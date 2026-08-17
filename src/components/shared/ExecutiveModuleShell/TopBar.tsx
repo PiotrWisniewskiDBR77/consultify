@@ -167,7 +167,7 @@ const Chip: React.FC<{ descriptor: TopBarChipDescriptor; menuItem?: boolean }> =
   } else if (active) {
     // Active/toggle state — neutral blue focus accent (NEVER crimson;
     // `primary-*` in tailwind = crimson #85182F, reserved for destructive semantics).
-    stateClasses = 'text-c-focus-solid bg-c-focus/10 hover:bg-c-focus/15';
+    stateClasses = 'text-blue-700 bg-c-focus/10 hover:bg-c-focus/15 dark:text-blue-300';
   } else {
     // Secondary tier — ghost button, lower visual weight.
     stateClasses =

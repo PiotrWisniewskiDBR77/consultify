@@ -198,7 +198,7 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
               onClick={() => setActiveTab(tab.id)}
               className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
                 isActive
-                  ? 'bg-c-surface shadow-sm text-c-text/[0.12] dark:text-[var(--c-info)]'
+                  ? 'bg-c-surface shadow-sm text-blue-700 dark:text-blue-300'
                   : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-border-subtle'
               }`}
             >

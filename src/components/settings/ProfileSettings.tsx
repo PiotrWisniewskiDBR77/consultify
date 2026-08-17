@@ -601,7 +601,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
             {formState.pronouns && (
               <p className="text-[var(--c-text-muted)] text-xs">({formState.pronouns})</p>
             )}
-            <p className="text-sm font-medium text-[var(--c-accent)]">{currentUser.companyName}</p>
+            <p className="text-sm font-medium text-c-text-secondary">{currentUser.companyName}</p>
 
             {/* Status Badge */}
             {(formState.statusMessage || formState.isOutOfOffice) && (

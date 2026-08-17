@@ -36,7 +36,7 @@ export const HubWorkAreaLoadError: React.FC<HubWorkAreaLoadErrorProps> = ({
         className="max-w-xl w-full p-5 rounded-2xl border border-c-danger/30 bg-c-danger/5"
         role="alert"
       >
-        <div className="text-sm font-semibold text-c-danger">{title}</div>
+        <div className="text-sm font-semibold text-danger-700 dark:text-danger-300">{title}</div>
         <p className="mt-1 text-sm text-c-text">{message}</p>
         {errorCode ? (
           <p className="mt-1 text-xs text-c-text-secondary font-mono">code: {errorCode}</p>
@@ -45,7 +45,7 @@ export const HubWorkAreaLoadError: React.FC<HubWorkAreaLoadErrorProps> = ({
           <button
             type="button"
             onClick={onRetry}
-            className="h-9 rounded-lg border border-c-danger/40 px-3 text-sm font-medium text-c-danger hover:bg-c-danger/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+            className="h-9 rounded-lg border border-danger-400 px-3 text-sm font-medium text-danger-700 hover:bg-danger-50 dark:border-danger-600 dark:text-danger-300 dark:hover:bg-danger-950/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
             {retryLabel}
           </button>

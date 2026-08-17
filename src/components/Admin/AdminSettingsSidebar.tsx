@@ -167,7 +167,7 @@ export const AdminSettingsSidebar: React.FC<AdminSettingsSidebarProps> = ({
                   <div className="truncate text-sm font-medium">
                     {t(item.labelKey, { defaultValue: item.labelDefault })}
                   </div>
-                  <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                  <div className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">
                     {t(item.descriptionKey, { defaultValue: item.descriptionDefault })}
                   </div>
                 </div>

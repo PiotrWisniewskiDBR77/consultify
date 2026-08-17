@@ -342,23 +342,23 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
   const colorMap = {
     violet: {
       icon: 'bg-c-accent-soft text-c-accent',
-      statusOk: 'text-emerald-400',
-      statusBad: 'text-amber-400',
+      statusOk: 'text-emerald-700 dark:text-emerald-300',
+      statusBad: 'text-amber-700 dark:text-amber-300',
     },
     blue: {
-      icon: 'bg-blue-500/10 text-blue-400',
-      statusOk: 'text-emerald-400',
-      statusBad: 'text-danger-400',
+      icon: 'bg-blue-500/10 text-blue-700 dark:text-blue-300',
+      statusOk: 'text-emerald-700 dark:text-emerald-300',
+      statusBad: 'text-danger-700 dark:text-danger-300',
     },
     emerald: {
-      icon: 'bg-emerald-500/10 text-emerald-400',
-      statusOk: 'text-emerald-400',
+      icon: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+      statusOk: 'text-emerald-700 dark:text-emerald-300',
       statusBad: 'text-c-text-secondary',
     },
     amber: {
-      icon: 'bg-amber-500/10 text-amber-400',
-      statusOk: 'text-emerald-400',
-      statusBad: 'text-amber-400',
+      icon: 'bg-amber-500/10 text-amber-700 dark:text-amber-300',
+      statusOk: 'text-emerald-700 dark:text-emerald-300',
+      statusBad: 'text-amber-700 dark:text-amber-300',
     },
   };
 
@@ -479,7 +479,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
                         <Icon size={18} />
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-white">{card.title}</p>
+                        <p className="text-sm font-medium text-c-text">{card.title}</p>
                         <p
                           className={cn(
                             'text-xs font-semibold',
