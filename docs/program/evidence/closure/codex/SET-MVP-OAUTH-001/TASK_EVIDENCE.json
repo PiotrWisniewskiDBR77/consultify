@@ -3,6 +3,10 @@
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "3cf595da94a516ade16b976cb1abf370a17213c0",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
+  "ownerDecision": {"recordId": "INTERNAL-BETA-OWNER-DECISIONS-20260817-AMENDMENT-01", "decisionId": "AMD-SET-OAUTH-APPROVED-OUT-001", "status": "APPROVED_OUT"},
+  "amendmentSha": "617b5d29c229e6c073452a17c8da1888ce18aa8d59a5913fa0d9aa59b2272702",
+  "reopenWhen": "A named provider has approved scopes, DPA, residency, redirects and revoke semantics.",
+  "evidenceInvalidation": "Invalidate on provider registry, scopes, OAuth callback, token storage, revoke or residency behavior changes.",
   "changedPaths": ["server/src/services/oauthService.ts", "server/src/services/integrationOAuthEngine.ts", "tests/integration/auth/oauthProviderApprovalRegistry.test.ts", "tests/integration/settings/integration-oauth-approval.test.ts"],
   "changedPathRationale": {"runtime": "credentials alone cannot activate an unapproved provider; exact scopes and residency are required", "tests": "malformed, over-broad and absent approvals fail closed"},
   "ownerTables": ["oauth_connections"],
@@ -12,6 +16,7 @@
   "negativeControls": {"providerEnablement": "must remain fail-closed without registry, scopes and residency approval"},
   "browserArtifacts": [],
   "rollback": {"policy": "providers remain disabled", "code": "revert 3cf595da94 before deployment"},
-  "verdict": "BLOCKED_OWNER",
-  "openBlockers": ["Security/Privacy owner must approve provider registry, scopes, residency and secret-handling policy."]
+  "technicalVerdict": "PASS_FAIL_CLOSED_APPROVED_OUT",
+  "verdict": "PARTIAL",
+  "openBlockers": ["APPROVED_OUT: zero OAuth providers are enabled. Real-provider connect, callback, revoke, DPA and residency evidence remain intentionally outside this MVP."]
 }

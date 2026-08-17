@@ -3,15 +3,20 @@
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "c8ffd7be0e9b848932064b70a5c8271a9da45f1e",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
+  "ownerDecision": {"recordId": "INTERNAL-BETA-OWNER-DECISIONS-20260817-AMENDMENT-01", "decisionId": "AMD-MTG-APPROVED-OUT-001", "status": "APPROVED_OUT"},
+  "amendmentSha": "617b5d29c229e6c073452a17c8da1888ce18aa8d59a5913fa0d9aa59b2272702",
+  "reopenWhen": "Recording or transcription is proposed with consent, retention, legal-hold, regional and processor evidence.",
+  "evidenceInvalidation": "Invalidate on any meeting recording, transcript, media-upload, persistence or provider activation path.",
   "changedPaths": [],
   "changedPathRationale": {},
   "ownerTables": [],
   "commands": [{"command": "node scripts/cleanup/verify-closure-plan.mjs", "exitCode": 0}],
-  "denominators": {"policyDecisionsRequired": 1, "policyDecisionsApproved": 0},
+  "denominators": {"policyDecisionsRequired": 1, "policyDecisionsApproved": 1, "recordingOrTranscriptActivationTests": "0/1"},
   "fixtures": {},
   "negativeControls": {"recording": "OFF by default", "transcription": "OFF without consent and provider approval"},
   "browserArtifacts": [],
   "rollback": {"policy": "recording and transcription remain disabled"},
-  "verdict": "BLOCKED_OWNER",
-  "openBlockers": ["Legal/Privacy must approve consent, retention and legal-hold policy before recording/transcription can be enabled."]
+  "technicalVerdict": "APPROVED_OUT_DEFAULT_OFF_PROOF_INCOMPLETE",
+  "verdict": "PARTIAL",
+  "openBlockers": ["APPROVED_OUT: recording/transcription remain excluded. Before any stronger completion claim, inventory and test every Meeting recording/transcript path as absent or default-OFF across restart."]
 }

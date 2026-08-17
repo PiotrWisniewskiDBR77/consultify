@@ -3,6 +3,10 @@
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "04833b1161dc88402cdbd2565b2f3940c9d84607",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
+  "ownerDecision": {"recordId": "INTERNAL-BETA-OWNER-DECISIONS-20260817-AMENDMENT-01", "decisionId": "AMD-SET-DELETE-APPROVED-OUT-001", "status": "APPROVED_RESTRICTED_SCOPE"},
+  "amendmentSha": "617b5d29c229e6c073452a17c8da1888ce18aa8d59a5913fa0d9aa59b2272702",
+  "reopenWhen": "Legal and Privacy approve a versioned data-class action, retention, backup and legal-hold matrix.",
+  "evidenceInvalidation": "Invalidate on request, cancellation, legal hold, anonymization, purge, retention or backup-treatment changes.",
   "changedPaths": [
     "tests/integration/settings/account-deletion-routes-guard.test.ts",
     "tests/integration/settings/gdpr-settings-no-stubs.test.ts"
@@ -24,9 +28,10 @@
   ],
   "browserArtifacts": [],
   "rollback": {"code": "revert 04833b1161 before deployment", "data": "no destructive execution occurred"},
-  "verdict": "BLOCKED_OWNER",
+  "technicalVerdict": "PASS_INCLUDED_REQUEST_CANCEL_APPROVED_OUT_DESTRUCTIVE_EXECUTION",
+  "verdict": "PARTIAL",
   "openBlockers": [
-    "Legal/Privacy must approve retention minima/maxima, anonymize-versus-delete, legal hold approval and release.",
-    "Only request scheduling is verified; destructive execution remains OFF by default."
+    "APPROVED_OUT: destructive anonymization and purge execution remain OFF; only authenticated request scheduling and cancellation are verified.",
+    "Activation still requires Legal/Privacy retention, legal-hold, backup and data-class action evidence."
   ]
 }

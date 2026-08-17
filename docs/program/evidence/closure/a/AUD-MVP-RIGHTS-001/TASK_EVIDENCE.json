@@ -6,6 +6,10 @@
   "baselineTag": "closure-execution-baseline-v2-20260816",
   "productSha": "78a618942ea0e12e7837bf64dec05f0b30bbdff1",
   "leaseSha256": "a2f9be9983e3a03e5e64f1a51dca193199a5bec963a246c3b4fe94b378af1308",
+  "ownerDecision": {"recordId": "INTERNAL-BETA-OWNER-DECISIONS-20260817-AMENDMENT-01", "decisionId": "AMD-AUD-RIGHTS-001", "status": "APPROVED_RESTRICTED_SCOPE_IMPLEMENTATION_REQUIRED"},
+  "amendmentSha": "617b5d29c229e6c073452a17c8da1888ce18aa8d59a5913fa0d9aa59b2272702",
+  "reopenWhen": "A named external standard has source-version-specific rights evidence and approval.",
+  "evidenceInvalidation": "Invalidate on pack reads, preset availability, rights classification, norm-source or mounted route behavior changes.",
   "sharedCommitNote": "This commit also covers AUD-POL-001 (docs/program/evidence/closure/a/AUD-POL-001/TASK_EVIDENCE.json, same productSha and same test file). This record lists the rights/content inventory sweep and the two integrator change requests; the POL record lists the decision-packet framing and the fail-closed-gate proof.",
   "changedPaths": [
     "docs/program/evidence/closure/a/AUD-MVP-RIGHTS-001/RIGHTS_INVENTORY.md",
@@ -84,12 +88,12 @@
   "knownConsequences": [
     {
       "description": "GAP 1: server/src/routes/audits/packs.routes.ts GET /packs and GET /packs/:id apply no publication_status filter by default and no capability check (only write routes call requireAdmin). Any authenticated org member — not just pack authors/admins — can browse and read draft/in-review pack content today. Ready-to-apply diff exists (ICR-1) but is outside this lane's lease.",
-      "blocking": false,
+      "blocking": true,
       "source": "commit 78a618942ea0e12e7837bf64dec05f0b30bbdff1"
     },
     {
       "description": "GAP 2: ISO_27001_PRESET (src/components/Audit/auditPresets.ts:47-145) is static frontend data reachable by default through the legacy Audit Orchestrator wizard (MODULE_AUDITS: 'open'), with no audit_norm_sources row and no rights check, because it feeds the legacy write path and never reaches packValidator. Standard-naming-as-content, not reproduced clause language, but still brands a client deliverable as an 'ISO 27001 readiness audit' outside the rights kernel. Fix is blocked on a Product decision (Section 1, item 2 of the AUD-POL-001 decision packet).",
-      "blocking": false,
+      "blocking": true,
       "source": "commit 78a618942ea0e12e7837bf64dec05f0b30bbdff1"
     }
   ],
@@ -107,7 +111,7 @@
       "reason": "GAP 1: GET /packs and GET /packs/:id have no publication_status filter and no capability check, so any org member can read draft/in-review packs.",
       "minimalHunk": "default the read path to status='published' unless the actor is a platform admin; full verbatim diff in docs/program/evidence/closure/a/AUD-MVP-RIGHTS-001/INTEGRATOR_CHANGE_REQUESTS.md ICR-1",
       "consumerTest": "extend auditPackRights.realdb.test.ts describe block 5 with a route-level (supertest) HTTP test asserting a non-admin's GET /packs excludes the draft pack by default and GET /packs/:id for that draft returns 404",
-      "blocking": false
+      "blocking": true
     },
     {
       "taskId": "AUD-MVP-RIGHTS-001",
@@ -115,17 +119,19 @@
       "reason": "GAP 2: the legacy ISO 27001 preset bypasses the rights kernel entirely (no audit_norm_sources row, no packValidator gate, reachable by default).",
       "minimalHunk": "intentionally not a ready-to-apply diff — requires a Product decision (retire vs. flag-gate vs. accept-as-is) first, per ICR-2 in INTEGRATOR_CHANGE_REQUESTS.md",
       "consumerTest": "retire: a component test asserting no 'New ISO 27001 audit' element renders. flag-gate: a component test asserting the button is absent at the new flag's default (off) value.",
-      "blocking": false
+      "blocking": true
     }
   ],
   "openItems": [
     "GAP 1 has a ready-to-apply diff but has not been applied (outside this lane's lease).",
-    "GAP 2 cannot be fixed until Product decides its disposition (retire / flag-gate / accept-as-is) — see AUD-POL-001 Section 1 item 2.",
+    "GAP 2 disposition is decided: the legacy ISO preset must be default-OFF and inaccessible, but the product change and consumer test have not landed.",
     "No browser/visual evidence exists for this task; it is a content/rights inventory plus backend negative-control tests, with no UI surface exercised."
   ],
   "unverifiedFields": [],
-  "verdict": "BLOCKED_OWNER",
-  "verdictRationale": "G0/G1/G3 shared gates pass at this SHA. The inventory itself is complete and evidence-backed (reproducible grep commands, every hit classified, zero hits excluded because inconvenient), and both named gaps are proven with real-Postgres tests rather than asserted. This task is BLOCKED_OWNER by design, matching AUD-POL-001: activating any named external standard, and deciding the ISO 27001 preset's fate, are Product + Methodology/Rights + Legal decisions this lane may not take. GAP 1 has a ready diff sitting outside this lane's lease waiting on the integrator; GAP 2 cannot even get a diff until Product decides. The engineering-verifiable half (what does the kernel actually contain and enforce today) is DONE; the decision half is not this lane's to close. No browser/visual evidence exists, consistent with this being an inventory/evidence task with no UI surface of its own.",
+  "technicalVerdict": "FIX_REQUIRED_OWNER_DECISION_COMPLETE",
+  "verdict": "PARTIAL",
+  "historicalVerdictRationale": "G0/G1/G3 shared gates pass at this SHA and the evidence-backed inventory proves both gaps. This task was BLOCKED_OWNER before the amendment.",
+  "verdictRationale": "The restricted-scope decision is complete, but the characterized read-path and legacy-preset bypasses remain active. Published-only or author/admin draft reads, the default-OFF ISO preset and operationalized detector still require product changes and mounted proof.",
   "ownerTables": [],
   "fixtures": {},
   "negativeControls": {}

@@ -3,6 +3,10 @@
   "baselineSha": "ca963fe5112f6caf5bebdef04e4f0a624be00e91",
   "productSha": "0c6f9b7308bb0df788ab3c35c43a58b7611c4ab7",
   "leaseSha256": "not_applicable_codex_bounded_task",
+  "ownerDecision": {"recordId": "INTERNAL-BETA-OWNER-DECISIONS-20260817-AMENDMENT-01", "decisionId": "AMD-PRT-ACCRUAL-APPROVED-OUT-001", "status": "APPROVED_OUT"},
+  "amendmentSha": "617b5d29c229e6c073452a17c8da1888ce18aa8d59a5913fa0d9aa59b2272702",
+  "reopenWhen": "Commercial, Finance and Legal approve versioned economics, jurisdiction, tax, KYC, reversal and dispute treatment.",
+  "evidenceInvalidation": "Invalidate on accrual policy schema, attribution, commission, payout, approval, ledger or automation changes.",
   "changedPaths": [
     "server/src/services/partnerAccrualPolicy.ts",
     "server/src/services/partnerCommissionService.ts",
@@ -43,7 +47,8 @@
     "focusedTestFiles": { "passed": 4, "failed": 0 },
     "focusedTests": { "passed": 22, "failed": 0, "skipped": 0, "todo": 0 },
     "ownerDecisionFieldsRequired": 6,
-    "ownerDecisionFieldsApproved": 0
+    "ownerDecisionFieldsApproved": 0,
+    "approvedOutByOwner": 1
   },
   "fixtures": {
     "policyGate": "No production policy supplied; runtime remains fail-closed.",
@@ -76,10 +81,11 @@
     "policy": "Unset PARTNER_ACCRUAL_POLICY_JSON to preserve fail-closed behavior; ledger facts remain append-only.",
     "destructive": false
   },
-  "verdict": "BLOCKED_OWNER",
-  "verdictRationale": "The backend no longer invents currency, rate, fee, threshold or rule version and cannot create an accrual without an approved policy plus active tenant-matching attribution. Both legacy and V8 requests use one PostgreSQL transaction for payout row, commission links and payout.requested; advisory locking and tenant-scoped idempotency prove one effect under concurrency, rollback on failure and cold readback. Automatic payout is forced off and approval requires a different actor. The only remaining release blocker is the accountable Commercial + Finance + Legal decision.",
+  "technicalVerdict": "PASS_FAIL_CLOSED_APPROVED_OUT",
+  "verdict": "PARTIAL",
+  "verdictRationale": "The backend no longer invents economics and the technical controls pass, but accrual and payout are explicitly excluded from this MVP. The synthetic APPROVED fixture proves control behavior only and is not a commercial policy.",
   "openBlockers": [
-    "Commercial + Finance + Legal must approve the base currency, versioned commission rule, eligibility and attribution window, payout fee/minimum, reversal/dispute treatment and tax responsibility.",
-    "The real-PostgreSQL proof used an explicitly synthetic APPROVED policy fixture for technical control only; it is not a production decision or authorization."
+    "APPROVED_OUT: commission accrual and payout remain disabled until a future versioned Commercial + Finance + Legal policy exists.",
+    "The real-PostgreSQL synthetic APPROVED policy fixture is technical control proof only; it is not production authorization."
   ]
 }

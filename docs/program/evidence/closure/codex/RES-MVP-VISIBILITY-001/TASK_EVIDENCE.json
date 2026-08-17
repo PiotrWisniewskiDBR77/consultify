@@ -3,15 +3,20 @@
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "c8ffd7be0e9b848932064b70a5c8271a9da45f1e",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
+  "ownerDecision": {"recordId": "INTERNAL-BETA-OWNER-DECISIONS-20260817-AMENDMENT-01", "decisionId": "AMD-RES-VISIBILITY-001", "status": "APPROVED_RESTRICTED_SCOPE_IMPLEMENTATION_REQUIRED"},
+  "amendmentSha": "617b5d29c229e6c073452a17c8da1888ce18aa8d59a5913fa0d9aa59b2272702",
+  "reopenWhen": "A versioned Manager or Reader visibility and roll-up matrix replaces the OWNER/ADMIN-only beta scope.",
+  "evidenceInvalidation": "Invalidate when any canonical Results route, role mapping or visibility policy changes.",
   "changedPaths": [],
   "changedPathRationale": {},
   "ownerTables": ["rvn_platform_visibility_policies"],
   "commands": [{"command": "node scripts/cleanup/verify-closure-plan.mjs", "exitCode": 0}],
-  "denominators": {"ownerDecisionsRequired": 1, "ownerDecisionsApproved": 0},
+  "denominators": {"ownerDecisionsRequired": 1, "ownerDecisionsApproved": 1, "mountedWholeResultsRoleMatrix": "0/1"},
   "fixtures": {},
   "negativeControls": {"default": "Results visibility remains restricted; no broader role matrix inferred"},
   "browserArtifacts": [],
   "rollback": {"code": "no code change", "policy": "retain current restrictive policy"},
-  "verdict": "BLOCKED_OWNER",
-  "openBlockers": ["Product owner must approve the seven-role visibility and roll-up matrix and rollout scope."]
+  "technicalVerdict": "FIX_REQUIRED_OWNER_DECISION_COMPLETE",
+  "verdict": "PARTIAL",
+  "openBlockers": ["Repository-owned technical gap: prove and, where absent, enforce OWNER/ADMIN allow plus Manager/Consultant/Member/respondent/partner and cross-tenant denial across every canonical Results route, cold session and direct deep link."]
 }

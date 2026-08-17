@@ -4,6 +4,10 @@
   "productSha": "74517d8437c338db4a8550017923d935d1a7b19b",
   "testCleanupSha": "8b642f83c7c9e3e84d8c81e0cfd9c3562a881857",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
+  "ownerDecision": {"recordId": "INTERNAL-BETA-OWNER-DECISIONS-20260817-AMENDMENT-01", "decisionId": "AMD-FIN-RECONCILIATION-001", "status": "APPROVED_RESTRICTED_SCOPE_ENVIRONMENT_QUARANTINE"},
+  "amendmentSha": "617b5d29c229e6c073452a17c8da1888ce18aa8d59a5913fa0d9aa59b2272702",
+  "reopenWhen": "The immutable Actual owner, greater-than-5-percent boundary, resolver role or historical-row disposition changes.",
+  "evidenceInvalidation": "Invalidate on reconciliation schema, threshold, grant ledger, mounted authorization or target historical-row inventory changes.",
   "decision": {
     "decisionId": "DEC-FIN-RESULTS-RECONCILIATION-001",
     "status": "APPROVED_RESTRICTED_SCOPE",
@@ -64,8 +68,9 @@
     {"formerBlocker": "Finance/Results owner decision on Actual writer and materiality threshold.", "resolution": "DEC-FIN approved Results as sole immutable Actual writer, Finance proposal/dispute only, and strictly greater than 5 percent as material."},
     {"formerBlocker": "Post-fan-in test fixture residue.", "resolution": "Cleanup SHA 8b642f83c7 uses exact fixture IDs, FK-safe transaction and named triggers; post-suite residue is 0."}
   ],
-  "verdict": "BLOCKED_OWNER",
+  "technicalVerdict": "PASS_REPOSITORY_FAIL_CLOSED_PARTIAL_ENVIRONMENT_DATA",
+  "verdict": "PARTIAL",
   "openBlockers": [
-    "Any target database containing pre-DEC-FIN reconciliation rows requires an owner-approved data triage/backfill disposition before migration. The verified migration refuses those rows without changing or deleting them."
+    "ENVIRONMENT_QUARANTINE: any target database containing pre-DEC-FIN reconciliation rows is excluded from the internal beta until row-by-row disposition is recorded. The verified migration refuses those rows without changing, deleting, inferring or auto-backfilling them."
   ]
 }

@@ -6,6 +6,10 @@
   "baselineTag": "closure-execution-baseline-v2-20260816",
   "productSha": "78a618942ea0e12e7837bf64dec05f0b30bbdff1",
   "leaseSha256": "a2f9be9983e3a03e5e64f1a51dca193199a5bec963a246c3b4fe94b378af1308",
+  "ownerDecision": {"recordId": "INTERNAL-BETA-OWNER-DECISIONS-20260817-AMENDMENT-01", "decisionId": "AMD-AUD-RIGHTS-001", "status": "APPROVED_RESTRICTED_SCOPE_IMPLEMENTATION_REQUIRED"},
+  "amendmentSha": "617b5d29c229e6c073452a17c8da1888ce18aa8d59a5913fa0d9aa59b2272702",
+  "reopenWhen": "A named external standard has source-version-specific rights evidence and approval.",
+  "evidenceInvalidation": "Invalidate on pack reads, preset availability, rights, publication validation, segregation-of-duties or detector wiring changes.",
   "sharedCommitNote": "This commit also covers AUD-MVP-RIGHTS-001 (docs/program/evidence/closure/a/AUD-MVP-RIGHTS-001/TASK_EVIDENCE.json, same productSha and same test file). This record lists the decision-packet framing and the fail-closed-gate proof; the RIGHTS record lists the content-inventory sweep and the two named gaps' integrator change requests.",
   "changedPaths": [
     "docs/program/evidence/closure/a/AUD-POL-001/DECISION_PACKET.md",
@@ -89,8 +93,10 @@
     "No browser/visual evidence exists for this task; it is a decision packet plus backend negative-control tests, with no UI surface exercised."
   ],
   "unverifiedFields": [],
-  "verdict": "BLOCKED_OWNER",
-  "verdictRationale": "G0/G1/G3 shared gates pass at this SHA and the packet's factual claims are proven, not asserted: 10/10 real-Postgres tests confirm the fail-closed publish/usage gates work today, all four segregation-of-duties guards are wired at their call sites, and two real gaps (GAP 1 read-path filtering, GAP 2 legacy ISO 27001 preset bypass) are identified with evidence rather than hidden. This task is BLOCKED_OWNER by design: activating any named external standard, and deciding the fate of the legacy ISO 27001 preset, are Product + Methodology/Rights + Legal decisions this lane may not take (explicitly stated in the decision packet itself). The engineering-verifiable half of this task (does the fail-closed default actually hold today) is DONE; the decision half cannot be closed by this lane regardless of code quality. No browser/visual evidence exists, consistent with this being a decision/evidence task with no UI surface.",
+  "technicalVerdict": "FIX_REQUIRED_OWNER_DECISION_COMPLETE",
+  "verdict": "PARTIAL",
+  "historicalVerdictRationale": "G0/G1/G3 shared gates pass at this SHA and the packet's factual claims are proven, not asserted: 10/10 real-Postgres tests confirm the fail-closed publish/usage gates work today, all four segregation-of-duties guards are wired at their call sites, and two real gaps (GAP 1 read-path filtering, GAP 2 legacy ISO 27001 preset bypass) are identified with evidence rather than hidden. This task was BLOCKED_OWNER before the amendment.",
+  "verdictRationale": "The owner decision is complete and keeps named standards OFF, but it does not waive the proven repository gaps. Draft-pack reads are not yet author/admin scoped, the legacy ISO preset is still reachable outside the rights kernel, and the independence detector is not operationalized.",
   "ownerTables": [],
   "fixtures": {},
   "negativeControls": {}

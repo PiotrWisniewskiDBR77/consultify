@@ -2,6 +2,10 @@
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "a62dbe340114d87eda75a0d2da2d77bee2a90685",
   "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
+  "ownerDecision": {"recordId": "INTERNAL-BETA-OWNER-DECISIONS-20260817-AMENDMENT-01", "decisionId": "AMD-MAT-POLICY-001", "status": "APPROVED_RESTRICTED_SCOPE_IMPLEMENTATION_REQUIRED"},
+  "amendmentSha": "617b5d29c229e6c073452a17c8da1888ce18aa8d59a5913fa0d9aa59b2272702",
+  "reopenWhen": "Visual PDF parity, an external renderer or a newly rights-cleared customer template is proposed.",
+  "evidenceInvalidation": "Invalidate on engine dependency/version, export label, template inventory, font, image, layout or provenance-gate changes.",
   "environment": {
     "node": "v24.12.0",
     "postgres": "16.14 (pgvector/pgvector:pg16)",
@@ -12,7 +16,8 @@
   "gateG1": "PASS — npm run type-check exit 0; npm run build:backend exit 0; test:discovery-gate PASS 4997/4997 discovered, 4698 executed.",
   "gateG3": "PASS — strict migrate on FRESH from-zero DB exit 0; repeat run applied 0; --dry-run 0 pending; schema_migrations 709 success / 0 failed / 0 pending.",
   "taskId": "MAT-POL-001",
-  "verdict": "BLOCKED_OWNER",
+  "technicalVerdict": "FIX_REQUIRED_OWNER_DECISION_COMPLETE",
+  "verdict": "PARTIAL",
   "owner": "Product + Legal/Privacy + Procurement",
   "ownerTables": [
     "artifact_export_receipts"
@@ -34,6 +39,9 @@
     "All four export engines are IN-PROCESS and MIT (pptxgenjs 4.0.1, exceljs 4.4.0, docx 9.5.1, pdfkit 0.17.2) — no external provider exists, so DPA/residency/SLA limbs do not apply to the current runtime.",
     "puppeteer 24.39.0 is declared but has zero imports in server/src.",
     "PDF export is a pdfkit text dump, not a visual render of the deck — owner decision D4."
+  ],
+  "openBlockers": [
+    "Repository-owned technical gap: record exact engine and license provenance, label presentation PDF as a text summary with no visual-parity claim, and enforce quarantine for templates whose layout, font, image or redistribution provenance is unknown."
   ],
   "changedPathRationale": {},
   "commands": [],

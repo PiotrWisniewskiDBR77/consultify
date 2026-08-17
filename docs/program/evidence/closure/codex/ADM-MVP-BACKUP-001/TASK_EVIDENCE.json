@@ -3,6 +3,10 @@
   "baselineSha": "3f603e65d323b95a7b78e1b4984f87dd099648f2",
   "productSha": "5e752a41cc604ae5fc8d929d7c6392d65bc41da8",
   "leaseSha256": "not_applicable_codex_bounded_task",
+  "ownerDecision": {"recordId": "INTERNAL-BETA-OWNER-DECISIONS-20260817-AMENDMENT-01", "decisionId": "AMD-ADM-BACKUP-TARGETS-001", "status": "ENGINEERING_TARGET_ACCEPTED_RELEASE_EXCLUDED"},
+  "amendmentSha": "617b5d29c229e6c073452a17c8da1888ce18aa8d59a5913fa0d9aa59b2272702",
+  "reopenWhen": "The environment, storage provider, encryption-key rotation, RPO or RTO changes.",
+  "evidenceInvalidation": "Invalidate on backup format, encryption, scheduler, restore isolation, storage, audit, RPO or RTO changes.",
   "generatedAt": "2026-08-16T20:55:00.000Z",
   "scope": "Tenant encrypted export, isolated PostgreSQL restore, integrity, access audit and recovery rehearsal",
   "changedPaths": [
@@ -110,10 +114,11 @@
     "schema": "additive and backward-readable",
     "data": "no production data and no live restore"
   },
-  "verdict": "BLOCKED_OWNER",
+  "technicalVerdict": "PASS_REPOSITORY_PARTIAL_ENVIRONMENT_NOT_AUTHORIZED",
+  "verdict": "PARTIAL",
   "openBlockers": [
-    "RPO/RTO defaults require accountable-owner acceptance for release-facing status.",
     "No deployment or production scheduler observation was authorized.",
-    "Encryption-key rotation and durable S3/R2 provisioning remain environment-owner operations."
+    "Encryption-key rotation and durable S3/R2 provisioning remain environment-owner operations.",
+    "Production restore and release remain NOT_AUTHORIZED."
   ]
 }
