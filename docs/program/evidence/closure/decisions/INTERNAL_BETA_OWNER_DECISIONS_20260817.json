@@ -1,0 +1,126 @@
+{
+  "recordId": "INTERNAL-BETA-OWNER-DECISIONS-20260817",
+  "recordedAt": "2026-08-17T00:00:00+02:00",
+  "effectiveProductSha": "b0b088f3e14e1fa449193929800b549796d7a214",
+  "effectiveForDescendants": true,
+  "releaseAuthorized": false,
+  "deploymentAuthorized": false,
+  "productionRestoreAuthorized": false,
+  "authority": {
+    "programOwner": "Piotr Wisniewski",
+    "delegation": "The program owner explicitly delegated obvious program and safety decisions to the primary integrator on 2026-08-17.",
+    "integrator": "Codex primary integrator"
+  },
+  "decisions": [
+    {
+      "decisionId": "DEC-AUD-MVP-SCOPE-001",
+      "affectedTasks": ["AUD-POL-001", "AUD-MVP-RIGHTS-001"],
+      "status": "APPROVED_RESTRICTED_SCOPE",
+      "decision": "The MVP ships only the owned internal transformation audit pack. Named external standards remain unavailable and may not be represented as certification or compliance. The legacy ISO 27001 preset must be default-OFF and inaccessible without a future rights-cleared decision. Draft or unpublished packs are visible only to their author or a platform administrator.",
+      "rationale": "This preserves the proven rights kernel and prevents an unlicensed normative claim.",
+      "implementationRequired": [
+        "Default non-author pack reads to published packs only.",
+        "Place the legacy ISO 27001 preset behind an explicit default-OFF gate.",
+        "Operationalize the independence detector as a scheduled or explicitly surfaced control."
+      ],
+      "reopenWhen": "A named standard has source-version-specific rights evidence and Methodology approval."
+    },
+    {
+      "decisionId": "DEC-MAT-MVP-PROVIDER-001",
+      "affectedTasks": ["MAT-POL-001"],
+      "status": "APPROVED_RESTRICTED_SCOPE",
+      "decision": "The approved MVP export engines are the existing in-process libraries for DOCX, PPTX, XLSX and PDF. No external rendering provider is approved or required. Presentation PDF is labelled as a text-summary export and must not claim visual parity with PPTX. A customer-deliverable template remains unavailable until its assets, fonts and layout provenance are recorded.",
+      "rationale": "The current runtime sends no document content to an external renderer; an honest summary label is safer than a false parity claim.",
+      "implementationRequired": [
+        "Record engine and license provenance.",
+        "Use an honest PDF text-summary label.",
+        "Quarantine templates with unknown redistribution rights."
+      ],
+      "reopenWhen": "Visual PDF parity or an external provider is proposed."
+    },
+    {
+      "decisionId": "DEC-MTG-RECORDING-001",
+      "affectedTasks": ["MTG-POL-001"],
+      "status": "APPROVED_OUT",
+      "decision": "Meeting recording and transcript capture or persistence are excluded from the MVP and remain OFF. User-authored agenda, minutes, decisions and follow-ups remain available.",
+      "rationale": "No consent, retention, legal-hold, regional or processor policy is required for a capability that is not activated or claimed.",
+      "reopenWhen": "Recording or transcription is proposed with Legal and Privacy evidence."
+    },
+    {
+      "decisionId": "DEC-SET-OAUTH-001",
+      "affectedTasks": ["SET-MVP-OAUTH-001"],
+      "status": "APPROVED_OUT",
+      "decision": "All OAuth providers remain disabled for the MVP. Credentials alone never activate a provider. Any future provider requires an exact approved registry entry, and the maximum default identity scopes are openid, email and profile.",
+      "rationale": "This avoids unapproved scopes, token handling, residency and subprocessor exposure.",
+      "reopenWhen": "A named provider, app owner, redirect set, scopes, DPA, residency and revoke semantics are approved."
+    },
+    {
+      "decisionId": "DEC-SET-DELETION-001",
+      "affectedTasks": ["SET-MVP-DELETE-001"],
+      "status": "APPROVED_RESTRICTED_SCOPE",
+      "decision": "The MVP may accept and cancel an authenticated deletion request, but destructive anonymization or purge execution remains OFF. Legal hold remains a separate state and overrides scheduling.",
+      "rationale": "An irreversible executor cannot be enabled without a versioned data-class retention and legal-hold policy.",
+      "reopenWhen": "Legal and Privacy approve the data-class action matrix, retention bounds, backup treatment, hold authority and release process."
+    },
+    {
+      "decisionId": "DEC-PRT-ECONOMICS-001",
+      "affectedTasks": ["PRT-POL-001", "PRT-MVP-ACCRUAL-001"],
+      "status": "APPROVED_OUT",
+      "decision": "Partner referral, certification, attribution and the immutable program ledger may ship. Commission accrual, payout policy and payout execution are excluded from this MVP until a versioned commercial policy is approved. Automatic payout remains prohibited.",
+      "rationale": "Inventing a currency, rate, attribution window, fee, tax or dispute policy would create financial and legal obligations without owner evidence.",
+      "reopenWhen": "Commercial, Finance and Legal approve versioned economics, jurisdiction, tax, KYC, reversal and dispute treatment."
+    },
+    {
+      "decisionId": "DEC-RES-VISIBILITY-001",
+      "affectedTasks": ["RES-MVP-VISIBILITY-001"],
+      "status": "APPROVED_RESTRICTED_SCOPE",
+      "decision": "For the internal beta, Results is visible only to active OWNER and ADMIN members of the owning tenant. Manager, Consultant, Member, respondent and partner roles have no Results visibility or roll-up. Cross-tenant visibility is always denied.",
+      "rationale": "This is the existing fail-closed default and avoids inventing an unapproved hierarchy or roll-up model.",
+      "reopenWhen": "A versioned Manager or Reader visibility matrix is approved."
+    },
+    {
+      "decisionId": "DEC-FIN-RESULTS-RECONCILIATION-001",
+      "affectedTasks": ["FIN-MVP-RECONCILIATION-001", "RES-FLOW-ADAPTER-001"],
+      "status": "APPROVED_RESTRICTED_SCOPE",
+      "decision": "Results remains the sole writer of immutable Actual. Finance may open a versioned proposal or dispute and may never overwrite Actual automatically. Divergence above 5 percent opens reconciliation; exactly 5 percent is within tolerance. Only the Finance owner may resolve or accept the divergence. A resolved proposal produces a new versioned fact or decision, never a historical UPDATE.",
+      "rationale": "The 5 percent boundary matches the existing provisional runtime while retaining human resolution and immutable ownership.",
+      "reopenWhen": "The materiality threshold, resolution roles or ownership model changes."
+    },
+    {
+      "decisionId": "DEC-AGT-AUTONOMY-001",
+      "affectedTasks": ["AGT-OPS-001", "MYW-AGT-BVP-001"],
+      "status": "APPROVED_RESTRICTED_SCOPE",
+      "decision": "Background autonomy remains OFF. A scheduler and worker must be controlled by the same default-OFF flag. The only approved artifact path is proposal-only: a human explicitly selects the target type and approves the proposal before a canonical Task, Decision or Notebook command is called. No autonomous target selection or auto-approval is allowed.",
+      "rationale": "This permits useful assisted work without unattended materialization or an undrained producer queue.",
+      "implementationRequired": [
+        "Durable dispatch and attempt receipt with stable job identity.",
+        "Retry, dead-letter, operator redrive and restart reclaim proof.",
+        "Human-approved proposal receipt and canonical target command."
+      ],
+      "reopenWhen": "Autonomous execution, content generation budget or unattended approval is proposed."
+    },
+    {
+      "decisionId": "DEC-ADM-BACKUP-BETA-001",
+      "affectedTasks": ["ADM-MVP-BACKUP-001", "DATA-DR-001"],
+      "status": "APPROVED_ENGINEERING_TARGET",
+      "decision": "The internal-beta engineering targets are RPO at most 15 minutes and RTO at most 60 minutes. Encryption is mandatory and a missing key fails closed. This decision does not authorize deployment, production restore or use of an unprovisioned storage destination.",
+      "rationale": "The targets are already implemented and locally rehearsed; environment proof remains a separate release gate.",
+      "reopenWhen": "The environment, storage provider, key rotation, RPO or RTO changes."
+    },
+    {
+      "decisionId": "DEC-HUMAN-REVIEWERS-001",
+      "affectedTasks": ["PERSONA-UAT-001", "UI-CANON-ALL-001"],
+      "status": "REVIEWER_ASSIGNED",
+      "decision": "Piotr Wisniewski is the accountable Product and brand reviewer, manual VoiceOver reviewer, and reviewer for Owner, Admin, Manager, Consultant, Member, respondent and partner job stories.",
+      "limitation": "One accountable reviewer exercising seven roles is owner UAT, not independent representative user research.",
+      "completionRequired": "Each positive and forbidden journey and the manual VoiceOver script must still be executed and signed against one exact candidate SHA."
+    },
+    {
+      "decisionId": "DEC-RELEASE-AUTHORITY-001",
+      "affectedTasks": ["REL-001-T01"],
+      "status": "NOT_AUTHORIZED",
+      "decision": "No push, deployment, production mutation, production restore or release is authorized by this record.",
+      "reopenWhen": "All exact-SHA technical, environment, human, telemetry and rollback gates are complete and Piotr records a separate authorization."
+    }
+  ]
+}
