@@ -155,6 +155,32 @@ test.describe('ADM-UI-CANON-001 mounted role and authoritative-state matrix', ()
     const superRun = makeRunId('adm-ui-super');
     runIds.push(superRun);
     const superadmin = await getPrivilegedSession(request, { runId: superRun, role: 'SUPERADMIN' });
+
+    const superMemberSeed = await request.post(`${API}/api/test-support/member`, {
+      headers: { 'x-test-support-key': SUPPORT_KEY, 'content-type': 'application/json' },
+      data: { runId: adminRun, role: 'USER' },
+    });
+    expect(superMemberSeed.status(), await superMemberSeed.text()).toBe(201);
+    const superMember = (await superMemberSeed.json()) as PrivilegedSession;
+    const superMemberToken = jwt.sign(
+      {
+        id: superMember.userId,
+        email: superMember.email,
+        role: 'SUPERADMIN',
+        isSuperAdmin: true,
+        organizationId: admin.organizationId,
+        runId: adminRun,
+      },
+      config.JWT_SECRET,
+      { expiresIn: '10m' }
+    );
+    for (const endpoint of ['/api/admin/audit-logs', '/api/admin/health-panel/probes']) {
+      const response = await request.get(`${API}${endpoint}`, {
+        headers: headers(superMemberToken),
+      });
+      expect(response.status(), `SUPERADMIN ACTIVE MEMBER ${endpoint}`).toBe(403);
+    }
+
     const superContext = await browser.newContext();
     const superPage = await superContext.newPage();
     await seedBrowser(superPage, superadmin);

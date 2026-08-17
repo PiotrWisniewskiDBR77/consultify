@@ -347,9 +347,11 @@ async function getAdminActor(
   const actorRole = normalizeOrganizationRole(
     membership?.role || (requestRole === 'superadmin' ? 'OWNER' : requestRole)
   );
-  const capabilities = await getActorCapabilities(orgId, actorId, actorRole, isSuperAdmin);
+  // Platform SUPERADMIN is not tenant authority. Tenant admin access is derived
+  // only from this organization's ACTIVE role or explicit delegated grants.
+  const capabilities = await getActorCapabilities(orgId, actorId, actorRole, false);
 
-  if (!isSuperAdmin && !['OWNER', 'ADMIN'].includes(actorRole) && capabilities.length === 0) {
+  if (!['OWNER', 'ADMIN'].includes(actorRole) && capabilities.length === 0) {
     res.status(403).json({
       error: 'Admin access required',
       code: 'ADMIN_ACCESS_REQUIRED',

@@ -192,6 +192,17 @@ describe('adminP32Routes', () => {
     expect(getLogs).not.toHaveBeenCalled();
   });
 
+  it('does not let SUPERADMIN with an ACTIVE MEMBER membership bypass tenant admin authority', async () => {
+    mockUserRole = 'superadmin';
+    dbGet.mockResolvedValueOnce({ role: 'MEMBER', status: 'ACTIVE' }).mockResolvedValueOnce(null);
+
+    const res = await request(createApp()).get('/api/admin/audit-logs');
+
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('ADMIN_ACCESS_REQUIRED');
+    expect(getLogs).not.toHaveBeenCalled();
+  });
+
   it('fails closed with 503 when the authoritative membership lookup fails', async () => {
     dbGet.mockRejectedValueOnce(new Error('database unavailable'));
 
@@ -222,15 +233,29 @@ describe('adminP32Routes', () => {
     const app = express();
     app.use('/api/admin/health-panel', healthRouter);
 
-    dbGet.mockResolvedValueOnce({ status: 'REVOKED' });
+    dbGet.mockResolvedValueOnce({ role: 'ADMIN', status: 'REVOKED' });
     expect((await request(app).get('/api/admin/health-panel/probes')).status).toBe(403);
 
     dbGet.mockRejectedValueOnce(new Error('database unavailable'));
     expect((await request(app).get('/api/admin/health-panel/probes')).status).toBe(503);
 
-    dbGet.mockResolvedValueOnce({ status: 'ACTIVE' });
+    dbGet.mockResolvedValueOnce({ role: 'ADMIN', status: 'ACTIVE' });
     getCachedResults.mockResolvedValueOnce([]);
     expect((await request(app).get('/api/admin/health-panel/probes')).status).toBe(200);
+  });
+
+  it('does not let SUPERADMIN with an ACTIVE MEMBER membership bypass health tenant authority', async () => {
+    mockUserRole = 'superadmin';
+    const healthRouter = (await import('../admin/health-panel.routes.js')).default;
+    const app = express();
+    app.use('/api/admin/health-panel', healthRouter);
+    dbGet.mockResolvedValueOnce({ role: 'MEMBER', status: 'ACTIVE' });
+
+    const res = await request(app).get('/api/admin/health-panel/probes');
+
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('ADMIN_ACCESS_REQUIRED');
+    expect(getCachedResults).not.toHaveBeenCalled();
   });
 
   it('blocks guests from the admin cockpit with explicit guidance', async () => {

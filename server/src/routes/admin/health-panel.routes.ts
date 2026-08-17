@@ -43,8 +43,8 @@ router.use(
     }
 
     try {
-      const membership = await dbGet<{ status?: string }>(
-        `SELECT status FROM organization_members
+      const membership = await dbGet<{ role?: string; status?: string }>(
+        `SELECT role, status FROM organization_members
          WHERE organization_id = ? AND user_id = ?
          LIMIT 1`,
         [organizationId, userId],
@@ -60,6 +60,20 @@ router.use(
           success: false,
           error: 'Active organization membership required',
           code: 'ADMIN_MEMBERSHIP_REQUIRED',
+        });
+        return;
+      }
+      if (
+        !['OWNER', 'ADMIN'].includes(
+          String(membership.role || '')
+            .trim()
+            .toUpperCase()
+        )
+      ) {
+        res.status(403).json({
+          success: false,
+          error: 'Tenant admin role required',
+          code: 'ADMIN_ACCESS_REQUIRED',
         });
         return;
       }
