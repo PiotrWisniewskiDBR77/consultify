@@ -31,8 +31,10 @@ async function main() {
   if (command === 'positive-control') {
     const run = randomUUID();
     const now = new Date().toISOString();
-    for (let index = 0; index < 5; index++) await recordOperationalAlertSignal({ organizationId, actorId: evaluatorId, correlationId: `positive-control:${run}`, sourceType: 'operator_positive_control', sourceId: `${run}:${index}`, kind: 'REPEATED_AUTH_DENIALS', outcome: 'DENIAL', occurredAt: now, idempotencyKey: `positive-control:${run}:${index}`, metadata: { synthetic: true } });
-    console.log(JSON.stringify(await evaluateOperationalAlertWindows({ organizationId, evaluatorId, now }), null, 2));
+    const receipts = [];
+    for (let index = 0; index < 5; index++) receipts.push(await recordOperationalAlertSignal({ organizationId, actorId: evaluatorId, correlationId: `positive-control:${run}`, sourceType: 'operator_positive_control', sourceId: `${run}:${index}`, kind: 'REPEATED_AUTH_DENIALS', outcome: 'DENIAL', occurredAt: now, idempotencyKey: `positive-control:${run}:${index}`, metadata: { synthetic: true }, operatorOverride: true }));
+    const states = durableOperationalAlertsEnabled() ? await evaluateOperationalAlertWindows({ organizationId, evaluatorId, now }) : [];
+    console.log(JSON.stringify({ positiveControlRunId: run, signalReceiptIds: receipts.map((row) => row.signal_id), evaluationDeferred: !durableOperationalAlertsEnabled(), states }, null, 2));
     return;
   }
   throw new Error('usage: operational-alerts.ts list [--organization ID] | ack --organization ID --kind KIND | positive-control --organization ID');

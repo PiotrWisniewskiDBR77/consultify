@@ -218,6 +218,8 @@ const TICK_DURATION_HISTORY_LIMIT = 50;
 let timer: ReturnType<typeof setTimeout> | null = null;
 let loopRunning = false;
 let tickInFlight: Promise<void> | null = null;
+let missedDurableAlertSignals = 0;
+export function getMissedCaseWorkspaceDurableAlertSignals(): number { return missedDurableAlertSignals; }
 let backoffMultiplier = 1;
 let tickDurationHistory: number[] = [];
 let metrics: OutboxWorkerMetricsSnapshot = freshMetrics();
@@ -336,11 +338,14 @@ async function runTickBody(
       sourceType: 'case_workspace_event_outbox',
       sourceId: `tick:${bucket}`,
     };
-    await Promise.all([
+    try { await Promise.all([
       recordOperationalAlertSignal({ ...base, kind: 'OUTBOX_OLDEST_AGE', outcome: 'SAMPLE', observedValue: (backlog.oldestPendingAgeSeconds ?? 0) * 1000, idempotencyKey: `case:${options.organizationId}:${bucket}:age` }),
       ...(result.delivered > 0 ? [recordOperationalAlertSignal({ ...base, sourceId: `tick:${bucket}:success`, kind: 'WRITE_FAILURE_RATE', outcome: 'SUCCESS', observedValue: result.delivered, idempotencyKey: `case:${options.organizationId}:${bucket}:success` })] : []),
       ...(result.failed > 0 ? [recordOperationalAlertSignal({ ...base, sourceId: `tick:${bucket}:failure`, kind: 'WRITE_FAILURE_RATE', outcome: 'FAILURE', observedValue: result.failed, idempotencyKey: `case:${options.organizationId}:${bucket}:failure` })] : []),
-    ]);
+    ]); } catch (error) {
+      missedDurableAlertSignals++;
+      logger.warn(`[CaseWorkspaceOutboxWorker] primary tick outcome preserved; durable alert signal queued for operator repair: ${error instanceof Error ? error.message : String(error)}`);
+    }
   }
 
   if (result.failed > 0 || deadLetterCount > 0) {

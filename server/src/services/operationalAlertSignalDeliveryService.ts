@@ -34,9 +34,15 @@ export interface OperationalAlertSignalInput {
   sourceType: string; sourceId: string; kind: OperationalAlertKind;
   outcome: SignalOutcome; observedValue?: number; occurredAt?: string;
   idempotencyKey: string; metadata?: Record<string, unknown>;
+  operatorOverride?: boolean;
 }
 
 export async function recordOperationalAlertSignal(input: OperationalAlertSignalInput) {
+  if (!durableOperationalAlertsEnabled()) {
+    if (!(input.operatorOverride === true && input.sourceType === 'operator_positive_control' && input.metadata?.synthetic === true)) {
+      throw new Error('OPS_ALERT_DURABLE_DISABLED');
+    }
+  }
   const normalized = {
     organizationId: required(input.organizationId, 'OPS_ALERT_ORGANIZATION_INVALID'),
     actorId: required(input.actorId, 'OPS_ALERT_ACTOR_INVALID'),

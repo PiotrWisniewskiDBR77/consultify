@@ -55,9 +55,14 @@ describe.skipIf(!REAL_PG)('OPS-OBS tenant signal delivery (real PostgreSQL)', ()
     expect(new Set(rows.map((row) => row.signal_id)).size).toBe(1);
     await expect(recordOperationalAlertSignal(signal({ outcome: 'SUCCESS' }))).rejects.toThrow('OPS_ALERT_IDEMPOTENCY_COLLISION');
     await expect(recordOperationalAlertSignal(signal({ idempotencyKey: `${prefix}-secret`, metadata: { authorization: 'Bearer no' } }))).rejects.toThrow('OPS_ALERT_METADATA_UNSAFE');
+    delete process.env.OPERATIONAL_ALERT_DURABLE_ENABLED;
+    await expect(recordOperationalAlertSignal(signal({ idempotencyKey: `${prefix}-disabled` }))).rejects.toThrow('OPS_ALERT_DURABLE_DISABLED');
+    const override = await recordOperationalAlertSignal(signal({ idempotencyKey: `${prefix}-operator`, sourceType: 'operator_positive_control', metadata: { synthetic: true }, operatorOverride: true }));
+    expect(override.signal_id).toBeTruthy();
+    process.env.OPERATIONAL_ALERT_DURABLE_ENABLED = 'true';
     await recordOperationalAlertSignal(signal({ organizationId: otherOrg, idempotencyKey: `${prefix}-foreign` }));
     const db = new Client({ connectionString: DATABASE_URL }); await db.connect();
-    expect((await db.query(`SELECT count(*)::int n FROM operational_alert_signals WHERE organization_id=$1`, [org])).rows[0].n).toBe(1);
+    expect((await db.query(`SELECT count(*)::int n FROM operational_alert_signals WHERE organization_id=$1`, [org])).rows[0].n).toBe(2);
     expect((await db.query(`SELECT count(*)::int n FROM operational_alert_signals WHERE organization_id=$1`, [otherOrg])).rows[0].n).toBe(1);
     await expect(db.query(`UPDATE operational_alert_signals SET observed_value=2 WHERE organization_id=$1`, [org])).rejects.toThrow(/OPS_ALERT_APPEND_ONLY/);
     await expect(db.query(`DELETE FROM operational_alert_signals WHERE organization_id=$1`, [org])).rejects.toThrow(/OPS_ALERT_APPEND_ONLY/);
@@ -136,6 +141,16 @@ describe.skipIf(!REAL_PG)('OPS-OBS tenant signal delivery (real PostgreSQL)', ()
     const address = server.address();
     if (!address || typeof address === 'string') throw new Error('local receiver unavailable');
     const endpoint = `http://127.0.0.1:${address.port}/ops-alerts`;
+    let redirectedHits = 0;
+    const redirectedTarget = createServer((_request, response) => { redirectedHits++; response.end('must-not-hit'); });
+    await new Promise<void>((resolve) => redirectedTarget.listen(0, '127.0.0.1', resolve));
+    const targetAddress = redirectedTarget.address(); if (!targetAddress || typeof targetAddress === 'string') throw new Error('redirect target unavailable');
+    const redirector = createServer((_request, response) => { response.statusCode = 302; response.setHeader('location', `http://127.0.0.1:${targetAddress.port}/external`); response.end(); });
+    await new Promise<void>((resolve) => redirector.listen(0, '127.0.0.1', resolve));
+    const redirectAddress = redirector.address(); if (!redirectAddress || typeof redirectAddress === 'string') throw new Error('redirector unavailable');
+    expect(await deliverOperationalAlerts({ endpoint: `http://127.0.0.1:${redirectAddress.port}/redirect`, workerId: `${prefix}-http-worker`, organizationId: deliveryOrg, limit: 1, fetchImpl: realLocalFetch })).toMatchObject({ delivered: 0, failed: 1 });
+    expect(redirectedHits).toBe(0);
+    const redirectDb = new Client({ connectionString: DATABASE_URL }); await redirectDb.connect(); await redirectDb.query(`UPDATE operational_alert_delivery_outbox SET available_at=now() WHERE organization_id=$1 AND status='FAILED'`, [deliveryOrg]); await redirectDb.end();
     const unavailableReceiver: typeof fetch = async (...args) => {
       await realLocalFetch(...args);
       throw new Error('receiver unavailable after accept-before-ack crash window');
@@ -147,6 +162,8 @@ describe.skipIf(!REAL_PG)('OPS-OBS tenant signal delivery (real PostgreSQL)', ()
     expect(calls).toBeGreaterThanOrEqual(2); expect(new Set(ids).size).toBe(1);
     delete process.env.OPERATIONAL_ALERT_DELIVERY_ENABLED;
     await new Promise<void>((resolve) => server.close(() => resolve()));
+    await new Promise<void>((resolve) => redirector.close(() => resolve()));
+    await new Promise<void>((resolve) => redirectedTarget.close(() => resolve()));
     const cleanup = new Client({ connectionString: DATABASE_URL }); await cleanup.connect();
     await cleanup.query(`ALTER TABLE operational_alert_delivery_receipts DISABLE TRIGGER trg_operational_alert_receipts_immutable`);
     await cleanup.query(`DELETE FROM operational_alert_delivery_receipts WHERE organization_id=$1`, [deliveryOrg]);

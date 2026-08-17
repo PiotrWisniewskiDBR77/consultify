@@ -5,7 +5,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { getPrimaryPoolSaturationPercent } from '../../../../database/PostgresDatabase.js';
 import { operationalAlerts } from '../../../operationalAlertService.js';
-import { runOutboxDispatchTick } from '../platformOutboxDrainCron.js';
+import { getMissedResultsDurableAlertSignals, runOutboxDispatchTick } from '../platformOutboxDrainCron.js';
 
 const databaseUrl = process.env.DATABASE_URL || '';
 const marker = `ops_obs_${Date.now()}_${randomUUID().slice(0, 8)}`;
@@ -84,5 +84,19 @@ describe('OPS-OBS-001 production signal wiring (real PostgreSQL)', () => {
     expect(Number.isFinite(saturation)).toBe(true);
     expect(saturation).toBeGreaterThanOrEqual(0);
     expect(saturation).toBeLessThanOrEqual(100);
+  });
+
+  it('preserves the primary terminal marker when the secondary signal store fails', async () => {
+    await client.query(`UPDATE rvn_platform_outbox SET status='pending',attempts=0,next_attempt_at=now() WHERE outbox_id=$1`, [outboxId]);
+    await client.query(`ALTER TABLE operational_alert_signals RENAME TO operational_alert_signals_forced_down`);
+    const before = getMissedResultsDurableAlertSignals();
+    try {
+      const result = await runOutboxDispatchTick(10);
+      expect(result).toMatchObject({ claimed: 1, failed: 1, deadLettered: 1 });
+      expect(getMissedResultsDurableAlertSignals()).toBe(before + 1);
+      expect((await client.query(`SELECT status,attempts FROM rvn_platform_outbox WHERE outbox_id=$1`, [outboxId])).rows[0]).toMatchObject({ status: 'dead_letter', attempts: 1 });
+    } finally {
+      await client.query(`ALTER TABLE operational_alert_signals_forced_down RENAME TO operational_alert_signals`);
+    }
   });
 });

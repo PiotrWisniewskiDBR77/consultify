@@ -40,9 +40,10 @@ import {
   type RvnPlatformEventRow,
 } from './consumerRegistry.js';
 
+let missedDurableAlertSignals = 0;
 async function recordDurableWrite(event: RvnPlatformEventRow, row: RvnOutboxRow, outcome: 'SUCCESS' | 'FAILURE') {
   if (!durableOperationalAlertsEnabled()) return;
-  await recordOperationalAlertSignal({
+  try { await recordOperationalAlertSignal({
     organizationId: event.organization_id,
     actorId: event.actor_user_id ?? 'system',
     correlationId: event.event_id,
@@ -51,8 +52,12 @@ async function recordDurableWrite(event: RvnPlatformEventRow, row: RvnOutboxRow,
     kind: 'WRITE_FAILURE_RATE',
     outcome,
     idempotencyKey: `rvn:${row.outbox_id}:${outcome}`,
-  });
+  }); } catch (error) {
+    missedDurableAlertSignals++;
+    logger.warn('[RvnPlatformOutbox] primary outcome committed; durable alert signal queued for operator repair', { outboxId: row.outbox_id, outcome, error: error instanceof Error ? error.message : String(error) });
+  }
 }
+export function getMissedResultsDurableAlertSignals(): number { return missedDurableAlertSignals; }
 import { drainExecutionSignalIngress } from './executionSignalIngress.js';
 
 const DEFAULT_BATCH_SIZE = 50;
@@ -202,7 +207,6 @@ export async function runOutboxDispatchTick(
           sourceId: row.outbox_id,
           result: 'FAILURE',
         });
-        await recordDurableWrite(event, row, 'FAILURE');
         result.noConsumerRegistered++;
         result.failed++;
         if (failResult.status === 'dead_letter') {
@@ -216,6 +220,7 @@ export async function runOutboxDispatchTick(
             throttleMs: DEAD_LETTER_ALERT_THROTTLE_MS,
           });
         }
+        await recordDurableWrite(event, row, 'FAILURE');
         continue;
       }
 
@@ -223,8 +228,8 @@ export async function runOutboxDispatchTick(
         await dispatchClient.query('BEGIN');
         await consumerFn(dispatchClient, event, row);
         await dispatchClient.query('COMMIT');
-        await recordDurableWrite(event, row, 'SUCCESS');
         await markDispatched(dispatchClient, row.outbox_id);
+        await recordDurableWrite(event, row, 'SUCCESS');
         operationalAlerts.recordWrite({
           correlationId: event.event_id,
           tenantId: event.organization_id,
@@ -247,7 +252,6 @@ export async function runOutboxDispatchTick(
           sourceId: row.outbox_id,
           result: 'FAILURE',
         });
-        await recordDurableWrite(event, row, 'FAILURE');
         const failResult = await markFailed(
           dispatchClient,
           row.outbox_id,
@@ -255,6 +259,7 @@ export async function runOutboxDispatchTick(
           DEFAULT_BACKOFF_SECONDS
         );
         result.failed++;
+        await recordDurableWrite(event, row, 'FAILURE');
         if (failResult.status === 'dead_letter') {
           result.deadLettered++;
           await sendSystemAlert({
