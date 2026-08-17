@@ -1,6 +1,56 @@
 -- IDEA-WORKSPACE-SUBPACKET-001: durable, tenant-scoped collaboration leases.
 -- Presence/cursors remain ephemeral; edit exclusion and fencing are database truth.
 
+-- Fail before the first mutation when a non-empty partial install cannot be
+-- reconciled deterministically. Optional timestamp/id columns are additive;
+-- identity/fencing columns must already be complete and any PK must have the
+-- exact tenant/idea/node order.
+DO $$
+DECLARE
+  rel REGCLASS;
+  present_count INTEGER;
+  pk_columns TEXT[];
+BEGIN
+  rel := to_regclass('idea_workspace_node_locks');
+  IF rel IS NOT NULL THEN
+    SELECT count(*) INTO present_count FROM pg_attribute
+    WHERE attrelid=rel AND NOT attisdropped AND attname = ANY(ARRAY[
+      'organization_id','idea_id','node_id','holder_user_id','lease_owner','fencing_token','acquired_at','expires_at'
+    ]);
+    IF EXISTS (SELECT 1 FROM idea_workspace_node_locks LIMIT 1) AND present_count <> 8 THEN
+      RAISE EXCEPTION 'IDEA_WORKSPACE_LATE_PREFLIGHT: lock identity columns missing';
+    END IF;
+    IF present_count = 8 AND EXISTS (
+      SELECT 1 FROM idea_workspace_node_locks WHERE organization_id IS NULL OR idea_id IS NULL OR
+        node_id IS NULL OR holder_user_id IS NULL OR lease_owner IS NULL OR fencing_token IS NULL OR
+        acquired_at IS NULL OR expires_at IS NULL LIMIT 1
+    ) THEN RAISE EXCEPTION 'IDEA_WORKSPACE_LATE_PREFLIGHT: lock identity contains NULL'; END IF;
+    SELECT array_agg(a.attname ORDER BY key.ordinality) INTO pk_columns
+    FROM pg_constraint c CROSS JOIN LATERAL unnest(c.conkey) WITH ORDINALITY key(attnum, ordinality)
+    JOIN pg_attribute a ON a.attrelid=c.conrelid AND a.attnum=key.attnum
+    WHERE c.conrelid=rel AND c.contype='p';
+    IF pk_columns IS NOT NULL AND pk_columns <> ARRAY['organization_id','idea_id','node_id']::TEXT[] THEN
+      RAISE EXCEPTION 'IDEA_WORKSPACE_LATE_PREFLIGHT: lock PK must be (organization_id,idea_id,node_id)';
+    END IF;
+  END IF;
+
+  rel := to_regclass('idea_workspace_lock_events');
+  IF rel IS NOT NULL THEN
+    SELECT count(*) INTO present_count FROM pg_attribute
+    WHERE attrelid=rel AND NOT attisdropped AND attname = ANY(ARRAY[
+      'organization_id','idea_id','node_id','actor_user_id','lease_owner','fencing_token','event_type','correlation_id'
+    ]);
+    IF EXISTS (SELECT 1 FROM idea_workspace_lock_events LIMIT 1) AND present_count <> 8 THEN
+      RAISE EXCEPTION 'IDEA_WORKSPACE_LATE_PREFLIGHT: event identity columns missing';
+    END IF;
+    IF present_count = 8 AND EXISTS (
+      SELECT 1 FROM idea_workspace_lock_events WHERE organization_id IS NULL OR idea_id IS NULL OR
+        node_id IS NULL OR actor_user_id IS NULL OR lease_owner IS NULL OR fencing_token IS NULL OR
+        event_type IS NULL OR correlation_id IS NULL LIMIT 1
+    ) THEN RAISE EXCEPTION 'IDEA_WORKSPACE_LATE_PREFLIGHT: event identity contains NULL'; END IF;
+  END IF;
+END $$;
+
 CREATE TABLE IF NOT EXISTS idea_workspace_node_locks (
   organization_id TEXT NOT NULL,
   idea_id TEXT NOT NULL,
@@ -44,11 +94,11 @@ DO $$ BEGIN
     ALTER TABLE idea_workspace_node_locks ADD CONSTRAINT idea_workspace_node_locks_scope_pk
       PRIMARY KEY (organization_id, idea_id, node_id);
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='idea_workspace_node_locks_fence_positive') THEN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='idea_workspace_node_locks'::regclass AND conname='idea_workspace_node_locks_fence_positive') THEN
     ALTER TABLE idea_workspace_node_locks ADD CONSTRAINT idea_workspace_node_locks_fence_positive
       CHECK (fencing_token > 0);
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='idea_workspace_node_locks_valid_window') THEN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='idea_workspace_node_locks'::regclass AND conname='idea_workspace_node_locks_valid_window') THEN
     ALTER TABLE idea_workspace_node_locks ADD CONSTRAINT idea_workspace_node_locks_valid_window
       CHECK (expires_at > acquired_at);
   END IF;
@@ -116,10 +166,10 @@ DO $$ BEGIN
   ) THEN
     ALTER TABLE idea_workspace_lock_events ADD CONSTRAINT idea_workspace_lock_events_pk PRIMARY KEY (id);
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='idea_workspace_lock_events_fence_positive') THEN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='idea_workspace_lock_events'::regclass AND conname='idea_workspace_lock_events_fence_positive') THEN
     ALTER TABLE idea_workspace_lock_events ADD CONSTRAINT idea_workspace_lock_events_fence_positive CHECK (fencing_token > 0);
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='idea_workspace_lock_events_type_valid') THEN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='idea_workspace_lock_events'::regclass AND conname='idea_workspace_lock_events_type_valid') THEN
     ALTER TABLE idea_workspace_lock_events ADD CONSTRAINT idea_workspace_lock_events_type_valid
       CHECK (event_type IN ('ACQUIRED','RECLAIMED','RENEWED','RELEASED','FENCE_REJECTED'));
   END IF;

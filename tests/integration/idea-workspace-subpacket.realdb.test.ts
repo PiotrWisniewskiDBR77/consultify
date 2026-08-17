@@ -1,5 +1,6 @@
 /** @vitest-environment node */
 import { randomUUID } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
 
 import { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -250,5 +251,57 @@ describe.skipIf(!enabled)('IDEA-WORKSPACE-SUBPACKET durable collaboration (real 
     expect(GovernedIdeaStageEnum.safeParse('owner-invented-stage').success).toBe(false);
     expect(IdeaMaturityAttestationSchema.safeParse({ criterionId: 'economics.initial', met: true }).success).toBe(true);
     expect(IdeaMaturityAttestationSchema.safeParse({ criterionId: '../unsafe', met: 'yes' }).success).toBe(false);
+  });
+
+  it('late-reconciles a seeded partial schema and fails before mutation on a wrong PK', async () => {
+    const sql = await readFile('server/migrations/20261012_idea_workspace_durable_collaboration.sql', 'utf8');
+    const good = `idea_late_${randomUUID().replace(/-/g, '').slice(0, 8)}`;
+    const bad = `idea_bad_${randomUUID().replace(/-/g, '').slice(0, 8)}`;
+    try {
+      await pool.query(`CREATE SCHEMA ${good}`);
+      await pool.query(`SET search_path TO ${good},public`);
+      await pool.query(`CREATE TABLE my_ideas(id text,organization_id text)`);
+      await pool.query(`INSERT INTO my_ideas VALUES('late-idea','late-org')`);
+      await pool.query(`CREATE TABLE idea_workspace_node_locks(
+        organization_id text,idea_id text,node_id text,holder_user_id text,lease_owner text,
+        fencing_token bigint,acquired_at timestamptz,expires_at timestamptz)`);
+      await pool.query(`CREATE TABLE idea_workspace_lock_events(
+        organization_id text,idea_id text,node_id text,actor_user_id text,lease_owner text,
+        fencing_token bigint,event_type text,correlation_id text)`);
+      await pool.query(`INSERT INTO idea_workspace_node_locks VALUES
+        ('late-org','late-idea','node','user','worker',7,NOW()-interval '1m',NOW()+interval '1m')`);
+      await pool.query(`INSERT INTO idea_workspace_lock_events VALUES
+        ('late-org','late-idea','node','user','worker',7,'ACQUIRED','corr')`);
+      await pool.query(sql);
+      const reconciled = await pool.query(
+        `SELECT fencing_token,updated_at IS NOT NULL AS updated FROM idea_workspace_node_locks WHERE node_id='node'`
+      );
+      expect(reconciled.rows[0]).toMatchObject({ fencing_token: '7', updated: true });
+      const pk = await pool.query<{ cols: string[] }>(`SELECT array_agg(a.attname ORDER BY k.ord) AS cols
+        FROM pg_constraint c CROSS JOIN LATERAL unnest(c.conkey) WITH ORDINALITY k(attnum,ord)
+        JOIN pg_attribute a ON a.attrelid=c.conrelid AND a.attnum=k.attnum
+        WHERE c.conrelid='idea_workspace_node_locks'::regclass AND c.contype='p'`);
+      const rawPkColumns = pk.rows[0]?.cols as unknown;
+      const normalizedPkColumns = Array.isArray(rawPkColumns)
+        ? rawPkColumns
+        : String(rawPkColumns || '').replace(/^\{|\}$/g, '').split(',').filter(Boolean);
+      expect(normalizedPkColumns).toEqual(['organization_id','idea_id','node_id']);
+
+      await pool.query(`CREATE SCHEMA ${bad}`);
+      await pool.query(`SET search_path TO ${bad},public`);
+      await pool.query(`CREATE TABLE idea_workspace_node_locks(
+        organization_id text,idea_id text,node_id text PRIMARY KEY,holder_user_id text,lease_owner text,
+        fencing_token bigint,acquired_at timestamptz,expires_at timestamptz)`);
+      await pool.query(`INSERT INTO idea_workspace_node_locks VALUES
+        ('late-org','late-idea','node','user','worker',7,NOW()-interval '1m',NOW()+interval '1m')`);
+      await expect(pool.query(sql)).rejects.toThrow('IDEA_WORKSPACE_LATE_PREFLIGHT');
+      const untouched = await pool.query<{ n: number }>(`SELECT count(*)::int AS n FROM information_schema.columns
+        WHERE table_schema=$1 AND table_name='idea_workspace_node_locks' AND column_name='updated_at'`, [bad]);
+      expect(untouched.rows[0]?.n).toBe(0);
+    } finally {
+      await pool.query('SET search_path TO public');
+      await pool.query(`DROP SCHEMA IF EXISTS ${good} CASCADE`);
+      await pool.query(`DROP SCHEMA IF EXISTS ${bad} CASCADE`);
+    }
   });
 });

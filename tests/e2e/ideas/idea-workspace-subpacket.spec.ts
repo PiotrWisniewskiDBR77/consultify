@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { Pool } from 'pg';
+import jwt from 'jsonwebtoken';
 
 import {
   API_BASE_URL,
@@ -111,7 +112,9 @@ test.describe('IDEA-WORKSPACE-SUBPACKET mounted four-tool journey', () => {
                   socket.send(JSON.stringify({ type: 'unlock_node', nodeId: lockedNode.nodeId }));
                 } else if (message.type === 'session_state' && persistedVersion > 0 &&
                            !message.state?.lockedNodes?.[lockedNode.nodeId]) {
-                  window.clearTimeout(timer); socket.close(); resolve({ token, version: persistedVersion });
+                  window.clearTimeout(timer);
+                  (window as any).__ideaWorkspaceSocket = socket;
+                  resolve({ token, version: persistedVersion });
                 } else if (message.type === 'error') {
                   window.clearTimeout(timer); socket.close(); reject(new Error(String(message.code)));
                 }
@@ -124,6 +127,79 @@ test.describe('IDEA-WORKSPACE-SUBPACKET mounted four-tool journey', () => {
           const wsCold = await page.request.get(`${IDEAS_API}/${ideaId}/map`, { headers: authHeaders(token) });
           const wsColdBody = await wsCold.json();
           expect(wsColdBody.map.nodes.find((node: any) => node.id === nodeId)?.wsProof).toBe(marker);
+
+          const claims = jwt.decode(token) as { id?: string; userId?: string; organizationId?: string } | null;
+          const memberUserId = String(claims?.id || claims?.userId || '');
+          const memberOrgId = String(claims?.organizationId || '');
+          expect(memberUserId).not.toBe('');
+          expect(memberOrgId).not.toBe('');
+          const revokePool = new Pool({ connectionString: process.env.DATABASE_URL, max: 1 });
+          const beforeRevokeVersion = Number(wsColdBody.map.version);
+          try {
+            await page.evaluate(async ({ url, bearer, scopedIdeaId }) => {
+              await new Promise<void>((resolve, reject) => {
+                const peer = new WebSocket(`${url}/ws/collab/${encodeURIComponent(scopedIdeaId)}?token=${encodeURIComponent(bearer)}`);
+                peer.onopen = () => { (window as any).__ideaWorkspacePeer = peer; resolve(); };
+                peer.onerror = () => reject(new Error('idea peer ws connection failed'));
+              });
+            }, { url: wsBase, bearer: token, scopedIdeaId: ideaId });
+            const revoked = await revokePool.query(
+              `UPDATE organization_members SET status='REVOKED'
+               WHERE organization_id=$1 AND user_id=$2 AND UPPER(status)='ACTIVE'`,
+              [memberOrgId, memberUserId]
+            );
+            expect(revoked.rowCount).toBe(1);
+            const denial = await page.evaluate(async ({ deniedNode, deniedMarker }) => {
+              const socket = (window as any).__ideaWorkspaceSocket as WebSocket;
+              const peer = (window as any).__ideaWorkspacePeer as WebSocket;
+              return await new Promise<{ code: string; relayed: boolean }>((resolve, reject) => {
+                const timer = window.setTimeout(() => reject(new Error('revoked socket denial timeout')), 5000);
+                let relayed = false;
+                const peerHandler = (event: MessageEvent) => {
+                  const message = JSON.parse(String(event.data));
+                  if (message.type === 'graph_patch') relayed = true;
+                };
+                peer.addEventListener('message', peerHandler);
+                const handler = (event: MessageEvent) => {
+                  const message = JSON.parse(String(event.data));
+                  if (message.type === 'error') {
+                    window.clearTimeout(timer); socket.removeEventListener('message', handler);
+                    window.setTimeout(() => {
+                      peer.removeEventListener('message', peerHandler);
+                      resolve({ code: String(message.code), relayed });
+                    }, 200);
+                  }
+                };
+                socket.addEventListener('message', handler);
+                socket.send(JSON.stringify({ type: 'graph_patch', correlationId: `revoked-${deniedMarker}`,
+                  operations: [{ op: 'add_node', data: { id: deniedNode } }] }));
+              });
+            }, { deniedNode: `revoked-${marker}`, deniedMarker: marker });
+            expect(denial).toEqual({ code: 'NOT_A_WRITER', relayed: false });
+            const afterDenied = await revokePool.query<{ version: number; nodes_json: string }>(
+              `SELECT version,nodes_json FROM my_idea_maps
+               WHERE idea_id=$1 AND organization_id=$2 AND is_canonical=TRUE`, [ideaId, memberOrgId]
+            );
+            expect(Number(afterDenied.rows[0]?.version)).toBe(beforeRevokeVersion);
+            expect(JSON.parse(afterDenied.rows[0]!.nodes_json).some((node: any) => node.id === `revoked-${marker}`)).toBe(false);
+            const falseAudit = await revokePool.query<{ n: number }>(
+              `SELECT count(*)::int AS n FROM collab_session_events WHERE payload_json LIKE $1`,
+              [`%revoked-${marker}%`]
+            );
+            expect(falseAudit.rows[0]?.n).toBe(0);
+          } finally {
+            await revokePool.query(
+              `UPDATE organization_members SET status='ACTIVE' WHERE organization_id=$1 AND user_id=$2`,
+              [memberOrgId, memberUserId]
+            );
+            await revokePool.end();
+            await page.evaluate(() => {
+              const socket = (window as any).__ideaWorkspaceSocket as WebSocket | undefined;
+              const peer = (window as any).__ideaWorkspacePeer as WebSocket | undefined;
+              socket?.close(); peer?.close();
+              delete (window as any).__ideaWorkspaceSocket; delete (window as any).__ideaWorkspacePeer;
+            });
+          }
         }
 
         await page.goto(`/my-work/ideas/${encodeURIComponent(ideaId)}/workspace/${slug}`);
