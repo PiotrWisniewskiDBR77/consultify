@@ -68,8 +68,13 @@ import * as queryHelpers from '../utils/queryHelpers.js';
 import { type PgTransactionClient, withPgTransaction } from '../utils/queryHelpers.js';
 import { CLOSURE_HANDOFF_SOURCE, handoffFromClosure } from './executionResultsBridge.js';
 import { observeWriter } from './results/resultsWriterObservationService.js';
+import { ensureRoiCaseForClosureReceipt } from './resultsVnext/roi/closureReceiptRoiCaseAdapter.js';
 
 const LOG_PREFIX = '[ClosureDeliveryReceipt]';
+
+function closureRoiBindingEnabled(): boolean {
+  return process.env.FLOW_CLOSURE_ROI_BINDING_ENABLED === 'true';
+}
 
 export const SYSTEM_ACTOR_LABEL = 'system:exe-009-closure-receipt';
 
@@ -656,6 +661,34 @@ export async function attemptDeliveryInternal(
     }
   }
 
+  // The closure row is itself the durable repair cursor. If ROI-case binding
+  // fails after the primary Results/Finance outcomes committed, neither
+  // outcome is rewritten: next_retry_at makes the reconciliation sweep retry
+  // only the missing idempotent binding.
+  if (closureRoiBindingEnabled()) {
+    try {
+      const binding = await ensureRoiCaseForClosureReceipt({ organizationId, receiptId });
+      await queryHelpers.queryRun(
+        `UPDATE closure_delivery_receipts
+            SET finance_payload = COALESCE(finance_payload, '{}'::jsonb) || ?::jsonb,
+                updated_at = CURRENT_TIMESTAMP
+          WHERE id = ? AND organization_id = ?`,
+        [JSON.stringify({ roiCaseId: binding.result.case.caseId }), receiptId, organizationId]
+      );
+    } catch (err) {
+      logger.warn(`${LOG_PREFIX} ROI case binding deferred for receipt ${receiptId}`, {
+        message: err instanceof Error ? err.message : String(err),
+      });
+      await queryHelpers.queryRun(
+        `UPDATE closure_delivery_receipts
+            SET next_retry_at = COALESCE(next_retry_at, CURRENT_TIMESTAMP),
+                updated_at = CURRENT_TIMESTAMP
+          WHERE id = ? AND organization_id = ?`,
+        [receiptId, organizationId]
+      );
+    }
+  }
+
   const refreshed = await queryHelpers.queryOne<ReceiptRow>(
     `SELECT * FROM closure_delivery_receipts WHERE id = ?`,
     [receiptId]
@@ -666,7 +699,8 @@ export async function attemptDeliveryInternal(
     result.resultsStatus === 'PENDING' ||
     result.resultsStatus === 'FAILED' ||
     result.financeStatus === 'PENDING' ||
-    result.financeStatus === 'FAILED';
+    result.financeStatus === 'FAILED' ||
+    (closureRoiBindingEnabled() && typeof result.financePayload?.roiCaseId !== 'string');
   const nextRetryAt = stillPending
     ? new Date(
         Date.now() + backoffMs(Math.max(result.resultsAttempts, result.financeAttempts))
@@ -775,12 +809,13 @@ async function claimDueReceipts(limit: number): Promise<string[]> {
           OR (finance_status IN ('PENDING', 'FAILED') AND finance_attempts < max_attempts)
           OR (results_status = 'DELIVERING' AND updated_at < CURRENT_TIMESTAMP - INTERVAL '${STALE_DELIVERING_LEASE_MINUTES} minutes')
           OR (finance_status = 'DELIVERING' AND updated_at < CURRENT_TIMESTAMP - INTERVAL '${STALE_DELIVERING_LEASE_MINUTES} minutes')
+          OR (? = 1 AND finance_payload->>'roiCaseId' IS NULL)
         )
           AND (next_retry_at IS NULL OR next_retry_at <= CURRENT_TIMESTAMP)
         ORDER BY created_at ASC
         LIMIT ?
         FOR UPDATE SKIP LOCKED`,
-      [limit]
+      [closureRoiBindingEnabled() ? 1 : 0, limit]
     );
     const ids = rows.map((r) => r.id);
     if (ids.length > 0) {
