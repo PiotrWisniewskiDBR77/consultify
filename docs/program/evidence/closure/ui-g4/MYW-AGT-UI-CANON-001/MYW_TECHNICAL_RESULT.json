@@ -1,0 +1,874 @@
+{
+  "productSha": "b962d7c6bcfa1fe42c03d025f9ff76cc6decc9b3",
+  "e2eMode": "false",
+  "signedRoles": [
+    "USER",
+    "MANAGER"
+  ],
+  "cells": [
+    {
+      "role": "USER",
+      "surface": "inbox",
+      "language": "pl",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 960
+      },
+      "responses": [
+        404,
+        404,
+        404,
+        200,
+        200,
+        200,
+        404,
+        404,
+        404,
+        200,
+        200,
+        200
+      ],
+      "focus": true,
+      "criticalSerious": 0,
+      "deepReload": true,
+      "screenshot": "/private/tmp/consultify-myw-current-b962/docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens-technical/USER-inbox-pl-light-1440.png"
+    },
+    {
+      "role": "USER",
+      "surface": "inbox",
+      "language": "en",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 960
+      },
+      "responses": [
+        404,
+        404,
+        404,
+        200,
+        200,
+        200,
+        404,
+        404,
+        404,
+        200,
+        200,
+        200
+      ],
+      "focus": true,
+      "criticalSerious": 0,
+      "deepReload": true,
+      "screenshot": "/private/tmp/consultify-myw-current-b962/docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens-technical/USER-inbox-en-dark-1440.png"
+    },
+    {
+      "role": "USER",
+      "surface": "inbox",
+      "language": "pl",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "responses": [
+        404,
+        404,
+        404,
+        200,
+        200,
+        200,
+        404,
+        404,
+        404,
+        200,
+        200,
+        200
+      ],
+      "focus": true,
+      "criticalSerious": 0,
+      "deepReload": true,
+      "screenshot": "/private/tmp/consultify-myw-current-b962/docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens-technical/USER-inbox-pl-dark-390.png"
+    },
+    {
+      "role": "USER",
+      "surface": "inbox",
+      "language": "en",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "responses": [
+        404,
+        404,
+        404,
+        200,
+        200,
+        200,
+        404,
+        404,
+        404,
+        200,
+        200,
+        200
+      ],
+      "focus": true,
+      "criticalSerious": 0,
+      "deepReload": true,
+      "screenshot": "/private/tmp/consultify-myw-current-b962/docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens-technical/USER-inbox-en-light-390.png"
+    },
+    {
+      "role": "USER",
+      "surface": "tasks",
+      "language": "pl",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 960
+      },
+      "responses": [
+        404,
+        404,
+        404,
+        200,
+        200,
+        200,
+        404,
+        404,
+        404,
+        200,
+        200,
+        200
+      ],
+      "focus": true,
+      "criticalSerious": 0,
+      "deepReload": true,
+      "screenshot": "/private/tmp/consultify-myw-current-b962/docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens-technical/USER-tasks-pl-light-1440.png"
+    },
+    {
+      "role": "USER",
+      "surface": "tasks",
+      "language": "en",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 960
+      },
+      "responses": [
+        404,
+        404,
+        404,
+        200,
+        200,
+        200,
+        404,
+        404,
+        404,
+        200,
+        200,
+        200
+      ],
+      "focus": true,
+      "criticalSerious": 0,
+      "deepReload": true,
+      "screenshot": "/private/tmp/consultify-myw-current-b962/docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens-technical/USER-tasks-en-dark-1440.png"
+    },
+    {
+      "role": "USER",
+      "surface": "tasks",
+      "language": "pl",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "responses": [
+        404,
+        404,
+        404,
+        200,
+        200,
+        200,
+        404,
+        404,
+        404,
+        200,
+        200,
+        200
+      ],
+      "focus": true,
+      "criticalSerious": 0,
+      "deepReload": true,
+      "screenshot": "/private/tmp/consultify-myw-current-b962/docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens-technical/USER-tasks-pl-dark-390.png"
+    },
+    {
+      "role": "USER",
+      "surface": "tasks",
+      "language": "en",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "responses": [
+        404,
+        404,
+        404,
+        200,
+        200,
+        200,
+        404,
+        404,
+        404,
+        200,
+        200,
+        200
+      ],
+      "focus": true,
+      "criticalSerious": 0,
+      "deepReload": true,
+      "screenshot": "/private/tmp/consultify-myw-current-b962/docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens-technical/USER-tasks-en-light-390.png"
+    },
+    {
+      "role": "USER",
+      "surface": "decisions",
+      "language": "pl",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 960
+      },
+      "responses": [
+        404,
+        404,
+        404,
+        200,
+        200,
+        200,
+        404,
+        404,
+        404,
+        200,
+        200,
+        200
+      ],
+      "focus": true,
+      "criticalSerious": 0,
+      "deepReload": true,
+      "screenshot": "/private/tmp/consultify-myw-current-b962/docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens-technical/USER-decisions-pl-light-1440.png"
+    },
+    {
+      "role": "USER",
+      "surface": "decisions",
+      "language": "en",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 960
+      },
+      "responses": [
+        404,
+        404,
+        404,
+        200,
+        200,
+        200,
+        404,
+        404,
+        404,
+        200,
+        200,
+        200
+      ],
+      "focus": true,
+      "criticalSerious": 0,
+      "deepReload": true,
+      "screenshot": "/private/tmp/consultify-myw-current-b962/docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens-technical/USER-decisions-en-dark-1440.png"
+    },
+    {
+      "role": "USER",
+      "surface": "decisions",
+      "language": "pl",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "responses": [
+        404,
+        404,
+        404,
+        200,
+        200,
+        200,
+        404,
+        404,
+        404,
+        200,
+        200,
+        200
+      ],
+      "focus": true,
+      "criticalSerious": 0,
+      "deepReload": true,
+      "screenshot": "/private/tmp/consultify-myw-current-b962/docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens-technical/USER-decisions-pl-dark-390.png"
+    },
+    {
+      "role": "USER",
+      "surface": "decisions",
+      "language": "en",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "responses": [
+        404,
+        404,
+        404,
+        200,
+        200,
+        200,
+        404,
+        404,
+        404,
+        200,
+        200,
+        200
+      ],
+      "focus": true,
+      "criticalSerious": 0,
+      "deepReload": true,
+      "screenshot": "/private/tmp/consultify-myw-current-b962/docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens-technical/USER-decisions-en-light-390.png"
+    },
+    {
+      "role": "USER",
+      "surface": "agent",
+      "language": "pl",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 960
+      },
+      "responses": [
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200
+      ],
+      "focus": true,
+      "criticalSerious": 0,
+      "deepReload": true,
+      "screenshot": "/private/tmp/consultify-myw-current-b962/docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens-technical/USER-agent-pl-light-1440.png"
+    },
+    {
+      "role": "USER",
+      "surface": "agent",
+      "language": "en",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 960
+      },
+      "responses": [
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200
+      ],
+      "focus": true,
+      "criticalSerious": 0,
+      "deepReload": true,
+      "screenshot": "/private/tmp/consultify-myw-current-b962/docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens-technical/USER-agent-en-dark-1440.png"
+    },
+    {
+      "role": "USER",
+      "surface": "agent",
+      "language": "pl",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "responses": [
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200
+      ],
+      "focus": true,
+      "criticalSerious": 0,
+      "deepReload": true,
+      "screenshot": "/private/tmp/consultify-myw-current-b962/docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens-technical/USER-agent-pl-dark-390.png"
+    },
+    {
+      "role": "USER",
+      "surface": "agent",
+      "language": "en",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "responses": [
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200
+      ],
+      "focus": true,
+      "criticalSerious": 0,
+      "deepReload": true,
+      "screenshot": "/private/tmp/consultify-myw-current-b962/docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens-technical/USER-agent-en-light-390.png"
+    },
+    {
+      "role": "MANAGER",
+      "surface": "inbox",
+      "language": "pl",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 960
+      },
+      "responses": [
+        404,
+        404,
+        404,
+        200,
+        200,
+        200,
+        404,
+        404,
+        404,
+        200,
+        200,
+        200
+      ],
+      "focus": true,
+      "criticalSerious": 0,
+      "deepReload": true,
+      "screenshot": "/private/tmp/consultify-myw-current-b962/docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens-technical/MANAGER-inbox-pl-light-1440.png"
+    },
+    {
+      "role": "MANAGER",
+      "surface": "inbox",
+      "language": "en",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 960
+      },
+      "responses": [
+        404,
+        404,
+        404,
+        200,
+        200,
+        200,
+        404,
+        404,
+        404,
+        200,
+        200,
+        200
+      ],
+      "focus": true,
+      "criticalSerious": 0,
+      "deepReload": true,
+      "screenshot": "/private/tmp/consultify-myw-current-b962/docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens-technical/MANAGER-inbox-en-dark-1440.png"
+    },
+    {
+      "role": "MANAGER",
+      "surface": "inbox",
+      "language": "pl",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "responses": [
+        404,
+        404,
+        404,
+        200,
+        200,
+        200,
+        404,
+        404,
+        404,
+        200,
+        200,
+        200
+      ],
+      "focus": true,
+      "criticalSerious": 0,
+      "deepReload": true,
+      "screenshot": "/private/tmp/consultify-myw-current-b962/docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens-technical/MANAGER-inbox-pl-dark-390.png"
+    },
+    {
+      "role": "MANAGER",
+      "surface": "inbox",
+      "language": "en",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "responses": [
+        404,
+        404,
+        404,
+        200,
+        200,
+        200,
+        404,
+        404,
+        404,
+        200,
+        200,
+        200
+      ],
+      "focus": true,
+      "criticalSerious": 0,
+      "deepReload": true,
+      "screenshot": "/private/tmp/consultify-myw-current-b962/docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens-technical/MANAGER-inbox-en-light-390.png"
+    },
+    {
+      "role": "MANAGER",
+      "surface": "tasks",
+      "language": "pl",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 960
+      },
+      "responses": [
+        404,
+        404,
+        404,
+        200,
+        200,
+        200,
+        404,
+        404,
+        404,
+        200,
+        200,
+        200
+      ],
+      "focus": true,
+      "criticalSerious": 0,
+      "deepReload": true,
+      "screenshot": "/private/tmp/consultify-myw-current-b962/docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens-technical/MANAGER-tasks-pl-light-1440.png"
+    },
+    {
+      "role": "MANAGER",
+      "surface": "tasks",
+      "language": "en",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 960
+      },
+      "responses": [
+        404,
+        404,
+        404,
+        200,
+        200,
+        200,
+        404,
+        404,
+        404,
+        200,
+        200,
+        200
+      ],
+      "focus": true,
+      "criticalSerious": 0,
+      "deepReload": true,
+      "screenshot": "/private/tmp/consultify-myw-current-b962/docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens-technical/MANAGER-tasks-en-dark-1440.png"
+    },
+    {
+      "role": "MANAGER",
+      "surface": "tasks",
+      "language": "pl",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "responses": [
+        404,
+        404,
+        404,
+        200,
+        200,
+        200,
+        404,
+        404,
+        404,
+        200,
+        200,
+        200
+      ],
+      "focus": true,
+      "criticalSerious": 0,
+      "deepReload": true,
+      "screenshot": "/private/tmp/consultify-myw-current-b962/docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens-technical/MANAGER-tasks-pl-dark-390.png"
+    },
+    {
+      "role": "MANAGER",
+      "surface": "tasks",
+      "language": "en",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "responses": [
+        404,
+        404,
+        404,
+        200,
+        200,
+        200,
+        404,
+        404,
+        404,
+        200,
+        200,
+        200
+      ],
+      "focus": true,
+      "criticalSerious": 0,
+      "deepReload": true,
+      "screenshot": "/private/tmp/consultify-myw-current-b962/docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens-technical/MANAGER-tasks-en-light-390.png"
+    },
+    {
+      "role": "MANAGER",
+      "surface": "decisions",
+      "language": "pl",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 960
+      },
+      "responses": [
+        404,
+        404,
+        404,
+        200,
+        200,
+        200,
+        404,
+        404,
+        404,
+        200,
+        200,
+        200
+      ],
+      "focus": true,
+      "criticalSerious": 0,
+      "deepReload": true,
+      "screenshot": "/private/tmp/consultify-myw-current-b962/docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens-technical/MANAGER-decisions-pl-light-1440.png"
+    },
+    {
+      "role": "MANAGER",
+      "surface": "decisions",
+      "language": "en",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 960
+      },
+      "responses": [
+        404,
+        404,
+        404,
+        200,
+        200,
+        200,
+        404,
+        404,
+        404,
+        200,
+        200,
+        200
+      ],
+      "focus": true,
+      "criticalSerious": 0,
+      "deepReload": true,
+      "screenshot": "/private/tmp/consultify-myw-current-b962/docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens-technical/MANAGER-decisions-en-dark-1440.png"
+    },
+    {
+      "role": "MANAGER",
+      "surface": "decisions",
+      "language": "pl",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "responses": [
+        404,
+        404,
+        404,
+        200,
+        200,
+        200,
+        404,
+        404,
+        404,
+        200,
+        200,
+        200
+      ],
+      "focus": true,
+      "criticalSerious": 0,
+      "deepReload": true,
+      "screenshot": "/private/tmp/consultify-myw-current-b962/docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens-technical/MANAGER-decisions-pl-dark-390.png"
+    },
+    {
+      "role": "MANAGER",
+      "surface": "decisions",
+      "language": "en",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "responses": [
+        404,
+        404,
+        404,
+        200,
+        200,
+        200,
+        404,
+        404,
+        404,
+        200,
+        200,
+        200
+      ],
+      "focus": true,
+      "criticalSerious": 0,
+      "deepReload": true,
+      "screenshot": "/private/tmp/consultify-myw-current-b962/docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens-technical/MANAGER-decisions-en-light-390.png"
+    },
+    {
+      "role": "MANAGER",
+      "surface": "agent",
+      "language": "pl",
+      "theme": "light",
+      "viewport": {
+        "width": 1440,
+        "height": 960
+      },
+      "responses": [
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200
+      ],
+      "focus": true,
+      "criticalSerious": 0,
+      "deepReload": true,
+      "screenshot": "/private/tmp/consultify-myw-current-b962/docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens-technical/MANAGER-agent-pl-light-1440.png"
+    },
+    {
+      "role": "MANAGER",
+      "surface": "agent",
+      "language": "en",
+      "theme": "dark",
+      "viewport": {
+        "width": 1440,
+        "height": 960
+      },
+      "responses": [
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200
+      ],
+      "focus": true,
+      "criticalSerious": 0,
+      "deepReload": true,
+      "screenshot": "/private/tmp/consultify-myw-current-b962/docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens-technical/MANAGER-agent-en-dark-1440.png"
+    },
+    {
+      "role": "MANAGER",
+      "surface": "agent",
+      "language": "pl",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "responses": [
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200
+      ],
+      "focus": true,
+      "criticalSerious": 0,
+      "deepReload": true,
+      "screenshot": "/private/tmp/consultify-myw-current-b962/docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens-technical/MANAGER-agent-pl-dark-390.png"
+    },
+    {
+      "role": "MANAGER",
+      "surface": "agent",
+      "language": "en",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "responses": [
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200
+      ],
+      "focus": true,
+      "criticalSerious": 0,
+      "deepReload": true,
+      "screenshot": "/private/tmp/consultify-myw-current-b962/docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens-technical/MANAGER-agent-en-light-390.png"
+    }
+  ]
+}

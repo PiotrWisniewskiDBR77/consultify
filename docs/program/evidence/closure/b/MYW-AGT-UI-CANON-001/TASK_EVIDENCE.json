@@ -1,7 +1,8 @@
 {
   "taskId": "MYW-AGT-UI-CANON-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "99406b784bf1332beb369be161e75a2422f00fc6",
+  "productSha": "b962d7c6bcfa1fe42c03d025f9ff76cc6decc9b3",
+  "reconciliationSha": "b962d7c6bcfa1fe42c03d025f9ff76cc6decc9b3",
   "leaseSha256": "f4d75f0aed94f2e34acaec63d91c245495e7e0f658aa36d1122342c2acecc612",
   "toolchain": {
     "node": "v24.12.0",
@@ -30,11 +31,17 @@
     "task": "Mounted-surface inventory: 7 mounted, 2 gated, 1 dead",
     "laneRealDbPass": "110 leased realDB files on an isolated DB: 77 passed / 7 failed / 26 skipped; 675 tests: 565 passed / 51 failed / 59 skipped",
     "recoveredAcceptance": "14 leased acceptance files the mandated G2 command cannot collect, run under vitest.acceptance.config.ts: 105 tests, 91 passed / 14 failed",
-    "automatedG4Cells": "14/14",
-    "automatedG4Screenshots": "15/15",
+    "automatedG4Cells": "32/32 current-SHA signed USER/MANAGER matrix",
+    "automatedG4Screenshots": "32/32 newly generated; hashes 32/32",
     "automatedG4AxeCriticalSerious": "0/0",
     "automatedG4UnnamedControls": 0,
-    "automatedG4VisibleFocus": "PASS"
+    "automatedG4VisibleFocus": "32/32 PASS",
+    "mountedDatabaseOutageRetry": "1/1 PASS",
+    "mountedTaskAuthIdempotencyTenant": "1/1 PASS",
+    "decisionTimeoutUnit": "2/2 PASS",
+    "decisionComponent": "7/7 PASS",
+    "migrationsCurrent": "fresh756/repeat0/dry0/nonSuccess0",
+    "fixtureResidueCurrent": "organizations0/test_support_runs0/named tasks0"
   },
   "fixtures": {
     "prefix": "claude_b_",
@@ -119,14 +126,29 @@
       }
     }
   ],
+  "technicalPacket": {
+    "candidateSha": "c2cced7e93f99e253976ed67514683ed0fe1586a",
+    "resultPath": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/MYW_TECHNICAL_RESULT.json",
+    "findingsPath": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/MYW_TECHNICAL_FINDINGS.md",
+    "signedRoles": ["USER", "MANAGER"],
+    "e2eMode": false,
+    "visualCells": "32/32",
+    "axeCriticalSerious": "0/0",
+    "settledVisibleFocus": "32/32",
+    "realDatabaseOutageRetry": "PASS 1/1",
+    "taskIdempotencyTenantAuth": "PASS 1/1",
+    "fixtureResidue": "organizations=0; test_support_runs=0; named tasks=0"
+  },
   "rollback": {
     "method": "Revert the lane commits; all changes are additive application code plus new tests. NO migration was added by this lane, so no schema rollback is required and old readers are unaffected."
   },
-  "verdict": "BLOCKED_HUMAN",
+  "verdict": "PARTIAL",
   "openBlocker": "Radar confirmed literally OFF via hardcoded source constant RADAR_ENABLED=false (MyWorkHub.tsx:245) — a code edit, not a config flip. DecisionWorkspace is never mounted despite a default-ON flag and a comment claiming otherwise (phantom flag). betaAccess.ts:80 MYWORK_IDEAS is \"closed\", contradicting the in-file comment. Named human UX + VoiceOver verdict cannot be produced by an agent.",
   "openBlockers": [
     "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
-    "Task-specific UI states not reached by the final automated sweep: stale."
+    "No versioned stale-write contract exists on the personal-task UI mutation exercised here; stale/conflict remains NOT_VERIFIED rather than inferred.",
+    "Seeded non-empty success journeys for Inbox, Decisions, and Agent remain NOT_VERIFIED.",
+    "Immediate revoked-membership UI presentation remains NOT_VERIFIED; unsigned and cross-tenant mounted API negatives passed."
   ],
   "blockerReconciliation": [
     {
@@ -181,7 +203,7 @@
       "notFound404": 0,
       "other": 0
     },
-    "humanAcceptance": "PENDING — automated G4 does not sign VoiceOver, persona or visual-owner acceptance",
+    "humanAcceptance": "BLOCKED_HUMAN — VoiceOver, persona and visual-owner/brand acceptance remain open",
     "reachabilityAndStates": {
       "states": [
         {
