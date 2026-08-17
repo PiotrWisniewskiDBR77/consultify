@@ -101,8 +101,13 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import { getTableColumns } from '../../utils/dbSchema.js';
 import logger from '../../utils/Logger.js';
+import { createLegacyCutoverGuard } from '../../services/legacyCutover/legacyCutoverKernel.js';
+import { requireActiveMembership } from '../../services/legacyCutover/requireActiveMembership.js';
+import { RESULTS_CUTOVER } from '../../services/legacyCutover/registry/results.js';
 
 const router = Router();
+router.use(requireActiveMembership);
+router.use(createLegacyCutoverGuard(RESULTS_CUTOVER));
 
 /** Stable contract id for V8 Results read responses. */
 export const V8_RESULTS_READ_CONTRACT = 'results_runtime_read_v1';

@@ -21,6 +21,7 @@ import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js'
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { withPgTransaction } from '../utils/queryHelpers.js';
 
 const router = Router();
 
@@ -65,37 +66,29 @@ router.post(
           continue;
         }
 
-        // Check if email already exists
-        const existing = await dbAll<{ id: string }>(
-          'SELECT id FROM users WHERE LOWER(email) = LOWER(?) AND organization_id = ?',
-          [user.email, orgId]
-        );
-
-        if (existing.length > 0) {
-          results.errors.push({ row, email: user.email, error: 'Email already exists' });
-          results.failed++;
-          continue;
-        }
-
-        // Generate user ID
         const userId = uuidv4();
         const now = new Date().toISOString();
-
-        // Insert user
-        await dbRun(
-          `INSERT INTO users (id, email, first_name, last_name, role, status, organization_id, created_at)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            userId,
-            user.email.toLowerCase(),
-            user.firstName || null,
-            user.lastName || null,
-            user.role || 'USER',
-            'active',
-            orgId,
-            now,
-          ]
-        );
+        await withPgTransaction(async (tx) => {
+          const existing = await tx.query<{ id: string }>(
+            'SELECT id FROM users WHERE LOWER(email)=LOWER(?) AND organization_id=? FOR UPDATE',
+            [user.email, orgId]
+          );
+          if (existing.rows.length > 0) throw new Error('BULK_EMAIL_EXISTS');
+          const role = String(user.role || 'USER').toUpperCase();
+          const membershipRole = role === 'ADMIN' ? 'ADMIN' : 'MEMBER';
+          await tx.query(
+            `INSERT INTO users (id,email,first_name,last_name,role,status,organization_id,created_at)
+             VALUES (?,?,?,?,?,?,?,?)`,
+            [userId,user.email.toLowerCase(),user.firstName || null,user.lastName || null,
+             role,'active',orgId,now]
+          );
+          await tx.query(
+            `INSERT INTO organization_members
+             (id,organization_id,user_id,role,status,created_at)
+             VALUES (?,?,?,?,?,?)`,
+            [uuidv4(),orgId,userId,membershipRole,'ACTIVE',now]
+          );
+        });
 
         results.success++;
       } catch (err: any) {

@@ -22,6 +22,7 @@ import express from 'express';
 import { Pool } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { cleanupLegacyCutoverTestIntents } from './legacyCutoverTestCleanup.js';
 
 import { createLegacyCutoverGuard } from '../legacyCutoverKernel.js';
 import { FINANCE_STATEMENTS_CUTOVER } from '../registry/financeStatements.js';
@@ -89,6 +90,7 @@ describe.skipIf(!REAL_PG)('FINANCE-STATEMENTS legacy-cutover guard (fresh real P
 
   afterAll(async () => {
     if (!pool) return;
+    await cleanupLegacyCutoverTestIntents(pool, { organizationIds: [orgA, orgB], requestIdPrefix: prefix });
     await pool.query(`DELETE FROM financial_ratio_benchmarks WHERE organization_id = ANY($1)`, [
       [orgA, orgB],
     ]);

@@ -17,6 +17,7 @@ import jwt from 'jsonwebtoken';
 import { Pool } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { cleanupLegacyCutoverTestIntents } from './legacyCutoverTestCleanup.js';
 
 import { createLegacyCutoverGuard } from '../legacyCutoverKernel.js';
 import { PARTNERS_CUTOVER } from '../registry.js';
@@ -122,6 +123,7 @@ describe.skipIf(!REAL_PG)('Legacy cutover kernel (fresh real PostgreSQL)', () =>
 
   afterAll(async () => {
     if (!pool) return;
+    await cleanupLegacyCutoverTestIntents(pool, { organizationIds: [orgA, orgB], requestIdPrefix: prefix });
     delete process.env.PARTNER_LEGACY_ROLLBACK_WRITERS;
     delete process.env.PARTNER_LEGACY_ROLLBACK_ENABLED;
     await pool.query(`DELETE FROM legacy_cutover_usage_events WHERE organization_id = ANY($1)`, [

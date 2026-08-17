@@ -2,6 +2,13 @@ import express, { type Express } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('../../../services/legacyCutover/requireActiveMembership.js', () => ({
+  requireActiveMembership: (_req: unknown, _res: unknown, next: () => void) => next(),
+}));
+vi.mock('../../../services/legacyCutover/legacyCutoverKernel.js', () => ({
+  createLegacyCutoverGuard: () => (_req: unknown, _res: unknown, next: () => void) => next(),
+}));
+
 import { KpiDefinitionVersionConflictError } from '../../../services/results/kpiDefinitionService.js';
 import { V8_RESULTS_READ_CONTRACT, V8_RESULTS_WRITE_CONTRACT } from '../results.routes.js';
 

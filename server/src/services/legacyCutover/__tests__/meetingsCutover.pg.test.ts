@@ -21,6 +21,7 @@ import express from 'express';
 import { Pool } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { cleanupLegacyCutoverTestIntents } from './legacyCutoverTestCleanup.js';
 
 import { createLegacyCutoverGuard } from '../legacyCutoverKernel.js';
 import { MEETINGS_CUTOVER } from '../registry/meetings.js';
@@ -91,6 +92,7 @@ describe.skipIf(!REAL_PG)('MEETINGS legacy-cutover guard (fresh real PostgreSQL)
 
   afterAll(async () => {
     if (!pool) return;
+    await cleanupLegacyCutoverTestIntents(pool, { organizationIds: [orgA, orgB], requestIdPrefix: prefix });
     await pool.query(`DELETE FROM meeting_follow_ups WHERE meeting_id IN (
       SELECT id FROM meetings WHERE organization_id = ANY($1)
     )`, [[orgA, orgB]]);

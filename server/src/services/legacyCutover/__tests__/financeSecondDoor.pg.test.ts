@@ -25,6 +25,7 @@ import express from 'express';
 import { Pool } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { cleanupLegacyCutoverTestIntents } from './legacyCutoverTestCleanup.js';
 
 import { createLegacyCutoverGuard } from '../legacyCutoverKernel.js';
 import { FINANCE_MODELING_CUTOVER, FINANCE_CUTOVER } from '../registry.js';
@@ -94,6 +95,7 @@ describe.skipIf(!REAL_PG)('Finance approve — both doors (fresh real PostgreSQL
 
   afterAll(async () => {
     if (!pool) return;
+    await cleanupLegacyCutoverTestIntents(pool, { organizationIds: [org], requestIdPrefix: prefix });
     await pool.query(`DELETE FROM legacy_cutover_usage_events WHERE organization_id = $1`, [org]);
     await pool.query(`DELETE FROM organizations WHERE id = $1`, [org]);
     await pool.end();

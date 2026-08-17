@@ -18,6 +18,7 @@ import express from 'express';
 import { Pool } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { cleanupLegacyCutoverTestIntents } from './legacyCutoverTestCleanup.js';
 
 import { createLegacyCutoverGuard } from '../legacyCutoverKernel.js';
 import { RESULTS_CUTOVER } from '../registry/results.js';
@@ -65,6 +66,17 @@ describe.skipIf(!REAL_PG)('RESULTS legacy-cutover guard (fresh real PostgreSQL)'
         [org, org, now]
       );
     }
+    await pool.query(
+      `INSERT INTO users(id,organization_id,email,password,role,status,created_at)
+       VALUES($1,$2,$3,'unused','ADMIN','active',$4) ON CONFLICT(id) DO NOTHING`,
+      [actor, orgA, `${actor}@test.invalid`, now]
+    );
+    for (const org of [orgA, orgB])
+      await pool.query(
+        `INSERT INTO organization_members(id,organization_id,user_id,role,status,created_at)
+         VALUES($1,$2,$3,'ADMIN','ACTIVE',$4) ON CONFLICT(organization_id,user_id) DO NOTHING`,
+        [`${prefix}-${org}-membership`, org, actor, now]
+      );
 
     const resultsRouter = (await import('../../../routes/v8/results.routes.js')).default;
     app = express();
@@ -82,6 +94,7 @@ describe.skipIf(!REAL_PG)('RESULTS legacy-cutover guard (fresh real PostgreSQL)'
 
   afterAll(async () => {
     if (!pool) return;
+    await cleanupLegacyCutoverTestIntents(pool, { organizationIds: [orgA, orgB], requestIdPrefix: prefix });
     await pool.query(
       `DELETE FROM kpi_metric_audit_log WHERE organization_id = ANY($1)`,
       [[orgA, orgB]]
@@ -102,6 +115,13 @@ describe.skipIf(!REAL_PG)('RESULTS legacy-cutover guard (fresh real PostgreSQL)'
     await pool.query(`DELETE FROM legacy_cutover_usage_events WHERE organization_id = ANY($1)`, [
       [orgA, orgB],
     ]);
+    await pool.query(`DELETE FROM legacy_cutover_signal_intents WHERE organization_id = ANY($1)`, [
+      [orgA, orgB],
+    ]);
+    await pool.query(`DELETE FROM organization_members WHERE organization_id = ANY($1)`, [
+      [orgA, orgB],
+    ]);
+    await pool.query(`DELETE FROM users WHERE id=$1`, [actor]);
     await pool.query(`DELETE FROM organizations WHERE id = ANY($1)`, [[orgA, orgB]]);
     await pool.end();
   });

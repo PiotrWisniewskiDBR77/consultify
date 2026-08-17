@@ -20,6 +20,13 @@ import express, { type Express } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('../../services/legacyCutover/requireActiveMembership.js', () => ({
+  requireActiveMembership: (_req: unknown, _res: unknown, next: () => void) => next(),
+}));
+vi.mock('../../services/legacyCutover/legacyCutoverKernel.js', () => ({
+  createLegacyCutoverGuard: () => (_req: unknown, _res: unknown, next: () => void) => next(),
+}));
+
 const mockGetModel = vi.fn();
 const mockListEvents = vi.fn();
 const mockGetOutputs = vi.fn();

@@ -20,6 +20,12 @@ import { NextFunction, Request, Response, Router } from 'express';
 
 import { getDatabase } from '../database/Database.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
+import { createLegacyCutoverGuard } from '../services/legacyCutover/legacyCutoverKernel.js';
+import { requireActiveMembership } from '../services/legacyCutover/requireActiveMembership.js';
+import {
+  PARTNERS_CONFIG_CUTOVER,
+  PARTNERS_SUPERADMIN_CUTOVER,
+} from '../services/legacyCutover/registry/partnersSiblings.js';
 import { verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
 import {
   listPartnerApplications,
@@ -2370,7 +2376,9 @@ publicPartnerRouter.post(
 export const superAdminPartnerRouter = Router();
 
 superAdminPartnerRouter.use(verifyToken);
+superAdminPartnerRouter.use(requireActiveMembership);
 superAdminPartnerRouter.use(verifySuperAdmin);
+superAdminPartnerRouter.use(createLegacyCutoverGuard(PARTNERS_SUPERADMIN_CUTOVER));
 
 /**
  * GET /api/superadmin/partner-settlements/summary
@@ -2803,7 +2811,9 @@ import * as PartnerConfigService from '../services/partnerConfigService.js';
 export const partnerConfigRouter = Router();
 
 partnerConfigRouter.use(verifyToken);
+partnerConfigRouter.use(requireActiveMembership);
 partnerConfigRouter.use(verifySuperAdmin);
+partnerConfigRouter.use(createLegacyCutoverGuard(PARTNERS_CONFIG_CUTOVER));
 
 /**
  * GET /api/superadmin/partner-config/commission-rates

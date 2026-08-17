@@ -34,6 +34,11 @@ import type { NextFunction, Request, Response } from 'express';
 import * as DbPromise from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import { resolveCanonicalIdentity, type CanonicalIdentityStatus } from './canonicalIdentityBridge.js';
+import {
+  completeLegacyCutoverIntent,
+  registerLegacyCutoverIntent,
+  type LegacyIntentTerminalResult,
+} from './legacyCutoverIntentService.js';
 
 export type LegacyWriterState =
   /** Returns 410/409 by default today. */
@@ -316,25 +321,43 @@ export function createLegacyCutoverGuard(config: LegacyCutoverDomainConfig) {
       return;
     }
 
+    const usage: RecordUsageInput = {
+      domain: config.domain,
+      writerId: rule?.writerId || null,
+      organizationId: tenant.organizationId,
+      tenantResolution: tenant.resolution,
+      requestId,
+      userId: tenant.userId,
+      method,
+      routePath: recordedPath,
+      accessKind,
+      successorPath: rule?.successor || null,
+      legacyTable,
+      legacyId,
+      canonicalArtifactId: identity.artifactId,
+      canonicalBusinessVersionId: identity.businessVersionId,
+      canonicalWorkingRevisionId: identity.workingRevisionId,
+      identityStatus: identity.status,
+    };
+
+    let intentId: string;
     try {
-      await recordLegacyUsage({
-        domain: config.domain,
-        writerId: rule?.writerId || null,
-        organizationId: tenant.organizationId,
-        tenantResolution: tenant.resolution,
-        requestId,
-        userId: tenant.userId,
-        method,
-        routePath: recordedPath,
-        accessKind,
-        successorPath: rule?.successor || null,
-        legacyTable,
-        legacyId,
-        canonicalArtifactId: identity.artifactId,
-        canonicalBusinessVersionId: identity.businessVersionId,
-        canonicalWorkingRevisionId: identity.workingRevisionId,
-        identityStatus: identity.status,
+      intentId = (await registerLegacyCutoverIntent(
+        usage,
+        String(req.headers?.['idempotency-key'] || req.headers?.['x-idempotency-key'] || '').trim() || null
+      )).intentId;
+    } catch (error) {
+      logger.error(`[LegacyCutover:${config.domain}] durable intent registration failed`, error);
+      res.status(503).json({
+        success: false,
+        code: 'LEGACY_CUTOVER_INTENT_UNAVAILABLE',
+        message: 'Legacy writer intent could not be registered',
       });
+      return;
+    }
+
+    try {
+      await recordLegacyUsage(usage);
     } catch (error) {
       // Telemetry is an observer, never a gate. A disabled writer stays
       // disabled below whether or not this insert succeeded; an available one
@@ -344,11 +367,37 @@ export function createLegacyCutoverGuard(config: LegacyCutoverDomainConfig) {
     }
 
     if (!isDisabled) {
+      let completed = false;
+      const complete = (source: 'finish' | 'close') => {
+        if (completed) return;
+        completed = true;
+        const responseFinished = Boolean((res as Response & { writableFinished?: boolean }).writableFinished);
+        const result: LegacyIntentTerminalResult =
+          source === 'close' && !responseFinished
+            ? 'aborted_unknown'
+            : rule && rollback.enabled
+              ? 'rollback_passed'
+              : 'passed';
+        void completeLegacyCutoverIntent({
+          intentId,
+          terminalStatus: Number.isFinite(res.statusCode) ? res.statusCode : null,
+          terminalResult: result,
+          source,
+        }).catch((error) => logger.error(`[LegacyCutover:${config.domain}] intent completion failed`, error));
+      };
+      res.once('finish', () => complete('finish'));
+      res.once('close', () => complete('close'));
       next();
       return;
     }
 
     if (strandedRecord) {
+      await completeLegacyCutoverIntent({
+        intentId,
+        terminalStatus: 409,
+        terminalResult: 'refused_identity_unmapped',
+        source: 'guard',
+      });
       res.status(409).json({
         success: false,
         code: config.unmappedCode,
@@ -365,6 +414,12 @@ export function createLegacyCutoverGuard(config: LegacyCutoverDomainConfig) {
       return;
     }
 
+    await completeLegacyCutoverIntent({
+      intentId,
+      terminalStatus: 410,
+      terminalResult: 'refused_gone',
+      source: 'guard',
+    });
     res.status(410).json({
       success: false,
       code: config.disabledCode,

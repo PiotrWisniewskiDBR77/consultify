@@ -25,6 +25,9 @@ import { Request, Response, Router } from 'express';
 import { z } from 'zod';
 
 import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
+import { createLegacyCutoverGuard } from '../services/legacyCutover/legacyCutoverKernel.js';
+import { requireActiveMembership } from '../services/legacyCutover/requireActiveMembership.js';
+import { FINANCE_MODELING_CUTOVER } from '../services/legacyCutover/registry.js';
 import { validateBody } from '../middleware/validation.middleware.js';
 import {
   getFinanceTraceId,
@@ -55,6 +58,7 @@ import { run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();
+const financeModelingCutoverGuard = createLegacyCutoverGuard(FINANCE_MODELING_CUTOVER);
 interface AuthRequest extends Request {
   user?: { id: string; organizationId: string };
 }
@@ -539,6 +543,8 @@ router.post(
   '/models/:id/approve',
   verifyToken,
   isAuthenticated,
+  requireActiveMembership,
+  financeModelingCutoverGuard,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });

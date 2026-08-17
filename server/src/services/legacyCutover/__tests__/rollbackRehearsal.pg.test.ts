@@ -22,6 +22,7 @@ import express from 'express';
 import { Pool } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { cleanupLegacyCutoverTestIntents } from './legacyCutoverTestCleanup.js';
 
 import { createLegacyCutoverGuard, type LegacyCutoverDomainConfig } from '../legacyCutoverKernel.js';
 import { CUTOVER_REGISTRY } from '../registry.js';
@@ -128,6 +129,7 @@ describe.skipIf(!REAL_PG)('Rollback rehearsal for every disabled writer', () => 
 
   afterAll(async () => {
     if (!pool) return;
+    await cleanupLegacyCutoverTestIntents(pool, { organizationIds: [org], requestIdPrefix: prefix });
     for (const tranche of TRANCHES) delete process.env[tranche.rollbackWritersEnv];
     await pool.query(`DELETE FROM legacy_cutover_usage_events WHERE organization_id = $1`, [org]);
     await pool.query(`DELETE FROM organizations WHERE id = $1`, [org]);
