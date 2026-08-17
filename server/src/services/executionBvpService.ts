@@ -3,9 +3,14 @@ import { withPgTransaction } from '../utils/queryHelpers.js';
 type ExecutionLinkRow = {
   link_id: string;
   organization_id: string;
-  initiative_id: string;
-  case_id: string;
-  project_id: string;
+  initiative_id: string | null;
+  case_id: string | null;
+  project_id: string | null;
+  source_kind: 'LEGACY_CASE_CORE' | 'RUNTIME_V1';
+  runtime_initiative_id: string | null;
+  runtime_execution_case_id: string | null;
+  source_version: number;
+  source_project_id: string | null;
   work_ref: string | null;
   resource_ref: string | null;
   control_ref: string | null;
@@ -13,6 +18,89 @@ type ExecutionLinkRow = {
   status: 'ACTIVE' | 'CLOSED';
   version: number;
 };
+
+export async function linkRuntimeInitiativeToExecutionCase(input: {
+  organizationId: string;
+  initiativeId: string;
+  caseId: string;
+  sourceVersion: number;
+  actorId: string;
+  idempotencyKey: string;
+}): Promise<ExecutionLinkRow> {
+  const organizationId = required(input.organizationId, 'execution_org_required');
+  const initiativeId = required(input.initiativeId, 'execution_initiative_required');
+  const caseId = required(input.caseId, 'execution_case_required');
+  const actorId = required(input.actorId, 'execution_actor_required');
+  const idempotencyKey = required(input.idempotencyKey, 'execution_idempotency_key_required');
+  if (!Number.isInteger(input.sourceVersion) || input.sourceVersion < 1) {
+    throw new Error('execution_source_version_invalid');
+  }
+
+  return withPgTransaction(async (tx) => {
+    // Serialize equal intake intents before replay validation. The runtime
+    // identity indexes protect the canonical one-to-one relation, while this
+    // lock makes concurrent same-key requests converge on a replay instead of
+    // exposing a PostgreSQL unique violation.
+    await tx.query(`SELECT pg_advisory_xact_lock(hashtextextended(?, 0))`, [
+      `${organizationId}:${idempotencyKey}`,
+    ]);
+    const replay = await tx.query<ExecutionLinkRow>(
+      `SELECT * FROM execution_case_links WHERE organization_id=? AND intake_idempotency_key=?`,
+      [organizationId, idempotencyKey]
+    );
+    if (replay.rows[0]) {
+      if (
+        replay.rows[0].source_kind !== 'RUNTIME_V1' ||
+        replay.rows[0].runtime_initiative_id !== initiativeId ||
+        replay.rows[0].runtime_execution_case_id !== caseId ||
+        replay.rows[0].source_version !== input.sourceVersion
+      ) throw new Error('execution_idempotency_payload_conflict');
+      return replay.rows[0];
+    }
+    const initiative = await tx.query<{ version: number; payload_json: Record<string, unknown> }>(
+      `SELECT version,payload_json FROM ie_aggregate_state
+        WHERE organization_id=? AND aggregate_type='initiative' AND aggregate_id=? FOR UPDATE`,
+      [organizationId, initiativeId]
+    );
+    const initiativeRow = initiative.rows[0];
+    if (!initiativeRow || initiativeRow.version !== input.sourceVersion) {
+      throw new Error('execution_runtime_initiative_stale_or_not_found');
+    }
+    if (initiativeRow.payload_json.lifecycleState !== 'IN_EXECUTION') {
+      throw new Error('execution_runtime_initiative_not_ready');
+    }
+    const executionCase = await tx.query<{ payload_json: Record<string, unknown> }>(
+      `SELECT payload_json FROM ie_aggregate_state
+        WHERE organization_id=? AND aggregate_type='execution_case' AND aggregate_id=? FOR UPDATE`,
+      [organizationId, caseId]
+    );
+    const casePayload = executionCase.rows[0]?.payload_json;
+    if (!casePayload || casePayload.initiativeId !== initiativeId || casePayload.state !== 'ACTIVE') {
+      throw new Error('execution_runtime_case_not_found');
+    }
+    const relation = await tx.query(
+      `SELECT 1 FROM ie_aggregate_relations
+        WHERE organization_id=? AND relation_type='INITIATIVE_EXECUTION_CASE'
+          AND source_type='initiative' AND source_id=?
+          AND target_type='execution_case' AND target_id=?`,
+      [organizationId, initiativeId, caseId]
+    );
+    if (!relation.rows[0]) throw new Error('execution_runtime_relation_not_found');
+    const projectId = required(
+      String(initiativeRow.payload_json.projectId || ''),
+      'execution_runtime_project_required'
+    );
+
+    const inserted = await tx.query<ExecutionLinkRow>(
+      `INSERT INTO execution_case_links
+         (organization_id,source_kind,runtime_initiative_id,runtime_execution_case_id,
+          source_version,source_project_id,intake_idempotency_key,created_by)
+       VALUES (?,'RUNTIME_V1',?,?,?,?,?,?) RETURNING *`,
+      [organizationId, initiativeId, caseId, input.sourceVersion, projectId, idempotencyKey, actorId]
+    );
+    return inserted.rows[0];
+  });
+}
 
 type EvidenceRow = {
   evidence_id: string;

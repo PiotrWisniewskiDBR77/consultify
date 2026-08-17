@@ -13,18 +13,45 @@ const expectedVersion = z.number().int().positive();
 router.post(
   '/execution-bvp/links',
   caseWorkspaceHandler(async (req, res, actor) => {
-    const body = parseBody(z.object({ initiativeId: id, caseId: id }), req.body);
+    const body = parseBody(
+      z.discriminatedUnion('sourceKind', [
+        z.object({
+          sourceKind: z.literal('RUNTIME_V1'),
+          initiativeId: id,
+          caseId: id,
+          sourceVersion: expectedVersion,
+        }),
+        z.object({
+          sourceKind: z.literal('LEGACY_CASE_CORE').optional().default('LEGACY_CASE_CORE'),
+          initiativeId: id,
+          caseId: id,
+        }),
+      ]),
+      req.body
+    );
     const idempotencyKey = readIdempotencyKeyHeader(req);
     if (!idempotencyKey) throw new Error('execution_idempotency_key_required');
-    await requireCaseAccessForActor(actor, body.caseId);
     await requireOrgRoleForActor(actor, 'ADMIN');
-    const link = await svc.linkInitiativeToExecutionCase({
-      organizationId: actor.organizationId,
-      initiativeId: body.initiativeId,
-      caseId: body.caseId,
-      actorId: actor.actorUserId,
-      idempotencyKey,
-    });
+    const link =
+      body.sourceKind === 'RUNTIME_V1'
+        ? await svc.linkRuntimeInitiativeToExecutionCase({
+            organizationId: actor.organizationId,
+            initiativeId: body.initiativeId,
+            caseId: body.caseId,
+            sourceVersion: body.sourceVersion,
+            actorId: actor.actorUserId,
+            idempotencyKey,
+          })
+        : await (async () => {
+            await requireCaseAccessForActor(actor, body.caseId);
+            return svc.linkInitiativeToExecutionCase({
+              organizationId: actor.organizationId,
+              initiativeId: body.initiativeId,
+              caseId: body.caseId,
+              actorId: actor.actorUserId,
+              idempotencyKey,
+            });
+          })();
     res.status(201).json({ data: link });
   })
 );
