@@ -116,6 +116,21 @@
   },
   "verdict": "BLOCKED_HUMAN",
   "openBlocker": "ExecutionInitiativeStatusControl, KPIDashboard, PeopleChangeWorkspace, ReportCompactPanel, RiskSignalsPanel all confirmed zero live importers. ExecutionSummaryOneLook has its flag ON by default yet no reachable trigger anywhere. Named human UX + VoiceOver verdict required.",
+  "openBlockers": [
+    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
+    "Task-specific UI states not reached by the final automated sweep: stale.",
+    "Observed console HTTP errors require task-specific qualification: total=78, 403=78, 404=0, other=0."
+  ],
+  "blockerReconciliation": [
+    {
+      "historicalBlocker": null,
+      "classification": "NO_HISTORICAL_OPEN_BLOCKER_LINES",
+      "detail": "The final G4 result is additive; current openBlockers enumerate only remaining human, state, reachability or console qualification gates."
+    }
+  ],
+  "resolvedBlockers": [
+    "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed."
+  ],
   "automatedG4Verdict": {
     "verdict": "PASS_EXACT_SHA",
     "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",

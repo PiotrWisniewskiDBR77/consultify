@@ -147,8 +147,25 @@
   },
   "verdict": "PARTIAL",
   "openBlockers": [
-    "Authenticated responsive and axe browser journey did not complete.",
-    "Manual VoiceOver sign-off and a successful exact-SHA static gate remain."
+    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
+    "Task-specific UI states not reached by the final automated sweep: stale.",
+    "Observed console HTTP errors require task-specific qualification: total=2, 403=0, 404=2, other=0."
+  ],
+  "blockerReconciliation": [
+    {
+      "historicalBlocker": "Authenticated responsive and axe browser journey did not complete.",
+      "classification": "RESOLVED_G4",
+      "detail": "Resolved by the final exact-SHA mounted G4 sweep and moved out of openBlockers."
+    },
+    {
+      "historicalBlocker": "Manual VoiceOver sign-off and a successful exact-SHA static gate remain.",
+      "classification": "RETAINED_OPEN",
+      "detail": "The blocker remains represented in openBlockers as a task-specific, human or environment qualification."
+    }
+  ],
+  "resolvedBlockers": [
+    "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed.",
+    "Historical blocker resolved by exact-SHA G4: Authenticated responsive and axe browser journey did not complete."
   ],
   "automatedG4Verdict": {
     "verdict": "PASS_EXACT_SHA",

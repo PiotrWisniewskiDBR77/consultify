@@ -130,8 +130,25 @@
   },
   "verdict": "PARTIAL",
   "openBlockers": [
-    "Mounted browser journey, responsive screenshots, axe and human visual sign-off remain missing.",
-    "The legacy Earnings test still emits a pre-existing maximum-update-depth warning and required one retry."
+    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
+    "Task-specific UI states not reached by the final automated sweep: stale.",
+    "Observed console HTTP errors require task-specific qualification: total=2, 403=0, 404=2, other=0.",
+    "The legacy Earnings test maximum-update-depth warning and retry remain to be qualified."
+  ],
+  "blockerReconciliation": [
+    {
+      "historicalBlocker": "Mounted browser journey, responsive screenshots, axe and human visual sign-off remain missing.",
+      "classification": "PARTIALLY_RESOLVED",
+      "detail": "The automated browser/matrix portion is resolved; the task-specific or human portion remains explicitly in openBlockers."
+    },
+    {
+      "historicalBlocker": "The legacy Earnings test still emits a pre-existing maximum-update-depth warning and required one retry.",
+      "classification": "RETAINED_OPEN",
+      "detail": "The blocker remains represented in openBlockers as a task-specific, human or environment qualification."
+    }
+  ],
+  "resolvedBlockers": [
+    "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed."
   ],
   "automatedG4Verdict": {
     "verdict": "PASS_EXACT_SHA",

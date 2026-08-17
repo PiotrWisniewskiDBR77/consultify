@@ -124,6 +124,20 @@
     "executed": false
   },
   "verdict": "BLOCKED_HUMAN",
+  "openBlockers": [
+    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
+    "Task-specific UI states not reached by the final automated sweep: forbidden, stale."
+  ],
+  "blockerReconciliation": [
+    {
+      "historicalBlocker": null,
+      "classification": "NO_HISTORICAL_OPEN_BLOCKER_LINES",
+      "detail": "The final G4 result is additive; current openBlockers enumerate only remaining human, state, reachability or console qualification gates."
+    }
+  ],
+  "resolvedBlockers": [
+    "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed."
+  ],
   "automatedG4Verdict": {
     "verdict": "PASS_EXACT_SHA",
     "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",

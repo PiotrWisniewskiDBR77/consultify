@@ -218,11 +218,43 @@
   "verdict": "PARTIAL",
   "humanGate": "BLOCKED_HUMAN",
   "openBlockers": [
-    "Mounted browser completion for Prediction and Valuation, plus explicit conflict/error-state journeys, is incomplete.",
-    "Axe coverage is present only in the existing focused component suites, not a mounted axe scan of every workspace.",
-    "Keyboard traversal was not completed across every workspace.",
-    "Human visual review and VoiceOver remain BLOCKED_HUMAN by task contract.",
-    "Server startup's secondary Table Platform runner logged a non-fatal syntax error in 20260809_finance_v3_d03_analysis_03_kpi_p0_catalog.sql even though the strict migration runner passed fresh and repeat."
+    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
+    "Task-specific UI states not reached by the final automated sweep: stale.",
+    "Prediction and Valuation workspace completion plus an explicit conflict journey remain incomplete.",
+    "The secondary Table Platform runner syntax error in 20260809_finance_v3_d03_analysis_03_kpi_p0_catalog.sql remains to be qualified despite the green strict migration runner."
+  ],
+  "blockerReconciliation": [
+    {
+      "historicalBlocker": "Mounted browser completion for Prediction and Valuation, plus explicit conflict/error-state journeys, is incomplete.",
+      "classification": "PARTIALLY_RESOLVED",
+      "detail": "The automated browser/matrix portion is resolved; the task-specific or human portion remains explicitly in openBlockers."
+    },
+    {
+      "historicalBlocker": "Axe coverage is present only in the existing focused component suites, not a mounted axe scan of every workspace.",
+      "classification": "RESOLVED_G4",
+      "detail": "Resolved by the final exact-SHA mounted G4 sweep and moved out of openBlockers."
+    },
+    {
+      "historicalBlocker": "Keyboard traversal was not completed across every workspace.",
+      "classification": "RESOLVED_G4",
+      "detail": "Resolved by the final exact-SHA mounted G4 sweep and moved out of openBlockers."
+    },
+    {
+      "historicalBlocker": "Human visual review and VoiceOver remain BLOCKED_HUMAN by task contract.",
+      "classification": "RETAINED_OPEN",
+      "detail": "The blocker remains represented in openBlockers as a task-specific, human or environment qualification."
+    },
+    {
+      "historicalBlocker": "Server startup's secondary Table Platform runner logged a non-fatal syntax error in 20260809_finance_v3_d03_analysis_03_kpi_p0_catalog.sql even though the strict migration runner passed fresh and repeat.",
+      "classification": "RETAINED_OPEN",
+      "detail": "The blocker remains represented in openBlockers as a task-specific, human or environment qualification."
+    }
+  ],
+  "resolvedBlockers": [
+    "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed.",
+    "Historical blocker resolved by exact-SHA G4: Mounted browser completion for Prediction and Valuation, plus explicit conflict/error-state journeys, is incomplete.",
+    "Historical blocker resolved by exact-SHA G4: Axe coverage is present only in the existing focused component suites, not a mounted axe scan of every workspace.",
+    "Historical blocker resolved by exact-SHA G4: Keyboard traversal was not completed across every workspace."
   ],
   "automatedG4Verdict": {
     "verdict": "PASS_EXACT_SHA",

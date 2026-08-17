@@ -126,9 +126,31 @@
   },
   "verdict": "NOT_VERIFIED",
   "openBlockers": [
-    "The complete real browser journey must be rerun after the mount fix on the exact integrated SHA.",
-    "Permission, conflict and complete success states plus desktop/tablet/mobile, PL/EN, light/dark and axe need fresh artifacts.",
-    "Named human and VoiceOver sign-off remains external."
+    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
+    "Task-specific UI states not reached by the final automated sweep: stale.",
+    "Task-specific permission, conflict and complete success journeys remain not evidenced by the final automated matrix."
+  ],
+  "blockerReconciliation": [
+    {
+      "historicalBlocker": "The complete real browser journey must be rerun after the mount fix on the exact integrated SHA.",
+      "classification": "RESOLVED_G4",
+      "detail": "Resolved by the final exact-SHA mounted G4 sweep and moved out of openBlockers."
+    },
+    {
+      "historicalBlocker": "Permission, conflict and complete success states plus desktop/tablet/mobile, PL/EN, light/dark and axe need fresh artifacts.",
+      "classification": "PARTIALLY_RESOLVED",
+      "detail": "The automated browser/matrix portion is resolved; the task-specific or human portion remains explicitly in openBlockers."
+    },
+    {
+      "historicalBlocker": "Named human and VoiceOver sign-off remains external.",
+      "classification": "RETAINED_OPEN",
+      "detail": "The blocker remains represented in openBlockers as a task-specific, human or environment qualification."
+    }
+  ],
+  "resolvedBlockers": [
+    "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed.",
+    "Historical blocker resolved by exact-SHA G4: The complete real browser journey must be rerun after the mount fix on the exact integrated SHA.",
+    "Historical blocker resolved by exact-SHA G4: Permission, conflict and complete success states plus desktop/tablet/mobile, PL/EN, light/dark and axe need fresh artifacts."
   ],
   "automatedG4Verdict": {
     "verdict": "PASS_EXACT_SHA",

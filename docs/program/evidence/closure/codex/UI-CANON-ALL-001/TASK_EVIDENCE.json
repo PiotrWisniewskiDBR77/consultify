@@ -126,6 +126,21 @@
     "Run axe and full keyboard/focus-return coverage.",
     "Obtain named visual and VoiceOver acceptance."
   ],
+  "openBlockers": [
+    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
+    "Observed console HTTP errors require task-specific qualification: total=98, 403=78, 404=20, other=0.",
+    "The proposed Audit UI surface is outside the 82-task authority and remains NOT_VERIFIED."
+  ],
+  "blockerReconciliation": [
+    {
+      "historicalBlocker": null,
+      "classification": "NO_HISTORICAL_OPEN_BLOCKER_LINES",
+      "detail": "The final G4 result is additive; current openBlockers enumerate only remaining human, state, reachability or console qualification gates."
+    }
+  ],
+  "resolvedBlockers": [
+    "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed."
+  ],
   "automatedG4Verdict": {
     "verdict": "PASS_EXACT_SHA",
     "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
