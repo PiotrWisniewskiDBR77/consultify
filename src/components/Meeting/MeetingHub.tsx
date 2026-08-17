@@ -39,6 +39,7 @@ import { StandardModuleBar } from '@/components/standard/StandardModuleBar';
 import { ErrorState, LoadingState } from '@/components/ui/primitives';
 import { StatusChip } from '@/components/ui/primitives/chips';
 import { Api, type GovernedMeetingNoteDto } from '@/services/api';
+import { useAppStore } from '@/store/useAppStore';
 
 type FollowUpStatus = 'open' | 'done';
 export type MeetingStatus = 'scheduled' | 'completed';
@@ -69,6 +70,10 @@ export const MeetingHub: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const isPolish = i18n.language?.startsWith('pl');
+  const currentUser = useAppStore((state) => state.currentUser);
+  const canApproveMeetingNotes = ['OWNER', 'ADMIN', 'SUPERADMIN'].includes(
+    String(currentUser?.role || '').toUpperCase()
+  );
 
   const [activeTab, setActiveTab] = useState<ModuleTab>('list');
   const [viewMode, setViewMode] = useState<ViewMode>('table');
@@ -1383,7 +1388,7 @@ export const MeetingHub: React.FC = () => {
                                 }
                               />
                             </div>
-                            {note.status === 'proposed' ? (
+                            {note.status === 'proposed' && canApproveMeetingNotes ? (
                               <div className="mt-3 flex justify-end gap-2">
                                 <button
                                   type="button"
@@ -1404,6 +1409,13 @@ export const MeetingHub: React.FC = () => {
                                     : t('meeting.notes.approve', 'Approve and materialize')}
                                 </button>
                               </div>
+                            ) : note.status === 'proposed' ? (
+                              <p className="mt-3 text-right text-xs text-c-text-muted">
+                                {t(
+                                  'meeting.notes.approvalRequiresAdmin',
+                                  'Approval requires an active organization owner or administrator.'
+                                )}
+                              </p>
                             ) : null}
                             {noteReceiptIds[note.id] ? (
                               <p className="mt-2 break-all text-xs text-c-text-muted">

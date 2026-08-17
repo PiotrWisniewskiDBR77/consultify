@@ -42,6 +42,11 @@ vi.mock('@/services/api', () => ({
   },
 }));
 
+vi.mock('@/store/useAppStore', () => ({
+  useAppStore: (selector: (state: any) => unknown) =>
+    selector({ currentUser: { id: 'admin-1', role: 'ADMIN', isAuthenticated: true } }),
+}));
+
 import { MeetingHub } from '../MeetingHub';
 
 const meeting = {
@@ -216,5 +221,32 @@ describe('MeetingHub (smoke)', () => {
       expect(decideNoteMock).toHaveBeenCalledWith('meeting-1', 'note-1', { action: 'approve' })
     );
     expect(await screen.findByText(/receipt-1/)).toBeTruthy();
+  });
+
+  it('reloads authoritative proposal state after a stale decision conflict', async () => {
+    getMeetingsMock.mockResolvedValue({ meetings: [meeting] });
+    const note = {
+      id: 'note-stale',
+      source: 'heuristic',
+      summary: 'Concurrent proposal',
+      keyPoints: [],
+      decisions: [],
+      actionItems: [],
+      status: 'proposed',
+      proposalId: 'proposal-stale',
+    };
+    listNotesMock
+      .mockResolvedValueOnce({ notes: [note] })
+      .mockResolvedValueOnce({ notes: [{ ...note, status: 'approved' }] });
+    const conflict: any = new Error('already materialized');
+    conflict.status = 409;
+    decideNoteMock.mockRejectedValue(conflict);
+    render(<MeetingHub />);
+    fireEvent.dblClick(await screen.findByText('Quarterly Review'));
+    fireEvent.click(await screen.findByRole('button', { name: /meeting\.aiNotes|AI Notes/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /Approve and materialize/i }));
+
+    await waitFor(() => expect(listNotesMock).toHaveBeenCalledTimes(2));
+    expect(await screen.findByText('Materialized')).toBeTruthy();
   });
 });
