@@ -50,7 +50,12 @@ vi.mock('../../middleware/auth.middleware.js', () => ({
     req.organizationId = mockUser.organizationId;
     next();
   },
+  validateOrgMembership: (_req: any, _res: any, next: () => void) => next(),
   isAuthenticated: (_req: any, _res: any, next: () => void) => next(),
+}));
+
+vi.mock('../../middleware/effectiveCapability.middleware.js', () => ({
+  requireInitiativeCapability: () => (_req: any, _res: any, next: () => void) => next(),
 }));
 
 vi.mock('../../middleware/rbac.middleware.js', () => ({

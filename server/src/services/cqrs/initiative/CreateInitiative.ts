@@ -20,7 +20,7 @@ export class CreateInitiativeCommand {
 export class CreateInitiativeHandler implements CommandHandler<CreateInitiativeCommand> {
   async execute(command: CreateInitiativeCommand): Promise<{ id: string }> {
     // Uspójnienie F1.9 — kanoniczny lejek tworzenia inicjatyw.
-    if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+    if (process.env.INITIATIVE_FUNNEL_ENABLED !== 'false') {
       const orgId = command.organizationId || '';
       const __r = await funnelCreateInitiative(
         orgId,

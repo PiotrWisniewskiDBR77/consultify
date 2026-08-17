@@ -421,7 +421,7 @@ export class ArtifactConversionService {
 
     // Uspójnienie F1.9 — kanoniczny lejek tworzenia inicjatyw.
     let initiativeId: string;
-    if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+    if (process.env.INITIATIVE_FUNNEL_ENABLED !== 'false') {
       const __r = await funnelCreateInitiative(
         params.organizationId,
         {

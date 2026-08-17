@@ -293,7 +293,9 @@ async function applyInboxTriageSideEffects({
     );
     const transition = validateTaskStatusTransition(task?.status, 'done');
     if (!transition.allowed) {
-      throw new Error('message' in transition ? transition.message : 'Invalid task status transition');
+      throw new Error(
+        'message' in transition ? transition.message : 'Invalid task status transition'
+      );
     }
     await queryHelpers.queryRun(
       `UPDATE tasks SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
@@ -1315,7 +1317,9 @@ router.post(
         [orgId, idempotencyKey]
       );
       if (existing) {
-        res.status(200).json({ ...existing, tags: parseTagsArray(existing?.tags), idempotent: true });
+        res
+          .status(200)
+          .json({ ...existing, tags: parseTagsArray(existing?.tags), idempotent: true });
         return;
       }
     }
@@ -3031,7 +3035,7 @@ router.get(
       ideaColumns.has('evidence_refs_json') ? 'evidence_refs_json' : "'[]' as evidence_refs_json",
       // E08: only select the real column when the additive migration has run —
       // never fabricate a fake "supported" value here (see maturityGatesSupported below).
-      hasMaturityGatesColumn ? 'maturity_gates_json' : "NULL as maturity_gates_json",
+      hasMaturityGatesColumn ? 'maturity_gates_json' : 'NULL as maturity_gates_json',
       // E12: same honest-degrade pattern — a database without the
       // 20260810_idea_confidentiality.sql migration reports the implicit
       // default rather than 500ing or fabricating a "gate applied" signal.
@@ -3222,9 +3226,7 @@ router.put(
     // migration silently no-ops the persist instead of erroring.
     if (req.body?.confidentiality !== undefined) {
       const requestedConfidentiality = String(req.body.confidentiality).trim().toLowerCase();
-      if (
-        !(IDEA_CONFIDENTIALITY_LEVELS as readonly string[]).includes(requestedConfidentiality)
-      ) {
+      if (!(IDEA_CONFIDENTIALITY_LEVELS as readonly string[]).includes(requestedConfidentiality)) {
         res.status(400).json({
           error: `confidentiality must be one of: ${IDEA_CONFIDENTIALITY_LEVELS.join(', ')}`,
         });
@@ -7052,9 +7054,7 @@ router.post(
     // (no CHECK, see 20260723_idea_conversion_history.sql), so finer values
     // need no migration. Legacy callers that still omit `scope` keep the old
     // 'selection' fallback — behavior for them is unchanged.
-    const conversionScope = isWholeIdeaScope
-      ? 'workspace'
-      : explicitScope || 'selection';
+    const conversionScope = isWholeIdeaScope ? 'workspace' : explicitScope || 'selection';
 
     const promote = async (promotedTo: string, promotedEntityId: string | null) => {
       // Historia KAŻDEJ konwersji — insert, NIGDY update. Zastępuje pojedyncze pole
@@ -7077,7 +7077,17 @@ router.post(
           containerType: 'idea_workspace',
           containerId: ideaId,
         });
-        const insertCols = ['id', 'idea_id', 'organization_id', 'target', 'entity_id', 'scope', 'node_ids_json', 'source_link_json', 'created_by'];
+        const insertCols = [
+          'id',
+          'idea_id',
+          'organization_id',
+          'target',
+          'entity_id',
+          'scope',
+          'node_ids_json',
+          'source_link_json',
+          'created_by',
+        ];
         const insertVals: any[] = [
           uuidv4(),
           ideaId,
@@ -7173,7 +7183,7 @@ router.post(
 
       // Uspójnienie F1.5 — przez kanoniczny lejek (DRAFT + name/title + lineage).
       let initiativeId: string;
-      if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+      if (process.env.INITIATIVE_FUNNEL_ENABLED !== 'false') {
         const __r = await funnelCreateInitiative(
           orgId,
           {
@@ -7804,7 +7814,7 @@ router.get(
     const conversionCols = await getTableColumns('my_idea_conversions');
     const mappingVersionSelect = conversionCols.has('mapping_version')
       ? 'mapping_version as "mappingVersion"'
-      : "NULL as \"mappingVersion\"";
+      : 'NULL as "mappingVersion"';
 
     const rows = await queryHelpers.queryAll<any>(
       `

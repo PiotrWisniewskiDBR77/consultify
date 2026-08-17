@@ -1523,7 +1523,7 @@ Respond in JSON format:
         // Uspójnienie F1.6 — przez kanoniczny lejek. PENDING_REVIEW jest świadomym
         // statusem importu (ważny w cyklu) → przekazany jawnie; extra kolumny
         // (source_report_id/tags/created_from) ustawiane post-create.
-        if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+        if (process.env.INITIATIVE_FUNNEL_ENABLED !== 'false') {
           const __r = await funnelCreateInitiative(
             organizationId,
             {

@@ -655,7 +655,7 @@ class ReportInitiativeService {
     for (const initiative of initiatives) {
       try {
         // Uspójnienie F1.9 — przez kanoniczny lejek (DRAFT + name/title + lineage).
-        if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+        if (process.env.INITIATIVE_FUNNEL_ENABLED !== 'false') {
           const __r = await funnelCreateInitiative(
             organizationId,
             {

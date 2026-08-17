@@ -289,7 +289,7 @@ export async function convertNotebookPage(params: {
 
     // Uspójnienie F1.9 — przez kanoniczny lejek (DRAFT + name/title + lineage).
     let initiativeId = newId;
-    if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+    if (process.env.INITIATIVE_FUNNEL_ENABLED !== 'false') {
       const __r = await funnelCreateInitiative(
         orgId,
         {

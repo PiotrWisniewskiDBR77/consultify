@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getTableColumns } from '../../utils/dbSchema.js';
 import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
+import { createInitiative as funnelCreateInitiative } from '../initiative/createInitiativeService.js';
 import { checkSimilarInitiatives } from '../initiativeSimilarityService.js';
 import * as artifactRegistryService from '../v8/artifactRegistryService.js';
 import { addFinding } from '../v8/interviewInsightFindingsService.js';
@@ -733,37 +734,38 @@ async function createInitiativesFromAssessmentRecommendations(params: {
       );
     }
 
-    const initiativeId = uuidv4();
-    const insertCols: string[] = ['id'];
-    const insertVals: string[] = ['?'];
-    const insertArgs: unknown[] = [initiativeId];
-    const add = (col: string, val: unknown) => {
-      if (!initiativeCols.has(col)) return;
-      insertCols.push(col);
-      insertVals.push('?');
-      insertArgs.push(val);
-    };
-    add('organization_id', organizationId);
-    add('project_id', projectId);
-    add('name', title);
-    add('title', title);
-    add('summary', initiativeSummary);
-    add('description', initiativeSummary);
-    add('status', 'DRAFT');
-    add('priority', 'medium');
-    add('risk_level', 'medium');
-    add('source_type', 'assessment');
-    add('source_id', assessmentId);
-    add('source_assessment_id', assessmentId);
-    add('created_from', 'assessment');
-    add('created_by', userId);
-    add('owner_id', userId);
-    add('created_at', now);
-    add('updated_at', now);
-    await queryHelpers.queryRun(
-      `INSERT INTO initiatives (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
-      insertArgs
+    const initiative = await funnelCreateInitiative(
+      organizationId,
+      {
+        title,
+        projectId,
+        summary: initiativeSummary,
+        description: initiativeSummary,
+        status: 'DRAFT',
+        priority: 'medium',
+        sourceType: 'assessment',
+        sourceId: assessmentId,
+      },
+      { actor: { id: userId } }
     );
+    const initiativeId = initiative.id;
+
+    // Preserve workbench-specific metadata after the single canonical create.
+    // These are enrichment-only updates; no second creation writer remains.
+    const enrichment: Array<[string, unknown]> = [
+      ['risk_level', 'medium'],
+      ['source_assessment_id', assessmentId],
+      ['created_from', 'assessment'],
+      ['owner_id', userId],
+    ];
+    const assignments = enrichment.filter(([column]) => initiativeCols.has(column));
+    if (assignments.length > 0) {
+      await queryHelpers.queryRun(
+        `UPDATE initiatives SET ${assignments.map(([column]) => `${column} = ?`).join(', ')}, updated_at = ?
+          WHERE id = ? AND organization_id = ?`,
+        [...assignments.map(([, value]) => value), now, initiativeId, organizationId]
+      );
+    }
 
     const linkId = uuidv4();
     const lcols: string[] = ['id', 'assessment_id', 'batch_id', 'initiative_id'];

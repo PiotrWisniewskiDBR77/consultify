@@ -1968,12 +1968,12 @@ router.post(
     // F15 (data-integrity, continuation of Z139): decode HTML entities the
     // global sanitizer may have escaped on this title before it feeds
     // initiatives.title/name below (funnel branch AND raw-insert fallback —
-    // INITIATIVE_FUNNEL_ENABLED is default OFF).
+    // INITIATIVE_FUNNEL_ENABLED is default ON).
     const decodedAnalysisName = decodeHtmlEntities(String(analysis.name || ''));
 
     // Uspójnienie F1.3 — przez kanoniczny lejek (DRAFT + name/title + lineage).
     let initiativeId: string;
-    if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+    if (process.env.INITIATIVE_FUNNEL_ENABLED !== 'false') {
       const __r = await funnelCreateInitiative(
         orgId,
         {
@@ -1992,7 +1992,7 @@ router.post(
     } else {
       initiativeId = uuidv4();
       // D1 (Zwornik §9 Faza 3): this raw-insert branch is the LIVE path
-      // (INITIATIVE_FUNNEL_ENABLED defaults off) and did not anchor
+      // (INITIATIVE_FUNNEL_ENABLED defaults ON; explicit 'false' selects rollback) and did not anchor
       // project_id — auto-assign the org's system portfolio project instead
       // of persisting a silent orphan.
       const anchoredProjectId = await resolveInitiativeProjectId(orgId, analysis.project_id, {

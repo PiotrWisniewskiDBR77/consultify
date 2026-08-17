@@ -59,11 +59,31 @@ vi.mock('../../database/Database.js', () => ({
 
 vi.mock('../../middleware/auth.middleware.js', () => ({
   verifyToken: (_req: any, _res: any, next: () => void) => next(),
+  validateOrgMembership: (_req: any, _res: any, next: () => void) => next(),
   requireSuperAdmin: (_req: any, _res: any, next: () => void) => next(),
   requireRole: () => (_req: any, _res: any, next: () => void) => next(),
   requireOrganization: (_req: any, _res: any, next: () => void) => next(),
   isAuthenticated: (_req: any, _res: any, next: () => void) => next(),
 }));
+
+vi.mock('../../middleware/effectiveCapability.middleware.js', () => ({
+  requireInitiativeCapability: () => (_req: any, _res: any, next: () => void) => next(),
+}));
+
+vi.mock('../../services/initiative/initiativeTransitionService.js', async (importOriginal) => {
+  const actual =
+    await importOriginal<
+      typeof import('../../services/initiative/initiativeTransitionService.js')
+    >();
+  return {
+    ...actual,
+    executeInitiativeTransition: vi.fn(async () => ({
+      ok: false,
+      statusCode: 400,
+      body: { code: 'INITIATIVE_STATUS_TRANSITION_INVALID' },
+    })),
+  };
+});
 
 vi.mock('../../middleware/rbac.middleware.js', () => ({
   requireOrgAccess: () => (_req: any, _res: any, next: () => void) => next(),

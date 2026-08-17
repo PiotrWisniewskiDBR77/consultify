@@ -490,7 +490,8 @@ export class InitiativeController {
       // kompletności/heurystyki pozostają doradcze, więc lekki quick-create nie
       // jest blokowany. FAIL-OPEN gdy walidator rzuci (bug). Zawór:
       // CARD_CONTENT_HARD_GATE (default ON). Umieszczone TU (a nie tylko w funnelu),
-      // bo INITIATIVE_FUNNEL_ENABLED jest domyślnie OFF → to raw-insert jest ŻYWĄ
+      // Kanoniczny lejek jest domyślnie ON; poniższy raw-insert pozostaje wyłącznie
+      // jawną ścieżką awaryjnego rollbacku (`INITIATIVE_FUNNEL_ENABLED=false`).
       // ścieżką na demo (weryfikuj realny runtime, nie flagi).
       try {
         const b = req.body as Record<string, unknown>;
@@ -524,7 +525,7 @@ export class InitiativeController {
       // Uspójnienie F1 — single creation funnel (flag-gated rollout). When enabled,
       // creation flows through createInitiativeService (one contract, DRAFT default,
       // name+title). Route already ran validateBody(CreateInitiativeSchema) → validate:false.
-      if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+      if (process.env.INITIATIVE_FUNNEL_ENABLED !== 'false') {
         try {
           const result = await funnelCreateInitiative(orgId, req.body as Record<string, unknown>, {
             validate: false,
@@ -587,7 +588,7 @@ export class InitiativeController {
         return;
       }
       // F15 (data-integrity, continuation of Z139): INITIATIVE_FUNNEL_ENABLED is
-      // default OFF, so this raw-insert branch (not the funnel above) is the
+      // default ON, so this raw-insert branch (not the funnel above) is the
       // live path on demo today. Decode entities the global sanitizer escaped
       // on the title before storing initiatives.title/name.
       const decodedTitle = typeof title === 'string' ? decodeHtmlEntities(title) : title;

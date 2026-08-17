@@ -1415,7 +1415,7 @@ function buildCardSpecUserPrompt(args: CardSpecUserPromptArgs): string {
  * that still bypassed the project-anchoring gate — it called
  * `initiativeService.createInitiative` (InitiativeDefinitionService), whose raw
  * INSERT path only anchors a project when the UNRELATED, org-wide
- * `INITIATIVE_FUNNEL_ENABLED` flag is 'true' (default OFF everywhere; confirmed
+ * `INITIATIVE_FUNNEL_ENABLED` is not explicitly 'false' (default ON; explicit false is rollback;
  * by grep — no env file sets it). With that flag off, EVERY caller through this
  * function persisted `project_id = NULL`, i.e. AI creating orphans faster than a
  * human could (audit finding, panel adwersaryjny bloker #5 follow-up).

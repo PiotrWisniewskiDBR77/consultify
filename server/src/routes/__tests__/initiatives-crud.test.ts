@@ -42,6 +42,7 @@ vi.mock('../../database/Database.js', () => ({
 
 vi.mock('../../middleware/auth.middleware.js', () => ({
   verifyToken: (_req: any, _res: any, next: () => void) => next(),
+  validateOrgMembership: (_req: any, _res: any, next: () => void) => next(),
   requireSuperAdmin: (_req: any, _res: any, next: () => void) => next(),
   requireRole: () => (_req: any, _res: any, next: () => void) => next(),
   requireOrganization: (_req: any, _res: any, next: () => void) => next(),
@@ -56,6 +57,10 @@ vi.mock('../../middleware/rbac.middleware.js', () => ({
 
 vi.mock('../../middleware/rateLimiting.middleware.js', () => ({
   apiAuthRateLimiter: (_req: any, _res: any, next: () => void) => next(),
+}));
+
+vi.mock('../../middleware/effectiveCapability.middleware.js', () => ({
+  requireInitiativeCapability: () => (_req: any, _res: any, next: () => void) => next(),
 }));
 
 vi.mock('../../middleware/validation.middleware.js', () => ({
@@ -204,9 +209,12 @@ describe('initiatives CRUD routes', () => {
   it('POST / creates an initiative (200)', async () => {
     mockQueryRun.mockResolvedValue({ changes: 1, lastID: 1 });
 
-    const res = await request(app)
-      .post('/api/initiatives')
-      .send({ title: 'Reduce cycle time', description: 'Lean kaizen', priority: 'HIGH' });
+    const res = await request(app).post('/api/initiatives').send({
+      title: 'Reduce cycle time',
+      description: 'Lean kaizen',
+      priority: 'HIGH',
+      projectId: 'project-crud',
+    });
 
     expect([200, 201]).toContain(res.status);
     expect(res.body.id).toBeTruthy();
@@ -230,7 +238,7 @@ describe('initiatives CRUD routes', () => {
 
     const res = await request(app)
       .post('/api/initiatives')
-      .send({ title: 'PM creates an initiative', priority: 'HIGH' });
+      .send({ title: 'PM creates an initiative', priority: 'HIGH', projectId: 'project-crud' });
 
     expect([200, 201]).toContain(res.status);
     expect(res.body.id).toBeTruthy();

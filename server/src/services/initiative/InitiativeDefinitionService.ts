@@ -99,7 +99,7 @@ LIMIT ? OFFSET ? `,
     if (!orgId) throw new Error('Organization ID is required');
 
     // Uspójnienie F1.9 — kanoniczny lejek tworzenia inicjatyw.
-    if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+    if (process.env.INITIATIVE_FUNNEL_ENABLED !== 'false') {
       const ownerId = data.owner_business_id || data.owner_id || null;
       const __r = await funnelCreateInitiative(
         orgId,

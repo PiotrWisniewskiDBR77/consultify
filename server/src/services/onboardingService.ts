@@ -458,7 +458,7 @@ class OnboardingService {
       // may already be escaped on the plan-snapshot title before storing.
       const decodedInitTitle = decodeHtmlEntities(String(initiative.title || 'Initiative'));
       // Uspójnienie F1.9 — przez kanoniczny lejek (DRAFT + name/title + lineage).
-      if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+      if (process.env.INITIATIVE_FUNNEL_ENABLED !== 'false') {
         const __r = await funnelCreateInitiative(
           organizationId,
           {
@@ -479,7 +479,7 @@ class OnboardingService {
         );
       } else {
         // D1 (Zwornik §9 Faza 3): this branch is the LIVE path
-        // (INITIATIVE_FUNNEL_ENABLED defaults off) and didn't even select a
+        // (INITIATIVE_FUNNEL_ENABLED defaults ON; explicit 'false' selects rollback) and didn't even select a
         // project_id column — every AI-onboarding initiative was a silent
         // orphan. Anchor to the org's system portfolio project instead.
         const anchoredProjectId = await resolveInitiativeProjectId(organizationId, null, {

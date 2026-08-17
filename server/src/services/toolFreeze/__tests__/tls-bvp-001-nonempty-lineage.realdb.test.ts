@@ -64,12 +64,10 @@ import {
 // *.realdb.test.ts in this repo (see tools-outputs-immutable.realdb.test.ts).
 process.env.DB_TYPE = 'postgres';
 process.env.NODE_ENV = process.env.NODE_ENV || 'test';
-// Route the 'initiative' outputType through the funnel so this suite is not
-// tripped by the PRE-EXISTING, unrelated `initiatives.priority_order`
-// migration-ordering gap documented at the top of
-// tests/integration/tools-outputs-immutable.realdb.test.ts (same repo-wide
-// issue, not something TLS-BVP-001 touches).
-process.env.INITIATIVE_FUNNEL_ENABLED = 'true';
+// INI-MVP-PROFILE-001: the canonical funnel is now the shipped default. Keep
+// the flag unset so this realDB suite is a positive control for that default;
+// only an explicit value of 'false' may select the emergency rollback writer.
+delete process.env.INITIATIVE_FUNNEL_ENABLED;
 
 const DATABASE_URL = process.env.DATABASE_URL as string;
 
@@ -83,21 +81,11 @@ let uidCounter = 0;
 const uid = (label: string): string => `${P}${label}-${uidCounter++}`;
 
 let app: Express;
-let EmptyToolOutputError: (typeof import(
-  '../../tools/toolOutputSnapshotService.js'
-))['EmptyToolOutputError'];
-let getToolOutputById: (typeof import(
-  '../../tools/toolOutputSnapshotService.js'
-))['getToolOutputById'];
-let correctToolOutput: (typeof import(
-  '../../tools/toolOutputSnapshotService.js'
-))['correctToolOutput'];
-let mutateConclusions: (typeof import(
-  '../../../sharedRuntime/toolOutputs/outputLifecycle.js'
-))['mutateConclusions'];
-let ImmutableOutputError: (typeof import(
-  '../../../sharedRuntime/toolOutputs/outputLifecycle.js'
-))['ImmutableOutputError'];
+let EmptyToolOutputError: (typeof import('../../tools/toolOutputSnapshotService.js'))['EmptyToolOutputError'];
+let getToolOutputById: (typeof import('../../tools/toolOutputSnapshotService.js'))['getToolOutputById'];
+let correctToolOutput: (typeof import('../../tools/toolOutputSnapshotService.js'))['correctToolOutput'];
+let mutateConclusions: (typeof import('../../../sharedRuntime/toolOutputs/outputLifecycle.js'))['mutateConclusions'];
+let ImmutableOutputError: (typeof import('../../../sharedRuntime/toolOutputs/outputLifecycle.js'))['ImmutableOutputError'];
 
 async function db(): Promise<Client> {
   const c = new Client({ connectionString: DATABASE_URL });
@@ -182,8 +170,15 @@ async function seedRealSwotSession(
         estimatedEffort: 'medium',
         firstStep: 'Wybrać klienta pilotażowego',
         ownerRole: 'Dyrektor sprzedaży',
-        tradeoff: { chosen: 'Pilot regionalny', deferred: 'Rozwój produktu', cost: 'Dług produktowy +1Q' },
-        rejectedAlternative: { option: 'Wejście przez partnera', reason: 'Utrata kontroli nad wdrożeniem' },
+        tradeoff: {
+          chosen: 'Pilot regionalny',
+          deferred: 'Rozwój produktu',
+          cost: 'Dług produktowy +1Q',
+        },
+        rejectedAlternative: {
+          option: 'Wejście przez partnera',
+          reason: 'Utrata kontroli nad wdrożeniem',
+        },
       },
     ],
   };
@@ -272,7 +267,11 @@ beforeAll(async () => {
     next();
   });
   app.get('/api/tools/:toolId', ToolController.getToolSession);
-  app.put('/api/tools/:toolId', validateBody(UpdateToolSessionSchema), ToolController.updateToolSession);
+  app.put(
+    '/api/tools/:toolId',
+    validateBody(UpdateToolSessionSchema),
+    ToolController.updateToolSession
+  );
   app.post('/api/tools/:toolId/promote', ToolController.promoteToOutput);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   app.use((err: any, _req: any, res: any, _next: any) => {
@@ -283,16 +282,30 @@ beforeAll(async () => {
 afterAll(async () => {
   const c = await db();
   try {
-    await c.query(`DELETE FROM tool_output_initiative_proposals WHERE organization_id IN ($1,$2)`, [ORG_A, ORG_B]);
-    await c.query(`DELETE FROM tool_output_approvals WHERE organization_id IN ($1,$2)`, [ORG_A, ORG_B]);
-    await c.query(`DELETE FROM tool_session_events WHERE organization_id IN ($1,$2)`, [ORG_A, ORG_B]);
+    await c.query(`DELETE FROM tool_output_initiative_proposals WHERE organization_id IN ($1,$2)`, [
+      ORG_A,
+      ORG_B,
+    ]);
+    await c.query(`DELETE FROM tool_output_approvals WHERE organization_id IN ($1,$2)`, [
+      ORG_A,
+      ORG_B,
+    ]);
+    await c.query(`DELETE FROM tool_session_events WHERE organization_id IN ($1,$2)`, [
+      ORG_A,
+      ORG_B,
+    ]);
     await c.query(`DELETE FROM tool_outputs WHERE organization_id IN ($1,$2)`, [ORG_A, ORG_B]);
     await c.query(`DELETE FROM tool_initiative_links WHERE tool_session_id LIKE $1`, [`${P}%`]);
     await c.query(`DELETE FROM initiatives WHERE organization_id IN ($1,$2)`, [ORG_A, ORG_B]);
-    await c.query(`DELETE FROM my_ideas WHERE organization_id IN ($1,$2) AND source_type = 'tool'`, [ORG_A, ORG_B]);
+    await c.query(
+      `DELETE FROM my_ideas WHERE organization_id IN ($1,$2) AND source_type = 'tool'`,
+      [ORG_A, ORG_B]
+    );
     await c.query(`DELETE FROM tool_sessions WHERE organization_id IN ($1,$2)`, [ORG_A, ORG_B]);
     await c.query(`DELETE FROM users WHERE id IN ($1,$2)`, [ACTOR, ACTOR_B]).catch(() => undefined);
-    await c.query(`DELETE FROM organizations WHERE id IN ($1,$2)`, [ORG_A, ORG_B]).catch(() => undefined);
+    await c
+      .query(`DELETE FROM organizations WHERE id IN ($1,$2)`, [ORG_A, ORG_B])
+      .catch(() => undefined);
   } finally {
     await c.end();
   }
@@ -314,13 +327,18 @@ describe('TLS-BVP-001 — nonempty-lineage guard on tool_outputs freeze (real Po
 
     const c = await db();
     try {
-      const rows = await c.query(`SELECT * FROM tool_outputs WHERE tool_session_id = $1`, [sessionId]);
+      const rows = await c.query(`SELECT * FROM tool_outputs WHERE tool_session_id = $1`, [
+        sessionId,
+      ]);
       expect(rows.rows.length).toBe(0);
       // Belt-and-braces: no ledger row either (claim-before-create must
       // never have gotten far enough to claim on a refused promotion —
       // 'idea' isn't a pre-claimed outputType, so this is chiefly a sanity
       // check, not the primary proof).
-      const links = await c.query(`SELECT * FROM tool_initiative_links WHERE tool_session_id = $1`, [sessionId]);
+      const links = await c.query(
+        `SELECT * FROM tool_initiative_links WHERE tool_session_id = $1`,
+        [sessionId]
+      );
       expect(links.rows.length).toBe(0);
     } finally {
       await c.end();
@@ -339,7 +357,9 @@ describe('TLS-BVP-001 — nonempty-lineage guard on tool_outputs freeze (real Po
 
     const c = await db();
     try {
-      const rows = await c.query(`SELECT * FROM tool_outputs WHERE tool_session_id = $1`, [sessionId]);
+      const rows = await c.query(`SELECT * FROM tool_outputs WHERE tool_session_id = $1`, [
+        sessionId,
+      ]);
       expect(rows.rows.length).toBe(1);
       const row = rows.rows[0];
       expect(row.status).toBe('approved');
@@ -365,7 +385,9 @@ describe('TLS-BVP-001 — nonempty-lineage guard on tool_outputs freeze (real Po
 
     const c = await db();
     try {
-      const rows = await c.query(`SELECT * FROM tool_outputs WHERE tool_session_id = $1`, [sessionId]);
+      const rows = await c.query(`SELECT * FROM tool_outputs WHERE tool_session_id = $1`, [
+        sessionId,
+      ]);
       expect(rows.rows.length).toBe(1);
       const row = rows.rows[0];
       expect(row.tool_type).toBe('market-forces');
@@ -398,8 +420,11 @@ describe('TLS-BVP-001 — nonempty-lineage guard on tool_outputs freeze (real Po
 
     const c = await db();
     try {
-      const row = (await c.query(`SELECT version, completion_percent FROM tool_sessions WHERE id = $1`, [sessionId]))
-        .rows[0];
+      const row = (
+        await c.query(`SELECT version, completion_percent FROM tool_sessions WHERE id = $1`, [
+          sessionId,
+        ])
+      ).rows[0];
       expect(Number(row.version)).toBe(1);
       expect(Number(row.completion_percent)).toBe(100);
     } finally {
@@ -429,8 +454,11 @@ describe('TLS-BVP-001 — nonempty-lineage guard on tool_outputs freeze (real Po
 
     const c = await db();
     try {
-      const row = (await c.query(`SELECT version, completion_percent FROM tool_sessions WHERE id = $1`, [sessionId]))
-        .rows[0];
+      const row = (
+        await c.query(`SELECT version, completion_percent FROM tool_sessions WHERE id = $1`, [
+          sessionId,
+        ])
+      ).rows[0];
       expect(Number(row.version)).toBe(2);
       expect(Number(row.completion_percent)).toBe(60); // the stale write never landed
     } finally {
@@ -452,11 +480,18 @@ describe('TLS-BVP-001 — nonempty-lineage guard on tool_outputs freeze (real Po
     let outputId: string;
     let before: { content_hash: string; payload_json: unknown; status: string };
     try {
-      const row = (await c.query(`SELECT id, content_hash, payload_json, status FROM tool_outputs WHERE tool_session_id = $1`, [
-        sessionId,
-      ])).rows[0];
+      const row = (
+        await c.query(
+          `SELECT id, content_hash, payload_json, status FROM tool_outputs WHERE tool_session_id = $1`,
+          [sessionId]
+        )
+      ).rows[0];
       outputId = row.id;
-      before = { content_hash: row.content_hash, payload_json: row.payload_json, status: row.status };
+      before = {
+        content_hash: row.content_hash,
+        payload_json: row.payload_json,
+        status: row.status,
+      };
       expect(before.status).toBe('approved');
     } finally {
       await c.end();
@@ -468,9 +503,12 @@ describe('TLS-BVP-001 — nonempty-lineage guard on tool_outputs freeze (real Po
 
     const c2 = await db();
     try {
-      const after = (await c2.query(`SELECT content_hash, payload_json, status FROM tool_outputs WHERE id = $1`, [
-        outputId,
-      ])).rows[0];
+      const after = (
+        await c2.query(
+          `SELECT content_hash, payload_json, status FROM tool_outputs WHERE id = $1`,
+          [outputId]
+        )
+      ).rows[0];
       expect(after.status).toBe(before.status);
       expect(after.content_hash).toBe(before.content_hash);
       expect(after.payload_json).toEqual(before.payload_json);
@@ -494,9 +532,12 @@ describe('TLS-BVP-001 — nonempty-lineage guard on tool_outputs freeze (real Po
     let originalHash: string;
     let originalPayload: unknown;
     try {
-      const row = (await c.query(`SELECT id, content_hash, payload_json FROM tool_outputs WHERE tool_session_id = $1`, [
-        sessionId,
-      ])).rows[0];
+      const row = (
+        await c.query(
+          `SELECT id, content_hash, payload_json FROM tool_outputs WHERE tool_session_id = $1`,
+          [sessionId]
+        )
+      ).rows[0];
       originalId = row.id;
       originalHash = row.content_hash;
       originalPayload = row.payload_json;
@@ -507,7 +548,10 @@ describe('TLS-BVP-001 — nonempty-lineage guard on tool_outputs freeze (real Po
     const original = await getToolOutputById(originalId, ORG_A);
     expect(original).toBeTruthy();
     expect(original!.conclusions.length).toBeGreaterThan(0);
-    const editedConclusion = { ...original!.conclusions[0], k2Meaning: 'SKORYGOWANE po TLS-BVP-001.' };
+    const editedConclusion = {
+      ...original!.conclusions[0],
+      k2Meaning: 'SKORYGOWANE po TLS-BVP-001.',
+    };
 
     const { superseded, revision } = await correctToolOutput({
       approvedOutputId: originalId,
@@ -525,16 +569,21 @@ describe('TLS-BVP-001 — nonempty-lineage guard on tool_outputs freeze (real Po
 
     const c2 = await db();
     try {
-      const originalAfter = (await c2.query(`SELECT status, content_hash, payload_json FROM tool_outputs WHERE id = $1`, [
-        originalId,
-      ])).rows[0];
+      const originalAfter = (
+        await c2.query(
+          `SELECT status, content_hash, payload_json FROM tool_outputs WHERE id = $1`,
+          [originalId]
+        )
+      ).rows[0];
       expect(originalAfter.status).toBe('superseded');
       expect(originalAfter.content_hash).toBe(originalHash); // never mutated
       expect(originalAfter.payload_json).toEqual(originalPayload);
 
-      const revisionRow = (await c2.query(`SELECT status, supersedes_id, version FROM tool_outputs WHERE id = $1`, [
-        revision.id,
-      ])).rows[0];
+      const revisionRow = (
+        await c2.query(`SELECT status, supersedes_id, version FROM tool_outputs WHERE id = $1`, [
+          revision.id,
+        ])
+      ).rows[0];
       expect(revisionRow.status).toBe('approved');
       expect(revisionRow.supersedes_id).toBe(originalId);
       expect(revisionRow.version).toBe(2);
@@ -566,7 +615,10 @@ describe('TLS-BVP-001 — nonempty-lineage guard on tool_outputs freeze (real Po
 
     const c = await db();
     try {
-      const rows = await c.query(`SELECT COUNT(*)::int n FROM tool_outputs WHERE tool_session_id = $1`, [sessionId]);
+      const rows = await c.query(
+        `SELECT COUNT(*)::int n FROM tool_outputs WHERE tool_session_id = $1`,
+        [sessionId]
+      );
       expect(rows.rows[0].n).toBe(1);
     } finally {
       await c.end();
@@ -587,7 +639,9 @@ describe('TLS-BVP-001 — nonempty-lineage guard on tool_outputs freeze (real Po
     const c = await db();
     let outputId: string | undefined;
     try {
-      const noRow = await c.query(`SELECT * FROM tool_outputs WHERE tool_session_id = $1`, [sessionId]);
+      const noRow = await c.query(`SELECT * FROM tool_outputs WHERE tool_session_id = $1`, [
+        sessionId,
+      ]);
       expect(noRow.rows.length).toBe(0); // org B's attempt created nothing
 
       // Now legitimately freeze it as org A, then prove org B still cannot read it.
@@ -596,7 +650,9 @@ describe('TLS-BVP-001 — nonempty-lineage guard on tool_outputs freeze (real Po
         .set(as(ORG_A))
         .send({ outputType: 'idea', title: 'legit org A promotion' });
       assertPromotionBranchReached(legit);
-      outputId = (await c.query(`SELECT id FROM tool_outputs WHERE tool_session_id = $1`, [sessionId])).rows[0].id;
+      outputId = (
+        await c.query(`SELECT id FROM tool_outputs WHERE tool_session_id = $1`, [sessionId])
+      ).rows[0].id;
     } finally {
       await c.end();
     }
@@ -606,10 +662,10 @@ describe('TLS-BVP-001 — nonempty-lineage guard on tool_outputs freeze (real Po
 
     const c2 = await db();
     try {
-      const scoped = await c2.query(`SELECT id FROM tool_outputs WHERE id = $1 AND organization_id = $2`, [
-        outputId,
-        ORG_B,
-      ]);
+      const scoped = await c2.query(
+        `SELECT id FROM tool_outputs WHERE id = $1 AND organization_id = $2`,
+        [outputId, ORG_B]
+      );
       expect(scoped.rows.length).toBe(0);
     } finally {
       await c2.end();
@@ -632,9 +688,12 @@ describe('TLS-BVP-001 — nonempty-lineage guard on tool_outputs freeze (real Po
     const independent = new Client({ connectionString: DATABASE_URL });
     await independent.connect();
     try {
-      const row = (await independent.query(`SELECT status, frozen_at, payload_json FROM tool_outputs WHERE tool_session_id = $1`, [
-        sessionId,
-      ])).rows[0];
+      const row = (
+        await independent.query(
+          `SELECT status, frozen_at, payload_json FROM tool_outputs WHERE tool_session_id = $1`,
+          [sessionId]
+        )
+      ).rows[0];
       expect(row.status).toBe('approved');
       expect(row.frozen_at).toBeTruthy();
       expect(row.payload_json.conclusions.length).toBeGreaterThan(0);

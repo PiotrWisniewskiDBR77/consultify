@@ -72,6 +72,14 @@ import initiativesExecutionRuntimeRouter from './initiativesExecutionRuntime.rou
 
 const router = Router();
 
+// INI-MVP-PROFILE-001: Initiative routes have completed their shadow period.
+// Preserve per-route project resolution/allowWithoutProject options, but never
+// allow an individual caller to silently return to log-only authorization.
+const requireGovernedInitiativeCapability = (
+  capability: string,
+  options: Parameters<typeof requireInitiativeCapability>[1] = {}
+) => requireInitiativeCapability(capability, { ...options, shadow: false });
+
 function resolvePmoInitiativesCorrelationId(req: any): string | null {
   return req?.correlationId || req?.get?.('X-Correlation-ID') || null;
 }
@@ -189,7 +197,10 @@ const WizardCandidateTriageSchema = z.object({
 router.post(
   '/wizard/sessions',
   requireOrgRole('user'),
-  requireInitiativeCapability('initiative.wizard.use', { shadow: true, allowWithoutProject: true }),
+  requireGovernedInitiativeCapability('initiative.wizard.use', {
+    shadow: true,
+    allowWithoutProject: true,
+  }),
   requireInitiativeWriteAccess(),
   validateBody(WizardSessionSchema),
   async (req: any, res: any) => {
@@ -215,7 +226,10 @@ router.get('/wizard/sessions/:sessionId', requireOrgRole('user'), async (req: an
 router.post(
   '/wizard/sessions/:sessionId/candidates/generate',
   requireOrgRole('user'),
-  requireInitiativeCapability('initiative.wizard.use', { shadow: true, allowWithoutProject: true }),
+  requireGovernedInitiativeCapability('initiative.wizard.use', {
+    shadow: true,
+    allowWithoutProject: true,
+  }),
   requireInitiativeWriteAccess(),
   async (req: any, res: any) => {
     const orgId = req.user?.organizationId;
@@ -260,7 +274,10 @@ router.get(
 router.patch(
   '/wizard/candidates/:candidateId/triage',
   requireOrgRole('user'),
-  requireInitiativeCapability('initiative.wizard.use', { shadow: true, allowWithoutProject: true }),
+  requireGovernedInitiativeCapability('initiative.wizard.use', {
+    shadow: true,
+    allowWithoutProject: true,
+  }),
   requireInitiativeWriteAccess(),
   validateBody(WizardCandidateTriageSchema),
   async (req: any, res: any) => {
@@ -315,7 +332,10 @@ const WizardDraftsCreatedSchema = z.object({
 router.post(
   '/wizard/sessions/:sessionId/drafts-created',
   requireOrgRole('user'),
-  requireInitiativeCapability('initiative.wizard.use', { shadow: true, allowWithoutProject: true }),
+  requireGovernedInitiativeCapability('initiative.wizard.use', {
+    shadow: true,
+    allowWithoutProject: true,
+  }),
   requireInitiativeWriteAccess(),
   validateBody(WizardDraftsCreatedSchema),
   async (req: any, res: any) => {
@@ -626,7 +646,7 @@ async function handleMergeOrExtendFromInsight(req: any, res: any, mode: 'merge' 
 router.post(
   '/:id/merge-from-insight',
   requireOrgRole('user'),
-  requireInitiativeCapability('initiative.update', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.update', { shadow: true }),
   validateBody(MergeExtendFromInsightSchema),
   async (req: any, res: any) => handleMergeOrExtendFromInsight(req, res, 'merge')
 );
@@ -634,7 +654,7 @@ router.post(
 router.post(
   '/:id/extend-from-insight',
   requireOrgRole('user'),
-  requireInitiativeCapability('initiative.update', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.update', { shadow: true }),
   validateBody(MergeExtendFromInsightSchema),
   async (req: any, res: any) => handleMergeOrExtendFromInsight(req, res, 'extend')
 );
@@ -733,7 +753,7 @@ router.get('/portfolio/dependencies', InitiativeController.getPortfolioDependenc
 router.post(
   '/portfolio/dependencies',
   requireOrgRole('user'),
-  requireInitiativeCapability('initiative.dependency.manage', {
+  requireGovernedInitiativeCapability('initiative.dependency.manage', {
     shadow: true,
     allowWithoutProject: true,
   }),
@@ -747,7 +767,7 @@ router.post(
 router.delete(
   '/portfolio/dependencies/:id',
   requireOrgRole('user'),
-  requireInitiativeCapability('initiative.dependency.manage', {
+  requireGovernedInitiativeCapability('initiative.dependency.manage', {
     shadow: true,
     allowWithoutProject: true,
   }),
@@ -818,7 +838,7 @@ router.get('/programs', async (req: any, res: any) => {
 router.post(
   '/programs',
   requireOrgRole('user'),
-  requireInitiativeCapability('initiative.program.manage', {
+  requireGovernedInitiativeCapability('initiative.program.manage', {
     shadow: true,
     allowWithoutProject: true,
   }),
@@ -989,7 +1009,7 @@ router.get('/programs/:programId/rollup', async (req: any, res: any) => {
 router.put(
   '/programs/:programId',
   requireOrgRole('user'),
-  requireInitiativeCapability('initiative.program.manage', {
+  requireGovernedInitiativeCapability('initiative.program.manage', {
     shadow: true,
     allowWithoutProject: true,
   }),
@@ -1084,7 +1104,7 @@ router.put(
 router.delete(
   '/programs/:programId',
   requireOrgRole('user'),
-  requireInitiativeCapability('initiative.program.manage', {
+  requireGovernedInitiativeCapability('initiative.program.manage', {
     shadow: true,
     allowWithoutProject: true,
   }),
@@ -1189,7 +1209,7 @@ router.get('/raci-results-summary', async (req: any, res: any) => {
  */
 router.post(
   '/:id/duplicate',
-  requireInitiativeCapability('initiative.create', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.create', { shadow: true }),
   async (req: any, res: any) => {
     try {
       const orgId = req.user?.organizationId;
@@ -1336,7 +1356,7 @@ router.get('/templates/:templateId', async (req: any, res: any) => {
  */
 router.post(
   '/templates',
-  requireInitiativeCapability('initiative.template.manage', {
+  requireGovernedInitiativeCapability('initiative.template.manage', {
     shadow: true,
     allowWithoutProject: true,
   }),
@@ -1363,7 +1383,7 @@ router.post(
  */
 router.put(
   '/templates/:templateId',
-  requireInitiativeCapability('initiative.template.manage', {
+  requireGovernedInitiativeCapability('initiative.template.manage', {
     shadow: true,
     allowWithoutProject: true,
   }),
@@ -1400,7 +1420,7 @@ router.put(
  */
 router.delete(
   '/templates/:templateId',
-  requireInitiativeCapability('initiative.template.manage', {
+  requireGovernedInitiativeCapability('initiative.template.manage', {
     shadow: true,
     allowWithoutProject: true,
   }),
@@ -1433,7 +1453,7 @@ router.delete(
  */
 router.post(
   '/templates/:templateId/duplicate',
-  requireInitiativeCapability('initiative.template.manage', {
+  requireGovernedInitiativeCapability('initiative.template.manage', {
     shadow: true,
     allowWithoutProject: true,
   }),
@@ -1552,7 +1572,7 @@ router.get('/templates/:templateId/wbs', async (req: any, res: any) => {
 router.post(
   '/templates/:templateId/wbs',
   requireOrgRole('user'),
-  requireInitiativeCapability('initiative.template.manage', {
+  requireGovernedInitiativeCapability('initiative.template.manage', {
     shadow: true,
     allowWithoutProject: true,
   }),
@@ -1601,7 +1621,7 @@ router.post(
 router.put(
   '/templates/:templateId/wbs/:itemId',
   requireOrgRole('user'),
-  requireInitiativeCapability('initiative.template.manage', {
+  requireGovernedInitiativeCapability('initiative.template.manage', {
     shadow: true,
     allowWithoutProject: true,
   }),
@@ -1630,7 +1650,7 @@ router.put(
 router.delete(
   '/templates/:templateId/wbs/:itemId',
   requireOrgRole('user'),
-  requireInitiativeCapability('initiative.template.manage', {
+  requireGovernedInitiativeCapability('initiative.template.manage', {
     shadow: true,
     allowWithoutProject: true,
   }),
@@ -1655,7 +1675,7 @@ router.delete(
 router.post(
   '/templates/:templateId/wbs/reorder',
   requireOrgRole('user'),
-  requireInitiativeCapability('initiative.template.manage', {
+  requireGovernedInitiativeCapability('initiative.template.manage', {
     shadow: true,
     allowWithoutProject: true,
   }),
@@ -1700,7 +1720,7 @@ router.get('/templates/:templateId/validate', async (req: any, res: any) => {
 router.post(
   '/templates/:templateId/clone',
   requireOrgRole('user'),
-  requireInitiativeCapability('initiative.template.manage', {
+  requireGovernedInitiativeCapability('initiative.template.manage', {
     shadow: true,
     allowWithoutProject: true,
   }),
@@ -1733,7 +1753,7 @@ router.post(
  */
 router.patch(
   '/:id/template',
-  requireInitiativeCapability('initiative.template.apply', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.template.apply', { shadow: true }),
   validateBody(UpdateInitiativeTemplateSchema),
   async (req: any, res: any) => {
     try {
@@ -1783,7 +1803,7 @@ router.patch(
  */
 router.post(
   '/:id/apply-template',
-  requireInitiativeCapability('initiative.template.apply', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.template.apply', { shadow: true }),
   async (req: any, res: any) => {
     try {
       const orgId = req.user?.organizationId;
@@ -2042,7 +2062,7 @@ router.post(
  */
 router.post(
   '/:id/changes',
-  requireInitiativeCapability('initiative.change.manage', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.change.manage', { shadow: true }),
   async (req: any, res: any) => {
     try {
       const orgId = req.user?.organizationId;
@@ -2233,7 +2253,7 @@ router.post(
 router.post(
   '/:id/apply-blueprint',
   requireOrgRole('user'),
-  requireInitiativeCapability('initiative.template.apply', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.template.apply', { shadow: true }),
   async (req: any, res: any) => {
     try {
       const orgId = req.user?.organizationId;
@@ -2357,7 +2377,7 @@ router.get('/section-types/:id', async (req: any, res: any) => {
  */
 router.post(
   '/section-types',
-  requireInitiativeCapability('initiative.section_type.manage', {
+  requireGovernedInitiativeCapability('initiative.section_type.manage', {
     shadow: true,
     allowWithoutProject: true,
   }),
@@ -2389,7 +2409,7 @@ router.post(
  */
 router.put(
   '/section-types/:id',
-  requireInitiativeCapability('initiative.section_type.manage', {
+  requireGovernedInitiativeCapability('initiative.section_type.manage', {
     shadow: true,
     allowWithoutProject: true,
   }),
@@ -2432,7 +2452,7 @@ router.put(
  */
 router.delete(
   '/section-types/:id',
-  requireInitiativeCapability('initiative.section_type.manage', {
+  requireGovernedInitiativeCapability('initiative.section_type.manage', {
     shadow: true,
     allowWithoutProject: true,
   }),
@@ -2475,7 +2495,7 @@ router.delete(
  */
 router.post(
   '/section-types/:id/duplicate',
-  requireInitiativeCapability('initiative.section_type.manage', {
+  requireGovernedInitiativeCapability('initiative.section_type.manage', {
     shadow: true,
     allowWithoutProject: true,
   }),
@@ -2875,7 +2895,7 @@ router.post('/suggest-sections', async (req: any, res: any) => {
  */
 router.post(
   '/',
-  requireInitiativeCapability('initiative.create', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.create', { shadow: true }),
   validateBody(CreateInitiativeSchema),
   InitiativeController.createInitiative
 );
@@ -2978,7 +2998,7 @@ function extractSessionRecommendations(session: {
 router.post(
   '/from-tool-session',
   requireOrgRole('user'),
-  requireInitiativeCapability('initiative.create', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.create', { shadow: true }),
   requireInitiativeWriteAccess(),
   validateBody(FromToolSessionSchema),
   async (req: any, res: any) => {
@@ -3139,7 +3159,7 @@ router.put('/:id/profile', requireOrgRole('OWNER', 'ADMIN'), async (req: any, re
  */
 router.put(
   '/:id',
-  requireInitiativeCapability('initiative.update', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.update', { shadow: true }),
   validateBody(UpdateInitiativeSchema),
   InitiativeController.updateInitiative
 );
@@ -3150,7 +3170,7 @@ router.put(
  */
 router.patch(
   '/:id/status',
-  requireInitiativeCapability('initiative.status.change', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.status.change', { shadow: true }),
   validateBody(UpdateInitiativeStatusSchema),
   InitiativeController.updateInitiativeStatus
 );
@@ -3161,7 +3181,7 @@ router.patch(
  */
 router.patch(
   '/:id/quick-update',
-  requireInitiativeCapability('initiative.update', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.update', { shadow: true }),
   validateBody(QuickUpdateInitiativeSchema),
   InitiativeController.quickUpdateInitiative
 );
@@ -3176,7 +3196,7 @@ router.patch(
  */
 router.patch(
   '/:id',
-  requireInitiativeCapability('initiative.update', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.update', { shadow: true }),
   (req, res, next) => {
     const body = (req as any)?.body || {};
     const hasStatus = body && Object.prototype.hasOwnProperty.call(body, 'status');
@@ -3204,7 +3224,7 @@ router.patch(
 router.delete(
   '/:id',
   requireOrgRole('user'),
-  requireInitiativeCapability('initiative.delete', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.delete', { shadow: true }),
   requireInitiativeWriteAccess(),
   InitiativeController.deleteInitiative
 );
@@ -3225,7 +3245,7 @@ router.get('/:id/readiness', InitiativeController.checkReadiness);
  */
 router.post(
   '/:id/submit-review',
-  requireInitiativeCapability('initiative.submit', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.submit', { shadow: true }),
   InitiativeController.submitForReview
 );
 
@@ -3235,7 +3255,7 @@ router.post(
  */
 router.post(
   '/:id/approve',
-  requireInitiativeCapability('initiative.approve', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.approve', { shadow: true }),
   InitiativeController.approveInitiative
 );
 
@@ -3266,7 +3286,7 @@ router.post(
  */
 router.post(
   '/:id/start-execution',
-  requireInitiativeCapability('initiative.start', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.start', { shadow: true }),
   InitiativeController.startExecution
 );
 
@@ -3276,7 +3296,7 @@ router.post(
  */
 router.post(
   '/:id/block',
-  requireInitiativeCapability('initiative.block', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.block', { shadow: true }),
   InitiativeController.blockInitiative
 );
 
@@ -3286,7 +3306,7 @@ router.post(
  */
 router.post(
   '/:id/unblock',
-  requireInitiativeCapability('initiative.unblock', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.unblock', { shadow: true }),
   InitiativeController.unblockInitiative
 );
 
@@ -3296,7 +3316,7 @@ router.post(
  */
 router.post(
   '/:id/complete',
-  requireInitiativeCapability('initiative.complete', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.complete', { shadow: true }),
   InitiativeController.completeInitiative
 );
 
@@ -3306,7 +3326,7 @@ router.post(
  */
 router.post(
   '/:id/move',
-  requireInitiativeCapability('initiative.update', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.update', { shadow: true }),
   InitiativeController.moveInitiative
 );
 
@@ -3320,7 +3340,7 @@ router.post(
  */
 router.post(
   '/bulk-assign',
-  requireInitiativeCapability('initiative.update', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.update', { shadow: true }),
   InitiativeController.bulkAssignInitiatives
 );
 
@@ -3330,7 +3350,7 @@ router.post(
  */
 router.post(
   '/:id/archive',
-  requireInitiativeCapability('initiative.status.change', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.status.change', { shadow: true }),
   InitiativeController.archiveInitiative
 );
 
@@ -3392,7 +3412,7 @@ router.get('/:id/kpis', InitiativeController.getInitiativeKpis);
  */
 router.post(
   '/:id/kpis',
-  requireInitiativeCapability('kpi.update', { shadow: true }),
+  requireGovernedInitiativeCapability('kpi.update', { shadow: true }),
   InitiativeController.createInitiativeKpi
 );
 
@@ -3402,7 +3422,7 @@ router.post(
  */
 router.put(
   '/:id/kpis/:kpiId',
-  requireInitiativeCapability('kpi.update', { shadow: true }),
+  requireGovernedInitiativeCapability('kpi.update', { shadow: true }),
   InitiativeController.updateInitiativeKpi
 );
 
@@ -3412,7 +3432,7 @@ router.put(
  */
 router.delete(
   '/:id/kpis/:kpiId',
-  requireInitiativeCapability('kpi.update', { shadow: true }),
+  requireGovernedInitiativeCapability('kpi.update', { shadow: true }),
   InitiativeController.deleteInitiativeKpi
 );
 
@@ -3432,7 +3452,7 @@ router.get('/:id/milestones', InitiativeController.getMilestones);
  */
 router.post(
   '/:id/milestones',
-  requireInitiativeCapability('initiative.milestone.manage', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.milestone.manage', { shadow: true }),
   InitiativeController.createMilestone
 );
 
@@ -3442,7 +3462,7 @@ router.post(
  */
 router.put(
   '/:id/milestones/:milestoneId',
-  requireInitiativeCapability('initiative.milestone.manage', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.milestone.manage', { shadow: true }),
   InitiativeController.updateMilestone
 );
 
@@ -3452,7 +3472,7 @@ router.put(
  */
 router.delete(
   '/:id/milestones/:milestoneId',
-  requireInitiativeCapability('initiative.milestone.manage', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.milestone.manage', { shadow: true }),
   InitiativeController.deleteMilestone
 );
 
@@ -3497,7 +3517,7 @@ router.get('/:id/resources', InitiativeController.getResources);
  */
 router.post(
   '/:id/resources',
-  requireInitiativeCapability('initiative.resource.manage', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.resource.manage', { shadow: true }),
   InitiativeController.addResource
 );
 
@@ -3507,7 +3527,7 @@ router.post(
  */
 router.delete(
   '/:id/resources/:resourceId',
-  requireInitiativeCapability('initiative.resource.manage', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.resource.manage', { shadow: true }),
   InitiativeController.deleteResource
 );
 
@@ -3517,7 +3537,7 @@ router.delete(
  */
 router.put(
   '/:id/resources/:resourceId',
-  requireInitiativeCapability('initiative.resource.manage', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.resource.manage', { shadow: true }),
   InitiativeController.updateResource
 );
 
@@ -3527,7 +3547,7 @@ router.put(
  */
 router.post(
   '/:id/resources/ai-apply-log',
-  requireInitiativeCapability('initiative.resource.manage', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.resource.manage', { shadow: true }),
   validateBody(ResourcesAiApplyLogSchema),
   InitiativeController.logResourcesAiApply
 );
@@ -3540,39 +3560,39 @@ router.get('/:id/staffing-plans', StaffingPlanController.listPlans);
 router.post(
   '/:id/staffing-plans',
   requireOrgRole('user'),
-  requireInitiativeCapability('initiative.staffing.manage', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.staffing.manage', { shadow: true }),
   StaffingPlanController.createPlan
 );
 router.get('/:id/staffing-plans/:planId', StaffingPlanController.getPlan);
 router.put(
   '/:id/staffing-plans/:planId',
   requireOrgRole('user'),
-  requireInitiativeCapability('initiative.staffing.manage', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.staffing.manage', { shadow: true }),
   StaffingPlanController.updatePlan
 );
 router.delete(
   '/:id/staffing-plans/:planId',
   requireOrgRole('user'),
-  requireInitiativeCapability('initiative.staffing.manage', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.staffing.manage', { shadow: true }),
   StaffingPlanController.deletePlan
 );
 
 router.post(
   '/:id/staffing-plans/:planId/roles',
   requireOrgRole('user'),
-  requireInitiativeCapability('initiative.staffing.manage', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.staffing.manage', { shadow: true }),
   StaffingPlanController.addRole
 );
 router.put(
   '/:id/staffing-plans/:planId/roles/:roleId',
   requireOrgRole('user'),
-  requireInitiativeCapability('initiative.staffing.manage', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.staffing.manage', { shadow: true }),
   StaffingPlanController.updateRole
 );
 router.delete(
   '/:id/staffing-plans/:planId/roles/:roleId',
   requireOrgRole('user'),
-  requireInitiativeCapability('initiative.staffing.manage', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.staffing.manage', { shadow: true }),
   StaffingPlanController.deleteRole
 );
 
@@ -3580,7 +3600,7 @@ router.get('/:id/staffing-plans/:planId/gaps', StaffingPlanController.getGaps);
 router.post(
   '/:id/staffing-plans/:planId/sync-capacity',
   requireOrgRole('user'),
-  requireInitiativeCapability('initiative.staffing.manage', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.staffing.manage', { shadow: true }),
   StaffingPlanController.syncCapacity
 );
 
@@ -3600,7 +3620,7 @@ router.get('/:id/budget-items', InitiativeController.getBudgetItems);
  */
 router.post(
   '/:id/budget-items',
-  requireInitiativeCapability('initiative.budget.manage', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.budget.manage', { shadow: true }),
   InitiativeController.addBudgetItem
 );
 
@@ -3610,7 +3630,7 @@ router.post(
  */
 router.put(
   '/:id/budget-items/:itemId',
-  requireInitiativeCapability('initiative.budget.manage', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.budget.manage', { shadow: true }),
   InitiativeController.updateBudgetItem
 );
 
@@ -3620,7 +3640,7 @@ router.put(
  */
 router.delete(
   '/:id/budget-items/:itemId',
-  requireInitiativeCapability('initiative.budget.manage', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.budget.manage', { shadow: true }),
   InitiativeController.deleteBudgetItem
 );
 
@@ -3640,7 +3660,7 @@ router.get('/:id/tools', InitiativeController.getTools);
  */
 router.post(
   '/:id/tools',
-  requireInitiativeCapability('initiative.tool.manage', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.tool.manage', { shadow: true }),
   InitiativeController.addTool
 );
 
@@ -3650,7 +3670,7 @@ router.post(
  */
 router.put(
   '/:id/tools/:toolId',
-  requireInitiativeCapability('initiative.tool.manage', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.tool.manage', { shadow: true }),
   InitiativeController.updateTool
 );
 
@@ -3660,7 +3680,7 @@ router.put(
  */
 router.delete(
   '/:id/tools/:toolId',
-  requireInitiativeCapability('initiative.tool.manage', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.tool.manage', { shadow: true }),
   InitiativeController.deleteTool
 );
 
@@ -3680,7 +3700,7 @@ router.get('/:id/intangible-assets', InitiativeController.getIntangibleAssets);
  */
 router.post(
   '/:id/intangible-assets',
-  requireInitiativeCapability('initiative.intangible.manage', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.intangible.manage', { shadow: true }),
   InitiativeController.addIntangibleAsset
 );
 
@@ -3690,7 +3710,7 @@ router.post(
  */
 router.put(
   '/:id/intangible-assets/:assetId',
-  requireInitiativeCapability('initiative.intangible.manage', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.intangible.manage', { shadow: true }),
   InitiativeController.updateIntangibleAsset
 );
 
@@ -3700,7 +3720,7 @@ router.put(
  */
 router.delete(
   '/:id/intangible-assets/:assetId',
-  requireInitiativeCapability('initiative.intangible.manage', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.intangible.manage', { shadow: true }),
   InitiativeController.deleteIntangibleAsset
 );
 
@@ -3711,41 +3731,41 @@ router.delete(
 router.get('/:id/stakeholders', InitiativeController.getStakeholders);
 router.post(
   '/:id/stakeholders',
-  requireInitiativeCapability('initiative.stakeholder.manage', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.stakeholder.manage', { shadow: true }),
   InitiativeController.addStakeholder
 );
 router.delete(
   '/:id/stakeholders/:stakeholderId',
-  requireInitiativeCapability('initiative.stakeholder.manage', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.stakeholder.manage', { shadow: true }),
   InitiativeController.deleteStakeholder
 );
 
 router.get('/:id/watchers', InitiativeController.getWatchers);
 router.post(
   '/:id/watchers',
-  requireInitiativeCapability('initiative.watcher.manage', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.watcher.manage', { shadow: true }),
   InitiativeController.addWatcher
 );
 router.delete(
   '/:id/watchers/:watcherId',
-  requireInitiativeCapability('initiative.watcher.manage', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.watcher.manage', { shadow: true }),
   InitiativeController.deleteWatcher
 );
 
 router.get('/:id/raid', InitiativeController.getRaid);
 router.post(
   '/:id/raid',
-  requireInitiativeCapability('initiative.raid.manage', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.raid.manage', { shadow: true }),
   InitiativeController.createRaidItem
 );
 router.patch(
   '/:id/raid/:raidId',
-  requireInitiativeCapability('initiative.raid.manage', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.raid.manage', { shadow: true }),
   InitiativeController.updateRaidItem
 );
 router.delete(
   '/:id/raid/:raidId',
-  requireInitiativeCapability('initiative.raid.manage', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.raid.manage', { shadow: true }),
   InitiativeController.deleteRaidItem
 );
 
@@ -3758,12 +3778,12 @@ router.get('/:id/history', InitiativeController.getHistory);
 router.get('/:id/comments', InitiativeController.getInitiativeComments);
 router.post(
   '/:id/comments',
-  requireInitiativeCapability('initiative.comment', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.comment', { shadow: true }),
   InitiativeController.addInitiativeComment
 );
 router.delete(
   '/:id/comments/:commentId',
-  requireInitiativeCapability('initiative.comment', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.comment', { shadow: true }),
   InitiativeController.deleteInitiativeComment
 );
 
@@ -3784,7 +3804,7 @@ router.get('/:id/task-dependencies', InitiativeController.getInitiativeTaskDepen
 router.get('/:id/gate-roles', InitiativeController.getGateRoles);
 router.put(
   '/:id/gate-roles',
-  requireInitiativeCapability('initiative.gate_role.manage', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.gate_role.manage', { shadow: true }),
   InitiativeController.updateGateRoles
 );
 
@@ -3820,7 +3840,7 @@ router.put(
  * closed: if we cannot resolve the access context, deny the gate."); this
  * handler additionally treats ANY error thrown while resolving access as a
  * deny, so an unexpected failure can never fall through to an allow. This is
- * deliberately NOT `requireInitiativeCapability(..., { shadow: true })` —
+ * deliberately NOT `requireGovernedInitiativeCapability(..., { shadow: true })` —
  * that helper's shadow mode (used elsewhere in this file) is telemetry-only
  * and, even without `shadow`, silently ALLOWS every caller unless the
  * `EFFECTIVE_ACCESS_ENFORCE`/`EFFECTIVE_ACCESS_SHADOW` env flags happen to be
@@ -3934,12 +3954,12 @@ router.post('/:id/gate-ai-check', InitiativeController.getGateAiCheck);
 router.get('/:id/linked-items', InitiativeController.getLinkedItems);
 router.post(
   '/:id/linked-items',
-  requireInitiativeCapability('initiative.link.manage', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.link.manage', { shadow: true }),
   InitiativeController.addLinkedItem
 );
 router.delete(
   '/:id/linked-items/:linkId',
-  requireInitiativeCapability('initiative.link.manage', { shadow: true }),
+  requireGovernedInitiativeCapability('initiative.link.manage', { shadow: true }),
   InitiativeController.removeLinkedItem
 );
 router.get('/:id/gate-readiness-check', InitiativeController.getGateReadinessCheck);

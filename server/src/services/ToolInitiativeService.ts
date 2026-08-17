@@ -267,7 +267,7 @@ export class ToolInitiativeService {
       const axis = (initiative.category || 'Operations').toLowerCase();
       // Uspójnienie F1.8 — per-record przez kanoniczny lejek (DRAFT + name/title + lineage).
       let effectiveInitiativeId = initiativeId;
-      if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+      if (process.env.INITIATIVE_FUNNEL_ENABLED !== 'false') {
         const __r = await funnelCreateInitiative(
           toolSession.organization_id,
           {

@@ -1158,7 +1158,7 @@ const AIActionExecutor = {
 
     // Uspójnienie F1.10 — przez kanoniczny lejek; org_id WYMUSZONY (naprawia bug sierot).
     let initiativeId: string;
-    if (process.env.INITIATIVE_FUNNEL_ENABLED === 'true') {
+    if (process.env.INITIATIVE_FUNNEL_ENABLED !== 'false') {
       const __r = await funnelCreateInitiative(
         orgId,
         {

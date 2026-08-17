@@ -950,7 +950,7 @@ Return a JSON array with exactly ${count} initiatives in this format:
       'updated_at',
     ]);
 
-    const funnelEnabled = process.env.INITIATIVE_FUNNEL_ENABLED === 'true';
+    const funnelEnabled = process.env.INITIATIVE_FUNNEL_ENABLED !== 'false';
     const sourceType = reportId ? 'assessment_report' : 'assessment';
     const sourceId = reportId ? String(reportId) : String(assessment.id);
 
