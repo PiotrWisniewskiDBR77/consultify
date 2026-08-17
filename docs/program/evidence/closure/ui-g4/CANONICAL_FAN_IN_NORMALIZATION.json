@@ -1,0 +1,37 @@
+{
+  "kind": "UI_G4_CANONICAL_FAN_IN_NORMALIZATION",
+  "fanInProductSha": "9f2aa21b39d11a935d6ab2b8b60f1dded4a0c4f1",
+  "sourceBranch": "codex/claude-next-ui-g4",
+  "sourceTip": "5824bc84951ac29bc13b7bf79b49672df63a5977",
+  "testedUiProductSha": "40e1a89bdd118de828fd5f716839789fc340a20a",
+  "sourceHarnessCommit": "9e3091a10f",
+  "sourceEvidenceCommit": "5824bc8495",
+  "integrity": {
+    "taskRecords": 15,
+    "screenshots": 214,
+    "screenshotHashesVerified": 214,
+    "screenshotHashFailures": 0,
+    "primaryCellsPerSurface": 12,
+    "mountedRuntime": "Vite client and tsx backend",
+    "database": "fresh PostgreSQL 16 from the canonical migration chain",
+    "authentication": "signed JWT from the real test-support bootstrap",
+    "requestInterception": "none"
+  },
+  "historicalVerdict": "AUTOMATED_G4_FAIL / BLOCKED_HUMAN",
+  "currentVerdict": "NOT_RETESTED_ON_FAN_IN_SHA",
+  "canonicalTaskEvidenceReplacements": [],
+  "replacementRationale": "No canonical TASK_EVIDENCE verdict is replaced by this fan-in. The measured sweep is exact-SHA evidence for 40e1a89bdd only. Every surface failed the automated focus gate and some also failed axe. A later canonical commit, 26d87a95fc, changes the default focus-visible contract and is included in the fan-in ancestry, so the historical focus result cannot be projected onto the current SHA without a mounted re-sweep.",
+  "claimsSupported": [
+    "At testedUiProductSha, 15 of 15 surfaces mounted with real PostgreSQL and signed authentication.",
+    "At testedUiProductSha, 214 of 214 screenshot files match their recorded sha256.",
+    "At testedUiProductSha, every surface passed its declared primary render matrix, horizontal-overflow, deep-link, reload, cold-reopen, and unnamed-control probes.",
+    "At testedUiProductSha, no surface passed the complete automated G4 gate."
+  ],
+  "claimsNotSupported": [
+    "No G4 PASS or DONE_CURRENT_SHA claim is supported for fanInProductSha.",
+    "No forbidden-state coverage is supported.",
+    "No manual VoiceOver, brand, visual-owner, or target-role acceptance is supported.",
+    "No claim is made that axe or focus findings remain unchanged on fanInProductSha."
+  ],
+  "nextGate": "Run the mounted UI-G4 sweep on the exact current candidate after all UI fan-in commits, then normalize canonical per-task evidence from those new results."
+}
