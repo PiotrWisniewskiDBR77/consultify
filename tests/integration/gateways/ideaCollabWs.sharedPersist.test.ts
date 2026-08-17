@@ -557,6 +557,12 @@ describe('DP-3 T5 — ideaCollabWs shared canonical persist', () => {
     ws.send(JSON.stringify({ type: 'graph_patch', operations: [{ op: 'unknown', data: { id: 'x' } }] }));
     expect((await malformed).code).toBe('INVALID_MESSAGE');
     expect(store.canonical.get('idea-validate')?.version).toBe(4);
+    const malformedSelection = onceMessageOfType(ws, 'error');
+    ws.send(JSON.stringify({ type: 'select_nodes', nodeIds: Array.from({ length: 201 }, (_, i) => `n-${i}`) }));
+    expect((await malformedSelection).code).toBe('INVALID_MESSAGE');
+    const malformedCursor = onceMessageOfType(ws, 'error');
+    ws.send(JSON.stringify({ type: 'cursor', x: 'NaN', y: 0 }));
+    expect((await malformedCursor).code).toBe('INVALID_MESSAGE');
     store.members.delete('org-a:userA');
     const revoked = onceMessageOfType(ws, 'error');
     ws.send(JSON.stringify({ type: 'graph_patch', operations: [{ op: 'add_node', data: { id: 'x' } }] }));
@@ -565,10 +571,31 @@ describe('DP-3 T5 — ideaCollabWs shared canonical persist', () => {
     ws.close();
   });
 
+  it('flag OFF still rechecks ACTIVE membership and revoked mutation has no relay or audit', async () => {
+    flagState.ENABLE_SHARED_IDEA_MAPS = false;
+    store.ideaOrg.set('idea-off-revoke', 'org-a');
+    store.members.add('org-a:userA'); store.members.add('org-a:userB');
+    store.canonical.set('idea-off-revoke', { id: 'map-off-r', version: 2, nodes_json: '[]', edges_json: '[]' });
+    const wsA = await connect(port, 'idea-off-revoke', signToken({ id: 'userA', organizationId: 'org-a' }));
+    const wsB = await connect(port, 'idea-off-revoke', signToken({ id: 'userB', organizationId: 'org-a' }));
+    store.members.delete('org-a:userA');
+    let relayed = false;
+    wsB.on('message', (raw) => { try { if (JSON.parse(raw.toString()).type === 'graph_patch') relayed = true; } catch {} });
+    const denied = onceMessageOfType(wsA, 'error');
+    wsA.send(JSON.stringify({ type: 'graph_patch', operations: [{ op: 'add_node', data: { id: 'denied' } }] }));
+    expect((await denied).code).toBe('NOT_A_WRITER');
+    await delay(100);
+    expect(relayed).toBe(false);
+    expect(store.collabEvents.some((event) => event.eventType === 'graph_patch')).toBe(false);
+    expect(store.canonical.get('idea-off-revoke')?.version).toBe(2);
+    wsA.close(); wsB.close();
+  });
+
   it('flag OFF → no persist (DB untouched) but relay still delivers the patch', async () => {
     flagState.ENABLE_SHARED_IDEA_MAPS = false;
     store.ideaOrg.set('idea-3', 'org-a');
-    // members not required when flag OFF (upgrade uses org-scope only)
+    store.members.add('org-a:userA');
+    store.members.add('org-a:userB');
     store.canonical.set('idea-3', {
       id: 'map-3',
       version: 7,

@@ -75,6 +75,7 @@ interface CollabSocket extends WebSocket {
  *  DP-3: when ENABLE_SHARED_IDEA_MAPS is ON these additionally require
  *  membership canWrite (a non-member is already rejected at upgrade with 403). */
 const WRITE_OPS = new Set([
+  'cursor',
   'lock_node',
   'unlock_node',
   'select_nodes',
@@ -574,15 +575,16 @@ export function attachIdeaCollabWs(server: HttpServer): void {
             }
             return;
           }
-          if (featureFlags.ENABLE_SHARED_IDEA_MAPS) {
-            const currentMembership = await assertIdeaMembership(
-              db, user.organizationId || '', user.id, ideaId
-            );
-            if (!currentMembership.canWrite) {
-              ws.__canWrite = false;
-              ws.send(JSON.stringify({ type: 'error', code: 'NOT_A_WRITER', op: msg.type }));
-              return;
-            }
+          // ACTIVE membership is authoritative for every mutation, including
+          // legacy relay-only mode. Feature flags may change persistence, never
+          // the tenant/revocation boundary.
+          const currentMembership = await assertIdeaMembership(
+            db, user.organizationId || '', user.id, ideaId
+          );
+          if (!currentMembership.canWrite) {
+            if (featureFlags.ENABLE_SHARED_IDEA_MAPS) ws.__canWrite = false;
+            ws.send(JSON.stringify({ type: 'error', code: 'NOT_A_WRITER', op: msg.type }));
+            return;
           }
         }
 
@@ -598,6 +600,11 @@ export function attachIdeaCollabWs(server: HttpServer): void {
             break;
 
           case 'cursor':
+            if (![msg.x ?? 0, msg.y ?? 0].every((value) => Number.isFinite(value) && Math.abs(value) <= 10_000_000) ||
+                (msg.activeNodeId != null && (typeof msg.activeNodeId !== 'string' || msg.activeNodeId.length > 200))) {
+              ws.send(JSON.stringify({ type: 'error', code: 'INVALID_MESSAGE' }));
+              break;
+            }
             user.cursorX = msg.x ?? 0;
             user.cursorY = msg.y ?? 0;
             user.activeNodeId = msg.activeNodeId;
@@ -642,7 +649,13 @@ export function attachIdeaCollabWs(server: HttpServer): void {
 
           case 'unlock_node': {
             const nodeId = msg.nodeId;
-            if (!nodeId) break;
+            const suppliedFence = msg.fencingToken;
+            if (typeof nodeId !== 'string' || !nodeId || nodeId.length > 200 ||
+                (msg.correlationId != null && (typeof msg.correlationId !== 'string' || msg.correlationId.length > 128)) ||
+                (suppliedFence != null && (!Number.isSafeInteger(Number(suppliedFence)) || Number(suppliedFence) <= 0))) {
+              ws.send(JSON.stringify({ type: 'error', code: 'INVALID_MESSAGE' }));
+              break;
+            }
             const released = await releaseDurableIdeaNodeLock(db, {
               organizationId: user.organizationId || '',
               ideaId,
@@ -666,7 +679,12 @@ export function attachIdeaCollabWs(server: HttpServer): void {
           }
 
           case 'select_nodes': {
-            const nodeIds = Array.isArray(msg.nodeIds) ? msg.nodeIds : [];
+            if (!Array.isArray(msg.nodeIds) || msg.nodeIds.length > 200 ||
+                msg.nodeIds.some((id: unknown) => typeof id !== 'string' || id.length < 1 || id.length > 200)) {
+              ws.send(JSON.stringify({ type: 'error', code: 'INVALID_MESSAGE' }));
+              break;
+            }
+            const nodeIds = msg.nodeIds;
             state.selections.set(user.id, nodeIds);
             state.lastActivity = Date.now();
             broadcastSessionState(ideaId);

@@ -304,4 +304,67 @@ describe.skipIf(!enabled)('IDEA-WORKSPACE-SUBPACKET durable collaboration (real 
       await pool.query(`DROP SCHEMA IF EXISTS ${bad} CASCADE`);
     }
   });
+
+  it('fails before mutation when a seeded event table has the wrong primary key', async () => {
+    const sql = await readFile('server/migrations/20261012_idea_workspace_durable_collaboration.sql', 'utf8');
+    const schema = `idea_event_pk_${randomUUID().replace(/-/g, '').slice(0, 8)}`;
+    const client = await pool.connect();
+    try {
+      await client.query(`CREATE SCHEMA ${schema}`);
+      await client.query(`SET search_path TO ${schema},public`);
+      await client.query(`CREATE TABLE idea_workspace_lock_events(
+        id bigint,organization_id text,idea_id text,node_id text PRIMARY KEY,actor_user_id text,
+        lease_owner text,fencing_token bigint,event_type text,correlation_id text)`);
+      await client.query(`INSERT INTO idea_workspace_lock_events VALUES
+        (17,'late-org','late-idea','node','user','worker',7,'ACQUIRED','corr')`);
+      const before = await client.query(`SELECT row_to_json(e)::text AS row FROM idea_workspace_lock_events e`);
+      await expect(client.query(sql)).rejects.toThrow('IDEA_WORKSPACE_LATE_PREFLIGHT: event PK must be (id)');
+      const after = await client.query(`SELECT row_to_json(e)::text AS row FROM idea_workspace_lock_events e`);
+      expect(after.rows).toEqual(before.rows);
+      const createdAt = await client.query<{ n: number }>(`SELECT count(*)::int AS n FROM information_schema.columns
+        WHERE table_schema=$1 AND table_name='idea_workspace_lock_events' AND column_name='created_at'`, [schema]);
+      expect(createdAt.rows[0]?.n).toBe(0);
+    } finally {
+      await client.query('SET search_path TO public');
+      await client.query(`DROP SCHEMA IF EXISTS ${schema} CASCADE`);
+      client.release();
+    }
+  });
+
+  it('fails before mutation when either seeded partial table has incompatible required types', async () => {
+    const sql = await readFile('server/migrations/20261012_idea_workspace_durable_collaboration.sql', 'utf8');
+    for (const table of ['lock', 'event'] as const) {
+      const schema = `idea_type_${table}_${randomUUID().replace(/-/g, '').slice(0, 8)}`;
+      const client = await pool.connect();
+      try {
+        await client.query(`CREATE SCHEMA ${schema}`);
+        await client.query(`SET search_path TO ${schema},public`);
+        if (table === 'lock') {
+          await client.query(`CREATE TABLE idea_workspace_node_locks(
+            organization_id text,idea_id text,node_id text,holder_user_id text,lease_owner text,
+            fencing_token text,acquired_at timestamptz,expires_at timestamptz)`);
+          await client.query(`INSERT INTO idea_workspace_node_locks VALUES
+            ('late-org','late-idea','node','user','worker','7',NOW()-interval '1m',NOW()+interval '1m')`);
+        } else {
+          await client.query(`CREATE TABLE idea_workspace_lock_events(
+            id bigint PRIMARY KEY,organization_id text,idea_id text,node_id text,actor_user_id text,
+            lease_owner text,fencing_token text,event_type text,correlation_id text)`);
+          await client.query(`INSERT INTO idea_workspace_lock_events VALUES
+            (17,'late-org','late-idea','node','user','worker','7','ACQUIRED','corr')`);
+        }
+        const tableName = table === 'lock' ? 'idea_workspace_node_locks' : 'idea_workspace_lock_events';
+        const before = await client.query(`SELECT row_to_json(t)::text AS row FROM ${tableName} t`);
+        await expect(client.query(sql)).rejects.toThrow(`IDEA_WORKSPACE_LATE_PREFLIGHT: ${table} identity column types incompatible`);
+        const after = await client.query(`SELECT row_to_json(t)::text AS row FROM ${tableName} t`);
+        expect(after.rows).toEqual(before.rows);
+        const added = await client.query<{ n: number }>(`SELECT count(*)::int AS n FROM information_schema.columns
+          WHERE table_schema=$1 AND table_name=$2 AND column_name IN ('updated_at','created_at')`, [schema, tableName]);
+        expect(added.rows[0]?.n).toBe(0);
+      } finally {
+        await client.query('SET search_path TO public');
+        await client.query(`DROP SCHEMA IF EXISTS ${schema} CASCADE`);
+        client.release();
+      }
+    }
+  });
 });

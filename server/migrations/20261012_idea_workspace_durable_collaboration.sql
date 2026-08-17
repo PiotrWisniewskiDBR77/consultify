@@ -10,6 +10,7 @@ DECLARE
   rel REGCLASS;
   present_count INTEGER;
   pk_columns TEXT[];
+  types_ok BOOLEAN;
 BEGIN
   rel := to_regclass('idea_workspace_node_locks');
   IF rel IS NOT NULL THEN
@@ -20,6 +21,15 @@ BEGIN
     IF EXISTS (SELECT 1 FROM idea_workspace_node_locks LIMIT 1) AND present_count <> 8 THEN
       RAISE EXCEPTION 'IDEA_WORKSPACE_LATE_PREFLIGHT: lock identity columns missing';
     END IF;
+    SELECT count(a.attname)=8 AND COALESCE(bool_and(format_type(a.atttypid,a.atttypmod)=expected.typ),FALSE)
+      INTO types_ok
+    FROM (VALUES
+      ('organization_id','text'),('idea_id','text'),('node_id','text'),('holder_user_id','text'),
+      ('lease_owner','text'),('fencing_token','bigint'),('acquired_at','timestamp with time zone'),
+      ('expires_at','timestamp with time zone')
+    ) expected(name,typ)
+    LEFT JOIN pg_attribute a ON a.attrelid=rel AND a.attname=expected.name AND NOT a.attisdropped;
+    IF NOT types_ok THEN RAISE EXCEPTION 'IDEA_WORKSPACE_LATE_PREFLIGHT: lock identity column types incompatible'; END IF;
     IF present_count = 8 AND EXISTS (
       SELECT 1 FROM idea_workspace_node_locks WHERE organization_id IS NULL OR idea_id IS NULL OR
         node_id IS NULL OR holder_user_id IS NULL OR lease_owner IS NULL OR fencing_token IS NULL OR
@@ -43,11 +53,26 @@ BEGIN
     IF EXISTS (SELECT 1 FROM idea_workspace_lock_events LIMIT 1) AND present_count <> 8 THEN
       RAISE EXCEPTION 'IDEA_WORKSPACE_LATE_PREFLIGHT: event identity columns missing';
     END IF;
+    SELECT count(a.attname)=8 AND COALESCE(bool_and(format_type(a.atttypid,a.atttypmod)=expected.typ),FALSE)
+      INTO types_ok
+    FROM (VALUES
+      ('organization_id','text'),('idea_id','text'),('node_id','text'),('actor_user_id','text'),
+      ('lease_owner','text'),('fencing_token','bigint'),('event_type','text'),('correlation_id','text')
+    ) expected(name,typ)
+    LEFT JOIN pg_attribute a ON a.attrelid=rel AND a.attname=expected.name AND NOT a.attisdropped;
+    IF NOT types_ok THEN RAISE EXCEPTION 'IDEA_WORKSPACE_LATE_PREFLIGHT: event identity column types incompatible'; END IF;
     IF present_count = 8 AND EXISTS (
       SELECT 1 FROM idea_workspace_lock_events WHERE organization_id IS NULL OR idea_id IS NULL OR
         node_id IS NULL OR actor_user_id IS NULL OR lease_owner IS NULL OR fencing_token IS NULL OR
         event_type IS NULL OR correlation_id IS NULL LIMIT 1
     ) THEN RAISE EXCEPTION 'IDEA_WORKSPACE_LATE_PREFLIGHT: event identity contains NULL'; END IF;
+    SELECT array_agg(a.attname ORDER BY key.ordinality) INTO pk_columns
+    FROM pg_constraint c CROSS JOIN LATERAL unnest(c.conkey) WITH ORDINALITY key(attnum, ordinality)
+    JOIN pg_attribute a ON a.attrelid=c.conrelid AND a.attnum=key.attnum
+    WHERE c.conrelid=rel AND c.contype='p';
+    IF pk_columns IS NOT NULL AND pk_columns <> ARRAY['id']::TEXT[] THEN
+      RAISE EXCEPTION 'IDEA_WORKSPACE_LATE_PREFLIGHT: event PK must be (id)';
+    END IF;
   END IF;
 END $$;
 

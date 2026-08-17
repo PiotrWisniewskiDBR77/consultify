@@ -17,7 +17,7 @@ const tools = [
   ['whiteboard', 'whiteboard'],
 ] as const;
 
-async function cleanupDurableWsFixtures(marker: string): Promise<void> {
+async function cleanupDurableWsFixtures(marker: string, ideaId: string): Promise<void> {
   if (process.env.IDEA_WORKSPACE_ALLOW_FIXTURE_CLEANUP !== '1') {
     throw new Error('IDEA_WORKSPACE_ALLOW_FIXTURE_CLEANUP=1 is required');
   }
@@ -40,6 +40,15 @@ async function cleanupDurableWsFixtures(marker: string): Promise<void> {
       `SELECT tgenabled FROM pg_trigger WHERE tgname='trg_idea_workspace_lock_events_append_only'`
     );
     expect(trigger.rows[0]?.tgenabled).toBe('O');
+    const residue = await pool.query<{ locks: number; events: number; maps: number; ideas: number }>(
+      `SELECT
+        (SELECT count(*)::int FROM idea_workspace_node_locks WHERE node_id LIKE $1) AS locks,
+        (SELECT count(*)::int FROM idea_workspace_lock_events WHERE node_id LIKE $1) AS events,
+        (SELECT count(*)::int FROM my_idea_maps WHERE idea_id=$2) AS maps,
+        (SELECT count(*)::int FROM my_ideas WHERE id=$2) AS ideas`,
+      [`%-${marker}`, ideaId]
+    );
+    expect(residue.rows[0]).toEqual({ locks: 0, events: 0, maps: 0, ideas: 0 });
   } finally {
     await pool.query(`SELECT pg_advisory_unlock(hashtext('idea-workspace-e2e-cleanup'))`).catch(() => undefined);
     await pool.end();
@@ -241,7 +250,7 @@ test.describe('IDEA-WORKSPACE-SUBPACKET mounted four-tool journey', () => {
       if (ideaId) {
         await page.request.delete(`${IDEAS_API}/${ideaId}`, { headers: authHeaders(token) });
       }
-      await cleanupDurableWsFixtures(marker);
+      await cleanupDurableWsFixtures(marker, ideaId);
     }
   });
 });
