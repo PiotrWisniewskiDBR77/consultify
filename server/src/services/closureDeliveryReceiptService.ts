@@ -67,6 +67,7 @@ import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import { type PgTransactionClient, withPgTransaction } from '../utils/queryHelpers.js';
 import { CLOSURE_HANDOFF_SOURCE, handoffFromClosure } from './executionResultsBridge.js';
+import { observeWriter } from './results/resultsWriterObservationService.js';
 
 const LOG_PREFIX = '[ClosureDeliveryReceipt]';
 
@@ -546,6 +547,30 @@ export async function attemptDeliveryInternal(
             WHERE id = ?`,
           [JSON.stringify({ benefitIds: rows.map((r) => r.id) }), receiptId]
         );
+      });
+
+      // Writer observability for the Execution -> Results family (side-channel;
+      // never gates or alters this delivery). Placed AFTER the terminal
+      // transaction commits, so an observation means "this writer really ran
+      // and the leg is DELIVERED", not "an attempt started".
+      //
+      // Instrumented HERE, at the business call site, rather than inside
+      // `executionResultsBridge.handoffFromClosure`: `healthProbeService.ts`
+      // calls that same bridge function twice per probe run, and probe traffic
+      // must never be counted as real Execution -> Results usage. This call
+      // site is business traffic by construction, so the probe stays
+      // uninstrumented without needing a suppression flag.
+      //
+      // `receiptId` is the correlation identity: a retried delivery of the same
+      // receipt leg is the same logical operation and dedupes to one row via
+      // uq_results_writer_observation_correlated_op.
+      observeWriter({
+        organizationId,
+        actorUserId: actorId ?? null,
+        writerFamily: 'execution_results',
+        operation: 'closureHandoff',
+        endpoint: 'service:closureDeliveryReceiptService.deliver#results',
+        correlationId: receiptId,
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);

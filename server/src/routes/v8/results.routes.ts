@@ -84,6 +84,10 @@ import {
   updateScorecard,
 } from '../../services/results/kpiScorecardService.js';
 import { KPI_VISIBILITY_SCOPES } from '../../services/results/kpiVisibilityService.js';
+import {
+  correlationIdFromRequest,
+  observeWriter,
+} from '../../services/results/resultsWriterObservationService.js';
 import { resultsEnterpriseService } from '../../services/resultsEnterpriseService.js';
 import {
   type KpiDriverMapping,
@@ -699,6 +703,19 @@ router.post(
         code: 'RESULTS_RECONCILIATION_PULL_FAILED',
       });
     }
+
+    // Writer observability (side-channel; never gates or alters this write).
+    // Instrumented at the HANDLER, not inside pullAndReconcileInitiative:
+    // healthProbeService.ts calls that service function directly, and probe
+    // traffic must not be counted as real Results->Finance usage.
+    observeWriter({
+      organizationId,
+      actorUserId: userId,
+      writerFamily: 'results_finance',
+      operation: 'pullAndReconcile',
+      endpoint: 'POST /api/v8/results/reconciliations/pull',
+      correlationId: correlationIdFromRequest(req as never),
+    });
 
     return res.json({
       data: result,

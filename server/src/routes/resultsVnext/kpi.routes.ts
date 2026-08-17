@@ -70,6 +70,11 @@ import {
   validateQuery,
 } from '../../middleware/validation.middleware.js';
 import { resolveEffectiveAccess } from '../../services/effectiveAccessService.js';
+import { requireActiveMembership } from '../../services/legacyCutover/requireActiveMembership.js';
+import {
+  correlationIdFromRequest,
+  observeWriter,
+} from '../../services/results/resultsWriterObservationService.js';
 import {
   activateKpi,
   approveDefinitionVersion,
@@ -137,6 +142,15 @@ const router = Router();
 
 router.use(apiAuthRateLimiter);
 router.use(verifyToken);
+// Strict per-request tenant membership wall, mounted directly after
+// `verifyToken` so a revoked member is denied before any further work — see the
+// identical mount and full rationale in `benefits.routes.ts`.
+//
+// `requireOrgAccess()` below does NOT cover this: it contains zero references to
+// `organization_members`. Verified against a real server + real Postgres: after
+// revoking the membership row, this router still served requests on the same
+// signed token, as did a SUPERADMIN holding no membership row at all.
+router.use(requireActiveMembership);
 router.use(requireOrgAccess());
 router.use(requireResultsInternalBetaVisibility);
 router.use(demoContextMiddleware);
@@ -186,6 +200,37 @@ function normalizeOptionalString(value: unknown): string | undefined {
 
 function resolveIdempotencyKey(bodyKey: string | undefined | null): string {
   return normalizeOptionalString(bodyKey ?? undefined) || randomUUID();
+}
+
+/**
+ * Writer observability for this router's write endpoints (side-channel; never
+ * gates, delays or alters a business write — see
+ * `services/results/resultsWriterObservationService.ts`).
+ *
+ * Tenant and actor come from `auth` (server-resolved by `requireAuth` out of
+ * the verified JWT), never from `req.body` — a spoofed body must not be able
+ * to attribute traffic to another tenant.
+ *
+ * The correlation id deliberately uses `correlationIdFromRequest` (the
+ * `api_logs`-joinable TEXT value) rather than this router's own
+ * `getCorrelationId` UUID-shape check: that check exists for
+ * `rvn_platform_events.correlation_id`, a Postgres `UUID` column, and dropping
+ * a real-but-non-UUID id here would weaken retry dedupe in the ledger.
+ */
+function observeVnextKpiWriter(
+  req: AuthenticatedRequest,
+  auth: RouteAuth,
+  operation: string,
+  endpoint: string
+): void {
+  observeWriter({
+    organizationId: auth.organizationId,
+    actorUserId: auth.userId,
+    writerFamily: 'vnext_kpi',
+    operation,
+    endpoint,
+    correlationId: correlationIdFromRequest(req as never),
+  });
 }
 
 /**
@@ -335,6 +380,7 @@ router.post(
         reason: body.reason ?? null,
         access,
       });
+      observeVnextKpiWriter(req, auth, 'createKpiDraft', 'POST /api/vnext/results/kpi');
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
         eventId: outcome.eventId,
@@ -484,6 +530,7 @@ router.put(
         reason: body.reason ?? null,
         access,
       });
+      observeVnextKpiWriter(req, auth, 'editDraft', 'PUT /api/vnext/results/kpi/:kpiId/draft');
       res.status(200).json({
         outcome: outcome.outcome,
         eventId: outcome.eventId,
@@ -534,6 +581,7 @@ router.post(
         reason: body.reason ?? null,
         access,
       });
+      observeVnextKpiWriter(req, auth, 'submitDefinition', 'POST /api/vnext/results/kpi/:kpiId/submit');
       res.status(200).json({
         outcome: outcome.outcome,
         eventId: outcome.eventId,
@@ -579,6 +627,7 @@ router.post(
         reason: body.reason ?? null,
         access,
       });
+      observeVnextKpiWriter(req, auth, 'approveDefinitionVersion', 'POST /api/vnext/results/kpi/:kpiId/definition-versions/:versionId/approve');
       res.status(200).json({
         outcome: outcome.outcome,
         eventId: outcome.eventId,
@@ -624,6 +673,7 @@ router.post(
         correlationId: getCorrelationId(req),
         access,
       });
+      observeVnextKpiWriter(req, auth, 'rejectDefinitionVersion', 'POST /api/vnext/results/kpi/:kpiId/definition-versions/:versionId/reject');
       res.status(200).json({
         outcome: outcome.outcome,
         eventId: outcome.eventId,
@@ -676,6 +726,7 @@ router.post(
         reason: body.reason ?? null,
         access,
       });
+      observeVnextKpiWriter(req, auth, 'reviseDefinition', 'POST /api/vnext/results/kpi/:kpiId/definition-versions/:versionId/revise');
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
         eventId: outcome.eventId,
@@ -715,6 +766,9 @@ function mountLifecycleRoute(path: string, op: string, runner: typeof activateKp
           reason: body.reason ?? null,
           access,
         });
+        // One insertion point covers all three lifecycle endpoints; `op` is
+        // already the per-route operation label (see the mount calls below).
+        observeVnextKpiWriter(req, auth, op, `POST /api/vnext/results/kpi${path}`);
         res.status(200).json({
           outcome: outcome.outcome,
           eventId: outcome.eventId,
@@ -803,6 +857,7 @@ router.post(
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
       });
+      observeVnextKpiWriter(req, auth, 'recordMeasurement', 'POST /api/vnext/results/kpi/:kpiId/measurements');
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
         eventId: outcome.eventId,
@@ -908,6 +963,7 @@ router.post(
         correlationId: getCorrelationId(req),
         access,
       });
+      observeVnextKpiWriter(req, auth, 'correctMeasurement', 'POST /api/vnext/results/kpi/:kpiId/measurements/:measurementId/corrections');
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
         eventId: outcome.eventId,
@@ -951,6 +1007,7 @@ router.post(
         notes: body.notes ?? null,
         access,
       });
+      observeVnextKpiWriter(req, auth, 'verifyMeasurement', 'POST /api/vnext/results/kpi/:kpiId/measurements/:measurementId/verify');
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
         eventId: outcome.eventId,
@@ -994,6 +1051,7 @@ router.post(
         correlationId: getCorrelationId(req),
         access,
       });
+      observeVnextKpiWriter(req, auth, 'disputeMeasurement', 'POST /api/vnext/results/kpi/:kpiId/measurements/:measurementId/dispute');
       res.status(outcome.outcome === 'applied' ? 201 : 200).json({
         outcome: outcome.outcome,
         eventId: outcome.eventId,

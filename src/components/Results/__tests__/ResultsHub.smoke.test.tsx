@@ -159,4 +159,52 @@ describe('ResultsHub smoke', () => {
     expect(navigate).toHaveBeenCalledTimes(1);
     expect(navigate).toHaveBeenCalledWith('/results/kpi');
   });
+
+  // RES-UI-CANON-001 closed blocker: the link used to vanish in queue mode,
+  // because that submode's early return composed its own action row before the
+  // link existed. Discoverability must be invariant across every KPI submode.
+  it('keeps the registry link reachable in queue mode and still navigates exactly to /results/kpi', async () => {
+    resultsVNextFlags.kpiRegistry = true;
+    loadResultsKpis.mockResolvedValue({ kpis: [], initiatives: [], mappings: [] });
+    render(
+      <MemoryRouter initialEntries={['/results']}>
+        <ResultsHub />
+      </MemoryRouter>
+    );
+
+    // Default submode ('catalog') — present.
+    await screen.findByRole('button', { name: 'Open KPI registry (preview)' });
+
+    // Switch to the queue submode ("Corrective Action" chip).
+    fireEvent.click(screen.getByRole('button', { name: 'Corrective Action' }));
+
+    // Queue mode keeps its OWN action ("Add sheet") — this fix is additive, it
+    // must not displace the submode's existing affordance.
+    expect(await screen.findByRole('button', { name: 'Add sheet' })).toBeInTheDocument();
+
+    const queueLink = await screen.findByRole('button', {
+      name: 'Open KPI registry (preview)',
+    });
+    fireEvent.click(queueLink);
+    expect(navigate).toHaveBeenCalledTimes(1);
+    expect(navigate).toHaveBeenCalledWith('/results/kpi');
+  });
+
+  it('hides the registry link in queue mode too while the flag is OFF', async () => {
+    // Flag OFF is the default (see beforeEach) — absence must hold in EVERY
+    // submode, not just the default one, or "default-OFF" is not a real claim.
+    loadResultsKpis.mockResolvedValue({ kpis: [], initiatives: [], mappings: [] });
+    render(
+      <MemoryRouter initialEntries={['/results']}>
+        <ResultsHub />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => expect(screen.getByTestId('results-module-bar')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: 'Corrective Action' }));
+
+    expect(await screen.findByRole('button', { name: 'Add sheet' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Open KPI registry (preview)' })).toBeNull();
+    expect(navigate).not.toHaveBeenCalled();
+  });
 });

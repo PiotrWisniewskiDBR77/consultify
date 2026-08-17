@@ -6,17 +6,27 @@
 import { type NextFunction, type Request, type Response, Router } from 'express';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
+import { requireActiveMembership } from '../services/legacyCutover/requireActiveMembership.js';
 import * as ReportBuilderService from '../services/reportBuilderService.js';
 import {
   createKpiReportSnapshot,
   getKpiReportSnapshot,
   ResultsKpiReportSnapshotError,
 } from '../services/results/kpiReportSnapshotService.js';
+import {
+  correlationIdFromRequest,
+  observeWriter,
+} from '../services/results/resultsWriterObservationService.js';
 import { all as dbAll } from '../utils/DbPromise.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 
 const router = Router();
 router.use(verifyToken);
+// Strict per-request tenant membership wall — see the identical mount and full
+// rationale in `benefits.routes.ts`. Proven hole closed here too: after
+// revoking `organization_members`, the first request still created a KPI report
+// snapshot with the same signed token.
+router.use(requireActiveMembership);
 
 const asyncHandler =
   (fn: (req: Request, res: Response, next: NextFunction) => Promise<any>) =>
@@ -337,6 +347,17 @@ router.post(
     }
 
     const reportId = await createReportArtifactFromSnapshot({ orgId, userId, created });
+
+    // Writer observability (side-channel; never gates or alters this write).
+    observeWriter({
+      organizationId: orgId,
+      actorUserId: userId,
+      writerFamily: 'kpi_reports',
+      operation: 'createSnapshot',
+      endpoint: 'POST /api/results/kpi-reports',
+      correlationId: correlationIdFromRequest(req as never),
+    });
+
     res.json({ success: true, data: { snapshotId: created.snapshotId, reportId } });
   })
 );
@@ -388,6 +409,16 @@ router.post(
     });
 
     const reportId = await createReportArtifactFromSnapshot({ orgId, userId, created: refreshed });
+
+    observeWriter({
+      organizationId: orgId,
+      actorUserId: userId,
+      writerFamily: 'kpi_reports',
+      operation: 'refreshSnapshot',
+      endpoint: 'POST /api/results/kpi-reports/:snapshotId/refresh',
+      correlationId: correlationIdFromRequest(req as never),
+    });
+
     res.json({ success: true, data: { snapshotId: refreshed.snapshotId, reportId } });
   })
 );

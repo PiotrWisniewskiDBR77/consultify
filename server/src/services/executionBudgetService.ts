@@ -8,6 +8,7 @@
 import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import { getCurrentPgTransactionClient } from '../utils/queryHelpers.js';
+import { observeWriter } from './results/resultsWriterObservationService.js';
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -129,6 +130,20 @@ export async function createBudgetEntry(
   if (data.entryType === 'ACTUAL') {
     const { fireBudgetHealthExport } = await import('./executionResultsBridge.js');
     fireBudgetHealthExport(organizationId, data.initiativeId);
+    // Writer observability for Execution -> Results (side-channel; never gates
+    // or alters this write). Instrumented at the business call site, not inside
+    // executionResultsBridge, so health-probe traffic is never counted — see
+    // closureDeliveryReceiptService.ts's call site for the full rationale.
+    // Correlation identity is the budget entry just written, so a retry of the
+    // same entry dedupes.
+    observeWriter({
+      organizationId,
+      actorUserId: data.createdBy || null,
+      writerFamily: 'execution_results',
+      operation: 'budgetHealthExport',
+      endpoint: 'service:executionBudgetService.createBudgetEntry',
+      correlationId: id,
+    });
   }
   return id;
 }
@@ -217,6 +232,17 @@ export async function deleteBudgetEntry(
   // M14→M15 feed-forward: budget composition changed (non-blocking)
   const { fireBudgetHealthExport } = await import('./executionResultsBridge.js');
   fireBudgetHealthExport(organizationId, initiativeId);
+  // Writer observability for Execution -> Results (side-channel). Same call-site
+  // rationale as createBudgetEntry above. No interactive actor is available on
+  // this path, so actor is honestly null rather than a guessed identity.
+  observeWriter({
+    organizationId,
+    actorUserId: null,
+    writerFamily: 'execution_results',
+    operation: 'budgetHealthExport',
+    endpoint: 'service:executionBudgetService.deleteBudgetEntry',
+    correlationId: entryId,
+  });
   return true;
 }
 

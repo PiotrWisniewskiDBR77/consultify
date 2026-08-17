@@ -58,6 +58,19 @@ vi.mock('../../../middleware/auth.middleware.js', () => ({
 vi.mock('../../../middleware/rbac.middleware.js', () => ({
   requireOrgAccess: () => (_req: any, _res: any, next: () => void) => next(),
 }));
+// The Results strict membership wall is mounted on this router (see
+// `requireActiveMembership` in kpi.routes.ts). Stubbed pass-through here for the
+// SAME reason `verifyToken` and `requireOrgAccess` above are: this suite proves
+// route logic, not authorization, and its DB is mocked with no
+// `organization_members` row — the real wall would (correctly) answer 403 to
+// every request. The wall's own contract is proven in
+// `server/src/middleware/__tests__/resultsStrictMembership.middleware.test.ts`
+// and end-to-end against a real server + real Postgres, not here.
+vi.mock('../../../services/legacyCutover/requireActiveMembership.js', () => ({
+  requireActiveMembership: (_req: any, _res: any, next: () => void) => next(),
+  MEMBERSHIP_REVOKED_CODE: 'ORG_MEMBERSHIP_REVOKED',
+  MEMBERSHIP_UNVERIFIABLE_CODE: 'ORG_MEMBERSHIP_UNVERIFIABLE',
+}));
 vi.mock('../../../middleware/demoGuard.middleware.js', () => ({
   demoContextMiddleware: (_req: any, _res: any, next: () => void) => next(),
 }));

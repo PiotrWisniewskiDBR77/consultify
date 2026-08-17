@@ -19,6 +19,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import { computeAttribution } from '../services/kpiAttributionService.js';
+import { requireActiveMembership } from '../services/legacyCutover/requireActiveMembership.js';
 import {
   callRemoteTool,
   makeIrisHeaders,
@@ -39,11 +40,33 @@ import {
   recordKpiMeasurement,
 } from '../services/results/kpiMeasurementWriterService.js';
 import { assertKpiPermission } from '../services/results/kpiPermissions.js';
+import {
+  correlationIdFromRequest,
+  observeWriter,
+} from '../services/results/resultsWriterObservationService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();
 router.use(verifyToken);
+// Strict per-request tenant membership wall for the whole legacy Results
+// surface. Reuses the EXISTING repo-owned middleware already mounted on
+// `v8/results.routes.ts` (and partners/financial-modeling) rather than adding a
+// second implementation of the same security barrier.
+//
+// This closes a proven hole: before this line, revoking a user's
+// `organization_members` row left their signed JWT fully able to WRITE here —
+// the first request after revocation created a KPI (verified against a real
+// server + real Postgres), and a SUPERADMIN with no membership row at all was
+// likewise accepted. `verifyToken` alone only proves the token's signature and
+// trusts its `organizationId` claim for the token's whole 7-day lifetime.
+//
+// Deliberately NOT `validateOrgMembership` (auth.middleware.ts): that helper
+// has a different, intentional contract — a 60s positive cache and fail-OPEN on
+// DB error — which is unsuitable for a writer surface. This one reads
+// `organization_members` on every request, requires ACTIVE, never caches, and
+// fails CLOSED (503) when the lookup itself fails.
+router.use(requireActiveMembership);
 
 const asyncHandler =
   (fn: (req: Request, res: Response, next: NextFunction) => Promise<any>) =>
@@ -245,6 +268,16 @@ router.post(
       reason: 'legacy-benefits-kpi-create',
     });
 
+    // Writer observability (side-channel; never gates or alters this write).
+    observeWriter({
+      organizationId: orgId,
+      actorUserId: getUserId(req) || null,
+      writerFamily: 'legacy_kpi_crud',
+      operation: 'createKpi',
+      endpoint: 'POST /api/benefits/kpis',
+      correlationId: correlationIdFromRequest(req as never),
+    });
+
     res.json({ success: true, data: { id: created.id } });
   })
 );
@@ -386,6 +419,15 @@ router.put(
       throw error;
     }
 
+    observeWriter({
+      organizationId: orgId,
+      actorUserId: getUserId(req) || null,
+      writerFamily: 'legacy_kpi_crud',
+      operation: 'updateKpi',
+      endpoint: 'PUT /api/benefits/kpis/:kpiId',
+      correlationId: correlationIdFromRequest(req as never),
+    });
+
     res.json({ success: true, currentDefinitionVersion: updated.currentDefinitionVersion });
   })
 );
@@ -428,6 +470,15 @@ router.delete(
       kpiId: String(kpiId),
       actorUserId: getUserId(req) || null,
       reason: 'legacy-benefits-kpi-delete',
+    });
+
+    observeWriter({
+      organizationId: orgId,
+      actorUserId: getUserId(req) || null,
+      writerFamily: 'legacy_kpi_crud',
+      operation: 'archiveKpi',
+      endpoint: 'DELETE /api/benefits/kpis/:kpiId',
+      correlationId: correlationIdFromRequest(req as never),
     });
 
     res.json({ success: true });
@@ -545,6 +596,15 @@ router.post(
       }
       throw error;
     }
+
+    observeWriter({
+      organizationId: orgId,
+      actorUserId: (req as any).user?.id || null,
+      writerFamily: 'legacy_kpi_crud',
+      operation: 'recordMeasurement',
+      endpoint: 'POST /api/benefits/kpis/:kpiId/time-series',
+      correlationId: correlationIdFromRequest(req as never),
+    });
 
     res.json({
       success: true,
@@ -1131,6 +1191,18 @@ router.post(
         }
       }
 
+      // One observation per REQUEST, not per ingested point: the unit the
+      // cutover decision counts is "this writer was invoked", and a 500-point
+      // batch is still a single use of the connector-ingest surface.
+      observeWriter({
+        organizationId: orgId,
+        actorUserId: (req as any).user?.id || null,
+        writerFamily: 'legacy_kpi_crud',
+        operation: 'refreshFromIris',
+        endpoint: 'POST /api/benefits/kpis/:kpiId/refresh/iris',
+        correlationId: correlationIdFromRequest(req as never),
+      });
+
       return res.json({
         success: true,
         providerId: String(provider.id),
@@ -1276,6 +1348,16 @@ router.delete(
       kpiId,
       orgId,
     ]);
+
+    observeWriter({
+      organizationId: orgId,
+      actorUserId: getUserId(req) || null,
+      writerFamily: 'legacy_kpi_crud',
+      operation: 'deleteMeasurement',
+      endpoint: 'DELETE /api/benefits/kpis/:kpiId/time-series/:tsId',
+      correlationId: correlationIdFromRequest(req as never),
+    });
+
     res.json({ success: true });
   })
 );

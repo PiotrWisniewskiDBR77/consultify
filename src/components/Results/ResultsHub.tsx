@@ -1292,6 +1292,30 @@ export const ResultsHub: React.FC = () => {
       </button>
     ) : null;
 
+    // The vNext KPI registry is an additive, separately governed surface. Keep
+    // the legacy KPI workspace unchanged and expose only a neutral deep-link
+    // when that registry's existing default-OFF flag is explicitly enabled.
+    //
+    // Computed BEFORE the queue-mode early return below so the link is
+    // invariant across every legacy KPI submode (catalog/overview/scorecards/
+    // signals AND queue). Queue mode previously returned its own action row
+    // before this was composed, so the link silently vanished there with no
+    // owner decision behind that gap — recorded as an open blocker in
+    // RES-UI-CANON-001 ("the neutral KPI registry link is not invariant across
+    // every legacy KPI submode"), now closed. This changes discoverability
+    // only: no writer, endpoint, route auth or cutover semantics move with it,
+    // and the surface stays explicitly labelled a preview.
+    const openKpiRegistryButton =
+      activeTab === 'results_kpi' && isResultsVNextFlagEnabled('kpiRegistry') ? (
+        <button
+          type="button"
+          onClick={() => navigate(ROUTES.RESULTS_KPI.ROOT)}
+          className={MENU_3_ACTION_NEUTRAL}
+        >
+          <span>{t('results.actions.openKpiRegistry', 'Open KPI registry (preview)')}</span>
+        </button>
+      ) : null;
+
     if (activeTab === 'results_kpi' && kpiWorkspaceMode === 'queue') {
       return (
         <div className={MENU_3_RIGHT_CLASS}>
@@ -1304,6 +1328,7 @@ export const ResultsHub: React.FC = () => {
             <Plus size={14} />
             <span>{t('results.kpi.signals.addSheet', 'Add sheet')}</span>
           </button>
+          {openKpiRegistryButton}
         </div>
       );
     }
@@ -1316,20 +1341,6 @@ export const ResultsHub: React.FC = () => {
           className={MENU_3_ACTION_NEUTRAL}
         >
           <span>{t('results.actions.viewInOutputs', 'View in Outputs')}</span>
-        </button>
-      ) : null;
-
-    // The vNext KPI registry is an additive, separately governed surface. Keep
-    // the legacy KPI workspace unchanged and expose only a neutral deep-link
-    // when that registry's existing default-OFF flag is explicitly enabled.
-    const openKpiRegistryButton =
-      activeTab === 'results_kpi' && isResultsVNextFlagEnabled('kpiRegistry') ? (
-        <button
-          type="button"
-          onClick={() => navigate(ROUTES.RESULTS_KPI.ROOT)}
-          className={MENU_3_ACTION_NEUTRAL}
-        >
-          <span>{t('results.actions.openKpiRegistry', 'Open KPI registry (preview)')}</span>
         </button>
       ) : null;
 
