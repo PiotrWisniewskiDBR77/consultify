@@ -23,7 +23,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 
 import * as svc from '../../services/caseWorkspace/proposalApprovalService.js';
-import { requireCaseAccessForActor, requireOrgRoleForActor } from './_shared/access.js';
+import { executeGovernedCaseAction, requireCaseAccessForActor } from './_shared/access.js';
 import { caseWorkspaceHandler, readIdempotencyKeyHeader } from './_shared/handler.js';
 import { toCaseWorkspaceAppError } from './_shared/errors.js';
 import { parseBody, parseParams, parseQuery } from './_shared/validate.js';
@@ -160,7 +160,6 @@ router.get(
   '/proposals/:actionProposalId/decisions',
   caseWorkspaceHandler(async (req, res, actor) => {
     const params = parseParams(proposalIdParams, req.params);
-    await requireCaseAccessForProposal(actor, params.actionProposalId);
     const items = await svc.listDecisionsForProposal(params.actionProposalId, actor.actorUserId);
     res.status(200).json({ data: items });
   })
@@ -217,14 +216,14 @@ router.post(
       });
       return;
     }
-    await requireCaseAccessForProposal(actor, params.actionProposalId);
-    await requireOrgRoleForActor(actor, 'ADMIN');
     const { expectedVersion, ...decisionInput } = body;
-    const result = await svc.recordApprovalDecision(
-      params.actionProposalId,
-      { ...decisionInput, idempotencyKey, decidedByActorId: actor.actorUserId },
-      expectedVersion
-    );
+    const result = await executeGovernedCaseAction({
+      actor, actionId: 'case.proposal.decide', targetId: params.actionProposalId,
+      operation: async () => {
+        await requireCaseAccessForProposal(actor, params.actionProposalId);
+        return svc.recordApprovalDecision(params.actionProposalId, { ...decisionInput, idempotencyKey, decidedByActorId: actor.actorUserId }, expectedVersion);
+      },
+    });
     res.status(200).json({ data: result });
   })
 );
@@ -235,13 +234,13 @@ router.post(
   caseWorkspaceHandler(async (req, res, actor) => {
     const params = parseParams(proposalIdParams, req.params);
     const body = parseBody(expectedVersionBody, req.body);
-    await requireCaseAccessForProposal(actor, params.actionProposalId);
-    await requireOrgRoleForActor(actor, 'ADMIN');
-    const updated = await svc.transitionProposalToExecuting(
-      params.actionProposalId,
-      { actorUserId: actor.actorUserId },
-      body.expectedVersion
-    );
+    const updated = await executeGovernedCaseAction({
+      actor, actionId: 'case.proposal.execute', targetId: params.actionProposalId,
+      operation: async () => {
+        await requireCaseAccessForProposal(actor, params.actionProposalId);
+        return svc.transitionProposalToExecuting(params.actionProposalId, { actorUserId: actor.actorUserId }, body.expectedVersion);
+      },
+    });
     res.status(200).json({ data: updated });
   })
 );
@@ -252,7 +251,6 @@ router.post(
   caseWorkspaceHandler(async (req, res, actor) => {
     const params = parseParams(proposalIdParams, req.params);
     const body = parseBody(expectedVersionBody, req.body);
-    await requireCaseAccessForProposal(actor, params.actionProposalId);
     const updated = await svc.transitionProposalToExecuted(
       params.actionProposalId,
       { actorUserId: actor.actorUserId },
@@ -327,14 +325,13 @@ router.post(
   caseWorkspaceHandler(async (req, res, actor) => {
     const params = parseParams(proposalIdParams, req.params);
     const body = parseBody(revokeBody, req.body);
-    await requireCaseAccessForProposal(actor, params.actionProposalId);
-    await requireOrgRoleForActor(actor, 'ADMIN');
-    const updated = await svc.revokeApprovedProposal(
-      params.actionProposalId,
-      { actorUserId: actor.actorUserId },
-      body.reason,
-      body.expectedVersion
-    );
+    const updated = await executeGovernedCaseAction({
+      actor, actionId: 'case.proposal.revoke', targetId: params.actionProposalId,
+      operation: async () => {
+        await requireCaseAccessForProposal(actor, params.actionProposalId);
+        return svc.revokeApprovedProposal(params.actionProposalId, { actorUserId: actor.actorUserId }, body.reason, body.expectedVersion);
+      },
+    });
     res.status(200).json({ data: updated });
   })
 );

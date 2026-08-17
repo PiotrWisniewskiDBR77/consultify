@@ -11,6 +11,15 @@ export type ExecutionActionPolicy = {
   auditRequired: boolean;
 };
 
+const ROLE_RANK = { MEMBER: 1, ADMIN: 2, OWNER: 3 } as const;
+
+function classifyOutcome(error: unknown): Exclude<ExecutionActionOutcome, 'SUCCEEDED'> {
+  const code = String((error as { code?: unknown })?.code || (error as Error)?.message || '');
+  if (/not_found|access_denied/i.test(code)) return 'NOT_FOUND';
+  if (/conflict|stale|version|already|invalid_transition/i.test(code)) return 'CONFLICT';
+  return 'DENIED';
+}
+
 export async function getExecutionActionPolicy(
   actionId: string
 ): Promise<ExecutionActionPolicy | null> {
@@ -39,6 +48,63 @@ export async function requireImplementedExecutionAction(
     throw new Error('execution_action_hidden_or_unregistered');
   }
   return policy;
+}
+
+/**
+ * Single runtime authority for governed Execution actions. The caller supplies
+ * the membership role resolved from the database (never the JWT claim). Every
+ * terminal result is appended to the shared action audit.
+ */
+export async function executeGovernedExecutionAction<T>(input: {
+  organizationId: string;
+  actionId: string;
+  targetId: string;
+  actorId: string;
+  membershipRole: 'MEMBER' | 'ADMIN' | 'OWNER';
+  requestId?: string | null;
+  operation: () => Promise<T>;
+}): Promise<T> {
+  const policy = await getExecutionActionPolicy(input.actionId);
+  if (!policy) throw new Error('execution_action_hidden_or_unregistered');
+  if (policy.runtimeState !== 'IMPLEMENTED') {
+    await recordExecutionActionAudit({
+      ...input,
+      outcome: 'DENIED',
+      reasonCode: 'execution_action_hidden',
+    });
+    throw new Error('execution_action_hidden_or_unregistered');
+  }
+  if (ROLE_RANK[input.membershipRole] < ROLE_RANK[policy.minimumRole]) {
+    await recordExecutionActionAudit({
+      ...input,
+      outcome: 'DENIED',
+      reasonCode: 'insufficient_org_role',
+    });
+    const error = new Error('insufficient_org_role') as Error & { code?: string };
+    error.code = 'insufficient_org_role';
+    throw error;
+  }
+  try {
+    const result = await input.operation();
+    if (result === false || result == null) {
+      await recordExecutionActionAudit({
+        ...input,
+        outcome: 'NOT_FOUND',
+        reasonCode: 'action_target_not_found',
+      });
+      return result;
+    }
+    await recordExecutionActionAudit({ ...input, outcome: 'SUCCEEDED' });
+    return result;
+  } catch (error) {
+    const outcome = classifyOutcome(error);
+    await recordExecutionActionAudit({
+      ...input,
+      outcome,
+      reasonCode: String((error as { code?: unknown })?.code || (error as Error)?.message || outcome),
+    });
+    throw error;
+  }
 }
 
 export async function recordExecutionActionAudit(input: {

@@ -21,7 +21,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 
 import * as svc from '../../services/caseWorkspace/artifactLinkService.js';
-import { requireCaseAccessForActor, requireOrgRoleForActor } from './_shared/access.js';
+import { executeGovernedCaseAction, requireCaseAccessForActor } from './_shared/access.js';
 import { caseWorkspaceHandler, readIdempotencyKeyHeader } from './_shared/handler.js';
 import { toCaseWorkspaceAppError } from './_shared/errors.js';
 import { parseBody, parseParams, parseQuery } from './_shared/validate.js';
@@ -141,7 +141,6 @@ router.get(
     // this file (see this file's "RE-WIRE AFTER STREAM A MERGES" header
     // note) — svc.resolveArtifactLinkOpen() re-does the same access check
     // internally via getArtifactLink().
-    await requireCaseAccessForLink(actor, params.linkId);
     const resolution = await svc.resolveArtifactLinkOpen(params.linkId, actor.actorUserId);
     if (!resolution) {
       // Reachable only if the link was concurrently unlinked/access-revoked
@@ -215,13 +214,13 @@ router.delete(
   caseWorkspaceHandler(async (req, res, actor) => {
     const params = parseParams(linkIdParams, req.params);
     const body = parseBody(reasonOnlyBody, req.body);
-    await requireCaseAccessForLink(actor, params.linkId);
-    await requireOrgRoleForActor(actor, 'ADMIN');
-    const updated = await svc.unlinkArtifactFromCase(
-      params.linkId,
-      { actorUserId: actor.actorUserId },
-      body.reason ?? null
-    );
+    const updated = await executeGovernedCaseAction({
+      actor, actionId: 'case.artifact.unlink', targetId: params.linkId,
+      operation: async () => {
+        await requireCaseAccessForLink(actor, params.linkId);
+        return svc.unlinkArtifactFromCase(params.linkId, { actorUserId: actor.actorUserId }, body.reason ?? null);
+      },
+    });
     res.status(200).json({ data: updated });
   })
 );

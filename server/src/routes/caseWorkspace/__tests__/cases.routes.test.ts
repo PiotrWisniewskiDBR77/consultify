@@ -10,6 +10,11 @@ const mockGetCase = vi.fn();
 const mockListCasesForOrganization = vi.fn();
 const mockTransitionStatus = vi.fn();
 const mockCancelCase = vi.fn();
+const mockExecuteGovernedAction = vi.fn((input: { operation: () => Promise<unknown> }) => input.operation());
+
+vi.mock('../../../services/executionActionRegistryService.js', () => ({
+  executeGovernedExecutionAction: (...args: unknown[]) => mockExecuteGovernedAction(...(args as [{ operation: () => Promise<unknown> }])),
+}));
 
 vi.mock('../../../middleware/v8Auth.middleware.js', () => ({
   getV8Context: (...args: unknown[]) => mockGetV8Context(...args),

@@ -8,6 +8,11 @@ const mockRequireOrgRole = vi.fn();
 const mockLinkArtifactToCase = vi.fn();
 const mockGetArtifactLink = vi.fn();
 const mockUnlinkArtifactFromCase = vi.fn();
+const mockExecuteGovernedAction = vi.fn((input: { operation: () => Promise<unknown> }) => input.operation());
+
+vi.mock('../../../services/executionActionRegistryService.js', () => ({
+  executeGovernedExecutionAction: (...args: unknown[]) => mockExecuteGovernedAction(...(args as [{ operation: () => Promise<unknown> }])),
+}));
 const mockListArtifactLinksForCase = vi.fn();
 
 vi.mock('../../../middleware/v8Auth.middleware.js', () => ({

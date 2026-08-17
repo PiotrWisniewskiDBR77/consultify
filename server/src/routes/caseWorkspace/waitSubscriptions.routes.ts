@@ -22,7 +22,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 
 import * as svc from '../../services/caseWorkspace/waitSubscriptionService.js';
-import { requireCaseAccessForActor, requireOrgRoleForActor } from './_shared/access.js';
+import { executeGovernedCaseAction, requireCaseAccessForActor } from './_shared/access.js';
 import { caseWorkspaceHandler, readIdempotencyKeyHeader } from './_shared/handler.js';
 import { toCaseWorkspaceAppError } from './_shared/errors.js';
 import { parseBody, parseParams, parseQuery } from './_shared/validate.js';
@@ -195,14 +195,13 @@ router.post(
   caseWorkspaceHandler(async (req, res, actor) => {
     const params = parseParams(waitIdParams, req.params);
     const body = parseBody(cancelWaitBody, req.body);
-    await requireCaseAccessForWait(actor, params.waitId);
-    await requireOrgRoleForActor(actor, 'ADMIN');
-    const updated = await svc.cancelWait(
-      params.waitId,
-      { actorUserId: actor.actorUserId },
-      body.reason,
-      body.expectedVersion
-    );
+    const updated = await executeGovernedCaseAction({
+      actor, actionId: 'case.wait.cancel', targetId: params.waitId,
+      operation: async () => {
+        await requireCaseAccessForWait(actor, params.waitId);
+        return svc.cancelWait(params.waitId, { actorUserId: actor.actorUserId }, body.reason, body.expectedVersion);
+      },
+    });
     res.status(200).json({ data: updated });
   })
 );

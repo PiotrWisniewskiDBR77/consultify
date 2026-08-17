@@ -35,9 +35,9 @@ import {
   getPortfolioBudgetSummary,
 } from '../services/executionBudgetService.js';
 import {
-  recordExecutionActionAudit,
-  requireImplementedExecutionAction,
+  executeGovernedExecutionAction,
 } from '../services/executionActionRegistryService.js';
+import { requireOrgMember } from '../services/caseWorkspace/caseWorkspaceAuthContext.js';
 import { getTimelineWarningsSnapshot } from '../services/executionControlReadService.js';
 import { dispatchProjectCommunicationEvent } from '../services/integrations/communicationSyncService.js';
 import { detectRiskSignals } from '../services/riskDetectionService.js';
@@ -545,7 +545,6 @@ router.delete(
   '/budget/entries/:entryId',
   verifyToken,
   isAuthenticated,
-  requireOrgRole('admin'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
@@ -553,33 +552,20 @@ router.delete(
     const { initiativeId } = req.query;
     if (!initiativeId) return res.status(400).json({ error: 'initiativeId is required' });
 
-    await requireImplementedExecutionAction('execution.budget.delete');
-    const deleted = await deleteBudgetEntry(
-      orgId,
-      String(req.params.entryId),
-      String(initiativeId)
-    );
     const requestId = String(req.headers['x-request-id'] || '').trim() || null;
-    if (!deleted) {
-      await recordExecutionActionAudit({
-        organizationId: orgId,
-        actionId: 'execution.budget.delete',
-        targetId: String(req.params.entryId),
-        actorId: String(req.user?.id || ''),
-        outcome: 'NOT_FOUND',
-        reasonCode: 'budget_entry_not_found',
-        requestId,
-      });
-      return res.status(404).json({ error: 'Budget entry not found' });
-    }
-    await recordExecutionActionAudit({
+    const membership = await requireOrgMember(String(req.user?.id || ''), orgId);
+    const deleted = await executeGovernedExecutionAction({
       organizationId: orgId,
       actionId: 'execution.budget.delete',
       targetId: String(req.params.entryId),
       actorId: String(req.user?.id || ''),
-      outcome: 'SUCCEEDED',
+      membershipRole: membership.role === 'CONSULTANT' ? 'MEMBER' : membership.role,
       requestId,
+      operation: () => deleteBudgetEntry(orgId, String(req.params.entryId), String(initiativeId)),
     });
+    if (!deleted) {
+      return res.status(404).json({ error: 'Budget entry not found' });
+    }
     return res.json({ success: true });
   })
 );

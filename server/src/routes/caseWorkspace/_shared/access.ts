@@ -28,6 +28,7 @@ import {
   type OrgRole,
 } from '../../../services/caseWorkspace/caseWorkspaceAuthContext.js';
 import type { CaseWorkspaceActor } from './handler.js';
+import { executeGovernedExecutionAction } from '../../../services/executionActionRegistryService.js';
 
 export { CaseWorkspaceAuthError };
 export type { OrgMembership, OrgRole };
@@ -45,4 +46,22 @@ export function requireOrgMemberForActor(actor: CaseWorkspaceActor): Promise<Org
 /** Fail-closed: actor must hold at least `minimumRole` in their own authenticated organization. */
 export function requireOrgRoleForActor(actor: CaseWorkspaceActor, minimumRole: OrgRole): Promise<OrgMembership> {
   return requireOrgRole(actor.actorUserId, actor.organizationId, minimumRole);
+}
+
+export async function executeGovernedCaseAction<T>(input: {
+  actor: CaseWorkspaceActor;
+  actionId: string;
+  targetId: string;
+  operation: () => Promise<T>;
+}): Promise<T> {
+  const membership = await requireOrgRole(input.actor.actorUserId, input.actor.organizationId, 'MEMBER');
+  return executeGovernedExecutionAction({
+    organizationId: input.actor.organizationId,
+    actionId: input.actionId,
+    targetId: input.targetId,
+    actorId: input.actor.actorUserId,
+    membershipRole: membership.role === 'CONSULTANT' ? 'MEMBER' : membership.role,
+    requestId: input.actor.correlationId,
+    operation: input.operation,
+  });
 }

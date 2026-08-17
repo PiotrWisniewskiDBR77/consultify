@@ -21,9 +21,9 @@ import { z } from 'zod';
 
 import * as svc from '../../services/caseWorkspace/caseCoreService.js';
 import {
+  executeGovernedCaseAction,
   requireCaseAccessForActor,
   requireOrgMemberForActor,
-  requireOrgRoleForActor,
 } from './_shared/access.js';
 import { caseWorkspaceHandler } from './_shared/handler.js';
 import { parseBody, parseParams, parseQuery } from './_shared/validate.js';
@@ -151,10 +151,20 @@ router.post(
   caseWorkspaceHandler(async (req, res, actor) => {
     const params = parseParams(caseIdParams, req.params);
     const body = parseBody(transitionStatusBody, req.body);
-    await requireCaseAccessForActor(actor, params.caseId);
     if (body.targetStatus === 'CLOSED' || body.targetStatus === 'CANCELLED') {
-      await requireOrgRoleForActor(actor, 'ADMIN');
+      const updated = await executeGovernedCaseAction({
+        actor,
+        actionId: body.targetStatus === 'CLOSED' ? 'case.close' : 'case.cancel',
+        targetId: params.caseId,
+        operation: async () => {
+          await requireCaseAccessForActor(actor, params.caseId);
+          return svc.transitionStatus(params.caseId, body.targetStatus, { actorUserId: actor.actorUserId }, body.reason);
+        },
+      });
+      res.status(200).json({ data: updated });
+      return;
     }
+    await requireCaseAccessForActor(actor, params.caseId);
     const updated = await svc.transitionStatus(
       params.caseId,
       body.targetStatus,
@@ -239,14 +249,13 @@ router.post(
   caseWorkspaceHandler(async (req, res, actor) => {
     const params = parseParams(caseIdParams, req.params);
     const body = parseBody(recordClosureBody, req.body);
-    await requireCaseAccessForActor(actor, params.caseId);
-    await requireOrgRoleForActor(actor, 'ADMIN');
-    const updated = await svc.recordClosure(
-      params.caseId,
-      body.closureType,
-      { actorUserId: actor.actorUserId },
-      body.evidenceRef ?? null
-    );
+    const updated = await executeGovernedCaseAction({
+      actor, actionId: 'case.close', targetId: params.caseId,
+      operation: async () => {
+        await requireCaseAccessForActor(actor, params.caseId);
+        return svc.recordClosure(params.caseId, body.closureType, { actorUserId: actor.actorUserId }, body.evidenceRef ?? null);
+      },
+    });
     res.status(200).json({ data: updated });
   })
 );
@@ -259,13 +268,13 @@ router.post(
   caseWorkspaceHandler(async (req, res, actor) => {
     const params = parseParams(caseIdParams, req.params);
     const body = parseBody(cancelCaseBody, req.body);
-    await requireCaseAccessForActor(actor, params.caseId);
-    await requireOrgRoleForActor(actor, 'ADMIN');
-    const updated = await svc.cancelCase(
-      params.caseId,
-      { actorUserId: actor.actorUserId },
-      body.reason
-    );
+    const updated = await executeGovernedCaseAction({
+      actor, actionId: 'case.cancel', targetId: params.caseId,
+      operation: async () => {
+        await requireCaseAccessForActor(actor, params.caseId);
+        return svc.cancelCase(params.caseId, { actorUserId: actor.actorUserId }, body.reason);
+      },
+    });
     res.status(200).json({ data: updated });
   })
 );
