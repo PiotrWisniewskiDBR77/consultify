@@ -11,8 +11,8 @@
   "ownerTables": ["initiative_candidates", "ie_aggregate_state", "ie_initiative_card_catalog", "ie_initiative_card_selection", "ie_initiative_card_versions", "ie_command_receipts", "ie_audit_events", "ie_outbox_events"],
   "commands": [
     {"command": "IE_TEST_DATABASE_URL=<provider> DATABASE_URL=<provider> RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres npx vitest run initiativeCardsClosure archiveReadOnly authorizationBoundary configure publish review --no-file-parallelism --maxWorkers=1", "exitCode": 0, "result": "6/6 files, 16/16 tests."},
-    {"command": "NODE_ENV=test DATABASE_URL=<provider> DB_TYPE=postgres npm run db:migrate:strict", "exitCode": 0, "result": "Applying migrations: 0."},
-    {"command": "NODE_ENV=test DATABASE_URL=<provider> DB_TYPE=postgres npm run db:migrate:strict -- --dry-run", "exitCode": 0, "result": "Pending migrations: 0; ledger 738 success."},
+    {"command": "NODE_ENV=test DATABASE_URL=<fresh-tmpfs> DB_TYPE=postgres npm run db:migrate:strict", "exitCode": 0, "result": "Fresh apply 738, repeat applying 0."},
+    {"command": "NODE_ENV=test DATABASE_URL=<fresh-tmpfs> DB_TYPE=postgres npm run db:migrate:strict -- --dry-run", "exitCode": 0, "result": "Pending migrations: 0; ledger 738 success; failed status 0; empty checksum 0."},
     {"command": "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check", "exitCode": 0, "result": "Repository TypeScript passes."},
     {"command": "SQL residue query organization_id LIKE codex-ini-cards-%", "exitCode": 0, "result": "aggregate=0, selection=0, versions=0, candidates=0 after cleanup."}
   ],
@@ -25,7 +25,7 @@
     "cleanup": "0/4 owned fixture surfaces retained"
   },
   "fixtures": {
-    "database": "Reused isolated PostgreSQL 16 pgvector provider database on localhost:56815; current 738-migration ledger, explicitly not literal fresh.",
+    "database": "Literal fresh disposable PostgreSQL 16 pgvector container consultify-ini-cards-fresh-tmpfs on localhost:56825 with /var/lib/postgresql/data backed by a 2 GiB tmpfs; 738 migrations applied from zero.",
     "tenant": "codex-ini-cards-001 and foreign negative codex-ini-cards-foreign, exactly deleted after each test and suite.",
     "writers": "registerInitiative, configureInitiativeCards, publishInitiativeCard and PostgresMaterialCommandUnitOfWork; cold reader uses a new Pool."
   },
@@ -38,8 +38,8 @@
   },
   "browserArtifacts": [],
   "rollback": {"code": "Revert dfbf186bbaf78ded4540ac2532ad41690a6b96c4.", "data": "No schema or retained fixtures."},
-  "verdict": "PARTIAL",
-  "openBlockers": ["Literal fresh-current PostgreSQL was unsafe at 98% Docker filesystem utilization. Current-ledger semantics are green; batch fresh-current requalification is the only remaining gate."],
+  "verdict": "DONE_CURRENT_SHA",
+  "openBlockers": [],
   "surfaceDisposition": {
     "PortfolioHealthTable": "Dead; self-reference only.",
     "CandidatesTable": "Dead; self-reference only.",
