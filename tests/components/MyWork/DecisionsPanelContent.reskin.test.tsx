@@ -100,6 +100,7 @@ vi.mock('@/services/api', () => ({
 }));
 
 import { DecisionsPanelContent } from '@/components/MyWork/DecisionsPanelContent';
+import { Api } from '@/services/api';
 
 function renderPanel(props: Partial<React.ComponentProps<typeof DecisionsPanelContent>> = {}) {
   return render(
@@ -125,6 +126,7 @@ function rowFor(el: HTMLElement): HTMLElement {
 describe('DecisionsPanelContent — Vegas re-skin anatomy', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(Api.getDecisions).mockResolvedValue(mockDecisions);
   });
 
   it('renders decision rows with the L2 title token (text-sm font-semibold text-c-text)', async () => {
@@ -149,14 +151,13 @@ describe('DecisionsPanelContent — Vegas re-skin anatomy', () => {
     const title = await screen.findByText('Approve Q1 Budget Increase');
     const row = rowFor(title);
 
-    // Before click: no selection/preview surface (FilterableTable's neutral
-    // selected-row class — kanon TRIADA §27).
-    expect(row.className).not.toContain('bg-slate-50 dark:bg-white/[0.06]');
+    // Before click: no canonical semantic selection surface.
+    expect(row.className).not.toContain('bg-state-selected');
 
     fireEvent.click(row);
 
     await waitFor(() => {
-      expect(row.className).toContain('bg-slate-50 dark:bg-white/[0.06]');
+      expect(row.className).toContain('bg-state-selected');
     });
   });
 
@@ -168,9 +169,9 @@ describe('DecisionsPanelContent — Vegas re-skin anatomy', () => {
     fireEvent.click(first);
 
     await waitFor(() => {
-      expect(first.className).toContain('bg-slate-50 dark:bg-white/[0.06]');
+      expect(first.className).toContain('bg-state-selected');
     });
-    expect(second.className).not.toContain('bg-slate-50 dark:bg-white/[0.06]');
+    expect(second.className).not.toContain('bg-state-selected');
   });
 
   it('renders a neutral-shell status chip (dot carries the only color)', async () => {
@@ -181,5 +182,37 @@ describe('DecisionsPanelContent — Vegas re-skin anatomy', () => {
     const statusChip = within(row).getByText(/pending/i);
     // Shell must not be a solid crimson/primary fill.
     expect(statusChip.closest('span,div')?.className || '').not.toMatch(/bg-primary|bg-crimson/);
+  });
+
+  it('announces a durable load error instead of rendering the empty-success state', async () => {
+    vi.mocked(Api.getDecisions).mockRejectedValueOnce(new Error('backend unavailable'));
+
+    renderPanel();
+
+    const alert = await screen.findByRole('alert');
+    expect(within(alert).getByText('Failed to load decisions')).toBeInTheDocument();
+    expect(screen.queryByText('No decisions awaiting your action')).not.toBeInTheDocument();
+    expect(Api.getDecisions).toHaveBeenCalledTimes(1);
+  });
+
+  it('retries exactly once, shows loading while pending, and replaces the error with data', async () => {
+    let resolveRetry!: (value: typeof mockDecisions) => void;
+    vi.mocked(Api.getDecisions)
+      .mockRejectedValueOnce(new Error('backend unavailable'))
+      .mockImplementationOnce(
+        () => new Promise<typeof mockDecisions>((resolve) => (resolveRetry = resolve))
+      );
+
+    renderPanel();
+    const retry = await screen.findByRole('button', { name: 'Try again' });
+    fireEvent.click(retry);
+
+    expect(Api.getDecisions).toHaveBeenCalledTimes(2);
+    expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
+
+    resolveRetry(mockDecisions);
+    expect(await screen.findByText('Approve Q1 Budget Increase')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(Api.getDecisions).toHaveBeenCalledTimes(2);
   });
 });

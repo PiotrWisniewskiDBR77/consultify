@@ -36,7 +36,7 @@ import { type RowActionSection } from '@/components/shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { StandardTable, type TableColumn, type TableRow } from '@/components/standard';
 import { EmptyState } from '@/components/ui/composed/EmptyState';
-import { LoadingState } from '@/components/ui/primitives';
+import { ErrorState, LoadingState } from '@/components/ui/primitives';
 import {
   DueChip,
   EntityStatusChip,
@@ -783,6 +783,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
   const { currentUser } = useAppStore();
   const [decisions, setDecisions] = useState<Decision[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [previewDecisionId, setPreviewDecisionId] = useState<string | null>(null);
 
   // Selection state
@@ -822,11 +823,17 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
   const fetchDecisions = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const data = await Api.getDecisions();
       setDecisions(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to fetch decisions:', error);
-      toast.error(t('myWork.decisionsPanel.toast.loadFailed', 'Failed to load decisions'));
+      const message = t(
+        'myWork.decisionsPanel.toast.loadFailed',
+        'Failed to load decisions'
+      );
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -1512,6 +1519,22 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
     return (
       <div className="flex-1 flex items-center justify-center h-64">
         <LoadingState variant="spinner" />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="flex-1 flex items-center justify-center h-full">
+        <ErrorState
+          title={loadError}
+          message={t(
+            'myWork.decisionsPanel.loadErrorHint',
+            'Check your connection and try again.'
+          )}
+          retry={() => void fetchDecisions()}
+          className="h-full"
+        />
       </div>
     );
   }
