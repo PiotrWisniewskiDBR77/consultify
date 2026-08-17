@@ -38,6 +38,9 @@ vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
   default: (req: any, _res: any, next: () => void) => { req.user = { id: 'p27-user', role: 'ADMIN', organizationId: 'p27-org', isSuperAdmin: false }; req.userId = 'p27-user'; req.organizationId = 'p27-org'; next(); },
   verifyToken: (req: any, _res: any, next: () => void) => { req.user = { id: 'p27-user', role: 'ADMIN', organizationId: 'p27-org', isSuperAdmin: false }; req.userId = 'p27-user'; req.organizationId = 'p27-org'; next(); },
 }));
+vi.mock('../../../server/src/middleware/auditsStrictMembership.middleware.js', () => ({
+  requireActiveTenantMembership: (_req: any, _res: any, next: () => void) => next(),
+}));
 vi.mock('../../../server/src/middleware/rbac.middleware.js', () => ({ requireOrgAccess: () => (_req: any, _res: any, next: () => void) => next() }));
 vi.mock('../../../server/src/middleware/demoGuard.middleware.js', () => ({ demoContextMiddleware: (_req: any, _res: any, next: () => void) => next() }));
 vi.mock('../../../server/src/middleware/rateLimiting.middleware.js', () => ({ apiAuthRateLimiter: (_req: any, _res: any, next: () => void) => next() }));

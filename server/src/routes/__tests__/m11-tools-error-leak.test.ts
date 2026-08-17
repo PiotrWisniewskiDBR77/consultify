@@ -55,6 +55,10 @@ vi.mock('../../middleware/auth.middleware.js', () => ({
   },
 }));
 
+vi.mock('../../middleware/auditsStrictMembership.middleware.js', () => ({
+  requireActiveTenantMembership: (_req: any, _res: any, next: () => void) => next(),
+}));
+
 vi.mock('../../middleware/rbac.middleware.js', () => ({
   requireOrgAccess: () => (req: any, res: any, next: () => void) => {
     if (!req.user) return res.status(401).json({ error: 'No token' });
