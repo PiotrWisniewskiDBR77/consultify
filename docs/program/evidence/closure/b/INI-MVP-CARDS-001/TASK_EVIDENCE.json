@@ -1,50 +1,49 @@
 {
   "taskId": "INI-MVP-CARDS-001",
-  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "99406b784bf1332beb369be161e75a2422f00fc6",
+  "baselineSha": "31fe607399448c74d71574d07114e8ce7548eb6b",
+  "productSha": "dfbf186bbaf78ded4540ac2532ad41690a6b96c4",
   "leaseSha256": "f4d75f0aed94f2e34acaec63d91c245495e7e0f658aa36d1122342c2acecc612",
-  "toolchain": {
-    "node": "v24.12.0",
-    "npm": "11.6.2",
-    "vitest": "4.1.8",
-    "playwright": "1.62.1",
-    "postgres": "16.14 pgvector/pgvector:pg16",
-    "docker": "29.3.0"
+  "changedPaths": ["tests/integration/initiatives-execution/initiativeCardsClosure.realdb.test.ts", "docs/program/evidence/closure/b/INI-MVP-CARDS-001/TASK_EVIDENCE.json"],
+  "changedPathRationale": {
+    "tests/integration/initiatives-execution/initiativeCardsClosure.realdb.test.ts": "Production-command acceptance for registration, selection, three persisted cards, replay, concurrent/stale CAS, capability/tenant denial, cold new-pool readback and cleanup.",
+    "docs/program/evidence/closure/b/INI-MVP-CARDS-001/TASK_EVIDENCE.json": "Current-candidate evidence replacing the historical empty-table assessment."
   },
-  "laneGates": {
-    "G0": "PASS — branch codex/closure-claude-b-transformation, HEAD==baseline at start, verify-closure-lane.mjs PASS",
-    "G1": "PASS — type-check exit 0, build:backend exit 0, build exit 0, discovery-gate PASS 4997/4997",
-    "G3_strict_migration": "PASS — fresh/repeat/dry-run exit 0; schema_migrations 703 success / 0 failed / 0 pending; 703/703 checksums independently verified; 1678 tables",
-    "G2_lane_baseline": "RED (pre-existing at sealed baseline): 747 collected of 761 real test files; 107 files failed / 557 passed / 83 skipped; 287 tests failed / 4270 passed / 617 skipped",
-    "G2_defects": "14 leased acceptance tests uncollectable by the mandated command; 110 further realDB files run without a DB by it; backend tests execute under jsdom because environmentMatchGlobs is dead in Vitest 4"
-  },
-  "ownerTables": [
-    "ie_initiative_card_catalog",
-    "ie_initiative_card_selection",
-    "ie_initiative_card_versions"
-  ],
-  "changedPaths": [],
-  "changedPathRationale": {},
+  "ownerTables": ["initiative_candidates", "ie_aggregate_state", "ie_initiative_card_catalog", "ie_initiative_card_selection", "ie_initiative_card_versions", "ie_command_receipts", "ie_audit_events", "ie_outbox_events"],
   "commands": [
-    "node scripts/cleanup/verify-closure-lane.mjs b closure-execution-baseline-v2-20260816",
-    "jq -r '.tests.vitest[]' docs/cleanup/agents/generated/CLAUDE_LANE_B_PATH_LEASE.json | xargs -n 80 npx vitest run --no-file-parallelism --maxWorkers=1 --maxConcurrency=2 --retry=0",
-    "CI=true DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts  (fresh, repeat, --dry-run)"
+    {"command": "IE_TEST_DATABASE_URL=<provider> DATABASE_URL=<provider> RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres npx vitest run initiativeCardsClosure archiveReadOnly authorizationBoundary configure publish review --no-file-parallelism --maxWorkers=1", "exitCode": 0, "result": "6/6 files, 16/16 tests."},
+    {"command": "NODE_ENV=test DATABASE_URL=<provider> DB_TYPE=postgres npm run db:migrate:strict", "exitCode": 0, "result": "Applying migrations: 0."},
+    {"command": "NODE_ENV=test DATABASE_URL=<provider> DB_TYPE=postgres npm run db:migrate:strict -- --dry-run", "exitCode": 0, "result": "Pending migrations: 0; ledger 738 success."},
+    {"command": "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check", "exitCode": 0, "result": "Repository TypeScript passes."},
+    {"command": "SQL residue query organization_id LIKE codex-ini-cards-%", "exitCode": 0, "result": "aggregate=0, selection=0, versions=0, candidates=0 after cleanup."}
   ],
   "denominators": {
-    "task": "Single-writer claim CONFIRMED (postgresMaterialCommandUnitOfWork only); reader is read-only",
-    "laneRealDbPass": "110 leased realDB files on an isolated DB: 77 passed / 7 failed / 26 skipped; 675 tests: 565 passed / 51 failed / 59 skipped",
-    "recoveredAcceptance": "14 leased acceptance files the mandated G2 command cannot collect, run under vitest.acceptance.config.ts: 105 tests, 91 passed / 14 failed"
+    "focusedRealPg": "16/16 tests in 6/6 files",
+    "productionCommandClosure": "3/3",
+    "publishedCardSurfaces": "3/3: summary-scope, success-criteria, risk-raid",
+    "cardTablesDuringFixture": "catalog=26, selection=26, versions=3, initiative aggregate=1",
+    "migrationLedger": "738/738 success; repeat=0; dry=0",
+    "cleanup": "0/4 owned fixture surfaces retained"
   },
   "fixtures": {
-    "prefix": "claude_b_",
-    "isolatedDb": "consultify-closure-b-64f50785 @127.0.0.1:55811; verification replica @55812; clean-room @55813",
-    "env": "NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false (all three required — NODE_ENV=test alone substitutes a mock DB)"
+    "database": "Reused isolated PostgreSQL 16 pgvector provider database on localhost:56815; current 738-migration ledger, explicitly not literal fresh.",
+    "tenant": "codex-ini-cards-001 and foreign negative codex-ini-cards-foreign, exactly deleted after each test and suite.",
+    "writers": "registerInitiative, configureInitiativeCards, publishInitiativeCard and PostgresMaterialCommandUnitOfWork; cold reader uses a new Pool."
   },
-  "negativeControls": {},
+  "negativeControls": {
+    "tenant": "Foreign tenant receives null Initiative and empty cards.",
+    "capabilityRole": "Invalid registration capability has zero writes; mounted authorization suite covers anonymous and unauthorized roles.",
+    "idempotency": "Identical register/publish receipt replays without duplicates.",
+    "concurrencyAndCas": "Two same-version concurrent writers produce one success and one conflict with one committed row.",
+    "archive": "initiative.archive is terminal; card/task/allocation and forged initiative.restore remain rejected byte-stably. No reopen is invented."
+  },
   "browserArtifacts": [],
-  "rollback": {
-    "method": "Revert the lane commits; all changes are additive application code plus new tests. NO migration was added by this lane, so no schema rollback is required and old readers are unaffected."
-  },
+  "rollback": {"code": "Revert dfbf186bbaf78ded4540ac2532ad41690a6b96c4.", "data": "No schema or retained fixtures."},
   "verdict": "PARTIAL",
-  "openBlocker": "Determinism proven only at code level — the three card tables and ie_aggregate_state are all EMPTY in this environment, so it could not be verified empirically. \"Reopen\" DOES NOT EXIST as a command: all 16 initiative.* command types across 36 domain files were enumerated; archive is explicitly terminal (\"restore is not supported\"). Retirement: PortfolioHealthTable/CandidatesTable/CandidatesPanel confirmed dead; InitiativeFullView is LIVE (MyWorkHub.tsx:3804) — do not retire."
+  "openBlockers": ["Literal fresh-current PostgreSQL was unsafe at 98% Docker filesystem utilization. Current-ledger semantics are green; batch fresh-current requalification is the only remaining gate."],
+  "surfaceDisposition": {
+    "PortfolioHealthTable": "Dead; self-reference only.",
+    "CandidatesTable": "Dead; self-reference only.",
+    "CandidatesPanel": "Transitively dead through CandidatesTable.",
+    "InitiativeFullView": "LIVE and retained; lazy-imported and rendered by MyWorkHub.tsx."
+  }
 }
