@@ -313,31 +313,62 @@ describe.skipIf(!REAL_PG)(
     afterAll(async () => {
       if (!raw) return;
       try {
-        await raw.query(`SET session_replication_role = replica`);
-        await raw.query(`DELETE FROM rvn_finance_reconciliation_grant_events WHERE organization_id=$1`, [orgId]);
-        await raw.query(`SET session_replication_role = origin`);
-        // `benefit_tracking`'s DELETE guard is part of the artifact under test;
-        // drop it only for this suite's own cleanup, then put it straight back.
-        await raw.query(
-          `DROP TRIGGER IF EXISTS trg_benefit_tracking_deny_delete ON benefit_tracking`
-        );
+        await raw.query('BEGIN');
+        // Disable only the three named append/delete guards whose behavior this
+        // suite already proved. The deletes remain exact-org/exact-id scoped.
+        await raw.query(`ALTER TABLE benefit_tracking DISABLE TRIGGER trg_benefit_tracking_deny_delete`);
+        await raw.query(`ALTER TABLE rvn_finance_reconciliation_grant_events DISABLE TRIGGER trg_rvn_fin_reconciliation_grant_append_only`);
+        await raw.query(`ALTER TABLE rvn_finance_reconciliation_decisions DISABLE TRIGGER trg_rvn_fin_reconciliation_decision_append_only`);
         await raw.query(`DELETE FROM benefit_tracking WHERE organization_id = $1`, [orgId]);
-        await raw.query(
-          `CREATE TRIGGER trg_benefit_tracking_deny_delete BEFORE DELETE ON benefit_tracking
-           FOR EACH ROW EXECUTE FUNCTION benefit_tracking_deny_actual_overwrite()`
-        );
+        await raw.query(`DELETE FROM rvn_finance_reconciliation_decisions WHERE organization_id = $1`, [orgId]);
+        await raw.query(`DELETE FROM rvn_roi_finance_reconciliations WHERE organization_id = $1`, [orgId]);
+        await raw.query(`DELETE FROM rvn_finance_reconciliation_grant_events WHERE organization_id = $1`, [orgId]);
         if (createdLinkIds.length > 0) {
-          await raw.query(`SET session_replication_role = replica`);
-          await raw.query(`DELETE FROM rvn_finance_reconciliation_decisions WHERE organization_id = $1`, [orgId]);
-          await raw.query(
-            `DELETE FROM rvn_roi_finance_reconciliations WHERE organization_id = $1`,
-            [orgId]
-          );
-          await raw.query(`SET session_replication_role = origin`);
           await raw.query(`DELETE FROM rvn_roi_finance_links WHERE link_id = ANY($1::uuid[])`, [
             createdLinkIds,
           ]);
         }
+        await raw.query(`DELETE FROM rvn_platform_outbox WHERE event_id IN (SELECT event_id FROM rvn_platform_events WHERE organization_id=$1)`, [orgId]);
+        await raw.query(`DELETE FROM rvn_platform_events WHERE organization_id=$1`, [orgId]);
+        await raw.query(`DELETE FROM rvn_platform_resource_acl WHERE resource_type='roi_case' AND resource_id=$1`, [caseId]);
+        await raw.query(`DELETE FROM rvn_platform_obligations WHERE organization_id=$1`, [orgId]);
+        await raw.query(`DELETE FROM rvn_roi_baselines WHERE organization_id=$1`, [orgId]);
+        await raw.query(`DELETE FROM rvn_roi_calculation_policy WHERE organization_id=$1`, [orgId]);
+        await raw.query(`DELETE FROM rvn_roi_cases WHERE organization_id=$1`, [orgId]);
+        await raw.query(`DELETE FROM rvn_platform_resource_visibility WHERE organization_id=$1`, [orgId]);
+        await raw.query(`DELETE FROM rvn_platform_visibility_policies WHERE organization_id=$1`, [orgId]);
+        await raw.query(`DELETE FROM digitization_analyses WHERE id=ANY($1::text[])`, [[analysisWithCase, analysisWithoutCase]]);
+        await raw.query(`DELETE FROM initiatives WHERE id=ANY($1::text[])`, [[initiativeWithCase, initiativeWithoutCase]]);
+        await raw.query(`DELETE FROM organization_members WHERE organization_id=$1`, [orgId]);
+        await raw.query(`DELETE FROM users WHERE id=ANY($1::text[])`, [[userId, `resolver-${userId}`, `acceptor-${userId}`]]);
+        await raw.query(`DELETE FROM organizations WHERE id=$1`, [orgId]);
+
+        await raw.query(`ALTER TABLE benefit_tracking ENABLE TRIGGER trg_benefit_tracking_deny_delete`);
+        await raw.query(`ALTER TABLE rvn_finance_reconciliation_grant_events ENABLE TRIGGER trg_rvn_fin_reconciliation_grant_append_only`);
+        await raw.query(`ALTER TABLE rvn_finance_reconciliation_decisions ENABLE TRIGGER trg_rvn_fin_reconciliation_decision_append_only`);
+
+        const residue = await raw.query<{ total: string }>(
+          `SELECT (
+            (SELECT count(*) FROM organizations WHERE id=$1) +
+            (SELECT count(*) FROM users WHERE organization_id=$1) +
+            (SELECT count(*) FROM organization_members WHERE organization_id=$1) +
+            (SELECT count(*) FROM initiatives WHERE organization_id=$1) +
+            (SELECT count(*) FROM digitization_analyses WHERE organization_id=$1) +
+            (SELECT count(*) FROM rvn_roi_cases WHERE organization_id=$1) +
+            (SELECT count(*) FROM rvn_platform_visibility_policies WHERE organization_id=$1) +
+            (SELECT count(*) FROM rvn_roi_finance_reconciliations WHERE organization_id=$1) +
+            (SELECT count(*) FROM rvn_finance_reconciliation_grant_events WHERE organization_id=$1) +
+            (SELECT count(*) FROM rvn_finance_reconciliation_decisions WHERE organization_id=$1)
+          )::text AS total`,
+          [orgId]
+        );
+        if (residue.rows[0]?.total !== '0') {
+          throw new Error(`finance reconciliation fixture residue: ${residue.rows[0]?.total ?? 'unknown'}`);
+        }
+        await raw.query('COMMIT');
+      } catch (error) {
+        await raw.query('ROLLBACK').catch(() => undefined);
+        throw error;
       } finally {
         await raw.end();
       }
