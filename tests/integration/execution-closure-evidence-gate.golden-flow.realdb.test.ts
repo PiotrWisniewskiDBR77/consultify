@@ -263,7 +263,11 @@ const REQUIRED_TABLES = [
 
 function base64UrlEncode(obj: unknown): string {
   const json = JSON.stringify(obj);
-  return Buffer.from(json, 'utf8').toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  return Buffer.from(json, 'utf8')
+    .toString('base64')
+    .replace(/=/g, '')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_');
 }
 
 function makeE2EToken(userId: string, organizationId: string): string {
@@ -370,6 +374,59 @@ interface Harness {
   taskOrgBId: string;
 
   cleanup: () => Promise<void>;
+}
+
+async function deleteOwnedImmutableGateFixtures(
+  client: Client,
+  initiativeIds: string[],
+  forceFailureAfterDisable = false
+): Promise<void> {
+  if (process.env.CLOSURE_EVIDENCE_ALLOW_IMMUTABLE_FIXTURE_CLEANUP !== '1') {
+    throw new Error('immutable fixture cleanup is not explicitly enabled');
+  }
+  const prefix = String(process.env.CLOSURE_EVIDENCE_DISPOSABLE_DB_PREFIX ?? '').trim();
+  const db = await client.query<{ name: string }>('SELECT current_database() AS name');
+  if (!prefix || !String(db.rows[0]?.name ?? '').startsWith(prefix)) {
+    throw new Error('refusing immutable fixture cleanup outside the disposable database prefix');
+  }
+  await client.query('BEGIN');
+  try {
+    await client.query(
+      `SELECT pg_advisory_xact_lock(hashtext('closure-evidence-fixture-cleanup'))`
+    );
+    await client.query('TRUNCATE TABLE initiative_closure_evidence');
+    await client.query(
+      'ALTER TABLE initiative_lifecycle_gate_decisions DISABLE TRIGGER initiative_lifecycle_gate_decisions_immutable'
+    );
+    if (forceFailureAfterDisable) throw new Error('forced-cleanup-failure');
+    await client.query(
+      `DELETE FROM initiative_lifecycle_gate_decisions WHERE decision_id = ANY($1::text[])`,
+      [initiativeIds.map((id) => `gf_dec_${id}`)]
+    );
+    await client.query(
+      'ALTER TABLE initiative_lifecycle_gate_decisions ENABLE TRIGGER initiative_lifecycle_gate_decisions_immutable'
+    );
+    await client.query(
+      `DELETE FROM v8_agent_proposal_scope_reviews WHERE review_id = ANY($1::text[])`,
+      [initiativeIds.map((id) => `gf_rev_${id}`)]
+    );
+    await client.query(
+      `DELETE FROM v8_agent_proposal_versions WHERE proposal_version_id = ANY($1::text[])`,
+      [initiativeIds.map((id) => `gf_pv_${id}`)]
+    );
+    await client.query(
+      `DELETE FROM transformation_cases WHERE transformation_case_id = ANY($1::text[])`,
+      [initiativeIds.map((id) => `gf_case_${id}`)]
+    );
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    const trigger = await client.query<{ enabled: string }>(
+      `SELECT tgenabled AS enabled FROM pg_trigger WHERE tgname = 'initiative_lifecycle_gate_decisions_immutable'`
+    );
+    if (trigger.rows[0]?.enabled !== 'O') throw new Error('immutable trigger was not restored');
+    throw error;
+  }
 }
 
 function suffix(): string {
@@ -706,27 +763,31 @@ async function setupHarness(): Promise<Harness | null> {
      * TRUNCATE, not DELETE: removal is DDL requiring ownership of the table,
      * which a runtime role does not have and a disposable test database does.
      */
+    await expect(deleteOwnedImmutableGateFixtures(client, [], true)).rejects.toThrow(
+      'forced-cleanup-failure'
+    );
+    await deleteOwnedImmutableGateFixtures(client, allInitiativeIds);
     try {
-      await client.query('TRUNCATE TABLE initiative_closure_evidence');
-    } catch (error) {
-      // Visible, because a teardown that cannot clear the ledger will make the
-      // NEXT run's evidence counts wrong and there is nothing to diagnose it by.
-      console.error('[exe08 cleanup] could not clear the evidence ledger:', error);
-    }
-    try {
-      await client.query(`DELETE FROM initiative_closure_requests WHERE organization_id = ANY($1)`, [
-        [orgAId, orgBId],
-      ]);
+      await client.query(
+        `DELETE FROM initiative_closure_requests WHERE organization_id = ANY($1)`,
+        [[orgAId, orgBId]]
+      );
       await client.query(`DELETE FROM initiative_history WHERE initiative_id = ANY($1)`, [
         allInitiativeIds,
       ]);
-      await client.query(`DELETE FROM decisions WHERE organization_id = ANY($1)`, [[orgAId, orgBId]]);
+      await client.query(`DELETE FROM decisions WHERE organization_id = ANY($1)`, [
+        [orgAId, orgBId],
+      ]);
       await client.query(`DELETE FROM tasks WHERE organization_id = ANY($1)`, [[orgAId, orgBId]]);
       await client.query(`DELETE FROM initiative_milestones WHERE organization_id = ANY($1)`, [
         [orgAId, orgBId],
       ]);
-      await client.query(`DELETE FROM initiatives WHERE organization_id = ANY($1)`, [[orgAId, orgBId]]);
-      await client.query(`DELETE FROM projects WHERE organization_id = ANY($1)`, [[orgAId, orgBId]]);
+      await client.query(`DELETE FROM initiatives WHERE organization_id = ANY($1)`, [
+        [orgAId, orgBId],
+      ]);
+      await client.query(`DELETE FROM projects WHERE organization_id = ANY($1)`, [
+        [orgAId, orgBId],
+      ]);
       // Best-effort: the E2E auth bypass also seeds `organization_members`
       // rows for whichever identities actually authenticate.
       await client.query(`DELETE FROM organization_members WHERE organization_id = ANY($1)`, [
@@ -734,8 +795,8 @@ async function setupHarness(): Promise<Harness | null> {
       ]);
       await client.query(`DELETE FROM users WHERE organization_id = ANY($1)`, [[orgAId, orgBId]]);
       await client.query(`DELETE FROM organizations WHERE id = ANY($1)`, [[orgAId, orgBId]]);
-    } catch {
-      // Leaking a few rows is acceptable; a hung/throwing cleanup is not.
+    } catch (error) {
+      throw new Error(`EXE-08 fixture cleanup failed: ${String(error)}`);
     }
     try {
       await client.end();
@@ -821,7 +882,10 @@ async function driveClosureRequestToSubmitted(
   const submitRes = await request(app)
     .post(`/api/initiatives/${initiativeId}/closure-requests/${closureRequestId}/submit`)
     .set('Authorization', `Bearer ${ownerToken}`)
-    .send({ closureRationale: 'Driven-to-submitted rationale', outcomeSummary: 'Driven-to-submitted outcome' });
+    .send({
+      closureRationale: 'Driven-to-submitted rationale',
+      outcomeSummary: 'Driven-to-submitted outcome',
+    });
   expect(submitRes.status).toBe(200);
   expect(submitRes.body.success).toBe(true);
   expect(submitRes.body.status).toBe('submitted');
@@ -926,7 +990,9 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
       const requestUrl = `/api/initiatives/${initiativeId}/closure-requests/${closureRequestId}`;
 
       // 2. GET readiness -> ready:false (no rationale/outcome/evidence yet).
-      const readiness0 = await request(app).get(readinessUrl).set('Authorization', `Bearer ${ownerToken}`);
+      const readiness0 = await request(app)
+        .get(readinessUrl)
+        .set('Authorization', `Bearer ${ownerToken}`);
       expect(readiness0.status).toBe(200);
       expect(readiness0.body.ready).toBe(false);
       const items0: Array<{ key: string; satisfied: boolean }> = readiness0.body.items;
@@ -944,10 +1010,14 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
       expect(evTask.status).toBe(201);
       expect(evTask.body.success).toBe(true);
 
-      const readiness1 = await request(app).get(readinessUrl).set('Authorization', `Bearer ${ownerToken}`);
+      const readiness1 = await request(app)
+        .get(readinessUrl)
+        .set('Authorization', `Bearer ${ownerToken}`);
       expect(readiness1.status).toBe(200);
       expect(readiness1.body.ready).toBe(false);
-      expect(readiness1.body.items.find((i: any) => i.key === 'evidenceMinimumTwo')?.satisfied).toBe(false);
+      expect(
+        readiness1.body.items.find((i: any) => i.key === 'evidenceMinimumTwo')?.satisfied
+      ).toBe(false);
 
       const evMilestone = await request(app)
         .post(evidenceUrl)
@@ -956,9 +1026,13 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
       expect(evMilestone.status).toBe(201);
       expect(evMilestone.body.success).toBe(true);
 
-      const readiness2 = await request(app).get(readinessUrl).set('Authorization', `Bearer ${ownerToken}`);
+      const readiness2 = await request(app)
+        .get(readinessUrl)
+        .set('Authorization', `Bearer ${ownerToken}`);
       expect(readiness2.status).toBe(200);
-      expect(readiness2.body.items.find((i: any) => i.key === 'evidenceMinimumTwo')?.satisfied).toBe(true);
+      expect(
+        readiness2.body.items.find((i: any) => i.key === 'evidenceMinimumTwo')?.satisfied
+      ).toBe(true);
       // Still not ready overall — rationale/outcome still missing.
       expect(readiness2.body.ready).toBe(false);
 
@@ -979,7 +1053,8 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
         .send({});
       expect(submitRejected.status).toBe(422);
       expect(submitRejected.body.code).toBe('CLOSURE_NOT_READY');
-      const rejectedChecklist: Array<{ key: string; satisfied: boolean }> = submitRejected.body.details.checklist;
+      const rejectedChecklist: Array<{ key: string; satisfied: boolean }> =
+        submitRejected.body.details.checklist;
       expect(rejectedChecklist.find((i) => i.key === 'closureRationale')?.satisfied).toBe(false);
       expect(rejectedChecklist.find((i) => i.key === 'outcomeSummary')?.satisfied).toBe(false);
       expect(rejectedChecklist.find((i) => i.key === 'evidenceMinimumTwo')?.satisfied).toBe(true);
@@ -1015,7 +1090,9 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
       expect(returnRes.body.status).toBe('returned');
 
       // Negative control C: reviewRationale from the return is visible on GET.
-      const afterReturnGet = await request(app).get(requestUrl).set('Authorization', `Bearer ${ownerToken}`);
+      const afterReturnGet = await request(app)
+        .get(requestUrl)
+        .set('Authorization', `Bearer ${ownerToken}`);
       expect(afterReturnGet.status).toBe(200);
       expect(afterReturnGet.body.closureRequest.status).toBe('returned');
       expect(afterReturnGet.body.closureRequest.reviewRationale).toBe(reviewRationale);
@@ -1043,7 +1120,9 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
 
       let finalStatus = approveRes.body.status as string;
       if (finalStatus !== 'done') {
-        const healGet = await request(app).get(requestUrl).set('Authorization', `Bearer ${ownerToken}`);
+        const healGet = await request(app)
+          .get(requestUrl)
+          .set('Authorization', `Bearer ${ownerToken}`);
         expect(healGet.status).toBe(200);
         finalStatus = healGet.body.closureRequest.status;
       }
@@ -1093,41 +1172,45 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
   // Negative control A — incomplete evidence (<2) rejected at submit.
   // -------------------------------------------------------------------------
 
-  itDB('negative control A: submit with fewer than 2 evidence refs -> 422 CLOSURE_NOT_READY', async (h) => {
-    const app = await buildApp();
-    const ownerToken = makeE2EToken(h.userAId, h.orgAId);
-    const initiativeId = h.initiativeIncompleteEvidenceId;
+  itDB(
+    'negative control A: submit with fewer than 2 evidence refs -> 422 CLOSURE_NOT_READY',
+    async (h) => {
+      const app = await buildApp();
+      const ownerToken = makeE2EToken(h.userAId, h.orgAId);
+      const initiativeId = h.initiativeIncompleteEvidenceId;
 
-    const createRes = await request(app)
-      .post(`/api/initiatives/${initiativeId}/closure-requests`)
-      .set('Authorization', `Bearer ${ownerToken}`)
-      .send({});
-    expect(createRes.status).toBe(201);
-    const closureRequestId = createRes.body.id as string;
+      const createRes = await request(app)
+        .post(`/api/initiatives/${initiativeId}/closure-requests`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({});
+      expect(createRes.status).toBe(201);
+      const closureRequestId = createRes.body.id as string;
 
-    const ev1 = await request(app)
-      .post(`/api/initiatives/${initiativeId}/closure-requests/${closureRequestId}/evidence`)
-      .set('Authorization', `Bearer ${ownerToken}`)
-      .send({ evidenceType: 'task', evidenceRefId: h.evidenceByInitiative[initiativeId].taskId });
-    expect(ev1.status).toBe(201);
+      const ev1 = await request(app)
+        .post(`/api/initiatives/${initiativeId}/closure-requests/${closureRequestId}/evidence`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({ evidenceType: 'task', evidenceRefId: h.evidenceByInitiative[initiativeId].taskId });
+      expect(ev1.status).toBe(201);
 
-    const submitRes = await request(app)
-      .post(`/api/initiatives/${initiativeId}/closure-requests/${closureRequestId}/submit`)
-      .set('Authorization', `Bearer ${ownerToken}`)
-      .send({ closureRationale: 'Rationale present', outcomeSummary: 'Outcome present' });
-    expect(submitRes.status).toBe(422);
-    expect(submitRes.body.code).toBe('CLOSURE_NOT_READY');
-    const checklist: Array<{ key: string; satisfied: boolean }> = submitRes.body.details.checklist;
-    expect(checklist.find((i) => i.key === 'evidenceMinimumTwo')?.satisfied).toBe(false);
-    expect(checklist.find((i) => i.key === 'closureRationale')?.satisfied).toBe(true);
-    expect(checklist.find((i) => i.key === 'outcomeSummary')?.satisfied).toBe(true);
+      const submitRes = await request(app)
+        .post(`/api/initiatives/${initiativeId}/closure-requests/${closureRequestId}/submit`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({ closureRationale: 'Rationale present', outcomeSummary: 'Outcome present' });
+      expect(submitRes.status).toBe(422);
+      expect(submitRes.body.code).toBe('CLOSURE_NOT_READY');
+      const checklist: Array<{ key: string; satisfied: boolean }> =
+        submitRes.body.details.checklist;
+      expect(checklist.find((i) => i.key === 'evidenceMinimumTwo')?.satisfied).toBe(false);
+      expect(checklist.find((i) => i.key === 'closureRationale')?.satisfied).toBe(true);
+      expect(checklist.find((i) => i.key === 'outcomeSummary')?.satisfied).toBe(true);
 
-    const row = await h.client.query(
-      `SELECT status FROM initiative_closure_requests WHERE id = $1`,
-      [closureRequestId]
-    );
-    expect(row.rows[0].status).toBe('draft');
-  });
+      const row = await h.client.query(
+        `SELECT status FROM initiative_closure_requests WHERE id = $1`,
+        [closureRequestId]
+      );
+      expect(row.rows[0].status).toBe('draft');
+    }
+  );
 
   // -------------------------------------------------------------------------
   // Negative control B — wrong-tenant evidence injection rejected.
@@ -1169,7 +1252,11 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
   // created, (b) readiness/evidenceMinimumTwo never counts the rejected ref.
   // -------------------------------------------------------------------------
 
-  async function openDraftOn(app: express.Express, initiativeId: string, ownerToken: string): Promise<string> {
+  async function openDraftOn(
+    app: express.Express,
+    initiativeId: string,
+    ownerToken: string
+  ): Promise<string> {
     const createRes = await request(app)
       .post(`/api/initiatives/${initiativeId}/closure-requests`)
       .set('Authorization', `Bearer ${ownerToken}`)
@@ -1195,28 +1282,31 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
     expect(res.body.code).toBe(expectedCode);
   }
 
-  itDB('negative control B2: task belongs to a DIFFERENT initiative in the same org -> 404, not accepted', async (h) => {
-    const app = await buildApp();
-    const ownerToken = makeE2EToken(h.userAId, h.orgAId);
-    const initiativeId = h.initiativeEvidenceOwnershipId;
-    const closureRequestId = await openDraftOn(app, initiativeId, ownerToken);
-    // A real, terminal, org-A task — but attached to initiativeGoldenId, not this one.
-    const foreignTaskId = h.evidenceByInitiative[h.initiativeGoldenId].taskId;
-    await assertEvidenceRejected(
-      app,
-      initiativeId,
-      closureRequestId,
-      ownerToken,
-      { evidenceType: 'task', evidenceRefId: foreignTaskId },
-      404,
-      'EVIDENCE_REF_NOT_FOUND'
-    );
-    const rows = await h.client.query(
-      `SELECT id FROM initiative_closure_evidence WHERE closure_request_id = $1`,
-      [closureRequestId]
-    );
-    expect(rows.rows.length).toBe(0);
-  });
+  itDB(
+    'negative control B2: task belongs to a DIFFERENT initiative in the same org -> 404, not accepted',
+    async (h) => {
+      const app = await buildApp();
+      const ownerToken = makeE2EToken(h.userAId, h.orgAId);
+      const initiativeId = h.initiativeEvidenceOwnershipId;
+      const closureRequestId = await openDraftOn(app, initiativeId, ownerToken);
+      // A real, terminal, org-A task — but attached to initiativeGoldenId, not this one.
+      const foreignTaskId = h.evidenceByInitiative[h.initiativeGoldenId].taskId;
+      await assertEvidenceRejected(
+        app,
+        initiativeId,
+        closureRequestId,
+        ownerToken,
+        { evidenceType: 'task', evidenceRefId: foreignTaskId },
+        404,
+        'EVIDENCE_REF_NOT_FOUND'
+      );
+      const rows = await h.client.query(
+        `SELECT id FROM initiative_closure_evidence WHERE closure_request_id = $1`,
+        [closureRequestId]
+      );
+      expect(rows.rows.length).toBe(0);
+    }
+  );
 
   itDB(
     'negative control B3: milestone belongs to a DIFFERENT initiative in the same org -> 404, not accepted',
@@ -1349,7 +1439,12 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
       const app = await buildApp();
       const ownerToken = makeE2EToken(h.userAId, h.orgAId);
       const initiativeId = h.initiativeIdemApproveId;
-      const closureRequestId = await driveClosureRequestToSubmitted(app, initiativeId, ownerToken, h);
+      const closureRequestId = await driveClosureRequestToSubmitted(
+        app,
+        initiativeId,
+        ownerToken,
+        h
+      );
       const idempotencyKey = `idem-approve-${suffix()}`;
 
       const approveUrl = `/api/initiatives/${initiativeId}/closure-requests/${closureRequestId}/approve`;
@@ -1403,7 +1498,12 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
       const app = await buildApp();
       const ownerToken = makeE2EToken(h.userAId, h.orgAId);
       const initiativeId = h.initiativeConcurrentApproveId;
-      const closureRequestId = await driveClosureRequestToSubmitted(app, initiativeId, ownerToken, h);
+      const closureRequestId = await driveClosureRequestToSubmitted(
+        app,
+        initiativeId,
+        ownerToken,
+        h
+      );
       const approveUrl = `/api/initiatives/${initiativeId}/closure-requests/${closureRequestId}/approve`;
 
       // No shared idempotencyKey — this exercises the row-lock serialization
@@ -1473,7 +1573,12 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
       const app = await buildApp();
       const ownerToken = makeE2EToken(h.userAId, h.orgAId);
       const initiativeId = h.initiativeStaleVersionId;
-      const closureRequestId = await driveClosureRequestToSubmitted(app, initiativeId, ownerToken, h);
+      const closureRequestId = await driveClosureRequestToSubmitted(
+        app,
+        initiativeId,
+        ownerToken,
+        h
+      );
 
       // Simulate "something changed" on the initiative between submit and
       // approve via the real quick-update endpoint (bumps
@@ -1540,7 +1645,10 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
       const evidenceRes = await request(app)
         .post(`/api/initiatives/${initiativeId}/closure-requests/${closureRequestId}/evidence`)
         .set('Authorization', `Bearer ${attackerToken}`)
-        .send({ evidenceType: 'task', evidenceRefId: h.evidenceByInitiative[h.initiativeGoldenId].taskId });
+        .send({
+          evidenceType: 'task',
+          evidenceRefId: h.evidenceByInitiative[h.initiativeGoldenId].taskId,
+        });
       expect(evidenceRes.status).toBe(404);
 
       const submitRes = await request(app)
@@ -1587,7 +1695,9 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
       expect(res.status).toBe(410);
       expect(res.body.code).toBe('CLOSURE_REQUEST_REQUIRED');
 
-      const row = await h.client.query(`SELECT status FROM initiatives WHERE id = $1`, [initiativeId]);
+      const row = await h.client.query(`SELECT status FROM initiatives WHERE id = $1`, [
+        initiativeId,
+      ]);
       expect(row.rows[0].status).toBe('EXECUTING');
     }
   );
@@ -1609,7 +1719,9 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
       const fabricatedClosureRequestId = `nonexistent-closure-request-${suffix()}`;
 
       const res = await request(app)
-        .post(`/api/initiatives/${initiativeId}/closure-requests/${fabricatedClosureRequestId}/approve`)
+        .post(
+          `/api/initiatives/${initiativeId}/closure-requests/${fabricatedClosureRequestId}/approve`
+        )
         .set('Authorization', `Bearer ${ownerToken}`)
         .send({});
       expect(res.status).toBe(404);
@@ -1651,7 +1763,12 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
       const app = await buildApp();
       const ownerToken = makeE2EToken(h.userAId, h.orgAId);
       const initiativeId = h.initiativeRecoveryAId;
-      const closureRequestId = await driveClosureRequestToSubmitted(app, initiativeId, ownerToken, h);
+      const closureRequestId = await driveClosureRequestToSubmitted(
+        app,
+        initiativeId,
+        ownerToken,
+        h
+      );
 
       await expect(
         approveClosureRequest({
@@ -1715,7 +1832,12 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
       const app = await buildApp();
       const ownerToken = makeE2EToken(h.userAId, h.orgAId);
       const initiativeId = h.initiativeRecoveryBId;
-      const closureRequestId = await driveClosureRequestToSubmitted(app, initiativeId, ownerToken, h);
+      const closureRequestId = await driveClosureRequestToSubmitted(
+        app,
+        initiativeId,
+        ownerToken,
+        h
+      );
 
       await expect(
         approveClosureRequest({
@@ -1773,7 +1895,12 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
       const app = await buildApp();
       const ownerToken = makeE2EToken(h.userAId, h.orgAId);
       const initiativeId = h.initiativeRecoveryCId;
-      const closureRequestId = await driveClosureRequestToSubmitted(app, initiativeId, ownerToken, h);
+      const closureRequestId = await driveClosureRequestToSubmitted(
+        app,
+        initiativeId,
+        ownerToken,
+        h
+      );
 
       await expect(
         approveClosureRequest({

@@ -29,6 +29,7 @@ import {
   raceExactly,
   requireDatabase,
   seedTenants,
+  truncateEvidenceLedgerForFixture,
 } from './evidenceFixture.js';
 
 import { PINNED_EVIDENCE_TYPES } from '../../../server/src/services/initiative/closureEvidenceSourceReader.js';
@@ -206,7 +207,8 @@ beforeAll(async () => {
     [METHOD_FROZEN, TENANT_A.id, METHOD_SESSION, fxId('snap', METHOD_FROZEN), HASH_METHOD]
   );
 
-  const router = (await import('../../../server/src/routes/pmo/initiativeClosure.routes.js')).default;
+  const router = (await import('../../../server/src/routes/pmo/initiativeClosure.routes.js'))
+    .default;
   app = express();
   app.use(express.json());
   app.use('/api/initiatives', router);
@@ -222,7 +224,7 @@ afterAll(async () => {
   // Teardown is by id, children first — except the evidence ledger, which
   // admits no scoped delete at all. TRUNCATE is DDL and needs ownership of the
   // table, which is the only reason a test can do it and a runtime role cannot.
-  await client.query('TRUNCATE TABLE initiative_closure_evidence');
+  await truncateEvidenceLedgerForFixture(client);
   await client.query(`DELETE FROM initiative_closure_requests WHERE id = ANY($1::text[])`, [
     createdClosureRequests,
   ]);
@@ -230,7 +232,15 @@ afterAll(async () => {
   await client.query(`DELETE FROM method_snapshots WHERE id = $1`, [fxId('snap', METHOD_FROZEN)]);
   await client.query(`DELETE FROM method_sessions WHERE id = $1`, [METHOD_SESSION]);
   await client.query(`DELETE FROM tool_outputs WHERE id = ANY($1::text[])`, [
-    [TOOL_FROZEN, TOOL_DRAFT, TOOL_B, TOOL_WRONG_HASH, TOOL_NO_ARRAYS, TOOL_ITEMS_NOT_ARRAY, TOOL_NO_VERSION],
+    [
+      TOOL_FROZEN,
+      TOOL_DRAFT,
+      TOOL_B,
+      TOOL_WRONG_HASH,
+      TOOL_NO_ARRAYS,
+      TOOL_ITEMS_NOT_ARRAY,
+      TOOL_NO_VERSION,
+    ],
   ]);
   await client.query(`DELETE FROM initiatives WHERE id = ANY($1::text[])`, [
     [INITIATIVE_A, INITIATIVE_B],
@@ -239,7 +249,9 @@ afterAll(async () => {
     `DELETE FROM audit_events WHERE org_id = ANY($1::text[]) AND action = 'INITIATIVE_CLOSURE_EVIDENCE_ADDED'`,
     [orgs]
   );
-  await client.query(`DELETE FROM organization_members WHERE organization_id = ANY($1::text[])`, [orgs]);
+  await client.query(`DELETE FROM organization_members WHERE organization_id = ANY($1::text[])`, [
+    orgs,
+  ]);
   await client.query(`DELETE FROM users WHERE organization_id = ANY($1::text[])`, [orgs]);
   await client.query(`DELETE FROM projects WHERE organization_id = ANY($1::text[])`, [orgs]);
   await client.query(`DELETE FROM organizations WHERE id = ANY($1::text[])`, [orgs]);
@@ -300,7 +312,11 @@ describe('Hash-bearing sources as closure evidence (real Postgres, mounted signe
       const res = await agent()
         .post(evidenceUrl(INITIATIVE_A, requestId))
         .set('Authorization', forgedE2EBearer(TENANT_A.owner))
-        .send({ evidenceType: 'tool_output', evidenceRefId: TOOL_FROZEN, initiativeId: INITIATIVE_A });
+        .send({
+          evidenceType: 'tool_output',
+          evidenceRefId: TOOL_FROZEN,
+          initiativeId: INITIATIVE_A,
+        });
       expect(res.status).toBe(401);
     });
 
@@ -309,7 +325,11 @@ describe('Hash-bearing sources as closure evidence (real Postgres, mounted signe
       const res = await agent()
         .post(evidenceUrl(INITIATIVE_A, requestId))
         .set('Authorization', bearer(TENANT_A.revoked))
-        .send({ evidenceType: 'tool_output', evidenceRefId: TOOL_FROZEN, initiativeId: INITIATIVE_A });
+        .send({
+          evidenceType: 'tool_output',
+          evidenceRefId: TOOL_FROZEN,
+          initiativeId: INITIATIVE_A,
+        });
       expect({ status: res.status, code: res.body.code }).toEqual({
         status: 403,
         code: 'MEMBERSHIP_NOT_ACTIVE',
@@ -364,7 +384,9 @@ describe('Hash-bearing sources as closure evidence (real Postgres, mounted signe
       const requestId = await createClosureRequest(INITIATIVE_A, TENANT_A.id);
       const res = await attach('tool_output', TOOL_DRAFT, requestId, 'k-tool-draft01');
       const rows = await coldRead((c) =>
-        c.query(`SELECT id FROM initiative_closure_evidence WHERE closure_request_id = $1`, [requestId])
+        c.query(`SELECT id FROM initiative_closure_evidence WHERE closure_request_id = $1`, [
+          requestId,
+        ])
       );
       expect({ status: res.status, code: res.body.code, rows: rows.rowCount }).toEqual({
         status: 409,
@@ -385,17 +407,35 @@ describe('Hash-bearing sources as closure evidence (real Postgres, mounted signe
         )
       );
       expect(
-        cols.rows.map((r) => `${r.column_name}:${r.is_nullable}:${r.column_default ? 'default' : 'none'}`)
+        cols.rows.map(
+          (r) => `${r.column_name}:${r.is_nullable}:${r.column_default ? 'default' : 'none'}`
+        )
       ).toEqual(['content_hash:NO:none', 'frozen_at:NO:default']);
     });
   });
 
   describe('2b. tool_output verification is unconditional — no fallback to "looks like a sha256"', () => {
     const cases: Array<[string, string, string]> = [
-      ['a 64-hex hash that does not describe the payload', TOOL_WRONG_HASH, 'content_hash_mismatch'],
-      ['a payload with none of the required arrays', TOOL_NO_ARRAYS, 'payload_missing_or_malformed:items+tensions+conclusions'],
-      ['`items` present but an object instead of an array', TOOL_ITEMS_NOT_ARRAY, 'payload_missing_or_malformed:items'],
-      ['an incomplete identity (empty method_pack_version)', TOOL_NO_VERSION, 'tool_output_identity_incomplete'],
+      [
+        'a 64-hex hash that does not describe the payload',
+        TOOL_WRONG_HASH,
+        'content_hash_mismatch',
+      ],
+      [
+        'a payload with none of the required arrays',
+        TOOL_NO_ARRAYS,
+        'payload_missing_or_malformed:items+tensions+conclusions',
+      ],
+      [
+        '`items` present but an object instead of an array',
+        TOOL_ITEMS_NOT_ARRAY,
+        'payload_missing_or_malformed:items',
+      ],
+      [
+        'an incomplete identity (empty method_pack_version)',
+        TOOL_NO_VERSION,
+        'tool_output_identity_incomplete',
+      ],
     ];
 
     for (const [label, refId, expectedState] of cases) {
@@ -454,7 +494,12 @@ describe('Hash-bearing sources as closure evidence (real Postgres, mounted signe
     it("tenant B's tool output and a nonexistent id are indistinguishable to tenant A", async () => {
       const requestId = await createClosureRequest(INITIATIVE_A, TENANT_A.id);
       const foreign = await attach('tool_output', TOOL_B, requestId, 'k-tool-xten001');
-      const missing = await attach('tool_output', fxId('toolout', 'never'), requestId, 'k-tool-miss001');
+      const missing = await attach(
+        'tool_output',
+        fxId('toolout', 'never'),
+        requestId,
+        'k-tool-miss001'
+      );
 
       expect(foreign.status).toBe(missing.status);
       expect(foreign.status).toBe(404);
@@ -488,7 +533,9 @@ describe('Hash-bearing sources as closure evidence (real Postgres, mounted signe
         attach('method_output', METHOD_FROZEN, requestId, 'k-method-race1')
       );
       const rows = await coldRead((c) =>
-        c.query(`SELECT id FROM initiative_closure_evidence WHERE closure_request_id = $1`, [requestId])
+        c.query(`SELECT id FROM initiative_closure_evidence WHERE closure_request_id = $1`, [
+          requestId,
+        ])
       );
       const created = race.fulfilled.filter((r: any) => r.status === 201).length;
       const replayed = race.fulfilled.filter((r: any) => r.status === 200).length;
@@ -518,7 +565,9 @@ describe('Hash-bearing sources as closure evidence (real Postgres, mounted signe
       expect(attached.status).toBe(201);
 
       const update = await client
-        .query(`UPDATE initiative_closure_evidence SET notes = 'x' WHERE id = $1`, [attached.body.id])
+        .query(`UPDATE initiative_closure_evidence SET notes = 'x' WHERE id = $1`, [
+          attached.body.id,
+        ])
         .then(() => 'ALLOWED')
         .catch((e: Error) => e.message);
 

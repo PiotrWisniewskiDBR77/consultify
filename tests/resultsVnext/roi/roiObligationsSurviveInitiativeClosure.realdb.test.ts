@@ -76,16 +76,24 @@ const INITIATIVE_ID = `roi-e005-ac02-init-${tag}`;
 let client: Client;
 let reachable = false;
 
-type CaseCommandsModule = typeof import('../../../server/src/services/resultsVnext/roi/roiCaseCommands.js');
-type BaselineCommandsModule = typeof import('../../../server/src/services/resultsVnext/roi/roiBaselineCommands.js');
-type CostLineCommandsModule = typeof import('../../../server/src/services/resultsVnext/roi/roiCostLineCommands.js');
-type BenefitLineCommandsModule = typeof import('../../../server/src/services/resultsVnext/roi/roiBenefitLineCommands.js');
-type CalcRunCommandsModule = typeof import('../../../server/src/services/resultsVnext/roi/roiCalculationRunCommands.js');
-type ApprovalCommandsModule = typeof import('../../../server/src/services/resultsVnext/roi/roiCaseApprovalCommands.js');
-type TrackingCommandsModule = typeof import('../../../server/src/services/resultsVnext/roi/roiTrackingCommands.js');
+type CaseCommandsModule =
+  typeof import('../../../server/src/services/resultsVnext/roi/roiCaseCommands.js');
+type BaselineCommandsModule =
+  typeof import('../../../server/src/services/resultsVnext/roi/roiBaselineCommands.js');
+type CostLineCommandsModule =
+  typeof import('../../../server/src/services/resultsVnext/roi/roiCostLineCommands.js');
+type BenefitLineCommandsModule =
+  typeof import('../../../server/src/services/resultsVnext/roi/roiBenefitLineCommands.js');
+type CalcRunCommandsModule =
+  typeof import('../../../server/src/services/resultsVnext/roi/roiCalculationRunCommands.js');
+type ApprovalCommandsModule =
+  typeof import('../../../server/src/services/resultsVnext/roi/roiCaseApprovalCommands.js');
+type TrackingCommandsModule =
+  typeof import('../../../server/src/services/resultsVnext/roi/roiTrackingCommands.js');
 type BenefitsRealizationCommandsModule =
   typeof import('../../../server/src/services/resultsVnext/roi/roiBenefitsRealizationCommands.js');
-type InitiativeClosureServiceModule = typeof import('../../../server/src/services/initiative/initiativeClosureService.js');
+type InitiativeClosureServiceModule =
+  typeof import('../../../server/src/services/initiative/initiativeClosureService.js');
 
 let createRoiCase: CaseCommandsModule['createRoiCase'];
 let startModeling: CaseCommandsModule['startModeling'];
@@ -103,6 +111,60 @@ let addEvidence: InitiativeClosureServiceModule['addEvidence'];
 let submitClosureRequest: InitiativeClosureServiceModule['submitClosureRequest'];
 let approveClosureRequest: InitiativeClosureServiceModule['approveClosureRequest'];
 let closePgPool: (() => Promise<void>) | undefined;
+const gateFixtureIds = {
+  decisions: [] as string[],
+  cases: [] as string[],
+  proposals: [] as string[],
+  reviews: [] as string[],
+};
+
+async function cleanupImmutableClosureFixtures(): Promise<void> {
+  if (process.env.CLOSURE_EVIDENCE_ALLOW_IMMUTABLE_FIXTURE_CLEANUP !== '1') {
+    throw new Error('immutable fixture cleanup is not explicitly enabled');
+  }
+  const prefix = String(process.env.CLOSURE_EVIDENCE_DISPOSABLE_DB_PREFIX ?? '').trim();
+  const db = await client.query<{ name: string }>('SELECT current_database() AS name');
+  if (!prefix || !String(db.rows[0]?.name ?? '').startsWith(prefix)) {
+    throw new Error('refusing immutable fixture cleanup outside the disposable database prefix');
+  }
+  await client.query('BEGIN');
+  try {
+    await client.query(
+      `SELECT pg_advisory_xact_lock(hashtext('closure-evidence-fixture-cleanup'))`
+    );
+    await client.query('TRUNCATE TABLE initiative_closure_evidence');
+    await client.query(
+      'ALTER TABLE initiative_lifecycle_gate_decisions DISABLE TRIGGER initiative_lifecycle_gate_decisions_immutable'
+    );
+    await client.query(
+      `DELETE FROM initiative_lifecycle_gate_decisions WHERE decision_id = ANY($1::text[])`,
+      [gateFixtureIds.decisions]
+    );
+    await client.query(
+      'ALTER TABLE initiative_lifecycle_gate_decisions ENABLE TRIGGER initiative_lifecycle_gate_decisions_immutable'
+    );
+    await client.query(
+      `DELETE FROM v8_agent_proposal_scope_reviews WHERE review_id = ANY($1::text[])`,
+      [gateFixtureIds.reviews]
+    );
+    await client.query(
+      `DELETE FROM v8_agent_proposal_versions WHERE proposal_version_id = ANY($1::text[])`,
+      [gateFixtureIds.proposals]
+    );
+    await client.query(
+      `DELETE FROM transformation_cases WHERE transformation_case_id = ANY($1::text[])`,
+      [gateFixtureIds.cases]
+    );
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    const trigger = await client.query<{ enabled: string }>(
+      `SELECT tgenabled AS enabled FROM pg_trigger WHERE tgname = 'initiative_lifecycle_gate_decisions_immutable'`
+    );
+    if (trigger.rows[0]?.enabled !== 'O') throw new Error('immutable trigger was not restored');
+    throw error;
+  }
+}
 
 /**
  * A GATE UNRELATED TO ROI-E005, DISCOVERED WHILE WRITING THIS TEST, NOT THE
@@ -129,6 +191,7 @@ async function seedApprovedClosureGateDecision(
   humanActorUserId: string
 ): Promise<void> {
   const caseId = `tc_${randomUUID()}`;
+  gateFixtureIds.cases.push(caseId);
   await client.query(
     `INSERT INTO transformation_cases
        (transformation_case_id, organization_id, initiated_by_user_id, mandate, lineage_id, idempotency_key)
@@ -137,6 +200,7 @@ async function seedApprovedClosureGateDecision(
   );
 
   const proposalVersionId = `pv_${randomUUID()}`;
+  gateFixtureIds.proposals.push(proposalVersionId);
   await client.query(
     `INSERT INTO v8_agent_proposal_versions
        (proposal_version_id, proposal_id, organization_id, canonical_run_id, proposal_version, plan_version,
@@ -155,6 +219,9 @@ async function seedApprovedClosureGateDecision(
   );
 
   const reviewId = `review_${randomUUID()}`;
+  gateFixtureIds.reviews.push(reviewId);
+  const decisionId = `decision_${randomUUID()}`;
+  gateFixtureIds.decisions.push(decisionId);
   await client.query(
     `INSERT INTO v8_agent_proposal_scope_reviews
        (review_id, proposal_version_id, scope_key, decision, reason, reviewed_by_user_id)
@@ -172,7 +239,7 @@ async function seedApprovedClosureGateDecision(
              'ROI-E005 AC-02 test-fixture authority', 'ROI-E005 AC-02 test-fixture closure gate decision',
              now() + interval '1 day', $10, $11)`,
     [
-      `decision_${randomUUID()}`,
+      decisionId,
       orgId,
       initiativeId,
       caseId,
@@ -187,7 +254,11 @@ async function seedApprovedClosureGateDecision(
   );
 }
 
-async function insertVisibilityPolicy(domain: string, mode: string, createdBy: string): Promise<void> {
+async function insertVisibilityPolicy(
+  domain: string,
+  mode: string,
+  createdBy: string
+): Promise<void> {
   await client.query(
     `INSERT INTO rvn_platform_visibility_policies
        (organization_id, domain, policy_version, visibility_mode, is_active, created_by)
@@ -203,7 +274,9 @@ describe('ROI-E005 AC-02 — ROI obligations survive a REAL Initiative closure (
   beforeAll(async () => {
     if (!DB_CONFIGURED) {
       // eslint-disable-next-line no-console
-      console.error('[skip] No Postgres configured — ROI-E005 AC-02 obligations-survive-closure realdb test did NOT run. This run is not evidence.');
+      console.error(
+        '[skip] No Postgres configured — ROI-E005 AC-02 obligations-survive-closure realdb test did NOT run. This run is not evidence.'
+      );
       return;
     }
 
@@ -223,41 +296,36 @@ describe('ROI-E005 AC-02 — ROI obligations survive a REAL Initiative closure (
     }
     reachable = true;
 
-    const caseCommands: CaseCommandsModule = await import('../../../server/src/services/resultsVnext/roi/roiCaseCommands.js');
+    const caseCommands: CaseCommandsModule =
+      await import('../../../server/src/services/resultsVnext/roi/roiCaseCommands.js');
     createRoiCase = caseCommands.createRoiCase;
     startModeling = caseCommands.startModeling;
     markReadyForReview = caseCommands.markReadyForReview;
-    const baselineCommands: BaselineCommandsModule = await import(
-      '../../../server/src/services/resultsVnext/roi/roiBaselineCommands.js'
-    );
+    const baselineCommands: BaselineCommandsModule =
+      await import('../../../server/src/services/resultsVnext/roi/roiBaselineCommands.js');
     captureOrUpdateBaseline = baselineCommands.captureOrUpdateBaseline;
-    const costLineCommands: CostLineCommandsModule = await import('../../../server/src/services/resultsVnext/roi/roiCostLineCommands.js');
+    const costLineCommands: CostLineCommandsModule =
+      await import('../../../server/src/services/resultsVnext/roi/roiCostLineCommands.js');
     addCostLine = costLineCommands.addCostLine;
-    const benefitLineCommands: BenefitLineCommandsModule = await import(
-      '../../../server/src/services/resultsVnext/roi/roiBenefitLineCommands.js'
-    );
+    const benefitLineCommands: BenefitLineCommandsModule =
+      await import('../../../server/src/services/resultsVnext/roi/roiBenefitLineCommands.js');
     addBenefitLine = benefitLineCommands.addBenefitLine;
-    const calcRunCommands: CalcRunCommandsModule = await import(
-      '../../../server/src/services/resultsVnext/roi/roiCalculationRunCommands.js'
-    );
+    const calcRunCommands: CalcRunCommandsModule =
+      await import('../../../server/src/services/resultsVnext/roi/roiCalculationRunCommands.js');
     createRoiCalculationRun = calcRunCommands.createRoiCalculationRun;
-    const approvalCommands: ApprovalCommandsModule = await import(
-      '../../../server/src/services/resultsVnext/roi/roiCaseApprovalCommands.js'
-    );
+    const approvalCommands: ApprovalCommandsModule =
+      await import('../../../server/src/services/resultsVnext/roi/roiCaseApprovalCommands.js');
     submitRoiCaseForApproval = approvalCommands.submitRoiCaseForApproval;
     approveRoiCase = approvalCommands.approveRoiCase;
-    const trackingCommands: TrackingCommandsModule = await import(
-      '../../../server/src/services/resultsVnext/roi/roiTrackingCommands.js'
-    );
+    const trackingCommands: TrackingCommandsModule =
+      await import('../../../server/src/services/resultsVnext/roi/roiTrackingCommands.js');
     startRoiCaseTracking = trackingCommands.startRoiCaseTracking;
-    const benefitsRealizationCommands: BenefitsRealizationCommandsModule = await import(
-      '../../../server/src/services/resultsVnext/roi/roiBenefitsRealizationCommands.js'
-    );
+    const benefitsRealizationCommands: BenefitsRealizationCommandsModule =
+      await import('../../../server/src/services/resultsVnext/roi/roiBenefitsRealizationCommands.js');
     startRoiCaseBenefitsRealization = benefitsRealizationCommands.startRoiCaseBenefitsRealization;
 
-    const closureService: InitiativeClosureServiceModule = await import(
-      '../../../server/src/services/initiative/initiativeClosureService.js'
-    );
+    const closureService: InitiativeClosureServiceModule =
+      await import('../../../server/src/services/initiative/initiativeClosureService.js');
     createClosureRequest = closureService.createClosureRequest;
     addEvidence = closureService.addEvidence;
     submitClosureRequest = closureService.submitClosureRequest;
@@ -349,14 +417,18 @@ describe('ROI-E005 AC-02 — ROI obligations survive a REAL Initiative closure (
     await client.query(`DELETE FROM rvn_roi_variances WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM rvn_roi_actual_snapshots WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM rvn_roi_actual_entries WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`DELETE FROM rvn_roi_forecast_versions WHERE organization_id = $1`, [ORG_ID]);
+    await client.query(`DELETE FROM rvn_roi_forecast_versions WHERE organization_id = $1`, [
+      ORG_ID,
+    ]);
     await client.query(
       `UPDATE rvn_roi_cases SET original_approved_snapshot_id = NULL, latest_approved_snapshot_id = NULL,
               decision_calculation_run_id = NULL
         WHERE organization_id = $1`,
       [ORG_ID]
     );
-    await client.query(`DELETE FROM rvn_roi_approval_snapshots WHERE organization_id = $1`, [ORG_ID]);
+    await client.query(`DELETE FROM rvn_roi_approval_snapshots WHERE organization_id = $1`, [
+      ORG_ID,
+    ]);
     await client.query(
       `DELETE FROM rvn_platform_resource_acl
         WHERE resource_type = 'roi_case'
@@ -372,44 +444,31 @@ describe('ROI-E005 AC-02 — ROI obligations survive a REAL Initiative closure (
     await client.query(`DELETE FROM rvn_roi_calculation_runs WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM rvn_roi_benefit_lines WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM rvn_roi_cost_lines WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`DELETE FROM rvn_roi_calculation_policy WHERE organization_id = $1`, [ORG_ID]);
+    await client.query(`DELETE FROM rvn_roi_calculation_policy WHERE organization_id = $1`, [
+      ORG_ID,
+    ]);
     await client.query(`DELETE FROM rvn_roi_baselines WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM rvn_roi_cases WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`DELETE FROM rvn_platform_resource_visibility WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`DELETE FROM rvn_platform_visibility_policies WHERE organization_id = $1`, [ORG_ID]);
-    // `initiative_closure_evidence` refuses UPDATE and DELETE unconditionally
-    // and its parents are ON DELETE RESTRICT
-    // (20261008_closure_evidence_snapshot_and_immutability.sql), so there is no
-    // scoped delete to issue here — by design, and with no session setting that
-    // opens one. TRUNCATE is DDL requiring ownership of the table; a runtime
-    // role does not have it.
-    await client.query('TRUNCATE TABLE initiative_closure_evidence');
-    await client.query(`DELETE FROM initiative_closure_requests WHERE organization_id = $1`, [ORG_ID]);
+    await client.query(`DELETE FROM rvn_platform_resource_visibility WHERE organization_id = $1`, [
+      ORG_ID,
+    ]);
+    await client.query(`DELETE FROM rvn_platform_visibility_policies WHERE organization_id = $1`, [
+      ORG_ID,
+    ]);
+    await cleanupImmutableClosureFixtures();
+    await client.query(`DELETE FROM initiative_closure_requests WHERE organization_id = $1`, [
+      ORG_ID,
+    ]);
     await client.query(`DELETE FROM initiative_history WHERE initiative_id = $1`, [INITIATIVE_ID]);
-    // NOT cleaned up: `initiative_lifecycle_gate_decisions` is immutable BY
-    // DESIGN — `BEFORE UPDATE OR DELETE` trigger `reject_initiative_
-    // lifecycle_gate_decision_mutation` (20260810_t01_initiative_lifecycle_
-    // gate_decisions.sql) rejects even a DELETE, not just an UPDATE. Its
-    // supporting fixture rows (`v8_agent_proposal_versions`,
-    // `v8_agent_proposal_scope_reviews`, `transformation_cases`) are
-    // therefore also left in place — the gate-decision row's FKs to them
-    // would block deleting the parents anyway even if the gate-decision
-    // row itself could be removed. All four are tagged with this run's
-    // unique `tag`-suffixed ids and never referenced by anything outside
-    // this suite, so they cause no interference with other tests — an
-    // accepted, permanent, by-design residue, not a leak this test can fix.
     await client.query(`DELETE FROM tasks WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM initiative_milestones WHERE organization_id = $1`, [ORG_ID]);
-    // NOT deleted, for the same reason: `initiative_lifecycle_gate_decisions
-    // .initiative_id`/`.human_actor_user_id` are plain (non-CASCADE) FKs to
-    // `initiatives`/`users` — deleting either would fail with the same
-    // 23503/immutability error transitively (and deleting `organizations`
-    // would fail too, since `initiatives.organization_id` cascades INTO the
-    // blocked initiative delete). `initiatives`/`projects`/`users`/
-    // `organizations` for this run's uniquely-tagged org are therefore left
-    // in place alongside the gate-decision chain above — same accepted,
-    // permanent, by-design residue.
+    await client.query(`DELETE FROM initiatives WHERE id = $1`, [INITIATIVE_ID]);
+    await client.query(`DELETE FROM projects WHERE id = $1`, [PROJECT_ID]);
     await client.query(`DELETE FROM organization_members WHERE organization_id = $1`, [ORG_ID]);
+    await client.query(`DELETE FROM users WHERE id = ANY($1::text[])`, [
+      [USER_OWNER, USER_APPROVER],
+    ]);
+    await client.query(`DELETE FROM organizations WHERE id = $1`, [ORG_ID]);
     await client.end();
     if (closePgPool) await closePgPool();
   }, 30_000);
@@ -452,7 +511,7 @@ describe('ROI-E005 AC-02 — ROI obligations survive a REAL Initiative closure (
         actorEffectiveRole: 'consultant',
         idempotencyKey: `start-${randomUUID()}`,
         access: { capabilities: ['*'], platformRole: null },
-});
+      });
       await captureOrUpdateBaseline({
         organizationId: ORG_ID,
         caseId,
@@ -464,7 +523,7 @@ describe('ROI-E005 AC-02 — ROI obligations survive a REAL Initiative closure (
         actorEffectiveRole: 'consultant',
         idempotencyKey: `baseline-${randomUUID()}`,
         access: { capabilities: ['*'], platformRole: null },
-});
+      });
       await addCostLine({
         caseId,
         organizationId: ORG_ID,
@@ -478,7 +537,7 @@ describe('ROI-E005 AC-02 — ROI obligations survive a REAL Initiative closure (
         actorEffectiveRole: 'consultant',
         idempotencyKey: `cost-${randomUUID()}`,
         access: { capabilities: ['*'], platformRole: null },
-});
+      });
       await addBenefitLine({
         caseId,
         organizationId: ORG_ID,
@@ -493,7 +552,7 @@ describe('ROI-E005 AC-02 — ROI obligations survive a REAL Initiative closure (
         actorEffectiveRole: 'consultant',
         idempotencyKey: `benefit-${randomUUID()}`,
         access: { capabilities: ['*'], platformRole: null },
-});
+      });
       await createRoiCalculationRun({
         organizationId: ORG_ID,
         caseId,
@@ -502,7 +561,7 @@ describe('ROI-E005 AC-02 — ROI obligations survive a REAL Initiative closure (
         actorEffectiveRole: 'consultant',
         idempotencyKey: `run-${randomUUID()}`,
         access: { capabilities: ['*'], platformRole: null },
-});
+      });
       const readyOutcome = await markReadyForReview({
         caseId,
         organizationId: ORG_ID,
@@ -511,7 +570,7 @@ describe('ROI-E005 AC-02 — ROI obligations survive a REAL Initiative closure (
         actorEffectiveRole: 'consultant',
         idempotencyKey: `ready-${randomUUID()}`,
         access: { capabilities: ['*'], platformRole: null },
-});
+      });
       const submitRoiOutcome = await submitRoiCaseForApproval({
         caseId,
         organizationId: ORG_ID,
@@ -520,7 +579,7 @@ describe('ROI-E005 AC-02 — ROI obligations survive a REAL Initiative closure (
         actorEffectiveRole: 'consultant',
         idempotencyKey: `submit-${randomUUID()}`,
         access: { capabilities: ['*'], platformRole: null },
-});
+      });
       const approveRoiOutcome = await approveRoiCase({
         caseId,
         organizationId: ORG_ID,
@@ -529,7 +588,7 @@ describe('ROI-E005 AC-02 — ROI obligations survive a REAL Initiative closure (
         actorEffectiveRole: 'admin',
         idempotencyKey: `approve-${randomUUID()}`,
         access: { capabilities: ['*'], platformRole: null },
-});
+      });
       const trackingOutcome = await startRoiCaseTracking({
         caseId,
         organizationId: ORG_ID,
@@ -538,7 +597,7 @@ describe('ROI-E005 AC-02 — ROI obligations survive a REAL Initiative closure (
         actorEffectiveRole: 'consultant',
         idempotencyKey: `tracking-${randomUUID()}`,
         access: { capabilities: ['*'], platformRole: null },
-});
+      });
       const benefitsRealizationOutcome = await startRoiCaseBenefitsRealization({
         caseId,
         organizationId: ORG_ID,
@@ -547,11 +606,14 @@ describe('ROI-E005 AC-02 — ROI obligations survive a REAL Initiative closure (
         actorEffectiveRole: 'consultant',
         idempotencyKey: `br-${randomUUID()}`,
         access: { capabilities: ['*'], platformRole: null },
-});
+      });
       expect(benefitsRealizationOutcome.outcome).toBe('applied');
       expect(benefitsRealizationOutcome.result.status).toBe('benefits_realization');
 
-      const obligationsBeforeClosure = await client.query<{ obligation_type: string; status: string }>(
+      const obligationsBeforeClosure = await client.query<{
+        obligation_type: string;
+        status: string;
+      }>(
         `SELECT obligation_type, status FROM rvn_platform_obligations
           WHERE organization_id = $1 AND reference_type = 'roi_case' AND reference_id = $2
           ORDER BY obligation_type`,

@@ -155,7 +155,9 @@ export function forgedE2EBearer(actor: FxActor): string {
 export function requireDbUrl(): string {
   const url = process.env.DATABASE_URL;
   if (!url || !/localhost|127\.0\.0\.1/.test(url)) {
-    throw new Error(`evidenceFixture requires a LOCAL disposable DATABASE_URL. Got: ${url || '(unset)'}`);
+    throw new Error(
+      `evidenceFixture requires a LOCAL disposable DATABASE_URL. Got: ${url || '(unset)'}`
+    );
   }
   return url;
 }
@@ -253,39 +255,46 @@ export async function seedTenants(
  * declared cascade carry it — the same path the append-only guard deliberately
  * permits.
  */
-export async function cleanupFixture(client: pg.Client, ids: {
-  closureRequestIds: string[];
-  initiativeIds: string[];
-  meetingIds: string[];
-  notebookPageIds: string[];
-  toolOutputIds?: string[];
-  methodOutputIds?: string[];
-  /**
-   * The tenants THIS suite owns. Defaults to the module-level pair for the
-   * suites written against it; a suite using `buildTenantPair` must pass its
-   * own, or cleanup deletes another namespace's users and leaves its own behind.
-   */
-  tenants?: FxTenant[];
-  /** Rows in tables this fixture does not model, deleted before their parents. */
-  extra?: Array<{ table: string; ids: string[] }>;
-}): Promise<void> {
+export async function cleanupFixture(
+  client: pg.Client,
+  ids: {
+    closureRequestIds: string[];
+    initiativeIds: string[];
+    meetingIds: string[];
+    notebookPageIds: string[];
+    toolOutputIds?: string[];
+    methodOutputIds?: string[];
+    /**
+     * The tenants THIS suite owns. Defaults to the module-level pair for the
+     * suites written against it; a suite using `buildTenantPair` must pass its
+     * own, or cleanup deletes another namespace's users and leaves its own behind.
+     */
+    tenants?: FxTenant[];
+    /** Rows in tables this fixture does not model, deleted before their parents. */
+    extra?: Array<{ table: string; ids: string[] }>;
+  }
+): Promise<void> {
   const tenants = ids.tenants ?? ALL_TENANTS;
   const actors = actorsOf(tenants);
   // Evidence FIRST, and necessarily wholesale: the ledger admits no scoped
   // delete. Suites in this directory run with --no-file-parallelism against a
   // disposable database, so "everything" is this run's own rows.
-  await truncateEvidenceLedger(client);
+  await truncateEvidenceLedgerForFixture(client);
   await client.query(`DELETE FROM initiative_closure_requests WHERE id = ANY($1::text[])`, [
     ids.closureRequestIds,
   ]);
   await client.query(`DELETE FROM notebook_page_versions WHERE page_id = ANY($1::text[])`, [
     ids.notebookPageIds,
   ]);
-  await client.query(`DELETE FROM notebook_pages WHERE id = ANY($1::text[])`, [ids.notebookPageIds]);
+  await client.query(`DELETE FROM notebook_pages WHERE id = ANY($1::text[])`, [
+    ids.notebookPageIds,
+  ]);
   await client.query(`DELETE FROM meeting_follow_ups WHERE meeting_id = ANY($1::text[])`, [
     ids.meetingIds,
   ]);
-  await client.query(`DELETE FROM meeting_notes WHERE meeting_id = ANY($1::text[])`, [ids.meetingIds]);
+  await client.query(`DELETE FROM meeting_notes WHERE meeting_id = ANY($1::text[])`, [
+    ids.meetingIds,
+  ]);
   await client.query(`DELETE FROM meetings WHERE id = ANY($1::text[])`, [ids.meetingIds]);
   await client.query(`DELETE FROM tool_outputs WHERE id = ANY($1::text[])`, [
     ids.toolOutputIds ?? [],
@@ -335,8 +344,33 @@ export async function cleanupFixture(client: pg.Client, ids: {
  * it is why this is safe to use here against a disposable test database while
  * remaining unavailable to anything serving a request.
  */
-async function truncateEvidenceLedger(client: pg.Client): Promise<void> {
-  await client.query('TRUNCATE TABLE initiative_closure_evidence');
+export async function truncateEvidenceLedgerForFixture(client: pg.Client): Promise<void> {
+  await client.query('BEGIN');
+  try {
+    await assertDisposableCleanupTarget(client);
+    await client.query('TRUNCATE TABLE initiative_closure_evidence');
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw error;
+  }
+}
+
+export async function assertDisposableCleanupTarget(client: pg.Client): Promise<string> {
+  if (process.env.CLOSURE_EVIDENCE_ALLOW_IMMUTABLE_FIXTURE_CLEANUP !== '1') {
+    throw new Error(
+      'immutable fixture cleanup requires CLOSURE_EVIDENCE_ALLOW_IMMUTABLE_FIXTURE_CLEANUP=1'
+    );
+  }
+  const prefix = String(process.env.CLOSURE_EVIDENCE_DISPOSABLE_DB_PREFIX ?? '').trim();
+  if (!prefix) throw new Error('CLOSURE_EVIDENCE_DISPOSABLE_DB_PREFIX is required');
+  const result = await client.query<{ name: string }>('SELECT current_database() AS name');
+  const name = String(result.rows[0]?.name ?? '');
+  if (!name.startsWith(prefix)) {
+    throw new Error(`refusing fixture cleanup outside disposable database prefix ${prefix}`);
+  }
+  await client.query(`SELECT pg_advisory_xact_lock(hashtext('closure-evidence-fixture-cleanup'))`);
+  return name;
 }
 
 export async function raceExactly<T>(

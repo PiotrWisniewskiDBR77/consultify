@@ -254,6 +254,53 @@ interface Harness {
   cleanup: () => Promise<void>;
 }
 
+async function deleteExe09GateFixtures(client: Client, initiativeIds: string[]): Promise<void> {
+  if (process.env.CLOSURE_EVIDENCE_ALLOW_IMMUTABLE_FIXTURE_CLEANUP !== '1') {
+    throw new Error('immutable fixture cleanup is not explicitly enabled');
+  }
+  const prefix = String(process.env.CLOSURE_EVIDENCE_DISPOSABLE_DB_PREFIX ?? '').trim();
+  const db = await client.query<{ name: string }>('SELECT current_database() AS name');
+  if (!prefix || !String(db.rows[0]?.name ?? '').startsWith(prefix)) {
+    throw new Error('refusing immutable fixture cleanup outside the disposable database prefix');
+  }
+  await client.query('BEGIN');
+  try {
+    await client.query(
+      `SELECT pg_advisory_xact_lock(hashtext('closure-evidence-fixture-cleanup'))`
+    );
+    await client.query(
+      'ALTER TABLE initiative_lifecycle_gate_decisions DISABLE TRIGGER initiative_lifecycle_gate_decisions_immutable'
+    );
+    await client.query(
+      `DELETE FROM initiative_lifecycle_gate_decisions WHERE decision_id = ANY($1::text[])`,
+      [initiativeIds.map((id) => `closure_decision_${id}`)]
+    );
+    await client.query(
+      'ALTER TABLE initiative_lifecycle_gate_decisions ENABLE TRIGGER initiative_lifecycle_gate_decisions_immutable'
+    );
+    await client.query(
+      `DELETE FROM v8_agent_proposal_scope_reviews WHERE review_id = ANY($1::text[])`,
+      [initiativeIds.map((id) => `review_${id}`)]
+    );
+    await client.query(
+      `DELETE FROM v8_agent_proposal_versions WHERE proposal_version_id = ANY($1::text[])`,
+      [initiativeIds.map((id) => `proposal_version_${id}`)]
+    );
+    await client.query(
+      `DELETE FROM transformation_cases WHERE transformation_case_id = ANY($1::text[])`,
+      [initiativeIds.map((id) => `case_${id}`)]
+    );
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    const trigger = await client.query<{ enabled: string }>(
+      `SELECT tgenabled AS enabled FROM pg_trigger WHERE tgname = 'initiative_lifecycle_gate_decisions_immutable'`
+    );
+    if (trigger.rows[0]?.enabled !== 'O') throw new Error('immutable trigger was not restored');
+    throw error;
+  }
+}
+
 async function setupHarness(): Promise<Harness | null> {
   const config = buildClientConfig();
   if (!config) return null;
@@ -415,41 +462,22 @@ async function setupHarness(): Promise<Harness | null> {
   };
 
   const cleanup = async () => {
+    await deleteExe09GateFixtures(client, initiativeIds);
     for (const id of initiativeIds) {
-      await client
-        .query(`DELETE FROM roi_assumptions WHERE initiative_id = $1`, [id])
-        .catch(() => {});
-      await client
-        .query(`DELETE FROM roi_realized_values WHERE initiative_id = $1`, [id])
-        .catch(() => {});
-      await client
-        .query(`DELETE FROM closure_delivery_receipts WHERE initiative_id = $1`, [id])
-        .catch(() => {});
-      await client
-        .query(`DELETE FROM initiative_benefits WHERE initiative_id = $1`, [id])
-        .catch(() => {});
-      await client
-        .query(`DELETE FROM kpi_time_series WHERE initiative_id = $1`, [id])
-        .catch(() => {});
-      await client
-        .query(`DELETE FROM initiative_kpis WHERE initiative_id = $1`, [id])
-        .catch(() => {});
-      await client
-        .query(`DELETE FROM initiative_status_history WHERE initiative_id = $1`, [id])
-        .catch(() => {});
-      await client
-        .query(`DELETE FROM initiative_history WHERE initiative_id = $1`, [id])
-        .catch(() => {});
-      await client.query(`DELETE FROM initiatives WHERE id = $1`, [id]).catch(() => {});
+      await client.query(`DELETE FROM roi_assumptions WHERE initiative_id = $1`, [id]);
+      await client.query(`DELETE FROM roi_realized_values WHERE initiative_id = $1`, [id]);
+      await client.query(`DELETE FROM closure_delivery_receipts WHERE initiative_id = $1`, [id]);
+      await client.query(`DELETE FROM initiative_benefits WHERE initiative_id = $1`, [id]);
+      await client.query(`DELETE FROM kpi_time_series WHERE initiative_id = $1`, [id]);
+      await client.query(`DELETE FROM initiative_kpis WHERE initiative_id = $1`, [id]);
+      await client.query(`DELETE FROM initiative_status_history WHERE initiative_id = $1`, [id]);
+      await client.query(`DELETE FROM initiative_history WHERE initiative_id = $1`, [id]);
+      await client.query(`DELETE FROM initiatives WHERE id = $1`, [id]);
     }
-    await client.query(`DELETE FROM projects WHERE id = $1`, [projectAId]).catch(() => {});
-    await client
-      .query(`DELETE FROM users WHERE id = ANY($1)`, [[userAId, userMemberId, userBId]])
-      .catch(() => {});
-    await client
-      .query(`DELETE FROM organizations WHERE id = ANY($1)`, [[orgAId, orgBId]])
-      .catch(() => {});
-    await client.end().catch(() => {});
+    await client.query(`DELETE FROM projects WHERE id = $1`, [projectAId]);
+    await client.query(`DELETE FROM users WHERE id = ANY($1)`, [[userAId, userMemberId, userBId]]);
+    await client.query(`DELETE FROM organizations WHERE id = ANY($1)`, [[orgAId, orgBId]]);
+    await client.end();
   };
 
   return {
