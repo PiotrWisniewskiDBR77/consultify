@@ -230,5 +230,20 @@ describe('FIN-MVP-RECONCILIATION mounted realPG auth/tenant matrix', () => {
         WHERE organization_id=$1 AND user_id=$2 AND grant_version=2`,
       [ORG_A, FIN_OWNER]
     )).rejects.toThrow(/append-only/i);
+    await expect(db.query(
+      `INSERT INTO rvn_finance_reconciliation_grant_events
+       (organization_id,user_id,grant_version,action,acted_by,policy_version,policy_digest)
+       VALUES ($1,$2,3,'granted',$3,'DEC-FIN-RESULTS-RECONCILIATION-001/v1',
+        'sha256:a0b04a2bcd42d9fa8a2680f0dd35008f4226bc92db5ecc63756732d7a8854e6d')`,
+      [ORG_A, FIN_OWNER, OWNER]
+    )).rejects.toThrow(/irreversible/i);
+    const commands = await import('../../server/src/services/resultsVnext/roi/roiFinanceReconciliationCommands.js');
+    await expect(commands.recordFinanceOwnerGrantEvent({
+      organizationId: ORG_A,
+      userId: FIN_OWNER,
+      action: 'granted',
+      actorUserId: OWNER,
+      access: { capabilities: ['*'], platformRole: null },
+    })).rejects.toMatchObject({ code: 'FINANCE_OWNER_REVOCATION_IRREVERSIBLE' });
   });
 });

@@ -2,6 +2,16 @@
 -- Additive late-upgrade safe policy stamp for Finance proposals/disputes.
 -- Results Actual stores remain governed by the existing append-only triggers.
 
+-- Existing rows predate the approved DEC-FIN command and cannot truthfully be
+-- relabelled as v1 by a DEFAULT. Stop the upgrade for explicit owner triage;
+-- never fabricate policy provenance or collapse duplicate historical intent.
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM rvn_roi_finance_reconciliations LIMIT 1) THEN
+    RAISE EXCEPTION 'DEC-FIN migration preflight: historical reconciliation rows require explicit backfill/triage';
+  END IF;
+END $$;
+
 ALTER TABLE rvn_roi_finance_reconciliations
   ADD COLUMN IF NOT EXISTS reconciliation_kind TEXT NOT NULL DEFAULT 'dispute',
   ADD COLUMN IF NOT EXISTS materiality_threshold_pct NUMERIC NOT NULL DEFAULT 5,
@@ -103,6 +113,35 @@ CREATE TABLE IF NOT EXISTS rvn_finance_reconciliation_grant_events (
   UNIQUE (organization_id, user_id, capability, grant_version),
   UNIQUE (receipt_id)
 );
+
+CREATE OR REPLACE FUNCTION rvn_fin_reconciliation_grant_insert_guard()
+RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE latest_action TEXT; latest_version INTEGER;
+BEGIN
+  PERFORM pg_advisory_xact_lock(hashtext(NEW.organization_id), hashtext(NEW.user_id));
+  SELECT action, grant_version INTO latest_action, latest_version
+    FROM rvn_finance_reconciliation_grant_events
+   WHERE organization_id=NEW.organization_id AND user_id=NEW.user_id AND capability=NEW.capability
+   ORDER BY grant_version DESC LIMIT 1;
+  IF NEW.grant_version <> COALESCE(latest_version,0)+1 THEN
+    RAISE EXCEPTION 'Finance-owner grant version must be exactly next';
+  END IF;
+  IF latest_action='revoked' AND NEW.action='granted' THEN
+    RAISE EXCEPTION 'Finance-owner revocation is irreversible';
+  END IF;
+  IF NEW.action='revoked' AND latest_action IS DISTINCT FROM 'granted' THEN
+    RAISE EXCEPTION 'Finance-owner revoke requires an active grant';
+  END IF;
+  IF NEW.action='granted' AND latest_action='granted' THEN
+    RAISE EXCEPTION 'Finance-owner grant is already active';
+  END IF;
+  RETURN NEW;
+END $$;
+DROP TRIGGER IF EXISTS trg_rvn_fin_reconciliation_grant_insert_guard
+  ON rvn_finance_reconciliation_grant_events;
+CREATE TRIGGER trg_rvn_fin_reconciliation_grant_insert_guard
+  BEFORE INSERT ON rvn_finance_reconciliation_grant_events
+  FOR EACH ROW EXECUTE FUNCTION rvn_fin_reconciliation_grant_insert_guard();
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_rvn_fin_reconciliation_org
   ON rvn_roi_finance_reconciliations(reconciliation_id, organization_id);

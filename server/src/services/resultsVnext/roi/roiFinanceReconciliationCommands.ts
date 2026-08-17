@@ -159,6 +159,12 @@ export async function recordFinanceOwnerGrantEvent(input: {
     if (current.rows[0]?.action === input.action) {
       throw new RoiFinanceReconciliationValidationError('Grant ledger transition would not change governed state.', 'FINANCE_OWNER_GRANT_INVALID_TRANSITION');
     }
+    if (current.rows[0]?.action === 'revoked' && input.action === 'granted') {
+      throw new RoiFinanceReconciliationValidationError(
+        'Finance-owner revocation is irreversible; create a new governed identity instead.',
+        'FINANCE_OWNER_REVOCATION_IRREVERSIBLE'
+      );
+    }
     const grantVersion = (current.rows[0]?.grant_version ?? 0) + 1;
     const receiptId = randomUUID();
     await client.query(
