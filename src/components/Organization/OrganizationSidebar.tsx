@@ -16,6 +16,7 @@ import {
   Network,
   Palette,
   ShieldAlert,
+  ShieldCheck,
   Target,
   Users,
 } from 'lucide-react';
@@ -31,6 +32,7 @@ export type OrganizationSection =
   | 'megatrends'
   | 'strategy'
   | 'knowledge-graph'
+  | 'context-governance'
   | 'members'
   | 'competencies'
   | 'billing'
@@ -110,6 +112,12 @@ export const OrganizationSidebar: React.FC<OrganizationSidebarProps> = ({
             labelKey: 'organization.sidebar.knowledgeGraph',
             defaultLabel: 'Knowledge Graph',
             icon: Network,
+          },
+          {
+            id: 'context-governance',
+            labelKey: 'organization.sidebar.contextGovernance',
+            defaultLabel: 'Context governance',
+            icon: ShieldCheck,
           },
         ],
       },

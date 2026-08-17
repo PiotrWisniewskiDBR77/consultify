@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 
 import { KnowledgeGraphExplorer } from '../components/Organization/KnowledgeGraphExplorer';
+import { GovernedContextWorkspace } from '../components/Organization/GovernedContextWorkspace';
 import OrganizationSidebar, {
   type OrganizationSection,
 } from '../components/Organization/OrganizationSidebar';
@@ -119,6 +120,12 @@ const sectionMeta: Record<
     subtitleKey: 'organization.sections.knowledgeGraph.subtitle',
     subtitle: 'Explore entities, relations, provenance and governance',
   },
+  'context-governance': {
+    titleKey: 'organization.sections.contextGovernance.title',
+    title: 'Context governance',
+    subtitleKey: 'organization.sections.contextGovernance.subtitle',
+    subtitle: 'Review sourced claims and reopen immutable published context',
+  },
 };
 
 export const OrganizationView: React.FC = () => {
@@ -214,6 +221,8 @@ export const OrganizationView: React.FC = () => {
         return <StrategicSynthesisModule />;
       case 'knowledge-graph':
         return <KnowledgeGraphExplorer />;
+      case 'context-governance':
+        return <GovernedContextWorkspace isAdmin={isOrgAdmin} />;
       default:
         return <OrganizationProfileModule />;
     }
