@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import { createHash } from 'node:crypto';
 
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import { type WorkbookSchema, WorkbookSchemaValidator } from './WorkbookSchema.js';
@@ -15,6 +16,8 @@ export interface CustomWorkbookTemplate {
   name: string;
   description: string | null;
   schema: WorkbookSchema;
+  templateVersion: string;
+  snapshotHash: string;
 }
 
 export interface CustomWorkbookTemplateSummary {
@@ -181,25 +184,52 @@ export async function resolveCustomWorkbookTemplate(
     name: string;
     description: string | null;
     schema_snapshot: unknown;
+    version: string;
   }>(
-    `SELECT CAST(id AS TEXT) AS id, name, description, schema_snapshot
+    `SELECT CAST(id AS TEXT) AS id, name, description, schema_snapshot,
+            COALESCE(version, '1.0.0') AS version
       FROM tp_base_templates
       WHERE CAST(id AS TEXT) = ?
+        AND status <> 'deprecated'
         AND (
-          created_by IS NULL
-          OR (COALESCE(visibility, 'organization') <> 'private' AND organization_id = ?)
-          OR (visibility = 'private' AND created_by = ?)
-        )
-        AND (status IS NULL OR status <> 'deprecated')
-        AND (created_by IS NOT NULL OR status IS NULL OR status IN ('approved', 'published'))`,
-    [templateId, organizationId, userId]
+          (status IN ('approved', 'published') AND (
+            created_by IS NULL OR
+            (organization_id = ? AND (
+              COALESCE(visibility, 'organization') <> 'private'
+              OR COALESCE(owner_user_id, created_by) = ?
+            ))
+          ))
+          OR (status = 'draft' AND organization_id = ? AND COALESCE(owner_user_id, created_by) = ?)
+          OR (status IS NULL AND (
+            created_by IS NULL OR
+            (organization_id = ? AND (
+              COALESCE(visibility, 'organization') <> 'private' OR created_by = ?
+            ))
+          ))
+        )`,
+    [templateId, organizationId, userId, organizationId, userId, organizationId, userId]
   );
   if (!row) return null;
+  const canonicalize = (value: unknown): unknown =>
+    Array.isArray(value)
+      ? value.map(canonicalize)
+      : value && typeof value === 'object'
+        ? Object.fromEntries(
+            Object.entries(value as Record<string, unknown>)
+              .sort(([a], [b]) => a.localeCompare(b))
+              .map(([key, nested]) => [key, canonicalize(nested)])
+          )
+        : value;
+  const parsedSnapshot = parseSnapshot(row.schema_snapshot);
   return {
     id: row.id,
     name: row.name,
     description: row.description,
-    schema: convertCustomTemplateSnapshot(row.schema_snapshot, row.name, row.description),
+    schema: convertCustomTemplateSnapshot(parsedSnapshot, row.name, row.description),
+    templateVersion: row.version,
+    snapshotHash: createHash('sha256')
+      .update(JSON.stringify(canonicalize(parsedSnapshot)))
+      .digest('hex'),
   };
 }
 
@@ -214,6 +244,8 @@ export function materializeCustomWorkbookSchema(
     metadata: {
       ...(template.schema.metadata ?? {}),
       customTemplateId: template.id,
+      customTemplateVersion: template.templateVersion,
+      customTemplateSnapshotHash: template.snapshotHash,
       materializationId: uuidv4(),
     },
   };

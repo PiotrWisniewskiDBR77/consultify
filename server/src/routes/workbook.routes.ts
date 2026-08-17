@@ -14,7 +14,7 @@ import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { v4 as uuidv4 } from 'uuid';
 
-import { verifyToken } from '../middleware/auth.middleware.js';
+import { validateOrgMembership, verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
@@ -850,6 +850,7 @@ async function finalizeGeneratedWorkbook(params: {
     });
   } catch (err) {
     logger.warn('[WorkbookRoutes] Failed to persist workbook metadata:', err);
+    workbookCache.delete(result.id);
     throw err;
   }
 
@@ -1131,6 +1132,7 @@ router.get(
  */
 router.post(
   '/templates/:id/build',
+  validateOrgMembership,
   asyncHandler(async (req: AuthenticatedRequest, res) => {
     const user = req.user;
     if (!user) {
@@ -1145,6 +1147,65 @@ router.post(
       await import('../services/workbook/templates/index.js');
     const entry = getWorkbookTemplate(id);
     if (!entry) {
+      const { resolveCustomWorkbookTemplate, materializeCustomWorkbookSchema } =
+        await import('../services/workbook/customWorkbookTemplateService.js');
+      const custom = await resolveCustomWorkbookTemplate(id, user.organizationId, user.id);
+      if (custom) {
+        try {
+          const customSchema = materializeCustomWorkbookSchema(
+            custom,
+            rawParams && typeof rawParams === 'object' ? rawParams : {}
+          );
+          const { buildWorkbookBuffer } = await import('../services/workbook/WorkbookBuilder.js');
+          const buffer = await buildWorkbookBuffer(customSchema);
+          const workbookId = uuidv4();
+          const generatedAt = new Date().toISOString();
+          const payload = await finalizeGeneratedWorkbook({
+            result: {
+              id: workbookId,
+              schema: customSchema,
+              buffer,
+              fileName: `${customSchema.title.replace(/\s+/g, '_')}.xlsx`,
+              validationErrors: [],
+              qualityScore: null,
+              pipelineLog: [`materialized custom template ${custom.id}`],
+              generatedAt,
+            },
+            user,
+            promptText: `[custom-template:${custom.id}] ${customSchema.title}`,
+            source: 'workbook_custom_template',
+            projectId: projectId || null,
+            sourceInitiativeId: sourceInitiativeId || null,
+            conversationId: conversationId || null,
+            actionContract: {
+              command: 'materialize_custom_workbook_template',
+              commandVersion: '1',
+              templateId: custom.id,
+              templateVersion: custom.templateVersion,
+              templateSnapshotHash: custom.snapshotHash,
+              templateMaterializationId: customSchema.metadata?.materializationId,
+            },
+            sourcePack: {
+              kind: 'custom_workbook_template',
+              templateId: custom.id,
+              templateVersion: custom.templateVersion,
+              templateSnapshotHash: custom.snapshotHash,
+            },
+          });
+          res.json(payload);
+          return;
+        } catch (err) {
+          logger.error('[WorkbookRoutes] Custom template build failed:', err);
+          res.status(422).json({
+            error: 'Invalid custom workbook template',
+            classified: createP23Error(
+              'validation_failed',
+              err instanceof Error ? err.message : String(err)
+            ),
+          });
+          return;
+        }
+      }
       res.status(404).json({
         error: `Unknown workbook template: "${id}"`,
         classified: createP23Error('validation_failed', `No registered template with id "${id}"`),

@@ -25,6 +25,7 @@ vi.mock('../../../../server/src/middleware/auth.middleware.js', () => ({
     req.organizationId = mockUser.organizationId;
     next();
   },
+  validateOrgMembership: (_req: any, _res: any, next: () => void) => next(),
 }));
 vi.mock('../../../../server/src/middleware/demoGuard.middleware.js', () => ({
   demoContextMiddleware: (_req: any, _res: any, next: () => void) => next(),
@@ -164,11 +165,20 @@ describe('workbook.routes — C3 parametric templates', () => {
   it('builds an org-owned custom template snapshot and preserves workbook features', async () => {
     queryOneMock.mockImplementation(async (sql: string, params: unknown[]) => {
       if (sql.includes('FROM tp_base_templates')) {
-        expect(params).toEqual(['custom-portfolio', 'org-1']);
+        expect(params).toEqual([
+          'custom-portfolio',
+          'org-1',
+          'user-1',
+          'org-1',
+          'user-1',
+          'org-1',
+          'user-1',
+        ]);
         return {
           id: 'custom-portfolio',
           name: 'Portfolio Transformation Control',
           description: 'Custom portfolio template',
+          version: '2.1.0',
           schema_snapshot: {
             title: 'Portfolio Transformation Control',
             sheets: [
@@ -235,6 +245,17 @@ describe('workbook.routes — C3 parametric templates', () => {
     });
     expect(persistedSchema.sheets[1].rows[0].cells.B.formula).toBe("'Inputs'!B2");
     expect(persistedSchema.sheets[1].conditionalFormatting[0].rules[0].type).toBe('dataBar');
+    expect(persistedSchema.metadata.customTemplateVersion).toBe('2.1.0');
+    expect(persistedSchema.metadata.customTemplateSnapshotHash).toMatch(/^[0-9a-f]{64}$/);
+
+    const actionContract = JSON.parse(String(insert![1][12]));
+    expect(actionContract).toMatchObject({
+      command: 'materialize_custom_workbook_template',
+      commandVersion: '1',
+      templateId: 'custom-portfolio',
+      templateVersion: '2.1.0',
+      templateSnapshotHash: persistedSchema.metadata.customTemplateSnapshotHash,
+    });
 
     const workbookId = String(res.body.id);
     const reopen = await request(app).get(`/workbook/${workbookId}/schema`);
