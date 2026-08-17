@@ -71,6 +71,7 @@ import { verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess } from '../../middleware/rbac.middleware.js';
+import { requireResultsInternalBetaVisibility } from '../../middleware/resultsInternalBetaVisibility.middleware.js';
 import {
   validateBody,
   validateParams,
@@ -151,6 +152,7 @@ const router = Router();
 router.use(apiAuthRateLimiter);
 router.use(verifyToken);
 router.use(requireOrgAccess());
+router.use(requireResultsInternalBetaVisibility);
 router.use(demoContextMiddleware);
 
 // ==========================================

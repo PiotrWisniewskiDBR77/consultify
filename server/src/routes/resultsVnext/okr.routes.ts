@@ -34,6 +34,7 @@ import { verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess, requireOrgRole } from '../../middleware/rbac.middleware.js';
+import { requireResultsInternalBetaVisibility } from '../../middleware/resultsInternalBetaVisibility.middleware.js';
 import { validateBody, validateParams, validateQuery } from '../../middleware/validation.middleware.js';
 import { resolveEffectiveAccess } from '../../services/effectiveAccessService.js';
 import {
@@ -278,6 +279,7 @@ const router = Router();
 router.use(apiAuthRateLimiter);
 router.use(verifyToken);
 router.use(requireOrgAccess());
+router.use(requireResultsInternalBetaVisibility);
 router.use(demoContextMiddleware);
 
 // ==========================================
