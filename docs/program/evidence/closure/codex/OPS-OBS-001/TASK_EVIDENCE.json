@@ -2,8 +2,9 @@
   "taskId": "OPS-OBS-001",
   "baselineSha": "92284b90e97f164ff4d4f0d75241cfea82021d58",
   "integrationBaselineSha": "5d9",
-  "productSha": "7583ca8f86c37e0d7dbc1175b2ccbbceb261e9f6",
-  "cleanupTestSha": "2441b89b5cd5463c8aca1dd76ee39c2d4a765dad",
+  "productSha": "b4929e56b9d4f2591c9918cbcb99bcd959f8ca7b",
+  "reconciliationSha": "d9de65506c0211ed5273331d8f4ea75a892f744c",
+  "cleanupTestSha": "b4929e56b9d4f2591c9918cbcb99bcd959f8ca7b",
   "leaseSha256": "not_applicable_integrator_bounded_task",
   "changedPaths": [
     "server/src/services/operationalAlertService.ts",
@@ -24,6 +25,12 @@
     "server/src/services/notificationOutboxService.ts",
     "server/src/middleware/metrics.middleware.ts",
     "server/scripts/operational-alerts.ts",
+    "server/migrations/20261003_operational_alert_missed_signal_repair.sql",
+    "server/src/services/operationalAlertRepairService.ts",
+    "server/src/services/operationalAlertIncidentCron.ts",
+    "server/src/services/__tests__/operationalAlertRepairService.pg.test.ts",
+    "server/src/services/__tests__/operationalAlertAuthDenialMounted.pg.test.ts",
+    "server/src/index.ts",
     "tests/unit/backend/operationalAlertService.test.ts",
     "docs/runbooks/OPS-OBS-001_OPERATIONAL_ALERTS.md",
     "docs/program/evidence/closure/codex/OPS-OBS-001/TASK_EVIDENCE.json"
@@ -47,9 +54,15 @@
     "server/src/services/notificationOutboxService.ts": "Notification telemetry after primary marker with failure isolation.",
     "server/src/middleware/metrics.middleware.ts": "Identity-complete authenticated denial producer when tenant, actor and correlation exist.",
     "server/scripts/operational-alerts.ts": "List, recovered-only acknowledge and receipt-bound synthetic positive control.",
+    "server/migrations/20261003_operational_alert_missed_signal_repair.sql": "Layer 3 durable repair intents, fenced claims, immutable attempts and receipts, transition cursors and database-owned terminal stamps.",
+    "server/src/services/operationalAlertRepairService.ts": "Default-OFF bounded reconstruction, reclaim/fencing, retry, DLQ, redrive and exactly-once signal repair.",
+    "server/src/services/operationalAlertIncidentCron.ts": "Default-OFF repair scheduler on the existing operational lifecycle.",
+    "server/src/services/__tests__/operationalAlertRepairService.pg.test.ts": "Fresh and late-apply realPG proof including all three sources, 8-way idempotency, fencing, retry, terminal stamps and 3+3+0 cursor continuation.",
+    "server/src/services/__tests__/operationalAlertAuthDenialMounted.pg.test.ts": "Mounted production route signed-JWT identity and bounded shutdown proof.",
+    "server/src/index.ts": "Bounded non-throwing pre-pool shutdown flush.",
     "tests/unit/backend/operationalAlertService.test.ts": "Layer 1 threshold and identity controls.",
     "docs/runbooks/OPS-OBS-001_OPERATIONAL_ALERTS.md": "Operator boundaries, flags and non-authorized external transport.",
-    "docs/program/evidence/closure/codex/OPS-OBS-001/TASK_EVIDENCE.json": "Semantic two-layer current evidence."
+    "docs/program/evidence/closure/codex/OPS-OBS-001/TASK_EVIDENCE.json": "Semantic three-layer current evidence with exact-current reconciliation."
   },
   "ownerTables": [
     "operational_alert_incidents",
@@ -57,7 +70,11 @@
     "operational_alert_signals",
     "operational_alert_tenant_states",
     "operational_alert_delivery_outbox",
-    "operational_alert_delivery_receipts"
+    "operational_alert_delivery_receipts",
+    "operational_alert_repair_intents",
+    "operational_alert_repair_attempts",
+    "operational_alert_repair_receipts",
+    "operational_alert_repair_cursors"
   ],
   "commands": [
     {"command": "Layer 1 historical focused unit, metrics and fail-closed contracts", "exitCode": 0},
@@ -65,17 +82,23 @@
     {"command": "canonical 7583ca8f86 fresh tmpfs PG strict migration", "exitCode": 0},
     {"command": "canonical 7583ca8f86 strict repeat and migrate.postgres.ts --dry-run", "exitCode": 0},
     {"command": "OPERATIONAL_ALERT_DURABLE_ENABLED=true realPG combined signal, incident, producer-isolation and Results suites", "exitCode": 0},
-    {"command": "full type-check and backend build on integrated product packet", "exitCode": 0}
+    {"command": "full type-check and backend build on integrated product packet", "exitCode": 0},
+    {"command": "exact 9a8d7ae5fb fresh isolated PostgreSQL migration 750, repeat 0 and dry-run 0", "exitCode": 0},
+    {"command": "exact 9a8d7ae5fb normal repair, mounted auth, producer isolation and Results suites 13/13", "exitCode": 0},
+    {"command": "exact 9a8d7ae5fb late-apply schema 749 to 750 and bounded transition proof 1/1", "exitCode": 0},
+    {"command": "exact d9de65506c static type/backend/frontend gates after disjoint workbook test-only cleanup", "exitCode": 0}
   ],
   "denominators": {
-    "migrations": {"applied": 747, "failed": 0, "repeatApplied": 0, "dryRunPending": 0, "opsMigrationSha256": "7b6cb269db5c4fa192b39edd1441d0dd13c6272f2805e377c838814815ab7e1c"},
-    "focusedTestFiles": {"passed": 4, "failed": 0},
-    "focusedTests": {"passed": 12, "failed": 0, "skipped": 0, "todo": 0},
+    "migrations": {"applied": 750, "failed": 0, "repeatApplied": 0, "dryRunPending": 0, "opsMigrationSha256": "4f565cc1a7301cd30111efcfd4ba02c10826cb80bb7709fb4b679c5163c93e92"},
+    "focusedTestFiles": {"passed": 5, "failed": 0},
+    "focusedTests": {"passed": 14, "failed": 0, "skipped": 0, "todo": 0},
     "historicalLayer1": {"focusedTestFilesPassed": 4, "focusedTestsPassed": 35}
   },
   "fixtures": {
-    "postFanInDatabase": "fresh isolated tmpfs pgvector PostgreSQL 16 at exact product SHA",
-    "postFanInResidue": "signals/outbox/states/receipts/incidents/events/results-events/results-outbox = 0/0/0/0/0/0/0/0",
+    "postFanInDatabase": "fresh isolated tmpfs pgvector PostgreSQL 16 at OPS gate SHA 9a8d7ae5fb (ancestor of reconciliation SHA d9de65506c); schema ledger 750/750; repeat 0; dry-run 0",
+    "postFanInResidue": "fresh and late databases: all own signals, intents, receipts, attempts, delivery rows and source fixtures = 0; repair cursors exactly 3",
+    "lateApplyDatabase": "current schema excluding 20261003 was 749; applying 20261003 alone was 1; pre-install terminal history excluded; late Results, Notification and Case transitions reconstructed in batches 3+3+0",
+    "reconciliationDelta": "d9de65506c adds disjoint workbook test-only cleanup after the exact OPS gate ancestor 9a8d7ae5fb; global static type/backend/frontend gates passed at d9de65506c",
     "legacyIncidentCleanup": "exact created incident UUIDs only; transactional trigger disable/delete/re-enable with guaranteed restoration",
     "weightedRate": "1 failure plus 999 successes evaluates to 0.001, not 100 percent",
     "redirect": "loopback 302 target receives zero requests"
@@ -101,19 +124,27 @@
     "resultsPrimaryMarkerSurvivesSignalFailure": true,
     "notificationSendOnceAndSentSurviveSignalFailure": true,
     "caseDispatchOnceAndTickOutcomeSurviveSignalFailure": true,
-    "noFalseDeliverySuccessOrReceipt": true
+    "noFalseDeliverySuccessOrReceipt": true,
+    "eightWayRepairIntentExactlyOnce": true,
+    "expiredWorkerFencedAfterReclaim": true,
+    "allThreeTerminalSourcesReconstructedWithoutBusinessReplay": true,
+    "lateTransitionsBoundedThreePlusThreePlusZero": true,
+    "preInstallTerminalHistoryExcluded": true,
+    "terminalTimestampSpoofAndRewriteRejectedForAllThreeSources": true,
+    "repairOffConsumesZero": true,
+    "mountedSignedJwtDenialIdentityExact": true,
+    "freshAndLateResidueZeroWithExactlyThreeCursors": true
   },
   "browserArtifacts": [],
   "rollback": {
-    "method": "OPERATIONAL_ALERT_LEDGER_ENABLED=false is the absolute emergency master disable. Durable tenant signals and delivery are separately default OFF. Revert integrated product commit 7583ca8f86; additive tables remain readable.",
+    "method": "OPERATIONAL_ALERT_LEDGER_ENABLED=false is the absolute emergency master disable. Durable tenant signals, delivery and repair remain separately default OFF. Revert integrated OPS product through b4929e56b9; additive tables remain readable.",
     "executed": false
   },
-  "technicalVerdict": "PASS_LAYER1_DURABLE_INCIDENT_AND_LAYER2_DEFAULT_OFF_TENANT_DELIVERY",
+  "technicalVerdict": "PASS_REPOSITORY_TECHNICAL_DURABILITY_ON_EXACT_CURRENT_SCHEMA_750",
   "verdict": "PARTIAL",
   "openBlockers": [
-    "PARTIAL_DURABILITY: Results, Notification and Case protect primary outcomes and increment in-process missed-signal counters, but there is no durable repair cursor; a crash after the primary marker can lose secondary telemetry.",
-    "PARTIAL_DURABILITY: authenticated HTTP denial persistence is post-response fire-and-forget and may be lost on immediate process death.",
     "NOT_AUTHORIZED: external paging transport and operator dashboard are not authorized; repository transport remains default-OFF and loopback-only.",
-    "NOT_VERIFIED: no deployed sustained multi-instance observation window or exercised production operator incident."
+    "NOT_VERIFIED: no deployed sustained multi-instance observation window or exercised production operator incident.",
+    "PARTIAL_SIGKILL: accepted in-process authenticated denial intents use bounded graceful-shutdown flushing, but an ungraceful SIGKILL before the durable write completes can still lose the intent."
   ]
 }
