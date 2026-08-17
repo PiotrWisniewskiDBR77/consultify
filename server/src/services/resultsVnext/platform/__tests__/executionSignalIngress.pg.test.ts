@@ -80,7 +80,28 @@ describe.skipIf(!REAL_PG)('RES-FLOW-ADAPTER-001 execution signal ingress', () =>
   });
 
   afterAll(async () => {
-    if (db) await db.end();
+    if (db) {
+      await db.query('BEGIN');
+      try {
+        await db.query('ALTER TABLE rvn_execution_signal_receipts DISABLE TRIGGER USER');
+        await db.query('DELETE FROM rvn_execution_signal_receipts WHERE organization_id = ANY($1)', [[orgA, orgB]]);
+        await db.query('ALTER TABLE rvn_execution_signal_receipts ENABLE TRIGGER USER');
+        await db.query('DELETE FROM execution_results_signal_outbox WHERE organization_id = ANY($1)', [[orgA, orgB]]);
+        await db.query('DELETE FROM execution_delivery_evidence WHERE organization_id = ANY($1)', [[orgA, orgB]]);
+        await db.query('DELETE FROM execution_case_links WHERE organization_id = ANY($1)', [[orgA, orgB]]);
+        await db.query('DELETE FROM case_workspace_artifact_links WHERE organization_id = ANY($1)', [[orgA, orgB]]);
+        await db.query('DELETE FROM case_core WHERE organization_id = ANY($1)', [[orgA, orgB]]);
+        await db.query('DELETE FROM initiatives WHERE organization_id = ANY($1)', [[orgA, orgB]]);
+        await db.query('DELETE FROM projects WHERE organization_id = ANY($1)', [[orgA, orgB]]);
+        await db.query('DELETE FROM organizations WHERE id = ANY($1)', [[orgA, orgB]]);
+        await db.query('COMMIT');
+      } catch (error) {
+        await db.query('ROLLBACK');
+        throw error;
+      } finally {
+        await db.end();
+      }
+    }
   });
 
   it('is tenant-scoped and exactly-once under concurrency', async () => {
