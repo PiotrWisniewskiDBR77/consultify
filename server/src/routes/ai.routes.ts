@@ -116,6 +116,36 @@ import {
 
 const router = Router();
 
+/** Chat streaming is provider-bearing: stale role claims and SUPERADMIN do not
+ * replace an authoritative ACTIVE tenant membership row. */
+const requireActiveChatMembership = asyncHandler(
+  async (req: AuthRequest, res: Response, next) => {
+    const userId = String(req.userId || req.user?.id || '').trim();
+    const organizationId = String(req.organizationId || req.user?.organizationId || '').trim();
+    if (!userId || !organizationId) {
+      return res.status(403).json({ code: 'ORG_MEMBERSHIP_REVOKED' });
+    }
+    try {
+      const membership = await dbGet<{ status?: string }>(
+        `SELECT status FROM organization_members WHERE user_id=? AND organization_id=?`,
+        [userId, organizationId],
+        { fallback: false }
+      );
+      if (String(membership?.status || '').toUpperCase() !== 'ACTIVE') {
+        return res.status(403).json({ code: 'ORG_MEMBERSHIP_REVOKED' });
+      }
+    } catch (error) {
+      logger.warn('[AI Stream] membership verification unavailable', {
+        userId,
+        organizationId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return res.status(503).json({ code: 'ORG_MEMBERSHIP_UNVERIFIABLE' });
+    }
+    next();
+  }
+);
+
 function isConnectorFreshDataAsk(message: unknown): boolean {
   const text = String(message || '').toLowerCase();
   const mentionsConnector =
@@ -1437,6 +1467,7 @@ router.post(
 router.post(
   '/chat/stream',
   verifyToken,
+  requireActiveChatMembership,
   validateBody(ChatStreamRequestSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const body = req.body as {
@@ -2291,11 +2322,9 @@ router.post(
         `
           INSERT INTO ai_partial_responses (id, session_id, user_id, organization_id, content, updated_at)
           VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-          ON CONFLICT(session_id) DO UPDATE SET
+          ON CONFLICT(organization_id, user_id, session_id) DO UPDATE SET
               content = excluded.content,
               updated_at = CURRENT_TIMESTAMP
-          WHERE ai_partial_responses.organization_id = excluded.organization_id
-            AND ai_partial_responses.user_id = excluded.user_id
         `,
         [uuidv4(), sessionId, userId, orgId, content]
       );

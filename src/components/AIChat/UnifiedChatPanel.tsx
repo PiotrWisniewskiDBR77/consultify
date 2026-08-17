@@ -2147,8 +2147,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           id: `idea-action-error-${Date.now()}`,
           role: 'ai',
           content: t('aiChat.teresaAction.error', {
-            defaultValue:
-              'Nie udało się wykonać akcji „{{action}}” — wystąpił błąd. Nic nie zostało potwierdzone jako zrobione.',
+            defaultValue: 'Nie udało się wykonać akcji „{{action}}” — wystąpił błąd. Nic nie zostało potwierdzone jako zrobione.',
             action: payload.toolName,
           }),
           timestamp: new Date(),
@@ -2325,8 +2324,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         id: `idea-action-confirm-error-${Date.now()}`,
         role: 'ai',
         content: t('aiChat.teresaAction.error', {
-          defaultValue:
-            'Nie udało się wykonać akcji „{{action}}” — wystąpił błąd. Nic nie zostało potwierdzone jako zrobione.',
+            defaultValue: 'Nie udało się wykonać akcji „{{action}}” — wystąpił błąd. Nic nie zostało potwierdzone jako zrobione.',
           action: pending.toolName,
         }),
         timestamp: new Date(),
@@ -5418,45 +5416,44 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   // real backend contract this maps onto.
   // ------------------------------------------------------------------------
   const [branchList, setBranchList] = useState<ConversationBranch[]>([]);
-  const [branchParentConversationId, setBranchParentConversationId] = useState<string | null>(null);
+  const [branchParentConversationId, setBranchParentConversationId] = useState<string | null>(
+    null
+  );
   const [branchSelfName, setBranchSelfName] = useState<string | null>(null);
   const [branchesLoading, setBranchesLoading] = useState(false);
   const [branchesError, setBranchesError] = useState<string | null>(null);
   const [branchCreating, setBranchCreating] = useState(false);
 
-  const refreshBranches = useCallback(
-    async (conversationId: string) => {
-      setBranchesLoading(true);
-      setBranchesError(null);
-      try {
-        const res: any = await Api.getConversationBranches(conversationId);
-        const mapped: ConversationBranch[] = Array.isArray(res?.branches)
-          ? res.branches.map((b: any) => ({
-              id: b.id,
-              conversationId: b.conversationId,
-              parentBranchId: b.parentBranchId ?? null,
-              forkMessageId: b.forkMessageId,
-              name: b.branchName || 'Branch',
-              messageCount: b.messageCount,
-              createdAt: b.createdAt,
-              createdBy: b.createdBy,
-            }))
-          : [];
-        setBranchList(mapped);
-        setBranchParentConversationId(res?.isBranch ? res?.parentConversationId || null : null);
-        setBranchSelfName(res?.isBranch ? res?.branchName || null : null);
-      } catch (err) {
-        console.error('[UnifiedChatPanel] Failed to load conversation branches:', err);
-        setBranchList([]);
-        setBranchParentConversationId(null);
-        setBranchSelfName(null);
-        setBranchesError(t('branch.loadFailed', 'Could not load branches.'));
-      } finally {
-        setBranchesLoading(false);
-      }
-    },
-    [t]
-  );
+  const refreshBranches = useCallback(async (conversationId: string) => {
+    setBranchesLoading(true);
+    setBranchesError(null);
+    try {
+      const res: any = await Api.getConversationBranches(conversationId);
+      const mapped: ConversationBranch[] = Array.isArray(res?.branches)
+        ? res.branches.map((b: any) => ({
+            id: b.id,
+            conversationId: b.conversationId,
+            parentBranchId: b.parentBranchId ?? null,
+            forkMessageId: b.forkMessageId,
+            name: b.branchName || 'Branch',
+            messageCount: b.messageCount,
+            createdAt: b.createdAt,
+            createdBy: b.createdBy,
+          }))
+        : [];
+      setBranchList(mapped);
+      setBranchParentConversationId(res?.isBranch ? res?.parentConversationId || null : null);
+      setBranchSelfName(res?.isBranch ? res?.branchName || null : null);
+    } catch (err) {
+      console.error('[UnifiedChatPanel] Failed to load conversation branches:', err);
+      setBranchList([]);
+      setBranchParentConversationId(null);
+      setBranchSelfName(null);
+      setBranchesError(t('branch.loadFailed', 'Could not load branches.'));
+    } finally {
+      setBranchesLoading(false);
+    }
+  }, [t]);
 
   useEffect(() => {
     if (!activeConversationId || String(activeConversationId).startsWith('local-')) {
@@ -5499,9 +5496,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       // the latest message in the thread so far (server falls back to "no
       // messages" only when the source conversation is truly empty).
       const msgs = useConversationStore.getState().activeMessages || [];
-      const lastRealMsg = [...msgs]
-        .reverse()
-        .find((m: any) => !String(m.id || '').startsWith('local-'));
+      const lastRealMsg = [...msgs].reverse().find((m: any) => !String(m.id || '').startsWith('local-'));
       setBranchCreating(true);
       try {
         const res: any = await Api.branchConversation(sourceId, lastRealMsg?.id, name);

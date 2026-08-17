@@ -33,6 +33,7 @@ describe.skipIf(!REAL_DB)('CHAT-NFR — tenant-bound partial recovery (real Post
 
   beforeAll(async () => {
     await assertRealPostgresTestEnvironment();
+    process.env.E2E_MODE = 'true';
     pool = new Pool({ connectionString: DATABASE_URL });
     for (const [organizationId, name] of [
       [orgA, 'Partial A'],
@@ -59,6 +60,11 @@ describe.skipIf(!REAL_DB)('CHAT-NFR — tenant-bound partial recovery (real Post
         [id(`member_${userId}`), organizationId, userId, status]
       );
     }
+    await pool.query(
+      `INSERT INTO conversations (id,user_id,organization_id,title)
+       VALUES ($1,$2,$3,'Partial recovery')`,
+      [session, userA, orgA]
+    );
     await pool.query(
       `INSERT INTO ai_partial_responses
          (id,session_id,user_id,organization_id,content,updated_at)
@@ -88,6 +94,8 @@ describe.skipIf(!REAL_DB)('CHAT-NFR — tenant-bound partial recovery (real Post
     await pool.query(`DELETE FROM ai_partial_responses WHERE session_id LIKE $1`, [
       `chat_partial_%_${suffix}`,
     ]);
+    await pool.query(`DELETE FROM conversation_messages WHERE conversation_id=$1`, [session]);
+    await pool.query(`DELETE FROM conversations WHERE id=$1`, [session]);
     await pool.query(`DELETE FROM organization_members WHERE organization_id = ANY($1::text[])`, [
       [orgA, orgB],
     ]);
@@ -147,5 +155,59 @@ describe.skipIf(!REAL_DB)('CHAT-NFR — tenant-bound partial recovery (real Post
     expect(row.rows).toEqual([
       { organization_id: orgA, user_id: userA, content: 'durable partial' },
     ]);
+  });
+
+  it('stores the same session id independently for two tenants and scopes deletion', async () => {
+    await Promise.all([
+      pool.query(
+        `INSERT INTO ai_partial_responses (id,session_id,user_id,organization_id,content)
+         VALUES ($1,$2,$3,$4,'tenant A')
+         ON CONFLICT(organization_id,user_id,session_id) DO UPDATE SET content=excluded.content`,
+        [id('same_a'), id('shared_session'), userA, orgA]
+      ),
+      pool.query(
+        `INSERT INTO ai_partial_responses (id,session_id,user_id,organization_id,content)
+         VALUES ($1,$2,$3,$4,'tenant B')
+         ON CONFLICT(organization_id,user_id,session_id) DO UPDATE SET content=excluded.content`,
+        [id('same_b'), id('shared_session'), userB, orgB]
+      ),
+    ]);
+    const rows = await pool.query(
+      `SELECT organization_id,content FROM ai_partial_responses
+       WHERE session_id=$1 ORDER BY organization_id`,
+      [id('shared_session')]
+    );
+    expect(rows.rows).toEqual([
+      { organization_id: orgA, content: 'tenant A' },
+      { organization_id: orgB, content: 'tenant B' },
+    ]);
+    await pool.query(
+      `DELETE FROM ai_partial_responses
+       WHERE session_id=$1 AND user_id=$2 AND organization_id=$3`,
+      [id('shared_session'), userA, orgA]
+    );
+    const survivor = await pool.query(
+      `SELECT organization_id,content FROM ai_partial_responses WHERE session_id=$1`,
+      [id('shared_session')]
+    );
+    expect(survivor.rows).toEqual([{ organization_id: orgB, content: 'tenant B' }]);
+  });
+
+  it('requires ACTIVE membership before POST /chat/stream reaches the handler', async () => {
+    const body = { message: 'resume', conversationId: session, resumeFromPartial: true };
+    const active = await request(app).post('/api/ai/chat/stream').set(bearer(tokenA)).send(body);
+    expect(active.status).toBe(200);
+    expect(active.text).toContain('data:');
+
+    const denied = await request(app)
+      .post('/api/ai/chat/stream')
+      .set(bearer(tokenRevoked))
+      .send(body);
+    expect(denied.status).toBe(403);
+    expect(denied.body).toMatchObject({ code: 'ORG_MEMBERSHIP_REVOKED' });
+
+    const foreign = await request(app).post('/api/ai/chat/stream').set(bearer(tokenB)).send(body);
+    expect(foreign.status).toBe(200);
+    expect(foreign.text).toContain('PARTIAL_RECOVERY_NOT_FOUND');
   });
 });

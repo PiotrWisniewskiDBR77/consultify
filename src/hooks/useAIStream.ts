@@ -610,7 +610,8 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
       context?: Record<string, unknown>,
       focusMode?: string,
       roleName?: string,
-      language?: string
+      language?: string,
+      throwTerminalError = false
     ) => {
       // Save for manual retry (best-effort)
       lastRequestRef.current = {
@@ -1408,6 +1409,7 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
       if (terminalError) {
         setLastError(terminalError);
         options.onStreamError?.(terminalError);
+        if (throwTerminalError) throw terminalError;
       }
     },
     [
@@ -1524,7 +1526,10 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
           sessionId,
           resumeFromPartial: true,
         },
-        focusMode
+        focusMode,
+        undefined,
+        undefined,
+        true
       );
     },
     [startStream]

@@ -4,7 +4,15 @@
 -- left untouched and become unreachable through the canonical runtime.  This
 -- avoids inventing tenant ownership during a late upgrade.
 
-CREATE INDEX IF NOT EXISTS idx_ai_partial_responses_tenant_session
+-- The original table made session_id globally unique. Session identifiers are
+-- client supplied, so two tenants may legitimately use the same value. Remove
+-- both historical shapes (table constraint and standalone unique index) before
+-- installing the tenant-bound identity used by the runtime upsert.
+ALTER TABLE ai_partial_responses
+  DROP CONSTRAINT IF EXISTS ai_partial_responses_session_id_key;
+DROP INDEX IF EXISTS idx_partial_responses_session;
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_ai_partial_responses_tenant_session
   ON ai_partial_responses (organization_id, user_id, session_id);
 
 CREATE OR REPLACE FUNCTION enforce_ai_partial_response_tenant_scope()
