@@ -6185,21 +6185,34 @@ export const Api = {
   getDecisions: async (projectId?: string): Promise<any[]> => {
     let url = `${API_URL}/decisions`;
     if (projectId) url += `?projectId=${projectId}`;
-    const res = await fetch(url, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch decisions');
-    const data = await res.json();
-    // Extract decisions array and map snake_case to camelCase
-    const decisions = Array.isArray(data) ? data : data.decisions || [];
-    return decisions.map((d: any) => ({
-      ...d,
-      decisionOwnerId: d.decision_maker_id || d.decisionOwnerId,
-      ownerName: d.owner_name || d.ownerName,
-      projectName: d.project_name || d.projectName,
-      createdAt: d.created_at || d.createdAt,
-      dueDate: d.deadline || d.dueDate,
-      decisionType: d.type || d.decisionType,
-      priority: d.priority || 'MEDIUM',
-    }));
+    const ctrl = new AbortController();
+    const timeoutId = setTimeout(() => ctrl.abort(), 20000);
+    try {
+      const res = await fetch(url, { headers: getHeaders(), signal: ctrl.signal });
+      if (!res.ok) throw new Error('Failed to fetch decisions');
+      const data = await res.json();
+      // Extract decisions array and map snake_case to camelCase
+      const decisions = Array.isArray(data) ? data : data.decisions || [];
+      return decisions.map((d: any) => ({
+        ...d,
+        decisionOwnerId: d.decision_maker_id || d.decisionOwnerId,
+        ownerName: d.owner_name || d.ownerName,
+        projectName: d.project_name || d.projectName,
+        createdAt: d.created_at || d.createdAt,
+        dueDate: d.deadline || d.dueDate,
+        decisionType: d.type || d.decisionType,
+        priority: d.priority || 'MEDIUM',
+      }));
+    } catch (error) {
+      if (ctrl.signal.aborted) {
+        const timeoutError = new Error('Decision request timed out') as Error & { code?: string };
+        timeoutError.code = 'DECISIONS_REQUEST_TIMEOUT';
+        throw timeoutError;
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
+    }
   },
 
   getDecision: async (id: string): Promise<any> => {

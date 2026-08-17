@@ -730,10 +730,18 @@ router.post(
     const requestedRole = String(req.body?.role || 'USER')
       .trim()
       .toUpperCase();
-    const validRoles = ['ADMIN', 'USER', 'GUEST'] as const;
-    const userRole = (validRoles as readonly string[]).includes(requestedRole)
-      ? (requestedRole as (typeof validRoles)[number])
-      : 'USER';
+    const validRoles = ['ADMIN', 'MANAGER', 'USER', 'GUEST'] as const;
+    if (!(validRoles as readonly string[]).includes(requestedRole)) {
+      return res.status(400).json({ error: 'Unsupported test-support member role' });
+    }
+    const userRole = requestedRole as (typeof validRoles)[number];
+    // The canonical organization-membership schema intentionally has no
+    // MANAGER enum; the signed platform persona normalizes MANAGER to
+    // PROJECT_MANAGER while its active tenant membership uses the existing
+    // ADMIN bucket. This is test-only identity construction, never a product
+    // authorization shortcut (the normal auth/membership middleware still
+    // validates the row on every mounted request).
+    const memberRole = userRole === 'MANAGER' ? 'ADMIN' : userRole;
     if (!runId || runId.length > 128) {
       return res.status(400).json({ error: 'runId is required' });
     }
@@ -774,14 +782,21 @@ router.post(
       await DbPromise.run(
         `INSERT INTO organization_members (id, organization_id, user_id, role, status, permission_scope)
          VALUES (?, ?, ?, ?, ?, ?)`,
-        [memberId, run.organization_id, userId, userRole, 'ACTIVE', JSON.stringify({ '*': true })],
+        [
+          memberId,
+          run.organization_id,
+          userId,
+          memberRole,
+          'ACTIVE',
+          JSON.stringify({ '*': true }),
+        ],
         { fallback: false }
       );
     } catch {
       await DbPromise.run(
         `INSERT INTO organization_members (id, organization_id, user_id, role, status)
          VALUES (?, ?, ?, ?, ?)`,
-        [memberId, run.organization_id, userId, userRole, 'ACTIVE'],
+        [memberId, run.organization_id, userId, memberRole, 'ACTIVE'],
         { fallback: false }
       );
     }
