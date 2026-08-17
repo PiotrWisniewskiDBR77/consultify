@@ -22,14 +22,20 @@
  * authority. Extending coverage requires an explicit owner-approved allowlist of
  * the additional writer paths; it must not be widened silently.
  *
- * COUNTING CONVENTION
+ * COUNTING CONVENTION — THE DENOMINATOR IS DISCOVERED, NOT HAND-LISTED
  * A "write site" is one `router.post|put|patch|delete(...)` registration in a
- * Results route file. One site can mount several endpoints: `kpi.routes.ts`'s
- * `mountLifecycleRoute` factory is a single site serving activate/suspend/
- * archive, which is why 20 observed sites cover 22 endpoints. Counts here are
- * verified against the files on disk by
- * `__tests__/resultsWriterInventory.denominator.test.ts` — that test fails when
- * a writer is added without updating this inventory.
+ * Results route file. The 216 total is produced by FILESYSTEM DISCOVERY:
+ * `__tests__/resultsWriterInventory.denominator.test.ts` walks
+ * `server/src/routes`, selects every non-test `.ts` whose path matches
+ * result/benefit, counts its write sites, and fails if any writer-bearing file is
+ * absent from this inventory (or if a listed file no longer exists). So a new
+ * Results router cannot quietly shrink the world this ledger claims to describe.
+ *
+ * One site can mount several endpoints: `kpi.routes.ts`'s `mountLifecycleRoute`
+ * factory is a single site serving activate/suspend/archive, which is why 20
+ * observed sites cover 22 endpoints. The same test also counts the real
+ * observation call sites per file, so removing an `observeWriter` call without
+ * reclassifying its entry fails the gate too.
  */
 import type { ResultsWriterFamily } from './resultsWriterObservationService.js';
 

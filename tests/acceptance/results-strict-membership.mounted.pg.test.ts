@@ -1,54 +1,113 @@
 /**
- * Mounted auth matrix for the Results strict membership wall — real routers,
- * real `verifyToken`, real `requireActiveMembership`, real signed JWTs, real
- * PostgreSQL.
+ * Authorization matrix for the Results strict membership wall over MOUNTED
+ * ROUTERS (not the full Gateway) — real routers, real `verifyToken`, real
+ * `requireActiveMembership`, real signed JWTs, real PostgreSQL.
  *
- * WHAT THIS GATE EXISTS TO PROVE
+ * SCOPE, NAMED HONESTLY
+ * This suite mounts the four Results routers directly on a bare Express app. It
+ * does NOT exercise the production Gateway, so Gateway-level concerns (betaGate,
+ * v8FeatureGate, global rate limiting, the readiness gate, apiLogging) are OUT OF
+ * SCOPE here and are not proven by it. What it does prove is the per-router
+ * authorization contract and that a denial writes nothing.
+ *
+ * WHAT THIS GATE EXISTS FOR
  * Three Results routers had NO per-request membership check: after revoking a
  * user's `organization_members` row their still-valid signed JWT could keep
- * WRITING, and a SUPERADMIN with no membership row at all was accepted. The wall
- * (`services/legacyCutover/requireActiveMembership.ts`, already guarding
- * `v8/results.routes.ts`) is now mounted on all three. This suite proves the
- * denial AND that a denial writes nothing — neither a business row nor an
- * observation row.
+ * WRITING, and a SUPERADMIN with no membership row at all was accepted.
  *
- * NOTHING IS MOCKED HERE. In particular the membership middleware is NOT stubbed
- * (the resultsVnext unit suites stub it because they test route logic; this gate
- * exists precisely to test the thing they stub). Tokens are signed with the real
- * `config.JWT_SECRET`, and every membership state is a real row.
+ * NOTHING ABOUT AUTHORIZATION IS MOCKED. The membership middleware is real (the
+ * resultsVnext unit suites stub it because they test route logic; this gate exists
+ * to test the thing they stub). The ONLY injected seam is a bounded failure of
+ * `DbPromise.get` for `organization_members` lookups, used to prove fail-closed
+ * behaviour; every other query delegates to the real implementation, the number
+ * of intercepted lookups is asserted, and the seam is disarmed in `finally`.
  *
  * HOW TO RUN:
  *   DB_TYPE=postgres NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false \
+ *   RESULTS_STRICT_MEMBERSHIP_TEST_CLEANUP=i-own-this-disposable-database \
  *   DATABASE_URL=postgresql://<user>@127.0.0.1:<port>/consultify_wobs_<something> \
- *   npx vitest run --retry=0 tests/acceptance/results-strict-membership.mounted.pg.test.ts
- *
- * The DB-failure case renames `organization_members` for one request to make the
- * membership lookup genuinely fail (a real error, not a mocked rejection) and
- * renames it back. That is destructive, so — like the observation suite — this
- * file refuses to run unless the SERVER reports a database name starting with
- * `consultify_wobs`.
+ *   npx vitest run --config vitest.acceptance.config.ts --retry=0 \
+ *     tests/acceptance/results-strict-membership.mounted.pg.test.ts
  */
 import { randomUUID } from 'node:crypto';
 
 import express, { type Express } from 'express';
 import jwt from 'jsonwebtoken';
-import pg from 'pg';
+import pg, { type PoolClient } from 'pg';
 import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+
+/**
+ * BOUNDED FAILURE INJECTION — `organization_members` lookups only.
+ *
+ * Armed for exactly one assertion, it fails ONLY queries that read
+ * `organization_members` and delegates everything else to the real DbPromise.
+ * A blanket `ALTER TABLE ... RENAME` (the previous approach) took the table away
+ * from the entire process, which is both wider than the thing under test and
+ * destructive to any concurrent reader.
+ */
+const membershipLookup = vi.hoisted(() => ({ failing: false, interceptedHits: 0 }));
+
+vi.mock('../../server/src/utils/DbPromise.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../server/src/utils/DbPromise.js')>();
+  return {
+    ...actual,
+    get: (...args: unknown[]) => {
+      // `get` is overloaded as (sql, ...) and (db, sql, ...).
+      const sql = typeof args[0] === 'string' ? args[0] : typeof args[1] === 'string' ? args[1] : '';
+      if (membershipLookup.failing && /organization_members/i.test(sql)) {
+        membershipLookup.interceptedHits += 1;
+        return Promise.reject(new Error('injected membership lookup failure (bounded test seam)'));
+      }
+      return (actual.get as (...a: unknown[]) => unknown)(...args);
+    },
+  };
+});
 
 import config from '../../server/src/config/Config.js';
 
 const DATABASE_URL = process.env.DATABASE_URL ?? '';
 const REQUIRED_DB_PREFIX = 'consultify_wobs';
+const CLEANUP_OPT_IN =
+  process.env.RESULTS_STRICT_MEMBERSHIP_TEST_CLEANUP === 'i-own-this-disposable-database';
+
+function callerDbName(connectionString: string): string {
+  try {
+    return new URL(connectionString).pathname.replace(/^\//, '');
+  } catch {
+    return '';
+  }
+}
+const CALLER_DB = callerDbName(DATABASE_URL);
+
 const enabled =
   process.env.RUN_DB_TESTS === '1' &&
   process.env.MOCK_DB === 'false' &&
-  DATABASE_URL.startsWith('postgres');
+  DATABASE_URL.startsWith('postgres') &&
+  CLEANUP_OPT_IN &&
+  CALLER_DB.startsWith(REQUIRED_DB_PREFIX);
+
+if (!enabled) {
+  // eslint-disable-next-line no-console
+  console.warn(
+    `[mounted Results strict membership suite SKIPPED — clean skip, not a pass] needs ` +
+      `RUN_DB_TESTS=1 MOCK_DB=false, ` +
+      `RESULTS_STRICT_MEMBERSHIP_TEST_CLEANUP=i-own-this-disposable-database, and a DATABASE_URL ` +
+      `whose database name starts with "${REQUIRED_DB_PREFIX}" (teardown disables an append-only ` +
+      `DELETE trigger). db="${CALLER_DB}" cleanupOptIn=${CLEANUP_OPT_IN}`
+  );
+}
 
 const MEMBERSHIP_REVOKED_CODE = 'ORG_MEMBERSHIP_REVOKED';
 const MEMBERSHIP_UNVERIFIABLE_CODE = 'ORG_MEMBERSHIP_UNVERIFIABLE';
+const DELETE_TRIGGER = 'trg_results_writer_observation_no_delete';
+const UPDATE_TRIGGER = 'trg_results_writer_observation_no_update';
 
-describe.skipIf(!enabled).sequential('mounted Results strict membership wall', () => {
+/** Deterministic advisory-lock key: same value on every run, so two concurrent
+ * runs of THIS suite serialize instead of interleaving a trigger disable. */
+const ADVISORY_LOCK_KEY = 20261014;
+
+describe.skipIf(!enabled).sequential('mounted Results routers — strict membership wall', () => {
   const runId = randomUUID();
   const orgA = `sm-${runId}-org-a`;
   const orgB = `sm-${runId}-org-b`;
@@ -59,8 +118,10 @@ describe.skipIf(!enabled).sequential('mounted Results strict membership wall', (
   const superNoMembership = `sm-${runId}-super`;
   const foreignAdmin = `sm-${runId}-foreign`;
 
-  let db: pg.Client;
+  let pool: pg.Pool;
   let app: Express;
+  /** A REAL org-A resource, created through a real request, for the foreign case. */
+  let orgAKpiId = '';
 
   const token = (userId: string, organizationId: string, role = 'ADMIN', extra = {}) =>
     jwt.sign(
@@ -76,87 +137,89 @@ describe.skipIf(!enabled).sequential('mounted Results strict membership wall', (
       { algorithm: 'HS256', expiresIn: '10m' }
     );
 
-  /** Observation rows for a tenant — the telemetry side of every delta assertion. */
-  async function observations(organizationId: string): Promise<number> {
-    const { rows } = await db.query<{ n: string }>(
-      `SELECT count(*)::text AS n FROM results_writer_observations WHERE organization_id = $1`,
+  /** The three counters every denial must leave untouched, per tenant. */
+  async function deltas(organizationId: string): Promise<{
+    business: number;
+    intents: number;
+    observations: number;
+  }> {
+    const { rows } = await pool.query<{ business: string; intents: string; observations: string }>(
+      `SELECT
+         ((SELECT count(*) FROM initiative_kpis WHERE organization_id = $1) +
+          (SELECT count(*) FROM results_kpi_report_snapshots WHERE organization_id = $1) +
+          (SELECT count(*) FROM rvn_kpi_definitions WHERE organization_id = $1))::text AS business,
+         (SELECT count(*) FROM legacy_cutover_signal_intents WHERE organization_id = $1)::text AS intents,
+         (SELECT count(*) FROM results_writer_observations WHERE organization_id = $1)::text AS observations`,
       [organizationId]
     );
-    return Number(rows[0]?.n ?? '0');
+    return {
+      business: Number(rows[0]?.business ?? '0'),
+      intents: Number(rows[0]?.intents ?? '0'),
+      observations: Number(rows[0]?.observations ?? '0'),
+    };
   }
 
-  /** Business rows a denied request must not have created. */
-  async function businessRows(organizationId: string): Promise<number> {
-    const { rows } = await db.query<{ n: string }>(
-      `SELECT (
-         (SELECT count(*) FROM initiative_kpis WHERE organization_id = $1) +
-         (SELECT count(*) FROM results_kpi_report_snapshots WHERE organization_id = $1)
-       )::text AS n`,
-      [organizationId]
-    );
-    return Number(rows[0]?.n ?? '0');
-  }
+  /** observeWriter is fire-and-forget by design; let the dispatch land. */
+  const settle = () => new Promise((resolve) => setTimeout(resolve, 400));
 
-  /** The three newly-walled write surfaces, exercised as real HTTP requests. */
   const WALLED_WRITES = [
     {
       name: 'benefits POST /kpis',
-      exec: (bearer: string, body?: Record<string, unknown>) =>
-        request(app)
-          .post('/benefits/kpis')
-          .set('Authorization', `Bearer ${bearer}`)
-          .send({
-            name: `sm-${runId}-kpi-${randomUUID().slice(0, 8)}`,
-            unit: '%',
-            targetValue: 90,
-            direction: 'HIGHER_IS_BETTER',
-            ...(body ?? {}),
-          }),
+      exec: (bearer?: string, body?: Record<string, unknown>) => {
+        const req = request(app).post('/benefits/kpis');
+        if (bearer) req.set('Authorization', `Bearer ${bearer}`);
+        return req.send({
+          name: `sm-${runId}-kpi-${randomUUID().slice(0, 8)}`,
+          unit: '%',
+          targetValue: 90,
+          direction: 'HIGHER_IS_BETTER',
+          ...(body ?? {}),
+        });
+      },
     },
     {
       name: 'results POST /kpi-reports',
-      exec: (bearer: string, body?: Record<string, unknown>) =>
-        request(app)
-          .post('/results/kpi-reports')
-          .set('Authorization', `Bearer ${bearer}`)
-          .send({ periodStart: '2026-08-01', ...(body ?? {}) }),
+      exec: (bearer?: string, body?: Record<string, unknown>) => {
+        const req = request(app).post('/results/kpi-reports');
+        if (bearer) req.set('Authorization', `Bearer ${bearer}`);
+        return req.send({ periodStart: '2026-08-01', ...(body ?? {}) });
+      },
     },
     {
       name: 'vnext POST /kpi',
-      exec: (bearer: string, body?: Record<string, unknown>) =>
-        request(app)
-          .post('/vnext/kpi')
-          .set('Authorization', `Bearer ${bearer}`)
-          .send({
-            kpiCode: `SM-${randomUUID().slice(0, 8)}`,
-            name: 'sm vnext kpi',
-            targetGeometry: 'threshold_min',
-            targetValue: 1,
-            ...(body ?? {}),
-          }),
+      exec: (bearer?: string, body?: Record<string, unknown>) => {
+        const req = request(app).post('/vnext/kpi');
+        if (bearer) req.set('Authorization', `Bearer ${bearer}`);
+        return req.send({
+          kpiCode: `SM-${randomUUID().slice(0, 8)}`,
+          name: 'sm vnext kpi',
+          targetGeometry: 'threshold_min',
+          targetValue: 1,
+          ...(body ?? {}),
+        });
+      },
     },
   ] as const;
 
   beforeAll(async () => {
-    db = new pg.Client({ connectionString: DATABASE_URL });
-    await db.connect();
+    pool = new pg.Pool({ connectionString: DATABASE_URL, max: 6 });
 
-    const { rows } = await db.query<{ db: string }>(`SELECT current_database() AS db`);
+    // Server-side guard: the connection string can lie, `current_database()` cannot.
+    const { rows } = await pool.query<{ db: string }>(`SELECT current_database() AS db`);
     const serverDb = rows[0]?.db ?? '';
     if (!serverDb.startsWith(REQUIRED_DB_PREFIX)) {
       throw new Error(
         `refusing to run: server-side current_database()="${serverDb}" does not start with ` +
-          `"${REQUIRED_DB_PREFIX}". This suite temporarily renames organization_members and must ` +
-          `only run against a disposable database.`
+          `"${REQUIRED_DB_PREFIX}". Teardown disables an append-only DELETE trigger and must only ` +
+          `run against a disposable database.`
       );
     }
 
-    await db.query(
+    await pool.query(
       `INSERT INTO organizations(id,name,status) VALUES($1,$1,'active'),($2,$2,'active')`,
       [orgA, orgB]
     );
 
-    // Real users + real membership rows in every state the wall must distinguish.
     for (const [userId, organizationId, role, membership] of [
       [activeAdmin, orgA, 'ADMIN', 'ACTIVE'],
       [revokedAdmin, orgA, 'ADMIN', 'REVOKED'],
@@ -164,13 +227,13 @@ describe.skipIf(!enabled).sequential('mounted Results strict membership wall', (
       [superNoMembership, orgA, 'SUPERADMIN', null],
       [foreignAdmin, orgB, 'ADMIN', 'ACTIVE'],
     ] as const) {
-      await db.query(
+      await pool.query(
         `INSERT INTO users(id,organization_id,email,password,role,status)
          VALUES($1,$2,$3,'x',$4,'active')`,
         [userId, organizationId, `${userId}@test.invalid`, role]
       );
       if (membership) {
-        await db.query(
+        await pool.query(
           `INSERT INTO organization_members(id,organization_id,user_id,role,status)
            VALUES($1,$2,$3,$4,$5)`,
           [randomUUID(), organizationId, userId, role === 'SUPERADMIN' ? 'ADMIN' : role, membership]
@@ -178,14 +241,19 @@ describe.skipIf(!enabled).sequential('mounted Results strict membership wall', (
       }
     }
 
-    const [{ default: benefits }, { default: kpiReports }, { default: vnextKpi }, { default: v8Results }, authModule] =
-      await Promise.all([
-        import('../../server/src/routes/benefits.routes.js'),
-        import('../../server/src/routes/results-kpi-reports.routes.js'),
-        import('../../server/src/routes/resultsVnext/kpi.routes.js'),
-        import('../../server/src/routes/v8/results.routes.js'),
-        import('../../server/src/middleware/auth.middleware.js'),
-      ]);
+    const [
+      { default: benefits },
+      { default: kpiReports },
+      { default: vnextKpi },
+      { default: v8Results },
+      authModule,
+    ] = await Promise.all([
+      import('../../server/src/routes/benefits.routes.js'),
+      import('../../server/src/routes/results-kpi-reports.routes.js'),
+      import('../../server/src/routes/resultsVnext/kpi.routes.js'),
+      import('../../server/src/routes/v8/results.routes.js'),
+      import('../../server/src/middleware/auth.middleware.js'),
+    ]);
 
     app = express();
     app.use(express.json());
@@ -199,107 +267,125 @@ describe.skipIf(!enabled).sequential('mounted Results strict membership wall', (
   }, 90_000);
 
   afterAll(async () => {
-    if (!db) return;
+    if (!pool) return;
+    // ONE pinned client for the whole destructive sequence: BEGIN, every DELETE,
+    // the residue read and COMMIT/ROLLBACK all run on the SAME connection. With a
+    // pool, `DISABLE TRIGGER` could otherwise land on a different backend than the
+    // DELETE it is meant to permit, and the residue read could observe a state
+    // predating the commit.
+    let client: PoolClient | null = null;
     try {
-      // Exact, FK-safe teardown in dependency order. No LIKE sweeps on shared
-      // tables, no swallowed errors.
-      await db.query(
-        `ALTER TABLE results_writer_observations DISABLE TRIGGER trg_results_writer_observation_no_delete`
-      );
-      await db.query(`DELETE FROM results_writer_observations WHERE organization_id = ANY($1::text[])`, [
-        [orgA, orgB],
-      ]);
-      await db.query(
-        `ALTER TABLE results_writer_observations ENABLE TRIGGER trg_results_writer_observation_no_delete`
-      );
+      client = await pool.connect();
+      await client.query('BEGIN');
+      try {
+        // Deterministic key, transaction-scoped: released on COMMIT or ROLLBACK.
+        await client.query(`SELECT pg_advisory_xact_lock($1)`, [ADVISORY_LOCK_KEY]);
 
-      await db.query(`DELETE FROM kpi_metric_audit_log WHERE organization_id = ANY($1::text[])`, [
-        [orgA, orgB],
-      ]);
-      // `initiative_kpis.current_definition_version` and `kpi_definition_versions.kpi_id`
-      // reference each other, so neither table can simply be deleted first
-      // (`fk_initiative_kpis_current_version` fires either way). Break the
-      // pointer, then delete versions, then the KPIs themselves.
-      await db.query(
-        `UPDATE initiative_kpis SET current_definition_version = NULL WHERE organization_id = ANY($1::text[])`,
-        [[orgA, orgB]]
-      );
-      await db.query(`DELETE FROM kpi_definition_versions WHERE organization_id = ANY($1::text[])`, [
-        [orgA, orgB],
-      ]);
-      await db.query(`DELETE FROM initiative_kpis WHERE organization_id = ANY($1::text[])`, [[orgA, orgB]]);
-      await db.query(`DELETE FROM results_kpi_report_snapshots WHERE organization_id = ANY($1::text[])`, [
-        [orgA, orgB],
-      ]);
-
-      // The KPI-reports writer also materializes a Report Builder artifact, whose
-      // rows reference BOTH the organization and the acting user. Children first,
-      // then the report, or the later `users` delete trips
-      // `report_builder_reports_created_by_fkey`. Enumerated from the live FK
-      // graph rather than guessed.
-      const reportIds = await db.query<{ id: string }>(
-        `SELECT id FROM report_builder_reports WHERE organization_id = ANY($1::text[])`,
-        [[orgA, orgB]]
-      );
-      const reportIdList = reportIds.rows.map((r) => r.id);
-      if (reportIdList.length > 0) {
-        for (const table of [
-          'report_builder_comment_activity',
-          'report_builder_comments',
-          'report_builder_activity',
-          'report_builder_sections',
-          'report_builder_sessions',
-          'report_builder_versions',
-        ]) {
-          await db.query(`DELETE FROM ${table} WHERE report_id = ANY($1::text[])`, [reportIdList]);
+        const guard = await client.query<{ db: string }>(`SELECT current_database() AS db`);
+        if (!(guard.rows[0]?.db ?? '').startsWith(REQUIRED_DB_PREFIX)) {
+          throw new Error('database-name guard failed inside the teardown transaction');
         }
-        await db.query(`DELETE FROM report_builder_reports WHERE id = ANY($1::text[])`, [reportIdList]);
-      }
-      await db.query(`DELETE FROM report_builder_templates WHERE organization_id = ANY($1::text[])`, [
-        [orgA, orgB],
-      ]);
-      await db.query(`DELETE FROM report_builder_block_types WHERE organization_id = ANY($1::text[])`, [
-        [orgA, orgB],
-      ]);
-      await db.query(`DELETE FROM rvn_kpi_definition_versions WHERE organization_id = ANY($1::text[])`, [
-        [orgA, orgB],
-      ]);
-      await db.query(`DELETE FROM rvn_kpi_definitions WHERE organization_id = ANY($1::text[])`, [
-        [orgA, orgB],
-      ]);
-      await db.query(`DELETE FROM organization_members WHERE organization_id = ANY($1::text[])`, [
-        [orgA, orgB],
-      ]);
-      await db.query(`DELETE FROM users WHERE organization_id = ANY($1::text[])`, [[orgA, orgB]]);
-      await db.query(`DELETE FROM organizations WHERE id = ANY($1::text[])`, [[orgA, orgB]]);
 
-      // Exact residue0 for this run's tenants.
-      const { rows } = await db.query<{ n: string }>(
-        `SELECT (
-           (SELECT count(*) FROM results_writer_observations WHERE organization_id = ANY($1::text[])) +
-           (SELECT count(*) FROM initiative_kpis WHERE organization_id = ANY($1::text[])) +
-           (SELECT count(*) FROM results_kpi_report_snapshots WHERE organization_id = ANY($1::text[])) +
-           (SELECT count(*) FROM organization_members WHERE organization_id = ANY($1::text[])) +
-           (SELECT count(*) FROM organizations WHERE id = ANY($1::text[]))
-         )::text AS n`,
-        [[orgA, orgB]]
-      );
-      if (Number(rows[0]?.n ?? '0') !== 0) {
-        throw new Error(`teardown left ${rows[0]?.n} row(s) behind for this run's tenants`);
-      }
+        const orgs = [orgA, orgB];
 
-      // Trigger state O — the append-only guard must be back on.
-      const trg = await db.query<{ tgname: string; tgenabled: string }>(
-        `SELECT tgname, tgenabled::text FROM pg_trigger
-          WHERE tgrelid = 'results_writer_observations'::regclass AND NOT tgisinternal`
-      );
-      for (const row of trg.rows) {
-        if (row.tgenabled !== 'O') {
-          throw new Error(`trigger ${row.tgname} left in state ${row.tgenabled}, expected O`);
+        await client.query(
+          `ALTER TABLE results_writer_observations DISABLE TRIGGER ${DELETE_TRIGGER}`
+        );
+        await client.query(
+          `DELETE FROM results_writer_observations WHERE organization_id = ANY($1::text[])`,
+          [orgs]
+        );
+        await client.query(
+          `ALTER TABLE results_writer_observations ENABLE TRIGGER ${DELETE_TRIGGER}`
+        );
+
+        await client.query(`DELETE FROM legacy_cutover_signal_intents WHERE organization_id = ANY($1::text[])`, [orgs]);
+
+        // Report Builder artifacts created by the KPI-reports writer reference both
+        // the organization and the acting user: children first, then the report,
+        // or the later `users` delete trips report_builder_reports_created_by_fkey.
+        const reports = await client.query<{ id: string }>(
+          `SELECT id FROM report_builder_reports WHERE organization_id = ANY($1::text[])`,
+          [orgs]
+        );
+        const reportIds = reports.rows.map((r) => r.id);
+        if (reportIds.length > 0) {
+          for (const table of [
+            'report_builder_comment_activity',
+            'report_builder_comments',
+            'report_builder_activity',
+            'report_builder_sections',
+            'report_builder_sessions',
+            'report_builder_versions',
+          ]) {
+            await client.query(`DELETE FROM ${table} WHERE report_id = ANY($1::text[])`, [reportIds]);
+          }
+          await client.query(`DELETE FROM report_builder_reports WHERE id = ANY($1::text[])`, [reportIds]);
         }
+        await client.query(`DELETE FROM report_builder_templates WHERE organization_id = ANY($1::text[])`, [orgs]);
+        await client.query(`DELETE FROM report_builder_block_types WHERE organization_id = ANY($1::text[])`, [orgs]);
+
+        await client.query(`DELETE FROM results_kpi_report_snapshots WHERE organization_id = ANY($1::text[])`, [orgs]);
+        await client.query(`DELETE FROM kpi_metric_audit_log WHERE organization_id = ANY($1::text[])`, [orgs]);
+        // initiative_kpis.current_definition_version and kpi_definition_versions.kpi_id
+        // reference each other: break the pointer, then versions, then the KPIs.
+        await client.query(
+          `UPDATE initiative_kpis SET current_definition_version = NULL WHERE organization_id = ANY($1::text[])`,
+          [orgs]
+        );
+        await client.query(`DELETE FROM kpi_definition_versions WHERE organization_id = ANY($1::text[])`, [orgs]);
+        await client.query(`DELETE FROM initiative_kpis WHERE organization_id = ANY($1::text[])`, [orgs]);
+
+        await client.query(`DELETE FROM rvn_kpi_definition_versions WHERE organization_id = ANY($1::text[])`, [orgs]);
+        await client.query(`DELETE FROM rvn_kpi_definitions WHERE organization_id = ANY($1::text[])`, [orgs]);
+        await client.query(`DELETE FROM organization_members WHERE organization_id = ANY($1::text[])`, [orgs]);
+        await client.query(`DELETE FROM users WHERE organization_id = ANY($1::text[])`, [orgs]);
+        await client.query(`DELETE FROM organizations WHERE id = ANY($1::text[])`, [orgs]);
+
+        // Full residue0, read on the SAME pinned connection before COMMIT.
+        const residue = await client.query<{ n: string }>(
+          `SELECT (
+             (SELECT count(*) FROM results_writer_observations WHERE organization_id = ANY($1::text[])) +
+             (SELECT count(*) FROM legacy_cutover_signal_intents WHERE organization_id = ANY($1::text[])) +
+             (SELECT count(*) FROM initiative_kpis WHERE organization_id = ANY($1::text[])) +
+             (SELECT count(*) FROM kpi_definition_versions WHERE organization_id = ANY($1::text[])) +
+             (SELECT count(*) FROM results_kpi_report_snapshots WHERE organization_id = ANY($1::text[])) +
+             (SELECT count(*) FROM rvn_kpi_definitions WHERE organization_id = ANY($1::text[])) +
+             (SELECT count(*) FROM report_builder_reports WHERE organization_id = ANY($1::text[])) +
+             (SELECT count(*) FROM organization_members WHERE organization_id = ANY($1::text[])) +
+             (SELECT count(*) FROM users WHERE organization_id = ANY($1::text[])) +
+             (SELECT count(*) FROM organizations WHERE id = ANY($1::text[]))
+           )::text AS n`,
+          [orgs]
+        );
+        if (Number(residue.rows[0]?.n ?? '0') !== 0) {
+          throw new Error(`teardown left ${residue.rows[0]?.n} row(s) behind for this run's tenants`);
+        }
+
+        // Exact named triggers must be back to 'O' BEFORE we commit.
+        const trg = await client.query<{ tgname: string; tgenabled: string }>(
+          `SELECT tgname, tgenabled::text FROM pg_trigger
+            WHERE tgrelid = 'results_writer_observations'::regclass AND NOT tgisinternal
+              AND tgname = ANY($1::text[])`,
+          [[DELETE_TRIGGER, UPDATE_TRIGGER]]
+        );
+        if (trg.rows.length !== 2) {
+          throw new Error(`expected both append-only triggers, found ${trg.rows.length}`);
+        }
+        for (const row of trg.rows) {
+          if (row.tgenabled !== 'O') {
+            throw new Error(`trigger ${row.tgname} left in state ${row.tgenabled}, expected O`);
+          }
+        }
+
+        await client.query('COMMIT');
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
       }
     } finally {
-      await db.end();
+      client?.release();
+      await pool.end();
     }
   }, 90_000);
 
@@ -308,28 +394,28 @@ describe.skipIf(!enabled).sequential('mounted Results strict membership wall', (
     for (const surface of WALLED_WRITES) {
       const res = await surface.exec(bearer);
       // The wall must not be what stops an ACTIVE member. Downstream governance
-      // (e.g. vNext's NO_ACTIVE_VISIBILITY_POLICY) may still refuse the write —
-      // that is a different, pre-existing decision and not this gate's subject.
-      expect(res.body?.code, `${surface.name} denied by the wall for an ACTIVE member`).not.toBe(
-        MEMBERSHIP_REVOKED_CODE
-      );
-      expect(res.status, `${surface.name}`).not.toBe(403);
+      // (e.g. vNext's NO_ACTIVE_VISIBILITY_POLICY) may still refuse — a different,
+      // pre-existing decision and not this gate's subject.
+      expect(res.body?.code, `${surface.name} denied by the wall`).not.toBe(MEMBERSHIP_REVOKED_CODE);
+      expect(res.status, surface.name).not.toBe(403);
     }
   });
 
-  it('ACTIVE ADMIN write records EXACTLY ONE observation per invoked writer', async () => {
+  it('ACTIVE ADMIN write records EXACTLY ONE observation and yields a real org-A resource', async () => {
     const bearer = token(activeAdmin, orgA);
-    const before = await observations(orgA);
+    const before = await deltas(orgA);
 
-    const created = await WALLED_WRITES[0].exec(bearer); // benefits POST /kpis
+    const created = await WALLED_WRITES[0].exec(bearer);
     expect(created.status).toBe(200);
+    orgAKpiId = String(created.body?.data?.id ?? '');
+    expect(orgAKpiId).toMatch(/^[0-9a-f-]{36}$/i);
 
-    // observeWriter is fire-and-forget (documented best-effort), so allow the
-    // dispatch to land before counting — this asserts exactly-one, not at-least-one.
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    expect(await observations(orgA)).toBe(before + 1);
+    await settle();
+    const after = await deltas(orgA);
+    expect(after.observations).toBe(before.observations + 1);
+    expect(after.business).toBe(before.business + 1);
 
-    const { rows } = await db.query<{ writer_family: string; operation: string }>(
+    const { rows } = await pool.query<{ writer_family: string; operation: string }>(
       `SELECT writer_family, operation FROM results_writer_observations
         WHERE organization_id = $1 ORDER BY created_at DESC LIMIT 1`,
       [orgA]
@@ -337,103 +423,132 @@ describe.skipIf(!enabled).sequential('mounted Results strict membership wall', (
     expect(rows[0]).toMatchObject({ writer_family: 'legacy_kpi_crud', operation: 'createKpi' });
   });
 
-  it('REVOKED membership: first request denied 403 with delta business=0 observation=0', async () => {
+  it('MISSING identity: 401 on every walled router with delta 0/0/0', async () => {
+    const before = await deltas(orgA);
+    for (const surface of WALLED_WRITES) {
+      const res = await surface.exec(undefined);
+      expect(res.status, surface.name).toBe(401);
+    }
+    await settle();
+    expect(await deltas(orgA)).toEqual(before);
+  });
+
+  it('INVALID identity (bad signature): 401 with delta 0/0/0', async () => {
+    const before = await deltas(orgA);
+    const forged = jwt.sign(
+      { id: activeAdmin, organizationId: orgA, role: 'ADMIN' },
+      'not-the-real-signing-secret-at-all',
+      { algorithm: 'HS256', expiresIn: '10m' }
+    );
+    for (const surface of WALLED_WRITES) {
+      const res = await surface.exec(forged);
+      expect(res.status, surface.name).toBe(401);
+    }
+    await settle();
+    expect(await deltas(orgA)).toEqual(before);
+  });
+
+  it('REVOKED membership: first request 403 ORG_MEMBERSHIP_REVOKED with delta 0/0/0', async () => {
+    const before = await deltas(orgA);
     const bearer = token(revokedAdmin, orgA);
-    const businessBefore = await businessRows(orgA);
-    const obsBefore = await observations(orgA);
-
     for (const surface of WALLED_WRITES) {
       const res = await surface.exec(bearer);
       expect(res.status, surface.name).toBe(403);
       expect(res.body?.code, surface.name).toBe(MEMBERSHIP_REVOKED_CODE);
     }
-
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    expect(await businessRows(orgA)).toBe(businessBefore);
-    expect(await observations(orgA)).toBe(obsBefore);
+    await settle();
+    expect(await deltas(orgA)).toEqual(before);
   });
 
-  it('MISSING membership row: 403 with delta 0/0', async () => {
+  it('MISSING membership row: 403 with delta 0/0/0', async () => {
+    const before = await deltas(orgA);
     const bearer = token(noMembership, orgA);
-    const businessBefore = await businessRows(orgA);
-    const obsBefore = await observations(orgA);
-
     for (const surface of WALLED_WRITES) {
       const res = await surface.exec(bearer);
       expect(res.status, surface.name).toBe(403);
       expect(res.body?.code, surface.name).toBe(MEMBERSHIP_REVOKED_CODE);
     }
-
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    expect(await businessRows(orgA)).toBe(businessBefore);
-    expect(await observations(orgA)).toBe(obsBefore);
+    await settle();
+    expect(await deltas(orgA)).toEqual(before);
   });
 
-  it('SUPERADMIN without membership: 403 — a role claim is no bypass — delta 0/0', async () => {
+  it('SUPERADMIN without membership: 403 — a role claim is no bypass — delta 0/0/0', async () => {
+    const before = await deltas(orgA);
     const bearer = token(superNoMembership, orgA, 'SUPERADMIN', { isSuperAdmin: true });
-    const businessBefore = await businessRows(orgA);
-    const obsBefore = await observations(orgA);
-
     for (const surface of WALLED_WRITES) {
       const res = await surface.exec(bearer);
       expect(res.status, surface.name).toBe(403);
       expect(res.body?.code, surface.name).toBe(MEMBERSHIP_REVOKED_CODE);
     }
-
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    expect(await businessRows(orgA)).toBe(businessBefore);
-    expect(await observations(orgA)).toBe(obsBefore);
+    await settle();
+    expect(await deltas(orgA)).toEqual(before);
   });
 
-  it('FOREIGN tenant: an org-B member writing into org-A leaves org-A untouched (delta 0/0)', async () => {
-    // The foreign actor IS an active member of its own org, so the wall admits
-    // it; tenant scoping then keeps it inside org B. Either outcome is
-    // acceptable per route contract — what must hold is that org A gains nothing.
-    const bearer = token(foreignAdmin, orgB);
-    const aBusinessBefore = await businessRows(orgA);
-    const aObsBefore = await observations(orgA);
+  it('FOREIGN tenant writing a REAL org-A resource: exact 404, delta 0/0/0 in BOTH tenants', async () => {
+    // A real, existing org-A KPI id — not a fabricated uuid, so the request is
+    // genuinely cross-tenant rather than merely "not found for everyone".
+    expect(orgAKpiId).toBeTruthy();
+    const beforeA = await deltas(orgA);
+    const beforeB = await deltas(orgB);
 
-    for (const surface of WALLED_WRITES) {
-      const res = await surface.exec(bearer);
-      expect([200, 201, 400, 403, 404, 409], `${surface.name} -> ${res.status}`).toContain(res.status);
-    }
+    const res = await request(app)
+      .post(`/benefits/kpis/${orgAKpiId}/time-series`)
+      .set('Authorization', `Bearer ${token(foreignAdmin, orgB)}`)
+      .send({ value: 42, periodStart: '2026-08-19', source: 'manual' });
 
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    expect(await businessRows(orgA)).toBe(aBusinessBefore);
-    expect(await observations(orgA)).toBe(aObsBefore);
+    // The foreign actor IS an active ADMIN of its own tenant, so both the wall and
+    // the role policy admit it; org scoping is what refuses, with this exact code.
+    expect(res.status).toBe(404);
+    expect(res.body?.code).toBe('RESULTS_KPI_NOT_FOUND');
+
+    await settle();
+    expect(await deltas(orgA)).toEqual(beforeA);
+    // The foreign tenant gains nothing either — a denied write is not attributed
+    // to the caller's own tenant as consolation.
+    expect(await deltas(orgB)).toEqual(beforeB);
   });
 
-  it('membership lookup DB FAILURE: 503 fail-closed with delta 0/0 (never proceeds)', async () => {
+  it('membership lookup DB FAILURE (bounded to organization_members): 503 fail-closed, delta 0/0/0', async () => {
+    const before = await deltas(orgA);
     const bearer = token(activeAdmin, orgA);
-    const businessBefore = await businessRows(orgA);
-    const obsBefore = await observations(orgA);
 
-    // A REAL lookup failure: the table the wall reads is gone for the duration
-    // of one request. Not a mocked rejection.
-    await db.query(`ALTER TABLE organization_members RENAME TO organization_members_sm_hidden`);
+    membershipLookup.failing = true;
+    membershipLookup.interceptedHits = 0;
     try {
       for (const surface of WALLED_WRITES) {
         const res = await surface.exec(bearer);
         expect(res.status, surface.name).toBe(503);
         expect(res.body?.code, surface.name).toBe(MEMBERSHIP_UNVERIFIABLE_CODE);
       }
+      // EXACTLY TWO intercepted `organization_members` lookups per request, and
+      // the distinction between them is the whole reason the strict wall exists:
+      //   1. `verifyToken` -> `attachUser` (auth.middleware.ts:807) reads
+      //      membership to RESOLVE org context, inside a `try/catch` that
+      //      swallows failures — fail-OPEN, and not an authorization decision;
+      //   2. `requireActiveMembership` reads it to AUTHORIZE — fail-CLOSED.
+      // Under this injection both reads fail; the request still ends 503 (asserted
+      // above), proving the fail-open reader cannot rescue an unverifiable tenant
+      // and that the authoritative decision is the wall's. Two reads per request
+      // also confirm neither reader is served from a cache.
+      expect(membershipLookup.interceptedHits).toBe(WALLED_WRITES.length * 2);
     } finally {
-      await db.query(`ALTER TABLE organization_members_sm_hidden RENAME TO organization_members`);
+      membershipLookup.failing = false;
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    expect(await businessRows(orgA)).toBe(businessBefore);
-    expect(await observations(orgA)).toBe(obsBefore);
+    await settle();
+    expect(await deltas(orgA)).toEqual(before);
 
-    // The wall works again afterwards — the outage did not leave it open.
-    const after = await WALLED_WRITES[1].exec(bearer);
-    expect(after.status).not.toBe(503);
+    // After restore an ACTIVE request must pass again — the outage must not have
+    // left the wall either open or permanently closed.
+    const recovered = await WALLED_WRITES[1].exec(bearer);
+    expect(recovered.status).toBe(200);
+    expect(recovered.body?.code).not.toBe(MEMBERSHIP_UNVERIFIABLE_CODE);
   });
 
   it('BODY SPOOF: a spoofed org/actor in the body does not change attribution', async () => {
     const bearer = token(activeAdmin, orgA);
     const spoofCorrelation = randomUUID();
-    const bObsBefore = await observations(orgB);
+    const beforeB = await deltas(orgB);
 
     const res = await request(app)
       .post('/results/kpi-reports')
@@ -449,8 +564,8 @@ describe.skipIf(!enabled).sequential('mounted Results strict membership wall', (
       });
     expect(res.status).toBe(200);
 
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    const { rows } = await db.query<{ organization_id: string; actor_user_id: string }>(
+    await settle();
+    const { rows } = await pool.query<{ organization_id: string; actor_user_id: string }>(
       `SELECT organization_id, actor_user_id FROM results_writer_observations WHERE correlation_id = $1`,
       [spoofCorrelation]
     );
@@ -458,13 +573,10 @@ describe.skipIf(!enabled).sequential('mounted Results strict membership wall', (
     // Attribution comes from the signed token, never from the body.
     expect(rows[0].organization_id).toBe(orgA);
     expect(rows[0].actor_user_id).toBe(activeAdmin);
-    expect(await observations(orgB)).toBe(bObsBefore);
+    expect(await deltas(orgB)).toEqual(beforeB);
   });
 
   it('v8/results REGRESSION: the pre-existing wall still denies revoked and missing membership', async () => {
-    // Separate regression for the router that already had the wall before this
-    // packet — it must not have been weakened by mounting the same middleware
-    // elsewhere.
     const revoked = await request(app)
       .post('/v8-results/reconciliations/pull')
       .set('Authorization', `Bearer ${token(revokedAdmin, orgA)}`)

@@ -58,6 +58,127 @@
 -- an append-only ledger would make the parent row undeletable, turning an
 -- observability side-channel into a constraint on real business data.
 
+-- ============================================================================
+-- PREFLIGHT — runs BEFORE any mutation.
+--
+-- Validates the DEFINITIONS of a pre-existing table, not merely the NAMES of its
+-- objects. A primary key called the right thing over the wrong column, or an
+-- index with the expected name over the wrong key, is worse than a missing one:
+-- it looks converged while silently failing to enforce anything. Everything here
+-- must therefore fail BEFORE `CREATE TABLE`/`ALTER TABLE` below make any
+-- persistent change, so a wrong-shaped ledger is never half-migrated.
+--
+-- No-ops on a fresh database (the table does not exist yet).
+-- ============================================================================
+DO $$
+DECLARE
+  v_rel oid;
+  v_problems text[] := ARRAY[]::text[];
+  v_pk_cols text;
+  v_idx_cols text;
+  v_idx_pred text;
+  v_idx_unique boolean;
+  v_check_def text;
+  v_bad_types text;
+BEGIN
+  v_rel := to_regclass('public.results_writer_observations');
+  IF v_rel IS NULL THEN
+    RETURN; -- fresh install: nothing to converge, nothing to validate
+  END IF;
+
+  -- 1. PRIMARY KEY: must exist AND be exactly (observation_id).
+  SELECT string_agg(a.attname, ',' ORDER BY k.ord)
+    INTO v_pk_cols
+    FROM pg_constraint c
+    CROSS JOIN LATERAL unnest(c.conkey) WITH ORDINALITY AS k(attnum, ord)
+    JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = k.attnum
+   WHERE c.conrelid = v_rel AND c.contype = 'p';
+
+  IF v_pk_cols IS NULL THEN
+    v_problems := v_problems || 'no PRIMARY KEY';
+  ELSIF v_pk_cols <> 'observation_id' THEN
+    v_problems := v_problems || format('PRIMARY KEY is over (%s), expected (observation_id)', v_pk_cols);
+  END IF;
+
+  -- 2. Column TYPES of whatever already exists (a `writer_family integer` would
+  --    accept none of the family values and must not be silently kept).
+  SELECT string_agg(format('%s:%s', column_name, data_type), ', ' ORDER BY column_name)
+    INTO v_bad_types
+    FROM information_schema.columns
+   WHERE table_name = 'results_writer_observations'
+     AND (
+       (column_name IN ('observation_id','organization_id','actor_user_id','writer_family',
+                        'operation','endpoint','correlation_id') AND data_type <> 'text')
+       OR (column_name = 'created_at' AND data_type <> 'timestamp with time zone')
+     );
+  IF v_bad_types IS NOT NULL THEN
+    v_problems := v_problems || format('wrong column type(s): %s', v_bad_types);
+  END IF;
+
+  -- 3. The TARGET unique index, if a relation with that name already exists:
+  --    it must be a UNIQUE index on this table, over exactly
+  --    (organization_id, correlation_id, writer_family, operation) IN THAT ORDER,
+  --    and unconditional (a partial index would leave rows undeduplicated).
+  IF EXISTS (SELECT 1 FROM pg_class WHERE relname = 'uq_results_writer_observation_tenant_correlated_op') THEN
+    SELECT i.indisunique,
+           pg_get_expr(i.indpred, i.indrelid),
+           string_agg(a.attname, ',' ORDER BY k.ord)
+      INTO v_idx_unique, v_idx_pred, v_idx_cols
+      FROM pg_index i
+      CROSS JOIN LATERAL unnest(i.indkey) WITH ORDINALITY AS k(attnum, ord)
+      JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = k.attnum
+     WHERE i.indexrelid = 'uq_results_writer_observation_tenant_correlated_op'::regclass
+       AND i.indrelid = v_rel
+     GROUP BY i.indisunique, i.indpred, i.indrelid;
+
+    IF v_idx_cols IS NULL THEN
+      v_problems := v_problems ||
+        'uq_results_writer_observation_tenant_correlated_op exists but is not an index on results_writer_observations';
+    ELSE
+      IF NOT v_idx_unique THEN
+        v_problems := v_problems || 'tenant-scoped index exists but is NOT UNIQUE';
+      END IF;
+      IF v_idx_cols <> 'organization_id,correlation_id,writer_family,operation' THEN
+        v_problems := v_problems ||
+          format('tenant-scoped index is over (%s), expected (organization_id,correlation_id,writer_family,operation)', v_idx_cols);
+      END IF;
+      IF v_idx_pred IS NOT NULL THEN
+        v_problems := v_problems || format('tenant-scoped index is PARTIAL (predicate: %s)', v_idx_pred);
+      END IF;
+    END IF;
+  END IF;
+
+  -- 4. The writer-family CHECK, if a constraint with that name already exists:
+  --    its DEFINITION must whitelist exactly the five known families. A
+  --    same-named CHECK over a different family set would let mislabelled rows in.
+  SELECT pg_get_constraintdef(c.oid)
+    INTO v_check_def
+    FROM pg_constraint c
+   WHERE c.conrelid = v_rel
+     AND c.contype = 'c'
+     AND c.conname = 'results_writer_observations_writer_family_check';
+
+  IF v_check_def IS NOT NULL THEN
+    IF NOT (
+      v_check_def LIKE '%legacy_kpi_crud%'
+      AND v_check_def LIKE '%kpi_reports%'
+      AND v_check_def LIKE '%vnext_kpi%'
+      AND v_check_def LIKE '%execution_results%'
+      AND v_check_def LIKE '%results_finance%'
+      AND v_check_def LIKE '%writer_family%'
+    ) THEN
+      v_problems := v_problems ||
+        format('writer_family CHECK has an unexpected definition: %s', v_check_def);
+    END IF;
+  END IF;
+
+  IF array_length(v_problems, 1) > 0 THEN
+    RAISE EXCEPTION
+      'results_writer_observations preflight failed (no changes were applied): %',
+      array_to_string(v_problems, '; ');
+  END IF;
+END $$;
+
 CREATE TABLE IF NOT EXISTS results_writer_observations (
   observation_id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   organization_id TEXT NOT NULL,
@@ -231,30 +352,53 @@ BEGIN
     v_problems := v_problems || format('unexpected column/type set: %s', v_cols);
   END IF;
 
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint
-     WHERE conrelid = 'results_writer_observations'::regclass
-       AND contype = 'p'
-  ) THEN
-    v_problems := v_problems || 'missing PRIMARY KEY';
+  -- PK by DEFINITION, not by existence: exactly (observation_id).
+  IF (
+    SELECT string_agg(a.attname, ',' ORDER BY k.ord)
+      FROM pg_constraint c
+      CROSS JOIN LATERAL unnest(c.conkey) WITH ORDINALITY AS k(attnum, ord)
+      JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = k.attnum
+     WHERE c.conrelid = 'results_writer_observations'::regclass AND c.contype = 'p'
+  ) IS DISTINCT FROM 'observation_id' THEN
+    v_problems := v_problems || 'PRIMARY KEY is not exactly (observation_id)';
   END IF;
 
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint
-     WHERE conrelid = 'results_writer_observations'::regclass
-       AND contype = 'c'
-       AND conname = 'results_writer_observations_writer_family_check'
-  ) THEN
+  -- CHECK by DEFINITION: must whitelist exactly the five known families.
+  IF (
+    SELECT pg_get_constraintdef(c.oid)
+      FROM pg_constraint c
+     WHERE c.conrelid = 'results_writer_observations'::regclass
+       AND c.contype = 'c'
+       AND c.conname = 'results_writer_observations_writer_family_check'
+  ) IS NULL THEN
     v_problems := v_problems || 'missing writer_family CHECK constraint';
+  ELSIF NOT EXISTS (
+    SELECT 1 FROM pg_constraint c
+     WHERE c.conrelid = 'results_writer_observations'::regclass
+       AND c.contype = 'c'
+       AND c.conname = 'results_writer_observations_writer_family_check'
+       AND pg_get_constraintdef(c.oid) LIKE '%legacy_kpi_crud%'
+       AND pg_get_constraintdef(c.oid) LIKE '%kpi_reports%'
+       AND pg_get_constraintdef(c.oid) LIKE '%vnext_kpi%'
+       AND pg_get_constraintdef(c.oid) LIKE '%execution_results%'
+       AND pg_get_constraintdef(c.oid) LIKE '%results_finance%'
+  ) THEN
+    v_problems := v_problems || 'writer_family CHECK does not whitelist the five known families';
   END IF;
 
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_index i
-     WHERE i.indrelid = 'results_writer_observations'::regclass
+  -- Unique index by DEFINITION: unique, unconditional, exact key and order.
+  IF (
+    SELECT string_agg(a.attname, ',' ORDER BY k.ord)
+      FROM pg_index i
+      CROSS JOIN LATERAL unnest(i.indkey) WITH ORDINALITY AS k(attnum, ord)
+      JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = k.attnum
+     WHERE i.indexrelid = 'uq_results_writer_observation_tenant_correlated_op'::regclass
+       AND i.indrelid = 'results_writer_observations'::regclass
        AND i.indisunique
-       AND i.indexrelid = 'uq_results_writer_observation_tenant_correlated_op'::regclass
-  ) THEN
-    v_problems := v_problems || 'missing tenant-scoped unique index';
+       AND i.indpred IS NULL
+  ) IS DISTINCT FROM 'organization_id,correlation_id,writer_family,operation' THEN
+    v_problems := v_problems ||
+      'tenant-scoped unique index is missing, partial, non-unique, or over the wrong key/order';
   END IF;
 
   IF EXISTS (

@@ -10,7 +10,7 @@
  * updating the declared denominator — which is exactly the drift that would let
  * "no observations" quietly start meaning "no usage".
  */
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
@@ -39,6 +39,34 @@ const ROUTE_FILES = Array.from(
   new Set(RESULTS_WRITER_INVENTORY.filter((e) => e.source.startsWith('routes/')).map((e) => e.source))
 );
 
+/**
+ * FILESYSTEM DISCOVERY — makes 216 a discovered denominator rather than a
+ * hand-maintained list.
+ *
+ * Walks `server/src/routes` and returns every non-test `.ts` file whose path
+ * looks like a Results surface. Without this, the inventory could stay
+ * "complete" simply because nobody remembered to add a new router to it, and the
+ * coverage ratio would quietly describe a smaller world than the real one.
+ */
+function discoverResultsRouteFiles(dir = 'routes'): string[] {
+  const found: string[] = [];
+  const walk = (relative: string): void => {
+    const absolute = path.join(SERVER_SRC, relative);
+    for (const entry of readdirSync(absolute)) {
+      const relativeEntry = path.join(relative, entry);
+      if (statSync(path.join(SERVER_SRC, relativeEntry)).isDirectory()) {
+        if (entry !== '__tests__') walk(relativeEntry);
+        continue;
+      }
+      if (!entry.endsWith('.ts')) continue;
+      if (!/result|benefit/i.test(relativeEntry)) continue;
+      found.push(relativeEntry);
+    }
+  };
+  walk(dir);
+  return found.sort();
+}
+
 describe('Results writer inventory — denominator gate', () => {
   it('accounts for EVERY write site in each Results route file it names', () => {
     const mismatches: string[] = [];
@@ -57,6 +85,29 @@ describe('Results writer inventory — denominator gate', () => {
     // A new writer added to any of these files lands here until the inventory
     // classifies it OBSERVED or EXPLICITLY_UNOBSERVED.
     expect(mismatches).toEqual([]);
+  });
+
+  it('DISCOVERS Results route files from the filesystem and leaves no writer-bearing file unlisted', () => {
+    const discovered = discoverResultsRouteFiles();
+
+    // Files with no write sites (pure read routers, helpers such as
+    // resultsVnext/correlationId.ts) legitimately need no inventory entry.
+    const discoveredWithWrites = discovered.filter((file) => countWriteSites(read(file)) > 0);
+
+    const unlisted = discoveredWithWrites.filter((file) => !ROUTE_FILES.includes(file));
+    // A NEW Results router with writers lands here until it is classified.
+    expect(unlisted).toEqual([]);
+
+    // And nothing in the inventory may be stale/renamed away.
+    const missingFromDisk = ROUTE_FILES.filter((file) => !discovered.includes(file));
+    expect(missingFromDisk).toEqual([]);
+
+    // The discovered write-site total IS the denominator.
+    const discoveredTotal = discoveredWithWrites.reduce(
+      (total, file) => total + countWriteSites(read(file)),
+      0
+    );
+    expect(discoveredTotal).toBe(RESULTS_WRITER_DENOMINATOR.totalHttpWriteSites);
   });
 
   it('declares an observation site for every OBSERVED entry and a reason+owner blocker for every gap', () => {
