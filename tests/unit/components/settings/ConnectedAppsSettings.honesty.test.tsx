@@ -58,6 +58,14 @@ vi.mock('@/components/settings/integrations/MappingDriftPanel', () => ({
   default: () => null,
 }));
 
+vi.mock('@/services/api', () => ({
+  getHeaders: () => ({
+    'Content-Type': 'application/json',
+    Authorization: 'Bearer signed-user-token',
+    'X-Correlation-ID': 'settings-oauth-test-correlation',
+  }),
+}));
+
 describe('ConnectedAppsSettings honest UI', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -172,7 +180,13 @@ describe('ConnectedAppsSettings honest UI', () => {
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
     expect(fetchMock).toHaveBeenLastCalledWith(
       '/api/settings/integrations/oauth/start/gmail',
-      expect.objectContaining({ credentials: 'include' })
+      expect.objectContaining({
+        credentials: 'include',
+        headers: expect.objectContaining({
+          Authorization: 'Bearer signed-user-token',
+          'X-Correlation-ID': 'settings-oauth-test-correlation',
+        }),
+      })
     );
   });
 

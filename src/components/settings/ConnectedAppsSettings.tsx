@@ -31,6 +31,7 @@ import {
   type UserIntegration,
   useUserIntegrations,
 } from '../../hooks/useUserIntegrations';
+import { getHeaders } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 import MappingDriftPanel from './integrations/MappingDriftPanel';
 
@@ -637,6 +638,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
     try {
       const resp = await fetch('/api/settings/integrations/oauth/status', {
         credentials: 'include',
+        headers: getHeaders(),
         signal,
       });
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
@@ -792,6 +794,7 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
       try {
         const resp = await fetch(`/api/settings/integrations/oauth/start/${connectorId}`, {
           credentials: 'include',
+          headers: getHeaders(),
         });
         if (!resp.ok) {
           const data = await resp.json().catch(() => ({}));
