@@ -1,0 +1,361 @@
+{
+  "taskId": "FLOW-CLOSURE-EVIDENCE-CORRECTIVE-PORT",
+  "recordStatus": "CURRENT_RECONCILED. Preserves the corrective proof and binds post-fan-in current-SHA migration, regression, residue and constructed late-upgrade evidence.",
+  "branch": "codex/evidence-a-c-current-8883",
+  "canonicalBaselineSha": "42c28b75b2f4fbcf0a5163255867e2e0bafb7413",
+  "productSha": "8883e410b8fa5ad4c67421f16804062cf40e8416",
+  "reconciliationSha": "8883e410b8fa5ad4c67421f16804062cf40e8416",
+  "supersededEvidence": {
+    "sha": "b1e08be464",
+    "branch": "codex/claude-f-meeting-notebook-evidence",
+    "whyNotCarriedForward": "Measured against a different tree, with the bypass still present. Quoting it alongside this record would give two live answers to the same question."
+  },
+  "worktree": "/private/tmp/consultify-a-current-8883 (disposed after preserving evidence)",
+  "pushed": false,
+  "merged": true,
+  "deployed": false,
+  "portMethod": {
+    "notMerged": "The source branch's full diff is 311 files; merging it would drag unrelated history onto canonical.",
+    "notCherryPicked": "cdcc535b69 depends on migrations, a reader, a service and a route that do not exist at the canonical baseline. Picking it alone would apply a correction to code that was never there.",
+    "whatWasDone": "File-by-file selective port with the migrations renumbered. Verified before porting that canonical's initiativeClosureService.ts, initiativeClosure.routes.ts, execution-closure-evidence-gate.golden-flow.realdb.test.ts and roiObligationsSurviveInitiativeClosure.realdb.test.ts are byte-identical to the source branch's baseline, so those needed no manual reconciliation — the diff between the two trees for each was empty.",
+    "migrationRenumbering": {
+      "reason": "20260923-26 are occupied on canonical by legacy-cutover (20260923/24), operational-alert (20260925/26) and neighbours. Reusing them would collide.",
+      "reserved": [
+        "20261005",
+        "20261006",
+        "20261007",
+        "20261008"
+      ],
+      "highestPreexistingDatedMigration": "20261001_myw_agent_approved_materialization.sql",
+      "mapping": {
+        "20260923_closure_evidence_meeting_notebook_sources.sql": "20261005_closure_evidence_meeting_notebook_sources.sql",
+        "20260924_closure_evidence_governed_artifact_sources.sql": "20261006_closure_evidence_governed_artifact_sources.sql",
+        "20260925_closure_evidence_integrity.sql": "20261007_closure_evidence_integrity.sql",
+        "20260926_closure_evidence_snapshot_exemption.sql": "20261008_closure_evidence_snapshot_and_immutability.sql"
+      }
+    }
+  },
+  "correction1_noApplicationReachableBypass": {
+    "whatWasWrong": "The append-only guard opened for any session that had set `closure_evidence.migration_operation` (UPDATE) or `closure_evidence.retention_operation` (DELETE). A GUC is a session variable, not a privilege — the application's own pool holds UPDATE/DELETE rights and could set either value for itself. The mechanism authorized nothing.",
+    "whyItWasThere": "The snapshot backfill had to write to a table an earlier migration had already sealed. The door was a workaround for an ordering mistake.",
+    "howItIsFixedStructurally": [
+      "20261005 no longer installs any guard.",
+      "20261008 adds the exemption column, runs the one-time backfill while the ledger is still mutable, installs the BEFORE INSERT trigger forcing snapshot_exempt=false, adds the snapshot CHECK, and installs immutability LAST.",
+      "The guard now refuses UPDATE and DELETE unconditionally: no current_setting, no named operation, no branch reading anything the caller controls."
+    ],
+    "retentionPosition": "Removing evidence is not an application operation. It requires ownership of the table — a privilege Postgres checks and the runtime role does not have. A genuine legal-retention or erasure obligation needs a privileged database role and an operator workflow, and is a separate decision that has not been taken.",
+    "literalTests": [
+      {
+        "claim": "An ordinary session that sets BOTH former door settings still cannot UPDATE or DELETE",
+        "result": "PASS",
+        "note": "The test asserts the settings really landed (current_setting returns 'authorized' / 'snapshot_exemption_backfill') before asserting the refusal, so a refusal for the wrong reason cannot look like success."
+      },
+      {
+        "claim": "The installed guard function contains no session-variable branch at all",
+        "result": "PASS",
+        "note": "Reads pg_proc.prosrc — a behavioural test only probes the values someone thought to try."
+      },
+      {
+        "claim": "A new computed-hash row without a snapshot is refused",
+        "result": "PASS"
+      },
+      {
+        "claim": "A new row that asks for snapshot_exempt=true is still refused — the trigger overwrites the claim before the CHECK sees it",
+        "result": "PASS"
+      },
+      {
+        "claim": "Deleting the parent closure request, and the initiative, are both refused by RESTRICT",
+        "result": "PASS"
+      },
+      {
+        "claim": "Deleting the SOURCE leaves the evidence citing it intact",
+        "result": "PASS"
+      },
+      {
+        "claim": "Late upgrade preserves the historical row, stamps it exempt, leaves its hash intact, adds the CHECK, and leaves no bypass behind",
+        "result": "PASS",
+        "detail": "LEGACY_SURVIVED=1, LEGACY_EXEMPT=true, LEGACY_HASH_INTACT=true, CHECK_PRESENT=1, GUARD_HAS_GUC=false, NEW_SNAPSHOTLESS=REJECTED, POST_MIGRATION_UPDATE_WITH_OLD_GUCS=REJECTED, DELETE_WITH_OLD_GUC=REJECTED"
+      }
+    ]
+  },
+  "correction2_toolOutputThroughTheRealProducer": {
+    "whatWasWrong": "Every tool_output test wrote the tool_outputs row itself. That proves the reader agrees with the fixture, not with the system — and it is how the source's misclassification survived so long.",
+    "realChain": "POST /api/tools/:id/promote (tools.routes.ts → ToolController.promoteToOutput → ensureToolOutputSnapshot → tool_outputs) → closure evidence attach (initiativeClosure.routes.ts → addEvidence → closureEvidenceSourceReader) → cold readback through a new Pool.",
+    "fixtureIsASessionNotAnArtefact": "The test seeds a dynamic-swot session whose moves genuinely clear the engine's W2 gate (rationale, live links, complete trade-off, named rejected alternative). A session that fails any of those yields zero conclusions and the freeze path refuses it outright, so a frozen row is itself proof the contract was met.",
+    "assertedOnProductionOutput": {
+      "producerDigestLength": 16,
+      "producerDigestIsSha256Shaped": false,
+      "note": "computeOutputHash is FNV-1a over 64 BITS, documented in sharedRuntime/toolOutputs/contentHash.ts as non-cryptographic. This is asserted on a value production code computed, not on a fixture constant.",
+      "ledgerHashIsSha256": true,
+      "ledgerHashEqualsProducerDigest": false,
+      "snapshotCarriesProducerDigest": true,
+      "pinnedVersionIsTheProducedOutputId": true
+    },
+    "negativeControls": [
+      "Forged producer digest on an otherwise genuine payload → 409 content_hash_mismatch, 0 rows.",
+      "Client-supplied sourceHash / sourceVersionId / snapshotExempt in the request body → ignored; the stored identity is the computed one and snapshot_exempt is false.",
+      "A tool output frozen in another tenant → 404 EVIDENCE_REF_NOT_FOUND.",
+      "Source drift after the pin, with the payload AND digest rewritten so the row stays internally consistent → 409 EVIDENCE_SOURCE_VERSION_CONFLICT and the pinned evidence unchanged.",
+      "Malformed payload matrix (missing arrays, object instead of array, incomplete identity) remains covered in the governed-artifact suite."
+    ],
+    "methodOutput": "Unchanged and still honestly format-only. Its content_hash is a genuine sha256 from MethodOutputService, but this work does NOT recompute it: doing so would mean reimplementing that service's assembly of findings, sorting and rounding — a second definition of the same truth. No content-recompute claim is made."
+  },
+  "correction3_noVacuousPass": {
+    "whatWasWrong": "`if (!harness) { expect(true).toBe(true); return; }` in the exe08 golden flow. A required real-database release gate reported 18/18 whether it exercised the ledger or found no database at all.",
+    "now": "Throws EVIDENCE_MISSING with the reason and the remedy.",
+    "proof": {
+      "withoutDatabase": "18 failed (18)",
+      "withRealPostgres": [
+        "18 passed",
+        "18 passed",
+        "18 passed",
+        "18 passed",
+        "18 passed"
+      ]
+    }
+  },
+  "correction4_teardownThatHadStartedDyingSilently": {
+    "finding": "Sealing the ledger broke the exe08 harness cleanup: its first statement (DELETE FROM initiative_closure_evidence) threw, a blanket catch swallowed it, and every later statement was skipped. A green run left 12 organizations, 18 users and 78 initiatives behind and said nothing.",
+    "fix": "The ledger is cleared with TRUNCATE — DDL, requiring table ownership — in its own try block that logs on failure, so the rest of the teardown is no longer hidden behind one catch.",
+    "foundBy": "Counting rows in the database after a fully green regression run, not by a failing test."
+  },
+  "gates": [
+    {
+      "gate": "closure-evidence directory",
+      "command": "vitest run tests/integration/closure-evidence --no-file-parallelism --maxWorkers=1 --retry=0",
+      "exitCode": 0,
+      "result": "109 passed / 109",
+      "perFile": {
+        "authorization-matrix": 57,
+        "meeting-notebook-evidence": 29,
+        "governed-artifact-evidence": 16,
+        "tool-output-producer-flow": 7
+      }
+    },
+    {
+      "gate": "full closure regression",
+      "command": "vitest run tests/integration/closure-evidence + execution-closure-evidence-gate.golden-flow + exe009-closure-delivery-receipt + roiObligationsSurviveInitiativeClosure + ClosureSection --no-file-parallelism --maxWorkers=1 --retry=0",
+      "exitCode": 0,
+      "result": "166 passed / 166",
+      "files": 8,
+      "skipped": 0,
+      "todo": 0,
+      "retries": 0
+    },
+    {
+      "gate": "actor/type authorization matrix",
+      "result": "57 passed / 57",
+      "shape": "8 evidence types x 7 actor cases"
+    },
+    {
+      "gate": "real producer flow",
+      "result": "7 passed / 7"
+    },
+    {
+      "gate": "migration — fresh from zero on canonical + the four new files",
+      "command": "CI=true DATABASE_URL=<cc_gate> npx tsx server/scripts/migrate.postgres.ts",
+      "exitCode": 0,
+      "applied": 756,
+      "failedRows": 0
+    },
+    {
+      "gate": "migration — repeat",
+      "exitCode": 0,
+      "reapplied": 0
+    },
+    {
+      "gate": "migration — dry run",
+      "exitCode": 0,
+      "pending": 0
+    },
+    {
+      "gate": "migration — checksum/status ledger",
+      "rows": 756,
+      "nonSuccess": 0
+    },
+    {
+      "gate": "migration — late upgrade on a populated database",
+      "exitCode": 0,
+      "preChainRows": 752,
+      "appliedNow": [
+        "20261005_closure_evidence_meeting_notebook_sources.sql",
+        "20261006_closure_evidence_governed_artifact_sources.sql",
+        "20261007_closure_evidence_integrity.sql",
+        "20261008_closure_evidence_snapshot_and_immutability.sql"
+      ],
+      "outcome": "5/5 historical source and legacy-column hashes byte-identical; closure request, initiative and organization deletes each rejected with SQLSTATE 23503; repeat 0; dry-run 0"
+    },
+    {
+      "gate": "typecheck server (8GB)",
+      "exitCode": 0
+    },
+    {
+      "gate": "typecheck root (8GB)",
+      "exitCode": 0
+    },
+    {
+      "gate": "backend build",
+      "exitCode": 0
+    },
+    {
+      "gate": "git diff --check",
+      "exitCode": 0
+    },
+    {
+      "gate": "raw control bytes across every changed file",
+      "nulCount": 0,
+      "sohCount": 0
+    }
+  ],
+  "residue": {
+    "measuredAfter": "current-SHA requalification after the green 109/109 and combined 166/166 gates",
+    "zero": {
+      "initiative_closure_evidence": 0,
+      "initiative_closure_requests": 0,
+      "tool_outputs": 0,
+      "tool_sessions": 0,
+      "everyRowThisWorkFixturesCreate (fme-* prefix, all tables)": 0,
+      "initiatives": 0,
+      "organizations": 0,
+      "users": 0
+    }
+  },
+  "changedPaths": [
+    {
+      "path": "server/migrations/20261005_closure_evidence_meeting_notebook_sources.sql",
+      "change": "added",
+      "why": "meeting/notebook evidence types and source identity columns; installs NO guard (ordering fix)."
+    },
+    {
+      "path": "server/migrations/20261006_closure_evidence_governed_artifact_sources.sql",
+      "change": "added",
+      "why": "extends the type and identity constraints to tool_output and method_output."
+    },
+    {
+      "path": "server/migrations/20261007_closure_evidence_integrity.sql",
+      "change": "added",
+      "why": "snapshot column, sha256 shape CHECK, FKs CASCADE→RESTRICT. No trigger."
+    },
+    {
+      "path": "server/migrations/20261008_closure_evidence_snapshot_and_immutability.sql",
+      "change": "added",
+      "why": "exemption marker, one-time backfill, insert trigger, snapshot CHECK, and unconditional immutability installed last."
+    },
+    {
+      "path": "server/src/services/initiative/closureEvidenceSourceReader.ts",
+      "change": "added",
+      "why": "the source reader: mandatory verification, fail-closed shapes, ledger-computed sha256 plus snapshot."
+    },
+    {
+      "path": "server/src/services/initiative/initiativeClosureService.ts",
+      "change": "modified",
+      "why": "addEvidence in one pinned transaction with ACTIVE membership and requester/OWNER/ADMIN checks for every type."
+    },
+    {
+      "path": "server/src/routes/pmo/initiativeClosure.routes.ts",
+      "change": "modified",
+      "why": "explicit initiativeId for pinned types; path stays authoritative."
+    },
+    {
+      "path": "tests/integration/closure-evidence/evidenceFixture.ts",
+      "change": "added",
+      "why": "two tenants, real HS256 tokens, deterministic ids, cold readback. Retention door removed."
+    },
+    {
+      "path": "tests/integration/closure-evidence/meeting-notebook-evidence.realdb.test.ts",
+      "change": "added",
+      "why": "the meeting/notebook flow plus the snapshot rule and the no-bypass controls."
+    },
+    {
+      "path": "tests/integration/closure-evidence/governed-artifact-evidence.realdb.test.ts",
+      "change": "added",
+      "why": "the 8-type denominator and the malformed-payload matrix."
+    },
+    {
+      "path": "tests/integration/closure-evidence/authorization-matrix.realdb.test.ts",
+      "change": "added",
+      "why": "8 types x 7 actor cases."
+    },
+    {
+      "path": "tests/integration/closure-evidence/tool-output-producer-flow.realdb.test.ts",
+      "change": "added",
+      "why": "the real producer chain and its negative controls."
+    },
+    {
+      "path": "tests/integration/execution-closure-evidence-gate.golden-flow.realdb.test.ts",
+      "change": "modified",
+      "why": "vacuous pass removed; one bound server per app; teardown no longer silently dead."
+    },
+    {
+      "path": "tests/resultsVnext/roi/roiObligationsSurviveInitiativeClosure.realdb.test.ts",
+      "change": "modified",
+      "why": "teardown no longer uses the removed retention door."
+    }
+  ],
+  "ownerTables": [
+    "initiative_closure_evidence (append-only ledger: columns added, constraints tightened, immutability installed)",
+    "initiative_closure_requests (FK changed to RESTRICT; no semantics changed)",
+    "initiatives (FK changed to RESTRICT)",
+    "organizations (FK changed to RESTRICT)"
+  ],
+  "tablesReadNotWritten": [
+    "meetings",
+    "meeting_notes",
+    "meeting_follow_ups",
+    "notebook_pages",
+    "notebook_page_versions",
+    "tool_sessions",
+    "tool_outputs",
+    "method_outputs",
+    "method_sessions",
+    "method_snapshots",
+    "organization_members",
+    "tasks",
+    "decisions",
+    "initiative_milestones"
+  ],
+  "rollback": {
+    "product": "git revert 95c864bc19 removes the reader, the four migrations and the suites, and restores canonical's service, route and two test files. Canonical had no closure-evidence chain, so there is nothing partial left behind.",
+    "database": "All four migrations are additive: columns, constraints, two triggers, two functions. Dropping the triggers and constraints and the two added columns returns the table to its 934 shape without rewriting a row. The backfill is not reversed and does not need to be — snapshot_exempt only ever describes rows that predate the rule.",
+    "noDataLoss": "Nothing in this change deletes or rewrites evidence content."
+  },
+  "openItems": [
+    {
+      "id": "OPEN-1",
+      "severity": "medium",
+      "statement": "method_output content is not independently verified, only its format. Recomputing it would duplicate MethodOutputService's assembly logic. Stated in the code; unchanged by this port.",
+      "ownerDecisionNeeded": false
+    },
+    {
+      "id": "OPEN-2",
+      "severity": "medium",
+      "statement": "Privileged retention is unimplemented on purpose. There is now NO way to remove an evidence row without table ownership. If a legal-retention or erasure obligation arises, it needs a dedicated database role and an operator workflow — a decision, not a code change to be made quietly.",
+      "ownerDecisionNeeded": true
+    },
+    {
+      "id": "OPEN-3",
+      "severity": "medium",
+      "statement": "The exe08 golden flow uses alg:none only inside the explicitly enabled test lifecycle harness. It proves lifecycle semantics, not production authentication; the closure-evidence suites separately use real HS256 tokens.",
+      "ownerDecisionNeeded": true
+    },
+    {
+      "id": "OPEN-4",
+      "severity": "low",
+      "statement": "The corrected disposable-database teardown now leaves exact residue 0 while preserving production append-only semantics.",
+      "ownerDecisionNeeded": false
+    },
+    {
+      "id": "OPEN-5",
+      "severity": "low",
+      "statement": "Fan-in requalification completed on exact reconciliation SHA 8883e410b8fa5ad4c67421f16804062cf40e8416.",
+      "ownerDecisionNeeded": false
+    }
+  ],
+  "environment": {
+    "database": "disposable Postgres in docker (fm-evidence-pg), migrated from zero per gate",
+    "envTrio": "NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false",
+    "authBypassesUsed": "none in the closure-evidence suites — the fixture deletes E2E_MODE at import time and every request carries a real HS256 token. The exe08 golden flow is the exception; see OPEN-3.",
+    "retryPolicy": "--retry=0 on every run, because vitest.config.ts sets retry: CI ? 3 : 1",
+    "incidentsDuringTheRun": "The Postgres container's checkpointer was SIGKILLed twice under write load (Docker VM memory, not disk — 21% used). Both times the affected gate was re-run from a freshly created database after a container restart; no gate result in this record comes from a run that was interrupted."
+  }
+}
