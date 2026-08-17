@@ -71,6 +71,7 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
     () => claims.filter((claim) => claim.reviewState === 'pending').length,
     [claims]
   );
+  const approvedCount = useMemo(() => claims.filter((claim) => claim.approved).length, [claims]);
 
   const decide = async (claim: GovernedClaim, decision: 'approve' | 'reject') => {
     setBusyKey(`${claim.claimId}:${decision}`);
@@ -166,12 +167,29 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
             </p>
           </div>
           {isAdmin && (
-            <Button onClick={() => void publish()} disabled={busyKey !== null || pendingCount > 0}>
+            <Button
+              onClick={() => void publish()}
+              disabled={busyKey !== null || pendingCount > 0 || approvedCount === 0}
+              aria-describedby="governed-publish-requirements"
+            >
               {busyKey === 'publish' ? <Loader2 className="animate-spin" size={16} /> : <FileCheck2 size={16} />}
               {t('organization.governance.publish', 'Publish approved claims')}
             </Button>
           )}
         </div>
+        {isAdmin && (pendingCount > 0 || approvedCount === 0) && (
+          <p id="governed-publish-requirements" className="mt-3 text-sm text-c-text-secondary">
+            {pendingCount > 0
+              ? t(
+                  'organization.governance.publishPending',
+                  'Review every pending claim before publishing a version.'
+                )
+              : t(
+                  'organization.governance.publishEmpty',
+                  'At least one approved claim is required before a version can be published.'
+                )}
+          </p>
+        )}
         {!isAdmin && (
           <p className="mt-4 rounded-xl bg-c-surface-raised px-3 py-2 text-sm text-c-text-secondary">
             {t(

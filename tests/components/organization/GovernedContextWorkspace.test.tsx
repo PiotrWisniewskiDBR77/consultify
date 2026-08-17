@@ -111,6 +111,22 @@ describe('GovernedContextWorkspace', () => {
     expect(screen.queryByRole('button', { name: /Publish approved/i })).not.toBeInTheDocument();
   });
 
+  it.each([
+    ['an empty claim set', []],
+    [
+      'an all-rejected claim set',
+      [{ ...pendingClaim, reviewState: 'rejected', approved: false }],
+    ],
+  ])('does not call publish for %s', async (_label, claims) => {
+    api.listClaims.mockResolvedValue(claims);
+    render(<GovernedContextWorkspace isAdmin />);
+    const publish = await screen.findByRole('button', { name: /Publish approved claims/i });
+    expect(publish).toBeDisabled();
+    expect(publish).toHaveAccessibleDescription(/At least one approved claim is required/i);
+    fireEvent.click(publish);
+    expect(api.publish).not.toHaveBeenCalled();
+  });
+
   it('publishes approved claims and reopens the exact immutable version with stale-source warning', async () => {
     api.listClaims.mockResolvedValue([{ ...pendingClaim, reviewState: 'approved', approved: true }]);
     let currentVersions: typeof version[] = [];
