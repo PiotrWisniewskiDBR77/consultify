@@ -153,7 +153,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
     scorePercentage >= 80
       ? 'text-emerald-400'
       : scorePercentage >= 50
-        ? 'text-amber-400'
+        ? 'text-amber-800 dark:text-amber-300'
         : 'text-danger-400';
 
   const scoreRingColor =
@@ -343,7 +343,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
     violet: {
       icon: 'bg-c-accent-soft text-c-accent',
       statusOk: 'text-emerald-700 dark:text-emerald-300',
-      statusBad: 'text-amber-700 dark:text-amber-300',
+      statusBad: 'text-amber-800 dark:text-amber-300',
     },
     blue: {
       icon: 'bg-blue-500/10 text-blue-700 dark:text-blue-300',
@@ -358,7 +358,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
     amber: {
       icon: 'bg-amber-500/10 text-amber-700 dark:text-amber-300',
       statusOk: 'text-emerald-700 dark:text-emerald-300',
-      statusBad: 'text-amber-700 dark:text-amber-300',
+      statusBad: 'text-amber-800 dark:text-amber-300',
     },
   };
 

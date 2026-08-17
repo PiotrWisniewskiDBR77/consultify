@@ -12,13 +12,28 @@ set -m
 ACTIVE_CHILD_PID=""
 ACTIVE_LOG=""
 
+terminate_process_tree() {
+  local root_pid="${1:-}"
+  [ -n "${root_pid}" ] || return 0
+  local child_pid
+  # Playwright's webServer runners may create their own process groups. Walk
+  # the parent/child tree leaf-first before terminating the Playwright parent;
+  # otherwise those runners are re-parented to launchd and survive the sweep.
+  while read -r child_pid; do
+    [ -n "${child_pid}" ] || continue
+    terminate_process_tree "${child_pid}"
+  done < <(pgrep -P "${root_pid}" 2>/dev/null || true)
+  kill -TERM "${root_pid}" 2>/dev/null || true
+}
+
 cleanup_active_child() {
   local exit_code="${1:-1}"
   trap - INT TERM EXIT
   if [ -n "${ACTIVE_CHILD_PID}" ] && kill -0 "${ACTIVE_CHILD_PID}" 2>/dev/null; then
+    terminate_process_tree "${ACTIVE_CHILD_PID}"
     # Monitor mode gives the background Playwright command its own process
-    # group. Stop the whole group so its backend/frontend children cannot be
-    # orphaned and restarted by the next loop iteration.
+    # group. Keep the group kill as a second guard for same-group processes
+    # that disappeared from the parent tree during shutdown.
     kill -TERM -- "-${ACTIVE_CHILD_PID}" 2>/dev/null || true
     wait "${ACTIVE_CHILD_PID}" 2>/dev/null || true
   fi
