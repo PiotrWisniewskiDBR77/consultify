@@ -89,6 +89,16 @@ export const FINANCE_RECONCILIATION_POLICY = {
   materialityThresholdPercent: 5,
 } as const;
 
+export const FINANCE_PROJECTION_RECONCILIATION_ACTOR = 'system:finance_projection_consumer';
+export const FINANCE_PROJECTION_RECONCILIATION_SOURCE = 'results.finance_projection_consumer';
+
+const FINANCE_PROJECTION_SOURCE_EVENT_TYPES = new Set([
+  'roi.case_approved',
+  'roi.forecast_published',
+  'roi.actual_snapshot_published',
+  'roi.finance_link_created',
+]);
+
 async function loadRoiCaseOwnerUserId(
   client: PoolClient,
   caseId: string,
@@ -129,6 +139,7 @@ async function hasActiveExplicitFinanceOwnerGrant(client: PoolClient, organizati
 function reconciliationRequestFingerprint(input: {
   organizationId: string; caseId: string; financeLinkId: string; actorUserId: string;
   roiValue: number; financeValue: number; reconciliationKind: string; divergenceReason: string | null;
+  authorityKind?: 'human' | 'finance_projection'; sourceEventId?: string | null;
 }): string {
   return createHash('sha256').update(JSON.stringify(input)).digest('hex');
 }
@@ -206,8 +217,42 @@ export interface OpenRoiFinanceReconciliationInput {
   access: CommandAccessContext;
 }
 
+export type OpenRoiFinanceProjectionReconciliationInput = Omit<
+  OpenRoiFinanceReconciliationInput,
+  'actorUserId' | 'actorEffectiveRole' | 'access' | 'correlationId' | 'causationId'
+> & {
+  sourceEventId: string;
+};
+
+type ReconciliationAuthority =
+  | { kind: 'human'; access: CommandAccessContext }
+  | { kind: 'finance_projection'; sourceEventId: string };
+
 export async function openRoiFinanceReconciliation(
   input: OpenRoiFinanceReconciliationInput
+): Promise<AtomicCommandOutcome<RoiFinanceReconciliation>> {
+  return openRoiFinanceReconciliationWithAuthority(input, { kind: 'human', access: input.access });
+}
+
+export async function openRoiFinanceReconciliationFromProjection(
+  input: OpenRoiFinanceProjectionReconciliationInput
+): Promise<AtomicCommandOutcome<RoiFinanceReconciliation>> {
+  return openRoiFinanceReconciliationWithAuthority(
+    {
+      ...input,
+      actorUserId: FINANCE_PROJECTION_RECONCILIATION_ACTOR,
+      actorEffectiveRole: 'system',
+      correlationId: input.sourceEventId,
+      causationId: input.sourceEventId,
+      access: { capabilities: [], platformRole: null },
+    },
+    { kind: 'finance_projection', sourceEventId: input.sourceEventId }
+  );
+}
+
+async function openRoiFinanceReconciliationWithAuthority(
+  input: OpenRoiFinanceReconciliationInput,
+  authority: ReconciliationAuthority
 ): Promise<AtomicCommandOutcome<RoiFinanceReconciliation>> {
   const {
     caseId,
@@ -237,15 +282,35 @@ export async function openRoiFinanceReconciliation(
         organizationId,
         idempotencyKey,
       ]);
-      await assertActiveTenantMember(client, organizationId, actorUserId);
+      if (authority.kind === 'human') {
+        await assertActiveTenantMember(client, organizationId, actorUserId);
+      } else {
+        const sourceEvent = await client.query<{ event_type: string }>(
+          `SELECT event_type FROM rvn_platform_events
+            WHERE event_id=$1 AND organization_id=$2 AND aggregate_id=$3 AND aggregate_type='roi_case'`,
+          [authority.sourceEventId, organizationId, caseId]
+        );
+        if (
+          !sourceEvent.rows[0] ||
+          !FINANCE_PROJECTION_SOURCE_EVENT_TYPES.has(sourceEvent.rows[0].event_type)
+        ) {
+          throw new RoiFinanceReconciliationValidationError(
+            'A persisted tenant-bound ROI source event is required for system reconciliation.',
+            'FINANCE_PROJECTION_SOURCE_EVENT_REQUIRED',
+            { sourceEventId: authority.sourceEventId, organizationId, caseId }
+          );
+        }
+      }
 
       const caseOwnerUserId = await loadRoiCaseOwnerUserId(client, caseId, organizationId);
-      assertCommandCapability({
-        access,
-        actorUserId,
-        capability: ROI_FINANCE_RECONCILIATION_CAPABILITIES.open,
-        responsibleUserIds: [caseOwnerUserId],
-      });
+      if (authority.kind === 'human') {
+        assertCommandCapability({
+          access: authority.access,
+          actorUserId,
+          capability: ROI_FINANCE_RECONCILIATION_CAPABILITIES.open,
+          responsibleUserIds: [caseOwnerUserId],
+        });
+      }
 
       const linkResult = await client.query<{ link_id: string }>(
         `SELECT link_id FROM rvn_roi_finance_links WHERE link_id = $1 AND case_id = $2 AND organization_id = $3`,
@@ -259,7 +324,11 @@ export async function openRoiFinanceReconciliation(
       const divergencePercent = base === 0
         ? (financeValue === 0 ? 0 : Number.POSITIVE_INFINITY)
         : (Math.abs(financeValue - roiValue) / base) * 100;
-      if (!(divergencePercent > FINANCE_RECONCILIATION_POLICY.materialityThresholdPercent)) {
+      const isCurrencyMismatch = divergenceReason === 'currency_mismatch';
+      if (
+        !isCurrencyMismatch &&
+        !(divergencePercent > FINANCE_RECONCILIATION_POLICY.materialityThresholdPercent)
+      ) {
         throw new RoiFinanceReconciliationValidationError(
           'Finance divergence must be strictly greater than 5%.',
           'FINANCE_RECONCILIATION_WITHIN_TOLERANCE',
@@ -269,6 +338,8 @@ export async function openRoiFinanceReconciliation(
       const requestFingerprint = reconciliationRequestFingerprint({
         organizationId, caseId, financeLinkId, actorUserId, roiValue, financeValue,
         reconciliationKind, divergenceReason,
+        authorityKind: authority.kind,
+        sourceEventId: authority.kind === 'finance_projection' ? authority.sourceEventId : null,
       });
       const replay = await client.query<RoiFinanceReconciliationRow>(
         `SELECT * FROM rvn_roi_finance_reconciliations
@@ -318,7 +389,9 @@ export async function openRoiFinanceReconciliation(
         stateHash: computeStateHash(afterState),
         reason,
         evidenceRefs: [],
-        source: ROI_EVENT_SOURCE,
+        source: authority.kind === 'finance_projection'
+          ? FINANCE_PROJECTION_RECONCILIATION_SOURCE
+          : ROI_EVENT_SOURCE,
         idempotencyKey,
         expectedVersion: null,
         resultingVersion: 1,
@@ -328,6 +401,8 @@ export async function openRoiFinanceReconciliation(
           reconciliationKind: result.reconciliationKind,
           decisionPolicyVersion: result.decisionPolicyVersion,
           decisionPolicyDigest: result.decisionPolicyDigest,
+          authorityKind: authority.kind,
+          sourceEventId: authority.kind === 'finance_projection' ? authority.sourceEventId : null,
         },
       } satisfies AtomicEventInput;
     },

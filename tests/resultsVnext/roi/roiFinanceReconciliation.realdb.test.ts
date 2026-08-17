@@ -66,6 +66,7 @@ type PgModule = typeof import('../../../server/src/database/PostgresDatabase.js'
 let createRoiCase: CaseCommandsModule['createRoiCase'];
 let createRoiFinanceLink: FinanceLinkCommandsModule['createRoiFinanceLink'];
 let openRoiFinanceReconciliation: FinanceReconciliationCommandsModule['openRoiFinanceReconciliation'];
+let openRoiFinanceReconciliationFromProjection: FinanceReconciliationCommandsModule['openRoiFinanceReconciliationFromProjection'];
 let updateRoiFinanceReconciliationStatus: FinanceReconciliationCommandsModule['updateRoiFinanceReconciliationStatus'];
 let RoiFinanceLinkNotFoundError: FinanceReconciliationCommandsModule['RoiFinanceLinkNotFoundError'];
 let listRoiFinanceReconciliations: FinanceLinkRepositoryModule['listRoiFinanceReconciliations'];
@@ -187,6 +188,7 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
       '../../../server/src/services/resultsVnext/roi/roiFinanceReconciliationCommands.js'
     );
     openRoiFinanceReconciliation = financeReconciliationCommands.openRoiFinanceReconciliation;
+    openRoiFinanceReconciliationFromProjection = financeReconciliationCommands.openRoiFinanceReconciliationFromProjection;
     updateRoiFinanceReconciliationStatus = financeReconciliationCommands.updateRoiFinanceReconciliationStatus;
     RoiFinanceLinkNotFoundError = financeReconciliationCommands.RoiFinanceLinkNotFoundError;
     const financeLinkRepo: FinanceLinkRepositoryModule = await import(
@@ -289,6 +291,118 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
     expect(reconciliation.resolvedBy).toBeNull();
     expect(reconciliation.resolvedAt).toBeNull();
     expect(reconciliation.rowVersion).toBe(1);
+  });
+
+  itDB('public open requires ACTIVE membership; projection entrypoint accepts only an exact persisted tenant event and replays idempotently', async () => {
+    const fixture = await buildCaseWithFinanceLink('system-authority');
+    await client.query(
+      `UPDATE organization_members SET status='REVOKED'
+        WHERE organization_id=$1 AND user_id=$2`,
+      [ORG_ID, USER_MAKER]
+    );
+    await expect(openRoiFinanceReconciliation({
+      caseId: fixture.caseId,
+      organizationId: ORG_ID,
+      financeLinkId: fixture.linkId,
+      roiValue: 100,
+      financeValue: 120,
+      actorUserId: USER_MAKER,
+      actorEffectiveRole: 'member',
+      idempotencyKey: `human-revoked-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
+    })).rejects.toMatchObject({ code: 'ACTIVE_TENANT_MEMBERSHIP_REQUIRED' });
+    await client.query(
+      `UPDATE organization_members SET status='ACTIVE'
+        WHERE organization_id=$1 AND user_id=$2`,
+      [ORG_ID, USER_MAKER]
+    );
+
+    const source = await client.query<{ event_id: string }>(
+      `SELECT event_id FROM rvn_platform_events
+        WHERE organization_id=$1 AND aggregate_id=$2 AND event_type='roi.finance_link_created'
+        ORDER BY sequence DESC LIMIT 1`,
+      [ORG_ID, fixture.caseId]
+    );
+    const sourceEventId = source.rows[0]!.event_id;
+    const idempotencyKey = `system-reconciliation-${randomUUID()}`;
+    const input = {
+      caseId: fixture.caseId,
+      organizationId: ORG_ID,
+      financeLinkId: fixture.linkId,
+      roiValue: 100,
+      financeValue: 120,
+      divergenceReason: 'event_derived_value_mismatch',
+      idempotencyKey,
+      sourceEventId,
+    };
+    const opened = await openRoiFinanceReconciliationFromProjection(input);
+    const replayed = await openRoiFinanceReconciliationFromProjection(input);
+    expect(replayed.outcome).toBe('duplicate');
+    expect(replayed.result.reconciliationId).toBe(opened.result.reconciliationId);
+
+    await expect(openRoiFinanceReconciliationFromProjection({
+      ...input,
+      idempotencyKey: `spoof-${randomUUID()}`,
+      sourceEventId: randomUUID(),
+    })).rejects.toMatchObject({ code: 'FINANCE_PROJECTION_SOURCE_EVENT_REQUIRED' });
+    await expect(openRoiFinanceReconciliationFromProjection({
+      ...input,
+      idempotencyKey: `tenant-spoof-${randomUUID()}`,
+      organizationId: `${ORG_ID}-foreign`,
+    })).rejects.toMatchObject({ code: 'FINANCE_PROJECTION_SOURCE_EVENT_REQUIRED' });
+
+    const audit = await client.query<{ actor_user_id: string; source: string; payload: Record<string, unknown> }>(
+      `SELECT actor_user_id,source,payload FROM rvn_platform_events
+        WHERE organization_id=$1 AND idempotency_key=$2`,
+      [ORG_ID, idempotencyKey]
+    );
+    expect(audit.rows[0]).toMatchObject({
+      actor_user_id: 'system:finance_projection_consumer',
+      source: 'results.finance_projection_consumer',
+      payload: { authorityKind: 'finance_projection', sourceEventId },
+    });
+  });
+
+  itDB('materiality policy accepts equal-value currency mismatch, rejects same-currency <=5%, and accepts >5%', async () => {
+    const currencyFixture = await buildCaseWithFinanceLink('currency-hard-divergence');
+    const currencyOutcome = await openRoiFinanceReconciliation({
+      caseId: currencyFixture.caseId,
+      organizationId: ORG_ID,
+      financeLinkId: currencyFixture.linkId,
+      roiValue: 100,
+      financeValue: 100,
+      divergenceReason: 'currency_mismatch',
+      actorUserId: USER_MAKER,
+      actorEffectiveRole: 'member',
+      idempotencyKey: `currency-hard-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
+    });
+    expect(currencyOutcome.result.divergenceReason).toBe('currency_mismatch');
+
+    const thresholdFixture = await buildCaseWithFinanceLink('numeric-threshold');
+    await expect(openRoiFinanceReconciliation({
+      caseId: thresholdFixture.caseId,
+      organizationId: ORG_ID,
+      financeLinkId: thresholdFixture.linkId,
+      roiValue: 100,
+      financeValue: 105,
+      actorUserId: USER_MAKER,
+      actorEffectiveRole: 'member',
+      idempotencyKey: `within-threshold-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
+    })).rejects.toMatchObject({ code: 'FINANCE_RECONCILIATION_WITHIN_TOLERANCE' });
+    const aboveThreshold = await openRoiFinanceReconciliation({
+      caseId: thresholdFixture.caseId,
+      organizationId: ORG_ID,
+      financeLinkId: thresholdFixture.linkId,
+      roiValue: 100,
+      financeValue: 105.01,
+      actorUserId: USER_MAKER,
+      actorEffectiveRole: 'member',
+      idempotencyKey: `above-threshold-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
+    });
+    expect(aboveThreshold.result.status).toBe('open');
   });
 
   itDB('openRoiFinanceReconciliation validates financeLinkId belongs to the case', async () => {

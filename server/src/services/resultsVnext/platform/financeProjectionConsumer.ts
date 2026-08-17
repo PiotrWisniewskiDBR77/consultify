@@ -32,9 +32,8 @@
  *   NOTHING`, returning `duplicate` — no second reconciliation, no
  *   exception. Independently safe without being one physical transaction.
  *
- * `openRoiFinanceReconciliation` is called UNMODIFIED (not one line of
- * `roiFinanceReconciliationCommands.ts` changes) — this is why: its
- * `acquirePgClient()` call inside `executeAtomicCreate` genuinely opens a
+ * The projection-specific command entrypoint keeps the same two-layer shape:
+ * its `executeAtomicCreate` call genuinely opens a
  * SEPARATE connection from the one this file's caller (the dispatcher) has
  * pinned for the outer per-row transaction; there is no way to hand it the
  * outer `client` even if the file were edited to accept one, because
@@ -42,20 +41,10 @@
  * NOTHING on `rvn_platform_events`) needs its own commit boundary to be
  * meaningful under redelivery — exactly what Layer 2 is.
  *
- * DEVIATION FROM THE LITERAL RULING TEXT, DOCUMENTED (verify-signatures-
- * yourself catch): §5.4 says to call `openRoiFinanceReconciliation` "with
- * `actorUserId: null`" — but `OpenRoiFinanceReconciliationInput.actorUserId`
- * is typed `string` (not nullable) and `rvn_roi_finance_reconciliations
- * .opened_by` is `TEXT NOT NULL` (unlike `okrDecisionResolutionScanner.ts`'s
- * own precedent, `acknowledgeDecisionResolution`'s `actorUserId: string |
- * null` writes into `okr_vnext_decision_links.resolution_acknowledged_by
- * TEXT NULL` — nullable). Passing literal `null` here would either fail to
- * typecheck or, if the interface were force-widened, throw a real Postgres
- * NOT NULL violation at runtime. Resolution: pass the named system-actor
- * constant `FINANCE_PROJECTION_CONSUMER_ACTOR` (which the design itself
- * names in the very same paragraph) as `actorUserId`, `actorEffectiveRole:
- * 'system'` as ruled — same "no human actor, attribute to the system"
- * intent, zero changes to the reused command file, no NOT NULL violation.
+ * The internal entrypoint supplies the fixed non-human actor itself and
+ * verifies the exact persisted tenant/case source event before mutation.
+ * Public/human callers remain on the ordinary command, whose ACTIVE
+ * membership and capability checks are unchanged.
  *
  * Idempotency (design §5, mirrors myworkProjectionConsumer.ts's own guard):
  * `rvn_platform_consumer_processed` is checked/claimed FIRST via `ON
@@ -73,9 +62,11 @@ import type { PoolClient } from 'pg';
 
 import logger from '../../../utils/Logger.js';
 import { ROI_COMPARE_METRICS, type RoiCompareMetric } from '../roi/roiCompareRepository.js';
-import { openRoiFinanceReconciliation } from '../roi/roiFinanceReconciliationCommands.js';
+import {
+  FINANCE_PROJECTION_RECONCILIATION_ACTOR,
+  openRoiFinanceReconciliationFromProjection,
+} from '../roi/roiFinanceReconciliationCommands.js';
 
-import type { CommandAccessContext } from './commandCapabilityGuard.js';
 import type { RvnOutboxRow } from './outboxDrain.js';
 import type { RvnPlatformEventRow } from './consumerRegistry.js';
 
@@ -88,27 +79,7 @@ const CONSUMER_GROUP = 'finance_projection';
  * identity. See the file header for why this is passed as `actorUserId`
  * rather than the ruling's literal `null`.
  */
-export const FINANCE_PROJECTION_CONSUMER_ACTOR = 'system:finance_projection_consumer';
-
-/**
- * RN-G5 — this consumer is not a human/HTTP actor (see the constant above:
- * "No human triggers a divergence-detection reconciliation — this consumer
- * is the sole caller, always with this identity"). It has no
- * `organization_members` row and cannot go through `resolveEffectiveAccess`
- * — there is no request to resolve it from. The reconciliation it opens is
- * entirely server-computed from trusted event data (the projected ROI value
- * vs. the pinned finance value already stored on the link), not from
- * arbitrary user input, so a fixed wildcard access context for this one
- * fixed system identity is the correct shape here — the same '*' wildcard
- * `resolveEffectiveAccess` itself grants OWNER/ADMIN/SUPERADMIN, scoped to
- * exactly the one command this consumer calls. This is not a guard bypass:
- * `openRoiFinanceReconciliation`'s RN-G5 gate still runs and still requires
- * this to be supplied — omitting it is a compile error, not a silent pass.
- */
-const FINANCE_PROJECTION_CONSUMER_ACCESS: CommandAccessContext = {
-  capabilities: ['*'],
-  platformRole: null,
-};
+export const FINANCE_PROJECTION_CONSUMER_ACTOR = FINANCE_PROJECTION_RECONCILIATION_ACTOR;
 
 function isRoiCompareMetric(value: string): value is RoiCompareMetric {
   return (ROI_COMPARE_METRICS as readonly string[]).includes(value);
@@ -425,17 +396,15 @@ async function checkAndOpenDivergence(
 
   try {
     // Layer 2 — see file header. Separate connection, own idempotency key.
-    await openRoiFinanceReconciliation({
+    await openRoiFinanceReconciliationFromProjection({
       caseId,
       organizationId,
       financeLinkId: link.link_id,
       roiValue,
       financeValue: pinnedValue,
       divergenceReason,
-      actorUserId: FINANCE_PROJECTION_CONSUMER_ACTOR,
-      actorEffectiveRole: 'system',
       idempotencyKey: `finance-projection-divergence:${eventId}:${link.link_id}`,
-      access: FINANCE_PROJECTION_CONSUMER_ACCESS,
+      sourceEventId: eventId,
     });
     // Deliberately NOT trusting `outcome.result` here even on 'applied' —
     // re-reading below is the single code path for both 'applied' and
