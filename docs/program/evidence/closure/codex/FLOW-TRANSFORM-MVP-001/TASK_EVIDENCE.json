@@ -2,6 +2,9 @@
   "taskId": "FLOW-TRANSFORM-MVP-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "c50c4895f11012ea4326fd9879521716f100a5d8",
+  "technicalSourceSha": "64590c5b4a",
+  "requalificationSha": "1a0a9ef50694f981bcba167429e956493829180a",
+  "patchEquivalence": "Canonical 64590c5b4a is byte-for-byte patch-equivalent to reported source 1fd80eb9e28f02215683a0be487e5b950d0e0533 across all nine scoped-cleanup paths.",
   "leaseSha256": "18eb0f2e24aee1d6415a29e1605597117f24c42a1f74439842581e7a92583742",
   "changedPaths": [
     "tests/integration/exe009-closure-delivery-receipt.realdb.test.ts",
@@ -27,12 +30,33 @@
     {
       "command": "IE_TEST_DATABASE_URL=<fresh-pg> npx vitest run tests/integration/initiatives-execution/resultsMeasurement.realdb.test.ts --maxWorkers=1 --no-file-parallelism --reporter=dot",
       "exitCode": 0
+    },
+    {
+      "command": "DATABASE_URL=<current disposable pgvector PostgreSQL> DB_TYPE=postgres NODE_ENV=test npx tsx server/scripts/migrate.postgres.ts [fresh, repeat, --dry-run]",
+      "exitCode": 0,
+      "result": "fresh 758; repeat applying 0; dry-run pending 0; ledger 758"
+    },
+    {
+      "command": "RUN_DB_TESTS=1 MOCK_DB=false CLOSURE_EVIDENCE_ALLOW_IMMUTABLE_FIXTURE_CLEANUP=1 CLOSURE_EVIDENCE_DISPOSABLE_DB_PREFIX=<exact database prefix> npx vitest run <four closure-evidence realdb files> --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot",
+      "exitCode": 0,
+      "result": "4/4 files; 113/113 tests; forced cleanup failure rolled back and restored the immutable trigger"
+    },
+    {
+      "command": "same exact-current environment npx vitest run <four closure-evidence files> exe009-closure-delivery-receipt execution-closure-evidence-gate.golden-flow roiObligationsSurviveInitiativeClosure ClosureSection --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot",
+      "exitCode": 0,
+      "result": "8/8 files; 170/170 tests; forced downstream rollback passed; both immutable triggers enabled O; exact fixture residue 0"
     }
   ],
   "denominators": {
     "freshMigrations": {"applied": 722, "failed": 0},
     "executionResultsFinanceReceipt": {"files": 1, "passed": 27, "failed": 0, "skipped": 0},
-    "resultsFinanceAuthoritativeBridge": {"files": 1, "passed": 2, "failed": 0, "skipped": 0}
+    "resultsFinanceAuthoritativeBridge": {"files": 1, "passed": 2, "failed": 0, "skipped": 0},
+    "exactCurrentSchema": "fresh 758; repeat 0; dry-run pending 0; ledger 758",
+    "exactCurrentClosureEvidence": "4/4 files; 113/113",
+    "exactCurrentCombined": "8/8 files; 170/170",
+    "forcedRollback": "cleanup failure and downstream failure both roll back without false success",
+    "immutableTriggers": "initiative_lifecycle_gate_decisions_immutable=O; trg_initiative_closure_evidence_append_only=O",
+    "fixtureResidue": "0; the only global organization/user rows were canonical system/system seed rows"
   },
   "fixtures": {
     "database": "Disposable fresh pgvector PostgreSQL 16 database on localhost:56663",
@@ -44,7 +68,9 @@
     "deliveryRetryIdempotent": true,
     "crossTenantReceiptDenied": true,
     "financeNeverAutoRealizesCandidate": true,
-    "restartReconciliationRecoversPendingReceipt": true
+    "restartReconciliationRecoversPendingReceipt": true,
+    "cleanupFailClosed": "immutable-ledger cleanup requires explicit opt-in and exact disposable database prefix; a forced failure after trigger suspension rolls back and restores the trigger",
+    "downstreamFailureRollback": "forced downstream failure leaves no partial evidence attachment or false closure success"
   },
   "browserArtifacts": [],
   "rollback": {
@@ -56,5 +82,20 @@
     "No single test yet creates the entire Organization or Interview or DRD or SWOT source through candidate, Initiative, Execution, Results Actual, Finance reconciliation and PIR under one stable lineage.",
     "Upstream A and C producer receipts have not yet been exercised in the same fresh database as this downstream slice.",
     "Deployed desktop and mobile journey and rollback rehearsal are not authorized or verified."
-  ]
+  ],
+  "currentTechnicalRequalification": {
+    "candidateSha": "1a0a9ef50694f981bcba167429e956493829180a",
+    "technicalSourceSha": "64590c5b4a",
+    "database": "own disposable pgvector PostgreSQL 16; fresh 758, repeat 0, dry-run pending 0",
+    "closureEvidence": "113/113",
+    "combinedFlowRegression": "170/170",
+    "rollbackAndCleanup": "forced cleanup and downstream failures rolled back; both named immutable triggers remained enabled O; exact fixture residue 0",
+    "doesNotProve": [
+      "one stable Organization or Interview or DRD or SWOT source-to-PIR lineage",
+      "upstream A and C producer receipts exercised in the same database as the downstream slice",
+      "Results Actual and Finance reconciliation across the complete product journey under one stable identity",
+      "deployed desktop or mobile journey",
+      "production rollback rehearsal or release authorization"
+    ]
+  }
 }
