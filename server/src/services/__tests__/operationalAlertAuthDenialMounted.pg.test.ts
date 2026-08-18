@@ -102,13 +102,19 @@ describe.skipIf(!enabled)('OPS mounted signed-JWT auth denial repair intent', ()
         )
       ).rows[0].n
     ).toBe(1);
-    expect(
-      (
-        await request(app)
-          .post('/api/organization-context/rebuild')
-          .set('Authorization', `Bearer ${sign(active, org)}`)
-      ).status
-    ).toBe(403);
+    const missingHeaderDenied = await request(app)
+      .post('/api/organization-context/rebuild')
+      .set('Authorization', `Bearer ${sign(active, org)}`);
+    expect(missingHeaderDenied.status).toBe(403);
+    expect(missingHeaderDenied.headers['x-request-id']).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+    );
+    const repeatedClientHeaderDenied = await request(app)
+      .post('/api/organization-context/rebuild')
+      .set('Authorization', `Bearer ${sign(active, org)}`)
+      .set('x-request-id', `${p}-ok`);
+    expect(repeatedClientHeaderDenied.status).toBe(403);
+    expect(repeatedClientHeaderDenied.headers['x-request-id']).not.toBe(`${p}-ok`);
     const revokedDenied = await request(app)
       .post('/api/organization-context/rebuild')
       .set('Authorization', `Bearer ${sign(revoked, org)}`)
@@ -126,32 +132,19 @@ describe.skipIf(!enabled)('OPS mounted signed-JWT auth denial repair intent', ()
       `SELECT organization_id,actor_id,correlation_id,kind,outcome,source_type FROM operational_alert_repair_intents WHERE organization_id=ANY($1) ORDER BY correlation_id`,
       [[org, foreign]]
     );
-    expect(rows.rows).toEqual([
-      {
-        organization_id: org,
-        actor_id: active,
-        correlation_id: `${p}-foreign`,
-        kind: 'REPEATED_AUTH_DENIALS',
-        outcome: 'DENIAL',
-        source_type: 'http_auth_denial',
-      },
-      {
-        organization_id: org,
-        actor_id: active,
-        correlation_id: `${p}-ok`,
-        kind: 'REPEATED_AUTH_DENIALS',
-        outcome: 'DENIAL',
-        source_type: 'http_auth_denial',
-      },
-      {
-        organization_id: org,
-        actor_id: revoked,
-        correlation_id: `${p}-revoked`,
-        kind: 'REPEATED_AUTH_DENIALS',
-        outcome: 'DENIAL',
-        source_type: 'http_auth_denial',
-      },
-    ]);
+    expect(rows.rows).toHaveLength(5);
+    expect(new Set(rows.rows.map((row) => row.correlation_id)).size).toBe(5);
+    expect(rows.rows.every((row) => row.kind === 'REPEATED_AUTH_DENIALS')).toBe(true);
+    expect(rows.rows.every((row) => row.outcome === 'DENIAL')).toBe(true);
+    expect(rows.rows.every((row) => row.source_type === 'http_auth_denial')).toBe(true);
+    expect(rows.rows.filter((row) => row.actor_id === active)).toHaveLength(4);
+    expect(rows.rows.filter((row) => row.actor_id === revoked)).toHaveLength(1);
+    expect(
+      rows.rows.some(
+        (row) => row.correlation_id === missingHeaderDenied.headers['x-request-id']
+      )
+    ).toBe(true);
+    expect(rows.rows.some((row) => row.correlation_id === `${p}-ok`)).toBe(false);
   });
   it('reports a real bounded shutdown timeout and later flushes after the pending write settles', async () => {
     const slow = new Promise<void>((resolve) => setTimeout(resolve, 80));

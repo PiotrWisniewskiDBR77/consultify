@@ -29,7 +29,10 @@ describe('metrics.middleware', () => {
       .evaluate()
       .find((candidate) => candidate.kind === 'REPEATED_AUTH_DENIALS');
     expect(alert).toMatchObject({ active: true, value: 5, threshold: 5 });
-    expect(alert?.correlationId).toBe('auth-denial-4');
+    expect(alert?.correlationId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+    );
+    expect(alert?.correlationId).not.toBe('auth-denial-4');
   });
 
   it('does not end an authentication-denial response before the durable seam settles', async () => {
@@ -40,6 +43,28 @@ describe('metrics.middleware', () => {
     res.end('denied');
     expect(originalEnd).not.toHaveBeenCalled();
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    expect(originalEnd).toHaveBeenCalledWith('denied');
+  });
+
+  it('generates one stable server request id instead of trusting the client header', async () => {
+    const originalEnd = vi.fn();
+    const setHeader = vi.fn();
+    const req: any = { method: 'GET', headers: { 'x-request-id': 'client-controlled' } };
+    const res: any = { statusCode: 403, end: originalEnd, setHeader };
+    metricsMiddleware(req, res, vi.fn());
+    res.end('denied');
+    res.end('duplicate-end');
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+    const requestIds = setHeader.mock.calls
+      .filter(([name]) => name === 'x-request-id')
+      .map(([, value]) => value);
+    expect(requestIds).toHaveLength(1);
+    expect(requestIds[0]).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+    );
+    expect(requestIds[0]).not.toBe('client-controlled');
+    expect(originalEnd).toHaveBeenCalledTimes(1);
     expect(originalEnd).toHaveBeenCalledWith('denied');
   });
 
@@ -56,6 +81,23 @@ describe('metrics.middleware', () => {
       __private__.awaitDurableAuthDenialBarrier(Promise.reject(new Error('store unavailable')), 50)
     ).resolves.toBe('failed');
   });
+
+  it.each(['timed_out', 'failed'] as const)(
+    'destroys the socket and never ends the response on %s durability',
+    (outcome) => {
+      const originalEnd = vi.fn();
+      const destroy = vi.fn();
+      const res: any = { destroy };
+      expect(
+        __private__.finishDurableAuthDenialResponse(outcome, res, res, originalEnd, ['denied'])
+      ).toBe('destroyed');
+      expect(originalEnd).not.toHaveBeenCalled();
+      expect(destroy).toHaveBeenCalledTimes(1);
+      expect(destroy.mock.calls[0][0]).toMatchObject({
+        message: `AUTH_DENIAL_DURABILITY_${outcome.toUpperCase()}`,
+      });
+    }
+  );
 
   it('addBoundedMetric caps counters at Number.MAX_SAFE_INTEGER', () => {
     const capped = __private__.addBoundedMetric(Number.MAX_SAFE_INTEGER - 1, 2);
