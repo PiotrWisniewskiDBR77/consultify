@@ -4,15 +4,46 @@
  * Design: docs/product/results-vnext/ROI_E001_DESIGN.md §5. Structural
  * template: `kpi/kpiRepository.ts` (first real caller of
  * `buildVisibilityScopedCte`/`wrapWithVisibilityScope` — this file is the
- * second).
+ * second, and stays the second — see the Variant B note below).
+ *
+ * VISIBILITY AUTHORITY — CORRECTED (AMD-FLOW-ROI-VISIBILITY-002, closure-b
+ * F2). This file went through two designs before landing here; both are
+ * recorded so a reader does not have to re-derive why the second one
+ * exists:
+ *
+ *  1. Standalone (an earlier WIP round): these three functions bypassed
+ *     `buildVisibilityScopedCte`/`wrapWithVisibilityScope` entirely and
+ *     called `resolveRoiGovernedVisibility` directly, with a plain
+ *     org-scoped query on ALLOW. This worked for THIS file alone, but it
+ *     made roiRepository.ts the only one of 11 ROI repositories NOT
+ *     calling the shared machinery — a second, parallel visibility system
+ *     next to the one the other 10 (roiActualEntryRepository.ts,
+ *     roiActualSnapshotRepository.ts, roiApprovalSnapshotRepository.ts,
+ *     roiEconomicModelRepository.ts, roiFinanceLinkRepository.ts,
+ *     roiFinanceProjectionRepository.ts, roiForecastVersionRepository.ts,
+ *     roiOrgPerspectiveRepository.ts, roiPirRepository.ts,
+ *     roiVarianceRepository.ts) already depend on. Reverted.
+ *
+ *  2. Variant B (this file, now): the shared machinery itself
+ *     (visibilityScopedQuery.ts) gained a sixth `visibility_mode` literal,
+ *     `'ROI_GOVERNED'` (20261021_rvn_platform_visibility_roi_governed_mode.sql),
+ *     with its own branch that calls `resolveRoiGovernedVisibility`
+ *     internally and is explicitly excluded from the generic RBAC-override
+ *     branch (see visibilityScopedQuery.ts's own comment on that exclusion
+ *     — without it, any '*' holder, including a platform SUPERADMIN with
+ *     no membership row, would see every governed ROI resource through the
+ *     override branch regardless of the governed decision). This file goes
+ *     back to calling `buildVisibilityScopedCte`/`wrapWithVisibilityScope`
+ *     exactly like `kpiRepository.ts` and the other 10 ROI repositories —
+ *     ONE shared authority, correctly extended, not a parallel one.
  *
  * `rvn_platform_resource_visibility.resource_id` is TEXT;
  * `rvn_roi_cases.case_id` is UUID — every join casts `::text` on the UUID
  * side (`vr.resource_id = rc.case_id::text`). This exact cast was missed in
  * 7 places across 3 files in the KPI domain and only caught by a dedicated
- * realDB join-regression test after the fact (EXECUTION_LEDGER §24) — get it
- * right here from the start; `roiVisibilityJoin.realdb.test.ts` proves it
- * against a real Postgres.
+ * realDB join-regression test after the fact (EXECUTION_LEDGER §24) — get
+ * it right here from the start; `roiVisibilityJoin.realdb.test.ts` proves
+ * it against a real Postgres.
  *
  * `rvn_roi_baselines` carries no visibility row of its own — it inherits via
  * `case_id`, same `::text` cast requirement applies to that join.

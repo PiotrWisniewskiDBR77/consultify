@@ -19,6 +19,8 @@
  * this module family and because a future maker-checker/audit step (§B.3.2)
  * may need to write a break-glass audit event on the same connection.
  */
+import { createHash } from 'node:crypto';
+
 import type { PoolClient } from 'pg';
 
 import { acquirePgClient } from '../../../database/PostgresDatabase.js';
@@ -35,7 +37,9 @@ export type RvnVisibilityDenyReason =
   | 'OUT_OF_SCOPE'
   | 'NOT_IN_CHAIN'
   | 'NOT_ON_ACL'
-  | 'RESTRICTED_REQUIRES_BREAK_GLASS';
+  | 'RESTRICTED_REQUIRES_BREAK_GLASS'
+  // AMD-FLOW-ROI-VISIBILITY-002, Variant B.
+  | 'ROI_GOVERNED_DENIED';
 
 export type RvnVisibilityAllowReason =
   | 'RBAC_OVERRIDE'
@@ -43,7 +47,9 @@ export type RvnVisibilityAllowReason =
   | 'OWNER'
   | 'IN_SCOPE'
   | 'IN_MANAGEMENT_CHAIN'
-  | 'ON_ACL';
+  | 'ON_ACL'
+  // AMD-FLOW-ROI-VISIBILITY-002, Variant B.
+  | 'ROI_GOVERNED';
 
 export interface ResolveVisibilityInput {
   userId: string;
@@ -118,7 +124,18 @@ export async function resolveVisibility(
     const hasRbacOverride =
       hasEffectiveCapability(access, '*') || hasEffectiveCapability(access, requiredCapability);
 
-    if (hasRbacOverride) {
+    // AMD-FLOW-ROI-VISIBILITY-002, Variant B — the RBAC override is
+    // excluded from 'ROI_GOVERNED' resources entirely, kept in lockstep
+    // with visibilityScopedQuery.ts's identical exclusion (see that file's
+    // comment for the full reason: a '*' holder can be a platform
+    // SUPERADMIN with NO organization_members row, decision 15A — exactly
+    // the identity the governed ROI decision below is required to deny;
+    // without this exclusion that identity would see every governed ROI
+    // resource through this branch without ever reaching the switch case
+    // for 'ROI_GOVERNED'). `hasRbacOverride && record.visibility_mode !==
+    // 'ROI_GOVERNED'` falls through to the switch below for that one mode,
+    // same as any other actor.
+    if (hasRbacOverride && record.visibility_mode !== 'ROI_GOVERNED') {
       if (record.sensitivity === 'restricted' && record.visibility_mode === 'RESTRICTED_ACL') {
         // Design §B.3 step 2: RBAC override on a restricted/RESTRICTED_ACL
         // resource requires a break-glass audit event, not a plain allow.
@@ -177,6 +194,21 @@ export async function resolveVisibility(
           (row) => (ACCESS_LEVEL_RANK[row.access_level] ?? 0) >= requiredRank
         );
         return granted ? { allow: true, reason: 'ON_ACL' } : { allow: false, reason: 'NOT_ON_ACL' };
+      }
+
+      // AMD-FLOW-ROI-VISIBILITY-002, Variant B — kept in lockstep with
+      // visibilityScopedQuery.ts's own 'ROI_GOVERNED' branch, per this
+      // file's own header claim of implementing "the identical branching":
+      // a mode present in one and absent in the other is exactly the kind
+      // of divergence that gets found by an incident, not a test.
+      // Deliberately does NOT reuse the `hasRbacOverride` short-circuit
+      // above (already excluded for this mode) — resolveRoiGovernedVisibility
+      // is the ONLY authority reachable for this case.
+      case 'ROI_GOVERNED': {
+        const governed = await resolveRoiGovernedVisibility({ userId, organizationId });
+        return governed.allow
+          ? { allow: true, reason: 'ROI_GOVERNED' }
+          : { allow: false, reason: 'ROI_GOVERNED_DENIED' };
       }
 
       default:
@@ -573,17 +605,54 @@ export interface RoiGovernedVisibilityPolicyPublication {
 }
 
 export interface PublishRoiGovernedVisibilityPolicyOutcome {
-  /** 'applied' = this call performed the INSERT. 'replayed' = the SAME
-   * actor had already published for this organization; zero additional
-   * writes, the existing durable row is returned unchanged. */
+  /** 'applied' = this call performed the INSERT. 'replayed' = an EXACT
+   * repeat of a previously-applied call (same organizationId, actorUserId,
+   * policyKey, policyDigest AND idempotencyKey) — zero additional writes,
+   * the existing durable row is returned unchanged. Anything less than an
+   * exact match on ALL of those — a different actor, a reused
+   * idempotencyKey with a different fingerprint, or a fresh idempotencyKey
+   * once the org is already published — throws
+   * RoiGovernedVisibilityPolicyCollisionError instead; there is no third
+   * outcome. */
   outcome: 'applied' | 'replayed';
   publication: RoiGovernedVisibilityPolicyPublication;
 }
 
 /**
- * Governance command — the real production replacement for
- * `tests/integration/crossflow/flowFixture.ts`'s
- * `provisionSyntheticRoiVisibilityPolicy` (SYNTHETIC_TEST_ONLY OPEN_ORG).
+ * Deterministic identity of ONE publish request: organization + actor +
+ * the (always-pinned) policy identifiers. Two requests that hash the same
+ * are the SAME request, replayed; anything else — a different actor, or a
+ * theoretically-different policyKey/policyDigest if a future caller ever
+ * legitimately varied them — is a DIFFERENT request and must collide, not
+ * replay, even from the same actor. This is what makes replay-detection
+ * bind to "organization + idempotency key + the immutable pinned policy
+ * fingerprint", not merely "same actor vs different actor" (the earlier,
+ * weaker version of this function compared only `published_by`).
+ */
+export function computeRoiGovernancePublishFingerprint(input: {
+  organizationId: string;
+  actorUserId: string;
+  policyKey: string;
+  policyDigest: string;
+}): string {
+  return createHash('sha256')
+    .update(
+      JSON.stringify([input.organizationId, input.actorUserId, input.policyKey, input.policyDigest])
+    )
+    .digest('hex');
+}
+
+/**
+ * Governance command — the real production authority for BOTH ROI case
+ * creation (createRoiCase, roiCaseCommands.ts — RN-G5's standing "leave
+ * create ungated" decision was SUPERSEDED by a later owner decision; see
+ * that file's own comment on the reversal) and reads
+ * (resolveRoiGovernedVisibility below; roiRepository.ts's
+ * listRoiCases/getRoiCase/getRoiBaseline). There is no parallel second
+ * policy: `tests/integration/crossflow/flowFixture.ts` no longer contains
+ * a synthetic OPEN_ORG prerequisite of any kind — this command, called for
+ * real, is the ONLY thing that makes ROI case creation or reads possible
+ * for any organization, test or production.
  *
  * Org and actor MUST be derived by the caller from the verified JWT only
  * (see `roi.routes.ts`'s route handler — `organizationId`/`actorUserId`
@@ -593,23 +662,34 @@ export interface PublishRoiGovernedVisibilityPolicyOutcome {
  * `hasEffectiveCapability(access, '*')` (see `resolveRoiGovernedVisibility`'s
  * doc comment for why 15A's wildcard is not consulted here).
  *
- * Concurrency/idempotency/collision shape (8-way concurrency -> exactly one
- * winner; collision -> 409 at the route layer): `rvn_roi_visibility_governance`
+ * IDEMPOTENCY/COLLISION (CORRECTED — an earlier version of this function
+ * only compared `published_by`, which is a WEAKER property than what is
+ * required: it treated any retry from the recorded actor as a benign
+ * replay regardless of idempotencyKey, and would have treated a same-actor
+ * retry with a mutated payload as a replay too, which is wrong). This
+ * version binds replay to THREE things at once — organization_id (the
+ * table's own PRIMARY KEY), idempotency_key, and request_fingerprint
+ * (`computeRoiGovernancePublishFingerprint`, above) — and requires an EXACT
+ * match on both idempotency_key AND request_fingerprint against the
+ * existing row to call it a replay. A different actor, a same actor with a
+ * fresh/different idempotencyKey, or (were the pinned policyKey/policyDigest
+ * ever to legitimately vary) a mutated payload under the SAME
+ * idempotencyKey — all of these collide (`RoiGovernedVisibilityPolicyCollisionError`,
+ * mapped to 409 by the route), thrown BEFORE any write, never after a
+ * partial mutation.
+ *
+ * Concurrency (8-way concurrency -> exactly one winner): `rvn_roi_visibility_governance`
  * has exactly one row per organization (PRIMARY KEY organization_id) and
  * nothing to version between (one canonical policy, nothing to widen or
  * narrow) — so this intentionally does NOT go through the generic
- * `executeAtomicCreate`/`rvn_platform_events` machinery (which would also
- * require a new `RvnResourceType` literal in `resourceTypes.ts`, a file
- * outside this packet's bounded path list). Instead: a `pg_advisory_xact_lock`
- * on `organizationId` serializes every racing caller through the SAME
- * check-then-insert section, and the row's own `published_by` IS the
- * idempotent-receipt identity: the SAME actor calling again after the row
- * exists gets `outcome: 'replayed'` (zero additional writes, the original
- * row returned unchanged); a DIFFERENT actor calling after the row exists
- * gets `RoiGovernedVisibilityPolicyCollisionError` (mapped to 409 by the
- * route, same pattern every other typed guard error in `roi.routes.ts`
- * already uses) — thrown before any write in that branch, so a collision
- * never mutates anything.
+ * `executeAtomicCreate`/`rvn_platform_events` machinery. That reuse was
+ * ATTEMPTED first (per the CTO's explicit endorsement of it) and BLOCKED:
+ * `executeAtomicCreate`'s event envelope requires `aggregateType:
+ * RvnResourceType`, and `resourceTypes.ts` has no literal for an org-level
+ * governance event — adding one is outside this packet's bounded path
+ * list. This function's own `pg_advisory_xact_lock` on `organizationId`
+ * serializes every racing caller through the SAME check-then-insert
+ * section instead.
  */
 export async function publishRoiGovernedVisibilityPolicy(
   input: PublishRoiGovernedVisibilityPolicyInput
@@ -625,6 +705,13 @@ export async function publishRoiGovernedVisibilityPolicy(
   if (!idempotencyKey || !idempotencyKey.trim()) {
     throw new Error('[publishRoiGovernedVisibilityPolicy] idempotencyKey is required');
   }
+
+  const fingerprint = computeRoiGovernancePublishFingerprint({
+    organizationId,
+    actorUserId,
+    policyKey,
+    policyDigest,
+  });
 
   const client: PoolClient = await acquirePgClient();
   try {
@@ -645,15 +732,22 @@ export async function publishRoiGovernedVisibilityPolicy(
       published_by: string;
       published_at: string;
       policy_key: string;
+      idempotency_key: string;
+      request_fingerprint: string;
     }>(
-      `SELECT published_by, published_at, policy_key
+      `SELECT published_by, published_at, policy_key, idempotency_key, request_fingerprint
          FROM rvn_roi_visibility_governance
         WHERE organization_id = $1`,
       [organizationId]
     );
     if (existing.rowCount) {
       const row = existing.rows[0]!;
-      if (row.published_by !== actorUserId) {
+      const exactReplay = row.idempotency_key === idempotencyKey && row.request_fingerprint === fingerprint;
+      if (!exactReplay) {
+        // Covers EVERY non-exact case, not just "different actor": a
+        // different actor, the same actor reusing a fresh idempotencyKey
+        // once already published, or (hypothetically) a matching
+        // idempotencyKey paired with a different fingerprint — all collide.
         throw new RoiGovernedVisibilityPolicyCollisionError(organizationId);
       }
       await client.query('COMMIT');
@@ -668,16 +762,42 @@ export async function publishRoiGovernedVisibilityPolicy(
       };
     }
 
+    // AMD-FLOW-ROI-VISIBILITY-002, Variant B — publishes the LEGACY
+    // domain='roi' rvn_platform_visibility_policies row too, in the SAME
+    // transaction, mode 'ROI_GOVERNED'. HISTORY: an earlier draft did this
+    // with mode 'RESTRICTED_ACL' as an under-permitting proxy (no
+    // per-resource ACL grants, so it silently denied a legitimate
+    // Finance-grant holder on ROI read surfaces outside this packet's
+    // bounded path list) — REVERTED after CTO review, then this packet's
+    // scope grew to include the shared machinery itself
+    // (visibilityScopedQuery.ts/visibilityResolver.ts, this file), which is
+    // what makes this call correct now instead of a repeat of that mistake:
+    // 'ROI_GOVERNED' is a real CHECK-enforced literal
+    // (20261021_rvn_platform_visibility_roi_governed_mode.sql) with its own
+    // correctly-governed branch in BOTH buildVisibilityScopedCte and
+    // resolveVisibility, not a repurposed existing mode standing in for a
+    // policy it does not actually express. `createRoiCase`
+    // (roiCaseCommands.ts) still needs a valid `policy_id` here to satisfy
+    // `rvn_platform_resource_visibility.policy_id`'s NOT NULL FK — this is
+    // the one real production writer for that row, for domain='roi'.
+    await publishVisibilityPolicy(client, {
+      organizationId,
+      domain: 'roi',
+      mode: 'ROI_GOVERNED',
+      publishedBy: actorUserId,
+    });
+
     const insertResult = await client.query<{
       organization_id: string;
       published_by: string;
       published_at: string;
       policy_key: string;
     }>(
-      `INSERT INTO rvn_roi_visibility_governance (organization_id, published_by)
-       VALUES ($1, $2)
+      `INSERT INTO rvn_roi_visibility_governance
+         (organization_id, published_by, idempotency_key, request_fingerprint)
+       VALUES ($1, $2, $3, $4)
        RETURNING organization_id, published_by, published_at, policy_key`,
-      [organizationId, actorUserId]
+      [organizationId, actorUserId, idempotencyKey, fingerprint]
     );
     const inserted = insertResult.rows[0];
     if (!inserted) {

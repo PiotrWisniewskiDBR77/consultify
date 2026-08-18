@@ -87,6 +87,7 @@ import {
   createRoiCase,
   markReadyForReview,
   reopenRejectedRoiCase,
+  RoiCaseCreationNotAuthorizedError,
   RoiCaseNoActiveVisibilityPolicyError,
   RoiCaseNotReadyForReviewError,
   RoiCaseValidationError,
@@ -428,6 +429,15 @@ function handleRoiRouteError(res: Response, err: unknown, op: string): void {
   }
   if (err instanceof AtomicWriteAggregateNotFoundError) {
     res.status(404).json({ error: err.message || 'Not found', code: 'NOT_FOUND' });
+    return;
+  }
+  // AMD-FLOW-ROI-VISIBILITY-002 — checked ahead of the generic 409 branch
+  // below, same "coarse authorization denial first" rationale as
+  // CommandCapabilityDeniedError at the top of this function: creating a
+  // ROI case now requires the same governed authority reads do.
+  if (err instanceof RoiCaseCreationNotAuthorizedError) {
+    logger.warn(`[resultsVnext/roi.routes] createRoiCase denied`, { reason: err.details.reason });
+    res.status(403).json({ error: err.message, code: err.code });
     return;
   }
   if (err instanceof RoiCaseNoActiveVisibilityPolicyError) {

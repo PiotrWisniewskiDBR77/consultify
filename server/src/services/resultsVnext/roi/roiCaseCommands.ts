@@ -38,7 +38,13 @@ import {
   type CommandAccessContext,
 } from '../platform/commandCapabilityGuard.js';
 import { createObligation } from '../platform/obligations.js';
-import { getActiveVisibilityPolicy } from '../platform/visibilityResolver.js';
+// AMD-FLOW-ROI-VISIBILITY-002, Variant B — getActiveVisibilityPolicy IS
+// used again: it is no longer a competing gate (that duplication was
+// removed and stayed removed), it is the read of the row
+// publishRoiGovernedVisibilityPolicy's own dual-write now guarantees
+// exists (mode 'ROI_GOVERNED') once resolveRoiGovernedVisibility has
+// already said allow — see the comment at its one call site below.
+import { getActiveVisibilityPolicy, resolveRoiGovernedVisibility } from '../platform/visibilityResolver.js';
 
 import { isRoiCaseReadyForReviewEligibleWithEconomicModel } from './roiEconomicModelReadiness.js';
 import {
@@ -110,6 +116,24 @@ export class RoiCaseNoActiveVisibilityPolicyError extends Error {
     );
     this.name = 'RoiCaseNoActiveVisibilityPolicyError';
     this.details = { organizationId, domain };
+  }
+}
+
+/** AMD-FLOW-ROI-VISIBILITY-002 — fail-closed error for `createRoiCase`
+ * when the caller is not a same-tenant ACTIVE OWNER/ADMIN and does not
+ * hold the canonical Finance authority/grant. Thrown BEFORE any write —
+ * see `createRoiCase`'s own comment on the RN-G5 reversal for why this
+ * check now exists at all. `reason` carries `resolveRoiGovernedVisibility`'s
+ * own deny reason for server-side logging only, never wired to the
+ * client response body (same D06 generic-denial convention
+ * `commandCapabilityGuard.ts` documents). */
+export class RoiCaseCreationNotAuthorizedError extends Error {
+  code = 'ROI_CASE_CREATION_NOT_AUTHORIZED';
+  details: Record<string, unknown>;
+  constructor(organizationId: string, reason: string) {
+    super('Creating a ROI case requires a same-tenant ACTIVE OWNER, ADMIN, or current Finance-authority grant.');
+    this.name = 'RoiCaseCreationNotAuthorizedError';
+    this.details = { organizationId, reason };
   }
 }
 
@@ -285,26 +309,72 @@ export async function createRoiCase(
 
   // Captured inside applyMutation, read by buildEvent — same closure
   // convention as kpiDefinitionCommands.ts's file header explains.
+  // AMD-FLOW-ROI-VISIBILITY-002, Variant B — now genuinely populated again:
+  // the `domain='roi'` policy this reads exists because
+  // publishRoiGovernedVisibilityPolicy's own dual-write guarantees it, not
+  // because of a synthetic test fixture.
   let visibilityPolicyVersion: string | undefined;
 
-  // RN-G5 DECISION (documented, not an oversight): createRoiCase is
-  // deliberately left UNGATED by this pakiet — same reasoning as
+  // RN-G5 DECISION — STANDING, THEN SUPERSEDED. The paragraph below is the
+  // ORIGINAL RN-G5 decision, preserved verbatim so a reader can see exactly
+  // what was reversed and why it was reasonable at the time: createRoiCase
+  // was deliberately left UNGATED by that packet — same reasoning as
   // kpiDefinitionCommands.createKpiDraft's identical decision. No record
-  // exists yet at create time (capability-only, no owner fallback);
-  // `results.roi.case.create` is not part of any baseline a regular member
-  // holds (effectiveAccessService.ts is out of allowlist); and ~30 existing
-  // test files call this as a foundational fixture step (grepped before
+  // existed yet at create time (capability-only, no owner fallback);
+  // `results.roi.case.create` was not part of any baseline a regular member
+  // held (effectiveAccessService.ts was out of allowlist); and ~30 existing
+  // test files called this as a foundational fixture step (grepped before
   // deciding — a far larger blast radius than createKpiDraft's single
-  // breaking e2e file). Creating your OWN new case is also lower-risk than
+  // breaking e2e file). Creating your OWN new case was also lower-risk than
   // the named vulnerability (mutating/approving an EXISTING, possibly
-  // someone else's, case) — a fresh case is inert until it passes the
+  // someone else's, case) — a fresh case was inert until it passed the
   // separately-guarded submit/approve pipeline (roiCaseApprovalCommands.ts),
-  // which IS gated.
+  // which WAS gated.
+  //
+  // AMD-FLOW-ROI-VISIBILITY-002 (closure-b F2, later owner decision) SUPERSEDES
+  // the paragraph above: "the governed policy becomes the REAL AUTHORITY for
+  // ROI case CREATION and READS — not a parallel second policy." The ~30
+  // existing test files' blast radius was verified again at this decision
+  // point (still real, still ~30 files, still NOT fixed by this change —
+  // reported as a known, out-of-scope consequence, not silently absorbed)
+  // and the owner judged closing the authorization gap more important than
+  // preserving those tests' current green state. `createRoiCase` is gated
+  // below, before any write, via the exact same `resolveRoiGovernedVisibility`
+  // predicate the read path already uses — never via
+  // `hasEffectiveCapability(access, '*')` (see that function's own doc
+  // comment for why 15A's wildcard is not consulted here).
   return executeAtomicCreate<CreateRoiCaseResult>({
     organizationId,
     applyMutation: async (client) => {
-      // Fail closed if no active visibility policy exists for this
-      // org/domain — never fabricate a default (design §5).
+      // AMD-FLOW-ROI-VISIBILITY-002 — checked FIRST, before any query or
+      // write of any kind (including the legacy visibility-policy read
+      // below): same-tenant ACTIVE OWNER/ADMIN or a current Finance-authority
+      // grant is required to create a ROI case. Reuses the exact same
+      // predicate the read path (`roiRepository.ts`) and the governance
+      // publish command already use — one authority, not a parallel one.
+      // Fails closed identically for a revoked member, a foreign-tenant
+      // caller, a SUPERADMIN token with no membership row in this org, and
+      // a membership-lookup failure — see `resolveRoiGovernedVisibility`'s
+      // own doc comment for the exact fail-closed matrix this delegates to.
+      const governed = await resolveRoiGovernedVisibility({ userId: createdBy, organizationId });
+      if (!governed.allow) {
+        throw new RoiCaseCreationNotAuthorizedError(organizationId, governed.reason);
+      }
+
+      // AMD-FLOW-ROI-VISIBILITY-002, Variant B — the ONLY authorization
+      // gate is the one above. This read is NOT a second, independently-
+      // failing gate: `governed.allow === true` is only reachable once
+      // `publishRoiGovernedVisibilityPolicy` (visibilityResolver.ts) has
+      // already inserted a `domain='roi'`, mode='ROI_GOVERNED' row into
+      // `rvn_platform_visibility_policies` for this organization (that
+      // publish is what makes `resolveRoiGovernedVisibility` return allow
+      // in the first place, since it fails closed on NO_GOVERNED_POLICY
+      // otherwise) — so this SELECT is reading a row this function's own
+      // authorization dependency already guarantees exists, not
+      // independently gating on a second, possibly-absent precondition.
+      // Fail closed anyway rather than assume, per design §5's own "never
+      // fabricate a default" rule — if this ever throws, that is a real
+      // bug (the guarantee above broke), not an expected path.
       const policy = await getActiveVisibilityPolicy(client, {
         organizationId,
         domain: ROI_VISIBILITY_DOMAIN,
@@ -411,6 +481,11 @@ export async function createRoiCase(
         throw new Error('[createRoiCase] insert into rvn_roi_calculation_policy returned no row');
       }
 
+      // AMD-FLOW-ROI-VISIBILITY-002, Variant B — `policyDetails.visibility_mode`
+      // here will BE 'ROI_GOVERNED' (the only mode publishRoiGovernedVisibilityPolicy
+      // ever writes for domain='roi'), a real CHECK-enforced literal with
+      // its own correctly-governed branch in visibilityScopedQuery.ts /
+      // resolveVisibility — not a repurposed existing mode.
       await client.query(
         `INSERT INTO rvn_platform_resource_visibility
            (resource_type, resource_id, organization_id, visibility_mode, policy_id, scope_type, scope_id, owner_user_id, sensitivity)
@@ -497,7 +572,7 @@ export async function createRoiCase(
         correlationId: correlationId ?? randomUUID(),
         causationId,
         occurredAt: new Date().toISOString(),
-        policyVersion: visibilityPolicyVersion ?? '',
+        policyVersion: visibilityPolicyVersion ?? POLICY_VERSION_NOT_TRACKED,
         beforeState: null,
         afterState,
         stateHash: computeStateHash(afterState),

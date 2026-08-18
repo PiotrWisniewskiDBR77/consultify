@@ -8,13 +8,16 @@
  * surfaces — one SQL query returning every `resource_id` a user can see for
  * a given `resource_type`, instead of N resolve calls. Both implement the
  * identical branching (RBAC override / OPEN_ORG / PRIVATE / SCOPE /
- * MANAGEMENT_CHAIN / RESTRICTED_ACL) from §B.3 — read that file's comments
- * for the per-branch rationale; this file does not repeat them, only points
- * back where a branch deviates from the design in the same way.
+ * MANAGEMENT_CHAIN / RESTRICTED_ACL / ROI_GOVERNED — the last one added by
+ * AMD-FLOW-ROI-VISIBILITY-002, Variant B) from §B.3 — read that file's
+ * comments for the per-branch rationale; this file does not repeat them,
+ * only points back where a branch deviates from the design in the same way.
  *
- * Status: NOT_IMPLEMENTED as a wired dependency — no domain repository
- * (KPI/ROI/OKR) exists yet to call this. This is intentionally inert
- * scaffolding, same status as the rest of `platform/*` per README.md.
+ * Status: WIRED — corrected, an earlier version of this comment claimed
+ * NOT_IMPLEMENTED / no domain repository calling this yet; that has not
+ * been true for some time (kpiRepository.ts, roiRepository.ts, and 10
+ * other ROI repositories under services/resultsVnext/roi/ all call
+ * `buildVisibilityScopedCte`/`wrapWithVisibilityScope` today).
  *
  * Threat model: this is the T3 mitigation from EXECUTION_LEDGER.md §4.3
  * ("Visibility leakage przez agregację" — counters/search/export/AI must
@@ -90,6 +93,12 @@
 import { hasEffectiveCapability, resolveEffectiveAccess } from '../../effectiveAccessService.js';
 
 import { RVN_RESOURCE_TYPES, type RvnResourceType } from './resourceTypes.js';
+// AMD-FLOW-ROI-VISIBILITY-002, Variant B — the governed ROI predicate.
+// visibilityResolver.ts does NOT import this file (no cycle): this file
+// importing IT is a one-directional dependency, same direction
+// resolveVisibility() and buildVisibilityScopedCte() already both point at
+// effectiveAccessService.ts independently.
+import { resolveRoiGovernedVisibility } from './visibilityResolver.js';
 
 export interface BuildVisibilityScopedCteParams {
   userId: string;
@@ -171,6 +180,19 @@ export async function buildVisibilityScopedCte(
   const hasRbacOverride =
     hasEffectiveCapability(access, '*') || hasEffectiveCapability(access, requiredCapability);
 
+  // AMD-FLOW-ROI-VISIBILITY-002, Variant B — evaluated ONLY when
+  // resourceType is 'roi_case' (hardcoded literal, not an import of
+  // ROI_RESOURCE_TYPE from roiCaseCommands.ts, to avoid a cycle: this file
+  // is imported BY roiRepository.ts, which is a sibling of
+  // roiCaseCommands.ts). This is a ROI-specific governed decision, not a
+  // generic visibility_mode — computing it for kpi/okr_set/etc. resource
+  // types would be a meaningless extra DB round-trip, and no resource of
+  // another type will ever be stamped 'ROI_GOVERNED'. `false` for every
+  // other resourceType simply means the branch below is never pushed for
+  // them, same as if this code did not exist.
+  const roiGovernedAllow =
+    resourceType === 'roi_case' ? (await resolveRoiGovernedVisibility({ userId, organizationId })).allow : false;
+
   const values: unknown[] = [organizationId, resourceType, userId];
 
   const branches: string[] = [
@@ -248,6 +270,23 @@ export async function buildVisibilityScopedCte(
         AND rv.visibility_mode = 'RESTRICTED_ACL'`,
   ];
 
+  if (roiGovernedAllow) {
+    // AMD-FLOW-ROI-VISIBILITY-002, Variant B — the ONE new branch, pushed
+    // in the SAME conditional shape as the RBAC-override branch below
+    // (allow -> push; deny -> simply absent from the UNION, fail closed by
+    // omission). This is the ONLY branch that may ever admit a
+    // 'ROI_GOVERNED' resource — see the RBAC-override branch's own
+    // exclusion of this mode just below for why that branch must never be
+    // a second, independent path to the same resources.
+    branches.push(
+      `SELECT rv.resource_type, rv.resource_id
+         FROM rvn_platform_resource_visibility rv
+        WHERE rv.organization_id = $1
+          AND rv.resource_type = $2
+          AND rv.visibility_mode = 'ROI_GOVERNED'`
+    );
+  }
+
   if (hasRbacOverride) {
     // RBAC/PBAC override — sees every resource of this type in the org
     // regardless of visibility_mode, EXCEPT restricted-sensitivity
@@ -255,6 +294,20 @@ export async function buildVisibilityScopedCte(
     // 2), matching visibilityResolver.ts's RESTRICTED_REQUIRES_BREAK_GLASS
     // deny exactly (break-glass emission is not built yet, so this branch
     // fails closed on that combination the same way the resolver does).
+    //
+    // AMD-FLOW-ROI-VISIBILITY-002, Variant B — ALSO excludes
+    // visibility_mode = 'ROI_GOVERNED'. THE REASON, not just the rule: a
+    // holder of '*' includes a platform SUPERADMIN token with NO
+    // organization_members row at all (decision 15A,
+    // effectiveAccessService.ts) — exactly the identity the governed ROI
+    // decision (resolveRoiGovernedVisibility) is required to deny. Before
+    // this exclusion, that SUPERADMIN would see every 'ROI_GOVERNED'
+    // resource through THIS branch without ever touching the governed
+    // decision above — the new mode would be authoritative in name and
+    // bypassed in fact. The carve-out below is the fix: this branch now
+    // admits "everything except restricted RESTRICTED_ACL AND except the
+    // governed ROI mode" — 'ROI_GOVERNED' resources are visible ONLY via
+    // the roiGovernedAllow branch above, never via this one, for any actor.
     //
     // This branch is deliberately UNIONed alongside the ordinary branches
     // above (not used as a replacement for them) — the design's own example
@@ -266,7 +319,8 @@ export async function buildVisibilityScopedCte(
          FROM rvn_platform_resource_visibility rv
         WHERE rv.organization_id = $1
           AND rv.resource_type = $2
-          AND NOT (rv.sensitivity = 'restricted' AND rv.visibility_mode = 'RESTRICTED_ACL')`
+          AND NOT (rv.sensitivity = 'restricted' AND rv.visibility_mode = 'RESTRICTED_ACL')
+          AND rv.visibility_mode <> 'ROI_GOVERNED'`
     );
   }
 

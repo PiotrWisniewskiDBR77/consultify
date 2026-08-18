@@ -291,6 +291,23 @@ async function loadRoiFinanceLinkById(client: PoolClient, linkId: string): Promi
  * reference) decides what "the Finance side of this link is gone" means for
  * itself.
  */
+// HAZARD (closure-b F2 read-surface audit, AMD-FLOW-ROI-VISIBILITY-002):
+// this function's own internal read (loadRoiFinanceLinkById, above) is a
+// bare `link_id` primary-key SELECT with NO organizationId parameter and
+// NO visibility/tenant check of any kind — it will return a link belonging
+// to ANY organization to ANY caller who knows or guesses a linkId. It is
+// exported and currently has ZERO real call sites anywhere in this
+// codebase (verified by grep — only this file's own comments mention the
+// name), so it is not reachable today. It is flagged here, not scoped,
+// because scoping an exported function with no current caller risks
+// guessing wrong about a signature a future caller actually needs — a
+// future caller MUST add its own organizationId check before or after
+// calling this, the same way `roiFinanceReconciliationAdapter.ts`'s
+// `resolveReconciliationDecision` does immediately after its own analogous
+// unscoped PK read (see that file's `readReconciliationByPk`, flagged the
+// same way). Sibling functions in THIS file that ARE reachable from
+// Teresa/AI paths go through the visibility-scoped repository CTE — this
+// one deliberately does not, and must never be assumed to.
 export async function getFinanceContextForLink(linkId: string): Promise<FinanceContextForLink> {
   const client = await acquirePgClient();
   let row: RoiFinanceLinkRow | undefined;

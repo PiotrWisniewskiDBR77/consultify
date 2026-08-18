@@ -454,6 +454,21 @@ export async function findActiveRoiCaseIdForInitiative(
  * `{userId, organizationId, caseId, reconciliationId}` for its ABAC join;
  * `resolveReconciliationDecision`'s signature has only the id, and the case
  * id is precisely what this read exists to discover. Read-only, PK lookup.
+ *
+ * HAZARD (closure-b F2 read-surface audit, AMD-FLOW-ROI-VISIBILITY-002):
+ * this SELECT has NO organizationId parameter and NO visibility/tenant
+ * check of its own — a bare `reconciliation_id` primary-key lookup that
+ * will return ANY organization's row. It is NOT exported (module-private),
+ * and its ONE current caller, `resolveReconciliationDecision` immediately
+ * below, re-validates `current.organizationId` against the caller-supplied
+ * `options.organizationId` right after this returns, converting a
+ * cross-tenant read into `ReconciliationNotFoundError` before anything
+ * else happens — so the hazard is contained TODAY, but only because that
+ * one caller remembers to check. Flagged rather than changed: this
+ * function's signature has no organizationId to filter by without also
+ * changing its one caller's contract, and that caller's own re-check
+ * already closes the gap correctly. A NEW caller of this function that
+ * skips an equivalent immediate check would reopen it.
  */
 async function readReconciliationByPk(
   reconciliationId: string
