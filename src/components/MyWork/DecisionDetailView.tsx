@@ -206,6 +206,15 @@ interface DecisionDetailViewProps {
   onSaved?: (data: any) => void;
 }
 
+export const aggregateDecisionImpact = (
+  impact: Pick<ImpactValues, 'scope' | 'schedule' | 'cost' | 'quality'>
+): 'low' | 'medium' | 'high' => {
+  const levels = [impact.scope, impact.schedule, impact.cost, impact.quality];
+  if (levels.includes('high')) return 'high';
+  if (levels.includes('medium')) return 'medium';
+  return 'low';
+};
+
 // VF1-4 (SPEC-A wzorzec, wg VF1-1 Task): gate for the visible loading-guard
 // swap (ad-hoc spinner → shared/states SkeletonState, record archetype).
 // Default OFF until Piotr accepts on screenshots (reguła #7).
@@ -1444,7 +1453,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       deciderId: deciderId || null,
       alternatives,
       selectedAlternativeId: selectedAlternativeId || null,
-      impact,
+      impact: aggregateDecisionImpact(impact),
     }),
     [
       title,
