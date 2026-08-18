@@ -1468,6 +1468,7 @@ router.get(
         t.expected_outcome as "expectedOutcome",
         t.created_at as "createdAt",
         t.updated_at as "updatedAt",
+        CAST(t.updated_at AS TEXT) as "versionToken",
         t.completed_at as "completedAt"
       FROM tasks t
       WHERE t.id = ? AND t.organization_id = ? AND ${ownerScope.whereSql}
@@ -1520,7 +1521,10 @@ router.put(
     // dokładnie tak jak w GET /personal-tasks/:id, gdzie ten sam filtr zdjęto
     // wcześniej (patrz komentarz przy 404 w detalu).
     const existing = await queryHelpers.queryOne<any>(
-      `SELECT id, status FROM tasks t WHERE id = ? AND organization_id = ? AND ${ownerScope.whereSql} LIMIT 1`,
+      `SELECT id, status, CAST(updated_at AS TEXT) as "versionToken"
+       FROM tasks t
+       WHERE id = ? AND organization_id = ? AND ${ownerScope.whereSql}
+       LIMIT 1`,
       [id, orgId, ...ownerScope.params]
     );
     if (!existing) {
@@ -1593,7 +1597,10 @@ router.put(
     }
 
     if (cols.has('updated_at')) {
-      setParts.push(`updated_at = CURRENT_TIMESTAMP`);
+      // Each queryRun is its own statement/transaction, so CURRENT_TIMESTAMP
+      // advances on PostgreSQL without relying on module-load-time dialect
+      // detection (static ESM imports can run before a test sets DB_TYPE).
+      setParts.push('updated_at = CURRENT_TIMESTAMP');
     }
 
     if (setParts.length === 0) {
@@ -1610,6 +1617,7 @@ router.put(
           t.expected_outcome as "expectedOutcome",
           t.created_at as "createdAt",
           t.updated_at as "updatedAt",
+          CAST(t.updated_at AS TEXT) as "versionToken",
           t.completed_at as "completedAt"
         FROM tasks t
       WHERE t.id = ? AND t.organization_id = ? AND ${ownerScope.whereSql}
@@ -1621,11 +1629,35 @@ router.put(
       return;
     }
 
+    const expectedVersionToken =
+      typeof req.body?.expectedVersionToken === 'string'
+        ? req.body.expectedVersionToken.trim()
+        : null;
     params.push(id, orgId, ...ownerScopeNoAlias.params);
-    await queryHelpers.queryRun(
-      `UPDATE tasks SET ${setParts.join(', ')} WHERE id = ? AND organization_id = ? AND ${ownerScopeNoAlias.whereSql}`,
+    let versionPredicate = '';
+    if (expectedVersionToken) {
+      versionPredicate = ' AND CAST(updated_at AS TEXT) = ?';
+      params.push(expectedVersionToken);
+    }
+    const updateResult = await queryHelpers.queryRun(
+      `UPDATE tasks SET ${setParts.join(', ')} WHERE id = ? AND organization_id = ? AND ${ownerScopeNoAlias.whereSql}${versionPredicate}`,
       params
     );
+    if (expectedVersionToken && Number(updateResult?.changes || 0) === 0) {
+      const current = await queryHelpers.queryOne<{ versionToken: string }>(
+        `SELECT CAST(updated_at AS TEXT) as "versionToken"
+         FROM tasks t
+         WHERE id = ? AND organization_id = ? AND ${ownerScope.whereSql}
+         LIMIT 1`,
+        [id, orgId, ...ownerScope.params]
+      );
+      res.status(409).json({
+        error: 'Task changed since it was opened',
+        code: 'TASK_VERSION_CONFLICT',
+        currentVersionToken: current?.versionToken || null,
+      });
+      return;
+    }
 
     const row = await queryHelpers.queryOne<any>(
       `
@@ -1640,6 +1672,7 @@ router.put(
         t.expected_outcome as "expectedOutcome",
         t.created_at as "createdAt",
         t.updated_at as "updatedAt",
+        CAST(t.updated_at AS TEXT) as "versionToken",
         t.completed_at as "completedAt"
       FROM tasks t
       WHERE t.id = ? AND t.organization_id = ? AND ${ownerScope.whereSql}

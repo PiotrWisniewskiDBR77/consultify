@@ -475,6 +475,65 @@ describe('M02-P04 — Tasks idempotency + lifecycle + tenant isolation (real Pos
     expect(afterDelete.status).toBe(404);
   });
 
+  itDB('optimistic token makes two-writer personal-task updates atomic', async (h) => {
+    const created = await request(app)
+      .post('/api/my-work/personal-tasks')
+      .set('Authorization', `Bearer ${h.tokenA1}`)
+      .send({
+        title: 'Two writer baseline',
+        idempotencyKey: `idem-two-writer-${suffix()}`,
+      });
+    expect(created.status).toBe(201);
+
+    const taskId = created.body.id;
+    const opened = await request(app)
+      .get(`/api/my-work/personal-tasks/${taskId}`)
+      .set('Authorization', `Bearer ${h.tokenA1}`);
+    expect(opened.status).toBe(200);
+    expect(opened.body.versionToken).toEqual(expect.any(String));
+
+    const foreignWithStolenToken = await request(app)
+      .put(`/api/my-work/personal-tasks/${taskId}`)
+      .set('Authorization', `Bearer ${h.tokenB}`)
+      .send({
+        title: 'Foreign writer must not reach version comparison',
+        expectedVersionToken: opened.body.versionToken,
+      });
+    expect(foreignWithStolenToken.status).toBe(404);
+
+    const firstWriter = await request(app)
+      .put(`/api/my-work/personal-tasks/${taskId}`)
+      .set('Authorization', `Bearer ${h.tokenA1}`)
+      .send({
+        title: 'First writer wins',
+        expectedVersionToken: opened.body.versionToken,
+      });
+    expect(firstWriter.status).toBe(200);
+    expect(firstWriter.body.versionToken).toEqual(expect.any(String));
+    expect(firstWriter.body.versionToken).not.toBe(opened.body.versionToken);
+
+    const staleWriter = await request(app)
+      .put(`/api/my-work/personal-tasks/${taskId}`)
+      .set('Authorization', `Bearer ${h.tokenA1}`)
+      .send({
+        title: 'Stale writer must lose',
+        expectedVersionToken: opened.body.versionToken,
+      });
+    expect(staleWriter.status).toBe(409);
+    expect(staleWriter.body).toMatchObject({
+      error: 'Task changed since it was opened',
+      code: 'TASK_VERSION_CONFLICT',
+      currentVersionToken: firstWriter.body.versionToken,
+    });
+
+    const readback = await request(app)
+      .get(`/api/my-work/personal-tasks/${taskId}`)
+      .set('Authorization', `Bearer ${h.tokenA1}`);
+    expect(readback.status).toBe(200);
+    expect(readback.body.title).toBe('First writer wins');
+    expect(readback.body.versionToken).toBe(firstWriter.body.versionToken);
+  });
+
   // ── GATE 4: cross-tenant / cross-owner-same-tenant / forged-field controls ──
 
   itDB('cross-tenant: org B cannot read, update, or delete org A\'s personal task', async (h) => {

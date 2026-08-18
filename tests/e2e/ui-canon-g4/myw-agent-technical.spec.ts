@@ -432,6 +432,44 @@ test.describe.serial('MYW-AGT-UI-CANON owner-free technical closure', () => {
         // An empty-state message must NOT coexist with the seeded rows — that
         // combination is how a stale cached shell fakes a populated surface.
         await expect(page.getByText(/No decisions awaiting|All caught up/i)).toHaveCount(0);
+
+        // Load the real task into the signed browser first, then mutate it from
+        // a second signed client. The browser must keep its local edit and show
+        // the conflict; silently reloading here would destroy the user's draft.
+        await page.goto(`/my-work?taskId=${encodeURIComponent(seed.taskId)}`, {
+          waitUntil: 'domcontentloaded',
+        });
+        const titleButton = page.getByRole('button', { name: titles.taskTitle, exact: true });
+        await expect(titleButton).toBeVisible({ timeout: 30_000 });
+
+        const opened = await identityApi.get(`/api/my-work/personal-tasks/${seed.taskId}`);
+        expect(opened.status()).toBe(200);
+        const openedTask = await opened.json();
+        expect(openedTask.versionToken).toEqual(expect.any(String));
+
+        const concurrentTitle = `MYW concurrent ${own.runId}`;
+        const concurrent = await identityApi.put(`/api/my-work/personal-tasks/${seed.taskId}`, {
+          data: {
+            title: concurrentTitle,
+            expectedVersionToken: openedTask.versionToken,
+          },
+        });
+        expect(concurrent.status()).toBe(200);
+
+        const localDraftTitle = `MYW preserved draft ${own.runId}`;
+        await titleButton.click();
+        const titleInput = page.locator('input[type="text"]:focus');
+        await expect(titleInput).toHaveValue(titles.taskTitle);
+        await titleInput.fill(localDraftTitle);
+        await titleInput.press('Enter');
+        await expect(
+          page.getByText(/changed in another session.*draft is preserved/i)
+        ).toBeVisible({ timeout: 30_000 });
+        await expect(page.getByRole('button', { name: localDraftTitle, exact: true })).toBeVisible();
+
+        const afterConflict = await identityApi.get(`/api/my-work/personal-tasks/${seed.taskId}`);
+        expect(afterConflict.status()).toBe(200);
+        expect((await afterConflict.json()).title).toBe(concurrentTitle);
       } finally {
         await context.close();
       }

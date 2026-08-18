@@ -500,6 +500,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   // Origin tracking
   const [sourceType, setSourceType] = useState<string | null>(null);
   const [sourceId, setSourceId] = useState<string | null>(null);
+  const [versionToken, setVersionToken] = useState<string | null>(null);
 
   // Stakeholders
   const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
@@ -1006,6 +1007,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
       setLinkedItems(task.linkedItems || []);
       setSourceType(task.sourceType || task.source_type || null);
       setSourceId(task.sourceId || task.source_id || null);
+      setVersionToken(task.versionToken || null);
       setBlockedByDecisionId(task.blockedByDecisionId || '');
 
       // D-A / defekt D12 (2026-07-22): tryb otwarcia zależy od STANU zadania,
@@ -1098,6 +1100,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     setEscalation(null);
     setBlockedByDecisionId('');
     setRelatedNotes([]);
+    setVersionToken(null);
   };
 
   const handleSave = async (silent = false) => {
@@ -1182,7 +1185,11 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
       }
 
       if (taskId) {
-        await Api.updatePersonalTask(taskId, personalPayload);
+        const updated = await Api.updatePersonalTask(taskId, {
+          ...personalPayload,
+          expectedVersionToken: versionToken,
+        });
+        setVersionToken(updated?.versionToken || null);
         if (!silent) toast.success(t('myWork.taskDetail.toastSuccess', 'Task updated'));
         emitMyWorkEvent({ type: 'item:updated', entityType: 'task', entityId: taskId });
         if (personalPayload?.dueDate) {
@@ -1234,7 +1241,20 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
       }
     } catch (error) {
       console.error('Failed to save task', error);
-      if (!silent) toast.error(t('myWork.taskDetail.toastError3', 'Failed to save task'));
+      const apiError = error as { status?: number; data?: { code?: string } } | null;
+      if (apiError?.status === 409 && apiError.data?.code === 'TASK_VERSION_CONFLICT') {
+        // The draft was persisted before the request. Keep every local field in
+        // place so the user can copy/compare it; never silently reload and lose
+        // their work after a concurrent edit.
+        toast.error(
+          t(
+            'myWork.taskDetail.versionConflict',
+            'This task changed in another session. Your draft is preserved; reopen the task to review the latest version.'
+          )
+        );
+      } else if (!silent) {
+        toast.error(t('myWork.taskDetail.toastError3', 'Failed to save task'));
+      }
     } finally {
       setSaving(false);
     }
