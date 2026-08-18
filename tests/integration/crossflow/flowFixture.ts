@@ -405,6 +405,27 @@ export async function seedTenants(client: pg.Client): Promise<void> {
  * Synthetic test-only prerequisite for the ROI owner. This is deliberately
  * not a business step and never invents a production default: a signed ACTIVE
  * ADMIN calls the canonical policy publisher on this suite's pinned client.
+ *
+ * AMD-FLOW-ROI-VISIBILITY-002 STATUS (closure-b F2): this function is now
+ * ONLY a workaround for a SEPARATE, still-open gap it does not fix —
+ * `createRoiCase` (roiCaseCommands.ts) fails closed on
+ * `RoiCaseNoActiveVisibilityPolicyError` unless an active
+ * `rvn_platform_visibility_policies` row exists for `domain='roi'`, and NO
+ * production writer for that row exists anywhere in this codebase (the
+ * only other caller of `publishVisibilityPolicy` is OKR's `publishProgram`,
+ * `domain='okr'`) — verified by F2's Phase 1 grep, confirmed independently
+ * by the packet lead. This function remains ONLY so `createRoiCase`'s
+ * internal call (via `closureReceiptRoiCaseAdapter.ts`, invoked by this
+ * suite's closure-delivery worker) does not fail closed here in the test.
+ * It is NOT the release-qualification policy the owner decision asked for
+ * — see `provisionRoiGovernedVisibilityPolicy` below for that, which gates
+ * the actual READ path (`resolveRoiGovernedVisibility`,
+ * `GET /cases`/`GET /cases/:caseId`) this suite also now exercises for
+ * real. Whether the OLD `domain='roi'` policy path should ever get a real
+ * production writer — and if so whether it should be THIS command or
+ * something else — is OWNER DECISION REQUIRED (F2 escalation (b)); this
+ * function is deliberately left exactly as it was, not resolved as a side
+ * effect of this packet.
  */
 export async function provisionSyntheticRoiVisibilityPolicy(
   client: pg.Client,
@@ -461,6 +482,36 @@ export async function provisionSyntheticRoiVisibilityPolicy(
 }
 
 /**
+ * AMD-FLOW-ROI-VISIBILITY-002 — the REAL, production-capable governance
+ * command (server/src/services/resultsVnext/platform/visibilityResolver.ts,
+ * `publishRoiGovernedVisibilityPolicy`), called through this suite's own
+ * pinned JWT actor exactly the way a real OWNER/ADMIN would from the route
+ * layer — NOT a raw SQL insert, NOT a bypass. This is what
+ * `resolveRoiGovernedVisibility` (and, through it, `GET /cases` /
+ * `GET /cases/:caseId`) actually checks. Unlike
+ * `provisionSyntheticRoiVisibilityPolicy` above, this is the intended
+ * production path, not a test-only workaround.
+ */
+export async function provisionRoiGovernedVisibilityPolicy(
+  actor: CfActor,
+  organizationId: string
+): Promise<{
+  outcome: 'applied' | 'replayed';
+  publication: { organizationId: string; publishedBy: string; publishedAt: string; policyKey: string };
+}> {
+  const { publishRoiGovernedVisibilityPolicy, ROI_GOVERNED_VISIBILITY_POLICY } = await import(
+    '../../../server/src/services/resultsVnext/platform/visibilityResolver.js'
+  );
+  return publishRoiGovernedVisibilityPolicy({
+    organizationId,
+    actorUserId: actor.id,
+    policyKey: ROI_GOVERNED_VISIBILITY_POLICY.key,
+    policyDigest: ROI_GOVERNED_VISIBILITY_POLICY.digest,
+    idempotencyKey: cfId('roi-governed-visibility-publish', organizationId, actor.id),
+  });
+}
+
+/**
  * Deletes every row this lane created, in FK-safe order, and returns the
  * per-table delete counts so a suite can assert ZERO residue instead of
  * trusting that cleanup ran. Unknown/absent tables are skipped rather than
@@ -514,6 +565,13 @@ export async function purgeResultsLineageFixture(client: pg.Client): Promise<voi
     throw new Error('FLOW Results cleanup requires a flow_* disposable database');
   const tables = [
     'rvn_finance_reconciliation_decisions', 'rvn_finance_reconciliation_grant_events',
+    // AMD-FLOW-ROI-VISIBILITY-002 — same append-only shape as the line above
+    // (BEFORE UPDATE OR DELETE trigger, RAISE EXCEPTION), cleaned the exact
+    // same sanctioned way: this function's own `session_replication_role=
+    // 'replica'` transaction-scoped escape hatch (line below), already gated
+    // behind FLOW_ALLOW_IMMUTABLE_FIXTURE_CLEANUP + the flow_* disposable-db
+    // check above — never a persistent ALTER TABLE ... DISABLE TRIGGER.
+    'rvn_roi_visibility_governance',
     'rvn_roi_variance_causes', 'rvn_roi_scenario_overrides', 'rvn_roi_finance_projections',
     'rvn_roi_variances', 'rvn_roi_actual_entries', 'rvn_roi_actual_snapshots',
     'rvn_roi_approval_snapshots', 'rvn_roi_benefit_evidence_links', 'rvn_roi_calculation_runs',

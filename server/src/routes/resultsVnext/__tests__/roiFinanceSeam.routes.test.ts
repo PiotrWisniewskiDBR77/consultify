@@ -23,6 +23,8 @@ const mockOpenRoiFinanceReconciliation = vi.fn();
 const mockUpdateRoiFinanceReconciliationStatus = vi.fn();
 const mockRecordFinanceOwnerGrantEvent = vi.fn();
 const mockFlagEvidenceLinkFreshnessCheck = vi.fn();
+const mockPublishRoiGovernedVisibilityPolicy = vi.fn();
+const mockResolveRoiGovernedVisibility = vi.fn().mockResolvedValue({ allow: true, reason: 'OWNER' });
 
 vi.mock('../../../middleware/auth.middleware.js', () => ({
   verifyToken: (req: any, _res: any, next: () => void) => {
@@ -72,8 +74,23 @@ vi.mock('../../../services/resultsVnext/roi/roiBenefitEvidenceLinkCommands.js', 
     flagEvidenceLinkFreshnessCheck: (...args: unknown[]) => mockFlagEvidenceLinkFreshnessCheck(...args),
   };
 });
+vi.mock('../../../services/resultsVnext/platform/visibilityResolver.js', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../../../services/resultsVnext/platform/visibilityResolver.js')>();
+  return {
+    ...actual,
+    publishRoiGovernedVisibilityPolicy: (...args: unknown[]) => mockPublishRoiGovernedVisibilityPolicy(...args),
+    resolveRoiGovernedVisibility: (...args: unknown[]) => mockResolveRoiGovernedVisibility(...args),
+  };
+});
 
 const { AtomicWriteConflictError } = await import('../../../services/resultsVnext/platform/atomicWrite.js');
+const {
+  ROI_GOVERNED_VISIBILITY_POLICY,
+  RoiGovernedVisibilityPolicyMismatchError,
+  RoiVisibilityGovernanceActorNotAuthorizedError,
+  RoiGovernedVisibilityPolicyCollisionError,
+} = await import('../../../services/resultsVnext/platform/visibilityResolver.js');
 const { RoiFinanceLinkNotFoundError, RoiFinanceReconciliationNotFoundError, RoiFinanceReconciliationValidationError } =
   await import('../../../services/resultsVnext/roi/roiFinanceReconciliationCommands.js');
 const { RoiBenefitEvidenceLinkValidationError } = await import(
@@ -471,5 +488,66 @@ describe('POST .../kpi-evidence-links/:linkId/freshness-check', () => {
     expect(mockFlagEvidenceLinkFreshnessCheck).toHaveBeenCalledWith(
       expect.objectContaining({ reason: 'Quarterly review acknowledgment' })
     );
+  });
+});
+
+// ==========================================================================
+// AMD-FLOW-ROI-VISIBILITY-002 — POST /visibility-policy
+// ==========================================================================
+
+describe('POST /visibility-policy', () => {
+  it('derives org/actor from auth and always publishes the one pinned canonical policy (never client-supplied)', async () => {
+    mockPublishRoiGovernedVisibilityPolicy.mockResolvedValueOnce({
+      outcome: 'applied',
+      publication: { organizationId: 'org-1', publishedBy: 'user-actor', publishedAt: '2026-08-18T00:00:00.000Z', policyKey: ROI_GOVERNED_VISIBILITY_POLICY.key },
+    });
+    const response = await request(createApp())
+      .post('/api/vnext/results/roi/visibility-policy')
+      .send({ idempotencyKey: 'publish-key-1' });
+    expect(response.status).toBe(201);
+    expect(response.body.outcome).toBe('applied');
+    expect(mockPublishRoiGovernedVisibilityPolicy).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      actorUserId: 'user-actor',
+      policyKey: ROI_GOVERNED_VISIBILITY_POLICY.key,
+      policyDigest: ROI_GOVERNED_VISIBILITY_POLICY.digest,
+      idempotencyKey: 'publish-key-1',
+    });
+  });
+
+  it('200s (not 201) on a replayed outcome', async () => {
+    mockPublishRoiGovernedVisibilityPolicy.mockResolvedValueOnce({
+      outcome: 'replayed',
+      publication: { organizationId: 'org-1', publishedBy: 'user-actor', publishedAt: '2026-08-18T00:00:00.000Z', policyKey: ROI_GOVERNED_VISIBILITY_POLICY.key },
+    });
+    const response = await request(createApp()).post('/api/vnext/results/roi/visibility-policy').send({});
+    expect(response.status).toBe(200);
+    expect(response.body.outcome).toBe('replayed');
+  });
+
+  it('maps RoiVisibilityGovernanceActorNotAuthorizedError to 403', async () => {
+    mockPublishRoiGovernedVisibilityPolicy.mockRejectedValueOnce(new RoiVisibilityGovernanceActorNotAuthorizedError());
+    const response = await request(createApp()).post('/api/vnext/results/roi/visibility-policy').send({});
+    expect(response.status).toBe(403);
+  });
+
+  it('maps RoiGovernedVisibilityPolicyCollisionError to 409', async () => {
+    mockPublishRoiGovernedVisibilityPolicy.mockRejectedValueOnce(new RoiGovernedVisibilityPolicyCollisionError('org-1'));
+    const response = await request(createApp()).post('/api/vnext/results/roi/visibility-policy').send({});
+    expect(response.status).toBe(409);
+  });
+
+  it('maps RoiGovernedVisibilityPolicyMismatchError to 400 (defense in depth — the route never actually sends a mismatched policy)', async () => {
+    mockPublishRoiGovernedVisibilityPolicy.mockRejectedValueOnce(new RoiGovernedVisibilityPolicyMismatchError());
+    const response = await request(createApp()).post('/api/vnext/results/roi/visibility-policy').send({});
+    expect(response.status).toBe(400);
+  });
+
+  it('400s on an unknown body field (idempotencyKey is the only accepted field)', async () => {
+    const response = await request(createApp())
+      .post('/api/vnext/results/roi/visibility-policy')
+      .send({ idempotencyKey: 'k', mode: 'OPEN_ORG' });
+    expect(response.status).toBe(400);
+    expect(mockPublishRoiGovernedVisibilityPolicy).not.toHaveBeenCalled();
   });
 });

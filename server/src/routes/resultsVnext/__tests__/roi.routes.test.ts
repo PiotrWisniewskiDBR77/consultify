@@ -74,6 +74,26 @@ vi.mock('../../../services/resultsVnext/roi/roiRepository.js', () => ({
   getRoiBaseline: (...args: unknown[]) => mockGetRoiBaseline(...args),
 }));
 
+// AMD-FLOW-ROI-VISIBILITY-002 — roi.routes.ts now calls
+// resolveRoiGovernedVisibility() in front of GET /cases and
+// GET /cases/:caseId (see roi.routes.ts). Default ALLOW here so every
+// pre-existing test in this file (none of which know about this new gate)
+// keeps exercising exactly the repository-level behavior it already
+// asserts on — this mock exists ONLY to stop those routes from making a
+// real acquirePgClient() call in a route-contract test that mocks
+// everything else. publishRoiGovernedVisibilityPolicy is intentionally
+// left unmocked (falls through to the real, unused export) since no test
+// in this file calls POST /visibility-policy.
+const mockResolveRoiGovernedVisibility = vi.fn().mockResolvedValue({ allow: true, reason: 'OWNER' });
+vi.mock('../../../services/resultsVnext/platform/visibilityResolver.js', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../../../services/resultsVnext/platform/visibilityResolver.js')>();
+  return {
+    ...actual,
+    resolveRoiGovernedVisibility: (...args: unknown[]) => mockResolveRoiGovernedVisibility(...args),
+  };
+});
+
 const { RoiCaseNoActiveVisibilityPolicyError, RoiCaseNotReadyForReviewError, RoiCaseValidationError } =
   await import('../../../services/resultsVnext/roi/roiCaseCommands.js');
 const { RoiBaselineFrozenError } = await import('../../../services/resultsVnext/roi/roiBaselineCommands.js');
@@ -235,6 +255,15 @@ describe('POST /api/vnext/results/roi/cases + GET /cases/:caseId — create -> g
     expect(response.body.code).toBe('NOT_FOUND');
   });
 
+  it('AMD-FLOW-ROI-VISIBILITY-002: 404s GET when the governed gate denies — same NOT_FOUND shape as an ' +
+    'absent case, never a 403, and never calls the repository at all', async () => {
+    mockResolveRoiGovernedVisibility.mockResolvedValueOnce({ allow: false, reason: 'ORDINARY_MEMBER_DENIED' });
+    const response = await request(createApp()).get(`/api/vnext/results/roi/cases/${CASE_ID}`);
+    expect(response.status).toBe(404);
+    expect(response.body.code).toBe('NOT_FOUND');
+    expect(mockGetRoiCase).not.toHaveBeenCalled();
+  });
+
   it('400s create when required fields are missing (Zod validation)', async () => {
     const response = await request(createApp())
       .post('/api/vnext/results/roi/cases')
@@ -278,6 +307,15 @@ describe('GET /api/vnext/results/roi/cases — listRoiCases', () => {
       limit: 10,
       offset: 5,
     });
+  });
+
+  it('AMD-FLOW-ROI-VISIBILITY-002: returns an empty list, never a 403, when the governed gate denies — ' +
+    'and never calls the repository at all', async () => {
+    mockResolveRoiGovernedVisibility.mockResolvedValueOnce({ allow: false, reason: 'NO_GOVERNED_POLICY' });
+    const response = await request(createApp()).get('/api/vnext/results/roi/cases');
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ cases: [] });
+    expect(mockListRoiCases).not.toHaveBeenCalled();
   });
 });
 

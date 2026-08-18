@@ -15,6 +15,7 @@ import {
   dbReachable,
   dropTenants,
   newClient,
+  provisionRoiGovernedVisibilityPolicy,
   purgeFixture,
   purgeImmutableLifecycleGateFixture,
   purgeResultsLineageFixture,
@@ -45,6 +46,23 @@ beforeAll(async () => {
   ).rejects.toThrow('same-tenant ADMIN');
   const policy = await provisionSyntheticRoiVisibilityPolicy(client, TENANT_A.admin, TENANT_A.id);
   expect(policy.fixtureKind).toBe('SYNTHETIC_TEST_ONLY');
+
+  // AMD-FLOW-ROI-VISIBILITY-002 — the REAL governed policy, published
+  // through the same command the route layer calls (publishRoiGovernedVisibilityPolicy),
+  // NOT a raw insert. This is what GET /cases and GET /cases/:caseId below
+  // actually check (resolveRoiGovernedVisibility) — replacing the synthetic
+  // OPEN_ORG fixture above as the thing THIS suite's read path depends on.
+  // The synthetic fixture above remains ONLY because createRoiCase (via
+  // closureReceiptRoiCaseAdapter.ts, invoked by the closure-delivery worker
+  // below) still depends on the SEPARATE, still-unresolved legacy
+  // domain='roi' policy — see flowFixture.ts's doc comment on
+  // provisionSyntheticRoiVisibilityPolicy for why that is OWNER DECISION
+  // REQUIRED, not something this packet resolves.
+  await expect(provisionRoiGovernedVisibilityPolicy(TENANT_A.owner, 'foreign-tenant')).rejects.toThrow(
+    'same-tenant ACTIVE OWNER or ADMIN'
+  );
+  const governedPolicy = await provisionRoiGovernedVisibilityPolicy(TENANT_A.owner, TENANT_A.id);
+  expect(governedPolicy.outcome).toBe('applied');
   const initiativesRouter = (await import('../../../server/src/routes/pmo/initiatives.routes.js')).default;
   const proposalsRouter = (await import('../../../server/src/routes/v8/agent-proposals.routes.js')).default;
   const roiRouter = (await import('../../../server/src/routes/resultsVnext/roi.routes.js')).default;
@@ -87,6 +105,35 @@ afterAll(async () => {
     'tool_sessions',
     'projects',
   ]);
+  // AMD-FLOW-ROI-VISIBILITY-002 — CORRECTION to an earlier version of this
+  // teardown (closure-b F2): the packet lead's initial framing ("zero
+  // residue for an append-only-ledger-referenced org is structurally
+  // impossible short of dropping the database") was right about the
+  // trigger — a plain DELETE, and even DELETE-via-ON-DELETE-CASCADE, both
+  // still fire a BEFORE DELETE FOR EACH ROW trigger and both get rejected,
+  // verified empirically. It was wrong about there being NO sanctioned way
+  // around that HERE specifically: `purgeResultsLineageFixture` above
+  // already carries a transaction-scoped `SET LOCAL session_replication_role=
+  // 'replica'` escape hatch (flowFixture.ts), gated behind
+  // FLOW_ALLOW_IMMUTABLE_FIXTURE_CLEANUP=1 and a `flow_*`-prefixed
+  // disposable-database name check — built for, and already used on,
+  // `rvn_finance_reconciliation_grant_events` (the pre-existing sibling
+  // table this suite's own finance-owner-grants step above already
+  // populates for TENANT_A). `replica` mode suppresses ordinary (non-ALWAYS)
+  // triggers for the duration of the transaction only, auto-reverting at
+  // COMMIT/ROLLBACK — NOT a persistent `ALTER TABLE ... DISABLE TRIGGER`,
+  // so it does not "publish the claim that the guard is liftable" the way a
+  // permanent disable would.
+  //
+  // `rvn_roi_visibility_governance` (this packet's own table) is now added
+  // to `purgeResultsLineageFixture`'s table list (flowFixture.ts), so it is
+  // cleaned the SAME sanctioned way, in the SAME already-open transaction,
+  // BEFORE `dropTenants()` runs below — verified empirically (closure-b F2)
+  // that after this cleanup, `organizations` for TENANT_A deletes with zero
+  // FK violation, exactly like TENANT_B always has. `dropTenants()` itself
+  // (the SHARED helper) is therefore called completely unmodified, and the
+  // residue assertion below is a REAL, MEASURED zero — not an accepted
+  // permanent non-zero — because zero turned out to be reachable after all.
   await dropTenants(client);
   const postCommit = await client.query<{ residue: string; triggers_enabled: string; advisory: string }>(
     `SELECT (
@@ -98,7 +145,8 @@ afterAll(async () => {
        (SELECT count(*) FROM v8_agent_proposal_versions WHERE organization_id=ANY($1::text[])) +
        (SELECT count(*) FROM rvn_roi_cases WHERE organization_id=ANY($1::text[])) +
        (SELECT count(*) FROM rvn_platform_events WHERE organization_id=ANY($1::text[])) +
-       (SELECT count(*) FROM rvn_finance_reconciliation_grant_events WHERE organization_id=ANY($1::text[]))
+       (SELECT count(*) FROM rvn_finance_reconciliation_grant_events WHERE organization_id=ANY($1::text[])) +
+       (SELECT count(*) FROM rvn_roi_visibility_governance WHERE organization_id=ANY($1::text[]))
      )::text residue,
      (SELECT count(*)::text FROM pg_trigger WHERE NOT tgisinternal AND tgenabled='O'
        AND tgname=ANY($3::text[])) triggers_enabled,
@@ -111,10 +159,11 @@ afterAll(async () => {
         'trg_rvn_fin_reconciliation_grant_insert_guard',
         'trg_rvn_fin_reconciliation_decision_append_only',
         'trg_rvn_fin_reconciliation_grant_append_only',
+        'trg_rvn_roi_visibility_governance_append_only',
       ],
     ]
   );
-  expect(postCommit.rows[0]).toEqual({ residue: '0', triggers_enabled: '4', advisory: '0' });
+  expect(postCommit.rows[0]).toEqual({ residue: '0', triggers_enabled: '5', advisory: '0' });
   await client.end();
 });
 
