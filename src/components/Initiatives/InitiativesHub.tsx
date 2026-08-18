@@ -156,6 +156,14 @@ const unwrapApiList = (response: unknown, listKey?: string): any[] => {
   return [];
 };
 
+export const readV8InitiativeId = (response: unknown): string => {
+  if (!response || typeof response !== 'object') return '';
+  const record = response as Record<string, unknown>;
+  const candidate = 'initiative' in record ? record.initiative : record;
+  if (!candidate || typeof candidate !== 'object') return '';
+  return String((candidate as Record<string, unknown>).id ?? '').trim();
+};
+
 // D1.2: Complete status set — includes execution/done + archived/cancelled for restoration
 const ALLOWED_STATUSES: InitiativeStatus[] =
   MODULE_STATUSES.length > 0
@@ -849,8 +857,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
           try {
             const v8Response = await V8PlanningApi.getInitiative(openId);
-            const v8Initiative = v8Response?.initiative || v8Response;
-            if (String(v8Initiative?.id || '') === openId) {
+            if (readV8InitiativeId(v8Response) === openId) {
               response = v8Response;
             } else if (!fromList) {
               throw new Error('Initiative is not registered in the V8 runtime');

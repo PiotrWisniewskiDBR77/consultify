@@ -116,7 +116,7 @@ vi.mock('../../../store/useAppStore', () => ({
   useAppStore: () => appStoreState,
 }));
 
-import { InitiativesHub } from '../InitiativesHub';
+import { InitiativesHub, readV8InitiativeId } from '../InitiativesHub';
 
 const renderHub = () =>
   render(
@@ -146,6 +146,13 @@ afterEach(() => {
 });
 
 describe('InitiativesHub smoke', () => {
+  it('reads a V8 initiative id from direct and canonical envelopes and fails closed otherwise', () => {
+    expect(readV8InitiativeId({ id: 'direct-1' })).toBe('direct-1');
+    expect(readV8InitiativeId({ initiative: { id: 'enveloped-1' } })).toBe('enveloped-1');
+    expect(readV8InitiativeId({ initiative: null })).toBe('');
+    expect(readV8InitiativeId({})).toBe('');
+  });
+
   it('mounts and renders the hub shell with an empty portfolio', async () => {
     renderHub();
     await waitFor(() => {
