@@ -36,6 +36,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   clearFeatureFlagOverrides();
+  vi.unstubAllGlobals();
 });
 
 const BV_ID = 'bv-valuation-1';
@@ -260,5 +261,93 @@ describe('ValuationWorkspace — honest PL variant-load error message (ID_BRIDGE
     expect(screen.getByTestId('valuation-variant-error').textContent).toMatch(
       /nie istnieje albo nie masz do niej dostępu/
     );
+  });
+});
+
+describe('ValuationWorkspace — real legacy recommendation candidate handoff', () => {
+  it('binds the explicit legacy valuation to its real recommendation and reconciles duplicate confirm', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          valuation: {
+            advisory: {
+              recommendations: [{ id: 'rec-real-1', title: 'Reduce governed execution risk' }],
+            },
+          },
+        }),
+      })
+    );
+    const candidateHandoffApi = {
+      preview: vi.fn().mockResolvedValue({
+        eligible: true,
+        preview: {
+          title: 'Reduce governed execution risk',
+          rationale: 'Exact source recommendation',
+          sourceType: 'finance_valuation_recommendation',
+          sourceId: 'rec-real-1',
+          sourceSnapshot: { sourceVersion: '3', sourceFingerprint: 'a'.repeat(64) },
+        },
+      }),
+      confirm: vi.fn().mockResolvedValue({ created: false, candidateId: 'candidate-existing' }),
+      get: vi.fn().mockResolvedValue({
+        id: 'receipt-1',
+        organizationId: 'org-1',
+        sourceType: 'finance_valuation_recommendation',
+        sourceId: 'rec-real-1',
+        candidateId: 'candidate-existing',
+        createdBy: 'user-1',
+        createdAt: '2026-08-18T00:00:00Z',
+        sourceSnapshot: { sourceVersion: '3', sourceFingerprint: 'a'.repeat(64) },
+      }),
+    };
+
+    render(
+      <ValuationWorkspace
+        businessVersionId={BV_ID}
+        legacyValuationId="legacy-valuation-1"
+        api={makeApi()}
+        candidateHandoffApi={candidateHandoffApi as any}
+        initialStepId="advisor"
+      />
+    );
+
+    const open = await screen.findByRole('button', {
+      name: 'Wyślij jako kandydata na Initiative',
+    });
+    expect(screen.getByText('Reduce governed execution risk')).toBeInTheDocument();
+    expect(screen.getByText(/Źródło: rec-real-1/)).toBeInTheDocument();
+    fireEvent.click(open);
+    await waitFor(() => expect(candidateHandoffApi.preview).toHaveBeenCalledWith('rec-real-1'));
+    fireEvent.click(await screen.findByRole('button', { name: 'Wyślij' }));
+    await waitFor(() => expect(candidateHandoffApi.confirm).toHaveBeenCalledWith('rec-real-1'));
+    await waitFor(() => expect(candidateHandoffApi.get).toHaveBeenCalledWith('rec-real-1'));
+    expect(await screen.findByText(/już istnieje — nie utworzono duplikatu/)).toBeInTheDocument();
+  });
+
+  it('fails closed while the tenant-scoped recommendation source is loading or unavailable', async () => {
+    let rejectLoad!: (reason: Error) => void;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockReturnValue(new Promise((_resolve, reject) => (rejectLoad = reject)))
+    );
+    render(
+      <ValuationWorkspace
+        businessVersionId={BV_ID}
+        legacyValuationId="legacy-valuation-1"
+        api={makeApi()}
+        initialStepId="advisor"
+      />
+    );
+    expect(await screen.findByText('Weryfikowanie źródła rekomendacji…')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Wyślij jako kandydata na Initiative' })
+    ).not.toBeInTheDocument();
+    rejectLoad(new Error('tenant lookup unavailable'));
+    expect(await screen.findByText(/Przekazanie kandydata jest zablokowane/)).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Wyślij jako kandydata na Initiative' })
+    ).not.toBeInTheDocument();
   });
 });

@@ -150,14 +150,18 @@ const OkrCyclesPage = lazyWithRetry(() =>
 // RN-G5 scopegap task 1 (§G #30) — cross-cutting Attention view
 // (`ROUTES.RESULTS_ATTENTION`), D10: one view, not a fourth registry.
 const ResultsAttentionPage = lazyWithRetry(() =>
-  import('@/components/ResultsVNext/attention/ResultsAttentionPage').then((m) => ({ default: m.default }))
+  import('@/components/ResultsVNext/attention/ResultsAttentionPage').then((m) => ({
+    default: m.default,
+  }))
 );
 // RN-G5 scopegap task 3 (§G #11) — ROI org PIR-outcomes perspective
 // (`ROUTES.RESULTS_ROI.PIR_OUTCOMES`), standalone route until
 // `ResultsRoiHub.tsx` (out of this package's allowlist) folds it in as a
 // third Menu 2 tab — see `RoiPirOutcomesTab.tsx`'s own header.
 const ResultsRoiPirOutcomesPage = lazyWithRetry(() =>
-  import('@/components/ResultsVNext/roi/ResultsRoiPirOutcomesPage').then((m) => ({ default: m.default }))
+  import('@/components/ResultsVNext/roi/ResultsRoiPirOutcomesPage').then((m) => ({
+    default: m.default,
+  }))
 );
 // RN-G3 lane (2026-08-11) — full KPI tool, klasa L (`/results/kpi/:kpiId`,
 // D03) + Deviation Case subview (`/results/kpi/:kpiId/deviation-cases/:caseId`,
@@ -802,10 +806,7 @@ const AuditsFlagGate: React.FC<{
 const AuditsMethodHubRoute: React.FC = () => {
   const { isEnabled } = useFeatureFlagsContext();
   return (
-    <AuditsFlagGate
-      enabled={isEnabled('auditsFiveSurfacesV1')}
-      label="Ładowanie modułu audytów…"
-    >
+    <AuditsFlagGate enabled={isEnabled('auditsFiveSurfacesV1')} label="Ładowanie modułu audytów…">
       <AuditsMethodHub />
     </AuditsFlagGate>
   );
@@ -820,10 +821,7 @@ const AuditsMethodHubRoute: React.FC = () => {
 const CriterionWorkspaceRoute: React.FC = () => {
   const { isEnabled } = useFeatureFlagsContext();
   return (
-    <AuditsFlagGate
-      enabled={isEnabled('auditsFiveSurfacesV1')}
-      label="Ładowanie kryterium audytu…"
-    >
+    <AuditsFlagGate enabled={isEnabled('auditsFiveSurfacesV1')} label="Ładowanie kryterium audytu…">
       <CriterionWorkspace />
     </AuditsFlagGate>
   );
@@ -1638,17 +1636,17 @@ export const AppRoutes: React.FC = () => {
           path="/audit-programs"
           element={
             <ProtectedRoute requireAuth={true}>
-            <BetaGate moduleId="MODULE_AUDITS">
-              <MainLayout breadcrumbs={breadcrumbs || ['Audits']}>
-                <RouteErrorBoundary>
-                  <AnimationWrapper variant="slideUp">
-                    <Suspense fallback={<LoadingScreen message="Loading audits..." />}>
-                      <AuditProgramsHub />
-                    </Suspense>
-                  </AnimationWrapper>
-                </RouteErrorBoundary>
-              </MainLayout>
-            </BetaGate>
+              <BetaGate moduleId="MODULE_AUDITS">
+                <MainLayout breadcrumbs={breadcrumbs || ['Audits']}>
+                  <RouteErrorBoundary>
+                    <AnimationWrapper variant="slideUp">
+                      <Suspense fallback={<LoadingScreen message="Loading audits..." />}>
+                        <AuditProgramsHub />
+                      </Suspense>
+                    </AnimationWrapper>
+                  </RouteErrorBoundary>
+                </MainLayout>
+              </BetaGate>
             </ProtectedRoute>
           }
         />
@@ -1662,17 +1660,17 @@ export const AppRoutes: React.FC = () => {
           path="/audit-programs/drd-report/:reportId"
           element={
             <ProtectedRoute requireAuth={true}>
-            <BetaGate moduleId="MODULE_AUDITS">
-              <MainLayout breadcrumbs={breadcrumbs || ['Audits', 'Raport DRD']}>
-                <RouteErrorBoundary>
-                  <AnimationWrapper variant="slideUp">
-                    <Suspense fallback={<LoadingScreen message="Loading DRD report..." />}>
-                      <DRDAuditReportRoute />
-                    </Suspense>
-                  </AnimationWrapper>
-                </RouteErrorBoundary>
-              </MainLayout>
-            </BetaGate>
+              <BetaGate moduleId="MODULE_AUDITS">
+                <MainLayout breadcrumbs={breadcrumbs || ['Audits', 'Raport DRD']}>
+                  <RouteErrorBoundary>
+                    <AnimationWrapper variant="slideUp">
+                      <Suspense fallback={<LoadingScreen message="Loading DRD report..." />}>
+                        <DRDAuditReportRoute />
+                      </Suspense>
+                    </AnimationWrapper>
+                  </RouteErrorBoundary>
+                </MainLayout>
+              </BetaGate>
             </ProtectedRoute>
           }
         />
@@ -1686,17 +1684,17 @@ export const AppRoutes: React.FC = () => {
           path="/audit-programs/method"
           element={
             <ProtectedRoute requireAuth={true}>
-            <BetaGate moduleId="MODULE_AUDITS">
-              <MainLayout breadcrumbs={breadcrumbs || ['Audits']}>
-                <RouteErrorBoundary>
-                  <AnimationWrapper variant="slideUp">
-                    <Suspense fallback={<LoadingScreen message="Loading audits..." />}>
-                      <AuditsMethodHubRoute />
-                    </Suspense>
-                  </AnimationWrapper>
-                </RouteErrorBoundary>
-              </MainLayout>
-            </BetaGate>
+              <BetaGate moduleId="MODULE_AUDITS">
+                <MainLayout breadcrumbs={breadcrumbs || ['Audits']}>
+                  <RouteErrorBoundary>
+                    <AnimationWrapper variant="slideUp">
+                      <Suspense fallback={<LoadingScreen message="Loading audits..." />}>
+                        <AuditsMethodHubRoute />
+                      </Suspense>
+                    </AnimationWrapper>
+                  </RouteErrorBoundary>
+                </MainLayout>
+              </BetaGate>
             </ProtectedRoute>
           }
         />
@@ -1708,17 +1706,17 @@ export const AppRoutes: React.FC = () => {
           path="/audit-programs/method/:programId/criteria/:criterionId"
           element={
             <ProtectedRoute requireAuth={true}>
-            <BetaGate moduleId="MODULE_AUDITS">
-              <MainLayout breadcrumbs={breadcrumbs || ['Audits']}>
-                <RouteErrorBoundary>
-                  <AnimationWrapper variant="slideUp">
-                    <Suspense fallback={<LoadingScreen message="Loading audits..." />}>
-                      <CriterionWorkspaceRoute />
-                    </Suspense>
-                  </AnimationWrapper>
-                </RouteErrorBoundary>
-              </MainLayout>
-            </BetaGate>
+              <BetaGate moduleId="MODULE_AUDITS">
+                <MainLayout breadcrumbs={breadcrumbs || ['Audits']}>
+                  <RouteErrorBoundary>
+                    <AnimationWrapper variant="slideUp">
+                      <Suspense fallback={<LoadingScreen message="Loading audits..." />}>
+                        <CriterionWorkspaceRoute />
+                      </Suspense>
+                    </AnimationWrapper>
+                  </RouteErrorBoundary>
+                </MainLayout>
+              </BetaGate>
             </ProtectedRoute>
           }
         />
@@ -2393,6 +2391,23 @@ export const AppRoutes: React.FC = () => {
           }
         />
         <Route
+          path="/finance/valuations/:id"
+          element={
+            <BetaGate moduleId="MODULE_ECONOMICS">
+              <MainLayout breadcrumbs={breadcrumbs || ['Finance', 'Valuation']} noPadding>
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Finance"
+                >
+                  <RouteErrorBoundary>
+                    <EconomicsView />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        <Route
           path={ROUTES.EXECUTION}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Execution']}>
@@ -2899,7 +2914,11 @@ export const AppRoutes: React.FC = () => {
             <BetaGate moduleId="MODULE_BENEFITS">
               <MainLayout
                 breadcrumbs={
-                  breadcrumbs || [t('sidebar.results', 'Results'), t('results.roi', 'ROI'), t('results.roiPirOutcomes', 'PIR outcomes')]
+                  breadcrumbs || [
+                    t('sidebar.results', 'Results'),
+                    t('results.roi', 'ROI'),
+                    t('results.roiPirOutcomes', 'PIR outcomes'),
+                  ]
                 }
                 noPadding
               >
@@ -2972,7 +2991,11 @@ export const AppRoutes: React.FC = () => {
             <BetaGate moduleId="MODULE_BENEFITS">
               <MainLayout
                 breadcrumbs={
-                  breadcrumbs || [t('sidebar.results', 'Results'), t('results.okr', 'OKR'), t('results.okrPrograms', 'Programs')]
+                  breadcrumbs || [
+                    t('sidebar.results', 'Results'),
+                    t('results.okr', 'OKR'),
+                    t('results.okrPrograms', 'Programs'),
+                  ]
                 }
                 noPadding
               >
@@ -2994,7 +3017,11 @@ export const AppRoutes: React.FC = () => {
             <BetaGate moduleId="MODULE_BENEFITS">
               <MainLayout
                 breadcrumbs={
-                  breadcrumbs || [t('sidebar.results', 'Results'), t('results.okr', 'OKR'), t('results.okrCycles', 'Cycles')]
+                  breadcrumbs || [
+                    t('sidebar.results', 'Results'),
+                    t('results.okr', 'OKR'),
+                    t('results.okrCycles', 'Cycles'),
+                  ]
                 }
                 noPadding
               >
@@ -3019,7 +3046,12 @@ export const AppRoutes: React.FC = () => {
           element={
             <BetaGate moduleId="MODULE_BENEFITS">
               <MainLayout
-                breadcrumbs={breadcrumbs || [t('sidebar.results', 'Results'), t('results.attention', 'Attention')]}
+                breadcrumbs={
+                  breadcrumbs || [
+                    t('sidebar.results', 'Results'),
+                    t('results.attention', 'Attention'),
+                  ]
+                }
                 noPadding
               >
                 <ProductionModuleGate

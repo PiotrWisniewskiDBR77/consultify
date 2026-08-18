@@ -18,6 +18,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useFinanceFocusMode } from '@/hooks/useFinanceFocusMode';
 import { useFinanceValuationWorkspaceFlag } from '@/hooks/useFinanceValuationWorkspaceFlag';
+import { API_URL, getHeaders } from '@/services/api';
 import {
   createValuationMethod,
   generateValuationAdvisorOutput,
@@ -47,9 +48,15 @@ import {
   type ValuationWaccInputsRawDto,
   type ValuationWeightedRecommendationDto,
 } from '@/services/api/financeV2.types';
+import {
+  confirmValuationRecommendationCandidateHandoff,
+  getValuationRecommendationCandidateHandoff,
+  previewValuationRecommendationCandidateHandoff,
+} from '@/services/api/v8/financeCandidateHandoffValuation';
 
 import { FinanceErrorBoundary } from '../shared/FinanceErrorBoundary';
 import { FinanceWorkspaceBar } from '../shared/FinanceWorkspaceBar';
+import { FinanceCandidateHandoffModal } from '../shared/FinanceCandidateHandoffModal';
 import {
   ENABLEMENT_ALWAYS,
   type WorkspaceBarConfig,
@@ -124,10 +131,24 @@ export const REAL_VALUATION_WORKSPACE_API: ValuationWorkspaceApi = {
 
 export interface ValuationWorkspaceProps {
   businessVersionId: string;
+  /** Explicit legacy identity supplied by FinanceHub's resolved bridge. */
+  legacyValuationId?: string;
   api?: ValuationWorkspaceApi;
   initialStepId?: ValuationStepId;
   onNavigateBack?: () => void;
   role?: WorkspaceBarEvaluationContext['role'];
+  candidateHandoffApi?: {
+    preview: typeof previewValuationRecommendationCandidateHandoff;
+    confirm: typeof confirmValuationRecommendationCandidateHandoff;
+    get: typeof getValuationRecommendationCandidateHandoff;
+  };
+}
+
+interface LegacyValuationRecommendation {
+  id: string;
+  title?: string;
+  sourceVersion?: string;
+  sourceHash?: string;
 }
 
 /**
@@ -146,10 +167,16 @@ export function ValuationWorkspace(props: ValuationWorkspaceProps): React.ReactE
 function ValuationWorkspaceInner(props: ValuationWorkspaceProps): React.ReactElement {
   const {
     businessVersionId,
+    legacyValuationId,
     api = REAL_VALUATION_WORKSPACE_API,
     initialStepId = 'source',
     onNavigateBack = () => {},
     role = 'preparer',
+    candidateHandoffApi = {
+      preview: previewValuationRecommendationCandidateHandoff,
+      confirm: confirmValuationRecommendationCandidateHandoff,
+      get: getValuationRecommendationCandidateHandoff,
+    },
   } = props;
 
   const [activeStep, setActiveStep] = useState<ValuationStepId>(initialStepId);
@@ -168,6 +195,56 @@ function ValuationWorkspaceInner(props: ValuationWorkspaceProps): React.ReactEle
   >(null);
 
   const [reloadNonce, setReloadNonce] = useState(0);
+  const [legacyRecommendations, setLegacyRecommendations] = useState<
+    LegacyValuationRecommendation[] | null
+  >(null);
+  const [legacyRecommendationError, setLegacyRecommendationError] = useState<string | null>(null);
+  const [candidateRecommendationId, setCandidateRecommendationId] = useState<string | null>(null);
+  const [candidateResult, setCandidateResult] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!legacyValuationId) {
+      setLegacyRecommendations([]);
+      setLegacyRecommendationError(null);
+      return;
+    }
+    let cancelled = false;
+    setLegacyRecommendations(null);
+    setLegacyRecommendationError(null);
+    fetch(`${API_URL}/economics/valuations/${encodeURIComponent(legacyValuationId)}`, {
+      headers: getHeaders(),
+    })
+      .then(async (response) => {
+        if (!response.ok)
+          throw new Error(`valuation recommendation source unavailable (${response.status})`);
+        const payload = (await response.json()) as { valuation?: { advisory?: unknown } };
+        const raw = payload.valuation?.advisory;
+        const advisory =
+          typeof raw === 'string' ? (JSON.parse(raw) as { recommendations?: unknown }) : raw;
+        const recommendations = Array.isArray(
+          (advisory as { recommendations?: unknown } | null)?.recommendations
+        )
+          ? (advisory as { recommendations: unknown[] }).recommendations.filter(
+              (item): item is LegacyValuationRecommendation =>
+                !!item &&
+                typeof item === 'object' &&
+                typeof (item as { id?: unknown }).id === 'string'
+            )
+          : [];
+        if (!cancelled) setLegacyRecommendations(recommendations);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLegacyRecommendations([]);
+          setLegacyRecommendationError(
+            'Nie udało się zweryfikować rekomendacji źródłowej. Przekazanie kandydata jest zablokowane.'
+          );
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [legacyValuationId, reloadNonce]);
 
   // Variant identity — needed for the bar regardless of active step.
   useEffect(() => {
@@ -418,15 +495,82 @@ function ValuationWorkspaceInner(props: ValuationWorkspaceProps): React.ReactEle
             />
           )}
           {activeStep === 'advisor' && (
-            <AdvisorStep
-              findings={advisorFindings}
-              status={config.identity.status}
-              onGenerate={handleGenerateAdvisor}
-            />
+            <>
+              <AdvisorStep
+                findings={advisorFindings}
+                status={config.identity.status}
+                onGenerate={handleGenerateAdvisor}
+              />
+              <section className="mt-6 max-w-5xl space-y-3" aria-label="Przekazanie rekomendacji">
+                <h3 className="text-sm font-semibold text-c-text">Rekomendacja → kandydat</h3>
+                {legacyRecommendations === null && (
+                  <p className="text-xs text-c-text-muted">Weryfikowanie źródła rekomendacji…</p>
+                )}
+                {legacyRecommendationError && (
+                  <p role="alert" className="text-xs text-c-danger">
+                    {legacyRecommendationError}
+                  </p>
+                )}
+                {legacyRecommendations?.map((recommendation) => (
+                  <div
+                    key={recommendation.id}
+                    className="rounded-lg border border-c-border-subtle bg-c-surface p-3"
+                  >
+                    <p className="text-sm font-medium text-c-text">
+                      {recommendation.title || recommendation.id}
+                    </p>
+                    <p className="mt-1 text-[10px] text-c-text-muted">
+                      Źródło: {recommendation.id}
+                      {recommendation.sourceVersion
+                        ? ` · wersja ${recommendation.sourceVersion}`
+                        : ''}
+                      {recommendation.sourceHash ? ` · hash ${recommendation.sourceHash}` : ''}
+                    </p>
+                    <button
+                      type="button"
+                      className="mt-2 rounded-lg bg-c-text px-3 py-2 text-xs font-medium text-c-bg"
+                      onClick={() => {
+                        setCandidateResult(null);
+                        setCandidateRecommendationId(recommendation.id);
+                      }}
+                    >
+                      Wyślij jako kandydata na Initiative
+                    </button>
+                  </div>
+                ))}
+                {candidateResult && <p className="text-xs text-c-success">{candidateResult}</p>}
+              </section>
+            </>
           )}
           {activeStep === 'export' && <ExportStep />}
         </FinanceErrorBoundary>
       </main>
+      {candidateRecommendationId && (
+        <FinanceCandidateHandoffModal
+          open
+          onClose={() => setCandidateRecommendationId(null)}
+          sourceType="finance_valuation_recommendation"
+          sourceId={candidateRecommendationId}
+          preview={() => candidateHandoffApi.preview(candidateRecommendationId)}
+          confirm={() => candidateHandoffApi.confirm(candidateRecommendationId)}
+          fetchHandoff={() => candidateHandoffApi.get(candidateRecommendationId)}
+          getReopenLink={() => null}
+          title="Wyślij jako kandydata na Initiative"
+          noticeText="Ta operacja tworzy kandydata do osobnej oceny; nie tworzy Initiative automatycznie."
+          confirmLabel="Wyślij"
+          cancelLabel="Anuluj"
+          checkingLabel="Sprawdzanie zakotwiczenia źródła…"
+          previewErrorFallback="Nie udało się zweryfikować rekomendacji źródłowej"
+          confirmErrorFallback="Nie udało się utworzyć kandydata"
+          onConfirmed={({ created, candidateId }) => {
+            setCandidateResult(
+              created
+                ? `Utworzono kandydata ${candidateId}`
+                : `Kandydat ${candidateId} już istnieje — nie utworzono duplikatu`
+            );
+          }}
+        />
+      )}
     </div>
   );
 }

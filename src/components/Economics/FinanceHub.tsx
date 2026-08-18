@@ -3091,6 +3091,7 @@ export const FinanceHub: React.FC = () => {
                     >
                       <FinanceV3ValuationWorkspace
                         businessVersionId={resolved.businessVersionId ?? ''}
+                        legacyValuationId={activeDocument.id}
                         role="preparer"
                         onNavigateBack={handleShowList}
                       />
