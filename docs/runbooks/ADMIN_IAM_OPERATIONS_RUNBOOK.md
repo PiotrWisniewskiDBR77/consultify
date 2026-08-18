@@ -25,6 +25,32 @@ the MVP owner boundary.
 5. A growing `running` count past the lease interval or any `failed` count is an
    alert condition. Preserve rows and event history for diagnosis.
 
+## Queue alert conditions
+
+This alert is INTERNAL: it is evaluated on demand against the current
+`admin_iam_jobs` state. It is not wired to any deployed scheduler or to
+external paging. Wiring an external pager is a separate, later release gate.
+
+Two alert kinds, by exact code name:
+
+1. `ADMIN_IAM_JOB_STALE` — detection predicate: `admin_iam_jobs` rows with
+   `status = 'running' AND lease_expires_at < now()`. Threshold: greater than
+   zero matching rows. No existing code path reclaims an expired `running`
+   lease — the claim query only reclaims rows still in `queued`. A stale job
+   therefore needs explicit operator attention; it will not self-heal.
+2. `ADMIN_IAM_JOB_FAILED` — detection predicate: `admin_iam_jobs` rows with
+   `status = 'failed'`. Threshold: greater than zero matching rows. Per the
+   rule above, never flip a `failed` job to `succeeded` manually. The remedy
+   is to re-enqueue a corrected command under a NEW idempotency key.
+
+Recovery: the alert clears when the matching count returns to zero on a
+subsequent evaluator run. The durable transition sequence for each alert
+instance is DETECTED, then RECOVERED.
+
+Secrets: the alert payload deliberately carries only counts, identifiers and
+the runbook id above. It never carries the job payload, the last error text,
+or a lease token.
+
 ## Rollback
 
 Disable callers/workers at the previous code SHA. The schema is additive and
