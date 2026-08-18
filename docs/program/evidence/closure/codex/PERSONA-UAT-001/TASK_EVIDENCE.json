@@ -16,6 +16,8 @@
     "status": "Automated role fixtures exist in module packets, but no named human UAT roster or signed journey record exists.",
     "candidateBinding": "TO_BE_BOUND_AT_SESSION_START_AFTER_ALL_16_UI_PACKETS_AND_FINAL_INTEGRATION",
     "reviewerRule": "Each role requires a named person or explicitly accountable reviewer. One person may review more than one role only when each role has an independent journey record and sign-off.",
+    "accountableReviewer": "Piotr",
+    "reviewerDecision": "AMD-PERSONA-UAT-REVIEWER-002 / option 8A, recorded at 34c2e2ec4c. Piotr is accountable for all seven roles, but must produce seven independent journey records and verdicts.",
     "defectRule": "Any P0 or P1 defect blocks that role. P2 or P3 may be accepted only with a named owner, written disposition and explicit ACCEPT_WITH_DEFECTS verdict."
   },
   "humanUatProtocol": {
@@ -81,9 +83,9 @@
     ],
     "completionRule": "All seven signOff values must be ACCEPT or ACCEPT_WITH_DEFECTS, every accepted defect must have owner and disposition, and the consolidated human verdict must contain zero unresolved P0 or P1 defects on one exact candidate SHA."
   },
-  "negativeControls": {"automatedTestsNotAcceptedAsHumanUat": true, "namedReviewerPresent": false, "zeroP0P1HumanVerdict": false},
+  "negativeControls": {"automatedTestsNotAcceptedAsHumanUat": true, "namedReviewerPresent": true, "zeroP0P1HumanVerdict": false},
   "browserArtifacts": [],
   "rollback": {"method": "Evidence-only record; no runtime or schema change.", "executed": false},
   "verdict": "BLOCKED_HUMAN",
-  "blocker": "Seven named people or explicitly accountable reviewers must execute and sign the positive and forbidden job stories on the exact candidate SHA."
+  "blocker": "The accountable reviewer is now named (Piotr), but all seven role-specific positive and forbidden journeys still require independent execution and sign-off on one final exact candidate SHA after all sixteen UI packets are integrated."
 }
