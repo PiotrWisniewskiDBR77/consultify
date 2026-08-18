@@ -245,6 +245,30 @@ test.describe('feature-flag fixture safety', () => {
       // A run that never cleans up (simulated crash) leaves only its own row, and
       // a later cleanup by runId removes it.
       crashed = await makeFixture(crashRunId);
+
+      for (const flagKey of [
+        'financeStatementPackWorkspaceV2',
+        'financeWorkspacePlatformV1',
+        'financeExportImportV1',
+      ]) {
+        const enabled = await enableFor(crashed.primaryOrgId, crashRunId, flagKey);
+        expect(enabled.status, `${flagKey} is an explicitly owned override`).toBe(200);
+        expect(enabled.body).toMatchObject({
+          flagKey,
+          organizationId: crashed.primaryOrgId,
+          override: { enabled: true, run_id: crashRunId },
+        });
+
+        const ctx = await support();
+        try {
+          const removed = await ctx.post('/api/test-support/org-feature-flag', {
+            data: { flagKey, organizationId: crashed.primaryOrgId, enabled: false },
+          });
+          expect(removed.status(), `${flagKey} override is removed by exact identity`).toBe(200);
+        } finally {
+          await ctx.dispose();
+        }
+      }
       await enableFor(crashed.primaryOrgId, crashRunId);
       const leftBehind = await residue([crashed.primaryOrgId]);
       expect(leftBehind.g4_test_flag_overrides, 'the crashed run left its own override').toBe(1);

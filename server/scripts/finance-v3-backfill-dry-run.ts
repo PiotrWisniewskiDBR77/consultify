@@ -50,6 +50,7 @@
  */
 
 import crypto from 'crypto';
+import { pathToFileURL } from 'node:url';
 
 import { Pool, type PoolClient } from 'pg';
 
@@ -355,6 +356,42 @@ async function createComputeChain(
 
 type TargetStatus = 'DRAFT' | 'IN_REVIEW' | 'APPROVED' | 'ARCHIVED' | 'INVALIDATED' | 'SUPERSEDED';
 
+export async function ensureMutableBackfillWorkingRevision(
+  client: Pick<PoolClient, 'query'>,
+  opts: { artifactId: string; businessVersionId: string; organizationId: string; contentHash: string }
+): Promise<string> {
+  const existing = await client.query<{ working_revision_id: string }>(
+    `SELECT working_revision_id FROM finance_working_revisions
+      WHERE artifact_id = $1 AND business_version_id = $2 AND organization_id = $3 AND is_current = true
+      LIMIT 1`,
+    [opts.artifactId, opts.businessVersionId, opts.organizationId]
+  );
+  if (existing.rows[0]) return existing.rows[0].working_revision_id;
+
+  await client.query(
+    `UPDATE finance_working_revisions SET is_current = false
+      WHERE artifact_id = $1 AND organization_id = $2 AND is_current = true`,
+    [opts.artifactId, opts.organizationId]
+  );
+  const seq = await client.query<{ next: number }>(
+    `SELECT COALESCE(MAX(revision_seq), 0) + 1 AS next FROM finance_working_revisions WHERE artifact_id = $1`,
+    [opts.artifactId]
+  );
+  const inserted = await client.query<{ working_revision_id: string }>(
+    `INSERT INTO finance_working_revisions
+       (artifact_id, organization_id, business_version_id, revision_seq, content_semantic_hash, is_current, edited_by)
+     VALUES ($1, $2, $3, $4, $5, true, $6) RETURNING working_revision_id`,
+    [opts.artifactId, opts.organizationId, opts.businessVersionId, seq.rows[0]?.next ?? 1, opts.contentHash, ACTOR]
+  );
+  const workingRevisionId = inserted.rows[0].working_revision_id;
+  await client.query(
+    `UPDATE finance_business_versions SET source_working_revision_id = $1
+      WHERE business_version_id = $2 AND organization_id = $3`,
+    [workingRevisionId, opts.businessVersionId, opts.organizationId]
+  );
+  return workingRevisionId;
+}
+
 async function createBusinessVersion(
   client: PoolClient,
   opts: {
@@ -368,6 +405,19 @@ async function createBusinessVersion(
     versionKind?: 'ORIGINAL' | 'RESTATED' | 'MANAGEMENT_ADJUSTED';
   }
 ): Promise<string> {
+  const existingVersion = await client.query<{ business_version_id: string }>(
+    `SELECT business_version_id FROM finance_business_versions
+      WHERE artifact_id = $1 AND organization_id = $2 AND version_no = $3`,
+    [opts.artifactId, opts.organizationId, opts.versionNo]
+  );
+  if (existingVersion.rows[0]) {
+    const businessVersionId = existingVersion.rows[0].business_version_id;
+    if (opts.status === 'DRAFT' || opts.status === 'IN_REVIEW') {
+      await ensureMutableBackfillWorkingRevision(client, { artifactId: opts.artifactId, businessVersionId, organizationId: opts.organizationId, contentHash: opts.contentHash });
+    }
+    return businessVersionId;
+  }
+
   let computeSnapshotId: string | null = null;
   if (opts.status === 'APPROVED') {
     computeSnapshotId = await createComputeChain(client, {
@@ -405,6 +455,9 @@ async function createBusinessVersion(
     ]
   );
   const businessVersionId = res.rows[0].business_version_id;
+  if (opts.status === 'DRAFT' || opts.status === 'IN_REVIEW') {
+    await ensureMutableBackfillWorkingRevision(client, { artifactId: opts.artifactId, businessVersionId, organizationId: opts.organizationId, contentHash: opts.contentHash });
+  }
   if (opts.parentVersionId) {
     await client.query(
       `UPDATE finance_business_versions
@@ -630,6 +683,19 @@ async function runChunked(
 async function sortedIds(pool: Pool, table: string, orgColumn: string, organizationId: string): Promise<string[]> {
   const res = await pool.query(`SELECT id FROM ${table} WHERE ${orgColumn} = $1 ORDER BY id ASC`, [organizationId]);
   return res.rows.map((r) => String(r.id));
+}
+
+export const OPTIONAL_HISTORICAL_FINANCE_TABLES = ['analysis_financials', 'initiative_financials'] as const;
+type OptionalHistoricalFinanceTable = (typeof OPTIONAL_HISTORICAL_FINANCE_TABLES)[number];
+
+/** Only these documented SQLite-era parallel stores may be absent from strict current PostgreSQL. */
+export async function catalogOptionalHistoricalFinanceTables(pool: Pick<Pool, 'query'>): Promise<Set<OptionalHistoricalFinanceTable>> {
+  const result = await pool.query<{ table_name: OptionalHistoricalFinanceTable }>(
+    `SELECT candidate.table_name FROM unnest($1::text[]) AS candidate(table_name)
+      WHERE to_regclass('public.' || candidate.table_name) IS NOT NULL ORDER BY candidate.table_name`,
+    [[...OPTIONAL_HISTORICAL_FINANCE_TABLES]]
+  );
+  return new Set(result.rows.map((row) => row.table_name));
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -1192,7 +1258,12 @@ async function phaseAnalysis(pool: Pool, ctx: RunCtx) {
 
   // Legacy parallel stores — whole-table QUARANTINE per WP-A01 + ORCH-DEC-002 (adapter-only,
   // outside the canonical DAG: neither maps to one of the 6 finance_artifacts.artifact_type values).
-  for (const table of ['analysis_financials', 'initiative_financials']) {
+  const presentOptionalTables = await catalogOptionalHistoricalFinanceTables(pool);
+  for (const table of OPTIONAL_HISTORICAL_FINANCE_TABLES) {
+    if (!presentOptionalTables.has(table)) {
+      console.log(`Optional historical source ${table}: absent (deterministic zero-input phase).`);
+      continue;
+    }
     for (const org of [...orgs, '__ghost__']) {
       const orgFilter = org === '__ghost__' ? null : org;
       const rowsRes = orgFilter
@@ -1854,10 +1925,14 @@ type RunCtx = {
   crashState: { remaining: number };
 };
 
-async function allOrgIds(pool: Pool): Promise<string[]> {
-  const res = await pool.query(`SELECT id FROM organizations WHERE id LIKE 'org-fv3-%' AND id NOT LIKE '%ghost%' ORDER BY id`);
+export async function allFinanceOrganizationIds(pool: Pick<Pool, 'query'>): Promise<string[]> {
+  const res = await pool.query<{ id: string }>(
+    `SELECT id FROM organizations WHERE id LIKE 'org-fv3-%' AND id NOT LIKE '%ghost%' ORDER BY id`
+  );
   return res.rows.map((r) => r.id);
 }
+
+const allOrgIds = allFinanceOrganizationIds;
 
 async function runBackfill(pool: Pool, opts: { chunkSize: number; runBatch: string; resume: boolean; crashAfter: number }) {
   const classification = await loadClassification();
@@ -1915,7 +1990,12 @@ async function verify(pool: Pool) {
     'valuations',
     'valuation_snapshots',
   ];
+  const presentOptionalTables = await catalogOptionalHistoricalFinanceTables(pool);
   for (const t of tables) {
+    if (OPTIONAL_HISTORICAL_FINANCE_TABLES.includes(t as OptionalHistoricalFinanceTable) && !presentOptionalTables.has(t as OptionalHistoricalFinanceTable)) {
+      sourceCounts[t] = 0;
+      continue;
+    }
     const res = await pool.query(`SELECT count(*)::int AS c FROM ${t}`);
     sourceCounts[t] = res.rows[0].c;
   }
@@ -2070,7 +2150,9 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}

@@ -1081,7 +1081,12 @@ router.post(
  * Only the flags this gate is allowed to touch are accepted; an arbitrary
  * `flagKey` is refused rather than silently honoured.
  */
-const G4_OVERRIDABLE_FLAGS = new Set(['auditsFiveSurfacesV1']);
+const G4_OVERRIDABLE_FLAGS = new Set([
+  'auditsFiveSurfacesV1',
+  'financeStatementPackWorkspaceV2',
+  'financeWorkspacePlatformV1',
+  'financeExportImportV1',
+]);
 
 router.post(
   '/org-feature-flag',
