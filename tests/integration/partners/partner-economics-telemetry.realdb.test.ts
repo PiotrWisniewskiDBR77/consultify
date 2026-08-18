@@ -512,6 +512,104 @@ const WRONG_VARIANTS: WrongVariant[] = [
     // neither the canonical definition nor the OR-true variant's DDL.
     expectedMessage: /(?=[\s\S]*CHECK on surface is not byte-exact canonical)(?=[\s\S]*shadow_admin_surface)/,
   },
+  {
+    name: "OR (2=2)-widened CHECK on surface",
+    setupSql: `
+      CREATE TABLE ${TABLE} (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        request_id TEXT,
+        user_id TEXT,
+        organization_id TEXT,
+        partner_org_id TEXT,
+        method TEXT NOT NULL,
+        route_path TEXT NOT NULL,
+        surface TEXT NOT NULL CHECK (surface IN ('v8_partner','legacy_partner','superadmin_partner_settlements','superadmin_partner_config','service') OR (2=2)),
+        operation TEXT NOT NULL CHECK (operation IN ('commission','discount','accrual','payout','payout_settings','lifecycle_payout')),
+        decision TEXT NOT NULL,
+        denial_code TEXT NOT NULL,
+        receipt_identity TEXT NOT NULL,
+        request_fingerprint TEXT NOT NULL,
+        observed_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      INSERT INTO ${TABLE}
+        (request_id,user_id,organization_id,partner_org_id,method,route_path,surface,operation,decision,denial_code,receipt_identity,request_fingerprint)
+      VALUES
+        ('seed-or-2eq2','user-seed','org-seed','partner-seed','POST','/seed','v8_partner','commission','AMD-PRT-ECONOMICS-002','PARTNER_ECONOMICS_POLICY_DISABLED','identity-seed-or-2eq2','fingerprint-seed-or-2eq2');
+    `,
+    // Same shared-template situation as the two 'CHECK on surface' variants
+    // above. Confirmed empirically against this suite's own live database
+    // (throwaway probe table, dropped immediately) that Postgres's deparser
+    // renders `OR (2=2)` as `OR (2 = 2)` inside pg_get_constraintdef -- a
+    // marker that appears in neither the canonical definition nor any other
+    // variant's DDL, so it uniquely fingerprints THIS seed even though the
+    // RAISE template text itself is shared.
+    expectedMessage: /(?=[\s\S]*CHECK on surface is not byte-exact canonical)(?=[\s\S]*2 = 2)/,
+  },
+  {
+    name: "OR ('a'='a')-widened CHECK on surface",
+    setupSql: `
+      CREATE TABLE ${TABLE} (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        request_id TEXT,
+        user_id TEXT,
+        organization_id TEXT,
+        partner_org_id TEXT,
+        method TEXT NOT NULL,
+        route_path TEXT NOT NULL,
+        surface TEXT NOT NULL CHECK (surface IN ('v8_partner','legacy_partner','superadmin_partner_settlements','superadmin_partner_config','service') OR ('a'='a')),
+        operation TEXT NOT NULL CHECK (operation IN ('commission','discount','accrual','payout','payout_settings','lifecycle_payout')),
+        decision TEXT NOT NULL,
+        denial_code TEXT NOT NULL,
+        receipt_identity TEXT NOT NULL,
+        request_fingerprint TEXT NOT NULL,
+        observed_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      INSERT INTO ${TABLE}
+        (request_id,user_id,organization_id,partner_org_id,method,route_path,surface,operation,decision,denial_code,receipt_identity,request_fingerprint)
+      VALUES
+        ('seed-or-a-eq-a','user-seed','org-seed','partner-seed','POST','/seed','v8_partner','commission','AMD-PRT-ECONOMICS-002','PARTNER_ECONOMICS_POLICY_DISABLED','identity-seed-or-a-eq-a','fingerprint-seed-or-a-eq-a');
+    `,
+    // Same shared-template situation again. Empirically confirmed (same
+    // live-database probe as above) that Postgres's deparser renders
+    // `OR ('a'='a')` as `OR ('a'::text = 'a'::text)` inside
+    // pg_get_constraintdef -- unique to this seed, appearing in neither the
+    // canonical definition nor any sibling variant's DDL.
+    expectedMessage: /(?=[\s\S]*CHECK on surface is not byte-exact canonical)(?=[\s\S]*'a'::text = 'a'::text)/,
+  },
+  {
+    name: 'NOT NULL widened to nullable on method',
+    setupSql: `
+      CREATE TABLE ${TABLE} (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        request_id TEXT,
+        user_id TEXT,
+        organization_id TEXT,
+        partner_org_id TEXT,
+        method TEXT,
+        route_path TEXT NOT NULL,
+        surface TEXT NOT NULL CHECK (surface IN ('v8_partner','legacy_partner','superadmin_partner_settlements','superadmin_partner_config','service')),
+        operation TEXT NOT NULL CHECK (operation IN ('commission','discount','accrual','payout','payout_settings','lifecycle_payout')),
+        decision TEXT NOT NULL,
+        denial_code TEXT NOT NULL,
+        receipt_identity TEXT NOT NULL,
+        request_fingerprint TEXT NOT NULL,
+        observed_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      INSERT INTO ${TABLE}
+        (request_id,user_id,organization_id,partner_org_id,method,route_path,surface,operation,decision,denial_code,receipt_identity,request_fingerprint)
+      VALUES
+        ('seed-nullable-method','user-seed','org-seed','partner-seed','POST','/seed','v8_partner','commission','AMD-PRT-ECONOMICS-002','PARTNER_ECONOMICS_POLICY_DISABLED','identity-seed-nullable-method','fingerprint-seed-nullable-method');
+    `,
+    // Column-shape mismatch, not a CHECK mismatch: the preflight's
+    // column-shape loop (same loop that catches "missing column" and
+    // "wrong-typed column" above) reads is_nullable straight from
+    // information_schema.columns and compares it to the canonical 'NO' for
+    // `method`. This fires and RAISEs before the CHECK-comparison loop ever
+    // runs, exactly like the wrong-typed-column variant above -- so, same
+    // as that variant, this DDL doesn't bother giving decision/denial_code
+    // their CHECKs either, since the preflight never gets that far.
+    expectedMessage: /column method nullability YES, expected NO/,
+  },
 ];
 
 /* ==========================================================================

@@ -246,11 +246,26 @@ function buildConfigApp(): Express {
 // ---------------------------------------------------------------------------
 // Identity minting — REAL signed JWTs, jsonwebtoken, same secret tests/setup.ts
 // exports globally. No E2E bypass anywhere in this file.
+//
+// `role` is optional but, when the actor's real membership role is known
+// up front (see the `activeOwner` mint below), it should be supplied: both
+// `server/src/routes/auth.routes.ts` login and register handlers ALWAYS bake
+// a `role` claim into a real token (via `resolveAuthEffectiveRole`,
+// preferring the caller's `organization_members.role` for the token's own
+// org, falling back to the global `users.role`). `auth.middleware.ts`'s
+// `attachUser` only ever back-fills `req.userRole` from a fresh DB read when
+// the token's claimed org does NOT match an ACTIVE membership (the
+// self-heal/cross-tenant path) — for an actor whose token org IS their real
+// ACTIVE org (the ordinary, non-mismatched case), the role has to already be
+// on the token, exactly as a real login would put it there, or
+// `requireOrgRole` gates never see anything to check.
 // ---------------------------------------------------------------------------
-function signToken(userId: string, organizationId: string): string {
-  return jwt.sign({ id: userId, email: `${userId}@local.test`, organizationId }, JWT_SECRET, {
-    expiresIn: '1h',
-  });
+function signToken(userId: string, organizationId: string, role?: string): string {
+  return jwt.sign(
+    { id: userId, email: `${userId}@local.test`, organizationId, ...(role ? { role } : {}) },
+    JWT_SECRET,
+    { expiresIn: '1h' }
+  );
 }
 
 interface Harness {
@@ -315,10 +330,111 @@ async function assertDisposableDatabase(client: Client): Promise<string> {
 const ADVISORY_LOCK_NAME = 'partner-economics-mounted-auth-2026-08-18';
 let lockClient: Client | null = null;
 
+/**
+ * CATALOG-TYPE CONTRACT. This fixture's `CREATE TABLE IF NOT EXISTS` calls
+ * below are NO-OPS against a database that already carries these tables from
+ * the real migration history (which every disposable database used to run
+ * this file does, by construction — migrations are applied before this
+ * suite runs). That means the values this fixture inserts must match the
+ * LIVE, already-migrated column types, not the types spelled out in this
+ * file's own (dead) `CREATE TABLE` text.
+ *
+ * Measured directly against `information_schema.columns` on this database:
+ * several `partner_org_id`/`id` columns are genuinely `uuid` even though
+ * `000_initdb_core_tables.sql` declares them TEXT — a later migration
+ * converted them. Feeding a non-UUID string into one of those columns fails
+ * as Postgres error 22P02 (`invalid input syntax for type uuid`,
+ * routine `string_to_uuid`) with a stack trace that points at the INSERT,
+ * not at the type assumption that is actually wrong.
+ *
+ * This assertion runs FIRST, before any CREATE TABLE/INSERT, so a future
+ * schema change that flips one of these columns between text and uuid (in
+ * either direction) fails loudly HERE, with an exact column-by-column diff,
+ * instead of resurfacing as a cryptic 22P02 pointing at an unrelated line.
+ */
+const FIXTURE_COLUMN_TYPE_CONTRACT: ReadonlyArray<{
+  table: string;
+  column: string;
+  dataType: string;
+}> = [
+  { table: 'organizations', column: 'id', dataType: 'text' },
+  { table: 'organizations', column: 'name', dataType: 'text' },
+  { table: 'organizations', column: 'plan', dataType: 'text' },
+  { table: 'organizations', column: 'status', dataType: 'text' },
+  { table: 'users', column: 'id', dataType: 'text' },
+  { table: 'users', column: 'organization_id', dataType: 'text' },
+  { table: 'users', column: 'email', dataType: 'text' },
+  { table: 'users', column: 'password', dataType: 'text' },
+  { table: 'users', column: 'role', dataType: 'text' },
+  { table: 'users', column: 'status', dataType: 'text' },
+  { table: 'users', column: 'first_name', dataType: 'text' },
+  { table: 'users', column: 'last_name', dataType: 'text' },
+  { table: 'organization_members', column: 'id', dataType: 'text' },
+  { table: 'organization_members', column: 'organization_id', dataType: 'text' },
+  { table: 'organization_members', column: 'user_id', dataType: 'text' },
+  { table: 'organization_members', column: 'role', dataType: 'text' },
+  { table: 'organization_members', column: 'status', dataType: 'text' },
+  { table: 'partner_organizations', column: 'id', dataType: 'uuid' },
+  { table: 'partner_organizations', column: 'name', dataType: 'character varying' },
+  { table: 'partner_organizations', column: 'contact_email', dataType: 'character varying' },
+  { table: 'partner_organizations', column: 'status', dataType: 'character varying' },
+  { table: 'partner_users', column: 'id', dataType: 'uuid' },
+  // NOTE: user_id is uuid here even though `users.id` (the value that flows
+  // into it — see `partnerOrgResolution.ts`'s `getActivePartnerOrgIdForUser`)
+  // is TEXT. This is not a contradiction: production always mints user ids
+  // with `uuidv4()` (see `server/src/routes/auth.routes.ts`), so a real
+  // user id is always UUID-shaped text. This fixture must mint UUID-shaped
+  // actor ids for the same reason, even though `users.id` itself is TEXT.
+  { table: 'partner_users', column: 'user_id', dataType: 'uuid' },
+  { table: 'partner_users', column: 'partner_org_id', dataType: 'uuid' },
+  { table: 'partner_users', column: 'role', dataType: 'character varying' },
+  { table: 'partner_users', column: 'status', dataType: 'character varying' },
+  { table: 'partner_payouts', column: 'partner_org_id', dataType: 'uuid' },
+  { table: 'partner_commission_transactions', column: 'partner_org_id', dataType: 'uuid' },
+  { table: 'organization_discounts', column: 'id', dataType: 'text' },
+  { table: 'organization_discounts', column: 'organization_id', dataType: 'text' },
+  { table: 'organization_discounts', column: 'partner_org_id', dataType: 'text' },
+  { table: 'partner_program_runtime', column: 'partner_org_id', dataType: 'text' },
+  { table: 'partner_program_ledger', column: 'partner_org_id', dataType: 'text' },
+  { table: 'partner_payout_accounts', column: 'partner_org_id', dataType: 'text' },
+  { table: 'partner_economics_policy_events', column: 'partner_org_id', dataType: 'text' },
+];
+
+async function assertFixtureColumnTypeContract(client: Client): Promise<void> {
+  const mismatches: string[] = [];
+  for (const { table, column, dataType } of FIXTURE_COLUMN_TYPE_CONTRACT) {
+    const r = await client.query<{ data_type: string }>(
+      `SELECT data_type FROM information_schema.columns WHERE table_name = $1 AND column_name = $2`,
+      [table, column]
+    );
+    const actual = r.rows[0]?.data_type;
+    if (actual !== dataType) {
+      mismatches.push(
+        `${table}.${column}: fixture assumes "${dataType}", live catalog says "${actual ?? '(column not found)'}"`
+      );
+    }
+  }
+  if (mismatches.length > 0) {
+    throw new Error(
+      '[partner-economics-mounted-auth] Live catalog no longer matches this fixture\'s column-type contract. ' +
+        'Fix the FIXTURE\'s value-shape for the listed columns (uuid columns need randomUUID() values, text ' +
+        'columns can keep prefixed strings) — do not cast around it in SQL:\n' +
+        mismatches.map((m) => `  - ${m}`).join('\n')
+    );
+  }
+}
+
 async function buildAndSeedSchema(client: Client, prefix: string): Promise<Harness> {
+  await assertFixtureColumnTypeContract(client);
+
   const orgId = `${prefix}_org`;
   const foreignOrgId = `${prefix}_foreign_org`;
-  const partnerOrgId = `${prefix}_partner_org`;
+  // uuid live column (partner_organizations.id, partner_users.partner_org_id,
+  // partner_payouts.partner_org_id, partner_commission_transactions.partner_org_id
+  // — see FIXTURE_COLUMN_TYPE_CONTRACT above). orgId/foreignOrgId stay
+  // prefixed TEXT: nothing this suite touches compares them against a uuid
+  // column.
+  const partnerOrgId = randomUUID();
 
   // -------------------------------------------------------------------
   // Base identity tables — same column shapes as
@@ -498,11 +614,23 @@ async function buildAndSeedSchema(client: Client, prefix: string): Promise<Harne
     [foreignOrgId]
   );
 
-  const activeOwnerUserId = `${prefix}_u_active_owner`;
-  const revokedUserId = `${prefix}_u_revoked`;
-  const foreignUserId = `${prefix}_u_foreign`;
-  const superadminNoMembershipUserId = `${prefix}_u_superadmin_no_membership`;
-  const superadminActiveUserId = `${prefix}_u_superadmin_active`;
+  // `users.id` itself is TEXT, so a prefixed human-readable id would be fine
+  // for THAT column alone — but almost every mounted route (v8 and legacy)
+  // calls `getActivePartnerOrgIdForUser(userId)`, which runs
+  // `SELECT ... FROM partner_users WHERE user_id = ?` with this exact value.
+  // `partner_users.user_id` is a genuinely uuid column on the live catalog
+  // (see FIXTURE_COLUMN_TYPE_CONTRACT), so ANY actor whose id is not
+  // UUID-shaped 22P02s the very first time that query runs for them — even
+  // actors who have no partner_users row at all, because the type error
+  // fires before the WHERE clause gets to compare values. Real production
+  // never hits this because `server/src/routes/auth.routes.ts` always mints
+  // user ids with `uuidv4()`; these actor ids just have to match that same
+  // real-world shape.
+  const activeOwnerUserId = randomUUID();
+  const revokedUserId = randomUUID();
+  const foreignUserId = randomUUID();
+  const superadminNoMembershipUserId = randomUUID();
+  const superadminActiveUserId = randomUUID();
 
   const allUsers: Array<{ id: string; role: string; orgId: string }> = [
     { id: activeOwnerUserId, role: 'CONSULTANT', orgId },
@@ -575,7 +703,10 @@ async function buildAndSeedSchema(client: Client, prefix: string): Promise<Harne
     foreignOrgId,
     partnerOrgId,
     actors: {
-      activeOwner: { userId: activeOwnerUserId, token: signToken(activeOwnerUserId, orgId) },
+      // 'OWNER' matches the ACTIVE organization_members row minted above for
+      // this actor in this exact org — the real per-org role a genuine login
+      // would put on the token (see the signToken doc comment).
+      activeOwner: { userId: activeOwnerUserId, token: signToken(activeOwnerUserId, orgId, 'OWNER') },
       revokedPartnerMember: { userId: revokedUserId, token: signToken(revokedUserId, orgId) },
       foreignActor: { userId: foreignUserId, token: signToken(foreignUserId, orgId) },
       superadminNoMembership: {
@@ -723,7 +854,19 @@ afterAll(async () => {
       [harness.orgId, harness.foreignOrgId],
     ])
     .catch(() => undefined);
-  await client.query(`DELETE FROM users WHERE id LIKE $1`, [`${prefix}%`]).catch(() => undefined);
+  // users.id is no longer prefix-derived (see the actor-id UUID note in
+  // buildAndSeedSchema) — clean up by the exact generated ids instead of a
+  // LIKE prefix scan.
+  const allActorUserIds = [
+    harness.actors.activeOwner.userId,
+    harness.actors.revokedPartnerMember.userId,
+    harness.actors.foreignActor.userId,
+    harness.actors.superadminNoMembership.userId,
+    harness.actors.superadminActive.userId,
+  ];
+  await client
+    .query(`DELETE FROM users WHERE id = ANY($1)`, [allActorUserIds])
+    .catch(() => undefined);
   await client
     .query(`DELETE FROM partner_organizations WHERE id = $1`, [partnerOrgId])
     .catch(() => undefined);
@@ -757,6 +900,12 @@ afterAll(async () => {
     [[harness.orgId, harness.foreignOrgId]]
   );
   if (Number(orgResidue.rows[0]?.n ?? 0) > 0) residue['organizations'] = Number(orgResidue.rows[0].n);
+
+  const usersResidue = await client.query<{ n: number }>(
+    `SELECT count(*)::int AS n FROM users WHERE id = ANY($1)`,
+    [allActorUserIds]
+  );
+  if (Number(usersResidue.rows[0]?.n ?? 0) > 0) residue['users'] = Number(usersResidue.rows[0].n);
 
   expect(residue).toEqual({});
 
@@ -1044,7 +1193,7 @@ describeReal('actor matrix — ACTIVE owner/admin, revoked member, foreign tenan
       }
     });
 
-    itDB('GET /program/status is 200 only for the actor with an ACTIVE partner_users link; everyone else gets 403 PARTNER_ORG_REQUIRED, never 410', async (h) => {
+    itDB('GET /program/status is 200 only for the actor with an ACTIVE partner_users link; everyone else gets 403, never 410', async (h) => {
       const app = buildV8App();
       const active = await request(app)
         .get(`${V8_BASE}/program/status`)
@@ -1052,6 +1201,40 @@ describeReal('actor matrix — ACTIVE owner/admin, revoked member, foreign tenan
       expect(active.status).toBe(200);
       expect(active.body?.data?.lifecyclePhase).toBeTruthy();
 
+      // `requirePartnerEconomicsReadAccess` on this route is
+      // `[requireActiveMembership, requireOrgRole('admin')]` — a real,
+      // per-request `organization_members` check runs BEFORE the route
+      // handler's own `getActivePartnerOrgIdForUser` lookup, so the exact
+      // denial code differs by WHY each actor fails, not just THAT they
+      // fail:
+      //   - revokedPartnerMember's only organization_members row is the
+      //     INACTIVE one seeded in orgId, and attachUser's cross-org
+      //     self-heal (auth.middleware.ts) only reassigns the request's org
+      //     when it finds a DIFFERENT org with an ACTIVE row — there isn't
+      //     one here (deliberately, per buildAndSeedSchema's comment on this
+      //     actor) — so `requireActiveMembership` denies first, on the
+      //     unchanged orgId, with ORG_MEMBERSHIP_REVOKED. The route handler
+      //     (and its PARTNER_ORG_REQUIRED code) is never reached.
+      //   - superadminNoMembership has NO organization_members row anywhere,
+      //     so the same self-heal has nothing to find either — same
+      //     ORG_MEMBERSHIP_REVOKED, same "route handler never reached".
+      //   - foreignActor's JWT claims orgId (a cross-tenant probe), but they
+      //     DO hold a real ACTIVE membership elsewhere (foreignOrgId) — the
+      //     self-heal finds THAT row, reassigns req.organizationId to
+      //     foreignOrgId and req.userRole to their real role there, so they
+      //     clear both requireActiveMembership and requireOrgRole('admin')
+      //     and actually reach the route handler, where
+      //     getActivePartnerOrgIdForUser correctly finds no partner_users
+      //     link for them and returns the route's own PARTNER_ORG_REQUIRED.
+      // This is the exact same actor-vs-code split already asserted for the
+      // superadmin_partner_settlements/superadmin_partner_config surfaces
+      // below — confirmed against the live, real-middleware-chain response,
+      // not assumed.
+      const expectedCodeByLabel = {
+        revokedPartnerMember: 'ORG_MEMBERSHIP_REVOKED',
+        foreignActor: 'PARTNER_ORG_REQUIRED',
+        superadminNoMembership: 'ORG_MEMBERSHIP_REVOKED',
+      } as const;
       for (const [label, actor] of [
         ['revokedPartnerMember', h.actors.revokedPartnerMember],
         ['foreignActor', h.actors.foreignActor],
@@ -1061,7 +1244,7 @@ describeReal('actor matrix — ACTIVE owner/admin, revoked member, foreign tenan
           .get(`${V8_BASE}/program/status`)
           .set('Authorization', `Bearer ${actor.token}`);
         expect([label, res.status]).toEqual([label, 403]);
-        expect([label, res.body?.code]).toEqual([label, 'PARTNER_ORG_REQUIRED']);
+        expect([label, res.body?.code]).toEqual([label, expectedCodeByLabel[label]]);
         expect([label, res.status]).not.toEqual([label, 410]);
       }
     });
