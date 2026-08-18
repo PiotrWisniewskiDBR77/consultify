@@ -1,12 +1,12 @@
 {
   "taskId": "FIN-MVP-CANDIDATE-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "59a2bae0e1fd1bdf6e81a932349fb106709a9279",
-  "technicalSourceShas": ["941654b6a7aceb54848cbc87b9e6be813be5fda7", "d56262f2479478396c71b7867ded28636a0af513", "bce33e8e43bea50fc7c9bc0eb0c62a67a3cf7476", "4f0fd2cd9b0665a971a86867a91015655ce127af"],
-  "reconciliationSha": "2be22ad261e36ec7edc2603b417e8f66ef104387",
+  "productSha": "3e9eabea0bf191795ea05bc26a5c8a60c77c4404",
+  "technicalSourceShas": ["3e9eabea0bf191795ea05bc26a5c8a60c77c4404"],
+  "reconciliationSha": "3e9eabea0bf191795ea05bc26a5c8a60c77c4404",
   "supersedesEvidenceSha": "9936a10ce90de755320cfb626c2d533dc0554049",
   "evidenceReconciliationPath": "docs/program/evidence/closure/codex/FIN-MVP-CANDIDATE-001/TASK_EVIDENCE.json",
-  "evidenceReconciliationRationale": "Supersedes stale browser-control and type-check blockers with literal exact-current signed, acceptance and static gates while preserving the historical productSha and the owner-controlled default-OFF rollout boundary.",
+  "evidenceReconciliationRationale": "Exact-current reconciliation of the scoped governed Finance investment-case handoff through canonical cold inbox visibility. It does not claim downstream project assignment or Initiative registration.",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
   "changedPaths": ["server/src/Gateway.ts", "server/src/routes/__tests__/financeCandidateHandoffMounts.auth.test.ts", "src/components/Economics/FinanceHub.tsx", "src/components/Finance/Valuation/ValuationWorkspace.tsx", "src/components/Finance/Valuation/__tests__/ValuationWorkspace.test.tsx", "src/routes/AppRoutes.tsx", "tests/acceptance/fin-006-investment-case-candidate-handoff.e2e.test.ts", "tests/acceptance/fin-006-statement-pack-candidate-handoff.e2e.test.ts", "tests/acceptance/fin-006-valuation-recommendation-candidate-handoff.e2e.test.ts", "tests/e2e/finance/finance-candidate-handoff.signed.spec.ts", "tests/e2e/finance/financeCandidateHandoffFixture.ts"],
   "changedPathRationale": {
@@ -29,9 +29,9 @@
   "negativeControls": {"directInitiative": "direct Finance-to-Initiative routes remain disabled", "tenant": "foreign tenant cannot preview, confirm or reopen", "concurrency": "five confirms create exactly one candidate/receipt", "toctou": "approval revoked between preview and confirm fails closed", "schema": "broken required schema fails closed"},
   "browserArtifacts": [{"runtime": "mounted Vite :33100 + real server :33101 + fresh PostgreSQL :32902", "result": "BLOCKED_BEFORE_G4", "detail": "Login screen mounted and was inspected with Browser. Both semantic locator fill and visible-DOM typing left the controlled email/password inputs empty, so no authenticated Finance transition was executed. A separate AuthView contract rerun passed 8/8 and a new real userEvent test proves both controlled values persist; this isolates the symptom to the browser-control mechanism rather than product event wiring."}],
   "rollback": {"code": "verification-only evidence; no code change", "data": "isolated fixtures only"},
-  "technicalVerdict": "PASS_EXACT_CURRENT_BOUNDED_CANDIDATE",
-  "verdict": "PARTIAL",
-  "openBlockers": ["The bounded candidate handoff is green, but the governed V3 handoff remains default-OFF and requires owner-controlled activation and broader Finance rollout evidence; this task does not authorize that rollout."],
+  "technicalVerdict": "PASS_EXACT_CURRENT_GOVERNED_HANDOFF_THROUGH_COLD_INBOX",
+  "verdict": "DONE_CURRENT_SHA",
+  "openBlockers": ["NOT_EXECUTED_RELEASE_WORKFLOW_BOUNDARY: explicit project assignment and subsequent Initiative registration are a separate downstream triage workflow and are not claimed by this task."],
   "resolvedBlockers": ["The historical browser-control login blocker is superseded by the exact-current signed mounted candidate journey, 1/1.", "The historical non-terminating type-check is superseded by the exact-current 8 GB root type-check, exit 0."],
   "currentTechnicalRequalification": {
     "commandRedactionNote": "Credential values in command strings are redacted; command structure, database identity, ports, paths and denominators are preserved.",
@@ -47,5 +47,45 @@
     "signedResult": "1/1 passed with real signed identities and repository test support explicitly enabled.",
     "cleanup": "Across all three databases disabled triggers, advisory locks and the tracked MFA fixture rows were 0; the owned container and volumes were removed and the app ports released.",
     "static": "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check -- --pretty false exited 0; NODE_OPTIONS=--max-old-space-size=8192 npm run build:backend exited 0; frontend builds completed through both signed Playwright webServer runs."
+  },
+  "exactCurrentReconciliation20260819": {
+    "testedSha": "3e9eabea0bf191795ea05bc26a5c8a60c77c4404",
+    "scope": "Governed Finance investment-case source, approved immutable snapshot, explicit candidate confirmation, idempotent candidate and receipt, and canonical cold Initiative candidate inbox visibility.",
+    "freshJourney": {
+      "modelId": "de90afa7-78db-4eac-bd9d-12421790cb89",
+      "modelTitle": "FIN Closure 2ce 1787091449866",
+      "candidateId": "f46c341a-3551-4a5b-9a69-145c9eda04e8",
+      "receiptId": "62ce412e-fb0c-40fe-88b8-783528c209ba",
+      "sourceFingerprint": "40eecfb4c8f8837d",
+      "approvedVersion": 2,
+      "approvedPeriods": 60,
+      "validation": "180/180 PASS",
+      "numericAnchors": {"capex": 6000, "opex": 147500},
+      "unknownByContract": ["npv", "irr", "roi", "payback", "assumptions"],
+      "confirm": "HTTP 201; one candidate and one immutable receipt",
+      "replay": "HTTP 200; created=false; same candidateId and approved snapshot"
+    },
+    "focusedVerification": {
+      "mountedRealPostgres": "5/5 PASS: one visible Finance proposal, exact candidate/source/receipt snapshot lineage, cold reader one, existing project-scoped proposal unchanged, revoked and foreign tenant denied",
+      "renderedWorkbench": "7/7 PASS: unassigned proposal remains visible with assignment-required message; Register and Other decision disabled; assigned authorized behavior unchanged",
+      "typecheck": "exit 0",
+      "diffCheckAndPrecommit": "PASS"
+    },
+    "coldSignedBrowser": {
+      "route": "/initiatives?tab=candidates",
+      "marker": "FIN Closure 2ce 1787091449866",
+      "markerCount": 1,
+      "sourceLabel": "finance_investment_case v1",
+      "assignmentRequiredStatusCount": 1,
+      "registerEnabled": false,
+      "otherDecisionEnabled": false,
+      "receiptVisibility": "Receipt ID and fingerprint are not rendered in this inbox; exact lineage is proven by the mounted real-PostgreSQL and cold-reader checks."
+    },
+    "downstreamBoundary": {
+      "status": "NOT_EXECUTED",
+      "scope": "Explicit project assignment and subsequent Initiative registration",
+      "reason": "Separate release/workflow boundary; the unassigned proposal intentionally fails closed and no project is inferred or auto-created."
+    },
+    "verdictScope": "DONE_CURRENT_SHA applies only to the governed Finance handoff through canonical cold inbox visibility."
   }
 }
