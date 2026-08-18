@@ -18,14 +18,20 @@
  *   4. POSITIVE control: the clean internal DEMONSTRATION seed pack CAN be
  *      published and CAN launch a program — proves the harness isn't just
  *      finding everything broken.
- *   5. KNOWN-GAP characterization (GAP 1, not fixed by this task — fix is
- *      owned by the integrator): a plain org member can list/read a DRAFT
- *      pack via the exact code path `GET /packs` and `GET /packs/:id` call
- *      (packService.listPacks / packService.getPack), because
- *      server/src/routes/audits/packs.routes.ts performs NO capability
- *      check and NO publication_status filter before calling them (verified
- *      by reading the route file — only POST/PATCH/DELETE call
- *      requireAdmin()).
+ *   5. GAP 1 — CLOSED (requalified 2026-08-18, AUD-MVP-RIGHTS-001 /
+ *      AMD-AUD-RIGHTS-001): draft/in-review pack visibility is now
+ *      author-or-platform-admin scoped. `server/src/routes/audits/
+ *      packs.routes.ts` GET /packs, GET /packs/:id, GET .../compare and
+ *      GET .../validate all pass `readScope: isPlatformAdmin(actor) ?
+ *      undefined : { actorUserId: actor.userId }`; enforcement is
+ *      `assertRowReadable` in `packService.ts` (404, not 403, so a foreign
+ *      draft's existence is not disclosed). This describe block used to
+ *      characterize the gap as open; it now proves the fix, including a
+ *      mounted-router supertest against the real `packs.routes.ts`. The
+ *      historical characterization is preserved verbatim in
+ *      docs/program/evidence/closure/a/AUD-MVP-RIGHTS-001/TASK_EVIDENCE.json;
+ *      this fix landed in ancestor commits 0dc91d839f / e05577375e, not in
+ *      this task — this pass requalified it, it did not implement it.
  *   6. Tenant isolation: org B cannot read or publish org A's pack.
  *   7. Cold readback: after publishing, a SEPARATE `pg.Pool` (not the app's
  *      shared DbPromise connection) still sees exactly one published pack
@@ -831,6 +837,55 @@ suite('Audits — rights/provenance negative controls (real Postgres, AUD-MVP-RI
       } finally {
         await freshPool.end();
       }
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // 8. Revoked/stale identity fails closed (mandatory negative control)
+  // -------------------------------------------------------------------------
+  describe('8. revoked/stale identity fails closed', () => {
+    it('ROUTE: a request whose auth middleware attached no identity (session revoked/expired) gets 401 AUDIT_NO_CONTEXT, not 200 or 500', async () => {
+      const { default: packsRouter } = await import('../../../routes/audits/packs.routes.js');
+
+      // Mirrors what happens upstream when a token is revoked/expired: the
+      // shared auth middleware does not attach req.user/organizationId/userId
+      // at all (rather than attaching a stale one). The Audits kernel's own
+      // `assertActor` must refuse this itself, not rely solely on a gate
+      // further up the middleware chain.
+      const noIdentityApp = express();
+      noIdentityApp.use(express.json());
+      noIdentityApp.use('/', packsRouter);
+
+      const listRes = await request(noIdentityApp).get('/');
+      expect(listRes.status).toBe(401);
+      expect(listRes.body.code).toBe('AUDIT_NO_CONTEXT');
+      expect(listRes.body.success).toBe(false);
+
+      const draft = await createDraftPack({
+        packKey: `aud-rights-revoked-${randomUUID()}`,
+        title: 'Pakiet — sprawdzenie odwołanej tożsamości',
+      });
+      const getRes = await request(noIdentityApp).get(`/${draft.id}`);
+      expect(getRes.status).toBe(401);
+      expect(getRes.body.code).toBe('AUDIT_NO_CONTEXT');
+    });
+
+    it('ROUTE: an identity with organizationId but no userId (partially-stale session) also fails closed with 401, not a crash', async () => {
+      const { default: packsRouter } = await import('../../../routes/audits/packs.routes.js');
+
+      const partialApp = express();
+      partialApp.use(express.json());
+      partialApp.use((req: Request, _res: Response, next: NextFunction) => {
+        // organizationId present, userId absent — e.g. a token whose subject
+        // claim failed to resolve after the user record was revoked/deleted.
+        (req as any).organizationId = orgA;
+        next();
+      });
+      partialApp.use('/', packsRouter);
+
+      const res = await request(partialApp).get('/');
+      expect(res.status).toBe(401);
+      expect(res.body.code).toBe('AUDIT_NO_CONTEXT');
     });
   });
 });
