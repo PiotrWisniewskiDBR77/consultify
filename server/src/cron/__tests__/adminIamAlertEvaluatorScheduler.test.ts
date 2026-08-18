@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { fileURLToPath, URL as NodeURL } from 'node:url';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const runTick = vi.fn();
@@ -31,5 +33,10 @@ describe('Admin IAM alert scheduler gate', () => {
     const { runAdminIamAlertSchedulerTick } = await import('../Scheduler.js');
     await expect(runAdminIamAlertSchedulerTick()).resolves.toBeUndefined();
     expect(runTick).toHaveBeenCalledTimes(1);
+  });
+
+  it('registers the exact exported tick on a five-minute cron', () => {
+    const source = readFileSync(fileURLToPath(new NodeURL('../Scheduler.ts', import.meta.url)), 'utf8');
+    expect(source).toContain("cron.schedule('*/5 * * * *', runAdminIamAlertSchedulerTick)");
   });
 });
