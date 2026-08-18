@@ -841,11 +841,17 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         let isCanonicalRuntime = false;
         if (!fromShowcase) {
           try {
+            await Api.get(`/initiatives/runtime-v1/initiatives/${encodeURIComponent(openId)}`);
+            isCanonicalRuntime = true;
+          } catch (registrationError: any) {
+            if (registrationError?.status !== 404) throw registrationError;
+          }
+
+          try {
             const v8Response = await V8PlanningApi.getInitiative(openId);
             const v8Initiative = v8Response?.initiative || v8Response;
             if (String(v8Initiative?.id || '') === openId) {
               response = v8Response;
-              isCanonicalRuntime = true;
             } else if (!fromList) {
               throw new Error('Initiative is not registered in the V8 runtime');
             }

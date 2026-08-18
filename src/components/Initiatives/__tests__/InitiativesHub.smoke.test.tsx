@@ -192,18 +192,32 @@ describe('InitiativesHub smoke', () => {
     expect(screen.queryByTestId('canonical-initiative')).not.toBeInTheDocument();
   });
 
-  it('opens a legacy deep link in the persisted document and a registered V8 deep link in the canonical card', async () => {
-    apiGet.mockResolvedValueOnce({ id: 'legacy-1', name: 'Legacy persisted', status: 'DRAFT' });
-    const legacy = renderHubAt('/initiatives?open=legacy-1&mode=doc');
+  it('opens a 404-unregistered deep link in the persisted initiative document', async () => {
+    apiGet
+      .mockRejectedValueOnce(Object.assign(new Error('not registered'), { status: 404 }))
+      .mockResolvedValueOnce({ id: 'legacy-1', name: 'Legacy persisted', status: 'DRAFT' });
+    renderHubAt('/initiatives?open=legacy-1&mode=doc');
     expect(await screen.findByTestId('legacy-initiative')).toBeInTheDocument();
     expect(screen.queryByTestId('canonical-initiative')).not.toBeInTheDocument();
-    legacy.unmount();
+  });
 
+  it('opens a runtime-v1 registered deep link in the canonical card', async () => {
+    apiGet.mockResolvedValueOnce({ id: 'runtime-1' });
     getInitiative.mockResolvedValueOnce({
       initiative: { id: 'runtime-1', name: 'Registered runtime', status: 'DRAFT' },
     });
     renderHubAt('/initiatives?open=runtime-1&mode=doc');
     expect(await screen.findByTestId('canonical-initiative')).toBeInTheDocument();
     expect(screen.queryByTestId('legacy-initiative')).not.toBeInTheDocument();
+  });
+
+  it('fails closed when the runtime-v1 registration read fails unexpectedly', async () => {
+    apiGet.mockRejectedValueOnce(Object.assign(new Error('runtime unavailable'), { status: 500 }));
+    getInitiative.mockClear();
+    renderHubAt('/initiatives?open=broken-1&mode=doc');
+    await waitFor(() =>
+      expect(apiGet).toHaveBeenCalledWith('/initiatives/runtime-v1/initiatives/broken-1')
+    );
+    expect(getInitiative).not.toHaveBeenCalledWith('broken-1');
   });
 });
