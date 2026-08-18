@@ -531,6 +531,29 @@ async function listColumns(table: string): Promise<string[]> {
 }
 
 async function purgeByOrganizationId(organizationId: string): Promise<void> {
+  // `presentation_analytics` is keyed ONLY by `deck_id` — it carries neither
+  // `organization_id` nor `org_id`, so the generic loop below (which matches on
+  // exactly those two columns) skips it entirely, and `deck_id` has no foreign
+  // key to cascade from. Its rows therefore survived every cleanup as orphans
+  // once this run's decks were deleted.
+  //
+  // Delete them FIRST, before the loop can remove `presentation_decks` and take
+  // the only link to them away, and scope the delete to the exact deck ids this
+  // run's organization owns — never a broad or global delete, so analytics rows
+  // belonging to any other deck or tenant are left untouched.
+  // Deliberately NOT wrapped in catch-and-continue like the generic loop below.
+  // Swallowing a failure here would let `/cleanup` answer 200 after a PARTIAL
+  // delete — reporting success while leaving exactly the orphan rows this code
+  // exists to remove. `{ fallback: false }` makes DbPromise reject rather than
+  // resolve null, and the rejection propagates through `asyncHandler` so the
+  // endpoint fails closed and the caller sees it.
+  await DbPromise.run(
+    `DELETE FROM presentation_analytics
+      WHERE deck_id IN (SELECT id FROM presentation_decks WHERE organization_id = ?)`,
+    [organizationId],
+    { fallback: false }
+  );
+
   const tables = await listTables();
   for (const table of tables) {
     // Table names come from the DB, but we still harden to avoid SQL injection.
