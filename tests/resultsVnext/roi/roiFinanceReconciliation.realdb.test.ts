@@ -151,6 +151,56 @@ async function outboxConsumerGroups(eventType: string, aggregateId: string): Pro
   return result.rows.map((r) => r.consumer_group);
 }
 
+/** CTO-directed binding design's zero-write proof helper: a compact,
+ * directly-measured snapshot of every table a status-update call could
+ * possibly touch for one (caseId, reconciliationId) pair — the aggregate
+ * row itself (row_version/status/resolution_notes), its event log rows
+ * (scoped by aggregate_id=caseId, aggregate_type='roi_case' — the identity
+ * `updateRoiFinanceReconciliationStatus`'s `buildEvent` uses), the outbox
+ * rows fanned from those events, and any terminal-transition decision rows
+ * (scoped by reconciliation_id). Comparing two snapshots with `toEqual`
+ * proves a delta is EXACTLY zero, not "no meaningful change". */
+async function snapshotReconciliationState(
+  caseId: string,
+  reconciliationId: string
+): Promise<{
+  rowVersion: number | null;
+  status: string | null;
+  resolutionNotes: string | null;
+  eventsCount: number;
+  outboxCount: number;
+  decisionsCount: number;
+}> {
+  const result = await client.query<{
+    row_version: number | null;
+    status: string | null;
+    resolution_notes: string | null;
+    events_count: number;
+    outbox_count: number;
+    decisions_count: number;
+  }>(
+    `SELECT
+       (SELECT row_version FROM rvn_roi_finance_reconciliations WHERE reconciliation_id = $1) row_version,
+       (SELECT status FROM rvn_roi_finance_reconciliations WHERE reconciliation_id = $1) status,
+       (SELECT resolution_notes FROM rvn_roi_finance_reconciliations WHERE reconciliation_id = $1) resolution_notes,
+       (SELECT count(*)::int FROM rvn_platform_events
+          WHERE aggregate_id = $2 AND aggregate_type = 'roi_case') events_count,
+       (SELECT count(*)::int FROM rvn_platform_outbox o JOIN rvn_platform_events e ON e.event_id = o.event_id
+          WHERE e.aggregate_id = $2 AND e.aggregate_type = 'roi_case') outbox_count,
+       (SELECT count(*)::int FROM rvn_finance_reconciliation_decisions WHERE reconciliation_id = $1) decisions_count`,
+    [reconciliationId, caseId]
+  );
+  const row = result.rows[0];
+  return {
+    rowVersion: row?.row_version ?? null,
+    status: row?.status ?? null,
+    resolutionNotes: row?.resolution_notes ?? null,
+    eventsCount: row?.events_count ?? 0,
+    outboxCount: row?.outbox_count ?? 0,
+    decisionsCount: row?.decisions_count ?? 0,
+  };
+}
+
 describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
   beforeAll(async () => {
     if (!DB_CONFIGURED) {
@@ -920,68 +970,363 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
   );
 
   itDB(
-    'GAP 2 (fixed) — a reused idempotency key carrying a DIFFERENT status is ' +
-      'rejected the same way openRoiFinanceReconciliation rejects a mismatched ' +
-      'replay (IDEMPOTENCY_FINGERPRINT_CONFLICT). Before the local fix in ' +
-      'roiFinanceReconciliationCommands.ts this call resolved with ' +
-      "outcome:'duplicate' and a MIS-SHAPED { reconciliation: {...} } result " +
-      "carrying the stale 'investigating' status instead of rejecting — see " +
-      'the literal failure text recorded in the FIN-MVP-RECONCILIATION-001 ' +
-      'W4 report for that pre-fix behavior.',
+    'GAP 2 corrective (CTO-directed binding design) — an EXACT original ' +
+      'duplicate call returns a FLAT replay of the first committed result ' +
+      '(no nested { reconciliation: {...} } envelope — same top-level shape ' +
+      "as the original 'applied' response), and performs ZERO writes — " +
+      'measured directly (row_version/status/notes/event count/outbox ' +
+      'count/decision count before vs. after), not inferred from the ' +
+      'response alone.',
     async () => {
-      const fixture = await buildCaseWithFinanceLink('9');
+      const fixture = await buildCaseWithFinanceLink('10');
       const openOutcome = await openRoiFinanceReconciliation({
         caseId: fixture.caseId,
         organizationId: ORG_ID,
         financeLinkId: fixture.linkId,
-        roiValue: 600,
-        financeValue: 550,
+        roiValue: 700,
+        financeValue: 640,
         actorUserId: USER_MAKER,
         actorEffectiveRole: 'consultant',
-        idempotencyKey: `recon-idem-asym-open-${randomUUID()}`,
+        idempotencyKey: `recon-exact-dup-open-${randomUUID()}`,
         access: { capabilities: ['*'], platformRole: null },
       });
+      const reconciliationId = openOutcome.result.reconciliationId;
+      const sharedKey = `recon-exact-dup-shared-${randomUUID()}`;
+      const callArgs = {
+        reconciliationId,
+        caseId: fixture.caseId,
+        organizationId: ORG_ID,
+        expectedVersion: openOutcome.result.rowVersion,
+        status: 'investigating' as const,
+        resolutionNotes: 'exact-duplicate probe note',
+        actorUserId: USER_MAKER,
+        actorEffectiveRole: 'consultant',
+        idempotencyKey: sharedKey,
+        access: { capabilities: ['*'], platformRole: null },
+      };
 
-      const sharedKey = `recon-idem-asym-shared-${randomUUID()}`;
+      const first = await updateRoiFinanceReconciliationStatus(callArgs);
+      expect(first.outcome).toBe('applied');
+      expect(first.result.status).toBe('investigating');
+      expect(first.result).not.toHaveProperty('reconciliation');
 
-      // First call under sharedKey: non-terminal transition to 'investigating'.
+      const before = await snapshotReconciliationState(fixture.caseId, reconciliationId);
+
+      // BYTE-IDENTICAL arguments to the first call, including the ORIGINAL
+      // (now-stale) expectedVersion — a genuine retried duplicate, not a
+      // fresh command. Must be served as a flat replay, never contending on
+      // the aggregate CAS at all.
+      const second = await updateRoiFinanceReconciliationStatus(callArgs);
+
+      const after = await snapshotReconciliationState(fixture.caseId, reconciliationId);
+
+      expect(second.outcome).toBe('duplicate');
+      expect(second.eventId).toBe(first.eventId);
+      expect(second.resultingVersion).toBe(first.resultingVersion);
+      expect(second.result).not.toHaveProperty('reconciliation');
+      expect(second.result.reconciliationId).toBe(reconciliationId);
+      expect(second.result.status).toBe('investigating');
+      expect(second.result.resolutionNotes).toBe('exact-duplicate probe note');
+
+      // ZERO writes, measured directly.
+      expect(after).toEqual(before);
+    }
+  );
+
+  itDB(
+    'GAP 2 corrective — changed expectedVersion ONLY (every other field of ' +
+      'the seven-field tuple byte-identical) is rejected as ' +
+      'IDEMPOTENCY_FINGERPRINT_CONFLICT, with zero writes. This is the ' +
+      'sharpest case: if this returns a replay instead of a conflict, the ' +
+      'fingerprint is not doing its job.',
+    async () => {
+      const fixture = await buildCaseWithFinanceLink('11');
+      const openOutcome = await openRoiFinanceReconciliation({
+        caseId: fixture.caseId,
+        organizationId: ORG_ID,
+        financeLinkId: fixture.linkId,
+        roiValue: 710,
+        financeValue: 650,
+        actorUserId: USER_MAKER,
+        actorEffectiveRole: 'consultant',
+        idempotencyKey: `recon-ver-only-open-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
+      });
+      const reconciliationId = openOutcome.result.reconciliationId;
+      const sharedKey = `recon-ver-only-shared-${randomUUID()}`;
+
       const first = await updateRoiFinanceReconciliationStatus({
-        reconciliationId: openOutcome.result.reconciliationId,
+        reconciliationId,
         caseId: fixture.caseId,
         organizationId: ORG_ID,
         expectedVersion: openOutcome.result.rowVersion,
         status: 'investigating',
+        resolutionNotes: 'version-only probe note',
         actorUserId: USER_MAKER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: sharedKey,
         access: { capabilities: ['*'], platformRole: null },
       });
-      expect(first.result.status).toBe('investigating');
+      expect(first.outcome).toBe('applied');
 
-      // Second call REUSES sharedKey but requests a genuinely DIFFERENT
-      // command — a terminal 'resolved' status — with the correctly-advanced
-      // expectedVersion (so this is not a literal duplicate replay, it is a
-      // distinct command that collides on idempotency_key, e.g. a client bug
-      // or key-reuse attack). openRoiFinanceReconciliation would reject an
-      // equivalent collision with IDEMPOTENCY_FINGERPRINT_CONFLICT (see the
-      // 'DEC-FIN: terminal resolution is capability-only...' test above).
-      // updateRoiFinanceReconciliationStatus has no fingerprint pre-check —
-      // executeAtomicCommand's generic ON CONFLICT (organization_id,
-      // idempotency_key) DO NOTHING fires only AFTER applyMutation already
-      // ran, the mutation is then rolled back, and (with no loadExistingResult
-      // supplied for this command) the raw first event's after_state is
-      // handed back as outcome:'duplicate' with no comparison and no error.
+      const before = await snapshotReconciliationState(fixture.caseId, reconciliationId);
+
+      // Every field identical to the first call EXCEPT expectedVersion,
+      // which now (plausibly, from the caller's point of view) reflects the
+      // post-first-call current version instead of the original.
       await expect(updateRoiFinanceReconciliationStatus({
-        reconciliationId: openOutcome.result.reconciliationId,
+        reconciliationId,
         caseId: fixture.caseId,
         organizationId: ORG_ID,
         expectedVersion: first.resultingVersion,
-        status: 'resolved',
+        status: 'investigating',
+        resolutionNotes: 'version-only probe note',
+        actorUserId: USER_MAKER,
+        actorEffectiveRole: 'consultant',
+        idempotencyKey: sharedKey,
+        access: { capabilities: ['*'], platformRole: null },
+      })).rejects.toMatchObject({ code: 'IDEMPOTENCY_FINGERPRINT_CONFLICT' });
+
+      const after = await snapshotReconciliationState(fixture.caseId, reconciliationId);
+      expect(after).toEqual(before);
+    }
+  );
+
+  itDB(
+    'GAP 2 corrective — changed status ONLY (both targets non-terminal, so ' +
+      'no grant/self-resolution check intervenes first) is rejected as ' +
+      'IDEMPOTENCY_FINGERPRINT_CONFLICT, with zero writes.',
+    async () => {
+      const fixture = await buildCaseWithFinanceLink('12');
+      const openOutcome = await openRoiFinanceReconciliation({
+        caseId: fixture.caseId,
+        organizationId: ORG_ID,
+        financeLinkId: fixture.linkId,
+        roiValue: 720,
+        financeValue: 660,
+        actorUserId: USER_MAKER,
+        actorEffectiveRole: 'consultant',
+        idempotencyKey: `recon-status-only-open-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
+      });
+      const reconciliationId = openOutcome.result.reconciliationId;
+      const sharedKey = `recon-status-only-shared-${randomUUID()}`;
+
+      const first = await updateRoiFinanceReconciliationStatus({
+        reconciliationId,
+        caseId: fixture.caseId,
+        organizationId: ORG_ID,
+        expectedVersion: openOutcome.result.rowVersion,
+        status: 'investigating',
+        resolutionNotes: 'status-only probe note',
+        actorUserId: USER_MAKER,
+        actorEffectiveRole: 'consultant',
+        idempotencyKey: sharedKey,
+        access: { capabilities: ['*'], platformRole: null },
+      });
+      expect(first.outcome).toBe('applied');
+
+      const before = await snapshotReconciliationState(fixture.caseId, reconciliationId);
+
+      // SAME expectedVersion as the first call (the ORIGINAL, now-stale
+      // value) and SAME everything else — ONLY status differs ('open' vs.
+      // 'investigating', both non-terminal).
+      await expect(updateRoiFinanceReconciliationStatus({
+        reconciliationId,
+        caseId: fixture.caseId,
+        organizationId: ORG_ID,
+        expectedVersion: openOutcome.result.rowVersion,
+        status: 'open',
+        resolutionNotes: 'status-only probe note',
+        actorUserId: USER_MAKER,
+        actorEffectiveRole: 'consultant',
+        idempotencyKey: sharedKey,
+        access: { capabilities: ['*'], platformRole: null },
+      })).rejects.toMatchObject({ code: 'IDEMPOTENCY_FINGERPRINT_CONFLICT' });
+
+      const after = await snapshotReconciliationState(fixture.caseId, reconciliationId);
+      expect(after).toEqual(before);
+    }
+  );
+
+  itDB(
+    'GAP 2 corrective — changed resolutionNotes ONLY is rejected as ' +
+      'IDEMPOTENCY_FINGERPRINT_CONFLICT, with zero writes.',
+    async () => {
+      const fixture = await buildCaseWithFinanceLink('13');
+      const openOutcome = await openRoiFinanceReconciliation({
+        caseId: fixture.caseId,
+        organizationId: ORG_ID,
+        financeLinkId: fixture.linkId,
+        roiValue: 730,
+        financeValue: 670,
+        actorUserId: USER_MAKER,
+        actorEffectiveRole: 'consultant',
+        idempotencyKey: `recon-notes-only-open-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
+      });
+      const reconciliationId = openOutcome.result.reconciliationId;
+      const sharedKey = `recon-notes-only-shared-${randomUUID()}`;
+
+      const first = await updateRoiFinanceReconciliationStatus({
+        reconciliationId,
+        caseId: fixture.caseId,
+        organizationId: ORG_ID,
+        expectedVersion: openOutcome.result.rowVersion,
+        status: 'investigating',
+        resolutionNotes: 'original probe note',
+        actorUserId: USER_MAKER,
+        actorEffectiveRole: 'consultant',
+        idempotencyKey: sharedKey,
+        access: { capabilities: ['*'], platformRole: null },
+      });
+      expect(first.outcome).toBe('applied');
+
+      const before = await snapshotReconciliationState(fixture.caseId, reconciliationId);
+
+      await expect(updateRoiFinanceReconciliationStatus({
+        reconciliationId,
+        caseId: fixture.caseId,
+        organizationId: ORG_ID,
+        expectedVersion: openOutcome.result.rowVersion,
+        status: 'investigating',
+        resolutionNotes: 'DIFFERENT probe note',
+        actorUserId: USER_MAKER,
+        actorEffectiveRole: 'consultant',
+        idempotencyKey: sharedKey,
+        access: { capabilities: ['*'], platformRole: null },
+      })).rejects.toMatchObject({ code: 'IDEMPOTENCY_FINGERPRINT_CONFLICT' });
+
+      const after = await snapshotReconciliationState(fixture.caseId, reconciliationId);
+      expect(after).toEqual(before);
+    }
+  );
+
+  itDB(
+    'GAP 2 corrective — changed actor ONLY (both non-terminal, both active ' +
+      'org members with full capabilities, so no auth check intervenes ' +
+      'first) is rejected as IDEMPOTENCY_FINGERPRINT_CONFLICT, with zero ' +
+      'writes.',
+    async () => {
+      const fixture = await buildCaseWithFinanceLink('14');
+      const openOutcome = await openRoiFinanceReconciliation({
+        caseId: fixture.caseId,
+        organizationId: ORG_ID,
+        financeLinkId: fixture.linkId,
+        roiValue: 740,
+        financeValue: 680,
+        actorUserId: USER_MAKER,
+        actorEffectiveRole: 'consultant',
+        idempotencyKey: `recon-actor-only-open-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
+      });
+      const reconciliationId = openOutcome.result.reconciliationId;
+      const sharedKey = `recon-actor-only-shared-${randomUUID()}`;
+
+      const first = await updateRoiFinanceReconciliationStatus({
+        reconciliationId,
+        caseId: fixture.caseId,
+        organizationId: ORG_ID,
+        expectedVersion: openOutcome.result.rowVersion,
+        status: 'investigating',
+        resolutionNotes: 'actor-only probe note',
+        actorUserId: USER_MAKER,
+        actorEffectiveRole: 'consultant',
+        idempotencyKey: sharedKey,
+        access: { capabilities: ['*'], platformRole: null },
+      });
+      expect(first.outcome).toBe('applied');
+
+      const before = await snapshotReconciliationState(fixture.caseId, reconciliationId);
+
+      await expect(updateRoiFinanceReconciliationStatus({
+        reconciliationId,
+        caseId: fixture.caseId,
+        organizationId: ORG_ID,
+        expectedVersion: openOutcome.result.rowVersion,
+        status: 'investigating',
+        resolutionNotes: 'actor-only probe note',
         actorUserId: USER_RESOLVER,
         actorEffectiveRole: 'consultant',
         idempotencyKey: sharedKey,
         access: { capabilities: ['*'], platformRole: null },
       })).rejects.toMatchObject({ code: 'IDEMPOTENCY_FINGERPRINT_CONFLICT' });
+
+      const after = await snapshotReconciliationState(fixture.caseId, reconciliationId);
+      expect(after).toEqual(before);
+    }
+  );
+
+  itDB(
+    'GAP 2 corrective — changed caseId ONLY, via cross-case idempotency-key ' +
+      'reuse (two DIFFERENT reconciliations, in two DIFFERENT cases, both ' +
+      'freshly opened at rowVersion 1, sharing one idempotency_key with ' +
+      'identical status/notes/actor/org/expectedVersion) is rejected as ' +
+      'IDEMPOTENCY_FINGERPRINT_CONFLICT, with zero writes to the second ' +
+      '(attempted) reconciliation.',
+    async () => {
+      const fixtureA = await buildCaseWithFinanceLink('15a');
+      const fixtureB = await buildCaseWithFinanceLink('15b');
+      const openA = await openRoiFinanceReconciliation({
+        caseId: fixtureA.caseId,
+        organizationId: ORG_ID,
+        financeLinkId: fixtureA.linkId,
+        roiValue: 750,
+        financeValue: 690,
+        actorUserId: USER_MAKER,
+        actorEffectiveRole: 'consultant',
+        idempotencyKey: `recon-case-only-open-a-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
+      });
+      const openB = await openRoiFinanceReconciliation({
+        caseId: fixtureB.caseId,
+        organizationId: ORG_ID,
+        financeLinkId: fixtureB.linkId,
+        roiValue: 750,
+        financeValue: 690,
+        actorUserId: USER_MAKER,
+        actorEffectiveRole: 'consultant',
+        idempotencyKey: `recon-case-only-open-b-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
+      });
+      expect(openA.result.rowVersion).toBe(1);
+      expect(openB.result.rowVersion).toBe(1);
+
+      const sharedKey = `recon-case-only-shared-${randomUUID()}`;
+      const first = await updateRoiFinanceReconciliationStatus({
+        reconciliationId: openA.result.reconciliationId,
+        caseId: fixtureA.caseId,
+        organizationId: ORG_ID,
+        expectedVersion: openA.result.rowVersion,
+        status: 'investigating',
+        resolutionNotes: 'case-only probe note',
+        actorUserId: USER_MAKER,
+        actorEffectiveRole: 'consultant',
+        idempotencyKey: sharedKey,
+        access: { capabilities: ['*'], platformRole: null },
+      });
+      expect(first.outcome).toBe('applied');
+
+      const beforeB = await snapshotReconciliationState(fixtureB.caseId, openB.result.reconciliationId);
+
+      // SAME idempotencyKey, SAME status/notes/actor/org/expectedVersion as
+      // the first call -- but a DIFFERENT reconciliation, in a DIFFERENT
+      // case, never touched by the first call.
+      await expect(updateRoiFinanceReconciliationStatus({
+        reconciliationId: openB.result.reconciliationId,
+        caseId: fixtureB.caseId,
+        organizationId: ORG_ID,
+        expectedVersion: openB.result.rowVersion,
+        status: 'investigating',
+        resolutionNotes: 'case-only probe note',
+        actorUserId: USER_MAKER,
+        actorEffectiveRole: 'consultant',
+        idempotencyKey: sharedKey,
+        access: { capabilities: ['*'], platformRole: null },
+      })).rejects.toMatchObject({ code: 'IDEMPOTENCY_FINGERPRINT_CONFLICT' });
+
+      const afterB = await snapshotReconciliationState(fixtureB.caseId, openB.result.reconciliationId);
+      expect(afterB).toEqual(beforeB);
     }
   );
 });
