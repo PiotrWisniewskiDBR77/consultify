@@ -198,19 +198,18 @@ is blocked on a product decision, not on missing test infrastructure.
 
 ---
 
-## ICR-3 — unleased tracked file edited (2026-08-18 successor wave)
+## ICR-3 — RESOLVED: exact-path lease amendment (2026-08-18 successor wave)
 
 **Task**: AUD-MVP-RIGHTS-001
 **File edited**: `server/src/routes/audits/__tests__/mounting.integration.test.ts`
-**Lease status**: NOT LEASED to any of the four current lane leases at the
-time of this edit. Checked programmatically (recomputed, not taken on
-report) against all four `docs/cleanup/agents/generated/*_PATH_LEASE.json`
-files: Lane A (current identity `e75d0729bb...`, 721 files — see
-`leaseSha256Correction20260818` in `TASK_EVIDENCE.json` for why the
-previously recorded Lane A identity in this task's own evidence was stale),
-Lane B, Lane C, and the Codex integrator lease. Zero matches for this exact
-path, and zero matches for any other file under
-`server/src/routes/audits/__tests__/`, in any of the four files.
+**Lease status**: RESOLVED. The edit was unleased when first authored; that
+historical fact is preserved. Codex integrator governance commits
+`fe5143cc22` -> `5b14a81558` subsequently added exactly this path to Lane A,
+producing current identity
+`f9a412a47ab3aed81113d445d248f4e14ea365d293dd77b8fa1fcfad70b8eca5`
+(722 paths). SHA/count/JSON-Markdown parity, codepoint ordering, zero overlap,
+plan, ownership and dependency graph all passed. No directory or sibling path
+was leased by this exception.
 
 **Exact change made**: 45 lines added, 0 lines removed. One new `it(...)`
 test case appended inside the file's existing, already-present
