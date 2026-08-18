@@ -239,7 +239,8 @@
       }
     ],
     "environment": "disposable container a2-org-pg, database consultify_org_5ce16 on 127.0.0.1:55521; container removed and ports 55521/55621/55622 released after the run",
-    "migration": "20261015_knowledge_docs_file_hash.sql; SHA-256 8da301a8bf8b98038b26b58fc9a1496c4584b07ad1cd6812c3cab0abef278477; fresh 762, repeat 0, dry pending 0, ledger 762, checksum-null 0.",
+    "migration": "20261015_knowledge_docs_file_hash.sql; SHA-256 8da301a8bf8b98038b26b58fc9a1496c4584b07ad1cd6812c3cab0abef278477; exact-current 5ce16c71bd fresh 771, repeat 0, dry pending 0.",
+    "buildBinding": "The historical gates array records backend and frontend builds from the earlier product qualification and is preserved as history. The exact-current 5ce16c71bd requalification did not rerun either build and does not claim that it did; its exact gates are limited to the two TypeScript checks, fresh/repeat/dry migrations, focused real-PG 54/54 and mounted Playwright 2/2 listed above.",
     "focused": "6 files and 54/54 tests passed on real PostgreSQL at 5ce16c71bd (identical to the cdb0b5c200 run).",
     "mounted": "2/2 mounted production journeys passed at 5ce16c71bd (identical to the cdb0b5c200 run).",
     "hashTruth": "Historical NULL is preserved as source_hash_unverified; frozen hash with live NULL is hash_unavailable; differing hashes are hash_mismatch; deleted sources remain fail-closed."
