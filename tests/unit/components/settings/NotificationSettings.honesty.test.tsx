@@ -88,4 +88,37 @@ describe('NotificationSettings honest UI', () => {
     expect(toast.success).not.toHaveBeenCalled();
     expect(onUpdateUser).not.toHaveBeenCalled();
   });
+
+  it('confirms a saved preference by read-back and restores it on reload', async () => {
+    const onUpdateUser = vi.fn();
+    const persistedPreferences = {
+      ...initialPreferences,
+      taskAssignment: { ...initialPreferences.taskAssignment, inApp: false },
+    };
+    vi.mocked(Api.getNotificationPreferences)
+      .mockResolvedValueOnce(initialPreferences)
+      .mockResolvedValueOnce(persistedPreferences)
+      .mockResolvedValueOnce(persistedPreferences);
+
+    const firstRender = render(
+      <NotificationSettings currentUser={asUser(currentUser)} onUpdateUser={onUpdateUser} />
+    );
+
+    await waitFor(() => expect(screen.getByText('Task Assignments')).toBeInTheDocument());
+    fireEvent.click(screen.getAllByRole('switch')[0]);
+    fireEvent.click(screen.getByRole('button', { name: /Save Changes/i }));
+
+    await waitFor(() => {
+      expect(Api.saveNotificationPreferences).toHaveBeenCalledWith('user-1', persistedPreferences);
+      expect(toast.success).toHaveBeenCalled();
+    });
+    expect(screen.getByRole('button', { name: /Save Changes/i })).toBeDisabled();
+
+    firstRender.unmount();
+    render(<NotificationSettings currentUser={asUser(currentUser)} onUpdateUser={vi.fn()} />);
+
+    await waitFor(() => expect(screen.getByText('Task Assignments')).toBeInTheDocument());
+    expect(screen.getAllByRole('switch')[0]).not.toBeChecked();
+    expect(Api.getNotificationPreferences).toHaveBeenCalledTimes(3);
+  });
 });

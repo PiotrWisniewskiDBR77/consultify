@@ -1863,19 +1863,23 @@ export const Api = {
   },
 
   // --- SETTINGS (NotificationSettings, IntegrationSettings) ---
-  getNotificationPreferences: async (userId: string): Promise<any> => {
-    const res = await fetchWithRetry(`${API_URL}/settings/notifications?userId=${userId}`, {
+  getNotificationPreferences: async (_userId: string): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/settings/preferences/notifications`, {
       headers: getHeaders(),
     });
-    if (!res.ok) return {};
-    return res.json();
+    if (!res.ok) throw new Error('Failed to load notification preferences');
+    const payload = await res.json();
+    if (!payload?.preferences || typeof payload.preferences !== 'object') {
+      throw new Error('Notification preferences response is invalid');
+    }
+    return payload.preferences;
   },
 
-  saveNotificationPreferences: async (userId: string, preferences: any): Promise<void> => {
-    const res = await fetchWithRetry(`${API_URL}/settings/notifications`, {
-      method: 'POST',
+  saveNotificationPreferences: async (_userId: string, preferences: any): Promise<void> => {
+    const res = await fetchWithRetry(`${API_URL}/settings/preferences/notifications`, {
+      method: 'PUT',
       headers: getHeaders(),
-      body: JSON.stringify({ userId, preferences }),
+      body: JSON.stringify({ preferences }),
     });
     if (!res.ok) throw new Error('Failed to save notification preferences');
   },
