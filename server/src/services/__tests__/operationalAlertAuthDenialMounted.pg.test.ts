@@ -92,7 +92,8 @@ describe.skipIf(!enabled)('OPS mounted signed-JWT auth denial repair intent', ()
       .set('x-request-id', `${p}-ok`);
     expect(activeDenied.status).toBe(403);
     expect(activeDenied.body).toMatchObject({ error: 'Admin access required' });
-    await flushPendingOperationalAuthDenialIntents();
+    // The response itself is the durability barrier: no explicit shutdown
+    // flush is needed before this readback.
     expect(
       (
         await pool.query(

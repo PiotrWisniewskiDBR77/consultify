@@ -35,6 +35,7 @@ const MAX_METRIC_COUNTER = Number.MAX_SAFE_INTEGER;
 const MAX_RECORDED_REQUEST_DURATION_MS = 600_000;
 const MAX_DISTINCT_METHOD_LABELS = 64;
 const METHOD_OVERFLOW_BUCKET = 'OTHER';
+const DEFAULT_AUTH_DENIAL_BARRIER_TIMEOUT_MS = 2000;
 
 const metrics: MetricsBucket = {
   requests: 0,
@@ -64,7 +65,13 @@ function normalizeOptionalString(value: unknown): string | undefined {
 const pendingOperationalAuthIntents = new Set<Promise<unknown>>();
 export function trackOperationalAuthIntentForShutdown(pending: Promise<unknown>): void {
   pendingOperationalAuthIntents.add(pending);
-  void pending.finally(() => pendingOperationalAuthIntents.delete(pending));
+  // `finally()` mirrors the original rejection into a new promise. Ignoring
+  // that promise would turn an expected durability failure into an unhandled
+  // rejection even though the response barrier handles the original promise.
+  void pending.then(
+    () => pendingOperationalAuthIntents.delete(pending),
+    () => pendingOperationalAuthIntents.delete(pending)
+  );
 }
 export async function flushPendingOperationalAuthDenialIntents(
   params: { timeoutMs?: number } = {}
@@ -85,14 +92,14 @@ export async function flushPendingOperationalAuthDenialIntents(
   }
 }
 
-function recordDurableAuthDenial(req: Request): void {
+function recordDurableAuthDenial(req: Request): Promise<unknown> {
   const user = safeRead(() => (req as any).user as Record<string, unknown> | undefined, undefined);
   const organizationId = normalizeOptionalString(user?.organizationId ?? user?.organization_id);
   const actorId = normalizeOptionalString(user?.id ?? user?.userId ?? user?.user_id);
   const correlationId = normalizeOptionalString(
     safeRead(() => req.headers['x-request-id'], undefined)
   );
-  if (!organizationId || !actorId || !correlationId) return;
+  if (!organizationId || !actorId || !correlationId) return Promise.resolve();
   const pending = Promise.all([
     import('../services/operationalAlertSignalDeliveryService.js'),
     import('../services/operationalAlertRepairService.js'),
@@ -109,9 +116,32 @@ function recordDurableAuthDenial(req: Request): void {
             outcome: 'DENIAL',
           })
         : undefined
-    )
-    .catch(() => undefined);
+    );
   trackOperationalAuthIntentForShutdown(pending);
+  return pending;
+}
+
+function authDenialBarrierTimeoutMs(): number {
+  const parsed = Number(process.env.OPERATIONAL_AUTH_DENIAL_BARRIER_TIMEOUT_MS);
+  if (!Number.isFinite(parsed)) return DEFAULT_AUTH_DENIAL_BARRIER_TIMEOUT_MS;
+  return Math.max(50, Math.min(5000, Math.trunc(parsed)));
+}
+
+async function awaitDurableAuthDenialBarrier(
+  pending: Promise<unknown>,
+  timeoutMs = authDenialBarrierTimeoutMs()
+): Promise<'settled' | 'failed' | 'timed_out'> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      pending.then(() => 'settled' as const, () => 'failed' as const),
+      new Promise<'timed_out'>((resolve) => {
+        timer = setTimeout(() => resolve('timed_out'), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
 }
 
 function safeMethod(req: Request): string {
@@ -289,7 +319,6 @@ export const metricsMiddleware = (req: Request, res: Response, next: NextFunctio
         operationalAlerts.recordAuthDenial(
           normalizeOptionalString(safeRead(() => req.headers['x-request-id'], undefined))
         );
-        recordDurableAuthDenial(req);
       }
 
       for (const bucket of LATENCY_BUCKETS) {
@@ -317,7 +346,34 @@ export const metricsMiddleware = (req: Request, res: Response, next: NextFunctio
     next();
     return;
   }
+  let endStarted = false;
   const wrappedEnd = function (this: unknown, ...args: any[]) {
+    if (endStarted) return this;
+    endStarted = true;
+    const status = normalizeHttpStatus(safeRead(() => res.statusCode, 500));
+    if (status === 401 || status === 403) {
+      // Do not put the denial on the wire until its durable intent transaction
+      // has settled. A SIGKILL after the client observes the response can no
+      // longer erase an accepted authenticated denial intent.
+      void awaitDurableAuthDenialBarrier(recordDurableAuthDenial(req)).then((outcome) => {
+        try {
+          if (outcome === 'settled') {
+            originalEnd.apply(this, args);
+          } else {
+            // Never acknowledge a denial whose durable intent was not known to
+            // commit. Destroying the socket is bounded and fail-closed; the
+            // caller may retry with the same correlation id.
+            const destroy = safeRead(() => (res as any).destroy, undefined);
+            if (typeof destroy === 'function') {
+              destroy.call(res, new Error(`AUTH_DENIAL_DURABILITY_${outcome.toUpperCase()}`));
+            }
+          }
+        } finally {
+          recordCompletion();
+        }
+      });
+      return this;
+    }
     try {
       return originalEnd.apply(this, args);
     } finally {
@@ -382,4 +438,5 @@ export const __private__ = {
   addBoundedMetric,
   subtractBoundedMetric,
   escapePrometheusLabelValue,
+  awaitDurableAuthDenialBarrier,
 };

@@ -11,7 +11,7 @@ import {
 import { operationalAlerts } from '../../../../server/src/services/operationalAlertService.ts';
 
 describe('metrics.middleware', () => {
-  it('feeds completed authentication denials into the operational alert threshold', () => {
+  it('feeds completed authentication denials into the operational alert threshold', async () => {
     operationalAlerts.resetForTests();
 
     for (let index = 0; index < 5; index += 1) {
@@ -23,12 +23,38 @@ describe('metrics.middleware', () => {
       metricsMiddleware(req, res, vi.fn());
       res.end();
     }
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
 
     const alert = operationalAlerts
       .evaluate()
       .find((candidate) => candidate.kind === 'REPEATED_AUTH_DENIALS');
     expect(alert).toMatchObject({ active: true, value: 5, threshold: 5 });
     expect(alert?.correlationId).toBe('auth-denial-4');
+  });
+
+  it('does not end an authentication-denial response before the durable seam settles', async () => {
+    const originalEnd = vi.fn();
+    const req: any = { method: 'GET', headers: {} };
+    const res: any = { statusCode: 403, end: originalEnd };
+    metricsMiddleware(req, res, vi.fn());
+    res.end('denied');
+    expect(originalEnd).not.toHaveBeenCalled();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    expect(originalEnd).toHaveBeenCalledWith('denied');
+  });
+
+  it('bounds a hung durability barrier instead of waiting indefinitely', async () => {
+    const never = new Promise<void>(() => undefined);
+    const started = Date.now();
+    await expect(__private__.awaitDurableAuthDenialBarrier(never, 50)).resolves.toBe('timed_out');
+    expect(Date.now() - started).toBeGreaterThanOrEqual(40);
+    expect(Date.now() - started).toBeLessThan(500);
+  });
+
+  it('classifies a failed durability write as fail-closed', async () => {
+    await expect(
+      __private__.awaitDurableAuthDenialBarrier(Promise.reject(new Error('store unavailable')), 50)
+    ).resolves.toBe('failed');
   });
 
   it('addBoundedMetric caps counters at Number.MAX_SAFE_INTEGER', () => {
