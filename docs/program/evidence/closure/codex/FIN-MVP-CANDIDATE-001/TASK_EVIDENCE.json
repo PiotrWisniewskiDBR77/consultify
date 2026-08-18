@@ -2,25 +2,25 @@
   "taskId": "FIN-MVP-CANDIDATE-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "3e9eabea0bf191795ea05bc26a5c8a60c77c4404",
-  "technicalSourceShas": ["3e9eabea0bf191795ea05bc26a5c8a60c77c4404"],
-  "reconciliationSha": "3e9eabea0bf191795ea05bc26a5c8a60c77c4404",
+  "technicalSourceShas": ["2ce0469cf8b7f3ba3f1142bad530a1362e5c6736", "3e9eabea0bf191795ea05bc26a5c8a60c77c4404"],
+  "reconciliationSha": "8a64fa3c808260a2e85bdc31f072c7a65780fa91",
   "supersedesEvidenceSha": "9936a10ce90de755320cfb626c2d533dc0554049",
   "evidenceReconciliationPath": "docs/program/evidence/closure/codex/FIN-MVP-CANDIDATE-001/TASK_EVIDENCE.json",
   "evidenceReconciliationRationale": "Exact-current reconciliation of the scoped governed Finance investment-case handoff through canonical cold inbox visibility. It does not claim downstream project assignment or Initiative registration.",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
-  "changedPaths": ["server/src/Gateway.ts", "server/src/routes/__tests__/financeCandidateHandoffMounts.auth.test.ts", "src/components/Economics/FinanceHub.tsx", "src/components/Finance/Valuation/ValuationWorkspace.tsx", "src/components/Finance/Valuation/__tests__/ValuationWorkspace.test.tsx", "src/routes/AppRoutes.tsx", "tests/acceptance/fin-006-investment-case-candidate-handoff.e2e.test.ts", "tests/acceptance/fin-006-statement-pack-candidate-handoff.e2e.test.ts", "tests/acceptance/fin-006-valuation-recommendation-candidate-handoff.e2e.test.ts", "tests/e2e/finance/finance-candidate-handoff.signed.spec.ts", "tests/e2e/finance/financeCandidateHandoffFixture.ts"],
+  "changedPaths": ["server/src/services/finance/financeInvestmentCaseCandidateHandoff.ts", "tests/acceptance/fin-006-investment-case-candidate-handoff.e2e.test.ts", "server/src/routes/pmo/initiativesExecutionRuntime.routes.ts", "src/components/Initiatives/SourceProposalRegistrationWorkbench.tsx", "tests/acceptance/ini-ui-canonical-mounted.realpg.test.ts", "tests/unit/initiatives-execution/sourceProposalRegistrationWorkbench.test.tsx"],
   "changedPathRationale": {
-    "server/src/Gateway.ts": "Mounts all three Finance candidate routers behind identity verification and the tenant-authoritative ACTIVE membership wall.",
-    "server/src/routes/__tests__/financeCandidateHandoffMounts.auth.test.ts": "Pins middleware order and ACTIVE, missing, revoked, SUPERADMIN-without-membership and lookup-failure behavior for all three mounts.",
-    "src/components/Economics/FinanceHub.tsx": "Passes the legacy valuation identity into the governed V3 workspace without fabricating a recommendation identifier.",
-    "src/components/Finance/Valuation/ValuationWorkspace.tsx": "Adds the governed valuation recommendation candidate modal behind the existing owner-controlled V3 feature flag.",
-    "src/components/Finance/Valuation/__tests__/ValuationWorkspace.test.tsx": "Proves V3 candidate preview, explicit confirmation and fail-closed UI behavior while the runtime flag boundary remains explicit.",
-    "src/routes/AppRoutes.tsx": "Adds the canonical valuation deep link using the same gated Finance route shell as sibling workspaces.",
-    "tests/acceptance/fin-006-investment-case-candidate-handoff.e2e.test.ts": "Requalifies investment-case preview, confirmation, idempotency, tenant and stale-approval controls behind the production membership wall.",
-    "tests/acceptance/fin-006-statement-pack-candidate-handoff.e2e.test.ts": "Requalifies statement-pack preview, confirmation, idempotency, tenant and stale-approval controls behind the production membership wall.",
-    "tests/acceptance/fin-006-valuation-recommendation-candidate-handoff.e2e.test.ts": "Requalifies valuation recommendation backend acceptance and strict tenant behavior without claiming the default-OFF UI is activated.",
-    "tests/e2e/finance/finance-candidate-handoff.signed.spec.ts": "Proves signed real UI preview, explicit confirmation and cold readback for investment case and statement pack, and proves valuation remains default-OFF with zero write.",
-    "tests/e2e/finance/financeCandidateHandoffFixture.ts": "Provides guarded exact-identity PostgreSQL setup and nested cleanup with database-name, advisory-lock and residue controls."
+    "server/src/services/finance/financeInvestmentCaseCandidateHandoff.ts": "Commit 2ce0469cf8: derives CAPEX and OPEX only from complete finite fields in the exact approved immutable model snapshot; unsupported anchors remain UNKNOWN.",
+    "tests/acceptance/fin-006-investment-case-candidate-handoff.e2e.test.ts": "Commit 2ce0469cf8: proves numeric anchors, legitimate UNKNOWN fields and unchanged idempotent receipt fingerprint/replay.",
+    "server/src/routes/pmo/initiativesExecutionRuntime.routes.ts": "Commit 3e9eabea0b: includes tenant-scoped unassigned governed proposals while forcing every material capability false.",
+    "src/components/Initiatives/SourceProposalRegistrationWorkbench.tsx": "Commit 3e9eabea0b: renders the assignment-required status and disables all decision actions from server capabilities.",
+    "tests/acceptance/ini-ui-canonical-mounted.realpg.test.ts": "Commit 3e9eabea0b: proves one cold Finance proposal with exact receipt lineage, unchanged project rows and revoked/foreign denial.",
+    "tests/unit/initiatives-execution/sourceProposalRegistrationWorkbench.test.tsx": "Commit 3e9eabea0b: rendered proof that unassigned actions are disabled while assigned authorized behavior remains enabled."
+  },
+  "historicalProvenance": {
+    "productSha": "59a2bae0e1fd1bdf6e81a932349fb106709a9279",
+    "changedPaths": ["server/src/Gateway.ts", "server/src/routes/__tests__/financeCandidateHandoffMounts.auth.test.ts", "src/components/Economics/FinanceHub.tsx", "src/components/Finance/Valuation/ValuationWorkspace.tsx", "src/components/Finance/Valuation/__tests__/ValuationWorkspace.test.tsx", "src/routes/AppRoutes.tsx", "tests/acceptance/fin-006-investment-case-candidate-handoff.e2e.test.ts", "tests/acceptance/fin-006-statement-pack-candidate-handoff.e2e.test.ts", "tests/acceptance/fin-006-valuation-recommendation-candidate-handoff.e2e.test.ts", "tests/e2e/finance/finance-candidate-handoff.signed.spec.ts", "tests/e2e/finance/financeCandidateHandoffFixture.ts"],
+    "note": "Preserved historical product and eleven-path evidence scope. It is superseded for the exact-current FIN-MVP-CANDIDATE-001 verdict by the two-commit, six-path technical chain above."
   },
   "ownerTables": ["initiative_candidates", "finance_candidate_handoffs", "financial_statement_packs", "financial_models", "valuation_recommendations"],
   "commands": [{"command": "DATABASE_URL=<fresh-pg> RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test npx vitest run --config vitest.acceptance.config.ts tests/acceptance/fin-006-statement-pack-candidate-handoff.e2e.test.ts tests/acceptance/fin-006-investment-case-candidate-handoff.e2e.test.ts tests/acceptance/fin-006-valuation-recommendation-candidate-handoff.e2e.test.ts --reporter=dot", "exitCode": 0, "result": "four consecutive combined runs; each 3/3 files and 27/27 tests; 108/108 aggregate"}, {"command": "DATABASE_URL=<fresh-pg> NODE_ENV=test DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts; repeat; --dry-run", "exitCode": 0, "result": "fresh 723/723; repeat applied 0; dry-run pending 0; ledger success:723"}, {"command": "npm run type-check", "exitCode": 130, "result": "no diagnostics emitted but did not terminate after more than four minutes; manually stopped and recorded NOT_VERIFIED"}],
@@ -50,6 +50,15 @@
   },
   "exactCurrentReconciliation20260819": {
     "testedSha": "3e9eabea0bf191795ea05bc26a5c8a60c77c4404",
+    "technicalCommits": {
+      "2ce0469cf8b7f3ba3f1142bad530a1362e5c6736": ["server/src/services/finance/financeInvestmentCaseCandidateHandoff.ts", "tests/acceptance/fin-006-investment-case-candidate-handoff.e2e.test.ts"],
+      "3e9eabea0bf191795ea05bc26a5c8a60c77c4404": ["server/src/routes/pmo/initiativesExecutionRuntime.routes.ts", "src/components/Initiatives/SourceProposalRegistrationWorkbench.tsx", "tests/acceptance/ini-ui-canonical-mounted.realpg.test.ts", "tests/unit/initiatives-execution/sourceProposalRegistrationWorkbench.test.tsx"]
+    },
+    "evidenceCarrier": {
+      "parentSha": "8a64fa3c808260a2e85bdc31f072c7a65780fa91",
+      "commitSha": "NON_SELF_REFERENTIAL: resolve as the commit containing this JSON blob after integration",
+      "semantics": "reconciliationSha names the parent evidence candidate. A commit cannot truthfully embed its own SHA; Git history is authoritative for the successor carrier commit."
+    },
     "scope": "Governed Finance investment-case source, approved immutable snapshot, explicit candidate confirmation, idempotent candidate and receipt, and canonical cold Initiative candidate inbox visibility.",
     "freshJourney": {
       "modelId": "de90afa7-78db-4eac-bd9d-12421790cb89",
@@ -71,6 +80,57 @@
       "typecheck": "exit 0",
       "diffCheckAndPrecommit": "PASS"
     },
+    "literalVerificationCommands": [
+      {
+        "timestamp": "2026-08-19T00:30:29+02:00",
+        "command": "DATABASE_URL=postgresql://truthrun:<redacted>@127.0.0.1:55483/consultify_truth DB_TYPE=postgres NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DB_MANAGED_SCHEMA=false JWT_SECRET=<redacted> npx vitest run --config vitest.acceptance.config.ts tests/acceptance/ini-ui-canonical-mounted.realpg.test.ts --maxWorkers=1 --maxConcurrency=1",
+        "exitCode": 0,
+        "result": "1 file, 5/5 tests PASS"
+      },
+      {
+        "timestamp": "2026-08-19T00:31:47+02:00",
+        "command": "npx vitest run tests/unit/initiatives-execution/sourceProposalRegistrationWorkbench.test.tsx --maxWorkers=1 --maxConcurrency=1",
+        "exitCode": 0,
+        "result": "1 file, 7/7 tests PASS",
+        "ephemeralSupportingPointer": "/private/tmp/consultify-fin-inbox-clean-2ce/junit.xml (non-authoritative and not committed)"
+      },
+      {
+        "timestamp": "2026-08-19T00:30:45+02:00",
+        "command": "npm run type-check",
+        "exitCode": 0,
+        "result": "tsc --noEmit completed without diagnostics"
+      },
+      {
+        "timestamp": "2026-08-19T00:35:00+02:00",
+        "command": "signed real-browser cold reload http://127.0.0.1:3410/initiatives?tab=candidates on backend exact 3e9eabea0b",
+        "exitCode": 0,
+        "result": "marker count 1; assignment-required status count 1; Register disabled; Other decision disabled"
+      },
+      {
+        "timestamp": "2026-08-19 evidence successor verification",
+        "command": "jq . docs/program/evidence/closure/codex/FIN-MVP-CANDIDATE-001/TASK_EVIDENCE.json",
+        "exitCode": 0,
+        "result": "valid JSON"
+      },
+      {
+        "timestamp": "2026-08-19 evidence successor verification",
+        "command": "node scripts/cleanup/report-closure-progress.mjs",
+        "exitCode": 0,
+        "result": "denominator 82; missingEvidence 0; invalidPresentEvidence 0; DONE_CURRENT_SHA 41; PARTIAL 40; BLOCKED_HUMAN 1"
+      },
+      {
+        "timestamp": "2026-08-19 evidence successor verification",
+        "command": "node scripts/cleanup/verify-closure-plan.mjs",
+        "exitCode": 0,
+        "result": "74 module plus 8 cross-program equals 82; ownership, leases and graph PASS"
+      },
+      {
+        "timestamp": "2026-08-19 evidence successor verification",
+        "command": "git diff --check",
+        "exitCode": 0,
+        "result": "clean"
+      }
+    ],
     "coldSignedBrowser": {
       "route": "/initiatives?tab=candidates",
       "marker": "FIN Closure 2ce 1787091449866",
