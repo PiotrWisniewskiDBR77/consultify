@@ -1329,4 +1329,191 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
       expect(afterB).toEqual(beforeB);
     }
   );
+
+  // --- CTO corrective (2026-08-18): DEFECT 1 + DEFECT 2 ---------------------
+  //
+  // An independent audit returned HOLD on the c44303afc7 corrective above
+  // (17/17 real-Postgres) for two further defects. These two probes are
+  // direct proof of each fix, driving the real command functions against a
+  // real Postgres exactly like every other test in this suite.
+
+  itDB(
+    'CTO corrective DEFECT 1 — TERMINAL EXACT REPLAY: a byte-identical retry ' +
+      'against a reconciliation its OWN first call already drove into a ' +
+      "terminal status returns the FLAT duplicate ('applied' call's own " +
+      'result), never FINANCE_RECONCILIATION_ALREADY_TERMINAL, with zero ' +
+      'writes measured directly — direct proof the replay lookup now runs ' +
+      'BEFORE the terminal-state rejection, not after.',
+    async () => {
+      const fixture = await buildCaseWithFinanceLink('16');
+      const openOutcome = await openRoiFinanceReconciliation({
+        caseId: fixture.caseId,
+        organizationId: ORG_ID,
+        financeLinkId: fixture.linkId,
+        roiValue: 760,
+        financeValue: 700,
+        actorUserId: USER_MAKER,
+        actorEffectiveRole: 'consultant',
+        idempotencyKey: `recon-terminal-replay-open-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
+      });
+      const reconciliationId = openOutcome.result.reconciliationId;
+      const sharedKey = `recon-terminal-replay-shared-${randomUUID()}`;
+      const callArgs = {
+        reconciliationId,
+        caseId: fixture.caseId,
+        organizationId: ORG_ID,
+        expectedVersion: openOutcome.result.rowVersion,
+        status: 'resolved' as const,
+        resolutionNotes: 'terminal-replay probe note',
+        actorUserId: USER_RESOLVER,
+        actorEffectiveRole: 'consultant',
+        idempotencyKey: sharedKey,
+        access: { capabilities: ['*'], platformRole: null },
+      };
+
+      const first = await updateRoiFinanceReconciliationStatus(callArgs);
+      expect(first.outcome).toBe('applied');
+      expect(first.result.status).toBe('resolved');
+      expect(first.result.resolvedBy).toBe(USER_RESOLVER);
+      expect(first.result.resolvedAt).not.toBeNull();
+
+      const before = await snapshotReconciliationState(fixture.caseId, reconciliationId);
+      // Sanity: the row really is terminal now — this is the exact
+      // condition that used to make the retry below throw
+      // FINANCE_RECONCILIATION_ALREADY_TERMINAL instead of replaying.
+      expect(before.status).toBe('resolved');
+
+      // BYTE-IDENTICAL retry (same reconciliationId, same stale
+      // expectedVersion, same everything) against a row that is now
+      // terminal. Must be served as a flat replay of `first`'s own result —
+      // never reach the terminal-state rejection.
+      const second = await updateRoiFinanceReconciliationStatus(callArgs);
+
+      const after = await snapshotReconciliationState(fixture.caseId, reconciliationId);
+
+      expect(second.outcome).toBe('duplicate');
+      expect(second.eventId).toBe(first.eventId);
+      expect(second.resultingVersion).toBe(first.resultingVersion);
+      expect(second.result).not.toHaveProperty('reconciliation');
+      expect(second.result.reconciliationId).toBe(reconciliationId);
+      expect(second.result.status).toBe('resolved');
+      expect(second.result.resolvedBy).toBe(USER_RESOLVER);
+      expect(second.result.resolutionNotes).toBe('terminal-replay probe note');
+
+      // ZERO writes, measured directly — deltas exactly zero, not inferred
+      // from the response shape.
+      expect(after).toEqual(before);
+    }
+  );
+
+  itDB(
+    'CTO corrective DEFECT 2 — CONCURRENT CROSS-CASE DIFFERING FINGERPRINT: ' +
+      'two GENUINELY concurrent updateRoiFinanceReconciliationStatus calls ' +
+      '(launched with Promise.allSettled, no await between them — same ' +
+      "pattern this suite's own CAS race test above already uses to prove " +
+      'a real race, not a sequential simulation dressed up as one) against ' +
+      'TWO DIFFERENT reconciliations, in TWO DIFFERENT cases, sharing one ' +
+      'idempotency_key. No CAS lock serializes them (different aggregate ' +
+      'rows), so both can race on the underlying (organization_id, ' +
+      'idempotency_key) unique index inside executeAtomicCommand. The loser ' +
+      "must get IDEMPOTENCY_FINGERPRINT_CONFLICT — never the winner's " +
+      'result — with zero writes to its own row, measured directly.',
+    async () => {
+      const fixtureA = await buildCaseWithFinanceLink('17a');
+      const fixtureB = await buildCaseWithFinanceLink('17b');
+      const openA = await openRoiFinanceReconciliation({
+        caseId: fixtureA.caseId,
+        organizationId: ORG_ID,
+        financeLinkId: fixtureA.linkId,
+        roiValue: 770,
+        financeValue: 710,
+        actorUserId: USER_MAKER,
+        actorEffectiveRole: 'consultant',
+        idempotencyKey: `recon-race-open-a-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
+      });
+      const openB = await openRoiFinanceReconciliation({
+        caseId: fixtureB.caseId,
+        organizationId: ORG_ID,
+        financeLinkId: fixtureB.linkId,
+        roiValue: 780,
+        financeValue: 720,
+        actorUserId: USER_MAKER,
+        actorEffectiveRole: 'consultant',
+        idempotencyKey: `recon-race-open-b-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
+      });
+
+      const sharedKey = `recon-race-shared-${randomUUID()}`;
+      const beforeA = await snapshotReconciliationState(fixtureA.caseId, openA.result.reconciliationId);
+      const beforeB = await snapshotReconciliationState(fixtureB.caseId, openB.result.reconciliationId);
+
+      // No await between these two calls — genuinely launched together.
+      // Whichever code path actually intercepts the loser (the sequential
+      // fingerprint pre-check in precheckUpdateStatusReplay, if its own
+      // no-prior-event read happens to run after the winner already
+      // committed; or the DEFECT 2 fix in loadExistingResult's race
+      // fallback, if both calls clear the pre-check before either
+      // commits — the genuinely concurrent case this probe targets) — the
+      // OBSERVABLE CONTRACT is identical either way: exactly one winner,
+      // one loser rejected IDEMPOTENCY_FINGERPRINT_CONFLICT, zero writes to
+      // the loser. This is what makes it a genuine, not simulated, race:
+      // the test does not force interleaving, it only refuses to serialize
+      // the two calls with an `await` between them.
+      const [settledA, settledB] = await Promise.allSettled([
+        updateRoiFinanceReconciliationStatus({
+          reconciliationId: openA.result.reconciliationId,
+          caseId: fixtureA.caseId,
+          organizationId: ORG_ID,
+          expectedVersion: openA.result.rowVersion,
+          status: 'investigating',
+          resolutionNotes: 'race probe A',
+          actorUserId: USER_MAKER,
+          actorEffectiveRole: 'consultant',
+          idempotencyKey: sharedKey,
+          access: { capabilities: ['*'], platformRole: null },
+        }),
+        updateRoiFinanceReconciliationStatus({
+          reconciliationId: openB.result.reconciliationId,
+          caseId: fixtureB.caseId,
+          organizationId: ORG_ID,
+          expectedVersion: openB.result.rowVersion,
+          status: 'investigating',
+          resolutionNotes: 'race probe B',
+          actorUserId: USER_MAKER,
+          actorEffectiveRole: 'consultant',
+          idempotencyKey: sharedKey,
+          access: { capabilities: ['*'], platformRole: null },
+        }),
+      ]);
+
+      const settled = [settledA, settledB];
+      const fulfilled = settled.filter(
+        (r): r is PromiseFulfilledResult<Awaited<ReturnType<typeof updateRoiFinanceReconciliationStatus>>> =>
+          r.status === 'fulfilled'
+      );
+      const rejected = settled.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
+
+      // Exactly one winner (applied) and one loser (fingerprint conflict) —
+      // not two winners (the idempotency guard would not be enforcing at
+      // all) and not a silent adoption of the other side's result.
+      expect(fulfilled).toHaveLength(1);
+      expect(rejected).toHaveLength(1);
+      expect(fulfilled[0]!.value.outcome).toBe('applied');
+      expect(rejected[0]!.reason).toMatchObject({ code: 'IDEMPOTENCY_FINGERPRINT_CONFLICT' });
+
+      const winnerIsA = settledA.status === 'fulfilled';
+      const afterA = await snapshotReconciliationState(fixtureA.caseId, openA.result.reconciliationId);
+      const afterB = await snapshotReconciliationState(fixtureB.caseId, openB.result.reconciliationId);
+
+      if (winnerIsA) {
+        expect(afterA).not.toEqual(beforeA); // winner: exactly one write applied
+        expect(afterB).toEqual(beforeB); // loser: zero writes, measured directly
+      } else {
+        expect(afterB).not.toEqual(beforeB);
+        expect(afterA).toEqual(beforeA);
+      }
+    }
+  );
 });
