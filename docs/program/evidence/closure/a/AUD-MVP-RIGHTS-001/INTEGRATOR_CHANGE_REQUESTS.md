@@ -202,31 +202,64 @@ is blocked on a product decision, not on missing test infrastructure.
 
 **Task**: AUD-MVP-RIGHTS-001
 **File edited**: `server/src/routes/audits/__tests__/mounting.integration.test.ts`
-**Lease status**: NOT LEASED to any of the four current lane leases at the
-time of this edit. Checked programmatically (recomputed, not taken on
-report) against all four `docs/cleanup/agents/generated/*_PATH_LEASE.json`
-files: Lane A (current identity `e75d0729bb...`, 721 files — see
-`leaseSha256Correction20260818` in `TASK_EVIDENCE.json` for why the
-previously recorded Lane A identity in this task's own evidence was stale),
-Lane B, Lane C, and the Codex integrator lease. Zero matches for this exact
-path, and zero matches for any other file under
-`server/src/routes/audits/__tests__/`, in any of the four files.
 
-**Exact change made**: 45 lines added, 0 lines removed. One new `it(...)`
-test case appended inside the file's existing, already-present
-`mountedSuite(...)` describe block (the file's own opt-in real-Postgres
-gate — `AUD_MOUNTED_ALLOW_FIXTURE_CLEANUP=1` /
-`AUD_MOUNTED_DISPOSABLE_DB_PREFIX`), immediately after the pre-existing
-"canonical pack writer... every membership denial writes zero business/audit
-rows" test. No existing test was modified, skipped, or given `.only`; no
-timeout was touched; no mock was introduced; no migration was added. The
-new test builds a second, function-scoped `express()` app (never exported,
-mutating nothing shared) using the SAME real `verifyToken` and SAME real
-`auditsMethodRouter` production modules already imported by the file, with
-`requireActiveAuditsMembership` removed from the mount chain, and asserts
-that the identical revoked-membership token now returns 200 instead of the
-403 the real chain returns — a vacuity/non-triviality check proving the
-guard under test is load-bearing.
+**Lease status — UPDATED, this correction**. The original text below
+undercounted its own subject twice (was: "45 added, 0 removed, one new
+`it(...)`", written even after a second commit had already superseded it);
+see the corrected diff figures below. On the lease question itself: a
+genuine integrator-granted exception for this exact file EXISTS and is
+independently verified by direct commit inspection — `CLAUDE_LANE_A_PATH_LEASE.json`
+at commit `5b14a815586705a69edb188319e97e86b89d6d67` (branch
+`codex/chat-shared-recovery-seam`, preceded by `fe5143cc229f61ddf7b1aef4fb3885a6f64eee53`)
+holds 722 files, includes this file verbatim, and its own embedded sha256
+plus this pass's independent recomputation both equal
+`f9a412a47ab3aed81113d445d248f4e14ea365d293dd77b8fa1fcfad70b8eca5`.
+**However**, that branch is NOT an ancestor of canonical `5ce16c71bd` or of
+this task's branch (`git merge-base --is-ancestor` returns false both ways;
+`git merge-base 5b14a81558 HEAD` = `5ce16c71bd`, the shared divergence
+point) — it has not merged back. This worktree's actual, currently-effective
+`CLAUDE_LANE_A_PATH_LEASE.json` remains at identity `e75d0729bb...`
+(721 files, does NOT include this path), re-verified by this pass
+immediately before writing this sentence. Status: **GRANTED, NOT YET
+EFFECTIVE** — the exception is real and decided, pending the integrator
+merging `codex/chat-shared-recovery-seam` into canonical (or otherwise
+making it effective for this branch). See `TASK_EVIDENCE.json`
+`laneBSuccessorWave20260818.leasePosition20260818` for the full,
+step-by-step verification trail, including two earlier, unverifiable
+intermediate hash claims (`a2f9be9983e3...` mis-cited as a new grant, and a
+transient `7c43c978...` that corresponds to no commit or file state this
+pass could locate anywhere in the repository).
+
+**Provenance chain**: `a2f9be9983e3...` (719, original) → `e75d0729bb...`
+(721, +2 G4 paths, commit `90eb06424e`, currently effective on this branch)
+→ *[not yet merged]* `f9a412a4...` (722, +1 this file, commits
+`fe5143cc22` then `5b14a81558` on `codex/chat-shared-recovery-seam`).
+
+**Exact change made — CORRECTED, this pass**: **62 lines added, 0 lines
+removed, across TWO commits, adding TWO new `it(...)` test cases** (not
+"45 added, 0 removed, one new test" as this ICR previously and, at one
+point, already-stalely stated):
+1. `6f80655637` (+35 lines) — this pass's vacuity-check ablation: a
+   function-scoped `express()` app (never exported, mutating nothing
+   shared) using the SAME real `verifyToken` and SAME real
+   `auditsMethodRouter` production modules already imported by the file,
+   with `requireActiveAuditsMembership` removed from the mount chain,
+   asserting the identical revoked-membership token now returns 200
+   instead of the 403 the real chain returns.
+2. `c2c99d7d18` (+27 lines) — a later commit, not authored by this pass,
+   adding a dedicated `/api/audits/packs` test asserting ACTIVE-response
+   body shape (`success`/`data`/`total`) and exact REVOKED-denial body
+   shape with the same reused token. This test is real, compiling source
+   (`tsc --noEmit` clean) but has NOT been executed against real Postgres
+   by this pass or, as far as this pass can verify, by anyone — see
+   `TASK_EVIDENCE.json` `laneBSuccessorWave20260818.integrityCorrection20260818`
+   for the full account of an intervening commit that had wrongly
+   presented it as a verified "39/39" pass.
+
+Verified via `git diff --stat 5ce16c71bd..59e95b7083 -- .../mounting.integration.test.ts`
+= `62 ++`, and by reading both commits' diffs directly. No existing test
+was modified, skipped, or given `.only`; no timeout was touched; no mock
+was introduced; no migration was added.
 
 **Why this was the minimal way to prove the required gate**: the successor
 wave (2026-08-18) required a real-Postgres, real-Gateway-mounted proof that
@@ -242,12 +275,12 @@ running the whole file was a smaller, more faithful change than authoring
 a parallel file elsewhere that would have duplicated this fixture/harness
 machinery outside any lease either way.
 
-**Authorization status**: NO lease amendment was made or is claimed by
-this pass. A chat instruction from a lane lead is explicitly NOT a recorded
-lease amendment (per the lead's own escalation of this exact point to the
-program integrator — see `TASK_EVIDENCE.json`
-`laneBSuccessorWave20260818.leasePosition20260818`). This ICR exists so the
-integrator can decide: retroactively lease the path, request the change be
-relocated to a leased path, or accept it as-is. The task's verdict
-(`DONE_CURRENT_SHA`) reflects the technical gate only and does not assert
-lease compliance for this specific file.
+**Authorization status**: this pass made no lease amendment itself. The
+exception described above is GRANTED (verified real, on
+`codex/chat-shared-recovery-seam`) but NOT YET EFFECTIVE for this branch
+pending a merge into canonical. This ICR now exists so the integrator can
+complete that merge (or otherwise make the exception effective here) rather
+than to request a fresh decision. The task's verdict (`DONE_CURRENT_SHA`)
+rests on this pass's own verified 38/38 real-Postgres run and does not
+depend on either the unverified 39th case or the not-yet-effective lease
+grant.
