@@ -1262,7 +1262,14 @@ export function locateStatementSections(
       if (isCorrection) continue;
     }
 
-    const start = Math.max(0, index - 4);
+    const startsAtStructuredSheet = /^===\s*Sheet:/i.test(trimmedStartLine);
+    const followsStructuredSheet =
+      index > 0 && /^===\s*Sheet:/i.test(String(rawLines[index - 1] || '').trim());
+    const start = startsAtStructuredSheet
+      ? index
+      : followsStructuredSheet
+        ? index - 1
+        : Math.max(0, index - 4);
     const maxWindow = normalizedType === 'BS' ? 120 : 220;
     const maxSearch = normalizedType === 'BS' ? 150 : 260;
     let end = Math.min(rawLines.length, index + maxWindow);
@@ -1332,7 +1339,17 @@ export function locateStatementSections(
     const financialNumericPattern = /\d{1,3}[,. \u00A0]\d{3}/;
     const numericLines = windowLines.filter((candidate) => {
       const matches = candidate.match(numericGroupRegex) || [];
-      return matches.length >= 2 && financialNumericPattern.test(candidate);
+      const tabularNumericCells = candidate
+        .split('\t')
+        .slice(1)
+        .filter((cell) => {
+          const parsed = parseStatementNumber(cell, 'unknown');
+          return parsed.value !== null && Number.isFinite(parsed.value);
+        }).length;
+      return (
+        matches.length >= 2 &&
+        (financialNumericPattern.test(candidate) || tabularNumericCells >= 2)
+      );
     }).length;
     const semanticLines = windowLines.filter((candidate) =>
       /(aktywa|pasywa|kapitał|equity|liabilities|assets|cash|należności|zobowiązania|revenue|przychody|profit|ebitda|flow|zysk|koszt|amortyzacja|depreciation|przepływy)/i.test(
@@ -1588,6 +1605,9 @@ function extractRelevantStatementSection(
 function classifyNonFinancialLine(label: string): { isNonFinancial: boolean; reason?: string } {
   const normalized = normalizeAliasText(label);
   if (!normalized) return { isNonFinancial: true, reason: 'EMPTY_LABEL' };
+  if (/^sheet\s+(?:balance sheet|income statement|cash flow statement)\b/.test(normalized)) {
+    return { isNonFinancial: true, reason: 'SPREADSHEET_SECTION_MARKER' };
+  }
   if (normalized.length > 140) return { isNonFinancial: true, reason: 'NARRATIVE_LABEL_TOO_LONG' };
   if (normalized.length < 4) return { isNonFinancial: true, reason: 'FRAGMENT_TOO_SHORT' };
   if (
@@ -6856,6 +6876,11 @@ function hasCanonicalLineCoverage(
   const hasAnyPresentPrefix = (prefix: string): boolean =>
     Array.from(presentLineIds).some((presentId) => presentId.startsWith(prefix));
 
+  if (lineId === 'fsl-bs-ap') return hasAnyPresentPrefix('fsl-bs-ap-');
+  if (lineId === 'fsl-bs-long-term-debt') {
+    return hasAnyPresentPrefix('fsl-bs-long-term-debt-');
+  }
+
   if (lineId === 'fsl-pl-tax') {
     return getValue('fsl-pl-tax-current') !== null || getValue('fsl-pl-tax-deferred') !== null;
   }
@@ -9933,6 +9958,65 @@ export function runCfoAutoValidation(
   ].join(' | ');
 
   return { qualityScore: score, verdict, checks, repairs, derivedLines, summary };
+}
+
+export function isStructuredStatementInput(fileName: string): boolean {
+  return /\.(?:xlsx|xls|csv)$/i.test(String(fileName || '').trim());
+}
+
+export function appendCfoDerivedMappingSuggestions(
+  mapped: Array<Record<string, any>>,
+  statement: {
+    statementType: string;
+    currency?: string | null;
+    scaling?: string | null;
+    periodLabel?: string | null;
+    sourceFileName?: string | null;
+  }
+): Array<Record<string, any>> {
+  if (normalizeStatementTypeToken(statement.statementType) !== 'BS') return mapped;
+
+  const validation = runCfoAutoValidation(
+    mapped.map((line) => ({
+      canonicalLineId: line.suggestedCanonicalId || null,
+      value: Number(line.value),
+      originalLabel: line.originalLabel,
+      periodLabel: line.selectedPeriodLabel,
+      isNonFinancial: line.isNonFinancial,
+      statementType: 'BS',
+    })),
+    {
+      currency: statement.currency || undefined,
+      scaling: statement.scaling || undefined,
+      period: statement.periodLabel || undefined,
+      documentName: statement.sourceFileName || undefined,
+    }
+  );
+  const existingCanonicalIds = new Set(
+    mapped.map((line) => String(line.suggestedCanonicalId || '')).filter(Boolean)
+  );
+
+  for (const derived of validation.derivedLines) {
+    const canonicalLineId = String(derived.canonicalLineId || '').trim();
+    if (!canonicalLineId || existingCanonicalIds.has(canonicalLineId)) continue;
+    const repair = validation.repairs.find(
+      (candidate) => candidate.action === 'derived' && candidate.canonicalLineId === canonicalLineId
+    );
+    mapped.push({
+      originalLabel: derived.originalLabel || `[CFO-derived] ${canonicalLineId}`,
+      value: derived.value,
+      confidence: repair?.confidence ?? 0.8,
+      suggestedCanonicalId: canonicalLineId,
+      suggestedCanonicalLabel: derived.originalLabel || canonicalLineId,
+      mappingReason: 'cfo_derived',
+      classificationReason: repair?.reason || 'canonical_formula_derivation',
+      isNonFinancial: false,
+      selectedPeriodLabel: statement.periodLabel || undefined,
+      rowType: 'subtotal',
+    });
+    existingCanonicalIds.add(canonicalLineId);
+  }
+  return mapped;
 }
 
 logger.info('[FinancialStatementService] Loaded');

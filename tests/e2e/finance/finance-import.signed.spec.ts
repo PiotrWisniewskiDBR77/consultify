@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import path from 'node:path';
 
 import { expect, test } from '@playwright/test';
@@ -72,7 +73,21 @@ test('signed XLSX statement confirm registers a canonical pack and import surviv
 
     const sourceWorkbook = path.resolve('tests/fixtures/finance/dbr77-financial-statements.xlsx');
     await page.locator('input[type=file][accept*=".xlsx"]').setInputFiles(sourceWorkbook);
+    const uploadResponsePromise = page.waitForResponse(
+      (response) =>
+        /\/api\/(?:v8\/finance\/statements|finance-statements)\/upload-and-analyze$/.test(
+          new URL(response.url()).pathname
+        ) &&
+        response.request().method() === 'POST' &&
+        response.status() === 201
+    );
     await page.getByRole('button', { name: /Upload & Analyze|Prześlij.*analizuj/i }).click();
+    const uploadResponse = await uploadResponsePromise;
+    expect(uploadResponse.status()).toBe(201);
+    const stagedResponse = await uploadResponse.json();
+    const staged = stagedResponse.data || stagedResponse;
+    expect(staged).toMatchObject({ mode: 'fallback', statementPackId: null });
+    expect(staged.statementIds).toHaveLength(1);
 
     await page.locator('select').first().selectOption('BS');
     await page.getByPlaceholder('e.g. 2024').fill('2026');
@@ -83,6 +98,18 @@ test('signed XLSX statement confirm registers a canonical pack and import surviv
     await extract.waitFor({ state: 'visible', timeout: 30_000 });
     await extract.click();
 
+    const derivedLabel = '[CFO-derived] Total Assets − Current Assets';
+    const editDerived = page.getByRole('button', {
+      name: `Edit ${derivedLabel} value`,
+      exact: true,
+    });
+    await expect(editDerived).toBeVisible();
+    await editDerived.click();
+    const derivedInput = page.getByRole('spinbutton', { name: `${derivedLabel} value` });
+    await derivedInput.fill('9500000');
+    await derivedInput.press('Enter');
+    await expect(editDerived).toContainText('9,500,000');
+
     const continueToConfirm = page.getByRole('button', {
       name: /Save & Validate|Zapisz.*waliduj/i,
     });
@@ -91,13 +118,17 @@ test('signed XLSX statement confirm registers a canonical pack and import surviv
 
     const confirmResponsePromise = page.waitForResponse(
       (response) =>
-        /\/api\/finance\/statements\/[^/]+\/confirm$/.test(new URL(response.url()).pathname) &&
-        response.request().method() === 'POST'
+        /\/api\/(?:v8\/finance\/statements|finance-statements)\/[^/]+\/confirm$/.test(
+          new URL(response.url()).pathname
+        ) &&
+        response.request().method() === 'POST' &&
+        response.status() === 200
     );
     await page.getByRole('button', { name: /Confirm & Save|Potwierdź.*zapisz/i }).click();
     const confirmResponse = await confirmResponsePromise;
     expect(confirmResponse.status()).toBe(200);
-    const confirmed = await confirmResponse.json();
+    const confirmedResponse = await confirmResponse.json();
+    const confirmed = confirmedResponse.data || confirmedResponse;
     expect(confirmed).toMatchObject({ success: true, canonicalReplay: false });
     expect(confirmed.statementPackId).toBeTruthy();
     expect(confirmed.canonicalArtifactId).toBeTruthy();
@@ -105,6 +136,7 @@ test('signed XLSX statement confirm registers a canonical pack and import surviv
     expect(confirmed.canonicalWorkingRevisionId).toBeTruthy();
 
     await page.goto(`${WEB_BASE_URL}/finance/statements/${confirmed.statementPackId}`);
+    await page.getByRole('button', { name: 'Excel', exact: true }).click();
     const panel = page.getByTestId('finance-export-import-panel');
     await expect(panel).toBeVisible();
     const downloadPromise = page.waitForEvent('download');
@@ -113,24 +145,27 @@ test('signed XLSX statement confirm registers a canonical pack and import surviv
     const exportedWorkbook = await download.path();
     expect(exportedWorkbook).toBeTruthy();
 
-    await panel.getByTestId('import-file-input').setInputFiles(exportedWorkbook!);
+    await panel.getByTestId('import-file-input').setInputFiles({
+      name: 'statement-pack-export.xlsx',
+      mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      buffer: fs.readFileSync(exportedWorkbook!),
+    });
     await expect(panel.getByTestId('import-parsed')).toContainText(/Manifest OK/i);
     await panel.getByTestId('import-preview-button').click();
     await expect(panel.getByTestId('import-preview')).toBeVisible();
     await expect(panel.getByTestId('import-apply-button')).toBeEnabled();
     const applyResponsePromise = page.waitForResponse(
       (response) =>
-        /\/api\/v8\/finance\/artifacts\/[^/]+\/versions\/[^/]+\/import\/apply$/.test(
-          new URL(response.url()).pathname
-        ) && response.request().method() === 'POST'
+        new URL(response.url()).pathname === '/api/v8/finance-v2/import/apply' &&
+        response.request().method() === 'POST'
     );
     await panel.getByTestId('import-apply-button').click();
     const applyResponse = await applyResponsePromise;
     expect(applyResponse.status()).toBe(200);
     const applied = await applyResponse.json();
-    await expect(panel.getByTestId('import-applied')).toContainText(
-      String(applied.data?.newWorkingRevisionId || applied.newWorkingRevisionId)
-    );
+    const appliedData = applied.data || applied;
+    const appliedWorkingRevisionId = String(appliedData.newWorkingRevisionId);
+    await expect(panel.getByTestId('import-applied')).toContainText(appliedWorkingRevisionId);
 
     const cold = await browser.newPage();
     try {
@@ -141,11 +176,22 @@ test('signed XLSX statement confirm registers a canonical pack and import surviv
           JSON.stringify({ id: userId, organizationId, role: 'OWNER', isAuthenticated: true })
         );
       }, state);
+      const coldVersionPromise = cold.waitForResponse(
+        (response) =>
+          new URL(response.url()).pathname ===
+            `/api/v8/finance-v2/versions/${confirmed.canonicalBusinessVersionId}` &&
+          response.request().method() === 'GET' &&
+          response.status() === 200
+      );
       await cold.goto(`${WEB_BASE_URL}/finance/statements/${confirmed.statementPackId}`);
+      const coldVersion = await (await coldVersionPromise).json();
+      expect(coldVersion.data).toMatchObject({
+        artifactId: confirmed.canonicalArtifactId,
+        businessVersionId: confirmed.canonicalBusinessVersionId,
+        sourceWorkingRevisionId: appliedWorkingRevisionId,
+      });
+      await cold.getByRole('button', { name: 'Excel', exact: true }).click();
       await expect(cold.getByTestId('finance-export-import-panel')).toBeVisible();
-      await expect(
-        cold.getByText(String(confirmed.canonicalArtifactId), { exact: false })
-      ).toHaveCount(1);
     } finally {
       await cold.close();
     }

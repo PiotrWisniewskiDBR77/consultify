@@ -77,6 +77,7 @@ import {
 } from '../../services/financialStatementReadService.js';
 import type { DetectionResult } from '../../services/financialStatementService.js';
 import {
+  appendCfoDerivedMappingSuggestions,
   autoMapLines,
   classifyStatementDocument,
   cleanupUnpersistedUpload,
@@ -91,6 +92,7 @@ import {
   getIdempotencyKey,
   getLatestStatementIngestRun,
   IdempotencyKeyTooLongError,
+  isStructuredStatementInput,
   loadPersistedStatementCandidateRows,
   loadStatementSourceText,
   locateStatementSections,
@@ -116,6 +118,7 @@ import {
   withStatementUploadIdempotencyLock,
 } from '../../services/financialStatementService.js';
 import { saveStatementValuesFlow } from '../../services/financialStatementValueWriteService.js';
+import { confirmAndRegisterStatementPack } from '../../services/finance/canonical/statementPackRegistrationService.js';
 import {
   applyLlmProposals,
   applySecondPassProposals,
@@ -1444,11 +1447,14 @@ router.post(
         sizeBytes: file.size,
       });
 
-      const analysis = await analyzeAndExtractFullDocument({
-        filePath: file.path,
-        fileName: file.originalname,
-        traceId,
-      });
+      const structuredInput = isStructuredStatementInput(file.originalname);
+      const analysis = structuredInput
+        ? null
+        : await analyzeAndExtractFullDocument({
+            filePath: file.path,
+            fileName: file.originalname,
+            traceId,
+          });
 
       if (!analysis || analysis.sections.length === 0) {
         const detection = detectStatementType(text);
@@ -1477,7 +1483,7 @@ router.post(
         anyStatementPersisted = true;
         primaryStatementId = statementId;
         createdStatementIds.push(statementId);
-        const statementPackId = await syncStatementToPack(statementId);
+        const statementPackId = structuredInput ? null : await syncStatementToPack(statementId);
         await dbRun(
           `UPDATE financial_statements SET notes = ? WHERE id = ?`,
           [`${text.substring(0, 100000)}`, statementId],
@@ -1495,8 +1501,9 @@ router.post(
               statementPackId,
               statementIds: [statementId],
               analysis: null,
-              message:
-                'LLM analysis unavailable — created single statement with heuristic detection.',
+              message: structuredInput
+                ? 'Structured statement staged for explicit detection, mapping, and confirmation.'
+                : 'LLM analysis unavailable — created single statement with heuristic detection.',
             },
             meta: financeMeta(),
           },
@@ -2569,6 +2576,14 @@ router.post(
       }
     }
 
+    appendCfoDerivedMappingSuggestions(mapped, {
+      statementType: statement.statement_type,
+      currency: statement.currency,
+      scaling: statement.scaling,
+      periodLabel: statement.period_label,
+      sourceFileName: statement.source_file_name,
+    });
+
     const candidateRows = await persistStatementCandidateRows({
       statementId,
       ingestRunId,
@@ -2724,65 +2739,26 @@ router.post(
       });
     }
 
-    const ingestRunId = await ensureStatementIngestRun({
+    const registration = await confirmAndRegisterStatementPack({
       statementId,
       organizationId,
-      createdBy: userId,
-      sourceFileName: statement.source_file_name,
-      sourceFilePath: statement.source_file_path,
-      parseMethod: statement.parse_method,
-      documentClass: statement.document_class,
-      extractionStrategy: statement.extraction_strategy,
-      templateFamily: statement.template_family,
-    });
-
-    await confirmFinancialStatement(statementId, userId, readiness);
-    await snapshotCanonicalStatementVersion({
-      statementId,
-      versionKind: 'confirmed',
-      readinessStatus: readiness.readinessStatus,
+      userId,
+      statement,
       values: valueRows,
       validations: validationMessages,
-      createdBy: userId,
-      summary: 'Confirmed statement-ready snapshot.',
-    });
-    const statementPackId = await syncStatementToPack(statementId);
-    await recordStatementSourceArtifact({
-      statementId,
-      ingestRunId,
-      artifactType: 'confirmation',
-      stage: 'confirm',
-      contentJson: readiness,
-      createdBy: userId,
-    });
-    await updateStatementIngestRun({
-      ingestRunId,
-      currentStage: 'confirm',
-      runStatus: 'completed',
-      reasonCodes: readiness.reasonCodes,
-      summary: {
-        readinessStatus: readiness.readinessStatus,
-      },
-    });
-    await recordStatementQualityRun({
-      statementId,
-      organizationId,
-      stage: 'confirm',
-      resultStatus: 'pass',
-      readinessStatus: readiness.readinessStatus,
-      strategy: String(statement.extraction_strategy || 'confirmation_gate'),
-      summary: 'Statement confirmed as statement-ready.',
-      reasonCodes: readiness.reasonCodes,
-      payload: readiness,
-      createdBy: userId,
+      readiness,
     });
 
     return res.json({
       data: {
         success: true,
         statementId,
-        statementPackId,
-        ingestRunId,
+        statementPackId: registration.statementPackId,
+        ingestRunId: registration.ingestRunId,
+        canonicalArtifactId: registration.artifactId,
+        canonicalBusinessVersionId: registration.businessVersionId,
+        canonicalWorkingRevisionId: registration.workingRevisionId,
+        canonicalReplay: registration.replayed,
         status: 'confirmed',
         readiness,
       },

@@ -78,6 +78,7 @@ import type { DetectionResult } from '../services/financialStatementService.js';
 import {
   autoMapLines,
   classifyStatementDocument,
+  appendCfoDerivedMappingSuggestions,
   cleanupUnpersistedUpload,
   confirmStatement,
   createStatement,
@@ -108,7 +109,7 @@ import {
   reserveIdempotentUpload,
   resolveDuplicateSuggestedMappings,
   resolveStatementColumnSelection,
-  runCfoAutoValidation,
+  isStructuredStatementInput,
   saveStatementValues,
   sha256Hex,
   snapshotCanonicalStatementVersion,
@@ -1182,11 +1183,14 @@ router.post(
       });
 
       // 2. LLM analyzes entire document — finds all sections, extracts all lines
-      const analysis = await analyzeAndExtractFullDocument({
-        filePath: file.path,
-        fileName: file.originalname,
-        traceId,
-      });
+      const structuredInput = isStructuredStatementInput(file.originalname);
+      const analysis = structuredInput
+        ? null
+        : await analyzeAndExtractFullDocument({
+            filePath: file.path,
+            fileName: file.originalname,
+            traceId,
+          });
 
       if (!analysis || analysis.sections.length === 0) {
         // Fallback: create single statement with heuristic detection (old behavior)
@@ -1216,7 +1220,7 @@ router.post(
         anyStatementPersisted = true;
         primaryStatementId = statementId;
         createdStatementIds.push(statementId);
-        const statementPackId = await syncStatementToPack(statementId);
+        const statementPackId = structuredInput ? null : await syncStatementToPack(statementId);
         await dbRun(
           `UPDATE financial_statements SET notes = ? WHERE id = ?`,
           [`${text.substring(0, 100000)}`, statementId],
@@ -1232,7 +1236,9 @@ router.post(
             statementIds: [statementId],
             analysis: null,
             message:
-              'LLM analysis unavailable — created single statement with heuristic detection.',
+                structuredInput
+                  ? 'Structured statement staged for explicit detection, mapping, and confirmation.'
+                  : 'LLM analysis unavailable — created single statement with heuristic detection.',
           },
         };
       }
@@ -2176,6 +2182,19 @@ router.post(
         });
       }
     }
+
+    // CFO-derived rows are reviewable mapping suggestions, not silent values.
+    // The user still sees/can correct them in Map & Correct, and only the later
+    // explicit values save persists the accepted number. Preserve the direct
+    // PPE child mapping; FIXED_ASSETS is a separate canonical aggregate derived
+    // from exact Total Assets and Total Current Assets inputs.
+    appendCfoDerivedMappingSuggestions(mapped, {
+      statementType: stmt.statement_type,
+      currency: stmt.currency,
+      scaling: stmt.scaling,
+      periodLabel: stmt.period_label,
+      sourceFileName: stmt.source_file_name,
+    });
 
     const candidateRows = await persistStatementCandidateRows({
       statementId,
