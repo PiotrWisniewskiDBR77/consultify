@@ -572,5 +572,40 @@ mountedSuite(
 
       expect(await auditWriteSnapshot()).toEqual(before);
     });
+
+    /**
+     * VACUITY CHECK (AUD-MVP-RIGHTS-001 successor gate, 2026-08-18): a
+     * negative control is only meaningful if removing the control it tests
+     * would make the same request succeed. This proves that directly rather
+     * than asserting it from reading source: the exact same revoked-token
+     * request that the Gateway mount above denies is replayed through an
+     * otherwise-identical app — same real `verifyToken`, same real
+     * `auditsMethodRouter` (which itself still runs `requireOrgAccess()`
+     * internally) — with only `requireActiveAuditsMembership` removed from
+     * the chain. `requireOrgAccess()` alone (rbac.middleware.ts:209-225)
+     * checks only that `req.organizationId` is a well-shaped string; it never
+     * queries `organization_members`, so it cannot see the revocation.
+     */
+    it('VACUITY CHECK: with requireActiveAuditsMembership removed from the mount, the identical revoked-token request succeeds instead of denying', async () => {
+      await setMembership('REVOKED');
+      const { default: verifyTokenDirect } = await import('../../../middleware/auth.middleware.js');
+      const { default: auditsMethodRouterDirect } = await import('../index.js');
+      const ablatedApp = express();
+      ablatedApp.use(express.json());
+      // Gateway.ts:1331 is `app.use('/api/audits', gatewayVerifyToken, auditsStrictMembership, auditsMethodRouter)`.
+      // This is the identical chain with ONLY auditsStrictMembership removed —
+      // not a mock, not a re-implementation, the same two real production modules.
+      ablatedApp.use('/api/audits', verifyTokenDirect, auditsMethodRouterDirect);
+
+      const res = await request(ablatedApp)
+        .get('/api/audits/packs')
+        .set('Authorization', `Bearer ${tokenActive()}`); // same still-REVOKED-membership user/org as above
+
+      expect(res.status).toBe(200);
+      expect(res.body?.success).toBe(true);
+      expect(res.body?.code).not.toBe('ORG_MEMBERSHIP_REVOKED');
+
+      await setMembership('ACTIVE'); // restore, hygiene for afterAll/residue checks
+    });
   }
 );
