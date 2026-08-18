@@ -173,6 +173,140 @@ export const SAME_DATE_ORDER_OVERRIDES: Record<string, string> = {
   '20260809_case_workspace_migration_readiness.sql': '20260809_11',
 };
 
+// ---------------------------------------------------------------------------
+// Closed classification manifest — the end of the silent "phase 3" catch-all
+// ---------------------------------------------------------------------------
+// `phaseAndKeyFor()` used to end with an unconditional `return { phase: 3 }`
+// for any filename matching neither NUMBERED_RE nor DATED_RE. That made an
+// unrecognized name indistinguishable from a deliberately order-independent
+// one: a typo'd migration silently ran LAST instead of failing, with no log
+// line and exit code 0.
+//
+// Every currently-unclassifiable filename on disk is enumerated below
+// (measured: 16 of the 979 runnable top-level entries). Anything NOT listed
+// here and not matching either pattern is now a hard error.
+//
+// All three groups keep `{ phase: 3, key: filename }` — byte-identical to the
+// previous behavior. This manifest removes the SILENCE, not the ordering: no
+// migration changes execution position as a result of this change.
+export const ORDER_INDEPENDENT_MANIFEST: string[] = [
+  // Extension bootstrap; creates no schema objects other migrations order
+  // against. Genuinely position-independent — the only member of this set
+  // the original phase-3 comment actually intended.
+  'init-pgvector.sql',
+];
+
+// Legacy SQLite-first scaffolding. `isSqliteOnlyMigration()` in
+// migrate.postgres.ts already excludes every one of these from a normal
+// strict run (they start with `add_`, or are named explicitly there), so in
+// practice they never reach the sorter. They are classified anyway because
+// an explicit `--only <file>` run BYPASSES that exclusion filter and would
+// otherwise throw on a file the runner is deliberately able to run.
+export const LEGACY_NON_SCHEMA_MANIFEST: string[] = [
+  'add_chat_projects.js',
+  'add_chat_projects.sql',
+  'add_mywork_tables.sql',
+  'add_response_feedback.sql',
+  'assessment-module.sql',
+  'fix_conversations_table.sql',
+];
+
+// Dated migrations carrying a single-letter INTRADAY ordering suffix
+// (`20260810c_`, `20260813b_`). DATED_RE does not admit that suffix, so all
+// nine currently fall through to phase 3 and execute LAST — measured, on a
+// virgin database, as running after `20261019_*`, roughly two months later
+// than their own names imply.
+//
+// They are pinned here at their CURRENT position on purpose. Widening
+// DATED_RE to admit the suffix would move all nine several hundred positions
+// earlier into date-ordered phase 1, which is plausibly their intended
+// order — but that is a re-sequencing of nine production migrations, and
+// proving it safe needs the fresh-container dry-run diff described in
+// STRICT_SCHEMA_REPAIR_REPORT.md ETAP 1, not a classification change. Kept
+// order-identical here; the re-sequencing question is deliberately left open
+// rather than smuggled in behind a regex edit.
+export const INTRADAY_SUFFIX_MANIFEST: string[] = [
+  '20260802c_mat010_operation_claims_table.sql',
+  '20260810c_case_workspace_inbox_ambiguous_code.sql',
+  '20260810d_case_workspace_case_identity.sql',
+  '20260810e_case_workspace_event_correlation.sql',
+  '20260810f_case_workspace_append_only_guards.sql',
+  '20260811a_case_workspace_run_lifecycle.sql',
+  '20260812a_case_workspace_outbox_next_retry_at.sql',
+  '20260813b_audits_source_classification_split.sql',
+  '20260813c_method_core_roles_and_approvals.sql',
+];
+
+export const UNORDERED_PHASE_MANIFEST: string[] = [
+  ...ORDER_INDEPENDENT_MANIFEST,
+  ...LEGACY_NON_SCHEMA_MANIFEST,
+  ...INTRADAY_SUFFIX_MANIFEST,
+];
+export const UNORDERED_PHASE_SET = new Set(UNORDERED_PHASE_MANIFEST);
+
+export class UnclassifiedMigrationFilenameError extends Error {
+  constructor(public readonly filename: string) {
+    super(
+      `UNCLASSIFIED MIGRATION FILENAME: '${filename}' matches neither NUMBERED_RE (NNN_) nor ` +
+        `DATED_RE (YYYYMMDD_ / YYYY-MM-DD_), and is not listed in UNORDERED_PHASE_MANIFEST, ` +
+        `LATE_PHASE_MANIFEST, EARLY_VERSION_OVERRIDES or SAME_DATE_ORDER_OVERRIDES. Refusing to ` +
+        `guess its execution position. Rename it to match a supported convention, or add it to an ` +
+        `explicit manifest with a reason.`
+    );
+    this.name = 'UnclassifiedMigrationFilenameError';
+  }
+}
+
+export class DuplicateSortKeyError extends Error {
+  constructor(
+    public readonly filenameA: string,
+    public readonly filenameB: string,
+    public readonly phase: number,
+    public readonly key: string
+  ) {
+    super(
+      `DUPLICATE SORT KEY: '${filenameA}' and '${filenameB}' both resolve to phase ${phase}, key ` +
+        `'${key}'. Their relative execution order would be decided by Array.prototype.sort's ` +
+        `tie handling rather than by this comparator, so the run order is not a deterministic ` +
+        `total order. Give them distinct ordering identity.`
+    );
+    this.name = 'DuplicateSortKeyError';
+  }
+}
+
+export class OverrideMapCollisionError extends Error {
+  constructor(public readonly filename: string, public readonly maps: string[]) {
+    super(
+      `OVERRIDE MAP COLLISION: '${filename}' appears in more than one classification map ` +
+        `{${maps.join(', ')}}. Only the first branch checked in phaseAndKeyFor() wins; every other ` +
+        `entry is dead configuration that reads as active. Remove it from all but one map.`
+    );
+    this.name = 'OverrideMapCollisionError';
+  }
+}
+
+/**
+ * Pure. Verifies no filename is claimed by two classification maps at once.
+ * `phaseAndKeyFor()` cannot detect this on its own — it consults exactly one
+ * map per call (the first that matches) and silently ignores the rest.
+ */
+export function validateOverrideMapsAreDisjoint(): void {
+  const membership = new Map<string, string[]>();
+  const record = (filename: string, mapName: string) => {
+    const seen = membership.get(filename);
+    if (seen) seen.push(mapName);
+    else membership.set(filename, [mapName]);
+  };
+  for (const f of LATE_PHASE_MANIFEST) record(f, 'LATE_PHASE_MANIFEST');
+  for (const f of Object.keys(EARLY_VERSION_OVERRIDES)) record(f, 'EARLY_VERSION_OVERRIDES');
+  for (const f of Object.keys(SAME_DATE_ORDER_OVERRIDES)) record(f, 'SAME_DATE_ORDER_OVERRIDES');
+  for (const f of UNORDERED_PHASE_MANIFEST) record(f, 'UNORDERED_PHASE_MANIFEST');
+
+  for (const [filename, maps] of membership) {
+    if (maps.length > 1) throw new OverrideMapCollisionError(filename, maps);
+  }
+}
+
 export function phaseAndKeyFor(m: Migration): { phase: number; key: string } {
   const f = m.filename;
   if (LATE_PHASE_SET.has(f)) {
@@ -199,14 +333,20 @@ export function phaseAndKeyFor(m: Migration): { phase: number; key: string } {
     const [, y, mo, d] = dated;
     return { phase: 1, key: `${y}${mo}${d}_${f}` };
   }
-  return { phase: 3, key: f };
+  if (UNORDERED_PHASE_SET.has(f)) {
+    return { phase: 3, key: f };
+  }
+  throw new UnclassifiedMigrationFilenameError(f);
 }
 
 export function compareMigrationOrder(a: Migration, b: Migration): number {
   const pa = phaseAndKeyFor(a);
   const pb = phaseAndKeyFor(b);
   if (pa.phase !== pb.phase) return pa.phase - pb.phase;
-  if (pa.key === pb.key) return 0;
+  if (pa.key === pb.key) {
+    if (a.filename === b.filename) return 0;
+    throw new DuplicateSortKeyError(a.filename, b.filename, pa.phase, pa.key);
+  }
   return pa.key < pb.key ? -1 : 1;
 }
 

@@ -1,6 +1,16 @@
-#!/usr/bin/env tsx
 /**
  * Postgres migration runner (deterministic, no SQLite translation)
+ *
+ * NOTE ON THE MISSING SHEBANG:
+ * This file used to start with `#!/usr/bin/env tsx`. It was decorative — the
+ * file is mode 100644 (never executable) and every caller invokes it as
+ * `tsx server/scripts/migrate.postgres.ts` or `node dist/scripts/migrate.postgres.js`.
+ * The shebang DID, however, make the module unimportable under vitest: Vite's
+ * SSR transform prepends its own import ahead of line 1, and rollup then fails
+ * with "Parse failure: Expected ident". That forced tests to hand-copy this
+ * file's checksum/ledger logic instead of importing it — a copy that tests
+ * itself and keeps passing after the real code changes. Removed so the trust
+ * surface below can be asserted against directly.
  *
  * Why:
  * - `server/scripts/migrate.ts` is SQLite-first and rewrites SQL (Postgres→SQLite).
@@ -24,12 +34,19 @@ import fs from 'fs';
 import path from 'path';
 import { pathToFileURL } from 'url';
 
-import { Pool } from 'pg';
+import { Pool, type PoolClient } from 'pg';
 
 import {
   assertNoPrivateRailwayDbHostOutsideRailway,
   resolveReachableDatabaseUrl,
 } from '../src/config/databaseTargetResolver.js';
+
+import type { IDatabase, QueryResult, RunResult } from '../src/database/IDatabase.js';
+
+import {
+  classifySqlChainChecksum,
+  type ChecksumVerdict,
+} from '../src/services/releaseGate/sqlChainChecksumPolicy.js';
 
 type Args = {
   dir?: string;
@@ -48,10 +65,51 @@ import {
   PROMOTED_LEGACY_PRODUCERS,
   PROMOTED_LEGACY_SET,
   EARLY_VERSION_OVERRIDES,
+  SAME_DATE_ORDER_OVERRIDES,
+  UNORDERED_PHASE_MANIFEST,
+  UNORDERED_PHASE_SET,
+  ORDER_INDEPENDENT_MANIFEST,
+  LEGACY_NON_SCHEMA_MANIFEST,
+  INTRADAY_SUFFIX_MANIFEST,
   phaseAndKeyFor,
   compareMigrationOrder,
   sortMigrationsDeterministically,
+  validateOverrideMapsAreDisjoint,
+  UnclassifiedMigrationFilenameError,
+  DuplicateSortKeyError,
+  OverrideMapCollisionError,
 } from './migrationOrdering.js';
+
+// Re-export the pure ordering surface. This file is the entrypoint callers
+// know about, and `tests/integration/migration-ordering-parity.realdb.test.ts`
+// imports `compareMigrationOrder` from HERE to prove the runner's real order
+// rather than a copy of it.
+export {
+  type Migration,
+  NUMBERED_RE,
+  DATED_RE,
+  LATE_PHASE_MANIFEST,
+  LATE_PHASE_SET,
+  PROMOTED_LEGACY_PRODUCERS,
+  PROMOTED_LEGACY_SET,
+  EARLY_VERSION_OVERRIDES,
+  SAME_DATE_ORDER_OVERRIDES,
+  UNORDERED_PHASE_MANIFEST,
+  UNORDERED_PHASE_SET,
+  ORDER_INDEPENDENT_MANIFEST,
+  LEGACY_NON_SCHEMA_MANIFEST,
+  INTRADAY_SUFFIX_MANIFEST,
+  phaseAndKeyFor,
+  compareMigrationOrder,
+  sortMigrationsDeterministically,
+  validateOverrideMapsAreDisjoint,
+  UnclassifiedMigrationFilenameError,
+  DuplicateSortKeyError,
+  OverrideMapCollisionError,
+};
+
+/** Anything both a `Pool` and a checked-out `PoolClient` satisfy. */
+type Queryable = Pool | PoolClient;
 
 
 function parseArgs(argv: string[]): Args {
@@ -88,11 +146,46 @@ function calculateChecksum(filepath: string): string {
   return crypto.createHash('sha256').update(content).digest('hex');
 }
 
+// `server/migrations/` holds three subdirectories (ops/, never-ran/,
+// rollback/) that are deliberately NOT part of the forward chain. Their
+// exclusion used to be an ACCIDENT: `readdirSync` is non-recursive and a
+// directory name never ends in .sql/.js/.ts, so they vanished silently — and
+// so would any future subdirectory, or a migration dropped in by mistake.
+// Make the exclusion an explicit, closed decision.
+export const KNOWN_EXCLUDED_MIGRATIONS_SUBDIRS = new Set(['ops', 'never-ran', 'rollback']);
+export const RUNNABLE_MIGRATION_EXTENSIONS = ['.sql', '.js', '.ts'] as const;
+
+export class UnexpectedMigrationsEntryError extends Error {
+  constructor(
+    public readonly entryName: string,
+    public readonly kind: string
+  ) {
+    super(
+      `UNEXPECTED ENTRY in the migrations directory: '${entryName}' (${kind}). Known excluded ` +
+        `subdirectories are exactly {${[...KNOWN_EXCLUDED_MIGRATIONS_SUBDIRS].join(', ')}}. Refusing ` +
+        `to silently ignore it — add it to the allowlist if the exclusion is intentional.`
+    );
+    this.name = 'UnexpectedMigrationsEntryError';
+  }
+}
+
 function getAllMigrations(dir: string): Migration[] {
-  const files = fs
-    .readdirSync(dir)
-    .filter((f) => f.endsWith('.sql') || f.endsWith('.js') || f.endsWith('.ts'))
-    .sort();
+  const files: string[] = [];
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (entry.isDirectory()) {
+      if (!KNOWN_EXCLUDED_MIGRATIONS_SUBDIRS.has(entry.name)) {
+        throw new UnexpectedMigrationsEntryError(entry.name, 'directory');
+      }
+      continue;
+    }
+    if (!entry.isFile()) {
+      throw new UnexpectedMigrationsEntryError(entry.name, 'not a regular file');
+    }
+    if (RUNNABLE_MIGRATION_EXTENSIONS.some((ext) => entry.name.endsWith(ext))) {
+      files.push(entry.name);
+    }
+  }
+  files.sort();
 
   return files.map((filename) => {
     const filepath = path.join(dir, filename);
@@ -192,8 +285,8 @@ function isSqliteOnlyMigration(m: Migration): boolean {
   return false;
 }
 
-async function ensureSchemaMigrationsTable(pool: Pool) {
-  await pool.query(`
+async function ensureSchemaMigrationsTable(db: Queryable) {
+  await db.query(`
     CREATE TABLE IF NOT EXISTS schema_migrations (
       version TEXT NOT NULL,
       filename TEXT PRIMARY KEY,
@@ -203,28 +296,44 @@ async function ensureSchemaMigrationsTable(pool: Pool) {
       status TEXT NOT NULL DEFAULT 'success'
     );
   `);
-  await pool.query(
+  await db.query(
     `CREATE INDEX IF NOT EXISTS idx_schema_migrations_status ON schema_migrations(status);`
   );
 }
 
-async function getApplied(pool: Pool): Promise<Map<string, { status: string }>> {
-  const res = await pool.query(`SELECT filename, status FROM schema_migrations ORDER BY filename`);
-  const map = new Map<string, { status: string }>();
-  for (const r of res.rows || [])
-    map.set(String(r.filename), { status: String(r.status || 'success') });
+export type AppliedMigrationRow = {
+  filename: string;
+  status: string;
+  checksum: string | null;
+};
+
+async function getApplied(db: Queryable): Promise<Map<string, AppliedMigrationRow>> {
+  // `checksum` is read, not just written. Without it the ledger's checksum
+  // column was write-only and post-hoc edits to an already-applied migration
+  // file were structurally undetectable.
+  const res = await db.query(
+    `SELECT filename, status, checksum FROM schema_migrations ORDER BY filename`
+  );
+  const map = new Map<string, AppliedMigrationRow>();
+  for (const r of res.rows || []) {
+    map.set(String(r.filename), {
+      filename: String(r.filename),
+      status: String(r.status || 'success'),
+      checksum: r.checksum === null || r.checksum === undefined ? null : String(r.checksum),
+    });
+  }
   return map;
 }
 
 async function recordResult(
-  pool: Pool,
+  db: Queryable,
   m: Migration,
   status: 'success' | 'failed' | 'skipped',
   executionTimeMs: number,
   checksumOverride?: string
 ) {
   const checksum = checksumOverride ?? m.checksum;
-  await pool.query(
+  await db.query(
     `INSERT INTO schema_migrations (version, filename, checksum, execution_time_ms, status)
      VALUES ($1, $2, $3, $4, $5)
      ON CONFLICT (filename) DO UPDATE
@@ -237,7 +346,228 @@ async function recordResult(
   );
 }
 
-async function applySql(pool: Pool, m: Migration) {
+// ---------------------------------------------------------------------------
+// Ledger trust, preflight, concurrency
+// ---------------------------------------------------------------------------
+export const CHECKSUM_HEX_RE = /^[0-9a-f]{64}$/;
+export const SKIPPED_CHECKSUM_RE = /^skipped:[0-9a-f]{64}$/;
+export const KNOWN_LEDGER_STATUSES = new Set(['success', 'failed', 'skipped']);
+
+export class HistoricalMutationError extends Error {
+  constructor(
+    public readonly filename: string,
+    public readonly storedChecksum: string,
+    public readonly currentChecksum: string,
+    public readonly verdict: ChecksumVerdict = 'DRIFT'
+  ) {
+    super(
+      `HISTORICAL MUTATION: '${filename}' is recorded 'success' with checksum ${storedChecksum}, but ` +
+        `its bytes on disk now hash to ${currentChecksum}. An already-applied migration was edited ` +
+        `after the fact, so the ledger no longer describes the schema that is actually live. Refusing ` +
+        `to apply anything until this is resolved.`
+    );
+    this.name = 'HistoricalMutationError';
+  }
+}
+
+export class MalformedLedgerEntryError extends Error {
+  constructor(
+    public readonly filename: string,
+    public readonly reason: string
+  ) {
+    super(
+      `UNTRUSTED LEDGER ROW for '${filename}': ${reason}. This runner refuses to treat a row it did ` +
+        `not write as proof that a migration was applied. Refusing to run.`
+    );
+    this.name = 'MalformedLedgerEntryError';
+  }
+}
+
+export class DuplicateMigrationIdentityError extends Error {
+  constructor(public readonly filename: string) {
+    super(
+      `DUPLICATE MIGRATION IDENTITY: '${filename}' appears more than once in this run's migration set. ` +
+        `schema_migrations.filename is the identity key and cannot record two distinct applications of ` +
+        `the same name.`
+    );
+    this.name = 'DuplicateMigrationIdentityError';
+  }
+}
+
+export class MigrationLockHeldError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'MigrationLockHeldError';
+  }
+}
+
+/** Pure. Throws on the first repeated filename. */
+export function assertNoDuplicateMigrationIdentity(migrations: Migration[]): void {
+  const seen = new Set<string>();
+  for (const m of migrations) {
+    if (seen.has(m.filename)) throw new DuplicateMigrationIdentityError(m.filename);
+    seen.add(m.filename);
+  }
+}
+
+/**
+ * A stored checksum is TRUSTED only when its shape is one this runner itself
+ * writes, for a status this runner itself writes. An untrusted row is never
+ * compared against disk — comparing an unrecognized shape would turn a
+ * provenance problem into a misleading pass/fail.
+ *
+ * Scope: rows are validated for the migrations THIS run would consider, not
+ * for the whole table. A ledger row can only cause harm here by making the
+ * runner skip a migration it should have applied, and only rows for candidate
+ * migrations can do that. Validating unrelated rows would also break the
+ * legitimate narrow `--dir` / `--only` invocations, whose ledger necessarily
+ * contains filenames absent from the directory being run.
+ */
+export function assertLedgerRowIsTrusted(row: AppliedMigrationRow): void {
+  if (!KNOWN_LEDGER_STATUSES.has(row.status)) {
+    throw new MalformedLedgerEntryError(
+      row.filename,
+      `status '${row.status}' is not one this runner writes (success/failed/skipped)`
+    );
+  }
+  if (row.status === 'skipped') {
+    if (row.checksum === null || !SKIPPED_CHECKSUM_RE.test(row.checksum)) {
+      throw new MalformedLedgerEntryError(
+        row.filename,
+        `status 'skipped' but checksum ${JSON.stringify(row.checksum)} is not the ` +
+          `'skipped:<sha256>' form this runner writes under --safe`
+      );
+    }
+    return;
+  }
+  if (row.checksum === null || !CHECKSUM_HEX_RE.test(row.checksum)) {
+    throw new MalformedLedgerEntryError(
+      row.filename,
+      `status '${row.status}' but checksum ${JSON.stringify(row.checksum)} is not a 64-character ` +
+        `lowercase hex sha256 digest`
+    );
+  }
+}
+
+/**
+ * Everything that must fail BEFORE the first mutation: classification-map
+ * sanity, duplicate identity, untrusted ledger rows, and historical mutation
+ * of an already-applied migration.
+ */
+export function runFilesystemPreflight(candidates: Migration[]): void {
+  validateOverrideMapsAreDisjoint();
+  assertNoDuplicateMigrationIdentity(candidates);
+
+  // Classify EVERY candidate up front. Relying on the sort to surface an
+  // unclassified filename is not enough: Array.prototype.sort never invokes
+  // the comparator for a single-element array, so a lone bad filename would
+  // sail through. This also proves the (phase, key) space is collision-free
+  // for this run, independent of how many comparisons sort happens to make.
+  const keyOwner = new Map<string, string>();
+  for (const m of candidates) {
+    const { phase, key } = phaseAndKeyFor(m);
+    const id = `${phase}|${key}`;
+    const owner = keyOwner.get(id);
+    if (owner !== undefined && owner !== m.filename) {
+      throw new DuplicateSortKeyError(owner, m.filename, phase, key);
+    }
+    keyOwner.set(id, m.filename);
+  }
+}
+
+/**
+ * Ledger-side half of preflight. Runs after the ledger is read and BEFORE the
+ * first migration is applied.
+ */
+export function runLedgerPreflight(
+  candidates: Migration[],
+  applied: Map<string, AppliedMigrationRow>
+): void {
+  for (const m of candidates) {
+    const row = applied.get(m.filename);
+    if (!row) continue;
+    assertLedgerRowIsTrusted(row);
+    if (row.status !== 'success') continue;
+    // `row.checksum` is non-null here: assertLedgerRowIsTrusted enforced the
+    // 64-char hex shape for 'success'.
+    // Delegate to the release gate's OWN checksum policy rather than a raw
+    // inequality. `server/src/services/releaseGate/sqlChainChecksumPolicy.ts`
+    // records 32 (stored, current) pairs that a 2026-08-13 forensic pass
+    // approved as deliberate historical variants, plus one schema-attested
+    // legacy pair. Those environments are exactly the ones this runner is
+    // pointed at by `release-migration-gate.ts` — the Railway
+    // `preDeployCommand`. A bare `stored !== current` check here would refuse
+    // to migrate demo/prod for drift the gate governing this runner already
+    // accepts, so the two must read from ONE source of truth.
+    const verdict = classifySqlChainChecksum(m.filename, row.checksum, m.checksum);
+    if (verdict === 'DRIFT') {
+      throw new HistoricalMutationError(m.filename, row.checksum as string, m.checksum, verdict);
+    }
+  }
+}
+
+/** Composed preflight: filesystem-only checks, then ledger-side checks. */
+export function runPreflightChecks(
+  candidates: Migration[],
+  applied: Map<string, AppliedMigrationRow>
+): void {
+  runFilesystemPreflight(candidates);
+  runLedgerPreflight(candidates, applied);
+}
+
+/**
+ * Reads the ledger WITHOUT creating it. `--dry-run` must not mutate a fresh
+ * database, and `ensureSchemaMigrationsTable()` is itself a mutation
+ * (CREATE TABLE + CREATE INDEX), so a dry run against a virgin database must
+ * treat a missing ledger as "nothing applied yet" rather than create one.
+ */
+async function readLedgerIfPresent(db: Queryable): Promise<Map<string, AppliedMigrationRow>> {
+  const present = await db.query(`SELECT to_regclass('schema_migrations') AS t`);
+  if (!present.rows[0]?.t) return new Map<string, AppliedMigrationRow>();
+  return getApplied(db);
+}
+
+// Errors that mean "this migration's objects are already there" rather than
+// "this migration is broken". Only these are eligible to be recorded
+// 'skipped' under --safe. Anything else — including an error carrying no
+// SQLSTATE at all — is a genuine failure, so the classification fails closed.
+export const BENIGN_ALREADY_APPLIED_PG_CODES = new Set([
+  '42P07', // duplicate_table
+  '42P06', // duplicate_schema
+  '42P04', // duplicate_database
+  '42710', // duplicate_object (incl. constraints, indexes, types)
+  '42701', // duplicate_column
+  '42723', // duplicate_function
+]);
+
+export function isBenignAlreadyAppliedError(e: unknown): boolean {
+  const code = (e as { code?: unknown } | null | undefined)?.code;
+  return typeof code === 'string' && BENIGN_ALREADY_APPLIED_PG_CODES.has(code);
+}
+
+export const MIGRATION_ADVISORY_LOCK_KEY = 'consultify:migrate.postgres:schema_migrations';
+
+async function acquireMigrationLock(client: PoolClient): Promise<void> {
+  const res = await client.query(`SELECT pg_try_advisory_lock(hashtext($1)::bigint) AS locked`, [
+    MIGRATION_ADVISORY_LOCK_KEY,
+  ]);
+  if (res.rows[0]?.locked !== true) {
+    throw new MigrationLockHeldError(
+      `Another migrate.postgres.ts run already holds the migration advisory lock on this database ` +
+        `(key '${MIGRATION_ADVISORY_LOCK_KEY}'). Two concurrent runners can each compute the same ` +
+        `pending set and double-apply. Fails fast rather than blocking, because this runner is a ` +
+        `one-shot CLI/CI step and a blocked run is indistinguishable from a hung one.`
+    );
+  }
+}
+
+async function releaseMigrationLock(client: PoolClient): Promise<void> {
+  await client
+    .query(`SELECT pg_advisory_unlock(hashtext($1)::bigint)`, [MIGRATION_ADVISORY_LOCK_KEY])
+    .catch(() => {});
+}
+
+async function applySql(db: Queryable, m: Migration) {
   let sql = fs.readFileSync(m.filepath, 'utf-8');
 
   // ------------------------------
@@ -286,24 +616,199 @@ async function applySql(pool: Pool, m: Migration) {
   }
 
   // Most Postgres migrations are safe to run as a single multi-statement query.
-  await pool.query(sql);
+  await db.query(sql);
 }
 
-async function applyJs(pool: Pool, m: Migration) {
+export class UnsupportedMigrationDatabaseCallError extends Error {
+  constructor(
+    public readonly filename: string,
+    public readonly method: string
+  ) {
+    super(
+      `MIGRATION USED AN UNSUPPORTED DATABASE CALL: '${filename}' called ${method}. The migration ` +
+        `database handed to up() is pinned to the single transactional client running this migration, ` +
+        `and deliberately implements only the promise-style surface. Anything else could reach a ` +
+        `different connection and escape the transaction, so it fails loudly instead.`
+    );
+    this.name = 'UnsupportedMigrationDatabaseCallError';
+  }
+}
+
+/**
+ * The `IDatabase` handed to a `.ts`/`.js` migration's `up(db)`, pinned to the
+ * SAME `PoolClient` (and therefore the same open transaction) that runs the
+ * migration and writes its ledger row.
+ *
+ * Why this exists: `applyJs` previously resolved its own handle via
+ * `getDatabaseAsync()`. That handle is a DIFFERENT connection, so a JS/TS
+ * migration's DDL committed independently of the ledger write and could not be
+ * rolled back with it — and under `NODE_ENV=test` (which the localhost guard
+ * forces on for any local run) `getDatabaseAsync()` returns a MOCK unless
+ * RUN_DB_TESTS=1, so the four canonical dated `.ts` migrations could report
+ * success having written nothing at all.
+ *
+ * Only the promise-style methods are implemented. The sqlite-style callback
+ * overloads, and `close()`, throw: `close()` in particular must never be
+ * honoured here, because the client belongs to the runner, not the migration.
+ */
+class TransactionalMigrationDatabase {
+  constructor(
+    private readonly client: PoolClient,
+    private readonly filename: string
+  ) {}
+
+  private unsupported(method: string): never {
+    throw new UnsupportedMigrationDatabaseCallError(this.filename, method);
+  }
+
+  private assertNoCallback(params: unknown, callback: unknown, method: string): void {
+    if (typeof params === 'function' || typeof callback === 'function') {
+      this.unsupported(`${method}(..., callback)`);
+    }
+  }
+
+  async run(sql: string, params?: unknown[], callback?: unknown): Promise<RunResult> {
+    this.assertNoCallback(params, callback, 'run');
+    const res = await this.client.query(sql, params as unknown[] | undefined);
+    return { changes: res.rowCount ?? 0 };
+  }
+
+  async get<T = unknown>(sql: string, params?: unknown[], callback?: unknown): Promise<T | null> {
+    this.assertNoCallback(params, callback, 'get');
+    const res = await this.client.query(sql, params as unknown[] | undefined);
+    return ((res.rows?.[0] as T | undefined) ?? null) as T | null;
+  }
+
+  async all<T = unknown>(sql: string, params?: unknown[], callback?: unknown): Promise<T[]> {
+    this.assertNoCallback(params, callback, 'all');
+    const res = await this.client.query(sql, params as unknown[] | undefined);
+    return (res.rows ?? []) as T[];
+  }
+
+  async query<T = unknown>(text: string, params?: unknown[]): Promise<QueryResult<T>> {
+    const res = await this.client.query(text, params);
+    return { rows: (res.rows ?? []) as T[], rowCount: res.rowCount ?? 0 };
+  }
+
+  async exec(sql: string, callback?: unknown): Promise<void> {
+    this.assertNoCallback(undefined, callback, 'exec');
+    await this.client.query(sql);
+  }
+
+  close(): never {
+    // The client is the runner's, and the transaction is still open.
+    return this.unsupported('close()');
+  }
+}
+
+/**
+ * Builds the pinned migration database. Exported so the contract can be
+ * asserted directly rather than inferred from a migration's side effects.
+ */
+export function createTransactionalMigrationDatabase(
+  client: PoolClient,
+  filename: string
+): IDatabase {
+  const target = new TransactionalMigrationDatabase(client, filename);
+  // Any member this adapter does not implement (sqlite-style `serialize`,
+  // `prepare`, `each`, ...) must fail with the named error rather than a bare
+  // "is not a function" TypeError — and must never fall through to something
+  // that could reach another connection.
+  return new Proxy(target, {
+    get(obj, prop, receiver) {
+      if (prop in obj || typeof prop === 'symbol') {
+        return Reflect.get(obj, prop, receiver);
+      }
+      return () => {
+        throw new UnsupportedMigrationDatabaseCallError(filename, String(prop));
+      };
+    },
+  }) as unknown as IDatabase;
+}
+
+/**
+ * True only when the function's own source declares `()` — an EMPTY parameter
+ * list. `fn.length` alone is wrong here: a default (`up(db = null)`) or rest
+ * (`up(...args)`) parameter also reports length 0, and rejecting those would
+ * refuse a migration that does accept the database.
+ */
+export function declaresEmptyParameterList(fn: (...args: unknown[]) => unknown): boolean {
+  const params = /\(([^)]*)\)/.exec(Function.prototype.toString.call(fn));
+  return params !== null && params[1].trim() === '';
+}
+
+async function applyJs(client: PoolClient, m: Migration) {
   const mod = await import(pathToFileUrl(m.filepath));
   if (typeof mod.up !== 'function') {
     throw new Error(`JS migration ${m.filename} has no exported up() function`);
   }
-  // Run JS migrations through the app DB adapter to preserve compatibility shims
-  // (e.g., PRAGMA mapping, sqlite-style helpers).
-  const { getDatabaseAsync } = await import('../src/database/Database.js');
-  process.env.DB_TYPE = 'postgres';
-  const db = await getDatabaseAsync();
-  await mod.up(db);
+  if (declaresEmptyParameterList(mod.up)) {
+    throw new Error(
+      `JS migration ${m.filename} exports up() taking no database argument. The runner supplies a ` +
+        `transaction-pinned IDatabase; a zero-argument up() would have to find its own connection and ` +
+        `would escape the migration's transaction.`
+    );
+  }
+  await mod.up(createTransactionalMigrationDatabase(client, m.filename));
 }
 
 function pathToFileUrl(p: string) {
   return pathToFileURL(p).href;
+}
+
+type MigrationOutcome = 'success' | 'benign-skipped' | 'genuine-failure';
+
+/**
+ * One migration = one transaction on ONE client, so the DDL and the ledger
+ * row commit or roll back together. Previously the migration ran via
+ * `pool.query()` and the ledger write was a second `pool.query()` that could
+ * land on a different pooled connection: a crash between them left the schema
+ * mutated with no ledger record.
+ *
+ * On failure the transaction is rolled back FIRST (which clears the client's
+ * aborted state), and only then is the failed/skipped bookkeeping row written
+ * as a fresh statement — never inside the transaction that just aborted.
+ */
+async function applyOneMigration(
+  client: PoolClient,
+  m: Migration,
+  safe: boolean
+): Promise<MigrationOutcome> {
+  const started = Date.now();
+  // eslint-disable-next-line no-console
+  console.log(`→ ${m.filename}`);
+
+  try {
+    await client.query('BEGIN');
+    if (m.filename.endsWith('.sql')) {
+      await applySql(client, m);
+    } else {
+      await applyJs(client, m);
+    }
+    await recordResult(client, m, 'success', Date.now() - started);
+    await client.query('COMMIT');
+    return 'success';
+  } catch (e: any) {
+    await client.query('ROLLBACK').catch(() => {});
+    const msg = e?.message || String(e);
+    // eslint-disable-next-line no-console
+    console.error(`✗ ${m.filename}: ${msg}`);
+
+    if (safe) {
+      // --safe tolerates "already applied" errors, and ONLY those. A genuine
+      // failure is recorded 'failed' (never 'skipped', which reads as "not
+      // needed") and makes the whole run exit non-zero.
+      if (isBenignAlreadyAppliedError(e)) {
+        await recordResult(client, m, 'skipped', Date.now() - started, `skipped:${m.checksum}`);
+        return 'benign-skipped';
+      }
+      await recordResult(client, m, 'failed', Date.now() - started);
+      return 'genuine-failure';
+    }
+
+    await recordResult(client, m, 'failed', Date.now() - started);
+    throw e;
+  }
 }
 
 async function main() {
@@ -329,22 +834,48 @@ async function main() {
     console.warn(`[migrate.postgres] ${resolvedDb.reason}`);
   }
 
+  // ---------------------------------------------------------------------
+  // Phase 1 — FILESYSTEM. Discovery, classification, ordering and checksums
+  // all happen before a connection is even opened, so a malformed directory
+  // or an unclassifiable filename fails with nothing touched at all.
+  // ---------------------------------------------------------------------
+  const candidates = getAllMigrations(migrationsDir)
+    .filter((m) => (only.size ? only.has(m.filename) : true))
+    // NOTE: allow explicit `--only` to run even legacy (<500) migrations.
+    // PROMOTED_LEGACY_PRODUCERS overrides the blanket <500 exclusion for
+    // specific, verified-safe producer files (see comment above).
+    .filter((m) =>
+      only.size ? true : PROMOTED_LEGACY_SET.has(m.filename) || !isSqliteOnlyMigration(m)
+    );
+
+  runFilesystemPreflight(candidates);
+
+  const all = sortMigrationsDeterministically(candidates);
+
+  // ---------------------------------------------------------------------
+  // Phase 2 — DATABASE. Lock first, so the ledger this run reads cannot be
+  // changed by a competing runner between the read and the apply, and so the
+  // ledger's own creation is serialized too.
+  // ---------------------------------------------------------------------
   const pool = new Pool({ connectionString: databaseUrl });
+  const client = await pool.connect();
+  let lockHeld = false;
 
   try {
-    await ensureSchemaMigrationsTable(pool);
-    const applied = await getApplied(pool);
+    let applied: Map<string, AppliedMigrationRow>;
 
-    const all = sortMigrationsDeterministically(
-      getAllMigrations(migrationsDir)
-        .filter((m) => (only.size ? only.has(m.filename) : true))
-        // NOTE: allow explicit `--only` to run even legacy (<500) migrations.
-        // PROMOTED_LEGACY_PRODUCERS overrides the blanket <500 exclusion for
-        // specific, verified-safe producer files (see comment above).
-        .filter((m) =>
-          only.size ? true : PROMOTED_LEGACY_SET.has(m.filename) || !isSqliteOnlyMigration(m)
-        )
-    );
+    if (dryRun) {
+      // A dry run mutates NOTHING: no lock, no CREATE TABLE, no index.
+      applied = await readLedgerIfPresent(client);
+    } else {
+      await acquireMigrationLock(client);
+      lockHeld = true;
+      await ensureSchemaMigrationsTable(client);
+      applied = await getApplied(client);
+    }
+
+    // Fail closed BEFORE the first migration is applied.
+    runLedgerPreflight(candidates, applied);
 
     // `--from` resumes at a specific file's position in the DETERMINISTIC
     // execution order (not raw filename string comparison, which would no
@@ -365,7 +896,7 @@ async function main() {
           // eslint-disable-next-line no-console
           console.log(`- ${m.filename}`);
         } catch (e: any) {
-          // When piped to tools like `head`, stdout can close early → EPIPE.
+          // When piped to tools like `head`, stdout can close early -> EPIPE.
           // Treat that as a normal termination condition.
           if (String(e?.code || '').toUpperCase() === 'EPIPE') return;
           throw e;
@@ -377,43 +908,49 @@ async function main() {
     // eslint-disable-next-line no-console
     console.log(`Applying migrations: ${pending.length}`);
 
+    const genuineFailures: string[] = [];
     for (const m of pending) {
-      const started = Date.now();
-      try {
-        // eslint-disable-next-line no-console
-        console.log(`→ ${m.filename}`);
+      const outcome = await applyOneMigration(client, m, safe);
+      if (outcome === 'genuine-failure') genuineFailures.push(m.filename);
+    }
 
-        if (m.filename.endsWith('.sql')) {
-          await applySql(pool, m);
-        } else {
-          await applyJs(pool, m);
-        }
-
-        await recordResult(pool, m, 'success', Date.now() - started);
-      } catch (e: any) {
-        const msg = e?.message || String(e);
-        // eslint-disable-next-line no-console
-        console.error(`✗ ${m.filename}: ${msg}`);
-
-        if (safe) {
-          await recordResult(pool, m, 'skipped', Date.now() - started, `skipped:${m.checksum}`);
-          continue;
-        }
-
-        await recordResult(pool, m, 'failed', Date.now() - started);
-        throw e;
-      }
+    if (genuineFailures.length > 0) {
+      throw new Error(
+        `${genuineFailures.length} migration(s) genuinely failed under --safe: ` +
+          `${genuineFailures.join(', ')}. --safe tolerates already-applied errors only; these are ` +
+          `recorded 'failed', not 'skipped', and the run is not reported as complete.`
+      );
     }
 
     // eslint-disable-next-line no-console
     console.log('✅ Postgres migrations complete');
   } finally {
+    if (lockHeld) await releaseMigrationLock(client);
+    client.release();
     await pool.end();
   }
 }
 
-main().catch((e) => {
-  // eslint-disable-next-line no-console
-  console.error('❌ Postgres migrate failed:', e?.message || e);
-  process.exit(1);
-});
+/**
+ * True only when this module IS the process entrypoint. Without this guard,
+ * merely importing the file ran `main()` — so no test could bind to the
+ * runner's real exported functions without it trying to open a database
+ * connection and calling process.exit().
+ */
+export function isDirectCliInvocation(): boolean {
+  const entry = process.argv[1];
+  if (!entry) return false;
+  try {
+    return import.meta.url === pathToFileURL(entry).href;
+  } catch {
+    return false;
+  }
+}
+
+if (isDirectCliInvocation()) {
+  main().catch((e) => {
+    // eslint-disable-next-line no-console
+    console.error('❌ Postgres migrate failed:', e?.message || e);
+    process.exit(1);
+  });
+}
