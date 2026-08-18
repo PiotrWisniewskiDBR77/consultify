@@ -346,25 +346,27 @@ describe('F2 blast-radius remediation — ensureRoiFixtureMembership / ensureRoi
       expect(fixed.rows[0]?.role).toBe('OWNER');
       expect(fixed.rows[0]?.status).toBe('ACTIVE');
 
-      // Prove the correction is not merely cosmetic: this actor can now
-      // actually publish governance, which a still-REVOKED row would deny.
-      const secondOrgId = `${ORG_ID}-second`;
-      await ensureRoiFixtureOrganization(client, secondOrgId, 'ROI Fixture Helper Second RealDB Org');
-      await ensureRoiFixtureMembership(client, {
-        organizationId: secondOrgId,
-        userId: USER_TO_BE_REVOKED_THEN_FIXED,
-        role: 'OWNER',
-        status: 'ACTIVE',
-      });
-      const published = await ensureRoiGovernedVisibility({
-        organizationId: secondOrgId,
-        actorUserId: USER_TO_BE_REVOKED_THEN_FIXED,
-        idempotencyKey: `publish-second-org-${tag}`,
-      });
-      expect(published.outcome).toBe('applied');
-      await client.query(`DELETE FROM rvn_platform_visibility_policies WHERE organization_id = $1`, [secondOrgId]);
-      await client.query(`DELETE FROM organization_members WHERE organization_id = $1`, [secondOrgId]);
-      await client.query(`DELETE FROM organizations WHERE id = $1`, [secondOrgId]);
+      // Prove the correction is not merely cosmetic. ORG_ID already has a
+      // published governance policy (from the "delegates to the canonical
+      // function" test above), so `publishRoiGovernedVisibilityPolicy`
+      // checks this now-ACTIVE-OWNER actor's same-tenant membership FIRST
+      // (visibilityResolver.ts) — a still-REVOKED row would be denied with
+      // RoiVisibilityGovernanceActorNotAuthorizedError right there, before
+      // the existing-policy row is even read. Reaching the COLLISION
+      // instead, with a FRESH idempotencyKey against the ALREADY-governed
+      // ORG_ID, is therefore only possible once the membership gate has
+      // let this actor through — proving the same thing a second
+      // organization's successful publish would have proved, without
+      // creating a new organization or a new governance row: a collision
+      // throws before any write, and the actor/org pairing needs neither
+      // (both already exist). Zero new residue.
+      await expect(
+        ensureRoiGovernedVisibility({
+          organizationId: ORG_ID,
+          actorUserId: USER_TO_BE_REVOKED_THEN_FIXED,
+          idempotencyKey: `publish-after-fix-${tag}`,
+        })
+      ).rejects.toThrow(RoiGovernedVisibilityPolicyCollisionError);
     }
   );
 

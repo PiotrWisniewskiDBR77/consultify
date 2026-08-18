@@ -23,7 +23,10 @@
  */
 import type { Client } from 'pg';
 
-import { publishRoiGovernedVisibilityPolicy } from '../../../server/src/services/resultsVnext/platform/visibilityResolver.js';
+import {
+  publishRoiGovernedVisibilityPolicy,
+  ROI_GOVERNED_VISIBILITY_POLICY,
+} from '../../../server/src/services/resultsVnext/platform/visibilityResolver.js';
 import type { PublishRoiGovernedVisibilityPolicyOutcome } from '../../../server/src/services/resultsVnext/platform/visibilityResolver.js';
 
 export async function ensureRoiFixtureOrganization(
@@ -79,7 +82,20 @@ export async function ensureRoiFixtureMembership(
     `INSERT INTO organization_members (id, organization_id, user_id, role, status)
      VALUES ($1, $2, $3, $4, $5)
      ON CONFLICT (organization_id, user_id) DO UPDATE SET role = EXCLUDED.role, status = EXCLUDED.status`,
-    [`${userId}-membership`, organizationId, userId, role, status]
+    // The row id must be scoped by (organizationId, userId), not userId
+    // alone: the same user can legitimately hold membership in more than
+    // one organization. A userId-only id would collide on
+    // organization_members_pkey the second time that user is granted
+    // membership in a DIFFERENT org, while the ON CONFLICT (organization_id,
+    // user_id) arbiter would not match that constraint — Postgres would
+    // raise a raw duplicate-key error instead of upserting. Found via a
+    // realdb run: roiRealdbOrgFixtureHelper.realdb.test.ts's upsert-safety
+    // case originally exercised this via a second organization; that path
+    // was later replaced with a same-org collision proof (avoids
+    // permanently undeletable residue from a second published governance
+    // row), but the id must stay org-scoped regardless — any future caller
+    // reusing a userId across organizations would hit the same bug.
+    [`${organizationId}-${userId}-membership`, organizationId, userId, role, status]
   );
 }
 
