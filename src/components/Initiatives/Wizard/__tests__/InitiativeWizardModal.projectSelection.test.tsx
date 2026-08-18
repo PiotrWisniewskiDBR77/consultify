@@ -112,6 +112,10 @@ describe('InitiativeWizardModal project anchoring', () => {
       '/initiatives/wizard/sessions',
       expect.objectContaining({ projectId: 'project-b' })
     );
+    expect(apiPost).toHaveBeenCalledWith(
+      '/initiatives/similarity-check',
+      expect.objectContaining({ projectId: 'project-b' })
+    );
     expect(createInitiativeWriteTruth).toHaveBeenCalledWith(
       expect.objectContaining({ projectId: 'project-b' })
     );
