@@ -408,6 +408,33 @@ mountedSuite(
       }
     );
 
+    it('GET /api/audits/packs returns business data while ACTIVE, then exact denial with the identical token immediately after REVOKED', async () => {
+      await setMembership('ACTIVE');
+      const token = tokenActive();
+
+      const active = await request(app)
+        .get('/api/audits/packs')
+        .set('Authorization', `Bearer ${token}`);
+      expect(active.status).toBe(200);
+      expect(active.body?.success).toBe(true);
+      expect(Array.isArray(active.body?.data)).toBe(true);
+      expect(typeof active.body?.total).toBe('number');
+
+      await setMembership('REVOKED');
+      const revoked = await request(app)
+        .get('/api/audits/packs')
+        .set('Authorization', `Bearer ${token}`);
+      expect(revoked.status).toBe(403);
+      expect(revoked.body).toEqual({
+        error: 'You no longer have access to this organization',
+        code: 'ORG_MEMBERSHIP_REVOKED',
+      });
+      expect(revoked.body).not.toHaveProperty('data');
+      expect(revoked.body).not.toHaveProperty('packs');
+
+      await setMembership('ACTIVE');
+    });
+
     it.each(MOUNT_PROBES)('$mount — a user with NO membership row is refused', async ({ path }) => {
       const res = await request(app)
         .get(path)
