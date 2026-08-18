@@ -5,6 +5,8 @@ import request from 'supertest';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { getDatabase } from '../../../server/src/database/Database.js';
 import { initializeDatabase } from '../../../server/src/database/DatabaseInitializer.js';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 vi.hoisted(() => {
   process.env.MOCK_DB = 'false';
@@ -366,7 +368,9 @@ describe('MFA Routes', () => {
 
     it('should disable MFA with valid TOTP', async () => {
       vi.mocked(MFAService.disableMFA).mockResolvedValue({ success: true });
-      vi.mocked(MFAService.revokeAllTrustedDevices).mockResolvedValue({ count: 2 });
+      vi.mocked(MFAService.revokeAllTrustedDevices).mockResolvedValue({
+        count: 2,
+      });
 
       const result = await MFAService.disableMFA(mockUser.id, '123456');
       await MFAService.revokeAllTrustedDevices(mockUser.id);
@@ -409,8 +413,16 @@ describe('MFA Routes', () => {
 
       it('should list trusted devices', async () => {
         vi.mocked(MFAService.getTrustedDevices).mockResolvedValue([
-          { id: 1, name: 'Chrome on Windows', created_at: new Date().toISOString() },
-          { id: 2, name: 'Safari on iPhone', created_at: new Date().toISOString() },
+          {
+            id: 1,
+            name: 'Chrome on Windows',
+            created_at: new Date().toISOString(),
+          },
+          {
+            id: 2,
+            name: 'Safari on iPhone',
+            created_at: new Date().toISOString(),
+          },
         ]);
 
         const devices = await MFAService.getTrustedDevices(mockUser.id);
@@ -434,7 +446,9 @@ describe('MFA Routes', () => {
       });
 
       it('should revoke specific trusted device', async () => {
-        vi.mocked(MFAService.revokeTrustedDevice).mockResolvedValue({ success: true });
+        vi.mocked(MFAService.revokeTrustedDevice).mockResolvedValue({
+          success: true,
+        });
 
         const result = await MFAService.revokeTrustedDevice(mockUser.id, '1');
 
@@ -442,7 +456,9 @@ describe('MFA Routes', () => {
       });
 
       it('should return 404 for non-existent device', async () => {
-        vi.mocked(MFAService.revokeTrustedDevice).mockResolvedValue({ success: false });
+        vi.mocked(MFAService.revokeTrustedDevice).mockResolvedValue({
+          success: false,
+        });
 
         const result = await MFAService.revokeTrustedDevice(mockUser.id, '999');
 
@@ -457,7 +473,9 @@ describe('MFA Routes', () => {
       });
 
       it('should revoke all trusted devices', async () => {
-        vi.mocked(MFAService.revokeAllTrustedDevices).mockResolvedValue({ count: 3 });
+        vi.mocked(MFAService.revokeAllTrustedDevices).mockResolvedValue({
+          count: 3,
+        });
 
         const result = await MFAService.revokeAllTrustedDevices(mockUser.id);
 
@@ -575,5 +593,28 @@ describe('MFA Routes', () => {
       // In real implementation, would validate numeric
       expect(/^\d{6}$/.test(token)).toBe(false);
     });
+  });
+});
+
+describe('mounted MFA auth wall contract', () => {
+  it('mounts authentication then uncached ACTIVE membership exactly once before handlers', () => {
+    const source = readFileSync(resolve(process.cwd(), 'server/src/routes/mfa.routes.ts'), 'utf8');
+
+    expect(source).toContain('router.use(verifyToken, requireActiveTenantMembership)');
+    expect(source.match(/router\.use\(verifyToken, requireActiveTenantMembership\)/g)).toHaveLength(
+      1
+    );
+    expect(source).not.toContain('const isAuthenticated = verifyToken');
+
+    for (const route of [
+      "router.get('/status', async",
+      "router.post('/setup', async",
+      "router.post('/verify-setup', async",
+      "router.post('/verify', async",
+      "router.post('/disable', async",
+    ]) {
+      expect(source).toContain(route);
+    }
+    expect(source).not.toMatch(/router\.(?:get|post)\([^\n]+verifyToken/);
   });
 });

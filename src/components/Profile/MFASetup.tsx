@@ -75,6 +75,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
   const [qrCode, setQrCode] = useState<string>('');
   const [secret, setSecret] = useState<string>('');
   const [verificationCode, setVerificationCode] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
   const [recoveryEmail, setRecoveryEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -116,9 +117,9 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
 
   useEffect(() => {
     fetchMFAMethods();
-    if (isEnabled) {
-      fetchMFAStatus();
-    }
+    // The parent user snapshot can be older than the tenant-authoritative MFA
+    // row after enrolment or a cold reload. Always hydrate the real status.
+    fetchMFAStatus();
   }, [isEnabled]);
 
   const fetchMFAMethods = async () => {
@@ -142,7 +143,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
       const response = await Api.get('/api/mfa/status');
       if (response) {
         setMfaStatus({
-          enabled: response.isEnabled,
+          enabled: response.enabled ?? response.isEnabled ?? false,
           enabledAt: response.enabledAt,
           method: response.method || 'totp',
           backupCodesRemaining: response.backupCodesRemaining,
@@ -169,8 +170,8 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
     setError(null);
     try {
       const res = await Api.post('/api/mfa/setup', {});
-      setQrCode(res.qrCode || res.data?.qrCode);
-      setSecret(res.manualEntry || res.data?.manualEntry);
+      setQrCode(res.qrCodeData || res.qrCode || res.data?.qrCodeData || res.data?.qrCode);
+      setSecret(res.secret || res.manualEntry || res.data?.secret || res.data?.manualEntry);
       setStep('setup-app');
     } catch (err: any) {
       setError(
@@ -240,9 +241,12 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await Api.post('/api/mfa/sms/verify-setup', { code: verificationCode });
+      const res = await Api.post('/api/mfa/sms/verify-setup', {
+        code: verificationCode,
+      });
       if (res.success || res.data?.success) {
         setBackupCodes(res.backupCodes || res.data?.backupCodes || []);
+        setMfaStatus((current) => ({ ...current, enabled: true, method: 'sms' }));
         setStep('backup');
         toast.success(t('security.mfa.smsEnabled', 'SMS MFA enabled successfully!'));
       }
@@ -266,9 +270,12 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await Api.post('/api/mfa/verify-setup', { token: verificationCode });
+      const res = await Api.post('/api/mfa/verify-setup', {
+        token: verificationCode,
+      });
       if (res.success || res.data?.success) {
         setBackupCodes(res.backupCodes || res.data?.backupCodes || []);
+        setMfaStatus((current) => ({ ...current, enabled: true, method: 'totp' }));
         setStep('backup');
         toast.success(t('security.mfa.enabled', '2FA enabled successfully!'));
       }
@@ -284,6 +291,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
   };
 
   const regenerateBackupCodes = async () => {
+    if (loading) return;
     if (verificationCode.length !== 6) {
       setError(
         t('security.mfa.codeRequired', 'Enter your current 2FA code to regenerate backup codes')
@@ -294,11 +302,16 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await Api.post('/api/mfa/regenerate-codes', { token: verificationCode });
-      if (res.success || res.backupCodes) {
-        setBackupCodes(res.backupCodes || []);
+      const res = await Api.post('/api/mfa/regenerate-backup-codes', {
+        token: verificationCode,
+      });
+      const regeneratedCodes = res.backupCodes || res.data?.backupCodes;
+      if (res.success || res.data?.success || regeneratedCodes) {
+        setBackupCodes(regeneratedCodes || []);
         setVerificationCode('');
         toast.success(t('security.mfa.codesRegenerated', 'Backup codes regenerated'));
+      } else {
+        throw new Error(t('security.mfa.regenerateError', 'Failed to regenerate codes'));
       }
     } catch (err: any) {
       setError(
@@ -310,20 +323,32 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
   };
 
   const disableMFA = async () => {
+    if (loading) return;
     if (verificationCode.length !== 6) {
       setError(t('security.mfa.codeRequired', 'Please enter your 2FA code'));
+      return;
+    }
+    if (!currentPassword) {
+      setError(t('security.mfa.passwordRequired', 'Enter your current password'));
       return;
     }
 
     setLoading(true);
     setError(null);
     try {
-      const res = await Api.post('/api/mfa/disable', { token: verificationCode });
+      const res = await Api.post('/api/mfa/disable', {
+        token: verificationCode,
+        password: currentPassword,
+      });
       if (res.success || res.data?.success) {
         setDisableConfirm(false);
         setVerificationCode('');
+        setCurrentPassword('');
+        setMfaStatus((current) => ({ ...current, enabled: false }));
         toast.success(t('security.mfa.disabled', '2FA has been disabled'));
         onUpdate();
+      } else {
+        throw new Error(t('security.mfa.disableError', 'Failed to disable 2FA'));
       }
     } catch (err: any) {
       setError(err.response?.data?.error || t('security.mfa.invalidCode', 'Invalid code'));
@@ -361,9 +386,12 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
   };
 
   // MFA Enabled State
-  if (isEnabled && !disableConfirm) {
+  if (mfaStatus.enabled && !disableConfirm) {
     return (
-      <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div
+        data-testid="mfa-setup"
+        className="max-w-2xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500"
+      >
         {/* Status Card */}
         <div className="bg-gradient-to-br from-emerald-500 to-blue-600 rounded-xl p-6 text-white shadow-lg shadow-emerald-500/25">
           <div className="flex items-center gap-4 mb-4">
@@ -469,11 +497,12 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
             <div className="flex gap-3 mb-4">
               <input
                 type="text"
+                aria-label={t('security.mfa.enterCode', 'Enter your 2FA code to confirm')}
                 value={verificationCode}
                 onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, ''))}
                 maxLength={6}
                 placeholder="000000"
-                className="w-32 px-4 py-2 text-center text-lg font-mono tracking-widest border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500"
+                className="w-32 px-4 py-2 text-center text-lg font-mono tracking-widest border border-slate-200 dark:border-navy-700 rounded-lg bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-c-focus"
               />
               <button
                 onClick={regenerateBackupCodes}
@@ -488,7 +517,11 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                 {t('security.mfa.regenerate', 'Regenerate')}
               </button>
             </div>
-            {error && <p className="text-danger-500 text-sm mb-4">{error}</p>}
+            {error && (
+              <p role="alert" aria-live="assertive" className="text-danger-500 text-sm mb-4">
+                {error}
+              </p>
+            )}
             {backupCodes.length > 0 && (
               <div className="mt-6">
                 <BackupCodesDisplay
@@ -520,7 +553,10 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
   // Disable Confirmation
   if (disableConfirm) {
     return (
-      <div className="max-w-md mx-auto bg-danger-50 dark:bg-danger-900/10 rounded-xl p-6 border border-danger-200 dark:border-danger-500/30 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div
+        data-testid="mfa-setup"
+        className="max-w-md mx-auto bg-danger-50 dark:bg-danger-900/10 rounded-xl p-6 border border-danger-200 dark:border-danger-500/30 animate-in fade-in slide-in-from-bottom-4 duration-500"
+      >
         <div className="flex items-center gap-3 mb-4">
           <div className="p-2 bg-danger-100 dark:bg-danger-500/20 rounded-lg">
             <AlertTriangle className="w-6 h-6 text-danger-600 dark:text-danger-400" />
@@ -536,23 +572,45 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
           )}
         </p>
         <div className="mb-4">
-          <label className="block text-sm font-medium text-danger-700 dark:text-danger-400 mb-2">
+          <label
+            htmlFor="mfa-current-password"
+            className="block text-sm font-medium text-danger-700 dark:text-danger-400 mb-2"
+          >
+            {t('security.mfa.currentPassword', 'Current password')}
+          </label>
+          <input
+            id="mfa-current-password"
+            type="password"
+            autoComplete="current-password"
+            className="w-full px-4 py-3 mb-4 border border-danger-200 dark:border-danger-500/30 rounded-lg bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-c-focus"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+          />
+          <label
+            htmlFor="mfa-disable-token"
+            className="block text-sm font-medium text-danger-700 dark:text-danger-400 mb-2"
+          >
             {t('security.mfa.enterCode', 'Enter your 2FA code to confirm')}
           </label>
           <input
+            id="mfa-disable-token"
             type="text"
             placeholder="000000"
             maxLength={6}
-            className="w-full px-4 py-3 text-center text-lg font-mono tracking-widest border border-danger-200 dark:border-danger-500/30 rounded-lg bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-danger-500"
+            className="w-full px-4 py-3 text-center text-lg font-mono tracking-widest border border-danger-200 dark:border-danger-500/30 rounded-lg bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-c-focus"
             value={verificationCode}
             onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, ''))}
           />
         </div>
-        {error && <p className="text-danger-600 text-sm mb-4">{error}</p>}
+        {error && (
+          <p role="alert" aria-live="assertive" className="text-danger-600 text-sm mb-4">
+            {error}
+          </p>
+        )}
         <div className="flex gap-3">
           <button
             onClick={disableMFA}
-            disabled={loading || verificationCode.length !== 6}
+            disabled={loading || verificationCode.length !== 6 || !currentPassword}
             className="flex-1 py-3 bg-danger-600 hover:bg-danger-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {loading ? (
@@ -566,6 +624,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
             onClick={() => {
               setDisableConfirm(false);
               setVerificationCode('');
+              setCurrentPassword('');
               setError(null);
             }}
             className="px-6 py-3 bg-slate-200 dark:bg-navy-800 hover:bg-slate-300 dark:hover:bg-navy-700 text-slate-700 dark:text-slate-300 rounded-lg font-medium transition-colors"
@@ -579,7 +638,10 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
 
   // Setup Flow
   return (
-    <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div
+      data-testid="mfa-setup"
+      className="max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500"
+    >
       {/* Initial State - Enable 2FA */}
       {step === 'initial' && (
         <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
@@ -735,7 +797,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
               placeholder="+1234567890"
-              className="w-full px-4 py-3 border border-slate-200 dark:border-navy-700 rounded-xl bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 placeholder-slate-400"
+              className="w-full px-4 py-3 border border-slate-200 dark:border-navy-700 rounded-xl bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-c-focus placeholder-slate-400"
             />
             <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
               {t(
@@ -812,7 +874,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
               onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, ''))}
               maxLength={6}
               placeholder="000000"
-              className="w-40 px-4 py-3 text-center text-xl font-mono tracking-[0.5em] border border-slate-200 dark:border-navy-700 rounded-xl bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500"
+              className="w-40 px-4 py-3 text-center text-xl font-mono tracking-[0.5em] border border-slate-200 dark:border-navy-700 rounded-xl bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-c-focus"
               onKeyDown={(e) => e.key === 'Enter' && verifySMSAndEnable()}
             />
             <button
@@ -926,7 +988,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ isEnabled, onUpdate }) => {
                 <div className="flex gap-3">
                   <input
                     type="text"
-                    className="w-40 px-4 py-3 text-center text-xl font-mono tracking-[0.5em] border border-slate-200 dark:border-navy-700 rounded-xl bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500"
+                    className="w-40 px-4 py-3 text-center text-xl font-mono tracking-[0.5em] border border-slate-200 dark:border-navy-700 rounded-xl bg-white dark:bg-navy-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-c-focus"
                     placeholder="000000"
                     maxLength={6}
                     value={verificationCode}

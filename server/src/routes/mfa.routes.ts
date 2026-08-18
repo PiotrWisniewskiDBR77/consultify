@@ -5,7 +5,7 @@
 import { Request, Response, Router } from 'express';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
-const isAuthenticated = verifyToken; // alias for compatibility
+import { requireActiveTenantMembership } from '../middleware/auditsStrictMembership.middleware.js';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 
@@ -13,6 +13,10 @@ import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js'
 import logger from '../utils/Logger.js';
 
 const router = Router();
+// MFA secrets and recovery codes are tenant-owned security state. Authenticate
+// first, then resolve ACTIVE membership from PostgreSQL on every request so a
+// revoked token cannot continue reading or mutating that state from a cache.
+router.use(verifyToken, requireActiveTenantMembership);
 const db = {
   get: (sql: string, params: any[]) => dbGet(sql, params),
   all: (sql: string, params: any[]) => dbAll(sql, params),
@@ -95,7 +99,7 @@ function verifyTOTP(secret: string, token: string): boolean {
  * GET /api/mfa/status
  * Get MFA status for current user
  */
-router.get('/status', verifyToken, isAuthenticated, async (req: Request, res: Response) => {
+router.get('/status', async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
 
@@ -123,7 +127,10 @@ router.get('/status', verifyToken, isAuthenticated, async (req: Request, res: Re
       err: error,
       correlationId: (req as any).correlationId,
     });
-    res.status(500).json({ error: 'Nie udało się pobrać statusu MFA', code: 'MFA_STATUS_FAILED' });
+    res.status(500).json({
+      error: 'Nie udało się pobrać statusu MFA',
+      code: 'MFA_STATUS_FAILED',
+    });
   }
 });
 
@@ -131,7 +138,7 @@ router.get('/status', verifyToken, isAuthenticated, async (req: Request, res: Re
  * POST /api/mfa/setup
  * Initialize MFA setup - generates secret and QR code data
  */
-router.post('/setup', verifyToken, isAuthenticated, async (req: Request, res: Response) => {
+router.post('/setup', async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     const user = (await db.get('SELECT email FROM users WHERE id = ?', [userId])) as {
@@ -163,9 +170,10 @@ router.post('/setup', verifyToken, isAuthenticated, async (req: Request, res: Re
         error: storeResult?.error,
         correlationId: (req as any).correlationId,
       });
-      return res
-        .status(500)
-        .json({ error: 'Nie udało się skonfigurować MFA', code: 'MFA_SETUP_NOT_PERSISTED' });
+      return res.status(500).json({
+        error: 'Nie udało się skonfigurować MFA',
+        code: 'MFA_SETUP_NOT_PERSISTED',
+      });
     }
 
     await writeMfaAudit(req, userId, 'security.mfa.enroll_started', true);
@@ -183,7 +191,10 @@ router.post('/setup', verifyToken, isAuthenticated, async (req: Request, res: Re
       err: error,
       correlationId: (req as any).correlationId,
     });
-    res.status(500).json({ error: 'Nie udało się skonfigurować MFA', code: 'MFA_SETUP_FAILED' });
+    res.status(500).json({
+      error: 'Nie udało się skonfigurować MFA',
+      code: 'MFA_SETUP_FAILED',
+    });
   }
 });
 
@@ -191,7 +202,7 @@ router.post('/setup', verifyToken, isAuthenticated, async (req: Request, res: Re
  * POST /api/mfa/verify-setup
  * Verify setup by checking first TOTP code
  */
-router.post('/verify-setup', verifyToken, isAuthenticated, async (req: Request, res: Response) => {
+router.post('/verify-setup', async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     const { token } = req.body;
@@ -246,9 +257,10 @@ router.post('/verify-setup', verifyToken, isAuthenticated, async (req: Request, 
         error: enableResult?.error,
         correlationId: (req as any).correlationId,
       });
-      return res
-        .status(500)
-        .json({ error: 'Nie udało się włączyć MFA', code: 'MFA_ENABLE_NOT_PERSISTED' });
+      return res.status(500).json({
+        error: 'Nie udało się włączyć MFA',
+        code: 'MFA_ENABLE_NOT_PERSISTED',
+      });
     }
 
     await writeMfaAudit(req, userId, 'security.mfa.enroll_completed', true);
@@ -277,7 +289,7 @@ router.post('/verify-setup', verifyToken, isAuthenticated, async (req: Request, 
  * POST /api/mfa/verify
  * Verify MFA code during login
  */
-router.post('/verify', verifyToken, async (req: Request, res: Response) => {
+router.post('/verify', async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     const { token, isBackupCode } = req.body;
@@ -361,11 +373,11 @@ router.post('/verify', verifyToken, async (req: Request, res: Response) => {
     const stampResult = isBackupCode
       ? { success: true }
       : await db.run(
-      `
+          `
       UPDATE user_mfa SET last_verified_at = datetime('now') WHERE user_id = ?
     `,
-      [userId]
-    );
+          [userId]
+        );
 
     // The factor itself was verified above; only the "last used" stamp may be
     // missing. That is an audit-quality problem, not an authentication one, so
@@ -384,7 +396,10 @@ router.post('/verify', verifyToken, async (req: Request, res: Response) => {
       err: error,
       correlationId: (req as any).correlationId,
     });
-    res.status(500).json({ error: 'Weryfikacja nie powiodła się', code: 'MFA_VERIFY_FAILED' });
+    res.status(500).json({
+      error: 'Weryfikacja nie powiodła się',
+      code: 'MFA_VERIFY_FAILED',
+    });
   }
 });
 
@@ -392,7 +407,7 @@ router.post('/verify', verifyToken, async (req: Request, res: Response) => {
  * POST /api/mfa/disable
  * Disable MFA (requires current password confirmation)
  */
-router.post('/disable', verifyToken, isAuthenticated, async (req: Request, res: Response) => {
+router.post('/disable', async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     const { token, password } = req.body;
@@ -407,9 +422,10 @@ router.post('/disable', verifyToken, isAuthenticated, async (req: Request, res: 
     } | null;
     if (!user?.password || !bcrypt.compareSync(password, user.password)) {
       await writeMfaAudit(req, userId, 'security.mfa.disable', false, 'reauth_failed');
-      return res
-        .status(401)
-        .json({ error: 'Current password is incorrect', code: 'REAUTH_FAILED' });
+      return res.status(401).json({
+        error: 'Current password is incorrect',
+        code: 'REAUTH_FAILED',
+      });
     }
 
     const mfaConfig = (await db.get('SELECT secret, enabled FROM user_mfa WHERE user_id = ?', [
@@ -445,9 +461,10 @@ router.post('/disable', verifyToken, isAuthenticated, async (req: Request, res: 
         error: disableResult?.error,
         correlationId: (req as any).correlationId,
       });
-      return res
-        .status(500)
-        .json({ error: 'Nie udało się wyłączyć MFA', code: 'MFA_DISABLE_NOT_PERSISTED' });
+      return res.status(500).json({
+        error: 'Nie udało się wyłączyć MFA',
+        code: 'MFA_DISABLE_NOT_PERSISTED',
+      });
     }
 
     await writeMfaAudit(req, userId, 'security.mfa.disable', true);
@@ -460,7 +477,10 @@ router.post('/disable', verifyToken, isAuthenticated, async (req: Request, res: 
       err: error,
       correlationId: (req as any).correlationId,
     });
-    res.status(500).json({ error: 'Nie udało się wyłączyć MFA', code: 'MFA_DISABLE_FAILED' });
+    res.status(500).json({
+      error: 'Nie udało się wyłączyć MFA',
+      code: 'MFA_DISABLE_FAILED',
+    });
   }
 });
 
@@ -468,83 +488,78 @@ router.post('/disable', verifyToken, isAuthenticated, async (req: Request, res: 
  * POST /api/mfa/regenerate-backup-codes
  * Generate new backup codes (invalidates old ones)
  */
-router.post(
-  '/regenerate-backup-codes',
-  verifyToken,
-  isAuthenticated,
-  async (req: Request, res: Response) => {
-    try {
-      const userId = (req as any).user?.id;
-      const { token } = req.body;
+router.post('/regenerate-backup-codes', async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    const { token } = req.body;
 
-      const mfaConfig = (await db.get('SELECT secret, enabled FROM user_mfa WHERE user_id = ?', [
+    const mfaConfig = (await db.get('SELECT secret, enabled FROM user_mfa WHERE user_id = ?', [
+      userId,
+    ])) as { secret: string; enabled: boolean } | null;
+
+    if (!mfaConfig?.enabled) {
+      return res.status(400).json({ error: 'MFA is not enabled' });
+    }
+
+    if (!verifyTOTP(mfaConfig.secret, token)) {
+      await writeMfaAudit(
+        req,
         userId,
-      ])) as { secret: string; enabled: boolean } | null;
-
-      if (!mfaConfig?.enabled) {
-        return res.status(400).json({ error: 'MFA is not enabled' });
-      }
-
-      if (!verifyTOTP(mfaConfig.secret, token)) {
-        await writeMfaAudit(
-          req,
-          userId,
-          'security.mfa.recovery_codes_regenerated',
-          false,
-          'invalid_totp'
-        );
-        return res.status(401).json({ error: 'Invalid verification code' });
-      }
-
-      const backupCodes = Array.from({ length: 10 }, () =>
-        crypto.randomBytes(8).toString('hex').toUpperCase()
+        'security.mfa.recovery_codes_regenerated',
+        false,
+        'invalid_totp'
       );
-      const hashedBackupCodes = backupCodes.map((code) =>
-        crypto.createHash('sha256').update(code).digest('hex')
-      );
+      return res.status(401).json({ error: 'Invalid verification code' });
+    }
 
-      const regenerateResult = await db.run(
-        `
+    const backupCodes = Array.from({ length: 10 }, () =>
+      crypto.randomBytes(8).toString('hex').toUpperCase()
+    );
+    const hashedBackupCodes = backupCodes.map((code) =>
+      crypto.createHash('sha256').update(code).digest('hex')
+    );
+
+    const regenerateResult = await db.run(
+      `
       UPDATE user_mfa
       SET backup_codes = ?, backup_codes_count = 10, updated_at = datetime('now')
       WHERE user_id = ?
     `,
-        [JSON.stringify(hashedBackupCodes), userId]
-      );
+      [JSON.stringify(hashedBackupCodes), userId]
+    );
 
-      // Handing back codes the response calls valid, while the old set is
-      // still the one stored, would lock the user out of their own recovery
-      // path. Refuse instead of printing codes that do not work.
-      if (!regenerateResult?.success) {
-        logger.error('[MFA] Failed to persist regenerated backup codes', {
-          userId,
-          error: regenerateResult?.error,
-          correlationId: (req as any).correlationId,
-        });
-        return res.status(500).json({
-          error: 'Nie udało się wygenerować nowych kodów zapasowych',
-          code: 'MFA_BACKUP_CODES_NOT_PERSISTED',
-        });
-      }
-
-      await writeMfaAudit(req, userId, 'security.mfa.recovery_codes_regenerated', true);
-
-      res.json({
-        success: true,
-        backupCodes,
-        warning: 'Previous backup codes have been invalidated. Save these new codes securely.',
-      });
-    } catch (error: any) {
-      logger.error('[MFA] Failed to regenerate backup codes:', {
-        err: error,
+    // Handing back codes the response calls valid, while the old set is
+    // still the one stored, would lock the user out of their own recovery
+    // path. Refuse instead of printing codes that do not work.
+    if (!regenerateResult?.success) {
+      logger.error('[MFA] Failed to persist regenerated backup codes', {
+        userId,
+        error: regenerateResult?.error,
         correlationId: (req as any).correlationId,
       });
-      res.status(500).json({
+      return res.status(500).json({
         error: 'Nie udało się wygenerować nowych kodów zapasowych',
-        code: 'MFA_REGENERATE_CODES_FAILED',
+        code: 'MFA_BACKUP_CODES_NOT_PERSISTED',
       });
     }
+
+    await writeMfaAudit(req, userId, 'security.mfa.recovery_codes_regenerated', true);
+
+    res.json({
+      success: true,
+      backupCodes,
+      warning: 'Previous backup codes have been invalidated. Save these new codes securely.',
+    });
+  } catch (error: any) {
+    logger.error('[MFA] Failed to regenerate backup codes:', {
+      err: error,
+      correlationId: (req as any).correlationId,
+    });
+    res.status(500).json({
+      error: 'Nie udało się wygenerować nowych kodów zapasowych',
+      code: 'MFA_REGENERATE_CODES_FAILED',
+    });
   }
-);
+});
 
 export default router;
