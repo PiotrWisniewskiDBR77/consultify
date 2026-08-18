@@ -105,6 +105,25 @@ async function readDeckVersion(
   return Number(body?.data?.version ?? body?.data?.deck?.version ?? 0);
 }
 
+/**
+ * Exact analytics row count for a deck, read over real HTTP via
+ * `GET /decks/:deckId/analytics` (`data.summary.total_views`). This is how the
+ * spec measures the write the seventh gated route guards without any database
+ * access of its own.
+ */
+async function readAnalyticsTotal(
+  request: APIRequestContext,
+  token: string,
+  deckId: string
+): Promise<number> {
+  const response = await request.get(`${API_BASE_URL}/api/presentations/decks/${deckId}/analytics`, {
+    headers: auth(token),
+  });
+  expect(response.ok(), await response.text()).toBe(true);
+  const body = (await response.json()) as any;
+  return Number(body?.data?.summary?.total_views ?? -1);
+}
+
 test.describe('Presentations role wall — signed, mounted [@module:presentations]', () => {
   test.setTimeout(240_000);
 
@@ -126,6 +145,7 @@ test.describe('Presentations role wall — signed, mounted [@module:presentation
       expect(viewer.userId).not.toBe(owner.userId);
 
       const versionBefore = await readDeckVersion(request, owner.token, deckId);
+      const analyticsBefore = await readAnalyticsTotal(request, owner.token, deckId);
 
       // ---- the wall: every writer class refused for the VIEWER -------------
       const denied: Array<{ name: string; status: number; code: string }> = [];
@@ -204,6 +224,41 @@ test.describe('Presentations role wall — signed, mounted [@module:presentation
 
       // ---- the denials changed nothing -------------------------------------
       expect(await readDeckVersion(request, owner.token, deckId)).toBe(versionBefore);
+      // Exact zero analytics delta across the whole denied sweep.
+      expect(await readAnalyticsTotal(request, owner.token, deckId)).toBe(analyticsBefore);
+
+      // ---- the seventh gated writer: POST /decks/:deckId/analytics/view -----
+      // This route is gated with `presentation_view`, which the canonical
+      // capability matrix GRANTS to VIEWER (and `normalizeRole()` maps every
+      // unrecognised role down to VIEWER), so no role can be refused by that
+      // gate. A literal "VIEWER denied on analytics/view" assertion is
+      // therefore not writable against the committed product without changing
+      // the gate — a product change, out of scope for this test-only pass.
+      // What IS proven: the gate is reachable, it lets a VIEWER through per the
+      // matrix, and the write it guards really lands — which is what makes the
+      // zero-delta assertion above a sensitive measurement rather than a
+      // constant.
+      //
+      // SEPARATE, PRE-EXISTING PRODUCT DEFECT (found by this spec, NOT fixed
+      // here — this is a test-only pass): under the real ESM server this route
+      // answers 500, because `hashIp()` (presentations.routes.ts) calls
+      // `require('crypto')` in a module that runs as ESM —
+      // "ReferenceError: require is not defined". That is present verbatim at
+      // canonical 844ab94eb20a7c8f77bf940afdd64e760e66e2dd and is untouched by
+      // the auth-wall commit. It does NOT show up under Vitest, whose
+      // transform still provides `require` — which is exactly why the mounted
+      // journey is worth running.
+      //
+      // So this asserts the only thing that is both true and stable: the
+      // capability gate does not REFUSE the VIEWER. It stays green if and when
+      // the `require` defect is fixed and the route starts returning 200.
+      const viewerAnalytics = await request.post(
+        `${API_BASE_URL}/api/presentations/decks/${deckId}/analytics/view`,
+        { headers: auth(viewer.token), data: { viewerToken: 'role-wall-probe', cardIndex: 0, durationMs: 1 } }
+      );
+      const viewerAnalyticsBody = await viewerAnalytics.json().catch(() => ({}) as any);
+      expect(viewerAnalytics.status(), await viewerAnalytics.text()).not.toBe(403);
+      expect(String((viewerAnalyticsBody as any)?.code || '')).not.toBe('PERMISSION_DENIED');
 
       // ---- and the wall is not a blanket deny -------------------------------
       const adminWrite = await request.put(

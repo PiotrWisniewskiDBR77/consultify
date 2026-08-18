@@ -84,6 +84,14 @@ describeRealPg('PRESENTATIONS-AUTH-WALL-001 — writer authorization wall (real 
   let deckId = '';
   let versionId = '';
 
+  /**
+   * Captured before any fixture is written and re-asserted identical in
+   * afterAll: this suite must not add, drop or DISABLE a trigger anywhere in
+   * the database. `tgenabled = 'O'` is "enabled, origin" — anything else means
+   * a trigger was switched off.
+   */
+  let triggerBaseline: Array<{ table_name: string; trigger_name: string; tgenabled: string }> = [];
+
   const createdUserIds: string[] = [];
   const createdMemberIds: string[] = [];
   const createdOrgIds: string[] = [];
@@ -219,7 +227,21 @@ describeRealPg('PRESENTATIONS-AUTH-WALL-001 — writer authorization wall (real 
           .post(`/api/presentations/decks/${deckId}/versions/${versionId}/restore`)
           .set(auth)
           .send({ expectedVersion: 1, ...body }),
+      analyticsView: () =>
+        request(app)
+          .post(`/api/presentations/decks/${deckId}/analytics/view`)
+          .set(auth)
+          .send({ viewerToken: 'authwall-probe', cardIndex: 0, durationMs: 1, ...body }),
     };
+  }
+
+  /** Rows written by the seventh gated writer, counted on their own. */
+  async function analyticsCount(): Promise<number> {
+    const res = await pool.query<{ c: number }>(
+      `SELECT count(*)::int AS c FROM presentation_analytics WHERE deck_id = $1`,
+      [deckId]
+    );
+    return res.rows[0].c;
   }
 
   beforeAll(async () => {
@@ -261,6 +283,21 @@ describeRealPg('PRESENTATIONS-AUTH-WALL-001 — writer authorization wall (real 
     app.use(express.json({ limit: '20mb' }));
     app.use('/api/presentations', routesModule.default);
 
+    const baseline = await pool.query<{
+      table_name: string;
+      trigger_name: string;
+      tgenabled: string;
+    }>(
+      `SELECT c.relname AS table_name, t.tgname AS trigger_name, t.tgenabled::text AS tgenabled
+         FROM pg_trigger t
+         JOIN pg_class c ON c.oid = t.tgrelid
+        WHERE NOT t.tgisinternal
+        ORDER BY c.relname, t.tgname`
+    );
+    triggerBaseline = baseline.rows;
+    // Sanity: the fixture database really is the migrated schema, not an empty one.
+    expect(triggerBaseline.length).toBeGreaterThan(0);
+
     orgA = await seedOrg('AUTH-WALL tenant A');
     orgB = await seedOrg('AUTH-WALL tenant B');
 
@@ -279,18 +316,98 @@ describeRealPg('PRESENTATIONS-AUTH-WALL-001 — writer authorization wall (real 
 
   afterAll(async () => {
     if (!pool) return;
+    // Nested finally: whatever happens to cleanup or to its assertions, the
+    // advisory lock is still unlocked and verified, the client is still
+    // released and the pool is still ended. None of those can be skipped.
     try {
-      // ---- residue: this run must leave nothing behind ----
-      await pool.query(`DELETE FROM presentation_analytics WHERE deck_id = ANY($1::text[])`, [createdDeckIds]);
-      await pool.query(`DELETE FROM presentation_deck_versions WHERE deck_id = ANY($1::text[])`, [createdDeckIds]);
-      await pool.query(`DELETE FROM approval_assignments WHERE artifact_id = ANY($1::text[]) OR proposal_id = ANY($1::text[])`, [createdDeckIds]);
-      await pool.query(`DELETE FROM presentation_decks WHERE id = ANY($1::text[])`, [createdDeckIds]);
-      await pool.query(`DELETE FROM audit_events WHERE org_id = ANY($1::text[]) OR resource_id = ANY($2::text[]) OR entity_id = ANY($2::text[])`, [createdOrgIds, createdDeckIds]);
-      await pool.query(`DELETE FROM organization_members WHERE id = ANY($1::text[])`, [createdMemberIds]);
-      await pool.query(`DELETE FROM users WHERE id = ANY($1::text[])`, [createdUserIds]);
-      await pool.query(`DELETE FROM organizations WHERE id = ANY($1::text[])`, [createdOrgIds]);
+      try {
+        // One retained client, one transaction: either the whole cleanup lands
+        // or none of it does. Deletes are by EXACT ids this run created, in
+        // FK-safe order (children before parents), never by pattern.
+        await lockClient.query('BEGIN');
 
-      const residue = await pool.query(
+        await lockClient.query(
+          `DELETE FROM presentation_analytics WHERE deck_id = ANY($1::text[])`,
+          [createdDeckIds]
+        );
+        await lockClient.query(
+          `DELETE FROM presentation_deck_versions WHERE deck_id = ANY($1::text[])`,
+          [createdDeckIds]
+        );
+        await lockClient.query(
+          `DELETE FROM approval_assignments
+            WHERE artifact_id = ANY($1::text[]) OR proposal_id = ANY($1::text[])`,
+          [createdDeckIds]
+        );
+        await lockClient.query(`DELETE FROM presentation_decks WHERE id = ANY($1::text[])`, [
+          createdDeckIds,
+        ]);
+        await lockClient.query(
+          `DELETE FROM audit_events
+            WHERE org_id = ANY($1::text[])
+               OR resource_id = ANY($2::text[])
+               OR entity_id = ANY($2::text[])`,
+          [createdOrgIds, createdDeckIds]
+        );
+        await lockClient.query(`DELETE FROM organization_members WHERE id = ANY($1::text[])`, [
+          createdMemberIds,
+        ]);
+        await lockClient.query(`DELETE FROM users WHERE id = ANY($1::text[])`, [createdUserIds]);
+        await lockClient.query(`DELETE FROM organizations WHERE id = ANY($1::text[])`, [
+          createdOrgIds,
+        ]);
+
+        // Residue INSIDE the transaction: prove the deletes actually removed
+        // every row this run created before anything is committed.
+        const residueInTx = await lockClient.query(
+          `SELECT
+             (SELECT count(*)::int FROM presentation_decks WHERE id = ANY($1::text[])) AS decks,
+             (SELECT count(*)::int FROM presentation_deck_versions WHERE deck_id = ANY($1::text[])) AS versions,
+             (SELECT count(*)::int FROM presentation_analytics WHERE deck_id = ANY($1::text[])) AS analytics,
+             (SELECT count(*)::int FROM approval_assignments WHERE artifact_id = ANY($1::text[])) AS approvals,
+             (SELECT count(*)::int FROM organization_members WHERE id = ANY($2::text[])) AS members,
+             (SELECT count(*)::int FROM users WHERE id = ANY($3::text[])) AS users,
+             (SELECT count(*)::int FROM organizations WHERE id = ANY($4::text[])) AS orgs`,
+          [createdDeckIds, createdMemberIds, createdUserIds, createdOrgIds]
+        );
+        expect(residueInTx.rows[0]).toEqual({
+          decks: 0,
+          versions: 0,
+          analytics: 0,
+          approvals: 0,
+          members: 0,
+          users: 0,
+          orgs: 0,
+        });
+
+        // Exact trigger presence, count and enabled-state, compared against the
+        // inventory captured before the first fixture row was written.
+        const triggersInTx = await lockClient.query<{
+          table_name: string;
+          trigger_name: string;
+          tgenabled: string;
+        }>(
+      `SELECT c.relname AS table_name, t.tgname AS trigger_name, t.tgenabled::text AS tgenabled
+         FROM pg_trigger t
+         JOIN pg_class c ON c.oid = t.tgrelid
+        WHERE NOT t.tgisinternal
+        ORDER BY c.relname, t.tgname`
+        );
+        expect(triggersInTx.rows.length).toBe(triggerBaseline.length);
+        expect(triggersInTx.rows).toEqual(triggerBaseline);
+        for (const row of triggersInTx.rows) expect(row.tgenabled).toBe('O');
+
+        await lockClient.query('COMMIT');
+      } catch (cleanupError) {
+        await lockClient.query('ROLLBACK').catch(() => {
+          /* the original failure is the one worth reporting */
+        });
+        throw cleanupError;
+      }
+
+      // Identical residue AFTER the commit: what the transaction proved must
+      // also be true of the durable database state.
+      const residueCommitted = await lockClient.query(
         `SELECT
            (SELECT count(*)::int FROM presentation_decks WHERE id = ANY($1::text[])) AS decks,
            (SELECT count(*)::int FROM presentation_deck_versions WHERE deck_id = ANY($1::text[])) AS versions,
@@ -301,7 +418,7 @@ describeRealPg('PRESENTATIONS-AUTH-WALL-001 — writer authorization wall (real 
            (SELECT count(*)::int FROM organizations WHERE id = ANY($4::text[])) AS orgs`,
         [createdDeckIds, createdMemberIds, createdUserIds, createdOrgIds]
       );
-      expect(residue.rows[0]).toEqual({
+      expect(residueCommitted.rows[0]).toEqual({
         decks: 0,
         versions: 0,
         analytics: 0,
@@ -310,30 +427,23 @@ describeRealPg('PRESENTATIONS-AUTH-WALL-001 — writer authorization wall (real 
         users: 0,
         orgs: 0,
       });
-
-      // ---- triggers: the suite must not have disabled any (all 'O' = origin) ----
-      const triggers = await pool.query<{ tgenabled: string }>(
-        `SELECT t.tgenabled
-           FROM pg_trigger t
-           JOIN pg_class c ON c.oid = t.tgrelid
-          WHERE NOT t.tgisinternal
-            AND c.relname IN ('presentation_decks','presentation_deck_versions','organization_members','audit_events')`
-      );
-      for (const row of triggers.rows) expect(row.tgenabled).toBe('O');
-
-      // ---- locks: released, and none left held by this backend ----
-      const unlocked = await lockClient.query<{ ok: boolean }>(
-        'SELECT pg_advisory_unlock(hashtext($1)) AS ok',
-        [AUTH_WALL_LOCK_KEY]
-      );
-      expect(unlocked.rows[0]?.ok).toBe(true);
-      const held = await lockClient.query<{ count: string }>(
-        `SELECT count(*) AS count FROM pg_locks WHERE locktype = 'advisory' AND pid = pg_backend_pid()`
-      );
-      expect(Number(held.rows[0]?.count ?? 0)).toBe(0);
     } finally {
-      lockClient?.release();
-      await pool.end();
+      try {
+        const unlocked = await lockClient.query<{ ok: boolean }>(
+          'SELECT pg_advisory_unlock(hashtext($1)) AS ok',
+          [AUTH_WALL_LOCK_KEY]
+        );
+        expect(unlocked.rows[0]?.ok).toBe(true);
+        const held = await lockClient.query<{ count: string }>(
+          `SELECT count(*) AS count
+             FROM pg_locks
+            WHERE locktype = 'advisory' AND pid = pg_backend_pid()`
+        );
+        expect(Number(held.rows[0]?.count ?? 0)).toBe(0);
+      } finally {
+        lockClient?.release();
+        await pool.end();
+      }
     }
   }, 60_000);
 
@@ -342,7 +452,11 @@ describeRealPg('PRESENTATIONS-AUTH-WALL-001 — writer authorization wall (real 
   // ===========================================================================
   it('denies a VIEWER on every writer class, with zero business/event/receipt deltas', async () => {
     const before = await snapshotState();
-    const probes = writerProbes(viewerA.token);
+    // `analyticsView` is deliberately excluded: it is gated with
+    // `presentation_view`, which the canonical matrix GRANTS to VIEWER, so it
+    // is an allow — it gets its own case below. Everything else here is a
+    // capability the matrix withholds from VIEWER.
+    const { analyticsView: _analyticsViewIsAnAllow, ...probes } = writerProbes(viewerA.token);
 
     for (const [name, probe] of Object.entries(probes)) {
       const res = await probe();
@@ -462,7 +576,70 @@ describeRealPg('PRESENTATIONS-AUTH-WALL-001 — writer authorization wall (real 
   }, 60_000);
 
   // ===========================================================================
-  // 8. reads stay reachable — the wall is writer-scoped
+  // 8. the seventh gated writer: POST /decks/:deckId/analytics/view
+  // ===========================================================================
+  // NOTE ON WHAT THIS CAN AND CANNOT ASSERT.
+  // This route is gated with `presentation_view`, and the canonical capability
+  // matrix (presentationAccessPolicyService.ts:83) grants VIEWER exactly
+  // {presentation_view, presentation_export}. `normalizeRole()` also maps every
+  // unrecognised role down to VIEWER. So NO role can be refused by this gate,
+  // and a "VIEWER is denied on analytics/view" assertion is not writable
+  // against the committed product without changing the gate itself — which is
+  // a product change, out of scope here. What is asserted instead:
+  //   - the gate is reachable and lets a VIEWER through (canonical semantics),
+  //     and the write it guards really happens (+1 row) so the counter below is
+  //     demonstrably sensitive, not vacuous;
+  //   - every identity the WALL refuses writes exactly zero analytics rows.
+  it('covers analytics/view: VIEWER allowed per matrix, walled identities write exactly zero rows', async () => {
+    const before = await snapshotState();
+    const analyticsBefore = await analyticsCount();
+
+    // HARNESS DIVERGENCE, RECORDED DELIBERATELY: under the real ESM server this
+    // route answers 500 — `hashIp()` calls `require('crypto')` in an ESM module
+    // ("ReferenceError: require is not defined"), a pre-existing defect present
+    // verbatim at canonical 844ab94eb20a7c8f77bf940afdd64e760e66e2dd and not
+    // touched by the auth-wall change. Vitest's transform still provides
+    // `require`, so the row really is written here. The mounted signed spec
+    // asserts only "not refused" for that reason.
+    // VIEWER holds `presentation_view` — allowed, and it writes exactly one row.
+    const viewerAllowed = await writerProbes(viewerA.token).analyticsView();
+    expect(viewerAllowed.status).toBe(200);
+    expect(await analyticsCount()).toBe(analyticsBefore + 1);
+
+    // Everything the membership wall refuses must write exactly zero rows.
+    const walled = await analyticsCount();
+
+    const ghostDenied = await writerProbes(ghostA.token).analyticsView();
+    expect(ghostDenied.status).toBe(403);
+    expect(ghostDenied.body.code).toBe('ORG_MEMBERSHIP_REVOKED');
+    expect(await analyticsCount()).toBe(walled);
+
+    const revokedDenied = await writerProbes(revokedA.token).analyticsView();
+    expect(revokedDenied.status).toBe(403);
+    expect(revokedDenied.body.code).toBe('ORG_MEMBERSHIP_REVOKED');
+    expect(await analyticsCount()).toBe(walled);
+
+    // A spoofed body cannot buy the walled identity a row either.
+    const spoofDenied = await writerProbes(ghostA.token, {
+      organizationId: orgA,
+      userId: ownerA.id,
+      role: 'OWNER',
+    }).analyticsView();
+    expect(spoofDenied.status).toBe(403);
+    expect(await analyticsCount()).toBe(walled);
+
+    // A foreign tenant is org-scoped out before any row is written.
+    const foreignDenied = await writerProbes(ownerB.token).analyticsView();
+    expect(foreignDenied.status).toBe(404);
+    expect(await analyticsCount()).toBe(walled);
+
+    // Nothing but the single allowed analytics row changed anywhere.
+    const after = await snapshotState();
+    expect(after).toEqual({ ...before, analytics: before.analytics + 1 });
+  }, 60_000);
+
+  // ===========================================================================
+  // 9. reads stay reachable — the wall is writer-scoped
   // ===========================================================================
   it('leaves reads unchanged for the same VIEWER that every writer denies', async () => {
     const res = await request(app)
