@@ -15,6 +15,7 @@
  */
 import { v4 as uuidv4 } from 'uuid';
 
+import { withPinnedPostgresTransaction } from '../../database/PostgresDatabase.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import { getAuditLogger } from '../AuditLogger.js';
@@ -89,6 +90,12 @@ function label(suffix: string): string {
   return `${HEALTH_PROBE_PREFIX}${suffix}-${uuidv4().slice(0, 8)}`;
 }
 
+class HealthProbeRollback extends Error {
+  constructor(readonly detail: Record<string, unknown>) {
+    super('HEALTH_PROBE_ROLLBACK');
+  }
+}
+
 /**
  * (a) M15 KPI create → read → delete.
  * Uses the canonical V8 results service for create/read; hard-deletes the row.
@@ -138,68 +145,75 @@ const probeM15RoiRoundTrip: HealthProbe = {
   id: 'm15_roi_round_trip',
   module: 'M15',
   title: 'ROI realization write → read',
-  description: 'Writes an ROI realization entry and reads it back by initiative, org-scoped.',
+  description:
+    'Writes an ROI realization entry and reads it back by initiative, org-scoped, then rolls the pinned transaction back.',
   run: async ({ organizationId }) => {
-    let kpiId: string | null = null;
-    let initiativeId: string | null = null;
-    let entryId: string | null = null;
+    const initiativeId = uuidv4();
+    const kpiId = uuidv4();
+    const entryId = uuidv4();
+    const now = new Date().toISOString();
     try {
-      const initiative = await createInitiativeViaFunnel(
-        organizationId,
-        {
-          title: label('ROI-INITIATIVE'),
-          summary: 'health probe — ROI realization round-trip',
-          sourceType: 'tool',
-          sourceId: label('ROI-SOURCE'),
-        },
-        { emitAudit: false }
-      );
-      initiativeId = initiative.id;
-
-      const kpi = await createKPI({
-        organizationId,
-        name: label('ROI-KPI'),
-        mode: 'initiative_linked',
-        metricType: 'currency',
-        measurementCadence: 'monthly',
-        initiativeId,
+      await withPinnedPostgresTransaction(async (tx) => {
+        const initiativeTitle = label('ROI-INITIATIVE');
+        await tx.queryRun(
+          `INSERT INTO initiatives (
+             id, organization_id, project_id, title, name, summary, status, source_type,
+             source_id, created_at, updated_at
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            initiativeId,
+            organizationId,
+            null,
+            initiativeTitle,
+            initiativeTitle,
+            'health probe — ROI realization round-trip',
+            'DRAFT',
+            'tool',
+            label('ROI-SOURCE'),
+            now,
+            now,
+          ]
+        );
+        await tx.queryRun(
+          `INSERT INTO v8_kpi_definitions (
+             kpi_id, organization_id, name, mode, initiative_id, metric_type,
+             measurement_cadence, status, created_at, updated_at
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            kpiId,
+            organizationId,
+            label('ROI-KPI'),
+            'initiative_linked',
+            initiativeId,
+            'currency',
+            'monthly',
+            'active',
+            now,
+            now,
+          ]
+        );
+        await tx.queryRun(
+          `INSERT INTO v8_roi_realization_entries (
+             entry_id, organization_id, kpi_id, initiative_id, realized_value,
+             period, provenance_ref, verified_by, created_at
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [entryId, organizationId, kpiId, initiativeId, 4242, '2026-Q3', label('PROV'), null, now]
+        );
+        const found = await tx.queryOne<{ entry_id: string; realized_value: number }>(
+          `SELECT entry_id, realized_value
+             FROM v8_roi_realization_entries
+            WHERE entry_id = ? AND initiative_id = ? AND organization_id = ?`,
+          [entryId, initiativeId, organizationId]
+        );
+        if (!found) throw new Error('ROI entry not readable after write');
+        if (Number(found.realized_value) !== 4242) {
+          throw new Error('ROI realized value mismatch on read');
+        }
+        throw new HealthProbeRollback({ entryId, initiativeId, rolledBack: true });
       });
-      kpiId = kpi.kpiId;
-
-      const entry = await recordROIRealization({
-        organizationId,
-        kpiId,
-        initiativeId,
-        realizedValue: 4242,
-        period: '2026-Q3',
-        provenanceRef: label('PROV'),
-      });
-      entryId = entry.entryId;
-
-      const rows = await getROIByInitiative(initiativeId, organizationId);
-      const found = rows.find((r) => r.entryId === entryId);
-      if (!found) throw new Error('ROI entry not readable after write');
-      if (found.realizedValue !== 4242) throw new Error('ROI realized value mismatch on read');
-      return { entryId, initiativeId };
-    } finally {
-      if (entryId) {
-        await dbRun(
-          `DELETE FROM v8_roi_realization_entries WHERE entry_id = ? AND organization_id = ?`,
-          [entryId, organizationId]
-        ).catch((e) => logger.warn(`${LOG_PREFIX} m15_roi entry cleanup failed`, e));
-      }
-      if (kpiId) {
-        await dbRun(`DELETE FROM v8_kpi_definitions WHERE kpi_id = ? AND organization_id = ?`, [
-          kpiId,
-          organizationId,
-        ]).catch((e) => logger.warn(`${LOG_PREFIX} m15_roi kpi cleanup failed`, e));
-      }
-      if (initiativeId) {
-        await dbRun(`DELETE FROM initiatives WHERE id = ? AND organization_id = ?`, [
-          initiativeId,
-          organizationId,
-        ]).catch((e) => logger.warn(`${LOG_PREFIX} m15_roi initiative cleanup failed`, e));
-      }
+    } catch (error) {
+      if (error instanceof HealthProbeRollback) return error.detail;
+      throw error;
     }
   },
 };

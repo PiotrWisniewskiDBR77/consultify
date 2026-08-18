@@ -30,6 +30,9 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
   all: vi.fn(),
   run: vi.fn(),
 }));
+vi.mock('../../../server/src/database/PostgresDatabase.js', () => ({
+  withPinnedPostgresTransaction: vi.fn(),
+}));
 // Round-trip probe dependencies (Paczka1 #3).
 vi.mock('../../../server/src/services/initiative/createInitiativeService.js', () => ({
   createInitiative: vi.fn(),
@@ -64,6 +67,7 @@ import { pullAndReconcileInitiative } from '../../../server/src/services/v8/resu
 import { getRecentArtifactRefsForOrg } from '../../../server/src/services/v8/artifactRegistryService.js';
 import { getAuditLogger } from '../../../server/src/services/AuditLogger.js';
 import * as DbPromise from '../../../server/src/utils/DbPromise.js';
+import { withPinnedPostgresTransaction } from '../../../server/src/database/PostgresDatabase.js';
 import {
   HEALTH_PROBES,
   HEALTH_PROBE_PREFIX,
@@ -324,42 +328,33 @@ describe('probe (a) — M15 KPI round-trip', () => {
 describe('probe (b) — M15 ROI realization round-trip', () => {
   const probe = getProbeById('m15_roi_round_trip')!;
 
-  it('creates the FK parent before the linked KPI and cleans the whole chain', async () => {
-    (createInitiativeViaFunnel as any).mockResolvedValue({ id: 'initiative-roi-1' });
-    (resultsROIService.createKPI as any).mockResolvedValue({ kpiId: 'kpi-roi-1' });
-    (resultsROIService.recordROIRealization as any).mockResolvedValue({ entryId: 'entry-roi-1' });
-    (resultsROIService.getROIByInitiative as any).mockResolvedValue([
-      { entryId: 'entry-roi-1', realizedValue: 4242 },
-    ]);
+  it('writes and reads on one pinned transaction, then rolls it back without DELETE', async () => {
+    const queryRun = vi.fn().mockResolvedValue({ changes: 1 });
+    const queryOne = vi.fn().mockResolvedValue({ entry_id: 'entry-roi-1', realized_value: 4242 });
+    (withPinnedPostgresTransaction as any).mockImplementation(async (work: any) => {
+      try {
+        return await work({ queryRun, queryOne, queryAll: vi.fn() });
+      } catch (error) {
+        throw error;
+      }
+    });
 
     const result = await runProbe(probe, CTX);
 
     expect(result.status).toBe('pass');
-    expect(createInitiativeViaFunnel).toHaveBeenCalledWith(
-      CTX.organizationId,
-      expect.objectContaining({
-        title: expect.stringContaining(HEALTH_PROBE_PREFIX),
-        sourceType: 'tool',
-      }),
-      { emitAudit: false }
+    expect(result.detail).toMatchObject({ rolledBack: true });
+    expect(withPinnedPostgresTransaction).toHaveBeenCalledOnce();
+    expect(queryRun).toHaveBeenCalledTimes(3);
+    expect(queryRun.mock.calls[0][0]).toContain('INSERT INTO initiatives');
+    expect(queryRun.mock.calls[1][0]).toContain('INSERT INTO v8_kpi_definitions');
+    expect(queryRun.mock.calls[2][0]).toContain('INSERT INTO v8_roi_realization_entries');
+    expect(queryOne).toHaveBeenCalledWith(
+      expect.stringContaining('FROM v8_roi_realization_entries'),
+      expect.arrayContaining([CTX.organizationId])
     );
-    expect(resultsROIService.createKPI).toHaveBeenCalledWith(
-      expect.objectContaining({ initiativeId: 'initiative-roi-1' })
-    );
-    expect(DbPromise.run).toHaveBeenNthCalledWith(
-      1,
-      expect.stringContaining('DELETE FROM v8_roi_realization_entries'),
-      ['entry-roi-1', CTX.organizationId]
-    );
-    expect(DbPromise.run).toHaveBeenNthCalledWith(
-      2,
-      expect.stringContaining('DELETE FROM v8_kpi_definitions'),
-      ['kpi-roi-1', CTX.organizationId]
-    );
-    expect(DbPromise.run).toHaveBeenNthCalledWith(
-      3,
-      expect.stringContaining('DELETE FROM initiatives'),
-      ['initiative-roi-1', CTX.organizationId]
+    expect(DbPromise.run).not.toHaveBeenCalledWith(
+      expect.stringContaining('DELETE FROM'),
+      expect.anything()
     );
   });
 });
@@ -589,7 +584,10 @@ describe('golden-path ROUND-TRIP probes (Paczka1 #3)', () => {
         offTrackCount: 1,
         items: [goodItem],
       });
-      (DbPromise.get as any).mockResolvedValue({ unit_multiplier: 1000, deviation_absolute: -18000 });
+      (DbPromise.get as any).mockResolvedValue({
+        unit_multiplier: 1000,
+        deviation_absolute: -18000,
+      });
 
       const result = await runProbe(probe, CTX);
 
@@ -617,7 +615,9 @@ describe('golden-path ROUND-TRIP probes (Paczka1 #3)', () => {
         reconciledCount: 1,
         offTrackCount: 0,
         // Realized left in raw % (72) while projected is on the finance basis.
-        items: [{ ...goodItem, kpiId: 'kpi-recon-2', realizedValue: 72, deviationAbsolute: -89928 }],
+        items: [
+          { ...goodItem, kpiId: 'kpi-recon-2', realizedValue: 72, deviationAbsolute: -89928 },
+        ],
       });
 
       const result = await runProbe(probe, CTX);
@@ -653,8 +653,13 @@ describe('runAllProbes', () => {
       kpiId: 'k',
       organizationId: CTX.organizationId,
     });
-    (resultsROIService.recordROIRealization as any).mockResolvedValue({ entryId: 'e', realizedValue: 4242 });
-    (resultsROIService.getROIByInitiative as any).mockResolvedValue([{ entryId: 'e', realizedValue: 4242 }]);
+    (resultsROIService.recordROIRealization as any).mockResolvedValue({
+      entryId: 'e',
+      realizedValue: 4242,
+    });
+    (resultsROIService.getROIByInitiative as any).mockResolvedValue([
+      { entryId: 'e', realizedValue: 4242 },
+    ]);
     (getAuditLogger as any).mockReturnValue({ log: vi.fn().mockResolvedValue(undefined) });
 
     const results = await runAllProbes(CTX);
