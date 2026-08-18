@@ -29,7 +29,7 @@ interface Stage {
 }
 
 const STATUS_STYLE: Record<Stage['status'], string> = {
-  not_started: 'bg-gray-100 text-gray-500 border-gray-200',
+  not_started: 'bg-c-surface-raised text-c-text-muted border-c-border-subtle',
   active: 'bg-blue-100 text-blue-700 border-blue-200',
   gated: 'bg-amber-100 text-amber-700 border-amber-200',
   done: 'bg-emerald-100 text-emerald-700 border-emerald-200',
@@ -105,12 +105,12 @@ export const RolloutStagesPanel: React.FC<Props> = ({ projectId }) => {
 
   return (
     <section
-      className="rounded-xl border border-gray-200 bg-white p-4"
+      className="rounded-xl border border-c-border-subtle bg-c-surface p-4"
       data-testid="rollout-stages-panel"
     >
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-900">Fale wdrożenia (rollout stages)</h3>
-        <span className="text-xs text-gray-400">{stages.length}/5 fal</span>
+        <h3 className="text-sm font-semibold text-c-text">Fale wdrożenia (rollout stages)</h3>
+        <span className="text-xs text-c-text-muted">{stages.length}/5 fal</span>
       </div>
 
       {failed && (
@@ -118,7 +118,7 @@ export const RolloutStagesPanel: React.FC<Props> = ({ projectId }) => {
           Nie udało się załadować/zmienić fal (sprawdź uprawnienia MANAGE_ROLLOUT).
         </p>
       )}
-      {loading && <p className="text-sm text-gray-400">Ładowanie…</p>}
+      {loading && <p className="text-sm text-c-text-muted">Ładowanie…</p>}
 
       <div className="flex flex-wrap items-stretch gap-2" data-testid="rollout-waves">
         {WAVE_ORDER.map((wave, idx) => {
@@ -126,10 +126,10 @@ export const RolloutStagesPanel: React.FC<Props> = ({ projectId }) => {
           return (
             <div
               key={wave}
-              className="flex min-w-[8.5rem] flex-1 flex-col gap-1 rounded-lg border border-gray-100 p-2"
+              className="flex min-w-[8.5rem] flex-1 flex-col gap-1 rounded-lg border border-c-border-subtle p-2"
             >
-              <div className="flex items-center gap-1 text-xs font-medium text-gray-500">
-                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-gray-100 text-[10px]">
+              <div className="flex items-center gap-1 text-xs font-medium text-c-text-muted">
+                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-c-surface-raised text-[10px]">
                   {idx + 1}
                 </span>
                 {WAVE_LABEL[wave]}
@@ -157,7 +157,7 @@ export const RolloutStagesPanel: React.FC<Props> = ({ projectId }) => {
                   type="button"
                   disabled={busy === wave}
                   onClick={() => void createWave(wave)}
-                  className="mt-1 rounded-md border border-gray-200 px-2 py-0.5 text-[11px] font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                  className="mt-1 rounded-md border border-c-border-subtle px-2 py-0.5 text-[11px] font-medium text-c-text-muted hover:bg-c-surface-raised disabled:opacity-50"
                 >
                   {busy === wave ? '…' : '+ utwórz'}
                 </button>

@@ -36,7 +36,7 @@ const STATUS_STYLE: Record<string, string> = {
 };
 
 const statusStyle = (status: string): string =>
-  STATUS_STYLE[status] || 'bg-gray-100 text-gray-500 border-gray-200';
+  STATUS_STYLE[status] || 'bg-c-surface-raised text-c-text-muted border-c-border-subtle';
 
 const fmtVal = (v: number | null): string => (v === null || v === undefined ? '—' : String(v));
 
@@ -94,13 +94,13 @@ export const BenefitsRegisterPanel: React.FC<Props> = ({ initiativeId }) => {
 
   return (
     <section
-      className="rounded-xl border border-gray-200 bg-white p-4"
+      className="rounded-xl border border-c-border-subtle bg-c-surface p-4"
       data-testid="benefits-panel"
     >
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-900">Rejestr korzyści (handoff M14→M15)</h3>
+        <h3 className="text-sm font-semibold text-c-text">Rejestr korzyści (handoff M14→M15)</h3>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-400">{benefits.length}</span>
+          <span className="text-xs text-c-text-muted">{benefits.length}</span>
           <button
             type="button"
             data-testid="benefits-add-btn"
@@ -118,18 +118,21 @@ export const BenefitsRegisterPanel: React.FC<Props> = ({ initiativeId }) => {
           Nie udało się załadować/zmienić rejestru korzyści (sprawdź uprawnienia MANAGE_ROLLOUT).
         </p>
       )}
-      {loading && <p className="text-sm text-gray-400">Ładowanie…</p>}
+      {loading && <p className="text-sm text-c-text-muted">Ładowanie…</p>}
 
       {!loading && benefits.length === 0 ? (
-        <p className="text-sm text-gray-400" data-testid="benefits-list">
+        <p className="text-sm text-c-text-muted" data-testid="benefits-list">
           Brak zarejestrowanych korzyści — dodaj pierwszą (handoff do Rezultatów/M15).
         </p>
       ) : (
         <ul className="flex flex-col gap-2" data-testid="benefits-list">
           {benefits.map((b) => (
-            <li key={b.id} className="flex flex-col gap-1 rounded-lg border border-gray-100 p-2">
+            <li
+              key={b.id}
+              className="flex flex-col gap-1 rounded-lg border border-c-border-subtle p-2"
+            >
               <div className="flex items-center justify-between gap-2">
-                <span className="text-sm font-medium text-gray-900">{b.kpi_name || b.name}</span>
+                <span className="text-sm font-medium text-c-text">{b.kpi_name || b.name}</span>
                 <div className="flex items-center gap-1">
                   {b.source === HANDOFF_SOURCE && (
                     <span className="inline-block rounded-full border border-violet-200 bg-violet-100 px-2 py-0.5 text-[10px] font-medium text-violet-700">
@@ -143,7 +146,7 @@ export const BenefitsRegisterPanel: React.FC<Props> = ({ initiativeId }) => {
                   </span>
                 </div>
               </div>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-gray-500">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-c-text-muted">
                 <span>owner: {b.owner_id || '—'}</span>
                 <span>
                   {fmtVal(b.baseline_value)} → {fmtVal(b.target_value)}

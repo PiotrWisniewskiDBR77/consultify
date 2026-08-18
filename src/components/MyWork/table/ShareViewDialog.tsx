@@ -62,7 +62,6 @@ export const ShareViewDialog: React.FC<ShareViewDialogProps> = ({
     setTimeout(() => setCopied(false), 2000);
   }, [shareUrl]);
 
-
   return (
     <div
       className="fixed inset-0 z-context-menu flex items-center justify-center bg-black/20 backdrop-blur-[2px]"
@@ -74,7 +73,7 @@ export const ShareViewDialog: React.FC<ShareViewDialogProps> = ({
         aria-modal="true"
         aria-labelledby="share-view-dialog-title"
         tabIndex={-1}
-        className="w-[440px] bg-c-surface rounded-2xl border border-slate-200/60 dark:border-white/[0.03] shadow-2xl p-6 outline-none"
+        className="w-[440px] max-w-[calc(100vw-2rem)] bg-c-surface rounded-2xl border border-slate-200/60 dark:border-white/[0.03] shadow-2xl p-6 outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

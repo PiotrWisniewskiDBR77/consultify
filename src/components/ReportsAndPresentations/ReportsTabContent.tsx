@@ -11,6 +11,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { EmptyState } from '@/components/shared/states';
 import {
   StandardPreview,
   type StandardPreviewActions,
@@ -399,21 +400,26 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
   }
 
   if (error && reports.length === 0 && !searchQuery && activeFilters.length === 0) {
+    // Canonical failed-load state — shared `EmptyState variant="error"` owns the
+    // icon, the assertive live region and the "Try again" affordance
+    // (docs/ui-standards/02-components/empty-loading-states.md §2). The former
+    // bespoke amber card had no retry control at all despite its own copy
+    // telling the user to retry. Message + operator hint are preserved verbatim.
     return (
-      <div className="flex items-center justify-center h-full p-6">
-        <div className="w-full max-w-3xl rounded-2xl border border-amber-200/70 dark:border-amber-400/20 bg-amber-50/80 dark:bg-amber-500/10 p-6">
-          <div className="text-lg font-semibold text-c-text">
-            {t('rap.errors.realReportsTitle', 'Real reports source needs attention')}
-          </div>
-          <div className="mt-2 text-sm text-c-text-secondary">{error}</div>
-          <div className="mt-4 text-xs uppercase tracking-wide text-c-text-muted">
-            {t(
-              'rap.errors.realSourceHint',
-              'No synthetic demo fallback was injected. Verify active DB, organization scope, and data-context before retrying.'
-            )}
-          </div>
-        </div>
-      </div>
+      <EmptyState
+        variant="error"
+        title={t('rap.errors.realReportsTitle', 'Real reports source needs attention')}
+        description={[
+          error,
+          t(
+            'rap.errors.realSourceHint',
+            'No synthetic demo fallback was injected. Verify active DB, organization scope, and data-context before retrying.'
+          ),
+        ]
+          .filter(Boolean)
+          .join(' ')}
+        onRetry={onRefresh}
+      />
     );
   }
 

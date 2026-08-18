@@ -19,9 +19,9 @@ import {
   ExternalLink,
   Filter,
   GitBranch,
+  Inbox,
   Lightbulb,
   List,
-  Inbox,
   Plus,
   Shield,
   Sparkles,
@@ -86,7 +86,13 @@ import { InitiativeGridCard } from '../Portfolio/InitiativeGridCard';
 // Portfolio view components
 import { type KanbanScope, PortfolioKanbanView } from '../Portfolio/PortfolioKanbanView';
 // ModuleHub components
-import { FilterChip, ModuleTab, OpenDocument, ViewMode } from '../shared/ModuleHub';
+import {
+  FilterChip,
+  HubWorkAreaLoadError,
+  ModuleTab,
+  OpenDocument,
+  ViewMode,
+} from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import {
   MENU_3_ACTION_DANGER,
@@ -1578,35 +1584,25 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     }
 
     if (loadError) {
+      // The bespoke card that used to live here was painted in a dark-only
+      // danger palette (`text-danger-300/200/100`, `bg-danger-900/10`) with no
+      // light variants, so in the LIGHT theme the message and the retry button
+      // were effectively invisible — the recovery affordance disappeared exactly
+      // when the user needed it. `HubWorkAreaLoadError` is the same card with
+      // the measured, token-based palette (see its header comment) and is
+      // already the pattern used by Results/Execution.
       return (
-        <div className="flex items-center justify-center h-full px-6">
-          <div
-            className="max-w-xl w-full p-5 rounded-2xl border border-danger-500/20 bg-danger-900/10"
-            role="alert"
-          >
-            <div className="text-sm font-semibold text-danger-300">
-              {t('initiatives.hub.failedToLoad')}
-            </div>
-            <div className="text-sm text-danger-200/80 mt-1">{loadError}</div>
-            {loadErrorCode ? (
-              <p className="mt-1 text-xs text-danger-200/70 font-mono">code: {loadErrorCode}</p>
-            ) : null}
-            <div className="mt-4 flex gap-2">
-              <button
-                onClick={() => fetchData(true)}
-                className="h-9 rounded-lg border border-danger-400/40 px-3 text-sm text-danger-100 hover:bg-danger-500/20"
-              >
-                {t('initiatives.hub.retry')}
-              </button>
-              <button
-                onClick={() => setLoadError(null)}
-                className="h-9 rounded-lg border border-c-border-subtle px-3 text-sm text-c-text-secondary hover:bg-c-surface-raised"
-              >
-                {t('initiatives.hub.dismiss')}
-              </button>
-            </div>
-          </div>
-        </div>
+        <HubWorkAreaLoadError
+          title={t('initiatives.hub.failedToLoad')}
+          message={loadError}
+          errorCode={loadErrorCode}
+          retryLabel={t('initiatives.hub.retry')}
+          dismissLabel={t('initiatives.hub.dismiss')}
+          onRetry={() => {
+            void fetchData(true);
+          }}
+          onDismiss={() => setLoadError(null)}
+        />
       );
     }
 

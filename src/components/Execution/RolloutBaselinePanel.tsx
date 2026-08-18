@@ -98,11 +98,11 @@ export const RolloutBaselinePanel: React.FC<Props> = ({ projectId }) => {
 
   return (
     <section
-      className="rounded-xl border border-gray-200 bg-white p-4"
+      className="rounded-xl border border-c-border-subtle bg-c-surface p-4"
       data-testid="baseline-panel"
     >
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-900">Baseline planu (rebaseline)</h3>
+        <h3 className="text-sm font-semibold text-c-text">Baseline planu (rebaseline)</h3>
         <button
           type="button"
           disabled={busy}
@@ -122,19 +122,22 @@ export const RolloutBaselinePanel: React.FC<Props> = ({ projectId }) => {
           Nie udało się załadować/zapisać baseline'ów (sprawdź uprawnienia).
         </p>
       )}
-      {loading && <p className="text-sm text-gray-400">Ładowanie…</p>}
+      {loading && <p className="text-sm text-c-text-muted">Ładowanie…</p>}
 
       {!loading && baselines.length === 0 ? (
-        <p className="text-sm text-gray-400">Brak zapisanych baseline'ów — zapisz pierwszy.</p>
+        <p className="text-sm text-c-text-muted">Brak zapisanych baseline'ów — zapisz pierwszy.</p>
       ) : (
         <ul className="flex flex-col gap-2" data-testid="baseline-list">
           {baselines.map((b) => (
-            <li key={b.id} className="flex flex-col gap-0.5 rounded-lg border border-gray-100 p-2">
+            <li
+              key={b.id}
+              className="flex flex-col gap-0.5 rounded-lg border border-c-border-subtle p-2"
+            >
               <div className="flex items-center justify-between gap-2">
-                <span className="text-sm font-medium text-gray-900">{b.label || 'Baseline'}</span>
-                <span className="shrink-0 text-xs text-gray-400">{baselineDate(b)}</span>
+                <span className="text-sm font-medium text-c-text">{b.label || 'Baseline'}</span>
+                <span className="shrink-0 text-xs text-c-text-muted">{baselineDate(b)}</span>
               </div>
-              {b.reason && <span className="text-xs text-gray-500">{b.reason}</span>}
+              {b.reason && <span className="text-xs text-c-text-muted">{b.reason}</span>}
             </li>
           ))}
         </ul>

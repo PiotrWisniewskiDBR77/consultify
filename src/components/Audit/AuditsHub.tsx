@@ -51,6 +51,7 @@ import {
   MENU_3_RIGHT_CLASS,
   Menu3Chip,
 } from '@/components/shared/ModuleMenu3';
+import { EmptyState } from '@/components/shared/states';
 import {
   StandardPreview,
   type StandardPreviewActions,
@@ -148,6 +149,10 @@ export const AuditsHub: React.FC = () => {
   const [drdLoading, setDrdLoading] = useState(false);
   const [drdError, setDrdError] = useState<string | null>(null);
   const [selectedDrdReportId, setSelectedDrdReportId] = useState<string | null>(null);
+  // The DRD list is fetched inside an effect, so there was no callback the
+  // error banner could retry with — unlike the Programs tab below, which has
+  // had a Retry button all along. Bumping this nonce re-runs the effect.
+  const [drdReloadNonce, setDrdReloadNonce] = useState(0);
 
   // Lazy-load the DRD report list only once the tab is actually opened.
   useEffect(() => {
@@ -170,7 +175,7 @@ export const AuditsHub: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [drdReportFlagOn, activeTab, t]);
+  }, [drdReportFlagOn, activeTab, drdReloadNonce, t]);
 
   // Load the first page (resets the list). Used on mount, after mutations, and
   // whenever the server-side search/status filter changes.
@@ -808,12 +813,20 @@ export const AuditsHub: React.FC = () => {
         <div className="mx-auto max-w-6xl px-6 py-6">
           {activeTab === 'drd-reports' ? (
             <>
+              {/* Canonical failed-load state (docs/ui-standards/02-components/
+                  empty-loading-states.md §2): the shared `EmptyState` with
+                  `variant="error"` owns the icon, the assertive live region and
+                  the "Try again" affordance. This tab previously showed the
+                  message with no way to retry at all. */}
               {drdError && (
-                <div className="mb-4 flex items-start gap-3 rounded-xl border border-danger-200 bg-danger-50 p-4 dark:border-danger-500/20 dark:bg-danger-500/10">
-                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-danger-600 dark:text-danger-400" />
-                  <div className="flex-1">
-                    <p className="text-sm text-danger-800 dark:text-danger-300">{drdError}</p>
-                  </div>
+                <div className="mb-4" data-testid="drd-reports-error">
+                  <EmptyState
+                    variant="error"
+                    compact
+                    title={t('audit.drdReports.loadFailed', 'Could not load DRD reports')}
+                    description={drdError}
+                    onRetry={() => setDrdReloadNonce((n) => n + 1)}
+                  />
                 </div>
               )}
               {drdLoading ? (

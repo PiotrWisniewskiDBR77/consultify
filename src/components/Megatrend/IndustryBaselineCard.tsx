@@ -9,6 +9,8 @@ import { ArrowRight, Globe, Sparkles } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { EmptyState } from '@/components/shared/states';
+
 import { MegatrendDetail } from './TrendDetailCard';
 
 interface IndustryBaselineCardProps {
@@ -16,6 +18,8 @@ interface IndustryBaselineCardProps {
   megatrends: MegatrendDetail[];
   loading?: boolean;
   error?: string | null;
+  /** Refetch handler — renders a "Try again" button on the error state. */
+  onRetry?: () => void;
   onTrendSelect: (trendId: string) => void;
 }
 
@@ -24,6 +28,7 @@ export const IndustryBaselineCard: React.FC<IndustryBaselineCardProps> = ({
   megatrends,
   loading,
   error,
+  onRetry,
   onTrendSelect,
 }) => {
   const { t } = useTranslation();
@@ -54,17 +59,20 @@ export const IndustryBaselineCard: React.FC<IndustryBaselineCardProps> = ({
         </div>
       )}
 
+      {/* A failed fetch used to reuse the EMPTY-state copy ("not yet configured
+          — contact your admin"), which reports a transient network failure as a
+          permanent configuration gap and offers no way out. A failure is a
+          failure: say so, and offer the retry. */}
       {error && (
-        <div className="rounded-2xl border border-dashed border-c-border-subtle dark:border-white/[0.08] bg-c-surface-raised dark:bg-c-surface/[0.04] p-8 text-center">
-          <Globe className="mx-auto mb-3 text-c-text-secondary" size={28} strokeWidth={1.5} />
-          <p className="text-base font-medium text-c-text-secondary">
-            {t('tools.megatrends.notAvailable', 'Megatrends data is not yet configured')}
-          </p>
-          <p className="mt-2 text-sm text-c-text-muted">{error}</p>
-          <p className="mt-3 text-sm text-c-text-muted">
-            {t('tools.megatrends.contactAdmin', 'Contact your admin')}
-          </p>
-        </div>
+        <EmptyState
+          variant="error"
+          title={t('tools.megatrends.loadFailed', 'Could not load megatrends')}
+          description={t(
+            'tools.megatrends.loadFailedDesc',
+            'The megatrend baseline for this industry could not be fetched.'
+          )}
+          onRetry={onRetry}
+        />
       )}
 
       {isEmpty && (

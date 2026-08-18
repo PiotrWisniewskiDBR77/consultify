@@ -8,9 +8,7 @@
 import { expect, Page, test } from '@playwright/test';
 
 async function dismissTourModal(page: Page) {
-  const skipTour = page
-    .getByRole('button', { name: /Skip tour|Skip for now|Pomiń/i })
-    .first();
+  const skipTour = page.getByRole('button', { name: /Skip tour|Skip for now|Pomiń/i }).first();
   const consultantCard = page.getByRole('button', { name: /Consultant|Konsultant/i }).first();
   const welcomeTitle = page.getByText(/Welcome to Consultinity|Witamy w Consultinity/i);
 
@@ -49,10 +47,7 @@ test.describe('L4 Smoke — sidebar navigation [@module:navigation]', () => {
   });
 
   function navItem(page: Page, name: RegExp) {
-    return page
-      .getByRole('button', { name })
-      .or(page.getByRole('link', { name }))
-      .first();
+    return page.getByRole('button', { name }).or(page.getByRole('link', { name })).first();
   }
 
   test('sidebar shows key items', async ({ page }) => {
@@ -65,7 +60,7 @@ test.describe('L4 Smoke — sidebar navigation [@module:navigation]', () => {
       /Execution/i,
       /Results|Benefits/i,
       /Finance|Economics/i,
-      /Outputs|Reports/i,
+      /Materials|Materiały/i,
       /Settings/i,
     ];
 
@@ -109,15 +104,15 @@ test.describe('L4 Smoke — sidebar navigation [@module:navigation]', () => {
     await expectNoRouteError(page);
   });
 
-  test('navigates to Initiatives (portfolio)', async ({ page }) => {
+  test('navigates to Initiatives (/initiatives)', async ({ page }) => {
     await navItem(page, /Initiatives/i).click();
-    await expect(page).toHaveURL(/\/portfolio/);
+    await expect(page).toHaveURL(/\/initiatives/);
     await expectNoRouteError(page);
   });
 
-  test('navigates to Execution (implementation)', async ({ page }) => {
+  test('navigates to Execution (/execution)', async ({ page }) => {
     await navItem(page, /Execution/i).click();
-    await expect(page).toHaveURL(/\/implementation/);
+    await expect(page).toHaveURL(/\/execution/);
     await expectNoRouteError(page);
   });
 

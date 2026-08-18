@@ -151,6 +151,9 @@ export const MegatrendsWorkspace: React.FC<MegatrendsWorkspaceProps> = ({
             megatrends={megatrends}
             loading={loading}
             error={error}
+            onRetry={() => {
+              void fetchMegatrends(industry);
+            }}
             onTrendSelect={handleTrendSelect}
           />
         )}
@@ -160,6 +163,9 @@ export const MegatrendsWorkspace: React.FC<MegatrendsWorkspaceProps> = ({
               data={radarData}
               loading={loading}
               error={error}
+              onRetry={() => {
+                void fetchMegatrends(industry);
+              }}
               onTrendSelect={handleTrendSelect}
             />
           </div>

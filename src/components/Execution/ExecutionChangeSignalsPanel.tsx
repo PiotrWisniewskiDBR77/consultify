@@ -296,7 +296,7 @@ export const ExecutionChangeSignalsPanel: React.FC<Props> = ({ fetchers }) => {
     <div className="grid grid-cols-1 gap-3 lg:grid-cols-3" data-testid="change-signals-panel">
       {/* Capacity signals */}
       <div
-        className="rounded-xl border border-c-border-subtle bg-white p-4"
+        className="rounded-xl border border-c-border-subtle bg-c-surface p-4"
         data-testid="capacity-signals-card"
       >
         <div className="mb-3 flex items-center justify-between">
@@ -354,7 +354,7 @@ export const ExecutionChangeSignalsPanel: React.FC<Props> = ({ fetchers }) => {
 
       {/* People-change readiness (ADKAR) */}
       <div
-        className="rounded-xl border border-c-border-subtle bg-white p-4"
+        className="rounded-xl border border-c-border-subtle bg-c-surface p-4"
         data-testid="readiness-card"
       >
         <div className="mb-3 flex items-center justify-between">
@@ -418,7 +418,7 @@ export const ExecutionChangeSignalsPanel: React.FC<Props> = ({ fetchers }) => {
 
       {/* Change champions coalition */}
       <div
-        className="rounded-xl border border-c-border-subtle bg-white p-4"
+        className="rounded-xl border border-c-border-subtle bg-c-surface p-4"
         data-testid="champions-card"
       >
         <div className="mb-3 flex items-center justify-between">

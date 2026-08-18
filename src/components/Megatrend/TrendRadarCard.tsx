@@ -13,6 +13,9 @@
 // ---------------------------------------------------------------
 
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { EmptyState } from '@/components/shared/states';
 
 import { RadarChart } from '../RadarChart';
 
@@ -45,6 +48,8 @@ interface TrendRadarCardProps {
   onTrendSelect?: (trendId: string) => void;
   loading?: boolean;
   error?: string | null;
+  /** Refetch handler — renders a "Try again" button on the error state. */
+  onRetry?: () => void;
 }
 
 export const TrendRadarCard: React.FC<TrendRadarCardProps> = ({
@@ -52,7 +57,9 @@ export const TrendRadarCard: React.FC<TrendRadarCardProps> = ({
   onTrendSelect,
   loading,
   error,
+  onRetry,
 }) => {
+  const { t } = useTranslation();
   const [tooltip, setTooltip] = useState<{ x: number; y: number; text: string } | null>(null);
 
   // Responsive size - based on container width (max 500 px)
@@ -134,7 +141,19 @@ export const TrendRadarCard: React.FC<TrendRadarCardProps> = ({
           <span>Loading radar data…</span>
         </div>
       )}
-      {error && <p className="text-danger-600 dark:text-danger-400">Error: {error}</p>}
+      {/* Was a bare, untranslated `Error: {error}` line with no recovery. */}
+      {error && (
+        <EmptyState
+          variant="error"
+          compact
+          title={t('tools.megatrends.radarLoadFailed', 'Could not load the trend radar')}
+          description={t(
+            'tools.megatrends.loadFailedDesc',
+            'The megatrend baseline for this industry could not be fetched.'
+          )}
+          onRetry={onRetry}
+        />
+      )}
 
       <div className="relative mx-auto" style={{ width: size, height: size }}>
         {/* Base radar grid – dummy max values just to draw the web */}

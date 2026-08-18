@@ -31,7 +31,7 @@ interface Runbook {
 }
 
 const RUNBOOK_STATUS_STYLE: Record<RunbookStatus, string> = {
-  planned: 'bg-gray-100 text-gray-500 border-gray-200',
+  planned: 'bg-c-surface-raised text-c-text-muted border-c-border-subtle',
   in_progress: 'bg-blue-100 text-blue-700 border-blue-200',
   completed: 'bg-emerald-100 text-emerald-700 border-emerald-200',
   aborted: 'bg-red-100 text-red-700 border-red-200',
@@ -45,7 +45,7 @@ const RUNBOOK_STATUS_LABEL: Record<RunbookStatus, string> = {
 };
 
 const STEP_STATUS_STYLE: Record<StepStatus, string> = {
-  pending: 'bg-gray-100 text-gray-500 border-gray-200',
+  pending: 'bg-c-surface-raised text-c-text-muted border-c-border-subtle',
   in_progress: 'bg-blue-100 text-blue-700 border-blue-200',
   done: 'bg-emerald-100 text-emerald-700 border-emerald-200',
   skipped: 'bg-amber-100 text-amber-700 border-amber-200',
@@ -134,10 +134,13 @@ export const CutoverRunbookPanel: React.FC<Props> = ({ initiativeId }) => {
   const steps = runbook?.steps ?? [];
 
   return (
-    <section className="rounded-xl border border-gray-200 bg-white p-4" data-testid="cutover-panel">
+    <section
+      className="rounded-xl border border-c-border-subtle bg-c-surface p-4"
+      data-testid="cutover-panel"
+    >
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-900">Cutover runbook + rollback</h3>
-        {runbook && <span className="text-xs text-gray-400">{steps.length} kroków</span>}
+        <h3 className="text-sm font-semibold text-c-text">Cutover runbook + rollback</h3>
+        {runbook && <span className="text-xs text-c-text-muted">{steps.length} kroków</span>}
       </div>
 
       {failed && (
@@ -145,10 +148,12 @@ export const CutoverRunbookPanel: React.FC<Props> = ({ initiativeId }) => {
           Nie udało się załadować/zmienić runbooka (sprawdź uprawnienia MANAGE_ROLLOUT).
         </p>
       )}
-      {loading && <p className="text-sm text-gray-400">Ładowanie…</p>}
+      {loading && <p className="text-sm text-c-text-muted">Ładowanie…</p>}
 
       {!initiativeId ? (
-        <p className="text-sm text-gray-400">Wybierz inicjatywę, aby zobaczyć runbook cutover.</p>
+        <p className="text-sm text-c-text-muted">
+          Wybierz inicjatywę, aby zobaczyć runbook cutover.
+        </p>
       ) : !runbook ? (
         !loading && (
           <button
@@ -169,22 +174,22 @@ export const CutoverRunbookPanel: React.FC<Props> = ({ initiativeId }) => {
             >
               {RUNBOOK_STATUS_LABEL[runbook.status]}
             </span>
-            <span className="truncate text-xs text-gray-500">{runbook.name}</span>
+            <span className="truncate text-xs text-c-text-muted">{runbook.name}</span>
           </div>
 
           <ul className="mb-3 flex flex-col gap-1" data-testid="cutover-steps">
             {steps.length === 0 ? (
-              <li className="text-sm text-gray-400">Brak kroków — dodaj pierwszy.</li>
+              <li className="text-sm text-c-text-muted">Brak kroków — dodaj pierwszy.</li>
             ) : (
               steps.map((step) => (
                 <li
                   key={step.id}
-                  className="flex items-center gap-2 rounded-lg border border-gray-100 px-2 py-1"
+                  className="flex items-center gap-2 rounded-lg border border-c-border-subtle px-2 py-1"
                 >
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gray-100 text-[10px] font-medium text-gray-500">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-c-surface-raised text-[10px] font-medium text-c-text-muted">
                     {step.sequence}
                   </span>
-                  <span className="flex-1 truncate text-xs font-medium text-gray-800">
+                  <span className="flex-1 truncate text-xs font-medium text-c-text">
                     {step.title}
                   </span>
                   {step.isRollback && (
@@ -208,7 +213,7 @@ export const CutoverRunbookPanel: React.FC<Props> = ({ initiativeId }) => {
               data-testid="cutover-addstep-btn"
               disabled={busy === 'step'}
               onClick={() => void addStep(false)}
-              className="rounded-md border border-gray-200 px-2 py-0.5 text-[11px] font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+              className="rounded-md border border-c-border-subtle px-2 py-0.5 text-[11px] font-medium text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-50"
             >
               {busy === 'step' ? '…' : '+ Dodaj krok'}
             </button>
