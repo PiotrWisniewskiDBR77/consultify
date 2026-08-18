@@ -69,6 +69,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { dedupeInitiativeUsersById } from './initiativeUsers';
+
 import { PresentMode } from '@/components/Presentations/DeckBuilder/PresentMode';
 import type { CardBlock, DeckCard } from '@/components/Presentations/wizard/types';
 import { Callout, EmbeddedView, EmptyStateInline } from '@/components/shared/NModeBlocks';
@@ -2558,7 +2560,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         setTasks(showcaseDetail.tasks || []);
         setDependencies(showcaseDetail.dependencies || []);
         setStakeholders(showcaseDetail.stakeholders || []);
-        setUsers(initiativesDemoData.users || []);
+        setUsers(dedupeInitiativeUsersById(initiativesDemoData.users || []));
         setPendingApprovals(showcaseDetail.pendingApprovals || []);
         setComments(showcaseDetail.comments || []);
         setGateRoles(showcaseDetail.gateRoles || []);
@@ -2696,7 +2698,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           })
           .catch(() => setStakeholders([])),
         Api.get('/users')
-          .then((u: any) => setUsers(Array.isArray(u) ? u : u?.users || []))
+          .then((u: any) =>
+            setUsers(dedupeInitiativeUsersById(Array.isArray(u) ? u : u?.users || []))
+          )
           .catch(() => setUsers([])),
         Api.get(
           `/decisions?relatedObjectId=${initiativeId}&relatedObjectType=initiative&type=GATE_APPROVAL`
