@@ -1,22 +1,101 @@
 {
   "taskId": "MTG-POL-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "c8ffd7be0e9b848932064b70a5c8271a9da45f1e",
+  "historicalProductSha": "c8ffd7be0e9b848932064b70a5c8271a9da45f1e",
+  "productSha": "061b47c8fe3a182b3efd8f49e54404557386298d",
+  "technicalSourceSha": "061b47c8fe3a182b3efd8f49e54404557386298d",
+  "reconciliationSha": "061b47c8fe3a182b3efd8f49e54404557386298d",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
-  "ownerDecision": {"recordId": "INTERNAL-BETA-OWNER-DECISIONS-20260817-AMENDMENT-01", "decisionId": "AMD-MTG-APPROVED-OUT-001", "status": "APPROVED_OUT"},
+  "ownerDecision": {
+    "recordId": "INTERNAL-BETA-OWNER-DECISIONS-20260817-AMENDMENT-01",
+    "decisionId": "AMD-MTG-APPROVED-OUT-001",
+    "status": "APPROVED_OUT"
+  },
   "amendmentSha": "617b5d29c229e6c073452a17c8da1888ce18aa8d59a5913fa0d9aa59b2272702",
   "reopenWhen": "Recording or transcription is proposed with consent, retention, legal-hold, regional and processor evidence.",
   "evidenceInvalidation": "Invalidate on any meeting recording, transcript, media-upload, persistence or provider activation path.",
-  "changedPaths": [],
-  "changedPathRationale": {},
-  "ownerTables": [],
-  "commands": [{"command": "node scripts/cleanup/verify-closure-plan.mjs", "exitCode": 0}],
-  "denominators": {"policyDecisionsRequired": 1, "policyDecisionsApproved": 1, "recordingOrTranscriptActivationTests": "0/1"},
-  "fixtures": {},
-  "negativeControls": {"recording": "OFF by default", "transcription": "OFF without consent and provider approval"},
+  "changedPaths": [
+    "server/src/routes/meeting.routes.ts",
+    "src/components/Meeting/MeetingHub.tsx",
+    "src/components/Meeting/__tests__/MeetingHub.smoke.test.tsx",
+    "src/services/api.ts",
+    "tests/integration/routes/meeting.m12-golden-flows.postgres.integration.test.ts",
+    "tests/unit/meeting/meetingCaptureDefaultOff.contract.test.ts"
+  ],
+  "changedPathRationale": {
+    "server/src/routes/meeting.routes.ts": "Defines an environment-independent default-OFF policy and rejects every field outside the manual transcript, language and idempotency contract before downstream work.",
+    "src/components/Meeting/MeetingHub.tsx": "Marks the live Meeting note surface as manual-text-only while retaining the explicit recording and automatic-transcription OFF disclosure.",
+    "src/components/Meeting/__tests__/MeetingHub.smoke.test.tsx": "Proves that the mounted UI exposes the OFF disclosure and no recording or transcription control.",
+    "src/services/api.ts": "Removes the obsolete persist option from the canonical Meeting note client contract.",
+    "tests/integration/routes/meeting.m12-golden-flows.postgres.integration.test.ts": "Proves manual-text success plus capture, provider and persistence rejection before note, proposal or receipt mutation.",
+    "tests/unit/meeting/meetingCaptureDefaultOff.contract.test.ts": "Inventories the bounded Meeting UI, API and route surface and proves restart remains default-OFF despite activation-looking environment values."
+  },
+  "ownerTables": [
+    "meetings",
+    "meeting_notes",
+    "meeting_follow_ups",
+    "artifact_handoff_proposals",
+    "artifact_handoff_receipts"
+  ],
+  "commands": [
+    {
+      "command": "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:56976/consultify_mtg_pol DB_TYPE=postgres NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false POSTGRES_SKIP_INIT_IN_TEST=1 npm run db:migrate:strict",
+      "exitCode": 0,
+      "result": "fresh applying 763"
+    },
+    {
+      "command": "export DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:56976/consultify_mtg_pol DB_TYPE=postgres NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false POSTGRES_SKIP_INIT_IN_TEST=1; npm run db:migrate:strict > /tmp/mtg-pol-repeat.log; npm run db:migrate:strict -- --dry-run > /tmp/mtg-pol-dry.log",
+      "exitCode": 0,
+      "result": "repeat applying 0; dry pending 0"
+    },
+    {
+      "command": "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:56976/consultify_mtg_pol DB_TYPE=postgres NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false POSTGRES_SKIP_INIT_IN_TEST=1 npm exec vitest -- run tests/integration/routes/meeting.m12-golden-flows.postgres.integration.test.ts --retry=0",
+      "exitCode": 0,
+      "result": "49/49"
+    },
+    {
+      "command": "npm exec vitest -- run server/src/routes/__tests__/meeting.routes.test.ts server/src/services/__tests__/meetingService.test.ts tests/unit/meeting/meetingCaptureDefaultOff.contract.test.ts src/components/Meeting/__tests__/MeetingHub.smoke.test.tsx --retry=0",
+      "exitCode": 0,
+      "result": "40/40"
+    },
+    {
+      "command": "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check; NODE_OPTIONS=--max-old-space-size=8192 npm run typecheck --prefix server; npm run build:backend; NODE_OPTIONS=--max-old-space-size=8192 npm run build; git diff --check",
+      "exitCode": 0,
+      "result": "root and server typechecks, backend and frontend builds, and diff-check passed"
+    }
+  ],
+  "denominators": {
+    "policyDecisionsRequired": 1,
+    "policyDecisionsApproved": 1,
+    "manualTextPositive": "1/1",
+    "captureProviderPersistNegatives": "6/6",
+    "boundedSurfaceInventory": "1/1",
+    "restartEnvironmentNegative": "1/1",
+    "m12RealPostgres": "49/49",
+    "focusedRouteServiceContractHub": "40/40"
+  },
+  "fixtures": {
+    "database": "own disposable pgvector/pgvector:pg16 PostgreSQL database consultify_mtg_pol on 127.0.0.1:56976",
+    "migrationLedger": "763 rows after fresh migration; repeat applying 0; dry pending 0",
+    "cleanup": "meetings, notes, follow-ups, handoff proposals and receipts 0 for the two fixture organizations; advisory locks 0",
+    "container": "consultify-mtg-pol-pg removed with volumes after the run"
+  },
+  "negativeControls": {
+    "recording": "OFF by default and activation-looking fields are rejected before writes",
+    "transcription": "OFF without consent and provider approval; provider and auto-transcription fields are rejected",
+    "persistence": "Direct persist requests are outside the manual-source contract and fail before notes, proposals or receipts",
+    "restart": "Environment values cannot enable recording or transcription after module restart"
+  },
   "browserArtifacts": [],
-  "rollback": {"policy": "recording and transcription remain disabled"},
-  "technicalVerdict": "APPROVED_OUT_DEFAULT_OFF_PROOF_INCOMPLETE",
-  "verdict": "PARTIAL",
-  "openBlockers": ["APPROVED_OUT: recording/transcription remain excluded. Before any stronger completion claim, inventory and test every Meeting recording/transcript path as absent or default-OFF across restart."]
+  "rollback": { "policy": "recording and transcription remain disabled" },
+  "technicalVerdict": "APPROVED_OUT_DEFAULT_OFF_VERIFIED",
+  "verdict": "DONE_CURRENT_SHA",
+  "openBlockers": [],
+  "completionBoundary": "Repository technical policy closure only: the bounded Meeting UI, client and generate-notes route accept manual source text and keep recording/transcription default-OFF. This does not authorize or deploy capture, transcription, media upload or an external provider.",
+  "doesNotAuthorize": [
+    "meeting recording",
+    "automatic transcription",
+    "audio or media upload",
+    "external capture or transcription provider"
+  ]
 }
