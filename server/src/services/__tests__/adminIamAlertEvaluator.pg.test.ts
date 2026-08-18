@@ -82,7 +82,7 @@
  * and SKIPS the whole suite (describe.skipIf) — it makes zero assertions in
  * that case and is not a substitute for actually running it.
  *
- * DATABASE SAFETY HARNESS — six properties this file enforces, independent
+ * DATABASE SAFETY HARNESS — eight properties this file enforces, independent
  * of what any individual `it` proves about the evaluator:
  *
  *  H1. EXPLICIT DISPOSABLE DATABASE GUARD. Gated at module load by two
@@ -124,6 +124,20 @@
  *      operational_alert_delivery_outbox, and this suite's own probe row in
  *      operational_alert_signals — and zero advisory locks are asserted
  *      held by this backend after the explicit unlock.
+ *  H7. PREFLIGHT TRIGGER ASSERTION. Before this suite performs its first
+ *      write, beforeAll asserts — right after the disposable-database guard,
+ *      before any BEGIN or mutation — that exactly ONE non-internal trigger
+ *      exists on operational_alert_signals and that its tgenabled = 'O'. If
+ *      the guard were already disabled (or duplicated, or missing) when the
+ *      suite starts, every append-only assertion made afterwards would be
+ *      worthless; this preflight makes that condition fail loudly, naming
+ *      the actual count and state, instead of going unnoticed.
+ *  H8. PRE-COMMIT (IN-TRANSACTION) RESIDUE ASSERTION. In addition to H6's
+ *      postcommit check, the SAME scoped residue assertion — RESIDUE_TABLES
+ *      plus operational_alert_signals scoped to orgGuardProbe — runs INSIDE
+ *      the cleanup transaction, after the DELETEs and before COMMIT. H6
+ *      proves the COMMIT persisted; H8 proves the DELETEs actually matched.
+ *      Both are needed and they prove different things.
  *
  * Run (now requires two additional opt-in env vars beyond RUN_DB_TESTS,
  * MOCK_DB, DATABASE_URL — see H1 above):
@@ -311,6 +325,28 @@ describe.skipIf(!REAL_PG)('ADM-OPS-ALERT admin IAM queue alert evaluator (real P
     // connections opened from the same DATABASE_URL landed on the same
     // database.
     await assertDisposableDatabase(db);
+
+    // H7 — PREFLIGHT TRIGGER ASSERTION, before any BEGIN or mutation. If the
+    // append-only guard on operational_alert_signals is already disabled (or
+    // duplicated, or absent) when this suite starts, every append-only
+    // assertion this file makes afterwards is worthless — nothing today
+    // would notice that until cleanup. Fail loudly here instead, naming the
+    // actual count and state.
+    const preflightTrigger = await db.query<{ tgname: string; tgenabled: string }>(
+      `SELECT tgname, tgenabled::text AS tgenabled FROM pg_trigger WHERE tgrelid = 'operational_alert_signals'::regclass AND NOT tgisinternal`
+    );
+    expect(
+      preflightTrigger.rows.length,
+      `preflight: expected exactly 1 non-internal trigger on operational_alert_signals before any mutation, found ${preflightTrigger.rows.length} (${
+        preflightTrigger.rows.map((row) => row.tgname).join(', ') || '<none>'
+      })`
+    ).toBe(1);
+    expect(
+      preflightTrigger.rows[0]?.tgenabled,
+      `preflight: trigger ${preflightTrigger.rows[0]?.tgname ?? '<missing>'} on operational_alert_signals must be enabled (tgenabled='O') before any mutation, found tgenabled=${
+        preflightTrigger.rows[0]?.tgenabled ?? '<missing>'
+      }`
+    ).toBe('O');
   });
 
   afterAll(async () => {
@@ -361,6 +397,31 @@ describe.skipIf(!REAL_PG)('ADM-OPS-ALERT admin IAM queue alert evaluator (real P
             })`
           );
         }
+
+        // H8 — pre-COMMIT (in-transaction) residue assertion, on the SAME
+        // retained lockClient, inside this SAME transaction, after the
+        // DELETEs above and before COMMIT. This is an addition alongside
+        // H6's postcommit verification below (retained unchanged), not a
+        // replacement: this proves the DELETEs actually matched every row
+        // this suite wrote; H6 separately proves the COMMIT persisted that.
+        // Both are needed and they prove different things. Same
+        // RESIDUE_TABLES list plus operational_alert_signals scoped to its
+        // probe org.
+        for (const [table, column] of RESIDUE_TABLES) {
+          const inTxnResidue = await lockClient.query<{ count: number }>(
+            `SELECT COUNT(*)::int AS count FROM ${table} WHERE ${column} = ANY($1)`,
+            [ALL_ORGS]
+          );
+          expect(Number(inTxnResidue.rows[0].count), `in-transaction (pre-COMMIT) residue in ${table}`).toBe(0);
+        }
+        const inTxnSignalsResidue = await lockClient.query<{ count: number }>(
+          `SELECT COUNT(*)::int AS count FROM operational_alert_signals WHERE organization_id = $1`,
+          [orgGuardProbe]
+        );
+        expect(
+          Number(inTxnSignalsResidue.rows[0].count),
+          'in-transaction (pre-COMMIT) residue in operational_alert_signals'
+        ).toBe(0);
 
         await lockClient.query('COMMIT');
       } catch (cleanupErr) {
