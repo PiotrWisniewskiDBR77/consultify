@@ -70,7 +70,7 @@ export const normalizeManagementReportProjects = (
       id: String(project?.id || '').trim(),
       name: String(project?.name || '').trim(),
     }))
-    .filter((project) => project.id && project.name);
+    .filter((project: { id: string; name: string }) => project.id && project.name);
 };
 
 export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ className = '' }) => {

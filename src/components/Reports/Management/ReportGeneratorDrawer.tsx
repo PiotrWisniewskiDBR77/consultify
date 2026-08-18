@@ -40,7 +40,7 @@ const normalizeProjects = (response: any): Project[] => {
       id: String(project?.id || '').trim(),
       name: String(project?.name || '').trim(),
     }))
-    .filter((project) => project.id && project.name);
+    .filter((project: Project) => project.id && project.name);
 };
 
 const reportTypeOptions = [
