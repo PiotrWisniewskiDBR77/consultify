@@ -4,7 +4,7 @@ Authority HEAD: `c40a9ba58e28ccc78bdef8d1f61f64db60e088eb`
 
 Branch: `codex/recovery-canonical-20260816`
 
-Lease SHA-256: `6b9eb7aa39e4631cca8c2729885eb48917cb91fb342657018a3f7ccc40070c9d`
+Lease SHA-256: `7f67cda00645473d438b3af721c8c6d6761a8713ca85945f14576e28d9a91a2d`
 
 Counts: 1556 tracked paths; 854 source/docs; 687 Vitest; 14 Playwright/visual.
 
@@ -101,7 +101,7 @@ the lane reserved migration/evidence namespace.
 - `server/src/controllers/superadmin/securityController.ts`
 - `server/src/cron/Scheduler.ts`
 - `server/src/cron/__tests__/adminIamAlertEvaluatorScheduler.test.ts`
-- `server/src/jobs/__tests__/adminIamAlertEvaluationJob.pg.test.ts`
+- `server/src/jobs/__tests__/adminIamAlertEvaluationJob.test.ts`
 - `server/src/jobs/adminIamAlertEvaluationJob.ts`
 - `server/src/middleware/securityHeaders.middleware.ts`
 - `server/src/routes/__tests__/finance-enterprise.routes.auth.test.ts`

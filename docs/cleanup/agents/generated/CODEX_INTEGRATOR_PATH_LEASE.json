@@ -5,7 +5,7 @@
   "lane": "codex",
   "branch": "codex/recovery-canonical-20260816",
   "rule": "Only listed tracked paths may be changed. Shared files require an integrator request. New files must live under an already-listed domain directory or the reserved migration/evidence namespace.",
-  "sha256": "6b9eb7aa39e4631cca8c2729885eb48917cb91fb342657018a3f7ccc40070c9d",
+  "sha256": "7f67cda00645473d438b3af721c8c6d6761a8713ca85945f14576e28d9a91a2d",
   "counts": {
     "all": 1556,
     "source": 854,
@@ -101,7 +101,7 @@
     "server/src/controllers/superadmin/securityController.ts",
     "server/src/cron/Scheduler.ts",
     "server/src/cron/__tests__/adminIamAlertEvaluatorScheduler.test.ts",
-    "server/src/jobs/__tests__/adminIamAlertEvaluationJob.pg.test.ts",
+    "server/src/jobs/__tests__/adminIamAlertEvaluationJob.test.ts",
     "server/src/jobs/adminIamAlertEvaluationJob.ts",
     "server/src/middleware/securityHeaders.middleware.ts",
     "server/src/routes/__tests__/finance-enterprise.routes.auth.test.ts",
@@ -2430,7 +2430,7 @@
   "tests": {
     "vitest": [
       "server/src/cron/__tests__/adminIamAlertEvaluatorScheduler.test.ts",
-      "server/src/jobs/__tests__/adminIamAlertEvaluationJob.pg.test.ts",
+      "server/src/jobs/__tests__/adminIamAlertEvaluationJob.test.ts",
       "server/src/routes/__tests__/finance-enterprise.routes.auth.test.ts",
       "server/src/routes/__tests__/finance-statements.routes.assign.test.ts",
       "server/src/routes/__tests__/finance-statements.routes.f5wiring.test.ts",
