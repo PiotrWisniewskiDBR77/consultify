@@ -39,7 +39,7 @@
  * OOM from proxy allocation). Queries below match on those raw keys, same
  * convention as other DiscoveryTools tests in this repo.
  */
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it } from 'vitest';
 
@@ -148,6 +148,54 @@ describe('SWOTBuildPhase — quadrant inputs are reachable and editable', () => 
     fireEvent.click(trashButton);
 
     expect(screen.queryByDisplayValue('Temp item')).not.toBeInTheDocument();
+  });
+});
+
+describe('SWOTBuildPhase — accepted-signal import is replay-idempotent', () => {
+  beforeEach(() => {
+    resetStore();
+  });
+
+  const addAcceptedSignal = (title: string) =>
+    useToolStore.getState().addSWOTSignal({
+      type: 'ai',
+      sourceLabel: title,
+      content: `${title} evidence`,
+      confidence: 4,
+      tags: ['strengths', 'input-proposal', 'confirmed-for-matrix'],
+      evidenceType: 'observation',
+      state: 'accepted',
+      proposalStatus: 'accepted',
+    });
+
+  it('imports two signals once under StrictMode and a later third signal once', async () => {
+    addAcceptedSignal('First stable strength');
+    addAcceptedSignal('Second stable strength');
+
+    render(
+      <React.StrictMode>
+        <Harness />
+      </React.StrictMode>
+    );
+
+    await waitFor(() => {
+      const data = useToolStore.getState().currentSession?.inputData as any;
+      expect(data.items.map((item: any) => item.text)).toEqual([
+        'First stable strength',
+        'Second stable strength',
+      ]);
+    });
+
+    act(() => addAcceptedSignal('Later stable strength'));
+
+    await waitFor(() => {
+      const data = useToolStore.getState().currentSession?.inputData as any;
+      expect(data.items.map((item: any) => item.text)).toEqual([
+        'First stable strength',
+        'Second stable strength',
+        'Later stable strength',
+      ]);
+    });
   });
 });
 
@@ -265,9 +313,7 @@ describe('SWOTBuildPhase — AI proposal accept is gated (STREAM G1 fix)', () =>
     expect(item.status).not.toBe('accepted');
 
     // An actionable message is shown inline.
-    expect(
-      screen.getByText(/core competency|niche strength/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/core competency|niche strength/i)).toBeInTheDocument();
   });
 
   it('ALLOWS accepting the same claim once a linked signal exists, and stamps evidenceStatus honestly', () => {
@@ -339,7 +385,8 @@ describe('SWOTBuildPhase — Evidence & classification editor (STREAM G1, Delive
     const [strengthsInput] = screen.getAllByPlaceholderText(KEYS.addPointPlaceholder);
     fireEvent.change(strengthsInput, { target: { value: text } });
     fireEvent.keyDown(strengthsInput, { key: 'Enter', code: 'Enter' });
-    const toggle = screen.getByText('discoveryToolsTools.dynamicSwot.buildPhase.swotPoint')
+    const toggle = screen
+      .getByText('discoveryToolsTools.dynamicSwot.buildPhase.swotPoint')
       .closest('div')?.parentElement?.parentElement as HTMLElement;
     const evidenceToggle = within(toggle).getByRole('button', {
       name: /Evidence & classification|Dowód i klasyfikacja/i,
@@ -400,9 +447,7 @@ describe('SWOTBuildPhase — Evidence & classification editor (STREAM G1, Delive
     const roundTripped = JSON.parse(JSON.stringify(before));
 
     const beforeItem = (before as any).items.find((i: any) => i.text === 'Reload-proof item');
-    const afterItem = (roundTripped as any).items.find(
-      (i: any) => i.text === 'Reload-proof item'
-    );
+    const afterItem = (roundTripped as any).items.find((i: any) => i.text === 'Reload-proof item');
     expect(afterItem).toEqual(beforeItem);
     expect(afterItem.evidenceType).toBe('observation');
     expect(afterItem.evidenceSource).toBe('Sales call transcripts');

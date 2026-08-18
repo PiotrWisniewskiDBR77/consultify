@@ -1,11 +1,8 @@
 import { Check, Plus, Trash2, X } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import {
-  evaluateSwotAcceptGate,
-  stampAcceptedSwotItem,
-} from '@/config/swot/swotAcceptGate';
+import { evaluateSwotAcceptGate, stampAcceptedSwotItem } from '@/config/swot/swotAcceptGate';
 import {
   ProposalCardType,
   SWOTData,
@@ -315,6 +312,7 @@ export function SWOTBuildPhase({ session, isPolish, isGeneratingAI = false }: Bu
   const swotData = session.inputData as SWOTData;
   const signals = swotData.signals || [];
   const items = swotData.items || [];
+  const importingSignalIdsRef = useRef(new Set<string>());
   const [replaceTargetByProposalId, setReplaceTargetByProposalId] = useState<
     Record<string, string>
   >({});
@@ -406,11 +404,20 @@ export function SWOTBuildPhase({ session, isPolish, isGeneratingAI = false }: Bu
   };
 
   useEffect(() => {
-    if (items.length > 0) return;
     const acceptedSignals = Object.values(groupedAcceptedSignals).flat();
-    if (acceptedSignals.length === 0) return;
-    importSignalsIntoMatrix(acceptedSignals);
-  }, [items.length, groupedAcceptedSignals]);
+    const storedSignalIds = new Set(items.flatMap((item) => item.linkedSignalIds || []));
+    const signalsToImport = acceptedSignals.filter(
+      (signal) => !storedSignalIds.has(signal.id) && !importingSignalIdsRef.current.has(signal.id)
+    );
+    if (signalsToImport.length === 0) return;
+
+    // Zustand writes synchronously, but React StrictMode replays this effect
+    // with the same pre-write render snapshot. Fence each stable signal id
+    // before the first write so the replay cannot materialize it twice. A
+    // genuinely new signal still has a new id and is imported exactly once.
+    signalsToImport.forEach((signal) => importingSignalIdsRef.current.add(signal.id));
+    importSignalsIntoMatrix(signalsToImport);
+  }, [items, groupedAcceptedSignals]);
 
   // STREAM G1 (2026-08-13): previously this called `updateSWOTItem(...,
   // {status:'accepted', proposalStatus:'accepted'})` directly — bypassing the
