@@ -76,10 +76,26 @@ async function loadLegacyResultsKpis(): Promise<KpiCatalogRuntimeResult> {
     Api.get('/benefits/kpi-mappings'),
   ]);
 
-  const kpisPayload: any = kpisRes.status === 'fulfilled' ? kpisRes.value : null;
-  const mappingsPayload: any = mappingsRes.status === 'fulfilled' ? mappingsRes.value : null;
+  const readGenericApiData = (response: unknown): unknown => {
+    if (!response || typeof response !== 'object') return response;
 
-  const kpis = mapResultsKpis(kpisPayload?.data || [], mappingsPayload?.data || []);
+    // Api.get uses an Axios-compat Proxy whose `data` getter intentionally
+    // returns the whole JSON payload.  The server's real list is still the
+    // target object's own `data` value, so read its descriptor without
+    // triggering the Proxy getter.  Plain Axios-shaped test/caller responses
+    // take the same path.
+    const ownData = Object.getOwnPropertyDescriptor(response, 'data')?.value;
+    return ownData === undefined ? (response as { data?: unknown }).data : ownData;
+  };
+
+  const kpisPayload = kpisRes.status === 'fulfilled' ? readGenericApiData(kpisRes.value) : null;
+  const mappingsPayload =
+    mappingsRes.status === 'fulfilled' ? readGenericApiData(mappingsRes.value) : null;
+
+  const kpis = mapResultsKpis(
+    Array.isArray(kpisPayload) ? kpisPayload : [],
+    Array.isArray(mappingsPayload) ? mappingsPayload : []
+  );
 
   return {
     initiatives: [],

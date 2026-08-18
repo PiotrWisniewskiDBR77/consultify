@@ -48,6 +48,39 @@ describe('Results runtime response truth', () => {
     expect(result.kpis[0]?.name).toBe('Throughput');
   });
 
+  it('accepts an empty V8 catalog when legacy Api.get returns its real Proxy shape', async () => {
+    getKpiCatalog.mockResolvedValue({
+      data: {
+        organizationId: 'org-1',
+        initiatives: [],
+        kpis: [],
+        mappings: [],
+      },
+      meta: { contract: 'results-v8' },
+    });
+
+    const makeGenericApiResponse = (data: unknown) =>
+      new Proxy(
+        { success: true, data },
+        {
+          get(target, prop, receiver) {
+            if (prop === 'data') return target;
+            return Reflect.get(target, prop, receiver);
+          },
+        }
+      );
+    const { Api } = await import('@/services/api');
+    vi.mocked(Api.get)
+      .mockResolvedValueOnce(makeGenericApiResponse([]))
+      .mockResolvedValueOnce(makeGenericApiResponse([]));
+
+    await expect(loadResultsKpis()).resolves.toEqual({
+      initiatives: [],
+      kpis: [],
+      source: 'v8',
+    });
+  });
+
   it('does not request a dashboard without a real initiative scope', async () => {
     await expect(loadResultsDashboard(undefined)).resolves.toBeNull();
     await expect(loadResultsDashboard('   ')).resolves.toBeNull();
