@@ -1205,6 +1205,7 @@ router.get(
           t.tags,
           t.created_at as "createdAt",
           t.updated_at as "updatedAt",
+          CAST(t.updated_at AS TEXT) as "versionToken",
           t.completed_at as "completedAt",
           t.assignee_id as "assigneeId",
           a.first_name as "assigneeFirstName",
@@ -1532,6 +1533,18 @@ router.put(
       return;
     }
 
+    const expectedVersionToken =
+      typeof req.body?.expectedVersionToken === 'string'
+        ? req.body.expectedVersionToken.trim()
+        : '';
+    if (!expectedVersionToken) {
+      res.status(428).json({
+        error: 'expectedVersionToken is required',
+        code: 'TASK_VERSION_REQUIRED',
+      });
+      return;
+    }
+
     const cols = await getTableColumns('tasks');
     const setParts: string[] = [];
     const params: any[] = [];
@@ -1597,10 +1610,14 @@ router.put(
     }
 
     if (cols.has('updated_at')) {
-      // Each queryRun is its own statement/transaction, so CURRENT_TIMESTAMP
-      // advances on PostgreSQL without relying on module-load-time dialect
-      // detection (static ESM imports can run before a test sets DB_TYPE).
-      setParts.push('updated_at = CURRENT_TIMESTAMP');
+      // The token must advance even when two writes land within the database
+      // clock's visible precision. Resolve dialect at request time because ESM
+      // imports can execute before test bootstraps set DB_TYPE.
+      setParts.push(
+        process.env.DB_TYPE === 'postgres'
+          ? "updated_at = GREATEST(clock_timestamp(), updated_at + INTERVAL '1 microsecond')"
+          : "updated_at = strftime('%Y-%m-%d %H:%M:%f', 'now', '+0.001 seconds')"
+      );
     }
 
     if (setParts.length === 0) {
@@ -1629,21 +1646,13 @@ router.put(
       return;
     }
 
-    const expectedVersionToken =
-      typeof req.body?.expectedVersionToken === 'string'
-        ? req.body.expectedVersionToken.trim()
-        : null;
     params.push(id, orgId, ...ownerScopeNoAlias.params);
-    let versionPredicate = '';
-    if (expectedVersionToken) {
-      versionPredicate = ' AND CAST(updated_at AS TEXT) = ?';
-      params.push(expectedVersionToken);
-    }
+    params.push(expectedVersionToken);
     const updateResult = await queryHelpers.queryRun(
-      `UPDATE tasks SET ${setParts.join(', ')} WHERE id = ? AND organization_id = ? AND ${ownerScopeNoAlias.whereSql}${versionPredicate}`,
+      `UPDATE tasks SET ${setParts.join(', ')} WHERE id = ? AND organization_id = ? AND ${ownerScopeNoAlias.whereSql} AND CAST(updated_at AS TEXT) = ?`,
       params
     );
-    if (expectedVersionToken && Number(updateResult?.changes || 0) === 0) {
+    if (Number(updateResult?.changes || 0) === 0) {
       const current = await queryHelpers.queryOne<{ versionToken: string }>(
         `SELECT CAST(updated_at AS TEXT) as "versionToken"
          FROM tasks t

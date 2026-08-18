@@ -1187,7 +1187,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
       if (taskId) {
         const updated = await Api.updatePersonalTask(taskId, {
           ...personalPayload,
-          expectedVersionToken: versionToken,
+          expectedVersionToken: String(versionToken || ''),
         });
         setVersionToken(updated?.versionToken || null);
         if (!silent) toast.success(t('myWork.taskDetail.toastSuccess', 'Task updated'));

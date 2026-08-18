@@ -4602,7 +4602,10 @@ export const Api = {
     return created;
   },
 
-  updatePersonalTask: async (id: string, updates: any): Promise<any> => {
+  updatePersonalTask: async (
+    id: string,
+    updates: Record<string, unknown> & { expectedVersionToken: string }
+  ): Promise<any> => {
     const res = await fetch(`${API_URL}/my-work/personal-tasks/${id}`, {
       method: 'PUT',
       headers: getHeaders(),

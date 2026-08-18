@@ -87,9 +87,20 @@ export const TasksCalendarView: React.FC<TasksCalendarViewProps> = ({
       params.set('source', source);
       params.set('includeDone', 'false');
       params.set('limit', '500');
-      const res = (await Api.get(`/my-work/calendar?${params.toString()}`)) as any;
+      const [res, personalTasks] = await Promise.all([
+        Api.get(`/my-work/calendar?${params.toString()}`) as Promise<any>,
+        Api.getPersonalTasks({ limit: 500 }),
+      ]);
       const list = Array.isArray(res) ? res : res?.tasks || [];
-      setTasks(list || []);
+      const personalTokens = new Map(
+        (personalTasks || []).map((task: any) => [String(task.id), String(task.versionToken || '')])
+      );
+      setTasks(
+        (list || []).map((task: Task) => ({
+          ...task,
+          versionToken: personalTokens.get(String(task.id)) || (task as any).versionToken,
+        }))
+      );
     } catch (e) {
       // eslint-disable-next-line no-console
       console.error('Failed to fetch tasks (calendar view):', e);
@@ -200,7 +211,10 @@ export const TasksCalendarView: React.FC<TasksCalendarViewProps> = ({
       try {
         const taskType = String((task as any)?.taskType || '').toLowerCase();
         if (taskType === 'personal') {
-          await Api.updatePersonalTask(task.id, { dueDate: dueDate || null });
+          await Api.updatePersonalTask(task.id, {
+            dueDate: dueDate || null,
+            expectedVersionToken: String((task as any).versionToken || ''),
+          });
         } else {
           await Api.updateTask(task.id, { dueDate: dueDate || null });
         }

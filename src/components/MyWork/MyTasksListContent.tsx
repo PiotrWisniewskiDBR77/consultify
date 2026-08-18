@@ -1640,9 +1640,23 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   }, [groupedTasks, urgentCount, newUntriagedCount, onCountsChange]);
 
   // Handlers
+  const persistPersonalTask = async (taskId: string, updates: Record<string, unknown>) => {
+    const current = tasks.find((task) => task.id === taskId) as
+      | (Task & { versionToken?: string })
+      | undefined;
+    const updated = await Api.updatePersonalTask(taskId, {
+      ...updates,
+      expectedVersionToken: String(current?.versionToken || ''),
+    });
+    setTasks((prev) =>
+      prev.map((task) => (task.id === taskId ? ({ ...task, ...updated } as Task) : task))
+    );
+    return updated;
+  };
+
   const handleToggleComplete = async (taskId: string, completed: boolean) => {
     try {
-      await Api.updatePersonalTask(taskId, { status: completed ? 'completed' : 'todo' });
+      await persistPersonalTask(taskId, { status: completed ? 'completed' : 'todo' });
       setTasks((prev) =>
         prev.map((t) =>
           t.id === taskId ? ({ ...t, status: completed ? 'completed' : 'todo' } as Task) : t
@@ -1666,7 +1680,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     status: 'todo' | 'in_progress' | 'blocked' | 'completed'
   ) => {
     try {
-      await Api.updatePersonalTask(taskId, { status });
+      await persistPersonalTask(taskId, { status });
       setTasks((prev) => prev.map((t) => (t.id === taskId ? ({ ...t, status } as Task) : t)));
       if (status === 'completed') {
         trackFunnelEvent('personal_task_completed', { source: 'table_status', taskId });
@@ -1687,7 +1701,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     setTasks((prev) => prev.map((t) => (t.id === taskId ? ({ ...t, [field]: value } as Task) : t)));
 
     try {
-      await Api.updatePersonalTask(taskId, { [field]: value });
+      await persistPersonalTask(taskId, { [field]: value });
       trackFunnelEvent('inline_edit_used', { field, taskId });
 
       toast.success(
@@ -1721,7 +1735,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     const today = new Date();
     const isoDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
     try {
-      await Api.updatePersonalTask(taskId, { dueDate: isoDate, status: 'in_progress' });
+      await persistPersonalTask(taskId, { dueDate: isoDate, status: 'in_progress' });
       setTasks((prev) =>
         prev.map((t) =>
           t.id === taskId ? ({ ...t, dueDate: isoDate, status: 'in_progress' } as Task) : t
@@ -1737,7 +1751,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
   const handleTriageSchedule = async (taskId: string, date: string) => {
     try {
-      await Api.updatePersonalTask(taskId, { dueDate: date });
+      await persistPersonalTask(taskId, { dueDate: date });
       setTasks((prev) =>
         prev.map((t) => (t.id === taskId ? ({ ...t, dueDate: date } as Task) : t))
       );
@@ -1751,7 +1765,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
   const handleTriageArchive = async (taskId: string) => {
     try {
-      await Api.updatePersonalTask(taskId, { status: 'completed' });
+      await persistPersonalTask(taskId, { status: 'completed' });
       setTasks((prev) =>
         prev.map((t) => (t.id === taskId ? ({ ...t, status: 'completed' } as Task) : t))
       );
@@ -1768,7 +1782,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     inTwoDays.setDate(inTwoDays.getDate() + 2);
     const isoDate = `${inTwoDays.getFullYear()}-${String(inTwoDays.getMonth() + 1).padStart(2, '0')}-${String(inTwoDays.getDate()).padStart(2, '0')}`;
     try {
-      await Api.updatePersonalTask(taskId, { dueDate: isoDate });
+      await persistPersonalTask(taskId, { dueDate: isoDate });
       setTasks((prev) =>
         prev.map((t) => (t.id === taskId ? ({ ...t, dueDate: isoDate } as Task) : t))
       );
@@ -1882,7 +1896,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   const handleBulkComplete = async () => {
     try {
       await Promise.all(
-        Array.from(selectedIds).map((id) => Api.updatePersonalTask(id, { status: 'completed' }))
+        Array.from(selectedIds).map((id) => persistPersonalTask(id, { status: 'completed' }))
       );
       setTasks((prev) =>
         prev.map((t) => (selectedIds.has(t.id) ? ({ ...t, status: 'completed' } as Task) : t))
@@ -1929,7 +1943,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
         prev.map((t) => (selectedIds.has(t.id) ? ({ ...t, priority: newPriority } as Task) : t))
       );
       setSelectedIds(new Set());
-      await Promise.all(ids.map((id) => Api.updatePersonalTask(id, { priority: newPriority })));
+      await Promise.all(ids.map((id) => persistPersonalTask(id, { priority: newPriority })));
       trackFunnelEvent('bulk_edit_applied', { field: 'priority', value: newPriority, count });
       toast.success(
         t('myWork.tasksList.toast.priorityBulkUpdated', 'Priority → {{priority}} ({{count}})', {
@@ -1960,7 +1974,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
       );
       setSelectedIds(new Set());
       await Promise.all(
-        ids.map((id) => Api.updatePersonalTask(id, { dueDate: isRemove ? null : newDate }))
+        ids.map((id) => persistPersonalTask(id, { dueDate: isRemove ? null : newDate }))
       );
       trackFunnelEvent('personal_task_due_date_set', { source: 'bulk', count });
       toast.success(isRemove ? `Due date removed (${count})` : `Due date → ${newDate} (${count})`, {
@@ -1976,7 +1990,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   const handleBulkArchive = async () => {
     try {
       await Promise.all(
-        Array.from(selectedIds).map((id) => Api.updatePersonalTask(id, { status: 'completed' }))
+        Array.from(selectedIds).map((id) => persistPersonalTask(id, { status: 'completed' }))
       );
       setTasks((prev) => prev.filter((t) => !selectedIds.has(t.id)));
       toast.success(
@@ -2116,7 +2130,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     onSetPriority: async (priority) => {
       if (focusedTask) {
         try {
-          await Api.updatePersonalTask(focusedTask.id, { priority });
+          await persistPersonalTask(focusedTask.id, { priority });
           setTasks((prev) =>
             prev.map((t) => (t.id === focusedTask.id ? ({ ...t, priority } as Task) : t))
           );

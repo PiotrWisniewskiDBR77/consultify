@@ -430,6 +430,11 @@ describe('M02-P04 — Tasks idempotency + lifecycle + tenant isolation (real Pos
     expect(created.status).toBe(201);
     const taskId = created.body.id;
 
+    const initiallyOpened = await request(app)
+      .get(`/api/my-work/personal-tasks/${taskId}`)
+      .set('Authorization', `Bearer ${h.tokenA1}`);
+    expect(initiallyOpened.status).toBe(200);
+
     const mutated = await request(app)
       .put(`/api/my-work/personal-tasks/${taskId}`)
       .set('Authorization', `Bearer ${h.tokenA1}`)
@@ -439,6 +444,7 @@ describe('M02-P04 — Tasks idempotency + lifecycle + tenant isolation (real Pos
         priority: 'high',
         expectedOutcome: 'ship the fix',
         checklist: [{ id: 'c1', text: 'step one', completed: false }],
+        expectedVersionToken: initiallyOpened.body.versionToken,
       });
     expect(mutated.status).toBe(200);
     expect(mutated.body.title).toBe('Lifecycle task v2 — edited');
@@ -460,7 +466,7 @@ describe('M02-P04 — Tasks idempotency + lifecycle + tenant isolation (real Pos
     const completed = await request(app)
       .put(`/api/my-work/personal-tasks/${taskId}`)
       .set('Authorization', `Bearer ${h.tokenA1}`)
-      .send({ status: 'done' });
+      .send({ status: 'done', expectedVersionToken: reopened.body.versionToken });
     expect(completed.status).toBe(200);
     expect(completed.body.completedAt).toBeTruthy();
 
@@ -491,6 +497,25 @@ describe('M02-P04 — Tasks idempotency + lifecycle + tenant isolation (real Pos
       .set('Authorization', `Bearer ${h.tokenA1}`);
     expect(opened.status).toBe(200);
     expect(opened.body.versionToken).toEqual(expect.any(String));
+
+    const beforeMissingToken = await h.client.query<{ title: string }>(
+      `SELECT title FROM tasks WHERE id = $1 AND organization_id = $2`,
+      [taskId, h.orgAId]
+    );
+    const missingToken = await request(app)
+      .put(`/api/my-work/personal-tasks/${taskId}`)
+      .set('Authorization', `Bearer ${h.tokenA1}`)
+      .send({ title: 'Blind overwrite must be refused' });
+    expect(missingToken.status).toBe(428);
+    expect(missingToken.body).toEqual({
+      error: 'expectedVersionToken is required',
+      code: 'TASK_VERSION_REQUIRED',
+    });
+    const afterMissingToken = await h.client.query<{ title: string }>(
+      `SELECT title FROM tasks WHERE id = $1 AND organization_id = $2`,
+      [taskId, h.orgAId]
+    );
+    expect(afterMissingToken.rows).toEqual(beforeMissingToken.rows);
 
     const foreignWithStolenToken = await request(app)
       .put(`/api/my-work/personal-tasks/${taskId}`)

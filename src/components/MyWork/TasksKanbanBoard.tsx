@@ -798,7 +798,13 @@ export const TasksKanbanBoard: React.FC<TasksKanbanBoardProps> = ({
 
         // Persist via API
         try {
-          await Api.updatePersonalTask(activeId, { status: newStatus });
+          const updated = await Api.updatePersonalTask(activeId, {
+            status: newStatus,
+            expectedVersionToken: String((task as any).versionToken || ''),
+          });
+          setTasks((prev) =>
+            prev.map((item) => (item.id === activeId ? { ...item, ...updated } : item))
+          );
           toast.success(
             t('myWork.kanban.statusMoved', 'Przeniesiono do „{{column}}"', {
               column: targetColDef.label,
