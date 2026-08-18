@@ -2,6 +2,7 @@ import type { Request } from 'express';
 import { z } from 'zod';
 
 import config from '../../config/Config.js';
+import { getRegistryApprovalDecision } from '../oauthService.js';
 import { issueSyncExternalAuthSession } from '../syncExternalAuthSessionService.js';
 import { storeCredential } from './pmSyncAuthService.js';
 import { storeRefreshExecutionSecret } from './pmSyncRefreshExecutionService.js';
@@ -76,6 +77,61 @@ function uniqueFields(fields: string[]): string[] {
 
 function normalizeConnectorId(connectorId: string): string {
   return connectorId.trim().toLowerCase();
+}
+
+/**
+ * SET-MVP-OAUTH-001 / AMD-SET-OAUTH-APPROVED-OUT-002: external OAuth is
+ * excluded from MVP. Every reachable consent-URL producer in this file must
+ * fail closed unless the connector is explicitly approved through
+ * `OAUTH_APPROVED_PROVIDER_REGISTRY`.
+ *
+ * Key vocabulary: `normalizeConnectorId` already lowercases/trims connector
+ * ids to exactly {'jira','gmail','asana','teams','slack'} — the same literal
+ * keys `integrationOAuthEngine.ts`'s `CONNECTOR_OAUTH_CONFIGS` uses for its
+ * registry lookups (`getConnectorApprovalDecision` reads `registry[connectorId]`
+ * with no further normalization). `oauthService.ts` uses a DIFFERENT
+ * vocabulary for its own login-OAuth surface ('google' | 'linkedin' — e.g.
+ * 'google' there is not the same registry entry as 'gmail' here, since login
+ * and this governed sync flow are different grants with different scopes).
+ * This module therefore keys the registry with its own normalized connector
+ * id, not oauthService's provider names.
+ *
+ * Required scopes per connector are this module's OWN default scope lists
+ * (`DEFAULT_JIRA_SCOPES` etc. — the scopes this module will actually put on
+ * the authorize URL / request at token exchange), not
+ * `integrationOAuthEngine.ts`'s CONNECTOR_OAUTH_CONFIGS scopes, which differ
+ * (e.g. its jira/gmail/teams scope lists are broader and do not match what
+ * this module requests). Approving a scope set that isn't the one actually
+ * granted would be a false sense of governance.
+ *
+ * Any connector id outside this map is unknown/unmappable and MUST be denied
+ * — never silently passed through.
+ */
+const GOVERNED_CONNECTOR_REQUIRED_SCOPES: Record<string, readonly string[]> = {
+  jira: DEFAULT_JIRA_SCOPES,
+  gmail: DEFAULT_GMAIL_SCOPES,
+  asana: DEFAULT_ASANA_SCOPES,
+  teams: DEFAULT_TEAMS_SCOPES,
+  slack: DEFAULT_SLACK_SCOPES,
+};
+
+/**
+ * Throws (fail closed) unless `connectorId` is both a recognized governed
+ * connector AND explicitly approved by the registry with matching scopes and
+ * non-empty residency. Must be called before any side effect (session/state
+ * row write, URL construction, token exchange, credential storage).
+ */
+function requireApprovedGovernedConnector(connectorId: string): void {
+  const normalized = normalizeConnectorId(connectorId);
+  const requiredScopes = GOVERNED_CONNECTOR_REQUIRED_SCOPES[normalized];
+  if (!requiredScopes) {
+    throw new Error(`Governed external auth provider is not approved: ${connectorId}`);
+  }
+
+  const decision = getRegistryApprovalDecision(normalized, requiredScopes);
+  if (!decision) {
+    throw new Error(`Governed external auth provider is not approved: ${connectorId}`);
+  }
 }
 
 function getGoogleClientId(): string {
@@ -172,6 +228,8 @@ export function buildGovernedExternalAuthSession(
   req: Pick<Request, 'protocol' | 'get'>,
   context: GovernedExternalAuthContext
 ): GovernedExternalAuthSessionInfo {
+  requireApprovedGovernedConnector(context.connectorId);
+
   const session = issueSyncExternalAuthSession({
     integrationId: context.integrationId,
     organizationId: context.organizationId,
@@ -306,6 +364,7 @@ export async function materializeGovernedExternalAuthCallback(params: {
       `Unsupported callback materialization connector: ${params.session.connectorId}`
     );
   }
+  requireApprovedGovernedConnector(normalizedConnectorId);
 
   const callbackUrl = buildExternalAuthCallbackUrl(params.req, params.session.state);
   if (normalizedConnectorId === 'jira') {

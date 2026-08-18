@@ -6,6 +6,7 @@
 import crypto from 'crypto';
 import { Response, Router } from 'express';
 
+import { requireActiveAuditsMembership } from '../middleware/auditsStrictMembership.middleware.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { getSettingsActorRole, isRequestSuperAdmin } from '../middleware/requestAccess.js';
 import { createAccountDeletionRequest, createDataExportRequest } from '../services/gdprService.js';
@@ -1732,6 +1733,7 @@ router.get(
 router.post(
   '/integrations/:provider/connect',
   verifyToken,
+  requireActiveAuditsMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
     const organizationId = req.organizationId || req.user?.organizationId;
@@ -1757,11 +1759,30 @@ router.post(
       const scopes = connector.capabilities.map((capability) => `read:${capability}`);
       const integrationId = `${connector.id}-${organizationId}-${Date.now()}`;
 
+      // Governed-connector approval MUST be consulted before any write (pending
+      // row, ownership row, connection log, connecting-state transition, or
+      // consent URL). buildGovernedExternalAuthSession throws (fail closed) via
+      // its internal requireApprovedGovernedConnector guard when the connector
+      // is not registry-approved, so this call happening first means a denied
+      // provider never leaves a pending integration or a 'connecting' state
+      // transition behind.
+      const willAttemptExternalAuth =
+        connector.authType === 'oauth2' && onboardingStatus === 'pending_external_auth';
+      const preparedExternalAuth = willAttemptExternalAuth
+        ? buildGovernedExternalAuthSession(req, {
+            integrationId,
+            organizationId,
+            connectorId: connector.id,
+            mode: 'connect',
+            config,
+          })
+        : null;
+
       await dbRun(
         `INSERT INTO integrations (
           id, organization_id, connector_id, name, category,
-          status, config, capabilities, auth_type, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+          status, config, capabilities, auth_type, connected_by, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
         [
           integrationId,
           organizationId,
@@ -1772,6 +1793,11 @@ router.post(
           JSON.stringify(config),
           JSON.stringify(scopes),
           connector.authType,
+          // Audit identity: bound ONLY to the verified token's userId (checked
+          // non-empty by the `if (!userId) return res.status(401)` guard above,
+          // before any of this handler's writes run). Never sourced from
+          // req.body — a spoofable connected_by is not an audit identity.
+          userId,
         ]
       );
       await setIntegrationOwner({ integrationId, organizationId, ownerUserId: userId });
@@ -1793,7 +1819,7 @@ router.post(
       );
 
       let authUrl: string | null = null;
-      if (connector.authType === 'oauth2' && onboardingStatus === 'pending_external_auth') {
+      if (willAttemptExternalAuth && preparedExternalAuth) {
         await setConnectorAuthState({
           connectorId: connector.id,
           organizationId,
@@ -1801,14 +1827,7 @@ router.post(
           transitionedBy: userId,
           reason: 'settings_integrations_connect_initiated',
         });
-        const session = buildGovernedExternalAuthSession(req, {
-          integrationId,
-          organizationId,
-          connectorId: connector.id,
-          mode: 'connect',
-          config,
-        });
-        authUrl = session.authUrl;
+        authUrl = preparedExternalAuth.authUrl;
         await logIntegrationConnectionEvent({
           organizationId,
           userId,
@@ -1818,8 +1837,8 @@ router.post(
           metadata: {
             source: 'settings',
             mode: 'connect',
-            callbackUrl: session.callbackUrl,
-            expiresAt: session.expiresAt,
+            callbackUrl: preparedExternalAuth.callbackUrl,
+            expiresAt: preparedExternalAuth.expiresAt,
           },
           ipAddress: typeof req.ip === 'string' ? req.ip : null,
           userAgent:
@@ -2211,6 +2230,7 @@ router.post(
 router.post(
   '/integrations/:provider/refresh',
   verifyToken,
+  requireActiveAuditsMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
     const organizationId = req.organizationId || req.user?.organizationId;
@@ -2253,6 +2273,16 @@ router.post(
       });
     }
 
+    // Approval must be consulted before the pending-status write or the
+    // connecting-state transition, so a denied connector leaves no trace.
+    const externalAuth = buildGovernedExternalAuthSession(req, {
+      integrationId: item.id,
+      organizationId,
+      connectorId: connector.id,
+      mode: 'reauth',
+      config,
+    });
+
     await updateIntegrationStatus(item.id, 'pending');
     await setConnectorAuthState({
       connectorId: connector.id,
@@ -2260,13 +2290,6 @@ router.post(
       targetState: 'connecting',
       transitionedBy: userId,
       reason: 'settings_integrations_refresh_started',
-    });
-    const externalAuth = buildGovernedExternalAuthSession(req, {
-      integrationId: item.id,
-      organizationId,
-      connectorId: connector.id,
-      mode: 'reauth',
-      config,
     });
 
     return res.json({
@@ -2284,6 +2307,7 @@ router.post(
 router.put(
   '/integrations/:provider/config',
   verifyToken,
+  requireActiveAuditsMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
     const organizationId = req.organizationId || req.user?.organizationId;
@@ -2325,6 +2349,22 @@ router.put(
       configuredFields
     );
 
+    // When this configuration update would also trigger a governed external
+    // auth attempt, the approval decision must be consulted before the
+    // config write (which can carry credential fields like client_secret)
+    // and before the connecting-state transition — never after.
+    const willAttemptExternalAuth =
+      connector.authType === 'oauth2' && onboardingStatus === 'pending_external_auth';
+    const preparedExternalAuth = willAttemptExternalAuth
+      ? buildGovernedExternalAuthSession(req, {
+          integrationId: item.id,
+          organizationId,
+          connectorId: connector.id,
+          mode: 'connect',
+          config: nextConfig,
+        })
+      : null;
+
     await dbRun(
       `UPDATE integrations
        SET config = ?, updated_at = CURRENT_TIMESTAMP
@@ -2333,7 +2373,7 @@ router.put(
     );
 
     let authUrl: string | null = null;
-    if (connector.authType === 'oauth2' && onboardingStatus === 'pending_external_auth') {
+    if (willAttemptExternalAuth && preparedExternalAuth) {
       await setConnectorAuthState({
         connectorId: connector.id,
         organizationId,
@@ -2341,13 +2381,7 @@ router.put(
         transitionedBy: userId,
         reason: 'settings_integrations_configured',
       });
-      authUrl = buildGovernedExternalAuthSession(req, {
-        integrationId: item.id,
-        organizationId,
-        connectorId: connector.id,
-        mode: 'connect',
-        config: nextConfig,
-      }).authUrl;
+      authUrl = preparedExternalAuth.authUrl;
     }
 
     return res.json({

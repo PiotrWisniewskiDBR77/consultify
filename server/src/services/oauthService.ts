@@ -102,24 +102,35 @@ const REQUIRED_PROVIDER_SCOPES: Record<OAuthProvider, readonly string[]> = {
  *
  * Example:
  * {"google":{"approved":true,"scopes":["openid","email","profile"],"residency":"EU"}}
+ *
+ * This is the single canonical parser for `OAUTH_APPROVED_PROVIDER_REGISTRY`.
+ * Every consumer (login OAuth here, the generic connector engine, the pmSync
+ * governed external-auth flow) MUST route through `getRegistryApprovalDecision`
+ * rather than re-parsing the env var — the registry key vocabulary differs
+ * per consumer (e.g. 'google' here vs 'gmail' for the pmSync Google connector),
+ * so callers pass their own registry key and their own required-scope set;
+ * only the parse/validate mechanics are shared.
  */
-export function getApprovedOAuthProviderDecision(
-  provider: OAuthProvider
+export function getRegistryApprovalDecision(
+  registryKey: string,
+  requiredScopes: readonly string[]
 ): ApprovedOAuthProviderDecision | null {
   const raw = process.env.OAUTH_APPROVED_PROVIDER_REGISTRY;
   if (!raw) return null;
 
   try {
     const registry = JSON.parse(raw) as Record<string, unknown>;
-    const candidate = registry[provider];
+    const candidate = registry[registryKey];
     if (!candidate || typeof candidate !== 'object') return null;
     const decision = candidate as Record<string, unknown>;
     if (decision.approved !== true || !Array.isArray(decision.scopes)) return null;
     if (typeof decision.residency !== 'string' || !decision.residency.trim()) return null;
 
     const scopes = decision.scopes.filter((scope): scope is string => typeof scope === 'string');
-    const required = REQUIRED_PROVIDER_SCOPES[provider];
-    if (scopes.length !== required.length || !required.every((scope) => scopes.includes(scope))) {
+    if (
+      scopes.length !== requiredScopes.length ||
+      !requiredScopes.every((scope) => scopes.includes(scope))
+    ) {
       return null;
     }
 
@@ -127,6 +138,12 @@ export function getApprovedOAuthProviderDecision(
   } catch {
     return null;
   }
+}
+
+export function getApprovedOAuthProviderDecision(
+  provider: OAuthProvider
+): ApprovedOAuthProviderDecision | null {
+  return getRegistryApprovalDecision(provider, REQUIRED_PROVIDER_SCOPES[provider]);
 }
 
 function getGoogleConfig(): OAuthProviderConfig | null {

@@ -6,6 +6,7 @@ import { Request, Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import { verifyAdmin } from '../../middleware/admin.middleware.js';
+import { requireActiveAuditsMembership } from '../../middleware/auditsStrictMembership.middleware.js';
 import { isAuthenticated, verifyToken } from '../../middleware/auth.middleware.js';
 import { CONNECTORS } from '../../services/integrationHubService.js';
 import { dispatchProjectCommunicationEvent } from '../../services/integrations/communicationSyncService.js';
@@ -199,11 +200,35 @@ async function connectGovernedConnectorIntegration(input: {
   );
   const scopes = connector.capabilities.map((capability) => `read:${capability}`);
 
+  // Approved-provider guard MUST run before any write (integration row insert,
+  // connector auth-state transition, or audit entry). `buildGovernedExternalAuthSession`
+  // calls the registry-approval check (`requireApprovedGovernedConnector`) as its
+  // very first step and throws synchronously when the connector is not approved
+  // (SET-MVP-OAUTH-001 / AMD-SET-OAUTH-APPROVED-OUT-002); by computing the session
+  // here — before the INSERT and the auth-state transition below — a denied
+  // provider leaves no state behind. `integrationId` is a locally generated UUID,
+  // not a database read, so it is safe to use before the row exists.
+  let authUrl: string | null = null;
+  let governedAuthSession: ReturnType<typeof buildGovernedExternalAuthSession> | null = null;
+  const requiresGovernedExternalAuth =
+    connector.authType === 'oauth2' && onboardingStatus === 'pending_external_auth';
+
+  if (requiresGovernedExternalAuth) {
+    governedAuthSession = buildGovernedExternalAuthSession(input.req, {
+      integrationId,
+      organizationId: input.organizationId,
+      connectorId: connector.id,
+      mode: 'connect',
+      config,
+    });
+    authUrl = governedAuthSession.authUrl;
+  }
+
   await dbRun(
     `INSERT INTO integrations (
       id, organization_id, connector_id, name, category,
-      status, config, capabilities, auth_type, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+      status, config, capabilities, auth_type, connected_by, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
     [
       integrationId,
       input.organizationId,
@@ -214,12 +239,14 @@ async function connectGovernedConnectorIntegration(input: {
       JSON.stringify(config),
       JSON.stringify(scopes),
       connector.authType,
+      // Required immutable audit identity (server/migrations/256_integrations_system.sql:
+      // connected_by TEXT NOT NULL, no default). Bound only from the verified actor —
+      // never from req.body — see the actorId guard at both call sites below.
+      input.actorId,
     ]
   );
 
-  let authUrl: string | null = null;
-
-  if (connector.authType === 'oauth2' && onboardingStatus === 'pending_external_auth') {
+  if (requiresGovernedExternalAuth) {
     await setConnectorAuthState({
       connectorId: connector.id,
       organizationId: input.organizationId,
@@ -227,14 +254,6 @@ async function connectGovernedConnectorIntegration(input: {
       transitionedBy: input.actorId,
       reason: 'canonical_integrations_connect_initiated',
     });
-    const session = buildGovernedExternalAuthSession(input.req, {
-      integrationId,
-      organizationId: input.organizationId,
-      connectorId: connector.id,
-      mode: 'connect',
-      config,
-    });
-    authUrl = session.authUrl;
   }
 
   return {
@@ -699,6 +718,10 @@ router.post(
 router.post(
   '/connect/:provider',
   verifyToken,
+  // Authoritative ACTIVE same-tenant membership wall (SET-MVP-OAUTH-001 /
+  // AMD-SET-OAUTH-APPROVED-OUT-002). No platform-role exemption: an
+  // unmembered SUPERADMIN is denied here, not just a wrong-role member.
+  requireActiveAuditsMembership,
   verifyAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
@@ -708,11 +731,17 @@ router.post(
 
     const cols = await tryGetColumns('integrations');
     if (cols.has('connector_id') && cols.has('config')) {
+      // connected_by is a required immutable audit identity (NOT NULL, no
+      // default — server/migrations/256_integrations_system.sql). It must come
+      // only from the verified token, never a synthetic fallback and never
+      // req.body. Fail closed rather than writing a placeholder identity.
+      const actorId = req.user?.id;
+      if (!actorId) return res.status(401).json({ error: 'Unauthorized' });
       try {
         const result = await connectGovernedConnectorIntegration({
           req,
           organizationId: orgId,
-          actorId: req.user?.id || 'system',
+          actorId,
           provider,
           name: req.body?.name,
           config: (req.body?.config || {}) as Record<string, unknown>,
@@ -746,6 +775,10 @@ router.post(
 router.post(
   '/:provider/connect',
   verifyToken,
+  // Authoritative ACTIVE same-tenant membership wall (SET-MVP-OAUTH-001 /
+  // AMD-SET-OAUTH-APPROVED-OUT-002). No platform-role exemption: an
+  // unmembered SUPERADMIN is denied here, not just a wrong-role member.
+  requireActiveAuditsMembership,
   verifyAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
@@ -755,11 +788,17 @@ router.post(
 
     const cols = await tryGetColumns('integrations');
     if (cols.has('connector_id') && cols.has('config')) {
+      // connected_by is a required immutable audit identity (NOT NULL, no
+      // default — server/migrations/256_integrations_system.sql). It must come
+      // only from the verified token, never a synthetic fallback and never
+      // req.body. Fail closed rather than writing a placeholder identity.
+      const actorId = req.user?.id;
+      if (!actorId) return res.status(401).json({ error: 'Unauthorized' });
       try {
         const result = await connectGovernedConnectorIntegration({
           req,
           organizationId: orgId,
-          actorId: req.user?.id || 'system',
+          actorId,
           provider,
           name: req.body?.name,
           config: (req.body?.config || {}) as Record<string, unknown>,

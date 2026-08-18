@@ -8,6 +8,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
+import { requireActiveAuditsMembership } from '../../middleware/auditsStrictMembership.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import { logIntegrationConnectionEvent } from '../../services/integrationConnectionLogService.js';
 import {
@@ -913,8 +914,8 @@ router.post(
     await dbRun(
       `INSERT INTO integrations (
          id, organization_id, connector_id, name, category,
-         status, config, capabilities, auth_type, created_at, updated_at
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+         status, config, capabilities, auth_type, connected_by, created_at, updated_at
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
       [
         integrationId,
         organizationId,
@@ -925,6 +926,7 @@ router.post(
         JSON.stringify(parsedBody.data.config ?? {}),
         JSON.stringify(scopes),
         connector.authType,
+        actorId,
       ]
     );
     await setIntegrationOwner({ integrationId, organizationId, ownerUserId: actorId });
@@ -973,6 +975,7 @@ router.post(
 
 router.post(
   '/integrations/:integrationId/configure',
+  requireActiveAuditsMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const integrationId =
@@ -1039,6 +1042,38 @@ router.post(
       configuredFields
     );
 
+    // SET-MVP-OAUTH-001 / AMD-SET-OAUTH-APPROVED-OUT-002: the approved-provider
+    // guard MUST be consulted before any write below (pending-config save,
+    // audit log, connector auth-state transition, or connection-event log).
+    // `buildGovernedExternalAuthSession` runs `requireApprovedGovernedConnector`
+    // as its very first step and throws (fail closed) when the connector is
+    // not registry-approved. Calling it here — before the UPDATE and every
+    // write that follows — means a denied connector leaves no state behind:
+    // no updated config row, no audit entry, no 'connecting' transition, no
+    // consent URL.
+    const requiresGovernedExternalAuth =
+      connector.authType === 'oauth2' && onboardingStatus === 'pending_external_auth';
+    let preparedExternalAuth: ReturnType<typeof buildGovernedExternalAuthSession> | null = null;
+    if (requiresGovernedExternalAuth) {
+      try {
+        preparedExternalAuth = buildGovernedExternalAuthSession(req, {
+          integrationId,
+          organizationId,
+          connectorId: connector.id,
+          mode: 'connect',
+          config: nextConfig,
+        });
+      } catch (error) {
+        return res.status(403).json({
+          error:
+            error instanceof Error
+              ? error.message
+              : 'Governed external auth provider is not approved',
+          code: 'GOVERNED_EXTERNAL_AUTH_NOT_APPROVED',
+        });
+      }
+    }
+
     await dbRun(
       `UPDATE integrations
        SET config = ?, updated_at = CURRENT_TIMESTAMP
@@ -1067,7 +1102,7 @@ router.post(
         }
       | undefined;
 
-    if (connector.authType === 'oauth2' && onboardingStatus === 'pending_external_auth') {
+    if (requiresGovernedExternalAuth && preparedExternalAuth) {
       await setConnectorAuthState({
         connectorId: connector.id,
         organizationId,
@@ -1075,13 +1110,7 @@ router.post(
         transitionedBy: actorId,
         reason: 'external_auth_prepared',
       });
-      externalAuth = buildGovernedExternalAuthSession(req, {
-        integrationId,
-        organizationId,
-        connectorId: connector.id,
-        mode: 'connect',
-        config: nextConfig,
-      });
+      externalAuth = preparedExternalAuth;
       await logIntegrationConnectionEvent({
         organizationId,
         userId: actorId,
@@ -1156,6 +1185,7 @@ router.post(
 
 router.post(
   '/integrations/:integrationId/reauth',
+  requireActiveAuditsMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const integrationId =
@@ -1201,6 +1231,37 @@ router.post(
       configuredFields
     );
 
+    // SET-MVP-OAUTH-001 / AMD-SET-OAUTH-APPROVED-OUT-002: the approved-provider
+    // guard MUST be consulted before any write below (the reauth audit entry,
+    // the integration status flip back to 'pending', or the connector
+    // auth-state transition). `buildGovernedExternalAuthSession` runs
+    // `requireApprovedGovernedConnector` as its very first step and throws
+    // (fail closed) when the connector is not registry-approved. Calling it
+    // here — before the first write — means a denied connector leaves no
+    // state behind.
+    const requiresGovernedExternalAuth =
+      connector.authType === 'oauth2' && onboardingStatus === 'pending_external_auth';
+    let preparedExternalAuth: ReturnType<typeof buildGovernedExternalAuthSession> | null = null;
+    if (requiresGovernedExternalAuth) {
+      try {
+        preparedExternalAuth = buildGovernedExternalAuthSession(req, {
+          integrationId,
+          organizationId,
+          connectorId: connector.id,
+          mode: 'reauth',
+          config,
+        });
+      } catch (error) {
+        return res.status(403).json({
+          error:
+            error instanceof Error
+              ? error.message
+              : 'Governed external auth provider is not approved',
+          code: 'GOVERNED_EXTERNAL_AUTH_NOT_APPROVED',
+        });
+      }
+    }
+
     await logIntegrationAudit(organizationId, integrationId, 'reauth_started', actorId, actorId, {
       connectorId: connector.id,
       onboardingStatus,
@@ -1213,7 +1274,7 @@ router.post(
           expiresAt: string;
         }
       | undefined;
-    if (connector.authType === 'oauth2' && onboardingStatus === 'pending_external_auth') {
+    if (requiresGovernedExternalAuth && preparedExternalAuth) {
       await updateIntegrationStatus(integrationId, 'pending');
       await setConnectorAuthState({
         connectorId: connector.id,
@@ -1222,13 +1283,7 @@ router.post(
         transitionedBy: actorId,
         reason: 'reauth_started',
       });
-      externalAuth = buildGovernedExternalAuthSession(req, {
-        integrationId,
-        organizationId,
-        connectorId: connector.id,
-        mode: 'reauth',
-        config,
-      });
+      externalAuth = preparedExternalAuth;
     }
 
     return res.json({
