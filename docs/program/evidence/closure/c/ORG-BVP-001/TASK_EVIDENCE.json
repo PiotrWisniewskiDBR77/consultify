@@ -1,7 +1,7 @@
 {
   "taskId": "ORG-BVP-001",
   "baselineSha": "3d58ec9f028cfaf8d2daf6dcd2d6e89ee8cb3898",
-  "productSha": "48eefa9dab6e014200a7494fcce167f3158cf310",
+  "productSha": "1c2549c3156b0d9c3cd6d9b27e81e94f846d12ee",
   "technicalSourceSha": "5ce16c71bdee5258ba126870e2fd3039c2a1485d",
   "reconciliationSha": "48eefa9dab6e014200a7494fcce167f3158cf310",
   "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
@@ -14,7 +14,12 @@
     "Named-persona acceptance: STILL OPEN. AMD-PERSONA-UAT-SIGNOFF-003 (18C) allows one blanket sign-off by the release owner but keeps 'separate automated signed role journeys and forbidden-action controls still required for every persona'; no such per-persona artefact is recorded for this task.",
     "Release/owner boundary (REL-001-T01) is unaffected by this record; per AMD-TECHNICAL-DONE-RELEASE-BOUNDARY-002 (20A) it blocks release, not repository technical completion."
   ],
-  "changedPaths": [
+  "historicalProvenance": {
+    "productSha": "1c2549c3156b0d9c3cd6d9b27e81e94f846d12ee",
+    "technicalSourceSha": "5ce16c71bdee5258ba126870e2fd3039c2a1485d",
+    "reconciliationSha": "5ce16c71bdee5258ba126870e2fd3039c2a1485d",
+    "scope": "Historical repository product and test lineage. These paths are not attributed to exact-current runtime-only HEAD 48eefa9dab.",
+    "changedPaths": [
     "server/migrations/20260929_org_context_consumer_bindings.sql",
     "server/src/services/organizationContext/OrganizationContextService.ts",
     "server/src/services/organizationContext/governedSnapshotConsumerBindingService.ts",
@@ -33,7 +38,7 @@
     "tests/e2e/organization/org-ui-canon-governed-context.spec.ts",
     "tests/e2e/organization/orgUiGovernedContextFixture.ts"
   ],
-  "changedPathRationale": {
+    "changedPathRationale": {
     "server/migrations/20260929_org_context_consumer_bindings.sql": "Adds an immutable exact-ref receipt keyed to the governed Chat/Idea proposal; no existing table is rewritten.",
     "server/src/services/organizationContext/OrganizationContextService.ts": "Returns stable snapshotId alongside version/hash for publish/list/read without changing immutable snapshot bytes.",
     "server/src/services/organizationContext/governedSnapshotConsumerBindingService.ts": "Validates tenant/id/version/hash and records proposal+binding in one pinned PostgreSQL UoW with proposal locking for race-safe replay.",
@@ -51,7 +56,10 @@
     "tests/unit/backend/services/contextDocumentService.storage-usage.test.ts": "Proves successful upload persists the digest of the exact bytes and quota denial performs no persisted hash write.",
     "tests/e2e/organization/org-ui-canon-governed-context.spec.ts": "Exercises mounted multipart upload, governed approval and publish, cold reopen and fail-closed source drift with signed role and tenant negatives.",
     "tests/e2e/organization/orgUiGovernedContextFixture.ts": "Provides guarded disposable fixtures and exact cleanup for the mounted known-byte governed-context journey."
+    }
   },
+  "changedPaths": [],
+  "changedPathRationale": {},
   "ownerTables": [
     "organization_context_snapshot_versions",
     "organization_context_consumer_bindings",
@@ -247,6 +255,11 @@
   },
   "exactCurrentRuntimeReconciliation20260819": {
     "testedSha": "48eefa9dab6e014200a7494fcce167f3158cf310",
+    "productBinding": {
+      "exactRuntimeHead": "48eefa9dab6e014200a7494fcce167f3158cf310",
+      "orgCodeDelta": [],
+      "semantics": "This reconciliation re-executed the production ORG-BVP contract on exact product HEAD 48e. It introduces and claims zero Organization code paths; historical implementation paths and SHAs remain isolated under historicalProvenance."
+    },
     "evidenceCarrier": {
       "parentSha": "48eefa9dab6e014200a7494fcce167f3158cf310",
       "commitSha": "NON_SELF_REFERENTIAL: resolve as the exact-one commit containing this JSON blob",
@@ -274,10 +287,12 @@
       "claimItemId": "a78bddc3-db58-40e5-b66f-82e593cb75bf",
       "claimPopulationBeforeDecision": "exactly one run-owned pending claim",
       "approval": "HTTP 200; approved by the signed tenant OWNER",
+      "approvalDecidedAt": "2026-08-18T20:44:29.301Z",
       "publish": "HTTP 201",
       "snapshotId": "4d629af0-383e-42c7-822c-9502f2ab5d93",
       "version": 1,
       "contentHash": "c4ec6517cb703956a6e1cf61785196bdc016797a47eb0db5e59399dcdf4ca49d",
+      "snapshotCreatedAt": "2026-08-18T20:44:29.322Z",
       "claimCount": 1,
       "sourceFileHash": "36da9b3f4959b077ac03a1372e3ad3380fc907c90a9063c98d02018c2902a498",
       "sourceState": "dangling=false; danglingReason=null"
@@ -295,6 +310,50 @@
       },
       "result": "HTTP 201; one pending Chat document proposal and one immutable exact-ref binding"
     },
+    "literalProductionCommands": [
+      {
+        "command": "POST http://127.0.0.1:3411/api/organizations Authorization=Bearer_<redacted> Content-Type=application/json body={name,industry}",
+        "status": 201,
+        "result": "organizationId=26ff994e-7a4d-4447-957d-24f6c66eab20; role=OWNER",
+        "timestamp": "NOT_RETURNED_BY_ENDPOINT"
+      },
+      {
+        "command": "POST http://127.0.0.1:3411/api/ai/attachments/ingest Authorization=Bearer_<redacted> x-org-context=26ff994e-7a4d-4447-957d-24f6c66eab20 Idempotency-Key=org-bvp-run-48e-1787093100 multipart file=org-bvp-run-48e.txt",
+        "status": 201,
+        "result": "docId=8afdd7b7-bbd9-443b-acca-12db56214e8b; extractionStatus=extracted; totalChunks=1",
+        "timestamp": "NOT_RETURNED_BY_ENDPOINT"
+      },
+      {
+        "command": "POST http://127.0.0.1:3411/api/organization-context/governed/claims/1da415d4-33fd-4e7e-8dc9-d5b119cc1d5f/approve Authorization=Bearer_<redacted> x-org-context=26ff994e-7a4d-4447-957d-24f6c66eab20",
+        "status": 200,
+        "result": "reviewState=approved; wonDecision=true",
+        "timestamp": "2026-08-18T20:44:29.301Z"
+      },
+      {
+        "command": "POST http://127.0.0.1:3411/api/organization-context/governed/publish Authorization=Bearer_<redacted> x-org-context=26ff994e-7a4d-4447-957d-24f6c66eab20 body={}",
+        "status": 201,
+        "result": "snapshotId=4d629af0-383e-42c7-822c-9502f2ab5d93; version=1; contentHash=c4ec6517cb703956a6e1cf61785196bdc016797a47eb0db5e59399dcdf4ca49d",
+        "timestamp": "2026-08-18T20:44:29.322Z"
+      },
+      {
+        "command": "POST http://127.0.0.1:3411/api/conversations then POST /api/conversations/c55b86ea-f417-4d2b-8508-2787aa8f3561/messages with signed tenant context",
+        "status": 201,
+        "result": "conversationId=c55b86ea-f417-4d2b-8508-2787aa8f3561; messageId=f62f81bc-c885-412d-bc7c-1261aa5729b7",
+        "timestamp": "message sourceCreatedAt 2026-08-18T22:45:01.548Z"
+      },
+      {
+        "command": "POST http://127.0.0.1:3411/api/v8/chat/conversations/c55b86ea-f417-4d2b-8508-2787aa8f3561/governed-handoff-proposals Authorization=Bearer_<redacted> x-org-context=26ff994e-7a4d-4447-957d-24f6c66eab20 body={messageId,targetKind=document,idempotencyKey,governedSnapshotRef}",
+        "status": 201,
+        "result": "proposalId=b24ce7d1-e63c-44d7-adfb-d8f6183d837c; bindingId=4a942671-6221-4380-a1aa-1d5ad97dfdb0; exact snapshot ref persisted",
+        "timestamp": "proposal 2026-08-18T22:45:52.687Z; binding 2026-08-18T22:45:52.692Z"
+      },
+      {
+        "command": "graceful backend restart at exact 48e with ENABLE_V8_GLOBAL=true; fresh POST /api/auth/login; signed GET /api/organization-context/governed/versions/1; GET /api/v8/chat/conversations/c55b86ea-f417-4d2b-8508-2787aa8f3561/handoff-proposals; GET /api/conversations/c55b86ea-f417-4d2b-8508-2787aa8f3561",
+        "status": 200,
+        "result": "cold snapshot, source refs, conversation message and exactly one governed Chat proposal reopened with byte-identical ids and hashes",
+        "timestamp": "NOT_RETURNED_BY_READ_ENDPOINTS"
+      }
+    ],
     "v8RuntimeContract": {
       "initialResult": "V8_DISABLED while ENABLE_V8_GLOBAL was absent",
       "resolution": "The same sole exact-current backend and PostgreSQL were restarted with ENABLE_V8_GLOBAL=true, the repository's explicit global V8 feature-gate contract. The fresh test tenant had no organization flag rows and used the documented non-production implicit-row fallback.",
