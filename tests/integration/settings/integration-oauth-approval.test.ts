@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 
 import express, { type Express } from 'express';
 import jwt from 'jsonwebtoken';
+import pg from 'pg';
 import request from 'supertest';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -98,6 +99,9 @@ describe('POST /api/settings/integrations/:provider/connect — OAuth approval g
 
   let db: any;
   let resetConnection: (() => Promise<void>) | undefined;
+  let fixturePool: pg.Pool | undefined;
+  let fixtureClient: pg.PoolClient | undefined;
+  let fixtureLockHeld = false;
 
   const signToken = (claims: Record<string, unknown> = {}) =>
     jwt.sign(
@@ -179,19 +183,29 @@ describe('POST /api/settings/integrations/:provider/connect — OAuth approval g
     // unauthenticated-negative test into a false pass.
     delete process.env.ENABLE_TEST_AUTH_BYPASS;
 
+    if (process.env.SET_OAUTH_ALLOW_FIXTURE_CLEANUP !== '1') {
+      throw new Error('SET_OAUTH_ALLOW_FIXTURE_CLEANUP=1 is required');
+    }
+    const expectedDatabase = new URL(databaseUrl).pathname.replace(/^\//, '');
+    if (!expectedDatabase.startsWith('oauth_')) {
+      throw new Error(`SET_OAUTH_DISPOSABLE_DATABASE_REQUIRED:${expectedDatabase}`);
+    }
+    fixturePool = new pg.Pool({ connectionString: databaseUrl, max: 1 });
+    fixtureClient = await fixturePool.connect();
+    const current = await fixtureClient.query<{ name: string }>('SELECT current_database() AS name');
+    if (current.rows[0]?.name !== expectedDatabase) {
+      throw new Error('SET_OAUTH_DATABASE_IDENTITY_MISMATCH');
+    }
+    await fixtureClient.query(`SELECT pg_advisory_lock(hashtext('set-mvp-oauth-realpg'))`);
+    fixtureLockHeld = true;
+
     const database = await import('../../../server/src/database/Database.ts');
     resetConnection = database.resetConnection;
     await resetConnection();
     db = await database.getDatabaseAsync();
 
-    await db.run(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [
-      orgId,
-      'OAuth Connect Org',
-    ]);
-    await db.run(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [
-      foreignOrgId,
-      'OAuth Connect Foreign Org',
-    ]);
+    await db.run(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [orgId, 'OAuth Connect Org']);
+    await db.run(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [foreignOrgId, 'OAuth Connect Foreign Org']);
     await db.run(
       `INSERT INTO users (id, organization_id, email, first_name, last_name, role)
        VALUES (?, ?, ?, ?, ?, ?)`,
@@ -206,18 +220,45 @@ describe('POST /api/settings/integrations/:provider/connect — OAuth approval g
 
   afterAll(async () => {
     try {
-      if (db) {
-        await db.run(`DELETE FROM integrations WHERE organization_id IN (?, ?)`, [
-          orgId,
-          foreignOrgId,
-        ]);
-        await db.run(`DELETE FROM organization_members WHERE user_id = ?`, [userId]);
-        await db.run(`DELETE FROM users WHERE id = ?`, [userId]);
-        await db.run(`DELETE FROM organizations WHERE id IN (?, ?)`, [orgId, foreignOrgId]);
+      if (fixtureClient) {
+        await fixtureClient.query('BEGIN');
+        try {
+          await fixtureClient.query(`DELETE FROM integrations WHERE organization_id = ANY($1::text[])`, [[orgId, foreignOrgId]]);
+          await fixtureClient.query(`DELETE FROM organization_members WHERE user_id = $1`, [userId]);
+          await fixtureClient.query(`DELETE FROM users WHERE id = $1`, [userId]);
+          await fixtureClient.query(`DELETE FROM organizations WHERE id = ANY($1::text[])`, [[orgId, foreignOrgId]]);
+          const residue = await fixtureClient.query<{ n: number }>(
+            `SELECT
+               (SELECT count(*) FROM integrations WHERE organization_id = ANY($1::text[])) +
+               (SELECT count(*) FROM organization_members WHERE user_id = $2) +
+               (SELECT count(*) FROM users WHERE id = $2) +
+               (SELECT count(*) FROM organizations WHERE id = ANY($1::text[])) AS n`,
+            [[orgId, foreignOrgId], userId]
+          );
+          expect(Number(residue.rows[0]?.n)).toBe(0);
+          await fixtureClient.query('COMMIT');
+        } catch (error) {
+          await fixtureClient.query('ROLLBACK');
+          throw error;
+        }
       }
       await resetConnection?.();
     } finally {
-      process.env = previousEnv;
+      try {
+        if (fixtureClient && fixtureLockHeld) {
+          const unlocked = await fixtureClient.query<{ unlocked: boolean }>(
+            `SELECT pg_advisory_unlock(hashtext('set-mvp-oauth-realpg')) AS unlocked`
+          );
+          expect(unlocked.rows[0]?.unlocked).toBe(true);
+          fixtureLockHeld = false;
+        }
+      } finally {
+        fixtureClient?.release();
+        fixtureClient = undefined;
+        await fixturePool?.end();
+        fixturePool = undefined;
+        process.env = previousEnv;
+      }
     }
   }, 30_000);
 
@@ -419,6 +460,38 @@ describe('POST /api/settings/integrations/:provider/connect — OAuth approval g
       );
     }
   );
+
+  it('denies an unmembered platform SUPERADMIN with exact current 403 and zero writes', async () => {
+    await db.run(
+      `DELETE FROM organization_members WHERE user_id = ? AND organization_id = ?`,
+      [userId, orgId]
+    );
+    process.env.OAUTH_APPROVED_PROVIDER_REGISTRY = JSON.stringify({
+      asana: { approved: true, scopes: ['default'], residency: 'EU' },
+    });
+    process.env.ASANA_CLIENT_ID = `asana-client-${suffix}`;
+    process.env.ASANA_CLIENT_SECRET = `asana-secret-${suffix}`;
+    try {
+      const { app, sessionSpy } = await buildApp();
+      const before = await countIntegrations(orgId);
+      const res = await request(app)
+        .post('/api/settings/integrations/asana/connect')
+        .set('Authorization', `Bearer ${signToken({ role: 'SUPERADMIN', isSuperAdmin: true })}`)
+        .send({ config: { workspace_gid: `wg-superadmin-${suffix}` } });
+
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('ORG_MEMBERSHIP_REVOKED');
+      expect(await countIntegrations(orgId)).toBe(before);
+      expect(sessionSpy).not.toHaveBeenCalled();
+      sessionSpy.mockRestore();
+    } finally {
+      await db.run(
+        `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+         VALUES (?, ?, ?, 'ADMIN', 'ACTIVE')`,
+        [`member-${userId}`, orgId, userId]
+      );
+    }
+  });
 
   it('preserves the approved path: a registry-approved connector with matching scopes/residency still connects', async () => {
     // The gate must be a GATE, not a WALL — a packet that only proves denial

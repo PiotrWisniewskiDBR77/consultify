@@ -1,5 +1,5 @@
 // AMD-INTEGRATIONS-SHAPE-M21 -- real-PostgreSQL proof for the
-// 20261021_integrations_connector_runtime_shape.sql migration: the `integrations`
+// 20261023_integrations_connector_runtime_shape.sql migration: the `integrations`
 // table exists in two incompatible shapes today because every declaration used
 // CREATE TABLE IF NOT EXISTS and the first writer won --
 //   - server/migrations/256_integrations_system.sql (legacy): provider_id-keyed,
@@ -58,7 +58,7 @@ import path from 'node:path';
 import pg from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-const MIGRATION_PATH = 'server/migrations/20261021_integrations_connector_runtime_shape.sql';
+const MIGRATION_PATH = 'server/migrations/20261023_integrations_connector_runtime_shape.sql';
 const TABLE = 'integrations';
 
 // HARNESS NORMALIZATION (Q5): the pg_temp canonical twin's own table name is
@@ -183,17 +183,20 @@ const LEGACY_DDL = `
 `;
 
 suite('migration21 integrations connector-runtime shape -- exact late-safe contract', () => {
-  // max:1 deliberately (house pattern -- orgContextUploadIdempotencyMigration16
-  // .realdb.test.ts:21 / templateProvenanceApproval19.realdb.test.ts:65-70): a
-  // session-level pg_advisory_lock and the canonical twin both only work if
-  // every query in this file rides the SAME physical backend connection,
-  // which a max:1 pool guarantees without an explicit dedicated client.
   const pool = new pg.Pool({ connectionString: rawUrl, max: 1 });
+  let client: pg.PoolClient | undefined;
+  let lockHeld = false;
   const schemas: string[] = [];
   let tempSchema = '';
+  const query = <T extends pg.QueryResultRow = any>(text: string, values?: unknown[]) => {
+    if (!client) throw new Error('INTEGRATIONS_SHAPE_CLIENT_NOT_ACQUIRED');
+    return client.query<T>(text, values);
+  };
 
   beforeAll(async () => {
-    await pool.query(`SELECT pg_advisory_lock(hashtext('integrations-connector-shape-m21'))`);
+    client = await pool.connect();
+    await query(`SELECT pg_advisory_lock(hashtext('integrations-connector-shape-m21'))`);
+    lockHeld = true;
 
     // Canonical twin, built once in a disposable REGULAR schema (per the
     // owner's instruction: compare index/column shape against a twin built by
@@ -205,7 +208,7 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
     // Q5 NOTE: originally built as a session-scoped `CREATE TEMP TABLE`
     // (pg_temp), matching the owner's literal wording. That collided with the
     // MIGRATION'S OWN internal preflight machinery: the migration file itself
-    // (20261021_integrations_connector_runtime_shape.sql:171-172, 203) builds
+    // (20261023_integrations_connector_runtime_shape.sql:171-172, 203) builds
     // its own short-lived comparison twin via
     // `CREATE TEMP TABLE m21_idx_twin (...)` and then
     // `CREATE INDEX idx_integrations_org ON pg_temp.m21_idx_twin(...)` /
@@ -231,7 +234,7 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
     const twinSchema = await makeSchema();
     tempSchema = twinSchema;
 
-    await pool.query(`
+    await query(`
       CREATE TABLE "${twinSchema}".${TWIN_TABLE} (
         id TEXT PRIMARY KEY,
         organization_id TEXT NOT NULL,
@@ -258,8 +261,8 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
-    await pool.query(`CREATE INDEX idx_integrations_org ON "${twinSchema}".${TWIN_TABLE}(organization_id)`);
-    await pool.query(`CREATE INDEX idx_integrations_connector ON "${twinSchema}".${TWIN_TABLE}(connector_id)`);
+    await query(`CREATE INDEX idx_integrations_org ON "${twinSchema}".${TWIN_TABLE}(organization_id)`);
+    await query(`CREATE INDEX idx_integrations_connector ON "${twinSchema}".${TWIN_TABLE}(connector_id)`);
     expect(tempSchema).not.toBe('');
   });
 
@@ -271,35 +274,44 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
     // converged table ends up with. The pg_temp twin table needs no explicit
     // cleanup: it is dropped automatically when the session (this pool's sole
     // connection) ends via pool.end() below.
-    for (const schema of schemas.reverse()) {
-      await pool.query(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`);
+    try {
+      if (client) {
+        for (const schema of [...schemas].reverse()) {
+          await query(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`);
+        }
+        const residue = await query<{ n: number }>(
+          `SELECT count(*)::int AS n FROM information_schema.schemata WHERE schema_name = ANY($1)`,
+          [schemas]
+        );
+        expect(residue.rows[0]?.n).toBe(0);
+      }
+    } finally {
+      try {
+        if (client && lockHeld) {
+          const unlocked = await query<{ unlocked: boolean }>(
+            `SELECT pg_advisory_unlock(hashtext('integrations-connector-shape-m21')) AS unlocked`
+          );
+          expect(unlocked.rows[0]?.unlocked).toBe(true);
+          lockHeld = false;
+        }
+      } finally {
+        client?.release();
+        client = undefined;
+        await pool.end();
+      }
     }
-    if (schemas.length) {
-      const residue = await pool.query(
-        `SELECT count(*)::int AS n FROM information_schema.schemata WHERE schema_name = ANY($1)`,
-        [schemas]
-      );
-      expect(residue.rows[0]?.n).toBe(0);
-    }
-    // Unlock unconditionally (same reasoning as templateProvenanceApproval19
-    // .realdb.test.ts:102-113): pg.Pool destroys and replaces its pooled
-    // connection whenever a query it ran rejects, and this suite's negative
-    // tests reject `apply()` on purpose repeatedly. Unlocking a lock this
-    // session no longer holds is a harmless no-op.
-    await pool.query(`SELECT pg_advisory_unlock(hashtext('integrations-connector-shape-m21'))`);
-    await pool.end();
   });
 
   const makeSchema = async () => {
     const schema = `int21_${randomUUID().replaceAll('-', '').slice(0, 12)}`;
     schemas.push(schema);
-    await pool.query(`CREATE SCHEMA "${schema}"`);
+    await query(`CREATE SCHEMA "${schema}"`);
     return schema;
   };
 
   const makeLegacySchema = async () => {
     const schema = await makeSchema();
-    await pool.query(`CREATE TABLE "${schema}".${TABLE} (${LEGACY_DDL})`);
+    await query(`CREATE TABLE "${schema}".${TABLE} (${LEGACY_DDL})`);
     return schema;
   };
 
@@ -379,7 +391,7 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
    *  worse one, because the migration's OWN scratch comparison object
    *  (`pg_temp.m21_idx_twin`, with an index EXECUTE-formatted to the exact
    *  same literal name as the real canonical index,
-   *  20261021_integrations_connector_runtime_shape.sql:171-172) would then
+   *  20261023_integrations_connector_runtime_shape.sql:171-172) would then
    *  collide with the real target's own same-named index in the very same
    *  pg_temp namespace -- something that structurally cannot happen in
    *  production, where the real target lives in `public` and the scratch
@@ -408,25 +420,25 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
     migration.replaceAll('public.', `${schema}.`).replaceAll("'public'", `'${schema}'`);
 
   const apply = async (schema: string) => {
-    await pool.query('BEGIN');
+    await query('BEGIN');
     try {
-      await pool.query(sqlFor(schema));
-      await pool.query('COMMIT');
+      await query(sqlFor(schema));
+      await query('COMMIT');
     } catch (error) {
-      await pool.query('ROLLBACK');
+      await query('ROLLBACK');
       throw error;
     }
   };
 
   const shape = async (schema: string) => {
-    const columns = await pool.query(
+    const columns = await query(
       `SELECT column_name, data_type, is_nullable, column_default
          FROM information_schema.columns
         WHERE table_schema = $1 AND table_name = $2
         ORDER BY ordinal_position`,
       [schema, TABLE]
     );
-    const constraints = await pool.query(
+    const constraints = await query(
       `SELECT c.conname, pg_get_constraintdef(c.oid) AS definition
          FROM pg_constraint c JOIN pg_class t ON t.oid = c.conrelid
          JOIN pg_namespace n ON n.oid = t.relnamespace
@@ -443,7 +455,7 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
    *  shape -- the point the owner asked for: compare via pg_get_indexdef,
    *  never a hardcoded string. */
   const indexDefs = async (schemaName: string, table: string) => {
-    const res = await pool.query<{ indexname: string; indexdef: string }>(
+    const res = await query<{ indexname: string; indexdef: string }>(
       `SELECT ic.relname AS indexname, pg_get_indexdef(ix.indexrelid) AS indexdef
          FROM pg_index ix
          JOIN pg_class ic ON ic.oid = ix.indexrelid
@@ -475,7 +487,7 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
       .sort((a, b) => a.name.localeCompare(b.name));
 
   const rowsOf = (schema: string) =>
-    pool.query(`SELECT * FROM "${schema}".${TABLE} ORDER BY id`);
+    query(`SELECT * FROM "${schema}".${TABLE} ORDER BY id`);
 
   // -------------------------------------------------------------------
   // SELF-TEST: a comparison harness has no evidentiary value until it is
@@ -490,16 +502,16 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
     expect(before.columns.length).toBeGreaterThan(0);
     expect(before.constraints.length).toBeGreaterThan(0); // legacy UNIQUE(organization_id, provider_id) + pkey
 
-    await pool.query(`ALTER TABLE "${schema}".${TABLE} ADD COLUMN probe_for_self_test TEXT`);
+    await query(`ALTER TABLE "${schema}".${TABLE} ADD COLUMN probe_for_self_test TEXT`);
     const afterColumnAdd = await shape(schema);
     expect(afterColumnAdd).not.toEqual(before);
     expect(afterColumnAdd.columns.map((c) => c.column_name)).toContain('probe_for_self_test');
 
     // Also prove the index-comparison path (indexDefs/usingClause) is capable
     // of detecting a change, not just column shape.
-    await pool.query(`CREATE INDEX probe_idx_for_self_test ON "${schema}".${TABLE}(id)`);
+    await query(`CREATE INDEX probe_idx_for_self_test ON "${schema}".${TABLE}(id)`);
     const idxBefore = await indexDefs(schema, TABLE);
-    await pool.query(`DROP INDEX "${schema}".probe_idx_for_self_test`);
+    await query(`DROP INDEX "${schema}".probe_idx_for_self_test`);
     const idxAfter = await indexDefs(schema, TABLE);
     expect(idxAfter).not.toEqual(idxBefore);
   });
@@ -524,7 +536,7 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
     // no legacy columns exist to carry forward, so every column is "new".
     // Compared by name (sorted) rather than physical ordinal position: column
     // order is not part of the documented contract.
-    const twinColumns = await pool.query(
+    const twinColumns = await query(
       `SELECT column_name, data_type, column_default
          FROM information_schema.columns
         WHERE table_schema = $1 AND table_name = $2
@@ -576,14 +588,14 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
     expect(normalizeIdx(await indexDefs(schema, TABLE))).toEqual(canonical);
 
     // (i) MISSING INDEX: drop idx_integrations_connector entirely.
-    await pool.query(`DROP INDEX "${schema}".idx_integrations_connector`);
+    await query(`DROP INDEX "${schema}".idx_integrations_connector`);
     const afterMissing = normalizeIdx(await indexDefs(schema, TABLE));
     expect(afterMissing).not.toEqual(canonical);
     expect(afterMissing.map((r) => r.name)).not.toContain('idx_integrations_connector');
     expect(afterMissing.length).toBe(canonical.length - 1);
 
     // Restore correctly before the next probe, so each defect is isolated.
-    await pool.query(`CREATE INDEX idx_integrations_connector ON "${schema}".${TABLE}(connector_id)`);
+    await query(`CREATE INDEX idx_integrations_connector ON "${schema}".${TABLE}(connector_id)`);
     expect(normalizeIdx(await indexDefs(schema, TABLE))).toEqual(canonical); // sanity: back to green
 
     // (ii) WRONG COLUMN: same index name, indexing a different column --
@@ -592,8 +604,8 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
     // mirrored here directly against the comparison itself rather than
     // through the migration's own preflight (that path is covered
     // separately by the "FAIL-BEFORE-MUTATION: ... WRONG COLUMN" test).
-    await pool.query(`DROP INDEX "${schema}".idx_integrations_connector`);
-    await pool.query(`CREATE INDEX idx_integrations_connector ON "${schema}".${TABLE}(name)`);
+    await query(`DROP INDEX "${schema}".idx_integrations_connector`);
+    await query(`CREATE INDEX idx_integrations_connector ON "${schema}".${TABLE}(name)`);
     const afterWrongColumn = normalizeIdx(await indexDefs(schema, TABLE));
     expect(afterWrongColumn).not.toEqual(canonical);
     const wrongEntry = afterWrongColumn.find((r) => r.name === 'idx_integrations_connector');
@@ -603,19 +615,19 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
     );
 
     // Restore correctly before the next probe.
-    await pool.query(`DROP INDEX "${schema}".idx_integrations_connector`);
-    await pool.query(`CREATE INDEX idx_integrations_connector ON "${schema}".${TABLE}(connector_id)`);
+    await query(`DROP INDEX "${schema}".idx_integrations_connector`);
+    await query(`CREATE INDEX idx_integrations_connector ON "${schema}".${TABLE}(connector_id)`);
     expect(normalizeIdx(await indexDefs(schema, TABLE))).toEqual(canonical); // sanity: back to green
 
     // (iii) EXTRA INDEX: an unexpected index the canonical twin does not have.
-    await pool.query(`CREATE INDEX idx_integrations_extra_probe ON "${schema}".${TABLE}(status)`);
+    await query(`CREATE INDEX idx_integrations_extra_probe ON "${schema}".${TABLE}(status)`);
     const afterExtra = normalizeIdx(await indexDefs(schema, TABLE));
     expect(afterExtra).not.toEqual(canonical);
     expect(afterExtra.length).toBe(canonical.length + 1);
     expect(afterExtra.map((r) => r.name)).toContain('idx_integrations_extra_probe');
 
     // Restore: drop the extra index, confirm back to exactly canonical.
-    await pool.query(`DROP INDEX "${schema}".idx_integrations_extra_probe`);
+    await query(`DROP INDEX "${schema}".idx_integrations_extra_probe`);
     expect(normalizeIdx(await indexDefs(schema, TABLE))).toEqual(canonical);
   });
 
@@ -624,7 +636,7 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
   // no-op.
   // -------------------------------------------------------------------
   // The migration's own index-preflight RAISE, verbatim
-  // (20261021_integrations_connector_runtime_shape.sql:206-207):
+  // (20261023_integrations_connector_runtime_shape.sql:206-207):
   //   RAISE EXCEPTION 'integrations index % has incompatible definition: % (expected %)',
   //     pair.idx_name, actual_def, expected_def;
   const INDEX_PREFLIGHT_RAISE_RE =
@@ -633,7 +645,7 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
   it('REPEAT: a second apply on a fresh install is a byte-identical no-op', async () => {
     // Q5 NOTE: a second, real apply() onto an already-converged schema
     // exercises the migration's own internal index-preflight
-    // (20261021_integrations_connector_runtime_shape.sql:149-210, "the two
+    // (20261023_integrations_connector_runtime_shape.sql:149-210, "the two
     // indexes this migration owns ... are checked, when already present,
     // against a canonical twin ... rendered via pg_get_indexdef"). As proven
     // in the long comment above sqlFor(), pg_get_indexdef(oid) ALWAYS fully
@@ -720,14 +732,14 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
   it('NON-EMPTY LATE LEGACY CONVERGENCE: legacy rows survive with backfilled connector_id/name/category/status, tokens preserved', async () => {
     const schema = await makeLegacySchema();
 
-    await pool.query(
+    await query(
       `INSERT INTO "${schema}".${TABLE}
          (id, organization_id, provider_id, auth_type, access_token, refresh_token, api_key,
           token_expires_at, status, connected_by)
        VALUES ('int-full', 'org-a', 'int-slack', 'oauth2', 'tok-access', 'tok-refresh', 'tok-api',
                '2026-01-01 00:00:00', 'active', 'user-a')`
     );
-    await pool.query(
+    await query(
       `INSERT INTO "${schema}".${TABLE}
          (id, organization_id, provider_id, auth_type, status, connected_by)
        VALUES ('int-minimal', 'org-b', 'int-jira', 'api_key', NULL, 'user-b')`
@@ -793,7 +805,7 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
   // -------------------------------------------------------------------
   it('EXACT canonical types/defaults for newly-added columns, both indexes present, after a non-empty legacy convergence', async () => {
     const schema = await makeLegacySchema();
-    await pool.query(
+    await query(
       `INSERT INTO "${schema}".${TABLE} (id, organization_id, provider_id, auth_type, connected_by)
        VALUES ('int-x', 'org-x', 'int-slack', 'oauth2', 'user-x')`
     );
@@ -806,7 +818,7 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
       .map((c) => ({ column_name: c.column_name, data_type: c.data_type, column_default: c.column_default }))
       .sort((a, b) => a.column_name.localeCompare(b.column_name));
 
-    const twinAll = await pool.query(
+    const twinAll = await query(
       `SELECT column_name, data_type, column_default
          FROM information_schema.columns
         WHERE table_schema = $1 AND table_name = $2`,
@@ -857,7 +869,7 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
   // -------------------------------------------------------------------
   const nonEmptyConvergedSchema = async () => {
     const schema = await makeLegacySchema();
-    await pool.query(
+    await query(
       `INSERT INTO "${schema}".${TABLE} (id, organization_id, provider_id, auth_type, connected_by)
        VALUES ('int-seed', 'org-seed', 'int-slack', 'oauth2', 'user-seed')`
     );
@@ -870,8 +882,8 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
     // connector_id already converged as TEXT; drop and recreate as the wrong
     // type so a second apply must see an incompatible column, not a missing
     // one.
-    await pool.query(`ALTER TABLE "${schema}".${TABLE} DROP COLUMN connector_id`);
-    await pool.query(`ALTER TABLE "${schema}".${TABLE} ADD COLUMN connector_id INTEGER`);
+    await query(`ALTER TABLE "${schema}".${TABLE} DROP COLUMN connector_id`);
+    await query(`ALTER TABLE "${schema}".${TABLE} ADD COLUMN connector_id INTEGER`);
     const before = await shape(schema);
     const rowsBefore = await rowsOf(schema);
     expect(rowsBefore.rowCount).toBe(1); // sanity: this refusal protects a NON-EMPTY table
@@ -886,7 +898,7 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
     const schema = await nonEmptyConvergedSchema();
     // config is canonically TEXT DEFAULT '{}' (DatabaseInitializer.ts:1239);
     // widen it to a different default without changing type.
-    await pool.query(`ALTER TABLE "${schema}".${TABLE} ALTER COLUMN config SET DEFAULT '[]'`);
+    await query(`ALTER TABLE "${schema}".${TABLE} ALTER COLUMN config SET DEFAULT '[]'`);
     const before = await shape(schema);
     const rowsBefore = await rowsOf(schema);
     expect(rowsBefore.rowCount).toBe(1);
@@ -905,8 +917,8 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
     // `CREATE INDEX IF NOT EXISTS idx_integrations_org ...` (the name already
     // exists, so IF NOT EXISTS skips it) -- exactly the failure mode a
     // preflight must catch instead.
-    await pool.query(`DROP INDEX "${schema}".idx_integrations_org`);
-    await pool.query(`CREATE INDEX idx_integrations_org ON "${schema}".${TABLE}(id)`);
+    await query(`DROP INDEX "${schema}".idx_integrations_org`);
+    await query(`CREATE INDEX idx_integrations_org ON "${schema}".${TABLE}(id)`);
     const before = await shape(schema);
     const beforeIdx = await indexDefs(schema, TABLE);
     const rowsBefore = await rowsOf(schema);
@@ -927,7 +939,7 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
   // -------------------------------------------------------------------
   it('NOT NULL relaxation is scoped to provider_id and auth_type; organization_id stays NOT NULL', async () => {
     const schema = await makeLegacySchema();
-    const beforeCols = await pool.query(
+    const beforeCols = await query(
       `SELECT column_name, is_nullable FROM information_schema.columns
         WHERE table_schema=$1 AND table_name=$2 AND column_name IN ('provider_id','auth_type','organization_id')`,
       [schema, TABLE]
@@ -936,7 +948,7 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
 
     await apply(schema);
 
-    const afterCols = await pool.query(
+    const afterCols = await query(
       `SELECT column_name, is_nullable FROM information_schema.columns
         WHERE table_schema=$1 AND table_name=$2 AND column_name IN ('provider_id','auth_type','organization_id')`,
       [schema, TABLE]
@@ -955,14 +967,14 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
   // -------------------------------------------------------------------
   it('LEGACY + CONNECTOR COMPATIBILITY: old-style and new-style rows both insert and read back after convergence', async () => {
     const schema = await makeLegacySchema();
-    await pool.query(
+    await query(
       `INSERT INTO "${schema}".${TABLE} (id, organization_id, provider_id, auth_type, connected_by)
        VALUES ('int-old', 'org-compat', 'int-teams', 'oauth2', 'user-compat')`
     );
     await apply(schema);
 
     // Old-style row survived and was backfilled (from test 3's contract).
-    const oldRow = await pool.query(`SELECT * FROM "${schema}".${TABLE} WHERE id='int-old'`);
+    const oldRow = await query(`SELECT * FROM "${schema}".${TABLE} WHERE id='int-old'`);
     expect(oldRow.rowCount).toBe(1);
     expect(oldRow.rows[0].provider_id).toBe('int-teams');
     expect(oldRow.rows[0].connector_id).toBe('int-teams');
@@ -985,7 +997,7 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
     // testing a strictly narrower statement that happens to have the same
     // omission this migration would NOT protect against. Restored to match
     // the real 11-column production statement exactly.
-    await pool.query(
+    await query(
       `INSERT INTO "${schema}".${TABLE} (
          id, organization_id, connector_id, name, category,
          status, config, capabilities, auth_type, connected_by, created_at, updated_at
@@ -1003,14 +1015,14 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
         'user-new',
       ]
     );
-    const newRow = await pool.query(`SELECT * FROM "${schema}".${TABLE} WHERE id='int-new'`);
+    const newRow = await query(`SELECT * FROM "${schema}".${TABLE} WHERE id='int-new'`);
     expect(newRow.rowCount).toBe(1);
     expect(newRow.rows[0].connector_id).toBe('int-slack');
     expect(newRow.rows[0].provider_id).toBeNull(); // new-style row never sets legacy provider_id
     expect(newRow.rows[0].name).toBe('Slack');
     expect(newRow.rows[0].category).toBe('communication');
 
-    const both = await pool.query(`SELECT id FROM "${schema}".${TABLE} ORDER BY id`);
+    const both = await query(`SELECT id FROM "${schema}".${TABLE} ORDER BY id`);
     expect(both.rows.map((r: any) => r.id)).toEqual(['int-new', 'int-old']);
   });
 
@@ -1024,7 +1036,7 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
   // -------------------------------------------------------------------
   it('does not invent any organization+connector uniqueness during convergence', async () => {
     const schema = await makeLegacySchema();
-    await pool.query(
+    await query(
       `INSERT INTO "${schema}".${TABLE} (id, organization_id, provider_id, auth_type, connected_by)
        VALUES ('int-uniq', 'org-uniq', 'int-slack', 'oauth2', 'user-uniq')`
     );
@@ -1063,10 +1075,10 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
     // shape or row change below. `id` is included only so the file's
     // existing rowsOf() helper (which does ORDER BY id) can be reused
     // as-is.
-    await pool.query(
+    await query(
       `CREATE TABLE "${schema}".${TABLE} (id TEXT PRIMARY KEY, decoy_marker TEXT DEFAULT 'untouched-decoy')`
     );
-    await pool.query(`INSERT INTO "${schema}".${TABLE} (id) VALUES ('decoy-1')`);
+    await query(`INSERT INTO "${schema}".${TABLE} (id) VALUES ('decoy-1')`);
 
     const before = await shape(schema);
     const rowsBefore = await rowsOf(schema);
@@ -1083,16 +1095,16 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
     // mutation on the shared test database's real public.integrations (which
     // is exactly what the raw, correctly-`public`-qualified migration text
     // would otherwise legitimately target -- that's the point being proved).
-    await pool.query('BEGIN');
+    await query('BEGIN');
     try {
-      await pool.query(`SET LOCAL search_path TO "${schema}";\n${migration}`);
+      await query(`SET LOCAL search_path TO "${schema}";\n${migration}`);
     } catch {
       // A RAISE from the preflight against whatever state the shared test
       // database's REAL public.integrations happens to be in is an
       // acceptable outcome here -- irrelevant to this test's only claim,
       // which is about the decoy, not about the real public schema.
     } finally {
-      await pool.query('ROLLBACK');
+      await query('ROLLBACK');
     }
 
     expect(await shape(schema)).toEqual(before);
@@ -1103,7 +1115,7 @@ suite('migration21 integrations connector-runtime shape -- exact late-safe contr
 // ---------------------------------------------------------------------------
 // DEPENDENCY NOTE for the lead, updated by Q2 (second pass) after reading
 // Q1's fully schema-qualified migration text
-// (server/migrations/20261021_integrations_connector_runtime_shape.sql) in
+// (server/migrations/20261023_integrations_connector_runtime_shape.sql) in
 // full:
 //
 // 1. RESOLVED (superseding the previous pass's item 1). Q1's owner-decision
