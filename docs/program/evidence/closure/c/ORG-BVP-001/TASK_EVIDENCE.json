@@ -5,10 +5,15 @@
   "technicalSourceSha": "5ce16c71bdee5258ba126870e2fd3039c2a1485d",
   "reconciliationSha": "5ce16c71bdee5258ba126870e2fd3039c2a1485d",
   "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
-  "verdict": "DONE_CURRENT_SHA",
+  "verdict": "PARTIAL",
   "technicalVerdict": "DONE_CURRENT_SHA",
-  "verdictRationale": "DONE_CURRENT_SHA on exact-current product HEAD 5ce16c71bd. The owner-free pinned-consumption and mounted governed-upload gaps are closed: exact refs remain immutable, new uploads persist the SHA-256 of their actual bytes, and cold reads fail closed when a source hash is unavailable, unverified, mismatched or deleted. Every repository-owned gate was re-run on 5ce16c71bd and is green (see exactCurrentRequalification.gates). The task carried no owner, legal, provider, deployment or release dependency at any point (lane C matrix external disposition for ORG-BVP-001 is literally 'none'); the sole remaining item was human G4 acceptance (VoiceOver, brand, named-persona), which root/Codex has explicitly placed OUTSIDE MVP scope and ruled inadmissible as a repository-closure blocker. No non-VoiceOver human, owner or deployment boundary remains, so openBlockers is empty.",
-  "open": [],
+  "verdictRationale": "technicalVerdict is DONE_CURRENT_SHA on exact-current product HEAD 5ce16c71bd: every repository-owned gate was RE-EXECUTED there and is green (see exactCurrentRequalification.gates) — server and root typecheck, migrate fresh/repeat/dry-run, focused real-PG 54/54, mounted Playwright 2/2. Per AMD-TECHNICAL-DONE-RELEASE-BOUNDARY-002 (20A) that technical completion stands independently of external provider, deployment and release evidence.\n\nTop-level verdict deliberately REMAINS PARTIAL. An earlier revision of this record raised it to DONE_CURRENT_SHA on the reading that VoiceOver was the sole remaining item; an independent audit refuted that reading and it is corrected here rather than left standing. The original open entry bundled four distinct dependencies into one sentence ('Human VoiceOver, brand, named-persona and owner acceptance'), and only ONE of them is waived: AMD-UI-MANUAL-ACCEPTANCE-DEFERRED-002 (19C) places VoiceOver outside MVP scope, but in the same breath DEFERS manual UX and brand acceptance to the pre-release gate and forbids claiming brand approval before that gate. AMD-PERSONA-UAT-SIGNOFF-003 (18C) keeps per-persona signed role journeys required. Note also that 19C's 'Affected tasks' column lists PERSONA-UAT-001, all *-UI-CANON-001, UI-CANON-ALL-001 and REL-001-T01 — ORG-BVP-001 is a *-BVP-001 task and is not named there, so applying the waiver to it at all is the widest defensible reading, not a narrow one. The open list below is therefore itemised per dependency with its own basis instead of being emptied.",
+  "open": [
+    "VoiceOver acceptance: WAIVED as a closure blocker. AMD-UI-MANUAL-ACCEPTANCE-DEFERRED-002 (19C) states VoiceOver acceptance is explicitly outside MVP scope and moves to the post-MVP backlog; it does not block MVP technical DONE.",
+    "Manual brand/UX acceptance: STILL OPEN. The same decision 19C DEFERS manual UX and brand acceptance to the pre-release gate and instructs: 'Do not claim manual acceptance, VoiceOver or brand approval before their respective gates.' Deferred is not waived.",
+    "Named-persona acceptance: STILL OPEN. AMD-PERSONA-UAT-SIGNOFF-003 (18C) allows one blanket sign-off by the release owner but keeps 'separate automated signed role journeys and forbidden-action controls still required for every persona'; no such per-persona artefact is recorded for this task.",
+    "Release/owner boundary (REL-001-T01) is unaffected by this record; per AMD-TECHNICAL-DONE-RELEASE-BOUNDARY-002 (20A) it blocks release, not repository technical completion."
+  ],
   "changedPaths": [
     "server/migrations/20260929_org_context_consumer_bindings.sql",
     "server/src/services/organizationContext/OrganizationContextService.ts",
@@ -184,7 +189,7 @@
     "20261015_knowledge_docs_file_hash.sql": "8da301a8bf8b98038b26b58fc9a1496c4584b07ad1cd6812c3cab0abef278477"
   },
   "browserArtifacts": [],
-  "gateG4": "TECHNICAL_MOUNTED_PASS_ON_5ce16c71bd; human VoiceOver/brand/persona acceptance OUTSIDE MVP per root decision, not a closure blocker",
+  "gateG4": "TECHNICAL_MOUNTED_PASS_ON_5ce16c71bd; VoiceOver waived per 19C; manual brand/UX deferred to the pre-release gate per 19C; named-persona artefacts still required per 18C",
   "exactCurrentRequalification": {
     "technicalSourceSha": "5ce16c71bdee5258ba126870e2fd3039c2a1485d",
     "reconciliationSha": "5ce16c71bdee5258ba126870e2fd3039c2a1485d",
