@@ -9,6 +9,7 @@ import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { assertPartnerEconomicsOperationAllowed } from './partnerEconomicsPolicy.js';
 
 export const PARTNER_LEDGER_ENTRY_TYPES = [
   'accrual.posted',
@@ -372,6 +373,20 @@ export class PartnerProgramLedgerService {
   static async appendEntry(
     input: AppendLedgerEntryInput
   ): Promise<{ id: string; duplicate?: boolean }> {
+    // AMD-PRT-ECONOMICS-002: scoped to the money-bearing entry types only, and
+    // checked BEFORE any SQL so a refusal leaves no residue.
+    //
+    // NOT unconditional on purpose. `lifecycle.transition` entries are also
+    // written for the non-economic onboard->activate and activate->earn edges,
+    // which the owner decision explicitly preserves ("non-economic
+    // referral/campaign/profile/certification journeys remain"). Blocking every
+    // entry type here would break partner onboarding. The one economic
+    // lifecycle edge (earn->payout) is refused in `transitionLifecycle` itself.
+    if (input.entryType !== 'lifecycle.transition') {
+      assertPartnerEconomicsOperationAllowed(
+        input.entryType.startsWith('payout.') ? 'payout' : 'accrual'
+      );
+    }
     const db = getDatabase();
     await ensurePartnerProgramSchema(db);
 
@@ -729,6 +744,14 @@ export class PartnerProgramLedgerService {
     actorId?: string | null;
     reason?: string;
   }): Promise<{ ok: boolean; from: PartnerLifecyclePhase; to: PartnerLifecyclePhase }> {
+    // AMD-PRT-ECONOMICS-002: only the transition INTO the payout phase is
+    // excluded. onboard->activate and activate->earn are onboarding edges the
+    // owner decision preserves, and payout->earn is the operator unwinding an
+    // already-historical payout, which must stay possible for audit hygiene.
+    // Checked before getDatabase()/ensureSchema so nothing is touched.
+    if (params.toPhase === 'payout') {
+      assertPartnerEconomicsOperationAllowed('lifecycle_payout');
+    }
     const db = getDatabase();
     await ensurePartnerProgramSchema(db);
     const rt = await this.getOrCreateRuntime(params.partnerOrgId);

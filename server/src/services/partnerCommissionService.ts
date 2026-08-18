@@ -19,6 +19,7 @@ import { acquirePgClient } from '../database/PostgresDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import { assertPolicyCurrency, readApprovedPartnerAccrualPolicy } from './partnerAccrualPolicy.js';
+import { assertPartnerEconomicsOperationAllowed } from './partnerEconomicsPolicy.js';
 import PartnerProgramLedgerService from './partnerProgramLedgerService.js';
 
 // ==========================================
@@ -337,6 +338,9 @@ export function setDependencies(newDeps: { db?: IDatabase } = {}): void {
 export async function createCommission(
   params: CreateCommissionParams
 ): Promise<CommissionTransaction> {
+  // AMD-PRT-ECONOMICS-002: fail closed BEFORE any SQL, transaction, advisory
+  // lock or client acquisition, so a refusal can never leave residue.
+  assertPartnerEconomicsOperationAllowed('commission');
   const {
     partnerOrgId,
     attributionId,
@@ -509,6 +513,9 @@ export async function approveCommissions(
   commissionIds: string[],
   approvedBy: string
 ): Promise<{ success: boolean; approvedCount: number }> {
+  // AMD-PRT-ECONOMICS-002: fail closed BEFORE any SQL, transaction, advisory
+  // lock or client acquisition, so a refusal can never leave residue.
+  assertPartnerEconomicsOperationAllowed('commission');
   if (commissionIds.length === 0) {
     return { success: false, approvedCount: 0 };
   }
@@ -574,6 +581,9 @@ export async function cancelCommission(
   reason: string,
   cancelledBy: string
 ): Promise<boolean> {
+  // AMD-PRT-ECONOMICS-002: fail closed BEFORE any SQL, transaction, advisory
+  // lock or client acquisition, so a refusal can never leave residue.
+  assertPartnerEconomicsOperationAllowed('commission');
   try {
     const result = await DbPromise.run(
       db,
@@ -677,6 +687,9 @@ export async function getEarningsSummary(partnerOrgId: string): Promise<Earnings
  * Request a payout (partner action)
  */
 export async function requestPayout(params: PayoutRequest): Promise<Payout | null> {
+  // AMD-PRT-ECONOMICS-002: fail closed BEFORE any SQL, transaction, advisory
+  // lock or client acquisition, so a refusal can never leave residue.
+  assertPartnerEconomicsOperationAllowed('payout');
   const { partnerOrgId, payoutAccountId, requestedBy, notes } = params;
 
   let client: Awaited<ReturnType<typeof acquirePgClient>> | null = null;
@@ -863,6 +876,9 @@ export async function processPayout(
     reason?: string;
   }
 ): Promise<boolean> {
+  // AMD-PRT-ECONOMICS-002: fail closed BEFORE any SQL, transaction, advisory
+  // lock or client acquisition, so a refusal can never leave residue.
+  assertPartnerEconomicsOperationAllowed('payout');
   try {
     const payout = await getPayoutRowById(payoutId);
     if (!payout) return false;
@@ -923,6 +939,9 @@ export async function completePayout(
     reason?: string;
   }
 ): Promise<boolean> {
+  // AMD-PRT-ECONOMICS-002: fail closed BEFORE any SQL, transaction, advisory
+  // lock or client acquisition, so a refusal can never leave residue.
+  assertPartnerEconomicsOperationAllowed('payout');
   try {
     const payout = await getPayoutRowById(payoutId);
     if (!payout) return false;
@@ -1011,6 +1030,9 @@ export async function completePayout(
  * Fail a payout (admin/system action)
  */
 export async function failPayout(payoutId: string, reason: string): Promise<boolean> {
+  // AMD-PRT-ECONOMICS-002: fail closed BEFORE any SQL, transaction, advisory
+  // lock or client acquisition, so a refusal can never leave residue.
+  assertPartnerEconomicsOperationAllowed('payout');
   try {
     const payout = await getPayoutRowById(payoutId);
     if (!payout) return false;

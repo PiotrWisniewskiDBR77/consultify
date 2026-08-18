@@ -47,6 +47,12 @@ import {
 } from '../services/partnerCertificationService.js';
 import PartnerCommissionService from '../services/partnerCommissionService.js';
 import { ensurePartnerDemoDataset } from '../services/partnerDemoSeedService.js';
+import {
+  LEGACY_PARTNER_ECONOMIC_WRITERS,
+  SUPERADMIN_CONFIG_ECONOMIC_WRITERS,
+  SUPERADMIN_SETTLEMENT_ECONOMIC_WRITERS,
+  createPartnerEconomicsPolicyGuard,
+} from '../services/partnerEconomicsPolicy.js';
 import { partnerLegacyCutoverGuard } from '../services/partnerLegacyCutover.js';
 import { getActivePartnerOrgIdForUser } from '../services/partnerOrgResolution.js';
 import {
@@ -232,6 +238,12 @@ async function requirePartnerOrgId(req: Request, res: Response): Promise<string 
 
 // Apply authentication to all routes
 router.use(verifyToken);
+// AMD-PRT-ECONOMICS-002 runs BEFORE the cutover guard on purpose. Both would
+// answer 410, but they mean different things: the cutover guard says "moved to
+// V8" and names a successor, which is no longer truthful for the two economic
+// writers now excluded by owner policy. Policy wins the ordering so the stable
+// code and the telemetry receipt are the policy ones.
+router.use(createPartnerEconomicsPolicyGuard(LEGACY_PARTNER_ECONOMIC_WRITERS, 'legacy_partner'));
 router.use(partnerLegacyCutoverGuard);
 
 // =============================================================================
@@ -2378,6 +2390,17 @@ export const superAdminPartnerRouter = Router();
 superAdminPartnerRouter.use(verifyToken);
 superAdminPartnerRouter.use(requireActiveMembership);
 superAdminPartnerRouter.use(verifySuperAdmin);
+// AMD-PRT-ECONOMICS-002. This is the operator "money path": approve-commissions,
+// process/complete/fail-payout, operator lifecycle and direct ledger append.
+// Every one of these was registered in the cutover kernel with state
+// 'observed', and that kernel refuses only writers whose state is 'disabled',
+// so before this packet they were reachable and never refused.
+superAdminPartnerRouter.use(
+  createPartnerEconomicsPolicyGuard(
+    SUPERADMIN_SETTLEMENT_ECONOMIC_WRITERS,
+    'superadmin_partner_settlements'
+  )
+);
 superAdminPartnerRouter.use(createLegacyCutoverGuard(PARTNERS_SUPERADMIN_CUTOVER));
 
 /**
@@ -2813,6 +2836,14 @@ export const partnerConfigRouter = Router();
 partnerConfigRouter.use(verifyToken);
 partnerConfigRouter.use(requireActiveMembership);
 partnerConfigRouter.use(verifySuperAdmin);
+// AMD-PRT-ECONOMICS-002. commission-rates / discount / payout-settings are the
+// only implementation of the "discount" writer named in the owner decision.
+partnerConfigRouter.use(
+  createPartnerEconomicsPolicyGuard(
+    SUPERADMIN_CONFIG_ECONOMIC_WRITERS,
+    'superadmin_partner_config'
+  )
+);
 partnerConfigRouter.use(createLegacyCutoverGuard(PARTNERS_CONFIG_CUTOVER));
 
 /**

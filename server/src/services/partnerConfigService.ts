@@ -13,6 +13,7 @@ import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { assertPartnerEconomicsOperationAllowed } from './partnerEconomicsPolicy.js';
 
 // ==========================================
 // TYPES
@@ -98,6 +99,9 @@ export async function getCommissionRates(): Promise<CommissionRate[]> {
  * Update commission rate for a tier
  */
 export async function updateCommissionRate(tier: string, rate: number): Promise<boolean> {
+  // AMD-PRT-ECONOMICS-002: fail closed BEFORE any SQL, transaction, advisory
+  // lock or client acquisition, so a refusal can never leave residue.
+  assertPartnerEconomicsOperationAllowed('commission');
   const database = ensureDb();
 
   if (rate < 0 || rate > 100) {
@@ -185,6 +189,9 @@ export async function getDiscountConfig(): Promise<DiscountConfig | null> {
  * Update discount configuration
  */
 export async function updateDiscountConfig(config: Partial<DiscountConfig>): Promise<boolean> {
+  // AMD-PRT-ECONOMICS-002: fail closed BEFORE any SQL, transaction, advisory
+  // lock or client acquisition, so a refusal can never leave residue.
+  assertPartnerEconomicsOperationAllowed('discount');
   const database = ensureDb();
 
   try {
@@ -281,6 +288,9 @@ export async function getPayoutSettings(): Promise<PayoutSettings | null> {
  * Update payout settings
  */
 export async function updatePayoutSettings(settings: Partial<PayoutSettings>): Promise<boolean> {
+  // AMD-PRT-ECONOMICS-002: fail closed BEFORE any SQL, transaction, advisory
+  // lock or client acquisition, so a refusal can never leave residue.
+  assertPartnerEconomicsOperationAllowed('payout_settings');
   const database = ensureDb();
 
   try {

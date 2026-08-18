@@ -3,6 +3,7 @@ import crypto from 'node:crypto';
 import { getDatabase } from '../database/Database.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { assertPartnerEconomicsOperationAllowed } from './partnerEconomicsPolicy.js';
 import { EncryptionService } from './encryption/EncryptionService.js';
 
 export type PartnerPayoutMethod = 'BANK_TRANSFER' | 'PAYPAL' | 'STRIPE' | 'WISE';
@@ -196,6 +197,9 @@ export async function updatePartnerPayoutSettings(
   partnerOrgId: string,
   input: UpdatePartnerPayoutSettingsInput
 ): Promise<PartnerPayoutSettings> {
+  // AMD-PRT-ECONOMICS-002: fail closed BEFORE any SQL, transaction, advisory
+  // lock or client acquisition, so a refusal can never leave residue.
+  assertPartnerEconomicsOperationAllowed('payout_settings');
   await ensurePartnerPayoutSchema();
   const db = getDatabase();
 

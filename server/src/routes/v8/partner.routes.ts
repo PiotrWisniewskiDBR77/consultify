@@ -23,6 +23,11 @@ import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import legalService from '../../services/legalService.js';
 import PartnerCommissionService from '../../services/partnerCommissionService.js';
 import { ensurePartnerDemoDataset } from '../../services/partnerDemoSeedService.js';
+import {
+  V8_PARTNER_ECONOMIC_WRITERS,
+  createPartnerEconomicsPolicyGuard,
+  partnerEconomicsPolicyProjection,
+} from '../../services/partnerEconomicsPolicy.js';
 import { getActivePartnerOrgIdForUser } from '../../services/partnerOrgResolution.js';
 import {
   getPartnerPayoutSettings,
@@ -40,6 +45,12 @@ const router = Router();
 
 export const V8_PARTNER_READ_CONTRACT = 'partner_runtime_read_v1';
 export const V8_PARTNER_PROGRAM_CONTRACT = 'partner_program_p29_v1';
+
+// AMD-PRT-ECONOMICS-002: economic mutations are refused here, as the FIRST
+// middleware on this router. Placement is load-bearing: the demo-dataset
+// middleware below performs writes (seeding), so guarding after it would let a
+// policy-denied request mutate the database before being refused.
+router.use(createPartnerEconomicsPolicyGuard(V8_PARTNER_ECONOMIC_WRITERS, 'v8_partner'));
 
 router.use(
   asyncHandler(async (req: AuthRequest, _res: Response, next) => {
