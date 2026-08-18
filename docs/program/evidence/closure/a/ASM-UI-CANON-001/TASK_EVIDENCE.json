@@ -2,8 +2,8 @@
   "taskId": "ASM-UI-CANON-001",
   "baselineSha": "c024bde874d49fe414d18c53ccc82bb85e87efbc",
   "productSha": "ca963fe5112f6caf5bebdef04e4f0a624be00e91",
-  "technicalSourceSha": "e946c5bdaf8702fa73dacbdde57a1d4e27b409d4",
-  "reconciliationSha": "74f6a15ffd6b953432531a77b8e2e58a73c4128a",
+  "technicalSourceSha": "5ce16c71bdee5258ba126870e2fd3039c2a1485d",
+  "reconciliationSha": "ca8c8ee5b941aa1c1a52a4a6f42823ed2698c8ce",
   "leaseSha256": "integrator_fix_after_lane_a_handoff",
   "changedPaths": [
     "src/components/assessment/library/AssessmentLibraryTab.tsx",
@@ -168,6 +168,7 @@
     }
   ],
   "resolvedBlockers": [
+    "Exact-current technical requalification on 5ce16c71bd: the signed ASM technical journey passed 2/2 twice from one clean worktree and one fresh real-PostgreSQL runtime with retries disabled; permission denial, distinct approver freeze, cold persisted readback, deterministic stale CAS conflict and foreign-tenant fail-closed remained green.",
     "Exact-current technical packet integrated at 74f6a15ffd6b953432531a77b8e2e58a73c4128a (source e946c5bdaf8702fa73dacbdde57a1d4e27b409d4): signed owner/non-approver denial, distinct approver freeze, persisted Output/Report/Initiative cold readback, deterministic stale CAS conflict and foreign-tenant fail-closed passed 2/2 on fresh PostgreSQL with fixture residue 0.",
     "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed.",
     "Historical blocker resolved by exact-SHA G4: The complete real browser journey must be rerun after the mount fix on the exact integrated SHA.",
@@ -223,5 +224,34 @@
         "stale"
       ]
     }
+  },
+  "exactCurrentRequalification20260818": {
+    "technicalSourceSha": "5ce16c71bdee5258ba126870e2fd3039c2a1485d",
+    "reconciliationSha": "ca8c8ee5b941aa1c1a52a4a6f42823ed2698c8ce",
+    "relationship": "The commits from 5ce16c71bd through ca8c8ee5b9 are evidence-only and do not change ASM product, fixture or test paths; the technical runtime was executed literally on 5ce16c71bd and is reconciled to ca8c8ee5b9 by path identity, not represented as a runtime on ca8c8ee5b9.",
+    "runtime": {
+      "worktree": "/private/tmp/consultify-a6-asm-current-5ce",
+      "worktreeStatusBeforeAndAfter": "clean",
+      "database": "fresh disposable pgvector/pgvector:pg16 on loopback port 55581",
+      "migrations": "fresh chain complete; a separate exact-SHA preflight recorded repeat applying 0 and dry-run pending 0",
+      "command": "CI=true E2E_USE_WEB_SERVER=false E2E_REQUIRE_TEST_SUPPORT=false E2E_ALLOW_LOCALHOST_REMOTE=true E2E_MODE=false E2E_API_URL=http://127.0.0.1:4391 E2E_BASE_URL=http://127.0.0.1:4390 TEST_SUPPORT_KEY=asm-ui-support-key DATABASE_URL=<fresh-real-postgres> npx playwright test tests/e2e/assessment/asm-ui-canon-technical.spec.ts --project=chromium --workers=1 --retries=0 --reporter=line",
+      "frontendContract": "VITE_ENABLE_LOCAL_FEATURE_FLAG_OVERRIDES=true; VITE_API_TARGET=http://127.0.0.1:4391",
+      "run1": {
+        "passed": 2,
+        "failed": 0,
+        "duration": "45.8s",
+        "logSha256": "1c285492ef7e707d950c0b6bcd7a4b5e24d4677003db668ecb1c31d177cd8ac4"
+      },
+      "run2": {
+        "passed": 2,
+        "failed": 0,
+        "duration": "35.2s",
+        "logSha256": "c8be6b9b6d070f8883a7997eabd420ec89b9197e572253b287cd2ab06a255cfd"
+      },
+      "migrationLogSha256": "3424c7e873da0e66157cc2be9febd3d5ef1f9cc7cb1d21109f0a6dcf351f75ee",
+      "cleanup": "Both passing journeys completed their scoped afterEach cleanup. The self-contained runtime trap stopped backend/frontend and removed the owned container with its volume; listeners 4390, 4391 and 55581 were all zero afterward.",
+      "doesNotProve": "Manual VoiceOver, named-persona, visual/brand owner acceptance, release, deployment or production runtime."
+    },
+    "verdictImpact": "Technical current-SHA proof is refreshed; top-level verdict remains PARTIAL and the existing human acceptance blocker is preserved unchanged."
   }
 }
