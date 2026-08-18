@@ -1,13 +1,13 @@
 {
   "taskId": "ORG-BVP-001",
   "baselineSha": "3d58ec9f028cfaf8d2daf6dcd2d6e89ee8cb3898",
-  "productSha": "1c2549c3156b0d9c3cd6d9b27e81e94f846d12ee",
+  "productSha": "48eefa9dab6e014200a7494fcce167f3158cf310",
   "technicalSourceSha": "5ce16c71bdee5258ba126870e2fd3039c2a1485d",
-  "reconciliationSha": "5ce16c71bdee5258ba126870e2fd3039c2a1485d",
+  "reconciliationSha": "48eefa9dab6e014200a7494fcce167f3158cf310",
   "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
   "verdict": "PARTIAL",
   "technicalVerdict": "DONE_CURRENT_SHA",
-  "verdictRationale": "technicalVerdict is DONE_CURRENT_SHA on exact-current product HEAD 5ce16c71bd: every repository-owned gate was RE-EXECUTED there and is green (see exactCurrentRequalification.gates) — server and root typecheck, migrate fresh/repeat/dry-run, focused real-PG 54/54, mounted Playwright 2/2. Per AMD-TECHNICAL-DONE-RELEASE-BOUNDARY-002 (20A) that technical completion stands independently of external provider, deployment and release evidence.\n\nTop-level verdict deliberately REMAINS PARTIAL. An earlier revision of this record raised it to DONE_CURRENT_SHA on the reading that VoiceOver was the sole remaining item; an independent audit refuted that reading and it is corrected here rather than left standing. The original open entry bundled four distinct dependencies into one sentence ('Human VoiceOver, brand, named-persona and owner acceptance'), and only ONE of them is waived: AMD-UI-MANUAL-ACCEPTANCE-DEFERRED-002 (19C) places VoiceOver outside MVP scope, but in the same breath DEFERS manual UX and brand acceptance to the pre-release gate and forbids claiming brand approval before that gate. AMD-PERSONA-UAT-SIGNOFF-003 (18C) keeps per-persona signed role journeys required. Note also that 19C's 'Affected tasks' column lists PERSONA-UAT-001, all *-UI-CANON-001, UI-CANON-ALL-001 and REL-001-T01 — ORG-BVP-001 is a *-BVP-001 task and is not named there, so applying the waiver to it at all is the widest defensible reading, not a narrow one. The open list below is therefore itemised per dependency with its own basis instead of being emptied.",
+  "verdictRationale": "technicalVerdict is DONE_CURRENT_SHA on exact-current product HEAD 48eefa9dab: the historical repository gates remain recorded below, and a fresh signed production-service journey on the existing real PostgreSQL independently requalified tenant creation, document ingestion, sole run-owned claim approval, immutable snapshot publication, exact Chat binding and process-restart cold reopen (see exactCurrentRuntimeReconciliation20260819). Per AMD-TECHNICAL-DONE-RELEASE-BOUNDARY-002 (20A) that technical completion stands independently of external provider, deployment and release evidence.\n\nTop-level verdict deliberately REMAINS PARTIAL. An earlier revision of this record raised it to DONE_CURRENT_SHA on the reading that VoiceOver was the sole remaining item; an independent audit refuted that reading and it is corrected here rather than left standing. The original open entry bundled four distinct dependencies into one sentence ('Human VoiceOver, brand, named-persona and owner acceptance'), and only ONE of them is waived: AMD-UI-MANUAL-ACCEPTANCE-DEFERRED-002 (19C) places VoiceOver outside MVP scope, but in the same breath DEFERS manual UX and brand acceptance to the pre-release gate and forbids claiming brand approval before that gate. AMD-PERSONA-UAT-SIGNOFF-003 (18C) keeps per-persona signed role journeys required. Note also that 19C's 'Affected tasks' column lists PERSONA-UAT-001, all *-UI-CANON-001, UI-CANON-ALL-001 and REL-001-T01 — ORG-BVP-001 is a *-BVP-001 task and is not named there, so applying the waiver to it at all is the widest defensible reading, not a narrow one. The open list below is therefore itemised per dependency with its own basis instead of being emptied.",
   "open": [
     "VoiceOver acceptance: WAIVED as a closure blocker. AMD-UI-MANUAL-ACCEPTANCE-DEFERRED-002 (19C) states VoiceOver acceptance is explicitly outside MVP scope and moves to the post-MVP backlog; it does not block MVP technical DONE.",
     "Manual brand/UX acceptance: STILL OPEN. The same decision 19C DEFERS manual UX and brand acceptance to the pre-release gate and instructs: 'Do not claim manual acceptance, VoiceOver or brand approval before their respective gates.' Deferred is not waived.",
@@ -244,6 +244,69 @@
     "focused": "6 files and 54/54 tests passed on real PostgreSQL at 5ce16c71bd (identical to the cdb0b5c200 run).",
     "mounted": "2/2 mounted production journeys passed at 5ce16c71bd (identical to the cdb0b5c200 run).",
     "hashTruth": "Historical NULL is preserved as source_hash_unverified; frozen hash with live NULL is hash_unavailable; differing hashes are hash_mismatch; deleted sources remain fail-closed."
+  },
+  "exactCurrentRuntimeReconciliation20260819": {
+    "testedSha": "48eefa9dab6e014200a7494fcce167f3158cf310",
+    "evidenceCarrier": {
+      "parentSha": "48eefa9dab6e014200a7494fcce167f3158cf310",
+      "commitSha": "NON_SELF_REFERENTIAL: resolve as the exact-one commit containing this JSON blob",
+      "semantics": "reconciliationSha identifies the exact tested product parent; Git history identifies the evidence carrier without inventing a self-referential SHA."
+    },
+    "scopeDecision": {
+      "technicalDone": true,
+      "basis": "The frozen ORG-BVP-001 DoD requires document to claim proposal to human approval to immutable context snapshot to Chat or Idea with exact refs to reopen, plus conflict, source, confidentiality and tenant negatives. It does not require the operating-system file chooser; literal mounted UI states belong to ORG-UI-CANON-001 and historical G4 automation already covers the repository UI contract.",
+      "uiFileChooser": "NOT_VERIFIED in this manual run because the Chrome control extension could not attach a file chooser without its file-URL permission. The signed production multipart endpoint used by the UI was exercised instead. This does not upgrade or replace ORG-UI-CANON-001 acceptance."
+    },
+    "productionTenantCreation": {
+      "endpoint": "POST /api/organizations",
+      "result": "HTTP 201 through the authenticated production controller and canonical organization service; no test-support endpoint and no direct database fixture write",
+      "organizationId": "26ff994e-7a4d-4447-957d-24f6c66eab20",
+      "organizationName": "ORG-BVP Run 48e 1787093100",
+      "ownerUserId": "c9cf5985-89d5-4e75-833d-4c66bcb739a0"
+    },
+    "documentClaimSnapshot": {
+      "uploadEndpoint": "POST /api/ai/attachments/ingest",
+      "uploadStatus": 201,
+      "documentId": "8afdd7b7-bbd9-443b-acca-12db56214e8b",
+      "filename": "org-bvp-run-48e.txt",
+      "extraction": "extracted; totalChunks=1; embeddedChunks=0",
+      "claimId": "1da415d4-33fd-4e7e-8dc9-d5b119cc1d5f",
+      "claimItemId": "a78bddc3-db58-40e5-b66f-82e593cb75bf",
+      "claimPopulationBeforeDecision": "exactly one run-owned pending claim",
+      "approval": "HTTP 200; approved by the signed tenant OWNER",
+      "publish": "HTTP 201",
+      "snapshotId": "4d629af0-383e-42c7-822c-9502f2ab5d93",
+      "version": 1,
+      "contentHash": "c4ec6517cb703956a6e1cf61785196bdc016797a47eb0db5e59399dcdf4ca49d",
+      "claimCount": 1,
+      "sourceFileHash": "36da9b3f4959b077ac03a1372e3ad3380fc907c90a9063c98d02018c2902a498",
+      "sourceState": "dangling=false; danglingReason=null"
+    },
+    "chatExactBinding": {
+      "conversationId": "c55b86ea-f417-4d2b-8508-2787aa8f3561",
+      "messageId": "f62f81bc-c885-412d-bc7c-1261aa5729b7",
+      "proposalId": "b24ce7d1-e63c-44d7-adfb-d8f6183d837c",
+      "bindingId": "4a942671-6221-4380-a1aa-1d5ad97dfdb0",
+      "sourceContentHash": "3ebfd826dcc6028c97966f214c486d6c8bf6e6a0120a142e32979e8e86e089df",
+      "governedSnapshotRef": {
+        "snapshotId": "4d629af0-383e-42c7-822c-9502f2ab5d93",
+        "version": 1,
+        "contentHash": "c4ec6517cb703956a6e1cf61785196bdc016797a47eb0db5e59399dcdf4ca49d"
+      },
+      "result": "HTTP 201; one pending Chat document proposal and one immutable exact-ref binding"
+    },
+    "v8RuntimeContract": {
+      "initialResult": "V8_DISABLED while ENABLE_V8_GLOBAL was absent",
+      "resolution": "The same sole exact-current backend and PostgreSQL were restarted with ENABLE_V8_GLOBAL=true, the repository's explicit global V8 feature-gate contract. The fresh test tenant had no organization flag rows and used the documented non-production implicit-row fallback.",
+      "dataMutation": "No feature-flag row or permission was fabricated or changed."
+    },
+    "coldReopen": {
+      "method": "Graceful backend shutdown, fresh exact-current backend process, fresh production login, then signed tenant-scoped reads",
+      "snapshot": "Exact snapshot id, version, content hash, one claim, source document id and file hash reopened after restart",
+      "chat": "Exactly one conversation proposal reopened with the exact governed snapshot ref and source content hash",
+      "foreignTenantControl": "Original tenant remained total=25, pending=24, approved=1; none of its 24 pending claims was reviewed or mutated."
+    },
+    "verdictScope": "technicalVerdict DONE_CURRENT_SHA is requalified for the repository-owned ORG-BVP flow on exact 48e. Top-level verdict remains PARTIAL; manual brand/UX, named-persona and release/owner boundaries remain unchanged and are not claimed."
   },
   "rollback": {
     "method": "Keep governed upload/hash consumers disabled or stop their callers, then revert the scoped Organization product commits only if needed. Preserve immutable bindings, snapshots and the nullable knowledge_docs.file_hash values, including historical NULL; destructive table or column removal is not authorized.",
