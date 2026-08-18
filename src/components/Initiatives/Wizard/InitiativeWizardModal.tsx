@@ -1113,7 +1113,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
     }
     try {
       const response: SimilarityCheckResponse = await Api.post('/initiatives/similarity-check', {
-        projectId: projectId || undefined,
+        projectId: sessionProjectId || selectedProjectId,
         candidates: payloadCandidates,
       });
       const results = Array.isArray(response?.results) ? response.results : [];
