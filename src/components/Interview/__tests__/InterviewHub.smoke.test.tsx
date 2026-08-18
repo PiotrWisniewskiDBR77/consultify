@@ -51,10 +51,22 @@ vi.mock('react-hot-toast', () => {
   };
 });
 
-const { apiGet, apiPost, getSessions } = vi.hoisted(() => ({
+const {
+  apiGet,
+  apiPost,
+  getSessions,
+  getProjects,
+  createProject,
+  setCurrentProjectId,
+  appStoreState,
+} = vi.hoisted(() => ({
   apiGet: vi.fn(),
   apiPost: vi.fn(),
   getSessions: vi.fn(),
+  getProjects: vi.fn(),
+  createProject: vi.fn(),
+  setCurrentProjectId: vi.fn(),
+  appStoreState: { currentProjectId: 'proj-1' as string | null },
 }));
 
 vi.mock('@/services/api', () => ({
@@ -64,6 +76,8 @@ vi.mock('@/services/api', () => ({
     patch: vi.fn(async () => ({})),
     delete: vi.fn(async () => ({})),
     postMultipart: vi.fn(async () => ({})),
+    getProjects,
+    createProject,
   },
   shouldAllowDemoData: () => false,
 }));
@@ -108,8 +122,8 @@ vi.mock('@/hooks/useInterviewPermissions', () => ({
 
 vi.mock('@/store/useAppStore', () => ({
   useAppStore: () => ({
-    currentProjectId: 'proj-1',
-    setCurrentProjectId: vi.fn(),
+    currentProjectId: appStoreState.currentProjectId,
+    setCurrentProjectId,
     currentOrganization: { id: 'org-1', name: 'Acme' },
     currentUser: { id: 'user-1', firstName: 'Test', lastName: 'User', email: 't@e.com' },
     setInterviewBreadcrumbs: vi.fn(),
@@ -141,6 +155,15 @@ beforeEach(() => {
   apiPost.mockResolvedValue({});
   getSessions.mockReset();
   getSessions.mockResolvedValue({ sessions: [] });
+  getProjects.mockReset();
+  getProjects.mockResolvedValue([{ id: 'proj-1', name: 'Project One' }]);
+  createProject.mockReset();
+  createProject.mockImplementation(async ({ name }: { name: string }) => ({
+    id: 'proj-new',
+    name,
+  }));
+  setCurrentProjectId.mockReset();
+  appStoreState.currentProjectId = 'proj-1';
 });
 
 afterEach(() => {
@@ -192,6 +215,26 @@ describe('InterviewHub smoke — tab rendering', () => {
     await waitFor(() => expect(container.firstChild).toBeTruthy());
     // No throw + shell present => real (mocked) load path was used, not demo.
     expect(container.firstChild).toBeTruthy();
+  });
+
+  it('exposes the shared project create control in the new-session modal for a zero-project tenant', async () => {
+    appStoreState.currentProjectId = null;
+    getProjects.mockResolvedValue([]);
+
+    renderTab('sessions');
+    fireEvent.click(await screen.findByRole('button', { name: 'New session' }));
+
+    expect(await screen.findByLabelText('Project *')).toHaveValue('');
+    expect(screen.getByRole('textbox', { name: 'New project name' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Create project' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Create' })).toBeDisabled();
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'New project name' }), {
+      target: { value: 'Shared project' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Create project' }));
+    await waitFor(() => expect(createProject).toHaveBeenCalledWith({ name: 'Shared project' }));
+    expect(setCurrentProjectId).toHaveBeenCalledWith('proj-new');
   });
 
   it('creates a named session only after canonical server readback and renders translated labels', async () => {
