@@ -89,9 +89,10 @@
  * different fixture role each time.
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import express, { type Express } from 'express';
 import request from 'supertest';
+import type { Server } from 'http';
 
 /* ==========================================================================
  * Persistence + shared-utility seams. `partner.routes.ts`,
@@ -225,10 +226,58 @@ interface Actor {
   userRole: string; // e.g. 'OWNER' | 'ADMIN' | 'MEMBER' | 'SUPERADMIN'
 }
 
-function buildApp(actor: Actor): Express {
+/*
+ * ACTOR IS READ PER-REQUEST, NOT BAKED INTO THE APP AT CONSTRUCTION TIME.
+ *
+ * The suite below has 46 assertions across ~40 `request(...)` calls. The
+ * original version of this file called `buildApp(actor)` fresh for every
+ * single one of those calls; each fresh, not-yet-listening Express app
+ * handed to `supertest.request()` makes supertest open its own ephemeral
+ * `app.listen(0)` server and close it again at the end of that one request
+ * (see `node_modules/supertest/lib/test.js`: `serverAddress()` calls
+ * `app.listen(0)` whenever `app.address()` is falsy, and `.end()` closes
+ * that server once the response lands). That is ~40 bind+close cycles for
+ * this file alone, on top of a similar count from each of the four sibling
+ * economics suites that run in the same combined command — all of it
+ * executing inside ONE Node process, because `--no-file-parallelism` still
+ * lets Vitest's `forks` pool reuse a single worker process across
+ * sequentially-run files (only the per-file module registry is reset, not
+ * the OS process or its open sockets/ports).
+ *
+ * Under host CPU contention (this run reproduced at ~13%, 2/15, with the
+ * combined 5-file command; the same file alone was clean on 3/3 runs) that
+ * much rapid ephemeral-port churn is exactly the shape of thing that trips
+ * `ECONNRESET`/"socket hang up" on an in-flight request from a completely
+ * unrelated test — the failure was NOT confined to this file's own tests
+ * (it also hit `partner-registration-economics-denied.unit.test.ts`, a
+ * file this suite does not own), consistent with shared-process socket
+ * pressure rather than a bug in any one file's assertions.
+ *
+ * The fix that is actually within this file's control: stop being a
+ * contributor to that churn. Build ONE Express app and ONE already-listening
+ * `http.Server` for the whole file (`beforeAll`/`afterAll` below), and read
+ * the current test's actor from a per-request-time variable instead of a
+ * per-app-construction closure. `supertest`'s `serverAddress()` only calls
+ * `app.listen(0)` when the passed object has no address yet — passing the
+ * same already-listening `server` to every `request(server)` call skips
+ * that path entirely, so this file now performs exactly ONE bind and ONE
+ * close for its whole 46-assertion run instead of ~40. Tests in this file
+ * run strictly sequentially (no `it.concurrent`), so mutating `currentActor`
+ * immediately before each `await request(...)` call is race-free — the
+ * middleware below reads it synchronously on the very next request cycle
+ * before the next test could reassign it.
+ */
+let currentActor: Actor | null = null;
+
+function buildApp(): Express {
   const app = express();
   app.use(express.json());
   app.use((req: any, _res, next) => {
+    const actor = currentActor;
+    if (!actor) {
+      next(new Error('test bug: currentActor not set before request'));
+      return;
+    }
     req.userId = actor.userId;
     req.organizationId = actor.organizationId;
     req.userRole = actor.userRole;
@@ -249,6 +298,18 @@ function buildApp(actor: Actor): Express {
   });
   return app;
 }
+
+let server: Server;
+
+beforeAll(() => {
+  server = buildApp().listen(0);
+});
+
+afterAll(() => {
+  return new Promise<void>((resolve, reject) => {
+    server.close((err) => (err ? reject(err) : resolve()));
+  });
+});
 
 const TENANT_ORG = 'org-tenant-1';
 const PARTNER_ORG_ID = 'partner-org-1';
@@ -320,8 +381,8 @@ describe('AMD-PRT-ECONOMICS-002 — economic read authorization (v8 partner rout
       for (const route of ECONOMIC_READ_ROUTES) {
         it(`${actorName} reading ${route.path} succeeds with 200`, async () => {
           dbGet.mockResolvedValue({ status: 'ACTIVE' });
-          const app = buildApp(actor);
-          const res = await request(app)[route.method](route.path);
+          currentActor = actor;
+          const res = await request(server)[route.method](route.path);
           expect(res.status).toBe(200);
         });
       }
@@ -334,8 +395,8 @@ describe('AMD-PRT-ECONOMICS-002 — economic read authorization (v8 partner rout
         // Membership row exists and is ACTIVE — MEMBER fails the ROLE check,
         // not the membership check.
         dbGet.mockResolvedValue({ status: 'ACTIVE' });
-        const app = buildApp(MEMBER);
-        const res = await request(app)[route.method](route.path);
+        currentActor = MEMBER;
+        const res = await request(server)[route.method](route.path);
         expect(res.status).toBe(403);
         expect(res.body?.code).toBe('RBAC_INSUFFICIENT_ROLE');
       });
@@ -349,8 +410,8 @@ describe('AMD-PRT-ECONOMICS-002 — economic read authorization (v8 partner rout
         // real membership is for a different tenant. requireActiveMembership
         // must deny before the role check is ever reached.
         dbGet.mockResolvedValue(undefined);
-        const app = buildApp(FOREIGN_TENANT_ADMIN);
-        const res = await request(app)[route.method](route.path);
+        currentActor = FOREIGN_TENANT_ADMIN;
+        const res = await request(server)[route.method](route.path);
         expect(res.status).toBe(403);
         expect(res.body?.code).toBe('ORG_MEMBERSHIP_REVOKED');
       });
@@ -361,8 +422,8 @@ describe('AMD-PRT-ECONOMICS-002 — economic read authorization (v8 partner rout
     for (const route of ECONOMIC_READ_ROUTES) {
       it(`revoked ADMIN reading ${route.path} is denied with 403`, async () => {
         dbGet.mockResolvedValue({ status: 'REVOKED' });
-        const app = buildApp(REVOKED_ADMIN);
-        const res = await request(app)[route.method](route.path);
+        currentActor = REVOKED_ADMIN;
+        const res = await request(server)[route.method](route.path);
         expect(res.status).toBe(403);
         expect(res.body?.code).toBe('ORG_MEMBERSHIP_REVOKED');
       });
@@ -377,8 +438,8 @@ describe('AMD-PRT-ECONOMICS-002 — economic read authorization (v8 partner rout
         // even though requireOrgRole's role hierarchy alone WOULD have let a
         // 'superadmin'-canonical role through.
         dbGet.mockResolvedValue(undefined);
-        const app = buildApp(SUPERADMIN_NO_MEMBERSHIP);
-        const res = await request(app)[route.method](route.path);
+        currentActor = SUPERADMIN_NO_MEMBERSHIP;
+        const res = await request(server)[route.method](route.path);
         expect(res.status).toBe(403);
         expect(res.body?.code).toBe('ORG_MEMBERSHIP_REVOKED');
       });
@@ -389,8 +450,8 @@ describe('AMD-PRT-ECONOMICS-002 — economic read authorization (v8 partner rout
     for (const route of ECONOMIC_READ_ROUTES) {
       it(`${route.path} response includes meta.policyUnavailable`, async () => {
         dbGet.mockResolvedValue({ status: 'ACTIVE' });
-        const app = buildApp(OWNER);
-        const res = await request(app)[route.method](route.path);
+        currentActor = OWNER;
+        const res = await request(server)[route.method](route.path);
         expect(res.status).toBe(200);
         expect(res.body?.meta?.policyUnavailable).toBeDefined();
         expect(res.body.meta.policyUnavailable).toMatchObject({
@@ -406,8 +467,8 @@ describe('AMD-PRT-ECONOMICS-002 — economic read authorization (v8 partner rout
   describe('positive control: non-economic routes are unaffected by the new gate', () => {
     it('GET /clients still succeeds for an ordinary MEMBER partner user', async () => {
       dbGet.mockResolvedValue({ status: 'ACTIVE' });
-      const app = buildApp(MEMBER);
-      const res = await request(app).get('/api/v8/partner/clients');
+      currentActor = MEMBER;
+      const res = await request(server).get('/api/v8/partner/clients');
       expect(res.status).toBe(200);
       expect(getPartnerClients).toHaveBeenCalled();
     });
@@ -417,8 +478,8 @@ describe('AMD-PRT-ECONOMICS-002 — economic read authorization (v8 partner rout
       // an absent membership row must not affect them — regression guard
       // against accidentally widening the new gate onto this route.
       dbGet.mockResolvedValue(undefined);
-      const app = buildApp(MEMBER);
-      const res = await request(app).get('/api/v8/partner/clients');
+      currentActor = MEMBER;
+      const res = await request(server).get('/api/v8/partner/clients');
       expect(res.status).toBe(200);
     });
   });
@@ -430,8 +491,8 @@ describe('AMD-PRT-ECONOMICS-002 — economic read authorization (v8 partner rout
       // createPartnerEconomicsPolicyGuard (router.use, unmoved by this
       // change) must still refuse it with 410 before any role logic runs.
       dbGet.mockResolvedValue({ status: 'ACTIVE' });
-      const app = buildApp(MEMBER);
-      const res = await request(app)
+      currentActor = MEMBER;
+      const res = await request(server)
         .put('/api/v8/partner/payout-settings')
         .send({ method: 'BANK_TRANSFER' });
       expect(res.status).toBe(410);
@@ -442,8 +503,8 @@ describe('AMD-PRT-ECONOMICS-002 — economic read authorization (v8 partner rout
 
     it('PUT /payout-settings still returns 410 for an OWNER too (guard applies regardless of role)', async () => {
       dbGet.mockResolvedValue({ status: 'ACTIVE' });
-      const app = buildApp(OWNER);
-      const res = await request(app)
+      currentActor = OWNER;
+      const res = await request(server)
         .put('/api/v8/partner/payout-settings')
         .send({ method: 'BANK_TRANSFER' });
       expect(res.status).toBe(410);

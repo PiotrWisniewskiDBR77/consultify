@@ -34,11 +34,15 @@ DECLARE
   col             record;
   expected        record;
   mismatch        text := NULL;
-  check_src       text;
   fn_src          text;
   trg_count       integer;
   trg_disabled    integer;
   idx_missing     text := NULL;
+  col_attnum      smallint;
+  con_count       integer;
+  actual_def      text;
+  actual_norm     text;
+  canonical_norm  text;
 BEGIN
   SELECT EXISTS (
     SELECT 1 FROM pg_class c
@@ -131,88 +135,96 @@ BEGIN
   END IF;
 
   -- ---------------------------------------------------------------------
-  -- CHECK semantics. A missing CHECK, a widened OR-true CHECK and a superset
-  -- value list are all rejected: the receipt vocabulary must be exact.
+  -- CHECK semantics, EXACT. For each target column we locate the single
+  -- CHECK constraint that genuinely constrains it -- found by joining
+  -- pg_constraint.conkey against that column's own attnum, NEVER by matching
+  -- a constraint's definition TEXT against the column name -- and then
+  -- compare pg_get_constraintdef(oid), whitespace-normalized, against the
+  -- exact canonical definition string PostgreSQL itself produces for the
+  -- CREATE TABLE in Phase 2 below.
+  --
+  -- PostgreSQL rewrites `col IN (v1, v2, ...)` into
+  -- `col = ANY (ARRAY[v1::text, v2::text, ...])` at parse time, and that is
+  -- the only string pg_get_constraintdef ever emits for it: ruleutils.c
+  -- prints "= ANY (ARRAY[" from a fixed C string constant, not from the
+  -- original source text, so that keyword casing cannot vary with the
+  -- author's formatting or across PostgreSQL versions -- only the RUN
+  -- LENGTH of whitespace can, and the normalizer below collapses that.
+  -- A tautology widening (OR TRUE, OR 2=2, OR ('a'='a'),
+  -- OR <col> IS NOT NULL, or any other spelling), a superset value, a
+  -- subset value, a wrong type, or any other rewrite of the expression
+  -- parses to a different tree and therefore deparses to a different
+  -- pg_get_constraintdef string -- so every one of them fails this
+  -- comparison automatically. No per-spelling detection logic is needed or
+  -- present.
+  --
+  -- Literal string content (the actual enum values) is compared verbatim
+  -- and case-sensitively, matching PostgreSQL's own `=` runtime semantics.
+  -- Only whitespace is normalized here, deliberately never letter case:
+  -- folding the whole string's case would let e.g. a CHECK admitting
+  -- 'V8_Partner' pass as equal to the canonical 'v8_partner', even though
+  -- PostgreSQL's text equality treats those as different values and the
+  -- application would still be rejected at runtime.
   -- ---------------------------------------------------------------------
   FOR expected IN
     SELECT * FROM (VALUES
-      ('surface',     ARRAY['v8_partner','legacy_partner','superadmin_partner_settlements','superadmin_partner_config','service']),
-      ('operation',   ARRAY['commission','discount','accrual','payout','payout_settings','lifecycle_payout'])
-    ) AS t(col, vals)
+      ('surface',
+       'CHECK ((surface = ANY (ARRAY[''v8_partner''::text, ''legacy_partner''::text, ''superadmin_partner_settlements''::text, ''superadmin_partner_config''::text, ''service''::text])))'),
+      ('operation',
+       'CHECK ((operation = ANY (ARRAY[''commission''::text, ''discount''::text, ''accrual''::text, ''payout''::text, ''payout_settings''::text, ''lifecycle_payout''::text])))'),
+      ('decision',
+       'CHECK ((decision = ''AMD-PRT-ECONOMICS-002''::text))'),
+      ('denial_code',
+       'CHECK ((denial_code = ''PARTNER_ECONOMICS_POLICY_DISABLED''::text))')
+    ) AS t(col, canonical_def)
   LOOP
-    SELECT string_agg(pg_get_constraintdef(con.oid), ' ') INTO check_src
+    SELECT a.attnum INTO col_attnum
+      FROM pg_attribute a
+      JOIN pg_class c ON c.oid = a.attrelid
+      JOIN pg_namespace n ON n.oid = c.relnamespace
+     WHERE c.relname = 'partner_economics_policy_events'
+       AND n.nspname = current_schema()
+       AND a.attname = expected.col
+       AND NOT a.attisdropped;
+
+    -- The column-shape loop above already proved this column exists with
+    -- the canonical type, so col_attnum is always found at this point.
+
+    SELECT count(*) INTO con_count
       FROM pg_constraint con
       JOIN pg_class c ON c.oid = con.conrelid
       JOIN pg_namespace n ON n.oid = c.relnamespace
      WHERE c.relname = 'partner_economics_policy_events'
        AND n.nspname = current_schema()
        AND con.contype = 'c'
-       AND pg_get_constraintdef(con.oid) LIKE '%' || expected.col || '%';
+       AND con.conkey = ARRAY[col_attnum]::smallint[];
 
-    IF check_src IS NULL THEN
+    IF con_count = 0 THEN
       RAISE EXCEPTION
-        'AMD-PRT-ECONOMICS-002 preflight: CHECK on % is missing; malformed receipts would be storable. Refusing before ANY mutation.',
+        'AMD-PRT-ECONOMICS-002 preflight: no single-column CHECK constrains %; malformed receipts would be storable. Refusing before ANY mutation.',
         expected.col;
-    END IF;
-
-    -- Widening detector, HONEST SCOPE: this recognises the two literal
-    -- spellings OR TRUE and OR 1=1 (optionally parenthesised). It is NOT a
-    -- general tautology solver -- OR 2=2, OR ('a'='a') and
-    -- OR <col> IS NOT NULL would each defeat the CHECK and pass this test.
-    -- Writing a SQL theorem prover here would be false assurance; the exact
-    -- spellings covered are pinned by tested negatives in
-    -- tests/integration/partners/partner-economics-telemetry.realdb.test.ts.
-    IF check_src ~* '\mor\M\s+(true|\(?1\s*=\s*1)' THEN
+    ELSIF con_count > 1 THEN
       RAISE EXCEPTION
-        'AMD-PRT-ECONOMICS-002 preflight: CHECK on % is widened with a recognised OR-true term (%). Note: only the literal OR TRUE / OR 1=1 spellings are detected. Refusing before ANY mutation.',
-        expected.col, check_src;
+        'AMD-PRT-ECONOMICS-002 preflight: % single-column CHECK constraint(s) found on %, expected exactly 1. Refusing before ANY mutation.',
+        con_count, expected.col;
     END IF;
 
-    -- Every canonical value must be present...
-    FOR mismatch IN SELECT unnest(expected.vals) LOOP
-      IF position(quote_literal(mismatch) in check_src) = 0 THEN
-        RAISE EXCEPTION
-          'AMD-PRT-ECONOMICS-002 preflight: CHECK on % does not admit canonical value %. Refusing before ANY mutation.',
-          expected.col, mismatch;
-      END IF;
-    END LOOP;
-
-    -- ...and the count of quoted literals must not exceed the canonical set,
-    -- which rejects a superset that admits extra values.
-    -- HONEST SCOPE: check_src is aggregated from every CHECK on this table whose
-    -- definition text merely CONTAINS the column name, so an unrelated
-    -- constraint mentioning 'operation' or 'surface' inside a string literal
-    -- inflates this count and can trip a false SUPERSET rejection. That fails
-    -- CLOSED (it blocks the migration, it never admits bad data), which is the
-    -- safe direction, but it is a heuristic and is described as one.
-    IF (length(check_src) - length(replace(check_src, '''', ''))) / 2
-       > array_length(expected.vals, 1) THEN
-      RAISE EXCEPTION
-        'AMD-PRT-ECONOMICS-002 preflight: CHECK on % admits a SUPERSET of the canonical values (%). Refusing before ANY mutation.',
-        expected.col, check_src;
-    END IF;
-  END LOOP;
-
-  -- Pinned-literal CHECKs on decision / denial_code.
-  FOR expected IN
-    SELECT * FROM (VALUES
-      ('decision',    'AMD-PRT-ECONOMICS-002'),
-      ('denial_code', 'PARTNER_ECONOMICS_POLICY_DISABLED')
-    ) AS t(col, val)
-  LOOP
-    SELECT string_agg(pg_get_constraintdef(con.oid), ' ') INTO check_src
+    SELECT pg_get_constraintdef(con.oid) INTO actual_def
       FROM pg_constraint con
       JOIN pg_class c ON c.oid = con.conrelid
       JOIN pg_namespace n ON n.oid = c.relnamespace
      WHERE c.relname = 'partner_economics_policy_events'
        AND n.nspname = current_schema()
        AND con.contype = 'c'
-       AND pg_get_constraintdef(con.oid) LIKE '%' || expected.col || '%';
+       AND con.conkey = ARRAY[col_attnum]::smallint[];
 
-    IF check_src IS NULL OR position(quote_literal(expected.val) in check_src) = 0 THEN
+    actual_norm    := btrim(regexp_replace(actual_def, '\s+', ' ', 'g'));
+    canonical_norm := btrim(regexp_replace(expected.canonical_def, '\s+', ' ', 'g'));
+
+    IF actual_norm <> canonical_norm THEN
       RAISE EXCEPTION
-        'AMD-PRT-ECONOMICS-002 preflight: CHECK pinning % to % is missing or altered. Refusing before ANY mutation.',
-        expected.col, expected.val;
+        'AMD-PRT-ECONOMICS-002 preflight: CHECK on % is not byte-exact canonical. Found: [%]  Expected: [%]. Refusing before ANY mutation.',
+        expected.col, actual_norm, canonical_norm;
     END IF;
   END LOOP;
 

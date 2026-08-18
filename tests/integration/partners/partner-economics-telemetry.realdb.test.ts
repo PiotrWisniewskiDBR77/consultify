@@ -403,7 +403,12 @@ const WRONG_VARIANTS: WrongVariant[] = [
       VALUES
         ('seed-missing-column','user-seed','org-seed','POST','/seed','v8_partner','commission','AMD-PRT-ECONOMICS-002','PARTNER_ECONOMICS_POLICY_DISABLED','identity-seed-missing-column','fingerprint-seed-missing-column');
     `,
-    expectedMessage: /non-canonical shape \(missing column "partner_org_id"\)/,
+    // NOTE: the migration's RAISE EXCEPTION builds this fragment via
+    // format('missing column %I', ...). %I is quote_ident, which only adds
+    // double quotes when the identifier actually needs them (uppercase,
+    // keyword, leading digit, special chars). 'partner_org_id' is a plain
+    // lower-case, non-keyword identifier, so it comes through UNQUOTED.
+    expectedMessage: /non-canonical shape \(missing column partner_org_id\)/,
   },
   {
     name: 'wrong-typed column (route_path is integer)',
@@ -429,7 +434,10 @@ const WRONG_VARIANTS: WrongVariant[] = [
       VALUES
         ('seed-wrong-type','user-seed','org-seed','partner-seed','POST',1,'v8_partner','commission','AMD-PRT-ECONOMICS-002','PARTNER_ECONOMICS_POLICY_DISABLED','identity-seed-wrong-type','fingerprint-seed-wrong-type');
     `,
-    expectedMessage: /column "route_path" has type integer, expected text/,
+    // Same %I-is-not-always-quoted note as above: 'route_path' is a plain
+    // lower-case identifier, so format('column %I has type %s, ...') emits
+    // it unquoted too.
+    expectedMessage: /column route_path has type integer, expected text/,
   },
   {
     name: 'OR-true-widened CHECK on surface',
@@ -455,7 +463,21 @@ const WRONG_VARIANTS: WrongVariant[] = [
       VALUES
         ('seed-or-true','user-seed','org-seed','partner-seed','POST','/seed','v8_partner','commission','AMD-PRT-ECONOMICS-002','PARTNER_ECONOMICS_POLICY_DISABLED','identity-seed-or-true','fingerprint-seed-or-true');
     `,
-    expectedMessage: /CHECK on surface is widened with an OR-true term/,
+    // The migration no longer runs a heuristic OR-true detector. It compares
+    // pg_get_constraintdef(oid) for the single-column CHECK on `surface`,
+    // whitespace-normalized, against the exact canonical definition string.
+    // An OR-true widening and a superset value list both fail that same
+    // comparison and raise the SAME generic template:
+    //   'AMD-PRT-ECONOMICS-002 preflight: CHECK on % is not byte-exact
+    //    canonical. Found: [%]  Expected: [%]. Refusing before ANY mutation.'
+    // The migration text itself does not distinguish "OR-true" from
+    // "superset" -- only the dynamic Found: [...] content (produced by
+    // Postgres's own deparser) differs, because it echoes back whatever this
+    // fixture actually seeded. So this regex asserts the shared template
+    // AND the seed-specific marker ("OR true", which this variant's DDL
+    // literally appended to the CHECK) via lookaheads, independent of the
+    // exact bracket/paren spelling pg_get_constraintdef produces.
+    expectedMessage: /(?=[\s\S]*CHECK on surface is not byte-exact canonical)(?=[\s\S]*OR true)/,
   },
   {
     name: 'superset CHECK value list on surface',
@@ -481,7 +503,14 @@ const WRONG_VARIANTS: WrongVariant[] = [
       VALUES
         ('seed-superset','user-seed','org-seed','partner-seed','POST','/seed','v8_partner','commission','AMD-PRT-ECONOMICS-002','PARTNER_ECONOMICS_POLICY_DISABLED','identity-seed-superset','fingerprint-seed-superset');
     `,
-    expectedMessage: /admits a SUPERSET of the canonical values/,
+    // Same shared-template situation as the OR-true variant above: this also
+    // raises 'CHECK on surface is not byte-exact canonical...'. The marker
+    // that distinguishes THIS variant is 'shadow_admin_surface', the extra
+    // enum value this fixture's DDL added to the value list -- it will
+    // appear verbatim in the Found: [...] fragment (quoted as
+    // 'shadow_admin_surface'::text by Postgres's deparser) and appears in
+    // neither the canonical definition nor the OR-true variant's DDL.
+    expectedMessage: /(?=[\s\S]*CHECK on surface is not byte-exact canonical)(?=[\s\S]*shadow_admin_surface)/,
   },
 ];
 
@@ -659,7 +688,11 @@ describeReal.sequential('AMD-PRT-ECONOMICS-002 — partner_economics_policy_even
         partnerOrgId: `${TEST_PREFIX}partner-concurrency`,
         userId: `${TEST_PREFIX}user-concurrency`,
       };
-      concurrencyIdentity = partnerEconomicsReceiptIdentity({ requestId, organizationId }).identity;
+      concurrencyIdentity = partnerEconomicsReceiptIdentity({
+        requestId,
+        organizationId,
+        userId: `${TEST_PREFIX}user-concurrency`,
+      }).identity;
       concurrencyOrg = organizationId;
 
       const attempt = () =>
@@ -685,11 +718,83 @@ describeReal.sequential('AMD-PRT-ECONOMICS-002 — partner_economics_policy_even
     }, 30_000);
   });
 
+  describe('4b. Two different users, same x-request-id, same tenant: two distinct receipts, never a collision', () => {
+    it('two different actors sending the same caller-supplied x-request-id on the same org each get their own receipt', async () => {
+      // Regression guard: `partnerEconomicsReceiptIdentity` scopes identity to
+      // (organizationId, userId, requestId) precisely because `x-request-id`
+      // is caller-supplied and two different users in the same tenant can
+      // legitimately send the same value. If `userId` is ever dropped from
+      // the identity again, the second denial below hits ON CONFLICT DO
+      // NOTHING on the first user's row, fails the fingerprint comparison
+      // (different userId => different fingerprint), and throws
+      // PartnerEconomicsReceiptCollisionError instead of persisting its own
+      // evidence — which is exactly the silently-discarded-evidence bug this
+      // test exists to catch.
+      const requestId = `${TEST_PREFIX}two-users-same-reqid`;
+      const organizationId = `${TEST_PREFIX}org-two-users`;
+      const userIdA = `${TEST_PREFIX}user-two-users-a`;
+      const userIdB = `${TEST_PREFIX}user-two-users-b`;
+
+      const identityA = partnerEconomicsReceiptIdentity({ requestId, organizationId, userId: userIdA }).identity;
+      const identityB = partnerEconomicsReceiptIdentity({ requestId, organizationId, userId: userIdB }).identity;
+      expect(identityA).not.toBe(identityB);
+
+      await expect(
+        denyOnce({
+          requestId,
+          organizationId,
+          partnerOrgId: `${TEST_PREFIX}partner-two-users`,
+          userId: userIdA,
+          method: 'POST',
+          path: '/payouts/request',
+          surface: 'v8_partner',
+          operation: 'payout',
+        })
+      ).resolves.toBeUndefined();
+
+      // Same org, same x-request-id, DIFFERENT user. Must NOT throw
+      // PartnerEconomicsReceiptCollisionError and must NOT be silently
+      // discarded as a fingerprint mismatch on the first user's row.
+      await expect(
+        denyOnce({
+          requestId,
+          organizationId,
+          partnerOrgId: `${TEST_PREFIX}partner-two-users`,
+          userId: userIdB,
+          method: 'POST',
+          path: '/payouts/request',
+          surface: 'v8_partner',
+          operation: 'payout',
+        })
+      ).resolves.toBeUndefined();
+
+      const rows = await sql.query(
+        `SELECT receipt_identity, user_id FROM ${TABLE} WHERE organization_id = $1 AND request_id = $2 ORDER BY user_id`,
+        [organizationId, requestId]
+      );
+      expect(rows.rowCount, 'both users must have persisted their own receipt for the same org+requestId').toBe(2);
+
+      const persistedIdentities = rows.rows.map((r) => r.receipt_identity as string).sort();
+      expect(
+        persistedIdentities,
+        'the two persisted receipt_identity values must be distinct, one per user'
+      ).toEqual([identityA, identityB].sort());
+
+      const byUser = new Map(rows.rows.map((r) => [r.user_id as string, r.receipt_identity as string]));
+      expect(byUser.get(userIdA)).toBe(identityA);
+      expect(byUser.get(userIdB)).toBe(identityB);
+    }, 30_000);
+  });
+
   describe('5. Altered-key collision: same identity, altered payload => throws, zero new rows', () => {
     it('a replay with the same request id + tenant but an altered method is refused as a binding collision', async () => {
       const requestId = `${TEST_PREFIX}collision`;
       const organizationId = `${TEST_PREFIX}org-collision`;
-      const identity = partnerEconomicsReceiptIdentity({ requestId, organizationId }).identity;
+      const identity = partnerEconomicsReceiptIdentity({
+        requestId,
+        organizationId,
+        userId: `${TEST_PREFIX}user-collision`,
+      }).identity;
 
       await denyOnce({
         requestId,
@@ -745,7 +850,11 @@ describeReal.sequential('AMD-PRT-ECONOMICS-002 — partner_economics_policy_even
   describe('6. Without x-request-id: honest non-replayable behaviour (documented, not asserted as exactly-one)', () => {
     it('two denials with no x-request-id each get their own row and neither throws', async () => {
       const organizationId = `${TEST_PREFIX}org-no-reqid`;
-      const noIdIdentity = partnerEconomicsReceiptIdentity({ requestId: null, organizationId });
+      const noIdIdentity = partnerEconomicsReceiptIdentity({
+        requestId: null,
+        organizationId,
+        userId: `${TEST_PREFIX}user-no-reqid`,
+      });
       expect(noIdIdentity.replayable).toBe(false);
 
       await expect(

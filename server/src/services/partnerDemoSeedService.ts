@@ -3,6 +3,7 @@ import crypto from 'node:crypto';
 import { getDatabase } from '../database/Database.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { isPartnerEconomicsOperationAvailable } from './partnerEconomicsPolicy.js';
 import { ensurePartnerReferralIdentity } from './partnerReferralService.js';
 
 const DEMO_CURRENCY = 'EUR';
@@ -55,6 +56,30 @@ export async function ensurePartnerDemoDataset(partnerOrgId: string): Promise<vo
   }
   const db = getDatabase();
 
+  // AMD-PRT-ECONOMICS-002 (GAP A). This function runs as router-level
+  // middleware (via requirePartnerOrgId / the v8 partner bridge) on
+  // effectively every partner request, including plain GETs, and its whole
+  // body below is already wrapped in a single try/catch that swallows any
+  // error as a generic warning (see the catch at the bottom of this
+  // function). That matters for HOW this guard is implemented:
+  //
+  // Calling `assertPartnerEconomicsOperationAllowed()` (throw-based) here
+  // would NOT break ordinary requests — the outer catch already swallows any
+  // throw — but it WOULD abort the rest of THIS function on the first
+  // economic block, silently skipping the non-economic seeding that runs
+  // afterwards (campaign links, referral clicks), which the owner decision
+  // requires to keep working. So this guard instead reads the predicate
+  // (`isPartnerEconomicsOperationAvailable()`) once and SKIPS only the two
+  // economic write blocks (attributions, commission transactions/payouts)
+  // with a log line, letting every non-economic block after them still run.
+  const economicsSeedWritesAllowed = isPartnerEconomicsOperationAvailable();
+  if (!economicsSeedWritesAllowed) {
+    logger.info(
+      '[PartnerDemoSeedService] Skipping economics demo seed writes (attributions/commissions/payouts) — disallowed by owner policy AMD-PRT-ECONOMICS-002',
+      { partnerOrgId }
+    );
+  }
+
   try {
     await ensurePartnerReferralIdentity(partnerOrgId);
 
@@ -86,7 +111,7 @@ export async function ensurePartnerDemoDataset(partnerOrgId: string): Promise<vo
     const demoOrganizations = [crypto.randomUUID(), crypto.randomUUID(), crypto.randomUUID()];
     const attributionIds = [crypto.randomUUID(), crypto.randomUUID(), crypto.randomUUID()];
 
-    if (hasAttributions && attrCount === 0) {
+    if (economicsSeedWritesAllowed && hasAttributions && attrCount === 0) {
       await DbPromise.transaction([
         {
           sql: `INSERT INTO partner_attributions
@@ -144,7 +169,7 @@ export async function ensurePartnerDemoDataset(partnerOrgId: string): Promise<vo
       ]);
     }
 
-    if (hasCommissions && txCount === 0) {
+    if (economicsSeedWritesAllowed && hasCommissions && txCount === 0) {
       const paidPayoutId = crypto.randomUUID();
       const pendingPayoutId = crypto.randomUUID();
       const t1 = crypto.randomUUID();

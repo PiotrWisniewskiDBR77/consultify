@@ -20,6 +20,7 @@ import { NextFunction, Request, Response, Router } from 'express';
 
 import { getDatabase } from '../database/Database.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
+import { requireOrgRole } from '../middleware/rbac.middleware.js';
 import { createLegacyCutoverGuard } from '../services/legacyCutover/legacyCutoverKernel.js';
 import { requireActiveMembership } from '../services/legacyCutover/requireActiveMembership.js';
 import {
@@ -235,6 +236,31 @@ async function requirePartnerOrgId(req: Request, res: Response): Promise<string 
   await ensurePartnerDemoDataset(partnerOrgId);
   return partnerOrgId;
 }
+
+/**
+ * AMD-PRT-ECONOMICS-002 (owner decision 2A) read-side gate — legacy surface.
+ *
+ * Mirrors `requirePartnerEconomicsReadAccess` in
+ * `server/src/routes/v8/partner.routes.ts` (~line 127) exactly, applied here
+ * to the five legacy economic GETs that had no role check at all: any
+ * authenticated user with an active partner-org membership, of any role,
+ * could read full commission/payout history through this router.
+ * `requireActiveMembership` MUST run first — it re-reads a real, per-request
+ * `status='ACTIVE'` row from `organization_members` and denies a bare
+ * SUPERADMIN claim with no live membership row, a revoked membership, and a
+ * foreign-tenant membership; `requireOrgRole('admin')` then requires
+ * ADMIN-or-above (OWNER canonicalizes to the same bypass tier). Placing the
+ * membership check second would let a membership-less SUPERADMIN claim reach
+ * the role bypass here before ever being denied.
+ *
+ * Applied ONLY to the five economic GETs named in AMD-PRT-ECONOMICS-002's
+ * gap list (payout-settings, earnings, commission-transactions, payouts,
+ * commissions) — every other legacy partner GET (connection, catalog,
+ * organization, referral-tools, referral-analytics, attributions, clients,
+ * projects, employees, certifications, resources, tiers, invoices, licenses,
+ * metrics, stats, dashboard) stays open to ordinary partner users.
+ */
+const requirePartnerEconomicsReadAccess = [requireActiveMembership, requireOrgRole('admin')];
 
 // Apply authentication to all routes
 router.use(verifyToken);
@@ -771,7 +797,10 @@ router.put('/organization/listing', async (req: Request, res: Response, next: Ne
  * GET /api/partners/payout-settings
  * Get partner-owned payout settings
  */
-router.get('/payout-settings', async (req: Request, res: Response, next: NextFunction) => {
+router.get(
+  '/payout-settings',
+  ...requirePartnerEconomicsReadAccess,
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const partnerOrgId = await requirePartnerOrgId(req, res);
     if (!partnerOrgId) return;
@@ -788,7 +817,8 @@ router.get('/payout-settings', async (req: Request, res: Response, next: NextFun
     }
     next(error);
   }
-});
+  }
+);
 
 /**
  * PUT /api/partners/payout-settings
@@ -981,7 +1011,10 @@ router.get('/attributions', async (req: Request, res: Response, next: NextFuncti
  * `EarningsSection.tsx:304`). Po migracji FE (grep `/api/partners/earnings` = 0) →
  * usunąć. Emituje nagłówki `Deprecation`/`Link`, żeby zużycie było widoczne w logach.
  */
-router.get('/earnings', async (req: Request, res: Response, next: NextFunction) => {
+router.get(
+  '/earnings',
+  ...requirePartnerEconomicsReadAccess,
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const partnerOrgId = await requirePartnerOrgId(req, res);
     if (!partnerOrgId) return;
@@ -1005,13 +1038,17 @@ router.get('/earnings', async (req: Request, res: Response, next: NextFunction) 
     logger.error('Error fetching earnings:', error);
     next(error);
   }
-});
+  }
+);
 
 /**
  * GET /api/partners/commission-transactions
  * Get detailed commission transactions
  */
-router.get('/commission-transactions', async (req: Request, res: Response, next: NextFunction) => {
+router.get(
+  '/commission-transactions',
+  ...requirePartnerEconomicsReadAccess,
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const partnerOrgId = await requirePartnerOrgId(req, res);
     if (!partnerOrgId) return;
@@ -1043,7 +1080,8 @@ router.get('/commission-transactions', async (req: Request, res: Response, next:
     logger.error('Error fetching commission transactions:', error);
     next(error);
   }
-});
+  }
+);
 
 /**
  * POST /api/partners/payouts/request
@@ -1082,7 +1120,10 @@ router.post('/payouts/request', async (req: Request, res: Response, next: NextFu
  * GET /api/partners/payouts
  * Get payout history
  */
-router.get('/payouts', async (req: Request, res: Response, next: NextFunction) => {
+router.get(
+  '/payouts',
+  ...requirePartnerEconomicsReadAccess,
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     // FIX (module 19 MVP): previously read `req.user?.partnerOrgId`, which the auth
     // middleware never sets, so this route was broken (403) for every caller.
@@ -1114,7 +1155,8 @@ router.get('/payouts', async (req: Request, res: Response, next: NextFunction) =
     logger.error('Error fetching payouts:', error);
     next(error);
   }
-});
+  }
+);
 
 // =============================================================================
 // DASHBOARD & METRICS ROUTES
@@ -1953,7 +1995,10 @@ router.post('/licenses/order', async (req: Request, res: Response, next: NextFun
  * GET /api/partners/commissions
  * Commission transactions for the authenticated partner org (read-only).
  */
-router.get('/commissions', async (req: Request, res: Response, next: NextFunction) => {
+router.get(
+  '/commissions',
+  ...requirePartnerEconomicsReadAccess,
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = (req as any).user?.id || (req as any).userId;
     if (!userId) return res.status(401).json({ success: false, error: 'Unauthorized' });
@@ -1985,7 +2030,8 @@ router.get('/commissions', async (req: Request, res: Response, next: NextFunctio
     }
     next(error);
   }
-});
+  }
+);
 
 // =============================================================================
 // INVOICES ROUTES

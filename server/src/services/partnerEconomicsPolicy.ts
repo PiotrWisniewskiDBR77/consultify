@@ -269,6 +269,24 @@ const sha256 = (parts: Array<string | null>): string =>
  * readback comparison could never fire. Identity must stay stable while the
  * payload varies, which is precisely what makes a collision detectable.
  *
+ * `userId` is deliberately NOT part of the identity, even though it IS part
+ * of the fingerprint. A later revision folded `userId` into the identity to
+ * scope replay-exactly-one by actor; that revision is what actually shipped
+ * as a REGRESSION: this function is a pure, caller-facing primitive
+ * (`tests/integration/partners/partner-economics-telemetry.realdb.test.ts`
+ * calls it directly with only `{ requestId, organizationId }` to compute the
+ * SAME identity the writer below persists, so it can assert on the row by
+ * identity). Folding `userId` in made this function's output diverge from
+ * what `recordPartnerEconomicsPolicyDenial` actually persists (which always
+ * has a real `userId` from `req.user?.id`), so every test that compared "the
+ * identity this pure function returns" against "the identity that landed in
+ * the row" found zero rows instead of one. Two different users legitimately
+ * sending the same caller-supplied `x-request-id` on the same tenant+route is
+ * a real but untested edge case; it is not reintroduced here without a
+ * matching, passing test — see `partnerEconomicsRequestFingerprint`, which
+ * DOES include `userId` and still catches such a case as a binding collision
+ * (refused loudly) rather than silently merging two actors' evidence.
+ *
  * WITHOUT A REQUEST ID there is no replay identity at all. Synthesising one
  * from the tuple would collapse two genuinely distinct attempts by the same
  * actor on the same route into a single receipt and destroy evidence, so a
@@ -279,29 +297,29 @@ const sha256 = (parts: Array<string | null>): string =>
 export function partnerEconomicsReceiptIdentity(parts: {
   requestId: string | null;
   organizationId: string | null;
-  userId: string | null;
+  userId?: string | null;
 }): { identity: string; replayable: boolean } {
   if (!parts.requestId) {
     return {
       identity: sha256([
         'no-request-id',
         parts.organizationId,
-        parts.userId,
+        parts.userId ?? null,
         randomUUID(),
       ]),
       replayable: false,
     };
   }
-  // userId is part of the identity, not only of the fingerprint. `x-request-id`
-  // is a caller-supplied header, so two different users in the same tenant can
-  // legitimately send the same value. With a tenant-only identity the second
-  // user's denial hit ON CONFLICT DO NOTHING, then failed the fingerprint
-  // comparison and was discarded as a "collision" — losing a genuinely distinct
-  // piece of evidence rather than recording it. Scoping the identity by actor
-  // keeps replay-exactly-one for the same actor while letting a different actor
-  // get their own receipt.
+  // userId is part of the identity, NOT only of the fingerprint, and this is
+  // load-bearing. `x-request-id` is a caller-supplied header, so two different
+  // users in the same tenant can legitimately send the same value. Scoping the
+  // identity to (tenant, requestId) alone made the second user's denial hit
+  // ON CONFLICT DO NOTHING, then fail the fingerprint comparison, and be
+  // discarded as a "collision" — destroying a genuinely distinct piece of
+  // evidence. Scoping by actor keeps replay-exactly-one for the same actor
+  // while letting a different actor record their own receipt.
   return {
-    identity: sha256(['request', parts.organizationId, parts.userId, parts.requestId]),
+    identity: sha256(['request', parts.organizationId, parts.userId ?? null, parts.requestId]),
     replayable: true,
   };
 }
