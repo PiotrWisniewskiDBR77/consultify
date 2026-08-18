@@ -99,6 +99,9 @@ vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
 vi.mock('../../../server/src/middleware/rbac.middleware.js', () => ({
   requireOrgAccess: () => (_req: any, _res: any, next: () => void) => next(),
 }));
+vi.mock('../../../server/src/middleware/auditsStrictMembership.middleware.js', () => ({
+  requireActiveTenantMembership: (_req: any, _res: any, next: () => void) => next(),
+}));
 vi.mock('../../../server/src/middleware/demoGuard.middleware.js', () => ({
   demoContextMiddleware: (_req: any, _res: any, next: () => void) => next(),
 }));
