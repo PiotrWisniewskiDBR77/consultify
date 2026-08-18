@@ -1,7 +1,7 @@
 {
   "taskId": "PRT-POL-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "d25c354994b54e247aef791cf5adcfa4ba606ad3",
+  "productSha": "c8ffd7be0e9b848932064b70a5c8271a9da45f1e",
   "reconciliationSha": "d25c354994b54e247aef791cf5adcfa4ba606ad3",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
   "ownerDecision": {"recordId": "INTERNAL-BETA-OWNER-DECISIONS-20260817-AMENDMENT-01", "decisionId": "AMD-PRT-POLICY-CLOSED-001", "status": "POLICY_BOUNDARY_APPROVED"},
