@@ -113,6 +113,8 @@ describe.skipIf(!enabled)(
     let pool: Pool;
     let lockClient: PoolClient;
     let app: express.Express;
+    let safeDatabaseVerified = false;
+    let advisoryLockHeld = false;
 
     async function fullResidue(queryable: Pool | PoolClient) {
       const result = await queryable.query(
@@ -187,8 +189,13 @@ describe.skipIf(!enabled)(
       if (!databaseName.startsWith('consultify_fin_')) {
         throw new Error(`FIN_MODELING_MEMBERSHIP_GATE_TEST_DB_NOT_DISPOSABLE:${databaseName}`);
       }
+      // afterAll still runs when beforeAll throws. Set this only after the
+      // live database name passes the destructive-fixture guard, so a
+      // rejected database can never become a cleanup target.
+      safeDatabaseVerified = true;
       lockClient = await pool.connect();
       await lockClient.query(`SELECT pg_advisory_lock(hashtext($1))`, [suiteLock]);
+      advisoryLockHeld = true;
       const now = new Date().toISOString();
 
       await pool.query(
@@ -229,29 +236,62 @@ describe.skipIf(!enabled)(
       if (!pool) return;
       let cleanupClient: PoolClient | undefined;
       try {
-        cleanupClient = await pool.connect();
-        await cleanupClient.query('BEGIN');
-        // financial_model_events/outputs/validations all FK ON DELETE CASCADE
-        // from financial_models(id) — deleting the models cascades the rest.
-        await cleanupClient.query(`DELETE FROM financial_models WHERE id LIKE $1`, [`${prefix}%`]);
-        await cleanupClient.query(`DELETE FROM organization_members WHERE id LIKE $1`, [
-          `${prefix}%`,
-        ]);
-        await cleanupClient.query(`DELETE FROM users WHERE id LIKE $1`, [`${prefix}%`]);
-        await cleanupClient.query(`DELETE FROM organizations WHERE id = $1`, [orgA]);
-        expect(await fullResidue(cleanupClient)).toEqual(zeroResidue);
-        await cleanupClient.query('COMMIT');
-        expect(await fullResidue(pool)).toEqual(zeroResidue);
+        if (safeDatabaseVerified) {
+          cleanupClient = await pool.connect();
+          await cleanupClient.query('BEGIN');
+          // financial_model_events/outputs/validations all FK ON DELETE CASCADE
+          // from financial_models(id) — deleting the models cascades the rest.
+          await cleanupClient.query(`DELETE FROM financial_models WHERE id LIKE $1`, [`${prefix}%`]);
+          await cleanupClient.query(`DELETE FROM organization_members WHERE id LIKE $1`, [
+            `${prefix}%`,
+          ]);
+          await cleanupClient.query(`DELETE FROM users WHERE id LIKE $1`, [`${prefix}%`]);
+          await cleanupClient.query(`DELETE FROM organizations WHERE id = $1`, [orgA]);
+          expect(await fullResidue(cleanupClient)).toEqual(zeroResidue);
+          await cleanupClient.query('COMMIT');
+          expect(await fullResidue(pool)).toEqual(zeroResidue);
+        }
       } catch (error) {
-        if (cleanupClient) await cleanupClient.query('ROLLBACK');
+        if (cleanupClient) {
+          try {
+            await cleanupClient.query('ROLLBACK');
+          } catch {
+            // Preserve the original cleanup failure; final resource release
+            // remains mandatory below.
+          }
+        }
         throw error;
       } finally {
         cleanupClient?.release();
-        if (lockClient) {
-          await lockClient.query(`SELECT pg_advisory_unlock(hashtext($1))`, [suiteLock]);
-          lockClient.release();
+        try {
+          if (lockClient && advisoryLockHeld) {
+            const unlocked = await lockClient.query<{ unlocked: boolean }>(
+              `SELECT pg_advisory_unlock(hashtext($1)) AS unlocked`,
+              [suiteLock]
+            );
+            expect(unlocked.rows[0]?.unlocked).toBe(true);
+            advisoryLockHeld = false;
+
+            const trial = await lockClient.query<{ acquired: boolean }>(
+              `SELECT pg_try_advisory_lock(hashtext($1)) AS acquired`,
+              [suiteLock]
+            );
+            expect(trial.rows[0]?.acquired).toBe(true);
+            const trialUnlock = await lockClient.query<{ unlocked: boolean }>(
+              `SELECT pg_advisory_unlock(hashtext($1)) AS unlocked`,
+              [suiteLock]
+            );
+            expect(trialUnlock.rows[0]?.unlocked).toBe(true);
+            const held = await lockClient.query<{ count: number }>(
+              `SELECT count(*)::int AS count FROM pg_locks
+                WHERE locktype = 'advisory' AND pid = pg_backend_pid()`
+            );
+            expect(held.rows[0]?.count).toBe(0);
+          }
+        } finally {
+          lockClient?.release();
+          await pool.end();
         }
-        await pool.end();
       }
     });
 
