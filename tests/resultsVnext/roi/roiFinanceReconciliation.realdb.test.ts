@@ -72,6 +72,7 @@ let createRoiFinanceLink: FinanceLinkCommandsModule['createRoiFinanceLink'];
 let openRoiFinanceReconciliation: FinanceReconciliationCommandsModule['openRoiFinanceReconciliation'];
 let openRoiFinanceReconciliationFromProjection: FinanceReconciliationCommandsModule['openRoiFinanceReconciliationFromProjection'];
 let updateRoiFinanceReconciliationStatus: FinanceReconciliationCommandsModule['updateRoiFinanceReconciliationStatus'];
+let setUpdateStatusRaceHooksForTest: FinanceReconciliationCommandsModule['setUpdateStatusRaceHooksForTest'];
 let recordFinanceOwnerGrantEvent: FinanceReconciliationCommandsModule['recordFinanceOwnerGrantEvent'];
 let RoiFinanceLinkNotFoundError: FinanceReconciliationCommandsModule['RoiFinanceLinkNotFoundError'];
 let listRoiFinanceReconciliations: FinanceLinkRepositoryModule['listRoiFinanceReconciliations'];
@@ -295,6 +296,7 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
     openRoiFinanceReconciliation = financeReconciliationCommands.openRoiFinanceReconciliation;
     openRoiFinanceReconciliationFromProjection = financeReconciliationCommands.openRoiFinanceReconciliationFromProjection;
     updateRoiFinanceReconciliationStatus = financeReconciliationCommands.updateRoiFinanceReconciliationStatus;
+    setUpdateStatusRaceHooksForTest = financeReconciliationCommands.setUpdateStatusRaceHooksForTest;
     recordFinanceOwnerGrantEvent = financeReconciliationCommands.recordFinanceOwnerGrantEvent;
     RoiFinanceLinkNotFoundError = financeReconciliationCommands.RoiFinanceLinkNotFoundError;
     const financeLinkRepo: FinanceLinkRepositoryModule = await import(
@@ -1449,19 +1451,28 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
       const beforeA = await snapshotReconciliationState(fixtureA.caseId, openA.result.reconciliationId);
       const beforeB = await snapshotReconciliationState(fixtureB.caseId, openB.result.reconciliationId);
 
-      // No await between these two calls — genuinely launched together.
-      // Whichever code path actually intercepts the loser (the sequential
-      // fingerprint pre-check in precheckUpdateStatusReplay, if its own
-      // no-prior-event read happens to run after the winner already
-      // committed; or the DEFECT 2 fix in loadExistingResult's race
-      // fallback, if both calls clear the pre-check before either
-      // commits — the genuinely concurrent case this probe targets) — the
-      // OBSERVABLE CONTRACT is identical either way: exactly one winner,
-      // one loser rejected IDEMPOTENCY_FINGERPRINT_CONFLICT, zero writes to
-      // the loser. This is what makes it a genuine, not simulated, race:
-      // the test does not force interleaving, it only refuses to serialize
-      // the two calls with an `await` between them.
-      const [settledA, settledB] = await Promise.allSettled([
+      // Deterministically hold both calls immediately after their read-only
+      // replay precheck. Therefore neither can observe a committed prior
+      // event and the loser MUST travel through executeAtomicCommand's
+      // ON-CONFLICT/loadExistingResult fallback; this is not a test that can
+      // accidentally pass through the earlier sequential precheck.
+      let arrivals = 0;
+      let releaseBarrier!: () => void;
+      const barrier = new Promise<void>((resolve) => { releaseBarrier = resolve; });
+      let loadExistingResultCalls = 0;
+      setUpdateStatusRaceHooksForTest({
+        afterPrecheck: async () => {
+          arrivals += 1;
+          if (arrivals === 2) releaseBarrier();
+          await barrier;
+        },
+        onLoadExistingResult: () => { loadExistingResultCalls += 1; },
+      });
+
+      let settledA: PromiseSettledResult<Awaited<ReturnType<typeof updateRoiFinanceReconciliationStatus>>>;
+      let settledB: PromiseSettledResult<Awaited<ReturnType<typeof updateRoiFinanceReconciliationStatus>>>;
+      try {
+        [settledA, settledB] = await Promise.allSettled([
         updateRoiFinanceReconciliationStatus({
           reconciliationId: openA.result.reconciliationId,
           caseId: fixtureA.caseId,
@@ -1486,7 +1497,13 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
           idempotencyKey: sharedKey,
           access: { capabilities: ['*'], platformRole: null },
         }),
-      ]);
+        ]);
+      } finally {
+        setUpdateStatusRaceHooksForTest(undefined);
+      }
+
+      expect(arrivals).toBe(2);
+      expect(loadExistingResultCalls).toBe(1);
 
       const settled = [settledA, settledB];
       const fulfilled = settled.filter(

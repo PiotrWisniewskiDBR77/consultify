@@ -506,6 +506,37 @@ async function loadReconciliationForUpdate(
   );
   return result.rows[0];
 }
+
+/** Read-only replay/auth preflight. The real command reloads the aggregate
+ * with `FOR UPDATE` inside `executeAtomicCommand` before applying CAS. */
+async function loadReconciliationForReplay(
+  client: PoolClient,
+  reconciliationId: string,
+  organizationId: string
+): Promise<RoiFinanceReconciliationRow | undefined> {
+  const result = await client.query<RoiFinanceReconciliationRow>(
+    `SELECT * FROM rvn_roi_finance_reconciliations WHERE reconciliation_id = $1 AND organization_id = $2`,
+    [reconciliationId, organizationId]
+  );
+  return result.rows[0];
+}
+
+type UpdateStatusRaceHooks = {
+  afterPrecheck?: () => Promise<void>;
+  onLoadExistingResult?: () => void;
+};
+
+let updateStatusRaceHooksForTest: UpdateStatusRaceHooks | undefined;
+
+/** Deterministic concurrency seam for the real-PG race contract. It is
+ * deliberately inert outside NODE_ENV=test and never changes production
+ * command inputs or persistence semantics. */
+export function setUpdateStatusRaceHooksForTest(hooks?: UpdateStatusRaceHooks): void {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('Update-status race hooks are test-only.');
+  }
+  updateStatusRaceHooksForTest = hooks;
+}
 const reconciliationRowVersion = (row: RoiFinanceReconciliationRow) => row.row_version;
 
 export interface UpdateRoiFinanceReconciliationStatusInput {
@@ -550,9 +581,9 @@ export interface UpdateRoiFinanceReconciliationStatusInput {
  *      `applyMutation`, i.e. AFTER the CAS lock had already been taken —
  *      so a duplicate call still contended on the aggregate row lock. This
  *      corrects that: `precheckUpdateStatusReplay` below runs on its own,
- *      separate, read-only client, strictly before `executeAtomicCommand`
- *      is even called, so a genuine duplicate call performs ZERO writes
- *      and takes no row lock.
+ *      separate, read-only client and uses a SELECT without FOR UPDATE,
+ *      strictly before `executeAtomicCommand` is even called, so a genuine
+ *      duplicate call performs ZERO writes and takes no aggregate row lock.
  *   3. A fingerprint MISMATCH on the same idempotency key throws
  *      `IDEMPOTENCY_FINGERPRINT_CONFLICT`, from that same pre-check, also
  *      before any lock.
@@ -593,7 +624,7 @@ async function precheckUpdateStatusReplay(
     // `applyMutation` below, run here on a plain (non-CAS) read so an
     // unauthorized or invalid caller is rejected before any fingerprint
     // lookup or replay is even considered.
-    const currentRow = await loadReconciliationForUpdate(client, reconciliationId, organizationId);
+    const currentRow = await loadReconciliationForReplay(client, reconciliationId, organizationId);
     if (!currentRow || currentRow.case_id !== caseId) {
       throw new RoiFinanceReconciliationNotFoundError(reconciliationId, organizationId);
     }
@@ -727,6 +758,11 @@ export async function updateRoiFinanceReconciliationStatus(
   if (precheck.type === 'replay') {
     return precheck.outcome;
   }
+
+  // Test-only barrier used to make two different aggregates clear the
+  // replay precheck before either reaches the event-key race. Production has
+  // no hook, so this is a zero-cost no-op there.
+  await updateStatusRaceHooksForTest?.afterPrecheck?.();
 
   let beforeState: Record<string, unknown> | null = null;
   let isTerminalTransition = false;
@@ -901,6 +937,7 @@ export async function updateRoiFinanceReconciliationStatus(
     // `ExistingEventRow` (atomicWrite.ts) does not carry `payload` — a
     // deliberate, separate read below, not a change to that shared type.
     loadExistingResult: async (client, existingEvent) => {
+      updateStatusRaceHooksForTest?.onLoadExistingResult?.();
       const candidateFingerprint = updateStatusRequestFingerprint({
         expectedVersion,
         caseId,
