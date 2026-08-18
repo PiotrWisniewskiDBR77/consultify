@@ -16,10 +16,24 @@ test.describe('Partner V8 zero-writer — mounted signed session', () => {
     const state = readTestSupportState();
     const run = `prt-v8-${randomUUID().slice(0, 8)}`;
     const headers = { ...getAuthHeader(), 'content-type': 'application/json' };
-    const pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 1 });
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 2 });
+    const cleanupClient = await pool.connect();
     const fixtureApi = await playwrightRequest.newContext({ baseURL: API });
     let partnerOrgId = '';
     const legacyMutations: string[] = [];
+    let suiteLockHeld = false;
+
+    const databasePrefix = String(process.env.PRT_ZERO_WRITER_DB_PREFIX || '').trim();
+    expect(databasePrefix, 'explicit disposable database prefix').toMatch(/^prt_zero_writer(?:_|$)/);
+    const databaseName = String(
+      (await cleanupClient.query<{ current_database: string }>(`SELECT current_database()`)).rows[0]
+        ?.current_database || ''
+    );
+    expect(databaseName.startsWith(databasePrefix)).toBe(true);
+    await cleanupClient.query(`SELECT pg_advisory_lock(hashtext($1))`, [
+      'prt-v8-zero-writer-mounted-suite',
+    ]);
+    suiteLockHeld = true;
 
     page.on('request', (req) => {
       if (/\/api\/partners\//.test(req.url()) && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method())) {
@@ -169,28 +183,39 @@ test.describe('Partner V8 zero-writer — mounted signed session', () => {
     } finally {
       try {
         if (partnerOrgId) {
-          await pool.query(`DELETE FROM partner_payouts WHERE partner_org_id=$1`, [partnerOrgId]);
-          await pool.query(`DELETE FROM partner_commission_transactions WHERE partner_org_id=$1`, [partnerOrgId]);
-          await pool.query(`DELETE FROM partner_campaign_links WHERE partner_org_id=$1`, [partnerOrgId]);
-          await pool.query('BEGIN');
+          await cleanupClient.query('BEGIN');
           try {
-            await pool.query(`ALTER TABLE partner_program_ledger DISABLE TRIGGER trg_partner_program_ledger_guard`);
-            await pool.query(`DELETE FROM partner_program_ledger WHERE partner_org_id=$1`, [partnerOrgId]);
-            await pool.query(`ALTER TABLE partner_program_ledger ENABLE TRIGGER trg_partner_program_ledger_guard`);
-            await pool.query('COMMIT');
+            expect(
+              (await cleanupClient.query<{ tgenabled: string }>(
+                `SELECT tgenabled FROM pg_trigger WHERE tgrelid='partner_program_ledger'::regclass
+                  AND tgname='trg_partner_program_ledger_guard' AND NOT tgisinternal`
+              )).rows
+            ).toEqual([{ tgenabled: 'O' }]);
+            await cleanupClient.query(`DELETE FROM partner_payouts WHERE partner_org_id=$1`, [partnerOrgId]);
+            await cleanupClient.query(`DELETE FROM partner_commission_transactions WHERE partner_org_id=$1`, [partnerOrgId]);
+            await cleanupClient.query(`DELETE FROM partner_campaign_links WHERE partner_org_id=$1`, [partnerOrgId]);
+            await cleanupClient.query(`ALTER TABLE partner_program_ledger DISABLE TRIGGER trg_partner_program_ledger_guard`);
+            await cleanupClient.query(`DELETE FROM partner_program_ledger WHERE partner_org_id=$1`, [partnerOrgId]);
+            await cleanupClient.query(`ALTER TABLE partner_program_ledger ENABLE TRIGGER trg_partner_program_ledger_guard`);
+            await cleanupClient.query(`DELETE FROM partner_users WHERE partner_org_id=$1`, [partnerOrgId]);
+            await cleanupClient.query(`DELETE FROM partner_organizations WHERE id=$1`, [partnerOrgId]);
+            await cleanupClient.query('COMMIT');
           } catch (error) {
-            await pool.query('ROLLBACK');
+            try {
+              await cleanupClient.query(`ALTER TABLE partner_program_ledger ENABLE TRIGGER trg_partner_program_ledger_guard`);
+            } catch {
+              // ROLLBACK below restores any transaction-local trigger state.
+            }
+            await cleanupClient.query('ROLLBACK');
             throw error;
           }
           expect(
-            (await pool.query<{ tgenabled: string }>(
+            (await cleanupClient.query<{ tgenabled: string }>(
               `SELECT tgenabled FROM pg_trigger WHERE tgrelid='partner_program_ledger'::regclass
                 AND tgname='trg_partner_program_ledger_guard' AND NOT tgisinternal`
             )).rows
           ).toEqual([{ tgenabled: 'O' }]);
-          await pool.query(`DELETE FROM partner_users WHERE partner_org_id=$1`, [partnerOrgId]);
-          await pool.query(`DELETE FROM partner_organizations WHERE id=$1`, [partnerOrgId]);
-          const residue = await pool.query<{ n: number }>(
+          const residue = await cleanupClient.query<{ n: number }>(
             `SELECT
               (SELECT count(*) FROM partner_organizations WHERE id::text=$1::text)::int +
               (SELECT count(*) FROM partner_users WHERE partner_org_id::text=$1::text)::int +
@@ -202,7 +227,6 @@ test.describe('Partner V8 zero-writer — mounted signed session', () => {
           );
           expect(residue.rows[0]?.n).toBe(0);
         }
-        await pool.end();
         await fixtureApi.post('/api/test-support/cleanup', {
           headers: { 'x-test-support-key': SUPPORT_KEY, 'content-type': 'application/json' },
           data: { runId: state.runId },
@@ -212,7 +236,26 @@ test.describe('Partner V8 zero-writer — mounted signed session', () => {
           data: { runId: `${run}-foreign` },
         });
       } finally {
-        await fixtureApi.dispose();
+        try {
+          if (suiteLockHeld) {
+            const unlocked = await cleanupClient.query<{ unlocked: boolean }>(
+              `SELECT pg_advisory_unlock(hashtext($1)) AS unlocked`,
+              ['prt-v8-zero-writer-mounted-suite']
+            );
+            expect(unlocked.rows[0]?.unlocked).toBe(true);
+            suiteLockHeld = false;
+          }
+          expect(
+            (await cleanupClient.query<{ n: number }>(
+              `SELECT count(*)::int AS n FROM pg_locks
+                WHERE locktype='advisory' AND pid=pg_backend_pid()`
+            )).rows[0]?.n
+          ).toBe(0);
+        } finally {
+          cleanupClient.release();
+          await pool.end();
+          await fixtureApi.dispose();
+        }
       }
     }
   });
