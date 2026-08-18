@@ -58,6 +58,21 @@ export async function runAuditIndependenceSchedulerTick(): Promise<void> {
   }
 }
 
+/** Exact body registered with cron; exported for default-OFF/ON proof. */
+export async function runAdminIamAlertSchedulerTick(): Promise<void> {
+  if (process.env.ADMIN_IAM_ALERT_EVALUATOR_CRON_ENABLED === 'false') return;
+  try {
+    const { runAdminIamAlertEvaluationTick } =
+      await import('../jobs/adminIamAlertEvaluationJob.js');
+    const result = await runAdminIamAlertEvaluationTick();
+    if (result.failed > 0) {
+      logger.warn('[Scheduler] Admin IAM alert evaluation completed with failures', result);
+    }
+  } catch (err: any) {
+    logger.error('[Scheduler] Admin IAM alert evaluation tick failed:', err?.message || err);
+  }
+}
+
 export const Scheduler = {
   jobs: [] as cron.ScheduledTask[],
   async init(): Promise<void> {
@@ -891,8 +906,14 @@ export const Scheduler = {
     const job43 = cron.schedule('*/15 * * * *', runAuditIndependenceSchedulerTick);
     this.jobs.push(job43);
 
+    // 44. Internal Admin-IAM queue alert evaluation. Default-ON because it only
+    // maintains durable internal state/outbox; it does not configure external
+    // paging or claim deployed observation. Operators may explicitly disable it.
+    const job44 = cron.schedule('*/5 * * * *', runAdminIamAlertSchedulerTick);
+    this.jobs.push(job44);
+
     logger.info(
-      '[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min), AI Pattern Extraction (Every 6h), AI Consolidation (Daily 4:30AM), AI Cleanup (Weekly Mon 5AM), AI Memory Cleanup (Weekly Sun 2AM), Partial Response Cleanup (Hourly), Feedback Consolidation (Daily 4AM), Memory Cleanup (Every 6h), Webhook Retry (Every 5min), Auto Recovery (Every 2min), Invoice Reminders (Daily 9AM), Interview Reminders (Hourly), Idea Map Auto-Snapshots (Every 15min default), Agent Plan Scheduler (Every 2min), Artifact Lineage Reconciliation (Every 5min), Compute Job Lease Reaper (Every 1min), Audit Independence Detector Sweep (Every 15min tick, default-off)'
+      '[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min), AI Pattern Extraction (Every 6h), AI Consolidation (Daily 4:30AM), AI Cleanup (Weekly Mon 5AM), AI Memory Cleanup (Weekly Sun 2AM), Partial Response Cleanup (Hourly), Feedback Consolidation (Daily 4AM), Memory Cleanup (Every 6h), Webhook Retry (Every 5min), Auto Recovery (Every 2min), Invoice Reminders (Daily 9AM), Interview Reminders (Hourly), Idea Map Auto-Snapshots (Every 15min default), Agent Plan Scheduler (Every 2min), Artifact Lineage Reconciliation (Every 5min), Compute Job Lease Reaper (Every 1min), Audit Independence Detector Sweep (Every 15min tick, default-off), Admin IAM Alert Evaluation (Every 5min, default-on)'
     );
   },
   stop(): void {
