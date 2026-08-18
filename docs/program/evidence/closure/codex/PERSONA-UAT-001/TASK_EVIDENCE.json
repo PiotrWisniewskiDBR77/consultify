@@ -12,7 +12,75 @@
     "namedHumanJourneysCompleted": 0,
     "requiredRoles": ["Owner", "Admin", "Manager", "Consultant", "Member", "respondent", "partner"]
   },
-  "fixtures": {"status": "Automated role fixtures exist in module packets, but no named human UAT roster or signed journey record exists."},
+  "fixtures": {
+    "status": "Automated role fixtures exist in module packets, but no named human UAT roster or signed journey record exists.",
+    "candidateBinding": "TO_BE_BOUND_AT_SESSION_START_AFTER_ALL_16_UI_PACKETS_AND_FINAL_INTEGRATION",
+    "reviewerRule": "Each role requires a named person or explicitly accountable reviewer. One person may review more than one role only when each role has an independent journey record and sign-off.",
+    "defectRule": "Any P0 or P1 defect blocks that role. P2 or P3 may be accepted only with a named owner, written disposition and explicit ACCEPT_WITH_DEFECTS verdict."
+  },
+  "humanUatProtocol": {
+    "status": "READY_NOT_EXECUTED",
+    "sessionPrerequisites": [
+      "Bind candidateSha and verify the running client and server expose that exact SHA.",
+      "Complete and integrate the sixteen module UI packets before starting the final persona denominator.",
+      "Create seven independent named journey records even when one reviewer covers multiple roles.",
+      "Record screen or timestamped notes, positive outcome, forbidden-action outcome, defects and final verdict for every role.",
+      "Do not count automated tests, developer self-attestation or a journey on another SHA as human UAT."
+    ],
+    "verdicts": ["ACCEPT", "ACCEPT_WITH_DEFECTS", "REJECT"],
+    "journeys": [
+      {
+        "journeyId": "UAT-OWNER-01",
+        "role": "Owner",
+        "positiveJobStory": "Open governed organization context, inspect a sourced proposal, approve it and follow the resulting Initiative or governed downstream receipt through cold reopen.",
+        "forbiddenJobStory": "Attempt to approve stale, foreign-tenant or self-conflicting authority and confirm that no false success or downstream write appears.",
+        "signOff": "PENDING"
+      },
+      {
+        "journeyId": "UAT-ADMIN-01",
+        "role": "Admin",
+        "positiveJobStory": "Invite or manage an organization member, verify the resulting role or access state and reopen it after refresh.",
+        "forbiddenJobStory": "Attempt a SUPERADMIN-only, foreign-tenant or revoked-member action and confirm fail-closed presentation with no mutation.",
+        "signOff": "PENDING"
+      },
+      {
+        "journeyId": "UAT-MANAGER-01",
+        "role": "Manager",
+        "positiveJobStory": "Open an approved candidate, inspect Initiative definition and analysis, schedule governed work and reopen the linked Execution state.",
+        "forbiddenJobStory": "Attempt a stale transition or action outside the Manager capability and confirm conflict or denial without duplicate work.",
+        "signOff": "PENDING"
+      },
+      {
+        "journeyId": "UAT-CONSULTANT-01",
+        "role": "Consultant",
+        "positiveJobStory": "Create or continue a governed Assessment, Tool or Audit evidence journey, review the nonempty output and submit a proposal without directly writing a foreign downstream owner.",
+        "forbiddenJobStory": "Attempt to bypass required review, rights or approval and confirm that the UI explains the block and preserves the draft or evidence.",
+        "signOff": "PENDING"
+      },
+      {
+        "journeyId": "UAT-MEMBER-01",
+        "role": "Member",
+        "positiveJobStory": "Open a nonempty My Work item, complete an allowed task or decision step and verify the updated state after refresh.",
+        "forbiddenJobStory": "Attempt an owner, admin or approval-only action and confirm denial without losing the visible work item.",
+        "signOff": "PENDING"
+      },
+      {
+        "journeyId": "UAT-RESPONDENT-01",
+        "role": "respondent",
+        "positiveJobStory": "Use the invitation or token-only Interview journey, submit an answer and verify the allowed completion state without gaining organization navigation.",
+        "forbiddenJobStory": "Attempt replay, expired or foreign invitation access and confirm fail-closed behavior without exposing another respondent or organization.",
+        "signOff": "PENDING"
+      },
+      {
+        "journeyId": "UAT-PARTNER-01",
+        "role": "partner",
+        "positiveJobStory": "Connect the Partner profile and complete an allowed referral, campaign, certification, attribution or immutable-ledger read journey with cold reopen.",
+        "forbiddenJobStory": "Attempt excluded economics, accrual or payout behavior, a revoked membership action or foreign Partner access and confirm policy-blocked zero-write behavior.",
+        "signOff": "PENDING"
+      }
+    ],
+    "completionRule": "All seven signOff values must be ACCEPT or ACCEPT_WITH_DEFECTS, every accepted defect must have owner and disposition, and the consolidated human verdict must contain zero unresolved P0 or P1 defects on one exact candidate SHA."
+  },
   "negativeControls": {"automatedTestsNotAcceptedAsHumanUat": true, "namedReviewerPresent": false, "zeroP0P1HumanVerdict": false},
   "browserArtifacts": [],
   "rollback": {"method": "Evidence-only record; no runtime or schema change.", "executed": false},
