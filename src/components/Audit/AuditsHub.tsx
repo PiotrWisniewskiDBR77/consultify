@@ -817,19 +817,26 @@ export const AuditsHub: React.FC = () => {
                   empty-loading-states.md §2): the shared `EmptyState` with
                   `variant="error"` owns the icon, the assertive live region and
                   the "Try again" affordance. This tab previously showed the
-                  message with no way to retry at all. */}
-              {drdError && (
-                <div className="mb-4" data-testid="drd-reports-error">
+                  message with no way to retry at all.
+
+                  Error / loading / content are MUTUALLY EXCLUSIVE. A failed load
+                  replaces the table and its empty state: rendering "No DRD
+                  reports yet" beside a failure asserts something the app does
+                  not know, which docs/UI_UX/35_EMPTY_LOADING_ERROR_STATES.md
+                  forbids ("MUST NOT: Udawać sukcesu dla krytycznych operacji").
+
+                  The retry bumps `drdReloadNonce`, which is a dependency of the
+                  fetch effect, so it issues a real new request. */}
+              {drdError ? (
+                <div data-testid="drd-reports-error">
                   <EmptyState
                     variant="error"
-                    compact
-                    title={t('audit.drdReports.loadFailed', 'Could not load DRD reports')}
+                    title={t('audit.drdReportsLoadFailed', 'Could not load DRD reports')}
                     description={drdError}
                     onRetry={() => setDrdReloadNonce((n) => n + 1)}
                   />
                 </div>
-              )}
-              {drdLoading ? (
+              ) : drdLoading ? (
                 <div className="flex items-center justify-center gap-2 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface py-12 text-sm text-c-text-muted">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   {t('audit.loading')}

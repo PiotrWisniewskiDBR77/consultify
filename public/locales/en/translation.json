@@ -18044,7 +18044,10 @@
     "hideCategory": "Coming soon",
     "megatrends": {
       "notAvailable": "Megatrends data is not yet configured",
-      "contactAdmin": "Contact your admin"
+      "contactAdmin": "Contact your admin",
+      "loadFailed": "Could not load megatrends",
+      "loadFailedDesc": "The megatrend baseline for this industry could not be fetched.",
+      "radarLoadFailed": "Could not load the trend radar"
     },
     "domain": {
       "useCases": "Use cases",
@@ -22827,7 +22830,8 @@
     "confirmDeleteBulk": "Delete {{count}} audit program(s)?",
     "aiHintSummarize": "Summarize audit",
     "aiHintNextSteps": "Next steps",
-    "noSuggestedPlan": "No suggested plan"
+    "noSuggestedPlan": "No suggested plan",
+    "drdReportsLoadFailed": "Could not load DRD reports"
   },
   "audits": {
     "method": {

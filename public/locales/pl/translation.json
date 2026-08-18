@@ -18890,7 +18890,10 @@
     "hideCategory": "Wkrótce",
     "megatrends": {
       "notAvailable": "Dane Megatrendów nie są jeszcze dostępne",
-      "contactAdmin": "Skontaktuj się z administratorem"
+      "contactAdmin": "Skontaktuj się z administratorem",
+      "loadFailed": "Nie udało się wczytać megatrendów",
+      "loadFailedDesc": "Nie udało się pobrać bazowych megatrendów dla tej branży.",
+      "radarLoadFailed": "Nie udało się wczytać radaru trendów"
     },
     "domain": {
       "useCases": "Case'y użycia",
@@ -23932,7 +23935,8 @@
     "confirmDeleteBulk": "Usunąć {{count}} program(ów) audytowych?",
     "aiHintSummarize": "Podsumuj audyt",
     "aiHintNextSteps": "Następne kroki",
-    "noSuggestedPlan": "Brak sugerowanego planu"
+    "noSuggestedPlan": "Brak sugerowanego planu",
+    "drdReportsLoadFailed": "Nie udało się wczytać raportów DRD"
   },
   "audits": {
     "method": {
