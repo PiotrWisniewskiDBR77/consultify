@@ -2,7 +2,10 @@ import type { Express, RequestHandler } from 'express';
 
 import apiLoggingMiddleware from './middleware/apiLogging.middleware.js';
 import verifyToken, { validateOrgMembership } from './middleware/auth.middleware.js';
-import { requireActiveAuditsMembership } from './middleware/auditsStrictMembership.middleware.js';
+import {
+  requireActiveAuditsMembership,
+  requireActiveTenantMembership,
+} from './middleware/auditsStrictMembership.middleware.js';
 import { betaGate, createBetaGate } from './middleware/betaGate.middleware.js';
 import { demoContextMiddleware, demoWriteProtection } from './middleware/demoGuard.middleware.js';
 import { deprecationHeader } from './middleware/deprecationHeader.middleware.js';
@@ -430,6 +433,7 @@ const gatewayVerifyToken = verifyToken as unknown as RequestHandler;
  * four mounts so no other route's behaviour changes.
  */
 const auditsStrictMembership = requireActiveAuditsMembership as unknown as RequestHandler;
+const tenantStrictMembership = requireActiveTenantMembership as unknown as RequestHandler;
 const orgMembershipGuard = validateOrgMembership as unknown as RequestHandler;
 
 export class ApiGateway {
@@ -1336,7 +1340,11 @@ export class ApiGateway {
       mountStub('/api/workqueue', workqueueRoutes, 'workqueueRoutes');
       mountStub('/api/connectors', connectorRoutes, 'connectorRoutes');
       app.use('/api/audit', gatewayVerifyToken, auditsStrictMembership, auditEventsRoutes);
-      mountStub('/api/audit', [gatewayVerifyToken, auditsStrictMembership, auditRoutes], 'auditRoutes');
+      mountStub(
+        '/api/audit',
+        [gatewayVerifyToken, auditsStrictMembership, auditRoutes],
+        'auditRoutes'
+      );
       app.use('/api/mfa', mfaRoutes);
       app.use('/api/raid', raidRoutes);
       app.use(
@@ -1366,16 +1374,19 @@ export class ApiGateway {
       app.use(
         '/api/finance/candidate-handoff/investment-case',
         gatewayVerifyToken,
+        tenantStrictMembership,
         financeCandidateHandoffInvestmentCaseRoutes
       );
       app.use(
         '/api/finance/candidate-handoff/statement-pack',
         gatewayVerifyToken,
+        tenantStrictMembership,
         financeCandidateHandoffStatementPackRoutes
       );
       app.use(
         '/api/finance/candidate-handoff/valuation-recommendation',
         gatewayVerifyToken,
+        tenantStrictMembership,
         financeCandidateHandoffValuationRecommendationRoutes
       );
       app.use('/api/finance-v4', deprecationHeader('/api/v8/finance'), financeEnterpriseRoutes);
