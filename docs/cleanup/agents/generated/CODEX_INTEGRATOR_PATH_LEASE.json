@@ -5,12 +5,12 @@
   "lane": "codex",
   "branch": "codex/recovery-canonical-20260816",
   "rule": "Only listed tracked paths may be changed. Shared files require an integrator request. New files must live under an already-listed domain directory or the reserved migration/evidence namespace.",
-  "sha256": "a626ac0c356fc750569d14542c6908ee9381531f0669fce93f23773db934651c",
+  "sha256": "6b9eb7aa39e4631cca8c2729885eb48917cb91fb342657018a3f7ccc40070c9d",
   "counts": {
-    "all": 1552,
-    "source": 852,
-    "tests": 699,
-    "vitest": 685,
+    "all": 1556,
+    "source": 854,
+    "tests": 701,
+    "vitest": 687,
     "playwright": 14
   },
   "files": [
@@ -99,6 +99,10 @@
     "server/src/_backup/ts-js-collisions/validators/user-security-advanced.validators.js",
     "server/src/_backup/ts-js-collisions/workers/asyncJobProcessor.js",
     "server/src/controllers/superadmin/securityController.ts",
+    "server/src/cron/Scheduler.ts",
+    "server/src/cron/__tests__/adminIamAlertEvaluatorScheduler.test.ts",
+    "server/src/jobs/__tests__/adminIamAlertEvaluationJob.pg.test.ts",
+    "server/src/jobs/adminIamAlertEvaluationJob.ts",
     "server/src/middleware/securityHeaders.middleware.ts",
     "server/src/routes/__tests__/finance-enterprise.routes.auth.test.ts",
     "server/src/routes/__tests__/finance-statements.routes.assign.test.ts",
@@ -1652,6 +1656,8 @@
     "server/src/_backup/ts-js-collisions/validators/user-security-advanced.validators.js",
     "server/src/_backup/ts-js-collisions/workers/asyncJobProcessor.js",
     "server/src/controllers/superadmin/securityController.ts",
+    "server/src/cron/Scheduler.ts",
+    "server/src/jobs/adminIamAlertEvaluationJob.ts",
     "server/src/middleware/securityHeaders.middleware.ts",
     "server/src/routes/ai/ai-security.routes",
     "server/src/routes/ai/ai-security.routes.ts",
@@ -2423,6 +2429,8 @@
   ],
   "tests": {
     "vitest": [
+      "server/src/cron/__tests__/adminIamAlertEvaluatorScheduler.test.ts",
+      "server/src/jobs/__tests__/adminIamAlertEvaluationJob.pg.test.ts",
       "server/src/routes/__tests__/finance-enterprise.routes.auth.test.ts",
       "server/src/routes/__tests__/finance-statements.routes.assign.test.ts",
       "server/src/routes/__tests__/finance-statements.routes.f5wiring.test.ts",

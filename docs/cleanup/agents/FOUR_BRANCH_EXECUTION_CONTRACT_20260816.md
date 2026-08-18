@@ -72,7 +72,7 @@ the lease identity and must be reported in every handoff.
 - Lane A: `f9a412a47ab3aed81113d445d248f4e14ea365d293dd77b8fa1fcfad70b8eca5`
 - Lane B: `f4d75f0aed94f2e34acaec63d91c245495e7e0f658aa36d1122342c2acecc612`
 - Lane C: `7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c`
-- Codex: `a626ac0c356fc750569d14542c6908ee9381531f0669fce93f23773db934651c`
+- Codex: `6b9eb7aa39e4631cca8c2729885eb48917cb91fb342657018a3f7ccc40070c9d`
 
 Superseded lease identities, 2026-08-18 exact-path exception (integrator-granted,
 five enumerated paths only; generator keyword rules unchanged, no directory leased):
@@ -83,6 +83,14 @@ was superseded by the exact one-path AUD mounted-test exception for
 `server/src/routes/audits/__tests__/mounting.integration.test.ts`.
 Evidence records citing the superseded Codex identity predate this exception and
 remain historically accurate at the SHA where they were written.
+
+Codex `a626ac0c356fc750569d14542c6908ee9381531f0669fce93f23773db934651c`
+was superseded by the exact four-path `ADM-MVP-OPS-001` scheduler exception:
+`server/src/cron/Scheduler.ts`,
+`server/src/jobs/adminIamAlertEvaluationJob.ts`,
+`server/src/cron/__tests__/adminIamAlertEvaluatorScheduler.test.ts`, and
+`server/src/jobs/__tests__/adminIamAlertEvaluationJob.pg.test.ts`. No directory
+or unrelated scheduler/job path is leased by this exception.
 
 New implementation/test files are allowed only below the exact domain roots
 enforced by `verify-closure-lane.mjs`; a filename keyword elsewhere is not

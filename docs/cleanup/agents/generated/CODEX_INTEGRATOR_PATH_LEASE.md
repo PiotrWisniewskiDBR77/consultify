@@ -4,9 +4,9 @@ Authority HEAD: `c40a9ba58e28ccc78bdef8d1f61f64db60e088eb`
 
 Branch: `codex/recovery-canonical-20260816`
 
-Lease SHA-256: `a626ac0c356fc750569d14542c6908ee9381531f0669fce93f23773db934651c`
+Lease SHA-256: `6b9eb7aa39e4631cca8c2729885eb48917cb91fb342657018a3f7ccc40070c9d`
 
-Counts: 1552 tracked paths; 852 source/docs; 685 Vitest; 14 Playwright/visual.
+Counts: 1556 tracked paths; 854 source/docs; 687 Vitest; 14 Playwright/visual.
 
 Only the paths below may be modified. Shared files require an integrator
 request. New files must live below an already-listed domain directory or
@@ -99,6 +99,10 @@ the lane reserved migration/evidence namespace.
 - `server/src/_backup/ts-js-collisions/validators/user-security-advanced.validators.js`
 - `server/src/_backup/ts-js-collisions/workers/asyncJobProcessor.js`
 - `server/src/controllers/superadmin/securityController.ts`
+- `server/src/cron/Scheduler.ts`
+- `server/src/cron/__tests__/adminIamAlertEvaluatorScheduler.test.ts`
+- `server/src/jobs/__tests__/adminIamAlertEvaluationJob.pg.test.ts`
+- `server/src/jobs/adminIamAlertEvaluationJob.ts`
 - `server/src/middleware/securityHeaders.middleware.ts`
 - `server/src/routes/__tests__/finance-enterprise.routes.auth.test.ts`
 - `server/src/routes/__tests__/finance-statements.routes.assign.test.ts`
