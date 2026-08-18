@@ -108,7 +108,7 @@ describe('PartnerPortalView regions V8 seam', () => {
     expect(toastSuccess).toHaveBeenCalledWith('Regions updated');
   });
 
-  it('falls back to the legacy route for bounded compatibility errors', async () => {
+  it('fails closed without a legacy mutation when the governed writer fails', async () => {
     vi.mocked(V8PartnerApi.updateOrganizationRegions).mockRejectedValue({
       response: { status: 404 },
     });
@@ -120,12 +120,8 @@ describe('PartnerPortalView regions V8 seam', () => {
     fireEvent.click(await screen.findByRole('checkbox', { name: 'CEE' }));
     fireEvent.click(screen.getByRole('button', { name: 'Save Regions' }));
 
-    await waitFor(() => {
-      expect(Api.put).toHaveBeenCalledWith('/api/partners/organization/regions', {
-        regions: ['DACH', 'CEE'],
-      });
-    });
-    expect(toastSuccess).toHaveBeenCalledWith('Regions updated');
-    expect(toastError).not.toHaveBeenCalled();
+    await waitFor(() => expect(toastError).toHaveBeenCalledWith('Failed to save regions'));
+    expect(Api.put).not.toHaveBeenCalledWith('/api/partners/organization/regions', expect.anything());
+    expect(toastSuccess).not.toHaveBeenCalledWith('Regions updated');
   });
 });

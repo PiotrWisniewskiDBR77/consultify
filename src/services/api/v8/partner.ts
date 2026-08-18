@@ -20,6 +20,14 @@ export interface V8PartnerEarningsSummary {
   thisMonthCount: number;
   lastMonth: number;
   readyForPayout: number;
+  payoutEligibility?: {
+    eligible: boolean;
+    eligibleGross: number;
+    eligibleNet: number;
+    minimumThreshold: number;
+    currency: string;
+    reason: 'ELIGIBLE' | 'NO_APPROVED_COMMISSIONS' | 'BELOW_MINIMUM';
+  };
   currency: string;
   lifecyclePhase?: string;
   whatNext?: string[];

@@ -108,7 +108,7 @@ describe('PartnerPortalView public listing V8 seam', () => {
     expect(toastSuccess).toHaveBeenCalledWith('Public listing enabled');
   });
 
-  it('falls back to the legacy route for bounded compatibility errors', async () => {
+  it('fails closed without a legacy mutation when the governed writer fails', async () => {
     vi.mocked(V8PartnerApi.updateOrganizationListing).mockRejectedValue({
       response: { status: 404 },
     });
@@ -120,12 +120,8 @@ describe('PartnerPortalView public listing V8 seam', () => {
     const toggle = await screen.findByRole('button', { name: 'Toggle public listing' }, { timeout: 10000 });
     fireEvent.click(toggle);
 
-    await waitFor(() => {
-      expect(Api.put).toHaveBeenCalledWith('/api/partners/organization/listing', {
-        publicListingEnabled: true,
-      });
-    }, { timeout: 10000 });
-    expect(toastSuccess).toHaveBeenCalledWith('Public listing enabled');
-    expect(toastError).not.toHaveBeenCalled();
+    await waitFor(() => expect(toastError).toHaveBeenCalledWith('Failed to update listing settings'), { timeout: 10000 });
+    expect(Api.put).not.toHaveBeenCalledWith('/api/partners/organization/listing', expect.anything());
+    expect(toastSuccess).not.toHaveBeenCalledWith('Public listing enabled');
   });
 });

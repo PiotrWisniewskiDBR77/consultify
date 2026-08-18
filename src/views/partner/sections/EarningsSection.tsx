@@ -327,16 +327,8 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
 
   const savePayoutSettingsWithFallback = useCallback(async (settings: PayoutSettings) => {
     const governedSettings = { ...settings, autoPayoutEnabled: false };
-    try {
-      const response = await V8PartnerApi.updatePayoutSettings(governedSettings);
-      return normalizePayoutSettings(response?.settings);
-    } catch (error) {
-      if (!shouldFallbackToLegacyPartner(error)) {
-        throw error;
-      }
-      const response = await Api.put('/api/partners/payout-settings', governedSettings);
-      return normalizePayoutSettings(unwrapApiData(response) ?? response);
-    }
+    const response = await V8PartnerApi.updatePayoutSettings(governedSettings);
+    return normalizePayoutSettings(response?.settings);
   }, []);
 
   // Fetch earnings data from API
@@ -561,10 +553,11 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
 
   // Request payout via API
   const handleRequestPayout = async () => {
-    if (!summary || summary.readyForPayout < 100) {
+    const eligibility = v8Summary?.payoutEligibility;
+    if (!summary || !eligibility?.eligible) {
       toast.error(
         t('partner.earnings.minimumNotReached', 'Minimalna kwota wypłaty to {{amount}}', {
-          amount: formatCurrency(100),
+          amount: formatCurrency(eligibility?.minimumThreshold ?? 0),
         })
       );
       return;
@@ -850,10 +843,10 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
             </p>
             <button
               onClick={handleRequestPayout}
-              disabled={requestingPayout || (summary?.readyForPayout || 0) < 100}
+              disabled={requestingPayout || !v8Summary?.payoutEligibility?.eligible}
               className={cn(
                 'mt-2 px-3 py-1 text-xs font-medium rounded-lg transition-colors',
-                (summary?.readyForPayout || 0) >= 100
+                v8Summary?.payoutEligibility?.eligible
                   ? 'bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]'
                   : 'bg-slate-200 dark:bg-slate-700 text-c-text-muted cursor-not-allowed'
               )}

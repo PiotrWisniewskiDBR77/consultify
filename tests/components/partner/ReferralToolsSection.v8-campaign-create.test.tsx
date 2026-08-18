@@ -277,7 +277,7 @@ describe('ReferralToolsSection V8 campaign create seam', () => {
     expect(Api.post).not.toHaveBeenCalledWith('/api/partners/campaign-links', expect.anything());
   });
 
-  it('falls back to legacy campaign creation on bounded compatibility statuses', async () => {
+  it('fails closed without legacy campaign creation on governed writer errors', async () => {
     vi.mocked(V8PartnerApi.createCampaignLink).mockRejectedValue({ status: 404 });
     vi.mocked(Api.post).mockResolvedValue({
       success: true,
@@ -303,14 +303,8 @@ describe('ReferralToolsSection V8 campaign create seam', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Create' }));
     });
 
-    await waitFor(() => {
-      expect(Api.post).toHaveBeenCalledWith('/api/partners/campaign-links', {
-        name: 'Spring launch',
-        utmSource: undefined,
-        utmMedium: undefined,
-        utmCampaign: undefined,
-      });
-    });
+    await waitFor(() => expect(V8PartnerApi.createCampaignLink).toHaveBeenCalled());
+    expect(Api.post).not.toHaveBeenCalledWith('/api/partners/campaign-links', expect.anything());
   });
 
   it('prefers governed campaign deletion before legacy fallback', async () => {
@@ -340,7 +334,7 @@ describe('ReferralToolsSection V8 campaign create seam', () => {
     expect(Api.delete).not.toHaveBeenCalledWith('/api/partners/campaign-links/campaign-1');
   });
 
-  it('falls back to legacy campaign deletion on bounded compatibility statuses', async () => {
+  it('fails closed without legacy campaign deletion on governed writer errors', async () => {
     vi.stubGlobal('confirm', vi.fn(() => true));
     vi.mocked(V8PartnerApi.deleteCampaignLink).mockRejectedValue({ status: 404 });
     vi.mocked(Api.delete).mockResolvedValue({ success: true } as any);
@@ -358,8 +352,7 @@ describe('ReferralToolsSection V8 campaign create seam', () => {
       fireEvent.click(screen.getByRole('menuitem', { name: 'Delete' }));
     });
 
-    await waitFor(() => {
-      expect(Api.delete).toHaveBeenCalledWith('/api/partners/campaign-links/campaign-1');
-    });
+    await waitFor(() => expect(V8PartnerApi.deleteCampaignLink).toHaveBeenCalledWith('campaign-1'));
+    expect(Api.delete).not.toHaveBeenCalledWith('/api/partners/campaign-links/campaign-1');
   });
 });

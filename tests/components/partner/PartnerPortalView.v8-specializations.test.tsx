@@ -111,7 +111,7 @@ describe('PartnerPortalView specializations V8 seam', () => {
     expect(toastSuccess).toHaveBeenCalledWith('Specializations updated');
   });
 
-  it('falls back to the legacy route for bounded compatibility errors', async () => {
+  it('fails closed without a legacy mutation when the governed writer fails', async () => {
     vi.mocked(V8PartnerApi.updateOrganizationSpecializations).mockRejectedValue({
       response: { status: 404 },
     });
@@ -123,12 +123,8 @@ describe('PartnerPortalView specializations V8 seam', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'SIRI' }, { timeout: 10000 }));
     fireEvent.click(screen.getByRole('button', { name: 'Save Specializations' }));
 
-    await waitFor(() => {
-      expect(Api.put).toHaveBeenCalledWith('/api/partners/organization/specializations', {
-        specializations: ['DRD', 'SIRI'],
-      });
-    }, { timeout: 10000 });
-    expect(toastSuccess).toHaveBeenCalledWith('Specializations updated');
-    expect(toastError).not.toHaveBeenCalled();
+    await waitFor(() => expect(toastError).toHaveBeenCalledWith('Failed to save specializations'), { timeout: 10000 });
+    expect(Api.put).not.toHaveBeenCalledWith('/api/partners/organization/specializations', expect.anything());
+    expect(toastSuccess).not.toHaveBeenCalledWith('Specializations updated');
   });
 });

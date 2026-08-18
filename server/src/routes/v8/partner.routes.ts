@@ -735,9 +735,10 @@ router.get(
         code: 'PARTNER_ORG_REQUIRED',
       });
     }
-    const [legacySummary, detail] = await Promise.all([
+    const [legacySummary, detail, payoutEligibility] = await Promise.all([
       PartnerCommissionService.getEarningsSummary(partnerOrgId),
       PartnerProgramLedgerService.getProgramStatusDetail(partnerOrgId, 'partner'),
+      PartnerCommissionService.getPayoutEligibility(partnerOrgId),
     ]);
     const earnings = {
       totalEarned: detail.balances.grossEarned,
@@ -748,6 +749,7 @@ router.get(
       thisMonthCount: legacySummary.thisMonthCount,
       lastMonth: legacySummary.lastMonth,
       readyForPayout: detail.balances.availableToPayout,
+      payoutEligibility,
       currency: detail.balances.currency || legacySummary.currency || 'EUR',
       lifecyclePhase: detail.runtime.lifecycle_phase,
       whatNext: detail.whatNext,

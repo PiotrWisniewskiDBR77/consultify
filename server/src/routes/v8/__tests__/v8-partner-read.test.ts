@@ -12,6 +12,7 @@ const mockGetPartnerClients = vi.fn();
 const mockGetPartnerProjects = vi.fn();
 const mockGetPartnerEmployees = vi.fn();
 const mockGetEarningsSummary = vi.fn();
+const mockGetPayoutEligibility = vi.fn();
 const mockGetCommissions = vi.fn();
 const mockGetPayouts = vi.fn();
 const mockRequestPayout = vi.fn();
@@ -50,6 +51,7 @@ vi.mock('../../../services/partnerReferralService.js', () => ({
 vi.mock('../../../services/partnerCommissionService.js', () => ({
   default: {
     getEarningsSummary: (...args: unknown[]) => mockGetEarningsSummary(...args),
+    getPayoutEligibility: (...args: unknown[]) => mockGetPayoutEligibility(...args),
     getCommissions: (...args: unknown[]) => mockGetCommissions(...args),
     getPayouts: (...args: unknown[]) => mockGetPayouts(...args),
     requestPayout: (...args: unknown[]) => mockRequestPayout(...args),
@@ -251,6 +253,14 @@ describe('V8 partner read bridge', () => {
       lastMonth: 4,
       readyForPayout: 20,
       currency: 'EUR',
+    });
+    mockGetPayoutEligibility.mockResolvedValue({
+      eligible: false,
+      eligibleGross: 20,
+      eligibleNet: 19.8,
+      minimumThreshold: 100,
+      currency: 'EUR',
+      reason: 'BELOW_MINIMUM',
     });
     mockRequestPayout.mockResolvedValue({
       id: 'payout-1',
@@ -524,8 +534,17 @@ describe('V8 partner read bridge', () => {
     const res = await request(app).get('/api/v8/partner/earnings-summary');
     expect(res.status).toBe(200);
     expect(mockGetEarningsSummary).toHaveBeenCalledWith('partner-org-resolved');
+    expect(mockGetPayoutEligibility).toHaveBeenCalledWith('partner-org-resolved');
     expect(res.body.data.earnings.totalEarned).toBe(100);
     expect(res.body.data.earnings.readyForPayout).toBe(30);
+    expect(res.body.data.earnings.payoutEligibility).toEqual({
+      eligible: false,
+      eligibleGross: 20,
+      eligibleNet: 19.8,
+      minimumThreshold: 100,
+      currency: 'EUR',
+      reason: 'BELOW_MINIMUM',
+    });
     expect(res.body.meta.contract).toBe('partner_program_p29_v1');
   });
 
@@ -572,7 +591,7 @@ describe('V8 partner read bridge', () => {
     expect(mockGetEarningsSummary).not.toHaveBeenCalled();
   });
 
-  it('POST /api/v8/partner/payouts/request transitions payout lifecycle and appends governed ledger request', async () => {
+  it('POST /api/v8/partner/payouts/request transitions lifecycle and delegates one atomic payout request', async () => {
     const app = createApp();
     const res = await request(app).post('/api/v8/partner/payouts/request').send({
       notes: 'Please process this cycle',
@@ -592,14 +611,9 @@ describe('V8 partner read bridge', () => {
       requestedBy: 'user-partner-1',
       notes: 'Please process this cycle',
     });
-    expect(mockAppendLedgerEntry).toHaveBeenCalledWith(
-      expect.objectContaining({
-        partnerOrgId: 'partner-org-resolved',
-        entryType: 'payout.requested',
-        actor: 'partner',
-        actorId: 'user-partner-1',
-      })
-    );
+    // requestPayout owns the payout + governed ledger transaction. The route
+    // must not append a second, non-atomic payout.requested entry.
+    expect(mockAppendLedgerEntry).not.toHaveBeenCalled();
     expect(res.body.data.payout.id).toBe('payout-1');
     expect(res.body.meta.contract).toBe('partner_program_p29_v1');
   });

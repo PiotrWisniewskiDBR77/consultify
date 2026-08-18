@@ -396,36 +396,19 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
 
     try {
       setCreating(true);
-      let response: any;
-      try {
-        response = await V8PartnerApi.createCampaignLink({
-          name: candidateName,
-          utmSource: newCampaign.utmSource || undefined,
-          utmMedium: newCampaign.utmMedium || undefined,
-          utmCampaign: newCampaign.utmCampaign || undefined,
-        });
-      } catch (error) {
-        if (!shouldFallbackToLegacyPartner(error)) {
-          throw error;
-        }
-        response = await Api.post('/api/partners/campaign-links', {
-          name: candidateName,
-          utmSource: newCampaign.utmSource || undefined,
-          utmMedium: newCampaign.utmMedium || undefined,
-          utmCampaign: newCampaign.utmCampaign || undefined,
-        });
-      }
+      const response = await V8PartnerApi.createCampaignLink({
+        name: candidateName,
+        utmSource: newCampaign.utmSource || undefined,
+        utmMedium: newCampaign.utmMedium || undefined,
+        utmCampaign: newCampaign.utmCampaign || undefined,
+      });
 
-      if (response?.success || response?.campaignLink) {
+      if (response?.campaignLink) {
         // Refresh tools to get updated list
         await fetchTools();
         setShowNewCampaign(false);
         setNewCampaign({ name: '', utmSource: '', utmMedium: '', utmCampaign: '' });
         toast.success(t('partner.referrals.campaignCreated', 'Campaign link created!'));
-      } else {
-        toast.error(
-          response?.error || t('partner.referrals.createFailed', 'Failed to create campaign')
-        );
       }
     } catch (err: any) {
       console.error('Error creating campaign:', err);
@@ -450,17 +433,9 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
 
     try {
       setDeleting(campaignId);
-      let response: any;
-      try {
-        response = await V8PartnerApi.deleteCampaignLink(campaignId);
-      } catch (error) {
-        if (!shouldFallbackToLegacyPartner(error)) {
-          throw error;
-        }
-        response = await Api.delete(`/api/partners/campaign-links/${campaignId}`);
-      }
+      const response = await V8PartnerApi.deleteCampaignLink(campaignId);
 
-      if (response?.success || response?.deleted) {
+      if (response?.success && response?.deleted) {
         // Remove from local state
         setTools((prev) =>
           prev
@@ -468,10 +443,6 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
             : prev
         );
         toast.success(t('partner.referrals.campaignDeleted', 'Campaign link deleted'));
-      } else {
-        toast.error(
-          response?.error || t('partner.referrals.deleteFailed', 'Failed to delete campaign')
-        );
       }
     } catch (err: any) {
       console.error('Error deleting campaign:', err);

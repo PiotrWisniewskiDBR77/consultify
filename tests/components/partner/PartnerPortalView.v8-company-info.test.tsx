@@ -116,7 +116,7 @@ describe('PartnerPortalView company info V8 seam', () => {
     expect(toastSuccess).toHaveBeenCalledWith('Company information updated');
   });
 
-  it('falls back to the legacy route for bounded compatibility errors', async () => {
+  it('fails closed without a legacy mutation when the governed writer fails', async () => {
     vi.mocked(V8PartnerApi.updateOrganization).mockRejectedValue({
       response: { status: 404 },
     });
@@ -129,16 +129,8 @@ describe('PartnerPortalView company info V8 seam', () => {
     fireEvent.change(nameInput, { target: { value: 'Updated Partner Co' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
 
-    await waitFor(() => {
-      expect(Api.put).toHaveBeenCalledWith('/api/partners/organization', {
-        name: 'Updated Partner Co',
-        taxId: 'DE123456789',
-        contactEmail: 'partner@example.com',
-        contactPhone: '+49 30 12345',
-        website: 'https://test.example.com',
-      });
-    });
-    expect(toastSuccess).toHaveBeenCalledWith('Company information updated');
-    expect(toastError).not.toHaveBeenCalled();
+    await waitFor(() => expect(toastError).toHaveBeenCalledWith('Failed to save changes'));
+    expect(Api.put).not.toHaveBeenCalledWith('/api/partners/organization', expect.anything());
+    expect(toastSuccess).not.toHaveBeenCalledWith('Company information updated');
   });
 });

@@ -2535,15 +2535,7 @@ const ProfileSection: React.FC<{
   const handleSaveCompanyInfo = async () => {
     try {
       setSaving(true);
-      let response: any;
-      try {
-        response = await V8PartnerApi.updateOrganization(formData);
-      } catch (error) {
-        if (!shouldFallbackToLegacyPartner(error)) {
-          throw error;
-        }
-        response = await Api.put('/api/partners/organization', formData);
-      }
+      const response = await V8PartnerApi.updateOrganization(formData);
       if (response?.success) {
         toast.success('Company information updated');
         fetchOrganization();
@@ -2561,19 +2553,9 @@ const ProfileSection: React.FC<{
   const handleSaveSpecializations = async () => {
     try {
       setSaving(true);
-      let response: any;
-      try {
-        response = await V8PartnerApi.updateOrganizationSpecializations({
-          specializations: selectedSpecializations,
-        });
-      } catch (error) {
-        if (!shouldFallbackToLegacyPartner(error)) {
-          throw error;
-        }
-        response = await Api.put('/api/partners/organization/specializations', {
-          specializations: selectedSpecializations,
-        });
-      }
+      const response = await V8PartnerApi.updateOrganizationSpecializations({
+        specializations: selectedSpecializations,
+      });
       if (response?.success) {
         toast.success('Specializations updated');
       } else {
@@ -2590,19 +2572,9 @@ const ProfileSection: React.FC<{
   const handleSaveRegions = async () => {
     try {
       setSaving(true);
-      let response: any;
-      try {
-        response = await V8PartnerApi.updateOrganizationRegions({
-          regions: selectedRegions,
-        });
-      } catch (error) {
-        if (!shouldFallbackToLegacyPartner(error)) {
-          throw error;
-        }
-        response = await Api.put('/api/partners/organization/regions', {
-          regions: selectedRegions,
-        });
-      }
+      const response = await V8PartnerApi.updateOrganizationRegions({
+        regions: selectedRegions,
+      });
       if (response?.success) {
         toast.success('Regions updated');
       } else {
@@ -2620,19 +2592,9 @@ const ProfileSection: React.FC<{
     try {
       setSaving(true);
       const newValue = !publicListingEnabled;
-      let response: any;
-      try {
-        response = await V8PartnerApi.updateOrganizationListing({
-          publicListingEnabled: newValue,
-        });
-      } catch (error) {
-        if (!shouldFallbackToLegacyPartner(error)) {
-          throw error;
-        }
-        response = await Api.put('/api/partners/organization/listing', {
-          publicListingEnabled: newValue,
-        });
-      }
+      const response = await V8PartnerApi.updateOrganizationListing({
+        publicListingEnabled: newValue,
+      });
       if (response?.success || typeof response?.publicListingEnabled === 'boolean') {
         setPublicListingEnabled(newValue);
         toast.success(newValue ? 'Public listing enabled' : 'Public listing disabled');

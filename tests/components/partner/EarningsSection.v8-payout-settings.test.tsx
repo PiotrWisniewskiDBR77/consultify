@@ -37,6 +37,7 @@ vi.mock('@/services/api/v8', () => ({
     getPayouts: vi.fn(),
     getPayoutSettings: vi.fn(),
     updatePayoutSettings: vi.fn(),
+    requestPayout: vi.fn(),
   },
   shouldFallbackToLegacyPartner: (error: any) => {
     const status = Number(error?.status ?? error?.response?.status);
@@ -85,6 +86,14 @@ describe('EarningsSection V8 payout settings seam', () => {
         lastMonth: 90,
         readyForPayout: 150,
         currency: 'EUR',
+        payoutEligibility: {
+          eligible: true,
+          eligibleGross: 150,
+          eligibleNet: 148.5,
+          minimumThreshold: 100,
+          currency: 'EUR',
+          reason: 'ELIGIBLE',
+        },
       },
     } as any);
     vi.mocked(V8PartnerApi.getProgramStatus).mockResolvedValue({
@@ -159,7 +168,43 @@ describe('EarningsSection V8 payout settings seam', () => {
     expect(toastSuccess).toHaveBeenCalledWith('Payout settings updated');
   });
 
-  it('falls back to legacy payout-settings route on bounded compatibility errors', async () => {
+  it('does not enable payout from ledger balance when canonical eligibility is below policy minimum', async () => {
+    vi.mocked(V8PartnerApi.getEarningsSummary).mockResolvedValue({
+      earnings: {
+        totalEarned: 1200,
+        totalPending: 0,
+        totalApproved: 700,
+        totalPaid: 0,
+        thisMonth: 0,
+        thisMonthCount: 0,
+        lastMonth: 0,
+        readyForPayout: 700,
+        currency: 'EUR',
+        payoutEligibility: {
+          eligible: false,
+          eligibleGross: 200,
+          eligibleNet: 198,
+          minimumThreshold: 500,
+          currency: 'EUR',
+          reason: 'BELOW_MINIMUM',
+        },
+      },
+    } as any);
+    vi.mocked(V8PartnerApi.getPayoutSettings).mockResolvedValue({
+      settings: {
+        minimumThreshold: 100,
+        payoutMethod: 'BANK_TRANSFER',
+        autoPayoutEnabled: false,
+        payoutAccount: { accountHolderName: 'Partner', iban: 'DE123', bicSwift: '', bankName: '' },
+      },
+    } as any);
+
+    render(<EarningsSection />);
+
+    expect(await screen.findByRole('button', { name: /Request payout|Zażądaj wypłaty/i })).toBeDisabled();
+  });
+
+  it('keeps legacy reads but fails closed without a legacy payout-settings mutation', async () => {
     vi.mocked(V8PartnerApi.getPayoutSettings).mockRejectedValue({ status: 404 });
     vi.mocked(V8PartnerApi.updatePayoutSettings).mockRejectedValue({ status: 404 });
     vi.mocked(Api.get).mockImplementation(async (url: string) => {
@@ -222,22 +267,10 @@ describe('EarningsSection V8 payout settings seam', () => {
     fireEvent.change(holderInput, { target: { value: 'Legacy Updated' } });
     fireEvent.click(await screen.findByRole('button', { name: 'Save Changes' }, { timeout: 10000 }));
 
-    await waitFor(() => {
-      expect(Api.put).toHaveBeenCalledWith('/api/partners/payout-settings', {
-        minimumThreshold: 250,
-        payoutMethod: 'BANK_TRANSFER',
-        autoPayoutEnabled: false,
-        payoutAccount: {
-          accountHolderName: 'Legacy Updated',
-          iban: 'PL001234',
-          bicSwift: 'WBKPPLPP',
-          bankName: 'Legacy Bank',
-        },
-      });
-    }, { timeout: 10000 });
+    await waitFor(() => expect(toastError).toHaveBeenCalled(), { timeout: 10000 });
 
     expect(Api.get).toHaveBeenCalledWith('/api/partners/payout-settings');
-    expect(toastSuccess).toHaveBeenCalledWith('Payout settings updated');
-    expect(toastError).not.toHaveBeenCalled();
+    expect(Api.put).not.toHaveBeenCalledWith('/api/partners/payout-settings', expect.anything());
+    expect(toastSuccess).not.toHaveBeenCalledWith('Payout settings updated');
   });
 });

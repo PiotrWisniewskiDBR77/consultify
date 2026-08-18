@@ -141,6 +141,68 @@ export interface PayoutRequest {
   idempotencyKey?: string;
 }
 
+export type PayoutEligibilityReason = 'ELIGIBLE' | 'NO_APPROVED_COMMISSIONS' | 'BELOW_MINIMUM';
+
+export interface PayoutEligibility {
+  eligible: boolean;
+  eligibleGross: number;
+  eligibleNet: number;
+  minimumThreshold: number;
+  currency: string;
+  reason: PayoutEligibilityReason;
+}
+
+type ApprovedPayoutCommission = {
+  id: string;
+  commission_amount: string;
+  currency: string;
+  transaction_date: string;
+};
+
+function calculatePayoutEligibility(
+  policy: ReturnType<typeof readApprovedPartnerAccrualPolicy>,
+  approvedCommissions: ApprovedPayoutCommission[]
+): PayoutEligibility {
+  for (const commission of approvedCommissions) assertPolicyCurrency(policy, commission.currency);
+  const eligibleGross = approvedCommissions.reduce(
+    (sum, commission) => sum + Number(commission.commission_amount || 0),
+    0
+  );
+  const fees = Math.max(eligibleGross * (policy.payoutFeeBps / 10_000), 0);
+  const eligibleNet = eligibleGross - fees;
+  const minimumThreshold = policy.minimumPayoutMinor / 100;
+  const reason: PayoutEligibilityReason = approvedCommissions.length === 0
+    ? 'NO_APPROVED_COMMISSIONS'
+    : eligibleNet < minimumThreshold
+      ? 'BELOW_MINIMUM'
+      : 'ELIGIBLE';
+  return {
+    eligible: reason === 'ELIGIBLE',
+    eligibleGross,
+    eligibleNet,
+    minimumThreshold,
+    currency: policy.baseCurrency,
+    reason,
+  };
+}
+
+export async function getPayoutEligibility(partnerOrgId: string): Promise<PayoutEligibility> {
+  const policy = readApprovedPartnerAccrualPolicy();
+  const client = await acquirePgClient();
+  try {
+    const result = await client.query<ApprovedPayoutCommission>(
+      `SELECT id, commission_amount, currency, transaction_date
+         FROM partner_commission_transactions
+        WHERE partner_org_id = $1 AND status = 'APPROVED' AND payout_id IS NULL
+        ORDER BY transaction_date`,
+      [partnerOrgId]
+    );
+    return calculatePayoutEligibility(policy, result.rows);
+  } finally {
+    client.release();
+  }
+}
+
 // ==========================================
 // DATABASE TYPES
 // ==========================================
@@ -638,9 +700,7 @@ export async function requestPayout(params: PayoutRequest): Promise<Payout | nul
       }
     }
 
-    const approvedResult = await client.query<{
-      id: string; commission_amount: string; currency: string; transaction_date: string;
-    }>(
+    const approvedResult = await client.query<ApprovedPayoutCommission>(
       `SELECT id, commission_amount, currency, transaction_date
          FROM partner_commission_transactions
         WHERE partner_org_id = $1 AND status = 'APPROVED' AND payout_id IS NULL
@@ -648,23 +708,16 @@ export async function requestPayout(params: PayoutRequest): Promise<Payout | nul
       [partnerOrgId]
     );
     const approvedCommissions = approvedResult.rows;
+    const eligibility = calculatePayoutEligibility(policy, approvedCommissions);
 
-    if (approvedCommissions.length === 0) {
+    if (eligibility.reason === 'NO_APPROVED_COMMISSIONS') {
       logger.warn(`[PartnerCommissionService] No approved commissions for payout: ${partnerOrgId}`);
       await client.query('ROLLBACK');
       return null;
     }
-    for (const commission of approvedCommissions) {
-      assertPolicyCurrency(policy, commission.currency);
-    }
-
-    // Calculate totals
-    const grossAmount = approvedCommissions.reduce(
-      (sum, c) => sum + Number(c.commission_amount || 0),
-      0
-    );
-    const fees = Math.max(grossAmount * (policy.payoutFeeBps / 10_000), 0);
-    const netAmount = grossAmount - fees;
+    const grossAmount = eligibility.eligibleGross;
+    const fees = grossAmount - eligibility.eligibleNet;
+    const netAmount = eligibility.eligibleNet;
 
     // Get payout threshold
     const partnerResult = await client.query<{ payout_method: string }>(
@@ -672,8 +725,8 @@ export async function requestPayout(params: PayoutRequest): Promise<Payout | nul
     );
     const partner = partnerResult.rows[0];
 
-    const threshold = policy.minimumPayoutMinor / 100;
-    if (netAmount < threshold) {
+    const threshold = eligibility.minimumThreshold;
+    if (!eligibility.eligible) {
       logger.warn(
         `[PartnerCommissionService] Payout amount €${netAmount} below threshold €${threshold}`
       );
@@ -1181,6 +1234,7 @@ const PartnerCommissionService = {
   approveCommissions,
   cancelCommission,
   getEarningsSummary,
+  getPayoutEligibility,
   requestPayout,
   getPayouts,
   processPayout,
