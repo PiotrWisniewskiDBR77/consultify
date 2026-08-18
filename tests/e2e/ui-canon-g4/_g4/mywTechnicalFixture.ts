@@ -473,6 +473,12 @@ export const MYW_ORG_SCOPED_TABLES = [
 ] as const;
 
 export type CapturedFixtureIds = {
+  /**
+   * Present ONLY on a set that a real capture produced. An empty set that was
+   * genuinely captured (the run created no plans) is legitimate; a set that was
+   * never captured is not, and must never be passed off as one.
+   */
+  capturedBeforeCleanup: true;
   agentPlanIds: string[];
   agentPlanStepIds: string[];
   decisionHistoryIds: string[];
@@ -490,6 +496,7 @@ export async function captureFixtureIds(
   const ids = async (sql: string) =>
     (await session.query(sql, [organizationIds])).rows.map((r: any) => String(r.id));
   return {
+    capturedBeforeCleanup: true,
     agentPlanIds: await ids(
       `SELECT id FROM ai_agent_plans WHERE organization_id = ANY($1::text[])`
     ),
@@ -513,6 +520,21 @@ export async function captureFixtureIds(
 
 export type MywResidue = Record<string, number>;
 
+export type ResidueReport = {
+  counts: MywResidue;
+  /** Checks that could not be performed. NEVER silently counted as 0. */
+  unverified: string[];
+  /** Human-readable denominator carrying the MECHANISM, not just the number. */
+  denominator: string;
+};
+
+const CASCADE_ONLY_CHECKS = [
+  'ai_agent_plan_steps__by_captured_id',
+  'ai_agent_plans__by_captured_id',
+  'decision_history__by_captured_id',
+  'user_preferences__by_captured_user_id',
+] as const;
+
 /**
  * Post-cleanup inventory taken DIRECTLY from PostgreSQL.
  *
@@ -523,27 +545,47 @@ export type MywResidue = Record<string, number>;
  *
  * Cascade-only children are counted BY CAPTURED ID — never through a parent
  * join, which after cleanup would return 0 unconditionally.
+ *
+ * AND: a MISSING capture is reported UNVERIFIED, never 0. `WHERE id = ANY('{}')`
+ * returns 0, so an absent ID set and a genuinely clean database look identical
+ * to a verifier that only counts rows — that is the same false negative as the
+ * parent join, reached by another route. A throw during cleanup is not
+ * evidence that rows are gone.
  */
 export async function measureResidueStrict(
   session: FixtureCleanupSession,
   organizationIds: string[],
-  captured: CapturedFixtureIds
-): Promise<MywResidue> {
-  const residue: MywResidue = {};
+  captured: CapturedFixtureIds | null
+): Promise<ResidueReport> {
+  const counts: MywResidue = {};
+  const unverified: string[] = [];
   for (const { table, column } of MYW_ORG_SCOPED_TABLES) {
     const { rows } = await session.query(
       `SELECT COUNT(*)::int AS count FROM ${table} WHERE ${column} = ANY($1::text[])`,
       [organizationIds]
     );
-    residue[table] = Number(rows[0]?.count ?? 0);
+    counts[table] = Number(rows[0]?.count ?? 0);
   }
+
+  if (!captured || captured.capturedBeforeCleanup !== true) {
+    unverified.push(...CASCADE_ONLY_CHECKS);
+    return {
+      counts,
+      unverified,
+      denominator:
+        `org-scoped tables ${MYW_ORG_SCOPED_TABLES.length}/${MYW_ORG_SCOPED_TABLES.length} counted; ` +
+        `cascade-only children UNVERIFIED (${CASCADE_ONLY_CHECKS.length} checks) because no capture was ` +
+        `taken before cleanup — an empty id set would report 0 and be indistinguishable from clean`,
+    };
+  }
+
   const byId = async (label: string, sql: string, values: string[]) => {
     if (values.length === 0) {
-      residue[label] = 0;
+      counts[label] = 0;
       return;
     }
     const { rows } = await session.query(sql, [values]);
-    residue[label] = Number(rows[0]?.count ?? 0);
+    counts[label] = Number(rows[0]?.count ?? 0);
   };
   await byId(
     'ai_agent_plan_steps__by_captured_id',
@@ -565,23 +607,44 @@ export async function measureResidueStrict(
     `SELECT COUNT(*)::int AS count FROM user_preferences WHERE user_id = ANY($1::text[])`,
     captured.preferenceUserIds
   );
-  return residue;
+
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  return {
+    counts,
+    unverified,
+    denominator:
+      `residue ${total} across ${MYW_ORG_SCOPED_TABLES.length} org-scoped tables ` +
+      `+ ${CASCADE_ONLY_CHECKS.length} cascade-only checks BY CAPTURED ID ` +
+      `(plans=${captured.agentPlanIds.length}, steps=${captured.agentPlanStepIds.length}, ` +
+      `decisionHistory=${captured.decisionHistoryIds.length}, ` +
+      `preferenceUsers=${captured.preferenceUserIds.length} — identities captured BEFORE cleanup, ` +
+      `while their parents still existed). A missing capture is reported UNVERIFIED, never 0. ` +
+      `This verifier is proven able to go RED — see the forced partial-cleanup control.`,
+  };
 }
 
 /**
- * Require an exact zero for every enumerated entry, naming each offender.
+ * Require an exact zero for every enumerated entry, naming each offender, and
+ * refuse to pass when any check could not be performed at all.
  *
  * If an append-only table ever lands here its trigger will reject the DELETE,
  * purgeByOrganizationId will swallow that failure, and the count will stay
  * non-zero. Report that number honestly — for such a table zero is reachable
  * only by destroying the database, not by cleaning it.
  */
-export function expectNoResidue(residue: MywResidue): void {
-  const offenders = Object.entries(residue).filter(([, count]) => count !== 0);
+export function expectNoResidue(report: ResidueReport): void {
+  if (report.unverified.length > 0) {
+    throw new Error(
+      `fixture residue UNVERIFIED for ${report.unverified.join(', ')} — ` +
+        `absence of captured identities is not evidence of absence of rows. ` +
+        `[${report.denominator}]`
+    );
+  }
+  const offenders = Object.entries(report.counts).filter(([, count]) => count !== 0);
   if (offenders.length > 0) {
     throw new Error(
       `fixture residue not zero: ${offenders.map(([t, c]) => `${t}=${c}`).join(', ')} ` +
-        `(full inventory: ${JSON.stringify(residue)})`
+        `[${report.denominator}]`
     );
   }
 }
@@ -651,7 +714,7 @@ export async function guardedCleanupAndAssertNoResidue(
   databaseUrl: string,
   runIds: string[],
   organizationIds: string[]
-): Promise<{ residue: MywResidue; captured: CapturedFixtureIds }> {
+): Promise<{ residue: ResidueReport; captured: CapturedFixtureIds }> {
   const session = await openGuardedCleanupSession(databaseUrl);
   try {
     const captured = await captureFixtureIds(session, organizationIds);

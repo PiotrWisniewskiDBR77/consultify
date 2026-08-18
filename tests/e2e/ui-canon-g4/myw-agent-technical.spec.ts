@@ -12,6 +12,7 @@ import {
   createIsolatedRun,
   createMember,
   captureFixtureIds,
+  type CapturedFixtureIds,
   expectNoResidue,
   expectZeroWriteDelta,
   guardedCleanupAndAssertNoResidue,
@@ -476,11 +477,11 @@ test.describe.serial('MYW-AGT-UI-CANON owner-free technical closure', () => {
       baseURL: apiBase,
       extraHTTPHeaders: { Authorization: `Bearer ${member.token}` },
     });
-    // The test that exists to prove cleanup works must not itself be capable of
-    // leaving residue. NOTHING below — an assertion failure, a failure to open
-    // the session, a failure inside the recovery path — may exit before this
-    // run's own rows are removed, so the guaranteed teardown is the OUTERMOST
-    // frame and is nested so each stage still runs when an earlier one throws.
+    // RETAINED OUTSIDE the inner block. The final verification must always
+    // receive real captured identities: passing an empty set would make
+    // `WHERE id = ANY('{}')` return 0, which is indistinguishable from a clean
+    // database — the same false negative as the parent join, by another route.
+    let retained: CapturedFixtureIds | null = null;
     let ownCleaned = false;
     try {
       const titles = mywSeedTitles(own.runId, 'FAILCASE');
@@ -489,11 +490,16 @@ test.describe.serial('MYW-AGT-UI-CANON owner-free technical closure', () => {
 
       const session = await openGuardedCleanupSession(databaseUrl);
       try {
-        const captured = await captureFixtureIds(session, [own.organizationId]);
-        expect(captured.agentPlanStepIds.length).toBeGreaterThan(0);
+        retained = await captureFixtureIds(session, [own.organizationId]);
+        expect(retained.agentPlanStepIds.length).toBeGreaterThan(0);
 
-        // 1. Induce the real silent no-op: clean the DECOY, never the run that
-        //    holds the rows, then sweep the decoy again once it is already gone.
+        // CONTROL A — the empty-set hazard, demonstrated on a DIRTY database.
+        // Same session, same rows: a missing capture must NOT read as 0.
+        const withoutCapture = await measureResidueStrict(session, [own.organizationId], null);
+        expect(withoutCapture.unverified.length).toBeGreaterThan(0);
+        expect(() => expectNoResidue(withoutCapture)).toThrow(/UNVERIFIED/);
+
+        // CONTROL B — the verifier goes RED on retained identities.
         await cleanupRunAsserted(support, decoy.runId);
         const secondSweep = await support.post('/api/test-support/cleanup', {
           data: { runId: decoy.runId },
@@ -507,69 +513,139 @@ test.describe.serial('MYW-AGT-UI-CANON owner-free technical closure', () => {
           /did not report a real delete/
         );
 
-        // 2. Honest reporting: the inventory must say NON-ZERO, not 0.
-        const dirty = await measureResidueStrict(session, [own.organizationId], captured);
+        const dirty = await measureResidueStrict(session, [own.organizationId], retained);
+        expect(dirty.unverified).toEqual([]);
         expect(() => expectNoResidue(dirty)).toThrow(/residue not zero/);
-        expect(dirty.tasks).toBeGreaterThan(0);
-        expect(dirty.ai_agent_plans).toBeGreaterThan(0);
-        expect(dirty.canonical_inbox_items).toBeGreaterThan(0);
-        expect(dirty.ai_agent_plan_steps__by_captured_id).toBeGreaterThan(0);
+        expect(dirty.counts.tasks).toBeGreaterThan(0);
+        expect(dirty.counts.ai_agent_plans).toBeGreaterThan(0);
+        expect(dirty.counts.canonical_inbox_items).toBeGreaterThan(0);
+        expect(dirty.counts.ai_agent_plan_steps__by_captured_id).toBeGreaterThan(0);
 
-        // 3. Recovery: the correct cleanup, then a clean inventory — including
-        //    the cascade-only children BY CAPTURED ID, the only form that can
-        //    observe a lost cascade once the parent row is gone.
+        // Recovery, then green on the SAME retained identities that were red a
+        // moment ago — so the zero cannot be vacuous.
         await cleanupRunAsserted(support, own.runId);
         ownCleaned = true;
-        const clean = await measureResidueStrict(session, [own.organizationId], captured);
+        const clean = await measureResidueStrict(session, [own.organizationId], retained);
         expectNoResidue(clean);
-        expect(clean.ai_agent_plan_steps__by_captured_id).toBe(0);
+        expect(clean.counts.ai_agent_plan_steps__by_captured_id).toBe(0);
+        expect(clean.denominator).toContain('captured BEFORE cleanup');
       } finally {
-        // Unlock + client end always run, even if the recovery above threw.
+        await session.release();
+      }
+    } finally {
+      // Guaranteed teardown. Every stage still runs when an earlier one throws.
+      try {
+        const verify = await openGuardedCleanupSession(databaseUrl);
+        try {
+          // If the inner block never got to capture — an assertion failure, a
+          // session-open failure — capture NOW, BEFORE any recovery cleanup
+          // deletes the parents and makes the children unnameable forever.
+          if (!retained) {
+            retained = await captureFixtureIds(verify, [
+              own.organizationId,
+              decoy.organizationId,
+            ]);
+          }
+          try {
+            if (!ownCleaned) {
+              // A throw here is NOT evidence the rows are gone; it is recorded
+              // and the inventory below decides.
+              await cleanupRunAsserted(support, own.runId).catch(() => undefined);
+            }
+            await support
+              .post('/api/test-support/cleanup', {
+                data: { runId: decoy.runId },
+                timeout: MYW_CLEANUP_TIMEOUT_MS,
+              })
+              .catch(() => undefined);
+          } finally {
+            // ALWAYS with the retained identities — never an empty set.
+            const residual = await measureResidueStrict(
+              verify,
+              [own.organizationId, decoy.organizationId],
+              retained
+            );
+            expectNoResidue(residual);
+          }
+        } finally {
+          await verify.release();
+        }
+      } finally {
+        await memberApi.dispose();
+        await support.dispose();
+      }
+    }
+  });
+
+  /**
+   * FORCED PARTIAL CLEANUP — proof that the FINAL verifier can go RED.
+   *
+   * A verifier that has never failed is not a verifier. This seeds a run,
+   * captures the child identities while their parents still exist, then runs
+   * the exact final-verification call against the still-dirty database and
+   * requires it to fail. Only then does it clean for real and require green on
+   * the SAME identities, with unlock true and zero advisory locks left behind.
+   */
+  test('the final residue verifier goes red on retained child ids, then green', async () => {
+    const bootstrap = readTestSupportState();
+    const support = await apiRequest.newContext({
+      baseURL: apiBase,
+      extraHTTPHeaders: { 'x-test-support-key': supportKey },
+    });
+    const own = await createIsolatedRun(support, bootstrap.runId, 'partial-red');
+    const member = await createMember(support, own.runId, 'MANAGER');
+    const memberApi = await apiRequest.newContext({
+      baseURL: apiBase,
+      extraHTTPHeaders: { Authorization: `Bearer ${member.token}` },
+    });
+    let retained: CapturedFixtureIds | null = null;
+    try {
+      const seeded = await seedMywSurfaces(memberApi, mywSeedTitles(own.runId, 'PARTIAL'));
+      expect(seeded.inboxItemCount).toBeGreaterThanOrEqual(2);
+
+      const session = await openGuardedCleanupSession(databaseUrl);
+      try {
+        retained = await captureFixtureIds(session, [own.organizationId]);
+        expect(retained.agentPlanStepIds.length).toBeGreaterThan(0);
+        expect(retained.decisionHistoryIds.length).toBeGreaterThan(0);
+
+        // RED: leftover children under retained ids must fail the verifier.
+        const red = await measureResidueStrict(session, [own.organizationId], retained);
+        expect(red.counts.ai_agent_plan_steps__by_captured_id).toBe(
+          retained.agentPlanStepIds.length
+        );
+        expect(red.counts.decision_history__by_captured_id).toBe(
+          retained.decisionHistoryIds.length
+        );
+        expect(() => expectNoResidue(red)).toThrow(/residue not zero/);
+
+        // GREEN after a real cleanup, on the same identities.
+        await cleanupRunAsserted(support, own.runId);
+        const green = await measureResidueStrict(session, [own.organizationId], retained);
+        expectNoResidue(green);
+        expect(green.counts.ai_agent_plan_steps__by_captured_id).toBe(0);
+        expect(green.counts.decision_history__by_captured_id).toBe(0);
+        expect(green.counts.user_preferences__by_captured_user_id).toBe(0);
+      } finally {
+        // release() itself asserts pg_advisory_unlock() === true and that the
+        // session holds zero advisory locks afterwards.
         await session.release();
       }
     } finally {
       try {
-        // Guaranteed removal of this test's OWN seeded run, whatever failed.
-        if (!ownCleaned) {
-          await cleanupRunAsserted(support, own.runId).catch(async () => {
-            // Already-gone is acceptable here; anything else must still not
-            // block the remaining teardown stages below.
-          });
+        const verify = await openGuardedCleanupSession(databaseUrl);
+        try {
+          if (!retained) retained = await captureFixtureIds(verify, [own.organizationId]);
+          await cleanupRunAsserted(support, own.runId).catch(() => undefined);
+          expectNoResidue(
+            await measureResidueStrict(verify, [own.organizationId], retained)
+          );
+        } finally {
+          await verify.release();
         }
       } finally {
-        try {
-          // The decoy may or may not still exist; never let it strand the rest.
-          await support
-            .post('/api/test-support/cleanup', {
-              data: { runId: decoy.runId },
-              timeout: MYW_CLEANUP_TIMEOUT_MS,
-            })
-            .catch(() => undefined);
-        } finally {
-          try {
-            // Final independent verification that nothing survived, on its own
-            // guarded session so a failure above cannot skip it.
-            const verify = await openGuardedCleanupSession(databaseUrl);
-            try {
-              const residual = await measureResidueStrict(
-                verify,
-                [own.organizationId, decoy.organizationId],
-                {
-                  agentPlanIds: [],
-                  agentPlanStepIds: [],
-                  decisionHistoryIds: [],
-                  preferenceUserIds: [],
-                }
-              );
-              expectNoResidue(residual);
-            } finally {
-              await verify.release();
-            }
-          } finally {
-            await memberApi.dispose();
-            await support.dispose();
-          }
-        }
+        await memberApi.dispose();
+        await support.dispose();
       }
     }
   });
