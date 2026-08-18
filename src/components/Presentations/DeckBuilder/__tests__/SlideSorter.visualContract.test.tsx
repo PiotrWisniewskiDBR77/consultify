@@ -78,4 +78,26 @@ describe('SlideSorter visual and accessibility contract', () => {
       container.querySelector('button button, button [role="button"], [role="button"] button')
     ).toBeNull();
   });
+
+  it('invokes New slide as an argument-free action', () => {
+    const onAddCard = vi.fn();
+    render(
+      <SlideSorter
+        cards={[card]}
+        activeIndex={0}
+        onSelect={vi.fn()}
+        onReorder={vi.fn()}
+        onDuplicate={vi.fn()}
+        onDelete={vi.fn()}
+        onAddCard={onAddCard}
+      />
+    );
+
+    const addButton = screen.getByRole('button', { name: 'New slide' });
+    expect(addButton).toHaveAttribute('type', 'button');
+    fireEvent.click(addButton);
+
+    expect(onAddCard).toHaveBeenCalledOnce();
+    expect(onAddCard).toHaveBeenCalledWith();
+  });
 });
