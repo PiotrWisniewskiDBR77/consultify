@@ -864,9 +864,9 @@ export const InterviewHub: React.FC = () => {
       // the legacy /interview/sessions/managed?lifecycle= endpoint (#8b backend).
       const sessionsRes =
         lifecycle === 'active'
-          ? await V8InterviewApi.getManagedSessions()
+          ? await V8InterviewApi.getSessions()
               .then((res) => res.sessions)
-              .catch(() => Api.get('/interview/sessions/managed'))
+              .catch(() => Api.get('/interview/sessions'))
               .catch(() => [])
           : await Api.get(
               `/interview/sessions/managed?lifecycle=${encodeURIComponent(lifecycle)}`
@@ -2419,20 +2419,41 @@ export const InterviewHub: React.FC = () => {
       toast.loading(t('interview.hub.creatingInterviewSession'), {
         id: toastId,
       });
-      const newSession = await Api.post('/interview/sessions', {
+      const createResponse = await Api.post('/interview/sessions', {
         projectId,
         name,
       });
 
-      setSessions((prev) => [newSession as InterviewSession, ...prev]);
+      const createdSession = normalizeInterviewSessionRecord(
+        ((createResponse as { data?: InterviewSession; session?: InterviewSession })?.data ||
+          (createResponse as { session?: InterviewSession })?.session ||
+          createResponse) as InterviewSession
+      );
+      if (!createdSession?.id) {
+        throw new Error('Interview session create response did not include an id');
+      }
+
+      // The Sessions table is server truth. Re-read the canonical org-scoped
+      // list before closing the modal so a 201 that cannot be read back never
+      // masquerades as a completed create through optimistic React state.
+      const confirmedSessions = await loadManagedSessions('active');
+      const confirmedSession = confirmedSessions.find(
+        (session) => session.id === createdSession.id && session.name === name
+      );
+      if (!confirmedSession) {
+        throw new Error(
+          'Created interview session was not returned by the canonical sessions list'
+        );
+      }
+      setSessions(confirmedSessions);
 
       // Open the new session (inline to avoid TDZ issues)
       const doc: OpenDocument = {
-        id: (newSession as InterviewSession).id,
+        id: confirmedSession.id,
         type: 'interview_session',
-        name: (newSession as InterviewSession).name || 'Interview Session',
+        name: confirmedSession.name || 'Interview Session',
         subType: 'interview',
-        status: ((newSession as any)?.status || 'IN_PROGRESS').toString().toUpperCase() as any,
+        status: (confirmedSession.status || 'IN_PROGRESS').toString().toUpperCase() as any,
       };
       setOpenDocuments((prev) => {
         if (prev.find((d) => d.id === doc.id)) return prev;
@@ -2454,7 +2475,7 @@ export const InterviewHub: React.FC = () => {
     } finally {
       setCreatingSession(false);
     }
-  }, [ensureProjectId, isPolish, newSessionNameDraft]);
+  }, [ensureProjectId, isPolish, loadManagedSessions, newSessionNameDraft]);
 
   const handleSessionComplete = useCallback(
     async (sessionId: string) => {

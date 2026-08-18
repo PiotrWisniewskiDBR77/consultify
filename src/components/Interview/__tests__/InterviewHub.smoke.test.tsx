@@ -46,12 +46,15 @@ vi.mock('react-i18next', () => ({
 
 vi.mock('react-hot-toast', () => {
   const fn = vi.fn();
-  return { default: Object.assign(fn, { success: vi.fn(), error: vi.fn() }) };
+  return {
+    default: Object.assign(fn, { success: vi.fn(), error: vi.fn(), loading: vi.fn() }),
+  };
 });
 
-const { apiGet, apiPost } = vi.hoisted(() => ({
+const { apiGet, apiPost, getSessions } = vi.hoisted(() => ({
   apiGet: vi.fn(),
   apiPost: vi.fn(),
+  getSessions: vi.fn(),
 }));
 
 vi.mock('@/services/api', () => ({
@@ -67,6 +70,7 @@ vi.mock('@/services/api', () => ({
 
 vi.mock('@/services/api/v8/interview', () => ({
   V8InterviewApi: {
+    getSessions,
     getManagedSessions: vi.fn(async () => []),
     getMyAssignments: vi.fn(async () => []),
     getManagedAssignments: vi.fn(async () => []),
@@ -135,6 +139,8 @@ beforeEach(() => {
   // Default: every data fetch resolves to an empty collection.
   apiGet.mockResolvedValue([]);
   apiPost.mockResolvedValue({});
+  getSessions.mockReset();
+  getSessions.mockResolvedValue({ sessions: [] });
 });
 
 afterEach(() => {
@@ -186,5 +192,42 @@ describe('InterviewHub smoke — tab rendering', () => {
     await waitFor(() => expect(container.firstChild).toBeTruthy());
     // No throw + shell present => real (mocked) load path was used, not demo.
     expect(container.firstChild).toBeTruthy();
+  });
+
+  it('creates a named session only after canonical server readback and renders translated labels', async () => {
+    const created = {
+      id: 'session-created-1',
+      name: 'Customer discovery readback',
+      status: 'active',
+      ownerId: 'user-1',
+      organizationId: 'org-1',
+      projectId: 'proj-1',
+      totalQuestions: 0,
+      answeredQuestions: 0,
+      startedAt: '2026-08-18T20:00:00.000Z',
+    };
+    getSessions.mockResolvedValueOnce({ sessions: [] }).mockResolvedValue({ sessions: [created] });
+    apiPost.mockResolvedValue(created);
+
+    renderTab('sessions');
+    fireEvent.click(await screen.findByRole('button', { name: 'New session' }));
+
+    expect(screen.getByRole('heading', { name: 'New interview session' })).toBeInTheDocument();
+    expect(screen.queryByText('interview.hub.newSessionModalTitle')).not.toBeInTheDocument();
+
+    const nameInput = screen.getByRole('textbox', { name: 'Session name' });
+    fireEvent.change(nameInput, { target: { value: created.name } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create' }));
+
+    await waitFor(() => {
+      expect(apiPost).toHaveBeenCalledWith('/interview/sessions', {
+        projectId: 'proj-1',
+        name: created.name,
+      });
+      expect(getSessions).toHaveBeenCalledTimes(2);
+      expect(
+        screen.queryByRole('heading', { name: 'New interview session' })
+      ).not.toBeInTheDocument();
+    });
   });
 });
