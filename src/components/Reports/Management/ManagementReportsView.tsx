@@ -54,6 +54,25 @@ interface ManagementReportsViewProps {
   className?: string;
 }
 
+export const normalizeManagementReportProjects = (
+  response: any
+): { id: string; name: string }[] => {
+  const rows = Array.isArray(response)
+    ? response
+    : Array.isArray(response?.data)
+      ? response.data
+      : Array.isArray(response?.data?.projects)
+        ? response.data.projects
+        : null;
+  if (!rows) throw new Error('Invalid projects response');
+  return rows
+    .map((project: any) => ({
+      id: String(project?.id || '').trim(),
+      name: String(project?.name || '').trim(),
+    }))
+    .filter((project) => project.id && project.name);
+};
+
 export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ className = '' }) => {
   const { t } = useTranslation();
   // State
@@ -94,16 +113,17 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
 
   // Projects list from API
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
+  const [projectsLoadError, setProjectsLoadError] = useState(false);
 
   // Load projects
   useEffect(() => {
     const loadProjects = async () => {
       try {
         const response = await Api.get('/api/projects');
-        if (response.data?.projects) {
-          setProjects(response.data.projects.map((p: any) => ({ id: p.id, name: p.name })));
-        }
+        setProjects(normalizeManagementReportProjects(response));
+        setProjectsLoadError(false);
       } catch (error) {
+        setProjectsLoadError(true);
         console.error('Failed to load projects:', error);
       }
     };
@@ -332,6 +352,13 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                 <Sparkles size={20} className="text-c-accent" />
                 <h2 className="text-lg font-semibold text-c-text">Generate New Report</h2>
               </div>
+
+              {projectsLoadError && (
+                <div role="alert" className="mb-4 text-sm text-red-600 dark:text-red-300">
+                  Failed to load projects. Report generation is unavailable until projects can be
+                  loaded.
+                </div>
+              )}
 
               <ReportTypeSelector
                 reportType={reportType}
