@@ -2295,7 +2295,12 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             if (created.length === 1) {
               // M13 flow redesign: a single freshly created initiative opens
               // straight in its DOCUMENT (not just the list preview).
-              handleOpenInitiativeDocument(first);
+              handleOpenDocument({
+                id: first.id,
+                type: 'initiative',
+                name: first.name || t('initiatives.document.untitled', 'Untitled initiative'),
+                status: first.status,
+              });
             } else {
               setPreviewInitiativeId(first.id);
             }

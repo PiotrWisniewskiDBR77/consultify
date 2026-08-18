@@ -70,8 +70,29 @@ vi.mock('@/hooks/useOpenChatWithContext', () => ({
 }));
 
 vi.mock('../Wizard/InitiativeWizardModal', () => ({
-  InitiativeWizardModal: ({ isOpen }: { isOpen: boolean }) =>
-    isOpen ? React.createElement('div', { 'data-testid': 'initiative-wizard-modal' }) : null,
+  InitiativeWizardModal: ({ isOpen, onCreated }: { isOpen: boolean; onCreated: Function }) =>
+    isOpen
+      ? React.createElement(
+          'div',
+          { 'data-testid': 'initiative-wizard-modal' },
+          React.createElement(
+            'button',
+            {
+              onClick: () => onCreated([{ id: 'fresh-1', name: 'Fresh draft', status: 'DRAFT' }]),
+            },
+            'Complete wizard'
+          )
+        )
+      : null,
+}));
+
+vi.mock('../InitiativeDocumentView', () => ({
+  InitiativeDocumentView: () => React.createElement('div', { 'data-testid': 'legacy-initiative' }),
+}));
+
+vi.mock('../CanonicalInitiativeCardWorkspace', () => ({
+  CanonicalInitiativeCardWorkspace: () =>
+    React.createElement('div', { 'data-testid': 'canonical-initiative' }),
 }));
 
 vi.mock('@/store/useConversationStore', () => ({
@@ -141,5 +162,15 @@ describe('InitiativesHub smoke', () => {
     await waitFor(() => {
       expect(screen.getByTestId('initiative-wizard-modal')).toBeInTheDocument();
     });
+  });
+
+  it('opens a wizard-created draft in the persisted initiative document, not unregistered runtime', async () => {
+    renderHub();
+    const [primaryWizardButton] = await screen.findAllByRole('button', { name: 'New Initiative' });
+    fireEvent.click(primaryWizardButton);
+    fireEvent.click(await screen.findByRole('button', { name: 'Complete wizard' }));
+
+    expect(await screen.findByTestId('legacy-initiative')).toBeInTheDocument();
+    expect(screen.queryByTestId('canonical-initiative')).not.toBeInTheDocument();
   });
 });
