@@ -6,6 +6,7 @@ import type { PgTransactionClient } from '../../utils/queryHelpers.js';
 
 export const INITIATIVE_LIFECYCLE_GATE_DOMAINS = [
   'SCHEDULE_MILESTONES',
+  'RESOURCE_RESPONSIBILITY',
   'GOVERNANCE_DECISION_MAKING',
   'CLOSURE',
 ] as const;

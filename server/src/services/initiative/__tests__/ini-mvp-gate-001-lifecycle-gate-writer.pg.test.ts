@@ -92,6 +92,7 @@ describe.skipIf(!REAL_PG)(
     const schema = `claude_b_gate_${randomUUID().replaceAll('-', '')}`;
     const quotedSchema = `"${schema}"`;
     let pool: InstanceType<typeof pg.Pool>;
+    let domainMigration: string;
 
     const digest = (seed: string) => createHash('sha256').update(seed).digest('hex');
     const future = '2099-01-01T00:00:00.000Z';
@@ -106,6 +107,7 @@ describe.skipIf(!REAL_PG)(
     const PROPOSAL_A = 'claude_b_proposal_a';
     const REVIEW_SCHEDULE = 'claude_b_review_schedule';
     const REVIEW_GOVERNANCE = 'claude_b_review_governance';
+    const REVIEW_RESOURCE = 'claude_b_review_resource';
     const REVIEW_CLOSURE = 'claude_b_review_closure';
     const CASE_VERSION = 9;
 
@@ -179,6 +181,13 @@ describe.skipIf(!REAL_PG)(
         '../../../../migrations/20260810_t01_initiative_lifecycle_gate_decisions.sql'
       );
       const migration = fs.readFileSync(migrationPath, 'utf8');
+      domainMigration = fs.readFileSync(
+        path.resolve(
+          path.dirname(fileURLToPath(import.meta.url)),
+          '../../../../migrations/20261018_initiative_resource_responsibility_gate_domain.sql'
+        ),
+        'utf8'
+      );
 
       await withSchemaClient(async (client) => {
         // Minimal LOCAL stub tables for every FK dependency the migration
@@ -233,6 +242,7 @@ describe.skipIf(!REAL_PG)(
         // (with its immutability trigger) is production-identical, just
         // FK-bound to the local stubs above via search_path.
         await client.query(migration);
+        await client.query(domainMigration);
 
         await client.query(`
           INSERT INTO users (id, organization_id, status) VALUES
@@ -254,6 +264,7 @@ describe.skipIf(!REAL_PG)(
             (review_id, proposal_version_id, scope_key, decision, reviewed_by_user_id) VALUES
             ('${REVIEW_SCHEDULE}', '${PROPOSAL_A}', 'schedule_lock', 'approved', '${USER_A}'),
             ('${REVIEW_GOVERNANCE}', '${PROPOSAL_A}', 'governance_lock', 'approved', '${USER_A}'),
+            ('${REVIEW_RESOURCE}', '${PROPOSAL_A}', 'resource_responsibility', 'approved', '${USER_A}'),
             ('${REVIEW_CLOSURE}', '${PROPOSAL_A}', 'closure_lock', 'approved', '${USER_A}');
         `);
       });
@@ -275,6 +286,110 @@ describe.skipIf(!REAL_PG)(
         await pool.query(`DROP SCHEMA IF EXISTS ${quotedSchema} CASCADE`);
         await pool.end();
       }
+    });
+
+    async function withMigrationProbe(
+      tableDefinition: string,
+      run: (client: PoolClient, probeSchema: string) => Promise<void>
+    ): Promise<void> {
+      const probeSchema = `flow_m18_${randomUUID().replaceAll('-', '')}`;
+      const quotedProbe = `"${probeSchema}"`;
+      const client = await pool.connect();
+      try {
+        await client.query(`CREATE SCHEMA ${quotedProbe}`);
+        await client.query(`SET search_path TO ${quotedProbe}, public`);
+        await client.query(`
+          CREATE TABLE initiative_lifecycle_gate_decisions (${tableDefinition});
+          CREATE OR REPLACE FUNCTION reject_initiative_lifecycle_gate_decision_mutation()
+          RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'immutable'; END $$;
+          CREATE TRIGGER initiative_lifecycle_gate_decisions_immutable
+          BEFORE UPDATE OR DELETE ON initiative_lifecycle_gate_decisions
+          FOR EACH ROW EXECUTE FUNCTION reject_initiative_lifecycle_gate_decision_mutation();
+        `);
+        await run(client, probeSchema);
+      } finally {
+        await client.query('RESET search_path').catch(() => undefined);
+        await client.query(`DROP SCHEMA IF EXISTS ${quotedProbe} CASCADE`).catch(() => undefined);
+        client.release();
+      }
+    }
+
+    async function migrationProbeFingerprint(client: PoolClient): Promise<string> {
+      const result = await client.query(`
+        SELECT jsonb_build_object(
+          'columns', (SELECT jsonb_agg(to_jsonb(x) ORDER BY x.attnum) FROM (
+            SELECT attnum, attname, format_type(atttypid, atttypmod) AS type, attnotnull
+              FROM pg_attribute
+             WHERE attrelid='initiative_lifecycle_gate_decisions'::regclass
+               AND attnum > 0 AND NOT attisdropped
+          ) x),
+          'constraints', (SELECT jsonb_agg(pg_get_constraintdef(oid) ORDER BY conname)
+                            FROM pg_constraint
+                           WHERE conrelid='initiative_lifecycle_gate_decisions'::regclass),
+          'rows', (SELECT coalesce(jsonb_agg(to_jsonb(r) ORDER BY r.marker), '[]'::jsonb)
+                     FROM initiative_lifecycle_gate_decisions r)
+        ) AS fingerprint
+      `);
+      return JSON.stringify(result.rows[0]?.fingerprint);
+    }
+
+    it('M18 preserves non-empty history, adds exactly RESOURCE_RESPONSIBILITY, and is repeat-safe', async () => {
+      await withMigrationProbe(
+        `marker TEXT PRIMARY KEY,
+         pmo_domain TEXT NOT NULL CHECK (pmo_domain IN
+           ('SCHEDULE_MILESTONES','GOVERNANCE_DECISION_MAKING','CLOSURE'))`,
+        async (client) => {
+          await client.query(`INSERT INTO initiative_lifecycle_gate_decisions VALUES ('history-1','CLOSURE')`);
+          const beforeRows = await client.query(`SELECT to_jsonb(t) AS row FROM initiative_lifecycle_gate_decisions t`);
+          await client.query(domainMigration);
+          await client.query(
+            `INSERT INTO initiative_lifecycle_gate_decisions VALUES ('resource-1','RESOURCE_RESPONSIBILITY')`
+          );
+          await client.query(domainMigration);
+          const history = await client.query(
+            `SELECT to_jsonb(t) AS row FROM initiative_lifecycle_gate_decisions t WHERE marker='history-1'`
+          );
+          expect(history.rows[0]?.row).toEqual(beforeRows.rows[0]?.row);
+          const checks = await client.query(`
+            SELECT lower(regexp_replace(regexp_replace(pg_get_constraintdef(c.oid), '::text', '', 'g'), '[[:space:]()'']', '', 'g')) AS definition
+              FROM pg_constraint c
+             WHERE c.conrelid='initiative_lifecycle_gate_decisions'::regclass AND c.contype='c'
+          `);
+          expect(checks.rows).toEqual([
+            {
+              definition:
+                'checkpmo_domain=anyarray[schedule_milestones,resource_responsibility,governance_decision_making,closure]',
+            },
+          ]);
+        }
+      );
+    });
+
+    it.each([
+      [
+        'OR-true',
+        `marker TEXT PRIMARY KEY, pmo_domain TEXT NOT NULL CHECK
+          (pmo_domain IN ('SCHEDULE_MILESTONES','GOVERNANCE_DECISION_MAKING','CLOSURE') OR true)`,
+      ],
+      [
+        'superset',
+        `marker TEXT PRIMARY KEY, pmo_domain TEXT NOT NULL CHECK
+          (pmo_domain IN ('SCHEDULE_MILESTONES','GOVERNANCE_DECISION_MAKING','CLOSURE','UNOWNED'))`,
+      ],
+      [
+        'partial nullable column',
+        `marker TEXT PRIMARY KEY, pmo_domain TEXT CHECK
+          (pmo_domain IN ('SCHEDULE_MILESTONES','GOVERNANCE_DECISION_MAKING','CLOSURE'))`,
+      ],
+    ])('M18 fails before mutation for a wrong %s shape', async (_label, definition) => {
+      await withMigrationProbe(definition, async (client) => {
+        await client.query(`INSERT INTO initiative_lifecycle_gate_decisions VALUES ('history-1','CLOSURE')`);
+        const before = await migrationProbeFingerprint(client);
+        await expect(client.query(domainMigration)).rejects.toThrow(
+          /INITIATIVE_RESOURCE_GATE_DOMAIN_PREFLIGHT/
+        );
+        expect(await migrationProbeFingerprint(client)).toBe(before);
+      });
     });
 
     it('records a GO (approved) decision that persists and is visible to hasApprovedGateDecision', async () => {
@@ -349,6 +464,40 @@ describe.skipIf(!REAL_PG)(
           WHERE organization_id = '${ORG_A}' AND idempotency_key = '${idempotencyKey}'`
       );
       expect(count).toBe(1);
+    });
+
+    it('records the early PROMOTED→PLANNING RESOURCE_RESPONSIBILITY gate through the canonical immutable writer', async () => {
+      const written = await tx((client) =>
+        recordInitiativeLifecycleGateDecision(
+          client,
+          baseInput({
+            pmoDomain: 'RESOURCE_RESPONSIBILITY',
+            sourceDigest: digest('claude-b-resource-responsibility'),
+            a05ApprovalReceiptRef: REVIEW_RESOURCE,
+            humanAuthorityRef: 'resource_responsibility',
+            baselineRefs: [`transformation-case:${CASE_A}:v${CASE_VERSION}`],
+            idempotencyKey: 'claude_b:resource:early-planning-1',
+          })
+        )
+      );
+
+      expect(written.idempotentReplay).toBe(false);
+      expect(written.decision).toMatchObject({
+        organizationId: ORG_A,
+        initiativeId: INITIATIVE_A,
+        pmoDomain: 'RESOURCE_RESPONSIBILITY',
+        humanActorUserId: USER_A,
+        a05ApprovalReceiptRef: REVIEW_RESOURCE,
+      });
+      const current = await tx((client) =>
+        assertCurrentApprovedInitiativeLifecycleGateDecision(client, {
+          organizationId: ORG_A,
+          initiativeId: INITIATIVE_A,
+          pmoDomain: 'RESOURCE_RESPONSIBILITY',
+          expectedDecisionId: written.decision.decisionId,
+        })
+      );
+      expect(current.decisionId).toBe(written.decision.decisionId);
     });
 
     it('two CONCURRENT submissions with the same idempotency key produce exactly one row (advisory-lock serialized)', async () => {

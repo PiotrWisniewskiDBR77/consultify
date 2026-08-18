@@ -24,6 +24,7 @@ import { randomUUID } from 'node:crypto';
 
 import type { Response } from 'express';
 import { Router } from 'express';
+import { z } from 'zod';
 
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
@@ -188,6 +189,7 @@ import {
 } from '../../services/resultsVnext/roi/roiFinanceLinkRepository.js';
 import {
   openRoiFinanceReconciliation,
+  recordFinanceOwnerGrantEvent,
   updateRoiFinanceReconciliationStatus,
   RoiFinanceLinkNotFoundError,
   RoiFinanceReconciliationNotFoundError,
@@ -276,6 +278,12 @@ import {
 } from '../../validators/resultsVnextRoiPir.validators.js';
 
 const router = Router();
+
+const FinanceOwnerGrantSchema = z.object({
+  userId: z.string().min(1).max(255),
+  action: z.enum(['granted', 'revoked']),
+  idempotencyKey: z.string().min(1).max(255),
+}).strict();
 
 router.use(apiAuthRateLimiter);
 router.use(verifyToken);
@@ -3061,6 +3069,30 @@ router.post(
 // ==========================================================================
 // ROI-E007 — Finance/KPI Seams routes (design §6)
 // ==========================================================================
+
+router.post(
+  '/finance-owner-grants',
+  validateBody(FinanceOwnerGrantSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const body = req.body as z.infer<typeof FinanceOwnerGrantSchema>;
+      const access = await resolveAccess(req, auth);
+      const grant = await recordFinanceOwnerGrantEvent({
+        organizationId: auth.organizationId,
+        userId: body.userId,
+        action: body.action,
+        actorUserId: auth.userId,
+        idempotencyKey: body.idempotencyKey,
+        access,
+      });
+      res.status(grant.outcome === 'applied' ? 201 : 200).json({ grant });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'recordFinanceOwnerGrantEvent');
+    }
+  }
+);
 
 // ---------- GET/POST .../finance-links ; DELETE .../finance-links/:linkId ----------
 

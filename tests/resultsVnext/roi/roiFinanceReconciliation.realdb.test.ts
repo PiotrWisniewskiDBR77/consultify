@@ -51,6 +51,7 @@ const ORG_ID = `roi-e007-fin-recon-org-${tag}`;
 const USER_MAKER = `roi-e007-fin-recon-maker-${tag}`;
 const USER_RESOLVER = `roi-e007-fin-recon-resolver-${tag}`;
 const USER_RESOLVER_2 = `roi-e007-fin-recon-resolver-2-${tag}`;
+const USER_GRANTEE = `roi-e007-fin-recon-grantee-${tag}`;
 const INITIATIVE_ID = `roi-e007-fin-recon-init-${tag}`;
 
 let client: Client;
@@ -68,6 +69,7 @@ let createRoiFinanceLink: FinanceLinkCommandsModule['createRoiFinanceLink'];
 let openRoiFinanceReconciliation: FinanceReconciliationCommandsModule['openRoiFinanceReconciliation'];
 let openRoiFinanceReconciliationFromProjection: FinanceReconciliationCommandsModule['openRoiFinanceReconciliationFromProjection'];
 let updateRoiFinanceReconciliationStatus: FinanceReconciliationCommandsModule['updateRoiFinanceReconciliationStatus'];
+let recordFinanceOwnerGrantEvent: FinanceReconciliationCommandsModule['recordFinanceOwnerGrantEvent'];
 let RoiFinanceLinkNotFoundError: FinanceReconciliationCommandsModule['RoiFinanceLinkNotFoundError'];
 let listRoiFinanceReconciliations: FinanceLinkRepositoryModule['listRoiFinanceReconciliations'];
 let closePgPool: (() => Promise<void>) | undefined;
@@ -190,6 +192,7 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
     openRoiFinanceReconciliation = financeReconciliationCommands.openRoiFinanceReconciliation;
     openRoiFinanceReconciliationFromProjection = financeReconciliationCommands.openRoiFinanceReconciliationFromProjection;
     updateRoiFinanceReconciliationStatus = financeReconciliationCommands.updateRoiFinanceReconciliationStatus;
+    recordFinanceOwnerGrantEvent = financeReconciliationCommands.recordFinanceOwnerGrantEvent;
     RoiFinanceLinkNotFoundError = financeReconciliationCommands.RoiFinanceLinkNotFoundError;
     const financeLinkRepo: FinanceLinkRepositoryModule = await import(
       '../../../server/src/services/resultsVnext/roi/roiFinanceLinkRepository.js'
@@ -200,7 +203,7 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
     closePgPool = (pgModule as unknown as { closePool?: () => Promise<void> }).closePool;
 
     await insertOrganization();
-    for (const userId of [USER_MAKER, USER_RESOLVER, USER_RESOLVER_2]) {
+    for (const userId of [USER_MAKER, USER_RESOLVER, USER_RESOLVER_2, USER_GRANTEE]) {
       await client.query(
         `INSERT INTO users (id,organization_id,email,password,role,status,first_name,last_name,created_at)
          VALUES ($1,$2,$3,'x','USER','active','Fin','Recon',now())`,
@@ -250,7 +253,7 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
     await client.query(`DELETE FROM rvn_platform_visibility_policies WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM initiatives WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM organization_members WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`DELETE FROM users WHERE id = ANY($1::text[])`, [[USER_MAKER, USER_RESOLVER, USER_RESOLVER_2]]);
+    await client.query(`DELETE FROM users WHERE id = ANY($1::text[])`, [[USER_MAKER, USER_RESOLVER, USER_RESOLVER_2, USER_GRANTEE]]);
     await client.query(`DELETE FROM organizations WHERE id = $1`, [ORG_ID]);
     await client.end();
     if (closePgPool) await closePgPool();
@@ -690,5 +693,31 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
     expect(event.rows[0]?.payload).toMatchObject({
       decisionPolicyVersion: 'DEC-FIN-RESULTS-RECONCILIATION-001/v1',
     });
+  });
+
+  it('records one durable Finance-owner grant under 8-way concurrency and rejects fingerprint collisions', async () => {
+    if (!reachable) return;
+    const input = {
+      organizationId: ORG_ID,
+      userId: USER_GRANTEE,
+      action: 'granted' as const,
+      actorUserId: USER_MAKER,
+      idempotencyKey: `grant-${tag}`,
+      access: { capabilities: ['*'], platformRole: null },
+    };
+    const outcomes = await Promise.all(Array.from({ length: 8 }, () => recordFinanceOwnerGrantEvent(input)));
+    expect(outcomes.filter((row) => row.outcome === 'applied')).toHaveLength(1);
+    expect(outcomes.filter((row) => row.outcome === 'replayed')).toHaveLength(7);
+    expect(new Set(outcomes.map((row) => `${row.receiptId}:${row.grantVersion}`)).size).toBe(1);
+    await expect(recordFinanceOwnerGrantEvent({ ...input, action: 'revoked' })).rejects.toMatchObject({
+      code: 'FINANCE_OWNER_GRANT_IDEMPOTENCY_COLLISION',
+    });
+    await expect(recordFinanceOwnerGrantEvent({ ...input, userId: USER_MAKER })).rejects.toMatchObject({
+      code: 'FINANCE_OWNER_GRANT_SELF_DENIED',
+    });
+    expect((await client.query(
+      `SELECT count(*)::int n FROM rvn_finance_reconciliation_grant_events WHERE organization_id=$1 AND user_id=$2`,
+      [ORG_ID, USER_GRANTEE]
+    )).rows[0]?.n).toBe(1);
   });
 });

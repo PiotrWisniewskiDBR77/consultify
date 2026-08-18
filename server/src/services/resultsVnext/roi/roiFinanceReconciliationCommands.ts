@@ -144,23 +144,61 @@ function reconciliationRequestFingerprint(input: {
   return createHash('sha256').update(JSON.stringify(input)).digest('hex');
 }
 
+function deterministicGrantReceiptId(idempotencyKey: string): string {
+  const hex = createHash('sha256').update(`rvn-finance-owner-grant:${idempotencyKey}`).digest('hex').slice(0, 32).split('');
+  hex[12] = '4';
+  hex[16] = ((Number.parseInt(hex[16]!, 16) & 0x3) | 0x8).toString(16);
+  return `${hex.slice(0, 8).join('')}-${hex.slice(8, 12).join('')}-${hex.slice(12, 16).join('')}-${hex.slice(16, 20).join('')}-${hex.slice(20).join('')}`;
+}
+
 export async function recordFinanceOwnerGrantEvent(input: {
   organizationId: string;
   userId: string;
   action: 'granted' | 'revoked';
   actorUserId: string;
+  idempotencyKey: string;
   access: CommandAccessContext;
-}): Promise<{ receiptId: string; grantVersion: number; action: 'granted' | 'revoked' }> {
+}): Promise<{ receiptId: string; grantVersion: number; action: 'granted' | 'revoked'; outcome: 'applied' | 'replayed' }> {
   const { acquirePgClient } = await import('../../../database/PostgresDatabase.js');
   const client = await acquirePgClient();
   try {
     await client.query('BEGIN');
     await assertActiveTenantMember(client, input.organizationId, input.actorUserId);
     await assertActiveTenantMember(client, input.organizationId, input.userId);
+    if (input.actorUserId === input.userId) {
+      throw new RoiFinanceReconciliationValidationError('Finance-owner grants require a distinct tenant governor.', 'FINANCE_OWNER_GRANT_SELF_DENIED');
+    }
+    if (!input.idempotencyKey.trim()) {
+      throw new RoiFinanceReconciliationValidationError('A non-empty idempotency key is required.', 'IDEMPOTENCY_KEY_REQUIRED');
+    }
     if (!input.access.capabilities.includes('*')) {
       throw new RoiFinanceReconciliationValidationError('Only tenant governance may append Finance-owner grants.', 'FINANCE_OWNER_GRANT_GOVERNANCE_REQUIRED');
     }
+    const receiptId = deterministicGrantReceiptId(input.idempotencyKey.trim());
+    // The receipt key is globally unique. Fence on it before the tenant/user
+    // transition lock so two different fingerprints racing on one key yield
+    // a stable collision rather than a raw unique-constraint failure.
+    await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [receiptId]);
     await client.query(`SELECT pg_advisory_xact_lock(hashtext($1), hashtext($2))`, [input.organizationId, input.userId]);
+    const replay = await client.query<{
+      organization_id: string; user_id: string; action: 'granted' | 'revoked'; acted_by: string;
+      grant_version: number; policy_version: string; policy_digest: string;
+    }>(`SELECT organization_id,user_id,action,acted_by,grant_version,policy_version,policy_digest
+          FROM rvn_finance_reconciliation_grant_events WHERE receipt_id=$1`, [receiptId]);
+    if (replay.rowCount) {
+      const row = replay.rows[0]!;
+      const exact = row.organization_id === input.organizationId && row.user_id === input.userId &&
+        row.action === input.action && row.acted_by === input.actorUserId &&
+        row.policy_version === FINANCE_RECONCILIATION_POLICY.version && row.policy_digest === FINANCE_RECONCILIATION_POLICY.digest;
+      if (!exact) {
+        throw new RoiFinanceReconciliationValidationError(
+          'Finance-owner grant idempotency key was already used for a different command.',
+          'FINANCE_OWNER_GRANT_IDEMPOTENCY_COLLISION'
+        );
+      }
+      await client.query('COMMIT');
+      return { receiptId, grantVersion: row.grant_version, action: row.action, outcome: 'replayed' };
+    }
     const current = await client.query<{ action: string; grant_version: number }>(
       `SELECT action, grant_version FROM rvn_finance_reconciliation_grant_events
         WHERE organization_id=$1 AND user_id=$2 AND capability=$3
@@ -177,7 +215,6 @@ export async function recordFinanceOwnerGrantEvent(input: {
       );
     }
     const grantVersion = (current.rows[0]?.grant_version ?? 0) + 1;
-    const receiptId = randomUUID();
     await client.query(
       `INSERT INTO rvn_finance_reconciliation_grant_events
         (organization_id,user_id,capability,grant_version,action,acted_by,receipt_id,policy_version,policy_digest)
@@ -187,7 +224,7 @@ export async function recordFinanceOwnerGrantEvent(input: {
         FINANCE_RECONCILIATION_POLICY.version, FINANCE_RECONCILIATION_POLICY.digest]
     );
     await client.query('COMMIT');
-    return { receiptId, grantVersion, action: input.action };
+    return { receiptId, grantVersion, action: input.action, outcome: 'applied' };
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;

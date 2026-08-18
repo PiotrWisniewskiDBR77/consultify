@@ -60,6 +60,8 @@ const mockGetInitiativeDetailRead = vi.fn();
 const mockResolveAccessContext = vi.fn();
 const mockRecordDecision = vi.fn();
 const mockEvaluateGateAccess = vi.fn();
+const mockProposeEarly = vi.fn();
+const mockExecuteEarly = vi.fn();
 
 const ORG = 'org-gate-route-1';
 const OTHER_ORG_BODY_CLAIM = 'evil-org-injected-via-body';
@@ -80,6 +82,7 @@ vi.mock('../../../database/Database.js', () => ({
 
 vi.mock('../../../middleware/auth.middleware.js', () => ({
   verifyToken: (_req: any, _res: any, next: () => void) => next(),
+  validateOrgMembership: (_req: any, _res: any, next: () => void) => next(),
   requireSuperAdmin: (_req: any, _res: any, next: () => void) => next(),
   requireRole: () => (_req: any, _res: any, next: () => void) => next(),
   requireOrganization: (_req: any, _res: any, next: () => void) => next(),
@@ -155,6 +158,11 @@ vi.mock('../initiativeKpiAssignmentService.js', () => ({
   listInitiativeKpiAssignments: vi.fn().mockResolvedValue([]),
   updateInitiativeKpiAssignment: vi.fn().mockResolvedValue(undefined),
   deleteInitiativeKpiAssignment: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('../../v8/transformationInitiativeTransitionAdapterService.js', () => ({
+  proposeEarlyInitiativeTransition: (...a: unknown[]) => mockProposeEarly(...a),
+  executeApprovedEarlyInitiativeTransition: (...a: unknown[]) => mockExecuteEarly(...a),
 }));
 
 vi.mock('../initiativeWizardService.js', () => ({
@@ -332,6 +340,59 @@ const decisionFixture = (overrides: Record<string, unknown> = {}) => ({
 });
 
 // ── Tests ─────────────────────────────────────────────────────────────────
+
+describe('two-phase early governed lifecycle routes', () => {
+  it('derives proposer identity from session and creates only a pending proposal', async () => {
+    mockProposeEarly.mockResolvedValue({
+      proposalVersionId: 'pv-early-1',
+      scopeKey: 'initiative_lifecycle:governance_decision_making',
+      targetStatus: 'PROMOTED',
+    });
+    const res = await request(app)
+      .post(`/api/initiatives/${INITIATIVE_ID}/lifecycle-transition-proposals`)
+      .send({
+        transformationCaseId: 'case-early-1',
+        reviewerUserId: 'distinct-reviewer',
+        targetStatus: 'PROMOTED',
+        reason: 'Explicit proposer action',
+        proposerUserId: 'forged-proposer',
+        organizationId: 'forged-org',
+      });
+    expect(res.status).toBe(201);
+    expect(mockProposeEarly).toHaveBeenCalledWith(
+      expect.objectContaining({ organizationId: ORG, proposerUserId: UID, reviewerUserId: 'distinct-reviewer' })
+    );
+  });
+
+  it('rejects self-review and does not execute', async () => {
+    mockProposeEarly.mockRejectedValue(new Error('initiative_lifecycle_self_review_denied'));
+    const res = await request(app)
+      .post(`/api/initiatives/${INITIATIVE_ID}/lifecycle-transition-proposals`)
+      .send({
+        transformationCaseId: 'case-early-1',
+        reviewerUserId: UID,
+        targetStatus: 'PROMOTED',
+        reason: 'Self review must fail',
+      });
+    expect(res.status).toBe(409);
+    expect(mockExecuteEarly).not.toHaveBeenCalled();
+  });
+
+  it('execute consumes only the proposal id and derives reviewer identity from session', async () => {
+    mockExecuteEarly.mockResolvedValue({
+      gateDecisionId: 'gate-early-1',
+      idempotentReplay: false,
+      transition: { ok: true, id: INITIATIVE_ID, status: 'PROMOTED' },
+    });
+    const res = await request(app)
+      .post(`/api/initiatives/${INITIATIVE_ID}/lifecycle-transition-executions`)
+      .send({ proposalVersionId: 'pv-early-1', reason: 'Distinct reviewer approved through A05' });
+    expect(res.status).toBe(201);
+    expect(mockExecuteEarly).toHaveBeenCalledWith(
+      expect.objectContaining({ organizationId: ORG, initiativeId: INITIATIVE_ID, reviewerUserId: UID })
+    );
+  });
+});
 
 describe('POST /:id/lifecycle-gate-decisions — reachability at both mounted prefixes', () => {
   it.each(['/api/pmo/initiatives', '/api/initiatives'])(

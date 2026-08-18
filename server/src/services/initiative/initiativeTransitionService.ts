@@ -345,6 +345,10 @@ interface ExecuteInitiativeTransitionParams {
    * RBAC/decision check runs.
    */
   expectedCurrentStatus?: string | null;
+  /** Optional caller-owned transaction. When supplied, no nested BEGIN/COMMIT is opened. */
+  transactionClient?: PgTransactionClient;
+  /** Registers effects that may run only after the caller commits its pinned transaction. */
+  deferPostCommitEffect?: (effect: () => Promise<void>) => void;
   /** Defaults to `{ kind: 'user' }` — every existing caller is unaffected. */
   actor?: InitiativeTransitionActor;
   /**
@@ -462,7 +466,7 @@ export async function executeInitiativeTransition(
   // COMMIT didn't unambiguously succeed.
   let outcome: TransitionOutcome;
   try {
-    outcome = await queryHelpers.withPgTransaction(async (client) => {
+    const transitionBody = async (client: PgTransactionClient): Promise<TransitionOutcome> => {
       // CONCURRENCY FIX: lock the row FIRST. Every check below reads
       // `currentStatus`/`initiativeName`/etc. from THIS locked row.
       const lockedRows = (
@@ -1526,7 +1530,10 @@ export async function executeInitiativeTransition(
         correlationId,
         initiativeName,
       };
-    });
+    };
+    outcome = params.transactionClient
+      ? await transitionBody(params.transactionClient)
+      : await queryHelpers.withPgTransaction(transitionBody);
   } catch (err) {
     if (err instanceof TransitionGateSupersededError) {
       return {
@@ -1582,6 +1589,7 @@ export async function executeInitiativeTransition(
 
   // ---- Non-critical side effects (best-effort, deliberately OUTSIDE the transaction —
   // the row lock is already released by the time we get here) ----
+  const runPostCommitEffects = async (): Promise<void> => {
 
   // Uspójnienie F2.2–2.5/2.7 — record the stage-boundary handoff (event + lineage)
   // on every successful status transition. Fail-safe (never throws/blocks).
@@ -1754,6 +1762,10 @@ export async function executeInitiativeTransition(
   } catch {
     /* best-effort audit */
   }
+  };
+
+  if (params.deferPostCommitEffect) params.deferPostCommitEffect(runPostCommitEffects);
+  else await runPostCommitEffects();
 
   return { ok: true, id, status: nextStatus, previousStatus: currentStatus, gate, correlationId };
 }

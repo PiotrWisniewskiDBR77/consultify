@@ -55,6 +55,10 @@ import { resolveInitiativeProjectId } from '../../services/initiativeProjectPoli
 import initiativeSectionTypeService from '../../services/initiativeSectionTypeService.js';
 import { checkSimilarInitiatives } from '../../services/initiativeSimilarityService.js';
 import initiativeTemplateService from '../../services/initiativeTemplateService.js';
+import {
+  executeApprovedEarlyInitiativeTransition,
+  proposeEarlyInitiativeTransition,
+} from '../../services/v8/transformationInitiativeTransitionAdapterService.js';
 import { getInitiativesRaciResultsSummary } from '../../services/pmo/initiativeRaciResultsSummaryService.js';
 import { getProgramRollup } from '../../services/pmo/programRollupService.js';
 import {
@@ -3780,6 +3784,70 @@ router.put(
  * Body: RecordInitiativeLifecycleGateDecisionInput minus organizationId/
  * humanActorUserId (see above). `initiativeId` comes from the path.
  */
+const EarlyLifecycleProposalSchema = z.object({
+  transformationCaseId: z.string().trim().min(1).max(255),
+  reviewerUserId: z.string().trim().min(1).max(255),
+  targetStatus: z.enum(['PROMOTED', 'PLANNING', 'SCHEDULED', 'EXECUTING', 'DONE']),
+  reason: z.string().trim().min(1).max(2000),
+});
+
+router.post(
+  '/:id/lifecycle-transition-proposals',
+  requireOrgRole('user'),
+  validateBody(EarlyLifecycleProposalSchema),
+  async (req: any, res: any) => {
+    const organizationId = String(req.user?.organizationId || '');
+    const proposerUserId = String(req.user?.id || '');
+    if (!organizationId || !proposerUserId) return res.status(401).json({ code: 'UNAUTHORIZED' });
+    try {
+      const proposal = await proposeEarlyInitiativeTransition({
+        organizationId,
+        initiativeId: String(req.params.id),
+        transformationCaseId: req.body.transformationCaseId,
+        proposerUserId,
+        reviewerUserId: req.body.reviewerUserId,
+        targetStatus: req.body.targetStatus,
+        reason: req.body.reason,
+      });
+      return res.status(201).json({ proposal });
+    } catch (error) {
+      const code = error instanceof Error ? error.message : 'initiative_lifecycle_proposal_failed';
+      const status = code === 'initiative_lifecycle_self_review_denied' ? 409 : code.includes('authority') ? 403 : 409;
+      return res.status(status).json({ code });
+    }
+  }
+);
+
+const ExecuteEarlyLifecycleSchema = z.object({
+  proposalVersionId: z.string().trim().min(1).max(255),
+  reason: z.string().trim().min(1).max(2000),
+});
+
+router.post(
+  '/:id/lifecycle-transition-executions',
+  requireOrgRole('user'),
+  validateBody(ExecuteEarlyLifecycleSchema),
+  async (req: any, res: any) => {
+    const organizationId = String(req.user?.organizationId || '');
+    const reviewerUserId = String(req.user?.id || '');
+    if (!organizationId || !reviewerUserId) return res.status(401).json({ code: 'UNAUTHORIZED' });
+    try {
+      const result = await executeApprovedEarlyInitiativeTransition({
+        organizationId,
+        initiativeId: String(req.params.id),
+        proposalVersionId: req.body.proposalVersionId,
+        reviewerUserId,
+        reviewerRole: String(req.user?.role || 'USER'),
+        reason: req.body.reason,
+      });
+      return res.status(result.idempotentReplay ? 200 : 201).json(result);
+    } catch (error) {
+      const code = error instanceof Error ? error.message : 'initiative_lifecycle_execution_failed';
+      return res.status(code.includes('required') ? 403 : 409).json({ code });
+    }
+  }
+);
+
 const LifecycleGateDecisionSchema = z.object({
   transformationCaseId: z.string().trim().min(1).max(255),
   pmoDomain: z.enum(INITIATIVE_LIFECYCLE_GATE_DOMAINS),

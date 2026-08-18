@@ -107,6 +107,24 @@ describe('initiativeTransitionService EXECUTING -> DONE canonical closure gate',
     expect(queryMock.mock.calls.some(([sql]) => sql.includes('initiative_history'))).toBe(false);
   });
 
+  it('uses a caller-pinned client without opening or committing a nested transaction', async () => {
+    const pinnedClient = { query: queryMock } as any;
+    const result = await executeInitiativeTransition({
+      orgId: 'org-1',
+      initiativeId: 'initiative-1',
+      actorId: 'human-1',
+      actorRole: 'PMO',
+      expectedCurrentStatus: 'EXECUTING',
+      nextStatusInput: 'DONE',
+      transactionClient: pinnedClient,
+      deferPostCommitEffect: vi.fn(),
+    });
+
+    expect(result.ok).toBe(false);
+    expect(withPgTransactionMock).not.toHaveBeenCalled();
+    expect(assertCurrentMock).toHaveBeenCalledWith(pinnedClient, expect.any(Object));
+  });
+
   it.each([
     { label: 'task', tasks: 1, milestones: 0 },
     { label: 'milestone', tasks: 0, milestones: 1 },

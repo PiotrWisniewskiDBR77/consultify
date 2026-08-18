@@ -21,6 +21,7 @@ const mockListRoiFinanceLinks = vi.fn();
 const mockListRoiFinanceReconciliations = vi.fn();
 const mockOpenRoiFinanceReconciliation = vi.fn();
 const mockUpdateRoiFinanceReconciliationStatus = vi.fn();
+const mockRecordFinanceOwnerGrantEvent = vi.fn();
 const mockFlagEvidenceLinkFreshnessCheck = vi.fn();
 
 vi.mock('../../../middleware/auth.middleware.js', () => ({
@@ -61,6 +62,7 @@ vi.mock('../../../services/resultsVnext/roi/roiFinanceReconciliationCommands.js'
     ...actual,
     openRoiFinanceReconciliation: (...args: unknown[]) => mockOpenRoiFinanceReconciliation(...args),
     updateRoiFinanceReconciliationStatus: (...args: unknown[]) => mockUpdateRoiFinanceReconciliationStatus(...args),
+    recordFinanceOwnerGrantEvent: (...args: unknown[]) => mockRecordFinanceOwnerGrantEvent(...args),
   };
 });
 vi.mock('../../../services/resultsVnext/roi/roiBenefitEvidenceLinkCommands.js', async (importOriginal) => {
@@ -175,6 +177,28 @@ function evidenceLinkFixture(overrides: Record<string, unknown> = {}) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+});
+
+describe('POST /finance-owner-grants', () => {
+  it('derives tenant and governor from auth and returns applied/replayed receipts', async () => {
+    mockRecordFinanceOwnerGrantEvent
+      .mockResolvedValueOnce({ receiptId: 'receipt-1', grantVersion: 1, action: 'granted', outcome: 'applied' })
+      .mockResolvedValueOnce({ receiptId: 'receipt-1', grantVersion: 1, action: 'granted', outcome: 'replayed' });
+    const body = { userId: 'user-grantee', action: 'granted', idempotencyKey: 'grant-key-1' };
+    const first = await request(createApp()).post('/api/vnext/results/roi/finance-owner-grants').send(body);
+    const replay = await request(createApp()).post('/api/vnext/results/roi/finance-owner-grants').send(body);
+    expect(first.status).toBe(201);
+    expect(replay.status).toBe(200);
+    expect(mockRecordFinanceOwnerGrantEvent).toHaveBeenNthCalledWith(1, expect.objectContaining({
+      organizationId: 'org-1', actorUserId: 'user-actor', userId: 'user-grantee', action: 'granted', idempotencyKey: 'grant-key-1',
+    }));
+  });
+
+  it('rejects missing idempotency and unknown fields before the service', async () => {
+    expect((await request(createApp()).post('/api/vnext/results/roi/finance-owner-grants').send({ userId: 'u', action: 'granted' })).status).toBe(400);
+    expect((await request(createApp()).post('/api/vnext/results/roi/finance-owner-grants').send({ userId: 'u', action: 'granted', idempotencyKey: 'k', organizationId: 'foreign' })).status).toBe(400);
+    expect(mockRecordFinanceOwnerGrantEvent).not.toHaveBeenCalled();
+  });
 });
 
 // ==========================================
