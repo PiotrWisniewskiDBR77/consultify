@@ -69,7 +69,7 @@ touch only the smallest task-relevant subset and must list that subset in its
 evidence record. The four ceilings contain zero overlap. The JSON SHA-256 is
 the lease identity and must be reported in every handoff.
 
-- Lane A: `e75d0729bbf419818914a0c5235eec1f3fe354c22c21696324d01c13b4962141`
+- Lane A: `7c43c978258bc9a1c027be917cfe23bbce42c65a4874e3cb190c90fa93f59ec6`
 - Lane B: `f4d75f0aed94f2e34acaec63d91c245495e7e0f658aa36d1122342c2acecc612`
 - Lane C: `7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c`
 - Codex: `a626ac0c356fc750569d14542c6908ee9381531f0669fce93f23773db934651c`
@@ -78,6 +78,8 @@ Superseded lease identities, 2026-08-18 exact-path exception (integrator-granted
 five enumerated paths only; generator keyword rules unchanged, no directory leased):
 Lane A `a2f9be9983e3a03e5e64f1a51dca193199a5bec963a246c3b4fe94b378af1308`;
 Codex `0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860`.
+Lane A `e75d0729bbf419818914a0c5235eec1f3fe354c22c21696324d01c13b4962141`
+was superseded by the exact one-path AUD mounted-test exception above.
 Evidence records citing the superseded Codex identity predate this exception and
 remain historically accurate at the SHA where they were written.
 

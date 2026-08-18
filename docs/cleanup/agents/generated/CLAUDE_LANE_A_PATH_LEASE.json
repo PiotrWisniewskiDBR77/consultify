@@ -5,12 +5,12 @@
   "lane": "a",
   "branch": "codex/closure-claude-a-method-evidence",
   "rule": "Only listed tracked paths may be changed. Shared files require an integrator request. New files must live under an already-listed domain directory or the reserved migration/evidence namespace.",
-  "sha256": "e75d0729bbf419818914a0c5235eec1f3fe354c22c21696324d01c13b4962141",
+  "sha256": "7c43c978258bc9a1c027be917cfe23bbce42c65a4874e3cb190c90fa93f59ec6",
   "counts": {
-    "all": 721,
+    "all": 722,
     "source": 499,
-    "tests": 221,
-    "vitest": 195,
+    "tests": 222,
+    "vitest": 196,
     "playwright": 26
   },
   "files": [
@@ -112,6 +112,7 @@
     "server/src/method-core/outputs/__tests__/testFixtures.ts",
     "server/src/method-core/outputs/index.ts",
     "server/src/routes/__tests__/audit-programs.test.ts",
+    "server/src/routes/audits/__tests__/mounting.integration.test.ts",
     "server/src/routes/__tests__/initiative-controller-interview-insight.test.ts",
     "server/src/routes/__tests__/interview-elevated-read-access.test.ts",
     "server/src/routes/__tests__/interview-eval-strict-schema.contract.test.ts",
@@ -1262,6 +1263,7 @@
       "server/src/method-core/outputs/__tests__/supersession.test.ts",
       "server/src/method-core/outputs/__tests__/testFixtures.ts",
       "server/src/routes/__tests__/audit-programs.test.ts",
+      "server/src/routes/audits/__tests__/mounting.integration.test.ts",
       "server/src/routes/__tests__/initiative-controller-interview-insight.test.ts",
       "server/src/routes/__tests__/interview-elevated-read-access.test.ts",
       "server/src/routes/__tests__/interview-eval-strict-schema.contract.test.ts",
