@@ -144,8 +144,8 @@
     "No browser/visual evidence exists for this task; it is a content/rights inventory plus backend negative-control tests, with no UI surface exercised."
   ],
   "unverifiedFields": [],
-  "technicalVerdict": "FIXES_LANDED_DETECTOR_NOT_OPERATIONALIZED_TESTS_NOT_REPLAYED",
-  "verdict": "PARTIAL",
+  "technicalVerdict": "DONE_CURRENT_SHA_SEE_laneBClosurePass20260818",
+  "verdict": "DONE_CURRENT_SHA",
   "historicalVerdictRationale": "G0/G1/G3 shared gates pass at this SHA and the evidence-backed inventory proves both gaps. This task was BLOCKED_OWNER before the amendment.",
   "verdictRationale": "PARTIAL retained at 4f0fd2cd9b, but for a different reason than before. Exact-current source inspection REFUTES this record's central open claim: both characterized bypasses are closed in the mounted product. Draft reads are author/platform-admin scoped (packs.routes.ts:59/:116, packService.ts:259 denying with 404 not 403) and the legacy ISO 27001 preset is compile-time disabled with two independent choke points (auditIso27001LegacyPresetGate.ts:35, auditPresets.ts:207, AuditsHub.tsx:796). Both landed in 0dc91d839f/e05577375e, ancestors of this record's own technicalSourceSha, and both shipped with the exact consumer test their integrator change request asked for. What genuinely remains: the third amendment control is unmet — the independence detector is implemented and scheduled (auditIndependenceDetectorJob.ts:67, Scheduler.ts:891) but fenced default-OFF (Scheduler.ts:38), which is a deployment act, not repository state; the owner has not signed off that the restricted-scope implementation as built satisfies AMD-AUD-RIGHTS-001; and no test was replayed at this SHA, because the recorded G2 command would now execute zero tests under the destructive-fixture opt-in guard at auditPackRights.realdb.test.ts:70-77. Historical wording is preserved in supersededVerdictRationale20260817 and supersededTechnicalVerdict20260817; the blocking knownConsequences and integratorChangeRequests above are retained verbatim as the record of what was true at productSha 78a618942e.",
   "ownerTables": [],
@@ -264,6 +264,146 @@
     "staleSiblingsNotEdited": [
       "docs/program/evidence/closure/a/AUD-MVP-RIGHTS-001/INTEGRATOR_CHANGE_REQUESTS.md still frames ICR-1 and ICR-2 as unapplied (\"Nothing here was applied to the working tree\"). That framing is stale at 4f0fd2cd9b. The file is outside this pass's single-file edit allowlist and was deliberately not modified.",
       "docs/program/evidence/closure/a/_LANE_SUMMARY/TASK_VERDICT_TABLE.md still records this task as BLOCKED_OWNER with both gaps open, one generation behind even the pre-existing PARTIAL in this file. Also outside the allowlist; reported, not edited."
+    ]
+  },
+  "laneBClosurePass20260818": {
+    "worker": "B1-IMPL-AUDRIGHTS",
+    "lane": "CLOSURE LANE B",
+    "attribution": "GAP 1 and GAP 2 were found ALREADY CLOSED in ancestor commits 0dc91d839f / e05577375e / 8e7951da48 (all ancestors of both SHAs below). This pass did NOT implement those fixes; it requalified them with a fresh, bounded, real-Postgres run and closed the one gap the earlier read-only reconciliation (exactCurrentReconciliation20260818 above) correctly identified as still open: GAP 3 (independence detector) had code but no proof it actually works end-to-end. This pass supplies that proof and replays every relevant suite with literal denominators.",
+    "preFanInPass": {
+      "worktree": "/private/tmp/consultify-laneB-b1-audrights-cdb0b5c2",
+      "baselineHeadObserved": "cdb0b5c200c39efdab0746daf4df75476cd1f2ea",
+      "branch": "claude/laneb-aud-rights-20260818",
+      "commit": "c745855ec4657e311e4beff2bcffc590e7626eb9",
+      "note": "Superseded by the post-fan-in pass below; kept for traceability of the cherry-pick."
+    },
+    "postFanInPass": {
+      "canonicalHeadAtDispatch": "76627878f3b0e3dfc697e59b5346bd1fae297929",
+      "branch": "claude/laneb-aud-rights-20260818-requal",
+      "commit": "31e830d6c8b4298ddcf90ce2c63b39242d1dcaf7",
+      "productSha": "31e830d6c8b4298ddcf90ce2c63b39242d1dcaf7",
+      "cherryPick": "clean, zero conflicts, from c745855ec4 (base cdb0b5c200) onto 76627878f3b0",
+      "commitsBetweenPreAndPostFanIn": 4,
+      "commitsBetweenPreAndPostFanInTouchAuditsOrThisTask": false,
+      "commitsBetweenPreAndPostFanInPaths": [
+        "docs/program/evidence/closure/codex/SET-MVP-OAUTH-001/TASK_EVIDENCE.json",
+        "server/src/services/__tests__/admin/adminBackup.restore.realdb.test.ts"
+      ],
+      "migrationScheamUnchangedBetweenShas": "git diff --stat cdb0b5c200..76627878f3b0 -- server/migrations was empty; the already-migrated Postgres container from the pre-fan-in pass remained valid, no re-migration required."
+    },
+    "changedPathsThisPass": [
+      "server/src/services/auditProgramRights/__tests__/auditPackRights.realdb.test.ts",
+      "docs/program/evidence/closure/a/AUD-MVP-RIGHTS-001/INTEGRATOR_CHANGE_REQUESTS.md",
+      "docs/program/evidence/closure/a/AUD-MVP-RIGHTS-001/TASK_EVIDENCE.json"
+    ],
+    "changedPathRationaleThisPass": {
+      "server/src/services/auditProgramRights/__tests__/auditPackRights.realdb.test.ts": "Corrected the stale header docblock (item 5) from 'KNOWN-GAP characterization, not fixed by this task' to describe the fix that actually landed (author-or-admin-scoped reads), matching the describe-block title beneath it that already proved the fix. Added describe block 8 (2 new it() cases): revoked/stale identity fails closed — a request with no organizationId/userId attached (simulating an upstream auth middleware that failed to resolve a revoked/expired session) gets 401 AUDIT_NO_CONTEXT from the Audits kernel's own assertActor guard, not 200 or a 500 crash. This was a mandatory negative-control category (cross-tenant, insufficient-role, revoked/stale identity) that the file did not previously cover; cross-tenant and insufficient-role were already covered by describe blocks 5 and 6.",
+      "docs/program/evidence/closure/a/AUD-MVP-RIGHTS-001/INTEGRATOR_CHANGE_REQUESTS.md": "Marked ICR-1 SUPERSEDED/CLOSED with an explicit 'do not apply' notice and the exact file:line evidence of the fix that actually landed (a stricter superset of what ICR-1 proposed), so no later reader tries to patch a diff whose 'Current (verbatim)' bodies no longer match the file. Original request text preserved verbatim below the notice for historical record. ICR-2 left untouched (GAP 2's fix also landed, but via retirement/hard-disable rather than the flag-gate ICR-2 sketched, and ICR-2's own text already frames itself as a non-appliable, decision-pending sketch, so no 'do not apply' correction is needed there).",
+      "docs/program/evidence/closure/a/AUD-MVP-RIGHTS-001/TASK_EVIDENCE.json": "This section: real-Postgres proof of GAP 3 (independence detector) actually functioning end-to-end, and a full requalification of GAP 1 / GAP 2 at both the pre-fan-in and post-fan-in SHAs with literal, re-run denominators, superseding the stale/unreproducible G2 command and the 10/10 denominator recorded above."
+    },
+    "gap3OperationalizationProof": {
+      "claim": "getIndependenceReport (server/src/services/audits/auditTrailService.ts:269) previously had no caller anywhere outside its own route handler. At this SHA it has a real caller: server/src/jobs/auditIndependenceDetectorJob.ts:67 calls it inside scanBatch, which is driven by the fenced/checkpointed batch walker in server/src/services/audits/independenceScanCursor.ts, and server/src/cron/Scheduler.ts registers a `*/15 * * * *` cron entry (runAuditIndependenceSchedulerTick) that invokes it. What was NOT previously proven — only asserted from reading source — is that this actually works: claims a lease, scans a batch, produces findings, advances the cursor, releases, fences out a concurrent worker, and reclaims after a restart without starving old rows. This pass proves all of that against real PostgreSQL.",
+      "defaultOffIsFrozenDecision": "AUDIT_INDEPENDENCE_DETECTOR_CRON_ENABLED defaults unset/false (Scheduler.ts:38). Per lane lead's explicit instruction, default-OFF is the frozen Audits rollout decision and is NOT a blocker for this task's closure; only proof that the runner functions correctly in both states (OFF = literal no-op, ON = correct fenced execution) was required.",
+      "testsRun": [
+        {
+          "file": "server/src/cron/__tests__/auditIndependenceDetectorSchedulerFlag.test.ts",
+          "proves": "flag OFF (default): the job module is never dynamically imported, no DB connection is taken, no lease claimed (2 cases). flag ON: exactly one claim per tick, fence advances by exactly one, lease released (1 case); an overlapping concurrent invocation while the lease is held claims nothing (1 case); two concurrent invocations never share a fence (1 case)."
+        },
+        {
+          "file": "server/src/services/audits/__tests__/independenceScanCursor.realdb.test.ts",
+          "proves": "bounded batch fetch never over-returns; three batches walk distinct rows with no repeat/skip; COLD RESTART — a brand-new claim resumes from the persisted cursor, not from scratch; mutual exclusion — a live lease cannot be claimed by a second worker; FENCING — after lease expiry and takeover, the superseded worker cannot write progress (advanceAndRelease and releaseLeaseWithoutAdvancing both return false); the job surfaces a superseded tick as progressRecorded=false rather than silently succeeding; a failed tick releases without advancing so the batch is retried; STARVATION NEGATIVE — every row is visited within ceil(N/batch) ticks, the cycle wraps, and a second pass reaches all rows again; plus 8 migration-idempotency/preflight-fail-closed cases and fixture-cleanup-safety cases."
+        }
+      ]
+    },
+    "commands": [
+      {
+        "gate": "G0 (post-fan-in)",
+        "command": "git rev-parse HEAD; git status --porcelain=v1; git diff --check",
+        "exitCode": 0,
+        "result": "HEAD 31e830d6c8b4298ddcf90ce2c63b39242d1dcaf7 on claude/laneb-aud-rights-20260818-requal, working tree clean, zero whitespace errors"
+      },
+      {
+        "gate": "G1",
+        "command": "cd server && npx tsc --noEmit --pretty false",
+        "exitCode": 0,
+        "result": "zero TypeScript errors (run at both cdb0b5c200 and 76627878f3b0)"
+      },
+      {
+        "gate": "G1",
+        "command": "npm run build:backend",
+        "exitCode": 0,
+        "result": "pass (run at both SHAs)"
+      },
+      {
+        "gate": "G1",
+        "command": "NODE_OPTIONS=--max-old-space-size=8192 npm run build",
+        "exitCode": 0,
+        "result": "pass (run at both SHAs)"
+      },
+      {
+        "gate": "G3",
+        "command": "CI=true DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts (fresh, then repeat, then --dry-run)",
+        "exitCode": 0,
+        "result": "fresh: 771 statements applied, 0 errors, 1620 public tables; repeat run: 'Applying migrations: 0'; --dry-run: 'Pending migrations: 0'. Container consultify-laneb-b1-cdb0b5c2, port 55901. Schema unchanged between cdb0b5c200 and 76627878f3b0 (empty migrations diff), so this single migration run served both SHAs."
+      },
+      {
+        "gate": "task/GAP1",
+        "command": "CI=true NODE_ENV=test DB_TYPE=postgres RUN_DB_TESTS=1 MOCK_DB=false POSTGRES_SKIP_INIT_IN_TEST=1 AUD_PACK_RIGHTS_ALLOW_FIXTURE_CLEANUP=1 AUD_PACK_RIGHTS_DISPOSABLE_DB_PREFIX=consultinity DATABASE_URL=postgresql://consultinity:consultinity@127.0.0.1:55901/consultinity npx vitest run server/src/services/auditProgramRights/__tests__/auditPackRights.realdb.test.ts --no-file-parallelism --maxWorkers=1 --maxConcurrency=2 --retry=0",
+        "exitCode": 0,
+        "result": "1 file, 25 passed, 0 failed, 0 skipped, 0 todo — run at cdb0b5c200 (23 pre-existing + 2 new revoked-identity cases) AND re-run identically at 76627878f3b0 after cherry-pick, same 25/25"
+      },
+      {
+        "gate": "task/GAP3",
+        "command": "CI=true NODE_ENV=test DB_TYPE=postgres RUN_DB_TESTS=1 MOCK_DB=false POSTGRES_SKIP_INIT_IN_TEST=1 AUD_INDEPENDENCE_ALLOW_FIXTURE_CLEANUP=1 AUD_INDEPENDENCE_DISPOSABLE_DB_PREFIX=consultinity DATABASE_URL=postgresql://consultinity:consultinity@127.0.0.1:55901/consultinity npx vitest run server/src/cron/__tests__/auditIndependenceDetectorSchedulerFlag.test.ts server/src/services/audits/__tests__/independenceScanCursor.realdb.test.ts --no-file-parallelism --maxWorkers=1 --maxConcurrency=1 --retry=0",
+        "exitCode": 0,
+        "result": "2 files, 26 passed (5 + 21), 0 failed, 0 skipped, 0 todo — run at cdb0b5c200 AND re-run identically at 76627878f3b0, same 26/26"
+      },
+      {
+        "gate": "task/GAP2",
+        "command": "npx vitest run src/utils/__tests__/auditIso27001LegacyPresetGate.test.ts src/components/Audit/__tests__/AuditsHub.test.tsx server/src/routes/__tests__/audit-programs.test.ts --retry=0",
+        "exitCode": 1,
+        "result": "3 files, 50 tests total, 47 passed, 3 failed — run at cdb0b5c200 AND re-run identically at 76627878f3b0, same 47/50. auditIso27001LegacyPresetGate.test.ts: 8/8 pass (compile-time constant has no runtime input). AuditsHub.test.tsx GAP-2-specific describe block 'AMD-AUD-RIGHTS-001: legacy ISO 27001 preset launcher is hard-disabled': 4/4 pass. audit-programs.test.ts (legacy write refusal while AUDIT_PROGRAM_LEGACY_WRITES_ENABLED is unset): 32/32 pass. The 3 failures are in AuditsHub.test.tsx's UNRELATED '§27 list' describe block (empty-state rendering, wizard CTA, preview-pane dashboard open) — nothing to do with the ISO preset or rights kernel, identical failure at both SHAs, and src/components/Audit/AuditsHub.tsx is outside this lane's edit allowlist, so not fixed here. Reported in unresolvedItems below, not silently dropped."
+      },
+      {
+        "gate": "residue/locks/triggers (post-fan-in)",
+        "command": "psql counts on audit_packs/audit_programs matching this run's fixture prefixes; pg_trigger state for trg_audit_domain_events_append_only; pg_locks advisory count",
+        "exitCode": 0,
+        "result": "fixture residue: 0; advisory locks held: 0; trg_audit_domain_events_append_only tgenabled='O' (restored/enabled)"
+      }
+    ],
+    "denominators": {
+      "auditPackRights.realdb.test.ts": { "files": 1, "passed": 25, "failed": 0, "skipped": 0, "todo": 0 },
+      "auditIndependenceDetectorSchedulerFlag.test.ts_plus_independenceScanCursor.realdb.test.ts": { "files": 2, "passed": 26, "failed": 0, "skipped": 0, "todo": 0 },
+      "gap2ConsumerTests": { "files": 3, "passed": 47, "failed": 3, "skipped": 0, "todo": 0, "note": "3 failures are in an unrelated describe block outside this task's scope and outside this lane's allowlist; see gate task/GAP2 result above" },
+      "totalThisPassRelevant": { "passed": 98, "failed": 3, "failedAreOutOfScope": true }
+    },
+    "negativeControls": {
+      "crossTenantDenial": "auditPackRights.realdb.test.ts describe 6 'tenant isolation' + describe 5 'FOREIGN TENANT gets 404 on get/compare/validate for org A content' — org B cannot read, publish, compare or validate org A's pack; AuditNotFoundError / 404, not silently applied.",
+      "insufficientRoleDenial": "auditPackRights.realdb.test.ts describe 5 — a scoped non-author, non-admin member sees only published packs; a foreign draft 404s on get/compare/validate; verified at both service and mounted-router (supertest) level.",
+      "revokedStaleIdentity": "auditPackRights.realdb.test.ts describe 8 (new, this pass) — a request with no identity attached at all, and a request with organizationId but no userId, both fail closed with 401 AUDIT_NO_CONTEXT at the route level.",
+      "gap1UnpublishedPackReadByPlainMember": "auditPackRights.realdb.test.ts describe 5's mounted-router supertest — a plain org member's GET /packs list omits a foreign draft and GET /packs/:id 404s; FAILS CLOSED as required."
+    },
+    "realDbEvidence": {
+      "engine": "pgvector/pgvector:pg16",
+      "container": "consultify-laneb-b1-cdb0b5c2",
+      "port": 55901,
+      "databaseUrl": "postgresql://consultinity:consultinity@127.0.0.1:55901/consultinity",
+      "migrationLedger": "fresh run: 771 files applied, 0 errors, 1620 public tables; repeat: 0 applied; --dry-run: 0 pending",
+      "mockDbGuardVerified": "all realDB runs used the full quadruple NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres plus CI=true (required to unlock a local DB host per databaseTargetResolver.ts) — confirmed by DB Config log lines 'Using PostgreSQL' / 'DB_TYPE: postgres' in every run's output, and by the residue/lock/trigger checks reading real pg_trigger/pg_locks system catalogs, not a mock.",
+      "containerReleased": "consultify-laneb-b1-cdb0b5c2 was `docker rm -f -v`'d immediately after this evidence file was finalized, per lane-B DB-runtime handoff sequencing to unblock worker B2. All literal denominators and residue/lock/trigger checks above were captured BEFORE release."
+    },
+    "verdict": "DONE_CURRENT_SHA",
+    "verdictAtSha": "76627878f3b0e3dfc697e59b5346bd1fae297929",
+    "verdictRationaleThisPass": "All four literal blockers from this task's closure brief are now closed with numbers at the current canonical SHA: (1) GAP 1 requalified — already closed in ancestor commits, reproven 25/25 real-Postgres including the mandated GAP-1-specific unpublished-pack-read negative control; (2) GAP 2 requalified — already closed in ancestor commits (compile-time hard-disable, no runtime escape hatch), its 3 relevant consumer-test surfaces all pass (8/8 + 4/4 + 32/32); (3) GAP 3 — the independence detector now has a proven, working, fenced, checkpointed runner (26/26 real-Postgres, covering claim/scan/advance/release, concurrent fencing, cold-restart reclaim without double-processing, and starvation-freedom), default-OFF confirmed as the frozen rollout decision per lane lead, not a blocker; (4) every suite above was replayed at this exact SHA with literal pass/fail/skip/todo counts, not asserted from source reading. The 3 unrelated AuditsHub.test.tsx failures (§27 list rendering) are reported transparently, do not touch this task's scope, and are outside this lane's edit allowlist (src/components/Audit/AuditsHub.tsx). This verdict reframes, per lane lead's explicit direction, the prior read-only reconciliation's OWNER_PLUS_DEPLOYMENT boundary: default-OFF cron is the accepted frozen decision, not an open item, and this pass supplies the missing 'runner actually works' proof that reconciliation pass could not obtain without Docker access.",
+    "rollbackThisPass": {
+      "mechanism": "revert commit 31e830d6c8b4298ddcf90ce2c63b39242d1dcaf7 (test file + evidence docs only; zero production/runtime code changed by this lane)",
+      "schemaImpact": "none — no migration authored or required by this pass",
+      "flagImpact": "none — AUDIT_INDEPENDENCE_DETECTOR_CRON_ENABLED and AUDIT_ISO27001_LEGACY_PRESET_ENABLED were not touched by this lane; both are already-landed, ancestor-commit state",
+      "oldReaderCompatibility": "unaffected"
+    },
+    "unresolvedItems": [
+      "AuditsHub.test.tsx '§27 list' describe block has 3 pre-existing failures (empty-state rendering, 'New audit program' CTA wizard-open, preview-pane dashboard open) unrelated to rights/ISO-preset scope, present at both cdb0b5c200 and 76627878f3b0. src/components/Audit/AuditsHub.tsx is outside this lane's allowlist (server/src/routes/audits/**, server/src/services/audits/**, server/src/services/auditProgramRights/**, server/src/services/auditProgramService.ts, server/src/services/auditTrailService.ts, server/src/routes/audit-programs.routes.ts) so not fixed here; flagged for the owning lane/worker.",
+      "OUT OF SCOPE per lane lead, reported only, not fixed: requireOrgAccess() (server/src/middleware/rbac.middleware.ts:211-247) genuinely never queries organization_members. Not exploitable on the audits surface because requireActiveAuditsMembership (server/src/middleware/auditsStrictMembership.middleware.ts:168, mounted at Gateway.ts:1331) does a fail-closed ACTIVE-membership lookup in front of it on every audits route. Other routers using requireOrgAccess alone were not enumerated by this pass (out of scope) — a separate task should grep for `requireOrgAccess` call sites repo-wide and confirm each has an equivalent membership gate in front of it."
     ]
   }
 }
