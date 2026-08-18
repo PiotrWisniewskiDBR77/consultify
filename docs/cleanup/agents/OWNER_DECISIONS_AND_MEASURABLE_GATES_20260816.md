@@ -27,6 +27,24 @@ Every accepted decision records: decision ID, selected option, owner, timestamp,
 rationale, affected tasks, effective SHA and evidence invalidation. Silence never
 changes a fail-closed default.
 
+## Owner amendments accepted 2026-08-18
+
+The following decisions were explicitly selected by Piotr, Product and release
+owner, during the closure session on 2026-08-18. They authorize repository
+implementation and exact-SHA verification only. They do not authorize push,
+deployment or release.
+
+| Decision ID | Selected option | Binding product decision | Affected tasks | Implementation and invalidation gate |
+| --- | --- | --- | --- | --- |
+| `AMD-FIN-VALUATION-V3-001` | `1A` | `financeValuationWorkspaceV1` becomes the default valuation workspace. | `FIN-MVP-CANDIDATE-001`, `FIN-UI-CANON-001`, `FIN-BVP-001` | Enable V3 by default, retain a fail-safe rollback flag, and prove the signed valuation preview → explicit confirm → cold candidate/receipt readback. Invalidate on route, flag default, valuation identity or candidate-handoff contract change. |
+| `AMD-PRT-ECONOMICS-002` | `2A` | Partner commission, discount, accrual and payout operations excluded by policy are unavailable and hidden; attempts fail closed. | `PRT-POL-001`, `PRT-MVP-ACCRUAL-001`, `PRT-MVP-LEGACY-CUTOVER-001`, `PRT-UI-CANON-001` | Remove reachable excluded writers and UI affordances, preserve only explicitly governed non-economic Partner journeys and historical records required for audit. Prove zero writes and no fallback. Invalidate on any Partner economics route, flag or UI reactivation. |
+| `AMD-MAT-PROVENANCE-WRITER-002` | `3B` | An authenticated same-tenant `OWNER` or `ADMIN` may approve template provenance only when source, license/rights basis, actor, version and durable evidence are all present. Unknown/incomplete provenance remains quarantined. | `MAT-POL-001`, `MAT-UI-CANON-001` | Implement a governed, audited, immutable approval command with tenant isolation, maker identity and complete evidence. This decision does not fabricate or attest rights for any existing template. Invalidate on approval roles, required provenance fields, rights semantics or audit immutability change. |
+| `AMD-FLOW-ROI-VISIBILITY-002` | `4C` | ROI visibility is restricted to same-tenant `OWNER`, `ADMIN` and users holding the canonical Finance authority/grant; general `OPEN_ORG` is not an approved production policy. | `FLOW-TRANSFORM-MVP-001`, `FIN-MVP-RECONCILIATION-001`, `RES-UI-CANON-001` | Replace the synthetic `OPEN_ORG` prerequisite in release qualification with a governed role/capability policy, including foreign/revoked/ordinary-member denial and cold readback. Invalidate on visibility domains, role/capability mapping or Finance-grant semantics change. |
+
+The effective implementation SHA for each amendment is recorded only after its
+product and runtime gates pass on the integrated candidate. Until then, the
+decision is `APPROVED_IMPLEMENTATION_REQUIRED`, not evidence of completion.
+
 ## Quantified proposed default gates
 
 These values are testable recommendations, not a silently inferred business
