@@ -314,8 +314,15 @@ test.describe.serial('MYW-AGT-UI-CANON owner-free technical closure', () => {
         expect(victim.status()).toBe(200);
         expect((await victim.json()).title).toBe(payload.title);
 
+        // UNSIGNED 401 with its own zero-write delta.
+        const beforeUnsigned = await snapshotWrites(probe, orgs);
         const unsignedRes = await unsigned.get('/api/my-work/personal-tasks');
         expect(unsignedRes.status()).toBe(401);
+        expectZeroWriteDelta(
+          beforeUnsigned,
+          await snapshotWrites(probe, orgs),
+          'unsigned 401 request'
+        );
       } finally {
         await probe.release();
       }
@@ -469,6 +476,12 @@ test.describe.serial('MYW-AGT-UI-CANON owner-free technical closure', () => {
       baseURL: apiBase,
       extraHTTPHeaders: { Authorization: `Bearer ${member.token}` },
     });
+    // The test that exists to prove cleanup works must not itself be capable of
+    // leaving residue. NOTHING below — an assertion failure, a failure to open
+    // the session, a failure inside the recovery path — may exit before this
+    // run's own rows are removed, so the guaranteed teardown is the OUTERMOST
+    // frame and is nested so each stage still runs when an earlier one throws.
+    let ownCleaned = false;
     try {
       const titles = mywSeedTitles(own.runId, 'FAILCASE');
       const seeded = await seedMywSurfaces(memberApi, titles);
@@ -479,8 +492,8 @@ test.describe.serial('MYW-AGT-UI-CANON owner-free technical closure', () => {
         const captured = await captureFixtureIds(session, [own.organizationId]);
         expect(captured.agentPlanStepIds.length).toBeGreaterThan(0);
 
-        // 1. The induced failure: clean the DECOY, never the run that holds the
-        //    rows. This is the genuine no-op shape once the decoy is gone.
+        // 1. Induce the real silent no-op: clean the DECOY, never the run that
+        //    holds the rows, then sweep the decoy again once it is already gone.
         await cleanupRunAsserted(support, decoy.runId);
         const secondSweep = await support.post('/api/test-support/cleanup', {
           data: { runId: decoy.runId },
@@ -503,18 +516,61 @@ test.describe.serial('MYW-AGT-UI-CANON owner-free technical closure', () => {
         expect(dirty.ai_agent_plan_steps__by_captured_id).toBeGreaterThan(0);
 
         // 3. Recovery: the correct cleanup, then a clean inventory — including
-        //    the cascade-only children checked BY CAPTURED ID, which is the
-        //    only form that can observe a lost cascade once the parent is gone.
+        //    the cascade-only children BY CAPTURED ID, the only form that can
+        //    observe a lost cascade once the parent row is gone.
         await cleanupRunAsserted(support, own.runId);
+        ownCleaned = true;
         const clean = await measureResidueStrict(session, [own.organizationId], captured);
         expectNoResidue(clean);
         expect(clean.ai_agent_plan_steps__by_captured_id).toBe(0);
       } finally {
+        // Unlock + client end always run, even if the recovery above threw.
         await session.release();
       }
     } finally {
-      await memberApi.dispose();
-      await support.dispose();
+      try {
+        // Guaranteed removal of this test's OWN seeded run, whatever failed.
+        if (!ownCleaned) {
+          await cleanupRunAsserted(support, own.runId).catch(async () => {
+            // Already-gone is acceptable here; anything else must still not
+            // block the remaining teardown stages below.
+          });
+        }
+      } finally {
+        try {
+          // The decoy may or may not still exist; never let it strand the rest.
+          await support
+            .post('/api/test-support/cleanup', {
+              data: { runId: decoy.runId },
+              timeout: MYW_CLEANUP_TIMEOUT_MS,
+            })
+            .catch(() => undefined);
+        } finally {
+          try {
+            // Final independent verification that nothing survived, on its own
+            // guarded session so a failure above cannot skip it.
+            const verify = await openGuardedCleanupSession(databaseUrl);
+            try {
+              const residual = await measureResidueStrict(
+                verify,
+                [own.organizationId, decoy.organizationId],
+                {
+                  agentPlanIds: [],
+                  agentPlanStepIds: [],
+                  decisionHistoryIds: [],
+                  preferenceUserIds: [],
+                }
+              );
+              expectNoResidue(residual);
+            } finally {
+              await verify.release();
+            }
+          } finally {
+            await memberApi.dispose();
+            await support.dispose();
+          }
+        }
+      }
     }
   });
 
@@ -550,10 +606,38 @@ test.describe.serial('MYW-AGT-UI-CANON owner-free technical closure', () => {
       expect(revoked.ok()).toBe(true);
       expect((await revoked.json()).status).toBe('REVOKED');
 
-      // FIRST guarded request this identity ever makes.
-      const first = await identityApi.get('/api/my-work/stats');
-      expect(first.status()).toBe(403);
-      expect((await first.json()).code).toBe('ORG_MEMBERSHIP_REVOKED');
+      // FIRST guarded request this identity ever makes — with a zero-write
+      // delta, so a denial that nonetheless wrote a row cannot pass quietly.
+      const probe = await openGuardedCleanupSession(databaseUrl);
+      try {
+        const orgs = [own.organizationId];
+        const beforeRevoked = await snapshotWrites(probe, orgs);
+        const first = await identityApi.get('/api/my-work/stats');
+        expect(first.status()).toBe(403);
+        expect((await first.json()).code).toBe('ORG_MEMBERSHIP_REVOKED');
+        expectZeroWriteDelta(
+          beforeRevoked,
+          await snapshotWrites(probe, orgs),
+          'revoked first-request 403'
+        );
+
+        // UNSIGNED 401 on the same surface, also with a zero-write delta.
+        const unsigned = await apiRequest.newContext({ baseURL: apiBase });
+        try {
+          const beforeUnsigned = await snapshotWrites(probe, orgs);
+          const unsignedRes = await unsigned.get('/api/my-work/stats');
+          expect(unsignedRes.status()).toBe(401);
+          expectZeroWriteDelta(
+            beforeUnsigned,
+            await snapshotWrites(probe, orgs),
+            'unsigned 401 request'
+          );
+        } finally {
+          await unsigned.dispose();
+        }
+      } finally {
+        await probe.release();
+      }
     } finally {
       try {
         await guardedCleanupAndAssertNoResidue(

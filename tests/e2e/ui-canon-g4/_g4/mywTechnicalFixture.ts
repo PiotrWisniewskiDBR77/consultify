@@ -331,30 +331,51 @@ export async function cleanupRunAsserted(
 /** Fixed, deterministic — NOT random: two harness runs must serialize. */
 export const MYW_FIXTURE_ADVISORY_LOCK_KEY = 774811001;
 
-/** Exact names known disposable. */
-const DISPOSABLE_DB_EXACT = new Set(['cb_myw']);
-/** Prefix used by this program's disposable lanes. */
-const DISPOSABLE_DB_PREFIX = 'cb_';
+/**
+ * THIS LANE'S OWN database, and nothing else.
+ *
+ * An earlier version allowed the family prefix `cb_`. That was aimed at the
+ * wrong threat. It did reject `prod_cb_myw_live`, but it also ACCEPTED
+ * `cb_ini`, `cb_exe` and `cb_exe_technical` — the live databases of sibling
+ * lanes running concurrently in this same PostgreSQL instance and holding
+ * their in-flight fixture state. A mistyped DATABASE_URL would not have been
+ * caught by that guard, it would have been AUTHORISED by it, and this lane's
+ * cleanup would have deleted another lane's data mid-run. It would also have
+ * accepted `cb_prod`. A guard that admits a sibling's live database is worse
+ * than no guard, because it carries authority.
+ *
+ * So the guard is bound to the MYW lane name specifically: exactly `cb_myw`,
+ * or `cb_myw_` followed by a non-empty suffix. Never a family prefix, and
+ * never `includes`/substring (which would accept `prod_cb_myw_live`).
+ */
+const MYW_LANE_DB_EXACT = 'cb_myw';
+const MYW_LANE_DB_PREFIX = 'cb_myw_';
+
+/** Cleanup may only ever run against a database on this machine. */
+const LOCAL_DB_HOSTS = new Set(['127.0.0.1', 'localhost', '::1', '0.0.0.0']);
 
 function parseDatabaseName(databaseUrl: string): string {
   return new URL(databaseUrl).pathname.replace(/^\//, '');
 }
 
-/**
- * EXACT equality, or EXACT PREFIX equality via startsWith.
- *
- * Deliberately never `includes`/substring: a contains-test would happily accept
- * a production database whose name merely EMBEDS the prefix, e.g.
- * "prod_cb_myw_live" contains "cb_" but must never be cleaned.
- */
 export function assertDisposableDatabaseName(dbName: string): void {
-  const exact = DISPOSABLE_DB_EXACT.has(dbName);
-  const prefixed = dbName.startsWith(DISPOSABLE_DB_PREFIX);
-  if (!exact && !prefixed) {
+  const exact = dbName === MYW_LANE_DB_EXACT;
+  const laneSuffixed =
+    dbName.startsWith(MYW_LANE_DB_PREFIX) && dbName.length > MYW_LANE_DB_PREFIX.length;
+  if (!exact && !laneSuffixed) {
     throw new Error(
-      `refusing to mutate "${dbName}": not an exact disposable name (${[...DISPOSABLE_DB_EXACT].join(', ')}) ` +
-        `and does not start with "${DISPOSABLE_DB_PREFIX}"`
+      `refusing to mutate "${dbName}": this lane may only clean "${MYW_LANE_DB_EXACT}" or ` +
+        `"${MYW_LANE_DB_PREFIX}<suffix>". Sibling lane databases (cb_ini, cb_exe, cb_exe_technical) ` +
+        `and everything else are out of bounds.`
     );
+  }
+}
+
+/** Refuse any non-local host outright, before the name is even considered. */
+export function assertLocalDatabaseHost(databaseUrl: string): void {
+  const { hostname } = new URL(databaseUrl);
+  if (!LOCAL_DB_HOSTS.has(hostname)) {
+    throw new Error(`refusing to mutate a non-local database host "${hostname}"`);
   }
 }
 
@@ -376,6 +397,7 @@ export async function openGuardedCleanupSession(
       'refusing to clean: set MYW_ALLOW_FIXTURE_CLEANUP=1 to opt in explicitly. Cleanup deletes rows and is never implicit.'
     );
   }
+  assertLocalDatabaseHost(databaseUrl);
   const declared = parseDatabaseName(databaseUrl);
   assertDisposableDatabaseName(declared);
 
@@ -565,7 +587,16 @@ export function expectNoResidue(residue: MywResidue): void {
 }
 
 /** Tables a denied request must not write to. */
-export const MYW_WRITE_DELTA_TABLES = ['tasks', 'decisions', 'ai_agent_plans'] as const;
+export const MYW_WRITE_DELTA_TABLES = [
+  'tasks',
+  'decisions',
+  'ai_agent_plans',
+  // canonical_inbox_items is what the seeded Inbox journeys actually write.
+  // Omitting it meant a denial that wrongly inserted an inbox row would have
+  // passed the zero-write assertion silently — the same shape of blind spot as
+  // the parent-join false negative.
+  'canonical_inbox_items',
+] as const;
 
 export type WriteSnapshot = Record<string, number>;
 
