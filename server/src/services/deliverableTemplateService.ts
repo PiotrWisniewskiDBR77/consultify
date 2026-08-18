@@ -587,36 +587,6 @@ export class TemplateNotFoundError extends Error {
   }
 }
 
-export async function approveDeliverableTemplateProvenance(input: {
-  templateId: string;
-  type: DeliverableTemplateType;
-  organizationId: string;
-  actor: string;
-  authority: string;
-  version: string;
-  evidence: string;
-}): Promise<void> {
-  const required = ['templateId', 'organizationId', 'actor', 'authority', 'version', 'evidence'] as const;
-  for (const key of required) {
-    if (!String(input[key] || '').trim()) throw new Error(`Template provenance ${key} is required`);
-  }
-  const provenance = JSON.stringify({
-    authority: input.authority.trim(), actor: input.actor.trim(),
-    version: input.version.trim(), evidence: input.evidence.trim(),
-  });
-  const statements: Record<DeliverableTemplateType, string> = {
-    doc: `UPDATE document_studio_templates SET provenance_status='approved', provenance_json=$1::jsonb
-           WHERE template_id=$2 AND organization_id=$3 AND status='approved'`,
-    deck: `UPDATE presentation_templates SET provenance_status='approved', provenance_json=$1::jsonb
-            WHERE id=$2 AND organization_id=$3 AND is_active=TRUE AND lifecycle_state='approved'`,
-    table: `UPDATE tp_base_templates SET provenance_status='approved', provenance_json=$1::jsonb
-             WHERE id::text=$2 AND organization_id=$3 AND status='approved'`,
-  };
-  const result = await queryRun(statements[input.type], [provenance, input.templateId, input.organizationId]);
-  const changed = Number((result as { rowCount?: number; changes?: number })?.rowCount ?? (result as { changes?: number })?.changes ?? 0);
-  if (changed !== 1) throw new TemplateNotFoundError(input.templateId);
-}
-
 /** Pobierz jeden szablon po id (przeszukuje wszystkie 3 tabele). */
 export async function getDeliverableTemplate(
   id: string,

@@ -5,6 +5,8 @@ DECLARE
   policy_columns INTEGER;
   template_name TEXT;
   provenance_columns INTEGER;
+  actual_definition TEXT;
+  expected_definition TEXT;
 BEGIN
   IF to_regclass('public.artifact_export_receipts') IS NULL THEN
     RAISE EXCEPTION 'm17 preflight: artifact_export_receipts is missing';
@@ -30,14 +32,35 @@ BEGIN
   ) THEN
     RAISE EXCEPTION 'm17 preflight: receipt policy columns have wrong type/null/default';
   END IF;
-  IF policy_columns = 4 AND NOT EXISTS (
-    SELECT 1 FROM pg_constraint
+  IF policy_columns = 4 THEN
+    CREATE TEMP TABLE m17_expected_receipt_check (
+      policy_contract_version TEXT, render_engine_version TEXT,
+      render_engine_license TEXT, output_semantics TEXT, provider_key TEXT NOT NULL,
+      CONSTRAINT m17_expected_receipt_constraint CHECK (
+        (policy_contract_version IS NULL AND render_engine_version IS NULL
+          AND render_engine_license IS NULL AND output_semantics IS NULL) OR COALESCE((
+          policy_contract_version = 'mat-policy-v1'
+          AND render_engine_version IS NOT NULL
+          AND render_engine_license = 'MIT'
+          AND output_semantics IN ('document', 'workbook', 'presentation', 'text_summary')
+          AND ((provider_key = 'native:docx' AND render_engine_version = '9.5.1' AND output_semantics = 'document')
+            OR (provider_key = 'native:pptxgenjs' AND render_engine_version = '4.0.1' AND output_semantics = 'presentation')
+            OR (provider_key = 'native:exceljs' AND render_engine_version = '4.4.0' AND output_semantics = 'workbook')
+            OR (provider_key = 'native:pdfkit' AND render_engine_version = '0.17.2' AND output_semantics = 'text_summary'))
+        ), FALSE)
+      )
+    ) ON COMMIT DROP;
+    SELECT regexp_replace(lower(pg_get_constraintdef(oid)), '\s+', '', 'g')
+      INTO expected_definition FROM pg_constraint
+     WHERE conrelid='pg_temp.m17_expected_receipt_check'::regclass
+       AND conname='m17_expected_receipt_constraint';
+    SELECT regexp_replace(lower(pg_get_constraintdef(oid)), '\s+', '', 'g')
+      INTO actual_definition FROM pg_constraint
      WHERE conrelid='public.artifact_export_receipts'::regclass
-       AND conname='artifact_export_receipts_policy17_check'
-       AND pg_get_constraintdef(oid) LIKE '%policy_contract_version IS NULL%render_engine_version IS NULL%'
-       AND pg_get_constraintdef(oid) LIKE '%mat-policy-v1%native:pdfkit%'
-  ) THEN
-    RAISE EXCEPTION 'm17 preflight: receipt policy CHECK has wrong semantics';
+       AND conname='artifact_export_receipts_policy17_check';
+    IF actual_definition IS DISTINCT FROM expected_definition THEN
+      RAISE EXCEPTION 'm17 preflight: receipt policy CHECK has wrong exact semantics';
+    END IF;
   END IF;
   IF NOT EXISTS (
     SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
@@ -70,13 +93,32 @@ BEGIN
     ) THEN
       RAISE EXCEPTION 'm17 preflight: provenance columns have wrong type/null/default on %', template_name;
     END IF;
-    IF provenance_columns = 2 AND NOT EXISTS (
-      SELECT 1 FROM pg_constraint
+    IF provenance_columns = 2 THEN
+      CREATE TEMP TABLE m17_expected_template_check (
+        provenance_status TEXT NOT NULL, provenance_json JSONB NOT NULL,
+        CONSTRAINT m17_expected_template_constraint CHECK (
+          provenance_status IN ('unknown','approved','quarantined')
+          AND (provenance_status <> 'approved' OR (
+            jsonb_typeof(provenance_json) = 'object'
+            AND nullif(btrim(provenance_json->>'authority'), '') IS NOT NULL
+            AND nullif(btrim(provenance_json->>'actor'), '') IS NOT NULL
+            AND nullif(btrim(provenance_json->>'version'), '') IS NOT NULL
+            AND nullif(btrim(provenance_json->>'evidence'), '') IS NOT NULL
+          ))
+        )
+      ) ON COMMIT DROP;
+      SELECT regexp_replace(lower(pg_get_constraintdef(oid)), '\s+', '', 'g')
+        INTO expected_definition FROM pg_constraint
+       WHERE conrelid='pg_temp.m17_expected_template_check'::regclass
+         AND conname='m17_expected_template_constraint';
+      SELECT regexp_replace(lower(pg_get_constraintdef(oid)), '\s+', '', 'g')
+        INTO actual_definition FROM pg_constraint
        WHERE conrelid=to_regclass('public.' || template_name)
-         AND conname=template_name || '_provenance_status_check'
-         AND pg_get_constraintdef(oid) LIKE '%authority%actor%version%evidence%'
-    ) THEN
-      RAISE EXCEPTION 'm17 preflight: provenance CHECK has wrong semantics on %', template_name;
+         AND conname=template_name || '_provenance_status_check';
+      IF actual_definition IS DISTINCT FROM expected_definition THEN
+        RAISE EXCEPTION 'm17 preflight: provenance CHECK has wrong exact semantics on %', template_name;
+      END IF;
+      DROP TABLE m17_expected_template_check;
     END IF;
   END LOOP;
 END $$;
