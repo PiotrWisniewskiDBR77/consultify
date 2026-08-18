@@ -3,7 +3,7 @@
   "baselineSha": "92284b90e97f164ff4d4f0d75241cfea82021d58",
   "integrationBaselineSha": "5d9",
   "productSha": "b4929e56b9d4f2591c9918cbcb99bcd959f8ca7b",
-  "testedSha": "6f8c04f40c1c2cabba6d0b4dc1e1f3ca79710ea5",
+  "testedSha": "05cf060f67aedaba4a36c2f255dff22016e5b017",
   "reconciliationSha": "d9de65506c0211ed5273331d8f4ea75a892f744c",
   "cleanupTestSha": "b4929e56b9d4f2591c9918cbcb99bcd959f8ca7b",
   "leaseSha256": "not_applicable_integrator_bounded_task",
@@ -144,19 +144,20 @@
   "technicalVerdict": "PASS_EXACT_CURRENT_DURABLE_AUTH_DENIAL_AND_ALERT_LIFECYCLE",
   "verdict": "DONE_CURRENT_SHA",
   "openBlockers": [],
-  "verdictRationale": "DONE_CURRENT_SHA at testedSha 6f8c04f40c. The only repository-owned residual blocker in the prior packet, PARTIAL_SIGKILL, is superseded by the landed response durability fence: an authenticated 401/403 is not put on the wire until the durable repair intent commits; timeout or failure destroys the socket instead of acknowledging a denial whose intent may be lost. Exact-current focused unit, mounted signed-JWT real-PostgreSQL, concurrency, incident, delivery, repair, production-wiring and producer-isolation gates pass with zero run-owned residue and zero advisory locks. AMD-OBSERVABILITY-INTERNAL-GATE-002 explicitly classifies external paging and deployed observation as release gates, so they do not block repository technical DONE and remain unclaimed.",
+  "verdictRationale": "DONE_CURRENT_SHA at testedSha 05cf060f67. The repository-owned PARTIAL_SIGKILL blocker is closed without trusting caller-controlled correlation: every request receives a server-generated UUID, returned as x-request-id, and an authenticated denial with canonical tenant plus actor is not put on the wire until the durable repair intent commits under that server identity. Timeout or failure destroys the socket instead of acknowledging a denial whose intent may be lost. An unauthenticated 401 without tenant/actor remains an in-process non-tenant operational metric and is not misrepresented as a tenant durable intent. Exact-current unit and mounted signed-JWT real-PostgreSQL gates pass with zero run-owned residue and zero advisory locks; the predecessor lifecycle/concurrency qualification remains valid because the product successor changes only the request identity fence and its tests. AMD-OBSERVABILITY-INTERNAL-GATE-002 classifies external paging and deployed observation as release gates, so they do not block repository technical DONE and remain unclaimed.",
   "releaseBoundaries": [
     "NOT_AUTHORIZED / NOT_VERIFIED: external paging transport and operator dashboard remain default-OFF and were not exercised.",
     "NOT_VERIFIED: no deployed sustained multi-instance observation window or production operator incident was exercised.",
     "No push, deployment or release is authorized or claimed by this packet."
   ],
   "exactCurrentReconciliation20260819": {
-    "testedSha": "6f8c04f40c1c2cabba6d0b4dc1e1f3ca79710ea5",
+    "testedSha": "05cf060f67aedaba4a36c2f255dff22016e5b017",
+    "currentTechnicalSourceSha": "05cf060f67aedaba4a36c2f255dff22016e5b017",
     "historicalProductProvenance": {
       "productSha": "b4929e56b9d4f2591c9918cbcb99bcd959f8ca7b",
       "changedPathsMeaning": "The top-level changedPaths remain the historical OPS product lineage. This reconciliation changes evidence only and does not relabel testedSha as the product-authoring commit."
     },
-    "ancestry": "1c5637e66f (integrated durability fence, patch-equivalent to source ac5415738f) and historical productSha b4929e56b9 are ancestors of testedSha. No later commit on the three fence paths exists between 1c5637e66f and testedSha.",
+    "ancestry": "Historical productSha b4929e56b9, integrated fence 1c5637e66f, canonical base 6f8c04f40c and evidence predecessor 4da6cebdaf are ancestors of testedSha. Product successor 05cf060f67 changes exactly the middleware and its two existing focused tests.",
     "authority": {
       "decision": "AMD-OBSERVABILITY-INTERNAL-GATE-002 (16A)",
       "effect": "Internal technical completion requires exercised write-failure, stale queue/outbox, saturation and authorization-denial alerts with runbook, positive control and verified recovery/clear. External paging and deployed observation remain release gates.",
@@ -164,16 +165,16 @@
     },
     "supersededRepositoryBlocker": {
       "historical": "PARTIAL_SIGKILL: an accepted authenticated denial could be acknowledged before its durable intent completed.",
-      "current": "RESOLVED. metricsMiddleware delays res.end for 401/403 until the durable intent barrier settles. On timeout or failure it destroys the socket, so the application never acknowledges a denial whose durable intent is not known to have committed."
+      "current": "RESOLVED. metricsMiddleware creates a server-owned per-request UUID, returns it as x-request-id and uses it for authenticated tenant denial durability; a reused client x-request-id cannot collapse distinct requests. It delays res.end until the durable intent barrier settles. On timeout or failure it destroys the socket, so the application never acknowledges a denial whose durable intent is not known to have committed."
     },
     "commands": [
       {
         "command": "npx vitest run tests/unit/backend/middleware/metrics.middleware.test.ts --maxWorkers=1 --maxConcurrency=1 --retry=0 --reporter=dot",
-        "result": "1 file / 32 tests passed / 0 failed / 0 skipped"
+        "result": "1 file / 35 tests passed / 0 failed / 0 skipped at product successor 05cf060f67; includes server-id stability, client-header distrust and explicit timeout/failure socket destruction"
       },
       {
         "command": "CI=true NODE_ENV=test DB_TYPE=postgres RUN_DB_TESTS=1 MOCK_DB=false POSTGRES_SKIP_INIT_IN_TEST=1 DATABASE_URL=postgresql://truthrun:REDACTED@127.0.0.1:55483/consultify_truth npx vitest run server/src/services/__tests__/operationalAlertAuthDenialMounted.pg.test.ts --maxWorkers=1 --maxConcurrency=1 --retry=0 --reporter=dot",
-        "result": "1 file / 2 tests passed; real mounted production route, signed JWT, ACTIVE/revoked/forged-tenant denial identity and response-time durable readback"
+        "result": "1 file / 2 tests passed at product successor 05cf060f67; real mounted production route, signed JWT, missing-header server UUID returned and persisted before 403, reused client header produces distinct durable identities, ACTIVE/revoked/forged-tenant controls"
       },
       {
         "command": "CI=true NODE_ENV=test DB_TYPE=postgres RUN_DB_TESTS=1 MOCK_DB=false POSTGRES_SKIP_INIT_IN_TEST=1 OPS_REPAIR_ALLOW_CURSOR_RESTORE_TEST=1 DATABASE_URL=postgresql://truthrun:REDACTED@127.0.0.1:55483/ops_repair_6f8 npx vitest run server/src/services/__tests__/operationalAlertIncidentService.pg.test.ts server/src/services/__tests__/operationalAlertSignalDeliveryService.pg.test.ts server/src/services/__tests__/operationalAlertRepairService.pg.test.ts server/src/services/resultsVnext/platform/__tests__/operationalAlertWiring.pg.test.ts server/src/services/__tests__/operationalAlertProducerIsolation.test.ts --maxWorkers=1 --maxConcurrency=1 --retry=0 --reporter=dot",
@@ -187,16 +188,20 @@
       "isolatedDatabase": "ops_repair_6f8, schema-only clone of the exact-current runtime inside the same PostgreSQL container; used because the repair suite fail-closes unless the database name is explicitly disposable"
     },
     "denominators": {
-      "focusedUnit": "1 file / 32 passed",
+      "focusedUnit": "1 file / 35 passed at 05cf060f67",
       "mountedSignedJwtRealPg": "1 file / 2 passed",
       "alertLifecycleRealPgAndIsolation": "5 files / 18 passed / 1 deliberately skipped",
-      "combined": "7 files / 52 passed / 1 deliberately skipped / 0 failed"
+      "currentSuccessorFocused": "2 files / 37 passed / 0 failed / 0 skipped",
+      "predecessorLifecycleQualification": "5 files / 18 passed / 1 deliberately skipped / 0 failed at 6f8c04f40c; unaffected paths",
+      "combinedAcrossSuccessorAndUnchangedPredecessor": "7 files / 55 passed / 1 deliberately skipped / 0 failed"
     },
     "negativeControls": [
-      "The mounted response itself is the durability barrier; immediate PostgreSQL readback found the exact intent without an explicit shutdown flush.",
+      "The mounted response itself is the durability barrier; a missing-header signed 403 returned a server UUID and immediate PostgreSQL readback found that exact intent without an explicit shutdown flush.",
+      "Two distinct signed requests carrying the same client x-request-id received distinct server UUIDs and persisted distinct intent rows; client input is not the durability key.",
       "ACTIVE role denial, revoked membership denial and forged-tenant denial persisted exact canonical organization and actor identity.",
       "Eight concurrent incident detections and eight concurrent repair intents collapsed to one durable identity.",
-      "Timeout and rejected durability promises are classified fail-closed; the response wrapper does not call the original end on those outcomes.",
+      "Timeout and rejected durability promises are classified fail-closed; direct response-finalization tests prove destroy is called and original end is not called for both outcomes.",
+      "A 401 without authenticated tenant and actor contributes only to the non-tenant in-process metric; no tenant durability claim is made for that case.",
       "Primary Results, Notification and Case outcomes survive secondary alert-store failure without duplicate business execution."
     ],
     "cleanup": {
