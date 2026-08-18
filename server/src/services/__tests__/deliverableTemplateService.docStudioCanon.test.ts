@@ -66,6 +66,7 @@ const {
   deleteDeliverableTemplate,
   getDeliverableTemplate,
   listDeliverableTemplates,
+  approveDeliverableTemplateProvenance,
 } = await import('../deliverableTemplateService.js');
 const { __resetTemplateRegistryForTests, getTemplate, isTemplateUsableForGeneration } =
   await import('../documentStudio/documentTemplateService.js');
@@ -84,6 +85,21 @@ beforeEach(() => {
 });
 
 describe('createDeliverableTemplate("doc") — canon rewrite to document_studio_templates', () => {
+  it('records governed non-empty provenance through the owner command only', async () => {
+    queryRunMock.mockResolvedValueOnce({ rowCount: 1 });
+    await approveDeliverableTemplateProvenance({
+      templateId: 'dst-approved', type: 'doc', organizationId: ORG_ID,
+      actor: USER_ID, authority: 'AMD-MAT-POLICY-001', version: 'v1', evidence: 'lease:mat-pol',
+    });
+    expect(queryRunMock).toHaveBeenCalledWith(
+      expect.stringContaining("provenance_status='approved'"),
+      [expect.stringContaining('AMD-MAT-POLICY-001'), 'dst-approved', ORG_ID]
+    );
+    await expect(approveDeliverableTemplateProvenance({
+      templateId: 'dst-approved', type: 'doc', organizationId: ORG_ID,
+      actor: USER_ID, authority: '', version: 'v1', evidence: 'lease:mat-pol',
+    })).rejects.toThrow('authority is required');
+  });
   it('creates the template in document_studio_templates and never touches report_builder_templates', async () => {
     const template = await createDeliverableTemplate(
       'doc',
