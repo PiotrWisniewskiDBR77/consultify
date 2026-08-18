@@ -160,7 +160,9 @@ describe.skipIf(!OPTED_IN)(
         const res = await c.query(
           `SELECT column_name, data_type, is_nullable, column_default
              FROM information_schema.columns
-            WHERE table_name = 'organizations' AND column_name = 'trial_tokens_used'`
+            WHERE table_schema = 'public'
+              AND table_name = 'organizations'
+              AND column_name = 'trial_tokens_used'`
         );
         return res.rows[0] as
           | {
@@ -239,10 +241,15 @@ describe.skipIf(!OPTED_IN)(
 
     afterAll(async () => {
       if (lockClient) {
-        await lockClient.query('SELECT pg_advisory_unlock(hashtext($1)::bigint)', [
-          SUITE_LOCK_KEY,
-        ]);
-        await lockClient.end();
+        try {
+          const unlocked = await lockClient.query(
+            'SELECT pg_advisory_unlock(hashtext($1)::bigint) AS unlocked',
+            [SUITE_LOCK_KEY]
+          );
+          expect(unlocked.rows[0]?.unlocked).toBe(true);
+        } finally {
+          await lockClient.end();
+        }
       }
     });
 
@@ -564,6 +571,34 @@ describe.skipIf(!OPTED_IN)(
 
         expect(after).toEqual(before);
         expect(after?.column_default).toContain('1');
+        expect(afterRows).toEqual(beforeRows);
+        const realChecksum = sha256(fs.readFileSync(NEW_FILE_PATH, 'utf-8'));
+        expect(afterLedgerRow?.status).toBe('failed');
+        expect(afterLedgerRow?.checksum).toBe(realChecksum);
+      },
+      120_000
+    );
+
+    it(
+      'hostile late apply — missing default: pre-existing nullable INTEGER without a default is refused',
+      async () => {
+        const { run, before, after, beforeRows, afterRows, afterLedgerRow } =
+          await runHostileDeviantShapeCase({
+            label: 'missing-default',
+            deviantColumnSql: `ALTER TABLE organizations ADD COLUMN trial_tokens_used INTEGER`,
+          });
+
+        expect(run.status).not.toBe(0);
+        expect(run.stdout + run.stderr).toContain(
+          'organizations.trial_tokens_used already exists with an unexpected shape'
+        );
+        expect(run.stdout + run.stderr).toContain('default=<none>');
+        expect(run.stdout).not.toContain('✅ Postgres migrations complete');
+
+        expect(after).toEqual(before);
+        expect(after?.data_type).toBe('integer');
+        expect(after?.is_nullable).toBe('YES');
+        expect(after?.column_default).toBeNull();
         expect(afterRows).toEqual(beforeRows);
         const realChecksum = sha256(fs.readFileSync(NEW_FILE_PATH, 'utf-8'));
         expect(afterLedgerRow?.status).toBe('failed');
