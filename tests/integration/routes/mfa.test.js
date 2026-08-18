@@ -7,6 +7,8 @@ import { getDatabase } from '../../../server/src/database/Database.js';
 import { initializeDatabase } from '../../../server/src/database/DatabaseInitializer.js';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { requireActiveTenantMembershipOrUnavailable } from '../../../server/src/middleware/auditsStrictMembership.middleware.js';
+import * as DbPromise from '../../../server/src/utils/DbPromise.js';
 
 vi.hoisted(() => {
   process.env.MOCK_DB = 'false';
@@ -597,13 +599,19 @@ describe('MFA Routes', () => {
 });
 
 describe('mounted MFA auth wall contract', () => {
+  afterEach(() => vi.restoreAllMocks());
+
   it('mounts authentication then uncached ACTIVE membership exactly once before handlers', () => {
     const source = readFileSync(resolve(process.cwd(), 'server/src/routes/mfa.routes.ts'), 'utf8');
 
-    expect(source).toContain('router.use(verifyToken, requireActiveTenantMembership)');
-    expect(source.match(/router\.use\(verifyToken, requireActiveTenantMembership\)/g)).toHaveLength(
-      1
+    expect(source).toContain(
+      'router.use(verifyToken, requireActiveTenantMembershipOrUnavailable)'
     );
+    expect(
+      source.match(
+        /router\.use\(verifyToken, requireActiveTenantMembershipOrUnavailable\)/g
+      )
+    ).toHaveLength(1);
     expect(source).not.toContain('const isAuthenticated = verifyToken');
 
     for (const route of [
@@ -616,5 +624,86 @@ describe('mounted MFA auth wall contract', () => {
       expect(source).toContain(route);
     }
     expect(source).not.toMatch(/router\.(?:get|post)\([^\n]+verifyToken/);
+  });
+
+  function responseRecorder() {
+    const response = {
+      statusCode: 200,
+      body: undefined,
+      status(code) {
+        this.statusCode = code;
+        return this;
+      },
+      json(body) {
+        this.body = body;
+        return this;
+      },
+    };
+    return response;
+  }
+
+  it('denies an ordinary authenticated user without an ACTIVE membership before the handler', async () => {
+    vi.spyOn(DbPromise, 'get').mockResolvedValueOnce(undefined);
+    const response = responseRecorder();
+    const handler = vi.fn();
+
+    const write = vi.spyOn(DbPromise, 'run');
+    await requireActiveTenantMembershipOrUnavailable(
+      { user: { id: 'ordinary', organizationId: 'tenant-a' } },
+      response,
+      handler
+    );
+
+    expect(response).toMatchObject({
+      statusCode: 403,
+      body: { code: 'ORG_MEMBERSHIP_REVOKED' },
+    });
+    expect(handler).not.toHaveBeenCalled();
+    expect(write).not.toHaveBeenCalled();
+  });
+
+  it('fails closed with 503 when the targeted membership lookup fails and never enters MFA', async () => {
+    vi.spyOn(DbPromise, 'get').mockRejectedValueOnce(new Error('membership lookup unavailable'));
+    const response = responseRecorder();
+    const mfaHandler = vi.fn();
+
+    const write = vi.spyOn(DbPromise, 'run');
+    await requireActiveTenantMembershipOrUnavailable(
+      { user: { id: 'ordinary', organizationId: 'tenant-a' } },
+      response,
+      mfaHandler
+    );
+
+    expect(response).toMatchObject({
+      statusCode: 503,
+      body: { code: 'ORG_MEMBERSHIP_UNAVAILABLE' },
+    });
+    expect(mfaHandler).not.toHaveBeenCalled();
+    expect(write).not.toHaveBeenCalled();
+  });
+
+  it('intentionally lets a platform SUPERADMIN reach only the subsequent own-user MFA handler', async () => {
+    const membershipLookup = vi.spyOn(DbPromise, 'get');
+    const response = responseRecorder();
+    const ownUserMfaHandler = vi.fn();
+    const mountedRequest = {
+      body: { userId: 'different-user' },
+      user: { id: 'platform-admin', organizationId: 'tenant-a', isSuperAdmin: true },
+    };
+
+    await requireActiveTenantMembershipOrUnavailable(
+      mountedRequest,
+      response,
+      ownUserMfaHandler
+    );
+
+    expect(response.statusCode).toBe(200);
+    expect(membershipLookup).not.toHaveBeenCalled();
+    expect(ownUserMfaHandler).toHaveBeenCalledTimes(1);
+    expect(mountedRequest.user.id).toBe('platform-admin');
+    expect(mountedRequest.body.userId).toBe('different-user');
+    const source = readFileSync(resolve(process.cwd(), 'server/src/routes/mfa.routes.ts'), 'utf8');
+    expect(source.match(/const userId = \(req as any\)\.user\?\.id;/g)?.length).toBeGreaterThan(0);
+    expect(source).not.toMatch(/const\s*\{[^}]*userId[^}]*\}\s*=\s*req\.body/);
   });
 });

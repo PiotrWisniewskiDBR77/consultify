@@ -28,9 +28,11 @@ vi.mock('../../utils/Logger.js', () => ({
 }));
 
 const DbPromise = await import('../../utils/DbPromise.js');
-const { requireActiveAuditsMembership, requireActiveTenantMembership } = await import(
-  '../auditsStrictMembership.middleware.js'
-);
+const {
+  requireActiveAuditsMembership,
+  requireActiveTenantMembership,
+  requireActiveTenantMembershipOrUnavailable,
+} = await import('../auditsStrictMembership.middleware.js');
 
 function makeRes() {
   const res = {
@@ -264,5 +266,47 @@ describe('requireActiveTenantMembership (Tools export) — original contract pre
 
     expect(next).not.toHaveBeenCalled();
     expect(res.statusCode).toBe(403);
+  });
+});
+
+describe('requireActiveTenantMembershipOrUnavailable (MFA export)', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('keeps ordinary missing and revoked membership at 403', async () => {
+    for (const membership of [undefined, { status: 'REVOKED' }]) {
+      (DbPromise.get as any).mockResolvedValueOnce(membership);
+      const res = makeRes();
+      const next = vi.fn() as unknown as NextFunction;
+      await requireActiveTenantMembershipOrUnavailable(ACTIVE_REQ, res, next);
+      expect(next).not.toHaveBeenCalled();
+      expect(res.statusCode).toBe(403);
+      expect(res.body).toMatchObject({ code: 'ORG_MEMBERSHIP_REVOKED' });
+    }
+  });
+
+  it('returns exact 503 only when the membership lookup is unavailable', async () => {
+    (DbPromise.get as any).mockRejectedValueOnce(new Error('database offline'));
+    const res = makeRes();
+    const next = vi.fn() as unknown as NextFunction;
+    await requireActiveTenantMembershipOrUnavailable(ACTIVE_REQ, res, next);
+    expect(next).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(503);
+    expect(res.body).toEqual({
+      error: 'Organization membership could not be verified',
+      code: 'ORG_MEMBERSHIP_UNAVAILABLE',
+    });
+  });
+
+  it('retains the platform SUPERADMIN own-user bypass without a membership lookup', async () => {
+    const res = makeRes();
+    const next = vi.fn() as unknown as NextFunction;
+    await requireActiveTenantMembershipOrUnavailable(
+      { user: { id: 'platform-admin', isSuperAdmin: true }, organizationId: 'org1' } as any,
+      res,
+      next
+    );
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(DbPromise.get).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(0);
   });
 });

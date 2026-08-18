@@ -71,11 +71,14 @@ interface MembershipGuardOptions {
   allowPlatformSuperAdminBypass: boolean;
   /** Prefix for the deny log line, so the two guards are distinguishable in ops output. */
   logLabel: string;
+  /** Distinguish an unreadable membership store from an ordinary revoked/missing row. */
+  lookupFailureUnavailable?: boolean;
 }
 
 function createActiveMembershipGuard({
   allowPlatformSuperAdminBypass,
   logLabel,
+  lookupFailureUnavailable = false,
 }: MembershipGuardOptions) {
   return async function activeMembershipGuard(
     req: AuthRequest,
@@ -123,7 +126,14 @@ function createActiveMembershipGuard({
         organizationId,
         error: error instanceof Error ? error.message : String(error),
       });
-      deny(res);
+      if (lookupFailureUnavailable) {
+        res.status(503).json({
+          error: 'Organization membership could not be verified',
+          code: 'ORG_MEMBERSHIP_UNAVAILABLE',
+        });
+      } else {
+        deny(res);
+      }
     }
   };
 }
@@ -136,6 +146,18 @@ function createActiveMembershipGuard({
 export const requireActiveTenantMembership = createActiveMembershipGuard({
   allowPlatformSuperAdminBypass: true,
   logLabel: '[TenantStrictMembership]',
+});
+
+/**
+ * MFA-specific tenant guard. Ordinary missing/revoked membership remains 403,
+ * while a database lookup failure is distinguishable as a retryable 503. The
+ * platform SUPERADMIN exemption is retained; MFA handlers bind all state to
+ * req.user.id and never accept a target user from the request body.
+ */
+export const requireActiveTenantMembershipOrUnavailable = createActiveMembershipGuard({
+  allowPlatformSuperAdminBypass: true,
+  logLabel: '[MfaStrictMembership]',
+  lookupFailureUnavailable: true,
 });
 
 /**

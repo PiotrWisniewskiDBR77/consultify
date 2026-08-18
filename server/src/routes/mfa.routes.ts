@@ -5,7 +5,7 @@
 import { Request, Response, Router } from 'express';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
-import { requireActiveTenantMembership } from '../middleware/auditsStrictMembership.middleware.js';
+import { requireActiveTenantMembershipOrUnavailable } from '../middleware/auditsStrictMembership.middleware.js';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 
@@ -16,7 +16,7 @@ const router = Router();
 // MFA secrets and recovery codes are tenant-owned security state. Authenticate
 // first, then resolve ACTIVE membership from PostgreSQL on every request so a
 // revoked token cannot continue reading or mutating that state from a cache.
-router.use(verifyToken, requireActiveTenantMembership);
+router.use(verifyToken, requireActiveTenantMembershipOrUnavailable);
 const db = {
   get: (sql: string, params: any[]) => dbGet(sql, params),
   all: (sql: string, params: any[]) => dbAll(sql, params),
