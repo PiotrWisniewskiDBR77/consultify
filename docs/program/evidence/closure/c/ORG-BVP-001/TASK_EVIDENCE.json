@@ -31,7 +31,17 @@
     "tests/integration/routes/organization-context.routes.test.ts",
     "tests/unit/backend/services/contextDocumentService.storage-usage.test.ts",
     "tests/e2e/organization/org-ui-canon-governed-context.spec.ts",
-    "tests/e2e/organization/orgUiGovernedContextFixture.ts"
+    "tests/e2e/organization/orgUiGovernedContextFixture.ts",
+    "server/migrations/20261016_org_context_upload_idempotency.sql",
+    "server/src/services/organizationContext/__tests__/orgContextUploadIdempotencyMigration16.realdb.test.ts",
+    "server/src/routes/ai.routes.ts",
+    "server/src/routes/__tests__/ai.routes.attachments-ingest.test.ts",
+    "src/components/Organization/GovernedContextWorkspace.tsx",
+    "src/services/organizationGovernedContextApi.ts",
+    "src/services/api.ts",
+    "tests/components/organization/GovernedContextWorkspace.test.tsx",
+    "tests/integration/organization/orgUploadGovernedClaim.mounted.pg.test.ts",
+    "tests/unit/services/organizationGovernedContextApi.ingest.test.ts"
   ],
   "changedPathRationale": {
     "server/migrations/20260929_org_context_consumer_bindings.sql": "Adds an immutable exact-ref receipt keyed to the governed Chat/Idea proposal; no existing table is rewritten.",
@@ -50,13 +60,15 @@
     "tests/integration/routes/organization-context.routes.test.ts": "Keeps the isolated route fixture aligned with the production ACTIVE-membership wall without weakening route assertions.",
     "tests/unit/backend/services/contextDocumentService.storage-usage.test.ts": "Proves successful upload persists the digest of the exact bytes and quota denial performs no persisted hash write.",
     "tests/e2e/organization/org-ui-canon-governed-context.spec.ts": "Exercises mounted multipart upload, governed approval and publish, cold reopen and fail-closed source drift with signed role and tenant negatives.",
-    "tests/e2e/organization/orgUiGovernedContextFixture.ts": "Provides guarded disposable fixtures and exact cleanup for the mounted known-byte governed-context journey."
+    "tests/e2e/organization/orgUiGovernedContextFixture.ts": "Provides guarded disposable fixtures and exact cleanup for the mounted known-byte governed-context journey.",
+    "governed-upload surface (added by commits 12ac3338a6, facd79e23d, 07754af21b, 352c8b3379 AFTER the original technicalSourceSha)": "An independent audit found these paths missing from this record even though two of those commits changed OrganizationContextService.ts — this task's own owner file — and one added the organization_context_upload_receipts table. They are listed here and, more importantly, their gates are now actually executed (see exactCurrentRequalification.governedUploadGates). Listing them without running them would have left technicalVerdict resting on a narrower surface than the task actually owns."
   },
   "ownerTables": [
     "organization_context_snapshot_versions",
     "organization_context_consumer_bindings",
     "artifact_handoff_proposals",
-    "knowledge_docs"
+    "knowledge_docs",
+    "organization_context_upload_receipts"
   ],
   "commands": [
     {
@@ -243,11 +255,63 @@
     "buildBinding": "The historical gates array records backend and frontend builds from the earlier product qualification and is preserved as history. The exact-current 5ce16c71bd requalification did not rerun either build and does not claim that it did; its exact gates are limited to the two TypeScript checks, fresh/repeat/dry migrations, focused real-PG 54/54 and mounted Playwright 2/2 listed above.",
     "focused": "6 files and 54/54 tests passed on real PostgreSQL at 5ce16c71bd (identical to the cdb0b5c200 run).",
     "mounted": "2/2 mounted production journeys passed at 5ce16c71bd (identical to the cdb0b5c200 run).",
-    "hashTruth": "Historical NULL is preserved as source_hash_unverified; frozen hash with live NULL is hash_unavailable; differing hashes are hash_mismatch; deleted sources remain fail-closed."
+    "hashTruth": "Historical NULL is preserved as source_hash_unverified; frozen hash with live NULL is hash_unavailable; differing hashes are hash_mismatch; deleted sources remain fail-closed.",
+    "governedUploadGates": {
+      "why": "Closes the coverage gap raised by independent audit: the first requalification exercised only the original 6 focused files plus 1 mounted spec, and touched none of the governed-upload/idempotency surface.",
+      "gates": [
+        {
+          "gate": "G3",
+          "command": "NODE_ENV=test DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:55521/consultify_org_gap DB_TYPE=postgres MOCK_DB=false CI=true npx tsx server/scripts/migrate.postgres.ts",
+          "exitCode": 0,
+          "result": "20261016_org_context_upload_idempotency.sql applied; organization_context_upload_receipts created with PK(organization_id,idempotency_key), 4 CHECK constraints, 2 FK (organizations, knowledge_docs, ON DELETE RESTRICT), trigger trg_org_context_upload_receipt_immutable; schema_migrations row status=success with non-empty checksum"
+        },
+        {
+          "gate": "G3",
+          "command": "(repeat)",
+          "exitCode": 0,
+          "result": "Applying migrations: 0"
+        },
+        {
+          "gate": "G3",
+          "command": "(--dry-run)",
+          "exitCode": 0,
+          "result": "Pending migrations: 0"
+        },
+        {
+          "gate": "G2",
+          "command": "RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test DB_TYPE=postgres CI=true ORG_UPLOAD_M16_CLEANUP=1 npx vitest run server/src/services/organizationContext/__tests__/orgContextUploadIdempotencyMigration16.realdb.test.ts --no-file-parallelism --maxWorkers=1 --retry=0",
+          "exitCode": 0,
+          "result": "16/16 on real PostgreSQL (requires ORG_UPLOAD_M16_CLEANUP=1 and a consultify_org_-prefixed database; without them the suite self-skips)"
+        },
+        {
+          "gate": "G2",
+          "command": "RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test DB_TYPE=postgres CI=true npx vitest run tests/integration/organization/orgUploadGovernedClaim.mounted.pg.test.ts --no-file-parallelism --maxWorkers=1 --retry=0",
+          "exitCode": 0,
+          "result": "5/5 mounted upload-to-claim seam on real PostgreSQL"
+        },
+        {
+          "gate": "G2",
+          "command": "NODE_ENV=test npx vitest run tests/components/organization/GovernedContextWorkspace.test.tsx --no-file-parallelism --retry=0",
+          "exitCode": 0,
+          "result": "10/10 component tests"
+        },
+        {
+          "gate": "G2",
+          "command": "NODE_ENV=test npx vitest run server/src/routes/__tests__/ai.routes.attachments-ingest.test.ts --no-file-parallelism --retry=0",
+          "exitCode": 0,
+          "result": "9/9 ingest route tests"
+        }
+      ],
+      "total": "40/40 tests green on 5ce16c71bd across the governed-upload/idempotency surface",
+      "environmentCaveat": "The shared host killed the disposable container twice with SIGKILL (docker events: kill signal=9 -> die exitCode=137 -> destroy) from outside the test process; a control probe under an unused name was killed in the same window. Two runs therefore failed with ECONNREFUSED before the third, uninterrupted run produced these numbers. Recorded as an operational fact so a future red on this host is not mistaken for a product regression."
+    }
   },
   "rollback": {
     "method": "Keep governed upload/hash consumers disabled or stop their callers, then revert the scoped Organization product commits only if needed. Preserve immutable bindings, snapshots and the nullable knowledge_docs.file_hash values, including historical NULL; destructive table or column removal is not authorized.",
     "executed": false,
     "schemaImpact": "The historical pinned-consumer substrate is additive; migration 20261015 adds one nullable validated column and no index or fabricated backfill."
+  },
+  "leaseProvenance": {
+    "unleasedPaths": "Independent audit finding, recorded rather than silently carried: 9 of the paths above are in no lane lease (A/B/C/Codex) and match no allowedNewRoots pattern — notably server/migrations/20261016_*.sql, server/src/routes/ai.routes.ts, src/services/{api,organizationGovernedContextApi}.ts and the tests/{components,integration,unit}/... files, because allowedNewRoots requires the domain word directly after tests/. The same gap already applied to two paths in this record's ORIGINAL changedPaths (tests/e2e/organization/org-ui-canon-governed-context.spec.ts and orgUiGovernedContextFixture.ts), so it predates this reconciliation. Resolving it requires regenerating the lane lease, which is a governance act outside this record."
   }
 }
