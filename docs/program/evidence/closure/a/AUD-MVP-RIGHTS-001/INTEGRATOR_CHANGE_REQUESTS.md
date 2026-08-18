@@ -10,6 +10,27 @@ was applied to the working tree.
 
 ## ICR-1 — GAP 1: unpublished packs listable/readable by any org member
 
+**STATUS: SUPERSEDED / CLOSED (requalified 2026-08-18 at SHA cdb0b5c200, and
+again at 76627878f3).** The diff below no longer applies — its "Current
+(verbatim)" bodies do not match the file at these SHAs, because the fix that
+landed took a different, stricter shape than this ICR proposed. **Do not
+attempt to apply this diff.** The gap is closed in ancestor commits
+`0dc91d839f` and `e05577375e` (both ancestors of cdb0b5c200): `GET /packs`
+(`packs.routes.ts:59`), `GET /packs/:id` (`:116`), `.../compare` (`:89`) and
+`.../validate` all pass `readScope: isPlatformAdmin(actor) ? undefined :
+{ actorUserId: actor.userId }`, enforced by `assertRowReadable` in
+`packService.ts:259` (404, not 403 — a foreign draft's existence is not
+disclosed). This is a superset of what this ICR asked for: published-OR-
+authored-by-caller, plus platform-admin bypass, rather than published-only.
+The consumer test this ICR asked for exists and passes: see
+`auditPackRights.realdb.test.ts` describe block "5. draft/in-review
+visibility is author-or-admin scoped", including the mounted-router
+supertest. This lane (AUD-MVP-RIGHTS-001, closure pass 2026-08-18)
+requalified this fix; it did not implement it — see TASK_EVIDENCE.json for
+the full attribution and the SHA-by-SHA proof.
+
+**Original request (kept verbatim below for historical record):**
+
 **Task**: AUD-MVP-RIGHTS-001
 **File**: `server/src/routes/audits/packs.routes.ts`
 **Reason**: `GET /packs` and `GET /packs/:id` apply no `publication_status`
