@@ -142,5 +142,103 @@
       }
     ],
     "verdictAtCurrentSha": "PARTIAL, UNCHANGED. Backend and runtime DoD re-proves at currentSha. The openBlocker stands verbatim: the mounted UI proof still covers only the delivery-closure slice, and the remaining nine governed action surfaces still require task-specific loading, empty, backend-error and success-state UI qualification, followed by manual VoiceOver, named-persona and visual/brand owner acceptance. Nothing in this reconciliation narrows that blocker."
+  },
+  "correctiveReconciliation": {
+    "supersedes": "currentShaReconciliation (retained above verbatim; nothing in it is deleted or rewritten)",
+    "correctiveOf": "d72e407a948c26110445c1cff197093b7b769199",
+    "raisedBy": "integrator audit, 2026-08-18, five findings",
+    "shaRelationshipHonest": {
+      "laneBaseSha": "4f0fd2cd9b0665a971a86867a91015655ce127af — the exact canonical SHA this lane's worktree was created from and at which every rerun below was executed",
+      "canonicalTipAtCorrection": "b63c36dcefcacf26ef98c2b770ceca0cb50c8c7f on codex/recovery-canonical-20260816; laneBaseSha IS an ancestor of it; tip is laneBase + 4 commits. No rebase was performed and no dirty work was rebased.",
+      "canonicalDriftPaths": "docs/program/evidence/closure/codex/{FIN-MVP-CANDIDATE-001,FLOW-TRANSFORM-MVP-001,PERSONA-UAT-001,SET-MVP-MFA-001}/TASK_EVIDENCE.json, server/src/routes/__tests__/mfaPersistence.pg.test.ts, tests/e2e/settings/settings-mfa-lifecycle.signed.spec.ts. None intersects this packet's 21 paths.",
+      "historicalReconciliationShaCorrected": "The top-level reconciliationSha field says 3b55f6b627b74d1e3397b75582d3912bf3e9c557. That field is PRESERVED as history, but it must not be read as 'the commit carrying this packet's changes'. 3b55f6b627 is a docs-only commit whose entire content is docs/program/evidence/closure/codex/INT-UI-CANON-001/TASK_EVIDENCE.json — ANOTHER lane's evidence file. It is a point-in-time marker, not a content commit for governed actions. It is an ancestor of laneBaseSha. The commits that actually carry this packet are 75714ca5b4 (make governed actions one pinned unit of work), d9fcb6fea8 (govern destructive actions and protect audit), 7d0ce06749, 3455ea9895 and 8578205047 (live-stack proofs) — all ancestors of laneBaseSha.",
+      "externalSourcesAreNotAncestors": "technicalSourceSha aa118bbdcbab2a811740eda2684eff5428aa981d is NOT an ancestor of laneBaseSha and is NOT presented as one anywhere in this packet. It is a side-branch technical source whose content reached canonical only patch-equivalent, through integratedProductSha 39341f3ffb, which IS an ancestor. The patch-equivalence claim rests on the 21-path blob-identity audit below, not on ancestry.",
+      "method": "git merge-base --is-ancestor for every SHA; git show --name-only for every commit cited; git rev-parse <sha>:<path> for every blob identity; test -f for every path. Nothing was inferred from documentation."
+    },
+    "currentTechnicalRequalification": {
+      "note": "The top-level changedPathRationale holds four generic keys (registry, routes, migration, tests) for 21 paths. That field is PRESERVED as history. The per-path 1:1 mapping the integrator requires is supplied here: 21 paths, 21 rationales, 0 missing, 0 orphan, 21/21 existing at laneBaseSha.",
+      "changedPaths": [
+        "server/migrations/20260917_execution_action_audit_immutability.sql",
+        "server/src/services/executionActionRegistryService.ts",
+        "server/src/services/executionBudgetService.ts",
+        "server/src/utils/queryHelpers.ts",
+        "server/src/services/__tests__/executionActionRegistryService.test.ts",
+        "server/src/services/__tests__/executionActionRegistryService.pg.test.ts",
+        "server/src/routes/executionControl.routes.ts",
+        "server/src/routes/caseWorkspace/_shared/access.ts",
+        "server/src/routes/caseWorkspace/cases.routes.ts",
+        "server/src/routes/caseWorkspace/actionProposals.routes.ts",
+        "server/src/routes/caseWorkspace/runLifecycle.routes.ts",
+        "server/src/routes/caseWorkspace/waitSubscriptions.routes.ts",
+        "server/src/routes/caseWorkspace/artifactLinks.routes.ts",
+        "server/src/routes/caseWorkspace/__tests__/cases.routes.test.ts",
+        "server/src/routes/caseWorkspace/__tests__/actionProposals.routes.test.ts",
+        "server/src/routes/caseWorkspace/__tests__/waitSubscriptions.routes.test.ts",
+        "server/src/routes/caseWorkspace/__tests__/artifactLinks.routes.test.ts",
+        "server/src/routes/caseWorkspace/_shared/errors.ts",
+        "server/src/services/caseWorkspace/__tests__/e2e/liveStackHarness.ts",
+        "server/src/services/caseWorkspace/__tests__/e2e/liveStack.e2e.pg.test.ts",
+        "server/src/services/caseWorkspace/__tests__/e2e/liveStack.e2e.part2.pg.test.ts"
+      ],
+      "changedPathRationale": {
+        "server/migrations/20260917_execution_action_audit_immutability.sql": "Creates execution_action_audit_deny_mutation() and the trigger that rejects direct UPDATE and DELETE on the action ledger. Introduced by d9fcb6fea8. VERIFIED AT laneBaseSha OUT OF BAND: a psql session outside the application, superuser-equivalent, no SET LOCAL, had both UPDATE and DELETE rejected with 'execution_action_audit is append-only'. The guard does not depend on application cooperation.",
+        "server/src/services/executionActionRegistryService.ts": "The single live authority for action registration, minimum_role and terminal outcome audit across all nine IMPLEMENTED actions. Changed by both 75714ca5b4 (+57/-, pinned unit of work) and d9fcb6fea8 (+66, destructive-action governance). This is the file that makes 'authorized mutation' and 'SUCCEEDED audit row' share one transaction rather than two.",
+        "server/src/services/executionBudgetService.ts": "Host of execution.budget.delete, the one governed action that lives outside caseWorkspace. Changed by 75714ca5b4 (+38) to join the pinned unit of work. THE ONE DRIFTED PATH: blob 1ad06ee561 -> e9117dfc59 at laneBaseSha via dd5239076d, +26 lines of observeWriter side-channel in createBudgetEntry and deleteBudgetEntry plus its import. No branch, no guard, no return-path change, and no contact with authorization, the registry, the ledger or the pinned UoW. The 43/43 focused and 21/21 realPG reruns confirm this empirically rather than by inspection.",
+        "server/src/utils/queryHelpers.ts": "Supplies getCurrentPgTransactionClient, the mechanism by which an inner service-style withPgTransaction inherits the outer pinned client instead of opening a second BEGIN/COMMIT. Changed by 75714ca5b4 (+12). Without it the nested-transaction negative control could not be true.",
+        "server/src/services/__tests__/executionActionRegistryService.test.ts": "Focused unit regression on the registry authority: minimum-role resolution and outcome classification, changed by both carrying commits (+13, +62). Fast failure signal before the realPG suite is paid for.",
+        "server/src/services/__tests__/executionActionRegistryService.pg.test.ts": "The real PostgreSQL proof: 9/9 nested pinned-UoW success and 9/9 forced-audit-failure rollback. 1 file / 21 tests / exit 0 at laneBaseSha. Changed by both carrying commits (+36, +72).",
+        "server/src/routes/executionControl.routes.ts": "Routes execution.budget.delete through the governed guard. d9fcb6fea8 is net-negative here (+32/-, with deletions) because bespoke inline checks were replaced by the single registry guard — fewer places to get authorization wrong.",
+        "server/src/routes/caseWorkspace/_shared/access.ts": "The shared guard helper (+19 in d9fcb6fea8) that every caseWorkspace action route calls. Placing object access INSIDE the audited operation is what makes cross-tenant reads return an enumeration-safe NOT_FOUND instead of leaking existence through a 403.",
+        "server/src/routes/caseWorkspace/cases.routes.ts": "Hosts case.close and case.cancel (+45/-). Both now pass through the governed guard rather than local role checks.",
+        "server/src/routes/caseWorkspace/actionProposals.routes.ts": "Hosts case.proposal.decide, case.proposal.execute and case.proposal.revoke (+47/-) — three of the nine, the densest single route file in the packet.",
+        "server/src/routes/caseWorkspace/runLifecycle.routes.ts": "Hosts case.run.cancel (+13/-).",
+        "server/src/routes/caseWorkspace/waitSubscriptions.routes.ts": "Hosts case.wait.cancel (+17/-).",
+        "server/src/routes/caseWorkspace/artifactLinks.routes.ts": "Hosts case.artifact.unlink (+17/-). With the four above and executionControl.routes.ts this completes the nine IMPLEMENTED actions; no generic catch-all action route is exposed, which is why an unregistered action URL 404s.",
+        "server/src/routes/caseWorkspace/__tests__/cases.routes.test.ts": "Route-level regression for case.close/case.cancel (+5 in d9fcb6fea8). Part of the 6-file / 43-test focused denominator.",
+        "server/src/routes/caseWorkspace/__tests__/actionProposals.routes.test.ts": "Route-level regression for the three proposal actions (+5), including the 409 case_version_conflict mapping.",
+        "server/src/routes/caseWorkspace/__tests__/waitSubscriptions.routes.test.ts": "Route-level regression for case.wait.cancel (+5).",
+        "server/src/routes/caseWorkspace/__tests__/artifactLinks.routes.test.ts": "Route-level regression for case.artifact.unlink (+5).",
+        "server/src/routes/caseWorkspace/_shared/errors.ts": "Maps domain failures to the DENIED / NOT_FOUND / CONFLICT outcome vocabulary the audit ledger records. Introduced into this packet's scope by 7d0ce06749. Without a fixed vocabulary the ledger would store raw text and the classification negative control would be unfalsifiable.",
+        "server/src/services/caseWorkspace/__tests__/e2e/liveStackHarness.ts": "Provisions the live-stack login fixtures (3455ea9895) and holds the fail-closed guard that throws 'LIVE STACK NOT UP — this suite proves nothing and must not be read as a pass' when no backend is listening. That guard produced the first red of this lane and is the reason the red was legible rather than a silent skip.",
+        "server/src/services/caseWorkspace/__tests__/e2e/liveStack.e2e.pg.test.ts": "Mounted real-domain proof, part 1. Runs against a real Express router started with NODE_ENV=development and E2E_MODE / ENABLE_TEST_AUTH_BYPASS deliberately unset, so the real auth chain executes.",
+        "server/src/services/caseWorkspace/__tests__/e2e/liveStack.e2e.part2.pg.test.ts": "Mounted real-domain proof, part 2 (7d0ce06749, extended by 8578205047 for rollback controls). Carries the 'EXE-MVP-ACTIONS-001 governed production routes' case that mutates close, run-cancel, wait-cancel, artifact-unlink and proposal-revoke through real JWT routes."
+      },
+      "pathExistenceAtLaneBase": "21/21 EXISTS",
+      "blobIdentityVsReconciliationSha": "20/21 SAME, 1 DRIFT (server/src/services/executionBudgetService.ts, additive-only, detailed in its rationale above)",
+      "rationaleCardinality": "21 paths / 21 rationales / 0 missing / 0 orphan"
+    },
+    "denominatorsSeparated": {
+      "historicalPreservedVerbatim": {
+        "freshMigrations": "shared cluster ledger 738, repeat 0, dry 0; no new schema in this packet",
+        "exactCurrentSchema": "758 migrations; repeat 0; dry-run pending 0",
+        "focusedRegression": "6/6 files, 43/43 tests, exit 0",
+        "realPostgres": "1/1 file, 21/21 tests, exit 0",
+        "mountedRealDomain": "1/1 file, 15/15 tests, exit 0 at productSha",
+        "exactCurrentExecutionUi": "2/2 PASS",
+        "fixtureResidue": "0; append-only trigger restored/enabled (O)",
+        "note": "These are the packet's original strings, retained as the record of what was observed at productSha/integratedProductSha. They are NOT restated as current. Note the historical block itself carried two different schema numbers, 738 and 758, from two different clusters — that inconsistency is preserved rather than quietly harmonised."
+      },
+      "currentAtLaneBaseSha": {
+        "schema": "765 applied on fresh; repeat Applying migrations: 0; dry-run Pending migrations: 0; schema_migrations 765 total / 765 status=success / 0 non-success / 0 empty checksum / 765 distinct filenames; 1623 public tables. This packet still adds no schema of its own.",
+        "focusedRegression": "6 files / 43 tests / exit 0 — numerically identical to historical",
+        "realPostgres": "1 file / 21 tests / exit 0 — numerically identical to historical",
+        "mountedRealDomain": "2 files / 39 tests / exit 0 — SUPERSEDES the historical 1 file / 15 tests, which covered part2 only",
+        "actionDisposition": "13/13 read from the live table, not the code: 9 runtime_state=IMPLEMENTED, 4 HIDDEN, audit_required true for all 13; minimum_role ADMIN x11, OWNER for execution.initiative.delete, MEMBER for execution.report.edit",
+        "executionUi": "NOT RE-RUN IN THIS CORRECTION. The historical 2/2 is not restated as a current observation.",
+        "typeCheck": "root exit 0 (8 GB heap), server exit 0, zero diagnostics each",
+        "backendBuild": "exit 0",
+        "frontendBuild": "exit 0 (8 GB heap)",
+        "fixtureResidue": "NON_ZERO_IN_DATABASE — see residueHonestStatement above",
+        "advisoryLocks": 0,
+        "namedTriggers": "49 non-internal append-only/immutability triggers, all tgenabled=O, none disabled at any point",
+        "reporter82": "denominator 82, missingEvidence 0, invalidPresentEvidence 0, counts DONE_CURRENT_SHA 36 / PARTIAL 45 / BLOCKED_HUMAN 1; identical before and after this lane's commits because no verdict field was touched",
+        "planVerifier": "scripts/cleanup/verify-closure-plan.mjs PASS on all four checks"
+      }
+    },
+    "reporterHonesty": "scripts/cleanup/report-closure-progress.mjs validates only field PRESENCE, taskId match, verdict membership and productSha existence. It does NOT enforce changedPaths/changedPathRationale 1:1 and does not check path existence. The 1:1 mapping and the 21/21 existence above were verified by hand with jq set arithmetic and test -f; a green reporter82 does NOT prove either, and must not be cited as if it did.",
+    "verdictDiscipline": {
+      "verdict": "PARTIAL — UNCHANGED, and deliberately not uplifted.",
+      "why": "Backend and runtime DoD re-proves at laneBaseSha, but the mounted UI proof still covers only the delivery-closure slice. The nine governed action UIs remain unqualified for loading, empty, backend-error and success states, and manual VoiceOver, named-persona and visual/brand owner acceptance remain pending. Green backend, green realPG, green mounted-domain and green builds do not substitute for nine unproven UI surfaces. The openBlocker stands verbatim."
+    }
   }
 }
