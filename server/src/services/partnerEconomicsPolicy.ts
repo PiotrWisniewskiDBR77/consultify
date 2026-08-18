@@ -29,6 +29,8 @@
  * route, flag or UI reactivation").
  */
 
+import { createHash, randomUUID } from 'node:crypto';
+
 import type { NextFunction, Request, Response } from 'express';
 
 import * as DbPromise from '../utils/DbPromise.js';
@@ -230,37 +232,132 @@ export function findPartnerEconomicWriter(
  */
 export const PARTNER_ECONOMICS_POLICY_EVENT_TABLE = 'partner_economics_policy_events';
 
+/**
+ * Deterministic, tenant-bound replay identity.
+ *
+ * A blind INSERT made the receipt non-idempotent: a client retry (or a proxy
+ * replay) of the same denied request stored a second row, so "exactly one
+ * receipt per denial" could not be proven. The fingerprint binds the caller's
+ * own request id to the tenant and to the exact refused operation.
+ *
+ * When the caller supplies NO x-request-id there is genuinely no replay
+ * identity to deduplicate on. Inventing a stable one from the tuple alone
+ * would be worse: two legitimately distinct attempts by the same actor on the
+ * same route would collapse into one receipt and evidence would be lost. In
+ * that case the fingerprint carries a random component, so every such denial
+ * gets its own receipt. This is recorded rather than hidden: replay-exactly-one
+ * is provable only for requests that carry a request id.
+ */
+export function partnerEconomicsDenialFingerprint(parts: {
+  requestId: string | null;
+  surface: string;
+  operation: PartnerEconomicOperation;
+  method: string;
+  routePath: string;
+  organizationId: string | null;
+  userId: string | null;
+}): string {
+  const identity = parts.requestId
+    ? parts.requestId
+    : `no-request-id:${randomUUID()}`;
+  return createHash('sha256')
+    .update(
+      [
+        identity,
+        parts.surface,
+        parts.operation,
+        parts.method,
+        parts.routePath,
+        parts.organizationId ?? '',
+        parts.userId ?? '',
+      ].join(' ')
+    )
+    .digest('hex');
+}
+
 export async function recordPartnerEconomicsPolicyDenial(params: {
   req: Request;
   operation: PartnerEconomicOperation;
   surface: string;
 }): Promise<void> {
   const req = params.req as any;
-  const userId = String(req.user?.id || req.userId || '').trim();
-  const organizationId = String(
-    req.user?.organizationId || req.organizationId || req.organization?.id || ''
-  ).trim();
-  const partnerOrgId = String(req.partnerOrgId || '').trim();
-  const requestId = String(params.req.headers?.['x-request-id'] || '').trim();
+  const userId = String(req.user?.id || req.userId || '').trim() || null;
+  const organizationId =
+    String(req.user?.organizationId || req.organizationId || req.organization?.id || '').trim() ||
+    null;
+  // HONESTY NOTE. On /api/v8/partner the guard is mounted ahead of the
+  // partner-org resolution middleware, deliberately: resolution performs writes
+  // (it self-heals a partner_users row) and demo-dataset seeding runs alongside
+  // it, so resolving first would let a policy-denied request mutate before
+  // being refused. The consequence is that partner_org_id is NULL for v8
+  // denials, and this table is therefore NOT evidence of ACTIVE partner
+  // membership. Any claim of ACTIVE-membership proof must come from a mounted
+  // test that resolves membership itself, never from these rows.
+  const partnerOrgId = String(req.partnerOrgId || '').trim() || null;
+  const requestId = String(params.req.headers?.['x-request-id'] || '').trim() || null;
+  const method = String(params.req.method || 'UNKNOWN').toUpperCase();
+  const routePath = String(req.originalUrl || params.req.path || '/').split('?')[0];
 
+  const fingerprint = partnerEconomicsDenialFingerprint({
+    requestId,
+    surface: params.surface,
+    operation: params.operation,
+    method,
+    routePath,
+    organizationId,
+    userId,
+  });
+
+  // ON CONFLICT DO NOTHING gives replay-exactly-one. The readback then proves
+  // the stored receipt actually describes THIS request: if a colliding
+  // fingerprint carries different content, we refuse to treat it as our
+  // receipt and surface the collision loudly instead of silently accepting
+  // someone else's evidence.
   await DbPromise.run(
     `INSERT INTO ${PARTNER_ECONOMICS_POLICY_EVENT_TABLE}
-       (request_id,user_id,organization_id,partner_org_id,method,route_path,surface,operation,decision,denial_code)
-     VALUES (?,?,?,?,?,?,?,?,?,?)`,
+       (request_id,user_id,organization_id,partner_org_id,method,route_path,surface,operation,decision,denial_code,denial_fingerprint)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?)
+     ON CONFLICT (denial_fingerprint) DO NOTHING`,
     [
-      requestId || null,
-      userId || null,
-      organizationId || null,
-      partnerOrgId || null,
-      String(params.req.method || 'UNKNOWN').toUpperCase(),
-      String((params.req as any).originalUrl || params.req.path || '/').split('?')[0],
+      requestId,
+      userId,
+      organizationId,
+      partnerOrgId,
+      method,
+      routePath,
       params.surface,
       params.operation,
       PARTNER_ECONOMICS_POLICY_DECISION,
       PARTNER_ECONOMICS_POLICY_CODE,
+      fingerprint,
     ],
     { fallback: false }
   );
+
+  const stored = await DbPromise.get<{
+    surface: string;
+    operation: string;
+    method: string;
+    route_path: string;
+  }>(
+    `SELECT surface, operation, method, route_path
+       FROM ${PARTNER_ECONOMICS_POLICY_EVENT_TABLE}
+      WHERE denial_fingerprint = ?`,
+    [fingerprint],
+    { fallback: false }
+  );
+
+  if (
+    stored &&
+    (stored.surface !== params.surface ||
+      stored.operation !== params.operation ||
+      stored.method !== method ||
+      stored.route_path !== routePath)
+  ) {
+    throw new Error(
+      `[PartnerEconomicsPolicy] denial fingerprint collision: stored receipt ${stored.method} ${stored.route_path} (${stored.surface}/${stored.operation}) does not describe this request ${method} ${routePath} (${params.surface}/${params.operation})`
+    );
+  }
 }
 
 /* -------------------------------------------------------------------------- */
