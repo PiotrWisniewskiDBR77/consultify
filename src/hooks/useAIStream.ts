@@ -366,12 +366,7 @@ export type UseAIStreamReturn = {
     context?: Record<string, unknown>,
     focusMode?: string
   ) => Promise<void>;
-  checkPartialResponse: (sessionId: string) => Promise<{
-    sessionId: string;
-    content: string;
-    canResume?: boolean;
-    updatedAt?: string;
-  } | null>;
+  checkPartialResponse: (sessionId: string) => Promise<PartialResponse | null>;
 
   isStreaming: boolean;
   streamedContent: string;
@@ -476,11 +471,13 @@ type CitationsEvent = {
   citations: any[];
 };
 
-type PartialResponse = {
+export type PartialResponse = {
   sessionId: string;
   content: string;
   canResume?: boolean;
   updatedAt?: string;
+  stale?: boolean;
+  forbidden?: boolean;
 };
 
 export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
@@ -1490,6 +1487,9 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
 
         if (response.status === 404) {
           return null;
+        }
+        if (response.status === 403) {
+          return { sessionId, content: '', canResume: false, forbidden: true };
         }
         if (!response.ok) {
           throw new Error(`chat_partial_discovery_failed_${response.status}`);

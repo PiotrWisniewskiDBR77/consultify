@@ -132,12 +132,37 @@ describe.skipIf(!REAL_DB)('CHAT-NFR — tenant-bound partial recovery (real Post
     const response = await request(app)
       .get(`/api/ai/stream/partial/${session}`)
       .set(bearer(tokenRevoked));
-    expect(response.status).toBe(404);
+    expect(response.status).toBe(403);
+    expect(response.body).toMatchObject({ code: 'ORG_MEMBERSHIP_REVOKED' });
     expect(response.text).not.toContain('durable partial');
     await pool.query(`UPDATE ai_partial_responses SET user_id=$1 WHERE session_id=$2`, [
       userA,
       session,
     ]);
+  });
+
+  it('marks a checkpoint stale when the conversation already contains a later assistant answer', async () => {
+    const messageId = id('superseding_message');
+    await pool.query(
+      `INSERT INTO conversation_messages
+         (id,conversation_id,role,content,metadata,created_at)
+       VALUES ($1,$2,'ai','later complete answer','{}'::jsonb,CURRENT_TIMESTAMP + interval '1 second')`,
+      [messageId, session]
+    );
+
+    const response = await request(app)
+      .get(`/api/ai/stream/partial/${session}`)
+      .set(bearer(tokenA));
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      sessionId: session,
+      content: 'durable partial',
+      canResume: false,
+      stale: true,
+      code: 'PARTIAL_RECOVERY_SUPERSEDED',
+    });
+
+    await pool.query(`DELETE FROM conversation_messages WHERE id=$1`, [messageId]);
   });
 
   it('rejects new unscoped checkpoints and preserves the scoped row', async () => {

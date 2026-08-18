@@ -5969,31 +5969,50 @@ router.get(
   validateParams(SessionIdParamSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
+      const activeMembership = (await dbGet(
+        `SELECT 1 AS ok
+           FROM organization_members
+          WHERE organization_id = ? AND user_id = ? AND UPPER(status) = 'ACTIVE'`,
+        [req.organizationId, req.userId]
+      )) as { ok: number } | null;
+
+      if (!activeMembership) {
+        return res.status(403).json({
+          error: 'Active organization membership required',
+          code: 'ORG_MEMBERSHIP_REVOKED',
+        });
+      }
+
       const row = (await dbGet(
         `
-            SELECT content, updated_at
-            FROM ai_partial_responses
-            WHERE session_id = ? AND user_id = ? AND organization_id = ?
-              AND EXISTS (
-                SELECT 1 FROM organization_members om
-                WHERE om.organization_id = ai_partial_responses.organization_id
-                  AND om.user_id = ai_partial_responses.user_id
-                  AND UPPER(om.status) = 'ACTIVE'
-              )
+            SELECT
+              p.content,
+              p.updated_at,
+              EXISTS (
+                SELECT 1 FROM conversation_messages m
+                WHERE m.conversation_id = p.session_id
+                  AND LOWER(m.role) IN ('ai', 'assistant')
+                  AND m.created_at >= p.updated_at
+              ) AS superseded
+            FROM ai_partial_responses p
+            WHERE p.session_id = ? AND p.user_id = ? AND p.organization_id = ?
         `,
         [req.params.sessionId, req.userId, req.organizationId]
-      )) as { content: string; updated_at: string } | null;
+      )) as { content: string; updated_at: string; superseded: boolean | number } | null;
 
       if (!row) {
         return res.status(404).json({ error: 'No partial response found' });
-        return;
       }
+
+      const stale = row.superseded === true || row.superseded === 1;
 
       return res.json({
         sessionId: req.params.sessionId,
         content: row.content,
         updatedAt: row.updated_at,
-        canResume: true,
+        canResume: !stale,
+        stale,
+        ...(stale ? { code: 'PARTIAL_RECOVERY_SUPERSEDED' } : {}),
       });
     } catch (err: any) {
       logger.warn('[AI Stream] Partial-response discovery failed', {

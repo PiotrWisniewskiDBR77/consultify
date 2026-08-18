@@ -599,6 +599,55 @@ describe('useAIStream', () => {
     expect(partial).toBeNull();
   });
 
+  it('returns revoked membership as a non-resumable forbidden state', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 403,
+    });
+
+    const { result } = renderHook(() => useAIStream());
+
+    let partial: any;
+    await act(async () => {
+      partial = await result.current.checkPartialResponse('revoked-session');
+    });
+
+    expect(partial).toEqual({
+      sessionId: 'revoked-session',
+      content: '',
+      canResume: false,
+      forbidden: true,
+    });
+  });
+
+  it('preserves a server-declared superseded checkpoint as stale and non-resumable', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          sessionId: 'stale-session',
+          content: 'Outdated partial',
+          canResume: false,
+          stale: true,
+          code: 'PARTIAL_RECOVERY_SUPERSEDED',
+        }),
+    });
+
+    const { result } = renderHook(() => useAIStream());
+
+    let partial: any;
+    await act(async () => {
+      partial = await result.current.checkPartialResponse('stale-session');
+    });
+
+    expect(partial).toMatchObject({
+      sessionId: 'stale-session',
+      content: 'Outdated partial',
+      canResume: false,
+      stale: true,
+    });
+  });
+
   it('should pass focus mode to stream context', async () => {
     vi.mocked(Api.chatWithAIStream).mockImplementation(
       async (message, history, onChunk, onDone, systemPrompt, context) => {
