@@ -11,8 +11,14 @@ import {
   createIdentityContext,
   createIsolatedRun,
   createMember,
+  captureFixtureIds,
   expectNoResidue,
-  measureResidue,
+  expectZeroWriteDelta,
+  guardedCleanupAndAssertNoResidue,
+  measureResidueStrict,
+  MYW_CLEANUP_TIMEOUT_MS,
+  openGuardedCleanupSession,
+  snapshotWrites,
   type MywIdentity,
   type MywSeed,
   mywSeedTitles,
@@ -269,22 +275,60 @@ test.describe.serial('MYW-AGT-UI-CANON owner-free technical closure', () => {
       expect(replay.status()).toBe(200);
       expect((await replay.json()).id).toBe(createdBody.id);
 
-      const foreignRead = await foreignApi.get(`/api/my-work/personal-tasks/${createdBody.id}`);
-      expect([403, 404]).toContain(foreignRead.status());
+      // EXACT status and code. `[403, 404]` could not tell "denied" from
+      // "route missing": a route that silently stopped existing would pass it.
+      const probe = await openGuardedCleanupSession(databaseUrl);
+      try {
+        const orgs = [own.organizationId, foreign.organizationId];
 
-      expect((await unsigned.get('/api/my-work/personal-tasks')).status()).toBe(401);
+        const beforeForeign = await snapshotWrites(probe, orgs);
+        const foreignRead = await foreignApi.get(`/api/my-work/personal-tasks/${createdBody.id}`);
+        expect(foreignRead.status()).toBe(404);
+        expect(await foreignRead.json()).toMatchObject({
+          error: 'Not found',
+          code: 'TASK_NOT_FOUND',
+        });
+        expectZeroWriteDelta(
+          beforeForeign,
+          await snapshotWrites(probe, orgs),
+          'foreign-tenant read'
+        );
+
+        // BODY SPOOF: a genuinely valid foreign token whose BODY forges the
+        // victim's organizationId and userId. Authorization must come from the
+        // verified token, never from caller-supplied body fields.
+        const beforeSpoof = await snapshotWrites(probe, orgs);
+        const spoof = await foreignApi.put(`/api/my-work/personal-tasks/${createdBody.id}`, {
+          data: {
+            title: 'SPOOFED TITLE',
+            organizationId: own.organizationId,
+            userId: member.userId,
+          },
+        });
+        expect(spoof.status()).toBe(404);
+        expect(await spoof.json()).toMatchObject({ error: 'Not found', code: 'TASK_NOT_FOUND' });
+        expectZeroWriteDelta(beforeSpoof, await snapshotWrites(probe, orgs), 'body-spoof write');
+
+        // and the victim's row is untouched
+        const victim = await memberApi.get(`/api/my-work/personal-tasks/${createdBody.id}`);
+        expect(victim.status()).toBe(200);
+        expect((await victim.json()).title).toBe(payload.title);
+
+        const unsignedRes = await unsigned.get('/api/my-work/personal-tasks');
+        expect(unsignedRes.status()).toBe(401);
+      } finally {
+        await probe.release();
+      }
     } finally {
       // NESTED finally: every context is disposed even when a cleanup throws,
       // and BOTH runs are cleaned with their responses asserted — including the
       // foreign one, which is the path that silently no-ops.
       try {
-        const cleaned = [
-          await cleanupRunAsserted(support, own.runId),
-          await cleanupRunAsserted(support, foreign.runId),
-        ];
-        expect(cleaned.map((c) => c.status)).toEqual([200, 200]);
-        expectNoResidue(
-          await measureResidue(databaseUrl, [own.organizationId, foreign.organizationId])
+        await guardedCleanupAndAssertNoResidue(
+          support,
+          databaseUrl,
+          [own.runId, foreign.runId],
+          [own.organizationId, foreign.organizationId]
         );
       } finally {
         await memberApi.dispose();
@@ -385,13 +429,92 @@ test.describe.serial('MYW-AGT-UI-CANON owner-free technical closure', () => {
       }
     } finally {
       try {
-        const cleaned = await cleanupRunAsserted(support, own.runId);
-        expect(cleaned.status).toBe(200);
-        expectNoResidue(await measureResidue(databaseUrl, [own.organizationId]));
+        await guardedCleanupAndAssertNoResidue(
+          support,
+          databaseUrl,
+          [own.runId],
+          [own.organizationId]
+        );
       } finally {
         await identityApi.dispose();
         await support.dispose();
       }
+    }
+  });
+
+  /**
+   * FORCED CLEANUP FAILURE — detection and honest reporting.
+   *
+   * Cleanup here is NOT atomic and this packet never claims it is:
+   * purgeByOrganizationId iterates tables one DELETE at a time and swallows
+   * every per-table failure (testSupport.routes.ts:553-559), so a partial purge
+   * is possible by construction and the endpoint can still answer ok.
+   *
+   * What IS demonstrated: when cleanup does not actually remove the rows, the
+   * harness NOTICES and reports non-zero rather than silently printing 0, and
+   * it then recovers. The failure is induced without touching product code, by
+   * directing the cleanup at a DIFFERENT run — the real silent-no-op path,
+   * which answers HTTP 200 ok:true deleted:false while the fixture survives.
+   */
+  test('a cleanup that does not delete is reported, not silently passed', async () => {
+    const bootstrap = readTestSupportState();
+    const support = await apiRequest.newContext({
+      baseURL: apiBase,
+      extraHTTPHeaders: { 'x-test-support-key': supportKey },
+    });
+    const own = await createIsolatedRun(support, bootstrap.runId, 'cleanup-failure');
+    const decoy = await createIsolatedRun(support, bootstrap.runId, 'cleanup-decoy');
+    const member = await createMember(support, own.runId, 'MANAGER');
+    const memberApi = await apiRequest.newContext({
+      baseURL: apiBase,
+      extraHTTPHeaders: { Authorization: `Bearer ${member.token}` },
+    });
+    try {
+      const titles = mywSeedTitles(own.runId, 'FAILCASE');
+      const seeded = await seedMywSurfaces(memberApi, titles);
+      expect(seeded.inboxItemCount).toBeGreaterThanOrEqual(2);
+
+      const session = await openGuardedCleanupSession(databaseUrl);
+      try {
+        const captured = await captureFixtureIds(session, [own.organizationId]);
+        expect(captured.agentPlanStepIds.length).toBeGreaterThan(0);
+
+        // 1. The induced failure: clean the DECOY, never the run that holds the
+        //    rows. This is the genuine no-op shape once the decoy is gone.
+        await cleanupRunAsserted(support, decoy.runId);
+        const secondSweep = await support.post('/api/test-support/cleanup', {
+          data: { runId: decoy.runId },
+          timeout: MYW_CLEANUP_TIMEOUT_MS,
+        });
+        expect(secondSweep.status()).toBe(200);
+        // HTTP 200 + ok:true, yet nothing was deleted — the endpoint's word is
+        // not evidence.
+        expect(await secondSweep.json()).toMatchObject({ ok: true, deleted: false });
+        await expect(cleanupRunAsserted(support, decoy.runId)).rejects.toThrow(
+          /did not report a real delete/
+        );
+
+        // 2. Honest reporting: the inventory must say NON-ZERO, not 0.
+        const dirty = await measureResidueStrict(session, [own.organizationId], captured);
+        expect(() => expectNoResidue(dirty)).toThrow(/residue not zero/);
+        expect(dirty.tasks).toBeGreaterThan(0);
+        expect(dirty.ai_agent_plans).toBeGreaterThan(0);
+        expect(dirty.canonical_inbox_items).toBeGreaterThan(0);
+        expect(dirty.ai_agent_plan_steps__by_captured_id).toBeGreaterThan(0);
+
+        // 3. Recovery: the correct cleanup, then a clean inventory — including
+        //    the cascade-only children checked BY CAPTURED ID, which is the
+        //    only form that can observe a lost cascade once the parent is gone.
+        await cleanupRunAsserted(support, own.runId);
+        const clean = await measureResidueStrict(session, [own.organizationId], captured);
+        expectNoResidue(clean);
+        expect(clean.ai_agent_plan_steps__by_captured_id).toBe(0);
+      } finally {
+        await session.release();
+      }
+    } finally {
+      await memberApi.dispose();
+      await support.dispose();
     }
   });
 
@@ -433,9 +556,12 @@ test.describe.serial('MYW-AGT-UI-CANON owner-free technical closure', () => {
       expect((await first.json()).code).toBe('ORG_MEMBERSHIP_REVOKED');
     } finally {
       try {
-        const cleaned = await cleanupRunAsserted(support, own.runId);
-        expect(cleaned.status).toBe(200);
-        expectNoResidue(await measureResidue(databaseUrl, [own.organizationId]));
+        await guardedCleanupAndAssertNoResidue(
+          support,
+          databaseUrl,
+          [own.runId],
+          [own.organizationId]
+        );
       } finally {
         await identityApi.dispose();
         await support.dispose();

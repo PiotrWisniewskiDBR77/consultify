@@ -307,8 +307,137 @@ export async function cleanupRunAsserted(
   return { runId, status, body };
 }
 
-/** Every table this lane can write, enumerated BY NAME. No spot checks. */
-export const MYW_RESIDUE_TABLES = [
+/**
+ * ---------------------------------------------------------------------------
+ * GUARDED CLEANUP + RESIDUE PROVEN BY CAPTURED IDS
+ * ---------------------------------------------------------------------------
+ *
+ * The previous residue check counted ai_agent_plan_steps by JOINING through
+ * ai_agent_plans. Cleanup deletes the parent, so after cleanup that inner join
+ * matches no parent rows and returns 0 WHETHER OR NOT THE CHILDREN SURVIVED.
+ * It reported 0 by construction and could never fail — the same shape of
+ * false-green that made the historical evidence wrong.
+ *
+ * ai_agent_plan_steps carries neither organization_id nor org_id, so
+ * purgeByOrganizationId skips it outright; it survives only via
+ * ai_agent_plan_steps_plan_id_fkey ON DELETE CASCADE. A lost cascade is exactly
+ * what a parent-join can never see. The same applies to decision_history
+ * (cascade from decisions) and user_preferences (cascade from users).
+ *
+ * So: capture the child IDs BEFORE cleanup, then after cleanup query each child
+ * table DIRECTLY by those captured IDs — no join, no parent dependency.
+ */
+
+/** Fixed, deterministic — NOT random: two harness runs must serialize. */
+export const MYW_FIXTURE_ADVISORY_LOCK_KEY = 774811001;
+
+/** Exact names known disposable. */
+const DISPOSABLE_DB_EXACT = new Set(['cb_myw']);
+/** Prefix used by this program's disposable lanes. */
+const DISPOSABLE_DB_PREFIX = 'cb_';
+
+function parseDatabaseName(databaseUrl: string): string {
+  return new URL(databaseUrl).pathname.replace(/^\//, '');
+}
+
+/**
+ * EXACT equality, or EXACT PREFIX equality via startsWith.
+ *
+ * Deliberately never `includes`/substring: a contains-test would happily accept
+ * a production database whose name merely EMBEDS the prefix, e.g.
+ * "prod_cb_myw_live" contains "cb_" but must never be cleaned.
+ */
+export function assertDisposableDatabaseName(dbName: string): void {
+  const exact = DISPOSABLE_DB_EXACT.has(dbName);
+  const prefixed = dbName.startsWith(DISPOSABLE_DB_PREFIX);
+  if (!exact && !prefixed) {
+    throw new Error(
+      `refusing to mutate "${dbName}": not an exact disposable name (${[...DISPOSABLE_DB_EXACT].join(', ')}) ` +
+        `and does not start with "${DISPOSABLE_DB_PREFIX}"`
+    );
+  }
+}
+
+export type FixtureCleanupSession = {
+  query: (text: string, values?: unknown[]) => Promise<{ rows: any[] }>;
+  release: () => Promise<void>;
+};
+
+/**
+ * Everything below runs BEFORE any mutation: opt-in, disposable-namespace
+ * check, caller-vs-server database EQUALITY check, then a retained
+ * deterministic advisory lock held for the whole cleanup.
+ */
+export async function openGuardedCleanupSession(
+  databaseUrl: string
+): Promise<FixtureCleanupSession> {
+  if (process.env.MYW_ALLOW_FIXTURE_CLEANUP !== '1') {
+    throw new Error(
+      'refusing to clean: set MYW_ALLOW_FIXTURE_CLEANUP=1 to opt in explicitly. Cleanup deletes rows and is never implicit.'
+    );
+  }
+  const declared = parseDatabaseName(databaseUrl);
+  assertDisposableDatabaseName(declared);
+
+  const { Client } = await import('pg');
+  const client = new Client({ connectionString: databaseUrl });
+  await client.connect();
+  try {
+    const current = String((await client.query('SELECT current_database() AS db')).rows[0]?.db);
+    // EQUALITY, not containment: the database the caller NAMED must be the
+    // database the server actually served, or the URL is pointing somewhere else.
+    if (current !== declared) {
+      throw new Error(
+        `database identity mismatch: caller URL names "${declared}" but the server reports "${current}"`
+      );
+    }
+    assertDisposableDatabaseName(current);
+    const locked = (
+      await client.query('SELECT pg_advisory_lock($1) IS NOT NULL AS ok', [
+        MYW_FIXTURE_ADVISORY_LOCK_KEY,
+      ])
+    ).rows[0]?.ok;
+    if (locked !== true) throw new Error('failed to acquire the fixture advisory lock');
+  } catch (error) {
+    await client.end();
+    throw error;
+  }
+
+  return {
+    query: (text, values) => client.query(text, values as any),
+    release: async () => {
+      try {
+        const released = (
+          await client.query('SELECT pg_advisory_unlock($1) AS released', [
+            MYW_FIXTURE_ADVISORY_LOCK_KEY,
+          ])
+        ).rows[0]?.released;
+        if (released !== true) {
+          throw new Error(`advisory unlock did not return true (got ${JSON.stringify(released)})`);
+        }
+        const held = Number(
+          (
+            await client.query(
+              "SELECT count(*)::int AS c FROM pg_locks WHERE locktype='advisory' AND pid = pg_backend_pid()"
+            )
+          ).rows[0]?.c
+        );
+        if (held !== 0) {
+          throw new Error(`session still holds ${held} advisory lock(s) after unlock`);
+        }
+      } finally {
+        await client.end();
+      }
+    },
+  };
+}
+
+/**
+ * Tables written by this lane that ARE org-scoped, so purgeByOrganizationId can
+ * reach them. Enumerated by name — business, audit and telemetry alike.
+ * (`audit_events` is scoped by `org_id`, not `organization_id`.)
+ */
+export const MYW_ORG_SCOPED_TABLES = [
   { table: 'organizations', column: 'id' },
   { table: 'users', column: 'organization_id' },
   { table: 'organization_members', column: 'organization_id' },
@@ -316,67 +445,192 @@ export const MYW_RESIDUE_TABLES = [
   { table: 'decisions', column: 'organization_id' },
   { table: 'ai_agent_plans', column: 'organization_id' },
   { table: 'canonical_inbox_items', column: 'organization_id' },
+  { table: 'test_support_runs', column: 'organization_id' },
+  { table: 'audit_events', column: 'org_id' },
+  { table: 'api_logs', column: 'organization_id' },
 ] as const;
+
+export type CapturedFixtureIds = {
+  agentPlanIds: string[];
+  agentPlanStepIds: string[];
+  decisionHistoryIds: string[];
+  preferenceUserIds: string[];
+};
+
+/**
+ * Capture the identities of CASCADE-ONLY children BEFORE cleanup. After
+ * cleanup their parents are gone, so this is the only moment they can be named.
+ */
+export async function captureFixtureIds(
+  session: FixtureCleanupSession,
+  organizationIds: string[]
+): Promise<CapturedFixtureIds> {
+  const ids = async (sql: string) =>
+    (await session.query(sql, [organizationIds])).rows.map((r: any) => String(r.id));
+  return {
+    agentPlanIds: await ids(
+      `SELECT id FROM ai_agent_plans WHERE organization_id = ANY($1::text[])`
+    ),
+    agentPlanStepIds: await ids(
+      `SELECT s.id FROM ai_agent_plan_steps s
+       JOIN ai_agent_plans p ON p.id = s.plan_id
+       WHERE p.organization_id = ANY($1::text[])`
+    ),
+    decisionHistoryIds: await ids(
+      `SELECT h.id FROM decision_history h
+       JOIN decisions d ON d.id = h.decision_id
+       WHERE d.organization_id = ANY($1::text[])`
+    ),
+    preferenceUserIds: await ids(
+      `SELECT u.id FROM user_preferences up
+       JOIN users u ON u.id = up.user_id
+       WHERE u.organization_id = ANY($1::text[])`
+    ),
+  };
+}
 
 export type MywResidue = Record<string, number>;
 
 /**
- * Count leftovers for the given organizations by querying PostgreSQL DIRECTLY.
+ * Post-cleanup inventory taken DIRECTLY from PostgreSQL.
  *
- * Deliberately NOT routed through /api/test-support/fixture-residue: that
- * endpoint counts organizations, users, organization_members, audit_programs,
- * audit_packs and g4_test_flag_overrides only — it can report a clean sweep
- * while tasks, decisions, agent plans and canonical inbox rows survive.
+ * The cleanup endpoint's own success response proves nothing here:
+ * purgeByOrganizationId swallows every per-table DELETE failure
+ * (testSupport.routes.ts:553-559 catch + logger.warn + continue), so it can
+ * report ok/deleted while rows survive. Only this inventory is evidence.
  *
- * `ai_agent_plan_steps` carries NEITHER organization_id NOR org_id, so
- * purgeByOrganizationId skips it outright; it is counted here through its plan
- * parent, which reaches it via ai_agent_plan_steps_plan_id_fkey ON DELETE
- * CASCADE. If that cascade ever goes away the count below turns non-zero
- * instead of hiding.
+ * Cascade-only children are counted BY CAPTURED ID — never through a parent
+ * join, which after cleanup would return 0 unconditionally.
  */
-export async function measureResidue(
-  databaseUrl: string,
-  organizationIds: string[]
+export async function measureResidueStrict(
+  session: FixtureCleanupSession,
+  organizationIds: string[],
+  captured: CapturedFixtureIds
 ): Promise<MywResidue> {
-  const { Client } = await import('pg');
-  const client = new Client({ connectionString: databaseUrl });
-  await client.connect();
   const residue: MywResidue = {};
-  try {
-    for (const { table, column } of MYW_RESIDUE_TABLES) {
-      const { rows } = await client.query(
-        `SELECT COUNT(*)::int AS count FROM ${table} WHERE ${column} = ANY($1::text[])`,
-        [organizationIds]
-      );
-      residue[table] = Number(rows[0]?.count ?? 0);
-    }
-    const steps = await client.query(
-      `SELECT COUNT(*)::int AS count FROM ai_agent_plan_steps s
-       JOIN ai_agent_plans p ON p.id = s.plan_id
-       WHERE p.organization_id = ANY($1::text[])`,
+  for (const { table, column } of MYW_ORG_SCOPED_TABLES) {
+    const { rows } = await session.query(
+      `SELECT COUNT(*)::int AS count FROM ${table} WHERE ${column} = ANY($1::text[])`,
       [organizationIds]
     );
-    residue.ai_agent_plan_steps = Number(steps.rows[0]?.count ?? 0);
-  } finally {
-    await client.end();
+    residue[table] = Number(rows[0]?.count ?? 0);
   }
+  const byId = async (label: string, sql: string, values: string[]) => {
+    if (values.length === 0) {
+      residue[label] = 0;
+      return;
+    }
+    const { rows } = await session.query(sql, [values]);
+    residue[label] = Number(rows[0]?.count ?? 0);
+  };
+  await byId(
+    'ai_agent_plan_steps__by_captured_id',
+    `SELECT COUNT(*)::int AS count FROM ai_agent_plan_steps WHERE id = ANY($1::text[])`,
+    captured.agentPlanStepIds
+  );
+  await byId(
+    'ai_agent_plans__by_captured_id',
+    `SELECT COUNT(*)::int AS count FROM ai_agent_plans WHERE id = ANY($1::text[])`,
+    captured.agentPlanIds
+  );
+  await byId(
+    'decision_history__by_captured_id',
+    `SELECT COUNT(*)::int AS count FROM decision_history WHERE id = ANY($1::text[])`,
+    captured.decisionHistoryIds
+  );
+  await byId(
+    'user_preferences__by_captured_user_id',
+    `SELECT COUNT(*)::int AS count FROM user_preferences WHERE user_id = ANY($1::text[])`,
+    captured.preferenceUserIds
+  );
   return residue;
 }
 
 /**
- * Require an exact zero for every enumerated table, naming each offender.
+ * Require an exact zero for every enumerated entry, naming each offender.
  *
- * If an append-only table ever lands in this list its trigger will reject the
- * DELETE, purgeByOrganizationId will swallow that failure, and the count will
- * stay non-zero. Report that number honestly — for such a table zero is
- * reachable only by destroying the database, not by cleaning it.
+ * If an append-only table ever lands here its trigger will reject the DELETE,
+ * purgeByOrganizationId will swallow that failure, and the count will stay
+ * non-zero. Report that number honestly — for such a table zero is reachable
+ * only by destroying the database, not by cleaning it.
  */
 export function expectNoResidue(residue: MywResidue): void {
   const offenders = Object.entries(residue).filter(([, count]) => count !== 0);
   if (offenders.length > 0) {
     throw new Error(
       `fixture residue not zero: ${offenders.map(([t, c]) => `${t}=${c}`).join(', ')} ` +
-        `(full measurement: ${JSON.stringify(residue)})`
+        `(full inventory: ${JSON.stringify(residue)})`
     );
+  }
+}
+
+/** Tables a denied request must not write to. */
+export const MYW_WRITE_DELTA_TABLES = ['tasks', 'decisions', 'ai_agent_plans'] as const;
+
+export type WriteSnapshot = Record<string, number>;
+
+/** Row counts scoped to the given organizations, for zero-write deltas. */
+export async function snapshotWrites(
+  session: FixtureCleanupSession,
+  organizationIds: string[]
+): Promise<WriteSnapshot> {
+  const snapshot: WriteSnapshot = {};
+  for (const table of MYW_WRITE_DELTA_TABLES) {
+    const { rows } = await session.query(
+      `SELECT COUNT(*)::int AS count FROM ${table} WHERE organization_id = ANY($1::text[])`,
+      [organizationIds]
+    );
+    snapshot[table] = Number(rows[0]?.count ?? 0);
+  }
+  return snapshot;
+}
+
+/** A denied request must leave every counted table byte-identical. */
+export function expectZeroWriteDelta(
+  before: WriteSnapshot,
+  after: WriteSnapshot,
+  label: string
+): void {
+  const moved = Object.keys(before).filter((t) => before[t] !== after[t]);
+  if (moved.length > 0) {
+    throw new Error(
+      `${label} was expected to write nothing, but ${moved
+        .map((t) => `${t}: ${before[t]} -> ${after[t]}`)
+        .join(', ')}`
+    );
+  }
+}
+
+/**
+ * The whole teardown, in the only order that proves anything:
+ *   guard -> lock -> CAPTURE cascade-only child IDs -> cleanup (response
+ *   asserted) -> direct PostgreSQL inventory -> unlock asserted.
+ *
+ * Capture must precede cleanup: afterwards the parents are gone and the
+ * children can no longer be named.
+ *
+ * NOTE ON ATOMICITY: this is NOT atomic and is never claimed to be.
+ * purgeByOrganizationId iterates tables one DELETE at a time and swallows
+ * per-table failures, so a partial purge is possible by construction. What is
+ * demonstrated here is DETECTION and honest reporting of a partial purge —
+ * see the forced-failure test — not atomic cleanup.
+ */
+export async function guardedCleanupAndAssertNoResidue(
+  support: APIRequestContext,
+  databaseUrl: string,
+  runIds: string[],
+  organizationIds: string[]
+): Promise<{ residue: MywResidue; captured: CapturedFixtureIds }> {
+  const session = await openGuardedCleanupSession(databaseUrl);
+  try {
+    const captured = await captureFixtureIds(session, organizationIds);
+    for (const runId of runIds) {
+      await cleanupRunAsserted(support, runId);
+    }
+    const residue = await measureResidueStrict(session, organizationIds, captured);
+    expectNoResidue(residue);
+    return { residue, captured };
+  } finally {
+    await session.release();
   }
 }
