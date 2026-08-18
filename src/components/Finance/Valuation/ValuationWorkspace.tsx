@@ -11,7 +11,8 @@
  * that deliberately throws.
  *
  * ★ NOT wired into any production route/hub — mounting is gated by
- * `useFinanceValuationWorkspaceFlag` (default OFF, CLAUDE.md rule #7). The only consumer today is
+ * `useFinanceValuationWorkspaceFlag` (default ON after AMD-FIN-VALUATION-V3-001). The flag remains
+ * a controlled rollback seam. The only consumer today is
  * `dev-render/screens/finance-valuation-workspace.tsx` for screenshot evidence.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';

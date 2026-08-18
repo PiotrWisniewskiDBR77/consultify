@@ -2,7 +2,8 @@
  * @vitest-environment jsdom
  *
  * `ValuationWorkspace` — AP_MOUNT §A: the component reads its OWN flag
- * (`financeValuationWorkspaceV1`, default OFF) and gates on it BEFORE
+ * (`financeValuationWorkspaceV1`, default ON after AMD-FIN-VALUATION-V3-001)
+ * and gates on it BEFORE
  * mounting the `useEffect` that calls `api.getValuationVariant` on mount.
  *
  * Uses the component's own injectable `api` prop (its established DI
@@ -10,9 +11,8 @@
  * so the spies prove real call counts through the real prop path.
  *
  * Proves:
- *   - flag OFF (no override, i.e. real production default): renders nothing
- *     AND never calls `api.getValuationVariant`.
- *   - flag ON (local override): mounts and calls it.
+ *   - flag ON by default: mounts and calls `api.getValuationVariant`;
+ *   - explicit rollback override OFF: renders nothing and never calls it.
  */
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
@@ -59,18 +59,18 @@ afterEach(() => {
 });
 
 describe('ValuationWorkspace — flag gate (AP_MOUNT §A)', () => {
-  it('OFF (default): renders nothing and never calls api.getValuationVariant', () => {
+  it('ON (owner-approved default): mounts and calls api.getValuationVariant', async () => {
     const api = fakeApi();
-    const { container } = render(<ValuationWorkspace businessVersionId="bv-1" api={api} />);
-    expect(container).toBeEmptyDOMElement();
-    expect(api.getValuationVariant).not.toHaveBeenCalled();
-  });
-
-  it('ON (local override): mounts and calls api.getValuationVariant', async () => {
-    const api = fakeApi();
-    setFeatureFlagOverrides({ financeValuationWorkspaceV1: true });
     render(<ValuationWorkspace businessVersionId="bv-1" api={api} />);
     expect(screen.getByTestId('valuation-workspace')).toBeInTheDocument();
     await waitFor(() => expect(api.getValuationVariant).toHaveBeenCalledTimes(1));
+  });
+
+  it('OFF (explicit rollback override): renders nothing and never calls api.getValuationVariant', () => {
+    const api = fakeApi();
+    setFeatureFlagOverrides({ financeValuationWorkspaceV1: false });
+    const { container } = render(<ValuationWorkspace businessVersionId="bv-1" api={api} />);
+    expect(container).toBeEmptyDOMElement();
+    expect(api.getValuationVariant).not.toHaveBeenCalled();
   });
 });

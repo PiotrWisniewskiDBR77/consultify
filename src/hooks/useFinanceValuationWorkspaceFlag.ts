@@ -1,7 +1,7 @@
 /**
  * Flaga `financeValuationWorkspaceV1` (Pakiet H — Enterprise Valuation).
  *
- * CLAUDE.md reguła #7: „Wygląd tylko za flagą (default OFF) do akceptu."
+ * CLAUDE.md reguła #7: „Wygląd tylko za flagą do akceptu."
  * Osobna flaga od `financeWorkspacePlatformV1` (Pakiet C) celowo — ta ostatnia
  * gałęzi WSPÓLNE komponenty chrome (`FinanceWorkspaceBar`/Focus Mode/
  * `FinanceErrorBoundary`) używane przez wiele workspace'ów Finance; ta flaga
@@ -9,8 +9,9 @@
  * — który dziś nie ma żadnego produkcyjnego punktu wejścia (żaden route ani
  * hub go nie renderuje; jedyny konsument to `dev-render/screens/
  * finance-valuation-workspace.tsx`, harness do zrzutów). Rozdzielenie flag
- * pozwala włączyć platformę C dla innych workspace'ów bez automatycznego
- * odsłaniania jeszcze nieodebranego ekranu Wyceny, i odwrotnie.
+ * pozwala niezależnie wycofać ekran Wyceny bez wyłączania platformy C.
+ * Piotr zaakceptował domyślne włączenie w `AMD-FIN-VALUATION-V3-001`
+ * (2026-08-18); flaga pozostaje jako bezpieczny rollback.
  *
  * Wzorzec identyczny jak `useFinanceWorkspacePlatformFlag.ts` (Pakiet C):
  * NIE modyfikuje współdzielonego `src/hooks/useFeatureFlags.tsx` (poza
@@ -29,9 +30,9 @@ const FINANCE_VALUATION_WORKSPACE_FLAG: FeatureFlag = {
     'Włącza ekran Wyceny przedsiębiorstwa (Source → Assumptions → Methods & weights → ' +
     'Results → Sensitivity → Valuation Advisor → Export, OWN-FIN-021/OWN-FIN-002). OFF = ' +
     'ekran nie jest mountowany nigdzie w aplikacji (dziś brak produkcyjnego punktu wejścia — ' +
-    'żaden hub/route go nie renderuje). Domyślnie OFF do akceptu Piotra na zrzutach ' +
-    '(CLAUDE.md #7) — zrzuty renderowane wyłącznie przez dev-render harness.',
-  defaultValue: false,
+    'żaden hub/route go nie renderuje). Domyślnie ON po akceptacji Piotra ' +
+    '`AMD-FIN-VALUATION-V3-001`; flaga pozostaje kontrolowanym rollbackiem.',
+  defaultValue: true,
   category: 'beta',
   allowLocalOverride: true,
 };
