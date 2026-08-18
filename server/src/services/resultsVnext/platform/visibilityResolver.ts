@@ -353,3 +353,350 @@ async function resolveScopeVisibility(
 
   return { allow: false, reason: 'OUT_OF_SCOPE' };
 }
+
+// ==========================================
+// AMD-FLOW-ROI-VISIBILITY-002 — governed ROI visibility policy
+// ==========================================
+//
+// Owner decision (docs/cleanup/agents/OWNER_DECISIONS_AND_MEASURABLE_GATES_20260816.md
+// row 42): ROI visibility is restricted to same-tenant OWNER, ADMIN and
+// users holding the canonical Finance authority/grant; OPEN_ORG is not an
+// approved production policy.
+//
+// Deliberately NOT built as a sixth `visibility_mode` value on
+// `rvn_platform_visibility_policies` / a branch inside `resolveVisibility()`
+// above or `visibilityScopedQuery.ts`'s CTE — see
+// server/migrations/20261020_roi_governed_visibility_policy.sql's header
+// comment for the full impossibility proof (closed 5-literal CHECK enum on
+// a table shared by KPI/OKR/ROI, not append-only today, and OKR's live
+// `publishProgram` (okrProgramCommands.ts:574) actively UPDATEs it — none
+// of that can be touched or repurposed for this packet). Everything below
+// is a sibling system: its own table, its own predicate, its own command.
+//
+// "The canonical Finance authority/grant" is read literally as the ONE
+// thing in this codebase that already answers to that description —
+// `rvn_finance_reconciliation_grant_events` / capability
+// 'results.roi.finance_reconciliation.resolve' (ROI-E007,
+// roiFinanceReconciliationCommands.ts, migration 20260928) — reused here
+// UNMODIFIED (no ALTER, no new capability literal, no second ledger).
+
+/** Pinned literal, mirrored by the CHECK constraints on
+ * `rvn_roi_visibility_governance.policy_key`/`policy_digest`
+ * (20261020_roi_governed_visibility_policy.sql). A caller of
+ * `publishRoiGovernedVisibilityPolicy` must pass these exact values —
+ * anything else (wrong, partial, or a broadened/"superset" policy) is
+ * rejected BEFORE any client is acquired or any mutation attempted. */
+export const ROI_GOVERNED_VISIBILITY_POLICY = {
+  key: 'AMD-FLOW-ROI-VISIBILITY-002/v1',
+  digest: 'sha256:2c49cd371727bd19b7164b950e523c2caa9068874c88a451700d05f0ced67c65',
+} as const;
+
+/** The existing, unmodified ROI-E007 Finance-reconciliation capability,
+ * reused as "the canonical Finance authority/grant" per the owner decision's
+ * own wording (definite article — not a new capability). */
+export const ROI_FINANCE_AUTHORITY_CAPABILITY = 'results.roi.finance_reconciliation.resolve';
+
+export class RoiGovernedVisibilityPolicyMismatchError extends Error {
+  code = 'ROI_GOVERNED_VISIBILITY_POLICY_MISMATCH';
+  constructor() {
+    super(
+      'The ROI governed visibility policy key/digest does not match the canonical pinned policy — refusing before any mutation.'
+    );
+    this.name = 'RoiGovernedVisibilityPolicyMismatchError';
+  }
+}
+
+export class RoiVisibilityGovernanceActorNotAuthorizedError extends Error {
+  code = 'ROI_VISIBILITY_GOVERNANCE_ACTOR_NOT_AUTHORIZED';
+  constructor() {
+    super('Publishing the ROI governed visibility policy requires a same-tenant ACTIVE OWNER or ADMIN.');
+    this.name = 'RoiVisibilityGovernanceActorNotAuthorizedError';
+  }
+}
+
+export class RoiGovernedVisibilityPolicyCollisionError extends Error {
+  code = 'ROI_GOVERNED_VISIBILITY_POLICY_COLLISION';
+  constructor(organizationId: string) {
+    super(
+      `ROI governed visibility policy for organization ${organizationId} was already published by a different actor.`
+    );
+    this.name = 'RoiGovernedVisibilityPolicyCollisionError';
+  }
+}
+
+/**
+ * AUTHORITATIVE, ROI-visibility-local same-tenant ACTIVE membership role
+ * lookup. Deliberately duplicated (not imported) from
+ * `effectiveAccessService.ts`'s private `readApplicationRole` — this file
+ * must never import from or touch `effectiveAccessService.ts` (owner
+ * decision 15A stays exactly as pinned there; this is a narrower, SEPARATE
+ * gate that does not consult it). Same fail-closed shape: a missing row, a
+ * non-ACTIVE row, or a lookup error all return `null` — never a claimed
+ * role from anywhere else (no token/application-role fallback exists here
+ * to begin with).
+ */
+async function readSameTenantActiveMembershipRole(
+  client: PoolClient,
+  organizationId: string,
+  userId: string
+): Promise<'OWNER' | 'ADMIN' | 'MEMBER' | null> {
+  try {
+    const result = await client.query<{ role: string | null; status: string | null }>(
+      `SELECT UPPER(role) AS role, UPPER(status) AS status
+         FROM organization_members
+        WHERE organization_id = $1 AND user_id = $2
+        LIMIT 1`,
+      [organizationId, userId]
+    );
+    const row = result.rows[0];
+    if (!row || row.status !== 'ACTIVE') return null;
+    if (row.role === 'OWNER' || row.role === 'ADMIN' || row.role === 'MEMBER') return row.role;
+    return null;
+  } catch {
+    // Membership-lookup failure fails closed — an unreadable membership
+    // table must never become an open door, and (for the publish command)
+    // must never be treated as authorization to write.
+    return null;
+  }
+}
+
+/**
+ * Live lookup against the EXISTING, UNMODIFIED
+ * `rvn_finance_reconciliation_grant_events` ledger (ROI-E007) — no caching,
+ * so a revocation denies on the very next call. Structurally identical to
+ * `roiFinanceReconciliationCommands.ts`'s private
+ * `hasActiveExplicitFinanceOwnerGrant` (same table, same capability
+ * literal), reimplemented here rather than imported because that file is
+ * out of this packet's bounded path list — not because the logic differs.
+ */
+export async function hasActiveRoiFinanceAuthorityGrant(
+  client: PoolClient,
+  organizationId: string,
+  userId: string
+): Promise<boolean> {
+  const result = await client.query<{ action: string }>(
+    `SELECT action FROM rvn_finance_reconciliation_grant_events
+      WHERE organization_id = $1 AND user_id = $2 AND capability = $3
+      ORDER BY grant_version DESC LIMIT 1`,
+    [organizationId, userId, ROI_FINANCE_AUTHORITY_CAPABILITY]
+  );
+  return result.rows[0]?.action === 'granted';
+}
+
+export type RoiGovernedVisibilityDenyReason = 'NO_GOVERNED_POLICY' | 'NOT_ACTIVE_MEMBER' | 'ORDINARY_MEMBER_DENIED';
+export type RoiGovernedVisibilityAllowReason = 'OWNER' | 'ADMIN' | 'FINANCE_AUTHORITY_GRANT';
+
+export interface ResolveRoiGovernedVisibilityResult {
+  allow: boolean;
+  reason: RoiGovernedVisibilityAllowReason | RoiGovernedVisibilityDenyReason;
+}
+
+/**
+ * Sibling of `resolveVisibility()` above — NOT a branch of it, NOT wired
+ * through the generic OPEN_ORG/PRIVATE/SCOPE/MANAGEMENT_CHAIN/RESTRICTED_ACL
+ * modal system. Deliberately does NOT call `resolveEffectiveAccess` /
+ * `hasEffectiveCapability(access, '*')` and does NOT import anything from
+ * `effectiveAccessService.ts`.
+ *
+ * Two truths that are BOTH correct at once, on purpose: owner decision 15A
+ * (a SUPERADMIN token resolves to org OWNER with '*' in ANY organization,
+ * WITHOUT a membership row) stays exactly as pinned everywhere else in the
+ * app — untouched by this file. But THIS gate is narrower and does not
+ * consult that wildcard: a SUPERADMIN token with no row in
+ * `organization_members` for this organization is DENIED here, at the ROI
+ * visibility gate specifically, while remaining globally OWNER/'*'
+ * everywhere `hasEffectiveCapability`/`resolveEffectiveAccess` ARE
+ * consulted. Neither statement is a regression of the other.
+ *
+ * Fails closed with `NO_GOVERNED_POLICY` when the organization has never
+ * published the governed policy — this never falls back to OPEN_ORG or any
+ * other default (per the owner decision: OPEN_ORG is not an approved
+ * production policy, and no default may be fabricated).
+ */
+export async function resolveRoiGovernedVisibility(input: {
+  userId: string;
+  organizationId: string;
+}): Promise<ResolveRoiGovernedVisibilityResult> {
+  const { userId, organizationId } = input;
+
+  const client: PoolClient = await acquirePgClient();
+  try {
+    const policyResult = await client.query<{ organization_id: string }>(
+      `SELECT organization_id FROM rvn_roi_visibility_governance WHERE organization_id = $1`,
+      [organizationId]
+    );
+    if (!policyResult.rows[0]) {
+      return { allow: false, reason: 'NO_GOVERNED_POLICY' };
+    }
+
+    const role = await readSameTenantActiveMembershipRole(client, organizationId, userId);
+    if (!role) {
+      // Covers: no membership row at all (including a foreign-tenant
+      // caller — this organization_id simply has no row for that userId),
+      // a non-ACTIVE (revoked) row, a SUPERADMIN token with no row here,
+      // and a membership-lookup failure — all collapse to the same
+      // fail-closed outcome by construction of
+      // `readSameTenantActiveMembershipRole`.
+      return { allow: false, reason: 'NOT_ACTIVE_MEMBER' };
+    }
+    if (role === 'OWNER') return { allow: true, reason: 'OWNER' };
+    if (role === 'ADMIN') return { allow: true, reason: 'ADMIN' };
+
+    const hasFinanceGrant = await hasActiveRoiFinanceAuthorityGrant(client, organizationId, userId);
+    return hasFinanceGrant
+      ? { allow: true, reason: 'FINANCE_AUTHORITY_GRANT' }
+      : { allow: false, reason: 'ORDINARY_MEMBER_DENIED' };
+  } finally {
+    client.release();
+  }
+}
+
+export interface PublishRoiGovernedVisibilityPolicyInput {
+  organizationId: string;
+  actorUserId: string;
+  /** Must equal `ROI_GOVERNED_VISIBILITY_POLICY.key` — see that constant's
+   * doc comment. Required (not defaulted) so a caller passing the wrong,
+   * a partial, or a broadened/"superset" policy identifier is rejected
+   * before any mutation, rather than the function silently substituting
+   * the canonical value on the caller's behalf. */
+  policyKey: string;
+  /** Must equal `ROI_GOVERNED_VISIBILITY_POLICY.digest`. */
+  policyDigest: string;
+  idempotencyKey: string;
+}
+
+export interface RoiGovernedVisibilityPolicyPublication {
+  organizationId: string;
+  publishedBy: string;
+  publishedAt: string;
+  policyKey: string;
+}
+
+export interface PublishRoiGovernedVisibilityPolicyOutcome {
+  /** 'applied' = this call performed the INSERT. 'replayed' = the SAME
+   * actor had already published for this organization; zero additional
+   * writes, the existing durable row is returned unchanged. */
+  outcome: 'applied' | 'replayed';
+  publication: RoiGovernedVisibilityPolicyPublication;
+}
+
+/**
+ * Governance command — the real production replacement for
+ * `tests/integration/crossflow/flowFixture.ts`'s
+ * `provisionSyntheticRoiVisibilityPolicy` (SYNTHETIC_TEST_ONLY OPEN_ORG).
+ *
+ * Org and actor MUST be derived by the caller from the verified JWT only
+ * (see `roi.routes.ts`'s route handler — `organizationId`/`actorUserId`
+ * come from `req.user`, never from the request body). ACTIVE same-tenant
+ * OWNER or ADMIN is required, checked directly against
+ * `organization_members` — deliberately NOT via
+ * `hasEffectiveCapability(access, '*')` (see `resolveRoiGovernedVisibility`'s
+ * doc comment for why 15A's wildcard is not consulted here).
+ *
+ * Concurrency/idempotency/collision shape (8-way concurrency -> exactly one
+ * winner; collision -> 409 at the route layer): `rvn_roi_visibility_governance`
+ * has exactly one row per organization (PRIMARY KEY organization_id) and
+ * nothing to version between (one canonical policy, nothing to widen or
+ * narrow) — so this intentionally does NOT go through the generic
+ * `executeAtomicCreate`/`rvn_platform_events` machinery (which would also
+ * require a new `RvnResourceType` literal in `resourceTypes.ts`, a file
+ * outside this packet's bounded path list). Instead: a `pg_advisory_xact_lock`
+ * on `organizationId` serializes every racing caller through the SAME
+ * check-then-insert section, and the row's own `published_by` IS the
+ * idempotent-receipt identity: the SAME actor calling again after the row
+ * exists gets `outcome: 'replayed'` (zero additional writes, the original
+ * row returned unchanged); a DIFFERENT actor calling after the row exists
+ * gets `RoiGovernedVisibilityPolicyCollisionError` (mapped to 409 by the
+ * route, same pattern every other typed guard error in `roi.routes.ts`
+ * already uses) — thrown before any write in that branch, so a collision
+ * never mutates anything.
+ */
+export async function publishRoiGovernedVisibilityPolicy(
+  input: PublishRoiGovernedVisibilityPolicyInput
+): Promise<PublishRoiGovernedVisibilityPolicyOutcome> {
+  const { organizationId, actorUserId, policyKey, policyDigest, idempotencyKey } = input;
+
+  // FAIL BEFORE MUTATION: a wrong, partial, or broadened/"superset" policy
+  // is rejected here — before a client is even acquired, let alone a
+  // transaction opened.
+  if (policyKey !== ROI_GOVERNED_VISIBILITY_POLICY.key || policyDigest !== ROI_GOVERNED_VISIBILITY_POLICY.digest) {
+    throw new RoiGovernedVisibilityPolicyMismatchError();
+  }
+  if (!idempotencyKey || !idempotencyKey.trim()) {
+    throw new Error('[publishRoiGovernedVisibilityPolicy] idempotencyKey is required');
+  }
+
+  const client: PoolClient = await acquirePgClient();
+  try {
+    await client.query('BEGIN');
+
+    const role = await readSameTenantActiveMembershipRole(client, organizationId, actorUserId);
+    if (role !== 'OWNER' && role !== 'ADMIN') {
+      throw new RoiVisibilityGovernanceActorNotAuthorizedError();
+    }
+
+    // Advisory-lock ordering: every racing caller for this organizationId
+    // serializes here before either reading or writing the row below —
+    // this is what makes "8-way concurrency yields exactly one winner"
+    // true rather than a race on the bare SELECT-then-INSERT.
+    await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [organizationId]);
+
+    const existing = await client.query<{
+      published_by: string;
+      published_at: string;
+      policy_key: string;
+    }>(
+      `SELECT published_by, published_at, policy_key
+         FROM rvn_roi_visibility_governance
+        WHERE organization_id = $1`,
+      [organizationId]
+    );
+    if (existing.rowCount) {
+      const row = existing.rows[0]!;
+      if (row.published_by !== actorUserId) {
+        throw new RoiGovernedVisibilityPolicyCollisionError(organizationId);
+      }
+      await client.query('COMMIT');
+      return {
+        outcome: 'replayed',
+        publication: {
+          organizationId,
+          publishedBy: row.published_by,
+          publishedAt: row.published_at,
+          policyKey: row.policy_key,
+        },
+      };
+    }
+
+    const insertResult = await client.query<{
+      organization_id: string;
+      published_by: string;
+      published_at: string;
+      policy_key: string;
+    }>(
+      `INSERT INTO rvn_roi_visibility_governance (organization_id, published_by)
+       VALUES ($1, $2)
+       RETURNING organization_id, published_by, published_at, policy_key`,
+      [organizationId, actorUserId]
+    );
+    const inserted = insertResult.rows[0];
+    if (!inserted) {
+      throw new Error('[publishRoiGovernedVisibilityPolicy] insert returned no row');
+    }
+    await client.query('COMMIT');
+    return {
+      outcome: 'applied',
+      publication: {
+        organizationId: inserted.organization_id,
+        publishedBy: inserted.published_by,
+        publishedAt: inserted.published_at,
+        policyKey: inserted.policy_key,
+      },
+    };
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw error;
+  } finally {
+    client.release();
+  }
+}

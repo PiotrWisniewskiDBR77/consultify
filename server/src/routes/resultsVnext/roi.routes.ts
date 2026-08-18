@@ -33,6 +33,14 @@ import { requireOrgAccess } from '../../middleware/rbac.middleware.js';
 import { requireResultsInternalBetaVisibility } from '../../middleware/resultsInternalBetaVisibility.middleware.js';
 import { validateBody, validateParams, validateQuery } from '../../middleware/validation.middleware.js';
 import { resolveEffectiveAccess } from '../../services/effectiveAccessService.js';
+import {
+  publishRoiGovernedVisibilityPolicy,
+  resolveRoiGovernedVisibility,
+  ROI_GOVERNED_VISIBILITY_POLICY,
+  RoiGovernedVisibilityPolicyCollisionError,
+  RoiGovernedVisibilityPolicyMismatchError,
+  RoiVisibilityGovernanceActorNotAuthorizedError,
+} from '../../services/resultsVnext/platform/visibilityResolver.js';
 import { acquirePgClient } from '../../database/PostgresDatabase.js';
 import {
   AtomicWriteAggregateNotFoundError,
@@ -285,6 +293,17 @@ const FinanceOwnerGrantSchema = z.object({
   idempotencyKey: z.string().min(1).max(255),
 }).strict();
 
+// AMD-FLOW-ROI-VISIBILITY-002 — the policy identifier is never accepted
+// from the client: the route always publishes the one pinned canonical
+// policy (ROI_GOVERNED_VISIBILITY_POLICY). This closes off any client-side
+// attack surface for a 'wrong/partial/superset' policy at the HTTP layer;
+// the service-level guard (publishRoiGovernedVisibilityPolicy's own
+// FAIL-BEFORE-MUTATION check) is exercised directly by
+// roiGovernedVisibility20.realdb.test.ts, not through this route.
+const PublishRoiVisibilityPolicySchema = z.object({
+  idempotencyKey: z.string().min(1).max(255).optional(),
+}).strict();
+
 router.use(apiAuthRateLimiter);
 router.use(verifyToken);
 router.use(requireOrgAccess());
@@ -358,6 +377,25 @@ function handleRoiRouteError(res: Response, err: unknown, op: string): void {
     // `details.capability` is server-side-log-only, never wire.
     logger.warn(`[resultsVnext/roi.routes] ${op} denied`, { capability: err.details.capability });
     res.status(403).json({ error: err.message, code: err.code });
+    return;
+  }
+  // AMD-FLOW-ROI-VISIBILITY-002 — checked alongside the RN-G5 coarse
+  // authorization branch above: actor-not-authorized is a 403, a
+  // different-actor collision on an already-published org policy is a
+  // 409 (state conflict, same family as every other typed guard error in
+  // this router), and a wrong/partial/superset policy identifier is a 400
+  // (malformed request) — all three are FAIL-BEFORE-MUTATION errors, never
+  // reached after a partial write.
+  if (err instanceof RoiVisibilityGovernanceActorNotAuthorizedError) {
+    res.status(403).json({ error: err.message, code: (err as { code: string }).code });
+    return;
+  }
+  if (err instanceof RoiGovernedVisibilityPolicyCollisionError) {
+    res.status(409).json({ error: err.message, code: (err as { code: string }).code });
+    return;
+  }
+  if (err instanceof RoiGovernedVisibilityPolicyMismatchError) {
+    res.status(400).json({ error: err.message, code: (err as { code: string }).code });
     return;
   }
   // ROI-E003 §7: checked FIRST, ahead of the generic conflict/validation 409
@@ -522,6 +560,20 @@ router.get(
     const auth = requireAuth(req, res);
     if (!auth) return;
     try {
+      // AMD-FLOW-ROI-VISIBILITY-002 — governed read gate, layered IN FRONT
+      // OF (not a replacement for) listRoiCases's own OPEN_ORG/RBAC-override
+      // visibility-scoped CTE (roiRepository.ts, out of this packet's
+      // bounded path list). A denial here returns zero rows, never a 403 —
+      // same non-leak convention every visibility-scoped list in this
+      // codebase already follows.
+      const governed = await resolveRoiGovernedVisibility({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+      });
+      if (!governed.allow) {
+        res.status(200).json({ cases: [] });
+        return;
+      }
       const query = req.query as unknown as import('zod').infer<typeof ListRoiCasesQuerySchema>;
       const cases = await listRoiCases({
         userId: auth.userId,
@@ -550,6 +602,19 @@ router.get(
     if (!auth) return;
     try {
       const { caseId } = req.params as { caseId: string };
+      // AMD-FLOW-ROI-VISIBILITY-002 — governed read gate, layered IN FRONT
+      // OF getRoiCase's own visibility-scoped CTE. A denial here returns
+      // 404, matching the existing not-found response below — never a 403,
+      // to avoid leaking whether the case exists (same convention
+      // resolveVisibility()'s NO_VISIBILITY_RECORD deny already follows).
+      const governed = await resolveRoiGovernedVisibility({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+      });
+      if (!governed.allow) {
+        res.status(404).json({ error: 'ROI case not found', code: 'NOT_FOUND' });
+        return;
+      }
       // includeArchived: true — fetching a specific known id must not 404
       // merely because the case was archived (Decision D4: archiving is
       // registry housekeeping, orthogonal to whether the resource still
@@ -3062,6 +3127,44 @@ router.post(
       });
     } catch (err) {
       handleRoiRouteError(res, err, 'closeRoiCase');
+    }
+  }
+);
+
+// ==========================================================================
+// AMD-FLOW-ROI-VISIBILITY-002 — governed ROI visibility policy
+// ==========================================================================
+// Replaces the SYNTHETIC_TEST_ONLY OPEN_ORG prerequisite
+// (tests/integration/crossflow/flowFixture.ts) with a real, governed,
+// production publish path. See
+// server/src/services/resultsVnext/platform/visibilityResolver.ts's
+// AMD-FLOW-ROI-VISIBILITY-002 section for the full design/impossibility-
+// proof writeup.
+
+router.post(
+  '/visibility-policy',
+  validateBody(PublishRoiVisibilityPolicySchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const body = req.body as z.infer<typeof PublishRoiVisibilityPolicySchema>;
+      const outcome = await publishRoiGovernedVisibilityPolicy({
+        // Org and actor come from the verified JWT only (auth.organizationId/
+        // auth.userId, resolved by requireAuth from req.user) — never from the
+        // request body, which carries only an optional idempotency key.
+        organizationId: auth.organizationId,
+        actorUserId: auth.userId,
+        policyKey: ROI_GOVERNED_VISIBILITY_POLICY.key,
+        policyDigest: ROI_GOVERNED_VISIBILITY_POLICY.digest,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+      });
+      res.status(outcome.outcome === 'applied' ? 201 : 200).json({
+        outcome: outcome.outcome,
+        publication: outcome.publication,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'publishRoiGovernedVisibilityPolicy');
     }
   }
 );
