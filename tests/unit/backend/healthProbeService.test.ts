@@ -321,6 +321,49 @@ describe('probe (a) — M15 KPI round-trip', () => {
   });
 });
 
+describe('probe (b) — M15 ROI realization round-trip', () => {
+  const probe = getProbeById('m15_roi_round_trip')!;
+
+  it('creates the FK parent before the linked KPI and cleans the whole chain', async () => {
+    (createInitiativeViaFunnel as any).mockResolvedValue({ id: 'initiative-roi-1' });
+    (resultsROIService.createKPI as any).mockResolvedValue({ kpiId: 'kpi-roi-1' });
+    (resultsROIService.recordROIRealization as any).mockResolvedValue({ entryId: 'entry-roi-1' });
+    (resultsROIService.getROIByInitiative as any).mockResolvedValue([
+      { entryId: 'entry-roi-1', realizedValue: 4242 },
+    ]);
+
+    const result = await runProbe(probe, CTX);
+
+    expect(result.status).toBe('pass');
+    expect(createInitiativeViaFunnel).toHaveBeenCalledWith(
+      CTX.organizationId,
+      expect.objectContaining({
+        title: expect.stringContaining(HEALTH_PROBE_PREFIX),
+        sourceType: 'tool',
+      }),
+      { emitAudit: false }
+    );
+    expect(resultsROIService.createKPI).toHaveBeenCalledWith(
+      expect.objectContaining({ initiativeId: 'initiative-roi-1' })
+    );
+    expect(DbPromise.run).toHaveBeenNthCalledWith(
+      1,
+      expect.stringContaining('DELETE FROM v8_roi_realization_entries'),
+      ['entry-roi-1', CTX.organizationId]
+    );
+    expect(DbPromise.run).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining('DELETE FROM v8_kpi_definitions'),
+      ['kpi-roi-1', CTX.organizationId]
+    );
+    expect(DbPromise.run).toHaveBeenNthCalledWith(
+      3,
+      expect.stringContaining('DELETE FROM initiatives'),
+      ['initiative-roi-1', CTX.organizationId]
+    );
+  });
+});
+
 describe('probe (d) — M24 add-member validate + audit', () => {
   const probe = getProbeById('m24_member_validate_audit')!;
 

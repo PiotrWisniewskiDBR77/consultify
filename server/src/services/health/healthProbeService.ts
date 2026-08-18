@@ -141,9 +141,21 @@ const probeM15RoiRoundTrip: HealthProbe = {
   description: 'Writes an ROI realization entry and reads it back by initiative, org-scoped.',
   run: async ({ organizationId }) => {
     let kpiId: string | null = null;
-    const initiativeId = uuidv4();
+    let initiativeId: string | null = null;
     let entryId: string | null = null;
     try {
+      const initiative = await createInitiativeViaFunnel(
+        organizationId,
+        {
+          title: label('ROI-INITIATIVE'),
+          summary: 'health probe — ROI realization round-trip',
+          sourceType: 'tool',
+          sourceId: label('ROI-SOURCE'),
+        },
+        { emitAudit: false }
+      );
+      initiativeId = initiative.id;
+
       const kpi = await createKPI({
         organizationId,
         name: label('ROI-KPI'),
@@ -181,6 +193,12 @@ const probeM15RoiRoundTrip: HealthProbe = {
           kpiId,
           organizationId,
         ]).catch((e) => logger.warn(`${LOG_PREFIX} m15_roi kpi cleanup failed`, e));
+      }
+      if (initiativeId) {
+        await dbRun(`DELETE FROM initiatives WHERE id = ? AND organization_id = ?`, [
+          initiativeId,
+          organizationId,
+        ]).catch((e) => logger.warn(`${LOG_PREFIX} m15_roi initiative cleanup failed`, e));
       }
     }
   },
