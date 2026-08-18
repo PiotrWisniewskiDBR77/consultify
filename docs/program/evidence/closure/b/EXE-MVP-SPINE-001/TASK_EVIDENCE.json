@@ -109,5 +109,72 @@
     ],
     "verdictAtCurrentSha": "PARTIAL, UNCHANGED. Every historical fact in this packet is preserved. The exact-current governed delivery-closure slice re-proves at currentSha. The broader legacy execution-model and health-formula unification named in openBlocker remains outside this packet and still requires its separate cutover authority.",
     "notRequalifiedHere": "This reconciliation re-ran the spine proof only. It does NOT qualify the four competing execution models or the four distinct health formulas as unified. That historical CONFIRMED finding records that they coexist live-mounted, not that they were reconciled."
+  },
+  "correctiveReconciliation": {
+    "supersedes": "currentShaReconciliation (retained above verbatim; nothing in it is deleted or rewritten)",
+    "correctiveOf": "d8d42a212afc257b093eb9dcabef5db539ffc98a",
+    "raisedBy": "integrator audit, 2026-08-18, five findings",
+    "shaRelationshipHonest": {
+      "laneBaseSha": "4f0fd2cd9b0665a971a86867a91015655ce127af — the exact canonical SHA this lane's worktree was created from and at which every rerun below was executed",
+      "canonicalTipAtCorrection": "b63c36dcefcacf26ef98c2b770ceca0cb50c8c7f on codex/recovery-canonical-20260816; laneBaseSha IS an ancestor of it; tip is laneBase + 4 commits. No rebase was performed and no dirty work was rebased.",
+      "canonicalDriftPaths": "docs/program/evidence/closure/codex/{FIN-MVP-CANDIDATE-001,FLOW-TRANSFORM-MVP-001,PERSONA-UAT-001,SET-MVP-MFA-001}/TASK_EVIDENCE.json, server/src/routes/__tests__/mfaPersistence.pg.test.ts, tests/e2e/settings/settings-mfa-lifecycle.signed.spec.ts. None intersects this packet.",
+      "historicalReconciliationShaCorrected": "The top-level reconciliationSha field says 3b55f6b627b74d1e3397b75582d3912bf3e9c557. That field is PRESERVED as history, but it must not be read as 'the commit carrying this packet's changes'. 3b55f6b627 is a docs-only commit whose entire content is docs/program/evidence/closure/codex/INT-UI-CANON-001/TASK_EVIDENCE.json — ANOTHER lane's evidence file. It is a point-in-time marker at which a reconciliation was recorded, not a content commit for the execution spine. It is an ancestor of laneBaseSha.",
+      "externalSourcesAreNotAncestors": "technicalSourceSha aa118bbdcbab2a811740eda2684eff5428aa981d and bf55070e2f are NOT ancestors of laneBaseSha and are NOT presented as such anywhere in this packet. They are side-branch technical sources. Their content reached canonical only patch-equivalent, through integratedProductSha 39341f3ffbd60b1a18461f925abf3c327bd97b43, which IS an ancestor of laneBaseSha. The patch-equivalence claim is evidenced by the blob-identity table in currentTechnicalRequalification below, not by ancestry.",
+      "method": "git merge-base --is-ancestor for every SHA; git show --name-only for every commit cited; git rev-parse <sha>:<path> for every blob identity. Nothing was inferred from documentation."
+    },
+    "currentTechnicalRequalification": {
+      "note": "The top-level changedPaths is [] and changedPathRationale is {} — both PRESERVED as history. This packet's current technical union is the nine product/test paths below, taken from the commits that actually carry the spine (6de1fe8532 feat(execution): expose governed delivery closure journey, and 39341f3ffb test(execution): fence immutable fixture cleanup). Every one EXISTS at laneBaseSha and every one is blob-identical between 39341f3ffb and laneBaseSha, which is the literal evidence for the patch-equivalence claim above.",
+      "changedPaths": [
+        "server/src/routes/caseWorkspace/executionBvp.routes.ts",
+        "server/src/services/executionBvpService.ts",
+        "server/src/services/__tests__/executionBvpService.pg.test.ts",
+        "src/services/api/v8/executionBvp.ts",
+        "src/components/Execution/ExecutionDeliveryClosurePanel.tsx",
+        "src/components/Execution/ExecutionHub.tsx",
+        "tests/components/Execution/ExecutionDeliveryClosurePanel.test.tsx",
+        "tests/e2e/execution/_helpers/executionUiTechnicalFixture.ts",
+        "tests/e2e/execution/exe-ui-canon-technical.spec.ts"
+      ],
+      "changedPathRationale": {
+        "server/src/routes/caseWorkspace/executionBvp.routes.ts": "Carries the six governed delivery-closure endpoints (one GET snapshot, five POST). VERIFIED MOUNTED, not merely present: imported at server/src/routes/caseWorkspace/index.ts:35 and mounted by router.use at index.ts:56, so the proof runs through the real router rather than a test-only mount.",
+        "server/src/services/executionBvpService.ts": "Produces the one exact immutable Results receipt and enforces the expectedVersion contract that makes the stale write return 404 instead of silently winning.",
+        "server/src/services/__tests__/executionBvpService.pg.test.ts": "The realPG proof itself. One it() containing the four dimensions: mounted signed auth, tenant/role denial, immutable receipt, cold snapshot. 1 file / 1 test / exit 0 at laneBaseSha.",
+        "src/services/api/v8/executionBvp.ts": "Frontend client (ExecutionBvpApi plus the ExecutionDeliveryLink/Evidence/Snapshot types) through which the UI reads the same governed endpoints the backend proof exercises — the reason the UI and realPG proofs describe one surface and not two.",
+        "src/components/Execution/ExecutionDeliveryClosurePanel.tsx": "The rendered delivery-closure surface: the only Execution UI in this packet with a signed mounted journey behind it.",
+        "src/components/Execution/ExecutionHub.tsx": "Reachability. VERIFIED: imports the panel at line 129 and renders it at line 5531. Without this the panel would be dead code and the UI denominator would be meaningless.",
+        "tests/components/Execution/ExecutionDeliveryClosurePanel.test.tsx": "Component-level regression on the panel's states, so a rendering regression fails here rather than only in the slower browser journey.",
+        "tests/e2e/execution/_helpers/executionUiTechnicalFixture.ts": "Builds the signed identities and fixture state for the browser journeys and fences fixture cleanup (the whole content of 39341f3ffb). It is the file that keeps the UI proof from leaving residue it would then have to lie about.",
+        "tests/e2e/execution/exe-ui-canon-technical.spec.ts": "The two signed UI journeys: four-eyes approval + close + immutable Results receipt, and the stale/foreign/revoked fail-closed journey. This is exactly the 2/2 denominator, and exactly the reason the verdict stays PARTIAL — see verdictDiscipline."
+      },
+      "pathExistenceAtLaneBase": "9/9 EXISTS",
+      "blobIdentityVsTechnicalSource": "9/9 SAME versus 39341f3ffb"
+    },
+    "denominatorsSeparated": {
+      "historicalPreservedVerbatim": {
+        "exactCurrentSchema": "758 migrations; repeat 0; dry-run pending 0",
+        "exactCurrentExecutionBvpRealPg": "4/4 PASS",
+        "exactCurrentExecutionUi": "2/2 PASS",
+        "fixtureResidue": "0; append-only trigger restored/enabled (O)",
+        "note": "These are the packet's original strings. They are retained as the historical record of what was observed at productSha/integratedProductSha. They are NOT restated as current."
+      },
+      "currentAtLaneBaseSha": {
+        "schema": "765 applied on fresh; repeat Applying migrations: 0; dry-run Pending migrations: 0; schema_migrations 765 total / 765 status=success / 0 non-success / 0 empty checksum / 765 distinct filenames; 1623 public tables",
+        "executionBvpRealPg": "1 vitest file / 1 vitest test / exit 0, covering 4 named proof dimensions",
+        "executionUi": "NOT RE-RUN IN THIS CORRECTION. The historical 2/2 is not restated as a current observation.",
+        "mountedLiveStack": "2 files / 39 tests / exit 0 against the real mounted router",
+        "typeCheck": "root exit 0 (8 GB heap), server exit 0, zero diagnostics each",
+        "backendBuild": "exit 0",
+        "frontendBuild": "exit 0 (8 GB heap)",
+        "fixtureResidue": "NON_ZERO_IN_DATABASE — see residueHonestStatement above",
+        "reporter82": "denominator 82, missingEvidence 0, invalidPresentEvidence 0, counts DONE_CURRENT_SHA 36 / PARTIAL 45 / BLOCKED_HUMAN 1; identical before and after this lane's commits because no verdict field was touched",
+        "planVerifier": "scripts/cleanup/verify-closure-plan.mjs PASS on all four checks: 74 module + 8 cross-program = 82 unique tasks; A15+B15+C15+Codex37 with zero duplicates or missing; leases SHA-valid with zero tracked-path overlap; graph A -> C -> B -> Codex"
+      },
+      "unitDisciplineWarning": "The historical 4/4 and the current 1/1 are not in conflict and neither supersedes the other numerically: 4/4 counts proof DIMENSIONS, 1/1 counts vitest TESTS. The file has held exactly one it() at every SHA in this packet. Mixing the two units is what made the original denominator block unreadable."
+    },
+    "reporterHonesty": "scripts/cleanup/report-closure-progress.mjs validates only field PRESENCE, taskId match, verdict membership and productSha existence. It does NOT enforce changedPaths/changedPathRationale 1:1, and it does not check path existence. A green reporter82 therefore does NOT prove the 1:1 mapping asserted here — that mapping was verified by hand and is recorded above so a later reader is not misled by the green.",
+    "verdictDiscipline": {
+      "verdict": "PARTIAL — UNCHANGED, and deliberately not uplifted.",
+      "why": "The 2/2 UI denominator covers the delivery-closure slice only. All nine governed action UIs remain unproven. A 2/2 on one slice is not evidence about nine surfaces, and no combination of backend green, realPG green or build green substitutes for it. The openBlocker stands verbatim."
+    }
   }
 }
