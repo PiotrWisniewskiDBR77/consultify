@@ -57,5 +57,57 @@
   "openBlocker": "The exact-current governed delivery-closure slice is proven, but broader legacy execution-model and health-formula unification remains outside this packet and requires its separate cutover authority.",
   "resolvedBlockers": [
     "Exact-current execution delivery spine integrated patch-equivalent at 6de1fe8532/39341f3ffb (source bf55070e2f/aa118bbdcb): realPG 4/4 and signed mounted UI 2/2 prove canonical capacity, actions, four-eyes, close and immutable Results receipt with stale/tenant/revoked/cold controls."
-  ]
+  ],
+  "currentShaReconciliation": {
+    "currentSha": "4f0fd2cd9b0665a971a86867a91015655ce127af",
+    "reconciledOn": "2026-08-18",
+    "reconciledBy": "closure lane B, branch codex/closure-b-20260818, isolated worktree created from exact canonical 4f0fd2cd9b",
+    "canonicalTipObserved": "codex/recovery-canonical-20260816 @ 2be22ad261e36ec7edc2603b417e8f66ef104387 = currentSha + 1 commit (test(mfa): align signed fixtures with strict membership), touching only server/src/routes/__tests__/mfaPersistence.pg.test.ts and tests/e2e/settings/settings-mfa-lifecycle.signed.spec.ts. No collision with this packet. No rebase was performed.",
+    "ancestry": {
+      "baselineSha": "ANCESTOR_OF_CURRENT",
+      "productSha": "ANCESTOR_OF_CURRENT",
+      "integratedProductSha": "ANCESTOR_OF_CURRENT",
+      "reconciliationSha": "ANCESTOR_OF_CURRENT",
+      "technicalSourceSha": "NOT_ANCESTOR. aa118bbdcb (and bf55070e2f) are side-branch technical sources; their content reached canonical patch-equivalent through integratedProductSha 39341f3ffb, which IS an ancestor of currentSha.",
+      "method": "git merge-base --is-ancestor <sha> 4f0fd2cd9b for every SHA named in this packet. Nothing was assumed."
+    },
+    "pathDrift": {
+      "declaredChangedPaths": 0,
+      "detail": "This packet declares changedPaths: []. The spine surface it asserts over (server/src/services/executionBvpService.ts, server/src/routes/caseWorkspace/executionBvp.routes.ts, server/src/services/__tests__/executionBvpService.pg.test.ts) is byte-identical between 6de1fe8532 / 39341f3ffb and currentSha, verified by git rev-parse blob hash comparison."
+    },
+    "rerunDenominators": {
+      "exactCurrentExecutionBvpRealPg": "1 vitest file / 1 vitest test, exit 0, fresh isolated pgvector PostgreSQL 16 at currentSha. UNIT CORRECTION: the historical string 4/4 is a proof-DIMENSION count, not a vitest count. server/src/services/__tests__/executionBvpService.pg.test.ts has contained exactly one it() since 6de1fe8532, at every SHA in this packet. The four dimensions are asserted inside that single test and each was re-observed: (1) mounted signed auth on the real router; (2) tenant and role, a foreign token gets 403 or 404 on both the write and the snapshot read, and a membership flipped to REVOKED gets 403; (3) immutable receipt, a direct UPDATE of rvn_execution_signal_receipts rejects with /immutable/; (4) cold snapshot, GET links/:id returns status CLOSED with the exact receipt id. Idempotent replay returns the identical link_id and a stale expectedVersion returns 404.",
+      "exactCurrentSchema": "765 migrations applied on fresh; repeat reports Applying migrations: 0; --dry-run reports Pending migrations: 0; schema_migrations 765 total / 765 status=success / 0 non-success / 0 empty checksum / 765 distinct filenames; 1623 public tables. NUMBER CORRECTION: the historical 758 is superseded at currentSha by 765; seven migrations landed between reconciliationSha and currentSha. Repeat and dry-run remain 0.",
+      "schemaMigrationsKeyCaveat": "schema_migrations holds 765 distinct filenames but only 392 distinct version values, and the primary key is filename, not version. Any assertion keyed on version silently collapses rows. Pre-existing structural fact, not introduced by this lane.",
+      "mountedLiveStack": "2 files / 39 tests, exit 0 at currentSha, against a REAL mounted Express router started by scripts/dev/case-workspace-local-backend.sh: NODE_ENV=development, E2E_MODE and ENABLE_TEST_AUTH_BYPASS deliberately unset, real POST /api/auth/login, real signed JWT. Health 200 and an unauthenticated GET /api/v8/case-workspace/cases returns 401, so the auth chain was live and not bypassed.",
+      "typeCheck": "root tsc -p tsconfig.json --noEmit with NODE_OPTIONS=--max-old-space-size=8192 exit 0 and zero diagnostics; server tsc --noEmit --pretty false exit 0 and zero diagnostics",
+      "backendBuild": "npm run build:backend exit 0; 9 server runtime mirror files verified",
+      "frontendBuild": "NODE_OPTIONS=--max-old-space-size=8192 npm run build exit 0, built in 42.46s"
+    },
+    "triggerAndLockFacts": {
+      "advisoryLocks": 0,
+      "namedTriggersEnabled": "49 non-internal append-only / immutability triggers enumerated on the fresh schema, every one tgenabled=O. The two that matter here: trg_rvn_execution_signal_receipts_immutable=O and trg_execution_action_audit_immutable=O. No trigger was disabled at any point in this lane.",
+      "outOfBandNegativeControl": "An out-of-band psql session outside the application, with no SET LOCAL and a superuser-equivalent role, had both DELETE and UPDATE on execution_action_audit rejected by execution_action_audit_deny_mutation() with the message execution_action_audit is append-only. The guard therefore does not depend on application cooperation."
+    },
+    "residueHonestStatement": {
+      "verdict": "NON_ZERO_IN_DATABASE. This corrects the historical fixtureResidue value of 0.",
+      "measured": "organizations=4 (system, the deliberate harness seed cw-local-org, and two left by tests: cw-stream-e-other-org and exe-actions-1787025024889); users=6; organization_members=6; case_core=2; v8_execution_runs=4; execution_action_audit=39; budget_entries=0; tasks=0; ie_aggregate_state=0; rvn_execution_signal_receipts=0",
+      "why": "execution_action_audit is an append-only ledger guarded by an enabled trigger, so its 39 rows are structurally impossible to delete in place. Residue 0 for this surface is reachable only by DESTROYING the database, never by cleaning it. Any packet claiming residue 0 here is claiming container teardown, and should say so in those words.",
+      "disposal": "The entire database lived in a disposable tmpfs container removed together with its volume at end of lane."
+    },
+    "firstRedsAndClassification": [
+      {
+        "red": "liveStack e2e: 39 failures with LIVE STACK NOT UP - this suite proves nothing and must not be read as a pass; backend unreachable at http://127.0.0.1:3001",
+        "classification": "ENVIRONMENT_PRECONDITION, NOT A PRODUCT DEFECT. The suite fail-closed instead of reporting a false pass. This guard is worth keeping exactly as it is.",
+        "fix": "Started the real mounted router via scripts/dev/case-workspace-local-backend.sh against the isolated database. No test, product code or assertion was weakened."
+      },
+      {
+        "red": "liveStack e2e: both files failed at suite level with login failed for cw.local@local.test: HTTP 401 Invalid email or password",
+        "classification": "ENVIRONMENT_PRECONDITION, NOT A PRODUCT DEFECT. A fresh database carries no fixture identity and the harness refused to invent one.",
+        "fix": "Ran the documented scripts/dev/case-workspace-seed-local.mjs against the isolated database: 1 org, 1 user, 1 ACTIVE member, 1 project, 8 flags. Real bcrypt hash, real login, real signed JWT, no auth bypass."
+      }
+    ],
+    "verdictAtCurrentSha": "PARTIAL, UNCHANGED. Every historical fact in this packet is preserved. The exact-current governed delivery-closure slice re-proves at currentSha. The broader legacy execution-model and health-formula unification named in openBlocker remains outside this packet and still requires its separate cutover authority.",
+    "notRequalifiedHere": "This reconciliation re-ran the spine proof only. It does NOT qualify the four competing execution models or the four distinct health formulas as unified. That historical CONFIRMED finding records that they coexist live-mounted, not that they were reconciled."
+  }
 }
