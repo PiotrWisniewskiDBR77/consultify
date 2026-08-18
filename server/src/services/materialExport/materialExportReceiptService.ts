@@ -9,6 +9,7 @@ import {
   HandoffSpineError,
   recordExportReceipt,
 } from '../artifactHandoff/handoffSpineService.js';
+import { MATERIAL_EXPORT_POLICY_VERSION, requireApprovedExportEngine } from './materialExportPolicyService.js';
 
 export type GovernedMaterialKind = Extract<ExportArtifactKind, 'document' | 'workbook'>;
 
@@ -62,6 +63,7 @@ export async function beginMaterialExport(
   if (!providerKey) {
     throw new HandoffSpineError('unsupported governed material export format', 'INVALID_ARGUMENT');
   }
+  const engine = requireApprovedExportEngine(providerKey);
   const sourceContentHash = canonicalSourceHash(input.sourceContent);
   const idempotencyKey = deriveMaterialExportIdempotencyKey({
     ...input,
@@ -75,6 +77,10 @@ export async function beginMaterialExport(
     sourceContentHash,
     outputFormat: input.outputFormat,
     providerKey,
+    policyContractVersion: MATERIAL_EXPORT_POLICY_VERSION,
+    renderEngineVersion: engine.version,
+    renderEngineLicense: engine.license,
+    outputSemantics: engine.outputSemantics,
     providerJobId: `native-job:${idempotencyKey}`,
     createdBy: input.createdBy,
     idempotencyKey,
@@ -87,7 +93,11 @@ export async function beginMaterialExport(
     replay.sourceVersion !== input.sourceVersion ||
     replay.sourceContentHash !== sourceContentHash ||
     replay.outputFormat !== input.outputFormat ||
-    replay.providerKey !== providerKey
+    replay.providerKey !== providerKey ||
+    replay.policyContractVersion !== MATERIAL_EXPORT_POLICY_VERSION ||
+    replay.renderEngineVersion !== engine.version ||
+    replay.renderEngineLicense !== engine.license ||
+    replay.outputSemantics !== engine.outputSemantics
   ) {
     throw new HandoffSpineError(
       'idempotency key is already bound to a different immutable export source',
@@ -141,4 +151,3 @@ export async function failMaterialExport(input: {
     failureCode: input.failureCode,
   });
 }
-

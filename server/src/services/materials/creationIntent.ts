@@ -171,6 +171,7 @@ interface DocumentStudioTemplateProbeRow {
   organization_id: string | null;
   status: string | null;
   is_system: unknown;
+  provenance_status: string | null;
 }
 
 interface ReportTemplateProbeRow {
@@ -180,6 +181,7 @@ interface ReportTemplateProbeRow {
   is_active: unknown;
   is_public: unknown;
   sections_json: string | null;
+  provenance_status: string | null;
 }
 
 interface PresentationTemplateProbeRow {
@@ -193,6 +195,7 @@ interface PresentationTemplateProbeRow {
   outline_json: string | null;
   theme: string | null;
   layout_policy_json: string | null;
+  provenance_status: string | null;
 }
 
 function parseJsonObject(raw: unknown): Record<string, unknown> | null {
@@ -310,7 +313,7 @@ async function resolveDocumentStudioTemplate(
   organizationId: string
 ): Promise<ResolvedDocumentTemplate> {
   const row = await dbGet<DocumentStudioTemplateProbeRow>(
-    `SELECT template_id, organization_id, status, is_system
+    `SELECT template_id, organization_id, status, is_system, provenance_status
        FROM document_studio_templates
       WHERE template_id = ?
       LIMIT 1`,
@@ -335,6 +338,11 @@ async function resolveDocumentStudioTemplate(
       'Template belongs to another organization',
       { canonicalTemplateId, originRuntime: 'document_template' }
     );
+  }
+  if (row.provenance_status !== 'approved') {
+    throw new TemplateResolveError('TEMPLATE_FORBIDDEN', 'Template provenance is not approved', {
+      canonicalTemplateId, originRuntime: 'document_template', provenanceStatus: row.provenance_status ?? 'unknown',
+    });
   }
 
   const status = normalizeTemplateStatus(row.status);
@@ -381,7 +389,7 @@ async function resolveLegacyReportTemplate(
   organizationId: string
 ): Promise<ResolvedDocumentTemplate> {
   const row = await dbGet<ReportTemplateProbeRow>(
-    `SELECT id, organization_id, is_system, is_active, is_public, sections_json
+    `SELECT id, organization_id, is_system, is_active, is_public, sections_json, provenance_status
        FROM report_builder_templates
       WHERE id = ?
       LIMIT 1`,
@@ -409,6 +417,11 @@ async function resolveLegacyReportTemplate(
       'Template belongs to another organization',
       { canonicalTemplateId, originRuntime: 'report_template' }
     );
+  }
+  if (row.provenance_status !== 'approved') {
+    throw new TemplateResolveError('TEMPLATE_FORBIDDEN', 'Template provenance is not approved', {
+      canonicalTemplateId, originRuntime: 'report_template', provenanceStatus: row.provenance_status ?? 'unknown',
+    });
   }
 
   const isActive = toBool(row.is_active);
@@ -472,7 +485,7 @@ export async function resolvePresentationTemplateForCreation(
 
   const row = await dbGet<PresentationTemplateProbeRow>(
     `SELECT id, organization_id, name, is_system, is_active, lifecycle_state, outline_json,
-            theme, layout_policy_json
+            theme, layout_policy_json, provenance_status
        FROM presentation_templates
       WHERE id = ?
       LIMIT 1`,
@@ -501,6 +514,11 @@ export async function resolvePresentationTemplateForCreation(
       'Template belongs to another organization',
       { canonicalTemplateId, originRuntime: 'presentation_template' }
     );
+  }
+  if (row.provenance_status !== 'approved') {
+    throw new TemplateResolveError('TEMPLATE_FORBIDDEN', 'Template provenance is not approved', {
+      canonicalTemplateId, originRuntime: 'presentation_template', provenanceStatus: row.provenance_status ?? 'unknown',
+    });
   }
 
   // `is_active = false` is the older kill-switch (still checked by the list

@@ -46,9 +46,11 @@ import {
   completeExportReceipt,
   type ExportReceipt,
   failExportReceipt,
+  HandoffSpineError,
   markExportUnavailable,
   recordExportReceipt,
 } from '../artifactHandoff/handoffSpineService.js';
+import { MATERIAL_EXPORT_POLICY_VERSION, requireApprovedExportEngine } from '../materialExport/materialExportPolicyService.js';
 
 export type PresentationExportFormat = 'pptx' | 'pdf' | 'png';
 
@@ -171,6 +173,8 @@ export async function beginPresentationExport(
     requestKey: input.requestIdempotencyKey,
   });
 
+  const providerKey = PRESENTATION_EXPORT_PROVIDER_KEYS[input.format];
+  const engine = requireApprovedExportEngine(providerKey);
   const { receipt, replayed } = await recordExportReceipt({
     organizationId: input.organizationId,
     artifactKind: 'presentation',
@@ -178,10 +182,31 @@ export async function beginPresentationExport(
     sourceVersion,
     sourceContentHash,
     outputFormat: input.format,
-    providerKey: PRESENTATION_EXPORT_PROVIDER_KEYS[input.format],
+    providerKey,
+    policyContractVersion: MATERIAL_EXPORT_POLICY_VERSION,
+    renderEngineVersion: engine.version,
+    renderEngineLicense: engine.license,
+    outputSemantics: engine.outputSemantics,
     createdBy: input.createdBy,
     idempotencyKey,
   });
+
+  if (
+    receipt.sourceRecordId !== input.deckId ||
+    receipt.sourceVersion !== sourceVersion ||
+    receipt.sourceContentHash !== sourceContentHash ||
+    receipt.outputFormat !== input.format ||
+    receipt.providerKey !== providerKey ||
+    receipt.policyContractVersion !== MATERIAL_EXPORT_POLICY_VERSION ||
+    receipt.renderEngineVersion !== engine.version ||
+    receipt.renderEngineLicense !== engine.license ||
+    receipt.outputSemantics !== engine.outputSemantics
+  ) {
+    throw new HandoffSpineError(
+      'idempotency key is already bound to a different immutable export policy/source',
+      'IDEMPOTENCY_CONFLICT'
+    );
+  }
 
   return { receipt, replayed, sourceContentHash, sourceVersion, idempotencyKey };
 }

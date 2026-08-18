@@ -95,6 +95,7 @@ import {
   completePresentationExport,
   failPresentationExport,
 } from '../services/presentationExport/presentationExportReceiptService.js';
+import { requireApprovedExportEngine } from '../services/materialExport/materialExportPolicyService.js';
 import { buildParityReportForDeck } from '../services/presentationExportParityService.js';
 import type { DeckSetup } from '../services/presentationGeneratorService.js';
 import { generateDeck, generateOutline } from '../services/presentationGeneratorService.js';
@@ -928,6 +929,7 @@ async function getTemplateForOrgOrSystem(templateId: string, organizationId: str
      FROM presentation_templates
      WHERE id = ?
        AND is_active = TRUE
+       AND provenance_status = 'approved'
        AND (organization_id IS NULL OR organization_id = ?)`,
     [templateId, organizationId]
   )) as any;
@@ -1169,7 +1171,7 @@ router.get(
   asyncHandler(async (req, res) => {
     const orgId = getOrgId(req);
     const rows = await dbAll(
-      `SELECT * FROM presentation_templates WHERE (organization_id IS NULL OR organization_id = ?) AND is_active = TRUE ORDER BY is_system DESC, name`,
+      `SELECT * FROM presentation_templates WHERE (organization_id IS NULL OR organization_id = ?) AND is_active = TRUE AND provenance_status = 'approved' ORDER BY is_system DESC, name`,
       [orgId]
     );
     const templates = ((rows || []) as any[]).map((r: any) => normalizeTemplatePayload(r));
@@ -2855,6 +2857,8 @@ router.get(
     const filename = presentationExportFilename(deck.title, 'pdf', isDraftExport);
     markPresentationExportResponse(res, exportMode, String(deck.id), deck.version);
     res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('X-Consultify-Output-Semantics', 'text-summary');
+    res.setHeader('X-Consultify-Visual-Parity', 'not-claimed');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
 
     try {
@@ -7585,6 +7589,19 @@ router.post(
         errorCategory: 'quality_gate_blocked',
       });
       return res.status(quality.status ?? 422).json(quality.payload);
+    }
+
+    // AMD-MAT-POLICY-001: preserve the existing quality decision above, then
+    // fail before rendering/receipt because sharp/SVG is outside the frozen
+    // engine allowlist.
+    try {
+      requireApprovedExportEngine('native:sharp-svg');
+    } catch {
+      return res.status(503).json({
+        success: false,
+        code: 'EXPORT_ENGINE_NOT_APPROVED',
+        error: 'PNG export engine is not approved for this policy version.',
+      });
     }
 
     const deckData: any = normalizeDeckDocument(deck) || {};

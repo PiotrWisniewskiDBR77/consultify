@@ -99,6 +99,10 @@ export interface ExportReceipt {
   sourceContentHash: string;
   outputFormat: string;
   providerKey: string;
+  policyContractVersion: string | null;
+  renderEngineVersion: string | null;
+  renderEngineLicense: string | null;
+  outputSemantics: string | null;
   providerJobId: string | null;
   status: ExportStatus;
   failureCode: string | null;
@@ -266,6 +270,10 @@ interface ExportReceiptRow {
   source_content_hash: string;
   output_format: string;
   provider_key: string;
+  policy_contract_version: string | null;
+  render_engine_version: string | null;
+  render_engine_license: string | null;
+  output_semantics: string | null;
   provider_job_id: string | null;
   status: string;
   failure_code: string | null;
@@ -344,6 +352,10 @@ function mapExportReceiptRow(row: ExportReceiptRow): ExportReceipt {
     sourceContentHash: row.source_content_hash,
     outputFormat: row.output_format,
     providerKey: row.provider_key,
+    policyContractVersion: row.policy_contract_version,
+    renderEngineVersion: row.render_engine_version,
+    renderEngineLicense: row.render_engine_license,
+    outputSemantics: row.output_semantics,
     providerJobId: row.provider_job_id,
     status: row.status as ExportStatus,
     failureCode: row.failure_code,
@@ -740,6 +752,10 @@ export interface RecordExportReceiptInput {
   /** Engine key, or the literal 'unavailable' when no approved provider
    * exists (MAT-POL-001). */
   providerKey: string;
+  policyContractVersion?: string | null;
+  renderEngineVersion?: string | null;
+  renderEngineLicense?: string | null;
+  outputSemantics?: string | null;
   providerJobId?: string | null;
   createdBy: string;
   idempotencyKey?: string | null;
@@ -778,8 +794,9 @@ export async function recordExportReceipt(
         `INSERT INTO artifact_export_receipts (
            export_receipt_id, organization_id, artifact_kind, source_record_id,
            source_version, source_content_hash, output_format, provider_key,
-           provider_job_id, status, created_by, created_at, idempotency_key
-         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', $10, NOW(), $11)`,
+           provider_job_id, status, created_by, created_at, idempotency_key,
+           policy_contract_version, render_engine_version, render_engine_license, output_semantics
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', $10, NOW(), $11, $12, $13, $14, $15)`,
         [
           exportReceiptId,
           organizationId,
@@ -792,6 +809,10 @@ export async function recordExportReceipt(
           input.providerJobId ?? null,
           createdBy,
           idempotencyKey,
+          input.policyContractVersion ?? null,
+          input.renderEngineVersion ?? null,
+          input.renderEngineLicense ?? null,
+          input.outputSemantics ?? null,
         ]
       );
     } catch (err) {

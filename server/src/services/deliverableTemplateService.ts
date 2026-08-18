@@ -113,7 +113,7 @@ function mapDeckRow(r: DeckRow): DeliverableTemplate {
 
 const LEGACY_DECK_SQL = `SELECT id, name, description, is_system, theme, organization_id, outline_json
        FROM presentation_templates
-       WHERE (is_system = true OR organization_id = $1) AND is_active = true
+       WHERE (is_system = true OR organization_id = $1) AND is_active = true AND provenance_status = 'approved'
        ORDER BY is_system DESC, name`;
 
 /**
@@ -135,7 +135,7 @@ async function listDeckTemplates(orgId: string, userId?: string): Promise<Delive
     const rows = await queryAll<DeckRow>(
       `SELECT id, name, description, is_system, theme, organization_id, outline_json
        FROM presentation_templates
-       WHERE is_active = true
+       WHERE is_active = true AND provenance_status = 'approved'
          AND (
            is_system = true
            OR (COALESCE(visibility, 'organization') <> 'private' AND organization_id = $1)
@@ -189,7 +189,7 @@ function mapDocRow(r: DocRow): DeliverableTemplate {
 
 const LEGACY_DOC_SQL = `SELECT id, name, description, is_system, is_public, report_type, sections_json, organization_id
        FROM report_builder_templates
-       WHERE (is_system = true OR is_public = true OR organization_id = $1)
+       WHERE (is_system = true OR is_public = true OR organization_id = $1) AND provenance_status = 'approved'
        ORDER BY is_system DESC, name`;
 
 /** Legacy source: report_builder_templates (pre-existing "doc" template table). */
@@ -201,7 +201,7 @@ async function listReportBuilderDocTemplates(
     const rows = await queryAll<DocRow>(
       `SELECT id, name, description, is_system, is_public, report_type, sections_json, organization_id
        FROM report_builder_templates
-       WHERE (
+       WHERE provenance_status = 'approved' AND (
          is_system = true
          OR is_public = true
          OR (COALESCE(visibility, 'organization') <> 'private' AND organization_id = $1)
@@ -331,7 +331,7 @@ async function listDocStudioDocTemplates(orgId: string): Promise<DeliverableTemp
     const rows = await queryAll<DocStudioTemplateRow>(
       `SELECT template_id, name, purpose, notes, is_system, organization_id, section_blueprint, document_type
        FROM document_studio_templates
-       WHERE status = 'approved'
+       WHERE status = 'approved' AND provenance_status = 'approved'
          AND (organization_id = $1 OR (organization_id = $2 AND is_system = TRUE))
        ORDER BY is_system DESC, name`,
       [orgId, DOC_STUDIO_SYSTEM_ORG_ID]
@@ -517,6 +517,7 @@ function mapTableRow(r: TableRow): DeliverableTemplate {
 // not a silent behaviour change).
 const LEGACY_TABLE_SQL = `SELECT id, name, description, is_featured, category, schema_snapshot, created_by, organization_id
        FROM tp_base_templates
+       WHERE provenance_status = 'approved'
        ORDER BY is_featured DESC, name`;
 
 async function listTableTemplates(orgId: string, userId?: string): Promise<DeliverableTemplate[]> {
@@ -524,7 +525,7 @@ async function listTableTemplates(orgId: string, userId?: string): Promise<Deliv
     const rows = await queryAll<TableRow>(
       `SELECT id, name, description, is_featured, category, schema_snapshot, created_by, organization_id
        FROM tp_base_templates
-       WHERE (
+       WHERE provenance_status = 'approved' AND (
          created_by IS NULL
          OR (COALESCE(visibility, 'organization') <> 'private' AND organization_id = $1)
          OR (visibility = 'private' AND created_by = $2)

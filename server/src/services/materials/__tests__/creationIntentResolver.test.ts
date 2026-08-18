@@ -47,6 +47,7 @@ function docStudioRow(overrides: Record<string, unknown> = {}) {
     organization_id: ORG,
     status: 'approved',
     is_system: false,
+    provenance_status: 'approved',
     ...overrides,
   };
 }
@@ -59,6 +60,7 @@ function reportTemplateRow(overrides: Record<string, unknown> = {}) {
     is_system: false,
     is_active: true,
     is_public: false,
+    provenance_status: 'approved',
     sections_json: JSON.stringify([
       { key: 'exec_summary', title: 'Executive summary' },
       { key: 'findings', title: 'Findings' },
@@ -97,6 +99,7 @@ function presentationTemplateRow(overrides: Record<string, unknown> = {}) {
     is_system: true,
     is_active: true,
     lifecycle_state: 'approved',
+    provenance_status: 'approved',
     theme: 'modern',
     layout_policy_json: null,
     outline_json: JSON.stringify([
@@ -165,6 +168,14 @@ beforeEach(() => {
 });
 
 describe('resolveDocumentTemplateForCreation — canonical Document Studio template', () => {
+  it('quarantines an otherwise approved template when provenance is unknown', async () => {
+    routeDb({ docStudio: docStudioRow({ provenance_status: 'unknown' }) });
+    mockGetTemplate.mockReturnValue(registeredDocTemplate());
+    await expectResolveError(
+      { kind: 'internal', canonicalTemplateId: 'dst-exec-memo-001', originRuntime: 'document_template' },
+      'TEMPLATE_FORBIDDEN'
+    );
+  });
   it('returns the sectionBlueprint from the registry (not the description) and separated ids', async () => {
     routeDb({
       originLink: { origin_runtime: 'document_template', origin_record_id: 'dst-exec-memo-001' },
@@ -429,6 +440,13 @@ describe('resolveDocumentTemplateForCreation — rejection paths', () => {
 // =============================================================================
 
 describe('resolvePresentationTemplateForCreation — canonical presentation template', () => {
+  it('quarantines an otherwise approved presentation template with unknown provenance', async () => {
+    routeDb({ presentationTemplate: presentationTemplateRow({ provenance_status: 'quarantined' }) });
+    await expectPresentationResolveError(
+      { kind: 'internal', canonicalTemplateId: 'pt-steering', originRuntime: 'presentation_template' },
+      'TEMPLATE_FORBIDDEN'
+    );
+  });
   it('returns the outline_json blueprint fresh from the registry, matching the fixture row', async () => {
     routeDb({
       originLink: { origin_runtime: 'presentation_template', origin_record_id: 'pt-steering' },

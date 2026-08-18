@@ -191,21 +191,21 @@ describe('P0.4 — POST /presentations/decks/:deckId/export/png quality-gate con
         '/presentations/decks/deck-1/export/png?overrideQualityGate=true'
       );
 
-      // Bypassed the gate: the route proceeds past the 422 branch entirely.
-      // (It goes on to render real PNGs via sharp/archiver and stream a zip.)
+      // The quality gate was bypassed, but restricted MAT policy still denies
+      // the unapproved sharp/SVG engine before rendering or receipt creation.
       expect(res.status).not.toBe(422);
-      expect(res.status).toBe(200);
-      expect(res.headers['content-type']).toContain('application/zip');
+      expect(res.status).toBe(503);
+      expect(res.body.code).toBe('EXPORT_ENGINE_NOT_APPROVED');
     }
   );
 
-  it('passing deck (canExport=true) -> 200 regardless of override flag', async () => {
+  it('passing deck reaches restricted engine policy and fails explicitly', async () => {
     mockCheckGates.mockResolvedValue(passingGateReport());
     const app = await buildApp();
 
     const res = await request(app).post('/presentations/decks/deck-1/export/png');
 
-    expect(res.status).toBe(200);
-    expect(res.headers['content-type']).toContain('application/zip');
+    expect(res.status).toBe(503);
+    expect(res.body.code).toBe('EXPORT_ENGINE_NOT_APPROVED');
   });
 });

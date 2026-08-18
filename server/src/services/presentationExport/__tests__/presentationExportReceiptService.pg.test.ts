@@ -219,12 +219,12 @@ describe('derivePresentationExportIdempotencyKey', () => {
     const first = derivePresentationExportIdempotencyKey({
       deckId: 'deck-1',
       sourceVersion: 2,
-      format: 'png',
+      format: 'pptx',
     });
     const second = derivePresentationExportIdempotencyKey({
       deckId: 'deck-1',
       sourceVersion: 2,
-      format: 'png',
+      format: 'pptx',
     });
     expect(first).toBe(second);
 
@@ -240,6 +240,24 @@ describe('derivePresentationExportIdempotencyKey', () => {
 // ── Real PPTX bytes + speaker notes survive export → reopen ────────────
 
 describe('real PPTX bytes: receipt binds source hash+version to output hash+size', () => {
+  it('labels PDF receipts as pdfkit text summaries without visual-parity semantics', async () => {
+    const { deck, deckId } = makeDeckRow({});
+    const begin = await beginPresentationExport({
+      organizationId: ORG_A,
+      deckId,
+      deck,
+      format: 'pdf',
+      createdBy: USER_A,
+    });
+    expect(begin.receipt).toMatchObject({
+      providerKey: 'native:pdfkit',
+      policyContractVersion: 'mat-policy-v1',
+      renderEngineVersion: '0.17.2',
+      renderEngineLicense: 'MIT',
+      outputSemantics: 'text_summary',
+    });
+  });
+
   it('renders real bytes via PptxPipelineService, records a matching receipt, and speaker notes survive reopen', async () => {
     const { deck, document, deckId } = makeDeckRow({ speakerNotes: SPEAKER_NOTE_MARKER });
 
@@ -253,6 +271,12 @@ describe('real PPTX bytes: receipt binds source hash+version to output hash+size
     expect(begin.replayed).toBe(false);
     expect(begin.receipt.status).toBe('pending');
     expect(begin.receipt.providerKey).toBe(PRESENTATION_EXPORT_PROVIDER_KEYS.pptx);
+    expect(begin.receipt).toMatchObject({
+      policyContractVersion: 'mat-policy-v1',
+      renderEngineVersion: '4.0.1',
+      renderEngineLicense: 'MIT',
+      outputSemantics: 'presentation',
+    });
     expect(begin.sourceContentHash).toBe(deriveDeckSourceHash(deck));
     expect(begin.sourceVersion).toBe(1);
 
@@ -342,7 +366,7 @@ describe('idempotent retry', () => {
       organizationId: ORG_A,
       deckId,
       deck,
-      format: 'png',
+      format: 'pptx',
       createdBy: USER_A,
       requestIdempotencyKey,
     });
@@ -350,7 +374,7 @@ describe('idempotent retry', () => {
       organizationId: ORG_A,
       deckId,
       deck,
-      format: 'png',
+      format: 'pptx',
       createdBy: USER_A,
       requestIdempotencyKey,
     });
@@ -360,10 +384,27 @@ describe('idempotent retry', () => {
 
     const rows = await pool.query(
       `SELECT COUNT(*)::int AS n FROM artifact_export_receipts
-        WHERE organization_id = $1 AND source_record_id = $2 AND output_format = 'png'`,
+        WHERE organization_id = $1 AND source_record_id = $2 AND output_format = 'pptx'`,
       [ORG_A, deckId]
     );
     expect(rows.rows[0].n).toBe(1);
+  });
+
+  it('fails closed before a receipt for the unapproved sharp SVG/PNG renderer', async () => {
+    const { deck, deckId } = makeDeckRow({});
+    await expect(beginPresentationExport({
+      organizationId: ORG_A,
+      deckId,
+      deck,
+      format: 'png',
+      createdBy: USER_A,
+    })).rejects.toThrow('MAT_EXPORT_ENGINE_NOT_APPROVED:native:sharp-svg');
+    const rows = await pool.query(
+      `SELECT COUNT(*)::int AS n FROM artifact_export_receipts
+        WHERE organization_id = $1 AND source_record_id = $2`,
+      [ORG_A, deckId]
+    );
+    expect(rows.rows[0].n).toBe(0);
   });
 
   it('two CONCURRENT exports of the same deck+version+format produce exactly ONE receipt', async () => {

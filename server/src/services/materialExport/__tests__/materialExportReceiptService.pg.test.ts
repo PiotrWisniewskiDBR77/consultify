@@ -52,6 +52,10 @@ describe.skipIf(!REAL_PG)('MAT-MVP-EXPORT-001 DOC/XLSX receipts (real PG)', () =
       artifactKind: 'document',
       sourceVersion: 7,
       providerKey: 'native:docx',
+      policyContractVersion: 'mat-policy-v1',
+      renderEngineVersion: '9.5.1',
+      renderEngineLicense: 'MIT',
+      outputSemantics: 'document',
       status: 'succeeded',
       outputContentHash: hashExportBytes(bytes),
       outputByteSize: bytes.length,
@@ -95,6 +99,12 @@ describe.skipIf(!REAL_PG)('MAT-MVP-EXPORT-001 DOC/XLSX receipts (real PG)', () =
       [ORG_A, attempts[0].idempotencyKey]
     );
     expect(count.rows[0].count).toBe(1);
+    expect(attempts[0].receipt).toMatchObject({
+      policyContractVersion: 'mat-policy-v1',
+      renderEngineVersion: '4.4.0',
+      renderEngineLicense: 'MIT',
+      outputSemantics: 'workbook',
+    });
   });
 
   it('rejects same-key source drift and different provider output', async () => {
@@ -163,7 +173,7 @@ describe.skipIf(!REAL_PG)('MAT-MVP-EXPORT-001 DOC/XLSX receipts (real PG)', () =
       sourceRecordId: `${PREFIX}-tenant-doc`,
       sourceVersion: 1,
       sourceContent: { body: 'tenant A' },
-      outputFormat: 'markdown',
+      outputFormat: 'docx',
       createdBy: USER_A,
     });
     await expect(
@@ -172,7 +182,7 @@ describe.skipIf(!REAL_PG)('MAT-MVP-EXPORT-001 DOC/XLSX receipts (real PG)', () =
     const completed = await completeMaterialExport({
       begun,
       organizationId: ORG_A,
-      bytes: Buffer.from('tenant-a-markdown'),
+      bytes: Buffer.from('tenant-a-docx'),
     });
     await expect(
       pool.query(
