@@ -2,6 +2,8 @@
   "taskId": "SET-MVP-OAUTH-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "3cf595da94a516ade16b976cb1abf370a17213c0",
+  "technicalSourceSha": "cdb0b5c200c39efdab0746daf4df75476cd1f2ea",
+  "reconciliationSha": "cdb0b5c200c39efdab0746daf4df75476cd1f2ea",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
   "ownerDecision": {"recordId": "INTERNAL-BETA-OWNER-DECISIONS-20260817-AMENDMENT-01", "decisionId": "AMD-SET-OAUTH-APPROVED-OUT-001", "status": "APPROVED_OUT"},
   "amendmentSha": "617b5d29c229e6c073452a17c8da1888ce18aa8d59a5913fa0d9aa59b2272702",
@@ -17,6 +19,40 @@
   "browserArtifacts": [],
   "rollback": {"policy": "providers remain disabled", "code": "revert 3cf595da94 before deployment"},
   "technicalVerdict": "PASS_FAIL_CLOSED_APPROVED_OUT",
-  "verdict": "PARTIAL",
-  "openBlockers": ["APPROVED_OUT: zero OAuth providers are enabled. Real-provider connect, callback, revoke, DPA and residency evidence remain intentionally outside this MVP."]
+  "currentTechnicalRequalification": {
+    "integratedChain": [
+      "10a854e19b",
+      "c5b76cf567",
+      "cdb0b5c200"
+    ],
+    "scope": "All reachable Settings, Integrations and V8 OAuth preparation paths fail closed before session or credential materialization unless the provider registry, scopes, residency and a live ACTIVE organization membership authorize the request. Zero providers remain enabled by default.",
+    "changedPaths": [
+      "server/migrations/20261023_integrations_connector_runtime_shape.sql",
+      "server/src/routes/__tests__/integrations.routes.test.ts",
+      "server/src/routes/__tests__/settings.routes.test.ts",
+      "server/src/routes/integrations/integrations.routes.ts",
+      "server/src/routes/settings.routes.ts",
+      "server/src/routes/v8/__tests__/sync.routes.test.ts",
+      "server/src/routes/v8/sync.routes.ts",
+      "server/src/services/__tests__/integrationsConnectorRuntimeShape21.realdb.test.ts",
+      "server/src/services/oauthService.ts",
+      "server/src/services/v8/__tests__/pmSyncExternalAuthMaterializationService.test.ts",
+      "server/src/services/v8/pmSyncExternalAuthMaterializationService.ts",
+      "tests/integration/auth/oauthProviderApprovalRegistry.test.ts",
+      "tests/integration/auth/oauthRoutes.status.test.ts",
+      "tests/integration/settings/integration-oauth-approval.test.ts"
+    ],
+    "exactCurrentGates": {
+      "migrationLedger": "fresh 771; repeat 0; dry-run pending 0",
+      "realPostgres": "m23 shape 13/13 plus mounted OAuth authorization 9/9 (22/22 combined)",
+      "static": "root typecheck, server typecheck and backend build exit 0",
+      "cleanup": "OAuth fixture residue 0; advisory locks 0; owned container and port released"
+    }
+  },
+  "verdict": "DONE_CURRENT_SHA",
+  "openBlockers": [],
+  "approvedOutReleaseBoundaries": [
+    "No OAuth provider is enabled in the internal-beta registry.",
+    "Real-provider callback, revoke, DPA, residency and deployed observation remain reopening conditions and are not claimed as executed."
+  ]
 }
