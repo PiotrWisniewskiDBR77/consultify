@@ -1,6 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import jwt from 'jsonwebtoken';
 import request from 'supertest';
 
+import { config } from '../../../server/src/config/Config';
+import { run as dbRun } from '../../../server/src/utils/DbPromise';
 import { canBindEphemeralPort, makeTestApp } from '../_helpers/testApp';
 
 function makeE2eToken(payload: Record<string, any>) {
@@ -67,6 +70,39 @@ describe('Auth routes: /me (E2E_MODE)', () => {
           isAuthenticated: true,
         }),
       })
+    );
+  });
+
+  it('uses the DB-backed read model for a normally signed user in E2E_MODE', async function () {
+    if (!canListen) this.skip();
+    const id = 'e2e-signed-profile-user';
+    const organizationId = 'e2e-signed-profile-org';
+    const email = 'e2e-signed-profile@local.test';
+
+    // The unsigned request creates the same deterministic user/org/membership
+    // fixture used by browser E2E. The signed request below must not inherit
+    // the route's synthetic /me response merely because E2E_MODE is global.
+    await request(makeApp())
+      .get('/api/auth/me')
+      .set(
+        'Authorization',
+        `Bearer ${makeE2eToken({ e2e: true, id, email, role: 'ADMIN', organizationId })}`
+      )
+      .expect(200);
+    await dbRun('UPDATE users SET status_message = ? WHERE id = ?', ['Working remotely', id]);
+
+    const signedToken = jwt.sign(
+      { id, email, role: 'ADMIN', organizationId, jti: `signed-profile-${Date.now()}` },
+      config.JWT_SECRET,
+      { expiresIn: '5m' }
+    );
+    const res = await request(makeApp())
+      .get('/api/auth/me')
+      .set('Authorization', `Bearer ${signedToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.user).toEqual(
+      expect.objectContaining({ id, organizationId, statusMessage: 'Working remotely' })
     );
   });
 

@@ -339,6 +339,7 @@ export interface AuthRequest extends AuthenticatedRequest {
   organizationId?: string;
   user?: AuthenticatedUser;
   isDemo?: boolean;
+  isE2EAuthBypass?: boolean;
   can?: (capability: string) => boolean;
 }
 
@@ -1292,6 +1293,10 @@ export const verifyToken = asyncHandler(
             logger.warn('[AuthMiddleware] E2E seed failed (continuing):', seedErr);
           }
 
+          // Mark this request specifically as the unsigned E2E bypass. Routes
+          // must not infer bypass identity from the process-wide E2E_MODE flag:
+          // the same runtime also serves normally signed, DB-backed users.
+          req.isE2EAuthBypass = true;
           // Attach without signature verification / revocation checks
           await attachUser(normalizedDecoded, req, next, res);
           return;

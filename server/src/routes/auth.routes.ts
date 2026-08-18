@@ -312,7 +312,7 @@ router.get(
       // Playwright runtime smoke tests use an unsigned JWT-like token
       // accepted by auth middleware only when E2E_MODE=true. In that mode
       // we return a valid user payload directly from the decoded token.
-      if (process.env.E2E_MODE === 'true' && req.user && (req.user as any).id) {
+      if (req.isE2EAuthBypass === true && req.user && (req.user as any).id) {
         const e2eRole = String(req.userRole || (req.user as any).role || 'ADMIN').toUpperCase();
         return res.json({
           user: {
