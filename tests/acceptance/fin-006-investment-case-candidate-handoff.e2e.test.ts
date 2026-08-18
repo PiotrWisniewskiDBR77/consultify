@@ -58,7 +58,12 @@ function mintTokenFor(userId: string, orgId: string, email: string): string {
   );
 }
 
-async function seedTenant(c: pg.Client, orgId: string, userId: string, email: string): Promise<void> {
+async function seedTenant(
+  c: pg.Client,
+  orgId: string,
+  userId: string,
+  email: string
+): Promise<void> {
   const now = new Date().toISOString();
   await c.query(
     `INSERT INTO organizations (id, name, plan, status, is_active, created_at)
@@ -92,7 +97,9 @@ async function insertModel(
   const isApproved = params.status === 'approved';
   const snapshot = isApproved
     ? JSON.stringify({
-        periods: Array.from({ length: params.approvedSnapshotPeriods ?? 3 }, (_, i) => ({ index: i })),
+        periods: Array.from({ length: params.approvedSnapshotPeriods ?? 3 }, (_, i) => ({
+          index: i,
+        })),
         validations: [],
         computedAt: now,
       })
@@ -149,14 +156,24 @@ beforeAll(async () => {
   await seedTenant(client, ORG_B, USER_B, EMAIL_B);
 
   await insertModel(client, { id: MODEL_DRAFT, orgId: ORG_A, status: 'draft', createdBy: USER_A });
-  await insertModel(client, { id: MODEL_GOLDEN, orgId: ORG_A, status: 'approved', createdBy: USER_A });
+  await insertModel(client, {
+    id: MODEL_GOLDEN,
+    orgId: ORG_A,
+    status: 'approved',
+    createdBy: USER_A,
+  });
   await insertModel(client, {
     id: MODEL_CONCURRENCY,
     orgId: ORG_A,
     status: 'approved',
     createdBy: USER_A,
   });
-  await insertModel(client, { id: MODEL_TOCTOU, orgId: ORG_A, status: 'approved', createdBy: USER_A });
+  await insertModel(client, {
+    id: MODEL_TOCTOU,
+    orgId: ORG_A,
+    status: 'approved',
+    createdBy: USER_A,
+  });
   await insertModel(client, {
     id: MODEL_CROSSTENANT,
     orgId: ORG_A,
@@ -167,16 +184,27 @@ beforeAll(async () => {
   tokenA = mintTokenFor(USER_A, ORG_A, EMAIL_A);
   tokenB = mintTokenFor(USER_B, ORG_B, EMAIL_B);
 
+  const { getDatabaseAsync } = await import('../../server/src/database/Database.js');
+  await getDatabaseAsync();
   const { default: verifyToken } = await import('../../server/src/middleware/auth.middleware.js');
+  const { requireActiveMembership } =
+    await import('../../server/src/services/legacyCutover/requireActiveMembership.js');
   const candidateHandoffRouter = (
     await import('../../server/src/routes/financeCandidateHandoffInvestmentCase.routes.js')
   ).default;
 
   app = express();
   app.use(express.json());
+  app.use((req, _res, next) => {
+    const authorization = String(req.headers.authorization || '');
+    if (authorization === `Bearer ${tokenA}`) req.headers['x-organization-id'] = ORG_A;
+    if (authorization === `Bearer ${tokenB}`) req.headers['x-organization-id'] = ORG_B;
+    next();
+  });
   app.use(
     '/api/finance/candidate-handoff/investment-case',
     verifyToken as any,
+    requireActiveMembership as any,
     candidateHandoffRouter
   );
 
@@ -192,7 +220,9 @@ beforeAll(async () => {
 }, 60_000);
 
 afterAll(async () => {
-  await client.query(`DELETE FROM finance_candidate_handoffs WHERE source_id LIKE $1`, [`${PREFIX}%`]);
+  await client.query(`DELETE FROM finance_candidate_handoffs WHERE source_id LIKE $1`, [
+    `${PREFIX}%`,
+  ]);
   await client.query(`DELETE FROM initiative_candidates WHERE source_id LIKE $1`, [`${PREFIX}%`]);
   await client.query(`DELETE FROM initiatives WHERE source_id LIKE $1`, [`${PREFIX}%`]);
   await client.query(`DELETE FROM financial_models WHERE id LIKE $1`, [`${PREFIX}%`]);
@@ -372,7 +402,9 @@ describe('FIN-06 — investment case (financial_models) candidate handoff', () =
       .set('Authorization', `Bearer ${tokenA}`);
     expect(preview.body.data.eligible).toBe(true);
 
-    await client.query(`UPDATE financial_models SET status = 'archived' WHERE id = $1`, [MODEL_TOCTOU]);
+    await client.query(`UPDATE financial_models SET status = 'archived' WHERE id = $1`, [
+      MODEL_TOCTOU,
+    ]);
 
     const confirm = await request(app)
       .post(`/api/finance/candidate-handoff/investment-case/${MODEL_TOCTOU}/confirm`)

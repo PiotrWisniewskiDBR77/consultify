@@ -77,7 +77,12 @@ function mintTokenFor(userId: string, orgId: string, email: string): string {
   );
 }
 
-async function seedTenant(c: pg.Client, orgId: string, userId: string, email: string): Promise<void> {
+async function seedTenant(
+  c: pg.Client,
+  orgId: string,
+  userId: string,
+  email: string
+): Promise<void> {
   const now = new Date().toISOString();
   await c.query(
     `INSERT INTO organizations (id, name, plan, status, is_active, created_at)
@@ -263,16 +268,27 @@ beforeAll(async () => {
   tokenA = mintTokenFor(USER_A, ORG_A, EMAIL_A);
   tokenB = mintTokenFor(USER_B, ORG_B, EMAIL_B);
 
+  const { getDatabaseAsync } = await import('../../server/src/database/Database.js');
+  await getDatabaseAsync();
   const { verifyToken } = await import('../../server/src/middleware/auth.middleware.js');
+  const { requireActiveMembership } =
+    await import('../../server/src/services/legacyCutover/requireActiveMembership.js');
   const candidateHandoffRouter = (
     await import('../../server/src/routes/financeCandidateHandoffValuationRecommendation.routes.js')
   ).default;
 
   app = express();
   app.use(express.json());
+  app.use((req, _res, next) => {
+    const authorization = String(req.headers.authorization || '');
+    if (authorization === `Bearer ${tokenA}`) req.headers['x-organization-id'] = ORG_A;
+    if (authorization === `Bearer ${tokenB}`) req.headers['x-organization-id'] = ORG_B;
+    next();
+  });
   app.use(
     '/api/finance/candidate-handoff/valuation-recommendation',
     verifyToken as any,
+    requireActiveMembership as any,
     candidateHandoffRouter
   );
 
@@ -287,7 +303,9 @@ beforeAll(async () => {
 }, 60_000);
 
 afterAll(async () => {
-  await client.query(`DELETE FROM finance_candidate_handoffs WHERE source_id LIKE $1`, [`${PREFIX}%`]);
+  await client.query(`DELETE FROM finance_candidate_handoffs WHERE source_id LIKE $1`, [
+    `${PREFIX}%`,
+  ]);
   await client.query(`DELETE FROM initiative_candidates WHERE source_id LIKE $1`, [`${PREFIX}%`]);
   await client.query(`DELETE FROM initiatives WHERE source_id LIKE $1`, [`${PREFIX}%`]);
   await client.query(`DELETE FROM valuations WHERE id LIKE $1`, [`${PREFIX}%`]);
@@ -461,7 +479,9 @@ describe('FIN-06 — valuation recommendation candidate handoff', () => {
     const results = await Promise.all(
       Array.from({ length: 5 }, () =>
         request(app)
-          .post(`/api/finance/candidate-handoff/valuation-recommendation/${REC_CONCURRENCY}/confirm`)
+          .post(
+            `/api/finance/candidate-handoff/valuation-recommendation/${REC_CONCURRENCY}/confirm`
+          )
           .set('Authorization', `Bearer ${tokenA}`)
           .send({})
       )
@@ -523,7 +543,9 @@ describe('FIN-06 — valuation recommendation candidate handoff', () => {
 
   it('convert-to-initiative route creates a Candidate through the real HTTP path, never a bare Initiative', async () => {
     const res = await request(economicsApp)
-      .post(`/api/economics/valuations/${VAL_CONVERT}/advisory/${REC_CONVERT}/convert-to-initiative`)
+      .post(
+        `/api/economics/valuations/${VAL_CONVERT}/advisory/${REC_CONVERT}/convert-to-initiative`
+      )
       .set('Authorization', `Bearer ${tokenA}`)
       .send({});
     expect(res.status, JSON.stringify(res.body)).toBe(201);
@@ -551,7 +573,9 @@ describe('FIN-06 — valuation recommendation candidate handoff', () => {
 
     // Retry via the same route is idempotent too (shared core behind it).
     const retry = await request(economicsApp)
-      .post(`/api/economics/valuations/${VAL_CONVERT}/advisory/${REC_CONVERT}/convert-to-initiative`)
+      .post(
+        `/api/economics/valuations/${VAL_CONVERT}/advisory/${REC_CONVERT}/convert-to-initiative`
+      )
       .set('Authorization', `Bearer ${tokenA}`)
       .send({});
     expect(retry.status, JSON.stringify(retry.body)).toBe(200);

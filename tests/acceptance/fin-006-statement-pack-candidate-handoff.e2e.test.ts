@@ -177,13 +177,35 @@ beforeAll(async () => {
   const statementPackRouter = (
     await import('../../server/src/routes/financeCandidateHandoffStatementPack.routes.js')
   ).default;
+  const { getDatabaseAsync } = await import('../../server/src/database/Database.js');
+  await getDatabaseAsync();
+  const { verifyToken } = await import('../../server/src/middleware/auth.middleware.js');
+  const { requireActiveMembership } =
+    await import('../../server/src/services/legacyCutover/requireActiveMembership.js');
+
+  ownerToken = mintToken();
+  orgBToken = mintToken({
+    id: USER_B_ID,
+    email: EMAIL_B,
+    organizationId: ORG_B_ID,
+    organization_id: ORG_B_ID,
+    role: 'OWNER',
+  });
 
   app = express();
   app.use(express.json());
-  app.use('/api/finance/candidate-handoff/statement-pack', statementPackRouter);
-
-  ownerToken = mintToken();
-  orgBToken = mintToken({ id: USER_B_ID, email: EMAIL_B, organizationId: ORG_B_ID, organization_id: ORG_B_ID, role: 'OWNER' });
+  app.use((req, _res, next) => {
+    const authorization = String(req.headers.authorization || '');
+    if (authorization === `Bearer ${ownerToken}`) req.headers['x-organization-id'] = SEED.ORG_ID;
+    if (authorization === `Bearer ${orgBToken}`) req.headers['x-organization-id'] = ORG_B_ID;
+    next();
+  });
+  app.use(
+    '/api/finance/candidate-handoff/statement-pack',
+    verifyToken as any,
+    requireActiveMembership as any,
+    statementPackRouter
+  );
 }, 60_000);
 
 afterAll(async () => {
@@ -399,7 +421,7 @@ describe('FIN-06 — statement pack candidate handoff (golden flow, idempotency,
     }
   });
 
-  it('cross-tenant: org B cannot preview, confirm, or reopen org A\'s pack', async () => {
+  it("cross-tenant: org B cannot preview, confirm, or reopen org A's pack", async () => {
     const preview = await request(app)
       .get(`/api/finance/candidate-handoff/statement-pack/${PACK.crossTenant}/preview`)
       .set('Authorization', `Bearer ${orgBToken}`);
@@ -524,7 +546,9 @@ describe('FIN-06 — statement pack candidate handoff (golden flow, idempotency,
     const client = pgClient();
     await client.connect();
     try {
-      await client.query(`ALTER TABLE financial_statements RENAME COLUMN statement_type TO statement_type__sabotaged`);
+      await client.query(
+        `ALTER TABLE financial_statements RENAME COLUMN statement_type TO statement_type__sabotaged`
+      );
     } finally {
       await client.end();
     }

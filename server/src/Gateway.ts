@@ -2,10 +2,7 @@ import type { Express, RequestHandler } from 'express';
 
 import apiLoggingMiddleware from './middleware/apiLogging.middleware.js';
 import verifyToken, { validateOrgMembership } from './middleware/auth.middleware.js';
-import {
-  requireActiveAuditsMembership,
-  requireActiveTenantMembership,
-} from './middleware/auditsStrictMembership.middleware.js';
+import { requireActiveAuditsMembership } from './middleware/auditsStrictMembership.middleware.js';
 import { betaGate, createBetaGate } from './middleware/betaGate.middleware.js';
 import { demoContextMiddleware, demoWriteProtection } from './middleware/demoGuard.middleware.js';
 import { deprecationHeader } from './middleware/deprecationHeader.middleware.js';
@@ -421,6 +418,7 @@ import workModeRoutes from './routes/workMode.routes.js';
 import workqueueRoutes from './routes/workqueue.routes.js';
 import workspaceDefaultsRoutes from './routes/workspace-defaults.routes.js';
 import { initializeLayoutCapacityPersistence } from './services/presentationStudioLayoutCapacityPersistenceService.js';
+import { requireActiveMembership } from './services/legacyCutover/requireActiveMembership.js';
 import logger from './utils/Logger.js';
 import { safeFetchHtml, SsrfBlockedError } from './utils/ssrfGuard.js';
 
@@ -433,7 +431,7 @@ const gatewayVerifyToken = verifyToken as unknown as RequestHandler;
  * four mounts so no other route's behaviour changes.
  */
 const auditsStrictMembership = requireActiveAuditsMembership as unknown as RequestHandler;
-const tenantStrictMembership = requireActiveTenantMembership as unknown as RequestHandler;
+const tenantStrictMembership = requireActiveMembership as unknown as RequestHandler;
 const orgMembershipGuard = validateOrgMembership as unknown as RequestHandler;
 
 export class ApiGateway {
