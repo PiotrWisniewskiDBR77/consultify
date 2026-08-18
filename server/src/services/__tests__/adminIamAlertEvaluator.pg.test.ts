@@ -45,38 +45,100 @@
  *    job out of `running` is `completeAdminIamJob` under its ORIGINAL lease
  *    token; that function checks `status='running' AND lease_token=?`, not
  *    lease expiry, so completing under the still-known token is a real
- *    lifecycle transition, not a backdoor.
+ *    lifecycle transition, not a backdoor. This test seeds its OWN stale job
+ *    (see org `orgStaleRecovery` below) rather than reusing the job the
+ *    ADMIN_IAM_JOB_STALE-firing test created, so the two tests do not depend
+ *    on execution order.
  *  - Recovering ADMIN_IAM_JOB_FAILED: the runbook's detection predicate is
  *    literally "admin_iam_jobs rows with status='failed'", with no window
  *    and no job_type/idempotency scoping. `adminIamOperationsService.ts`
  *    exposes no function that ever moves a job OUT of terminal `failed`
  *    (enqueue/claim/complete/fail all require a prior status that `failed`
  *    does not satisfy), and the runbook forbids ever flipping it to
- *    `succeeded` by hand. So the only way the evaluator's own query can see
- *    the failed count return to zero is for the terminal row to actually
- *    leave `admin_iam_jobs`. This suite (a) performs the real remediation —
- *    enqueues a NEW job under a NEW idempotency key and lets it succeed —
- *    and (b) archives the old terminal row via the same disable/delete
- *    /enable-trigger-shaped direct SQL the sibling OPS-OBS suite already
- *    uses for its own out-of-band cleanup (no trigger to disable here; the
- *    two admin-iam tables carry no append-only guard). This never touches
- *    `status`; it stands in for an archival step this service does not yet
- *    expose as a function, so the evaluator's next run observes the state
- *    honestly rather than being told a lie.
+ *    `succeeded` by hand. NO SUPPORTED REMEDIATION PATH HAS BEEN PROVEN for
+ *    taking a job out of terminal `failed`. So the only way the evaluator's
+ *    own query can see the failed count return to zero is for the terminal
+ *    row to actually leave `admin_iam_jobs`. This suite (a) performs the
+ *    real remediation — enqueues a NEW job under a NEW idempotency key and
+ *    lets it succeed — and (b) separately, as a CONTROLLED TEST-ONLY
+ *    ARCHIVAL/REMOVAL (not a remediation path, and not evidence one exists),
+ *    deletes the old terminal row directly via SQL, the same
+ *    disable/delete/enable-trigger-shaped direct SQL the sibling OPS-OBS
+ *    suite already uses for its own out-of-band cleanup (no trigger to
+ *    disable here; the two admin-iam tables carry no append-only guard).
+ *    This never touches `status`; it stands in for an archival capability
+ *    this service does not yet expose as a function, so the evaluator's next
+ *    run observes the state honestly rather than being told a lie. See the
+ *    reworded test title and inline comment on that `it` block below for the
+ *    exact, undressed statement of what is and is not proven. Like the
+ *    stale-recovery test above, this test seeds its OWN failed job (org
+ *    `orgFailedRecovery`, its own idempotency keys) rather than reusing the
+ *    job the ADMIN_IAM_JOB_FAILED-firing test created, so neither recovery
+ *    test depends on its corresponding firing test — or on each other —
+ *    having run first. Both recovery pairs in this suite are order-
+ *    independent of every other `it` block.
  *
  * REQUIRES A REAL DATABASE. When one is not configured this file collects
  * and SKIPS the whole suite (describe.skipIf) — it makes zero assertions in
  * that case and is not a substitute for actually running it.
  *
- * Run:
+ * DATABASE SAFETY HARNESS — six properties this file enforces, independent
+ * of what any individual `it` proves about the evaluator:
+ *
+ *  H1. EXPLICIT DISPOSABLE DATABASE GUARD. Gated at module load by two
+ *      opt-in env vars (below) in addition to RUN_DB_TESTS/MOCK_DB, AND
+ *      re-verified live via `assertDisposableDatabase()` — a
+ *      `SELECT current_database()` compared against the declared prefix,
+ *      PLUS the database name embedded in DATABASE_URL itself compared
+ *      against what the live connection reports — before anything else
+ *      runs, and again immediately before the destructive cleanup in
+ *      afterAll. The env var is never trusted alone. Same shape as
+ *      tests/integration/partners/partner-economics-telemetry.realdb.test.ts's
+ *      assertDisposableDatabase.
+ *  H2. RETAINED SESSION ADVISORY LOCK. `pg_advisory_lock` is taken on a
+ *      dedicated PoolClient (`lockClient`, checked out from a dedicated
+ *      Pool) and held for the whole suite, so two concurrent runs against
+ *      the same disposable database cannot interleave. Lock namespace
+ *      `adm-iam-alert-pgtest-harness-lock` is disjoint from the evaluator's
+ *      own `adm-iam-alert-eval:*` and the sibling ops evaluator's
+ *      `ops-eval:*`. Released explicitly in afterAll.
+ *  H3. PINNED TRANSACTIONAL CLEANUP. All teardown DELETEs run inside one
+ *      explicit BEGIN...COMMIT on that SAME retained `lockClient` — never
+ *      on `db` or on an ad hoc pool connection.
+ *  H4. EXACT NAMED TRIGGER HANDLING. The append-only guard on
+ *      operational_alert_signals is disabled and re-enabled BY ITS EXACT
+ *      NAME (`trg_operational_alert_signals_immutable`) — never a blanket
+ *      DISABLE TRIGGER ALL — and `tgenabled='O'` is asserted INSIDE the
+ *      transaction, before COMMIT, so a failure to restore the guard aborts
+ *      the whole cleanup transaction instead of ever being committed.
+ *  H5. FAILURE PATHS. The disable/delete/re-enable/assert sequence runs in
+ *      a try/catch that ROLLBACKs on any error (Postgres DDL is
+ *      transactional, so ROLLBACK genuinely restores the trigger too — a
+ *      mid-cleanup failure cannot leave it disabled). A nested `finally`
+ *      unconditionally unlocks the advisory lock, releases `lockClient`,
+ *      and ends both the guard Pool and `db`, so a mid-test failure never
+ *      leaves a disabled trigger, a held lock, or a leaked connection.
+ *  H6. POSTCOMMIT VERIFICATION. After COMMIT, zero residue is asserted
+ *      across every table this suite owns or writes — admin_iam_jobs,
+ *      admin_iam_job_events, operational_alert_tenant_states,
+ *      operational_alert_delivery_outbox, and this suite's own probe row in
+ *      operational_alert_signals — and zero advisory locks are asserted
+ *      held by this backend after the explicit unlock.
+ *
+ * Run (now requires two additional opt-in env vars beyond RUN_DB_TESTS,
+ * MOCK_DB, DATABASE_URL — see H1 above):
+ *
  *   RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=postgres://user:pass@host:port/db \
+ *     ADMIN_IAM_ALERT_PGTEST_ALLOW_DESTRUCTIVE_FIXTURE=1 \
+ *     ADMIN_IAM_ALERT_PGTEST_DISPOSABLE_DB_PREFIX=<prefix-of-the-db-name-above> \
  *     npx vitest run server/src/services/__tests__/adminIamAlertEvaluator.pg.test.ts
  */
 import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { Client } from 'pg';
+import { Client, Pool } from 'pg';
+import type { PoolClient } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
@@ -92,15 +154,91 @@ import {
 } from '../adminIamAlertEvaluator.js';
 
 const DATABASE_URL = process.env.DATABASE_URL || '';
+
+/* ==========================================================================
+ * H1 — explicit disposable-database guard. Opt-in env vars are the
+ * module-load-time half of the gate (cheap, no connection needed yet); the
+ * live half (`assertDisposableDatabase`) runs in beforeAll and again
+ * immediately before the destructive cleanup in afterAll, and never trusts
+ * the env var alone.
+ * ========================================================================== */
+
+const DISPOSABLE_DB_ENABLE_ENV = 'ADMIN_IAM_ALERT_PGTEST_ALLOW_DESTRUCTIVE_FIXTURE';
+const DISPOSABLE_DB_PREFIX_ENV = 'ADMIN_IAM_ALERT_PGTEST_DISPOSABLE_DB_PREFIX';
+
 const REAL_PG =
   process.env.RUN_DB_TESTS === '1' &&
   process.env.MOCK_DB === 'false' &&
-  DATABASE_URL.startsWith('postgres');
+  DATABASE_URL.startsWith('postgres') &&
+  process.env[DISPOSABLE_DB_ENABLE_ENV] === '1' &&
+  Boolean(String(process.env[DISPOSABLE_DB_PREFIX_ENV] ?? '').trim());
 
 // Same reasoning as adminIamBvp.pg.test.ts: adminIamOperationsService.ts
 // goes through the DbPromise abstraction, which reads DB_TYPE lazily on
 // first real call — set it before any test body runs, not inside a hook.
 if (REAL_PG) process.env.DB_TYPE = 'postgres';
+
+class UnsafeCleanupTargetError extends Error {}
+
+function parseDatabaseNameFromUrl(url: string): string {
+  try {
+    return decodeURIComponent(new URL(url).pathname.replace(/^\//, ''));
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * H1. Never trusts DISPOSABLE_DB_ENABLE_ENV / DISPOSABLE_DB_PREFIX_ENV alone.
+ * Confirms, with a LIVE `SELECT current_database()` on the actual connection
+ * passed in, that the database really is prefixed as declared, AND that the
+ * database name embedded in DATABASE_URL (the "caller URL") matches what the
+ * server reports for that same connection — guarding against DB_TYPE/
+ * DbPromise's lazy connection-string resolution silently landing on a
+ * different database than the one this file thinks it opened.
+ */
+async function assertDisposableDatabase(client: Client | PoolClient): Promise<string> {
+  if (process.env[DISPOSABLE_DB_ENABLE_ENV] !== '1') {
+    throw new UnsafeCleanupTargetError(`${DISPOSABLE_DB_ENABLE_ENV}=1 is required before this suite may run`);
+  }
+  const prefix = String(process.env[DISPOSABLE_DB_PREFIX_ENV] ?? '').trim();
+  if (!prefix) {
+    throw new UnsafeCleanupTargetError(`${DISPOSABLE_DB_PREFIX_ENV} is required (disposable database name prefix)`);
+  }
+  const result = await client.query<{ db: string }>('SELECT current_database() AS db');
+  const liveDatabase = String(result.rows[0]?.db ?? '');
+  if (!liveDatabase.startsWith(prefix)) {
+    throw new UnsafeCleanupTargetError(
+      `Refusing to run: live current_database() "${liveDatabase}" does not start with declared disposable prefix "${prefix}" (${DISPOSABLE_DB_PREFIX_ENV})`
+    );
+  }
+  const urlDatabase = parseDatabaseNameFromUrl(DATABASE_URL);
+  if (urlDatabase !== liveDatabase) {
+    throw new UnsafeCleanupTargetError(
+      `Refusing to run: DATABASE_URL names database "${urlDatabase}" but the live connection reports current_database() "${liveDatabase}" — caller URL and server disagree`
+    );
+  }
+  return liveDatabase;
+}
+
+/* ==========================================================================
+ * H2 — lock namespace, disjoint from adm-iam-alert-eval:* (the evaluator
+ * under test) and ops-eval:* (the sibling ops evaluator's own namespace).
+ * H4 — exact trigger name, never DISABLE TRIGGER ALL.
+ * ========================================================================== */
+
+const ADM_IAM_ALERT_HARNESS_LOCK_KEY = 'adm-iam-alert-pgtest-harness-lock';
+const OPERATIONAL_ALERT_SIGNALS_TRIGGER = 'trg_operational_alert_signals_immutable';
+
+/** H6 — tables this suite owns/writes, verified to have zero residue after
+ * the guarded cleanup commits. operational_alert_signals is checked
+ * separately below (scoped to orgGuardProbe, not the ALL_ORGS list). */
+const RESIDUE_TABLES: Array<[table: string, column: string]> = [
+  ['admin_iam_jobs', 'organization_id'],
+  ['admin_iam_job_events', 'organization_id'],
+  ['operational_alert_tenant_states', 'organization_id'],
+  ['operational_alert_delivery_outbox', 'organization_id'],
+];
 
 const SECRET_SHAPE = /(authorization|cookie|password|secret|token|api.?key)/i;
 
@@ -118,8 +256,10 @@ const actor = `${prefix}-actor`;
 const evaluatorId = `${prefix}-evaluator`;
 
 const orgStale = `${prefix}-org-stale`;
+const orgStaleRecovery = `${prefix}-org-stale-recovery`;
 const orgReplay = `${prefix}-org-replay`;
 const orgFailed = `${prefix}-org-failed`;
+const orgFailedRecovery = `${prefix}-org-failed-recovery`;
 const orgLeakCheck = `${prefix}-org-leak-check`;
 const orgIsoA = `${prefix}-org-iso-a`;
 const orgIsoB = `${prefix}-org-iso-b`;
@@ -127,8 +267,10 @@ const orgHealthy = `${prefix}-org-healthy`;
 const orgGuardProbe = `${prefix}-org-guard-probe`;
 const ALL_ORGS = [
   orgStale,
+  orgStaleRecovery,
   orgReplay,
   orgFailed,
+  orgFailedRecovery,
   orgLeakCheck,
   orgIsoA,
   orgIsoB,
@@ -144,25 +286,130 @@ const T_RECOVER = '2026-08-19T06:00:00.000Z'; // after T_DETECT
 
 describe.skipIf(!REAL_PG)('ADM-OPS-ALERT admin IAM queue alert evaluator (real PostgreSQL)', () => {
   let db: Client;
-  let staleJobId = '';
+  let guardPool: Pool;
+  let lockClient: PoolClient;
 
   beforeAll(async () => {
+    // H2: dedicated Pool + PoolClient, checked out once and retained for the
+    // whole suite — this is the client the session-level advisory lock and
+    // the pinned transactional cleanup both use.
+    guardPool = new Pool({ connectionString: DATABASE_URL });
+    lockClient = await guardPool.connect();
+
+    // H1, live half: confirm the gate is REAL — not just env-flag trust —
+    // before taking the lock or touching any table.
+    await assertDisposableDatabase(lockClient);
+
+    // H2: session-level advisory lock, held for the whole suite so a
+    // concurrent run against the same disposable database cannot interleave
+    // with this one's writes/cleanup.
+    await lockClient.query('SELECT pg_advisory_lock(hashtext($1))', [ADM_IAM_ALERT_HARNESS_LOCK_KEY]);
+
     db = new Client({ connectionString: DATABASE_URL });
     await db.connect();
+    // Re-confirm on this second connection too — never assume two
+    // connections opened from the same DATABASE_URL landed on the same
+    // database.
+    await assertDisposableDatabase(db);
   });
 
   afterAll(async () => {
-    await db.query(`DELETE FROM admin_iam_job_events WHERE organization_id = ANY($1)`, [ALL_ORGS]);
-    await db.query(`DELETE FROM admin_iam_jobs WHERE organization_id = ANY($1)`, [ALL_ORGS]);
-    await db.query(`DELETE FROM operational_alert_delivery_outbox WHERE organization_id = ANY($1)`, [ALL_ORGS]);
-    await db.query(`DELETE FROM operational_alert_tenant_states WHERE organization_id = ANY($1)`, [ALL_ORGS]);
-    // Test DB only: disable the immutable guard solely to remove this
-    // suite's own probe row from the append-only signals table (the guard
-    // itself is asserted intact in the last `it` below, before this runs).
-    await db.query(`ALTER TABLE operational_alert_signals DISABLE TRIGGER trg_operational_alert_signals_immutable`);
-    await db.query(`DELETE FROM operational_alert_signals WHERE organization_id = $1`, [orgGuardProbe]);
-    await db.query(`ALTER TABLE operational_alert_signals ENABLE TRIGGER trg_operational_alert_signals_immutable`);
-    await db.end();
+    let lockReleased = false;
+    try {
+      // H1: re-verified immediately before any destructive statement, not
+      // just once at suite start.
+      await assertDisposableDatabase(lockClient);
+
+      // H3: pinned transactional cleanup — everything below runs inside one
+      // explicit BEGIN...COMMIT on the SAME retained lockClient.
+      await lockClient.query('BEGIN');
+      try {
+        await lockClient.query(`DELETE FROM admin_iam_job_events WHERE organization_id = ANY($1)`, [ALL_ORGS]);
+        await lockClient.query(`DELETE FROM admin_iam_jobs WHERE organization_id = ANY($1)`, [ALL_ORGS]);
+        await lockClient.query(`DELETE FROM operational_alert_delivery_outbox WHERE organization_id = ANY($1)`, [
+          ALL_ORGS,
+        ]);
+        await lockClient.query(`DELETE FROM operational_alert_tenant_states WHERE organization_id = ANY($1)`, [
+          ALL_ORGS,
+        ]);
+
+        // H4: exact named trigger, never DISABLE TRIGGER ALL. Test DB only:
+        // disable the immutable guard solely to remove this suite's own
+        // probe row from the append-only signals table (the guard itself is
+        // exercised as still-intact in the last `it` below, before this
+        // runs).
+        await lockClient.query(
+          `ALTER TABLE operational_alert_signals DISABLE TRIGGER ${OPERATIONAL_ALERT_SIGNALS_TRIGGER}`
+        );
+        await lockClient.query(`DELETE FROM operational_alert_signals WHERE organization_id = $1`, [orgGuardProbe]);
+        await lockClient.query(
+          `ALTER TABLE operational_alert_signals ENABLE TRIGGER ${OPERATIONAL_ALERT_SIGNALS_TRIGGER}`
+        );
+
+        // H4: assert the guard is back INSIDE the transaction, before
+        // COMMIT — a failure to restore it throws here, which the catch
+        // below turns into a ROLLBACK instead of ever letting a disabled
+        // guard reach COMMIT.
+        const guardState = await lockClient.query<{ tgenabled: string }>(
+          `SELECT tgenabled FROM pg_trigger WHERE tgrelid = 'operational_alert_signals'::regclass AND tgname = $1`,
+          [OPERATIONAL_ALERT_SIGNALS_TRIGGER]
+        );
+        if (guardState.rows[0]?.tgenabled !== 'O') {
+          throw new Error(
+            `refusing to commit cleanup: ${OPERATIONAL_ALERT_SIGNALS_TRIGGER} did not come back enabled (tgenabled=${
+              guardState.rows[0]?.tgenabled ?? '<missing>'
+            })`
+          );
+        }
+
+        await lockClient.query('COMMIT');
+      } catch (cleanupErr) {
+        // H5: explicit ROLLBACK on error. Postgres DDL (the ALTER TABLE
+        // DISABLE/ENABLE TRIGGER statements above) is transactional, so this
+        // genuinely restores the trigger to its pre-cleanup state too — a
+        // mid-cleanup failure cannot leave it disabled.
+        await lockClient.query('ROLLBACK').catch(() => undefined);
+        throw cleanupErr;
+      }
+
+      // H6: postcommit verification — zero residue across every table this
+      // suite owns or writes.
+      for (const [table, column] of RESIDUE_TABLES) {
+        const residue = await lockClient.query<{ count: number }>(
+          `SELECT COUNT(*)::int AS count FROM ${table} WHERE ${column} = ANY($1)`,
+          [ALL_ORGS]
+        );
+        expect(Number(residue.rows[0].count), `postcommit residue in ${table}`).toBe(0);
+      }
+      const signalsResidue = await lockClient.query<{ count: number }>(
+        `SELECT COUNT(*)::int AS count FROM operational_alert_signals WHERE organization_id = $1`,
+        [orgGuardProbe]
+      );
+      expect(Number(signalsResidue.rows[0].count), 'postcommit residue in operational_alert_signals').toBe(0);
+
+      // H2: explicit release, then H6 proves zero advisory locks remain
+      // held by this backend.
+      await lockClient.query('SELECT pg_advisory_unlock(hashtext($1))', [ADM_IAM_ALERT_HARNESS_LOCK_KEY]);
+      lockReleased = true;
+
+      const locks = await lockClient.query<{ count: number }>(
+        `SELECT COUNT(*)::int AS count FROM pg_locks WHERE locktype = 'advisory' AND pid = pg_backend_pid()`
+      );
+      expect(Number(locks.rows[0].count), 'advisory locks held by this backend after release').toBe(0);
+    } finally {
+      // H5: nested finally — ALWAYS unlock, release, close, no matter what
+      // failed above. pg_advisory_unlock on an already-released (or
+      // never-acquired) lock returns false, not an error, so this is a safe
+      // no-op when the explicit unlock above already ran.
+      if (!lockReleased) {
+        await lockClient
+          .query('SELECT pg_advisory_unlock(hashtext($1))', [ADM_IAM_ALERT_HARNESS_LOCK_KEY])
+          .catch(() => undefined);
+      }
+      lockClient.release();
+      await guardPool.end().catch(() => undefined);
+      await db.end().catch(() => undefined);
+    }
   });
 
   it('fires ADMIN_IAM_JOB_STALE once a running job outlives its lease, driven by an explicit now', async () => {
@@ -174,7 +421,6 @@ describe.skipIf(!REAL_PG)('ADM-OPS-ALERT admin IAM queue alert evaluator (real P
       payload: { source: 'scim' },
       maxAttempts: 3,
     });
-    staleJobId = job.id;
     const claimed = await claimAdminIamJob({ organizationId: orgStale, workerId: `${prefix}-worker-stale` });
     expect(claimed?.id).toBe(job.id);
 
@@ -306,96 +552,156 @@ describe.skipIf(!REAL_PG)('ADM-OPS-ALERT admin IAM queue alert evaluator (real P
   });
 
   it('recovers ADMIN_IAM_JOB_STALE once the job is completed under its original lease token, transitions DETECTED,RECOVERED', async () => {
-    expect(staleJobId).toBeTruthy();
-    const leaseRow = (
-      await db.query(`SELECT lease_token FROM admin_iam_jobs WHERE id = $1`, [staleJobId])
-    ).rows[0];
-    const leaseToken = leaseRow?.lease_token as string;
-    expect(leaseToken).toBeTruthy();
+    // Self-seeded (org `orgStaleRecovery`, not `orgStale`) rather than
+    // reusing the job the ADMIN_IAM_JOB_STALE-firing test created, so this
+    // test does not depend on that other test having run first or having
+    // passed — no cross-test state, no execution-order coupling.
+    const job = await enqueueAdminIamJob({
+      organizationId: orgStaleRecovery,
+      actorId: actor,
+      jobType: 'membership_sync',
+      idempotencyKey: `${prefix}-stale-recovery-job`,
+      payload: { source: 'scim' },
+      maxAttempts: 3,
+    });
+    const claimed = await claimAdminIamJob({
+      organizationId: orgStaleRecovery,
+      workerId: `${prefix}-worker-stale-recovery-claim`,
+    });
+    expect(claimed?.id).toBe(job.id);
+    await db.query(`UPDATE admin_iam_jobs SET lease_expires_at = $1 WHERE id = $2`, [T_PAST_LEASE, job.id]);
+
+    const detected = await evaluateAdminIamQueueAlerts({
+      organizationId: orgStaleRecovery,
+      evaluatorId,
+      now: T_DETECT,
+    });
+    expect(detected.find((row) => row.kind === 'ADMIN_IAM_JOB_STALE')?.status).toBe('ACTIVE');
 
     // completeAdminIamJob checks status='running' AND lease_token=?, not
     // lease expiry — completing under the still-known token is a real
     // lifecycle transition (see file header for why re-claim cannot apply).
     const completed = await completeAdminIamJob({
-      organizationId: orgStale,
-      jobId: staleJobId,
-      leaseToken,
+      organizationId: orgStaleRecovery,
+      jobId: job.id,
+      leaseToken: claimed!.leaseToken!,
       workerId: `${prefix}-worker-stale-recovery`,
     });
     expect(completed.status).toBe('succeeded');
 
-    const recovered = await evaluateAdminIamQueueAlerts({ organizationId: orgStale, evaluatorId, now: T_RECOVER });
+    const recovered = await evaluateAdminIamQueueAlerts({
+      organizationId: orgStaleRecovery,
+      evaluatorId,
+      now: T_RECOVER,
+    });
     const staleState = recovered.find((row) => row.kind === 'ADMIN_IAM_JOB_STALE');
     expect(staleState?.status).toBe('RECOVERED');
 
     const stateRow = (
       await db.query(
         `SELECT recovered_at FROM operational_alert_tenant_states WHERE organization_id=$1 AND kind=$2`,
-        [orgStale, 'ADMIN_IAM_JOB_STALE']
+        [orgStaleRecovery, 'ADMIN_IAM_JOB_STALE']
       )
     ).rows[0];
     expect(stateRow?.recovered_at).toBeTruthy();
 
     const transitions = await db.query(
       `SELECT transition FROM operational_alert_delivery_outbox WHERE organization_id=$1 AND kind=$2 ORDER BY state_version ASC`,
-      [orgStale, 'ADMIN_IAM_JOB_STALE']
+      [orgStaleRecovery, 'ADMIN_IAM_JOB_STALE']
     );
     expect(transitions.rows.map((row) => row.transition)).toEqual(['DETECTED', 'RECOVERED']);
   });
 
-  it('recovers ADMIN_IAM_JOB_FAILED once the terminal job is archived out of the failed set after real remediation, transitions DETECTED,RECOVERED', async () => {
+  it("recovers ADMIN_IAM_JOB_FAILED after CONTROLLED TEST-ONLY ARCHIVAL of the terminal row (no supported remediation path exists: the runbook forbids a manual succeeded flip, and no service function moves a job out of terminal failed), transitions DETECTED,RECOVERED", async () => {
+    // Self-seeded (org `orgFailedRecovery`, not `orgFailed`) rather than
+    // reusing the job the ADMIN_IAM_JOB_FAILED-firing test created, so this
+    // test does not depend on that other test having run first or having
+    // passed — no cross-test state, no execution-order coupling.
+    const job = await enqueueAdminIamJob({
+      organizationId: orgFailedRecovery,
+      actorId: actor,
+      jobType: 'role_reconcile',
+      idempotencyKey: `${prefix}-failed-recovery-job`,
+      payload: { source: 'scim' },
+      maxAttempts: 1,
+    });
+    const claimed = await claimAdminIamJob({
+      organizationId: orgFailedRecovery,
+      workerId: `${prefix}-worker-failed-recovery-claim`,
+    });
+    expect(claimed?.id).toBe(job.id);
+    const failedJob = await failAdminIamJob({
+      organizationId: orgFailedRecovery,
+      jobId: job.id,
+      leaseToken: claimed!.leaseToken!,
+      workerId: `${prefix}-worker-failed-recovery-claim`,
+      error: 'directory provider timeout',
+    });
+    expect(failedJob.status).toBe('failed');
+
+    const detected = await evaluateAdminIamQueueAlerts({
+      organizationId: orgFailedRecovery,
+      evaluatorId,
+      now: T_DETECT,
+    });
+    expect(detected.find((row) => row.kind === 'ADMIN_IAM_JOB_FAILED')?.status).toBe('ACTIVE');
+
     // Real remediation per the runbook: a NEW job, a NEW idempotency key,
     // and it succeeds normally.
     const remediation = await enqueueAdminIamJob({
-      organizationId: orgFailed,
+      organizationId: orgFailedRecovery,
       actorId: actor,
       jobType: 'role_reconcile',
-      idempotencyKey: `${prefix}-failed-job-remediation`,
+      idempotencyKey: `${prefix}-failed-recovery-job-remediation`,
       payload: { source: 'scim', retry: true },
       maxAttempts: 3,
     });
     const remediationClaim = await claimAdminIamJob({
-      organizationId: orgFailed,
-      workerId: `${prefix}-worker-failed-remediation`,
+      organizationId: orgFailedRecovery,
+      workerId: `${prefix}-worker-failed-recovery-remediation`,
     });
     expect(remediationClaim?.id).toBe(remediation.id);
     const remediationComplete = await completeAdminIamJob({
-      organizationId: orgFailed,
+      organizationId: orgFailedRecovery,
       jobId: remediation.id,
       leaseToken: remediationClaim!.leaseToken!,
-      workerId: `${prefix}-worker-failed-remediation`,
+      workerId: `${prefix}-worker-failed-recovery-remediation`,
     });
     expect(remediationComplete.status).toBe('succeeded');
 
-    // The original failed row: no service function ever moves a job out of
-    // terminal 'failed' (see file header). Archive it directly — status is
-    // never touched, this only removes the already-actioned terminal
-    // record so the evaluator's own query observes the honest state.
-    const originalFailedJob = (
-      await db.query(
-        `SELECT id FROM admin_iam_jobs WHERE organization_id=$1 AND idempotency_key=$2`,
-        [orgFailed, `${prefix}-failed-job`]
-      )
-    ).rows[0];
-    expect(originalFailedJob?.id).toBeTruthy();
-    await db.query(`DELETE FROM admin_iam_job_events WHERE job_id = $1`, [originalFailedJob.id]);
-    await db.query(`DELETE FROM admin_iam_jobs WHERE id = $1`, [originalFailedJob.id]);
+    // CONTROLLED TEST-ONLY ARCHIVAL/REMOVAL of the terminal row. This is NOT
+    // a remediation path and must not be read as one. No supported
+    // remediation path has been proven for taking a job out of terminal
+    // 'failed': the runbook forbids ever flipping a job to 'succeeded' by
+    // hand, and adminIamOperationsService.ts exposes no function that moves
+    // a job out of terminal 'failed' (enqueue/claim/complete/fail all
+    // require a prior status other than 'failed'). This direct-SQL DELETE
+    // never touches `status`; it exists only so this evaluator's own next
+    // query observes the honest, already-remediated-via-a-new-job state
+    // instead of being permanently poisoned by a terminal row this service
+    // has no supported way to move or clear.
+    await db.query(`DELETE FROM admin_iam_job_events WHERE job_id = $1`, [job.id]);
+    await db.query(`DELETE FROM admin_iam_jobs WHERE id = $1`, [job.id]);
 
-    const recovered = await evaluateAdminIamQueueAlerts({ organizationId: orgFailed, evaluatorId, now: T_RECOVER });
+    const recovered = await evaluateAdminIamQueueAlerts({
+      organizationId: orgFailedRecovery,
+      evaluatorId,
+      now: T_RECOVER,
+    });
     const failedState = recovered.find((row) => row.kind === 'ADMIN_IAM_JOB_FAILED');
     expect(failedState?.status).toBe('RECOVERED');
 
     const stateRow = (
       await db.query(
         `SELECT recovered_at FROM operational_alert_tenant_states WHERE organization_id=$1 AND kind=$2`,
-        [orgFailed, 'ADMIN_IAM_JOB_FAILED']
+        [orgFailedRecovery, 'ADMIN_IAM_JOB_FAILED']
       )
     ).rows[0];
     expect(stateRow?.recovered_at).toBeTruthy();
 
     const transitions = await db.query(
       `SELECT transition FROM operational_alert_delivery_outbox WHERE organization_id=$1 AND kind=$2 ORDER BY state_version ASC`,
-      [orgFailed, 'ADMIN_IAM_JOB_FAILED']
+      [orgFailedRecovery, 'ADMIN_IAM_JOB_FAILED']
     );
     expect(transitions.rows.map((row) => row.transition)).toEqual(['DETECTED', 'RECOVERED']);
   });
