@@ -116,7 +116,31 @@ describe('SourceProposalRegistrationWorkbench', () => {
   it('restores the exact selected proposal from durable route context', () => {
     renderWorkbench({ initialSelectedId: proposal.id });
     expect(screen.getByText('Median changeover is 95 minutes.')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^Register$/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Register$/ })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /Other decision/ })).toBeEnabled();
+  });
+
+  it('keeps an unassigned governed proposal visible but disables every decision action', () => {
+    const unassigned = {
+      ...proposal,
+      projectId: null,
+      projectName: null,
+      capabilities: {
+        canRegister: false,
+        canMerge: false,
+        canExtend: false,
+        canReturn: false,
+        canDefer: false,
+        canDismiss: false,
+      },
+    };
+    renderWorkbench({ proposals: [unassigned], initialSelectedId: unassigned.id });
+
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Assign a project before validation actions are available.'
+    );
+    expect(screen.getByRole('button', { name: /^Register$/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Other decision/ })).toBeDisabled();
   });
   it('registers only after impact confirmation, waits for read-back and opens canonical ID', async () => {
     const { register, readBack, onOpenInitiative } = renderWorkbench();

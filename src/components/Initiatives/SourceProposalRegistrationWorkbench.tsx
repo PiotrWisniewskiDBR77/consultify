@@ -359,7 +359,16 @@ export const SourceProposalRegistrationWorkbench: React.FC<Props> = ({
             <button
               className="btn-secondary"
               type="button"
-              disabled={writeState.kind === 'SAVING'}
+              disabled={
+                writeState.kind === 'SAVING' ||
+                !(
+                  proposal.capabilities.canMerge ||
+                  proposal.capabilities.canExtend ||
+                  proposal.capabilities.canReturn ||
+                  proposal.capabilities.canDefer ||
+                  proposal.capabilities.canDismiss
+                )
+              }
               onClick={() => setDeciding(true)}
             >
               <Gavel aria-hidden="true" size={15} /> Other decision
@@ -395,6 +404,14 @@ export const SourceProposalRegistrationWorkbench: React.FC<Props> = ({
           </div>
         )}
       >
+        {selected && !selected.projectId && (
+          <div
+            role="status"
+            className="mx-4 mt-3 rounded-md border border-c-border px-3 py-2 text-sm text-c-text-secondary"
+          >
+            Assign a project before validation actions are available.
+          </div>
+        )}
         <StandardTable
           columns={columns}
           data={proposals}

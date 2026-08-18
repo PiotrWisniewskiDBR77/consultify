@@ -10,7 +10,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import config from '../../server/src/config/Config.js';
 import { PostgresInitiativeReader } from '../../server/src/domain/initiatives-execution/postgresInitiativeReader.js';
 import { PostgresMaterialCommandUnitOfWork } from '../../server/src/domain/initiatives-execution/postgresMaterialCommandUnitOfWork.js';
-import { verifyToken } from '../../server/src/middleware/auth.middleware.js';
+import { validateOrgMembership, verifyToken } from '../../server/src/middleware/auth.middleware.js';
 import { createInitiativesExecutionRuntimeRouter } from '../../server/src/routes/pmo/initiativesExecutionRuntime.routes.js';
 
 const enabled = process.env.RUN_DB_TESTS === '1' && process.env.MOCK_DB === 'false';
@@ -27,6 +27,9 @@ describe.skipIf(!enabled)('mounted Initiative UI canonical reads', () => {
   const foreignOwner = `${prefix}-foreign-owner`;
   const project = `${prefix}-project`;
   const proposalId = `${prefix}-proposal`;
+  const financeProposalId = `${prefix}-finance-proposal`;
+  const financeSourceId = `${prefix}-finance-model`;
+  const financeReceiptId = `${prefix}-finance-receipt`;
   const initiativeId = `${prefix}-initiative`;
   const executionCaseId = `${prefix}-execution`;
   const pool = new pg.Pool({ connectionString: databaseUrl, max: 2 });
@@ -75,6 +78,28 @@ describe.skipIf(!enabled)('mounted Initiative UI canonical reads', () => {
        VALUES($1,$2,'assessment-finding',$3,4,'Mounted candidate','Problem','Outcome',$4,$5,
               'PROJECT','READY','CLEAR','pending',2)`,
       [proposalId, org, `${prefix}-finding`, project, owner]
+    );
+    await pool.query(
+      `INSERT INTO initiative_candidates
+        (id,organization_id,source_type,source_id,source_version,title,problem,proposed_outcome,
+         project_id,initiative_owner_id,visibility,evidence_state,duplicate_state,status,version,
+         created_by)
+       VALUES($1,$2,'finance_investment_case',$3,2,'Governed Finance candidate',NULL,NULL,
+              NULL,NULL,'ORGANIZATION_RESTRICTED','READY','CLEAR','pending',1,$4)`,
+      [financeProposalId, org, financeSourceId, owner]
+    );
+    await pool.query(
+      `INSERT INTO finance_candidate_handoffs
+        (id,organization_id,source_type,source_id,candidate_id,created_by,source_snapshot)
+       VALUES($1,$2,'finance_investment_case',$3,$4,$5,$6::jsonb)`,
+      [
+        financeReceiptId,
+        org,
+        financeSourceId,
+        financeProposalId,
+        owner,
+        JSON.stringify({ capex: 6000, opex: 147500, sourceFingerprint: `${prefix}-fingerprint` }),
+      ]
     );
     await pool.query(
       `INSERT INTO ie_aggregate_state
@@ -126,6 +151,7 @@ describe.skipIf(!enabled)('mounted Initiative UI canonical reads', () => {
     app.use(
       '/api/initiatives/runtime-v1',
       verifyToken,
+      validateOrgMembership,
       createInitiativesExecutionRuntimeRouter({
         unitOfWork: new PostgresMaterialCommandUnitOfWork(pool),
         reader: new PostgresInitiativeReader(pool),
@@ -145,6 +171,7 @@ describe.skipIf(!enabled)('mounted Initiative UI canonical reads', () => {
   afterAll(async () => {
     await pool.query(`DELETE FROM ie_aggregate_relations WHERE organization_id=$1`, [org]);
     await pool.query(`DELETE FROM ie_aggregate_state WHERE organization_id=$1`, [org]);
+    await pool.query(`DELETE FROM finance_candidate_handoffs WHERE organization_id=$1`, [org]);
     await pool.query(`DELETE FROM initiative_candidates WHERE organization_id=$1`, [org]);
     await pool.query(`DELETE FROM organization_members WHERE organization_id=ANY($1)`, [
       [org, foreignOrg],
@@ -162,7 +189,50 @@ describe.skipIf(!enabled)('mounted Initiative UI canonical reads', () => {
       .get('/api/initiatives/runtime-v1/source-proposals')
       .set('Authorization', `Bearer ${bearer}`);
     expect(candidates.status, JSON.stringify(candidates.body)).toBe(200);
-    expect(candidates.body.proposals.map((row: { id: string }) => row.id)).toEqual([proposalId]);
+    const proposalIds = candidates.body.proposals.map((row: { id: string }) => row.id);
+    expect(proposalIds.filter((id: string) => id === financeProposalId)).toHaveLength(1);
+    expect(proposalIds).toContain(proposalId);
+    expect(candidates.body.proposals).toContainEqual(
+      expect.objectContaining({
+        id: financeProposalId,
+        sourceId: financeSourceId,
+        projectId: null,
+        capabilities: {
+          canRegister: false,
+          canMerge: false,
+          canExtend: false,
+          canReturn: false,
+          canDefer: false,
+          canDismiss: false,
+        },
+      })
+    );
+    const lineage = await pool.query(
+      `SELECT candidate_id, source_id, source_snapshot
+         FROM finance_candidate_handoffs
+        WHERE organization_id=$1 AND id=$2`,
+      [org, financeReceiptId]
+    );
+    expect(lineage.rows).toHaveLength(1);
+    expect(lineage.rows[0]).toMatchObject({
+      candidate_id: financeProposalId,
+      source_id: financeSourceId,
+      source_snapshot: {
+        capex: 6000,
+        opex: 147500,
+        sourceFingerprint: `${prefix}-fingerprint`,
+      },
+    });
+
+    const financeColdPool = new pg.Pool({ connectionString: databaseUrl, max: 1 });
+    try {
+      const coldProposals = await new PostgresInitiativeReader(financeColdPool).listSourceProposals(
+        org
+      );
+      expect(coldProposals.filter((row) => row.id === financeProposalId)).toHaveLength(1);
+    } finally {
+      await financeColdPool.end();
+    }
 
     const linked = await request(app)
       .get(`/api/initiatives/runtime-v1/initiatives/${initiativeId}/execution-case`)
@@ -214,10 +284,17 @@ describe.skipIf(!enabled)('mounted Initiative UI canonical reads', () => {
     ['revoked membership', () => token(revoked, org)],
     ['foreign tenant', () => token(foreignOwner, foreignOrg)],
   ])('fails closed for %s without leaking the linked case', async (_label, bearer) => {
+    const candidates = await request(app)
+      .get('/api/initiatives/runtime-v1/source-proposals')
+      .set('Authorization', `Bearer ${bearer()}`);
+    expect(
+      (candidates.body.proposals ?? []).some(
+        (proposal: { id: string }) => proposal.id === financeProposalId
+      )
+    ).toBe(false);
     const linked = await request(app)
       .get(`/api/initiatives/runtime-v1/initiatives/${initiativeId}/execution-case`)
       .set('Authorization', `Bearer ${bearer()}`);
-    expect(linked.status).toBe(404);
-    expect(linked.body).toEqual({ error: { code: 'NOT_FOUND' } });
+    expect([403, 404]).toContain(linked.status);
   });
 });

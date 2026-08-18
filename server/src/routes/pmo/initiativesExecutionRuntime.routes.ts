@@ -1373,20 +1373,33 @@ export function createInitiativesExecutionRuntimeRouter(
         (typeof proposals)[number] & {
           policy: EffectiveGovernancePolicy;
           capabilities: {
-            canRegister: true;
-            canMerge: true;
-            canExtend: true;
-            canReturn: true;
-            canDefer: true;
-            canDismiss: true;
+            canRegister: boolean;
+            canMerge: boolean;
+            canExtend: boolean;
+            canReturn: boolean;
+            canDefer: boolean;
+            canDismiss: boolean;
           };
         }
       > = [];
       for (const proposal of proposals) {
-        if (
-          proposal.projectId &&
-          (await deps.authorize(actor, proposal.projectId, 'initiative.create'))
-        ) {
+        if (!proposal.projectId) {
+          // Governed handoffs may legitimately arrive before project triage.
+          // Keep them visible, but fail closed until assignment; never infer a project.
+          visible.push({
+            ...proposal,
+            // Empty lookup resolves product/organization policy only and is never persisted.
+            policy: await deps.resolvePolicy(actor.organizationId, ''),
+            capabilities: {
+              canRegister: false,
+              canMerge: false,
+              canExtend: false,
+              canReturn: false,
+              canDefer: false,
+              canDismiss: false,
+            },
+          });
+        } else if (await deps.authorize(actor, proposal.projectId, 'initiative.create')) {
           const policy = await deps.resolvePolicy(actor.organizationId, proposal.projectId);
           visible.push({
             ...proposal,
