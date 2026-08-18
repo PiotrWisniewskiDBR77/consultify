@@ -248,31 +248,82 @@ export const PARTNER_ECONOMICS_POLICY_EVENT_TABLE = 'partner_economics_policy_ev
  * gets its own receipt. This is recorded rather than hidden: replay-exactly-one
  * is provable only for requests that carry a request id.
  */
-export function partnerEconomicsDenialFingerprint(parts: {
+/**
+ * Unambiguous field separator for hashed tuples. Escaped, never a literal
+ * control byte in source: an embedded NUL turns this file into `data` rather
+ * than text and makes plain grep silently skip it.
+ */
+const RECEIPT_FIELD_DELIMITER = String.fromCharCode(0);
+
+const sha256 = (parts: Array<string | null>): string =>
+  createHash('sha256')
+    .update(parts.map((p) => p ?? '').join(RECEIPT_FIELD_DELIMITER))
+    .digest('hex');
+
+/**
+ * RECEIPT IDENTITY — deliberately NARROW: tenant + request id only.
+ *
+ * An earlier revision hashed every field into one value and used it as the
+ * uniqueness key. That was wrong: altering any field produced a DIFFERENT key,
+ * so an altered replay inserted a brand-new row instead of colliding, and the
+ * readback comparison could never fire. Identity must stay stable while the
+ * payload varies, which is precisely what makes a collision detectable.
+ *
+ * WITHOUT A REQUEST ID there is no replay identity at all. Synthesising one
+ * from the tuple would collapse two genuinely distinct attempts by the same
+ * actor on the same route into a single receipt and destroy evidence, so a
+ * random component is used instead and every such denial gets its own row.
+ * Consequence, stated plainly: replay-exactly-one is provable ONLY for callers
+ * that send `x-request-id`. It is not claimed for callers that do not.
+ */
+export function partnerEconomicsReceiptIdentity(parts: {
   requestId: string | null;
+  organizationId: string | null;
+}): { identity: string; replayable: boolean } {
+  if (!parts.requestId) {
+    return {
+      identity: sha256(['no-request-id', parts.organizationId, randomUUID()]),
+      replayable: false,
+    };
+  }
+  return {
+    identity: sha256(['request', parts.organizationId, parts.requestId]),
+    replayable: true,
+  };
+}
+
+/**
+ * REQUEST FINGERPRINT — the full immutable description of what was refused.
+ * Stored alongside the identity and compared on replay. Never contributes to
+ * the uniqueness key.
+ */
+export function partnerEconomicsRequestFingerprint(parts: {
   surface: string;
   operation: PartnerEconomicOperation;
   method: string;
   routePath: string;
   organizationId: string | null;
+  partnerOrgId: string | null;
   userId: string | null;
 }): string {
-  const identity = parts.requestId
-    ? parts.requestId
-    : `no-request-id:${randomUUID()}`;
-  return createHash('sha256')
-    .update(
-      [
-        identity,
-        parts.surface,
-        parts.operation,
-        parts.method,
-        parts.routePath,
-        parts.organizationId ?? '',
-        parts.userId ?? '',
-      ].join(' ')
-    )
-    .digest('hex');
+  return sha256([
+    parts.surface,
+    parts.operation,
+    parts.method,
+    parts.routePath,
+    parts.organizationId,
+    parts.partnerOrgId,
+    parts.userId,
+  ]);
+}
+
+/** Raised when one identity is presented with two different payloads. */
+export class PartnerEconomicsReceiptCollisionError extends Error {
+  readonly code = 'PARTNER_ECONOMICS_RECEIPT_COLLISION';
+  constructor(message: string) {
+    super(message);
+    this.name = 'PartnerEconomicsReceiptCollisionError';
+  }
 }
 
 export async function recordPartnerEconomicsPolicyDenial(params: {
@@ -298,26 +349,29 @@ export async function recordPartnerEconomicsPolicyDenial(params: {
   const method = String(params.req.method || 'UNKNOWN').toUpperCase();
   const routePath = String(req.originalUrl || params.req.path || '/').split('?')[0];
 
-  const fingerprint = partnerEconomicsDenialFingerprint({
+  const { identity, replayable } = partnerEconomicsReceiptIdentity({
     requestId,
+    organizationId,
+  });
+  const fingerprint = partnerEconomicsRequestFingerprint({
     surface: params.surface,
     operation: params.operation,
     method,
     routePath,
     organizationId,
+    partnerOrgId,
     userId,
   });
 
-  // ON CONFLICT DO NOTHING gives replay-exactly-one. The readback then proves
-  // the stored receipt actually describes THIS request: if a colliding
-  // fingerprint carries different content, we refuse to treat it as our
-  // receipt and surface the collision loudly instead of silently accepting
-  // someone else's evidence.
+  // ON CONFLICT on the NARROW identity gives replay-exactly-one. The readback
+  // then compares the FULL fingerprint: same identity with an altered surface,
+  // operation, method, path, actor or tenant is a binding collision, refused
+  // loudly with zero new row rather than silently accepted or re-keyed.
   await DbPromise.run(
     `INSERT INTO ${PARTNER_ECONOMICS_POLICY_EVENT_TABLE}
-       (request_id,user_id,organization_id,partner_org_id,method,route_path,surface,operation,decision,denial_code,denial_fingerprint)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?)
-     ON CONFLICT (denial_fingerprint) DO NOTHING`,
+       (request_id,user_id,organization_id,partner_org_id,method,route_path,surface,operation,decision,denial_code,receipt_identity,request_fingerprint)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+     ON CONFLICT (receipt_identity) DO NOTHING`,
     [
       requestId,
       userId,
@@ -329,33 +383,24 @@ export async function recordPartnerEconomicsPolicyDenial(params: {
       params.operation,
       PARTNER_ECONOMICS_POLICY_DECISION,
       PARTNER_ECONOMICS_POLICY_CODE,
+      identity,
       fingerprint,
     ],
     { fallback: false }
   );
 
-  const stored = await DbPromise.get<{
-    surface: string;
-    operation: string;
-    method: string;
-    route_path: string;
-  }>(
-    `SELECT surface, operation, method, route_path
-       FROM ${PARTNER_ECONOMICS_POLICY_EVENT_TABLE}
-      WHERE denial_fingerprint = ?`,
-    [fingerprint],
+  if (!replayable) return;
+
+  const stored = await DbPromise.get<{ request_fingerprint: string }>(
+    `SELECT request_fingerprint FROM ${PARTNER_ECONOMICS_POLICY_EVENT_TABLE}
+      WHERE receipt_identity = ?`,
+    [identity],
     { fallback: false }
   );
 
-  if (
-    stored &&
-    (stored.surface !== params.surface ||
-      stored.operation !== params.operation ||
-      stored.method !== method ||
-      stored.route_path !== routePath)
-  ) {
-    throw new Error(
-      `[PartnerEconomicsPolicy] denial fingerprint collision: stored receipt ${stored.method} ${stored.route_path} (${stored.surface}/${stored.operation}) does not describe this request ${method} ${routePath} (${params.surface}/${params.operation})`
+  if (stored && stored.request_fingerprint !== fingerprint) {
+    throw new PartnerEconomicsReceiptCollisionError(
+      `receipt identity is already bound to a different request: stored fingerprint ${stored.request_fingerprint}, this request ${fingerprint} (${method} ${routePath}, ${params.surface}/${params.operation})`
     );
   }
 }

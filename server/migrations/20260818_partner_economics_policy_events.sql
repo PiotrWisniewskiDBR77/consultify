@@ -70,7 +70,8 @@ BEGIN
       ('operation',          'text',                        'NO' ),
       ('decision',           'text',                        'NO' ),
       ('denial_code',        'text',                        'NO' ),
-      ('denial_fingerprint', 'text',                        'NO' ),
+      ('receipt_identity',   'text',                        'NO' ),
+      ('request_fingerprint','text',                        'NO' ),
       ('observed_at',        'timestamp with time zone',    'NO' )
     ) AS t(column_name, data_type, is_nullable)
   LOOP
@@ -105,7 +106,7 @@ BEGIN
      AND c.column_name NOT IN (
        'id','request_id','user_id','organization_id','partner_org_id','method',
        'route_path','surface','operation','decision','denial_code',
-       'denial_fingerprint','observed_at');
+       'receipt_identity','request_fingerprint','observed_at');
   IF mismatch IS NOT NULL THEN
     RAISE EXCEPTION
       'AMD-PRT-ECONOMICS-002 preflight: partner_economics_policy_events has unexpected extra column(s) (%). Refusing before ANY mutation.',
@@ -206,10 +207,10 @@ BEGIN
      WHERE c.relname = 'partner_economics_policy_events'
        AND i.indisunique
        AND i.indnatts = 1
-       AND a.attname = 'denial_fingerprint'
+       AND a.attname = 'receipt_identity'
   ) THEN
     RAISE EXCEPTION
-      'AMD-PRT-ECONOMICS-002 preflight: denial_fingerprint lacks a UNIQUE index; replayed denials would duplicate. Refusing before ANY mutation.';
+      'AMD-PRT-ECONOMICS-002 preflight: receipt_identity lacks a UNIQUE index; replayed denials would duplicate. Refusing before ANY mutation.';
   END IF;
 
   -- Append-only function body must actually raise.
@@ -303,12 +304,13 @@ CREATE TABLE IF NOT EXISTS partner_economics_policy_events (
     -- + user_id. UNIQUE, so a replayed request yields exactly one receipt and
     -- an altered request with a colliding identity fails closed instead of
     -- silently overwriting evidence.
-    denial_fingerprint TEXT NOT NULL,
+    receipt_identity TEXT NOT NULL,
+    request_fingerprint TEXT NOT NULL,
     observed_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_partner_economics_policy_fingerprint
-  ON partner_economics_policy_events(denial_fingerprint);
+  ON partner_economics_policy_events(receipt_identity);
 CREATE INDEX IF NOT EXISTS idx_partner_economics_policy_observed
   ON partner_economics_policy_events(observed_at DESC);
 CREATE INDEX IF NOT EXISTS idx_partner_economics_policy_operation
@@ -365,9 +367,9 @@ BEGIN
     JOIN pg_attribute a ON a.attrelid = c.oid AND a.attnum = ANY (i.indkey)
    WHERE c.relname = 'partner_economics_policy_events'
      AND i.indisunique
-     AND a.attname = 'denial_fingerprint';
+     AND a.attname = 'receipt_identity';
   IF uq_ok < 1 THEN
-    RAISE EXCEPTION 'AMD-PRT-ECONOMICS-002: denial_fingerprint UNIQUE index missing after migration';
+    RAISE EXCEPTION 'AMD-PRT-ECONOMICS-002: receipt_identity UNIQUE index missing after migration';
   END IF;
 END
 $post$;

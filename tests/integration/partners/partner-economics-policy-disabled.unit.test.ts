@@ -1,30 +1,26 @@
 /**
- * AMD-PRT-ECONOMICS-002 (owner decision 2A) — partner economics fail closed.
+ * AMD-PRT-ECONOMICS-002 (owner decision 2A) — MOCK-ONLY UNIT SUITE.
  *
- * This file has two independent halves, on purpose.
+ * TRUTHFUL SCOPE, stated first because an earlier revision of this file was
+ * named "*.realdb.test.ts" while mocking the entire persistence layer. That
+ * name claimed a real-PostgreSQL proof this file does not provide, and the
+ * claim was wrong. Renamed rather than quietly left in place.
  *
- * HALF 1 — DIRECT-SERVICE ZERO-WRITE NEGATIVES. Runs with NO database and NO
- * container. That is not a convenience shortcut, it is the stronger proof for
- * this specific claim: the policy guard is the FIRST statement of every writer,
- * before any connection is acquired, so "zero write" is provable by asserting
- * the persistence layer was never entered at all. A real-PostgreSQL run can
- * only show that no row appeared, which is weaker — it cannot distinguish
- * "refused before the write" from "wrote and rolled back". These negatives also
- * cover the two exported-but-uncalled writers (createOrganizationDiscount,
- * cancelOrganizationDiscount, cancelCommission), which no route reaches and
- * which a route-level test therefore cannot exercise at all.
+ * WHAT THIS FILE ACTUALLY PROVES. The persistence seam (DbPromise, the
+ * database handle and the pg client acquirer) is mocked, and each test asserts
+ * that a policy-denied writer NEVER ENTERS it. For the deep-service guards
+ * that is a genuinely stronger statement than a row count, because it
+ * distinguishes "refused before the write" from "wrote and rolled back", and
+ * because it can exercise createOrganizationDiscount, cancelOrganizationDiscount
+ * and cancelCommission, which have no route and which no HTTP test can reach.
  *
- * HALF 2 — MOUNTED REAL-POSTGRES PROOF. Guarded by the repository's
- * RUN_DB_TESTS/MOCK_DB convention and skipped cleanly when no isolated database
- * is configured, per owner decision 14A (at most two isolated containers
- * globally, never a shared database).
- *
- *   RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test CI=true \
- *   DATABASE_URL=postgresql://<user>:<pass>@127.0.0.1:<isolated-port>/<isolated-db> \
- *   npx vitest run tests/integration/partners/partner-economics-policy-disabled.realdb.test.ts --retry=0
- *
- * --retry=0 is mandatory: root vitest.config.ts sets retry: CI ? 3 : 1, which
- * would otherwise let a flaky pass masquerade as green.
+ * WHAT THIS FILE DOES NOT PROVE, AND MUST NOT BE CITED FOR: anything requiring
+ * a real database or a mounted production auth stack. No schema is applied, no
+ * migration runs, no advisory lock is taken, no residue is measured, no
+ * trigger fires, no ACTIVE/revoked/foreign membership is resolved, and receipt
+ * idempotency, collision behaviour and append-only immutability are NOT
+ * exercised here. Those belong to the separate opted-in disposable-PostgreSQL
+ * suite and are not claimed until it is green.
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
