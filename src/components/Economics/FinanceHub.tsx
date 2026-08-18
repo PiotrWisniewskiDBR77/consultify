@@ -46,6 +46,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { EmptyState, LoadingState } from '@/components/shared/states';
+import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import {
   StandardPreview,
   type StandardPreviewActions,
@@ -1615,7 +1616,7 @@ export const FinanceHub: React.FC = () => {
             setShowValuationCreateModal(true);
           }
         }}
-        className="inline-flex items-center h-9 px-4 rounded-full text-sm font-medium bg-c-text text-c-bg hover:opacity-90 transition-colors duration-150 active:scale-[0.97]"
+        className="inline-flex items-center h-9 px-4 rounded-full text-sm font-medium bg-c-text text-c-bg hover:opacity-90 transition-colors duration-150 active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-2 focus-visible:ring-offset-c-bg"
       >
         <span>{labels[currentKind] || labels.models}</span>
       </button>
@@ -1935,7 +1936,7 @@ export const FinanceHub: React.FC = () => {
                         )
                       : undefined
                   }
-                  className="group flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-c-surface disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                  className="group flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-c-surface disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-2 focus-visible:ring-offset-c-bg"
                 >
                   <span className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-c-surface-raised transition-colors group-hover:bg-c-border-subtle">
                     {analyzeActionIcons[action.id] || (
@@ -2395,95 +2396,48 @@ export const FinanceHub: React.FC = () => {
 
   const statementsTableWithPreview = useMemo(
     () => (
-      <div className="h-full flex overflow-hidden">
-        <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
-          <StandardTable
-            columns={columnsForActiveTab}
-            data={statementRowsData as unknown as Array<Record<string, unknown> & { id: string }>}
-            selectedRowId={selectedId}
-            onRowClick={(row) => onSelectRow(row as unknown as FinanceStatementRow)}
-            onRowDoubleClick={(row) => handleOpenFull(row as unknown as FinanceStatementRow)}
-            rowDescription={() => null}
-            defaultSort={{ columnId: 'updatedAt', direction: 'desc' }}
-            persistKey="finance.statements.list"
-            selection={{ selectedIds: selectedStatementIds, onChange: setSelectedStatementIds }}
-            activeFilters={activeFilters}
-            onFilterChange={setActiveFilters}
-            empty={{
-              icon: FileText,
-              title: t('finance.empty.statementsTitle', 'No statements yet'),
-              description: emptyMessage,
-              actionLabel: t('finance.cta.importStatement', 'Import statement'),
-              onAction: () => setShowImportWizard(true),
-            }}
-            rowMenu={(row): StandardRowMenu => {
-              const statementRow = row as unknown as FinanceStatementRow;
-              const isConfirmed =
-                String(statementRow.rawStatus || '').toLowerCase() === 'confirmed';
-              return {
-                primary: [
-                  {
-                    id: 'open',
-                    label: t('common.open', 'Open'),
-                    icon: ExternalLink,
-                    onClick: () => handleOpenFull(statementRow),
-                  },
-                  ...(statementRow.isWorkable
-                    ? [
-                        {
-                          id: 'createModel',
-                          label: t('finance.row.createModelFromStatement', 'Utwórz model'),
-                          icon: TrendingUp,
-                          onClick: () => handleCreateModelFromStatement(statementRow),
-                        },
-                      ]
-                    : []),
-                ],
-                statusTransitions:
-                  statementRow.isWorkable && !isConfirmed
-                    ? [
-                        {
-                          id: 'confirm',
-                          label: t('finance.row.confirmStatement', 'Potwierdź'),
-                          onClick: async () => {
-                            try {
-                              await Api.post(
-                                `/api/finance-statements/${statementRow.id}/confirm`,
-                                {}
-                              );
-                              await loadStatements();
-                              toast.success(
-                                t('finance.toast.statementConfirmed', 'Statement potwierdzony')
-                              );
-                            } catch (e: any) {
-                              toast.error(
-                                e?.response?.data?.error ||
-                                  t('finance.toast.approveFailed', 'Nie udało się zatwierdzić')
-                              );
-                            }
-                          },
-                        },
-                      ]
-                    : undefined,
-                universalHandlers: {
-                  preview: () => onSelectRow(statementRow),
-                  edit: () => handleOpenFull(statementRow),
-                  // Brak API archiwizacji statementu — pozycja disabled z notą (StandardTable dokłada ją sama).
-                },
-                destructive: {
-                  onClick: () => void handleFinanceDelete(statementRow),
-                },
-              };
-            }}
-          />
-        </div>
-
-        {selectedStatementRow ? (
-          <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+      // TABLE_AND_PREVIEW_CANON §7.2 (MUST): the preview pane width comes
+      // WYLACZNIE from the shared component — "Zakaz sztywnej szerokosci na
+      // kontenerze preview: w-[420px], w-[360px], w-[460px] itp.". This block
+      // hand-rolled `flex` + `<aside className="w-[400px] shrink-0 bg-slate-50
+      // dark:bg-navy-950">`: it pinned the width from the screen, painted
+      // non-token colours and had no mobile behaviour. TableWithPreviewLayout
+      // owns clamp(340px, 28%, 480px) + gap-1.5 without border-l and the
+      // mobile overlay (TableWithPreviewLayout.tsx:374, :521).
+      <TableWithPreviewLayout<FinanceStatementRow & { title: string }>
+        selectedId={selectedId}
+        selectedItem={
+          selectedStatementRow
+            ? (selectedStatementRow as unknown as FinanceStatementRow & { title: string })
+            : null
+        }
+        itemIds={statementRowsData.map((row) => String(row.id))}
+        getItemById={(id) =>
+          (statementRowsData.find((row) => String(row.id) === id) as unknown as
+            | (FinanceStatementRow & { title: string })
+            | undefined) ?? null
+        }
+        onSelect={(id) => {
+          if (!id) {
+            deselectRow();
+            return;
+          }
+          const row = statementRowsData.find((candidate) => String(candidate.id) === id);
+          if (row) onSelectRow(row as unknown as FinanceStatementRow);
+        }}
+        onOpenFull={(id) => {
+          const row = statementRowsData.find((candidate) => String(candidate.id) === id);
+          if (row) handleOpenFull(row as unknown as FinanceStatementRow);
+        }}
+        renderPreview={() =>
+          selectedStatementRow ? (
             <StandardPreview
+              // The parent PreviewPaneShell (TableWithPreviewLayout) owns the
+              // header, the close control and the Escape listener. `embedded`
+              // renders the canonical preview BODY only — one shell, one title,
+              // one close, one Escape handler.
+              embedded
               title={selectedStatementRow.title}
-              onClose={() => deselectRow()}
-              onOpenFull={() => handleOpenFull(selectedStatementRow)}
               meta={{
                 pills: [
                   {
@@ -2503,20 +2457,43 @@ export const FinanceHub: React.FC = () => {
                 ),
               }}
               details={{
-                text: [
-                  `${t('common.currency', 'Currency')}: ${selectedStatementRow.currency}`,
-                  `${t('finance.columns.mappedLines', 'Docs')}: ${
-                    selectedStatementRow.sourceStatementCount ??
-                    selectedStatementRow.statementIds?.length ??
-                    0
-                  }`,
-                  `${t('finance.statements.mappedLines', 'Mapped lines')}: ${selectedStatementRow.mappedLineCount ?? 0} / ${selectedStatementRow.totalLineCount ?? 0}`,
-                  selectedStatementRow.readinessSummary
-                    ? `${t('finance.statements.previewTitle', 'Pack health')}: ${selectedStatementRow.readinessSummary}`
-                    : '',
-                ]
-                  .filter(Boolean)
-                  .join('\n\n'),
+                // TRIADA_KANON §C3 (N-52): wlasciwosci encji (klucz-wartosc) ida
+                // do `properties`, renderowanych przez ArtifactPropertiesTable —
+                // NIE sklejane w akapit `text`. Przeglad 128 zrzutow wskazal
+                // dokladnie ten anty-wzorzec (podglad bedacy zrzutem pol).
+                properties: [
+                  {
+                    id: 'currency',
+                    label: t('common.currency', 'Currency'),
+                    value: selectedStatementRow.currency,
+                    mono: true,
+                  },
+                  {
+                    id: 'docs',
+                    label: t('finance.columns.mappedLines', 'Docs'),
+                    value: String(
+                      selectedStatementRow.sourceStatementCount ??
+                        selectedStatementRow.statementIds?.length ??
+                        0
+                    ),
+                    mono: true,
+                  },
+                  {
+                    id: 'mappedLines',
+                    label: t('finance.statements.mappedLines', 'Mapped lines'),
+                    value: `${selectedStatementRow.mappedLineCount ?? 0} / ${selectedStatementRow.totalLineCount ?? 0}`,
+                    mono: true,
+                  },
+                  ...(selectedStatementRow.readinessSummary
+                    ? [
+                        {
+                          id: 'packHealth',
+                          label: t('finance.statements.previewTitle', 'Pack health'),
+                          value: selectedStatementRow.readinessSummary,
+                        },
+                      ]
+                    : []),
+                ],
                 onCopy: () => {
                   void navigator.clipboard?.writeText(
                     `${selectedStatementRow.title} — ${selectedStatementRow.status} (${selectedStatementRow.completenessLabel || ''})`
@@ -2539,9 +2516,88 @@ export const FinanceHub: React.FC = () => {
               }
               actions={statementPreviewActions}
             />
-          </aside>
-        ) : null}
-      </div>
+          ) : null
+        }
+      >
+        <StandardTable
+          columns={columnsForActiveTab}
+          data={statementRowsData as unknown as Array<Record<string, unknown> & { id: string }>}
+          selectedRowId={selectedId}
+          onRowClick={(row) => onSelectRow(row as unknown as FinanceStatementRow)}
+          onRowDoubleClick={(row) => handleOpenFull(row as unknown as FinanceStatementRow)}
+          rowDescription={() => null}
+          defaultSort={{ columnId: 'updatedAt', direction: 'desc' }}
+          persistKey="finance.statements.list"
+          selection={{ selectedIds: selectedStatementIds, onChange: setSelectedStatementIds }}
+          activeFilters={activeFilters}
+          onFilterChange={setActiveFilters}
+          empty={{
+            icon: FileText,
+            title: t('finance.empty.statementsTitle', 'No statements yet'),
+            description: emptyMessage,
+            actionLabel: t('finance.cta.importStatement', 'Import statement'),
+            onAction: () => setShowImportWizard(true),
+          }}
+          rowMenu={(row): StandardRowMenu => {
+            const statementRow = row as unknown as FinanceStatementRow;
+            const isConfirmed = String(statementRow.rawStatus || '').toLowerCase() === 'confirmed';
+            return {
+              primary: [
+                {
+                  id: 'open',
+                  label: t('common.open', 'Open'),
+                  icon: ExternalLink,
+                  onClick: () => handleOpenFull(statementRow),
+                },
+                ...(statementRow.isWorkable
+                  ? [
+                      {
+                        id: 'createModel',
+                        label: t('finance.row.createModelFromStatement', 'Utwórz model'),
+                        icon: TrendingUp,
+                        onClick: () => handleCreateModelFromStatement(statementRow),
+                      },
+                    ]
+                  : []),
+              ],
+              statusTransitions:
+                statementRow.isWorkable && !isConfirmed
+                  ? [
+                      {
+                        id: 'confirm',
+                        label: t('finance.row.confirmStatement', 'Potwierdź'),
+                        onClick: async () => {
+                          try {
+                            await Api.post(
+                              `/api/finance-statements/${statementRow.id}/confirm`,
+                              {}
+                            );
+                            await loadStatements();
+                            toast.success(
+                              t('finance.toast.statementConfirmed', 'Statement potwierdzony')
+                            );
+                          } catch (e: any) {
+                            toast.error(
+                              e?.response?.data?.error ||
+                                t('finance.toast.approveFailed', 'Nie udało się zatwierdzić')
+                            );
+                          }
+                        },
+                      },
+                    ]
+                  : undefined,
+              universalHandlers: {
+                preview: () => onSelectRow(statementRow),
+                edit: () => handleOpenFull(statementRow),
+                // Brak API archiwizacji statementu — pozycja disabled z notą (StandardTable dokłada ją sama).
+              },
+              destructive: {
+                onClick: () => void handleFinanceDelete(statementRow),
+              },
+            };
+          }}
+        />
+      </TableWithPreviewLayout>
     ),
     [
       columnsForActiveTab,
@@ -2904,7 +2960,7 @@ export const FinanceHub: React.FC = () => {
                 </div>
               </div>
               <button
-                className="h-9 px-4 rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors"
+                className="h-9 px-4 rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-2 focus-visible:ring-offset-c-bg"
                 onClick={handleShowList}
               >
                 {t('common.backToList', 'Wróć do listy')}
