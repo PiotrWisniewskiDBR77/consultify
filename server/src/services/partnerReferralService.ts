@@ -18,6 +18,7 @@ import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { assertPartnerEconomicsOperationAllowed } from './partnerEconomicsPolicy.js';
 
 // ==========================================
 // TYPES
@@ -894,6 +895,14 @@ export async function markClickConverted(
  * Create a partner attribution (link organization to referring partner)
  */
 export async function createAttribution(params: CreateAttributionParams): Promise<Attribution> {
+  // AMD-PRT-ECONOMICS-002: this function is exported, so any future import
+  // (route, script, console) is a reachable bypass unless the guard sits
+  // here, before ANY SQL, transaction, advisory lock or client acquisition.
+  // It persists commission_rate_percent / commission_duration_months into
+  // partner_attributions, which makes it a commission writer even though the
+  // row also carries non-economic referral-attribution fields.
+  assertPartnerEconomicsOperationAllowed('commission');
+
   const {
     partnerOrgId,
     organizationId,
@@ -1421,6 +1430,15 @@ export async function updateAttributionStatus(
   status: AttributionStatus,
   updates?: { firstPaymentAt?: string }
 ): Promise<boolean> {
+  // AMD-PRT-ECONOMICS-002: this function is exported, so any future import
+  // (route, script, console) is a reachable bypass unless the guard sits
+  // here, before ANY SQL, transaction, advisory lock or client acquisition.
+  // Called from the Stripe webhook on every invoice.paid: it flips the
+  // attribution to ACTIVE and stamps first_payment_at, which is the event
+  // that starts the commission-earning window, so it is a commission writer
+  // even though the column it touches is `status`, not an amount column.
+  assertPartnerEconomicsOperationAllowed('commission');
+
   try {
     let query = `UPDATE partner_attributions SET status = ?, updated_at = NOW()`;
     const params: any[] = [status];

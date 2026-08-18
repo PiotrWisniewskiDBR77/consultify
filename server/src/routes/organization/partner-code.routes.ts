@@ -14,9 +14,37 @@ import {
   type AuthRequest,
   verifyToken as authenticateToken,
 } from '../../middleware/auth.middleware.js';
+import {
+  isPartnerEconomicsOperationAvailable,
+  PARTNER_ECONOMICS_POLICY_CODE,
+  PARTNER_ECONOMICS_POLICY_DECISION,
+  PARTNER_ECONOMICS_POLICY_STATUS,
+} from '../../services/partnerEconomicsPolicy.js';
 import * as partnerReferralService from '../../services/partnerReferralService.js';
 import * as DbPromise from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+
+/**
+ * AMD-PRT-ECONOMICS-002 (owner decision 2A).
+ *
+ * This entire router is currently DEAD CODE: `routes/organization/index.ts`
+ * mounts it, but that barrel is only re-exported by `routes/index.ts`, which
+ * nothing in `Gateway.ts` or `src/index.ts` imports (verified by grep — see
+ * the S7 handoff report). It is being fixed anyway, in place, so that
+ * re-adding a single `app.use(...)` line can never resurrect a bypass: the
+ * writers below (`createAttribution`, the `organization_discounts` INSERT,
+ * and the `organization_discounts` status=CANCELLED UPDATE) must refuse
+ * before any service call or SQL, exactly like every other partner-economics
+ * writer in the codebase. GET /partner-attribution is left untouched — it is
+ * a read, not a writer.
+ */
+function refusePartnerEconomicsWrite(res: Response): Response {
+  return res.status(PARTNER_ECONOMICS_POLICY_STATUS).json({
+    success: false,
+    error: `Partner code operations are excluded by owner policy ${PARTNER_ECONOMICS_POLICY_DECISION}`,
+    code: PARTNER_ECONOMICS_POLICY_CODE,
+  });
+}
 
 const router = Router();
 
@@ -102,6 +130,10 @@ router.get('/partner-attribution', authenticateToken, async (req: Request, res: 
  * Apply a partner referral code to the organization
  */
 router.post('/partner-code', authenticateToken, async (req: Request, res: Response) => {
+  if (!isPartnerEconomicsOperationAvailable()) {
+    return refusePartnerEconomicsWrite(res);
+  }
+
   try {
     const authReq = req as AuthRequest;
     const organizationId = authReq.user?.organization_id;
@@ -209,6 +241,10 @@ router.post('/partner-code', authenticateToken, async (req: Request, res: Respon
  * Remove partner attribution from the organization
  */
 router.delete('/partner-code', authenticateToken, async (req: Request, res: Response) => {
+  if (!isPartnerEconomicsOperationAvailable()) {
+    return refusePartnerEconomicsWrite(res);
+  }
+
   try {
     const authReq = req as AuthRequest;
     const organizationId = authReq.user?.organization_id;

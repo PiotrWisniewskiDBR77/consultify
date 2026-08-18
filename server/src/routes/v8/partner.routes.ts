@@ -19,7 +19,9 @@ import { Router } from 'express';
 
 import { getDatabase } from '../../database/Database.js';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
+import { requireOrgRole } from '../../middleware/rbac.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
+import { requireActiveMembership } from '../../services/legacyCutover/requireActiveMembership.js';
 import legalService from '../../services/legalService.js';
 import PartnerCommissionService from '../../services/partnerCommissionService.js';
 import { ensurePartnerDemoDataset } from '../../services/partnerDemoSeedService.js';
@@ -86,11 +88,51 @@ function partnerProgramMeta(req: AuthRequest, partnerOrgId: string) {
 }
 
 /**
+ * AMD-PRT-ECONOMICS-002 (owner decision 2A) read-side gate.
+ *
+ * Writes are already fully refused by `createPartnerEconomicsPolicyGuard`
+ * above, but until now the economic READS (program/status, program/ledger,
+ * earnings-summary, commission-transactions, payouts, payout-settings) had
+ * NO role check at all: any authenticated partner-portal user could see full
+ * commission/payout history. AMD-PRT-ECONOMICS-002 requires that historical
+ * records "stay readable BUT ONLY through an authorized same-tenant
+ * OWNER/ADMIN audit surface" — this array is that surface, applied only to
+ * the six economic read routes below (never to the non-economic reads, which
+ * must keep working for ordinary partner users).
+ *
+ * Two checks, both server-derived — never a client-supplied header/body:
+ *  1. `requireActiveMembership` (server/src/services/legacyCutover/
+ *     requireActiveMembership.ts) re-reads a REAL, per-request `status='ACTIVE'`
+ *     row from `organization_members` for the V8 tenant context that
+ *     `attachV8Context` already attached upstream (`req.v8Context.organizationId`
+ *     / `.userId`). Its own doc comment: "Role claims, including SUPERADMIN,
+ *     never bypass it" — this is what denies a SUPERADMIN JWT claim that has
+ *     no live membership row, and denies a caller whose real membership is for
+ *     a different (foreign) tenant, and denies a revoked membership.
+ *  2. `requireOrgRole('admin')` (server/src/middleware/rbac.middleware.ts,
+ *     `requireRole`/`requireOrgRole` — alias defined lines ~257-259) then
+ *     requires ADMIN-or-above from `req.userRole`/`req.user.role`, which
+ *     `verifyToken` resolved from that same `organization_members` row
+ *     upstream. OWNER canonicalizes to the same "superadmin" bypass tier as
+ *     ADMIN's hierarchy check (rbac.middleware.ts `toCanonicalRole`), so both
+ *     OWNER and ADMIN pass while MEMBER (canonical "user", level 1 < 2) is
+ *     rejected. Placing this SECOND means a membership-less SUPERADMIN claim
+ *     is already denied by check 1 and never reaches the role bypass here.
+ *
+ * Call-convention precedent, copied rather than reinvented:
+ * `server/src/routes/admin-data.routes.ts` line ~45
+ * (`router.use(requireRole('super_admin', 'admin', 'owner'))`) and line ~108
+ * (`router.put('/user-tiers/:orgId/:userId', requireRole(...), ...)`).
+ */
+const requirePartnerEconomicsReadAccess = [requireActiveMembership, requireOrgRole('admin')];
+
+/**
  * GET /api/v8/partner/program/status
  * P29 single truth: lifecycle phase (runtime) + derived ledger balances
  */
 router.get(
   '/program/status',
+  ...requirePartnerEconomicsReadAccess,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.userId || req.user?.id;
     if (!userId) {
@@ -119,7 +161,12 @@ router.get(
         hold: detail.hold,
         ...(detail.degraded ? { degraded: detail.degraded } : {}),
       },
-      meta: partnerProgramMeta(req, partnerOrgId),
+      // AMD-PRT-ECONOMICS-002 (GAP 2): every economic read carries the policy
+      // projection inside `meta`, alongside the existing contract/version
+      // fields — the one place a client already looks for server-derived
+      // envelope state, so the UI needs no second, client-side copy of the
+      // policy to render an honest read-only audit view.
+      meta: { ...partnerProgramMeta(req, partnerOrgId), ...partnerEconomicsPolicyProjection() },
     });
   })
 );
@@ -129,6 +176,7 @@ router.get(
  */
 router.get(
   '/program/ledger',
+  ...requirePartnerEconomicsReadAccess,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.userId || req.user?.id;
     if (!userId) {
@@ -152,7 +200,7 @@ router.get(
     const entries = await PartnerProgramLedgerService.listEntries(partnerOrgId, { limit, offset });
     return res.json({
       data: { entries },
-      meta: partnerProgramMeta(req, partnerOrgId),
+      meta: { ...partnerProgramMeta(req, partnerOrgId), ...partnerEconomicsPolicyProjection() },
     });
   })
 );
@@ -734,6 +782,7 @@ router.get(
  */
 router.get(
   '/earnings-summary',
+  ...requirePartnerEconomicsReadAccess,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.userId || req.user?.id;
     if (!userId) {
@@ -769,7 +818,7 @@ router.get(
     };
     return res.json({
       data: { earnings },
-      meta: partnerProgramMeta(req, partnerOrgId),
+      meta: { ...partnerProgramMeta(req, partnerOrgId), ...partnerEconomicsPolicyProjection() },
     });
   })
 );
@@ -779,6 +828,7 @@ router.get(
  */
 router.get(
   '/commission-transactions',
+  ...requirePartnerEconomicsReadAccess,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.userId || req.user?.id;
     if (!userId) {
@@ -806,7 +856,7 @@ router.get(
     });
     return res.json({
       data: { transactions },
-      meta: partnerReadMeta(req, partnerOrgId),
+      meta: { ...partnerReadMeta(req, partnerOrgId), ...partnerEconomicsPolicyProjection() },
     });
   })
 );
@@ -816,6 +866,7 @@ router.get(
  */
 router.get(
   '/payouts',
+  ...requirePartnerEconomicsReadAccess,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.userId || req.user?.id;
     if (!userId) {
@@ -841,7 +892,7 @@ router.get(
     });
     return res.json({
       data: { payouts },
-      meta: partnerReadMeta(req, partnerOrgId),
+      meta: { ...partnerReadMeta(req, partnerOrgId), ...partnerEconomicsPolicyProjection() },
     });
   })
 );
@@ -1208,6 +1259,7 @@ router.put(
  */
 router.get(
   '/payout-settings',
+  ...requirePartnerEconomicsReadAccess,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.userId || req.user?.id;
     if (!userId) {
@@ -1224,7 +1276,7 @@ router.get(
     const settings = await getPartnerPayoutSettings(partnerOrgId);
     return res.json({
       data: { settings },
-      meta: partnerReadMeta(req, partnerOrgId),
+      meta: { ...partnerReadMeta(req, partnerOrgId), ...partnerEconomicsPolicyProjection() },
     });
   })
 );

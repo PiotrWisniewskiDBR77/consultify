@@ -14,6 +14,11 @@ import { v4 as uuidv4 } from 'uuid';
 import * as PartnerCommissionService from '../../services/partnerCommissionService.js';
 // Partner services for commission tracking
 import * as PartnerReferralService from '../../services/partnerReferralService.js';
+// AMD-PRT-ECONOMICS-002: partner economics (commission/discount/accrual/payout)
+// are excluded by owner decision; this predicate/guard fails closed before
+// any of the writes below (attribution activation, first_payment_at stamp,
+// commission row) can execute.
+import { assertPartnerEconomicsOperationAllowed } from '../../services/partnerEconomicsPolicy.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 
@@ -503,6 +508,16 @@ async function handleInvoicePaid(invoice: StripeTypes.Invoice): Promise<string |
   // PARTNER COMMISSION TRACKING (GAP-PARTNER-001)
   // =========================================
   try {
+    // AMD-PRT-ECONOMICS-002: partner economics (commission/discount/accrual/
+    // payout) are excluded by owner decision. Fail closed as the FIRST
+    // statement of this block — before the attribution lookup, before the
+    // ACTIVE-status/first_payment_at writes below, and before any commission
+    // creation — so none of those writes execute. Caught by the existing
+    // catch (partnerError) below, which only logs: commission tracking is
+    // not the critical path, so the webhook must keep returning success to
+    // Stripe regardless of this policy state.
+    assertPartnerEconomicsOperationAllowed('commission');
+
     // Check if organization has a partner attribution
     const attribution = await PartnerReferralService.getAttributionByOrganization(orgId);
 

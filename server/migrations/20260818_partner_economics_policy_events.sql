@@ -118,8 +118,10 @@ BEGIN
     SELECT 1
       FROM pg_index i
       JOIN pg_class c ON c.oid = i.indrelid
+      JOIN pg_namespace n ON n.oid = c.relnamespace
       JOIN pg_attribute a ON a.attrelid = c.oid AND a.attnum = ANY (i.indkey)
      WHERE c.relname = 'partner_economics_policy_events'
+       AND n.nspname = current_schema()
        AND i.indisprimary
        AND i.indnatts = 1
        AND a.attname = 'id'
@@ -141,7 +143,9 @@ BEGIN
     SELECT string_agg(pg_get_constraintdef(con.oid), ' ') INTO check_src
       FROM pg_constraint con
       JOIN pg_class c ON c.oid = con.conrelid
+      JOIN pg_namespace n ON n.oid = c.relnamespace
      WHERE c.relname = 'partner_economics_policy_events'
+       AND n.nspname = current_schema()
        AND con.contype = 'c'
        AND pg_get_constraintdef(con.oid) LIKE '%' || expected.col || '%';
 
@@ -151,10 +155,16 @@ BEGIN
         expected.col;
     END IF;
 
-    -- OR-true widening (e.g. "... OR true", "OR 1=1") defeats the CHECK.
+    -- Widening detector, HONEST SCOPE: this recognises the two literal
+    -- spellings OR TRUE and OR 1=1 (optionally parenthesised). It is NOT a
+    -- general tautology solver -- OR 2=2, OR ('a'='a') and
+    -- OR <col> IS NOT NULL would each defeat the CHECK and pass this test.
+    -- Writing a SQL theorem prover here would be false assurance; the exact
+    -- spellings covered are pinned by tested negatives in
+    -- tests/integration/partners/partner-economics-telemetry.realdb.test.ts.
     IF check_src ~* '\mor\M\s+(true|\(?1\s*=\s*1)' THEN
       RAISE EXCEPTION
-        'AMD-PRT-ECONOMICS-002 preflight: CHECK on % is widened with an OR-true term (%). Refusing before ANY mutation.',
+        'AMD-PRT-ECONOMICS-002 preflight: CHECK on % is widened with a recognised OR-true term (%). Note: only the literal OR TRUE / OR 1=1 spellings are detected. Refusing before ANY mutation.',
         expected.col, check_src;
     END IF;
 
@@ -169,6 +179,12 @@ BEGIN
 
     -- ...and the count of quoted literals must not exceed the canonical set,
     -- which rejects a superset that admits extra values.
+    -- HONEST SCOPE: check_src is aggregated from every CHECK on this table whose
+    -- definition text merely CONTAINS the column name, so an unrelated
+    -- constraint mentioning 'operation' or 'surface' inside a string literal
+    -- inflates this count and can trip a false SUPERSET rejection. That fails
+    -- CLOSED (it blocks the migration, it never admits bad data), which is the
+    -- safe direction, but it is a heuristic and is described as one.
     IF (length(check_src) - length(replace(check_src, '''', ''))) / 2
        > array_length(expected.vals, 1) THEN
       RAISE EXCEPTION
@@ -187,7 +203,9 @@ BEGIN
     SELECT string_agg(pg_get_constraintdef(con.oid), ' ') INTO check_src
       FROM pg_constraint con
       JOIN pg_class c ON c.oid = con.conrelid
+      JOIN pg_namespace n ON n.oid = c.relnamespace
      WHERE c.relname = 'partner_economics_policy_events'
+       AND n.nspname = current_schema()
        AND con.contype = 'c'
        AND pg_get_constraintdef(con.oid) LIKE '%' || expected.col || '%';
 
@@ -203,8 +221,10 @@ BEGIN
     SELECT 1
       FROM pg_index i
       JOIN pg_class c ON c.oid = i.indrelid
+      JOIN pg_namespace n ON n.oid = c.relnamespace
       JOIN pg_attribute a ON a.attrelid = c.oid AND a.attnum = ANY (i.indkey)
      WHERE c.relname = 'partner_economics_policy_events'
+       AND n.nspname = current_schema()
        AND i.indisunique
        AND i.indnatts = 1
        AND a.attname = 'receipt_identity'
@@ -250,7 +270,12 @@ BEGIN
       'idx_partner_economics_policy_operation',
       'idx_partner_economics_policy_org'])
   LOOP
-    IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = mismatch AND relkind = 'i') THEN
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_class c2
+        JOIN pg_namespace n2 ON n2.oid = c2.relnamespace
+       WHERE c2.relname = mismatch AND c2.relkind = 'i'
+         AND n2.nspname = current_schema()
+    ) THEN
       idx_missing := coalesce(idx_missing || ', ', '') || mismatch;
     END IF;
   END LOOP;

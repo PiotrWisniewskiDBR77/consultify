@@ -35,6 +35,10 @@ import {
   DuplicateOrganizationNameError,
   isGenericOrganizationName,
 } from '../services/organizationIdentityService.js';
+import {
+  isPartnerEconomicsOperationAvailable,
+  PARTNER_ECONOMICS_POLICY_DECISION,
+} from '../services/partnerEconomicsPolicy.js';
 import refreshTokenService from '../services/RefreshTokenService.js';
 import slackService from '../services/slackService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -1851,8 +1855,41 @@ router.post(
         }
 
         // GAP-PARTNER-007: Create partner attribution if partner_code is provided
+        //
+        // AMD-PRT-ECONOMICS-002 (owner decision 2A). This call site was the most
+        // severe bypass found in the packet: /api/auth/* is unauthenticated and
+        // NOT covered by any partnerEconomicsPolicy route rule, so an anonymous
+        // signup carrying a partner/promo code could create a commission-bearing
+        // attribution AND an ACTIVE row in organization_discounts even while the
+        // policy says those operations are unavailable.
+        //
+        // Approach chosen: (a) skip the ENTIRE block up front when the policy is
+        // disabled, before PartnerReferralService.validateReferralCode/
+        // createAttribution are even called and before the raw
+        // `INSERT INTO organization_discounts` below. This is preferred over
+        // wrapping assertPartnerEconomicsOperationAllowed('discount') in a
+        // try/catch here because it (1) makes ZERO calls into the partner
+        // service or discount-config lookup at all -- no reliance on a guard
+        // inside createAttribution() staying correct (that guard is owned by a
+        // parallel change, not this file), and (2) keeps the log line an
+        // explicit, honest "skipped by policy" instead of routing an expected
+        // refusal through the `catch (partnerErr) { logger.error(...) }` below,
+        // which is meant for genuine failures.
+        //
+        // Nothing upstream of this block is transactional with it and nothing
+        // here is undone: the user row, the organization_members row, the APLIX
+        // interview assignment, legal-doc acceptance, the demo-trial event and
+        // the general AttributionService self-serve/promo attribution have all
+        // already been created/attempted above and are independent of partner
+        // commission/discount economics. Skipping this block leaves registration
+        // fully functional -- it only omits the partner attribution + discount
+        // side effects.
         const effectivePartnerCode = promoValidation?.partnerCode || partner_code;
-        if (effectivePartnerCode) {
+        if (effectivePartnerCode && !isPartnerEconomicsOperationAvailable()) {
+          logger.info(
+            `[Auth] Skipped partner attribution/discount for org ${orgId} (code ${effectivePartnerCode}): excluded by owner policy ${PARTNER_ECONOMICS_POLICY_DECISION}`
+          );
+        } else if (effectivePartnerCode) {
           try {
             const { default: PartnerReferralService } =
               (await import('../services/partnerReferralService.js')) as any;

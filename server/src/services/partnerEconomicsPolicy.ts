@@ -279,15 +279,29 @@ const sha256 = (parts: Array<string | null>): string =>
 export function partnerEconomicsReceiptIdentity(parts: {
   requestId: string | null;
   organizationId: string | null;
+  userId: string | null;
 }): { identity: string; replayable: boolean } {
   if (!parts.requestId) {
     return {
-      identity: sha256(['no-request-id', parts.organizationId, randomUUID()]),
+      identity: sha256([
+        'no-request-id',
+        parts.organizationId,
+        parts.userId,
+        randomUUID(),
+      ]),
       replayable: false,
     };
   }
+  // userId is part of the identity, not only of the fingerprint. `x-request-id`
+  // is a caller-supplied header, so two different users in the same tenant can
+  // legitimately send the same value. With a tenant-only identity the second
+  // user's denial hit ON CONFLICT DO NOTHING, then failed the fingerprint
+  // comparison and was discarded as a "collision" — losing a genuinely distinct
+  // piece of evidence rather than recording it. Scoping the identity by actor
+  // keeps replay-exactly-one for the same actor while letting a different actor
+  // get their own receipt.
   return {
-    identity: sha256(['request', parts.organizationId, parts.requestId]),
+    identity: sha256(['request', parts.organizationId, parts.userId, parts.requestId]),
     replayable: true,
   };
 }
@@ -352,6 +366,7 @@ export async function recordPartnerEconomicsPolicyDenial(params: {
   const { identity, replayable } = partnerEconomicsReceiptIdentity({
     requestId,
     organizationId,
+    userId,
   });
   const fingerprint = partnerEconomicsRequestFingerprint({
     surface: params.surface,
