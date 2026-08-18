@@ -95,12 +95,7 @@ vi.mock('../../../src/components/shared/ModuleHub', () => ({
               ))}
             </button>
             {(getRowActions?.(row) ?? []).map((a: any) => (
-              <button
-                key={a.id}
-                aria-label={a.label}
-                disabled={a.disabled}
-                onClick={a.onClick}
-              >
+              <button key={a.id} aria-label={a.label} disabled={a.disabled} onClick={a.onClick}>
                 {a.label}
               </button>
             ))}
@@ -117,9 +112,7 @@ vi.mock('../../../src/components/shared/TableWithPreviewLayout', () => ({
   TableWithPreviewLayout: ({ children, selectedItem, renderPreview }: any) => (
     <div data-testid="table-preview-layout">
       {children}
-      {selectedItem ? (
-        <div data-testid="preview-pane">{renderPreview(selectedItem)}</div>
-      ) : null}
+      {selectedItem ? <div data-testid="preview-pane">{renderPreview(selectedItem)}</div> : null}
     </div>
   ),
 }));
@@ -132,15 +125,17 @@ vi.mock('../../../src/components/ui/primitives/chips', () => ({
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
-function makeProgram(overrides: Partial<{
-  id: string;
-  name: string;
-  status: string;
-  objective: string | null;
-  templateIds: string[];
-  assigneeIds: string[];
-  surveysGenerated: boolean;
-}> = {}) {
+function makeProgram(
+  overrides: Partial<{
+    id: string;
+    name: string;
+    status: string;
+    objective: string | null;
+    templateIds: string[];
+    assigneeIds: string[];
+    surveysGenerated: boolean;
+  }> = {}
+) {
   return {
     id: overrides.id ?? 'prog-1',
     organizationId: 'org-1',
@@ -163,9 +158,7 @@ function makeProgram(overrides: Partial<{
 const COMPLETION = { generated: false, total: 1, done: 0, percent: 0, byStatus: {} };
 
 function renderHub() {
-  return render(
-    <AuditsHubUnderTest />
-  );
+  return render(<AuditsHubUnderTest />);
 }
 
 // Import AFTER mocks are registered.
@@ -263,44 +256,14 @@ describe('AuditsHub — lista + dashboard (T6)', () => {
     });
   });
 
-  it('opens wizard on "New audit program" CTA', async () => {
+  it('does not expose retired legacy or ISO program creation launchers', async () => {
     mockListPrograms.mockResolvedValue({ programs: [], total: 0, limit: 50, offset: 0 });
     renderHub();
     await waitFor(() => screen.queryByText(/ładowanie|loading/i) === null);
 
-    const newBtn = screen.getByRole('button', { name: 'audit.newAuditProgram' });
-    fireEvent.click(newBtn);
-
-    await waitFor(() => {
-      expect(screen.getByTestId('audit-wizard')).toBeInTheDocument();
-    });
-  });
-
-  it('opens ISO 27001 wizard via right-controls button', async () => {
-    mockListPrograms.mockResolvedValue({ programs: [], total: 0, limit: 50, offset: 0 });
-    renderHub();
-    await waitFor(() => screen.queryByText(/ładowanie|loading/i) === null);
-
-    const isoBtn = screen.getByRole('button', { name: 'audit.iso27001' });
-    fireEvent.click(isoBtn);
-
-    await waitFor(() => {
-      expect(screen.getByTestId('audit-wizard')).toBeInTheDocument();
-    });
-  });
-
-  it('closes wizard when wizard fires onClose', async () => {
-    mockListPrograms.mockResolvedValue({ programs: [], total: 0, limit: 50, offset: 0 });
-    renderHub();
-    await waitFor(() => screen.queryByText(/ładowanie|loading/i) === null);
-
-    fireEvent.click(screen.getByRole('button', { name: 'audit.newAuditProgram' }));
-    await waitFor(() => screen.getByTestId('audit-wizard'));
-
-    fireEvent.click(screen.getByText('close-wizard'));
-    await waitFor(() => {
-      expect(screen.queryByTestId('audit-wizard')).not.toBeInTheDocument();
-    });
+    expect(screen.queryByRole('button', { name: 'audit.newAuditProgram' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'audit.iso27001' })).toBeNull();
+    expect(screen.queryByTestId('audit-wizard')).toBeNull();
   });
 
   it('calls deleteProgram and reloads list on confirm delete', async () => {
@@ -340,7 +303,9 @@ describe('AuditsHub — lista + dashboard (T6)', () => {
     await waitFor(() => {
       expect(screen.getByTestId('preview-pane')).toBeInTheDocument();
     });
-    expect(within(screen.getByTestId('preview-pane')).getByText('Clickable Program')).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId('preview-pane')).getByText('Clickable Program')
+    ).toBeInTheDocument();
   });
 
   it('shows "surveys generated" badge when surveysGenerated=true', async () => {
