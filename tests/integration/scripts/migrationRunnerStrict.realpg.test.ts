@@ -285,6 +285,66 @@ describe.skipIf(!OPTED_IN)('migrate.postgres.ts — strict contract on real Post
     await clearLedger([f]);
   }, 120_000);
 
+  it('rejects a malformed existing ledger before recreating its missing status index', async () => {
+    const dir = fixtureDir();
+    const f = '700_cf_malformed_no_index.sql';
+    write(dir, f, 'CREATE TABLE IF NOT EXISTS cf_malformed_no_index (id INT);');
+    await clearLedger([f]);
+
+    await withClient(async (c) => {
+      await c.query('DROP INDEX IF EXISTS idx_schema_migrations_status');
+      await c.query(
+        `INSERT INTO schema_migrations (version, filename, checksum, status)
+         VALUES ($1, $2, $3, 'success')`,
+        ['700', f, 'malformed-checksum']
+      );
+    });
+
+    try {
+      const before = await withClient(async (c) => ({
+        row: (
+          await c.query(
+            `SELECT version, filename, checksum, status FROM schema_migrations WHERE filename = $1`,
+            [f]
+          )
+        ).rows,
+        index: (
+          await c.query(`SELECT to_regclass('idx_schema_migrations_status') AS name`)
+        ).rows[0]?.name,
+      }));
+      expect(before.index).toBeNull();
+
+      const run = runMigrate(['--dir', dir]);
+      expect(run.status).not.toBe(0);
+      expect(run.stdout + run.stderr).toContain('UNTRUSTED LEDGER ROW');
+
+      const after = await withClient(async (c) => ({
+        row: (
+          await c.query(
+            `SELECT version, filename, checksum, status FROM schema_migrations WHERE filename = $1`,
+            [f]
+          )
+        ).rows,
+        index: (
+          await c.query(`SELECT to_regclass('idx_schema_migrations_status') AS name`)
+        ).rows[0]?.name,
+        relation: (
+          await c.query(`SELECT to_regclass('public.cf_malformed_no_index') AS name`)
+        ).rows[0]?.name,
+      }));
+      expect(after.row).toEqual(before.row);
+      expect(after.index).toBeNull();
+      expect(after.relation).toBeNull();
+    } finally {
+      await clearLedger([f]);
+      await withClient((c) =>
+        c.query(
+          'CREATE INDEX IF NOT EXISTS idx_schema_migrations_status ON schema_migrations(status)'
+        )
+      );
+    }
+  }, 120_000);
+
   it('rolls back a partially-failing migration: no relations, no ledger row', async () => {
     const dir = fixtureDir();
     const f = '700_cf_rollback.sql';

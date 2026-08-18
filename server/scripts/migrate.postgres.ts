@@ -863,6 +863,7 @@ async function main() {
 
   try {
     let applied: Map<string, AppliedMigrationRow>;
+    let ledgerPreflightComplete = false;
 
     if (dryRun) {
       // A dry run mutates NOTHING: no lock, no CREATE TABLE, no index.
@@ -870,12 +871,27 @@ async function main() {
     } else {
       await acquireMigrationLock(client);
       lockHeld = true;
-      await ensureSchemaMigrationsTable(client);
-      applied = await getApplied(client);
+
+      // An existing ledger is untrusted input. Read and validate it before
+      // `ensureSchemaMigrationsTable` can create its optional status index.
+      // A malformed row or incompatible table shape must therefore fail with
+      // the existing schema and data byte-for-byte unchanged.
+      const existingLedger = await client.query(
+        `SELECT to_regclass('schema_migrations') AS t`
+      );
+      if (existingLedger.rows[0]?.t) {
+        applied = await getApplied(client);
+        runLedgerPreflight(candidates, applied);
+        ledgerPreflightComplete = true;
+        await ensureSchemaMigrationsTable(client);
+      } else {
+        await ensureSchemaMigrationsTable(client);
+        applied = new Map<string, AppliedMigrationRow>();
+      }
     }
 
     // Fail closed BEFORE the first migration is applied.
-    runLedgerPreflight(candidates, applied);
+    if (!ledgerPreflightComplete) runLedgerPreflight(candidates, applied);
 
     // `--from` resumes at a specific file's position in the DETERMINISTIC
     // execution order (not raw filename string comparison, which would no
