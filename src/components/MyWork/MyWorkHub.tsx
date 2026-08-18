@@ -1587,16 +1587,19 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   // flows and is intentionally not reconciled here.
   useEffect(() => {
     const nbId = searchParams.get('notebook');
-    if ((nbId || null) === (notebookOpenId || null)) return;
     if (!nbId) {
       setNotebookOpenId(null);
       setNotebookOpenTitle('');
       return;
     }
-    setActiveTab('notebook');
-    setNotebookOpenId(nbId);
-    setNotebookOpenTitle('');
-    setNotebookOpenPageId(null);
+    if (nbId !== notebookOpenId) {
+      setActiveTab('notebook');
+      setNotebookOpenId(nbId);
+      setNotebookOpenTitle('');
+      setNotebookOpenPageId(null);
+      return;
+    }
+    if (notebookOpenTitle) return;
     let cancelled = false;
     void (async () => {
       try {
@@ -1610,7 +1613,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     return () => {
       cancelled = true;
     };
-  }, [searchParams, notebookOpenId]);
+  }, [searchParams, notebookOpenId, notebookOpenTitle]);
 
   useEffect(() => {
     const intent = parseMyWorkPathIntent(location.pathname, isPolish);

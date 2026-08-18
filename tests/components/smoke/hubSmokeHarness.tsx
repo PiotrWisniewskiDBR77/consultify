@@ -55,13 +55,7 @@ vi.mock('react-router-dom', async (importOriginal) => {
 // ── ModuleHub stub: render tabs (labels) + command rows + children ────────────
 // Path used by every hub is '@/components/shared/ModuleHub/ModuleHub'.
 vi.mock('@/components/shared/ModuleHub/ModuleHub', () => ({
-  ModuleHub: ({
-    tabs,
-    activeTab,
-    commandRowContent,
-    commandRowRightContent,
-    children,
-  }: any) => (
+  ModuleHub: ({ tabs, activeTab, commandRowContent, commandRowRightContent, children }: any) => (
     <div data-testid="module-hub">
       <nav data-testid="module-hub-tabs">
         {(tabs || []).map((tab: any) => (
@@ -95,7 +89,9 @@ vi.mock('@/components/shared/ModuleHub/useModuleOpenDocuments', () => ({
 // trivial element. Mirrors tests/components/MyWork/NotebookContent.*'s approach of
 // mocking `notebook/extensions`.
 vi.mock('@/components/MyWork/NotebookContent', () => ({
-  NotebookContent: () => <div data-testid="stub-notebook-content" />,
+  NotebookContent: ({ notebookTitle }: { notebookTitle?: string }) => (
+    <div data-testid="stub-notebook-content">{notebookTitle}</div>
+  ),
 }));
 vi.mock('@/components/Initiatives/InitiativeDocumentView', () => ({
   InitiativeDocumentView: () => <div data-testid="stub-initiative-document-view" />,
@@ -214,6 +210,6 @@ export function renderHub(element: React.ReactElement, initialPath = '/'): Rende
           <MemoryRouter initialEntries={[initialPath]}>{element}</MemoryRouter>
         </AccessPolicyProvider>
       </FeatureFlagsProvider>
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
 }

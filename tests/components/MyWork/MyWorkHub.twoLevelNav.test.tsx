@@ -13,10 +13,11 @@
  * here, consistent with how the pre-existing `clientVaultFlag`/
  * `agentPlanFlag` tests are gated in this codebase.
  */
-import { waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { installFetchStub, renderHub } from '../smoke/hubSmokeHarness';
+import { Api } from '@/services/api';
 
 const FLAG_LS_KEY = 'ff.mywork_two_level_nav';
 
@@ -58,5 +59,23 @@ describe('MyWorkHub — two-level nav flag (M02-P01)', () => {
     // The group tablist must carry a real accessible name (M02-010 fix).
     const groupRow = document.querySelector('[data-testid="mywork-nav-groups"]');
     expect(groupRow?.getAttribute('aria-label')).toBeTruthy();
+  });
+
+  it('loads the server-truth notebook title once on a cold deep link', async () => {
+    const getNotebook = vi.spyOn(Api, 'getNotebook').mockResolvedValue({
+      id: 'notebook-1',
+      title: 'Server Truth Notebook',
+    });
+    const { MyWorkHub } = await import('@/components/MyWork/MyWorkHub');
+
+    renderHub(<MyWorkHub />, '/my-work/notebook?notebook=notebook-1');
+
+    await waitFor(() => {
+      expect(screen.getByTestId('stub-notebook-content')).toHaveTextContent(
+        'Server Truth Notebook'
+      );
+    });
+    expect(getNotebook).toHaveBeenCalledTimes(1);
+    expect(getNotebook).toHaveBeenCalledWith('notebook-1');
   });
 });
