@@ -402,95 +402,29 @@ export async function seedTenants(client: pg.Client): Promise<void> {
 }
 
 /**
- * Synthetic test-only prerequisite for the ROI owner. This is deliberately
- * not a business step and never invents a production default: a signed ACTIVE
- * ADMIN calls the canonical policy publisher on this suite's pinned client.
- *
- * AMD-FLOW-ROI-VISIBILITY-002 STATUS (closure-b F2): this function is now
- * ONLY a workaround for a SEPARATE, still-open gap it does not fix —
- * `createRoiCase` (roiCaseCommands.ts) fails closed on
- * `RoiCaseNoActiveVisibilityPolicyError` unless an active
- * `rvn_platform_visibility_policies` row exists for `domain='roi'`, and NO
- * production writer for that row exists anywhere in this codebase (the
- * only other caller of `publishVisibilityPolicy` is OKR's `publishProgram`,
- * `domain='okr'`) — verified by F2's Phase 1 grep, confirmed independently
- * by the packet lead. This function remains ONLY so `createRoiCase`'s
- * internal call (via `closureReceiptRoiCaseAdapter.ts`, invoked by this
- * suite's closure-delivery worker) does not fail closed here in the test.
- * It is NOT the release-qualification policy the owner decision asked for
- * — see `provisionRoiGovernedVisibilityPolicy` below for that, which gates
- * the actual READ path (`resolveRoiGovernedVisibility`,
- * `GET /cases`/`GET /cases/:caseId`) this suite also now exercises for
- * real. Whether the OLD `domain='roi'` policy path should ever get a real
- * production writer — and if so whether it should be THIS command or
- * something else — is OWNER DECISION REQUIRED (F2 escalation (b)); this
- * function is deliberately left exactly as it was, not resolved as a side
- * effect of this packet.
- */
-export async function provisionSyntheticRoiVisibilityPolicy(
-  client: pg.Client,
-  actor: CfActor,
-  organizationId: string
-): Promise<{ policyId: string; policyVersion: string; fixtureKind: 'SYNTHETIC_TEST_ONLY' }> {
-  if (actor.organizationId !== organizationId || actor.role !== 'ADMIN')
-    throw new Error('FLOW synthetic ROI policy requires same-tenant ADMIN');
-  const encoded = bearer(actor).replace(/^Bearer /, '');
-  const claims = jwt.verify(encoded, process.env.JWT_SECRET || PINNED_JWT_SECRET) as jwt.JwtPayload;
-  if (String(claims.id ?? claims.sub ?? '') !== actor.id)
-    throw new Error('FLOW synthetic ROI policy signed actor mismatch');
-  const membership = await client.query(
-    `SELECT 1 FROM organization_members
-      WHERE organization_id=$1 AND user_id=$2 AND role='ADMIN' AND UPPER(status)='ACTIVE'`,
-    [organizationId, actor.id]
-  );
-  if (membership.rowCount !== 1) throw new Error('FLOW synthetic ROI policy ACTIVE membership required');
-
-  const { publishVisibilityPolicy } = await import(
-    '../../../server/src/services/resultsVnext/platform/visibilityResolver.js'
-  );
-  await client.query('BEGIN');
-  try {
-    const policy = await publishVisibilityPolicy(client, {
-      organizationId,
-      domain: 'roi',
-      mode: 'OPEN_ORG',
-      publishedBy: actor.id,
-    });
-    const readback = await client.query<{
-      policy_id: string;
-      policy_version: number;
-      visibility_mode: string;
-      created_by: string;
-    }>(
-      `SELECT policy_id,policy_version,visibility_mode,created_by
-         FROM rvn_platform_visibility_policies
-        WHERE policy_id=$1 AND organization_id=$2 AND domain='roi' AND is_active=true`,
-      [policy.policyId, organizationId]
-    );
-    if (
-      readback.rowCount !== 1 ||
-      readback.rows[0]?.created_by !== actor.id ||
-      readback.rows[0]?.visibility_mode !== 'OPEN_ORG' ||
-      String(readback.rows[0]?.policy_version) !== policy.policyVersion
-    ) throw new Error('FLOW synthetic ROI policy exact audit/readback failed');
-    await client.query('COMMIT');
-    return { ...policy, fixtureKind: 'SYNTHETIC_TEST_ONLY' };
-  } catch (error) {
-    await client.query('ROLLBACK');
-    throw error;
-  }
-}
-
-/**
  * AMD-FLOW-ROI-VISIBILITY-002 — the REAL, production-capable governance
  * command (server/src/services/resultsVnext/platform/visibilityResolver.ts,
  * `publishRoiGovernedVisibilityPolicy`), called through this suite's own
  * pinned JWT actor exactly the way a real OWNER/ADMIN would from the route
  * layer — NOT a raw SQL insert, NOT a bypass. This is what
- * `resolveRoiGovernedVisibility` (and, through it, `GET /cases` /
- * `GET /cases/:caseId`) actually checks. Unlike
- * `provisionSyntheticRoiVisibilityPolicy` above, this is the intended
- * production path, not a test-only workaround.
+ * `resolveRoiGovernedVisibility` (`GET /cases`/`GET /cases/:caseId`) checks.
+ * There is no second, synthetic prerequisite anymore:
+ * `provisionSyntheticRoiVisibilityPolicy`, which used to publish a raw
+ * SYNTHETIC_TEST_ONLY OPEN_ORG legacy policy purely so `createRoiCase`
+ * would not fail closed, has been DELETED from this file.
+ *
+ * `createRoiCase` (roiCaseCommands.ts) does NOT currently succeed after
+ * this function runs — CORRECTED, this was claimed here before and was
+ * false: `publishRoiGovernedVisibilityPolicy` does NOT write the legacy
+ * `domain='roi'` row (that draft was reverted; see its own comment in
+ * visibilityResolver.ts). `createRoiCase` checks `resolveRoiGovernedVisibility`
+ * for authorization and then throws `RoiCaseCreationAwaitingGovernedModeError`
+ * unconditionally, for every authorized actor, until the CTO-decided Variant
+ * B (a governed mode added to the shared `rvn_platform_visibility_policies`
+ * machinery) lands in a parallel worktree. This function is still the ONLY
+ * ROI-visibility fixture step this suite needs for the READ path
+ * (`resolveRoiGovernedVisibility`); it is not sufficient, on its own, to
+ * make ROI case creation succeed.
  */
 export async function provisionRoiGovernedVisibilityPolicy(
   actor: CfActor,

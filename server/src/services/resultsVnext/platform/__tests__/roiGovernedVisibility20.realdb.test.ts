@@ -307,16 +307,27 @@ describe('AMD-FLOW-ROI-VISIBILITY-002 governed ROI visibility (real Postgres)', 
   });
 
   itDB(
-    '8-way concurrency, SAME actor: exactly one applied, the other seven replayed with zero additional writes — ' +
-      'and the org-level publish that survives every other negative test above',
+    '8-way concurrency, SAME actor AND SAME idempotency key (a true client retry storm): exactly one applied, ' +
+      'the other seven replayed with zero additional writes — and the org-level publish that survives every ' +
+      'other negative test above',
     async () => {
-      const attempts = Array.from({ length: 8 }, (_, i) =>
+      // CORRECTED (Variant B idempotency redesign): all 8 calls share ONE
+      // idempotencyKey now, not 8 distinct ones. Under the fingerprint-based
+      // replay contract (organization + idempotency key + the pinned policy
+      // fingerprint), a replay requires an EXACT match on the idempotency
+      // key too — 8 distinct keys from the same actor would now each
+      // legitimately collide (see the next test), not replay. This test's
+      // OWN name says "SAME actor" — the realistic scenario that name
+      // describes is a client retrying the SAME logical request, which
+      // means the SAME idempotency key, not a fresh one per attempt.
+      const sharedIdempotencyKey = `gov20-owner-race-${randomUUID()}`;
+      const attempts = Array.from({ length: 8 }, () =>
         publishRoiGovernedVisibilityPolicy({
           organizationId: ORG_ID,
           actorUserId: USER_OWNER,
           policyKey: ROI_GOVERNED_VISIBILITY_POLICY.key,
           policyDigest: ROI_GOVERNED_VISIBILITY_POLICY.digest,
-          idempotencyKey: `gov20-owner-race-${i}-${randomUUID()}`,
+          idempotencyKey: sharedIdempotencyKey,
         })
       );
       const results = await Promise.all(attempts);
@@ -324,6 +335,26 @@ describe('AMD-FLOW-ROI-VISIBILITY-002 governed ROI visibility (real Postgres)', 
       const replayed = results.filter((r) => r.outcome === 'replayed');
       expect(applied.length).toBe(1);
       expect(replayed.length).toBe(7);
+      const rows = await client.query(`SELECT count(*)::text AS c FROM rvn_roi_visibility_governance WHERE organization_id = $1`, [ORG_ID]);
+      expect(rows.rows[0].c).toBe('1');
+    }
+  );
+
+  itDB(
+    'NEW property (Variant B): the SAME actor reusing a FRESH idempotency key, once the org is already ' +
+      'published, COLLIDES rather than replays — this is the "altered identity OR altered payload" contract, ' +
+      'not merely "different actor"; the weaker, superseded version of this function treated any retry from the ' +
+      'recorded actor as a benign replay regardless of idempotencyKey',
+    async () => {
+      await expect(
+        publishRoiGovernedVisibilityPolicy({
+          organizationId: ORG_ID,
+          actorUserId: USER_OWNER,
+          policyKey: ROI_GOVERNED_VISIBILITY_POLICY.key,
+          policyDigest: ROI_GOVERNED_VISIBILITY_POLICY.digest,
+          idempotencyKey: `gov20-owner-fresh-key-${randomUUID()}`,
+        })
+      ).rejects.toBeInstanceOf(RoiGovernedVisibilityPolicyCollisionError);
       const rows = await client.query(`SELECT count(*)::text AS c FROM rvn_roi_visibility_governance WHERE organization_id = $1`, [ORG_ID]);
       expect(rows.rows[0].c).toBe('1');
     }

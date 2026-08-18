@@ -19,7 +19,6 @@ import {
   purgeFixture,
   purgeImmutableLifecycleGateFixture,
   purgeResultsLineageFixture,
-  provisionSyntheticRoiVisibilityPolicy,
   seedTransformationContextForInitiative,
   seedTenants,
 } from './flowFixture.js';
@@ -41,23 +40,29 @@ beforeAll(async () => {
   client = newClient();
   await client.connect();
   await seedTenants(client);
-  await expect(
-    provisionSyntheticRoiVisibilityPolicy(client, TENANT_A.admin, 'foreign-tenant')
-  ).rejects.toThrow('same-tenant ADMIN');
-  const policy = await provisionSyntheticRoiVisibilityPolicy(client, TENANT_A.admin, TENANT_A.id);
-  expect(policy.fixtureKind).toBe('SYNTHETIC_TEST_ONLY');
 
   // AMD-FLOW-ROI-VISIBILITY-002 — the REAL governed policy, published
-  // through the same command the route layer calls (publishRoiGovernedVisibilityPolicy),
-  // NOT a raw insert. This is what GET /cases and GET /cases/:caseId below
-  // actually check (resolveRoiGovernedVisibility) — replacing the synthetic
-  // OPEN_ORG fixture above as the thing THIS suite's read path depends on.
-  // The synthetic fixture above remains ONLY because createRoiCase (via
-  // closureReceiptRoiCaseAdapter.ts, invoked by the closure-delivery worker
-  // below) still depends on the SEPARATE, still-unresolved legacy
-  // domain='roi' policy — see flowFixture.ts's doc comment on
-  // provisionSyntheticRoiVisibilityPolicy for why that is OWNER DECISION
-  // REQUIRED, not something this packet resolves.
+  // through the same command the route layer calls
+  // (publishRoiGovernedVisibilityPolicy), NOT a raw insert. This is what
+  // GET /cases and GET /cases/:caseId below actually check
+  // (resolveRoiGovernedVisibility). The SYNTHETIC_TEST_ONLY OPEN_ORG
+  // fixture that used to sit here (provisionSyntheticRoiVisibilityPolicy)
+  // has been DELETED from flowFixture.ts — this is the only ROI-visibility
+  // fixture step this suite has left, and it is the real production
+  // command, not a workaround.
+  //
+  // KNOWN, CURRENT CONSEQUENCE (Variant B in progress, not landed in this
+  // worktree): `createRoiCase` (roiCaseCommands.ts) now throws
+  // `RoiCaseCreationAwaitingGovernedModeError` unconditionally for every
+  // authorized actor — its legacy `domain='roi'` policy dependency was
+  // removed along with the synthetic fixture that used to satisfy it, and
+  // its replacement (the shared governed visibility MODE) has not landed
+  // yet. `closureReceiptRoiCaseAdapter.ts`'s internal call to
+  // `createRoiCase`, invoked by this suite's closure-delivery worker later
+  // in this test, will therefore fail, and every assertion downstream of
+  // `receipt.rows[0]?.finance_payload?.roiCaseId` will not be reached. That
+  // is expected under this WIP state, not a defect in this file — it
+  // resolves when Variant B lands and createRoiCase is restored.
   await expect(provisionRoiGovernedVisibilityPolicy(TENANT_A.owner, 'foreign-tenant')).rejects.toThrow(
     'same-tenant ACTIVE OWNER or ADMIN'
   );
