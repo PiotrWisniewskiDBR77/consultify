@@ -144,6 +144,29 @@ function reconciliationRequestFingerprint(input: {
   return createHash('sha256').update(JSON.stringify(input)).digest('hex');
 }
 
+/** GAP 2 fix (FIN-MVP-RECONCILIATION-001): idempotency-key replay guard for
+ * `updateRoiFinanceReconciliationStatus`, sibling to
+ * `reconciliationRequestFingerprint` above (open's own check). NOTE this is
+ * NOT the same mechanism as open's: open pre-checks its OWN domain table
+ * (`rvn_roi_finance_reconciliations`, which stores `idempotency_key` +
+ * `request_fingerprint` written once at INSERT time by open itself). The
+ * reconciliation row this command UPDATEs has no per-update-command
+ * fingerprint column — adding one is out of bounds for this fix (no new
+ * column, no migration). So the check this fingerprint feeds is a NEW,
+ * narrowly-scoped direct read of the platform event log
+ * (`rvn_platform_events`) done here in the domain command, not a mirror of
+ * open's domain-table check and not a change to the shared
+ * `executeAtomicCommand` primitive in atomicWrite.ts. */
+function updateStatusRequestFingerprint(input: {
+  organizationId: string;
+  reconciliationId: string;
+  actorUserId: string;
+  status: RoiFinanceReconciliationStatus;
+  resolutionNotes: string | null;
+}): string {
+  return createHash('sha256').update(JSON.stringify(input)).digest('hex');
+}
+
 function deterministicGrantReceiptId(organizationId: string, idempotencyKey: string): string {
   const hex = createHash('sha256').update(`rvn-finance-owner-grant:${organizationId}:${idempotencyKey}`).digest('hex').slice(0, 32).split('');
   hex[12] = '4';
@@ -516,6 +539,10 @@ export async function updateRoiFinanceReconciliationStatus(
 
   let beforeState: Record<string, unknown> | null = null;
   let isTerminalTransition = false;
+  // GAP 2 fix: populated inside applyMutation, read by buildEvent — same
+  // outer-closure pattern already used for beforeState/isTerminalTransition
+  // above.
+  let requestFingerprint: string | null = null;
 
   return executeAtomicCommand<RoiFinanceReconciliationRow, RoiFinanceReconciliation>({
     organizationId,
@@ -551,6 +578,39 @@ export async function updateRoiFinanceReconciliationStatus(
         );
       }
       const mergedNotes = resolutionNotes !== undefined ? resolutionNotes : currentRow.resolution_notes;
+
+      // GAP 2 fix (FIN-MVP-RECONCILIATION-001): a reused idempotency_key
+      // carrying a DIFFERENT canonical request (status/resolutionNotes/
+      // actor) must be rejected the same way openRoiFinanceReconciliation
+      // rejects a mismatched replay (IDEMPOTENCY_FINGERPRINT_CONFLICT), not
+      // silently hand back the prior committed result via
+      // executeAtomicCommand's generic (and too-late) ON CONFLICT DO
+      // NOTHING path. See updateStatusRequestFingerprint's doc comment for
+      // why this reads rvn_platform_events directly instead of mirroring
+      // open's own-domain-table check.
+      requestFingerprint = updateStatusRequestFingerprint({
+        organizationId,
+        reconciliationId,
+        actorUserId,
+        status,
+        resolutionNotes: mergedNotes,
+      });
+      const priorFingerprintEvent = await client.query<{
+        payload: { requestFingerprint?: string } | null;
+      }>(
+        `SELECT payload FROM rvn_platform_events WHERE organization_id = $1 AND idempotency_key = $2`,
+        [organizationId, idempotencyKey]
+      );
+      if (
+        priorFingerprintEvent.rows[0] &&
+        priorFingerprintEvent.rows[0].payload?.requestFingerprint !== requestFingerprint
+      ) {
+        throw new AtomicWriteConflictError(
+          'Idempotency key was already used for a different canonical request.',
+          'IDEMPOTENCY_FINGERPRINT_CONFLICT'
+        );
+      }
+
       const terminalDecisionId = isTerminalTransition ? randomUUID() : currentRow.terminal_decision_id;
       if (isTerminalTransition) {
         await client.query(
@@ -622,8 +682,28 @@ export async function updateRoiFinanceReconciliationStatus(
           decisionPolicyDigest: result.decisionPolicyDigest,
           terminalDecisionId: result.terminalDecisionId,
           terminalDecisionVersion: result.terminalDecisionVersion,
+          // GAP 2 fix: stored so a FUTURE reused idempotency_key can be
+          // fingerprint-checked against this commit (see
+          // updateStatusRequestFingerprint above).
+          requestFingerprint,
         },
       } satisfies AtomicEventInput;
+    },
+    // GAP 2 fix: without this, a duplicate-key collision fell through to
+    // executeAtomicCommand's generic fallback `(existingEvent.after_state ??
+    // {})`, which is `{ reconciliation: {...} }` — NOT the flat
+    // RoiFinanceReconciliation shape every caller of this command expects.
+    // Mirrors openRoiFinanceReconciliation's own loadExistingResult above.
+    loadExistingResult: async (_client, existingEvent) => {
+      const afterState = existingEvent.after_state as {
+        reconciliation?: RoiFinanceReconciliation;
+      } | null;
+      if (!afterState?.reconciliation) {
+        throw new Error(
+          `[updateRoiFinanceReconciliationStatus] replay event ${existingEvent.event_id} has no reconciliation result`
+        );
+      }
+      return afterState.reconciliation;
     },
   });
 }

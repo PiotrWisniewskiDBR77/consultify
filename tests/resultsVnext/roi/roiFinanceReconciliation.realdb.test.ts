@@ -861,4 +861,127 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
       [ORG_ID, USER_GRANTEE]
     )).rows[0]?.n).toBe(1);
   });
+
+  // --- FIN-MVP-RECONCILIATION-001 gap probes -------------------------------
+  //
+  // These two probes were added to re-verify two suspected gaps by driving
+  // the REAL command functions rather than reading code. Do not "fix" the
+  // assertions to match current behavior if they fail — a failure here IS
+  // the proof the gap exists.
+
+  itDB(
+    'GAP 1 — self-resolution guard (:547-552) is reachable once the opener ' +
+      'holds an active Finance-owner grant, and fires BEFORE the grant check ' +
+      'would otherwise pass: FINANCE_RECONCILIATION_SELF_RESOLUTION_DENIED, ' +
+      'not FINANCE_OWNER_GRANT_REQUIRED',
+    async () => {
+      const fixture = await buildCaseWithFinanceLink('8');
+      const openOutcome = await openRoiFinanceReconciliation({
+        caseId: fixture.caseId,
+        organizationId: ORG_ID,
+        financeLinkId: fixture.linkId,
+        roiValue: 400,
+        financeValue: 340,
+        actorUserId: USER_MAKER,
+        actorEffectiveRole: 'consultant',
+        idempotencyKey: `recon-self-guard-open-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
+      });
+
+      // Grant USER_MAKER — the opener — an active Finance-owner grant so the
+      // FINANCE_OWNER_GRANT_REQUIRED check at :541-543 is satisfied and the
+      // self-resolution guard at :547-552 becomes reachable. The seeding
+      // loop in beforeAll (:271-278) only grants USER_RESOLVER/USER_RESOLVER_2,
+      // never USER_MAKER, which is why the guard has never fired in this
+      // suite before. recordFinanceOwnerGrantEvent denies self-grants
+      // (FINANCE_OWNER_GRANT_SELF_DENIED), so a distinct governor
+      // (USER_RESOLVER) performs the grant on USER_MAKER's behalf.
+      await recordFinanceOwnerGrantEvent({
+        organizationId: ORG_ID,
+        userId: USER_MAKER,
+        action: 'granted',
+        actorUserId: USER_RESOLVER,
+        idempotencyKey: `grant-maker-self-guard-${tag}`,
+        access: { capabilities: ['*'], platformRole: null },
+      });
+
+      await expect(updateRoiFinanceReconciliationStatus({
+        reconciliationId: openOutcome.result.reconciliationId,
+        caseId: fixture.caseId,
+        organizationId: ORG_ID,
+        expectedVersion: openOutcome.result.rowVersion,
+        status: 'resolved',
+        actorUserId: USER_MAKER,
+        actorEffectiveRole: 'consultant',
+        idempotencyKey: `recon-self-guard-attempt-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
+      })).rejects.toMatchObject({ code: 'FINANCE_RECONCILIATION_SELF_RESOLUTION_DENIED' });
+    }
+  );
+
+  itDB(
+    'GAP 2 (fixed) — a reused idempotency key carrying a DIFFERENT status is ' +
+      'rejected the same way openRoiFinanceReconciliation rejects a mismatched ' +
+      'replay (IDEMPOTENCY_FINGERPRINT_CONFLICT). Before the local fix in ' +
+      'roiFinanceReconciliationCommands.ts this call resolved with ' +
+      "outcome:'duplicate' and a MIS-SHAPED { reconciliation: {...} } result " +
+      "carrying the stale 'investigating' status instead of rejecting — see " +
+      'the literal failure text recorded in the FIN-MVP-RECONCILIATION-001 ' +
+      'W4 report for that pre-fix behavior.',
+    async () => {
+      const fixture = await buildCaseWithFinanceLink('9');
+      const openOutcome = await openRoiFinanceReconciliation({
+        caseId: fixture.caseId,
+        organizationId: ORG_ID,
+        financeLinkId: fixture.linkId,
+        roiValue: 600,
+        financeValue: 550,
+        actorUserId: USER_MAKER,
+        actorEffectiveRole: 'consultant',
+        idempotencyKey: `recon-idem-asym-open-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
+      });
+
+      const sharedKey = `recon-idem-asym-shared-${randomUUID()}`;
+
+      // First call under sharedKey: non-terminal transition to 'investigating'.
+      const first = await updateRoiFinanceReconciliationStatus({
+        reconciliationId: openOutcome.result.reconciliationId,
+        caseId: fixture.caseId,
+        organizationId: ORG_ID,
+        expectedVersion: openOutcome.result.rowVersion,
+        status: 'investigating',
+        actorUserId: USER_MAKER,
+        actorEffectiveRole: 'consultant',
+        idempotencyKey: sharedKey,
+        access: { capabilities: ['*'], platformRole: null },
+      });
+      expect(first.result.status).toBe('investigating');
+
+      // Second call REUSES sharedKey but requests a genuinely DIFFERENT
+      // command — a terminal 'resolved' status — with the correctly-advanced
+      // expectedVersion (so this is not a literal duplicate replay, it is a
+      // distinct command that collides on idempotency_key, e.g. a client bug
+      // or key-reuse attack). openRoiFinanceReconciliation would reject an
+      // equivalent collision with IDEMPOTENCY_FINGERPRINT_CONFLICT (see the
+      // 'DEC-FIN: terminal resolution is capability-only...' test above).
+      // updateRoiFinanceReconciliationStatus has no fingerprint pre-check —
+      // executeAtomicCommand's generic ON CONFLICT (organization_id,
+      // idempotency_key) DO NOTHING fires only AFTER applyMutation already
+      // ran, the mutation is then rolled back, and (with no loadExistingResult
+      // supplied for this command) the raw first event's after_state is
+      // handed back as outcome:'duplicate' with no comparison and no error.
+      await expect(updateRoiFinanceReconciliationStatus({
+        reconciliationId: openOutcome.result.reconciliationId,
+        caseId: fixture.caseId,
+        organizationId: ORG_ID,
+        expectedVersion: first.resultingVersion,
+        status: 'resolved',
+        actorUserId: USER_RESOLVER,
+        actorEffectiveRole: 'consultant',
+        idempotencyKey: sharedKey,
+        access: { capabilities: ['*'], platformRole: null },
+      })).rejects.toMatchObject({ code: 'IDEMPOTENCY_FINGERPRINT_CONFLICT' });
+    }
+  );
 });
