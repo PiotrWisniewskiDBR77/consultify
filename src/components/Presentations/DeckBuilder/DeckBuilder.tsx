@@ -70,6 +70,7 @@ import { DeckRelationsPanel } from './DeckRelationsPanel';
 import type { BrandKit } from './DeckThemeContext';
 import { DeckThemeProvider } from './DeckThemeContext';
 import { MediaLibraryBrowser } from './MediaLibraryBrowser';
+import { resolveBlankCardInsertionIndex } from './manualEditing';
 import { presentationVersionApprovalId } from './presentationApproval';
 import { createPresentationArtifactCommandRegistry } from './presentationArtifactCommands';
 import { PresentationReviewPanel } from './PresentationReviewPanel';
@@ -962,8 +963,8 @@ export const DeckBuilder: React.FC = () => {
   );
 
   const handleAddBlankCard = useCallback(
-    (atIndex?: number) => {
-      const idx = atIndex ?? (deck?.cards.length || 0);
+    (atIndex?: unknown) => {
+      const idx = resolveBlankCardInsertionIndex(atIndex, deck?.cards.length || 0);
       const newCard: DeckCard = {
         card_id: `card-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         deck_id: deck?.deck_id || '',

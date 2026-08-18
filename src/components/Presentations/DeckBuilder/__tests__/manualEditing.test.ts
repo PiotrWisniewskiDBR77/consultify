@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { URL as NodeURL } from 'node:url';
+
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -11,6 +14,18 @@ import {
 } from '../manualEditing';
 
 describe('manual PowerPoint editing helpers', () => {
+  it('wires the click-safe insertion resolver into the real Deck Builder handler', () => {
+    const deckBuilderSource = readFileSync(
+      new NodeURL('../DeckBuilder.tsx', import.meta.url),
+      'utf8'
+    );
+
+    expect(deckBuilderSource).toContain(
+      'resolveBlankCardInsertionIndex(atIndex, deck?.cards.length || 0)'
+    );
+    expect(deckBuilderSource).not.toContain('const idx = atIndex ??');
+  });
+
   it('appends when React passes a click event to New slide', () => {
     expect(resolveBlankCardInsertionIndex({ type: 'click' }, 8)).toBe(8);
   });
