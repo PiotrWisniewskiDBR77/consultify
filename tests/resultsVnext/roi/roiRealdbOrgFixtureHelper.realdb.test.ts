@@ -42,6 +42,83 @@
  * `roiOpenOrgBackfillVariantB.realdb.test.ts` already rely on. Every
  * organizationId in this file is unique per run (`tag` below) specifically
  * so that permanent residue never collides with a later run.
+ *
+ * ONE-ORG PROOF, NOT A MULTI-TENANT ONE. The upsert-safety test below
+ * proves the membership gate (REVOKED → ACTIVE OWNER) by re-publishing
+ * against the SAME already-governed ORG_ID with a fresh idempotencyKey and
+ * asserting the resulting collision — collision is only reachable once
+ * `publishRoiGovernedVisibilityPolicy` has let the actor past its
+ * same-tenant-membership check (visibilityResolver.ts), so it proves the
+ * gate passed. This is deliberately a SINGLE-ORG proof. It does NOT
+ * exercise, and this file makes NO claim about, cross-tenant/multi-org
+ * behavior — an earlier draft published governance for a second
+ * organization to make the same point and was reverted specifically
+ * because that created a second permanently undeletable organizations row
+ * (see the HONEST LIMIT section below) for no additional proof value.
+ *
+ * SAFETY MECHANISMS ADDED after an independent audit of an earlier draft
+ * of this file (that draft reached 8/8 passing without any of the four
+ * below — green, but not proven safe to run against a real database):
+ *
+ * 1. HARD EXPLICIT DISPOSABLE OPT-IN — `ROI_REALDB_DISPOSABLE_DB_PREFIX`
+ *    must be set, in addition to `DATABASE_URL`. A `DATABASE_URL` alone is
+ *    not treated as consent to run mutating tests: `DATABASE_URL` is often
+ *    ambient (shared across many `*.realdb.test.ts` files in a single CI
+ *    run), so its mere presence does not mean this specific file's
+ *    destructive behavior was deliberately opted into for THIS database.
+ *    Absent this variable, the suite no-ops, same as the existing
+ *    no-`DATABASE_URL` skip path.
+ *
+ * 2. CALLER/LIVE DATABASE NAME EQUALITY — the value of
+ *    `ROI_REALDB_DISPOSABLE_DB_PREFIX` is not just a flag; it is the
+ *    caller's own declaration of which database they believe they are
+ *    pointing at. `beforeAll` queries the LIVE connection for
+ *    `SELECT current_database()` — a fact only Postgres itself can supply,
+ *    independent of whatever `DATABASE_URL` says or a proxy/alias/tunnel
+ *    silently redirected to — and aborts BEFORE any write if the live name
+ *    does not start with the declared prefix. A `DATABASE_URL` that LOOKS
+ *    disposable is not evidence; only the live connection is.
+ *
+ * 3. RETAINED ADVISORY SESSION LOCK — a dedicated `lockClient` (never
+ *    shared with the `client` used for fixture reads/writes) takes
+ *    `pg_advisory_lock(hashtext(...))` once, at the very start, and holds
+ *    it — not acquired-and-released around each step — for the entire
+ *    file's run, releasing only in `afterAll`. A dedicated `Client` is used
+ *    (not a shared `Pool`) specifically because a `Pool` silently discards
+ *    the physical connection behind any client whose query rejected, and a
+ *    session-level advisory lock and its unlock must land on the SAME
+ *    backend connection or the unlock is a no-op against the wrong
+ *    session.
+ *
+ * 4. PINNED CLEANUP, NESTED `finally` — `afterAll`'s teardown runs as a
+ *    chain of nested `try`/`finally` stages (see `runStagesNested` below),
+ *    not a flat sequence of awaited statements. If any one DELETE throws,
+ *    every later stage — including the residue/lock assertions and the
+ *    connection teardown — still runs, because it lives in the `finally`
+ *    of the stage before it. This repo has a documented history of
+ *    teardown dying silently under a bare `catch {}`; this file
+ *    deliberately does NOT swallow teardown errors that way — a stage that
+ *    throws still lets every later stage run, but the failure is not
+ *    hidden from the test run's own result.
+ *
+ * HONEST LIMIT — READ BEFORE TRUSTING A GREEN RUN. Governance
+ * (`rvn_roi_visibility_governance`) is append-only, and it FK-references
+ * `organizations` — so once this file publishes governance for ORG_ID (the
+ * "delegates to the canonical function" test), that ORG_ID's `organizations`
+ * row becomes PERMANENTLY undeletable from WITHIN this test file, by
+ * construction, not by omission. The postcommit assertions in `afterAll`
+ * below therefore assert exact-zero residue ONLY for the NON-governance
+ * tables this file touches (organizations and rvn_roi_visibility_governance
+ * are explicitly excluded from that assertion — see the assertion itself
+ * for the full excluded set). Residue-zero on a database this file expects
+ * to be REUSED is NOT what this file proves, and nothing in this file's
+ * comments, assertions, or any report generated from running it should be
+ * read as claiming otherwise. The only way to reach a TRUE final zero —
+ * including the permanent organizations/governance rows — is to drop the
+ * whole disposable child database this file ran against, from OUTSIDE this
+ * file, after the run. That is an operational step for whoever runs this
+ * suite, not something this file can do to itself (Postgres will not let a
+ * database drop the very database it is connected through).
  */
 import { randomUUID } from 'node:crypto';
 
@@ -67,7 +144,18 @@ function buildClientConfig(): ClientConfig | null {
   };
 }
 
-const DB_CONFIGURED = buildClientConfig() !== null;
+// SAFETY MECHANISM 1 — HARD EXPLICIT DISPOSABLE OPT-IN. `DATABASE_URL`
+// alone is not consent to run this file's mutating tests against it: it is
+// often ambient/shared across many `*.realdb.test.ts` files in one run.
+// This file additionally requires `ROI_REALDB_DISPOSABLE_DB_PREFIX` — a
+// non-empty string the caller supplies to declare "the database I am
+// pointing this file at is a disposable child database whose real name
+// starts with this". Its presence is the opt-in; its value is checked
+// against the LIVE connection below (SAFETY MECHANISM 2) — an env var can
+// be stale or wrong, so the declaration alone is not trusted either.
+const DISPOSABLE_DB_PREFIX = (process.env.ROI_REALDB_DISPOSABLE_DB_PREFIX || '').trim() || null;
+
+const DB_CONFIGURED = buildClientConfig() !== null && DISPOSABLE_DB_PREFIX !== null;
 
 const tag = `${Date.now().toString(36)}_${randomUUID().slice(0, 8)}`;
 const ORG_ID = `roi-fixture-helper-org-${tag}`;
@@ -75,6 +163,21 @@ const INITIATIVE_ID = `roi-fixture-helper-init-${tag}`;
 const USER_OWNER = `roi-fixture-helper-owner-${tag}`;
 const USER_TO_BE_REVOKED_THEN_FIXED = `roi-fixture-helper-flip-${tag}`;
 const USER_ORDINARY_MEMBER = `roi-fixture-helper-member-${tag}`;
+
+// SAFETY MECHANISM 3 — RETAINED ADVISORY LOCK. One fixed key for the whole
+// file (not per-org, not per-test) — the point is to serialize whole runs
+// of THIS file against the same physical database, not to protect any one
+// row.
+const ADVISORY_LOCK_KEY = 'roiRealdbOrgFixtureHelper.realdb.test.ts::disposable-db-mutex';
+
+// Every organizationId this file ever creates (ORG_ID itself and the
+// anti-pattern test's `${ORG_ID}-antipattern`) shares this prefix — used
+// both to scope the cleanup/residue queries below and, per the audit's
+// requirement, to scope the postcommit residue assertion by THIS RUN's
+// tag rather than by whole-table totals (`roi_gov_base` already contains
+// one pre-existing `organizations` row, `system`, that is not this run's
+// and must not be counted against it).
+const RUN_SCOPE_LIKE = `${ORG_ID}%`;
 
 type VisibilityResolverModule =
   typeof import('../../../server/src/services/resultsVnext/platform/visibilityResolver.js');
@@ -89,8 +192,28 @@ let RoiGovernedVisibilityPolicyCollisionError: VisibilityResolverModule['RoiGove
 let createRoiCase: RoiCaseCommandsModule['createRoiCase'];
 let RoiCaseCreationNotAuthorizedError: RoiCaseCommandsModule['RoiCaseCreationNotAuthorizedError'];
 
+// SAFETY MECHANISM 4 helper (see top docblock). Each stage's own `try`
+// wraps a `finally` that runs every remaining stage, so one stage throwing
+// cannot prevent later stages — including connection teardown — from
+// running. Deliberately no `catch` here: a thrown error still propagates
+// after every later stage has run, rather than being silently absorbed.
+async function runStagesNested(stages: ReadonlyArray<() => Promise<void>>, index = 0): Promise<void> {
+  if (index >= stages.length) return;
+  try {
+    await stages[index]!();
+  } finally {
+    await runStagesNested(stages, index + 1);
+  }
+}
+
 let client: Client;
+// SAFETY MECHANISM 3 — a SEPARATE, dedicated connection solely for the
+// retained advisory lock. Never used for fixture reads/writes, so a query
+// failure on `client` can never cause the lock/unlock pair to land on
+// different backend connections.
+let lockClient: Client;
 let reachable = false;
+let advisoryLockHeld = false;
 
 async function insertRawLegacyPolicy(
   organizationId: string,
@@ -123,6 +246,26 @@ describe('F2 blast-radius remediation — ensureRoiFixtureMembership / ensureRoi
     client = new Client(buildClientConfig() as ClientConfig);
     try {
       await client.connect();
+
+      // SAFETY MECHANISM 2 — CALLER/LIVE DATABASE NAME EQUALITY. This must
+      // run before ANY schema probe or write, and it checks a fact only
+      // Postgres itself can supply (`current_database()`), not anything
+      // derived from parsing DATABASE_URL — a connection string can look
+      // disposable and still resolve, via a proxy/alias/tunnel, to a
+      // database that is not. A mismatch aborts here, before the
+      // migration-presence check below and before any INSERT.
+      const liveDb = await client.query<{ current_database: string }>('SELECT current_database()');
+      const liveDbName = liveDb.rows[0]?.current_database;
+      if (!liveDbName || !liveDbName.startsWith(DISPOSABLE_DB_PREFIX as string)) {
+        throw new Error(
+          `Live current_database() is "${liveDbName}", which does not start with the declared ` +
+            `ROI_REALDB_DISPOSABLE_DB_PREFIX "${DISPOSABLE_DB_PREFIX}". Refusing to run mutating ` +
+            'realdb tests against a database whose live identity does not match what the caller ' +
+            'explicitly declared as disposable — this is exactly the "URL looks disposable" gap ' +
+            'the caller/live-database equality check exists to close.'
+        );
+      }
+
       await client.query('SELECT 1');
       await client.query('SELECT 1 FROM rvn_roi_visibility_governance LIMIT 0');
       const checkPermits = await client.query<{ ok: boolean }>(
@@ -138,9 +281,20 @@ describe('F2 blast-radius remediation — ensureRoiFixtureMembership / ensureRoi
           '20261021_rvn_platform_visibility_roi_governed_mode.sql has not run against this database — apply it before this suite'
         );
       }
+
+      // SAFETY MECHANISM 3 — acquire the retained advisory lock on its own
+      // dedicated connection, still before any fixture write. Session-level
+      // (`pg_advisory_lock`, not `pg_advisory_xact_lock`): it is meant to
+      // outlive any single statement/transaction and be released explicitly
+      // in `afterAll`, not implicitly at a transaction boundary.
+      lockClient = new Client(buildClientConfig() as ClientConfig);
+      await lockClient.connect();
+      await lockClient.query('SELECT pg_advisory_lock(hashtext($1))', [ADVISORY_LOCK_KEY]);
+      advisoryLockHeld = true;
     } catch (error) {
       throw new Error(
-        'A database is configured but is not reachable, or is missing the ROI_GOVERNED migration; refusing to report a green run. ' +
+        'A database is configured but is not reachable, is missing the ROI_GOVERNED migration, or failed ' +
+          'the disposable-database identity check; refusing to report a green run. ' +
           String(error)
       );
     }
@@ -172,29 +326,143 @@ describe('F2 blast-radius remediation — ensureRoiFixtureMembership / ensureRoi
 
   afterAll(async () => {
     if (!reachable) return;
-    // rvn_roi_visibility_governance is left in place — append-only,
-    // documented above. Everything else scoped to ORG_ID is cleaned.
-    await client.query(
-      `DELETE FROM rvn_platform_resource_acl
-        WHERE resource_type = 'roi_case'
-          AND resource_id IN (SELECT case_id::text FROM rvn_roi_cases WHERE organization_id = $1)`,
-      [ORG_ID]
-    );
-    await client.query(`DELETE FROM rvn_platform_obligations WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(
-      `DELETE FROM rvn_platform_outbox WHERE event_id IN (SELECT event_id FROM rvn_platform_events WHERE organization_id = $1)`,
-      [ORG_ID]
-    );
-    await client.query(`DELETE FROM rvn_platform_events WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`DELETE FROM rvn_platform_resource_visibility WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`DELETE FROM rvn_roi_calculation_policy WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`DELETE FROM rvn_roi_baselines WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`DELETE FROM rvn_roi_cases WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`DELETE FROM initiatives WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`DELETE FROM rvn_platform_visibility_policies WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`DELETE FROM organization_members WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`DELETE FROM users WHERE organization_id = $1`, [ORG_ID]);
-    await client.end();
+
+    // SAFETY MECHANISM 4 — PINNED CLEANUP, NESTED `finally`. Each stage's
+    // work lives in a `try`; the NEXT stage lives in that `try`'s
+    // `finally` (see `runStagesNested` below), so a stage that throws
+    // still lets every later stage run — including the postcommit
+    // residue/lock assertions and the connection teardown. This
+    // deliberately does NOT wrap each stage in its own `catch {}`: that
+    // would swallow the failure (the documented silent-teardown-death
+    // anti-pattern this mechanism exists to avoid) instead of merely
+    // refusing to let it block later stages. If more than one stage
+    // throws, JavaScript's finally-supersedes-try semantics mean only the
+    // LAST thrown error ultimately surfaces from this hook — an accepted
+    // tradeoff for "every stage still runs" over "every error is
+    // individually reported".
+    const stages: Array<() => Promise<void>> = [
+      // rvn_roi_visibility_governance is deliberately NOT deleted —
+      // append-only by trigger, see HONEST LIMIT in the top docblock.
+      async () => {
+        await client.query(
+          `DELETE FROM rvn_platform_resource_acl
+            WHERE resource_type = 'roi_case'
+              AND resource_id IN (SELECT case_id::text FROM rvn_roi_cases WHERE organization_id = $1)`,
+          [ORG_ID]
+        );
+      },
+      async () => {
+        await client.query(`DELETE FROM rvn_platform_obligations WHERE organization_id = $1`, [ORG_ID]);
+      },
+      async () => {
+        await client.query(
+          `DELETE FROM rvn_platform_outbox WHERE event_id IN (SELECT event_id FROM rvn_platform_events WHERE organization_id = $1)`,
+          [ORG_ID]
+        );
+      },
+      async () => {
+        await client.query(`DELETE FROM rvn_platform_events WHERE organization_id = $1`, [ORG_ID]);
+      },
+      async () => {
+        await client.query(`DELETE FROM rvn_platform_resource_visibility WHERE organization_id = $1`, [ORG_ID]);
+      },
+      async () => {
+        await client.query(`DELETE FROM rvn_roi_calculation_policy WHERE organization_id = $1`, [ORG_ID]);
+      },
+      async () => {
+        await client.query(`DELETE FROM rvn_roi_baselines WHERE organization_id = $1`, [ORG_ID]);
+      },
+      async () => {
+        await client.query(`DELETE FROM rvn_roi_cases WHERE organization_id = $1`, [ORG_ID]);
+      },
+      async () => {
+        await client.query(`DELETE FROM initiatives WHERE organization_id = $1`, [ORG_ID]);
+      },
+      async () => {
+        await client.query(`DELETE FROM rvn_platform_visibility_policies WHERE organization_id = $1`, [ORG_ID]);
+      },
+      async () => {
+        await client.query(`DELETE FROM organization_members WHERE organization_id = $1`, [ORG_ID]);
+      },
+      async () => {
+        await client.query(`DELETE FROM users WHERE organization_id = $1`, [ORG_ID]);
+      },
+      // POSTCOMMIT ASSERTION 1 — exact scoped NON-governance residue = 0.
+      // Scoped by RUN_SCOPE_LIKE (this run's tag prefix, covering both
+      // ORG_ID and the anti-pattern test's `${ORG_ID}-antipattern`), never
+      // by whole-table totals: `roi_gov_base` already contains one
+      // pre-existing `organizations` row ("system") that belongs to no
+      // run and must not be counted against — or credited to — this one.
+      // `organizations` and `rvn_roi_visibility_governance` are
+      // deliberately EXCLUDED from this assertion; see HONEST LIMIT in the
+      // top docblock for why zero there is not achievable from inside this
+      // file.
+      async () => {
+        const residue = await client.query<{ n: string }>(
+          `SELECT (
+             (SELECT count(*) FROM users WHERE organization_id LIKE $1) +
+             (SELECT count(*) FROM organization_members WHERE organization_id LIKE $1) +
+             (SELECT count(*) FROM initiatives WHERE organization_id LIKE $1) +
+             (SELECT count(*) FROM rvn_platform_visibility_policies WHERE organization_id LIKE $1) +
+             (SELECT count(*) FROM rvn_platform_resource_visibility WHERE organization_id LIKE $1) +
+             (SELECT count(*) FROM rvn_roi_cases WHERE organization_id LIKE $1) +
+             (SELECT count(*) FROM rvn_roi_baselines WHERE organization_id LIKE $1) +
+             (SELECT count(*) FROM rvn_roi_calculation_policy WHERE organization_id LIKE $1) +
+             (SELECT count(*) FROM rvn_platform_events WHERE organization_id LIKE $1) +
+             (SELECT count(*) FROM rvn_platform_outbox WHERE event_id IN (
+                SELECT event_id FROM rvn_platform_events WHERE organization_id LIKE $1)) +
+             (SELECT count(*) FROM rvn_platform_resource_acl WHERE resource_type = 'roi_case' AND resource_id IN (
+                SELECT case_id::text FROM rvn_roi_cases WHERE organization_id LIKE $1))
+           )::text AS n`,
+          [RUN_SCOPE_LIKE]
+        );
+        const residueCount = Number(residue.rows[0]?.n ?? -1);
+        if (residueCount !== 0) {
+          throw new Error(
+            `Postcommit residue assertion FAILED: expected 0 rows across all non-governance tables ` +
+              `scoped to "${RUN_SCOPE_LIKE}", found ${residueCount}. (organizations and ` +
+              `rvn_roi_visibility_governance are excluded from this assertion by design — see ` +
+              'HONEST LIMIT in the top docblock.)'
+          );
+        }
+      },
+      // release the retained advisory lock, on the SAME dedicated
+      // connection that acquired it (SAFETY MECHANISM 3) — never `client`.
+      async () => {
+        if (advisoryLockHeld) {
+          await lockClient.query('SELECT pg_advisory_unlock(hashtext($1))', [ADVISORY_LOCK_KEY]);
+          advisoryLockHeld = false;
+        }
+      },
+      // POSTCOMMIT ASSERTION 2 — advisory locks = 0. `pg_locks` is
+      // CLUSTER-WIDE, not per-database, so a raw count would be noisy on a
+      // shared Postgres instance running unrelated sessions. Instead,
+      // directly demonstrate the key is free: `client` (a session that
+      // never held it) attempts a NON-blocking acquire of the exact same
+      // key just released above — success proves nobody, including this
+      // file, still holds it — then immediately releases its own trial
+      // lock so this check itself leaves nothing behind.
+      async () => {
+        const tryLock = await client.query<{ ok: boolean }>(
+          'SELECT pg_try_advisory_lock(hashtext($1)) AS ok',
+          [ADVISORY_LOCK_KEY]
+        );
+        if (!tryLock.rows[0]?.ok) {
+          throw new Error(
+            `Postcommit advisory-lock assertion FAILED: "${ADVISORY_LOCK_KEY}" is still held after unlock.`
+          );
+        }
+        await client.query('SELECT pg_advisory_unlock(hashtext($1))', [ADVISORY_LOCK_KEY]);
+      },
+      async () => {
+        await client.end();
+      },
+      async () => {
+        await lockClient.end();
+      },
+    ];
+
+    await runStagesNested(stages);
   }, 30_000);
 
   const itDB = (name: string, fn: () => Promise<void>, timeoutMs = 30_000) =>
