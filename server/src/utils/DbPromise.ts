@@ -11,7 +11,7 @@
 
 import dbProxy from '../database/Database.js';
 import logger from './Logger.js';
-import { recordQueryPerformance } from './queryHelpers.js';
+import { getCurrentPgTransactionClient, recordQueryPerformance } from './queryHelpers.js';
 
 // ==========================================
 // TYPES
@@ -207,6 +207,20 @@ export function all<T = any>(
   const { timeout = DEFAULT_TIMEOUT, fallback = true } = queryOptions;
   sql = translatePlaceholders(sql);
   const startedAt = Date.now();
+  const transactionClient = getCurrentPgTransactionClient();
+  if (transactionClient) {
+    return transactionClient.query<T>(sql, params).then(
+      (result) => {
+        recordQueryPerformance('all', Date.now() - startedAt);
+        return result.rows;
+      },
+      (error: Error) => {
+        recordQueryPerformance('all', Date.now() - startedAt);
+        if (fallback) return [];
+        throw error;
+      }
+    );
+  }
 
   return new Promise<T[]>((resolve, reject) => {
     const guard = createSettleGuard();
@@ -325,6 +339,20 @@ export function get<T = any>(
   const { timeout = DEFAULT_TIMEOUT, fallback = true } = queryOptions;
   sql = translatePlaceholders(sql);
   const startedAt = Date.now();
+  const transactionClient = getCurrentPgTransactionClient();
+  if (transactionClient) {
+    return transactionClient.query<T>(sql, params).then(
+      (result) => {
+        recordQueryPerformance('get', Date.now() - startedAt);
+        return result.rows[0] ?? null;
+      },
+      (error: Error) => {
+        recordQueryPerformance('get', Date.now() - startedAt);
+        if (fallback) return null;
+        throw error;
+      }
+    );
+  }
 
   return new Promise<T | null>((resolve, reject) => {
     const guard = createSettleGuard();
@@ -413,6 +441,20 @@ export function run(
   const { timeout = DEFAULT_TIMEOUT, fallback = true } = queryOptions;
   sql = translatePlaceholders(sql);
   const startedAt = Date.now();
+  const transactionClient = getCurrentPgTransactionClient();
+  if (transactionClient) {
+    return transactionClient.query(sql, params).then(
+      (result) => {
+        recordQueryPerformance('run', Date.now() - startedAt);
+        return { success: true, changes: result.rowCount };
+      },
+      (error: Error) => {
+        recordQueryPerformance('run', Date.now() - startedAt);
+        if (fallback) return { success: false, error: error.message };
+        throw error;
+      }
+    );
+  }
 
   return new Promise<RunResult>((resolve, reject) => {
     const guard = createSettleGuard();

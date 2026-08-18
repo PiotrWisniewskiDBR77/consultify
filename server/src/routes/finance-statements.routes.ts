@@ -65,6 +65,7 @@ import {
   publishFinanceReportSectionSnapshot,
 } from '../services/financeReportSectionService.js';
 import { buildStatementAnalytics } from '../services/financeStatementAnalyticsService.js';
+import { confirmAndRegisterStatementPack } from '../services/finance/canonical/statementPackRegistrationService.js';
 import {
   assignStatementToExistingPack,
   detachStatementFromPack,
@@ -2444,6 +2445,7 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const statementId = String(req.params.id);
     const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
     const stmt = await getStatementOrFail(statementId, orgId, res);
     if (!stmt) return;
     const userId = req.user!.id;
@@ -2494,67 +2496,26 @@ router.post(
         readiness,
       });
     }
-    const ingestRunId = await ensureIngestRun({
+    const registration = await confirmAndRegisterStatementPack({
       statementId,
       organizationId: orgId,
-      createdBy: userId,
-      sourceFileName: stmt.source_file_name,
-      sourceFilePath: stmt.source_file_path,
-      parseMethod: stmt.parse_method,
-      documentClass: stmt.document_class,
-      extractionStrategy: stmt.extraction_strategy,
-      templateFamily: stmt.template_family,
-    });
-
-    await confirmStatement(statementId, userId, readiness);
-    await snapshotCanonicalStatementVersion({
-      statementId,
-      versionKind: 'confirmed',
-      readinessStatus: readiness.readinessStatus,
+      userId,
+      statement: stmt,
       values: valueRows,
       validations: validationMessages,
-      createdBy: userId,
-      summary: 'Confirmed statement-ready snapshot.',
+      readiness,
     });
-    const statementPackId = await syncStatementToPack(statementId);
-    await recordStatementSourceArtifact({
-      statementId,
-      ingestRunId,
-      artifactType: 'confirmation',
-      stage: 'confirm',
-      contentJson: readiness,
-      createdBy: userId,
-    });
-    await updateStatementIngestRun({
-      ingestRunId,
-      currentStage: 'confirm',
-      runStatus: 'completed',
-      reasonCodes: readiness.reasonCodes,
-      summary: {
-        readinessStatus: readiness.readinessStatus,
-      },
-    });
-    if (orgId) {
-      await recordStatementQualityRun({
-        statementId,
-        organizationId: orgId,
-        stage: 'confirm',
-        resultStatus: 'pass',
-        readinessStatus: readiness.readinessStatus,
-        strategy: stmt.extraction_strategy || 'confirmation_gate',
-        summary: 'Statement confirmed as statement-ready.',
-        reasonCodes: readiness.reasonCodes,
-        payload: readiness,
-        createdBy: userId,
-      });
-    }
     logger.info(`[FinanceStatements] Statement ${statementId} confirmed by ${userId}`);
 
     res.json({
       success: true,
       statementId,
-      statementPackId,
-      ingestRunId,
+      statementPackId: registration.statementPackId,
+      ingestRunId: registration.ingestRunId,
+      canonicalArtifactId: registration.artifactId,
+      canonicalBusinessVersionId: registration.businessVersionId,
+      canonicalWorkingRevisionId: registration.workingRevisionId,
+      canonicalReplay: registration.replayed,
       status: 'confirmed',
       readiness,
     });

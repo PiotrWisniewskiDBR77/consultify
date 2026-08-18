@@ -682,7 +682,16 @@ async function shadowReconcilePack(packId: string, statements: PackStatementRow[
   // shouldBlockReady(result) at the recompute UPDATE above.
 }
 
-export async function recomputeStatementPack(packId: string): Promise<string | null> {
+export async function runStatementPackShadowReconcile(packId: string): Promise<void> {
+  const statements = await loadRawPackStatementsWithSchemaCompat(packId);
+  if (!Array.isArray(statements) || statements.length === 0) return;
+  await shadowReconcilePack(packId, statements);
+}
+
+export async function recomputeStatementPack(
+  packId: string,
+  options: { deferShadow?: boolean } = {}
+): Promise<string | null> {
   const statements = await loadRawPackStatementsWithSchemaCompat(packId);
   if (!Array.isArray(statements) || statements.length === 0) {
     await pruneEmptyPack(packId);
@@ -734,18 +743,23 @@ export async function recomputeStatementPack(packId: string): Promise<string | n
 
   // ── SHADOW: reconcile R1-R8 (observational; never changes pack readiness) ──
   // Wrapped so a reconcile fault can never affect the recompute contract.
-  await shadowReconcilePack(packId, statements).catch((error) => {
-    // eslint-disable-next-line no-console
-    console.warn('[reconcile-shadow] pack reconcile failed (non-fatal)', {
-      packId,
-      error: (error as Error)?.message || String(error),
+  if (!options.deferShadow) {
+    await shadowReconcilePack(packId, statements).catch((error) => {
+      // eslint-disable-next-line no-console
+      console.warn('[reconcile-shadow] pack reconcile failed (non-fatal)', {
+        packId,
+        error: (error as Error)?.message || String(error),
+      });
     });
-  });
+  }
 
   return packId;
 }
 
-export async function syncStatementToPack(statementId: string): Promise<string | null> {
+export async function syncStatementToPack(
+  statementId: string,
+  options: { deferShadow?: boolean } = {}
+): Promise<string | null> {
   const statement = await loadStatementForPack(statementId);
   if (!statement) return null;
 
@@ -759,9 +773,9 @@ export async function syncStatementToPack(statementId: string): Promise<string |
     await assignStatementToPack(statementId, targetPackId);
   }
   if (currentPackId && currentPackId !== targetPackId) {
-    await recomputeStatementPack(currentPackId);
+    await recomputeStatementPack(currentPackId, options);
   }
-  await recomputeStatementPack(targetPackId);
+  await recomputeStatementPack(targetPackId, options);
   return targetPackId;
 }
 

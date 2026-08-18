@@ -25,6 +25,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
+import { getCurrentPgTransactionClient } from '../../../utils/queryHelpers.js';
 import { EMPTY_WORKING_REVISION_CONTENT_HASH } from './contentHash.js';
 import type { FinanceArtifactType } from './lifecycleService.js';
 import {
@@ -220,7 +221,10 @@ export async function createArtifact(params: CreateArtifactParams): Promise<Crea
   const workingRevisionId = uuidv4();
   const riskTier = params.riskTier ?? defaultRiskTierForArtifactType(params.artifactType);
 
-  return withPinnedPostgresTransaction(async (tx) => {
+  const createInTransaction = async (tx: {
+    queryOne<T>(sql: string, params?: unknown[]): Promise<T | null>;
+    queryRun(sql: string, params?: unknown[]): Promise<{ changes: number }>;
+  }) => {
     const artifact = await tx.queryOne<ArtifactRow>(
       `INSERT INTO finance_artifacts (artifact_id, organization_id, artifact_type, natural_key, created_by)
        VALUES (?, ?, ?, ?, ?) RETURNING *`,
@@ -302,7 +306,25 @@ export async function createArtifact(params: CreateArtifactParams): Promise<Crea
       businessVersion: { ...businessVersion, source_working_revision_id: workingRevisionId },
       workingRevision,
     };
-  });
+  };
+
+  const ambient = getCurrentPgTransactionClient();
+  if (ambient) {
+    return createInTransaction({
+      queryOne: async <T>(sql: string, queryParams: unknown[] = []) =>
+        (await ambient.query<T>(sql, queryParams)).rows[0] ?? null,
+      queryRun: async (sql: string, queryParams: unknown[] = []) => ({
+        changes: (await ambient.query(sql, queryParams)).rowCount,
+      }),
+    });
+  }
+  return withPinnedPostgresTransaction((tx) =>
+    createInTransaction({
+      queryOne: async <T>(sql: string, queryParams: unknown[] = []) =>
+        (await tx.queryOne(sql, queryParams)) as T | null,
+      queryRun: (sql: string, queryParams: unknown[] = []) => tx.queryRun(sql, queryParams),
+    })
+  );
 }
 
 // ---------------------------------------------------------------------------
