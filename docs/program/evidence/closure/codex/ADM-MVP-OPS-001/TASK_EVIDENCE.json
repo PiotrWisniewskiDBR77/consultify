@@ -2,23 +2,215 @@
   "taskId": "ADM-MVP-OPS-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "ceb5bbe515e501dd2101d35529da433ad617fa21",
-  "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
+  "technicalSourceSha": "915b8cd650a6799c400c30966104af6f95588058",
+  "reconciliationSha": "915b8cd650a6799c400c30966104af6f95588058",
+  "leaseSha256": "a626ac0c356fc750569d14542c6908ee9381531f0669fce93f23773db934651c",
   "verdict": "PARTIAL",
-  "changedPaths": ["docs/program/evidence/closure/codex/ADM-MVP-OPS-001/TASK_EVIDENCE.json"],
-  "changedPathRationale": {"evidence": "Current-SHA queue lifecycle proof with deployed observation blocker preserved."},
-  "ownerTables": ["admin_iam_jobs", "admin_iam_job_events", "role_change_audit_events"],
-  "ownPathsThisRun": ["docs/program/evidence/closure/codex/ADM-MVP-OPS-001/TASK_EVIDENCE.json"],
-  "commands": [
-    {"command": "fresh PostgreSQL migrate.postgres.ts", "exitCode": 0, "denominator": "722/722 migrations applied"},
-    {"command": "vitest adminIamBvp.pg + admin-iam-operations.realdb + OrganizationController.membership", "exitCode": 0, "denominator": "14/14 tests, 3/3 files; OPS slice 2/2"},
-    {"command": "tsc -p server/tsconfig.json --noEmit", "exitCode": 0, "denominator": "server TypeScript project"}
+  "changedPaths": [
+    "docs/program/evidence/closure/codex/ADM-MVP-OPS-001/TASK_EVIDENCE.json"
   ],
-  "proved": ["tenant-scoped idempotent enqueue and payload-stable replay", "foreign tenant cannot claim", "lease/CAS stale worker denial", "retry then success with exact durable events", "attempt exhaustion reaches failed", "metrics readback and zero orphan events", "same fresh-PG packet includes the full invite-to-revoke journey"],
-  "negativeControls": {"tenant": "foreign tenant cannot claim", "lease": "stale worker rejected", "retry": "exhausted job terminal failed", "audit": "zero orphan events"},
-  "denominators": {"freshMigrations": "722/722", "focusedPacket": "14/14 tests in 3/3 files", "opsRealDb": "2/2"},
-  "fixtures": {"database": "disposable PostgreSQL 16 localhost:56674"},
+  "changedPathRationale": {
+    "evidence": "Exact-current reconciliation after integration of the internal alert evaluator, linked runbook and guarded real-PostgreSQL positive/recovery controls. Production reachability, automatic CI execution and deployed observation remain open."
+  },
+  "ownerTables": [
+    "admin_iam_jobs",
+    "admin_iam_job_events",
+    "role_change_audit_events"
+  ],
+  "ownPathsThisRun": [
+    "docs/program/evidence/closure/codex/ADM-MVP-OPS-001/TASK_EVIDENCE.json"
+  ],
+  "commands": [
+    {
+      "command": "fresh PostgreSQL migrate.postgres.ts",
+      "exitCode": 0,
+      "denominator": "722/722 migrations applied"
+    },
+    {
+      "command": "vitest adminIamBvp.pg + admin-iam-operations.realdb + OrganizationController.membership",
+      "exitCode": 0,
+      "denominator": "14/14 tests, 3/3 files; OPS slice 2/2"
+    },
+    {
+      "command": "tsc -p server/tsconfig.json --noEmit",
+      "exitCode": 0,
+      "denominator": "server TypeScript project"
+    }
+  ],
+  "proved": [
+    "tenant-scoped idempotent enqueue and payload-stable replay",
+    "foreign tenant cannot claim",
+    "lease/CAS stale worker denial",
+    "retry then success with exact durable events",
+    "attempt exhaustion reaches failed",
+    "metrics readback and zero orphan events",
+    "same fresh-PG packet includes the full invite-to-revoke journey"
+  ],
+  "negativeControls": {
+    "tenant": "foreign tenant cannot claim",
+    "lease": "stale worker rejected",
+    "retry": "exhausted job terminal failed",
+    "audit": "zero orphan events"
+  },
+  "denominators": {
+    "freshMigrations": "722/722",
+    "focusedPacket": "14/14 tests in 3/3 files",
+    "opsRealDb": "2/2"
+  },
+  "fixtures": {
+    "database": "disposable PostgreSQL 16 localhost:56674"
+  },
   "browserArtifacts": [],
-  "rollback": {"code": "Revert evidence update.", "data": "Test jobs cleaned; no production queue touched."},
-  "singleResidualBlocker": "No sustained deployed worker/alert observation window was authorized or available; repository tests prove queue metrics and lifecycle but cannot prove a real operator alert fires under long-running production scheduling.",
-  "database": "Disposable PostgreSQL 16 at localhost:56674; no production/staging touched"
+  "rollback": {
+    "code": "Revert evidence update.",
+    "data": "Test jobs cleaned; no production queue touched."
+  },
+  "singleResidualBlocker": "The internal alert evaluator and guarded positive/recovery controls are integrated and exact-current green, but the evaluator has no production caller or scheduler, the real-PostgreSQL suite is opt-in rather than an automatic CI gate, and external paging/deployed observation remain NOT_VERIFIED and NOT_AUTHORIZED.",
+  "database": "Disposable PostgreSQL 16 at localhost:56674; no production/staging touched",
+  "supersededSingleResidualBlocker20260817": "No sustained deployed worker/alert observation window was authorized or available; repository tests prove queue metrics and lifecycle but cannot prove a real operator alert fires under long-running production scheduling.",
+  "currentTechnicalRequalification20260818": {
+    "requalifiedAtSha": "915b8cd650a6799c400c30966104af6f95588058",
+    "requalifiedOn": "2026-08-18",
+    "verdict": "PARTIAL",
+    "integratedTechnicalChain": [
+      "f68d6eacf4",
+      "cece7d38a3",
+      "915b8cd650"
+    ],
+    "integratedPaths": {
+      "server/src/services/adminIamAlertEvaluator.ts": "Per-tenant stale/failed queue evaluator with idempotent transition/outbox behavior and closed payload fields.",
+      "server/src/services/__tests__/adminIamAlertEvaluator.pg.test.ts": "Guarded disposable-PostgreSQL positive, replay and recovery controls; cleanup asserts trigger O, residue0 and advisory locks0.",
+      "docs/runbooks/ADMIN_IAM_OPERATIONS_RUNBOOK.md": "Machine-resolved internal runbook anchor for queue alert conditions and controlled remediation boundary."
+    },
+    "exactCurrentGates": [
+      {
+        "gate": "plan82",
+        "command": "node scripts/cleanup/verify-closure-plan.mjs",
+        "exitCode": 0,
+        "result": "74 module + 8 cross = 82; ownership A15/B15/C15/Codex37; lease and graph PASS"
+      },
+      {
+        "gate": "rootTypecheck",
+        "command": "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check -- --pretty false",
+        "exitCode": 0
+      },
+      {
+        "gate": "backendBuild",
+        "command": "NODE_OPTIONS=--max-old-space-size=8192 npm run build:backend",
+        "exitCode": 0,
+        "result": "server runtime mirror verification passed"
+      },
+      {
+        "gate": "frontendBuild",
+        "command": "NODE_OPTIONS=--max-old-space-size=8192 npm run build",
+        "exitCode": 0,
+        "result": "built in 35.76s"
+      },
+      {
+        "gate": "adminIamAlertRealPg",
+        "command": "RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test DATABASE_URL=<redacted> ADMIN_IAM_ALERT_PGTEST_ALLOW_DESTRUCTIVE_FIXTURE=1 ADMIN_IAM_ALERT_PGTEST_DISPOSABLE_DB_PREFIX=adm_postfan_ npx vitest run server/src/services/__tests__/adminIamAlertEvaluator.pg.test.ts --retry=0 --no-file-parallelism --maxWorkers=1 --reporter=dot",
+        "exitCode": 0,
+        "result": "1/1 file; 9/9 tests; guarded database adm_postfan_915b; own container removed and port 34987 FREE"
+      }
+    ],
+    "provedNow": [
+      "stale and failed admin IAM queue alerts transition exactly once per tenant and kind",
+      "unchanged replay does not increment state or duplicate outbox delivery",
+      "linked runbook anchor resolves and secret-like payload fields are excluded",
+      "positive activation and controlled recovery/clear behavior are exercised on real PostgreSQL"
+    ],
+    "remainingBoundary": "No production caller/scheduler invokes this evaluator; realPG remains opt-in rather than automatic CI; external paging and deployed observation are not verified or authorized. Therefore DONE_CURRENT_SHA is not claimed."
+  },
+  "supersededTechnicalRequalificationBeforeAlertIntegration20260818": {
+    "requalifiedAtSha": "844ab94eb20a7c8f77bf940afdd64e760e66e2dd",
+    "requalifiedOn": "2026-08-18",
+    "scope": "Evidence-only reconciliation. No product, test or migration file was touched. Historical productSha ceb5bbe515, baselineSha, all three recorded commands with their results, denominators, proved list and negative controls are preserved verbatim above.",
+    "frozenGateSet": {
+      "required": [
+        "G0",
+        "G1",
+        "G2",
+        "G3",
+        "G5",
+        "G6"
+      ],
+      "excluded": "G4 (signed-in browser/visual) is not required for this task.",
+      "source": "docs/cleanup/agents/CODEX_INTEGRATOR_RETAINED_37_TASKS_20260816.md:94"
+    },
+    "zeroDriftSinceProductSha": {
+      "commitsBetween": 349,
+      "commitsTouchingOwnedPaths": 0,
+      "byteIdentical": [
+        "server/src/services/adminIamOperationsService.ts",
+        "server/migrations/20260816_admin_iam_operations.sql",
+        "tests/integration/admin-iam-operations.realdb.test.ts",
+        "server/src/services/__tests__/adminIamBvp.pg.test.ts",
+        "server/src/controllers/__tests__/OrganizationController.membership.test.ts",
+        "docs/runbooks/ADMIN_IAM_OPERATIONS_RUNBOOK.md"
+      ],
+      "consequence": "The recorded G3 fresh-migration run (722/722) and the focused packet (14/14 in 3/3 files) are not stale with respect to code drift: every owned product, migration, test and runbook blob is byte-identical between productSha and 844ab94eb2. Only two evidence-file-only commits (60a4335620, c8b72d53d6) touch this task path in that range."
+    },
+    "capabilityVerification": {
+      "method": "Each claimed capability was re-verified by locating BOTH the product code and the test that proves it at 844ab94eb2, rather than by trusting this record's own assertions.",
+      "results": {
+        "queueLifecycle": "VERIFIED — adminIamOperationsService.ts enqueue/claim/complete/fail; tests/integration/admin-iam-operations.realdb.test.ts:34-101",
+        "metrics": "VERIFIED — getAdminIamJobMetrics; test asserts exact {queued:0,running:0,succeeded:1,failed:0} readback",
+        "tenantIsolation": "VERIFIED — claim scopes WHERE organization_id; foreign tenant claim returns null while the owning tenant job exists",
+        "casStaleLease": "VERIFIED — complete requires exact lease_token match and throws \"IAM job lease is stale or outside tenant scope\"; test drives a stale worker and expects the rejection",
+        "retry": "VERIFIED — fail re-queues while attempt_count < max_attempts; test asserts status returns to queued",
+        "exhaustion": "VERIFIED — maxAttempts:1 reaches terminal failed, with a zero-orphan-events assertion",
+        "idempotentEnqueue": "VERIFIED — ON CONFLICT (organization_id, idempotency_key) DO NOTHING with re-read by key; replay returns the original id and the original payload, not the forged replay payload",
+        "durableAudit": "VERIFIED — every transition writes admin_iam_job_events and throws if not persisted; test asserts the exact sequence enqueued/claimed/retry_scheduled/claimed/succeeded"
+      },
+      "denominatorHonesty": "The recorded 14/14 across 3 files is accurate but only 2 of those tests are this task's own proof; the other 12 belong to ADM-BVP-001 (invite/accept/role/revoke/session and controller membership). This record's own opsRealDb: 2/2 sub-denominator already states that correctly, so the bundling is disclosed rather than overstated."
+    },
+    "blockerRenamed": {
+      "why": "The superseded blocker framed the remaining gap as purely external — a deployed worker and a real operator alert under production scheduling. That framing is wrong in a way that matters: it implies nothing is left to build in the repository, when in fact the required internal proof does not exist at all.",
+      "decidingSentence": "AMD-OBSERVABILITY-INTERNAL-GATE-002 (16A), scoped to ADM-MVP-OPS-001 among others: \"Internal technical completion requires exercised alerts for write failures, stale queue/outbox work, sustained database saturation and repeated authorization denials. Each alert must have a linked runbook, a positive-control activation and a verified recovery/clear event without secret payloads. External paging and deployed observation remain release gates.\"",
+      "interpretation": "That sentence draws the line explicitly. An exercised alert with a positive-control activation and a verified recovery/clear event is REPOSITORY-TECHNICAL and is required for internal technical completion. Only external paging and deployed observation are carved out as release gates. So the external half is correctly out of scope, and the internal half is in scope and unmet.",
+      "evidenceOfTheGap": "The generic alert substrate exists for OPS-OBS-001 (server/scripts/operational-alerts.ts, server/src/services/operationalAlertSignalDeliveryService.ts, plus its own pg test) but is NOT wired to this queue: grep -c \"admin_iam|adminIam\" returns 0 in both files at 844ab94eb2. No code path fires an alert on stale or failed admin_iam_jobs, and no test exercises a fire-then-recover cycle for it. Five commits touched that substrate since productSha and none reference admin_iam, so the gap is still open at HEAD rather than closed by unrelated work.",
+      "corroboration": "docs/cleanup/agents/CLAUDE_NEXT_F_OPERATIONAL_RELEASE_15_TASKS_20260817.md:24 still lists as outstanding item 7: \"ADM-MVP-OPS-001 — uruchom trwały worker jobs, lease recovery, retry/exhaustion, metrics i alert positive control przez dluzsze okno lokalne.\" Note it says a longer LOCAL window, which is consistent with the internal gate rather than with production deployment."
+    },
+    "currentBlocker": "Missing internal alert positive-control proof for the admin_iam_jobs queue: an exercised alert on stale/failed queue work, with a linked runbook, a positive-control activation and a verified recovery/clear event, per AMD-OBSERVABILITY-INTERNAL-GATE-002. This is repository-technical and unbuilt, not merely a deployment observation. External operator paging remains separately out of scope as a release gate.",
+    "gatesRunThisPass": [
+      {
+        "gate": "G0/identity",
+        "command": "git branch --show-current; git rev-parse HEAD; git status --porcelain=v1",
+        "result": "codex/adm-mvp-ops-evidence-20260818; 844ab94eb20a7c8f77bf940afdd64e760e66e2dd; clean"
+      },
+      {
+        "gate": "G0/lease",
+        "command": "jq -r '.files | join(\"\\n\")' docs/cleanup/agents/generated/CODEX_INTEGRATOR_PATH_LEASE.json | sed -e '$a\\' | shasum -a 256",
+        "result": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860 — identical to the recorded leaseSha256; cached allowlist exact"
+      },
+      {
+        "gate": "G6/structural",
+        "command": "jq . docs/program/evidence/closure/codex/ADM-MVP-OPS-001/TASK_EVIDENCE.json",
+        "result": "valid JSON; all reporter-required fields present"
+      },
+      {
+        "gate": "static",
+        "command": "cd server && npx tsc --noEmit",
+        "exitCode": 0,
+        "result": "no output"
+      },
+      {
+        "gate": "reporter",
+        "command": "node scripts/cleanup/report-closure-progress.mjs",
+        "exitCode": 0,
+        "result": "denominator 82; DONE_CURRENT_SHA 37, PARTIAL 44, BLOCKED_HUMAN 1; this task issues: []"
+      },
+      {
+        "gate": "plan82",
+        "command": "node scripts/cleanup/verify-closure-plan.mjs",
+        "exitCode": 0,
+        "result": "74+8=82 unique tasks; ownership A15+B15+C15+Codex37; leases SHA-valid, zero overlap; graph A -> C -> B -> Codex"
+      }
+    ],
+    "gatesNotRunThisPass": "G3 was not re-executed: it requires a disposable Docker PostgreSQL container and no runtime window was authorized for this pass. It is not claimed as current. The zero-drift proof above is what keeps the recorded 722/722 run attributable to an unchanged surface; it is not a substitute for a fresh run. G1 build and G2 leased-denominator were likewise not re-executed here.",
+    "verdictDetermination": {
+      "verdict": "PARTIAL",
+      "whyNotDone": "DONE_CURRENT_SHA is permitted only when the frozen Definition of Done is fully repository-technical AND every required current gate is literal. Here a repository-technical element of the DoD's own \"observability\" item is unmet — the internal exercised-alert proof does not exist for this queue — and G1/G2/G3 were not re-executed at this SHA. Either alone forbids promotion."
+    }
+  }
 }
