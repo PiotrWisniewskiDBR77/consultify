@@ -1,7 +1,8 @@
 {
   "taskId": "PRT-POL-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "c8ffd7be0e9b848932064b70a5c8271a9da45f1e",
+  "productSha": "d25c354994b54e247aef791cf5adcfa4ba606ad3",
+  "reconciliationSha": "d25c354994b54e247aef791cf5adcfa4ba606ad3",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
   "ownerDecision": {"recordId": "INTERNAL-BETA-OWNER-DECISIONS-20260817-AMENDMENT-01", "decisionId": "AMD-PRT-POLICY-CLOSED-001", "status": "POLICY_BOUNDARY_APPROVED"},
   "amendmentSha": "617b5d29c229e6c073452a17c8da1888ce18aa8d59a5913fa0d9aa59b2272702",
@@ -10,14 +11,28 @@
   "changedPaths": [],
   "changedPathRationale": {},
   "ownerTables": ["partner_program_ledger"],
-  "commands": [{"command": "RUN_DB_TESTS=1 npx vitest run tests/integration/partners/partner-program-ledger-governance.realdb.test.ts", "exitCode": 0}],
-  "denominators": {"policyDecisionsRequired": 1, "policyDecisionsApproved": 1, "sharedAccrualControlProof": "22/22 historical PRT-MVP-ACCRUAL evidence; not independently requalified or task-bound here"},
-  "fixtures": {"database": "fresh isolated PostgreSQL"},
-  "negativeControls": {"payout": "automatic payout remains disabled", "ledger": "append-only and versioned"},
+  "commands": [
+    {"command": "RUN_DB_TESTS=1 npx vitest run tests/integration/partners/partner-program-ledger-governance.realdb.test.ts", "exitCode": 0, "result": "historical append-only ledger proof"},
+    {"command": "npx vitest run tests/integration/partners/partner-economics-policy-disabled.unit.test.ts tests/integration/partners/partner-economics-read-authorization.unit.test.ts --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot", "exitCode": 0, "result": "2/2 files; 68/68 tests passed on exact current SHA"},
+    {"command": "PUT http://127.0.0.1:3411/api/v8/partner/payout-settings with fresh signed OWNER, x-org-context=26ff994e-7a4d-4447-957d-24f6c66eab20, x-request-id=prt-pol-d25c-auto-payout-denied-1 and autoPayoutEnabled=true", "exitCode": 0, "result": "HTTP 410 PARTNER_ECONOMICS_POLICY_DISABLED; AMD-PRT-ECONOMICS-002; payout_settings; every excluded operation projected; historicalReadOnly=true"}
+  ],
+  "denominators": {"policyDecisionsRequired": 1, "policyDecisionsApproved": 1, "sharedAccrualControlProof": "22/22 historical PRT-MVP-ACCRUAL plus independent exact-current PRT-POL proof: 68/68 focused contracts and one signed real-PostgreSQL policy denial with zero owner-table writes"},
+  "fixtures": {"database": "existing real PostgreSQL consultify_truth on loopback 55483; no Docker or schema fixture created", "policy": "PARTNER_ACCRUAL_POLICY_JSON absent; economics compile-time constant false"},
+  "negativeControls": {"payout": "automatic payout request denied before an economics writer", "ledger": "exact-current attempted policy write produced no ledger row", "policyRead": "410 denial exposes unavailable operation families and historicalReadOnly=true", "ownerTables": "commissions, payouts, ledger and auto-payout-enabled counts were identical before and after"},
   "browserArtifacts": [],
-  "rollback": {"policy": "manual payout only; no destructive ledger rollback"},
-  "technicalVerdict": "PARTIAL_APPROVED_OUT_POLICY_BOUNDARY_DECIDED",
-  "verdict": "PARTIAL",
-  "openBlockers": ["APPROVED_OUT: economics, accrual and payout remain excluded. The absent-policy and automatic-payout controls are referenced from historical PRT-MVP-ACCRUAL evidence but are not independently current-SHA requalified or task-bound in this policy record."],
-  "completionBoundary": "The owner boundary is decided, but this record does not claim current-SHA technical qualification. No currency, rate, tax, KYC or payout fact is inferred."
+  "rollback": {"policy": "Approved-out compile-time boundary remains default-off; no runtime flag, commercial policy or destructive ledger rollback exists."},
+  "technicalVerdict": "PASS_EXACT_CURRENT_APPROVED_OUT_DEFAULT_OFF",
+  "verdict": "DONE_CURRENT_SHA",
+  "openBlockers": [],
+  "completionBoundary": "DONE means the approved-out/default-off policy contract is enforced on exact current SHA. Economics, accrual and payout remain excluded; no currency, rate, tax, KYC or payout fact is inferred or authorized. Reopen when the excluded scope is proposed for activation.",
+  "exactCurrentRequalification20260819": {
+    "testedSha": "d25c354994b54e247aef791cf5adcfa4ba606ad3",
+    "scope": "PRT-POL-001 only: owner-approved exclusion and fail-closed default-off behavior; not accrual activation or payout authorization.",
+    "runtime": "Sole backend gracefully restarted from exact d25c with ENABLE_V8_GLOBAL=true and existing PostgreSQL consultify_truth on 55483; PARTNER_ACCRUAL_POLICY_JSON absent.",
+    "signedIdentity": {"userId": "c9cf5985-89d5-4e75-833d-4c66bcb739a0", "organizationId": "26ff994e-7a4d-4447-957d-24f6c66eab20", "role": "OWNER"},
+    "attempt": {"method": "PUT", "route": "/api/v8/partner/payout-settings", "requestId": "prt-pol-d25c-auto-payout-denied-1", "requestedAutomaticPayout": true, "status": 410, "code": "PARTNER_ECONOMICS_POLICY_DISABLED", "decision": "AMD-PRT-ECONOMICS-002", "operation": "payout_settings"},
+    "policyReadSurface": {"policyUnavailable": true, "operations": ["commission", "discount", "accrual", "payout", "payout_settings", "lifecycle_payout"], "historicalReadOnly": true, "honesty": "The denial exposes the excluded scope; it does not imply an approved economics configuration."},
+    "postgresBeforeAfter": {"before": {"partner_commission_transactions": 0, "partner_payouts": 0, "partner_program_ledger": 0, "auto_payout_enabled_true": 0}, "after": {"partner_commission_transactions": 0, "partner_payouts": 0, "partner_program_ledger": 0, "auto_payout_enabled_true": 0}, "allowedAuditReceipt": "Exactly one partner_economics_policy_events denial receipt; audit evidence, not an economics or payout write."},
+    "verdictScope": "DONE is only for the approved-out policy decision and current-SHA enforcement. All excluded commercial/legal facts remain UNKNOWN and unavailable."
+  }
 }
