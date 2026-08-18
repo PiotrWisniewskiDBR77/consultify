@@ -3,6 +3,7 @@
   "baselineSha": "92284b90e97f164ff4d4f0d75241cfea82021d58",
   "integrationBaselineSha": "5d9",
   "productSha": "b4929e56b9d4f2591c9918cbcb99bcd959f8ca7b",
+  "testedSha": "6f8c04f40c1c2cabba6d0b4dc1e1f3ca79710ea5",
   "reconciliationSha": "d9de65506c0211ed5273331d8f4ea75a892f744c",
   "cleanupTestSha": "b4929e56b9d4f2591c9918cbcb99bcd959f8ca7b",
   "leaseSha256": "not_applicable_integrator_bounded_task",
@@ -140,11 +141,69 @@
     "method": "OPERATIONAL_ALERT_LEDGER_ENABLED=false is the absolute emergency master disable. Durable tenant signals, delivery and repair remain separately default OFF. Revert integrated OPS product through b4929e56b9; additive tables remain readable.",
     "executed": false
   },
-  "technicalVerdict": "PASS_REPOSITORY_TECHNICAL_DURABILITY_ON_EXACT_CURRENT_SCHEMA_750",
-  "verdict": "PARTIAL",
-  "openBlockers": [
-    "NOT_AUTHORIZED: external paging transport and operator dashboard are not authorized; repository transport remains default-OFF and loopback-only.",
-    "NOT_VERIFIED: no deployed sustained multi-instance observation window or exercised production operator incident.",
-    "PARTIAL_SIGKILL: accepted in-process authenticated denial intents use bounded graceful-shutdown flushing, but an ungraceful SIGKILL before the durable write completes can still lose the intent."
-  ]
+  "technicalVerdict": "PASS_EXACT_CURRENT_DURABLE_AUTH_DENIAL_AND_ALERT_LIFECYCLE",
+  "verdict": "DONE_CURRENT_SHA",
+  "openBlockers": [],
+  "verdictRationale": "DONE_CURRENT_SHA at testedSha 6f8c04f40c. The only repository-owned residual blocker in the prior packet, PARTIAL_SIGKILL, is superseded by the landed response durability fence: an authenticated 401/403 is not put on the wire until the durable repair intent commits; timeout or failure destroys the socket instead of acknowledging a denial whose intent may be lost. Exact-current focused unit, mounted signed-JWT real-PostgreSQL, concurrency, incident, delivery, repair, production-wiring and producer-isolation gates pass with zero run-owned residue and zero advisory locks. AMD-OBSERVABILITY-INTERNAL-GATE-002 explicitly classifies external paging and deployed observation as release gates, so they do not block repository technical DONE and remain unclaimed.",
+  "releaseBoundaries": [
+    "NOT_AUTHORIZED / NOT_VERIFIED: external paging transport and operator dashboard remain default-OFF and were not exercised.",
+    "NOT_VERIFIED: no deployed sustained multi-instance observation window or production operator incident was exercised.",
+    "No push, deployment or release is authorized or claimed by this packet."
+  ],
+  "exactCurrentReconciliation20260819": {
+    "testedSha": "6f8c04f40c1c2cabba6d0b4dc1e1f3ca79710ea5",
+    "historicalProductProvenance": {
+      "productSha": "b4929e56b9d4f2591c9918cbcb99bcd959f8ca7b",
+      "changedPathsMeaning": "The top-level changedPaths remain the historical OPS product lineage. This reconciliation changes evidence only and does not relabel testedSha as the product-authoring commit."
+    },
+    "ancestry": "1c5637e66f (integrated durability fence, patch-equivalent to source ac5415738f) and historical productSha b4929e56b9 are ancestors of testedSha. No later commit on the three fence paths exists between 1c5637e66f and testedSha.",
+    "authority": {
+      "decision": "AMD-OBSERVABILITY-INTERNAL-GATE-002 (16A)",
+      "effect": "Internal technical completion requires exercised write-failure, stale queue/outbox, saturation and authorization-denial alerts with runbook, positive control and verified recovery/clear. External paging and deployed observation remain release gates.",
+      "conclusion": "External paging/dashboard and deployed observation are preserved as release boundaries, not open repository blockers."
+    },
+    "supersededRepositoryBlocker": {
+      "historical": "PARTIAL_SIGKILL: an accepted authenticated denial could be acknowledged before its durable intent completed.",
+      "current": "RESOLVED. metricsMiddleware delays res.end for 401/403 until the durable intent barrier settles. On timeout or failure it destroys the socket, so the application never acknowledges a denial whose durable intent is not known to have committed."
+    },
+    "commands": [
+      {
+        "command": "npx vitest run tests/unit/backend/middleware/metrics.middleware.test.ts --maxWorkers=1 --maxConcurrency=1 --retry=0 --reporter=dot",
+        "result": "1 file / 32 tests passed / 0 failed / 0 skipped"
+      },
+      {
+        "command": "CI=true NODE_ENV=test DB_TYPE=postgres RUN_DB_TESTS=1 MOCK_DB=false POSTGRES_SKIP_INIT_IN_TEST=1 DATABASE_URL=postgresql://truthrun:REDACTED@127.0.0.1:55483/consultify_truth npx vitest run server/src/services/__tests__/operationalAlertAuthDenialMounted.pg.test.ts --maxWorkers=1 --maxConcurrency=1 --retry=0 --reporter=dot",
+        "result": "1 file / 2 tests passed; real mounted production route, signed JWT, ACTIVE/revoked/forged-tenant denial identity and response-time durable readback"
+      },
+      {
+        "command": "CI=true NODE_ENV=test DB_TYPE=postgres RUN_DB_TESTS=1 MOCK_DB=false POSTGRES_SKIP_INIT_IN_TEST=1 OPS_REPAIR_ALLOW_CURSOR_RESTORE_TEST=1 DATABASE_URL=postgresql://truthrun:REDACTED@127.0.0.1:55483/ops_repair_6f8 npx vitest run server/src/services/__tests__/operationalAlertIncidentService.pg.test.ts server/src/services/__tests__/operationalAlertSignalDeliveryService.pg.test.ts server/src/services/__tests__/operationalAlertRepairService.pg.test.ts server/src/services/resultsVnext/platform/__tests__/operationalAlertWiring.pg.test.ts server/src/services/__tests__/operationalAlertProducerIsolation.test.ts --maxWorkers=1 --maxConcurrency=1 --retry=0 --reporter=dot",
+        "result": "5 files / 18 passed / 1 deliberately skipped / 0 failed; incident, signal delivery, eight-way repair, real Results wiring and producer-failure isolation"
+      }
+    ],
+    "runtime": {
+      "engine": "existing sole pgvector PostgreSQL 16 container consultify-truth-ac78-20260818",
+      "schema": "exact-current runtime ledger 772 total / 772 success / 0 failed / 0 empty checksums",
+      "mountedDatabase": "consultify_truth for the bounded mounted denial gate",
+      "isolatedDatabase": "ops_repair_6f8, schema-only clone of the exact-current runtime inside the same PostgreSQL container; used because the repair suite fail-closes unless the database name is explicitly disposable"
+    },
+    "denominators": {
+      "focusedUnit": "1 file / 32 passed",
+      "mountedSignedJwtRealPg": "1 file / 2 passed",
+      "alertLifecycleRealPgAndIsolation": "5 files / 18 passed / 1 deliberately skipped",
+      "combined": "7 files / 52 passed / 1 deliberately skipped / 0 failed"
+    },
+    "negativeControls": [
+      "The mounted response itself is the durability barrier; immediate PostgreSQL readback found the exact intent without an explicit shutdown flush.",
+      "ACTIVE role denial, revoked membership denial and forged-tenant denial persisted exact canonical organization and actor identity.",
+      "Eight concurrent incident detections and eight concurrent repair intents collapsed to one durable identity.",
+      "Timeout and rejected durability promises are classified fail-closed; the response wrapper does not call the original end on those outcomes.",
+      "Primary Results, Notification and Case outcomes survive secondary alert-store failure without duplicate business execution."
+    ],
+    "cleanup": {
+      "sharedRuntimeBeforeAfter": "operational_alert_repair_intents=0, attempts=0, receipts=0 before and after; run-owned organizations=0, users=0, memberships=0",
+      "isolatedDatabaseAfter": "repair intents=0, attempts=0, receipts=0, signals=0, incidents=0",
+      "advisoryLocks": 0,
+      "temporaryDatabaseDisposition": "Drop only ops_repair_6f8 after evidence commit; no canonical or shared runtime database is removed."
+    }
+  }
 }
