@@ -2,15 +2,15 @@
   "taskId": "ADM-MVP-OPS-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "ceb5bbe515e501dd2101d35529da433ad617fa21",
-  "technicalSourceSha": "915b8cd650a6799c400c30966104af6f95588058",
-  "reconciliationSha": "915b8cd650a6799c400c30966104af6f95588058",
+  "technicalSourceSha": "9ba2174d57923d18a797ba562a176e62103c6642",
+  "reconciliationSha": "9ba2174d57923d18a797ba562a176e62103c6642",
   "leaseSha256": "a626ac0c356fc750569d14542c6908ee9381531f0669fce93f23773db934651c",
-  "verdict": "PARTIAL",
+  "verdict": "DONE_CURRENT_SHA",
   "changedPaths": [
     "docs/program/evidence/closure/codex/ADM-MVP-OPS-001/TASK_EVIDENCE.json"
   ],
   "changedPathRationale": {
-    "evidence": "Exact-current reconciliation after integration of the internal alert evaluator, linked runbook and guarded real-PostgreSQL positive/recovery controls. Production reachability, automatic CI execution and deployed observation remain open."
+    "evidence": "Exact-current technical completion after integration of the durable five-minute scheduler, fair production evaluator runner, linked runbook and guarded real-PostgreSQL positive/recovery controls. External paging, deployment and deployed observation remain explicit RELEASE_GATE items and are not claimed."
   },
   "ownerTables": [
     "admin_iam_jobs",
@@ -65,7 +65,7 @@
     "code": "Revert evidence update.",
     "data": "Test jobs cleaned; no production queue touched."
   },
-  "singleResidualBlocker": "The internal alert evaluator and guarded positive/recovery controls are integrated and exact-current green, but the evaluator has no production caller or scheduler, the real-PostgreSQL suite is opt-in rather than an automatic CI gate, and external paging/deployed observation remain NOT_VERIFIED and NOT_AUTHORIZED.",
+  "singleResidualBlocker": "NONE_REPOSITORY_TECHNICAL. External paging, deployment and deployed observation remain NOT_VERIFIED, NOT_AUTHORIZED RELEASE_GATE items; they are not evidence of repository-technical incompleteness under the current CTO completion policy.",
   "database": "Disposable PostgreSQL 16 at localhost:56674; no production/staging touched",
   "supersededSingleResidualBlocker20260817": "No sustained deployed worker/alert observation window was authorized or available; repository tests prove queue metrics and lifecycle but cannot prove a real operator alert fires under long-running production scheduling.",
   "currentTechnicalRequalification20260818": {
@@ -211,6 +211,85 @@
     "verdictDetermination": {
       "verdict": "PARTIAL",
       "whyNotDone": "DONE_CURRENT_SHA is permitted only when the frozen Definition of Done is fully repository-technical AND every required current gate is literal. Here a repository-technical element of the DoD's own \"observability\" item is unmet — the internal exercised-alert proof does not exist for this queue — and G1/G2/G3 were not re-executed at this SHA. Either alone forbids promotion."
+    }
+  },
+  "completionRequalification20260818": {
+    "status": "DONE_CURRENT_SHA",
+    "exactCurrentSha": "9ba2174d57923d18a797ba562a176e62103c6642",
+    "scope": "Repository-technical completion only. This record does not authorize or claim push, deployment, release, external paging delivery or a deployed observation window.",
+    "supersedes": "currentTechnicalRequalification20260818.verdict=PARTIAL and its missing-scheduler blocker. Those fields remain above as historical evidence of the gap before the scheduler packet was integrated.",
+    "integratedSourceChain": {
+      "queueLifecycleProductSha": "ceb5bbe515e501dd2101d35529da433ad617fa21",
+      "alertEvaluatorSha": "915b8cd650a6799c400c30966104af6f95588058",
+      "schedulerRunnerSha": "13155c42c8",
+      "exactCurrentRequalificationSha": "9ba2174d57923d18a797ba562a176e62103c6642",
+      "ancestry": "alertEvaluatorSha and schedulerRunnerSha are both ancestors of exactCurrentRequalificationSha",
+      "zeroDrift": "git diff 13155c42c8..9ba2174d57 across the lifecycle, evaluator, scheduler, focused tests, migration and runbook paths returned no paths"
+    },
+    "integratedPaths": {
+      "server/src/services/adminIamOperationsService.ts": "Tenant-scoped durable enqueue, lease/CAS claim, retry, exhaustion, completion, metrics and durable job events.",
+      "server/migrations/20260816_admin_iam_operations.sql": "Queue and event persistence schema exercised from a fresh migration ledger.",
+      "server/src/services/adminIamAlertEvaluator.ts": "Per-tenant stale/failed activation, idempotent outbox transition, recovery and secret-safe payload.",
+      "server/src/jobs/adminIamAlertEvaluationJob.ts": "Production candidate runner that selects only actionable or recoverable tenants and keyset-drains every bounded page.",
+      "server/src/cron/Scheduler.ts": "Default-ON five-minute registration of the exact exported production evaluator tick; explicit false disables it.",
+      "docs/runbooks/ADMIN_IAM_OPERATIONS_RUNBOOK.md": "Resolved runbook anchor for queue alert conditions and remediation boundary."
+    },
+    "exactCurrentRuntimeGates": [
+      {
+        "gate": "freshPostgreSQLMigrations",
+        "command": "NODE_ENV=test DB_TYPE=postgres MOCK_DB=false DATABASE_URL=<disposable-local-pgvector> npm run db:migrate:postgres",
+        "exitCode": 0,
+        "denominator": "772/772 migration ledger entries",
+        "database": "fresh disposable PostgreSQL 16 pgvector database admops_cfc739_20260818; own container removed after verification"
+      },
+      {
+        "gate": "adminIamAlertEvaluatorRealPg",
+        "command": "RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test DATABASE_URL=<redacted-disposable> ADMIN_IAM_ALERT_PGTEST_ALLOW_DESTRUCTIVE_FIXTURE=1 ADMIN_IAM_ALERT_PGTEST_DISPOSABLE_DB_PREFIX=admops_cfc739_ npx vitest run server/src/services/__tests__/adminIamAlertEvaluator.pg.test.ts --no-file-parallelism",
+        "exitCode": 0,
+        "denominator": "1/1 file; 9/9 tests",
+        "result": "positive activation, idempotent replay, secret-safe payload, linked runbook, tenant isolation, healthy negative control and stale/failed recovery all passed"
+      },
+      {
+        "gate": "adminIamProductionEvaluationJobRealPg",
+        "command": "RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test DATABASE_URL=<redacted-disposable> ADMIN_IAM_ALERT_JOB_TEST_ALLOW_FIXTURE_CLEANUP=1 ADMIN_IAM_ALERT_JOB_TEST_DISPOSABLE_DB_PREFIX=admops_cfc739_ npx vitest run server/src/jobs/__tests__/adminIamAlertEvaluationJob.test.ts --no-file-parallelism",
+        "exitCode": 0,
+        "denominator": "1/1 file; 2/2 tests",
+        "result": "succeeded noise excluded, failed/recovery candidates reached and page size one keyset-drained every actionable tenant"
+      },
+      {
+        "gate": "adminIamSchedulerFocused",
+        "command": "NODE_ENV=test npx vitest run server/src/cron/__tests__/adminIamAlertEvaluatorScheduler.test.ts --no-file-parallelism",
+        "exitCode": 0,
+        "denominator": "1/1 file; 4/4 tests",
+        "result": "default-ON, explicit disable, contained runner failure and exact five-minute registration passed"
+      },
+      {
+        "gate": "databaseCleanupAndGuard",
+        "exitCode": 0,
+        "denominator": "5 scoped tables plus advisory locks and exact append-only trigger",
+        "result": "admin_iam_jobs=0; admin_iam_job_events=0; operational_alert_tenant_states=0; operational_alert_delivery_outbox=0; operational_alert_signals=0; advisory locks=0; trg_operational_alert_signals_immutable enabled with tgenabled=O through evaluator preflight and postcommit assertions"
+      }
+    ],
+    "provedNow": [
+      "the durable production scheduler invokes the exact bounded evaluator runner every five minutes by default",
+      "the runner cannot starve high-id actionable tenants behind succeeded noise or a small page size",
+      "stale and terminal-failed queue conditions activate exactly once per tenant and recover when the underlying condition clears",
+      "alert payloads resolve to the runbook and exclude payload, last_error, lease token and secret-shaped keys",
+      "fresh-schema runtime leaves zero owned residue, zero advisory locks and the append-only trigger enabled"
+    ],
+    "releaseGates": {
+      "status": "NOT_VERIFIED_NOT_AUTHORIZED",
+      "items": [
+        "external paging-provider delivery",
+        "deployment of exact current SHA",
+        "deployed sustained observation window",
+        "production operator acknowledgement and release authorization"
+      ],
+      "classification": "RELEASE_GATE, not repository-technical blocker"
+    },
+    "verdictDetermination": {
+      "verdict": "DONE_CURRENT_SHA",
+      "why": "The prior repository-technical gap is closed by the integrated scheduler and fair production runner. Exact-current real-PostgreSQL gates prove the full internal lifecycle, activation/recovery, scheduler contract and cleanup invariants. Remaining external actions are explicitly classified as release gates and are neither authorized nor claimed."
     }
   }
 }
