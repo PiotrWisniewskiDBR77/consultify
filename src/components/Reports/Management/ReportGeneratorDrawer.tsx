@@ -26,6 +26,23 @@ interface Project {
   name: string;
 }
 
+const normalizeProjects = (response: any): Project[] => {
+  const rows = Array.isArray(response)
+    ? response
+    : Array.isArray(response?.data)
+      ? response.data
+      : Array.isArray(response?.data?.projects)
+        ? response.data.projects
+        : null;
+  if (!rows) throw new Error('Invalid projects response');
+  return rows
+    .map((project: any) => ({
+      id: String(project?.id || '').trim(),
+      name: String(project?.name || '').trim(),
+    }))
+    .filter((project) => project.id && project.name);
+};
+
 const reportTypeOptions = [
   {
     id: 'TEAM_MEETING' as ManagementReportType,
@@ -93,16 +110,17 @@ export const ReportGeneratorDrawer: React.FC<ReportGeneratorDrawerProps> = ({
   const [periodDays, setPeriodDays] = useState(7);
   const [generating, setGenerating] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [projectsLoadError, setProjectsLoadError] = useState(false);
 
   // Load projects
   useEffect(() => {
     const loadProjects = async () => {
       try {
         const response = await Api.get('/api/projects');
-        if (response.data?.projects) {
-          setProjects(response.data.projects.map((p: any) => ({ id: p.id, name: p.name })));
-        }
+        setProjects(normalizeProjects(response));
+        setProjectsLoadError(false);
       } catch (error) {
+        setProjectsLoadError(true);
         console.error('Failed to load projects:', error);
       }
     };
@@ -296,6 +314,11 @@ export const ReportGeneratorDrawer: React.FC<ReportGeneratorDrawerProps> = ({
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
                 />
               </div>
+              {projectsLoadError && (
+                <p role="alert" className="mt-2 text-sm text-red-600 dark:text-red-300">
+                  Failed to load projects. Report generation is unavailable.
+                </p>
+              )}
             </div>
           )}
 
