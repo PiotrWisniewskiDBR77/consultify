@@ -346,5 +346,17 @@
       "integratorBoundary": "The live default-suite regression documented above sits entirely outside lane A's lease and must be repaired by the integrator, using the one-file minimal allowlist named above.",
       "whyNotDoneCurrentSha": "DONE_CURRENT_SHA is permitted only when the literal frozen Definition of Done is completely current and carries no human, owner, legal, provider, deployment or release dependency. G4 carries an explicit human dependency, and a named default-suite test is currently red at canonical. PARTIAL is retained."
     }
+  },
+  "integratorHarnessResolution20260818": {
+    "status": "RESOLVED_AT_CURRENT_CANONICAL_SUCCESSOR",
+    "implementationSha": "cec286ef37",
+    "changedPath": "tests/integration/tools/tool-session-roundtrip.contract.test.ts",
+    "change": "The SQLite-backed route contract now neutralizes requireActiveTenantMembership exactly like its existing auth, RBAC, demo and rate-limit middleware mocks. Production strict-membership behavior is unchanged; only this isolated controller/persistence harness is restored to its intended boundary.",
+    "focusedCommand": "npx vitest run tests/integration/tools/tool-session-roundtrip.contract.test.ts --retry=0 --reporter=dot",
+    "focusedResult": "1 file / 11 tests passed / exit 0 / 5.09s at cec286ef37",
+    "productionGuardRegressionCommand": "npx vitest run server/src/middleware/__tests__/auditsStrictMembership.middleware.test.ts --retry=0 --reporter=dot",
+    "productionGuardRegressionResult": "1 file / 18 tests passed / exit 0",
+    "supersedesIntegratorBoundaryOnly": "The live default-suite regression and integrator harness-fix boundary documented in exactCurrentReconciliation20260818 are resolved. Historical bisect, diagnosis and command results remain retained above.",
+    "remainingBoundary": "PARTIAL remains correct: the Dynamic SWOT freeze/promote mounted browser and named human G4/VoiceOver/brand acceptance are still not present. This harness repair alone does not satisfy them."
   }
 }
