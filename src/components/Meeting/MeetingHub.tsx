@@ -1309,7 +1309,7 @@ export const MeetingHub: React.FC = () => {
                 <X size={16} />
               </button>
             </div>
-            <div className="space-y-4 p-5">
+            <div className="space-y-4 p-5" data-meeting-capture-policy="manual-text-only">
               <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-xs text-c-text-muted">
                 <strong className="text-c-text-secondary">
                   {t('meeting.notes.captureOff', 'Recording and automatic transcription are OFF.')}

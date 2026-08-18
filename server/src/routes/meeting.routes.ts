@@ -24,6 +24,32 @@ import {
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
 
+export const MEETING_CAPTURE_POLICY = Object.freeze({
+  recordingEnabled: false,
+  automaticTranscriptionEnabled: false,
+  acceptsManualSourceText: true,
+} as const);
+
+const MANUAL_NOTE_FIELDS = new Set(['transcript', 'language', 'idempotencyKey']);
+const CAPTURE_FIELD = /(record|transcrib|audio|media|blob|provider|upload|file|url)/i;
+
+export function validateManualMeetingNotePayload(body: unknown):
+  | { ok: true }
+  | { ok: false; code: 'MEETING_CAPTURE_DISABLED' | 'UNSUPPORTED_MEETING_NOTE_FIELD'; fields: string[] } {
+  const value = body && typeof body === 'object' && !Array.isArray(body)
+    ? body as Record<string, unknown>
+    : {};
+  const unsupported = Object.keys(value).filter((key) => !MANUAL_NOTE_FIELDS.has(key));
+  if (unsupported.length === 0) return { ok: true };
+  return {
+    ok: false,
+    code: unsupported.some((key) => CAPTURE_FIELD.test(key))
+      ? 'MEETING_CAPTURE_DISABLED'
+      : 'UNSUPPORTED_MEETING_NOTE_FIELD',
+    fields: unsupported.sort(),
+  };
+}
+
 /** Maps `HandoffSpineError.code` (and our own boundary errors of the same
  * shape) onto the HTTP status the route should answer with. Centralised so
  * every proposal-flow route (generate-notes, notes/:noteId/decision) reports
@@ -285,18 +311,22 @@ router.post(
     const userId = req.user?.id;
     if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
 
+    const payloadPolicy = validateManualMeetingNotePayload(req.body);
+    if (!payloadPolicy.ok) {
+      return res.status(400).json({
+        error: payloadPolicy.code === 'MEETING_CAPTURE_DISABLED'
+          ? 'Meeting recording and automatic transcription are disabled'
+          : 'Unsupported meeting-note request field',
+        code: payloadPolicy.code,
+        fields: payloadPolicy.fields,
+      });
+    }
+
     const meetingId = String(req.params.id);
     const transcript = String(req.body?.transcript || '').trim();
     if (!transcript) {
       return res.status(400).json({ error: 'transcript is required' });
     }
-    if (req.body?.persist === true) {
-      return res.status(409).json({
-        error: 'Direct persistence is unavailable; approve the generated meeting-note proposal',
-        code: 'MEETING_APPROVAL_REQUIRED',
-      });
-    }
-
     const meeting = await getMeeting({ organizationId: orgId, meetingId });
     if (!meeting) return res.status(404).json({ error: 'Meeting not found' });
 

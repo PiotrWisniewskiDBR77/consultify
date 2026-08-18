@@ -478,6 +478,32 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
       expect(res.status).toBe(400);
     });
 
+    it('GF-30b rejects every capture/provider activation field before durable writes', async () => {
+      const count = async () => (await pool.query<{ n: number }>(
+        `SELECT
+          (SELECT count(*) FROM meeting_notes WHERE organization_id=$1)::int +
+          (SELECT count(*) FROM artifact_handoff_proposals WHERE producer_kind='meeting' AND organization_id=$1)::int AS n`,
+        [ORG_A]
+      )).rows[0].n;
+      const before = await count();
+      for (const forbidden of [
+        { recording: true },
+        { automaticTranscription: true },
+        { provider: 'external:any' },
+        { audioUrl: 'https://example.invalid/audio' },
+        { mediaBlob: 'opaque' },
+        { persist: true },
+      ]) {
+        const res = await request(app)
+          .post(`/api/meeting/${id}/generate-notes`)
+          .set(member())
+          .send({ transcript: 'manual text must not bypass capture policy', ...forbidden });
+        expect(res.status).toBe(400);
+        expect(res.body.code).toMatch(/MEETING_CAPTURE_DISABLED|UNSUPPORTED_MEETING_NOTE_FIELD/);
+      }
+      expect(await count()).toBe(before);
+    });
+
     it('GF-31 generate-notes on an unknown meeting is 404', async () => {
       const res = await request(app)
         .post(`/api/meeting/meeting-nope/generate-notes`)

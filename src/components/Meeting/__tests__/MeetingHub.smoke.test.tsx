@@ -169,6 +169,9 @@ describe('MeetingHub (smoke)', () => {
     fireEvent.click(await screen.findByRole('button', { name: /meeting\.aiNotes|AI Notes/i }));
 
     expect(await screen.findByText(/Recording and automatic transcription are OFF/i)).toBeTruthy();
+    expect(screen.getByLabelText(/Meeting source text/i)).toBeTruthy();
+    expect(document.querySelector('[data-meeting-capture-policy="manual-text-only"]')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /record|transcrib|upload audio/i })).toBeNull();
     expect(await screen.findByText('Draft minutes')).toBeTruthy();
     expect(screen.getByRole('button', { name: /Approve and materialize/i })).toBeTruthy();
   });

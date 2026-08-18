@@ -3464,7 +3464,7 @@ export const Api = {
   // approves or rejects them; this never enables recording/transcription.
   generateMeetingNotes: async (
     meetingId: string,
-    data: { transcript: string; language?: string; persist?: boolean }
+    data: { transcript: string; language?: string; idempotencyKey?: string }
   ): Promise<any> => {
     const res = await fetchWithRetry(`${API_URL}/meeting/${meetingId}/generate-notes`, {
       method: 'POST',
