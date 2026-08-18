@@ -34,10 +34,14 @@ const REAL_DB =
 if (REAL_DB) process.env.DB_TYPE = 'postgres';
 
 let currentUserId = '';
+let currentOrganizationId = '';
 
 vi.mock('../../middleware/auth.middleware.js', () => ({
   verifyToken: (req: express.Request, _res: express.Response, next: express.NextFunction) => {
-    (req as express.Request & { user?: unknown }).user = { id: currentUserId };
+    (req as express.Request & { user?: unknown }).user = {
+      id: currentUserId,
+      organizationId: currentOrganizationId,
+    };
     next();
   },
 }));
@@ -76,7 +80,13 @@ describe.skipIf(!REAL_DB)('MFA enrolment — real PostgreSQL', () => {
       `INSERT INTO users (id, organization_id, email, password) VALUES ($1, $2, $3, $4)`,
       [id, orgId, `${id}@example.test`, bcrypt.hashSync('correct-password', 4)]
     );
+    await pool.query(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+       VALUES ($1, $2, $3, 'ADMIN', 'ACTIVE')`,
+      [randomUUID(), orgId, id]
+    );
     createdUsers.push(id);
+    currentOrganizationId = orgId;
     return id;
   };
 
@@ -98,6 +108,7 @@ describe.skipIf(!REAL_DB)('MFA enrolment — real PostgreSQL', () => {
     if (!pool) return;
     await pool.query(`DELETE FROM audit_logs WHERE user_id = ANY($1)`, [createdUsers]);
     await pool.query(`DELETE FROM user_mfa WHERE user_id = ANY($1)`, [createdUsers]);
+    await pool.query(`DELETE FROM organization_members WHERE user_id = ANY($1)`, [createdUsers]);
     await pool.query(`DELETE FROM users WHERE id = ANY($1)`, [createdUsers]);
     await pool.query(`DELETE FROM organizations WHERE id = $1`, [orgId]);
     const residue = await pool.query(`SELECT COUNT(*)::int AS n FROM users WHERE id = ANY($1)`, [

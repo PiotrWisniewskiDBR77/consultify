@@ -196,6 +196,12 @@ test.describe('SET-MVP-MFA mounted signed lifecycle', () => {
 
       await page.goto('/settings/security');
       await dismissOverlayIfPresent(page);
+      const onboarding = page
+        .getByRole('dialog')
+        .filter({ hasText: /Welcome to Consultify|Witamy/i });
+      if (await onboarding.waitFor({ state: 'visible', timeout: 3_000 }).then(() => true).catch(() => false)) {
+        await onboarding.getByRole('button', { name: /Skip for now|Pomiń na razie/i }).click();
+      }
       await page.getByRole('button', { name: /Authentication & Access/i }).click();
       await expect(
         page.getByRole('heading', { name: /Authentication & Access/i }).first()
