@@ -6,7 +6,7 @@
   "technicalSourceSha": "d7e1b42a5f60281b6c552d8571e731288e792c73",
   "requalificationSha": "d7e1b42a5f60281b6c552d8571e731288e792c73",
   "reconciliationSha": "2be22ad261e36ec7edc2603b417e8f66ef104387",
-  "evidenceSha": "9936a10ce90de755320cfb626c2d533dc0554049",
+  "supersedesEvidenceSha": "9936a10ce90de755320cfb626c2d533dc0554049",
   "postFanInTechnicalSourceShas": [
     "f3c8ecafd9cc017503d9f6a3166e5c774e8a0f60",
     "4a84daf3917519969529cfd7a5cefe1d7e191dcb",
@@ -204,11 +204,12 @@
     ]
   },
   "postFanInFullLineageRequalification": {
+    "commandRedactionNote": "Credential values in command strings are redacted; command structure, database identity, ports, paths and denominators are preserved.",
     "testedSha": "4f0fd2cd9b0665a971a86867a91015655ce127af",
     "reconciliationSha": "2be22ad261e36ec7edc2603b417e8f66ef104387",
     "relationship": "Canonical reconciliation adds only the integrated MFA two-file test corrective after the tested FLOW source; FLOW product and test paths are unchanged.",
     "schema": "Fresh 765, repeat 0, dry-run pending 0, ledger 765 and migration 20261018 checksum 2565bd889e451f44aa19a250fd81680ac67675361b534d3ef2f6681792262466. The exact migration command transcript was unavailable after log compaction and is not reconstructed here.",
-    "command": "DATABASE_URL=postgresql://consultify:consultify@127.0.0.1:32978/flow_postfan_4f0f FLOW_DISPOSABLE_DB_PREFIX=flow_postfan_ FLOW_ALLOW_IMMUTABLE_FIXTURE_CLEANUP=1 ROI_E007_DISPOSABLE_DB_PREFIX=flow_postfan_ ROI_E007_ALLOW_IMMUTABLE_FIXTURE_CLEANUP=1 JWT_SECRET=consultify-postfan-pinned-secret-at-least-32-characters DB_TYPE=postgres NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false npx vitest run server/src/routes/resultsVnext/__tests__/roiFinanceSeam.routes.test.ts server/src/services/initiative/__tests__/ini-mvp-gate-001-lifecycle-gate-route.test.ts server/src/services/initiative/__tests__/ini-mvp-gate-001-lifecycle-gate-writer.pg.test.ts server/src/services/initiative/__tests__/initiativeTransitionService.closureGate.test.ts tests/integration/crossflow/cf-00-full-transformation-lineage.realdb.test.ts tests/resultsVnext/roi/roiFinanceReconciliation.realdb.test.ts --retry=0 --no-file-parallelism --maxWorkers=1",
+    "command": "DATABASE_URL=postgresql://consultify:<redacted>@127.0.0.1:32978/flow_postfan_4f0f FLOW_DISPOSABLE_DB_PREFIX=flow_postfan_ FLOW_ALLOW_IMMUTABLE_FIXTURE_CLEANUP=1 ROI_E007_DISPOSABLE_DB_PREFIX=flow_postfan_ ROI_E007_ALLOW_IMMUTABLE_FIXTURE_CLEANUP=1 JWT_SECRET=<redacted> DB_TYPE=postgres NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false npx vitest run server/src/routes/resultsVnext/__tests__/roiFinanceSeam.routes.test.ts server/src/services/initiative/__tests__/ini-mvp-gate-001-lifecycle-gate-route.test.ts server/src/services/initiative/__tests__/ini-mvp-gate-001-lifecycle-gate-writer.pg.test.ts server/src/services/initiative/__tests__/initiativeTransitionService.closureGate.test.ts tests/integration/crossflow/cf-00-full-transformation-lineage.realdb.test.ts tests/resultsVnext/roi/roiFinanceReconciliation.realdb.test.ts --retry=0 --no-file-parallelism --maxWorkers=1",
     "result": "6/6 files and 67/67 tests passed in one no-retry sequential invocation.",
     "proved": "One mounted signed APPROVED SWOT source retains stable identity through candidate, Initiative, Execution, observed Actual, governed Finance reconciliation and PIR; gate authority, tenant scope, CAS and reconciliation seams remain fail closed.",
     "boundary": "The visibility policy is explicitly SYNTHETIC_TEST_ONLY and does not authorize production policy, rollout or deployment.",
