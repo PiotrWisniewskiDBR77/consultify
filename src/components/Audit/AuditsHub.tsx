@@ -63,7 +63,6 @@ import {
 import { StandardModuleBar } from '@/components/standard/StandardModuleBar';
 import { EntityStatusChip, MetaChip, statusChipTone } from '@/components/ui/primitives/chips';
 import { Api } from '@/services/api';
-import { AUDIT_ISO27001_LEGACY_PRESET_ENABLED } from '@/utils/auditIso27001LegacyPresetGate';
 import { isAuditProgramEditEnabled } from '@/utils/auditProgramEditStubFlag';
 import { isDrdReportEnabled } from '@/utils/drdReportFlag';
 
@@ -76,7 +75,6 @@ import {
   listPrograms,
   type ProgramCompletion,
 } from './auditApi';
-import { AuditOrchestratorWizard } from './AuditOrchestratorWizard';
 
 const PAGE_SIZE = 50;
 
@@ -118,8 +116,6 @@ export const AuditsHub: React.FC = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [generatingId, setGeneratingId] = useState<string | null>(null);
 
-  const [wizardOpen, setWizardOpen] = useState(false);
-  const [wizardPresetId, setWizardPresetId] = useState<string | null>(null);
   // StandardTable owns the (unused-here) column filter chips. Search + status
   // remain SERVER-SIDE via ModuleHub (load()); these stay empty by design.
   const [tableFilters, setTableFilters] = useState<FilterChip[]>([]);
@@ -329,11 +325,6 @@ export const AuditsHub: React.FC = () => {
     } finally {
       setGeneratingId(null);
     }
-  };
-
-  const openWizard = (presetId: string | null) => {
-    setWizardPresetId(presetId);
-    setWizardOpen(true);
   };
 
   // Triada standard (docs/ui-standards/TRIADA_KANON.md A4): name (+status
@@ -784,31 +775,16 @@ export const AuditsHub: React.FC = () => {
         activeFilters={[]}
         onRemoveFilter={() => {}}
         onClearFilters={() => {}}
-        onNewItem={() => openWizard(null)}
-        newItemLabel={t('audit.newAuditProgram')}
+        /* Program creation is intentionally absent. The legacy wizard writes to
+         * POST /api/audit/programs, whose mutations are retired with HTTP 410.
+         * The supported /api/audits/programs writer requires a published audit
+         * pack and represents a different workflow, so silently remapping the
+         * old wizard would create the wrong product semantics. */
         statusFilters={statusFilters}
         activeStatusFilter={statusFilter === 'all' ? null : statusFilter}
         onStatusFilterChange={(s) => setStatusFilter((s as AuditProgramStatus | null) ?? 'all')}
         viewModes={['table']}
         commandRowContent={bulkCommandRowContent}
-        filterControls={
-          // AMD-AUD-RIGHTS-001: legacy ISO 27001 preset is hard-disabled and
-          // cannot be re-enabled by any runtime input — see
-          // auditIso27001LegacyPresetGate.ts. AUDIT_PRESETS already excludes
-          // the preset (which also empties getPresetById('iso27001')); this is
-          // the second, independent choke point so the launcher never renders.
-          // No new UI is introduced — this only removes an existing control.
-          AUDIT_ISO27001_LEGACY_PRESET_ENABLED ? (
-            <button
-              type="button"
-              onClick={() => openWizard('iso27001')}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-c-border px-3 py-2 text-sm text-c-text-secondary hover:bg-c-surface-raised"
-            >
-              <ShieldCheck className="h-4 w-4" />
-              {t('audit.iso27001')}
-            </button>
-          ) : undefined
-        }
       >
         <div className="mx-auto max-w-6xl px-6 py-6">
           {activeTab === 'drd-reports' ? (
@@ -943,8 +919,6 @@ export const AuditsHub: React.FC = () => {
                             query.trim() || statusFilter !== 'all'
                               ? t('audit.noProgramsMatchFilters')
                               : t('audit.noAuditProgramsYet'),
-                          actionLabel: t('audit.newAuditProgram'),
-                          onAction: () => openWizard(null),
                         }}
                         rowMenu={(row) => buildRowMenu(row as unknown as AuditRow)}
                       />
@@ -1058,17 +1032,6 @@ export const AuditsHub: React.FC = () => {
           )}
         </div>
       </StandardModuleBar>
-
-      <AuditOrchestratorWizard
-        open={wizardOpen}
-        onClose={() => setWizardOpen(false)}
-        initialPresetId={wizardPresetId}
-        onCreated={(program) => {
-          setWizardOpen(false);
-          setSelectedId(program.id);
-          void load();
-        }}
-      />
     </div>
   );
 };

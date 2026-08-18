@@ -8,7 +8,7 @@
  *  - renders one row per audit program returned by listPrograms(),
  *  - server-side search wiring: typing in the search box re-calls
  *    listPrograms({ search }),
- *  - the "New audit program" primary CTA opens the wizard,
+ *  - the retired legacy writer is not exposed as a creation CTA,
  *  - selecting a row opens the per-program dashboard in the preview pane.
  *
  * The auditApi client is mocked so the hub mounts deterministically offline.
@@ -145,19 +145,11 @@ describe('AuditsHub — §27 list', () => {
     );
   });
 
-  it('opens the wizard from the "New audit program" primary CTA', async () => {
+  it('does not expose the retired legacy program writer as a creation CTA', async () => {
     render(<AuditsHub />);
     await waitFor(() => expect(screen.getByTestId('audits-hub')).toBeInTheDocument());
-
-    const cta = await screen.findByText('New audit program');
-    fireEvent.click(cta);
-
-    // The wizard header reuses the same EN label; assert the wizard chrome appears.
-    await waitFor(() => {
-      expect(
-        screen.getByText('Define the objective, what to ask, and who fills it.')
-      ).toBeInTheDocument();
-    });
+    expect(screen.queryByRole('button', { name: 'New audit program' })).toBeNull();
+    expect(screen.queryByText('Define the objective, what to ask, and who fills it.')).toBeNull();
   });
 
   it('opens the per-program dashboard in the preview when a row is clicked', async () => {
