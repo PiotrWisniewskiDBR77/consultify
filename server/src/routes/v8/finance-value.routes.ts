@@ -35,6 +35,7 @@ import { Router } from 'express';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
+import { requireActiveMembership } from '../../services/legacyCutover/requireActiveMembership.js';
 import {
   bankBenefit,
   bankingStatus,
@@ -115,6 +116,7 @@ function queryString(req: AuthRequest, key: string): string | undefined {
  */
 router.post(
   '/ledger/baselines',
+  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
     const initiativeId = String(req.body?.initiativeId || '').trim();
@@ -169,6 +171,7 @@ router.get(
  */
 router.post(
   '/ledger/entries',
+  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
     const initiativeId = String(req.body?.initiativeId || '').trim();
@@ -316,6 +319,7 @@ router.get(
  */
 router.post(
   '/capture/gates',
+  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const initiativeId = String(req.body?.initiativeId || '').trim();
@@ -355,6 +359,7 @@ router.post(
  */
 router.post(
   '/capture/gates/:id/advance',
+  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
     const { id } = req.params;
@@ -656,6 +661,7 @@ router.get(
  */
 router.post(
   '/post-investment-reviews',
+  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
     if (!organizationId) return res.status(401).json({ error: 'Unauthorized' });

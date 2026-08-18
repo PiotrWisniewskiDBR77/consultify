@@ -149,6 +149,18 @@ delete process.env.ENABLE_TEST_AUTH_BYPASS;
 const REQUIRED_DB_PREFIX = process.env.FINANCE_MEMBERSHIP_GATE_TEST_DB_PREFIX || 'consultify';
 const SUITE_LOCK_NAME = 'finance-value-membership-gate';
 
+/**
+ * Exact append-only guard set on public.roi_realized_values (ROI-E007). Pinned by
+ * NAME and COUNT so that a dropped, renamed or added guard fails the teardown
+ * instead of being silently tolerated. Only the DELETE guard is ever disabled, and
+ * only inside the pinned cleanup transaction.
+ */
+const APPEND_ONLY_DELETE_TRIGGER = 'trg_roi_realized_values_deny_delete';
+const APPEND_ONLY_TRIGGERS = [
+  APPEND_ONLY_DELETE_TRIGGER,
+  'trg_roi_realized_values_deny_update',
+] as const;
+
 const prefix = `finval-${randomUUID().slice(0, 8)}`;
 const org = `${prefix}-org`;
 const foreignOrg = `${prefix}-forg`;
@@ -336,9 +348,50 @@ describe.sequential('finance-value.routes.ts — requireActiveMembership wall (r
   afterAll(async () => {
     if (!pool) return;
     let cleanupClient: PoolClient | undefined;
+    let lockReleased = false;
     try {
       cleanupClient = await pool.connect();
+
+      // roi_realized_values is append-only under ROI-E007: trigger function
+      // roi_realized_values_deny_mutation RAISEs unconditionally on DELETE/UPDATE
+      // with no GUC escape hatch, so a fixture teardown cannot delete its own rows
+      // while that trigger is live. Resolve the DELETE trigger BY NAME from the
+      // catalog (never hardcoded) and require it to start ENABLED, so a fixture that
+      // silently inherits an already-disabled product guard fails loudly instead.
+      // Every catalog probe below is schema-qualified via pg_namespace against
+      // current_schema(), so a same-named table in another schema on the search_path
+      // can never be probed (or disabled) by mistake.
+      const trgProbe = await cleanupClient.query<{ tgname: string; tgenabled: string }>(
+        `SELECT t.tgname, t.tgenabled::text AS tgenabled
+           FROM pg_trigger t
+           JOIN pg_class c ON c.oid = t.tgrelid
+           JOIN pg_namespace n ON n.oid = c.relnamespace
+          WHERE n.nspname = current_schema()
+            AND c.relname = 'roi_realized_values'
+            AND NOT t.tgisinternal
+          ORDER BY t.tgname`
+      );
+      // Exact named set and exact count, all initially ENABLED ('O').
+      expect(
+        trgProbe.rows.map((r) => r.tgname),
+        'exact append-only guard set on roi_realized_values'
+      ).toEqual(APPEND_ONLY_TRIGGERS);
+      expect(trgProbe.rowCount, 'exact append-only guard count').toBe(APPEND_ONLY_TRIGGERS.length);
+      for (const row of trgProbe.rows) {
+        expect(row.tgenabled, `guard ${row.tgname} must be ENABLED (O) BEFORE teardown`).toBe('O');
+      }
+      const appendOnlyDeleteTrigger = APPEND_ONLY_DELETE_TRIGGER;
+
       await cleanupClient.query('BEGIN');
+
+      // Disable ONLY the resolved DELETE trigger, INSIDE the pinned cleanup
+      // transaction: Postgres DDL is transactional, so the ROLLBACK path below
+      // restores the guard with no compensating action. The sibling UPDATE guard is
+      // deliberately left untouched — this teardown only deletes.
+      await cleanupClient.query(
+        `ALTER TABLE roi_realized_values DISABLE TRIGGER "${appendOnlyDeleteTrigger}"`
+      );
+
       await cleanupClient.query(`DELETE FROM finance_post_investment_reviews WHERE organization_id IN ($1,$2)`, [org, foreignOrg]);
       await cleanupClient.query(`DELETE FROM roi_realized_values WHERE organization_id IN ($1,$2)`, [org, foreignOrg]);
       await cleanupClient.query(`DELETE FROM value_capture_gates WHERE organization_id IN ($1,$2)`, [org, foreignOrg]);
@@ -351,8 +404,37 @@ describe.sequential('finance-value.routes.ts — requireActiveMembership wall (r
       await cleanupClient.query(`DELETE FROM users WHERE organization_id IN ($1,$2)`, [org, foreignOrg]);
       await cleanupClient.query(`DELETE FROM organizations WHERE id IN ($1,$2)`, [org, foreignOrg]);
 
-      const residue = await cleanupClient.query<{ n: string }>(
-        `SELECT
+      // Re-enable the guard and prove it is back to 'O' BEFORE the residue gate and
+      // the COMMIT, so the suite can never commit a run that left the product
+      // append-only guard weakened.
+      await cleanupClient.query(
+        `ALTER TABLE roi_realized_values ENABLE TRIGGER "${appendOnlyDeleteTrigger}"`
+      );
+      const trgAfter = await cleanupClient.query<{ tgname: string; tgenabled: string }>(
+        `SELECT t.tgname, t.tgenabled::text AS tgenabled
+           FROM pg_trigger t
+           JOIN pg_class c ON c.oid = t.tgrelid
+           JOIN pg_namespace n ON n.oid = c.relnamespace
+          WHERE n.nspname = current_schema()
+            AND c.relname = 'roi_realized_values'
+            AND NOT t.tgisinternal
+          ORDER BY t.tgname`
+      );
+      expect(
+        trgAfter.rows.map((r) => r.tgname),
+        'exact append-only guard set must be intact before COMMIT'
+      ).toEqual(APPEND_ONLY_TRIGGERS);
+      expect(trgAfter.rowCount, 'exact append-only guard count before COMMIT').toBe(
+        APPEND_ONLY_TRIGGERS.length
+      );
+      for (const row of trgAfter.rows) {
+        expect(row.tgenabled, `guard ${row.tgname} must be ENABLED (O) before COMMIT`).toBe('O');
+      }
+
+      // ONE residue inventory, covering EVERY table this suite can touch, executed
+      // identically in-transaction and post-COMMIT. A narrower post-commit probe
+      // would let committed business rows survive unnoticed.
+      const RESIDUE_SQL = `SELECT
            (SELECT count(*)::int FROM organizations WHERE id IN ($1,$2)) +
            (SELECT count(*)::int FROM users WHERE organization_id IN ($1,$2)) +
            (SELECT count(*)::int FROM organization_members WHERE organization_id IN ($1,$2)) +
@@ -364,26 +446,93 @@ describe.sequential('finance-value.routes.ts — requireActiveMembership wall (r
            (SELECT count(*)::int FROM value_ledger_entries WHERE organization_id IN ($1,$2)) +
            (SELECT count(*)::int FROM value_baselines WHERE organization_id IN ($1,$2)) +
            (SELECT count(*)::int FROM finance_post_investment_reviews WHERE organization_id IN ($1,$2))
-           AS n`,
-        [org, foreignOrg, initiativeId, modelId]
-      );
+           AS n`;
+      const RESIDUE_PARAMS = [org, foreignOrg, initiativeId, modelId];
+
+      const residue = await cleanupClient.query<{ n: string }>(RESIDUE_SQL, RESIDUE_PARAMS);
       expect(Number(residue.rows[0].n), 'residue must be exactly zero BEFORE commit').toBe(0);
       await cleanupClient.query('COMMIT');
 
-      const postCommitResidue = await pool.query<{ n: string }>(
-        `SELECT
-           (SELECT count(*)::int FROM organizations WHERE id IN ($1,$2)) +
-           (SELECT count(*)::int FROM users WHERE organization_id IN ($1,$2)) AS n`,
-        [org, foreignOrg]
+      const postCommitResidue = await pool.query<{ n: string }>(RESIDUE_SQL, RESIDUE_PARAMS);
+      expect(
+        Number(postCommitResidue.rows[0].n),
+        'full-inventory residue must be exactly zero AFTER commit'
+      ).toBe(0);
+
+      // Post-commit: the product guard must be live again on a fresh connection,
+      // not merely inside the (now closed) cleanup transaction.
+      const trgPostCommit = await pool.query<{ tgname: string; tgenabled: string }>(
+        `SELECT t.tgname, t.tgenabled::text AS tgenabled
+           FROM pg_trigger t
+           JOIN pg_class c ON c.oid = t.tgrelid
+           JOIN pg_namespace n ON n.oid = c.relnamespace
+          WHERE n.nspname = current_schema()
+            AND c.relname = 'roi_realized_values'
+            AND NOT t.tgisinternal
+          ORDER BY t.tgname`
       );
-      expect(Number(postCommitResidue.rows[0].n), 'residue must be exactly zero AFTER commit').toBe(0);
+      expect(
+        trgPostCommit.rows.map((r) => r.tgname),
+        'exact append-only guard set must be intact AFTER commit'
+      ).toEqual(APPEND_ONLY_TRIGGERS);
+      expect(trgPostCommit.rowCount, 'exact append-only guard count AFTER commit').toBe(
+        APPEND_ONLY_TRIGGERS.length
+      );
+      for (const row of trgPostCommit.rows) {
+        expect(row.tgenabled, `guard ${row.tgname} must be ENABLED (O) AFTER commit`).toBe('O');
+      }
+
+      // Advisory lock: release must report true, and this backend must hold zero
+      // advisory locks afterwards. Done here (not in `finally`) so a throw cannot be
+      // masked; `finally` still releases unconditionally via the flag below.
+      if (lockClient) {
+        const unlocked = await lockClient.query<{ ok: boolean }>(
+          `SELECT pg_advisory_unlock(hashtext($1)) AS ok`,
+          [SUITE_LOCK_NAME]
+        );
+        expect(unlocked.rows[0].ok, 'advisory unlock must return true').toBe(true);
+        lockReleased = true;
+        const locks = await lockClient.query<{ n: number }>(
+          `SELECT count(*)::int AS n FROM pg_locks
+            WHERE locktype = 'advisory' AND pid = pg_backend_pid()`
+        );
+        expect(Number(locks.rows[0].n), 'this backend must hold zero advisory locks').toBe(0);
+      }
     } catch (error) {
       if (cleanupClient) await cleanupClient.query('ROLLBACK');
+      // ROLLBACK restores the guard (transactional DDL). Verify on a separate
+      // connection so a failed teardown can never leave it disabled silently.
+      try {
+        const restored = await pool.query<{ tgname: string; tgenabled: string }>(
+          `SELECT t.tgname, t.tgenabled::text AS tgenabled
+             FROM pg_trigger t
+             JOIN pg_class c ON c.oid = t.tgrelid
+             JOIN pg_namespace n ON n.oid = c.relnamespace
+            WHERE n.nspname = current_schema()
+              AND c.relname = 'roi_realized_values'
+              AND NOT t.tgisinternal`
+        );
+        for (const row of restored.rows) {
+          if (row.tgenabled !== 'O') {
+            throw new Error(
+              `FIXTURE LEFT PRODUCT GUARD DISABLED after rollback (tgenabled=${row.tgenabled})`
+            );
+          }
+        }
+      } catch (verifyError) {
+        console.error('[membershipGate teardown] guard-restore verification failed', verifyError);
+      }
       throw error;
     } finally {
       cleanupClient?.release();
       if (lockClient) {
-        await lockClient.query(`SELECT pg_advisory_unlock(hashtext($1))`, [SUITE_LOCK_NAME]);
+        if (!lockReleased) {
+          try {
+            await lockClient.query(`SELECT pg_advisory_unlock(hashtext($1))`, [SUITE_LOCK_NAME]);
+          } catch {
+            // best effort on the error path; session close releases it regardless
+          }
+        }
         lockClient.release();
       }
       await pool.end();
@@ -406,11 +555,30 @@ describe.sequential('finance-value.routes.ts — requireActiveMembership wall (r
     body: () => Record<string, unknown>;
     headers?: () => Record<string, string>;
     countBusinessRows: (organizationId: string) => Promise<number>;
+    /**
+     * Deterministic expected outcome when the caller presents a token CLAIMING
+     * `org` while holding an ACTIVE membership only in `foreignOrg`.
+     *
+     * Canonical verifyToken tenant re-resolution is ACCEPTED product behavior
+     * (server/src/middleware/auth.middleware.ts:803-835): the obsolete/spoofed
+     * claimed org is re-resolved to the caller's own ACTIVE org. That makes the
+     * outcome per-writer KNOWABLE from the fixtures, so it is pinned here rather
+     * than accepting any 2xx:
+     *   status 2xx -> the writer's preconditions are satisfiable in the caller's
+     *                 own org, so exactly ONE correctly tenant-bound row must
+     *                 appear in `foreignOrg` (ownOrgDelta = 1).
+     *   status 404 -> an `org`-owned precondition (gate / model+actuals) is
+     *                 invisible under the resolved tenant, so NOTHING is written
+     *                 anywhere (ownOrgDelta = 0).
+     * In both cases the delta in the CLAIMED org must be exactly zero.
+     */
+    foreignClaim: { status: number; ownOrgDelta: 0 | 1 };
   }
 
   const writers: Writer[] = [
     {
       key: 'baselines',
+      foreignClaim: { status: 201, ownOrgDelta: 1 },
       label: 'POST /ledger/baselines (freezeBaseline)',
       path: '/ledger/baselines',
       body: () => ({ initiativeId, kpiId, value: 100 }),
@@ -424,6 +592,7 @@ describe.sequential('finance-value.routes.ts — requireActiveMembership wall (r
     },
     {
       key: 'entries',
+      foreignClaim: { status: 201, ownOrgDelta: 1 },
       label: 'POST /ledger/entries (appendLedgerEntry)',
       path: '/ledger/entries',
       body: () => ({ initiativeId, entryType: 'correction', valueDelta: 10 }),
@@ -437,6 +606,7 @@ describe.sequential('finance-value.routes.ts — requireActiveMembership wall (r
     },
     {
       key: 'gates',
+      foreignClaim: { status: 201, ownOrgDelta: 1 },
       label: 'POST /capture/gates (createGate)',
       path: '/capture/gates',
       body: () => ({ initiativeId, gate: 'G1', criteria: 'membership-wall probe' }),
@@ -450,6 +620,7 @@ describe.sequential('finance-value.routes.ts — requireActiveMembership wall (r
     },
     {
       key: 'reviews',
+      foreignClaim: { status: 404, ownOrgDelta: 0 },
       label: 'POST /post-investment-reviews (createPostInvestmentReview)',
       path: '/post-investment-reviews',
       body: () => ({
@@ -521,14 +692,34 @@ describe.sequential('finance-value.routes.ts — requireActiveMembership wall (r
         // token claims organizationId=org, so the (foreignUser, org) lookup
         // finds nothing — proves the wall is scoped to the exact pair from
         // the token, never "active in SOME org".
+        const foreignBefore = await w.countBusinessRows(foreignOrg);
         const res = await request(app)
           .post(`${BASE}${w.path}`)
           .set(bearer(foreignUser, org))
           .set(w.headers?.() ?? {})
           .send(w.body());
-        expect(res.status).toBe(403);
-        expect(res.body).toMatchObject({ success: false, code: 'ORG_MEMBERSHIP_REVOKED' });
+
+        // THE security invariant, asserted unconditionally: a caller who holds no
+        // ACTIVE membership in `org` must never cause a row to appear in `org`.
         expect(await w.countBusinessRows(org)).toBe(before);
+
+        // How that invariant is upheld is a product decision made UPSTREAM of this
+        // wall. verifyToken (server/src/middleware/auth.middleware.ts:803-835)
+        // re-resolves req.organizationId to the caller's own most-recent ACTIVE org
+        // when the token's claimed org has no ACTIVE membership row. So the pair the
+        // wall sees is (foreignUser, foreignOrg) -- genuinely ACTIVE -- and the write
+        // is admitted INTO THE CALLER'S OWN ORG, not into `org`.
+        // Assert that precisely, so a future change to that re-resolution (or to the
+        // wall) is caught rather than silently absorbed.
+        // The outcome is DETERMINISTIC per writer (see Writer.foreignClaim) -- an
+        // arbitrary 2xx is never accepted, and a 2xx is only admissible together
+        // with the exact own-org delta proving the write was correctly tenant-bound.
+        expect(res.status, `${w.label}: foreign-claim status must be exactly ${w.foreignClaim.status}`)
+          .toBe(w.foreignClaim.status);
+        expect(
+          await w.countBusinessRows(foreignOrg),
+          `${w.label}: resolved-org delta must be exactly ${w.foreignClaim.ownOrgDelta}`
+        ).toBe(foreignBefore + w.foreignClaim.ownOrgDelta);
       });
 
       it('fails CLOSED (503) when the membership lookup itself fails, writes nothing, and recovers on the next request', async () => {
@@ -756,12 +947,33 @@ describe.sequential('finance-value.routes.ts — requireActiveMembership wall (r
 
     it('denies a caller whose JWT claims membership in `org` they do not hold', async () => {
       const before = await gateRow(gateForForeignClaim);
+      // Delta-based, not absolute: earlier foreign-claim cases legitimately create
+      // rows in the resolved org, so only THIS request's delta is meaningful.
+      const foreignGatesBefore = await pool.query<{ n: string }>(
+        `SELECT count(*)::int AS n FROM value_capture_gates WHERE organization_id=$1`,
+        [foreignOrg]
+      );
       const res = await request(app)
         .post(`${BASE}/capture/gates/${gateForForeignClaim}/advance`)
         .set(bearer(foreignUser, org))
         .send({ signedOffBy: foreignUser });
-      expect(res.status).toBe(403);
+
+      // Invariant: the `org`-owned gate must be untouched, whatever the status.
       expect(await gateRow(gateForForeignClaim)).toEqual(before);
+
+      // Deterministic, not a set: verifyToken re-resolves the tenant to foreignOrg,
+      // advanceGate scopes its lookup to foreignOrg, and the gate lives in `org`, so
+      // the only correct outcome for THIS fixture is a tenant-scoped miss -> 404 with
+      // nothing written anywhere. A 2xx would mean a foreign-org gate was mutated.
+      expect(res.status, 'foreign-claim advance must be exactly 404 (tenant-scoped miss)').toBe(404);
+      const foreignGatesAfter = await pool.query<{ n: string }>(
+        `SELECT count(*)::int AS n FROM value_capture_gates WHERE organization_id=$1`,
+        [foreignOrg]
+      );
+      expect(
+        Number(foreignGatesAfter.rows[0].n) - Number(foreignGatesBefore.rows[0].n),
+        'an advance must create zero gates in the resolved org'
+      ).toBe(0);
     });
 
     it('fails CLOSED (503) when the membership lookup itself fails, leaves the gate unchanged, and recovers on the next request', async () => {
