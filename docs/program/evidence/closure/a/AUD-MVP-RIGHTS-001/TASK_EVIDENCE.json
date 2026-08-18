@@ -102,7 +102,15 @@
       "todo": 0,
       "historicalPassed": 10,
       "note": "CURRENT as of laneBClosurePass20260818 (independently reproduced by auditor B3 in its own fresh container: 1 file, 25 passed, 0 failed, 0 skipped, 0 todo). The historical 10/10 recorded when this task's evidence was first written is preserved in historicalPassed only; it is not current. This 25/25 is real ONLY under the file's own opt-in destructive-fixture gate (AUD_PACK_RIGHTS_ALLOW_FIXTURE_CLEANUP=1 + AUD_PACK_RIGHTS_DISPOSABLE_DB_PREFIX set) — without those vars the whole suite is describe.skip by design, not a failure. CAVEAT on scope, not on the number: 2 of these 25 cases (describe block 8, revoked/stale identity) mount packsRouter directly on a bare express() app and so only prove the Audits kernel's own assertActor() input-shape guard, not production revocation propagation (B5-confirmed) — the production-revocation proof this task needed is the SEPARATE mounting.integration.test.ts run recorded in laneBSuccessorWave20260818 (verified 38/38; see integrityCorrection20260818 for a since-corrected '39/39' claim that could not be reproduced from available evidence), which is what restored the verdict to DONE_CURRENT_SHA.",
-      "mountedRevocationGate": { "files": 1, "verifiedPassed": 38, "currentStaticTestCount": 39, "failed": 0, "skipped": 0, "todo": 0, "note": "server/src/routes/audits/__tests__/mounting.integration.test.ts — verifiedPassed=38 is this pass's actual real-Postgres run, predating commit c2c99d7d18 which added a 39th case that is real source (tsc-clean) but UNVERIFIED. See laneBSuccessorWave20260818.integrityCorrection20260818 for the full correction of an intervening '39/39' claim that could not be reproduced from available evidence. Also gated behind its own opt-in vars (AUD_MOUNTED_ALLOW_FIXTURE_CLEANUP=1 + AUD_MOUNTED_DISPOSABLE_DB_PREFIX); the 14 non-DB routing-presence cases in the same file run unconditionally." }
+      "mountedRevocationGate": {
+        "files": 1,
+        "verifiedPassed": 38,
+        "currentStaticTestCount": 39,
+        "failed": 0,
+        "skipped": 0,
+        "todo": 0,
+        "note": "server/src/routes/audits/__tests__/mounting.integration.test.ts — verifiedPassed=38 is this pass's actual real-Postgres run, predating commit c2c99d7d18 which added a 39th case that is real source (tsc-clean) but UNVERIFIED. See laneBSuccessorWave20260818.integrityCorrection20260818 for the full correction of an intervening '39/39' claim that could not be reproduced from available evidence. Also gated behind its own opt-in vars (AUD_MOUNTED_ALLOW_FIXTURE_CLEANUP=1 + AUD_MOUNTED_DISPOSABLE_DB_PREFIX); the 14 non-DB routing-presence cases in the same file run unconditionally."
+      }
     },
     "regression": null,
     "note": "--retry=0 was mandatory: root vitest.config.ts sets retry: CI ? 3 : 1, which would otherwise let a flaky pass masquerade as green."
@@ -155,9 +163,19 @@
       "minimalHunk": "LANDED — the 'retire' option this ICR sketched: AUDIT_ISO27001_LEGACY_PRESET_ENABLED is a hard compile-time false in src/utils/auditIso27001LegacyPresetGate.ts, consumed at two independent choke points (auditPresets.ts, AuditsHub.tsx).",
       "consumerTest": "LANDED: src/utils/__tests__/auditIso27001LegacyPresetGate.test.ts (8/8) and the 4 GAP-2-specific cases in src/components/Audit/__tests__/AuditsHub.test.tsx, both passing at the current SHA.",
       "blocking": false
+    },
+    {
+      "taskId": "AUD-MVP-RIGHTS-001",
+      "file": "server/src/routes/audits/__tests__/mounting.integration.test.ts",
+      "reason": "Unleased tracked file edited this successor wave (62 lines added, 0 removed, across two commits: 6f80655637 +35 this pass's vacuity-check ablation, c2c99d7d18 +27 a dedicated same-token response-semantics test). The file was outside all four current lane leases at the time it was edited.",
+      "minimalHunk": "N/A — not a proposed diff. Full change already landed on this branch; see the file itself and TASK_EVIDENCE.json laneBSuccessorWave20260818 for the exact diffs and their rationale.",
+      "consumerTest": "The edit IS the consumer test: 38/38 real-Postgres pass verified by this pass (container consultify-laneb-b1-succ), including the vacuity-ablation case this pass added. The c2c99d7d18 case is real source but unverified — see laneBSuccessorWave20260818.integrityCorrection20260818.",
+      "blocking": false,
+      "status": "GRANTED, NOT YET EFFECTIVE",
+      "statusDetail": "An integrator-granted lease exception for this exact file is independently verified real (commits fe5143cc22 -> 5b14a81558 on branch codex/chat-shared-recovery-seam, sha256 f9a412a4..., 722 files, includes this path) but that branch has not merged into canonical (5ce16c71bd) or into this task's branch as of this evidence's HEAD. leaseSha256 above is correctly left at e75d0729bb... (721 files, does not include this path) because that is what governs this branch's actual git history. Full verification trail: docs/program/evidence/closure/a/AUD-MVP-RIGHTS-001/INTEGRATOR_CHANGE_REQUESTS.md ICR-3, and TASK_EVIDENCE.json laneBSuccessorWave20260818.leasePosition20260818."
     }
   ],
-  "integratorChangeRequestsNote": "Both entries above are CLOSED (blocking: false) and the first is explicitly marked DO NOT APPLY — this is the CURRENT state. Neither ICR is actionable or outstanding.",
+  "integratorChangeRequestsNote": "All three entries above reflect their CURRENT state, not history: ICR-1 and ICR-2 are CLOSED (blocking: false), ICR-1 explicitly marked DO NOT APPLY. ICR-3 is GRANTED, NOT YET EFFECTIVE (blocking: false) — the lease exception for the file it names is real but lives on an unmerged branch; see its statusDetail. None of the three is actionable as a live blocker for this task's verdict.",
   "openItems": [
     "None blocking. The previously-sole open item (a mounted, real-Gateway-path proof that a genuine ACTIVE-to-REVOKED organization_members transition denies a reused, still-valid signed token, with zero-fallback and a non-vacuity check) is now GATE_GREEN on VERIFIED evidence — see laneBSuccessorWave20260818: 38/38 real-Postgres (this pass's actual run, container consultify-laneb-b1-succ), driven through apiGateway.initializeRoutes(app) (the actual Gateway.ts:1331 chain), same-token denial 403 {code:'ORG_MEMBERSHIP_REVOKED'}, zero business/audit writes across every denial path, and a literal ablation proving the control is load-bearing. A later, separately-committed 39th case (c2c99d7d18, adding an ACTIVE-response-shape assertion) is real source but UNVERIFIED — an intervening commit's claim that it had been run ('39/39') cannot be reproduced or confirmed from available evidence and is corrected in laneBSuccessorWave20260818.integrityCorrection20260818.",
     "GAP 1 (unpublished packs readable by any org member): CLOSED — see knownConsequences[0].",
@@ -396,10 +414,33 @@
       }
     ],
     "denominators": {
-      "auditPackRights.realdb.test.ts": { "files": 1, "passed": 25, "failed": 0, "skipped": 0, "todo": 0 },
-      "auditIndependenceDetectorSchedulerFlag.test.ts_plus_independenceScanCursor.realdb.test.ts": { "files": 2, "passed": 26, "failed": 0, "skipped": 0, "todo": 0 },
-      "gap2ConsumerTests": { "files": 3, "passed": 47, "failed": 3, "skipped": 0, "todo": 0, "note": "3 failures are in an unrelated describe block outside this task's scope and outside this lane's allowlist; see gate task/GAP2 result above" },
-      "totalThisPassRelevant": { "passed": 98, "failed": 3, "failedAreOutOfScope": true }
+      "auditPackRights.realdb.test.ts": {
+        "files": 1,
+        "passed": 25,
+        "failed": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "auditIndependenceDetectorSchedulerFlag.test.ts_plus_independenceScanCursor.realdb.test.ts": {
+        "files": 2,
+        "passed": 26,
+        "failed": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "gap2ConsumerTests": {
+        "files": 3,
+        "passed": 47,
+        "failed": 3,
+        "skipped": 0,
+        "todo": 0,
+        "note": "3 failures are in an unrelated describe block outside this task's scope and outside this lane's allowlist; see gate task/GAP2 result above"
+      },
+      "totalThisPassRelevant": {
+        "passed": 98,
+        "failed": 3,
+        "failedAreOutOfScope": true
+      }
     },
     "negativeControls": {
       "crossTenantDenial": "auditPackRights.realdb.test.ts describe 6 'tenant isolation' + describe 5 'FOREIGN TENANT gets 404 on get/compare/validate for org A content' — org B cannot read, publish, compare or validate org A's pack; AuditNotFoundError / 404, not silently applied.",
