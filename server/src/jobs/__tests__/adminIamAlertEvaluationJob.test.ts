@@ -7,7 +7,7 @@ vi.mock('../../services/adminIamAlertEvaluator.js', () => ({
   evaluateAdminIamQueueAlerts: evaluate,
 }));
 
-describe('Admin IAM alert evaluation production job contract', () => {
+describe('Admin IAM alert evaluation production job contract (mocked seam)', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('enumerates queue and durable-state tenants, then evaluates each once', async () => {
