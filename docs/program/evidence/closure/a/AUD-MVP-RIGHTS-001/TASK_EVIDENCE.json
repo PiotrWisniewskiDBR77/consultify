@@ -18,7 +18,11 @@
     "pathContinuity": "The audited 17-path AUD technical surface was unchanged from b9cb120075 through reconciliation SHA 163a702f."
   },
   "leaseSha256": "a2f9be9983e3a03e5e64f1a51dca193199a5bec963a246c3b4fe94b378af1308",
-  "ownerDecision": {"recordId": "INTERNAL-BETA-OWNER-DECISIONS-20260817-AMENDMENT-01", "decisionId": "AMD-AUD-RIGHTS-001", "status": "APPROVED_RESTRICTED_SCOPE_IMPLEMENTATION_REQUIRED"},
+  "ownerDecision": {
+    "recordId": "INTERNAL-BETA-OWNER-DECISIONS-20260817-AMENDMENT-01",
+    "decisionId": "AMD-AUD-RIGHTS-001",
+    "status": "APPROVED_RESTRICTED_SCOPE_IMPLEMENTATION_REQUIRED"
+  },
   "amendmentSha": "617b5d29c229e6c073452a17c8da1888ce18aa8d59a5913fa0d9aa59b2272702",
   "reopenWhen": "A named external standard has source-version-specific rights evidence and approval.",
   "evidenceInvalidation": "Invalidate on pack reads, preset availability, rights classification, norm-source or mounted route behavior changes.",
@@ -140,11 +144,126 @@
     "No browser/visual evidence exists for this task; it is a content/rights inventory plus backend negative-control tests, with no UI surface exercised."
   ],
   "unverifiedFields": [],
-  "technicalVerdict": "FIX_REQUIRED_OWNER_DECISION_COMPLETE",
+  "technicalVerdict": "FIXES_LANDED_DETECTOR_NOT_OPERATIONALIZED_TESTS_NOT_REPLAYED",
   "verdict": "PARTIAL",
   "historicalVerdictRationale": "G0/G1/G3 shared gates pass at this SHA and the evidence-backed inventory proves both gaps. This task was BLOCKED_OWNER before the amendment.",
-  "verdictRationale": "The restricted-scope decision is complete, but the characterized read-path and legacy-preset bypasses remain active. Published-only or author/admin draft reads, the default-OFF ISO preset and operationalized detector still require product changes and mounted proof.",
+  "verdictRationale": "PARTIAL retained at 4f0fd2cd9b, but for a different reason than before. Exact-current source inspection REFUTES this record's central open claim: both characterized bypasses are closed in the mounted product. Draft reads are author/platform-admin scoped (packs.routes.ts:59/:116, packService.ts:259 denying with 404 not 403) and the legacy ISO 27001 preset is compile-time disabled with two independent choke points (auditIso27001LegacyPresetGate.ts:35, auditPresets.ts:207, AuditsHub.tsx:796). Both landed in 0dc91d839f/e05577375e, ancestors of this record's own technicalSourceSha, and both shipped with the exact consumer test their integrator change request asked for. What genuinely remains: the third amendment control is unmet — the independence detector is implemented and scheduled (auditIndependenceDetectorJob.ts:67, Scheduler.ts:891) but fenced default-OFF (Scheduler.ts:38), which is a deployment act, not repository state; the owner has not signed off that the restricted-scope implementation as built satisfies AMD-AUD-RIGHTS-001; and no test was replayed at this SHA, because the recorded G2 command would now execute zero tests under the destructive-fixture opt-in guard at auditPackRights.realdb.test.ts:70-77. Historical wording is preserved in supersededVerdictRationale20260817 and supersededTechnicalVerdict20260817; the blocking knownConsequences and integratorChangeRequests above are retained verbatim as the record of what was true at productSha 78a618942e.",
   "ownerTables": [],
   "fixtures": {},
-  "negativeControls": {}
+  "negativeControls": {},
+  "supersededVerdictRationale20260817": "The restricted-scope decision is complete, but the characterized read-path and legacy-preset bypasses remain active. Published-only or author/admin draft reads, the default-OFF ISO preset and operationalized detector still require product changes and mounted proof.",
+  "supersededTechnicalVerdict20260817": "FIX_REQUIRED_OWNER_DECISION_COMPLETE",
+  "exactCurrentReconciliation20260818": {
+    "reconciledAtSha": "4f0fd2cd9b0665a971a86867a91015655ce127af",
+    "reconciledOn": "2026-08-18",
+    "method": "Read-only reconciliation on a clean isolated worktree branched from the exact canonical SHA. No product or test file was edited; the sole edit allowlist for this pass is this TASK_EVIDENCE.json. Every statement below is source-bound to a file:line or a literal command result at 4f0fd2cd9b. The two blocking knownConsequences and both integratorChangeRequests above are preserved verbatim as historical record and are NOT deleted; their exact-current disposition is stated here.",
+    "canonicalCollision": {
+      "canonicalHeadObserved": "e9183a8c22f182782e4de36aa53664a912f6b5c6",
+      "commitsAheadOfReconciliationBase": 5,
+      "collisionWithThisTask": "none — the five commits ahead touch only codex-lane evidence files (FIN-MVP-CANDIDATE-001, FLOW-TRANSFORM-MVP-001, PERSONA-UAT-001, SET-MVP-MFA-001), ai.routes.ts, useAIStream.ts and MFA/chat tests. No lane-A authority file and no AUD path is affected, so no port or rebase is required and no rerun scope is opened."
+    },
+    "pathAndHashChecks": {
+      "changedPathsExist": true,
+      "blobs": {
+        "docs/program/evidence/closure/a/AUD-MVP-RIGHTS-001/RIGHTS_INVENTORY.md": "bb265304c835a9191151f19f5bb2959613d93a75",
+        "docs/program/evidence/closure/a/AUD-MVP-RIGHTS-001/INTEGRATOR_CHANGE_REQUESTS.md": "3d8f1f0cb85a9020ec28f96e017f12c9b4be47c8",
+        "server/src/services/auditProgramRights/__tests__/auditPackRights.realdb.test.ts": "5dc859c5fef22c7dc94dd4a90ab9003cf370c7f4"
+      },
+      "byteIdenticalAcross": "All three changedPaths are byte-identical at technicalSourceSha a8b309342c and at 4f0fd2cd9b; zero of the 49 commits in a8b309342c..4f0fd2cd9b touch any of them.",
+      "shaAncestry": "baselineSha 64f507859c, productSha 78a618942e, technicalSourceSha a8b309342c, requalificationSha b9cb120075 and reconciliationSha 163a702f12 all exist, are commits, and are ancestors of 4f0fd2cd9b. leaseSha256 and amendmentSha are 64-hex content hashes, not git objects.",
+      "baselineTagResolution": "Annotated tag closure-execution-baseline-v2-20260816 dereferences to 64f507859c717494ffa5e83fae550173c9382230, equal to the recorded baselineSha.",
+      "leaseSha256Recomputed": "jq -r '.files | join(\"\\n\")' docs/cleanup/agents/generated/CLAUDE_LANE_A_PATH_LEASE.json | sed -e '$a\\' | shasum -a 256 -> a2f9be9983e3a03e5e64f1a51dca193199a5bec963a246c3b4fe94b378af1308; identical to the recorded leaseSha256 and to the lease file's own sha256 field. Cached allowlist is exact.",
+      "leaseExclusionStillTrue": "The three ICR target paths (server/src/routes/audits/packs.routes.ts, src/components/Audit/auditPresets.ts, src/components/Audit/AuditsHub.tsx) are still absent from the lane-A lease files array, so \"outside this lane's lease\" remains accurate — which is precisely why the fixes landed through another lane rather than this one."
+    },
+    "gapDisposition": [
+      {
+        "historicalItem": "GAP 1 / ICR-1 — GET /packs and GET /packs/:id expose draft packs to any org member",
+        "exactCurrentStatus": "CLOSED_IN_PRODUCT — superseded, and by a stricter rule than ICR-1 proposed",
+        "productEvidence": "server/src/routes/audits/packs.routes.ts:59 (list) and :116 (get by id) now pass readScope: isPlatformAdmin(actor) ? undefined : { actorUserId: actor.userId }; the same scoping is also applied at :89 and :185 (compare/validate). Enforcement is server/src/services/audits/packService.ts:259 assertRowReadable, which returns early only for published rows or for the author and otherwise throws AuditNotFoundError, i.e. 404 rather than 403 so a foreign draft is not disclosed by its error code.",
+        "differenceFromProposal": "ICR-1 proposed published-only for non-admins. What landed is a superset: published OR authored-by-the-caller, plus platform-admin bypass. The author carve-out ICR-1 explicitly declined was added deliberately.",
+        "consumerTestLanded": "The exact consumer test ICR-1 asked for exists: auditPackRights.realdb.test.ts:483 describe \"5. draft/in-review visibility is author-or-admin scoped (AUD-MVP-RIGHTS-001 / AMD-AUD-RIGHTS-001)\" containing :550 it(\"ROUTE (supertest against the real mounted packs.routes.ts): member list omits a foreign draft, direct id 404s, admin sees both\").",
+        "landedIn": "0dc91d839f, extended by e05577375e — both ancestors of technicalSourceSha a8b309342c and of 4f0fd2cd9b"
+      },
+      {
+        "historicalItem": "GAP 2 / ICR-2 — legacy ISO 27001 preset reachable by default outside the rights kernel",
+        "exactCurrentStatus": "CLOSED_IN_PRODUCT — the owner's \"retire/inaccessible\" option was taken",
+        "productEvidence": "src/utils/auditIso27001LegacyPresetGate.ts:35 declares export const AUDIT_ISO27001_LEGACY_PRESET_ENABLED = false as const — a compile-time constant deliberately NOT implemented as a runtime flag, with no query-string, storage, env or flag-registry read anywhere in the module. Two independent choke points consume it: src/components/Audit/auditPresets.ts:207 (which also empties getPresetById('iso27001'), so a hand-crafted openWizard('iso27001') resolves to no preset) and src/components/Audit/AuditsHub.tsx:796 (launcher button).",
+        "structuralCaveatUnchanged": "The legacy wizard write path still never reaches packValidator — the preset was made unreachable rather than brought inside the rights kernel. The bypass is therefore closed by inaccessibility, not by kernel coverage. If the preset is ever re-enabled, the original GAP 2 returns in full.",
+        "consumerTestLanded": "Both consumer tests ICR-2 named exist: src/components/Audit/__tests__/AuditsHub.test.tsx:177 describe \"AuditsHub — AMD-AUD-RIGHTS-001: legacy ISO 27001 preset launcher is hard-disabled\" (which asserts the historical localStorage activation vector ff.audit_iso27001_preset no longer changes the result), and src/utils/__tests__/auditIso27001LegacyPresetGate.test.ts (8 cases) asserting the code has no query-string, storage or env read and is in no feature-flag registry.",
+        "landedIn": "0dc91d839f — ancestor of technicalSourceSha a8b309342c and of 4f0fd2cd9b"
+      },
+      {
+        "historicalItem": "No browser/visual evidence exists for this task",
+        "exactCurrentStatus": "UNCHANGED_AND_NOT_BEARING",
+        "productEvidence": "This task's frozen gate set is G0, G2-G3 and G5-G6 (docs/cleanup/agents/CLAUDE_LANE_A_15_TASKS_20260816.md:98). G4 is not required, so absence of browser evidence does not bear on its Definition of Done. Note however that GAP 2's fix is now a frontend gate with frontend consumer tests, so the task has acquired a UI-adjacent surface it did not have when this item was written."
+      }
+    ],
+    "rightsTripleAtHead": {
+      "kernelLocation": "server/src/services/auditProgramRights/ contains ONLY the test file — there is no kernel implementation under that path. The actual rights kernel is server/src/services/audits/packValidator.ts. The directory name in changedPaths is therefore a test-location convention, not the kernel's home.",
+      "names": "ENFORCED — packValidator.ts:451 raises PACK_TITLE_IMPLIES_NORMATIVE from a regex over pack.title matching ISO|IATF|VDA|SOC 2|HIPAA, fail-closed unless the title is explicitly demo/template.",
+      "content": "ENFORCED BY ABSENCE — the RIGHTS_INVENTORY.md sweep found zero reproduced normative clause text in the Audits kernel; re-grep at 4f0fd2cd9b confirms this. The three \"name-as-content\" hits all traced to ISO_27001_PRESET, which is now unreachable (see gapDisposition).",
+      "scoring": "PARTIALLY MAPPED — the literal term \"scoring\" does not appear in the audits rights kernel. The functional equivalent is classification: packValidator.ts:465/:469 computeEligibleClassifications gates VERIFIED_NORMATIVE on rightsStatus in {licensed, owned_internal, public_reference} plus a verified source and expert approval, with SOURCE_RIGHTS_UNVERIFIED/SOURCE_RIGHTS_DENIED at :297-:311. Whether \"scoring\" in the frozen DoD means exactly this classification gate is a wording question this pass cannot resolve from source alone; it is recorded rather than assumed."
+    },
+    "denominatorHonesty": {
+      "recordedTaskTests": "files 1, passed 10, failed 0, skipped 0, todo 0",
+      "exactCurrentFileShape": "auditPackRights.realdb.test.ts holds 23 it(...) cases across 8 describe(...) blocks at 4f0fd2cd9b, not 10.",
+      "provenance": "At productSha 78a618942e the same file held exactly 10 it(...) cases. The recorded 10/10 is an accurate historical denominator for the moment it was written and is preserved unchanged above. It is NOT exact-current: the same commits that closed GAP 1 and GAP 2 (0dc91d839f, e05577375e, 8e7951da48, a8b309342c) grew the file to 23 cases.",
+      "recordedCommandNoLongerReproducible": "The recorded G2/task command is not reproducible as written at 4f0fd2cd9b. The suite is now selected by const suite = DESTRUCTIVE_FIXTURES_ENABLED ? describe : describe.skip (auditPackRights.realdb.test.ts:77), where DESTRUCTIVE_FIXTURES_ENABLED = REAL_PG && CLEANUP_OPT_IN && DISPOSABLE_DB_PREFIX.length > 0 (:72), CLEANUP_OPT_IN = process.env.AUD_PACK_RIGHTS_ALLOW_FIXTURE_CLEANUP === '1' (:70) and DISPOSABLE_DB_PREFIX = process.env.AUD_PACK_RIGHTS_DISPOSABLE_DB_PREFIX ?? '' (:71). The recorded command sets neither variable, so replaying it verbatim today would print the file's own clean-skip warning (:85-91) and execute ZERO tests — it would not reproduce 10 passed. Determined from the guard logic read at source, not from a run.",
+      "internalInconsistencyInProductFile": "The test file's own top-of-file docstring still describes its item 5 as a \"KNOWN-GAP characterization (GAP 1, not fixed by this task)\", while the describe block it introduces is now titled \"draft/in-review visibility is author-or-admin scoped\" and proves the opposite. This is a stale comment inside a product/test file, outside this pass's edit allowlist; it is reported, not silenced.",
+      "landmine": "The file contains a literal NUL byte inside the deliberate negative-control string '\\0-impossible-prefix', so plain grep treats it as binary and silently returns nothing. Use grep -a when re-counting.",
+      "notReRun": "No test was executed for this task in this pass. The suite is real-PostgreSQL and additionally requires the two destructive-fixture opt-in variables; this pass was granted no Docker and took no bounded runtime window. No exact-current pass/fail is claimed."
+    },
+    "gateReRuns": [
+      {
+        "gate": "G6/structural",
+        "command": "jq . docs/program/evidence/closure/a/AUD-MVP-RIGHTS-001/TASK_EVIDENCE.json",
+        "exitCode": 0,
+        "result": "valid JSON"
+      },
+      {
+        "gate": "G0/whitespace",
+        "command": "git diff --check 4f0fd2cd9b0665a971a86867a91015655ce127af HEAD",
+        "exitCode": 0,
+        "result": "zero whitespace errors"
+      },
+      {
+        "gate": "plan82",
+        "command": "node scripts/cleanup/verify-closure-plan.mjs",
+        "exitCode": 0,
+        "result": "74 module + 8 cross-program = 82 unique tasks; ownership, leases and integration graph all PASS"
+      },
+      {
+        "gate": "reporter",
+        "command": "node scripts/cleanup/report-closure-progress.mjs",
+        "exitCode": 0,
+        "result": "denominator 82; DONE_CURRENT_SHA 36, PARTIAL 45, BLOCKED_HUMAN 1; zero missingEvidence and zero invalidPresentEvidence"
+      },
+      {
+        "gate": "mirror-check",
+        "command": "node scripts/cleanup/sync-server-runtime-mirrors.mjs --check",
+        "exitCode": 0,
+        "result": "Verified 9 server runtime mirror files; no drift"
+      },
+      {
+        "gate": "G0/lane-lease",
+        "command": "node scripts/cleanup/verify-closure-lane.mjs a closure-execution-baseline-v2-20260816",
+        "exitCode": 1,
+        "result": "lane A lease violation (1128) — expected by construction: the verifier diffs every path changed since the sealed baseline against lane A's lease, and canonical aggregates all four lanes. G0 is a lane-branch gate; the historical G0 PASS stands only on codex/closure-claude-a-method-evidence at the sealed baseline."
+      }
+    ],
+    "remainingBoundary": {
+      "type": "OWNER_PLUS_DEPLOYMENT",
+      "statement": "The amendment record states explicitly that \"The three repository controls and mounted negative proofs are not waived by this decision.\" Two of the three controls are now demonstrably met in the repository (author/platform-admin-scoped draft reads; legacy ISO preset default-OFF and inaccessible), each with the consumer test the corresponding ICR asked for. The third — \"the independence detector must be operationalized\" — is met only up to code: server/src/jobs/auditIndependenceDetectorJob.ts:67 calls getIndependenceReport and Scheduler.ts:891 schedules it every 15 minutes, but Scheduler.ts:38 returns immediately unless AUDIT_INDEPENDENCE_DETECTOR_CRON_ENABLED === 'true', and the fix commit itself states it stays \"implemented, gated off\", not \"operationalized\". No repository document records the owner accepting the restricted-scope implementation as built.",
+      "whyNotDoneCurrentSha": "DONE_CURRENT_SHA is permitted only when the literal frozen Definition of Done is completely current and carries no human, owner, legal, provider, deployment or release dependency. The frozen entry for this task is BLOCKED_OWNER, its lane row names the methodology/legal owner as blocker, the one unmet amendment control is a deployment act, and the mounted negative proofs the amendment requires were not re-run at this SHA. PARTIAL is retained.",
+      "whatWouldClearIt": [
+        "Owner sign-off that the restricted-scope implementation as built satisfies AMD-AUD-RIGHTS-001.",
+        "A deployment decision enabling AUDIT_INDEPENDENCE_DETECTOR_CRON_ENABLED, or an explicit owner acceptance that \"implemented, gated off\" satisfies \"operationalized\".",
+        "A bounded runtime window to replay the 23-case real-PostgreSQL suite with AUD_PACK_RIGHTS_ALLOW_FIXTURE_CLEANUP=1 and AUD_PACK_RIGHTS_DISPOSABLE_DB_PREFIX set against a disposable database, producing an exact-current denominator to replace the historical 10/10."
+      ]
+    },
+    "staleSiblingsNotEdited": [
+      "docs/program/evidence/closure/a/AUD-MVP-RIGHTS-001/INTEGRATOR_CHANGE_REQUESTS.md still frames ICR-1 and ICR-2 as unapplied (\"Nothing here was applied to the working tree\"). That framing is stale at 4f0fd2cd9b. The file is outside this pass's single-file edit allowlist and was deliberately not modified.",
+      "docs/program/evidence/closure/a/_LANE_SUMMARY/TASK_VERDICT_TABLE.md still records this task as BLOCKED_OWNER with both gaps open, one generation behind even the pre-existing PARTIAL in this file. Also outside the allowlist; reported, not edited."
+    ]
+  }
 }
