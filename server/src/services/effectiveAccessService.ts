@@ -713,16 +713,45 @@ export async function seedFactoryRoleTemplates(
     .catch(() => undefined);
 }
 
-async function readApplicationRole(userId: string, organizationId: string, fallback?: unknown) {
-  const row = await queryHelpers
-    .queryOne<{
-      role?: string;
-    }>(`SELECT role FROM organization_members WHERE user_id = ? AND organization_id = ? LIMIT 1`, [
-      userId,
-      organizationId,
-    ])
-    .catch(() => null);
-  return normalizeApplicationRole(row?.role || fallback);
+/**
+ * AUTHORITATIVE organization membership -> application role. FAILS CLOSED.
+ *
+ * Returns null when there is no membership row, when the row is not ACTIVE, or
+ * when the lookup itself fails. Callers MUST treat null as "no organization access".
+ *
+ * Two deliberate properties, both security-relevant:
+ *
+ *  1. ACTIVE predicate. The previous query had no status predicate, so a REVOKED
+ *     row still returned its role. The canonical production predicate used
+ *     everywhere else in this codebase is UPPER(status) = 'ACTIVE' (see
+ *     auth.middleware.ts, auditsStrictMembership.middleware.ts, ideaMapAccess.ts,
+ *     and the note at testSupport.routes.ts:993). This now matches it.
+ *
+ *  2. NO `fallback` PARAMETER. It previously accepted the caller's token-derived
+ *     role and returned it whenever no row existed, so deleting a membership did
+ *     not remove access — it handed control of the role to the token. The
+ *     parameter WAS the vulnerability, so it is gone rather than merely unused.
+ *
+ * A lookup error returns null rather than degrading to any claimed role: an
+ * unreadable membership table must not become an open door.
+ */
+async function readApplicationRole(
+  userId: string,
+  organizationId: string
+): Promise<ApplicationRoleValue | null> {
+  let row: { role?: string; status?: string } | null | undefined;
+  try {
+    row = await queryHelpers.queryOne<{ role?: string; status?: string }>(
+      `SELECT role, status FROM organization_members
+        WHERE user_id = ? AND organization_id = ? LIMIT 1`,
+      [userId, organizationId]
+    );
+  } catch {
+    return null;
+  }
+  if (!row) return null;
+  if (normalizeUpper(row.status) !== 'ACTIVE') return null;
+  return normalizeApplicationRole(row.role);
 }
 
 async function readProjectMembership(userId: string, projectId: string) {
@@ -786,10 +815,46 @@ export async function resolveEffectiveAccess(params: {
   isImpersonating?: boolean;
 }): Promise<AccessContext> {
   const platformRole = normalizePlatformRole(params.applicationRole);
-  const applicationRole = platformRole
-    ? 'OWNER'
-    : await readApplicationRole(params.userId, params.organizationId, params.applicationRole);
+  /*
+   * PLATFORM SUPERADMIN — DELIBERATE, EXPLICITLY AUTHORIZED BEHAVIOUR (owner decision 15A).
+   *
+   * A token normalizing to SUPERADMIN is granted org-level OWNER in ANY organization
+   * WITHOUT a membership row and WITHOUT consulting the database at all, and is then
+   * granted '*' below. This lane did NOT change that; it is preserved exactly and is
+   * pinned by a named focused test so it can never drift silently. If this policy is
+   * to change, that is a separate owner decision — not a refactor.
+   */
+  const membershipRole = platformRole
+    ? null
+    : await readApplicationRole(params.userId, params.organizationId);
+  const hasAuthority = platformRole !== null || membershipRole !== null;
+  const applicationRole: ApplicationRoleValue = platformRole ? 'OWNER' : (membershipRole ?? 'GUEST');
   const warnings: string[] = [];
+
+  /*
+   * FAIL CLOSED. No ACTIVE membership (missing row, non-ACTIVE row, or unreadable
+   * table) yields NO capabilities at all. We return before the project branch on
+   * purpose: falling through would hand out project-role template capabilities via
+   * defaultProjectRoleForApplicationRole to a principal with no organization access.
+   */
+  if (!hasAuthority) {
+    return {
+      userId: params.userId,
+      organizationId: params.organizationId,
+      applicationRole: 'GUEST',
+      platformRole: null,
+      projectId: params.projectId,
+      projectRole: null,
+      rawProjectRole: null,
+      roleTemplateId: null,
+      capabilities: [],
+      scope: ['organization'],
+      isImpersonating: params.isImpersonating,
+      auditRequired: params.isImpersonating === true,
+      source: 'resolved',
+      warnings: ['NO_ACTIVE_ORGANIZATION_MEMBERSHIP'],
+    };
+  }
 
   let projectRole: ProjectRoleValue | null = null;
   let rawProjectRole: string | null = null;
