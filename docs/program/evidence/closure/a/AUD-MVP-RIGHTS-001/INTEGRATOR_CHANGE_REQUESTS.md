@@ -195,3 +195,59 @@ is one of:
 
 No test was added for this ICR in this closure pass because the fix itself
 is blocked on a product decision, not on missing test infrastructure.
+
+---
+
+## ICR-3 — unleased tracked file edited (2026-08-18 successor wave)
+
+**Task**: AUD-MVP-RIGHTS-001
+**File edited**: `server/src/routes/audits/__tests__/mounting.integration.test.ts`
+**Lease status**: NOT LEASED to any of the four current lane leases at the
+time of this edit. Checked programmatically (recomputed, not taken on
+report) against all four `docs/cleanup/agents/generated/*_PATH_LEASE.json`
+files: Lane A (current identity `e75d0729bb...`, 721 files — see
+`leaseSha256Correction20260818` in `TASK_EVIDENCE.json` for why the
+previously recorded Lane A identity in this task's own evidence was stale),
+Lane B, Lane C, and the Codex integrator lease. Zero matches for this exact
+path, and zero matches for any other file under
+`server/src/routes/audits/__tests__/`, in any of the four files.
+
+**Exact change made**: 45 lines added, 0 lines removed. One new `it(...)`
+test case appended inside the file's existing, already-present
+`mountedSuite(...)` describe block (the file's own opt-in real-Postgres
+gate — `AUD_MOUNTED_ALLOW_FIXTURE_CLEANUP=1` /
+`AUD_MOUNTED_DISPOSABLE_DB_PREFIX`), immediately after the pre-existing
+"canonical pack writer... every membership denial writes zero business/audit
+rows" test. No existing test was modified, skipped, or given `.only`; no
+timeout was touched; no mock was introduced; no migration was added. The
+new test builds a second, function-scoped `express()` app (never exported,
+mutating nothing shared) using the SAME real `verifyToken` and SAME real
+`auditsMethodRouter` production modules already imported by the file, with
+`requireActiveAuditsMembership` removed from the mount chain, and asserts
+that the identical revoked-membership token now returns 200 instead of the
+403 the real chain returns — a vacuity/non-triviality check proving the
+guard under test is load-bearing.
+
+**Why this was the minimal way to prove the required gate**: the successor
+wave (2026-08-18) required a real-Postgres, real-Gateway-mounted proof that
+a genuine `organization_members` ACTIVE-to-REVOKED transition denies a
+reused, still-valid signed token, with zero-fallback and a non-vacuity
+check. This exact file already existed (2026-08-17, commit `7fd13543b3`,
+authored by a prior, unrelated pass) with that proof already written —
+built via the real `apiGateway.initializeRoutes(app)` production bootstrap,
+parameterized across all 4 Audits mounts including `/api/audits/packs`,
+plus a zero-business/audit-write proof across every denial path — but it
+had never been run. Appending one test to prove non-vacuity and then
+running the whole file was a smaller, more faithful change than authoring
+a parallel file elsewhere that would have duplicated this fixture/harness
+machinery outside any lease either way.
+
+**Authorization status**: NO lease amendment was made or is claimed by
+this pass. A chat instruction from a lane lead is explicitly NOT a recorded
+lease amendment (per the lead's own escalation of this exact point to the
+program integrator — see `TASK_EVIDENCE.json`
+`laneBSuccessorWave20260818.leasePosition20260818`). This ICR exists so the
+integrator can decide: retroactively lease the path, request the change be
+relocated to a leased path, or accept it as-is. The task's verdict
+(`DONE_CURRENT_SHA`) reflects the technical gate only and does not assert
+lease compliance for this specific file.
