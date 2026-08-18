@@ -6,6 +6,15 @@
   "technicalSourceSha": "d7e1b42a5f60281b6c552d8571e731288e792c73",
   "requalificationSha": "d7e1b42a5f60281b6c552d8571e731288e792c73",
   "reconciliationSha": "d7e1b42a5f60281b6c552d8571e731288e792c73",
+  "postFanInTechnicalSourceShas": [
+    "f3c8ecafd9cc017503d9f6a3166e5c774e8a0f60",
+    "4a84daf3917519969529cfd7a5cefe1d7e191dcb",
+    "f34e070f4de2282db74e6626fa07bd2c2f38d720",
+    "282976784543a591e767facf2982d9e613f09eb8"
+  ],
+  "postFanInReconciliationSha": "2be22ad261e36ec7edc2603b417e8f66ef104387",
+  "evidenceReconciliationPath": "docs/program/evidence/closure/codex/FLOW-TRANSFORM-MVP-001/TASK_EVIDENCE.json",
+  "evidenceReconciliationRationale": "Adds the exact-current single-SWOT lineage proof and preserves explicit synthetic-policy, unproved source-family, deployment and rollback boundaries without changing the historical productSha.",
   "patchEquivalence": "Canonical 64590c5b4a530b53b4432ef990b709efe3ef12e3 is byte-for-byte patch-equivalent to reported source 1fd80eb9e28f02215683a0be487e5b950d0e0533 across all nine scoped-cleanup paths.",
   "leaseSha256": "18eb0f2e24aee1d6415a29e1605597117f24c42a1f74439842581e7a92583742",
   "changedPaths": [
@@ -111,9 +120,12 @@
   },
   "verdict": "PARTIAL",
   "openBlockers": [
-    "No single test yet creates the entire Organization or Interview or DRD or SWOT source through candidate, Initiative, Execution, Results Actual, Finance reconciliation and PIR under one stable lineage.",
-    "Upstream A and C producer receipts have not yet been exercised in the same fresh database as this downstream slice.",
+    "The current single-lineage suite proves the SWOT source path, but equivalent Organization, Interview and DRD source paths through the same candidate, Initiative, Execution, Results Actual, Finance reconciliation and PIR identity remain NOT_VERIFIED.",
+    "The full-lineage policy fixture is explicitly SYNTHETIC_TEST_ONLY; production policy activation and non-synthetic owner authorization remain outside this bounded technical proof.",
     "Deployed desktop and mobile journey and rollback rehearsal are not authorized or verified."
+  ],
+  "resolvedBlockers": [
+    "A single exact-current real-PostgreSQL suite now carries one APPROVED SWOT identity through candidate, Initiative, Execution, Results Actual, Finance reconciliation and PIR, with fail-closed tenant and authority controls."
   ],
   "currentTechnicalRequalification": {
     "candidateSha": "1a0a9ef50694f981bcba167429e956493829180a",
@@ -171,5 +183,17 @@
       "a separately restarted operating-system process for the reconciliation sweep",
       "deployed desktop or mobile behavior, production rollback or release authorization"
     ]
+  },
+  "postFanInFullLineageRequalification": {
+    "testedSha": "4f0fd2cd9b0665a971a86867a91015655ce127af",
+    "reconciliationSha": "2be22ad261e36ec7edc2603b417e8f66ef104387",
+    "relationship": "Canonical reconciliation adds only the integrated MFA two-file test corrective after the tested FLOW source; FLOW product and test paths are unchanged.",
+    "schema": "Fresh 765, repeat 0, dry-run pending 0, ledger 765 and migration 20261018 checksum 2565bd889e451f44aa19a250fd81680ac67675361b534d3ef2f6681792262466. The exact migration command transcript was unavailable after log compaction and is not reconstructed here.",
+    "command": "DATABASE_URL=postgresql://consultify:consultify@127.0.0.1:32978/flow_postfan_4f0f FLOW_DISPOSABLE_DB_PREFIX=flow_postfan_ FLOW_ALLOW_IMMUTABLE_FIXTURE_CLEANUP=1 ROI_E007_DISPOSABLE_DB_PREFIX=flow_postfan_ ROI_E007_ALLOW_IMMUTABLE_FIXTURE_CLEANUP=1 JWT_SECRET=consultify-postfan-pinned-secret-at-least-32-characters DB_TYPE=postgres NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false npx vitest run server/src/routes/resultsVnext/__tests__/roiFinanceSeam.routes.test.ts server/src/services/initiative/__tests__/ini-mvp-gate-001-lifecycle-gate-route.test.ts server/src/services/initiative/__tests__/ini-mvp-gate-001-lifecycle-gate-writer.pg.test.ts server/src/services/initiative/__tests__/initiativeTransitionService.closureGate.test.ts tests/integration/crossflow/cf-00-full-transformation-lineage.realdb.test.ts tests/resultsVnext/roi/roiFinanceReconciliation.realdb.test.ts --retry=0 --no-file-parallelism --maxWorkers=1",
+    "result": "6/6 files and 67/67 tests passed in one no-retry sequential invocation.",
+    "proved": "One mounted signed APPROVED SWOT source retains stable identity through candidate, Initiative, Execution, observed Actual, governed Finance reconciliation and PIR; gate authority, tenant scope, CAS and reconciliation seams remain fail closed.",
+    "boundary": "The visibility policy is explicitly SYNTHETIC_TEST_ONLY and does not authorize production policy, rollout or deployment.",
+    "cleanup": "Across all three databases disabled triggers and advisory locks were 0 and the tracked MFA fixture rows were 0; the owned pgvector container and volumes were removed and all four app ports released.",
+    "static": "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check -- --pretty false exited 0; NODE_OPTIONS=--max-old-space-size=8192 npm run build:backend exited 0; frontend builds completed through both signed Playwright webServer runs."
   }
 }
