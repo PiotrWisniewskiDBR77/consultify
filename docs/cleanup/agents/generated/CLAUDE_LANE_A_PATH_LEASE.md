@@ -4,9 +4,9 @@ Authority HEAD: `c40a9ba58e28ccc78bdef8d1f61f64db60e088eb`
 
 Branch: `codex/closure-claude-a-method-evidence`
 
-Lease SHA-256: `a2f9be9983e3a03e5e64f1a51dca193199a5bec963a246c3b4fe94b378af1308`
+Lease SHA-256: `e75d0729bbf419818914a0c5235eec1f3fe354c22c21696324d01c13b4962141`
 
-Counts: 719 tracked paths; 499 source/docs; 195 Vitest; 25 Playwright/visual.
+Counts: 721 tracked paths; 499 source/docs; 195 Vitest; 26 Playwright/visual.
 
 Only the paths below may be modified. Shared files require an integrator
 request. New files must live below an already-listed domain directory or
@@ -676,6 +676,8 @@ the lane reserved migration/evidence namespace.
 - `tests/e2e/smoke/deploy-gate-api-interview.spec.ts`
 - `tests/e2e/smoke/interview-initiative-wizard.spec.ts`
 - `tests/e2e/smoke/tier0-interview.spec.ts`
+- `tests/e2e/ui-canon-g4/_g4/swotBvpSeed.ts`
+- `tests/e2e/ui-canon-g4/tls-bvp-g4.spec.ts`
 - `tests/integration/assessment-ai.integration.test.ts`
 - `tests/integration/assessment-api.integration.test.ts`
 - `tests/integration/assessment-rbac.integration.test.ts`

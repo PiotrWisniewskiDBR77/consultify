@@ -4,9 +4,9 @@ Authority HEAD: `c40a9ba58e28ccc78bdef8d1f61f64db60e088eb`
 
 Branch: `codex/recovery-canonical-20260816`
 
-Lease SHA-256: `0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860`
+Lease SHA-256: `a626ac0c356fc750569d14542c6908ee9381531f0669fce93f23773db934651c`
 
-Counts: 1549 tracked paths; 851 source/docs; 684 Vitest; 14 Playwright/visual.
+Counts: 1552 tracked paths; 852 source/docs; 685 Vitest; 14 Playwright/visual.
 
 Only the paths below may be modified. Shared files require an integrator
 request. New files must live below an already-listed domain directory or
@@ -14,6 +14,7 @@ the lane reserved migration/evidence namespace.
 
 ## Resolved paths
 
+- `docs/runbooks/ADMIN_IAM_OPERATIONS_RUNBOOK.md`
 - `scripts/check-ssot-paths.sh`
 - `scripts/docs/check-ssot-registry.mjs`
 - `scripts/security/npm-audit-allowlist.json`
@@ -202,6 +203,8 @@ the lane reserved migration/evidence namespace.
 - `server/src/routes/v8/finance-value.routes.ts`
 - `server/src/routes/v8/finance.routes.ts`
 - `server/src/routes/v8/partner.routes.ts`
+- `server/src/services/__tests__/adminIamAlertEvaluator.pg.test.ts`
+- `server/src/services/adminIamAlertEvaluator.ts`
 - `server/src/services/ai/__tests__/userPrivacyService.memoryGates.test.ts`
 - `server/src/services/ai/enterpriseSecurity`
 - `server/src/services/ai/enterpriseSecurity.ts`
