@@ -6,6 +6,8 @@
  * green module fixtures is not a full transformation lineage.
  */
 import {
+  ALL_ACTORS,
+  ALL_TENANTS,
   TENANT_A,
   bearer,
   coldRead,
@@ -86,6 +88,33 @@ afterAll(async () => {
     'projects',
   ]);
   await dropTenants(client);
+  const postCommit = await client.query<{ residue: string; triggers_enabled: string; advisory: string }>(
+    `SELECT (
+       (SELECT count(*) FROM organizations WHERE id=ANY($1::text[])) +
+       (SELECT count(*) FROM users WHERE id=ANY($2::text[])) +
+       (SELECT count(*) FROM organization_members WHERE organization_id=ANY($1::text[])) +
+       (SELECT count(*) FROM initiatives WHERE organization_id=ANY($1::text[])) +
+       (SELECT count(*) FROM initiative_lifecycle_gate_decisions WHERE organization_id=ANY($1::text[])) +
+       (SELECT count(*) FROM v8_agent_proposal_versions WHERE organization_id=ANY($1::text[])) +
+       (SELECT count(*) FROM rvn_roi_cases WHERE organization_id=ANY($1::text[])) +
+       (SELECT count(*) FROM rvn_platform_events WHERE organization_id=ANY($1::text[])) +
+       (SELECT count(*) FROM rvn_finance_reconciliation_grant_events WHERE organization_id=ANY($1::text[]))
+     )::text residue,
+     (SELECT count(*)::text FROM pg_trigger WHERE NOT tgisinternal AND tgenabled='O'
+       AND tgname=ANY($3::text[])) triggers_enabled,
+     (SELECT count(*)::text FROM pg_locks WHERE locktype='advisory' AND pid=pg_backend_pid()) advisory`,
+    [
+      ALL_TENANTS.map((tenant) => tenant.id),
+      ALL_ACTORS.map((actor) => actor.id),
+      [
+        'initiative_lifecycle_gate_decisions_immutable',
+        'trg_rvn_fin_reconciliation_grant_insert_guard',
+        'trg_rvn_fin_reconciliation_decision_append_only',
+        'trg_rvn_fin_reconciliation_grant_append_only',
+      ],
+    ]
+  );
+  expect(postCommit.rows[0]).toEqual({ residue: '0', triggers_enabled: '4', advisory: '0' });
   await client.end();
 });
 
@@ -159,6 +188,16 @@ describe('FLOW full transformation lineage (real PostgreSQL)', () => {
     }
 
     const runGoverned = async (targetStatus: 'PROMOTED' | 'PLANNING') => {
+      const arbitraryActiveReviewer = await request(app)
+        .post(`/api/initiatives/${lineage.initiativeId}/lifecycle-transition-proposals`)
+        .set('Authorization', bearer(TENANT_A.owner))
+        .send({
+          transformationCaseId: context.transformationCaseId,
+          reviewerUserId: TENANT_A.member.id,
+          targetStatus,
+          reason: `Reject arbitrary ACTIVE reviewer for ${targetStatus}`,
+        });
+      expect(arbitraryActiveReviewer.status).toBe(403);
       const proposed = await request(app)
         .post(`/api/initiatives/${lineage.initiativeId}/lifecycle-transition-proposals`)
         .set('Authorization', bearer(TENANT_A.owner))
@@ -184,11 +223,33 @@ describe('FLOW full transformation lineage (real PostgreSQL)', () => {
         .send({ decision: 'approved', reason: `Independent ${targetStatus} review` });
       expect(reviewed.status, JSON.stringify(reviewed.body)).toBe(200);
 
-      const executed = await request(app)
+      if (targetStatus === 'PROMOTED') {
+        await client.query(
+          `UPDATE project_members SET project_role='TEAM_MEMBER'
+            WHERE project_id=(SELECT project_id FROM initiatives WHERE id=$1 AND organization_id=$2)
+              AND user_id=$3`,
+          [lineage.initiativeId, TENANT_A.id, TENANT_A.admin.id]
+        );
+        const staleAuthority = await request(app)
+          .post(`/api/initiatives/${lineage.initiativeId}/lifecycle-transition-executions`)
+          .set('Authorization', bearer(TENANT_A.admin))
+          .send({ proposalVersionId, reason: 'An approved review cannot outlive reviewer project authority' });
+        expect(staleAuthority.status).toBe(403);
+        await client.query(
+          `UPDATE project_members SET project_role='PROJECT_SPONSOR'
+            WHERE project_id=(SELECT project_id FROM initiatives WHERE id=$1 AND organization_id=$2)
+              AND user_id=$3`,
+          [lineage.initiativeId, TENANT_A.id, TENANT_A.admin.id]
+        );
+      }
+
+      const executions = await Promise.all(Array.from({ length: 2 }, () => request(app)
         .post(`/api/initiatives/${lineage.initiativeId}/lifecycle-transition-executions`)
         .set('Authorization', bearer(TENANT_A.admin))
-        .send({ proposalVersionId, reason: `Execute approved ${targetStatus}` });
-      expect([200, 201], JSON.stringify(executed.body)).toContain(executed.status);
+        .send({ proposalVersionId, reason: `Execute approved ${targetStatus}` })));
+      const winners = executions.filter((result) => result.status === 200 || result.status === 201);
+      expect(winners, executions.map((result) => ({ status: result.status, body: result.body }))).toHaveLength(1);
+      expect(executions.filter((result) => result.status === 409)).toHaveLength(1);
     };
 
     await runGoverned('PROMOTED');

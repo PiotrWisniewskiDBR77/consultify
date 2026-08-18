@@ -48,6 +48,7 @@ const DB_CONFIGURED = buildClientConfig() !== null;
 
 const tag = `${Date.now().toString(36)}_${randomUUID().slice(0, 8)}`;
 const ORG_ID = `roi-e007-fin-recon-org-${tag}`;
+const SECOND_ORG_ID = `roi-e007-fin-recon-org-second-${tag}`;
 const USER_MAKER = `roi-e007-fin-recon-maker-${tag}`;
 const USER_RESOLVER = `roi-e007-fin-recon-resolver-${tag}`;
 const USER_RESOLVER_2 = `roi-e007-fin-recon-resolver-2-${tag}`;
@@ -229,7 +230,7 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
   afterAll(async () => {
     if (!reachable) return;
     await client.query(`SET session_replication_role = replica`);
-    await client.query(`DELETE FROM rvn_finance_reconciliation_grant_events WHERE organization_id = $1`, [ORG_ID]);
+    await client.query(`DELETE FROM rvn_finance_reconciliation_grant_events WHERE organization_id = ANY($1::text[])`, [[ORG_ID, SECOND_ORG_ID]]);
     await client.query(`DELETE FROM rvn_finance_reconciliation_decisions WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM rvn_roi_finance_reconciliations WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`SET session_replication_role = origin`);
@@ -252,9 +253,9 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
     await client.query(`DELETE FROM rvn_platform_resource_visibility WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM rvn_platform_visibility_policies WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM initiatives WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`DELETE FROM organization_members WHERE organization_id = $1`, [ORG_ID]);
+    await client.query(`DELETE FROM organization_members WHERE organization_id = ANY($1::text[])`, [[ORG_ID, SECOND_ORG_ID]]);
     await client.query(`DELETE FROM users WHERE id = ANY($1::text[])`, [[USER_MAKER, USER_RESOLVER, USER_RESOLVER_2, USER_GRANTEE]]);
-    await client.query(`DELETE FROM organizations WHERE id = $1`, [ORG_ID]);
+    await client.query(`DELETE FROM organizations WHERE id = ANY($1::text[])`, [[ORG_ID, SECOND_ORG_ID]]);
     await client.end();
     if (closePgPool) await closePgPool();
   }, 30_000);
@@ -709,6 +710,20 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
     expect(outcomes.filter((row) => row.outcome === 'applied')).toHaveLength(1);
     expect(outcomes.filter((row) => row.outcome === 'replayed')).toHaveLength(7);
     expect(new Set(outcomes.map((row) => `${row.receiptId}:${row.grantVersion}`)).size).toBe(1);
+    await client.query(
+      `INSERT INTO organizations (id,name,plan,status) VALUES($1,$2,'enterprise','active')`,
+      [SECOND_ORG_ID, 'Finance grant second-tenant fixture']
+    );
+    for (const userId of [USER_MAKER, USER_GRANTEE]) {
+      await client.query(
+        `INSERT INTO organization_members (id,organization_id,user_id,role,status,created_at)
+         VALUES($1,$2,$3,'MEMBER','ACTIVE',now())`,
+        [`${SECOND_ORG_ID}-${userId}`, SECOND_ORG_ID, userId]
+      );
+    }
+    const sameRawKeyOtherTenant = await recordFinanceOwnerGrantEvent({ ...input, organizationId: SECOND_ORG_ID });
+    expect(sameRawKeyOtherTenant.outcome).toBe('applied');
+    expect(sameRawKeyOtherTenant.receiptId).not.toBe(outcomes[0]!.receiptId);
     await expect(recordFinanceOwnerGrantEvent({ ...input, action: 'revoked' })).rejects.toMatchObject({
       code: 'FINANCE_OWNER_GRANT_IDEMPOTENCY_COLLISION',
     });

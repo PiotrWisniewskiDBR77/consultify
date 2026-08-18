@@ -94,8 +94,12 @@ export async function proposeEarlyInitiativeTransition(input: ProposeEarlyInitia
             AND EXISTS (SELECT 1 FROM project_members pm WHERE pm.project_id=c.project_id AND pm.user_id=?)
             AND EXISTS (SELECT 1 FROM organization_members om WHERE om.organization_id=c.organization_id
                          AND om.user_id=? AND UPPER(om.status)='ACTIVE')
+            AND EXISTS (SELECT 1 FROM project_members reviewer_pm
+                         WHERE reviewer_pm.project_id=c.project_id AND reviewer_pm.user_id=?
+                           AND UPPER(reviewer_pm.project_role) IN ('PROJECT_SPONSOR','STEERING_COMMITTEE'))
           FOR SHARE OF c,p,l,i`,
-        [input.initiativeId, input.transformationCaseId, input.organizationId, input.proposerUserId, input.reviewerUserId]
+        [input.initiativeId, input.transformationCaseId, input.organizationId, input.proposerUserId,
+          input.reviewerUserId, input.reviewerUserId]
       )
     ).rows[0];
     if (!current) throw new Error('initiative_lifecycle_authority_required');
@@ -163,14 +167,24 @@ export interface ExecuteApprovedEarlyInitiativeTransitionInput {
 
 /** Consumes an already-approved exact A05 review; never creates or approves one. */
 export async function executeApprovedEarlyInitiativeTransition(input: ExecuteApprovedEarlyInitiativeTransitionInput) {
-  const pins = await withPgTransaction(async (client) => {
+  const deferred: Array<() => Promise<void>> = [];
+  const { gate, transition } = await withPgTransaction(async (client) => {
     const row = (
       await client.query<any>(
         `SELECT p.after_json,p.expires_at,r.review_id,r.reviewed_by_user_id
            FROM v8_agent_proposal_versions p
            JOIN v8_agent_proposal_scope_reviews r ON r.proposal_version_id=p.proposal_version_id
+           JOIN transformation_cases c
+             ON c.transformation_case_id=(p.after_json->>'transformationCaseId')
+            AND c.organization_id=p.organization_id
+           JOIN project_members reviewer_pm ON reviewer_pm.project_id=c.project_id
+            AND reviewer_pm.user_id=r.reviewed_by_user_id
+           JOIN organization_members reviewer_om ON reviewer_om.organization_id=p.organization_id
+            AND reviewer_om.user_id=r.reviewed_by_user_id AND UPPER(reviewer_om.status)='ACTIVE'
           WHERE p.proposal_version_id=? AND p.organization_id=? AND p.status='approved'
-            AND r.decision='approved' AND r.reviewed_by_user_id=? FOR SHARE OF p,r`,
+            AND r.decision='approved' AND r.reviewed_by_user_id=?
+            AND UPPER(reviewer_pm.project_role) IN ('PROJECT_SPONSOR','STEERING_COMMITTEE')
+          FOR UPDATE OF p,r,c,reviewer_pm,reviewer_om`,
         [input.proposalVersionId, input.organizationId, input.reviewerUserId]
       )
     ).rows[0];
@@ -183,10 +197,7 @@ export async function executeApprovedEarlyInitiativeTransition(input: ExecuteApp
     if (!APPROVED_DOMAIN_BY_TARGET[targetStatus] || payload.pmoDomain !== APPROVED_DOMAIN_BY_TARGET[targetStatus])
       throw new Error('initiative_lifecycle_proposal_target_invalid');
     const expectedDigest = digest(payload);
-    return { payload, sourceDigest: expectedDigest, reviewId: String(row.review_id), expiresAt: new Date(row.expires_at).toISOString(), scopeKey: `initiative_lifecycle:${payload.pmoDomain.toLowerCase()}` };
-  });
-  const deferred: Array<() => Promise<void>> = [];
-  const { gate, transition } = await withPgTransaction(async (client) => {
+    const pins = { payload, sourceDigest: expectedDigest, reviewId: String(row.review_id), expiresAt: new Date(row.expires_at).toISOString(), scopeKey: `initiative_lifecycle:${payload.pmoDomain.toLowerCase()}` };
     const gate = await recordInitiativeLifecycleGateDecision(client, {
       organizationId: input.organizationId,
       initiativeId: pins.payload.initiativeId,

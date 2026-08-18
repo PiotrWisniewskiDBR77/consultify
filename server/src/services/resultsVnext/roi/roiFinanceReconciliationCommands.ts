@@ -144,8 +144,8 @@ function reconciliationRequestFingerprint(input: {
   return createHash('sha256').update(JSON.stringify(input)).digest('hex');
 }
 
-function deterministicGrantReceiptId(idempotencyKey: string): string {
-  const hex = createHash('sha256').update(`rvn-finance-owner-grant:${idempotencyKey}`).digest('hex').slice(0, 32).split('');
+function deterministicGrantReceiptId(organizationId: string, idempotencyKey: string): string {
+  const hex = createHash('sha256').update(`rvn-finance-owner-grant:${organizationId}:${idempotencyKey}`).digest('hex').slice(0, 32).split('');
   hex[12] = '4';
   hex[16] = ((Number.parseInt(hex[16]!, 16) & 0x3) | 0x8).toString(16);
   return `${hex.slice(0, 8).join('')}-${hex.slice(8, 12).join('')}-${hex.slice(12, 16).join('')}-${hex.slice(16, 20).join('')}-${hex.slice(20).join('')}`;
@@ -174,7 +174,7 @@ export async function recordFinanceOwnerGrantEvent(input: {
     if (!input.access.capabilities.includes('*')) {
       throw new RoiFinanceReconciliationValidationError('Only tenant governance may append Finance-owner grants.', 'FINANCE_OWNER_GRANT_GOVERNANCE_REQUIRED');
     }
-    const receiptId = deterministicGrantReceiptId(input.idempotencyKey.trim());
+    const receiptId = deterministicGrantReceiptId(input.organizationId, input.idempotencyKey.trim());
     // The receipt key is globally unique. Fence on it before the tenant/user
     // transition lock so two different fingerprints racing on one key yield
     // a stable collision rather than a raw unique-constraint failure.

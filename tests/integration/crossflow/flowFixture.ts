@@ -21,13 +21,13 @@
  *    (`server/src/database/Database.ts`), so the required trio is
  *    `NODE_ENV=test` + `RUN_DB_TESTS=1` + `MOCK_DB=false`. Set here, not left
  *    to the caller's shell.
- * 4. Deterministic IDs — every identifier derives from a seeded counter, never
- *    from `Date.now()` / `randomUUID()`, so a rerun on a fresh database
- *    produces byte-identical rows and a diff is meaningful.
+ * 4. Run-isolated IDs — one random namespace is chosen at process start, then
+ *    every identifier is deterministic inside that run. Parallel/retried
+ *    suites cannot collide with retained rows from an earlier run.
  * 5. Cold readback uses a SEPARATE pg client the suite opens after the writer
  *    closed, so an in-process cache cannot masquerade as durability.
  */
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 
 import jwt from 'jsonwebtoken';
 import pg from 'pg';
@@ -46,7 +46,7 @@ process.env.RUN_DB_TESTS = '1';
 if (!process.env.NODE_ENV) process.env.NODE_ENV = 'test';
 
 /** Deterministic, collision-proof prefix for every row this lane creates. */
-export const CF = 'cfq-';
+export const CF = `cfq-${randomUUID().slice(0, 8)}-`;
 
 // ---------------------------------------------------------------------------
 // (2) Deterministic identity generation
@@ -64,7 +64,7 @@ export function cfId(...parts: Array<string | number>): string {
 
 /** Deterministic UUID-shaped id, for columns with a uuid type or format check. */
 export function cfUuid(...parts: Array<string | number>): string {
-  const h = createHash('sha256').update(`cfq|${parts.join('|')}`).digest('hex');
+  const h = createHash('sha256').update(`${CF}|${parts.join('|')}`).digest('hex');
   // RFC-4122 v4 shape (version nibble 4, variant nibble 8) so format checks pass.
   return [
     h.slice(0, 8),
@@ -193,10 +193,11 @@ export async function seedTransformationContextForInitiative(
   const projectId = initiative.rows[0]?.project_id;
   if (!projectId) throw new Error('accepted initiative has no canonical project');
   for (const actor of [TENANT_A.owner, TENANT_A.admin]) {
+    const projectRole = actor.id === TENANT_A.admin.id ? 'PROJECT_SPONSOR' : 'PROJECT_MANAGER';
     await client.query(
       `INSERT INTO project_members (project_id,user_id,project_role)
-       VALUES($1,$2,'PROJECT_MANAGER') ON CONFLICT DO NOTHING`,
-      [projectId, actor.id]
+       VALUES($1,$2,$3) ON CONFLICT(project_id,user_id) DO UPDATE SET project_role=excluded.project_role`,
+      [projectId, actor.id, projectRole]
     );
   }
   await client.query(
@@ -506,7 +507,10 @@ export async function purgeResultsLineageFixture(client: pg.Client): Promise<voi
   if (process.env.FLOW_ALLOW_IMMUTABLE_FIXTURE_CLEANUP !== '1')
     throw new Error('FLOW Results cleanup requires explicit opt-in');
   const db = await client.query<{ current_database: string }>('SELECT current_database()');
-  if (!/^flow_[a-z0-9_]+$/.test(String(db.rows[0]?.current_database ?? '')))
+  const actualDb = String(db.rows[0]?.current_database ?? '');
+  const callerDb = new URL(process.env.DATABASE_URL ?? '').pathname.replace(/^\//, '');
+  const requiredPrefix = process.env.FLOW_DISPOSABLE_DB_PREFIX ?? '';
+  if (!requiredPrefix || callerDb !== actualDb || !actualDb.startsWith(requiredPrefix) || !/^flow_[a-z0-9_]+$/.test(actualDb))
     throw new Error('FLOW Results cleanup requires a flow_* disposable database');
   const tables = [
     'rvn_finance_reconciliation_decisions', 'rvn_finance_reconciliation_grant_events',
@@ -551,13 +555,21 @@ export async function purgeResultsLineageFixture(client: pg.Client): Promise<voi
     await client.query('ROLLBACK');
     throw error;
   }
-  const state = await client.query<{ role: string; disabled: string }>(
+  const state = await client.query<{ role: string; disabled: string; expected_enabled: string; advisory: string }>(
     `SELECT current_setting('session_replication_role') role,
       (SELECT count(*)::text FROM pg_trigger WHERE NOT tgisinternal AND tgenabled<>'O'
-        AND tgrelid::regclass::text = ANY($1::text[])) disabled`,
-    [tables]
+        AND tgrelid::regclass::text = ANY($1::text[])) disabled,
+      (SELECT count(*)::text FROM pg_trigger WHERE NOT tgisinternal AND tgenabled='O'
+        AND tgname=ANY($2::text[])) expected_enabled,
+      (SELECT count(*)::text FROM pg_locks WHERE locktype='advisory' AND pid=pg_backend_pid()) advisory`,
+    [tables, [
+      'trg_rvn_fin_reconciliation_grant_insert_guard',
+      'trg_rvn_fin_reconciliation_decision_append_only',
+      'trg_rvn_fin_reconciliation_grant_append_only',
+    ]]
   );
-  if (state.rows[0]?.role !== 'origin' || state.rows[0]?.disabled !== '0')
+  if (state.rows[0]?.role !== 'origin' || state.rows[0]?.disabled !== '0' ||
+      state.rows[0]?.expected_enabled !== '3' || state.rows[0]?.advisory !== '0')
     throw new Error('FLOW Results cleanup did not restore trigger/session state');
 }
 
@@ -571,7 +583,10 @@ export async function purgeImmutableLifecycleGateFixture(client: pg.Client): Pro
   if (process.env.FLOW_ALLOW_IMMUTABLE_FIXTURE_CLEANUP !== '1')
     throw new Error('FLOW immutable fixture cleanup requires explicit opt-in');
   const db = await client.query<{ current_database: string }>('SELECT current_database()');
-  if (!/^flow_[a-z0-9_]+$/.test(String(db.rows[0]?.current_database ?? '')))
+  const actualDb = String(db.rows[0]?.current_database ?? '');
+  const callerDb = new URL(process.env.DATABASE_URL ?? '').pathname.replace(/^\//, '');
+  const requiredPrefix = process.env.FLOW_DISPOSABLE_DB_PREFIX ?? '';
+  if (!requiredPrefix || callerDb !== actualDb || !actualDb.startsWith(requiredPrefix) || !/^flow_[a-z0-9_]+$/.test(actualDb))
     throw new Error('FLOW immutable fixture cleanup requires a flow_* disposable database');
   await client.query('BEGIN');
   try {
@@ -617,6 +632,15 @@ export async function purgeImmutableLifecycleGateFixture(client: pg.Client): Pro
     await client.query('ROLLBACK');
     throw error;
   }
+  const postCommit = await client.query<{ tgenabled: string; advisory: string }>(
+    `SELECT t.tgenabled,
+       (SELECT count(*)::text FROM pg_locks WHERE locktype='advisory' AND pid=pg_backend_pid()) advisory
+       FROM pg_trigger t
+      WHERE t.tgrelid='initiative_lifecycle_gate_decisions'::regclass
+        AND t.tgname='initiative_lifecycle_gate_decisions_immutable' AND NOT t.tgisinternal`
+  );
+  if (postCommit.rows[0]?.tgenabled !== 'O' || postCommit.rows[0]?.advisory !== '0')
+    throw new Error('FLOW lifecycle cleanup post-commit trigger/advisory state invalid');
 }
 
 /** Final teardown of tenants/actors themselves. Call after `purgeFixture`. */
