@@ -233,3 +233,150 @@ export async function assertVisibleAndUncovered(locator: any, label: string): Pr
     throw new Error(`${label} is not genuinely presented to the user (${covered})`);
   }
 }
+
+// ---------------------------------------------------------------------------
+// Per-test isolation, asserted cleanup, and residue verified against the
+// database itself.
+//
+// Why this exists: sharing one bootstrap run across tests lets one test's
+// residue become another test's phantom pass, and `purgeByOrganizationId`
+// swallows every per-table DELETE failure (testSupport.routes.ts:553-559
+// catch + logger.warn + continue). A cleanup whose response nobody reads, and
+// whose effect nobody re-measures, is not a cleanup that can be claimed.
+// ---------------------------------------------------------------------------
+
+/** Bounded on purpose: a real cleanup here measured 87s against 1634 tables. */
+export const MYW_CLEANUP_TIMEOUT_MS = 180_000;
+
+export type MywRun = {
+  runId: string;
+  organizationId: string;
+  userId: string;
+  token: string;
+};
+
+/**
+ * A bootstrap run owned by exactly ONE test. The suffix carries the test label
+ * plus time and randomness, so two tests — and two concurrent runs of this
+ * file — can never collide or clean up each other's rows.
+ */
+export async function createIsolatedRun(
+  support: APIRequestContext,
+  baseRunId: string,
+  label: string
+): Promise<MywRun> {
+  const runId = `${baseRunId}-${label}-${Date.now().toString(36)}-${Math.random()
+    .toString(36)
+    .slice(2, 8)}`;
+  const response = await support.post('/api/test-support/bootstrap', { data: { runId } });
+  if (!response.ok()) {
+    throw new Error(`bootstrap ${runId} failed: ${response.status()} ${await response.text()}`);
+  }
+  return { ...(await response.json()), runId } as MywRun;
+}
+
+export type MywCleanupResult = {
+  runId: string;
+  status: number;
+  body: unknown;
+};
+
+/**
+ * Cleanup whose RESPONSE IS READ AND ASSERTED. `deleted: false` is the silent
+ * no-op path — a run that was never registered, or was already purged — and it
+ * must fail loudly rather than be mistaken for a successful clean.
+ */
+export async function cleanupRunAsserted(
+  support: APIRequestContext,
+  runId: string
+): Promise<MywCleanupResult> {
+  const response = await support.post('/api/test-support/cleanup', {
+    data: { runId },
+    timeout: MYW_CLEANUP_TIMEOUT_MS,
+  });
+  const status = response.status();
+  const body = await response.json().catch(() => null);
+  if (status !== 200) {
+    throw new Error(`cleanup ${runId} returned ${status}: ${JSON.stringify(body)}`);
+  }
+  if (!body || (body as any).ok !== true || (body as any).deleted !== true) {
+    throw new Error(
+      `cleanup ${runId} did not report a real delete (silent no-op?): ${JSON.stringify(body)}`
+    );
+  }
+  return { runId, status, body };
+}
+
+/** Every table this lane can write, enumerated BY NAME. No spot checks. */
+export const MYW_RESIDUE_TABLES = [
+  { table: 'organizations', column: 'id' },
+  { table: 'users', column: 'organization_id' },
+  { table: 'organization_members', column: 'organization_id' },
+  { table: 'tasks', column: 'organization_id' },
+  { table: 'decisions', column: 'organization_id' },
+  { table: 'ai_agent_plans', column: 'organization_id' },
+  { table: 'canonical_inbox_items', column: 'organization_id' },
+] as const;
+
+export type MywResidue = Record<string, number>;
+
+/**
+ * Count leftovers for the given organizations by querying PostgreSQL DIRECTLY.
+ *
+ * Deliberately NOT routed through /api/test-support/fixture-residue: that
+ * endpoint counts organizations, users, organization_members, audit_programs,
+ * audit_packs and g4_test_flag_overrides only — it can report a clean sweep
+ * while tasks, decisions, agent plans and canonical inbox rows survive.
+ *
+ * `ai_agent_plan_steps` carries NEITHER organization_id NOR org_id, so
+ * purgeByOrganizationId skips it outright; it is counted here through its plan
+ * parent, which reaches it via ai_agent_plan_steps_plan_id_fkey ON DELETE
+ * CASCADE. If that cascade ever goes away the count below turns non-zero
+ * instead of hiding.
+ */
+export async function measureResidue(
+  databaseUrl: string,
+  organizationIds: string[]
+): Promise<MywResidue> {
+  const { Client } = await import('pg');
+  const client = new Client({ connectionString: databaseUrl });
+  await client.connect();
+  const residue: MywResidue = {};
+  try {
+    for (const { table, column } of MYW_RESIDUE_TABLES) {
+      const { rows } = await client.query(
+        `SELECT COUNT(*)::int AS count FROM ${table} WHERE ${column} = ANY($1::text[])`,
+        [organizationIds]
+      );
+      residue[table] = Number(rows[0]?.count ?? 0);
+    }
+    const steps = await client.query(
+      `SELECT COUNT(*)::int AS count FROM ai_agent_plan_steps s
+       JOIN ai_agent_plans p ON p.id = s.plan_id
+       WHERE p.organization_id = ANY($1::text[])`,
+      [organizationIds]
+    );
+    residue.ai_agent_plan_steps = Number(steps.rows[0]?.count ?? 0);
+  } finally {
+    await client.end();
+  }
+  return residue;
+}
+
+/**
+ * Require an exact zero for every enumerated table, naming each offender.
+ *
+ * If an append-only table ever lands in this list its trigger will reject the
+ * DELETE, purgeByOrganizationId will swallow that failure, and the count will
+ * stay non-zero. Report that number honestly — for such a table zero is
+ * reachable only by destroying the database, not by cleaning it.
+ */
+export function expectNoResidue(residue: MywResidue): void {
+  const offenders = Object.entries(residue).filter(([, count]) => count !== 0);
+  if (offenders.length > 0) {
+    throw new Error(
+      `fixture residue not zero: ${offenders.map(([t, c]) => `${t}=${c}`).join(', ')} ` +
+        `(full measurement: ${JSON.stringify(residue)})`
+    );
+  }
+}

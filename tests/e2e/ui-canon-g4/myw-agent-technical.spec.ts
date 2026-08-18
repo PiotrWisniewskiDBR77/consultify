@@ -7,8 +7,12 @@ import { expect, request as apiRequest, test } from '@playwright/test';
 import { readTestSupportState } from '../_helpers/testSupportState';
 import {
   assertVisibleAndUncovered,
+  cleanupRunAsserted,
   createIdentityContext,
+  createIsolatedRun,
   createMember,
+  expectNoResidue,
+  measureResidue,
   type MywIdentity,
   type MywSeed,
   mywSeedTitles,
@@ -20,6 +24,21 @@ const apiBase = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
 const appBase = process.env.E2E_BASE_URL || 'http://127.0.0.1:3000';
 const supportKey = process.env.TEST_SUPPORT_KEY || 'local-test-support-key-change-me';
 const dbContainer = process.env.MYW_TECHNICAL_DB_CONTAINER || '';
+/**
+ * Residue is re-measured against PostgreSQL itself, so the check cannot be
+ * satisfied by an endpoint that simply reports success. Required, never
+ * defaulted to a silent skip: a residue assertion that quietly does not run is
+ * indistinguishable from one that passed.
+ */
+const databaseUrl = (() => {
+  const url = process.env.MYW_RESIDUE_DATABASE_URL || process.env.DATABASE_URL || '';
+  if (!url) {
+    throw new Error(
+      'MYW_RESIDUE_DATABASE_URL (or DATABASE_URL) is required so fixture residue can be verified against the database.'
+    );
+  }
+  return url;
+})();
 /**
  * Current-SHA observations are written to their OWN directory, never on top of
  * `closure/ui-g4/.../screens-technical`. That historical set belongs to
@@ -222,18 +241,26 @@ test.describe.serial('MYW-AGT-UI-CANON owner-free technical closure', () => {
       baseURL: apiBase,
       extraHTTPHeaders: { 'x-test-support-key': supportKey },
     });
-    const member = await createMember(support, bootstrap.runId, 'USER');
+    // OWN run, not the shared global bootstrap: sharing fixture identity across
+    // tests is how one test's residue becomes another test's phantom pass.
+    const own = await createIsolatedRun(support, bootstrap.runId, 'tenant');
+    const foreign = await createIsolatedRun(support, bootstrap.runId, 'tenant-foreign');
+    const member = await createMember(support, own.runId, 'USER');
     const memberApi = await apiRequest.newContext({
       baseURL: apiBase,
       extraHTTPHeaders: { Authorization: `Bearer ${member.token}` },
     });
-    const foreignRunId = `${bootstrap.runId}-foreign`;
+    const foreignApi = await apiRequest.newContext({
+      baseURL: apiBase,
+      extraHTTPHeaders: { Authorization: `Bearer ${foreign.token}` },
+    });
+    const unsigned = await apiRequest.newContext({ baseURL: apiBase });
     try {
       const payload = {
-        title: 'MYW mounted success task',
+        title: `MYW mounted success task ${own.runId}`,
         status: 'todo',
         priority: 'high',
-        idempotencyKey: `${bootstrap.runId}-task-once`,
+        idempotencyKey: `${own.runId}-task-once`,
       };
       const created = await memberApi.post('/api/my-work/personal-tasks', { data: payload });
       expect(created.status()).toBe(201);
@@ -242,37 +269,32 @@ test.describe.serial('MYW-AGT-UI-CANON owner-free technical closure', () => {
       expect(replay.status()).toBe(200);
       expect((await replay.json()).id).toBe(createdBody.id);
 
-      const foreignBootstrap = await support.post('/api/test-support/bootstrap', {
-        data: { runId: foreignRunId, role: 'ADMIN' },
-      });
-      expect(foreignBootstrap.ok()).toBe(true);
-      const foreign = (await foreignBootstrap.json()) as MywIdentity;
-      const foreignApi = await apiRequest.newContext({
-        baseURL: apiBase,
-        extraHTTPHeaders: { Authorization: `Bearer ${foreign.token}` },
-      });
       const foreignRead = await foreignApi.get(`/api/my-work/personal-tasks/${createdBody.id}`);
       expect([403, 404]).toContain(foreignRead.status());
-      await foreignApi.dispose();
 
-      const unsigned = await apiRequest.newContext({ baseURL: apiBase });
       expect((await unsigned.get('/api/my-work/personal-tasks')).status()).toBe(401);
-      await unsigned.dispose();
     } finally {
-      // Teardown only — no assertion is relaxed here. `purgeByOrganizationId`
-      // walks every table in the schema, and this database has 1634 public
-      // tables, so a real cleanup measured 87s against the project-wide
-      // actionTimeout of 15s (playwright.config.ts:89). Without an explicit
-      // timeout the test fails in `finally` AFTER all of its auth, idempotency
-      // and tenant assertions have already passed, and leaves the fixture behind.
-      await support.post('/api/test-support/cleanup', {
-        data: { runId: foreignRunId },
-        timeout: 180_000,
-      });
-      await memberApi.dispose();
-      await support.dispose();
+      // NESTED finally: every context is disposed even when a cleanup throws,
+      // and BOTH runs are cleaned with their responses asserted — including the
+      // foreign one, which is the path that silently no-ops.
+      try {
+        const cleaned = [
+          await cleanupRunAsserted(support, own.runId),
+          await cleanupRunAsserted(support, foreign.runId),
+        ];
+        expect(cleaned.map((c) => c.status)).toEqual([200, 200]);
+        expectNoResidue(
+          await measureResidue(databaseUrl, [own.organizationId, foreign.organizationId])
+        );
+      } finally {
+        await memberApi.dispose();
+        await foreignApi.dispose();
+        await unsigned.dispose();
+        await support.dispose();
+      }
     }
   });
+
 
   /**
    * The four preceding cells only ever proved that a surface MOUNTS. A surface
@@ -295,7 +317,8 @@ test.describe.serial('MYW-AGT-UI-CANON owner-free technical closure', () => {
     // correctly refused with 403. Seeding as USER would therefore have to
     // either bypass that check or drop the Decisions journey — both worse than
     // using the persona that genuinely holds the capability.
-    const identity = await createMember(support, bootstrap.runId, 'MANAGER');
+    const own = await createIsolatedRun(support, bootstrap.runId, 'seeded');
+    const identity = await createMember(support, own.runId, 'MANAGER');
     const identityApi = await apiRequest.newContext({
       baseURL: apiBase,
       extraHTTPHeaders: { Authorization: `Bearer ${identity.token}` },
@@ -307,7 +330,7 @@ test.describe.serial('MYW-AGT-UI-CANON owner-free technical closure', () => {
       });
       expect(onboarding.ok()).toBe(true);
 
-      const titles = mywSeedTitles(bootstrap.runId, identity.role);
+      const titles = mywSeedTitles(own.runId, identity.role);
       seed = await seedMywSurfaces(identityApi, titles);
 
       // Database truth FIRST: if PostgreSQL is empty the UI assertion below
@@ -361,8 +384,14 @@ test.describe.serial('MYW-AGT-UI-CANON owner-free technical closure', () => {
         await context.close();
       }
     } finally {
-      await identityApi.dispose();
-      await support.dispose();
+      try {
+        const cleaned = await cleanupRunAsserted(support, own.runId);
+        expect(cleaned.status).toBe(200);
+        expectNoResidue(await measureResidue(databaseUrl, [own.organizationId]));
+      } finally {
+        await identityApi.dispose();
+        await support.dispose();
+      }
     }
   });
 
@@ -385,7 +414,8 @@ test.describe.serial('MYW-AGT-UI-CANON owner-free technical closure', () => {
       baseURL: apiBase,
       extraHTTPHeaders: { 'x-test-support-key': supportKey },
     });
-    const identity = await createMember(support, bootstrap.runId, 'USER');
+    const own = await createIsolatedRun(support, bootstrap.runId, 'revoked');
+    const identity = await createMember(support, own.runId, 'USER');
     const identityApi = await apiRequest.newContext({
       baseURL: apiBase,
       extraHTTPHeaders: { Authorization: `Bearer ${identity.token}` },
@@ -402,8 +432,14 @@ test.describe.serial('MYW-AGT-UI-CANON owner-free technical closure', () => {
       expect(first.status()).toBe(403);
       expect((await first.json()).code).toBe('ORG_MEMBERSHIP_REVOKED');
     } finally {
-      await identityApi.dispose();
-      await support.dispose();
+      try {
+        const cleaned = await cleanupRunAsserted(support, own.runId);
+        expect(cleaned.status).toBe(200);
+        expectNoResidue(await measureResidue(databaseUrl, [own.organizationId]));
+      } finally {
+        await identityApi.dispose();
+        await support.dispose();
+      }
     }
   });
 });
