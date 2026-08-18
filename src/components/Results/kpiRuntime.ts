@@ -14,6 +14,41 @@ export interface KpiCatalogRuntimeResult {
   source: 'v8' | 'legacy' | 'empty' | 'showcase';
 }
 
+type CatalogEnvelope = {
+  data?: unknown;
+  initiatives?: unknown;
+  kpis?: unknown;
+  mappings?: unknown;
+};
+
+function unwrapCatalog(payload: unknown): CatalogEnvelope {
+  let current = payload as CatalogEnvelope | null | undefined;
+  for (let depth = 0; depth < 2; depth += 1) {
+    if (
+      current &&
+      typeof current === 'object' &&
+      !Array.isArray(current) &&
+      !Array.isArray(current.initiatives) &&
+      !Array.isArray(current.kpis) &&
+      !Array.isArray(current.mappings) &&
+      current.data &&
+      typeof current.data === 'object'
+    ) {
+      current = current.data as CatalogEnvelope;
+      continue;
+    }
+    break;
+  }
+  return current && typeof current === 'object' ? current : {};
+}
+
+export async function loadResultsDashboard(initiativeId?: string) {
+  const scopedInitiativeId = String(initiativeId || '').trim();
+  if (!scopedInitiativeId) return null;
+  const response = await V8ResultsApi.getDashboard({ initiativeId: scopedInitiativeId });
+  return response?.snapshot ?? null;
+}
+
 function showcaseResult(): KpiCatalogRuntimeResult {
   return {
     initiatives: createResultsShowcaseInitiatives(),
@@ -55,7 +90,7 @@ async function loadLegacyResultsKpis(): Promise<KpiCatalogRuntimeResult> {
 
 export async function loadResultsKpis(): Promise<KpiCatalogRuntimeResult> {
   try {
-    const catalog = await V8ResultsApi.getKpiCatalog();
+    const catalog = unwrapCatalog(await V8ResultsApi.getKpiCatalog());
     const initiatives = Array.isArray(catalog?.initiatives) ? catalog.initiatives : [];
     const kpis = mapResultsKpis(
       Array.isArray(catalog?.kpis) ? catalog.kpis : [],

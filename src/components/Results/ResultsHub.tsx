@@ -72,7 +72,7 @@ import {
 } from './kpiDomain';
 import { KpiOverviewView } from './KpiOverviewView';
 import { KpiQueueView } from './KpiQueueView';
-import { loadResultsKpis } from './kpiRuntime';
+import { loadResultsDashboard, loadResultsKpis } from './kpiRuntime';
 import type { SignalSheetRecord } from './kpiSignalSheetTypes';
 import { KpiSignalSheetView } from './KpiSignalSheetView';
 import { KPITimeSeriesDrawer } from './KPITimeSeriesDrawer';
@@ -82,15 +82,15 @@ import { isResultsFlagEnabled } from './resultsFeatureFlags';
 import { ResultsInitiativesView } from './ResultsInitiativesView';
 import { ResultsKpiReportsView } from './ResultsKpiReportsView';
 import { ResultsKpiScorecardsView } from './ResultsKpiScorecardsView';
-import { ResultsOkrSetsTable } from './ResultsOkrSetsTable';
-import { ResultsRoiReviewsTable } from './ResultsRoiReviewsTable';
-import { ResultsScorecardsTable } from './ResultsScorecardsTable';
 import { ResultsGridView } from './ResultsKPITable';
+import { ResultsOkrSetsTable } from './ResultsOkrSetsTable';
 import {
   ResultsKpiConnectorsView,
   ResultsReportSchedulesView,
   ResultsWallboardsView,
 } from './ResultsReportingEnterpriseViews';
+import { ResultsRoiReviewsTable } from './ResultsRoiReviewsTable';
+import { ResultsScorecardsTable } from './ResultsScorecardsTable';
 import { createResultsShowcaseSnapshot } from './resultsShowcaseData';
 import {
   ResultsThreePairsView,
@@ -244,7 +244,11 @@ export const ResultsHub: React.FC = () => {
   >(
     (VALID_REPORT_MODES as readonly string[]).includes(searchParams.get('rmode') || '')
       ? (searchParams.get('rmode') as
-          'tracked' | 'reports' | 'schedules' | 'wallboards' | 'connectors')
+          | 'tracked'
+          | 'reports'
+          | 'schedules'
+          | 'wallboards'
+          | 'connectors')
       : 'tracked'
   );
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -403,8 +407,7 @@ export const ResultsHub: React.FC = () => {
 
   const loadV8Snapshot = useCallback(async () => {
     try {
-      const response = await V8ResultsApi.getDashboard({ initiativeId: scopedInitiativeId });
-      setV8Snapshot(response.snapshot);
+      setV8Snapshot(await loadResultsDashboard(scopedInitiativeId));
     } catch {
       setV8Snapshot(null);
     }
@@ -2327,12 +2330,17 @@ export const ResultsHub: React.FC = () => {
                 <StrategicLayerPanel projectId="all" />
               ) : (
                 <div className="text-sm text-c-text-muted py-8 text-center">
-                  {t('results.strategic.disabled', 'Strategic layer disabled — enable the ff_strategicLayer flag.')}
+                  {t(
+                    'results.strategic.disabled',
+                    'Strategic layer disabled — enable the ff_strategicLayer flag.'
+                  )}
                 </div>
               )}
               {isResultsFlagEnabled('valueDriverTree') && (
                 <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface/40 p-4">
-                  <h3 className="text-sm font-semibold text-c-text mb-3">{t('results.driverTree.title', 'Value Driver Tree')}</h3>
+                  <h3 className="text-sm font-semibold text-c-text mb-3">
+                    {t('results.driverTree.title', 'Value Driver Tree')}
+                  </h3>
                   <ValueDriverTree projectId="all" />
                 </div>
               )}
