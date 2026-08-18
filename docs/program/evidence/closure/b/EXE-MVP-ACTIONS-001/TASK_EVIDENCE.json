@@ -35,7 +35,12 @@
     "migration": "Database trigger rejects direct UPDATE and DELETE of the action ledger.",
     "tests": "Focused route regression plus real PostgreSQL 9/9 nested-UoW success and forced-audit-failure rollback proof."
   },
-  "ownerTables": ["execution_action_registry", "execution_action_audit", "budget_entries", "case_core"],
+  "ownerTables": [
+    "execution_action_registry",
+    "execution_action_audit",
+    "budget_entries",
+    "case_core"
+  ],
   "commands": [
     "npx vitest run server/src/services/__tests__/executionActionRegistryService.test.ts server/src/services/__tests__/executionBudgetDelete.test.ts server/src/routes/caseWorkspace/__tests__/cases.routes.test.ts server/src/routes/caseWorkspace/__tests__/actionProposals.routes.test.ts server/src/routes/caseWorkspace/__tests__/artifactLinks.routes.test.ts server/src/routes/caseWorkspace/__tests__/waitSubscriptions.routes.test.ts --reporter=dot --no-file-parallelism",
     "cd server && npx tsc --noEmit --pretty false",
@@ -80,5 +85,62 @@
   "openBlocker": "Backend/runtime DoD is complete, but the mounted UI proof covers only the delivery-closure slice. The remaining nine governed action surfaces still require task-specific loading, empty, backend-error and success-state UI qualification, followed by manual VoiceOver, named-persona and visual/brand owner acceptance.",
   "resolvedBlockers": [
     "Exact-current backend/runtime governed actions and the delivery-closure UI slice requalified patch-equivalent at 6de1fe8532/39341f3ffb (source bf55070e2f/aa118bbdcb): realPG 4/4 and signed mounted UI 2/2, residue 0, trigger restored/enabled. This does not qualify all nine governed action UIs."
-  ]
+  ],
+  "currentShaReconciliation": {
+    "currentSha": "4f0fd2cd9b0665a971a86867a91015655ce127af",
+    "reconciledOn": "2026-08-18",
+    "reconciledBy": "closure lane B, branch codex/closure-b-20260818, isolated worktree created from exact canonical 4f0fd2cd9b",
+    "canonicalTipObserved": "codex/recovery-canonical-20260816 advanced twice during this lane, ending at b63c36dcefcacf26ef98c2b770ceca0cb50c8c7f. Every path it added sits under docs/program/evidence/closure/codex/ plus server/src/routes/__tests__/mfaPersistence.pg.test.ts and tests/e2e/settings/settings-mfa-lifecycle.signed.spec.ts. None collides with this packet. No rebase was performed.",
+    "ancestry": {
+      "baselineSha": "ANCESTOR_OF_CURRENT",
+      "productSha": "ANCESTOR_OF_CURRENT",
+      "integratedProductSha": "ANCESTOR_OF_CURRENT",
+      "reconciliationSha": "ANCESTOR_OF_CURRENT",
+      "rollbackCommits": "both ANCESTOR_OF_CURRENT (75714ca5b4 and d9fcb6fea8), so the documented rollback method is still applicable at currentSha",
+      "technicalSourceSha": "NOT_ANCESTOR. aa118bbdcb is a side-branch technical source; its content reached canonical patch-equivalent through integratedProductSha 39341f3ffb, which IS an ancestor.",
+      "method": "git merge-base --is-ancestor <sha> 4f0fd2cd9b for every SHA named in this packet. Nothing was assumed."
+    },
+    "pathDrift": {
+      "method": "git rev-parse <sha>:<path> blob-hash comparison, reconciliationSha 3b55f6b627 versus currentSha 4f0fd2cd9b, over all 21 declared changedPaths",
+      "identical": 20,
+      "drifted": 1,
+      "driftDetail": "server/src/services/executionBudgetService.ts drifted 1ad06ee561 -> e9117dfc59 through a single commit, dd5239076d feat(results): observe writer usage and close the membership wall. The change is +26 lines and nothing else: two observeWriter() side-channel calls in createBudgetEntry and deleteBudgetEntry, plus the import. It adds no branch, no guard and no return-path change, and it does not touch authorization, the action registry, the audit ledger or the pinned unit of work. The governed-actions semantics this packet asserts are therefore unaffected, and the focused and realPG reruns below confirm that empirically rather than by inspection alone."
+    },
+    "rerunDenominators": {
+      "focusedRegression": "6/6 files, 43/43 tests, exit 0 at currentSha. Identical to the historical denominator.",
+      "realPostgres": "1/1 file, 21/21 tests, exit 0 at currentSha on fresh isolated pgvector PostgreSQL 16 (executionActionRegistryService.pg.test.ts). Identical to the historical denominator.",
+      "mountedRealDomain": "2/2 files, 39/39 tests, exit 0 at currentSha (liveStack.e2e.pg.test.ts and liveStack.e2e.part2.pg.test.ts) against a REAL mounted Express router. This SUPERSEDES the historical 1 file / 15 tests, which covered part2 only. Router started by scripts/dev/case-workspace-local-backend.sh with NODE_ENV=development and E2E_MODE and ENABLE_TEST_AUTH_BYPASS deliberately unset; health returned 200 and an unauthenticated GET /api/v8/case-workspace/cases returned 401, proving the auth chain was live and not bypassed.",
+      "actionDisposition": "13/13 CONFIRMED at currentSha by reading the live table, not the code: execution_action_registry holds 13 rows, 9 runtime_state=IMPLEMENTED (case.artifact.unlink, case.cancel, case.close, case.proposal.decide, case.proposal.execute, case.proposal.revoke, case.run.cancel, case.wait.cancel, execution.budget.delete) and 4 HIDDEN (execution.initiative.archive, execution.initiative.delete, execution.report.archive, execution.report.edit). audit_required is true for all 13. minimum_role is ADMIN for 11, OWNER for execution.initiative.delete, MEMBER for execution.report.edit.",
+      "freshMigrations": "765 applied on fresh; repeat reports Applying migrations: 0; --dry-run reports Pending migrations: 0; schema_migrations 765 total / 765 status=success / 0 non-success / 0 empty checksum / 765 distinct filenames; 1623 public tables. This packet still adds no schema of its own. NUMBER CORRECTION: the historical shared-cluster ledger of 738 is superseded at currentSha by 765 on a private cluster.",
+      "schemaMigrationsKeyCaveat": "765 distinct filenames but only 392 distinct version values, primary key on filename not version. Any assertion keyed on version silently collapses rows. Pre-existing, not introduced by this lane.",
+      "typeCheck": "server tsc --noEmit --pretty false exit 0, zero diagnostics; root tsc -p tsconfig.json --noEmit with 8 GB heap exit 0, zero diagnostics",
+      "backendBuild": "npm run build:backend exit 0 at currentSha; 9 server runtime mirror files verified",
+      "frontendBuild": "NODE_OPTIONS=--max-old-space-size=8192 npm run build exit 0, built in 42.46s"
+    },
+    "negativeControlsReverified": {
+      "immutableAudit": "RE-PROVEN OUT OF BAND at currentSha. A psql session outside the application, with no SET LOCAL and a superuser-equivalent role, had both DELETE and UPDATE on execution_action_audit rejected by execution_action_audit_deny_mutation() with the message execution_action_audit is append-only. The guard does not depend on application cooperation, which is the only version of this claim worth making.",
+      "triggerState": "trg_execution_action_audit_immutable tgenabled=O. 49 non-internal append-only / immutability triggers enumerated on the fresh schema, every one tgenabled=O. No trigger was disabled at any point in this lane.",
+      "advisoryLocks": 0,
+      "notReverified": "policyDrift, hidden-action 404, DENIED/NOT_FOUND/CONFLICT classification, coldReadback, auditFailureRollback and nestedTransaction were not independently re-executed as standalone probes at currentSha. They are covered transitively by the 21/21 realPG and 39/39 mounted runs above, which pass, but this reconciliation does not claim a fresh standalone observation of each one."
+    },
+    "residueHonestStatement": {
+      "verdict": "NON_ZERO_IN_DATABASE. This corrects the historical fixtureResidue value of 0.",
+      "measured": "organizations=4 (system, the deliberate harness seed cw-local-org, and two left by tests: cw-stream-e-other-org and exe-actions-1787025024889); users=6; organization_members=6; case_core=2; v8_execution_runs=4; execution_action_audit=39 (28 under cw-local-org, 11 under exe-actions-1787025024889); budget_entries=0; tasks=0; ie_aggregate_state=0",
+      "why": "execution_action_audit is exactly the append-only ledger this packet introduced a trigger to protect. That protection makes its rows structurally impossible to delete in place, as the out-of-band DELETE rejection above demonstrates. Residue 0 for this surface is therefore reachable only by DESTROYING the database, never by cleaning it. A packet claiming residue 0 here is claiming container teardown and should say so in those words.",
+      "disposal": "The entire database lived in a disposable tmpfs container removed together with its volume at end of lane."
+    },
+    "firstRedsAndClassification": [
+      {
+        "red": "liveStack e2e: 39 failures with LIVE STACK NOT UP - this suite proves nothing and must not be read as a pass; backend unreachable at http://127.0.0.1:3001",
+        "classification": "ENVIRONMENT_PRECONDITION, NOT A PRODUCT DEFECT. The suite fail-closed rather than reporting a false pass, which is the behaviour we want.",
+        "fix": "Started the real mounted router via scripts/dev/case-workspace-local-backend.sh against the isolated database. Nothing was weakened."
+      },
+      {
+        "red": "liveStack e2e: both files failed at suite level with login failed for cw.local@local.test: HTTP 401 Invalid email or password",
+        "classification": "ENVIRONMENT_PRECONDITION, NOT A PRODUCT DEFECT. A fresh database carries no fixture identity and the harness refused to invent one.",
+        "fix": "Ran the documented scripts/dev/case-workspace-seed-local.mjs against the isolated database. Real bcrypt hash, real login, real signed JWT, no auth bypass."
+      }
+    ],
+    "verdictAtCurrentSha": "PARTIAL, UNCHANGED. Backend and runtime DoD re-proves at currentSha. The openBlocker stands verbatim: the mounted UI proof still covers only the delivery-closure slice, and the remaining nine governed action surfaces still require task-specific loading, empty, backend-error and success-state UI qualification, followed by manual VoiceOver, named-persona and visual/brand owner acceptance. Nothing in this reconciliation narrows that blocker."
+  }
 }
