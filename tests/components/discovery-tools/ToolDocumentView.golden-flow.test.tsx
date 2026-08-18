@@ -43,6 +43,17 @@ import React from 'react';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+const { toastCustomMock } = vi.hoisted(() => ({ toastCustomMock: vi.fn() }));
+
+vi.mock('react-hot-toast', () => ({
+  default: Object.assign(vi.fn(), {
+    custom: toastCustomMock,
+    dismiss: vi.fn(),
+    error: vi.fn(),
+    success: vi.fn(),
+  }),
+}));
+
 // ── Api mock (overrides the global tests/setup.ts mock for this file) ───────
 const getToolSessionMock = vi.fn();
 const createToolSessionMock = vi.fn();
@@ -137,6 +148,7 @@ vi.mock('@/components/shared/NModeLayout', () => ({
 }));
 
 import { ToolDocumentView } from '@/components/DiscoveryTools/ToolDocumentView';
+import { writeRecoveryDraft } from '@/services/toolSessionRecoveryDraft';
 import { useToolStore } from '@/store/useToolStore';
 
 const resetToolStore = () => {
@@ -239,6 +251,28 @@ describe('ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav 
     });
 
     expect(updateToolSessionMock).not.toHaveBeenCalled();
+  });
+
+  it('deduplicates the recovery prompt when StrictMode loads the same session twice', async () => {
+    const session = baseSwotSession({ updatedAt: '2026-08-18T20:00:00.000Z' });
+    getToolSessionMock.mockResolvedValue(session);
+    writeRecoveryDraft('sess-existing-1', {
+      baseUpdatedAt: '2026-08-18T20:00:00.000Z',
+      data: { ...session.answers, mission: 'unsynced local edit' },
+    });
+
+    render(
+      <React.StrictMode>
+        <ToolDocumentView toolType="dynamic-swot" sessionId="sess-existing-1" onBack={vi.fn()} />
+      </React.StrictMode>
+    );
+
+    await waitFor(() => expect(toastCustomMock).toHaveBeenCalled());
+    expect(
+      toastCustomMock.mock.calls.every(
+        ([, options]) => options?.id === 'tool-session-recovery-sess-existing-1'
+      )
+    ).toBe(true);
   });
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -361,9 +395,7 @@ describe('ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav 
     const [calledSessionId, calledPayload] = updateToolSessionMock.mock.calls[0];
     expect(calledSessionId).toBe('sess-existing-1');
     const savedItems = (calledPayload as any)?.answers?.items ?? [];
-    const savedWeakness = savedItems.find(
-      (item: any) => item.text === 'Unmount-flush weakness'
-    );
+    const savedWeakness = savedItems.find((item: any) => item.text === 'Unmount-flush weakness');
     expect(savedWeakness).toBeTruthy();
     expect(savedWeakness.quadrant).toBe('weaknesses');
 

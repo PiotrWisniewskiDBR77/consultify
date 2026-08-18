@@ -452,7 +452,14 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
             </div>
           </div>
         ),
-        { duration: 15000 }
+        {
+          duration: 15000,
+          // React StrictMode may run the initial load effect twice in development.
+          // A stable, session-scoped id makes react-hot-toast update the existing
+          // recovery prompt instead of rendering two contradictory actions for
+          // the same draft.
+          id: `tool-session-recovery-${toolSessionId || 'pending'}`,
+        }
       );
     },
   });
