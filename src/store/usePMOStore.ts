@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { create } from 'zustand';
 
 import { Api } from '@/services/api';
@@ -174,10 +175,27 @@ export const usePMOContextAutoFetch = (projectId: string | null) => {
   const fetchTaskLabels = usePMOStore((state) => state.fetchTaskLabels);
   const lastFetched = usePMOStore((state) => state.lastFetched);
   const storedProjectId = usePMOStore((state) => state.projectId);
+  const requestedProjectId = useRef<string | null>(null);
 
-  // Re-fetch when project changes or on initial load
-  if (projectId && (projectId !== storedProjectId || !lastFetched)) {
-    fetchPMOContext(projectId);
-    fetchTaskLabels(projectId);
-  }
+  useEffect(() => {
+    if (!projectId) {
+      requestedProjectId.current = null;
+      return;
+    }
+
+    const alreadyLoaded = projectId === storedProjectId && Boolean(lastFetched);
+    if (alreadyLoaded) {
+      requestedProjectId.current = projectId;
+      return;
+    }
+
+    // Effects are intentionally replayed in React StrictMode. Remember the
+    // requested project so a render/effect replay cannot start duplicate PMO
+    // and label requests for the same transition.
+    if (requestedProjectId.current === projectId) return;
+    requestedProjectId.current = projectId;
+
+    void fetchPMOContext(projectId);
+    void fetchTaskLabels(projectId);
+  }, [fetchPMOContext, fetchTaskLabels, lastFetched, projectId, storedProjectId]);
 };
