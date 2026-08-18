@@ -3,6 +3,7 @@
  * Deck generation, templates, brand kits, export.
  */
 
+import { createHash } from 'crypto';
 import { type NextFunction, type Request, type Response, Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import fs from 'fs';
@@ -7961,7 +7962,10 @@ router.get(
 );
 
 function hashIp(ip: string): string {
-  const { createHash } = require('crypto');
+  // ESM module: a runtime `require('crypto')` here threw
+  // "ReferenceError: require is not defined" on the real server, turning
+  // POST /decks/:deckId/analytics/view into a 500 for every caller. Vitest's
+  // transform still provides `require`, so only a mounted run showed it.
   return createHash('sha256')
     .update(ip + 'consultify-salt')
     .digest('hex')

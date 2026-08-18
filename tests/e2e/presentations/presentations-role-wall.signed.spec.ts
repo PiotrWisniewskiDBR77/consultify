@@ -238,27 +238,20 @@ test.describe('Presentations role wall — signed, mounted [@module:presentation
       // matrix, and the write it guards really lands — which is what makes the
       // zero-delta assertion above a sensitive measurement rather than a
       // constant.
-      //
-      // SEPARATE, PRE-EXISTING PRODUCT DEFECT (found by this spec, NOT fixed
-      // here — this is a test-only pass): under the real ESM server this route
-      // answers 500, because `hashIp()` (presentations.routes.ts) calls
-      // `require('crypto')` in a module that runs as ESM —
-      // "ReferenceError: require is not defined". That is present verbatim at
-      // canonical 844ab94eb20a7c8f77bf940afdd64e760e66e2dd and is untouched by
-      // the auth-wall commit. It does NOT show up under Vitest, whose
-      // transform still provides `require` — which is exactly why the mounted
-      // journey is worth running.
-      //
-      // So this asserts the only thing that is both true and stable: the
-      // capability gate does not REFUSE the VIEWER. It stays green if and when
-      // the `require` defect is fixed and the route starts returning 200.
+      // An ACTIVE member holding `presentation_view` — which the canonical
+      // matrix grants VIEWER — must be let through by the gate, and the write
+      // it guards must actually land: exactly one new analytics row, read back
+      // over real HTTP. That exact +1 is what makes the zero-delta assertions
+      // above a sensitive measurement rather than a constant.
       const viewerAnalytics = await request.post(
         `${API_BASE_URL}/api/presentations/decks/${deckId}/analytics/view`,
-        { headers: auth(viewer.token), data: { viewerToken: 'role-wall-probe', cardIndex: 0, durationMs: 1 } }
+        {
+          headers: auth(viewer.token),
+          data: { viewerToken: 'role-wall-probe', cardIndex: 0, durationMs: 1 },
+        }
       );
-      const viewerAnalyticsBody = await viewerAnalytics.json().catch(() => ({}) as any);
-      expect(viewerAnalytics.status(), await viewerAnalytics.text()).not.toBe(403);
-      expect(String((viewerAnalyticsBody as any)?.code || '')).not.toBe('PERMISSION_DENIED');
+      expect(viewerAnalytics.status(), await viewerAnalytics.text()).toBe(200);
+      expect(await readAnalyticsTotal(request, owner.token, deckId)).toBe(analyticsBefore + 1);
 
       // ---- and the wall is not a blanket deny -------------------------------
       const adminWrite = await request.put(
