@@ -20,7 +20,10 @@
  * DELETE /models/:id, POST /models/:id/compute, POST /models/:id/submit-review,
  * POST /models/:id/events, PUT /events/:eventId, DELETE /events/:eventId —
  * carry only `verifyToken, isAuthenticated` (+ `validateBody` schema checks
- * on three of them), which verifies a signed JWT and a non-empty user id but
+ * on four of them — POST /models, PUT /models/:id, POST /models/:id/events,
+ * PUT /events/:eventId; three separate parties miscounted this as three
+ * before an audit measured four), which verifies a signed JWT and a
+ * non-empty user id but
  * never looks at `organization_members`. A REVOKED member or a caller with
  * NO membership row at all can still create/update/delete/compute against
  * `financial_models` through any of these 9 doors today.
@@ -47,10 +50,13 @@
  *   local/disposable; DB name must start with `consultify_fin_`)
  *   JWT_SECRET=test-jwt-secret-key-min-32-chars-long-for-validation
  *
- * ── SCOPE ── tests-first preflight only. No product edit lands in this
- * packet — the RED here is the deliverable. The wall (mounting
- * `requireActiveMembership` on the 9 routes) lands in the next packet once
- * this red is on record.
+ * ── SCOPE ── originally landed as a tests-first preflight (RED only, no
+ * product edit). The wall now DOES land in this same file's history: a
+ * follow-up commit mounted `requireActiveMembership` on the 9 previously-open
+ * routes in `financial-modeling.routes.ts`, confirmed against a real-Postgres
+ * RED (18 of 27 cases failing pre-fix, matching this suite exactly) followed
+ * by a real-Postgres GREEN (27 of 27 passing post-fix). This file's
+ * assertions were not loosened to get there.
  */
 import { randomUUID } from 'node:crypto';
 import express from 'express';

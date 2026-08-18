@@ -175,6 +175,7 @@ router.post(
   '/models',
   verifyToken,
   isAuthenticated,
+  requireActiveMembership,
   validateBody(createModelSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
@@ -373,6 +374,7 @@ router.put(
   '/models/:id',
   verifyToken,
   isAuthenticated,
+  requireActiveMembership,
   validateBody(updateModelSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const modelId = String(req.params.id);
@@ -390,6 +392,7 @@ router.post(
   '/models/:id/refresh-source',
   verifyToken,
   isAuthenticated,
+  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     const userId = req.user?.id;
@@ -435,6 +438,7 @@ router.delete(
   '/models/:id',
   verifyToken,
   isAuthenticated,
+  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const modelId = String(req.params.id);
     const model = await getModel(modelId, req.user?.organizationId);
@@ -459,6 +463,7 @@ router.post(
   '/models/:id/compute',
   verifyToken,
   isAuthenticated,
+  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const modelId = String(req.params.id);
     const model = await getModel(modelId, req.user?.organizationId);
@@ -527,6 +532,7 @@ router.post(
   '/models/:id/submit-review',
   verifyToken,
   isAuthenticated,
+  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const modelId = String(req.params.id);
     const model = await getModel(modelId, req.user?.organizationId);
@@ -569,6 +575,7 @@ router.post(
   '/models/:id/events',
   verifyToken,
   isAuthenticated,
+  requireActiveMembership,
   validateBody(createEventSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const modelId = String(req.params.id);
@@ -650,6 +657,7 @@ router.put(
   '/events/:eventId',
   verifyToken,
   isAuthenticated,
+  requireActiveMembership,
   validateBody(updateEventSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const eventId = String(req.params.eventId);
@@ -670,6 +678,7 @@ router.delete(
   '/events/:eventId',
   verifyToken,
   isAuthenticated,
+  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const eventId = String(req.params.eventId);
     const owned = await dbGet(
