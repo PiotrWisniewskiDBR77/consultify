@@ -246,7 +246,7 @@ export class ProjectController {
         return;
       }
 
-      const { name: rawName, ownerId, description: rawDescription, goal: rawGoal } = req.body;
+      const { name: rawName, description: rawDescription } = req.body;
 
       if (!rawName) {
         res.status(400).json({ error: 'Project name is required' });
@@ -257,32 +257,28 @@ export class ProjectController {
       const name = decodeHtmlEntities(String(rawName));
       const description =
         typeof rawDescription === 'string' ? decodeHtmlEntities(rawDescription) : rawDescription;
-      const goal = typeof rawGoal === 'string' ? decodeHtmlEntities(rawGoal) : rawGoal;
-
       const id = uuidv4();
-      const owner = ownerId || userId;
+      const owner = userId;
 
-      const sql = `INSERT INTO projects (id, organization_id, name, description, goal, status, owner_id) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+      const sql = `INSERT INTO projects (id, organization_id, name, description, status, owner_id) VALUES (?, ?, ?, ?, ?, ?)`;
 
       logger.error(`[ProjectController] Executing INSERT for project ${id}`);
-      await queryHelpers.queryRun(sql, [
-        id,
-        orgId,
-        name,
-        description || null,
-        goal || null,
-        'active',
-        owner,
-      ]);
+      await queryHelpers.queryRun(sql, [id, orgId, name, description || null, 'active', owner]);
 
-      // Verify immediately
-      const count = await queryHelpers.queryOne<{ c: number }>(
-        'SELECT COUNT(*) as c FROM projects WHERE organization_id = ?',
-        [orgId]
+      // Return only server-confirmed persisted truth from the current schema.
+      const created = await queryHelpers.queryOne<any>(
+        'SELECT id, name, description, status, owner_id FROM projects WHERE id = ? AND organization_id = ?',
+        [id, orgId]
       );
-      logger.error(`[ProjectController] Immediate verify count for org ${orgId}: ${count?.c}`);
+      if (!created) throw new Error('Created project could not be read back');
 
-      res.status(201).json({ id, name, description, goal, status: 'active', ownerId: owner });
+      res.status(201).json({
+        id: created.id,
+        name: created.name,
+        description: created.description,
+        status: created.status,
+        ownerId: created.owner_id,
+      });
     }
   );
 

@@ -66,12 +66,11 @@ export function RequiredProjectPicker({
       setNewName('');
       onChange(created.id);
     } catch (cause) {
+      const rawMessage = cause instanceof Error ? cause.message : '';
+      const message = rawMessage && rawMessage !== '[object Object]' ? rawMessage : '';
       setError(
-        cause instanceof Error
-          ? cause.message
-          : language === 'pl'
-            ? 'Nie udało się utworzyć projektu.'
-            : 'Project could not be created.'
+        message ||
+          (language === 'pl' ? 'Nie udało się utworzyć projektu.' : 'Project could not be created.')
       );
     } finally {
       setCreating(false);

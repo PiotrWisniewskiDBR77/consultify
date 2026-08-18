@@ -97,18 +97,40 @@ describe('ProjectController', () => {
   });
 
   it('createProject should insert and return 201', async () => {
-    mockReq.body = { name: 'P', description: null, goal: null };
+    mockReq.body = { name: 'P', description: null, ownerId: 'foreign-user' };
     mockQueryRun.mockResolvedValueOnce({ changes: 1 });
-    mockQueryOne.mockResolvedValueOnce({ c: 1 }); // verify count query
+    mockQueryOne.mockResolvedValueOnce({
+      id: 'uuid-123',
+      name: 'P',
+      description: null,
+      status: 'active',
+      owner_id: 'user-1',
+    });
 
     const { ProjectController } =
       await import('../../../../server/src/controllers/ProjectController.js');
     await ProjectController.createProject(mockReq, mockRes, mockNext);
 
-    expect(mockQueryRun).toHaveBeenCalled();
+    expect(mockQueryRun).toHaveBeenCalledWith(expect.not.stringContaining('goal'), [
+      'uuid-123',
+      'org-1',
+      'P',
+      null,
+      'active',
+      'user-1',
+    ]);
+    expect(mockQueryOne).toHaveBeenCalledWith(
+      expect.stringContaining('WHERE id = ? AND organization_id = ?'),
+      ['uuid-123', 'org-1']
+    );
     expect(mockRes.status).toHaveBeenCalledWith(201);
     expect(mockRes.json).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 'uuid-123', name: 'P', status: 'active' })
+      expect.objectContaining({
+        id: 'uuid-123',
+        name: 'P',
+        status: 'active',
+        ownerId: 'user-1',
+      })
     );
   });
 });
