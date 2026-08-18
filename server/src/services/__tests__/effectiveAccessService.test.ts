@@ -2,10 +2,18 @@ import { describe, expect, it, vi } from 'vitest';
 
 // P0-2 — resolveEffectiveAccess reads organization_members via queryHelpers;
 // stub the DB layer so the baseline-capability tests below run hermetically.
+//
+// SECURITY NOTE: this stub used to resolve to `null` (no membership row). That only
+// produced capabilities because readApplicationRole then fell back to the CALLER'S
+// CLAIMED role — the vulnerability. resolveEffectiveAccess now fails closed on
+// missing/non-ACTIVE membership, so these fixtures supply an AUTHORITATIVE ACTIVE
+// row. The assertions are unchanged; only the fixture's honesty changed.
+const mockQueryOne = vi.fn().mockResolvedValue(null);
 vi.mock('../../utils/queryHelpers.js', () => ({
-  queryOne: vi.fn().mockResolvedValue(null),
+  queryOne: (...args: unknown[]) => mockQueryOne(...args),
   queryRun: vi.fn().mockResolvedValue(undefined),
 }));
+const activeMembership = (role: string) => ({ role, status: 'ACTIVE' });
 
 import {
   CANVAS_MEMBER_CAPABILITIES,
@@ -52,6 +60,7 @@ describe('effectiveAccessService capability catalog', () => {
 
 describe('P0-2 — Canvas baseline capabilities for members', () => {
   it('grants every canvas.* capability to a plain MEMBER without project context', async () => {
+    mockQueryOne.mockResolvedValue(activeMembership('MEMBER'));
     const access = await resolveEffectiveAccess({
       userId: 'user-member',
       organizationId: 'org-1',
@@ -68,6 +77,7 @@ describe('P0-2 — Canvas baseline capabilities for members', () => {
   });
 
   it('does not grant canvas capabilities to GUEST/VIEWER roles', async () => {
+    mockQueryOne.mockResolvedValue(activeMembership('GUEST'));
     const access = await resolveEffectiveAccess({
       userId: 'user-guest',
       organizationId: 'org-1',

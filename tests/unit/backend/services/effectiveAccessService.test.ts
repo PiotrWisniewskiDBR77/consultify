@@ -31,6 +31,9 @@ import {
   resolveEffectiveAccess,
 } from '../../../../server/src/services/effectiveAccessService.ts';
 
+/** An AUTHORITATIVE ACTIVE organization_members row — the only thing that now confers a role. */
+const activeMembership = (role: string) => ({ role, status: 'ACTIVE' });
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. hasEffectiveCapability
 // ─────────────────────────────────────────────────────────────────────────────
@@ -107,11 +110,16 @@ describe('resolveEffectiveAccess — org level (no projectId)', () => {
   beforeEach(() => {
     mockQueryOne.mockReset();
     mockQueryRun.mockReset().mockResolvedValue(undefined);
-    // No org membership row → service falls back to applicationRole param
-    mockQueryOne.mockResolvedValue(null);
+    // SECURITY: this used to be `null` — no membership row — and the capabilities
+    // below only appeared because readApplicationRole fell back to the CALLER'S
+    // CLAIMED role. That fallback was the vulnerability and is gone. Each test now
+    // supplies the AUTHORITATIVE ACTIVE membership that legitimately confers its
+    // role. Assertions are unchanged.
+    mockQueryOne.mockResolvedValue(activeMembership('USER'));
   });
 
   it('OWNER gets admin.access + admin.people.manage + admin.project_roles.manage', async () => {
+    mockQueryOne.mockResolvedValue(activeMembership('OWNER'));
     const access = await resolveEffectiveAccess({
       userId: 'u1',
       organizationId: 'org1',
@@ -125,6 +133,7 @@ describe('resolveEffectiveAccess — org level (no projectId)', () => {
   });
 
   it('ADMIN gets admin.access + admin.people.manage but NOT admin.project_roles.manage', async () => {
+    mockQueryOne.mockResolvedValue(activeMembership('ADMIN'));
     const access = await resolveEffectiveAccess({
       userId: 'u2',
       organizationId: 'org1',
@@ -137,6 +146,7 @@ describe('resolveEffectiveAccess — org level (no projectId)', () => {
   });
 
   it('USER gets no admin capabilities at org level', async () => {
+    mockQueryOne.mockResolvedValue(activeMembership('USER'));
     const access = await resolveEffectiveAccess({
       userId: 'u3',
       organizationId: 'org1',
@@ -148,6 +158,7 @@ describe('resolveEffectiveAccess — org level (no projectId)', () => {
   });
 
   it('GUEST gets no admin capabilities at org level', async () => {
+    mockQueryOne.mockResolvedValue(activeMembership('GUEST'));
     const access = await resolveEffectiveAccess({
       userId: 'u4',
       organizationId: 'org1',
@@ -214,7 +225,7 @@ describe('resolveEffectiveAccess — project scope (with projectId)', () => {
     // Second call: project membership lookup → PROJECT_LEADER
     // Third call: template capabilities → []  (fall back to FACTORY_ROLE_TEMPLATES)
     mockQueryOne
-      .mockResolvedValueOnce(null) // org membership
+      .mockResolvedValueOnce(activeMembership('USER')) // AUTHORITATIVE org membership
       .mockResolvedValueOnce({
         // project membership
         project_role: 'PROJECT_LEADER',
@@ -240,7 +251,7 @@ describe('resolveEffectiveAccess — project scope (with projectId)', () => {
 
   it('PROJECT_SPONSOR gets decision.approve', async () => {
     mockQueryOne
-      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(activeMembership('USER'))
       .mockResolvedValueOnce({
         project_role: 'PROJECT_SPONSOR',
         normalized_project_role: 'PROJECT_SPONSOR',
@@ -263,7 +274,7 @@ describe('resolveEffectiveAccess — project scope (with projectId)', () => {
 
   it('OBSERVER gets project.view but not project.team.manage', async () => {
     mockQueryOne
-      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(activeMembership('GUEST'))
       .mockResolvedValueOnce({
         project_role: 'OBSERVER',
         normalized_project_role: 'OBSERVER',
@@ -286,7 +297,7 @@ describe('resolveEffectiveAccess — project scope (with projectId)', () => {
 
   it('no project membership → fallback role from applicationRole (ADMIN → PROJECT_LEADER)', async () => {
     mockQueryOne
-      .mockResolvedValueOnce(null) // org membership
+      .mockResolvedValueOnce(activeMembership('ADMIN')) // AUTHORITATIVE org membership
       .mockResolvedValueOnce(null) // project membership (not found)
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce(null);
@@ -304,7 +315,7 @@ describe('resolveEffectiveAccess — project scope (with projectId)', () => {
 
   it('no project membership → OWNER falls back to PROJECT_SPONSOR', async () => {
     mockQueryOne
-      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(activeMembership('OWNER'))
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce(null);
@@ -321,7 +332,7 @@ describe('resolveEffectiveAccess — project scope (with projectId)', () => {
 
   it('project scope adds scoped to scope array when scoped caps present', async () => {
     mockQueryOne
-      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(activeMembership('GUEST'))
       .mockResolvedValueOnce({
         project_role: 'OBSERVER',
         normalized_project_role: 'OBSERVER',
@@ -340,6 +351,142 @@ describe('resolveEffectiveAccess — project scope (with projectId)', () => {
 
     // OBSERVER has task.view.scoped → scope should include 'scoped'
     expect(access.scope).toContain('scoped');
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 3b. AUTHORITATIVE MEMBERSHIP — fail-closed authorization (security)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('resolveEffectiveAccess — authoritative ACTIVE membership required', () => {
+  beforeEach(() => {
+    mockQueryOne.mockReset();
+    mockQueryRun.mockReset().mockResolvedValue(undefined);
+  });
+
+  /** The regression that would hurt most: a fix that over-denies legitimate users. */
+  it('ACTIVE membership RETAINS access and full capabilities', async () => {
+    mockQueryOne.mockResolvedValue(activeMembership('OWNER'));
+    const access = await resolveEffectiveAccess({
+      userId: 'u-active',
+      organizationId: 'org1',
+      applicationRole: 'OWNER',
+    });
+    expect(access.applicationRole).toBe('OWNER');
+    expect(access.capabilities).toContain('*');
+    expect(access.capabilities).toContain('admin.access');
+    expect(hasEffectiveCapability(access, 'initiative.view')).toBe(true);
+    expect(access.warnings).not.toContain('NO_ACTIVE_ORGANIZATION_MEMBERSHIP');
+  });
+
+  it('ACTIVE membership is honoured case-insensitively (UPPER(status) canon)', async () => {
+    mockQueryOne.mockResolvedValue({ role: 'OWNER', status: 'active' });
+    const access = await resolveEffectiveAccess({
+      userId: 'u-lower',
+      organizationId: 'org1',
+      applicationRole: 'OWNER',
+    });
+    expect(access.capabilities).toContain('*');
+  });
+
+  /** HOLE 1 — a REVOKED row must confer nothing, whatever the token claims. */
+  it.each(['REVOKED', 'SUSPENDED', 'PENDING', 'INVITED', ''])(
+    'non-ACTIVE membership status %s is denied all capabilities',
+    async (status) => {
+      mockQueryOne.mockResolvedValue({ role: 'OWNER', status });
+      const access = await resolveEffectiveAccess({
+        userId: 'u-revoked',
+        organizationId: 'org1',
+        applicationRole: 'OWNER',
+      });
+      expect(access.capabilities).toEqual([]);
+      expect(access.capabilities).not.toContain('*');
+      expect(access.applicationRole).toBe('GUEST');
+      expect(hasEffectiveCapability(access, 'initiative.view')).toBe(false);
+      expect(access.warnings).toContain('NO_ACTIVE_ORGANIZATION_MEMBERSHIP');
+    }
+  );
+
+  it('a NULL membership status is not ACTIVE and is denied', async () => {
+    mockQueryOne.mockResolvedValue({ role: 'OWNER', status: null });
+    const access = await resolveEffectiveAccess({
+      userId: 'u-null-status',
+      organizationId: 'org1',
+      applicationRole: 'OWNER',
+    });
+    expect(access.capabilities).toEqual([]);
+    expect(hasEffectiveCapability(access, 'initiative.view')).toBe(false);
+  });
+
+  /**
+   * HOLE 2 — the token's claimed role must NEVER become an application role.
+   * Deleting a membership row must remove access, not hand control to the token.
+   */
+  it('NO membership row denies access even when the token claims OWNER', async () => {
+    mockQueryOne.mockResolvedValue(null);
+    const access = await resolveEffectiveAccess({
+      userId: 'u-missing',
+      organizationId: 'org1',
+      applicationRole: 'OWNER',
+    });
+    expect(access.capabilities).toEqual([]);
+    expect(access.applicationRole).toBe('GUEST');
+    expect(hasEffectiveCapability(access, 'admin.access')).toBe(false);
+    expect(access.warnings).toContain('NO_ACTIVE_ORGANIZATION_MEMBERSHIP');
+  });
+
+  it('NO membership row denies project capabilities instead of falling back to a project role', async () => {
+    mockQueryOne.mockResolvedValue(null);
+    const access = await resolveEffectiveAccess({
+      userId: 'u-missing',
+      organizationId: 'org1',
+      applicationRole: 'ADMIN',
+      projectId: 'proj1',
+    });
+    expect(access.capabilities).toEqual([]);
+    expect(access.projectRole).toBeNull();
+    expect(access.scope).not.toContain('project');
+    expect(access.warnings).not.toContain('PROJECT_ROLE_FALLBACK_FROM_APPLICATION_ROLE');
+  });
+
+  /** A transient DB error must DENY, not degrade to the token's claim. */
+  it('membership lookup failure fails CLOSED rather than degrading to the token role', async () => {
+    mockQueryOne.mockRejectedValue(new Error('connection reset'));
+    const access = await resolveEffectiveAccess({
+      userId: 'u-dberror',
+      organizationId: 'org1',
+      applicationRole: 'OWNER',
+    });
+    expect(access.capabilities).toEqual([]);
+    expect(access.applicationRole).toBe('GUEST');
+    expect(hasEffectiveCapability(access, '*')).toBe(false);
+    expect(access.warnings).toContain('NO_ACTIVE_ORGANIZATION_MEMBERSHIP');
+  });
+
+  /**
+   * HOLE 3 — DELIBERATELY UNCHANGED, PINNED HERE SO IT CANNOT DRIFT SILENTLY.
+   *
+   * Owner decision 15A: platform SUPERADMIN policy stays only where explicitly
+   * authorized and tested. This lane did NOT change it. Recorded as a finding for
+   * decision, NOT decided here: a SUPERADMIN token is granted org-level OWNER and
+   * the '*' wildcard in ANY organization with NO membership row and NO database
+   * lookup at all. If that is to change, it is a separate owner decision.
+   */
+  it('POLICY (explicit, authorized): a SUPERADMIN token is granted org OWNER and "*" WITHOUT any membership row', async () => {
+    mockQueryOne.mockResolvedValue(null);
+    const access = await resolveEffectiveAccess({
+      userId: 'u-superadmin',
+      organizationId: 'org-not-a-member-of',
+      applicationRole: 'SUPERADMIN',
+    });
+    expect(access.platformRole).toBe('SUPERADMIN');
+    expect(access.applicationRole).toBe('OWNER');
+    expect(access.capabilities).toContain('*');
+    expect(access.capabilities).toContain('superadmin.access');
+    expect(hasEffectiveCapability(access, 'anything.at.all')).toBe(true);
+    // Proof that no membership lookup was performed for the platform path.
+    expect(mockQueryOne).not.toHaveBeenCalled();
+    expect(access.warnings).not.toContain('NO_ACTIVE_ORGANIZATION_MEMBERSHIP');
   });
 });
 
