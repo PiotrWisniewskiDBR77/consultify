@@ -246,15 +246,19 @@ point, already-stalely stated):
    with `requireActiveAuditsMembership` removed from the mount chain,
    asserting the identical revoked-membership token now returns 200
    instead of the 403 the real chain returns.
-2. `c2c99d7d18` (+27 lines) — a later commit, not authored by this pass,
-   adding a dedicated `/api/audits/packs` test asserting ACTIVE-response
-   body shape (`success`/`data`/`total`) and exact REVOKED-denial body
-   shape with the same reused token. This test is real, compiling source
-   (`tsc --noEmit` clean) but has NOT been executed against real Postgres
-   by this pass or, as far as this pass can verify, by anyone — see
-   `TASK_EVIDENCE.json` `laneBSuccessorWave20260818.integrityCorrection20260818`
-   for the full account of an intervening commit that had wrongly
-   presented it as a verified "39/39" pass.
+2. `c2c99d7d18` (+27 lines) — a later commit adding a dedicated
+   `/api/audits/packs` test asserting ACTIVE-response body shape
+   (`success`/`data`/`total`) and exact REVOKED-denial body shape with the
+   same reused token. This test is real, compiling source (`tsc --noEmit`
+   clean); its authorship and its execution status are both UNVERIFIED —
+   git commit metadata cannot distinguish this pass's own commits from any
+   other commit in the repository (same generic identity throughout), and
+   no execution of this case against real Postgres appears in this pass's
+   own tool history. See `TASK_EVIDENCE.json`
+   `laneBSuccessorWave20260818.integrityCorrection20260818` and
+   `.integrityCorrectionWordingNote20260818` for the full account,
+   including an intervening commit's unreproduced "39/39" claim and its
+   correction.
 
 Verified via `git diff --stat 5ce16c71bd..59e95b7083 -- .../mounting.integration.test.ts`
 = `62 ++`, and by reading both commits' diffs directly. No existing test
