@@ -2,7 +2,7 @@
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "a62dbe340114d87eda75a0d2da2d77bee2a90685",
   "technicalSourceSha": "a6b8230d45464c3eaefb930698e4b7dddd4458f8",
-  "reconciliationSha": "c8da53f1f4469bc39734fa0fee76298dd4d41e3f",
+  "reconciliationSha": "352c8b3379c71e0581a3eb921320c934f30df1a4",
   "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
   "environment": {
     "node": "v24.12.0",
@@ -16,14 +16,65 @@
   "taskId": "ORG-UI-CANON-001",
   "verdict": "PARTIAL",
   "open": [
-    "The current governed-context workspace is mounted and technically qualified, but the upload-to-governed-claim UI seam is not proven end to end.",
     "Disposition of superseded dead or unmounted organization components remains incomplete; their historical presence is not treated as a live product surface.",
     "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending."
   ],
-  "changedPaths": [],
-  "changedPathRationale": {},
-  "ownerTables": [],
-  "commands": [],
+  "changedPaths": [
+    "server/migrations/20261016_org_context_upload_idempotency.sql",
+    "server/src/routes/__tests__/ai.routes.attachments-ingest.test.ts",
+    "server/src/routes/ai.routes.ts",
+    "server/src/services/organizationContext/OrganizationContextService.ts",
+    "server/src/services/organizationContext/__tests__/orgContextUploadIdempotencyMigration16.realdb.test.ts",
+    "src/components/Organization/GovernedContextWorkspace.tsx",
+    "src/services/api.ts",
+    "src/services/organizationGovernedContextApi.ts",
+    "tests/components/organization/GovernedContextWorkspace.test.tsx",
+    "tests/integration/organization/orgUploadGovernedClaim.mounted.pg.test.ts",
+    "tests/unit/services/organizationGovernedContextApi.ingest.test.ts"
+  ],
+  "changedPathRationale": {
+    "server/migrations/20261016_org_context_upload_idempotency.sql": "Adds an immutable tenant-scoped upload receipt with exact request-hash collision and durable response/document binding.",
+    "server/src/routes/__tests__/ai.routes.attachments-ingest.test.ts": "Proves ACTIVE membership precedes multipart parsing and failures do not reach the handler.",
+    "server/src/routes/ai.routes.ts": "Runs authenticated ingest as one pinned doc, chunk, context-item, claim and receipt transaction with fail-closed replay/collision semantics.",
+    "server/src/services/organizationContext/OrganizationContextService.ts": "Accepts an optional pinned PostgreSQL writer while preserving canonical placeholder behavior for all existing dbRun callers.",
+    "server/src/services/organizationContext/__tests__/orgContextUploadIdempotencyMigration16.realdb.test.ts": "Proves fresh and late schema convergence plus fail-before-mutation for missing or weakened FK, default, CHECK, trigger and function invariants.",
+    "src/components/Organization/GovernedContextWorkspace.tsx": "Adds the admin upload, stable retry key, loading, accessible error and no-double-submit governed-context control.",
+    "src/services/api.ts": "Lets the canonical authenticated multipart client send an optional Idempotency-Key.",
+    "src/services/organizationGovernedContextApi.ts": "Orchestrates upload with bearer auth and stable idempotency without bypassing the canonical ingest route.",
+    "tests/components/organization/GovernedContextWorkspace.test.tsx": "Proves admin-only upload states, retry, preserved claims and no false success.",
+    "tests/integration/organization/orgUploadGovernedClaim.mounted.pg.test.ts": "Proves signed upload to pending claim, approve, publish and cold exact source ref with 8-way replay, collision, rollback and role/tenant negatives.",
+    "tests/unit/services/organizationGovernedContextApi.ingest.test.ts": "Proves canonical multipart fields, bearer header and stable idempotency header."
+  },
+  "ownerTables": [
+    "knowledge_docs",
+    "knowledge_chunks",
+    "organization_context_items",
+    "organization_context_claims",
+    "organization_context_upload_receipts",
+    "organization_context_snapshot_versions"
+  ],
+  "commands": [
+    {
+      "command": "NODE_ENV=test DATABASE_URL=postgres://postgres:postgres@127.0.0.1:56980/consultify_org_ui_postfanin npm run db:migrate:strict; NODE_ENV=test DATABASE_URL=postgres://postgres:postgres@127.0.0.1:56980/consultify_org_ui_postfanin npm run db:migrate:strict; NODE_ENV=test DATABASE_URL=postgres://postgres:postgres@127.0.0.1:56980/consultify_org_ui_postfanin npm run db:migrate:postgres:dry",
+      "exitCode": 0,
+      "result": "fresh 763; repeat 0; dry pending 0; checksum gate passed"
+    },
+    {
+      "command": "ORG_UPLOAD_M16_CLEANUP=1 RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test DATABASE_URL=postgres://postgres:postgres@127.0.0.1:56980/consultify_org_ui_postfanin npm exec vitest -- run server/src/services/organizationContext/__tests__/orgContextUploadIdempotencyMigration16.realdb.test.ts tests/integration/organization/orgUploadGovernedClaim.mounted.pg.test.ts --retry=0",
+      "exitCode": 0,
+      "result": "migration 16/16; mounted 5/5"
+    },
+    {
+      "command": "npm exec vitest -- run tests/components/organization/GovernedContextWorkspace.test.tsx tests/unit/services/organizationGovernedContextApi.ingest.test.ts server/src/routes/__tests__/ai.routes.attachments-ingest.test.ts --retry=0",
+      "exitCode": 0,
+      "result": "focused 22/22"
+    },
+    {
+      "command": "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check; NODE_OPTIONS=--max-old-space-size=8192 npm run typecheck --prefix server; npm run build:backend; NODE_OPTIONS=--max-old-space-size=8192 npm run build",
+      "exitCode": 0,
+      "result": "root/server typechecks and backend/frontend builds passed"
+    }
+  ],
   "denominators": {
     "automatedG4Cells": "15/15",
     "automatedG4Screenshots": "15/15",
@@ -32,10 +83,19 @@
     "automatedG4VisibleFocus": "PASS",
     "governedContextMountedJourneysAtTechnicalSource": "2/2",
     "governedContextRealPgBackendAtTechnicalSource": "16/16",
-    "governedContextFocusedUiAtTechnicalSource": "7/7"
+    "governedContextFocusedUiAtTechnicalSource": "7/7",
+    "currentMigration": "16/16",
+    "currentMountedUpload": "5/5",
+    "currentFocused": "22/22"
   },
   "fixtures": {},
-  "negativeControls": {},
+  "negativeControls": {
+    "authentication": "unauthenticated 401; immediate revoked membership denied before multipart parsing with zero writes",
+    "tenant": "foreign tenant and multipart organization spoof cannot write or read another tenant's claim",
+    "atomicity": "forced document, chunk, claim and COMMIT failures roll back without a false receipt or claim",
+    "idempotency": "eight-way same key creates one durable receipt/document; cold replay returns the same binding; altered bytes under the key return 409",
+    "lateMigration": "missing or wrong FK/default/CHECK/trigger/function shapes fail before mutation with historical data unchanged"
+  },
   "browserArtifacts": [
     {
       "kind": "mounted_signed_auth_g4_final",
@@ -119,20 +179,35 @@
   },
   "openBlockers": [
     "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
-    "Upload-to-governed-claim is not yet proven as a complete mounted product seam.",
     "Superseded dead or unmounted organization components still require explicit KEEP/CONNECT/DELETE disposition."
   ],
   "blockerReconciliation": [
     {
       "historicalBlocker": "No live UI surface for the governed claims review journey.",
-      "classification": "PARTIALLY_RESOLVED",
-      "detail": "Technical source a6b8230d45464c3eaefb930698e4b7dddd4458f8 provides the mounted governed-context claim/review/approve/publish/reopen workspace and rejects empty approved snapshots with stable NO_APPROVED_GOVERNED_CLAIMS semantics. It does not prove the upload-to-governed-claim seam or dispose every superseded component."
+      "classification": "RESOLVED",
+      "detail": "Technical source a6b8230d45464c3eaefb930698e4b7dddd4458f8 provides the mounted governed-context workspace; exact current 352c8b3379c71e0581a3eb921320c934f30df1a4 additionally proves authenticated idempotent upload, pending claim, approve, publish and cold source-ref reopen. Superseded component disposition remains a separate blocker."
     }
   ],
   "resolvedBlockers": [
     "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed.",
-    "Integrated technical source a6b8230d45464c3eaefb930698e4b7dddd4458f8 closes the live governed-context workspace and fail-closed empty-publish repository contract; its ancestry is reconciled at c8da53f1f4469bc39734fa0fee76298dd4d41e3f."
+    "Integrated technical source a6b8230d45464c3eaefb930698e4b7dddd4458f8 closes the live governed-context workspace and fail-closed empty-publish repository contract; its ancestry is reconciled at c8da53f1f4469bc39734fa0fee76298dd4d41e3f.",
+    "Exact current 352c8b3379c71e0581a3eb921320c934f30df1a4 closes upload-to-governed-claim with durable idempotency, atomic no-false-success writes, role/tenant denial, approve, publish and cold source-ref proof."
   ],
+  "currentTechnicalRequalification": {
+    "technicalSourceSha": "352c8b3379c71e0581a3eb921320c934f30df1a4",
+    "reconciliationSha": "352c8b3379c71e0581a3eb921320c934f30df1a4",
+    "integratedChain": [
+      "38fd8227c6ae43478583ff2581d24912b42f0350",
+      "121cff16a55ec0f435fbe4747a81bd00ca0a7087",
+      "12ac3338a64d631b1f2c832d812922cf4bb379a5",
+      "facd79e23d883bbe75bda85583e7bdff3de9b6ac",
+      "07754af21b386d5bf060efab4a9aed06101da40e",
+      "352c8b3379c71e0581a3eb921320c934f30df1a4"
+    ],
+    "gates": "fresh 763; repeat 0; dry pending 0; migration 16/16; mounted 5/5; focused 22/22; root/server TypeScript and backend/frontend builds passed",
+    "cleanup": "upload receipts, claims, context items, documents and advisory locks 0; named immutable trigger enabled O",
+    "scope": "Automated technical document-to-claim-to-publish-to-cold-reopen closure only; human G4 and dead-component disposition remain open."
+  },
   "automatedG4Verdict": {
     "verdict": "PASS_EXACT_SHA",
     "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
@@ -179,9 +254,7 @@
     "humanAcceptance": "PENDING — automated G4 does not sign VoiceOver, persona or visual-owner acceptance",
     "reachabilityAndStates": {
       "states": [],
-      "statesNotPresent": [
-        "stale"
-      ]
+      "statesNotPresent": ["stale"]
     }
   }
 }
