@@ -8,8 +8,10 @@
  * CRUD (T3): create/update/delete/getById — org-scoped, system templates chronione (403).
  */
 
+import { createHash } from 'node:crypto';
+
 import logger from '../utils/Logger.js';
-import { queryAll, queryOne, queryRun } from '../utils/queryHelpers.js';
+import { queryAll, queryOne, queryRun, withPgTransaction } from '../utils/queryHelpers.js';
 import type {
   DocumentTemplate,
   TemplateSectionBlueprint,
@@ -1201,4 +1203,353 @@ export async function deleteDeliverableTemplate(
     );
   }
   return r.changes > 0;
+}
+
+// ============================================================
+// MAT-POL / AMD-MAT-PROVENANCE-WRITER-002 (owner decision 3B)
+// Governed template-provenance approval.
+//
+// Until this command existed there was NO production writer of
+// `provenance_status` anywhere in the repository — only a real-PG test fixture
+// flipped it by hand. That is deliberate: every list/resolve path above filters
+// on `provenance_status = 'approved'`, so an unattested template stays
+// quarantined by construction. This command is the single, audited door out of
+// that quarantine.
+//
+// It attests nothing on its own. The caller must supply the source, the
+// licence/rights basis, the deciding authority, a version and durable evidence;
+// the ledger and the registry CHECK both refuse an incomplete attestation. There
+// is no backfill path and no automatic approval.
+// ============================================================
+
+/** The three canonical registries. `report_builder_templates` is legacy and is
+ *  deliberately NOT approvable (MATERIALS_TARGET_STATE_AND_TEMPLATE_CANON_2026-07-24.md:158). */
+export const TEMPLATE_PROVENANCE_REGISTRIES = [
+  'document_studio_templates',
+  'presentation_templates',
+  'tp_base_templates',
+] as const;
+
+export type TemplateProvenanceRegistry = (typeof TEMPLATE_PROVENANCE_REGISTRIES)[number];
+
+/** Each registry keys its rows differently; document studio uses `template_id`. */
+const TEMPLATE_REGISTRY_ID_COLUMN: Record<TemplateProvenanceRegistry, string> = {
+  document_studio_templates: 'template_id',
+  presentation_templates: 'id',
+  tp_base_templates: 'id',
+};
+
+/** Tenant roles permitted to attest rights, per owner decision 3B. */
+const PROVENANCE_APPROVER_ROLES = ['OWNER', 'ADMIN'] as const;
+
+export class TemplateProvenanceUnsupportedRegistryError extends Error {
+  readonly code = 'UNSUPPORTED_TEMPLATE_REGISTRY';
+  constructor(registry: string) {
+    super(`Template registry is not approvable: ${registry}`);
+    this.name = 'TemplateProvenanceUnsupportedRegistryError';
+  }
+}
+
+export class TemplateProvenanceInvalidError extends Error {
+  readonly code = 'INCOMPLETE_PROVENANCE';
+  constructor(field: string) {
+    super(`Provenance field is required and must be non-empty: ${field}`);
+    this.name = 'TemplateProvenanceInvalidError';
+  }
+}
+
+export class TemplateProvenanceForbiddenError extends Error {
+  constructor(
+    readonly code: 'ORG_MEMBERSHIP_REVOKED' | 'PROVENANCE_ROLE_REQUIRED',
+    msg: string
+  ) {
+    super(msg);
+    this.name = 'TemplateProvenanceForbiddenError';
+  }
+}
+
+export class TemplateProvenanceConflictError extends Error {
+  constructor(
+    readonly code: 'IDEMPOTENCY_KEY_REUSED' | 'TEMPLATE_ALREADY_APPROVED',
+    msg: string
+  ) {
+    super(msg);
+    this.name = 'TemplateProvenanceConflictError';
+  }
+}
+
+export type TemplateProvenanceInput = {
+  source: string;
+  licenseBasis: string;
+  authority: string;
+  version: string;
+  evidence: string;
+};
+
+export type TemplateProvenanceApprovalReceipt = {
+  organizationId: string;
+  idempotencyKey: string;
+  registry: TemplateProvenanceRegistry;
+  templateId: string;
+  requestFingerprint: string;
+  provenanceVersion: string;
+  approvedBy: string;
+  approvedByRole: string;
+  createdAt: string;
+};
+
+export type TemplateProvenanceApprovalResult = {
+  receipt: TemplateProvenanceApprovalReceipt;
+  replayed: boolean;
+};
+
+function requireNonEmpty(value: unknown, field: string): string {
+  const text = typeof value === 'string' ? value.trim() : '';
+  if (!text) throw new TemplateProvenanceInvalidError(field);
+  return text;
+}
+
+/**
+ * Fingerprint of the exact approved request. Values are emitted in a fixed order
+ * so the digest is stable across callers and cannot drift with object key order.
+ *
+ * The tenant and the deciding human are part of the identity, not context around
+ * it. Without them a second authorized actor reusing the same key with the same
+ * body would be served the FIRST actor's receipt as a replay, and the ledger
+ * would attribute a rights attestation to someone who never made it. Binding
+ * both turns that case into an explicit collision instead.
+ *
+ * The normalized key is part of the digest too, so the recorded fingerprint is a
+ * self-contained statement of what was approved under which key — it does not
+ * rely on the primary key's scoping to carry half of that identity.
+ */
+function fingerprintApprovalRequest(params: {
+  organizationId: string;
+  actorUserId: string;
+  idempotencyKey: string;
+  registry: TemplateProvenanceRegistry;
+  templateId: string;
+  provenance: TemplateProvenanceInput;
+}): string {
+  const canonical = JSON.stringify([
+    params.idempotencyKey,
+    params.organizationId,
+    params.actorUserId,
+    params.registry,
+    params.templateId,
+    params.provenance.source,
+    params.provenance.licenseBasis,
+    params.provenance.authority,
+    params.provenance.version,
+    params.provenance.evidence,
+  ]);
+  return createHash('sha256').update(canonical, 'utf8').digest('hex');
+}
+
+/**
+ * Approve template provenance as a same-tenant OWNER or ADMIN.
+ *
+ * The membership and role are resolved from `organization_members` INSIDE the
+ * same pinned transaction that performs the write, against the organization the
+ * caller's verified token resolved to. This is deliberately NOT
+ * `rbac.middleware`'s `requireRole`: that layer maps platform `superadmin` and
+ * `owner` onto one canonical bucket with a universal bypass, so a platform
+ * SUPERADMIN holding no `organization_members` row would pass. Decision 3B is a
+ * tenant grant, so an unmembered SUPERADMIN must be denied like anyone else.
+ */
+export async function approveTemplateProvenance(params: {
+  organizationId: string;
+  actorUserId: string;
+  idempotencyKey: string;
+  registry: string;
+  templateId: string;
+  provenance: TemplateProvenanceInput;
+}): Promise<TemplateProvenanceApprovalResult> {
+  const organizationId = requireNonEmpty(params.organizationId, 'organizationId');
+  const actorUserId = requireNonEmpty(params.actorUserId, 'actorUserId');
+  const idempotencyKey = requireNonEmpty(params.idempotencyKey, 'idempotencyKey');
+  const templateId = requireNonEmpty(params.templateId, 'templateId');
+
+  // Unsupported registries fail before any tenant lookup or write, so a legacy
+  // or invented registry name never reaches the database.
+  const registry = String(params.registry || '').trim() as TemplateProvenanceRegistry;
+  if (!(TEMPLATE_PROVENANCE_REGISTRIES as readonly string[]).includes(registry)) {
+    throw new TemplateProvenanceUnsupportedRegistryError(String(params.registry ?? ''));
+  }
+
+  const provenance: TemplateProvenanceInput = {
+    source: requireNonEmpty(params.provenance?.source, 'source'),
+    licenseBasis: requireNonEmpty(params.provenance?.licenseBasis, 'licenseBasis'),
+    authority: requireNonEmpty(params.provenance?.authority, 'authority'),
+    version: requireNonEmpty(params.provenance?.version, 'version'),
+    evidence: requireNonEmpty(params.provenance?.evidence, 'evidence'),
+  };
+
+  const requestFingerprint = fingerprintApprovalRequest({
+    organizationId,
+    actorUserId,
+    idempotencyKey,
+    registry,
+    templateId,
+    provenance,
+  });
+  const idColumn = TEMPLATE_REGISTRY_ID_COLUMN[registry];
+
+  return withPgTransaction(async (client) => {
+    const membership = await client.query<{ role: string }>(
+      `SELECT role FROM organization_members
+        WHERE organization_id = ? AND user_id = ? AND UPPER(status) = 'ACTIVE'`,
+      [organizationId, actorUserId]
+    );
+    const tenantRole = String(membership.rows[0]?.role || '').toUpperCase();
+    if (!membership.rows.length) {
+      throw new TemplateProvenanceForbiddenError(
+        'ORG_MEMBERSHIP_REVOKED',
+        'Active organization membership required'
+      );
+    }
+    if (!(PROVENANCE_APPROVER_ROLES as readonly string[]).includes(tenantRole)) {
+      throw new TemplateProvenanceForbiddenError(
+        'PROVENANCE_ROLE_REQUIRED',
+        'Organization OWNER or ADMIN role required'
+      );
+    }
+
+    // Tenant scope and existence collapse into one lookup: a template owned by
+    // another organization is indistinguishable from one that does not exist, so
+    // approval never confirms a foreign tenant's inventory.
+    const target = await client.query<Record<string, unknown>>(
+      `SELECT ${idColumn} AS target_id FROM ${registry}
+        WHERE ${idColumn}::text = ? AND organization_id = ?
+        FOR UPDATE`,
+      [templateId, organizationId]
+    );
+    if (!target.rows.length) throw new TemplateNotFoundError(templateId);
+
+    const provenanceJson = JSON.stringify({
+      source: provenance.source,
+      licenseBasis: provenance.licenseBasis,
+      authority: provenance.authority,
+      actor: actorUserId,
+      version: provenance.version,
+      evidence: provenance.evidence,
+    });
+
+    // The receipt is written before the status flips, and both live in this one
+    // transaction: a failure on either side leaves the template quarantined and
+    // leaves no orphan attestation behind.
+    await client.query('SAVEPOINT template_provenance_receipt');
+    let inserted: { rowCount: number };
+    try {
+      inserted = await client.query(
+        `INSERT INTO template_provenance_approval_receipts
+           (organization_id, idempotency_key, registry, template_id, request_fingerprint,
+            provenance_version, approved_by, approved_by_role, provenance_json)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb)
+         ON CONFLICT (organization_id, idempotency_key) DO NOTHING`,
+        [
+          organizationId,
+          idempotencyKey,
+          registry,
+          templateId,
+          requestFingerprint,
+          provenance.version,
+          actorUserId,
+          tenantRole,
+          provenanceJson,
+        ]
+      );
+    } catch (err) {
+      const violation = err as { code?: string; constraint?: string };
+      if (
+        violation?.code === '23505' &&
+        violation?.constraint === 'uq_template_provenance_receipt_target'
+      ) {
+        await client.query('ROLLBACK TO SAVEPOINT template_provenance_receipt');
+        throw new TemplateProvenanceConflictError(
+          'TEMPLATE_ALREADY_APPROVED',
+          'Template provenance has already been approved'
+        );
+      }
+      throw err;
+    }
+    await client.query('RELEASE SAVEPOINT template_provenance_receipt');
+
+    if (inserted.rowCount === 0) {
+      // The key is taken. A replay is only honoured when it is byte-for-byte the
+      // same attestation; a different body under the same key is a collision,
+      // never a silent overwrite of a recorded rights decision.
+      const existing = await client.query<{
+        registry: string;
+        template_id: string;
+        request_fingerprint: string;
+        provenance_version: string;
+        approved_by: string;
+        approved_by_role: string;
+        created_at: string;
+      }>(
+        `SELECT registry, template_id, request_fingerprint, provenance_version,
+                approved_by, approved_by_role, created_at
+           FROM template_provenance_approval_receipts
+          WHERE organization_id = ? AND idempotency_key = ?
+          FOR UPDATE`,
+        [organizationId, idempotencyKey]
+      );
+      const prior = existing.rows[0];
+      if (!prior || prior.request_fingerprint !== requestFingerprint) {
+        throw new TemplateProvenanceConflictError(
+          'IDEMPOTENCY_KEY_REUSED',
+          'Idempotency key was already used for a different approval'
+        );
+      }
+      return {
+        replayed: true,
+        receipt: {
+          organizationId,
+          idempotencyKey,
+          registry: prior.registry as TemplateProvenanceRegistry,
+          templateId: prior.template_id,
+          requestFingerprint: prior.request_fingerprint,
+          provenanceVersion: prior.provenance_version,
+          approvedBy: prior.approved_by,
+          approvedByRole: prior.approved_by_role,
+          createdAt: String(prior.created_at),
+        },
+      };
+    }
+
+    const updated = await client.query(
+      `UPDATE ${registry}
+          SET provenance_status = 'approved', provenance_json = ?::jsonb
+        WHERE ${idColumn}::text = ? AND organization_id = ?`,
+      [provenanceJson, templateId, organizationId]
+    );
+    if (updated.rowCount !== 1) {
+      // Never leave a receipt asserting an approval the registry did not take.
+      throw new Error(
+        `template provenance status update affected ${updated.rowCount} rows for ${registry}:${templateId}`
+      );
+    }
+
+    const written = await client.query<{ created_at: string }>(
+      `SELECT created_at FROM template_provenance_approval_receipts
+        WHERE organization_id = ? AND idempotency_key = ?`,
+      [organizationId, idempotencyKey]
+    );
+
+    return {
+      replayed: false,
+      receipt: {
+        organizationId,
+        idempotencyKey,
+        registry,
+        templateId,
+        requestFingerprint,
+        provenanceVersion: provenance.version,
+        approvedBy: actorUserId,
+        approvedByRole: tenantRole,
+        createdAt: String(written.rows[0]?.created_at ?? ''),
+      },
+    };
+  });
 }

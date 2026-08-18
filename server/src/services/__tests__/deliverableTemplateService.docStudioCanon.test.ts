@@ -16,6 +16,20 @@
  * "testy deterministyczne, fixtures, bez żywej bazy"); cała logika biznesowa
  * (draftTemplate/reviseTemplateStructure/approveTemplate/updateTemplateContent
  * /deprecateTemplate w documentTemplateService.ts) jest REALNA.
+ *
+ * 2026-08-18 — rozszerzenie o `approveTemplateProvenance` (governed
+ * template-provenance approval, deliverableTemplateService.ts:1210+). Ta
+ * komenda jest jedynymi drzwiami wyjścia z kwarantanny `provenance_status`;
+ * poniższe testy dowodzą WYŁĄCZNIE tego, co da się udowodnić bez żywej bazy
+ * przy istniejącym mocku queryHelpers.js: (a) odrzucenie niewspieranego
+ * rejestru PRZED jakąkolwiek pracą na bazie ("zero database work" — asercja
+ * na liczbie wywołań `withPgTransaction`), (b) zawartość
+ * TEMPLATE_PROVENANCE_REGISTRIES, (c) walidację wymaganych pól provenance i
+ * parametrów wywołania — wszystko to dzieje się w `approveTemplateProvenance`
+ * PRZED wejściem do `withPgTransaction`, więc nie wymaga żywej bazy. Sama
+ * transakcja (membership, rola, receipt, idempotencja, rollback) NIE jest tu
+ * testowana — to wymaga prawdziwego Postgresa i żyje w osobnym teście
+ * realPG (patrz komentarz na końcu pliku).
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -49,11 +63,23 @@ const queryRunMock = vi.fn();
 // `queryAll(sql, params?)` — mirror the real helper signature so the mock
 // factory can forward positionally and `mockImplementation` can read `sql`.
 const queryAllMock = vi.fn(async (_sql: string, _params?: unknown[]): Promise<unknown[]> => []);
+// `withPgTransaction(fn)` — the governed-approval writer's single door into the
+// database. Mocked so `approveTemplateProvenance`'s pre-transaction guards
+// (unsupported registry, missing params/provenance fields) can be proven to
+// run — and reject — WITHOUT ever entering it. The mock intentionally does
+// NOT invoke its callback: none of the tests below need transactional
+// behaviour, and not invoking it keeps the mock from silently acquiring a
+// meaning ("what does the fake client return?") that would make it look like
+// it proves something about the transaction body, which it does not.
+const withPgTransactionMock = vi.fn(async (_fn: (client: unknown) => unknown) => {
+  throw new Error('withPgTransaction should not be invoked in this mock-only test file');
+});
 
 vi.mock('../../utils/queryHelpers.js', () => ({
   queryOne: (...args: unknown[]) => queryOneMock(...args),
   queryRun: (...args: unknown[]) => queryRunMock(...args),
   queryAll: (sql: string, params?: unknown[]) => queryAllMock(sql, params),
+  withPgTransaction: (fn: (client: unknown) => unknown) => withPgTransactionMock(fn),
 }));
 
 vi.mock('../v8/artifactRegistryService.js', () => ({
@@ -66,6 +92,10 @@ const {
   deleteDeliverableTemplate,
   getDeliverableTemplate,
   listDeliverableTemplates,
+  approveTemplateProvenance,
+  TEMPLATE_PROVENANCE_REGISTRIES,
+  TemplateProvenanceUnsupportedRegistryError,
+  TemplateProvenanceInvalidError,
 } = await import('../deliverableTemplateService.js');
 const { __resetTemplateRegistryForTests, getTemplate, isTemplateUsableForGeneration } =
   await import('../documentStudio/documentTemplateService.js');
@@ -81,6 +111,7 @@ beforeEach(() => {
   queryOneMock.mockClear();
   queryRunMock.mockClear();
   queryAllMock.mockClear();
+  withPgTransactionMock.mockClear();
 });
 
 describe('createDeliverableTemplate("doc") — canon rewrite to document_studio_templates', () => {
@@ -246,5 +277,180 @@ describe('createDeliverableTemplate("doc") — canon rewrite to document_studio_
     const resolved = getTemplate(created.id, ORG_ID);
     expect(resolved).not.toBeNull();
     expect(isTemplateUsableForGeneration(resolved, ORG_ID)).toBe(true);
+  });
+});
+
+// ============================================================
+// approveTemplateProvenance — pre-transaction guards (2026-08-18)
+//
+// approveTemplateProvenance (deliverableTemplateService.ts:1344) validates its
+// registry argument and every required parameter/provenance field BEFORE
+// calling `withPgTransaction`. That ordering is exactly what makes these
+// guards provable with a mock: `withPgTransactionMock` above throws if it is
+// ever invoked, so any test here that reaches the transaction would fail loud
+// rather than silently pass. Every assertion below pairs the expected thrown
+// error with `expect(withPgTransactionMock).not.toHaveBeenCalled()` (or an
+// explicit `.mock.calls.length` check per the task's "zero database work"
+// requirement) so a future regression that moves a guard to the wrong side of
+// the transaction boundary breaks the test, not just the production code.
+//
+// NOT covered here (requires a real database, see the realPG counterpart):
+// membership resolution, role enforcement (OWNER/ADMIN), idempotency-key
+// replay semantics, the provenance receipt row itself, and transaction
+// rollback. Those all live inside the `withPgTransaction(async (client) => ...)`
+// body, which this file deliberately never executes.
+// ============================================================
+
+/** A complete, valid provenance payload — the "control" for the negative tests
+ *  below, so each test varies exactly one thing from an otherwise-passing call. */
+function validProvenance() {
+  return {
+    source: 'Vendor library v3',
+    licenseBasis: 'Perpetual commercial license, contract #4471',
+    authority: 'Legal (K. Nowak)',
+    version: '2026-08-18',
+    evidence: 'https://internal.example/legal/contract-4471.pdf',
+  };
+}
+
+function validApprovalParams(overrides: Record<string, unknown> = {}) {
+  return {
+    organizationId: ORG_ID,
+    actorUserId: USER_ID,
+    idempotencyKey: 'idem-key-1',
+    registry: 'document_studio_templates',
+    templateId: 'tmpl-1',
+    provenance: validProvenance(),
+    ...overrides,
+  };
+}
+
+describe('approveTemplateProvenance — unsupported registry rejected before any database work', () => {
+  it('rejects the legacy registry report_builder_templates (MATERIALS_TARGET_STATE_AND_TEMPLATE_CANON_2026-07-24.md:158)', async () => {
+    await expect(
+      approveTemplateProvenance(
+        validApprovalParams({ registry: 'report_builder_templates' }) as any
+      )
+    ).rejects.toThrow(TemplateProvenanceUnsupportedRegistryError);
+    await expect(
+      approveTemplateProvenance(
+        validApprovalParams({ registry: 'report_builder_templates' }) as any
+      )
+    ).rejects.toMatchObject({ code: 'UNSUPPORTED_TEMPLATE_REGISTRY' });
+
+    // The point of this test: zero database work happened.
+    expect(withPgTransactionMock.mock.calls.length).toBe(0);
+  });
+
+  it('rejects an invented/unknown registry name', async () => {
+    await expect(
+      approveTemplateProvenance(validApprovalParams({ registry: 'made_up_registry_xyz' }) as any)
+    ).rejects.toThrow(TemplateProvenanceUnsupportedRegistryError);
+    await expect(
+      approveTemplateProvenance(validApprovalParams({ registry: 'made_up_registry_xyz' }) as any)
+    ).rejects.toMatchObject({ code: 'UNSUPPORTED_TEMPLATE_REGISTRY' });
+
+    expect(withPgTransactionMock.mock.calls.length).toBe(0);
+  });
+
+  it('rejects an empty registry', async () => {
+    await expect(
+      approveTemplateProvenance(validApprovalParams({ registry: '' }) as any)
+    ).rejects.toThrow(TemplateProvenanceUnsupportedRegistryError);
+    await expect(
+      approveTemplateProvenance(validApprovalParams({ registry: '' }) as any)
+    ).rejects.toMatchObject({ code: 'UNSUPPORTED_TEMPLATE_REGISTRY' });
+
+    expect(withPgTransactionMock.mock.calls.length).toBe(0);
+  });
+});
+
+describe('TEMPLATE_PROVENANCE_REGISTRIES — exact canonical registry set', () => {
+  it('contains exactly the three canonical registries and excludes the legacy one', () => {
+    expect(TEMPLATE_PROVENANCE_REGISTRIES).toHaveLength(3);
+    expect([...TEMPLATE_PROVENANCE_REGISTRIES].sort()).toEqual(
+      ['document_studio_templates', 'presentation_templates', 'tp_base_templates'].sort()
+    );
+    expect(TEMPLATE_PROVENANCE_REGISTRIES).not.toContain('report_builder_templates');
+  });
+});
+
+describe('approveTemplateProvenance — every provenance field is mandatory', () => {
+  it.each([
+    ['source' as const],
+    ['licenseBasis' as const],
+    ['authority' as const],
+    ['version' as const],
+    ['evidence' as const],
+  ])('rejects a missing "%s" before any database work', async (field) => {
+    const provenance = validProvenance();
+    delete (provenance as Record<string, unknown>)[field];
+
+    await expect(
+      approveTemplateProvenance(validApprovalParams({ provenance }) as any)
+    ).rejects.toThrow(TemplateProvenanceInvalidError);
+    await expect(
+      approveTemplateProvenance(validApprovalParams({ provenance }) as any)
+    ).rejects.toMatchObject({ code: 'INCOMPLETE_PROVENANCE' });
+
+    expect(withPgTransactionMock.mock.calls.length).toBe(0);
+  });
+
+  it.each([
+    ['source' as const],
+    ['licenseBasis' as const],
+    ['authority' as const],
+    ['version' as const],
+    ['evidence' as const],
+  ])('rejects a whitespace-only "%s" before any database work', async (field) => {
+    const provenance = { ...validProvenance(), [field]: '   ' };
+
+    await expect(
+      approveTemplateProvenance(validApprovalParams({ provenance }) as any)
+    ).rejects.toThrow(TemplateProvenanceInvalidError);
+    await expect(
+      approveTemplateProvenance(validApprovalParams({ provenance }) as any)
+    ).rejects.toMatchObject({ code: 'INCOMPLETE_PROVENANCE' });
+
+    expect(withPgTransactionMock.mock.calls.length).toBe(0);
+  });
+});
+
+describe('approveTemplateProvenance — call parameters are mandatory', () => {
+  it.each([
+    ['organizationId' as const],
+    ['actorUserId' as const],
+    ['idempotencyKey' as const],
+    ['templateId' as const],
+  ])('rejects a missing "%s" before any database work', async (field) => {
+    const params = validApprovalParams();
+    delete (params as Record<string, unknown>)[field];
+
+    await expect(approveTemplateProvenance(params as any)).rejects.toThrow(
+      TemplateProvenanceInvalidError
+    );
+    await expect(approveTemplateProvenance(params as any)).rejects.toMatchObject({
+      code: 'INCOMPLETE_PROVENANCE',
+    });
+
+    expect(withPgTransactionMock.mock.calls.length).toBe(0);
+  });
+
+  it.each([
+    ['organizationId' as const],
+    ['actorUserId' as const],
+    ['idempotencyKey' as const],
+    ['templateId' as const],
+  ])('rejects a whitespace-only "%s" before any database work', async (field) => {
+    const params = validApprovalParams({ [field]: '   ' });
+
+    await expect(approveTemplateProvenance(params as any)).rejects.toThrow(
+      TemplateProvenanceInvalidError
+    );
+    await expect(approveTemplateProvenance(params as any)).rejects.toMatchObject({
+      code: 'INCOMPLETE_PROVENANCE',
+    });
+
+    expect(withPgTransactionMock.mock.calls.length).toBe(0);
   });
 });

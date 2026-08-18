@@ -17,6 +17,7 @@ import { verifyToken } from '../middleware/auth.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import type { DeliverableTemplateType } from '../services/deliverableTemplateService.js';
 import {
+  approveTemplateProvenance,
   createDeliverableTemplate,
   deleteDeliverableTemplate,
   getDeliverableTemplate,
@@ -24,6 +25,10 @@ import {
   syncWorkbookTemplateArtifactLifecycle,
   TemplateForbiddenError,
   TemplateNotFoundError,
+  TemplateProvenanceConflictError,
+  TemplateProvenanceForbiddenError,
+  TemplateProvenanceInvalidError,
+  TemplateProvenanceUnsupportedRegistryError,
   updateDeliverableTemplate,
 } from '../services/deliverableTemplateService.js';
 import { suggestTemplate } from '../services/deliverableTemplateSuggestService.js';
@@ -270,6 +275,69 @@ router.delete('/templates/:id', async (req, res) => {
     }
     logger.error('[deliverableTemplates] Failed to delete template', { err, id: req.params.id });
     res.status(500).json({ error: 'Failed to delete template' });
+  }
+});
+
+// ── PROVENANCE APPROVAL (MAT-POL / AMD-MAT-PROVENANCE-WRITER-002) ──────────
+//
+// The actor and tenant come from the verified token only — never from the body.
+// A body-supplied organizationId or actor is ignored rather than merged, so a
+// spoofed field cannot widen scope or misattribute a rights attestation.
+//
+// The role check itself lives in the service, inside the same transaction as the
+// write, because `requireOrgAccess()` on this router only asserts that an
+// organization id is present; it does not read `organization_members` and would
+// not deny a platform SUPERADMIN who holds no membership in this tenant.
+router.post('/templates/:id/provenance/approve', async (req, res) => {
+  // The replay boundary has exactly ONE source. A body fallback would give the
+  // same logical request two different identities depending on how it was sent,
+  // so the header is required and a body-supplied key is never consulted.
+  const idempotencyKey =
+    (typeof req.header === 'function' ? req.header('Idempotency-Key') : '') || '';
+  try {
+    const result = await approveTemplateProvenance({
+      organizationId: getOrgId(req),
+      actorUserId: getUserId(req),
+      idempotencyKey: String(idempotencyKey || ''),
+      registry: String(req.body?.registry ?? ''),
+      templateId: req.params.id,
+      provenance: {
+        source: String(req.body?.source ?? ''),
+        licenseBasis: String(req.body?.licenseBasis ?? ''),
+        authority: String(req.body?.authority ?? ''),
+        version: String(req.body?.version ?? ''),
+        evidence: String(req.body?.evidence ?? ''),
+      },
+    });
+    res.status(result.replayed ? 200 : 201).json(result);
+  } catch (err) {
+    if (err instanceof TemplateProvenanceUnsupportedRegistryError) {
+      res.status(400).json({ error: err.message, code: err.code });
+      return;
+    }
+    if (err instanceof TemplateProvenanceInvalidError) {
+      res.status(400).json({ error: err.message, code: err.code });
+      return;
+    }
+    if (err instanceof TemplateProvenanceForbiddenError) {
+      res.status(403).json({ error: err.message, code: err.code });
+      return;
+    }
+    if (err instanceof TemplateProvenanceConflictError) {
+      res.status(409).json({ error: err.message, code: err.code });
+      return;
+    }
+    if (err instanceof TemplateNotFoundError) {
+      res.status(404).json({ error: err.message });
+      return;
+    }
+    // The failure detail is logged, never returned: an approval error must not
+    // become a channel for registry contents or identifiers.
+    logger.error('[deliverableTemplates] Failed to approve template provenance', {
+      err,
+      id: req.params.id,
+    });
+    res.status(500).json({ error: 'Failed to approve template provenance' });
   }
 });
 
