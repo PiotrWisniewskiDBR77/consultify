@@ -36,11 +36,11 @@
  * name, scenario, currency, horizon_months, approved_at, approved_by,
  * version, and (best-effort, defensively parsed) the `computedAt` timestamp
  * and period count persisted inside `approved_snapshot` at approval time.
- * There is no NPV/IRR/payback column or computed field anywhere in
- * `financialModelingService.ts` (confirmed by reading the whole file) — this
- * module does NOT fabricate any such metric. `fitScore` is deliberately
- * omitted for the same reason: no principled scoring signal exists yet for
- * this source type.
+ * There is no NPV/IRR/payback column or canonical stored calculation in
+ * `financialModelingService.ts`; those fields remain unknown. CAPEX/OPEX,
+ * however, are exact frozen period values in `approved_snapshot`, so this
+ * adapter may aggregate their spend magnitudes without re-running the model.
+ * `fitScore` is deliberately omitted: no principled scoring signal exists.
  */
 import type { PinnedTransactionClient } from '../../database/PostgresDatabase.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
@@ -91,6 +91,8 @@ interface ApprovedSnapshotValidation {
 function readApprovedSnapshotFacts(snapshotJson: string | null): {
   computedAt: string | null;
   periodsCount: number | null;
+  capex: number | null;
+  opex: number | null;
   /**
    * Real, stored validation-check messages for checks that did NOT pass
    * (`status` = 'warning' | 'fail') — the closest genuine "risk" signal
@@ -101,7 +103,15 @@ function readApprovedSnapshotFacts(snapshotJson: string | null): {
    */
   validationRisks: string[] | null;
 } {
-  if (!snapshotJson) return { computedAt: null, periodsCount: null, validationRisks: null };
+  if (!snapshotJson) {
+    return {
+      computedAt: null,
+      periodsCount: null,
+      capex: null,
+      opex: null,
+      validationRisks: null,
+    };
+  }
   try {
     const parsed = JSON.parse(snapshotJson) as {
       computedAt?: unknown;
@@ -110,6 +120,31 @@ function readApprovedSnapshotFacts(snapshotJson: string | null): {
     };
     const computedAt = typeof parsed.computedAt === 'string' ? parsed.computedAt : null;
     const periodsCount = Array.isArray(parsed.periods) ? parsed.periods.length : null;
+    let capex: number | null = null;
+    let opex: number | null = null;
+    if (Array.isArray(parsed.periods)) {
+      const numericPeriods = parsed.periods as Array<{
+        pl?: Record<string, unknown>;
+        cf?: Record<string, unknown>;
+      }>;
+      const capexValues = numericPeriods.map((period) => period?.cf?.CAPEX_CF);
+      const opexValues = numericPeriods.map((period) => period?.pl?.OPEX);
+      // The compute engine stores both OPEX and CAPEX_CF as negative cash/
+      // expense values. Candidate anchors are positive spend magnitudes, so
+      // aggregate the exact frozen period values and normalize the sign once.
+      if (
+        capexValues.length > 0 &&
+        capexValues.every((value) => typeof value === 'number' && Number.isFinite(value))
+      ) {
+        capex = Math.abs((capexValues as number[]).reduce((sum, value) => sum + value, 0));
+      }
+      if (
+        opexValues.length > 0 &&
+        opexValues.every((value) => typeof value === 'number' && Number.isFinite(value))
+      ) {
+        opex = Math.abs((opexValues as number[]).reduce((sum, value) => sum + value, 0));
+      }
+    }
     let validationRisks: string[] | null = null;
     if (Array.isArray(parsed.validations)) {
       validationRisks = (parsed.validations as ApprovedSnapshotValidation[])
@@ -117,9 +152,15 @@ function readApprovedSnapshotFacts(snapshotJson: string | null): {
         .map((v) => String(v.message ?? v.checkName ?? 'validation flagged'))
         .filter(Boolean);
     }
-    return { computedAt, periodsCount, validationRisks };
+    return { computedAt, periodsCount, capex, opex, validationRisks };
   } catch {
-    return { computedAt: null, periodsCount: null, validationRisks: null };
+    return {
+      computedAt: null,
+      periodsCount: null,
+      capex: null,
+      opex: null,
+      validationRisks: null,
+    };
   }
 }
 
@@ -160,22 +201,21 @@ async function resolveEligibleInvestmentCase(
  * THIS module reimplementing the math, exactly what is forbidden). Those
  * four fields are honestly 'unknown'.
  *
- * capex/opex are ALSO 'unknown': `approved_snapshot.periods[]` (see
- * `computeModel`'s `PeriodOutput`) has per-period `pl.OPEX`/`cf.CAPEX_CF`
- * breakdowns, but no single aggregate figure — summing those periods would
- * be this module deriving a new number, not carrying one over verbatim.
+ * CAPEX/OPEX are deterministic spend aggregates over the exact immutable
+ * `approved_snapshot.periods[]` values produced by `computeModel`. Missing or
+ * malformed period fields remain honestly unknown; they are never coerced to
+ * zero. NPV/IRR/ROI/payback remain unknown because the snapshot carries no
+ * canonical inputs or stored result for those calculations.
  */
 function buildInvestmentCaseSourceSnapshot(
   model: FinancialModelRow
 ): FinanceCandidateSourceSnapshot {
-  const { validationRisks } = readApprovedSnapshotFacts(model.approved_snapshot);
+  const { capex, opex, validationRisks } = readApprovedSnapshotFacts(model.approved_snapshot);
   return {
     ...emptySourceSnapshot(),
     currency: unknownIfMissing(model.currency),
-    // No aggregate CAPEX/OPEX column on financial_models and no stored
-    // total in approved_snapshot (only per-period breakdowns) — see header.
-    capex: 'unknown',
-    opex: 'unknown',
+    capex: capex ?? 'unknown',
+    opex: opex ?? 'unknown',
     // No NPV/IRR/ROI/payback anywhere reachable by modelId — see header.
     npv: 'unknown',
     irr: 'unknown',

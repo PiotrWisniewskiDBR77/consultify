@@ -91,15 +91,18 @@ async function insertModel(
     status: 'draft' | 'approved' | 'archived';
     createdBy: string;
     approvedSnapshotPeriods?: number;
+    withNumericAnchors?: boolean;
   }
 ): Promise<void> {
   const now = new Date().toISOString();
   const isApproved = params.status === 'approved';
   const snapshot = isApproved
     ? JSON.stringify({
-        periods: Array.from({ length: params.approvedSnapshotPeriods ?? 3 }, (_, i) => ({
-          index: i,
-        })),
+        periods: Array.from({ length: params.approvedSnapshotPeriods ?? 3 }, (_, i) =>
+          params.withNumericAnchors
+            ? { index: i, pl: { OPEX: -100 - i }, cf: { CAPEX_CF: -50 - i } }
+            : { index: i }
+        ),
         validations: [],
         computedAt: now,
       })
@@ -161,6 +164,7 @@ beforeAll(async () => {
     orgId: ORG_A,
     status: 'approved',
     createdBy: USER_A,
+    withNumericAnchors: true,
   });
   await insertModel(client, {
     id: MODEL_CONCURRENCY,
@@ -281,19 +285,27 @@ describe('FIN-06 — investment case (financial_models) candidate handoff', () =
     expect(snap.sourceVersion).toBe('2');
     expect(typeof snap.sourceFingerprint).toBe('string');
     expect(snap.sourceFingerprint.length).toBeGreaterThan(0);
-    // financial_models has NO npv/irr/roi/payback/capex/opex/assumptions
-    // field or computed-on-read value reachable by modelId — honestly
-    // 'unknown', never 0/null/fabricated.
+    // CAPEX/OPEX are deterministic aggregates of exact frozen period values.
+    expect(snap.capex).toBe(153);
+    expect(snap.opex).toBe(303);
+    // No canonical stored calculation exists for these fields.
     expect(snap.npv).toBe('unknown');
     expect(snap.irr).toBe('unknown');
     expect(snap.roi).toBe('unknown');
     expect(snap.payback).toBe('unknown');
-    expect(snap.capex).toBe('unknown');
-    expect(snap.opex).toBe('unknown');
     expect(snap.assumptions).toBe('unknown');
     // Fixture's approved_snapshot has a real (empty) validations array ->
     // a genuine computed "no risks flagged" result, not 'unknown'.
     expect(snap.risks).toEqual([]);
+
+    // A legitimate older/incomplete approved snapshot stays fail-closed; an
+    // absent numeric field is never converted to a misleading zero.
+    const absent = await request(app)
+      .get(`/api/finance/candidate-handoff/investment-case/${MODEL_CONCURRENCY}/preview`)
+      .set('Authorization', `Bearer ${tokenA}`);
+    expect(absent.status, JSON.stringify(absent.body)).toBe(200);
+    expect(absent.body.data.preview.sourceSnapshot.capex).toBe('unknown');
+    expect(absent.body.data.preview.sourceSnapshot.opex).toBe('unknown');
   });
 
   it('confirm: creates candidate + receipt, retry is idempotent (same candidateId, one row)', async () => {
@@ -310,6 +322,8 @@ describe('FIN-06 — investment case (financial_models) candidate handoff', () =
     expect(confirm1.body.data.sourceSnapshot).toBeDefined();
     expect(confirm1.body.data.sourceSnapshot.currency).toBe('EUR');
     expect(confirm1.body.data.sourceSnapshot.baselineOrScenario).toBe('base');
+    expect(confirm1.body.data.sourceSnapshot.capex).toBe(153);
+    expect(confirm1.body.data.sourceSnapshot.opex).toBe(303);
     expect(confirm1.body.data.sourceSnapshot.npv).toBe('unknown');
 
     const candidateRow = await client.query(
