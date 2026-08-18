@@ -57,6 +57,8 @@ const INITIATIVE_ID = `roi-e007-fin-recon-init-${tag}`;
 
 let client: Client;
 let reachable = false;
+let connected = false;
+let suiteLockHeld = false;
 
 type CaseCommandsModule = typeof import('../../../server/src/services/resultsVnext/roi/roiCaseCommands.js');
 type FinanceLinkCommandsModule = typeof import('../../../server/src/services/resultsVnext/roi/roiFinanceLinkCommands.js');
@@ -162,6 +164,7 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
     client = new Client(buildClientConfig() as ClientConfig);
     try {
       await client.connect();
+      connected = true;
       const database = await client.query<{ current_database: string }>('SELECT current_database()');
       const actualDatabase = String(database.rows[0]?.current_database ?? '');
       const callerDatabase = new URL(process.env.DATABASE_URL ?? '').pathname.replace(/^\//, '');
@@ -171,6 +174,7 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
         throw new Error('ROI-E007 requires explicit cleanup opt-in and an exact disposable database prefix');
       }
       await client.query(`SELECT pg_advisory_lock(hashtext('roi-e007-finance-reconciliation-suite'))`);
+      suiteLockHeld = true;
       const initialSafety = await client.query<{ role: string; triggers_enabled: string }>(
         `SELECT current_setting('session_replication_role') role,
           (SELECT count(*)::text FROM pg_trigger WHERE NOT tgisinternal AND tgenabled='O'
@@ -194,6 +198,34 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
            id TEXT PRIMARY KEY, organization_id TEXT NOT NULL, name TEXT NOT NULL)`
       );
     } catch (error) {
+      let cleanupError: unknown;
+      try {
+        if (suiteLockHeld) {
+          const unlocked = await client.query<{ unlocked: boolean }>(
+            `SELECT pg_advisory_unlock(hashtext('roi-e007-finance-reconciliation-suite')) unlocked`
+          );
+          if (!unlocked.rows[0]?.unlocked) throw new Error('ROI-E007 setup advisory unlock returned false');
+          suiteLockHeld = false;
+        }
+      } catch (releaseError) {
+        cleanupError = releaseError;
+      } finally {
+        try {
+          if (connected) {
+            await client.end();
+            connected = false;
+          }
+        } catch (endError) {
+          cleanupError ??= endError;
+        } finally {
+          try {
+            if (closePgPool) await closePgPool();
+          } catch (poolError) {
+            cleanupError ??= poolError;
+          }
+        }
+      }
+      if (cleanupError) throw new AggregateError([error, cleanupError], 'ROI-E007 setup and cleanup both failed');
       throw new Error(
         'A database is configured but is not reachable (or missing the ROI-E007 finance-seam schema); refusing to report a green run. ' +
           String(error)
@@ -300,9 +332,12 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
            (SELECT count(*) FROM rvn_finance_reconciliation_decisions WHERE organization_id=ANY($1::text[])) +
            (SELECT count(*) FROM rvn_finance_reconciliation_grant_events WHERE organization_id=ANY($1::text[])) +
            (SELECT count(*) FROM rvn_platform_events WHERE organization_id=ANY($1::text[])) +
+           (SELECT count(*) FROM audit_events WHERE org_id=ANY($1::text[])) +
            (SELECT count(*) FROM rvn_platform_obligations WHERE organization_id=ANY($1::text[])) +
            (SELECT count(*) FROM rvn_platform_resource_visibility WHERE organization_id=ANY($1::text[])) +
            (SELECT count(*) FROM rvn_platform_visibility_policies WHERE organization_id=ANY($1::text[])) +
+           (SELECT count(*) FROM rvn_roi_baselines WHERE organization_id=ANY($1::text[])) +
+           (SELECT count(*) FROM rvn_roi_calculation_policy WHERE organization_id=ANY($1::text[])) +
            (SELECT count(*) FROM rvn_platform_resource_acl WHERE resource_id=ANY($4::text[])) +
            (SELECT count(*) FROM rvn_platform_outbox WHERE event_id::text=ANY($5::text[]))
          )::text residue,
@@ -326,16 +361,28 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
       if (inTransaction) await client.query('ROLLBACK');
       throw error;
     } finally {
-      const unlocked = await client.query<{ unlocked: boolean }>(
-        `SELECT pg_advisory_unlock(hashtext('roi-e007-finance-reconciliation-suite')) unlocked`
-      );
-      expect(unlocked.rows[0]?.unlocked).toBe(true);
-      const locks = await client.query<{ count: string }>(
-        `SELECT count(*)::text count FROM pg_locks WHERE locktype='advisory' AND pid=pg_backend_pid()`
-      );
-      expect(locks.rows[0]?.count).toBe('0');
-      await client.end();
-      if (closePgPool) await closePgPool();
+      try {
+        if (suiteLockHeld) {
+          const unlocked = await client.query<{ unlocked: boolean }>(
+            `SELECT pg_advisory_unlock(hashtext('roi-e007-finance-reconciliation-suite')) unlocked`
+          );
+          expect(unlocked.rows[0]?.unlocked).toBe(true);
+          suiteLockHeld = false;
+        }
+        const locks = await client.query<{ count: string }>(
+          `SELECT count(*)::text count FROM pg_locks WHERE locktype='advisory' AND pid=pg_backend_pid()`
+        );
+        expect(locks.rows[0]?.count).toBe('0');
+      } finally {
+        try {
+          if (connected) {
+            await client.end();
+            connected = false;
+          }
+        } finally {
+          if (closePgPool) await closePgPool();
+        }
+      }
     }
   }, 30_000);
 
