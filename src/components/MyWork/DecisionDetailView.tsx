@@ -96,6 +96,7 @@ import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
 // pamięć ręcznej wysokości + tryb Podgląd). Jedna droga budowy pola karty.
 import { AutoFitTextarea } from '../shared/AutoFitTextarea';
 import { CapabilityGate } from '../shared/CapabilityGate';
+import { RequiredProjectPicker } from '../shared/RequiredProjectPicker';
 import { NCardAIAnalysisPanel } from '../shared/NModeLayout/NCardAIAnalysisPanel';
 // #52 — card-management primitive (show/hide + reorder), same "nakładka"
 // wiring as InsightViewer.tsx / TaskDetailView.tsx (see `decisionCardLayout`).
@@ -878,6 +879,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
 
   // Form State
   const [title, setTitle] = useState('');
+  const [decisionProjectId, setDecisionProjectId] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<keyof typeof STATUS_CONFIG>('pending');
   const [workflowStatus, setWorkflowStatus] = useState<DecisionWorkflowStage>('proposed');
@@ -1443,6 +1445,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const publishPayload = useMemo(
     () => ({
       title,
+      projectId: decisionProjectId || undefined,
       description,
       status: status.toUpperCase(),
       priority: priority.toLowerCase(),
@@ -1457,6 +1460,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
     }),
     [
       title,
+      decisionProjectId,
       description,
       status,
       priority,
@@ -2140,15 +2144,20 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   // SaaS autosave: persist edits to backend (debounced).
   useEffect(() => {
     if (!isLocalHydrated || !hasPublishBaseline || !isDirty) return;
+    if (!decisionId && !decisionProjectId) return;
     const timer = setTimeout(() => {
       handleSave(true);
     }, 900);
     return () => clearTimeout(timer);
-  }, [isLocalHydrated, hasPublishBaseline, isDirty, draftSnapshot]);
+  }, [isLocalHydrated, hasPublishBaseline, isDirty, draftSnapshot, decisionId, decisionProjectId]);
 
   const handleSave = async (silent = false) => {
     if (!title.trim()) {
       if (!silent) toast.error(t('decisions.detail.toast.titleRequired', 'Title is required'));
+      return;
+    }
+    if (!decisionId && !decisionProjectId) {
+      if (!silent) toast.error(t('decisions.detail.toast.projectRequired', 'Project is required'));
       return;
     }
     if (!isDirty) {
@@ -5612,6 +5621,17 @@ Use userId only from this list:
                 )}
               </span>
             </div>
+
+            {!decisionId && (
+              <div className="mb-3 rounded-md border border-c-border bg-c-surface px-3 py-3">
+                <RequiredProjectPicker
+                  value={decisionProjectId}
+                  onChange={setDecisionProjectId}
+                  disabled={saving}
+                  language={isPolish ? 'pl' : 'en'}
+                />
+              </div>
+            )}
 
             {/* ═══════════ N MODE (page-first, 2-pane) ═════════════════════════
                Layout per docs/ui-standards/01-shell-layout/presentation-modes.md §2.5:
