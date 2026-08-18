@@ -30,6 +30,7 @@ import {
   replyToDeckComment,
   setDeckCommentResolved,
 } from '../services/deckCommentsService.js';
+import { resolvePublicDemoPrincipal } from '../services/demo/demoPrincipalGuard.js';
 import {
   isTemplateResolveError,
   resolvePresentationTemplateForCreation,
@@ -1159,8 +1160,97 @@ router.get(
   })
 );
 
+// ============================================================
+// PRESENTATIONS-AUTH-WALL-001 — live tenant wall for mutating requests
+// ============================================================
+// `verifyToken` + `requireOrgAccess()` below prove only that the request
+// carries a signed identity and a syntactically well-formed org id:
+// `requireOrgAccess()` (rbac.middleware.ts:211-252) never queries
+// `organization_members`, so a token whose org claim names a tenant the caller
+// was removed from still reached every writer in this file. This middleware
+// closes that door, and it runs BEFORE any handler body, so a denial cannot
+// leave a business row, an audit/event row or an export receipt behind.
+//
+// Scope: mutating requests only (`req.method !== 'GET'`). Reads and
+// calculators keep their existing behaviour untouched.
+//
+// Deliberately NOT reusing `validateOrgMembership` (auth.middleware.ts:1566):
+// it caches a verdict for 60s (a revoked member keeps writing until that entry
+// expires), it bypasses the check outright for SUPERADMIN, and it fails OPEN
+// when the lookup itself errors. All three are the opposite of what this wall
+// needs — it must bite on the FIRST request made with an already-issued token.
+const PRESENTATION_MEMBERSHIP_DENIED = {
+  success: false,
+  error: 'You no longer have access to this organization',
+  code: 'ORG_MEMBERSHIP_REVOKED',
+} as const;
+
+async function hasActiveOrgMembership(userId: string, organizationId: string): Promise<boolean> {
+  const row = await dbGet<{ status?: string }>(
+    `SELECT status FROM organization_members WHERE user_id = ? AND organization_id = ? LIMIT 1`,
+    [userId, organizationId],
+    { fallback: false }
+  );
+  return !!row && String(row.status || '').toUpperCase() === 'ACTIVE';
+}
+
+/**
+ * A public demo principal works inside a per-session derived tenant that has no
+ * `organization_members` row at all — `demoSessionService.ts` writes
+ * `demo_sessions`/`demo_session_tenants`, while the only membership row written
+ * for that identity (demoSignupProvisioning.ts:278) names the curated BASE org.
+ * Its tenancy proof is therefore the ACTIVE demo session itself, re-read from
+ * the database here rather than trusted from a token claim, a header or a role.
+ * A missing or expired session denies, exactly like a revoked membership.
+ */
+async function hasActiveDemoTenancy(userId: string, organizationId: string): Promise<boolean> {
+  const demo = await resolvePublicDemoPrincipal(userId);
+  return demo.isPublicDemoPrincipal && demo.session?.sessionOrgId === organizationId;
+}
+
+const requireActiveMembershipForWriters = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    if (req.method === 'GET') {
+      next();
+      return;
+    }
+
+    const organizationId = getOrgId(req);
+    // Not `getUserId()` — that helper falls back to the literal 'system', which
+    // must never satisfy a membership lookup.
+    const userId = String((req as any).user?.id || (req as any).userId || '').trim();
+    if (!organizationId || !userId) {
+      res.status(403).json(PRESENTATION_MEMBERSHIP_DENIED);
+      return;
+    }
+
+    let allowed = false;
+    try {
+      allowed =
+        (await hasActiveOrgMembership(userId, organizationId)) ||
+        (await hasActiveDemoTenancy(userId, organizationId));
+    } catch {
+      // Fail CLOSED: an unreachable membership table must not widen access.
+      res.status(403).json({
+        success: false,
+        error: 'Could not verify your organization access',
+        code: 'ORG_MEMBERSHIP_LOOKUP_FAILED',
+      });
+      return;
+    }
+
+    if (!allowed) {
+      res.status(403).json(PRESENTATION_MEMBERSHIP_DENIED);
+      return;
+    }
+
+    next();
+  }
+);
+
 router.use(verifyToken);
 router.use(requireOrgAccess());
+router.use(requireActiveMembershipForWriters);
 
 // ============================================================
 // TEMPLATES (T059)
@@ -2370,6 +2460,7 @@ router.get(
 router.post(
   '/decks/:id/approval/submit',
   asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_edit')) return;
     const orgId = getOrgId(req);
     const userId = getUserId(req);
     const assignedToUserId = String(req.body?.assignedToUserId || '').trim();
@@ -2405,6 +2496,7 @@ router.post(
 router.post(
   '/decks/:id/approval/approve',
   asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_approve')) return;
     const orgId = getOrgId(req);
     const userId = getUserId(req);
     const deck = (await dbGet(
@@ -2433,6 +2525,7 @@ router.post(
 router.post(
   '/decks/:id/approval/reject',
   asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_approve')) return;
     const orgId = getOrgId(req);
     const userId = getUserId(req);
     const deck = (await dbGet(
@@ -3009,6 +3102,7 @@ router.delete(
   '/decks/:id',
   requireAudit,
   asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_edit')) return;
     const orgId = getOrgId(req);
     if (!(await enforceNoLegalHold(res, orgId, 'Presentation deletion'))) return;
     const deck = (await dbGet(
@@ -3768,6 +3862,7 @@ router.post(
 router.put(
   '/decks/:deckId/autosave',
   asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_edit')) return;
     const { deckId } = req.params;
     const orgId = getOrgId(req);
     const userId = getUserId(req);
@@ -7785,6 +7880,7 @@ function escapeXml(s: string): string {
 router.post(
   '/decks/:deckId/analytics/view',
   asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_view')) return;
     const orgId = getOrgId(req);
     const { deckId } = req.params;
     const { viewerToken, cardIndex, durationMs } = req.body;
@@ -7907,6 +8003,7 @@ router.get(
 router.post(
   '/decks/:deckId/versions/:versionId/restore',
   asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_edit')) return;
     const { deckId, versionId } = req.params;
     const orgId = getOrgId(req);
     const userId = getUserId(req);
