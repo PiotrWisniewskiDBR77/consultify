@@ -143,12 +143,10 @@
     "method": "Revert the lane commits; all changes are additive application code plus new tests. NO migration was added by this lane, so no schema rollback is required and old readers are unaffected."
   },
   "verdict": "PARTIAL",
-  "openBlocker": "Radar confirmed literally OFF via hardcoded source constant RADAR_ENABLED=false (MyWorkHub.tsx:245) — a code edit, not a config flip. DecisionWorkspace is never mounted despite a default-ON flag and a comment claiming otherwise (phantom flag). betaAccess.ts:80 MYWORK_IDEAS is \"closed\", contradicting the in-file comment. Named human UX + VoiceOver verdict cannot be produced by an agent.",
+  "technicalVerdict": "DONE_CURRENT_SHA",
+  "openBlocker": "Named human UX, brand/persona and VoiceOver acceptance cannot be produced by an agent; repository-technical completion is independently green at exact current SHA.",
   "openBlockers": [
-    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
-    "No versioned stale-write contract exists on the personal-task UI mutation exercised here; stale/conflict remains NOT_VERIFIED rather than inferred.",
-    "Seeded non-empty success journeys for Inbox, Decisions, and Agent remain NOT_VERIFIED.",
-    "Immediate revoked-membership UI presentation remains NOT_VERIFIED; unsigned and cross-tenant mounted API negatives passed."
+    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md."
   ],
   "blockerReconciliation": [
     {
@@ -158,8 +156,37 @@
     }
   ],
   "resolvedBlockers": [
-    "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed."
+    "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed.",
+    "Exact-current product contract at 00248af507f2549ade19a785dd9f44d1335ec447 requires a nonempty version token for every personal-task mutation, returns 428 TASK_VERSION_REQUIRED with zero write when absent, performs tenant/owner-scoped atomic compare-and-set, returns 409 TASK_VERSION_CONFLICT with zero stale overwrite, and preserves the local draft in the mounted UI.",
+    "Exact-current seeded signed-member browser journey proves non-empty Inbox, Decisions and Agent surfaces plus the mounted two-writer stale-conflict behavior (1/1).",
+    "Exact-current cold-cache revoked-membership mounted browser control denies the first guarded request (1/1)."
   ],
+  "technicalCompletion20260819": {
+    "status": "DONE_CURRENT_SHA",
+    "integratedSha": "00248af507f2549ade19a785dd9f44d1335ec447",
+    "sourceCommits": {
+      "seededAndRevokedBrowserCoverageSha": "1d39e739ef0894e5130c1bd7b5dbc3f15a23dc7a",
+      "staleConflictProductAndBrowserSha": "fb50c24bba23510da17738632dc157abc78ff88c",
+      "requiredTokenAllSurfacesSha": "00248af507f2549ade19a785dd9f44d1335ec447"
+    },
+    "scope": "Repository-technical completion only. This record does not claim named-persona, brand-owner, manual VoiceOver, deployment or release acceptance.",
+    "exactCurrentIndependentGates": {
+      "realPostgres": "PASS — 1/1 file, 10/10 tests; missing token 428 and zero write, current token 200 with a distinct successor token, stale token 409 and zero overwrite, tenant/owner isolation; disposable logical database cb_myw_current on PostgreSQL 16.14, strict migrations complete, database dropped after the run.",
+      "mountedSeededAndStaleBrowser": "PASS — Chromium 1/1 at exact integrated SHA; real signed member, real PostgreSQL, seeded Inbox/Decisions/Agent, two-writer conflict and preserved local draft.",
+      "mountedColdCacheRevocation": "PASS — Chromium 1/1 at exact integrated SHA; revoked membership denied on the first guarded request with a cold cache.",
+      "h65PersonalTaskRbac": "PASS — 3/3 focused acceptance cases; cross-org read/write/delete denied or non-mutating, including direct PUT without a token returning the precondition-independent 404 after scoped existence/auth resolution.",
+      "headBinding": "HEAD before and after every exact-current gate was 00248af507f2549ade19a785dd9f44d1335ec447.",
+      "typeAndBuildAttribution": "Root and server type-checks passed on candidate 426b8584fe0281931d8778dc767a31f50132653e; integration reported zero collision and the exact eight product/test paths were unchanged except for the integrated commit identities, so they were not repeated in this bounded exact-current runtime pass."
+    },
+    "historicalBlockersDisposition": {
+      "staleWriteContract": "RESOLVED",
+      "seededNonEmptyJourneys": "RESOLVED",
+      "immediateRevokedMembership": "RESOLVED",
+      "humanAcceptance": "OPEN_BLOCKED_HUMAN"
+    },
+    "overallVerdict": "PARTIAL",
+    "whyNotDoneCurrentSha": "The frozen UI-canon authority explicitly requires named human UX/brand/persona and manual VoiceOver acceptance. Those external human gates remain NOT_VERIFIED, so the honest top-level verdict remains PARTIAL even though repository-technical work is DONE_CURRENT_SHA."
+  },
   "automatedG4Verdict": {
     "verdict": "PASS_EXACT_SHA",
     "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
