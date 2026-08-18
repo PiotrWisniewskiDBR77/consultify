@@ -662,6 +662,65 @@ describe('UnifiedChatPanel (L2)', () => {
     expect(resumeFromPartialMock).not.toHaveBeenCalled();
   });
 
+  it('renders a forbidden checkpoint without a Resume button', async () => {
+    conversationStoreState.activeConversationId = 'conv-forbidden';
+    conversationStoreState.activeMessages = [
+      { id: 'u1', role: 'user', content: 'Continue this analysis' },
+    ];
+    checkPartialResponseMock.mockResolvedValue({
+      sessionId: 'conv-forbidden',
+      content: '',
+      canResume: false,
+      forbidden: true,
+    });
+
+    renderWithRouter(<UnifiedChatPanel />);
+
+    const notice = await screen.findByTestId('chat-partial-recovery');
+    expect(notice).toHaveAttribute('data-state', 'forbidden');
+    expect(screen.queryByRole('button', { name: 'Resume' })).not.toBeInTheDocument();
+    expect(resumeFromPartialMock).not.toHaveBeenCalled();
+  });
+
+  it('renders a stale checkpoint without a Resume button', async () => {
+    conversationStoreState.activeConversationId = 'conv-stale';
+    conversationStoreState.activeMessages = [
+      { id: 'u1', role: 'user', content: 'Continue this analysis' },
+    ];
+    checkPartialResponseMock.mockResolvedValue({
+      sessionId: 'conv-stale',
+      content: 'Superseded partial content',
+      canResume: false,
+      stale: true,
+    });
+
+    renderWithRouter(<UnifiedChatPanel />);
+
+    const notice = await screen.findByTestId('chat-partial-recovery');
+    expect(notice).toHaveAttribute('data-state', 'stale');
+    expect(screen.queryByRole('button', { name: 'Resume' })).not.toBeInTheDocument();
+    expect(resumeFromPartialMock).not.toHaveBeenCalled();
+  });
+
+  it('renders an available checkpoint with its Resume button', async () => {
+    conversationStoreState.activeConversationId = 'conv-available';
+    conversationStoreState.activeMessages = [
+      { id: 'u1', role: 'user', content: 'Continue this analysis' },
+    ];
+    checkPartialResponseMock.mockResolvedValue({
+      sessionId: 'conv-available',
+      content: 'Saved partial',
+      canResume: true,
+    });
+
+    renderWithRouter(<UnifiedChatPanel />);
+
+    const notice = await screen.findByTestId('chat-partial-recovery');
+    expect(notice).toHaveAttribute('data-state', 'available');
+    expect(screen.getByRole('button', { name: 'Resume' })).toBeInTheDocument();
+    expect(resumeFromPartialMock).not.toHaveBeenCalled();
+  });
+
   // M01-P03A — BranchSelector was found fully orphaned (finding M01-035):
   // imported nowhere in src/. These tests are the negative-control proof
   // that it is now REALLY mounted and wired, not just present in the tree

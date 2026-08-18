@@ -1063,6 +1063,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     sessionId: string;
     content: string;
     updatedAt?: string;
+    stale?: boolean;
+    forbidden?: boolean;
   } | null>(null);
   const [partialRecoveryError, setPartialRecoveryError] = useState<string | null>(null);
   const [isResumingPartial, setIsResumingPartial] = useState(false);
@@ -2174,9 +2176,17 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
     void checkPartialResponse(activeConversationId)
       .then((partial) => {
-        if (!cancelled && partial?.canResume && partial.content.trim()) {
-          setPartialRecovery(partial);
+        if (cancelled || !partial) return;
+        if (partial.forbidden) {
+          setPartialRecovery({ ...partial, content: '' });
+          return;
         }
+        if (!partial.content.trim()) return;
+        if (partial.stale || !partial.canResume) {
+          setPartialRecovery({ ...partial, stale: true });
+          return;
+        }
+        setPartialRecovery(partial);
       })
       .catch(() => {
         if (!cancelled) {
@@ -2194,7 +2204,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   ]);
 
   const handleResumePartial = useCallback(async () => {
-    if (!partialRecovery || isStreaming || isResumingPartial) return;
+    if (!partialRecovery || partialRecovery.stale || partialRecovery.forbidden) return;
+    if (isStreaming || isResumingPartial) return;
     let sourceMessages = activeMessages;
     let latestUserIndex = [...sourceMessages]
       .map((message) => String(message.role || '').toLowerCase())
@@ -2247,20 +2258,39 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     t,
   ]);
 
+  const partialRecoveryState = partialRecovery?.forbidden
+    ? 'forbidden'
+    : partialRecovery?.stale
+      ? 'stale'
+      : partialRecovery
+        ? 'available'
+        : partialRecoveryError
+          ? 'error'
+          : null;
+  const partialRecoveryMessage = partialRecovery?.forbidden
+    ? t(
+        'aiChat.partialRecovery.forbidden',
+        'Your access to this workspace was revoked, so the interrupted response cannot be opened.'
+      )
+    : partialRecovery?.stale
+      ? t(
+          'aiChat.partialRecovery.stale',
+          'This interrupted response is out of date — the conversation already continued past it.'
+        )
+      : partialRecoveryError ||
+        t('aiChat.partialRecovery.available', 'An interrupted response is available.');
   const partialRecoveryNotice =
     partialRecovery || partialRecoveryError ? (
       <div
         className="mb-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 dark:border-sky-900/40 dark:bg-sky-900/20"
         data-testid="chat-partial-recovery"
+        data-state={partialRecoveryState}
         role="status"
       >
         <div className="flex items-center justify-between gap-3">
-          <div className="text-xs text-sky-900 dark:text-sky-100">
-            {partialRecoveryError ||
-              t('aiChat.partialRecovery.available', 'An interrupted response is available.')}
-          </div>
+          <div className="text-xs text-sky-900 dark:text-sky-100">{partialRecoveryMessage}</div>
           <div className="flex items-center gap-2">
-            {partialRecovery && (
+            {partialRecovery && !partialRecovery.stale && !partialRecovery.forbidden && (
               <button
                 type="button"
                 onClick={() => void handleResumePartial()}
