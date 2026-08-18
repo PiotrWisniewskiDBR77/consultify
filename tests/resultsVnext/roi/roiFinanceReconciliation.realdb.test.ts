@@ -162,7 +162,27 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
     client = new Client(buildClientConfig() as ClientConfig);
     try {
       await client.connect();
-      await client.query('SELECT 1');
+      const database = await client.query<{ current_database: string }>('SELECT current_database()');
+      const actualDatabase = String(database.rows[0]?.current_database ?? '');
+      const callerDatabase = new URL(process.env.DATABASE_URL ?? '').pathname.replace(/^\//, '');
+      const requiredPrefix = process.env.ROI_E007_DISPOSABLE_DB_PREFIX ?? '';
+      if (process.env.ROI_E007_ALLOW_IMMUTABLE_FIXTURE_CLEANUP !== '1' || !requiredPrefix ||
+          callerDatabase !== actualDatabase || !actualDatabase.startsWith(requiredPrefix)) {
+        throw new Error('ROI-E007 requires explicit cleanup opt-in and an exact disposable database prefix');
+      }
+      await client.query(`SELECT pg_advisory_lock(hashtext('roi-e007-finance-reconciliation-suite'))`);
+      const initialSafety = await client.query<{ role: string; triggers_enabled: string }>(
+        `SELECT current_setting('session_replication_role') role,
+          (SELECT count(*)::text FROM pg_trigger WHERE NOT tgisinternal AND tgenabled='O'
+            AND tgname=ANY($1::text[])) triggers_enabled`,
+        [[
+          'trg_rvn_fin_reconciliation_grant_insert_guard',
+          'trg_rvn_fin_reconciliation_decision_append_only',
+          'trg_rvn_fin_reconciliation_grant_append_only',
+        ]]
+      );
+      if (initialSafety.rows[0]?.role !== 'origin' || initialSafety.rows[0]?.triggers_enabled !== '3')
+        throw new Error('ROI-E007 fixture requires all named production triggers enabled at origin');
       await client.query('SELECT 1 FROM rvn_roi_finance_reconciliations LIMIT 0');
       await client.query(
         `CREATE TABLE IF NOT EXISTS team_members (
@@ -229,35 +249,94 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
 
   afterAll(async () => {
     if (!reachable) return;
-    await client.query(`SET session_replication_role = replica`);
-    await client.query(`DELETE FROM rvn_finance_reconciliation_grant_events WHERE organization_id = ANY($1::text[])`, [[ORG_ID, SECOND_ORG_ID]]);
-    await client.query(`DELETE FROM rvn_finance_reconciliation_decisions WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`DELETE FROM rvn_roi_finance_reconciliations WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`SET session_replication_role = origin`);
-    await client.query(`DELETE FROM rvn_roi_finance_links WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(
-      `DELETE FROM rvn_platform_resource_acl
-        WHERE resource_type = 'roi_case'
-          AND resource_id IN (SELECT case_id::text FROM rvn_roi_cases WHERE organization_id = $1)`,
-      [ORG_ID]
-    );
-    await client.query(`DELETE FROM rvn_platform_obligations WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(
-      `DELETE FROM rvn_platform_outbox WHERE event_id IN (SELECT event_id FROM rvn_platform_events WHERE organization_id = $1)`,
-      [ORG_ID]
-    );
-    await client.query(`DELETE FROM rvn_platform_events WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`DELETE FROM rvn_roi_baselines WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`DELETE FROM rvn_roi_calculation_policy WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`DELETE FROM rvn_roi_cases WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`DELETE FROM rvn_platform_resource_visibility WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`DELETE FROM rvn_platform_visibility_policies WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`DELETE FROM initiatives WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`DELETE FROM organization_members WHERE organization_id = ANY($1::text[])`, [[ORG_ID, SECOND_ORG_ID]]);
-    await client.query(`DELETE FROM users WHERE id = ANY($1::text[])`, [[USER_MAKER, USER_RESOLVER, USER_RESOLVER_2, USER_GRANTEE]]);
-    await client.query(`DELETE FROM organizations WHERE id = ANY($1::text[])`, [[ORG_ID, SECOND_ORG_ID]]);
-    await client.end();
-    if (closePgPool) await closePgPool();
+    let inTransaction = false;
+    try {
+      const ownedCaseIds = (await client.query<{ case_id: string }>(
+        `SELECT case_id::text case_id FROM rvn_roi_cases WHERE organization_id=$1`, [ORG_ID]
+      )).rows.map((row) => row.case_id);
+      const ownedEventIds = (await client.query<{ event_id: string }>(
+        `SELECT event_id::text event_id FROM rvn_platform_events WHERE organization_id=$1`, [ORG_ID]
+      )).rows.map((row) => row.event_id);
+      await client.query('BEGIN');
+      inTransaction = true;
+      await client.query(`SET LOCAL session_replication_role = replica`);
+      await client.query(`DELETE FROM rvn_finance_reconciliation_grant_events WHERE organization_id = ANY($1::text[])`, [[ORG_ID, SECOND_ORG_ID]]);
+      await client.query(`DELETE FROM rvn_finance_reconciliation_decisions WHERE organization_id = $1`, [ORG_ID]);
+      await client.query(`DELETE FROM rvn_roi_finance_reconciliations WHERE organization_id = $1`, [ORG_ID]);
+      await client.query(`DELETE FROM rvn_roi_finance_links WHERE organization_id = $1`, [ORG_ID]);
+      await client.query(
+        `DELETE FROM rvn_platform_resource_acl
+          WHERE resource_type = 'roi_case'
+            AND resource_id IN (SELECT case_id::text FROM rvn_roi_cases WHERE organization_id = $1)`,
+        [ORG_ID]
+      );
+      await client.query(`DELETE FROM rvn_platform_obligations WHERE organization_id = $1`, [ORG_ID]);
+      await client.query(
+        `DELETE FROM rvn_platform_outbox WHERE event_id IN (SELECT event_id FROM rvn_platform_events WHERE organization_id = $1)`,
+        [ORG_ID]
+      );
+      await client.query(`DELETE FROM rvn_platform_events WHERE organization_id = $1`, [ORG_ID]);
+      await client.query(`DELETE FROM rvn_roi_baselines WHERE organization_id = $1`, [ORG_ID]);
+      await client.query(`DELETE FROM rvn_roi_calculation_policy WHERE organization_id = $1`, [ORG_ID]);
+      await client.query(`DELETE FROM rvn_roi_cases WHERE organization_id = $1`, [ORG_ID]);
+      await client.query(`DELETE FROM rvn_platform_resource_visibility WHERE organization_id = $1`, [ORG_ID]);
+      await client.query(`DELETE FROM rvn_platform_visibility_policies WHERE organization_id = $1`, [ORG_ID]);
+      await client.query(`DELETE FROM initiatives WHERE organization_id = $1`, [ORG_ID]);
+      await client.query(`DELETE FROM organization_members WHERE organization_id = ANY($1::text[])`, [[ORG_ID, SECOND_ORG_ID]]);
+      await client.query(`DELETE FROM users WHERE id = ANY($1::text[])`, [[USER_MAKER, USER_RESOLVER, USER_RESOLVER_2, USER_GRANTEE]]);
+      await client.query(`DELETE FROM organizations WHERE id = ANY($1::text[])`, [[ORG_ID, SECOND_ORG_ID]]);
+      await client.query('COMMIT');
+      inTransaction = false;
+
+      const postCommit = await client.query<{ residue: string; role: string; triggers_enabled: string }>(
+        `SELECT (
+           (SELECT count(*) FROM organizations WHERE id=ANY($1::text[])) +
+           (SELECT count(*) FROM users WHERE id=ANY($2::text[])) +
+           (SELECT count(*) FROM organization_members WHERE organization_id=ANY($1::text[])) +
+           (SELECT count(*) FROM initiatives WHERE organization_id=ANY($1::text[])) +
+           (SELECT count(*) FROM rvn_roi_cases WHERE organization_id=ANY($1::text[])) +
+           (SELECT count(*) FROM rvn_roi_finance_links WHERE organization_id=ANY($1::text[])) +
+           (SELECT count(*) FROM rvn_roi_finance_reconciliations WHERE organization_id=ANY($1::text[])) +
+           (SELECT count(*) FROM rvn_finance_reconciliation_decisions WHERE organization_id=ANY($1::text[])) +
+           (SELECT count(*) FROM rvn_finance_reconciliation_grant_events WHERE organization_id=ANY($1::text[])) +
+           (SELECT count(*) FROM rvn_platform_events WHERE organization_id=ANY($1::text[])) +
+           (SELECT count(*) FROM rvn_platform_obligations WHERE organization_id=ANY($1::text[])) +
+           (SELECT count(*) FROM rvn_platform_resource_visibility WHERE organization_id=ANY($1::text[])) +
+           (SELECT count(*) FROM rvn_platform_visibility_policies WHERE organization_id=ANY($1::text[])) +
+           (SELECT count(*) FROM rvn_platform_resource_acl WHERE resource_id=ANY($4::text[])) +
+           (SELECT count(*) FROM rvn_platform_outbox WHERE event_id::text=ANY($5::text[]))
+         )::text residue,
+         current_setting('session_replication_role') role,
+         (SELECT count(*)::text FROM pg_trigger WHERE NOT tgisinternal AND tgenabled='O'
+           AND tgname=ANY($3::text[])) triggers_enabled`,
+        [
+          [ORG_ID, SECOND_ORG_ID],
+          [USER_MAKER, USER_RESOLVER, USER_RESOLVER_2, USER_GRANTEE],
+          [
+            'trg_rvn_fin_reconciliation_grant_insert_guard',
+            'trg_rvn_fin_reconciliation_decision_append_only',
+            'trg_rvn_fin_reconciliation_grant_append_only',
+          ],
+          ownedCaseIds,
+          ownedEventIds,
+        ]
+      );
+      expect(postCommit.rows[0]).toEqual({ residue: '0', role: 'origin', triggers_enabled: '3' });
+    } catch (error) {
+      if (inTransaction) await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      const unlocked = await client.query<{ unlocked: boolean }>(
+        `SELECT pg_advisory_unlock(hashtext('roi-e007-finance-reconciliation-suite')) unlocked`
+      );
+      expect(unlocked.rows[0]?.unlocked).toBe(true);
+      const locks = await client.query<{ count: string }>(
+        `SELECT count(*)::text count FROM pg_locks WHERE locktype='advisory' AND pid=pg_backend_pid()`
+      );
+      expect(locks.rows[0]?.count).toBe('0');
+      await client.end();
+      if (closePgPool) await closePgPool();
+    }
   }, 30_000);
 
   const itDB = (name: string, fn: () => Promise<void>, timeoutMs = 30_000) =>
