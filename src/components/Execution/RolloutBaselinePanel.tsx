@@ -9,6 +9,7 @@
  */
 import React, { useCallback, useEffect, useState } from 'react';
 
+import { EmptyState, LoadingState } from '@/components/shared/states';
 import { Api } from '@/services/api';
 
 interface Baseline {
@@ -117,30 +118,47 @@ export const RolloutBaselinePanel: React.FC<Props> = ({ projectId }) => {
       {needsProject && (
         <p className="mb-2 text-xs text-amber-600">Zapis baseline wymaga wybranego projektu.</p>
       )}
-      {failed && (
-        <p className="mb-2 text-xs text-amber-600">
-          Nie udało się załadować/zapisać baseline'ów (sprawdź uprawnienia).
-        </p>
-      )}
-      {loading && <p className="text-sm text-c-text-muted">Ładowanie…</p>}
-
-      {!loading && baselines.length === 0 ? (
-        <p className="text-sm text-c-text-muted">Brak zapisanych baseline'ów — zapisz pierwszy.</p>
+      {/* Error / loading / content are MUTUALLY EXCLUSIVE. This panel used to
+          print the failure as a line ABOVE the list, so a failed load still
+          rendered the "nothing here yet — create the first one" copy (or the
+          wave cells) underneath: the UI asserted an absence it had not
+          established. docs/UI_UX/35_EMPTY_LOADING_ERROR_STATES.md forbids that
+          ("MUST NOT: Udawac sukcesu dla krytycznych operacji"). */}
+      {failed ? (
+        <div data-testid="baseline-load-error">
+          <EmptyState
+            variant="error"
+            compact
+            title="Nie udało się wczytać baseline'ów"
+            description="Sprawdź uprawnienia."
+            onRetry={() => void load()}
+          />
+        </div>
+      ) : loading ? (
+        <LoadingState template="list" rows={3} />
       ) : (
-        <ul className="flex flex-col gap-2" data-testid="baseline-list">
-          {baselines.map((b) => (
-            <li
-              key={b.id}
-              className="flex flex-col gap-0.5 rounded-lg border border-c-border-subtle p-2"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-sm font-medium text-c-text">{b.label || 'Baseline'}</span>
-                <span className="shrink-0 text-xs text-c-text-muted">{baselineDate(b)}</span>
-              </div>
-              {b.reason && <span className="text-xs text-c-text-muted">{b.reason}</span>}
-            </li>
-          ))}
-        </ul>
+        <>
+          {baselines.length === 0 ? (
+            <p className="text-sm text-c-text-muted">
+              Brak zapisanych baseline'ów — zapisz pierwszy.
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-2" data-testid="baseline-list">
+              {baselines.map((b) => (
+                <li
+                  key={b.id}
+                  className="flex flex-col gap-0.5 rounded-lg border border-c-border-subtle p-2"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium text-c-text">{b.label || 'Baseline'}</span>
+                    <span className="shrink-0 text-xs text-c-text-muted">{baselineDate(b)}</span>
+                  </div>
+                  {b.reason && <span className="text-xs text-c-text-muted">{b.reason}</span>}
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
       )}
     </section>
   );

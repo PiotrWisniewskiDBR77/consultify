@@ -8,6 +8,7 @@
  */
 import React, { useCallback, useEffect, useState } from 'react';
 
+import { EmptyState, LoadingState } from '@/components/shared/states';
 import { Api } from '@/services/api';
 
 const WAVE_ORDER = ['pilot', 'limited', 'full', 'hypercare', 'closure'] as const;
@@ -113,59 +114,71 @@ export const RolloutStagesPanel: React.FC<Props> = ({ projectId }) => {
         <span className="text-xs text-c-text-muted">{stages.length}/5 fal</span>
       </div>
 
-      {failed && (
-        <p className="mb-2 text-xs text-amber-600">
-          Nie udało się załadować/zmienić fal (sprawdź uprawnienia MANAGE_ROLLOUT).
-        </p>
-      )}
-      {loading && <p className="text-sm text-c-text-muted">Ładowanie…</p>}
-
-      <div className="flex flex-wrap items-stretch gap-2" data-testid="rollout-waves">
-        {WAVE_ORDER.map((wave, idx) => {
-          const stage = byWave.get(wave);
-          return (
-            <div
-              key={wave}
-              className="flex min-w-[8.5rem] flex-1 flex-col gap-1 rounded-lg border border-c-border-subtle p-2"
-            >
-              <div className="flex items-center gap-1 text-xs font-medium text-c-text-muted">
-                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-c-surface-raised text-[10px]">
-                  {idx + 1}
-                </span>
-                {WAVE_LABEL[wave]}
-              </div>
-              {stage ? (
-                <>
-                  <span
-                    className={`inline-block w-fit rounded-full border px-2 py-0.5 text-[11px] font-medium ${STATUS_STYLE[stage.status]}`}
-                  >
-                    {STATUS_LABEL[stage.status]}
+      {/* Error / loading / content are MUTUALLY EXCLUSIVE. This panel used to
+          print the failure as a line ABOVE the content, so a failed load still
+          rendered the five wave cells as if they were real underneath: the UI asserted a state it had not
+          established. docs/UI_UX/35_EMPTY_LOADING_ERROR_STATES.md forbids that
+          ("MUST NOT: Udawac sukcesu dla krytycznych operacji"). */}
+      {failed ? (
+        <div data-testid="rollout-stages-load-error">
+          <EmptyState
+            variant="error"
+            compact
+            title="Nie udało się wczytać fal wdrożenia"
+            description="Sprawdź uprawnienia MANAGE_ROLLOUT."
+            onRetry={() => void load()}
+          />
+        </div>
+      ) : loading ? (
+        <LoadingState template="list" rows={5} />
+      ) : (
+        <div className="flex flex-wrap items-stretch gap-2" data-testid="rollout-waves">
+          {WAVE_ORDER.map((wave, idx) => {
+            const stage = byWave.get(wave);
+            return (
+              <div
+                key={wave}
+                className="flex min-w-[8.5rem] flex-1 flex-col gap-1 rounded-lg border border-c-border-subtle p-2"
+              >
+                <div className="flex items-center gap-1 text-xs font-medium text-c-text-muted">
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-c-surface-raised text-[10px]">
+                    {idx + 1}
                   </span>
-                  {stage.status !== 'done' && (
-                    <button
-                      type="button"
-                      disabled={busy === stage.id}
-                      onClick={() => void advance(stage.id)}
-                      className="mt-1 rounded-md border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-700 hover:bg-blue-100 disabled:opacity-50"
+                  {WAVE_LABEL[wave]}
+                </div>
+                {stage ? (
+                  <>
+                    <span
+                      className={`inline-block w-fit rounded-full border px-2 py-0.5 text-[11px] font-medium ${STATUS_STYLE[stage.status]}`}
                     >
-                      {busy === stage.id ? '…' : 'Dalej →'}
-                    </button>
-                  )}
-                </>
-              ) : (
-                <button
-                  type="button"
-                  disabled={busy === wave}
-                  onClick={() => void createWave(wave)}
-                  className="mt-1 rounded-md border border-c-border-subtle px-2 py-0.5 text-[11px] font-medium text-c-text-muted hover:bg-c-surface-raised disabled:opacity-50"
-                >
-                  {busy === wave ? '…' : '+ utwórz'}
-                </button>
-              )}
-            </div>
-          );
-        })}
-      </div>
+                      {STATUS_LABEL[stage.status]}
+                    </span>
+                    {stage.status !== 'done' && (
+                      <button
+                        type="button"
+                        disabled={busy === stage.id}
+                        onClick={() => void advance(stage.id)}
+                        className="mt-1 rounded-md border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-700 hover:bg-blue-100 disabled:opacity-50"
+                      >
+                        {busy === stage.id ? '…' : 'Dalej →'}
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={busy === wave}
+                    onClick={() => void createWave(wave)}
+                    className="mt-1 rounded-md border border-c-border-subtle px-2 py-0.5 text-[11px] font-medium text-c-text-muted hover:bg-c-surface-raised disabled:opacity-50"
+                  >
+                    {busy === wave ? '…' : '+ utwórz'}
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 };

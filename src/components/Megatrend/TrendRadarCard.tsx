@@ -15,7 +15,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { EmptyState } from '@/components/shared/states';
+import { EmptyState, LoadingState } from '@/components/shared/states';
 
 import { RadarChart } from '../RadarChart';
 
@@ -120,29 +120,12 @@ export const TrendRadarCard: React.FC<TrendRadarCardProps> = ({
     <div className="bg-c-surface rounded-xl shadow-lg p-6 space-y-4" ref={containerRef}>
       <h2 className="text-2xl font-semibold text-c-text">Trend Radar Map</h2>
 
-      {loading && (
-        <div className="flex items-center space-x-2 text-c-text-secondary">
-          <svg
-            className="animate-spin h-5 w-5 text-c-accent"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            ></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-          </svg>
-          <span>Loading radar data…</span>
-        </div>
-      )}
-      {/* Was a bare, untranslated `Error: {error}` line with no recovery. */}
-      {error && (
+      {/* Error / loading / content are MUTUALLY EXCLUSIVE. The radar used to be
+          drawn underneath the error state, so a failed load still painted a
+          chart built from stale or empty data — the app asserting a shape of
+          the world it did not have. Was also a bare `Error: {error}` line with
+          no recovery. */}
+      {error ? (
         <EmptyState
           variant="error"
           compact
@@ -153,46 +136,50 @@ export const TrendRadarCard: React.FC<TrendRadarCardProps> = ({
           )}
           onRetry={onRetry}
         />
+      ) : loading ? (
+        <LoadingState template="card" count={1} />
+      ) : (
+        <>
+          <div className="relative mx-auto" style={{ width: size, height: size }}>
+            {/* Base radar grid – dummy max values just to draw the web */}
+            <RadarChart data={data.map((d) => ({ label: d.label, value: maxVal }))} size={size} />
+            {/* Overlay points */}
+            <svg
+              className="absolute inset-0"
+              width={size}
+              height={size}
+              viewBox={`0 0 ${size} ${size}`}
+            >
+              {renderPoints()}
+            </svg>
+            {/* Tooltip */}
+            {tooltip && (
+              <div
+                className="absolute bg-c-text text-c-bg text-xs rounded py-1 px-2 whitespace-nowrap shadow-lg"
+                style={{ left: tooltip.x - 50, top: tooltip.y - 40 }}
+              >
+                {tooltip.text}
+              </div>
+            )}
+          </div>
+
+          {/* Legend */}
+          <div className="flex justify-center space-x-6 mt-4 text-sm text-c-text-secondary">
+            {Object.entries(typeColors).map(([type, { emoji }]) => (
+              <div key={type} className="flex items-center space-x-1">
+                <span>{emoji}</span>
+                <span>{type}</span>
+              </div>
+            ))}
+            <div className="flex items-center space-x-1">
+              <span className="inline-block w-3 h-3 bg-c-surface-raised rounded-full"></span>
+              <span>Impact size (larger = stronger)</span>
+            </div>
+          </div>
+
+          {/* Detail modal Removed: Handled by parent via onTrendSelect */}
+        </>
       )}
-
-      <div className="relative mx-auto" style={{ width: size, height: size }}>
-        {/* Base radar grid – dummy max values just to draw the web */}
-        <RadarChart data={data.map((d) => ({ label: d.label, value: maxVal }))} size={size} />
-        {/* Overlay points */}
-        <svg
-          className="absolute inset-0"
-          width={size}
-          height={size}
-          viewBox={`0 0 ${size} ${size}`}
-        >
-          {renderPoints()}
-        </svg>
-        {/* Tooltip */}
-        {tooltip && (
-          <div
-            className="absolute bg-c-text text-c-bg text-xs rounded py-1 px-2 whitespace-nowrap shadow-lg"
-            style={{ left: tooltip.x - 50, top: tooltip.y - 40 }}
-          >
-            {tooltip.text}
-          </div>
-        )}
-      </div>
-
-      {/* Legend */}
-      <div className="flex justify-center space-x-6 mt-4 text-sm text-c-text-secondary">
-        {Object.entries(typeColors).map(([type, { emoji }]) => (
-          <div key={type} className="flex items-center space-x-1">
-            <span>{emoji}</span>
-            <span>{type}</span>
-          </div>
-        ))}
-        <div className="flex items-center space-x-1">
-          <span className="inline-block w-3 h-3 bg-c-surface-raised rounded-full"></span>
-          <span>Impact size (larger = stronger)</span>
-        </div>
-      </div>
-
-      {/* Detail modal Removed: Handled by parent via onTrendSelect */}
     </div>
   );
 };

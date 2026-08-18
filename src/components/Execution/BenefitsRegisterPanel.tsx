@@ -10,6 +10,7 @@
  */
 import React, { useCallback, useEffect, useState } from 'react';
 
+import { EmptyState, LoadingState } from '@/components/shared/states';
 import { Api } from '@/services/api';
 
 const HANDOFF_SOURCE = 'M14_CLOSURE_HANDOFF';
@@ -113,49 +114,64 @@ export const BenefitsRegisterPanel: React.FC<Props> = ({ initiativeId }) => {
         </div>
       </div>
 
-      {failed && (
-        <p className="mb-2 text-xs text-amber-600">
-          Nie udało się załadować/zmienić rejestru korzyści (sprawdź uprawnienia MANAGE_ROLLOUT).
-        </p>
-      )}
-      {loading && <p className="text-sm text-c-text-muted">Ładowanie…</p>}
-
-      {!loading && benefits.length === 0 ? (
-        <p className="text-sm text-c-text-muted" data-testid="benefits-list">
-          Brak zarejestrowanych korzyści — dodaj pierwszą (handoff do Rezultatów/M15).
-        </p>
+      {/* Error / loading / content are MUTUALLY EXCLUSIVE. This panel used to
+          print the failure as a line ABOVE the list, so a failed load still
+          rendered the "nothing here yet — create the first one" copy (or the
+          wave cells) underneath: the UI asserted an absence it had not
+          established. docs/UI_UX/35_EMPTY_LOADING_ERROR_STATES.md forbids that
+          ("MUST NOT: Udawac sukcesu dla krytycznych operacji"). */}
+      {failed ? (
+        <div data-testid="benefits-load-error">
+          <EmptyState
+            variant="error"
+            compact
+            title="Nie udało się wczytać rejestru korzyści"
+            description="Sprawdź uprawnienia MANAGE_ROLLOUT."
+            onRetry={() => void load()}
+          />
+        </div>
+      ) : loading ? (
+        <LoadingState template="list" rows={3} />
       ) : (
-        <ul className="flex flex-col gap-2" data-testid="benefits-list">
-          {benefits.map((b) => (
-            <li
-              key={b.id}
-              className="flex flex-col gap-1 rounded-lg border border-c-border-subtle p-2"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-sm font-medium text-c-text">{b.kpi_name || b.name}</span>
-                <div className="flex items-center gap-1">
-                  {b.source === HANDOFF_SOURCE && (
-                    <span className="inline-block rounded-full border border-violet-200 bg-violet-100 px-2 py-0.5 text-[10px] font-medium text-violet-700">
-                      handoff M14
+        <>
+          {benefits.length === 0 ? (
+            <p className="text-sm text-c-text-muted" data-testid="benefits-list">
+              Brak zarejestrowanych korzyści — dodaj pierwszą (handoff do Rezultatów/M15).
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-2" data-testid="benefits-list">
+              {benefits.map((b) => (
+                <li
+                  key={b.id}
+                  className="flex flex-col gap-1 rounded-lg border border-c-border-subtle p-2"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium text-c-text">{b.kpi_name || b.name}</span>
+                    <div className="flex items-center gap-1">
+                      {b.source === HANDOFF_SOURCE && (
+                        <span className="inline-block rounded-full border border-violet-200 bg-violet-100 px-2 py-0.5 text-[10px] font-medium text-violet-700">
+                          handoff M14
+                        </span>
+                      )}
+                      <span
+                        className={`inline-block rounded-full border px-2 py-0.5 text-[11px] font-medium ${statusStyle(b.status)}`}
+                      >
+                        {b.status}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-c-text-muted">
+                    <span>owner: {b.owner_id || '—'}</span>
+                    <span>
+                      {fmtVal(b.baseline_value)} → {fmtVal(b.target_value)}
                     </span>
-                  )}
-                  <span
-                    className={`inline-block rounded-full border px-2 py-0.5 text-[11px] font-medium ${statusStyle(b.status)}`}
-                  >
-                    {b.status}
-                  </span>
-                </div>
-              </div>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-c-text-muted">
-                <span>owner: {b.owner_id || '—'}</span>
-                <span>
-                  {fmtVal(b.baseline_value)} → {fmtVal(b.target_value)}
-                </span>
-                <span>cadence: {b.cadence || '—'}</span>
-              </div>
-            </li>
-          ))}
-        </ul>
+                    <span>cadence: {b.cadence || '—'}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
       )}
     </section>
   );

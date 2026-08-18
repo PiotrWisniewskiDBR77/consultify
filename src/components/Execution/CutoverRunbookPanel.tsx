@@ -8,6 +8,7 @@
  */
 import React, { useCallback, useEffect, useState } from 'react';
 
+import { EmptyState, LoadingState } from '@/components/shared/states';
 import { Api } from '@/services/api';
 
 type RunbookStatus = 'planned' | 'in_progress' | 'completed' | 'aborted';
@@ -143,29 +144,37 @@ export const CutoverRunbookPanel: React.FC<Props> = ({ initiativeId }) => {
         {runbook && <span className="text-xs text-c-text-muted">{steps.length} kroków</span>}
       </div>
 
-      {failed && (
-        <p className="mb-2 text-xs text-amber-600">
-          Nie udało się załadować/zmienić runbooka (sprawdź uprawnienia MANAGE_ROLLOUT).
-        </p>
-      )}
-      {loading && <p className="text-sm text-c-text-muted">Ładowanie…</p>}
-
-      {!initiativeId ? (
+      {/* Error / loading / content are MUTUALLY EXCLUSIVE. This panel used to
+          print the failure as a line ABOVE the content, so a failed load still
+          rendered the "create a runbook" call to action underneath: the UI asserted a state it had not
+          established. docs/UI_UX/35_EMPTY_LOADING_ERROR_STATES.md forbids that
+          ("MUST NOT: Udawac sukcesu dla krytycznych operacji"). */}
+      {failed ? (
+        <div data-testid="cutover-load-error">
+          <EmptyState
+            variant="error"
+            compact
+            title="Nie udało się wczytać runbooka cutover"
+            description="Sprawdź uprawnienia MANAGE_ROLLOUT."
+            onRetry={() => void load()}
+          />
+        </div>
+      ) : loading ? (
+        <LoadingState template="list" rows={4} />
+      ) : !initiativeId ? (
         <p className="text-sm text-c-text-muted">
           Wybierz inicjatywę, aby zobaczyć runbook cutover.
         </p>
       ) : !runbook ? (
-        !loading && (
-          <button
-            type="button"
-            data-testid="cutover-create-btn"
-            disabled={busy === 'create'}
-            onClick={() => void createRunbook()}
-            className="rounded-md border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100 disabled:opacity-50"
-          >
-            {busy === 'create' ? '…' : 'Utwórz runbook cutover'}
-          </button>
-        )
+        <button
+          type="button"
+          data-testid="cutover-create-btn"
+          disabled={busy === 'create'}
+          onClick={() => void createRunbook()}
+          className="rounded-md border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100 disabled:opacity-50"
+        >
+          {busy === 'create' ? '…' : 'Utwórz runbook cutover'}
+        </button>
       ) : (
         <>
           <div className="mb-3 flex items-center gap-2">
