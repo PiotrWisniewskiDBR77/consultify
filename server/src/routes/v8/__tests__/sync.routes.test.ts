@@ -1,14 +1,100 @@
 /**
  * @vitest-environment node
+ *
+ * HISTORY (SET-MVP-OAUTH-001 / AMD-SET-OAUTH-APPROVED-OUT-002):
+ *
+ * This suite previously ran with zero references to
+ * `OAUTH_APPROVED_PROVIDER_REGISTRY` and zero mocks of the pmSync governed
+ * external-auth service (`pmSyncExternalAuthMaterializationService.ts`), so
+ * every test exercised the REAL `buildGovernedExternalAuthSession` code path
+ * with no registry approval configured. The suite was fully green under
+ * that condition. Six of those green tests were, at the time, asserting
+ * that calling POST /integrations/:integrationId/configure or
+ * POST /integrations/:integrationId/reauth for an UNAPPROVED connector
+ * (gmail, asana, teams, slack, jira) produced a real, usable provider
+ * consent URL (a live authUrl pointed at the real Google/Asana/Microsoft/
+ * Slack/Atlassian authorize endpoint) and transitioned connector auth state
+ * to 'connecting' — with no approval registry consulted at all. That green
+ * was certifying the fail-open defect: external OAuth is excluded from MVP,
+ * so an unapproved connector must never reach a live consent URL. The green
+ * was the bug, not a regression.
+ *
+ * Once the service-layer guard (`requireApprovedGovernedConnector` inside
+ * `pmSyncExternalAuthMaterializationService.ts`) and the route-layer
+ * reordering/membership wall in `sync.routes.ts` were put in place, those
+ * six tests failed (6 failed / 33 passed) because they no longer seeded an
+ * approved registry entry. They have been INVERTED here, honestly: each now
+ * seeds `OAUTH_APPROVED_PROVIDER_REGISTRY` with that connector's exact
+ * pmSync registry key and exact required scopes before asserting the
+ * previously-implicit positive path, and negative-path siblings were added
+ * asserting denial (with zero writes) when the registry is absent,
+ * disapproved, scope-mismatched, or residency-empty. The six inverted
+ * tests (identified by their original names, unchanged) are:
+ *
+ *   1. "prepares a real Gmail provider auth URL"
+ *   2. "prepares a real Asana provider auth URL"
+ *   3. "prepares a real Teams provider auth URL"
+ *   4. "prepares a real Slack provider auth URL"
+ *   5. "saves pending setup fields on the governed seam" (jira / configure)
+ *   6. "starts a governed reauth flow" (jira / reauth)
  */
 import express, { type Express } from 'express';
 import request from 'supertest';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   V8_SYNC_RUNTIME_MUTATION_CONTRACT,
   V8_SYNC_RUNTIME_READ_CONTRACT,
 } from '../sync.routes.js';
+
+/**
+ * Copied verbatim from
+ * `server/src/services/v8/pmSyncExternalAuthMaterializationService.ts`
+ * (`GOVERNED_CONNECTOR_REQUIRED_SCOPES` / `DEFAULT_*_SCOPES`, lines 32,
+ * 41-47, 51, 57) — this is the scope set `requireApprovedGovernedConnector`
+ * actually checks the registry against for the pmSync governed sync flow.
+ * Deliberately NOT sourced from `integrationOAuthEngine.ts`'s
+ * `CONNECTOR_OAUTH_CONFIGS` scope table: that module keys the SAME
+ * connector ids (jira/gmail/teams/slack/asana) to a DIFFERENT, broader
+ * scope list for a different OAuth surface (login/generic connect), so
+ * approving against it would approve a scope set pmSync never actually
+ * requests — false governance, not real governance.
+ */
+const DEFAULT_JIRA_SCOPES = ['offline_access', 'read:jira-work'];
+const DEFAULT_ASANA_SCOPES = ['default'];
+const DEFAULT_GMAIL_SCOPES = [
+  'openid',
+  'email',
+  'profile',
+  'https://www.googleapis.com/auth/gmail.readonly',
+];
+const DEFAULT_SLACK_SCOPES = ['channels:read', 'users:read', 'chat:write'];
+const DEFAULT_TEAMS_SCOPES = ['offline_access', 'openid', 'profile', 'email', 'User.Read'];
+
+/**
+ * Builds a value for `process.env.OAUTH_APPROVED_PROVIDER_REGISTRY`
+ * matching the shape `getRegistryApprovalDecision` (server/src/services/
+ * oauthService.ts) parses: `{ [registryKey]: { approved, scopes, residency } }`.
+ * The pmSync governed flow keys the registry with its own normalized
+ * connector id ('jira' | 'gmail' | 'asana' | 'teams' | 'slack'), which is
+ * exactly the connector id used below.
+ */
+function buildApprovedRegistry(
+  entries: Record<
+    string,
+    { approved?: boolean; scopes: readonly string[]; residency?: string }
+  >
+): string {
+  const registry: Record<string, unknown> = {};
+  for (const [connectorId, entry] of Object.entries(entries)) {
+    registry[connectorId] = {
+      approved: entry.approved ?? true,
+      scopes: [...entry.scopes],
+      residency: entry.residency ?? 'EU',
+    };
+  }
+  return JSON.stringify(registry);
+}
 
 const mockGetCredentialHealth = vi.fn();
 const mockGetActiveEscalations = vi.fn();
@@ -39,6 +125,7 @@ const mockStoreRefreshExecutionSecret = vi.fn();
 const mockExecuteRefreshExecution = vi.fn();
 const mockDbAll = vi.fn();
 const mockDbRun = vi.fn();
+const mockDbGet = vi.fn();
 
 vi.mock('../../../services/v8/pmSyncAuthService.js', () => ({
   getCredentialHealth: (...args: unknown[]) => mockGetCredentialHealth(...args),
@@ -100,6 +187,10 @@ vi.mock('../../../utils/DbPromise.js', async () => {
     ...actual,
     all: (...args: unknown[]) => mockDbAll(...args),
     run: (...args: unknown[]) => mockDbRun(...args),
+    // `get` backs `requireActiveAuditsMembership` (the membership wall on
+    // configure/reauth) — it reads `organization_members` directly via
+    // DbPromise.get, bypassing the `all`/`run` mocks above.
+    get: (...args: unknown[]) => mockDbGet(...args),
   };
 });
 
@@ -195,10 +286,26 @@ const ORG = '00000000-0000-4000-8000-000000000099';
 const UID = 'user-sync-v8';
 const CONNECTOR = 'conn-jira-1';
 
+// Captured once so every test — including ones that never touch the
+// registry — restores the exact starting value (including "was never set
+// at all") rather than leaking an approval into a sibling test. This is the
+// "undefined case" from the capture/restore requirement: `ORIGINAL_REGISTRY_ENV`
+// is `undefined` whenever the process never had the var set, and `afterEach`
+// deletes the key rather than writing the string "undefined".
+const ORIGINAL_REGISTRY_ENV = process.env.OAUTH_APPROVED_PROVIDER_REGISTRY;
+
 describe('V8 sync read-only routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUser = { id: UID, role: 'ADMIN', organizationId: ORG, isSuperAdmin: false };
+    // Default: no registry approved. Tests that need an approved connector
+    // opt in explicitly via `buildApprovedRegistry`; this keeps the default
+    // posture fail-closed, matching production (SET-MVP-OAUTH-001).
+    delete process.env.OAUTH_APPROVED_PROVIDER_REGISTRY;
+    // Default: an ACTIVE same-tenant membership, so tests that are not
+    // specifically exercising the membership wall (added to configure/reauth
+    // by AMD-SET-OAUTH-APPROVED-OUT-002's ordering fix) are unaffected by it.
+    mockDbGet.mockResolvedValue({ status: 'ACTIVE' });
     mockGetCredential.mockResolvedValue(null);
     mockRecordAuthEscalation.mockResolvedValue({
       escalationId: 'esc-auth-1',
@@ -306,6 +413,17 @@ describe('V8 sync read-only routes', () => {
     mockDisconnectIntegration.mockResolvedValue({ success: true });
   });
 
+  afterEach(() => {
+    // Leaked approval state between tests is a false-green vector: restore
+    // exactly what was there before this file's tests ran, including the
+    // "was never set" (undefined) case.
+    if (ORIGINAL_REGISTRY_ENV === undefined) {
+      delete process.env.OAUTH_APPROVED_PROVIDER_REGISTRY;
+    } else {
+      process.env.OAUTH_APPROVED_PROVIDER_REGISTRY = ORIGINAL_REGISTRY_ENV;
+    }
+  });
+
   it('GET /api/v8/sync/integrations returns governed inventory envelope', async () => {
     mockListGovernedIntegrations.mockResolvedValue([
       {
@@ -398,7 +516,92 @@ describe('V8 sync read-only routes', () => {
     );
   });
 
+  // -------------------------------------------------------------------
+  // `connected_by` audit-identity binding on the `integrations` INSERT
+  // (POST /connectors/:connectorId/connect — the only route in this file
+  // that runs a literal `INSERT INTO integrations`). The column is
+  // `TEXT NOT NULL` with no default (server/migrations/256_integrations_
+  // system.sql); it must always be the verified actor id from the token
+  // (`req.user.id` / `req.userId`), never a value supplied by the caller.
+  // -------------------------------------------------------------------
+
+  it('POST /api/v8/sync/connectors/:connectorId/connect binds connected_by to the authenticated actor id on the integrations INSERT', async () => {
+    const app = createApp();
+    const res = await request(app).post('/api/v8/sync/connectors/jira/connect').send({});
+
+    expect(res.status).toBe(201);
+
+    const insertCall = mockDbRun.mock.calls.find(
+      (call) => typeof call[0] === 'string' && call[0].includes('INSERT INTO integrations')
+    );
+    expect(insertCall).toBeDefined();
+    const [sql, params] = insertCall as [string, unknown[]];
+    expect(sql).toContain('connected_by');
+
+    // The column list and the value list must line up positionally: find
+    // where `connected_by` sits among the declared columns and assert the
+    // bound parameter at that same index is the authenticated actor id.
+    const columnListMatch = sql.match(/INSERT INTO integrations \(([\s\S]*?)\)\s*VALUES/);
+    expect(columnListMatch).not.toBeNull();
+    const columns = (columnListMatch as RegExpMatchArray)[1]
+      .split(',')
+      .map((column) => column.trim());
+    const connectedByIndex = columns.indexOf('connected_by');
+    expect(connectedByIndex).toBeGreaterThanOrEqual(0);
+    // Trailing columns bound to literal CURRENT_TIMESTAMP (not `?`) are not
+    // present in `params`, so only columns up to and including connected_by
+    // need to map 1:1 into the params array.
+    expect(params[connectedByIndex]).toBe(UID);
+  });
+
+  it('POST /api/v8/sync/connectors/:connectorId/connect ignores a spoofed connected_by/actorId/userId in the request body', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/v8/sync/connectors/jira/connect')
+      .send({
+        connected_by: 'attacker-connected-by',
+        connectedBy: 'attacker-connectedBy',
+        actorId: 'attacker-actor-id',
+        userId: 'attacker-user-id',
+      });
+
+    expect(res.status).toBe(201);
+
+    const insertCall = mockDbRun.mock.calls.find(
+      (call) => typeof call[0] === 'string' && call[0].includes('INSERT INTO integrations')
+    );
+    expect(insertCall).toBeDefined();
+    const [, params] = insertCall as [string, unknown[]];
+
+    // No spoofed value from the body reached the INSERT's bound params at all.
+    expect(params).not.toContain('attacker-connected-by');
+    expect(params).not.toContain('attacker-connectedBy');
+    expect(params).not.toContain('attacker-actor-id');
+    expect(params).not.toContain('attacker-user-id');
+    // The authenticated actor id is what actually landed in the params.
+    expect(params).toContain(UID);
+  });
+
+  it('POST /api/v8/sync/connectors/:connectorId/connect fails closed with zero writes when there is no authenticated actor', async () => {
+    mockUser = null;
+
+    const app = createApp();
+    const res = await request(app).post('/api/v8/sync/connectors/jira/connect').send({});
+
+    expect(res.status).not.toBe(200);
+    expect(res.status).not.toBe(201);
+    expect(res.status).toBe(401);
+    expect(mockDbRun).not.toHaveBeenCalled();
+  });
+
   it('POST /api/v8/sync/integrations/:integrationId/configure saves pending setup fields on the governed seam', async () => {
+    // INVERTED (see file-header HISTORY): this test used to pass with no
+    // registry approval configured at all. It now seeds an explicit
+    // approval for 'jira' with the connector's exact required scopes before
+    // asserting the positive (approved) path.
+    process.env.OAUTH_APPROVED_PROVIDER_REGISTRY = buildApprovedRegistry({
+      jira: { scopes: DEFAULT_JIRA_SCOPES },
+    });
     mockDbAll.mockResolvedValueOnce([
       {
         id: 'int-pending-1',
@@ -453,6 +656,10 @@ describe('V8 sync read-only routes', () => {
   });
 
   it('POST /api/v8/sync/integrations/:integrationId/configure prepares a real Gmail provider auth URL', async () => {
+    // INVERTED (see file-header HISTORY).
+    process.env.OAUTH_APPROVED_PROVIDER_REGISTRY = buildApprovedRegistry({
+      gmail: { scopes: DEFAULT_GMAIL_SCOPES },
+    });
     mockDbAll.mockResolvedValueOnce([
       {
         id: 'int-gmail-1',
@@ -491,6 +698,10 @@ describe('V8 sync read-only routes', () => {
   });
 
   it('POST /api/v8/sync/integrations/:integrationId/configure prepares a real Asana provider auth URL', async () => {
+    // INVERTED (see file-header HISTORY).
+    process.env.OAUTH_APPROVED_PROVIDER_REGISTRY = buildApprovedRegistry({
+      asana: { scopes: DEFAULT_ASANA_SCOPES },
+    });
     mockDbAll.mockResolvedValueOnce([
       {
         id: 'int-asana-1',
@@ -529,6 +740,10 @@ describe('V8 sync read-only routes', () => {
   });
 
   it('POST /api/v8/sync/integrations/:integrationId/configure prepares a real Teams provider auth URL', async () => {
+    // INVERTED (see file-header HISTORY).
+    process.env.OAUTH_APPROVED_PROVIDER_REGISTRY = buildApprovedRegistry({
+      teams: { scopes: DEFAULT_TEAMS_SCOPES },
+    });
     mockDbAll.mockResolvedValueOnce([
       {
         id: 'int-teams-1',
@@ -567,6 +782,10 @@ describe('V8 sync read-only routes', () => {
   });
 
   it('POST /api/v8/sync/integrations/:integrationId/configure prepares a real Slack provider auth URL', async () => {
+    // INVERTED (see file-header HISTORY).
+    process.env.OAUTH_APPROVED_PROVIDER_REGISTRY = buildApprovedRegistry({
+      slack: { scopes: DEFAULT_SLACK_SCOPES },
+    });
     mockDbAll.mockResolvedValueOnce([
       {
         id: 'int-slack-1',
@@ -669,6 +888,10 @@ describe('V8 sync read-only routes', () => {
   });
 
   it('POST /api/v8/sync/integrations/:integrationId/reauth starts a governed reauth flow', async () => {
+    // INVERTED (see file-header HISTORY).
+    process.env.OAUTH_APPROVED_PROVIDER_REGISTRY = buildApprovedRegistry({
+      jira: { scopes: DEFAULT_JIRA_SCOPES },
+    });
     mockDbAll.mockResolvedValueOnce([
       {
         connector_id: 'jira',
@@ -1340,4 +1563,249 @@ describe('V8 sync read-only routes', () => {
     expect(res.body.code).toBe('INVALID_BODY');
     expect(mockResolveConflict).not.toHaveBeenCalled();
   });
+
+  // ---------------------------------------------------------------------
+  // Governed external-auth approval guard — negative coverage
+  //
+  // Every case below must be denied BEFORE any write: no config UPDATE, no
+  // audit log INSERT, no connector auth-state transition, no reauth's
+  // integration-status flip, and — since `logIntegrationConnectionEvent`
+  // also writes through `dbRun` — no connection-event INSERT either. A
+  // single shared assertion (`mockDbRun` not called) covers all of those,
+  // because every write in this file's configure/reauth handlers goes
+  // through `dbRun`.
+  // ---------------------------------------------------------------------
+
+  const CONFIGURE_CONNECTOR_FIXTURES = [
+    {
+      connectorId: 'jira',
+      integrationId: 'int-jira-neg',
+      scopes: DEFAULT_JIRA_SCOPES,
+      config: {
+        site_url: 'https://example.atlassian.net',
+        cloud_id: 'cloud-123',
+        client_id: 'jira-client-id',
+        client_secret: 'jira-client-secret',
+      },
+    },
+    {
+      connectorId: 'gmail',
+      integrationId: 'int-gmail-neg',
+      scopes: DEFAULT_GMAIL_SCOPES,
+      config: { domain: 'acme.com' },
+    },
+    {
+      connectorId: 'asana',
+      integrationId: 'int-asana-neg',
+      scopes: DEFAULT_ASANA_SCOPES,
+      config: { workspace_gid: 'workspace-123' },
+    },
+    {
+      connectorId: 'teams',
+      integrationId: 'int-teams-neg',
+      scopes: DEFAULT_TEAMS_SCOPES,
+      config: { tenant_id: 'tenant-123' },
+    },
+    {
+      connectorId: 'slack',
+      integrationId: 'int-slack-neg',
+      scopes: DEFAULT_SLACK_SCOPES,
+      config: { workspace_id: 'workspace-123' },
+    },
+  ] as const;
+
+  function approvalVariants(scopes: readonly string[]): Array<{
+    label: string;
+    registry: (connectorId: string) => string | undefined;
+  }> {
+    return [
+      { label: 'no registry entry at all', registry: () => undefined },
+      {
+        label: 'registry entry has approved:false',
+        registry: (connectorId) =>
+          buildApprovedRegistry({ [connectorId]: { approved: false, scopes } }),
+      },
+      {
+        label: 'registry scopes do not match the required scope set',
+        registry: (connectorId) =>
+          buildApprovedRegistry({ [connectorId]: { scopes: ['not-a-real-scope'] } }),
+      },
+      {
+        label: 'registry residency is empty',
+        registry: (connectorId) =>
+          buildApprovedRegistry({ [connectorId]: { scopes, residency: '' } }),
+      },
+    ];
+  }
+
+  for (const fixture of CONFIGURE_CONNECTOR_FIXTURES) {
+    for (const variant of approvalVariants(fixture.scopes)) {
+      it(`POST /api/v8/sync/integrations/:integrationId/configure denies ${fixture.connectorId} when ${variant.label}`, async () => {
+        const registryValue = variant.registry(fixture.connectorId);
+        if (registryValue === undefined) {
+          delete process.env.OAUTH_APPROVED_PROVIDER_REGISTRY;
+        } else {
+          process.env.OAUTH_APPROVED_PROVIDER_REGISTRY = registryValue;
+        }
+        mockDbAll.mockResolvedValueOnce([
+          {
+            id: fixture.integrationId,
+            connector_id: fixture.connectorId,
+            config: '{}',
+            status: 'pending',
+          },
+        ]);
+
+        const app = createApp();
+        const res = await request(app)
+          .post(`/api/v8/sync/integrations/${fixture.integrationId}/configure`)
+          .send({ config: fixture.config });
+
+        expect(res.status).toBe(403);
+        expect(res.body.code).toBe('GOVERNED_EXTERNAL_AUTH_NOT_APPROVED');
+        expect(res.body.data).toBeUndefined();
+        // A rejected promise alone would not prove this: assert the writes
+        // this route would otherwise have made were never attempted.
+        expect(mockDbRun).not.toHaveBeenCalled();
+        expect(mockSetConnectorAuthState).not.toHaveBeenCalled();
+      });
+    }
+  }
+
+  const REAUTH_JIRA_CONFIG =
+    '{"site_url":"https://example.atlassian.net","cloud_id":"cloud-123","client_id":"jira-client-id","client_secret":"jira-client-secret"}';
+
+  // Jira is required in both positive and negative coverage on both routes
+  // (configure above, reauth here).
+  for (const variant of approvalVariants(DEFAULT_JIRA_SCOPES)) {
+    it(`POST /api/v8/sync/integrations/:integrationId/reauth denies jira when ${variant.label}`, async () => {
+      const registryValue = variant.registry('jira');
+      if (registryValue === undefined) {
+        delete process.env.OAUTH_APPROVED_PROVIDER_REGISTRY;
+      } else {
+        process.env.OAUTH_APPROVED_PROVIDER_REGISTRY = registryValue;
+      }
+      mockDbAll.mockResolvedValueOnce([
+        { connector_id: 'jira', config: REAUTH_JIRA_CONFIG },
+      ]);
+
+      const app = createApp();
+      const res = await request(app).post('/api/v8/sync/integrations/int-1/reauth').send({});
+
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('GOVERNED_EXTERNAL_AUTH_NOT_APPROVED');
+      expect(res.body.data).toBeUndefined();
+      expect(mockUpdateIntegrationStatus).not.toHaveBeenCalled();
+      expect(mockSetConnectorAuthState).not.toHaveBeenCalled();
+      // 'reauth_started' is logged via logIntegrationAudit -> dbRun; it must
+      // not fire either, since it now happens AFTER the approval guard.
+      expect(mockDbRun).not.toHaveBeenCalled();
+    });
+  }
+
+  // ---------------------------------------------------------------------
+  // Authoritative ACTIVE same-tenant membership wall — negative coverage
+  // on both routes. Mounted via `requireActiveAuditsMembership`
+  // (allowPlatformSuperAdminBypass: false), so a platform SUPERADMIN with
+  // no membership row is denied exactly like anyone else.
+  // ---------------------------------------------------------------------
+
+  type MembershipNegativeCase = {
+    label: string;
+    setup: () => void;
+    expectedStatus: number;
+    expectedCode?: string;
+    dbGetShouldBeCalled: boolean;
+  };
+
+  function membershipNegativeCases(): MembershipNegativeCase[] {
+    return [
+      {
+        label: 'the request has no token',
+        setup: () => {
+          mockUser = null;
+        },
+        expectedStatus: 401,
+        dbGetShouldBeCalled: false,
+      },
+      {
+        label: 'the caller’s membership was revoked',
+        setup: () => {
+          mockDbGet.mockResolvedValue({ status: 'REVOKED' });
+        },
+        expectedStatus: 403,
+        expectedCode: 'ORG_MEMBERSHIP_REVOKED',
+        dbGetShouldBeCalled: true,
+      },
+      {
+        label: 'the caller has no ACTIVE membership row in this tenant (foreign org)',
+        setup: () => {
+          mockDbGet.mockResolvedValue(undefined);
+        },
+        expectedStatus: 403,
+        expectedCode: 'ORG_MEMBERSHIP_REVOKED',
+        dbGetShouldBeCalled: true,
+      },
+      {
+        label: 'the caller is an unmembered platform SUPERADMIN',
+        setup: () => {
+          mockUser = { id: UID, role: 'SUPERADMIN', organizationId: ORG, isSuperAdmin: true };
+          mockDbGet.mockResolvedValue(undefined);
+        },
+        expectedStatus: 403,
+        expectedCode: 'ORG_MEMBERSHIP_REVOKED',
+        dbGetShouldBeCalled: true,
+      },
+      {
+        label: 'the membership lookup itself fails',
+        setup: () => {
+          mockDbGet.mockRejectedValue(new Error('connection terminated unexpectedly'));
+        },
+        expectedStatus: 403,
+        expectedCode: 'ORG_MEMBERSHIP_REVOKED',
+        dbGetShouldBeCalled: true,
+      },
+    ];
+  }
+
+  for (const testCase of membershipNegativeCases()) {
+    it(`POST /api/v8/sync/integrations/:integrationId/configure denies when ${testCase.label}`, async () => {
+      testCase.setup();
+
+      const app = createApp();
+      const res = await request(app)
+        .post('/api/v8/sync/integrations/int-1/configure')
+        .send({ config: {} });
+
+      expect(res.status).toBe(testCase.expectedStatus);
+      if (testCase.expectedCode) {
+        expect(res.body.code).toBe(testCase.expectedCode);
+      }
+      expect(mockDbGet).toHaveBeenCalledTimes(testCase.dbGetShouldBeCalled ? 1 : 0);
+      // Denied before the route handler ever runs: no integration lookup,
+      // no write of any kind.
+      expect(mockDbAll).not.toHaveBeenCalled();
+      expect(mockDbRun).not.toHaveBeenCalled();
+      expect(mockSetConnectorAuthState).not.toHaveBeenCalled();
+    });
+  }
+
+  for (const testCase of membershipNegativeCases()) {
+    it(`POST /api/v8/sync/integrations/:integrationId/reauth denies when ${testCase.label}`, async () => {
+      testCase.setup();
+
+      const app = createApp();
+      const res = await request(app).post('/api/v8/sync/integrations/int-1/reauth').send({});
+
+      expect(res.status).toBe(testCase.expectedStatus);
+      if (testCase.expectedCode) {
+        expect(res.body.code).toBe(testCase.expectedCode);
+      }
+      expect(mockDbGet).toHaveBeenCalledTimes(testCase.dbGetShouldBeCalled ? 1 : 0);
+      expect(mockDbAll).not.toHaveBeenCalled();
+      expect(mockDbRun).not.toHaveBeenCalled();
+      expect(mockUpdateIntegrationStatus).not.toHaveBeenCalled();
+      expect(mockSetConnectorAuthState).not.toHaveBeenCalled();
+    });
+  }
 });

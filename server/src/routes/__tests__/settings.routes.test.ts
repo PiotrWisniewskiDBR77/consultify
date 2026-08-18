@@ -55,15 +55,24 @@ vi.mock('../../services/v8/pmSyncTruthService.js', () => ({
 
 vi.mock('../../middleware/auth.middleware.js', () => ({
   verifyToken: (req: any, _res: any, next: () => void) => {
+    // Test-only escape hatch: simulate a request that reaches downstream
+    // middleware with no identity at all, so the membership wall's own
+    // fail-closed "no userId/organizationId" branch can be exercised
+    // independently of this stub's normal behavior.
+    if (req.headers['x-simulate-missing-token']) {
+      next();
+      return;
+    }
     const role = req.headers['x-user-role'] || 'member';
+    const organizationId = String(req.headers['x-claim-org'] || 'org-1');
     req.user = {
       id: 'user-1',
-      organizationId: 'org-1',
+      organizationId,
       role,
       isSuperAdmin: String(role).toLowerCase() === 'superadmin',
     };
     req.userRole = role;
-    req.organizationId = 'org-1';
+    req.organizationId = organizationId;
     next();
   },
 }));
@@ -98,7 +107,22 @@ describe('settings integrations authority continuity', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockDbRun.mockResolvedValue({ success: true });
-    mockDbGet.mockResolvedValue(undefined);
+    // Default: the real requireActiveAuditsMembership middleware (not mocked
+    // here — it is the thing under test) queries organization_members on
+    // every request to the three governed-connect routes. Grant an ACTIVE
+    // row for the default caller/org used by the "happy path" tests below;
+    // any other user/org combination (forged org claims, unmembered
+    // superadmins, etc.) falls through to "no row" and is denied by design.
+    mockDbGet.mockImplementation(async (sql: string, params?: unknown[]) => {
+      if (String(sql).includes('FROM organization_members')) {
+        const [userId, organizationId] = Array.isArray(params) ? params : [];
+        if (userId === 'user-1' && organizationId === 'org-1') {
+          return { status: 'ACTIVE' };
+        }
+        return undefined;
+      }
+      return undefined;
+    });
     mockBuildResolvedContext.mockResolvedValue({
       profile: {
         defaultLanguage: 'pl',
@@ -309,6 +333,94 @@ describe('settings integrations authority continuity', () => {
           (call[1] as unknown[]).includes('pending')
       )
     ).toBe(true);
+  });
+
+  describe('connected_by audit identity binding on POST /integrations/:provider/connect', () => {
+    // connected_by is a required, immutable audit identity column
+    // (server/migrations/256_integrations_system.sql: NOT NULL, no default).
+    // It must be bound ONLY from the verified token's userId, never from the
+    // request body, and the insert must never fire without it.
+    function findIntegrationsInsertCall() {
+      return mockDbRun.mock.calls.find(
+        (call) => typeof call[0] === 'string' && call[0].includes('INSERT INTO integrations')
+      );
+    }
+
+    function insertColumnIndex(sql: string, column: string): number {
+      const match = /INSERT INTO integrations \(([^)]+)\)/.exec(sql);
+      if (!match) throw new Error('could not parse INSERT INTO integrations column list');
+      const columns = match[1].split(',').map((c) => c.trim());
+      return columns.indexOf(column);
+    }
+
+    const connectBody = {
+      config: {
+        site_url: 'https://acme.atlassian.net',
+        cloud_id: 'cloud-1',
+        client_id: 'jira-client-id',
+        client_secret: 'jira-client-secret',
+      },
+    };
+
+    it('binds connected_by to the authenticated actor id on the pending-row insert', async () => {
+      const app = express();
+      app.use(express.json());
+      app.use('/api/settings', settingsRoutes);
+
+      const res = await request(app)
+        .post('/api/settings/integrations/jira/connect')
+        .send(connectBody);
+
+      expect(res.status).toBe(200);
+      const call = findIntegrationsInsertCall();
+      expect(call).toBeDefined();
+      const columnIndex = insertColumnIndex(String(call![0]), 'connected_by');
+      expect(columnIndex).toBeGreaterThanOrEqual(0);
+      expect((call![1] as unknown[])[columnIndex]).toBe('user-1');
+    });
+
+    it('ignores body-supplied actor-identity spoof fields; only the authenticated id reaches the insert', async () => {
+      const app = express();
+      app.use(express.json());
+      app.use('/api/settings', settingsRoutes);
+
+      const res = await request(app)
+        .post('/api/settings/integrations/jira/connect')
+        .send({
+          ...connectBody,
+          connected_by: 'attacker-connected-by',
+          connectedBy: 'attacker-connectedBy',
+          actorId: 'attacker-actorId',
+          userId: 'attacker-userId',
+          connected_by_id: 'attacker-connected-by-id',
+        });
+
+      expect(res.status).toBe(200);
+      const call = findIntegrationsInsertCall();
+      expect(call).toBeDefined();
+      const params = call![1] as unknown[];
+      const columnIndex = insertColumnIndex(String(call![0]), 'connected_by');
+      expect(params[columnIndex]).toBe('user-1');
+      expect(params).not.toContain('attacker-connected-by');
+      expect(params).not.toContain('attacker-connectedBy');
+      expect(params).not.toContain('attacker-actorId');
+      expect(params).not.toContain('attacker-userId');
+      expect(params).not.toContain('attacker-connected-by-id');
+    });
+
+    it('fails closed with zero database writes when there is no authenticated identity', async () => {
+      const app = express();
+      app.use(express.json());
+      app.use('/api/settings', settingsRoutes);
+
+      const res = await request(app)
+        .post('/api/settings/integrations/jira/connect')
+        .set('x-simulate-missing-token', '1')
+        .send(connectBody);
+
+      expect(res.status).not.toBeLessThan(300);
+      expect(mockDbRun).not.toHaveBeenCalled();
+    });
   });
 
   it('DELETE /api/settings/integrations/:provider reuses governed disconnect authority', async () => {
@@ -626,6 +738,268 @@ describe('settings integrations authority continuity', () => {
     expect(activeRes.status).toBe(200);
     expect(activeRes.body).toEqual({ success: true });
   });
+});
+
+describe('SET-MVP-OAUTH-001: membership wall + approval ordering on governed connect routes', () => {
+  // Every scenario below is exercised against all three routes that call
+  // buildGovernedExternalAuthSession: connect, refresh, and config. Each
+  // denial case must produce zero writes (no pending-row insert, no
+  // config-row update, no connecting-state transition, and no consent URL
+  // built) — proving the membership wall runs, and runs first.
+  const routes: Array<{
+    label: string;
+    send: (app: express.Express, extraHeaders?: Record<string, string>) => request.Test;
+  }> = [
+    {
+      label: 'POST /integrations/:provider/connect',
+      send: (app, extraHeaders = {}) => {
+        let req = request(app).post('/api/settings/integrations/jira/connect');
+        for (const [key, value] of Object.entries(extraHeaders)) req = req.set(key, value);
+        return req.send({
+          config: {
+            site_url: 'https://acme.atlassian.net',
+            cloud_id: 'cloud-1',
+            client_id: 'jira-client-id',
+            client_secret: 'jira-client-secret',
+          },
+        });
+      },
+    },
+    {
+      label: 'POST /integrations/:provider/refresh',
+      send: (app, extraHeaders = {}) => {
+        let req = request(app).post('/api/settings/integrations/jira/refresh');
+        for (const [key, value] of Object.entries(extraHeaders)) req = req.set(key, value);
+        return req.send();
+      },
+    },
+    {
+      label: 'PUT /integrations/:provider/config',
+      send: (app, extraHeaders = {}) => {
+        let req = request(app).put('/api/settings/integrations/jira/config');
+        for (const [key, value] of Object.entries(extraHeaders)) req = req.set(key, value);
+        return req.send({
+          config: {
+            cloud_id: 'cloud-1',
+            client_id: 'jira-client-id',
+            client_secret: 'jira-client-secret',
+          },
+        });
+      },
+    },
+  ];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockDbRun.mockResolvedValue({ success: true });
+    mockDbGet.mockImplementation(async (sql: string, params?: unknown[]) => {
+      if (String(sql).includes('FROM organization_members')) {
+        const [userId, organizationId] = Array.isArray(params) ? params : [];
+        if (userId === 'user-1' && organizationId === 'org-1') {
+          return { status: 'ACTIVE' };
+        }
+        return undefined;
+      }
+      return undefined;
+    });
+    mockGetTableColumns.mockImplementation(async (table: string) => {
+      if (table === 'integrations') {
+        return new Set(['connector_id', 'config']);
+      }
+      return new Set();
+    });
+    mockDbAll.mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM integrations')) {
+        return [
+          {
+            id: 'int-1',
+            connector_id: 'jira',
+            config: JSON.stringify({
+              site_url: 'https://acme.atlassian.net',
+              cloud_id: 'cloud-1',
+              client_id: 'jira-client-id',
+              client_secret: 'jira-client-secret',
+            }),
+            created_at: '2026-03-27T20:00:00.000Z',
+            updated_at: '2026-03-27T20:05:00.000Z',
+          },
+        ];
+      }
+      return [];
+    });
+    mockBuildGovernedExternalAuthSession.mockReturnValue({
+      authUrl: 'https://auth.atlassian.com/authorize?state=state-1',
+      callbackUrl: 'https://example.test/api/sync-hub/external-auth/callback?state=state-1',
+      state: 'state-1',
+      expiresAt: '2026-03-27T20:11:00.000Z',
+    });
+    mockSetConnectorAuthState.mockResolvedValue({
+      recordId: 'auth-1',
+      connectorId: 'jira',
+      organizationId: 'org-1',
+      authState: 'connecting',
+      previousState: null,
+      transitionedAt: '2026-03-27T20:10:00.000Z',
+      transitionedBy: 'user-1',
+      reason: 'settings_integrations_connect_initiated',
+    });
+    mockUpdateIntegrationStatus.mockResolvedValue({ success: true });
+  });
+
+  function expectNoWrites() {
+    // dbRun covers the pending-row insert (connect) and the config-row
+    // update (config); mockUpdateIntegrationStatus covers the refresh
+    // route's own write. setConnectorAuthState and the approval guard
+    // itself must also never fire once the membership wall has denied.
+    expect(mockDbRun).not.toHaveBeenCalled();
+    expect(mockUpdateIntegrationStatus).not.toHaveBeenCalled();
+    expect(mockSetConnectorAuthState).not.toHaveBeenCalled();
+    expect(mockBuildGovernedExternalAuthSession).not.toHaveBeenCalled();
+  }
+
+  for (const route of routes) {
+    describe(route.label, () => {
+      it('denies a request with no identity at all (missing/failed token)', async () => {
+        const app = express();
+        app.use(express.json());
+        app.use('/api/settings', settingsRoutes);
+
+        const res = await route.send(app, { 'x-simulate-missing-token': '1' });
+
+        expect(res.status).toBe(403);
+        expect(res.body.code).toBe('ORG_MEMBERSHIP_REVOKED');
+        expectNoWrites();
+      });
+
+      it('denies a revoked membership', async () => {
+        mockDbGet.mockImplementationOnce(async (sql: string) => {
+          if (String(sql).includes('FROM organization_members')) {
+            return { status: 'REVOKED' };
+          }
+          return undefined;
+        });
+
+        const app = express();
+        app.use(express.json());
+        app.use('/api/settings', settingsRoutes);
+
+        const res = await route.send(app);
+
+        expect(res.status).toBe(403);
+        expect(res.body.code).toBe('ORG_MEMBERSHIP_REVOKED');
+        expectNoWrites();
+      });
+
+      it('denies a foreign/forged organization claim', async () => {
+        // user-1 has no ACTIVE row for org-forged in this test's mock —
+        // only the (user-1, org-1) pairing resolves ACTIVE.
+        const app = express();
+        app.use(express.json());
+        app.use('/api/settings', settingsRoutes);
+
+        const res = await route.send(app, { 'x-claim-org': 'org-forged' });
+
+        expect(res.status).toBe(403);
+        expect(res.body.code).toBe('ORG_MEMBERSHIP_REVOKED');
+        expectNoWrites();
+      });
+
+      it('denies an unmembered platform SUPERADMIN (no platform bypass)', async () => {
+        mockDbGet.mockImplementationOnce(async (sql: string) => {
+          if (String(sql).includes('FROM organization_members')) {
+            return undefined;
+          }
+          return undefined;
+        });
+
+        const app = express();
+        app.use(express.json());
+        app.use('/api/settings', settingsRoutes);
+
+        const res = await route.send(app, { 'x-user-role': 'superadmin' });
+
+        expect(res.status).toBe(403);
+        expect(res.body.code).toBe('ORG_MEMBERSHIP_REVOKED');
+        // Prove the membership table was genuinely consulted for this
+        // SUPERADMIN — not short-circuited by a platform-role bypass.
+        expect(
+          mockDbGet.mock.calls.some((call) => String(call[0]).includes('FROM organization_members'))
+        ).toBe(true);
+        expectNoWrites();
+      });
+
+      it('denies when the membership lookup itself fails', async () => {
+        mockDbGet.mockImplementationOnce(async (sql: string) => {
+          if (String(sql).includes('FROM organization_members')) {
+            throw new Error('organization_members unavailable');
+          }
+          return undefined;
+        });
+
+        const app = express();
+        app.use(express.json());
+        app.use('/api/settings', settingsRoutes);
+
+        const res = await route.send(app);
+
+        expect(res.status).toBe(403);
+        expect(res.body.code).toBe('ORG_MEMBERSHIP_REVOKED');
+        expectNoWrites();
+      });
+
+      it('consults the approval guard before any write, and still succeeds for an ACTIVE member on an approved connector', async () => {
+        const order: string[] = [];
+        mockBuildGovernedExternalAuthSession.mockImplementation((..._args: unknown[]) => {
+          order.push('guard');
+          return {
+            authUrl: 'https://auth.atlassian.com/authorize?state=state-1',
+            callbackUrl: 'https://example.test/api/sync-hub/external-auth/callback?state=state-1',
+            state: 'state-1',
+            expiresAt: '2026-03-27T20:11:00.000Z',
+          };
+        });
+        mockDbRun.mockImplementation(async (sql: string) => {
+          if (String(sql).includes('INSERT INTO integrations') || String(sql).includes('UPDATE integrations')) {
+            order.push('write:dbRun');
+          }
+          return { success: true };
+        });
+        mockUpdateIntegrationStatus.mockImplementation(async (...args: unknown[]) => {
+          order.push('write:updateIntegrationStatus');
+          return { success: true };
+        });
+        mockSetConnectorAuthState.mockImplementation(async (...args: unknown[]) => {
+          order.push('write:setConnectorAuthState');
+          return {
+            recordId: 'auth-1',
+            connectorId: 'jira',
+            organizationId: 'org-1',
+            authState: 'connecting',
+            previousState: null,
+            transitionedAt: '2026-03-27T20:10:00.000Z',
+            transitionedBy: 'user-1',
+            reason: 'settings_integrations_connect_initiated',
+          };
+        });
+
+        const app = express();
+        app.use(express.json());
+        app.use('/api/settings', settingsRoutes);
+
+        const res = await route.send(app);
+
+        expect(res.status).toBe(200);
+        expect(order.length).toBeGreaterThan(0);
+        expect(order[0]).toBe('guard');
+        const guardIndex = order.indexOf('guard');
+        for (const entry of order.slice(1)) {
+          expect(entry.startsWith('write:')).toBe(true);
+        }
+        expect(order.filter((entry) => entry === 'guard')).toHaveLength(1);
+        expect(guardIndex).toBe(0);
+      });
+    });
+  }
 });
 
 describe('settings preferences and advanced flows', () => {
