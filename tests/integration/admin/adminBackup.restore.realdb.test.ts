@@ -15,6 +15,7 @@ const orgA = `backup-org-a-${fixtureRunId}`;
 const orgB = `backup-org-b-${fixtureRunId}`;
 const actorId = `backup-actor-${fixtureRunId}`;
 const fixtureLockKey = 7_401_001;
+const appendOnlyTriggerName = 'backup_access_audit_no_update';
 let backupService: typeof import('../../../server/src/services/backupService.js').default;
 let backup: Awaited<ReturnType<typeof backupService.createBackup>>;
 let objectPath = '';
@@ -47,17 +48,23 @@ async function assertDisposableDatabase(client: Client, url: string, label: stri
   }
 }
 
-async function triggerState(client: Client) {
-  const result = await client.query(`
-    SELECT t.tgenabled
-    FROM pg_trigger t
-    JOIN pg_class c ON c.oid=t.tgrelid
-    JOIN pg_namespace n ON n.oid=c.relnamespace
-    WHERE n.nspname='public'
-      AND c.relname='backup_access_audit'
-      AND t.tgname='backup_access_audit_no_update'
-  `);
-  return result.rows.map((row) => row.tgenabled);
+async function appendOnlyTriggerState(client: Client) {
+  const result = await client.query(
+    `
+      SELECT t.tgname, t.tgenabled, pg_get_triggerdef(t.oid) AS definition
+      FROM pg_trigger t
+      JOIN pg_class c ON c.oid=t.tgrelid
+      JOIN pg_namespace n ON n.oid=c.relnamespace
+      WHERE n.nspname='public'
+        AND c.relname='backup_access_audit'
+        AND NOT t.tgisinternal
+        AND t.tgname=$1
+    `,
+    [appendOnlyTriggerName]
+  );
+  expect(result.rows).toHaveLength(1);
+  expect(result.rows[0]).toMatchObject({ tgname: appendOnlyTriggerName, tgenabled: 'O' });
+  expect(result.rows[0].definition).toMatch(/BEFORE (UPDATE OR DELETE|DELETE OR UPDATE)/);
 }
 
 describeReal('ADM-MVP-BACKUP-001 encrypted tenant backup and isolated restore', () => {
@@ -70,7 +77,7 @@ describeReal('ADM-MVP-BACKUP-001 encrypted tenant backup and isolated restore', 
     await targetClient.connect();
     await assertDisposableDatabase(sourceClient, sourceUrl, 'source');
     await assertDisposableDatabase(targetClient, targetUrl, 'target');
-    expect(await triggerState(sourceClient)).toEqual(['O']);
+    await appendOnlyTriggerState(sourceClient);
     expect(
       (await sourceClient.query(`SELECT pg_advisory_lock($1)`, [fixtureLockKey])).rowCount
     ).toBe(1);
@@ -105,7 +112,9 @@ describeReal('ADM-MVP-BACKUP-001 encrypted tenant backup and isolated restore', 
       if (sourceClient) {
         await sourceClient.query('BEGIN');
         try {
-          await sourceClient.query(`SET LOCAL session_replication_role = 'replica'`);
+          await sourceClient.query(
+            `ALTER TABLE public.backup_access_audit DISABLE TRIGGER backup_access_audit_no_update`
+          );
           if (backup?.id) {
             await sourceClient.query(`DELETE FROM backup_access_audit WHERE backup_id=$1`, [
               backup.id,
@@ -115,12 +124,24 @@ describeReal('ADM-MVP-BACKUP-001 encrypted tenant backup and isolated restore', 
           await sourceClient.query(`DELETE FROM organizations WHERE id = ANY($1::text[])`, [
             [orgA, orgB],
           ]);
+          await sourceClient.query(
+            `ALTER TABLE public.backup_access_audit ENABLE TRIGGER backup_access_audit_no_update`
+          );
+          await appendOnlyTriggerState(sourceClient);
           await sourceClient.query('COMMIT');
         } catch (error) {
+          try {
+            await sourceClient.query(
+              `ALTER TABLE public.backup_access_audit ENABLE TRIGGER backup_access_audit_no_update`
+            );
+          } catch {
+            // ROLLBACK below restores the transaction's initial trigger state.
+          }
           await sourceClient.query('ROLLBACK');
+          await appendOnlyTriggerState(sourceClient);
           throw error;
         }
-        expect(await triggerState(sourceClient)).toEqual(['O']);
+        await appendOnlyTriggerState(sourceClient);
         const sourceResidue = await sourceClient.query(
           `
           SELECT
