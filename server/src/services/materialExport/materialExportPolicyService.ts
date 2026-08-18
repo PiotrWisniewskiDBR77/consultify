@@ -26,4 +26,3 @@ export function requireApprovedExportEngine(providerKey: string): ApprovedExport
 export function isApprovedTemplateProvenance(value: unknown): boolean {
   return String(value || '').trim().toLowerCase() === 'approved';
 }
-
