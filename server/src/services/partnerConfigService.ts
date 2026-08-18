@@ -355,6 +355,11 @@ export async function createOrganizationDiscount(
   discountValue: number,
   durationMonths: number
 ): Promise<string> {
+  // AMD-PRT-ECONOMICS-002: discount operations are excluded. Guarded even
+  // though no route references this today — it is exported, so any future
+  // import makes it a reachable deep-service bypass. Checked before ensureDb()
+  // so no connection is acquired and no row is touched.
+  assertPartnerEconomicsOperationAllowed('discount');
   const database = ensureDb();
 
   try {
@@ -427,6 +432,11 @@ export async function cancelOrganizationDiscount(
   organizationId: string,
   partnerOrgId: string
 ): Promise<boolean> {
+  // AMD-PRT-ECONOMICS-002: discount operations are excluded. Guarded even
+  // though no route references this today — it is exported, so any future
+  // import makes it a reachable deep-service bypass. Checked before ensureDb()
+  // so no connection is acquired and no row is touched.
+  assertPartnerEconomicsOperationAllowed('discount');
   const database = ensureDb();
 
   try {
