@@ -17,7 +17,11 @@
   "fixtures": {"registry": "unset, malformed, partial, over-broad and one exact approved-provider decision"},
   "negativeControls": {"providerEnablement": "must remain fail-closed without registry, scopes and residency approval"},
   "browserArtifacts": [],
-  "rollback": {"policy": "providers remain disabled", "code": "revert 3cf595da94 before deployment"},
+  "rollback": {
+    "policy": "providers remain disabled",
+    "historicalCode": "The former instruction to revert 3cf595da94 is preserved as superseded historical evidence.",
+    "currentCode": "Rollback the integrated OAuth chain in reverse order: cdb0b5c200, c5b76cf567, then 10a854e19b; rerun the migration ledger and OAuth fail-closed gates before any release."
+  },
   "technicalVerdict": "PASS_FAIL_CLOSED_APPROVED_OUT",
   "currentTechnicalRequalification": {
     "integratedChain": [
