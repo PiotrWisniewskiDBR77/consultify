@@ -755,45 +755,116 @@ describe.skipIf(!REAL_PG)(
     afterAll(async () => {
       if (!pool) return;
       try {
-        if (createdTemplateIds.document_studio_templates.length) {
-          await pool.query(`DELETE FROM document_studio_templates WHERE template_id = ANY($1::text[])`, [
-            createdTemplateIds.document_studio_templates,
-          ]);
+        // ---- Exact receipt accounting (ACCOUNT, do not exclude) ----
+        // Every successful (201, `replayed: false`) call anywhere in the
+        // suite above writes exactly one new row to
+        // template_provenance_approval_receipts; every replay (200) and
+        // every rejection (4xx/5xx) writes zero — that is the exact property
+        // each numbered test's own `receiptCount(...)` assertions already
+        // prove locally. Summed by hand against the numbered tests above:
+        //   orgA: test 1, 2, 9(tp_base leg), 10, 11, 12, 13, 14, 15, 17 = 10
+        //   orgB: test 14                                               =  1
+        // Test 16 (poisoned CHECK) rolls its own insert back along with the
+        // failed status UPDATE in the same transaction, so it contributes 0
+        // — already proven inline by that test's own
+        // `receiptCount(...).toBe(0)`. These two constants are the precise,
+        // non-negotiable expectation, not a lower bound.
+        const EXPECTED_ORG_A_RECEIPTS = 10;
+        const EXPECTED_ORG_B_RECEIPTS = 1;
+
+        const orgAReceiptCount = await pool.query<{ count: number }>(
+          `SELECT count(*)::int AS count FROM template_provenance_approval_receipts WHERE organization_id = $1`,
+          [orgA]
+        );
+        const orgBReceiptCount = await pool.query<{ count: number }>(
+          `SELECT count(*)::int AS count FROM template_provenance_approval_receipts WHERE organization_id = $1`,
+          [orgB]
+        );
+        expect(Number(orgAReceiptCount.rows[0]?.count ?? 0)).toBe(EXPECTED_ORG_A_RECEIPTS);
+        expect(Number(orgBReceiptCount.rows[0]?.count ?? 0)).toBe(EXPECTED_ORG_B_RECEIPTS);
+
+        // ---- Pinned cleanup transaction, on a dedicated client, FK-safe
+        // order: templates (all three registries) -> organization_members ->
+        // users. organizations and template_provenance_approval_receipts are
+        // deliberately NOT included — see above and below. Final zero
+        // residue for those two tables is achieved by the CALLER dropping
+        // this entire disposable database after the suite finishes; this
+        // suite asserts exact accounting for them, never zero.
+        const cleanupClient = await pool.connect();
+        try {
+          await cleanupClient.query('BEGIN');
+          if (createdTemplateIds.document_studio_templates.length) {
+            await cleanupClient.query(
+              `DELETE FROM document_studio_templates WHERE template_id = ANY($1::text[])`,
+              [createdTemplateIds.document_studio_templates]
+            );
+          }
+          if (createdTemplateIds.presentation_templates.length) {
+            await cleanupClient.query(
+              `DELETE FROM presentation_templates WHERE id = ANY($1::text[])`,
+              [createdTemplateIds.presentation_templates]
+            );
+          }
+          if (createdTemplateIds.tp_base_templates.length) {
+            await cleanupClient.query(
+              `DELETE FROM tp_base_templates WHERE id = ANY($1::uuid[])`,
+              [createdTemplateIds.tp_base_templates]
+            );
+          }
+          if (createdMemberIds.length) {
+            await cleanupClient.query(
+              `DELETE FROM organization_members WHERE id = ANY($1::text[])`,
+              [createdMemberIds]
+            );
+          }
+          if (createdUserIds.length) {
+            await cleanupClient.query(`DELETE FROM users WHERE id = ANY($1::text[])`, [
+              createdUserIds,
+            ]);
+          }
+          await cleanupClient.query('COMMIT');
+        } catch (err) {
+          await cleanupClient.query('ROLLBACK').catch(() => undefined);
+          throw err;
+        } finally {
+          cleanupClient.release();
         }
-        if (createdTemplateIds.presentation_templates.length) {
-          await pool.query(`DELETE FROM presentation_templates WHERE id = ANY($1::text[])`, [
-            createdTemplateIds.presentation_templates,
-          ]);
-        }
-        if (createdTemplateIds.tp_base_templates.length) {
-          await pool.query(`DELETE FROM tp_base_templates WHERE id = ANY($1::uuid[])`, [
-            createdTemplateIds.tp_base_templates,
-          ]);
-        }
-        if (createdMemberIds.length) {
-          await pool.query(`DELETE FROM organization_members WHERE id = ANY($1::text[])`, [
-            createdMemberIds,
-          ]);
-        }
-        if (createdUserIds.length) {
-          await pool.query(`DELETE FROM users WHERE id = ANY($1::text[])`, [createdUserIds]);
+
+        // ---- Receipts/organizations residue is a PROVEN DESIGN PROPERTY,
+        // not an oversight — checked AFTER the cleanup transaction above, so
+        // users/organization_members (which also reference organizations)
+        // are already gone and the ONLY remaining referencing row is the
+        // receipt(s) this suite wrote. template_provenance_approval_receipts
+        // is fully append-only (its trigger —
+        // 20261019_template_provenance_approval_receipts.sql's
+        // guard_template_provenance_receipt_immutability — rejects UPDATE
+        // and DELETE outright, reconfirmed below) and its organization_id
+        // column REFERENCES organizations(id) ON DELETE RESTRICT. Deleting
+        // either organization at this point MUST fail with a foreign-key
+        // violation raised specifically by that table. Prove it by actually
+        // attempting the delete, rather than merely asserting we chose not
+        // to.
+        for (const orgId of [orgA, orgB] as const) {
+          let rejected = false;
+          try {
+            await pool.query('DELETE FROM organizations WHERE id = $1', [orgId]);
+          } catch (err: any) {
+            rejected = true;
+            expect(err.code).toBe('23503');
+            expect(String(err.detail || err.message || '')).toContain(
+              'template_provenance_approval_receipts'
+            );
+          }
+          expect(rejected).toBe(true);
         }
 
         // organizations and template_provenance_approval_receipts are NOT
-        // deleted, and residue for them is NOT asserted zero:
-        // template_provenance_approval_receipts is fully append-only (its
-        // trigger — 20261019_template_provenance_approval_receipts.sql's
-        // guard_template_provenance_receipt_immutability — rejects UPDATE
-        // and DELETE outright), and its organization_id column REFERENCES
-        // organizations(id) ON DELETE RESTRICT. Once any test above wrote a
-        // receipt for orgA/orgB (nearly all of them do), those two
-        // organizations can never be deleted again by anyone, on this
-        // database, ever — that permanence is the ledger's entire point.
-        // "Residue 0" for organizations/receipts here would only be
-        // achievable by deleting rows the trigger forbids, which is exactly
-        // what this suite must never do. Templates and identity rows ARE
-        // fully reclaimed below — that is the honest residue this suite can
-        // claim.
+        // deleted, and residue for them is NOT asserted zero here — see the
+        // exact-count assertions and the proven-rejection loop above, which
+        // together turn "we left it behind" into an accounted, verified
+        // property of the schema rather than an unmeasured gap. Templates
+        // and identity rows ARE fully reclaimed below — that is the honest
+        // zero-residue this suite can claim by exact id.
         const residue = await pool.query<{
           doc_studio: number;
           presentation: number;
@@ -823,8 +894,9 @@ describe.skipIf(!REAL_PG)(
           users: 0,
         });
 
-        // The cleanup strategy above only holds because this trigger is
-        // actually armed. If it were ever disabled, "we didn't delete
+        // The cleanup + accounting strategy above only holds because this
+        // trigger is actually armed for the ENTIRE run — never disabled, not
+        // even transiently. If it were ever disabled, "we didn't delete
         // receipts because the trigger forbids it" would be a false excuse,
         // not a real constraint — so confirm it, don't just assume it.
         const trigger = await pool.query<{ tgenabled: string }>(
@@ -834,13 +906,33 @@ describe.skipIf(!REAL_PG)(
         );
         expect(trigger.rows[0]?.tgenabled).toBe('O');
       } finally {
-        if (lockClient) {
-          await lockClient
-            .query('SELECT pg_advisory_unlock(hashtext($1))', [MAT_PROV_19_LOCK_KEY])
-            .catch(() => undefined);
+        // Nested finally: the advisory lock MUST be released and its
+        // release verified (not just attempted) even if the cleanup above
+        // threw, and the pool MUST be ended even if the unlock itself
+        // throws. Nothing in here is allowed to swallow an error from the
+        // outer try — there is no catch above, so a thrown assertion or
+        // query failure there propagates through both finally blocks and
+        // fails the suite, exactly as it should.
+        try {
+          const unlockResult = await lockClient.query<{ unlocked: boolean }>(
+            'SELECT pg_advisory_unlock(hashtext($1)) AS unlocked',
+            [MAT_PROV_19_LOCK_KEY]
+          );
+          // A Pool discards a connection whose query rejected, so the lock
+          // was taken AND is released on this SAME dedicated `lockClient`
+          // (never via `pool.query`) — otherwise the unlock could land on a
+          // different backend and this assertion would prove nothing.
+          expect(unlockResult.rows[0]?.unlocked).toBe(true);
+
+          const heldLocks = await lockClient.query<{ count: number }>(
+            `SELECT count(*)::int AS count FROM pg_locks
+              WHERE locktype = 'advisory' AND pid = pg_backend_pid()`
+          );
+          expect(Number(heldLocks.rows[0]?.count ?? 0)).toBe(0);
+        } finally {
           lockClient.release();
+          await pool.end();
         }
-        await pool.end();
       }
     }, 30000);
 
