@@ -4,7 +4,7 @@ Authority HEAD: `c40a9ba58e28ccc78bdef8d1f61f64db60e088eb`
 
 Branch: `codex/closure-claude-a-method-evidence`
 
-Lease SHA-256: `7c43c978258bc9a1c027be917cfe23bbce42c65a4874e3cb190c90fa93f59ec6`
+Lease SHA-256: `f9a412a47ab3aed81113d445d248f4e14ea365d293dd77b8fa1fcfad70b8eca5`
 
 Counts: 722 tracked paths; 499 source/docs; 196 Vitest; 26 Playwright/visual.
 
@@ -112,7 +112,6 @@ the lane reserved migration/evidence namespace.
 - `server/src/method-core/outputs/__tests__/testFixtures.ts`
 - `server/src/method-core/outputs/index.ts`
 - `server/src/routes/__tests__/audit-programs.test.ts`
-- `server/src/routes/audits/__tests__/mounting.integration.test.ts`
 - `server/src/routes/__tests__/initiative-controller-interview-insight.test.ts`
 - `server/src/routes/__tests__/interview-elevated-read-access.test.ts`
 - `server/src/routes/__tests__/interview-eval-strict-schema.contract.test.ts`
@@ -140,6 +139,7 @@ the lane reserved migration/evidence namespace.
 - `server/src/routes/assessment/index`
 - `server/src/routes/assessment/index.ts`
 - `server/src/routes/audit-programs.routes.ts`
+- `server/src/routes/audits/__tests__/mounting.integration.test.ts`
 - `server/src/routes/interview-enterprise.routes.ts`
 - `server/src/routes/interview.routes.ts`
 - `server/src/routes/interviewCandidateHandoff.routes.ts`
