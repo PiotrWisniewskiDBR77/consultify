@@ -215,5 +215,30 @@
     "boundary": "The visibility policy is explicitly SYNTHETIC_TEST_ONLY and does not authorize production policy, rollout or deployment.",
     "cleanup": "Across all three databases disabled triggers and advisory locks were 0 and the tracked MFA fixture rows were 0; the owned pgvector container and volumes were removed and all four app ports released.",
     "static": "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check -- --pretty false exited 0; NODE_OPTIONS=--max-old-space-size=8192 npm run build:backend exited 0; frontend builds completed through both signed Playwright webServer runs."
+  },
+  "roiGovernedVisibilityPostFanInRequalification20260818": {
+    "technicalSourceSha": "dead405937f11755321186f983ecc596cec95fe3",
+    "reconciliationSha": "dead405937f11755321186f983ecc596cec95fe3",
+    "runtimeFacts": {
+      "migrations": "fresh 770; repeat 0; dry 0",
+      "governedBackfillHelperRealPg": "35/35",
+      "routeInventoryCrossflowPacket": "59/59",
+      "isolatedCrossflow": "2/2",
+      "rootTypecheck": "PASS",
+      "serverTypecheck": "PASS",
+      "backendBuild": "PASS",
+      "frontendBuild": "PASS",
+      "closurePlan": "PASS",
+      "closureReporter": "PASS",
+      "container": "FREE"
+    },
+    "historicalEvidence": "Preserved; this section appends exact-current qualification without replacing earlier productSha, commands, artifacts, or denominators.",
+    "verdict": "PARTIAL",
+    "scope": "The exact-current runtime proves the approved SWOT lineage only.",
+    "remainingBlockers": [
+      "Organization, Interview and DRD equivalent end-to-end lineages remain NOT_VERIFIED.",
+      "The fixture visibility policy is SYNTHETIC_TEST_ONLY and is not a production owner decision.",
+      "Deployed desktop/mobile acceptance and rollback/release execution remain not authorized and not verified."
+    ]
   }
 }

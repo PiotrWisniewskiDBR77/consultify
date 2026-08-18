@@ -117,5 +117,25 @@
   },
   "openBlockers": [],
   "technicalVerdict": "DONE_CURRENT_SHA",
-  "verdict": "DONE_CURRENT_SHA"
+  "verdict": "DONE_CURRENT_SHA",
+  "roiGovernedVisibilityPostFanInRequalification20260818": {
+    "technicalSourceSha": "dead405937f11755321186f983ecc596cec95fe3",
+    "reconciliationSha": "dead405937f11755321186f983ecc596cec95fe3",
+    "runtimeFacts": {
+      "migrations": "fresh 770; repeat 0; dry 0",
+      "governedBackfillHelperRealPg": "35/35",
+      "routeInventoryCrossflowPacket": "59/59",
+      "isolatedCrossflow": "2/2",
+      "rootTypecheck": "PASS",
+      "serverTypecheck": "PASS",
+      "backendBuild": "PASS",
+      "frontendBuild": "PASS",
+      "closurePlan": "PASS",
+      "closureReporter": "PASS",
+      "container": "FREE"
+    },
+    "historicalEvidence": "Preserved; this section appends exact-current qualification without replacing earlier productSha, commands, artifacts, or denominators.",
+    "verdict": "DONE_CURRENT_SHA",
+    "scope": "The exact-current ROI adapters, route inventory, governed visibility and crossflow packet preserve the adapter closure."
+  }
 }

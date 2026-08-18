@@ -72,5 +72,28 @@
   "verdict": "PARTIAL",
   "openBlockers": [
     "ENVIRONMENT_QUARANTINE: any target database containing pre-DEC-FIN reconciliation rows is excluded from the internal beta until row-by-row disposition is recorded. The verified migration refuses those rows without changing, deleting, inferring or auto-backfilling them."
-  ]
+  ],
+  "roiGovernedVisibilityPostFanInRequalification20260818": {
+    "technicalSourceSha": "dead405937f11755321186f983ecc596cec95fe3",
+    "reconciliationSha": "dead405937f11755321186f983ecc596cec95fe3",
+    "runtimeFacts": {
+      "migrations": "fresh 770; repeat 0; dry 0",
+      "governedBackfillHelperRealPg": "35/35",
+      "routeInventoryCrossflowPacket": "59/59",
+      "isolatedCrossflow": "2/2",
+      "rootTypecheck": "PASS",
+      "serverTypecheck": "PASS",
+      "backendBuild": "PASS",
+      "frontendBuild": "PASS",
+      "closurePlan": "PASS",
+      "closureReporter": "PASS",
+      "container": "FREE"
+    },
+    "historicalEvidence": "Preserved; this section appends exact-current qualification without replacing earlier productSha, commands, artifacts, or denominators.",
+    "verdict": "PARTIAL",
+    "scope": "The current governed reconciliation path is repository-green without changing the historical environment boundary.",
+    "remainingBlockers": [
+      "ENVIRONMENT_QUARANTINE: pre-DEC-FIN historical target rows require recorded row-by-row disposition; no automatic inference, deletion, backfill or release is authorized."
+    ]
+  }
 }
