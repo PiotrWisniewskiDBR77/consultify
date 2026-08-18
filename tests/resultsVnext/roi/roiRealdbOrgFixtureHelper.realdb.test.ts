@@ -90,35 +90,96 @@
  *    backend connection or the unlock is a no-op against the wrong
  *    session.
  *
- * 4. PINNED CLEANUP, NESTED `finally` — `afterAll`'s teardown runs as a
- *    chain of nested `try`/`finally` stages (see `runStagesNested` below),
- *    not a flat sequence of awaited statements. If any one DELETE throws,
- *    every later stage — including the residue/lock assertions and the
- *    connection teardown — still runs, because it lives in the `finally`
- *    of the stage before it. This repo has a documented history of
- *    teardown dying silently under a bare `catch {}`; this file
+ * 4. PINNED TRANSACTIONAL CLEANUP, NESTED `finally` — teardown's DELETEs run
+ *    as an EXPLICIT `BEGIN`/`COMMIT`/`ROLLBACK` on the ONE pinned `client`
+ *    connection (`runTeardownTransaction` below), never a flat sequence of
+ *    autocommit statements, so a mid-teardown failure rolls back cleanly
+ *    instead of leaving an ambiguous half-deleted state. That transactional
+ *    stage is itself one link in `afterAll`'s outer chain of nested
+ *    `try`/`finally` stages (see `runStagesNested` below): if the
+ *    transaction stage throws (after its own `ROLLBACK`), every later stage
+ *    — advisory-lock release, the postcommit lock-free assertion, and
+ *    closing BOTH connections — still runs, because it lives in the
+ *    `finally` of the stage before it. This repo has a documented history
+ *    of teardown dying silently under a bare `catch {}`; this file
  *    deliberately does NOT swallow teardown errors that way — a stage that
  *    throws still lets every later stage run, but the failure is not
  *    hidden from the test run's own result.
  *
+ * 5. RESIDUE ASSERTED TWICE — INSIDE AND AFTER THE TRANSACTION. The exact
+ *    same zero-residue query (`assertZeroResidue` below) runs once INSIDE
+ *    the still-open teardown transaction, immediately before `COMMIT`
+ *    (proving the DELETEs above actually did their work — a session always
+ *    sees its own uncommitted writes), and again AFTER `COMMIT`, on the
+ *    same connection (proving the deleted state actually survived the
+ *    commit, not merely that the DELETE statements ran). These prove
+ *    different things: passing only the first would not prove durability;
+ *    passing only the second would not localize a failure to "the deletes
+ *    were wrong" versus "something reappeared once the transaction closed".
+ *
+ * 6. UNCONDITIONAL CONNECTION/ADVISORY-LOCK TEARDOWN. Every stage that
+ *    releases the advisory lock or closes a connection is guarded by its
+ *    OWN state flag (`advisoryLockHeld` / `clientConnected` /
+ *    `lockClientConnected`), never by `reachable` alone. If the suite
+ *    aborts INSIDE `beforeAll` — wrong prefix, unreachable database, a
+ *    missing migration — after the lock was already acquired or a
+ *    connection already opened, `beforeAll`'s own `catch` releases/closes
+ *    whatever was actually acquired before rethrowing, AND `afterAll` still
+ *    runs its own guarded release/close stages regardless of whether
+ *    `reachable` ever became true. Both are idempotent (the flags make a
+ *    second attempt a no-op), so running from both places is safe. A lock
+ *    or connection retained by an aborted run blocks the next worker on a
+ *    container the whole lane shares.
+ *
+ * 7. RUN-SCOPED PREFIX — NOT A SINGLE ORG_ID — FOR BOTH CLEANUP AND
+ *    RESIDUE. Every organization id this file ever creates (`ORG_ID` itself
+ *    and the anti-pattern test's `${ORG_ID}-antipattern`) shares the
+ *    `RUN_SCOPE_LIKE` prefix (`${ORG_ID}%`). Both the teardown transaction's
+ *    DELETEs and the residue-count query are scoped by that SAME prefix
+ *    (`LIKE $1`), never by an exact match on `ORG_ID` alone — so the
+ *    anti-pattern org's rows are covered by `afterAll`'s own cleanup
+ *    independently of whether that test's own inline cleanup (inside its
+ *    test body) ran to completion. This is deliberate defense against the
+ *    specific trap where a negative-control test creates rows under an id
+ *    that does not share the run's tag: if it did not, tag-scoped cleanup
+ *    AND tag-scoped residue counting would both silently miss it — a leak
+ *    invisible to a vacuously-passing assertion. Here it does share the
+ *    tag, and both cleanup and counting cover it.
+ *
  * HONEST LIMIT — READ BEFORE TRUSTING A GREEN RUN. Governance
- * (`rvn_roi_visibility_governance`) is append-only, and it FK-references
- * `organizations` — so once this file publishes governance for ORG_ID (the
- * "delegates to the canonical function" test), that ORG_ID's `organizations`
- * row becomes PERMANENTLY undeletable from WITHIN this test file, by
- * construction, not by omission. The postcommit assertions in `afterAll`
- * below therefore assert exact-zero residue ONLY for the NON-governance
- * tables this file touches (organizations and rvn_roi_visibility_governance
- * are explicitly excluded from that assertion — see the assertion itself
- * for the full excluded set). Residue-zero on a database this file expects
- * to be REUSED is NOT what this file proves, and nothing in this file's
- * comments, assertions, or any report generated from running it should be
- * read as claiming otherwise. The only way to reach a TRUE final zero —
- * including the permanent organizations/governance rows — is to drop the
- * whole disposable child database this file ran against, from OUTSIDE this
- * file, after the run. That is an operational step for whoever runs this
- * suite, not something this file can do to itself (Postgres will not let a
- * database drop the very database it is connected through).
+ * (`rvn_roi_visibility_governance`) is append-only (trigger
+ * `trg_rvn_roi_visibility_governance_append_only`), and its
+ * `organization_id` column is `REFERENCES organizations(id)` with NO `ON
+ * DELETE CASCADE` — so once this file publishes governance for `ORG_ID`
+ * (the "delegates to the canonical function" test), that `ORG_ID`'s
+ * `organizations` row becomes PERMANENTLY undeletable from WITHIN this test
+ * file, by construction, not by omission. The ONLY way to reach a TRUE
+ * final zero — including that permanent `organizations` row and the
+ * governance row itself — is to drop the whole disposable child database
+ * this file ran against, from OUTSIDE this file, after the run (Postgres
+ * will not let a database drop the very database it is connected through).
+ * That is an operational step for whoever runs this suite, not something
+ * this file can do to itself.
+ *
+ * The postcommit residue assertions in `afterAll` (both the
+ * inside-transaction one and the after-commit one) therefore assert
+ * exact-zero residue ONLY for the NON-governance tables this file touches —
+ * and the excluded set is exactly TWO tables, no more, no fewer:
+ * `organizations` and `rvn_roi_visibility_governance`. Every OTHER table
+ * this file, `roiRealdbOrgFixture.ts`, or the product code it exercises
+ * (`createRoiCase`, `publishRoiGovernedVisibilityPolicy`) writes to IS
+ * counted — including `rvn_platform_obligations` (written by
+ * `createObligation` inside `createRoiCase`'s own transaction, test B
+ * below; easy to miss because it is never mentioned by name anywhere else
+ * in this file, and the prior draft of this docblock claimed full coverage
+ * while silently missing exactly this table from the count). Residue-zero
+ * on a database this file expects to be REUSED is NOT what this file
+ * proves, and nothing in this file's comments, assertions, or any report
+ * generated from running it should be read as claiming otherwise. If a
+ * future edit adds a write to a table not in `assertZeroResidue`'s count
+ * below, this paragraph's claim becomes false again exactly the way the
+ * prior draft's did — keep the excluded-table list here and the tables
+ * named in `assertZeroResidue` in lockstep, or don't claim coverage at all.
  */
 import { randomUUID } from 'node:crypto';
 
@@ -214,6 +275,128 @@ let client: Client;
 let lockClient: Client;
 let reachable = false;
 let advisoryLockHeld = false;
+// SAFETY MECHANISM 6 — tracked independently of `reachable`: `reachable`
+// only ever becomes true once EVERYTHING in `beforeAll` succeeded, but a
+// connection can be opened (and need closing) even when a LATER guard in
+// `beforeAll` aborts the run. These flags are what let both `beforeAll`'s
+// own abort `catch` and `afterAll` safely, idempotently, attempt to close
+// exactly what was actually opened — never more, never less.
+let clientConnected = false;
+let lockClientConnected = false;
+
+// Zero-residue query, scoped to RUN_SCOPE_LIKE (SAFETY MECHANISM 7 — covers
+// ORG_ID AND the anti-pattern test's `${ORG_ID}-antipattern` in one pass).
+// Counts every non-governance table this file or the product code it
+// exercises writes to — see the HONEST LIMIT section of the top docblock
+// for exactly why `organizations` and `rvn_roi_visibility_governance` are
+// the only two tables excluded, and why that exclusion list must stay in
+// lockstep with this query. `rvn_platform_obligations` is deliberately
+// included here — it is the one table an earlier draft's DELETE in
+// teardown covered but this count did not, which is exactly the defect an
+// independent audit found and this file now closes.
+async function assertZeroResidue(activeClient: Client, when: string): Promise<void> {
+  const residue = await activeClient.query<{ n: string }>(
+    `SELECT (
+       (SELECT count(*) FROM users WHERE organization_id LIKE $1) +
+       (SELECT count(*) FROM organization_members WHERE organization_id LIKE $1) +
+       (SELECT count(*) FROM initiatives WHERE organization_id LIKE $1) +
+       (SELECT count(*) FROM rvn_platform_visibility_policies WHERE organization_id LIKE $1) +
+       (SELECT count(*) FROM rvn_platform_resource_visibility WHERE organization_id LIKE $1) +
+       (SELECT count(*) FROM rvn_roi_cases WHERE organization_id LIKE $1) +
+       (SELECT count(*) FROM rvn_roi_baselines WHERE organization_id LIKE $1) +
+       (SELECT count(*) FROM rvn_roi_calculation_policy WHERE organization_id LIKE $1) +
+       (SELECT count(*) FROM rvn_platform_obligations WHERE organization_id LIKE $1) +
+       (SELECT count(*) FROM rvn_platform_events WHERE organization_id LIKE $1) +
+       (SELECT count(*) FROM rvn_platform_outbox WHERE event_id IN (
+          SELECT event_id FROM rvn_platform_events WHERE organization_id LIKE $1)) +
+       (SELECT count(*) FROM rvn_platform_resource_acl WHERE resource_type = 'roi_case' AND resource_id IN (
+          SELECT case_id::text FROM rvn_roi_cases WHERE organization_id LIKE $1))
+     )::text AS n`,
+    [RUN_SCOPE_LIKE]
+  );
+  const residueCount = Number(residue.rows[0]?.n ?? -1);
+  if (residueCount !== 0) {
+    throw new Error(
+      `Postcommit residue assertion FAILED (${when}): expected 0 rows across all non-governance ` +
+        `tables scoped to "${RUN_SCOPE_LIKE}", found ${residueCount}. (organizations and ` +
+        `rvn_roi_visibility_governance are excluded from this assertion by design — see HONEST ` +
+        'LIMIT in the top docblock.)'
+    );
+  }
+}
+
+// SAFETY MECHANISM 4/5/7 — the ONE pinned transaction for teardown's
+// DELETEs, on the ONE connection (`activeClient`, always `client` in
+// practice — never `lockClient`). Every DELETE is scoped by RUN_SCOPE_LIKE
+// (SAFETY MECHANISM 7), covering both ORG_ID and the anti-pattern org.
+// `rvn_roi_visibility_governance` is deliberately NEVER deleted here —
+// append-only by trigger, see HONEST LIMIT in the top docblock. On any
+// failure, ROLLBACK runs before rethrowing, so this stage never leaves the
+// connection sitting in an aborted transaction for a later stage to trip
+// over.
+async function runTeardownTransaction(activeClient: Client): Promise<void> {
+  await activeClient.query('BEGIN');
+  try {
+    await activeClient.query(
+      `DELETE FROM rvn_platform_resource_acl
+        WHERE resource_type = 'roi_case'
+          AND resource_id IN (SELECT case_id::text FROM rvn_roi_cases WHERE organization_id LIKE $1)`,
+      [RUN_SCOPE_LIKE]
+    );
+    await activeClient.query(
+      `DELETE FROM rvn_platform_obligations WHERE organization_id LIKE $1`,
+      [RUN_SCOPE_LIKE]
+    );
+    await activeClient.query(
+      `DELETE FROM rvn_platform_outbox WHERE event_id IN (SELECT event_id FROM rvn_platform_events WHERE organization_id LIKE $1)`,
+      [RUN_SCOPE_LIKE]
+    );
+    await activeClient.query(`DELETE FROM rvn_platform_events WHERE organization_id LIKE $1`, [RUN_SCOPE_LIKE]);
+    await activeClient.query(
+      `DELETE FROM rvn_platform_resource_visibility WHERE organization_id LIKE $1`,
+      [RUN_SCOPE_LIKE]
+    );
+    await activeClient.query(
+      `DELETE FROM rvn_roi_calculation_policy WHERE organization_id LIKE $1`,
+      [RUN_SCOPE_LIKE]
+    );
+    await activeClient.query(`DELETE FROM rvn_roi_baselines WHERE organization_id LIKE $1`, [RUN_SCOPE_LIKE]);
+    await activeClient.query(`DELETE FROM rvn_roi_cases WHERE organization_id LIKE $1`, [RUN_SCOPE_LIKE]);
+    await activeClient.query(`DELETE FROM initiatives WHERE organization_id LIKE $1`, [RUN_SCOPE_LIKE]);
+    await activeClient.query(
+      `DELETE FROM rvn_platform_visibility_policies WHERE organization_id LIKE $1`,
+      [RUN_SCOPE_LIKE]
+    );
+    await activeClient.query(`DELETE FROM organization_members WHERE organization_id LIKE $1`, [RUN_SCOPE_LIKE]);
+    await activeClient.query(`DELETE FROM users WHERE organization_id LIKE $1`, [RUN_SCOPE_LIKE]);
+    // organizations — EXCLUDING ORG_ID itself, which is permanently pinned
+    // by the governance row this file publishes for it (HONEST LIMIT).
+    // The anti-pattern org never gets a governance row (that is the whole
+    // point of the anti-pattern test), so it is not pinned and this DELETE
+    // is a genuine safety net if that test's own inline cleanup did not
+    // run to completion — a no-op if it already did.
+    await activeClient.query(`DELETE FROM organizations WHERE id LIKE $1 AND id <> $2`, [RUN_SCOPE_LIKE, ORG_ID]);
+
+    // POSTCOMMIT ASSERTION, INSIDE THE TRANSACTION (SAFETY MECHANISM 5) —
+    // proves the DELETEs above actually did their work before COMMIT is
+    // even attempted.
+    await assertZeroResidue(activeClient, 'INSIDE the teardown transaction, before COMMIT');
+
+    await activeClient.query('COMMIT');
+  } catch (error) {
+    await activeClient.query('ROLLBACK').catch(() => {
+      // A ROLLBACK failing here means the connection itself is already
+      // broken; the original `error` below is what matters and is never
+      // swallowed by this catch.
+    });
+    throw error;
+  }
+
+  // POSTCOMMIT ASSERTION, AFTER COMMIT (SAFETY MECHANISM 5) — same query,
+  // same connection, proving the deleted state actually survived the
+  // commit rather than merely that the statements ran.
+  await assertZeroResidue(activeClient, 'AFTER COMMIT');
+}
 
 async function insertRawLegacyPolicy(
   organizationId: string,
@@ -246,6 +429,7 @@ describe('F2 blast-radius remediation — ensureRoiFixtureMembership / ensureRoi
     client = new Client(buildClientConfig() as ClientConfig);
     try {
       await client.connect();
+      clientConnected = true;
 
       // SAFETY MECHANISM 2 — CALLER/LIVE DATABASE NAME EQUALITY. This must
       // run before ANY schema probe or write, and it checks a fact only
@@ -289,9 +473,54 @@ describe('F2 blast-radius remediation — ensureRoiFixtureMembership / ensureRoi
       // in `afterAll`, not implicitly at a transaction boundary.
       lockClient = new Client(buildClientConfig() as ClientConfig);
       await lockClient.connect();
+      lockClientConnected = true;
       await lockClient.query('SELECT pg_advisory_lock(hashtext($1))', [ADVISORY_LOCK_KEY]);
       advisoryLockHeld = true;
     } catch (error) {
+      // SAFETY MECHANISM 6 — UNCONDITIONAL TEARDOWN ON EARLY ABORT. Release
+      // whatever was ACTUALLY acquired (lock, either connection) before
+      // rethrowing — a wrong prefix, an unreachable database, or a missing
+      // migration must not leak a connection or a retained advisory lock
+      // onto a container the whole lane shares just because setup failed
+      // partway through. Guarded by the exact same flags `afterAll` uses
+      // below, so this is idempotent even if `afterAll` also runs and
+      // repeats the attempt. Each release is its own try/catch so one
+      // failing does not prevent the others from being attempted, and none
+      // of them replace or hide the ORIGINAL error, which is always what
+      // gets thrown from this hook.
+      try {
+        if (advisoryLockHeld && lockClientConnected) {
+          await lockClient.query('SELECT pg_advisory_unlock(hashtext($1))', [ADVISORY_LOCK_KEY]);
+          advisoryLockHeld = false;
+        }
+      } catch (unlockError) {
+        // eslint-disable-next-line no-console
+        console.error(
+          '[roiRealdbOrgFixtureHelper] releasing the advisory lock during beforeAll abort also failed:',
+          unlockError
+        );
+      }
+      try {
+        if (clientConnected) {
+          await client.end();
+          clientConnected = false;
+        }
+      } catch (endError) {
+        // eslint-disable-next-line no-console
+        console.error('[roiRealdbOrgFixtureHelper] closing `client` during beforeAll abort also failed:', endError);
+      }
+      try {
+        if (lockClientConnected) {
+          await lockClient.end();
+          lockClientConnected = false;
+        }
+      } catch (endError) {
+        // eslint-disable-next-line no-console
+        console.error(
+          '[roiRealdbOrgFixtureHelper] closing `lockClient` during beforeAll abort also failed:',
+          endError
+        );
+      }
       throw new Error(
         'A database is configured but is not reachable, is missing the ROI_GOVERNED migration, or failed ' +
           'the disposable-database identity check; refusing to report a green run. ' +
@@ -325,140 +554,83 @@ describe('F2 blast-radius remediation — ensureRoiFixtureMembership / ensureRoi
   }, 30_000);
 
   afterAll(async () => {
-    if (!reachable) return;
-
+    // SAFETY MECHANISM 6 — UNCONDITIONAL CONNECTION/ADVISORY-LOCK TEARDOWN.
+    // Deliberately NO `if (!reachable) return;` here: every stage below is
+    // individually guarded by its OWN state flag (`reachable` for the data
+    // cleanup; `advisoryLockHeld` / `clientConnected` / `lockClientConnected`
+    // for lock release and connection close), so this hook still reaches,
+    // and safely no-ops past, whichever of those was never set — including
+    // the case where `beforeAll` aborted before `reachable` was ever set.
+    // `beforeAll`'s own `catch` already attempts the same release/close at
+    // the point of abort; running the guarded versions again here is
+    // intentional defense in depth, not redundant risk — every stage is
+    // idempotent given its guard.
+    //
     // SAFETY MECHANISM 4 — PINNED CLEANUP, NESTED `finally`. Each stage's
     // work lives in a `try`; the NEXT stage lives in that `try`'s
     // `finally` (see `runStagesNested` below), so a stage that throws
     // still lets every later stage run — including the postcommit
-    // residue/lock assertions and the connection teardown. This
-    // deliberately does NOT wrap each stage in its own `catch {}`: that
-    // would swallow the failure (the documented silent-teardown-death
-    // anti-pattern this mechanism exists to avoid) instead of merely
-    // refusing to let it block later stages. If more than one stage
-    // throws, JavaScript's finally-supersedes-try semantics mean only the
-    // LAST thrown error ultimately surfaces from this hook — an accepted
-    // tradeoff for "every stage still runs" over "every error is
-    // individually reported".
+    // lock-free assertion and the connection teardown. This deliberately
+    // does NOT wrap each stage in its own `catch {}`: that would swallow
+    // the failure (the documented silent-teardown-death anti-pattern this
+    // mechanism exists to avoid) instead of merely refusing to let it
+    // block later stages. If more than one stage throws, JavaScript's
+    // finally-supersedes-try semantics mean only the LAST thrown error
+    // ultimately surfaces from this hook — an accepted tradeoff for
+    // "every stage still runs" over "every error is individually
+    // reported".
     const stages: Array<() => Promise<void>> = [
-      // rvn_roi_visibility_governance is deliberately NOT deleted —
-      // append-only by trigger, see HONEST LIMIT in the top docblock.
+      // SAFETY MECHANISM 1/4/5/7 — the pinned teardown transaction: every
+      // DELETE, the inside-transaction residue assertion, COMMIT (or
+      // ROLLBACK on failure), and the after-commit residue assertion. Only
+      // runs at all if `beforeAll` actually reached a usable connection.
       async () => {
-        await client.query(
-          `DELETE FROM rvn_platform_resource_acl
-            WHERE resource_type = 'roi_case'
-              AND resource_id IN (SELECT case_id::text FROM rvn_roi_cases WHERE organization_id = $1)`,
-          [ORG_ID]
-        );
-      },
-      async () => {
-        await client.query(`DELETE FROM rvn_platform_obligations WHERE organization_id = $1`, [ORG_ID]);
-      },
-      async () => {
-        await client.query(
-          `DELETE FROM rvn_platform_outbox WHERE event_id IN (SELECT event_id FROM rvn_platform_events WHERE organization_id = $1)`,
-          [ORG_ID]
-        );
-      },
-      async () => {
-        await client.query(`DELETE FROM rvn_platform_events WHERE organization_id = $1`, [ORG_ID]);
-      },
-      async () => {
-        await client.query(`DELETE FROM rvn_platform_resource_visibility WHERE organization_id = $1`, [ORG_ID]);
-      },
-      async () => {
-        await client.query(`DELETE FROM rvn_roi_calculation_policy WHERE organization_id = $1`, [ORG_ID]);
-      },
-      async () => {
-        await client.query(`DELETE FROM rvn_roi_baselines WHERE organization_id = $1`, [ORG_ID]);
-      },
-      async () => {
-        await client.query(`DELETE FROM rvn_roi_cases WHERE organization_id = $1`, [ORG_ID]);
-      },
-      async () => {
-        await client.query(`DELETE FROM initiatives WHERE organization_id = $1`, [ORG_ID]);
-      },
-      async () => {
-        await client.query(`DELETE FROM rvn_platform_visibility_policies WHERE organization_id = $1`, [ORG_ID]);
-      },
-      async () => {
-        await client.query(`DELETE FROM organization_members WHERE organization_id = $1`, [ORG_ID]);
-      },
-      async () => {
-        await client.query(`DELETE FROM users WHERE organization_id = $1`, [ORG_ID]);
-      },
-      // POSTCOMMIT ASSERTION 1 — exact scoped NON-governance residue = 0.
-      // Scoped by RUN_SCOPE_LIKE (this run's tag prefix, covering both
-      // ORG_ID and the anti-pattern test's `${ORG_ID}-antipattern`), never
-      // by whole-table totals: `roi_gov_base` already contains one
-      // pre-existing `organizations` row ("system") that belongs to no
-      // run and must not be counted against — or credited to — this one.
-      // `organizations` and `rvn_roi_visibility_governance` are
-      // deliberately EXCLUDED from this assertion; see HONEST LIMIT in the
-      // top docblock for why zero there is not achievable from inside this
-      // file.
-      async () => {
-        const residue = await client.query<{ n: string }>(
-          `SELECT (
-             (SELECT count(*) FROM users WHERE organization_id LIKE $1) +
-             (SELECT count(*) FROM organization_members WHERE organization_id LIKE $1) +
-             (SELECT count(*) FROM initiatives WHERE organization_id LIKE $1) +
-             (SELECT count(*) FROM rvn_platform_visibility_policies WHERE organization_id LIKE $1) +
-             (SELECT count(*) FROM rvn_platform_resource_visibility WHERE organization_id LIKE $1) +
-             (SELECT count(*) FROM rvn_roi_cases WHERE organization_id LIKE $1) +
-             (SELECT count(*) FROM rvn_roi_baselines WHERE organization_id LIKE $1) +
-             (SELECT count(*) FROM rvn_roi_calculation_policy WHERE organization_id LIKE $1) +
-             (SELECT count(*) FROM rvn_platform_events WHERE organization_id LIKE $1) +
-             (SELECT count(*) FROM rvn_platform_outbox WHERE event_id IN (
-                SELECT event_id FROM rvn_platform_events WHERE organization_id LIKE $1)) +
-             (SELECT count(*) FROM rvn_platform_resource_acl WHERE resource_type = 'roi_case' AND resource_id IN (
-                SELECT case_id::text FROM rvn_roi_cases WHERE organization_id LIKE $1))
-           )::text AS n`,
-          [RUN_SCOPE_LIKE]
-        );
-        const residueCount = Number(residue.rows[0]?.n ?? -1);
-        if (residueCount !== 0) {
-          throw new Error(
-            `Postcommit residue assertion FAILED: expected 0 rows across all non-governance tables ` +
-              `scoped to "${RUN_SCOPE_LIKE}", found ${residueCount}. (organizations and ` +
-              `rvn_roi_visibility_governance are excluded from this assertion by design — see ` +
-              'HONEST LIMIT in the top docblock.)'
-          );
+        if (reachable && clientConnected) {
+          await runTeardownTransaction(client);
         }
       },
       // release the retained advisory lock, on the SAME dedicated
       // connection that acquired it (SAFETY MECHANISM 3) — never `client`.
       async () => {
-        if (advisoryLockHeld) {
+        if (advisoryLockHeld && lockClientConnected) {
           await lockClient.query('SELECT pg_advisory_unlock(hashtext($1))', [ADVISORY_LOCK_KEY]);
           advisoryLockHeld = false;
         }
       },
-      // POSTCOMMIT ASSERTION 2 — advisory locks = 0. `pg_locks` is
+      // POSTCOMMIT ASSERTION — advisory locks = 0. `pg_locks` is
       // CLUSTER-WIDE, not per-database, so a raw count would be noisy on a
       // shared Postgres instance running unrelated sessions. Instead,
       // directly demonstrate the key is free: `client` (a session that
       // never held it) attempts a NON-blocking acquire of the exact same
       // key just released above — success proves nobody, including this
       // file, still holds it — then immediately releases its own trial
-      // lock so this check itself leaves nothing behind.
+      // lock so this check itself leaves nothing behind. Only meaningful
+      // (and only attempted) if `client` is actually still connected.
       async () => {
-        const tryLock = await client.query<{ ok: boolean }>(
-          'SELECT pg_try_advisory_lock(hashtext($1)) AS ok',
-          [ADVISORY_LOCK_KEY]
-        );
-        if (!tryLock.rows[0]?.ok) {
-          throw new Error(
-            `Postcommit advisory-lock assertion FAILED: "${ADVISORY_LOCK_KEY}" is still held after unlock.`
+        if (clientConnected) {
+          const tryLock = await client.query<{ ok: boolean }>(
+            'SELECT pg_try_advisory_lock(hashtext($1)) AS ok',
+            [ADVISORY_LOCK_KEY]
           );
+          if (!tryLock.rows[0]?.ok) {
+            throw new Error(
+              `Postcommit advisory-lock assertion FAILED: "${ADVISORY_LOCK_KEY}" is still held after unlock.`
+            );
+          }
+          await client.query('SELECT pg_advisory_unlock(hashtext($1))', [ADVISORY_LOCK_KEY]);
         }
-        await client.query('SELECT pg_advisory_unlock(hashtext($1))', [ADVISORY_LOCK_KEY]);
       },
       async () => {
-        await client.end();
+        if (clientConnected) {
+          await client.end();
+          clientConnected = false;
+        }
       },
       async () => {
-        await lockClient.end();
+        if (lockClientConnected) {
+          await lockClient.end();
+          lockClientConnected = false;
+        }
       },
     ];
 
