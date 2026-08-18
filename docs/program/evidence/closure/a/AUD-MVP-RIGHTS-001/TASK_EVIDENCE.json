@@ -5,6 +5,7 @@
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "baselineTag": "closure-execution-baseline-v2-20260816",
   "productSha": "78a618942ea0e12e7837bf64dec05f0b30bbdff1",
+  "productShaReaderNote": "This field and its historical siblings (technicalSourceSha, requalificationSha, reconciliationSha below) are FROZEN HISTORY, preserved as-written at the time each was recorded (per the AUD-POL-001 convention) — they are NOT the current identity of this task's evidence. A reader who stops at top-level fields will be misled. The current identity is laneBClosurePass20260818.postFanInPass.productSha (31e830d6c8b4298ddcf90ce2c63b39242d1dcaf7) and .verdictAtSha (76627878f3b0e3dfc697e59b5346bd1fae297929); the top-level \"verdict\" field itself IS kept current (DONE_CURRENT_SHA) even though productSha is not.",
   "technicalSourceSha": "a8b309342c3b4a2842e2fceba2a3c0dbb9a2aa69",
   "requalificationSha": "b9cb1200752bd39d2361799ff5b20bb254b5b05c",
   "reconciliationSha": "163a702f128518965bcdb132dda9c664231a75fa",
@@ -304,6 +305,7 @@
     "gap3OperationalizationProof": {
       "claim": "getIndependenceReport (server/src/services/audits/auditTrailService.ts:269) previously had no caller anywhere outside its own route handler. At this SHA it has a real caller: server/src/jobs/auditIndependenceDetectorJob.ts:67 calls it inside scanBatch, which is driven by the fenced/checkpointed batch walker in server/src/services/audits/independenceScanCursor.ts, and server/src/cron/Scheduler.ts registers a `*/15 * * * *` cron entry (runAuditIndependenceSchedulerTick) that invokes it. What was NOT previously proven — only asserted from reading source — is that this actually works: claims a lease, scans a batch, produces findings, advances the cursor, releases, fences out a concurrent worker, and reclaims after a restart without starving old rows. This pass proves all of that against real PostgreSQL.",
       "defaultOffIsFrozenDecision": "AUDIT_INDEPENDENCE_DETECTOR_CRON_ENABLED defaults unset/false (Scheduler.ts:38). Per lane lead's explicit instruction, default-OFF is the frozen Audits rollout decision and is NOT a blocker for this task's closure; only proof that the runner functions correctly in both states (OFF = literal no-op, ON = correct fenced execution) was required.",
+      "authorshipNote": "PARITY WITH THE GAP-1 DISCLOSURE ABOVE: both files below are PRE-EXISTING at base 76627878f3b0e3dfc697e59b5346bd1fae297929 — server/src/cron/__tests__/auditIndependenceDetectorSchedulerFlag.test.ts (5 it() cases) and server/src/services/audits/__tests__/independenceScanCursor.realdb.test.ts (21 it() cases) — and were RUN, not authored, by this pass, exactly as the 23 pre-existing cases in auditPackRights.realdb.test.ts were. This pass's sole authorship contribution to the test suite is the 2 new revoked/stale-identity cases in auditPackRights.realdb.test.ts (describe block 8) plus this evidence file and the ICR-1 supersession notice.",
       "testsRun": [
         {
           "file": "server/src/cron/__tests__/auditIndependenceDetectorSchedulerFlag.test.ts",
@@ -365,10 +367,10 @@
         "result": "3 files, 50 tests total, 47 passed, 3 failed — run at cdb0b5c200 AND re-run identically at 76627878f3b0, same 47/50. auditIso27001LegacyPresetGate.test.ts: 8/8 pass (compile-time constant has no runtime input). AuditsHub.test.tsx GAP-2-specific describe block 'AMD-AUD-RIGHTS-001: legacy ISO 27001 preset launcher is hard-disabled': 4/4 pass. audit-programs.test.ts (legacy write refusal while AUDIT_PROGRAM_LEGACY_WRITES_ENABLED is unset): 32/32 pass. The 3 failures are in AuditsHub.test.tsx's UNRELATED '§27 list' describe block (empty-state rendering, wizard CTA, preview-pane dashboard open) — nothing to do with the ISO preset or rights kernel, identical failure at both SHAs, and src/components/Audit/AuditsHub.tsx is outside this lane's edit allowlist, so not fixed here. Reported in unresolvedItems below, not silently dropped."
       },
       {
-        "gate": "residue/locks/triggers (post-fan-in)",
+        "gate": "residue/locks/triggers (post-fan-in, observed once before teardown)",
         "command": "psql counts on audit_packs/audit_programs matching this run's fixture prefixes; pg_trigger state for trg_audit_domain_events_append_only; pg_locks advisory count",
         "exitCode": 0,
-        "result": "fixture residue: 0; advisory locks held: 0; trg_audit_domain_events_append_only tgenabled='O' (restored/enabled)"
+        "result": "fixture residue: 0; advisory locks held: 0; trg_audit_domain_events_append_only tgenabled='O' (restored/enabled). OBSERVED ONCE, immediately before this container was destroyed with -v — see realDbEvidence.containerReleased below for why these specific numbers cannot be independently re-derived by anyone, including B3."
       }
     ],
     "denominators": {
@@ -390,7 +392,7 @@
       "databaseUrl": "postgresql://consultinity:consultinity@127.0.0.1:55901/consultinity",
       "migrationLedger": "fresh run: 771 files applied, 0 errors, 1620 public tables; repeat: 0 applied; --dry-run: 0 pending",
       "mockDbGuardVerified": "all realDB runs used the full quadruple NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres plus CI=true (required to unlock a local DB host per databaseTargetResolver.ts) — confirmed by DB Config log lines 'Using PostgreSQL' / 'DB_TYPE: postgres' in every run's output, and by the residue/lock/trigger checks reading real pg_trigger/pg_locks system catalogs, not a mock.",
-      "containerReleased": "consultify-laneb-b1-cdb0b5c2 was `docker rm -f -v`'d immediately after this evidence file was finalized, per lane-B DB-runtime handoff sequencing to unblock worker B2. All literal denominators and residue/lock/trigger checks above were captured BEFORE release."
+      "containerReleased": "consultify-laneb-b1-cdb0b5c2 was `docker rm -f -v`'d immediately after this evidence file was finalized, per lane-B DB-runtime handoff sequencing to unblock worker B2. All literal denominators and residue/lock/trigger checks above were captured BEFORE release. IMPORTANT — honesty framing: the -v flag destroyed the container's volume, so the exact residue/lock/trigger numbers above (residue 0, advisory locks 0, tgenabled='O', 1620 tables) are PERMANENTLY UNVERIFIABLE by anyone after this point, including auditor B3 — they are observed-once-before-teardown facts, not independently reproducible ones. B3 can only re-derive analogous numbers in its own fresh container/volume, never confirm this identical volume state. This does not weaken the packet: none of the four blocker closures (GAP 1/2/3, test replay) rest on these specific residue numbers — they rest on the pass/fail test denominators (25/25, 26/26, 47/50) and the migration ledger, which are independently re-runnable by any worker with its own fresh container (B3 was, at the time of this edit, queued behind B4 for exactly that real-Postgres reproduction of the 25/25 and 26/26; it had already independently reproduced the DB-free 47/50 GAP-2 numbers)."
     },
     "verdict": "DONE_CURRENT_SHA",
     "verdictAtSha": "76627878f3b0e3dfc697e59b5346bd1fae297929",
