@@ -25,6 +25,8 @@ import { randomUUID } from 'node:crypto';
 import { Client, type ClientConfig } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { ensureRoiGovernedVisibility } from './roiRealdbOrgFixture.js';
+
 function buildClientConfig(): ClientConfig | null {
   const raw = process.env.DATABASE_URL;
   const url = typeof raw === 'string' && raw.trim() && !raw.includes('${{') ? raw.trim() : null;
@@ -77,15 +79,6 @@ let recordFinanceOwnerGrantEvent: FinanceReconciliationCommandsModule['recordFin
 let RoiFinanceLinkNotFoundError: FinanceReconciliationCommandsModule['RoiFinanceLinkNotFoundError'];
 let listRoiFinanceReconciliations: FinanceLinkRepositoryModule['listRoiFinanceReconciliations'];
 let closePgPool: (() => Promise<void>) | undefined;
-
-async function insertVisibilityPolicy(domain: string, mode: string, createdBy: string): Promise<void> {
-  await client.query(
-    `INSERT INTO rvn_platform_visibility_policies
-       (organization_id, domain, policy_version, visibility_mode, is_active, created_by)
-     VALUES ($1, $2, 1, $3, true, $4)`,
-    [ORG_ID, domain, mode, createdBy]
-  );
-}
 
 async function insertOrganization(): Promise<void> {
   await client.query(
@@ -234,9 +227,10 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
           'trg_rvn_fin_reconciliation_grant_insert_guard',
           'trg_rvn_fin_reconciliation_decision_append_only',
           'trg_rvn_fin_reconciliation_grant_append_only',
+          'trg_rvn_roi_visibility_governance_append_only',
         ]]
       );
-      if (initialSafety.rows[0]?.role !== 'origin' || initialSafety.rows[0]?.triggers_enabled !== '3')
+      if (initialSafety.rows[0]?.role !== 'origin' || initialSafety.rows[0]?.triggers_enabled !== '4')
         throw new Error('ROI-E007 fixture requires all named production triggers enabled at origin');
       await client.query('SELECT 1 FROM rvn_roi_finance_reconciliations LIMIT 0');
       await client.query(
@@ -316,8 +310,8 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
       );
       await client.query(
         `INSERT INTO organization_members (id,organization_id,user_id,role,status,created_at)
-         VALUES ($1,$2,$3,'MEMBER','ACTIVE',now())`,
-        [`${userId}-membership`, ORG_ID, userId]
+         VALUES ($1,$2,$3,$4,'ACTIVE',now())`,
+        [`${userId}-membership`, ORG_ID, userId, userId === USER_MAKER ? 'OWNER' : 'MEMBER']
       );
     }
     for (const resolverId of [USER_RESOLVER, USER_RESOLVER_2]) await client.query(
@@ -328,7 +322,11 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
         'DEC-FIN-RESULTS-RECONCILIATION-001/v1',
         'sha256:a0b04a2bcd42d9fa8a2680f0dd35008f4226bc92db5ecc63756732d7a8854e6d']
     );
-    await insertVisibilityPolicy('roi', 'OPEN_ORG', USER_MAKER);
+    await ensureRoiGovernedVisibility({
+      organizationId: ORG_ID,
+      actorUserId: USER_MAKER,
+      idempotencyKey: `roi-e007-governed-visibility-${tag}`,
+    });
   }, 30_000);
 
   afterAll(async () => {
@@ -365,6 +363,7 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
       await client.query(`DELETE FROM rvn_roi_cases WHERE organization_id = $1`, [ORG_ID]);
       await client.query(`DELETE FROM rvn_platform_resource_visibility WHERE organization_id = $1`, [ORG_ID]);
       await client.query(`DELETE FROM rvn_platform_visibility_policies WHERE organization_id = $1`, [ORG_ID]);
+      await client.query(`DELETE FROM rvn_roi_visibility_governance WHERE organization_id = $1`, [ORG_ID]);
       await client.query(`DELETE FROM initiatives WHERE organization_id = $1`, [ORG_ID]);
       await client.query(`DELETE FROM organization_members WHERE organization_id = ANY($1::text[])`, [[ORG_ID, SECOND_ORG_ID]]);
       await client.query(`DELETE FROM users WHERE id = ANY($1::text[])`, [[USER_MAKER, USER_RESOLVER, USER_RESOLVER_2, USER_GRANTEE]]);
@@ -388,6 +387,7 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
            (SELECT count(*) FROM rvn_platform_obligations WHERE organization_id=ANY($1::text[])) +
            (SELECT count(*) FROM rvn_platform_resource_visibility WHERE organization_id=ANY($1::text[])) +
            (SELECT count(*) FROM rvn_platform_visibility_policies WHERE organization_id=ANY($1::text[])) +
+           (SELECT count(*) FROM rvn_roi_visibility_governance WHERE organization_id=ANY($1::text[])) +
            (SELECT count(*) FROM rvn_roi_baselines WHERE organization_id=ANY($1::text[])) +
            (SELECT count(*) FROM rvn_roi_calculation_policy WHERE organization_id=ANY($1::text[])) +
            (SELECT count(*) FROM rvn_platform_resource_acl WHERE resource_id=ANY($4::text[])) +
@@ -403,12 +403,13 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
             'trg_rvn_fin_reconciliation_grant_insert_guard',
             'trg_rvn_fin_reconciliation_decision_append_only',
             'trg_rvn_fin_reconciliation_grant_append_only',
+            'trg_rvn_roi_visibility_governance_append_only',
           ],
           ownedCaseIds,
           ownedEventIds,
         ]
       );
-      expect(postCommit.rows[0]).toEqual({ residue: '0', role: 'origin', triggers_enabled: '3' });
+      expect(postCommit.rows[0]).toEqual({ residue: '0', role: 'origin', triggers_enabled: '4' });
     } catch (error) {
       if (inTransaction) await client.query('ROLLBACK');
       throw error;
