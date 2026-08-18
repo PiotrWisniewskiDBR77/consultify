@@ -596,6 +596,11 @@ interface InitiativeWizardModalProps {
   onCreated: (created: PortfolioInitiative[]) => void;
 }
 
+interface InitiativeProjectOption {
+  id: string;
+  name: string;
+}
+
 const BUSINESS_PRIORITIES: Array<{ id: string; label: Record<WizardLanguage, string> }> = [
   { id: 'margin', label: { pl: 'Marza / EBITDA', en: 'Margin / EBITDA' } },
   { id: 'quality', label: { pl: 'Jakosc', en: 'Quality' } },
@@ -701,7 +706,12 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
   const [riskAppetite, setRiskAppetite] = useState(initialRiskAppetite);
   const [businessPriorities, setBusinessPriorities] = useState<string[]>(initialBusinessPriorities);
   const [manualNotes, setManualNotes] = useState(initialManualNotes);
+  const [selectedProjectId, setSelectedProjectId] = useState(projectId?.trim() || '');
+  const [projectOptions, setProjectOptions] = useState<InitiativeProjectOption[]>([]);
+  const [projectsLoading, setProjectsLoading] = useState(false);
+  const [projectsError, setProjectsError] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [sessionProjectId, setSessionProjectId] = useState<string | null>(null);
   const [candidates, setCandidates] = useState<WizardCandidate[]>([]);
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
   // Audit #29d: per-candidate duplicate/similarity verdict from the backend,
@@ -750,6 +760,41 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
   const autoSkippedEmptyInsightsRef = useRef(false);
 
   const t = useMemo(() => WIZARD_COPY[language] ?? WIZARD_COPY.pl, [language]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    setSelectedProjectId(projectId?.trim() || '');
+    setProjectsLoading(true);
+    setProjectsError(null);
+    void Api.getProjects()
+      .then((projects) => {
+        if (cancelled) return;
+        const normalized = (Array.isArray(projects) ? projects : [])
+          .map((project: any) => ({
+            id: String(project?.id || '').trim(),
+            name: String(project?.name || project?.title || '').trim(),
+          }))
+          .filter((project) => project.id && project.name);
+        setProjectOptions(normalized);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        console.error('[InitiativeWizardModal] Projects load failed:', error);
+        setProjectOptions([]);
+        setProjectsError(
+          language === 'pl'
+            ? 'Nie udało się pobrać projektów. Spróbuj ponownie.'
+            : 'Projects could not be loaded. Try again.'
+        );
+      })
+      .finally(() => {
+        if (!cancelled) setProjectsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, language, projectId]);
 
   const selectedCandidate = useMemo(
     () => candidates.find((candidate) => candidate.id === selectedCandidateId) || candidates[0],
@@ -858,6 +903,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
     setBusinessPriorities(initialBusinessPriorities);
     setManualNotes(initialManualNotes);
     setSessionId(null);
+    setSessionProjectId(null);
     setCandidates([]);
     setSelectedCandidateId(null);
     setSimilarityByCandidate({});
@@ -1084,6 +1130,14 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
   };
 
   const startWizard = async () => {
+    if (!selectedProjectId) {
+      toast.error(
+        language === 'pl'
+          ? 'Wybierz projekt przed wygenerowaniem kandydatów.'
+          : 'Select a project before generating candidates.'
+      );
+      return;
+    }
     setIsWorking(true);
     try {
       // #29b — selected insights become the evidence sourceBasket so the backend
@@ -1103,7 +1157,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
             ? initialSourceBasket
             : [{ type: 'manual_note', label: 'Consultant wizard input' }];
       const sessionResponse = await Api.post('/initiatives/wizard/sessions', {
-        projectId: projectId || undefined,
+        projectId: selectedProjectId,
         mode,
         businessPriorities,
         targetCount,
@@ -1115,6 +1169,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
       const nextSessionId = sessionResponse?.session?.id;
       if (!nextSessionId) throw new Error('Wizard session was not created');
       setSessionId(nextSessionId);
+      setSessionProjectId(selectedProjectId);
 
       const candidateResponse = await Api.post(
         `/initiatives/wizard/sessions/${nextSessionId}/candidates/generate`,
@@ -1177,6 +1232,14 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
 
   const createDrafts = async () => {
     if (!sessionId) return;
+    if (!sessionProjectId) {
+      toast.error(
+        language === 'pl'
+          ? 'Wybierz projekt przed utworzeniem draftów.'
+          : 'Select a project before creating drafts.'
+      );
+      return;
+    }
     if (!shortlistGateOk) {
       const firstBlocker = shortlistGateBlockers[0];
       toast.error(
@@ -1230,7 +1293,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
           new Set([...(candidate.evidenceRefs || []), ...insightEvidenceRefs])
         );
         const result = await createInitiativeWriteTruth({
-          projectId: projectId || undefined,
+          projectId: sessionProjectId,
           title: candidate.title,
           summary:
             applyCore && coreFields.solution.trim()
@@ -1675,6 +1738,46 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
   const renderIntent = () => (
     <div className="space-y-3">
       {renderCorePanel()}
+      <div>
+        <label
+          htmlFor="initiative-wizard-project"
+          className="mb-1.5 block text-sm font-medium text-slate-500 dark:text-slate-400"
+        >
+          {language === 'pl' ? 'Projekt *' : 'Project *'}
+        </label>
+        <select
+          id="initiative-wizard-project"
+          data-testid="initiative-wizard-project"
+          value={selectedProjectId}
+          onChange={(event) => setSelectedProjectId(event.target.value)}
+          disabled={projectsLoading || Boolean(sessionId)}
+          required
+          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
+        >
+          <option value="">
+            {projectsLoading
+              ? language === 'pl'
+                ? 'Ładowanie projektów…'
+                : 'Loading projects…'
+              : language === 'pl'
+                ? 'Wybierz projekt…'
+                : 'Select a project…'}
+          </option>
+          {projectOptions.map((project) => (
+            <option key={project.id} value={project.id}>
+              {project.name}
+            </option>
+          ))}
+        </select>
+        {projectsError && <p className="mt-1 text-xs text-danger-600">{projectsError}</p>}
+        {!projectsLoading && !projectsError && projectOptions.length === 0 && (
+          <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
+            {language === 'pl'
+              ? 'Najpierw utwórz projekt — każda inicjatywa musi należeć do projektu.'
+              : 'Create a project first — every initiative must belong to a project.'}
+          </p>
+        )}
+      </div>
       {/* #29c — capacity / overload signal */}
       {capacity && (
         <div
@@ -2589,7 +2692,7 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
               <Button
                 type="button"
                 variant="primary"
-                disabled={isWorking}
+                disabled={isWorking || !selectedProjectId || projectsLoading}
                 onClick={startWizard}
                 loading={isWorking}
                 icon={isWorking ? undefined : <Sparkles size={16} />}
