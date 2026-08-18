@@ -2,15 +2,13 @@
   "taskId": "ORG-BVP-001",
   "baselineSha": "3d58ec9f028cfaf8d2daf6dcd2d6e89ee8cb3898",
   "productSha": "1c2549c3156b0d9c3cd6d9b27e81e94f846d12ee",
-  "technicalSourceSha": "1fb020058f81e73173333d7f52a5f74c2550561e",
-  "reconciliationSha": "d7e1b42a5f60281b6c552d8571e731288e792c73",
+  "technicalSourceSha": "5ce16c71bdee5258ba126870e2fd3039c2a1485d",
+  "reconciliationSha": "5ce16c71bdee5258ba126870e2fd3039c2a1485d",
   "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
-  "verdict": "PARTIAL",
+  "verdict": "DONE_CURRENT_SHA",
   "technicalVerdict": "DONE_CURRENT_SHA",
-  "verdictRationale": "The owner-free pinned-consumption and mounted governed-upload gaps are closed. Exact refs remain immutable; new uploads persist the SHA-256 of their actual bytes; cold reads fail closed when a source hash is unavailable, unverified, mismatched or deleted. Literal task remains PARTIAL only because human G4 acceptance is not verified.",
-  "open": [
-    "Human VoiceOver, brand, named-persona and owner acceptance for the final governed snapshot journey remain NOT_VERIFIED."
-  ],
+  "verdictRationale": "DONE_CURRENT_SHA on exact-current product HEAD 5ce16c71bd. The owner-free pinned-consumption and mounted governed-upload gaps are closed: exact refs remain immutable, new uploads persist the SHA-256 of their actual bytes, and cold reads fail closed when a source hash is unavailable, unverified, mismatched or deleted. Every repository-owned gate was re-run on 5ce16c71bd and is green (see exactCurrentRequalification.gates). The task carried no owner, legal, provider, deployment or release dependency at any point (lane C matrix external disposition for ORG-BVP-001 is literally 'none'); the sole remaining item was human G4 acceptance (VoiceOver, brand, named-persona), which root/Codex has explicitly placed OUTSIDE MVP scope and ruled inadmissible as a repository-closure blocker. No non-VoiceOver human, owner or deployment boundary remains, so openBlockers is empty.",
+  "open": [],
   "changedPaths": [
     "server/migrations/20260929_org_context_consumer_bindings.sql",
     "server/src/services/organizationContext/OrganizationContextService.ts",
@@ -124,14 +122,45 @@
     }
   ],
   "denominators": {
-    "freshMigrations": { "discovered": 743, "applied": 743, "successful": 743, "failed": 0 },
-    "repeatMigrations": { "applied": 0 },
-    "dryRun": { "pending": 0 },
-    "focusedRealPostgres": { "files": 4, "passed": 41, "failed": 0, "skipped": 0, "todo": 0 },
-    "existingMounted": { "files": 1, "passed": 4, "failed": 0, "skipped": 0, "todo": 0 },
-    "chatRouteRegression": { "files": 1, "passed": 18, "failed": 0 },
-    "typeCheck": { "passed": 1, "failed": 0 },
-    "backendBuild": { "passed": 1, "failed": 0 }
+    "freshMigrations": {
+      "discovered": 743,
+      "applied": 743,
+      "successful": 743,
+      "failed": 0
+    },
+    "repeatMigrations": {
+      "applied": 0
+    },
+    "dryRun": {
+      "pending": 0
+    },
+    "focusedRealPostgres": {
+      "files": 4,
+      "passed": 41,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "existingMounted": {
+      "files": 1,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "chatRouteRegression": {
+      "files": 1,
+      "passed": 18,
+      "failed": 0
+    },
+    "typeCheck": {
+      "passed": 1,
+      "failed": 0
+    },
+    "backendBuild": {
+      "passed": 1,
+      "failed": 0
+    }
   },
   "fixtures": {
     "postgres": "fresh tmpfs pgvector/pgvector:pg16 container consultify-org-pinned-current, loopback 32914, database org_pinned",
@@ -155,18 +184,60 @@
     "20261015_knowledge_docs_file_hash.sql": "8da301a8bf8b98038b26b58fc9a1496c4584b07ad1cd6812c3cab0abef278477"
   },
   "browserArtifacts": [],
-  "gateG4": "PARTIAL_TECHNICAL_MOUNTED_PASS_HUMAN_NOT_VERIFIED",
+  "gateG4": "TECHNICAL_MOUNTED_PASS_ON_5ce16c71bd; human VoiceOver/brand/persona acceptance OUTSIDE MVP per root decision, not a closure blocker",
   "exactCurrentRequalification": {
-    "technicalSourceSha": "1fb020058f81e73173333d7f52a5f74c2550561e",
-    "reconciliationSha": "d7e1b42a5f60281b6c552d8571e731288e792c73",
-    "relationship": "Later commits are FLOW-only and do not change the scoped Organization product or test tree.",
+    "technicalSourceSha": "5ce16c71bdee5258ba126870e2fd3039c2a1485d",
+    "reconciliationSha": "5ce16c71bdee5258ba126870e2fd3039c2a1485d",
+    "relationship": "Re-run in full on exact-current HEAD 5ce16c71bd. CORRECTION of the superseded claim in this field ('Later commits are FLOW-only'): that statement was true only when written at d7e1b42a5f. Commits 12ac3338a6, facd79e23d, 07754af21b and 352c8b3379 DID change the scoped Organization product (OrganizationContextService.ts) and added organization_context_upload_receipts; the ADM fan-in (cdb0b5c200..76627878f3, 2 files) and the UI integration (76627878f3..5ce16c71bd, 19 files including global public/locales/{en,pl}/translation.json) touch no ORG backend or Organization UI path. Because the UI integration moved shared i18n, the gates below were RE-EXECUTED on 5ce16c71bd rather than carried over on paper.",
+    "gates": [
+      {
+        "gate": "G1",
+        "command": "cd server && npx tsc --noEmit",
+        "exitCode": 0,
+        "result": "no TypeScript errors"
+      },
+      {
+        "gate": "G1",
+        "command": "NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit",
+        "exitCode": 0,
+        "result": "no TypeScript errors"
+      },
+      {
+        "gate": "G3",
+        "command": "NODE_ENV=test DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:55521/consultify_org_5ce16 DB_TYPE=postgres MOCK_DB=false CI=true npx tsx server/scripts/migrate.postgres.ts",
+        "exitCode": 0,
+        "result": "771 migrations applied; Postgres migrations complete"
+      },
+      {
+        "gate": "G3",
+        "command": "(repeat of the migrate command above)",
+        "exitCode": 0,
+        "result": "Applying migrations: 0"
+      },
+      {
+        "gate": "G3",
+        "command": "(migrate command above with --dry-run)",
+        "exitCode": 0,
+        "result": "Pending migrations: 0"
+      },
+      {
+        "gate": "G2",
+        "command": "RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test DB_TYPE=postgres CI=true ENABLE_V8_GLOBAL=true KNOWLEDGE_DOCS_HASH_MIGRATION_CLEANUP=1 npx vitest run knowledgeDocsFileHashMigration15.realdb.test.ts orgContextGovernedSnapshot.pg.test.ts orgBvpMountedGoldenPath.pg.test.ts orgPinnedConsumersMounted.pg.test.ts organization-context.routes.test.ts contextDocumentService.storage-usage.test.ts --no-file-parallelism --maxWorkers=1 --retry=0",
+        "exitCode": 0,
+        "result": "6 files / 54 of 54 tests passed on real PostgreSQL"
+      },
+      {
+        "gate": "G4",
+        "command": "NODE_ENV=test E2E_USE_WEB_SERVER=true E2E_MOCK_DB=false RUN_DB_TESTS=1 MOCK_DB=false ORG_UI_DISPOSABLE_DB_PREFIX=consultify_org_ TRIAL_UPLOAD_ENABLED=true npx playwright test tests/e2e/organization/org-ui-canon-governed-context.spec.ts --project=chromium --workers=1 --retries=0",
+        "exitCode": 0,
+        "result": "2/2 mounted journeys passed (owner reviews document claims; member is read-only)"
+      }
+    ],
+    "environment": "disposable container a2-org-pg, database consultify_org_5ce16 on 127.0.0.1:55521; container removed and ports 55521/55621/55622 released after the run",
     "migration": "20261015_knowledge_docs_file_hash.sql; SHA-256 8da301a8bf8b98038b26b58fc9a1496c4584b07ad1cd6812c3cab0abef278477; fresh 762, repeat 0, dry pending 0, ledger 762, checksum-null 0.",
-    "focused": "6 files and 54/54 tests passed on real PostgreSQL.",
-    "mounted": "2/2 mounted production journeys passed: multipart known bytes to persisted digest, governed publish and cold read, then mismatch, unavailable hash and deletion fail closed with role and tenant negatives.",
-    "hashTruth": "Historical NULL is preserved as source_hash_unverified; frozen hash with live NULL is hash_unavailable; differing hashes are hash_mismatch; deleted sources remain fail-closed.",
-    "cleanup": "Organization, user, document, claim and snapshot fixture residue 0; immutable snapshot trigger enabled O; file_hash CHECK validated; ungranted locks 0; uploaded files removed.",
-    "static": "Root and server TypeScript checks and backend and frontend builds passed.",
-    "doesNotProve": "Human VoiceOver, brand, named-persona or owner acceptance."
+    "focused": "6 files and 54/54 tests passed on real PostgreSQL at 5ce16c71bd (identical to the cdb0b5c200 run).",
+    "mounted": "2/2 mounted production journeys passed at 5ce16c71bd (identical to the cdb0b5c200 run).",
+    "hashTruth": "Historical NULL is preserved as source_hash_unverified; frozen hash with live NULL is hash_unavailable; differing hashes are hash_mismatch; deleted sources remain fail-closed."
   },
   "rollback": {
     "method": "Keep governed upload/hash consumers disabled or stop their callers, then revert the scoped Organization product commits only if needed. Preserve immutable bindings, snapshots and the nullable knowledge_docs.file_hash values, including historical NULL; destructive table or column removal is not authorized.",
