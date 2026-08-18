@@ -150,7 +150,9 @@
     "The named default-suite regression is green (11/11), and the repaired fixture suites plus original TLS suite are green on fresh strict-migrated PostgreSQL (32/32).",
     "No browser/visual evidence exists for this task's user-facing surface (SWOT tool freeze/promote flow)."
   ],
-  "unverifiedFields": ["Mounted browser G4 for the SWOT freeze/promote UI flow."],
+  "unverifiedFields": [
+    "Mounted browser G4 for the SWOT freeze/promote UI flow."
+  ],
   "exactCurrentBackendRequalification20260817": {
     "baselineSha": "4ba0ca0d3553765f492ed48f3d382db25db37803",
     "harnessCommit": "a3924b9185",
@@ -211,7 +213,7 @@
     "g4": "NOT_VERIFIED; no browser evidence added in this bounded technical pass"
   },
   "verdict": "PARTIAL",
-  "verdictRationale": "Backend technical closure is green on exact product SHA 4dfe3ebaa7: mounted production-route task suite 11/11 and combined focused real-PostgreSQL suites 33/33 on the exact-current strict schema, with clean owned-fixture residue and backend build exit 0. The literal task remains PARTIAL only because mounted browser G4 belongs to Settings and is not verified here.",
+  "verdictRationale": "PARTIAL retained at 4f0fd2cd9b. The task's own guard is intact and unchanged (toolOutputSnapshotService.ts:204/:261, ToolController.ts:2317), and all five changedPaths are byte-identical from productSha 4dfe3ebaa7 through 184 commits to canonical, so the recorded backend gates remain attributable to an unmodified surface. The literal task remains PARTIAL for two reasons, neither of which is the one previously recorded. First, G4 is required by this task's frozen gate set and carries an explicit human dependency: manual VoiceOver and brand/UX sign-off for the Dynamic SWOT freeze/promote flow, for which no browser evidence exists at any SHA. (The superseded wording said G4 \"belongs to Settings\"; that was a copy artifact from another record.) Second, the blocking integrator change request this record raised is NOT stale — tests/integration/tools/tool-session-roundtrip.contract.test.ts is red again at canonical, 11/11 failing in 481s, but from an unrelated cause: commit 208ce122fe mounted a strict tenant-membership middleware on the Tools router (tools.routes.ts:34) whose DbPromise path throws on a missing export in the test's partial queryHelpers mock, leaving the promise permanently unsettled. That commit is a descendant of this task's productSha, so the regression is not attributable to this task's change, and all four implicated paths lie outside lane A's lease. See exactCurrentReconciliation20260818 for the controlled A/B evidence, the bisect, the source-bound mechanism and the one-file minimal allowlist.",
   "ownerTables": [],
   "fixtures": {
     "prefix": "bvp001-*",
@@ -226,5 +228,123 @@
     "foreignTenant": "denied with zero foreign read/write",
     "scopeBoundary": "non-dynamic-SWOT behavior unchanged",
     "replayConcurrency": "same receipt on replay and exactly one freeze under 10 concurrent calls"
+  },
+  "supersededVerdictRationale20260817": "Backend technical closure is green on exact product SHA 4dfe3ebaa7: mounted production-route task suite 11/11 and combined focused real-PostgreSQL suites 33/33 on the exact-current strict schema, with clean owned-fixture residue and backend build exit 0. The literal task remains PARTIAL only because mounted browser G4 belongs to Settings and is not verified here.",
+  "exactCurrentReconciliation20260818": {
+    "reconciledAtSha": "4f0fd2cd9b0665a971a86867a91015655ce127af",
+    "reconciledOn": "2026-08-18",
+    "method": "Read-only reconciliation on a clean isolated worktree branched from the exact canonical SHA, plus one controlled A/B execution of the single default-suite test this record names as its blocking consequence. No product or test file was edited; the sole edit allowlist for this pass is this TASK_EVIDENCE.json.",
+    "canonicalCollision": {
+      "canonicalHeadObserved": "e9183a8c22f182782e4de36aa53664a912f6b5c6",
+      "commitsAheadOfReconciliationBase": 5,
+      "collisionWithThisTask": "none — the five commits ahead touch only codex-lane evidence files, ai.routes.ts, useAIStream.ts and MFA/chat tests. No lane-A authority file, no Tools path and no changedPath of this task is affected; no port or rebase is required and no rerun scope is opened."
+    },
+    "pathAndHashChecks": {
+      "allChangedPathsExist": true,
+      "byteIdenticalAcrossProductShaToCanonical": "All five changedPaths are byte-identical between productSha 4dfe3ebaa7 and 4f0fd2cd9b, despite 184 intervening commits: ToolController.ts, toolOutputSnapshotService.ts, tls-bvp-001-nonempty-lineage.realdb.test.ts, tools-promote-characterization.realdb.test.ts and tools-promotion-race.realdb.test.ts.",
+      "shaAncestry": "baselineSha 4ba0ca0d35, productSha 4dfe3ebaa7, harnessCommit a3924b9185, integrator candidateSha 670794629f, 6c4fd71cdb, 55a55fc011 and 6f07c1ae92 all exist, are commits, and are ancestors of 4f0fd2cd9b.",
+      "baselineShaVersusTag": "PROVENANCE DEFECT, recorded not silenced: baselineTag closure-execution-baseline-v2-20260816 dereferences to commit 64f507859c (2026-08-16 20:40), but the recorded baselineSha is 4ba0ca0d35 (2026-08-17 04:56), a LATER commit. The tag is an ancestor of 4ba0ca0d35, not equal to it. Sibling lane-A records (AUD-POL-001, AUD-MVP-RIGHTS-001) record baselineSha 64f507859c, matching the tag. This record's baselineSha is therefore the branch state at requalification time, not the sealed baseline the tag names. Both values are preserved; neither was rewritten.",
+      "leaseSha256Recomputed": "jq -r '.files | join(\"\\n\")' docs/cleanup/agents/generated/CLAUDE_LANE_A_PATH_LEASE.json | sed -e '$a\\' | shasum -a 256 -> a2f9be9983e3a03e5e64f1a51dca193199a5bec963a246c3b4fe94b378af1308; identical to the recorded leaseSha256. Cached allowlist is exact.",
+      "taskTestCaseCount": "tls-bvp-001-nonempty-lineage.realdb.test.ts holds 11 it(...) cases at 4f0fd2cd9b, structurally consistent with the recorded 11/11 mounted denominator.",
+      "p27Drift": "tests/integration/routes/tools.p27.test.ts is NOT byte-identical to the recorded 6c4fd71cdb state: commit 05e4d9f8e9 (\"test(tools): isolate strict membership route fixtures\") added 3 lines. The file still holds 26 it(...) cases, so the recorded 26/26 remains structurally plausible, but the recorded \"passes twice at 26/26 on commit 6c4fd71cdb\" is a historical result, not an exact-current one."
+    },
+    "liveDefaultSuiteRegression": {
+      "status": "NOT_STALE — the recorded blocking integrator change request is live-red again at canonical, from a DIFFERENT cause",
+      "file": "tests/integration/tools/tool-session-roundtrip.contract.test.ts",
+      "controlledComparison": {
+        "command": "npx vitest run tests/integration/tools/tool-session-roundtrip.contract.test.ts --retry=0 --reporter=dot",
+        "atIntegratorCandidate670794629f": "exit 0; 1 file passed; 11/11 tests passed; 2.44s",
+        "atFirstBadParent2b1d5fdb3c": "exit 0; 1 file passed; 11/11 tests passed; 2.84s",
+        "atFirstBad208ce122fe": "exit 1; 1 file failed; 11/11 tests FAILED; 483.29s",
+        "atCanonical4f0fd2cd9b": "exit non-zero; 1 file failed; 11/11 tests FAILED; 481.22s",
+        "atCanonicalWithFunnelFlagForcedOff": "INITIATIVE_FUNNEL_ENABLED=false; still 11/11 FAILED; 481.84s — the initiative-funnel default flip is NOT the cause",
+        "confoundsRuledOut": "package.json, package-lock.json, vitest.config.ts and tests/setup.ts are byte-identical at 670794629f and 4f0fd2cd9b, and the test file blob itself is unchanged across the whole range (98da7610d0). The green/red split is therefore pure product-side drift, not environment, dependencies, config or test edits."
+      },
+      "firstBadCommit": {
+        "sha": "208ce122fecd5e662bb5084da053784b6d82ee71",
+        "subject": "test(tools): close signed SWOT UI lifecycle gaps",
+        "date": "2026-08-17 13:52:38 +0200",
+        "parent": "2b1d5fdb3c1e73fb22b0bee453450ff5f28bb29b (confirmed green with the unmodified command)",
+        "method": "git bisect over the 275-commit range 670794629f..4f0fd2cd9b; 7 steps, no skips, both endpoints re-confirmed with the unmodified canonical command",
+        "relationToThisTasksProductSha": "CRITICAL AND EXCULPATORY: 208ce122fe is a DESCENDANT of this task's productSha 4dfe3ebaa7 (2026-08-17 04:59), not an ancestor. At 4dfe3ebaa7 the file server/src/routes/tools.routes.ts is blob a8a946b32a and contains NO strict-membership mount; at 208ce122fe and at 4f0fd2cd9b it is blob db42c5b334 and does. 208ce122fe is the only commit touching that file in 2b1d5fdb3c..4f0fd2cd9b. Therefore this record's own gates at productSha 4dfe3ebaa7 were captured on a tree where the default suite was still green; the regression arrived afterwards and is not attributable to this task's change."
+      },
+      "mechanism": {
+        "productDelta": "208ce122fe mounts a strict tenant-membership check on the Tools router: server/src/routes/tools.routes.ts:10 imports requireActiveTenantMembership and :34 does router.use(requireActiveTenantMembership), between verifyToken (:33) and requireOrgAccess() (:35). Present unchanged at 4f0fd2cd9b.",
+        "whyItHangs": "That middleware is the first consumer of DbPromise on this route (auditsStrictMembership.middleware.ts:30 imports DbPromise; :74 awaits DbPromise.get on organization_members). ToolController reaches persistence only through queryHelpers (ToolController.ts:46), which is the seam the test mocks. DbPromise.ts:14 imports recordQueryPerformance from queryHelpers, but the test's factory mock at tool-session-roundtrip.contract.test.ts:57-65 does not return that export, and Vitest throws on a missing factory export. In the test environment the DB proxy is the in-process mock driver, which invokes its callback synchronously, so inside DbPromise.get the sequence is: clearTimeout (:345), guard.claim() succeeds (:346), recordQueryPerformance throws (:347). The synchronous throw unwinds into the wrapping catch at :361-363, where clearTimeout runs again and guard.claim() now returns false, so the handler returns BEFORE resolve/reject. The promise is left permanently pending with its timeout already cleared, the middleware await never resumes, Express never responds, and supertest waits until the 60s vitest timeout.",
+        "downstreamSymptom": "Because every request now dies in middleware, ToolController is never entered and ensureToolsSchema never runs, so the SQLite-asserting tests fail immediately with \"no such table: tool_sessions\" / \"no such table: tool_initiative_links\" and \"expected [] to include 'output_json'\" rather than timing out. The 481-483s duration is roughly eight timed-out tests at 60s each.",
+        "measuredDisproofOfSelfHealing": "Re-running the first case at 208ce122fe with --testTimeout=25000 still timed out at 25s (27.73s wall), so the promise outlives DbPromise's own 15s DEFAULT_TIMEOUT — consistent only with a permanently unsettled promise whose timer was cleared."
+      },
+      "classification": "TEST_HARNESS_DEFECT as the trigger. The product change is legitimate and intentional — a fail-closed, uncached organization_members check on /api/tools, closing the known gap that requireOrgAccess() does not consult organization_members. In production recordQueryPerformance is real, nothing throws, and the middleware answers next() or 403. The test neutralizes every other middleware on this router (lines 85-108) but not the newly mounted one, and its queryHelpers factory mock is partial.",
+      "latentProductHazard": "Recorded separately because it is real and not triggered by current production wiring: DbPromise all/get/run all claim the settle guard inside the driver callback BEFORE doing work that can throw, and the surrounding catch then refuses to settle because the guard is already claimed (DbPromise.ts:346-347 versus :361-363; same shape at :229-230 versus :260-261 for all, and at :422 for run). Any synchronous throw inside that callback converts a query into a permanent hang with its timeout already cleared.",
+      "leaseFinding": "None of the four relevant paths is in the lane-A lease: tests/integration/tools/tool-session-roundtrip.contract.test.ts, server/src/routes/tools.routes.ts, server/src/middleware/auditsStrictMembership.middleware.ts and server/src/utils/DbPromise.ts are all absent from CLAUDE_LANE_A_PATH_LEASE.json. Lane A therefore cannot repair this within its own lease; it remains an integrator change request, exactly as the original record framed it.",
+      "minimalAllowlistToClose": [
+        "tests/integration/tools/tool-session-roundtrip.contract.test.ts — SUFFICIENT ON ITS OWN: add a vi.mock of server/src/middleware/auditsStrictMembership.middleware.js returning requireActiveTenantMembership, requireActiveAuditsMembership and default as pass-through (_req,_res,next)=>next(), matching how the file already neutralizes auth/rbac/demoGuard/rateLimiting at lines 85-108. That restores the parent commit's request path exactly, since the mount is the sole delta.",
+        "NOT AN ALTERNATIVE ON ITS OWN: merely adding recordQueryPerformance to the existing queryHelpers factory unblocks the promise but then lets the real middleware run against the mock driver, which returns no organization_members row and denies with 403 — the tests would fail on status instead of timing out. Useful only as additional hardening alongside the mock above.",
+        "server/src/utils/DbPromise.ts — OPTIONAL PRODUCT HARDENING, not required to green the suite: claim the settle guard after the resolve/reject decision, or wrap the performance/logging side effects in try/catch, so a throwing side effect inside a driver callback can never leave a promise permanently pending."
+      ],
+      "notProven": "The thrown recordQueryPerformance error was not captured in situ by instrumenting the running process, because that would require editing tracked product/test files, which this pass forbids. That single link is established by elimination (on this path err is null and Logger is mocked, leaving recordQueryPerformance as the only throwable statement between guard.claim() and resolve) plus the measured fact that the promise outlives its own 15s timeout. The proposed one-file fix was NOT applied and NOT verified to green the run."
+    },
+    "originalChangeRequestsDisposition": [
+      {
+        "historicalItem": "integratorChangeRequests[0] — tool-session-roundtrip.contract.test.ts seeds a content-free dynamic-swot session and asserts 200, now receiving 409 EMPTY_TOOL_OUTPUT",
+        "exactCurrentStatus": "RESOLVED_THEN_RE-BROKEN_BY_AN_UNRELATED_COMMIT",
+        "evidence": "The empty-lineage cause was genuinely fixed: commit 423ca2ad49 (\"test(contracts): align fixtures with governed runtime\", 2026-08-16 23:36) aligned the fixture after 55a55fc011 (21:28), and the integrator recorded the file green 11/11 at 670794629f. This pass re-confirmed that green independently at 670794629f. The file is red again at 4f0fd2cd9b for the entirely different middleware/DbPromise reason documented above."
+      },
+      {
+        "historicalItem": "integratorChangeRequests[1] — \"two further fixtures referenced only as three test fixtures; the other two file paths are not given\"",
+        "exactCurrentStatus": "RESOLVED — the two unnamed fixtures are identified and repaired",
+        "evidence": "They are tests/integration/tools-promote-characterization.realdb.test.ts and tests/integration/tools-promotion-race.realdb.test.ts, both repaired by 6f07c1ae92 and 670794629f and both already listed in this record's changedPaths. This change request can be considered closed."
+      }
+    ],
+    "provenanceDefectInThisRecord": "The pre-existing verdictRationale states the task \"remains PARTIAL only because mounted browser G4 belongs to Settings and is not verified here\". Settings is the wrong module: this task's G4 surface is the Dynamic SWOT freeze/promote flow, as this record's own openItems correctly state. The sentence is a copy artifact from another task's record. It is preserved verbatim in supersededVerdictRationale20260817 and corrected in the live verdictRationale.",
+    "guardStillLiveAtCanonical": {
+      "fix": "The TLS-BVP-001 guard itself is intact and unchanged at 4f0fd2cd9b: toolOutputSnapshotService.ts:204 declares EmptyToolOutputError with code EMPTY_TOOL_OUTPUT, :261 throws it, and ToolController.ts:2317 maps it to the error's own status before any DB write. Both blobs are byte-identical to productSha 4dfe3ebaa7.",
+      "scopeWordingCorrection": "The changedPathRationale for toolOutputSnapshotService.ts says the guard refuses \"a tool_outputs row with zero items/tensions/conclusions\". The literal guard at :260 is if (output.conclusions.length === 0), and the code comment immediately above it states the refusal applies \"even though items/tensions may be nonempty\". The enforced condition is conclusions-only. The historical wording is preserved; this is the exact-current reading."
+    },
+    "gateReRuns": [
+      {
+        "gate": "G6/structural",
+        "command": "jq . docs/program/evidence/closure/a/TLS-BVP-001/TASK_EVIDENCE.json",
+        "exitCode": 0,
+        "result": "valid JSON"
+      },
+      {
+        "gate": "G0/whitespace",
+        "command": "git diff --check 4f0fd2cd9b0665a971a86867a91015655ce127af HEAD",
+        "exitCode": 0,
+        "result": "zero whitespace errors"
+      },
+      {
+        "gate": "plan82",
+        "command": "node scripts/cleanup/verify-closure-plan.mjs",
+        "exitCode": 0,
+        "result": "74 module + 8 cross-program = 82 unique tasks; ownership, leases and integration graph all PASS"
+      },
+      {
+        "gate": "reporter",
+        "command": "node scripts/cleanup/report-closure-progress.mjs",
+        "exitCode": 0,
+        "result": "denominator 82; DONE_CURRENT_SHA 36, PARTIAL 45, BLOCKED_HUMAN 1; zero missingEvidence and zero invalidPresentEvidence"
+      },
+      {
+        "gate": "mirror-check",
+        "command": "node scripts/cleanup/sync-server-runtime-mirrors.mjs --check",
+        "exitCode": 0,
+        "result": "Verified 9 server runtime mirror files; no drift"
+      },
+      {
+        "gate": "G0/lane-lease",
+        "command": "node scripts/cleanup/verify-closure-lane.mjs a closure-execution-baseline-v2-20260816",
+        "exitCode": 1,
+        "result": "lane A lease violation (1128) — expected by construction: the verifier diffs every path changed since the sealed baseline against lane A's lease, and canonical aggregates all four lanes. G0 is a lane-branch gate; the historical G0 PASS stands only on codex/closure-claude-a-method-evidence at its recorded baseline."
+      }
+    ],
+    "realDbNotReRun": "Neither the 11/11 mounted task suite nor the 33/33 combined focused suite was replayed at 4f0fd2cd9b. Both are real-PostgreSQL suites requiring RUN_DB_TESTS=1 MOCK_DB=false and an isolated database; this pass was granted no Docker and took no bounded runtime window. Their recorded results stand as historical facts at their recorded SHAs, strengthened but not replaced by the proof that all five changedPaths are byte-identical from productSha 4dfe3ebaa7 to 4f0fd2cd9b. No exact-current pass/fail is claimed for them.",
+    "remainingBoundary": {
+      "type": "HUMAN_G4_PLUS_INTEGRATOR_FIX",
+      "humanBoundary": "This task's frozen gate set is G0-G6 (docs/cleanup/agents/CLAUDE_LANE_A_15_TASKS_20260816.md:102), so G4 is required. The gate catalog states that manual VoiceOver and human brand/UX approval remain external evidence and that the agent reports BLOCKED_HUMAN until the named human signs. No browser or visual evidence exists for the Dynamic SWOT freeze/promote surface at any SHA.",
+      "integratorBoundary": "The live default-suite regression documented above sits entirely outside lane A's lease and must be repaired by the integrator, using the one-file minimal allowlist named above.",
+      "whyNotDoneCurrentSha": "DONE_CURRENT_SHA is permitted only when the literal frozen Definition of Done is completely current and carries no human, owner, legal, provider, deployment or release dependency. G4 carries an explicit human dependency, and a named default-suite test is currently red at canonical. PARTIAL is retained."
+    }
   }
 }
