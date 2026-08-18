@@ -18,7 +18,11 @@
     "pathContinuity": "The audited 17-path AUD technical surface was unchanged from b9cb120075 through reconciliation SHA 163a702f."
   },
   "leaseSha256": "a2f9be9983e3a03e5e64f1a51dca193199a5bec963a246c3b4fe94b378af1308",
-  "ownerDecision": {"recordId": "INTERNAL-BETA-OWNER-DECISIONS-20260817-AMENDMENT-01", "decisionId": "AMD-AUD-RIGHTS-001", "status": "APPROVED_RESTRICTED_SCOPE_IMPLEMENTATION_REQUIRED"},
+  "ownerDecision": {
+    "recordId": "INTERNAL-BETA-OWNER-DECISIONS-20260817-AMENDMENT-01",
+    "decisionId": "AMD-AUD-RIGHTS-001",
+    "status": "APPROVED_RESTRICTED_SCOPE_IMPLEMENTATION_REQUIRED"
+  },
   "amendmentSha": "617b5d29c229e6c073452a17c8da1888ce18aa8d59a5913fa0d9aa59b2272702",
   "reopenWhen": "A named external standard has source-version-specific rights evidence and approval.",
   "evidenceInvalidation": "Invalidate on pack reads, preset availability, rights, publication validation, segregation-of-duties or detector wiring changes.",
@@ -108,8 +112,112 @@
   "technicalVerdict": "FIX_REQUIRED_OWNER_DECISION_COMPLETE",
   "verdict": "PARTIAL",
   "historicalVerdictRationale": "G0/G1/G3 shared gates pass at this SHA and the packet's factual claims are proven, not asserted: 10/10 real-Postgres tests confirm the fail-closed publish/usage gates work today, all four segregation-of-duties guards are wired at their call sites, and two real gaps (GAP 1 read-path filtering, GAP 2 legacy ISO 27001 preset bypass) are identified with evidence rather than hidden. This task was BLOCKED_OWNER before the amendment.",
-  "verdictRationale": "The owner decision is complete and keeps named standards OFF, but it does not waive the proven repository gaps. Draft-pack reads are not yet author/admin scoped, the legacy ISO preset is still reachable outside the rights kernel, and the independence detector is not operationalized.",
+  "verdictRationale": "PARTIAL retained at 4f0fd2cd9b. The owner decision AMD-AUD-RIGHTS-001 is complete and keeps named external standards OFF. Exact-current source inspection supersedes two of the three gaps this record previously held open: draft-pack reads ARE now author/platform-admin scoped (packs.routes.ts:59/:116, packService.ts:259) and the legacy ISO 27001 preset IS hard-disabled at compile time with two independent choke points (auditIso27001LegacyPresetGate.ts:35, auditPresets.ts:207, AuditsHub.tsx:796). The third gap survives in substance: the independence detector now has a real caller (auditIndependenceDetectorJob.ts:67) registered in the scheduler (Scheduler.ts:891) but fenced default-OFF (Scheduler.ts:38), so it is implemented, not operationalized — and operationalizing it is a deployment act, not a repository state. The recorded 10/10 denominator is preserved as an accurate historical fact at productSha 78a618942e but is not exact-current: the same file now holds 23 cases and was not re-run in this pass (real-PostgreSQL suite; no Docker and no runtime window were taken). See exactCurrentReconciliation20260818 for the literal evidence and supersededVerdictRationale20260817 for the superseded wording.",
   "ownerTables": [],
   "fixtures": {},
-  "negativeControls": {}
+  "negativeControls": {},
+  "supersededVerdictRationale20260817": "The owner decision is complete and keeps named standards OFF, but it does not waive the proven repository gaps. Draft-pack reads are not yet author/admin scoped, the legacy ISO preset is still reachable outside the rights kernel, and the independence detector is not operationalized.",
+  "exactCurrentReconciliation20260818": {
+    "reconciledAtSha": "4f0fd2cd9b0665a971a86867a91015655ce127af",
+    "reconciledOn": "2026-08-18",
+    "method": "Read-only reconciliation on a clean isolated worktree branched from the exact canonical SHA. No product or test file was edited; the sole edit allowlist for this pass is this TASK_EVIDENCE.json. Every statement below is source-bound to a file:line or a literal command result at 4f0fd2cd9b.",
+    "canonicalCollision": {
+      "canonicalHeadObserved": "2be22ad261e36ec7edc2603b417e8f66ef104387",
+      "commitsAhead": 1,
+      "pathsAhead": [
+        "server/src/routes/__tests__/mfaPersistence.pg.test.ts",
+        "tests/e2e/settings/settings-mfa-lifecycle.signed.spec.ts"
+      ],
+      "collisionWithThisTask": "none — neither path is a changedPath, an AUD path, or otherwise in this task scope"
+    },
+    "pathAndHashChecks": {
+      "changedPathsExist": true,
+      "blobs": {
+        "docs/program/evidence/closure/a/AUD-POL-001/DECISION_PACKET.md": "1259b9acd325251917ca1b35d5e6199d8c25aa56",
+        "server/src/services/auditProgramRights/__tests__/auditPackRights.realdb.test.ts": "5dc859c5fef22c7dc94dd4a90ab9003cf370c7f4"
+      },
+      "byteIdenticalAcross": "Both changedPaths are byte-identical at technicalSourceSha b9cb120075, at reconciliationSha 163a702f12 and at 4f0fd2cd9b.",
+      "baselineTagResolution": "Annotated tag closure-execution-baseline-v2-20260816 dereferences to commit 64f507859c717494ffa5e83fae550173c9382230, which equals the recorded baselineSha exactly.",
+      "leaseSha256Recomputed": "jq -r '.files | join(\"\\n\")' docs/cleanup/agents/generated/CLAUDE_LANE_A_PATH_LEASE.json | sed -e '$a\\' | shasum -a 256 -> a2f9be9983e3a03e5e64f1a51dca193199a5bec963a246c3b4fe94b378af1308; identical to the recorded leaseSha256 and to the lease file's own sha256 field. Cached allowlist is exact (719 files; 195 vitest, 25 playwright).",
+      "shaAncestry": "baselineSha 64f507859c, productSha 78a618942e, technicalSourceSha/requalificationSha b9cb120075 and reconciliationSha 163a702f12 all exist, are commits, and are ancestors of 4f0fd2cd9b. Commit timestamps in this repository are non-monotonic against DAG order: 163a702f12 is timestamped 2026-08-17 20:58 and b9cb120075 2026-08-17 22:54, yet b9cb120075 is the ancestor of 163a702f12. Ancestry, not commit date, is the ordering authority here.",
+      "amendmentShaSemantics": "amendmentSha 617b5d29c2... equals the amendment document's own initialContentSha256 field verbatim. It is NOT a hash of the document as it now stands: shasum -a 256 docs/program/evidence/closure/decisions/INTERNAL_BETA_OWNER_DECISIONS_20260817_AMENDMENT.json -> e64c3420d7bcb3d9c468edcc5b73f2ba6bac5758dd0e00fe30caee625435afba. The divergence is expected and self-declared by that document's own correctionReason; it is recorded here so no reader mistakes amendmentSha for a current-integrity hash."
+    },
+    "openItemsDisposition": [
+      {
+        "historicalOpenItem": "GAP 1 — unpublished packs listable/readable by any org member",
+        "exactCurrentStatus": "SUPERSEDED_BY_LANDED_FIX",
+        "evidence": "server/src/routes/audits/packs.routes.ts:59 (list) and :116 (get by id) pass readScope: isPlatformAdmin(actor) ? undefined : { actorUserId: actor.userId }; the same scoping is applied at :89 and :185. Enforcement is server/src/services/audits/packService.ts:259 assertRowReadable, which returns early for published rows and for the author, and otherwise throws AuditNotFoundError (404, not 403, so a foreign draft is not disclosed). Landed in 0dc91d839f and extended by e05577375e, both ancestors of 4f0fd2cd9b.",
+        "note": "INTEGRATOR_CHANGE_REQUESTS.md in the sibling AUD-MVP-RIGHTS-001 folder still frames this diff as unapplied. That framing is stale at 4f0fd2cd9b; the equivalent fix is live. That sibling document is outside this pass's edit allowlist and was deliberately not modified."
+      },
+      {
+        "historicalOpenItem": "GAP 2 — the legacy ISO 27001 preset bypasses the rights kernel entirely",
+        "exactCurrentStatus": "SUPERSEDED_BY_LANDED_FIX",
+        "evidence": "src/utils/auditIso27001LegacyPresetGate.ts:35 declares export const AUDIT_ISO27001_LEGACY_PRESET_ENABLED = false as const — a compile-time constant with no env, query-param, localStorage or flag-registry input path. Two independent choke points consume it: src/components/Audit/auditPresets.ts:207 (which also empties getPresetById('iso27001')) and src/components/Audit/AuditsHub.tsx:796 (launcher button). Landed in 0dc91d839f, an ancestor of 4f0fd2cd9b."
+      },
+      {
+        "historicalOpenItem": "The independence detector getIndependenceReport (auditTrailService.ts:269) has no caller anywhere in src/, server/src/cron, server/src/jobs or server/src/scripts",
+        "exactCurrentStatus": "PARTIALLY_SUPERSEDED — a caller now exists, but the detector is not operationalized",
+        "evidence": "getIndependenceReport is still at server/src/services/audits/auditTrailService.ts:269. A caller now exists: server/src/jobs/auditIndependenceDetectorJob.ts:67 calls it inside scanBatch. It is registered in the scheduler at server/src/cron/Scheduler.ts:891 (cron.schedule of runAuditIndependenceSchedulerTick every 15 minutes). However Scheduler.ts:38 returns immediately unless process.env.AUDIT_INDEPENDENCE_DETECTOR_CRON_ENABLED === 'true', and Scheduler.ts:31 documents the job as DEFAULT-OFF. The literal claim \"has no caller\" is false at 4f0fd2cd9b; the substantive claim \"is not operationalized\" remains true, because turning the job on is an environment/deployment act, not a repository state."
+      },
+      {
+        "historicalOpenItem": "No browser/visual evidence exists for this task",
+        "exactCurrentStatus": "UNCHANGED_AND_NOT_BEARING",
+        "evidence": "This task's frozen gate set is G0 and G6 only (docs/cleanup/agents/CLAUDE_LANE_A_15_TASKS_20260816.md:95). G4 is not required for AUD-POL-001, so the absence of browser evidence does not bear on its Definition of Done."
+      }
+    ],
+    "denominatorHonesty": {
+      "recordedTaskTests": "10 passed, 10 collected",
+      "exactCurrentFileShape": "server/src/services/auditProgramRights/__tests__/auditPackRights.realdb.test.ts contains 23 it(...) cases at 4f0fd2cd9b, not 10.",
+      "provenance": "At productSha 78a618942e the same file contained exactly 10 it(...) cases (git show 78a618942e:<path> | grep -acE \"^\\s+it\\(\" -> 10). The recorded 10/10 is therefore an accurate historical denominator for the moment it was written, and is preserved unchanged above. It is NOT an exact-current denominator: four ancestor commits (0dc91d839f, e05577375e, 8e7951da48, a8b309342c) grew the file from 10 to 23 cases after productSha.",
+      "landmine": "This test file contains an embedded NUL byte, so plain grep treats it as binary and silently reports nothing. Use grep -a (or a byte-wise reader) when re-counting it.",
+      "notReRun": "The 23-case suite was NOT re-run in this pass. It is a real-PostgreSQL suite requiring RUN_DB_TESTS=1 MOCK_DB=false and an isolated database; this pass was granted no Docker and took no bounded runtime window. No exact-current pass/fail claim is made for it.",
+      "recordedCommandNoLongerReproducible": "The recorded G2/task command is not reproducible as written at 4f0fd2cd9b. The suite is now wrapped by const suite = DESTRUCTIVE_FIXTURES_ENABLED ? describe : describe.skip (auditPackRights.realdb.test.ts:77), where DESTRUCTIVE_FIXTURES_ENABLED = REAL_PG && CLEANUP_OPT_IN && DISPOSABLE_DB_PREFIX.length > 0 (:72), CLEANUP_OPT_IN = process.env.AUD_PACK_RIGHTS_ALLOW_FIXTURE_CLEANUP === '1' (:70) and DISPOSABLE_DB_PREFIX = process.env.AUD_PACK_RIGHTS_DISPOSABLE_DB_PREFIX ?? '' (:71). The recorded command sets neither variable, so re-running it verbatim today would emit the file's own clean-skip warning (:85-91) and execute zero tests — it would NOT reproduce 10 passed. This is a determination from the guard logic read at source, not from a run."
+    },
+    "gateReRuns": [
+      {
+        "gate": "G6/structural",
+        "command": "jq . docs/program/evidence/closure/a/AUD-POL-001/TASK_EVIDENCE.json",
+        "exitCode": 0,
+        "result": "valid JSON"
+      },
+      {
+        "gate": "G0/whitespace",
+        "command": "git diff --check 4f0fd2cd9b0665a971a86867a91015655ce127af HEAD",
+        "exitCode": 0,
+        "result": "zero whitespace errors"
+      },
+      {
+        "gate": "plan82",
+        "command": "node scripts/cleanup/verify-closure-plan.mjs",
+        "exitCode": 0,
+        "result": "74 module + 8 cross-program = 82 unique tasks; ownership A15+B15+C15+Codex37 with zero duplicates/missing; leases SHA-valid with zero tracked-path overlap; graph A -> C -> B -> Codex Results/Finance"
+      },
+      {
+        "gate": "reporter",
+        "command": "node scripts/cleanup/report-closure-progress.mjs",
+        "exitCode": 0,
+        "result": "denominator 82; before this pass: DONE_CURRENT_SHA 36, PARTIAL 45, BLOCKED_HUMAN 1; zero missingEvidence and zero invalidPresentEvidence rows"
+      },
+      {
+        "gate": "mirror-check",
+        "command": "node scripts/cleanup/sync-server-runtime-mirrors.mjs --check",
+        "exitCode": 0,
+        "result": "Verified 9 server runtime mirror files; no drift"
+      },
+      {
+        "gate": "G0/lane-lease",
+        "command": "node scripts/cleanup/verify-closure-lane.mjs a closure-execution-baseline-v2-20260816",
+        "exitCode": 1,
+        "result": "lane A lease violation (1128). This is NOT a regression of this task: the verifier compares every path changed since the sealed baseline against lane A's lease, and the canonical branch aggregates all four lanes' work. G0 is a lane-branch gate and cannot pass when evaluated against canonical. The recorded historical G0 PASS remains valid only on its own lane branch codex/closure-claude-a-method-evidence at the sealed baseline."
+      }
+    ],
+    "remainingBoundary": {
+      "type": "OWNER_PLUS_DEPLOYMENT",
+      "statement": "The owner decision AMD-AUD-RIGHTS-001 is recorded as APPROVED_RESTRICTED_SCOPE_IMPLEMENTATION_REQUIRED and imposes three implementation conditions. Two of the three are now demonstrably met in the repository (author/platform-admin-scoped draft reads; legacy ISO preset default-OFF and inaccessible). The third — \"the independence detector must be operationalized\" — is met only up to code: the job exists and is scheduled, but is fenced default-OFF behind AUDIT_INDEPENDENCE_DETECTOR_CRON_ENABLED. Operationalizing it is a deployment/environment act outside repository state, and the owner has not signed off that the restricted-scope implementation as built satisfies the amendment.",
+      "whyNotDoneCurrentSha": "DONE_CURRENT_SHA is permitted only when the literal frozen Definition of Done is completely current and carries no human, owner, legal, provider, deployment or release dependency. This task's frozen entry is itself BLOCKED_OWNER (\"methodology/rights owner, internal pack and segregation of duties; named external standards OFF\"), its lane row names the methodology/legal owner as the blocker, and the one unmet amendment condition is a deployment dependency. PARTIAL is retained."
+    },
+    "unverifiableAsWritten": [
+      "The currentRequalification.pathContinuity claim names a \"17-path AUD technical surface\" but no enumeration of those 17 paths exists anywhere in the repository. The claim can therefore be neither confirmed nor refuted as written. What IS verifiable and true at 4f0fd2cd9b: zero commits in b9cb120075..HEAD touch either changedPath, server/src/services/auditProgramRights/**, server/src/routes/audits/**, or any path matching auditProgram or audit_pack. The substantive drift affecting this record happened BEFORE b9cb120075 (between productSha 78a618942e and b9cb120075), so the b9cb120075..HEAD window is the wrong window in which to look for it."
+    ]
+  }
 }
