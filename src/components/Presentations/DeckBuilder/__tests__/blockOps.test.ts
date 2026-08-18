@@ -67,4 +67,14 @@ describe('blockOps (Fala 1 — manual block editing, no data-model change)', () 
     const next = moveBlockInList(blocks, 'a', 'up');
     expect(next).toBe(blocks); // unchanged reference — nothing to swap with
   });
+
+  it('fails closed for a persisted legacy block without position', () => {
+    const malformed = { ...block('legacy', 0), position: undefined } as unknown as CardBlock;
+    const blocks = [malformed, block('valid', 1)];
+
+    expect(canMoveBlock(blocks, 'legacy', 'up')).toBe(false);
+    expect(canMoveBlock(blocks, 'legacy', 'down')).toBe(false);
+    expect(moveBlockInList(blocks, 'legacy', 'down')).toBe(blocks);
+    expect(duplicateBlockInList(blocks, 'legacy')).toHaveLength(3);
+  });
 });

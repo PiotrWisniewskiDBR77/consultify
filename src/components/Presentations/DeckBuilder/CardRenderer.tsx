@@ -327,7 +327,7 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
       ).includes(block.block_id);
       const editableNode = (
         <AnimatedBlock
-          key={block.block_id}
+          key={`${block.block_id}-${blockIndex}`}
           blockType={block.type}
           index={blockIndex}
           animationsEnabled={animationsEnabled}
@@ -355,7 +355,7 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
       );
       return block.geometry ? (
         <FreeformBlockFrame
-          key={block.block_id}
+          key={`${block.block_id}-${blockIndex}`}
           geometry={block.geometry}
           selected={isBlockSelected}
           onCommit={(geometry) => onBlockUpdate?.(block.block_id, { geometry })}
@@ -369,7 +369,7 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
 
     return (
       <AnimatedBlock
-        key={block.block_id}
+        key={`${block.block_id}-${blockIndex}`}
         blockType={block.type}
         index={blockIndex}
         animationsEnabled={animationsEnabled}
@@ -448,8 +448,8 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
             className="flex-1 flex flex-col gap-3"
             style={{ justifyContent: justifyFor(card.content_alignment || stackedFillMode) }}
           >
-            {structuredBlocks
-              .sort((a, b) => a.position.order - b.position.order)
+            {[...structuredBlocks]
+              .sort((a, b) => (a.position?.order ?? 0) - (b.position?.order ?? 0))
               .map((block, blockIndex) => renderBlockItem(block, blockIndex))}
           </div>
         )}
@@ -459,7 +459,7 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
             {card.blocks
               .filter((block) => block.geometry)
               .map((block, index) => (
-                <div key={block.block_id} className="pointer-events-auto">
+                <div key={`${block.block_id}-${index}`} className="pointer-events-auto">
                   {renderBlockItem(block, index)}
                 </div>
               ))}

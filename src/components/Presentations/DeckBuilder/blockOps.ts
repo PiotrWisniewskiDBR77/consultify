@@ -30,6 +30,7 @@ export function duplicateBlockInList(blocks: CardBlock[], blockId: string): Card
   };
   const next = [...blocks];
   next.splice(idx + 1, 0, clone);
+  if (!original.position) return next;
   return renumberArea(next, original.position.area);
 }
 
@@ -40,8 +41,10 @@ export function canMoveBlock(
   direction: 'up' | 'down'
 ): boolean {
   const target = blocks.find((b) => b.block_id === blockId);
-  if (!target) return false;
-  const sameArea = sortedByOrder(blocks.filter((b) => b.position.area === target.position.area));
+  if (!target?.position) return false;
+  const sameArea = sortedByOrder(
+    blocks.filter((b) => b.position?.area === target.position.area && b.position)
+  );
   const idx = sameArea.findIndex((b) => b.block_id === blockId);
   if (idx === -1) return false;
   return direction === 'up' ? idx > 0 : idx < sameArea.length - 1;
@@ -58,8 +61,10 @@ export function moveBlockInList(
   direction: 'up' | 'down'
 ): CardBlock[] {
   const target = blocks.find((b) => b.block_id === blockId);
-  if (!target) return blocks;
-  const sameArea = sortedByOrder(blocks.filter((b) => b.position.area === target.position.area));
+  if (!target?.position) return blocks;
+  const sameArea = sortedByOrder(
+    blocks.filter((b) => b.position?.area === target.position.area && b.position)
+  );
   const idx = sameArea.findIndex((b) => b.block_id === blockId);
   const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
   if (idx === -1 || swapIdx < 0 || swapIdx >= sameArea.length) return blocks;
@@ -78,15 +83,15 @@ export function moveBlockInList(
 }
 
 function sortedByOrder(blocks: CardBlock[]): CardBlock[] {
-  return [...blocks].sort((a, b) => a.position.order - b.position.order);
+  return [...blocks].sort((a, b) => (a.position?.order ?? 0) - (b.position?.order ?? 0));
 }
 
 /** Renumeruje `order` (0..n-1) bloków jednego regionu, zachowując ich kolejność w tablicy. */
 function renumberArea(blocks: CardBlock[], area: CardBlock['position']['area']): CardBlock[] {
   const sameAreaIndexed = blocks
     .map((b, i) => ({ b, i }))
-    .filter(({ b }) => b.position.area === area)
-    .sort((x, y) => x.b.position.order - y.b.position.order || x.i - y.i);
+    .filter(({ b }) => b.position?.area === area)
+    .sort((x, y) => (x.b.position?.order ?? 0) - (y.b.position?.order ?? 0) || x.i - y.i);
   const orderMap = new Map<string, number>();
   sameAreaIndexed.forEach(({ b }, idx) => orderMap.set(b.block_id, idx));
   return blocks.map((b) =>
