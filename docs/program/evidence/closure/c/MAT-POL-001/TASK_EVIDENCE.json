@@ -1,54 +1,130 @@
 {
+  "taskId": "MAT-POL-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "a62dbe340114d87eda75a0d2da2d77bee2a90685",
+  "technicalSourceSha": "466d4555dd2a38aa08e716f47d6674e99d12a972",
+  "reconciliationSha": "edfab2f319af0679adc79e90777eaaa934464070",
+  "technicalSourceChain": [
+    "f699ef69116f95578f45b49046cb1915b4c013a9",
+    "e22746c4d120a6351620552736efa04279581784",
+    "30534d62dc7f46cb6fa845c6c116ec9619205ff5",
+    "99945f9aaf7300dcd8b2cb496c7747ae8432994e"
+  ],
+  "integratedChain": [
+    "c06cc859b18485f32671b7fe233798d221699c4e",
+    "a77072e09a16f9787e2ec670fe188061035372f3",
+    "2127d9bebfd259b31596e17faf94d84985036267",
+    "466d4555dd2a38aa08e716f47d6674e99d12a972"
+  ],
   "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
-  "ownerDecision": {"recordId": "INTERNAL-BETA-OWNER-DECISIONS-20260817-AMENDMENT-01", "decisionId": "AMD-MAT-POLICY-001", "status": "APPROVED_RESTRICTED_SCOPE_IMPLEMENTATION_REQUIRED"},
+  "ownerDecision": {
+    "recordId": "INTERNAL-BETA-OWNER-DECISIONS-20260817-AMENDMENT-01",
+    "decisionId": "AMD-MAT-POLICY-001",
+    "status": "APPROVED_RESTRICTED_SCOPE_IMPLEMENTATION_REQUIRED"
+  },
   "amendmentSha": "617b5d29c229e6c073452a17c8da1888ce18aa8d59a5913fa0d9aa59b2272702",
   "reopenWhen": "Visual PDF parity, an external renderer or a newly rights-cleared customer template is proposed.",
   "evidenceInvalidation": "Invalidate on engine dependency/version, export label, template inventory, font, image, layout or provenance-gate changes.",
-  "environment": {
-    "node": "v24.12.0",
-    "postgres": "16.14 (pgvector/pgvector:pg16)",
-    "vitest": "root vitest.config.ts",
-    "dbUrl": "127.0.0.1:55432 isolated lane container consultify-closure-c-64f50785"
-  },
-  "gateG0": "PASS pre-commit (lease PASS, 25 changed paths). POST-COMMIT the verifier reports 11 new source/test files as violations; all 11 match lane C allowedNewRoots and none exist at baseline — see ICR-C-003, a verifier defect (isTracked() is true for staged/committed paths), not a scope violation.",
-  "gateG1": "PASS — npm run type-check exit 0; npm run build:backend exit 0; test:discovery-gate PASS 4997/4997 discovered, 4698 executed.",
-  "gateG3": "PASS — strict migrate on FRESH from-zero DB exit 0; repeat run applied 0; --dry-run 0 pending; schema_migrations 709 success / 0 failed / 0 pending.",
-  "taskId": "MAT-POL-001",
-  "technicalVerdict": "FIX_REQUIRED_OWNER_DECISION_COMPLETE",
-  "verdict": "PARTIAL",
   "owner": "Product + Legal/Privacy + Procurement",
-  "ownerTables": [
-    "artifact_export_receipts"
-  ],
+  "technicalVerdict": "RESTRICTED_ENGINE_POLICY_AND_UNKNOWN_PROVENANCE_QUARANTINE_VERIFIED_CURRENT",
+  "verdict": "PARTIAL",
   "changedPaths": [
-    "docs/program/evidence/closure/c/MAT-POL-001/DECISION_PACKET.md"
+    "docs/program/evidence/closure/c/MAT-POL-001/DECISION_PACKET.md",
+    "server/migrations/20261017_material_export_policy_provenance.sql",
+    "server/src/routes/presentations.routes.ts",
+    "server/src/services/artifactHandoff/handoffSpineService.ts",
+    "server/src/services/deliverableTemplateService.ts",
+    "server/src/services/materialExport/__tests__/materialExportPolicy17.realdb.test.ts",
+    "server/src/services/materialExport/__tests__/materialExportReceiptService.pg.test.ts",
+    "server/src/services/materialExport/materialExportPolicyService.ts",
+    "server/src/services/materialExport/materialExportReceiptService.ts",
+    "server/src/services/materials/__tests__/creationIntentResolver.test.ts",
+    "server/src/services/materials/creationIntent.ts",
+    "server/src/services/presentationExport/__tests__/presentationExportReceiptService.pg.test.ts",
+    "server/src/services/presentationExport/presentationExportReceiptService.ts",
+    "tests/integration/routes/presentations.export-gate.route.test.ts"
   ],
-  "rationale": {
-    "DECISION_PACKET.md": "Executable owner decision packet; no provider decision may be inferred by an agent."
+  "changedPathRationale": {
+    "docs/program/evidence/closure/c/MAT-POL-001/DECISION_PACKET.md": "Preserves the executable owner decision packet and approved restricted-scope authority; no provider or template-rights decision is inferred by an agent.",
+    "server/migrations/20261017_material_export_policy_provenance.sql": "Adds exact immutable engine metadata and fail-closed UNKNOWN template provenance with late-shape preflight.",
+    "server/src/routes/presentations.routes.ts": "Labels presentation PDF output as a text summary and preserves the existing quality gate before policy rejection.",
+    "server/src/services/artifactHandoff/handoffSpineService.ts": "Carries the restricted export policy through canonical artifact handoff.",
+    "server/src/services/deliverableTemplateService.ts": "Excludes templates without approved, complete provenance while preserving historical artifact reads.",
+    "server/src/services/materialExport/__tests__/materialExportPolicy17.realdb.test.ts": "Proves post-migration policy storage constraints, UNKNOWN template quarantine, immutable receipt metadata and guarded cleanup on PostgreSQL.",
+    "server/src/services/materialExport/__tests__/materialExportReceiptService.pg.test.ts": "Proves exact native engine/version/license/semantics receipt persistence and fail-closed drift.",
+    "server/src/services/materialExport/materialExportPolicyService.ts": "Defines the approved restricted in-process engine/version/license and output-semantics matrix.",
+    "server/src/services/materialExport/materialExportReceiptService.ts": "Persists the exact policy tuple in material export receipts.",
+    "server/src/services/materials/__tests__/creationIntentResolver.test.ts": "Proves UNKNOWN and quarantined templates cannot be selected for creation.",
+    "server/src/services/materials/creationIntent.ts": "Rejects template resolution unless provenance is explicitly approved.",
+    "server/src/services/presentationExport/__tests__/presentationExportReceiptService.pg.test.ts": "Proves presentation and PDF text-summary receipt semantics and immutable provenance.",
+    "server/src/services/presentationExport/presentationExportReceiptService.ts": "Persists exact pptxgenjs or pdfkit text-summary policy metadata.",
+    "tests/integration/routes/presentations.export-gate.route.test.ts": "Proves quality rejection remains 422 and an otherwise acceptable unapproved engine fails 503 without a receipt."
   },
+  "ownerTables": [
+    "artifact_export_receipts",
+    "document_studio_templates",
+    "report_builder_templates",
+    "presentation_templates",
+    "tp_base_templates"
+  ],
+  "commands": [
+    {
+      "command": "NODE_ENV=test DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:56984/prt_zero_writer_combined' DB_TYPE=postgres npm run db:migrate:strict; NODE_ENV=test DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:56984/prt_zero_writer_combined' DB_TYPE=postgres npm run db:migrate:strict; NODE_ENV=test DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:56984/prt_zero_writer_combined' DB_TYPE=postgres npm run db:migrate:strict -- --dry-run",
+      "exitCode": 0,
+      "result": "fresh 764; repeat applying 0; dry pending 0; ledger 764/764/764/checksum-null 0"
+    },
+    {
+      "command": "DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:56984/mat_pol_combined' DB_TYPE=postgres NODE_ENV=test CI=true MOCK_DB=false RUN_DB_TESTS=1 MAT_POL_FIXTURE_OPT_IN=1 MAT_POL_FIXTURE_PREFIX=mat_pol_combined npm --prefix server test -- --run src/services/materialExport/__tests__/materialExportPolicy17.realdb.test.ts src/services/materialExport/__tests__/materialExportReceiptService.pg.test.ts src/services/presentationExport/__tests__/presentationExportReceiptService.pg.test.ts src/services/artifactHandoff/__tests__/handoffSpine.pg.test.ts src/services/materials/__tests__/creationIntentResolver.test.ts src/services/__tests__/deliverableTemplateService.docStudioCanon.test.ts --no-file-parallelism --maxWorkers=1",
+      "exitCode": 0,
+      "result": "76/76"
+    },
+    {
+      "command": "DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:56984/mat_pol_combined' DB_TYPE=postgres NODE_ENV=test CI=true MOCK_DB=false RUN_DB_TESTS=1 MAT_POL_FIXTURE_OPT_IN=1 MAT_POL_FIXTURE_PREFIX=mat_pol_combined npx vitest run tests/integration/routes/presentations.export-gate.route.test.ts --no-file-parallelism --maxWorkers=1",
+      "exitCode": 0,
+      "result": "7/7"
+    },
+    {
+      "command": "set -e; start=$(git rev-parse HEAD); NODE_OPTIONS=--max-old-space-size=8192 npm run type-check; NODE_OPTIONS=--max-old-space-size=8192 npm --prefix server run typecheck; npm run build:backend; NODE_OPTIONS=--max-old-space-size=8192 npm run build; end=$(git rev-parse HEAD); test \"$start\" = \"$end\"; git diff --check; test -z \"$(git status --short)\"",
+      "exitCode": 0,
+      "result": "root/server typechecks, backend/frontend builds and exact edfab HEAD stability passed"
+    }
+  ],
   "denominators": {
-    "note": "No provider-dependent test asserted. Fail-closed default enforced in DB."
+    "freshMigrations": "764/764",
+    "materialPolicyAndReceiptSuites": "76/76",
+    "presentationRoutePolicy": "7/7",
+    "lateShapeMatrix": "valid nonempty apply plus OR-true, superset, wrong and partial shapes refused before persistent mutation"
+  },
+  "fixtures": {
+    "database": "own disposable PostgreSQL 16 container consultify-mat-prt-combined-pg; MAT clone mat_pol_combined",
+    "cleanup": "material receipts and templates 0; advisory locks 0; immutable receipt trigger enabled O"
   },
   "negativeControls": {
-    "falseSuccessImpossible": "INSERT status='succeeded' without output_content_hash rejected by artifact_export_receipts_success_check",
-    "unavailableRepresentable": "status='unavailable' accepted without hash"
+    "partialPolicy": "NULL policy contract cannot coexist with partial engine metadata",
+    "immutability": "engine, version, license and output semantics cannot change while a receipt becomes terminal",
+    "templateProvenance": "new and historical templates remain UNKNOWN/quarantined unless complete governed authority, actor, version and evidence exist",
+    "lateSafety": "OR-true, superset, wrong and partial historical shapes fail before schema or row mutation",
+    "pdfSemantics": "presentation PDF is explicitly text_summary with no visual-parity claim",
+    "qualityOrder": "invalid PNG remains a 422 quality failure; policy evaluation does not weaken it"
   },
   "findings": [
-    "All four export engines are IN-PROCESS and MIT (pptxgenjs 4.0.1, exceljs 4.4.0, docx 9.5.1, pdfkit 0.17.2) — no external provider exists, so DPA/residency/SLA limbs do not apply to the current runtime.",
-    "puppeteer 24.39.0 is declared but has zero imports in server/src.",
-    "PDF export is a pdfkit text dump, not a visual render of the deck — owner decision D4."
+    "Restricted engines are native docx 9.5.1, pptxgenjs 4.0.1, exceljs 4.4.0 and pdfkit 0.17.2, each recorded with MIT license provenance.",
+    "PDF export remains a pdfkit text summary, not a visual rendering of the deck.",
+    "No authenticated product command approves customer template provenance; creation remains fail-closed for UNKNOWN/quarantined templates."
+  ],
+  "resolvedBlockers": [
+    "Exact engine/version/license/output semantics are immutable in export receipts.",
+    "Presentation PDF is explicitly labelled text-summary and no visual-parity claim is made.",
+    "Templates with unknown or incomplete provenance are unavailable to list, resolve and create paths."
   ],
   "openBlockers": [
-    "Repository-owned technical gap: record exact engine and license provenance, label presentation PDF as a text summary with no visual-parity claim, and enforce quarantine for templates whose layout, font, image or redistribution provenance is unknown."
+    "No authenticated governed owner plus Legal/Procurement workflow exists to approve a new customer template's layout, font, image and redistribution provenance.",
+    "Visual PDF parity, any external renderer and any new rights-cleared template remain reopen gates requiring new owner evidence.",
+    "No production enablement, procurement approval or deployed acceptance is claimed."
   ],
-  "changedPathRationale": {},
-  "commands": [],
-  "fixtures": {},
   "browserArtifacts": [],
   "rollback": {
-    "method": "Not recorded by the lane; no rollback execution or completion claim is inferred.",
+    "method": "Keep UNKNOWN templates quarantined and stop restricted export callers; preserve additive immutable receipts and historical provenance rather than removing columns.",
     "executed": false
   }
 }
