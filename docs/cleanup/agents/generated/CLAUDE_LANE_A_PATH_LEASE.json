@@ -5,13 +5,13 @@
   "lane": "a",
   "branch": "codex/closure-claude-a-method-evidence",
   "rule": "Only listed tracked paths may be changed. Shared files require an integrator request. New files must live under an already-listed domain directory or the reserved migration/evidence namespace.",
-  "sha256": "a2f9be9983e3a03e5e64f1a51dca193199a5bec963a246c3b4fe94b378af1308",
+  "sha256": "e75d0729bbf419818914a0c5235eec1f3fe354c22c21696324d01c13b4962141",
   "counts": {
-    "all": 719,
+    "all": 721,
     "source": 499,
-    "tests": 220,
+    "tests": 221,
     "vitest": 195,
-    "playwright": 25
+    "playwright": 26
   },
   "files": [
     "server/migrations/20260222_interview_conversational_inference.sql",
@@ -676,6 +676,8 @@
     "tests/e2e/smoke/deploy-gate-api-interview.spec.ts",
     "tests/e2e/smoke/interview-initiative-wizard.spec.ts",
     "tests/e2e/smoke/tier0-interview.spec.ts",
+    "tests/e2e/ui-canon-g4/_g4/swotBvpSeed.ts",
+    "tests/e2e/ui-canon-g4/tls-bvp-g4.spec.ts",
     "tests/integration/assessment-ai.integration.test.ts",
     "tests/integration/assessment-api.integration.test.ts",
     "tests/integration/assessment-rbac.integration.test.ts",
@@ -1447,6 +1449,7 @@
       "tests/e2e/smoke/deploy-gate-api-interview.spec.ts",
       "tests/e2e/smoke/interview-initiative-wizard.spec.ts",
       "tests/e2e/smoke/tier0-interview.spec.ts",
+      "tests/e2e/ui-canon-g4/tls-bvp-g4.spec.ts",
       "tests/visual/__shots__/baseline/assessment-initiatives-panel--dark.png",
       "tests/visual/__shots__/baseline/assessment-initiatives-panel--light.png",
       "tests/visual/__shots__/baseline/assessment-initiatives-table--dark.png",
