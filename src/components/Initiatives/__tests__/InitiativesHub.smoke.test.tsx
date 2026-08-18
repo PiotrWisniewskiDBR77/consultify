@@ -31,31 +31,38 @@ vi.mock('react-hot-toast', () => {
   return { default: Object.assign(fn, { success: vi.fn(), error: vi.fn() }) };
 });
 
-const { getPortfolio, portfolioStoreState, appStoreState, conversationStoreState } = vi.hoisted(
-  () => ({
-    getPortfolio: vi.fn(),
-    portfolioStoreState: { refreshTrigger: 0 },
-    appStoreState: {
-      currentProjectId: 'proj-1',
-      currentUser: { id: 'u1', firstName: 'T', lastName: 'U', role: 'ADMIN' },
-      currentOrganization: { id: 'org-1' },
-    },
-    conversationStoreState: { addMessage: vi.fn() },
-  })
-);
+const {
+  getPortfolio,
+  getInitiative,
+  apiGet,
+  portfolioStoreState,
+  appStoreState,
+  conversationStoreState,
+} = vi.hoisted(() => ({
+  getPortfolio: vi.fn(),
+  getInitiative: vi.fn(),
+  apiGet: vi.fn(),
+  portfolioStoreState: { refreshTrigger: 0 },
+  appStoreState: {
+    currentProjectId: 'proj-1',
+    currentUser: { id: 'u1', firstName: 'T', lastName: 'U', role: 'ADMIN' },
+    currentOrganization: { id: 'org-1' },
+  },
+  conversationStoreState: { addMessage: vi.fn() },
+}));
 
 vi.mock('@/services/api/v8/planning', () => ({
   V8PlanningApi: {
     getPortfolio: getPortfolio,
     getPendingDecisions: vi.fn(async () => []),
     getInitiativeSnapshot: vi.fn(async () => null),
-    getInitiative: vi.fn(async () => null),
+    getInitiative,
   },
 }));
 
 vi.mock('@/services/api', () => ({
   Api: {
-    get: vi.fn(async () => ({})),
+    get: apiGet,
     post: vi.fn(async () => ({})),
     patch: vi.fn(async () => ({})),
     delete: vi.fn(async () => ({})),
@@ -118,9 +125,20 @@ const renderHub = () =>
     </MemoryRouter>
   );
 
+const renderHubAt = (entry: string) =>
+  render(
+    <MemoryRouter initialEntries={[entry]}>
+      <InitiativesHub />
+    </MemoryRouter>
+  );
+
 beforeEach(() => {
   getPortfolio.mockReset();
   getPortfolio.mockResolvedValue({ initiatives: [] });
+  getInitiative.mockReset();
+  getInitiative.mockResolvedValue(null);
+  apiGet.mockReset();
+  apiGet.mockResolvedValue({});
 });
 
 afterEach(() => {
@@ -172,5 +190,20 @@ describe('InitiativesHub smoke', () => {
 
     expect(await screen.findByTestId('legacy-initiative')).toBeInTheDocument();
     expect(screen.queryByTestId('canonical-initiative')).not.toBeInTheDocument();
+  });
+
+  it('opens a legacy deep link in the persisted document and a registered V8 deep link in the canonical card', async () => {
+    apiGet.mockResolvedValueOnce({ id: 'legacy-1', name: 'Legacy persisted', status: 'DRAFT' });
+    const legacy = renderHubAt('/initiatives?open=legacy-1&mode=doc');
+    expect(await screen.findByTestId('legacy-initiative')).toBeInTheDocument();
+    expect(screen.queryByTestId('canonical-initiative')).not.toBeInTheDocument();
+    legacy.unmount();
+
+    getInitiative.mockResolvedValueOnce({
+      initiative: { id: 'runtime-1', name: 'Registered runtime', status: 'DRAFT' },
+    });
+    renderHubAt('/initiatives?open=runtime-1&mode=doc');
+    expect(await screen.findByTestId('canonical-initiative')).toBeInTheDocument();
+    expect(screen.queryByTestId('legacy-initiative')).not.toBeInTheDocument();
   });
 });

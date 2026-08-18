@@ -832,21 +832,33 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
     const run = async () => {
       try {
-        // Prefer list row if already loaded; fallback to governed V8 detail read.
+        // Resolve the owning read model before choosing a document renderer. A legacy
+        // initiative may share the same ID/name shape, but it is not a registered V8
+        // runtime card and must stay in InitiativeDocumentView.
         const fromList = initiatives.find((i) => i.id === openId);
         const fromShowcase = initiativesDemoData.initiatives.find((i) => i.id === openId);
         let response: any = null;
-        if (!fromList && !fromShowcase) {
+        let isCanonicalRuntime = false;
+        if (!fromShowcase) {
           try {
-            response = await V8PlanningApi.getInitiative(openId);
+            const v8Response = await V8PlanningApi.getInitiative(openId);
+            const v8Initiative = v8Response?.initiative || v8Response;
+            if (String(v8Initiative?.id || '') === openId) {
+              response = v8Response;
+              isCanonicalRuntime = true;
+            } else if (!fromList) {
+              throw new Error('Initiative is not registered in the V8 runtime');
+            }
           } catch (v8Error) {
-            try {
-              response = await Api.get(`/initiatives/${encodeURIComponent(openId)}`);
-            } catch {
-              const interviewResponse = await Api.get('/initiatives?source=interview_insight');
-              const interviewInitiatives = unwrapApiList(interviewResponse, 'initiatives');
-              response = interviewInitiatives.find((item: any) => String(item?.id) === openId);
-              if (!response) throw v8Error;
+            if (!fromList) {
+              try {
+                response = await Api.get(`/initiatives/${encodeURIComponent(openId)}`);
+              } catch {
+                const interviewResponse = await Api.get('/initiatives?source=interview_insight');
+                const interviewInitiatives = unwrapApiList(interviewResponse, 'initiatives');
+                response = interviewInitiatives.find((item: any) => String(item?.id) === openId);
+                if (!response) throw v8Error;
+              }
             }
           }
         }
@@ -871,7 +883,16 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         setActiveStatusFilter(reveal.activeStatusFilter);
 
         if (mode === 'doc') {
-          handleOpenInitiativeDocument(initiative);
+          if (isCanonicalRuntime) {
+            handleOpenInitiativeDocument(initiative);
+          } else {
+            handleOpenDocument({
+              id: initiative.id,
+              name: initiative.name,
+              type: 'initiative',
+              status: initiative.status,
+            });
+          }
         } else {
           handleInitiativeClick(initiative);
         }
@@ -897,6 +918,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     initiatives,
     initiativesDemoData,
     handleInitiativeClick,
+    handleOpenDocument,
     handleOpenInitiativeDocument,
     scope,
     activeStatusFilter,
