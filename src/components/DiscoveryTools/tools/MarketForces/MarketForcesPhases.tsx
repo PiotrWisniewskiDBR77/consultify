@@ -14,6 +14,10 @@ import {
 import { CreateInitiativeFromMoveButton } from '../../shared/createInitiativeFromMove';
 import { ProposalCardActions as CardActions } from '../../shared/ProposalCardGovernance';
 import { PorterPentagonVisual } from '../../shared/StrategicCanvasVisuals';
+import {
+  normalizeUniversalSynthesis,
+  ToolSynthesisSections,
+} from '../../shared/ToolSynthesisSections';
 
 type PhaseProps = {
   session: ToolSession;
@@ -336,14 +340,64 @@ export function MarketForcesInsightsPhase({
     () => FORCE_ORDER.filter((forceId) => data.forces[forceId]?.proposalStatus !== 'rejected'),
     [data.forces]
   );
+  const universalSynthesis = useMemo(
+    () =>
+      normalizeUniversalSynthesis(
+        {
+          'executive-answer': data.summary?.executiveSummary || '',
+          'key-findings': acceptedForces.map(
+            (forceId) =>
+              `${isPolish ? FORCE_LABELS[forceId].pl : FORCE_LABELS[forceId].en}: ${data.forces[forceId].score}/5`
+          ),
+          'key-insights': (data.implications || []).map((implication) => implication.insight),
+          'business-implications': (data.implications || []).map(
+            (implication) => implication.title
+          ),
+          conclusions: data.summary?.appliedConclusions || [],
+          'decision-options': (data.recommendedMoves || []).map((move) => move.title),
+          'consultant-recommendation': (data.recommendedMoves || []).map((move) => move.rationale),
+          'risks-assumptions-uncertainties': acceptedForces
+            .filter((forceId) => data.forces[forceId].score >= 4)
+            .map((forceId) => (isPolish ? FORCE_LABELS[forceId].pl : FORCE_LABELS[forceId].en)),
+          'management-questions': (data.outputCandidates || []).map((candidate) => candidate.title),
+        },
+        isPolish,
+        {
+          'executive-answer': data.summary?.proposalId ? [data.summary.proposalId] : [],
+          'key-findings': acceptedForces,
+          'key-insights': (data.implications || []).map((implication) => implication.id),
+          'business-implications': (data.implications || []).map((implication) => implication.id),
+          conclusions: data.summary?.proposalId ? [data.summary.proposalId] : [],
+          'decision-options': (data.recommendedMoves || []).map((move) => move.id),
+          'consultant-recommendation': (data.recommendedMoves || []).map((move) => move.id),
+          'risks-assumptions-uncertainties': acceptedForces,
+          'management-questions': (data.outputCandidates || []).map((candidate) => candidate.id),
+        }
+      ),
+    [
+      acceptedForces,
+      data.forces,
+      data.implications,
+      data.outputCandidates,
+      data.recommendedMoves,
+      data.summary,
+      isPolish,
+    ]
+  );
 
   return (
     <div className="space-y-5 p-5">
-      <div>
-        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {t('discoveryToolsTools.marketForces.implicationsTitle')}
-        </h2>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+      <ToolSynthesisSections sections={universalSynthesis} isPolish={isPolish} />
+      <details className="rounded-2xl border border-c-border bg-c-surface">
+        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-c-text">
+          {isPolish ? 'Pokaż analizę źródłową' : 'Show supporting analysis'}
+        </summary>
+        <div className="space-y-5 border-t border-c-border p-4">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+              {t('discoveryToolsTools.marketForces.implicationsTitle')}
+            </h2>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
           {t('discoveryToolsTools.marketForces.implicationsSubtitle')}
         </p>
       </div>
@@ -433,16 +487,22 @@ export function MarketForcesInsightsPhase({
             </p>
             {move.firstStep && (
               <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-                {t('discoveryToolsTools.common.firstStepColonSpace')}
-                {move.firstStep}
+                    {t('discoveryToolsTools.common.firstStepColonSpace')}
+                    {move.firstStep}
+                  </div>
+                )}
+                <div className="flex justify-end">
+                  <CreateInitiativeFromMoveButton
+                    session={session}
+                    move={move}
+                    isPolish={isPolish}
+                  />
+                </div>
               </div>
-            )}
-            <div className="flex justify-end">
-              <CreateInitiativeFromMoveButton session={session} move={move} isPolish={isPolish} />
-            </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </div>
+      </details>
     </div>
   );
 }

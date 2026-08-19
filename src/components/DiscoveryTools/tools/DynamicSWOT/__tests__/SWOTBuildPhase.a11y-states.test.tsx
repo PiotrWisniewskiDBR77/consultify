@@ -70,10 +70,11 @@ describe('SWOTBuildPhase — default/empty state', () => {
     resetStore();
   });
 
-  it('shows the empty-quadrant placeholder in all four quadrants when the session has no items', () => {
+  it('shows one empty workspace and four reachable category tabs', () => {
     render(<Harness />);
     const emptyPlaceholders = screen.getAllByText(KEYS.noPoints);
-    expect(emptyPlaceholders).toHaveLength(4);
+    expect(emptyPlaceholders).toHaveLength(1);
+    expect(screen.getAllByRole('tab', { name: /\(0\)$/ })).toHaveLength(4);
   });
 });
 
@@ -118,7 +119,9 @@ describe('SWOTBuildPhase — accessible names', () => {
     });
     render(<Harness />);
 
-    const toggle = screen.getByRole('button', { name: /Evidence & classification|Dowód i klasyfikacja/i });
+    const toggle = screen.getByRole('button', {
+      name: /Evidence & classification|Dowód i klasyfikacja/i,
+    });
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
   });
 });
@@ -165,7 +168,9 @@ describe('SWOTBuildPhase — keyboard traversal and focus', () => {
     });
     render(<Harness />);
 
-    const toggle = screen.getByRole('button', { name: /Evidence & classification|Dowód i klasyfikacja/i });
+    const toggle = screen.getByRole('button', {
+      name: /Evidence & classification|Dowód i klasyfikacja/i,
+    });
     toggle.focus();
     expect(document.activeElement).toBe(toggle);
 
@@ -213,9 +218,7 @@ describe('SWOTBuildPhase — client-side conflict/reject state (evaluateSwotAcce
     fireEvent.click(acceptButtons[0]);
 
     const alert = screen.getByRole('alert');
-    expect(alert).toHaveTextContent(
-      /core competency|niche strength|rdzeń kompetencji|nisza/i
-    );
+    expect(alert).toHaveTextContent(/core competency|niche strength|rdzeń kompetencji|nisza/i);
 
     // The item must still be a pending proposal — the gate blocked the
     // transition to accepted, exactly like the server's 409 EMPTY_TOOL_OUTPUT
@@ -259,11 +262,11 @@ describe('SWOTBuildPhase — PL language rendering', () => {
 
   it('renders Polish quadrant titles and subtitles when isPolish=true', () => {
     render(<Harness isPolish />);
-    expect(screen.getByText('Mocne strony')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Mocne strony/ })).toBeInTheDocument();
     expect(screen.getByText('Wewnętrzne przewagi')).toBeInTheDocument();
-    expect(screen.getByText('Słabe strony')).toBeInTheDocument();
-    expect(screen.getByText('Szanse')).toBeInTheDocument();
-    expect(screen.getByText('Zagrożenia')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Słabe strony/ })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Szanse/ })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Zagrożenia/ })).toBeInTheDocument();
   });
 
   it('renders the Polish gate message for the same core-competency conflict state', () => {

@@ -411,6 +411,35 @@ describe('useAIStream', () => {
     });
   });
 
+  it('fails a terminal full-session start immediately while an aborted transport is still closing', async () => {
+    let release!: () => void;
+    vi.mocked(Api.chatWithAIStream).mockImplementation(
+      () => new Promise<void>((resolve) => (release = resolve))
+    );
+    const { result } = renderHook(() => useAIStream());
+    let first!: Promise<void>;
+    act(() => {
+      first = result.current.startStream('first', []);
+    });
+
+    await expect(
+      result.current.startStream(
+        'retry',
+        [],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        true
+      )
+    ).rejects.toThrow('still stopping');
+    expect(Api.chatWithAIStream).toHaveBeenCalledTimes(1);
+
+    release();
+    await act(async () => first);
+  });
+
   it('does not auto-retry non-retryable access or budget failures', async () => {
     const mockOnStreamError = vi.fn();
     const blocked = Object.assign(new Error('Budget exhausted'), {

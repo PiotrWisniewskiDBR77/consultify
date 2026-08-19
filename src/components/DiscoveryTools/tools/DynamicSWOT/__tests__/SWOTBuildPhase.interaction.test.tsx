@@ -81,14 +81,14 @@ describe('SWOTBuildPhase — quadrant inputs are reachable and editable', () => 
     resetStore();
   });
 
-  it('renders all four quadrants with an "add point" input each', () => {
+  it('renders four category tabs and exactly one active add-point workspace', () => {
     render(<Harness />);
     const inputs = screen.getAllByPlaceholderText(KEYS.addPointPlaceholder);
-    expect(inputs).toHaveLength(4);
-    expect(screen.getByText('Strengths')).toBeInTheDocument();
-    expect(screen.getByText('Weaknesses')).toBeInTheDocument();
-    expect(screen.getByText('Opportunities')).toBeInTheDocument();
-    expect(screen.getByText('Threats')).toBeInTheDocument();
+    expect(inputs).toHaveLength(1);
+    expect(screen.getByRole('tab', { name: /Strengths/ })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: /Weaknesses/ })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Opportunities/ })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Threats/ })).toBeInTheDocument();
   });
 
   it('adds an item to Strengths via keyboard Enter (no mouse needed)', () => {
@@ -105,8 +105,8 @@ describe('SWOTBuildPhase — quadrant inputs are reachable and editable', () => 
 
   it('adds an item via the mouse-driven "+" button', () => {
     render(<Harness />);
-    const inputs = screen.getAllByPlaceholderText(KEYS.addPointPlaceholder);
-    const weaknessesInput = inputs[1];
+    fireEvent.click(screen.getByRole('tab', { name: /Weaknesses/ }));
+    const weaknessesInput = screen.getByPlaceholderText(KEYS.addPointPlaceholder);
     const addButton = weaknessesInput.parentElement?.querySelector('button');
     expect(addButton).toBeTruthy();
 
@@ -118,18 +118,16 @@ describe('SWOTBuildPhase — quadrant inputs are reachable and editable', () => 
 
   it('places typed items in the correct quadrant, independently', () => {
     render(<Harness />);
-    const [strengths, weaknesses, opportunities, threats] = screen.getAllByPlaceholderText(
-      KEYS.addPointPlaceholder
-    );
-
     (
       [
-        [strengths, 'S item'],
-        [weaknesses, 'W item'],
-        [opportunities, 'O item'],
-        [threats, 'T item'],
+        ['Strengths', 'S item'],
+        ['Weaknesses', 'W item'],
+        ['Opportunities', 'O item'],
+        ['Threats', 'T item'],
       ] as const
-    ).forEach(([input, text]) => {
+    ).forEach(([label, text]) => {
+      fireEvent.click(screen.getByRole('tab', { name: new RegExp(label) }));
+      const input = screen.getByPlaceholderText(KEYS.addPointPlaceholder);
       fireEvent.change(input, { target: { value: text } });
       fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
     });

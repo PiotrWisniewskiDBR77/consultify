@@ -257,6 +257,8 @@ export interface NModeMenu2Props {
   howToButton?: React.ReactNode;
   /** PRAWA, SKRAJNIE — „Analizuj z AI" (fiolet). Użyj `Menu2AIButton`. */
   aiButton?: React.ReactNode;
+  /** Primary task CTA. It is the only filled/white action in this compact row. */
+  primaryButton?: React.ReactNode;
   /**
    * PRAWA — wyjątek na kebab akcji drugorzędnych karty (Eksport/Archiwizuj/Usuń).
    * NIE jest częścią kontraktu trzech stref; istnieje tylko po to, żeby
@@ -280,6 +282,7 @@ export const NModeMenu2: React.FC<NModeMenu2Props> = ({
   modeToggleDisabled,
   howToButton,
   aiButton,
+  primaryButton,
   overflowKebab,
   isPolish = false,
   className = '',
@@ -317,8 +320,9 @@ export const NModeMenu2: React.FC<NModeMenu2Props> = ({
       {/* ── PRAWA: [How to] [kebab] … [Analizuj z AI] skrajnie ───────────── */}
       <div data-menu2-zone="right" className="flex min-w-0 items-center gap-1.5">
         {howToButton}
-        {overflowKebab}
         {aiButton}
+        {primaryButton}
+        {overflowKebab}
       </div>
     </div>
   );

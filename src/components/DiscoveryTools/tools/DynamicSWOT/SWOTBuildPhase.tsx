@@ -16,7 +16,6 @@ import {
 
 import { SwotMatrixVisual } from '../../shared/StrategicCanvasVisuals';
 import { EvidenceEditor } from './EvidenceEditor';
-import { TeresaSwotProposals } from './TeresaSwotProposals';
 
 type QuadrantId = SWOTItem['quadrant'];
 
@@ -256,6 +255,9 @@ export function SWOTBuildPhase({ session, isPolish, isGeneratingAI = false }: Bu
   const [acceptErrorByProposalId, setAcceptErrorByProposalId] = useState<Record<string, string>>(
     {}
   );
+  const [activeQuadrant, setActiveQuadrant] = useState<QuadrantId>(
+    () => items[0]?.quadrant || 'strengths'
+  );
 
   const groupedItems = useMemo(
     () =>
@@ -456,68 +458,33 @@ export function SWOTBuildPhase({ session, isPolish, isGeneratingAI = false }: Bu
         </div>
       ) : null}
 
-      {/* TLS-04: Teresa-assisted SWOT — proposals are generated + persisted
-          server-side (swot_proposals table) and only ever change the matrix
-          after an explicit Accept. Mounted here (not ToolCanvas) because this
-          is the one place that already has `session.id` + the quadrant data
-          in scope without threading new props through ToolCanvas. */}
-      <TeresaSwotProposals toolSessionId={session.id} isPolish={isPolish} />
+      <div className="max-h-72 overflow-hidden rounded-2xl border border-navy-700/70 bg-navy-950/50 p-3">
+        <SwotMatrixVisual data={swotData} isPolish={isPolish} />
+      </div>
 
-      <SwotMatrixVisual
-        data={swotData}
-        isPolish={isPolish}
-        onUpdateItem={(itemId, text) => updateSWOTItem(itemId, { text })}
-        renderItemControls={(item) => (
-          <div className="mt-3 border-t border-current/10 pt-3">
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-300">
-                {t('discoveryToolsTools.dynamicSwot.buildPhase.swotPoint')}
-              </div>
-              <div className="flex items-center gap-1">
-                <label className="sr-only" htmlFor={`impact-${item.id}`}>
-                  {t('discoveryToolsTools.dynamicSwot.quadrantStep.highImpact')}
-                </label>
-                <select
-                  id={`impact-${item.id}`}
-                  value={item.impact}
-                  onChange={(event) =>
-                    updateSWOTItem(item.id, {
-                      impact: event.target.value as 'high' | 'medium' | 'low',
-                    })
-                  }
-                  className="h-7 rounded-lg border border-current/20 bg-white/70 px-1.5 text-[11px] text-slate-700 dark:bg-navy-900 dark:text-slate-200"
-                >
-                  <option value="high">
-                    {t('discoveryToolsTools.dynamicSwot.quadrantStep.highImpact')}
-                  </option>
-                  <option value="medium">
-                    {t('discoveryToolsTools.dynamicSwot.quadrantStep.mediumImpact')}
-                  </option>
-                  <option value="low">
-                    {t('discoveryToolsTools.dynamicSwot.quadrantStep.lowImpact')}
-                  </option>
-                </select>
-                <button
-                  type="button"
-                  onClick={() => removeSWOTItem(item.id)}
-                  aria-label={isPolish ? 'Usuń punkt SWOT' : 'Delete SWOT point'}
-                  className="rounded-lg p-1.5 text-slate-600 transition hover:bg-danger-50 hover:text-danger-600 dark:hover:bg-danger-900/30"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-            <EvidenceEditor
-              item={item}
-              isPolish={isPolish}
-              onChange={(patch) => updateSWOTItem(item.id, patch)}
-            />
-          </div>
-        )}
-      />
-
-      <div className="grid gap-4 md:grid-cols-2">
+      <nav
+        role="tablist"
+        aria-label={isPolish ? 'Kategorie macierzy SWOT' : 'SWOT matrix categories'}
+        className="grid grid-cols-2 gap-2 md:grid-cols-4"
+      >
         {ALL_QUADRANTS.map((quadrant) => (
+          <button
+            key={quadrant}
+            type="button"
+            onClick={() => setActiveQuadrant(quadrant)}
+            role="tab"
+            aria-selected={activeQuadrant === quadrant}
+            aria-controls={`swot-build-panel-${quadrant}`}
+            className={`rounded-xl border px-3 py-2 text-sm font-semibold ${activeQuadrant === quadrant ? 'border-c-focus bg-c-focus/10 text-c-text' : 'border-c-border text-c-text-secondary'}`}
+          >
+            {isPolish ? QUADRANT_META[quadrant].title.pl : QUADRANT_META[quadrant].title.en} (
+            {groupedItems[quadrant].length})
+          </button>
+        ))}
+      </nav>
+
+      <div id={`swot-build-panel-${activeQuadrant}`} role="tabpanel" className="grid gap-4">
+        {ALL_QUADRANTS.filter((quadrant) => quadrant === activeQuadrant).map((quadrant) => (
           <QuadrantCard
             key={quadrant}
             quadrant={quadrant}

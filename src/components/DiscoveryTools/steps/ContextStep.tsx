@@ -282,6 +282,34 @@ export const ContextStep: React.FC<ContextStepProps> = ({
       | OperationalToolData
       | undefined
   )?.context;
+  const [activeMissionQuestion, setActiveMissionQuestion] = React.useState(() => {
+    const context = (rawContextData || {}) as Partial<SWOTData['context']>;
+    if (context.question5Confirmed) return 6;
+    if (context.question4Confirmed) return 5;
+    if (context.question3Confirmed) return 4;
+    if (context.question2Confirmed) return 3;
+    if (context.question1Confirmed) return 2;
+    return 1;
+  });
+
+  React.useEffect(() => {
+    const context = (rawContextData || {}) as Partial<SWOTData['context']>;
+    setActiveMissionQuestion(
+      context.question5Confirmed
+        ? 6
+        : context.question4Confirmed
+          ? 5
+          : context.question3Confirmed
+            ? 4
+            : context.question2Confirmed
+              ? 3
+              : context.question1Confirmed
+                ? 2
+                : 1
+    );
+    setActiveMissionFeedback(null);
+    setMissionFeedbackInput('');
+  }, [session.id]);
 
   const contextData = React.useMemo(() => {
     if (rawContextData && typeof rawContextData === 'object') {
@@ -600,8 +628,8 @@ export const ContextStep: React.FC<ContextStepProps> = ({
 
     const labelsUi = {
       comment: t('discoveryToolsSteps.contextStep.dynamicSwot.ui.comment'),
-      thinkDeeper: t('discoveryToolsSteps.contextStep.dynamicSwot.ui.thinkDeeper'),
-      implement: t('discoveryToolsSteps.contextStep.dynamicSwot.ui.implement'),
+      thinkDeeper: isPolish ? 'Dodaj więcej' : 'Add more',
+      implement: isPolish ? 'Zastosuj' : 'Apply',
       close: t('discoveryToolsSteps.contextStep.dynamicSwot.ui.close'),
       next: t('discoveryToolsSteps.contextStep.dynamicSwot.ui.next'),
       previous: t('discoveryToolsSteps.contextStep.dynamicSwot.ui.previous'),
@@ -819,6 +847,8 @@ export const ContextStep: React.FC<ContextStepProps> = ({
               : displayedContext.constraints,
         });
       }
+
+      setActiveMissionQuestion(Math.min(6, questionId + 1));
     };
 
     const selectedDirectionLabels = directionOptions
@@ -1176,92 +1206,84 @@ export const ContextStep: React.FC<ContextStepProps> = ({
           </div>
 
           <div className="space-y-4 px-6 py-5">
-            <div className="rounded-[26px] border border-primary-200/70 bg-primary-500/5 p-5 shadow-sm dark:border-primary-900/40">
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-700 dark:text-primary-300">
-                  {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.aiUnderstanding')}
+            {activeMissionQuestion === 1 && (
+              <div
+                data-testid="mission-question"
+                className="rounded-[26px] border border-slate-200/70 bg-white/85 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04]"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
+                    {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.question1Heading')}
+                  </div>
+                  <span className="inline-flex rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200">
+                    1/5
+                  </span>
                 </div>
-                <span className="inline-flex rounded-full border border-primary-300/40 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-primary-800 dark:border-primary-800/50 dark:bg-white/[0.05] dark:text-primary-200">
-                  Understanding
-                </span>
-              </div>
-              <div className="mt-3 text-base font-medium leading-relaxed text-slate-900 dark:text-white">
-                {getMissionBlockPreviewValue('understanding')}
-              </div>
-              <div className="mt-4 flex justify-end">{renderMissionActionBar('understanding')}</div>
-              {renderMissionActionPanel('understanding')}
-            </div>
-
-            <div className="rounded-[26px] border border-slate-200/70 bg-white/85 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
-                  {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.question1Heading')}
+                <div className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                  {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.question1Description')}
                 </div>
-                <span className="inline-flex rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200">
-                  1/5
-                </span>
-              </div>
-              <div className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.question1Description')}
-              </div>
-              <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                {labelsUi.selectedMany}
-              </div>
-              <div className="mt-4 space-y-2">
-                {directionOptions.map((option) => {
-                  const active = (displayedContext.directionChoices || []).includes(option.id);
-                  return (
-                    <button
-                      key={option.id}
-                      type="button"
-                      onClick={() => toggleChoice('directionChoices', option.id)}
-                      className={`w-full rounded-2xl border px-4 py-3 text-left transition-all ${
-                        active
-                          ? 'border-primary-300 bg-primary-50 shadow-sm dark:border-primary-700 dark:bg-primary-950/20'
-                          : 'border-slate-200 bg-white/80 hover:border-slate-300 dark:border-navy-700 dark:bg-navy-900/40'
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <span
-                          className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold ${
-                            active
-                              ? 'border-primary-500 bg-primary-500 text-white'
-                              : 'border-slate-300 text-slate-600 dark:border-slate-600'
-                          }`}
-                        >
-                          {active ? '●' : ''}
-                        </span>
-                        <div>
-                          <div className="text-sm font-medium text-slate-900 dark:text-white">
-                            {option.label}
-                          </div>
-                          <div className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                            {option.description}
+                <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                  {labelsUi.selectedMany}
+                </div>
+                <div className="mt-4 space-y-2">
+                  {directionOptions.map((option) => {
+                    const active = (displayedContext.directionChoices || []).includes(option.id);
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        onClick={() => toggleChoice('directionChoices', option.id)}
+                        className={`w-full rounded-2xl border px-4 py-3 text-left transition-all ${
+                          active
+                            ? 'border-slate-500 bg-slate-100 shadow-sm dark:border-slate-400 dark:bg-white/[0.08]'
+                            : 'border-slate-200 bg-white/80 hover:border-slate-300 dark:border-navy-700 dark:bg-navy-900/40'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <span
+                            className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold ${
+                              active
+                                ? 'border-slate-700 bg-slate-800 text-white dark:border-slate-200 dark:bg-slate-100 dark:text-slate-900'
+                                : 'border-slate-300 text-slate-600 dark:border-slate-600'
+                            }`}
+                          >
+                            {active ? '●' : ''}
+                          </span>
+                          <div>
+                            <div className="text-sm font-medium text-slate-900 dark:text-white">
+                              {option.label}
+                            </div>
+                            <div className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                              {option.description}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => confirmQuestion(1)}
-                    disabled={(displayedContext.directionChoices || []).length === 0}
-                    className={primaryNavButtonClass}
-                  >
-                    {labelsUi.next}
-                  </button>
+                      </button>
+                    );
+                  })}
                 </div>
-                {renderMissionActionBar('direction')}
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => confirmQuestion(1)}
+                      disabled={(displayedContext.directionChoices || []).length === 0}
+                      className={primaryNavButtonClass}
+                    >
+                      {labelsUi.next}
+                    </button>
+                  </div>
+                  {renderMissionActionBar('direction')}
+                </div>
+                {renderMissionActionPanel('direction')}
               </div>
-              {renderMissionActionPanel('direction')}
-            </div>
+            )}
 
-            {displayedContext.question1Confirmed && (
-              <div className="rounded-[26px] border border-sky-200/70 bg-sky-500/5 p-5 shadow-sm dark:border-sky-900/40">
+            {activeMissionQuestion === 2 && (
+              <div
+                data-testid="mission-question"
+                className="rounded-[26px] border border-sky-200/70 bg-sky-500/5 p-5 shadow-sm dark:border-sky-900/40"
+              >
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-700 dark:text-sky-300">
                     {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.question2Heading')}
@@ -1317,12 +1339,8 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() =>
-                        updateMissionContext({
-                          question1Confirmed: false,
-                          question2Confirmed: false,
-                        })
-                      }
+                      onClick={() => setActiveMissionQuestion(1)}
+                      data-testid="mission-prev"
                       className={navButtonClass}
                     >
                       {labelsUi.previous}
@@ -1342,8 +1360,11 @@ export const ContextStep: React.FC<ContextStepProps> = ({
               </div>
             )}
 
-            {displayedContext.question2Confirmed && (
-              <div className="rounded-[26px] border border-emerald-200/70 bg-emerald-500/5 p-5 shadow-sm dark:border-emerald-900/40">
+            {activeMissionQuestion === 3 && (
+              <div
+                data-testid="mission-question"
+                className="rounded-[26px] border border-emerald-200/70 bg-emerald-500/5 p-5 shadow-sm dark:border-emerald-900/40"
+              >
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300">
                     {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.question3Heading')}
@@ -1431,12 +1452,8 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() =>
-                        updateMissionContext({
-                          question2Confirmed: false,
-                          question3Confirmed: false,
-                        })
-                      }
+                      onClick={() => setActiveMissionQuestion(2)}
+                      data-testid="mission-prev"
                       className={navButtonClass}
                     >
                       {labelsUi.previous}
@@ -1456,8 +1473,11 @@ export const ContextStep: React.FC<ContextStepProps> = ({
               </div>
             )}
 
-            {displayedContext.question3Confirmed && (
-              <div className="rounded-[26px] border border-primary-200/70 bg-primary-500/5 p-5 shadow-sm dark:border-primary-900/40">
+            {activeMissionQuestion === 4 && (
+              <div
+                data-testid="mission-question"
+                className="rounded-[26px] border border-slate-200/80 bg-slate-50/80 p-5 shadow-sm dark:border-slate-700 dark:bg-white/[0.04]"
+              >
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-700 dark:text-primary-300">
                     {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.question4Heading')}
@@ -1512,9 +1532,8 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                 <div className="mt-4 flex items-center justify-between">
                   <button
                     type="button"
-                    onClick={() =>
-                      updateMissionContext({ question3Confirmed: false, question4Confirmed: false })
-                    }
+                    onClick={() => setActiveMissionQuestion(3)}
+                    data-testid="mission-prev"
                     className={navButtonClass}
                   >
                     {labelsUi.previous}
@@ -1531,8 +1550,11 @@ export const ContextStep: React.FC<ContextStepProps> = ({
               </div>
             )}
 
-            {displayedContext.question4Confirmed && (
-              <div className="rounded-[26px] border border-amber-200/70 bg-amber-500/5 p-5 shadow-sm dark:border-amber-900/40">
+            {activeMissionQuestion === 5 && (
+              <div
+                data-testid="mission-question"
+                className="rounded-[26px] border border-amber-200/70 bg-amber-500/5 p-5 shadow-sm dark:border-amber-900/40"
+              >
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-700 dark:text-amber-300">
                     {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.question5Heading')}
@@ -1588,12 +1610,8 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() =>
-                        updateMissionContext({
-                          question4Confirmed: false,
-                          question5Confirmed: false,
-                        })
-                      }
+                      onClick={() => setActiveMissionQuestion(4)}
+                      data-testid="mission-prev"
                       className={navButtonClass}
                     >
                       {labelsUi.previous}
@@ -1613,8 +1631,11 @@ export const ContextStep: React.FC<ContextStepProps> = ({
               </div>
             )}
 
-            {displayedContext.question5Confirmed && (
-              <div className="rounded-[26px] border border-slate-200/70 bg-white/85 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
+            {activeMissionQuestion === 6 && (
+              <div
+                data-testid="mission-summary"
+                className="rounded-[26px] border border-slate-200/70 bg-white/85 p-5 shadow-sm dark:border-white/10 dark:bg-white/[0.04]"
+              >
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
                     {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.executiveSummaryHeading')}
@@ -1632,6 +1653,14 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                 <div className="mt-4 rounded-2xl border border-primary-200/70 bg-primary-500/5 px-4 py-4 text-sm leading-relaxed text-slate-700 dark:border-primary-900/40 dark:text-slate-200">
                   {executiveSummaryDelivery}
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveMissionQuestion(5)}
+                  data-testid="mission-prev"
+                  className={`${navButtonClass} mt-4`}
+                >
+                  {labelsUi.previous}
+                </button>
               </div>
             )}
 

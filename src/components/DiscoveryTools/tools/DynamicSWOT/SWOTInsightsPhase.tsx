@@ -28,6 +28,10 @@ import {
 } from '@/store/useToolStore';
 
 import { ProposalCard } from '../../shared/ProposalCard';
+import {
+  normalizeUniversalSynthesis,
+  ToolSynthesisSections,
+} from '../../shared/ToolSynthesisSections';
 
 const MOVE_CATEGORY_META: Record<
   string,
@@ -1342,6 +1346,56 @@ export function SWOTInsightsPhase({
     [strengths, weaknesses, opportunities, threats, correlations, isPolish]
   );
 
+  const universalSynthesis = useMemo(
+    () =>
+      normalizeUniversalSynthesis(
+        {
+          'executive-answer': executiveSummary || summary?.verdict || '',
+          'key-findings': items.map((item) => item.text),
+          'key-insights': keyInsights,
+          'business-implications': tensions.map((tension) => tension.insight || tension.title),
+          conclusions: appliedConclusions,
+          'decision-options': derivedRecommendations.map((recommendation) => recommendation.title),
+          'consultant-recommendation': activeMoves.map((move) => move.title),
+          'risks-assumptions-uncertainties': [
+            ...threats.map((item) => item.text),
+            ...(summary?.tradeoffs || []).map((tradeoff) => tradeoff.why),
+          ],
+          'management-questions': (swotData.outputCandidates || []).map(
+            (candidate) => candidate.title
+          ),
+        },
+        isPolish,
+        {
+          'executive-answer': summary?.proposalId ? [summary.proposalId] : [],
+          'key-findings': items.map((item) => item.id),
+          'key-insights': summary?.proposalId ? [summary.proposalId] : [],
+          'business-implications': tensions.map((tension) => tension.id),
+          conclusions: summary?.proposalId ? [summary.proposalId] : [],
+          'decision-options': derivedRecommendations.map((recommendation) => recommendation.id),
+          'consultant-recommendation': activeMoves.map((move) => move.id),
+          'risks-assumptions-uncertainties': threats.map((item) => item.id),
+          'management-questions': (swotData.outputCandidates || []).map(
+            (candidate) => candidate.id
+          ),
+        }
+      ),
+    [
+      activeMoves,
+      appliedConclusions,
+      derivedRecommendations,
+      executiveSummary,
+      isPolish,
+      items,
+      keyInsights,
+      summary?.tradeoffs,
+      summary?.verdict,
+      swotData.outputCandidates,
+      tensions,
+      threats,
+    ]
+  );
+
   const handleCreateCandidate = async (rec: DerivedRecommendation) => {
     // TLS-07: hand off to the governed Candidate inbox. Candidate acceptance,
     // not this SWOT surface, owns eventual Initiative creation.
@@ -1417,11 +1471,17 @@ export function SWOTInsightsPhase({
 
   return (
     <div className="space-y-5 p-1">
-      {/* ═══════════════════════════════════════════════════
+      <ToolSynthesisSections sections={universalSynthesis} isPolish={isPolish} />
+      <details className="rounded-2xl border border-c-border bg-c-surface">
+        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-c-text">
+          {isPolish ? 'Pokaż analizę źródłową' : 'Show supporting analysis'}
+        </summary>
+        <div className="space-y-5 border-t border-c-border p-4">
+          {/* ═══════════════════════════════════════════════════
           FACTOR PICTURE — 2×2 SWOT grid
           ═══════════════════════════════════════════════════ */}
-      {items.length > 0 && (
-        <section className="rounded-[28px] border border-slate-200/70 bg-white dark:border-navy-700/70 dark:bg-navy-900/40">
+          {items.length > 0 && (
+            <section className="rounded-[28px] border border-slate-200/70 bg-white dark:border-navy-700/70 dark:bg-navy-900/40">
           <SectionHeader
             title={t('discoveryToolsTools.dynamicSwot.insightsPhase.factorPictureTitle')}
             badge={t('discoveryToolsTools.dynamicSwot.insightsPhase.evidenceBadge')}
@@ -1473,18 +1533,26 @@ export function SWOTInsightsPhase({
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
             {t('discoveryToolsTools.dynamicSwot.insightsPhase.perAreaObservationsTitle')}
           </h2>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            {t('discoveryToolsTools.dynamicSwot.insightsPhase.perAreaObservationsSubtitle')}
-          </p>
-        </SectionHeader>
-        <div className="space-y-4 p-5">
-          <QuadrantObservationsBlock quadrant="strengths" items={strengths} isPolish={isPolish} />
-          <QuadrantObservationsBlock quadrant="weaknesses" items={weaknesses} isPolish={isPolish} />
-          <QuadrantObservationsBlock
-            quadrant="opportunities"
-            items={opportunities}
-            isPolish={isPolish}
-          />
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                {t('discoveryToolsTools.dynamicSwot.insightsPhase.perAreaObservationsSubtitle')}
+              </p>
+            </SectionHeader>
+            <div className="space-y-4 p-5">
+              <QuadrantObservationsBlock
+                quadrant="strengths"
+                items={strengths}
+                isPolish={isPolish}
+              />
+              <QuadrantObservationsBlock
+                quadrant="weaknesses"
+                items={weaknesses}
+                isPolish={isPolish}
+              />
+              <QuadrantObservationsBlock
+                quadrant="opportunities"
+                items={opportunities}
+                isPolish={isPolish}
+              />
           <QuadrantObservationsBlock quadrant="threats" items={threats} isPolish={isPolish} />
         </div>
       </section>
@@ -1820,17 +1888,19 @@ export function SWOTInsightsPhase({
                               {candidateReceipts[move.id].lineageState === 'PINNED'
                                 ? t('discoveryToolsTools.common.candidateCreated')
                                 : 'NEEDS_DECISION'}
-                            </span>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => void handoffFrozenMove(move.id)}
-                              disabled={!candidateHandoffAllowed || creatingRecommendationId === move.id}
-                              className="inline-flex items-center gap-1.5 rounded-lg bg-navy-900 px-3 py-2 text-xs font-semibold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-60 dark:bg-[#F4F7FB] dark:text-navy-950"
-                            >
-                              <Rocket className="h-3.5 w-3.5" />
-                              {creatingRecommendationId === move.id
-                                ? t('discoveryToolsTools.common.creatingCandidate')
+                                </span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => void handoffFrozenMove(move.id)}
+                                  disabled={
+                                    !candidateHandoffAllowed || creatingRecommendationId === move.id
+                                  }
+                                  className="inline-flex items-center gap-1.5 rounded-lg bg-navy-900 px-3 py-2 text-xs font-semibold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-60 dark:bg-[#F4F7FB] dark:text-navy-950"
+                                >
+                                  <Rocket className="h-3.5 w-3.5" />
+                                  {creatingRecommendationId === move.id
+                                    ? t('discoveryToolsTools.common.creatingCandidate')
                                 : t('discoveryToolsTools.common.createCandidate')}
                             </button>
                           )}
@@ -2011,10 +2081,12 @@ export function SWOTInsightsPhase({
                   </div>
                 </div>
               );
-            })}
-          </div>
-        </section>
-      )}
+                })}
+              </div>
+            </section>
+          )}
+        </div>
+      </details>
     </div>
   );
 }

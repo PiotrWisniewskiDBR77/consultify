@@ -352,7 +352,8 @@ export type UseAIStreamReturn = {
     context?: Record<string, unknown>,
     focusMode?: string,
     roleName?: string,
-    language?: string
+    language?: string,
+    throwTerminalError?: boolean
   ) => Promise<void>;
   abortStream: () => boolean;
   retryLastStream: () => Promise<void>;
@@ -609,7 +610,14 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
       language?: string,
       throwTerminalError = false
     ) => {
-      if (streamInFlightRef.current) return;
+      if (streamInFlightRef.current) {
+        if (throwTerminalError) {
+          throw new Error(
+            'AI stream is still stopping. Retry when the previous request has closed.'
+          );
+        }
+        return;
+      }
       streamInFlightRef.current = true;
       // Save for manual retry (best-effort)
       lastRequestRef.current = {

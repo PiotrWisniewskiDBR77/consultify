@@ -250,6 +250,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   const {
     isStreaming,
     streamedContent,
+    error: toolAiError,
     generateFullSession,
     runPhaseAiAction,
     phaseAiActions,
@@ -1704,6 +1705,33 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
             )}
 
             <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-slate-50/70 dark:border-navy-700/70 dark:bg-navy-900/40">
+              {toolType === 'dynamic-swot' && toolAiError ? (
+                <div
+                  role="alert"
+                  className="m-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-danger-300/60 bg-danger-50 p-3 text-sm text-danger-800 dark:border-danger-800 dark:bg-danger-950/30 dark:text-danger-200"
+                >
+                  <span>
+                    {/timeout|timed out|limit czasu/i.test(toolAiError)
+                      ? isPolish
+                        ? 'Przekroczono limit czasu generowania. Twoje dane są bezpieczne.'
+                        : 'Generation timed out. Your work is safe.'
+                      : /cancel|anulow/i.test(toolAiError)
+                        ? isPolish
+                          ? 'Generowanie anulowano. Twoje dane są bezpieczne.'
+                          : 'Generation was cancelled. Your work is safe.'
+                        : isPolish
+                          ? 'Dostawca AI nie odpowiedział. Twoje dane są bezpieczne.'
+                          : 'The AI provider did not respond. Your work is safe.'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => void generateFullSession()}
+                    className="rounded-lg border border-current px-3 py-1.5 text-xs font-semibold"
+                  >
+                    {isPolish ? 'Spróbuj ponownie' : 'Retry'}
+                  </button>
+                </div>
+              ) : null}
               {currentSession ? (
                 <ToolCanvas
                   toolType={toolType}
@@ -1833,12 +1861,16 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         badge: generatedInitiatives.length + (swotData?.outputCandidates?.length || 0),
         component: outputsSection,
       },
-      {
-        id: 'ai-collaboration',
-        icon: Sparkles,
-        label: { en: 'AI Collaboration Panel', pl: 'AI Collaboration Panel' },
-        component: aiCollaborationSection,
-      },
+      ...(toolType === 'dynamic-swot'
+        ? []
+        : [
+            {
+              id: 'ai-collaboration',
+              icon: Sparkles,
+              label: { en: 'AI Collaboration Panel', pl: 'AI Collaboration Panel' },
+              component: aiCollaborationSection,
+            },
+          ]),
       {
         id: 'comments',
         icon: MessageSquare,
@@ -1941,6 +1973,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     comments.length,
     completionItems,
     completionReady,
+    currentSession?.sessionGenerationStatus,
     createdAt,
     currentOrganization?.name,
     currentSession,
@@ -2022,6 +2055,11 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
           >
             <Sparkles size={12} />
             {isPolish ? 'Zapytaj Teresę' : 'Ask Teresa'}
+          </button>
+        ) : null}
+        {toolType === 'dynamic-swot' && currentSession?.sessionGenerationStatus === 'generating' ? (
+          <button type="button" onClick={abortStream} className={getMenu3AiButtonClass(false)}>
+            {isPolish ? 'Anuluj generowanie' : 'Cancel generation'}
           </button>
         ) : null}
         <span
@@ -2254,13 +2292,30 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
             toolStatus === 'DRAFT' ? 'draft' : toolStatus === 'REVIEW' ? 'review' : 'approved',
         }}
         rightPanel={
-          <div data-testid="tool-session-properties" className="h-full">
-            <ArtifactRightPanel
-              sections={sessionRightPanelSections}
-              className={ARTIFACT_PANEL_CARD_CLASS_DOCKED}
-              ariaLabel={isPolish ? 'Panel sesji narzędzia' : 'Tool session panel'}
-            />
-          </div>
+          <aside
+            aria-label={isPolish ? 'Właściwości sesji' : 'Session properties'}
+            className="h-full w-72 overflow-y-auto border-l border-c-border bg-c-surface px-4 py-5"
+            data-testid="tool-session-properties"
+          >
+            <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-c-text-muted">
+              {isPolish ? 'Właściwości' : 'Properties'}
+            </h2>
+            <dl className="space-y-3">
+              {properties.map((property) => (
+                <div
+                  key={property.id}
+                  className="border-b border-c-border-subtle pb-3 last:border-0"
+                >
+                  <dt className="text-[11px] font-medium uppercase tracking-wide text-c-text-muted">
+                    {isPolish ? property.label.pl : property.label.en}
+                  </dt>
+                  <dd className="mt-1 break-words text-sm font-medium text-c-text">
+                    {String(property.value ?? '—')}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </aside>
         }
         sections={sections}
         actions={[]}

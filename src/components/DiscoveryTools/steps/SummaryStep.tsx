@@ -18,7 +18,7 @@ import {
   TrendingUp,
   Wrench,
 } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -230,6 +230,67 @@ function DynamicSwotOutputs({
   const [reportId, setReportId] = useState<string | null>(null);
   const [reportCreating, setReportCreating] = useState(false);
   const [presCreated, setPresCreated] = useState(false);
+  const [attachmentBusy, setAttachmentBusy] = useState(false);
+  const [attachedDocuments, setAttachedDocuments] = useState<Array<{ id: string; name: string }>>(
+    []
+  );
+  const [vaultFilesLoading, setVaultFilesLoading] = useState(true);
+  const [vaultFilesError, setVaultFilesError] = useState<string | null>(null);
+
+  const refreshVaultDocuments = useCallback(async () => {
+    setVaultFilesLoading(true);
+    setVaultFilesError(null);
+    try {
+      const response = await Api.getKnowledgeDocuments({ scope: 'organization' });
+      const documents = Array.isArray(response) ? response : [];
+      setAttachedDocuments(
+        documents
+          .filter((document: any) => {
+            let tags = document?.tags;
+            if (typeof tags === 'string') {
+              try {
+                tags = JSON.parse(tags);
+              } catch {
+                tags = tags.split(',').map((tag: string) => tag.trim());
+              }
+            }
+            return (
+              document?.category === 'tool-output-attachment' &&
+              Array.isArray(tags) &&
+              tags.includes(session.id)
+            );
+          })
+          .map((document: any) => ({
+            id: String(document.id),
+            name: String(document.filename || document.name || document.title || 'Document'),
+          }))
+      );
+    } catch {
+      setVaultFilesError(
+        isPolish ? 'Nie udało się odczytać plików z Vault.' : 'Could not load files from Vault.'
+      );
+    } finally {
+      setVaultFilesLoading(false);
+    }
+  }, [isPolish, session.id]);
+
+  const downloadVaultDocument = async (document: { id: string; name: string }) => {
+    try {
+      const blob = await Api.downloadDocument(document.id);
+      const url = URL.createObjectURL(blob);
+      const anchor = window.document.createElement('a');
+      anchor.href = url;
+      anchor.download = document.name;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error(isPolish ? 'Nie udało się pobrać pliku.' : 'Could not download the file.');
+    }
+  };
+
+  useEffect(() => {
+    void refreshVaultDocuments();
+  }, [refreshVaultDocuments]);
 
   const toggleReportSection = (id: string) => {
     setReportSections((prev) => {
@@ -420,9 +481,170 @@ function DynamicSwotOutputs({
   const readinessScore = readinessChecklist.filter((c) => c.done).length;
   const readinessTotal = readinessChecklist.length;
 
+  const attachToVault = async (file: File | undefined) => {
+    if (!file) return;
+    setAttachmentBusy(true);
+    try {
+      await Api.uploadKnowledgeDocument(
+        file,
+        'tool-output-attachment',
+        ['dynamic-swot', session.id],
+        'organization'
+      );
+      await refreshVaultDocuments();
+      toast.success(isPolish ? 'Plik zapisano w Vault' : 'File saved in Vault');
+    } catch (error) {
+      toast.error(
+        isPolish ? 'Nie udało się zapisać pliku w Vault' : 'Could not save the file in Vault'
+      );
+    } finally {
+      setAttachmentBusy(false);
+    }
+  };
+
   const developCount = Object.values(initiativeActions).filter((a) => a === 'develop').length;
   const deferCount = Object.values(initiativeActions).filter((a) => a === 'defer').length;
   const ideaCount = Object.values(initiativeActions).filter((a) => a === 'idea').length;
+
+  const dedicatedOutputs = session.toolType === 'dynamic-swot';
+  if (dedicatedOutputs) {
+    return (
+      <div className="space-y-5" data-testid="swot-dedicated-outputs">
+        <section className="rounded-[28px] border border-slate-200/70 bg-white dark:border-navy-700/70 dark:bg-navy-900/40">
+          <SectionHeader
+            title={t('discoveryToolsSteps.summaryStep.dynamicSwot.outputsActions.title')}
+            badge={t('discoveryToolsSteps.summaryStep.dynamicSwot.outputsActions.badge')}
+            description={t(
+              'discoveryToolsSteps.summaryStep.dynamicSwot.outputsActions.description'
+            )}
+          />
+          <div className="p-5">
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-medium text-slate-700 dark:text-slate-300">
+                {t('discoveryToolsSteps.summaryStep.dynamicSwot.analysisReadiness')}
+              </span>
+              <strong>
+                {readinessScore}/{readinessTotal}
+              </strong>
+            </div>
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-navy-800">
+              <div
+                className="h-full rounded-full bg-emerald-500"
+                style={{ width: `${(readinessScore / readinessTotal) * 100}%` }}
+              />
+            </div>
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              {readinessChecklist.map((item) => (
+                <div
+                  key={item.label}
+                  className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300"
+                >
+                  <Check className={item.done ? 'text-emerald-500' : 'text-slate-400'} size={14} />
+                  {item.label}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="grid gap-3 md:grid-cols-3">
+          <button
+            type="button"
+            onClick={() =>
+              navigate(
+                `/reports/builder?new=true&sourceType=TOOL&sourceId=${encodeURIComponent(session.id)}`
+              )
+            }
+            className="rounded-2xl border border-c-border bg-c-surface p-4 text-left"
+          >
+            <FileText className="mb-3" size={20} />
+            <strong>{isPolish ? 'Otwórz generator raportu' : 'Open Report Generator'}</strong>
+            <p className="mt-1 text-xs text-c-text-muted">
+              {isPolish
+                ? 'Kontynuuj w dedykowanym narzędziu.'
+                : 'Continue in the dedicated generator.'}
+            </p>
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/initiatives?tab=candidates&candidateInbox=discovery')}
+            className="rounded-2xl border border-c-border bg-c-surface p-4 text-left"
+          >
+            <Rocket className="mb-3" size={20} />
+            <strong>{isPolish ? 'Otwórz kandydatów' : 'Open Candidate Inbox'}</strong>
+            <p className="mt-1 text-xs text-c-text-muted">
+              {isPolish ? 'Przejdź do skrzynki kandydatów.' : 'Continue in the candidate inbox.'}
+            </p>
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/my-work?tab=vault')}
+            className="rounded-2xl border border-c-border bg-c-surface p-4 text-left"
+          >
+            <BookOpen className="mb-3" size={20} />
+            <strong>Vault</strong>
+            <p className="mt-1 text-xs text-c-text-muted">
+              {isPolish ? 'Otwórz pliki źródłowe.' : 'Open supporting files.'}
+            </p>
+          </button>
+        </section>
+
+        <section className="rounded-2xl border border-c-border bg-c-surface p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="font-semibold text-c-text">
+                {isPolish ? 'Pliki źródłowe w Vault' : 'Source files in Vault'}
+              </h3>
+              <p className="text-xs text-c-text-muted">
+                {isPolish
+                  ? 'Pliki są indeksowane i przechowywane w Vault.'
+                  : 'Files are indexed and persisted in Vault.'}
+              </p>
+            </div>
+            <label className="cursor-pointer rounded-xl border border-c-border px-4 py-2 text-sm font-semibold text-c-text">
+              <input
+                type="file"
+                className="sr-only"
+                disabled={attachmentBusy}
+                onChange={(event) => void attachToVault(event.target.files?.[0])}
+              />
+              {attachmentBusy
+                ? isPolish
+                  ? 'Zapisywanie…'
+                  : 'Saving…'
+                : isPolish
+                  ? 'Dodaj plik'
+                  : 'Attach file'}
+            </label>
+          </div>
+          {vaultFilesLoading ? (
+            <div className="mt-3 text-sm text-c-text-muted" role="status">
+              {isPolish ? 'Wczytywanie plików…' : 'Loading files…'}
+            </div>
+          ) : vaultFilesError ? (
+            <div className="mt-3 text-sm text-danger-600" role="alert">
+              {vaultFilesError}
+            </div>
+          ) : attachedDocuments.length > 0 ? (
+            <ul className="mt-3 space-y-1 text-sm text-emerald-600" data-testid="vault-files">
+              {attachedDocuments.map((document) => (
+                <li key={document.id} className="flex items-center justify-between gap-3">
+                  <span>{document.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => void downloadVaultDocument(document)}
+                    className="rounded-lg border border-c-border px-2 py-1 text-xs font-semibold text-c-text"
+                  >
+                    {isPolish ? 'Pobierz' : 'Download'}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5">

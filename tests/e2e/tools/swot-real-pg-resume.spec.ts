@@ -457,6 +457,7 @@ test('TLS-05: signed creator and separate approver freeze, promote, replay and c
   test.setTimeout(120_000);
   const runId = `tls-freeze-${Date.now()}`;
   const marker = `TLS visible nonempty ${Date.now()}`;
+  const attachmentName = `uia-source-${Date.now()}.txt`;
   const pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 1 });
   let owner: Persona | undefined;
   let approver: Persona | undefined;
@@ -477,6 +478,20 @@ test('TLS-05: signed creator and separate approver freeze, promote, replay and c
     ownerContext = await signedContext(browser, owner);
     const page = await ownerContext.newPage();
     const headers = authHeaders(owner);
+
+    await page.goto('/discovery-tools?docId=known:dynamic-swot');
+    await expect(page.getByRole('heading', { name: /^Goal$/i })).toBeVisible({ timeout: 30_000 });
+    await page.getByRole('button', { name: /^Process$/i }).click();
+    await expect(page.getByRole('heading', { name: /^Process$/i })).toBeVisible();
+    await expect(page.getByRole('list', { name: /Tool process/i }).getByRole('listitem')).toHaveCount(
+      4
+    );
+    await page.getByRole('button', { name: /^Outcomes$/i }).click();
+    await expect(page.getByRole('heading', { name: /^Outcomes$/i })).toBeVisible();
+    await page.getByRole('button', { name: /^Example$/i }).click();
+    await expect(page.getByRole('heading', { name: /^Example$/i })).toBeVisible();
+    await expect(page.getByText(/Context:/i)).toHaveCount(1);
+    await expect(page.getByRole('button', { name: /^Start$/i })).toHaveCount(1);
     const create = await request.post(`${API_BASE_URL}/api/tools`, {
       headers,
       data: { toolType: 'dynamic-swot', name: `TLS quality gate ${Date.now()}` },
@@ -530,10 +545,14 @@ test('TLS-05: signed creator and separate approver freeze, promote, replay and c
       .toBe(true);
     await page.getByRole('button', { name: /Outputs & Actions/i }).click();
     await expect(page.getByRole('heading', { name: /Outputs & Actions/i })).toBeVisible();
+    await expect(page.getByTestId('tool-session-properties')).toContainText('Tool type');
+    await expect(page.getByTestId('tool-session-properties')).toContainText('Progress');
     await page
       .getByRole('button', { name: /Synthesis & Insights/i })
       .first()
       .click();
+    await expect(page.locator('[data-synthesis-section]')).toHaveCount(9);
+    await expect(page.getByText(/^Validated$/)).toHaveCount(0);
     const draftCandidateAction = page.getByRole('button', { name: /Send to candidates/i }).first();
     await expect(draftCandidateAction).toBeDisabled();
     await expect(page.getByText(/Approve this SWOT before sending/i).first()).toBeVisible();
@@ -633,6 +652,21 @@ test('TLS-05: signed creator and separate approver freeze, promote, replay and c
     await expect(page.getByRole('heading', { name: /Outputs & Actions/i })).toBeVisible({
       timeout: 30_000,
     });
+    const attachmentInput = page.getByLabel(/Attach file|Dodaj plik/i);
+    await attachmentInput.setInputFiles({
+      name: attachmentName,
+      mimeType: 'text/plain',
+      buffer: Buffer.from(`UIA source for ${sessionId}`),
+    });
+    await expect(page.getByText(attachmentName)).toBeVisible({ timeout: 20_000 });
+    await page.reload();
+    await page.getByRole('button', { name: /Outputs & Actions/i }).click();
+    await expect(page.getByText(attachmentName)).toBeVisible({ timeout: 30_000 });
+    const downloadResponse = page.waitForResponse(
+      (response) => response.request().method() === 'GET' && response.url().includes('/download')
+    );
+    await page.getByRole('button', { name: /Download|Pobierz/i }).click();
+    await expect((await downloadResponse).status()).toBe(200);
     const finalRead = await request.get(`${API_BASE_URL}/api/tools/${sessionId}`, {
       headers: { Authorization: `Bearer ${owner.token}` },
     });
@@ -641,15 +675,14 @@ test('TLS-05: signed creator and separate approver freeze, promote, replay and c
     expect(finalBody.answers).toEqual(answersAtApproval);
     expect(finalBody.contextSnapshot.approvedSnapshot.answers).toEqual(answersAtApproval);
 
-    const promotionResponsePromise = page.waitForResponse(
-      (response) =>
-        response.url().includes(`/api/tools/${sessionId}/promote`) &&
-        response.request().method() === 'POST'
+    await page.getByRole('button', { name: /Open Report Generator|Otwórz generator raportu/i }).click();
+    await expect(page).toHaveURL(
+      new RegExp(`/reports/builder\\?new=true&sourceType=TOOL&sourceId=${sessionId}`)
     );
-    const generateReport = page.getByRole('button', { name: /Generate report|Generuj raport/i });
-    await expect(generateReport).toBeEnabled();
-    await generateReport.click();
-    const promotionResponse = await promotionResponsePromise;
+    const promotionResponse = await request.post(`${API_BASE_URL}/api/tools/${sessionId}/promote`, {
+      headers,
+      data: { outputType: 'report', title: `TLS governed report ${sessionId}` },
+    });
     const promotionBody = await promotionResponse.json();
     expect(promotionResponse.status(), JSON.stringify(promotionBody)).toBe(200);
     reportId = String(promotionBody?.id || '');

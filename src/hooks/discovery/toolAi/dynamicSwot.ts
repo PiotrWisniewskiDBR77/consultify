@@ -812,8 +812,16 @@ export function applyDynamicSwotPendingAction({
 
   if (pendingAction === 'full-session') {
     const signals = Array.isArray(parsed.signals) ? parsed.signals : [];
+    const signalKeys = new Set(
+      (swotData.signals || []).map(
+        (signal) => `${signal.type}:${signal.content.toLowerCase().trim()}`
+      )
+    );
     signals.forEach((signal) => {
       if (!signal?.content || !signal?.type) return;
+      const key = `${signal.type}:${String(signal.content).toLowerCase().trim()}`;
+      if (signalKeys.has(key)) return;
+      signalKeys.add(key);
       actions.addSWOTSignal({
         type: signal.type,
         content: String(signal.content),
@@ -833,8 +841,14 @@ export function applyDynamicSwotPendingAction({
     });
 
     const items = Array.isArray(parsed.items) ? parsed.items : [];
+    const itemKeys = new Set(
+      (swotData.items || []).map((item) => `${item.quadrant}:${item.text.toLowerCase().trim()}`)
+    );
     items.forEach((item) => {
       if (!item?.text || !item?.quadrant) return;
+      const key = `${item.quadrant}:${String(item.text).toLowerCase().trim()}`;
+      if (itemKeys.has(key)) return;
+      itemKeys.add(key);
       actions.addSWOTItem({
         text: String(item.text),
         quadrant: item.quadrant,
@@ -848,8 +862,18 @@ export function applyDynamicSwotPendingAction({
     });
 
     const correlations = Array.isArray(parsed.correlations) ? parsed.correlations : [];
+    const correlationKey = (correlation: { type?: string; items?: string[]; insight?: string }) =>
+      `${correlation.type || ''}:${[...(correlation.items || [])].sort().join(',')}:${String(
+        correlation.insight || ''
+      )
+        .toLowerCase()
+        .trim()}`;
+    const correlationKeys = new Set((swotData.correlations || []).map(correlationKey));
     correlations.forEach((corr) => {
       if (!corr?.type || !corr?.insight) return;
+      const key = correlationKey(corr);
+      if (correlationKeys.has(key)) return;
+      correlationKeys.add(key);
       actions.addCorrelation({
         items: corr.items || [],
         type: corr.type,

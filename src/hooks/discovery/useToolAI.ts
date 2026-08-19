@@ -205,7 +205,7 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
     cardId: string;
   } | null>(null);
 
-  const { startStream, isStreaming, streamedContent, abortStream } = useAIStream();
+  const { startStream, isStreaming, streamedContent, abortStream, streamStartedAt } = useAIStream();
 
   // O-C2 grounding validator: the exact text sent as the user prompt for the
   // in-flight request — this IS the grounding source (it already carries the
@@ -213,6 +213,15 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
   // to deterministically catch fabricated numbers in the parsed AI response
   // before it reaches any apply*PendingAction() store writer.
   const lastPromptSentRef = useRef<string>('');
+  const fullSessionAttemptRef = useRef<{
+    id: number;
+    promise: Promise<void>;
+    resolve: () => void;
+    cancelled: boolean;
+    streamStartedAtBaseline: number | null;
+  } | null>(null);
+  const fullSessionAttemptIdRef = useRef(0);
+  const fullSessionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Get the appropriate system prompt
   const getSystemPrompt = useCallback(() => {
@@ -241,7 +250,7 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
 
   // Send a message to the AI
   const sendMessage = useCallback(
-    async (message: string) => {
+    async (message: string, throwTerminalError = false) => {
       setError(null);
 
       try {
@@ -278,12 +287,19 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
             role: m.role,
             content: m.content,
           })) || [],
-          systemPrompt + stepContext + interviewProtocol
+          systemPrompt + stepContext + interviewProtocol,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          throwTerminalError
         );
       } catch (e) {
-        setError('Failed to send message');
+        const message = e instanceof Error ? e.message : 'Failed to send message';
+        setError(message);
         setActiveAiActionId(null);
         console.error('[useToolAI] Error sending message:', e);
+        if (throwTerminalError) throw e;
       }
     },
     [currentSession, currentStepDef, getSystemPrompt, startStream, toolType]
@@ -476,100 +492,190 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
 
   const generateFullSession = useCallback(async () => {
     if (!currentSession) return;
+    if (fullSessionAttemptRef.current) return fullSessionAttemptRef.current.promise;
 
-    setError(null);
-    setSessionGenerationStatus('generating');
+    let resolveAttempt = () => {};
+    const attemptPromise = new Promise<void>((resolve) => {
+      resolveAttempt = resolve;
+    });
+    const attempt = {
+      id: ++fullSessionAttemptIdRef.current,
+      promise: attemptPromise,
+      resolve: resolveAttempt,
+      cancelled: false,
+      streamStartedAtBaseline: streamStartedAt,
+    };
+    fullSessionAttemptRef.current = attempt;
 
-    if (OPERATIONAL_AI_TOOLS.has(toolType)) {
-      const opData = currentSession.inputData as any;
-      const sectionIds = Object.keys(opData?.sections || {});
-      if (!sectionIds.length) {
-        setSessionGenerationStatus('idle');
+    const finishAttempt = (message?: string) => {
+      if (fullSessionAttemptRef.current?.id !== attempt.id) return;
+      if (fullSessionTimeoutRef.current) clearTimeout(fullSessionTimeoutRef.current);
+      fullSessionTimeoutRef.current = null;
+      if (message) {
+        setSessionGenerationStatus('error');
+        setPendingAction(null);
+        setActiveAiActionId(null);
+        setError(message);
+      }
+      fullSessionAttemptRef.current = null;
+      attempt.resolve();
+    };
+
+    const run = async () => {
+      setError(null);
+      setSessionGenerationStatus('generating');
+      fullSessionTimeoutRef.current = setTimeout(() => {
+        attempt.cancelled = true;
+        abortStream();
+        setSessionGenerationStatus('error');
+        setPendingAction(null);
+        setActiveAiActionId(null);
+        setError('Generation timed out. Your work is safe — retry when ready.');
+        finishAttempt();
+      }, 90_000);
+      const sendForAttempt = (message: string) => sendMessage(message, true);
+
+      if (OPERATIONAL_AI_TOOLS.has(toolType)) {
+        const opData = currentSession.inputData as any;
+        const sectionIds = Object.keys(opData?.sections || {});
+        if (!sectionIds.length) {
+          setSessionGenerationStatus('idle');
+          finishAttempt();
+          return;
+        }
+        const stepsById = new Map(((currentSession.steps || []) as any[]).map((s) => [s.id, s]));
+        const sectionMeta: OperationalSectionMeta[] = sectionIds.map((id) => {
+          const step = stepsById.get(id) as any;
+          return {
+            id,
+            name: step?.name || step?.title || id.replace(/[-_]/g, ' '),
+            description: step?.description,
+          };
+        });
+        const opPrompt = buildOperationalFullSessionPrompt(
+          opData,
+          sectionMeta,
+          OPERATIONAL_AI_TOOL_NAMES[toolType] || toolType,
+          formatForPrompt()
+        );
+        setPendingAction('full-session');
+        setActiveAiActionId('draft-session');
+        await sendForAttempt(opPrompt);
         return;
       }
-      const stepsById = new Map(((currentSession.steps || []) as any[]).map((s) => [s.id, s]));
-      const sectionMeta: OperationalSectionMeta[] = sectionIds.map((id) => {
-        const step = stepsById.get(id) as any;
-        return {
-          id,
-          name: step?.name || step?.title || id.replace(/[-_]/g, ' '),
-          description: step?.description,
-        };
-      });
-      const opPrompt = buildOperationalFullSessionPrompt(
-        opData,
-        sectionMeta,
-        OPERATIONAL_AI_TOOL_NAMES[toolType] || toolType,
-        formatForPrompt()
-      );
-      setPendingAction('full-session');
-      setActiveAiActionId('draft-session');
-      await sendMessage(opPrompt);
-      return;
-    }
 
-    const prompt =
-      toolType === 'risk-uncertainty'
-        ? buildRiskFullSessionPrompt(
-            currentSession.inputData as RiskUncertaintyData,
-            formatForPrompt()
-          )
-        : toolType === 'portfolio-priority'
-          ? buildPortfolioFullSessionPrompt(
-              currentSession.inputData as PortfolioPriorityData,
+      const prompt =
+        toolType === 'risk-uncertainty'
+          ? buildRiskFullSessionPrompt(
+              currentSession.inputData as RiskUncertaintyData,
               formatForPrompt()
             )
-          : toolType === 'growth-paths'
-            ? buildGrowthPathsFullSessionPrompt(
-                currentSession.inputData as GrowthPathsData,
+          : toolType === 'portfolio-priority'
+            ? buildPortfolioFullSessionPrompt(
+                currentSession.inputData as PortfolioPriorityData,
                 formatForPrompt()
               )
-            : toolType === 'market-forces'
-              ? buildMarketForcesFullSessionPrompt(
-                  currentSession.inputData as any,
+            : toolType === 'growth-paths'
+              ? buildGrowthPathsFullSessionPrompt(
+                  currentSession.inputData as GrowthPathsData,
                   formatForPrompt()
                 )
-              : toolType === 'value-chain'
-                ? buildValueChainFullSessionPrompt(
+              : toolType === 'market-forces'
+                ? buildMarketForcesFullSessionPrompt(
                     currentSession.inputData as any,
                     formatForPrompt()
                   )
-                : toolType === 'capability-mapper'
-                  ? buildCapabilityMapperFullSessionPrompt(
+                : toolType === 'value-chain'
+                  ? buildValueChainFullSessionPrompt(
                       currentSession.inputData as any,
                       formatForPrompt()
                     )
-                  : toolType === 'ambition-decomposer'
-                    ? buildAmbitionDecomposerFullSessionPrompt(
+                  : toolType === 'capability-mapper'
+                    ? buildCapabilityMapperFullSessionPrompt(
                         currentSession.inputData as any,
                         formatForPrompt()
                       )
-                    : toolType === 'focus-tradeoff'
-                      ? buildFocusTradeoffFullSessionPrompt(
+                    : toolType === 'ambition-decomposer'
+                      ? buildAmbitionDecomposerFullSessionPrompt(
                           currentSession.inputData as any,
                           formatForPrompt()
                         )
-                      : toolType === 'narrative-engine'
-                        ? buildNarrativeEngineFullSessionPrompt(
+                      : toolType === 'focus-tradeoff'
+                        ? buildFocusTradeoffFullSessionPrompt(
                             currentSession.inputData as any,
                             formatForPrompt()
                           )
-                        : toolType === 'dynamic-swot'
-                          ? buildDynamicSwotFullSessionPrompt(
-                              currentSession.inputData as SWOTData | undefined,
+                        : toolType === 'narrative-engine'
+                          ? buildNarrativeEngineFullSessionPrompt(
+                              currentSession.inputData as any,
                               formatForPrompt()
                             )
-                          : '';
+                          : toolType === 'dynamic-swot'
+                            ? buildDynamicSwotFullSessionPrompt(
+                                currentSession.inputData as SWOTData | undefined,
+                                formatForPrompt()
+                              )
+                            : '';
 
-    if (!prompt) {
-      setSessionGenerationStatus('idle');
-      return;
+      if (!prompt) {
+        setSessionGenerationStatus('idle');
+        finishAttempt();
+        return;
+      }
+
+      setPendingAction('full-session');
+      setActiveAiActionId('draft-session');
+      await sendForAttempt(prompt);
+    };
+
+    void run()
+      .then(() => {
+        if (attempt.cancelled) finishAttempt();
+      })
+      .catch(() => {
+        if (attempt.cancelled) finishAttempt();
+        else finishAttempt('Generation failed. Your work is safe — retry when ready.');
+      });
+    return attempt.promise;
+  }, [
+    abortStream,
+    toolType,
+    currentSession,
+    formatForPrompt,
+    sendMessage,
+    setSessionGenerationStatus,
+    streamStartedAt,
+  ]);
+
+  const abortToolStream = useCallback(() => {
+    abortStream();
+    const attempt = fullSessionAttemptRef.current;
+    if (attempt) {
+      attempt.cancelled = true;
+      if (fullSessionTimeoutRef.current) clearTimeout(fullSessionTimeoutRef.current);
+      fullSessionTimeoutRef.current = null;
+      setSessionGenerationStatus('error');
+      setPendingAction(null);
+      setActiveAiActionId(null);
+      setError('Generation cancelled. Your work is safe — retry when ready.');
+      fullSessionAttemptRef.current = null;
+      attempt.resolve();
     }
+  }, [abortStream, setSessionGenerationStatus]);
 
-    setPendingAction('full-session');
-    setActiveAiActionId('draft-session');
-    await sendMessage(prompt);
-  }, [toolType, currentSession, formatForPrompt, sendMessage, setSessionGenerationStatus]);
+  useEffect(
+    () => () => {
+      const attempt = fullSessionAttemptRef.current;
+      if (!attempt) return;
+      attempt.cancelled = true;
+      abortStream();
+      if (fullSessionTimeoutRef.current) clearTimeout(fullSessionTimeoutRef.current);
+      fullSessionTimeoutRef.current = null;
+      fullSessionAttemptRef.current = null;
+      attempt.resolve();
+    },
+    [abortStream, currentSession?.id, toolType]
+  );
 
   const runPhaseAiAction = useCallback(
     async (actionId: ToolPhaseAiActionId) => {
@@ -732,7 +838,29 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
       return;
 
     let parsed = extractObject(streamedContent);
+    if (pendingAction === 'full-session') {
+      const attempt = fullSessionAttemptRef.current;
+      if (
+        !attempt ||
+        attempt.cancelled ||
+        streamStartedAt === null ||
+        streamStartedAt === attempt.streamStartedAtBaseline
+      ) {
+        return;
+      }
+    }
     if (!parsed) {
+      if (pendingAction === 'full-session') {
+        setSessionGenerationStatus('error');
+        setError('Generation returned an invalid result. Your work is safe — retry when ready.');
+        const attempt = fullSessionAttemptRef.current;
+        if (attempt) {
+          if (fullSessionTimeoutRef.current) clearTimeout(fullSessionTimeoutRef.current);
+          fullSessionTimeoutRef.current = null;
+          fullSessionAttemptRef.current = null;
+          attempt.resolve();
+        }
+      }
       setPendingAction(null);
       setActiveAiActionId(null);
       return;
@@ -1015,6 +1143,15 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
       setRethinkTarget(null);
     }
 
+    if (pendingAction === 'full-session') {
+      const attempt = fullSessionAttemptRef.current;
+      if (!attempt || attempt.cancelled) return;
+      if (fullSessionTimeoutRef.current) clearTimeout(fullSessionTimeoutRef.current);
+      fullSessionTimeoutRef.current = null;
+      fullSessionAttemptRef.current = null;
+      attempt.resolve();
+    }
+
     setPendingAction(null);
     setActiveAiActionId(null);
   }, [
@@ -1037,6 +1174,7 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
     setMissionSuggestion,
     updateCardAfterRethink,
     streamedContent,
+    streamStartedAt,
     toolType,
     formatForPrompt,
   ]);
@@ -1057,7 +1195,7 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
     generateFullSession,
     runPhaseAiAction,
     rethinkCard,
-    abortStream,
+    abortStream: abortToolStream,
     phaseAiActions,
     activeAiActionId,
     missionSuggestion,

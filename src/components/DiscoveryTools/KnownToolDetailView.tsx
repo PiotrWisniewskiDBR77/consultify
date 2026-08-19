@@ -61,6 +61,7 @@ import { GrowthPathsLibraryGraphic } from './GrowthPathsLibraryGraphic';
 import { MarketForcesLibraryGraphic } from './MarketForcesLibraryGraphic';
 import { PortfolioPriorityLibraryGraphic } from './PortfolioPriorityLibraryGraphic';
 import { RiskUncertaintyLibraryGraphic } from './RiskUncertaintyLibraryGraphic';
+import { ToolProcessDiagram } from './ToolProcessDiagram';
 import { TOOL_CARD_RENDER_IDS, TOOL_CARD_SPEC } from './toolCards.contract';
 
 type KnownTool = Awaited<ReturnType<typeof Api.getKnownTool>>['tool'];
@@ -475,21 +476,6 @@ export function KnownToolDetailView(props: {
   // „Startuj sesję" to GŁÓWNE CTA tej karty: cała karta jest bazą wiedzy, której
   // jedynym wyjściem do pracy jest utworzenie sesji narzędzia. Dlatego akcja
   // idzie do `header.primaryAction` (niżej), a NIE do toolbara.
-  const primaryAction = useMemo(
-    () => ({
-      label: { en: 'Start session', pl: 'Startuj sesję' },
-      icon: ArrowRight,
-      onClick: startSession,
-      disabled: starting || !tool || !tool.isActive,
-      className: '!h-9 !w-32 !justify-center !px-3 !text-xs sm:!px-3 sm:!text-xs',
-      title: {
-        en: 'Create a tool session and start working',
-        pl: 'Utwórz sesję narzędzia i rozpocznij pracę',
-      },
-    }),
-    [tool, starting]
-  );
-
   // SPEC-N §2.6 (anty-duplikacja): „Startuj sesję" ŚWIADOMIE nie występuje tutaj —
   // żyje wyłącznie w slocie primary nagłówka. Toolbar niesie już tylko akcję
   // drugorzędną. Jedna akcja = jedno miejsce.
@@ -552,10 +538,11 @@ export function KnownToolDetailView(props: {
         aiDraft: string;
         approvedUse: string;
         outcome: string;
-      }>
+      }>,
+      limitToOne = false
     ) => (
       <div className="grid gap-4 lg:grid-cols-3">
-        {cases.map((item) => (
+        {(limitToOne ? cases.slice(0, 1) : cases).map((item) => (
           <div
             key={item.title}
             className="rounded-2xl border border-c-border-subtle bg-c-surface p-4"
@@ -707,8 +694,6 @@ export function KnownToolDetailView(props: {
             </div>
           </div>
         </div>
-
-        <DynamicSwotLibraryGraphic isPolish={isPolish} variant="process" />
       </div>
     );
 
@@ -802,6 +787,7 @@ export function KnownToolDetailView(props: {
 
     const processSection = (
       <div className="space-y-6">
+        <ToolProcessDiagram toolType="dynamic-swot" isPolish={isPolish} />
         <div>
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-lg font-semibold text-c-text">
@@ -1105,7 +1091,8 @@ export function KnownToolDetailView(props: {
             aiDraft: string;
             approvedUse: string;
             outcome: string;
-          }>
+          }>,
+          true
         )}
 
         <div className="grid gap-4 md:grid-cols-2">
@@ -1242,13 +1229,12 @@ export function KnownToolDetailView(props: {
             {t('discoveryToolsMain.knownToolDetail.marketForces.goal.aiPhilosophyBody')}
           </div>
         </div>
-
-        <MarketForcesLibraryGraphic isPolish={isPolish} variant="process" />
       </div>
     );
 
     const marketProcessSection = (
       <div className="space-y-6">
+        <ToolProcessDiagram toolType="market-forces" isPolish={isPolish} />
         <div>
           <h2 className="text-lg font-semibold text-c-text">
             {t('discoveryToolsMain.knownToolDetailView.workLogic')}
@@ -1334,7 +1320,8 @@ export function KnownToolDetailView(props: {
             aiDraft: string;
             approvedUse: string;
             outcome: string;
-          }>
+          }>,
+          true
         )}
         <MarketForcesLibraryGraphic isPolish={isPolish} variant="example" />
       </div>
@@ -2451,33 +2438,6 @@ export function KnownToolDetailView(props: {
               ? t('discoveryToolsMain.knownToolDetailView.statusActive', 'Active')
               : t('discoveryToolsMain.knownToolDetailView.statusInactive', 'Inactive'),
           statusTone: tool?.isActive && !tool?.isComingSoon ? 'approved' : 'neutral',
-          secondaryActions: (
-            <>
-              <SectionsManagerMenu
-                layout={toolCardLayout}
-                isPolish={isPolish}
-                buttonClassName="!h-9 !w-32 !justify-center !px-3"
-              />
-              <Menu2HowToButton
-                variant="knowledge"
-                isPolish={isPolish}
-                label={isPolish ? 'Wiedza' : 'Knowledge'}
-                onClick={openKb}
-                disabled={!tool}
-                className="!h-9 !w-32 !justify-center !px-3"
-              />
-              <Menu2AIButton
-                isPolish={isPolish}
-                label={isPolish ? 'Analizuj' : 'Analyze'}
-                busy={toolCardAnalysis.loading}
-                aria-expanded={toolCardAnalysis.open}
-                disabled={!tool}
-                onClick={toolCardAnalysis.run}
-                className="!h-9 !w-32 !justify-center !border-c-border-subtle !bg-transparent !px-3 !text-c-text-secondary hover:!bg-state-hover"
-              />
-            </>
-          ),
-          primaryAction,
         }}
         hideToolbarWhenEmpty
         sections={orderedToolSections}
@@ -2534,7 +2494,49 @@ export function KnownToolDetailView(props: {
         // ("karta nie ma zadnej akcji AI") byla prawdziwa dla AI-ktore-PISZE.
         // Analiza niczego nie pisze — ocenia gotowosc karty przed sesja, a
         // wlasciciel wylicza dla Narzedzia szesc kryteriow tej oceny.
-        renderActionBar={() => null}
+        renderActionBar={() => (
+          <NModeMenu2
+            isPolish={isPolish}
+            // ── LEWA STREFA — „Sekcje" ZAWSZE (naprawa 2026-07-24, fala 2) ────
+            // Było: tylko przy `?cardContract=1`, więc domyślnie lewe 2/3 paska
+            // świeciło pustką (zgłoszenie sędziego grafiki, największy brak tej
+            // karty). Picker steruje WIDOCZNOŚCIĄ sekcji — to preferencja widoku,
+            // nie zapis danych, więc charakter read-only karty go nie unieważnia
+            // i nie jest to atrapa: kliknięcie realnie chowa/pokazuje sekcję w
+            // lewej nawigacji i w centrum (patrz `orderedToolSections`).
+            sectionsMenu={<SectionsManagerMenu layout={toolCardLayout} isPolish={isPolish} />}
+            readMode={readMode}
+            howToButton={
+              <Menu2HowToButton
+                variant="knowledge"
+                isPolish={isPolish}
+                label={isPolish ? 'How to / Baza wiedzy' : 'How to / Knowledge base'}
+                onClick={openKb}
+                disabled={!tool}
+              />
+            }
+            aiButton={
+              <Menu2AIButton
+                isPolish={isPolish}
+                busy={toolCardAnalysis.loading}
+                aria-expanded={toolCardAnalysis.open}
+                disabled={!tool}
+                onClick={toolCardAnalysis.run}
+              />
+            }
+            primaryButton={
+              <button
+                type="button"
+                onClick={startSession}
+                disabled={starting || !tool || !tool.isActive}
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/70 bg-white px-3 text-xs font-semibold text-navy-950 shadow-sm transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-white dark:text-navy-950"
+              >
+                <ArrowRight size={13} />
+                {isPolish ? 'Start' : 'Start'}
+              </button>
+            }
+          />
+        )}
         activeSection={activeSection}
         onSectionChange={setActiveSection}
         rightPanel={

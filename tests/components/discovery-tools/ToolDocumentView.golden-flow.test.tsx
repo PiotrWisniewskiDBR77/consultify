@@ -120,6 +120,10 @@ vi.mock('@/utils/pdfExport', () => ({
   exportToPDF: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock('@/components/DiscoveryTools/tools/DynamicSWOT/TeresaSwotProposals', () => ({
+  TeresaSwotProposals: () => <div data-testid="governed-teresa-proposals">Governed proposals</div>,
+}));
+
 // ── NModeShell stub: real section-switch wiring, no chrome/animation weight ──
 vi.mock('@/components/shared/NModeLayout', () => ({
   NModeShell: (props: any) => {
@@ -141,7 +145,7 @@ vi.mock('@/components/shared/NModeLayout', () => ({
           ))}
         </div>
         <div data-testid="nmode-shell-active">{active?.component}</div>
-        <div data-testid="nmode-shell-right-panel">{props.rightPanel}</div>
+        {props.rightPanel}
         {props.children}
       </div>
     );
@@ -232,6 +236,9 @@ describe('ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav 
     getToolSessionMock.mockResolvedValue(baseSwotSession({ completionPercent: 100 }));
     updateToolSessionMock.mockResolvedValue({ id: 'sess-existing-1' });
 
+    const portal = document.createElement('div');
+    portal.id = 'module-command-row-right-actions';
+    document.body.appendChild(portal);
     const { unmount } = render(
       <React.StrictMode>
         <ToolDocumentView toolType="dynamic-swot" sessionId="sess-existing-1" onBack={vi.fn()} />
@@ -244,11 +251,24 @@ describe('ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav 
       expect(getLinkGraphBacklinksMock).toHaveBeenCalled();
     });
 
+    const properties = screen.getByTestId('tool-session-properties');
+    expect(within(properties).getByText('Tool type')).toBeInTheDocument();
+    expect(within(properties).getByText('Category')).toBeInTheDocument();
+    expect(within(properties).getByText('Status')).toBeInTheDocument();
+    expect(within(properties).getByText('Consulting stage')).toBeInTheDocument();
+    expect(within(properties).getByText('Current step')).toBeInTheDocument();
+    expect(within(properties).getByText('Progress')).toBeInTheDocument();
+
+    fireEvent.click(await screen.findByTestId('ask-teresa-toolbar'));
+    expect(screen.getByRole('dialog', { name: 'Teresa proposals' })).toBeInTheDocument();
+    expect(screen.getByTestId('governed-teresa-proposals')).toBeInTheDocument();
+
     // The production debounce is 2s. A read-only reopen must neither schedule
     // a write nor flush one during unmount.
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 2100));
       unmount();
+      portal.remove();
     });
 
     expect(updateToolSessionMock).not.toHaveBeenCalled();
@@ -304,12 +324,13 @@ describe('ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav 
     fireEvent.click(swotNavButton);
 
     await waitFor(() => {
-      expect(screen.getByText('Weaknesses')).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /Weaknesses/ })).toBeInTheDocument();
     });
 
     // Find the Weaknesses quadrant card and add a new item through the REAL
     // rendered input (SWOTBuildPhase's QuadrantCard "add point" input+button).
-    const weaknessesHeading = screen.getByText('Weaknesses');
+    fireEvent.click(screen.getByRole('tab', { name: /Weaknesses/ }));
+    const weaknessesHeading = await screen.findByText('Weaknesses');
     const weaknessesCard = weaknessesHeading.closest('div.rounded-\\[26px\\]') as HTMLElement;
     expect(weaknessesCard).toBeTruthy();
 
@@ -331,6 +352,7 @@ describe('ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav 
     expect(screen.queryByText('New weakness from golden-flow test')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('nmode-section-swot'));
+    fireEvent.click(await screen.findByRole('tab', { name: /Weaknesses/ }));
 
     await waitFor(() => {
       expect(screen.getByText('New weakness from golden-flow test')).toBeInTheDocument();
@@ -338,7 +360,8 @@ describe('ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav 
 
     // Proof this went through the real store, not local component state: the
     // Strengths item hydrated from the API is still present too.
-    expect(screen.getByText('Existing strength item')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('tab', { name: /Strengths/ }));
+    expect(await screen.findByText('Existing strength item')).toBeInTheDocument();
   });
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -369,10 +392,11 @@ describe('ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav 
 
     fireEvent.click(await screen.findByTestId('nmode-section-swot'));
     await waitFor(() => {
-      expect(screen.getByText('Weaknesses')).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /Weaknesses/ })).toBeInTheDocument();
     });
 
-    const weaknessesHeading = screen.getByText('Weaknesses');
+    fireEvent.click(screen.getByRole('tab', { name: /Weaknesses/ }));
+    const weaknessesHeading = await screen.findByText('Weaknesses');
     const weaknessesCard = weaknessesHeading.closest('div.rounded-\\[26px\\]') as HTMLElement;
     const draftInput = within(weaknessesCard).getByRole('textbox');
     fireEvent.change(draftInput, { target: { value: 'Unmount-flush weakness' } });
