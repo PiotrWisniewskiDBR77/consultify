@@ -9,9 +9,7 @@ const mockList = vi.fn();
 const mockUpdate = vi.fn();
 const mockDelete = vi.fn();
 const mockUpdateStatus = vi.fn();
-const mockAddDecision = vi.fn();
-const mockAddFollowUp = vi.fn();
-const mockUpdateFollowUpStatus = vi.fn();
+const mockGet = vi.fn();
 
 vi.mock('../../services/meetingService.js', () => ({
   ensureMeetingTables: vi.fn().mockResolvedValue(undefined),
@@ -20,9 +18,7 @@ vi.mock('../../services/meetingService.js', () => ({
   updateMeeting: (...a: unknown[]) => mockUpdate(...a),
   deleteMeeting: (...a: unknown[]) => mockDelete(...a),
   updateMeetingStatus: (...a: unknown[]) => mockUpdateStatus(...a),
-  addMeetingDecision: (...a: unknown[]) => mockAddDecision(...a),
-  addMeetingFollowUp: (...a: unknown[]) => mockAddFollowUp(...a),
-  updateMeetingFollowUpStatus: (...a: unknown[]) => mockUpdateFollowUpStatus(...a),
+  getMeeting: (...a: unknown[]) => mockGet(...a),
 }));
 
 // Auth mock reads an `x-test-role` header so a single app instance can simulate
@@ -59,11 +55,13 @@ const sampleMeeting = {
   decisions: [],
   followUps: [],
   status: 'scheduled',
+  createdBy: 'user-1',
 };
 
 describe('meeting routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGet.mockResolvedValue(sampleMeeting);
   });
 
   it('GET / lists meetings for the org', async () => {
@@ -91,6 +89,17 @@ describe('meeting routes', () => {
     expect(mockCreate).not.toHaveBeenCalled();
   });
 
+  it('POST / rejects embedded decisions instead of silently dropping them', async () => {
+    const res = await request(createApp()).post('/api/meeting').send({
+      title: 'Kickoff',
+      startAt: '2026-07-01T10:00:00.000Z',
+      decisions: ['Ship'],
+    });
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('MEETING_PROPOSAL_REQUIRED');
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+
   it('PUT /:id updates core fields', async () => {
     mockUpdate.mockResolvedValue({ ...sampleMeeting, title: 'Renamed' });
     const res = await request(createApp())
@@ -114,8 +123,17 @@ describe('meeting routes', () => {
     expect(mockUpdate).not.toHaveBeenCalled();
   });
 
+  it('PUT /:id rejects embedded follow-ups instead of silently dropping them', async () => {
+    const res = await request(createApp())
+      .put('/api/meeting/meeting-1')
+      .send({ followUps: [{ title: 'Bypass' }] });
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('MEETING_PROPOSAL_REQUIRED');
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
   it('PUT /:id returns 404 when the meeting is missing', async () => {
-    mockUpdate.mockResolvedValue(null);
+    mockGet.mockResolvedValue(null);
     const res = await request(createApp()).put('/api/meeting/missing').send({ title: 'Renamed' });
     expect(res.status).toBe(404);
   });
@@ -154,25 +172,20 @@ describe('meeting routes', () => {
     expect(res.body.meeting.status).toBe('completed');
   });
 
-  it('POST /:id/decisions appends a decision', async () => {
-    mockAddDecision.mockResolvedValue({ ...sampleMeeting, decisions: ['Ship'] });
+  it('POST /:id/decisions retires the direct writer', async () => {
     const res = await request(createApp())
       .post('/api/meeting/meeting-1/decisions')
       .send({ decision: 'Ship' });
-    expect(res.status).toBe(201);
-    expect(res.body.meeting.decisions).toContain('Ship');
+    expect(res.status).toBe(410);
+    expect(res.body.code).toBe('MEETING_PROPOSAL_REQUIRED');
   });
 
-  it('POST /:id/follow-ups adds a follow-up', async () => {
-    mockAddFollowUp.mockResolvedValue({
-      ...sampleMeeting,
-      followUps: [{ id: 'fu-1', title: 'Recap', owner: 'Bob', status: 'open' }],
-    });
+  it('POST /:id/follow-ups retires the direct writer', async () => {
     const res = await request(createApp())
       .post('/api/meeting/meeting-1/follow-ups')
       .send({ title: 'Recap', owner: 'Bob' });
-    expect(res.status).toBe(201);
-    expect(res.body.meeting.followUps).toHaveLength(1);
+    expect(res.status).toBe(410);
+    expect(res.body.code).toBe('MEETING_PROPOSAL_REQUIRED');
   });
 
   // L-04: role gate on destructive/administrative operations. Org-scope alone

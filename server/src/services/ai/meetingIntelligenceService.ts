@@ -5,11 +5,10 @@
  * - Generate structured meeting notes
  * - Extract action items with owners and deadlines
  * - Identify key decisions made
- * - Hand off to Notebook module for persistence
+ * - Return proposal content to the Meeting boundary for governed persistence
  */
 import { randomUUID } from 'node:crypto';
 
-import { run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 
 export interface MeetingNote {
@@ -34,12 +33,6 @@ export interface MeetingNote {
   rawTranscript?: string;
   /** Whether notes were produced by real AI or regex heuristic fallback. */
   source: 'ai' | 'heuristic';
-  /**
-   * L-01: whether the markdown note was persisted to `notebook_pages`.
-   * `false` signals a swallowed DB error (e.g. PG schema drift) so callers
-   * can surface "save skipped" instead of silently losing the handoff.
-   */
-  persisted?: boolean;
 }
 
 export interface MeetingContext {
@@ -180,8 +173,6 @@ Respond ONLY with valid JSON:
         source: 'ai',
       };
 
-      note.persisted = await this.persistNote(note, context.organizationId, context.userId);
-
       return note;
     } catch (err: any) {
       logger.warn(
@@ -228,80 +219,6 @@ Respond ONLY with valid JSON:
       rawTranscript: transcript,
       source: 'heuristic',
     };
-  }
-
-  /**
-   * Persist note markdown to `notebook_pages` (handoff to M04 Notebook).
-   * Returns whether the INSERT succeeded. L-01: a swallowed error (e.g. PG
-   * schema drift) is logged at `warn` — not `debug` — and reported via the
-   * return value, so the markdown never disappears silently.
-   */
-  private async persistNote(note: MeetingNote, orgId: string, userId: string): Promise<boolean> {
-    // NB: dbRun resolves `{success:false}` on DB error (fallback=true) — it does
-    // NOT reject — so the previous `.catch(logger.debug)` was dead code and any
-    // PG schema drift vanished silently. Inspect `success` explicitly (L-01).
-    let result;
-    try {
-      result = await dbRun(
-        `INSERT INTO notebook_pages
-          (id, owner_user_id, organization_id, title, content_text, visibility, content_json)
-         VALUES (?, ?, ?, ?, ?, 'private', '{}')`,
-        [note.id, userId, orgId, note.title, this.formatNoteAsMarkdown(note)]
-      );
-    } catch (err: any) {
-      logger.warn(
-        `[MeetingIntel] notebook_pages persist threw (note ${note.id} lost) — ${err?.message}`
-      );
-      return false;
-    }
-    if (!result?.success) {
-      logger.warn(
-        `[MeetingIntel] notebook_pages persist FAILED (note ${note.id} lost) — ${result?.error ?? 'unknown error'}`
-      );
-      return false;
-    }
-    return true;
-  }
-
-  private formatNoteAsMarkdown(note: MeetingNote): string {
-    const parts: string[] = [
-      `# ${note.title}`,
-      `**Date:** ${note.date}`,
-      `**Participants:** ${note.participants.join(', ')}`,
-      '',
-      '## Summary',
-      note.summary,
-      '',
-      '## Key Points',
-      ...note.keyPoints.map((kp) => `- ${kp}`),
-    ];
-
-    if (note.decisions.length > 0) {
-      parts.push('', '## Decisions');
-      for (const d of note.decisions) {
-        parts.push(
-          `- **${d.decision}** (by ${d.decidedBy}${d.rationale ? ` — ${d.rationale}` : ''})`
-        );
-      }
-    }
-
-    if (note.actionItems.length > 0) {
-      parts.push('', '## Action Items');
-      for (const a of note.actionItems) {
-        parts.push(
-          `- [ ] ${a.task} → **${a.owner}**${a.deadline ? ` (by ${a.deadline})` : ''} [${a.priority}]`
-        );
-      }
-    }
-
-    if (note.followUps.length > 0) {
-      parts.push('', '## Follow-ups');
-      for (const f of note.followUps) {
-        parts.push(`- ${f}`);
-      }
-    }
-
-    return parts.join('\n');
   }
 }
 

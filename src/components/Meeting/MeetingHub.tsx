@@ -87,8 +87,6 @@ export const MeetingHub: React.FC = () => {
   const [selectedListIds, setSelectedListIds] = useState<Set<string>>(new Set());
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [showDecisionModal, setShowDecisionModal] = useState(false);
-  const [showFollowUpModal, setShowFollowUpModal] = useState(false);
   const [showNotesModal, setShowNotesModal] = useState(false);
   const [notesTranscript, setNotesTranscript] = useState('');
   const [generatingNotes, setGeneratingNotes] = useState(false);
@@ -115,11 +113,6 @@ export const MeetingHub: React.FC = () => {
     preRead: '',
     agenda: '',
   });
-  const [followUpDraft, setFollowUpDraft] = useState({
-    title: '',
-    owner: '',
-  });
-  const [decisionDraft, setDecisionDraft] = useState('');
 
   const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId } =
     useModuleOpenDocuments('meeting');
@@ -611,44 +604,6 @@ export const MeetingHub: React.FC = () => {
     }
   };
 
-  const handleAddFollowUp = async () => {
-    if (!activeMeeting || !followUpDraft.title.trim()) return;
-    try {
-      const response = await (Api as any).addMeetingFollowUp?.(activeMeeting.id, {
-        title: followUpDraft.title.trim(),
-        owner: followUpDraft.owner.trim() || t('meeting.unassigned2'),
-      });
-      const meeting = response?.meeting as MeetingItem | undefined;
-      if (!meeting) throw new Error('Follow-up was not created');
-      setMeetings((prev) => prev.map((item) => (item.id === activeMeeting.id ? meeting : item)));
-      setFollowUpDraft({ title: '', owner: '' });
-      setShowFollowUpModal(false);
-      toast.success(t('meeting.followUp.notifications.created', 'Follow-up added'));
-    } catch (error) {
-      console.error('Failed to add follow-up:', error);
-      toast.error(t('meeting.followUp.errors.createFailed', 'Failed to add follow-up'));
-    }
-  };
-
-  const handleAddDecision = async () => {
-    if (!activeMeeting || !decisionDraft.trim()) return;
-    try {
-      const response = await (Api as any).addMeetingDecision?.(
-        activeMeeting.id,
-        decisionDraft.trim()
-      );
-      const meeting = response?.meeting as MeetingItem | undefined;
-      if (!meeting) throw new Error('Decision was not created');
-      setMeetings((prev) => prev.map((item) => (item.id === activeMeeting.id ? meeting : item)));
-      setDecisionDraft('');
-      setShowDecisionModal(false);
-      toast.success(t('meeting.decisions.notifications.created', 'Decision added'));
-    } catch (error) {
-      console.error('Failed to add decision:', error);
-      toast.error(t('meeting.decisions.errors.createFailed', 'Failed to add decision'));
-    }
-  };
-
   const handleGenerateNotes = async () => {
     if (!activeMeeting || !notesTranscript.trim()) return;
     setGeneratingNotes(true);
@@ -693,7 +648,13 @@ export const MeetingHub: React.FC = () => {
     setNotesError(null);
     try {
       const response = await Api.listMeetingNotes(meetingId);
-      setGovernedNotes(Array.isArray(response?.notes) ? response.notes : []);
+      const notes = Array.isArray(response?.notes) ? response.notes : [];
+      setGovernedNotes(notes);
+      setNoteReceiptIds(
+        Object.fromEntries(
+          notes.filter((note) => note.receiptId).map((note) => [note.id, note.receiptId!])
+        )
+      );
     } catch (error) {
       console.error('Failed to load governed meeting notes:', error);
       setNotesError(t('meeting.notes.errors.loadFailed', 'Could not load meeting note proposals.'));
@@ -741,26 +702,6 @@ export const MeetingHub: React.FC = () => {
       if (stale) await loadGovernedNotes(activeMeeting.id);
     } finally {
       setDecidingNoteId(null);
-    }
-  };
-
-  const handleToggleFollowUpStatus = async (meetingId: string, followUpId: string) => {
-    const meeting = meetings.find((item) => item.id === meetingId);
-    const followUp = meeting?.followUps.find((item) => item.id === followUpId);
-    if (!meeting || !followUp) return;
-    const nextStatus = followUp.status === 'done' ? 'open' : 'done';
-    try {
-      const response = await (Api as any).updateMeetingFollowUpStatus?.(
-        meetingId,
-        followUpId,
-        nextStatus
-      );
-      const updated = response?.meeting as MeetingItem | undefined;
-      if (!updated) throw new Error('Follow-up status update failed');
-      setMeetings((prev) => prev.map((item) => (item.id === meetingId ? updated : item)));
-    } catch (error) {
-      console.error('Failed to update follow-up status:', error);
-      toast.error(t('meeting.followUp.errors.statusFailed', 'Failed to update follow-up status'));
     }
   };
 
@@ -869,12 +810,7 @@ export const MeetingHub: React.FC = () => {
             onEdit={() => openEditModal(activeMeeting)}
             onDelete={() => setDeleteTarget(activeMeeting)}
             onToggleStatus={() => handleToggleMeetingStatus(activeMeeting.id)}
-            onAddDecision={() => setShowDecisionModal(true)}
-            onAddFollowUp={() => setShowFollowUpModal(true)}
             onGenerateNotes={openGovernedNotes}
-            onToggleFollowUpStatus={(followUpId) =>
-              handleToggleFollowUpStatus(activeMeeting.id, followUpId)
-            }
           />
         ) : viewMode === 'calendar' ? (
           <MeetingCalendarView
@@ -1191,105 +1127,6 @@ export const MeetingHub: React.FC = () => {
           </div>
         </div>
       ) : null}
-      {showDecisionModal && activeMeeting ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-c-surface border border-slate-200/60 dark:border-white/[0.03]">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
-              <div>
-                <div className="text-sm font-semibold text-c-text">
-                  {t('meeting.decisions.title', 'Add decision')}
-                </div>
-                <div className="text-xs text-c-text-muted">{activeMeeting.title}</div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowDecisionModal(false)}
-                className="p-2 rounded-lg hover:bg-c-surface-raised"
-              >
-                <X size={16} />
-              </button>
-            </div>
-            <div className="space-y-4 p-5">
-              <Field label={t('meeting.decisions.fields.value', 'Decision')}>
-                <textarea
-                  className="min-h-32 w-full rounded-xl border border-c-border bg-transparent px-3 py-2 text-sm"
-                  value={decisionDraft}
-                  onChange={(e) => setDecisionDraft(e.target.value)}
-                />
-              </Field>
-            </div>
-            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-c-border-subtle">
-              <button
-                type="button"
-                onClick={() => setShowDecisionModal(false)}
-                className="h-9 px-4 rounded-full border border-c-border text-sm"
-              >
-                {t('common.cancel', 'Cancel')}
-              </button>
-              <button
-                type="button"
-                onClick={handleAddDecision}
-                className="h-9 px-4 rounded-full bg-c-text text-c-surface text-sm font-medium hover:opacity-90"
-              >
-                {t('meeting.decisions.actions.add', 'Add decision')}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
-      {showFollowUpModal && activeMeeting ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-c-surface border border-slate-200/60 dark:border-white/[0.03]">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-c-border-subtle">
-              <div>
-                <div className="text-sm font-semibold text-c-text">
-                  {t('meeting.followUp.title', 'Add follow-up')}
-                </div>
-                <div className="text-xs text-c-text-muted">{activeMeeting.title}</div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowFollowUpModal(false)}
-                className="p-2 rounded-lg hover:bg-c-surface-raised"
-              >
-                <X size={16} />
-              </button>
-            </div>
-            <div className="space-y-4 p-5">
-              <Field label={t('meeting.followUp.fields.title', 'Action item')}>
-                <input
-                  className="w-full rounded-xl border border-c-border bg-transparent px-3 py-2 text-sm"
-                  value={followUpDraft.title}
-                  onChange={(e) => setFollowUpDraft((prev) => ({ ...prev, title: e.target.value }))}
-                />
-              </Field>
-              <Field label={t('meeting.followUp.fields.owner', 'Owner')}>
-                <input
-                  className="w-full rounded-xl border border-c-border bg-transparent px-3 py-2 text-sm"
-                  value={followUpDraft.owner}
-                  onChange={(e) => setFollowUpDraft((prev) => ({ ...prev, owner: e.target.value }))}
-                />
-              </Field>
-            </div>
-            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-c-border-subtle">
-              <button
-                type="button"
-                onClick={() => setShowFollowUpModal(false)}
-                className="h-9 px-4 rounded-full border border-c-border text-sm"
-              >
-                {t('common.cancel', 'Cancel')}
-              </button>
-              <button
-                type="button"
-                onClick={handleAddFollowUp}
-                className="h-9 px-4 rounded-full bg-c-text text-c-surface text-sm font-medium hover:opacity-90"
-              >
-                {t('meeting.followUp.actions.add', 'Add follow-up')}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
       {showNotesModal && activeMeeting ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-2xl rounded-2xl bg-c-surface border border-slate-200/60 dark:border-white/[0.03] max-h-[90vh] overflow-y-auto">
@@ -1587,10 +1424,7 @@ const MeetingDetailView: React.FC<{
   onEdit: () => void;
   onDelete: () => void;
   onToggleStatus: () => void;
-  onAddDecision: () => void;
-  onAddFollowUp: () => void;
   onGenerateNotes: () => void;
-  onToggleFollowUpStatus: (followUpId: string) => void;
 }> = ({
   meeting,
   isPolish,
@@ -1602,10 +1436,7 @@ const MeetingDetailView: React.FC<{
   onEdit,
   onDelete,
   onToggleStatus,
-  onAddDecision,
-  onAddFollowUp,
   onGenerateNotes,
-  onToggleFollowUpStatus,
 }) => {
   const { t } = useTranslation();
   return (
@@ -1644,20 +1475,6 @@ const MeetingDetailView: React.FC<{
               {meeting.status === 'completed'
                 ? t('meeting.markScheduled')
                 : t('meeting.markCompleted')}
-            </button>
-            <button
-              type="button"
-              onClick={onAddDecision}
-              className="h-9 px-4 rounded-full border border-c-border text-sm font-medium"
-            >
-              {t('meeting.addDecision2')}
-            </button>
-            <button
-              type="button"
-              onClick={onAddFollowUp}
-              className="h-9 px-4 rounded-full bg-c-text text-c-surface text-sm font-medium hover:opacity-90"
-            >
-              {t('meeting.addFollowUp2')}
             </button>
             <button
               type="button"
@@ -1718,11 +1535,9 @@ const MeetingDetailView: React.FC<{
             {meeting.followUps.length ? (
               <div className="space-y-2">
                 {meeting.followUps.map((item) => (
-                  <button
+                  <div
                     key={item.id}
-                    type="button"
-                    onClick={() => onToggleFollowUpStatus(item.id)}
-                    className="w-full rounded-xl border border-c-border-subtle px-3 py-2 text-left hover:bg-c-surface-raised"
+                    className="w-full rounded-xl border border-c-border-subtle px-3 py-2 text-left"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
@@ -1734,7 +1549,7 @@ const MeetingDetailView: React.FC<{
                         label={item.status === 'done' ? t('meeting.done') : t('meeting.open2')}
                       />
                     </div>
-                  </button>
+                  </div>
                 ))}
               </div>
             ) : (

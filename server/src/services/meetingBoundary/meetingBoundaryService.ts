@@ -23,9 +23,8 @@
  *      mirrors the resulting state onto the note row for cheap reads.
  *
  * WHAT THIS DELIBERATELY DOES NOT DO: it never writes into
- * `meetings.decisions_json` / `meeting_follow_ups` (Meeting's own legacy
- * tables — those stay reserved for direct, human-typed CRUD via the
- * pre-existing `addMeetingDecision` / `addMeetingFollowUp` routes) and it
+ * `meetings.decisions_json` / `meeting_follow_ups` (Meeting's legacy
+ * read-only output tables; the mounted direct writers are retired) and it
  * NEVER writes into `tasks`, `decisions`, or `materials` (foreign owner
  * tables Lane C does not own the lifecycle of). Meeting PROPOSES; the
  * consuming lane decides what, if anything, gets materialized into its own
@@ -90,6 +89,14 @@ export interface MeetingNoteRecord {
   actionItems: MeetingNoteActionItem[];
   status: MeetingNoteStatus;
   proposalId: string | null;
+  proposalState: 'pending' | 'approved' | 'rejected' | 'materialized' | 'failed' | null;
+  decidedBy: string | null;
+  decidedAt: string | null;
+  decisionReason: string | null;
+  receiptId: string | null;
+  targetKind: string | null;
+  targetRecordId: string | null;
+  materializedAt: string | null;
   idempotencyKey: string | null;
   createdBy: string;
   createdAt: string;
@@ -113,6 +120,14 @@ interface NoteRow {
   created_by: string;
   created_at: Date | string;
   updated_at: Date | string;
+  proposal_state?: string | null;
+  decided_by?: string | null;
+  decided_at?: Date | string | null;
+  decision_reason?: string | null;
+  receipt_id?: string | null;
+  receipt_target_kind?: string | null;
+  target_record_id?: string | null;
+  materialized_at?: Date | string | null;
 }
 
 function toIso(value: Date | string): string {
@@ -143,6 +158,18 @@ function mapNoteRow(row: NoteRow): MeetingNoteRecord {
     actionItems: parseJsonArray<MeetingNoteActionItem>(row.action_items_json),
     status: row.status === 'approved' || row.status === 'rejected' ? row.status : 'proposed',
     proposalId: row.proposal_id,
+    proposalState: ['pending', 'approved', 'rejected', 'materialized', 'failed'].includes(
+      String(row.proposal_state)
+    )
+      ? (row.proposal_state as MeetingNoteRecord['proposalState'])
+      : null,
+    decidedBy: row.decided_by || null,
+    decidedAt: row.decided_at ? toIso(row.decided_at) : null,
+    decisionReason: row.decision_reason || null,
+    receiptId: row.receipt_id || null,
+    targetKind: row.receipt_target_kind || null,
+    targetRecordId: row.target_record_id || null,
+    materializedAt: row.materialized_at ? toIso(row.materialized_at) : null,
     idempotencyKey: row.idempotency_key,
     createdBy: row.created_by,
     createdAt: toIso(row.created_at),
@@ -213,7 +240,9 @@ export async function ensureMeetingBoundaryTables(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_meeting_notes_meeting
       ON meeting_notes (organization_id, meeting_id, created_at DESC)
   `);
-  await dbRun(`CREATE INDEX IF NOT EXISTS idx_meeting_notes_proposal ON meeting_notes (proposal_id)`);
+  await dbRun(
+    `CREATE INDEX IF NOT EXISTS idx_meeting_notes_proposal ON meeting_notes (proposal_id)`
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -227,7 +256,16 @@ export async function getMeetingNote(input: {
 }): Promise<MeetingNoteRecord | null> {
   await ensureMeetingBoundaryTables();
   const row = await dbGet<NoteRow>(
-    `SELECT * FROM meeting_notes WHERE id = ? AND organization_id = ? AND meeting_id = ? LIMIT 1`,
+    `SELECT n.*,
+            p.state AS proposal_state, p.decided_by, p.decided_at, p.decision_reason,
+            r.receipt_id, r.target_kind AS receipt_target_kind,
+            r.target_record_id, r.materialized_at
+       FROM meeting_notes n
+       LEFT JOIN artifact_handoff_proposals p
+         ON p.proposal_id = n.proposal_id AND p.organization_id = n.organization_id
+       LEFT JOIN artifact_handoff_receipts r
+         ON r.proposal_id = n.proposal_id AND r.organization_id = n.organization_id
+      WHERE n.id = ? AND n.organization_id = ? AND n.meeting_id = ? LIMIT 1`,
     [input.noteId, input.organizationId, input.meetingId]
   );
   return row ? mapNoteRow(row) : null;
@@ -239,7 +277,17 @@ export async function listMeetingNotesForMeeting(input: {
 }): Promise<MeetingNoteRecord[]> {
   await ensureMeetingBoundaryTables();
   const rows = await dbAll<NoteRow>(
-    `SELECT * FROM meeting_notes WHERE organization_id = ? AND meeting_id = ? ORDER BY created_at DESC`,
+    `SELECT n.*,
+            p.state AS proposal_state, p.decided_by, p.decided_at, p.decision_reason,
+            r.receipt_id, r.target_kind AS receipt_target_kind,
+            r.target_record_id, r.materialized_at
+       FROM meeting_notes n
+       LEFT JOIN artifact_handoff_proposals p
+         ON p.proposal_id = n.proposal_id AND p.organization_id = n.organization_id
+       LEFT JOIN artifact_handoff_receipts r
+         ON r.proposal_id = n.proposal_id AND r.organization_id = n.organization_id
+      WHERE n.organization_id = ? AND n.meeting_id = ?
+      ORDER BY n.created_at DESC`,
     [input.organizationId, input.meetingId]
   );
   return (rows || []).map(mapNoteRow);
@@ -342,7 +390,19 @@ export async function proposeMeetingNote(
           // exists. Fail closed rather than fabricate a result.
           throw err;
         }
-        return { note: mapNoteRow(existing.rows[0]), isNew: false };
+        const replay = mapNoteRow(existing.rows[0]);
+        // The source text + language are the caller-owned request payload.
+        // Generated fields may legitimately vary across an LLM retry, so the
+        // first durable proposal stays authoritative for identical source.
+        const changedPayload =
+          replay.transcriptHash !== transcriptHash || replay.language !== language;
+        if (changedPayload) {
+          throw new MeetingBoundaryError(
+            'idempotencyKey was already used with different meeting-note content',
+            'IDEMPOTENCY_CONFLICT'
+          );
+        }
+        return { note: replay, isNew: false };
       }
       throw err;
     }
@@ -526,7 +586,10 @@ interface RawProposalRow {
  * this file needs the FINAL post-materialize state, which none of those
  * calls return. Reads only; never writes through this path.
  */
-async function readHandoffProposal(organizationId: string, proposalId: string): Promise<HandoffProposal> {
+async function readHandoffProposal(
+  organizationId: string,
+  proposalId: string
+): Promise<HandoffProposal> {
   return withPgTransaction(async (query) => {
     const rows = await query<RawProposalRow>(
       `SELECT * FROM artifact_handoff_proposals WHERE proposal_id = $1 AND organization_id = $2`,

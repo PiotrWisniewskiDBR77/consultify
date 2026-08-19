@@ -50,6 +50,14 @@ export interface GovernedMeetingNoteDto {
   actionItems: Array<{ task?: string; owner?: string } | string>;
   status: 'proposed' | 'approved' | 'rejected';
   proposalId: string | null;
+  proposalState?: 'pending' | 'approved' | 'rejected' | 'materialized' | 'failed' | null;
+  decidedBy?: string | null;
+  decidedAt?: string | null;
+  decisionReason?: string | null;
+  receiptId?: string | null;
+  targetKind?: string | null;
+  targetRecordId?: string | null;
+  materializedAt?: string | null;
   transcriptHash?: string;
   createdAt?: string;
 }
@@ -3443,27 +3451,6 @@ export const Api = {
     return handleResponse(res, 'Failed to update meeting status');
   },
 
-  addMeetingFollowUp: async (
-    meetingId: string,
-    data: { title: string; owner?: string }
-  ): Promise<any> => {
-    const res = await fetchWithRetry(`${API_URL}/meeting/${meetingId}/follow-ups`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(data || {}),
-    });
-    return handleResponse(res, 'Failed to add follow-up');
-  },
-
-  addMeetingDecision: async (meetingId: string, decision: string): Promise<any> => {
-    const res = await fetchWithRetry(`${API_URL}/meeting/${meetingId}/decisions`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify({ decision }),
-    });
-    return handleResponse(res, 'Failed to add decision');
-  },
-
   // Module 13: turn manually supplied meeting text into a durable governed note.
   // Extracted decisions/action items remain proposals until an authorized human
   // approves or rejects them; this never enables recording/transcription.
@@ -3501,19 +3488,6 @@ export const Api = {
       body: JSON.stringify(data),
     });
     return handleResponse(res, 'Failed to decide meeting note proposal');
-  },
-
-  updateMeetingFollowUpStatus: async (
-    meetingId: string,
-    followUpId: string,
-    status: 'open' | 'done'
-  ): Promise<any> => {
-    const res = await fetchWithRetry(`${API_URL}/meeting/${meetingId}/follow-ups/${followUpId}`, {
-      method: 'PATCH',
-      headers: getHeaders(),
-      body: JSON.stringify({ status }),
-    });
-    return handleResponse(res, 'Failed to update follow-up status');
   },
 
   getAIOperatorOverview: async (): Promise<any> => {

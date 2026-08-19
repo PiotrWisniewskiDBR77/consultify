@@ -336,26 +336,28 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
       expect(found.status).toBe('scheduled');
     });
 
-    it('GF-20 follow-ups survive the reopen and are attached to the right meeting', async () => {
-      await request(app)
+    it('GF-20 direct follow-up output is retired and reopen stays unchanged', async () => {
+      const write = await request(app)
         .post(`/api/meeting/${id}/follow-ups`)
         .set(member())
         .send({ title: 'Send minutes', owner: 'Ann' });
+      expect(write.status).toBe(410);
+      expect(write.body.code).toBe('MEETING_PROPOSAL_REQUIRED');
       const res = await request(app).get('/api/meeting').set(member());
       const found = res.body.meetings.find((m: any) => m.id === id);
-      expect(found.followUps).toHaveLength(1);
-      expect(found.followUps[0].title).toBe('Send minutes');
-      expect(found.followUps[0].status).toBe('open');
+      expect(found.followUps).toEqual([]);
     });
 
-    it('GF-21 decisions survive the reopen', async () => {
-      await request(app)
+    it('GF-21 direct decision output is retired and reopen stays unchanged', async () => {
+      const write = await request(app)
         .post(`/api/meeting/${id}/decisions`)
         .set(member())
         .send({ decision: 'Ship on Friday' });
+      expect(write.status).toBe(410);
+      expect(write.body.code).toBe('MEETING_PROPOSAL_REQUIRED');
       const res = await request(app).get('/api/meeting').set(member());
       const found = res.body.meetings.find((m: any) => m.id === id);
-      expect(found.decisions).toEqual(['Ship on Friday']);
+      expect(found.decisions).toEqual([]);
     });
   });
 
@@ -367,62 +369,56 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
       id = res.body.meeting.id;
     });
 
-    it('GF-22 add decision persists into decisions_json', async () => {
+    it('GF-22 direct decision writer is retired', async () => {
       const res = await request(app)
         .post(`/api/meeting/${id}/decisions`)
         .set(member())
         .send({ decision: 'Approve budget' });
-      expect(res.status).toBe(201);
-      expect(JSON.parse((await rowById(id)).decisions_json)).toEqual(['Approve budget']);
+      expect(res.status).toBe(410);
+      expect(res.body.code).toBe('MEETING_PROPOSAL_REQUIRED');
+      expect(JSON.parse((await rowById(id)).decisions_json)).toEqual([]);
     });
 
-    it('GF-23 empty decision is rejected 400', async () => {
+    it('GF-23 empty decision cannot reach the retired writer', async () => {
       const res = await request(app)
         .post(`/api/meeting/${id}/decisions`)
         .set(member())
         .send({ decision: '  ' });
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(410);
     });
 
-    it('GF-24 add follow-up creates a real child row', async () => {
+    it('GF-24 direct follow-up writer is retired', async () => {
       const res = await request(app)
         .post(`/api/meeting/${id}/follow-ups`)
         .set(member())
         .send({ title: 'Book room', owner: 'Bob' });
-      expect(res.status).toBe(201);
-      const rows = await followUpRows(id);
-      expect(rows).toHaveLength(1);
-      expect(rows[0].title).toBe('Book room');
-      expect(rows[0].owner).toBe('Bob');
-      expect(rows[0].status).toBe('open');
+      expect(res.status).toBe(410);
+      expect(res.body.code).toBe('MEETING_PROPOSAL_REQUIRED');
+      expect(await followUpRows(id)).toEqual([]);
     });
 
-    it('GF-25 empty follow-up title is rejected 400', async () => {
+    it('GF-25 empty follow-up cannot reach the retired writer', async () => {
       const res = await request(app)
         .post(`/api/meeting/${id}/follow-ups`)
         .set(member())
         .send({ title: '' });
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(410);
     });
 
-    it('GF-26 toggling a follow-up to done persists the new status', async () => {
-      const followUpId = (await followUpRows(id))[0].id;
+    it('GF-26 legacy follow-up status writer is retired', async () => {
       const res = await request(app)
-        .patch(`/api/meeting/${id}/follow-ups/${followUpId}`)
+        .patch(`/api/meeting/${id}/follow-ups/legacy-follow-up`)
         .set(member())
         .send({ status: 'done' });
-      expect(res.status).toBe(200);
-      const rows = await followUpRows(id);
-      expect(rows.find((r) => r.id === followUpId).status).toBe('done');
+      expect(res.status).toBe(410);
     });
 
-    it('GF-27 an invalid follow-up status is rejected 400', async () => {
-      const followUpId = (await followUpRows(id))[0].id;
+    it('GF-27 invalid status cannot reach the retired writer', async () => {
       const res = await request(app)
-        .patch(`/api/meeting/${id}/follow-ups/${followUpId}`)
+        .patch(`/api/meeting/${id}/follow-ups/legacy-follow-up`)
         .set(member())
         .send({ status: 'maybe' });
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(410);
     });
 
     it('GF-28 toggling a follow-up that does not exist must NOT report success', async () => {
@@ -430,7 +426,7 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
         .patch(`/api/meeting/${id}/follow-ups/meeting-fu-does-not-exist`)
         .set(member())
         .send({ status: 'done' });
-      expect(res.status).toBe(404);
+      expect(res.status).toBe(410);
     });
 
     it('GF-29 a follow-up id belonging to another meeting must NOT be toggled', async () => {
@@ -439,21 +435,13 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
         startAt: '2026-10-02T09:00:00.000Z',
       });
       const otherId = other.body.meeting.id;
-      await request(app)
-        .post(`/api/meeting/${otherId}/follow-ups`)
-        .set(member())
-        .send({ title: 'Belongs elsewhere' });
-      const foreignFollowUpId = (await followUpRows(otherId))[0].id;
-
       const res = await request(app)
-        .patch(`/api/meeting/${id}/follow-ups/${foreignFollowUpId}`)
+        .patch(`/api/meeting/${id}/follow-ups/foreign-follow-up`)
         .set(member())
         .send({ status: 'done' });
 
-      // Whatever the status code, the foreign row must be untouched.
-      const stillOpen = (await followUpRows(otherId))[0].status;
-      expect(stillOpen).toBe('open');
-      expect(res.status).toBe(404);
+      expect(await followUpRows(otherId)).toEqual([]);
+      expect(res.status).toBe(410);
     });
   });
 
@@ -627,10 +615,11 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
     });
 
     it('GF-38 an admin delete removes the meeting AND its follow-ups', async () => {
-      await request(app)
-        .post(`/api/meeting/${id}/follow-ups`)
-        .set(member())
-        .send({ title: 'Will be cascaded' });
+      await pool.query(
+        `INSERT INTO meeting_follow_ups (id, meeting_id, title, owner, status)
+         VALUES ($1, $2, 'Historical legacy row', 'system', 'open')`,
+        [`legacy-follow-up-${id}`, id]
+      );
       expect(await followUpRows(id)).toHaveLength(1);
 
       const res = await request(app).delete(`/api/meeting/${id}`).set(admin());

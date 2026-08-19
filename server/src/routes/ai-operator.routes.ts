@@ -2,6 +2,7 @@ import { type Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import aiOperatorService from '../services/aiOperatorService.js';
+import { getMeeting } from '../services/meetingService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
@@ -17,6 +18,17 @@ function getAuth(req: AuthRequest, res: Response) {
     return null;
   }
   return { organizationId, userId, role };
+}
+
+const MEETING_ADMIN_ROLES = new Set(['admin', 'owner', 'superadmin']);
+
+function canReadMeetingBrief(req: AuthRequest, meeting: NonNullable<Awaited<ReturnType<typeof getMeeting>>>): boolean {
+  const userId = String(req.user?.id || '').trim();
+  const email = String(req.user?.email || '').trim().toLowerCase();
+  const role = String(req.userRole || req.user?.role || '').trim().toLowerCase();
+  if (MEETING_ADMIN_ROLES.has(role) || meeting.createdBy === userId) return true;
+  const identities = new Set([userId.toLowerCase(), email].filter(Boolean));
+  return meeting.attendees.some((attendee) => identities.has(String(attendee).trim().toLowerCase()));
 }
 
 router.get(
@@ -79,6 +91,14 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const auth = getAuth(req, res);
     if (!auth) return;
+    const meeting = await getMeeting({
+      organizationId: auth.organizationId,
+      meetingId: String(req.params.meetingId),
+    });
+    if (!meeting || !canReadMeetingBrief(req, meeting)) {
+      res.status(404).json({ error: 'Meeting not found' });
+      return;
+    }
     const brief = await aiOperatorService.getMeetingBrief(
       auth.organizationId,
       String(req.params.meetingId)

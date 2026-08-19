@@ -71,13 +71,20 @@ async function makeMeeting(organizationId = ORG_A) {
   return meeting.id;
 }
 
-async function countFixtureRows(): Promise<{ notes: number; meetings: number; proposals: number; receipts: number }> {
-  const notes = await pool.query(`SELECT COUNT(*)::int AS n FROM meeting_notes WHERE organization_id LIKE $1`, [
-    `${PREFIX}%`,
-  ]);
-  const meetings = await pool.query(`SELECT COUNT(*)::int AS n FROM meetings WHERE organization_id LIKE $1`, [
-    `${PREFIX}%`,
-  ]);
+async function countFixtureRows(): Promise<{
+  notes: number;
+  meetings: number;
+  proposals: number;
+  receipts: number;
+}> {
+  const notes = await pool.query(
+    `SELECT COUNT(*)::int AS n FROM meeting_notes WHERE organization_id LIKE $1`,
+    [`${PREFIX}%`]
+  );
+  const meetings = await pool.query(
+    `SELECT COUNT(*)::int AS n FROM meetings WHERE organization_id LIKE $1`,
+    [`${PREFIX}%`]
+  );
   const proposals = await pool.query(
     `SELECT COUNT(*)::int AS n FROM artifact_handoff_proposals WHERE organization_id LIKE $1 AND producer_kind = 'meeting'`,
     [`${PREFIX}%`]
@@ -114,15 +121,18 @@ beforeAll(async () => {
 
 afterAll(async () => {
   try {
-    await pool.query(`DELETE FROM artifact_handoff_receipts WHERE organization_id LIKE $1`, [`${PREFIX}%`]);
+    await pool.query(`DELETE FROM artifact_handoff_receipts WHERE organization_id LIKE $1`, [
+      `${PREFIX}%`,
+    ]);
     await pool.query(
       `DELETE FROM artifact_handoff_proposals WHERE organization_id LIKE $1 AND producer_kind = 'meeting'`,
       [`${PREFIX}%`]
     );
     await pool.query(`DELETE FROM meeting_notes WHERE organization_id LIKE $1`, [`${PREFIX}%`]);
-    await pool.query(`DELETE FROM meeting_follow_ups WHERE meeting_id IN (SELECT id FROM meetings WHERE organization_id LIKE $1)`, [
-      `${PREFIX}%`,
-    ]);
+    await pool.query(
+      `DELETE FROM meeting_follow_ups WHERE meeting_id IN (SELECT id FROM meetings WHERE organization_id LIKE $1)`,
+      [`${PREFIX}%`]
+    );
     await pool.query(`DELETE FROM meetings WHERE organization_id LIKE $1`, [`${PREFIX}%`]);
 
     const remaining = await countFixtureRows();
@@ -172,7 +182,11 @@ describe('propose -> approve -> materialize happy path', () => {
 
     // Cold reopen: fresh, independent reads — never trust the in-memory
     // objects the functions handed back.
-    const reread = await getMeetingNote({ organizationId: ORG_A, meetingId, noteId: proposed.note.id });
+    const reread = await getMeetingNote({
+      organizationId: ORG_A,
+      meetingId,
+      noteId: proposed.note.id,
+    });
     expect(reread?.status).toBe('approved');
     expect(reread?.decisions).toEqual([{ decision: 'Ship on Friday' }]);
 
@@ -223,9 +237,10 @@ describe('exactly-one on approval', () => {
     expect(second!.replayed).toBe(true);
     expect(first!.receipt!.receiptId).toBe(second!.receipt!.receiptId);
 
-    const rows = await pool.query(`SELECT COUNT(*)::int AS n FROM artifact_handoff_receipts WHERE proposal_id = $1`, [
-      proposed.proposal.proposalId,
-    ]);
+    const rows = await pool.query(
+      `SELECT COUNT(*)::int AS n FROM artifact_handoff_receipts WHERE proposal_id = $1`,
+      [proposed.proposal.proposalId]
+    );
     expect(rows.rows[0].n).toBe(1);
   });
 
@@ -265,12 +280,15 @@ describe('exactly-one on approval', () => {
     expect(replayedCount).toBe(1);
     expect(r1!.receipt!.receiptId).toBe(r2!.receipt!.receiptId);
 
-    const rows = await pool.query(`SELECT COUNT(*)::int AS n FROM artifact_handoff_receipts WHERE proposal_id = $1`, [
-      proposed.proposal.proposalId,
-    ]);
+    const rows = await pool.query(
+      `SELECT COUNT(*)::int AS n FROM artifact_handoff_receipts WHERE proposal_id = $1`,
+      [proposed.proposal.proposalId]
+    );
     expect(rows.rows[0].n).toBe(1);
 
-    const noteRow = await pool.query(`SELECT status FROM meeting_notes WHERE id = $1`, [proposed.note.id]);
+    const noteRow = await pool.query(`SELECT status FROM meeting_notes WHERE id = $1`, [
+      proposed.note.id,
+    ]);
     expect(noteRow.rows[0].status).toBe('approved');
   });
 });
@@ -337,6 +355,26 @@ describe('replayed generate-notes (idempotency key)', () => {
     expect(second.note.id).toBe(first.note.id);
   });
 
+  it('rejects reuse of an explicit key for changed source text', async () => {
+    const meetingId = await makeMeeting();
+    const base = {
+      organizationId: ORG_A,
+      meetingId,
+      createdBy: USER_A,
+      source: 'heuristic' as const,
+      language: 'en',
+      summary: 's',
+      keyPoints: [],
+      decisions: [],
+      actionItems: [],
+      idempotencyKey: `${PREFIX}idem-conflict`,
+    };
+    await proposeMeetingNote({ ...base, transcript: `${PREFIX} source A` });
+    await expect(
+      proposeMeetingNote({ ...base, transcript: `${PREFIX} source B` })
+    ).rejects.toMatchObject({ code: 'IDEMPOTENCY_CONFLICT' });
+  });
+
   it('two CONCURRENT proposeMeetingNote calls with the same key produce exactly one note row', async () => {
     const meetingId = await makeMeeting();
     const idempotencyKey = `${PREFIX}idem-concurrent-note`;
@@ -391,12 +429,15 @@ describe('unapproved proposal materializes nothing', () => {
       })
     ).rejects.toThrow(/must be 'approved'/);
 
-    const rows = await pool.query(`SELECT COUNT(*)::int AS n FROM artifact_handoff_receipts WHERE proposal_id = $1`, [
-      proposed.proposal.proposalId,
-    ]);
+    const rows = await pool.query(
+      `SELECT COUNT(*)::int AS n FROM artifact_handoff_receipts WHERE proposal_id = $1`,
+      [proposed.proposal.proposalId]
+    );
     expect(rows.rows[0].n).toBe(0);
 
-    const noteRow = await pool.query(`SELECT status FROM meeting_notes WHERE id = $1`, [proposed.note.id]);
+    const noteRow = await pool.query(`SELECT status FROM meeting_notes WHERE id = $1`, [
+      proposed.note.id,
+    ]);
     expect(noteRow.rows[0].status).toBe('proposed');
   });
 });
@@ -429,9 +470,10 @@ describe('reject path', () => {
     expect(decided!.proposal.state).toBe('rejected');
     expect(decided!.receipt).toBeNull();
 
-    const rows = await pool.query(`SELECT COUNT(*)::int AS n FROM artifact_handoff_receipts WHERE proposal_id = $1`, [
-      proposed.proposal.proposalId,
-    ]);
+    const rows = await pool.query(
+      `SELECT COUNT(*)::int AS n FROM artifact_handoff_receipts WHERE proposal_id = $1`,
+      [proposed.proposal.proposalId]
+    );
     expect(rows.rows[0].n).toBe(0);
 
     // A rejected proposal cannot later be approved. `decideMeetingNote`
@@ -467,7 +509,11 @@ describe('tenant isolation', () => {
       actionItems: [],
     });
 
-    const crossOrgRead = await getMeetingNote({ organizationId: ORG_B, meetingId, noteId: proposed.note.id });
+    const crossOrgRead = await getMeetingNote({
+      organizationId: ORG_B,
+      meetingId,
+      noteId: proposed.note.id,
+    });
     expect(crossOrgRead).toBeNull();
 
     const crossOrgDecision = await decideMeetingNote({
@@ -519,9 +565,9 @@ describe('no foreign-owner writes', () => {
         [table]
       );
       if (!exists.rows[0].present) continue; // table may not exist in this env — nothing to check
-      const rows = await pool.query(`SELECT COUNT(*)::int AS n FROM ${table} WHERE created_by = $1`, [USER_A]).catch(
-        () => null
-      );
+      const rows = await pool
+        .query(`SELECT COUNT(*)::int AS n FROM ${table} WHERE created_by = $1`, [USER_A])
+        .catch(() => null);
       if (rows) {
         expect(rows.rows[0].n).toBe(0);
       }
@@ -529,11 +575,14 @@ describe('no foreign-owner writes', () => {
 
     // Meeting's OWN legacy tables must also be untouched by the governed
     // (non-legacy-compat) path.
-    const meetingRow = await pool.query(`SELECT decisions_json FROM meetings WHERE id = $1`, [meetingId]);
-    expect(JSON.parse(meetingRow.rows[0].decisions_json || '[]')).toEqual([]);
-    const followUpRows = await pool.query(`SELECT COUNT(*)::int AS n FROM meeting_follow_ups WHERE meeting_id = $1`, [
+    const meetingRow = await pool.query(`SELECT decisions_json FROM meetings WHERE id = $1`, [
       meetingId,
     ]);
+    expect(JSON.parse(meetingRow.rows[0].decisions_json || '[]')).toEqual([]);
+    const followUpRows = await pool.query(
+      `SELECT COUNT(*)::int AS n FROM meeting_follow_ups WHERE meeting_id = $1`,
+      [meetingId]
+    );
     expect(followUpRows.rows[0].n).toBe(0);
   });
 });

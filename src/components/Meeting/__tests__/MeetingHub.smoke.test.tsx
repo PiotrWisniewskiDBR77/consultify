@@ -226,6 +226,32 @@ describe('MeetingHub (smoke)', () => {
     expect(await screen.findByText(/receipt-1/)).toBeTruthy();
   });
 
+  it('shows the exact durable receipt after a cold proposal reload', async () => {
+    getMeetingsMock.mockResolvedValue({ meetings: [meeting] });
+    listNotesMock.mockResolvedValue({
+      notes: [
+        {
+          id: 'note-cold',
+          source: 'ai',
+          summary: 'Approved minutes',
+          keyPoints: [],
+          decisions: [],
+          actionItems: [],
+          status: 'approved',
+          proposalId: 'proposal-cold',
+          proposalState: 'materialized',
+          receiptId: 'receipt-cold-exact',
+          targetKind: 'material',
+          targetRecordId: 'note-cold',
+        },
+      ],
+    });
+    render(<MeetingHub />);
+    fireEvent.dblClick(await screen.findByText('Quarterly Review'));
+    fireEvent.click(await screen.findByRole('button', { name: /meeting\.aiNotes|AI Notes/i }));
+    expect(await screen.findByText(/receipt-cold-exact/)).toBeTruthy();
+  });
+
   it('reloads authoritative proposal state after a stale decision conflict', async () => {
     getMeetingsMock.mockResolvedValue({ meetings: [meeting] });
     const note = {

@@ -7,22 +7,19 @@ import { HandoffSpineError } from '../services/artifactHandoff/handoffSpineServi
 import {
   decideMeetingNote,
   listMeetingNotesForMeeting,
+  MeetingBoundaryError,
   proposeMeetingNote,
 } from '../services/meetingBoundary/meetingBoundaryService.js';
 import {
-  addMeetingDecision,
-  addMeetingFollowUp,
   createMeeting,
   deleteMeeting,
   ensureMeetingTables,
   getMeeting,
   listMeetings,
   updateMeeting,
-  updateMeetingFollowUpStatus,
   updateMeetingStatus,
 } from '../services/meetingService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import logger from '../utils/Logger.js';
 
 export const MEETING_CAPTURE_POLICY = Object.freeze({
   recordingEnabled: false,
@@ -33,12 +30,19 @@ export const MEETING_CAPTURE_POLICY = Object.freeze({
 const MANUAL_NOTE_FIELDS = new Set(['transcript', 'language', 'idempotencyKey']);
 const CAPTURE_FIELD = /(record|transcrib|audio|media|blob|provider|upload|file|url)/i;
 
-export function validateManualMeetingNotePayload(body: unknown):
+export function validateManualMeetingNotePayload(
+  body: unknown
+):
   | { ok: true }
-  | { ok: false; code: 'MEETING_CAPTURE_DISABLED' | 'UNSUPPORTED_MEETING_NOTE_FIELD'; fields: string[] } {
-  const value = body && typeof body === 'object' && !Array.isArray(body)
-    ? body as Record<string, unknown>
-    : {};
+  | {
+      ok: false;
+      code: 'MEETING_CAPTURE_DISABLED' | 'UNSUPPORTED_MEETING_NOTE_FIELD';
+      fields: string[];
+    } {
+  const value =
+    body && typeof body === 'object' && !Array.isArray(body)
+      ? (body as Record<string, unknown>)
+      : {};
   const unsupported = Object.keys(value).filter((key) => !MANUAL_NOTE_FIELDS.has(key));
   if (unsupported.length === 0) return { ok: true };
   return {
@@ -60,6 +64,7 @@ function statusForSpineErrorCode(code: string): number {
       return 404;
     case 'INVALID_STATE_TRANSITION':
     case 'NOT_APPROVED':
+    case 'IDEMPOTENCY_CONFLICT':
       return 409;
     case 'NOT_A_HUMAN_ACTOR':
     case 'INVALID_ARGUMENT':
@@ -72,7 +77,7 @@ function statusForSpineErrorCode(code: string): number {
 const router = Router();
 
 interface AuthRequest extends Request {
-  user?: { id: string; organizationId: string; role?: string };
+  user?: { id: string; organizationId: string; role?: string; email?: string };
   userRole?: string;
 }
 
@@ -93,6 +98,48 @@ function requireMeetingAdmin(req: AuthRequest, res: Response): boolean {
     return false;
   }
   return true;
+}
+
+function isMeetingAdmin(req: AuthRequest): boolean {
+  return PRIVILEGED_MEETING_ROLES.includes(getMeetingUserRole(req).toLowerCase());
+}
+
+function normalizeParticipant(value: unknown): string {
+  return String(value || '')
+    .trim()
+    .toLowerCase();
+}
+
+function canAccessMeeting(
+  req: AuthRequest,
+  meeting: Awaited<ReturnType<typeof getMeeting>>
+): boolean {
+  if (!meeting || !req.user) return false;
+  if (isMeetingAdmin(req) || meeting.createdBy === req.user.id) return true;
+  const identities = new Set(
+    [req.user.id, req.user.email].map(normalizeParticipant).filter(Boolean)
+  );
+  return meeting.attendees.some((attendee) => identities.has(normalizeParticipant(attendee)));
+}
+
+function denyMeetingAccess(res: Response): Response {
+  // Deliberately 404: do not reveal a same-tenant meeting to a non-participant.
+  return res.status(404).json({ error: 'Meeting not found' });
+}
+
+function hasDirectMeetingOutputs(body: unknown): boolean {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return false;
+  const value = body as Record<string, unknown>;
+  return [value.decisions, value.followUps].some(
+    (candidate) => candidate !== undefined && (!Array.isArray(candidate) || candidate.length > 0)
+  );
+}
+
+function rejectDirectMeetingOutputs(res: Response): Response {
+  return res.status(409).json({
+    error: 'Meeting decisions and follow-ups require a governed proposal',
+    code: 'MEETING_PROPOSAL_REQUIRED',
+  });
 }
 
 router.use(verifyToken);
@@ -116,7 +163,7 @@ router.get(
         ? req.query.projectId.trim()
         : null;
     const meetings = await listMeetings({ organizationId: orgId, projectId });
-    return res.json({ meetings });
+    return res.json({ meetings: meetings.filter((meeting) => canAccessMeeting(req, meeting)) });
   })
 );
 
@@ -134,6 +181,7 @@ router.post(
     if (!title || !startAt) {
       return res.status(400).json({ error: 'title and startAt are required' });
     }
+    if (hasDirectMeetingOutputs(req.body)) return rejectDirectMeetingOutputs(res);
 
     const meeting = await createMeeting({
       organizationId: orgId,
@@ -149,7 +197,9 @@ router.post(
       attendees: Array.isArray(req.body?.attendees) ? req.body.attendees : [],
       preRead: Array.isArray(req.body?.preRead) ? req.body.preRead : [],
       agenda: Array.isArray(req.body?.agenda) ? req.body.agenda : [],
-      decisions: Array.isArray(req.body?.decisions) ? req.body.decisions : [],
+      // Decisions are outputs, never scheduling metadata. They enter only via
+      // the governed note proposal below, not through meeting creation.
+      decisions: [],
     });
 
     return res.status(201).json({ meeting });
@@ -168,6 +218,13 @@ router.put(
     if (req.body?.startAt !== undefined && !String(req.body.startAt || '').trim()) {
       return res.status(400).json({ error: 'startAt cannot be empty' });
     }
+    if (hasDirectMeetingOutputs(req.body)) return rejectDirectMeetingOutputs(res);
+    const existing = await getMeeting({
+      organizationId: orgId,
+      meetingId: String(req.params.id),
+    });
+    if (!existing) return res.status(404).json({ error: 'Meeting not found' });
+    if (!isMeetingAdmin(req) && existing.createdBy !== req.user?.id) return denyMeetingAccess(res);
 
     const meeting = await updateMeeting({
       organizationId: orgId,
@@ -227,15 +284,12 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-    const decision = String(req.body?.decision || '').trim();
-    if (!decision) return res.status(400).json({ error: 'decision is required' });
-    const meeting = await addMeetingDecision({
-      organizationId: orgId,
-      meetingId: String(req.params.id),
-      decision,
+    const meeting = await getMeeting({ organizationId: orgId, meetingId: String(req.params.id) });
+    if (!canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
+    return res.status(410).json({
+      error: 'Direct meeting decision writes are retired; submit governed meeting notes',
+      code: 'MEETING_PROPOSAL_REQUIRED',
     });
-    if (!meeting) return res.status(404).json({ error: 'Meeting not found' });
-    return res.status(201).json({ meeting });
   })
 );
 
@@ -244,16 +298,12 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-    const title = String(req.body?.title || '').trim();
-    if (!title) return res.status(400).json({ error: 'title is required' });
-    const meeting = await addMeetingFollowUp({
-      organizationId: orgId,
-      meetingId: String(req.params.id),
-      title,
-      owner: req.body?.owner,
+    const meeting = await getMeeting({ organizationId: orgId, meetingId: String(req.params.id) });
+    if (!canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
+    return res.status(410).json({
+      error: 'Direct meeting follow-up writes are retired; submit governed meeting notes',
+      code: 'MEETING_PROPOSAL_REQUIRED',
     });
-    if (!meeting) return res.status(404).json({ error: 'Meeting not found' });
-    return res.status(201).json({ meeting });
   })
 );
 
@@ -262,20 +312,15 @@ router.patch(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-    const status = String(req.body?.status || '')
-      .trim()
-      .toLowerCase();
-    if (!['open', 'done'].includes(status)) {
-      return res.status(400).json({ error: 'status must be open or done' });
-    }
-    const meeting = await updateMeetingFollowUpStatus({
+    const meeting = await getMeeting({
       organizationId: orgId,
       meetingId: String(req.params.meetingId),
-      followUpId: String(req.params.followUpId),
-      status: status as 'open' | 'done',
     });
-    if (!meeting) return res.status(404).json({ error: 'Meeting not found' });
-    return res.json({ meeting });
+    if (!canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
+    return res.status(410).json({
+      error: 'Legacy meeting follow-ups are read-only',
+      code: 'MEETING_PROPOSAL_REQUIRED',
+    });
   })
 );
 
@@ -314,9 +359,10 @@ router.post(
     const payloadPolicy = validateManualMeetingNotePayload(req.body);
     if (!payloadPolicy.ok) {
       return res.status(400).json({
-        error: payloadPolicy.code === 'MEETING_CAPTURE_DISABLED'
-          ? 'Meeting recording and automatic transcription are disabled'
-          : 'Unsupported meeting-note request field',
+        error:
+          payloadPolicy.code === 'MEETING_CAPTURE_DISABLED'
+            ? 'Meeting recording and automatic transcription are disabled'
+            : 'Unsupported meeting-note request field',
         code: payloadPolicy.code,
         fields: payloadPolicy.fields,
       });
@@ -329,6 +375,7 @@ router.post(
     }
     const meeting = await getMeeting({ organizationId: orgId, meetingId });
     if (!meeting) return res.status(404).json({ error: 'Meeting not found' });
+    if (!canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
 
     const language =
       typeof req.body?.language === 'string' && req.body.language.trim()
@@ -353,14 +400,19 @@ router.post(
       },
     });
 
-    let proposalInfo: { proposalId: string; state: string; replayed: boolean } | null = null;
-    let meetingNoteId: string | null = null;
+    const idempotencyKey =
+      typeof req.body?.idempotencyKey === 'string' && req.body.idempotencyKey.trim()
+        ? req.body.idempotencyKey.trim()
+        : null;
+    let storedNote;
+    let proposal;
+    let replayed;
     try {
-      const idempotencyKey =
-        typeof req.body?.idempotencyKey === 'string' && req.body.idempotencyKey.trim()
-          ? req.body.idempotencyKey.trim()
-          : null;
-      const { note: storedNote, proposal, replayed } = await proposeMeetingNote({
+      ({
+        note: storedNote,
+        proposal,
+        replayed,
+      } = await proposeMeetingNote({
         organizationId: orgId,
         meetingId,
         createdBy: userId,
@@ -372,20 +424,31 @@ router.post(
         decisions: note.decisions || [],
         actionItems: note.actionItems || [],
         idempotencyKey,
-      });
-      meetingNoteId = storedNote.id;
-      proposalInfo = { proposalId: proposal.proposalId, state: proposal.state, replayed };
-    } catch (proposeErr: unknown) {
-      const msg = proposeErr instanceof Error ? proposeErr.message : String(proposeErr);
-      logger.warn(`[Meeting] generate-notes proposal failed (notes still returned): ${msg}`);
+      }));
+    } catch (err: unknown) {
+      if (err instanceof MeetingBoundaryError || err instanceof HandoffSpineError) {
+        return res
+          .status(statusForSpineErrorCode(err.code))
+          .json({ error: err.message, code: err.code });
+      }
+      throw err;
     }
 
     const refreshed = await getMeeting({ organizationId: orgId, meetingId });
     return res.status(201).json({
-      note,
+      // On replay return the first durable proposal bytes, not a fresh LLM
+      // rendering that was intentionally discarded by idempotency.
+      note: {
+        ...note,
+        source: storedNote.source,
+        summary: storedNote.summary,
+        keyPoints: storedNote.keyPoints,
+        decisions: storedNote.decisions,
+        actionItems: storedNote.actionItems,
+      },
       meeting: refreshed || meeting,
-      meetingNoteId,
-      proposal: proposalInfo,
+      meetingNoteId: storedNote.id,
+      proposal: { proposalId: proposal.proposalId, state: proposal.state, replayed },
     });
   })
 );
@@ -403,6 +466,7 @@ router.get(
     const meetingId = String(req.params.id);
     const meeting = await getMeeting({ organizationId: orgId, meetingId });
     if (!meeting) return res.status(404).json({ error: 'Meeting not found' });
+    if (!canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
     const notes = await listMeetingNotesForMeeting({ organizationId: orgId, meetingId });
     return res.json({ notes });
   })
@@ -433,13 +497,16 @@ router.post(
 
     const meetingId = String(req.params.id);
     const noteId = String(req.params.noteId);
-    const action = String(req.body?.action || '').trim().toLowerCase();
+    const action = String(req.body?.action || '')
+      .trim()
+      .toLowerCase();
     if (action !== 'approve' && action !== 'reject') {
       return res.status(400).json({ error: "action must be 'approve' or 'reject'" });
     }
 
     const meeting = await getMeeting({ organizationId: orgId, meetingId });
     if (!meeting) return res.status(404).json({ error: 'Meeting not found' });
+    if (!canAccessMeeting(req, meeting)) return denyMeetingAccess(res);
 
     try {
       const result = await decideMeetingNote({
@@ -459,7 +526,9 @@ router.post(
       });
     } catch (err: unknown) {
       if (err instanceof HandoffSpineError) {
-        return res.status(statusForSpineErrorCode(err.code)).json({ error: err.message, code: err.code });
+        return res
+          .status(statusForSpineErrorCode(err.code))
+          .json({ error: err.message, code: err.code });
       }
       throw err;
     }

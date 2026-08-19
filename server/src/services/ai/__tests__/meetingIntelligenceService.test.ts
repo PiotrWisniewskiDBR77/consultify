@@ -1,17 +1,12 @@
 /**
- * M21 · L-05 (S6 — AI notes) + L-02 (injection separation) + L-01 (persist flag).
+ * M21 · L-05 (S6 — AI notes) + L-02 (injection separation).
  *
  * Pokrywa pipeline notatek AI: ścieżka LLM, uczciwa heurystyka (NIE fabrykuje),
- * rozdzielenie dane↔instrukcje w wiadomościach LLM, oraz trwałość/flagę
- * `persisted` przy realnym `notebook_pages` (mock DbPromise.run).
+ * rozdzielenie dane↔instrukcje w wiadomościach LLM. Generator pozostaje
+ * bezstanowy; trwałość zapewnia dopiero proposal-first Meeting boundary.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { mockDbRun } = vi.hoisted(() => ({ mockDbRun: vi.fn() }));
-
-vi.mock('../../../utils/DbPromise.js', () => ({
-  run: mockDbRun,
-}));
 vi.mock('../../../utils/Logger.js', () => ({
   default: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
@@ -47,8 +42,6 @@ function makeLLMClient(json: unknown) {
 
 describe('M21 · meetingIntelligenceService — AI notes pipeline (S6)', () => {
   beforeEach(() => {
-    mockDbRun.mockReset();
-    mockDbRun.mockResolvedValue({ success: true, changes: 1 });
     // reset injected client between tests
     meetingIntelligenceService.setLLMClient(null);
   });
@@ -76,8 +69,7 @@ describe('M21 · meetingIntelligenceService — AI notes pipeline (S6)', () => {
       owner: 'Bob',
       priority: 'high',
     });
-    expect(note.persisted).toBe(true);
-    expect(mockDbRun).toHaveBeenCalledTimes(1);
+    expect('persisted' in note).toBe(false);
   });
 
   it('L-02: transcript is passed as separate user DATA message, instructions as system', async () => {
@@ -113,8 +105,7 @@ describe('M21 · meetingIntelligenceService — AI notes pipeline (S6)', () => {
     expect(dataMsg.match(/<\/transcript>/g)?.length).toBe(1); // only our own closer
   });
 
-  it('L-01: persist failure (PG schema drift) flips persisted=false, note still returned', async () => {
-    mockDbRun.mockResolvedValue({ success: false, error: 'column does not exist' });
+  it('returns proposal content without claiming or performing persistence', async () => {
     const client = makeLLMClient({ summary: 's', decisions: [], actionItems: [] });
     meetingIntelligenceService.setLLMClient(client);
 
@@ -124,7 +115,7 @@ describe('M21 · meetingIntelligenceService — AI notes pipeline (S6)', () => {
     });
 
     expect(note.summary).toBe('s');
-    expect(note.persisted).toBe(false); // surfaced, not silently lost
+    expect('persisted' in note).toBe(false);
   });
 
   it('heuristic fallback (no LLM client) extracts from real sentences, does NOT fabricate', async () => {
@@ -139,8 +130,6 @@ describe('M21 · meetingIntelligenceService — AI notes pipeline (S6)', () => {
     expect(note.source).toBe('heuristic');
     expect(note.decisions.length).toBeGreaterThan(0);
     expect(note.actionItems.length).toBeGreaterThan(0);
-    // heuristic path does not persist (no notebook_pages write)
-    expect(mockDbRun).not.toHaveBeenCalled();
   });
 
   it('heuristic on empty transcript yields empty arrays (no hallucination)', async () => {

@@ -101,10 +101,9 @@ describe('meeting boundary — route layer (real Postgres)', () => {
   });
 
   afterAll(async () => {
-    await pool.query(
-      `DELETE FROM artifact_handoff_receipts WHERE organization_id LIKE $1`,
-      [`${PREFIX}%`]
-    );
+    await pool.query(`DELETE FROM artifact_handoff_receipts WHERE organization_id LIKE $1`, [
+      `${PREFIX}%`,
+    ]);
     await pool.query(
       `DELETE FROM artifact_handoff_proposals WHERE organization_id LIKE $1 AND producer_kind = 'meeting'`,
       [`${PREFIX}%`]
@@ -151,14 +150,19 @@ describe('meeting boundary — route layer (real Postgres)', () => {
     expect(res.body.proposal?.proposalId).toBeTruthy();
     expect(res.body.proposal?.state).toBe('pending');
 
-    const meetingRow = await pool.query(`SELECT decisions_json FROM meetings WHERE id = $1`, [meetingId]);
-    expect(JSON.parse(meetingRow.rows[0].decisions_json || '[]')).toEqual([]);
-    const followUps = await pool.query(`SELECT COUNT(*)::int AS n FROM meeting_follow_ups WHERE meeting_id = $1`, [
+    const meetingRow = await pool.query(`SELECT decisions_json FROM meetings WHERE id = $1`, [
       meetingId,
     ]);
+    expect(JSON.parse(meetingRow.rows[0].decisions_json || '[]')).toEqual([]);
+    const followUps = await pool.query(
+      `SELECT COUNT(*)::int AS n FROM meeting_follow_ups WHERE meeting_id = $1`,
+      [meetingId]
+    );
     expect(followUps.rows[0].n).toBe(0);
 
-    const noteRow = await pool.query(`SELECT status FROM meeting_notes WHERE id = $1`, [res.body.meetingNoteId]);
+    const noteRow = await pool.query(`SELECT status FROM meeting_notes WHERE id = $1`, [
+      res.body.meetingNoteId,
+    ]);
     expect(noteRow.rows[0].status).toBe('proposed');
   });
 
@@ -174,13 +178,16 @@ describe('meeting boundary — route layer (real Postgres)', () => {
         language: 'en',
         persist: true,
       });
-    expect(res.status).toBe(409);
-    expect(res.body.code).toBe('MEETING_APPROVAL_REQUIRED');
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('UNSUPPORTED_MEETING_NOTE_FIELD');
 
-    const meetingRow = await pool.query(`SELECT decisions_json FROM meetings WHERE id = $1`, [meetingId]);
-    const followUps = await pool.query(`SELECT COUNT(*)::int AS n FROM meeting_follow_ups WHERE meeting_id = $1`, [
+    const meetingRow = await pool.query(`SELECT decisions_json FROM meetings WHERE id = $1`, [
       meetingId,
     ]);
+    const followUps = await pool.query(
+      `SELECT COUNT(*)::int AS n FROM meeting_follow_ups WHERE meeting_id = $1`,
+      [meetingId]
+    );
     expect(JSON.parse(meetingRow.rows[0].decisions_json || '[]')).toEqual([]);
     expect(followUps.rows[0].n).toBe(0);
   });
@@ -200,7 +207,9 @@ describe('meeting boundary — route layer (real Postgres)', () => {
       .send({ action: 'approve' });
     expect(memberAttempt.status).toBe(403);
 
-    const noteRowBefore = await pool.query(`SELECT status FROM meeting_notes WHERE id = $1`, [noteId]);
+    const noteRowBefore = await pool.query(`SELECT status FROM meeting_notes WHERE id = $1`, [
+      noteId,
+    ]);
     expect(noteRowBefore.rows[0].status).toBe('proposed');
 
     const adminAttempt = await request(app)
@@ -247,7 +256,9 @@ describe('meeting boundary — route layer (real Postgres)', () => {
       .send({ transcript: `${PREFIX} tenant isolation route transcript` });
     const noteId = genRes.body.meetingNoteId;
 
-    const crossOrgList = await request(app).get(`/api/meeting/${meetingId}/notes`).set(member(ORG_B, USER_B));
+    const crossOrgList = await request(app)
+      .get(`/api/meeting/${meetingId}/notes`)
+      .set(member(ORG_B, USER_B));
     expect(crossOrgList.status).toBe(404);
 
     const crossOrgDecision = await request(app)

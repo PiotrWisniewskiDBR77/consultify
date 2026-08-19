@@ -3,7 +3,6 @@ import { v4 as uuidv4 } from 'uuid';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import { finalBatchService } from './finalBatchService.js';
 import { ensureMeetingTables, getMeeting } from './meetingService.js';
-import { addMeetingFollowUp } from './meetingService.js';
 import * as NotificationService from './notificationService.js';
 import organizationContextService from './organizationContext/OrganizationContextService.js';
 
@@ -908,20 +907,10 @@ class AIOperatorService {
     let executionResult: Record<string, unknown> = {};
 
     if (actionType === 'operator_create_meeting_follow_up') {
-      if (!targetEntityId || !proposedChanges.followUpTitle)
-        return { ok: false, reason: 'invalid_payload' };
-      const meeting = await addMeetingFollowUp({
-        organizationId,
-        meetingId: targetEntityId,
-        title: String(proposedChanges.followUpTitle),
-        owner: proposedChanges.owner ? String(proposedChanges.owner) : '',
-      });
-      executionResult = {
-        effect: 'meeting_follow_up_added',
-        meetingId: targetEntityId,
-        followUpTitle: proposedChanges.followUpTitle,
-        meetingTitle: meeting?.title || null,
-      };
+      // MTG-BVP-001: the operator may propose meeting output, but it may not
+      // bypass the mounted human-approval/material receipt boundary by calling
+      // the legacy local follow-up writer.
+      return { ok: false, reason: 'meeting_proposal_required' };
     } else if (actionType === 'operator_send_execution_escalation') {
       const recipients = await this.getOrganizationRecipients(organizationId, [
         'ADMIN',
