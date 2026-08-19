@@ -8,6 +8,7 @@ import {
   generateState,
   generateNonce,
   buildSAMLAuthnRequest,
+  getUserInfo,
 } from '../../../../server/src/services/ssoService.js';
 
 describe('V4-ENT-05/06: SSO Service', () => {
@@ -45,5 +46,32 @@ describe('V4-ENT-05/06: SSO Service', () => {
     });
     expect(typeof request).toBe('string');
     expect(request.length).toBeGreaterThan(0);
+  });
+
+  it('reads OIDC identity only from the authenticated userinfo endpoint', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+      new Response(JSON.stringify({ sub: 'subject-1', email: 'owner@example.com' }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      })
+    );
+
+    const identity = await getUserInfo(
+      {
+        issuer: 'https://issuer.example.com',
+        clientId: 'client',
+        clientSecret: 'secret',
+        redirectUri: 'https://app.example.com/callback',
+        scopes: 'openid profile email',
+        userinfoEndpoint: 'https://issuer.example.com/userinfo',
+      },
+      'provider-access-token'
+    );
+
+    expect(identity).toEqual({ sub: 'subject-1', email: 'owner@example.com' });
+    expect(fetchSpy).toHaveBeenCalledWith('https://issuer.example.com/userinfo', {
+      headers: { Authorization: 'Bearer provider-access-token' },
+    });
+    fetchSpy.mockRestore();
   });
 });

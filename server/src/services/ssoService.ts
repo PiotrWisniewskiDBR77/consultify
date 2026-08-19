@@ -85,12 +85,6 @@ export async function exchangeOIDCCode(
   };
 }
 
-export function decodeIdToken(idToken: string): Record<string, unknown> {
-  const parts = idToken.split('.');
-  if (parts.length !== 3) throw new Error('Invalid id_token format');
-  return JSON.parse(Buffer.from(parts[1], 'base64url').toString());
-}
-
 export async function getUserInfo(
   config: OIDCConfig,
   accessToken: string

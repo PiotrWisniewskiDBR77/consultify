@@ -83,20 +83,27 @@ test.describe('L4 Smoke — deploy gate API (SSO / SCIM / Webhooks)', () => {
     expect(res.status()).toBe(400);
   });
 
-  test('POST /api/sso/saml/callback with dummy response succeeds', async ({ request }) => {
+  test('GET /api/sso/saml/login fails before creating unsigned auth state', async ({ request }) => {
+    const res = await request.get(`${API_BASE_URL}/api/sso/saml/login`, {
+      params: { domain: 'example.com' },
+    });
+    expect(res.status()).toBe(503);
+    const data = await res.json().catch(() => null);
+    expect(data?.code).toBe('SAML_SIGNATURE_VERIFICATION_UNAVAILABLE');
+    expect(data?.redirectUrl).toBeUndefined();
+    expect(data?.state).toBeUndefined();
+  });
+
+  test('POST /api/sso/saml/callback fails closed without issuing tokens', async ({ request }) => {
     const res = await request.post(`${API_BASE_URL}/api/sso/saml/callback`, {
       headers: { 'content-type': 'application/json' },
       data: { SAMLResponse: 'dummy' },
     });
-    await assertNo5xx(res, 'POST /api/sso/saml/callback');
-    expect([200, 400]).toContain(res.status());
-    if (res.status() === 400) {
-      const data = await res.json().catch(() => null);
-      expect(String(data?.error || '')).toMatch(/nameid|saml/i);
-      return;
-    }
+    expect(res.status()).toBe(503);
     const data = await res.json().catch(() => null);
-    expect(Boolean(data?.success)).toBe(true);
+    expect(data?.code).toBe('SAML_SIGNATURE_VERIFICATION_UNAVAILABLE');
+    expect(data?.token).toBeUndefined();
+    expect(data?.refreshToken).toBeUndefined();
   });
 
   test('POST /api/sso/oidc/callback without code returns 400', async ({ request }) => {
@@ -107,20 +114,27 @@ test.describe('L4 Smoke — deploy gate API (SSO / SCIM / Webhooks)', () => {
     expect(res.status()).toBe(400);
   });
 
-  test('POST /api/sso/oidc/callback with code succeeds', async ({ request }) => {
+  test('GET /api/sso/oidc/authorize fails before creating unverified auth state', async ({ request }) => {
+    const res = await request.get(`${API_BASE_URL}/api/sso/oidc/authorize`, {
+      params: { domain: 'example.com' },
+    });
+    expect(res.status()).toBe(503);
+    const data = await res.json().catch(() => null);
+    expect(data?.code).toBe('OIDC_TOKEN_VERIFICATION_UNAVAILABLE');
+    expect(data?.authUrl).toBeUndefined();
+    expect(data?.state).toBeUndefined();
+  });
+
+  test('POST /api/sso/oidc/callback fails closed without issuing tokens', async ({ request }) => {
     const res = await request.post(`${API_BASE_URL}/api/sso/oidc/callback`, {
       headers: { 'content-type': 'application/json' },
       data: { code: 'dummy', state: 'x' },
     });
-    await assertNo5xx(res, 'POST /api/sso/oidc/callback');
-    expect([200, 400]).toContain(res.status());
-    if (res.status() === 400) {
-      const data = await res.json().catch(() => null);
-      expect(String(data?.error || '')).toMatch(/code|oidc|token|invalid/i);
-      return;
-    }
+    expect(res.status()).toBe(503);
     const data = await res.json().catch(() => null);
-    expect(Boolean(data?.success)).toBe(true);
+    expect(data?.code).toBe('OIDC_TOKEN_VERIFICATION_UNAVAILABLE');
+    expect(data?.token).toBeUndefined();
+    expect(data?.refreshToken).toBeUndefined();
   });
 
   // ----------------------------
