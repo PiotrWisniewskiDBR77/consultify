@@ -16,10 +16,14 @@ import { GovernedSnapshotBindingError } from '../../services/organizationContext
 import {
   ChatTargetOwnerIngressError,
   claimNextChatOwnerIngress,
+  claimChatOwnerIngress,
   completeChatOwnerIngress,
   deliverApprovedChatProposal,
 } from '../../services/chatHandoff/chatTargetOwnerIngressService.js';
-import { ChatTargetMappingError, materializeClaimedChatTarget } from '../../services/chatHandoff/chatTargetMappingService.js';
+import {
+  ChatTargetMappingError,
+  materializeClaimedChatTarget,
+} from '../../services/chatHandoff/chatTargetMappingService.js';
 import * as chatExecutionService from '../../services/v8/chatExecutionService.js';
 import * as contextConsumerBindingService from '../../services/v8/contextConsumerBindingService.js';
 import * as contextSnapshotService from '../../services/v8/contextSnapshotService.js';
@@ -648,9 +652,7 @@ router.post(
         clientCitations: body.clientCitations ?? null,
         idempotencyKey: body.idempotencyKey ?? null,
       });
-      res
-        .status(result.replayed ? 200 : 201)
-        .json({ data: result, meta: { version: 'v8' } });
+      res.status(result.replayed ? 200 : 201).json({ data: result, meta: { version: 'v8' } });
     } catch (err) {
       handleChatHandoffError(err, res);
     }
@@ -822,7 +824,11 @@ router.post(
     const { organizationId, userId } = getV8Context(req);
     const { proposalId } = parseParams(chatProposalIdParams, req.params);
     try {
-      const data = await deliverApprovedChatProposal({ organizationId, proposalId, deliveredBy: userId });
+      const data = await deliverApprovedChatProposal({
+        organizationId,
+        proposalId,
+        deliveredBy: userId,
+      });
       res.status(data.replayed ? 200 : 201).json({ data, meta: { version: 'v8' } });
     } catch (err) {
       handleChatOwnerIngressError(err, res);
@@ -850,9 +856,31 @@ router.post(
         organizationId,
         claimedBy: userId,
         ...parsed.data,
-        targetKind: parsed.data.targetKind === 'artifact_origin' ? 'material' : parsed.data.targetKind,
+        targetKind:
+          parsed.data.targetKind === 'artifact_origin' ? 'material' : parsed.data.targetKind,
       });
       res.status(data ? 200 : 204).json(data ? { data, meta: { version: 'v8' } } : undefined);
+    } catch (err) {
+      handleChatOwnerIngressError(err, res);
+    }
+  })
+);
+
+router.post(
+  '/handoff-owner-ingress/:ingressId/claim',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!requireChatHandoffAdmin(req, res)) return;
+    const { organizationId, userId } = getV8Context(req);
+    const ingressId = z.string().uuid().parse(req.params.ingressId);
+    const leaseSeconds = z.number().int().min(15).max(900).optional().parse(req.body?.leaseSeconds);
+    try {
+      const data = await claimChatOwnerIngress({
+        organizationId,
+        ingressId,
+        claimedBy: userId,
+        leaseSeconds,
+      });
+      res.status(200).json({ data, meta: { version: 'v8' } });
     } catch (err) {
       handleChatOwnerIngressError(err, res);
     }
@@ -891,19 +919,33 @@ router.post(
 );
 
 const materializeChatTargetBody = z.object({ claimToken: z.string().uuid() });
-router.post('/handoff-owner-ingress/:ingressId/materialize', asyncHandler(async (req:AuthRequest,res:Response)=>{
-  if(!requireChatHandoffAdmin(req,res)) return;
-  const {organizationId,userId}=getV8Context(req);
-  const ingressId=z.string().uuid().parse(req.params.ingressId);
-  const parsed=materializeChatTargetBody.safeParse(req.body??{});
-  if(!parsed.success){res.status(400).json({code:'VALIDATION_ERROR',details:parsed.error.issues});return;}
-  try{
-    const data=await materializeClaimedChatTarget({organizationId,ingressId,actorUserId:userId,claimToken:parsed.data.claimToken});
-    res.status(200).json({data,meta:{version:'v8',commandSchemaVersion:'v1'}});
-  }catch(err){
-    if(err instanceof ChatTargetMappingError){res.status(err.httpStatus).json({error:err.message,code:err.code});return;}
-    throw err;
-  }
-}));
+router.post(
+  '/handoff-owner-ingress/:ingressId/materialize',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!requireChatHandoffAdmin(req, res)) return;
+    const { organizationId, userId } = getV8Context(req);
+    const ingressId = z.string().uuid().parse(req.params.ingressId);
+    const parsed = materializeChatTargetBody.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      res.status(400).json({ code: 'VALIDATION_ERROR', details: parsed.error.issues });
+      return;
+    }
+    try {
+      const data = await materializeClaimedChatTarget({
+        organizationId,
+        ingressId,
+        actorUserId: userId,
+        claimToken: parsed.data.claimToken,
+      });
+      res.status(200).json({ data, meta: { version: 'v8', commandSchemaVersion: 'v1' } });
+    } catch (err) {
+      if (err instanceof ChatTargetMappingError) {
+        res.status(err.httpStatus).json({ error: err.message, code: err.code });
+        return;
+      }
+      throw err;
+    }
+  })
+);
 
 export default router;

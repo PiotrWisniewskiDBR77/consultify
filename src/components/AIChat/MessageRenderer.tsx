@@ -40,6 +40,7 @@ import remarkGfm from 'remark-gfm';
 
 import { usePermissions } from '../../hooks/usePermissions';
 import { Api } from '../../services/api';
+import type { GovernedChatHandoffProposal } from '../../services/api/v8/chat';
 import { Artifact, ChatMessage, ResponseFeedback, ThinkingStep } from '../../types';
 import { formatExecutiveBrief } from '../../utils/textCleaning';
 import { ArtifactBadge } from './ArtifactBadge';
@@ -50,6 +51,7 @@ import { ChatCodeBlock } from './ChatCodeBlock';
 import { ChatTableProposalCard } from './ChatTableProposalCard';
 import { CitationList, CitationMarker } from './CitationList';
 import { ExecutionProposalMessage } from './ExecutionProposalMessage';
+import { GovernedChatHandoffCard } from './GovernedChatHandoffCard';
 import { InlineResponseFeedback } from './InlineResponseFeedback';
 import { ThinkingIndicator } from './Messages/InlineThinkingStream';
 import { ReasoningTrace } from './Messages/ReasoningTrace';
@@ -124,18 +126,20 @@ function stripVerboseCitationPrefixes(text: string): string {
 
 export function sanitizeUserVisibleAiText(text: string): string {
   if (!text) return text;
-  return text
-    // Governed workbook mutation JSON is rendered by TeresaProposalCard.
-    // Keep the conversational explanation, but do not expose or duplicate the
-    // machine envelope in the user-facing message body.
-    .replace(WORKBOOK_MUTATION_BLOCK_RE, '\n')
-    .replace(RAW_ARTIFACT_ENVELOPE_RE, '')
-    .replace(INTERNAL_DEBUG_LINE_RE, '')
-    .replace(INTERNAL_SOURCE_MARKER_RE, '')
-    .replace(INTERNAL_RAG_ID_RE, '')
-    .replace(/[ \t]{2,}/g, ' ')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
+  return (
+    text
+      // Governed workbook mutation JSON is rendered by TeresaProposalCard.
+      // Keep the conversational explanation, but do not expose or duplicate the
+      // machine envelope in the user-facing message body.
+      .replace(WORKBOOK_MUTATION_BLOCK_RE, '\n')
+      .replace(RAW_ARTIFACT_ENVELOPE_RE, '')
+      .replace(INTERNAL_DEBUG_LINE_RE, '')
+      .replace(INTERNAL_SOURCE_MARKER_RE, '')
+      .replace(INTERNAL_RAG_ID_RE, '')
+      .replace(/[ \t]{2,}/g, ' ')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim()
+  );
 }
 
 function renderNodesWithCitations(
@@ -312,6 +316,17 @@ export interface MessageRendererProps {
   handleSaveAsIdea: (messageId: string, content: string) => void;
   handleSaveAsNote: (messageId: string, content: string) => void;
   handleSaveToContext: (messageId: string, content: string, role: 'user' | 'ai') => void;
+  governedHandoffByMessageId?: Record<string, GovernedChatHandoffProposal>;
+  governedHandoffBusyById?: Record<
+    string,
+    'create' | 'approve' | 'reject' | 'materialize' | undefined
+  >;
+  governedHandoffErrorById?: Record<string, string | undefined>;
+  governedHandoffTargetById?: Record<string, string | undefined>;
+  onCreateGovernedDocument?: (msg: ChatMessage) => void;
+  onApproveGovernedHandoff?: (proposalId: string) => void;
+  onRejectGovernedHandoff?: (proposalId: string) => void;
+  onMaterializeGovernedHandoff?: (proposalId: string) => void;
   handleRunDirectedDeepening: (agentAuditPayload: any) => void;
   handleMultiSelectToggle: (value: string) => void;
   handleMultiSelectConfirm: () => void;
@@ -437,6 +452,14 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   handleSaveAsIdea,
   handleSaveAsNote,
   handleSaveToContext,
+  governedHandoffByMessageId = {},
+  governedHandoffBusyById = {},
+  governedHandoffErrorById = {},
+  governedHandoffTargetById = {},
+  onCreateGovernedDocument,
+  onApproveGovernedHandoff,
+  onRejectGovernedHandoff,
+  onMaterializeGovernedHandoff,
   handleRunDirectedDeepening,
   handleMultiSelectToggle,
   handleMultiSelectConfirm,
@@ -480,6 +503,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   const isCopied = copiedMessageId === msg.id;
   const isContextSaveBusy = contextSaveBusyMessageId === msg.id;
   const isContextSaved = contextSavedMessageIds.has(msg.id);
+  const governedHandoff = governedHandoffByMessageId[msg.id];
   const [showCompactActions, setShowCompactActions] = useState(false);
   const [showSourcesDetails, setShowSourcesDetails] = useState(false);
 
@@ -1915,6 +1939,26 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
         </div>
       )}
 
+      {msg.role === 'ai' && governedHandoff ? (
+        <GovernedChatHandoffCard
+          proposal={governedHandoff}
+          busy={
+            governedHandoffBusyById[governedHandoff.proposalId] === 'create'
+              ? null
+              : (governedHandoffBusyById[governedHandoff.proposalId] as
+                  | 'approve'
+                  | 'reject'
+                  | 'materialize'
+                  | undefined)
+          }
+          error={governedHandoffErrorById[governedHandoff.proposalId]}
+          targetRecordId={governedHandoffTargetById[governedHandoff.proposalId]}
+          onApprove={() => onApproveGovernedHandoff?.(governedHandoff.proposalId)}
+          onReject={() => onRejectGovernedHandoff?.(governedHandoff.proposalId)}
+          onMaterialize={() => onMaterializeGovernedHandoff?.(governedHandoff.proposalId)}
+        />
+      ) : null}
+
       {/*
         V8 / Wave A7 — Canonical trust panel for AI replies (Gap #10 —
         Output trust as one contract). Empty / missing bundles produce
@@ -2054,21 +2098,21 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                     persisted uuid, so a `local-` id could only ever 400. Same
                     guard Branch uses. */}
                 {!String(msg.id || '').startsWith('local-') && (
-                <button
-                  ref={reportTriggerRef}
-                  onClick={() => {
-                    setReportError(null);
-                    setReportOpen((v) => !v);
-                  }}
-                  data-testid="message-action-report"
-                  aria-haspopup="dialog"
-                  aria-expanded={reportOpen}
-                  className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                  title={t('chat.actions.report', 'Report')}
-                  aria-label={t('chat.actions.report', 'Report')}
-                >
-                  <Flag size={12} />
-                </button>
+                  <button
+                    ref={reportTriggerRef}
+                    onClick={() => {
+                      setReportError(null);
+                      setReportOpen((v) => !v);
+                    }}
+                    data-testid="message-action-report"
+                    aria-haspopup="dialog"
+                    aria-expanded={reportOpen}
+                    className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                    title={t('chat.actions.report', 'Report')}
+                    aria-label={t('chat.actions.report', 'Report')}
+                  >
+                    <Flag size={12} />
+                  </button>
                 )}
                 <button
                   onClick={() => handleSaveAsNote(msg.id, userVisibleContent)}
@@ -2086,6 +2130,24 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                 >
                   <Lightbulb size={12} />
                 </button>
+                {!governedHandoff && onCreateGovernedDocument ? (
+                  <button
+                    onClick={() => onCreateGovernedDocument(msg)}
+                    disabled={Boolean(governedHandoffBusyById[msg.id])}
+                    className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={t('chat.governedHandoff.proposeDocument', 'Propose governed document')}
+                    aria-label={t(
+                      'chat.governedHandoff.proposeDocument',
+                      'Propose governed document'
+                    )}
+                  >
+                    {governedHandoffBusyById[msg.id] === 'create' ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : (
+                      <FilePlus2 size={12} />
+                    )}
+                  </button>
+                ) : null}
                 {canSaveToContext && (
                   <button
                     onClick={() => handleSaveToContext(msg.id, userVisibleContent, contextSaveRole)}

@@ -249,6 +249,93 @@ export async function claimNextChatOwnerIngress(input: {
   });
 }
 
+/**
+ * Mounted Chat UI claims the ingress it just delivered. Queue-wide
+ * `claimNextChatOwnerIngress` is correct for background workers, but unsafe for
+ * an interactive request because an older document ingress may win the queue.
+ */
+export async function claimChatOwnerIngress(input: {
+  organizationId: string;
+  ingressId: string;
+  claimedBy: string;
+  leaseSeconds?: number;
+}): Promise<ClaimedOwnerIngress> {
+  const organizationId = required(input.organizationId, 'organizationId');
+  const ingressId = required(input.ingressId, 'ingressId');
+  const claimedBy = required(input.claimedBy, 'claimedBy');
+  const leaseSeconds = Math.max(
+    MIN_LEASE_SECONDS,
+    Math.min(MAX_LEASE_SECONDS, Math.trunc(input.leaseSeconds ?? 60))
+  );
+
+  return withPgTransaction(async (query) => {
+    const selected = await query<IngressRow>(
+      `SELECT * FROM chat_handoff_owner_ingress
+        WHERE ingress_id = $1 AND organization_id = $2
+        FOR UPDATE`,
+      [ingressId, organizationId]
+    );
+    const ingress = selected.rows[0];
+    if (!ingress) {
+      throw new ChatTargetOwnerIngressError('chat owner ingress not found', 'NOT_FOUND', 404);
+    }
+
+    const claims = await query<{
+      claim_token: string;
+      claimed_by: string;
+      lease_expires_at: Date | string;
+      attempt_count: number;
+      consumed_at: Date | string | null;
+    }>(
+      `INSERT INTO chat_handoff_owner_claims (
+         ingress_id, organization_id, claim_token, claimed_by, lease_expires_at
+       ) VALUES ($1,$2,$3,$4,NOW() + ($5 * INTERVAL '1 second'))
+       ON CONFLICT (ingress_id) DO UPDATE SET
+         claim_token = EXCLUDED.claim_token,
+         claimed_by = EXCLUDED.claimed_by,
+         claimed_at = NOW(),
+         lease_expires_at = EXCLUDED.lease_expires_at,
+         attempt_count = chat_handoff_owner_claims.attempt_count + 1
+       WHERE chat_handoff_owner_claims.consumed_at IS NULL
+         AND chat_handoff_owner_claims.lease_expires_at <= NOW()
+       RETURNING claim_token, claimed_by, lease_expires_at, attempt_count, consumed_at`,
+      [ingressId, organizationId, randomUUID(), claimedBy, leaseSeconds]
+    );
+    const claim = claims.rows[0];
+    if (!claim) {
+      const existing = await query<{
+        claimed_by: string;
+        consumed_at: Date | string | null;
+      }>(
+        `SELECT claimed_by, consumed_at FROM chat_handoff_owner_claims
+          WHERE ingress_id = $1 AND organization_id = $2`,
+        [ingressId, organizationId]
+      );
+      if (existing.rows[0]?.consumed_at) {
+        throw new ChatTargetOwnerIngressError(
+          'owner ingress already consumed',
+          'ALREADY_CONSUMED',
+          409
+        );
+      }
+      throw new ChatTargetOwnerIngressError(
+        'owner ingress is currently leased',
+        'CLAIM_UNAVAILABLE',
+        409
+      );
+    }
+    return {
+      ...mapIngress(ingress),
+      claimToken: claim.claim_token,
+      leaseExpiresAt:
+        claim.lease_expires_at instanceof Date
+          ? claim.lease_expires_at.toISOString()
+          : claim.lease_expires_at,
+      attemptCount: Number(claim.attempt_count),
+    };
+  });
+}
+
 export async function completeChatOwnerIngress(input: {
   organizationId: string;
   ingressId: string;
@@ -264,13 +351,15 @@ export async function completeChatOwnerIngress(input: {
   const materializedBy = required(input.materializedBy, 'materializedBy');
 
   const verified = await withPgTransaction(async (query) => {
-    const rows = await query<IngressRow & {
-      claim_token: string;
-      claimed_by: string;
-      lease_expires_at: Date | string;
-      consumed_at: Date | string | null;
-      handoff_receipt_id: string | null;
-    }>(
+    const rows = await query<
+      IngressRow & {
+        claim_token: string;
+        claimed_by: string;
+        lease_expires_at: Date | string;
+        consumed_at: Date | string | null;
+        handoff_receipt_id: string | null;
+      }
+    >(
       `SELECT i.*, c.claim_token, c.claimed_by, c.lease_expires_at,
               c.consumed_at, c.handoff_receipt_id
          FROM chat_handoff_owner_ingress i
@@ -287,7 +376,8 @@ export async function completeChatOwnerIngress(input: {
     if (row.consumed_at && row.handoff_receipt_id) {
       return { proposalId: row.proposal_id, alreadyConsumed: true };
     }
-    const lease = row.lease_expires_at instanceof Date ? row.lease_expires_at : new Date(row.lease_expires_at);
+    const lease =
+      row.lease_expires_at instanceof Date ? row.lease_expires_at : new Date(row.lease_expires_at);
     if (lease.getTime() <= Date.now()) {
       throw new ChatTargetOwnerIngressError('claim lease expired', 'CLAIM_EXPIRED', 409);
     }
@@ -326,7 +416,11 @@ export async function completeChatOwnerIngress(input: {
     });
   } catch (err) {
     if (err instanceof HandoffSpineError) {
-      throw new ChatTargetOwnerIngressError(err.message, err.code, err.code === 'NOT_FOUND' ? 404 : 409);
+      throw new ChatTargetOwnerIngressError(
+        err.message,
+        err.code,
+        err.code === 'NOT_FOUND' ? 404 : 409
+      );
     }
     throw err;
   }

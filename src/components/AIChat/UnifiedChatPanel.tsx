@@ -76,6 +76,8 @@ import { useChatActions } from '../../hooks/useChatActions';
 import { useDemoSession } from '../../hooks/useDemoSession';
 import { useUniversalVoice } from '../../hooks/useUniversalVoice';
 import { Api } from '../../services/api';
+import { V8ChatApi } from '../../services/api/v8';
+import type { GovernedChatHandoffProposal } from '../../services/api/v8/chat';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 import type { ChatContextAction } from '../../store/slices/uiSlice';
 import { useAIActionsStore } from '../../store/useAIActionsStore';
@@ -1056,6 +1058,18 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const [contextSaveBusyMessageId, setContextSaveBusyMessageId] = useState<string | null>(null);
   const [contextSavedMessageIds, setContextSavedMessageIds] = useState<Set<string>>(new Set());
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
+  const [governedHandoffByMessageId, setGovernedHandoffByMessageId] = useState<
+    Record<string, GovernedChatHandoffProposal>
+  >({});
+  const [governedHandoffBusyById, setGovernedHandoffBusyById] = useState<
+    Record<string, 'create' | 'approve' | 'reject' | 'materialize' | undefined>
+  >({});
+  const [governedHandoffErrorById, setGovernedHandoffErrorById] = useState<
+    Record<string, string | undefined>
+  >({});
+  const [governedHandoffTargetById, setGovernedHandoffTargetById] = useState<
+    Record<string, string | undefined>
+  >({});
   const [selectedMultiOptions, setSelectedMultiOptions] = useState<string[]>([]);
   const [dtHintDismissed, setDtHintDismissed] = useState(false);
   const [abortFeedback, setAbortFeedback] = useState<'partial' | 'cancelled' | null>(null);
@@ -1236,6 +1250,144 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const isDisabled = disabled || aiFreezeStatus.isFrozen;
   const isPrivateMode = Boolean((aiConfig as any)?.privateMode);
   const isRtlChatLanguage = isRtlLanguage(chatLanguage);
+
+  const replaceGovernedHandoff = useCallback((proposal: GovernedChatHandoffProposal) => {
+    const messageId = String(proposal.payload?.messageId || proposal.producerRecordId || '').trim();
+    if (!messageId) return;
+    setGovernedHandoffByMessageId((prev) => ({ ...prev, [messageId]: proposal }));
+  }, []);
+
+  // Durable conversation-scoped readback: a hard reload rehydrates only the
+  // authenticated tenant's Chat proposals returned by the mounted route.
+  useEffect(() => {
+    let cancelled = false;
+    setGovernedHandoffByMessageId({});
+    setGovernedHandoffErrorById({});
+    setGovernedHandoffTargetById({});
+    if (!activeConversationId)
+      return () => {
+        cancelled = true;
+      };
+    void V8ChatApi.listGovernedHandoffProposals(activeConversationId)
+      .then((proposals) => {
+        if (cancelled) return;
+        const next: Record<string, GovernedChatHandoffProposal> = {};
+        for (const proposal of proposals) {
+          const messageId = String(
+            proposal.payload?.messageId || proposal.producerRecordId || ''
+          ).trim();
+          if (messageId && !next[messageId]) next[messageId] = proposal;
+        }
+        setGovernedHandoffByMessageId(next);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setGovernedHandoffErrorById({
+          __conversation: err instanceof Error ? err.message : 'Proposal history unavailable.',
+        });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeConversationId]);
+
+  const handleCreateGovernedDocument = useCallback(
+    async (msg: ChatMessage) => {
+      if (!activeConversationId || String(msg.id).startsWith('local-')) return;
+      const messageId = String(msg.id);
+      setGovernedHandoffBusyById((prev) => ({ ...prev, [messageId]: 'create' }));
+      setGovernedHandoffErrorById((prev) => ({ ...prev, [messageId]: undefined }));
+      try {
+        const firstLine = String(msg.content || '')
+          .split('\n')
+          .map((line) => line.replace(/^#+\s*/, '').trim())
+          .find(Boolean);
+        const created = await V8ChatApi.createGovernedDocumentProposal({
+          conversationId: activeConversationId,
+          messageId,
+          title: (firstLine || t('chat.governedHandoff.defaultTitle', 'Document from Chat')).slice(
+            0,
+            120
+          ),
+          content: String(msg.content || '').trim(),
+          idempotencyKey: `chat-ui:document:${activeConversationId}:${messageId}:v1`,
+          citations: Array.isArray(msg.citations) ? msg.citations : [],
+        });
+        replaceGovernedHandoff(created.proposal);
+      } catch (err) {
+        toast.error(
+          err instanceof Error
+            ? err.message
+            : t('chat.governedHandoff.createFailed', 'Proposal creation failed.')
+        );
+        setGovernedHandoffErrorById((prev) => ({
+          ...prev,
+          [messageId]: err instanceof Error ? err.message : 'Proposal creation failed.',
+        }));
+      } finally {
+        setGovernedHandoffBusyById((prev) => ({ ...prev, [messageId]: undefined }));
+      }
+    },
+    [activeConversationId, replaceGovernedHandoff, t]
+  );
+
+  const decideGovernedHandoff = useCallback(
+    async (proposalId: string, decision: 'approve' | 'reject') => {
+      setGovernedHandoffBusyById((prev) => ({ ...prev, [proposalId]: decision }));
+      setGovernedHandoffErrorById((prev) => ({ ...prev, [proposalId]: undefined }));
+      try {
+        const proposal =
+          decision === 'approve'
+            ? await V8ChatApi.approveGovernedHandoffProposal(proposalId)
+            : await V8ChatApi.rejectGovernedHandoffProposal(proposalId);
+        replaceGovernedHandoff(proposal);
+      } catch (err) {
+        setGovernedHandoffErrorById((prev) => ({
+          ...prev,
+          [proposalId]: err instanceof Error ? err.message : 'Proposal decision failed.',
+        }));
+      } finally {
+        setGovernedHandoffBusyById((prev) => ({ ...prev, [proposalId]: undefined }));
+      }
+    },
+    [replaceGovernedHandoff]
+  );
+
+  const handleMaterializeGovernedHandoff = useCallback(
+    async (proposalId: string) => {
+      setGovernedHandoffBusyById((prev) => ({ ...prev, [proposalId]: 'materialize' }));
+      setGovernedHandoffErrorById((prev) => ({ ...prev, [proposalId]: undefined }));
+      try {
+        const delivered = await V8ChatApi.deliverGovernedHandoffProposal(proposalId);
+        const ingressId = delivered.ingress.ingressId;
+        const claim = await V8ChatApi.claimGovernedDocumentIngress(ingressId);
+        if (claim.ingressId !== ingressId || claim.proposalId !== proposalId) {
+          throw new Error('Owner claim identity did not match the approved proposal.');
+        }
+        const result = await V8ChatApi.materializeGovernedDocument(
+          claim.ingressId,
+          claim.claimToken
+        );
+        setGovernedHandoffTargetById((prev) => ({
+          ...prev,
+          [proposalId]: result.targetRecordId,
+        }));
+        if (activeConversationId) {
+          const refreshed = await V8ChatApi.listGovernedHandoffProposals(activeConversationId);
+          const proposal = refreshed.find((item) => item.proposalId === proposalId);
+          if (proposal) replaceGovernedHandoff(proposal);
+        }
+      } catch (err) {
+        setGovernedHandoffErrorById((prev) => ({
+          ...prev,
+          [proposalId]: err instanceof Error ? err.message : 'Document creation failed.',
+        }));
+      } finally {
+        setGovernedHandoffBusyById((prev) => ({ ...prev, [proposalId]: undefined }));
+      }
+    },
+    [activeConversationId, replaceGovernedHandoff]
+  );
 
   // ========================================================================
   // AI Stream hook
@@ -2149,7 +2301,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           id: `idea-action-error-${Date.now()}`,
           role: 'ai',
           content: t('aiChat.teresaAction.error', {
-            defaultValue: 'Nie udało się wykonać akcji „{{action}}” — wystąpił błąd. Nic nie zostało potwierdzone jako zrobione.',
+            defaultValue:
+              'Nie udało się wykonać akcji „{{action}}” — wystąpił błąd. Nic nie zostało potwierdzone jako zrobione.',
             action: payload.toolName,
           }),
           timestamp: new Date(),
@@ -2354,7 +2507,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         id: `idea-action-confirm-error-${Date.now()}`,
         role: 'ai',
         content: t('aiChat.teresaAction.error', {
-            defaultValue: 'Nie udało się wykonać akcji „{{action}}” — wystąpił błąd. Nic nie zostało potwierdzone jako zrobione.',
+          defaultValue:
+            'Nie udało się wykonać akcji „{{action}}” — wystąpił błąd. Nic nie zostało potwierdzone jako zrobione.',
           action: pending.toolName,
         }),
         timestamp: new Date(),
@@ -5446,44 +5600,45 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   // real backend contract this maps onto.
   // ------------------------------------------------------------------------
   const [branchList, setBranchList] = useState<ConversationBranch[]>([]);
-  const [branchParentConversationId, setBranchParentConversationId] = useState<string | null>(
-    null
-  );
+  const [branchParentConversationId, setBranchParentConversationId] = useState<string | null>(null);
   const [branchSelfName, setBranchSelfName] = useState<string | null>(null);
   const [branchesLoading, setBranchesLoading] = useState(false);
   const [branchesError, setBranchesError] = useState<string | null>(null);
   const [branchCreating, setBranchCreating] = useState(false);
 
-  const refreshBranches = useCallback(async (conversationId: string) => {
-    setBranchesLoading(true);
-    setBranchesError(null);
-    try {
-      const res: any = await Api.getConversationBranches(conversationId);
-      const mapped: ConversationBranch[] = Array.isArray(res?.branches)
-        ? res.branches.map((b: any) => ({
-            id: b.id,
-            conversationId: b.conversationId,
-            parentBranchId: b.parentBranchId ?? null,
-            forkMessageId: b.forkMessageId,
-            name: b.branchName || 'Branch',
-            messageCount: b.messageCount,
-            createdAt: b.createdAt,
-            createdBy: b.createdBy,
-          }))
-        : [];
-      setBranchList(mapped);
-      setBranchParentConversationId(res?.isBranch ? res?.parentConversationId || null : null);
-      setBranchSelfName(res?.isBranch ? res?.branchName || null : null);
-    } catch (err) {
-      console.error('[UnifiedChatPanel] Failed to load conversation branches:', err);
-      setBranchList([]);
-      setBranchParentConversationId(null);
-      setBranchSelfName(null);
-      setBranchesError(t('branch.loadFailed', 'Could not load branches.'));
-    } finally {
-      setBranchesLoading(false);
-    }
-  }, [t]);
+  const refreshBranches = useCallback(
+    async (conversationId: string) => {
+      setBranchesLoading(true);
+      setBranchesError(null);
+      try {
+        const res: any = await Api.getConversationBranches(conversationId);
+        const mapped: ConversationBranch[] = Array.isArray(res?.branches)
+          ? res.branches.map((b: any) => ({
+              id: b.id,
+              conversationId: b.conversationId,
+              parentBranchId: b.parentBranchId ?? null,
+              forkMessageId: b.forkMessageId,
+              name: b.branchName || 'Branch',
+              messageCount: b.messageCount,
+              createdAt: b.createdAt,
+              createdBy: b.createdBy,
+            }))
+          : [];
+        setBranchList(mapped);
+        setBranchParentConversationId(res?.isBranch ? res?.parentConversationId || null : null);
+        setBranchSelfName(res?.isBranch ? res?.branchName || null : null);
+      } catch (err) {
+        console.error('[UnifiedChatPanel] Failed to load conversation branches:', err);
+        setBranchList([]);
+        setBranchParentConversationId(null);
+        setBranchSelfName(null);
+        setBranchesError(t('branch.loadFailed', 'Could not load branches.'));
+      } finally {
+        setBranchesLoading(false);
+      }
+    },
+    [t]
+  );
 
   useEffect(() => {
     if (!activeConversationId || String(activeConversationId).startsWith('local-')) {
@@ -5526,7 +5681,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       // the latest message in the thread so far (server falls back to "no
       // messages" only when the source conversation is truly empty).
       const msgs = useConversationStore.getState().activeMessages || [];
-      const lastRealMsg = [...msgs].reverse().find((m: any) => !String(m.id || '').startsWith('local-'));
+      const lastRealMsg = [...msgs]
+        .reverse()
+        .find((m: any) => !String(m.id || '').startsWith('local-'));
       setBranchCreating(true);
       try {
         const res: any = await Api.branchConversation(sourceId, lastRealMsg?.id, name);
@@ -6033,6 +6190,16 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         handleSaveAsIdea={handleSaveAsIdea}
         handleSaveAsNote={handleSaveAsNote}
         handleSaveToContext={handleSaveToContext}
+        governedHandoffByMessageId={governedHandoffByMessageId}
+        governedHandoffBusyById={governedHandoffBusyById}
+        governedHandoffErrorById={governedHandoffErrorById}
+        governedHandoffTargetById={governedHandoffTargetById}
+        onCreateGovernedDocument={handleCreateGovernedDocument}
+        onApproveGovernedHandoff={(proposalId) => void decideGovernedHandoff(proposalId, 'approve')}
+        onRejectGovernedHandoff={(proposalId) => void decideGovernedHandoff(proposalId, 'reject')}
+        onMaterializeGovernedHandoff={(proposalId) =>
+          void handleMaterializeGovernedHandoff(proposalId)
+        }
         handleRunDirectedDeepening={handleRunDirectedDeepening}
         handleMultiSelectToggle={handleMultiSelectToggle}
         handleMultiSelectConfirm={handleMultiSelectConfirm}
