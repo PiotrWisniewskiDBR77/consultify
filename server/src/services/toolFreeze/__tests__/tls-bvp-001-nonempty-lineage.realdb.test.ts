@@ -739,11 +739,131 @@ describe('TLS-BVP-001 — nonempty-lineage guard on tool_outputs freeze (real Po
     expect(replay.body.id).toBe(promoted.body.id);
     expect(replay.body.deduplicated).toBe(true);
 
+    // The browser may select only an id. Any client-supplied prose is ignored:
+    // candidate title/rationale are derived from the exact frozen conclusion.
+    const missingConclusion = await request(app)
+      .post(`/api/tools/${sessionId}/swot-candidates`)
+      .set(as(ORG_A))
+      .send({ id: 'not-in-output' });
+    expect(missingConclusion.status, JSON.stringify(missingConclusion.body)).toBe(409);
+    expect(missingConclusion.body.code).toBe('RECOMMENDATION_NOT_IN_FROZEN_OUTPUT');
+
+    const forgedAuthority = await request(app)
+      .post(`/api/tools/${sessionId}/swot-candidates`)
+      .set(as(ORG_A))
+      .send({ id: 'm1', title: 'FORGED CLIENT TITLE', rationale: 'FORGED CLIENT RATIONALE' });
+    expect(forgedAuthority.status).toBe(400);
+
+    const concurrentHandoffs = await Promise.all([
+      request(app).post(`/api/tools/${sessionId}/swot-candidates`).set(as(ORG_A)).send({ id: 'm1' }),
+      request(app).post(`/api/tools/${sessionId}/swot-candidates`).set(as(ORG_A)).send({ id: 'm1' }),
+    ]);
+    expect(concurrentHandoffs.map((response) => response.status).sort()).toEqual([200, 201]);
+    const handoff = concurrentHandoffs.find((response) => response.status === 201)!;
+    expect(concurrentHandoffs[0].body.receipt).toEqual(concurrentHandoffs[1].body.receipt);
+    expect(handoff.body.candidate.title).toBe('Launch bounded pilot');
+    expect(handoff.body.receipt).toMatchObject({
+      recommendationId: 'm1', sourceRevision: 2, toolOutputVersion: 1,
+    });
+
+    const handoffReplay = await request(app)
+      .post(`/api/tools/${sessionId}/swot-candidates`)
+      .set(as(ORG_A))
+      .send({ id: 'm1' });
+    expect(handoffReplay.status, JSON.stringify(handoffReplay.body)).toBe(200);
+    expect(handoffReplay.body.created).toBe(false);
+    expect(handoffReplay.body.receipt).toEqual(handoff.body.receipt);
+
+    const crossOrgRead = await request(app)
+      .get(`/api/tools/${sessionId}/swot-candidates`)
+      .set(as(ORG_B, ACTOR_B));
+    expect(crossOrgRead.status).toBe(404);
+
+    const coldReceipts = await request(app)
+      .get(`/api/tools/${sessionId}/swot-candidates`)
+      .set(as(ORG_A));
+    expect(coldReceipts.status, JSON.stringify(coldReceipts.body)).toBe(200);
+    expect(coldReceipts.body.receipts).toEqual([handoff.body.receipt]);
+
+    const receiptGuardDb = await db();
+    try {
+      await expect(
+        receiptGuardDb.query(
+          `UPDATE swot_candidate_handoffs SET source_revision=99 WHERE id=$1`,
+          [handoff.body.receipt.receiptId]
+        )
+      ).rejects.toMatchObject({ code: '55000' });
+      await expect(
+        receiptGuardDb.query(`DELETE FROM swot_candidate_handoffs WHERE id=$1`, [
+          handoff.body.receipt.receiptId,
+        ])
+      ).rejects.toMatchObject({ code: '55000' });
+      await expect(
+        receiptGuardDb.query(
+          `INSERT INTO swot_candidate_handoffs
+             (id,organization_id,tool_session_id,recommendation_id,candidate_id,created_by,
+              tool_output_id,tool_output_version,tool_output_content_hash,source_revision)
+           VALUES ($1,$2,$3,'partial-lineage',$4,$5,$6,NULL,$7,2)`,
+          [uid('partial'), ORG_A, sessionId, handoff.body.candidate.id, ACTOR,
+            handoff.body.receipt.toolOutputId, handoff.body.receipt.toolOutputContentHash]
+        )
+      ).rejects.toMatchObject({ code: '23514' });
+
+      // Historical all-null lineage remains visible, but never gets inferred.
+      const historicalSessionId = uid('historical-session');
+      await seedRealSwotSession(historicalSessionId, ORG_A, ACTOR);
+      const historicalOutput = await request(app)
+        .post(`/api/tools/${historicalSessionId}/promote`)
+        .set(as(ORG_A))
+        .send({ outputType: 'idea', title: 'historical', description: 'historical' });
+      expect(historicalOutput.status, JSON.stringify(historicalOutput.body)).toBe(200);
+      await receiptGuardDb.query(
+        `INSERT INTO swot_candidate_handoffs
+           (id,organization_id,tool_session_id,recommendation_id,candidate_id,created_by)
+         VALUES ($1,$2,$3,'m1',$4,$5)`,
+        [uid('historical-receipt'), ORG_A, historicalSessionId, handoff.body.candidate.id, ACTOR]
+      );
+      const historicalRead = await request(app)
+        .get(`/api/tools/${historicalSessionId}/swot-candidates`)
+        .set(as(ORG_A));
+      expect(historicalRead.status, JSON.stringify(historicalRead.body)).toBe(200);
+      expect(historicalRead.body.receipts[0]).toMatchObject({
+        recommendationId: 'm1', lineageState: 'HISTORICAL_UNRESOLVED',
+        toolOutputId: null, toolOutputVersion: null, toolOutputContentHash: null, sourceRevision: null,
+      });
+      const historicalReplay = await request(app)
+        .post(`/api/tools/${historicalSessionId}/swot-candidates`)
+        .set(as(ORG_A))
+        .send({ id: 'm1' });
+      expect(historicalReplay.status).toBe(409);
+      expect(historicalReplay.body.code).toBe('CANDIDATE_HANDOFF_LINEAGE_MISSING');
+    } finally {
+      await receiptGuardDb.end();
+    }
+
+    const membershipDb = await db();
+    try {
+      await membershipDb.query(
+        `UPDATE organization_members SET status='REVOKED' WHERE organization_id=$1 AND user_id=$2`,
+        [ORG_A, ACTOR]
+      );
+      const revokedRead = await request(app)
+        .get(`/api/tools/${sessionId}/swot-candidates`)
+        .set(as(ORG_A));
+      expect(revokedRead.status).toBe(403);
+    } finally {
+      await membershipDb.query(
+        `UPDATE organization_members SET status='ACTIVE' WHERE organization_id=$1 AND user_id=$2`,
+        [ORG_A, ACTOR]
+      );
+      await membershipDb.end();
+    }
+
     const independent = new Client({ connectionString: DATABASE_URL });
     await independent.connect();
     try {
       const output = (await independent.query(
-        `SELECT id,status,payload_json FROM tool_outputs WHERE tool_session_id=$1`, [sessionId]
+        `SELECT id,status,payload_json,content_hash FROM tool_outputs WHERE tool_session_id=$1`, [sessionId]
       )).rows[0];
       const receipt = (await independent.query(
         `SELECT initiative_id,source_revision,output_type,idempotency_key
@@ -751,6 +871,17 @@ describe('TLS-BVP-001 — nonempty-lineage guard on tool_outputs freeze (real Po
       )).rows[0];
       expect(output.status).toBe('approved');
       expect(output.payload_json.conclusions.length).toBeGreaterThan(0);
+      const candidateReceipt = (await independent.query(
+        `SELECT tool_output_id,tool_output_version,tool_output_content_hash,source_revision
+           FROM swot_candidate_handoffs WHERE organization_id=$1 AND tool_session_id=$2 AND recommendation_id='m1'`,
+        [ORG_A, sessionId]
+      )).rows[0];
+      expect(candidateReceipt).toMatchObject({
+        tool_output_id: output.id,
+        tool_output_version: 1,
+        tool_output_content_hash: output.content_hash,
+        source_revision: 2,
+      });
       expect(receipt).toMatchObject({ initiative_id: promoted.body.id, source_revision: 2, output_type: 'idea', idempotency_key: 'promote-idea' });
     } finally {
       await independent.end();

@@ -13,7 +13,7 @@ import {
   Wrench,
   Zap,
 } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -1137,12 +1137,14 @@ function RecommendationCard({
   isPolish,
   onCreateCandidate,
   candidateHandoffAllowed,
+  showCandidateAction = true,
 }: {
   rec: DerivedRecommendation;
   index: number;
   isPolish: boolean;
   onCreateCandidate: (rec: DerivedRecommendation) => Promise<void>;
   candidateHandoffAllowed: boolean;
+  showCandidateAction?: boolean;
 }) {
   const { t } = useTranslation();
   const meta = REC_TYPE_META[rec.type];
@@ -1229,7 +1231,7 @@ function RecommendationCard({
                 : t('discoveryToolsTools.common.showRationale')}
             </button>
 
-            {candidateCreated ? (
+            {!showCandidateAction ? null : candidateCreated ? (
               <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300">
                 <Check className="h-3.5 w-3.5" />
                 {t('discoveryToolsTools.common.candidateCreated')}
@@ -1252,7 +1254,7 @@ function RecommendationCard({
               </button>
             )}
           </div>
-          {!candidateHandoffAllowed && (
+          {showCandidateAction && !candidateHandoffAllowed && (
             <p className="mt-2 text-right text-xs text-amber-700 dark:text-amber-300">
               {t('discoveryToolsTools.dynamicSwot.insightsPhase.candidateApprovalRequired')}
             </p>
@@ -1346,8 +1348,6 @@ export function SWOTInsightsPhase({
     try {
       await Api.handoffSwotCandidate(session.id, {
         id: rec.id,
-        title: rec.title,
-        rationale: `${rec.rationale}\n\n${rec.description}`,
       });
       toast.success(t('discoveryToolsTools.dynamicSwot.insightsPhase.candidateCreatedToast'));
     } catch (err) {
@@ -1362,6 +1362,58 @@ export function SWOTInsightsPhase({
       .trim()
       .toUpperCase()
   );
+
+  type CandidateReceipt = {
+    lineageState: 'PINNED' | 'HISTORICAL_UNRESOLVED';
+    receiptId: string;
+    recommendationId: string;
+    candidateId: string;
+    toolOutputId: string | null;
+    toolOutputVersion: number | null;
+    toolOutputContentHash: string | null;
+    sourceRevision: number | null;
+    createdAt: string;
+  };
+  const [candidateReceipts, setCandidateReceipts] = useState<Record<string, CandidateReceipt>>({});
+  const [creatingRecommendationId, setCreatingRecommendationId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!candidateHandoffAllowed) {
+      setCandidateReceipts({});
+      return;
+    }
+    let cancelled = false;
+    void Api.getSwotCandidateReceipts(session.id)
+      .then(({ receipts }) => {
+        if (cancelled) return;
+        setCandidateReceipts(
+          Object.fromEntries(receipts.map((receipt) => [receipt.recommendationId, receipt]))
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setCandidateReceipts({});
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [candidateHandoffAllowed, session.id]);
+
+  const handoffFrozenMove = async (recommendationId: string) => {
+    setCreatingRecommendationId(recommendationId);
+    try {
+      const result = await Api.handoffSwotCandidate(session.id, { id: recommendationId });
+      setCandidateReceipts((current) => ({
+        ...current,
+        [recommendationId]: result.receipt,
+      }));
+      toast.success(t('discoveryToolsTools.dynamicSwot.insightsPhase.candidateCreatedToast'));
+    } catch (error) {
+      console.error('[DynamicSWOT] frozen recommendation handoff failed:', error);
+      toast.error(t('discoveryToolsTools.dynamicSwot.insightsPhase.candidateCreateErrorToast'));
+    } finally {
+      setCreatingRecommendationId(null);
+    }
+  };
 
   return (
     <div className="space-y-5 p-1">
@@ -1744,6 +1796,46 @@ export function SWOTInsightsPhase({
                           {move.firstStep}
                         </div>
                       )}
+                      {!isProposal && (
+                        <div className="mt-3 flex justify-end">
+                          {candidateReceipts[move.id] ? (
+                            <span
+                              data-testid={`swot-candidate-receipt-${move.id}`}
+                              title={
+                                candidateReceipts[move.id].lineageState === 'PINNED'
+                                  ? `${candidateReceipts[move.id].toolOutputId}@${candidateReceipts[move.id].toolOutputVersion}`
+                                  : 'NEEDS_DECISION: historical receipt has no frozen output lineage'
+                              }
+                              className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium ${
+                                candidateReceipts[move.id].lineageState === 'PINNED'
+                                  ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300'
+                                  : 'bg-amber-50 text-amber-800 dark:bg-amber-900/20 dark:text-amber-300'
+                              }`}
+                            >
+                              {candidateReceipts[move.id].lineageState === 'PINNED' ? (
+                                <Check className="h-3.5 w-3.5" />
+                              ) : (
+                                <AlertTriangle className="h-3.5 w-3.5" />
+                              )}
+                              {candidateReceipts[move.id].lineageState === 'PINNED'
+                                ? t('discoveryToolsTools.common.candidateCreated')
+                                : 'NEEDS_DECISION'}
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => void handoffFrozenMove(move.id)}
+                              disabled={!candidateHandoffAllowed || creatingRecommendationId === move.id}
+                              className="inline-flex items-center gap-1.5 rounded-lg bg-navy-900 px-3 py-2 text-xs font-semibold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-60 dark:bg-[#F4F7FB] dark:text-navy-950"
+                            >
+                              <Rocket className="h-3.5 w-3.5" />
+                              {creatingRecommendationId === move.id
+                                ? t('discoveryToolsTools.common.creatingCandidate')
+                                : t('discoveryToolsTools.common.createCandidate')}
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
@@ -1797,6 +1889,7 @@ export function SWOTInsightsPhase({
                   isPolish={isPolish}
                   onCreateCandidate={handleCreateCandidate}
                   candidateHandoffAllowed={candidateHandoffAllowed}
+                  showCandidateAction={false}
                 />
               ))}
             </div>

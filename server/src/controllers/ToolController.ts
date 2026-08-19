@@ -28,6 +28,7 @@ import * as ReportBuilderService from '../services/reportBuilderService.js';
 import ToolInitiativeService from '../services/ToolInitiativeService.js';
 import {
   handoffSwotRecommendation,
+  listSwotCandidateReceipts,
   SwotCandidateHandoffError,
 } from '../services/tools/swotCandidateHandoffService.js';
 import {
@@ -3298,11 +3299,32 @@ export class ToolController {
           organizationId: user.organizationId,
           toolSessionId: req.params.toolId,
           recommendationId: String(req.body?.id || ''),
-          title: String(req.body?.title || ''),
-          rationale: String(req.body?.rationale || ''),
           actorId: user.id,
         });
         res.status(result.created ? 201 : 200).json(result);
+      } catch (error) {
+        if (error instanceof SwotCandidateHandoffError) {
+          res.status(error.status).json({ error: error.message, code: error.code });
+          return;
+        }
+        throw error;
+      }
+    }
+  );
+  /** Cold-read exact immutable receipt lineage for mounted SWOT UI. */
+  static listSwotCandidateReceipts = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const user = req.user;
+      if (!user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      try {
+        const receipts = await listSwotCandidateReceipts({
+          organizationId: user.organizationId,
+          toolSessionId: req.params.toolId,
+        });
+        res.json({ receipts });
       } catch (error) {
         if (error instanceof SwotCandidateHandoffError) {
           res.status(error.status).json({ error: error.message, code: error.code });

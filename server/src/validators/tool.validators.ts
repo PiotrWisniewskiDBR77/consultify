@@ -102,6 +102,12 @@ export const AcceptSwotProposalSchema = z.object({
 
 export const RejectSwotProposalSchema = z.object({}).passthrough();
 
+// A client chooses an already-frozen conclusion; it never supplies candidate
+// prose or provenance. `.strict()` makes that authority boundary executable.
+export const HandoffSwotCandidateSchema = z
+  .object({ id: z.string().trim().min(1).max(160) })
+  .strict();
+
 export type CreateToolSessionRequest = z.infer<typeof CreateToolSessionSchema>;
 export type UpdateToolSessionRequest = z.infer<typeof UpdateToolSessionSchema>;
 export type GenerateInitiativesRequest = z.infer<typeof GenerateInitiativesSchema>;

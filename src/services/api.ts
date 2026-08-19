@@ -6662,7 +6662,7 @@ export const Api = {
 
   handoffSwotCandidate: async (
     toolSessionId: string,
-    recommendation: { id: string; title: string; rationale: string }
+    recommendation: { id: string }
   ): Promise<any> => {
     const res = await fetch(
       `${API_URL}/tools/${encodeURIComponent(toolSessionId)}/swot-candidates`,
@@ -6673,6 +6673,26 @@ export const Api = {
       }
     );
     return handleResponse(res, 'Failed to create SWOT candidate');
+  },
+
+  getSwotCandidateReceipts: async (toolSessionId: string): Promise<{
+    receipts: Array<{
+      lineageState: 'PINNED' | 'HISTORICAL_UNRESOLVED';
+      receiptId: string;
+      recommendationId: string;
+      candidateId: string;
+      toolOutputId: string | null;
+      toolOutputVersion: number | null;
+      toolOutputContentHash: string | null;
+      sourceRevision: number | null;
+      createdAt: string;
+    }>;
+  }> => {
+    const res = await fetch(
+      `${API_URL}/tools/${encodeURIComponent(toolSessionId)}/swot-candidates`,
+      { headers: getHeaders() }
+    );
+    return handleResponse(res, 'Failed to load SWOT candidate receipts');
   },
 
   updateInitiative: async (id: string, updates: any): Promise<void> => {
