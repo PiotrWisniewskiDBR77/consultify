@@ -14,12 +14,18 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import { Pool } from 'pg';
 
+import { apiGateway } from '../../../../Gateway.js';
 import config from '../../../../config/Config.js';
 import verifyToken, { validateOrgMembership } from '../../../../middleware/auth.middleware.js';
 import { attachV8Context, requireV8OrgContext } from '../../../../middleware/v8Auth.middleware.js';
 import casesRoutes from '../../../../routes/caseWorkspace/cases.routes.js';
 import { errorHandlerMiddleware } from '../../../../utils/ErrorHandler.js';
-import { evaluateSteadyLoadGate } from './lib/steadyLoadGate.js';
+import {
+  evaluateSteadyLoadGate,
+  NFR_PERF_WORKLOADS,
+  type NfrPerfWorkload,
+  type WorkloadGateInput,
+} from './lib/steadyLoadGate.js';
 
 const databaseUrl = process.env.DATABASE_URL || '';
 const durationMs = Number(process.env.NFR_PERF_DURATION_MS || 60_000);
@@ -40,7 +46,11 @@ function assertConfiguration(): void {
   if (releaseGate && (durationMs < 30 * 60_000 || userCount < 50)) {
     throw new Error('release gate requires >=30 minutes and >=50 authenticated users');
   }
-  if (![durationMs, userCount, requestIntervalMs, writeEvery, sampleEveryMs].every((n) => Number.isFinite(n) && n > 0)) {
+  if (
+    ![durationMs, userCount, requestIntervalMs, writeEvery, sampleEveryMs].every(
+      (n) => Number.isFinite(n) && n > 0
+    )
+  ) {
     throw new Error('positive finite load configuration required');
   }
 }
@@ -80,12 +90,20 @@ async function main(): Promise<void> {
   const pool = new Pool({ connectionString: databaseUrl, max: 12 });
   const readLatencyMs: number[] = [];
   const writeLatencyMs: number[] = [];
+  const workloads = NFR_PERF_WORKLOADS.reduce(
+    (result, name) => {
+      result[name] = { latencyMs: [], totalRequests: 0, errors: 0 };
+      return result;
+    },
+    {} as Record<NfrPerfWorkload, WorkloadGateInput>
+  );
+  const expectedWriteIds: string[] = [];
   const heapSamples: Array<{ atMs: number; heapMb: number }> = [];
   let totalRequests = 0;
   let errors = 0;
   let crossTenantAttempts = 0;
   let crossTenantFalseSuccesses = 0;
-  let baselineCaseId = '';
+  const baselineCaseIds: string[] = [];
   let server: http.Server | undefined;
   const startedAt = Date.now();
   const endAt = startedAt + durationMs;
@@ -94,24 +112,32 @@ async function main(): Promise<void> {
 
   try {
     await pool.query(`INSERT INTO organizations(id,name) VALUES($1,$1),($2,$2)`, [org, foreignOrg]);
-    await pool.query(`INSERT INTO projects(id,organization_id,name) VALUES($1,$2,$1)`, [project, org]);
+    await pool.query(`INSERT INTO projects(id,organization_id,name) VALUES($1,$2,$1)`, [
+      project,
+      org,
+    ]);
     for (const user of [...users, foreignUser]) {
       const userOrg = user === foreignUser ? foreignOrg : org;
       await pool.query(
-        `INSERT INTO users(id,organization_id,email,role,status) VALUES($1,$2,$3,'MEMBER','active')`,
+        `INSERT INTO users(id,organization_id,email,role,status) VALUES($1,$2,$3,'ADMIN','active')`,
         [user, userOrg, `${user}@example.test`]
       );
       await pool.query(
         `INSERT INTO organization_members(id,organization_id,user_id,role,status)
-         VALUES($1,$2,$3,'MEMBER','ACTIVE')`,
+         VALUES($1,$2,$3,'ADMIN','ACTIVE')`,
         [`membership-${user}`, userOrg, user]
       );
     }
 
     const sign = (userId: string, organizationId: string) =>
-      jwt.sign({ id: userId, organizationId, role: 'MEMBER', email: `${userId}@example.test` }, config.JWT_SECRET, {
-        algorithm: 'HS256', expiresIn: '45m',
-      });
+      jwt.sign(
+        { id: userId, organizationId, role: 'ADMIN', email: `${userId}@example.test` },
+        config.JWT_SECRET,
+        {
+          algorithm: 'HS256',
+          expiresIn: '45m',
+        }
+      );
     const tokens = users.map((user) => sign(user, org));
     const foreignToken = sign(foreignUser, foreignOrg);
 
@@ -122,37 +148,66 @@ async function main(): Promise<void> {
     app.use(requireV8OrgContext);
     app.use(attachV8Context);
     app.use('/api/v8/case-workspace', casesRoutes);
+    apiGateway.initializeRoutes(app);
     app.use(errorHandlerMiddleware);
     server = app.listen(0, '127.0.0.1');
     await new Promise<void>((resolve) => server!.once('listening', resolve));
     const address = server.address();
-    if (!address || typeof address === 'string') throw new Error('ephemeral HTTP listener unavailable');
-    const base = `http://127.0.0.1:${address.port}/api/v8/case-workspace`;
+    if (!address || typeof address === 'string')
+      throw new Error('ephemeral HTTP listener unavailable');
+    const origin = `http://127.0.0.1:${address.port}`;
+    const caseBase = `${origin}/api/v8/case-workspace`;
 
     const requestJson = async (token: string, path: string, init?: RequestInit) => {
       const started = performance.now();
-      const response = await fetch(`${base}${path}`, {
-        ...init,
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', ...(init?.headers || {}) },
-      });
+      const response = await fetch(
+        path.startsWith('/api/') ? `${origin}${path}` : `${caseBase}${path}`,
+        {
+          ...init,
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            ...(init?.headers || {}),
+          },
+        }
+      );
       const latency = performance.now() - started;
       return { response, latency };
     };
 
-    const baseline = await requestJson(tokens[0], '/cases', {
-      method: 'POST',
-      body: JSON.stringify({ projectId: project, caseName: `NFR baseline ${tag}`, contractedClosureType: 'DELIVERY_COMPLETED' }),
-    });
-    if (baseline.response.status !== 201) throw new Error(`baseline create failed ${baseline.response.status}`);
-    baselineCaseId = String(((await baseline.response.json()) as any).data.caseId);
+    for (let index = 0; index < tokens.length; index += 1) {
+      const baseline = await requestJson(tokens[index]!, '/cases', {
+        method: 'POST',
+        body: JSON.stringify({
+          projectId: project,
+          caseName: `NFR baseline ${index} ${tag}`,
+          contractedClosureType: 'DELIVERY_COMPLETED',
+        }),
+      });
+      if (baseline.response.status !== 201) {
+        throw new Error(`baseline create ${index} failed ${baseline.response.status}`);
+      }
+      const baselineCaseId = String(((await baseline.response.json()) as any).data.caseId);
+      baselineCaseIds.push(baselineCaseId);
+      expectedWriteIds.push(baselineCaseId);
+    }
 
     const heapTimer = setInterval(() => {
       if (typeof global.gc === 'function') global.gc();
       const sample = { atMs: Date.now() - startedAt, heapMb: heapMb() };
       heapSamples.push(sample);
       if (!warmHeapMb && Date.now() >= warmAt) warmHeapMb = sample.heapMb;
-      atomicCheckpoint({ status: 'RUNNING', startedAt: new Date(startedAt).toISOString(), durationMs, userCount,
-        totalRequests, errors, crossTenantAttempts, crossTenantFalseSuccesses, heapSamples });
+      atomicCheckpoint({
+        status: 'RUNNING',
+        startedAt: new Date(startedAt).toISOString(),
+        durationMs,
+        userCount,
+        totalRequests,
+        errors,
+        crossTenantAttempts,
+        crossTenantFalseSuccesses,
+        heapSamples,
+      });
     }, sampleEveryMs);
 
     const worker = async (index: number) => {
@@ -161,20 +216,52 @@ async function main(): Promise<void> {
         const loopAt = Date.now();
         operation += 1;
         const isWrite = operation % writeEvery === 0;
+        const workload: NfrPerfWorkload = isWrite
+          ? 'case'
+          : NFR_PERF_WORKLOADS[(index + operation) % NFR_PERF_WORKLOADS.length]!;
         try {
           const result = isWrite
             ? await requestJson(tokens[index], '/cases', {
                 method: 'POST',
-                body: JSON.stringify({ projectId: project, caseName: `NFR ${index}-${operation}-${tag}`, contractedClosureType: 'DELIVERY_COMPLETED' }),
+                body: JSON.stringify({
+                  projectId: project,
+                  caseName: `NFR ${index}-${operation}-${tag}`,
+                  contractedClosureType: 'DELIVERY_COMPLETED',
+                }),
               })
-            : await requestJson(tokens[index], `/cases/${baselineCaseId}`);
+            : await requestJson(
+                tokens[index],
+                workload === 'case'
+                  ? `/cases/${baselineCaseIds[index]}`
+                  : workload === 'my_work'
+                    ? `/api/my-work/my-ideas?limit=20`
+                    : workload === 'settings'
+                      ? `/api/settings/preferences/regional`
+                      : workload === 'initiatives'
+                        ? `/api/initiatives`
+                        : `/api/economics/stats`
+              );
           totalRequests += 1;
-          (isWrite ? writeLatencyMs : readLatencyMs).push(result.latency);
-          if (result.response.status < 200 || result.response.status >= 300) errors += 1;
-          await result.response.arrayBuffer();
+          apiLatencyMs.push(result.latency);
+          workloads[workload].totalRequests += 1;
+          workloads[workload].latencyMs.push(result.latency);
+          if (isWrite) writeLatencyMs.push(result.latency);
+          if (result.response.status < 200 || result.response.status >= 300) {
+            errors += 1;
+            workloads[workload].errors += 1;
+          }
+          if (isWrite && result.response.status === 201) {
+            const payload = (await result.response.json()) as { data?: { caseId?: string } };
+            const id = String(payload.data?.caseId || '');
+            if (!id) throw new Error('case write returned no caseId');
+            expectedWriteIds.push(id);
+          } else {
+            await result.response.arrayBuffer();
+          }
         } catch {
           totalRequests += 1;
           errors += 1;
+          workloads[workload].errors += 1;
         }
         await sleep(Math.max(0, requestIntervalMs - (Date.now() - loopAt)));
       }
@@ -183,7 +270,7 @@ async function main(): Promise<void> {
     const negativeWorker = async () => {
       while (Date.now() < endAt) {
         try {
-          const result = await requestJson(foreignToken, `/cases/${baselineCaseId}`);
+          const result = await requestJson(foreignToken, `/cases/${baselineCaseIds[0]}`);
           crossTenantAttempts += 1;
           if (result.response.status !== 404) crossTenantFalseSuccesses += 1;
           await result.response.arrayBuffer();
@@ -203,19 +290,56 @@ async function main(): Promise<void> {
     const lastTenMinuteHeapMb = heapSamples
       .filter((sample) => sample.atMs >= Math.max(0, durationMs - 10 * 60_000))
       .map((sample) => sample.heapMb);
-    const gate = evaluateSteadyLoadGate({ readLatencyMs, writeLatencyMs, totalRequests, errors,
-      crossTenantFalseSuccesses, heapWarmMb: warmHeapMb, heapFinalMb: finalHeapMb, lastTenMinuteHeapMb });
+    const persistedWrites = expectedWriteIds.length
+      ? await pool.query<{ id: string }>(
+          `SELECT case_id AS id FROM case_core
+           WHERE organization_id=$1 AND case_id = ANY($2::text[]) ORDER BY case_id`,
+          [org, expectedWriteIds]
+        )
+      : { rows: [] as Array<{ id: string }> };
+    const gate = evaluateSteadyLoadGate({
+      apiLatencyMs,
+      writeLatencyMs,
+      totalRequests,
+      errors,
+      crossTenantFalseSuccesses,
+      heapWarmMb: warmHeapMb,
+      heapFinalMb: finalHeapMb,
+      lastTenMinuteHeapMb,
+      workloads,
+      expectedWriteIds,
+      persistedWriteIds: persistedWrites.rows.map((row) => row.id),
+    });
     const positiveControl = evaluateSteadyLoadGate({
-      readLatencyMs: [2000, 2500], writeLatencyMs: [2600, 3000], totalRequests: 100, errors: 2,
-      crossTenantFalseSuccesses: 1, heapWarmMb: 100, heapFinalMb: 125,
+      apiLatencyMs: [2000, 2500],
+      writeLatencyMs: [1300, 1600],
+      totalRequests: 100,
+      errors: 2,
+      crossTenantFalseSuccesses: 1,
+      heapWarmMb: 100,
+      heapFinalMb: 125,
       lastTenMinuteHeapMb: [100, 110, 120],
     });
     if (positiveControl.pass) throw new Error('positive control failed to breach the gate');
-    atomicCheckpoint({ status: gate.pass ? 'PASS' : 'FAIL', startedAt: new Date(startedAt).toISOString(),
-      finishedAt: new Date().toISOString(), durationMsRequested: durationMs,
-      durationMsActual: Date.now() - startedAt, userCount, totalRequests, errors,
-      crossTenantAttempts, crossTenantFalseSuccesses, warmHeapMb, finalHeapMb, heapSamples,
-      gate, positiveControlDetected: !positiveControl.pass, productSha: process.env.NFR_PERF_PRODUCT_SHA || 'WORKTREE' });
+    atomicCheckpoint({
+      status: gate.pass ? 'PASS' : 'FAIL',
+      startedAt: new Date(startedAt).toISOString(),
+      finishedAt: new Date().toISOString(),
+      durationMsRequested: durationMs,
+      durationMsActual: Date.now() - startedAt,
+      userCount,
+      totalRequests,
+      errors,
+      crossTenantAttempts,
+      crossTenantFalseSuccesses,
+      warmHeapMb,
+      finalHeapMb,
+      heapSamples,
+      workloads,
+      gate,
+      positiveControlDetected: !positiveControl.pass,
+      productSha: process.env.NFR_PERF_PRODUCT_SHA || 'WORKTREE',
+    });
     if (!gate.pass) process.exitCode = 1;
   } finally {
     if (server) await new Promise<void>((resolve) => server!.close(() => resolve()));
@@ -223,9 +347,13 @@ async function main(): Promise<void> {
     try {
       // The outbox is deliberately append-only and has no FK to organizations:
       // immutable performance evidence survives while every mutable fixture is removed.
-      await pool.query(`DELETE FROM case_core WHERE organization_id = ANY($1)`, [[org, foreignOrg]]);
+      await pool.query(`DELETE FROM case_core WHERE organization_id = ANY($1)`, [
+        [org, foreignOrg],
+      ]);
       await pool.query(`DELETE FROM projects WHERE organization_id = ANY($1)`, [[org, foreignOrg]]);
-      await pool.query(`DELETE FROM organization_members WHERE organization_id = ANY($1)`, [[org, foreignOrg]]);
+      await pool.query(`DELETE FROM organization_members WHERE organization_id = ANY($1)`, [
+        [org, foreignOrg],
+      ]);
       await pool.query(`DELETE FROM users WHERE organization_id = ANY($1)`, [[org, foreignOrg]]);
       await pool.query(`DELETE FROM organizations WHERE id = ANY($1)`, [[org, foreignOrg]]);
       await pool.query('COMMIT');
@@ -233,8 +361,13 @@ async function main(): Promise<void> {
         `SELECT count(*)::int AS n FROM case_workspace_event_outbox WHERE organization_id = ANY($1)`,
         [[org, foreignOrg]]
       );
-      extendCheckpoint({ cleanup: { immutableOutboxRowsPreserved: immutableResidue.rows[0]?.n || 0,
-        mutableFixtureRowsRemoved: true, completedAt: new Date().toISOString() } });
+      extendCheckpoint({
+        cleanup: {
+          immutableOutboxRowsPreserved: immutableResidue.rows[0]?.n || 0,
+          mutableFixtureRowsRemoved: true,
+          completedAt: new Date().toISOString(),
+        },
+      });
     } catch (error) {
       await pool.query('ROLLBACK').catch(() => undefined);
       throw error;
@@ -244,8 +377,14 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((error) => {
-  atomicCheckpoint({ status: 'ERROR', error: error instanceof Error ? error.message : String(error), at: new Date().toISOString() });
-  console.error('[NFR-PERF-001]', error);
-  process.exit(1);
-});
+main()
+  .then(() => process.exit(process.exitCode || 0))
+  .catch((error) => {
+    atomicCheckpoint({
+      status: 'ERROR',
+      error: error instanceof Error ? error.message : String(error),
+      at: new Date().toISOString(),
+    });
+    console.error('[NFR-PERF-001]', error);
+    process.exit(1);
+  });

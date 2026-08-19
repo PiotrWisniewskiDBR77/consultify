@@ -5,7 +5,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import { AccessBlockedModal } from '../components/access/AccessBlockedModal';
 import { ForbiddenAccessBanner } from '../components/access/ForbiddenAccessBanner';
-import { UnifiedChatPanel } from '../components/AIChat/UnifiedChatPanel';
 import { AIFreezeBanner } from '../components/AIFreezeBanner';
 import { DemoSessionManager } from '../components/demo/DemoSessionManager';
 import { DocumentSidePanel } from '../components/documents/DocumentSidePanel';
@@ -36,6 +35,15 @@ import { useConversationStore } from '../store/useConversationStore';
 import { AppView } from '../types';
 import { createWorkspaceContext, getDefaultWorkspaceType } from '../types/workspace';
 import { isArtifactStudioLaneEnabled } from '../utils/artifactStudioFlags';
+
+// The full Teresa workspace pulls in providers, artifact editors and tool
+// renderers that are not needed to paint the requested route. Keep the shell
+// interactive first and load chat only when its visible panel is mounted.
+const UnifiedChatPanel = React.lazy(() =>
+  import('../components/AIChat/UnifiedChatPanel').then((module) => ({
+    default: module.UnifiedChatPanel,
+  }))
+);
 
 /**
  * A breadcrumb segment. A plain string preserves the historical behaviour
@@ -471,32 +479,34 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                     >
                       <X size={16} />
                     </button>
-                    <UnifiedChatPanel
-                      mode="split"
-                      workspaceContext={
-                        artifactStudioUsesGlobalChat
-                          ? activeWorkspaceContext || workspaceContext
-                          : workspaceContext
-                      }
-                      showModeToggle={true}
-                      onModeToggle={() => {
-                        const effectiveContext = artifactStudioUsesGlobalChat
-                          ? activeWorkspaceContext || workspaceContext
-                          : workspaceContext;
-                        if (effectiveContext?.type === 'document') {
-                          navigate('/wordy');
-                        } else {
-                          expandToFullScreen();
+                    <React.Suspense fallback={null}>
+                      <UnifiedChatPanel
+                        mode="split"
+                        workspaceContext={
+                          artifactStudioUsesGlobalChat
+                            ? activeWorkspaceContext || workspaceContext
+                            : workspaceContext
                         }
-                      }}
-                      showHistoryTrigger={true}
-                      showFocusMode={true}
-                      kickoffMessage={chatKickoffMessage || undefined}
-                      onKickoffConsumed={clearChatKickoffMessage}
-                      systemPrompt={chatSystemPrompt || undefined}
-                      quickPrompts={chatQuickPrompts || undefined}
-                      contextActions={chatContextActions || undefined}
-                    />
+                        showModeToggle={true}
+                        onModeToggle={() => {
+                          const effectiveContext = artifactStudioUsesGlobalChat
+                            ? activeWorkspaceContext || workspaceContext
+                            : workspaceContext;
+                          if (effectiveContext?.type === 'document') {
+                            navigate('/wordy');
+                          } else {
+                            expandToFullScreen();
+                          }
+                        }}
+                        showHistoryTrigger={true}
+                        showFocusMode={true}
+                        kickoffMessage={chatKickoffMessage || undefined}
+                        onKickoffConsumed={clearChatKickoffMessage}
+                        systemPrompt={chatSystemPrompt || undefined}
+                        quickPrompts={chatQuickPrompts || undefined}
+                        contextActions={chatContextActions || undefined}
+                      />
+                    </React.Suspense>
                   </div>
                 </>
               )}
