@@ -60,6 +60,13 @@ interface TelemetryRow {
   observations: string;
 }
 
+interface PartnerBindingStatus {
+  receiptTablePresent: boolean;
+  activeBound: number;
+  activeUnbound: number;
+  receipts: Array<Record<string, any>>;
+}
+
 function parseArgs(argv: string[]): { databaseUrl?: string; out: string } {
   let databaseUrl: string | undefined;
   let out = EVIDENCE_DIR;
@@ -128,11 +135,16 @@ function loadInventory(): Record<string, any> {
   return inventories;
 }
 
-async function loadTelemetry(databaseUrl: string): Promise<TelemetryRow[]> {
+async function loadDatabaseSnapshot(databaseUrl: string): Promise<{
+  telemetry: TelemetryRow[];
+  partnerBinding: PartnerBindingStatus;
+}> {
   const { Pool } = await import('pg');
   const pool = new Pool({ connectionString: databaseUrl });
+  const client = await pool.connect();
   try {
-    const result = await pool.query<TelemetryRow>(
+    await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
+    const telemetry = await client.query<TelemetryRow>(
       `SELECT domain, writer_id, access_kind,
               count(DISTINCT organization_id) FILTER (WHERE tenant_resolution = 'resolved')::text AS tenants,
               count(*)::text AS observations
@@ -140,8 +152,52 @@ async function loadTelemetry(databaseUrl: string): Promise<TelemetryRow[]> {
         GROUP BY domain, writer_id, access_kind
         ORDER BY domain, writer_id, access_kind`
     );
-    return result.rows;
+    const counts = await client.query(
+      `SELECT count(*) FILTER (WHERE owner_organization_id IS NOT NULL)::int AS bound,
+              count(*) FILTER (WHERE owner_organization_id IS NULL)::int AS unbound
+         FROM partner_organizations WHERE lower(coalesce(status,'active'))='active'`
+    );
+    const table = await client.query(
+      `SELECT to_regclass('public.partner_owner_binding_receipts') IS NOT NULL AS present`
+    );
+    const receiptTablePresent = table.rows[0]?.present === true;
+    const receipts = receiptTablePresent
+      ? (await client.query(
+          `SELECT run_id,operation,apply_run_id,input_sha256,result_sha256,actor_user_id,
+                  executed_at::text,mapping_count,mappings_json
+             FROM partner_owner_binding_receipts ORDER BY executed_at,run_id`
+        )).rows
+      : [];
+    const expected = new Map<string, string | null>();
+    for (const receipt of receipts) {
+      for (const mapping of receipt.mappings_json as Array<Record<string, string>>) {
+        expected.set(mapping.partnerOrganizationId,
+          receipt.operation === 'APPLY' ? mapping.ownerOrganizationId : null);
+      }
+    }
+    if (expected.size) {
+      const live = await client.query(
+        `SELECT id::text AS id,owner_organization_id FROM partner_organizations
+          WHERE id::text=ANY($1::text[]) ORDER BY id`, [[...expected.keys()]]);
+      if (live.rowCount !== expected.size) throw new Error('Partner binding report: receipt row missing');
+      for (const row of live.rows) {
+        if ((row.owner_organization_id ?? null) !== expected.get(row.id)) {
+          throw new Error(`Partner binding report: live state contradicts receipt for ${row.id}`);
+        }
+      }
+    }
+    await client.query('COMMIT');
+    return { telemetry: telemetry.rows, partnerBinding: {
+      receiptTablePresent,
+      activeBound: Number(counts.rows[0]?.bound || 0),
+      activeUnbound: Number(counts.rows[0]?.unbound || 0),
+      receipts,
+    } };
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw error;
   } finally {
+    client.release();
     await pool.end();
   }
 }
@@ -154,9 +210,10 @@ function render(params: {
   registry: RegistryWriterRow[];
   inventories: Record<string, any>;
   telemetry: TelemetryRow[] | null;
+  partnerBinding: PartnerBindingStatus | null;
   generatedFromSha: string;
 }): string {
-  const { registry, inventories, telemetry, generatedFromSha } = params;
+  const { registry, inventories, telemetry, partnerBinding, generatedFromSha } = params;
   const counts = registry.reduce<Record<string, number>>((accumulator, row) => {
     accumulator[row.state] = (accumulator[row.state] || 0) + 1;
     return accumulator;
@@ -249,6 +306,27 @@ function render(params: {
   lines.push(`| **total** | **${inventoriedWriters}** | **${inventoryTotals.reduce((sum, entry) => sum + entry.readers, 0)}** | **${registry.length}** |`);
   lines.push('');
 
+  lines.push('## Historical Partner tenant bindings');
+  lines.push('');
+  if (!partnerBinding) {
+    lines.push('NO PARTNER BINDING STATE WAS READ. Use `--database-url` before making a backfill claim.');
+  } else {
+    lines.push(`Active Partner rows: **${partnerBinding.activeBound} bound**, **${partnerBinding.activeUnbound} unbound**.`);
+    if (!partnerBinding.receiptTablePresent) {
+      lines.push('The immutable binding receipt table is absent; no governed binding execution can be claimed.');
+    } else if (partnerBinding.receipts.length === 0) {
+      lines.push('The receipt table was read and contains no owner-binding executions.');
+    } else {
+      lines.push('');
+      lines.push('| run | operation | apply run | actor | executed | mappings | input sha256 | result sha256 |');
+      lines.push('| --- | --- | --- | --- | --- | ---: | --- | --- |');
+      for (const receipt of partnerBinding.receipts) {
+        lines.push(`| ${receipt.run_id} | ${receipt.operation} | ${receipt.apply_run_id || '_n/a_'} | ${receipt.actor_user_id} | ${receipt.executed_at} | ${receipt.mapping_count} | ${receipt.input_sha256} | ${receipt.result_sha256} |`);
+      }
+    }
+  }
+  lines.push('');
+
   lines.push('## Rules this report is generated under');
   lines.push('');
   lines.push('- A writer is `disabled` only if the running code refuses it by default.');
@@ -263,7 +341,9 @@ async function main(): Promise<void> {
   const { databaseUrl, out } = parseArgs(process.argv.slice(2));
   const registry = await loadRegistry();
   const inventories = loadInventory();
-  const telemetry = databaseUrl ? await loadTelemetry(databaseUrl) : null;
+  const databaseSnapshot = databaseUrl ? await loadDatabaseSnapshot(databaseUrl) : null;
+  const telemetry = databaseSnapshot?.telemetry || null;
+  const partnerBinding = databaseSnapshot?.partnerBinding || null;
 
   const generatedFromSha =
     process.env.CUTOVER_REPORT_SHA ||
@@ -273,7 +353,7 @@ async function main(): Promise<void> {
       .trim();
 
   fs.mkdirSync(out, { recursive: true });
-  const markdown = render({ registry, inventories, telemetry, generatedFromSha });
+  const markdown = render({ registry, inventories, telemetry, partnerBinding, generatedFromSha });
   fs.writeFileSync(path.join(out, 'ZERO_WRITER_PARITY_REPORT.md'), markdown);
   fs.writeFileSync(
     path.join(out, 'ZERO_WRITER_PARITY_REPORT.json'),
@@ -288,6 +368,7 @@ async function main(): Promise<void> {
           readers: (data.readers || []).length,
         })),
         telemetry,
+        partnerBinding,
       },
       null,
       2
