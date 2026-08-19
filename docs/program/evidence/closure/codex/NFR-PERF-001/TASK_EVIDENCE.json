@@ -1,63 +1,108 @@
 {
   "taskId": "NFR-PERF-001",
-  "baselineSha": "9d4d7f2ccd15eb3ecfe5530ce2a23b7af971d69f",
-  "productSha": "c2ebb9db52cdc84b3ba5fb987caaa0257055b208",
-  "technicalSourceSha": "163a702f128518965bcdb132dda9c664231a75fa",
-  "requalificationSha": "163a702f128518965bcdb132dda9c664231a75fa",
-  "reconciliationSha": "163a702f128518965bcdb132dda9c664231a75fa",
-  "financeB2PerformanceGate": {
-    "verdict": "PERF_FAIL",
-    "candidateSha": "163a702f128518965bcdb132dda9c664231a75fa",
-    "workload": "50 distinct models x 60 months x 2580 persisted outputs per approval",
-    "thresholdP95Ms": 1200,
-    "attemptP95Ms": [
-      2404.6,
-      2277.9,
-      2279.5
-    ],
-    "medianP95Ms": 2279.5,
-    "interpretation": "All three source-bound Finance B2 attempts exceed the release threshold. The set-based UNNEST change is functionally green but does not satisfy the Finance B2 performance gate.",
-    "preservedEvidence": "Existing Case profile and literal 30-minute steady-load measurements remain separate historical evidence and are not overwritten by this Finance-specific failure."
-  },
-  "leaseSha256": "not_applicable_integrator_bounded_task",
+  "baselineSha": "123aa5065f027c3d827462d9304e0a30ffe4b8f1",
+  "productSha": "6bb95088c3c1922a7805893890f0c3657b3ac42b",
+  "technicalSourceSha": "6bb95088c3c1922a7805893890f0c3657b3ac42b",
   "changedPaths": [
-    "server/src/routes/caseWorkspace/cases.routes.ts",
-    "server/src/services/caseWorkspace/caseCoreService.ts",
-    "server/src/services/caseWorkspace/caseWorkspaceAuthContext.ts",
     "server/src/services/caseWorkspace/__tests__/performance/lib/steadyLoadGate.ts",
     "server/src/services/caseWorkspace/__tests__/performance/steadyAuthenticatedLoad.ts",
-    "server/src/services/caseWorkspace/__tests__/performance/steadyLoadGate.test.ts"
+    "server/src/services/caseWorkspace/__tests__/performance/steadyLoadGate.test.ts",
+    "src/layouts/MainLayout.tsx",
+    "tests/e2e/performance/nfr-perf-web-vitals.signed.spec.ts"
   ],
   "changedPathRationale": {
-    "server/src/routes/caseWorkspace/cases.routes.ts": "Removes redundant create preflight checkout and resolves case visibility before governed close/cancel policy for enumeration-safe 404.",
-    "server/src/services/caseWorkspace/caseCoreService.ts": "Pins ACTIVE membership authorization to the createCase transaction.",
-    "server/src/services/caseWorkspace/caseWorkspaceAuthContext.ts": "Adds a transaction-client membership primitive with unchanged fail-closed semantics.",
-    "server/src/services/caseWorkspace/__tests__/performance/lib/steadyLoadGate.ts": "Encodes measurable API, write, error, tenant and heap SLOs.",
-    "server/src/services/caseWorkspace/__tests__/performance/steadyAuthenticatedLoad.ts": "Provides mounted signed-JWT steady load, second-tenant negative stream, heap sampling and atomic artifacts.",
-    "server/src/services/caseWorkspace/__tests__/performance/steadyLoadGate.test.ts": "Proves deliberately breached thresholds are detected."
+    "server/src/services/caseWorkspace/__tests__/performance/lib/steadyLoadGate.ts": "Defines per-workload read/write/error/heap SLO evaluation and a deliberate positive control.",
+    "server/src/services/caseWorkspace/__tests__/performance/steadyAuthenticatedLoad.ts": "Runs the literal 30-minute, 50-user mounted signed workload across Case, My Work, Settings, Initiatives and Finance with tenant-negative traffic and exact write reconciliation.",
+    "server/src/services/caseWorkspace/__tests__/performance/steadyLoadGate.test.ts": "Proves threshold breaches are detected.",
+    "src/layouts/MainLayout.tsx": "Lazy-loads the global chat panel so unrelated mounted workspaces do not pay its initial bundle cost.",
+    "tests/e2e/performance/nfr-perf-web-vitals.signed.spec.ts": "Measures cold signed desktop and mobile Web Vitals for five mounted workspaces without interception."
   },
   "ownerTables": ["organizations", "users", "organization_members", "projects", "case_core", "case_workspace_event_outbox"],
   "commands": [
-    {"command": "case-workspace profile: 1000 creates at concurrency 15 before and after on the same isolated tmpfs PostgreSQL", "exitCode": 0},
-    {"command": "NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false POSTGRES_SKIP_INIT_IN_TEST=1 DATABASE_URL=<isolated-tmpfs-pg> npx vitest run <3 focused CaseWorkspace files> steadyLoadGate.test.ts --environment node --reporter=dot", "exitCode": 0},
+    {"command": "fresh/repeat/dry migrations on nfr_perf_123aa_20260819", "exitCode": 0, "freshLedger": 789, "repeatApplying": 0, "dryPending": 0},
     {"command": "NFR_PERF_RELEASE_GATE=1 NFR_PERF_DURATION_MS=1800000 NFR_PERF_USERS=50 NODE_OPTIONS=--expose-gc npx tsx server/src/services/caseWorkspace/__tests__/performance/steadyAuthenticatedLoad.ts", "exitCode": 0},
-    {"command": "NODE_OPTIONS=--max-old-space-size=8192 npm --prefix server run typecheck", "exitCode": 0},
-    {"command": "NODE_OPTIONS=--max-old-space-size=8192 npm run build:backend", "exitCode": 0},
-    {"command": "git diff --check -- <six-path NFR allowlist>", "exitCode": 0}
+    {"command": "npx playwright test tests/e2e/performance/nfr-perf-web-vitals.signed.spec.ts --project=chromium --workers=1 --retries=0 --trace=on", "exitCode": 0},
+    {"command": "focused CaseWorkspace RealPG regression plus steadyLoadGate", "exitCode": 0},
+    {"command": "root/server typecheck, backend/frontend build, diff-check", "exitCode": 0}
   ],
   "denominators": {
-    "createCaseProfile": {"callsBefore": 1000, "callsAfter": 1000, "concurrency": 15, "beforeP95Ms": 102.3, "beforeP99Ms": 331.58, "beforeMaxMs": 352.19, "afterP95Ms": 96.39, "afterP99Ms": 111.16, "afterMaxMs": 119.8, "p99ImprovementPct": 66.5},
-    "focusedRegression": {"filesPassed": 4, "filesFailed": 0, "testsPassed": 39, "testsFailed": 0},
-    "literalSteadyLoad": {"durationMsRequested": 1800000, "durationMsActual": 1800523, "authenticatedUsers": 50, "totalRequests": 89900, "writeRequests": 3550, "errors": 0, "errorRatePct": 0, "apiP95Ms": 153.71, "apiP99Ms": 277.21, "writeP95Ms": 315.2, "writeP99Ms": 349.16, "secondTenantAttempts": 1788, "secondTenantFalseSuccesses": 0, "heapWarmMb": 52.45, "heapFinalMb": 53.35, "heapGrowthPct": 1.716, "lastTenMinutesMonotonic": false, "positiveControlDetected": true}
+    "focusedRegression": {"filesPassed": 4, "filesFailed": 0, "testsPassed": 33, "testsFailed": 0, "retries": 0},
+    "literalSteadyLoad": {
+      "durationMsRequested": 1800000,
+      "durationMsActual": 1801128,
+      "authenticatedUsers": 50,
+      "totalRequests": 89950,
+      "errors": 0,
+      "errorRatePct": 0,
+      "readP95Ms": 208.672,
+      "readP99Ms": 346.36,
+      "writeRequests": 3550,
+      "writeP95Ms": 437.352,
+      "writeP99Ms": 702.966,
+      "expectedPersistedWritesIncludingBaseline": 3600,
+      "actualPersistedWrites": 3600,
+      "foreignAttempts": 1786,
+      "foreignFalseSuccesses": 0,
+      "heapWarmMb": 358.58,
+      "heapFinalMb": 360.87,
+      "heapGrowthPct": 0.6386,
+      "lastTenMinutesMonotonic": false,
+      "positiveControlDetected": true
+    },
+    "signedWebVitals": {
+      "contextsPassed": 40,
+      "contextsFailed": 0,
+      "samplesPerSurfaceDevice": 4,
+      "desktopLcpP75Ms": {"case": 1176, "myWork": 1048, "settings": 1036, "initiatives": 1020, "finance": 1696},
+      "mobileLcpP75Ms": {"case": 1056, "myWork": 944, "settings": 1056, "initiatives": 1060, "finance": 1128},
+      "maxCls": 0.005376,
+      "maxInpMs": 80
+    }
   },
-  "fixtures": {"database": "isolated pgvector PostgreSQL 16 in Docker tmpfs on port 56831", "artifact": "/tmp/nfr-perf-release-30m.json", "atomicCheckpoint": true, "mutableResidueAfterRun": {"organizations": 0, "organizationMembers": 0, "cases": 0}, "immutableOutboxRowsPreservedForRun": 3551},
-  "negativeControls": {"secondTenantAttempts": 1788, "secondTenantFalseSuccesses": 0, "foreignOrUnknownCancelStatus": 404, "positiveControlDetected": true, "positiveControlBreachedChecks": 7},
-  "browserArtifacts": [],
-  "rollback": {"method": "Revert c2ebb9db52cdc84b3ba5fb987caaa0257055b208; no schema migration was introduced and append-only events remain immutable.", "executed": false},
-  "technicalVerdict": "PASS_OWNER_FREE_BACKEND_PERFORMANCE",
+  "thresholds": {
+    "readP95Ms": 1500,
+    "readP99Ms": 2500,
+    "writeP95Ms": 2500,
+    "errorRatePct": 1,
+    "heapGrowthPct": 20,
+    "desktopLcpP75Ms": 2500,
+    "mobileLcpP75Ms": 4000,
+    "cls": 0.1,
+    "inpMs": 200
+  },
+  "fixtures": {
+    "database": "nfr_perf_123aa_20260819 on isolated PostgreSQL 16",
+    "migrationLedger": {"total": 789, "distinct": 789, "failed": 0, "nullChecksum": 0},
+    "steadyArtifact": "/private/tmp/nfr-perf-release-123aa.json",
+    "webVitalsArtifact": "/private/tmp/nfr-perf-web-vitals4.json",
+    "traceSha256": "025cf28dab7d3df47e93bbcfb9d7f60d472a3d607da1e4c92518ac680d805065",
+    "mutableResidue": {"organizations": 0, "users": 0, "organizationMembers": 0, "projects": 0, "cases": 0, "testSupportRuns": 0},
+    "immutableOutboxRowsPreservedBeforeDatabaseDrop": 3716,
+    "advisoryLocks": 0,
+    "ports3510And3511Listening": 0
+  },
+  "negativeControls": {
+    "foreignAttempts": 1786,
+    "foreignFalseSuccesses": 0,
+    "positiveControlDetected": true,
+    "autonomousRetries": 0
+  },
+  "nonQualifyingAttempts": [
+    "Initial short runner used stale case-id/shared-baseline fixtures; corrected before qualification.",
+    "Initial browser run measured the onboarding overlay; exact user onboarding state was then seeded.",
+    "Three-sample mobile p75 was mathematically the maximum; the minimum was corrected to four cold samples without weakening thresholds.",
+    "Earlier UI bundle failures were corrected by lazy-loading the global chat panel; the final 40-context run is the qualifying run."
+  ],
+  "technicalVerdict": "PASS_REPOSITORY_CURRENT_SHA",
   "verdict": "PARTIAL",
   "openBlockers": [
-    "Browser Web Vitals (LCP, CLS and interaction thresholds on mounted surfaces) remain a separate UI/runtime qualification.",
-    "A deployed stability window and production alert breach exercise were not authorized by this repository-only packet."
-  ]
+    "The provisional repository Web Vitals thresholds require explicit Product owner acceptance before literal task DONE.",
+    "A deployed stability window and production alert-breach exercise remain release-only and were not authorized."
+  ],
+  "releaseBoundary": {
+    "repositoryImplementation": "QUALIFIED",
+    "ownerThresholdAcceptance": "NOT_RECORDED",
+    "deployedStabilityWindow": "NOT_EXECUTED_NOT_AUTHORIZED",
+    "release": "NOT_AUTHORIZED"
+  }
 }
