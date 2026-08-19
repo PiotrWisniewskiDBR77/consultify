@@ -15,6 +15,7 @@ const InitiativeController = InitiativeControllerRaw as any;
 import { StaffingPlanController } from '../../controllers/StaffingPlanController.js';
 import { validateOrgMembership, verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
+import { requireCanonicalExecutionWriter } from '../../middleware/executionSpineLegacyReadOnly.middleware.js';
 import { requireInitiativeCapability } from '../../middleware/effectiveCapability.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess, requireOrgRole } from '../../middleware/rbac.middleware.js';
@@ -151,6 +152,10 @@ router.use(demoContextMiddleware);
 // Canonical Initiatives + Execution vertical. Parent middleware supplies authenticated,
 // tenant-scoped actor context; the child router additionally enforces project capability.
 router.use('/runtime-v1', initiativesExecutionRuntimeRouter);
+// Runtime-v1 above remains the sole execution-work writer. Everything below
+// is the legacy Initiative/PMO compatibility surface and is read-only under
+// AMD-EXE-SPINE-AUTHORITY-004.
+router.use(requireCanonicalExecutionWriter);
 
 // ==========================================
 // INITIATIVE CRUD
