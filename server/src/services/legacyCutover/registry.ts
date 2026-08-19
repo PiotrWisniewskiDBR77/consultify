@@ -52,7 +52,7 @@ export const FINANCE_CUTOVER: LegacyCutoverDomainConfig = {
 
 /**
  * PARTNERS. Ported from `partnerLegacyCutover.ts` (PRT-MVP-LEGACY-CUTOVER-001).
- * The eight writers that already refuse keep refusing, with the same
+ * All sixteen inventoried writers now refuse, with the same
  * `PARTNER_LEGACY_WRITER_DISABLED` code and the same successors. Partners has no
  * canonical alias registry, so every rule resolves `not_applicable` and the 409
  * branch is unreachable here — behaviour is byte-identical to before, while the
@@ -131,78 +131,72 @@ export const PARTNERS_CUTOVER: LegacyCutoverDomainConfig = {
       reason: 'V8 payout settings update is the canonical owner.',
     },
 
-    // --- the eight that were declared but never covered ------------------
-    // These already passed through the old guard as untyped
-    // `legacy_uncovered_writer` traffic. Naming them gives each one an id, a
-    // reason and a row in the report, instead of an anonymous count.
+    // --- successors completed after the original eight -------------------
+    // W09 and W13-W15 now have transactional V8 commands. W10-W12 and W16
+    // preserve their approved no-write 503 contract behind explicit V8 routes.
     {
       writerId: 'PRT-W09',
       method: 'POST',
       path: /^\/connect\/?$/,
-      state: 'observed',
-      successor: null,
-      reason:
-        'The only INSERT into partner_organizations in the server (partners.routes.ts:321). V8 onboarding requires a pre-existing organization, so retiring this would leave no way to create one.',
+      state: 'disabled',
+      successor: '/api/v8/partner/connect',
+      reason: 'V8 self-connect is the canonical transactional owner.',
     },
     {
       writerId: 'PRT-W10',
       method: 'POST',
       path: /^\/clients\/?$/,
-      state: 'observed',
-      successor: null,
-      reason:
-        '503 stub at partners.routes.ts:1359 that touches no table. Safe to retire once an owner confirms the stub is intentional; retiring it changes no data path.',
+      state: 'disabled',
+      successor: '/api/v8/partner/clients',
+      reason: 'V8 preserves the authorized no-write 503 client-creation contract.',
     },
     {
       writerId: 'PRT-W11',
       method: 'POST',
       path: /^\/employees\/?$/,
-      state: 'observed',
-      successor: null,
-      reason: '503 stub at partners.routes.ts:1425 that touches no table.',
+      state: 'disabled',
+      successor: '/api/v8/partner/employees',
+      reason: 'V8 preserves the authorized no-write 503 employee-creation contract.',
     },
     {
       writerId: 'PRT-W12',
       method: 'POST',
       path: /^\/access-links\/?$/,
-      state: 'observed',
-      successor: null,
-      reason: '503 stub at partners.routes.ts:1459 that touches no table.',
+      state: 'disabled',
+      successor: '/api/v8/partner/access-links',
+      reason: 'V8 preserves the authorized no-write 503 access-link contract.',
     },
     {
       writerId: 'PRT-W13',
       method: 'POST',
       path: /^\/certifications\/[^/]+\/modules\/[^/]+\/progress\/?$/,
-      state: 'observed',
-      successor: null,
-      reason:
-        'Live certification progress write (partners.routes.ts:1702). No certification surface exists in V8 at all, so this needs a successor built, not a guard.',
+      state: 'disabled',
+      successor: '/api/v8/partner/certifications/:certId/modules/:moduleId/progress',
+      reason: 'V8 certification progress command is the canonical transactional owner.',
     },
     {
       writerId: 'PRT-W14',
       method: 'POST',
       path: /^\/certifications\/[^/]+\/exam\/start\/?$/,
-      state: 'observed',
-      successor: null,
-      reason:
-        'Live exam start (partners.routes.ts:1783), called unconditionally by the exam UI with no fallback. No V8 counterpart.',
+      state: 'disabled',
+      successor: '/api/v8/partner/certifications/:certId/exam/start',
+      reason: 'V8 certification exam-start command is the canonical transactional owner.',
     },
     {
       writerId: 'PRT-W15',
       method: 'POST',
       path: /^\/certifications\/[^/]+\/exam\/submit\/?$/,
-      state: 'observed',
-      successor: null,
-      reason:
-        'Live exam submission (partners.routes.ts:1819), called unconditionally by the exam UI with no fallback. No V8 counterpart.',
+      state: 'disabled',
+      successor: '/api/v8/partner/certifications/:certId/exam/submit',
+      reason: 'V8 certification exam-submit command is the canonical transactional owner.',
     },
     {
       writerId: 'PRT-W16',
       method: 'POST',
       path: /^\/licenses\/order\/?$/,
-      state: 'observed',
-      successor: null,
-      reason: '503 stub at partners.routes.ts:1921 that touches no table.',
+      state: 'disabled',
+      successor: '/api/v8/partner/licenses/order',
+      reason: 'V8 preserves the authorized no-write 503 license-order contract.',
     },
   ],
 };

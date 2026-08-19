@@ -56,6 +56,14 @@ export const PROTECTED_PARTNER_LEGACY_WRITERS: ProtectedLegacyWriter[] = [
     path: /^\/certifications\/[^/]+\/exam\/submit\/?$/,
     successor: '/api/v8/partner/certifications/:certId/exam/submit',
   },
+  { method: 'POST', path: /^\/clients\/?$/, successor: '/api/v8/partner/clients' },
+  { method: 'POST', path: /^\/employees\/?$/, successor: '/api/v8/partner/employees' },
+  { method: 'POST', path: /^\/access-links\/?$/, successor: '/api/v8/partner/access-links' },
+  {
+    method: 'POST',
+    path: /^\/licenses\/order\/?$/,
+    successor: '/api/v8/partner/licenses/order',
+  },
 ];
 
 export function partnerLegacyRollbackEnabled(env: NodeJS.ProcessEnv = process.env): boolean {

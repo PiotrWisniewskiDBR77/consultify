@@ -57,6 +57,41 @@ const router = Router();
 export const V8_PARTNER_READ_CONTRACT = 'partner_runtime_read_v1';
 export const V8_PARTNER_PROGRAM_CONTRACT = 'partner_program_p29_v1';
 
+const unavailablePartnerWriter = (capability: string) =>
+  asyncHandler(async (_req: AuthRequest, res: Response) =>
+    res.status(503).json({
+      success: false,
+      code: 'FEATURE_NOT_AVAILABLE',
+      capability,
+      message: 'This Partner capability is not available yet.',
+    })
+  );
+
+const requireBoundPartnerTenant = asyncHandler(
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
+    const { organizationId, userId } = getV8Context(req);
+    const binding = await DbPromise.get<{ id: string }>(
+      `SELECT po.id
+         FROM partner_organizations po
+         JOIN partner_users pu ON pu.partner_org_id=po.id
+        WHERE po.owner_organization_id=?
+          AND pu.user_id=?
+          AND lower(po.status)='active'
+          AND lower(pu.status)='active'
+        LIMIT 1`,
+      [organizationId, userId],
+      { fallback: false }
+    );
+    if (!binding) {
+      return res.status(403).json({
+        error: 'Partner organization required',
+        code: 'PARTNER_ORG_REQUIRED',
+      });
+    }
+    next();
+  }
+);
+
 // AMD-PRT-ECONOMICS-002: economic mutations are refused here, as the FIRST
 // middleware on this router. Placement is load-bearing: the demo-dataset
 // middleware below performs writes (seeding), so guarding after it would let a
@@ -74,6 +109,39 @@ router.use(
 // Self-connect acquires Partner capability, so live tenant membership and an
 // ADMIN/OWNER role must be established before any resolver/seeder can write.
 router.use('/connect', requireActiveMembership, requireOrgRole('admin'));
+
+// These four legacy endpoints were deliberate no-write 503 stubs. Their V8
+// successors preserve that honest contract until the corresponding business
+// commands are approved. They are registered before the demo seeder so even an
+// authorized request cannot mutate Partner demo data on its way to a refusal.
+router.post(
+  '/clients',
+  requireActiveMembership,
+  requireOrgRole('admin'),
+  requireBoundPartnerTenant,
+  unavailablePartnerWriter('partner_client_creation')
+);
+router.post(
+  '/employees',
+  requireActiveMembership,
+  requireOrgRole('admin'),
+  requireBoundPartnerTenant,
+  unavailablePartnerWriter('partner_employee_creation')
+);
+router.post(
+  '/access-links',
+  requireActiveMembership,
+  requireOrgRole('admin'),
+  requireBoundPartnerTenant,
+  unavailablePartnerWriter('partner_access_link_creation')
+);
+router.post(
+  '/licenses/order',
+  requireActiveMembership,
+  requireOrgRole('admin'),
+  requireBoundPartnerTenant,
+  unavailablePartnerWriter('partner_license_order')
+);
 
 router.use(
   asyncHandler(async (req: AuthRequest, _res: Response, next) => {

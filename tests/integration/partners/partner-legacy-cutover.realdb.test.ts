@@ -22,6 +22,7 @@ import {
   PROTECTED_PARTNER_LEGACY_WRITERS,
   partnerLegacyCutoverGuard,
 } from '../../../server/src/services/partnerLegacyCutover.ts';
+import { PARTNERS_CUTOVER } from '../../../server/src/services/legacyCutover/registry.ts';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const REQUEST_PREFIX = 'prt-cutover-proof-';
@@ -157,14 +158,16 @@ beforeAll(async () => {
     ]
   );
   await sql.query(
-    `INSERT INTO partner_organizations(id,name,contact_email,status,referral_code,referral_link_slug)
-     VALUES($1,$2,$3,'active',$4,$5)`,
+    `INSERT INTO partner_organizations
+      (id,name,contact_email,status,referral_code,referral_link_slug,owner_organization_id)
+     VALUES($1,$2,$3,'active',$4,$5,$6)`,
     [
       partnerOrgId,
       `PRT partner ${suffix}`,
       `partner-${suffix}@test.local`,
       `PRT-${suffix}`,
       `prt-${suffix}`,
+      orgId,
     ]
   );
   await sql.query(
@@ -251,12 +254,16 @@ afterAll(async () => {
 
 describe.sequential('Partner legacy cutover guard (real PG)', () => {
   it('declares every V8-owned legacy writer in the zero-writer guard', () => {
-    expect(PROTECTED_PARTNER_LEGACY_WRITERS).toHaveLength(12);
+    expect(PROTECTED_PARTNER_LEGACY_WRITERS).toHaveLength(16);
     expect(PROTECTED_PARTNER_LEGACY_WRITERS.map((entry) => entry.successor).sort()).toEqual(
       [
         '/api/v8/partner/campaign-links',
         '/api/v8/partner/campaign-links/:linkId',
         '/api/v8/partner/connect',
+        '/api/v8/partner/clients',
+        '/api/v8/partner/employees',
+        '/api/v8/partner/access-links',
+        '/api/v8/partner/licenses/order',
         '/api/v8/partner/certifications/:certId/exam/start',
         '/api/v8/partner/certifications/:certId/exam/submit',
         '/api/v8/partner/certifications/:certId/modules/:moduleId/progress',
@@ -268,6 +275,9 @@ describe.sequential('Partner legacy cutover guard (real PG)', () => {
         '/api/v8/partner/payouts/request',
       ].sort()
     );
+    expect(PARTNERS_CUTOVER.writers).toHaveLength(16);
+    expect(PARTNERS_CUTOVER.writers.every((entry) => entry.state === 'disabled')).toBe(true);
+    expect(PARTNERS_CUTOVER.writers.every((entry) => Boolean(entry.successor))).toBe(true);
   });
 
   it('blocks a V8-owned legacy writer by default and persists telemetry', async () => {
@@ -354,6 +364,107 @@ describe.sequential('Partner legacy cutover guard (real PG)', () => {
     expect(writeNext).not.toHaveBeenCalled();
     expect(writeResponse.state.status).toBe(410);
     expect((await event('uncovered')).access_kind).toBe('legacy_writer_blocked');
+  });
+
+  it('mounts four authorized no-write successors and retires their legacy stubs', async () => {
+    const writers = [
+      { path: '/clients', capability: 'partner_client_creation' },
+      { path: '/employees', capability: 'partner_employee_creation' },
+      { path: '/access-links', capability: 'partner_access_link_creation' },
+      { path: '/licenses/order', capability: 'partner_license_order' },
+    ];
+    const sensitiveSnapshot = async (client: Client = sql) =>
+      (
+        await client.query(
+          `SELECT
+            (SELECT COALESCE(jsonb_agg(to_jsonb(x) ORDER BY x.id),'[]'::jsonb)
+               FROM partner_organizations x WHERE x.id IN ($1,$2)) partner_orgs,
+            (SELECT COALESCE(jsonb_agg(to_jsonb(x) ORDER BY x.id),'[]'::jsonb)
+               FROM partner_users x WHERE x.partner_org_id IN ($1,$2)) partner_users,
+            (SELECT COALESCE(jsonb_agg(to_jsonb(x) ORDER BY x.id),'[]'::jsonb)
+               FROM partner_client_organizations x WHERE x.partner_org_id IN ($1,$2)) clients,
+            (SELECT COALESCE(jsonb_agg(to_jsonb(x) ORDER BY x.id),'[]'::jsonb)
+               FROM partner_licenses x WHERE x.partner_org_id IN ($1,$2)) licenses,
+            (SELECT COALESCE(jsonb_agg(to_jsonb(x) ORDER BY x.id),'[]'::jsonb)
+               FROM partner_campaign_links x WHERE x.partner_org_id IN ($1,$2)) access_links,
+            (SELECT COALESCE(jsonb_agg(to_jsonb(x) ORDER BY x.idempotency_key),'[]'::jsonb)
+               FROM partner_connection_receipts x WHERE x.organization_id IN ($3,$4)) receipts`,
+          [partnerOrgId, revokedPartnerOrgId, orgId, revokedOrgId]
+        )
+      ).rows[0];
+    const postV8 = (path: string, subject = userId, tenant = orgId, role = 'ADMIN') =>
+      supertest(app())
+        .post(`/api/v8/partner${path}`)
+        .set('Authorization', `Bearer ${token(subject, tenant, role)}`)
+        .send({ name: `ignored-${suffix}`, quantity: 7 });
+
+    // Qualify the two existing reads first. They retain their historical demo
+    // seeding behavior; the baseline below then isolates the four new writers
+    // and proves those refusals themselves never invoke the seeder.
+    expect(
+      (
+        await supertest(app())
+          .get('/api/v8/partner/clients')
+          .set('Authorization', `Bearer ${token()}`)
+      ).status
+    ).toBe(200);
+    expect(
+      (
+        await supertest(app())
+          .get('/api/v8/partner/employees')
+          .set('Authorization', `Bearer ${token()}`)
+      ).status
+    ).toBe(200);
+    const baseline = await sensitiveSnapshot();
+    for (const writer of writers) {
+      const responses = await Promise.all(Array.from({ length: 4 }, () => postV8(writer.path)));
+      for (const result of responses) {
+        expect(result.status).toBe(503);
+        expect(result.body).toEqual({
+          success: false,
+          code: 'FEATURE_NOT_AVAILABLE',
+          capability: writer.capability,
+          message: 'This Partner capability is not available yet.',
+        });
+      }
+      expect(await sensitiveSnapshot()).toEqual(baseline);
+
+      expect((await postV8(writer.path, userId, orgId, 'MEMBER')).status).toBe(403);
+      expect((await postV8(writer.path, revokedUserId, revokedOrgId)).status).toBe(403);
+      expect((await postV8(writer.path, foreignUserId, foreignOrgId)).status).toBe(403);
+      expect(await sensitiveSnapshot()).toEqual(baseline);
+    }
+
+    for (const [index, writer] of writers.entries()) {
+      const requestId = `${REQUEST_PREFIX}stub-${index}`;
+      const blocked = await supertest(app())
+        .post(`/api/partners${writer.path}`)
+        .set('Authorization', `Bearer ${token()}`)
+        .set('x-request-id', requestId)
+        .send({ name: `ignored-${suffix}` });
+      expect(blocked.status).toBe(410);
+      expect(blocked.body.successor).toBe(`/api/v8/partner${writer.path}`);
+      expect((await event(`stub-${index}`)).access_kind).toBe('legacy_writer_blocked');
+
+      process.env[PARTNER_LEGACY_WRITER_ROLLBACK_ENV] = 'true';
+      const rollback = await supertest(app())
+        .post(`/api/partners${writer.path}`)
+        .set('Authorization', `Bearer ${token()}`)
+        .set('x-request-id', `${REQUEST_PREFIX}stub-rollback-${index}`)
+        .send({ name: `ignored-${suffix}` });
+      delete process.env[PARTNER_LEGACY_WRITER_ROLLBACK_ENV];
+      expect(rollback.status).toBe(503);
+      expect((await event(`stub-rollback-${index}`)).access_kind).toBe('rollback_writer');
+      expect(await sensitiveSnapshot()).toEqual(baseline);
+    }
+
+    const cold = new Client({ connectionString: DATABASE_URL });
+    await cold.connect();
+    try {
+      expect(await sensitiveSnapshot(cold)).toEqual(baseline);
+    } finally {
+      await cold.end();
+    }
   });
 
   it('proves the identity backfill left no connected partner without a V8 referral identity', async () => {
