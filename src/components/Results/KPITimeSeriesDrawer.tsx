@@ -25,7 +25,6 @@ import { Api } from '@/services/api';
 import {
   shouldFallbackToLegacyResults,
   V8ResultsApi,
-  type V8ResultsCreateKpiMappingPayload,
   type V8ResultsRcaAction,
   type V8ResultsRcaHypothesis,
   type V8ResultsUpdateKpiPayload,
@@ -244,7 +243,6 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
 
   const [editMode, setEditMode] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
-  const [deleting, setDeleting] = useState(false);
 
   const [settingsName, setSettingsName] = useState('');
   const [settingsDescription, setSettingsDescription] = useState('');
@@ -266,7 +264,6 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
   >('org_visible');
 
   const [initiatives, setInitiatives] = useState<InitiativeOption[]>([]);
-  const [initiativeSearch, setInitiativeSearch] = useState('');
   const [mappings, setMappings] = useState<KpiMappingRow[]>([]);
   const [connectors, setConnectors] = useState<KpiConnectorRow[]>([]);
   const [mappingBusy, setMappingBusy] = useState(false);
@@ -575,34 +572,9 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
     settingsVisibility,
   ]);
 
-  const handleDeleteKpi = useCallback(async () => {
-    if (!kpiId) return;
-    const ok = window.confirm(
-      t(
-        'results.drawer.deleteConfirm',
-        'Delete this KPI? This will remove its measurements, mappings, and deviation cases.'
-      )
-    );
-    if (!ok) return;
-    setDeleting(true);
-    try {
-      try {
-        await V8ResultsApi.deleteKpi(kpiId);
-      } catch (error) {
-        if (!shouldFallbackToLegacyResults(error)) {
-          throw error;
-        }
-        await Api.delete(`/benefits/kpis/${kpiId}`);
-      }
-      onValueRecorded?.();
-      onClose();
-      toast.success(t('results.drawer.deleted', 'KPI deleted'));
-    } catch (error: any) {
-      toast.error(error?.message || t('results.drawer.deleteFailed', 'Failed to delete KPI'));
-    } finally {
-      setDeleting(false);
-    }
-  }, [kpiId, onClose, onValueRecorded, t]);
+  const openCanonicalKpiRegistry = useCallback(() => {
+    window.location.assign(`/results/kpi?kpiId=${encodeURIComponent(kpiId)}`);
+  }, [kpiId]);
 
   const openKpiAiChat = useCallback(
     async (prompt: string) => {
@@ -648,37 +620,6 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
     [kpi, kpiId, openChatWithContext, formatOrgContext, t]
   );
 
-  const handleLinkInitiative = useCallback(
-    async (initiativeId: string) => {
-      if (!initiativeId) return;
-      setMappingBusy(true);
-      try {
-        const payload: V8ResultsCreateKpiMappingPayload = {
-          initiativeId,
-          kpiId: String(kpiId),
-          impactWeight: 1.0,
-          impactDirection: settingsDirection === 'decrease' ? 'decrease' : 'increase',
-          confidence: 'medium',
-        };
-        try {
-          await V8ResultsApi.createKpiMapping(payload);
-        } catch (error) {
-          if (!shouldFallbackToLegacyResults(error)) {
-            throw error;
-          }
-          await Api.post('/benefits/kpi-mappings', payload);
-        }
-        setInitiativeSearch('');
-        fetchData();
-        onValueRecorded?.();
-      } catch {
-        // silent
-      } finally {
-        setMappingBusy(false);
-      }
-    },
-    [fetchData, kpiId, onValueRecorded, settingsDirection]
-  );
 
   const handleUnlinkMapping = useCallback(
     async (mappingId: string) => {
@@ -2446,20 +2387,14 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                   ) : null}
 
                   {normalizedSection === 'definition' && (
-                    <div
-                      id="kpi-drawer-danger"
-                      className="rounded-lg border border-danger-500/20 bg-danger-500/5 p-4 scroll-mt-4"
-                    >
+                    <div id="kpi-drawer-canonical-management" className="rounded-lg border border-slate-200 dark:border-navy-700 p-4 scroll-mt-4">
                       <button
                         type="button"
-                        disabled={deleting}
-                        onClick={() => void handleDeleteKpi()}
-                        className="w-full h-9 text-sm font-medium rounded-full border border-danger-500/30 bg-danger-500/10 text-danger-600 dark:text-danger-300 hover:bg-danger-500/15 transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-2"
+                        onClick={openCanonicalKpiRegistry}
+                        className="w-full h-9 text-sm font-medium rounded-full border border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors inline-flex items-center justify-center gap-2"
                       >
-                        <Trash2 size={16} />
-                        {deleting
-                          ? t('common.deleting', 'Deleting...')
-                          : t('common.delete', 'Delete')}
+                        <Target size={16} />
+                        {t('results.actions.manageInRegistry', 'Manage in KPI registry')}
                       </button>
                     </div>
                   )}
@@ -2589,42 +2524,9 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                     )}
                   </div>
 
-                  <div className="space-y-2">
-                    <input
-                      className={inputCls}
-                      value={initiativeSearch}
-                      onChange={(e) => setInitiativeSearch(e.target.value)}
-                      placeholder={t('results.drawer.linkSearch', 'Search initiatives to link...')}
-                      disabled={mappingBusy}
-                    />
-                    <div className="max-h-40 overflow-y-auto rounded-lg border border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-900/30">
-                      {initiatives
-                        .filter((i) => {
-                          if (!initiativeSearch.trim()) return true;
-                          return i.name.toLowerCase().includes(initiativeSearch.toLowerCase());
-                        })
-                        .filter(
-                          (i) => !mappings.some((m) => String(m.initiative_id) === String(i.id))
-                        )
-                        .slice(0, 25)
-                        .map((i) => (
-                          <button
-                            key={i.id}
-                            type="button"
-                            disabled={mappingBusy}
-                            onClick={() => void handleLinkInitiative(i.id)}
-                            className="w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.04] transition-colors disabled:opacity-60"
-                          >
-                            {i.name}
-                          </button>
-                        ))}
-                      {initiatives.length === 0 ? (
-                        <div className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
-                          {t('common.loading', 'Loading...')}
-                        </div>
-                      ) : null}
-                    </div>
-                  </div>
+                  <button type="button" onClick={openCanonicalKpiRegistry} className="w-full h-9 rounded-full border border-c-border bg-c-surface text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors">
+                    {t('results.actions.manageImpactInRegistry', 'Manage impacts in KPI registry')}
+                  </button>
                 </div>
               )}
             </div>

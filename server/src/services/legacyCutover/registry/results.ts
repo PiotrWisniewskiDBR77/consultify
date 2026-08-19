@@ -49,11 +49,11 @@ export const RESULTS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'RESULTS-W01',
       method: 'POST',
       path: /^\/kpis\/?$/,
-      state: 'protected',
+      state: 'disabled',
       successor: '/api/vnext/results/kpi',
       legacyTable: 'initiative_kpis',
       reason:
-        'INSERT INTO initiative_kpis via createKpiDefinition (server/src/services/results/kpiDefinitionService.ts:344), called from server/src/routes/v8/results.routes.ts:757-836. Canonical POST /api/vnext/results/kpi (server/src/routes/resultsVnext/kpi.routes.ts:299) writes rvn_kpi_definitions/rvn_kpi_definition_versions and is live; kept protected (not disabled) because no telemetry window has run yet.',
+        'Retired after every mounted Results create caller moved to the canonical KPI registry. Canonical POST /api/vnext/results/kpi owns governed definition creation.',
     },
     {
       writerId: 'RESULTS-W02',
@@ -70,12 +70,12 @@ export const RESULTS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'RESULTS-W03',
       method: 'DELETE',
       path: /^\/kpis\/[^/]+\/?$/,
-      state: 'protected',
+      state: 'disabled',
       successor: '/api/vnext/results/kpi/:kpiId/archive',
       legacyTable: 'initiative_kpis',
       legacyIdFromPath: (path) => decodeURIComponent(path.split('/')[2] || ''),
       reason:
-        'Soft-archive UPDATE initiative_kpis via archiveKpiDefinition (kpiDefinitionService.ts:575) plus DELETE FROM initiative_kpi_mappings, both from results.routes.ts:1022-1074. Canonical POST /api/vnext/results/kpi/:kpiId/archive (resultsVnext/kpi.routes.ts, mountLifecycleRoute at line 729) exists and archives the rvn_kpi_definitions row.',
+        'Retired after every mounted Results archive/delete caller moved to the canonical KPI registry. Canonical POST /api/vnext/results/kpi/:kpiId/archive owns governed archival.',
     },
     {
       writerId: 'RESULTS-W04',
@@ -114,11 +114,11 @@ export const RESULTS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'RESULTS-W17',
       method: 'POST',
       path: /^\/kpi-mappings\/?$/,
-      state: 'protected',
+      state: 'disabled',
       successor: '/api/vnext/results/initiatives/initiative-impacts',
       legacyTable: 'initiative_kpi_mappings',
       reason:
-        'INSERT INTO initiative_kpi_mappings, results.routes.ts:1080-1158 (INSERT confirmed at line 1130). Canonical POST /initiative-impacts (server/src/routes/resultsVnext/kpiPerspectives.routes.ts:296-297, mounted at /api/vnext/results/initiatives per server/src/Gateway.ts:1214) calls proposeInitiativeKpiImpact and writes rvn_kpi_initiative_impacts (server/src/services/resultsVnext/kpi/kpiInitiativeImpactCommands.ts:233).',
+        'Retired after every mounted Results mapping caller moved to the canonical KPI registry/tool. Canonical POST /initiative-impacts owns governed initiative impact proposals.',
     },
     {
       writerId: 'RESULTS-W18',

@@ -1,4 +1,3 @@
-export { KPICreateModal } from './KPICreateModal';
 export { KPITimeSeriesDrawer } from './KPITimeSeriesDrawer';
 export { ResultsHub } from './ResultsHub';
 export { ResultsGridView, ResultsKPITable } from './ResultsKPITable';

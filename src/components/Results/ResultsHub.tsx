@@ -60,7 +60,6 @@ import {
 } from '../shared/ModuleMenu3';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
 import AIInsightsPanel from './AIInsightsPanel';
-import { KPICreateModal } from './KPICreateModal';
 import {
   filterKpisByLifecycle,
   filterKpisByObservationPhase,
@@ -251,7 +250,6 @@ export const ResultsHub: React.FC = () => {
           | 'connectors')
       : 'tracked'
   );
-  const [showCreateModal, setShowCreateModal] = useState(false);
   const [kpiReportCreateNonce, setKpiReportCreateNonce] = useState(0);
   const [kpiScorecardCreateNonce, setKpiScorecardCreateNonce] = useState(0);
   const [reportWorkspaceCreateNonce, setReportWorkspaceCreateNonce] = useState(0);
@@ -954,32 +952,11 @@ export const ResultsHub: React.FC = () => {
     setActiveDocumentId(null);
   }, [setActiveDocumentId]);
 
-  const handleDeleteKpi = useCallback(
+  const openCanonicalKpi = useCallback(
     async (kpiId: string) => {
-      const ok = window.confirm(
-        t(
-          'results.deleteConfirm',
-          'Delete this KPI? This will remove its measurements, mappings, and deviation cases.'
-        )
-      );
-      if (!ok) return;
-      try {
-        try {
-          await V8ResultsApi.deleteKpi(kpiId);
-        } catch (error) {
-          if (!shouldFallbackToLegacyResults(error)) {
-            throw error;
-          }
-          await Api.delete(`/benefits/kpis/${kpiId}`);
-        }
-      } catch {
-        // silent
-      } finally {
-        setDrawerState((prev) => (prev?.kpiId === kpiId ? null : prev));
-        void refreshResultsTruth();
-      }
+      navigate(`${ROUTES.RESULTS_KPI.ROOT}?kpiId=${encodeURIComponent(kpiId)}`);
     },
-    [refreshResultsTruth, t]
+    [navigate]
   );
 
   const openKpiDrawer = useCallback((kpiId: string, section?: KpiDrawerSection) => {
@@ -1005,46 +982,21 @@ export const ResultsHub: React.FC = () => {
         case 'history':
           openKpiDrawer(kpi.id, 'history');
           break;
-        case 'delete':
-          void handleDeleteKpi(kpi.id);
+        case 'manage-canonical':
+          void openCanonicalKpi(kpi.id);
           break;
         default:
           break;
       }
     },
-    [handleDeleteKpi, openKpiDrawer]
+    [openCanonicalKpi, openKpiDrawer]
   );
 
   // Triada standard (canon A3/A6): bulk delete for the KPI catalog list tab
-  // checkbox selection (delete IS a real, wired API — V8ResultsApi.deleteKpi).
-  const handleBulkDeleteCatalogKpis = useCallback(async () => {
-    if (selectedKpiIds.size === 0) return;
-    if (
-      !window.confirm(
-        t(
-          'results.bulkDeleteConfirm',
-          `Delete ${selectedKpiIds.size} KPI(s)? This will remove their measurements, mappings, and deviation cases.`
-        )
-      )
-    )
-      return;
-    for (const id of Array.from(selectedKpiIds)) {
-      try {
-        await V8ResultsApi.deleteKpi(id);
-      } catch (error) {
-        if (shouldFallbackToLegacyResults(error)) {
-          await Api.delete(`/benefits/kpis/${id}`).catch(() => undefined);
-        }
-      }
-    }
-    setSelectedKpiIds(new Set());
-    void refreshResultsTruth();
-  }, [selectedKpiIds, refreshResultsTruth, t]);
-
-  const handleCreateSuccess = useCallback(() => {
-    setShowCreateModal(false);
-    void refreshResultsTruth();
-  }, [refreshResultsTruth]);
+  // checkbox selection now transfers mutation ownership to the canonical KPI registry.
+  const openCanonicalKpiRegistry = useCallback(() => {
+    navigate(ROUTES.RESULTS_KPI.ROOT);
+  }, [navigate]);
 
   const handleCreateSignalSheet = useCallback((sheet: SignalSheetRecord) => {
     setManualSignalSheets((prev) => [sheet, ...prev]);
@@ -1564,11 +1516,11 @@ export const ResultsHub: React.FC = () => {
         <div className={MENU_3_RIGHT_CLASS}>
           <button
             type="button"
-            onClick={() => void handleBulkDeleteCatalogKpis()}
-            className={MENU_3_ACTION_DANGER}
+            onClick={openCanonicalKpiRegistry}
+            className={MENU_3_ACTION_NEUTRAL}
           >
-            <Trash2 size={12} />
-            {t('common.delete', 'Delete')}
+            <Target size={12} />
+            {t('results.actions.manageInRegistry', 'Manage in KPI registry')}
           </button>
         </div>
       </div>
@@ -1605,18 +1557,10 @@ export const ResultsHub: React.FC = () => {
                 onClick: () => toggleWatchKpi(selectedCatalogKpi.id),
               },
             ],
-            resolutions: [
-              {
-                id: 'delete',
-                variant: 'destructive',
-                label: t('common.delete', 'Delete'),
-                icon: Trash2,
-                onClick: () => void handleDeleteKpi(selectedCatalogKpi.id),
-              },
-            ],
+            resolutions: [],
           }
         : undefined,
-    [selectedCatalogKpi, t, openKpiDrawer, watchedKpiIds, toggleWatchKpi, handleDeleteKpi]
+    [selectedCatalogKpi, t, openKpiDrawer, watchedKpiIds, toggleWatchKpi]
   );
 
   // Esc closes preview; single-key shortcuts (O/V) active while preview open (kanon B.24/B.31).
@@ -1818,7 +1762,7 @@ export const ResultsHub: React.FC = () => {
                 'Add your first KPI to start tracking results.'
               ),
               actionLabel: t('results.emptyState.createFirst', 'Add KPI'),
-              onAction: () => setShowCreateModal(true),
+              onAction: openCanonicalKpiRegistry,
             }}
             rowMenu={(row): StandardRowMenu => {
               const k = row as unknown as ResultsKPI;
@@ -1846,9 +1790,6 @@ export const ResultsHub: React.FC = () => {
                   edit: () => openKpiDrawer(k.id, 'definition'),
                   // Brak API archiwizacji KPI (nie istnieje w ogóle) —
                   // disabled z notą (StandardTable dokłada ją sama).
-                },
-                destructive: {
-                  onClick: () => void handleDeleteKpi(k.id),
                 },
               };
             }}
@@ -2039,7 +1980,7 @@ export const ResultsHub: React.FC = () => {
           roi={threePairRoi}
           objectives={threePairObjectivesRaw}
           isPolish={i18n.language?.startsWith('pl') ?? true}
-          onAddKpi={() => setShowCreateModal(true)}
+          onAddKpi={openCanonicalKpiRegistry}
           onNewRoi={openRoiPicker}
           onManageOkr={() => setShowOkrManage(true)}
           onOpenKpi={(id) => openKpiDrawer(id, 'summary')}
@@ -2063,12 +2004,6 @@ export const ResultsHub: React.FC = () => {
           }}
         />
 
-        {showCreateModal && (
-          <KPICreateModal
-            onClose={() => setShowCreateModal(false)}
-            onSuccess={handleCreateSuccess}
-          />
-        )}
 
         {drawerState && (
           <KPITimeSeriesDrawer
@@ -2176,14 +2111,14 @@ export const ResultsHub: React.FC = () => {
                 setActiveTab('results_kpi');
                 setKpiWorkspaceMode('catalog');
                 setViewMode('table');
-                setShowCreateModal(true);
+                openCanonicalKpiRegistry();
               }
             : activeTab === 'results_kpi'
-              ? () => setShowCreateModal(true)
+              ? openCanonicalKpiRegistry
               : activeTab === 'results_reports'
                 ? () =>
                     reportWorkspaceMode === 'tracked'
-                      ? setShowCreateModal(true)
+                      ? openCanonicalKpiRegistry()
                       : reportWorkspaceMode === 'reports'
                         ? setKpiReportCreateNonce(Date.now())
                         : setReportWorkspaceCreateNonce(Date.now())
@@ -2505,14 +2440,11 @@ export const ResultsHub: React.FC = () => {
             kpis={filteredKpis}
             onItemClick={(kpi) => openKpiDrawer(kpi.id, 'summary')}
             onItemAction={handleRowAction}
-            onNewItem={() => setShowCreateModal(true)}
+            onNewItem={openCanonicalKpiRegistry}
           />
         ) : null}
       </StandardModuleBar>
 
-      {showCreateModal && (
-        <KPICreateModal onClose={() => setShowCreateModal(false)} onSuccess={handleCreateSuccess} />
-      )}
 
       {drawerState && (
         <KPITimeSeriesDrawer

@@ -771,14 +771,8 @@ export const V8ResultsApi = {
    */
   pullReconciliation: (payload: V8ReconciliationPullPayload) =>
     v8Post<V8ReconciliationPullResult>('/results/reconciliations/pull', payload),
-  createKpi: (payload: V8ResultsCreateKpiPayload) =>
-    v8Post<V8ResultsCreateKpiResponse>('/results/kpis', payload),
   updateKpi: (kpiId: string, payload: V8ResultsUpdateKpiPayload) =>
     v8Put<V8ResultsUpdateKpiResponse>(`/results/kpis/${encodeURIComponent(kpiId)}`, payload),
-  deleteKpi: (kpiId: string) =>
-    v8Delete<V8ResultsDeleteKpiResponse>(`/results/kpis/${encodeURIComponent(kpiId)}`),
-  createKpiMapping: (payload: V8ResultsCreateKpiMappingPayload) =>
-    v8Post<V8ResultsCreateKpiMappingResponse>('/results/kpi-mappings', payload),
   deleteKpiMapping: (mappingId: string) =>
     v8Delete<V8ResultsDeleteKpiMappingResponse>(
       `/results/kpi-mappings/${encodeURIComponent(mappingId)}`

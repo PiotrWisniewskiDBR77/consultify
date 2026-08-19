@@ -8,6 +8,9 @@ describe('Results legacy cutover registry', () => {
   it('retires scorecard, deviation-command and legacy ROI-write slices and keeps the remaining denominator open', () => {
     expect(RESULTS_LEGACY_CUTOVER_DENOMINATOR.totalDoors).toBe(28);
     expect(RESULTS_LEGACY_CUTOVER_DENOMINATOR.retiredDoors).toEqual([
+      'RESULTS-W01',
+      'RESULTS-W03',
+      'RESULTS-W17',
       'RESULTS-W19',
       'RESULTS-W20',
       'RESULTS-W21',
@@ -19,7 +22,7 @@ describe('Results legacy cutover registry', () => {
       'RESULTS-W48',
       'RESULTS-W49',
     ]);
-    expect(RESULTS_LEGACY_CUTOVER_DENOMINATOR.openDoors).toHaveLength(18);
+    expect(RESULTS_LEGACY_CUTOVER_DENOMINATOR.openDoors).toHaveLength(15);
     expect(RESULTS_LEGACY_CUTOVER_DENOMINATOR.unmappedDoors).toHaveLength(13);
   });
 
@@ -27,17 +30,13 @@ describe('Results legacy cutover registry', () => {
     for (const writerId of RESULTS_LEGACY_CUTOVER_DENOMINATOR.retiredDoors) {
       const writer = RESULTS_CUTOVER.writers.find((entry) => entry.writerId === writerId);
       expect(writer?.state).toBe('disabled');
-      expect(writer?.successor).toMatch(
-        /^\/api\/vnext\/results\/(?:kpi\/(?:scorecards|deviation-cases)|roi\/cases)/
-      );
+      expect(writer?.successor).toMatch(/^\/api\/vnext\/results\/(?:kpi|initiatives|roi\/cases)/);
     }
     expect(RESULTS_CUTOVER.rollbackWritersEnv).toBe('RESULTS_LEGACY_ROLLBACK_WRITERS');
   });
 
-  it('does not retire W01 and keeps the guarded W23 resolve usable', () => {
-    expect(RESULTS_CUTOVER.writers.find((entry) => entry.writerId === 'RESULTS-W01')?.state).toBe(
-      'protected'
-    );
+  it('retires W01 and keeps the guarded W23 resolve usable', () => {
+    expect(RESULTS_CUTOVER.writers.find((entry) => entry.writerId === 'RESULTS-W01')?.state).toBe('disabled');
     const resolve = RESULTS_CUTOVER.writers.find((entry) => entry.writerId === 'RESULTS-W23');
     expect(resolve?.state).toBe('observed');
     expect(resolve?.successor).toBeNull();
@@ -115,5 +114,26 @@ describe('Results legacy cutover registry', () => {
     expect(legacyClient).not.toMatch(
       /^\s+(?:updateRoiInitiativeAssumptions|createRoiInitiativeRealizedEntry):/m
     );
+  });
+
+  it('removes every mounted Wave 4 legacy caller and directs mutation ownership to the canonical KPI surface', () => {
+    const client = readFileSync(
+      path.resolve(__dirname, '../../../../../src/services/api/v8/results.ts'),
+      'utf8'
+    );
+    expect(client).not.toMatch(/^\s+(?:createKpi|deleteKpi|createKpiMapping):/m);
+
+    for (const relative of [
+      '../../../../../src/components/Results/ResultsHub.tsx',
+      '../../../../../src/components/Results/KPITimeSeriesDrawer.tsx',
+    ]) {
+      const caller = readFileSync(path.resolve(__dirname, relative), 'utf8');
+      expect(caller).not.toMatch(/V8ResultsApi\.(?:createKpi|deleteKpi|createKpiMapping)\b/);
+      expect(caller).not.toMatch(/Api\.post\(['`]\/benefits\/(?:kpis|kpi-mappings)['`]/);
+      expect(caller).not.toMatch(/Api\.delete\(`\/benefits\/kpis\/\$\{kpiId\}`\)/);
+      expect(caller).not.toContain('KPICreateModal');
+      expect(caller).not.toContain('handleDeleteKpi');
+      expect(caller).not.toContain('handleLinkInitiative');
+    }
   });
 });

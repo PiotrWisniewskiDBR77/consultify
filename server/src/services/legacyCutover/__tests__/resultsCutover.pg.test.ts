@@ -33,6 +33,10 @@ import {
   publishRoiGovernedVisibilityPolicy,
   ROI_GOVERNED_VISIBILITY_POLICY,
 } from '../../resultsVnext/platform/visibilityResolver.js';
+import { createDefinition } from '../../results/kpiDefinitionService.js';
+import { archiveKpi, createKpiDraft } from '../../resultsVnext/kpi/kpiDefinitionCommands.js';
+import { proposeInitiativeKpiImpact } from '../../resultsVnext/kpi/kpiInitiativeImpactCommands.js';
+import { getKpi } from '../../resultsVnext/kpi/kpiRepository.js';
 
 const CONNECTION_STRING = process.env.DATABASE_URL || '';
 const REAL_PG =
@@ -101,6 +105,7 @@ describe.skipIf(!REAL_PG)('RESULTS legacy-cutover guard (fresh real PostgreSQL)'
     app.use((err: any, _req: any, res: any, _next: any) =>
       res.status(500).json({ error: String(err?.message || err) })
     );
+    await createDefinition({ organizationId: orgA, name: `${prefix}-kpi`, actorUserId: actor });
   }, 90_000);
 
   afterAll(async () => {
@@ -154,6 +159,10 @@ describe.skipIf(!REAL_PG)('RESULTS legacy-cutover guard (fresh real PostgreSQL)'
       [[orgA, orgB]]
     );
     await pool.query(`DELETE FROM rvn_roi_cases WHERE organization_id = ANY($1)`, [[orgA, orgB]]);
+    await pool.query(`DELETE FROM rvn_kpi_initiative_impacts WHERE organization_id = ANY($1)`, [[orgA, orgB]]);
+    await pool.query(`UPDATE rvn_kpi_definitions SET current_definition_version_id=NULL WHERE organization_id = ANY($1)`, [[orgA, orgB]]);
+    await pool.query(`DELETE FROM rvn_kpi_definition_versions WHERE organization_id = ANY($1)`, [[orgA, orgB]]);
+    await pool.query(`DELETE FROM rvn_kpi_definitions WHERE organization_id = ANY($1)`, [[orgA, orgB]]);
     await pool.query(
       `DELETE FROM rvn_platform_visibility_policies WHERE organization_id = ANY($1)`,
       [[orgA, orgB]]
@@ -169,14 +178,50 @@ describe.skipIf(!REAL_PG)('RESULTS legacy-cutover guard (fresh real PostgreSQL)'
     await pool.end();
   });
 
-  it('does not block KPI create (RESULTS-W01)', async () => {
-    const response = await request(app)
-      .post('/api/v8/results/kpis')
-      .set('x-request-id', `${prefix}-kpi-create-1`)
-      .send({ name: `${prefix}-kpi` });
-    expect(response.status).not.toBe(410);
-    expect(response.status).not.toBe(409);
-    expect(response.status).toBe(201);
+  it.each([
+    { writerId: 'RESULTS-W01', method: 'post' as const, path: '/api/v8/results/kpis', successor: '/api/vnext/results/kpi', body: { name: `${prefix}-kpi` } },
+    { writerId: 'RESULTS-W03', method: 'delete' as const, path: '/api/v8/results/kpis/legacy-kpi', successor: '/api/vnext/results/kpi/:kpiId/archive', body: {} },
+    { writerId: 'RESULTS-W17', method: 'post' as const, path: '/api/v8/results/kpi-mappings', successor: '/api/vnext/results/initiatives/initiative-impacts', body: { initiativeId: 'legacy-initiative', kpiId: 'legacy-kpi' } },
+  ])('refuses Wave 4 writer $writerId before mutation', async (entry) => {
+    const requestId = `${prefix}-${entry.writerId.toLowerCase()}`;
+    const before = await pool.query(`SELECT
+      (SELECT count(*)::int FROM initiative_kpis WHERE organization_id=$1) kpis,
+      (SELECT count(*)::int FROM initiative_kpi_mappings m JOIN initiatives i ON i.id=m.initiative_id WHERE i.organization_id=$1) mappings`, [orgA]);
+    const response = await request(app)[entry.method](entry.path).set('x-request-id', requestId).send(entry.body);
+    expect(response.status).toBe(410);
+    expect(response.body).toMatchObject({ code: 'RESULTS_LEGACY_WRITER_DISABLED', writerId: entry.writerId, successor: entry.successor });
+    const after = await pool.query(`SELECT
+      (SELECT count(*)::int FROM initiative_kpis WHERE organization_id=$1) kpis,
+      (SELECT count(*)::int FROM initiative_kpi_mappings m JOIN initiatives i ON i.id=m.initiative_id WHERE i.organization_id=$1) mappings`, [orgA]);
+    expect(after.rows).toEqual(before.rows);
+  });
+
+  it('writes and cold-reads the exact canonical KPI create, impact and archive successors', async () => {
+    await pool.query(`INSERT INTO rvn_platform_visibility_policies
+      (organization_id, domain, policy_version, visibility_mode, is_active, created_by)
+      VALUES ($1,'kpi',1,'OPEN_ORG',true,$2) ON CONFLICT DO NOTHING`, [orgA, actor]);
+    const initiativeId = `${prefix}-canonical-initiative`;
+    await pool.query(`INSERT INTO initiatives(id,organization_id,name,status) VALUES($1,$2,$3,'DRAFT')`, [initiativeId, orgA, 'Wave 4 canonical initiative']);
+    const access = { capabilities: ['*'], platformRole: 'ADMIN' as const };
+    const created = await createKpiDraft({
+      organizationId: orgA, kpiCode: `${prefix}-canonical`, name: 'Wave 4 canonical KPI',
+      targetGeometry: 'exact', targetValue: 1, createdBy: actor, actorEffectiveRole: 'ADMIN',
+      idempotencyKey: `${prefix}-canonical-create`, access,
+    });
+    const kpiId = created.result.kpi.kpiId;
+    const impact = await proposeInitiativeKpiImpact({
+      organizationId: orgA, kpiId, initiativeId, expectedContributionValue: 1,
+      expectedContributionDirection: 'increase', targetCompletionDate: null, proposedBy: actor,
+      actorEffectiveRole: 'ADMIN', idempotencyKey: `${prefix}-canonical-impact`, access,
+    });
+    expect(impact.result.impact).toMatchObject({ kpiId, initiativeId, status: 'proposed' });
+    const archived = await archiveKpi({
+      organizationId: orgA, kpiId, expectedVersion: created.result.kpi.rowVersion,
+      actorUserId: actor, actorEffectiveRole: 'ADMIN', idempotencyKey: `${prefix}-canonical-archive`, access,
+    });
+    expect(archived.result.status).toBe('archived');
+    const cold = await getKpi({ userId: actor, organizationId: orgA, kpiId });
+    expect(cold).toMatchObject({ kpiId, status: 'archived' });
   });
 
   it('refuses retired scorecard create (RESULTS-W33) with its canonical successor', async () => {
@@ -462,12 +507,12 @@ describe.skipIf(!REAL_PG)('RESULTS legacy-cutover guard (fresh real PostgreSQL)'
         WHERE domain = 'results' AND organization_id = $1
           AND request_id IN ($2, $3)
         ORDER BY writer_id`,
-      [orgA, `${prefix}-kpi-create-1`, `${prefix}-scorecard-create-1`]
+      [orgA, `${prefix}-results-w01`, `${prefix}-scorecard-create-1`]
     );
     expect(rows.rows).toEqual([
       {
         writer_id: 'RESULTS-W01',
-        access_kind: 'legacy_uncovered_writer',
+        access_kind: 'legacy_writer_blocked',
         organization_id: orgA,
         tenant_resolution: 'resolved',
         route_path: '/api/v8/results/kpis',

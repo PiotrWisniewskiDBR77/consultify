@@ -457,12 +457,12 @@ export const ResultsKPITable: React.FC<ResultsKPITableProps> = ({
             onClick: () => onRowAction?.('links', kpi),
           },
           {
-            id: 'delete',
-            label: t('common.delete', 'Delete'),
-            icon: Trash2,
+            id: 'manage-canonical',
+            label: t('results.actions.manageInRegistry', 'Manage in KPI registry'),
+            icon: Target,
             divider: true,
-            variant: 'danger',
-            onClick: () => onRowAction?.('delete', kpi),
+            variant: 'default',
+            onClick: () => onRowAction?.('manage-canonical', kpi),
           },
         ];
       },
@@ -701,13 +701,13 @@ export const ResultsGridView: React.FC<ResultsGridViewProps> = ({
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              onItemAction?.('delete', kpi);
+                              onItemAction?.('manage-canonical', kpi);
                               setMenuCardId(null);
                             }}
-                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-danger-600 dark:text-danger-300 hover:bg-danger-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-c-text-secondary hover:bg-black/5 dark:hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                           >
-                            <Trash2 size={14} />
-                            {t('common.delete', 'Delete')}
+                            <Target size={14} />
+                            {t('results.actions.manageInRegistry', 'Manage in KPI registry')}
                           </button>
                         </div>
                       </>
