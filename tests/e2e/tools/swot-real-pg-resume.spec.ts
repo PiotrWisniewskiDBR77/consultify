@@ -559,7 +559,10 @@ test('TLS-05: signed creator and separate approver freeze, promote, replay and c
     await page.getByText(/Show supporting analysis/i).click();
     const draftCandidateAction = page.getByRole('button', { name: /Send to candidates/i }).first();
     await expect(draftCandidateAction).toBeDisabled();
-    await expect(page.getByText(/Approve this SWOT before sending/i).first()).toBeVisible();
+    await expect(draftCandidateAction).toHaveAttribute(
+      'title',
+      /Approve this SWOT before sending/i
+    );
     await page.getByRole('button', { name: /Outputs & Actions/i }).click();
     await expect
       .poll(
