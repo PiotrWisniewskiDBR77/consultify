@@ -23,10 +23,11 @@
  * `/cases/:caseId/actuals`, confirmed at
  * `server/src/routes/resultsVnext/roi.routes.ts:2283-2284`).
  *
- * Scorecard writers W33/W35/W36 and deviation command writers
- * W19/W20/W21/W22/W24 are retired slices. Their historical readers and the
- * unmapped W23 resolve command stay mounted; mapped mutation work is owned by
- * the canonical vNext tools.
+ * Scorecard writers W33/W35/W36, deviation command writers
+ * W19/W20/W21/W22/W24, and the legacy ROI plan/actual writers W48/W49 are
+ * retired slices. Their historical readers and the unmapped W23 resolve
+ * command stay mounted; mapped mutation work is owned by the canonical vNext
+ * tools.
  * Every other writer remains protected/observed until its own caller and
  * identity migration are proven.
  */
@@ -96,7 +97,7 @@ export const RESULTS_CUTOVER: LegacyCutoverDomainConfig = {
       legacyTable: 'initiative_benefits',
       legacyIdFromPath: (path) => decodeURIComponent(path.split('/')[2] || ''),
       reason:
-        'INSERT initiative_kpis via createKpiDefinition (results.routes.ts:4212) plus UPDATE initiative_benefits SET status=\'promoted\' (results.routes.ts:4227-4232), from results.routes.ts:4143-4239. No route under /api/vnext/results/roi or /kpi composes the combined benefit-promote-to-KPI operation against rvn_roi_benefit_lines + rvn_kpi_definitions together, so successor is null even though the KPI half alone has a sibling (RESULTS-W01).',
+        "INSERT initiative_kpis via createKpiDefinition (results.routes.ts:4212) plus UPDATE initiative_benefits SET status='promoted' (results.routes.ts:4227-4232), from results.routes.ts:4143-4239. No route under /api/vnext/results/roi or /kpi composes the combined benefit-promote-to-KPI operation against rvn_roi_benefit_lines + rvn_kpi_definitions together, so successor is null even though the KPI half alone has a sibling (RESULTS-W01).",
     },
     {
       writerId: 'RESULTS-W06',
@@ -107,7 +108,7 @@ export const RESULTS_CUTOVER: LegacyCutoverDomainConfig = {
       legacyTable: 'initiative_benefits',
       legacyIdFromPath: (path) => decodeURIComponent(path.split('/')[2] || ''),
       reason:
-        'UPDATE initiative_benefits SET status=\'dismissed\', results.routes.ts:4245-4280. No rvn_roi_* route dismisses a benefit line; initiative_benefits has no confirmed canonical successor anywhere in this baseline.',
+        "UPDATE initiative_benefits SET status='dismissed', results.routes.ts:4245-4280. No rvn_roi_* route dismisses a benefit line; initiative_benefits has no confirmed canonical successor anywhere in this baseline.",
     },
     {
       writerId: 'RESULTS-W17',
@@ -327,23 +328,23 @@ export const RESULTS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'RESULTS-W48',
       method: 'PUT',
       path: /^\/roi\/initiative\/[^/]+\/assumptions\/?$/,
-      state: 'protected',
+      state: 'disabled',
       successor: '/api/vnext/results/roi/cases/:caseId/assumptions',
       legacyTable: 'roi_assumptions',
       legacyIdFromPath: (path) => decodeURIComponent(path.split('/')[3] || ''),
       reason:
-        'INSERT ... ON CONFLICT(initiative_id) DO UPDATE against roi_assumptions, results.routes.ts:3055-3134 (upsert at 3097-3107). Canonical POST /api/vnext/results/roi/cases/:caseId/assumptions (server/src/routes/resultsVnext/roi.routes.ts:937-938) writes rvn_roi_assumptions. roi_assumptions is not one of the append-only-protected tables, so the upsert here is not a governance violation.',
+        'Retired after every mounted legacy drawer became archive-read-only and points users to the full canonical ROI Case tool. Canonical POST /api/vnext/results/roi/cases/:caseId/assumptions owns assumption writes with case identity, CAS, idempotency and audit reason; the legacy initiative aggregate is not mechanically translated into a canonical case.',
     },
     {
       writerId: 'RESULTS-W49',
       method: 'POST',
       path: /^\/roi\/initiative\/[^/]+\/realized\/?$/,
-      state: 'protected',
+      state: 'disabled',
       successor: '/api/vnext/results/roi/cases/:caseId/actuals',
       legacyTable: 'roi_realized_values',
       legacyIdFromPath: (path) => decodeURIComponent(path.split('/')[3] || ''),
       reason:
-        'Pure INSERT into roi_realized_values (no UPDATE/DELETE), results.routes.ts:3141-3202 (insert at 3183-3194) — append-only respected, consistent with the DB-level deny-UPDATE/DELETE trigger on this table (server/migrations/20260809_finance_v3_e007_03_legacy_actual_protection.sql). CORRECTION vs the inventory: RESULTS.json names the successor path as ".../actual-entries", which does not exist in this baseline; the real route is POST /api/vnext/results/roi/cases/:caseId/actuals (verified at server/src/routes/resultsVnext/roi.routes.ts:2283-2284, calling recordActualEntry which writes rvn_roi_actual_entries per server/src/services/resultsVnext/roi/roiActualEntryCommands.ts:272).',
+        'Retired after every mounted legacy drawer became archive-read-only and points users to the full canonical ROI Case tool. Canonical POST /api/vnext/results/roi/cases/:caseId/actuals owns actual-entry writes with case/line identity, CAS, idempotency and evidence. The legacy initiative writer remains readable historically but cannot accept new mutations.',
     },
   ],
 };
@@ -351,16 +352,16 @@ export const RESULTS_CUTOVER: LegacyCutoverDomainConfig = {
 /** Machine-readable denominator used by cutover gates and status tooling. */
 export const RESULTS_LEGACY_CUTOVER_DENOMINATOR = Object.freeze({
   totalDoors: RESULTS_CUTOVER.writers.length,
-  retiredDoors: RESULTS_CUTOVER.writers.filter((writer) => writer.state === 'disabled').map(
-    (writer) => writer.writerId
-  ),
-  openDoors: RESULTS_CUTOVER.writers.filter((writer) => writer.state !== 'disabled').map(
-    (writer) => writer.writerId
-  ),
-  successorBackedDoors: RESULTS_CUTOVER.writers.filter((writer) => writer.successor !== null).map(
-    (writer) => writer.writerId
-  ),
-  unmappedDoors: RESULTS_CUTOVER.writers.filter((writer) => writer.successor === null).map(
-    (writer) => writer.writerId
-  ),
+  retiredDoors: RESULTS_CUTOVER.writers
+    .filter((writer) => writer.state === 'disabled')
+    .map((writer) => writer.writerId),
+  openDoors: RESULTS_CUTOVER.writers
+    .filter((writer) => writer.state !== 'disabled')
+    .map((writer) => writer.writerId),
+  successorBackedDoors: RESULTS_CUTOVER.writers
+    .filter((writer) => writer.successor !== null)
+    .map((writer) => writer.writerId),
+  unmappedDoors: RESULTS_CUTOVER.writers
+    .filter((writer) => writer.successor === null)
+    .map((writer) => writer.writerId),
 });

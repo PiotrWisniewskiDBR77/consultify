@@ -23,6 +23,16 @@ import { cleanupLegacyCutoverTestIntents } from './legacyCutoverTestCleanup.js';
 
 import { createLegacyCutoverGuard } from '../legacyCutoverKernel.js';
 import { RESULTS_CUTOVER } from '../registry/results.js';
+import { createRoiCase } from '../../resultsVnext/roi/roiCaseCommands.js';
+import { addAssumption } from '../../resultsVnext/roi/roiAssumptionCommands.js';
+import { addBenefitLine } from '../../resultsVnext/roi/roiBenefitLineCommands.js';
+import { listAssumptions } from '../../resultsVnext/roi/roiEconomicModelRepository.js';
+import { recordActualEntry } from '../../resultsVnext/roi/roiActualEntryCommands.js';
+import { listActualEntries } from '../../resultsVnext/roi/roiActualEntryRepository.js';
+import {
+  publishRoiGovernedVisibilityPolicy,
+  ROI_GOVERNED_VISIBILITY_POLICY,
+} from '../../resultsVnext/platform/visibilityResolver.js';
 
 const CONNECTION_STRING = process.env.DATABASE_URL || '';
 const REAL_PG =
@@ -95,35 +105,67 @@ describe.skipIf(!REAL_PG)('RESULTS legacy-cutover guard (fresh real PostgreSQL)'
 
   afterAll(async () => {
     if (!pool) return;
-    await cleanupLegacyCutoverTestIntents(pool, { organizationIds: [orgA, orgB], requestIdPrefix: prefix });
-    await pool.query(
-      `DELETE FROM kpi_metric_audit_log WHERE organization_id = ANY($1)`,
-      [[orgA, orgB]]
-    );
+    await cleanupLegacyCutoverTestIntents(pool, {
+      organizationIds: [orgA, orgB],
+      requestIdPrefix: prefix,
+    });
+    await pool.query(`DELETE FROM kpi_metric_audit_log WHERE organization_id = ANY($1)`, [
+      [orgA, orgB],
+    ]);
     // initiative_kpis.current_definition_version FKs into
     // kpi_definition_versions (fk_initiative_kpis_current_version) — the
     // referencing row must go first.
-    await pool.query(`DELETE FROM initiative_kpis WHERE organization_id = ANY($1)`, [
+    await pool.query(`DELETE FROM initiative_kpis WHERE organization_id = ANY($1)`, [[orgA, orgB]]);
+    await pool.query(`DELETE FROM kpi_definition_versions WHERE organization_id = ANY($1)`, [
       [orgA, orgB],
     ]);
-    await pool.query(
-      `DELETE FROM kpi_definition_versions WHERE organization_id = ANY($1)`,
-      [[orgA, orgB]]
-    );
-    await pool.query(`DELETE FROM kpi_scorecards WHERE organization_id = ANY($1)`, [
-      [orgA, orgB],
-    ]);
+    await pool.query(`DELETE FROM kpi_scorecards WHERE organization_id = ANY($1)`, [[orgA, orgB]]);
     await pool.query(`DELETE FROM legacy_cutover_usage_events WHERE organization_id = ANY($1)`, [
       [orgA, orgB],
     ]);
     await pool.query(`DELETE FROM legacy_cutover_signal_intents WHERE organization_id = ANY($1)`, [
       [orgA, orgB],
     ]);
+    await pool.query(`DELETE FROM rvn_roi_actual_entries WHERE organization_id = ANY($1)`, [
+      [orgA, orgB],
+    ]);
+    await pool.query(`DELETE FROM rvn_roi_benefit_lines WHERE organization_id = ANY($1)`, [
+      [orgA, orgB],
+    ]);
+    await pool.query(`DELETE FROM rvn_roi_assumptions WHERE organization_id = ANY($1)`, [
+      [orgA, orgB],
+    ]);
+    await pool.query(`DELETE FROM rvn_roi_calculation_policy WHERE organization_id = ANY($1)`, [
+      [orgA, orgB],
+    ]);
+    await pool.query(`DELETE FROM rvn_roi_baselines WHERE organization_id = ANY($1)`, [
+      [orgA, orgB],
+    ]);
+    await pool.query(
+      `DELETE FROM rvn_platform_outbox WHERE event_id IN
+         (SELECT event_id FROM rvn_platform_events WHERE organization_id = ANY($1))`,
+      [[orgA, orgB]]
+    );
+    await pool.query(`DELETE FROM rvn_platform_events WHERE organization_id = ANY($1)`, [
+      [orgA, orgB],
+    ]);
+    await pool.query(
+      `DELETE FROM rvn_platform_resource_visibility WHERE organization_id = ANY($1)`,
+      [[orgA, orgB]]
+    );
+    await pool.query(`DELETE FROM rvn_roi_cases WHERE organization_id = ANY($1)`, [[orgA, orgB]]);
+    await pool.query(
+      `DELETE FROM rvn_platform_visibility_policies WHERE organization_id = ANY($1)`,
+      [[orgA, orgB]]
+    );
+    await pool.query(`DELETE FROM initiatives WHERE organization_id = ANY($1)`, [[orgA, orgB]]);
     await pool.query(`DELETE FROM organization_members WHERE organization_id = ANY($1)`, [
       [orgA, orgB],
     ]);
     await pool.query(`DELETE FROM users WHERE id=$1`, [actor]);
-    await pool.query(`DELETE FROM organizations WHERE id = ANY($1)`, [[orgA, orgB]]);
+    // rvn_roi_visibility_governance is deliberately append-only. The fresh
+    // disposable consultify_b1_* database is dropped by the calling gate;
+    // do not disable its trigger merely to erase the published policy.
     await pool.end();
   });
 
@@ -171,53 +213,66 @@ describe.skipIf(!REAL_PG)('RESULTS legacy-cutover guard (fresh real PostgreSQL)'
       successor: '/api/vnext/results/kpi/scorecards/:scorecardId/items/:itemId',
       body: {},
     },
-  ])('refuses retired scorecard item mutation $writerId before handler execution', async (entry) => {
-    const requestId = `${prefix}-${entry.writerId.toLowerCase()}`;
-    const response = await request(app)
-      [entry.method](entry.path)
-      .set('x-request-id', requestId)
-      .send(entry.body);
+  ])(
+    'refuses retired scorecard item mutation $writerId before handler execution',
+    async (entry) => {
+      const requestId = `${prefix}-${entry.writerId.toLowerCase()}`;
+      const response = await request(app)
+        [entry.method](entry.path)
+        .set('x-request-id', requestId)
+        .send(entry.body);
 
-    expect(response.status).toBe(410);
-    expect(response.body).toMatchObject({
-      code: 'RESULTS_LEGACY_WRITER_DISABLED',
-      writerId: entry.writerId,
-      successor: entry.successor,
-    });
+      expect(response.status).toBe(410);
+      expect(response.body).toMatchObject({
+        code: 'RESULTS_LEGACY_WRITER_DISABLED',
+        writerId: entry.writerId,
+        successor: entry.successor,
+      });
 
-    const mutationRows = await pool.query(
-      `SELECT id FROM kpi_scorecard_items
+      const mutationRows = await pool.query(
+        `SELECT id FROM kpi_scorecard_items
         WHERE organization_id = $1 AND (scorecard_id = $2 OR kpi_id = $3)`,
-      [orgA, 'legacy-card', 'legacy-kpi']
-    );
-    expect(mutationRows.rows).toHaveLength(0);
-  });
+        [orgA, 'legacy-card', 'legacy-kpi']
+      );
+      expect(mutationRows.rows).toHaveLength(0);
+    }
+  );
 
   it.each([
     {
-      writerId: 'RESULTS-W19', method: 'post' as const,
+      writerId: 'RESULTS-W19',
+      method: 'post' as const,
       path: '/api/v8/results/deviation-cases/legacy-case/acknowledge',
-      successor: '/api/vnext/results/kpi/deviation-cases/:caseId/acknowledge', body: {},
+      successor: '/api/vnext/results/kpi/deviation-cases/:caseId/acknowledge',
+      body: {},
     },
     {
-      writerId: 'RESULTS-W20', method: 'put' as const,
+      writerId: 'RESULTS-W20',
+      method: 'put' as const,
       path: '/api/v8/results/deviation-cases/legacy-case/rca',
-      successor: '/api/vnext/results/kpi/deviation-cases/:caseId/root-cause', body: { rcaText: 'legacy' },
+      successor: '/api/vnext/results/kpi/deviation-cases/:caseId/root-cause',
+      body: { rcaText: 'legacy' },
     },
     {
-      writerId: 'RESULTS-W21', method: 'post' as const,
+      writerId: 'RESULTS-W21',
+      method: 'post' as const,
       path: '/api/v8/results/deviation-cases/legacy-case/actions',
-      successor: '/api/vnext/results/kpi/deviation-cases/:caseId/corrective-actions', body: { title: 'legacy' },
+      successor: '/api/vnext/results/kpi/deviation-cases/:caseId/corrective-actions',
+      body: { title: 'legacy' },
     },
     {
-      writerId: 'RESULTS-W22', method: 'put' as const,
+      writerId: 'RESULTS-W22',
+      method: 'put' as const,
       path: '/api/v8/results/deviation-cases/legacy-case/actions/legacy-action',
-      successor: '/api/vnext/results/kpi/deviation-cases/:caseId/corrective-actions/:actionId', body: { status: 'DONE' },
+      successor: '/api/vnext/results/kpi/deviation-cases/:caseId/corrective-actions/:actionId',
+      body: { status: 'DONE' },
     },
     {
-      writerId: 'RESULTS-W24', method: 'post' as const,
+      writerId: 'RESULTS-W24',
+      method: 'post' as const,
       path: '/api/v8/results/deviation-cases/legacy-case/close',
-      successor: '/api/vnext/results/kpi/deviation-cases/:caseId/close', body: { evidenceText: 'legacy' },
+      successor: '/api/vnext/results/kpi/deviation-cases/:caseId/close',
+      body: { evidenceText: 'legacy' },
     },
   ])('refuses retired deviation mutation $writerId before handler execution', async (entry) => {
     const response = await request(app)
@@ -236,12 +291,168 @@ describe.skipIf(!REAL_PG)('RESULTS legacy-cutover guard (fresh real PostgreSQL)'
       `SELECT id FROM kpi_deviation_cases WHERE organization_id = $1 AND id = $2`,
       [orgA, 'legacy-case']
     );
-    const legacyActions = await pool.query(
-      `SELECT id FROM kpi_deviation_actions WHERE id = $1`,
-      ['legacy-action']
-    );
+    const legacyActions = await pool.query(`SELECT id FROM kpi_deviation_actions WHERE id = $1`, [
+      'legacy-action',
+    ]);
     expect(legacyCases.rows).toHaveLength(0);
     expect(legacyActions.rows).toHaveLength(0);
+  });
+
+  it.each([
+    {
+      writerId: 'RESULTS-W48',
+      method: 'put' as const,
+      path: '/api/v8/results/roi/initiative/legacy-initiative/assumptions',
+      successor: '/api/vnext/results/roi/cases/:caseId/assumptions',
+      body: { expectedRevenueDelta: 123 },
+      table: 'roi_assumptions',
+    },
+    {
+      writerId: 'RESULTS-W49',
+      method: 'post' as const,
+      path: '/api/v8/results/roi/initiative/legacy-initiative/realized',
+      successor: '/api/vnext/results/roi/cases/:caseId/actuals',
+      body: { periodMonth: '2026-08-01', realizedSavings: 123 },
+      table: 'roi_realized_values',
+    },
+  ])('refuses retired ROI mutation $writerId before any legacy row is written', async (entry) => {
+    const requestId = `${prefix}-${entry.writerId.toLowerCase()}`;
+    const response = await request(app)
+      [entry.method](entry.path)
+      .set('x-request-id', requestId)
+      .send(entry.body);
+
+    expect(response.status).toBe(410);
+    expect(response.body).toMatchObject({
+      code: 'RESULTS_LEGACY_WRITER_DISABLED',
+      writerId: entry.writerId,
+      successor: entry.successor,
+    });
+    const legacyRows = await pool.query(
+      `SELECT id FROM ${entry.table} WHERE organization_id = $1 AND initiative_id = $2`,
+      [orgA, 'legacy-initiative']
+    );
+    expect(legacyRows.rows).toHaveLength(0);
+
+    const telemetry = await pool.query(
+      `SELECT access_kind, writer_id, organization_id
+         FROM legacy_cutover_usage_events
+        WHERE domain = 'results' AND organization_id = $1 AND request_id = $2`,
+      [orgA, requestId]
+    );
+    expect(telemetry.rows).toEqual([
+      { access_kind: 'legacy_writer_blocked', writer_id: entry.writerId, organization_id: orgA },
+    ]);
+  });
+
+  it('writes and cold-reads assumptions and actuals through canonical ROI case identity only', async () => {
+    const initiativeId = `${prefix}-canonical-roi-initiative`;
+    await pool.query(
+      `INSERT INTO initiatives (id, organization_id, name, status) VALUES ($1, $2, $3, 'EXECUTING')`,
+      [initiativeId, orgA, `${prefix} canonical ROI`]
+    );
+    await publishRoiGovernedVisibilityPolicy({
+      organizationId: orgA,
+      actorUserId: actor,
+      policyKey: ROI_GOVERNED_VISIBILITY_POLICY.key,
+      policyDigest: ROI_GOVERNED_VISIBILITY_POLICY.digest,
+      idempotencyKey: `${prefix}-roi-policy`,
+    });
+
+    const created = await createRoiCase({
+      organizationId: orgA,
+      initiativeId,
+      title: `${prefix} canonical case`,
+      ownerUserId: actor,
+      currency: 'EUR',
+      createdBy: actor,
+      actorEffectiveRole: 'admin',
+      idempotencyKey: `${prefix}-roi-case`,
+    });
+    const caseId = created.result.case.caseId;
+    const access = { capabilities: ['*'], platformRole: null };
+
+    const assumption = await addAssumption({
+      caseId,
+      organizationId: orgA,
+      category: 'benefit',
+      label: 'Canonical revenue assumption',
+      unit: 'EUR',
+      baseValue: 123,
+      confidence: 'high',
+      source: 'results-cutover-wave3',
+      actorUserId: actor,
+      actorEffectiveRole: 'admin',
+      idempotencyKey: `${prefix}-roi-assumption`,
+      reason: 'RESULTS-W48 canonical successor proof',
+      access,
+    });
+    const benefit = await addBenefitLine({
+      caseId,
+      organizationId: orgA,
+      category: 'revenue',
+      label: 'Canonical realized benefit',
+      isFinancial: true,
+      amount: 123,
+      currency: 'EUR',
+      timingType: 'one_time',
+      oneTimePeriodDate: '2026-08-01',
+      actorUserId: actor,
+      actorEffectiveRole: 'admin',
+      idempotencyKey: `${prefix}-roi-benefit`,
+      reason: 'RESULTS-W49 canonical successor fixture',
+      access,
+    });
+    // The lifecycle is independently covered by ROI lifecycle realDB suites;
+    // this fixture transition isolates the two successor writers/readbacks.
+    await pool.query(
+      `UPDATE rvn_roi_cases SET status='tracking' WHERE case_id=$1 AND organization_id=$2`,
+      [caseId, orgA]
+    );
+    const actual = await recordActualEntry({
+      caseId,
+      organizationId: orgA,
+      entryType: 'benefit',
+      benefitLineId: benefit.result.benefitLineId,
+      periodStart: '2026-08-01',
+      periodEnd: '2026-08-31',
+      amount: 123,
+      currency: 'EUR',
+      source: 'results-cutover-wave3',
+      evidenceRefs: ['receipt:results-w49'],
+      notes: 'canonical actual',
+      recordedBy: actor,
+      actorEffectiveRole: 'admin',
+      idempotencyKey: `${prefix}-roi-actual`,
+      reason: 'RESULTS-W49 canonical successor proof',
+    });
+
+    const coldAssumptions = await listAssumptions({ userId: actor, organizationId: orgA, caseId });
+    const coldActuals = await listActualEntries({ userId: actor, organizationId: orgA, caseId });
+    expect(coldAssumptions).toEqual([
+      expect.objectContaining({
+        assumptionId: assumption.result.assumptionId,
+        caseId,
+        baseValue: 123,
+        source: 'results-cutover-wave3',
+      }),
+    ]);
+    expect(coldActuals).toEqual([
+      expect.objectContaining({
+        actualEntryId: actual.result.actualEntryId,
+        caseId,
+        benefitLineId: benefit.result.benefitLineId,
+        amount: 123,
+        source: 'results-cutover-wave3',
+      }),
+    ]);
+    const legacyRows = await pool.query(
+      `SELECT
+         (SELECT count(*)::int FROM roi_assumptions WHERE organization_id=$1 AND initiative_id=$2) assumptions,
+         (SELECT count(*)::int FROM roi_realized_values WHERE organization_id=$1 AND initiative_id=$2) actuals`,
+      [orgA, initiativeId]
+    );
+    expect(legacyRows.rows).toEqual([{ assumptions: 0, actuals: 0 }]);
   });
 
   it('records one durable, tenant-scoped observation row per writer', async () => {
@@ -283,9 +494,7 @@ describe.skipIf(!REAL_PG)('RESULTS legacy-cutover guard (fresh real PostgreSQL)'
         WHERE domain = 'results' AND organization_id = $1 AND request_id = $2`,
       [orgA, `${prefix}-kpi-list-1`]
     );
-    expect(rows.rows).toEqual([
-      { access_kind: 'legacy_read', route_path: '/api/v8/results/kpis' },
-    ]);
+    expect(rows.rows).toEqual([{ access_kind: 'legacy_read', route_path: '/api/v8/results/kpis' }]);
   });
 
   it('keeps the signed legacy scorecard list as an explicit read-only archive', async () => {

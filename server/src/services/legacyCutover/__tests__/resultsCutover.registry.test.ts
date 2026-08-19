@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { RESULTS_CUTOVER, RESULTS_LEGACY_CUTOVER_DENOMINATOR } from '../registry/results.js';
 
 describe('Results legacy cutover registry', () => {
-  it('retires the scorecard and deviation command slices and keeps the remaining denominator open', () => {
+  it('retires scorecard, deviation-command and legacy ROI-write slices and keeps the remaining denominator open', () => {
     expect(RESULTS_LEGACY_CUTOVER_DENOMINATOR.totalDoors).toBe(28);
     expect(RESULTS_LEGACY_CUTOVER_DENOMINATOR.retiredDoors).toEqual([
       'RESULTS-W19',
@@ -16,8 +16,10 @@ describe('Results legacy cutover registry', () => {
       'RESULTS-W33',
       'RESULTS-W35',
       'RESULTS-W36',
+      'RESULTS-W48',
+      'RESULTS-W49',
     ]);
-    expect(RESULTS_LEGACY_CUTOVER_DENOMINATOR.openDoors).toHaveLength(20);
+    expect(RESULTS_LEGACY_CUTOVER_DENOMINATOR.openDoors).toHaveLength(18);
     expect(RESULTS_LEGACY_CUTOVER_DENOMINATOR.unmappedDoors).toHaveLength(13);
   });
 
@@ -26,7 +28,7 @@ describe('Results legacy cutover registry', () => {
       const writer = RESULTS_CUTOVER.writers.find((entry) => entry.writerId === writerId);
       expect(writer?.state).toBe('disabled');
       expect(writer?.successor).toMatch(
-        /^\/api\/vnext\/results\/kpi\/(?:scorecards|deviation-cases)/
+        /^\/api\/vnext\/results\/(?:kpi\/(?:scorecards|deviation-cases)|roi\/cases)/
       );
     }
     expect(RESULTS_CUTOVER.rollbackWritersEnv).toBe('RESULTS_LEGACY_ROLLBACK_WRITERS');
@@ -86,6 +88,32 @@ describe('Results legacy cutover registry', () => {
     );
     expect(legacyClient).not.toMatch(
       /^\s+(?:createScorecard|addKpiToScorecard|removeKpiFromScorecard):/m
+    );
+  });
+
+  it('keeps legacy ROI history readable but removes both retired mutation callers', () => {
+    const drawer = readFileSync(
+      path.resolve(__dirname, '../../../../../src/components/Results/ROIDetailDrawer.tsx'),
+      'utf8'
+    );
+    expect(drawer).toContain('legacy-roi-archive-notice');
+    expect(drawer).toContain('href="/results/roi"');
+    expect(drawer).toContain('<ROIAssumptionEditor');
+    expect(drawer).toContain('disabled');
+    expect(drawer).not.toMatch(
+      /V8ResultsApi\.(?:updateRoiInitiativeAssumptions|createRoiInitiativeRealizedEntry)/
+    );
+    expect(drawer).not.toMatch(
+      /Api\.(?:put|post)\(`\/benefits\/roi\/\$\{initiativeId\}\/(?:assumptions|realized)/
+    );
+    expect(drawer).not.toContain('handleRecordRealized');
+
+    const legacyClient = readFileSync(
+      path.resolve(__dirname, '../../../../../src/services/api/v8/results.ts'),
+      'utf8'
+    );
+    expect(legacyClient).not.toMatch(
+      /^\s+(?:updateRoiInitiativeAssumptions|createRoiInitiativeRealizedEntry):/m
     );
   });
 });

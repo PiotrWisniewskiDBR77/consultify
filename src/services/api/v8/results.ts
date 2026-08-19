@@ -814,22 +814,6 @@ export const V8ResultsApi = {
       `/results/kpi-reports/${encodeURIComponent(snapshotId)}/refresh`,
       {}
     ),
-  updateRoiInitiativeAssumptions: (
-    initiativeId: string,
-    payload: V8ResultsUpdateRoiAssumptionsPayload
-  ) =>
-    v8Put<V8ResultsUpdateRoiAssumptionsResponse>(
-      `/results/roi/initiative/${encodeURIComponent(initiativeId)}/assumptions`,
-      payload
-    ),
-  createRoiInitiativeRealizedEntry: (
-    initiativeId: string,
-    payload: V8ResultsCreateRoiRealizedPayload
-  ) =>
-    v8Post<V8ResultsCreateRoiRealizedResponse>(
-      `/results/roi/initiative/${encodeURIComponent(initiativeId)}/realized`,
-      payload
-    ),
   getWorkflowSignals: () =>
     v8Get<{
       data: Array<{
