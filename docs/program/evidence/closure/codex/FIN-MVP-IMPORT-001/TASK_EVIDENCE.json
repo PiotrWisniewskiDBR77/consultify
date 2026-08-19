@@ -123,17 +123,17 @@
     ],
     "literalGates": [
       {
-        "command": "npx vitest run server/src/services/__tests__/financialStatementValueWriteService.stagedPack.test.ts server/src/services/__tests__/financialStatementSpreadsheetSection.test.ts --reporter=verbose --maxWorkers=1",
+        "command": "npx vitest run server/src/services/__tests__/financialStatementValueWriteService.stagedPack.test.ts server/src/services/__tests__/financialStatementSpreadsheetSection.test.ts",
         "exitCode": 0,
         "result": "exact-current log 04-focused.log; 2 files; 3/3 tests passed; duration 926ms"
       },
       {
-        "command": "DATABASE_URL=<isolated-local-pg> RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test npx vitest run server/src/services/finance/canonical/__tests__/statementPackRegistrationService.pg.test.ts --reporter=verbose --maxWorkers=1",
+        "command": "DATABASE_URL=<isolated-local-pg> RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test npx vitest run server/src/services/finance/canonical/__tests__/statementPackRegistrationService.pg.test.ts",
         "exitCode": 0,
         "result": "exact-current log 05-atomic.log; 1 file; 5/5 real PostgreSQL tests passed; duration 1.03s"
       },
       {
-        "command": "DATABASE_URL=<isolated-local-pg> E2E_USE_WEB_SERVER=true E2E_MOCK_DB=false E2E_MODE=false E2E_API_URL=http://127.0.0.1:3431 E2E_BASE_URL=http://127.0.0.1:3430 ENABLE_V8_GLOBAL=true npx playwright test --config playwright.config.ts tests/e2e/finance/finance-import.signed.spec.ts --project=chromium --workers=1",
+        "command": "DATABASE_URL=<isolated-local-pg> E2E_USE_WEB_SERVER=true E2E_MOCK_DB=false E2E_API_URL=http://127.0.0.1:3431 E2E_BASE_URL=http://127.0.0.1:3430 ENABLE_V8_GLOBAL=true npx playwright test tests/e2e/finance/finance-import.signed.spec.ts --project=chromium --workers=1",
         "exitCode": 0,
         "result": "exact-current log 06b-signed-v8.log; 1/1 signed Playwright test passed in 55.4s; real PostgreSQL and browser; no request interception or mock persistence"
       },
@@ -183,8 +183,8 @@
         "06b-signed-v8.log": "ports 3430/3431; 1/1 passed in 55.4s; exit 0",
         "07-server-type.log": "server typecheck; exit 0",
         "08-residue.log": "runs=0, decoy_orgs=0, decoy_artifacts=0, fin_artifacts=0, fin_receipts=0, fin_statements=0, fin_packs=0, flag_overrides=0, locks=0",
-        "09-ports.log": "only the existing PostgreSQL container mapping remained after runtime teardown",
-        "10-teardown.log": "DB_EXISTS=0"
+        "09-ports.log": "empty output; application ports 3430 and 3431 were free after runtime teardown",
+        "10-teardown.log": "existing PostgreSQL container mapping 127.0.0.1:55483 to 5432; DB_EXISTS=0"
       }
     },
     "shaQualification": "The authoritative focused, realPG and signed-browser requalification ran on testedSha ee0b7aac49 itself. The earlier candidate run is historical supporting context only and is not used as the exact-current gate.",
