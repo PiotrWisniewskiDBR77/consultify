@@ -35987,6 +35987,9 @@
       "rationaleColon": "Uzasadnienie:",
       "createInitiative": "Utwórz inicjatywę",
       "initiativeCreated": "Inicjatywa utworzona",
+      "createCandidate": "Przekaż do kandydatów",
+      "creatingCandidate": "Przekazywanie…",
+      "candidateCreated": "Kandydat utworzony",
       "none": "Brak",
       "firstStepColon": "Pierwszy krok:",
       "whyNowColon": "Dlaczego teraz:",
@@ -36056,7 +36059,8 @@
         "initiativeCreatedToast": "Inicjatywa utworzona w module Inicjatywy",
         "initiativeCreateErrorToast": "Nie udało się zapisać inicjatywy w module Inicjatywy — szkic pozostał w sesji narzędzia",
         "candidateCreatedToast": "Rekomendacja trafiła do Skrzynki Kandydatów",
-        "candidateCreateErrorToast": "Nie udało się przekazać rekomendacji do Skrzynki Kandydatów"
+        "candidateCreateErrorToast": "Nie udało się przekazać rekomendacji do Skrzynki Kandydatów",
+        "candidateApprovalRequired": "Zatwierdź tę analizę SWOT przed przekazaniem rekomendacji do Skrzynki Kandydatów"
       },
       "inputExplorationPhase": {
         "consultantProposal": "Propozycja konsultanta",

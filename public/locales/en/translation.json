@@ -34832,6 +34832,9 @@
       "rationaleColon": "Rationale:",
       "createInitiative": "Create initiative",
       "initiativeCreated": "Initiative created",
+      "createCandidate": "Send to candidates",
+      "creatingCandidate": "Sending…",
+      "candidateCreated": "Candidate created",
       "none": "None",
       "firstStepColon": "First step:",
       "whyNowColon": "Why now:",
@@ -34901,7 +34904,8 @@
         "initiativeCreatedToast": "Initiative created in Initiatives",
         "initiativeCreateErrorToast": "Could not save the initiative to the Initiatives module — draft kept in the tool session",
         "candidateCreatedToast": "Recommendation sent to the Candidate Inbox",
-        "candidateCreateErrorToast": "Could not send the recommendation to the Candidate Inbox"
+        "candidateCreateErrorToast": "Could not send the recommendation to the Candidate Inbox",
+        "candidateApprovalRequired": "Approve this SWOT before sending a recommendation to the Candidate Inbox"
       },
       "inputExplorationPhase": {
         "consultantProposal": "Consultant proposal",

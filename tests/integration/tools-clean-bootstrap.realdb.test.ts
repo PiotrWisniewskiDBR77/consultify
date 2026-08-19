@@ -137,6 +137,7 @@ describe('Tools clean-database bootstrap — promoteToOutput (real Postgres)', (
   const suffix = randomUUID();
   const orgId = `org-bootstrap-${suffix}`;
   const userId = `user-bootstrap-${suffix}`;
+  const membershipId = randomUUID();
   const toolSessionId = `tool-bootstrap-${suffix}`;
 
   const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
@@ -188,13 +189,21 @@ describe('Tools clean-database bootstrap — promoteToOutput (real Postgres)', (
     // system-portfolio-project auto-creation policy.
     process.env.REQUIRE_INITIATIVE_PROJECT = 'false';
 
-    await client.query(`INSERT INTO organizations (id, name, plan, status) VALUES ($1,$2,'enterprise','active')
-      ON CONFLICT (id) DO NOTHING`, [orgId, 'Bootstrap test org']);
+    await client.query(
+      `INSERT INTO organizations (id, name, plan, status) VALUES ($1,$2,'enterprise','active')
+      ON CONFLICT (id) DO NOTHING`,
+      [orgId, 'Bootstrap test org']
+    );
     await client.query(
       `INSERT INTO users (id, organization_id, email, password, role, status, first_name, last_name)
        VALUES ($1,$2,$3,'x','ADMIN','active','Boot','Strap')
        ON CONFLICT (id) DO NOTHING`,
       [userId, orgId, `${userId}@local.test`]
+    );
+    await client.query(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+       VALUES ($1,$2,$3,'ADMIN','ACTIVE')`,
+      [membershipId, orgId, userId]
     );
 
     mockUser = { id: userId, role: 'ADMIN', organizationId: orgId };
@@ -217,13 +226,32 @@ describe('Tools clean-database bootstrap — promoteToOutput (real Postgres)', (
         [orgId]
       )
       .catch(() => {});
-    await client.query(`DELETE FROM report_builder_reports WHERE organization_id = $1`, [orgId]).catch(() => {});
-    await client.query(`DELETE FROM tool_initiative_links WHERE tool_session_id LIKE $1`, [`tool-bootstrap-${suffix}%`]).catch(() => {});
-    await client.query(`DELETE FROM initiatives WHERE organization_id = $1`, [orgId]).catch(() => {});
+    await client
+      .query(`DELETE FROM report_builder_reports WHERE organization_id = $1`, [orgId])
+      .catch(() => {});
+    await client
+      .query(`DELETE FROM tool_initiative_links WHERE tool_session_id LIKE $1`, [
+        `tool-bootstrap-${suffix}%`,
+      ])
+      .catch(() => {});
+    await client
+      .query(`DELETE FROM initiatives WHERE organization_id = $1`, [orgId])
+      .catch(() => {});
     await client.query(`DELETE FROM audit_log WHERE organization_id = $1`, [orgId]).catch(() => {});
-    await client.query(`DELETE FROM tool_sessions WHERE organization_id = $1`, [orgId]).catch(() => {});
-    await client.query(`DELETE FROM users WHERE id = $1`, [userId]).catch(() => {});
-    await client.query(`DELETE FROM organizations WHERE id = $1`, [orgId]).catch(() => {});
+    await client
+      .query(`DELETE FROM tool_sessions WHERE organization_id = $1`, [orgId])
+      .catch(() => {});
+    await client.query(`DELETE FROM organization_members WHERE id = $1`, [membershipId]);
+    await client.query(`DELETE FROM users WHERE id = $1`, [userId]);
+    await client.query(`DELETE FROM organizations WHERE id = $1`, [orgId]);
+    const residue = await client.query(
+      `SELECT
+         (SELECT count(*)::int FROM organization_members WHERE id=$1) memberships,
+         (SELECT count(*)::int FROM users WHERE id=$2) users,
+         (SELECT count(*)::int FROM organizations WHERE id=$3) organizations`,
+      [membershipId, userId, orgId]
+    );
+    expect(residue.rows[0]).toEqual({ memberships: 0, users: 0, organizations: 0 });
     await client.end();
   });
 

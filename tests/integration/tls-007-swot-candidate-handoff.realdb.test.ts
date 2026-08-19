@@ -15,6 +15,7 @@ const ORG_A = `${PREFIX}org-a`;
 const ORG_B = `${PREFIX}org-b`;
 const ACTOR = `${PREFIX}actor`;
 const SESSION = `${PREFIX}swot`;
+const UNAPPROVED_SESSION = `${PREFIX}swot-draft`;
 const NON_SWOT = `${PREFIX}other`;
 
 let handoffSwotRecommendation: (typeof import('../../server/src/services/tools/swotCandidateHandoffService.js'))['handoffSwotRecommendation'];
@@ -40,9 +41,10 @@ beforeAll(async () => {
          (id, organization_id, project_id, tool_type, name, status, completion_percent,
           confidence_avg, created_by, updated_by, created_at, updated_at)
        VALUES
-         ($1, $2, NULL, 'dynamic-swot', 'TLS-07 SWOT', 'DRAFT', 50, 0.8, $3, $3, NOW(), NOW()),
-         ($4, $2, NULL, 'business-model-canvas', 'Not SWOT', 'DRAFT', 50, 0.8, $3, $3, NOW(), NOW())`,
-      [SESSION, ORG_A, ACTOR, NON_SWOT]
+         ($1, $2, NULL, 'dynamic-swot', 'TLS-07 SWOT', 'APPROVED', 100, 4, $3, $3, NOW(), NOW()),
+         ($4, $2, NULL, 'dynamic-swot', 'TLS-07 unapproved SWOT', 'DRAFT', 100, 4, $3, $3, NOW(), NOW()),
+         ($5, $2, NULL, 'business-model-canvas', 'Not SWOT', 'APPROVED', 100, 4, $3, $3, NOW(), NOW())`,
+      [SESSION, ORG_A, ACTOR, UNAPPROVED_SESSION, NON_SWOT]
     );
   } finally {
     await db.end();
@@ -77,13 +79,56 @@ afterAll(async () => {
       ORG_A,
       ORG_B,
     ]);
-    await db.query(`DELETE FROM tool_sessions WHERE id IN ($1, $2)`, [SESSION, NON_SWOT]);
+    await db.query(`DELETE FROM tool_sessions WHERE id IN ($1, $2, $3)`, [
+      SESSION,
+      UNAPPROVED_SESSION,
+      NON_SWOT,
+    ]);
   } finally {
     await db.end();
   }
 });
 
 describe('TLS-07 — SWOT recommendation to canonical Candidate', () => {
+  it('rejects a DRAFT or REVIEW SWOT before any Candidate or receipt write', async () => {
+    for (const [status, recommendationId] of [
+      ['DRAFT', 'rec-7'],
+      ['REVIEW', 'rec-8'],
+    ] as const) {
+      const db = await client();
+      try {
+        await db.query(`UPDATE tool_sessions SET status=$1 WHERE id=$2`, [
+          status,
+          UNAPPROVED_SESSION,
+        ]);
+      } finally {
+        await db.end();
+      }
+      await expect(
+        handoffSwotRecommendation({
+          organizationId: ORG_A,
+          toolSessionId: UNAPPROVED_SESSION,
+          recommendationId,
+          title: 'Must not materialize',
+          rationale: 'Approval is mandatory.',
+          actorId: ACTOR,
+        })
+      ).rejects.toMatchObject({ code: 'SWOT_SESSION_NOT_APPROVED', status: 409 });
+    }
+    const db = await client();
+    try {
+      const residue = await db.query(
+        `SELECT
+           (SELECT count(*)::int FROM initiative_candidates WHERE organization_id=$1 AND source_type='swot_recommendation' AND source_id LIKE $2) candidates,
+           (SELECT count(*)::int FROM swot_candidate_handoffs WHERE organization_id=$1 AND tool_session_id=$3) receipts`,
+        [ORG_A, `${UNAPPROVED_SESSION}:%`, UNAPPROVED_SESSION]
+      );
+      expect(residue.rows[0]).toEqual({ candidates: 0, receipts: 0 });
+    } finally {
+      await db.end();
+    }
+  });
+
   it('creates one pending Candidate and durable lineage receipt', async () => {
     const result = await handoffSwotRecommendation({
       organizationId: ORG_A,

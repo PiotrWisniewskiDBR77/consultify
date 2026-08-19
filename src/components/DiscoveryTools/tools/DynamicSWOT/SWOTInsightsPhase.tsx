@@ -1136,11 +1136,13 @@ function RecommendationCard({
   index,
   isPolish,
   onCreateCandidate,
+  candidateHandoffAllowed,
 }: {
   rec: DerivedRecommendation;
   index: number;
   isPolish: boolean;
   onCreateCandidate: (rec: DerivedRecommendation) => Promise<void>;
+  candidateHandoffAllowed: boolean;
 }) {
   const { t } = useTranslation();
   const meta = REC_TYPE_META[rec.type];
@@ -1235,7 +1237,12 @@ function RecommendationCard({
             ) : (
               <button
                 onClick={handleCreate}
-                disabled={isCreatingCandidate}
+                disabled={isCreatingCandidate || !candidateHandoffAllowed}
+                title={
+                  candidateHandoffAllowed
+                    ? undefined
+                    : t('discoveryToolsTools.dynamicSwot.insightsPhase.candidateApprovalRequired')
+                }
                 className="inline-flex items-center gap-1.5 rounded-lg bg-navy-900 dark:bg-[#F4F7FB] px-3 py-2 text-xs font-semibold text-white dark:text-navy-950 shadow-sm transition-all hover:bg-navy-800 dark:hover:bg-[#DDE5EF] hover:shadow-md disabled:cursor-wait disabled:opacity-60"
               >
                 <Rocket className="h-3.5 w-3.5" />
@@ -1245,6 +1252,11 @@ function RecommendationCard({
               </button>
             )}
           </div>
+          {!candidateHandoffAllowed && (
+            <p className="mt-2 text-right text-xs text-amber-700 dark:text-amber-300">
+              {t('discoveryToolsTools.dynamicSwot.insightsPhase.candidateApprovalRequired')}
+            </p>
+          )}
         </div>
       </div>
     </div>
@@ -1344,6 +1356,12 @@ export function SWOTInsightsPhase({
       throw err;
     }
   };
+
+  const candidateHandoffAllowed = ['APPROVED', 'FINALIZED'].includes(
+    String(session.status || '')
+      .trim()
+      .toUpperCase()
+  );
 
   return (
     <div className="space-y-5 p-1">
@@ -1778,6 +1796,7 @@ export function SWOTInsightsPhase({
                   index={activeMoves.length > 0 ? activeMoves.length + idx : idx}
                   isPolish={isPolish}
                   onCreateCandidate={handleCreateCandidate}
+                  candidateHandoffAllowed={candidateHandoffAllowed}
                 />
               ))}
             </div>

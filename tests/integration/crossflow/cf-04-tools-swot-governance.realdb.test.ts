@@ -49,6 +49,7 @@ import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const SWOT_SESSION_DRAFT = cfId('tool', 'swot-draft');
+const SWOT_SESSION_APPROVED = cfId('tool', 'swot-approved');
 const SWOT_SESSION_B = cfId('tool', 'swot-tenant-b');
 const NONEXISTENT_SESSION = cfId('tool', 'never-created');
 
@@ -86,6 +87,12 @@ beforeAll(async () => {
      VALUES ($1, $2, 'dynamic-swot', 'Crossflow SWOT (DRAFT)', 'DRAFT', $3)
      ON CONFLICT (id) DO UPDATE SET status = 'DRAFT'`,
     [SWOT_SESSION_DRAFT, TENANT_A.id, TENANT_A.owner.id]
+  );
+  await client.query(
+    `INSERT INTO tool_sessions (id, organization_id, tool_type, name, status, approved_at, created_by)
+     VALUES ($1, $2, 'dynamic-swot', 'Crossflow SWOT (APPROVED)', 'APPROVED', NOW(), $3)
+     ON CONFLICT (id) DO UPDATE SET status = 'APPROVED', approved_at = NOW()`,
+    [SWOT_SESSION_APPROVED, TENANT_A.id, TENANT_A.owner.id]
   );
   await client.query(
     `INSERT INTO tool_sessions (id, organization_id, tool_type, name, status, created_by)
@@ -192,206 +199,85 @@ describe('CF-04 Tools/SWOT governance on real Postgres with a real signed JWT', 
   });
 
   describe('B. the freeze → approval → promotion sequence', () => {
-    it('B1: MEASURED DEFECT (gate OFF, shipped default) — a DRAFT SWOT session is promotable to an initiative candidate', async () => {
+    it('B1: a DRAFT SWOT is always refused before Candidate or receipt creation', async () => {
       requireHarness();
-      expect(process.env.TOOLS_SWOT_HANDOFF_REQUIRE_APPROVAL).not.toBe('true');
-
-      const before = await coldRead((c) =>
-        c.query(`SELECT status FROM tool_sessions WHERE id = $1`, [SWOT_SESSION_DRAFT])
-      );
-      expect(before.rows[0]?.status).toBe('DRAFT');
-
       const res = await request(app)
         .post(`/api/tools/${SWOT_SESSION_DRAFT}/swot-candidates`)
         .set('Authorization', bearer(TENANT_A.owner))
         .send(handoffBody('rec-1', 'Crossflow candidate from DRAFT SWOT'));
-
-      const candidates = await coldRead((c) =>
-        c.query(`SELECT id FROM initiative_candidates WHERE organization_id = $1 AND source_id = $2`, [
-          TENANT_A.id,
-          `${SWOT_SESSION_DRAFT}:rec-1`,
-        ])
+      expect(res.status).toBe(409);
+      expect(res.body?.code).toBe('SWOT_SESSION_NOT_APPROVED');
+      const residue = await coldRead((c) =>
+        c.query(
+          `SELECT
+             (SELECT count(*)::int FROM initiative_candidates WHERE organization_id=$1 AND source_id=$2) candidates,
+             (SELECT count(*)::int FROM swot_candidate_handoffs WHERE organization_id=$1 AND tool_session_id=$3 AND recommendation_id='rec-1') receipts`,
+          [TENANT_A.id, `${SWOT_SESSION_DRAFT}:rec-1`, SWOT_SESSION_DRAFT]
+        )
       );
-
-      // This is the DEFECT, asserted as fact so it cannot silently change:
-      // the governed sequence requires freeze + approval before promotion, yet
-      // an unapproved session promotes successfully.
-      expect({
-        httpStatus: res.status,
-        candidateRows: candidates.rowCount,
-        sessionStatus: before.rows[0]?.status,
-      }).toEqual({ httpStatus: 201, candidateRows: 1, sessionStatus: 'DRAFT' });
+      expect(residue.rows[0]).toEqual({ candidates: 0, receipts: 0 });
     });
 
-    it('B2: FIX (gate ON) — the same DRAFT session is refused with 409 and creates nothing', async () => {
+    it('B2: REVIEW and null statuses remain fail-closed', async () => {
       requireHarness();
-      process.env.TOOLS_SWOT_HANDOFF_REQUIRE_APPROVAL = 'true';
-      try {
+      for (const status of ['REVIEW', null]) {
+        await client.query(`UPDATE tool_sessions SET status=$1 WHERE id=$2`, [
+          status,
+          SWOT_SESSION_DRAFT,
+        ]);
         const res = await request(app)
           .post(`/api/tools/${SWOT_SESSION_DRAFT}/swot-candidates`)
           .set('Authorization', bearer(TENANT_A.owner))
-          .send(handoffBody('rec-5', 'gate-on probe'));
-
-        const candidates = await coldRead((c) =>
-          c.query(
-            `SELECT id FROM initiative_candidates WHERE organization_id = $1 AND source_id = $2`,
-            [TENANT_A.id, `${SWOT_SESSION_DRAFT}:rec-5`]
-          )
-        );
-        const receipts = await coldRead((c) =>
-          c.query(
-            `SELECT id FROM swot_candidate_handoffs
-              WHERE organization_id = $1 AND tool_session_id = $2 AND recommendation_id = 'rec-5'`,
-            [TENANT_A.id, SWOT_SESSION_DRAFT]
-          )
-        );
-
-        expect({
-          httpStatus: res.status,
-          code: res.body?.code,
-          candidateRows: candidates.rowCount,
-          receiptRows: receipts.rowCount,
-        }).toEqual({
-          httpStatus: 409,
+          .send(handoffBody(status === null ? 'rec-5' : 'rec-6', 'unapproved probe'));
+        expect({ status: res.status, code: res.body?.code }).toEqual({
+          status: 409,
           code: 'SWOT_SESSION_NOT_APPROVED',
-          candidateRows: 0,
-          receiptRows: 0,
         });
-      } finally {
-        delete process.env.TOOLS_SWOT_HANDOFF_REQUIRE_APPROVAL;
       }
+      await client.query(`UPDATE tool_sessions SET status='DRAFT' WHERE id=$1`, [
+        SWOT_SESSION_DRAFT,
+      ]);
     });
 
-    it('B3: FIX (gate ON) — an APPROVED session still passes, so the gate blocks only the ungoverned path', async () => {
+    it('B3: an APPROVED session passes without any environment switch', async () => {
       requireHarness();
-      const approved = cfId('tool', 'swot-approved');
-      await client.query(
-        `INSERT INTO tool_sessions (id, organization_id, tool_type, name, status, approved_at, created_by)
-         VALUES ($1, $2, 'dynamic-swot', 'Crossflow SWOT (APPROVED)', 'APPROVED', NOW(), $3)
-         ON CONFLICT (id) DO UPDATE SET status = 'APPROVED'`,
-        [approved, TENANT_A.id, TENANT_A.owner.id]
+      const res = await request(app)
+        .post(`/api/tools/${SWOT_SESSION_APPROVED}/swot-candidates`)
+        .set('Authorization', bearer(TENANT_A.owner))
+        .send(handoffBody('rec-6', 'approved-session probe'));
+      const candidates = await coldRead((c) =>
+        c.query(
+          `SELECT id FROM initiative_candidates WHERE organization_id = $1 AND source_id = $2`,
+          [TENANT_A.id, `${SWOT_SESSION_APPROVED}:rec-6`]
+        )
       );
-
-      process.env.TOOLS_SWOT_HANDOFF_REQUIRE_APPROVAL = 'true';
-      try {
-        const res = await request(app)
-          .post(`/api/tools/${approved}/swot-candidates`)
-          .set('Authorization', bearer(TENANT_A.owner))
-          .send(handoffBody('rec-6', 'approved-session probe'));
-
-        const candidates = await coldRead((c) =>
-          c.query(
-            `SELECT id FROM initiative_candidates WHERE organization_id = $1 AND source_id = $2`,
-            [TENANT_A.id, `${approved}:rec-6`]
-          )
-        );
-        expect({ httpStatus: res.status, candidateRows: candidates.rowCount }).toEqual({
-          httpStatus: 201,
-          candidateRows: 1,
-        });
-      } finally {
-        delete process.env.TOOLS_SWOT_HANDOFF_REQUIRE_APPROVAL;
-      }
+      expect({ httpStatus: res.status, candidateRows: candidates.rowCount }).toEqual({
+        httpStatus: 201,
+        candidateRows: 1,
+      });
     });
   });
 
-  describe('E. the end-to-end governance bypass this segment exists to measure', () => {
-    it('E1: DRAFT SWOT → candidate → accepted Initiative completes with NO freeze and NO approval anywhere in the chain', async () => {
+  describe('E. the governed chain cannot start from an unapproved SWOT', () => {
+    it('E1: DRAFT SWOT creates neither Candidate nor Initiative', async () => {
       requireHarness();
-
-      // Step 1 — hand a recommendation off from a session that was never
-      // reviewed, never approved and therefore never frozen.
       const handoff = await request(app)
         .post(`/api/tools/${SWOT_SESSION_DRAFT}/swot-candidates`)
         .set('Authorization', bearer(TENANT_A.owner))
-        .send(handoffBody('rec-7', 'Bypass chain probe'));
-      expect(handoff.status).toBe(201);
-      const candidateId = handoff.body?.candidate?.id as string;
-      expect(candidateId).toBeTruthy();
-
-      // Step 2 — accept the candidate through the real canonical funnel.
-      // `fill:false` skips the F1 card generator, which calls a model and would
-      // make this assertion non-deterministic.
-      const candidatesRouter = (
-        await import('../../../server/src/routes/initiativeCandidates.routes.js')
-      ).default;
-      const funnel = express();
-      funnel.use(express.json());
-      funnel.use('/api/initiatives', candidatesRouter);
-
-      const accept = await request(funnel)
-        .post(`/api/initiatives/candidates/${candidateId}/accept`)
-        .set('Authorization', bearer(TENANT_A.owner))
-        .send({ fill: false });
-
-      // Step 3 — read the whole lineage back COLD and assert what governance
-      // artefacts exist. The point is not that an Initiative appeared; it is
-      // that it appeared while the source tool session is still DRAFT, has
-      // no approved_at, and no APPROVE_TOOL decision was ever recorded.
-      const proof = await coldRead(async (c) => {
-        const session = await c.query(
-          `SELECT status, approved_at, context_snapshot FROM tool_sessions WHERE id = $1`,
-          [SWOT_SESSION_DRAFT]
-        );
-        const initiatives = await c.query(
-          `SELECT id, source_type FROM initiatives
-            WHERE organization_id = $1 AND source_type = 'swot_recommendation'`,
-          [TENANT_A.id]
-        );
-        const toolDecisions = await c.query(
-          `SELECT decision_type, status FROM tool_decisions WHERE tool_session_id = $1`,
-          [SWOT_SESSION_DRAFT]
-        );
-        return {
-          sessionStatus: session.rows[0]?.status ?? null,
-          approvedAt: session.rows[0]?.approved_at ?? null,
-          initiativeCount: initiatives.rowCount,
-          approveDecisions: toolDecisions.rows.filter(
-            (r: any) => String(r.decision_type).toUpperCase() === 'APPROVE_TOOL'
-          ).length,
-        };
+        .send(handoffBody('rec-8', 'unapproved chain probe'));
+      const after = await coldRead((c) =>
+        c.query(
+          `SELECT
+             (SELECT count(*)::int FROM initiative_candidates WHERE organization_id=$1 AND source_id=$2) candidates,
+             (SELECT count(*)::int FROM initiatives WHERE organization_id=$1 AND source_id=$3) initiatives`,
+          [TENANT_A.id, `${SWOT_SESSION_DRAFT}:rec-8`, SWOT_SESSION_DRAFT]
+        )
+      );
+      expect({ handoffStatus: handoff.status, ...after.rows[0] }).toEqual({
+        handoffStatus: 409,
+        candidates: 0,
+        initiatives: 0,
       });
-
-      // MEASURED STATE with the gate at its shipped default (OFF): a registered
-      // Initiative exists whose entire provenance is an unapproved SWOT. This
-      // is the finding, recorded as an assertion so it cannot regress silently.
-      expect({
-        acceptStatus: accept.status,
-        sessionStatus: proof.sessionStatus,
-        approvedAt: proof.approvedAt,
-        approveDecisions: proof.approveDecisions,
-        initiativeCount: proof.initiativeCount,
-      }).toEqual({
-        acceptStatus: 200,
-        sessionStatus: 'DRAFT',
-        approvedAt: null,
-        approveDecisions: 0,
-        initiativeCount: 1,
-      });
-    }, 60_000);
-
-    it('E2: with the gate ON the chain cannot even start — no candidate, therefore no Initiative', async () => {
-      requireHarness();
-      process.env.TOOLS_SWOT_HANDOFF_REQUIRE_APPROVAL = 'true';
-      try {
-        const handoff = await request(app)
-          .post(`/api/tools/${SWOT_SESSION_DRAFT}/swot-candidates`)
-          .set('Authorization', bearer(TENANT_A.owner))
-          .send(handoffBody('rec-8', 'gate-on bypass probe'));
-
-        const after = await coldRead((c) =>
-          c.query(
-            `SELECT id FROM initiative_candidates WHERE organization_id = $1 AND source_id = $2`,
-            [TENANT_A.id, `${SWOT_SESSION_DRAFT}:rec-8`]
-          )
-        );
-        expect({ handoffStatus: handoff.status, candidateRows: after.rowCount }).toEqual({
-          handoffStatus: 409,
-          candidateRows: 0,
-        });
-      } finally {
-        delete process.env.TOOLS_SWOT_HANDOFF_REQUIRE_APPROVAL;
-      }
     }, 60_000);
   });
 
@@ -399,7 +285,7 @@ describe('CF-04 Tools/SWOT governance on real Postgres with a real signed JWT', 
     it('C1: tenant B asking for tenant A’s session and for a nonexistent id get the SAME status', async () => {
       requireHarness();
       const foreign = await request(app)
-        .post(`/api/tools/${SWOT_SESSION_DRAFT}/swot-candidates`)
+        .post(`/api/tools/${SWOT_SESSION_APPROVED}/swot-candidates`)
         .set('Authorization', bearer(TENANT_B.owner))
         .send(handoffBody('rec-2', 'cross-tenant attempt'));
 
@@ -426,18 +312,18 @@ describe('CF-04 Tools/SWOT governance on real Postgres with a real signed JWT', 
     it('D1: the same recommendation handed off twice yields exactly one candidate', async () => {
       requireHarness();
       const first = await request(app)
-        .post(`/api/tools/${SWOT_SESSION_DRAFT}/swot-candidates`)
+        .post(`/api/tools/${SWOT_SESSION_APPROVED}/swot-candidates`)
         .set('Authorization', bearer(TENANT_A.owner))
         .send(handoffBody('rec-3', 'idempotency probe'));
       const second = await request(app)
-        .post(`/api/tools/${SWOT_SESSION_DRAFT}/swot-candidates`)
+        .post(`/api/tools/${SWOT_SESSION_APPROVED}/swot-candidates`)
         .set('Authorization', bearer(TENANT_A.owner))
         .send(handoffBody('rec-3', 'idempotency probe'));
 
       const rows = await coldRead((c) =>
         c.query(
           `SELECT id FROM initiative_candidates WHERE organization_id = $1 AND source_id = $2`,
-          [TENANT_A.id, `${SWOT_SESSION_DRAFT}:rec-3`]
+          [TENANT_A.id, `${SWOT_SESSION_APPROVED}:rec-3`]
         )
       );
 
@@ -454,7 +340,7 @@ describe('CF-04 Tools/SWOT governance on real Postgres with a real signed JWT', 
       const ATTEMPTS = 8;
       const race = await raceExactly(ATTEMPTS, () =>
         request(app)
-          .post(`/api/tools/${SWOT_SESSION_DRAFT}/swot-candidates`)
+          .post(`/api/tools/${SWOT_SESSION_APPROVED}/swot-candidates`)
           .set('Authorization', bearer(TENANT_A.owner))
           .send(handoffBody('rec-4', 'concurrency probe'))
       );
@@ -462,14 +348,14 @@ describe('CF-04 Tools/SWOT governance on real Postgres with a real signed JWT', 
       const rows = await coldRead((c) =>
         c.query(
           `SELECT id FROM initiative_candidates WHERE organization_id = $1 AND source_id = $2`,
-          [TENANT_A.id, `${SWOT_SESSION_DRAFT}:rec-4`]
+          [TENANT_A.id, `${SWOT_SESSION_APPROVED}:rec-4`]
         )
       );
       const receipts = await coldRead((c) =>
         c.query(
           `SELECT id FROM swot_candidate_handoffs
             WHERE organization_id = $1 AND tool_session_id = $2 AND recommendation_id = 'rec-4'`,
-          [TENANT_A.id, SWOT_SESSION_DRAFT]
+          [TENANT_A.id, SWOT_SESSION_APPROVED]
         )
       );
 

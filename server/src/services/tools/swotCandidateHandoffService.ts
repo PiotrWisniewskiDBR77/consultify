@@ -37,14 +37,7 @@ export function setSwotCandidateHandoffFaultInjectorForTests(
   testFaultInjector = injector;
 }
 
-/** Optional governance gate pending the Product decision whether handoff is a
- * promotion or merely a suggestion. The historical behavior remains default.
- */
 const APPROVED_SESSION_STATUSES = new Set(['APPROVED', 'FINALIZED']);
-
-export function isSwotHandoffApprovalGateEnabled(): boolean {
-  return process.env.TOOLS_SWOT_HANDOFF_REQUIRE_APPROVAL === 'true';
-}
 
 function candidateDb(tx: PgTransactionClient) {
   return {
@@ -104,17 +97,15 @@ export async function handoffSwotRecommendation(params: {
       );
     }
 
-    if (isSwotHandoffApprovalGateEnabled()) {
-      const normalizedStatus = String(source.status || '')
-        .trim()
-        .toUpperCase();
-      if (!APPROVED_SESSION_STATUSES.has(normalizedStatus)) {
-        throw new SwotCandidateHandoffError(
-          'SWOT_SESSION_NOT_APPROVED',
-          409,
-          'SWOT session must be approved before its recommendations can be handed off'
-        );
-      }
+    const normalizedStatus = String(source.status || '')
+      .trim()
+      .toUpperCase();
+    if (!APPROVED_SESSION_STATUSES.has(normalizedStatus)) {
+      throw new SwotCandidateHandoffError(
+        'SWOT_SESSION_NOT_APPROVED',
+        409,
+        'SWOT session must be approved before its recommendations can be handed off'
+      );
     }
 
     const existing = await tx.query<HandoffRow>(

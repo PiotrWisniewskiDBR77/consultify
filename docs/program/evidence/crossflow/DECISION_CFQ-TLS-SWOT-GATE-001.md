@@ -1,11 +1,13 @@
 # DECYZJA OWNERA — `CFQ-TLS-SWOT-GATE-001`
 
 ## Pytanie
+
 Czy przekazanie rekomendacji SWOT do kandydata inicjatywy (`POST /api/tools/:toolId/swot-candidates`)
 jest **krokiem promocji**, który musi być poprzedzony zamrożeniem i zatwierdzeniem narzędzia — czy
 **krokiem sugestii**, celowo otwartym, w którym prawdziwą bramką jest dopiero akceptacja kandydata?
 
 ## Co zostało zmierzone (nie wywnioskowane)
+
 Bieg integratora na świeżej bazie (733 migracje), przez prawdziwy router, z **prawdziwym podpisanym JWT**:
 `tests/integration/crossflow/cf-04-tools-swot-governance.realdb.test.ts`, test **E1**.
 
@@ -28,6 +30,7 @@ wyłącznie `id, tool_type` — nigdy `status`.
 ## Warianty
 
 **W1 — bramka WŁĄCZONA (rekomendacja).** Przekazanie do kandydata wymaga sesji `APPROVED`/`FINALIZED`.
+
 - Zgodne z brzmieniem zadania 4 („SWOT → freeze → approval → promotion").
 - Zamyka obejście na najwcześniejszym ogniwie; kolejne ogniwa nie muszą go łatać.
 - **Koszt**: zmiana zachowania. `tests/integration/tls-007-swot-candidate-handoff.realdb.test.ts`
@@ -37,39 +40,43 @@ wyłącznie `id, tool_type` — nigdy `status`.
 
 **W2 — bramka WYŁĄCZONA, gate przeniesiony na akceptację kandydata.** Kandydat pozostaje sugestią;
 `acceptCandidate` sprawdza status źródłowego narzędzia.
+
 - Zachowuje dzisiejszy UX zbierania pomysłów z roboczych narzędzi.
 - **Koszt**: `acceptCandidate` obsługuje wiele typów źródeł (`interview_insight`, `audit`,
   `swot_recommendation`, …); dokładanie tam wiedzy o narzędziach rozmywa odpowiedzialność.
   Obejście nadal istnieje dla każdej innej ścieżki, która czyta `initiative_candidates`.
 
 **W3 — status quo.** Żadnej bramki.
+
 - **Koszt**: zadanie 4 nie może zostać uznane za spełnione; sekwencja freeze→approval→promotion
   nie jest w runtime egzekwowana w żadnym punkcie.
 
 ## Rekomendacja
+
 **W1.** Sekwencja zarządcza ma wartość tylko wtedy, gdy jest egzekwowana na wejściu do łańcucha.
 Koszt to jeden fixture testowy i jeden komunikat w UI.
 
-## Co już jest gotowe technicznie (stan owner-gated)
-Bramka jest **zaimplementowana i dowiedziona**, ale **domyślnie WYŁĄCZONA** — zero zmiany zachowania,
-zero regresji. Włączenie to jedna zmienna środowiskowa:
+## Decyzja właściciela — 2026-08-19
 
-```bash
-TOOLS_SWOT_HANDOFF_REQUIRE_APPROVAL=true
-```
+Piotr zaakceptował **W1**. Do Skrzynki Kandydatów wolno przekazać wyłącznie rekomendację
+z Dynamic SWOT w stanie `APPROVED` albo `FINALIZED`. `DRAFT`, `REVIEW`, brak statusu i każdy
+inny stan kończą się `409 SWOT_SESSION_NOT_APPROVED` przed utworzeniem kandydata lub pokwitowania.
 
-Dowód obu trybów w jednym pliku:
-- `B1` — bramka OFF: `DRAFT` → 201, 1 kandydat (defekt zapisany jako asercja, więc nie zmieni się po cichu);
-- `B2` — bramka ON: `DRAFT` → **409 `SWOT_SESSION_NOT_APPROVED`**, 0 kandydatów, 0 pokwitowań;
-- `B3` — bramka ON: sesja `APPROVED` → 201, 1 kandydat (bramka blokuje wyłącznie ścieżkę niezarządzaną);
-- `E2` — bramka ON: łańcuch do Inicjatywy w ogóle się nie zaczyna.
+Historyczny przełącznik środowiskowy został wycofany: bramka jest niezmiennym kontraktem produktu,
+a nie konfiguracją wdrożenia. Historyczne pomiary B1/B2/B3 powyżej pozostają zapisem drogi do decyzji,
+nie opisem bieżącego zachowania.
+
+Status decyzji: **APPROVED — IMPLEMENTATION REQUIRED UNTIL QUALIFIED**. Implementacja nie może być
+uznana za zamkniętą przed zieloną kwalifikacją dokładnego pakietu źródłowego i realnego signed journey.
 
 ## Ścieżki odblokowywane tą decyzją
+
 - pakiet cross-flow SWOT (`SWOT → freeze → approval → promotion`);
 - `TLS-BVP-001` — ta sama sekwencja;
 - kryterium DoD „maker/checker i zakaz self-approval" w części dotyczącej narzędzi.
 
 ## Czego ta decyzja NIE odblokowuje
+
 Braku zakazu self-approval w `ToolController.approveTool` (ten sam użytkownik może poprosić o przegląd
 i zatwierdzić) — to osobne ustalenie, wymagające własnej decyzji o macierzy ról.
 

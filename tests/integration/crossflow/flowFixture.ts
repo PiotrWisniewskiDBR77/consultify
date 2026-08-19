@@ -350,33 +350,26 @@ export async function createApprovedSwotInitiative(
   app.use('/api/tools', toolsRouter);
   app.use('/api/initiatives', candidatesRouter);
 
-  const previousGate = process.env.TOOLS_SWOT_HANDOFF_REQUIRE_APPROVAL;
-  process.env.TOOLS_SWOT_HANDOFF_REQUIRE_APPROVAL = 'true';
-  try {
-    const handoff = await request(app)
-      .post(`/api/tools/${toolSessionId}/swot-candidates`)
-      .set('Authorization', bearer(actor))
-      .send({
-        id: recommendationId,
-        title: `Approved transformation ${suffix}`,
-        rationale: 'Approved SWOT source for the full transformation lineage proof',
-      });
-    if (handoff.status !== 201 || !handoff.body?.candidate?.id) {
-      throw new Error(`approved SWOT handoff failed: ${handoff.status} ${JSON.stringify(handoff.body)}`);
-    }
-    const candidateId = String(handoff.body.candidate.id);
-    const accepted = await request(app)
-      .post(`/api/initiatives/candidates/${candidateId}/accept`)
-      .set('Authorization', bearer(actor))
-      .send({ fill: false });
-    if (accepted.status !== 200 || accepted.body?.accepted !== true || !accepted.body?.initiativeId) {
-      throw new Error(`candidate acceptance failed: ${accepted.status} ${JSON.stringify(accepted.body)}`);
-    }
-    return { toolSessionId, candidateId, initiativeId: String(accepted.body.initiativeId) };
-  } finally {
-    if (previousGate === undefined) delete process.env.TOOLS_SWOT_HANDOFF_REQUIRE_APPROVAL;
-    else process.env.TOOLS_SWOT_HANDOFF_REQUIRE_APPROVAL = previousGate;
+  const handoff = await request(app)
+    .post(`/api/tools/${toolSessionId}/swot-candidates`)
+    .set('Authorization', bearer(actor))
+    .send({
+      id: recommendationId,
+      title: `Approved transformation ${suffix}`,
+      rationale: 'Approved SWOT source for the full transformation lineage proof',
+    });
+  if (handoff.status !== 201 || !handoff.body?.candidate?.id) {
+    throw new Error(`approved SWOT handoff failed: ${handoff.status} ${JSON.stringify(handoff.body)}`);
   }
+  const candidateId = String(handoff.body.candidate.id);
+  const accepted = await request(app)
+    .post(`/api/initiatives/candidates/${candidateId}/accept`)
+    .set('Authorization', bearer(actor))
+    .send({ fill: false });
+  if (accepted.status !== 200 || accepted.body?.accepted !== true || !accepted.body?.initiativeId) {
+    throw new Error(`candidate acceptance failed: ${accepted.status} ${JSON.stringify(accepted.body)}`);
+  }
+  return { toolSessionId, candidateId, initiativeId: String(accepted.body.initiativeId) };
 }
 
 // ---------------------------------------------------------------------------
