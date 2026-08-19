@@ -45,9 +45,11 @@ async function captureColdVitals(baseUrl: string, token: string, sha: string) {
   const browser = await chromium.launch({ headless: true });
   const samples: Array<{ productSha: string; device: 'desktop' | 'mobile'; cold: true; route: string; LCP: number; CLS: number; INP: number }> = [];
   const routes = ['/my-work', '/settings', '/initiatives', '/finance', '/zlecenia'];
+  const extraMyWorkSamples = Math.max(0, Number(process.env.NFR_PERF_EXTRA_MY_WORK_COLD_SAMPLES || 0));
+  const routeBatch = [...routes, ...Array.from({ length: extraMyWorkSamples }, () => '/my-work')];
   try {
     for (const device of ['desktop', 'mobile'] as const) {
-      for (const route of routes) {
+      for (const route of routeBatch) {
         let measured: { LCP: number; CLS: number; INP: number } | undefined;
         for (let attempt = 1; attempt <= 3; attempt++) {
         const context = await browser.newContext(device === 'mobile' ? devices['Pixel 7'] : { viewport: { width: 1440, height: 900 } });
@@ -60,15 +62,25 @@ async function captureColdVitals(baseUrl: string, token: string, sha: string) {
           new PerformanceObserver((list) => { for (const entry of list.getEntries() as any) (window as any).__nfrVitals.INP = Math.max((window as any).__nfrVitals.INP, entry.duration || 0); }).observe({ type: 'event', buffered: true, durationThreshold: 16 } as any);
         }, { authToken: token });
         const page = await context.newPage();
-        await page.goto(`${baseUrl}${route}`, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+        await page.goto(`${baseUrl}${route}`, { waitUntil: 'load', timeout: 60_000 });
+        // LCP collection ends on the first user interaction. Allow the SPA to
+        // hydrate and paint its route before generating the interaction used
+        // for INP, otherwise slower routes can truthfully have no LCP entry.
+        await page.waitForTimeout(2500);
+        const beforeInteraction = await page.evaluate(() => {
+          const observed = (window as any).__nfrVitals as { LCP: number; CLS: number; INP: number };
+          const bufferedLcp = performance.getEntriesByType('largest-contentful-paint').reduce((max, entry) => Math.max(max, entry.startTime), 0);
+          return { ...observed, LCP: Math.max(observed.LCP, bufferedLcp) };
+        });
         await page.locator('body').click({ position: { x: 10, y: 10 } });
         await page.keyboard.press('Tab');
-        await page.waitForTimeout(2500);
+        await page.waitForTimeout(500);
         measured = await page.evaluate(() => {
           const observed = (window as any).__nfrVitals as { LCP: number; CLS: number; INP: number };
           const bufferedLcp = performance.getEntriesByType('largest-contentful-paint').reduce((max, entry) => Math.max(max, entry.startTime), 0);
           return { ...observed, LCP: Math.max(observed.LCP, bufferedLcp) };
         });
+        measured = { ...measured, LCP: Math.max(beforeInteraction.LCP, measured.LCP), CLS: Math.max(beforeInteraction.CLS, measured.CLS) };
         await context.close();
         if (measured.LCP > 0) break;
         }
