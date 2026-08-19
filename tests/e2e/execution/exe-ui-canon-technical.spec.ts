@@ -54,26 +54,6 @@ const SCREENS_DIR = process.env.EXE_UI_SCREENS_DIR?.trim() ?? '';
  *   control   ExecutionControlSurface (+ ExecutionDeliveryClosurePanel)
  *   reports   ExecutionReportsSurface
  */
-/**
- * The exact set of endpoints that answered 403 to a fully signed ADMIN during
- * this lane's runs. Root cause is visible verbatim in the backend log:
- * "[PermissionMiddleware] Denied: manage_workstreams". These surfaces render
- * and then fire calls the signed role cannot make. Recorded as a PRODUCT
- * FINDING; fixing it needs a product allowlist this lane does not hold.
- */
-const MANAGER_LANE_403_ENDPOINTS = [
-  '/api/v8/execution-control/manager/lanes/action-queue/problems',
-  '/api/v8/execution-control/manager/lanes/blockers/problems',
-  '/api/v8/execution-control/manager/lanes/decisions/problems',
-  '/api/v8/execution-control/manager/lanes/people-change/problems',
-  '/api/v8/execution-control/manager/lanes/risk/problems',
-  '/api/v8/execution-control/manager/lanes/workload/problems',
-];
-
-/** `"<status> <METHOD> <url>"` entries -> sorted unique pathnames. */
-const distinctEndpoints = (entries: readonly string[]): string[] =>
-  [...new Set(entries.map((entry) => new URL(entry.split(' ')[2]).pathname))].sort();
-
 const TAB_ANCHOR_CHIP: Record<(typeof REACHABLE_EXECUTION_TABS)[number], string> = {
   list: 'standard-chip-active',
   work: 'standard-chip-tasks',
@@ -315,9 +295,10 @@ test.describe.serial('EXE-UI-CANON capacity and governed action reachability', (
       await expect(page.getByTestId('intel-panel')).toHaveCount(0);
     }
 
-    // --- Backend error: every v8 read fails. The surface must fail closed —
-    // no fabricated rows, no success chrome. This is the no-false-success gate.
-    await page.route('**/api/v8/**', (route) =>
+    // --- Backend error: the canonical case-list read fails. Keep the global V8
+    // capability read intact so this exercises the mounted Resources surface,
+    // not the module-level "Execution unavailable" boundary.
+    await page.route('**/api/initiatives/runtime-v1/execution-cases**', (route) =>
       route.fulfill({
         status: 500,
         contentType: 'application/json',
@@ -325,43 +306,36 @@ test.describe.serial('EXE-UI-CANON capacity and governed action reachability', (
       })
     );
     await page.goto('/execution?tab=resources');
-    // Observed fail-closed behaviour: the resources surface renders NO Menu-3
-    // capacity chips, NO rows and NO empty-state copy when its reads fail. That
-    // is acceptable (nothing is fabricated) but it is silent — the user is shown
-    // no error affordance and no retry control. Asserted as-is, not excused.
+    // The surface fails closed and gives the user an explicit recovery action.
     await expect(page.getByTestId('standard-chip-all')).toHaveCount(0);
     await expect(page.getByTestId('standard-chip-overallocated')).toHaveCount(0);
     await expect(page.getByRole('row')).toHaveCount(0);
     await expect(
       page.getByText('Brak kanonicznych przydziałów zasobów w dostępnych realizacjach.')
     ).toHaveCount(0);
+    const retry = page.getByRole('button', { name: 'Spróbuj ponownie' });
+    await expect(page.getByRole('alert')).toContainText(
+      'Nie udało się załadować rejestru zasobów.'
+    );
+    await expect(retry).toBeVisible();
 
-    // --- Retry: the surface has no dedicated retry control, so the product's
-    // only recovery path is a remount. Assert recovery really happens once the
-    // backend is healthy again (a stuck error state would fail here).
-    await page.unroute('**/api/v8/**');
-    await page.goto('/execution?tab=resources');
+    // Retry stays on the same mounted surface and must recover from the real API.
+    await page.unroute('**/api/initiatives/runtime-v1/execution-cases**');
+    await retry.click();
     await expect(page.getByTestId('standard-chip-overallocated')).toBeVisible({ timeout: 120_000 });
     await expect(page.getByTestId('standard-chip-cost-risk')).toBeVisible({ timeout: 60_000 });
     await expect(page.getByTestId('standard-chip-all')).toHaveText(/0\s*$/);
     await expect(page.getByRole('row')).toHaveCount(0);
 
-    // --- Console/403 accounting, asserted on the DETERMINISTIC axis.
-    // Raw totals vary with how many renders each navigation triggers, so the
-    // assertion pins the exact SET of distinct forbidden endpoints (stable)
-    // and reports the raw counts measured on this run. The counts are what was
-    // observed here — they are NOT the sealed historical G4 numbers and are not
-    // re-asserted from it.
-    expect(distinctEndpoints(watch.forbidden403)).toEqual(MANAGER_LANE_403_ENDPOINTS);
-    // Every non-403 failure in this journey must be the deliberate 500 the test
-    // injected itself — nothing unexplained is tolerated.
+    // The role-permission migration closes the historical manager-lane 403s.
+    expect(watch.forbidden403).toEqual([]);
+    // Every failure in this journey must be the deliberate 500 injected above.
     for (const entry of watch.failedResponses) {
-      if (entry.startsWith('403 ')) continue;
       expect(entry).toMatch(/^500 /);
     }
     // eslint-disable-next-line no-console
     console.log(
-      `[EXE-UI-CANON capacity MEASURED] consoleErrors=${watch.errors.length} failedResponses=${watch.failedResponses.length} forbidden403=${watch.forbidden403.length} distinct403Endpoints=${MANAGER_LANE_403_ENDPOINTS.length}`
+      `[EXE-UI-CANON capacity MEASURED] consoleErrors=${watch.errors.length} failedResponses=${watch.failedResponses.length} forbidden403=${watch.forbidden403.length}`
     );
 
     await context.close();
@@ -423,14 +397,13 @@ test.describe.serial('EXE-UI-CANON capacity and governed action reachability', (
     // this is a durable witness that zero governed writers ran.
     expect(await countGovernedAudit(tenant.organizationId)).toBe(0);
 
-    // --- Console/403 accounting. NO negative control runs in this journey, so
-    // EVERY failed response here is the product issuing a call its own signed
-    // ADMIN identity is not entitled to make.
-    expect(distinctEndpoints(watch.forbidden403)).toEqual(MANAGER_LANE_403_ENDPOINTS);
-    expect(watch.forbidden403.length).toBe(watch.failedResponses.length);
+    // The signed ADMIN may read all manager lanes and this journey has no
+    // negative control, so any failed response is unexplained and blocking.
+    expect(watch.forbidden403).toEqual([]);
+    expect(watch.failedResponses).toEqual([]);
     // eslint-disable-next-line no-console
     console.log(
-      `[EXE-UI-CANON governed MEASURED] consoleErrors=${watch.errors.length} failedResponses=${watch.failedResponses.length} forbidden403=${watch.forbidden403.length} distinct403Endpoints=${MANAGER_LANE_403_ENDPOINTS.length}`
+      `[EXE-UI-CANON governed MEASURED] consoleErrors=${watch.errors.length} failedResponses=${watch.failedResponses.length} forbidden403=${watch.forbidden403.length}`
     );
     await context.close();
 
