@@ -531,7 +531,8 @@ test('TLS-05: signed creator and separate approver freeze, promote, replay and c
     const swotPhase = page.getByRole('button', { name: /SWOT Build/i }).first();
     await expect(swotPhase).toBeVisible({ timeout: 30_000 });
     await swotPhase.click();
-    const weaknessInput = page.getByPlaceholder(/Add point|Dodaj punkt/i).nth(1);
+    await page.getByRole('tab', { name: /Weaknesses/i }).click();
+    const weaknessInput = page.getByPlaceholder(/Add point|Dodaj punkt/i);
     await weaknessInput.fill(marker);
     await weaknessInput.locator('..').getByRole('button').click();
     await expect(page.getByText(marker)).toBeVisible();
