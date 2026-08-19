@@ -54,8 +54,8 @@ test.describe('Partner V8 zero-writer — mounted signed session', () => {
     });
 
     try {
-      const connected = await fixtureApi.post('/api/partners/connect', {
-        headers,
+      const connected = await fixtureApi.post('/api/v8/partner/connect', {
+        headers: { ...headers, 'idempotency-key': `prt-connect-${run}` },
         data: { name: `PRT V8 ${run}`, contactEmail: `${run}@example.test` },
       });
       expect([200, 201]).toContain(connected.status());
