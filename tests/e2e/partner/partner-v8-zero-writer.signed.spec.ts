@@ -18,7 +18,7 @@ const SUPPORT_KEY = process.env.TEST_SUPPORT_KEY || 'local-test-support-key-chan
 test.describe('Partner V8 zero-writer — mounted signed session', () => {
   test.setTimeout(180_000);
 
-  test('uses governed company/campaign writers and keeps approved-out economics read-only without legacy mutation fallback', async ({ page }) => {
+  test('uses governed company/campaign writers and keeps approved-out economics read-only without legacy mutation fallback', async ({ page }, testInfo) => {
     const state = readTestSupportState();
     const run = `prt-v8-${randomUUID().slice(0, 8)}`;
     const headers = { ...getAuthHeader(), 'content-type': 'application/json' };
@@ -162,7 +162,14 @@ test.describe('Partner V8 zero-writer — mounted signed session', () => {
       await expect(page.getByDisplayValue('PRT V8 Owner')).toHaveCount(0);
       await expect(page.getByDisplayValue('DE89370400440532013000')).toHaveCount(0);
       await expect(page.getByRole('button', { name: /^Bank Transfer/i })).toHaveCount(0);
-      expect(legacyMutations).toEqual([]);
+      const tenantPayoutSettingsShot = testInfo.outputPath(
+        'partner-tenant-payout-settings-approved-out.png'
+      );
+      await page.screenshot({ path: tenantPayoutSettingsShot, fullPage: true });
+      await testInfo.attach('partner-tenant-payout-settings-approved-out', {
+        path: tenantPayoutSettingsShot,
+        contentType: 'image/png',
+      });
 
       expect(legacyMutations).toEqual([]);
 
@@ -205,6 +212,7 @@ test.describe('Partner V8 zero-writer — mounted signed session', () => {
               )).rows
             ).toEqual([{ tgenabled: 'O' }]);
             await cleanupClient.query(`DELETE FROM partner_payouts WHERE partner_org_id=$1`, [partnerOrgId]);
+            await cleanupClient.query(`DELETE FROM partner_payout_accounts WHERE partner_org_id=$1`, [partnerOrgId]);
             await cleanupClient.query(`DELETE FROM partner_commission_transactions WHERE partner_org_id=$1`, [partnerOrgId]);
             await cleanupClient.query(`DELETE FROM partner_campaign_links WHERE partner_org_id=$1`, [partnerOrgId]);
             await cleanupClient.query(`ALTER TABLE partner_program_ledger DISABLE TRIGGER trg_partner_program_ledger_guard`);
@@ -235,7 +243,8 @@ test.describe('Partner V8 zero-writer — mounted signed session', () => {
               (SELECT count(*) FROM partner_campaign_links WHERE partner_org_id::text=$1::text)::int +
               (SELECT count(*) FROM partner_program_ledger WHERE partner_org_id::text=$1::text)::int +
               (SELECT count(*) FROM partner_commission_transactions WHERE partner_org_id::text=$1::text)::int +
-              (SELECT count(*) FROM partner_payouts WHERE partner_org_id::text=$1::text)::int AS n`,
+              (SELECT count(*) FROM partner_payouts WHERE partner_org_id::text=$1::text)::int +
+              (SELECT count(*) FROM partner_payout_accounts WHERE partner_org_id::text=$1::text)::int AS n`,
             [partnerOrgId]
           );
           expect(residue.rows[0]?.n).toBe(0);
@@ -276,7 +285,7 @@ test.describe('Partner V8 zero-writer — mounted signed session', () => {
   test('keeps signed SUPERADMIN Partner Config and Settlements economics controls absent after cold reload', async ({
     page,
     request,
-  }) => {
+  }, testInfo) => {
     const runId = makeRunId('prt-approved-out-superadmin');
     const superadmin = await getPrivilegedSession(request, {
       runId,
@@ -316,6 +325,14 @@ test.describe('Partner V8 zero-writer — mounted signed session', () => {
       await page.getByRole('button', { name: 'Partner Config' }).click();
       await expect(page.getByText('Partner economics are read-only', { exact: true })).toBeVisible();
       await expect(page.getByText('Commission Rates by Tier', { exact: true })).toHaveCount(0);
+      const superadminConfigShot = testInfo.outputPath(
+        'partner-superadmin-config-approved-out-cold.png'
+      );
+      await page.screenshot({ path: superadminConfigShot, fullPage: true });
+      await testInfo.attach('partner-superadmin-config-approved-out-cold', {
+        path: superadminConfigShot,
+        contentType: 'image/png',
+      });
 
       await page.getByRole('button', { name: 'Partner Settlements' }).click();
       await expect(page.getByText('Partner economics are read-only', { exact: true })).toBeVisible();
@@ -328,6 +345,14 @@ test.describe('Partner V8 zero-writer — mounted signed session', () => {
       await dismissOverlayIfPresent(page);
       await page.getByRole('button', { name: 'Partner Settlements' }).click();
       await expect(page.getByText('Partner economics are read-only', { exact: true })).toBeVisible();
+      const superadminSettlementsShot = testInfo.outputPath(
+        'partner-superadmin-settlements-approved-out-cold.png'
+      );
+      await page.screenshot({ path: superadminSettlementsShot, fullPage: true });
+      await testInfo.attach('partner-superadmin-settlements-approved-out-cold', {
+        path: superadminSettlementsShot,
+        contentType: 'image/png',
+      });
       expect(economicsMutations).toEqual([]);
     } finally {
       const cleanup = await request.post(`${API}/api/test-support/cleanup`, {
