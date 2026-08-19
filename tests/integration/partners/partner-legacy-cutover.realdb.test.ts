@@ -439,6 +439,40 @@ describe.sequential('Partner legacy cutover guard (real PG)', () => {
     expect(submitted.body.data.passed).toBe(true);
     expect(submittedReplay.status, JSON.stringify(submittedReplay.body)).toBe(200);
     expect(submittedReplay.body.data).toEqual(submitted.body.data);
+    const submitState = () =>
+      sql.query(
+        `SELECT
+          (SELECT row_to_json(a)::text FROM (
+             SELECT submitted_at::text,answers_json::text,score_percent,passed
+             FROM partner_certification_attempts WHERE id=$1
+           ) a) attempt_snapshot,
+          (SELECT row_to_json(c)::text FROM (
+             SELECT certificate_id,certificate_url,passed_exam_at::text,completed_at::text,
+                    status,review_state,valid_until::text
+             FROM partner_certifications WHERE id=$2
+           ) c) certification_snapshot,
+          (SELECT count(*)::int FROM partner_certificates WHERE certification_id=$2) certificate_count,
+          (SELECT string_agg(row_to_json(r)::text,'|' ORDER BY operation,idempotency_key)
+             FROM partner_certification_mutation_receipts r
+            WHERE partner_org_id=$3 AND user_id=$4) receipt_snapshot,
+          (SELECT count(*)::int FROM partner_certification_mutation_receipts
+            WHERE partner_org_id=$3 AND user_id=$4) receipt_count`,
+        [first.body.data.attemptId, certificationId, partnerOrgId, userId]
+      );
+    const beforeSubmitCollision = (await submitState()).rows[0];
+    const changedAnswers = { ...answers };
+    const changedQuestion = first.body.data.questions[0];
+    changedAnswers[changedQuestion.id] = changedQuestion.options.find(
+      (option: { id: string }) => option.id !== answers[changedQuestion.id]
+    ).id;
+    const submitCollision = await supertest(app())
+      .post(`/api/v8/partner/certifications/${certificationId}/exam/submit`)
+      .set('Authorization', `Bearer ${token()}`)
+      .set('Idempotency-Key', `submit-${suffix}`)
+      .send({ attemptId: first.body.data.attemptId, answers: changedAnswers });
+    expect(submitCollision.status).toBe(409);
+    expect(submitCollision.body.code).toBe('IDEMPOTENCY_PAYLOAD_MISMATCH');
+    expect((await submitState()).rows[0]).toEqual(beforeSubmitCollision);
     const cold = await sql.query(
       `SELECT a.submitted_at,a.passed,c.certificate_id FROM partner_certification_attempts a
        JOIN partner_certifications c ON c.id=a.certification_id WHERE a.id=$1`,
