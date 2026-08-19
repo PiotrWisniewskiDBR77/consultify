@@ -24,6 +24,11 @@ import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import { requireActiveMembership } from '../../services/legacyCutover/requireActiveMembership.js';
 import legalService from '../../services/legalService.js';
 import PartnerCommissionService from '../../services/partnerCommissionService.js';
+import {
+  startCertificationExam,
+  submitCertificationExam,
+  updateCertificationModuleProgress,
+} from '../../services/partnerCertificationService.js';
 import { ensurePartnerDemoDataset } from '../../services/partnerDemoSeedService.js';
 import {
   V8_PARTNER_ECONOMIC_WRITERS,
@@ -125,6 +130,31 @@ function partnerProgramMeta(req: AuthRequest, partnerOrgId: string) {
  * (`router.put('/user-tiers/:orgId/:userId', requireRole(...), ...)`).
  */
 const requirePartnerEconomicsReadAccess = [requireActiveMembership, requireOrgRole('admin')];
+
+function requireIdempotencyKey(req: AuthRequest, res: Response): string | null {
+  const key = String(req.headers['idempotency-key'] || '').trim();
+  if (!key) {
+    res
+      .status(400)
+      .json({ error: 'Idempotency-Key is required', code: 'IDEMPOTENCY_KEY_REQUIRED' });
+    return null;
+  }
+  return key;
+}
+
+async function certificationActor(req: AuthRequest, res: Response) {
+  const userId = req.userId || req.user?.id;
+  if (!userId) {
+    res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
+    return null;
+  }
+  const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+  if (!partnerOrgId) {
+    res.status(403).json({ error: 'Partner organization required', code: 'PARTNER_ORG_REQUIRED' });
+    return null;
+  }
+  return { userId, partnerOrgId };
+}
 
 /**
  * GET /api/v8/partner/program/status
@@ -1254,9 +1284,84 @@ router.put(
   })
 );
 
-/**
- * GET /api/v8/partner/payout-settings
- */
+router.post(
+  '/certifications/:certId/modules/:moduleId/progress',
+  requireActiveMembership,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const key = requireIdempotencyKey(req, res);
+    if (!key) return;
+    const actor = await certificationActor(req, res);
+    if (!actor) return;
+    const allowed = new Set(['not_started', 'in_progress', 'completed']);
+    const status = allowed.has(req.body?.status) ? req.body.status : undefined;
+    const progress = Number.isFinite(Number(req.body?.progress))
+      ? Number(req.body.progress)
+      : undefined;
+    if (!status && progress === undefined) {
+      return res
+        .status(400)
+        .json({ error: 'status or progress required', code: 'PROGRESS_REQUIRED' });
+    }
+    const data = await updateCertificationModuleProgress({
+      certificationId: req.params.certId,
+      moduleId: req.params.moduleId,
+      ...actor,
+      status,
+      progress,
+    });
+    return res.json({ data, meta: partnerReadMeta(req, actor.partnerOrgId) });
+  })
+);
+
+router.post(
+  '/certifications/:certId/exam/start',
+  requireActiveMembership,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const idempotencyKey = requireIdempotencyKey(req, res);
+    if (!idempotencyKey) return;
+    const actor = await certificationActor(req, res);
+    if (!actor) return;
+    const data = await startCertificationExam({
+      certificationId: req.params.certId,
+      ...actor,
+      language: req.body?.language === 'pl' ? 'pl' : 'en',
+      ip: String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || ''),
+      userAgent: String(req.headers['user-agent'] || ''),
+      idempotencyKey,
+    });
+    return res.json({ data, meta: partnerReadMeta(req, actor.partnerOrgId) });
+  })
+);
+
+router.post(
+  '/certifications/:certId/exam/submit',
+  requireActiveMembership,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const idempotencyKey = requireIdempotencyKey(req, res);
+    if (!idempotencyKey) return;
+    const actor = await certificationActor(req, res);
+    if (!actor) return;
+    if (
+      typeof req.body?.attemptId !== 'string' ||
+      !req.body?.answers ||
+      typeof req.body.answers !== 'object'
+    ) {
+      return res
+        .status(400)
+        .json({ error: 'attemptId and answers are required', code: 'EXAM_SUBMISSION_REQUIRED' });
+    }
+    const data = await submitCertificationExam({
+      attemptId: req.body.attemptId,
+      certificationId: req.params.certId,
+      ...actor,
+      answers: req.body.answers,
+      idempotencyKey,
+    });
+    return res.json({ data, meta: partnerReadMeta(req, actor.partnerOrgId) });
+  })
+);
+
+/** GET /api/v8/partner/payout-settings */
 router.get(
   '/payout-settings',
   ...requirePartnerEconomicsReadAccess,

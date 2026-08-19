@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 
 import { getDatabase } from '../database/Database.js';
+import { withPgTransaction } from '../database/PostgresDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
@@ -262,6 +263,12 @@ function parseJson<T>(value: unknown, fallback: T): T {
   }
 }
 
+function stableRecordJson(value: Record<string, string>): string {
+  return JSON.stringify(
+    Object.fromEntries(Object.entries(value || {}).sort(([a], [b]) => a.localeCompare(b)))
+  );
+}
+
 function certificationPassingScore(certificationLevel?: string | null): number {
   return certificationLevel === 'practitioner' ? 80 : 70;
 }
@@ -515,6 +522,99 @@ async function requireCertificationOwnership(params: {
   return cert;
 }
 
+function stableAttemptId(params: {
+  certificationId: string;
+  partnerOrgId: string;
+  userId: string;
+  idempotencyKey: string;
+}): string {
+  const hex = crypto
+    .createHash('sha256')
+    .update(
+      `${params.partnerOrgId}:${params.userId}:${params.certificationId}:${params.idempotencyKey}`
+    )
+    .digest('hex')
+    .slice(0, 32);
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-8${hex.slice(17, 20)}-${hex.slice(20)}`;
+}
+
+export async function updateCertificationModuleProgress(params: {
+  certificationId: string;
+  moduleId: string;
+  partnerOrgId: string;
+  userId: string;
+  status?: 'not_started' | 'in_progress' | 'completed';
+  progress?: number;
+}): Promise<{ status: string; progressPercent: number }> {
+  if (!params.status && !Number.isFinite(params.progress)) {
+    throw new Error('status or progress required');
+  }
+  const progress = Number.isFinite(params.progress)
+    ? Math.max(0, Math.min(100, Number(params.progress)))
+    : null;
+  return withPgTransaction(async (query) => {
+    const cert = await query<any>(
+      `SELECT id, certification_type, exam_mode, review_state, certificate_id, passed_exam_at,
+              completed_at
+       FROM partner_certifications
+       WHERE id=$1 AND partner_org_id=$2 AND user_id=$3 FOR UPDATE`,
+      [params.certificationId, params.partnerOrgId, params.userId]
+    );
+    if (!cert.rows[0]) throw new Error('Certification not found');
+    const module = await query(
+      `SELECT id FROM partner_learning_modules
+       WHERE id=$1 AND certification_type=$2 AND is_active=TRUE`,
+      [params.moduleId, cert.rows[0].certification_type]
+    );
+    if (!module.rows[0]) throw new Error('Module not found for certification');
+    await query(
+      `INSERT INTO partner_learning_progress
+         (id,certification_id,module_id,status,progress_percent,started_at,completed_at,created_at,updated_at)
+       VALUES ($1,$2,$3,$4::text,$5::int,NOW(),CASE WHEN $4::text='completed' THEN NOW() END,NOW(),NOW())
+       ON CONFLICT (certification_id,module_id) DO UPDATE SET
+         status=COALESCE($6::text,partner_learning_progress.status),
+         progress_percent=COALESCE($7::int,partner_learning_progress.progress_percent),
+         started_at=COALESCE(partner_learning_progress.started_at,NOW()),
+         completed_at=CASE WHEN COALESCE($6::text,partner_learning_progress.status)='completed'
+                           THEN COALESCE(partner_learning_progress.completed_at,NOW())
+                           ELSE partner_learning_progress.completed_at END,
+         updated_at=NOW()`,
+      [
+        crypto.randomUUID(),
+        params.certificationId,
+        params.moduleId,
+        params.status || 'in_progress',
+        progress ?? 0,
+        params.status || null,
+        progress,
+      ]
+    );
+    const agg = await query<any>(
+      `SELECT COUNT(*)::int total,
+              COUNT(*) FILTER (WHERE status='completed')::int completed
+       FROM partner_learning_progress WHERE certification_id=$1`,
+      [params.certificationId]
+    );
+    const total = agg.rows[0]?.total || 0;
+    const completed = agg.rows[0]?.completed || 0;
+    const percentage = total ? Math.round((completed / total) * 100) : 0;
+    await query(
+      `UPDATE partner_certifications SET progress_percent=$1,
+         status=CASE WHEN certificate_id IS NOT NULL OR passed_exam_at IS NOT NULL THEN 'completed'
+                     WHEN $1>0 THEN 'in_progress' ELSE 'not_started' END,
+         started_at=CASE WHEN $1>0 THEN COALESCE(started_at,NOW()) ELSE started_at END,
+         updated_at=NOW() WHERE id=$2`,
+      [percentage, params.certificationId]
+    );
+    const row = await query<any>(
+      `SELECT status,progress_percent FROM partner_learning_progress
+       WHERE certification_id=$1 AND module_id=$2`,
+      [params.certificationId, params.moduleId]
+    );
+    return { status: row.rows[0].status, progressPercent: Number(row.rows[0].progress_percent) };
+  });
+}
+
 export async function startCertificationExam(params: {
   certificationId: string;
   partnerOrgId: string;
@@ -522,6 +622,7 @@ export async function startCertificationExam(params: {
   language: PartnerResourceLanguage;
   ip?: string | null;
   userAgent?: string | null;
+  idempotencyKey?: string;
 }): Promise<{
   attemptId: string;
   deadlineAt: string;
@@ -529,6 +630,44 @@ export async function startCertificationExam(params: {
 }> {
   const db = getDatabase();
   const cert = await requireCertificationOwnership(params);
+  const idempotencyKey = String(params.idempotencyKey || '').trim();
+  const attemptId = idempotencyKey
+    ? stableAttemptId({ ...params, idempotencyKey })
+    : crypto.randomUUID();
+  const existingAttempt = idempotencyKey
+    ? await DbPromise.get<any>(
+        db,
+        `SELECT * FROM partner_certification_attempts
+         WHERE id=? AND certification_id=? AND partner_org_id=? AND user_id=?`,
+        [attemptId, params.certificationId, params.partnerOrgId, params.userId]
+      )
+    : null;
+  if (existingAttempt) {
+    const ids = parseJson<Array<{ questionId: string }>>(existingAttempt.questions_json, []).map(
+      (item) => item.questionId
+    );
+    const existingQuestions = ids.length
+      ? await DbPromise.all<any>(
+          db,
+          `SELECT id,question_text,options_json FROM partner_exam_questions
+           WHERE id IN (${ids.map(() => '?').join(',')})`,
+          ids
+        )
+      : [];
+    const byId = new Map(existingQuestions.map((q) => [q.id, q]));
+    return {
+      attemptId,
+      deadlineAt: existingAttempt.deadline_at,
+      questions: ids
+        .map((id) => byId.get(id))
+        .filter(Boolean)
+        .map((q: any) => ({
+          id: q.id,
+          text: q.question_text,
+          options: parseJson<Array<{ id: string; label: string }>>(q.options_json, []),
+        })),
+    };
+  }
   const blueprint = certificationBlueprint(cert.certification_type);
   if (!blueprint) throw new Error('Certification blueprint not found');
   if (String(cert.exam_mode || blueprint.examMode) !== 'exam') {
@@ -573,39 +712,42 @@ export async function startCertificationExam(params: {
     throw new Error('Question bank not configured');
   }
 
-  const attemptId = crypto.randomUUID();
   const deadlineAt = new Date(Date.now() + EXAM_DEADLINE_MINUTES * 60 * 1000).toISOString();
   const ipHash = params.ip
     ? crypto.createHash('sha256').update(String(params.ip)).digest('hex')
     : null;
 
-  await DbPromise.run(
-    db,
-    `INSERT INTO partner_certification_attempts
-      (id, certification_id, partner_org_id, user_id, deadline_at, language, questions_json, ip_hash, user_agent)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      attemptId,
+  const created = await withPgTransaction(async (query) => {
+    await query(`SELECT id FROM partner_certifications WHERE id=$1 FOR UPDATE`, [
       params.certificationId,
-      params.partnerOrgId,
-      params.userId,
-      deadlineAt,
-      params.language,
-      JSON.stringify(questions.map((q: any) => ({ questionId: q.id }))),
-      ipHash,
-      params.userAgent || null,
-    ]
-  );
+    ]);
+    const inserted = await query(
+      `INSERT INTO partner_certification_attempts
+        (id,certification_id,partner_org_id,user_id,deadline_at,language,questions_json,ip_hash,user_agent)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT (id) DO NOTHING RETURNING id`,
+      [
+        attemptId,
+        params.certificationId,
+        params.partnerOrgId,
+        params.userId,
+        deadlineAt,
+        params.language,
+        JSON.stringify(questions.map((q: any) => ({ questionId: q.id }))),
+        ipHash,
+        params.userAgent || null,
+      ]
+    );
+    if (inserted.rowCount) {
+      await query(
+        `UPDATE partner_certifications SET attempt_count=COALESCE(attempt_count,0)+1,
+         last_attempt_at=NOW(),updated_at=NOW() WHERE id=$1`,
+        [params.certificationId]
+      );
+    }
+    return inserted.rowCount > 0;
+  });
 
-  await DbPromise.run(
-    db,
-    `UPDATE partner_certifications
-     SET attempt_count = COALESCE(attempt_count, 0) + 1,
-         last_attempt_at = CURRENT_TIMESTAMP,
-         updated_at = CURRENT_TIMESTAMP
-     WHERE id = ?`,
-    [params.certificationId]
-  );
+  if (!created && idempotencyKey) return startCertificationExam(params);
 
   return {
     attemptId,
@@ -625,6 +767,7 @@ export async function startSalesExam(params: {
   language: PartnerResourceLanguage;
   ip?: string | null;
   userAgent?: string | null;
+  idempotencyKey?: string;
 }) {
   return startCertificationExam(params);
 }
@@ -635,139 +778,153 @@ export async function submitCertificationExam(params: {
   partnerOrgId: string;
   userId: string;
   answers: Record<string, string>;
+  idempotencyKey?: string;
 }): Promise<{
   passed: boolean;
   scorePercent: number;
   certificateId?: string;
   reviewState?: string;
 }> {
-  const db = getDatabase();
-  const cert = await requireCertificationOwnership(params);
-  const attempt = await DbPromise.get<any>(
-    db,
-    `SELECT *
-     FROM partner_certification_attempts
-     WHERE id = ? AND certification_id = ? AND partner_org_id = ? AND user_id = ?`,
-    [params.attemptId, params.certificationId, params.partnerOrgId, params.userId]
-  );
-  if (!attempt) throw new Error('Attempt not found');
-  if (attempt.submitted_at) throw new Error('Attempt already submitted');
-  if (new Date(attempt.deadline_at).getTime() < Date.now()) throw new Error('Attempt expired');
+  return withPgTransaction(async (query) => {
+    const certResult = await query<any>(
+      `SELECT * FROM partner_certifications
+     WHERE id=$1 AND partner_org_id=$2 AND user_id=$3 FOR UPDATE`,
+      [params.certificationId, params.partnerOrgId, params.userId]
+    );
+    const cert = certResult.rows[0];
+    if (!cert) throw new Error('Certification not found');
+    const attemptResult = await query<any>(
+      `SELECT * FROM partner_certification_attempts
+     WHERE id=$1 AND certification_id=$2 AND partner_org_id=$3 AND user_id=$4 FOR UPDATE`,
+      [params.attemptId, params.certificationId, params.partnerOrgId, params.userId]
+    );
+    const attempt = attemptResult.rows[0];
+    if (!attempt) throw new Error('Attempt not found');
+    if (attempt.submitted_at) {
+      const previous = parseJson<Record<string, string>>(attempt.answers_json, {});
+      if (stableRecordJson(previous) !== stableRecordJson(params.answers || {})) {
+        throw new Error('Idempotency replay payload mismatch');
+      }
+      return {
+        passed: Boolean(attempt.passed),
+        scorePercent: Number(attempt.score_percent),
+        ...(cert.certificate_id ? { certificateId: cert.certificate_id } : {}),
+        reviewState: cert.review_state || undefined,
+      };
+    }
+    if (new Date(attempt.deadline_at).getTime() < Date.now()) throw new Error('Attempt expired');
 
-  const questionIds = parseJson<Array<{ questionId: string }>>(attempt.questions_json, []).map(
-    (item) => item.questionId
-  );
-  if (questionIds.length === 0) throw new Error('Attempt questions missing');
+    const questionIds = parseJson<Array<{ questionId: string }>>(attempt.questions_json, []).map(
+      (item) => item.questionId
+    );
+    if (questionIds.length === 0) throw new Error('Attempt questions missing');
 
-  const questionPlaceholders = questionIds.map(() => '?').join(', ');
-  const questions = await DbPromise.all<any>(
-    db,
-    `SELECT id, correct_option_id, passing_score
+    const questions = (
+      await query<any>(
+        `SELECT id, correct_option_id, passing_score
      FROM partner_exam_questions
-     WHERE certification_type = ?
-       AND id IN (${questionPlaceholders})`,
-    [cert.certification_type, ...questionIds]
-  );
-  const correctMap = new Map(
-    questions.map((question) => [question.id, String(question.correct_option_id || '')])
-  );
-  let score = 0;
-  for (const qid of questionIds) {
-    const answer = params.answers[qid];
-    if (answer && correctMap.get(qid) === answer) score += 1;
-  }
+     WHERE certification_type = $1 AND id = ANY($2::text[])`,
+        [cert.certification_type, questionIds]
+      )
+    ).rows;
+    const correctMap = new Map(
+      questions.map((question) => [question.id, String(question.correct_option_id || '')])
+    );
+    let score = 0;
+    for (const qid of questionIds) {
+      const answer = params.answers[qid];
+      if (answer && correctMap.get(qid) === answer) score += 1;
+    }
 
-  const scorePercent = Math.round((score / questionIds.length) * 100);
-  const passed = scorePercent >= certificationPassingScore(cert.certification_level);
-  await DbPromise.run(
-    db,
-    `UPDATE partner_certification_attempts
-     SET submitted_at = CURRENT_TIMESTAMP, answers_json = ?, score_percent = ?, passed = ?
-     WHERE id = ?`,
-    [JSON.stringify(params.answers || {}), scorePercent, passed, params.attemptId]
-  );
+    const scorePercent = Math.round((score / questionIds.length) * 100);
+    const passed = scorePercent >= certificationPassingScore(cert.certification_level);
+    await query(
+      `UPDATE partner_certification_attempts
+     SET submitted_at = CURRENT_TIMESTAMP, answers_json = $1, score_percent = $2, passed = $3
+     WHERE id = $4`,
+      [JSON.stringify(params.answers || {}), scorePercent, passed, params.attemptId]
+    );
 
-  if (!passed) {
-    return { passed, scorePercent, reviewState: cert.review_state || undefined };
-  }
+    if (!passed) {
+      return { passed, scorePercent, reviewState: cert.review_state || undefined };
+    }
 
-  const blueprint = certificationBlueprint(cert.certification_type);
-  const certificateId = crypto.randomUUID();
-  const shareToken = crypto.randomBytes(18).toString('hex');
-  const validUntil = validUntilFromPolicy(
-    cert.recertification_policy || blueprint?.recertificationPolicy
-  );
+    const blueprint = certificationBlueprint(cert.certification_type);
+    const certificateId = crypto.randomUUID();
+    const shareToken = crypto.randomBytes(18).toString('hex');
+    const validUntil = validUntilFromPolicy(
+      cert.recertification_policy || blueprint?.recertificationPolicy
+    );
 
-  await DbPromise.run(
-    db,
-    `INSERT INTO partner_certificates
+    await query(
+      `INSERT INTO partner_certificates
       (
         id, partner_org_id, user_id, certification_id, certificate_type, share_token,
         certification_track, certification_level, review_state, valid_until, earned_at, created_at
       )
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'approved', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-    [
-      certificateId,
-      params.partnerOrgId,
-      params.userId,
-      params.certificationId,
-      cert.certification_type,
-      shareToken,
-      cert.certification_track || blueprint?.track || null,
-      cert.certification_level || blueprint?.level || null,
-      validUntil,
-    ]
-  );
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'approved',$9,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)`,
+      [
+        certificateId,
+        params.partnerOrgId,
+        params.userId,
+        params.certificationId,
+        cert.certification_type,
+        shareToken,
+        cert.certification_track || blueprint?.track || null,
+        cert.certification_level || blueprint?.level || null,
+        validUntil,
+      ]
+    );
 
-  await DbPromise.run(
-    db,
-    `UPDATE partner_certifications
-     SET certificate_id = ?,
-         certificate_url = ?,
+    await query(
+      `UPDATE partner_certifications
+     SET certificate_id = $1,
+         certificate_url = $2,
          passed_exam_at = CURRENT_TIMESTAMP,
          completed_at = CURRENT_TIMESTAMP,
          status = 'completed',
          review_state = 'approved',
-         valid_until = ?,
+         valid_until = $3,
          updated_at = CURRENT_TIMESTAMP
-     WHERE id = ?`,
-    [
-      certificateId,
-      `/api/partners/certificates/${certificateId}/download`,
-      validUntil,
-      params.certificationId,
-    ]
-  );
-
-  try {
-    const org = await DbPromise.get<any>(
-      db,
-      `SELECT tier, tier_override, certification_tier_floor FROM partner_organizations WHERE id = ?`,
-      [params.partnerOrgId]
+     WHERE id = $4`,
+      [
+        certificateId,
+        `/api/partners/certificates/${certificateId}/download`,
+        validUntil,
+        params.certificationId,
+      ]
     );
-    const legacy = legacyPartnerTierToCanonical(org?.tier);
-    const currentFloor = org?.certification_tier_floor
-      ? String(org.certification_tier_floor).toUpperCase()
-      : null;
-    const effective = maxTier(maxTier(legacy, org?.tier_override), currentFloor);
-    const desired = maxTier(effective, cert.tier_target || blueprint?.targetTier || 'SILVER');
-    if (tierRank(desired) > tierRank(currentFloor)) {
-      await DbPromise.run(
-        db,
-        `UPDATE partner_organizations
-         SET certification_tier_floor = ?, updated_at = CURRENT_TIMESTAMP
-         WHERE id = ?`,
-        [desired, params.partnerOrgId]
+
+    try {
+      const org = (
+        await query<any>(
+          `SELECT tier, tier_override, certification_tier_floor FROM partner_organizations WHERE id = $1`,
+          [params.partnerOrgId]
+        )
+      ).rows[0];
+      const legacy = legacyPartnerTierToCanonical(org?.tier);
+      const currentFloor = org?.certification_tier_floor
+        ? String(org.certification_tier_floor).toUpperCase()
+        : null;
+      const effective = maxTier(maxTier(legacy, org?.tier_override), currentFloor);
+      const desired = maxTier(effective, cert.tier_target || blueprint?.targetTier || 'SILVER');
+      if (tierRank(desired) > tierRank(currentFloor)) {
+        await query(
+          `UPDATE partner_organizations
+         SET certification_tier_floor = $1, updated_at = CURRENT_TIMESTAMP
+         WHERE id = $2`,
+          [desired, params.partnerOrgId]
+        );
+      }
+    } catch (error: unknown) {
+      logger.warn(
+        '[PartnerCertification] Failed to update incentive floor',
+        (error as Error)?.message
       );
     }
-  } catch (error: unknown) {
-    logger.warn(
-      '[PartnerCertification] Failed to update incentive floor',
-      (error as Error)?.message
-    );
-  }
 
-  return { passed, scorePercent, certificateId, reviewState: 'approved' };
+    return { passed, scorePercent, certificateId, reviewState: 'approved' };
+  });
 }
 
 export async function submitSalesExam(params: {
@@ -776,6 +933,7 @@ export async function submitSalesExam(params: {
   partnerOrgId: string;
   userId: string;
   answers: Record<string, string>;
+  idempotencyKey?: string;
 }) {
   return submitCertificationExam(params);
 }

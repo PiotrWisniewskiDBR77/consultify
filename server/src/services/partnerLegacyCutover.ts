@@ -40,6 +40,21 @@ export const PROTECTED_PARTNER_LEGACY_WRITERS: ProtectedLegacyWriter[] = [
     path: /^\/payout-settings\/?$/,
     successor: '/api/v8/partner/payout-settings',
   },
+  {
+    method: 'POST',
+    path: /^\/certifications\/[^/]+\/modules\/[^/]+\/progress\/?$/,
+    successor: '/api/v8/partner/certifications/:certId/modules/:moduleId/progress',
+  },
+  {
+    method: 'POST',
+    path: /^\/certifications\/[^/]+\/exam\/start\/?$/,
+    successor: '/api/v8/partner/certifications/:certId/exam/start',
+  },
+  {
+    method: 'POST',
+    path: /^\/certifications\/[^/]+\/exam\/submit\/?$/,
+    successor: '/api/v8/partner/certifications/:certId/exam/submit',
+  },
 ];
 
 export function partnerLegacyRollbackEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
