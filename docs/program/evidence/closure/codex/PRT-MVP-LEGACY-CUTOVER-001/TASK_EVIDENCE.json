@@ -3,91 +3,110 @@
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "4f356fb86a8f7b92457e87956f18e70c5e0cd869",
   "historicalTechnicalSourceSha": "74f6a15ffd6b953432531a77b8e2e58a73c4128a",
-  "technicalSourceSha": "ed342ed686e2c01c1bfbe47908451d7d5f4e0acf",
   "historicalReconciliationSha": "de4100cead8759afcc2ee4e3a8d349242a22fd4a",
-  "reconciliationSha": "ed342ed686e2c01c1bfbe47908451d7d5f4e0acf",
   "zeroWriterTechnicalSourceSha": "1c12bb49c81d9ef2de53df2936214cde6d6c1d5e",
   "cleanupCorrectionSha": "cce2b95e3a1ad00224f75364bbfdbed216644f6a",
   "productIntegrationSha": "3eccbe879ab05b59d99ea67ec490b96b272e2eaf",
   "cleanupIntegrationSha": "edfab2f319af0679adc79e90777eaaa934464070",
-  "technicalVerdict": "PASS_EXACT_CURRENT_DEFAULT_ROUTER_AND_RETAINED_PUBLIC_INGRESS",
+  "technicalSourceSha": "570940e5cb0ff08aea0bfa7f6589cf3384d80da2",
+  "reconciliationSha": "cf3e5bcd5da6e194a8b02dd41069be72e56d29d7",
+  "technicalVerdict": "DONE_CURRENT_SHA_REPOSITORY_PARTNER_W01_W29",
+  "verdict": "DONE_CURRENT_SHA",
+  "verdictScope": "Repository-local exact-SHA Partner cutover; no production mutation, deployment or release is claimed.",
+  "verdictRationale": "W01-W29 have complete truthful dispositions: W01-W16 are successor-governed or explicit no-write surfaces, W17 is retained canonical public ingress, W18-W27 are domain-disabled and hidden by AMD-PRT-ECONOMICS-002, and W28-W29 use canonical operator-review successors. Signed owner-binding apply and rollback tooling is qualified. AMD-TECHNICAL-DONE-RELEASE-BOUNDARY-002 separates repository completion from production execution.",
+  "technicalSourceChain": [
+    "ed342ed686e2c01c1bfbe47908451d7d5f4e0acf",
+    "e9f3495c4027438694c40970048075365caaac45",
+    "c6635b08e7efb67a85cb8bcd2bcf115a0eaffedf",
+    "03fba8c992f01ca406bba1e19e3b2d679d0edeb8",
+    "570940e5cb0ff08aea0bfa7f6589cf3384d80da2"
+  ],
   "exactCurrent": {
-    "testedSha": "ed342ed686e2c01c1bfbe47908451d7d5f4e0acf",
-    "scope": "Repository-local Partner cutover: all sixteen declared default-router mutations have explicit V8 successors or explicit no-write successors; W17 is retained as the canonical public ingress rather than falsely retired; W28/W29 use canonical operator-review successors.",
-    "migration": "Fresh isolated PostgreSQL applied 776 migrations including 957; repeat applied 0 and dry-run reported 0 pending.",
-    "realPg": "The mounted Partner cutover and sibling-router files passed 21/21 in one qualifying run with retry 0. The W17 proof includes atomic click plus campaign increment, replay/collision/concurrency, trusted-proxy abuse bucketing, hostile-schema fail-closed checks, cold telemetry and cleanup.",
-    "static": "Server TypeScript typecheck exited 0.",
-    "cleanup": "Clicks, public-click receipts, campaigns, Partner usage events, signal intents and Partner organizations were 0; only the baseline system organization remained; advisory locks were 0; the owned database was dropped and catalog existence was 0.",
-    "logs": "/private/tmp/w17-ed342-final-{fresh,repeat,dry,realpg,residue-locks,drop,existence}.log and /private/tmp/w17-ed342-server-tsc.log",
-    "nonQualifyingAttempts": "Two earlier harness-only attempts were discarded: one omitted the mandatory B1 cleanup flag and one used a database name outside the enforced consultify_b1_ prefix. A new owned database was created before the single qualifying run."
+    "productTestedSha": "570940e5cb0ff08aea0bfa7f6589cf3384d80da2",
+    "artifactAndDbReconciliationSha": "cf3e5bcd5da6e194a8b02dd41069be72e56d29d7",
+    "scope": "29/29 declared Partner surfaces classified without falsely calling every surface retired.",
+    "migration": "Fresh PostgreSQL applied 777 migrations including 958 exactly once; ledger total/success/unique 777/777/777, missing checksum0, repeat0, dry pending0.",
+    "realPg": "Owner-binding 8/8; mounted W01-W29 packet 4 files / 75 tests in one sequential retry-free run.",
+    "focusedUi": "Approved-out Partner UI 4 files / 14 tests.",
+    "signedG4": "Mounted real-app Playwright 2/2 with tenant OWNER and SUPERADMIN, cold reload, zero forbidden economics mutation requests and no request interception.",
+    "cleanup": "All 27 enumerated operational tables and all non-system users, organizations and memberships0; system/system membership only; advisory locks0; database dropped; catalog existence0.",
+    "logs": {
+      "g3g5": "/private/tmp/consultify-prt-final-cf3e5b-20260819/",
+      "g4": "/private/tmp/consultify-prt-g4-570940e-20260819-07/",
+      "static": "/private/tmp/consultify-570940e5-{root-typecheck,server-typecheck,backend-build,frontend-build}.log"
+    },
+    "discardedAttempts": "Nonqualifying G4 attempts were excluded for browser path, stale legacy connect fixture, missing test env propagation, an exposed Proxy payload product bug and an unsupported test selector. Only the final 2/2 run contributes to the denominator."
   },
   "historicalKernelRequalification": {
-    "migration": "Fresh exact-current PostgreSQL ledger 758/758/758 successful and unique with zero missing checksums; strict repeat applied 0 and dry-run reported 0 pending.",
-    "focused": "3 files / 13 tests passed: durable lifecycle 5, mounted Finance/Results/Partner observation 6, atomic bulk user plus ACTIVE membership 2.",
-    "fullLegacy": "16 files / 103 tests passed.",
-    "executionDenominator": "118/118 cumulative test executions = focused 13 + full legacy 103 + separate atomic bulk regression 2. These sets overlap and are not 118 unique test definitions.",
-    "lateUpgrade": "Seeded late apply of 20261010 and 20261011 preserved the historical NULL-organization Chat row, installed the composite tenant index, preserved a seeded terminal cutover intent, and left the intent trigger enabled O.",
-    "static": "8 GB TypeScript typecheck and backend build passed.",
-    "cleanup": "Final legacy intent, bulk-user and orphan-membership fixture residue was 0. The first full run is invalid evidence because its database name failed the cleanup guard; the valid consultify_b1_requal rerun exited 0.",
-    "partnerScope": "SUPERADMIN cannot bypass missing ACTIVE membership. Mounted Partner observation is durable, tenant-separated and retry-idempotent; registration failure cannot produce false handler success.",
-    "reconciliationNote": "de4100 advances the tested 74f6 product state only through evidence commits relevant to this reconciliation; productSha remains the historical domain implementation authority."
+    "technicalSourceSha": "74f6a15ffd6b953432531a77b8e2e58a73c4128a",
+    "migration": "Historical ledger 758/758/758, repeat0, dry0.",
+    "execution": "Historical focused13 plus legacy103 plus atomic2; overlapping execution count118, not 118 unique tests.",
+    "note": "Frozen provenance, superseded by exact-current W01-W29 qualification."
   },
-  "currentCoveredWriterRequalification": {
-    "technicalSourceSha": "ed342ed686e2c01c1bfbe47908451d7d5f4e0acf",
-    "scope": "All sixteen declared default-router Partner mutations are classified and guarded. This does not claim that every mutation in the wider Partner domain is retired.",
-    "writers": "W01-W08 use governed V8 mutations; W09 and W13-W15 use tenant-bound connection/certification commands; W10-W12 and W16 have explicit no-write V8 503 successors; the three remaining active UI calls select V8 before the request and have no error fallback.",
-    "eligibility": "calculatePayoutEligibility is shared by the earnings read projection and transactional requestPayout executor; the UI no longer infers eligibility from ledger balance or a hardcoded threshold",
-    "mounted": "Mounted real PostgreSQL proves exact tenant ownership, same-user cross-tenant denial, durable replay/collision, selective rollback, operator reviews, no-write successors and the retained public ingress. Revoked, foreign and insufficient-role callers are denied before mutation.",
-    "cleanup": "At exact ed342, clicks, click receipts, campaigns, Partner usage, signal intents and Partner organizations were 0; the baseline system organization was the sole organization; advisory locks were 0; the owned database was dropped and catalog existence was 0.",
-    "policyBoundary": "PARTNER_ACCRUAL_POLICY_JSON used in the mounted gate is the repository synthetic-test-only fixture, not an owner or release policy"
+  "currentPartnerW01W29Requalification": {
+    "denominator": "29/29",
+    "W01_W16": "Governed V8 or explicit no-write successors; active client mutations preselect V8 and never retry a legacy writer after error.",
+    "W17": "Retained canonical anonymous public referral ingress with atomic receipt/click/campaign/tenant telemetry, idempotency and trusted-proxy abuse bounds.",
+    "W18_W27": "10/10 disabled by AMD-PRT-ECONOMICS-002 before the generic kernel and hidden from tenant and SUPERADMIN mutation UI; rollback envs cannot reactivate them.",
+    "W28_W29": "Canonical transactional idempotent operator-review successors; legacy doors default-disabled.",
+    "tenantIsolation": "Exact owner binding, ACTIVE membership and mounted same-user cross-tenant, revoked, foreign and historical-NULL denial."
+  },
+  "ownerBinding": {
+    "migration": "958 installs immutable receipts and fail-closed catalog checks for columns, constraints, indexes, trigger and function.",
+    "command": "Dry-run default; signed explicit apply and receipt-bound rollback-to-NULL; no membership or creator inference.",
+    "proof": "8/8 RealPG covers tamper, expiry, actor, duplicate/occupied target, hostile objects, injected rollback, replay/drift, concurrency, cold report reconciliation, receipt immutability and exact rollback.",
+    "productionExecution": "NOT_EXECUTED"
   },
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
   "changedPaths": [
     "server/migrations/20260906_partner_legacy_cutover.sql",
-    "server/src/services/partnerLegacyCutover.ts",
+    "server/migrations/958_partner_owner_binding_receipts.sql",
+    "server/scripts/legacy-cutover-report.ts",
+    "server/scripts/partner-owner-organization-binding.ts",
     "server/src/routes/partners.routes.ts",
-    "src/services/api/v8/partner.ts",
-    "tests/integration/partners/partner-legacy-cutover.realdb.test.ts",
-    "tests/integration/partners/partners.happy-path-and-fallback.test.ts",
-    "tests/unit/services/v8-partner-api.test.ts",
-    "server/src/routes/v8/__tests__/v8-partner-read.test.ts",
     "server/src/routes/v8/partner.routes.ts",
+    "server/src/services/legacyCutover/legacyCutoverKernel.ts",
+    "server/src/services/legacyCutover/registry/partnersSiblings.ts",
     "server/src/services/partnerCommissionService.ts",
+    "server/src/services/partnerLegacyCutover.ts",
+    "server/src/services/partnerProgramLedgerService.ts",
+    "src/services/api/v8/partner.ts",
     "src/views/partner/PartnerPortalView.tsx",
     "src/views/partner/sections/EarningsSection.tsx",
     "src/views/partner/sections/ReferralToolsSection.tsx",
+    "src/views/superadmin/partners/PartnerProgramConfig.tsx",
+    "src/views/superadmin/revenue/PartnerSettlementsView.tsx",
+    "playwright.config.ts",
+    "tests/components/partner/EarningsSection.v8-payout-request.test.tsx",
     "tests/components/partner/EarningsSection.v8-payout-settings.test.tsx",
-    "tests/components/partner/PartnerPortalView.v8-company-info.test.tsx",
-    "tests/components/partner/PartnerPortalView.v8-public-listing.test.tsx",
-    "tests/components/partner/PartnerPortalView.v8-regions.test.tsx",
-    "tests/components/partner/PartnerPortalView.v8-specializations.test.tsx",
-    "tests/components/partner/ReferralToolsSection.v8-campaign-create.test.tsx",
-    "tests/e2e/partner/partner-v8-zero-writer.signed.spec.ts"
+    "tests/components/partner/PartnerEconomicsApprovedOut.ui.test.tsx",
+    "tests/components/partner/PartnerProgramConfig.operator-review.test.tsx",
+    "tests/e2e/partner/partner-v8-zero-writer.signed.spec.ts",
+    "tests/integration/partners/partner-economics-mounted-auth.realpg.test.ts",
+    "tests/integration/partners/partner-legacy-cutover.realdb.test.ts",
+    "tests/integration/partners/partner-owner-organization-binding.realdb.test.ts",
+    "server/src/services/legacyCutover/__tests__/partnersSiblings.pg.test.ts",
+    "server/src/services/legacyCutover/__tests__/rollbackRehearsal.pg.test.ts",
+    "docs/runbooks/PARTNER_OWNER_ORGANIZATION_BINDING.md"
   ],
   "changedPathRationale": {
-    "server/migrations/20260906_partner_legacy_cutover.sql": "Adds durable legacy-usage telemetry and deterministic referral-identity backfill.",
-    "server/src/services/partnerLegacyCutover.ts": "Defines the default-off legacy mutation guard for V8-owned Partner writers.",
-    "server/src/routes/partners.routes.ts": "Applies the legacy writer guard to covered Partner mutation routes.",
-    "src/services/api/v8/partner.ts": "Exposes typed V8 Partner mutations and the canonical payout eligibility projection.",
-    "tests/integration/partners/partner-legacy-cutover.realdb.test.ts": "Proves default-off cutover, telemetry and rollback behavior on PostgreSQL.",
-    "tests/integration/partners/partners.happy-path-and-fallback.test.ts": "Preserves historical Partner route and fallback contract coverage.",
-    "tests/unit/services/v8-partner-api.test.ts": "Proves V8 Partner API client routing.",
-    "server/src/routes/v8/__tests__/v8-partner-read.test.ts": "Proves canonical payout eligibility and V8 Partner read/write response contracts.",
-    "server/src/routes/v8/partner.routes.ts": "Returns server-computed payout eligibility shared with the transactional executor.",
-    "server/src/services/partnerCommissionService.ts": "Uses one policy, approved-row and fee calculation for payout preview and request execution.",
-    "src/views/partner/PartnerPortalView.tsx": "Removes legacy mutation retry for V8-owned organization, specialization, region and listing writes.",
-    "src/views/partner/sections/EarningsSection.tsx": "Uses canonical payout eligibility and removes legacy mutation retry for payout settings.",
-    "src/views/partner/sections/ReferralToolsSection.tsx": "Removes legacy mutation retry for campaign create and delete.",
-    "tests/components/partner/EarningsSection.v8-payout-settings.test.tsx": "Proves payout settings and payout eligibility fail closed without a legacy retry.",
-    "tests/components/partner/PartnerPortalView.v8-company-info.test.tsx": "Proves company mutation failure does not call the legacy writer.",
-    "tests/components/partner/PartnerPortalView.v8-public-listing.test.tsx": "Proves listing mutation failure does not call the legacy writer.",
-    "tests/components/partner/PartnerPortalView.v8-regions.test.tsx": "Proves region mutation failure does not call the legacy writer.",
-    "tests/components/partner/PartnerPortalView.v8-specializations.test.tsx": "Proves specialization mutation failure does not call the legacy writer.",
-    "tests/components/partner/ReferralToolsSection.v8-campaign-create.test.tsx": "Proves campaign mutation failure does not call the legacy writer.",
-    "tests/e2e/partner/partner-v8-zero-writer.signed.spec.ts": "Proves signed company, campaign and payout success, governed failure with zero legacy network mutation, revoked and foreign denial, and guarded residue cleanup."
+    "server/migrations/958_partner_owner_binding_receipts.sql": "Fail-closed immutable owner-binding receipt schema.",
+    "server/scripts/partner-owner-organization-binding.ts": "Signed explicit dry-run, apply and receipt-bound rollback without tenant inference.",
+    "server/scripts/legacy-cutover-report.ts": "Single-snapshot W01-W29 and owner-binding report with live receipt reconciliation.",
+    "server/src/services/legacyCutover/registry/partnersSiblings.ts": "Truthful retained, approved-out and successor-backed dispositions through W29.",
+    "server/src/services/legacyCutover/legacyCutoverKernel.ts": "Separates immutable owner-decision enforcement from reversible env enforcement.",
+    "src/views/partner/sections/EarningsSection.tsx": "Historical reads remain; tenant payout request/settings mutation affordances are removed.",
+    "src/views/superadmin/partners/PartnerProgramConfig.tsx": "Approved-out authoring hidden; W28/W29 review retained; Proxy API payload unwrapped safely.",
+    "src/views/superadmin/revenue/PartnerSettlementsView.tsx": "Historical reads remain, approved-out mutations removed and Proxy payload unwrapped safely.",
+    "tests/e2e/partner/partner-v8-zero-writer.signed.spec.ts": "Mounted tenant and SUPERADMIN cold UI proof with zero forbidden mutation requests.",
+    "tests/integration/partners/partner-owner-organization-binding.realdb.test.ts": "Signed atomic binding lifecycle, hostile schema, cold reporting and cleanup proof.",
+    "tests/integration/partners/partner-economics-mounted-auth.realpg.test.ts": "All W18-W27 routes remain policy-disabled under global/selective rollback envs.",
+    "docs/runbooks/PARTNER_OWNER_ORGANIZATION_BINDING.md": "Authorized mapping, apply, audit and rollback procedure with release boundary."
   },
   "ownerTables": [
     "partner_legacy_usage_events",
+    "partner_legacy_cutover_intents",
+    "partner_owner_binding_receipts",
     "partner_organizations",
     "partner_program_ledger",
     "partner_commission_transactions",
@@ -96,125 +115,175 @@
   ],
   "commands": [
     {
-      "command": "fresh PostgreSQL migration apply, repeat and dry-run",
+      "command": "strict fresh migration, strict repeat and PostgreSQL dry-run on one owned database",
       "exitCode": 0,
-      "result": "710 successful ledger entries, 0 non-success, repeat 0, pending 0"
-    },
-    { "command": "Partner cutover realPG plus V8 API", "exitCode": 0, "result": "28/28 passed" },
-    {
-      "command": "sequential fresh realPG cutover, BVP, append-only ledger, API and referral",
-      "exitCode": 0,
-      "result": "43/43 passed"
+      "result": "777 applied and checksummed; repeat0; pending0"
     },
     {
-      "command": "explicit retired-route rollback plus V8 API",
+      "command": "owner-binding RealPG plus mounted W01-W29 Partner packet",
       "exitCode": 0,
-      "result": "29/29 passed"
-    },
-    { "command": "npm run type-check", "exitCode": 0 },
-    {
-      "command": "NODE_ENV=test DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:56984/prt_zero_writer_combined' DB_TYPE=postgres npm run db:migrate:strict; NODE_ENV=test DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:56984/prt_zero_writer_combined' DB_TYPE=postgres npm run db:migrate:strict; NODE_ENV=test DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:56984/prt_zero_writer_combined' DB_TYPE=postgres npm run db:migrate:strict -- --dry-run",
-      "exitCode": 0,
-      "result": "fresh 764; repeat applying 0; dry pending 0; ledger 764/764/764/checksum-null 0"
+      "result": "8/8 plus 75/75"
     },
     {
-      "command": "npx vitest run tests/components/partner/EarningsSection.v8-payout-settings.test.tsx tests/components/partner/PartnerPortalView.v8-company-info.test.tsx tests/components/partner/PartnerPortalView.v8-public-listing.test.tsx tests/components/partner/PartnerPortalView.v8-regions.test.tsx tests/components/partner/PartnerPortalView.v8-specializations.test.tsx tests/components/partner/ReferralToolsSection.v8-campaign-create.test.tsx --no-file-parallelism --maxWorkers=1",
+      "command": "focused approved-out UI packet and signed mounted Playwright",
       "exitCode": 0,
-      "result": "19/19"
+      "result": "14/14 plus 2/2"
     },
     {
-      "command": "npm --prefix server test -- --run src/routes/v8/__tests__/v8-partner-read.test.ts --no-file-parallelism --maxWorkers=1",
+      "command": "root/server typechecks and backend/frontend production builds",
       "exitCode": 0,
-      "result": "26/26; focused total 45/45"
+      "result": "all four passed"
     },
     {
-      "command": "DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:56984/prt_zero_writer_combined' DB_TYPE=postgres NODE_ENV=test CI=true MOCK_DB=false RUN_DB_TESTS=1 npx vitest run tests/integration/partners/partner-legacy-cutover.realdb.test.ts --no-file-parallelism --maxWorkers=1",
+      "command": "cold cutover report, residue and advisory-lock checks, DROP DATABASE and catalog check",
       "exitCode": 0,
-      "result": "5/5"
-    },
-    {
-      "command": "DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:56984/prt_zero_writer_combined' E2E_USE_WEB_SERVER=true E2E_BACKEND_RUNNER=tsx E2E_MOCK_DB=false E2E_API_URL='http://127.0.0.1:4303' E2E_BASE_URL='http://127.0.0.1:4302' E2E_MODE=true E2E_TMP_DIR=/private/tmp/prt-combined-e2e TEST_SUPPORT_KEY='<redacted>' PRT_ZERO_WRITER_DB_PREFIX='prt_zero_writer_combined' PARTNER_V8_ALLOW_IMMUTABLE_FIXTURE_CLEANUP=1 PARTNER_SELF_CONNECT_ENABLED=true ENABLE_V8_GLOBAL=true CI=false PARTNER_ACCRUAL_POLICY_JSON='{\"status\":\"APPROVED\",\"version\":\"synthetic-test-only-v1\",\"baseCurrency\":\"EUR\",\"commissionRateBps\":1500,\"payoutFeeBps\":100,\"minimumPayoutMinor\":100}' npx playwright test tests/e2e/partner/partner-v8-zero-writer.signed.spec.ts --config playwright.config.ts --project=chromium --workers=1 --reporter=list",
-      "exitCode": 0,
-      "result": "1/1"
-    },
-    {
-      "command": "set -e; start=$(git rev-parse HEAD); NODE_OPTIONS=--max-old-space-size=8192 npm run type-check; NODE_OPTIONS=--max-old-space-size=8192 npm --prefix server run typecheck; npm run build:backend; NODE_OPTIONS=--max-old-space-size=8192 npm run build; end=$(git rev-parse HEAD); test \"$start\" = \"$end\"; git diff --check; test -z \"$(git status --short)\"",
-      "exitCode": 0,
-      "result": "root/server typechecks, backend/frontend builds and exact edfab HEAD stability passed"
+      "result": "29/29 classified; residue0; locks0; existence0"
     }
   ],
   "literalExactCurrentGates": [
     {
-      "command": "DATABASE_URL='<redacted>' ALLOW_LOCAL_POSTGRES=true CI=true npm run db:migrate:strict",
+      "gate": "G0",
+      "command": "git rev-parse HEAD; git status --porcelain=v1; git diff --check",
       "exitCode": 0,
-      "result": "Applying migrations: 776; migration 957 applied; complete"
+      "result": "Product SHA570940e5 and artifact/DB reconciliation SHAcf3e5bcd were exact and clean."
     },
     {
-      "command": "DATABASE_URL='<redacted>' ALLOW_LOCAL_POSTGRES=true CI=true npm run db:migrate:strict; DATABASE_URL='<redacted>' ALLOW_LOCAL_POSTGRES=true CI=true npm run db:migrate:postgres:dry",
+      "gate": "G1",
+      "command": "DATABASE_URL='<redacted>' ALLOW_LOCAL_POSTGRES=true CI=true npm run db:migrate:strict; repeat; DATABASE_URL='<redacted>' ALLOW_LOCAL_POSTGRES=true CI=true npm run db:migrate:postgres:dry",
       "exitCode": 0,
-      "result": "repeat Applying migrations: 0; dry Pending migrations: 0"
+      "result": "fresh777, ledger777/777/777, migration958 once/checksum match, repeat0, dry0"
     },
     {
-      "command": "B1_LEGACY_TEST_CLEANUP=1 RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres DATABASE_URL='<redacted>' NODE_OPTIONS=--max-old-space-size=8192 npx vitest run tests/integration/partners/partner-legacy-cutover.realdb.test.ts server/src/services/legacyCutover/__tests__/partnersSiblings.pg.test.ts --maxWorkers=1 --maxConcurrency=1 --no-file-parallelism --reporter=verbose",
+      "gate": "G2_UI",
+      "command": "NODE_OPTIONS=--max-old-space-size=8192 npx vitest run tests/components/partner/PartnerEconomicsApprovedOut.ui.test.tsx tests/components/partner/PartnerProgramConfig.operator-review.test.tsx tests/components/partner/EarningsSection.v8-payout-settings.test.tsx tests/components/partner/EarningsSection.v8-payout-request.test.tsx --no-file-parallelism --maxWorkers=1 --maxConcurrency=1 --reporter=verbose",
       "exitCode": 0,
-      "result": "2 files; 21/21 passed in one qualifying run; no Vitest retry was used"
+      "result": "4 files / 14 tests"
     },
     {
-      "command": "NODE_OPTIONS=--max-old-space-size=8192 npm --prefix server run typecheck",
+      "gate": "G2_STATIC",
+      "command": "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check; NODE_OPTIONS=--max-old-space-size=8192 npm --prefix server run typecheck; NODE_ENV=production NODE_OPTIONS=--max-old-space-size=8192 npm run build:backend; NODE_ENV=production NODE_OPTIONS=--max-old-space-size=8192 npm run build",
       "exitCode": 0,
-      "result": "server TypeScript exact-current passed"
+      "result": "Both typechecks and both production builds passed; frontend emitted non-blocking chunk/import warnings."
     },
     {
-      "command": "exact scoped residue and advisory-lock query; DROP DATABASE; catalog existence query",
+      "gate": "G3_G5",
+      "command": "RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres DATABASE_URL='<redacted>' npx vitest run tests/integration/partners/partner-owner-organization-binding.realdb.test.ts; then B1_LEGACY_TEST_CLEANUP=1 npx vitest run tests/integration/partners/partner-legacy-cutover.realdb.test.ts tests/integration/partners/partner-economics-mounted-auth.realpg.test.ts server/src/services/legacyCutover/__tests__/partnersSiblings.pg.test.ts server/src/services/legacyCutover/__tests__/rollbackRehearsal.pg.test.ts --no-file-parallelism --maxWorkers=1 --maxConcurrency=1 --reporter=verbose",
       "exitCode": 0,
-      "result": "clicks/receipts/campaigns/usage/intents/partner_orgs 0; system organization only; locks 0; DROP DATABASE; existence 0"
+      "result": "owner8/8; W01-W29 four files75/75; report29/29; residue0; locks0; DB existence0"
+    },
+    {
+      "gate": "G4",
+      "command": "Real PostgreSQL/app/Chromium with PARTNER_SELF_CONNECT_ENABLED=true and synthetic approved EUR PARTNER_ACCRUAL_POLICY_JSON; npx playwright test tests/e2e/partner/partner-v8-zero-writer.signed.spec.ts --project=chromium --workers=1",
+      "exitCode": 0,
+      "result": "2/2; tenant14.0s; SUPERADMIN7.6s; cold reload; forbidden mutation requests0; four canonical PNG and two traces preserved"
     }
   ],
   "denominators": {
-    "freshMigrationsHistorical": "710/710",
-    "freshMigrationsHistoricalCoveredWriterWaveAtEdfab": "764/764",
-    "cutoverAndApiHistorical": "28/28",
-    "sequentialRealDbHistorical": "43/43",
-    "rollbackAndApiHistorical": "29/29",
-    "currentFocusedUiAndRoute": "45/45",
-    "currentLegacyGuard": "5/5",
-    "currentMountedSigned": "1/1",
-    "coveredLegacyWriters": "16/16",
+    "freshMigrationsExactCurrent": "777/777",
+    "declaredPartnerSurfaces": "29/29",
+    "defaultRouterW01_W16": "16/16",
     "retainedCanonicalPublicIngress": "PRT-W17",
-    "exactCurrentPartnerRealPg": "21/21",
-    "exactCurrentFreshMigrations": "776/776"
+    "approvedOutW18_W27": "10/10",
+    "operatorReviewW28_W29": "2/2",
+    "ownerBindingRealPg": "8/8",
+    "partnerW01_W29RealPg": "75/75",
+    "focusedApprovedOutUi": "14/14",
+    "signedMountedG4": "2/2",
+    "retries": 0,
+    "todo": 0,
+    "unhandled": 0
   },
   "fixtures": {
-    "database": "fresh disposable pgvector PostgreSQL primary DB prt_zero_writer_combined in consultify-mat-prt-combined-pg",
-    "coveredLegacyWriters": 16,
-    "declaredLegacyWriters": 16,
-    "testOnlyPolicy": "synthetic-test-only-v1; not an owner or release decision",
-    "cleanup": "partner organizations, users, campaigns, ledger, commissions, payouts and legacy telemetry 0; ledger trigger O; advisory locks 0"
+    "database": "One owned logical PostgreSQL DB, same OID renamed only for mutually exclusive owner-binding and B1 cleanup prefix guards; dropped existence0.",
+    "personas": ["ACTIVE PARTNER OWNER", "ACTIVE SUPERADMIN", "revoked and foreign negatives"],
+    "ownerBindingManifest": "Synthetic signed test manifest with non-secret key label; no production mapping or secret recorded.",
+    "policy": "Synthetic approved EUR policy used only by isolated signed test; not a production decision."
   },
   "negativeControls": {
-    "default": "retired default-router legacy mutations return 410 and identify their V8 or explicit no-write successor",
-    "rollback": "legacy access requires an explicit client and server rollback switch and is recorded",
-    "telemetry": "retired writers use tenant-bound durable cutover intents; retained PRT-W17 records resolved tenant and Partner identity inside its atomic command rather than pretending to use a generic retirement guard",
-    "clientZeroWriter": "a governed V8 failure results in zero legacy /api/partners mutation network requests",
-    "payoutEligibility": "ledger balance alone cannot enable payout; the shared server projection binds approved rows, fee, currency and policy threshold",
-    "membership": "revoked and foreign signed callers are denied before Partner mutation"
+    "classification": "29 unique writer IDs with no omitted or double-counted route.",
+    "approvedOut": "W18-W27 remain policy410/zero-write under global and selective rollback envs; tenant/SUPERADMIN mutation UI absent; observed mutation requests0.",
+    "ownerBinding": "Tamper, expiry, actor, foreign/occupied target, duplicate, collision, hostile catalog, injected failure and drift fail closed; concurrency one effect; exact rollback and immutable receipts.",
+    "tenantIsolation": "Same-user foreign tenant, revoked membership, foreign IDs and historical NULL owner binding cannot mutate or leak another Partner.",
+    "W17": "Replay, collision, concurrency, trusted-proxy abuse bucketing, atomic campaign increment and resolved tenant telemetry."
   },
   "resolvedBlockers": [
-    "All sixteen declared default-router mutations now have an explicit successor classification and the active UI mutations select V8 without an error fallback.",
-    "PRT-W17 remains compatible as an anonymous public ingress, but its receipt, click, campaign counter and resolved telemetry now commit atomically with idempotency and abuse bounds.",
-    "W28 and W29 use transactional, idempotent global-operator review successors with the old writers default-disabled.",
-    "Payout read and write share one canonical eligibility calculation; the former false-enabled ledger/UI divergence is closed.",
-    "Mounted fixture cleanup is pinned, disposable-database guarded, advisory-serialized and proves residue 0 with trigger O."
+    "All W01-W29 surfaces have explicit mounted and reportable dispositions.",
+    "W18-W27 policy is enforced before legacy code and reachable tenant/SUPERADMIN mutation UI is hidden.",
+    "Historical binding has signed dry-run/apply/rollback, immutable receipts, cold reconciled reporting and a runbook without inference.",
+    "Stale signed payout-positive fixtures and the real Proxy payload crash were corrected before the final 2/2 mounted run.",
+    "Repository-owned screenshots and traces are preserved with hashes."
   ],
-  "browserArtifacts": [],
+  "browserArtifacts": [
+    {
+      "kind": "screenshot",
+      "path": "docs/program/evidence/closure/ui-g4/PRT-MVP-LEGACY-CUTOVER-001/570940e5cb0ff08aea0bfa7f6589cf3384d80da2/tenant-earnings-cold.png",
+      "sha256": "fd0a4d078e166de3fe9fbac21bcb67bf0d6b957908937bc9cd83b00fc55a5ef9",
+      "testedSha": "570940e5cb0ff08aea0bfa7f6589cf3384d80da2",
+      "persona": "PARTNER",
+      "assertion": "Cold approved-out notice; request payout absent; mutation requests0."
+    },
+    {
+      "kind": "screenshot",
+      "path": "docs/program/evidence/closure/ui-g4/PRT-MVP-LEGACY-CUTOVER-001/570940e5cb0ff08aea0bfa7f6589cf3384d80da2/tenant-payout-settings-cold.png",
+      "sha256": "f48a636cf795395b92338765557af58d36ce12d4f2130441f5ca1a499b16797c",
+      "testedSha": "570940e5cb0ff08aea0bfa7f6589cf3384d80da2",
+      "persona": "PARTNER",
+      "assertion": "Cold historical settings read-only; save/edit absent; mutation requests0."
+    },
+    {
+      "kind": "screenshot",
+      "path": "docs/program/evidence/closure/ui-g4/PRT-MVP-LEGACY-CUTOVER-001/570940e5cb0ff08aea0bfa7f6589cf3384d80da2/superadmin-config-cold.png",
+      "sha256": "dbb46d3926c07acc02ffc55d57388067be52d04d704e06357b4242309427632b",
+      "testedSha": "570940e5cb0ff08aea0bfa7f6589cf3384d80da2",
+      "persona": "SUPERADMIN",
+      "assertion": "Cold config has no approved-out authoring while operator review remains."
+    },
+    {
+      "kind": "screenshot",
+      "path": "docs/program/evidence/closure/ui-g4/PRT-MVP-LEGACY-CUTOVER-001/570940e5cb0ff08aea0bfa7f6589cf3384d80da2/superadmin-settlements-cold.png",
+      "sha256": "d2f1fe76f4fee69cf898e45ed8211e625a265bd39eaf262bc7a360f60825c0e0",
+      "testedSha": "570940e5cb0ff08aea0bfa7f6589cf3384d80da2",
+      "persona": "SUPERADMIN",
+      "assertion": "Cold settlement view read-only; W18-W24 controls absent; mutation requests0."
+    },
+    {
+      "kind": "trace",
+      "path": "docs/program/evidence/closure/ui-g4/PRT-MVP-LEGACY-CUTOVER-001/570940e5cb0ff08aea0bfa7f6589cf3384d80da2/tenant-trace.zip",
+      "sha256": "31454b3307ab8eaecb2d2fd17bcd4ee9e91e94a54884af2640a267a014b2323b",
+      "testedSha": "570940e5cb0ff08aea0bfa7f6589cf3384d80da2",
+      "persona": "PARTNER"
+    },
+    {
+      "kind": "trace",
+      "path": "docs/program/evidence/closure/ui-g4/PRT-MVP-LEGACY-CUTOVER-001/570940e5cb0ff08aea0bfa7f6589cf3384d80da2/superadmin-trace.zip",
+      "sha256": "66392eeebd08204fd89aa7fbc2de02c16986d2892650241d374bca2fc5eaf014",
+      "testedSha": "570940e5cb0ff08aea0bfa7f6589cf3384d80da2",
+      "persona": "SUPERADMIN"
+    }
+  ],
   "rollback": {
-    "code": "PARTNER_LEGACY_ROLLBACK_ENABLED and VITE_PARTNER_LEGACY_ROLLBACK_ENABLED",
-    "data": "additive telemetry and identity backfill; no production migration executed"
+    "repositoryRehearsal": "PASS: successor rollback is scoped; W18-W27 remain policy-disabled under rollback envs; owner-binding rollback restores receipt-bound values to NULL and appends an immutable receipt.",
+    "schema": "Additive migrations; no destructive schema rollback claimed.",
+    "production": "NOT_EXECUTED / NOT_AUTHORIZED"
   },
-  "verdict": "PARTIAL",
-  "openBlockers": [
-    "The wider Partner-domain denominator is not limited to the sixteen default-router writers: retained or policy-governed sibling surfaces W18-W27 still require explicit disposition before any domain-wide zero-legacy-writer claim.",
-    "PRT-W17 is retained current public ingress by repository contract; external compatibility ownership and production abuse thresholds remain release-owner decisions.",
-    "Historical owner_organization_id rows remain deliberately UNBOUND until an owner-approved mapping runbook and production backfill are executed; deployed telemetry window and production rollback rehearsal are NOT_EXECUTED."
-  ]
+  "releaseBoundary": {
+    "verdict": "PARTIAL",
+    "authorization": "NOT_AUTHORIZED",
+    "productionOwnerMapping": "NOT_EXECUTED",
+    "productionBackfill": "NOT_EXECUTED",
+    "deployedTelemetryWindow": "NOT_VERIFIED",
+    "productionRollbackRehearsal": "NOT_EXECUTED",
+    "publicIngressCompatibilityOwner": "NOT_VERIFIED",
+    "publicIngressAbuseThresholds": "NOT_APPROVED",
+    "note": "These block release execution, not repository technical DONE. No deploy or release was performed."
+  },
+  "reopenConditions": [
+    "Any W01-W29 route, registry or mutation semantic changes.",
+    "AMD-PRT-ECONOMICS-002 changes or excluded economics UI/action is reactivated.",
+    "Owner-binding manifest, signature, migration, receipt, locking, report or rollback changes.",
+    "Authentication, membership or owner-organization resolution changes.",
+    "W17 compatibility, idempotency, proxy or abuse-bound contract changes.",
+    "Migration checksum, exact release candidate or target environment changes."
+  ],
+  "openBlockers": []
 }
