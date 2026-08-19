@@ -1,49 +1,151 @@
 {
+  "taskId": "IDEA-DOCUMENT-HANDOFF-SUBPACKET-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "a62dbe340114d87eda75a0d2da2d77bee2a90685",
-  "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
+  "historicalProductSha": "a62dbe340114d87eda75a0d2da2d77bee2a90685",
+  "productSha": "e6970687fd16c921ef1702b25ec804d850f78fd0",
+  "technicalSourceSha": "e6970687fd16c921ef1702b25ec804d850f78fd0",
+  "reconciliationSha": "e6970687fd16c921ef1702b25ec804d850f78fd0",
+  "verdict": "DONE_CURRENT_SHA",
+  "technicalVerdict": "DONE_CURRENT_SHA_REAL_OWNER_ATOMIC_HANDOFF",
+  "verdictScope": "Repository product and exact-current local technical qualification only; no deployment or production mutation is claimed.",
+  "technicalOpenBlockers": [],
+  "releaseBoundary": {
+    "verdict": "PARTIAL",
+    "deployment": "NOT_EXECUTED",
+    "productionTelemetry": "NOT_VERIFIED",
+    "authorization": "NOT_AUTHORIZED",
+    "note": "Release facts do not reduce repository technical DONE."
+  },
   "environment": {
     "node": "v24.12.0",
-    "postgres": "16.14 (pgvector/pgvector:pg16)",
-    "vitest": "root vitest.config.ts",
-    "dbUrl": "127.0.0.1:55432 isolated lane container consultify-closure-c-64f50785"
+    "postgres": "local PostgreSQL 16 on 127.0.0.1:55483",
+    "database": "idea_handoff_requal_e697_1049 (disposable; dropped after qualification)",
+    "browser": "Playwright Chromium, one worker, retries 0, real mounted frontend/backend/PostgreSQL"
   },
-  "gateG0": "PASS pre-commit (lease PASS, 25 changed paths). POST-COMMIT the verifier reports 11 new source/test files as violations; all 11 match lane C allowedNewRoots and none exist at baseline — see ICR-C-003, a verifier defect (isTracked() is true for staged/committed paths), not a scope violation.",
-  "gateG1": "PASS — npm run type-check exit 0; npm run build:backend exit 0; test:discovery-gate PASS 4997/4997 discovered, 4698 executed.",
-  "gateG3": "PASS — strict migrate on FRESH from-zero DB exit 0; repeat run applied 0; --dry-run 0 pending; schema_migrations 709 success / 0 failed / 0 pending.",
-  "taskId": "IDEA-DOCUMENT-HANDOFF-SUBPACKET-001",
-  "verdict": "PARTIAL",
   "ownerTables": [
     "artifact_handoff_proposals",
-    "artifact_handoff_receipts"
+    "artifact_handoff_receipts",
+    "wave5_artifacts",
+    "wave5_artifact_versions",
+    "artifact_evidence",
+    "presentation_decks",
+    "presentation_cards",
+    "generated_workbooks",
+    "my_idea_conversions"
   ],
   "denominators": {
-    "realdbTests": "12 passed / 12 discovered"
+    "migrations": "778 applied / 778 successful / 778 distinct / 0 null checksums; repeat 0; dry pending 0",
+    "realPg": "18 passed / 18 discovered / 0 failed / retries 0",
+    "signedBrowser": "1 passed / 1 discovered / 0 failed / retries 0; test 14.7s; run 1.4m",
+    "static": "root typecheck PASS; server typecheck PASS; backend build PASS; frontend build PASS at 8 GiB",
+    "cleanup": "all enumerated run-owned product, identity, child, receipt and test-support counters 0; advisory locks 0; ports 3460/3461 free; database existence 0"
   },
   "negativeControls": {
-    "idempotentPropose": "same key sequential AND concurrent -> ONE proposal",
-    "concurrentApprove": "converges",
-    "concurrentMaterialize": "ONE receipt",
-    "systemActor": "rejected — human required",
-    "rejectThenApprove": "rejected",
-    "crossTenant": "denied",
-    "hashPinning": "editing the idea after approval leaves source_content_hash unchanged; a fresh proposal gets a new hash and source_version 2"
+    "legacyAllSix": "initiative, task_set, decision, team_chat, report and presentation require Idempotency-Key; same-key replay creates one owner/history row; changed source returns 409",
+    "pinnedTransaction": "query helpers reuse one backend session, transaction advisory lock blocks a contender, and injected failure rolls back",
+    "ownerRollback": "injected failure after document, presentation and workbook owner creation leaves owner, child, evidence and receipt rows at 0",
+    "concurrency": "concurrent propose/materialize converges to one proposal, one real owner and one receipt",
+    "authorization": "foreign tenant and system actor are denied before owner materialization",
+    "migrationHostile": "direct repeat succeeds; hostile same-named wrong index is rejected without accepting the incompatible schema",
+    "documentCompatibility": "evidence is strict only inside governed ambient UoW; pre-existing non-governed Document Studio callers retain fail-soft behavior"
   },
-  "findings": [
-    "Confirmed against the live DB that no `presentations` table exists (to_regclass -> NULL), so the pre-existing Idea->Presentation convert target returns 501 on any fresh database.",
-    "Workbook/XLSX had no convert target at all; both gaps are closed on the governed path."
+  "resolvedBlockers": [
+    "The mounted legacy /my-ideas/:id/convert path is now transactionally idempotent for all six targets and its presentation target writes the canonical presentation_decks owner instead of returning 501.",
+    "Governed materialization now creates a real document, presentation deck or workbook and stores that real owner id in the exactly-once receipt; the placeholder idea-artifact:<proposalId> contract is retired.",
+    "Document owner, evidence envelope, presentation owner, workbook owner, proposal state and receipt participate in one pinned PostgreSQL unit of work.",
+    "The mounted Ideas UI performs propose, explicit human approval and materialization with a stable intent key, then opens the real owner deep link."
   ],
-  "open": [
-    "my-work.routes.ts /convert itself still has the duplicate-row defect — that file is outside the lane lease and was deliberately not touched.",
-    "materializeIdeaArtifact does not create the real document/deck/workbook row; those owner tables belong to other lanes. Cross-lane contract documented."
+  "changedPaths": [
+    "server/migrations/20261024_idea_conversion_idempotency_receipts.sql",
+    "server/src/routes/my-work.routes.ts",
+    "server/src/services/artifactHandoff/handoffSpineService.ts",
+    "server/src/services/documentStudio/documentStudioService.ts",
+    "server/src/services/evidence/evidenceEnvelopeService.ts",
+    "server/src/services/ideaHandoff/__tests__/ideaHandoffService.pg.test.ts",
+    "server/src/services/ideaHandoff/ideaHandoffService.ts",
+    "server/src/services/workbook/workbookCreationService.ts",
+    "server/src/utils/queryHelpers.ts",
+    "src/components/MyWork/MyIdeasListContent.tsx",
+    "src/components/MyWork/ideaConvertTargets.ts",
+    "src/services/api.ts",
+    "tests/e2e/my-work/idea-artifact-handoff.signed.spec.ts"
   ],
-  "changedPaths": [],
-  "changedPathRationale": {},
-  "commands": [],
-  "fixtures": {},
-  "browserArtifacts": [],
+  "changedPathRationale": {
+    "migration": "Adds fail-closed immutable idempotency receipt fields, exact constraint/index/function/trigger checks and a unique organization/key identity.",
+    "transactionKernel": "Lets query helpers, handoff spine and owner services share the same pinned PostgreSQL client without changing behavior outside an ambient UoW.",
+    "ownerMaterialization": "Creates and cold-reads canonical document, deck and workbook owners before completing the real-id receipt.",
+    "mountedLegacyRoute": "Requires a key and atomically replays or rejects collisions for all six historical conversion targets.",
+    "mountedUi": "Adds governed artifact targets, stable intent identity, explicit approval and real owner navigation.",
+    "tests": "Proves migration hostility, atomic rollback, replay, collision, concurrency, tenant denial, real UI clicks and hard-reload owner readback."
+  },
+  "commandsSemantics": "Redacted, normalized command summaries; authoritative literal outputs and exit artifacts are under /private/tmp/idea-handoff-requal-e697/00-16.",
+  "commands": [
+    {
+      "command": "NODE_ENV=test DATABASE_URL='<redacted>/idea_handoff_requal_e697_1049' DB_TYPE=postgres npm run db:migrate:strict",
+      "exitCode": 0,
+      "result": "fresh 778"
+    },
+    {
+      "command": "NODE_ENV=test DATABASE_URL='<redacted>/idea_handoff_requal_e697_1049' DB_TYPE=postgres npm run db:migrate:strict",
+      "exitCode": 0,
+      "result": "repeat 0"
+    },
+    {
+      "command": "NODE_ENV=test DATABASE_URL='<redacted>/idea_handoff_requal_e697_1049' DB_TYPE=postgres npm run db:migrate:postgres:dry",
+      "exitCode": 0,
+      "result": "pending 0"
+    },
+    {
+      "command": "RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL='<redacted>/idea_handoff_requal_e697_1049' npx vitest run server/src/services/ideaHandoff/__tests__/ideaHandoffService.pg.test.ts --maxWorkers=1 --retry=0",
+      "exitCode": 0,
+      "result": "18/18"
+    },
+    {
+      "command": "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check",
+      "exitCode": 0
+    },
+    {
+      "command": "NODE_OPTIONS=--max-old-space-size=8192 npm --prefix server run typecheck",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run build:backend",
+      "exitCode": 0
+    },
+    {
+      "command": "NODE_OPTIONS=--max-old-space-size=8192 npm run build",
+      "exitCode": 0
+    },
+    {
+      "command": "CI=true E2E_USE_WEB_SERVER=true E2E_MOCK_DB=false DATABASE_URL='<redacted>/idea_handoff_requal_e697_1049' npx playwright test tests/e2e/my-work/idea-artifact-handoff.signed.spec.ts --project=chromium --workers=1 --retries=0 --trace=on",
+      "exitCode": 0,
+      "result": "1/1"
+    },
+    {
+      "command": "scoped residue SQL over run-owned identities, owner/child/receipt tables and pg_locks; DROP DATABASE idea_handoff_requal_e697_1049 WITH (FORCE); catalog existence query",
+      "exitCode": 0,
+      "result": "all counters 0; locks 0; database existence 0"
+    }
+  ],
+  "browserArtifacts": [
+    {
+      "kind": "trace",
+      "path": "docs/program/evidence/closure/c/IDEA-DOCUMENT-HANDOFF-SUBPACKET-001/e6970687fd16c921ef1702b25ec804d850f78fd0/trace.zip",
+      "sha256": "b6e9d3ac4befeb19bcde48859e8fd5ff3ec920197e34c8f89fcf16475d96ec59",
+      "testedSha": "e6970687fd16c921ef1702b25ec804d850f78fd0",
+      "assertion": "Mounted Ideas UI creates and explicitly approves document, presentation and workbook; each real owner deep link survives hard reload."
+    }
+  ],
+  "nonQualifyingAttempts": [
+    "Pre-commit green runs were rejected because they did not bind to an immutable SHA.",
+    "A RealPG run exposed pooled artifact_evidence residue; the evidence writer was moved into the ambient UoW and the run was discarded.",
+    "The first exact-current frontend build exhausted the default approximately 4 GiB heap with exit 134; the qualifying 8 GiB build passed.",
+    "Earlier browser harness attempts that did not reach the test or retained a response body across navigation were discarded."
+  ],
+  "logs": "/private/tmp/idea-handoff-requal-e697/00-16",
   "rollback": {
-    "method": "Not recorded by the lane; no rollback execution or completion claim is inferred.",
-    "executed": false
+    "repository": "PASS: injected post-owner failures for document, presentation and workbook roll back owner, child, evidence, proposal/receipt effects in one pinned transaction.",
+    "schema": "Additive migration; immutable receipt fields; no destructive rollback executed.",
+    "production": "NOT_EXECUTED / NOT_AUTHORIZED"
   }
 }
