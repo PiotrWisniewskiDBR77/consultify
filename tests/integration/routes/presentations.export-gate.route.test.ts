@@ -92,7 +92,11 @@ const DECK_ROW = {
 
 vi.mock('../../../server/src/utils/DbPromise.js', () => ({
   all: vi.fn().mockResolvedValue([]),
-  get: vi.fn().mockResolvedValue(DECK_ROW),
+  get: vi
+    .fn()
+    .mockImplementation(async (sql: string) =>
+      /\borganization_members\b/i.test(String(sql)) ? { status: 'ACTIVE' } : DECK_ROW
+    ),
   run: vi.fn().mockResolvedValue(undefined),
 }));
 
