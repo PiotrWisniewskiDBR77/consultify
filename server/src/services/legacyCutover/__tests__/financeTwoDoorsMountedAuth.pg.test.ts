@@ -31,6 +31,8 @@ const superNoMembership = `${prefix}-super`;
 const foreign = `${prefix}-foreign`;
 const orgModel = `${prefix}-org-a-model`;
 const suiteLock = 'finance-two-doors-mounted-auth';
+let artifactId = '';
+let businessVersionId = '';
 
 process.env.NODE_ENV = 'test';
 process.env.DB_TYPE = 'postgres';
@@ -98,6 +100,8 @@ describe.skipIf(!enabled)('Finance W01/W02 mounted signed-JWT membership wall', 
          (SELECT count(*)::int FROM financial_model_outputs WHERE model_id LIKE $1) AS outputs,
          (SELECT count(*)::int FROM financial_model_validations WHERE model_id LIKE $1) AS validations,
          (SELECT count(*)::int FROM financial_model_versions WHERE model_id LIKE $1) AS versions,
+         (SELECT count(*)::int FROM finance_artifact_aliases WHERE organization_id IN ($2,$3)) AS aliases,
+         (SELECT count(*)::int FROM finance_artifacts WHERE organization_id IN ($2,$3)) AS artifacts,
          (SELECT count(*)::int FROM legacy_cutover_signal_intents WHERE request_id LIKE $1) AS intents,
          (SELECT count(*)::int FROM legacy_cutover_usage_events WHERE request_id LIKE $1) AS observations,
          (SELECT count(*)::int FROM finance_legacy_usage_events WHERE request_id LIKE $1) AS finance_observations`,
@@ -108,7 +112,8 @@ describe.skipIf(!enabled)('Finance W01/W02 mounted signed-JWT membership wall', 
 
   const zeroResidue = {
     organizations: 0, users: 0, memberships: 0, models: 0, model_events: 0,
-    outputs: 0, validations: 0, versions: 0, intents: 0, observations: 0,
+    outputs: 0, validations: 0, versions: 0, aliases: 0, artifacts: 0,
+    intents: 0, observations: 0,
     finance_observations: 0,
   };
 
@@ -132,7 +137,7 @@ describe.skipIf(!enabled)('Finance W01/W02 mounted signed-JWT membership wall', 
     if (!cleanupEnabled) throw new Error('LEGACY_CUTOVER_TEST_CLEANUP=1 is required');
     pool = new Pool({ connectionString: databaseUrl });
     const databaseName = (await pool.query(`SELECT current_database() AS name`)).rows[0].name as string;
-    if (!databaseName.startsWith('consultify_fin_')) {
+    if (!/^consultify_(?:fin|b1_fin)_/.test(databaseName)) {
       throw new Error(`FIN_TWO_DOORS_TEST_DB_NOT_DISPOSABLE:${databaseName}`);
     }
     lockClient = await pool.connect();
@@ -174,6 +179,19 @@ describe.skipIf(!enabled)('Finance W01/W02 mounted signed-JWT membership wall', 
        VALUES($1,$2,$3,CURRENT_DATE,'draft',1,$4,$5,$5)`,
       [orgModel, org, orgModel, active, now]
     );
+    const { createArtifact } = await import('../../finance/canonical/artifactVersionService.js');
+    const canonical = await createArtifact({
+      organizationId: org, artifactType: 'HISTORICAL_ANALYSIS', createdBy: active,
+    });
+    artifactId = canonical.artifact.artifact_id;
+    businessVersionId = canonical.businessVersion.business_version_id;
+    await pool.query(
+      `INSERT INTO finance_artifact_aliases
+         (legacy_table,legacy_id,legacy_version,artifact_id,organization_id,business_version_id,
+          mapping_confidence,mapping_reason,created_by)
+       VALUES('financial_models',$1,'',$2,$3,$4,'AUTO_MIGRATE','cutover first wave',$5)`,
+      [orgModel, artifactId, org, businessVersionId, active]
+    );
 
     const financeRouter = (await import('../../../routes/v8/finance.routes.js')).default;
     w01 = express();
@@ -199,6 +217,13 @@ describe.skipIf(!enabled)('Finance W01/W02 mounted signed-JWT membership wall', 
       await cleanupClient.query(`DELETE FROM financial_model_outputs WHERE model_id LIKE $1`, [`${prefix}%`]);
       await cleanupClient.query(`DELETE FROM financial_model_events WHERE model_id LIKE $1`, [`${prefix}%`]);
       await cleanupClient.query(`DELETE FROM financial_models WHERE id LIKE $1`, [`${prefix}%`]);
+      await cleanupClient.query(`SET LOCAL session_replication_role = replica`);
+      await cleanupClient.query(`DELETE FROM finance_artifact_aliases WHERE organization_id IN ($1,$2)`, [org, foreignOrg]);
+      await cleanupClient.query(`DELETE FROM artifact_lifecycle_events WHERE artifact_id=$1`, [artifactId]);
+      await cleanupClient.query(`DELETE FROM finance_working_revisions WHERE artifact_id=$1`, [artifactId]);
+      await cleanupClient.query(`DELETE FROM finance_business_versions WHERE artifact_id=$1`, [artifactId]);
+      await cleanupClient.query(`DELETE FROM finance_artifacts WHERE artifact_id=$1`, [artifactId]);
+      await cleanupClient.query(`SET LOCAL session_replication_role = origin`);
       await cleanupClient.query(`DELETE FROM organization_members WHERE id LIKE $1`, [`${prefix}%`]);
       await cleanupClient.query(`DELETE FROM users WHERE id LIKE $1`, [`${prefix}%`]);
       await cleanupClient.query(`DELETE FROM organizations WHERE id IN ($1,$2)`, [org, foreignOrg]);
@@ -230,39 +255,41 @@ describe.skipIf(!enabled)('Finance W01/W02 mounted signed-JWT membership wall', 
     expect(await mutationSnapshot()).toEqual(before);
   });
 
-  it('lets an ACTIVE tenant caller reach each governed door without tenant spoofing', async () => {
+  it('returns the mapped canonical identity from both disabled legacy doors', async () => {
     const before = await mutationSnapshot();
-    const [first, second] = await callBoth(active, org, 'active', { organizationId: foreignOrg });
+    const headers = authorization(active, org);
+    const [first, second] = await Promise.all([
+      request(w01).post(`/api/v8/finance/models/${orgModel}/approve`).set(headers)
+        .set('x-request-id', `${prefix}-mapped-w01`).send({ organizationId: foreignOrg }),
+      request(w02).post(`/api/financial-modeling/models/${orgModel}/approve`).set(headers)
+        .set('x-request-id', `${prefix}-mapped-w02`).send({ organizationId: foreignOrg }),
+    ]);
     expect(first.status).toBe(410);
     expect(first.body).toMatchObject({ code: 'FINANCE_LEGACY_WRITER_DISABLED' });
-    expect(second.status).toBe(404);
+    expect(second.status).toBe(410);
+    expect(second.body).toMatchObject({
+      code: 'FINANCE_LEGACY_WRITER_DISABLED', writerId: 'FIN-W02',
+      canonicalArtifactId: artifactId, canonicalBusinessVersionId: businessVersionId,
+    });
     const after = await mutationSnapshot();
     expectBusinessUnchanged(after, before);
-    expect(after).toMatchObject({
-      intents: before.intents + 1,
-      observations: before.observations + 1,
-      finance_observations: before.finance_observations + 1,
-    });
-    expect((await pool.query(
-      `SELECT request_id,access_kind,legacy_id,organization_id
-         FROM finance_legacy_usage_events WHERE request_id=$1`,
-      [`${prefix}-active-w01`]
-    )).rows).toEqual([{
-      request_id: `${prefix}-active-w01`, access_kind: 'legacy_writer_blocked',
-      legacy_id: `${prefix}-active-w01`, organization_id: org,
-    }]);
-    expect((await pool.query(
-      `SELECT request_id,writer_id,identity_status,legacy_id,organization_id
-         FROM legacy_cutover_usage_events WHERE request_id=$1`,
-      [`${prefix}-active-w02`]
-    )).rows).toEqual([{
-      request_id: `${prefix}-active-w02`, writer_id: 'FIN-W02', identity_status: 'not_migrated',
-      legacy_id: `${prefix}-active-w02`, organization_id: org,
-    }]);
-    expect((await pool.query(
-      `SELECT request_id,organization_id FROM legacy_cutover_signal_intents WHERE request_id=$1`,
-      [`${prefix}-active-w02`]
-    )).rows).toEqual([{ request_id: `${prefix}-active-w02`, organization_id: org }]);
+  });
+
+  it('returns 409 for unmapped FIN-W02 and records concurrent retries once', async () => {
+    const headers = authorization(active, org);
+    const requestId = `${prefix}-retry-w02`;
+    const responses = await Promise.all(Array.from({ length: 4 }, () =>
+      request(w02).post(`/api/financial-modeling/models/${prefix}-unmapped/approve`)
+        .set(headers).set('x-request-id', requestId).set('idempotency-key', requestId).send({})
+    ));
+    expect(responses.map((response) => response.status)).toEqual([409, 409, 409, 409]);
+    const counts = await pool.query(
+      `SELECT
+         (SELECT count(*)::int FROM legacy_cutover_signal_intents WHERE request_id=$1) AS intents,
+         (SELECT count(*)::int FROM legacy_cutover_usage_events WHERE request_id=$1) AS observations`,
+      [requestId]
+    );
+    expect(counts.rows[0]).toEqual({ intents: 1, observations: 1 });
   });
 
   it('rejects the same signed token on the next request after membership is revoked', async () => {
@@ -294,7 +321,7 @@ describe.skipIf(!enabled)('Finance W01/W02 mounted signed-JWT membership wall', 
       .set(headers).set('x-request-id', `${prefix}-foreign-w02`)
       .send({ organizationId: org, organization_id: org });
     expect(first.status).toBe(410);
-    expect(second.status).toBe(404);
+    expect(second.status).toBe(409);
     const after = await mutationSnapshot();
     expectBusinessUnchanged(after, before);
     expect((await pool.query(
@@ -318,7 +345,7 @@ describe.skipIf(!enabled)('Finance W01/W02 mounted signed-JWT membership wall', 
       [`${prefix}-foreign-w02`]
     )).rows).toEqual([{
       request_id: `${prefix}-foreign-w02`, user_id: foreign, organization_id: foreignOrg,
-      writer_id: 'FIN-W02', access_kind: 'legacy_uncovered_writer', legacy_table: 'financial_models',
+      writer_id: 'FIN-W02', access_kind: 'legacy_identity_unmapped', legacy_table: 'financial_models',
       legacy_id: orgModel, identity_status: 'not_migrated',
     }]);
     expect((await pool.query(
@@ -327,7 +354,7 @@ describe.skipIf(!enabled)('Finance W01/W02 mounted signed-JWT membership wall', 
       [`${prefix}-foreign-w02`]
     )).rows).toEqual([{
       request_id: `${prefix}-foreign-w02`, user_id: foreign, organization_id: foreignOrg,
-      writer_id: 'FIN-W02', access_kind: 'legacy_uncovered_writer', legacy_table: 'financial_models',
+      writer_id: 'FIN-W02', access_kind: 'legacy_identity_unmapped', legacy_table: 'financial_models',
       legacy_id: orgModel, identity_status: 'not_migrated',
     }]);
   });
@@ -358,6 +385,28 @@ describe.skipIf(!enabled)('Finance W01/W02 mounted signed-JWT membership wall', 
     expect(await mutationSnapshot()).toEqual(before);
     const [recoveredFirst, recoveredSecond] = await callBoth(active, org, 'db-recovered');
     expect(recoveredFirst.status).toBe(410);
-    expect(recoveredSecond.status).toBe(404);
+    expect(recoveredSecond.status).toBe(409);
+  });
+
+  it('writer-scoped rollback reopens only FIN-W02 with one observation', async () => {
+    const requestId = `${prefix}-rollback-w02`;
+    process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = 'FIN-W02';
+    try {
+      const response = await request(w02)
+        .post(`/api/financial-modeling/models/${orgModel}/approve`)
+        .set(authorization(active, org)).set('x-request-id', requestId).send({});
+      expect(response.status).toBe(200);
+      const observations = await pool.query(
+        `SELECT writer_id,access_kind,count(*)::int AS count
+           FROM legacy_cutover_usage_events WHERE request_id=$1
+          GROUP BY writer_id,access_kind`,
+        [requestId]
+      );
+      expect(observations.rows).toEqual([
+        { writer_id: 'FIN-W02', access_kind: 'rollback_writer', count: 1 },
+      ]);
+    } finally {
+      delete process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+    }
   });
 });

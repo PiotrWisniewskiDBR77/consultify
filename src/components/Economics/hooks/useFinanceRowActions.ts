@@ -15,6 +15,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { approveFinanceModel, resolveLegacyFinanceArtifact } from '@/services/api/financeV2.api';
 import {
   shouldFallbackToLegacyFinance,
   V8FinanceApi,
@@ -35,15 +36,19 @@ async function computeModelWithFallback(modelId: string) {
   }
 }
 
-async function approveModelWithFallback(modelId: string) {
-  try {
-    return await V8FinanceApi.approveModel(modelId);
-  } catch (error) {
-    if (!shouldFallbackToLegacyFinance(error)) {
-      throw error;
-    }
-    return await Api.post(`/api/financial-modeling/models/${modelId}/approve`, {});
+async function approveCanonicalModel(legacyModelId: string) {
+  const identity = await resolveLegacyFinanceArtifact('financial_models', legacyModelId);
+  if (identity.status !== 'RESOLVED') {
+    throw new Error(
+      identity.status === 'QUARANTINED'
+        ? identity.reason || 'Model identity is quarantined'
+        : 'Model has no canonical identity. Run the Finance backfill before approval.'
+    );
   }
+  return approveFinanceModel({
+    modelArtifactId: identity.artifactId,
+    idempotencyKey: crypto.randomUUID(),
+  });
 }
 
 async function createModelWithFallback(body: V8FinanceModelCreatePayload) {
@@ -440,7 +445,7 @@ export function useFinanceRowActions({
             variant: 'primary',
             onClick: async () => {
               try {
-                await approveModelWithFallback(row.id);
+                await approveCanonicalModel(row.id);
                 await loadModels();
                 toast.success(t('finance.toast.modelApproved', 'Model zatwierdzony'));
               } catch (e: any) {

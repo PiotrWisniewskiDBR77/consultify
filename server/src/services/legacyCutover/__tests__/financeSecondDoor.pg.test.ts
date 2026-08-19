@@ -13,12 +13,11 @@
  *
  * These tests pin both halves of that finding:
  *  - the retired door still refuses, and
- *  - the second door is now OBSERVED under its own writer id, per tenant,
- *    while deliberately still working (FIN-W02 is `protected`, not `disabled`,
- *    because live clients use it).
+ *  - the second door is disabled under its own writer id after both live
+ *    clients moved to the canonical successor.
  *
- * If someone later promotes FIN-W02 to `disabled`, the third test here fails
- * loudly rather than the change landing silently.
+ * The mounted signed-JWT suite owns mapped identity and rollback coverage;
+ * this file retains the compact unmapped second-door contract.
  */
 import { randomUUID } from 'node:crypto';
 import express from 'express';
@@ -107,8 +106,7 @@ describe.skipIf(!REAL_PG)('Finance approve — both doors (fresh real PostgreSQL
     expect(first?.successor).toBe(second?.successor);
     expect(first?.legacyTable).toBe(second?.legacyTable);
     expect(first?.state).toBe('disabled');
-    // Deliberate: live clients still call the second door, so it is observed.
-    expect(second?.state).toBe('protected');
+    expect(second?.state).toBe('disabled');
   });
 
   it('still refuses the retired first door', async () => {
@@ -125,17 +123,17 @@ describe.skipIf(!REAL_PG)('Finance approve — both doors (fresh real PostgreSQL
     });
   });
 
-  it('observes the second door under its own writer id without blocking it', async () => {
+  it('refuses an unmapped second-door id under its own writer id', async () => {
     const response = await request(modelingApp)
       .post(`/api/financial-modeling/models/${modelId}/approve`)
       .set('x-request-id', `${prefix}-door-2`)
       .send({});
 
-    // The point of this assertion: the guard must NOT have refused. Whatever the
-    // leaf handler answers (404 for a model that does not exist here) proves the
-    // request reached it.
-    expect(response.status).not.toBe(410);
-    expect(response.status).not.toBe(409);
+    expect(response.status).toBe(409);
+    expect(response.body).toMatchObject({
+      code: 'FINANCE_LEGACY_IDENTITY_UNMAPPED',
+      writerId: 'FIN-W02',
+    });
 
     const rows = await pool.query(
       `SELECT writer_id, access_kind, route_path, organization_id, tenant_resolution,
@@ -147,7 +145,7 @@ describe.skipIf(!REAL_PG)('Finance approve — both doors (fresh real PostgreSQL
     expect(rows.rows).toEqual([
       {
         writer_id: 'FIN-W02',
-        access_kind: 'legacy_uncovered_writer',
+        access_kind: 'legacy_identity_unmapped',
         route_path: `/api/financial-modeling/models/${modelId}/approve`,
         organization_id: org,
         tenant_resolution: 'resolved',

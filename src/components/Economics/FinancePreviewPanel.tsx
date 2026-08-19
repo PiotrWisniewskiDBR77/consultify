@@ -23,6 +23,7 @@ import {
 } from '@/components/shared/PreviewPane';
 import { statusChipTone } from '@/components/ui/primitives/chips';
 import { Api } from '@/services/api';
+import { approveFinanceModel, resolveLegacyFinanceArtifact } from '@/services/api/financeV2.api';
 import {
   type FinanceVersionSnapshot,
   shouldFallbackToLegacyFinance,
@@ -63,15 +64,19 @@ async function computeModelWithFallback(modelId: string) {
   }
 }
 
-async function approveModelWithFallback(modelId: string) {
-  try {
-    return await V8FinanceApi.approveModel(modelId);
-  } catch (error) {
-    if (!shouldFallbackToLegacyFinance(error)) {
-      throw error;
-    }
-    return await Api.post(`/api/financial-modeling/models/${modelId}/approve`, {});
+async function approveCanonicalModel(legacyModelId: string) {
+  const identity = await resolveLegacyFinanceArtifact('financial_models', legacyModelId);
+  if (identity.status !== 'RESOLVED') {
+    throw new Error(
+      identity.status === 'QUARANTINED'
+        ? identity.reason || 'Model identity is quarantined'
+        : 'Model has no canonical identity. Run the Finance backfill before approval.'
+    );
   }
+  return approveFinanceModel({
+    modelArtifactId: identity.artifactId,
+    idempotencyKey: crypto.randomUUID(),
+  });
 }
 
 function PackValidationsSection({
@@ -796,7 +801,9 @@ export function useFinancePreview({
                   const normalized = normalizeSensitivityGrid(sens);
                   if (!normalized) return null;
                   const { columnHeaders, rowHeaders, values: matrix } = normalized;
-                  const finiteValues = matrix.flat().filter((value): value is number => value != null);
+                  const finiteValues = matrix
+                    .flat()
+                    .filter((value): value is number => value != null);
                   const maxVal = Math.max(...finiteValues);
                   const minVal = Math.min(...finiteValues);
                   return (
@@ -826,7 +833,10 @@ export function useFinancePreview({
                                 {matRow.map((val, ci: number) => {
                                   if (val == null) {
                                     return (
-                                      <td key={ci} className="text-center py-0.5 px-1 text-slate-400">
+                                      <td
+                                        key={ci}
+                                        className="text-center py-0.5 px-1 text-slate-400"
+                                      >
                                         —
                                       </td>
                                     );
@@ -1030,7 +1040,7 @@ export function useFinancePreview({
           label: t('finance.actions.approve', 'Zatwierdź'),
           onClick: async () => {
             try {
-              await approveModelWithFallback(row.id);
+              await approveCanonicalModel(row.id);
               await loadModels();
               toast.success(t('finance.toast.modelApproved', 'Model zatwierdzony'));
             } catch (e: any) {

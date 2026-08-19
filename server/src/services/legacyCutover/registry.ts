@@ -240,12 +240,12 @@ export const FINANCE_MODELING_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'FIN-W02',
       method: 'POST',
       path: /^\/models\/[^/]+\/approve\/?$/,
-      state: 'protected',
+      state: 'disabled',
       successor: '/api/v8/finance-v2/models/:artifactId/approve',
       legacyTable: 'financial_models',
       legacyIdFromPath: (path) => decodeURIComponent(path.split('/')[2] || ''),
       reason:
-        'Same approveModel() write as the retired FIN-W01, reachable through a second unguarded mount. Two live UI callers, so observed rather than disabled until the telemetry window is clean.',
+        'Same approveModel() write as FIN-W01. Both live UI callers now resolve the legacy model alias and use the canonical finance-v2 approval route, so this second door is retired with writer-scoped rollback.',
     },
   ],
 };
