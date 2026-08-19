@@ -1,79 +1,163 @@
 {
   "taskId": "DATA-DR-001",
-  "baselineSha": "4f6a1e777c5f5dbeaa014dbafdfb0b9828198344",
-  "productSha": "144b33df06ec3d69c903204dcb88041caf238335",
+  "baselineSha": "0596eeb28a4755809509cb8831a288f02c4e0318",
+  "productSha": "b4e9feb02864328e029b74e7dedb57779bf6fa47",
+  "testedSha": "b4e9feb02864328e029b74e7dedb57779bf6fa47",
+  "reconciliationSha": "b4e9feb02864328e029b74e7dedb57779bf6fa47",
+  "technicalVerdict": "DONE_CURRENT_SHA",
+  "verdict": "DONE_CURRENT_SHA",
+  "verdictRationale": "Repository-only completion is permitted by TEN_PRODUCT_INFRA_CLOSURE_PLAN_20260819 and AMD-TECHNICAL-DONE-RELEASE-BOUNDARY-002. Exact-current qualification proves the application lifecycle, canonical encrypted v2 backup, durable receipts, RPO/RTO facts, isolated restore, previous-reader compatibility and fail-closed controls. Production KMS, external object storage, a deployed schedule and production restore remain unexecuted release boundaries.",
   "leaseSha256": "not_applicable_codex_bounded_task",
+  "technicalSource": {
+    "productCommit": "b4e9feb02864328e029b74e7dedb57779bf6fa47",
+    "qualificationLogRoot": "/private/tmp/consultify-data-dr-requal-dadr_requal_20260819_142329_26978",
+    "identity": "head-before=head-after=b4e9feb02864328e029b74e7dedb57779bf6fa47; status-before/status-after empty; exact12 SHA256 manifests byte-identical"
+  },
   "changedPaths": [
-    "server/scripts/lib/encryptedBackupArtifact.ts",
-    "server/scripts/backup-artifact-crypto.ts",
-    "tests/unit/backend/encryptedBackupArtifact.test.ts",
     "docs/runbooks/DATA-DR-001_POSTGRES_RESTORE.md",
-    "docs/program/evidence/closure/codex/DATA-DR-001/TASK_EVIDENCE.json"
+    "server/migrations/20260909_data_dr_backup_health.sql",
+    "server/src/cron/BackupCron.ts",
+    "server/src/cron/Scheduler.ts",
+    "server/src/index.ts",
+    "server/src/routes/admin/backup.routes.ts",
+    "server/src/routes/superadmin.routes.ts",
+    "server/src/services/backupService.ts",
+    "tests/integration/admin/adminBackup.restore.realdb.test.ts",
+    "tests/integration/admin/dataDrLifecycle.realdb.test.ts",
+    "tests/unit/backend/cron/backupCron.test.ts",
+    "tests/unit/backend/cron/schedulerBackupLifecycle.test.ts"
   ],
   "changedPathRationale": {
-    "server/scripts/lib/encryptedBackupArtifact.ts": "AES-256-GCM artifact encryption, authenticated restore, plaintext/ciphertext checksums and objective calculation.",
-    "server/scripts/backup-artifact-crypto.ts": "Repository-owned operator CLI for encryption and verified decryption.",
-    "tests/unit/backend/encryptedBackupArtifact.test.ts": "Exact-byte restore and corrupted/incomplete/wrong-key negative controls.",
-    "docs/runbooks/DATA-DR-001_POSTGRES_RESTORE.md": "Isolated restore, verification, cleanup and production authorization procedure.",
-    "docs/program/evidence/closure/codex/DATA-DR-001/TASK_EVIDENCE.json": "Machine-readable drill evidence."
+    "docs/runbooks/DATA-DR-001_POSTGRES_RESTORE.md": "Executable guarded two-database qualification, bootstrap pruning, compatibility and production authorization boundary.",
+    "server/migrations/20260909_data_dr_backup_health.sql": "Migration-owned source watermark, durable backup/restore receipts, leases and immutable hostile-validated triggers.",
+    "server/src/cron/BackupCron.ts": "Shared single-flight coordinator with durable slot claim, fencing, RPO facts and truthful terminal state.",
+    "server/src/cron/Scheduler.ts": "Sole idempotent backup lifecycle authority with concurrent initialization and stop drain.",
+    "server/src/index.ts": "Awaits Scheduler shutdown before database pool shutdown.",
+    "server/src/routes/admin/backup.routes.ts": "Tenant-admin manual full backup through the shared coordinator and active-membership gate.",
+    "server/src/routes/superadmin.routes.ts": "Capability-gated system manual full backup through the shared coordinator.",
+    "server/src/services/backupService.ts": "Canonical v2 writer and v2/v1 reader, repeatable-read snapshot, checksums, tenant validation and isolated atomic cold restore.",
+    "tests/integration/admin/adminBackup.restore.realdb.test.ts": "RealPG v2/v1 restore, corruption/key/tenant/pristine/rollback/RTO/audit controls and residue proof.",
+    "tests/integration/admin/dataDrLifecycle.realdb.test.ts": "RealPG hostile/repeat migration, fencing, RPO, compensation and mounted Gateway authorization.",
+    "tests/unit/backend/cron/backupCron.test.ts": "Coordinator single-flight, missed-run, key and failure-state unit controls.",
+    "tests/unit/backend/cron/schedulerBackupLifecycle.test.ts": "Scheduler duplicate-start and clean-stop lifecycle controls."
   },
-  "ownerTables": ["organizations", "users"],
+  "ownerTables": ["organizations", "users", "organization_members"],
   "commands": [
     {
-      "command": "npx vitest run tests/unit/backend/encryptedBackupArtifact.test.ts --maxWorkers=1 --no-file-parallelism",
-      "exitCode": 0
+      "command": "NODE_ENV=test DB_TYPE=postgres DATABASE_URL=<owned-source-or-target-url> npx tsx server/scripts/migrate.postgres.ts",
+      "exitCode": 0,
+      "result": "fresh and repeat passed independently on both databases; repeat applied 0",
+      "logPointers": ["migrate-source-fresh.log", "migrate-source-repeat.log", "migrate-target-fresh.log", "migrate-target-repeat.log"]
     },
     {
-      "command": "isolated PostgreSQL 16 source/destination drill using pg_dump, gzip, backup-artifact-crypto encrypt/decrypt and psql -v ON_ERROR_STOP=1",
-      "exitCode": 0
+      "command": "NODE_ENV=test DB_TYPE=postgres DATABASE_URL=<owned-source-or-target-url> npx tsx server/scripts/migrate.postgres.ts --dry-run",
+      "exitCode": 0,
+      "result": "pending 0 on both databases",
+      "logPointers": ["migrate-source-dry.log", "migrate-target-dry.log"]
     },
     {
-      "command": "corrupted ciphertext decrypt positive control",
-      "exitCode": 1,
-      "expectedExitCode": 1
+      "command": "npx vitest run tests/unit/backend/cron/backupCron.test.ts tests/unit/backend/cron/schedulerBackupLifecycle.test.ts --no-file-parallelism --maxWorkers=1 --retry=0",
+      "exitCode": 0,
+      "result": "2 files, 12 tests passed",
+      "logPointers": ["unit.log", "unit.exit"]
+    },
+    {
+      "command": "NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres DATABASE_URL=<owned-source-url> BACKUP_RESTORE_TARGET_DATABASE_URL=<owned-target-url> ADM_BACKUP_ALLOW_IMMUTABLE_FIXTURE_CLEANUP=1 BACKUP_ENCRYPTION_KEY=<32-byte-test-key> BACKUP_ENCRYPTION_KEY_ID=data-dr-requal STORAGE_PROVIDER=local UPLOADS_BASE_DIR=<owned-artifact-dir> ENABLE_TEST_AUTH_BYPASS=true npx vitest run tests/integration/admin/dataDrLifecycle.realdb.test.ts --no-file-parallelism --maxWorkers=1 --retry=0",
+      "exitCode": 0,
+      "result": "1 file, 9 tests passed",
+      "logPointers": ["realpg-lifecycle.log", "realpg-lifecycle.exit"]
+    },
+    {
+      "command": "NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres DATABASE_URL=<owned-source-url> BACKUP_RESTORE_TARGET_DATABASE_URL=<owned-target-url> ADM_BACKUP_ALLOW_IMMUTABLE_FIXTURE_CLEANUP=1 BACKUP_ENCRYPTION_KEY=<32-byte-test-key> BACKUP_ENCRYPTION_KEY_ID=data-dr-requal STORAGE_PROVIDER=local UPLOADS_BASE_DIR=<owned-artifact-dir> npx vitest run tests/integration/admin/adminBackup.restore.realdb.test.ts --no-file-parallelism --maxWorkers=1 --retry=0",
+      "exitCode": 0,
+      "result": "1 file, 10 tests passed",
+      "logPointers": ["realpg-restore.log", "realpg-restore.exit"]
+    },
+    {"command": "npm run type-check", "exitCode": 0, "logPointers": ["root-tsc.log", "root-tsc.exit"]},
+    {"command": "NODE_OPTIONS=--max-old-space-size=8192 npm --prefix server run typecheck", "exitCode": 0, "logPointers": ["server-tsc.log", "server-tsc.exit"]},
+    {"command": "npm run build:backend", "exitCode": 0, "logPointers": ["build-backend.log", "build-backend.exit"]},
+    {"command": "NODE_OPTIONS=--max-old-space-size=8192 npm run build", "exitCode": 0, "logPointers": ["build-frontend-8g.log", "build-frontend-8g.exit"]},
+    {
+      "command": "psql <each-owned-db> -v ON_ERROR_STOP=1 -At < exact scoped residue/trigger/advisory-lock query",
+      "exitCode": 0,
+      "result": "both DBs: owned organizations/users/memberships, manifests, audits, run receipts, restore receipts, bad triggers and advisory locks all 0; artifact files 0",
+      "logPointers": ["final-source.log", "final-target.log", "artifact-residue.log"]
+    },
+    {
+      "command": "dropdb <literal-owned-target>; dropdb <literal-owned-source>; psql consultify_truth -Atc <catalog-count-for-both-literal-names>",
+      "exitCode": 0,
+      "result": "catalog existence 0",
+      "logPointers": ["drop-existence0.log"]
     }
   ],
   "denominators": {
-    "unitTestFiles": { "passed": 1, "failed": 0 },
-    "unitTests": { "passed": 3, "failed": 0, "skipped": 0, "todo": 0 },
-    "sourceOwnerTables": 2,
-    "restoredOwnerTables": 2,
-    "sourceOrganizations": 2,
-    "restoredOrganizations": 2,
-    "sourceUsers": 2,
-    "restoredUsers": 2,
-    "tenantAlphaUsers": 1,
-    "tenantBetaUsers": 1
+    "testFiles": {"passed": 4, "failed": 0},
+    "tests": {"passed": 31, "failed": 0, "skipped": 0, "todo": 0},
+    "unit": {"files": 2, "tests": 12},
+    "lifecycleRealPg": {"files": 1, "tests": 9},
+    "restoreRealPg": {"files": 1, "tests": 10},
+    "migrationDatabases": 2,
+    "successfulMigrationLedgerRowsPerDatabase": 780
   },
   "fixtures": {
-    "sourceContainer": "consultify-data-dr-src-4f6a1e77 (removed)",
-    "restoreContainer": "consultify-data-dr-dst-4f6a1e77 (removed)",
+    "sourceDatabase": "consultify_adm_backup_source_dadr_requal_20260819_142329_26978 (dropped)",
+    "targetDatabase": "consultify_adm_backup_restore_dadr_requal_20260819_142329_26978 (dropped)",
     "postgresVersion": "16",
-    "sourceHash": "e49772b9fdfacd9076c79031e5716e70",
-    "restoredHash": "e49772b9fdfacd9076c79031e5716e70",
-    "ciphertextSha256": "2e1f885ab74c741c63d6c1003774aaf223a6bb21c3157d4c9ea541f644426250",
-    "rpoMs": 654,
-    "rtoMs": 23151,
-    "rpoTargetMs": 900000,
-    "rtoTargetMs": 3600000,
-    "containersRemoved": true
+    "migrationChecksum": "5ace25eb2d1bcf85a11d6bf134e7a6bf4aa85d8fde1257f39ac6f02848b5690e",
+    "pinnedHistoricalReaderSha": "5e752a41cc604ae5fc8d929d7c6392d65bc41da8",
+    "canonicalFormat": "consultify-logical-backup-v2",
+    "historicalReadableFormat": "consultify-encrypted-json-v1",
+    "legacyOperatorOnlyFormat": "consultify-pg-backup-v1",
+    "rpoTargetSeconds": 900,
+    "rtoTargetSeconds": 3600,
+    "databasesRemoved": true,
+    "artifactResidue": 0
   },
   "negativeControls": {
+    "duplicateScheduleStartAndSingleFlight": true,
+    "durableFenceAndExpiredLeaseReclaim": true,
+    "missingAndWrongKeyRejected": true,
+    "criticalExportAndStorageFailureCompensated": true,
     "corruptedCiphertextRejected": true,
-    "corruptRestoreOutputNotCreated": true,
-    "wrongEncryptionKeyRejected": true,
-    "tenantCountsRemainSeparated": true
+    "midRestoreFailureRolledBack": true,
+    "occupiedTargetOwnersRejected": true,
+    "foreignAndRevokedAuthorizationDenied": true,
+    "sameSourceTargetAndAliasRejected": true,
+    "hostileMigrationShapeRejected": true,
+    "tenantOwnerCountsAndHashesColdVerified": true
   },
   "browserArtifacts": [],
-  "rollback": {
-    "schemaChanged": false,
-    "productionRestoreAuthorized": false,
-    "method": "Remove the additive scripts/tests/runbook; drill containers and plaintext artifacts were isolated from the repository and containers were removed."
+  "nonqualifyingAttempts": [
+    "Initial administrative connection used the wrong container role; authentication failed before database creation.",
+    "Initial local migration omitted NODE_ENV=test and was rejected before mutation.",
+    "Pre-candidate migration delimiter and prosrc-normalization defects were fixed and qualifying databases recreated fresh.",
+    "Pre-candidate RealPG harness expectations for PostgreSQL index normalization, durable failed-state retention, membership authority and signed superadmin auth were corrected.",
+    "Pre-candidate restore target bootstrap and invalid historical fixture owner identity were corrected.",
+    "A pre-candidate frontend build used the default 4 GiB heap and OOMed; immutable requalification used the explicit 8 GiB command and passed."
+  ],
+  "releaseBoundary": {
+    "repositoryTechnicalStatus": "DONE_CURRENT_SHA",
+    "productionKms": "NOT_EXECUTED_NOT_AUTHORIZED",
+    "durableExternalObjectStore": "NOT_EXECUTED_NOT_AUTHORIZED",
+    "deployedFifteenMinuteSchedule": "NOT_EXECUTED_NOT_AUTHORIZED",
+    "productionRestore": "NOT_EXECUTED_NOT_AUTHORIZED",
+    "releaseStatus": "NOT_AUTHORIZED",
+    "statement": "AMD-ADM-BACKUP-INTERNAL-BETA-002, AMD-DATA-RECOVERY-TARGET-002 and AMD-TECHNICAL-DONE-RELEASE-BOUNDARY-002 permit repository technical DONE without claiming production DR, KMS, external object storage, deployed observation or production restore."
   },
-  "verdict": "PARTIAL",
-  "openBlockers": [
-    "The current application BackupCron remains daily and the logical BackupService is not wired to this encrypted PostgreSQL artifact seam, so default continuous RPO <=15 minutes is not yet operationally guaranteed.",
-    "No owner-provided KMS/key rotation, durable encrypted object-store target or production backup schedule was available; production restore remains separately unauthorized.",
-    "Migration/backfill replay and previous-SHA reader compatibility were not implicated by this schema-neutral drill and were not independently re-executed."
-  ]
+  "openBlockers": [],
+  "openReleaseBlockers": [
+    "Provision and verify production KMS/key rotation without exposing key material.",
+    "Provision and verify durable external S3/R2-compatible object storage.",
+    "Deploy and observe the 15-minute schedule on an authorized release candidate.",
+    "Authorize and execute a production restore only under the incident/release runbook."
+  ],
+  "rollback": {
+    "schemaChanged": true,
+    "productionRestoreAuthorized": false,
+    "method": "Repository rollback requires a normal successor decision. Production restore and destructive schema rollback are not authorized by this evidence."
+  },
+  "evidenceCarrier": {
+    "path": "docs/program/evidence/closure/codex/DATA-DR-001/TASK_EVIDENCE.json",
+    "commitSemantics": "The evidence-only carrier is a successor of testedSha and cannot self-reference its own Git SHA inside its tree."
+  }
 }
