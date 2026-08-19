@@ -3089,113 +3089,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     [refreshExecutionAfterWrite]
   );
 
-  const handleTimelineUpdate = useCallback(
-    async (initiativeId: string, field: string, value: string, reason?: string) => {
-      if (isPilotParticipant) {
-        dispatchPilotAccessBlocked({
-          href: '/execution',
-        });
-        return;
-      }
-      try {
-        const payload = { initiativeId, field, value, reason } as const;
-        const fallbackRequest = () =>
-          fetch('/api/execution-control/timeline-update', {
-            method: 'POST',
-            headers: { ...getHeaders(), 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-          });
-        const response = await V8ExecutionControlApi.updateTimeline({
-          initiativeId,
-          field: field as
-            | 'status'
-            | 'planned_start_date'
-            | 'planned_end_date'
-            | 'start_date'
-            | 'actual_end_date'
-            | 'progress',
-          value,
-          reason,
-        })
-          .then((data) => ({ ok: true, json: async () => data }))
-          .catch((error) => {
-            if (!shouldFallbackToLegacyExecutionControl(error)) {
-              throw error;
-            }
-            return fallbackRequest();
-          });
-        const json = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          const msg =
-            (json as any)?.error ||
-            (json as any)?.message ||
-            `HTTP ${(response as Response).status}`;
-          throw new Error(String(msg));
-        }
-
-        // Keep UI state consistent with persisted changes.
-        setInitiatives((prev) =>
-          prev.map((i) => {
-            if (i.id !== initiativeId) return i;
-            const next: any = { ...i };
-            switch (field) {
-              case 'planned_start_date':
-                next.plannedStartDate = value;
-                break;
-              case 'planned_end_date':
-                next.plannedEndDate = value;
-                break;
-              case 'start_date':
-                next.startDate = value;
-                break;
-              case 'actual_end_date':
-                next.actualEndDate = value;
-                break;
-              case 'status':
-                next.status = value;
-                break;
-              case 'progress':
-                next.progress = Number(value);
-                break;
-            }
-            return next as FullInitiative;
-          })
-        );
-        setSelectedInitiative((prev) => {
-          if (!prev || prev.id !== initiativeId) return prev;
-          const next: any = { ...prev };
-          switch (field) {
-            case 'planned_start_date':
-              next.plannedStartDate = value;
-              break;
-            case 'planned_end_date':
-              next.plannedEndDate = value;
-              break;
-            case 'start_date':
-              next.startDate = value;
-              break;
-            case 'actual_end_date':
-              next.actualEndDate = value;
-              break;
-            case 'status':
-              next.status = value;
-              break;
-            case 'progress':
-              next.progress = Number(value);
-              break;
-          }
-          return next as FullInitiative;
-        });
-        await refreshExecutionAfterWrite();
-      } catch (e: any) {
-        toast.error(
-          e?.message || t('execution.toast.timelineUpdateFailed', 'Failed to update timeline')
-        );
-      }
-    },
-    [isPilotParticipant, refreshExecutionAfterWrite, t]
-  );
-
   // Handle refresh
   const handleRefresh = useCallback(async () => {
     await refreshExecutionAfterWrite();
@@ -5718,7 +5611,7 @@ Please return:
               }
               onInitiativeClick={handleOpenSidePanel}
               onUpdateInitiative={isPilotParticipant ? undefined : handleInitiativeUpdate}
-              onTimelineUpdate={isPilotParticipant ? undefined : handleTimelineUpdate}
+              onTimelineUpdate={undefined}
               onDependenciesChanged={isPilotParticipant ? undefined : handleRefresh}
               riskSignals={riskSignals}
               delaySignals={delaySignals}
