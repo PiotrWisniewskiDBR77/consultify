@@ -16,7 +16,7 @@ describe.skipIf(!real)('20261038 Settings MFA legacy upgrade — real PostgreSQL
     const { Pool } = await import('pg');
     pool = new Pool({ connectionString: url });
     migration = await fs.readFile(
-      path.resolve(process.cwd(), 'server/migrations/20261038_settings_mfa_challenges.sql'),
+      path.resolve(process.cwd(), 'server/migrations/20261039_settings_mfa_challenges.sql'),
       'utf8'
     );
   });
