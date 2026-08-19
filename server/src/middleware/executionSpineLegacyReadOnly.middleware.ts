@@ -37,10 +37,10 @@ export function requireCanonicalExecutionWriter(
  * a read-only surface.
  */
 const LEGACY_INITIATIVE_EXECUTION_WRITE_PATHS = [
-  /^\/[^/]+\/(?:start-execution|block|unblock|complete|move)\/?$/,
+  /^\/[^/]+\/(?:start-execution|block|unblock|move)\/?$/,
   /^\/[^/]+\/(?:milestones|resources|staffing-plans|budget-items|raid|gate-roles)(?:\/.*)?$/,
   /^\/[^/]+\/(?:lifecycle-transition-proposals|lifecycle-transition-executions|lifecycle-gate-decisions)(?:\/.*)?$/,
-  /^\/[^/]+\/(?:apply-template|apply-blueprint|changes)\/?$/,
+  /^\/[^/]+\/(?:apply-template|apply-blueprint)\/?$/,
 ];
 
 export function requireCanonicalInitiativeExecutionWriter(

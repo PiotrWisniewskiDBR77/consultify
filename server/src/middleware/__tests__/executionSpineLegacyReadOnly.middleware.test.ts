@@ -75,6 +75,8 @@ describe('execution spine legacy read-only boundary', () => {
     '/initiative-1/merge-from-insight',
     '/templates',
     '/initiative-1/profile',
+    '/initiative-1/changes',
+    '/initiative-1/complete',
     '/initiative-1/comments',
   ])('keeps the unrelated Initiative writer %s mounted', (path) => {
     const result = invokeInitiative('POST', path);
