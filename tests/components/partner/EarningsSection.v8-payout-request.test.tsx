@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-hot-toast', () => ({
@@ -263,47 +263,30 @@ describe('EarningsSection V8 payout request seam', () => {
     expect(Api.get).toHaveBeenCalledWith('/api/partners/payouts');
   });
 
-  it('prefers governed payout request before legacy fallback', async () => {
-    vi.mocked(V8PartnerApi.requestPayout).mockResolvedValue({
-      payout: { id: 'payout-1', status: 'requested' },
-    } as any);
-
+  it('does not expose a payout request mutation even when historical balance is available', async () => {
     render(<EarningsSection subsection="earnings" />);
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Zażądaj wypłaty' })).toBeInTheDocument();
+      expect(screen.getByTestId('partner-economics-approved-out')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Zażądaj wypłaty' }));
-
-    await waitFor(() => {
-      expect(V8PartnerApi.requestPayout).toHaveBeenCalledWith({ amount: 150 });
-    });
-
-    expect(Api.post).not.toHaveBeenCalledWith('/api/partners/payouts/request', expect.anything());
+    expect(screen.queryByRole('button', { name: 'Zażądaj wypłaty' })).not.toBeInTheDocument();
+    expect(V8PartnerApi.requestPayout).not.toHaveBeenCalled();
+    expect(Api.post).not.toHaveBeenCalled();
     expect(
       screen.getByRole('button', { name: 'Commission inquiry routing unavailable' })
     ).toBeDisabled();
   });
 
-  it('does not issue a legacy payout request when governed payout request fails', async () => {
-    vi.mocked(V8PartnerApi.requestPayout).mockRejectedValue({ status: 404 });
-    vi.mocked(Api.post).mockResolvedValue({
-      success: true,
-      data: { id: 'payout-legacy-1' },
-    } as any);
-
+  it('has no governed or legacy payout request failure path reachable from tenant UI', async () => {
     render(<EarningsSection subsection="earnings" />);
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Zażądaj wypłaty' })).toBeInTheDocument();
+      expect(screen.getByTestId('partner-economics-approved-out')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Zażądaj wypłaty' }));
-
-    await waitFor(() => {
-      expect(V8PartnerApi.requestPayout).toHaveBeenCalledWith({ amount: 150 });
-    });
-    expect(Api.post).not.toHaveBeenCalledWith('/api/partners/payouts/request', expect.anything());
+    expect(screen.queryByRole('button', { name: 'Zażądaj wypłaty' })).not.toBeInTheDocument();
+    expect(V8PartnerApi.requestPayout).not.toHaveBeenCalled();
+    expect(Api.post).not.toHaveBeenCalled();
   });
 });

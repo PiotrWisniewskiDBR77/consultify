@@ -20,7 +20,6 @@ import {
   Clock,
   DollarSign,
   Download,
-  ExternalLink,
   FileText,
   HelpCircle,
   TrendingUp,
@@ -218,12 +217,10 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [requestingPayout, setRequestingPayout] = useState(false);
   const [activeTab, setActiveTab] = useState<'statements' | 'payments'>('statements');
   const [bankInfoComplete, setBankInfoComplete] = useState(true);
   const [nextPaymentDate, setNextPaymentDate] = useState<string | null>(null);
   const [payoutSettings, setPayoutSettings] = useState<PayoutSettings>(defaultPayoutSettings);
-  const [savingPayoutSettings, setSavingPayoutSettings] = useState(false);
 
   // Single currency formatter driven by API-provided currency code.
   // Falls back to the summary currency, the first payout/transaction currency,
@@ -323,12 +320,6 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
       const legacy = unwrapApiData(response) ?? response?.earnings ?? response;
       return { earnings: legacy };
     }
-  }, []);
-
-  const savePayoutSettingsWithFallback = useCallback(async (settings: PayoutSettings) => {
-    const governedSettings = { ...settings, autoPayoutEnabled: false };
-    const response = await V8PartnerApi.updatePayoutSettings(governedSettings);
-    return normalizePayoutSettings(response?.settings);
   }, []);
 
   // Fetch earnings data from API
@@ -551,77 +542,6 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
     );
   };
 
-  // Request payout via API
-  const handleRequestPayout = async () => {
-    const eligibility = v8Summary?.payoutEligibility;
-    if (!summary || !eligibility?.eligible) {
-      toast.error(
-        t('partner.earnings.minimumNotReached', 'Minimalna kwota wypłaty to {{amount}}', {
-          amount: formatCurrency(eligibility?.minimumThreshold ?? 0),
-        })
-      );
-      return;
-    }
-
-    if (!bankInfoComplete) {
-      toast.error(
-        t('partner.earnings.bankInfoRequired', 'Please complete your bank information first')
-      );
-      return;
-    }
-
-    try {
-      setRequestingPayout(true);
-      const response = await V8PartnerApi.requestPayout({
-        amount: summary.readyForPayout,
-      });
-
-      if (response?.payout) {
-        toast.success(t('partner.earnings.payoutRequested', 'Payout request submitted!'));
-        await fetchEarnings();
-      } else {
-        toast.error(
-          response?.error || t('partner.earnings.payoutFailed', 'Failed to request payout')
-        );
-      }
-    } catch (err: any) {
-      console.error('Error requesting payout:', err);
-      toast.error(
-        err?.response?.data?.error || t('partner.earnings.payoutFailed', 'Failed to request payout')
-      );
-    } finally {
-      setRequestingPayout(false);
-    }
-  };
-
-  const updatePayoutAccountField = (
-    field: keyof NonNullable<PayoutSettings['payoutAccount']>,
-    value: string
-  ) => {
-    setPayoutSettings((prev) => ({
-      ...prev,
-      payoutAccount: {
-        ...(prev.payoutAccount || defaultPayoutSettings.payoutAccount!),
-        [field]: value,
-      },
-    }));
-  };
-
-  const handleSavePayoutSettings = async () => {
-    try {
-      setSavingPayoutSettings(true);
-      await savePayoutSettingsWithFallback(payoutSettings);
-      const readBack = await getPayoutSettingsWithFallback();
-      setPayoutSettings(readBack);
-      toast.success(t('partner.payoutSettings.saved', 'Payout settings updated'));
-    } catch (err: any) {
-      console.error('Error saving payout settings:', err);
-      toast.error(t('partner.payoutSettings.saveFailed', 'Failed to update payout settings'));
-    } finally {
-      setSavingPayoutSettings(false);
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -662,14 +582,14 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                 <p className="text-amber-200 font-medium">
                   {t(
                     'partner.earnings.bankInfoRequired',
-                    'Up-to-date bank and tax information is required to receive commission payments.'
+                    'Historical bank and tax information is incomplete.'
                   )}
                 </p>
                 <div className="flex items-center gap-4 mt-2">
                   <div className="text-sm text-amber-300">
                     {t(
                       'partner.earnings.bankInfoRuntimeNotice',
-                      'Use the governed payout settings surface to keep payout details up to date.'
+                      'Payout settings are read-only and payout operations are unavailable under AMD-PRT-ECONOMICS-002.'
                     )}
                   </div>
                 </div>
@@ -841,20 +761,12 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
             <p className="text-2xl font-bold text-c-text">
               {formatCurrency(summary?.readyForPayout)}
             </p>
-            <button
-              onClick={handleRequestPayout}
-              disabled={requestingPayout || !v8Summary?.payoutEligibility?.eligible}
-              className={cn(
-                'mt-2 px-3 py-1 text-xs font-medium rounded-lg transition-colors',
-                v8Summary?.payoutEligibility?.eligible
-                  ? 'bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]'
-                  : 'bg-slate-200 dark:bg-slate-700 text-c-text-muted cursor-not-allowed'
+            <p className="mt-2 text-xs text-c-text-muted" data-testid="partner-economics-approved-out">
+              {t(
+                'partner.earnings.payoutOperationsUnavailable',
+                'Payout operations are unavailable. Historical balances remain read-only.'
               )}
-            >
-              {requestingPayout
-                ? t('partner.earnings.requesting', 'Wysyłanie...')
-                : t('partner.earnings.requestPayout', 'Zażądaj wypłaty')}
-            </button>
+            </p>
           </div>
         </div>
 
@@ -1147,57 +1059,29 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
         <p className="text-c-text-secondary">
           {t(
             'partner.payoutSettings.subtitle',
-            'Configure your payout preferences and bank details'
+            'Historical payout preferences and bank details are read-only'
           )}
         </p>
       </div>
 
-      {/* Payout Method */}
+      <div
+        className="rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-700/60 dark:bg-amber-500/10"
+        role="note"
+      >
+        <p className="font-medium text-c-text">Payout operations unavailable</p>
+        <p className="mt-1 text-sm text-c-text-secondary">
+          Commission, accrual and payout operations are unavailable under AMD-PRT-ECONOMICS-002.
+          Historical settings remain read-only.
+        </p>
+      </div>
+
+      {/* Historical payout method */}
       <div className="bg-c-surface-raised/50 rounded-xl border border-c-border-subtle dark:border-white/5 p-4">
         <h3 className="text-lg font-semibold text-c-text mb-4">Payout Method</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button
-            onClick={() =>
-              setPayoutSettings((prev) => ({ ...prev, payoutMethod: 'BANK_TRANSFER' }))
-            }
-            className={cn(
-              'p-4 rounded-xl border-2 text-left',
-              payoutSettings.payoutMethod === 'BANK_TRANSFER'
-                ? 'border-primary-500 bg-primary-500/10'
-                : 'border-c-border-subtle dark:border-white/10 hover:border-c-border dark:hover:border-white/20'
-            )}
-          >
-            <Wallet className="w-6 h-6 text-primary-400 mb-2" />
-            <p className="font-medium text-c-text">Bank Transfer</p>
-            <p className="text-xs text-c-text-secondary">Direct to your bank account</p>
-          </button>
-          <button
-            onClick={() => setPayoutSettings((prev) => ({ ...prev, payoutMethod: 'PAYPAL' }))}
-            className={cn(
-              'p-4 rounded-xl border text-left',
-              payoutSettings.payoutMethod === 'PAYPAL'
-                ? 'border-primary-500 bg-primary-500/10'
-                : 'border-c-border-subtle dark:border-white/10 hover:border-c-border dark:hover:border-white/20'
-            )}
-          >
-            <DollarSign className="w-6 h-6 text-c-text-secondary mb-2" />
-            <p className="font-medium text-c-text-secondary">PayPal</p>
-            <p className="text-xs text-c-text-muted">PayPal business account</p>
-          </button>
-          <button
-            onClick={() => setPayoutSettings((prev) => ({ ...prev, payoutMethod: 'STRIPE' }))}
-            className={cn(
-              'p-4 rounded-xl border text-left',
-              payoutSettings.payoutMethod === 'STRIPE'
-                ? 'border-primary-500 bg-primary-500/10'
-                : 'border-c-border-subtle dark:border-white/10 hover:border-c-border dark:hover:border-white/20'
-            )}
-          >
-            <ExternalLink className="w-6 h-6 text-c-text-secondary mb-2" />
-            <p className="font-medium text-c-text-secondary">Stripe</p>
-            <p className="text-xs text-c-text-muted">Stripe Connect</p>
-          </button>
-        </div>
+        <p className="text-c-text" data-testid="historical-payout-method">
+          {payoutSettings.payoutMethod.replace('_', ' ')}
+        </p>
+        <p className="mt-1 text-xs text-c-text-muted">Historical value</p>
       </div>
 
       {/* Bank Details */}
@@ -1205,50 +1089,21 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
         <h3 className="text-lg font-semibold text-c-text mb-4">Bank Account Details</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="text-sm text-c-text-secondary mb-1 block">Account Holder Name</label>
-            <input
-              type="text"
-              value={payoutSettings.payoutAccount?.accountHolderName ?? ''}
-              onChange={(e) => updatePayoutAccountField('accountHolderName', e.target.value)}
-              className="w-full px-4 py-2 bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text"
-            />
+            <p className="text-sm text-c-text-secondary mb-1">Account Holder Name</p>
+            <p className="text-c-text">{payoutSettings.payoutAccount?.accountHolderName || '—'}</p>
           </div>
           <div>
-            <label className="text-sm text-c-text-secondary mb-1 block">IBAN</label>
-            <input
-              type="text"
-              value={payoutSettings.payoutAccount?.iban ?? ''}
-              onChange={(e) => updatePayoutAccountField('iban', e.target.value)}
-              className="w-full px-4 py-2 bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text"
-            />
+            <p className="text-sm text-c-text-secondary mb-1">IBAN</p>
+            <p className="text-c-text">{payoutSettings.payoutAccount?.iban || '—'}</p>
           </div>
           <div>
-            <label className="text-sm text-c-text-secondary mb-1 block">BIC/SWIFT</label>
-            <input
-              type="text"
-              value={payoutSettings.payoutAccount?.bicSwift ?? ''}
-              onChange={(e) => updatePayoutAccountField('bicSwift', e.target.value)}
-              className="w-full px-4 py-2 bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text"
-            />
+            <p className="text-sm text-c-text-secondary mb-1">BIC/SWIFT</p>
+            <p className="text-c-text">{payoutSettings.payoutAccount?.bicSwift || '—'}</p>
           </div>
           <div>
-            <label className="text-sm text-c-text-secondary mb-1 block">Bank Name</label>
-            <input
-              type="text"
-              value={payoutSettings.payoutAccount?.bankName ?? ''}
-              onChange={(e) => updatePayoutAccountField('bankName', e.target.value)}
-              className="w-full px-4 py-2 bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text"
-            />
+            <p className="text-sm text-c-text-secondary mb-1">Bank Name</p>
+            <p className="text-c-text">{payoutSettings.payoutAccount?.bankName || '—'}</p>
           </div>
-        </div>
-        <div className="flex justify-end mt-4">
-          <button
-            onClick={handleSavePayoutSettings}
-            disabled={savingPayoutSettings}
-            className="px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg text-sm font-medium disabled:opacity-50"
-          >
-            {savingPayoutSettings ? 'Saving...' : 'Save Changes'}
-          </button>
         </div>
       </div>
 
@@ -1263,31 +1118,17 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                 Minimum amount before requesting payout
               </p>
             </div>
-            <select
-              value={String(payoutSettings.minimumThreshold)}
-              onChange={(e) =>
-                setPayoutSettings((prev) => ({
-                  ...prev,
-                  minimumThreshold: Number(e.target.value),
-                }))
-              }
-              className="px-3 py-2 bg-c-surface border border-c-border-subtle dark:border-white/10 rounded-lg text-c-text"
-            >
-              <option value="100">€100</option>
-              <option value="250">€250</option>
-              <option value="500">€500</option>
-              <option value="1000">€1,000</option>
-            </select>
+            <p className="text-c-text">{formatCurrency(payoutSettings.minimumThreshold)}</p>
           </div>
           <div
             className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-700/60 dark:bg-amber-500/10"
             role="note"
           >
             <div>
-              <p className="font-medium text-c-text">Manual payout requests only</p>
+              <p className="font-medium text-c-text">Historical settings only</p>
               <p className="mt-1 text-sm text-c-text-secondary">
-                Automatic payout and self-approval are unavailable. Requests require independent
-                review outside the Partner workspace.
+                These values are retained for historical reference and cannot be changed from the
+                Partner workspace.
               </p>
             </div>
           </div>
