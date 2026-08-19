@@ -23,6 +23,16 @@ async function requireActiveMember(tx: any, organizationId: string, userId: stri
   if (!member.rows[0]) throw new Error('MYW_AGENT_ACTIVE_MEMBERSHIP_REQUIRED');
 }
 
+async function membershipRole(tx: any, organizationId: string, userId: string): Promise<string> {
+  const member = await tx.query(
+    `SELECT UPPER(role) AS role FROM organization_members
+      WHERE organization_id=? AND user_id=? AND UPPER(status)='ACTIVE'`,
+    [organizationId, userId]
+  );
+  if (!member.rows[0]) throw new Error('MYW_AGENT_ACTIVE_MEMBERSHIP_REQUIRED');
+  return String(member.rows[0].role || '');
+}
+
 async function sourceIdentity(tx: any, organizationId: string, sourcePlanId: string) {
   const result = await tx.query(
     `SELECT id,organization_id,user_id,title,description,status,total_steps,completed_steps,current_step_index,
@@ -41,7 +51,42 @@ async function sourceIdentity(tx: any, organizationId: string, sourcePlanId: str
 export async function getAgentPlanSourceIdentity(organizationId: string, sourcePlanId: string, userId: string) {
   return withPgTransaction(async (tx) => {
     await requireActiveMember(tx,organizationId,userId);
+    const owned = await tx.query(
+      `SELECT 1 FROM ai_agent_plans WHERE id=? AND organization_id=? AND user_id=?`,
+      [sourcePlanId, organizationId, userId]
+    );
+    if (!owned.rows[0]) throw new Error('MYW_AGENT_SOURCE_NOT_FOUND');
     return sourceIdentity(tx, organizationId, sourcePlanId);
+  });
+}
+
+export async function listMaterializationProposals(input: {
+  organizationId: string; userId: string; sourcePlanId?: string;
+}) {
+  return withPgTransaction(async (tx) => {
+    const role = await membershipRole(tx, input.organizationId, input.userId);
+    const canReview = role === 'OWNER' || role === 'ADMIN';
+    const params: unknown[] = [input.organizationId, input.userId, canReview];
+    let sourceFilter = '';
+    if (input.sourcePlanId) {
+      params.push(input.sourcePlanId);
+      sourceFilter = ` AND p.source_plan_id=?`;
+    }
+    const result = await tx.query<any>(
+      `SELECT p.*, a.approval_id, a.approver_id, a.decision,
+              r.status AS receipt_status, r.target_id, r.output_digest,
+              r.command_version, r.last_error_code
+         FROM myw_agent_materialization_proposals p
+         LEFT JOIN myw_agent_materialization_approvals a ON a.proposal_id=p.proposal_id
+         LEFT JOIN myw_agent_materialization_receipts r ON r.proposal_id=p.proposal_id
+        WHERE p.organization_id=?
+          AND (p.requester_id=? OR (? AND p.state IN ('PENDING','APPROVED','MATERIALIZED')))
+          ${sourceFilter}
+        ORDER BY p.updated_at DESC, p.proposal_id DESC
+        LIMIT 100`,
+      params
+    );
+    return { proposals: result.rows, canReview };
   });
 }
 
@@ -54,6 +99,11 @@ export async function createMaterializationProposal(input: {
   const requestDigest = sha({ ...input, contentHash });
   return withPgTransaction(async (tx) => {
     await requireActiveMember(tx, input.organizationId, input.requesterId);
+    const owned = await tx.query(
+      `SELECT 1 FROM ai_agent_plans WHERE id=? AND organization_id=? AND user_id=?`,
+      [input.sourcePlanId, input.organizationId, input.requesterId]
+    );
+    if (!owned.rows[0]) throw new Error('MYW_AGENT_SOURCE_NOT_FOUND');
     await tx.query(`SELECT pg_advisory_xact_lock(hashtext(?))`,
       [`myw-agent:${input.organizationId}:${input.idempotencyKey}`]);
     const existing = await tx.query<any>(
@@ -87,7 +137,8 @@ export async function decideMaterializationProposal(input: {
   expectedStateVersion: number; sourceHash: string;
 }) {
   return withPgTransaction(async (tx) => {
-    await requireActiveMember(tx, input.organizationId, input.approverId);
+    const role = await membershipRole(tx, input.organizationId, input.approverId);
+    if (role !== 'OWNER' && role !== 'ADMIN') throw new Error('MYW_AGENT_REVIEWER_FORBIDDEN');
     const selected = await tx.query<any>(
       `SELECT * FROM myw_agent_materialization_proposals WHERE proposal_id=? AND organization_id=? FOR UPDATE`,
       [input.proposalId,input.organizationId]
@@ -132,6 +183,7 @@ export async function materializeApprovedProposal(input: {
     );
     const proposal = selected.rows[0];
     if (!proposal) throw new Error('MYW_AGENT_PROPOSAL_NOT_FOUND');
+    if (proposal.approver_id !== input.actorId) throw new Error('MYW_AGENT_REVIEWER_FORBIDDEN');
     const receipt = await tx.query<any>(`SELECT * FROM myw_agent_materialization_receipts WHERE proposal_id=?`, [input.proposalId]);
     if (receipt.rows[0]?.status === 'SUCCEEDED') return { terminal: receipt.rows[0] };
     if (proposal.state !== 'APPROVED' || proposal.decision !== 'APPROVE' ||

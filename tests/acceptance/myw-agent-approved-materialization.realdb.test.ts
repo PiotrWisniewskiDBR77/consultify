@@ -9,7 +9,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 const enabled = process.env.RUN_DB_TESTS === '1';
 
 describe.skipIf(!enabled)('MYW-AGT mounted signed-JWT acceptance', () => {
-  const tag=randomUUID(), org=`org-${tag}`, requester=`requester-${tag}`, approver=`approver-${tag}`, revoked=`revoked-${tag}`, foreign=`foreign-${tag}`, plan=`plan-${tag}`;
+  const tag=randomUUID(), org=`org-${tag}`, requester=`requester-${tag}`, approver=`approver-${tag}`, revoked=`revoked-${tag}`, foreign=`foreign-${tag}`, plan=`plan-${tag}`, otherPlan=`other-plan-${tag}`;
   let pool:Pool, app:any, requesterToken:string, approverToken:string, revokedToken:string, foreignToken:string;
   beforeAll(async()=>{
     pool=new Pool({connectionString:process.env.DATABASE_URL});
@@ -19,6 +19,7 @@ describe.skipIf(!enabled)('MYW-AGT mounted signed-JWT acceptance', () => {
       await pool.query(`INSERT INTO organization_members(id,organization_id,user_id,role,status) VALUES($1,$2,$3,'OWNER',$4)`,[randomUUID(),tenant,user,status]);
     }
     await pool.query(`INSERT INTO ai_agent_plans(id,organization_id,user_id,title,plan_json,updated_at) VALUES($1,$2,$3,'Mounted source','[]',date_trunc('milliseconds',now()))`,[plan,org,requester]);
+    await pool.query(`INSERT INTO ai_agent_plans(id,organization_id,user_id,title,plan_json,updated_at) VALUES($1,$2,$3,'Other user source','[]',date_trunc('milliseconds',now()))`,[otherPlan,org,approver]);
     const secret=process.env.JWT_SECRET!;
     const sign=(id:string,organizationId:string)=>jwt.sign({id,organizationId,role:'OWNER',email:`${id}@test.local`},secret,{expiresIn:'10m'});
     requesterToken=sign(requester,org); approverToken=sign(approver,org); revokedToken=sign(revoked,org); foreignToken=sign(foreign,foreign);
@@ -39,7 +40,7 @@ describe.skipIf(!enabled)('MYW-AGT mounted signed-JWT acceptance', () => {
     await pool.query(`DELETE FROM tasks WHERE organization_id=$1`,[org]);
     await pool.query(`DELETE FROM decisions WHERE organization_id=$1`,[org]);
     await pool.query(`DELETE FROM notebook_pages WHERE organization_id=$1`,[org]);
-    await pool.query(`DELETE FROM ai_agent_plans WHERE id=$1`,[plan]);
+    await pool.query(`DELETE FROM ai_agent_plans WHERE id=ANY($1)`,[[plan,otherPlan]]);
     await pool.query(`DELETE FROM organization_members WHERE organization_id=ANY($1)`,[[org,foreign]]);
     await pool.query(`DELETE FROM users WHERE organization_id=ANY($1)`,[[org,foreign]]);
     await pool.query(`DELETE FROM organizations WHERE id=ANY($1)`,[[org,foreign]]);
@@ -49,6 +50,7 @@ describe.skipIf(!enabled)('MYW-AGT mounted signed-JWT acceptance', () => {
   it('mounts all three canonical writers and blocks spoof, foreign, revoked, self-approval, stale and collision',async()=>{
     const source=await request(app).get(`/api/my-work/agent-materialization/source/${plan}`).set(auth(requesterToken));
     expect(source.status).toBe(200);
+    expect((await request(app).get(`/api/my-work/agent-materialization/source/${otherPlan}`).set(auth(requesterToken))).status).toBe(404);
     const proposed=await request(app).post('/api/my-work/agent-materialization/proposals').set(auth(requesterToken)).send({
       organizationId:foreign,requesterId:foreign,sourcePlanId:plan,sourceVersion:source.body.sourceVersion,sourceHash:source.body.sourceHash,
       targetKind:'task',content:{title:'Human approved mounted task'},idempotencyKey:`mounted-${tag}`,expiresAt:new Date(Date.now()+60_000).toISOString()
@@ -63,6 +65,16 @@ describe.skipIf(!enabled)('MYW-AGT mounted signed-JWT acceptance', () => {
         .send({...payload,content:{title:'collision'}});
       expect(collision.status).toBe(409);
       const proposalId=clean.body.proposal.proposal_id;
+      const ownerProjection=await request(app).get(`/api/my-work/agent-materialization/proposals?sourcePlanId=${plan}`).set(auth(requesterToken));
+      expect(ownerProjection.status).toBe(200);
+      expect(ownerProjection.body.proposals.some((item:any)=>item.proposal_id===proposalId)).toBe(true);
+      const reviewerProjection=await request(app).get('/api/my-work/agent-materialization/proposals').set(auth(approverToken));
+      expect(reviewerProjection.status).toBe(200);
+      expect(reviewerProjection.body.canReview).toBe(true);
+      expect(reviewerProjection.body.proposals.some((item:any)=>item.proposal_id===proposalId)).toBe(true);
+      const foreignProjection=await request(app).get('/api/my-work/agent-materialization/proposals').set(auth(foreignToken));
+      expect(foreignProjection.status).toBe(200);
+      expect(foreignProjection.body.proposals).toHaveLength(0);
       expect((await request(app).post(`/api/my-work/agent-materialization/proposals/${proposalId}/decision`).set(auth(requesterToken))
         .send({decision:'APPROVE',expectedStateVersion:1,sourceHash:source.body.sourceHash})).status).toBe(409);
       expect((await request(app).post(`/api/my-work/agent-materialization/proposals/${proposalId}/decision`).set(auth(revokedToken))

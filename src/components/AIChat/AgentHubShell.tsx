@@ -163,11 +163,12 @@ import {
 import { readablePhaseName } from './AgentPlanPanel';
 import { AgentPlanWorkspace } from './AgentPlanWorkspace';
 import { AgentOperationsPanel } from './AgentOperationsPanel';
+import { AgentMaterializationPanel } from './AgentMaterializationPanel';
 import { AgentProcessTemplatesPanel } from './AgentProcessTemplatesPanel';
 import { TransformationCasesPanel } from './TransformationCasesPanel';
 
 type AgentHubTab =
-  'processes' | 'templates' | 'governed_templates' | 'transformations' | 'operations';
+  'processes' | 'templates' | 'governed_templates' | 'transformations' | 'approvals' | 'operations';
 
 function agentHubTabLabel(tab: AgentHubTab, isPolish: boolean): string {
   const labels: Record<AgentHubTab, [string, string]> = {
@@ -175,6 +176,7 @@ function agentHubTabLabel(tab: AgentHubTab, isPolish: boolean): string {
     templates: ['Start i szablony', 'Start and templates'],
     governed_templates: ['Governance szablonów', 'Template governance'],
     transformations: ['Sprawy, akceptacje i wyniki', 'Cases, approvals and outputs'],
+    approvals: ['Akceptacje wyników', 'Output approvals'],
     operations: ['Operacje i odzyskiwanie', 'Operations and recovery'],
   };
   return labels[tab][isPolish ? 0 : 1];
@@ -388,6 +390,7 @@ export const AgentHubShell: React.FC = () => {
     requestedView === 'templates' ||
     requestedView === 'governed_templates' ||
     requestedView === 'transformations' ||
+    requestedView === 'approvals' ||
     (requestedView === 'operations' && isOperator)
       ? requestedView
       : null;
@@ -1492,6 +1495,10 @@ export const AgentHubShell: React.FC = () => {
               value: 'transformations',
               label: agentHubTabLabel('transformations', isPolish),
             },
+            {
+              value: 'approvals',
+              label: agentHubTabLabel('approvals', isPolish),
+            },
             ...(isOperator
               ? [
                   {
@@ -1688,6 +1695,7 @@ export const AgentHubShell: React.FC = () => {
               ) : (
                 <LoadingState template="list" rows={4} />
               )}
+              <AgentMaterializationPanel planId={activeItemId} isPolish={isPolish} />
             </div>
             <AgentPlanWorkspace
               key={activeItemId}
@@ -1701,6 +1709,8 @@ export const AgentHubShell: React.FC = () => {
           renderTemplates()
         ) : tab === 'governed_templates' ? (
           <AgentProcessTemplatesPanel />
+        ) : tab === 'approvals' ? (
+          <AgentMaterializationPanel isPolish={isPolish} />
         ) : tab === 'operations' ? (
           <AgentOperationsPanel initialCanonicalRunId={searchParams.get('canonicalRunId')} />
         ) : (

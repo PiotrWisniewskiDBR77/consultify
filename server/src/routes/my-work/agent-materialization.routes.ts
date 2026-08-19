@@ -6,6 +6,7 @@ import {
   createMaterializationProposal,
   decideMaterializationProposal,
   getAgentPlanSourceIdentity,
+  listMaterializationProposals,
   materializeApprovedProposal,
 } from '../../services/myWork/agentApprovedMaterializationService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
@@ -24,7 +25,7 @@ function sendError(res: any, error: unknown) {
   const code = error instanceof Error ? error.message : 'MYW_AGENT_INTERNAL';
   const status = code.includes('NOT_FOUND') ? 404
     : code.includes('COLLISION') || code.includes('STALE') || code.includes('DRIFT') || code.includes('SELF_APPROVAL') || code.includes('EXPIRED') ? 409
-      : code.includes('MEMBERSHIP') ? 403 : code.startsWith('MYW_AGENT_') ? 422 : 500;
+      : code.includes('MEMBERSHIP') || code.includes('FORBIDDEN') ? 403 : code.startsWith('MYW_AGENT_') ? 422 : 500;
   res.status(status).json({ status: 'fail', error: { code } });
 }
 
@@ -33,6 +34,17 @@ router.get('/agent-materialization/source/:planId', asyncHandler(async (req: Aut
   if (!identity) return;
   try {
     res.json(await getAgentPlanSourceIdentity(identity.orgId, String(req.params.planId), identity.userId));
+  } catch (error) { sendError(res, error); }
+}));
+
+router.get('/agent-materialization/proposals', asyncHandler(async (req: AuthRequest, res) => {
+  const identity = requireUser(req, res);
+  if (!identity) return;
+  const parsed = z.object({ sourcePlanId: z.string().min(1).max(128).optional() }).safeParse(req.query);
+  if (!parsed.success) return res.status(400).json({ status: 'fail', error: { code: 'MYW_AGENT_INPUT_INVALID' } });
+  try {
+    res.json(await listMaterializationProposals({ organizationId: identity.orgId, userId: identity.userId,
+      sourcePlanId: parsed.data.sourcePlanId }));
   } catch (error) { sendError(res, error); }
 }));
 
