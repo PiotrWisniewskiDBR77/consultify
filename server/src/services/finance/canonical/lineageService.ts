@@ -28,6 +28,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
+import { getCurrentPgTransactionClient } from '../../../utils/queryHelpers.js';
 import type { FinanceArtifactType } from './lifecycleService.js';
 
 // ---------------------------------------------------------------------------
@@ -75,7 +76,14 @@ export function stageRank(artifactType: FinanceArtifactType): number {
 
 export type EdgeRankValidation =
   | { ok: true }
-  | { ok: false; code: 'LINEAGE_CYCLE_REJECTED' | 'ASSUMPTION_SNAPSHOT_HASH_REQUIRED' | 'ASSUMPTION_SNAPSHOT_HASH_FORBIDDEN'; message: string };
+  | {
+      ok: false;
+      code:
+        | 'LINEAGE_CYCLE_REJECTED'
+        | 'ASSUMPTION_SNAPSHOT_HASH_REQUIRED'
+        | 'ASSUMPTION_SNAPSHOT_HASH_FORBIDDEN';
+      message: string;
+    };
 
 /**
  * WP-B03 §4 rank rule, mirroring the DB trigger `finance_lineage_prevent_cycle`:
@@ -196,7 +204,9 @@ export async function insertEdge(params: InsertEdgeParams): Promise<InsertEdgeRe
   }
 
   try {
-    return await withPinnedPostgresTransaction(async (tx) => {
+    const insertInTransaction = async (tx: {
+      queryOne<T>(sql: string, params?: unknown[]): Promise<T | null>;
+    }) => {
       const row = await tx.queryOne<LineageEdgeRow>(
         `INSERT INTO finance_lineage_edges (
            id, organization_id, source_version_id, source_artifact_type,
@@ -221,13 +231,24 @@ export async function insertEdge(params: InsertEdgeParams): Promise<InsertEdgeRe
       );
       if (!row) throw new Error('finance_lineage_edges insert returned no row');
       return { ok: true, edge: row } as const;
+    };
+    const ambient = getCurrentPgTransactionClient();
+    if (ambient) {
+      return await insertInTransaction({
+        queryOne: async <T>(sql: string, queryParams: unknown[] = []) =>
+          (await ambient.query<T>(sql, queryParams)).rows[0] ?? null,
     });
+    }
+    return await withPinnedPostgresTransaction((tx) => insertInTransaction(tx));
   } catch (error: any) {
     const message = String(error?.message || error);
     if (error?.code === '23505' || /uq_finance_lineage_edge/.test(message)) {
       return { ok: false, code: 'DUPLICATE_EDGE', message: 'This lineage edge already exists' };
     }
-    if (/finance_lineage_edges: target stage_rank/.test(message) || /does not match actual artifact_type/.test(message)) {
+    if (
+      /finance_lineage_edges: target stage_rank/.test(message) ||
+      /does not match actual artifact_type/.test(message)
+    ) {
       return { ok: false, code: 'LINEAGE_CYCLE_REJECTED', message };
     }
     throw error;

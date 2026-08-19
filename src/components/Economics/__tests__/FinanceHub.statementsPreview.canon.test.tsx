@@ -44,6 +44,7 @@ const STATEMENT_ROW = {
 const loadStatements = vi.fn();
 const onSelectRow = vi.fn();
 const deselectRow = vi.fn();
+const { apiPost } = vi.hoisted(() => ({ apiPost: vi.fn() }));
 
 /** Selection is driven by the test so preview open/closed is deterministic. */
 let selectedId: string | null = null;
@@ -68,6 +69,43 @@ vi.mock('@/contexts/AccessPolicyContext', async (importOriginal) => {
     useIsTrial: () => false,
   };
 });
+
+vi.mock('@/services/api', async (importOriginal) => {
+  const actual = (await importOriginal()) as Record<string, any>;
+  return { ...actual, Api: { ...actual.Api, post: apiPost } };
+});
+
+vi.mock('@/hooks/useFinanceStatementPackWorkspaceV2Flag', () => ({
+  useFinanceStatementPackWorkspaceV2Flag: () => ({ enabled: true }),
+}));
+vi.mock('@/hooks/useFinanceAnalysisWorkspaceFlag', () => ({
+  useFinanceAnalysisWorkspaceFlag: () => ({ enabled: true }),
+}));
+vi.mock('../../Finance/shared/FinanceLegacyBridgeGate', () => ({
+  FinanceLegacyBridgeGate: ({ children }: any) =>
+    children({ artifactId: 'pack-artifact-1', businessVersionId: 'pack-bv-1' }),
+}));
+vi.mock('../../Finance/statementPackWorkspaceV2/StatementPackWorkspaceV2', () => ({
+  StatementPackWorkspaceV2: ({ businessVersionId, onCreateNew }: any) => (
+    <button
+      type="button"
+      data-testid="create-derived-analysis"
+      onClick={() => onCreateNew('HISTORICAL_ANALYSIS', businessVersionId)}
+    >
+      Create related analysis
+    </button>
+  ),
+}));
+vi.mock('../../Finance/Analysis/AnalysisWorkspace', () => ({
+  AnalysisWorkspace: ({ artifactId, businessVersionId }: any) => (
+    <div data-testid="canonical-analysis-workspace">
+      {artifactId}:{businessVersionId}
+    </div>
+  ),
+}));
+vi.mock('../../Finance/shared/FinanceWorkspaceUtilities', () => ({
+  FinanceWorkspaceUtilities: () => null,
+}));
 
 vi.mock('../hooks/useFinanceData', () => ({
   useFinanceData: () => ({
@@ -133,6 +171,7 @@ beforeEach(() => {
   loadStatements.mockClear();
   onSelectRow.mockClear();
   deselectRow.mockClear();
+  apiPost.mockReset();
 });
 
 describe('FinanceHub — Statements list+preview canon (FIN-UI-CANON-001)', () => {
@@ -235,5 +274,30 @@ describe('FinanceHub — Statements list+preview canon (FIN-UI-CANON-001)', () =
       fireEvent.keyDown(document, { key: 'Escape' });
       await waitFor(() => expect(deselectRow).toHaveBeenCalled());
     });
+  });
+
+  it('creates a canonical Analysis with source lineage and mounts server-returned stable IDs', async () => {
+    apiPost.mockResolvedValue({
+      artifactId: 'analysis-artifact-1',
+      businessVersionId: 'analysis-bv-1',
+      workingRevisionId: 'analysis-wr-1',
+      edgeId: 'lineage-edge-1',
+    });
+    renderHub();
+    const row = (await screen.findAllByText(STATEMENT_ROW.title))
+      .map((node) => node.closest('tr'))
+      .find(Boolean);
+    expect(row).not.toBeNull();
+    fireEvent.doubleClick(row as HTMLElement);
+
+    fireEvent.click(await screen.findByTestId('create-derived-analysis'));
+    await waitFor(() =>
+      expect(apiPost).toHaveBeenCalledWith('/v8/finance-v2/versions/pack-bv-1/derived-analysis', {
+        idempotencyKey: expect.any(String),
+      })
+    );
+    expect(await screen.findByTestId('canonical-analysis-workspace')).toHaveTextContent(
+      'analysis-artifact-1:analysis-bv-1'
+    );
   });
 });

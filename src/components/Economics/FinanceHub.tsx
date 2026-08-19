@@ -430,6 +430,7 @@ export const FinanceHub: React.FC = () => {
   const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId } =
     useModuleOpenDocuments('finance');
   const [activeDocument, setActiveDocument] = useState<FinanceRow | null>(null);
+  const relatedArtifactIdempotencyKeys = useRef(new Map<string, string>());
 
   // AP_MOUNT §B — read each Finance v3 mount flag ONCE at the top of the
   // component (Rules of Hooks: unconditional call). All four default OFF
@@ -442,6 +443,48 @@ export const FinanceHub: React.FC = () => {
   const financeV3AnalysisFlag = useFinanceAnalysisWorkspaceFlag();
   const financeV3ValuationFlag = useFinanceValuationWorkspaceFlag();
   const financeV3StatementPackFlag = useFinanceStatementPackWorkspaceV2Flag();
+
+  const handleCreateRelatedArtifact = useCallback(
+    async (
+      artifactType: import('@/services/api/financeV2.types').FinanceArtifactType,
+      sourceBusinessVersionId: string
+    ) => {
+      if (artifactType !== 'HISTORICAL_ANALYSIS') {
+        toast('Ten typ artefaktu nie ma jeszcze bezpiecznego kreatora z pakietu sprawozdań.');
+        return;
+      }
+      if (!financeV3AnalysisFlag.enabled) {
+        toast.error('Kanoniczny obszar Analizy nie jest włączony dla tej organizacji.');
+        return;
+      }
+      try {
+        const idempotencyKey =
+          relatedArtifactIdempotencyKeys.current.get(sourceBusinessVersionId) ??
+          globalThis.crypto.randomUUID();
+        relatedArtifactIdempotencyKeys.current.set(sourceBusinessVersionId, idempotencyKey);
+        const response = (await Api.post(
+          `/v8/finance-v2/versions/${encodeURIComponent(sourceBusinessVersionId)}/derived-analysis`,
+          { idempotencyKey }
+        )) as any;
+        const created = response?.data ?? response;
+        if (!created?.artifactId || !created?.businessVersionId) {
+          throw new Error('Serwer nie zwrócił stabilnej tożsamości utworzonej analizy.');
+        }
+        const next = new URLSearchParams(searchParams);
+        next.set('tab', 'analysis');
+        next.set('canonicalArtifactType', 'HISTORICAL_ANALYSIS');
+        next.set('canonicalArtifactId', String(created.artifactId));
+        next.set('canonicalBusinessVersionId', String(created.businessVersionId));
+        setSearchParams(next);
+        relatedArtifactIdempotencyKeys.current.delete(sourceBusinessVersionId);
+        setActiveDocumentId(null);
+        setActiveDocument(null);
+      } catch (error) {
+        toast.error(getFinanceErrorMessage(error));
+      }
+    },
+    [financeV3AnalysisFlag.enabled, searchParams, setActiveDocumentId, setSearchParams]
+  );
 
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [exportTarget, setExportTarget] = useState<{
@@ -2900,6 +2943,41 @@ export const FinanceHub: React.FC = () => {
 
   // ---- Full view ----
   const fullView = useMemo(() => {
+    const canonicalArtifactType = searchParams.get('canonicalArtifactType');
+    const canonicalArtifactId = searchParams.get('canonicalArtifactId');
+    const canonicalBusinessVersionId = searchParams.get('canonicalBusinessVersionId');
+    if (
+      canonicalArtifactType === 'HISTORICAL_ANALYSIS' &&
+      canonicalArtifactId &&
+      canonicalBusinessVersionId &&
+      financeV3AnalysisFlag.enabled
+    ) {
+      const closeCanonical = () => {
+        const next = new URLSearchParams(searchParams);
+        next.delete('canonicalArtifactType');
+        next.delete('canonicalArtifactId');
+        next.delete('canonicalBusinessVersionId');
+        setSearchParams(next);
+      };
+      return (
+        <div className="p-4 lg:p-6">
+          <div className="h-[calc(100vh-120px)] min-h-[620px] overflow-hidden rounded-xl border border-c-border-subtle bg-c-surface">
+            <CanonicalFinanceWorkspaceMount
+              artifactId={canonicalArtifactId}
+              businessVersionId={canonicalBusinessVersionId}
+              artifactType="HISTORICAL_ANALYSIS"
+            >
+              <FinanceV3AnalysisWorkspace
+                artifactId={canonicalArtifactId}
+                businessVersionId={canonicalBusinessVersionId}
+                role="preparer"
+                onNavigateBack={closeCanonical}
+              />
+            </CanonicalFinanceWorkspaceMount>
+          </div>
+        </div>
+      );
+    }
     if (!activeDocumentId || !activeDocument) return null;
     const code = getTypeCode(activeDocument.kind);
     const activeModelRow = activeDocument as FinanceModelRow;
@@ -3005,8 +3083,8 @@ export const FinanceHub: React.FC = () => {
                           lineCode ?? canonicalLineId ?? rowKey
                         }
                         onOpenArtifact={() => toast('Otwórz powiązany artefakt z listy Finance.')}
-                        onCreateNew={() =>
-                          toast('Utwórz nowy artefakt z odpowiedniej zakładki Finance.')
+                        onCreateNew={(artifactType, sourceBusinessVersionId) =>
+                          void handleCreateRelatedArtifact(artifactType, sourceBusinessVersionId)
                         }
                         onOpenReportResult={() => navigate('/outputs')}
                         onNavigateBack={handleShowList}
@@ -3190,6 +3268,10 @@ export const FinanceHub: React.FC = () => {
   }, [
     activeDocumentId,
     activeDocument,
+    financeV3AnalysisFlag.enabled,
+    handleCreateRelatedArtifact,
+    searchParams,
+    setSearchParams,
     handleModelChanged,
     handleAnalysisChanged,
     handleBudgetChanged,
@@ -3450,7 +3532,13 @@ export const FinanceHub: React.FC = () => {
           </div>
         </>
       );
-    if (activeDocumentId && activeDocument) return fullView;
+    if (
+      (activeDocumentId && activeDocument) ||
+      (searchParams.get('canonicalArtifactType') === 'HISTORICAL_ANALYSIS' &&
+        searchParams.get('canonicalArtifactId') &&
+        searchParams.get('canonicalBusinessVersionId'))
+    )
+      return fullView;
     // Finance tabs are list surfaces. Analysis tools, planners and charts belong
     // to the record workspace opened from a row, never below the list itself.
     // Keeping this return unconditional is the canonical guard against the
@@ -3471,6 +3559,7 @@ export const FinanceHub: React.FC = () => {
     activeDocumentId,
     activeDocument,
     fullView,
+    searchParams,
     viewMode,
     gridView,
     tableWithPreview,

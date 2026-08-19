@@ -14,11 +14,15 @@
  *      this NEW route -> 404, independently confirmed by a direct SQL read
  *      that org A's edge is untouched and org B owns zero lineage edges.
  */
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 
 import express from 'express';
+import jwt from 'jsonwebtoken';
 import request from 'supertest';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+
+import verifyToken, { validateOrgMembership } from '../../../../middleware/auth.middleware.js';
+import { attachV8Context, requireV8OrgContext } from '../../../../middleware/v8Auth.middleware.js';
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_PG_REQUESTED =
@@ -38,6 +42,7 @@ describe.skipIf(!REAL_PG)('Finance v2 ROUTES_EXPOSURE — Lineage Navigator (rea
   const orgB = `org-lineagenav-b-${randomUUID()}`;
   const userA = `user-lineagenav-a-${randomUUID()}`;
   const userB = `user-lineagenav-b-${randomUUID()}`;
+  const revokedUser = `user-lineagenav-revoked-${randomUUID()}`;
 
   function appAsOrg(orgId: string, userId: string) {
     const a = express();
@@ -53,6 +58,9 @@ describe.skipIf(!REAL_PG)('Finance v2 ROUTES_EXPOSURE — Lineage Navigator (rea
   }
   let appA: express.Express;
   let appB: express.Express;
+  let signedA: express.Express;
+  let signedB: express.Express;
+  let signedRevoked: express.Express;
 
   let stmtBvId = '';
   let baselineBvId = '';
@@ -68,8 +76,48 @@ describe.skipIf(!REAL_PG)('Finance v2 ROUTES_EXPOSURE — Lineage Navigator (rea
       tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?), (?, ?)`, [orgA, 'LineageNav Tenant A', orgB, 'LineageNav Tenant B'])
     );
 
+    await withPinnedPostgresTransaction(async (tx) => {
+        const now = new Date().toISOString();
+        for (const [id, org, status] of [
+          [userA, orgA, 'ACTIVE'],
+          [userB, orgB, 'ACTIVE'],
+          [revokedUser, orgA, 'REVOKED'],
+        ]) {
+          await tx.queryRun(
+            `INSERT INTO users (id, organization_id, email, password, role, status, created_at)
+           VALUES (?, ?, ?, 'unused', 'ADMIN', 'active', ?)`,
+            [id, org, `${id}@test.invalid`, now]
+          );
+          await tx.queryRun(
+            `INSERT INTO organization_members (id, organization_id, user_id, role, status, created_at)
+           VALUES (?, ?, ?, 'ADMIN', ?, ?)`,
+            [`membership-${id}`, org, id, status, now]
+          );
+        }
+    });
+
     appA = appAsOrg(orgA, userA);
     appB = appAsOrg(orgB, userB);
+
+    function signedApp() {
+        const a = express();
+        a.use(express.json());
+        a.use(
+          '/api/v8/finance-v2',
+          verifyToken,
+          validateOrgMembership,
+          requireV8OrgContext,
+          attachV8Context,
+          financeV2Router
+        );
+        a.use((err: any, _req: any, res: any, _next: any) =>
+          res.status(500).json({ error: String(err?.message || err) })
+        );
+        return a;
+    }
+    signedA = signedApp();
+    signedB = signedApp();
+    signedRevoked = signedApp();
 
     // Statement Pack -> Baseline Model -> Prediction Scenario chain, org A only.
     const stmt = await av.createArtifact({ organizationId: orgA, artifactType: 'STATEMENT_PACK', createdBy: userA });
@@ -114,6 +162,65 @@ describe.skipIf(!REAL_PG)('Finance v2 ROUTES_EXPOSURE — Lineage Navigator (rea
     });
     expect(edge2.ok).toBe(true);
   });
+
+  afterAll(async () => {
+      await withPinnedPostgresTransaction(async (tx) => {
+        await tx.queryRun(`SET LOCAL session_replication_role = replica`);
+        await tx.queryRun(`DELETE FROM finance_lineage_edges WHERE organization_id IN (?, ?)`, [
+          orgA,
+          orgB,
+        ]);
+        await tx.queryRun(`DELETE FROM artifact_lifecycle_events WHERE organization_id IN (?, ?)`, [
+          orgA,
+          orgB,
+        ]);
+        await tx.queryRun(`DELETE FROM finance_working_revisions WHERE organization_id IN (?, ?)`, [
+          orgA,
+          orgB,
+        ]);
+        await tx.queryRun(`DELETE FROM finance_business_versions WHERE organization_id IN (?, ?)`, [
+          orgA,
+          orgB,
+        ]);
+        await tx.queryRun(`DELETE FROM finance_artifacts WHERE organization_id IN (?, ?)`, [
+          orgA,
+          orgB,
+        ]);
+        await tx.queryRun(`DELETE FROM organization_members WHERE organization_id IN (?, ?)`, [
+          orgA,
+          orgB,
+        ]);
+        await tx.queryRun(`DELETE FROM users WHERE organization_id IN (?, ?)`, [orgA, orgB]);
+        await tx.queryRun(`DELETE FROM organizations WHERE id IN (?, ?)`, [orgA, orgB]);
+        await tx.queryRun(`SET LOCAL session_replication_role = origin`);
+        const residue = await tx.queryOne<{ count: number }>(
+          `SELECT (SELECT count(*) FROM finance_artifacts WHERE organization_id IN (?, ?))::int
+              + (SELECT count(*) FROM finance_lineage_edges WHERE organization_id IN (?, ?))::int
+              + (SELECT count(*) FROM organizations WHERE id IN (?, ?))::int AS count`,
+          [orgA, orgB, orgA, orgB, orgA, orgB]
+        );
+        expect(residue?.count).toBe(0);
+      });
+    });
+
+  function auth(userId: string, organizationId: string) {
+      const secret = process.env.JWT_SECRET;
+      if (!secret) throw new Error('JWT_SECRET required for signed route qualification');
+      return {
+        Authorization: `Bearer ${jwt.sign(
+          {
+            id: userId,
+            userId,
+            email: `${userId}@test.invalid`,
+            organizationId,
+            organization_id: organizationId,
+            role: 'ADMIN',
+          },
+          secret,
+          { algorithm: 'HS256', expiresIn: '1h' }
+        )}`,
+      };
+    }
 
   // -----------------------------------------------------------------
   // Mount proof
@@ -196,7 +303,9 @@ describe.skipIf(!REAL_PG)('Finance v2 ROUTES_EXPOSURE — Lineage Navigator (rea
   // -----------------------------------------------------------------
 
   it('CROSS-TENANT: org B reading org A scenario via lineage-navigator -> 404 {code:"NOT_FOUND"}, SQL confirms org A edge untouched and org B owns zero edges', async () => {
-    const crossRead = await request(appB).get(`/api/v8/finance-v2/versions/${scenarioBvId}/lineage-navigator`);
+      const crossRead = await request(appB).get(
+        `/api/v8/finance-v2/versions/${scenarioBvId}/lineage-navigator`
+      );
     expect(crossRead.status).toBe(404);
     expect(crossRead.body).toHaveProperty('code', 'NOT_FOUND');
 
@@ -210,17 +319,24 @@ describe.skipIf(!REAL_PG)('Finance v2 ROUTES_EXPOSURE — Lineage Navigator (rea
     expect(orgAEdges[0].organization_id).toBe(orgA);
 
     const orgBEdges = await withPinnedPostgresTransaction((tx) =>
-      tx.queryAll<{ id: string }>(`SELECT id FROM finance_lineage_edges WHERE organization_id = ?`, [orgB])
+        tx.queryAll<{ id: string }>(
+          `SELECT id FROM finance_lineage_edges WHERE organization_id = ?`,
+          [orgB]
+        )
     );
     expect(orgBEdges.length).toBe(0);
   });
 
   it('CROSS-TENANT: org B reading org A baseline (mid-chain) via lineage-navigator -> 404, org A row count for that version unaffected', async () => {
-    const crossRead = await request(appB).get(`/api/v8/finance-v2/versions/${baselineBvId}/lineage-navigator`);
+      const crossRead = await request(appB).get(
+        `/api/v8/finance-v2/versions/${baselineBvId}/lineage-navigator`
+      );
     expect(crossRead.status).toBe(404);
     expect(crossRead.body).toHaveProperty('code', 'NOT_FOUND');
 
-    const legitRead = await request(appA).get(`/api/v8/finance-v2/versions/${baselineBvId}/lineage-navigator`);
+      const legitRead = await request(appA).get(
+        `/api/v8/finance-v2/versions/${baselineBvId}/lineage-navigator`
+      );
     expect(legitRead.status).toBe(200);
   });
 
@@ -232,9 +348,7 @@ describe.skipIf(!REAL_PG)('Finance v2 ROUTES_EXPOSURE — Lineage Navigator (rea
   // -----------------------------------------------------------------
 
   it('MOUNT PROOF: valid context + REAL router, unknown sourceVersionId -> 404 WITH {code:"NOT_FOUND"}', async () => {
-    const res = await request(appA)
-      .post('/api/v8/finance-v2/versions/lineage-edges')
-      .send({
+      const res = await request(appA).post('/api/v8/finance-v2/versions/lineage-edges').send({
         sourceVersionId: randomUUID(),
         sourceArtifactType: 'STATEMENT_PACK',
         targetVersionId: baselineBvId,
@@ -247,12 +361,14 @@ describe.skipIf(!REAL_PG)('Finance v2 ROUTES_EXPOSURE — Lineage Navigator (rea
   });
 
   it('END-TO-END: create an edge via HTTP, confirm by independent SQL, then read it back through the lineage-navigator route (closes the write->read loop)', async () => {
-    const analysis = await av.createArtifact({ organizationId: orgA, artifactType: 'HISTORICAL_ANALYSIS', createdBy: userA });
+      const analysis = await av.createArtifact({
+        organizationId: orgA,
+        artifactType: 'HISTORICAL_ANALYSIS',
+        createdBy: userA,
+      });
     const analysisBvId = analysis.businessVersion.business_version_id;
 
-    const createRes = await request(appA)
-      .post('/api/v8/finance-v2/versions/lineage-edges')
-      .send({
+      const createRes = await request(appA).post('/api/v8/finance-v2/versions/lineage-edges').send({
         sourceVersionId: stmtBvId,
         sourceArtifactType: 'STATEMENT_PACK',
         targetVersionId: analysisBvId,
@@ -290,17 +406,19 @@ describe.skipIf(!REAL_PG)('Finance v2 ROUTES_EXPOSURE — Lineage Navigator (rea
     // Read it back through the lineage-navigator route — the new edge must appear as a direct
     // child of the Statement Pack and a direct (indirect from focus's perspective) ancestor of
     // the new Analysis version's own related panel.
-    const readBack = await request(appA).get(`/api/v8/finance-v2/versions/${analysisBvId}/lineage-navigator`);
+      const readBack = await request(appA).get(
+        `/api/v8/finance-v2/versions/${analysisBvId}/lineage-navigator`
+      );
     expect(readBack.status).toBe(200);
     const parentTypes = readBack.body.data.relatedPanel.parents.map((g: any) => g.artifactType);
     expect(parentTypes).toEqual(['STATEMENT_PACK']);
-    expect(readBack.body.data.relatedPanel.parents[0].entries[0].metadata.versionId).toBe(stmtBvId);
+      expect(readBack.body.data.relatedPanel.parents[0].entries[0].metadata.versionId).toBe(
+        stmtBvId
+      );
   });
 
   it('APPEND-ONLY / DUPLICATE: re-creating the exact same edge (source, target, edgeType) already inserted in beforeAll -> 409 DUPLICATE_EDGE', async () => {
-    const res = await request(appA)
-      .post('/api/v8/finance-v2/versions/lineage-edges')
-      .send({
+      const res = await request(appA).post('/api/v8/finance-v2/versions/lineage-edges').send({
         sourceVersionId: stmtBvId,
         sourceArtifactType: 'STATEMENT_PACK',
         targetVersionId: baselineBvId,
@@ -314,12 +432,13 @@ describe.skipIf(!REAL_PG)('Finance v2 ROUTES_EXPOSURE — Lineage Navigator (rea
 
   it('CYCLE REJECTION: a backward edge (Baseline Model -> Statement Pack, rank 2 -> rank 0) is rejected with 409 LINEAGE_CYCLE_REJECTED, no row inserted', async () => {
     const before = await withPinnedPostgresTransaction((tx) =>
-      tx.queryAll<{ id: string }>(`SELECT id FROM finance_lineage_edges WHERE organization_id = ?`, [orgA])
+        tx.queryAll<{ id: string }>(
+          `SELECT id FROM finance_lineage_edges WHERE organization_id = ?`,
+          [orgA]
+        )
     );
 
-    const res = await request(appA)
-      .post('/api/v8/finance-v2/versions/lineage-edges')
-      .send({
+      const res = await request(appA).post('/api/v8/finance-v2/versions/lineage-edges').send({
         sourceVersionId: baselineBvId,
         sourceArtifactType: 'BASELINE_MODEL',
         targetVersionId: stmtBvId,
@@ -331,19 +450,23 @@ describe.skipIf(!REAL_PG)('Finance v2 ROUTES_EXPOSURE — Lineage Navigator (rea
     expect(res.body).toHaveProperty('code', 'LINEAGE_CYCLE_REJECTED');
 
     const after = await withPinnedPostgresTransaction((tx) =>
-      tx.queryAll<{ id: string }>(`SELECT id FROM finance_lineage_edges WHERE organization_id = ?`, [orgA])
+        tx.queryAll<{ id: string }>(
+          `SELECT id FROM finance_lineage_edges WHERE organization_id = ?`,
+          [orgA]
+        )
     );
     expect(after.length).toBe(before.length); // rejected, not silently inserted
   });
 
-  it('CROSS-TENANT EDGE CREATION: org B tries to link org A\'s own two business_version_id -> 404 NOT_FOUND, SQL confirms zero new edges for org B and org A edge count unchanged', async () => {
+    it("CROSS-TENANT EDGE CREATION: org B tries to link org A's own two business_version_id -> 404 NOT_FOUND, SQL confirms zero new edges for org B and org A edge count unchanged", async () => {
     const beforeA = await withPinnedPostgresTransaction((tx) =>
-      tx.queryAll<{ id: string }>(`SELECT id FROM finance_lineage_edges WHERE organization_id = ?`, [orgA])
+        tx.queryAll<{ id: string }>(
+          `SELECT id FROM finance_lineage_edges WHERE organization_id = ?`,
+          [orgA]
+        )
     );
 
-    const res = await request(appB)
-      .post('/api/v8/finance-v2/versions/lineage-edges')
-      .send({
+      const res = await request(appB).post('/api/v8/finance-v2/versions/lineage-edges').send({
         sourceVersionId: stmtBvId, // org A's real version
         sourceArtifactType: 'STATEMENT_PACK',
         targetVersionId: baselineBvId, // org A's real version
@@ -364,4 +487,162 @@ describe.skipIf(!REAL_PG)('Finance v2 ROUTES_EXPOSURE — Lineage Navigator (rea
     );
     expect(afterA.length).toBe(beforeA.length);
   });
+    it('DERIVED ANALYSIS: signed replay/concurrency creates exactly one artifact/BV/WR/edge; cold IDs are stable and changed source with the same key is 409', async () => {
+      const key = `derived-analysis-${randomUUID()}`;
+      const headers = auth(userA, orgA);
+      const calls = await Promise.all(
+        Array.from({ length: 4 }, () =>
+          request(signedA)
+            .post(`/api/v8/finance-v2/versions/${stmtBvId}/derived-analysis`)
+            .set(headers)
+            .set('Idempotency-Key', key)
+            .send({})
+        )
+      );
+      expect(calls.filter((result) => result.status === 201)).toHaveLength(1);
+      expect(calls.filter((result) => result.status === 200)).toHaveLength(3);
+      const ids = calls.map((result) => result.body.data);
+      expect(new Set(ids.map((row) => row.artifactId)).size).toBe(1);
+      expect(new Set(ids.map((row) => row.businessVersionId)).size).toBe(1);
+      expect(new Set(ids.map((row) => row.workingRevisionId)).size).toBe(1);
+      expect(new Set(ids.map((row) => row.edgeId)).size).toBe(1);
+
+      const created = ids[0];
+      const cold = await request(appA).get(
+        `/api/v8/finance-v2/versions/${created.businessVersionId}/lineage-navigator`
+      );
+      expect(cold.status).toBe(200);
+      expect(cold.body.data.relatedPanel.focus).toMatchObject({
+        artifactId: created.artifactId,
+        versionId: created.businessVersionId,
+        artifactType: 'HISTORICAL_ANALYSIS',
+      });
+
+      const counts = await withPinnedPostgresTransaction((tx) =>
+        tx.queryOne<{ artifacts: number; versions: number; revisions: number; edges: number }>(
+          `SELECT
+           (SELECT count(*)::int FROM finance_artifacts WHERE organization_id = ? AND artifact_id = ?) AS artifacts,
+           (SELECT count(*)::int FROM finance_business_versions WHERE organization_id = ? AND artifact_id = ?) AS versions,
+           (SELECT count(*)::int FROM finance_working_revisions WHERE organization_id = ? AND artifact_id = ?) AS revisions,
+           (SELECT count(*)::int FROM finance_lineage_edges WHERE organization_id = ? AND target_version_id = ?) AS edges`,
+          [
+            orgA,
+            created.artifactId,
+            orgA,
+            created.artifactId,
+            orgA,
+            created.artifactId,
+            orgA,
+            created.businessVersionId,
+          ]
+        )
+      );
+      expect(counts).toEqual({ artifacts: 1, versions: 1, revisions: 1, edges: 1 });
+
+      const secondSource = await av.createArtifact({
+        organizationId: orgA,
+        artifactType: 'STATEMENT_PACK',
+        createdBy: userA,
+      });
+      const collision = await request(signedA)
+        .post(
+          `/api/v8/finance-v2/versions/${secondSource.businessVersion.business_version_id}/derived-analysis`
+        )
+        .set(headers)
+        .set('Idempotency-Key', key)
+        .send({});
+      expect(collision.status).toBe(409);
+      expect(collision.body.code).toBe('IDEMPOTENCY_KEY_COLLISION');
+
+      const lockFree = await withPinnedPostgresTransaction(async (tx) => {
+        const row = await tx.queryOne<{ acquired: boolean }>(
+          `SELECT pg_try_advisory_xact_lock(hashtextextended(?, 0)) AS acquired`,
+          [`${orgA}:derived-analysis:${createHashForTest(key)}`]
+        );
+        return row?.acquired;
+      });
+      expect(lockFree).toBe(true);
+    });
+
+    it('DERIVED ANALYSIS authorization: foreign source is 404 and revoked membership is denied before any write', async () => {
+      const before = await withPinnedPostgresTransaction((tx) =>
+        tx.queryOne<{ count: number }>(
+          `SELECT count(*)::int AS count FROM finance_artifacts WHERE organization_id IN (?, ?) AND artifact_type = 'HISTORICAL_ANALYSIS'`,
+          [orgA, orgB]
+        )
+      );
+      const foreign = await request(signedB)
+        .post(`/api/v8/finance-v2/versions/${stmtBvId}/derived-analysis`)
+        .set(auth(userB, orgB))
+        .set('Idempotency-Key', randomUUID())
+        .send({});
+      expect(foreign.status).toBe(404);
+
+      const revoked = await request(signedRevoked)
+        .post(`/api/v8/finance-v2/versions/${stmtBvId}/derived-analysis`)
+        .set(auth(revokedUser, orgA))
+        .set('Idempotency-Key', randomUUID())
+        .send({});
+      expect(revoked.status).toBe(403);
+
+      const after = await withPinnedPostgresTransaction((tx) =>
+        tx.queryOne<{ count: number }>(
+          `SELECT count(*)::int AS count FROM finance_artifacts WHERE organization_id IN (?, ?) AND artifact_type = 'HISTORICAL_ANALYSIS'`,
+          [orgA, orgB]
+        )
+      );
+      expect(after).toEqual(before);
+    });
+
+    it('DERIVED ANALYSIS rolls artifact/BV/WR back when the edge insert fails', async () => {
+      const source = await av.createArtifact({
+        organizationId: orgA,
+        artifactType: 'STATEMENT_PACK',
+        createdBy: userA,
+      });
+      const sourceId = source.businessVersion.business_version_id;
+      const functionName = `fail_derived_edge_${randomUUID().replaceAll('-', '')}`;
+      const triggerName = `fail_derived_edge_${randomUUID().replaceAll('-', '')}`;
+      await withPinnedPostgresTransaction(async (tx) => {
+        await tx.queryRun(
+          `CREATE FUNCTION ${functionName}() RETURNS trigger LANGUAGE plpgsql AS $$
+         BEGIN
+           IF NEW.source_version_id = '${sourceId}' THEN RAISE EXCEPTION 'injected derived edge failure'; END IF;
+           RETURN NEW;
+         END $$`
+        );
+        await tx.queryRun(
+          `CREATE TRIGGER ${triggerName} BEFORE INSERT ON finance_lineage_edges
+         FOR EACH ROW EXECUTE FUNCTION ${functionName}()`
+        );
+      });
+      try {
+        const failed = await request(signedA)
+          .post(`/api/v8/finance-v2/versions/${sourceId}/derived-analysis`)
+          .set(auth(userA, orgA))
+          .set('Idempotency-Key', `rollback-${randomUUID()}`)
+          .send({});
+        expect(failed.status).toBe(500);
+        const residue = await withPinnedPostgresTransaction((tx) =>
+          tx.queryOne<{ count: number }>(
+            `SELECT count(*)::int AS count FROM finance_artifacts
+            WHERE organization_id = ? AND natural_key LIKE 'derived-analysis:%'
+              AND artifact_id NOT IN (SELECT target.artifact_id FROM finance_business_versions target
+                 JOIN finance_lineage_edges edge ON edge.target_version_id = target.business_version_id
+                WHERE edge.organization_id = ?)`,
+            [orgA, orgA]
+          )
+        );
+        expect(residue?.count).toBe(0);
+      } finally {
+        await withPinnedPostgresTransaction(async (tx) => {
+          await tx.queryRun(`DROP TRIGGER IF EXISTS ${triggerName} ON finance_lineage_edges`);
+          await tx.queryRun(`DROP FUNCTION IF EXISTS ${functionName}()`);
+        });
+      }
+    });
 });
+
+function createHashForTest(key: string): string {
+  return createHash('sha256').update(key).digest('hex');
+}
