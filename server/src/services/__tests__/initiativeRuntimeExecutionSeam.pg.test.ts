@@ -153,6 +153,8 @@ describe.skipIf(!REAL_PG)('INI-BVP-001 runtime-v1 Initiative -> Execution mounte
     if (client) {
       await client.query('BEGIN');
       try {
+        await client.query(`DELETE FROM execution_identity_aliases WHERE organization_id = ANY($1)`, [[org, foreignOrg]]);
+        await client.query(`DELETE FROM execution_link_reopen_receipts WHERE organization_id = ANY($1)`, [[org, foreignOrg]]);
         await client.query(`DELETE FROM execution_case_links WHERE organization_id = ANY($1)`, [[org, foreignOrg]]);
         for (const table of ['ie_aggregate_relations', 'ie_command_receipts', 'ie_audit_events', 'ie_outbox_events', 'ie_aggregate_state']) {
           await client.query(`DELETE FROM ${table} WHERE organization_id = ANY($1)`, [[org, foreignOrg]]);
@@ -268,5 +270,43 @@ describe.skipIf(!REAL_PG)('INI-BVP-001 runtime-v1 Initiative -> Execution mounte
       version: 2,
     });
     expect(legacyShadow.rows[0]).toEqual({ initiatives: 0, cases: 0 });
+
+    const authority = await request(app)
+      .get(`/api/v8/case-workspace/execution-bvp/authority/runtime/${initiativeId}/${caseId}?expectedVersion=2`)
+      .set(auth(ownerToken))
+      .expect(200);
+    expect(authority.body.data).toMatchObject({
+      link: { link_id: linkId, organization_id: org, source_kind: 'RUNTIME_V1', version: 2 },
+      authority: {
+        identity: 'EXECUTION_CASE_LINKS', workWriter: 'RUNTIME_V1', governance: 'CASE_WORKSPACE',
+        legacyPmo: 'ADAPTER_READ_ONLY', v8Control: 'ADAPTER_READ_ONLY',
+      },
+    });
+    await client.query(
+      `UPDATE execution_case_links SET status='CLOSED',version=version+1 WHERE link_id=$1 AND organization_id=$2`,
+      [linkId, org]
+    );
+    const reopenKey = `reopen-${tag}`;
+    const reopenPayload = { ...payload, expectedLinkVersion: 3 };
+    const reopened = await request(app)
+      .post(path).set(auth(ownerToken)).set('Idempotency-Key', reopenKey).send(reopenPayload).expect(201);
+    const reopenReplay = await request(app)
+      .post(path).set(auth(ownerToken)).set('Idempotency-Key', reopenKey).send(reopenPayload).expect(201);
+    expect(reopened.body.data).toMatchObject({ link_id: linkId, status: 'ACTIVE', version: 4, reopen_count: 1 });
+    expect(reopenReplay.body.data).toMatchObject({ link_id: linkId, status: 'ACTIVE', version: 4, reopen_count: 1 });
+    const changedReplay = await request(app)
+      .post(path).set(auth(ownerToken)).set('Idempotency-Key', reopenKey)
+      .send({ ...reopenPayload, sourceVersion: 13 });
+    expect(changedReplay.status).toBe(409);
+    expect(changedReplay.body.code).toBe('EXECUTION_REOPEN_IDEMPOTENCY_PAYLOAD_CONFLICT');
+
+    const staleAuthority = await request(app)
+      .get(`/api/v8/case-workspace/execution-bvp/authority/runtime/${initiativeId}/${caseId}?expectedVersion=3`)
+      .set(auth(ownerToken));
+    expect(staleAuthority.status).toBe(409);
+    const foreignAuthority = await request(app)
+      .get(`/api/v8/case-workspace/execution-bvp/authority/runtime/${initiativeId}/${caseId}`)
+      .set(auth(foreignToken));
+    expect(foreignAuthority.status).toBe(404);
   });
 });

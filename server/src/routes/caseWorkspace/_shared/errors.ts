@@ -32,6 +32,17 @@ import { CaseWorkspaceAuthError } from '../../../services/caseWorkspace/caseWork
  * comment for why each family needs an override).
  */
 const EXACT_STATUS_OVERRIDES: Record<string, number> = {
+  execution_authority_not_found: 404,
+  execution_authority_runtime_not_found: 404,
+  execution_authority_ambiguous_conflict: 409,
+  execution_authority_version_conflict: 409,
+  execution_authority_not_active: 409,
+  execution_authority_runtime_not_active: 409,
+  execution_authority_runtime_mismatch: 409,
+  execution_authority_runtime_required: 409,
+  execution_reopen_idempotency_payload_conflict: 409,
+  execution_legacy_alias_conflict: 409,
+  execution_authority_version_invalid: 400,
   // Natural-key / uniqueness conflicts that don't end in "_conflict".
   idempotency_key_conflict: 409,
   capability_already_registered: 409,

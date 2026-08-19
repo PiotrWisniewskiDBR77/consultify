@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import { withPgTransaction } from '../utils/queryHelpers.js';
 
 type ExecutionLinkRow = {
@@ -17,7 +19,95 @@ type ExecutionLinkRow = {
   report_ref: string | null;
   status: 'ACTIVE' | 'CLOSED';
   version: number;
+  reopened_at: string | null;
+  reopen_count: number;
 };
+
+export type ExecutionSpineAuthorityProjection = {
+  link: ExecutionLinkRow;
+  authority: {
+    identity: 'EXECUTION_CASE_LINKS';
+    workWriter: 'RUNTIME_V1';
+    governance: 'CASE_WORKSPACE';
+    legacyPmo: 'ADAPTER_READ_ONLY';
+    v8Control: 'ADAPTER_READ_ONLY';
+  };
+};
+
+export async function resolveExecutionSpineAuthority(input: {
+  organizationId: string;
+  linkId?: string;
+  runtimeInitiativeId?: string;
+  runtimeExecutionCaseId?: string;
+  expectedVersion?: number;
+  requireActive?: boolean;
+}): Promise<ExecutionSpineAuthorityProjection> {
+  const organizationId = required(input.organizationId, 'execution_org_required');
+  if (!input.linkId && !input.runtimeInitiativeId && !input.runtimeExecutionCaseId) {
+    throw new Error('execution_identity_required');
+  }
+  return withPgTransaction(async (tx) => {
+    const rows = await tx.query<ExecutionLinkRow>(
+      `SELECT * FROM execution_case_links
+        WHERE organization_id=?
+          AND (?::text IS NULL OR link_id::text=?)
+          AND (?::text IS NULL OR runtime_initiative_id=?)
+          AND (?::text IS NULL OR runtime_execution_case_id=?)
+        ORDER BY created_at`,
+      [
+        organizationId,
+        input.linkId ?? null, input.linkId ?? null,
+        input.runtimeInitiativeId ?? null, input.runtimeInitiativeId ?? null,
+        input.runtimeExecutionCaseId ?? null, input.runtimeExecutionCaseId ?? null,
+      ]
+    );
+    if (rows.rows.length === 0) throw new Error('execution_authority_not_found');
+    if (rows.rows.length !== 1) throw new Error('execution_authority_ambiguous_conflict');
+    const link = rows.rows[0];
+    if (link.source_kind !== 'RUNTIME_V1') throw new Error('execution_authority_runtime_required');
+    if (input.expectedVersion != null && link.version !== input.expectedVersion) {
+      throw new Error('execution_authority_version_conflict');
+    }
+    if (input.requireActive && link.status !== 'ACTIVE') throw new Error('execution_authority_not_active');
+    const runtime = await tx.query<{
+      initiative_version: number;
+      initiative_payload: Record<string, unknown>;
+      case_payload: Record<string, unknown>;
+      relation_exists: boolean;
+    }>(
+      `SELECT i.version AS initiative_version,i.payload_json AS initiative_payload,
+              c.payload_json AS case_payload,
+              EXISTS(SELECT 1 FROM ie_aggregate_relations r
+                WHERE r.organization_id=i.organization_id
+                  AND r.relation_type='INITIATIVE_EXECUTION_CASE'
+                  AND r.source_type='initiative' AND r.source_id=i.aggregate_id
+                  AND r.target_type='execution_case' AND r.target_id=c.aggregate_id) AS relation_exists
+         FROM ie_aggregate_state i
+         JOIN ie_aggregate_state c ON c.organization_id=i.organization_id
+          AND c.aggregate_type='execution_case' AND c.aggregate_id=?
+        WHERE i.organization_id=? AND i.aggregate_type='initiative' AND i.aggregate_id=?`,
+      [link.runtime_execution_case_id, organizationId, link.runtime_initiative_id]
+    );
+    const state = runtime.rows[0];
+    if (!state || !state.relation_exists) throw new Error('execution_authority_runtime_not_found');
+    if (
+      state.case_payload.initiativeId !== link.runtime_initiative_id ||
+      state.initiative_payload.projectId !== link.source_project_id ||
+      state.initiative_version < link.source_version
+    ) throw new Error('execution_authority_runtime_mismatch');
+    if (input.requireActive && (
+      state.initiative_payload.lifecycleState !== 'IN_EXECUTION' ||
+      state.case_payload.state !== 'ACTIVE'
+    )) throw new Error('execution_authority_runtime_not_active');
+    return {
+      link,
+      authority: {
+        identity: 'EXECUTION_CASE_LINKS', workWriter: 'RUNTIME_V1', governance: 'CASE_WORKSPACE',
+        legacyPmo: 'ADAPTER_READ_ONLY', v8Control: 'ADAPTER_READ_ONLY',
+      },
+    };
+  });
+}
 
 export async function linkRuntimeInitiativeToExecutionCase(input: {
   organizationId: string;
@@ -26,12 +116,19 @@ export async function linkRuntimeInitiativeToExecutionCase(input: {
   sourceVersion: number;
   actorId: string;
   idempotencyKey: string;
+  expectedLinkVersion?: number;
+  legacyInitiativeId?: string;
+  legacyCaseId?: string;
 }): Promise<ExecutionLinkRow> {
   const organizationId = required(input.organizationId, 'execution_org_required');
   const initiativeId = required(input.initiativeId, 'execution_initiative_required');
   const caseId = required(input.caseId, 'execution_case_required');
   const actorId = required(input.actorId, 'execution_actor_required');
   const idempotencyKey = required(input.idempotencyKey, 'execution_idempotency_key_required');
+  const reopenRequestDigest = createHash('sha256').update(JSON.stringify([
+    organizationId, initiativeId, caseId, input.sourceVersion, input.expectedLinkVersion ?? null,
+    input.legacyInitiativeId ?? null, input.legacyCaseId ?? null,
+  ])).digest('hex');
   if (!Number.isInteger(input.sourceVersion) || input.sourceVersion < 1) {
     throw new Error('execution_source_version_invalid');
   }
@@ -56,6 +153,18 @@ export async function linkRuntimeInitiativeToExecutionCase(input: {
         replay.rows[0].source_version !== input.sourceVersion
       ) throw new Error('execution_idempotency_payload_conflict');
       return replay.rows[0];
+    }
+    const reopenReplay = await tx.query<ExecutionLinkRow & { request_digest: string }>(
+      `SELECT e.*,r.request_digest FROM execution_link_reopen_receipts r
+       JOIN execution_case_links e ON e.link_id=r.execution_link_id AND e.organization_id=r.organization_id
+       WHERE r.organization_id=? AND r.idempotency_key=?`,
+      [organizationId, idempotencyKey]
+    );
+    if (reopenReplay.rows[0]) {
+      if (reopenReplay.rows[0].request_digest !== reopenRequestDigest) {
+        throw new Error('execution_reopen_idempotency_payload_conflict');
+      }
+      return reopenReplay.rows[0];
     }
     const initiative = await tx.query<{ version: number; payload_json: Record<string, unknown> }>(
       `SELECT version,payload_json FROM ie_aggregate_state
@@ -90,6 +199,74 @@ export async function linkRuntimeInitiativeToExecutionCase(input: {
       String(initiativeRow.payload_json.projectId || ''),
       'execution_runtime_project_required'
     );
+    if (Boolean(input.legacyInitiativeId) !== Boolean(input.legacyCaseId)) {
+      throw new Error('execution_legacy_alias_pair_required');
+    }
+    const attachLegacyAlias = async (linkId: string): Promise<void> => {
+      if (!input.legacyInitiativeId || !input.legacyCaseId) return;
+      const legacy = await tx.query<{ initiative_project_id: string; case_project_id: string }>(
+        `SELECT i.project_id AS initiative_project_id,c.project_id AS case_project_id
+           FROM initiatives i JOIN case_core c ON c.organization_id=i.organization_id
+          WHERE i.organization_id=? AND i.id=? AND c.case_id=?`,
+        [organizationId, input.legacyInitiativeId, input.legacyCaseId]
+      );
+      if (!legacy.rows[0]) throw new Error('execution_legacy_alias_not_found');
+      if (legacy.rows[0].initiative_project_id !== legacy.rows[0].case_project_id || legacy.rows[0].initiative_project_id !== projectId) {
+        throw new Error('execution_legacy_alias_project_mismatch');
+      }
+      const aliased = await tx.query<{ execution_link_id: string }>(
+        `INSERT INTO execution_identity_aliases
+          (organization_id,execution_link_id,legacy_initiative_id,legacy_case_id,created_by)
+         VALUES (?,?,?,?,?)
+         ON CONFLICT (organization_id,legacy_initiative_id,legacy_case_id) DO UPDATE
+           SET execution_link_id=EXCLUDED.execution_link_id
+         WHERE execution_identity_aliases.execution_link_id=EXCLUDED.execution_link_id
+         RETURNING execution_link_id`,
+        [organizationId,linkId,input.legacyInitiativeId,input.legacyCaseId,actorId]
+      );
+      if (!aliased.rows[0] || aliased.rows[0].execution_link_id !== linkId) {
+        throw new Error('execution_legacy_alias_conflict');
+      }
+    };
+
+    const existingIdentity = await tx.query<ExecutionLinkRow>(
+      `SELECT * FROM execution_case_links
+       WHERE organization_id=? AND source_kind='RUNTIME_V1'
+         AND (runtime_initiative_id=? OR runtime_execution_case_id=?) FOR UPDATE`,
+      [organizationId, initiativeId, caseId]
+    );
+    if (existingIdentity.rows.length > 1) throw new Error('execution_authority_ambiguous_conflict');
+    if (existingIdentity.rows[0]) {
+      const existing = existingIdentity.rows[0];
+      if (existing.runtime_initiative_id !== initiativeId || existing.runtime_execution_case_id !== caseId) {
+        throw new Error('execution_authority_runtime_mismatch');
+      }
+      if (existing.source_project_id !== projectId || existing.source_version > input.sourceVersion) {
+        throw new Error('execution_authority_runtime_mismatch');
+      }
+      if (existing.status === 'ACTIVE') {
+        await attachLegacyAlias(existing.link_id);
+        return existing;
+      }
+      if (!input.expectedLinkVersion || existing.version !== input.expectedLinkVersion) {
+        throw new Error('execution_authority_version_conflict');
+      }
+      const reopened = await tx.query<ExecutionLinkRow>(
+        `UPDATE execution_case_links SET status='ACTIVE',source_version=?,reopened_at=now(),
+             reopen_count=reopen_count+1,version=version+1,updated_at=now()
+         WHERE link_id=? AND organization_id=? AND status='CLOSED' AND version=? RETURNING *`,
+        [input.sourceVersion, existing.link_id, organizationId, input.expectedLinkVersion]
+      );
+      if (!reopened.rows[0]) throw new Error('execution_authority_version_conflict');
+      await tx.query(
+        `INSERT INTO execution_link_reopen_receipts
+          (organization_id,idempotency_key,request_digest,execution_link_id,expected_version,resulting_version,reopened_by)
+         VALUES (?,?,?,?,?,?,?)`,
+        [organizationId,idempotencyKey,reopenRequestDigest,existing.link_id,input.expectedLinkVersion,reopened.rows[0].version,actorId]
+      );
+      await attachLegacyAlias(existing.link_id);
+      return reopened.rows[0];
+    }
 
     const inserted = await tx.query<ExecutionLinkRow>(
       `INSERT INTO execution_case_links
@@ -98,6 +275,7 @@ export async function linkRuntimeInitiativeToExecutionCase(input: {
        VALUES (?,'RUNTIME_V1',?,?,?,?,?,?) RETURNING *`,
       [organizationId, initiativeId, caseId, input.sourceVersion, projectId, idempotencyKey, actorId]
     );
+    await attachLegacyAlias(inserted.rows[0].link_id);
     return inserted.rows[0];
   });
 }
@@ -200,6 +378,15 @@ export async function linkInitiativeToExecutionCase(input: {
   const idempotencyKey = required(input.idempotencyKey, 'execution_idempotency_key_required');
 
   return withPgTransaction(async (tx) => {
+    const canonical = await tx.query<ExecutionLinkRow>(
+      `SELECT e.* FROM execution_identity_aliases a
+       JOIN execution_case_links e ON e.link_id=a.execution_link_id AND e.organization_id=a.organization_id
+       WHERE a.organization_id=? AND a.legacy_initiative_id=? AND a.legacy_case_id=?
+         AND e.source_kind='RUNTIME_V1' ORDER BY e.created_at`,
+      [organizationId, initiativeId, caseId]
+    );
+    if (canonical.rows.length > 1) throw new Error('execution_authority_ambiguous_conflict');
+    if (canonical.rows[0]) throw new Error(`execution_legacy_writer_retired:${canonical.rows[0].link_id}`);
     const initiative = await tx.query<{ id: string; project_id: string; organization_id: string }>(
       `SELECT id,project_id,organization_id FROM initiatives
         WHERE id = ? AND organization_id = ? FOR UPDATE`,

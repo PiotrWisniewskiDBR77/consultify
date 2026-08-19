@@ -23,6 +23,24 @@ router.get(
   })
 );
 
+router.get(
+  '/execution-bvp/authority/runtime/:initiativeId/:caseId',
+  caseWorkspaceHandler(async (req, res, actor) => {
+    const params = parseParams(z.object({ initiativeId: id, caseId: id }), req.params);
+    const expected = req.query.expectedVersion == null ? undefined : Number(req.query.expectedVersion);
+    if (expected != null && (!Number.isInteger(expected) || expected < 1)) throw new Error('execution_authority_version_invalid');
+    await requireOrgRoleForActor(actor, 'MEMBER');
+    const projection = await svc.resolveExecutionSpineAuthority({
+      organizationId: actor.organizationId,
+      runtimeInitiativeId: params.initiativeId,
+      runtimeExecutionCaseId: params.caseId,
+      expectedVersion: expected,
+      requireActive: true,
+    });
+    res.status(200).json({ data: projection });
+  })
+);
+
 router.post(
   '/execution-bvp/links',
   caseWorkspaceHandler(async (req, res, actor) => {
@@ -33,6 +51,9 @@ router.post(
           initiativeId: id,
           caseId: id,
           sourceVersion: expectedVersion,
+          expectedLinkVersion: expectedVersion.optional(),
+          legacyInitiativeId: id.optional(),
+          legacyCaseId: id.optional(),
         }),
         z.object({
           sourceKind: z.literal('LEGACY_CASE_CORE').optional().default('LEGACY_CASE_CORE'),
@@ -54,17 +75,33 @@ router.post(
             sourceVersion: body.sourceVersion,
             actorId: actor.actorUserId,
             idempotencyKey,
+            expectedLinkVersion: body.expectedLinkVersion,
+            legacyInitiativeId: body.legacyInitiativeId,
+            legacyCaseId: body.legacyCaseId,
           })
         : await (async () => {
             await requireCaseAccessForActor(actor, body.caseId);
-            return svc.linkInitiativeToExecutionCase({
-              organizationId: actor.organizationId,
-              initiativeId: body.initiativeId,
-              caseId: body.caseId,
-              actorId: actor.actorUserId,
-              idempotencyKey,
-            });
+            try {
+              return await svc.linkInitiativeToExecutionCase({
+                organizationId: actor.organizationId,
+                initiativeId: body.initiativeId,
+                caseId: body.caseId,
+                actorId: actor.actorUserId,
+                idempotencyKey,
+              });
+            } catch (error) {
+              if (error instanceof Error && error.message.startsWith('execution_legacy_writer_retired:')) {
+                const linkId = error.message.split(':')[1];
+                const successor = await svc.resolveExecutionSpineAuthority({
+                  organizationId: actor.organizationId, linkId,
+                });
+                res.status(410).json({ code: 'EXECUTION_LEGACY_WRITER_RETIRED', data: { successor } });
+                return null as never;
+              }
+              throw error;
+            }
           })();
+    if (!link) return;
     res.status(201).json({ data: link });
   })
 );
