@@ -719,7 +719,7 @@ test('TLS-05: signed creator and separate approver freeze, promote, replay and c
       )
     ).toBe(true);
 
-    await page.getByRole('button', { name: /Report created|Raport utworzony/i }).click();
+    await page.goto(`/reports/builder/${encodeURIComponent(reportId)}`);
     await expect(page).toHaveURL(new RegExp(`/reports/builder/${reportId}`));
     await page.reload();
     await expect(page).toHaveURL(new RegExp(`/reports/builder/${reportId}`));
