@@ -1192,50 +1192,50 @@ const SURFACES: SurfaceFixture[] = [
 describeReal(
   'AMD-PRT-ECONOMICS-002 — every listed economic mutation route refuses (410, zero mutation, one receipt)',
   () => {
-    for (const surfaceFixture of SURFACES) {
-      for (const kase of surfaceFixture.mutations) {
-        itDB(
-          `${surfaceFixture.surface} ${kase.method} ${kase.path} -> 410, zero mutation, exactly one receipt`,
-          async (h) => {
-            const requestId = `${h.prefix}-cov-${surfaceFixture.surface}-${kase.method}-${kase.path.replace(/[^a-z0-9]+/gi, '-')}`;
-            const app = surfaceFixture.buildApp();
-            const token = surfaceFixture.token(h);
+  for (const surfaceFixture of SURFACES) {
+    for (const kase of surfaceFixture.mutations) {
+      itDB(
+        `${surfaceFixture.surface} ${kase.method} ${kase.path} -> 410, zero mutation, exactly one receipt`,
+        async (h) => {
+          const requestId = `${h.prefix}-cov-${surfaceFixture.surface}-${kase.method}-${kase.path.replace(/[^a-z0-9]+/gi, '-')}`;
+          const app = surfaceFixture.buildApp();
+          const token = surfaceFixture.token(h);
 
-            const res = await assertZeroMutationAroundDeniedCall(h, () =>
-              sendMutation(app, surfaceFixture.basePath, token, kase, requestId)
-            );
+          const res = await assertZeroMutationAroundDeniedCall(h, () =>
+            sendMutation(app, surfaceFixture.basePath, token, kase, requestId)
+          );
 
-            expect(res.status).toBe(410);
-            assertPolicyDeniedBody(res.body, kase.operation);
+          expect(res.status).toBe(410);
+          assertPolicyDeniedBody(res.body, kase.operation);
 
-            const receipts = await receiptRowsForRequestId(h.client, requestId);
-            expect(receipts).toHaveLength(1);
-            const receipt = receipts[0] as any;
-            expect(receipt.surface).toBe(surfaceFixture.surface);
-            expect(receipt.operation).toBe(kase.operation);
-            expect(receipt.method).toBe(kase.method);
-            expect(receipt.decision).toBe(PARTNER_ECONOMICS_POLICY_DECISION);
-            expect(receipt.denial_code).toBe(PARTNER_ECONOMICS_POLICY_CODE);
-            expect(String(receipt.route_path)).toContain(kase.path.split('/')[1] ?? kase.path);
+          const receipts = await receiptRowsForRequestId(h.client, requestId);
+          expect(receipts).toHaveLength(1);
+          const receipt = receipts[0] as any;
+          expect(receipt.surface).toBe(surfaceFixture.surface);
+          expect(receipt.operation).toBe(kase.operation);
+          expect(receipt.method).toBe(kase.method);
+          expect(receipt.decision).toBe(PARTNER_ECONOMICS_POLICY_DECISION);
+          expect(receipt.denial_code).toBe(PARTNER_ECONOMICS_POLICY_CODE);
+          expect(String(receipt.route_path)).toContain(kase.path.split('/')[1] ?? kase.path);
 
-            if (surfaceFixture.surface === 'v8_partner') {
-              // ROUTE ORDERING TRUTH: the guard runs before partner-org
-              // resolution on v8, so partner_org_id must be NULL on the
-              // receipt, and the resolution/demo-seed middleware (which would
-              // self-heal a partner_users row) must never have run.
-              expect(receipt.partner_org_id).toBeNull();
-            }
+          if (surfaceFixture.surface === 'v8_partner') {
+            // ROUTE ORDERING TRUTH: the guard runs before partner-org
+            // resolution on v8, so partner_org_id must be NULL on the
+            // receipt, and the resolution/demo-seed middleware (which would
+            // self-heal a partner_users row) must never have run.
+            expect(receipt.partner_org_id).toBeNull();
           }
-        );
-      }
+        }
+      );
     }
+  }
 
     itDB(
       'a denied v8 request never causes a new partner_users row for the target partner org',
       async (h) => {
-        const before = await partnerUsersRowCount(h.client, h.partnerOrgId);
-        const app = buildV8App();
-        const requestId = `${h.prefix}-cov-seeder-guard`;
+    const before = await partnerUsersRowCount(h.client, h.partnerOrgId);
+    const app = buildV8App();
+    const requestId = `${h.prefix}-cov-seeder-guard`;
         const res = await sendMutation(
           app,
           V8_BASE,
@@ -1243,9 +1243,9 @@ describeReal(
           V8_MUTATIONS[1],
           requestId
         );
-        expect(res.status).toBe(410);
-        const after = await partnerUsersRowCount(h.client, h.partnerOrgId);
-        expect(after).toBe(before);
+    expect(res.status).toBe(410);
+    const after = await partnerUsersRowCount(h.client, h.partnerOrgId);
+    expect(after).toBe(before);
       }
     );
   }
@@ -1358,100 +1358,100 @@ describeReal('AMD-PRT-ECONOMICS-002 — legacy rollback cannot reactivate PRT-W1
 describeReal(
   'actor matrix — ACTIVE owner/admin, revoked member, foreign tenant, SUPERADMIN-without-membership',
   () => {
-    describe('v8_partner', () => {
+  describe('v8_partner', () => {
       itDB(
         'POST /payouts/request refuses 410 for every actor regardless of membership',
         async (h) => {
-          const app = buildV8App();
-          for (const [label, actor] of [
-            ['activeOwner', h.actors.activeOwner],
-            ['revokedPartnerMember', h.actors.revokedPartnerMember],
-            ['foreignActor', h.actors.foreignActor],
-            ['superadminNoMembership', h.actors.superadminNoMembership],
-          ] as const) {
-            const requestId = `${h.prefix}-matrix-v8-mut-${label}`;
-            const res = await sendMutation(app, V8_BASE, actor.token, V8_MUTATIONS[1], requestId);
-            expect([label, res.status]).toEqual([label, 410]);
-            assertPolicyDeniedBody(res.body, 'payout');
-            const receipts = await receiptRowsForRequestId(h.client, requestId);
-            expect([label, receipts.length]).toEqual([label, 1]);
-            expect([label, (receipts[0] as any).partner_org_id]).toEqual([label, null]);
-          }
+      const app = buildV8App();
+      for (const [label, actor] of [
+        ['activeOwner', h.actors.activeOwner],
+        ['revokedPartnerMember', h.actors.revokedPartnerMember],
+        ['foreignActor', h.actors.foreignActor],
+        ['superadminNoMembership', h.actors.superadminNoMembership],
+      ] as const) {
+        const requestId = `${h.prefix}-matrix-v8-mut-${label}`;
+        const res = await sendMutation(app, V8_BASE, actor.token, V8_MUTATIONS[1], requestId);
+        expect([label, res.status]).toEqual([label, 410]);
+        assertPolicyDeniedBody(res.body, 'payout');
+        const receipts = await receiptRowsForRequestId(h.client, requestId);
+        expect([label, receipts.length]).toEqual([label, 1]);
+        expect([label, (receipts[0] as any).partner_org_id]).toEqual([label, null]);
+      }
         }
       );
 
       itDB(
         'GET /program/status is 200 only for the actor with an ACTIVE partner_users link; everyone else gets 403, never 410',
         async (h) => {
-          const app = buildV8App();
-          const active = await request(app)
-            .get(`${V8_BASE}/program/status`)
-            .set('Authorization', `Bearer ${h.actors.activeOwner.token}`);
-          expect(active.status).toBe(200);
-          expect(active.body?.data?.lifecyclePhase).toBeTruthy();
+      const app = buildV8App();
+      const active = await request(app)
+        .get(`${V8_BASE}/program/status`)
+        .set('Authorization', `Bearer ${h.actors.activeOwner.token}`);
+      expect(active.status).toBe(200);
+      expect(active.body?.data?.lifecyclePhase).toBeTruthy();
 
-          // `requirePartnerEconomicsReadAccess` on this route is
-          // `[requireActiveMembership, requireOrgRole('admin')]` — a real,
-          // per-request `organization_members` check runs BEFORE the route
-          // handler's own `getActivePartnerOrgIdForUser` lookup, so the exact
-          // denial code differs by WHY each actor fails, not just THAT they
-          // fail:
-          //   - revokedPartnerMember's only organization_members row is the
-          //     INACTIVE one seeded in orgId, and attachUser's cross-org
-          //     self-heal (auth.middleware.ts) only reassigns the request's org
-          //     when it finds a DIFFERENT org with an ACTIVE row — there isn't
-          //     one here (deliberately, per buildAndSeedSchema's comment on this
-          //     actor) — so `requireActiveMembership` denies first, on the
-          //     unchanged orgId, with ORG_MEMBERSHIP_REVOKED. The route handler
-          //     (and its PARTNER_ORG_REQUIRED code) is never reached.
-          //   - superadminNoMembership has NO organization_members row anywhere,
-          //     so the same self-heal has nothing to find either — same
-          //     ORG_MEMBERSHIP_REVOKED, same "route handler never reached".
-          //   - foreignActor's JWT claims orgId (a cross-tenant probe), but they
-          //     DO hold a real ACTIVE membership elsewhere (foreignOrgId) — the
-          //     self-heal finds THAT row, reassigns req.organizationId to
-          //     foreignOrgId and req.userRole to their real role there, so they
-          //     clear both requireActiveMembership and requireOrgRole('admin')
-          //     and actually reach the route handler, where
-          //     getActivePartnerOrgIdForUser correctly finds no partner_users
-          //     link for them and returns the route's own PARTNER_ORG_REQUIRED.
-          // This is the exact same actor-vs-code split already asserted for the
-          // superadmin_partner_settlements/superadmin_partner_config surfaces
-          // below — confirmed against the live, real-middleware-chain response,
-          // not assumed.
-          const expectedCodeByLabel = {
-            revokedPartnerMember: 'ORG_MEMBERSHIP_REVOKED',
-            foreignActor: 'PARTNER_ORG_REQUIRED',
-            superadminNoMembership: 'ORG_MEMBERSHIP_REVOKED',
-          } as const;
-          for (const [label, actor] of [
-            ['revokedPartnerMember', h.actors.revokedPartnerMember],
-            ['foreignActor', h.actors.foreignActor],
-            ['superadminNoMembership', h.actors.superadminNoMembership],
-          ] as const) {
-            const res = await request(app)
-              .get(`${V8_BASE}/program/status`)
-              .set('Authorization', `Bearer ${actor.token}`);
-            expect([label, res.status]).toEqual([label, 403]);
-            expect([label, res.body?.code]).toEqual([label, expectedCodeByLabel[label]]);
-            expect([label, res.status]).not.toEqual([label, 410]);
-          }
+      // `requirePartnerEconomicsReadAccess` on this route is
+      // `[requireActiveMembership, requireOrgRole('admin')]` — a real,
+      // per-request `organization_members` check runs BEFORE the route
+      // handler's own `getActivePartnerOrgIdForUser` lookup, so the exact
+      // denial code differs by WHY each actor fails, not just THAT they
+      // fail:
+      //   - revokedPartnerMember's only organization_members row is the
+      //     INACTIVE one seeded in orgId, and attachUser's cross-org
+      //     self-heal (auth.middleware.ts) only reassigns the request's org
+      //     when it finds a DIFFERENT org with an ACTIVE row — there isn't
+      //     one here (deliberately, per buildAndSeedSchema's comment on this
+      //     actor) — so `requireActiveMembership` denies first, on the
+      //     unchanged orgId, with ORG_MEMBERSHIP_REVOKED. The route handler
+      //     (and its PARTNER_ORG_REQUIRED code) is never reached.
+      //   - superadminNoMembership has NO organization_members row anywhere,
+      //     so the same self-heal has nothing to find either — same
+      //     ORG_MEMBERSHIP_REVOKED, same "route handler never reached".
+      //   - foreignActor's JWT claims orgId (a cross-tenant probe), but they
+      //     DO hold a real ACTIVE membership elsewhere (foreignOrgId) — the
+      //     self-heal finds THAT row, reassigns req.organizationId to
+      //     foreignOrgId and req.userRole to their real role there, so they
+      //     clear both requireActiveMembership and requireOrgRole('admin')
+      //     and actually reach the route handler, where
+      //     getActivePartnerOrgIdForUser correctly finds no partner_users
+      //     link for them and returns the route's own PARTNER_ORG_REQUIRED.
+      // This is the exact same actor-vs-code split already asserted for the
+      // superadmin_partner_settlements/superadmin_partner_config surfaces
+      // below — confirmed against the live, real-middleware-chain response,
+      // not assumed.
+      const expectedCodeByLabel = {
+        revokedPartnerMember: 'ORG_MEMBERSHIP_REVOKED',
+        foreignActor: 'PARTNER_ORG_REQUIRED',
+        superadminNoMembership: 'ORG_MEMBERSHIP_REVOKED',
+      } as const;
+      for (const [label, actor] of [
+        ['revokedPartnerMember', h.actors.revokedPartnerMember],
+        ['foreignActor', h.actors.foreignActor],
+        ['superadminNoMembership', h.actors.superadminNoMembership],
+      ] as const) {
+        const res = await request(app)
+          .get(`${V8_BASE}/program/status`)
+          .set('Authorization', `Bearer ${actor.token}`);
+        expect([label, res.status]).toEqual([label, 403]);
+        expect([label, res.body?.code]).toEqual([label, expectedCodeByLabel[label]]);
+        expect([label, res.status]).not.toEqual([label, 410]);
+      }
         }
       );
-    });
+  });
 
-    describe('legacy_partner', () => {
+  describe('legacy_partner', () => {
       itDB(
         'POST /payouts/request refuses 410 for every actor regardless of membership',
         async (h) => {
-          const app = buildLegacyApp();
-          for (const [label, actor] of [
-            ['activeOwner', h.actors.activeOwner],
-            ['revokedPartnerMember', h.actors.revokedPartnerMember],
-            ['foreignActor', h.actors.foreignActor],
-            ['superadminNoMembership', h.actors.superadminNoMembership],
-          ] as const) {
-            const requestId = `${h.prefix}-matrix-legacy-mut-${label}`;
+      const app = buildLegacyApp();
+      for (const [label, actor] of [
+        ['activeOwner', h.actors.activeOwner],
+        ['revokedPartnerMember', h.actors.revokedPartnerMember],
+        ['foreignActor', h.actors.foreignActor],
+        ['superadminNoMembership', h.actors.superadminNoMembership],
+      ] as const) {
+        const requestId = `${h.prefix}-matrix-legacy-mut-${label}`;
             const res = await sendMutation(
               app,
               LEGACY_BASE,
@@ -1459,58 +1459,58 @@ describeReal(
               LEGACY_MUTATIONS[0],
               requestId
             );
-            expect([label, res.status]).toEqual([label, 410]);
-            assertPolicyDeniedBody(res.body, 'payout');
-            const receipts = await receiptRowsForRequestId(h.client, requestId);
-            expect([label, receipts.length]).toEqual([label, 1]);
-          }
+        expect([label, res.status]).toEqual([label, 410]);
+        assertPolicyDeniedBody(res.body, 'payout');
+        const receipts = await receiptRowsForRequestId(h.client, requestId);
+        expect([label, receipts.length]).toEqual([label, 1]);
+      }
         }
       );
 
       itDB(
         'GET /payouts is 200 only for the actor with an ACTIVE partner_users link; everyone else gets 403, never 410',
         async (h) => {
-          const app = buildLegacyApp();
-          const active = await request(app)
-            .get(`${LEGACY_BASE}/payouts`)
-            .set('Authorization', `Bearer ${h.actors.activeOwner.token}`);
-          expect(active.status).toBe(200);
-          expect(active.body?.success).toBe(true);
-          expect(Array.isArray(active.body?.data)).toBe(true);
+      const app = buildLegacyApp();
+      const active = await request(app)
+        .get(`${LEGACY_BASE}/payouts`)
+        .set('Authorization', `Bearer ${h.actors.activeOwner.token}`);
+      expect(active.status).toBe(200);
+      expect(active.body?.success).toBe(true);
+      expect(Array.isArray(active.body?.data)).toBe(true);
 
-          for (const [label, actor] of [
-            ['revokedPartnerMember', h.actors.revokedPartnerMember],
-            ['foreignActor', h.actors.foreignActor],
-            ['superadminNoMembership', h.actors.superadminNoMembership],
-          ] as const) {
-            const res = await request(app)
-              .get(`${LEGACY_BASE}/payouts`)
-              .set('Authorization', `Bearer ${actor.token}`);
-            expect([label, res.status]).toEqual([label, 403]);
-            expect([label, res.status]).not.toEqual([label, 410]);
-          }
+      for (const [label, actor] of [
+        ['revokedPartnerMember', h.actors.revokedPartnerMember],
+        ['foreignActor', h.actors.foreignActor],
+        ['superadminNoMembership', h.actors.superadminNoMembership],
+      ] as const) {
+        const res = await request(app)
+          .get(`${LEGACY_BASE}/payouts`)
+          .set('Authorization', `Bearer ${actor.token}`);
+        expect([label, res.status]).toEqual([label, 403]);
+        expect([label, res.status]).not.toEqual([label, 410]);
+      }
         }
       );
-    });
+  });
 
-    describe('superadmin_partner_settlements', () => {
+  describe('superadmin_partner_settlements', () => {
       itDB(
         'POST /approve-commissions: only superadminActive reaches the guard (410); everyone else is refused earlier, with zero economics receipts',
         async (h) => {
-          const app = buildSettlementsApp();
+      const app = buildSettlementsApp();
 
-          const superadminRes = await sendMutation(
-            app,
-            SETTLEMENTS_BASE,
-            h.actors.superadminActive.token,
-            SETTLEMENTS_MUTATIONS[0],
-            `${h.prefix}-matrix-settlements-mut-superadminActive`
-          );
-          expect(superadminRes.status).toBe(410);
-          assertPolicyDeniedBody(superadminRes.body, 'commission');
+      const superadminRes = await sendMutation(
+        app,
+        SETTLEMENTS_BASE,
+        h.actors.superadminActive.token,
+        SETTLEMENTS_MUTATIONS[0],
+        `${h.prefix}-matrix-settlements-mut-superadminActive`
+      );
+      expect(superadminRes.status).toBe(410);
+      assertPolicyDeniedBody(superadminRes.body, 'commission');
 
-          // activeOwner: ACTIVE membership, NOT superadmin -> verifySuperAdmin denies.
-          const ownerRequestId = `${h.prefix}-matrix-settlements-mut-activeOwner`;
+      // activeOwner: ACTIVE membership, NOT superadmin -> verifySuperAdmin denies.
+      const ownerRequestId = `${h.prefix}-matrix-settlements-mut-activeOwner`;
           const ownerRes = await sendMutation(
             app,
             SETTLEMENTS_BASE,
@@ -1518,14 +1518,14 @@ describeReal(
             SETTLEMENTS_MUTATIONS[0],
             ownerRequestId
           );
-          expect(ownerRes.status).toBe(403);
-          expect(ownerRes.body?.code).toBe('INSUFFICIENT_PLATFORM_ROLE');
-          expect(await receiptRowsForRequestId(h.client, ownerRequestId)).toHaveLength(0);
+      expect(ownerRes.status).toBe(403);
+      expect(ownerRes.body?.code).toBe('INSUFFICIENT_PLATFORM_ROLE');
+      expect(await receiptRowsForRequestId(h.client, ownerRequestId)).toHaveLength(0);
 
-          // revokedPartnerMember: SUPERADMIN role claim in `users`, but INACTIVE
-          // membership -> requireActiveMembership denies BEFORE verifySuperAdmin
-          // even runs. Proves "Role claims, including SUPERADMIN, never bypass it."
-          const revokedRequestId = `${h.prefix}-matrix-settlements-mut-revoked`;
+      // revokedPartnerMember: SUPERADMIN role claim in `users`, but INACTIVE
+      // membership -> requireActiveMembership denies BEFORE verifySuperAdmin
+      // even runs. Proves "Role claims, including SUPERADMIN, never bypass it."
+      const revokedRequestId = `${h.prefix}-matrix-settlements-mut-revoked`;
           const revokedRes = await sendMutation(
             app,
             SETTLEMENTS_BASE,
@@ -1533,17 +1533,17 @@ describeReal(
             SETTLEMENTS_MUTATIONS[0],
             revokedRequestId
           );
-          expect(revokedRes.status).toBe(403);
-          expect(revokedRes.body?.code).toBe('ORG_MEMBERSHIP_REVOKED');
-          expect(await receiptRowsForRequestId(h.client, revokedRequestId)).toHaveLength(0);
+      expect(revokedRes.status).toBe(403);
+      expect(revokedRes.body?.code).toBe('ORG_MEMBERSHIP_REVOKED');
+      expect(await receiptRowsForRequestId(h.client, revokedRequestId)).toHaveLength(0);
 
-          // foreignActor: JWT claims orgId, but attachUser's ACTIVE-membership
-          // fallback resolves them into their REAL org (foreignOrgId, where they
-          // ARE active) before requireActiveMembership even runs — so membership
-          // passes and they are refused for being non-superadmin, same shape as
-          // activeOwner. This is the auth layer's own cross-tenant self-heal, not
-          // a gap in this file's coverage.
-          const foreignRequestId = `${h.prefix}-matrix-settlements-mut-foreign`;
+      // foreignActor: JWT claims orgId, but attachUser's ACTIVE-membership
+      // fallback resolves them into their REAL org (foreignOrgId, where they
+      // ARE active) before requireActiveMembership even runs — so membership
+      // passes and they are refused for being non-superadmin, same shape as
+      // activeOwner. This is the auth layer's own cross-tenant self-heal, not
+      // a gap in this file's coverage.
+      const foreignRequestId = `${h.prefix}-matrix-settlements-mut-foreign`;
           const foreignRes = await sendMutation(
             app,
             SETTLEMENTS_BASE,
@@ -1551,64 +1551,64 @@ describeReal(
             SETTLEMENTS_MUTATIONS[0],
             foreignRequestId
           );
-          expect(foreignRes.status).toBe(403);
-          expect(foreignRes.body?.code).toBe('INSUFFICIENT_PLATFORM_ROLE');
-          expect(await receiptRowsForRequestId(h.client, foreignRequestId)).toHaveLength(0);
+      expect(foreignRes.status).toBe(403);
+      expect(foreignRes.body?.code).toBe('INSUFFICIENT_PLATFORM_ROLE');
+      expect(await receiptRowsForRequestId(h.client, foreignRequestId)).toHaveLength(0);
 
-          // superadminNoMembership: SUPERADMIN role claim, but NO membership row
-          // anywhere for the claimed org -> requireActiveMembership denies first.
-          // This is the "SUPERADMIN-without-membership" actor named explicitly by
-          // REQUIRED COVERAGE §2.
-          const noMembershipRequestId = `${h.prefix}-matrix-settlements-mut-superadminNoMembership`;
-          const noMembershipRes = await sendMutation(
-            app,
-            SETTLEMENTS_BASE,
-            h.actors.superadminNoMembership.token,
-            SETTLEMENTS_MUTATIONS[0],
-            noMembershipRequestId
-          );
-          expect(noMembershipRes.status).toBe(403);
-          expect(noMembershipRes.body?.code).toBe('ORG_MEMBERSHIP_REVOKED');
-          expect(await receiptRowsForRequestId(h.client, noMembershipRequestId)).toHaveLength(0);
+      // superadminNoMembership: SUPERADMIN role claim, but NO membership row
+      // anywhere for the claimed org -> requireActiveMembership denies first.
+      // This is the "SUPERADMIN-without-membership" actor named explicitly by
+      // REQUIRED COVERAGE §2.
+      const noMembershipRequestId = `${h.prefix}-matrix-settlements-mut-superadminNoMembership`;
+      const noMembershipRes = await sendMutation(
+        app,
+        SETTLEMENTS_BASE,
+        h.actors.superadminNoMembership.token,
+        SETTLEMENTS_MUTATIONS[0],
+        noMembershipRequestId
+      );
+      expect(noMembershipRes.status).toBe(403);
+      expect(noMembershipRes.body?.code).toBe('ORG_MEMBERSHIP_REVOKED');
+      expect(await receiptRowsForRequestId(h.client, noMembershipRequestId)).toHaveLength(0);
         }
       );
 
       itDB(
         'GET /summary (historical read): 200 for every actor that clears requireActiveMembership+verifySuperAdmin, never gated by the economics guard',
         async (h) => {
-          const app = buildSettlementsApp();
-          const superadminRes = await request(app)
-            .get(`${SETTLEMENTS_BASE}/summary`)
-            .set('Authorization', `Bearer ${h.actors.superadminActive.token}`);
-          expect(superadminRes.status).toBe(200);
-          expect(superadminRes.body?.success).toBe(true);
+      const app = buildSettlementsApp();
+      const superadminRes = await request(app)
+        .get(`${SETTLEMENTS_BASE}/summary`)
+        .set('Authorization', `Bearer ${h.actors.superadminActive.token}`);
+      expect(superadminRes.status).toBe(200);
+      expect(superadminRes.body?.success).toBe(true);
 
-          const ownerRes = await request(app)
-            .get(`${SETTLEMENTS_BASE}/summary`)
-            .set('Authorization', `Bearer ${h.actors.activeOwner.token}`);
-          expect(ownerRes.status).toBe(403);
-          expect(ownerRes.body?.code).toBe('INSUFFICIENT_PLATFORM_ROLE');
+      const ownerRes = await request(app)
+        .get(`${SETTLEMENTS_BASE}/summary`)
+        .set('Authorization', `Bearer ${h.actors.activeOwner.token}`);
+      expect(ownerRes.status).toBe(403);
+      expect(ownerRes.body?.code).toBe('INSUFFICIENT_PLATFORM_ROLE');
         }
       );
-    });
+  });
 
-    describe('superadmin_partner_config', () => {
+  describe('superadmin_partner_config', () => {
       itDB(
         'PUT /commission-rates: only superadminActive reaches the guard (410); everyone else is refused earlier, with zero economics receipts',
         async (h) => {
-          const app = buildConfigApp();
+      const app = buildConfigApp();
 
-          const superadminRes = await sendMutation(
-            app,
-            CONFIG_BASE,
-            h.actors.superadminActive.token,
-            CONFIG_MUTATIONS[0],
-            `${h.prefix}-matrix-config-mut-superadminActive`
-          );
-          expect(superadminRes.status).toBe(410);
-          assertPolicyDeniedBody(superadminRes.body, 'commission');
+      const superadminRes = await sendMutation(
+        app,
+        CONFIG_BASE,
+        h.actors.superadminActive.token,
+        CONFIG_MUTATIONS[0],
+        `${h.prefix}-matrix-config-mut-superadminActive`
+      );
+      expect(superadminRes.status).toBe(410);
+      assertPolicyDeniedBody(superadminRes.body, 'commission');
 
-          const revokedRequestId = `${h.prefix}-matrix-config-mut-revoked`;
+      const revokedRequestId = `${h.prefix}-matrix-config-mut-revoked`;
           const revokedRes = await sendMutation(
             app,
             CONFIG_BASE,
@@ -1616,38 +1616,38 @@ describeReal(
             CONFIG_MUTATIONS[0],
             revokedRequestId
           );
-          expect(revokedRes.status).toBe(403);
-          expect(revokedRes.body?.code).toBe('ORG_MEMBERSHIP_REVOKED');
-          expect(await receiptRowsForRequestId(h.client, revokedRequestId)).toHaveLength(0);
+      expect(revokedRes.status).toBe(403);
+      expect(revokedRes.body?.code).toBe('ORG_MEMBERSHIP_REVOKED');
+      expect(await receiptRowsForRequestId(h.client, revokedRequestId)).toHaveLength(0);
 
-          const noMembershipRequestId = `${h.prefix}-matrix-config-mut-superadminNoMembership`;
-          const noMembershipRes = await sendMutation(
-            app,
-            CONFIG_BASE,
-            h.actors.superadminNoMembership.token,
-            CONFIG_MUTATIONS[0],
-            noMembershipRequestId
-          );
-          expect(noMembershipRes.status).toBe(403);
-          expect(noMembershipRes.body?.code).toBe('ORG_MEMBERSHIP_REVOKED');
-          expect(await receiptRowsForRequestId(h.client, noMembershipRequestId)).toHaveLength(0);
+      const noMembershipRequestId = `${h.prefix}-matrix-config-mut-superadminNoMembership`;
+      const noMembershipRes = await sendMutation(
+        app,
+        CONFIG_BASE,
+        h.actors.superadminNoMembership.token,
+        CONFIG_MUTATIONS[0],
+        noMembershipRequestId
+      );
+      expect(noMembershipRes.status).toBe(403);
+      expect(noMembershipRes.body?.code).toBe('ORG_MEMBERSHIP_REVOKED');
+      expect(await receiptRowsForRequestId(h.client, noMembershipRequestId)).toHaveLength(0);
         }
       );
 
       itDB(
         'GET /commission-rates (historical read): 200 for superadminActive, 403 (never 410) for a non-superadmin',
         async (h) => {
-          const app = buildConfigApp();
-          const superadminRes = await request(app)
-            .get(`${CONFIG_BASE}/commission-rates`)
-            .set('Authorization', `Bearer ${h.actors.superadminActive.token}`);
-          expect(superadminRes.status).toBe(200);
+      const app = buildConfigApp();
+      const superadminRes = await request(app)
+        .get(`${CONFIG_BASE}/commission-rates`)
+        .set('Authorization', `Bearer ${h.actors.superadminActive.token}`);
+      expect(superadminRes.status).toBe(200);
 
-          const ownerRes = await request(app)
-            .get(`${CONFIG_BASE}/commission-rates`)
-            .set('Authorization', `Bearer ${h.actors.activeOwner.token}`);
-          expect(ownerRes.status).toBe(403);
-          expect(ownerRes.status).not.toBe(410);
+      const ownerRes = await request(app)
+        .get(`${CONFIG_BASE}/commission-rates`)
+        .set('Authorization', `Bearer ${h.actors.activeOwner.token}`);
+      expect(ownerRes.status).toBe(403);
+      expect(ownerRes.status).not.toBe(410);
         }
       );
     });
@@ -1680,32 +1680,32 @@ describeReal('non-economic routes are never touched by the economics guard', () 
   itDB(
     'legacy POST /campaign-links is not refused by AMD-PRT-ECONOMICS-002 (it is not in LEGACY_PARTNER_ECONOMIC_WRITERS)',
     async (h) => {
-      const app = buildLegacyApp();
-      const requestId = `${h.prefix}-positive-legacy-campaign-links`;
-      const res = await request(app)
-        .post(`${LEGACY_BASE}/campaign-links`)
-        .set('Authorization', `Bearer ${h.actors.activeOwner.token}`)
-        .set('X-Request-Id', requestId)
-        .send({ name: 'Mounted auth probe campaign' });
-      expect(res.body?.code).not.toBe(PARTNER_ECONOMICS_POLICY_CODE);
-      expect(res.body?.decision).not.toBe(PARTNER_ECONOMICS_POLICY_DECISION);
-      expect(await receiptRowsForRequestId(h.client, requestId)).toHaveLength(0);
+    const app = buildLegacyApp();
+    const requestId = `${h.prefix}-positive-legacy-campaign-links`;
+    const res = await request(app)
+      .post(`${LEGACY_BASE}/campaign-links`)
+      .set('Authorization', `Bearer ${h.actors.activeOwner.token}`)
+      .set('X-Request-Id', requestId)
+      .send({ name: 'Mounted auth probe campaign' });
+    expect(res.body?.code).not.toBe(PARTNER_ECONOMICS_POLICY_CODE);
+    expect(res.body?.decision).not.toBe(PARTNER_ECONOMICS_POLICY_DECISION);
+    expect(await receiptRowsForRequestId(h.client, requestId)).toHaveLength(0);
     }
   );
 
   itDB(
     'superadmin-config POST /review-queue/:certificationId is not refused by AMD-PRT-ECONOMICS-002',
     async (h) => {
-      const app = buildConfigApp();
-      const requestId = `${h.prefix}-positive-config-review-queue`;
-      const res = await request(app)
-        .post(`${CONFIG_BASE}/review-queue/nonexistent-certification`)
-        .set('Authorization', `Bearer ${h.actors.superadminActive.token}`)
-        .set('X-Request-Id', requestId)
-        .send({ reviewState: 'approved', notes: 'mounted auth probe' });
-      expect(res.body?.code).not.toBe(PARTNER_ECONOMICS_POLICY_CODE);
-      expect(res.body?.decision).not.toBe(PARTNER_ECONOMICS_POLICY_DECISION);
-      expect(await receiptRowsForRequestId(h.client, requestId)).toHaveLength(0);
+    const app = buildConfigApp();
+    const requestId = `${h.prefix}-positive-config-review-queue`;
+    const res = await request(app)
+      .post(`${CONFIG_BASE}/review-queue/nonexistent-certification`)
+      .set('Authorization', `Bearer ${h.actors.superadminActive.token}`)
+      .set('X-Request-Id', requestId)
+      .send({ reviewState: 'approved', notes: 'mounted auth probe' });
+    expect(res.body?.code).not.toBe(PARTNER_ECONOMICS_POLICY_CODE);
+    expect(res.body?.decision).not.toBe(PARTNER_ECONOMICS_POLICY_DECISION);
+    expect(await receiptRowsForRequestId(h.client, requestId)).toHaveLength(0);
     }
   );
 
@@ -1725,34 +1725,34 @@ describeReal('the historical-read runtime upsert is real and is NOT a policy vio
   itDB(
     'GET /program/status changes partner_program_runtime for the ACTIVE partner (expected, and distinct from the zero-mutation guarantee for denied writes)',
     async (h) => {
-      const before = await countRow(h.client, 'partner_program_runtime', 'partner_org_id = $1', [
-        h.partnerOrgId,
-      ]);
-      const beforeUpdatedAt = await h.client.query<{ updated_at: string }>(
-        `SELECT updated_at FROM partner_program_runtime WHERE partner_org_id = $1`,
-        [h.partnerOrgId]
-      );
+    const before = await countRow(h.client, 'partner_program_runtime', 'partner_org_id = $1', [
+      h.partnerOrgId,
+    ]);
+    const beforeUpdatedAt = await h.client.query<{ updated_at: string }>(
+      `SELECT updated_at FROM partner_program_runtime WHERE partner_org_id = $1`,
+      [h.partnerOrgId]
+    );
 
-      const app = buildV8App();
-      const res = await request(app)
-        .get(`${V8_BASE}/program/status`)
-        .set('Authorization', `Bearer ${h.actors.activeOwner.token}`);
-      expect(res.status).toBe(200);
+    const app = buildV8App();
+    const res = await request(app)
+      .get(`${V8_BASE}/program/status`)
+      .set('Authorization', `Bearer ${h.actors.activeOwner.token}`);
+    expect(res.status).toBe(200);
 
-      const after = await countRow(h.client, 'partner_program_runtime', 'partner_org_id = $1', [
-        h.partnerOrgId,
-      ]);
-      const afterUpdatedAt = await h.client.query<{ updated_at: string }>(
-        `SELECT updated_at FROM partner_program_runtime WHERE partner_org_id = $1`,
-        [h.partnerOrgId]
-      );
+    const after = await countRow(h.client, 'partner_program_runtime', 'partner_org_id = $1', [
+      h.partnerOrgId,
+    ]);
+    const afterUpdatedAt = await h.client.query<{ updated_at: string }>(
+      `SELECT updated_at FROM partner_program_runtime WHERE partner_org_id = $1`,
+      [h.partnerOrgId]
+    );
 
-      // getOrCreateRuntime always re-writes onboard_checklist_json/updated_at on
-      // an existing row (see partnerProgramLedgerService.ts), so the row count
-      // itself does not move (this partner org already has a runtime row from
-      // beforeAll's warm-up call) but the row IS written to on every read.
-      expect(after).toBe(before);
-      expect(afterUpdatedAt.rows[0]?.updated_at).not.toBe(beforeUpdatedAt.rows[0]?.updated_at);
+    // getOrCreateRuntime always re-writes onboard_checklist_json/updated_at on
+    // an existing row (see partnerProgramLedgerService.ts), so the row count
+    // itself does not move (this partner org already has a runtime row from
+    // beforeAll's warm-up call) but the row IS written to on every read.
+    expect(after).toBe(before);
+    expect(afterUpdatedAt.rows[0]?.updated_at).not.toBe(beforeUpdatedAt.rows[0]?.updated_at);
     }
   );
 });
