@@ -12,7 +12,7 @@ const SUPPORT_KEY = process.env.TEST_SUPPORT_KEY || 'local-test-support-key-chan
 test.describe('Partner V8 zero-writer — mounted signed session', () => {
   test.setTimeout(180_000);
 
-  test('uses governed company/campaign/payout writers and never retries a failed mutation through legacy', async ({ page }) => {
+  test('uses governed company/campaign writers and keeps approved-out economics read-only without legacy mutation fallback', async ({ page }) => {
     const state = readTestSupportState();
     const run = `prt-v8-${randomUUID().slice(0, 8)}`;
     const headers = { ...getAuthHeader(), 'content-type': 'application/json' };
@@ -77,19 +77,29 @@ test.describe('Partner V8 zero-writer — mounted signed session', () => {
           WHERE partner_org_id=$1`,
         [partnerOrgId]
       );
-      const payoutSettings = await fixtureApi.put('/api/v8/partner/payout-settings', {
-        headers,
-        data: {
-          payoutMethod: 'BANK_TRANSFER',
-          payoutAccount: {
-            accountHolderName: 'PRT V8 Owner',
-            iban: 'DE89370400440532013000',
-            bicSwift: 'COBADEFFXXX',
-            bankName: 'Test Bank',
-          },
-        },
-      });
-      expect(payoutSettings.status(), await payoutSettings.text()).toBe(200);
+      // Historical economics fixture only. AMD-PRT-ECONOMICS-002 forbids using
+      // a product mutation API to manufacture payout readiness; direct writes
+      // here are disposable test setup for the read-only signed UI proof.
+      const historicalPayoutAccount = {
+        accountHolderName: 'PRT V8 Owner',
+        iban: 'DE89370400440532013000',
+        bicSwift: 'COBADEFFXXX',
+        bankName: 'Test Bank',
+      };
+      await pool.query(
+        `UPDATE partner_organizations
+            SET payout_threshold=100, payout_method='BANK_TRANSFER', auto_payout_enabled=FALSE,
+                updated_at=CURRENT_TIMESTAMP
+          WHERE id=$1`,
+        [partnerOrgId]
+      );
+      await pool.query(
+        `INSERT INTO partner_payout_accounts
+          (id,partner_org_id,payout_method,account_details_encrypted,account_name,
+           account_last_four,currency,is_primary,is_verified,created_at,updated_at)
+         VALUES($1,$2,'BANK_TRANSFER',$3,$4,'0000','EUR',TRUE,FALSE,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)`,
+        [randomUUID(), partnerOrgId, JSON.stringify(historicalPayoutAccount), 'Test Bank']
+      );
       const earningsRead = await fixtureApi.get('/api/v8/partner/earnings-summary', { headers });
       expect(earningsRead.status(), await earningsRead.text()).toBe(200);
       const earnings = (await earningsRead.json()).data.earnings;
@@ -129,15 +139,24 @@ test.describe('Partner V8 zero-writer — mounted signed session', () => {
 
       await page.goto('/partner?tab=earnings');
       await dismissOverlayIfPresent(page);
-      const requestPayoutButton = page.getByRole('button', {
-        name: /Zażądaj wypłaty|Request payout/i,
-      });
-      await expect(requestPayoutButton).toBeEnabled();
-      const payoutResponse = page.waitForResponse(
-        (res) => res.url().includes('/api/v8/partner/payouts/request') && res.request().method() === 'POST'
-      );
-      await requestPayoutButton.evaluate((button: HTMLButtonElement) => button.click());
-      expect((await payoutResponse).status()).toBe(201);
+      await expect(page.getByTestId('partner-economics-approved-out')).toBeVisible();
+      await expect(page.getByText(/Payout operations are unavailable/i)).toBeVisible();
+      await expect(
+        page.getByRole('button', { name: /Zażądaj wypłaty|Request payout/i })
+      ).toHaveCount(0);
+
+      await page.goto('/partner?tab=payout-settings');
+      await dismissOverlayIfPresent(page);
+      await expect(page.getByText('Payout operations unavailable', { exact: true })).toBeVisible();
+      await expect(page.getByText(/AMD-PRT-ECONOMICS-002/)).toBeVisible();
+      await expect(page.getByTestId('historical-payout-method')).toHaveText(/BANK TRANSFER/i);
+      await expect(page.getByText('PRT V8 Owner', { exact: true })).toBeVisible();
+      await expect(page.getByText('DE89370400440532013000', { exact: true })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Save Changes' })).toHaveCount(0);
+      await expect(page.getByDisplayValue('PRT V8 Owner')).toHaveCount(0);
+      await expect(page.getByDisplayValue('DE89370400440532013000')).toHaveCount(0);
+      await expect(page.getByRole('button', { name: /^Bank Transfer/i })).toHaveCount(0);
+      expect(legacyMutations).toEqual([]);
 
       await page.route('**/api/v8/partner/organization', async (route) => {
         if (route.request().method() === 'PUT') {
