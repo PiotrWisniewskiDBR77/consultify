@@ -873,7 +873,8 @@ test('TLS-05: signed creator and separate approver freeze, promote, replay and c
     coldContext = await signedContext(browser, owner);
     const coldPage = await coldContext.newPage();
     await coldPage.goto(`/discovery-tools?docId=${encodeURIComponent(sessionId)}`);
-    await coldPage.getByRole('button', { name: /Outputs & Actions/i }).click();
+    await coldPage.getByRole('button', { name: /SWOT Build/i }).click();
+    await coldPage.getByRole('tab', { name: /Weaknesses|Słabe strony/i }).click();
     await expect(coldPage.getByText(marker)).toBeVisible({ timeout: 30_000 });
     await coldPage.goto(`/reports/builder/${encodeURIComponent(reportId)}`);
     await coldPage.reload();
