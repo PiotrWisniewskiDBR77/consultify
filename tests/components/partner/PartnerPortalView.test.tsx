@@ -31,12 +31,21 @@ vi.mock('../../../src/services/api/v8', () => ({
     getReferralAnalytics: vi.fn(),
     getEarningsSummary: vi.fn(),
     getProgramStatus: vi.fn(),
+    getAttributions: vi.fn(),
+    connect: vi.fn(),
+    startCertificationExam: vi.fn(),
+    submitCertificationExam: vi.fn(),
   },
   shouldFallbackToLegacyPartner: () => false,
 }));
 
+vi.mock('../../../src/services/api/v8/partner', () => ({
+  isPartnerLegacyRollbackEnabled: vi.fn(),
+}));
+
 import { Api } from '../../../src/services/api';
 import { V8PartnerApi } from '../../../src/services/api/v8';
+import { isPartnerLegacyRollbackEnabled } from '../../../src/services/api/v8/partner';
 import { PartnerPortalViewNew } from '../../../src/views/partner/PartnerPortalView';
 
 // Test wrapper with providers
@@ -49,6 +58,7 @@ const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 describe('PartnerPortalView', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(isPartnerLegacyRollbackEnabled).mockReturnValue(false);
     vi.mocked(V8PartnerApi.getReferralAnalytics).mockResolvedValue({
       analytics: {
         totalClicks: 42,
@@ -88,6 +98,90 @@ describe('PartnerPortalView', () => {
       whatNext: [],
       hold: null,
     } as any);
+    vi.mocked(V8PartnerApi.getAttributions).mockResolvedValue({ attributions: [] } as any);
+  });
+
+  describe('V8 mutation cutover', () => {
+    const connectionResponses = () => {
+      let connected = false;
+      vi.mocked(Api.get).mockImplementation(async (url: string) => {
+        if (url === '/api/partners/connection') {
+          return {
+            success: true,
+            data: {
+              data: {
+                connected,
+                selfConnectEnabled: true,
+                organization: connected ? { name: 'Partner One' } : null,
+              },
+            },
+          } as any;
+        }
+        throw new Error(`Unexpected GET ${url}`);
+      });
+      return () => {
+        connected = true;
+      };
+    };
+
+    it('preselects V8 connect and never calls the legacy writer by default', async () => {
+      const markConnected = connectionResponses();
+      vi.mocked(V8PartnerApi.connect).mockImplementation(async () => {
+        markConnected();
+        return { connected: true, organization: { id: 'partner-1', name: 'Partner One' } };
+      });
+
+      render(
+        <TestWrapper>
+          <PartnerPortalViewNew />
+        </TestWrapper>
+      );
+
+      fireEvent.click(
+        await screen.findByRole('button', {
+          name: /Utwórz i połącz profil|Create and connect profile|partner\.connect\.cta/,
+        })
+      );
+
+      await waitFor(() =>
+        expect(V8PartnerApi.connect).toHaveBeenCalledWith(
+          { name: undefined },
+          expect.stringMatching(/^connect-/)
+        )
+      );
+      expect(Api.post).not.toHaveBeenCalledWith('/api/partners/connect', expect.anything());
+    });
+
+    it('selects legacy connect only when rollback was enabled before the request', async () => {
+      const markConnected = connectionResponses();
+      vi.mocked(isPartnerLegacyRollbackEnabled).mockReturnValue(true);
+      vi.mocked(Api.post).mockImplementation(async (url: string) => {
+        if (url === '/api/partners/connect') {
+          markConnected();
+          return {
+            success: true,
+            data: { data: { connected: true, organization: { id: 'partner-1' } } },
+          } as any;
+        }
+        throw new Error(`Unexpected POST ${url}`);
+      });
+
+      render(
+        <TestWrapper>
+          <PartnerPortalViewNew />
+        </TestWrapper>
+      );
+      fireEvent.click(
+        await screen.findByRole('button', {
+          name: /Utwórz i połącz profil|Create and connect profile|partner\.connect\.cta/,
+        })
+      );
+
+      await waitFor(() =>
+        expect(Api.post).toHaveBeenCalledWith('/api/partners/connect', { name: undefined })
+      );
+      expect(V8PartnerApi.connect).not.toHaveBeenCalled();
+    });
   });
 
   afterEach(() => {

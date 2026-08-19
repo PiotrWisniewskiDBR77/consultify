@@ -1355,6 +1355,7 @@ export async function getPartnerEmployees(
   const { status, limit = 50, offset = 0 } = options;
   const statusFilter =
     typeof status === 'string' && status.trim().length > 0 ? status.trim().toLowerCase() : null;
+  const statusClause = statusFilter ? `AND LOWER(COALESCE(pu.status, '')) = ?` : '';
 
   try {
     const rows = await DbPromise.all<
@@ -1380,17 +1381,20 @@ export async function getPartnerEmployees(
          u.last_login,
          sessions.last_active_at
        FROM partner_users pu
-       LEFT JOIN users u ON u.id = pu.user_id
+       LEFT JOIN users u ON u.id = pu.user_id::text
        LEFT JOIN (
          SELECT user_id, MAX(last_active_at) as last_active_at
          FROM user_sessions
          GROUP BY user_id
-       ) sessions ON sessions.user_id = pu.user_id
+       ) sessions ON sessions.user_id = pu.user_id::text
        WHERE pu.partner_org_id = ?
-         AND (? IS NULL OR LOWER(COALESCE(pu.status, '')) = ?)
+         ${statusClause}
        ORDER BY COALESCE(sessions.last_active_at, u.last_login, pu.updated_at, pu.joined_at) DESC
        LIMIT ? OFFSET ?`,
-      [partnerOrgId, statusFilter, statusFilter, limit, offset]
+      statusFilter
+        ? [partnerOrgId, statusFilter, limit, offset]
+        : [partnerOrgId, limit, offset],
+      { fallback: false }
     );
 
     return rows.map((row) => {
@@ -1418,7 +1422,7 @@ export async function getPartnerEmployees(
     });
   } catch (err: any) {
     logger.error('[PartnerReferralService] Error getting partner employees:', err);
-    return [];
+    throw err;
   }
 }
 

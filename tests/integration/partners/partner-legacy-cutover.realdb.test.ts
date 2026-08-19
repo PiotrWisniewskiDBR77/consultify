@@ -408,13 +408,36 @@ describe.sequential('Partner legacy cutover guard (real PG)', () => {
           .set('Authorization', `Bearer ${token()}`)
       ).status
     ).toBe(200);
-    expect(
-      (
-        await supertest(app())
-          .get('/api/v8/partner/employees')
-          .set('Authorization', `Bearer ${token()}`)
-      ).status
-    ).toBe(200);
+    const employees = await supertest(app())
+      .get('/api/v8/partner/employees')
+      .set('Authorization', `Bearer ${token()}`);
+    expect(employees.status).toBe(200);
+    expect(employees.body.data.employees).toContainEqual(
+      expect.objectContaining({
+        id: userId,
+        employeeName: 'Partner Owner',
+        email: `${userId}@test.local`,
+        accessType: 'Owner',
+        permissionSet: 'Owner',
+        status: 'ACTIVE',
+      })
+    );
+
+    await sql.query(`ALTER TABLE user_sessions RENAME TO user_sessions_prt_w4_hidden`);
+    try {
+      const failedEmployees = await supertest(app())
+        .get('/api/v8/partner/employees')
+        .set('Authorization', `Bearer ${token()}`);
+      expect(failedEmployees.status).toBe(500);
+      expect(failedEmployees.body?.data?.employees).toBeUndefined();
+    } finally {
+      await sql.query(`ALTER TABLE user_sessions_prt_w4_hidden RENAME TO user_sessions`);
+    }
+    const recoveredEmployees = await supertest(app())
+      .get('/api/v8/partner/employees')
+      .set('Authorization', `Bearer ${token()}`);
+    expect(recoveredEmployees.status).toBe(200);
+    expect(recoveredEmployees.body.data.employees).toHaveLength(1);
     const baseline = await sensitiveSnapshot();
     for (const writer of writers) {
       const responses = await Promise.all(Array.from({ length: 4 }, () => postV8(writer.path)));

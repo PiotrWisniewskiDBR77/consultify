@@ -60,6 +60,7 @@ import {
 } from '../../config/partnerKnowledge';
 import { ROUTES } from '../../routes/routeConfig';
 import { Api } from '../../services/api';
+import { isPartnerLegacyRollbackEnabled } from '../../services/api/v8/partner';
 import {
   shouldFallbackToLegacyPartner,
   V8PartnerApi,
@@ -100,6 +101,8 @@ const PARTNER_SECTIONS = new Set<PartnerSection>([
   'regions',
   'public-listing',
 ]);
+
+const partnerMutationKey = (operation: string) => `${operation}-${globalThis.crypto.randomUUID()}`;
 
 function isPartnerSection(value: string | null): value is PartnerSection {
   return Boolean(value && PARTNER_SECTIONS.has(value as PartnerSection));
@@ -146,8 +149,9 @@ const DashboardSection: React.FC = () => {
   const { t } = useTranslation();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [v8RuntimeSummary, setV8RuntimeSummary] = useState<PartnerRuntimeSummary | null>(null);
-  const [canonicalRuntime, setCanonicalRuntime] =
-    useState<PartnerCanonicalRuntimeSnapshot | null>(null);
+  const [canonicalRuntime, setCanonicalRuntime] = useState<PartnerCanonicalRuntimeSnapshot | null>(
+    null
+  );
   const [onboardingStatus, setOnboardingStatus] = useState<V8PartnerOnboardingStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1027,9 +1031,7 @@ function normalizeClientOrganization(
 ): ClientOrganization {
   const rawName = client.name || client.organizationName || client.clientName;
   const resolved =
-    (client as any).nameResolution === 'UNRESOLVED'
-      ? null
-      : String(rawName ?? '').trim() || null;
+    (client as any).nameResolution === 'UNRESOLVED' ? null : String(rawName ?? '').trim() || null;
   return {
     id: String(client.id || client.organizationId || 'client'),
     // Empty string marks "unresolved"; the table cell renders the localized
@@ -1548,13 +1550,14 @@ const CertificationSection: React.FC<{
       setExamOpen(true);
 
       const lang = navigator.language?.toLowerCase().includes('pl') ? 'pl' : 'en';
-      const resp = await Api.post(`/api/partners/certifications/${certId}/exam/start`, {
-        language: lang,
-      });
-      if (!resp?.success) throw new Error(resp?.error || 'Failed to start exam');
-
-      const payload = resp?.data;
-      const data = payload?.data;
+      const useLegacy = isPartnerLegacyRollbackEnabled();
+      const legacyResponse = useLegacy
+        ? await Api.post(`/api/partners/certifications/${certId}/exam/start`, { language: lang })
+        : null;
+      const data = useLegacy
+        ? legacyResponse?.data?.data
+        : await V8PartnerApi.startCertificationExam(certId, lang, partnerMutationKey('exam-start'));
+      if (!data) throw new Error(legacyResponse?.error || 'Failed to start exam');
       setExamAttemptId(data?.attemptId || null);
       setExamDeadlineAt(data?.deadlineAt || null);
       setExamQuestions(data?.questions || []);
@@ -1572,13 +1575,19 @@ const CertificationSection: React.FC<{
         return;
       }
       setExamSubmitting(true);
-      const resp = await Api.post(`/api/partners/certifications/${examCertId}/exam/submit`, {
-        attemptId: examAttemptId,
-        answers: examAnswers,
-      });
-      if (!resp?.success) throw new Error(resp?.error || 'Submit failed');
-      const payload = resp?.data;
-      const data = payload?.data;
+      const request = { attemptId: examAttemptId, answers: examAnswers };
+      const useLegacy = isPartnerLegacyRollbackEnabled();
+      const legacyResponse = useLegacy
+        ? await Api.post(`/api/partners/certifications/${examCertId}/exam/submit`, request)
+        : null;
+      const data = useLegacy
+        ? legacyResponse?.data?.data
+        : await V8PartnerApi.submitCertificationExam(
+            examCertId,
+            request,
+            partnerMutationKey('exam-submit')
+          );
+      if (!data) throw new Error(legacyResponse?.error || 'Submit failed');
       setExamResult({ passed: Boolean(data?.passed), scorePercent: data?.scorePercent || 0 });
       if (data?.passed) {
         toast.success('Exam passed');
@@ -3219,12 +3228,15 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
       setConnectError(null);
 
       const name = String(connectName || '').trim();
-      const payload = await Api.post('/api/partners/connect', { name: name || undefined });
-      const respPayload = payload?.data;
-      const data = respPayload?.data;
+      const request = { name: name || undefined };
+      const useLegacy = isPartnerLegacyRollbackEnabled();
+      const legacyResponse = useLegacy ? await Api.post('/api/partners/connect', request) : null;
+      const data = useLegacy
+        ? legacyResponse?.data?.data
+        : await V8PartnerApi.connect(request, partnerMutationKey('connect'));
 
-      if (!payload?.success || !data?.connected) {
-        throw new Error(respPayload?.error || 'Failed to connect partner profile');
+      if (!data?.connected) {
+        throw new Error(legacyResponse?.data?.error || 'Failed to connect partner profile');
       }
 
       toast.success(

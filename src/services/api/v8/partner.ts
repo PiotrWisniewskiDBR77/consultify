@@ -314,6 +314,35 @@ export interface V8PartnerPayoutSettingsUpdatePayload {
   payoutAccount: V8PartnerPayoutAccount | null;
 }
 
+export interface V8PartnerConnectPayload {
+  name?: string;
+  contactEmail?: string;
+}
+
+export interface V8PartnerConnectResult {
+  connected: boolean;
+  organization: { id: string; name?: string; [key: string]: unknown };
+  [key: string]: unknown;
+}
+
+export interface V8PartnerExamStartResult {
+  attemptId: string;
+  deadlineAt?: string | null;
+  questions: unknown[];
+  [key: string]: unknown;
+}
+
+export interface V8PartnerExamSubmitPayload {
+  attemptId: string;
+  answers: Record<string, string>;
+}
+
+export interface V8PartnerExamSubmitResult {
+  passed: boolean;
+  scorePercent: number;
+  [key: string]: unknown;
+}
+
 export const isPartnerLegacyRollbackEnabled = (): boolean =>
   String(import.meta.env.VITE_PARTNER_LEGACY_ROLLBACK_ENABLED || '').toLowerCase() === 'true';
 
@@ -343,6 +372,30 @@ export const V8PartnerApi = {
   getClients: () => v8Get<{ clients: V8PartnerClient[] }>('/partner/clients'),
   getProjects: () => v8Get<{ projects: V8PartnerProject[] }>('/partner/projects'),
   getEmployees: () => v8Get<{ employees: V8PartnerEmployee[] }>('/partner/employees'),
+  connect: (body: V8PartnerConnectPayload, idempotencyKey: string) =>
+    v8Post<V8PartnerConnectResult>('/partner/connect', body, {
+      extraHeaders: { 'Idempotency-Key': idempotencyKey },
+    }),
+  startCertificationExam: (
+    certificationId: string,
+    language: 'en' | 'pl',
+    idempotencyKey: string
+  ) =>
+    v8Post<V8PartnerExamStartResult>(
+      `/partner/certifications/${encodeURIComponent(certificationId)}/exam/start`,
+      { language },
+      { extraHeaders: { 'Idempotency-Key': idempotencyKey } }
+    ),
+  submitCertificationExam: (
+    certificationId: string,
+    body: V8PartnerExamSubmitPayload,
+    idempotencyKey: string
+  ) =>
+    v8Post<V8PartnerExamSubmitResult>(
+      `/partner/certifications/${encodeURIComponent(certificationId)}/exam/submit`,
+      body,
+      { extraHeaders: { 'Idempotency-Key': idempotencyKey } }
+    ),
   getOnboardingStatus: () =>
     v8Get<{ status: V8PartnerOnboardingStatus }>('/partner/onboarding-status'),
   getProgramStatus: () => v8Get<V8PartnerProgramStatus>('/partner/program/status'),

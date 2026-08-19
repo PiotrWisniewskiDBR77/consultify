@@ -117,6 +117,40 @@ describe('V8PartnerApi', () => {
     expect(data.employees[0].id).toBe('user-1');
   });
 
+  it('maps connect and certification mutations to exact V8 routes with idempotency', async () => {
+    vi.mocked(v8Post)
+      .mockResolvedValueOnce({ connected: true, organization: { id: 'partner-1' } })
+      .mockResolvedValueOnce({ attemptId: 'attempt-1', questions: [] })
+      .mockResolvedValueOnce({ passed: true, scorePercent: 100 });
+
+    await V8PartnerApi.connect({ name: 'Partner One' }, 'connect-key');
+    await V8PartnerApi.startCertificationExam('cert/encoded', 'pl', 'start-key');
+    await V8PartnerApi.submitCertificationExam(
+      'cert/encoded',
+      { attemptId: 'attempt-1', answers: { q1: 'a' } },
+      'submit-key'
+    );
+
+    expect(v8Post).toHaveBeenNthCalledWith(
+      1,
+      '/partner/connect',
+      { name: 'Partner One' },
+      { extraHeaders: { 'Idempotency-Key': 'connect-key' } }
+    );
+    expect(v8Post).toHaveBeenNthCalledWith(
+      2,
+      '/partner/certifications/cert%2Fencoded/exam/start',
+      { language: 'pl' },
+      { extraHeaders: { 'Idempotency-Key': 'start-key' } }
+    );
+    expect(v8Post).toHaveBeenNthCalledWith(
+      3,
+      '/partner/certifications/cert%2Fencoded/exam/submit',
+      { attemptId: 'attempt-1', answers: { q1: 'a' } },
+      { extraHeaders: { 'Idempotency-Key': 'submit-key' } }
+    );
+  });
+
   it('requests partner referral tools from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       tools: {
