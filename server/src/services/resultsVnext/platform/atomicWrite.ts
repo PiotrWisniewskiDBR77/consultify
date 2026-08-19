@@ -154,6 +154,11 @@ export const EVENT_TYPE_CONSUMER_GROUPS: Readonly<Record<string, readonly string
   // immediately above (a manual escalation overlay is exactly as
   // MyWork-relevant as the automatic one).
   'kpi.deviation_manager_escalated': ['mywork_projection'],
+  'kpi.recovery_action_created': ['mywork_projection'],
+  'kpi.recovery_action_updated': ['mywork_projection'],
+  'kpi.recovery_action_task_linked': ['mywork_projection'],
+  'kpi.recovery_checkpoint_created': ['mywork_projection'],
+  'kpi.recovery_checkpoint_resolved': ['mywork_projection'],
 
   // KPI-E004 (docs/product/results-vnext/KPI_E004_DESIGN.md §B/§D) —
   // Scorecards. The design doc's own task spec names 3 explicitly
@@ -922,6 +927,11 @@ export interface ExecuteAtomicCreateParams<TResult> {
    * event-ledger idempotency guard. */
   idempotencyKey?: string;
 
+  /** Optional authorization/tenancy preflight executed while the per-key
+   * advisory lock is held, before an existing idempotent result may be
+   * disclosed. Backward-compatible: existing callers omit it. */
+  preflight?: (client: PoolClient) => Promise<void>;
+
   /**
    * Performs the domain INSERT(s) for the new aggregate on the pinned
    * client and returns whatever shape the caller wants back as the command
@@ -978,6 +988,7 @@ export async function executeAtomicCreate<TResult>(
     buildEvent,
     loadExistingResult,
     validateExistingResult,
+    preflight,
   } = params;
 
   const client: PoolClient = await acquirePgClient();
@@ -988,6 +999,7 @@ export async function executeAtomicCreate<TResult>(
       await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [
         `${organizationId}:${idempotencyKey}`,
       ]);
+      await preflight?.(client);
       const existingResult = await client.query<ExistingEventRow>(
         `SELECT event_id, sequence, event_type, aggregate_type, aggregate_id, organization_id,
                 occurred_at, recorded_at, before_state, after_state, resulting_version, idempotency_key

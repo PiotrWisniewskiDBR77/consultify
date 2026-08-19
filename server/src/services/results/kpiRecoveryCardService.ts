@@ -85,6 +85,7 @@ export interface RecoveryActionRow {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  row_version?: number;
 }
 
 export interface RecoveryCheckpointRow {
@@ -98,6 +99,7 @@ export interface RecoveryCheckpointRow {
   created_by: string | null;
   created_at: string;
   resolved_at: string | null;
+  row_version?: number;
 }
 
 /**
@@ -120,6 +122,7 @@ export interface RecoveryActionDTO {
   taskLinkError: string | null;
   createdAt: string;
   updatedAt: string;
+  rowVersion?: number;
 }
 
 export interface RecoveryCheckpointDTO {
@@ -130,6 +133,7 @@ export interface RecoveryCheckpointDTO {
   kpiTimeSeriesId: string | null;
   createdAt: string;
   resolvedAt: string | null;
+  rowVersion?: number;
 }
 
 export interface RecoveryCardDTO {
@@ -207,6 +211,7 @@ export function toActionDTO(row: RecoveryActionRow): RecoveryActionDTO {
     taskLinkError: row.task_link_error,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    rowVersion: row.row_version,
   };
 }
 
@@ -220,6 +225,7 @@ export function toCheckpointDTO(row: RecoveryCheckpointRow): RecoveryCheckpointD
     kpiTimeSeriesId: row.kpi_time_series_id,
     createdAt: row.created_at,
     resolvedAt: row.resolved_at,
+    rowVersion: row.row_version,
   };
 }
 
@@ -274,7 +280,13 @@ async function fetchRecoveryActionRows(
   recoveryCardId: string
 ): Promise<RecoveryActionRow[]> {
   return db.all<RecoveryActionRow>(
-    `SELECT * FROM kpi_recovery_actions WHERE recovery_card_id = ? AND organization_id = ? ORDER BY created_at ASC`,
+    `SELECT action_id AS id, organization_id, recovery_card_id, action_type, title,
+            description, owner_user_id, due_date, status, linked_task_id,
+            task_link_status, task_link_error, task_link_attempted_at,
+            NULL::text AS idempotency_key, created_by, created_at, updated_at, row_version
+       FROM rvn_kpi_recovery_actions
+      WHERE recovery_card_id = ? AND organization_id = ?
+      ORDER BY created_at ASC, action_id ASC`,
     [recoveryCardId, orgId]
   );
 }
@@ -285,7 +297,11 @@ async function fetchRecoveryCheckpointRows(
   recoveryCardId: string
 ): Promise<RecoveryCheckpointRow[]> {
   return db.all<RecoveryCheckpointRow>(
-    `SELECT * FROM kpi_recovery_checkpoints WHERE recovery_card_id = ? AND organization_id = ? ORDER BY checkpoint_date ASC`,
+    `SELECT checkpoint_id AS id, organization_id, recovery_card_id, checkpoint_date,
+            status, kpi_time_series_id, notes, created_by, created_at, resolved_at, row_version
+       FROM rvn_kpi_recovery_checkpoints
+      WHERE recovery_card_id = ? AND organization_id = ?
+      ORDER BY checkpoint_date ASC, created_at ASC, checkpoint_id ASC`,
     [recoveryCardId, orgId]
   );
 }

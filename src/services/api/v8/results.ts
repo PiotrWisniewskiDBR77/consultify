@@ -1,4 +1,21 @@
 import { v8Delete, v8Get, v8Post, v8Put } from './client';
+import { Api } from '@/services/api';
+
+const canonicalResponseBody = (response: any): any => response?.data ?? response;
+const requireCanonicalRecoveryAction = (response: any): V8ResultsKpiRecoveryAction => {
+  const action = canonicalResponseBody(response)?.action;
+  if (!action?.id || !Number.isInteger(action.rowVersion)) {
+    throw new Error('Canonical recovery action response is incomplete');
+  }
+  return action as V8ResultsKpiRecoveryAction;
+};
+const requireCanonicalRecoveryCheckpoint = (response: any): V8ResultsKpiRecoveryCheckpoint => {
+  const checkpoint = canonicalResponseBody(response)?.checkpoint;
+  if (!checkpoint?.id || !Number.isInteger(checkpoint.rowVersion)) {
+    throw new Error('Canonical recovery checkpoint response is incomplete');
+  }
+  return checkpoint as V8ResultsKpiRecoveryCheckpoint;
+};
 
 /**
  * @deprecated V8 Results API (`/api/v8/results/*`) is the canonical SSOT.
@@ -850,43 +867,38 @@ export const V8ResultsApi = {
   // escalateRecoveryCard above and close/continue/escalate below, which DO
   // return the full card with actions/checkpoints embedded.
   createRecoveryAction: (cardId: string, payload: V8ResultsCreateRecoveryActionPayload) =>
-    v8Post<V8ResultsKpiRecoveryAction>(
-      `/results/recovery-cards/${encodeURIComponent(cardId)}/actions`,
-      payload
-    ),
+    Api.post(`/vnext/results/kpi/recovery-cards/${encodeURIComponent(cardId)}/actions`, payload)
+      .then(requireCanonicalRecoveryAction),
   updateRecoveryAction: (
     cardId: string,
     actionId: string,
     payload: V8ResultsUpdateRecoveryActionPayload
   ) =>
-    v8Put<V8ResultsKpiRecoveryAction>(
-      `/results/recovery-cards/${encodeURIComponent(cardId)}/actions/${encodeURIComponent(actionId)}`,
-      payload
-    ),
+    Api.patch(`/vnext/results/kpi/recovery-cards/${encodeURIComponent(cardId)}/actions/${encodeURIComponent(actionId)}`, payload)
+      .then(requireCanonicalRecoveryAction),
   // POST link-task does NOT return a bare ActionDTO — the route wraps it as
   // `{ linked, linkedTaskId, action }` (linkRecoveryActionTask service result
   // spread with a freshly-reloaded action DTO). Verified against
   // server/src/routes/v8/results.routes.ts (2026-08-01, parallel backend
   // track): `data: { ...result, action: freshAction ? toActionDTO(...) : null }`.
-  linkRecoveryActionTask: (cardId: string, actionId: string) =>
-    v8Post<V8ResultsLinkRecoveryActionTaskResponse>(
-      `/results/recovery-cards/${encodeURIComponent(cardId)}/actions/${encodeURIComponent(actionId)}/link-task`,
-      {}
-    ),
+  linkRecoveryActionTask: (cardId: string, actionId: string, payload: V8ResultsLinkRecoveryActionTaskPayload) =>
+    Api.post(`/vnext/results/kpi/recovery-cards/${encodeURIComponent(cardId)}/actions/${encodeURIComponent(actionId)}/link-task`, payload)
+      .then((response) => {
+        const body = canonicalResponseBody(response);
+        if (!body?.linked || !body?.linkedTaskId) throw new Error('Canonical task link response is incomplete');
+        requireCanonicalRecoveryAction({ action: body.action });
+        return body as V8ResultsLinkRecoveryActionTaskResponse;
+      }),
   createRecoveryCheckpoint: (cardId: string, payload: V8ResultsCreateRecoveryCheckpointPayload) =>
-    v8Post<V8ResultsKpiRecoveryCheckpoint>(
-      `/results/recovery-cards/${encodeURIComponent(cardId)}/checkpoints`,
-      payload
-    ),
+    Api.post(`/vnext/results/kpi/recovery-cards/${encodeURIComponent(cardId)}/checkpoints`, payload)
+      .then(requireCanonicalRecoveryCheckpoint),
   resolveRecoveryCheckpoint: (
     cardId: string,
     checkpointId: string,
     payload: V8ResultsResolveRecoveryCheckpointPayload
   ) =>
-    v8Put<V8ResultsKpiRecoveryCheckpoint>(
-      `/results/recovery-cards/${encodeURIComponent(cardId)}/checkpoints/${encodeURIComponent(checkpointId)}/resolve`,
-      payload
-    ),
+    Api.patch(`/vnext/results/kpi/recovery-cards/${encodeURIComponent(cardId)}/checkpoints/${encodeURIComponent(checkpointId)}`, payload)
+      .then(requireCanonicalRecoveryCheckpoint),
   closeRecoveryCard: (cardId: string, payload: V8ResultsCloseRecoveryCardPayload) =>
     v8Post<V8ResultsKpiRecoveryCard>(
       `/results/recovery-cards/${encodeURIComponent(cardId)}/close`,
@@ -1030,6 +1042,8 @@ export interface V8ResultsKpiRecoveryAction {
   status: V8ResultsRecoveryActionStatus;
   linkedTaskId?: string | null;
   taskLinkStatus: V8ResultsRecoveryTaskLinkStatus;
+  taskLinkError?: string | null;
+  rowVersion?: number;
 }
 
 /**
@@ -1049,6 +1063,7 @@ export interface V8ResultsKpiRecoveryCheckpoint {
   status: V8ResultsRecoveryCheckpointStatus;
   notes?: string | null;
   kpiTimeSeriesId?: string | null;
+  rowVersion?: number;
 }
 
 /**
@@ -1124,19 +1139,29 @@ export interface V8ResultsCreateRecoveryActionPayload {
 }
 
 export interface V8ResultsUpdateRecoveryActionPayload {
+  expectedVersion: number;
   status?: V8ResultsRecoveryActionStatus;
   ownerUserId?: string;
   dueDate?: string;
+  idempotencyKey?: string;
+}
+
+export interface V8ResultsLinkRecoveryActionTaskPayload {
+  expectedVersion: number;
+  idempotencyKey?: string;
 }
 
 export interface V8ResultsCreateRecoveryCheckpointPayload {
   checkpointDate: string;
   notes?: string;
+  idempotencyKey?: string;
 }
 
 export interface V8ResultsResolveRecoveryCheckpointPayload {
+  expectedVersion: number;
   status: 'MET' | 'MISSED';
   kpiTimeSeriesId?: string;
+  idempotencyKey?: string;
 }
 
 export interface V8ResultsCloseRecoveryCardPayload {

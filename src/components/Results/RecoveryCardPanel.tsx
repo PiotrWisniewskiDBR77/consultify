@@ -33,6 +33,10 @@ import { useNavigate } from 'react-router-dom';
 
 import { ROUTES } from '@/routes/routeConfig';
 import {
+  clearPersistentCommandId,
+  persistentCommandId,
+} from '@/services/initiatives-execution/persistentCommandId';
+import {
   V8ResultsApi,
   type V8ResultsCloseRecoveryCardConflict,
   type V8ResultsKpiRecoveryAction,
@@ -46,6 +50,39 @@ import {
   type V8ResultsRecoveryExperimentVerdict,
   type V8ResultsRecoveryListItem,
 } from '@/services/api/v8/results';
+
+function recoveryIntentFingerprint(operation: string, identity: Record<string, unknown>): string {
+  return `${operation}:${JSON.stringify(identity, Object.keys(identity).sort())}`;
+}
+
+function requireCanonicalActionReadback(
+  card: V8ResultsKpiRecoveryCard,
+  expected: V8ResultsKpiRecoveryAction
+): void {
+  const actual = card.actions.find((item) => item.id === expected.id);
+  if (!actual || expected.rowVersion === undefined || actual.rowVersion !== expected.rowVersion ||
+      actual.status !== expected.status || actual.ownerUserId !== expected.ownerUserId ||
+      actual.dueDate !== expected.dueDate || actual.linkedTaskId !== expected.linkedTaskId ||
+      actual.taskLinkStatus !== expected.taskLinkStatus) {
+    const error = new Error('Canonical recovery action readback mismatch') as Error & { code?: string };
+    error.code = 'CANONICAL_READBACK_MISMATCH';
+    throw error;
+  }
+}
+
+function requireCanonicalCheckpointReadback(
+  card: V8ResultsKpiRecoveryCard,
+  expected: V8ResultsKpiRecoveryCheckpoint
+): void {
+  const actual = card.checkpoints.find((item) => item.id === expected.id);
+  if (!actual || expected.rowVersion === undefined || actual.rowVersion !== expected.rowVersion ||
+      actual.status !== expected.status || actual.kpiTimeSeriesId !== expected.kpiTimeSeriesId ||
+      actual.checkpointDate !== expected.checkpointDate) {
+    const error = new Error('Canonical recovery checkpoint readback mismatch') as Error & { code?: string };
+    error.code = 'CANONICAL_READBACK_MISMATCH';
+    throw error;
+  }
+}
 
 interface RecoveryCardPanelProps {
   kpiId: string;
@@ -637,19 +674,27 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
   const handleAddAction = useCallback(async () => {
     if (!card || !newActionTitle.trim()) return;
     setAddingAction(true);
+    const payload = {
+      title: newActionTitle.trim(),
+      description: newActionDescription.trim() || undefined,
+      actionType: newActionType,
+      ownerUserId: newActionOwner.trim() || undefined,
+      dueDate: newActionDue || undefined,
+    };
+    const fingerprint = recoveryIntentFingerprint('create-action', { cardId: card.id, ...payload });
+    const namespace = 'results-recovery-create-action';
     try {
       // createRecoveryAction returns only the new action (sub-resource
       // response) — refetch the card to pick it up in `actions` rather than
       // trying to splice the partial response into local state.
-      await V8ResultsApi.createRecoveryAction(card.id, {
-        title: newActionTitle.trim(),
-        description: newActionDescription.trim() || undefined,
-        actionType: newActionType,
-        ownerUserId: newActionOwner.trim() || undefined,
-        dueDate: newActionDue || undefined,
-        idempotencyKey: crypto.randomUUID(),
+      const created = await V8ResultsApi.createRecoveryAction(card.id, {
+        ...payload,
+        idempotencyKey: persistentCommandId(namespace, fingerprint),
       });
-      await fetchCard({ background: true });
+      const fresh = await V8ResultsApi.getRecoveryCard(deviationCaseId);
+      requireCanonicalActionReadback(fresh, created);
+      setCard(fresh);
+      clearPersistentCommandId(namespace, fingerprint);
       setNewActionTitle('');
       setNewActionDescription('');
       setNewActionOwner('');
@@ -679,6 +724,7 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
     newActionType,
     newActionOwner,
     newActionDue,
+    deviationCaseId,
     fetchCard,
     onChanged,
     t,
@@ -687,15 +733,29 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
   const handleToggleActionStatus = useCallback(
     async (action: V8ResultsKpiRecoveryAction) => {
       if (!card) return;
+      if (action.rowVersion === undefined) {
+        await fetchCard({ background: true });
+        toast.error(t('results.recoveryCard.versionConflict', 'This card changed — reloaded the latest state.'));
+        return;
+      }
       setActionBusyId(action.id);
+      const nextStatus = action.status === 'DONE' ? 'OPEN' : 'DONE';
+      const fingerprint = recoveryIntentFingerprint('update-action', {
+        cardId: card.id, actionId: action.id, expectedVersion: action.rowVersion, status: nextStatus,
+      });
+      const namespace = 'results-recovery-update-action';
       try {
-        const nextStatus = action.status === 'DONE' ? 'OPEN' : 'DONE';
         // updateRecoveryAction returns only the updated action — refetch to
         // refresh the card's `actions` array from the server.
-        await V8ResultsApi.updateRecoveryAction(card.id, action.id, {
+        const updated = await V8ResultsApi.updateRecoveryAction(card.id, action.id, {
+          expectedVersion: action.rowVersion,
           status: nextStatus,
+          idempotencyKey: persistentCommandId(namespace, fingerprint),
         });
-        await fetchCard({ background: true });
+        const fresh = await V8ResultsApi.getRecoveryCard(deviationCaseId);
+        requireCanonicalActionReadback(fresh, updated);
+        setCard(fresh);
+        clearPersistentCommandId(namespace, fingerprint);
         onChanged?.();
       } catch (error: any) {
         if (error?.status === 409) {
@@ -706,18 +766,32 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
         setActionBusyId(null);
       }
     },
-    [card, fetchCard, onChanged, t]
+    [card, deviationCaseId, fetchCard, onChanged, t]
   );
 
   const handleCancelAction = useCallback(
     async (action: V8ResultsKpiRecoveryAction) => {
       if (!card) return;
-      setActionBusyId(action.id);
-      try {
-        await V8ResultsApi.updateRecoveryAction(card.id, action.id, {
-          status: 'CANCELLED',
-        });
+      if (action.rowVersion === undefined) {
         await fetchCard({ background: true });
+        toast.error(t('results.recoveryCard.versionConflict', 'This card changed — reloaded the latest state.'));
+        return;
+      }
+      setActionBusyId(action.id);
+      const fingerprint = recoveryIntentFingerprint('cancel-action', {
+        cardId: card.id, actionId: action.id, expectedVersion: action.rowVersion, status: 'CANCELLED',
+      });
+      const namespace = 'results-recovery-update-action';
+      try {
+        const updated = await V8ResultsApi.updateRecoveryAction(card.id, action.id, {
+          expectedVersion: action.rowVersion,
+          status: 'CANCELLED',
+          idempotencyKey: persistentCommandId(namespace, fingerprint),
+        });
+        const fresh = await V8ResultsApi.getRecoveryCard(deviationCaseId);
+        requireCanonicalActionReadback(fresh, updated);
+        setCard(fresh);
+        clearPersistentCommandId(namespace, fingerprint);
         onChanged?.();
       } catch (error: any) {
         if (error?.status === 409) {
@@ -728,18 +802,35 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
         setActionBusyId(null);
       }
     },
-    [card, fetchCard, onChanged, t]
+    [card, deviationCaseId, fetchCard, onChanged, t]
   );
 
   const handleLinkTask = useCallback(
     async (action: V8ResultsKpiRecoveryAction) => {
       if (!card) return;
+      if (action.rowVersion === undefined) {
+        await fetchCard({ background: true });
+        toast.error(t('results.recoveryCard.versionConflict', 'This card changed — reloaded the latest state.'));
+        return;
+      }
       setActionBusyId(action.id);
+      const fingerprint = recoveryIntentFingerprint('link-task', {
+        cardId: card.id, actionId: action.id, expectedVersion: action.rowVersion,
+      });
+      const namespace = 'results-recovery-link-task';
       try {
         // linkRecoveryActionTask returns only the action — refetch for the
         // card-level `actions` array to reflect the new taskLinkStatus.
-        await V8ResultsApi.linkRecoveryActionTask(card.id, action.id);
-        await fetchCard({ background: true });
+        const linked = await V8ResultsApi.linkRecoveryActionTask(card.id, action.id, {
+          expectedVersion: action.rowVersion,
+          idempotencyKey: persistentCommandId(namespace, fingerprint),
+        });
+        if (!linked.action || !linked.linkedTaskId) throw new Error('Canonical task link response is incomplete');
+        const fresh = await V8ResultsApi.getRecoveryCard(deviationCaseId);
+        requireCanonicalActionReadback(fresh, linked.action);
+        if (linked.action.linkedTaskId !== linked.linkedTaskId) throw new Error('Canonical task identity mismatch');
+        setCard(fresh);
+        clearPersistentCommandId(namespace, fingerprint);
         onChanged?.();
       } catch (error: any) {
         if (error?.status === 409) {
@@ -750,20 +841,26 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
         setActionBusyId(null);
       }
     },
-    [card, fetchCard, onChanged, t]
+    [card, deviationCaseId, fetchCard, onChanged, t]
   );
 
   const handleAddCheckpoint = useCallback(async () => {
     if (!card || !newCheckpointDate) return;
     setAddingCheckpoint(true);
+    const payload = { checkpointDate: newCheckpointDate, notes: newCheckpointNotes.trim() || undefined };
+    const fingerprint = recoveryIntentFingerprint('create-checkpoint', { cardId: card.id, ...payload });
+    const namespace = 'results-recovery-create-checkpoint';
     try {
       // createRecoveryCheckpoint returns only the new checkpoint — refetch
       // the card to pick it up in `checkpoints`.
-      await V8ResultsApi.createRecoveryCheckpoint(card.id, {
-        checkpointDate: newCheckpointDate,
-        notes: newCheckpointNotes.trim() || undefined,
+      const created = await V8ResultsApi.createRecoveryCheckpoint(card.id, {
+        ...payload,
+        idempotencyKey: persistentCommandId(namespace, fingerprint),
       });
-      await fetchCard({ background: true });
+      const fresh = await V8ResultsApi.getRecoveryCard(deviationCaseId);
+      requireCanonicalCheckpointReadback(fresh, created);
+      setCard(fresh);
+      clearPersistentCommandId(namespace, fingerprint);
       setNewCheckpointDate('');
       setNewCheckpointNotes('');
       toast.success(t('results.recoveryCard.checkpointAdded', 'Checkpoint added.'));
@@ -783,21 +880,36 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
     } finally {
       setAddingCheckpoint(false);
     }
-  }, [card, newCheckpointDate, newCheckpointNotes, fetchCard, onChanged, t]);
+  }, [card, deviationCaseId, newCheckpointDate, newCheckpointNotes, fetchCard, onChanged, t]);
 
   const handleResolveCheckpoint = useCallback(
     async (checkpoint: V8ResultsKpiRecoveryCheckpoint, status: 'MET' | 'MISSED') => {
       if (!card) return;
+      if (checkpoint.rowVersion === undefined) {
+        await fetchCard({ background: true });
+        toast.error(t('results.recoveryCard.versionConflict', 'This card changed — reloaded the latest state.'));
+        return;
+      }
       setCheckpointBusyId(checkpoint.id);
+      const kpiTimeSeriesId = checkpointMeasurementDraft[checkpoint.id]?.trim() || undefined;
+      const fingerprint = recoveryIntentFingerprint('resolve-checkpoint', {
+        cardId: card.id, checkpointId: checkpoint.id, expectedVersion: checkpoint.rowVersion,
+        status, kpiTimeSeriesId,
+      });
+      const namespace = 'results-recovery-resolve-checkpoint';
       try {
-        const kpiTimeSeriesId = checkpointMeasurementDraft[checkpoint.id]?.trim() || undefined;
         // resolveRecoveryCheckpoint returns only the checkpoint — refetch to
         // refresh the card's `checkpoints` array.
-        await V8ResultsApi.resolveRecoveryCheckpoint(card.id, checkpoint.id, {
+        const resolved = await V8ResultsApi.resolveRecoveryCheckpoint(card.id, checkpoint.id, {
+          expectedVersion: checkpoint.rowVersion,
           status,
           kpiTimeSeriesId,
+          idempotencyKey: persistentCommandId(namespace, fingerprint),
         });
-        await fetchCard({ background: true });
+        const fresh = await V8ResultsApi.getRecoveryCard(deviationCaseId);
+        requireCanonicalCheckpointReadback(fresh, resolved);
+        setCard(fresh);
+        clearPersistentCommandId(namespace, fingerprint);
         onChanged?.();
       } catch (error: any) {
         if (error?.status === 409) {
@@ -808,7 +920,7 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
         setCheckpointBusyId(null);
       }
     },
-    [card, checkpointMeasurementDraft, fetchCard, onChanged, t]
+    [card, checkpointMeasurementDraft, deviationCaseId, fetchCard, onChanged, t]
   );
 
   const handleSubmitClose = useCallback(async () => {
@@ -1390,7 +1502,7 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
                   {action.status !== 'CANCELLED' ? (
                     <button
                       type="button"
-                      disabled={actionBusyId === action.id}
+                      disabled={actionBusyId === action.id || action.rowVersion === undefined}
                       onClick={() => void handleToggleActionStatus(action)}
                       className={secondaryPillCls}
                     >
@@ -1405,7 +1517,7 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
                   {action.status === 'OPEN' ? (
                     <button
                       type="button"
-                      disabled={actionBusyId === action.id}
+                      disabled={actionBusyId === action.id || action.rowVersion === undefined}
                       onClick={() => void handleCancelAction(action)}
                       className={secondaryPillCls}
                     >
@@ -1415,7 +1527,7 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
                   {action.taskLinkStatus === 'NONE' || action.taskLinkStatus === 'LINK_FAILED' ? (
                     <button
                       type="button"
-                      disabled={actionBusyId === action.id}
+                      disabled={actionBusyId === action.id || action.rowVersion === undefined}
                       onClick={() => void handleLinkTask(action)}
                       className={secondaryPillCls}
                     >
@@ -1546,7 +1658,7 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        disabled={checkpointBusyId === checkpoint.id}
+                        disabled={checkpointBusyId === checkpoint.id || checkpoint.rowVersion === undefined}
                         onClick={() => void handleResolveCheckpoint(checkpoint, 'MET')}
                         className={secondaryPillCls}
                       >
@@ -1554,7 +1666,7 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
                       </button>
                       <button
                         type="button"
-                        disabled={checkpointBusyId === checkpoint.id}
+                        disabled={checkpointBusyId === checkpoint.id || checkpoint.rowVersion === undefined}
                         onClick={() => void handleResolveCheckpoint(checkpoint, 'MISSED')}
                         className={secondaryPillCls}
                       >

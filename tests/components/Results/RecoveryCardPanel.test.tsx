@@ -151,6 +151,7 @@ function makeAction(
     status: 'OPEN',
     linkedTaskId: null,
     taskLinkStatus: 'NONE',
+    rowVersion: 1,
     ...overrides,
   };
 }
@@ -320,7 +321,7 @@ describe('RecoveryCardPanel', () => {
         priority: 'HIGH',
         lifecycleStatus: 'UNDER_REVIEW',
         actions: [makeAction()],
-        checkpoints: [{ id: 'cp-1', checkpointDate: '2026-08-15', status: 'PENDING', notes: null }],
+        checkpoints: [{ id: 'cp-1', checkpointDate: '2026-08-15', status: 'PENDING', notes: null, rowVersion: 1 }],
         dependencies: [
           { description: 'Depends on Initiative Alpha', relatedId: 'INI-2', note: 'blocked' },
         ],
@@ -374,8 +375,11 @@ describe('RecoveryCardPanel', () => {
   });
 
   it('8. adding an action sends a non-empty idempotencyKey and refetches the card', async () => {
-    vi.mocked(V8ResultsApi.getRecoveryCard).mockResolvedValue(makeCard());
-    vi.mocked(V8ResultsApi.createRecoveryAction).mockResolvedValue(makeAction());
+    const created = makeAction();
+    vi.mocked(V8ResultsApi.getRecoveryCard)
+      .mockResolvedValueOnce(makeCard())
+      .mockResolvedValueOnce(makeCard({ actions: [created] }));
+    vi.mocked(V8ResultsApi.createRecoveryAction).mockResolvedValue(created);
 
     renderPanel();
 
@@ -405,6 +409,25 @@ describe('RecoveryCardPanel', () => {
     await waitFor(() => {
       expect(V8ResultsApi.getRecoveryCard).toHaveBeenCalledTimes(2);
     });
+  });
+
+  it('8b. keeps the same durable key and draft when canonical cold readback does not confirm create', async () => {
+    window.sessionStorage.clear();
+    const created = makeAction({ id: 'action-lost' });
+    vi.mocked(V8ResultsApi.getRecoveryCard).mockResolvedValue(makeCard());
+    vi.mocked(V8ResultsApi.createRecoveryAction).mockResolvedValue(created);
+    renderPanel();
+    await screen.findByText(rc.actionsTitle);
+    const title = screen.getByPlaceholderText(rc.actionTitlePlaceholder);
+    fireEvent.change(title, { target: { value: 'Persistent recovery action' } });
+    fireEvent.click(screen.getByRole('button', { name: rc.addAction }));
+    await waitFor(() => expect(V8ResultsApi.createRecoveryAction).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByDisplayValue('Persistent recovery action')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: rc.addAction }));
+    await waitFor(() => expect(V8ResultsApi.createRecoveryAction).toHaveBeenCalledTimes(2));
+    const firstKey = vi.mocked(V8ResultsApi.createRecoveryAction).mock.calls[0][1].idempotencyKey;
+    const retryKey = vi.mocked(V8ResultsApi.createRecoveryAction).mock.calls[1][1].idempotencyKey;
+    expect(retryKey).toBe(firstKey);
   });
 
   it('9. a LINKED action shows a clickable link that navigates to /my-work with the taskId', async () => {
