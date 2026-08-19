@@ -138,6 +138,7 @@ import { PlanScenarioSurface } from './PlanScenarioSurface';
 import PortfolioHealthView from './PortfolioHealthView';
 import { PortfolioScenarioSurface } from './PortfolioScenarioSurface';
 import { SourceProposalRegistrationSurface } from './SourceProposalRegistrationSurface';
+import { CandidatesTable } from './CandidatesTable';
 import { InitiativeWizardModal } from './Wizard/InitiativeWizardModal';
 
 const MODULE_STATUSES = getStatusesForModule('initiatives');
@@ -1481,27 +1482,59 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     // The legacy "Accept candidate" write path is intentionally no longer reachable
     // from the UI: registration is a governed, idempotent server command with read-back.
     if (activeTab === 'candidates') {
+      const candidateInbox =
+        searchParams.get('candidateInbox') === 'discovery' ? 'discovery' : 'source';
+      const setCandidateInbox = (nextInbox: 'source' | 'discovery') => {
+        const next = new URLSearchParams(searchParams);
+        next.set('candidateInbox', nextInbox);
+        next.delete(nextInbox === 'source' ? 'candidateId' : 'sourceProposalId');
+        setSearchParams(next, { replace: true });
+      };
       return (
-        <SourceProposalRegistrationSurface
-          initialSelectedId={searchParams.get('sourceProposalId')}
-          onSelectionChange={(proposalId) => {
-            const next = new URLSearchParams(searchParams);
-            if (proposalId) next.set('sourceProposalId', proposalId);
-            else next.delete('sourceProposalId');
-            setSearchParams(next, { replace: true });
-          }}
-          onOpenInitiative={(initiativeId) =>
-            handleOpenDocument({
-              id: initiativeId,
-              type: 'initiative',
-              name: t('initiatives.document.untitled', 'Untitled initiative'),
-              subType: 'canonical-runtime',
-              // OpenDocument still uses the legacy UI projection. The Initiative
-              // document reloads canonical REGISTERED_DRAFT from runtime-v1.
-              status: InitiativeStatus.DRAFT,
-            })
-          }
-        />
+        <div className="flex h-full min-h-0 flex-col">
+          <div className="flex items-center gap-2 border-b border-c-border px-4 py-2" role="tablist" aria-label="Candidate inbox">
+            <button type="button" role="tab" aria-selected={candidateInbox === 'source'} onClick={() => setCandidateInbox('source')} className={candidateInbox === 'source' ? 'btn-primary' : 'btn-secondary'}>
+              Source proposals
+            </button>
+            <button type="button" role="tab" aria-selected={candidateInbox === 'discovery'} onClick={() => setCandidateInbox('discovery')} className={candidateInbox === 'discovery' ? 'btn-primary' : 'btn-secondary'}>
+              Discovery candidates
+            </button>
+          </div>
+          <div className="min-h-0 flex-1">
+            {candidateInbox === 'discovery' ? (
+              <CandidatesTable
+                initialSelectedId={searchParams.get('candidateId')}
+                onSelectionChange={(candidateId) => {
+                  const next = new URLSearchParams(searchParams);
+                  next.set('candidateInbox', 'discovery');
+                  if (candidateId) next.set('candidateId', candidateId);
+                  else next.delete('candidateId');
+                  setSearchParams(next, { replace: true });
+                }}
+              />
+            ) : (
+              <SourceProposalRegistrationSurface
+                initialSelectedId={searchParams.get('sourceProposalId')}
+                onSelectionChange={(proposalId) => {
+                  const next = new URLSearchParams(searchParams);
+                  next.set('candidateInbox', 'source');
+                  if (proposalId) next.set('sourceProposalId', proposalId);
+                  else next.delete('sourceProposalId');
+                  setSearchParams(next, { replace: true });
+                }}
+                onOpenInitiative={(initiativeId) =>
+                  handleOpenDocument({
+                    id: initiativeId,
+                    type: 'initiative',
+                    name: t('initiatives.document.untitled', 'Untitled initiative'),
+                    subType: 'canonical-runtime',
+                    status: InitiativeStatus.DRAFT,
+                  })
+                }
+              />
+            )}
+          </div>
+        </div>
       );
     }
     // F4: Portfolio health — MECE coverage / gaps / balance / duplicate clusters (read-only).

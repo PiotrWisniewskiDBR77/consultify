@@ -401,6 +401,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const graphEdgesRef = useRef<any[]>([]);
   const [templateGalleryOpen, setTemplateGalleryOpen] = useState(false);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const [candidateHandoff, setCandidateHandoff] = useState<any>(null);
+  const [candidatePreview, setCandidatePreview] = useState<any>(null);
+  const [candidateHandoffBusy, setCandidateHandoffBusy] = useState(false);
   // Stan Cofnij/Ponów lewego paska — JEDEN kanał dla wszystkich 4 narzędzi
   // (`ideaUndoStateBus`). Wcześniej workspace słuchał tylko Mapy i Tabeli, więc
   // na Tablicy i Przepływie przyciski były trwale wygaszone.
@@ -3392,6 +3395,72 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     // (HttpBackend), wiec memo policzone przy pierwszym renderze zwracalo SUROWY
     // KLUCZ („mindmap.savedSecondsAgo") i bez `t` nigdy sie nie przeliczalo.
   }, [t, isPolish, lastSavedAt, saving]);
+
+  useEffect(() => {
+    if (activeTool !== 'process_flow' || !realId) {
+      setCandidateHandoff(null);
+      return;
+    }
+    let live = true;
+    Api.getIdeaProcessFlowCandidate(realId)
+      .then((value) => live && setCandidateHandoff(value))
+      .catch(() => live && setCandidateHandoff(null));
+    return () => {
+      live = false;
+    };
+  }, [activeTool, realId]);
+
+  const handlePreviewProcessFlowCandidate = useCallback(async () => {
+    if (!realId || candidateHandoffBusy) return;
+    if (['offline', 'conflict'].includes(graphRuntime.syncState)) {
+      toast.error(isPolish ? 'Najpierw zapisz bieżący Process Flow' : 'Save the current Process Flow first');
+      return;
+    }
+    setCandidateHandoffBusy(true);
+    try {
+      graphRuntime.captureToolGraph(
+        {
+          nodes: graphRuntime.graph.nodes,
+          edges: graphRuntime.graph.edges,
+          extensions: graphRuntime.graph.extensions,
+        },
+        { reason: 'manual', immediate: true }
+      );
+      await graphRuntime.flushGraph({ reason: 'manual' });
+      const preview = await Api.previewIdeaProcessFlowCandidate(realId);
+      setCandidatePreview(preview);
+    } catch (error: any) {
+      toast.error(error?.message || (isPolish ? 'Nie udało się przygotować podglądu' : 'Failed to prepare preview'));
+    } finally {
+      setCandidateHandoffBusy(false);
+    }
+  }, [candidateHandoffBusy, graphRuntime, isPolish, realId]);
+
+  const handleApproveProcessFlowCandidate = useCallback(async () => {
+    if (!realId || !candidatePreview || candidateHandoffBusy) return;
+    setCandidateHandoffBusy(true);
+    try {
+      const result = await Api.approveIdeaProcessFlowCandidate(realId, {
+        mapVersion: Number(candidatePreview.mapVersion),
+        projectionHash: String(candidatePreview.projectionHash),
+      });
+      setCandidateHandoff(result);
+      setCandidatePreview(null);
+      toast.success(
+        result?.created
+          ? isPolish
+            ? 'Kandydat inicjatywy został utworzony'
+            : 'Initiative candidate created'
+          : isPolish
+            ? 'Kandydat inicjatywy już istnieje'
+            : 'Initiative candidate already exists'
+      );
+    } catch (error: any) {
+      toast.error(error?.message || (isPolish ? 'Nie udało się utworzyć kandydata' : 'Failed to create candidate'));
+    } finally {
+      setCandidateHandoffBusy(false);
+    }
+  }, [candidateHandoffBusy, candidatePreview, isPolish, realId]);
   const activeToolLabel = useMemo(
     () => getIdeaWorkspaceToolLabel(activeTool, Boolean(isPolish)),
     [activeTool, isPolish]
@@ -4080,6 +4149,64 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           onConfirm={handleConversionPreviewConfirm}
           onCancel={handleConversionPreviewCancel}
         />
+        {activeTool === 'process_flow' && (
+          <div className="absolute bottom-4 right-4 z-sticky flex items-center gap-2 rounded-xl border border-c-border bg-c-surface-raised p-2 shadow-lg">
+            {candidateHandoff?.candidate?.id || candidateHandoff?.candidate_id ? (
+              <button
+                type="button"
+                data-testid="process-flow-candidate-readback"
+                onClick={() =>
+                  navigate(
+                    `/initiatives?tab=candidates&candidateInbox=discovery&candidateId=${encodeURIComponent(
+                      String(candidateHandoff?.candidate?.id || candidateHandoff?.candidate_id)
+                    )}`
+                  )
+                }
+                className="text-xs text-c-text-secondary underline"
+              >
+                {isPolish ? 'Kandydat gotowy' : 'Candidate ready'}
+              </button>
+            ) : null}
+            {candidatePreview ? (
+              <div data-testid="process-flow-candidate-preview" className="max-w-xs text-xs text-c-text-secondary">
+                <div>{candidatePreview.nodeCount} nodes · {candidatePreview.edgeCount} edges · v{candidatePreview.mapVersion}</div>
+                <div>
+                  {((candidatePreview.projection?.nodes || []) as any[])
+                    .slice(0, 3)
+                    .map((node) => String(node?.data?.label || node?.id || ''))
+                    .filter(Boolean)
+                    .join(' → ')}
+                </div>
+                <div>
+                  {((candidatePreview.projection?.processFlow?.lanes || []) as any[])
+                    .slice(0, 3)
+                    .map((lane) => String(lane?.name || lane?.label || lane?.id || ''))
+                    .filter(Boolean)
+                    .join(', ')}
+                </div>
+                <code>{String(candidatePreview.projectionHash).slice(0, 12)}…</code>
+                <button type="button" onClick={() => setCandidatePreview(null)} className="ml-2 underline">
+                  {isPolish ? 'Anuluj' : 'Cancel'}
+                </button>
+              </div>
+            ) : null}
+            <button
+              type="button"
+              data-testid={candidatePreview ? 'confirm-process-flow-candidate' : 'approve-process-flow-candidate'}
+              disabled={candidateHandoffBusy || graphRuntime.saving}
+              onClick={candidatePreview ? handleApproveProcessFlowCandidate : handlePreviewProcessFlowCandidate}
+              className="rounded-lg bg-c-brand-primary px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
+            >
+              {candidateHandoffBusy
+                ? isPolish
+                  ? 'Zatwierdzanie…'
+                  : 'Approving…'
+                : isPolish
+                  ? candidatePreview ? 'Potwierdź kandydaturę' : 'Przejrzyj kandydaturę'
+                  : candidatePreview ? 'Confirm candidate' : 'Review candidate'}
+            </button>
+          </div>
+        )}
       </div>
     );
   }

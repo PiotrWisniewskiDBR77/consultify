@@ -9,9 +9,12 @@ import {
   ALL_ACTORS,
   ALL_TENANTS,
   TENANT_A,
+  TENANT_B,
   bearer,
+  cfId,
   coldRead,
   createApprovedSwotInitiative,
+  createApprovedProcessFlowInitiative,
   dbReachable,
   dropTenants,
   newClient,
@@ -24,6 +27,7 @@ import {
 } from './flowFixture.js';
 
 import type pg from 'pg';
+import { readFileSync } from 'node:fs';
 import express, { type Express } from 'express';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -69,6 +73,7 @@ beforeAll(async () => {
   const governedPolicy = await provisionRoiGovernedVisibilityPolicy(TENANT_A.owner, TENANT_A.id);
   expect(governedPolicy.outcome).toBe('applied');
   const initiativesRouter = (await import('../../../server/src/routes/pmo/initiatives.routes.js')).default;
+  const myWorkRouter = (await import('../../../server/src/routes/my-work.routes.js')).default;
   const proposalsRouter = (await import('../../../server/src/routes/v8/agent-proposals.routes.js')).default;
   const roiRouter = (await import('../../../server/src/routes/resultsVnext/roi.routes.js')).default;
   const { verifyToken } = await import('../../../server/src/middleware/auth.middleware.js');
@@ -76,6 +81,7 @@ beforeAll(async () => {
   app = express();
   app.use(express.json());
   app.use('/api/initiatives', initiativesRouter);
+  app.use('/api/my-work', myWorkRouter);
   app.use('/api/v8/agent-proposals', verifyToken, attachV8Context, proposalsRouter);
   app.use('/api/vnext/results/roi', verifyToken, attachV8Context, roiRouter);
 });
@@ -105,6 +111,8 @@ afterAll(async () => {
     'initiative_cards',
     'initiative_candidates',
     'initiatives',
+    'my_idea_maps',
+    'my_ideas',
     'swot_candidate_handoffs',
     'tool_decisions',
     'tool_sessions',
@@ -146,6 +154,7 @@ afterAll(async () => {
        (SELECT count(*) FROM users WHERE id=ANY($2::text[])) +
        (SELECT count(*) FROM organization_members WHERE organization_id=ANY($1::text[])) +
        (SELECT count(*) FROM initiatives WHERE organization_id=ANY($1::text[])) +
+       (SELECT count(*) FROM idea_process_flow_candidate_handoffs WHERE organization_id=ANY($1::text[])) +
        (SELECT count(*) FROM initiative_lifecycle_gate_decisions WHERE organization_id=ANY($1::text[])) +
        (SELECT count(*) FROM v8_agent_proposal_versions WHERE organization_id=ANY($1::text[])) +
        (SELECT count(*) FROM rvn_roi_cases WHERE organization_id=ANY($1::text[])) +
@@ -161,6 +170,7 @@ afterAll(async () => {
       ALL_ACTORS.map((actor) => actor.id),
       [
         'initiative_lifecycle_gate_decisions_immutable',
+        'trg_idea_process_flow_candidate_handoff_immutable',
         'trg_rvn_fin_reconciliation_grant_insert_guard',
         'trg_rvn_fin_reconciliation_decision_append_only',
         'trg_rvn_fin_reconciliation_grant_append_only',
@@ -168,11 +178,214 @@ afterAll(async () => {
       ],
     ]
   );
-  expect(postCommit.rows[0]).toEqual({ residue: '0', triggers_enabled: '5', advisory: '0' });
+  expect(postCommit.rows[0]).toEqual({ residue: '0', triggers_enabled: '6', advisory: '0' });
   await client.end();
 });
 
 describe('FLOW full transformation lineage (real PostgreSQL)', () => {
+  it('serializes approval and fails closed on stale, malformed, wrong-tool, fault and missing replay states', async () => {
+    const service = await import('../../../server/src/services/ideaProcessFlowCandidateHandoffService.js');
+    const seed = async (suffix: string, overrides: { tool?: string; nodes?: unknown; edges?: unknown; extensions?: unknown } = {}) => {
+      const ideaId = cfId('idea', `negative-${suffix}`);
+      const mapId = cfId('map', `negative-${suffix}`);
+      await client.query(
+        `INSERT INTO my_ideas(id,user_id,organization_id,title) VALUES($1,$2,$3,$4)`,
+        [ideaId, TENANT_A.owner.id, TENANT_A.id, `Negative ${suffix}`]
+      );
+      await client.query(
+        `INSERT INTO my_idea_maps(id,idea_id,user_id,organization_id,nodes_json,edges_json,version,preferred_tool,extensions_json,is_canonical)
+         VALUES($1,$2,$3,$4,$5,$6,4,$7,$8,TRUE)`,
+        [mapId, ideaId, TENANT_A.owner.id, TENANT_A.id,
+          typeof overrides.nodes === 'string' ? overrides.nodes : JSON.stringify(overrides.nodes ?? [{ id: 'a', data: { label: 'A' } }]),
+          typeof overrides.edges === 'string' ? overrides.edges : JSON.stringify(overrides.edges ?? []),
+          overrides.tool ?? 'process_flow',
+          typeof overrides.extensions === 'string' ? overrides.extensions : JSON.stringify(overrides.extensions ?? { processFlow: { lanes: [] } })]
+      );
+      return { ideaId, mapId };
+    };
+
+    const wrong = await seed('wrong-tool', { tool: 'mindmap' });
+    await expect(service.previewIdeaProcessFlowCandidate({ organizationId: TENANT_A.id, ideaId: wrong.ideaId })).rejects.toMatchObject({ code: 'NOT_PROCESS_FLOW' });
+    const empty = await seed('empty', { nodes: [] });
+    await expect(service.previewIdeaProcessFlowCandidate({ organizationId: TENANT_A.id, ideaId: empty.ideaId })).rejects.toMatchObject({ code: 'EMPTY_PROCESS_FLOW' });
+    const malformed = await seed('malformed', { extensions: '{broken' });
+    await expect(service.previewIdeaProcessFlowCandidate({ organizationId: TENANT_A.id, ideaId: malformed.ideaId })).rejects.toMatchObject({ code: 'INVALID_PROCESS_FLOW' });
+
+    const valid = await seed('governed');
+    const preview = await service.previewIdeaProcessFlowCandidate({ organizationId: TENANT_A.id, ideaId: valid.ideaId });
+    for (const body of [
+      { mapVersion: 0, projectionHash: preview.projectionHash },
+      { mapVersion: preview.mapVersion, projectionHash: preview.projectionHash.toUpperCase() },
+    ]) {
+      const invalid = await request(app)
+        .post(`/api/my-work/my-ideas/${valid.ideaId}/map/candidate/approve`)
+        .set('Authorization', bearer(TENANT_A.owner))
+        .send(body);
+      expect(invalid.status).toBe(400);
+      expect(invalid.body.code).toBe('INVALID_PROCESS_FLOW_SNAPSHOT');
+    }
+    await expect(service.approveIdeaProcessFlowCandidate({
+      organizationId: TENANT_A.id, ideaId: valid.ideaId, actorId: TENANT_A.owner.id,
+      expectedMapVersion: preview.mapVersion, expectedProjectionHash: '0'.repeat(64),
+    })).rejects.toMatchObject({ code: 'PROCESS_FLOW_CHANGED' });
+    await expect(service.previewIdeaProcessFlowCandidate({ organizationId: TENANT_B.id, ideaId: valid.ideaId })).rejects.toMatchObject({ code: 'IDEA_NOT_FOUND' });
+
+    service.setIdeaProcessFlowHandoffFaultInjectorForTests((stage) => {
+      if (stage === 'candidate-created') throw new Error('forced-owner-to-receipt-failure');
+    });
+    await expect(service.approveIdeaProcessFlowCandidate({
+      organizationId: TENANT_A.id, ideaId: valid.ideaId, actorId: TENANT_A.owner.id,
+      expectedMapVersion: preview.mapVersion, expectedProjectionHash: preview.projectionHash,
+    })).rejects.toThrow('forced-owner-to-receipt-failure');
+    service.setIdeaProcessFlowHandoffFaultInjectorForTests(null);
+    const afterFault = await client.query<{ candidates: number; receipts: number }>(
+      `SELECT (SELECT count(*)::int FROM initiative_candidates WHERE organization_id=$1 AND source_type='idea_process_flow_snapshot' AND source_id LIKE $2) candidates,
+              (SELECT count(*)::int FROM idea_process_flow_candidate_handoffs WHERE organization_id=$1 AND idea_id=$3) receipts`,
+      [TENANT_A.id, `${valid.mapId}:%`, valid.ideaId]
+    );
+    expect(afterFault.rows[0]).toEqual({ candidates: 0, receipts: 0 });
+
+    await client.query(
+      `UPDATE my_idea_maps
+          SET version=version+1,
+              extensions_json=jsonb_set(
+                extensions_json::jsonb,
+                '{processFlow}',
+                (extensions_json::jsonb->'processFlow') ||
+                  '{"viewState":{"viewport":{"x":451,"y":-87,"zoom":2.25}}}'::jsonb,
+                true
+              )::text
+        WHERE id=$1 AND organization_id=$2`,
+      [valid.mapId, TENANT_A.id]
+    );
+    const viewportOnlyPreview = await service.previewIdeaProcessFlowCandidate({
+      organizationId: TENANT_A.id,
+      ideaId: valid.ideaId,
+    });
+    expect(viewportOnlyPreview.mapVersion).toBe(preview.mapVersion + 1);
+    expect(viewportOnlyPreview.projectionHash).toBe(preview.projectionHash);
+    expect((viewportOnlyPreview.projection as any).processFlow.viewState.viewport).toEqual({
+      x: 451,
+      y: -87,
+      zoom: 2.25,
+    });
+    const results = await Promise.all([
+      service.approveIdeaProcessFlowCandidate({ organizationId: TENANT_A.id, ideaId: valid.ideaId, actorId: TENANT_A.owner.id, expectedMapVersion: preview.mapVersion, expectedProjectionHash: preview.projectionHash }),
+      service.approveIdeaProcessFlowCandidate({ organizationId: TENANT_A.id, ideaId: valid.ideaId, actorId: TENANT_A.owner.id, expectedMapVersion: preview.mapVersion, expectedProjectionHash: preview.projectionHash }),
+    ]);
+    expect(results.map((result) => result.created).sort()).toEqual([false, true]);
+    expect(results[0].receipt.projection_json).toEqual(viewportOnlyPreview.projection);
+    const receiptId = results[0].receipt.receipt_id;
+    await expect(client.query(`UPDATE idea_process_flow_candidate_handoffs SET map_version=99 WHERE receipt_id=$1`, [receiptId])).rejects.toThrow(/immutable/);
+    await expect(client.query(`DELETE FROM idea_process_flow_candidate_handoffs WHERE receipt_id=$1`, [receiptId])).rejects.toThrow(/immutable/);
+    const trigger = await client.query<{ tgenabled: string; tgtype: number }>(
+      `SELECT tgenabled,tgtype FROM pg_trigger WHERE tgrelid='idea_process_flow_candidate_handoffs'::regclass AND tgname='trg_idea_process_flow_candidate_handoff_immutable'`
+    );
+    expect(trigger.rows[0]).toEqual({ tgenabled: 'O', tgtype: 27 });
+    await client.query(`DELETE FROM initiative_candidates WHERE id=$1 AND organization_id=$2`, [results[0].candidate.id, TENANT_A.id]);
+    await expect(service.approveIdeaProcessFlowCandidate({
+      organizationId: TENANT_A.id, ideaId: valid.ideaId, actorId: TENANT_A.owner.id,
+      expectedMapVersion: preview.mapVersion, expectedProjectionHash: preview.projectionHash,
+    })).rejects.toMatchObject({ code: 'HANDOFF_INCONSISTENT' });
+
+    const migrationSql = readFileSync('server/migrations/20261025_idea_process_flow_candidate_handoff.sql', 'utf8');
+    await client.query('BEGIN');
+    try {
+      await client.query(`ALTER TABLE idea_process_flow_candidate_handoffs RENAME TO idea_process_flow_candidate_handoffs_valid`);
+      await client.query(`CREATE TABLE idea_process_flow_candidate_handoffs(receipt_id TEXT PRIMARY KEY)`);
+      await expect(client.query(migrationSql)).rejects.toThrow(/incompatible/);
+    } finally {
+      await client.query('ROLLBACK');
+    }
+    await client.query('BEGIN');
+    try {
+      await client.query(`ALTER TABLE idea_process_flow_candidate_handoffs DROP CONSTRAINT pk_idea_process_flow_candidate_handoff`);
+      await client.query(`ALTER TABLE idea_process_flow_candidate_handoffs ADD CONSTRAINT pk_idea_process_flow_candidate_handoff PRIMARY KEY(receipt_id,organization_id)`);
+      await expect(client.query(migrationSql)).rejects.toThrow(/constraints are incompatible/);
+    } finally {
+      await client.query('ROLLBACK');
+    }
+    await client.query('BEGIN');
+    try {
+      await client.query(`ALTER TABLE idea_process_flow_candidate_handoffs DROP CONSTRAINT ck_idea_process_flow_handoff_version`);
+      await client.query(`ALTER TABLE idea_process_flow_candidate_handoffs ADD CONSTRAINT ck_idea_process_flow_handoff_version CHECK(TRUE)`);
+      await expect(client.query(migrationSql)).rejects.toThrow(/constraints are incompatible/);
+    } finally {
+      await client.query('ROLLBACK');
+    }
+    await client.query('BEGIN');
+    try {
+      await client.query(`ALTER INDEX uq_idea_process_flow_handoff_snapshot RENAME TO uq_idea_process_flow_handoff_snapshot_valid`);
+      await client.query(`CREATE UNIQUE INDEX uq_idea_process_flow_handoff_snapshot ON idea_process_flow_candidate_handoffs(organization_id) WHERE organization_id IS NOT NULL`);
+      await expect(client.query(migrationSql)).rejects.toThrow(/indexes are incompatible/);
+    } finally {
+      await client.query('ROLLBACK');
+    }
+    await client.query('BEGIN');
+    try {
+      await client.query(`ALTER TABLE idea_process_flow_candidate_handoffs DISABLE TRIGGER trg_idea_process_flow_candidate_handoff_immutable`);
+      await expect(client.query(migrationSql)).rejects.toThrow(/incompatible definition/);
+    } finally {
+      await client.query('ROLLBACK');
+    }
+    await client.query('BEGIN');
+    try {
+      await client.query(`ALTER FUNCTION protect_idea_process_flow_candidate_handoff() VOLATILE`);
+      await expect(client.query(migrationSql)).rejects.toThrow(/incompatible body/);
+    } finally {
+      await client.query('ROLLBACK');
+    }
+    await client.query('BEGIN');
+    try {
+      await client.query(`ALTER FUNCTION protect_idea_process_flow_candidate_handoff() RENAME TO protect_idea_process_flow_candidate_handoff_valid`);
+      await client.query(`CREATE FUNCTION protect_idea_process_flow_candidate_handoff() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN OLD; END $$`);
+      await expect(client.query(migrationSql)).rejects.toThrow(/incompatible body/);
+    } finally {
+      await client.query('ROLLBACK');
+    }
+    await expect(client.query(migrationSql)).resolves.toBeDefined();
+  });
+
+  it('hands one immutable canonical Process Flow snapshot to one accepted Initiative with cold stable identity', async () => {
+    const lineage = await createApprovedProcessFlowInitiative(client, 'primary');
+    const persisted = await coldRead(async (cold) => {
+      const receipt = await cold.query(
+        `SELECT map_id,map_version,projection_hash,candidate_id
+           FROM idea_process_flow_candidate_handoffs WHERE receipt_id=$1 AND organization_id=$2`,
+        [lineage.receiptId, TENANT_A.id]
+      );
+      const candidate = await cold.query(
+        `SELECT source_type,source_id,status,initiative_id,rationale
+           FROM initiative_candidates WHERE id=$1 AND organization_id=$2`,
+        [lineage.candidateId, TENANT_A.id]
+      );
+      const initiative = await cold.query(
+        `SELECT id,status,source_type,source_id FROM initiatives WHERE id=$1 AND organization_id=$2`,
+        [lineage.initiativeId, TENANT_A.id]
+      );
+      return { receipt: receipt.rows[0], candidate: candidate.rows[0], initiative: initiative.rows[0] };
+    });
+    expect(persisted.receipt).toMatchObject({
+      map_id: lineage.mapId,
+      map_version: lineage.mapVersion,
+      projection_hash: lineage.projectionHash,
+      candidate_id: lineage.candidateId,
+    });
+    expect(persisted.candidate).toMatchObject({
+      source_type: 'idea_process_flow_snapshot',
+      source_id: `${lineage.mapId}:${lineage.projectionHash}`,
+      status: 'accepted',
+      initiative_id: lineage.initiativeId,
+    });
+    expect(persisted.candidate.rationale).toContain(lineage.projectionHash);
+    expect(persisted.initiative).toMatchObject({
+      id: lineage.initiativeId,
+      status: 'DRAFT',
+      source_type: 'idea_process_flow_snapshot',
+      source_id: `${lineage.mapId}:${lineage.projectionHash}`,
+    });
+  });
+
   it('starts through mounted signed auth at one APPROVED SWOT and persists the accepted Initiative identity', async () => {
     const lineage = await createApprovedSwotInitiative(client, 'primary');
 

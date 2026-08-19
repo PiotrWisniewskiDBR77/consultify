@@ -4848,6 +4848,33 @@ export const Api = {
     return handleResponse(res, 'Failed to fetch idea map');
   },
 
+  previewIdeaProcessFlowCandidate: async (ideaId: string): Promise<any> => {
+    const res = await fetch(
+      `${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/map/candidate/preview`,
+      { headers: getHeaders() }
+    );
+    return handleResponse(res, 'Failed to preview Process Flow candidate');
+  },
+
+  getIdeaProcessFlowCandidate: async (ideaId: string): Promise<any> => {
+    const res = await fetch(
+      `${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/map/candidate`,
+      { headers: getHeaders() }
+    );
+    return handleResponse(res, 'Failed to read Process Flow candidate');
+  },
+
+  approveIdeaProcessFlowCandidate: async (
+    ideaId: string,
+    snapshot: { mapVersion: number; projectionHash: string }
+  ): Promise<any> => {
+    const res = await fetch(
+      `${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/map/candidate/approve`,
+      { method: 'POST', headers: getHeaders(), body: JSON.stringify(snapshot) }
+    );
+    return handleResponse(res, 'Failed to approve Process Flow candidate');
+  },
+
   saveMyIdeaMap: async (
     ideaId: string,
     payload: {

@@ -39,9 +39,16 @@ import {
   isIdeaRestricted,
 } from '../services/ideaConfidentiality.js';
 import { createIdeaMapSnapshot } from '../services/ideaMapSnapshotService.js';
+import {
+  approveIdeaProcessFlowCandidate,
+  IdeaProcessFlowCandidateHandoffError,
+  previewIdeaProcessFlowCandidate,
+  readIdeaProcessFlowCandidate,
+} from '../services/ideaProcessFlowCandidateHandoffService.js';
 import { InboxAiAssistItemSchema, runInboxAiAssist } from '../services/inboxAiAssistService.js';
 import inboxService from '../services/inboxService.js';
 import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
+import { requireActiveMembership } from '../services/legacyCutover/requireActiveMembership.js';
 import NotificationService from '../services/notificationService.js';
 import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import { createNativeDeck } from '../services/presentationGeneratorService.js';
@@ -4693,6 +4700,65 @@ router.get(
 
     const metrics = await queryIdeaMapMetrics(ids, orgId);
     res.json({ metrics });
+  })
+);
+
+router.get(
+  '/my-ideas/:id/map/candidate/preview',
+  requireActiveMembership,
+  requireRole('ADMIN', 'OWNER', 'SUPERADMIN'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    try {
+      res.json(await previewIdeaProcessFlowCandidate({ organizationId: identity.orgId, ideaId: String(req.params.id) }));
+    } catch (error) {
+      if (error instanceof IdeaProcessFlowCandidateHandoffError) return res.status(error.status).json({ code: error.code, error: error.message });
+      throw error;
+    }
+  })
+);
+
+router.get(
+  '/my-ideas/:id/map/candidate',
+  requireActiveMembership,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    try {
+      res.json(await readIdeaProcessFlowCandidate({ organizationId: identity.orgId, ideaId: String(req.params.id) }));
+    } catch (error) {
+      if (error instanceof IdeaProcessFlowCandidateHandoffError) return res.status(error.status).json({ code: error.code, error: error.message });
+      throw error;
+    }
+  })
+);
+
+router.post(
+  '/my-ideas/:id/map/candidate/approve',
+  requireActiveMembership,
+  requireRole('ADMIN', 'OWNER', 'SUPERADMIN'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const mapVersion = req.body?.mapVersion;
+    const projectionHash = req.body?.projectionHash;
+    if (!Number.isInteger(mapVersion) || mapVersion <= 0 || typeof projectionHash !== 'string' || !/^[0-9a-f]{64}$/.test(projectionHash)) {
+      return res.status(400).json({ code: 'INVALID_PROCESS_FLOW_SNAPSHOT', error: 'mapVersion must be a positive integer and projectionHash a lowercase sha256' });
+    }
+    try {
+      const result = await approveIdeaProcessFlowCandidate({
+        organizationId: identity.orgId,
+        ideaId: String(req.params.id),
+        actorId: identity.userId,
+        expectedMapVersion: mapVersion,
+        expectedProjectionHash: projectionHash,
+      });
+      res.status(result.created ? 201 : 200).json(result);
+    } catch (error) {
+      if (error instanceof IdeaProcessFlowCandidateHandoffError) return res.status(error.status).json({ code: error.code, error: error.message });
+      throw error;
+    }
   })
 );
 

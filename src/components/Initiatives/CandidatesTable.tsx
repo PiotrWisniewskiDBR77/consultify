@@ -35,15 +35,33 @@ function truncateWords(text: string, limit: number): string {
 
 export interface CandidatesTableProps {
   onAccept?: (payload: AcceptCandidatePayload) => void;
+  initialSelectedId?: string | null;
+  onSelectionChange?: (candidateId: string | null) => void;
 }
 
-export const CandidatesTable: React.FC<CandidatesTableProps> = ({ onAccept }) => {
+export const CandidatesTable: React.FC<CandidatesTableProps> = ({
+  onAccept,
+  initialSelectedId = null,
+  onSelectionChange,
+}) => {
   const { t, i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
   const { candidates, loading, error, busyId, scanning, refresh, scan, accept, dismiss } =
     useCandidates('pending');
 
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId);
+
+  React.useEffect(() => {
+    setSelectedId(initialSelectedId);
+  }, [initialSelectedId]);
+
+  const selectCandidate = useCallback(
+    (candidateId: string | null) => {
+      setSelectedId(candidateId);
+      onSelectionChange?.(candidateId);
+    },
+    [onSelectionChange]
+  );
 
   const selected = useMemo(
     () => candidates.find((c) => c.id === selectedId) ?? null,
@@ -54,10 +72,10 @@ export const CandidatesTable: React.FC<CandidatesTableProps> = ({ onAccept }) =>
   // resolves (the hook filters it out of state) — close the preview rather
   // than show a stale/ghost record.
   React.useEffect(() => {
-    if (selectedId && !candidates.some((c) => c.id === selectedId)) {
-      setSelectedId(null);
+    if (!loading && selectedId && !candidates.some((c) => c.id === selectedId)) {
+      selectCandidate(null);
     }
-  }, [candidates, selectedId]);
+  }, [candidates, loading, selectCandidate, selectedId]);
 
   const handleAccept = useCallback(
     async (id: string) => {
@@ -147,11 +165,11 @@ export const CandidatesTable: React.FC<CandidatesTableProps> = ({ onAccept }) =>
           },
         ],
         universalHandlers: {
-          preview: () => setSelectedId(String(row.id)),
+          preview: () => selectCandidate(String(row.id)),
         },
       };
     },
-    [busyId, handleAccept, dismiss, t, isPolish]
+    [busyId, handleAccept, dismiss, t, isPolish, selectCandidate]
   );
 
   return (
@@ -189,7 +207,7 @@ export const CandidatesTable: React.FC<CandidatesTableProps> = ({ onAccept }) =>
             persistKey="initiatives.candidates"
             defaultSort={{ columnId: 'createdAt', direction: 'desc' }}
             selectedRowId={selectedId}
-            onRowClick={(row) => setSelectedId(String(row.id))}
+            onRowClick={(row) => selectCandidate(String(row.id))}
             rowMenu={rowMenu}
             rowDescription={() => null}
             empty={{
@@ -206,7 +224,7 @@ export const CandidatesTable: React.FC<CandidatesTableProps> = ({ onAccept }) =>
           <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
             <StandardPreview
               title={selected.title}
-              onClose={() => setSelectedId(null)}
+              onClose={() => selectCandidate(null)}
               meta={{ pills: metaPills }}
               details={{
                 text: previewDetailsText,

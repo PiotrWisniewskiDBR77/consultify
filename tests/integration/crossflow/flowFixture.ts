@@ -175,6 +175,80 @@ export interface ApprovedSwotInitiativeLineage {
   initiativeId: string;
 }
 
+export interface ApprovedProcessFlowInitiativeLineage {
+  ideaId: string;
+  mapId: string;
+  mapVersion: number;
+  projectionHash: string;
+  receiptId: string;
+  candidateId: string;
+  initiativeId: string;
+}
+
+export async function createApprovedProcessFlowInitiative(
+  client: pg.Client,
+  suffix: string,
+  actor: CfActor = TENANT_A.owner
+): Promise<ApprovedProcessFlowInitiativeLineage> {
+  const ideaId = cfId('idea', `process-flow-${suffix}`);
+  const mapId = cfId('map', `process-flow-${suffix}`);
+  await client.query(
+    `INSERT INTO my_ideas(id,user_id,organization_id,title,created_at,updated_at)
+     VALUES($1,$2,$3,$4,$5,$5)`,
+    [ideaId, actor.id, actor.organizationId, `Governed Process ${suffix}`, CF_EPOCH]
+  );
+  await client.query(
+    `INSERT INTO my_idea_maps
+      (id,idea_id,user_id,organization_id,nodes_json,edges_json,version,preferred_tool,extensions_json,is_canonical)
+     VALUES($1,$2,$3,$4,$5,$6,3,'process_flow',$7,TRUE)`,
+    [
+      mapId,
+      ideaId,
+      actor.id,
+      actor.organizationId,
+      JSON.stringify([
+        { id: 'start', type: 'process', data: { label: 'Receive request' }, position: { x: 0, y: 0 } },
+        { id: 'finish', type: 'process', data: { label: 'Deliver outcome' }, position: { x: 240, y: 0 } },
+      ]),
+      JSON.stringify([{ id: 'flow-1', source: 'start', target: 'finish' }]),
+      JSON.stringify({ processFlow: { lanes: [{ id: 'lane-1', name: 'Operations' }] } }),
+    ]
+  );
+
+  const myWorkRouter = (await import('../../../server/src/routes/my-work.routes.js')).default;
+  const candidatesRouter = (await import('../../../server/src/routes/initiativeCandidates.routes.js')).default;
+  const app = express();
+  app.use(express.json());
+  app.use('/api/my-work', myWorkRouter);
+  app.use('/api/initiatives', candidatesRouter);
+  const preview = await request(app)
+    .get(`/api/my-work/my-ideas/${ideaId}/map/candidate/preview`)
+    .set('Authorization', bearer(actor));
+  if (preview.status !== 200) throw new Error(`Process Flow preview failed: ${preview.status} ${JSON.stringify(preview.body)}`);
+  const approved = await request(app)
+    .post(`/api/my-work/my-ideas/${ideaId}/map/candidate/approve`)
+    .set('Authorization', bearer(actor))
+    .send({ mapVersion: preview.body.mapVersion, projectionHash: preview.body.projectionHash });
+  if (approved.status !== 201) throw new Error(`Process Flow approval failed: ${approved.status} ${JSON.stringify(approved.body)}`);
+  const candidateId = String(approved.body.candidate.id);
+  const accepted = await request(app)
+    .post(`/api/initiatives/candidates/${candidateId}/accept`)
+    .set('Authorization', bearer(actor))
+    .send({ fill: false });
+  if (accepted.status !== 200 || !accepted.body?.initiativeId) {
+    throw new Error(`Process Flow candidate acceptance failed: ${accepted.status} ${JSON.stringify(accepted.body)}`);
+  }
+  return {
+    ideaId,
+    mapId,
+    mapVersion: Number(preview.body.mapVersion),
+    projectionHash: String(preview.body.projectionHash),
+    receiptId: String(approved.body.receipt.receipt_id),
+    candidateId,
+    initiativeId: String(accepted.body.initiativeId),
+  };
+}
+
 export async function seedTransformationContextForInitiative(
   client: pg.Client,
   initiativeId: string
@@ -498,6 +572,7 @@ export async function purgeResultsLineageFixture(client: pg.Client): Promise<voi
   if (!requiredPrefix || callerDb !== actualDb || !actualDb.startsWith(requiredPrefix) || !/^flow_[a-z0-9_]+$/.test(actualDb))
     throw new Error('FLOW Results cleanup requires a flow_* disposable database');
   const tables = [
+    'idea_process_flow_candidate_handoffs',
     'rvn_finance_reconciliation_decisions', 'rvn_finance_reconciliation_grant_events',
     // AMD-FLOW-ROI-VISIBILITY-002 — same append-only shape as the line above
     // (BEFORE UPDATE OR DELETE trigger, RAISE EXCEPTION), cleaned the exact
@@ -558,10 +633,11 @@ export async function purgeResultsLineageFixture(client: pg.Client): Promise<voi
       'trg_rvn_fin_reconciliation_grant_insert_guard',
       'trg_rvn_fin_reconciliation_decision_append_only',
       'trg_rvn_fin_reconciliation_grant_append_only',
+      'trg_idea_process_flow_candidate_handoff_immutable',
     ]]
   );
   if (state.rows[0]?.role !== 'origin' || state.rows[0]?.disabled !== '0' ||
-      state.rows[0]?.expected_enabled !== '3' || state.rows[0]?.advisory !== '0')
+      state.rows[0]?.expected_enabled !== '4' || state.rows[0]?.advisory !== '0')
     throw new Error('FLOW Results cleanup did not restore trigger/session state');
 }
 
