@@ -55,8 +55,12 @@ test.describe('ASM-UI-CANON server-authoritative technical journey', () => {
     await approverPage.goto(`/assessment/drd/${sessionId}`);
     await approverPage.getByTestId('freeze-button').click();
     await expect(approverPage.getByTestId('drd-http-frozen-output-view')).toBeVisible();
-    await approverPage.getByRole('button', { name: /Generuj raport z Outputu/i }).click();
-    await approverPage.getByRole('button', { name: /Wygeneruj z findingów/i }).click();
+    // SoD stays exact: the approver freezes; the owner creates the governed
+    // downstream artifacts from the immutable Output.
+    await ownerPage.reload();
+    await expect(ownerPage.getByTestId('drd-http-frozen-output-view')).toBeVisible();
+    await ownerPage.getByRole('button', { name: /Generuj raport z Outputu/i }).click();
+    await ownerPage.getByRole('button', { name: /Wygeneruj z findingów/i }).click();
 
     const coldContext = await signedContext(browser, owner, { width: 390, height: 844 });
     const coldPage = await coldContext.newPage();
@@ -90,13 +94,27 @@ test.describe('ASM-UI-CANON server-authoritative technical journey', () => {
     const second = await signedContext(browser, owner);
     const secondPage = await second.newPage();
     await Promise.all([firstPage.goto(`/assessment/drd/${sessionId}`), secondPage.goto(`/assessment/drd/${sessionId}`)]);
+    await expect(firstPage.getByRole('button', { name: /Wyślij do przeglądu/i })).toBeEnabled();
+    await expect(secondPage.getByRole('button', { name: /Wyślij do przeglądu/i })).toBeEnabled();
     // Both pages hydrate the same version first. Advance the canonical row in
     // the first context, then submit the deliberately stale second context.
     // Sequencing removes scheduler-dependent refresh races while preserving
     // the real mounted CAS conflict contract.
+    let releaseStaleRequest!: () => void;
+    const staleRequestMayContinue = new Promise<void>((resolve) => { releaseStaleRequest = resolve; });
+    let staleRequestCaptured!: () => void;
+    const staleRequestWasCaptured = new Promise<void>((resolve) => { staleRequestCaptured = resolve; });
+    await secondPage.route(`**/api/method/sessions/${sessionId}/transition`, async (route) => {
+      staleRequestCaptured();
+      await staleRequestMayContinue;
+      await route.continue();
+    });
+    const staleClick = secondPage.getByRole('button', { name: /Wyślij do przeglądu/i }).click();
+    await staleRequestWasCaptured;
     await firstPage.getByRole('button', { name: /Wyślij do przeglądu/i }).click();
     await expect(firstPage.getByRole('button', { name: /Wyślij do przeglądu/i })).toBeDisabled();
-    await secondPage.getByRole('button', { name: /Wyślij do przeglądu/i }).click();
+    releaseStaleRequest();
+    await staleClick;
     await expect(secondPage.getByTestId('drd-http-conflict-view')).toBeVisible();
     await expect(firstPage.getByTestId('drd-http-conflict-view')).toHaveCount(0);
 

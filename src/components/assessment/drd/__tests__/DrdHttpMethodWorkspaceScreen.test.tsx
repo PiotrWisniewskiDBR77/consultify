@@ -158,6 +158,33 @@ describe('requirement 7 — loading and error each have their own visible state'
     const errorView = await screen.findByTestId('drd-http-error-view');
     expect(errorView.textContent).toMatch(/boom: server unreachable/);
   });
+
+  it.each([
+    [403, 'missing_permission'],
+    [404, 'session_not_found'],
+  ])('keeps a canonical resume %s fail-closed with retry and no workspace', async (status, code) => {
+    hoisted.getSession.mockRejectedValue(new MethodCoreApiError(code, status, { error: code }));
+    render(<DrdHttpMethodWorkspaceScreen storage={makeMemoryStorage()} demoSessionId="sess-http-1" />);
+
+    const errorView = await screen.findByTestId('drd-http-error-view');
+    expect(errorView).toHaveTextContent(code);
+    expect(screen.getByTestId('error-retry')).toBeEnabled();
+    expect(screen.queryByTestId('method-workspace-shell')).not.toBeInTheDocument();
+  });
+});
+
+describe('canonical cold reopen identity and read-only contract', () => {
+  it('renders exact session/method versions and disables writes without a write role', async () => {
+    hoisted.getSession.mockResolvedValue({ session: makeSession({ version: 7 }), roles: [] });
+    hoisted.listEvents.mockResolvedValue([]);
+    render(<DrdHttpMethodWorkspaceScreen storage={makeMemoryStorage()} demoSessionId="sess-http-1" />);
+
+    expect(await screen.findByText('ID: sess-http-1')).toBeInTheDocument();
+    expect(screen.getByText(`method: ${DRD_METHOD_PACK_ID}@${DRD_METHOD_PACK_VERSION}`)).toBeInTheDocument();
+    expect(screen.getByText('session: v7')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Zapisz teraz' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Pracuję samodzielnie' })).toBeDisabled();
+  });
 });
 
 describe('requirement 3 — a 409 on write shows an explicit conflict screen, never a silent overwrite', () => {

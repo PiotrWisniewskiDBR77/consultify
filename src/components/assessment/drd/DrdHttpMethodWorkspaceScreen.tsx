@@ -29,6 +29,7 @@
  */
 import { AlertTriangle, ArrowLeft, CloudOff, FileText, Lightbulb, Lock, RefreshCw, RotateCcw } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { MethodWorkspaceShell } from '@/components/method-workspace/MethodWorkspaceShell';
 import { StandardTable } from '@/components/standard/StandardTable';
@@ -295,6 +296,8 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
   initialViewMode,
   forceState,
 }) => {
+  const { i18n } = useTranslation();
+  const isPolish = i18n.language?.startsWith('pl');
   const storage = storageProp ?? window.localStorage;
   const runtimeRef = useRef<DrdHttpSessionRuntime | null>(null);
   // React 18 StrictMode (dev only) double-invokes effects: mount -> cleanup
@@ -692,9 +695,12 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center gap-3 border-b border-c-border-subtle bg-c-warning/5 px-4 py-1.5 text-[11px] text-c-text-secondary">
+      <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 border-b border-c-border-subtle bg-c-warning/5 px-3 py-1.5 text-[11px] text-c-text-secondary sm:px-4">
         <AlertTriangle size={12} className="shrink-0 text-c-warning" />
-        <span>Sesja DRD przez HTTP — {DRD_METHOD_PACK_ID} — kanoniczny stan serwera.</span>
+        <span>{isPolish ? 'Kanoniczna sesja DRD' : 'Canonical DRD session'}</span>
+        <span className="min-w-0 break-all font-mono" title={session.id}>ID: {session.id}</span>
+        <span className="font-mono">{isPolish ? 'metoda' : 'method'}: {session.methodPackId}@{session.methodPackVersion}</span>
+        <span className="font-mono">{isPolish ? 'sesja' : 'session'}: v{session.version}</span>
         <DrdSourceIndicator
           source={sourceKind}
           title={sourceKind === 'SERVER' ? 'Świeżo potwierdzone przez serwer.' : 'Nie w pełni zsynchronizowane z serwerem.'}

@@ -1,174 +1,158 @@
-/**
- * @vitest-environment jsdom
- *
- * ASM-001A — Task 2/3 coverage: AssessmentLibraryTab renders the published
- * DRD definition, disables the unsupported methodologies with an explicit
- * status, Start creates an assessment bound to definitionId/definitionVersion
- * and navigates to the editor, and a 422 DEFINITION_NOT_PUBLISHED response is
- * surfaced (not swallowed into a false success).
- */
+/** @vitest-environment jsdom */
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { toast } from 'react-hot-toast';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { getDefinitionsMock, createAssessmentMock, navigateMock } = vi.hoisted(() => ({
-  getDefinitionsMock: vi.fn(),
-  createAssessmentMock: vi.fn(),
-  navigateMock: vi.fn(),
+const mocks = vi.hoisted(() => ({
+  create: vi.fn(),
+  get: vi.fn(),
+  list: vi.fn(),
+  navigate: vi.fn(),
+  language: 'en',
 }));
 
-vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
+vi.mock('react-router-dom', async () => ({
+  ...(await vi.importActual<typeof import('react-router-dom')>('react-router-dom')),
+  useNavigate: () => mocks.navigate,
+}));
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({ t: (key: string) => key, i18n: { language: mocks.language } }),
+}));
+
+vi.mock('react-hot-toast', () => ({
+  default: { loading: vi.fn(() => 'toast'), success: vi.fn(), error: vi.fn() },
+}));
+
+vi.mock('@/method-core/api/methodCoreApi', () => {
+  class MethodCoreApiError extends Error {
+    status: number;
+    body: any;
+    isNetworkError: boolean;
+    constructor(message: string, status = 0, body: any = null, isNetworkError = false) {
+      super(message);
+      this.status = status;
+      this.body = body;
+      this.isNetworkError = isNetworkError;
+    }
+  }
   return {
-    ...actual,
-    useNavigate: () => navigateMock,
+    MethodCoreApiError,
+    createSession: mocks.create,
+    getSession: mocks.get,
+    listSessions: mocks.list,
+    newIdempotencyKey: () => 'stable-start-key',
   };
 });
 
-vi.mock('@/services/api/v8', () => ({
-  V8AssessmentApi: {
-    getDefinitions: getDefinitionsMock,
-    createAssessment: createAssessmentMock,
-  },
-}));
-
+import { MethodCoreApiError } from '@/method-core/api/methodCoreApi';
 import { AssessmentLibraryTab } from '../../../../src/components/assessment/library/AssessmentLibraryTab';
 
-function publishedDrdVersion(overrides: Record<string, any> = {}) {
-  return {
-    id: 'asdef_drd_2.0',
-    methodologyId: 'DRD',
-    version: '2.0',
-    title: 'DRD canonical definition',
-    status: 'published',
-    isReadOnly: true,
-    definition: {},
-    createdBy: 'user-123',
-    createdAt: '2026-07-01T00:00:00.000Z',
-    updatedAt: '2026-07-10T00:00:00.000Z',
-    publishedAt: '2026-07-10T00:00:00.000Z',
-    ...overrides,
-  };
-}
+const canonicalSession = {
+  id: 'session-exact-123',
+  tenantId: 'tenant-1',
+  module: 'assessment',
+  methodPackId: 'drd',
+  methodPackVersion: '2.0.0-methodpack.1',
+  state: 'active',
+  version: 7,
+  mode: 'guided_manual',
+  projectId: null,
+  createdAt: '2026-08-19T10:00:00.000Z',
+  updatedAt: '2026-08-19T10:00:00.000Z',
+};
 
-describe('AssessmentLibraryTab', () => {
+describe('AssessmentLibraryTab canonical method-core flow', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.language = 'en';
+    mocks.list.mockResolvedValue({ sessions: [canonicalSession], total: 1 });
+    mocks.get.mockResolvedValue({ session: canonicalSession, roles: ['owner'] });
   });
 
-  it('renders the DRD card with the published version, and the other 4 as disabled/Coming soon', async () => {
-    getDefinitionsMock.mockResolvedValue({
-      methodologyId: 'DRD',
-      versions: [
-        publishedDrdVersion(),
-        // An older draft should be ignored by "pick latest published".
-        publishedDrdVersion({
-          id: 'asdef_drd_1.0',
-          version: '1.0',
-          status: 'draft',
-          publishedAt: undefined,
-        }),
-      ],
-    });
-
+  it('lists and cold-opens the exact canonical session and pinned versions', async () => {
     render(<AssessmentLibraryTab />);
 
-    expect(await screen.findByText('Digital Readiness Diagnosis')).toBeInTheDocument();
-    expect(await screen.findByText('Published v2.0')).toBeInTheDocument();
-
-    // The 4 unsupported methodologies are visible with an explicit status,
-    // never hidden (TRIADA_KANON.md C3).
-    expect(screen.getByText('Smart Industry Readiness Index')).toBeInTheDocument();
-    expect(screen.getByText('Advanced Digital Maturity Assessment')).toBeInTheDocument();
-    expect(screen.getByText('Capability Maturity Model Integration')).toBeInTheDocument();
-    expect(screen.getByText('Lean 4.0')).toBeInTheDocument();
-    expect(screen.getAllByText('Coming soon')).toHaveLength(4);
-
-    const startButtons = screen.getAllByRole('button', { name: /Start/i });
-    // DRD's Start is enabled; the other 4 are disabled.
-    const enabled = startButtons.filter((b) => !(b as HTMLButtonElement).disabled);
-    const disabled = startButtons.filter((b) => (b as HTMLButtonElement).disabled);
-    expect(enabled).toHaveLength(1);
-    expect(disabled).toHaveLength(4);
+    expect(await screen.findByText('session-exact-123')).toBeInTheDocument();
+    expect(screen.getByText('Method: 2.0.0-methodpack.1')).toBeInTheDocument();
+    expect(screen.getByText('Session: v7')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Open' }));
+    expect(mocks.navigate).toHaveBeenCalledWith('/assessment/drd/session-exact-123');
   });
 
-  it('Start on DRD calls create with definitionId/definitionVersion and navigates to the new editor', async () => {
-    getDefinitionsMock.mockResolvedValue({
-      methodologyId: 'DRD',
-      versions: [publishedDrdVersion()],
-    });
-    createAssessmentMock.mockResolvedValue({
-      id: 'asm_new_1',
-      assessment: { id: 'asm_new_1' },
-    });
-
+  it('retries an ambiguous create with the same idempotency key', async () => {
+    mocks.create
+      .mockRejectedValueOnce(new MethodCoreApiError('Offline', 0, null, true))
+      .mockResolvedValueOnce({ session: canonicalSession });
     render(<AssessmentLibraryTab />);
+    await screen.findByText('session-exact-123');
 
-    await screen.findByText('Published v2.0');
-    const startButtons = screen.getAllByRole('button', { name: /Start/i });
-    const drdStart = startButtons.find((b) => !(b as HTMLButtonElement).disabled)!;
-    fireEvent.click(drdStart);
+    const start = screen.getAllByRole('button', { name: 'Start' }).find((button) => !(button as HTMLButtonElement).disabled)!;
+    fireEvent.click(start);
+    expect(await screen.findByRole('alert')).toHaveTextContent('Offline');
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
 
-    await waitFor(() => {
-      expect(createAssessmentMock).toHaveBeenCalledTimes(1);
-    });
-    const payload = createAssessmentMock.mock.calls[0][0];
-    expect(payload).toMatchObject({
-      assessmentType: 'DRD',
-      definitionId: 'asdef_drd_2.0',
-      definitionVersion: '2.0',
-    });
-
-    await waitFor(() => {
-      expect(navigateMock).toHaveBeenCalledWith('/assessment/drd/asm_new_1');
-    });
+    await waitFor(() => expect(mocks.create).toHaveBeenCalledTimes(2));
+    expect(mocks.create.mock.calls[0][1]).toBe('stable-start-key');
+    expect(mocks.create.mock.calls[1][1]).toBe('stable-start-key');
+    expect(mocks.navigate).toHaveBeenCalledWith('/assessment/drd/session-exact-123');
   });
 
-  it('surfaces a 422 DEFINITION_NOT_PUBLISHED error instead of a false success', async () => {
-    getDefinitionsMock.mockResolvedValue({
-      methodologyId: 'DRD',
-      versions: [publishedDrdVersion()],
-    });
-    const notPublishedError = Object.assign(new Error('Definition not published'), {
-      status: 422,
-      data: { code: 'DEFINITION_NOT_PUBLISHED' },
-    });
-    createAssessmentMock.mockRejectedValueOnce(notPublishedError);
-
+  it('renders a durable fail-closed 403 with an explicit retry', async () => {
+    mocks.list.mockRejectedValueOnce(new MethodCoreApiError('Forbidden', 403));
     render(<AssessmentLibraryTab />);
+    expect(await screen.findByRole('alert')).toHaveTextContent('do not have access');
 
-    await screen.findByText('Published v2.0');
-    const startButtons = screen.getAllByRole('button', { name: /Start/i });
-    const drdStart = startButtons.find((b) => !(b as HTMLButtonElement).disabled)!;
-    fireEvent.click(drdStart);
-
-    await waitFor(() => {
-      expect(toast.error).toHaveBeenCalled();
-    });
-    expect(navigateMock).not.toHaveBeenCalled();
-    // Re-fetches the catalog after a stale-definition rejection.
-    await waitFor(() => {
-      expect(getDefinitionsMock).toHaveBeenCalledTimes(2);
-    });
+    mocks.list.mockResolvedValueOnce({ sessions: [canonicalSession], total: 1 });
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(await screen.findByText('session-exact-123')).toBeInTheDocument();
   });
 
-  it('shows an inline error with retry when the definition catalog fails to load', async () => {
-    getDefinitionsMock.mockRejectedValueOnce(new Error('network down'));
+  it.each([
+    [404, 'not found during canonical readback'],
+    [409, 'version or identity conflict'],
+  ])('keeps the same create key across a %s canonical readback failure', async (status, copy) => {
+    mocks.create.mockResolvedValue({ session: canonicalSession });
+    mocks.get
+      .mockRejectedValueOnce(new MethodCoreApiError('readback refused', status, { error: 'readback_refused' }))
+      .mockResolvedValueOnce({ session: canonicalSession, roles: ['owner'] });
+    render(<AssessmentLibraryTab />);
+    await screen.findByText('session-exact-123');
 
+    const start = screen.getAllByRole('button', { name: 'Start' }).find((button) => !(button as HTMLButtonElement).disabled)!;
+    fireEvent.click(start);
+    expect(await screen.findByRole('alert')).toHaveTextContent(copy);
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+
+    await waitFor(() => expect(mocks.navigate).toHaveBeenCalledWith('/assessment/drd/session-exact-123'));
+    expect(mocks.create).toHaveBeenCalledTimes(2);
+    expect(mocks.create.mock.calls.map((call) => call[1])).toEqual(['stable-start-key', 'stable-start-key']);
+  });
+
+  it('renders the canonical session controls in Polish and keeps non-DRD methods disabled', async () => {
+    mocks.language = 'pl';
+    render(<AssessmentLibraryTab />);
+    expect(await screen.findByText('Twoje kanoniczne sesje DRD')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Otwórz' })).toBeEnabled();
+    expect(screen.getAllByText('Wkrótce')).toHaveLength(4);
+    const startButtons = screen.getAllByRole('button', { name: 'Uruchom' });
+    expect(startButtons.filter((button) => (button as HTMLButtonElement).disabled)).toHaveLength(4);
+  });
+
+  it('never silently truncates more than 100 sessions and loads the next deduplicated page', async () => {
+    const firstPage = [
+      ...Array.from({ length: 99 }, (_, index) => ({ ...canonicalSession, id: `session-${index}` })),
+      { ...canonicalSession, id: 'tool-session-hidden', module: 'tools' },
+    ];
+    mocks.list
+      .mockResolvedValueOnce({ sessions: firstPage, total: 101 })
+      .mockResolvedValueOnce({ sessions: [{ ...canonicalSession, id: 'session-100' }], total: 101 });
     render(<AssessmentLibraryTab />);
 
-    expect(await screen.findByText('DRD definition catalog')).toBeInTheDocument();
-    expect(screen.getByText('network down')).toBeInTheDocument();
-
-    getDefinitionsMock.mockResolvedValueOnce({
-      methodologyId: 'DRD',
-      versions: [publishedDrdVersion()],
-    });
-    fireEvent.click(screen.getByRole('button', { name: /try again/i }));
-
-    await waitFor(() => {
-      expect(screen.getByText('Published v2.0')).toBeInTheDocument();
-    });
+    expect(await screen.findByText('Showing 99 DRD sessions; scanned 100 of 101')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Load more' }));
+    expect(await screen.findByText('session-100')).toBeInTheDocument();
+    expect(screen.queryByText('Showing 99 DRD sessions; scanned 100 of 101')).not.toBeInTheDocument();
+    expect(mocks.list.mock.calls[1][0]).toMatchObject({ limit: 100, offset: 100 });
   });
 });
