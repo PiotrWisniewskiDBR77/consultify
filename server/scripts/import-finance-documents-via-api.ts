@@ -86,7 +86,10 @@ function formatError(error: unknown): string {
 
 async function getAuthToken(): Promise<string> {
   const seedEmail = `finance-import-bot-${Date.now()}@demo.com`;
-  const seedPassword = 'FinanceImportBot2026!';
+  const seedPassword = process.env.FINANCE_IMPORT_BOT_PASSWORD;
+  if (!seedPassword) {
+    throw new Error('FINANCE_IMPORT_BOT_PASSWORD is required; no password fallback is permitted');
+  }
 
   const registerRes = await fetch(`${BASE_URL}/api/auth/register-demo`, {
     method: 'POST',

@@ -198,4 +198,31 @@ describe('SET-MVP-DELETE-001 approved request/cancel/status lifecycle', () => {
     );
     expect(count.rows[0]!.n).toBe(0);
   });
+
+  it('has no destructive executor and cannot mutate the user through a guessed route', async () => {
+    const created = await request(app())
+      .post('/api/settings/gdpr/deletion-request')
+      .set('Authorization', `Bearer ${token()}`)
+      .send({ password });
+    expect(created.status).toBe(200);
+
+    for (const path of [
+      '/api/settings/gdpr/execute-deletion',
+      `/api/settings/gdpr/deletion-request/${created.body.request.id}/execute`,
+      '/api/settings/gdpr/purge-account',
+    ]) {
+      const denied = await request(app())
+        .post(path)
+        .set('Authorization', `Bearer ${token()}`)
+        .send({});
+      expect(denied.status, path).toBe(404);
+    }
+    const user = await client.query<{ id: string }>('SELECT id FROM users WHERE id = $1', [userId]);
+    expect(user.rows).toEqual([{ id: userId }]);
+    const requestRow = await client.query<{ status: string; scheduled_at: string | null }>(
+      'SELECT status, scheduled_at FROM gdpr_requests WHERE id = $1',
+      [created.body.request.id]
+    );
+    expect(requestRow.rows).toEqual([{ status: 'pending', scheduled_at: null }]);
+  });
 });

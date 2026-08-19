@@ -239,6 +239,20 @@ describe('SSOService', () => {
       expect(result.error).toMatch(/invalid saml signature/i);
     });
 
+    it('rejects an unregistered organization even when a verifier is installed', async () => {
+      const encoded = Buffer.from(
+        '<samlp:Response><saml:Assertion><saml:Subject><saml:NameID>attacker@example.com</saml:NameID></saml:Subject></saml:Assertion></samlp:Response>'
+      ).toString('base64');
+      mockQuery.mockResolvedValueOnce({ rows: [] });
+      const verifier = vi.fn(() => true);
+      service.setSignatureVerifier(verifier);
+
+      const result = await service.validateSAMLResponse('unregistered-org', encoded);
+
+      expect(result).toEqual({ valid: false, error: 'no SAML certificate configured' });
+      expect(verifier).not.toHaveBeenCalled();
+    });
+
     it('accepts a response only when the signature verifier confirms it', async () => {
       const samlXml = `<samlp:Response>
         <saml:Assertion><saml:Subject>

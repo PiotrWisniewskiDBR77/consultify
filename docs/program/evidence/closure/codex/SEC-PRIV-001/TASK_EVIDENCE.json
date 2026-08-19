@@ -1,38 +1,35 @@
 {
   "taskId": "SEC-PRIV-001",
-  "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "0c2e54d0a9fea6f7f16c0d596c661526c0772ea4",
-  "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
-  "changedPaths": ["package.json", "package-lock.json", "docs/program/evidence/closure/codex/SEC-PRIV-001/TASK_EVIDENCE.json"],
-  "changedPathRationale": {
-    "package.json": "Safe patch-level production override moves Mammoth's transitive underscore from vulnerable 1.13.7 to 1.13.8.",
-    "package-lock.json": "Locks the reviewed transitive remediation reproducibly.",
-    "docs/program/evidence/closure/codex/SEC-PRIV-001/TASK_EVIDENCE.json": "Current-SHA audit and compatibility evidence."
-  },
-  "ownerTables": ["oauth_provider_approval_registry", "audit_logs"],
-  "commands": [
-    {"command": "npm audit --omit=dev --json", "exitCode": 1, "result": "11 production findings: 2 high, 7 moderate, 2 low, 0 critical; high reduced from 3 to 2"},
-    {"command": "npm install --ignore-scripts", "exitCode": 0, "result": "override installed without lifecycle scripts"},
-    {"command": "vitest documentStudioGenerateExportHappyPath + my-work.map-export-pptx.contract", "exitCode": 0, "result": "9/9 tests in 2/2 files"},
-    {"command": "tsc -p server/tsconfig.json --noEmit", "exitCode": 0, "result": "server TypeScript passes"}
-  ],
-  "denominators": {
-    "productionAuditBefore": {"high": 3, "critical": 0, "total": 12},
-    "productionAuditAfter": {"high": 2, "critical": 0, "total": 11},
-    "compatibilityTests": "9/9 in 2/2 files"
-  },
-  "fixtures": {"document": "real DOCX export reopened through Mammoth", "presentation": "real in-memory PPTXGenJS export contract"},
-  "negativeControls": {
-    "dependency": "No npm audit --force and no incompatible PPTXGenJS downgrade applied.",
-    "sandbox": "Existing run_script fail-closed evidence remains unchanged.",
-    "saml": "Existing unsigned/unregistered verifier denial evidence remains unchanged.",
-    "tenant": "Document compatibility packet includes cross-tenant read denial."
-  },
-  "browserArtifacts": [],
-  "rollback": {"code": "Remove underscore override and regenerate package-lock.json.", "data": "No schema or production data touched."},
   "verdict": "PARTIAL",
+  "securityStatus": "BLOCKED_ROTATION_REQUIRED",
+  "scope": "Fail-closed privacy/auth runtime, dependency reachability, secret gates and historical inventory",
+  "guarantees": {
+    "productionTouched": false,
+    "historyRewritten": false,
+    "providersContacted": false,
+    "secretValuesStoredInEvidence": false,
+    "secretValuesPrintedInEvidence": false
+  },
+  "runtimeEvidence": {
+    "privacy": "Fresh disposable real PostgreSQL proves signed ACTIVE/foreign/revoked membership matrix, immutable export receipt and hash/download/replay, deletion request/status/cancel, and absent destructive executor.",
+    "saml": "Unsigned and unregistered organization assertions deny before verifier execution.",
+    "runScript": "run_script remains fail-closed even when its feature flag is forced on.",
+    "presentation": "Exact PptxGenJS 4.0.1 executable bundles do not load image-size; runtime load trap stays at zero and generated PPTX reopens with valid slide/media/content types."
+  },
+  "secretEvidence": {
+    "currentTree": "0 findings after positive 1/1 and path-negative 3/3 canaries",
+    "history": {
+      "status": "BLOCKED_ROTATION_REQUIRED",
+      "inventory": "HISTORICAL_SECRET_INVENTORY.json",
+      "rawFindings": 119,
+      "uniquePathCommitHashRecords": 74,
+      "recordFields": ["path", "historyCommit", "sha256", "providerType", "rules", "lines", "status"]
+    }
+  },
   "openBlockers": [
-    "Two high audit records remain for one unresolved upstream chain: pptxgenjs 4.0.1 -> image-size 1.2.1. npm proposes an incompatible downgrade to pptxgenjs 1.1.5; no safe fixed image-size release is available in the audited resolution.",
-    "Full release-SHA secret scan, privacy export/delete proof, authorization UAT and deployed evidence remain outside this bounded packet."
-  ]
+    "Historical provider credentials require owner-coordinated provider rotation before any optional history rewrite.",
+    "No release or DONE verdict is permitted while the historical rotation gate remains open."
+  ],
+  "ownerDecisionRequired": "Approve and coordinate provider rotation; separately decide whether repository history rewrite is authorized after rotation.",
+  "rollback": "Revert the candidate commit; no migration, production data mutation, deployment, push or history rewrite occurred."
 }

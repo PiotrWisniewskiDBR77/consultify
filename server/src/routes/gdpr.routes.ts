@@ -567,6 +567,7 @@ router.get(
  */
 router.post(
   '/deletion-request',
+  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const userId = req.user!.id;
@@ -624,6 +625,7 @@ router.post(
  */
 router.post(
   '/cancel-deletion',
+  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const userId = req.user!.id;
@@ -658,6 +660,7 @@ router.post(
  */
 router.get(
   '/deletion-status',
+  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const userId = req.user!.id;

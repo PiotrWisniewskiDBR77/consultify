@@ -15,6 +15,7 @@ describe('Settings/GDPR routes (no stub responses)', () => {
   let settingsRouter: any;
   let gdprRouter: any;
   let userControlsRouter: any;
+  let legacyDataExportRouter: any;
   let dbPromiseModule: typeof import('../../../server/src/utils/DbPromise.js');
   let realDatabaseReady = false;
   let cleanupPool: pg.Pool;
@@ -47,6 +48,7 @@ describe('Settings/GDPR routes (no stub responses)', () => {
     app.use('/api/settings', settingsRouter);
     app.use('/api/gdpr', gdprRouter);
     app.use('/api/user', userControlsRouter);
+    app.use('/api/user', legacyDataExportRouter);
     return app;
   };
 
@@ -114,6 +116,13 @@ describe('Settings/GDPR routes (no stub responses)', () => {
         `DELETE FROM user_data_export_receipts WHERE request_id = ANY($1::text[])`,
         [requestIds]
       );
+      await cleanupClient.query(
+        `ALTER TABLE account_deletion_request_receipts DISABLE TRIGGER trg_account_deletion_request_receipts_immutable`
+      );
+      await cleanupClient.query(
+        `DELETE FROM account_deletion_request_receipts WHERE request_id = ANY($1::text[])`,
+        [gdprIds]
+      );
       await cleanupClient.query(`DELETE FROM data_export_requests WHERE id = ANY($1::text[])`, [
         requestIds,
       ]);
@@ -124,6 +133,9 @@ describe('Settings/GDPR routes (no stub responses)', () => {
       );
       await cleanupClient.query(
         `ALTER TABLE user_data_export_receipts ENABLE TRIGGER trg_user_data_export_receipts_immutable`
+      );
+      await cleanupClient.query(
+        `ALTER TABLE account_deletion_request_receipts ENABLE TRIGGER trg_account_deletion_request_receipts_immutable`
       );
       const trigger = await cleanupClient.query<{ tgenabled: string }>(
         `SELECT tgenabled FROM pg_trigger WHERE tgname='trg_user_data_export_receipts_immutable'`
@@ -175,6 +187,7 @@ describe('Settings/GDPR routes (no stub responses)', () => {
     userControlsRouter = (
       await import('../../../server/src/routes/user/user-data-controls.routes.ts')
     ).default;
+    legacyDataExportRouter = (await import('../../../server/src/routes/dataExport.routes.ts')).default;
   });
 
   afterAll(async () => {
@@ -342,6 +355,13 @@ describe('Settings/GDPR routes (no stub responses)', () => {
           ])
         )?.n
       ),
+      deletionRequests: Number(
+        (
+          await db.get(`SELECT count(*) AS n FROM account_deletion_requests WHERE user_id = ?`, [
+            userId,
+          ])
+        )?.n
+      ),
     });
     const before = await countRows();
 
@@ -365,6 +385,80 @@ describe('Settings/GDPR routes (no stub responses)', () => {
       .send({});
     expect(revoked.status).toBe(403);
     expect(revoked.body).toMatchObject({ code: 'ORG_MEMBERSHIP_REVOKED' });
+
+    const revokedMatrix: Array<[string, Promise<any>]> = [
+      [
+        'settings export request',
+        request(app)
+          .post('/api/settings/export-data')
+          .set('Authorization', `Bearer ${makeToken()}`)
+          .send({}),
+      ],
+      [
+        'settings export status',
+        request(app)
+          .get('/api/settings/gdpr/export-status')
+          .set('Authorization', `Bearer ${makeToken()}`),
+      ],
+      [
+        'settings export legacy request',
+        request(app)
+          .post('/api/settings/gdpr/export-request')
+          .set('Authorization', `Bearer ${makeToken()}`)
+          .send({}),
+      ],
+      [
+        'settings export download',
+        request(app)
+          .get('/api/settings/gdpr/export-download/not-owned')
+          .set('Authorization', `Bearer ${makeToken()}`),
+      ],
+      [
+        'gdpr deletion request',
+        request(app)
+          .post('/api/gdpr/deletion-request')
+          .set('Authorization', `Bearer ${makeToken()}`)
+          .send({ password: userPassword }),
+      ],
+      [
+        'gdpr deletion cancel',
+        request(app)
+          .post('/api/gdpr/cancel-deletion')
+          .set('Authorization', `Bearer ${makeToken()}`)
+          .send({ requestId: 'not-owned' }),
+      ],
+      [
+        'gdpr deletion status',
+        request(app)
+          .get('/api/gdpr/deletion-status')
+          .set('Authorization', `Bearer ${makeToken()}`),
+      ],
+      [
+        'direct export retirement',
+        request(app)
+          .get('/api/user/data-export')
+          .set('Authorization', `Bearer ${makeToken()}`),
+      ],
+      [
+        'legacy DSR export request',
+        request(app)
+          .post('/api/user/request')
+          .set('Authorization', `Bearer ${makeToken()}`)
+          .send({}),
+      ],
+      [
+        'legacy DSR deletion request',
+        request(app)
+          .post('/api/user/delete-request')
+          .set('Authorization', `Bearer ${makeToken()}`)
+          .send({ confirmationEmail: 'u1@test.local' }),
+      ],
+    ];
+    for (const [label, responsePromise] of revokedMatrix) {
+      const response = await responsePromise;
+      expect(response.status, label).toBe(403);
+      expect(response.body, label).toMatchObject({ code: 'ORG_MEMBERSHIP_REVOKED' });
+    }
 
     const superAdminWithoutMembership = await request(app)
       .post('/api/gdpr/export-request')
@@ -423,7 +517,7 @@ describe('Settings/GDPR routes (no stub responses)', () => {
         request: expect.objectContaining({
           id: expect.any(String),
           status: expect.any(String),
-          scheduledAt: expect.any(String),
+          scheduledAt: null,
         }),
       })
     );
@@ -436,12 +530,14 @@ describe('Settings/GDPR routes (no stub responses)', () => {
     expect(row?.status).toBeTruthy();
   });
 
-  it('GET /api/user/data-export returns JSON payload', async () => {
+  it('retires the unreceipted direct export and points to the governed successor', async () => {
     const res = await request(makeApp())
       .get('/api/user/data-export')
       .set('Authorization', `Bearer ${makeToken()}`);
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual(expect.objectContaining({ exportDate: expect.any(String) }));
-    expect(res.body.user).toEqual(expect.objectContaining({ id: userId }));
+    expect(res.status).toBe(410);
+    expect(res.body).toMatchObject({
+      code: 'GDPR_DIRECT_EXPORT_RETIRED',
+      successor: { request: '/api/gdpr/export-request' },
+    });
   });
 });

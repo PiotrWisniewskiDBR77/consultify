@@ -264,26 +264,14 @@ const AccountSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
   const handleExportData = async () => {
     try {
       setExporting(true);
-      // Real export: fetch the user's data from the backend and download it
-      // directly as a JSON file. Endpoint is mounted at
-      // /api/user/data-controls/data-export (server/src/routes/user/user-data-controls.routes.ts)
-      // and backed by collectUserData() in server/src/services/gdprService.ts.
-      const res = await Api.get('/api/user/data-controls/data-export');
-      const payload = res?.data ?? res;
-      if (!payload) {
-        throw new Error('Empty export response');
-      }
-      const blob = new Blob([JSON.stringify(payload, null, 2)], {
-        type: 'application/json',
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `consultify-data-export-${new Date().toISOString().split('T')[0]}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
+      const response = await Api.requestGdprExport();
+      const exportRequest = response?.request ?? response?.data?.request;
+      if (!exportRequest?.id) throw new Error('Export request was not confirmed');
       toast.success(
-        t('settings.account.exportDownloaded', 'Your data was downloaded as a JSON file.')
+        t(
+          'settings.account.exportRequested',
+          'Your export request was accepted. Download it from Data Controls when it is ready.'
+        )
       );
     } catch (error) {
       toast.error(t('settings.account.exportError', 'Failed to export data'));

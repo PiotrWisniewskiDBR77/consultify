@@ -8,6 +8,7 @@ import { verifyToken } from '../middleware/auth.middleware.js';
 const isAuthenticated = verifyToken; // alias for compatibility
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import { requireNoLegalHold } from '../services/OrgPoliciesService.js';
+import { requireActiveMembership } from '../services/legacyCutover/requireActiveMembership.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
@@ -24,6 +25,10 @@ async function checkLegalHoldForUser(
 }
 
 const router = Router();
+// This legacy-mounted DSR surface remains reachable at `/api/user/*`.  Keep it
+// fail-closed until the settings cutover retires its duplicate writers: a
+// valid token alone must never be enough after membership revocation.
+router.use(verifyToken, requireActiveMembership);
 const db = {
   get: (sql: string, params: any[]) => dbGet(sql, params),
   all: (sql: string, params: any[]) => dbAll(sql, params),

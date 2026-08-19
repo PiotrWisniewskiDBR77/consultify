@@ -476,6 +476,30 @@ describe('AutomationService', () => {
 
       delete (globalThis as any).__rceProof;
     });
+
+    it('still does NOT execute when the legacy enable flag is forced on without a sandbox', async () => {
+      const previous = process.env.TP_AUTOMATION_RUN_SCRIPT_ENABLED;
+      process.env.TP_AUTOMATION_RUN_SCRIPT_ENABLED = 'true';
+      (globalThis as any).__rceProof = false;
+      try {
+        const result = await (service as any).executeAction(
+          {
+            id: 'act-flag-on',
+            actionOrder: 0,
+            actionType: 'run_script',
+            actionConfig: { script: 'globalThis.__rceProof = true;' },
+          },
+          { id: 'rec-1', data: {} },
+          { id: 'auto-1', table_id: 't-1', created_by: 'u-1' }
+        );
+        expect((globalThis as any).__rceProof).toBe(false);
+        expect(result).toMatchObject({ success: false, error: 'script sandbox not configured' });
+      } finally {
+        if (previous === undefined) delete process.env.TP_AUTOMATION_RUN_SCRIPT_ENABLED;
+        else process.env.TP_AUTOMATION_RUN_SCRIPT_ENABLED = previous;
+        delete (globalThis as any).__rceProof;
+      }
+    });
   });
 
   // -----------------------------------------------------------------------

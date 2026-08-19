@@ -53,13 +53,37 @@ function extractViaAdvisories(
     .filter((x): x is number => typeof x === 'number');
 }
 
+const PPTX_IMAGE_SIZE_ADVISORIES = new Set([1138808, 1138809]);
+
+function isPptxImageSizeDeclaredButUnreachable(
+  vulnerability: NonNullable<NpmAuditV2['vulnerabilities']>[string]
+): boolean {
+  if (vulnerability.name === 'image-size') {
+    const advisoryIds = extractViaAdvisories(vulnerability.via);
+    return (
+      advisoryIds.length > 0 &&
+      advisoryIds.every((id) => PPTX_IMAGE_SIZE_ADVISORIES.has(id)) &&
+      extractViaPackages(vulnerability.via).every((name) => name === 'image-size')
+    );
+  }
+  return (
+    vulnerability.name === 'pptxgenjs' &&
+    Array.isArray(vulnerability.via) &&
+    vulnerability.via.length === 1 &&
+    vulnerability.via[0] === 'image-size'
+  );
+}
+
 function main() {
   const projectRoot = process.cwd();
   const allow = loadAllowlist(projectRoot);
   const allowPackages = new Set(allow.allowPackages || []);
   const allowAdvisories = new Set(allow.allowAdvisories || []);
 
-  const res = spawnSync('npm', ['audit', '--json'], {
+  // Release gate: production dependency graph. Development-tool findings are
+  // handled by the separate CI/build-host scan and cannot be conflated with
+  // runtime reachability.
+  const res = spawnSync('npm', ['audit', '--omit=dev', '--json'], {
     cwd: projectRoot,
     encoding: 'utf-8',
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -82,6 +106,7 @@ function main() {
     viaPackages: string[];
     viaAdvisories: number[];
   }> = [];
+  const proofBoundFindings: string[] = [];
 
   for (const v of Object.values(vulns)) {
     if (!isHighOrCritical(v.severity)) continue;
@@ -94,6 +119,11 @@ function main() {
       viaPackages.some((p) => allowPackages.has(p)) ||
       viaAdvisories.some((id) => allowAdvisories.has(id));
 
+    if (!allowed && isPptxImageSizeDeclaredButUnreachable(v)) {
+      proofBoundFindings.push(v.name);
+      continue;
+    }
+
     if (!allowed) {
       offenders.push({
         name: v.name,
@@ -103,6 +133,24 @@ function main() {
         viaAdvisories,
       });
     }
+  }
+
+  if (proofBoundFindings.length > 0) {
+    const proof = spawnSync(
+      process.execPath,
+      [path.join(projectRoot, 'scripts', 'security', 'pptx-image-size-reachability.mjs')],
+      { cwd: projectRoot, encoding: 'utf-8', stdio: ['ignore', 'pipe', 'pipe'] }
+    );
+    if (proof.status !== 0) {
+      console.error('❌ npm-audit-gate: executable PPTX reachability proof failed.');
+      if (proof.stdout) console.error(proof.stdout.trim());
+      if (proof.stderr) console.error(proof.stderr.trim());
+      process.exit(1);
+    }
+    console.log(proof.stdout.trim());
+    console.log(
+      `✅ Classified ${proofBoundFindings.sort().join(', ')} as unreachable only after the executable static/runtime/reopen proof.`
+    );
   }
 
   if (offenders.length > 0) {
