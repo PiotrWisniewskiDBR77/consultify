@@ -114,8 +114,16 @@ describe('Account deletion routes are uniformly password-gated', () => {
 
   beforeEach(async () => {
     expect(realDatabaseReady).toBe(true);
+    await db.run(
+      `ALTER TABLE account_deletion_request_receipts DISABLE TRIGGER trg_account_deletion_request_receipts_immutable`
+    );
+    await db.run(`DELETE FROM account_deletion_request_receipts WHERE user_id = ?`, [userId]);
+    await db.run(
+      `ALTER TABLE account_deletion_request_receipts ENABLE TRIGGER trg_account_deletion_request_receipts_immutable`
+    );
     await db.run(`DELETE FROM gdpr_requests WHERE user_id = ?`, [userId]);
     await db.run(`DELETE FROM account_deletion_requests WHERE user_id = ?`, [userId]);
+    await db.run(`DELETE FROM organization_members WHERE user_id = ?`, [userId]);
     await db.run(`DELETE FROM users WHERE id = ?`, [userId]);
     await db.run(`DELETE FROM organizations WHERE id = ?`, [orgId]);
     await db.run(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [orgId, 'Deletion Guard']);
@@ -123,6 +131,11 @@ describe('Account deletion routes are uniformly password-gated', () => {
       `INSERT INTO users (id, organization_id, email, first_name, last_name, password, role)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [userId, orgId, 'del@test.local', 'Del', 'Guard', passwordHash, 'ADMIN']
+    );
+    await db.run(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+       VALUES (?, ?, ?, 'ADMIN', 'ACTIVE')`,
+      [`membership-${userId}`, orgId, userId]
     );
   });
 

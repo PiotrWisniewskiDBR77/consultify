@@ -12,6 +12,8 @@ vi.mock('@/services/api', () => ({
     getGdprConsents: vi.fn(),
     getGdprRetention: vi.fn(),
     getGdprExportStatus: vi.fn(),
+    getGdprDeletionStatus: vi.fn(),
+    cancelGdprDeletion: vi.fn(),
     requestGdprDeletion: vi.fn(),
     requestGdprExport: vi.fn(),
     saveGdprConsents: vi.fn(),
@@ -55,6 +57,7 @@ describe('DataControlsSettings honest UI', () => {
     });
     vi.mocked(Api.getGdprConsents).mockResolvedValue({ consents });
     vi.mocked(Api.getGdprRetention).mockResolvedValue({ retention });
+    vi.mocked(Api.getGdprDeletionStatus).mockResolvedValue({ request: null });
   });
 
   it('does not render failed data-control loads as editable defaults', async () => {
@@ -90,6 +93,78 @@ describe('DataControlsSettings honest UI', () => {
     });
 
     expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  it('restores a pending deletion request after a cold mount and cancels by exact receipt id', async () => {
+    vi.mocked(Api.getGdprDeletionStatus)
+      .mockResolvedValueOnce({
+        request: { id: 'delete-receipt-1', status: 'pending', requestedAt: '2026-08-19T10:00:00Z' },
+      })
+      .mockResolvedValueOnce({ request: null });
+    vi.mocked(Api.cancelGdprDeletion).mockResolvedValue({
+      success: true,
+      request: { id: 'delete-receipt-1', status: 'cancelled' },
+    });
+
+    renderSettings();
+
+    await screen.findByText('Deletion request pending');
+    expect(screen.getByText(/delete-receipt-1/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Delete Account' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel deletion request' }));
+
+    await waitFor(() => {
+      expect(Api.cancelGdprDeletion).toHaveBeenCalledWith('delete-receipt-1');
+      expect(screen.getByRole('button', { name: 'Delete Account' })).toBeInTheDocument();
+    });
+    expect(toast.success).toHaveBeenCalledWith('Deletion request cancelled');
+  });
+
+  it('submits a reauthenticated deletion request and claims success only after exact read-back', async () => {
+    vi.mocked(Api.getGdprDeletionStatus)
+      .mockResolvedValueOnce({ request: null })
+      .mockResolvedValueOnce({ request: { id: 'delete-receipt-new', status: 'pending' } });
+    vi.mocked(Api.requestGdprDeletion).mockResolvedValue({
+      success: true,
+      request: { id: 'delete-receipt-new', status: 'pending' },
+    });
+
+    renderSettings();
+    await screen.findByRole('button', { name: 'Delete Account' });
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Account' }));
+    fireEvent.change(screen.getByPlaceholderText('delete my data'), {
+      target: { value: 'delete my data' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Your account password'), {
+      target: { value: 'correct-password' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Submit deletion request' }));
+
+    await waitFor(() => {
+      expect(Api.requestGdprDeletion).toHaveBeenCalledWith('correct-password');
+      expect(screen.getByText('Deletion request pending')).toBeInTheDocument();
+    });
+    expect(toast.success).toHaveBeenCalledWith(
+      'Deletion request recorded. No data will be erased while policy approval is pending.'
+    );
+  });
+
+  it('does not claim cancellation when cold read-back still returns an active request', async () => {
+    const active = { request: { id: 'delete-receipt-2', status: 'pending' } };
+    vi.mocked(Api.getGdprDeletionStatus).mockResolvedValue(active);
+    vi.mocked(Api.cancelGdprDeletion).mockResolvedValue({
+      success: true,
+      request: { id: 'delete-receipt-2', status: 'cancelled' },
+    });
+
+    renderSettings();
+    await screen.findByText('Deletion request pending');
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel deletion request' }));
+
+    await waitFor(() =>
+      expect(screen.getByText('Account deletion cancellation was not confirmed by read-back')).toBeInTheDocument()
+    );
+    expect(toast.success).not.toHaveBeenCalledWith('Deletion request cancelled');
   });
 
   it('polls pending export to ready and downloads only through the canonical receipt route', async () => {

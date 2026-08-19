@@ -17197,7 +17197,11 @@ export const Api = {
   },
 
   cancelGdprDeletion: async (_requestId?: string) => {
-    return Api.post('/api/gdpr/cancel-deletion', { requestId: _requestId });
+    return Api.post('/api/settings/gdpr/cancel-deletion', { requestId: _requestId });
+  },
+
+  getGdprDeletionStatus: async () => {
+    return Api.get('/api/settings/gdpr/deletion-status');
   },
 
   getDeveloperSettings: async () => {

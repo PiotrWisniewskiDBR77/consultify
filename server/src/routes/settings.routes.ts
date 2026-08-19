@@ -3191,24 +3191,17 @@ router.get(
 router.post(
   '/gdpr/deletion-request',
   verifyToken,
+  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
+    const tokenOrganizationId = req.user?.organizationId;
     const { reason, password } = req.body || {};
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
     await ensureGdprRequestsTable();
 
-    // Check for existing pending deletion request
-    const existingRequest = await dbGet(
-      `SELECT id FROM gdpr_requests WHERE user_id = ? AND type = 'deletion' AND status IN ('pending', 'scheduled')`,
-      [userId]
-    );
-
-    if (existingRequest) {
-      return res.status(400).json({ error: 'A deletion request is already pending' });
-    }
-
-    // Verify the user's password before scheduling an irreversible account deletion.
+    // Re-authenticate every request attempt. The request only schedules a reversible
+    // privacy workflow; destructive execution remains disabled pending policy approval.
     const passwordCheck = await verifyUserPassword(userId, password);
     if (passwordCheck.ok === false) {
       return res.status(passwordCheck.status).json({ error: passwordCheck.error });
@@ -3216,32 +3209,48 @@ router.post(
 
     const { v4: uuidv4 } = await import('uuid');
     const requestId = uuidv4();
-    // Schedule deletion for 30 days from now (grace period)
-    const scheduledAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-
     // gdpr_requests.organization_id is NOT NULL with no DB default (Postgres
     // rejects the row; SQLite let it slide) — resolve from the user's own org.
     const orgRow = await dbGet(`SELECT organization_id FROM users WHERE id = ?`, [userId]);
     const organizationId = orgRow?.organization_id;
-    if (!organizationId) {
+    if (!organizationId || organizationId !== tokenOrganizationId) {
       return res.status(404).json({ error: 'User organization not found' });
     }
 
-    await dbRun(
-      `INSERT INTO gdpr_requests (id, organization_id, user_id, type, status, reason, scheduled_at) VALUES (?, ?, ?, 'deletion', 'scheduled', ?, ?)`,
-      [requestId, organizationId, userId, reason || '', scheduledAt]
+    const inserted = await dbGet<{ id: string }>(
+      `INSERT INTO gdpr_requests (id, organization_id, user_id, type, status, reason, scheduled_at)
+       VALUES (?, ?, ?, 'deletion', 'pending', ?, NULL)
+       ON CONFLICT (user_id) WHERE type = 'deletion' AND status IN ('pending', 'scheduled')
+       DO NOTHING
+       RETURNING id`,
+      [requestId, organizationId, userId, reason || '']
     );
 
-    logger.info(
-      `[settings] GDPR deletion request created for user ${userId}, scheduled for ${scheduledAt}`
-    );
+    const activeRequest = inserted
+      ? await dbGet<any>(
+          `SELECT id, status, scheduled_at, created_at
+             FROM gdpr_requests
+            WHERE id = ? AND organization_id = ? AND user_id = ?`,
+          [inserted.id, organizationId, userId]
+        )
+      : await dbGet<any>(
+          `SELECT id, status, scheduled_at, created_at
+             FROM gdpr_requests
+            WHERE organization_id = ? AND user_id = ? AND type = 'deletion'
+              AND status IN ('pending', 'scheduled')
+            ORDER BY created_at DESC LIMIT 1`,
+          [organizationId, userId]
+        );
+    if (!activeRequest) throw new Error('Account deletion request read-back failed');
+
+    logger.info(`[settings] GDPR deletion request recorded for user ${userId}`);
 
     return res.json({
       request: {
-        id: requestId,
-        status: 'scheduled',
-        scheduledAt,
-        requestedAt: new Date().toISOString(),
+        id: activeRequest.id,
+        status: activeRequest.status,
+        scheduledAt: activeRequest.scheduled_at,
+        requestedAt: activeRequest.created_at,
       },
       success: true,
     });
@@ -3255,12 +3264,14 @@ router.post(
 router.get(
   '/gdpr/deletion-status',
   verifyToken,
+  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
     await ensureGdprRequestsTable();
 
+    const organizationId = req.user?.organizationId;
     const request = await dbGet<{
       id: string;
       status: string;
@@ -3270,9 +3281,10 @@ router.get(
     }>(
       `SELECT id, status, scheduled_at, reason, created_at 
              FROM gdpr_requests 
-             WHERE user_id = ? AND type = 'deletion' AND status IN ('pending', 'scheduled')
+             WHERE organization_id = ? AND user_id = ? AND type = 'deletion'
+               AND status IN ('pending', 'scheduled')
              ORDER BY created_at DESC LIMIT 1`,
-      [userId]
+      [organizationId, userId]
     );
 
     if (!request) {
@@ -3298,31 +3310,42 @@ router.get(
 router.post(
   '/gdpr/cancel-deletion',
   verifyToken,
+  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
     const { requestId } = req.body || {};
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
+    if (typeof requestId !== 'string' || !requestId.trim()) {
+      return res.status(400).json({ error: 'requestId is required' });
+    }
 
     await ensureGdprRequestsTable();
 
     // Find active deletion request
-    const request = await dbGet(
-      `SELECT id FROM gdpr_requests WHERE user_id = ? AND type = 'deletion' AND status IN ('pending', 'scheduled')`,
-      [userId]
+    const organizationId = req.user?.organizationId;
+    const request = await dbGet<{ id: string }>(
+      `SELECT id FROM gdpr_requests
+        WHERE id = ? AND organization_id = ? AND user_id = ? AND type = 'deletion'
+          AND status IN ('pending', 'scheduled')`,
+      [requestId, organizationId, userId]
     );
 
     if (!request) {
       return res.status(404).json({ error: 'No pending deletion request found' });
     }
 
-    await dbRun(
-      `UPDATE gdpr_requests SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-      [(request as any).id]
+    const cancelled = await dbGet<{ id: string }>(
+      `UPDATE gdpr_requests SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP
+        WHERE id = ? AND organization_id = ? AND user_id = ?
+          AND type = 'deletion' AND status IN ('pending', 'scheduled')
+        RETURNING id`,
+      [request.id, organizationId, userId]
     );
+    if (!cancelled) return res.status(409).json({ error: 'Deletion request is no longer active' });
 
     logger.info(`[settings] GDPR deletion request cancelled for user ${userId}`);
 
-    return res.json({ success: true });
+    return res.json({ success: true, request: { id: request.id, status: 'cancelled' } });
   })
 );
 

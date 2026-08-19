@@ -62,6 +62,8 @@ vi.mock('@/services/api', () => ({
     getGdprRetention: vi.fn(async () => ({ retention: { period: '365', autoDelete: false } })),
     requestGdprExport,
     getGdprExportStatus,
+    getGdprDeletionStatus: vi.fn(async () => ({ request: null })),
+    cancelGdprDeletion: vi.fn(),
     requestGdprDeletion: vi.fn(async () => ({})),
   },
 }));

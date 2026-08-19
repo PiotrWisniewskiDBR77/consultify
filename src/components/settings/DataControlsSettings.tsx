@@ -66,6 +66,13 @@ interface DataRetention {
   autoDelete: boolean;
 }
 
+interface DeletionRequest {
+  id: string;
+  status: 'pending' | 'scheduled';
+  requestedAt?: string | null;
+  scheduledAt?: string | null;
+}
+
 const DEFAULT_CONSENTS: ConsentSettings = {
   analytics: true,
   personalization: true,
@@ -226,6 +233,10 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [deletePassword, setDeletePassword] = useState('');
   const [requestingDeletion, setRequestingDeletion] = useState(false);
+  const [cancellingDeletion, setCancellingDeletion] = useState(false);
+  const [deletionRequest, setDeletionRequest] = useState<DeletionRequest | null>(null);
+  const [deletionStatusLoading, setDeletionStatusLoading] = useState(true);
+  const [deletionStatusError, setDeletionStatusError] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const exportInFlightRef = useRef(false);
@@ -285,6 +296,33 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
   useEffect(() => {
     void loadSettings();
   }, [currentUser.id, loadSettings]);
+
+  const loadDeletionStatus = useCallback(async () => {
+    setDeletionStatusLoading(true);
+    try {
+      setDeletionStatusError(null);
+      const response = await Api.getGdprDeletionStatus();
+      const request = response?.request;
+      if (request !== null && request !== undefined) {
+        if (!request.id || !['pending', 'scheduled'].includes(request.status)) {
+          throw new Error('Account deletion status response was invalid');
+        }
+        setDeletionRequest(request as DeletionRequest);
+      } else {
+        setDeletionRequest(null);
+      }
+    } catch (error: unknown) {
+      setDeletionStatusError(
+        normalizeApiErrorMessage(error, 'Failed to load account deletion request status')
+      );
+    } finally {
+      setDeletionStatusLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadDeletionStatus();
+  }, [currentUser.id, loadDeletionStatus]);
 
   const handleSave = useCallback(async () => {
     setSaving(true);
@@ -395,14 +433,20 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
     try {
       setActionError(null);
       const response = await Api.requestGdprDeletion(deletePassword);
-      if (response?.request) {
+      const request = response?.request;
+      if (request?.id && ['pending', 'scheduled'].includes(request.status)) {
+        const readBack = await Api.getGdprDeletionStatus();
+        if (readBack?.request?.id !== request.id || readBack.request.status !== request.status) {
+          throw new Error('Account deletion request was not confirmed by the server');
+        }
+        setDeletionRequest(readBack.request as DeletionRequest);
         setShowDeleteConfirm(false);
         setDeleteConfirmText('');
         setDeletePassword('');
         toast.success(
           t(
             'settings.data.deletionRequested',
-            'Account deletion scheduled. You will receive a confirmation email.'
+            'Deletion request recorded. No data will be erased while policy approval is pending.'
           )
         );
       } else {
@@ -417,6 +461,33 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
       toast.error(message);
     } finally {
       setRequestingDeletion(false);
+    }
+  };
+
+  const handleCancelDeletion = async () => {
+    if (!deletionRequest || cancellingDeletion) return;
+    setCancellingDeletion(true);
+    try {
+      setActionError(null);
+      const response = await Api.cancelGdprDeletion(deletionRequest.id);
+      if (response?.request?.id !== deletionRequest.id || response.request.status !== 'cancelled') {
+        throw new Error('Account deletion cancellation was not confirmed by the server');
+      }
+      const readBack = await Api.getGdprDeletionStatus();
+      if (readBack?.request !== null) {
+        throw new Error('Account deletion cancellation was not confirmed by read-back');
+      }
+      setDeletionRequest(null);
+      toast.success(t('settings.data.deletionCancelled', 'Deletion request cancelled'));
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        t('settings.data.deletionCancelError', 'Failed to cancel account deletion request')
+      );
+      setActionError(message);
+      toast.error(message);
+    } finally {
+      setCancellingDeletion(false);
     }
   };
 
@@ -602,11 +673,11 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                     <p className="text-xs text-c-text-secondary mt-1">
                       {t(
                         'settings.data.deleteAccountDesc',
-                        'Permanently delete your account and all associated data. This action cannot be undone. A 30-day grace period applies before final deletion.'
+                        'Submit a reversible privacy request. Automated deletion is disabled until retention and legal-hold rules are approved.'
                       )}
                     </p>
                   </div>
-                  {!showDeleteConfirm && (
+                  {!showDeleteConfirm && !deletionRequest && !deletionStatusLoading && (
                     <button
                       onClick={() => setShowDeleteConfirm(true)}
                       className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-shrink-0 bg-danger-500/10 text-danger-400 border border-danger-500/30 hover:bg-danger-500/20 hover:border-danger-500/50"
@@ -617,7 +688,53 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                   )}
                 </div>
 
-                {showDeleteConfirm && (
+                {deletionStatusLoading && (
+                  <div className="mt-4 flex items-center gap-2 text-xs text-c-text-secondary">
+                    <Loader2 size={14} className="animate-spin" />
+                    {t('settings.data.loadingDeletionStatus', 'Loading request status...')}
+                  </div>
+                )}
+
+                {deletionStatusError && (
+                  <div className="mt-4">
+                    <Banner variant="danger" title={deletionStatusError} />
+                    <button
+                      type="button"
+                      onClick={() => void loadDeletionStatus()}
+                      className="mt-2 px-3 py-1.5 bg-c-surface-raised border border-c-border-subtle rounded-lg text-xs text-c-text-secondary"
+                    >
+                      {t('common.retry', 'Retry')}
+                    </button>
+                  </div>
+                )}
+
+                {deletionRequest && (
+                  <div className="mt-4 p-4 bg-c-surface border border-c-border-subtle rounded-lg">
+                    <p className="text-sm font-medium text-c-text">
+                      {t('settings.data.deletionPending', 'Deletion request pending')}
+                    </p>
+                    <p className="text-xs text-c-text-secondary mt-1">
+                      {t(
+                        'settings.data.deletionPendingDesc',
+                        'Your request is recorded and can be cancelled. No automated erasure is scheduled.'
+                      )}
+                    </p>
+                    <p className="text-[11px] text-c-text-muted mt-2 font-mono break-all">
+                      {t('settings.data.requestReceipt', 'Receipt')}: {deletionRequest.id}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => void handleCancelDeletion()}
+                      disabled={cancellingDeletion}
+                      className="mt-3 flex items-center gap-2 px-4 py-2 bg-c-surface-raised border border-c-border-subtle text-c-text-secondary rounded-lg text-sm font-medium disabled:opacity-50"
+                    >
+                      {cancellingDeletion && <Loader2 size={14} className="animate-spin" />}
+                      {t('settings.data.cancelDeletionRequest', 'Cancel deletion request')}
+                    </button>
+                  </div>
+                )}
+
+                {showDeleteConfirm && !deletionRequest && (
                   <div className="mt-4 p-4 bg-danger-50/50 border border-danger-200 dark:border-danger-500/20 rounded-lg">
                     <div className="flex items-center gap-2 text-danger-400 mb-3">
                       <AlertTriangle size={16} />
@@ -628,7 +745,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                     <p className="text-xs text-c-text-secondary mb-3">
                       {t(
                         'settings.data.deleteConfirmDesc',
-                        'This action cannot be undone. All your data, including projects, settings, and history will be permanently deleted after a 30-day grace period.'
+                        'This submits a reversible request. It does not erase data or activate an automated deletion worker.'
                       )}
                     </p>
                     <label className="text-xs font-medium text-c-text-secondary mb-1.5 block">
@@ -672,7 +789,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                         ) : (
                           <Trash2 size={14} />
                         )}
-                        {t('settings.data.confirmDelete', 'Delete Everything')}
+                        {t('settings.data.confirmDelete', 'Submit deletion request')}
                       </button>
                       <button
                         onClick={() => {
