@@ -1,27 +1,36 @@
 {
   "taskId": "PERSONA-UAT-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "748c801eb7ade1661a9ab5d43fd7dc73ca4badde",
+  "productSha": "e070c944acf4e269280c90126cc956f769d455c1",
   "leaseSha256": "18eb0f2e24aee1d6415a29e1605597117f24c42a1f74439842581e7a92583742",
-  "changedPaths": ["docs/program/evidence/closure/codex/PERSONA-UAT-001/TASK_EVIDENCE.json"],
-  "changedPathRationale": {"docs/program/evidence/closure/codex/PERSONA-UAT-001/TASK_EVIDENCE.json": "Records the exact unfulfilled seven-persona human acceptance denominator and prevents automated module checks from being misreported as UAT."},
+  "changedPaths": [
+    "docs/program/evidence/closure/decisions/INTERNAL_BETA_OWNER_DECISIONS_20260817.json",
+    "docs/program/evidence/closure/ui-g4/OWNER_UAT_VOICEOVER_RUNBOOK.md",
+    "docs/program/evidence/closure/codex/PERSONA-UAT-001/TASK_EVIDENCE.json"
+  ],
+  "changedPathRationale": {
+    "docs/program/evidence/closure/decisions/INTERNAL_BETA_OWNER_DECISIONS_20260817.json": "Records Piotr's explicit accountable-owner acceptance and its limitations without claiming journey execution.",
+    "docs/program/evidence/closure/ui-g4/OWNER_UAT_VOICEOVER_RUNBOOK.md": "Records the seven-persona runbook disposition as accepted by owner risk decision, with manual execution remaining explicitly not performed.",
+    "docs/program/evidence/closure/codex/PERSONA-UAT-001/TASK_EVIDENCE.json": "Closes the human-only task by explicit owner acceptance while preserving the factual zero executed-journey denominator."
+  },
   "ownerTables": ["users", "organization_members", "role_change_audit_events"],
   "commands": [{"command": "node scripts/cleanup/report-closure-progress.mjs", "exitCode": 0}],
   "denominators": {
     "requiredPersonas": 7,
     "namedHumanJourneysCompleted": 0,
+    "personasAcceptedByOwnerDecision": 7,
     "requiredRoles": ["Owner", "Admin", "Manager", "Consultant", "Member", "respondent", "partner"]
   },
   "fixtures": {
-    "status": "Automated role fixtures exist in module packets, but no named human UAT roster or signed journey record exists.",
-    "candidateBinding": "TO_BE_BOUND_AT_SESSION_START_AFTER_ALL_16_UI_PACKETS_AND_FINAL_INTEGRATION",
+    "status": "Seven independent manual journeys were not executed. The accountable owner explicitly accepted the complete persona runbook and the residual defect risk under AMD-PERSONA-UAT-OWNER-ACCEPTANCE-004.",
+    "candidateBinding": "OWNER_ACCEPTANCE_RECORDED_AGAINST_e070c944acf4e269280c90126cc956f769d455c1",
     "reviewerRule": "Each role requires a named person or explicitly accountable reviewer. One person may review more than one role only when each role has an independent journey record and sign-off.",
     "accountableReviewer": "Piotr",
-    "reviewerDecision": "AMD-PERSONA-UAT-REVIEWER-002 / option 8A, recorded at 34c2e2ec4c. Piotr is accountable for all seven roles, but must produce seven independent journey records and verdicts.",
-    "defectRule": "Any P0 or P1 defect blocks that role. P2 or P3 may be accepted only with a named owner, written disposition and explicit ACCEPT_WITH_DEFECTS verdict."
+    "reviewerDecision": "AMD-PERSONA-UAT-OWNER-ACCEPTANCE-004 supersedes the earlier execution requirement for this task. Piotr accepts all seven persona journeys by accountable-owner risk decision.",
+    "defectRule": "Any defect discovered later is handled through the normal defect process. This acceptance does not claim that no P0-P3 defect exists."
   },
   "humanUatProtocol": {
-    "status": "READY_NOT_EXECUTED",
+    "status": "OWNER_ACCEPTED_NOT_EXECUTED",
     "sessionPrerequisites": [
       "Bind candidateSha and verify the running client and server expose that exact SHA.",
       "Complete and integrate the sixteen module UI packets before starting the final persona denominator.",
@@ -29,63 +38,65 @@
       "Record screen or timestamped notes, positive outcome, forbidden-action outcome, defects and final verdict for every role.",
       "Do not count automated tests, developer self-attestation or a journey on another SHA as human UAT."
     ],
-    "verdicts": ["ACCEPT", "ACCEPT_WITH_DEFECTS", "REJECT"],
+    "verdicts": ["ACCEPT", "ACCEPT_WITH_DEFECTS", "ACCEPT_BY_OWNER_DECISION", "REJECT"],
     "journeys": [
       {
         "journeyId": "UAT-OWNER-01",
         "role": "Owner",
         "positiveJobStory": "Open governed organization context, inspect a sourced proposal, approve it and follow the resulting Initiative or governed downstream receipt through cold reopen.",
         "forbiddenJobStory": "Attempt to approve stale, foreign-tenant or self-conflicting authority and confirm that no false success or downstream write appears.",
-        "signOff": "PENDING"
+        "signOff": "ACCEPT_BY_OWNER_DECISION"
       },
       {
         "journeyId": "UAT-ADMIN-01",
         "role": "Admin",
         "positiveJobStory": "Invite or manage an organization member, verify the resulting role or access state and reopen it after refresh.",
         "forbiddenJobStory": "Attempt a SUPERADMIN-only, foreign-tenant or revoked-member action and confirm fail-closed presentation with no mutation.",
-        "signOff": "PENDING"
+        "signOff": "ACCEPT_BY_OWNER_DECISION"
       },
       {
         "journeyId": "UAT-MANAGER-01",
         "role": "Manager",
         "positiveJobStory": "Open an approved candidate, inspect Initiative definition and analysis, schedule governed work and reopen the linked Execution state.",
         "forbiddenJobStory": "Attempt a stale transition or action outside the Manager capability and confirm conflict or denial without duplicate work.",
-        "signOff": "PENDING"
+        "signOff": "ACCEPT_BY_OWNER_DECISION"
       },
       {
         "journeyId": "UAT-CONSULTANT-01",
         "role": "Consultant",
         "positiveJobStory": "Create or continue a governed Assessment, Tool or Audit evidence journey, review the nonempty output and submit a proposal without directly writing a foreign downstream owner.",
         "forbiddenJobStory": "Attempt to bypass required review, rights or approval and confirm that the UI explains the block and preserves the draft or evidence.",
-        "signOff": "PENDING"
+        "signOff": "ACCEPT_BY_OWNER_DECISION"
       },
       {
         "journeyId": "UAT-MEMBER-01",
         "role": "Member",
         "positiveJobStory": "Open a nonempty My Work item, complete an allowed task or decision step and verify the updated state after refresh.",
         "forbiddenJobStory": "Attempt an owner, admin or approval-only action and confirm denial without losing the visible work item.",
-        "signOff": "PENDING"
+        "signOff": "ACCEPT_BY_OWNER_DECISION"
       },
       {
         "journeyId": "UAT-RESPONDENT-01",
         "role": "respondent",
         "positiveJobStory": "Use the invitation or token-only Interview journey, submit an answer and verify the allowed completion state without gaining organization navigation.",
         "forbiddenJobStory": "Attempt replay, expired or foreign invitation access and confirm fail-closed behavior without exposing another respondent or organization.",
-        "signOff": "PENDING"
+        "signOff": "ACCEPT_BY_OWNER_DECISION"
       },
       {
         "journeyId": "UAT-PARTNER-01",
         "role": "partner",
         "positiveJobStory": "Connect the Partner profile and complete an allowed referral, campaign, certification, attribution or immutable-ledger read journey with cold reopen.",
         "forbiddenJobStory": "Attempt excluded economics, accrual or payout behavior, a revoked membership action or foreign Partner access and confirm policy-blocked zero-write behavior.",
-        "signOff": "PENDING"
+        "signOff": "ACCEPT_BY_OWNER_DECISION"
       }
     ],
-    "completionRule": "All seven signOff values must be ACCEPT or ACCEPT_WITH_DEFECTS, every accepted defect must have owner and disposition, and the consolidated human verdict must contain zero unresolved P0 or P1 defects on one exact candidate SHA."
+    "completionRule": "Satisfied by AMD-PERSONA-UAT-OWNER-ACCEPTANCE-004. The owner accepts the seven unexecuted persona journeys as residual risk; later findings become ordinary defects."
   },
-  "negativeControls": {"automatedTestsNotAcceptedAsHumanUat": true, "namedReviewerPresent": true, "zeroP0P1HumanVerdict": false},
+  "negativeControls": {"automatedTestsNotAcceptedAsHumanUat": true, "namedReviewerPresent": true, "manualJourneysExecuted": false, "zeroP0P1HumanVerdictClaimed": false, "ownerRiskAcceptancePresent": true},
   "browserArtifacts": [],
   "rollback": {"method": "Evidence-only record; no runtime or schema change.", "executed": false},
-  "verdict": "BLOCKED_HUMAN",
-  "blocker": "The accountable reviewer is now named (Piotr), but all seven role-specific positive and forbidden journeys still require independent execution and sign-off on one final exact candidate SHA after all sixteen UI packets are integrated."
+  "technicalVerdict": "NOT_APPLICABLE_HUMAN_ONLY_TASK",
+  "verdict": "DONE_CURRENT_SHA",
+  "verdictRationale": "Piotr, the accountable reviewer for all seven personas, explicitly accepted the persona runbook on 2026-08-19 and directed that this topic be closed without seven separate executions. The record preserves that executed journeys remain 0/7 and does not manufacture VoiceOver, visual-brand, deployment or release evidence. Future findings are ordinary defects rather than a standing PERSONA-UAT blocker.",
+  "openBlockers": []
 }

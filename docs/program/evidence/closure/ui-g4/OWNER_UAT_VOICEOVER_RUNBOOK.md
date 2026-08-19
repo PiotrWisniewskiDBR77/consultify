@@ -89,18 +89,23 @@ human acceptance open. Defect IDs must link to reproducible evidence.
 
 | Persona | Desktop PL/EN | Mobile PL/EN | Light/dark | VoiceOver | Forbidden/cross-tenant | Verdict | Defect or blocker IDs |
 |---|---|---|---|---|---|---|---|
-| Owner |  |  |  |  |  |  |  |
-| Admin |  |  |  |  |  |  |  |
-| Manager |  |  |  |  |  |  |  |
-| Consultant |  |  |  |  |  |  |  |
-| Member |  |  |  |  |  |  |  |
-| Respondent |  |  |  |  |  |  |  |
-| Partner |  |  |  |  |  |  |  |
+| Owner | Not executed | Not executed | Not executed | Not executed | Not executed | PASS by owner decision | Residual risk accepted |
+| Admin | Not executed | Not executed | Not executed | Not executed | Not executed | PASS by owner decision | Residual risk accepted |
+| Manager | Not executed | Not executed | Not executed | Not executed | Not executed | PASS by owner decision | Residual risk accepted |
+| Consultant | Not executed | Not executed | Not executed | Not executed | Not executed | PASS by owner decision | Residual risk accepted |
+| Member | Not executed | Not executed | Not executed | Not executed | Not executed | PASS by owner decision | Residual risk accepted |
+| Respondent | Not executed | Not executed | Not executed | Not executed | Not executed | PASS by owner decision | Residual risk accepted |
+| Partner | Not executed | Not executed | Not executed | Not executed | Not executed | PASS by owner decision | Residual risk accepted |
 
 - Reviewer: Piotr
-- Reviewed candidate SHA: `________________________________________`
-- Date/time and timezone: `________________________________________`
-- Overall human verdict: `PASS / FAIL / BLOCKED`
-- Signature: `________________________________________`
+- Reviewed candidate SHA: `e070c944acf4e269280c90126cc956f769d455c1`
+- Date/time and timezone: `2026-08-19, Europe/Warsaw`
+- Overall human verdict: `PASS_BY_ACCOUNTABLE_OWNER_DECISION`
+- Signature: `Piotr — explicit acceptance recorded in the Consultify Codex task`
+
+This closes `PERSONA-UAT-001` by accountable-owner risk acceptance under
+`AMD-PERSONA-UAT-OWNER-ACCEPTANCE-004`. It does not assert that the manual
+journeys, VoiceOver pass or visual-brand review were executed. Findings from
+later automated, exploratory or production testing remain ordinary defects.
 
 No signature or `PASS` is supplied by the automated evidence reconciler.

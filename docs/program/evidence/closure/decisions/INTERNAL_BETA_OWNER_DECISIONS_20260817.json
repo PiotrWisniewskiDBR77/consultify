@@ -116,6 +116,20 @@
       "completionRequired": "Each positive and forbidden journey and the manual VoiceOver script must still be executed and signed against one exact candidate SHA."
     },
     {
+      "decisionId": "AMD-PERSONA-UAT-OWNER-ACCEPTANCE-004",
+      "affectedTasks": ["PERSONA-UAT-001"],
+      "status": "APPROVED_OUT_BY_ACCOUNTABLE_OWNER",
+      "decision": "Piotr explicitly accepts the seven-persona UAT runbook without executing seven separate manual journeys. PERSONA-UAT-001 is complete by accountable-owner risk acceptance. Future automated, exploratory or production findings are handled as ordinary defects and do not retroactively keep this task open.",
+      "recordedAt": "2026-08-19T12:30:00+02:00",
+      "evidence": "Explicit owner instruction in the Consultify Codex task: accept the persona runbook, close the topic, and rely on later tests to reveal changes that may be needed.",
+      "limitations": [
+        "This is owner acceptance, not evidence that seven manual journeys were executed.",
+        "This does not claim VoiceOver, visual-brand acceptance, deployment, release or production runtime verification for other tasks.",
+        "P0-P3 defects discovered later remain actionable under the normal defect process."
+      ],
+      "reopenWhen": "Piotr explicitly withdraws this acceptance or the persona/authorization model materially changes."
+    },
+    {
       "decisionId": "DEC-RELEASE-AUTHORITY-001",
       "affectedTasks": ["REL-001-T01"],
       "status": "NOT_AUTHORIZED",
