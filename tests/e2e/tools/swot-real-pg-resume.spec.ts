@@ -909,6 +909,20 @@ test('TLS-05: signed creator and separate approver freeze, promote, replay and c
         ]);
       }
       await pool.query(`DELETE FROM tool_decisions WHERE tool_session_id=$1`, [sessionId]);
+      const cleanupClient = await pool.connect();
+      try {
+        await cleanupClient.query('BEGIN');
+        await cleanupClient.query(`SET LOCAL session_replication_role = 'replica'`);
+        await cleanupClient.query(`DELETE FROM swot_candidate_handoffs WHERE tool_session_id=$1`, [
+          sessionId,
+        ]);
+        await cleanupClient.query('COMMIT');
+      } catch (error) {
+        await cleanupClient.query('ROLLBACK');
+        throw error;
+      } finally {
+        cleanupClient.release();
+      }
     }
     if (owner) await cleanup(request, runId);
     if (sessionId) {
