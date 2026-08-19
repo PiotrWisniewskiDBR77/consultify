@@ -20,6 +20,7 @@ import { requireAudit } from '../../middleware/requireAudit.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
 import type { CriticalPathTask } from '../../services/criticalPathService.js';
 import { calculateCriticalPath } from '../../services/criticalPathService.js';
+import { computeCanonicalExecutionHealth } from '../../services/execution/canonicalExecutionHealthService.js';
 import {
   type CustomFieldDefinition,
   CustomFieldDefinitionSchema,
@@ -662,14 +663,19 @@ router.get(
         !['done', 'completed', 'validated', 'cancelled'].includes((t.status || '').toLowerCase())
     );
 
-    let scheduleHealth: 'GREEN' | 'AMBER' | 'RED' = 'GREEN';
-    if (criticalPercent > 50 || overdueCritical.length > 1) {
-      scheduleHealth = 'RED';
-    } else if (criticalPercent >= 30 || overdueCritical.length > 0) {
-      scheduleHealth = 'AMBER';
-    }
+    const canonicalHealth = computeCanonicalExecutionHealth({
+      criticalPathPercent: criticalPercent,
+      overdueCriticalCount: overdueCritical.length,
+    });
+    const scheduleHealth = canonicalHealth.rag === 'NA' ? 'GREEN' : canonicalHealth.rag;
 
-    res.json({ success: true, ...result, scheduleHealth });
+    res.json({
+      success: true,
+      ...result,
+      scheduleHealth,
+      healthScore: canonicalHealth.score,
+      healthFormulaVersion: canonicalHealth.formulaVersion,
+    });
   })
 );
 

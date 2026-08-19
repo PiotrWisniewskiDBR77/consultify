@@ -37,6 +37,7 @@
 
 import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
+import { computeCanonicalExecutionHealth } from './canonicalExecutionHealthService.js';
 import {
   attachSource as attachEvidenceSource,
   type EvidenceEnvelope,
@@ -201,7 +202,7 @@ export function computeAxisW(
 
 export function computeScheduleHealth(evm: EvmResult | null): AxisRatio {
   if (!evm || evm.spi === null) return { ratio: null, rag: 'NA' };
-  return { ratio: evm.spi, rag: ratioRag(evm.spi) };
+  return { ratio: evm.spi, rag: computeCanonicalExecutionHealth({ spi: evm.spi }).rag };
 }
 
 /** W-vs-Z — impact gap. Ratio, nie delta: Z=10%/W=8% ≠ Z=90%/W=88% jako sygnał. */
@@ -416,7 +417,10 @@ export async function buildThreeAxisReport(scope: ThreeAxisScope): Promise<Three
       : { pct: null, dataQuality: 'missing', flags: ['no-value-baseline'] };
   const aggScheduleHealth: AxisRatio =
     portfolioEvm && portfolioEvm.spi !== null
-      ? { ratio: portfolioEvm.spi, rag: ratioRag(portfolioEvm.spi) }
+      ? {
+          ratio: portfolioEvm.spi,
+          rag: computeCanonicalExecutionHealth({ spi: portfolioEvm.spi }).rag,
+        }
       : { ratio: null, rag: 'NA' };
   const aggImpactGap = computeImpactGap(aggW, aggZ);
   const aggDeliveryPromise = computeDeliveryPromise(aggW, aggT);

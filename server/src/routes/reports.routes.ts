@@ -8,6 +8,7 @@
 import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { computeCanonicalExecutionHealth } from '../services/execution/canonicalExecutionHealthService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -69,8 +70,16 @@ router.get(
           : 0;
       const taskCompletionRate =
         totalTasks > 0 ? Math.round((Number(summary?.completedTasks || 0) / totalTasks) * 100) : 0;
-      const healthScore = Math.round((avgProjectProgress + taskCompletionRate) / 2);
-      const riskLevel = healthScore >= 75 ? 'low' : healthScore >= 50 ? 'medium' : 'high';
+      const executionHealth = computeCanonicalExecutionHealth({
+        progressPct: avgProjectProgress,
+        taskCompletionPct: taskCompletionRate,
+      });
+      const healthScore = executionHealth.score ?? 0;
+      const riskLevel = executionHealth.rag === 'GREEN'
+        ? 'low'
+        : executionHealth.rag === 'AMBER'
+          ? 'medium'
+          : 'high';
 
       return res.json({
         success: true,
@@ -85,6 +94,7 @@ router.get(
           metrics: {
             healthScore,
             riskLevel,
+            healthFormulaVersion: executionHealth.formulaVersion,
             onTrackPercentage,
           },
           generatedAt: new Date().toISOString(),

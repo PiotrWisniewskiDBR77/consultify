@@ -10,7 +10,8 @@
 
 import type { Response } from 'express';
 
-import { derivePortfolioEvm, evmScheduleHealth } from '../services/evmService.js';
+import { derivePortfolioEvm } from '../services/evmService.js';
+import { computeCanonicalExecutionHealth } from '../services/execution/canonicalExecutionHealthService.js';
 import { getActualCostByInitiative } from '../services/executionBudgetService.js';
 import { dispatchProjectCommunicationEvent } from '../services/integrations/communicationSyncService.js';
 import {
@@ -107,10 +108,12 @@ interface PortfolioHealthMetrics {
     risk: number;
   };
   initiativeHealth?: InitiativeHealthItem[];
-  // F2 — additive EVM roll-up (SPI/CPI/EAC…). Drives healthScore only when the
-  // M14/2.4 flag (EXECUTION_EVM_HEALTH_ENABLED) is on and SPI coverage exists.
+  // F2 — additive EVM roll-up (SPI/CPI/EAC…). Authoritative SPI/CPI facts feed
+  // the same versioned health formula used by the other execution readers.
   evm?: ReturnType<typeof derivePortfolioEvm>;
-  // M14/2.4 — true when the execution dimension + healthScore are SPI-driven.
+  healthFormulaVersion: string;
+  // True when authoritative EVM schedule or cost facts contribute to the one
+  // canonical formula. There is no longer a separate flag-gated formula.
   evmHealthApplied?: boolean;
 }
 
@@ -435,8 +438,6 @@ export class ExecutionController {
           ? Math.max(0, 100 - Math.round((blockedCount / totalInitiatives) * 100))
           : 100;
 
-      const healthScore = Math.round((avgProgress + decisionHealth + taskHealth + riskHealth) / 4);
-
       // Budget health: NULL when there is no actual-spend signal here. The old
       // value returned budget-DATA COVERAGE (% of initiatives with a budget set)
       // mislabelled as "health" — a number that looked like a score but measured
@@ -559,18 +560,17 @@ export class ExecutionController {
         Date.now()
       );
 
-      // M14/2.4 — EVM drives healthScore (flag-gated, default OFF for live safety).
-      // When on AND we have SPI coverage, the execution dimension becomes the PMBOK
-      // schedule-performance read (SPI×100) instead of naive avg-progress, and the
-      // composite healthScore is recomputed. Falls back to avg-progress when SPI is
-      // unknown (no baselines) so the number never goes blank.
-      const evmHealthOn = process.env.EXECUTION_EVM_HEALTH_ENABLED === 'true';
-      const schedHealth = evmScheduleHealth(portfolioEvm?.spi);
-      const evmHealthApplied = evmHealthOn && schedHealth != null;
-      const executionDim = evmHealthApplied ? (schedHealth as number) : avgProgress;
-      const effectiveHealthScore = evmHealthApplied
-        ? Math.round((executionDim + decisionHealth + taskHealth + riskHealth) / 4)
-        : healthScore;
+      const canonicalHealth = computeCanonicalExecutionHealth({
+        progressPct: avgProgress,
+        taskCompletionPct: taskHealth,
+        decisionHealthPct: decisionHealth,
+        riskHealthPct: riskHealth,
+        spi: portfolioEvm?.spi,
+        cpi: portfolioEvm?.cpi,
+      });
+      const evmHealthApplied = canonicalHealth.components.schedule != null || canonicalHealth.components.cost != null;
+      const executionDim = canonicalHealth.components.schedule ?? canonicalHealth.components.progress ?? 0;
+      const effectiveHealthScore = canonicalHealth.score ?? 0;
 
       const metrics: PortfolioHealthMetrics = {
         healthScore: effectiveHealthScore,
@@ -590,6 +590,7 @@ export class ExecutionController {
         initiativeHealth,
         evm: portfolioEvm,
         evmHealthApplied,
+        healthFormulaVersion: canonicalHealth.formulaVersion,
       };
 
       res.json(metrics);
