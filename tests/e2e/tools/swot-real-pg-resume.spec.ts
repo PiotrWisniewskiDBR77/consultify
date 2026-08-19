@@ -311,6 +311,7 @@ test('TLS-02/03: mounted SWOT edit persists while empty, stale, foreign and revo
     const reopenedSwotPhase = page.getByRole('button', { name: /SWOT Build/i }).first();
     await expect(reopenedSwotPhase).toBeVisible({ timeout: 30_000 });
     await reopenedSwotPhase.click();
+    await page.getByRole('tab', { name: /Weaknesses/i }).click();
     await expect(page.getByText(marker)).toBeVisible();
 
     const finalRead = await request.get(`${API_BASE_URL}/api/tools/${sessionId}`, {
@@ -482,16 +483,15 @@ test('TLS-05: signed creator and separate approver freeze, promote, replay and c
 
     await page.goto('/discovery-tools');
     await page.getByText('Dynamic SWOT', { exact: true }).dblclick();
-    await expect(page.getByRole('heading', { name: /^Goal$/i })).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole('button', { name: /^Goal$/i })).toBeVisible({ timeout: 30_000 });
     await page.getByRole('button', { name: /^Process$/i }).click();
-    await expect(page.getByRole('heading', { name: /^Process$/i })).toBeVisible();
     await expect(page.getByRole('list', { name: /Tool process/i }).getByRole('listitem')).toHaveCount(
       4
     );
     await page.getByRole('button', { name: /^Outcomes$/i }).click();
-    await expect(page.getByRole('heading', { name: /^Outcomes$/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Outcomes$/i })).toBeVisible();
     await page.getByRole('button', { name: /^Example$/i }).click();
-    await expect(page.getByRole('heading', { name: /^Example$/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Example$/i })).toBeVisible();
     await expect(page.getByText(/Context:/i)).toHaveCount(1);
     await expect(page.getByRole('button', { name: /^Start$/i })).toHaveCount(1);
     const create = await request.post(`${API_BASE_URL}/api/tools`, {
