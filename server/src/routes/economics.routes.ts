@@ -27,6 +27,7 @@ import {
   detectAndReconcile,
   findReconciliationTargetForInitiative,
 } from '../services/finance/canonical/roiFinanceReconciliationAdapter.js';
+import { createRegisteredValuation } from '../services/finance/canonical/valuationRegistrationService.js';
 import { FinanceCandidateHandoffError } from '../services/finance/financeCandidateHandoffCore.js';
 import { resolveEffectiveAccess } from '../services/effectiveAccessService.js';
 import * as finAnalysisSvc from '../services/financialAnalysisService.js';
@@ -2657,23 +2658,25 @@ router.post(
     if (!title || !sourceType)
       return res.status(400).json({ error: 'title and sourceType required' });
 
-    const created = await valuationSvc.createValuation(
-      orgId,
-      { title, description, projectId, initiativeId, sourceType, sourceId, horizonYears, currency },
-      userId
-    );
-    // F-4 EV depth switch (D-2, additive) — optional; when omitted, createValuation
-    // behavior is byte-for-byte unchanged (no second write happens at all).
-    if (depth) {
-      await setValuationDepth(orgId, created.id, depth, {
-        actor: {
-          userId,
-          userEmail: (req.user as any)?.email,
-          ip: req.ip,
-          userAgent: req.get('user-agent') || undefined,
-        },
-      });
-    }
+    const created = await createRegisteredValuation({
+      organizationId: orgId,
+      userId,
+      title,
+      description,
+      projectId,
+      initiativeId,
+      sourceType,
+      sourceId,
+      horizonYears,
+      currency,
+      depth,
+      actor: {
+        userId,
+        userEmail: (req.user as any)?.email,
+        ip: req.ip,
+        userAgent: req.get('user-agent') || undefined,
+      },
+    });
     return res.status(201).json({ success: true, id: created.id });
   })
 );
