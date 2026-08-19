@@ -628,29 +628,6 @@ test('TLS-05: signed creator and separate approver freeze, promote, replay and c
     expect(approved.contextSnapshot.approvedSnapshot.approvedBy).toBe(approver.userId);
     expect(approved.contextSnapshot.approvedSnapshot.answers).toEqual(answersAtApproval);
 
-    await approverPage
-      .getByRole('button', { name: /Synthesis & Insights/i })
-      .first()
-      .click();
-    await approverPage.getByText(/Show supporting analysis/i).click();
-    const handoffResponsePromise = approverPage.waitForResponse(
-      (response) =>
-        response.url().includes(`/api/tools/${sessionId}/swot-candidates`) &&
-        response.request().method() === 'POST'
-    );
-    const approvedCandidateAction = approverPage
-      .getByRole('button', { name: /Send to candidates/i })
-      .first();
-    await expect(approvedCandidateAction).toBeEnabled();
-    await approvedCandidateAction.click();
-    const handoffResponse = await handoffResponsePromise;
-    const candidateHandoff = await handoffResponse.json();
-    expect(handoffResponse.status(), JSON.stringify(candidateHandoff)).toBe(201);
-    candidateId = String(candidateHandoff?.candidate?.id || '');
-    candidateTitle = String(candidateHandoff?.candidate?.title || '');
-    expect(candidateId).toBeTruthy();
-    expect(candidateTitle).toBeTruthy();
-
     const tamper = await request.put(`${API_BASE_URL}/api/tools/${sessionId}`, {
       headers,
       data: { answers: { tampered: true } },
@@ -698,6 +675,30 @@ test('TLS-05: signed creator and separate approver freeze, promote, replay and c
     expect(promotionResponse.status(), JSON.stringify(promotionBody)).toBe(200);
     reportId = String(promotionBody?.id || '');
     expect(reportId).toBeTruthy();
+
+    await approverPage.reload();
+    await approverPage
+      .getByRole('button', { name: /Synthesis & Insights/i })
+      .first()
+      .click();
+    await approverPage.getByText(/Show supporting analysis/i).click();
+    const handoffResponsePromise = approverPage.waitForResponse(
+      (response) =>
+        response.url().includes(`/api/tools/${sessionId}/swot-candidates`) &&
+        response.request().method() === 'POST'
+    );
+    const approvedCandidateAction = approverPage
+      .getByRole('button', { name: /Send to candidates/i })
+      .first();
+    await expect(approvedCandidateAction).toBeEnabled();
+    await approvedCandidateAction.click();
+    const handoffResponse = await handoffResponsePromise;
+    const candidateHandoff = await handoffResponse.json();
+    expect(handoffResponse.status(), JSON.stringify(candidateHandoff)).toBe(201);
+    candidateId = String(candidateHandoff?.candidate?.id || '');
+    candidateTitle = String(candidateHandoff?.candidate?.title || '');
+    expect(candidateId).toBeTruthy();
+    expect(candidateTitle).toBeTruthy();
 
     const reportRead = await request.get(`${API_BASE_URL}/api/report-builder/${reportId}`, {
       headers: { Authorization: `Bearer ${owner.token}` },
