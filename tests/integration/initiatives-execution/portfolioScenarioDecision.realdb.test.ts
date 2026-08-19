@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Pool } from 'pg';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { cleanupInitiativesExecutionOrg } from '../../support/initiativesExecutionOrgCleanup';
 import {
   mutatePortfolioScenario,
   type PortfolioScenario,
@@ -108,7 +109,10 @@ real('Portfolio Scenario and per-Initiative Decision realDB', () => {
       ]
     );
   });
-  afterAll(async () => pool.end());
+  afterAll(async () => {
+    await cleanupInitiativesExecutionOrg(pool, org);
+    await pool.end();
+  });
   it('versions and publishes without lifecycle mutation, then one independent Decision approves only one Initiative', async () => {
     await mutatePortfolioScenario(
       uow,

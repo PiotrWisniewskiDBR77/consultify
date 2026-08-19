@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Pool } from 'pg';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { cleanupInitiativesExecutionOrg } from '../../support/initiativesExecutionOrgCleanup';
 import { createExecutionMilestone } from '../../../server/src/domain/initiatives-execution/executionMilestone';
 import {
   completeExecutionTask,
@@ -78,7 +79,10 @@ real('ACO-37 Execution Milestone blast radius realDB', () => {
       ]
     );
   });
-  afterAll(async () => pool.end());
+  afterAll(async () => {
+    await cleanupInitiativesExecutionOrg(pool, org);
+    await pool.end();
+  });
   it('projects blocked blast radius and recomputes complete/reopen without inventing forecast', async () => {
     const milestoneCommand = env(
       'execution_milestone',

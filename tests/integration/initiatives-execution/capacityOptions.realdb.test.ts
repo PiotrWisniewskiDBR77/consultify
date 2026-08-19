@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Pool } from 'pg';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { cleanupInitiativesExecutionOrg } from '../../support/initiativesExecutionOrgCleanup';
 import {
   createCapacityOptions,
   selectCapacityOption,
@@ -75,7 +76,10 @@ real('Capacity Options realDB', () => {
       ]
     );
   });
-  afterAll(async () => pool.end());
+  afterAll(async () => {
+    await cleanupInitiativesExecutionOrg(pool, org);
+    await pool.end();
+  });
   const known = (unit: string, base: number) => ({
       low: base - 1,
       base,

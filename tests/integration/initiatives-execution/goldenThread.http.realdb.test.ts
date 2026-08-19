@@ -3,6 +3,7 @@ import path from 'node:path';
 import express from 'express';
 import { Pool } from 'pg';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { cleanupInitiativesExecutionOrg } from '../../support/initiativesExecutionOrgCleanup';
 
 import { PostgresInitiativeReader } from '../../../server/src/domain/initiatives-execution/postgresInitiativeReader';
 import { PostgresMaterialCommandUnitOfWork } from '../../../server/src/domain/initiatives-execution/postgresMaterialCommandUnitOfWork';
@@ -90,7 +91,10 @@ real('production API Source-to-Analysis golden thread realDB', () => {
       [org, policy.policyId, project]
     );
   });
-  afterAll(async () => pool.end());
+  afterAll(async () => {
+    await cleanupInitiativesExecutionOrg(pool, org);
+    await pool.end();
+  });
 
   it('uses only production HTTP commands and returns reusable stable phase-2 refs', async () => {
     const fixture = await createInitiativesAnalysisGoldenThread(app, {

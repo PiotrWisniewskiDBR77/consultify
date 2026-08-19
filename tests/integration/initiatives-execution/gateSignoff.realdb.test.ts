@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Pool } from 'pg';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { cleanupInitiativesExecutionOrg } from '../../support/initiativesExecutionOrgCleanup';
 import {
   assertGateQuorumReceipt,
   gateSignoffId,
@@ -33,7 +34,10 @@ real('Canonical Gate Signoff quorum realDB', () => {
     ])
       await pool.query(`DELETE FROM ${t} WHERE organization_id=$1`, [org]);
   });
-  afterAll(async () => pool.end());
+  afterAll(async () => {
+    await cleanupInitiativesExecutionOrg(pool, org);
+    await pool.end();
+  });
   const policy = (baseline: 'BASELINE_SMALL' | 'STANDARD' | 'COMPLEX', bindings: any[]) => ({
       policyId: `p-${baseline}`,
       version: 1,

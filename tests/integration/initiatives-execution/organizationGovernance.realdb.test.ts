@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Pool } from 'pg';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { cleanupInitiativesExecutionOrg } from '../../support/initiativesExecutionOrgCleanup';
 import { PostgresGovernancePolicyResolver } from '../../../server/src/domain/initiatives-execution/postgresGovernancePolicyResolver';
 const url = process.env.IE_TEST_DATABASE_URL?.trim(),
   real = url ? describe : describe.skip;
@@ -28,7 +29,10 @@ real('Organization Governance policy resolution realDB', () => {
       [org]
     );
   });
-  afterAll(async () => pool.end());
+  afterAll(async () => {
+    await cleanupInitiativesExecutionOrg(pool, org);
+    await pool.end();
+  });
   it('uses project override with organization fallback and exact versioned role bindings', async () => {
     const fallback = await resolver.resolve(org, 'small-project'),
       override = await resolver.resolve(org, 'complex-project');

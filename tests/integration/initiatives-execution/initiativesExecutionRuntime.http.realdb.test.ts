@@ -5,6 +5,7 @@ import express from 'express';
 import { Pool } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { cleanupInitiativesExecutionOrg } from '../../support/initiativesExecutionOrgCleanup';
 
 import { PostgresInitiativeReader } from '../../../server/src/domain/initiatives-execution/postgresInitiativeReader';
 import { PostgresMaterialCommandUnitOfWork } from '../../../server/src/domain/initiatives-execution/postgresMaterialCommandUnitOfWork';
@@ -76,7 +77,10 @@ describeRealDb('Initiatives Execution runtime HTTP realDB', () => {
        'Reduce median changeover time.','operations-transformation-2027','iwona-owner',
        'PROJECT','READY','CLEAR','pending',2)`);
   });
-  afterAll(async () => pool.end());
+  afterAll(async () => {
+    await cleanupInitiativesExecutionOrg(pool, 'nordwerk-e2e');
+    await pool.end();
+  });
 
   const body = {
     initiativeId: 'aco-initiative-http-001',

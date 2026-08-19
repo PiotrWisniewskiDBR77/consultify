@@ -4,6 +4,7 @@ import path from 'node:path';
 import express from 'express';
 import { Pool } from 'pg';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { cleanupInitiativesExecutionOrg } from '../../support/initiativesExecutionOrgCleanup';
 
 import {
   mutateCapacityScenario,
@@ -143,7 +144,10 @@ real('NordWerk three-Initiative governed portfolio, plan and capacity journey', 
     );
   });
 
-  afterAll(async () => pool.end());
+  afterAll(async () => {
+    await cleanupInitiativesExecutionOrg(pool, organizationId);
+    await pool.end();
+  });
 
   it('keeps three canonical lineages, resolves the envelope and exposes UNKNOWN capacity honestly', async () => {
     const definitions = [

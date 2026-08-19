@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Pool } from 'pg';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { cleanupInitiativesExecutionOrg } from '../../support/initiativesExecutionOrgCleanup';
 import {
   decideSchedule,
   requestScheduleDecision,
@@ -129,7 +130,10 @@ real('Schedule Decision and Handoff Package realDB', () => {
       ]
     );
   });
-  afterAll(async () => pool.end());
+  afterAll(async () => {
+    await cleanupInitiativesExecutionOrg(pool, org);
+    await pool.end();
+  });
   it('replays request, rejects self approval and stale sources, then atomically schedules with immutable handoff', async () => {
     const first = await requestScheduleDecision(
       uow,
