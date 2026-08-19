@@ -1,14 +1,20 @@
 {
   "taskId": "INT-UI-CANON-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "71ec92695737d415b5319f001f9492bae4382e17",
+  "productSha": "b67175ab30dfa192a6d11154c909afb2f134cfbd",
   "technicalSourceSha": "2d3d99b62e0aaed01d6e71687c7e80e7a8f5d61c",
   "reconciliationSha": "74f6a15ffd6b953432531a77b8e2e58a73c4128a",
   "leaseSha256": "18eb0f2e24aee1d6415a29e1605597117f24c42a1f74439842581e7a92583742",
   "changedPaths": [
+    "src/components/Interview/InterviewHub.tsx",
+    "src/services/api/publicInterview.ts",
+    "src/views/PublicInterviewRespondentView.tsx",
     "docs/program/evidence/closure/codex/INT-UI-CANON-001/TASK_EVIDENCE.json"
   ],
   "changedPathRationale": {
+    "src/components/Interview/InterviewHub.tsx": "Makes mounted Interview list failures explicit and retryable instead of converting them to a false empty success.",
+    "src/services/api/publicInterview.ts": "Fails closed when answer or completion responses do not contain the exact server confirmation required by the UI.",
+    "src/views/PublicInterviewRespondentView.tsx": "Renders pinned-version cold reopen, terminal error states and completed answers read-only with truthful responsive PL/EN presentation.",
     "docs/program/evidence/closure/codex/INT-UI-CANON-001/TASK_EVIDENCE.json": "Records bounded mounted Interview UI acceptance without converting the login-wall observation into a false authenticated PASS."
   },
   "ownerTables": [
@@ -154,7 +160,7 @@
     }
   ],
   "rollback": {
-    "method": "Evidence-only packet; no runtime or schema change to roll back.",
+    "method": "Revert runtime candidate b67175ab30dfa192a6d11154c909afb2f134cfbd (integrated as b43fe39e2a) to restore the prior Interview Hub loading behavior, public-response validation and respondent rendering. No schema rollback is required.",
     "executed": false
   },
   "verdict": "PARTIAL",
