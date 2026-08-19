@@ -3,12 +3,12 @@
  * Bundle 30.5 (T112) — Real OAuth connect/disconnect
  */
 
-import { AlertTriangle, Check, ExternalLink, Link2, Loader2, Shield, Unlink } from 'lucide-react';
+import { AlertTriangle, Check, Loader2, Shield, Unlink } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { Api, API_URL } from '../../services/api';
+import { Api } from '../../services/api';
 import { User } from '../../types';
 
 interface ConnectedAccountsProps {
@@ -74,7 +74,6 @@ export const ConnectedAccounts: React.FC<ConnectedAccountsProps> = ({
   onUpdateUser,
 }) => {
   const { t } = useTranslation();
-  const [connecting, setConnecting] = useState<string | null>(null);
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
   const [accounts, setAccounts] = useState<ConnectedAccount[]>([]);
   const [loading, setLoading] = useState(true);
@@ -121,15 +120,6 @@ export const ConnectedAccounts: React.FC<ConnectedAccountsProps> = ({
     }
   };
 
-  const handleConnect = (providerId: string) => {
-    setConnecting(providerId);
-    if (providerId === 'linkedin') {
-      window.location.href = `${API_URL}/auth/linkedin/connect`;
-    } else if (providerId === 'google') {
-      window.location.href = `${API_URL}/auth/google`;
-    }
-  };
-
   const handleDisconnect = async (providerId: string) => {
     setDisconnecting(providerId);
     try {
@@ -159,8 +149,8 @@ export const ConnectedAccounts: React.FC<ConnectedAccountsProps> = ({
         </h3>
         <p className="text-sm text-c-text-muted mt-1">
           {t(
-            'settings.connectedAccounts.subtitle',
-            'Connect external accounts for easier sign-in and enhanced features'
+            'settings.connectedAccounts.managedSubtitle',
+            'Review or revoke accounts connected before external sign-in was disabled'
           )}
         </p>
       </div>
@@ -185,10 +175,17 @@ export const ConnectedAccounts: React.FC<ConnectedAccountsProps> = ({
       )}
 
       <div className="space-y-4">
-        {PROVIDERS.map((provider) => {
+        {!loading && !loadError && accounts.length === 0 && (
+          <p className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-4 text-sm text-c-text-muted">
+            {t(
+              'settings.connectedAccounts.noExistingConnections',
+              'No external accounts are connected.'
+            )}
+          </p>
+        )}
+        {PROVIDERS.filter((provider) => isConnected(provider.id)).map((provider) => {
           const connected = isConnected(provider.id);
           const connectionInfo = getConnectionInfo(provider.id);
-          const isConnecting = connecting === provider.id;
           const isDisconnecting = disconnecting === provider.id;
 
           return (
@@ -244,35 +241,18 @@ export const ConnectedAccounts: React.FC<ConnectedAccountsProps> = ({
                   </div>
                 </div>
 
-                <div>
-                  {connected ? (
-                    <button
-                      onClick={() => handleDisconnect(provider.id)}
-                      disabled={isDisconnecting}
-                      className="flex items-center gap-2 px-3 py-1.5 text-sm text-danger-600 hover:text-danger-700 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg transition-colors disabled:opacity-50"
-                    >
-                      {isDisconnecting ? (
-                        <Loader2 size={14} className="animate-spin" />
-                      ) : (
-                        <Unlink size={14} />
-                      )}
-                      {t('settings.connectedAccounts.disconnect', 'Disconnect')}
-                    </button>
+                <button
+                  onClick={() => handleDisconnect(provider.id)}
+                  disabled={isDisconnecting}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm text-danger-600 hover:text-danger-700 hover:bg-danger-50 dark:hover:bg-danger-500/10 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {isDisconnecting ? (
+                    <Loader2 size={14} className="animate-spin" />
                   ) : (
-                    <button
-                      onClick={() => handleConnect(provider.id)}
-                      disabled={isConnecting || loading}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${provider.color} ${provider.textColor} disabled:opacity-50`}
-                    >
-                      {isConnecting ? (
-                        <Loader2 size={16} className="animate-spin" />
-                      ) : (
-                        <Link2 size={16} />
-                      )}
-                      {t('settings.connectedAccounts.connect', 'Connect')}
-                    </button>
+                    <Unlink size={14} />
                   )}
-                </div>
+                  {t('settings.connectedAccounts.disconnect', 'Disconnect')}
+                </button>
               </div>
             </div>
           );
