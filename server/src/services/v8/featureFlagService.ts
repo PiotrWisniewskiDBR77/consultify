@@ -84,11 +84,7 @@ export function clearFlagCache(orgId?: string): void {
 // ---------------------------------------------------------------------------
 
 async function flagTableExists(): Promise<boolean> {
-  try {
-    return await tableExists('v8_feature_flags');
-  } catch {
-    return false;
-  }
+  return tableExists('v8_feature_flags');
 }
 
 // ---------------------------------------------------------------------------
