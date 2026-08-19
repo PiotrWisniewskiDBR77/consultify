@@ -7,11 +7,16 @@ import { z } from 'zod';
 
 // Login Request
 export const LoginRequestSchema = z.object({
-  email: z.string().email('Invalid email format'),
-  password: z.string().min(1, 'Password is required'),
+  email: z.string().email('Invalid email format').optional(),
+  password: z.string().min(1, 'Password is required').optional(),
   mfaToken: z.string().optional(),
+  mfaChallenge: z.string().optional(),
   deviceFingerprint: z.string().optional(),
   trustDevice: z.boolean().optional(),
+}).superRefine((value, context) => {
+  if (value.mfaChallenge && value.mfaToken) return;
+  if (value.email && value.password) return;
+  context.addIssue({ code: z.ZodIssueCode.custom, message: 'Credentials or MFA challenge required' });
 });
 
 // Register Demo Request (minimal: email + password for demo-only signup)

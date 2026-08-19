@@ -129,16 +129,31 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
   const body = req.body as LoginRequest;
   logger.info(`[Auth] Login request received for email: ${body.email}`);
-  const { email, password, mfaToken, deviceFingerprint, trustDevice } = body;
+  const { email, password, mfaToken, mfaChallenge, deviceFingerprint, trustDevice } = body;
   const normalizedEmail = String(email || '')
     .trim()
     .toLowerCase();
 
-  void resetAuthRateLimit(dependencies, normalizedEmail).catch((err: any) => {
-    logger.info(`[Auth] Rate limit reset failed (ignoring): ${err.message}`);
-  });
-
   try {
+    const verifiedChallenge = mfaChallenge
+      ? await dependencies.MFAService.verifyLoginChallenge(
+          mfaChallenge,
+          mfaToken || '',
+          deviceFingerprint,
+          Boolean(trustDevice),
+          req.ip,
+          req.get('user-agent')
+        )
+      : null;
+    if (verifiedChallenge && !verifiedChallenge.success) {
+      res.status(verifiedChallenge.status || 401).json({
+        error: 'The authentication challenge is invalid, expired, or locked',
+        code: verifiedChallenge.code,
+        mfaRequired: true,
+      });
+      return;
+    }
+
     logger.info(`[Auth] Querying user from DB: ${email}`);
     // Get user
     const user = await new Promise<{
@@ -152,8 +167,12 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       password: string;
     } | null>((resolve, reject) => {
       dependencies.db.get(
-        'SELECT * FROM users WHERE email = ?',
-        [normalizedEmail],
+          verifiedChallenge?.success
+            ? 'SELECT * FROM users WHERE id = ? AND organization_id = ?'
+            : 'SELECT * FROM users WHERE email = ?',
+          verifiedChallenge?.success
+            ? [verifiedChallenge.userId, verifiedChallenge.organizationId]
+            : [normalizedEmail],
         (err: Error | null, row: unknown) => {
           if (err) {
             logger.error(`[Auth] DB Query Error: ${err.message}`);
@@ -205,7 +224,9 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     logger.info('[Auth] Verifying password...');
     // Verify password
-    const passwordIsValid = await comparePassword(dependencies.bcrypt, password, user.password);
+    const passwordIsValid = verifiedChallenge?.success
+      ? true
+      : await comparePassword(dependencies.bcrypt, password, user.password);
     logger.info(`[Auth] Password valid: ${passwordIsValid}`);
     if (!passwordIsValid) {
       void recordFailedLogin(normalizedEmail, req.ip);
@@ -245,11 +266,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       });
       return;
     }
-
-    // Clear rate limit (success)
-    void resetAuthRateLimit(dependencies, normalizedEmail).catch(() => {
-      // Ignore rate-limit cleanup failures on success.
-    });
 
     const [org, mfaStatus, activeMembership] = await Promise.all([
       new Promise<{
@@ -320,59 +336,29 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    if (mfaStatus.enabled) {
-      if (deviceFingerprint) {
-        const isTrusted = await dependencies.MFAService.isDeviceTrusted(user.id, deviceFingerprint);
-        if (!isTrusted && !mfaToken) {
-          res.json({
-            mfaRequired: true,
-            userId: user.id,
-            message: 'Please enter your 2FA code',
-          });
-          return;
-        } else if (!isTrusted) {
-          // Verify Token
-          const verification = await dependencies.MFAService.verifyTOTP(
+    if (mfaStatus.enabled && !verifiedChallenge?.success) {
+      const isTrusted = deviceFingerprint
+        ? await dependencies.MFAService.isDeviceTrusted(
+            user.organization_id,
             user.id,
-            mfaToken!,
-            req.ip,
-            req.get('user-agent')
-          );
-          if (!verification.success) {
-            res.status(401).json({
-              error: verification.error,
-              mfaRequired: true,
-            });
-            return;
-          }
-          if (trustDevice) {
-            const deviceName = (req.get('user-agent') || 'Unknown Device').substring(0, 100);
-            await dependencies.MFAService.trustDevice(user.id, deviceFingerprint, deviceName);
-          }
-        }
-      } else if (!mfaToken) {
-        res.json({
-          mfaRequired: true,
-          userId: user.id,
-          message: 'Please enter your 2FA code',
-        });
-        return;
-      } else {
-        const verification = await dependencies.MFAService.verifyTOTP(
+            deviceFingerprint
+          )
+        : false;
+      if (!isTrusted) {
+        const challenge = await dependencies.MFAService.createLoginChallenge(
+          user.organization_id,
           user.id,
-          mfaToken,
           req.ip,
           req.get('user-agent')
         );
-        if (!verification.success) {
-          res.status(401).json({
-            error: verification.error,
-            mfaRequired: true,
-          });
-          return;
-        }
+        res.json({
+          mfaRequired: true,
+          mfaChallenge: challenge,
+          message: 'Please enter your 2FA code',
+        });
+        return;
       }
-    } else if (mfaStatus.enforced) {
+    } else if (!mfaStatus.enabled && mfaStatus.enforced) {
       res.status(403).json({
         error: 'Your organization requires two-factor authentication. Please set up MFA first.',
         mfaSetupRequired: true,
@@ -415,6 +401,28 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             );
           })
         : null;
+
+    // Trust is the final pre-issuance side effect, after every current tenant,
+    // organization and demo-session guard has passed.
+    if (
+      verifiedChallenge?.success &&
+      verifiedChallenge.trustRequested &&
+      verifiedChallenge.deviceCredential
+    ) {
+      const deviceName = (req.get('user-agent') || 'Unknown Device').substring(0, 100);
+      await dependencies.MFAService.trustDevice(
+        user.organization_id,
+        user.id,
+        verifiedChallenge.deviceCredential,
+        deviceName
+      );
+    }
+
+    // Only a completed authentication (including MFA) may reset the password
+    // limiter. A first-factor success is not yet a login.
+    void resetAuthRateLimit(dependencies, normalizedEmail || user.email).catch(() => {
+      // Ignore rate-limit cleanup failures after complete authentication.
+    });
 
     // Generate tokens
     const deviceInfo = (req.get('user-agent') || 'Unknown Device').substring(0, 200);

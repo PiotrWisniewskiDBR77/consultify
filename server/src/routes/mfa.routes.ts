@@ -159,7 +159,9 @@ router.post('/setup', async (req: Request, res: Response) => {
       `
       INSERT INTO user_mfa (user_id, secret, enabled, method, created_at)
       VALUES (?, ?, false, 'totp', datetime('now'))
-      ON CONFLICT(user_id) DO UPDATE SET secret = ?, enabled = false, updated_at = datetime('now')
+      ON CONFLICT(user_id) DO UPDATE SET secret = ?, enabled = false,
+        factor_generation = user_mfa.factor_generation + 1,
+        updated_at = datetime('now')
     `,
       [userId, secret, secret]
     );
@@ -446,7 +448,8 @@ router.post('/disable', async (req: Request, res: Response) => {
     const disableResult = await db.run(
       `
       UPDATE user_mfa
-      SET enabled = false, secret = null, backup_codes = null, backup_codes_count = 0
+      SET enabled = false, secret = null, backup_codes = null, backup_codes_count = 0,
+          factor_generation = factor_generation + 1, updated_at = NOW()
       WHERE user_id = ?
     `,
       [userId]

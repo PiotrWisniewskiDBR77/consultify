@@ -1336,15 +1336,22 @@ export const Api = {
   // --- AUTH ---
   login: async (
     email: string,
-    password: string
+    password: string,
+    options?: {
+      mfaToken?: string;
+      mfaChallenge?: string;
+      deviceFingerprint?: string;
+      trustDevice?: boolean;
+    }
   ): Promise<User & { demoSession?: DemoSessionPayload | null }> => {
     console.log('Api.login called:', { email, url: `${API_URL}/auth/login` });
+    const loginPayload = options?.mfaChallenge ? options : { email, password, ...options };
     let res: Response;
     try {
       res = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(loginPayload),
       });
     } catch (e: any) {
       // Browser network errors typically surface as TypeError("Load failed"/"Failed to fetch")
@@ -1364,12 +1371,21 @@ export const Api = {
         res = await fetch(`${API_URL}/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify(loginPayload),
         });
       }
     }
 
     return handleResponse(res, 'Login failed').then((data) => {
+      if (data?.mfaRequired === true && !data?.token) {
+        const error: any = new Error(data.message || 'Two-factor authentication required');
+        error.code = 'AUTH_MFA_REQUIRED';
+        error.data = data;
+        throw error;
+      }
+      if (!data?.token || !data?.user) {
+        throw new Error('Invalid login response');
+      }
       // Save both access token and refresh token
       tokenService.saveTokens(data.token, data.refreshToken);
       return { ...data.user, demoSession: data.demoSession ?? null };

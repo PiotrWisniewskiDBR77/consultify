@@ -80,19 +80,28 @@ type PublicAuthErrorContext =
   | 'loginRetry';
 
 function mapPublicAuthError(error: unknown, context: PublicAuthErrorContext): string {
-  const raw = error as { code?: unknown; error?: { code?: unknown } } | null;
+  const raw = error as {
+    code?: unknown;
+    error?: { code?: unknown };
+    data?: { code?: unknown };
+  } | null;
   const code =
     typeof raw?.code === 'string'
       ? raw.code
       : typeof raw?.error?.code === 'string'
         ? raw.error.code
-        : null;
+        : typeof raw?.data?.code === 'string'
+          ? raw.data.code
+          : null;
 
   if (code === 'AUTH_LOGIN_INVALID_CREDENTIALS' || code === 'AUTH_INVALID_CREDENTIALS') {
     return 'Invalid email or password.';
   }
   if (code === 'AUTH_PENDING_APPROVAL') {
     return 'Your account is pending approval.';
+  }
+  if (code === 'ORG_MEMBERSHIP_REVOKED') {
+    return 'Your access to this organization has been revoked.';
   }
 
   switch (context) {
@@ -377,6 +386,14 @@ export const AuthView: React.FC<AuthViewProps> = ({
     password: '',
     accessCode: sessionStorage.getItem('attribution_invite') || '',
   });
+  const [mfaChallenge, setMfaChallenge] = useState<{
+    email: string;
+    challenge: string;
+    code: string;
+    trustDevice: boolean;
+    error: string | null;
+    submitting: boolean;
+  } | null>(null);
 
   const applyInviteCode = React.useCallback(
     (
@@ -626,10 +643,11 @@ export const AuthView: React.FC<AuthViewProps> = ({
     if (targetMode === SessionMode.DEMO || fromDemoRedirect) {
       setIsDemoLoading(true);
       try {
-        const user = await Api.login(submittedEmail, submittedPassword);
-        const session = user.isDemo && user.demoSession
-          ? user.demoSession
-          : (await Api.enterDemo())?.demoSession;
+        const user = await Api.login(submittedEmail, submittedPassword, {
+          deviceFingerprint: deviceFingerprint(),
+        });
+        const session =
+          user.isDemo && user.demoSession ? user.demoSession : (await Api.enterDemo())?.demoSession;
         // Same ordering rule as the sign-up branch: adopt, then hand over to the
         // caller that navigates.
         adoptDemoSession(session);
@@ -656,7 +674,9 @@ export const AuthView: React.FC<AuthViewProps> = ({
     while (retries > 0) {
       try {
         console.log('Calling Api.login... (attempts remaining:', retries, ')');
-        const user = await Api.login(submittedEmail, submittedPassword);
+        const user = await Api.login(submittedEmail, submittedPassword, {
+          deviceFingerprint: deviceFingerprint(),
+        });
 
         // Verify token was stored
         const token = localStorage.getItem('token');
@@ -670,6 +690,24 @@ export const AuthView: React.FC<AuthViewProps> = ({
       } catch (err: any) {
         lastError = err;
         console.error('Login error:', getSafeAuthErrorLogMeta(err));
+
+        if (err?.code === 'AUTH_MFA_REQUIRED') {
+          setMfaChallenge({
+            email: submittedEmail,
+            challenge: String(err?.data?.mfaChallenge || ''),
+            code: '',
+            trustDevice: false,
+            error: null,
+            submitting: false,
+          });
+          return;
+        }
+
+        if (String(err?.data?.code || '').toUpperCase() === 'ORG_MEMBERSHIP_REVOKED') {
+          setFormData((current) => ({ ...current, password: '' }));
+          setError(mapPublicAuthError(err, 'login'));
+          return;
+        }
 
         // Don't retry on authentication errors (wrong password, etc.)
         if (
@@ -705,6 +743,60 @@ export const AuthView: React.FC<AuthViewProps> = ({
       setError(mapPublicAuthError(lastError, 'loginRetry'));
     } else {
       setError(mapPublicAuthError(null, 'login'));
+    }
+  };
+
+  const deviceFingerprint = () => {
+    const storageKey = 'consultify-trusted-device-id';
+    const existing = localStorage.getItem(storageKey);
+    if (existing && /^web-[a-f0-9]{64}$/.test(existing)) return existing;
+    const bytes = new Uint8Array(32);
+    window.crypto.getRandomValues(bytes);
+    const opaqueId = `web-${Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')}`;
+    localStorage.setItem(storageKey, opaqueId);
+    return opaqueId;
+  };
+
+  const submitMfaChallenge = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!mfaChallenge || mfaChallenge.submitting) return;
+    if (!/^\d{6}$/.test(mfaChallenge.code)) {
+      setMfaChallenge((current) =>
+        current ? { ...current, error: 'Enter the 6-digit authentication code.' } : current
+      );
+      return;
+    }
+
+    setMfaChallenge((current) =>
+      current ? { ...current, submitting: true, error: null } : current
+    );
+    try {
+      const user = await Api.login('', '', {
+        mfaToken: mfaChallenge.code,
+        mfaChallenge: mfaChallenge.challenge,
+        deviceFingerprint: deviceFingerprint(),
+        trustDevice: mfaChallenge.trustDevice,
+      });
+      const token = localStorage.getItem('token');
+      if (!token) throw new Error('Login succeeded but token was not stored');
+      setMfaChallenge(null);
+      setFormData((current) => ({ ...current, password: '' }));
+      onAuthSuccess(user);
+    } catch (err: any) {
+      const code = String(err?.data?.code || err?.code || '').toUpperCase();
+      if (code === 'ORG_MEMBERSHIP_REVOKED') {
+        setMfaChallenge(null);
+        setFormData((current) => ({ ...current, password: '' }));
+        setError(mapPublicAuthError(err, 'login'));
+        return;
+      }
+      const message =
+        err?.data?.mfaRequired === true || err?.status === 401
+          ? 'The authentication code is invalid or expired. Try a current code.'
+          : 'Verification could not be completed. Your code was not accepted; retry.';
+      setMfaChallenge((current) =>
+        current ? { ...current, code: '', error: message, submitting: false } : current
+      );
     }
   };
 
@@ -1257,6 +1349,93 @@ export const AuthView: React.FC<AuthViewProps> = ({
     </div>
   );
 
+  const renderMfaChallenge = () => {
+    if (!mfaChallenge) return null;
+    return (
+      <div className="space-y-6" data-testid="login-mfa-challenge">
+        <div className="text-center space-y-2">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-c-border bg-c-surface">
+            <Lock className="text-c-text" size={24} aria-hidden="true" />
+          </div>
+          <h2 className="text-2xl font-bold text-c-text">
+            {t('mfa.challenge.title', 'Two-Factor Authentication')}
+          </h2>
+          <p className="text-sm text-c-text-muted">
+            {t('mfa.challenge.enterTotp', 'Enter the code from your authenticator app')}
+          </p>
+        </div>
+
+        <form onSubmit={submitMfaChallenge} className="space-y-4">
+          <label className="block space-y-1.5">
+            <span className="text-xs font-medium text-c-text-secondary">Authentication code</span>
+            <input
+              autoFocus
+              aria-label="Authentication code"
+              autoComplete="one-time-code"
+              inputMode="numeric"
+              pattern="[0-9]{6}"
+              maxLength={6}
+              value={mfaChallenge.code}
+              onChange={(event) => {
+                const code = event.target.value.replace(/\D/g, '').slice(0, 6);
+                setMfaChallenge((current) =>
+                  current ? { ...current, code, error: null } : current
+                );
+              }}
+              className="w-full rounded-lg border border-c-border bg-c-surface-raised px-3 py-3 text-center font-mono text-2xl tracking-[0.45em] text-c-text outline-none transition-colors focus:border-c-focus-solid"
+            />
+          </label>
+
+          <label className="flex items-center gap-2 text-sm text-c-text-secondary">
+            <input
+              type="checkbox"
+              checked={mfaChallenge.trustDevice}
+              onChange={(event) =>
+                setMfaChallenge((current) =>
+                  current ? { ...current, trustDevice: event.target.checked } : current
+                )
+              }
+              className="h-4 w-4 rounded border-c-border text-c-text focus:ring-c-focus"
+            />
+            {t('mfa.challenge.trustDevice', 'Trust this device for 30 days')}
+          </label>
+
+          {mfaChallenge.error && (
+            <div
+              role="alert"
+              aria-live="assertive"
+              className="flex items-center gap-2 rounded border border-danger-200 bg-danger-50 p-3 text-sm text-danger-600 dark:border-danger-500/20 dark:bg-danger-500/10 dark:text-danger-400"
+            >
+              <AlertCircle size={16} />
+              {mfaChallenge.error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={mfaChallenge.submitting}
+            className="w-full rounded-lg bg-c-text py-2.5 text-sm font-semibold text-c-bg shadow-lg transition-opacity hover:opacity-90 disabled:cursor-wait disabled:opacity-60"
+          >
+            {mfaChallenge.submitting
+              ? t('common.verifying', 'Verifying…')
+              : t('mfa.challenge.verify', 'Verify')}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setMfaChallenge(null);
+              setFormData((current) => ({ ...current, password: '' }));
+              setError(null);
+            }}
+            className="w-full text-sm font-medium text-c-text-muted hover:text-c-text"
+          >
+            Back to login
+          </button>
+        </form>
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col items-center justify-center w-full h-full bg-c-bg p-6 relative overflow-hidden transition-colors duration-200">
       {/* Decorative BG */}
@@ -1376,7 +1555,9 @@ export const AuthView: React.FC<AuthViewProps> = ({
           !isPending &&
           !showDemoRedirect &&
           step === AuthStep.LOGIN &&
+          !mfaChallenge &&
           renderLogin()}
+        {!isDemoLoading && !isPending && !showDemoRedirect && mfaChallenge && renderMfaChallenge()}
         {isPending && renderPending()}
         {showDemoRedirect && renderDemoRedirect()}
       </div>
