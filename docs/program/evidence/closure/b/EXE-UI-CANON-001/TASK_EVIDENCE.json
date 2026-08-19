@@ -1,8 +1,8 @@
 {
   "taskId": "EXE-UI-CANON-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "99406b784bf1332beb369be161e75a2422f00fc6",
-  "technicalSourceSha": "aa118bbdcbab2a811740eda2684eff5428aa981d",
+  "productSha": "287aab619142f2990d46d04d04faaccb1cadf696",
+  "technicalSourceSha": "e6c3169db91981e9a27f594df76f01cf6ff5bbf8",
   "integratedProductSha": "39341f3ffbd60b1a18461f925abf3c327bd97b43",
   "reconciliationSha": "3b55f6b627b74d1e3397b75582d3912bf3e9c557",
   "leaseSha256": "f4d75f0aed94f2e34acaec63d91c245495e7e0f658aa36d1122342c2acecc612",
@@ -27,7 +27,8 @@
   "commands": [
     "node scripts/cleanup/verify-closure-lane.mjs b closure-execution-baseline-v2-20260816",
     "jq -r '.tests.vitest[]' docs/cleanup/agents/generated/CLAUDE_LANE_B_PATH_LEASE.json | xargs -n 80 npx vitest run --no-file-parallelism --maxWorkers=1 --maxConcurrency=2 --retry=0",
-    "CI=true DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts  (fresh, repeat, --dry-run)"
+    "CI=true DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts  (fresh, repeat, --dry-run)",
+    "ENABLE_V8_GLOBAL=true E2E_MOCK_DB=false npx playwright test tests/e2e/execution/exe-ui-canon-technical.spec.ts --project=chromium --workers=1 --retries=0"
   ],
   "denominators": {
     "exactCurrentExecutionBvpRealPg": "4/4 PASS",
@@ -41,7 +42,10 @@
     "automatedG4Screenshots": "13/13",
     "automatedG4AxeCriticalSerious": "0/0",
     "automatedG4UnnamedControls": 0,
-    "automatedG4VisibleFocus": "PASS"
+    "automatedG4VisibleFocus": "PASS",
+    "exactCurrentSignedTechnicalBrowser": "7/7 PASS on one fresh PostgreSQL 16 database: spine 2/2, capacity/error/retry 1/1, registry/flag-ON/tenant/revocation/cleanup 4/4",
+    "exactCurrentManagerLane403": "0 unexplained failed responses; 0 forbidden 403",
+    "exactCurrentSchemaRequalification": "794 migrations; repeat 0"
   },
   "fixtures": {
     "prefix": "claude_b_",
@@ -126,7 +130,7 @@
   "openBlockers": [
     "A fresh signed flag-ON Case Workspace browser matrix must exercise all nine governed controls; current production source and focused component evidence prove the controls and states, but the historical browser packet does not execute all nine.",
     "Five dead surfaces and one flag-ON but unreachable surface require explicit owner disposition before canonical UI closure.",
-    "Historical 403 observations are scoped as resolved only for the delivery-closure journey; other Execution surfaces still require task-specific auth/error qualification.",
+    "The exact-current seven-scenario technical browser gate is green with zero historical manager-lane 403s, but it does not execute all nine governed mutation controls end to end.",
     "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md."
   ],
   "blockerReconciliation": [
@@ -137,6 +141,7 @@
     }
   ],
   "resolvedBlockers": [
+    "Exact-current signed browser requalification on fresh PostgreSQL 16 passed 7/7: two governed spine journeys, capacity error and same-surface retry, registry and flag boundary, close denial, tenant/revocation and cleanup. The historical manager-lane 403 set is now empty after the role-permission migration.",
     "Exact-current signed technical UI 2/2 proves the delivery-closure slice: four-eyes, close, immutable Results receipt, stale, foreign-tenant, revoked, deep/reload/cold and no-false-success paths. Separately, exact-current source and focused component evidence prove 9/9 production controls and their loading or pending, empty where applicable, fail-closed error, busy, recovery and readback-confirmed success handling; this is not restated as a 9/9 signed-browser execution.",
     "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed."
   ],
@@ -159,6 +164,23 @@
     "capacityCorrection": "ExecutionResourcesSurface already renders role=alert and Spróbuj ponownie after backend failure; the historical browser source comment/assertion that described silent failure is stale and must not be used as current product truth.",
     "truthfulRemainingBoundary": "The controls live in flag-gated Case Workspace, while the existing signed browser journey proves they are absent from default /execution tabs and /zlecenia is default-OFF. A fresh flag-ON signed browser matrix executing all nine controls remains required. Human VoiceOver, named-persona and visual/brand acceptance remains external.",
     "verdict": "PARTIAL"
+  },
+  "exactCurrentTechnicalBrowser20260820": {
+    "technicalSourceSha": "e6c3169db91981e9a27f594df76f01cf6ff5bbf8",
+    "productPermissionSha": "287aab619142f2990d46d04d04faaccb1cadf696",
+    "runtime": "production build, real mounted router, signed JWT, E2E_MODE=false, ENABLE_V8_GLOBAL=true",
+    "database": "fresh disposable PostgreSQL 16; 794 migrations; immediate replay 0; container removed",
+    "tests": {
+      "spineAndConcurrency": "2/2 PASS",
+      "capacityErrorAndRetry": "1/1 PASS",
+      "registryFlagAuthAndCleanup": "4/4 PASS",
+      "total": "7/7 PASS",
+      "retries": 0
+    },
+    "managerLaneForbidden403": 0,
+    "unexplainedFailedResponsesInNonNegativeJourneys": 0,
+    "scopeLimit": "This gate executes the delivery spine, capacity recovery and one flag-ON governed close control. It does not claim end-to-end browser execution of all nine governed mutations.",
+    "verdict": "PASS_SCOPED_EXACT_CURRENT"
   },
   "automatedG4Verdict": {
     "verdict": "PASS_EXACT_SHA",
