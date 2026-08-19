@@ -26,7 +26,6 @@ import {
   statusInSql,
 } from './interview/interviewStatusNormalization.js';
 
-
 const parseJson = <T>(value: string | null | undefined, fallback: T): T => {
   if (!value) return fallback;
   try {
@@ -154,6 +153,8 @@ export interface CreateAssignmentInput {
   createdBy: string;
   processRef?: string;
   isAnonymous?: boolean; // D18-A — anonymous survey mode (default false)
+  createRequestKey?: string;
+  createRequestFingerprint?: string;
 }
 
 export interface Assignment {
@@ -437,8 +438,9 @@ class InterviewAssignmentService {
     await db.run(
       `INSERT INTO interview_assignments
        (id, organization_id, project_id, assignee_user_id, template_id, template_version,
-        process_ref, status, due_at, priority, is_team_assignment, is_anonymous, notes, escalate_to, created_by, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        process_ref, status, due_at, priority, is_team_assignment, is_anonymous, notes, escalate_to,
+        created_by, create_request_key, create_request_fingerprint, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         input.organizationId,
@@ -455,6 +457,8 @@ class InterviewAssignmentService {
         input.notes || null,
         input.escalateTo || input.createdBy, // Default to creator if not specified
         input.createdBy,
+        input.createRequestKey || null,
+        input.createRequestFingerprint || null,
         now,
         now,
       ]

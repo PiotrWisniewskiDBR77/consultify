@@ -17,6 +17,7 @@ const copy = {
     error: 'We could not load this interview.',
     expired: 'This interview link expired or was revoked.',
     heading: 'Interview',
+    version: 'Published template version',
     loading: 'Loading interview…',
     required: 'Required',
     retry: 'Try again',
@@ -31,6 +32,7 @@ const copy = {
     error: 'Nie udało się wczytać wywiadu.',
     expired: 'Ten link wygasł albo został cofnięty.',
     heading: 'Wywiad',
+    version: 'Wersja opublikowanego szablonu',
     loading: 'Ładowanie wywiadu…',
     required: 'Wymagane',
     retry: 'Spróbuj ponownie',
@@ -178,6 +180,12 @@ export const PublicInterviewRespondentView: React.FC = () => {
         <h1 className="mb-8 text-2xl font-semibold text-slate-950 dark:text-white">
           {text.heading}
         </h1>
+        <p className="-mt-6 mb-8 text-sm text-slate-600 dark:text-slate-300">
+          {text.version}:{' '}
+          <span className="font-medium">
+            {snapshot.templateVersion == null ? '—' : `v${snapshot.templateVersion}`}
+          </span>
+        </p>
         {error && (
           <div
             role="alert"

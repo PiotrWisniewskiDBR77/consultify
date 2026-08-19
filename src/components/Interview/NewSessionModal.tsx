@@ -36,6 +36,8 @@ interface Template {
   description?: string;
   category?: string;
   questionCount?: number;
+  version: number;
+  hasPublishedVersion?: boolean;
 }
 
 interface TeamMember {
@@ -84,6 +86,7 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
   const [loadingMembers, setLoadingMembers] = useState(false);
   const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
   const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
+  const requestKeyRef = React.useRef('');
 
   // Load team members
   useEffect(() => {
@@ -117,6 +120,8 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
   // Set default due date (7 days from now)
   useEffect(() => {
     if (isOpen && !dueDate) {
+      requestKeyRef.current =
+        globalThis.crypto?.randomUUID?.() ?? `assignment-${Date.now()}-${Math.random()}`;
       const defaultDate = new Date();
       defaultDate.setDate(defaultDate.getDate() + 7);
       setDueDate(defaultDate.toISOString().split('T')[0]);
@@ -183,9 +188,15 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
       } else {
         // Create assignment for team
         const assigneeIds = selectedAssignees.length > 0 ? selectedAssignees : [currentUser?.id];
+        const selectedTemplate = templates.find((template) => template.id === selectedTemplateId);
+        if (!selectedTemplate?.hasPublishedVersion || !Number.isInteger(selectedTemplate.version)) {
+          throw new Error('Publish this template before assigning it.');
+        }
 
         const assignment = await Api.post('/interview/assignments', {
           templateId: selectedTemplateId,
+          templateVersion: selectedTemplate.version,
+          idempotencyKey: requestKeyRef.current,
           assigneeUserIds: assigneeIds,
           teamLeadId: teamLeadId || assigneeIds[0],
           dueAt: new Date(dueDate).toISOString(),

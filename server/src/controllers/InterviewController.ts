@@ -10,6 +10,8 @@
  * - Organization context (Company Facts)
  */
 
+import { createHash } from 'node:crypto';
+
 import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
@@ -1921,6 +1923,7 @@ const buildTemplateResponse = (row: any) => {
     areaTags: normalizeTemplateAreaTags(parseJson(row.area_tags, [] as string[])),
     status: row.status || 'approved',
     version: Number(row.version ?? 0),
+    hasPublishedVersion: flagOn(row.has_published_version),
     sessionsUsed: Number(row.sessions_used ?? 0),
     createdBy: row.created_by || undefined,
     updatedAt: row.updated_at || row.created_at,
@@ -2004,8 +2007,9 @@ async function createSessionFromTemplate(params: {
   projectId?: string;
   name?: string;
   assignmentId?: string;
+  templateVersion?: number;
 }): Promise<any> {
-  const { user, templateId, projectId, name: rawName, assignmentId } = params;
+  const { user, templateId, projectId, name: rawName, assignmentId, templateVersion } = params;
   // F15 (data-integrity, continuation of Z139): decode HTML entities the
   // global input-sanitization middleware escaped on this field before
   // storing interview_sessions.name.
@@ -2029,7 +2033,7 @@ async function createSessionFromTemplate(params: {
   }
 
   // Only approved templates can be used to create sessions
-  if (String(template.status || '').toLowerCase() !== 'approved') {
+  if (templateVersion == null && String(template.status || '').toLowerCase() !== 'approved') {
     throw new Error('Template is not approved yet');
   }
 
@@ -2059,11 +2063,17 @@ async function createSessionFromTemplate(params: {
     sessionIsAnonymous = flagOn((assignmentRow as any)?.is_anonymous);
   }
 
+  const exactVersion = templateVersion ?? Number(template.version || 1);
   const publishedSnapshot = await getPublishedInterviewTemplateSnapshot(
     user.organizationId,
     template.id,
-    Number(template.version || 1)
+    exactVersion
   );
+  if (templateVersion != null && !publishedSnapshot) {
+    const error = new Error('The assigned template version is not published');
+    (error as any).code = 'ASSIGNED_TEMPLATE_VERSION_NOT_PUBLISHED';
+    throw error;
+  }
   const templateQuestions = publishedSnapshot
     ? publishedSnapshot.questions
     : await queryHelpers.queryAll(
@@ -2090,7 +2100,7 @@ async function createSessionFromTemplate(params: {
           ? 'task_list'
           : 'single_question',
         template.id,
-        template.version || 1,
+        exactVersion,
         assignmentId || null,
         sessionIsAnonymous,
         now,
@@ -2140,6 +2150,31 @@ async function createSessionFromTemplate(params: {
       templateQuestions.length,
       id,
     ]);
+    if (assignmentId) {
+      const assigned = await tx.query(
+        `UPDATE interview_assignments
+            SET session_id = ?, status = 'in_progress', started_at = ?, updated_at = ?,
+                project_id = COALESCE(project_id, ?)
+          WHERE id = ? AND organization_id = ? AND template_id = ? AND template_version = ?
+            AND session_id IS NULL`,
+        [
+          id,
+          now,
+          now,
+          resolvedProjectId,
+          assignmentId,
+          user.organizationId,
+          template.id,
+          exactVersion,
+        ]
+      );
+      if (assigned.rowCount !== 1) {
+        const conflict = new Error('Assignment changed before its session was created');
+        (conflict as any).code = 'ASSIGNMENT_START_CONFLICT';
+        (conflict as any).statusCode = 409;
+        throw conflict;
+      }
+    }
     return (await tx.query(`SELECT * FROM interview_sessions WHERE id = ?`, [id])).rows[0];
   });
   return buildSessionResponse(session);
@@ -3838,6 +3873,8 @@ export const InterviewController = {
       notes,
       teamLeadId,
       isAnonymous,
+      templateVersion,
+      idempotencyKey,
     } = req.body || {};
 
     // Support both singular and plural assignee fields
@@ -3854,6 +3891,22 @@ export const InterviewController = {
 
     if (userIds.length === 0 || !templateId) {
       res.status(400).json({ error: 'assigneeUserId(s) and templateId are required' });
+      return;
+    }
+    const requestKey = String(idempotencyKey || '').trim();
+    if (requestKey.length < 8 || requestKey.length > 200) {
+      res.status(428).json({
+        error: 'A stable idempotencyKey is required to create an assignment.',
+        code: 'ASSIGNMENT_IDEMPOTENCY_KEY_REQUIRED',
+      });
+      return;
+    }
+    const requestedTemplateVersion = Number(templateVersion);
+    if (!Number.isInteger(requestedTemplateVersion) || requestedTemplateVersion < 1) {
+      res.status(400).json({
+        error: 'An exact published templateVersion is required.',
+        code: 'PUBLISHED_TEMPLATE_VERSION_REQUIRED',
+      });
       return;
     }
 
@@ -3956,8 +4009,9 @@ export const InterviewController = {
 
     // Validate template
     const template = await queryHelpers.queryOne(
-      `SELECT id, name, version, status FROM interview_library_templates WHERE id = ?`,
-      [templateId]
+      `SELECT id, name, version, status FROM interview_library_templates
+       WHERE id = ? AND organization_id = ?`,
+      [templateId, admin.organizationId]
     );
     if (!template) {
       res.status(404).json({ error: 'Template not found' });
@@ -3965,6 +4019,18 @@ export const InterviewController = {
     }
     if (String((template as any).status || '').toLowerCase() !== 'approved') {
       res.status(400).json({ error: 'Template is not approved yet' });
+      return;
+    }
+    const publishedSnapshot = await getPublishedInterviewTemplateSnapshot(
+      admin.organizationId,
+      String(templateId),
+      requestedTemplateVersion
+    );
+    if (!publishedSnapshot) {
+      res.status(409).json({
+        error: 'The selected template version is not published.',
+        code: 'PUBLISHED_TEMPLATE_VERSION_NOT_FOUND',
+      });
       return;
     }
 
@@ -3976,7 +4042,7 @@ export const InterviewController = {
       organizationId: admin.organizationId,
       projectId: projectId || undefined,
       templateId,
-      templateVersion: (template as any).version || 1,
+      templateVersion: requestedTemplateVersion,
       dueAt: dueAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       priority: priority || 'medium',
       escalateTo: escalateTo || admin.id,
@@ -3988,42 +4054,85 @@ export const InterviewController = {
       isAnonymous: isAnonymous === true,
     };
 
+    const createOne = async (userId: string, perUserRequestKey: string) => {
+      const requestFingerprint = createHash('sha256')
+        .update(
+          JSON.stringify({
+            assigneeUserId: userId,
+            dueAt: createPayloadBase.dueAt,
+            isAnonymous: createPayloadBase.isAnonymous,
+            notes: createPayloadBase.notes ?? null,
+            priority: createPayloadBase.priority,
+            projectId: createPayloadBase.projectId ?? null,
+            templateId: String(templateId),
+            templateVersion: requestedTemplateVersion,
+          })
+        )
+        .digest('hex');
+      try {
+        const created = await interviewAssignmentService.create({
+          ...createPayloadBase,
+          assigneeUserIds: [userId],
+          createRequestKey: perUserRequestKey,
+          createRequestFingerprint: requestFingerprint,
+        });
+        return { assignment: created, replayed: false };
+      } catch (error) {
+        if (String((error as any)?.code || '') !== '23505') throw error;
+        const existing = await queryHelpers.queryOne(
+          `SELECT id, create_request_fingerprint FROM interview_assignments
+           WHERE organization_id = ? AND created_by = ? AND create_request_key = ?`,
+          [admin.organizationId, admin.id, perUserRequestKey]
+        );
+        if (!existing) throw error;
+        if ((existing as any).create_request_fingerprint !== requestFingerprint) {
+          const mismatch = new Error('Assignment idempotency key was reused with another payload');
+          (mismatch as any).code = 'ASSIGNMENT_IDEMPOTENCY_PAYLOAD_MISMATCH';
+          (mismatch as any).statusCode = 409;
+          throw mismatch;
+        }
+        return {
+          assignment: await interviewAssignmentService.getById(String((existing as any).id)),
+          replayed: true,
+        };
+      }
+    };
+
     // Multi-assign is modeled as separate assignments per assignee so each person
     // gets an independent session and manager review flow.
     if (userIds.length > 1) {
       const createdAssignments = [] as any[];
+      let replayedCount = 0;
       for (const userId of userIds) {
-        const created = await interviewAssignmentService.create({
-          ...createPayloadBase,
-          assigneeUserIds: [userId],
-        });
+        const created = await createOne(userId, `${requestKey}:${userId}`);
+        if (created.replayed) replayedCount += 1;
         const assignmentWithDetails = await interviewAssignmentService.getByIdWithDetails(
-          created.id
+          created.assignment!.id
         );
         if (assignmentWithDetails) {
           createdAssignments.push(assignmentWithDetails);
         }
       }
       const primaryAssignment = createdAssignments[0] || null;
-      res.status(201).json({
+      res.status(replayedCount === userIds.length ? 200 : 201).json({
         ...(primaryAssignment || {}),
         createdAssignments,
         createdCount: createdAssignments.length,
+        replayed: replayedCount === userIds.length,
         splitAssignments: true,
       });
       return;
     }
 
-    const assignment = await interviewAssignmentService.create({
-      ...createPayloadBase,
-      assigneeUserIds: userIds,
-      teamLeadId: teamLeadId || undefined,
-    });
+    const created = await createOne(userIds[0], `${requestKey}:${userIds[0]}`);
+    const assignment = created.assignment!;
 
     const assignmentWithDetails = await interviewAssignmentService.getByIdWithDetails(
       assignment.id
     );
-    res.status(201).json(assignmentWithDetails);
+    res
+      .status(created.replayed ? 200 : 201)
+      .json({ ...assignmentWithDetails, replayed: created.replayed });
   }),
 
   listAssignments: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
@@ -4159,21 +4268,27 @@ export const InterviewController = {
       return;
     }
 
-    const session = await createSessionFromTemplate({
-      user,
-      templateId: (assignment as any).template_id,
-      projectId: resolvedProjectId,
-      name: name || `Interview ${new Date().toLocaleDateString()}`,
-      assignmentId: id,
-    });
+    let session: any;
+    try {
+      session = await createSessionFromTemplate({
+        user,
+        templateId: (assignment as any).template_id,
+        templateVersion: Number((assignment as any).template_version),
+        projectId: resolvedProjectId,
+        name: name || `Interview ${new Date().toLocaleDateString()}`,
+        assignmentId: id,
+      });
+    } catch (error) {
+      if (String((error as any)?.code || '') !== '23505') throw error;
+      const existingSession = await queryHelpers.queryOne(
+        `SELECT * FROM interview_sessions WHERE assignment_id = ? AND organization_id = ?`,
+        [id, user.organizationId]
+      );
+      if (!existingSession) throw error;
+      session = buildSessionResponse(existingSession);
+    }
 
     const now = new Date().toISOString();
-    await queryHelpers.queryRun(
-      `UPDATE interview_assignments
-       SET session_id = ?, status = 'in_progress', started_at = ?, updated_at = ?, project_id = COALESCE(project_id, ?)
-       WHERE id = ?`,
-      [(session as any).id, now, now, resolvedProjectId, id]
-    );
 
     // Mirror into task status/description
     if ((assignment as any).task_id) {
@@ -5847,7 +5962,11 @@ export const InterviewController = {
          (SELECT COUNT(1) FROM interview_library_template_questions q WHERE q.template_id = t.id) as question_count,
          (SELECT COUNT(1) FROM interview_sessions s 
           JOIN projects p ON p.id = s.project_id 
-          WHERE s.template_id = t.id AND p.organization_id = ?) as sessions_used
+          WHERE s.template_id = t.id AND p.organization_id = ?) as sessions_used,
+         EXISTS (
+           SELECT 1 FROM interview_library_template_versions v
+            WHERE v.template_id = t.id AND v.organization_id = ? AND v.version = t.version
+         ) as has_published_version
        FROM interview_library_templates t
        WHERE (
          (
@@ -5874,6 +5993,7 @@ export const InterviewController = {
          t.category ASC,
          t.name ASC`,
       [
+        user.organizationId,
         user.organizationId,
         orgLanguage,
         orgLanguage,
@@ -5915,10 +6035,14 @@ export const InterviewController = {
     const row = await queryHelpers.queryOne(
       `SELECT
          t.*,
-         (SELECT COUNT(1) FROM interview_library_template_questions q WHERE q.template_id = t.id) as question_count
+         (SELECT COUNT(1) FROM interview_library_template_questions q WHERE q.template_id = t.id) as question_count,
+         EXISTS (
+           SELECT 1 FROM interview_library_template_versions v
+            WHERE v.template_id = t.id AND v.organization_id = ? AND v.version = t.version
+         ) as has_published_version
        FROM interview_library_templates t
        WHERE t.id = ?`,
-      [id]
+      [user.organizationId, id]
     );
 
     if (!row || !canAccessTemplate(row, user)) {

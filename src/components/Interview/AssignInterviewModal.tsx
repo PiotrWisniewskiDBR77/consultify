@@ -43,6 +43,9 @@ interface InterviewTemplate {
   questionCount?: number;
   scope?: TemplateScope;
   areaTags?: string[];
+  status?: string;
+  version: number;
+  hasPublishedVersion?: boolean;
 }
 
 interface User {
@@ -90,6 +93,7 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const requestKeyRef = React.useRef('');
 
   // Load templates and users
   useEffect(() => {
@@ -147,11 +151,18 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
         }
 
         setTemplates(
-          templatesRes.map((template) => ({
-            ...template,
-            scope: ((template?.scope || 'private') as TemplateScope) || 'private',
-            areaTags: normalizeInterviewTemplateAreaTags(template?.areaTags),
-          }))
+          templatesRes
+            .filter(
+              (template) =>
+                String(template?.status || '').toLowerCase() === 'approved' &&
+                template?.hasPublishedVersion === true
+            )
+            .map((template) => ({
+              ...template,
+              version: Number(template?.version || 0),
+              scope: ((template?.scope || 'private') as TemplateScope) || 'private',
+              areaTags: normalizeInterviewTemplateAreaTags(template?.areaTags),
+            }))
         );
 
         // Map users and filter based on assignment scope
@@ -196,6 +207,8 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
   // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
+      requestKeyRef.current =
+        globalThis.crypto?.randomUUID?.() ?? `assignment-${Date.now()}-${Math.random()}`;
       setSelectedTemplateId(preselectedTemplateId || '');
       setSelectedUserIds([]);
       setTeamLeadId('');
@@ -284,8 +297,19 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
 
     setIsSubmitting(true);
     try {
+      const selectedTemplate = templates.find((template) => template.id === selectedTemplateId);
+      if (
+        !selectedTemplate ||
+        !Number.isInteger(selectedTemplate.version) ||
+        selectedTemplate.version < 1
+      ) {
+        toast.error('The selected template has no published version. Publish it before assigning.');
+        return;
+      }
       const result = await Api.post('/interview/assignments', {
         templateId: selectedTemplateId,
+        templateVersion: selectedTemplate.version,
+        idempotencyKey: requestKeyRef.current,
         assigneeUserIds: selectedUserIds,
         teamLeadId: isTeamAssignment ? teamLeadId : undefined,
         dueAt: new Date(dueDate).toISOString(),
@@ -308,10 +332,19 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
     } catch (error: any) {
       console.error('[AssignInterviewModal] Failed to create assignment:', error);
       let errorMessage: string;
-      if (typeof error === 'string') {
+      const errorCode = String(
+        error?.data?.code || error?.response?.data?.code || error?.code || ''
+      );
+      if (errorCode === 'PUBLISHED_TEMPLATE_VERSION_NOT_FOUND') {
+        errorMessage =
+          'This template version is no longer available. Reload and select a published version.';
+      } else if (errorCode === 'ASSIGNMENT_IDEMPOTENCY_PAYLOAD_MISMATCH') {
+        errorMessage =
+          'This assignment changed while it was being retried. Close and reopen the form.';
+      } else if (typeof error === 'string') {
         errorMessage = error;
-      } else if (error?.response?.data?.error) {
-        const errData = error.response.data.error;
+      } else if (error?.data?.error || error?.response?.data?.error) {
+        const errData = error?.data?.error || error.response.data.error;
         errorMessage = typeof errData === 'string' ? errData : JSON.stringify(errData);
       } else if (error?.message) {
         errorMessage =

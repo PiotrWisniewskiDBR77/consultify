@@ -14,6 +14,8 @@ export interface PublicInterviewSnapshot {
   questions: PublicInterviewQuestion[];
   sessionId: string;
   status: string;
+  templateId: string | null;
+  templateVersion: number | null;
 }
 
 export class PublicInterviewApiError extends Error {

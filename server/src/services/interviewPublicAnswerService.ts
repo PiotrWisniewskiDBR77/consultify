@@ -77,6 +77,8 @@ interface DistributionScope {
   organizationId: string;
   sessionId: string;
   sessionStatus: string | null;
+  templateId: string | null;
+  templateVersion: number | null;
 }
 
 export interface PublicInterviewQuestionSnapshot {
@@ -93,9 +95,11 @@ export interface PublicInterviewQuestionSnapshot {
  * distribution. The distribution row is resolved again inside the pinned
  * transaction so a revoke/expiry racing the route-level lookup fails closed.
  */
-export async function readPublicQuestionSnapshot(
-  distributionId: string
-): Promise<PublicInterviewQuestionSnapshot[] | null> {
+export async function readPublicQuestionSnapshot(distributionId: string): Promise<{
+  questions: PublicInterviewQuestionSnapshot[];
+  templateId: string | null;
+  templateVersion: number | null;
+} | null> {
   return withPgTransaction(async (tx) => {
     const scope = await loadScope(tx, distributionId);
     if (!scope) return null;
@@ -116,7 +120,7 @@ export async function readPublicQuestionSnapshot(
       [scope.organizationId, scope.sessionId]
     );
 
-    return result.rows.map((row) => ({
+    const questions = result.rows.map((row) => ({
       answerText: row.answer_text,
       contextNote: row.context_note,
       id: row.id,
@@ -124,6 +128,7 @@ export async function readPublicQuestionSnapshot(
       questionText: row.question_text,
       updatedAt: new Date(row.updated_at).toISOString(),
     }));
+    return { questions, templateId: scope.templateId, templateVersion: scope.templateVersion };
   });
 }
 
@@ -158,8 +163,11 @@ async function loadScope(
     session_id: string;
     session_status: string | null;
     status: string;
+    template_id: string | null;
+    template_version: number | null;
   }>(
-    `SELECT d.organization_id, d.session_id, d.status, s.status AS session_status
+    `SELECT d.organization_id, d.session_id, d.status, s.status AS session_status,
+            s.template_id, s.template_version
        FROM interview_distributions d
        LEFT JOIN interview_sessions s
               ON s.id = d.session_id AND s.organization_id = d.organization_id
@@ -177,6 +185,8 @@ async function loadScope(
     organizationId: row.organization_id,
     sessionId: row.session_id,
     sessionStatus: row.session_status,
+    templateId: row.template_id,
+    templateVersion: row.template_version == null ? null : Number(row.template_version),
   };
 }
 

@@ -290,6 +290,8 @@ interface InterviewInsight {
   impactLevel?: string;
   confidence?: string;
   status?: string;
+  version: number;
+  hasPublishedVersion?: boolean;
   reviewStatus?: 'draft' | 'in_review' | 'published';
   publishedAt?: string;
   reviewedBy?: string;

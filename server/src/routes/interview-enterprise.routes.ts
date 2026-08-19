@@ -34,8 +34,8 @@ router.get(
       const invite = await interviewEnterpriseService.resolveActiveDistributionByToken(
         req.params.token
       );
-      const questions = await readPublicQuestionSnapshot(invite.id);
-      if (!questions) {
+      const delivery = await readPublicQuestionSnapshot(invite.id);
+      if (!delivery) {
         res.status(410).json({ error: 'DISTRIBUTION_NOT_ACTIVE' });
         return;
       }
@@ -45,7 +45,9 @@ router.get(
         status: invite.status,
         anonymityMode: invite.anonymityMode,
         expiresAt: invite.expiresAt,
-        questions,
+        questions: delivery.questions,
+        templateId: delivery.templateId,
+        templateVersion: delivery.templateVersion,
       });
     } catch (error) {
       if (error instanceof InterviewDistributionError) {

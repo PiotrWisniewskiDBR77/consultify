@@ -247,8 +247,30 @@ export async function handleChatAction(
         if (!templateId || assigneeUserIds.length === 0) {
           return { success: false, error: 'Template ID and at least one assignee are required' };
         }
+        const template = (await Api.get(`/interview/templates/${encodeURIComponent(templateId)}`)) as {
+          hasPublishedVersion?: boolean;
+          version?: number;
+        };
+        const templateVersion = Number(params.templateVersion || template?.version || 0);
+        if (!template?.hasPublishedVersion || !Number.isInteger(templateVersion) || templateVersion < 1) {
+          return { success: false, error: 'Publish this template before assigning it' };
+        }
+        const stableRequest = JSON.stringify({
+          assigneeUserIds: [...assigneeUserIds].sort(),
+          dueAt: params.dueAt || null,
+          projectId: params.projectId || deps.context.projectId || null,
+          templateId,
+          templateVersion,
+        });
+        let requestHash = 2166136261;
+        for (let index = 0; index < stableRequest.length; index += 1) {
+          requestHash ^= stableRequest.charCodeAt(index);
+          requestHash = Math.imul(requestHash, 16777619);
+        }
         await Api.post('/interview/assignments', {
           templateId,
+          templateVersion,
+          idempotencyKey: `chat-assign-${(requestHash >>> 0).toString(16)}`,
           assigneeUserIds,
           teamLeadId: assigneeUserIds[0],
           dueAt: params.dueAt ? new Date(params.dueAt as string).toISOString() : undefined,
