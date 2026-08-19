@@ -164,9 +164,6 @@
   "openBlockers": [
     "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
     "Task-specific UI states not reached by the final automated sweep: stale.",
-    "Observed console HTTP errors require task-specific qualification: total=4, 403=0, 404=4, other=0.",
-    "OAuth provider registry, approved scopes and residency remain owner-gated; this packet proves availability honesty and transport only, not provider rollout authorization.",
-    "MFA production rollout and the complete login/revocation browser matrix remain outside this bounded Connected Apps packet.",
     "Account deletion remains blocked on the legal/retention decision and is not requalified by OAuth availability evidence."
   ],
   "blockerReconciliation": [
@@ -178,8 +175,19 @@
   ],
   "resolvedBlockers": [
     "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed.",
-    "Bounded OAuth availability requalification on c8da53f1f4469bc39734fa0fee76298dd4d41e3f proved fail-closed availability, canonical bearer/correlation transport, real signed configured=true 3/3 and configured=false 3/3 windows, unit 6/6, PL/EN keyboard, scoped axe 0/0, fresh schema 758/repeat 0/pending 0 and fixture residue 0."
+    "Bounded OAuth availability requalification on c8da53f1f4469bc39734fa0fee76298dd4d41e3f proved fail-closed availability, canonical bearer/correlation transport, real signed configured=true 3/3 and configured=false 3/3 windows, unit 6/6, PL/EN keyboard, scoped axe 0/0, fresh schema 758/repeat 0/pending 0 and fixture residue 0.",
+    "The four historical 404 observations were reproduced as intentional GET /api/v8/admin/flags responses with code V8_DISABLED while the globally approved-out V8 surface is disabled; they are not missing Settings routes.",
+    "Canonical MFA now has a server-owned hash-at-rest challenge, five-minute/five-attempt budget, tenant/user/factor-generation/client binding, one-time consume, hashed tenant-bound trusted credentials, factor-lifecycle revocation, deterministic legacy upgrade, 11/11 focused tests and a mounted signed browser matrix.",
+    "AMD-SET-OAUTH-APPROVED-OUT-002 is enforced in mounted UI: login and registration expose no Google/LinkedIn redirect, profile cannot create a new external connection, and historical connections retain readback plus revoke. Focused Auth and ConnectedAccounts regression is 4 files / 20 tests."
   ],
+  "currentRequalification": {
+    "canonicalSha": "0f2dd6368a",
+    "mfaSource": "4ff5e67e47 plus migration lease correction 4adcd4ff64",
+    "oauthApprovedOutSource": "0f2dd6368a",
+    "mfaGates": "fresh 792 migrations and repeat 0 at source; legacy upgrade 2/2; RealPG 4/4; UI 5/5; mounted signed browser 1/1; root/server typecheck green",
+    "oauthUiGates": "Auth/ConnectedAccounts 4 files / 20 tests; desktop and 390px mounted auth views expose zero Google/LinkedIn redirect controls and no horizontal overflow; existing connection revoke remains available",
+    "verdictBoundary": "PARTIAL remains for manual human acceptance, still-unqualified stale UI state and the separately owner/legal-gated destructive account-deletion execution."
+  },
   "technicalRequalification": {
     "scope": "Connected Apps OAuth availability and start honesty only",
     "candidateSha": "c8da53f1f4469bc39734fa0fee76298dd4d41e3f",
