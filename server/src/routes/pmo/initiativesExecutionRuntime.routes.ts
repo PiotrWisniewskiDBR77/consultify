@@ -1637,7 +1637,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
+      const found = await deps.reader.findById(
+        actor.organizationId,
+        firstParam(req.params.initiativeId)
+      );
       if (!found) {
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
@@ -1658,7 +1661,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
+      const found = await deps.reader.findById(
+        actor.organizationId,
+        firstParam(req.params.initiativeId)
+      );
       if (!found || !(await deps.authorize(actor, found.initiative.projectId, 'initiative.view'))) {
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
@@ -1679,7 +1685,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
+      const found = await deps.reader.findById(
+        actor.organizationId,
+        firstParam(req.params.initiativeId)
+      );
       if (!found || !(await deps.authorize(actor, found.initiative.projectId, 'initiative.view'))) {
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
@@ -1705,7 +1714,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED', issues: parsed.error.issues } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
+      const found = await deps.reader.findById(
+        actor.organizationId,
+        firstParam(req.params.initiativeId)
+      );
       if (
         !found ||
         !(await deps.authorize(actor, found.initiative.projectId, 'initiative.update'))
@@ -1757,7 +1769,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED', issues: parsed.error.issues } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
+      const found = await deps.reader.findById(
+        actor.organizationId,
+        firstParam(req.params.initiativeId)
+      );
       if (
         !found ||
         !(await deps.authorize(actor, found.initiative.projectId, 'initiative.update'))
@@ -1798,7 +1813,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
+      const found = await deps.reader.findById(
+        actor.organizationId,
+        firstParam(req.params.initiativeId)
+      );
       if (!found || !(await deps.authorize(actor, found.initiative.projectId, 'initiative.view'))) {
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
@@ -1830,7 +1848,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
+      const found = await deps.reader.findById(
+        actor.organizationId,
+        firstParam(req.params.initiativeId)
+      );
       if (!found || !(await deps.authorize(actor, found.initiative.projectId, 'initiative.view'))) {
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
@@ -1888,7 +1909,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED', issues: parsed.error.issues } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
+      const found = await deps.reader.findById(
+        actor.organizationId,
+        firstParam(req.params.initiativeId)
+      );
       if (
         !found ||
         !(await deps.authorize(actor, found.initiative.projectId, 'initiative.update'))
@@ -1937,7 +1961,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED', issues: parsed.error.issues } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
+      const found = await deps.reader.findById(
+        actor.organizationId,
+        firstParam(req.params.initiativeId)
+      );
       if (
         !found ||
         !(await deps.authorize(actor, found.initiative.projectId, 'initiative.update'))
@@ -1994,7 +2021,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED', issues: parsed.error.issues } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
+      const found = await deps.reader.findById(
+        actor.organizationId,
+        firstParam(req.params.initiativeId)
+      );
       if (
         !found ||
         !(await deps.authorize(actor, found.initiative.projectId, 'initiative.review'))
@@ -2046,7 +2076,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED', issues: parsed.error.issues } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
+      const found = await deps.reader.findById(
+        actor.organizationId,
+        firstParam(req.params.initiativeId)
+      );
       if (
         !found ||
         !(await deps.authorize(actor, found.initiative.projectId, 'initiative.update'))
@@ -2094,7 +2127,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED', issues: parsed.error.issues } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
+      const found = await deps.reader.findById(
+        actor.organizationId,
+        firstParam(req.params.initiativeId)
+      );
       if (
         !found ||
         !(await deps.authorize(actor, found.initiative.projectId, 'initiative.review'))
@@ -2237,7 +2273,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
+      const found = await deps.reader.findById(
+        actor.organizationId,
+        firstParam(req.params.initiativeId)
+      );
       if (!found || !(await deps.authorize(actor, found.initiative.projectId, 'initiative.view'))) {
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
@@ -2268,7 +2307,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED', issues: parsed.error.issues } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
+      const found = await deps.reader.findById(
+        actor.organizationId,
+        firstParam(req.params.initiativeId)
+      );
       if (
         !found ||
         !(await deps.authorize(actor, found.initiative.projectId, 'initiative.update'))
@@ -2311,7 +2353,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED', issues: parsed.error.issues } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
+      const found = await deps.reader.findById(
+        actor.organizationId,
+        firstParam(req.params.initiativeId)
+      );
       if (
         !found ||
         !(await deps.authorize(actor, found.initiative.projectId, 'initiative.update'))
@@ -2359,7 +2404,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED', issues: parsed.error.issues } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
+      const found = await deps.reader.findById(
+        actor.organizationId,
+        firstParam(req.params.initiativeId)
+      );
       if (
         !found ||
         !(await deps.authorize(actor, found.initiative.projectId, 'initiative.review'))
@@ -2570,7 +2618,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
+      const found = await deps.reader.findById(
+        actor.organizationId,
+        firstParam(req.params.initiativeId)
+      );
       if (
         !found ||
         !(await deps.authorize(actor, found.initiative.projectId, 'initiative.update'))
@@ -2607,6 +2658,32 @@ export function createInitiativesExecutionRuntimeRouter(
     })
   );
 
+  router.get(
+    '/initiatives/:initiativeId/gates/portfolio/decision',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      if (!actor) {
+        res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+        return;
+      }
+      const initiativeId = firstParam(req.params.initiativeId);
+      const found = await deps.reader.findById(actor.organizationId, initiativeId);
+      if (!found || !(await deps.authorize(actor, found.initiative.projectId, 'initiative.view'))) {
+        res.status(404).json({ error: { code: 'NOT_FOUND' } });
+        return;
+      }
+      const decision = await deps.reader.findPortfolioDecisionForInitiative(
+        actor.organizationId,
+        initiativeId
+      );
+      if (!decision) {
+        res.status(404).json({ error: { code: 'NOT_FOUND' } });
+        return;
+      }
+      res.json(decision);
+    })
+  );
+
   router.post(
     '/initiatives/:initiativeId/gates/portfolio/decisions',
     asyncHandler(async (req, res) => {
@@ -2620,7 +2697,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
+      const found = await deps.reader.findById(
+        actor.organizationId,
+        firstParam(req.params.initiativeId)
+      );
       if (
         !found ||
         !(await deps.authorize(actor, found.initiative.projectId, 'initiative.review'))
@@ -2766,7 +2846,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
         return;
       }
-      const found = await deps.reader.findPlanScenario(actor.organizationId, firstParam(req.params.scenarioId));
+      const found = await deps.reader.findPlanScenario(
+        actor.organizationId,
+        firstParam(req.params.scenarioId)
+      );
       const portfolio = found
         ? await deps.reader.findPortfolioScenario(
             actor.organizationId,
@@ -2792,7 +2875,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
         return;
       }
-      const found = await deps.reader.findPlanScenario(actor.organizationId, firstParam(req.params.scenarioId));
+      const found = await deps.reader.findPlanScenario(
+        actor.organizationId,
+        firstParam(req.params.scenarioId)
+      );
       const portfolio = found
         ? await deps.reader.findPortfolioScenario(
             actor.organizationId,
@@ -2823,7 +2909,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
         return;
       }
-      const found = await deps.reader.findPlanScenario(actor.organizationId, firstParam(req.params.scenarioId));
+      const found = await deps.reader.findPlanScenario(
+        actor.organizationId,
+        firstParam(req.params.scenarioId)
+      );
       const portfolio = found
         ? await deps.reader.findPortfolioScenario(
             actor.organizationId,
@@ -3109,7 +3198,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
+      const found = await deps.reader.findById(
+        actor.organizationId,
+        firstParam(req.params.initiativeId)
+      );
       if (
         !found ||
         !(await deps.authorize(actor, found.initiative.projectId, 'initiative.update'))
@@ -3151,7 +3243,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
+      const found = await deps.reader.findById(
+        actor.organizationId,
+        firstParam(req.params.initiativeId)
+      );
       if (
         !found ||
         !(await deps.authorize(actor, found.initiative.projectId, 'initiative.review'))
@@ -3274,7 +3369,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
+      const found = await deps.reader.findById(
+        actor.organizationId,
+        firstParam(req.params.initiativeId)
+      );
       if (
         !found ||
         !(await deps.authorize(actor, found.initiative.projectId, 'initiative.update'))
@@ -3316,7 +3414,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
+      const found = await deps.reader.findById(
+        actor.organizationId,
+        firstParam(req.params.initiativeId)
+      );
       if (
         !found ||
         !(await deps.authorize(actor, found.initiative.projectId, 'initiative.review'))
@@ -3422,7 +3523,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
         return;
       }
-      const initiative = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
+      const initiative = await deps.reader.findById(
+        actor.organizationId,
+        firstParam(req.params.initiativeId)
+      );
       if (
         !initiative ||
         !(await deps.authorize(actor, initiative.initiative.projectId, 'initiative.view'))
@@ -3988,7 +4092,10 @@ export function createInitiativesExecutionRuntimeRouter(
         return;
       }
       const readBack = await deps.unitOfWork.transaction(async (tx) => {
-        const receipt = await tx.findReceipt<any>(actor.organizationId, firstParam(req.params.clientRequestId));
+        const receipt = await tx.findReceipt<any>(
+          actor.organizationId,
+          firstParam(req.params.clientRequestId)
+        );
         if (!receipt) return null;
         const allowed = await canViewAggregate(actor, receipt.aggregateType, receipt.aggregateId);
         if (!allowed) return null;
@@ -4527,7 +4634,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
         return;
       }
-      const found = await deps.reader.findBenefitsHandoffPack(actor.organizationId, firstParam(req.params.id));
+      const found = await deps.reader.findBenefitsHandoffPack(
+        actor.organizationId,
+        firstParam(req.params.id)
+      );
       if (!found) {
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
@@ -4618,7 +4728,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
         return;
       }
-      const item = await deps.reader.findFinanceReconciliation(actor.organizationId, firstParam(req.params.id));
+      const item = await deps.reader.findFinanceReconciliation(
+        actor.organizationId,
+        firstParam(req.params.id)
+      );
       if (!item || !(await canViewAggregate(actor, 'finance_reconciliation', req.params.id))) {
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
@@ -4656,7 +4769,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
         return;
       }
-      const item = await deps.reader.findResultsKpiObservation(actor.organizationId, firstParam(req.params.id));
+      const item = await deps.reader.findResultsKpiObservation(
+        actor.organizationId,
+        firstParam(req.params.id)
+      );
       if (!item || !(await canViewAggregate(actor, 'results_kpi_observation', req.params.id))) {
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
@@ -4819,7 +4935,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
         return;
       }
-      const closure = await deps.reader.findClosureCase(actor.organizationId, firstParam(req.params.id));
+      const closure = await deps.reader.findClosureCase(
+        actor.organizationId,
+        firstParam(req.params.id)
+      );
       const initiativeId = String((closure as any)?.initiativeId ?? '');
       const initiative = initiativeId
         ? await deps.reader.findById(actor.organizationId, initiativeId)
@@ -4885,7 +5004,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
         return;
       }
-      const item = await deps.reader.findEffectivenessSnapshot(actor.organizationId, firstParam(req.params.id));
+      const item = await deps.reader.findEffectivenessSnapshot(
+        actor.organizationId,
+        firstParam(req.params.id)
+      );
       if (!item || !(await canViewAggregate(actor, 'effectiveness_snapshot', req.params.id))) {
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
@@ -4952,7 +5074,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
         return;
       }
-      const x = await deps.reader.findClosureSnapshot(actor.organizationId, firstParam(req.params.id));
+      const x = await deps.reader.findClosureSnapshot(
+        actor.organizationId,
+        firstParam(req.params.id)
+      );
       if (!x || !(await canViewAggregate(actor, 'closure_snapshot', req.params.id))) {
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;
@@ -5267,7 +5392,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
         return;
       }
-      const found = await deps.reader.findById(actor.organizationId, firstParam(req.params.initiativeId));
+      const found = await deps.reader.findById(
+        actor.organizationId,
+        firstParam(req.params.initiativeId)
+      );
       if (!found) {
         res.status(404).json({ error: { code: 'NOT_FOUND' } });
         return;

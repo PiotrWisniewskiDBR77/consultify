@@ -699,6 +699,39 @@ export async function requestPortfolioDecision(
   if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
   return body;
 }
+export interface PortfolioDecisionReadModel {
+  version: number;
+  decision: {
+    decisionId: string;
+    initiativeId: string;
+    status:
+      | 'PENDING'
+      | 'APPROVED'
+      | 'CONDITIONALLY_APPROVED'
+      | 'RETURNED'
+      | 'DEFERRED'
+      | 'REJECTED'
+      | 'MERGED';
+    scenarioId: string;
+    scenarioVersion: number;
+    initiativeVersion: number;
+    authorityId: string;
+    requestedAt: string;
+    decidedAt: string | null;
+  };
+}
+export async function readPortfolioDecision(
+  initiativeId: string,
+  signal?: AbortSignal
+): Promise<PortfolioDecisionReadModel> {
+  const response = await fetch(
+    `/api/initiatives/runtime-v1/initiatives/${encodeURIComponent(initiativeId)}/gates/portfolio/decision`,
+    { credentials: 'include', signal }
+  );
+  const body = await readJson(response);
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  return body as PortfolioDecisionReadModel;
+}
 export async function decidePortfolioDecision(
   initiativeId: string,
   command: Record<string, unknown>

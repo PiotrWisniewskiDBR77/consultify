@@ -839,14 +839,15 @@ describe.skipIf(!REAL_PG)('INI-05 Portfolio/Resources/Roadmap — real PostgreSQ
       const taskId = `task-${randomUUID()}`;
       await pool.query(
         `INSERT INTO tasks
-           (id, organization_id, project_id, initiative_id, assignee_id, estimated_hours, status)
-         VALUES ($1,$2,$3,$4,$5,24,'todo')`,
+           (id, organization_id, project_id, initiative_id, assignee_id, title, estimated_hours, status)
+         VALUES ($1,$2,$3,$4,$5,'Capacity proof task',24,'todo')`,
         [taskId, orgA, projectA, initiativeId, ownerUserA]
       );
       await pool.query(
-        `INSERT INTO task_allocations (id, task_id, organization_id, week_start, allocated_hours)
-         VALUES ($1,$2,$3,'2026-08-10',24)`,
-        [`allocation-${randomUUID()}`, taskId, orgA]
+        `INSERT INTO task_allocations
+           (id, task_id, organization_id, user_id, week_start, allocated_hours)
+         VALUES ($1,$2,$3,$4,'2026-08-10',24)`,
+        [`allocation-${randomUUID()}`, taskId, orgA, ownerUserA]
       );
 
       const firstTimeline = await getCapacityTimeline(orgA, initiativeId);

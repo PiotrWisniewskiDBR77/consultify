@@ -1492,11 +1492,27 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       };
       return (
         <div className="flex h-full min-h-0 flex-col">
-          <div className="flex items-center gap-2 border-b border-c-border px-4 py-2" role="tablist" aria-label="Candidate inbox">
-            <button type="button" role="tab" aria-selected={candidateInbox === 'source'} onClick={() => setCandidateInbox('source')} className={candidateInbox === 'source' ? 'btn-primary' : 'btn-secondary'}>
+          <div
+            className="flex items-center gap-2 border-b border-c-border px-4 py-2"
+            role="tablist"
+            aria-label="Candidate inbox"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={candidateInbox === 'source'}
+              onClick={() => setCandidateInbox('source')}
+              className={candidateInbox === 'source' ? 'btn-primary' : 'btn-secondary'}
+            >
               Source proposals
             </button>
-            <button type="button" role="tab" aria-selected={candidateInbox === 'discovery'} onClick={() => setCandidateInbox('discovery')} className={candidateInbox === 'discovery' ? 'btn-primary' : 'btn-secondary'}>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={candidateInbox === 'discovery'}
+              onClick={() => setCandidateInbox('discovery')}
+              className={candidateInbox === 'discovery' ? 'btn-primary' : 'btn-secondary'}
+            >
               Discovery candidates
             </button>
           </div>
@@ -1558,6 +1574,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           initiatives={allInitiatives.map((initiative) => ({
             id: initiative.id,
             name: initiative.name || initiative.title || initiative.id,
+            version: (() => {
+              const exact = (initiative as PortfolioInitiative & { canonicalVersion?: number })
+                .canonicalVersion;
+              return Number.isInteger(exact) && Number(exact) > 0 ? Number(exact) : null;
+            })(),
           }))}
           activePreset={canonicalMenu3Preset.portfolio}
           onCountsChange={handlePortfolioMenu3Counts}

@@ -5,7 +5,9 @@ import { PortfolioScenarioSurface } from '../../../src/components/Initiatives/Po
 import {
   readPortfolioScenario,
   readPortfolioScenarioDiff,
+  readPortfolioDecision,
   requestPortfolioDecision,
+  RuntimeApiError,
   listPortfolioScenarioRegister,
   writePortfolioScenario,
 } from '../../../src/services/initiatives-execution/runtimeApi';
@@ -18,6 +20,7 @@ vi.mock('../../../src/services/initiatives-execution/runtimeApi', () => ({
   },
   readPortfolioScenario: vi.fn(),
   readPortfolioScenarioDiff: vi.fn(),
+  readPortfolioDecision: vi.fn(),
   requestPortfolioDecision: vi.fn(),
   listPortfolioScenarioRegister: vi.fn(),
   writePortfolioScenario: vi.fn(),
@@ -58,11 +61,13 @@ const scenario = {
 
 describe('PortfolioScenarioSurface', () => {
   beforeEach(() => {
+    sessionStorage.clear();
     vi.mocked(readPortfolioScenario).mockReset().mockResolvedValue({ version: 1, scenario });
     vi.mocked(listPortfolioScenarioRegister)
       .mockReset()
       .mockResolvedValue({ scenarios: [{ id: 'portfolio-q4' }] });
     vi.mocked(readPortfolioScenarioDiff).mockReset().mockResolvedValue({ changes: [] });
+    vi.mocked(readPortfolioDecision).mockReset().mockRejectedValue(new RuntimeApiError(404));
     vi.mocked(writePortfolioScenario)
       .mockReset()
       .mockResolvedValue({ aggregateVersion: 2, response: { ...scenario, scenarioVersion: 2 } });
@@ -73,7 +78,7 @@ describe('PortfolioScenarioSurface', () => {
     render(
       <PortfolioScenarioSurface
         portfolioId="project-1"
-        initiatives={[{ id: 'initiative-1', name: 'Automation' }]}
+        initiatives={[{ id: 'initiative-1', name: 'Automation', version: 4 }]}
         activePreset="included"
         onCountsChange={onCountsChange}
       />
@@ -94,7 +99,7 @@ describe('PortfolioScenarioSurface', () => {
     render(
       <PortfolioScenarioSurface
         portfolioId="project-1"
-        initiatives={[{ id: 'initiative-1', name: 'Automation' }]}
+        initiatives={[{ id: 'initiative-1', name: 'Automation', version: 4 }]}
       />
     );
     const row = (await screen.findByText('Automation')).closest('tr')!;
@@ -110,6 +115,39 @@ describe('PortfolioScenarioSurface', () => {
     expect(screen.getAllByText('1/2/3 FTE').length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole('button', { name: 'Zamknij narzędzia portfela' }));
     expect(screen.queryByRole('region', { name: 'Portfolio Scenario Workbench' })).toBeNull();
+  });
+
+  it('restores the exact persisted gate decision after a cold reopen', async () => {
+    const retryKey = 'consultify:portfolio-gate:portfolio-q4:1:initiative-1:4';
+    sessionStorage.setItem(
+      retryKey,
+      JSON.stringify({ decisionId: 'decision-portfolio-1', clientRequestId: 'request-1' })
+    );
+    vi.mocked(readPortfolioDecision).mockResolvedValue({
+      version: 1,
+      decision: {
+        decisionId: 'decision-portfolio-1',
+        initiativeId: 'initiative-1',
+        status: 'PENDING',
+        scenarioId: 'portfolio-q4',
+        scenarioVersion: 1,
+        initiativeVersion: 4,
+        authorityId: 'board-1',
+        requestedAt: '2026-08-09T12:10:00.000Z',
+        decidedAt: null,
+      },
+    });
+
+    render(
+      <PortfolioScenarioSurface
+        portfolioId="project-1"
+        initiatives={[{ id: 'initiative-1', name: 'Automation', version: 4 }]}
+      />
+    );
+
+    expect(await screen.findByText('Oczekuje na decyzję')).toBeInTheDocument();
+    expect(readPortfolioDecision).toHaveBeenCalledWith('initiative-1');
+    expect(sessionStorage.getItem(retryKey)).toBeNull();
   });
 
   it('creates and publishes only a scenario proposal, then requests one Initiative Decision', async () => {
@@ -128,7 +166,7 @@ describe('PortfolioScenarioSurface', () => {
     render(
       <PortfolioScenarioSurface
         portfolioId="project-1"
-        initiatives={[{ id: 'initiative-1', name: 'Automation' }]}
+        initiatives={[{ id: 'initiative-1', name: 'Automation', version: 4 }]}
       />
     );
     vi.mocked(listPortfolioScenarioRegister).mockResolvedValueOnce({ scenarios: [] });

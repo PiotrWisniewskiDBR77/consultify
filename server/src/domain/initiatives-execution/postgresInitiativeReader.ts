@@ -5,6 +5,7 @@ import type { InitiativeCardSelectionItem } from './configureInitiativeCards.js'
 import { gateRule, type GovernanceGate } from './organizationGovernance.js';
 import type { PlanScenario } from './planScenario.js';
 import type { PortfolioScenario } from './portfolioScenario.js';
+import type { PortfolioDecision } from './portfolioDecision.js';
 import type { EffectiveGovernancePolicy } from './postgresGovernancePolicyResolver.js';
 import type { RegisteredInitiative } from './registerInitiative.js';
 
@@ -1208,6 +1209,35 @@ export class PostgresInitiativeReader {
       updatedAt:
         row.updated_at instanceof Date ? row.updated_at.toISOString() : String(row.updated_at),
     }));
+  }
+
+  /**
+   * Cold readback for the exact Portfolio gate attached to an Initiative.
+   * The Initiative aggregate owns the decision reference; both rows are constrained
+   * to the authenticated tenant so a caller cannot probe a foreign decision id.
+   */
+  async findPortfolioDecisionForInitiative(
+    organizationId: string,
+    initiativeId: string
+  ): Promise<{ version: number; decision: PortfolioDecision } | null> {
+    const result = await this.pool.query<{
+      version: number;
+      payload_json: PortfolioDecision;
+    }>(
+      `SELECT d.version, d.payload_json
+         FROM ie_aggregate_state i
+         JOIN ie_aggregate_state d
+           ON d.organization_id = i.organization_id
+          AND d.aggregate_type = 'decision'
+          AND d.aggregate_id = i.payload_json->>'portfolioDecisionId'
+        WHERE i.organization_id = $1
+          AND i.aggregate_type = 'initiative'
+          AND i.aggregate_id = $2
+          AND d.payload_json->>'initiativeId' = i.aggregate_id`,
+      [organizationId, initiativeId]
+    );
+    const row = result.rows[0];
+    return row ? { version: row.version, decision: row.payload_json } : null;
   }
 
   async findBySource(

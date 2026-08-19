@@ -6,6 +6,7 @@ import { StandardPreview } from '@/components/standard/StandardPreview';
 import { StandardTable, type TableRow } from '@/components/standard/StandardTable';
 import {
   listPortfolioScenarioRegister,
+  readPortfolioDecision,
   readPortfolioScenario,
   readPortfolioScenarioDiff,
   requestPortfolioDecision,
@@ -58,6 +59,7 @@ interface Scenario {
 interface InitiativeOption {
   id: string;
   name: string;
+  version: number | null;
 }
 interface ScenarioRow extends TableRow {
   id: string;
@@ -78,6 +80,18 @@ interface Props extends CanonicalMenu3Contract {
 const unknown = <T,>(reason: string): TriState<T> => ({ state: 'UNKNOWN', value: null, reason });
 const triStateValue = <T,>(value: TriState<T> | undefined, format: (known: T) => string) =>
   !value || value.state === 'UNKNOWN' ? 'UNKNOWN' : format(value.value);
+const portfolioGateStorageKey = (
+  scenarioId: string,
+  scenarioVersion: number,
+  initiativeId: string,
+  initiativeVersion: number
+) =>
+  `consultify:portfolio-gate:${scenarioId}:${scenarioVersion}:${initiativeId}:${initiativeVersion}`;
+const portfolioDecisionStateKey = (
+  scenarioId: string,
+  scenarioVersion: number,
+  initiativeId: string
+) => `${scenarioId}:${scenarioVersion}:${initiativeId}`;
 const emptyScenario = (scenarioId: string, portfolioId: string): Scenario => ({
   scenarioId,
   scenarioVersion: 0,
@@ -119,7 +133,8 @@ const decisionLabel = (status: string): string => {
     MERGED: 'Połączona',
     FAILED: 'Błąd przekazania',
   };
-  return labels[status] ?? 'Stan nieznany';
+  const canonicalStatus = status.split(' · ', 1)[0];
+  return labels[canonicalStatus] ?? 'Stan nieznany';
 };
 const scenarioStatusLabel: Record<Scenario['status'], string> = {
   DRAFT: 'Szkic',
@@ -183,7 +198,15 @@ export const PortfolioScenarioSurface: React.FC<Props> = ({
         membership.roughDemand,
         (value) => `${value.low}/${value.base}/${value.high} ${value.unit}`
       ),
-      decision: decisionLabel(decisionStatus[membership.initiativeId] ?? 'NOT_REQUESTED'),
+      decision: decisionLabel(
+        decisionStatus[
+          portfolioDecisionStateKey(
+            activeScenario?.scenarioId ?? '',
+            activeScenario?.scenarioVersion ?? 0,
+            membership.initiativeId
+          )
+        ] ?? 'NOT_REQUESTED'
+      ),
       owner: membership.ownerId || 'UNKNOWN',
       mandatory:
         membership.mandatory === true ? 'YES' : membership.mandatory === false ? 'NO' : 'UNKNOWN',
@@ -254,6 +277,64 @@ export const PortfolioScenarioSurface: React.FC<Props> = ({
               hydrated.find((row) => row.status === 'PUBLISHED')?.id ?? hydrated[0]?.id ?? null
             );
           });
+          const memberIds = [
+            ...new Set(
+              hydrated.flatMap((row) => row.scenario.memberships.map((m) => m.initiativeId))
+            ),
+          ];
+          const decisions = await Promise.all(
+            memberIds.map(async (initiativeId) => {
+              try {
+                const result = await readPortfolioDecision(initiativeId);
+                const storageKey = portfolioGateStorageKey(
+                  result.decision.scenarioId,
+                  result.decision.scenarioVersion,
+                  initiativeId,
+                  result.decision.initiativeVersion
+                );
+                try {
+                  const persisted = JSON.parse(sessionStorage.getItem(storageKey) || 'null') as {
+                    decisionId?: string;
+                  } | null;
+                  if (persisted?.decisionId === result.decision.decisionId) {
+                    sessionStorage.removeItem(storageKey);
+                  }
+                } catch {
+                  // A malformed browser value is not authority and is left untouched.
+                }
+                return result.decision;
+              } catch (error) {
+                if (error instanceof RuntimeApiError && error.status === 404) {
+                  return null;
+                }
+                throw error;
+              }
+            })
+          );
+          if (!cancelled) {
+            const exactStates: Record<string, string> = {};
+            for (const row of hydrated) {
+              for (const member of row.scenario.memberships) {
+                const decision = decisions.find(
+                  (candidate) =>
+                    candidate?.initiativeId === member.initiativeId &&
+                    candidate.scenarioId === row.scenario.scenarioId &&
+                    candidate.scenarioVersion === row.scenario.scenarioVersion &&
+                    candidate.initiativeVersion === member.initiativeVersion
+                );
+                exactStates[
+                  portfolioDecisionStateKey(
+                    row.scenario.scenarioId,
+                    row.scenario.scenarioVersion,
+                    member.initiativeId
+                  )
+                ] = decision
+                  ? `${decision.status} · ${decision.decisionId}`
+                  : 'NOT_REQUESTED';
+              }
+            }
+            setDecisionStatus(exactStates);
+          }
         }
       } catch {
         if (!cancelled) setWriteState('ERROR');
@@ -323,13 +404,18 @@ export const PortfolioScenarioSurface: React.FC<Props> = ({
 
   const addMembership = (initiativeId: string) => {
     if (!draft || draft.memberships.some((item) => item.initiativeId === initiativeId)) return;
+    const initiative = initiatives.find((item) => item.id === initiativeId);
+    if (!initiative || !Number.isInteger(initiative.version) || Number(initiative.version) < 1) {
+      setWriteState('ERROR');
+      return;
+    }
     setDraft({
       ...draft,
       memberships: [
         ...draft.memberships,
         {
           initiativeId,
-          initiativeVersion: 1,
+          initiativeVersion: Number(initiative.version),
           disposition: 'INCLUDED',
           scoreDecomposition: { value: null, risk: null, fit: null },
           rank: null,
@@ -356,13 +442,42 @@ export const PortfolioScenarioSurface: React.FC<Props> = ({
     );
   const requestDecision = async (member: Membership) => {
     if (!draft || draft.status !== 'PUBLISHED' || !authorityId.trim() || !decisionDueAt) return;
-    const decisionId = crypto.randomUUID();
-    setDecisionStatus((current) => ({ ...current, [member.initiativeId]: 'REQUESTING' }));
+    if (!Number.isInteger(member.initiativeVersion) || member.initiativeVersion < 1) {
+      setWriteState('ERROR');
+      return;
+    }
+    const storageKey = portfolioGateStorageKey(
+      draft.scenarioId,
+      draft.scenarioVersion,
+      member.initiativeId,
+      member.initiativeVersion
+    );
+    const stateKey = portfolioDecisionStateKey(
+      draft.scenarioId,
+      draft.scenarioVersion,
+      member.initiativeId
+    );
+    let ids: { decisionId: string; clientRequestId: string } | null = null;
     try {
-      await requestPortfolioDecision(member.initiativeId, {
+      const persisted = sessionStorage.getItem(storageKey);
+      ids = persisted ? JSON.parse(persisted) : null;
+    } catch {
+      ids = null;
+    }
+    if (!ids?.decisionId || !ids?.clientRequestId) {
+      ids = { decisionId: crypto.randomUUID(), clientRequestId: crypto.randomUUID() };
+      try {
+        sessionStorage.setItem(storageKey, JSON.stringify(ids));
+      } catch {
+        // The in-memory ids still preserve retry identity for this mounted session.
+      }
+    }
+    setDecisionStatus((current) => ({ ...current, [stateKey]: 'REQUESTING' }));
+    try {
+      const result = await requestPortfolioDecision(member.initiativeId, {
         expectedVersion: member.initiativeVersion,
-        clientRequestId: crypto.randomUUID(),
-        decisionId,
+        clientRequestId: ids.clientRequestId,
+        decisionId: ids.decisionId,
         authorityId: authorityId.trim(),
         scenarioId: draft.scenarioId,
         scenarioVersion: draft.scenarioVersion,
@@ -370,10 +485,10 @@ export const PortfolioScenarioSurface: React.FC<Props> = ({
       });
       setDecisionStatus((current) => ({
         ...current,
-        [member.initiativeId]: `PENDING · ${decisionId}`,
+        [stateKey]: `${(result as { response?: { status?: string } }).response?.status ?? 'PENDING'} · ${ids.decisionId}`,
       }));
     } catch {
-      setDecisionStatus((current) => ({ ...current, [member.initiativeId]: 'FAILED' }));
+      setDecisionStatus((current) => ({ ...current, [stateKey]: 'FAILED' }));
     }
   };
 
@@ -671,18 +786,9 @@ export const PortfolioScenarioSurface: React.FC<Props> = ({
                         <div className="p-2">
                           {initiatives.find((item) => item.id === member.initiativeId)?.name ??
                             member.initiativeId}
-                          <input
-                            aria-label={`Version ${member.initiativeId}`}
-                            className="mt-1 w-20 bg-c-surface p-1"
-                            type="number"
-                            min={1}
-                            value={member.initiativeVersion}
-                            onChange={(e) =>
-                              updateMembership(member.initiativeId, {
-                                initiativeVersion: Number(e.target.value),
-                              })
-                            }
-                          />
+                          <span className="mt-1 block text-xs text-c-text-muted">
+                            Exact aggregate v{member.initiativeVersion}
+                          </span>
                         </div>
                       );
                     },
@@ -821,14 +927,26 @@ export const PortfolioScenarioSurface: React.FC<Props> = ({
                               draft.status !== 'PUBLISHED' ||
                               !authorityId ||
                               !decisionDueAt ||
-                              decisionStatus[member.initiativeId]?.startsWith('PENDING')
+                            decisionStatus[
+                              portfolioDecisionStateKey(
+                                draft.scenarioId,
+                                draft.scenarioVersion,
+                                member.initiativeId
+                              )
+                            ]?.startsWith('PENDING')
                             }
                             onClick={() => void requestDecision(member)}
                           >
                             Request
                           </button>
                           <div className="max-w-32 break-all text-xs">
-                            {decisionStatus[member.initiativeId] ?? 'Not requested'}
+                            {decisionStatus[
+                              portfolioDecisionStateKey(
+                                draft.scenarioId,
+                                draft.scenarioVersion,
+                                member.initiativeId
+                              )
+                            ] ?? 'Not requested'}
                           </div>
                         </div>
                       );
@@ -850,8 +968,8 @@ export const PortfolioScenarioSurface: React.FC<Props> = ({
               >
                 <option value="">Add Initiative…</option>
                 {available.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name}
+                  <option key={item.id} value={item.id} disabled={!item.version}>
+                    {item.name} {item.version ? `· v${item.version}` : '· VERSION UNKNOWN'}
                   </option>
                 ))}
               </select>
