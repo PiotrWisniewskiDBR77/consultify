@@ -557,7 +557,10 @@ test('TLS-05: signed creator and separate approver freeze, promote, replay and c
     await expect(page.locator('[data-synthesis-section]')).toHaveCount(9);
     await expect(page.getByText(/^Validated$/)).toHaveCount(0);
     await page.getByText(/Show supporting analysis/i).click();
-    const draftCandidateAction = page.getByRole('button', { name: /Send to candidates/i }).first();
+    const draftCandidateAction = page
+      .locator('button[title]')
+      .filter({ hasText: /Send to candidates/i })
+      .first();
     await expect(draftCandidateAction).toBeDisabled();
     await expect(draftCandidateAction).toHaveAttribute(
       'title',
