@@ -1896,6 +1896,13 @@ export function SWOTInsightsPhase({
                                   disabled={
                                     !candidateHandoffAllowed || creatingRecommendationId === move.id
                                   }
+                                  title={
+                                    candidateHandoffAllowed
+                                      ? undefined
+                                      : t(
+                                          'discoveryToolsTools.dynamicSwot.insightsPhase.candidateApprovalRequired'
+                                        )
+                                  }
                                   className="inline-flex items-center gap-1.5 rounded-lg bg-navy-900 px-3 py-2 text-xs font-semibold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-60 dark:bg-[#F4F7FB] dark:text-navy-950"
                                 >
                                   <Rocket className="h-3.5 w-3.5" />
