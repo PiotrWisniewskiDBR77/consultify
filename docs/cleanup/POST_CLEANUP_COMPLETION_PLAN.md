@@ -1,5 +1,15 @@
 # Consultify — kanoniczny plan domknięcia aplikacji
 
+> **Plan wykonawczy 2026-08-19:** dokładny zakres, EPIC-i, DoD, testy,
+> zależności i estymacje dla dziesięciu zadań z realnym brakiem produktu lub
+> infrastruktury są zamrożone w
+> [`TEN_PRODUCT_INFRA_CLOSURE_PLAN_20260819.md`](./TEN_PRODUCT_INFRA_CLOSURE_PLAN_20260819.md).
+> Zadania są realizowane sekwencyjnie; dokument nie zmienia frozen DoD ani
+> zewnętrznych owner/release gates.
+> Code-audit forecast zastępuje historyczny szacunek 71–128 agent-days /
+> 3–6 miesięcy; reestymację wymusiły literalne wielodrzwiowe cutover
+> Results/Finance, cztery modele Execution i osobne environment gates.
+
 Wersja: `2.0.0`
 
 Status: `EXECUTION_READY / 82_TASKS / NOT_RELEASE_READY`
