@@ -26,7 +26,7 @@ test.describe('Partner V8 zero-writer — mounted signed session', () => {
     const cleanupClient = await pool.connect();
     const fixtureApi = await playwrightRequest.newContext({ baseURL: API });
     let partnerOrgId = '';
-    const legacyMutations: string[] = [];
+    const forbiddenEconomicsMutations: string[] = [];
     let suiteLockHeld = false;
 
     const databasePrefix = String(process.env.PRT_ZERO_WRITER_DB_PREFIX || '').trim();
@@ -42,8 +42,14 @@ test.describe('Partner V8 zero-writer — mounted signed session', () => {
     suiteLockHeld = true;
 
     page.on('request', (req) => {
-      if (/\/api\/partners\//.test(req.url()) && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method())) {
-        legacyMutations.push(`${req.method()} ${new URL(req.url()).pathname}`);
+      const path = new URL(req.url()).pathname;
+      const methodAndPath = `${req.method()} ${path}`;
+      if (
+        /^(?:POST \/api\/(?:v8\/partner|partners)\/payouts\/request|PUT \/api\/(?:v8\/partner|partners)\/payout-settings)\/?$/.test(
+          methodAndPath
+        )
+      ) {
+        forbiddenEconomicsMutations.push(methodAndPath);
       }
     });
 
@@ -150,6 +156,24 @@ test.describe('Partner V8 zero-writer — mounted signed session', () => {
       await expect(
         page.getByRole('button', { name: /Zażądaj wypłaty|Request payout/i })
       ).toHaveCount(0);
+      expect(forbiddenEconomicsMutations).toEqual([]);
+
+      await page.reload();
+      await dismissOverlayIfPresent(page);
+      await expect(page.getByTestId('partner-economics-approved-out')).toBeVisible();
+      await expect(page.getByText(/Payout operations are unavailable/i)).toBeVisible();
+      await expect(
+        page.getByRole('button', { name: /Zażądaj wypłaty|Request payout/i })
+      ).toHaveCount(0);
+      const tenantEarningsShot = testInfo.outputPath(
+        'partner-tenant-earnings-approved-out-cold.png'
+      );
+      await page.screenshot({ path: tenantEarningsShot, fullPage: true });
+      await testInfo.attach('partner-tenant-earnings-approved-out-cold', {
+        path: tenantEarningsShot,
+        contentType: 'image/png',
+      });
+      expect(forbiddenEconomicsMutations).toEqual([]);
 
       await page.goto('/partner?tab=payout-settings');
       await dismissOverlayIfPresent(page);
@@ -162,16 +186,23 @@ test.describe('Partner V8 zero-writer — mounted signed session', () => {
       await expect(page.getByDisplayValue('PRT V8 Owner')).toHaveCount(0);
       await expect(page.getByDisplayValue('DE89370400440532013000')).toHaveCount(0);
       await expect(page.getByRole('button', { name: /^Bank Transfer/i })).toHaveCount(0);
+
+      await page.reload();
+      await dismissOverlayIfPresent(page);
+      await expect(page.getByText('Payout operations unavailable', { exact: true })).toBeVisible();
+      await expect(page.getByText(/AMD-PRT-ECONOMICS-002/)).toBeVisible();
+      await expect(page.getByTestId('historical-payout-method')).toHaveText(/BANK TRANSFER/i);
+      await expect(page.getByRole('button', { name: 'Save Changes' })).toHaveCount(0);
       const tenantPayoutSettingsShot = testInfo.outputPath(
-        'partner-tenant-payout-settings-approved-out.png'
+        'partner-tenant-payout-settings-approved-out-cold.png'
       );
       await page.screenshot({ path: tenantPayoutSettingsShot, fullPage: true });
-      await testInfo.attach('partner-tenant-payout-settings-approved-out', {
+      await testInfo.attach('partner-tenant-payout-settings-approved-out-cold', {
         path: tenantPayoutSettingsShot,
         contentType: 'image/png',
       });
 
-      expect(legacyMutations).toEqual([]);
+      expect(forbiddenEconomicsMutations).toEqual([]);
 
       const revoked = await fixtureApi.post('/api/test-support/member', {
         headers: { 'x-test-support-key': SUPPORT_KEY, 'content-type': 'application/json' },
@@ -218,6 +249,7 @@ test.describe('Partner V8 zero-writer — mounted signed session', () => {
             await cleanupClient.query(`ALTER TABLE partner_program_ledger DISABLE TRIGGER trg_partner_program_ledger_guard`);
             await cleanupClient.query(`DELETE FROM partner_program_ledger WHERE partner_org_id=$1`, [partnerOrgId]);
             await cleanupClient.query(`ALTER TABLE partner_program_ledger ENABLE TRIGGER trg_partner_program_ledger_guard`);
+            await cleanupClient.query(`DELETE FROM partner_program_runtime WHERE partner_org_id=$1`, [partnerOrgId]);
             await cleanupClient.query(`DELETE FROM partner_users WHERE partner_org_id=$1`, [partnerOrgId]);
             await cleanupClient.query(`DELETE FROM partner_organizations WHERE id=$1`, [partnerOrgId]);
             await cleanupClient.query('COMMIT');
@@ -241,6 +273,7 @@ test.describe('Partner V8 zero-writer — mounted signed session', () => {
               (SELECT count(*) FROM partner_organizations WHERE id::text=$1::text)::int +
               (SELECT count(*) FROM partner_users WHERE partner_org_id::text=$1::text)::int +
               (SELECT count(*) FROM partner_campaign_links WHERE partner_org_id::text=$1::text)::int +
+              (SELECT count(*) FROM partner_program_runtime WHERE partner_org_id::text=$1::text)::int +
               (SELECT count(*) FROM partner_program_ledger WHERE partner_org_id::text=$1::text)::int +
               (SELECT count(*) FROM partner_commission_transactions WHERE partner_org_id::text=$1::text)::int +
               (SELECT count(*) FROM partner_payouts WHERE partner_org_id::text=$1::text)::int +
@@ -340,6 +373,12 @@ test.describe('Partner V8 zero-writer — mounted signed session', () => {
       await expect(page.getByRole('button', { name: /^Process$/i })).toHaveCount(0);
       await expect(page.getByRole('button', { name: /^Complete$/i })).toHaveCount(0);
       await expect(page.getByRole('button', { name: /Remove attribution/i })).toHaveCount(0);
+      // W21/W23/W24 have no reachable mounted controls in this surface. Keep
+      // their product-action vocabulary under an explicit absence contract in
+      // addition to the namespace-wide passive request listener above.
+      await expect(page.getByRole('button', { name: /fail (?:the )?payout/i })).toHaveCount(0);
+      await expect(page.getByRole('button', { name: /(?:advance|change).*lifecycle/i })).toHaveCount(0);
+      await expect(page.getByRole('button', { name: /(?:add|append|record).*ledger/i })).toHaveCount(0);
 
       await page.reload();
       await dismissOverlayIfPresent(page);
