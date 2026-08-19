@@ -32,6 +32,7 @@ export interface ContextDocumentRecord {
   scope: ContextDocumentScope;
   filename: string;
   originalName: string;
+  filePath: string | null;
   mimeType: string | null;
   fileSizeBytes: number;
   sourceUpload: string;
@@ -1397,6 +1398,7 @@ function normalizeRecord(row: any): ContextDocumentRecord {
     scope: row?.scope === 'project' ? 'project' : 'user',
     filename: String(row?.filename || ''),
     originalName: String(row?.original_name || row?.filename || ''),
+    filePath: row?.filepath ? String(row.filepath) : null,
     mimeType: row?.mime_type ? String(row.mime_type) : null,
     fileSizeBytes: Number(row?.file_size_bytes || 0),
     sourceUpload: String(row?.source_upload || 'documents.library'),
