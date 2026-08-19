@@ -283,7 +283,8 @@ test('TLS-02/03: mounted SWOT edit persists while empty, stale, foreign and revo
     await swotPhase.click();
     await expect(page.getByText('Durable strength from PostgreSQL')).toBeVisible();
 
-    const weaknessInput = page.getByPlaceholder(/Add point|Dodaj punkt/i).nth(1);
+    await page.getByRole('tab', { name: /Weaknesses/i }).click();
+    const weaknessInput = page.getByPlaceholder(/Add point|Dodaj punkt/i);
     await expect(weaknessInput).toBeVisible();
     await weaknessInput.fill(marker);
     await weaknessInput.locator('..').getByRole('button').click();
@@ -479,7 +480,8 @@ test('TLS-05: signed creator and separate approver freeze, promote, replay and c
     const page = await ownerContext.newPage();
     const headers = authHeaders(owner);
 
-    await page.goto('/discovery-tools?docId=known:dynamic-swot');
+    await page.goto('/discovery-tools');
+    await page.getByText('Dynamic SWOT', { exact: true }).dblclick();
     await expect(page.getByRole('heading', { name: /^Goal$/i })).toBeVisible({ timeout: 30_000 });
     await page.getByRole('button', { name: /^Process$/i }).click();
     await expect(page.getByRole('heading', { name: /^Process$/i })).toBeVisible();
