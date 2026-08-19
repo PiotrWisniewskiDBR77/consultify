@@ -45,6 +45,7 @@ import {
   cancelRun,
   cancelWait,
   deferProposal,
+  executeProposal,
   markProposalFailed,
   newIdempotencyKey,
   pauseRun,
@@ -59,7 +60,13 @@ import {
   submitProposalForReview,
 } from './api';
 import { listNodeResultAcceptancesForCase } from './apiResults';
-import type { CaseActionProposal, CaseCoreView, CaseHistoryEvent, CaseRun, CaseWait } from './types';
+import type {
+  CaseActionProposal,
+  CaseCoreView,
+  CaseHistoryEvent,
+  CaseRun,
+  CaseWait,
+} from './types';
 import {
   CommandBanner,
   type CommandNotice,
@@ -157,7 +164,11 @@ type Selection =
  * rozszerzony o decyzje w sprawach, oczekiwania i przebiegi.
  */
 type PendingCommand =
-  | { kind: 'proposal-decision'; decision: 'APPROVE' | 'REJECT' | 'REQUEST_CHANGES' | 'DEFER'; proposal: CaseActionProposal }
+  | {
+      kind: 'proposal-decision';
+      decision: 'APPROVE' | 'REJECT' | 'REQUEST_CHANGES' | 'DEFER';
+      proposal: CaseActionProposal;
+    }
   /**
    * Cztery przejścia stanu propozycji BEZ decyzji zatwierdzającej — pakiet M2.
    * DRAFT→PENDING_REVIEW (wyślij), FAILED→APPROVED (ponów),
@@ -168,6 +179,7 @@ type PendingCommand =
   | { kind: 'proposal-submit'; proposal: CaseActionProposal }
   | { kind: 'proposal-retry'; proposal: CaseActionProposal }
   | { kind: 'proposal-revoke'; proposal: CaseActionProposal }
+  | { kind: 'proposal-execute'; proposal: CaseActionProposal }
   | { kind: 'proposal-mark-failed'; proposal: CaseActionProposal }
   | { kind: 'wait-provide-input'; wait: CaseWait }
   | { kind: 'wait-cancel'; wait: CaseWait }
@@ -372,6 +384,13 @@ function proposalPreviewActions(
     return {
       resolutions: [
         {
+          id: 'rozpocznij-wykonanie',
+          variant: 'positive',
+          label: 'Rozpocznij wykonanie',
+          icon: Play,
+          onClick: () => setPending({ kind: 'proposal-execute', proposal }),
+        },
+        {
           id: 'cofnij-zatwierdzenie',
           variant: 'destructive',
           label: 'Cofnij zatwierdzenie',
@@ -497,7 +516,10 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
           });
           if (!result.ok) {
             setNotice({
-              tone: result.failure.kind === 'conflict' || result.failure.kind === 'invalid' ? 'warning' : 'critical',
+              tone:
+                result.failure.kind === 'conflict' || result.failure.kind === 'invalid'
+                  ? 'warning'
+                  : 'critical',
               text: result.failure.message,
               refresh: result.failure.refreshSuggested,
             });
@@ -505,7 +527,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
           }
           intentKeysRef.current.delete(intent);
           setNotice({
-            tone: 'success',
+            tone: result.readback === 'confirmed' ? 'success' : 'warning',
             text:
               result.readback === 'confirmed'
                 ? `Decyzja zapisana. Sprawa ma teraz status: ${proposalStatusLabel(result.value.proposal.status, true)}.`
@@ -530,7 +552,10 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
           );
           if (!result.ok) {
             setNotice({
-              tone: result.failure.kind === 'conflict' || result.failure.kind === 'invalid' ? 'warning' : 'critical',
+              tone:
+                result.failure.kind === 'conflict' || result.failure.kind === 'invalid'
+                  ? 'warning'
+                  : 'critical',
               text: result.failure.message,
               refresh: result.failure.refreshSuggested,
             });
@@ -538,7 +563,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
           }
           intentKeysRef.current.delete(intent);
           setNotice({
-            tone: 'success',
+            tone: result.readback === 'confirmed' ? 'success' : 'warning',
             text:
               result.readback === 'confirmed'
                 ? `Sprawa wysłana do przeglądu. Ma teraz status: ${proposalStatusLabel(result.value.status, true)}.`
@@ -558,7 +583,10 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
           );
           if (!result.ok) {
             setNotice({
-              tone: result.failure.kind === 'conflict' || result.failure.kind === 'invalid' ? 'warning' : 'critical',
+              tone:
+                result.failure.kind === 'conflict' || result.failure.kind === 'invalid'
+                  ? 'warning'
+                  : 'critical',
               text: result.failure.message,
               refresh: result.failure.refreshSuggested,
             });
@@ -576,12 +604,48 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
           return;
         }
 
+        if (pending.kind === 'proposal-execute') {
+          const intent = `proposal-execute:${pending.proposal.actionProposalId}`;
+          const idempotencyKey = keyForIntent(intent);
+          const result = await executeProposal(
+            pending.proposal.actionProposalId,
+            pending.proposal.version,
+            { idempotencyKey }
+          );
+          if (!result.ok) {
+            setNotice({
+              tone:
+                result.failure.kind === 'conflict' || result.failure.kind === 'invalid'
+                  ? 'warning'
+                  : 'critical',
+              text: result.failure.message,
+              refresh: result.failure.refreshSuggested,
+            });
+            return;
+          }
+          if (result.readback !== 'confirmed') {
+            setNotice({
+              tone: 'warning',
+              text: 'Rozpoczęcie wykonania zostało przyjęte, ale nie potwierdzone ponownym odczytem. Odśwież dane.',
+              refresh: true,
+            });
+            return;
+          }
+          intentKeysRef.current.delete(intent);
+          setNotice({ tone: 'success', text: 'Wykonanie czynności zostało rozpoczęte.' });
+          onReload();
+          return;
+        }
+
         if (pending.kind === 'proposal-revoke') {
           const intent = `proposal-revoke:${pending.proposal.actionProposalId}`;
           const idempotencyKey = keyForIntent(intent);
           const reason = reasonOrInput.trim();
           if (!reason) {
-            setNotice({ tone: 'warning', text: 'Podaj powód cofnięcia zatwierdzenia — jest wymagany.' });
+            setNotice({
+              tone: 'warning',
+              text: 'Podaj powód cofnięcia zatwierdzenia — jest wymagany.',
+            });
             return;
           }
           const result = await revokeProposal(
@@ -592,7 +656,10 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
           );
           if (!result.ok) {
             setNotice({
-              tone: result.failure.kind === 'conflict' || result.failure.kind === 'invalid' ? 'warning' : 'critical',
+              tone:
+                result.failure.kind === 'conflict' || result.failure.kind === 'invalid'
+                  ? 'warning'
+                  : 'critical',
               text: result.failure.message,
               refresh: result.failure.refreshSuggested,
             });
@@ -600,7 +667,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
           }
           intentKeysRef.current.delete(intent);
           setNotice({
-            tone: 'success',
+            tone: result.readback === 'confirmed' ? 'success' : 'warning',
             text:
               result.readback === 'confirmed'
                 ? 'Zatwierdzenie zostało cofnięte. Czynność NIE zostanie wykonana, dopóki ktoś nie zatwierdzi jej ponownie.'
@@ -626,7 +693,10 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
           );
           if (!result.ok) {
             setNotice({
-              tone: result.failure.kind === 'conflict' || result.failure.kind === 'invalid' ? 'warning' : 'critical',
+              tone:
+                result.failure.kind === 'conflict' || result.failure.kind === 'invalid'
+                  ? 'warning'
+                  : 'critical',
               text: result.failure.message,
               refresh: result.failure.refreshSuggested,
             });
@@ -654,10 +724,15 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
           }
           const result = pending.wait.nodeRunId
             ? await provideNodeInput(pending.wait.nodeRunId, inputRef, { idempotencyKey })
-            : await provideHumanInput(pending.wait.waitId, inputRef, pending.wait.version, { idempotencyKey });
+            : await provideHumanInput(pending.wait.waitId, inputRef, pending.wait.version, {
+                idempotencyKey,
+              });
           if (!result.ok) {
             setNotice({
-              tone: result.failure.kind === 'conflict' || result.failure.kind === 'invalid' ? 'warning' : 'critical',
+              tone:
+                result.failure.kind === 'conflict' || result.failure.kind === 'invalid'
+                  ? 'warning'
+                  : 'critical',
               text: result.failure.message,
               refresh: result.failure.refreshSuggested,
             });
@@ -680,20 +755,35 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
           const idempotencyKey = keyForIntent(intent);
           const reason = reasonOrInput.trim();
           if (!reason) {
-            setNotice({ tone: 'warning', text: 'Podaj powód anulowania oczekiwania — jest wymagany.' });
+            setNotice({
+              tone: 'warning',
+              text: 'Podaj powód anulowania oczekiwania — jest wymagany.',
+            });
             return;
           }
-          const result = await cancelWait(pending.wait.waitId, reason, pending.wait.version, { idempotencyKey });
+          const result = await cancelWait(pending.wait.waitId, reason, pending.wait.version, {
+            idempotencyKey,
+          });
           if (!result.ok) {
             setNotice({
-              tone: result.failure.kind === 'conflict' || result.failure.kind === 'invalid' ? 'warning' : 'critical',
+              tone:
+                result.failure.kind === 'conflict' || result.failure.kind === 'invalid'
+                  ? 'warning'
+                  : 'critical',
               text: result.failure.message,
               refresh: result.failure.refreshSuggested,
             });
             return;
           }
           intentKeysRef.current.delete(intent);
-          setNotice({ tone: 'success', text: 'Oczekiwanie zostało anulowane.' });
+          setNotice({
+            tone: result.readback === 'confirmed' ? 'success' : 'warning',
+            text:
+              result.readback === 'confirmed'
+                ? 'Oczekiwanie zostało anulowane.'
+                : 'Anulowanie zostało przyjęte, ale nie potwierdzone ponownym odczytem. Odśwież dane.',
+            refresh: result.readback !== 'confirmed',
+          });
           onReload();
           return;
         }
@@ -707,7 +797,10 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
           const result = await startRun(pending.run.runId, { idempotencyKey });
           if (!result.ok) {
             setNotice({
-              tone: result.failure.kind === 'conflict' || result.failure.kind === 'invalid' ? 'warning' : 'critical',
+              tone:
+                result.failure.kind === 'conflict' || result.failure.kind === 'invalid'
+                  ? 'warning'
+                  : 'critical',
               text: result.failure.message,
               refresh: result.failure.refreshSuggested,
             });
@@ -729,7 +822,10 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
           const result = await pauseRun(pending.run.runId, pending.run.version, { idempotencyKey });
           if (!result.ok) {
             setNotice({
-              tone: result.failure.kind === 'conflict' || result.failure.kind === 'invalid' ? 'warning' : 'critical',
+              tone:
+                result.failure.kind === 'conflict' || result.failure.kind === 'invalid'
+                  ? 'warning'
+                  : 'critical',
               text: result.failure.message,
               refresh: result.failure.refreshSuggested,
             });
@@ -742,10 +838,15 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
         }
 
         if (pending.kind === 'run-resume') {
-          const result = await resumeRun(pending.run.runId, pending.run.version, { idempotencyKey });
+          const result = await resumeRun(pending.run.runId, pending.run.version, {
+            idempotencyKey,
+          });
           if (!result.ok) {
             setNotice({
-              tone: result.failure.kind === 'conflict' || result.failure.kind === 'invalid' ? 'warning' : 'critical',
+              tone:
+                result.failure.kind === 'conflict' || result.failure.kind === 'invalid'
+                  ? 'warning'
+                  : 'critical',
               text: result.failure.message,
               refresh: result.failure.refreshSuggested,
             });
@@ -763,19 +864,34 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
         // `CommandDialog` (pole opcjonalne) i ta funkcja mówiłyby co innego.
         {
           const reason = reasonOrInput.trim();
-          const result = await cancelRun(pending.run.runId, pending.run.version, reason || undefined, {
-            idempotencyKey,
-          });
+          const result = await cancelRun(
+            pending.run.runId,
+            pending.run.version,
+            reason || undefined,
+            {
+              idempotencyKey,
+            }
+          );
           if (!result.ok) {
             setNotice({
-              tone: result.failure.kind === 'conflict' || result.failure.kind === 'invalid' ? 'warning' : 'critical',
+              tone:
+                result.failure.kind === 'conflict' || result.failure.kind === 'invalid'
+                  ? 'warning'
+                  : 'critical',
               text: result.failure.message,
               refresh: result.failure.refreshSuggested,
             });
             return;
           }
           intentKeysRef.current.delete(intent);
-          setNotice({ tone: 'success', text: 'Przebieg został anulowany.' });
+          setNotice({
+            tone: result.readback === 'confirmed' ? 'success' : 'warning',
+            text:
+              result.readback === 'confirmed'
+                ? 'Przebieg został anulowany.'
+                : 'Anulowanie przebiegu zostało przyjęte, ale nie potwierdzone ponownym odczytem. Odśwież dane.',
+            refresh: result.readback !== 'confirmed',
+          });
           onReload();
         }
       } finally {
@@ -1005,7 +1121,10 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
         sortAccessor: (row: Record<string, unknown>) => String(row.odKiedy ?? ''),
         render: (row: Record<string, unknown>) => (
           <div className="min-w-0 space-y-0.5">
-            <div className="text-sm text-c-text-secondary" title={formatDateTime(String(row.odKiedy))}>
+            <div
+              className="text-sm text-c-text-secondary"
+              title={formatDateTime(String(row.odKiedy))}
+            >
               Czeka {relativeDays(String(row.odKiedy))}
             </div>
             <div className="text-xs text-c-text-muted">Termin: {terminText(row)}</div>
@@ -1149,7 +1268,9 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
             tabIndex={-1}
             className="min-w-0 space-y-1 rounded outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
-            <span className="block text-sm font-medium text-c-text">Przebieg {String(row.numer)}</span>
+            <span className="block text-sm font-medium text-c-text">
+              Przebieg {String(row.numer)}
+            </span>
             <StatusTag tone={row.stanTone as 'critical'}>{String(row.stan)}</StatusTag>
           </div>
         ),
@@ -1177,7 +1298,9 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
             tabIndex={-1}
             className="min-w-0 space-y-1 rounded outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
-            <span className="block text-sm font-medium text-c-text">Przebieg {String(row.numer)}</span>
+            <span className="block text-sm font-medium text-c-text">
+              Przebieg {String(row.numer)}
+            </span>
             <StatusTag tone={row.stanTone as 'critical'}>{String(row.stan)}</StatusTag>
             <span className="block text-xs text-c-text-muted">
               zmiana {relativeDays(String(row.zaktualizowany))}
@@ -1197,7 +1320,9 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
             tabIndex={-1}
             className="min-w-0 space-y-1 rounded outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
-            <span className="block text-sm font-medium text-c-text">Przebieg {String(row.numer)}</span>
+            <span className="block text-sm font-medium text-c-text">
+              Przebieg {String(row.numer)}
+            </span>
             <StatusTag tone={row.stanTone as 'critical'}>{String(row.stan)}</StatusTag>
             <span className="block text-xs text-c-text-muted">
               zmiana {relativeDays(String(row.zaktualizowany))}
@@ -1434,7 +1559,8 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
                               variant: 'positive',
                               label: 'Podaj dane',
                               icon: CheckCircle2,
-                              onClick: () => setPending({ kind: 'wait-provide-input', wait: selectedWait }),
+                              onClick: () =>
+                                setPending({ kind: 'wait-provide-input', wait: selectedWait }),
                             },
                           ] satisfies StandardPreviewAction[])
                         : []),
@@ -1632,12 +1758,16 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
                 {
                   id: 'wystartowal',
                   label: 'Wystartował',
-                  value: selectedRun.startedAt ? formatDateTime(selectedRun.startedAt) : 'jeszcze nie',
+                  value: selectedRun.startedAt
+                    ? formatDateTime(selectedRun.startedAt)
+                    : 'jeszcze nie',
                 },
                 {
                   id: 'zakonczony',
                   label: 'Zakończony',
-                  value: selectedRun.completedAt ? formatDateTime(selectedRun.completedAt) : 'jeszcze nie',
+                  value: selectedRun.completedAt
+                    ? formatDateTime(selectedRun.completedAt)
+                    : 'jeszcze nie',
                 },
                 {
                   id: 'zmieniony',
@@ -1711,7 +1841,11 @@ function dialogConfig(pending: PendingCommand | null): {
         title: `${decisionLabel} tę sprawę?`,
         description: effectClassLabel(pending.proposal.effectClass, true),
         confirmLabel: decisionLabel,
-        reason: { label: 'Powód (opcjonalnie)', required: false, placeholder: 'Krótkie uzasadnienie decyzji…' },
+        reason: {
+          label: 'Powód (opcjonalnie)',
+          required: false,
+          placeholder: 'Krótkie uzasadnienie decyzji…',
+        },
       };
     }
     case 'proposal-submit':
@@ -1734,7 +1868,18 @@ function dialogConfig(pending: PendingCommand | null): {
         description:
           'Zatwierdzenie przestanie obowiązywać i czynność NIE zostanie wykonana, dopóki ktoś nie zatwierdzi jej ponownie. Tej operacji nie da się cofnąć.',
         confirmLabel: 'Cofnij zatwierdzenie',
-        reason: { label: 'Powód cofnięcia', required: true, placeholder: 'Dlaczego cofasz to zatwierdzenie?' },
+        reason: {
+          label: 'Powód cofnięcia',
+          required: true,
+          placeholder: 'Dlaczego cofasz to zatwierdzenie?',
+        },
+      };
+    case 'proposal-execute':
+      return {
+        title: 'Rozpocząć wykonanie tej sprawy?',
+        description:
+          'Zatwierdzona czynność przejdzie do wykonania. Stan zostanie pokazany dopiero po potwierdzającym odczycie z serwera.',
+        confirmLabel: 'Rozpocznij wykonanie',
       };
     case 'proposal-mark-failed':
       return {
@@ -1750,14 +1895,22 @@ function dialogConfig(pending: PendingCommand | null): {
         description:
           'System czeka na dane od człowieka, żeby ruszyć dalej z tym krokiem. Wpisz treść, która ma zostać przekazana.',
         confirmLabel: 'Wyślij dane',
-        reason: { label: 'Treść danych', required: true, placeholder: 'Np. decyzja, liczba, link do dokumentu…' },
+        reason: {
+          label: 'Treść danych',
+          required: true,
+          placeholder: 'Np. decyzja, liczba, link do dokumentu…',
+        },
       };
     case 'wait-cancel':
       return {
         title: 'Anulować to oczekiwanie?',
         description: 'Krok przestanie czekać na ten sygnał. Tej operacji nie da się cofnąć.',
         confirmLabel: 'Anuluj oczekiwanie',
-        reason: { label: 'Powód anulowania', required: true, placeholder: 'Dlaczego anulujesz to oczekiwanie?' },
+        reason: {
+          label: 'Powód anulowania',
+          required: true,
+          placeholder: 'Dlaczego anulujesz to oczekiwanie?',
+        },
       };
     case 'run-start':
       return {
@@ -1784,7 +1937,11 @@ function dialogConfig(pending: PendingCommand | null): {
         description:
           'Wszystkie oczekujące kroki tego przebiegu zostaną anulowane razem z nim. Tej operacji nie da się cofnąć.',
         confirmLabel: 'Anuluj przebieg',
-        reason: { label: 'Powód anulowania', required: false, placeholder: 'Dlaczego anulujesz ten przebieg?' },
+        reason: {
+          label: 'Powód anulowania',
+          required: false,
+          placeholder: 'Dlaczego anulujesz ten przebieg?',
+        },
       };
   }
 }

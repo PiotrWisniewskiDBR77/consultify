@@ -118,7 +118,9 @@ export function listPlanVersions(caseId: string): Promise<CasePlanVersion[]> {
  * dowód z handlera i serwisu). Kto chce węzłów, sięga po `.semanticGraph`.
  */
 export function getPlanGraph(planVersionId: string): Promise<PlanGraphEnvelope> {
-  return v8Get<PlanGraphEnvelope>(`${BASE}/plan-versions/${encodeURIComponent(planVersionId)}/graph`);
+  return v8Get<PlanGraphEnvelope>(
+    `${BASE}/plan-versions/${encodeURIComponent(planVersionId)}/graph`
+  );
 }
 
 export function validatePlanVersion(planVersionId: string): Promise<PlanValidationResult> {
@@ -352,8 +354,7 @@ export function toCommandFailure(error: unknown): CaseCommandFailure {
     status,
     code,
     refreshSuggested: true,
-    message:
-      'Operacja nie doszła do skutku. Odśwież dane i sprawdź stan przed ponowieniem.',
+    message: 'Operacja nie doszła do skutku. Odśwież dane i sprawdź stan przed ponowieniem.',
   };
 }
 
@@ -822,7 +823,10 @@ export async function decideProposal(
         },
         idempotencyKey: key,
       }),
-    async (result) => ({ proposal: await getProposal(actionProposalId), decision: result.decision }),
+    async (result) => ({
+      proposal: await getProposal(actionProposalId),
+      decision: result.decision,
+    }),
     (result) => result,
     idempotencyKey
   );
@@ -904,6 +908,26 @@ export function revokeProposal(
   options?: CommandOptions
 ): Promise<CaseCommandResult<CaseActionProposal>> {
   return proposalCommand(actionProposalId, 'revoke', { reason, expectedVersion }, options);
+}
+
+/** POST /proposals/:id/transition-to-executing — starts an approved governed action. */
+export function executeProposal(
+  actionProposalId: string,
+  expectedVersion: number,
+  options?: CommandOptions
+): Promise<CaseCommandResult<CaseActionProposal>> {
+  return runCommand<CaseActionProposal, CaseActionProposal>(
+    (key) =>
+      send({
+        method: 'POST',
+        path: `/proposals/${encodeURIComponent(actionProposalId)}/transition-to-executing`,
+        body: { expectedVersion },
+        idempotencyKey: key,
+      }),
+    () => getProposal(actionProposalId),
+    (updated) => updated,
+    options?.idempotencyKey
+  );
 }
 
 // ── OCZEKIWANIA: podaj dane człowieka / anuluj oczekiwanie ───────────────────
@@ -1143,7 +1167,11 @@ export function createRun(
       send({
         method: 'POST',
         path: `/cases/${encodeURIComponent(caseId)}/runs`,
-        body: { casePlanVersionId: input.casePlanVersionId, correlationId: input.correlationId ?? null, idempotencyKey: key },
+        body: {
+          casePlanVersionId: input.casePlanVersionId,
+          correlationId: input.correlationId ?? null,
+          idempotencyKey: key,
+        },
         idempotencyKey: key,
       }),
     (created) => getRun(created.runId),
@@ -1181,7 +1209,10 @@ export async function startRun(
       const confirmed = await getRun(runId);
       return {
         ok: true,
-        value: mutated.outcome === 'started' ? { ...mutated, run: confirmed } : { outcome: 'already_started', run: confirmed },
+        value:
+          mutated.outcome === 'started'
+            ? { ...mutated, run: confirmed }
+            : { outcome: 'already_started', run: confirmed },
         readback: 'confirmed',
         idempotencyKey,
       };

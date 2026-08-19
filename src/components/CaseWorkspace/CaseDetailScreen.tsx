@@ -112,11 +112,7 @@ import {
   withdrawPlanVersion,
 } from './api';
 import { startLightOneClick } from './apiLightStart';
-import {
-  nazwaZlecenia,
-  rememberedListLocation,
-  rememberOpenedCase,
-} from './CasesListScreen';
+import { nazwaZlecenia, rememberedListLocation, rememberOpenedCase } from './CasesListScreen';
 import { PLAN_PROJECTIONS, type PlanProjection, PlanView } from './PlanView';
 import { RealizacjaView } from './RealizacjaView';
 import {
@@ -497,7 +493,9 @@ const MINIMAL_SEED_GRAPH: CanonicalGraph = {
     { nodeId: 'start', type: 'START' },
     { nodeId: 'end', type: 'END' },
   ],
-  edges: [{ edgeId: 'start-do-end', sourceNodeId: 'start', targetNodeId: 'end', edgeType: 'SEQUENCE' }],
+  edges: [
+    { edgeId: 'start-do-end', sourceNodeId: 'start', targetNodeId: 'end', edgeType: 'SEQUENCE' },
+  ],
 };
 
 /**
@@ -514,7 +512,11 @@ const MINIMAL_SEED_GRAPH: CanonicalGraph = {
  *    (wycofany plan nie jest PUBLISHED, serwer by go odrzucił).
  */
 type PendingPlanCommand =
-  | { kind: 'plan-create'; supersedesPlanVersion: CasePlanVersion | null; seedFrom: CasePlanVersion | null }
+  | {
+      kind: 'plan-create';
+      supersedesPlanVersion: CasePlanVersion | null;
+      seedFrom: CasePlanVersion | null;
+    }
   | { kind: 'plan-propose'; plan: CasePlanVersion }
   | { kind: 'plan-publish'; plan: CasePlanVersion }
   | { kind: 'plan-request-changes'; plan: CasePlanVersion }
@@ -671,7 +673,9 @@ export const CaseDetailScreen: React.FC = () => {
    */
   const rozstrzygnijOtwarcieZWeryfikacja = useCallback(
     (link: CaseArtifactLink): OtwarcieObiektu =>
-      nadpisaniaWeryfikacji[link.linkId] ?? nadpisaniaBackendu[link.linkId] ?? rozstrzygnijOtwarcie(link),
+      nadpisaniaWeryfikacji[link.linkId] ??
+      nadpisaniaBackendu[link.linkId] ??
+      rozstrzygnijOtwarcie(link),
     [nadpisaniaWeryfikacji, nadpisaniaBackendu]
   );
 
@@ -778,7 +782,13 @@ export const CaseDetailScreen: React.FC = () => {
             failedSections,
             blockedFlag
           ),
-          settleSection('przebiegi', listRunsForCase(caseId), [] as CaseRun[], failedSections, blockedFlag),
+          settleSection(
+            'przebiegi',
+            listRunsForCase(caseId),
+            [] as CaseRun[],
+            failedSections,
+            blockedFlag
+          ),
           settleSection(
             'pomiary wartości',
             listValueMeasurements(caseId),
@@ -1016,7 +1026,7 @@ export const CaseDetailScreen: React.FC = () => {
       }
       closureIntentKeysRef.current.delete(closeIntent);
       setClosureNotice({
-        tone: 'success',
+        tone: closeResult.readback === 'confirmed' ? 'success' : 'warning',
         text:
           closeResult.readback === 'confirmed'
             ? `Zlecenie zamknięte jako „${closureTypeLabel(closeResult.value.closureType ?? closureTypeForm, true).toLowerCase()}".`
@@ -1119,7 +1129,10 @@ export const CaseDetailScreen: React.FC = () => {
           );
           if (!result.ok) {
             setPlanNotice({
-              tone: result.failure.kind === 'conflict' || result.failure.kind === 'invalid' ? 'warning' : 'critical',
+              tone:
+                result.failure.kind === 'conflict' || result.failure.kind === 'invalid'
+                  ? 'warning'
+                  : 'critical',
               text: result.failure.message,
               refresh: result.failure.refreshSuggested,
             });
@@ -1174,13 +1187,21 @@ export const CaseDetailScreen: React.FC = () => {
                     plan.version,
                     { idempotencyKey }
                   )
-                : await withdrawPlanVersion(plan.casePlanVersionId, reasonOrEmpty.trim(), plan.version, {
-                    idempotencyKey,
-                  });
+                : await withdrawPlanVersion(
+                    plan.casePlanVersionId,
+                    reasonOrEmpty.trim(),
+                    plan.version,
+                    {
+                      idempotencyKey,
+                    }
+                  );
 
         if (!result.ok) {
           setPlanNotice({
-            tone: result.failure.kind === 'conflict' || result.failure.kind === 'invalid' ? 'warning' : 'critical',
+            tone:
+              result.failure.kind === 'conflict' || result.failure.kind === 'invalid'
+                ? 'warning'
+                : 'critical',
             text: result.failure.message,
             refresh: result.failure.refreshSuggested,
           });
@@ -1219,7 +1240,11 @@ export const CaseDetailScreen: React.FC = () => {
           title: 'Nowy szkic planu (zmiana)',
           description: `Powstanie nowy szkic na podstawie opublikowanego planu nr ${pending.supersedesPlanVersion.planNumber}. Obecnie opublikowany plan zostaje bez zmian i dalej obowiązuje, dopóki nowego szkicu nie opublikujesz.`,
           confirmLabel: 'Utwórz szkic',
-          reason: { label: 'Powód zmiany', required: false, placeholder: 'Np. Aktualizacja zakresu po spotkaniu z klientem.' },
+          reason: {
+            label: 'Powód zmiany',
+            required: false,
+            placeholder: 'Np. Aktualizacja zakresu po spotkaniu z klientem.',
+          },
         };
       }
       if (pending.seedFrom) {
@@ -1227,7 +1252,11 @@ export const CaseDetailScreen: React.FC = () => {
           title: 'Nowy szkic planu',
           description: `Powstanie nowy szkic, punkt startowy: treść wersji nr ${pending.seedFrom.planNumber} (${planVersionStatusLabel(pending.seedFrom.status, true).toLowerCase()}). Poprawki wprowadzisz przed zaproponowaniem go do przeglądu.`,
           confirmLabel: 'Utwórz szkic',
-          reason: { label: 'Powód', required: false, placeholder: 'Np. Wznawiamy planowanie po wycofaniu.' },
+          reason: {
+            label: 'Powód',
+            required: false,
+            placeholder: 'Np. Wznawiamy planowanie po wycofaniu.',
+          },
         };
       }
       return {
@@ -1235,7 +1264,11 @@ export const CaseDetailScreen: React.FC = () => {
         description:
           'Powstanie pierwszy szkic planu tego zlecenia z jednym punktem startowym i końcowym. Ten ekran nie ma jeszcze edytora kroków — kolejność i wykonawców dodasz w narzędziu autorskim planu, zanim zaproponujesz go do przeglądu.',
         confirmLabel: 'Utwórz szkic',
-        reason: { label: 'Powód', required: false, placeholder: 'Np. Pierwszy szkic planu zlecenia.' },
+        reason: {
+          label: 'Powód',
+          required: false,
+          placeholder: 'Np. Pierwszy szkic planu zlecenia.',
+        },
       };
     }
     if (pending.kind === 'plan-propose') {
@@ -1268,7 +1301,11 @@ export const CaseDetailScreen: React.FC = () => {
       title: 'Wycofaj opublikowany plan',
       description: `Plan nr ${pending.plan.planNumber} przestanie obowiązywać. Zlecenie zostanie bez aktywnego planu, dopóki nie opublikujesz kolejnego.`,
       confirmLabel: 'Wycofaj plan',
-      reason: { label: 'Powód wycofania', required: true, placeholder: 'Dlaczego wycofujesz ten plan?' },
+      reason: {
+        label: 'Powód wycofania',
+        required: true,
+        placeholder: 'Dlaczego wycofujesz ten plan?',
+      },
     };
   };
 
@@ -1475,7 +1512,9 @@ export const CaseDetailScreen: React.FC = () => {
           },
           { once: true }
         );
-        setKomunikat(`Wróciłeś do zlecenia — kursor stoi przy: ${stan.etykieta}.${doklejkaKontekstu}`);
+        setKomunikat(
+          `Wróciłeś do zlecenia — kursor stoi przy: ${stan.etykieta}.${doklejkaKontekstu}`
+        );
       } else {
         kotwicaSekcjiRef.current?.focus();
         setKomunikat(
@@ -1787,7 +1826,8 @@ export const CaseDetailScreen: React.FC = () => {
         icon: FilePlus2,
         colorScheme: 'primary',
         disabled: planCommandBusy,
-        onClick: () => setPlanPending({ kind: 'plan-create', supersedesPlanVersion: null, seedFrom: null }),
+        onClick: () =>
+          setPlanPending({ kind: 'plan-create', supersedesPlanVersion: null, seedFrom: null }),
       });
     } else if (currentPlanVersion.status === 'DRAFT') {
       planActionButtons.push({
@@ -1845,7 +1885,11 @@ export const CaseDetailScreen: React.FC = () => {
         colorScheme: 'primary',
         disabled: planCommandBusy,
         onClick: () =>
-          setPlanPending({ kind: 'plan-create', supersedesPlanVersion: null, seedFrom: currentPlanVersion }),
+          setPlanPending({
+            kind: 'plan-create',
+            supersedesPlanVersion: null,
+            seedFrom: currentPlanVersion,
+          }),
       });
     }
   }
@@ -1968,7 +2012,9 @@ export const CaseDetailScreen: React.FC = () => {
           />
           {lightStart.status === 'refused' ? (
             <div className="mt-2 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-xs text-c-text-secondary">
-              <span className="font-medium text-c-text">Zlecenie LIGHT nie zostało uruchomione.</span>{' '}
+              <span className="font-medium text-c-text">
+                Zlecenie LIGHT nie zostało uruchomione.
+              </span>{' '}
               {lightStart.reasonDetail}
             </div>
           ) : null}

@@ -14,9 +14,10 @@ import {
   Plus,
   TrendingDown,
   TrendingUp,
+  Trash2,
   X,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -75,6 +76,18 @@ interface BudgetControlPanelProps {
   onSaved?: () => void;
 }
 
+interface BudgetEntry {
+  id: string;
+  entryType: 'ACTUAL' | 'FORECAST' | 'ADJUSTMENT';
+  costType: 'CAPEX' | 'OPEX';
+  category: string;
+  amount: number;
+  currency: string;
+  description: string | null;
+  periodMonth: number | null;
+  periodYear: number | null;
+}
+
 // ── Config ─────────────────────────────────────────────────────
 
 const STATUS_STYLES = {
@@ -99,6 +112,9 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
   const [initSummary, setInitSummary] = useState<InitiativeBudgetSummary | null>(null);
   const [overspendSignals, setOverspendSignals] = useState<OverspendSignal[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [budgetEntries, setBudgetEntries] = useState<BudgetEntry[]>([]);
+  const [deletingEntryId, setDeletingEntryId] = useState<string | null>(null);
+  const deleteRequestIdsRef = useRef<Map<string, string>>(new Map());
   const [expandedInit, setExpandedInit] = useState<string | null>(null);
   const [showAddEntry, setShowAddEntry] = useState(false);
   const [entryForm, setEntryForm] = useState({
@@ -149,6 +165,20 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
             }
           );
           setInitSummary(data.summary);
+          const entriesRes = await fetch(
+            `/api/execution-control/budget/entries/${encodeURIComponent(initiativeId)}`,
+            { headers }
+          );
+          if (!entriesRes.ok) {
+            const failure = await entriesRes.json().catch(() => ({}));
+            throw new Error(
+              (failure as any)?.error ||
+                (failure as any)?.message ||
+                'Failed to load budget entries'
+            );
+          }
+          const entriesBody = await entriesRes.json();
+          setBudgetEntries(Array.isArray(entriesBody?.entries) ? entriesBody.entries : []);
         } catch (error: any) {
           toast.error(
             error?.message || t('execution.toast.budgetLoadFailed', 'Failed to load budget')
@@ -168,6 +198,68 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
       setIsLoading(false);
     }
   }, [projectId, initiativeId]);
+
+  const handleDeleteEntry = useCallback(
+    async (entry: BudgetEntry) => {
+      if (!initiativeId || deletingEntryId) return;
+      if (
+        !window.confirm(
+          t('execution.budget.deleteConfirm', 'Delete this budget entry? This cannot be undone.')
+        )
+      )
+        return;
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error(t('execution.toast.notAuthenticated', 'Not authenticated'));
+        return;
+      }
+      setDeletingEntryId(entry.id);
+      try {
+        const requestId = deleteRequestIdsRef.current.get(entry.id) || crypto.randomUUID();
+        deleteRequestIdsRef.current.set(entry.id, requestId);
+        const response = await fetch(
+          `/api/execution-control/budget/entries/${encodeURIComponent(entry.id)}?initiativeId=${encodeURIComponent(initiativeId)}`,
+          {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}`, 'X-Request-ID': requestId },
+          }
+        );
+        if (!response.ok) {
+          const failure = await response.json().catch(() => ({}));
+          throw new Error(
+            (failure as any)?.error ||
+              (failure as any)?.message ||
+              `Delete failed (${response.status})`
+          );
+        }
+        const readback = await fetch(
+          `/api/execution-control/budget/entries/${encodeURIComponent(initiativeId)}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (!readback.ok)
+          throw new Error(
+            'Delete was accepted, but canonical readback failed. Refresh and verify.'
+          );
+        const body = await readback.json();
+        const nextEntries: BudgetEntry[] = Array.isArray(body?.entries) ? body.entries : [];
+        if (nextEntries.some((candidate) => candidate.id === entry.id)) {
+          throw new Error('Delete was not confirmed by canonical readback. Refresh and retry.');
+        }
+        setBudgetEntries(nextEntries);
+        deleteRequestIdsRef.current.delete(entry.id);
+        await loadData();
+        onSaved?.();
+        toast.success(t('execution.budget.entryDeleted', 'Budget entry deleted'));
+      } catch (error: any) {
+        toast.error(
+          error?.message || t('execution.budget.deleteFailed', 'Failed to delete budget entry')
+        );
+      } finally {
+        setDeletingEntryId(null);
+      }
+    },
+    [initiativeId, deletingEntryId, loadData, onSaved, t]
+  );
 
   useEffect(() => {
     loadData();
@@ -390,6 +482,41 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
                 amount: formatCurrency(initSummary.forecast.total, initSummary.currency),
               })}
             </span>
+          </div>
+        )}
+
+        {budgetEntries.length > 0 && (
+          <div className="rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 divide-y divide-slate-200 dark:divide-navy-700">
+            <div className="px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white">
+              {t('execution.budget.entries', 'Budget entries')}
+            </div>
+            {budgetEntries.map((entry) => (
+              <div key={entry.id} className="flex items-center justify-between gap-3 px-3 py-2">
+                <div className="min-w-0">
+                  <div className="truncate text-xs font-medium text-slate-800 dark:text-slate-200">
+                    {entry.category || entry.entryType} · {entry.costType}
+                  </div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                    {formatCurrency(entry.amount, entry.currency)}
+                    {entry.periodMonth && entry.periodYear
+                      ? ` · ${entry.periodMonth}/${entry.periodYear}`
+                      : ''}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void handleDeleteEntry(entry)}
+                  disabled={deletingEntryId !== null}
+                  aria-label={t('execution.budget.deleteEntry', 'Delete budget entry')}
+                  className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs text-danger-500 hover:bg-danger-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Trash2 size={13} aria-hidden="true" />
+                  {deletingEntryId === entry.id
+                    ? t('common.deleting', 'Deleting…')
+                    : t('common.delete', 'Delete')}
+                </button>
+              </div>
+            ))}
           </div>
         )}
 

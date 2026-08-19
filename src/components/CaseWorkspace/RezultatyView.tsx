@@ -886,7 +886,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
           setSelection({ kind: 'obiekt', id: result.value.linkId });
           setOtwarcieRefreshToken((n) => n + 1);
           setArtifactCommandNotice({
-            tone: 'success',
+            tone: result.readback === 'confirmed' ? 'success' : 'warning',
             text:
               result.readback === 'confirmed'
                 ? `Obiekt powiązany ze zleceniem jako „${artifactLinkRelationLabel(result.value.relation, true)}".`
@@ -899,7 +899,10 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
           const { link } = pendingArtifactCommand;
           const revision = reasonOrRevision.trim();
           if (!revision) {
-            setArtifactCommandNotice({ tone: 'warning', text: 'Podaj wersję do przypięcia — jest wymagana.' });
+            setArtifactCommandNotice({
+              tone: 'warning',
+              text: 'Podaj wersję do przypięcia — jest wymagana.',
+            });
             return;
           }
           const intent = `pin:${link.linkId}:${revision}`;
@@ -923,7 +926,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
           invalidujOtwarcieBackendu(link.linkId);
           setOtwarcieRefreshToken((n) => n + 1);
           setArtifactCommandNotice({
-            tone: 'success',
+            tone: result.readback === 'confirmed' ? 'success' : 'warning',
             text:
               result.readback === 'confirmed'
                 ? `Wersja przypięta: „${revision}". Powiązanie przestało być oznaczone jako nieaktualne.`
@@ -938,7 +941,9 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
           const reason = reasonOrRevision.trim();
           const intent = `unlink:${link.linkId}`;
           const idempotencyKey = keyForArtifactIntent(intent);
-          const result = await unlinkArtifactFromCase(link.linkId, reason || null, { idempotencyKey });
+          const result = await unlinkArtifactFromCase(link.linkId, reason || null, {
+            idempotencyKey,
+          });
           if (!result.ok) {
             setArtifactCommandNotice({
               tone:
@@ -955,7 +960,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
           invalidujOtwarcieBackendu(link.linkId);
           setOtwarcieRefreshToken((n) => n + 1);
           setArtifactCommandNotice({
-            tone: 'success',
+            tone: result.readback === 'confirmed' ? 'success' : 'warning',
             text:
               result.readback === 'confirmed'
                 ? 'Powiązanie zostało odpięte. Sam obiekt NIE został usunięty — pozostaje w swoim module, tylko przestał być rezultatem tego zlecenia.'
@@ -1094,7 +1099,9 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
     artifactLinks.forEach((link) =>
       mapa.set(
         link.linkId,
-        nadpisaniaWeryfikacji[link.linkId] ?? nadpisaniaBackendu[link.linkId] ?? rozstrzygnijOtwarcie(link)
+        nadpisaniaWeryfikacji[link.linkId] ??
+          nadpisaniaBackendu[link.linkId] ??
+          rozstrzygnijOtwarcie(link)
       )
     );
     return mapa;
@@ -1741,7 +1748,8 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
                   </p>
                 </div>
               </div>
-            ) : selectedLinkOtwarcie?.status === 'otwieralny' && selectedLinkOtwarcie.ostrzezenie ? (
+            ) : selectedLinkOtwarcie?.status === 'otwieralny' &&
+              selectedLinkOtwarcie.ostrzezenie ? (
               // STALE — nadal otwieralny, ale nieaktualny: uczciwe ostrzeżenie
               // zamiast cichego otwarcia przestarzałej wersji.
               <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 dark:border-amber-500/30 dark:bg-amber-500/10">
@@ -1794,11 +1802,16 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
                      WYŁĄCZNIE semantyka krytyczna (TRIADA_KANON), więc 'critical'
                      mapujemy na 'danger' (ten sam czerwony token), nigdy na 'info'. */
                   tone: (() => {
-                    const acceptanceTone = resultAcceptanceTone(selectedNodeResult.resultAcceptance);
+                    const acceptanceTone = resultAcceptanceTone(
+                      selectedNodeResult.resultAcceptance
+                    );
                     return acceptanceTone === 'critical' ? 'danger' : acceptanceTone;
                   })(),
                 },
-                { label: nodeCompletionStateLabel(selectedNodeResult.nodeCompletionState), tone: 'neutral' },
+                {
+                  label: nodeCompletionStateLabel(selectedNodeResult.nodeCompletionState),
+                  tone: 'neutral',
+                },
               ],
             }}
             details={{
@@ -1807,14 +1820,26 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
               propertyLabel: 'Właściwość',
               valueLabel: 'Wartość',
               properties: [
-                { id: 'run', label: 'Źródłowy Run', value: <TechnicalId value={selectedNodeResult.runId} title="Run" /> },
+                {
+                  id: 'run',
+                  label: 'Źródłowy Run',
+                  value: <TechnicalId value={selectedNodeResult.runId} title="Run" />,
+                },
                 {
                   id: 'noderun',
                   label: 'NodeRun',
                   value: <TechnicalId value={selectedNodeResult.nodeRunId} title="NodeRun" />,
                 },
-                { id: 'zdarzylo', label: 'Zdarzyło się', value: formatDateTime(selectedNodeResult.occurredAt) },
-                { id: 'zapisano', label: 'Zapisano', value: formatDateTime(selectedNodeResult.recordedAt) },
+                {
+                  id: 'zdarzylo',
+                  label: 'Zdarzyło się',
+                  value: formatDateTime(selectedNodeResult.occurredAt),
+                },
+                {
+                  id: 'zapisano',
+                  label: 'Zapisano',
+                  value: formatDateTime(selectedNodeResult.recordedAt),
+                },
                 ...(selectedNodeResult.nodeCompletionState === 'SKIPPED'
                   ? [
                       {
@@ -1983,7 +2008,10 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
             ))}
           </select>
         </FormField>
-        <FormField label="Przypnij konkretną wersję" helpText="Puste = zawsze najnowsza wersja obiektu.">
+        <FormField
+          label="Przypnij konkretną wersję"
+          helpText="Puste = zawsze najnowsza wersja obiektu."
+        >
           <input
             type="text"
             value={formRewizja}
