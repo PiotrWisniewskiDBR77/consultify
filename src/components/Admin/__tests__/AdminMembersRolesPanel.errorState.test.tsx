@@ -32,9 +32,15 @@ vi.mock('../../../store/useAppStore', () => ({
 vi.mock('../../../services/api', () => ({
   Api: {
     getOrganizationMembers: vi.fn(),
+    getInvitations: vi.fn(),
+    createAdminOrganizationInvitation: vi.fn(),
+    resendOrganizationInvitation: vi.fn(),
+    revokeOrganizationInvitation: vi.fn(),
     addOrganizationMember: vi.fn(),
     updateOrganizationMemberRole: vi.fn(),
     removeOrganizationMember: vi.fn(),
+    changeAdminOrganizationMemberRole: vi.fn(),
+    revokeAdminOrganizationMember: vi.fn(),
     post: vi.fn(),
   },
 }));
@@ -44,6 +50,7 @@ const mockedApi = Api as unknown as Record<string, ReturnType<typeof vi.fn>>;
 describe('M15-H03 — błąd odczytu członków jest jawnym stanem błędu', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockedApi.getInvitations.mockResolvedValue([]);
   });
 
   it('pokazuje stan błędu, gdy API zwraca 500', async () => {

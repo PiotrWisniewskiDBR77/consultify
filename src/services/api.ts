@@ -12445,9 +12445,54 @@ export const Api = {
     const res = await fetch(`${API_URL}/billing/payment-methods`, { headers: getHeaders() });
     return handleResponse(res, 'Failed to fetch payment methods');
   },
-  // Invitations
-  getInvitations: async () => {
-    return [];
+  // Invitations — canonical tenant-scoped invitation lifecycle.  This used to
+  // be a stub returning [], which made Admin report a clean empty state while
+  // invitations were present in PostgreSQL.
+  getInvitations: async (organizationId: string): Promise<any[]> => {
+    const res = await fetch(`${API_URL}/organizations/${encodeURIComponent(organizationId)}/admin/invitations`, { headers: getHeaders() });
+    const data = await handleResponse(res, 'Failed to fetch invitations');
+    return Array.isArray(data) ? data : Array.isArray(data?.invitations) ? data.invitations : [];
+  },
+  createAdminOrganizationInvitation: async (
+    organizationId: string,
+    email: string,
+    role: string,
+    commandId?: string
+  ): Promise<any> => {
+    const headers = getHeaders();
+    if (commandId) headers['X-Idempotency-Key'] = commandId;
+    const res = await fetch(`${API_URL}/organizations/${encodeURIComponent(organizationId)}/admin/invitations`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ organizationId, email, role }),
+    });
+    return handleResponse(res, 'Failed to create invitation');
+  },
+  resendOrganizationInvitation: async (organizationId: string, invitationId: string, commandId: string): Promise<any> => {
+    const headers = getHeaders(); headers['X-Idempotency-Key'] = commandId;
+    const res = await fetch(`${API_URL}/organizations/${encodeURIComponent(organizationId)}/admin/invitations/${encodeURIComponent(invitationId)}/resend`, {
+      method: 'POST',
+      headers,
+    });
+    return handleResponse(res, 'Failed to resend invitation');
+  },
+  revokeOrganizationInvitation: async (organizationId: string, invitationId: string, commandId: string): Promise<any> => {
+    const headers = getHeaders(); headers['X-Idempotency-Key'] = commandId;
+    const res = await fetch(`${API_URL}/organizations/${encodeURIComponent(organizationId)}/admin/invitations/${encodeURIComponent(invitationId)}/revoke`, {
+      method: 'POST',
+      headers,
+    });
+    return handleResponse(res, 'Failed to revoke invitation');
+  },
+  changeAdminOrganizationMemberRole: async (organizationId: string, memberId: string, role: string, expectedRole: string, commandId: string): Promise<any> => {
+    const headers = getHeaders(); headers['X-Idempotency-Key'] = commandId;
+    const res = await fetch(`${API_URL}/organizations/${encodeURIComponent(organizationId)}/admin/members/${encodeURIComponent(memberId)}/role`, { method: 'PATCH', headers, body: JSON.stringify({ role, expectedRole }) });
+    return handleResponse(res, 'Failed to update member role');
+  },
+  revokeAdminOrganizationMember: async (organizationId: string, memberId: string, expectedRole: string, commandId: string): Promise<any> => {
+    const headers = getHeaders(); headers['X-Idempotency-Key'] = commandId;
+    const res = await fetch(`${API_URL}/organizations/${encodeURIComponent(organizationId)}/admin/members/${encodeURIComponent(memberId)}/revoke`, { method: 'POST', headers, body: JSON.stringify({ expectedRole }) });
+    return handleResponse(res, 'Failed to revoke member');
   },
   // System
   getSystemHealth: async () => {

@@ -10,6 +10,7 @@
  *  - Audit everything: successful mutations emit a role_change_audit_event.
  */
 
+import crypto from 'node:crypto';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { withPinnedPostgresTransaction } from '../database/PostgresDatabase.js';
 import { v4 as uuidv4 } from 'uuid';
@@ -39,6 +40,7 @@ export interface IamDenial {
 
 export interface IamSuccess {
   denied: false;
+  replayed?: boolean;
 }
 
 export type IamResult = IamDenial | IamSuccess;
@@ -270,37 +272,44 @@ export async function changeOrganizationMemberRoleAtomicallyViaIam(params: {
   organizationId: string;
   targetMemberId: string;
   newRole: string;
+  idempotencyKey?: string;
+  expectedRole?: string;
 }): Promise<IamResult> {
-  const access = await resolveEffectiveAccess({
-    userId: params.actorId,
-    organizationId: params.organizationId,
-    applicationRole: params.actorRole,
-  });
-  if (!hasEffectiveCapability(access, 'admin.people.manage')) {
-    return deny('CAPABILITY_REQUIRED', 'Capability admin.people.manage required');
-  }
-
   const newRole = String(params.newRole || '')
     .trim()
     .toUpperCase();
-  if (newRole === 'OWNER' && access.applicationRole !== 'OWNER') {
-    return deny('OWNER_ACTION_REQUIRED', 'Only an OWNER can promote another member to OWNER');
-  }
-
   return withPinnedPostgresTransaction(
     async (tx) => {
+      await tx.queryOne(`SELECT pg_advisory_xact_lock(hashtext(?))`, [params.organizationId]);
+      const intentDigest = crypto.createHash('sha256').update(JSON.stringify({ type: 'ROLE_CHANGE', target: params.targetMemberId, newRole, expectedRole: params.expectedRole || null })).digest('hex');
+      if (params.idempotencyKey) {
+        await tx.queryOne(`SELECT pg_advisory_xact_lock(hashtext(?))`, [`${params.organizationId}:${params.idempotencyKey}`]);
+        const replay = await tx.queryOne<any>(`SELECT intent_digest FROM admin_iam_member_commands WHERE organization_id = ? AND idempotency_key = ?`, [params.organizationId, params.idempotencyKey]);
+        if (replay) {
+          if (replay.intent_digest !== intentDigest) throw Object.assign(new Error('Idempotency key payload conflict'), { code: 'IDEMPOTENCY_PAYLOAD_CONFLICT' });
+          return { denied: false, replayed: true };
+        }
+      }
       const members = await tx.queryAll<{ user_id: string; role: string }>(
         `SELECT user_id, role
          FROM organization_members
-        WHERE organization_id = ?
+        WHERE organization_id = ? AND UPPER(status) = 'ACTIVE'
         FOR UPDATE`,
         [params.organizationId]
       );
+      const actor = members.find((member) => member.user_id === params.actorId);
+      const actorRole = String(actor?.role || '').toUpperCase();
+      if (!actor || !['OWNER', 'ADMIN'].includes(actorRole))
+        return deny('CAPABILITY_REQUIRED', 'Active admin.people.manage membership required');
       const target = members.find((member) => member.user_id === params.targetMemberId);
       if (!target)
         return deny('MEMBER_NOT_FOUND', 'Target member does not belong to this organisation');
 
       const owners = members.filter((member) => String(member.role).toUpperCase() === 'OWNER');
+      if (params.expectedRole && String(target.role).toUpperCase() !== String(params.expectedRole).toUpperCase())
+        return deny('MEMBER_NOT_FOUND', 'Membership changed; refresh before retrying');
+      if ((newRole === 'OWNER' || String(target.role).toUpperCase() === 'OWNER') && actorRole !== 'OWNER')
+        return deny('OWNER_ACTION_REQUIRED', 'Only an OWNER can change OWNER membership');
       if (
         String(target.role).toUpperCase() === 'OWNER' &&
         owners.length <= 1 &&
@@ -338,6 +347,9 @@ export async function changeOrganizationMemberRoleAtomicallyViaIam(params: {
         ]
       );
       if (audit.changes !== 1) throw new Error('IAM audit event was not persisted');
+      if (params.idempotencyKey) await tx.queryRun(`INSERT INTO admin_iam_member_commands
+        (id,organization_id,actor_id,command_type,idempotency_key,intent_digest,target_user_id,receipt_json)
+        VALUES (?, ?, ?, 'ROLE_CHANGE', ?, ?, ?, ?)`, [uuidv4(),params.organizationId,params.actorId,params.idempotencyKey,intentDigest,params.targetMemberId,JSON.stringify({ targetUserId: params.targetMemberId, role: newRole })]);
       return ok();
     },
     { organizationId: params.organizationId }
@@ -350,30 +362,41 @@ export async function removeOrganizationMemberAtomicallyViaIam(params: {
   actorRole: string;
   organizationId: string;
   targetMemberId: string;
+  idempotencyKey?: string;
+  expectedRole?: string;
 }): Promise<IamResult> {
-  const access = await resolveEffectiveAccess({
-    userId: params.actorId,
-    organizationId: params.organizationId,
-    applicationRole: params.actorRole,
-  });
-  if (!hasEffectiveCapability(access, 'admin.people.manage')) {
-    return deny('CAPABILITY_REQUIRED', 'Capability admin.people.manage required to remove members');
-  }
-
   return withPinnedPostgresTransaction(
     async (tx) => {
+      await tx.queryOne(`SELECT pg_advisory_xact_lock(hashtext(?))`, [params.organizationId]);
+      const intentDigest = crypto.createHash('sha256').update(JSON.stringify({ type: 'MEMBER_REVOKE', target: params.targetMemberId, expectedRole: params.expectedRole || null })).digest('hex');
+      if (params.idempotencyKey) {
+        await tx.queryOne(`SELECT pg_advisory_xact_lock(hashtext(?))`, [`${params.organizationId}:${params.idempotencyKey}`]);
+        const replay = await tx.queryOne<any>(`SELECT intent_digest FROM admin_iam_member_commands WHERE organization_id = ? AND idempotency_key = ?`, [params.organizationId, params.idempotencyKey]);
+        if (replay) {
+          if (replay.intent_digest !== intentDigest) throw Object.assign(new Error('Idempotency key payload conflict'), { code: 'IDEMPOTENCY_PAYLOAD_CONFLICT' });
+          return { denied: false, replayed: true };
+        }
+      }
       const members = await tx.queryAll<{ user_id: string; role: string }>(
         `SELECT user_id, role
          FROM organization_members
-        WHERE organization_id = ?
+        WHERE organization_id = ? AND UPPER(status) = 'ACTIVE'
         FOR UPDATE`,
         [params.organizationId]
       );
+      const actor = members.find((member) => member.user_id === params.actorId);
+      const actorRole = String(actor?.role || '').toUpperCase();
+      if (!actor || !['OWNER', 'ADMIN'].includes(actorRole))
+        return deny('CAPABILITY_REQUIRED', 'Active admin.people.manage membership required');
       const target = members.find((member) => member.user_id === params.targetMemberId);
       if (!target)
         return deny('MEMBER_NOT_FOUND', 'Target member does not belong to this organisation');
 
       const owners = members.filter((member) => String(member.role).toUpperCase() === 'OWNER');
+      if (params.expectedRole && String(target.role).toUpperCase() !== String(params.expectedRole).toUpperCase())
+        return deny('MEMBER_NOT_FOUND', 'Membership changed; refresh before retrying');
+      if (String(target.role).toUpperCase() === 'OWNER' && actorRole !== 'OWNER')
+        return deny('OWNER_ACTION_REQUIRED', 'Only an OWNER can remove an OWNER');
       if (String(target.role).toUpperCase() === 'OWNER' && owners.length <= 1) {
         return deny('LAST_OWNER_PROTECTED', 'Cannot remove the last OWNER of the organisation');
       }
@@ -403,6 +426,16 @@ export async function removeOrganizationMemberAtomicallyViaIam(params: {
         ]
       );
       if (audit.changes !== 1) throw new Error('IAM audit event was not persisted');
+      const now = Date.now();
+      const revoked = await tx.queryRun(
+        `INSERT INTO revoked_tokens (jti, user_id, expires_at, revoked_at, reason)
+         VALUES (?, ?, CURRENT_TIMESTAMP + INTERVAL '7 days', CURRENT_TIMESTAMP, 'revoke-all')`,
+        [`revoke-all-${params.targetMemberId}-${now}`, params.targetMemberId]
+      );
+      if (revoked.changes !== 1) throw new Error('IAM session revocation marker was not persisted');
+      if (params.idempotencyKey) await tx.queryRun(`INSERT INTO admin_iam_member_commands
+        (id,organization_id,actor_id,command_type,idempotency_key,intent_digest,target_user_id,receipt_json)
+        VALUES (?, ?, ?, 'MEMBER_REVOKE', ?, ?, ?, ?)`, [uuidv4(),params.organizationId,params.actorId,params.idempotencyKey,intentDigest,params.targetMemberId,JSON.stringify({ targetUserId: params.targetMemberId, revoked: true })]);
       return ok();
     },
     { organizationId: params.organizationId }

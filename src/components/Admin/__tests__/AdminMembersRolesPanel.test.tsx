@@ -6,7 +6,7 @@
  * the organization member API for owner/admin viewers.
  */
 
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -31,9 +31,15 @@ vi.mock('../../../store/useAppStore', () => ({
 vi.mock('../../../services/api', () => ({
   Api: {
     getOrganizationMembers: vi.fn(),
+    getInvitations: vi.fn(),
+    createAdminOrganizationInvitation: vi.fn(),
+    resendOrganizationInvitation: vi.fn(),
+    revokeOrganizationInvitation: vi.fn(),
     addOrganizationMember: vi.fn(),
     updateOrganizationMemberRole: vi.fn(),
     removeOrganizationMember: vi.fn(),
+    changeAdminOrganizationMemberRole: vi.fn(),
+    revokeAdminOrganizationMember: vi.fn(),
     post: vi.fn(),
   },
 }));
@@ -47,8 +53,10 @@ const members = [
 
 beforeEach(() => {
   vi.clearAllMocks();
+  sessionStorage.clear();
   mockedApi.getOrganizationMembers.mockResolvedValue(members);
-  mockedApi.updateOrganizationMemberRole.mockResolvedValue({ success: true });
+  mockedApi.getInvitations.mockResolvedValue([]);
+  mockedApi.changeAdminOrganizationMemberRole.mockResolvedValue({ success: true });
 });
 
 describe('AdminMembersRolesPanel', () => {
@@ -87,11 +95,66 @@ describe('AdminMembersRolesPanel', () => {
     fireEvent.change(memberRoleSelect, { target: { value: 'ADMIN' } });
 
     await waitFor(() =>
-      expect(mockedApi.updateOrganizationMemberRole).toHaveBeenCalledWith(
+      expect(mockedApi.changeAdminOrganizationMemberRole).toHaveBeenCalledWith(
         'org-1',
         'member-1',
-        'ADMIN'
+        'ADMIN',
+        'MEMBER',
+        expect.any(String)
       )
     );
+  });
+
+  it('creates an invitation and accepts it only after exact server read-back', async () => {
+    let invitationCreated = false;
+    mockedApi.createAdminOrganizationInvitation.mockImplementation(async () => {
+      invitationCreated = true;
+      return { invitation: { id: 'invite-1' } };
+    });
+    mockedApi.getInvitations.mockImplementation(async () =>
+      invitationCreated
+        ? [{ id: 'invite-1', email: 'new@acme.test', role: 'MEMBER', status: 'pending' }]
+        : []
+    );
+
+    render(<AdminMembersRolesPanel />);
+    await screen.findByText('member@acme.test');
+    fireEvent.change(screen.getByLabelText('Member email'), {
+      target: { value: 'new@acme.test' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Add member' }));
+
+    await waitFor(() =>
+      expect(mockedApi.createAdminOrganizationInvitation).toHaveBeenCalledWith(
+        'org-1',
+        'new@acme.test',
+        'MEMBER',
+        expect.any(String)
+      )
+    );
+    expect((await screen.findByText('new@acme.test')).closest('tr')).toBeInTheDocument();
+  });
+
+  it('resends and revokes a pending invitation with exact cold read-back', async () => {
+    const pending = { id: 'invite-1', email: 'new@acme.test', role: 'MEMBER', status: 'pending' };
+    mockedApi.getInvitations.mockResolvedValue([pending]);
+    mockedApi.resendOrganizationInvitation.mockResolvedValue({ success: true });
+    mockedApi.revokeOrganizationInvitation.mockResolvedValue({ success: true });
+
+    render(<AdminMembersRolesPanel />);
+    const row = (await screen.findByText('new@acme.test')).closest('tr')!;
+    fireEvent.click(within(row).getByRole('button', { name: 'Resend' }));
+    await waitFor(() =>
+      expect(mockedApi.resendOrganizationInvitation).toHaveBeenCalledWith('org-1', 'invite-1', expect.any(String))
+    );
+
+    mockedApi.getInvitations.mockResolvedValue([
+      { ...pending, status: 'revoked' },
+    ]);
+    fireEvent.click(within((await screen.findByText('new@acme.test')).closest('tr')!).getByRole('button', { name: 'Revoke' }));
+    await waitFor(() =>
+      expect(mockedApi.revokeOrganizationInvitation).toHaveBeenCalledWith('org-1', 'invite-1', expect.any(String))
+    );
+    await waitFor(() => expect(within(screen.getByText('new@acme.test').closest('tr')!).queryByRole('button', { name: 'Revoke' })).not.toBeInTheDocument());
   });
 });

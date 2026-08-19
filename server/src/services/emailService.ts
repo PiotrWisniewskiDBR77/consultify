@@ -27,6 +27,8 @@ interface SendEmailOptions {
   html?: string;
   template?: string;
   data?: Record<string, unknown>;
+  /** Return false unless a configured provider acknowledges the message. */
+  requireDelivery?: boolean;
   attachments?: Array<{
     filename: string;
     path?: string;
@@ -137,7 +139,7 @@ export function setDependencies(
 export async function send(options: SendEmailOptions): Promise<boolean> {
   await initDeps();
 
-  const { to, subject, html, template, data, attachments = [] } = options;
+  const { to, subject, html, template, data, attachments = [], requireDelivery = false } = options;
 
   // 0. Render Handlebars .hbs template when one exists for `template`.
   //    An explicit `html` always wins (caller opted out of the template).
@@ -213,7 +215,10 @@ export async function send(options: SendEmailOptions): Promise<boolean> {
     } catch (e: unknown) {
       const error = e as Error;
       logger.error('[EMAIL SERVICE] SMTP Failed:', error.message);
+      if (requireDelivery) return false;
     }
+  } else if (requireDelivery) {
+    return false;
   }
 
   return true;

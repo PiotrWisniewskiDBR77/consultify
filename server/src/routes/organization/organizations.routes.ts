@@ -8,6 +8,7 @@
 import { Router } from 'express';
 
 import OrganizationControllerRaw from '../../controllers/OrganizationController.js';
+import { AdminIamController } from '../../controllers/AdminIamController.js';
 const OrganizationController = OrganizationControllerRaw as any;
 import { requireRole, verifyToken } from '../../middleware/auth.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
@@ -75,6 +76,14 @@ router.get(
   requireRole('ADMIN', 'OWNER', 'SUPERADMIN'),
   OrganizationController.getMembers
 );
+
+router.get('/:orgId/admin/invitations', requireRole('ADMIN', 'OWNER', 'SUPERADMIN'), AdminIamController.list);
+router.post('/:orgId/admin/invitations', requireRole('ADMIN', 'OWNER', 'SUPERADMIN'), AdminIamController.command('CREATE'));
+router.post('/:orgId/admin/invitations/:invitationId/resend', requireRole('ADMIN', 'OWNER', 'SUPERADMIN'), AdminIamController.command('RESEND'));
+router.post('/:orgId/admin/invitations/:invitationId/revoke', requireRole('ADMIN', 'OWNER', 'SUPERADMIN'), AdminIamController.command('REVOKE'));
+router.patch('/:orgId/admin/members/:memberId/role', requireRole('ADMIN', 'OWNER', 'SUPERADMIN'), AdminIamController.changeRole);
+router.post('/:orgId/admin/members/:memberId/revoke', requireRole('ADMIN', 'OWNER', 'SUPERADMIN'), AdminIamController.revokeMember);
+
 
 /**
  * POST /api/organizations/:orgId/members

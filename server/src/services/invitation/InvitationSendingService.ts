@@ -1,15 +1,24 @@
 import logger from '../../utils/Logger.js';
 import { send as sendEmail } from '../emailService.js';
 
+export type InvitationDeliveryResult = {
+  inviteLink: string;
+  deliveryStatus: 'SENT' | 'FAILED';
+};
+
+type EmailSender = typeof sendEmail;
+
 /**
  * InvitationSendingService
  *
  * Sends organization / project invitation emails via the shared SMTP-backed
  * emailService (DB `settings.smtp_*` with SMTP_* env fallback). When no SMTP
- * config is present, emailService logs to console and returns true, so the
- * invite link is always returned to the caller regardless of delivery.
+ * config is present or the provider rejects/throws, the link remains available
+ * but delivery is reported truthfully as FAILED.
  */
 export class InvitationSendingService {
+  constructor(private readonly emailSender: EmailSender = sendEmail) {}
+
   private getInviteLink(token: string): string {
     const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     return `${baseUrl}/join?token=${token}`;
@@ -37,10 +46,10 @@ export class InvitationSendingService {
     `;
   }
 
-  async sendOrgInvitation(email: string, token: string): Promise<string> {
+  async sendOrgInvitation(email: string, token: string): Promise<InvitationDeliveryResult> {
     const inviteLink = this.getInviteLink(token);
     try {
-      await sendEmail({
+      const sent = await this.emailSender({
         to: email,
         subject: 'You have been invited to join an organization on Consultify',
         html: this.buildInviteHtml({
@@ -50,19 +59,53 @@ export class InvitationSendingService {
           inviteLink,
           cta: 'Accept invitation',
         }),
+        requireDelivery: true,
       });
+      if (!sent) return { inviteLink, deliveryStatus: 'FAILED' };
       logger.info(`[InvitationSending] Org invitation dispatched to ${email}`);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       logger.warn(`[InvitationSending] Org invitation email failed (link still returned): ${msg}`);
+      return { inviteLink, deliveryStatus: 'FAILED' };
     }
-    return inviteLink;
+    return { inviteLink, deliveryStatus: 'SENT' };
   }
 
-  async sendProjectInvitation(email: string, projectName: string, token: string): Promise<string> {
+  /** Canonical admin-IAM transport: never converts a provider failure into success. */
+  async dispatchAdminIamInvitation(
+    email: string,
+    token: string,
+    resent = false
+  ): Promise<{ state: 'SENT' | 'FAILED'; code: string | null }> {
     const inviteLink = this.getInviteLink(token);
     try {
-      await sendEmail({
+      const sent = await this.emailSender({
+        to: email,
+        subject: resent ? 'Your Consultify invitation (resent)' : 'You have been invited to Consultify',
+        html: this.buildInviteHtml({
+          heading: resent ? 'Your invitation to Consultify' : 'Join your team on Consultify',
+          intro: resent
+            ? 'Here is your invitation link again.'
+            : 'You have been invited to collaborate on Consultify.',
+          inviteLink,
+          cta: 'Accept invitation',
+        }),
+        requireDelivery: true,
+      });
+      return sent ? { state: 'SENT', code: null } : { state: 'FAILED', code: 'EMAIL_PROVIDER_REJECTED' };
+    } catch (error: any) {
+      return { state: 'FAILED', code: String(error?.code || 'EMAIL_PROVIDER_ERROR').slice(0, 100) };
+    }
+  }
+
+  async sendProjectInvitation(
+    email: string,
+    projectName: string,
+    token: string
+  ): Promise<InvitationDeliveryResult> {
+    const inviteLink = this.getInviteLink(token);
+    try {
+      const sent = await this.emailSender({
         to: email,
         subject: `You have been invited to the project "${projectName}" on Consultify`,
         html: this.buildInviteHtml({
@@ -71,21 +114,24 @@ export class InvitationSendingService {
           inviteLink,
           cta: 'Open project',
         }),
+        requireDelivery: true,
       });
+      if (!sent) return { inviteLink, deliveryStatus: 'FAILED' };
       logger.info(`[InvitationSending] Project invitation dispatched to ${email} (${projectName})`);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       logger.warn(
         `[InvitationSending] Project invitation email failed (link still returned): ${msg}`
       );
+      return { inviteLink, deliveryStatus: 'FAILED' };
     }
-    return inviteLink;
+    return { inviteLink, deliveryStatus: 'SENT' };
   }
 
-  async sendResentInvitation(email: string, token: string): Promise<string> {
+  async sendResentInvitation(email: string, token: string): Promise<InvitationDeliveryResult> {
     const inviteLink = this.getInviteLink(token);
     try {
-      await sendEmail({
+      const sent = await this.emailSender({
         to: email,
         subject: 'Your Consultify invitation (resent)',
         html: this.buildInviteHtml({
@@ -95,14 +141,17 @@ export class InvitationSendingService {
           inviteLink,
           cta: 'Accept invitation',
         }),
+        requireDelivery: true,
       });
+      if (!sent) return { inviteLink, deliveryStatus: 'FAILED' };
       logger.info(`[InvitationSending] Invitation resent to ${email}`);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       logger.warn(
         `[InvitationSending] Resent invitation email failed (link still returned): ${msg}`
       );
+      return { inviteLink, deliveryStatus: 'FAILED' };
     }
-    return inviteLink;
+    return { inviteLink, deliveryStatus: 'SENT' };
   }
 }

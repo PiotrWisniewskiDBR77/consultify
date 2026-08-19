@@ -1,4 +1,4 @@
-import { Copy, Crown, KeyRound, Shield, Trash2, UserPlus, Users } from 'lucide-react';
+import { Copy, Crown, KeyRound, RotateCw, Shield, Trash2, UserPlus, Users, XCircle } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 import { OwnershipManagementView } from '../../views/admin/OwnershipManagementView';
+import { StandardTable } from '../standard/StandardTable';
 import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
 import type { TableColumn } from '../shared/ModuleHub/FilterableTable';
 import { FilterableTable } from '../shared/ModuleHub/FilterableTable';
@@ -13,6 +14,33 @@ import { Button, Input, SelectField } from '../ui/primitives';
 import { EntityStatusChip } from '../ui/primitives/chips';
 
 type RoleOption = 'OWNER' | 'ADMIN' | 'MEMBER' | 'GUEST';
+
+type InvitationRow = {
+  id: string;
+  email: string;
+  role?: string;
+  role_to_assign?: string;
+  status: string;
+  expires_at?: string;
+  resend_count?: number;
+  last_resent_at?: string;
+  expiresAt?: string;
+  resendCount?: number;
+  lastResentAt?: string;
+  delivery?: 'SENT' | 'NOT_SENT' | 'UNKNOWN';
+};
+
+const inviteCommandStorageKey = (orgId: string, email: string, role: string) =>
+  `consultify:admin-invite-command:${orgId}:${email.trim().toLowerCase()}:${role}`;
+
+const getOrCreateInviteCommandId = (orgId: string, email: string, role: string): string => {
+  const key = inviteCommandStorageKey(orgId, email, role);
+  const stored = sessionStorage.getItem(key);
+  if (stored) return stored;
+  const value = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
+  sessionStorage.setItem(key, value);
+  return value;
+};
 
 const ROLE_GUIDANCE: Array<{ role: RoleOption; description: string; denial: string }> = [
   {
@@ -41,6 +69,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
   const { t } = useTranslation();
   const { currentOrganization, currentUser } = useAppStore();
   const [members, setMembers] = useState<any[]>([]);
+  const [invitations, setInvitations] = useState<InvitationRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingMemberId, setSavingMemberId] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState('');
@@ -57,6 +86,8 @@ export const AdminMembersRolesPanel: React.FC = () => {
   // kilku sekundach, a pusta tabela z komunikatem „brak członków" kłamie —
   // administrator widział organizację bez ludzi zamiast informacji o awarii.
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [invitationLoadError, setInvitationLoadError] = useState<string | null>(null);
+  const [savingInvitationId, setSavingInvitationId] = useState<string | null>(null);
 
   const orgId = currentOrganization?.id;
   const viewerMembership = useMemo(
@@ -90,8 +121,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
       const data = await Api.getOrganizationMembers(orgId);
       setMembers(Array.isArray(data) ? data : []);
     } catch (error: any) {
-      const message =
-        error?.message || t('admin.membersRoles.loadFailed', 'Failed to load members');
+      const message = error?.message || 'Failed to load members';
       toast.error(message);
       // Świadomie NIE czyścimy listy do pustej — brak danych z powodu awarii to
       // stan degraded, nie „zero członków".
@@ -99,11 +129,32 @@ export const AdminMembersRolesPanel: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [orgId, t]);
+  }, [orgId]);
+
+  const loadInvitations = useCallback(async (): Promise<InvitationRow[]> => {
+    if (!orgId) {
+      setInvitations([]);
+      setInvitationLoadError(null);
+      return [];
+    }
+    try {
+      setInvitationLoadError(null);
+      const data = await Api.getInvitations(orgId);
+      const rows = Array.isArray(data) ? data : [];
+      setInvitations(rows);
+      return rows;
+    } catch (error: any) {
+      setInvitationLoadError(
+        error?.message || 'Failed to load invitations'
+      );
+      return [];
+    }
+  }, [orgId]);
 
   useEffect(() => {
     void loadMembers();
-  }, [loadMembers]);
+    void loadInvitations();
+  }, [loadInvitations, loadMembers]);
 
   // RFC-lite email check — mirrors the server-side z.string().email() so we fail
   // fast with a visible, field-level message instead of a silent round-trip.
@@ -160,25 +211,40 @@ export const AdminMembersRolesPanel: React.FC = () => {
 
     try {
       setInviting(true);
-      await Api.addOrganizationMember(orgId, email, inviteRole);
-      const msg = t('admin.membersRoles.invite.added', '{{email}} added to the workspace.', {
+      const commandId = getOrCreateInviteCommandId(orgId, email, inviteRole);
+      const response = await Api.createAdminOrganizationInvitation(orgId, email, inviteRole, commandId);
+      const receiptId = String(response?.invitation?.id || response?.id || '');
+      const fresh = await loadInvitations();
+      const readback = fresh.find((row) => row.id === receiptId);
+      if (!receiptId || !readback) {
+        throw new Error(
+          t('admin.membersRoles.invite.readbackFailed', 'Invitation was submitted but exact read-back is not available. Retry with the same command.')
+        );
+      }
+      sessionStorage.removeItem(inviteCommandStorageKey(orgId, email, inviteRole));
+      const msg = t('admin.membersRoles.invite.added', 'Invitation for {{email}} is pending acceptance. Delivery: {{delivery}}.', {
         email,
+        delivery: readback.delivery || 'NOT_ATTEMPTED',
       });
       setInviteNotice(msg);
-      toast.success(t('admin.membersRoles.invite.addedToast', 'Member added to workspace'));
+      if (readback.delivery === 'SENT') toast.success(t('admin.membersRoles.invite.addedToast', 'Invitation sent'));
+      else toast.error(t('admin.membersRoles.invite.deliveryFailed', 'Invitation recorded, but email delivery failed or is unverified.'));
       setInviteEmail('');
       setInviteRole('MEMBER');
-      await loadMembers();
     } catch (error: any) {
       // Surface the concrete server reason (e.g. USER_NOT_FOUND, MEMBER_ALREADY_EXISTS)
       // both inline and as a toast so it is never a silent no-op.
       const raw = String(error?.message || '');
-      const friendly = /not\s*found/i.test(raw)
-        ? t(
-            'admin.membersRoles.invite.notFound',
-            'No account exists for that email yet. Use the Team Invite Code below so they can self-register, or create the account first.'
-          )
-        : raw || t('admin.membersRoles.invite.failed', 'Failed to add member.');
+      const fresh = await loadInvitations();
+      const recovered = fresh.find(
+        (row) =>
+          row.email?.toLowerCase() === email.toLowerCase() &&
+          String(row.role_to_assign || row.role || '').toUpperCase() === inviteRole &&
+          String(row.status).toLowerCase() === 'pending'
+      );
+      const friendly = recovered
+        ? t('admin.membersRoles.invite.recovered', 'A pending invitation exists. Delivery cannot be repeated until the server resend window opens.')
+        : raw || t('admin.membersRoles.invite.failed', 'Failed to create invitation. Retry uses the same command identity.');
       setInviteError(friendly);
       toast.error(friendly);
     } finally {
@@ -186,7 +252,34 @@ export const AdminMembersRolesPanel: React.FC = () => {
     }
   };
 
-  const handleRoleChange = async (memberId: string, role: RoleOption) => {
+  const handleInvitationAction = async (invitation: InvitationRow, action: 'resend' | 'revoke') => {
+    if (!canManageTeam) return;
+    try {
+      setSavingInvitationId(invitation.id);
+      const storageKey = `consultify:admin-invite-${action}:${orgId}:${invitation.id}`;
+      let commandId = sessionStorage.getItem(storageKey);
+      if (!commandId) {
+        commandId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
+        sessionStorage.setItem(storageKey, commandId);
+      }
+      if (action === 'resend') await Api.resendOrganizationInvitation(orgId!, invitation.id, commandId);
+      else await Api.revokeOrganizationInvitation(orgId!, invitation.id, commandId);
+      const fresh = await loadInvitations();
+      const exact = fresh.find((row) => row.id === invitation.id);
+      const expected = action === 'revoke' ? 'revoked' : 'pending';
+      if (!exact || String(exact.status).toLowerCase() !== expected) {
+        throw new Error('Command completed without exact invitation read-back.');
+      }
+      sessionStorage.removeItem(storageKey);
+      toast.success(action === 'resend' ? 'Invitation resent' : 'Invitation revoked');
+    } catch (error: any) {
+      toast.error(error?.message || `Failed to ${action} invitation`);
+    } finally {
+      setSavingInvitationId(null);
+    }
+  };
+
+  const handleRoleChange = async (memberId: string, role: RoleOption, expectedRole: string) => {
     if (!orgId) return;
     if (!canManageTeam) {
       toast.error(
@@ -202,9 +295,13 @@ export const AdminMembersRolesPanel: React.FC = () => {
     }
     try {
       setSavingMemberId(memberId);
-      await Api.updateOrganizationMemberRole(orgId, memberId, role);
+      const key = `consultify:admin-role:${orgId}:${memberId}:${expectedRole}:${role}`;
+      let commandId = sessionStorage.getItem(key) || globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
+      sessionStorage.setItem(key, commandId);
+      await Api.changeAdminOrganizationMemberRole(orgId, memberId, role, expectedRole, commandId);
       toast.success(t('admin.membersRoles.role.updated', 'Member role updated'));
       await loadMembers();
+      sessionStorage.removeItem(key);
     } catch (error: any) {
       toast.error(
         error?.message || t('admin.membersRoles.role.updateFailed', 'Failed to update role')
@@ -214,7 +311,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
     }
   };
 
-  const handleRemove = async (memberId: string) => {
+  const handleRemove = async (memberId: string, expectedRole: string) => {
     if (!orgId) return;
     if (!canManageTeam) {
       toast.error(
@@ -224,9 +321,13 @@ export const AdminMembersRolesPanel: React.FC = () => {
     }
     try {
       setSavingMemberId(memberId);
-      await Api.removeOrganizationMember(orgId, memberId);
+      const key = `consultify:admin-revoke-member:${orgId}:${memberId}:${expectedRole}`;
+      let commandId = sessionStorage.getItem(key) || globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
+      sessionStorage.setItem(key, commandId);
+      await Api.revokeAdminOrganizationMember(orgId, memberId, expectedRole, commandId);
       toast.success(t('admin.membersRoles.remove.removed', 'Member removed'));
       await loadMembers();
+      sessionStorage.removeItem(key);
     } catch (error: any) {
       toast.error(
         error?.message || t('admin.membersRoles.remove.failed', 'Failed to remove member')
@@ -334,7 +435,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
               id={`admin-member-role-select-${row.memberId}`}
               value={row.role}
               disabled={isBusy || ownerProtected}
-              onChange={(value) => void handleRoleChange(row.memberId, value as RoleOption)}
+              onChange={(value) => void handleRoleChange(row.memberId, value as RoleOption, row.role)}
               placeholder=""
               options={[
                 { value: 'OWNER', label: roleLabels.OWNER, disabled: true },
@@ -354,6 +455,69 @@ export const AdminMembersRolesPanel: React.FC = () => {
       render: (row) => (
         <EntityStatusChip status={String(row.memberStatus || 'active').toLowerCase()} />
       ),
+    },
+  ];
+
+  const invitationColumns: TableColumn[] = [
+    {
+      id: 'email',
+      label: t('admin.membersRoles.columns.email', 'Email'),
+      width: '220px',
+      render: (row) => <span className="font-medium text-c-text">{row.email}</span>,
+    },
+    {
+      id: 'role',
+      label: t('admin.membersRoles.columns.role', 'Role'),
+      width: '120px',
+      render: (row) => (
+        <span className="text-c-text-secondary">
+          {roleLabels[String(row.role_to_assign || row.role || 'MEMBER').toUpperCase() as RoleOption] || row.role_to_assign || row.role}
+        </span>
+      ),
+    },
+    {
+      id: 'status',
+      label: t('admin.membersRoles.columns.status', 'Status'),
+      width: '120px',
+      render: (row) => <EntityStatusChip status={String(row.status || 'unknown').toLowerCase()} />,
+    },
+    {
+      id: 'delivery',
+      label: t('admin.membersRoles.invitations.delivery', 'Delivery'),
+      width: '130px',
+      render: (row) => <EntityStatusChip status={String(row.delivery || 'NOT_ATTEMPTED').toLowerCase()} />,
+    },
+    {
+      id: 'expiresAt',
+      label: t('admin.membersRoles.invitations.expiry', 'Expires'),
+      width: '190px',
+      render: (row) => (
+        <span className="text-c-text-secondary">
+          {row.expires_at || row.expiresAt
+            ? new Date(row.expires_at || row.expiresAt).toLocaleString()
+            : '—'}
+        </span>
+      ),
+    },
+    {
+      id: 'actions',
+      label: t('admin.membersRoles.invitations.actions', 'Actions'),
+      width: '230px',
+      render: (row) => {
+        const pending = String(row.status || '').toLowerCase() === 'pending';
+        const busy = savingInvitationId === row.id;
+        if (!canManageTeam || !pending) return null;
+        return (
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" size="sm" disabled={busy} icon={<RotateCw className="h-4 w-4" />} onClick={() => void handleInvitationAction(row as InvitationRow, 'resend')}>
+              {t('admin.membersRoles.invitations.resend', 'Resend')}
+            </Button>
+            <Button variant="outline" size="sm" disabled={busy} icon={<XCircle className="h-4 w-4" />} onClick={() => void handleInvitationAction(row as InvitationRow, 'revoke')}>
+              {t('admin.membersRoles.invitations.revoke', 'Revoke')}
+            </Button>
+          </div>
+        );
+      },
     },
   ];
 
@@ -522,7 +686,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
                     label: t('admin.membersRoles.remove.action', 'Remove'),
                     icon: Trash2,
                     variant: 'danger' as const,
-                    onClick: () => void handleRemove(row.memberId),
+                    onClick: () => void handleRemove(row.memberId, row.role),
                   },
                 ];
               }}
@@ -530,6 +694,44 @@ export const AdminMembersRolesPanel: React.FC = () => {
               onFilterChange={setMemberFilters}
               emptyMessage={t('admin.membersRoles.empty', 'No members found for this workspace.')}
               persistKey="admin-members-table"
+              canvasClassName=""
+            />
+          </div>
+        )}
+      </div>
+
+      <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-semibold text-c-text">
+              {t('admin.membersRoles.invitations.title', 'Invitations')}
+            </h3>
+            <p className="text-sm text-c-text-muted">
+              {t(
+                'admin.membersRoles.invitations.subtitle',
+                'Server read-back of invitation delivery, acceptance, expiry, and revocation.'
+              )}
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => void loadInvitations()}>
+            {t('admin.membersRoles.invitations.refresh', 'Refresh')}
+          </Button>
+        </div>
+
+        {invitationLoadError ? (
+          <div role="alert" data-testid="invitations-load-error" className="mt-4 rounded-lg border border-c-danger/40 bg-c-danger/10 p-3 text-sm text-c-danger">
+            {invitationLoadError}
+          </div>
+        ) : invitations.length === 0 ? (
+          <p className="mt-4 text-sm text-c-text-muted">
+            {t('admin.membersRoles.invitations.empty', 'No invitation records for this workspace.')}
+          </p>
+        ) : (
+          <div className="mt-4">
+            <StandardTable
+              columns={invitationColumns}
+              data={invitations}
+              persistKey="admin-invitations-table"
               canvasClassName=""
             />
           </div>

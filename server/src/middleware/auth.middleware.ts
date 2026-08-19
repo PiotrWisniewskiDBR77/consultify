@@ -257,7 +257,7 @@ const buildSessionActivityUpdateSql = (
   activityColumn: UserSessionCompatibility['activityColumn']
 ): string => `UPDATE user_sessions SET ${activityColumn} = CURRENT_TIMESTAMP WHERE id = ?`;
 const buildRevokeAllLookupSql = (): string =>
-  "SELECT jti FROM revoked_tokens WHERE user_id = ? AND reason = 'revoke-all' AND expires_at > CURRENT_TIMESTAMP";
+  "SELECT jti FROM revoked_tokens WHERE user_id = ? AND reason = 'revoke-all' AND expires_at > CURRENT_TIMESTAMP ORDER BY revoked_at DESC, jti DESC LIMIT 1";
 
 const extractIssuedAtSeconds = (payload: JWTPayload): number => {
   try {

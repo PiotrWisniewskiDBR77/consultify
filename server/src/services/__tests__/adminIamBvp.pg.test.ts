@@ -89,10 +89,16 @@ describe.skipIf(!REAL_DB)('ADM-BVP-001 — Admin/IAM BVP on real PostgreSQL', ()
     invitationService = new InvitationServiceClass({
       db: getDatabase(),
       sendingService: {
-        sendOrgInvitation: async (_email: string, token: string) => `test://invite/${token}`,
+        sendOrgInvitation: async (_email: string, token: string) => ({
+          inviteLink: `test://invite/${token}`,
+          deliveryStatus: 'SENT' as const,
+        }),
         sendProjectInvitation: async (_email: string, _project: string, token: string) =>
-          `test://invite/${token}`,
-        sendResentInvitation: async (_email: string, token: string) => `test://invite/${token}`,
+          ({ inviteLink: `test://invite/${token}`, deliveryStatus: 'SENT' as const }),
+        sendResentInvitation: async (_email: string, token: string) => ({
+          inviteLink: `test://invite/${token}`,
+          deliveryStatus: 'SENT' as const,
+        }),
       } as any,
     });
 

@@ -214,6 +214,7 @@ export class InvitationServiceClass {
     status: InvitationStatus;
     expiresAt: string;
     invitedByUserId: string;
+    deliveryStatus: 'SENT' | 'FAILED';
   }> {
     const { organizationId, email, role = 'USER', invitedByUserId, metadata = {} } = params;
 
@@ -299,27 +300,31 @@ export class InvitationServiceClass {
     );
 
     // Sending
-    const inviteLink = await this.deps.sendingService.sendOrgInvitation(email, token);
+    const delivery = await this.deps.sendingService.sendOrgInvitation(email, token);
 
     await this.deps.dataService.logEvent(
       id,
-      INVITATION_EVENT_TYPES.SENT,
+      delivery.deliveryStatus === 'SENT'
+        ? INVITATION_EVENT_TYPES.SENT
+        : INVITATION_EVENT_TYPES.DELIVERY_FAILED,
       invitedByUserId,
-      { inviteLink },
+      { inviteLink: delivery.inviteLink, deliveryStatus: delivery.deliveryStatus },
       requestInfo
     );
 
     // Metrics
-    try {
-      const metricsCollector = await getMetricsCollector();
-      await metricsCollector.recordEvent(metricsCollector.EVENT_TYPES.INVITE_SENT, {
-        userId: invitedByUserId,
-        organizationId,
-        source: metricsCollector.SOURCE_TYPES.INVITATION,
-        context: { email: email.toLowerCase(), role, invitationType: INVITATION_TYPES.ORG },
-      });
-    } catch (metricsErr) {
-      logger.warn('[InvitationService] Metrics recording failed:', metricsErr as Error);
+    if (delivery.deliveryStatus === 'SENT') {
+      try {
+        const metricsCollector = await getMetricsCollector();
+        await metricsCollector.recordEvent(metricsCollector.EVENT_TYPES.INVITE_SENT, {
+          userId: invitedByUserId,
+          organizationId,
+          source: metricsCollector.SOURCE_TYPES.INVITATION,
+          context: { email: email.toLowerCase(), role, invitationType: INVITATION_TYPES.ORG },
+        });
+      } catch (metricsErr) {
+        logger.warn('[InvitationService] Metrics recording failed:', metricsErr as Error);
+      }
     }
 
     return {
@@ -332,6 +337,7 @@ export class InvitationServiceClass {
       status: INVITATION_STATUS.PENDING,
       expiresAt,
       invitedByUserId,
+      deliveryStatus: delivery.deliveryStatus,
     };
   }
 
@@ -350,6 +356,7 @@ export class InvitationServiceClass {
     status: InvitationStatus;
     expiresAt: string;
     invitedByUserId: string;
+    deliveryStatus: 'SENT' | 'FAILED';
   }> {
     const {
       organizationId,
@@ -417,7 +424,7 @@ export class InvitationServiceClass {
     );
 
     // Sending
-    const inviteLink = await this.deps.sendingService.sendProjectInvitation(
+    const delivery = await this.deps.sendingService.sendProjectInvitation(
       email,
       project.name,
       token
@@ -425,9 +432,11 @@ export class InvitationServiceClass {
 
     await this.deps.dataService.logEvent(
       id,
-      INVITATION_EVENT_TYPES.SENT,
+      delivery.deliveryStatus === 'SENT'
+        ? INVITATION_EVENT_TYPES.SENT
+        : INVITATION_EVENT_TYPES.DELIVERY_FAILED,
       invitedByUserId,
-      { inviteLink },
+      { inviteLink: delivery.inviteLink, deliveryStatus: delivery.deliveryStatus },
       requestInfo
     );
 
@@ -443,6 +452,7 @@ export class InvitationServiceClass {
       status: INVITATION_STATUS.PENDING,
       expiresAt,
       invitedByUserId,
+      deliveryStatus: delivery.deliveryStatus,
     };
   }
 
@@ -482,6 +492,21 @@ export class InvitationServiceClass {
     const isOpen = acceptMeta.open === true;
     if (requireProfile && (!jobTitle?.trim() || !siteLocation?.trim())) {
       throw new Error('Job title and work location are required to complete your first login.');
+    }
+
+    if (acceptMeta && (acceptMeta as any).adminIamCommandId && invitation.invitation_type === INVITATION_TYPES.ORG) {
+      const { acceptAdminIamInvitation } = await import('./adminIamCommandService.js');
+      return acceptAdminIamInvitation({
+        organizationId: invitation.organization_id,
+        rawToken: token,
+        email,
+        passwordHash: this.deps.bcrypt.hashSync(password, 10),
+        firstName,
+        lastName,
+        jobTitle,
+        siteLocation,
+        department,
+      });
     }
 
     if (invitation.status !== INVITATION_STATUS.PENDING) {
@@ -789,6 +814,7 @@ export class InvitationServiceClass {
     token: string;
     expiresAt: string;
     status: InvitationStatus;
+    deliveryStatus: 'SENT' | 'FAILED';
   }> {
     const invitation = await this.deps.dataService.getInvitationById(invitationId);
     if (!invitation) throw new Error('Invitation not found');
@@ -826,11 +852,16 @@ export class InvitationServiceClass {
 
     await this.deps.dataService.updateForResend(invitationId, newTokenHash, newExpiresAt);
 
-    const link = await this.deps.sendingService.sendResentInvitation(invitation.email, newToken);
+    const delivery = await this.deps.sendingService.sendResentInvitation(
+      invitation.email,
+      newToken
+    );
 
     await this.deps.dataService.logEvent(
       invitationId,
-      INVITATION_EVENT_TYPES.RESENT,
+      delivery.deliveryStatus === 'SENT'
+        ? INVITATION_EVENT_TYPES.RESENT
+        : INVITATION_EVENT_TYPES.DELIVERY_FAILED,
       performedByUserId,
       {
         newExpiresAt,
@@ -838,6 +869,8 @@ export class InvitationServiceClass {
         previousTokenHash: invitation.token_hash
           ? invitation.token_hash.substring(0, 16)
           : 'unknown',
+        inviteLink: delivery.inviteLink,
+        deliveryStatus: delivery.deliveryStatus,
       },
       requestInfo
     );
@@ -848,6 +881,7 @@ export class InvitationServiceClass {
       token: newToken,
       expiresAt: newExpiresAt,
       status: INVITATION_STATUS.PENDING,
+      deliveryStatus: delivery.deliveryStatus,
     };
   }
 

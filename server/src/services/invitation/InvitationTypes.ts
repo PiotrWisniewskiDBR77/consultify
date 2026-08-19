@@ -19,6 +19,7 @@ export const INVITATION_STATUS = {
 export const INVITATION_EVENT_TYPES = {
   CREATED: 'created',
   SENT: 'sent',
+  DELIVERY_FAILED: 'delivery_failed',
   RESENT: 'resent',
   ACCEPTED: 'accepted',
   EXPIRED: 'expired',
