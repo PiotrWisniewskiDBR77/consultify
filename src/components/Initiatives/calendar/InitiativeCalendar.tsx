@@ -6,16 +6,13 @@
  * day. Native HTML5 drag-and-drop reschedules an item to a new day, preserving
  * its duration.
  *
- * Drag-reschedule: mirrors the Gantt's W5 pattern (no external deps).
- * Tasks → optimistic override + PUT /api/pmo/tasks/:id {startedAt, dueDate},
- *         rollback on failure.
- * Phases / Milestones → onReschedule callback only (caller persists).
+ * Drag-reschedule is available only when the caller supplies a canonical
+ * writer callback. Otherwise this legacy schedule projection is read-only.
  */
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Api } from '@/services/api';
 import { toIsoDate } from '@/services/initiativeSchedule';
 import type { ScheduleItem, ScheduleItemType } from '@/types/initiativeSchedule';
 
@@ -28,7 +25,7 @@ export interface InitiativeCalendarProps {
     sourceId: string,
     start: string,
     end: string
-  ) => void;
+  ) => void | Promise<void>;
   loading?: boolean;
 }
 
@@ -149,14 +146,9 @@ export const InitiativeCalendar: React.FC<InitiativeCalendarProps> = ({
 
   const persist = useCallback(
     async (item: ScheduleItem, newStart: string, newEnd: string) => {
+      if (!onReschedule) return;
       try {
-        if (item.sourceKind === 'task') {
-          await Api.put(`/api/pmo/tasks/${item.sourceId}`, {
-            startedAt: new Date(newStart).toISOString(),
-            dueDate: new Date(newEnd).toISOString(),
-          });
-        }
-        onReschedule?.(item.id, item.sourceKind, item.sourceId, newStart, newEnd);
+        await onReschedule(item.id, item.sourceKind, item.sourceId, newStart, newEnd);
         setOverrides((prev) => {
           const next = new Map(prev);
           next.set(item.id, { start: newStart, end: newEnd });
@@ -177,6 +169,7 @@ export const InitiativeCalendar: React.FC<InitiativeCalendarProps> = ({
   const handleDrop = useCallback(
     (e: React.DragEvent, dayIso: string) => {
       e.preventDefault();
+      if (!onReschedule) return;
       const id = e.dataTransfer.getData('text/plain');
       // Resolve against the effective (override-aware) item so a second drag
       // shifts from the item's current position, not its server start.
@@ -196,7 +189,7 @@ export const InitiativeCalendar: React.FC<InitiativeCalendarProps> = ({
       });
       void persist(item, newStart, newEnd);
     },
-    [effectiveItems, persist]
+    [effectiveItems, persist, onReschedule]
   );
 
   return (

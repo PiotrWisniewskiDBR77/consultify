@@ -6,8 +6,8 @@
  * renders time columns with a draggable bar per dated item.
  *
  * Features:
- *  - drag-reschedule (W5): pointer-event based; tasks → PUT /api/pmo/tasks/:id,
- *    phases/milestones → onReschedule callback (caller persists);
+ *  - optional drag-reschedule (W5), persisted only through the supplied
+ *    canonical-writer callback; without it this legacy projection is read-only;
  *  - zoom (day / week / month) — visual density of the time axis;
  *  - status filter — narrow the bars to a single status;
  *  - dependency connectors (prop-driven) — L-shaped links between items;
@@ -16,7 +16,6 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Api } from '@/services/api';
 import { toIsoDate } from '@/services/initiativeSchedule';
 import type { ScheduleItem, ScheduleItemType } from '@/types/initiativeSchedule';
 
@@ -37,7 +36,7 @@ export interface InitiativeGanttProps {
     sourceId: string,
     start: string,
     end: string
-  ) => void;
+  ) => void | Promise<void>;
   /** Dependency edges between items (by ScheduleItem.id) → connector lines. */
   dependencies?: GanttDependency[];
   /** ScheduleItem.ids on the critical path → highlighted bars + connectors. */
@@ -135,16 +134,11 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
 
   const persist = useCallback(
     async (item: ScheduleItem, newS: number, newE: number) => {
+      if (!onReschedule) return;
       const startIso = toIsoDate(new Date(newS).toISOString())!;
       const endIso = toIsoDate(new Date(newE).toISOString())!;
       try {
-        if (item.sourceKind === 'task') {
-          await Api.put(`/api/pmo/tasks/${item.sourceId}`, {
-            startedAt: new Date(newS).toISOString(),
-            dueDate: new Date(newE).toISOString(),
-          });
-        }
-        onReschedule?.(item.id, item.sourceKind, item.sourceId, startIso, endIso);
+        await onReschedule(item.id, item.sourceKind, item.sourceId, startIso, endIso);
         setOverrides((prev) => {
           const next = new Map(prev);
           next.set(item.id, { s: newS, e: newE });
@@ -163,7 +157,7 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>, item: ScheduleItem, sMs: number, eMs: number) => {
-      if (!range) return;
+      if (!range || !onReschedule) return;
       e.preventDefault();
       const el = e.currentTarget;
       el.setPointerCapture(e.pointerId);
@@ -209,7 +203,7 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
       el.addEventListener('pointerup', onUp);
       el.addEventListener('pointercancel', onUp);
     },
-    [range, persist]
+    [range, persist, onReschedule]
   );
 
   // Toolbar (zoom + status filter) — rendered above the grid in all states.
@@ -398,7 +392,7 @@ export const InitiativeGantt: React.FC<InitiativeGanttProps> = ({
             const left = pct(effS);
             const width = `${(Math.max(effE - effS, DAY_MS) / totalMs) * 100}%`;
             const saving = ov?.saving;
-            const canDrag = item.sourceKind === 'task';
+            const canDrag = item.sourceKind === 'task' && Boolean(onReschedule);
             const isCritical = criticalSet.has(item.id);
             return (
               <div
