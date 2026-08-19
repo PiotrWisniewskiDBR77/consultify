@@ -1,8 +1,8 @@
 {
   "taskId": "NFR-PERF-001",
   "baselineSha": "123aa5065f027c3d827462d9304e0a30ffe4b8f1",
-  "productSha": "6bb95088c3c1922a7805893890f0c3657b3ac42b",
-  "technicalSourceSha": "6bb95088c3c1922a7805893890f0c3657b3ac42b",
+  "productSha": "f71b350b5d57c21c97833f2b37241c9f02f37194",
+  "technicalSourceSha": "f71b350b5d57c21c97833f2b37241c9f02f37194",
   "changedPaths": [
     "server/src/services/caseWorkspace/__tests__/performance/lib/steadyLoadGate.ts",
     "server/src/services/caseWorkspace/__tests__/performance/steadyAuthenticatedLoad.ts",
