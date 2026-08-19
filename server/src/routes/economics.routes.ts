@@ -27,6 +27,8 @@ import { findReconciliationTargetForInitiative } from '../services/finance/canon
 import { createRegisteredValuation } from '../services/finance/canonical/valuationRegistrationService.js';
 import { FinanceCandidateHandoffError } from '../services/finance/financeCandidateHandoffCore.js';
 import * as finAnalysisSvc from '../services/financialAnalysisService.js';
+import { createLegacyCutoverGuard } from '../services/legacyCutover/legacyCutoverKernel.js';
+import { ECONOMICS_CUTOVER } from '../services/legacyCutover/registry/economics.js';
 import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import { resolveInitiativeProjectId } from '../services/initiativeProjectPolicyService.js';
 import { buildBasketFromResults } from '../services/valuationBasketService.js';
@@ -50,6 +52,7 @@ import { resolveStoredRelativePath } from '../utils/storagePaths.js';
 logger.info('[Economics Routes] Module loaded - TypeScript version');
 logger.info('[Economics Routes] Router type:', typeof Router);
 const router = Router();
+const economicsCutoverGuard = createLegacyCutoverGuard(ECONOMICS_CUTOVER);
 
 // ---------------------------------------------------------------------------
 // M08-H01/H02/H03 — fail-closed / degraded storage guards.
@@ -2309,6 +2312,7 @@ router.put(
 router.post(
   '/financial-analyses/:id/run',
   verifyToken,
+  economicsCutoverGuard,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
@@ -2319,6 +2323,7 @@ router.post(
 router.post(
   '/financial-analyses/:id/approve',
   verifyToken,
+  economicsCutoverGuard,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
     const userId = req.user?.id || (req.user as any)?.user_id;

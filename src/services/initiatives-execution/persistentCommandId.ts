@@ -11,9 +11,12 @@ const fingerprintKey = (value: string) => {
   return `${(a >>> 0).toString(16)}${(b >>> 0).toString(16)}`;
 };
 
+const storageKeyFor = (namespace: string, fingerprint: string) =>
+  `${STORAGE_PREFIX}.${namespace}.${fingerprintKey(fingerprint)}`;
+
 /** Reuses one idempotency key across retries and reloads in the current browser session. */
 export const persistentCommandId = (namespace: string, fingerprint: string): string => {
-  const storageKey = `${STORAGE_PREFIX}.${namespace}.${fingerprintKey(fingerprint)}`;
+  const storageKey = storageKeyFor(namespace, fingerprint);
   try {
     const existing = window.sessionStorage.getItem(storageKey);
     if (existing) return existing;
@@ -22,5 +25,15 @@ export const persistentCommandId = (namespace: string, fingerprint: string): str
     return created;
   } catch {
     return crypto.randomUUID();
+  }
+};
+
+/** Clears an intent only after the caller has independently read back success. */
+export const clearPersistentCommandId = (namespace: string, fingerprint: string): void => {
+  try {
+    window.sessionStorage.removeItem(storageKeyFor(namespace, fingerprint));
+  } catch {
+    // Storage can be unavailable in hardened/private contexts. The command
+    // remains safe; callers simply cannot extend persistence across reloads.
   }
 };

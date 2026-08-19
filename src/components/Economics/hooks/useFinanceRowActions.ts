@@ -15,7 +15,12 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
-import { approveFinanceModel, resolveLegacyFinanceArtifact } from '@/services/api/financeV2.api';
+import {
+  approveCanonicalFinancialAnalysis,
+  approveFinanceModel,
+  resolveLegacyFinanceArtifact,
+  runCanonicalFinancialAnalysis,
+} from '@/services/api/financeV2.api';
 import {
   shouldFallbackToLegacyFinance,
   V8FinanceApi,
@@ -468,14 +473,7 @@ export function useFinanceRowActions({
             variant: 'primary',
             onClick: async () => {
               try {
-                try {
-                  await V8FinanceApi.approveAnalysis(row.id);
-                } catch (error) {
-                  if (!shouldFallbackToLegacyFinance(error)) {
-                    throw error;
-                  }
-                  await Api.post(`/api/economics/financial-analyses/${row.id}/approve`, {});
-                }
+                await approveCanonicalFinancialAnalysis(row.id);
                 await loadAnalyses();
                 toast.success(t('finance.toast.analysisApproved', 'Analiza zatwierdzona'));
               } catch (e: any) {
@@ -493,14 +491,7 @@ export function useFinanceRowActions({
           icon: RefreshCw,
           onClick: async () => {
             try {
-              try {
-                await V8FinanceApi.runAnalysis(row.id);
-              } catch (error) {
-                if (!shouldFallbackToLegacyFinance(error)) {
-                  throw error;
-                }
-                await Api.post(`/api/economics/financial-analyses/${row.id}/run`, {});
-              }
+              await runCanonicalFinancialAnalysis(row.id);
               await loadAnalyses();
               toast.success(t('finance.toast.reanalyzed', 'Analiza przeliczona'));
             } catch (e: any) {

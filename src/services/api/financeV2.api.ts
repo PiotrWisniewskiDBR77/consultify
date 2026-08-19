@@ -14,6 +14,10 @@
  */
 
 import { fetchWithRetry, getHeaders, handleResponse } from './baseClient';
+import {
+  clearPersistentCommandId,
+  persistentCommandId,
+} from '../initiatives-execution/persistentCommandId';
 import type {
   AnalysisComputeResultDto,
   AnalysisKpiCatalogEntryDto,
@@ -632,6 +636,99 @@ export async function getAnalysisKpiValues(
     `${BASE}/analysis/${encodeURIComponent(businessVersionId)}/kpi-values`
   );
 }
+
+async function resolveCanonicalFinancialAnalysis(legacyAnalysisId: string) {
+  const identity = await resolveLegacyFinanceArtifact('financial_analyses', legacyAnalysisId);
+  if (identity.status !== 'RESOLVED' || !identity.businessVersionId) {
+    const error = new Error(
+      identity.status === 'QUARANTINED'
+        ? identity.reason || 'Financial analysis identity is quarantined'
+        : 'Financial analysis has no canonical identity. Run the Finance backfill first.'
+    ) as Error & { code?: string };
+    error.code = identity.status === 'QUARANTINED' ? 'LEGACY_IDENTITY_QUARANTINED' : 'LEGACY_IDENTITY_UNMAPPED';
+    throw error;
+  }
+  const [artifact, version] = await Promise.all([
+    getFinanceArtifact(identity.artifactId),
+    getFinanceBusinessVersion(identity.businessVersionId),
+  ]);
+  if (
+    artifact.currentBusinessVersion?.businessVersionId !== identity.businessVersionId ||
+    version.businessVersionId !== identity.businessVersionId ||
+    version.artifactId !== identity.artifactId ||
+    !version.sourceWorkingRevisionId
+  ) {
+    const error = new Error(
+      'Financial analysis alias does not identify the current canonical business version and working revision.'
+    ) as Error & { code?: string };
+    error.code = 'CANONICAL_SOURCE_IDENTITY_STALE';
+    throw error;
+  }
+  return { identity, version };
+}
+
+async function assertCanonicalFinancialAnalysisReadback(
+  artifactId: string,
+  businessVersionId: string,
+  sourceWorkingRevisionId: string,
+  expectedStatus?: 'APPROVED'
+) {
+  const [artifact, version] = await Promise.all([
+    getFinanceArtifact(artifactId),
+    getFinanceBusinessVersion(businessVersionId),
+  ]);
+  if (
+    artifact.currentBusinessVersion?.businessVersionId !== businessVersionId ||
+    version.artifactId !== artifactId ||
+    version.sourceWorkingRevisionId !== sourceWorkingRevisionId ||
+    (expectedStatus && version.status !== expectedStatus) ||
+    (expectedStatus && artifact.currentBusinessVersion.status !== expectedStatus)
+  ) {
+    const error = new Error('Canonical financial analysis readback did not confirm the command result.') as Error & {
+      code?: string;
+    };
+    error.code = 'CANONICAL_READBACK_MISMATCH';
+    throw error;
+  }
+}
+
+/** Cutover adapter for the two legacy financial-analysis action surfaces. */
+export async function runCanonicalFinancialAnalysis(legacyAnalysisId: string) {
+  const { identity, version } = await resolveCanonicalFinancialAnalysis(legacyAnalysisId);
+  const attemptReadinessTransition = version.status === 'DRAFT';
+  const result = await computeAnalysisKpis({
+    businessVersionId: identity.businessVersionId!,
+    attemptReadinessTransition,
+    ...(attemptReadinessTransition ? { expectedVersion: version.version } : {}),
+  });
+  await assertCanonicalFinancialAnalysisReadback(
+    identity.artifactId,
+    identity.businessVersionId!,
+    version.sourceWorkingRevisionId!
+  );
+  return result;
+}
+
+/** Canonical four-eyes approval; never falls back to financial_analyses.status. */
+export async function approveCanonicalFinancialAnalysis(legacyAnalysisId: string) {
+  const { identity, version } = await resolveCanonicalFinancialAnalysis(legacyAnalysisId);
+  const intentIdentity = `${identity.artifactId}:${identity.businessVersionId}:${version.version}`;
+  const intentNamespace = 'finance-analysis-approve';
+  const idempotencyKey = persistentCommandId(intentNamespace, intentIdentity);
+  const result = await approveFinanceModel({
+    modelArtifactId: identity.artifactId,
+    expectedVersion: version.version,
+    idempotencyKey,
+  });
+  await assertCanonicalFinancialAnalysisReadback(
+    identity.artifactId,
+    identity.businessVersionId!,
+    version.sourceWorkingRevisionId!,
+    'APPROVED'
+  );
+  clearPersistentCommandId(intentNamespace, intentIdentity);
+  return result;
+}
 // --- /PKG-E Analysis ---
 
 // ---------------------------------------------------------------------------
@@ -992,6 +1089,8 @@ export const FinanceV2Api = {
   getAnalysisKpiCatalog,
   computeAnalysisKpis,
   getAnalysisKpiValues,
+  runCanonicalFinancialAnalysis,
+  approveCanonicalFinancialAnalysis,
   // --- PKG-H Valuation --- (getFinanceVersionLineage już wyżej — wspólna z Pakietem D, patrz uwaga przy definicji).
   createValuationCase,
   listValuationCases,

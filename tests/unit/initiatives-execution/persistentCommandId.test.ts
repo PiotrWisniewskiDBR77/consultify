@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { persistentCommandId } from '../../../src/services/initiatives-execution/persistentCommandId';
+import {
+  clearPersistentCommandId,
+  persistentCommandId,
+} from '../../../src/services/initiatives-execution/persistentCommandId';
 
 describe('persistentCommandId', () => {
   beforeEach(() => {
@@ -8,6 +11,15 @@ describe('persistentCommandId', () => {
     vi.spyOn(crypto, 'randomUUID')
       .mockReturnValueOnce('11111111-1111-4111-8111-111111111111')
       .mockReturnValueOnce('22222222-2222-4222-8222-222222222222');
+  });
+
+  it('retains a cold-retry key until explicitly cleared after readback', () => {
+    const first = persistentCommandId('finance-analysis-approve', 'artifact:bv:7');
+    const afterReloadEquivalent = persistentCommandId('finance-analysis-approve', 'artifact:bv:7');
+    expect(afterReloadEquivalent).toBe(first);
+
+    clearPersistentCommandId('finance-analysis-approve', 'artifact:bv:7');
+    expect(persistentCommandId('finance-analysis-approve', 'artifact:bv:7')).not.toBe(first);
   });
 
   it('reuses the same id after a retry/reload and isolates a different command fingerprint', () => {

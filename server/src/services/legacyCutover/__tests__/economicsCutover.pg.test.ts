@@ -2,9 +2,8 @@
 /**
  * CLAUDE-NEXT-LEGACY-CUTOVER — ECONOMICS domain guard.
  *
- * Proves the kernel, composed with the REAL `/api/economics` router
- * (`server/src/routes/economics.routes.ts`, mounted in production behind only
- * a no-op `betaGate` — see `registry/economics.ts`), does not block ECO-W27
+ * Proves the kernel, composed with the REAL `/api/economics` router, blocks
+ * ECO-W16/W17 before their legacy handlers mutate anything, while it does not block ECO-W27
  * (`POST /valuations/:id/approve`, the inventory's fourth independent
  * "approve" writer with no protection at all) or ECO-W42 (`PUT
  * /finance-settings`, a collection-level writer) while recording tenant-scoped,
@@ -24,6 +23,7 @@ import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { cleanupLegacyCutoverTestIntents } from './legacyCutoverTestCleanup.js';
 
+import { createArtifact } from '../../finance/canonical/artifactVersionService.js';
 import { createLegacyCutoverGuard } from '../legacyCutoverKernel.js';
 import { ECONOMICS_CUTOVER } from '../registry/economics.js';
 
@@ -48,10 +48,13 @@ const orgA = `${prefix}-org-a`;
 const orgB = `${prefix}-org-b`;
 const actor = `${prefix}-actor`;
 const valuationId = `${prefix}-valuation-1`;
+const mappedAnalysisId = `${prefix}-mapped-analysis`;
 
 describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL)', () => {
   let pool: Pool;
   let app: express.Express;
+  let mappedArtifactId: string;
+  let mappedBusinessVersionId: string;
 
   function authenticate(req: any, _res: any, next: any): void {
     const organizationId = String(req.headers['x-test-org'] || orgA);
@@ -72,6 +75,21 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
         [org, org, now]
       );
     }
+    const canonical = await createArtifact({
+      organizationId: orgA,
+      artifactType: 'HISTORICAL_ANALYSIS',
+      naturalKey: `cutover-${mappedAnalysisId}`,
+      createdBy: actor,
+    });
+    mappedArtifactId = canonical.artifact.artifact_id;
+    mappedBusinessVersionId = canonical.businessVersion.business_version_id;
+    await pool.query(
+      `INSERT INTO finance_artifact_aliases
+        (legacy_table,legacy_id,legacy_version,artifact_id,organization_id,
+         business_version_id,mapping_confidence,mapping_reason)
+       VALUES('financial_analyses',$1,NULL,$2,$3,$4,'AUTO_MIGRATE','wave2 realPG readback')`,
+      [mappedAnalysisId, mappedArtifactId, orgA, mappedBusinessVersionId]
+    );
 
     const economicsRouter = (await import('../../../routes/economics.routes.js')).default;
     app = express();
@@ -94,11 +112,125 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
       `DELETE FROM organization_settings WHERE organization_id = ANY($1) AND setting_key = 'finance'`,
       [[orgA, orgB]]
     );
+    await pool.query('BEGIN');
+    await pool.query(`SET LOCAL session_replication_role = replica`);
+    await pool.query(`DELETE FROM finance_artifact_aliases WHERE artifact_id=$1`, [mappedArtifactId]);
+    await pool.query(`DELETE FROM artifact_lifecycle_events WHERE artifact_id=$1`, [mappedArtifactId]);
+    await pool.query(
+      `UPDATE finance_business_versions SET source_working_revision_id=NULL WHERE artifact_id=$1`,
+      [mappedArtifactId]
+    );
+    await pool.query(`DELETE FROM finance_working_revisions WHERE artifact_id=$1`, [mappedArtifactId]);
+    await pool.query(`DELETE FROM finance_business_versions WHERE artifact_id=$1`, [mappedArtifactId]);
+    await pool.query(`DELETE FROM finance_artifacts WHERE artifact_id=$1`, [mappedArtifactId]);
+    await pool.query(`SET LOCAL session_replication_role = origin`);
+    await pool.query('COMMIT');
     await pool.query(`DELETE FROM legacy_cutover_usage_events WHERE organization_id = ANY($1)`, [
       [orgA, orgB],
     ]);
     await pool.query(`DELETE FROM organizations WHERE id = ANY($1)`, [[orgA, orgB]]);
     await pool.end();
+  });
+
+  it('blocks ECO-W16/W17 before either legacy analysis mutation can run', async () => {
+    const legacyId = `${prefix}-unmapped-analysis`;
+    const before = await pool.query<{ count: string }>(
+      `SELECT count(*)::text AS count FROM financial_analyses WHERE organization_id=$1`,
+      [orgA]
+    );
+
+    const runResponse = await request(app)
+      .post(`/api/economics/financial-analyses/${legacyId}/run`)
+      .set('x-request-id', `${prefix}-analysis-run-blocked`)
+      .send({});
+    const approveResponse = await request(app)
+      .post(`/api/economics/financial-analyses/${legacyId}/approve`)
+      .set('x-request-id', `${prefix}-analysis-approve-blocked`)
+      .send({});
+
+    expect(runResponse.status).toBe(409);
+    expect(runResponse.body).toMatchObject({
+      code: 'FINANCE_LEGACY_IDENTITY_UNMAPPED',
+      writerId: 'ECO-W16',
+    });
+    expect(approveResponse.status).toBe(409);
+    expect(approveResponse.body).toMatchObject({
+      code: 'FINANCE_LEGACY_IDENTITY_UNMAPPED',
+      writerId: 'ECO-W17',
+    });
+
+    const after = await pool.query<{ count: string }>(
+      `SELECT count(*)::text AS count FROM financial_analyses WHERE organization_id=$1`,
+      [orgA]
+    );
+    expect(after.rows).toEqual(before.rows);
+
+    const usage = await pool.query(
+      `SELECT writer_id,access_kind,legacy_table,legacy_id
+         FROM legacy_cutover_usage_events
+        WHERE organization_id=$1 AND request_id IN ($2,$3)
+        ORDER BY writer_id`,
+      [orgA, `${prefix}-analysis-run-blocked`, `${prefix}-analysis-approve-blocked`]
+    );
+    expect(usage.rows).toEqual([
+      {
+        writer_id: 'ECO-W16',
+        access_kind: 'legacy_identity_unmapped',
+        legacy_table: 'financial_analyses',
+        legacy_id: legacyId,
+      },
+      {
+        writer_id: 'ECO-W17',
+        access_kind: 'legacy_identity_unmapped',
+        legacy_table: 'financial_analyses',
+        legacy_id: legacyId,
+      },
+    ]);
+  });
+
+  it('cold-resolves the mapped canonical artifact/BV and still performs zero legacy mutation', async () => {
+    const before = await pool.query<{ count: string }>(
+      `SELECT count(*)::text AS count FROM financial_analyses WHERE organization_id=$1`,
+      [orgA]
+    );
+    const runResponse = await request(app)
+      .post(`/api/economics/financial-analyses/${mappedAnalysisId}/run`)
+      .set('x-request-id', `${prefix}-mapped-run`)
+      .send({});
+    const approveResponse = await request(app)
+      .post(`/api/economics/financial-analyses/${mappedAnalysisId}/approve`)
+      .set('x-request-id', `${prefix}-mapped-approve`)
+      .send({});
+
+    expect(runResponse.status).toBe(410);
+    expect(approveResponse.status).toBe(410);
+    const after = await pool.query<{ count: string }>(
+      `SELECT count(*)::text AS count FROM financial_analyses WHERE organization_id=$1`,
+      [orgA]
+    );
+    expect(after.rows).toEqual(before.rows);
+
+    const coldReadback = await pool.query(
+      `SELECT writer_id,access_kind,canonical_artifact_id,canonical_business_version_id
+         FROM legacy_cutover_usage_events
+        WHERE organization_id=$1 AND request_id IN ($2,$3)
+        ORDER BY writer_id`,
+      [orgA, `${prefix}-mapped-run`, `${prefix}-mapped-approve`]
+    );
+    expect(coldReadback.rows).toEqual([
+      {
+        writer_id: 'ECO-W16',
+        access_kind: 'legacy_writer_blocked',
+        canonical_artifact_id: mappedArtifactId,
+        canonical_business_version_id: mappedBusinessVersionId,
+      },
+      {
+        writer_id: 'ECO-W17',
+        access_kind: 'legacy_writer_blocked',
+        canonical_artifact_id: mappedArtifactId,
+        canonical_business_version_id: mappedBusinessVersionId,
+      },
+    ]);
   });
 
   it('does not block the valuation approve writer (ECO-W27)', async () => {

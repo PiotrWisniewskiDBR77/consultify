@@ -58,11 +58,11 @@
  * is unset (its live default) — a distinct split-brain risk with initiative
  * creation, unrelated to the Finance legacy-table bridge this lane covers.
  *
- * All forty-two writers are `observed`: reachable exactly as before, now durably
- * recorded per tenant. `POST /valuations/:id/approve` (ECO-W27) is the specific
- * writer flagged by the inventory as a fourth, unrelated "approve" writer with no
- * protection at all; it is `observed` alongside its siblings, not disabled — this
- * lane has no telemetry window for any writer in this router yet.
+ * Wave 2 retires exactly ECO-W16/W17 after both live UI surfaces moved to the
+ * canonical financial-analysis identity/BV/working-revision path. The other forty
+ * writers remain observed and reachable. `POST /valuations/:id/approve` (ECO-W27)
+ * is still the unrelated fourth approval writer and is intentionally not widened
+ * into this tranche.
  */
 
 import type { LegacyCutoverDomainConfig } from '../legacyCutoverKernel.js';
@@ -75,7 +75,7 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
   rollbackWritersEnv: 'FINANCE_LEGACY_ROLLBACK_WRITERS',
   disabledCode: 'FINANCE_LEGACY_WRITER_DISABLED',
   unmappedCode: 'FINANCE_LEGACY_IDENTITY_UNMAPPED',
-  idBridge: '/api/v8/finance-v2/artifacts/resolve-legacy/valuations/:legacyId',
+  idBridge: '/api/v8/finance-v2/artifacts/resolve-legacy/:legacyTable/:legacyId',
   writers: [
     {
       writerId: 'ECO-W01',
@@ -218,23 +218,23 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'ECO-W16',
       method: 'POST',
       path: /^\/financial-analyses\/[^/]+\/run\/?$/,
-      state: 'observed',
-      successor: null,
+      state: 'disabled',
+      successor: '/api/v8/finance-v2/analysis/:businessVersionId/compute',
       legacyTable: 'financial_analyses',
       legacyIdFromPath: idAt2,
       reason:
-        'Runs the full analysis pipeline via finAnalysisSvc.runFullAnalysis: rewrites financial_analysis_ratios and financial_analysis_insights and sets financial_analyses.status=REVIEW for the record addressed by :id (economics.routes.ts:2348, financialAnalysisService.ts:928-960). No proven successor.',
+        'All live callers now resolve the financial_analyses alias and invoke the canonical finance-v2 KPI compute/readiness command. The legacy ratios/insights archive remains read-only.',
     },
     {
       writerId: 'ECO-W17',
       method: 'POST',
       path: /^\/financial-analyses\/[^/]+\/approve\/?$/,
-      state: 'observed',
-      successor: null,
+      state: 'disabled',
+      successor: '/api/v8/finance-v2/models/:artifactId/approve',
       legacyTable: 'financial_analyses',
       legacyIdFromPath: idAt2,
       reason:
-        'Approves a financial_analyses row addressed by :id via finAnalysisSvc.approveAnalysis (economics.routes.ts:2358, financialAnalysisService.ts:542 UPDATE financial_analyses SET status=APPROVED). No proven successor.',
+        'All live callers now resolve the financial_analyses alias and invoke canonical finance-v2 four-eyes approval; the legacy status writer is retired.',
     },
     {
       writerId: 'ECO-W18',

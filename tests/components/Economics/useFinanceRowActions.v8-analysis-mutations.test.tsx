@@ -37,8 +37,19 @@ vi.mock('@/services/api/v8/finance', () => ({
   },
 }));
 
+vi.mock('@/services/api/financeV2.api', () => ({
+  runCanonicalFinancialAnalysis: vi.fn(),
+  approveCanonicalFinancialAnalysis: vi.fn(),
+  resolveLegacyFinanceArtifact: vi.fn(),
+  approveFinanceModel: vi.fn(),
+}));
+
 import { useFinanceRowActions } from '@/components/Economics/hooks/useFinanceRowActions';
 import { Api } from '@/services/api';
+import {
+  approveCanonicalFinancialAnalysis,
+  runCanonicalFinancialAnalysis,
+} from '@/services/api/financeV2.api';
 import { V8FinanceApi } from '@/services/api/v8/finance';
 
 const baseParams = {
@@ -85,9 +96,9 @@ describe('useFinanceRowActions V8 analysis mutations', () => {
     vi.clearAllMocks();
   });
 
-  it('prefers governed analysis run and approve actions before legacy fallback', async () => {
-    vi.mocked(V8FinanceApi.runAnalysis).mockResolvedValue({ success: true } as any);
-    vi.mocked(V8FinanceApi.approveAnalysis).mockResolvedValue({ success: true } as any);
+  it('uses only canonical analysis run and approval actions', async () => {
+    vi.mocked(runCanonicalFinancialAnalysis).mockResolvedValue({ results: [] } as any);
+    vi.mocked(approveCanonicalFinancialAnalysis).mockResolvedValue({ success: true } as any);
 
     const { result } = renderHook(() => useFinanceRowActions(baseParams));
     const actions = result.current.getRowActions(analysisRow);
@@ -99,16 +110,17 @@ describe('useFinanceRowActions V8 analysis mutations', () => {
       await approveAction?.onClick();
     });
 
-    expect(V8FinanceApi.runAnalysis).toHaveBeenCalledWith('analysis-1');
-    expect(V8FinanceApi.approveAnalysis).toHaveBeenCalledWith('analysis-1');
+    expect(runCanonicalFinancialAnalysis).toHaveBeenCalledWith('analysis-1');
+    expect(approveCanonicalFinancialAnalysis).toHaveBeenCalledWith('analysis-1');
+    expect(V8FinanceApi.runAnalysis).not.toHaveBeenCalled();
+    expect(V8FinanceApi.approveAnalysis).not.toHaveBeenCalled();
     expect(Api.post).not.toHaveBeenCalledWith('/api/economics/financial-analyses/analysis-1/run', {});
     expect(Api.post).not.toHaveBeenCalledWith('/api/economics/financial-analyses/analysis-1/approve', {});
   });
 
-  it('falls back to legacy analysis run and approve actions on bounded compatibility statuses', async () => {
-    vi.mocked(V8FinanceApi.runAnalysis).mockRejectedValue({ status: 404 });
-    vi.mocked(V8FinanceApi.approveAnalysis).mockRejectedValue({ status: 404 });
-    vi.mocked(Api.post).mockResolvedValue({ success: true } as any);
+  it('fails closed when canonical analysis identity is unavailable', async () => {
+    vi.mocked(runCanonicalFinancialAnalysis).mockRejectedValue({ code: 'LEGACY_IDENTITY_UNMAPPED' });
+    vi.mocked(approveCanonicalFinancialAnalysis).mockRejectedValue({ code: 'LEGACY_IDENTITY_UNMAPPED' });
 
     const { result } = renderHook(() => useFinanceRowActions(baseParams));
     const actions = result.current.getRowActions(analysisRow);
@@ -120,8 +132,8 @@ describe('useFinanceRowActions V8 analysis mutations', () => {
       await approveAction?.onClick();
     });
 
-    expect(Api.post).toHaveBeenCalledWith('/api/economics/financial-analyses/analysis-1/run', {});
-    expect(Api.post).toHaveBeenCalledWith('/api/economics/financial-analyses/analysis-1/approve', {});
+    expect(Api.post).not.toHaveBeenCalledWith('/api/economics/financial-analyses/analysis-1/run', {});
+    expect(Api.post).not.toHaveBeenCalledWith('/api/economics/financial-analyses/analysis-1/approve', {});
   });
 
   it('prefers governed model compute action before legacy fallback', async () => {

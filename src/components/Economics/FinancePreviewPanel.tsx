@@ -23,7 +23,12 @@ import {
 } from '@/components/shared/PreviewPane';
 import { statusChipTone } from '@/components/ui/primitives/chips';
 import { Api } from '@/services/api';
-import { approveFinanceModel, resolveLegacyFinanceArtifact } from '@/services/api/financeV2.api';
+import {
+  approveCanonicalFinancialAnalysis,
+  approveFinanceModel,
+  resolveLegacyFinanceArtifact,
+  runCanonicalFinancialAnalysis,
+} from '@/services/api/financeV2.api';
 import {
   type FinanceVersionSnapshot,
   shouldFallbackToLegacyFinance,
@@ -1059,14 +1064,7 @@ export function useFinancePreview({
           label: t('finance.actions.reanalyze', 'Przelicz ponownie'),
           onClick: async () => {
             try {
-              try {
-                await V8FinanceApi.runAnalysis(row.id);
-              } catch (error) {
-                if (!shouldFallbackToLegacyFinance(error)) {
-                  throw error;
-                }
-                await Api.post(`/api/economics/financial-analyses/${row.id}/run`, {});
-              }
+              await runCanonicalFinancialAnalysis(row.id);
               await loadAnalyses();
               await loadAnalysisPreviewRatios(row.id);
               toast.success(t('finance.toast.reanalyzed', 'Analiza przeliczona'));
@@ -1092,14 +1090,7 @@ export function useFinancePreview({
             label: t('finance.actions.approve', 'Zatwierdź'),
             onClick: async () => {
               try {
-                try {
-                  await V8FinanceApi.approveAnalysis(row.id);
-                } catch (error) {
-                  if (!shouldFallbackToLegacyFinance(error)) {
-                    throw error;
-                  }
-                  await Api.post(`/api/economics/financial-analyses/${row.id}/approve`, {});
-                }
+                await approveCanonicalFinancialAnalysis(row.id);
                 await loadAnalyses();
                 toast.success(t('finance.toast.analysisApproved', 'Analiza zatwierdzona'));
               } catch (e: any) {

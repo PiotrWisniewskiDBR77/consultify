@@ -54,8 +54,19 @@ vi.mock('@/services/api/v8/finance', () => ({
   },
 }));
 
+vi.mock('@/services/api/financeV2.api', () => ({
+  runCanonicalFinancialAnalysis: vi.fn(),
+  approveCanonicalFinancialAnalysis: vi.fn(),
+  resolveLegacyFinanceArtifact: vi.fn(),
+  approveFinanceModel: vi.fn(),
+}));
+
 import { useFinancePreview } from '@/components/Economics/FinancePreviewPanel';
 import { Api } from '@/services/api';
+import {
+  approveCanonicalFinancialAnalysis,
+  runCanonicalFinancialAnalysis,
+} from '@/services/api/financeV2.api';
 import { V8FinanceApi } from '@/services/api/v8/finance';
 
 const previewParams = {
@@ -129,9 +140,9 @@ describe('FinancePreviewPanel V8 analysis mutations', () => {
     vi.clearAllMocks();
   });
 
-  it('prefers governed preview run and approve actions before legacy fallback', async () => {
-    vi.mocked(V8FinanceApi.runAnalysis).mockResolvedValue({ success: true } as any);
-    vi.mocked(V8FinanceApi.approveAnalysis).mockResolvedValue({ success: true } as any);
+  it('uses only canonical preview run and approval actions', async () => {
+    vi.mocked(runCanonicalFinancialAnalysis).mockResolvedValue({ results: [] } as any);
+    vi.mocked(approveCanonicalFinancialAnalysis).mockResolvedValue({ success: true } as any);
 
     render(<FooterHarness />);
 
@@ -143,18 +154,17 @@ describe('FinancePreviewPanel V8 analysis mutations', () => {
     });
 
     await waitFor(() => {
-      expect(V8FinanceApi.runAnalysis).toHaveBeenCalledWith('analysis-1');
-      expect(V8FinanceApi.approveAnalysis).toHaveBeenCalledWith('analysis-1');
+      expect(runCanonicalFinancialAnalysis).toHaveBeenCalledWith('analysis-1');
+      expect(approveCanonicalFinancialAnalysis).toHaveBeenCalledWith('analysis-1');
     });
 
     expect(Api.post).not.toHaveBeenCalledWith('/api/economics/financial-analyses/analysis-1/run', {});
     expect(Api.post).not.toHaveBeenCalledWith('/api/economics/financial-analyses/analysis-1/approve', {});
   });
 
-  it('falls back to legacy preview run and approve actions on bounded compatibility statuses', async () => {
-    vi.mocked(V8FinanceApi.runAnalysis).mockRejectedValue({ status: 404 });
-    vi.mocked(V8FinanceApi.approveAnalysis).mockRejectedValue({ status: 404 });
-    vi.mocked(Api.post).mockResolvedValue({ success: true } as any);
+  it('fails closed when canonical preview identity is unavailable', async () => {
+    vi.mocked(runCanonicalFinancialAnalysis).mockRejectedValue({ code: 'LEGACY_IDENTITY_QUARANTINED' });
+    vi.mocked(approveCanonicalFinancialAnalysis).mockRejectedValue({ code: 'LEGACY_IDENTITY_QUARANTINED' });
 
     render(<FooterHarness />);
 
@@ -165,10 +175,9 @@ describe('FinancePreviewPanel V8 analysis mutations', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Zatwierdź' }));
     });
 
-    await waitFor(() => {
-      expect(Api.post).toHaveBeenCalledWith('/api/economics/financial-analyses/analysis-1/run', {});
-      expect(Api.post).toHaveBeenCalledWith('/api/economics/financial-analyses/analysis-1/approve', {});
-    });
+    await waitFor(() => expect(runCanonicalFinancialAnalysis).toHaveBeenCalled());
+    expect(Api.post).not.toHaveBeenCalledWith('/api/economics/financial-analyses/analysis-1/run', {});
+    expect(Api.post).not.toHaveBeenCalledWith('/api/economics/financial-analyses/analysis-1/approve', {});
   });
 
   it('prefers governed preview compute action before legacy fallback', async () => {
