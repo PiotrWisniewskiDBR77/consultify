@@ -130,38 +130,14 @@ export async function connectPartnerOrganization(params: {
       ).rows.map((row) => row.region);
       const currentData = responseFromOrg(org, specializations, regions);
       const suppliedKey = String(params.idempotencyKey || '').trim();
-      if (!suppliedKey) return { status: 200, data: currentData };
-      const suppliedPayload = normalizedPayload({
-        name:
-          params.name ||
-          (params.actorName ? `${params.actorName.trim()} — Partner` : 'Partner Organization'),
-        contactEmail: params.contactEmail || params.actorEmail,
-      });
-      const priorReceipt = await query<any>(
-        `SELECT request_hash,status,response_status,response_json
-         FROM partner_connection_receipts
-         WHERE organization_id=$1 AND user_id=$2 AND idempotency_key=$3`,
-        [params.organizationId, params.userId, suppliedKey]
-      );
-      if (!priorReceipt.rows[0]) return { status: 200, data: currentData };
-      if (priorReceipt.rows[0].request_hash !== requestHash(suppliedPayload)) {
-        throw new PartnerConnectionError(
-          'Idempotency replay payload mismatch',
-          409,
-          'IDEMPOTENCY_PAYLOAD_MISMATCH'
-        );
+      // Flag-off is strict rollback parity: an already connected tenant is a
+      // read, even when an older/newer client happens to send a key. With the
+      // flag on, however, a supplied key is a write intent and MUST join the
+      // durable receipt path below. Returning here used to lose receipts for
+      // existing and concurrently-created connections.
+      if (env[PARTNER_SELF_CONNECT_ENV] !== 'true' || !suppliedKey) {
+        return { status: 200, data: currentData };
       }
-      if (priorReceipt.rows[0].status !== 'COMPLETED') {
-        throw new PartnerConnectionError(
-          'Idempotency request incomplete',
-          409,
-          'IDEMPOTENCY_INCOMPLETE'
-        );
-      }
-      return {
-        status: Number(priorReceipt.rows[0].response_status) as 200 | 201,
-        data: priorReceipt.rows[0].response_json as PartnerConnectionResponse,
-      };
     }
 
     if (env[PARTNER_SELF_CONNECT_ENV] !== 'true') {

@@ -1262,6 +1262,51 @@ describe.sequential('Partner legacy cutover guard (real PG)', () => {
       expect(collision.body.code).toBe('IDEMPOTENCY_PAYLOAD_MISMATCH');
       expect((await state()).rows[0]).toEqual({ links: 2, receipts: 8 });
 
+      const connectedPartnerId = [...partnerIds][0];
+      const connectionCardinality = async () =>
+        (
+          await sql.query(
+            `SELECT
+               (SELECT count(*)::int FROM partner_organizations
+                 WHERE owner_organization_id=$1 AND LOWER(COALESCE(status,'active'))='active') orgs,
+               (SELECT count(*)::int FROM partner_users
+                 WHERE partner_org_id=$2 AND user_id::text=$3
+                   AND LOWER(COALESCE(status,'active'))='active') links,
+               (SELECT count(*)::int FROM partner_connection_receipts
+                 WHERE organization_id=$1 AND user_id=$3 AND status='COMPLETED') completed_receipts`,
+            [connectOrgId, connectedPartnerId, connectUserId]
+          )
+        ).rows[0];
+
+      // Repeated concurrency against an already-connected tenant must still
+      // enter the durable claim path. Each isolated wave contributes exactly
+      // eight completed receipts while preserving one organization and link.
+      for (let wave = 0; wave < 3; wave += 1) {
+        const beforeWave = await connectionCardinality();
+        const waveResponses = await Promise.all(
+          Array.from({ length: 8 }, (_, index) =>
+            postConnect(`existing-wave-${wave}-${suffix}-${index}`, payload)
+          )
+        );
+        expect(waveResponses.every((item) => item.status === 200)).toBe(true);
+        expect(
+          waveResponses.every((item) => item.body.data.organization.id === connectedPartnerId)
+        ).toBe(true);
+        const afterWave = await connectionCardinality();
+        expect(afterWave).toEqual({
+          orgs: 1,
+          links: 1,
+          completed_receipts: beforeWave.completed_receipts + 8,
+        });
+      }
+      expect((await state()).rows[0]).toEqual({ links: 2, receipts: 32 });
+
+      const beforeFlagOnNoKey = await connectionCardinality();
+      const existingWithoutKeyFlagOn = await postConnect(undefined, payload);
+      expect(existingWithoutKeyFlagOn.status).toBe(200);
+      expect(existingWithoutKeyFlagOn.body.data.organization.id).toBe(connectedPartnerId);
+      expect(await connectionCardinality()).toEqual(beforeFlagOnNoKey);
+
       const connectionSnapshot = () =>
         sql.query(
           `SELECT
@@ -1284,6 +1329,13 @@ describe.sequential('Partner legacy cutover guard (real PG)', () => {
       expect(existingWithoutKey.status).toBe(200);
       expect(existingWithoutKey.body.data.organization.id).toBe([...partnerIds][0]);
       expect((await connectionSnapshot()).rows[0]).toEqual(beforeFlagOffRead);
+      const existingWithOptionalKey = await postConnect(`flag-off-optional-${suffix}`, {
+        ...payload,
+        name: `${payload.name} ignored while flag off`,
+      });
+      expect(existingWithOptionalKey.status).toBe(200);
+      expect(existingWithOptionalKey.body.data.organization.id).toBe(connectedPartnerId);
+      expect((await connectionSnapshot()).rows[0]).toEqual(beforeFlagOffRead);
       process.env.PARTNER_SELF_CONNECT_ENABLED = 'true';
 
       process.env[PARTNER_LEGACY_WRITER_ROLLBACK_ENV] = 'true';
@@ -1293,7 +1345,7 @@ describe.sequential('Partner legacy cutover guard (real PG)', () => {
         .send(payload);
       expect(legacyRollback.status).toBe(200);
       expect(legacyRollback.body.data.organization.id).toBe([...partnerIds][0]);
-      expect((await state()).rows[0]).toEqual({ links: 2, receipts: 8 });
+      expect((await state()).rows[0]).toEqual({ links: 2, receipts: 32 });
       delete process.env[PARTNER_LEGACY_WRITER_ROLLBACK_ENV];
 
       const cold = new Client({ connectionString: DATABASE_URL });
@@ -1308,7 +1360,7 @@ describe.sequential('Partner legacy cutover guard (real PG)', () => {
           [connectOrgId, connectUserId]
         );
         expect(coldRows.rows).toHaveLength(1);
-        expect(coldRows.rows[0].receipts).toBe(8);
+        expect(coldRows.rows[0].receipts).toBe(32);
         expect(coldRows.rows[0].referral_code).toBeTruthy();
         expect(coldRows.rows[0].referral_link_slug).toBeTruthy();
       } finally {
