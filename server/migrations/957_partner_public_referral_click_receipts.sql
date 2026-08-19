@@ -3,15 +3,20 @@
 -- the two tables this retained ingress actually needs instead of relying on the
 -- old route's lazy runtime DDL.
 DO $$
-DECLARE incompatible TEXT;
+DECLARE incompatible TEXT; constraint_count INTEGER; fk_definition TEXT; default_expression TEXT;
 BEGIN
   IF to_regclass('public.partner_referral_clicks') IS NOT NULL THEN
     SELECT string_agg(required.name,',' ORDER BY required.name) INTO incompatible
       FROM (VALUES
         ('id','uuid'),('partner_org_id','uuid'),('referral_code','character varying'),
         ('clicked_at','timestamp with time zone'),('ip_hash','character varying'),
-        ('utm_campaign','character varying'),('session_id','character varying'),
-        ('cookie_id','character varying')
+        ('user_agent','text'),('referer','character varying'),
+        ('landing_page','character varying'),('utm_source','character varying'),
+        ('utm_medium','character varying'),('utm_campaign','character varying'),
+        ('utm_content','character varying'),('utm_term','character varying'),
+        ('converted','boolean'),('converted_at','timestamp with time zone'),
+        ('converted_organization_id','uuid'),('conversion_type','character varying'),
+        ('session_id','character varying'),('cookie_id','character varying')
       ) required(name,data_type)
       LEFT JOIN information_schema.columns actual
         ON actual.table_schema='public' AND actual.table_name='partner_referral_clicks'
@@ -20,14 +25,47 @@ BEGIN
     IF incompatible IS NOT NULL THEN
       RAISE EXCEPTION 'partner_referral_clicks has incompatible required columns: %', incompatible;
     END IF;
+    SELECT string_agg(required.name,',' ORDER BY required.name) INTO incompatible
+      FROM (VALUES ('id'),('partner_org_id'),('referral_code')) required(name)
+      JOIN information_schema.columns actual
+        ON actual.table_schema='public' AND actual.table_name='partner_referral_clicks'
+       AND actual.column_name=required.name
+     WHERE actual.is_nullable <> 'NO';
+    IF incompatible IS NOT NULL THEN
+      RAISE EXCEPTION 'partner_referral_clicks has incompatible nullable columns: %', incompatible;
+    END IF;
+    SELECT count(*) INTO constraint_count FROM pg_constraint c
+      WHERE c.conrelid='public.partner_referral_clicks'::regclass
+        AND c.contype='p'
+        AND lower(regexp_replace(pg_get_constraintdef(c.oid),'[[:space:]()]','','g'))='primarykeyid';
+    IF constraint_count <> 1 THEN
+      RAISE EXCEPTION 'partner_referral_clicks requires PRIMARY KEY(id)';
+    END IF;
+    SELECT lower(regexp_replace(pg_get_constraintdef(c.oid),'[[:space:]()]','','g'))
+      INTO fk_definition FROM pg_constraint c
+     WHERE c.conrelid='public.partner_referral_clicks'::regclass AND c.contype='f'
+       AND pg_get_constraintdef(c.oid) ILIKE 'FOREIGN KEY (partner_org_id)%';
+    IF fk_definition <> 'foreignkeypartner_org_idreferencespartner_organizationsidondeletecascade' THEN
+      RAISE EXCEPTION 'partner_referral_clicks has incompatible Partner FK: %', fk_definition;
+    END IF;
+    SELECT column_default INTO default_expression FROM information_schema.columns
+     WHERE table_schema='public' AND table_name='partner_referral_clicks' AND column_name='clicked_at';
+    IF default_expression IS NULL THEN
+      RAISE EXCEPTION 'partner_referral_clicks.clicked_at requires a server default';
+    END IF;
   END IF;
 
   IF to_regclass('public.partner_campaign_links') IS NOT NULL THEN
     SELECT string_agg(required.name,',' ORDER BY required.name) INTO incompatible
       FROM (VALUES
         ('id','uuid'),('partner_org_id','uuid'),('name','character varying'),
-        ('slug','character varying'),('utm_campaign','character varying'),
-        ('click_count','integer'),('is_active','boolean'),
+        ('description','text'),('slug','character varying'),
+        ('destination_url','character varying'),('utm_source','character varying'),
+        ('utm_medium','character varying'),('utm_campaign','character varying'),
+        ('utm_content','character varying'),('click_count','integer'),
+        ('signup_count','integer'),('conversion_count','integer'),
+        ('is_active','boolean'),('expires_at','timestamp with time zone'),
+        ('created_at','timestamp with time zone'),
         ('updated_at','timestamp with time zone')
       ) required(name,data_type)
       LEFT JOIN information_schema.columns actual
@@ -36,6 +74,39 @@ BEGIN
      WHERE actual.column_name IS NULL;
     IF incompatible IS NOT NULL THEN
       RAISE EXCEPTION 'partner_campaign_links has incompatible required columns: %', incompatible;
+    END IF;
+    SELECT string_agg(required.name,',' ORDER BY required.name) INTO incompatible
+      FROM (VALUES ('id'),('partner_org_id'),('name'),('slug')) required(name)
+      JOIN information_schema.columns actual
+        ON actual.table_schema='public' AND actual.table_name='partner_campaign_links'
+       AND actual.column_name=required.name
+     WHERE actual.is_nullable <> 'NO';
+    IF incompatible IS NOT NULL THEN
+      RAISE EXCEPTION 'partner_campaign_links has incompatible nullable columns: %', incompatible;
+    END IF;
+    SELECT count(*) INTO constraint_count FROM pg_constraint c
+      WHERE c.conrelid='public.partner_campaign_links'::regclass
+        AND c.contype='p'
+        AND lower(regexp_replace(pg_get_constraintdef(c.oid),'[[:space:]()]','','g'))='primarykeyid';
+    IF constraint_count <> 1 THEN
+      RAISE EXCEPTION 'partner_campaign_links requires PRIMARY KEY(id)';
+    END IF;
+    SELECT lower(regexp_replace(pg_get_constraintdef(c.oid),'[[:space:]()]','','g'))
+      INTO fk_definition FROM pg_constraint c
+     WHERE c.conrelid='public.partner_campaign_links'::regclass AND c.contype='f'
+       AND pg_get_constraintdef(c.oid) ILIKE 'FOREIGN KEY (partner_org_id)%';
+    IF fk_definition <> 'foreignkeypartner_org_idreferencespartner_organizationsidondeletecascade' THEN
+      RAISE EXCEPTION 'partner_campaign_links has incompatible Partner FK: %', fk_definition;
+    END IF;
+    SELECT column_default INTO default_expression FROM information_schema.columns
+     WHERE table_schema='public' AND table_name='partner_campaign_links' AND column_name='click_count';
+    IF default_expression IS NULL THEN
+      RAISE EXCEPTION 'partner_campaign_links.click_count requires a server default';
+    END IF;
+    SELECT column_default INTO default_expression FROM information_schema.columns
+     WHERE table_schema='public' AND table_name='partner_campaign_links' AND column_name='updated_at';
+    IF default_expression IS NULL THEN
+      RAISE EXCEPTION 'partner_campaign_links.updated_at requires a server default';
     END IF;
   END IF;
 END $$;

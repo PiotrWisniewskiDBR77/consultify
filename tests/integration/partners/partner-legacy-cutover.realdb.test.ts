@@ -83,6 +83,7 @@ function token(subject = userId, organizationId = orgId, role = 'ADMIN') {
 
 function app() {
   const instance = express();
+  instance.set('trust proxy', 1);
   instance.use(express.json());
   instance.use('/api/v8/partner', verifyToken, requireV8OrgContext, attachV8Context, partnerRoutes);
   instance.use(
@@ -594,12 +595,37 @@ describe.sequential('Partner legacy cutover guard (real PG)', () => {
     await sql.query('BEGIN');
     try {
       await sql.query(`ALTER TABLE partner_referral_clicks RENAME TO partner_referral_clicks_good`);
-      await sql.query(`CREATE TABLE partner_referral_clicks(id integer PRIMARY KEY)`);
+      await sql.query(
+        `CREATE TABLE partner_referral_clicks
+           (LIKE partner_referral_clicks_good INCLUDING ALL)`
+      );
+      await sql.query(`ALTER TABLE partner_referral_clicks DROP COLUMN user_agent`);
+      const before = (
+        await sql.query(
+          `SELECT
+             (SELECT string_agg(column_name || ':' || data_type || ':' || is_nullable, ',' ORDER BY ordinal_position)
+                FROM information_schema.columns
+               WHERE table_schema='public' AND table_name='partner_referral_clicks') columns,
+             (SELECT COALESCE(string_agg(filename || ':' || checksum, '|' ORDER BY filename),'')
+                FROM schema_migrations WHERE filename='957_partner_public_referral_click_receipts.sql') ledger`
+        )
+      ).rows[0];
       await sql.query('SAVEPOINT hostile_click_table_migration');
       await expect(sql.query(publicClickMigration)).rejects.toThrow(
         /partner_referral_clicks has incompatible required columns/
       );
       await sql.query('ROLLBACK TO SAVEPOINT hostile_click_table_migration');
+      const after = (
+        await sql.query(
+          `SELECT
+             (SELECT string_agg(column_name || ':' || data_type || ':' || is_nullable, ',' ORDER BY ordinal_position)
+                FROM information_schema.columns
+               WHERE table_schema='public' AND table_name='partner_referral_clicks') columns,
+             (SELECT COALESCE(string_agg(filename || ':' || checksum, '|' ORDER BY filename),'')
+                FROM schema_migrations WHERE filename='957_partner_public_referral_click_receipts.sql') ledger`
+        )
+      ).rows[0];
+      expect(after).toEqual(before);
     } finally {
       await sql.query('ROLLBACK');
     }
@@ -678,13 +704,14 @@ describe.sequential('Partner legacy cutover guard (real PG)', () => {
       options: {
         key?: string;
         ip?: string;
+        forwardedFor?: string;
         body?: Record<string, unknown>;
         forgedRequestId?: string;
       } = {}
     ) => {
       const request = supertest(app())
         .post('/api/public/partner/track-click')
-        .set('X-Forwarded-For', options.ip || '198.51.100.17')
+        .set('X-Forwarded-For', options.forwardedFor || options.ip || '198.51.100.17')
         .send({
           referralCode,
           utmCampaign: campaign,
@@ -770,19 +797,35 @@ describe.sequential('Partner legacy cutover guard (real PG)', () => {
       expect(generatedReplay.body).toEqual(generated.body);
 
       process.env.PARTNER_PUBLIC_CLICK_LIMIT_PER_60S = '2';
-      const quotaOne = await call({ key: `quota-1-${suffix}`, ip: '198.51.100.19' });
-      const quotaTwo = await call({ key: `quota-2-${suffix}`, ip: '198.51.100.19' });
+      const quotaOne = await call({
+        key: `quota-1-${suffix}`,
+        forwardedFor: '203.0.113.1, 198.51.100.19',
+      });
+      const quotaTwo = await call({
+        key: `quota-2-${suffix}`,
+        forwardedFor: '203.0.113.2, 198.51.100.19',
+      });
       expect([quotaOne.status, quotaTwo.status]).toEqual([200, 200]);
       const beforeQuotaRefusal = await snapshot();
-      const refused = await call({ key: `quota-3-${suffix}`, ip: '198.51.100.19' });
+      const refused = await call({
+        key: `quota-3-${suffix}`,
+        forwardedFor: '203.0.113.3, 198.51.100.19',
+      });
       expect(refused.status).toBe(429);
       expect(refused.body.code).toBe('PARTNER_CLICK_RATE_LIMITED');
       expect(await snapshot()).toEqual(beforeQuotaRefusal);
-      const quotaReplay = await call({ key: `quota-1-${suffix}`, ip: '198.51.100.19' });
+      const quotaReplay = await call({
+        key: `quota-1-${suffix}`,
+        forwardedFor: '203.0.113.200, 198.51.100.19',
+      });
       expect(quotaReplay.status).toBe(200);
       expect(quotaReplay.body).toEqual(quotaOne.body);
 
       const beforeInvalid = await snapshot();
+      const invalidKey = await call({ key: `unsafe-${'x'.repeat(201)}` });
+      expect(invalidKey.status).toBe(400);
+      expect(invalidKey.body.code).toBe('PARTNER_CLICK_IDEMPOTENCY_KEY_INVALID');
+      expect(await snapshot()).toEqual(beforeInvalid);
       const invalid = await call({
         key: `invalid-${suffix}`,
         body: { referralCode: `missing-${suffix}` },

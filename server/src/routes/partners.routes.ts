@@ -2392,8 +2392,16 @@ publicPartnerRouter.post(
         return res.status(400).json({ success: false, error: 'Referral code is required' });
       }
 
-      // Hash IP for privacy
-      const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
+      // Express resolves this through the application's trust-proxy policy.
+      // Never hash the raw X-Forwarded-For chain supplied by the caller.
+      const ip = String(req.ip || '').trim();
+      if (!ip) {
+        return res.status(400).json({
+          success: false,
+          error: 'Network identity is required',
+          code: 'PARTNER_CLICK_IP_REQUIRED',
+        });
+      }
       const ipHash = crypto.createHash('sha256').update(String(ip)).digest('hex');
       const click = {
         // The command resolves this code and its exact owner tenant inside the
@@ -2416,6 +2424,19 @@ publicPartnerRouter.post(
         Object.entries(click).map(([key, value]) => [key, String(value || '').trim() || null])
       );
       const suppliedKey = String(req.get('Idempotency-Key') || '').trim();
+      const suppliedKeyIsHeaderSafe =
+        suppliedKey.length <= 200 &&
+        [...suppliedKey].every((character) => {
+          const code = character.charCodeAt(0);
+          return code >= 0x20 && code <= 0x7e;
+        });
+      if (suppliedKey && !suppliedKeyIsHeaderSafe) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid Idempotency-Key',
+          code: 'PARTNER_CLICK_IDEMPOTENCY_KEY_INVALID',
+        });
+      }
       const visitor = String(cookieId || sessionId || '').trim();
       const idempotencyKey =
         suppliedKey ||
