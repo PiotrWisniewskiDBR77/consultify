@@ -238,7 +238,27 @@
     "reporterHonesty": "scripts/cleanup/report-closure-progress.mjs validates only field PRESENCE, taskId match, verdict membership and productSha existence. It does NOT enforce changedPaths/changedPathRationale 1:1 and does not check path existence. The 1:1 mapping and the 21/21 existence above were verified by hand with jq set arithmetic and test -f; a green reporter82 does NOT prove either, and must not be cited as if it did.",
     "verdictDiscipline": {
       "verdict": "PARTIAL — UNCHANGED, and deliberately not uplifted.",
-      "why": "Backend and runtime DoD re-proves at laneBaseSha, but the mounted UI proof still covers only the delivery-closure slice. The nine governed action UIs remain unqualified for loading, empty, backend-error and success states, and manual VoiceOver, named-persona and visual/brand owner acceptance remain pending. Green backend, green realPG, green mounted-domain and green builds do not substitute for nine unproven UI surfaces. The openBlocker stands verbatim."
+      "why": "Exact-current source and focused component evidence now prove all nine governed controls are present in production components with loading or pending, empty where the owning collection can be empty, fail-closed error, busy, retry or recovery, and readback-confirmed success behavior. A fresh signed flag-ON Case Workspace browser matrix for all nine controls remains missing, and manual VoiceOver, named-persona and visual/brand owner acceptance remain pending. PARTIAL is preserved without treating those evidence and human boundaries as missing production controls."
     }
+  },
+  "exactCurrentUiReconciliation20260819": {
+    "canonicalSha": "2db606fdaf48b1673a1b40d604dd1221ef288c6c",
+    "ancestry": "8b0ac1a2f7a22708e8d73f5c446ee58bbec71700 is an ancestor of the canonical SHA and introduced the production governed-action UI state closure.",
+    "productionControlMap": {
+      "case.cancel": "src/components/CaseWorkspace/CasesListScreen.tsx",
+      "case.close": "src/components/CaseWorkspace/CaseDetailScreen.tsx",
+      "case.wait.cancel": "src/components/CaseWorkspace/RealizacjaView.tsx",
+      "case.run.cancel": "src/components/CaseWorkspace/RealizacjaView.tsx",
+      "case.proposal.decide": "src/components/CaseWorkspace/RealizacjaView.tsx",
+      "case.proposal.execute": "src/components/CaseWorkspace/RealizacjaView.tsx",
+      "case.proposal.revoke": "src/components/CaseWorkspace/RealizacjaView.tsx",
+      "case.artifact.unlink": "src/components/CaseWorkspace/RezultatyView.tsx",
+      "execution.budget.delete": "src/components/Execution/BudgetControlPanel.tsx"
+    },
+    "stateTruth": "The shared Case Workspace collection and command surfaces expose loading or pending, honest empty states where applicable, fail-closed error handling, busy-disabled submission, retry or remount recovery, and success only after command/readback confirmation. This supersedes the stale claim that the nine production controls and their states are missing.",
+    "budgetAdvancement": "72a04cd38c makes execution.budget.delete replayable and binds success to its command receipt plus canonical readback; it is the only one of the nine production UI paths that advanced after 8b0ac.",
+    "focusedGate": "3 files / 10 tests passed at 2db606fdaf with --retry=0: governedActions.mounted-source 2/2, BudgetControlPanel.governed-delete 2/2, executionWorkResources 6/6.",
+    "remainingBoundary": "No fresh signed browser journey has exercised all nine controls through the flag-ON Case Workspace mount. The existing Execution browser journey proves that the controls are not exposed on the default /execution tabs and that /zlecenia is default-OFF; it is not a 9/9 action execution proof. Manual VoiceOver, named-persona and visual/brand acceptance also remain pending.",
+    "verdict": "PARTIAL"
   }
 }
