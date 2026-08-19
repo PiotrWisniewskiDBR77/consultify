@@ -139,13 +139,22 @@
   },
   "verdict": "PARTIAL",
   "openBlockers": [
-    "The current single-lineage suite proves the SWOT source path, but equivalent Organization, Interview and DRD source paths through the same candidate, Initiative, Execution, Results Actual, Finance reconciliation and PIR identity remain NOT_VERIFIED.",
     "The full-lineage policy fixture is explicitly SYNTHETIC_TEST_ONLY; production policy activation and non-synthetic owner authorization remain outside this bounded technical proof.",
     "Deployed desktop and mobile journey and rollback rehearsal are not authorized or verified."
   ],
   "resolvedBlockers": [
-    "A single exact-current real-PostgreSQL suite now carries one APPROVED SWOT identity through candidate, Initiative, Execution, Results Actual, Finance reconciliation and PIR, with fail-closed tenant and authority controls."
+    "A single exact-current real-PostgreSQL suite now carries one APPROVED SWOT identity through candidate, Initiative, Execution, Results Actual, Finance reconciliation and PIR, with fail-closed tenant and authority controls.",
+    "Commit d6020571a8 is an ancestor of canonical 81123eb305 and its 12 production/test paths are byte-identical at that canonical SHA. Its fresh-PostgreSQL source-adapter assertions passed 4/4 and its parameterized four-source downstream matrix passed 6/6 for Organization, Interview, DRD and SWOT, including cold replay, foreign-tenant denial, immutable correlation receipts and stable candidate-to-PIR identities."
   ],
+  "fourSourceCanonicalReconciliation20260819": {
+    "technicalSourceSha": "d6020571a8",
+    "reconciledCanonicalSha": "81123eb305",
+    "ancestry": "technicalSourceSha is an ancestor of reconciledCanonicalSha",
+    "pathDrift": "0/12 FLOW source, route, migration, UI and focused test paths changed between the technical source and reconciled canonical SHA",
+    "sourceAdapters": "4/4 real-PostgreSQL product assertions passed: exact replay, stale/hash/tenant denial, concurrency exactly one Candidate, injected rollback and immutable receipt",
+    "fourSourceLineage": "6/6 real-PostgreSQL tests passed for Organization, Interview, DRD and SWOT through accepted Candidate, Initiative, Execution authority, immutable Results Actual, governed Finance reconciliation with maker-checker separation, and finalized PIR pinned to the same Actual",
+    "verdictBoundary": "Repository four-source lineage is technically proven. PARTIAL remains because the visibility policy used by the full-lineage fixture is SYNTHETIC_TEST_ONLY and deployed desktop/mobile plus rollback/release are not authorized."
+  },
   "currentTechnicalRequalification": {
     "candidateSha": "1a0a9ef50694f981bcba167429e956493829180a",
     "technicalSourceSha": "64590c5b4a530b53b4432ef990b709efe3ef12e3",
