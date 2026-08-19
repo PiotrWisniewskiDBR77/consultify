@@ -204,17 +204,17 @@ export const PARTNERS_CUTOVER: LegacyCutoverDomainConfig = {
 /**
  * FINANCE, SECOND DOOR — `/api/financial-modeling`.
  *
- * THE FINDING THIS EXISTS FOR: `POST /api/v8/finance/models/:id/approve` was
- * retired by FIN-MVP-CUTOVER-001 and answers 410. The very same write —
- * literally the same `approveModel()` in `financialModelingService.ts` — is also
+ * HISTORICAL FINDING: `POST /api/v8/finance/models/:id/approve` had been
+ * retired by FIN-MVP-CUTOVER-001 and answered 410. The very same write —
+ * literally the same `approveModel()` in `financialModelingService.ts` — was also
  * reachable at `POST /api/financial-modeling/models/:id/approve`
  * (`server/src/routes/financial-modeling.routes.ts:538`, mounted at
  * `server/src/Gateway.ts:1348` behind `verifyToken` and a no-op `betaGate`),
- * where nothing guarded it at all. Two live UI surfaces call that second door
+ * where nothing guarded it at all. Two live UI surfaces called that second door
  * DIRECTLY, with no V8 attempt first:
  *   `src/components/Economics/hooks/useFinanceRowActions.ts:45`
  *   `src/components/Economics/FinancePreviewPanel.tsx:73`
- * So the writer was never retired — only one of its two doors was.
+ * At that point the writer was not retired — only one of its two doors was.
  *
  * Historical note: FIN-W02 initially remained `protected` while those two live
  * clients still used it, which closed the measurement gap without changing
