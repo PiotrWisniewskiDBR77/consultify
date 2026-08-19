@@ -1,10 +1,9 @@
 /**
  * CLAUDE-NEXT-LEGACY-CUTOVER — the Partner writers the cutover never saw.
  *
- * `partners.routes.ts` exports four routers, not one. The cutover guard was
- * applied to the default export only (`router.use(partnerLegacyCutoverGuard)` at
- * partners.routes.ts:229), so every write on the other three has been invisible
- * to the Partner cutover since it began:
+ * `partners.routes.ts` exports four routers, not one. Historically the cutover
+ * guard was applied to the default export only, so writes on the other three
+ * were invisible to the Partner cutover:
  *
  *   publicPartnerRouter      -> /api/public/partner            (Gateway.ts:630)
  *   superAdminPartnerRouter  -> /api/superadmin/partner-settlements (Gateway.ts:1264)
@@ -15,7 +14,9 @@
  * router was therefore describing a subset of the domain while reading as though
  * it described the domain.
  *
- * Every writer here is `observed`. None has a V8 successor located in code, and
+ * Every retiring writer here is `observed` unless a successor is named. W17 is
+ * different: it is the retained canonical public ingress and is not eligible
+ * for legacy retirement. The remaining writers have no V8 successor located in code, and
  * the superadmin surfaces have no V8 equivalent at all. The value of registering
  * them is that their traffic becomes attributable per tenant before anyone
  * proposes retiring anything in this domain.
@@ -27,10 +28,10 @@ const PARTNER_ROLLBACK_ENV = 'PARTNER_LEGACY_ROLLBACK_ENABLED';
 const PARTNER_ROLLBACK_WRITERS_ENV = 'PARTNER_LEGACY_ROLLBACK_WRITERS';
 
 /**
- * PUBLIC. Unauthenticated by design — it is the referral-click tracker. It is
- * registered here because an unauthenticated writer is exactly the kind that
- * telemetry must be able to name; the kernel will record it with
- * `tenant_resolution = 'unresolved'`, which is the honest answer.
+ * PUBLIC. Unauthenticated by design — it is the retained referral-click ingress.
+ * Its atomic command resolves the Partner owner tenant before persisting
+ * telemetry; this registry entry prevents retirement tooling from treating it
+ * as an incomplete legacy writer.
  */
 export const PARTNERS_PUBLIC_CUTOVER: LegacyCutoverDomainConfig = {
   domain: 'partners',
@@ -41,18 +42,19 @@ export const PARTNERS_PUBLIC_CUTOVER: LegacyCutoverDomainConfig = {
   // This mount is unauthenticated and takes referral-code traffic. An anonymous
   // GET here matches no writer rule and cannot be attributed to a tenant, so a
   // telemetry row per read would be write amplification on a public endpoint in
-  // exchange for a row that answers no retirement question. Writes are still
-  // recorded, always.
+  // exchange for a row that answers no retirement question. The production
+  // write is not mounted behind this generic guard; its atomic command records
+  // resolved owner-tenant telemetry together with the click.
   recordUnmatchedReads: false,
   writers: [
     {
       writerId: 'PRT-W17',
       method: 'POST',
       path: /^\/track-click\/?$/,
-      state: 'observed',
+      state: 'owner-blocked',
       successor: null,
       reason:
-        'Public, unauthenticated referral click tracker (partners.routes.ts:2309) on a router the Partner cutover guard was never applied to. Recorded with an unresolved tenant rather than an assumed one.',
+        'RETAINED_CURRENT_CANONICAL_PUBLIC_INGRESS: public referral click intake remains authoritative; its atomic command records resolved Partner-owner telemetry and is not a legacy retirement candidate.',
     },
   ],
 };

@@ -7,11 +7,12 @@
  * the two superadmin routers — settlement approval, payout processing,
  * commission rates — have been invisible to the Partner cutover since it began.
  *
- * These tests prove the three newly guarded mounts observe without blocking, and
- * pin the two properties that make the observation trustworthy: an
- * unauthenticated public writer is recorded with an UNRESOLVED tenant rather than
- * an assumed one, and two writers that share a router-local path on different
- * mounts stay distinguishable.
+ * These tests prove the authenticated sibling mounts observe without blocking.
+ * PRT-W17 is deliberately different: the production public router is not mounted
+ * behind the generic guard. Its retained canonical command resolves the owner
+ * tenant and records telemetry in the same transaction as the click. This file
+ * therefore pins registry authority only and must not manufacture synthetic
+ * unresolved "production" telemetry for the public ingress.
  */
 import { randomUUID } from 'node:crypto';
 import express from 'express';
@@ -87,7 +88,10 @@ describe.skipIf(!REAL_PG)('Partner sibling routers (fresh real PostgreSQL)', () 
 
   afterAll(async () => {
     if (!pool) return;
-    await cleanupLegacyCutoverTestIntents(pool, { organizationIds: [orgA, orgB], requestIdPrefix: prefix });
+    await cleanupLegacyCutoverTestIntents(pool, {
+      organizationIds: [orgA, orgB],
+      requestIdPrefix: prefix,
+    });
     await pool.query(`DELETE FROM legacy_cutover_usage_events WHERE request_id LIKE $1`, [
       `${prefix}%`,
     ]);
@@ -95,46 +99,28 @@ describe.skipIf(!REAL_PG)('Partner sibling routers (fresh real PostgreSQL)', () 
     await pool.end();
   });
 
-  it('observes the public referral writer with an unresolved tenant, never an assumed one', async () => {
-    const response = await request(app(PARTNERS_PUBLIC_CUTOVER, '/api/public/partner', false))
-      .post('/api/public/partner/track-click')
-      .set('x-request-id', `${prefix}-public`)
-      .send({});
-    expect(response.status).toBe(200);
-    expect(response.body.reachedLeaf).toBe(true);
+  it('classifies PRT-W17 as retained canonical ingress without claiming a generic guard mount', async () => {
+    expect(PARTNERS_PUBLIC_CUTOVER.recordUnmatchedReads).toBe(false);
+    expect(PARTNERS_PUBLIC_CUTOVER.writers).toHaveLength(1);
+    expect(PARTNERS_PUBLIC_CUTOVER.writers[0]).toMatchObject({
+      writerId: 'PRT-W17',
+      method: 'POST',
+      state: 'owner-blocked',
+      successor: null,
+    });
+    expect(PARTNERS_PUBLIC_CUTOVER.writers[0].reason).toContain(
+      'RETAINED_CURRENT_CANONICAL_PUBLIC_INGRESS'
+    );
 
-    expect(await rows(`${prefix}-public`)).toEqual([
-      {
-        writer_id: 'PRT-W17',
-        access_kind: 'legacy_uncovered_writer',
-        route_path: '/api/public/partner/track-click',
-        organization_id: null,
-        tenant_resolution: 'unresolved',
-      },
-    ]);
-  });
-
-  it('does not record an anonymous read on the public mount, but still records its writes', async () => {
-    const instance = app(PARTNERS_PUBLIC_CUTOVER, '/api/public/partner', false);
-    await request(instance)
-      .get('/api/public/partner/anything')
-      .set('x-request-id', `${prefix}-public-read`)
-      .send();
-    expect(await rows(`${prefix}-public-read`)).toHaveLength(0);
-
-    await request(instance)
-      .post('/api/public/partner/track-click')
-      .set('x-request-id', `${prefix}-public-write`)
-      .send({});
-    expect(await rows(`${prefix}-public-write`)).toHaveLength(1);
+    // This registry suite must not synthesize anonymous cutover events. The
+    // mounted production command and its resolved tenant telemetry are proven
+    // in partner-legacy-cutover.realdb.test.ts.
+    expect(await rows(`${prefix}-public`)).toHaveLength(0);
+    expect(await rows(`${prefix}-public-write`)).toHaveLength(0);
   });
 
   it('observes the superadmin payout money path per tenant without blocking it', async () => {
-    const instance = app(
-      PARTNERS_SUPERADMIN_CUTOVER,
-      '/api/superadmin/partner-settlements',
-      true
-    );
+    const instance = app(PARTNERS_SUPERADMIN_CUTOVER, '/api/superadmin/partner-settlements', true);
     const response = await request(instance)
       .post('/api/superadmin/partner-settlements/process-payout/payout-1')
       .set('x-test-org', orgA)
@@ -156,7 +142,9 @@ describe.skipIf(!REAL_PG)('Partner sibling routers (fresh real PostgreSQL)', () 
   it('keeps two writers that share a router-local path separable by mount', async () => {
     // PRT-W08 (retired, tenant-facing) and PRT-W27 (superadmin, observed) are
     // both `PUT /payout-settings`. Only the full path distinguishes them.
-    const response = await request(app(PARTNERS_CONFIG_CUTOVER, '/api/superadmin/partner-config', true))
+    const response = await request(
+      app(PARTNERS_CONFIG_CUTOVER, '/api/superadmin/partner-config', true)
+    )
       .put('/api/superadmin/partner-config/payout-settings')
       .set('x-test-org', orgA)
       .set('x-request-id', `${prefix}-collision`)

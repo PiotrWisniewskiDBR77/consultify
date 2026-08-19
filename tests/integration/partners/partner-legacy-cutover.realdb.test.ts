@@ -18,6 +18,7 @@ import partnerRoutes from '../../../server/src/routes/v8/partner.routes.ts';
 import partnerReviewRoutes from '../../../server/src/routes/v8/admin/partner-review.routes.ts';
 import legacyPartnerRoutes, {
   partnerConfigRouter,
+  publicPartnerRouter,
 } from '../../../server/src/routes/partners.routes.ts';
 
 import {
@@ -61,6 +62,10 @@ const operatorReviewMigration = readFileSync(
   path.resolve('server/migrations/956_partner_operator_review_receipts.sql'),
   'utf8'
 );
+const publicClickMigration = readFileSync(
+  path.resolve('server/migrations/957_partner_public_referral_click_receipts.sql'),
+  'utf8'
+);
 
 function token(subject = userId, organizationId = orgId, role = 'ADMIN') {
   return jwt.sign(
@@ -86,6 +91,7 @@ function app() {
     requireV8OrgContext,
     partnerReviewRoutes
   );
+  instance.use('/api/public/partner', publicPartnerRouter);
   instance.use('/api/partners', legacyPartnerRoutes);
   instance.use('/api/superadmin/partner-config', partnerConfigRouter);
   instance.use((error: Error, _req: any, res: any, _next: any) =>
@@ -145,6 +151,8 @@ beforeAll(async () => {
   await sql.query(connectionReceiptMigration);
   await sql.query(operatorReviewMigration);
   await sql.query(operatorReviewMigration);
+  await sql.query(publicClickMigration);
+  await sql.query(publicClickMigration);
   await sql.query(`DELETE FROM legacy_cutover_usage_events WHERE domain='partners' AND request_id LIKE $1`, [
     `${REQUEST_PREFIX}%`,
   ]);
@@ -296,6 +304,17 @@ afterAll(async () => {
     await sql.query(`DELETE FROM legacy_cutover_signal_intents WHERE domain='partners' AND request_id LIKE $1`, [
       `${REQUEST_PREFIX}%`,
     ]);
+    const ownedOrganizationIds = [orgId, foreignOrgId, revokedOrgId, unboundOrgId];
+    await sql.query(
+      `DELETE FROM legacy_cutover_usage_events
+        WHERE domain='partners' AND organization_id = ANY($1::text[])`,
+      [ownedOrganizationIds]
+    );
+    await sql.query(
+      `DELETE FROM legacy_cutover_signal_intents
+        WHERE domain='partners' AND organization_id = ANY($1::text[])`,
+      [ownedOrganizationIds]
+    );
     if (
       (
         await sql.query(
@@ -312,6 +331,11 @@ afterAll(async () => {
       `DELETE FROM partner_operator_review_receipts WHERE actor_user_id IN ($1,$2,$3,$4)`,
       [userId, foreignUserId, revokedUserId, unboundUserId]
     );
+    await sql.query(`DELETE FROM partner_referral_click_receipts WHERE partner_org_id=$1`, [
+      partnerOrgId,
+    ]);
+    await sql.query(`DELETE FROM partner_referral_clicks WHERE partner_org_id=$1`, [partnerOrgId]);
+    await sql.query(`DELETE FROM partner_campaign_links WHERE partner_org_id=$1`, [partnerOrgId]);
     await sql.query(`DELETE FROM public_partner_applications WHERE id=$1`, [operatorApplicationId]);
     await sql.query(`DELETE FROM partner_organizations WHERE id IN ($1,$2,$3)`, [
       partnerOrgId,
@@ -562,6 +586,261 @@ describe.sequential('Partner legacy cutover guard (real PG)', () => {
       await sql.query(`DROP TABLE IF EXISTS public_partner_applications`);
       await sql.query(
         `ALTER TABLE public_partner_applications_good RENAME TO public_partner_applications`
+      );
+    }
+  });
+
+  it('fails closed on hostile public-click table, receipt and abuse-index shapes', async () => {
+    await sql.query('BEGIN');
+    try {
+      await sql.query(`ALTER TABLE partner_referral_clicks RENAME TO partner_referral_clicks_good`);
+      await sql.query(`CREATE TABLE partner_referral_clicks(id integer PRIMARY KEY)`);
+      await sql.query('SAVEPOINT hostile_click_table_migration');
+      await expect(sql.query(publicClickMigration)).rejects.toThrow(
+        /partner_referral_clicks has incompatible required columns/
+      );
+      await sql.query('ROLLBACK TO SAVEPOINT hostile_click_table_migration');
+    } finally {
+      await sql.query('ROLLBACK');
+    }
+
+    await sql.query('BEGIN');
+    try {
+      await sql.query(`ALTER TABLE partner_campaign_links RENAME TO partner_campaign_links_good`);
+      await sql.query(`CREATE TABLE partner_campaign_links(id integer PRIMARY KEY)`);
+      await sql.query('SAVEPOINT hostile_campaign_table_migration');
+      await expect(sql.query(publicClickMigration)).rejects.toThrow(
+        /partner_campaign_links has incompatible required columns/
+      );
+      await sql.query('ROLLBACK TO SAVEPOINT hostile_campaign_table_migration');
+    } finally {
+      await sql.query('ROLLBACK');
+    }
+
+    await sql.query('BEGIN');
+    try {
+      await sql.query(
+        `ALTER TABLE partner_referral_click_receipts RENAME TO partner_referral_click_receipts_good`
+      );
+      await sql.query(`CREATE TABLE partner_referral_click_receipts(partner_org_id integer)`);
+      const before = (
+        await sql.query(
+          `SELECT
+             (SELECT string_agg(column_name || ':' || data_type || ':' || is_nullable, ',' ORDER BY ordinal_position)
+                FROM information_schema.columns
+               WHERE table_schema='public' AND table_name='partner_referral_click_receipts') columns,
+             (SELECT COALESCE(string_agg(filename || ':' || checksum, '|' ORDER BY filename),'')
+                FROM schema_migrations WHERE filename='957_partner_public_referral_click_receipts.sql') ledger`
+        )
+      ).rows[0];
+      await sql.query('SAVEPOINT hostile_receipt_migration');
+      await expect(sql.query(publicClickMigration)).rejects.toThrow(
+        /partner_referral_click_receipts has incompatible columns/
+      );
+      await sql.query('ROLLBACK TO SAVEPOINT hostile_receipt_migration');
+      const after = (
+        await sql.query(
+          `SELECT
+             (SELECT string_agg(column_name || ':' || data_type || ':' || is_nullable, ',' ORDER BY ordinal_position)
+                FROM information_schema.columns
+               WHERE table_schema='public' AND table_name='partner_referral_click_receipts') columns,
+             (SELECT COALESCE(string_agg(filename || ':' || checksum, '|' ORDER BY filename),'')
+                FROM schema_migrations WHERE filename='957_partner_public_referral_click_receipts.sql') ledger`
+        )
+      ).rows[0];
+      expect(after).toEqual(before);
+    } finally {
+      await sql.query('ROLLBACK');
+    }
+
+    await sql.query('BEGIN');
+    try {
+      await sql.query(
+        `ALTER INDEX idx_partner_clicks_abuse_window RENAME TO idx_partner_clicks_abuse_window_good`
+      );
+      await sql.query(
+        `CREATE INDEX idx_partner_clicks_abuse_window ON partner_referral_clicks(id)`
+      );
+      await expect(sql.query(publicClickMigration)).rejects.toThrow(
+        /idx_partner_clicks_abuse_window is incompatible/
+      );
+    } finally {
+      await sql.query('ROLLBACK');
+    }
+  });
+
+  it('retains an atomic, idempotent and abuse-bounded canonical public click ingress', async () => {
+    const campaignId = randomUUID();
+    const campaign = `w17-${suffix}`;
+    const referralCode = `PRT-${suffix}`;
+    const priorLimit = process.env.PARTNER_PUBLIC_CLICK_LIMIT_PER_60S;
+    const call = (
+      options: {
+        key?: string;
+        ip?: string;
+        body?: Record<string, unknown>;
+        forgedRequestId?: string;
+      } = {}
+    ) => {
+      const request = supertest(app())
+        .post('/api/public/partner/track-click')
+        .set('X-Forwarded-For', options.ip || '198.51.100.17')
+        .send({
+          referralCode,
+          utmCampaign: campaign,
+          landingPage: '/partner-proof',
+          ...(options.body || {}),
+        });
+      if (options.key) request.set('Idempotency-Key', options.key);
+      if (options.forgedRequestId) request.set('X-Request-Id', options.forgedRequestId);
+      return request;
+    };
+    const snapshot = async () =>
+      (
+        await sql.query(
+          `SELECT
+             (SELECT count(*)::int FROM partner_referral_clicks WHERE partner_org_id=$1) clicks,
+             (SELECT count(*)::int FROM partner_referral_click_receipts WHERE partner_org_id=$1) receipts,
+             (SELECT click_count FROM partner_campaign_links WHERE id=$2) campaign_clicks,
+             (SELECT count(*)::int FROM legacy_cutover_usage_events
+               WHERE domain='partners' AND writer_id='PRT-W17' AND organization_id=$3) telemetry`,
+          [partnerOrgId, campaignId, orgId]
+        )
+      ).rows[0];
+    try {
+      await sql.query(
+        `INSERT INTO partner_campaign_links
+         (id,partner_org_id,name,slug,utm_campaign,click_count,is_active)
+         VALUES($1,$2,'W17 proof',$3,$3,0,true)`,
+        [campaignId, partnerOrgId, campaign]
+      );
+      const baseline = await snapshot();
+
+      const firstKey = `w17-first-${suffix}`;
+      const first = await call({ key: firstKey, forgedRequestId: 'client-must-not-win' });
+      expect(first.status, JSON.stringify(first.body)).toBe(200);
+      expect(first.body).toEqual({
+        success: true,
+        data: {
+          success: true,
+          clickId: expect.any(String),
+          serverRequestId: expect.any(String),
+        },
+      });
+      expect(first.headers['x-request-id']).toBe(first.body.data.serverRequestId);
+      expect(first.headers['x-request-id']).not.toBe('client-must-not-win');
+      expect(first.headers['x-idempotency-key']).toBe(firstKey);
+      const replay = await call({ key: firstKey });
+      expect(replay.status).toBe(200);
+      expect(replay.body).toEqual(first.body);
+      expect(replay.headers['x-request-id']).toBe(first.headers['x-request-id']);
+      const collision = await call({ key: firstKey, body: { utmContent: 'changed' } });
+      expect(collision.status).toBe(409);
+      expect(collision.body.code).toBe('IDEMPOTENCY_PAYLOAD_MISMATCH');
+      expect(await snapshot()).toEqual({
+        clicks: baseline.clicks + 1,
+        receipts: baseline.receipts + 1,
+        campaign_clicks: baseline.campaign_clicks + 1,
+        telemetry: baseline.telemetry + 1,
+      });
+
+      const concurrentKey = `w17-concurrent-${suffix}`;
+      const concurrent = await Promise.all(
+        Array.from({ length: 8 }, () => call({ key: concurrentKey }))
+      );
+      expect(concurrent.every((response) => response.status === 200)).toBe(true);
+      for (const response of concurrent) expect(response.body).toEqual(concurrent[0].body);
+
+      const visitorBody = { cookieId: `visitor-${suffix}` };
+      const visitorFirst = await call({ body: visitorBody });
+      const visitorReplay = await call({ body: visitorBody });
+      expect(visitorFirst.status).toBe(200);
+      expect(visitorReplay.body).toEqual(visitorFirst.body);
+      expect(visitorReplay.headers['x-idempotency-key']).toBe(
+        visitorFirst.headers['x-idempotency-key']
+      );
+
+      const generated = await call({ ip: '198.51.100.18' });
+      expect(generated.status).toBe(200);
+      expect(generated.headers['x-idempotency-key']).toEqual(expect.any(String));
+      const generatedReplay = await call({
+        ip: '198.51.100.18',
+        key: generated.headers['x-idempotency-key'],
+      });
+      expect(generatedReplay.body).toEqual(generated.body);
+
+      process.env.PARTNER_PUBLIC_CLICK_LIMIT_PER_60S = '2';
+      const quotaOne = await call({ key: `quota-1-${suffix}`, ip: '198.51.100.19' });
+      const quotaTwo = await call({ key: `quota-2-${suffix}`, ip: '198.51.100.19' });
+      expect([quotaOne.status, quotaTwo.status]).toEqual([200, 200]);
+      const beforeQuotaRefusal = await snapshot();
+      const refused = await call({ key: `quota-3-${suffix}`, ip: '198.51.100.19' });
+      expect(refused.status).toBe(429);
+      expect(refused.body.code).toBe('PARTNER_CLICK_RATE_LIMITED');
+      expect(await snapshot()).toEqual(beforeQuotaRefusal);
+      const quotaReplay = await call({ key: `quota-1-${suffix}`, ip: '198.51.100.19' });
+      expect(quotaReplay.status).toBe(200);
+      expect(quotaReplay.body).toEqual(quotaOne.body);
+
+      const beforeInvalid = await snapshot();
+      const invalid = await call({
+        key: `invalid-${suffix}`,
+        body: { referralCode: `missing-${suffix}` },
+      });
+      expect(invalid.status).toBe(404);
+      expect(invalid.body.code).toBe('PARTNER_REFERRAL_CODE_NOT_FOUND');
+      expect(await snapshot()).toEqual(beforeInvalid);
+
+      await sql.query(
+        `ALTER TABLE partner_referral_click_receipts RENAME TO partner_referral_click_receipts_hidden`
+      );
+      try {
+        const failed = await call({ key: `storage-failure-${suffix}`, ip: '198.51.100.20' });
+        expect(failed.status).toBe(500);
+        expect(failed.body?.data?.success).toBeUndefined();
+      } finally {
+        await sql.query(
+          `ALTER TABLE partner_referral_click_receipts_hidden RENAME TO partner_referral_click_receipts`
+        );
+      }
+      expect(await snapshot()).toEqual(beforeInvalid);
+
+      const cold = new Client({ connectionString: DATABASE_URL });
+      await cold.connect();
+      try {
+        const rows = await cold.query(
+          `SELECT r.click_id,r.server_request_id,e.organization_id,e.tenant_resolution,e.legacy_id
+             FROM partner_referral_click_receipts r
+             JOIN legacy_cutover_usage_events e ON e.legacy_id=r.click_id::text
+            WHERE r.partner_org_id=$1 AND r.status='COMPLETED'
+            ORDER BY r.created_at`,
+          [partnerOrgId]
+        );
+        expect(rows.rows).toHaveLength(beforeInvalid.receipts - baseline.receipts);
+        expect(
+          rows.rows.every(
+            (row) =>
+              row.organization_id === orgId &&
+              row.tenant_resolution === 'resolved' &&
+              row.legacy_id === row.click_id
+          )
+        ).toBe(true);
+      } finally {
+        await cold.end();
+      }
+    } finally {
+      if (priorLimit === undefined) delete process.env.PARTNER_PUBLIC_CLICK_LIMIT_PER_60S;
+      else process.env.PARTNER_PUBLIC_CLICK_LIMIT_PER_60S = priorLimit;
+      await sql.query(`DELETE FROM partner_referral_click_receipts WHERE partner_org_id=$1`, [
+        partnerOrgId,
+      ]);
+      await sql.query(`DELETE FROM partner_referral_clicks WHERE partner_org_id=$1`, [
+        partnerOrgId,
+      ]);
+      await sql.query(`DELETE FROM partner_campaign_links WHERE id=$1`, [campaignId]);
+      await sql.query(
+        `DELETE FROM legacy_cutover_usage_events WHERE domain='partners' AND writer_id='PRT-W17' AND organization_id=$1`,
+        [orgId]
       );
     }
   });
@@ -1379,6 +1658,18 @@ describe.sequential('Partner legacy cutover guard (real PG)', () => {
       if (previousFlag === undefined) delete process.env.PARTNER_SELF_CONNECT_ENABLED;
       else process.env.PARTNER_SELF_CONNECT_ENABLED = previousFlag;
       delete process.env[PARTNER_LEGACY_WRITER_ROLLBACK_ENV];
+      await sql.query(
+        `DELETE FROM legacy_cutover_usage_events
+          WHERE domain='partners' AND writer_id='PRT-W09'
+            AND organization_id=$1 AND user_id=$2`,
+        [connectOrgId, connectUserId]
+      );
+      await sql.query(
+        `DELETE FROM legacy_cutover_signal_intents
+          WHERE domain='partners' AND writer_id='PRT-W09'
+            AND organization_id=$1 AND user_id=$2`,
+        [connectOrgId, connectUserId]
+      );
       await sql.query(`DELETE FROM partner_connection_receipts WHERE organization_id=$1`, [
         connectOrgId,
       ]);

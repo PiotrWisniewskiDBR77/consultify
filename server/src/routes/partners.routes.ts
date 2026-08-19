@@ -62,6 +62,7 @@ import {
 } from '../services/partnerPayoutSettingsService.js';
 import PartnerProgramLedgerService from '../services/partnerProgramLedgerService.js';
 import PartnerReferralService, {
+  PartnerPublicClickError,
   ensurePartnerReferralIdentity,
 } from '../services/partnerReferralService.js';
 import { generatePartnerToolkitResourceFile } from '../services/partnerToolkitResources.js';
@@ -2391,19 +2392,13 @@ publicPartnerRouter.post(
         return res.status(400).json({ success: false, error: 'Referral code is required' });
       }
 
-      // Look up partner by code
-      const partner = await PartnerReferralService.getPartnerByReferralCode(referralCode);
-
-      if (!partner) {
-        return res.status(404).json({ success: false, error: 'Invalid referral code' });
-      }
-
       // Hash IP for privacy
       const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
-      const ipHash = require('crypto').createHash('sha256').update(String(ip)).digest('hex');
-
-      const result = await PartnerReferralService.trackClick({
-        partnerOrgId: partner.partnerOrgId,
+      const ipHash = crypto.createHash('sha256').update(String(ip)).digest('hex');
+      const click = {
+        // The command resolves this code and its exact owner tenant inside the
+        // same pinned transaction that performs the write.
+        partnerOrgId: '',
         referralCode,
         ipHash,
         userAgent: req.headers['user-agent'] || undefined,
@@ -2416,11 +2411,39 @@ publicPartnerRouter.post(
         utmTerm,
         sessionId,
         cookieId,
+      };
+      const canonical = Object.fromEntries(
+        Object.entries(click).map(([key, value]) => [key, String(value || '').trim() || null])
+      );
+      const suppliedKey = String(req.get('Idempotency-Key') || '').trim();
+      const visitor = String(cookieId || sessionId || '').trim();
+      const idempotencyKey =
+        suppliedKey ||
+        (visitor
+          ? `visitor:${crypto
+              .createHash('sha256')
+              .update(JSON.stringify({ visitor, payload: canonical }))
+              .digest('hex')}`
+          : crypto.randomUUID());
+      // Always server-generated. A client x-request-id can correlate logs at
+      // most; it never becomes the durable identity or telemetry key.
+      const serverRequestId = crypto.randomUUID();
+      const result = await PartnerReferralService.trackPublicReferralClick({
+        click,
+        idempotencyKey,
+        serverRequestId,
       });
 
+      res.setHeader('X-Request-Id', result.serverRequestId);
+      res.setHeader('X-Idempotency-Key', idempotencyKey);
       res.json({ success: true, data: result });
     } catch (error: any) {
       logger.error('Error tracking click:', error);
+      if (error instanceof PartnerPublicClickError) {
+        return res
+          .status(error.status)
+          .json({ success: false, error: error.message, code: error.code });
+      }
       next(error);
     }
   }

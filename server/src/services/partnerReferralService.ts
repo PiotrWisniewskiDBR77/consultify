@@ -16,6 +16,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
+import { withPgTransaction } from '../database/PostgresDatabase.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import { assertPartnerEconomicsOperationAllowed } from './partnerEconomicsPolicy.js';
@@ -92,6 +93,77 @@ export interface ReferralClickParams {
   utmTerm?: string;
   sessionId?: string;
   cookieId?: string;
+}
+
+export const PARTNER_PUBLIC_CLICK_LIMIT_ENV = 'PARTNER_PUBLIC_CLICK_LIMIT_PER_60S';
+
+export class PartnerPublicClickError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly code: string
+  ) {
+    super(message);
+  }
+}
+
+export interface PublicReferralClickResult {
+  success: true;
+  clickId: string;
+  serverRequestId: string;
+}
+
+function publicClickLimit(env: NodeJS.ProcessEnv): number {
+  const configured = Number(env[PARTNER_PUBLIC_CLICK_LIMIT_ENV]);
+  if (!Number.isFinite(configured)) return 120;
+  return Math.min(10_000, Math.max(1, Math.trunc(configured)));
+}
+
+function normalizePublicClick(params: ReferralClickParams) {
+  const text = (value: unknown) => String(value || '').trim() || null;
+  const normalized = {
+    referralCode: text(params.referralCode),
+    ipHash: text(params.ipHash),
+    userAgent: text(params.userAgent),
+    referer: text(params.referer),
+    landingPage: text(params.landingPage),
+    utmSource: text(params.utmSource),
+    utmMedium: text(params.utmMedium),
+    utmCampaign: text(params.utmCampaign),
+    utmContent: text(params.utmContent),
+    utmTerm: text(params.utmTerm),
+    sessionId: text(params.sessionId),
+    cookieId: text(params.cookieId),
+  };
+  const limits: Array<[keyof typeof normalized, number]> = [
+    ['referralCode', 50],
+    ['ipHash', 64],
+    ['referer', 500],
+    ['landingPage', 500],
+    ['utmSource', 100],
+    ['utmMedium', 100],
+    ['utmCampaign', 100],
+    ['utmContent', 100],
+    ['utmTerm', 100],
+    ['sessionId', 100],
+    ['cookieId', 100],
+  ];
+  for (const [key, max] of limits) {
+    if (normalized[key] && normalized[key]!.length > max) {
+      throw new PartnerPublicClickError(`${key} is too long`, 400, 'PARTNER_CLICK_INVALID_INPUT');
+    }
+  }
+  if (!normalized.referralCode) {
+    throw new PartnerPublicClickError(
+      'Referral code is required',
+      400,
+      'PARTNER_REFERRAL_CODE_REQUIRED'
+    );
+  }
+  if (!normalized.ipHash || !/^[0-9a-f]{64}$/.test(normalized.ipHash)) {
+    throw new PartnerPublicClickError('Invalid network identity', 400, 'PARTNER_CLICK_IP_INVALID');
+  }
+  return normalized;
 }
 
 export interface CreateAttributionParams {
@@ -832,6 +904,184 @@ export async function trackClick(
     logger.error('[PartnerReferralService] Error tracking click:', err);
     return { success: false };
   }
+}
+
+/**
+ * Canonical PRT-W17 public ingress. The receipt, abuse decision, click,
+ * campaign counter and resolved-tenant observation share one pinned transaction.
+ */
+export async function trackPublicReferralClick(params: {
+  click: ReferralClickParams;
+  idempotencyKey: string;
+  serverRequestId: string;
+  env?: NodeJS.ProcessEnv;
+}): Promise<PublicReferralClickResult> {
+  const normalized = normalizePublicClick(params.click);
+  const rawKey = String(params.idempotencyKey || '').trim();
+  if (!rawKey || rawKey.length > 500) {
+    throw new PartnerPublicClickError(
+      'Invalid Idempotency-Key',
+      400,
+      'PARTNER_CLICK_IDEMPOTENCY_KEY_INVALID'
+    );
+  }
+  if (!/^[0-9a-f-]{36}$/.test(params.serverRequestId)) {
+    throw new PartnerPublicClickError(
+      'Invalid server request identity',
+      500,
+      'PARTNER_CLICK_REQUEST_ID_INVALID'
+    );
+  }
+  const opaqueKey = crypto.createHash('sha256').update(rawKey).digest('hex');
+  const hash = crypto.createHash('sha256').update(JSON.stringify(normalized)).digest('hex');
+  const env = params.env || process.env;
+
+  return withPgTransaction(async (query) => {
+    const partnerRows = await query<any>(
+      `SELECT id,owner_organization_id
+         FROM partner_organizations
+        WHERE (upper(referral_code)=upper($1) OR lower(referral_link_slug)=lower($1))
+          AND lower(status)='active'
+        ORDER BY updated_at DESC
+        LIMIT 2
+        FOR SHARE`,
+      [normalized.referralCode]
+    );
+    if (partnerRows.rows.length === 0) {
+      throw new PartnerPublicClickError(
+        'Invalid referral code',
+        404,
+        'PARTNER_REFERRAL_CODE_NOT_FOUND'
+      );
+    }
+    if (partnerRows.rows.length > 1) {
+      throw new PartnerPublicClickError(
+        'Referral code is ambiguous',
+        409,
+        'PARTNER_REFERRAL_CODE_AMBIGUOUS'
+      );
+    }
+    const partner = partnerRows.rows[0];
+    if (!partner.owner_organization_id) {
+      throw new PartnerPublicClickError(
+        'Partner tenant binding is required',
+        409,
+        'PARTNER_TENANT_UNBOUND'
+      );
+    }
+
+    await query(`SELECT pg_advisory_xact_lock(hashtextextended($1,0))`, [
+      `partner-public-click-receipt:${partner.id}:${opaqueKey}`,
+    ]);
+    const prior = (
+      await query<any>(
+        `SELECT request_hash,status,response_json
+           FROM partner_referral_click_receipts
+          WHERE partner_org_id=$1 AND idempotency_key=$2
+          FOR UPDATE`,
+        [partner.id, opaqueKey]
+      )
+    ).rows[0];
+    if (prior) {
+      if (prior.request_hash !== hash) {
+        throw new PartnerPublicClickError(
+          'Idempotency replay payload mismatch',
+          409,
+          'IDEMPOTENCY_PAYLOAD_MISMATCH'
+        );
+      }
+      if (prior.status !== 'COMPLETED') {
+        throw new PartnerPublicClickError(
+          'Idempotency request incomplete',
+          409,
+          'IDEMPOTENCY_INCOMPLETE'
+        );
+      }
+      return prior.response_json as PublicReferralClickResult;
+    }
+
+    await query(`SELECT pg_advisory_xact_lock(hashtextextended($1,0))`, [
+      `partner-public-click-abuse:${partner.id}:${normalized.ipHash}`,
+    ]);
+    const accepted = Number(
+      (
+        await query<{ count: string }>(
+          `SELECT count(*)::text count
+             FROM partner_referral_clicks
+            WHERE partner_org_id=$1 AND ip_hash=$2
+              AND clicked_at > NOW() - INTERVAL '60 seconds'`,
+          [partner.id, normalized.ipHash]
+        )
+      ).rows[0]?.count || 0
+    );
+    if (accepted >= publicClickLimit(env)) {
+      throw new PartnerPublicClickError(
+        'Too many referral clicks. Please try again shortly.',
+        429,
+        'PARTNER_CLICK_RATE_LIMITED'
+      );
+    }
+
+    const clickId = uuidv4();
+    await query(
+      `INSERT INTO partner_referral_click_receipts
+       (partner_org_id,idempotency_key,request_hash,server_request_id,click_id)
+       VALUES($1,$2,$3,$4::uuid,$5::uuid)`,
+      [partner.id, opaqueKey, hash, params.serverRequestId, clickId]
+    );
+    await query(
+      `INSERT INTO partner_referral_clicks
+       (id,partner_org_id,referral_code,ip_hash,user_agent,referer,landing_page,
+        utm_source,utm_medium,utm_campaign,utm_content,utm_term,session_id,cookie_id)
+       VALUES($1::uuid,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
+      [
+        clickId,
+        partner.id,
+        normalized.referralCode,
+        normalized.ipHash,
+        normalized.userAgent,
+        normalized.referer,
+        normalized.landingPage,
+        normalized.utmSource,
+        normalized.utmMedium,
+        normalized.utmCampaign,
+        normalized.utmContent,
+        normalized.utmTerm,
+        normalized.sessionId,
+        normalized.cookieId,
+      ]
+    );
+    if (normalized.utmCampaign) {
+      await query(
+        `UPDATE partner_campaign_links
+            SET click_count=click_count+1,updated_at=NOW()
+          WHERE partner_org_id=$1 AND (slug=$2 OR utm_campaign=$2)`,
+        [partner.id, normalized.utmCampaign]
+      );
+    }
+    await query(
+      `INSERT INTO legacy_cutover_usage_events
+       (domain,writer_id,source,organization_id,tenant_resolution,request_id,user_id,
+        method,route_path,access_kind,successor_path,legacy_table,legacy_id,identity_status)
+       VALUES('partners','PRT-W17','runtime',$1,'resolved',$2,NULL,
+              'POST','/api/public/partner/track-click','legacy_uncovered_writer',NULL,
+              'partner_referral_clicks',$3,'not_applicable')
+       ON CONFLICT DO NOTHING`,
+      [partner.owner_organization_id, params.serverRequestId, clickId]
+    );
+    const response: PublicReferralClickResult = {
+      success: true,
+      clickId,
+      serverRequestId: params.serverRequestId,
+    };
+    await query(
+      `UPDATE partner_referral_click_receipts
+          SET status='COMPLETED',response_json=$3::jsonb,completed_at=NOW()
+        WHERE partner_org_id=$1 AND idempotency_key=$2`,
+      [partner.id, opaqueKey, JSON.stringify(response)]
+    );
+    return response;
+  });
 }
 
 /**
@@ -1831,6 +2081,7 @@ const PartnerReferralService = {
   createCampaignLink,
   deleteCampaignLink,
   trackClick,
+  trackPublicReferralClick,
   markClickConverted,
   createAttribution,
   getAttributionByOrganization,
