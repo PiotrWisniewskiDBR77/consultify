@@ -12,15 +12,24 @@
   "gateG1": "PASS exact-current: 8 GB server TypeScript check exit 0; backend build exit 0; mounted frontend build exit 0.",
   "gateG2": "PASS exact-current automated recovery scope: real PostgreSQL 7/7, mounted browser 2/2, focused unit/hook 77/77, literal disconnect/cold resume 1/1.",
   "gateG3": "PASS exact-current: fresh PostgreSQL 758/758 successful unique migrations; repeat applied 0; dry-run pending 0; bounded fixture residue 0.",
-  "gateG4": "PARTIAL: historical mounted G4 passed 12/12 PL/EN light/dark desktop/tablet/mobile cells, axe critical/serious 0/0, keyboard/focus, deep-link, reload and cold reopen; exact-current recovery interaction passed. Human VoiceOver/persona/visual-owner acceptance and rendered forbidden/stale states remain open.",
+  "gateG4": "PARTIAL: historical mounted G4 passed 12/12 PL/EN light/dark desktop/tablet/mobile cells, axe critical/serious 0/0, keyboard/focus, deep-link, reload and cold reopen; later mounted evidence renders governed permission-denied and recovery states. Human VoiceOver/persona/visual-owner acceptance and a full matrix rerun at reconciliation base 2db606fdaf remain open.",
   "taskId": "CHAT-UI-CANON-001",
   "verdict": "PARTIAL",
   "technicalVerdict": "PARTIAL",
-  "verdictRationale": "Exact-current repository-owned recovery behavior is proven, including mounted disconnect, durable checkpoint, cold explicit resume, zero provider invocation before the click, exactly one after it, combined output, failure retention and strict membership. The full UI DoD is not DONE because task-specific forbidden/stale rendered states and human VoiceOver, named-persona and visual/brand acceptance remain open.",
+  "verdictRationale": "Repository-owned recovery behavior is proven, including mounted disconnect, durable checkpoint, cold explicit resume, zero provider invocation before the click, exactly one after it, combined output, failure retention and strict membership. Descendant commits 4e859a2d58 and b2b9e68cfb supersede the prior source-red claim for missing governed forbidden/stale and revoked-recovery UI states. The full UI DoD is not DONE because the complete matrix was not rerun at reconciliation base 2db606fdaf and human VoiceOver, named-persona and visual/brand acceptance remain open.",
   "open": [
     "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending.",
-    "Task-specific forbidden and stale rendered UI states were not reached by the final automated G4; the strict membership backend and mounted revoked/foreign negatives do not substitute for those rendered-state assertions."
+    "The complete responsive/language/theme/persona matrix was not rerun at reconciliation base 2db606fdaf; later bounded mounted evidence does not rewrite the historical G4 candidate."
   ],
+  "exactCurrentReconciliation": {
+    "baseSha": "2db606fdaf48b1673a1b40d604dd1221ef288c6c",
+    "ancestry": [
+      "4e859a2d58a2dd81537a67db038351a287fe705c",
+      "b2b9e68cfbaadf7a8a1d4febb0d7c9134cc2c5d6"
+    ],
+    "technicalFact": "4e859a2d58 adds mounted responsive evidence and explicit governed permission-denied/stale UI treatment; b2b9e68cfb adds the mounted signed revoked-recovery fail-closed journey. Both commits are ancestors of 2db606fdaf.",
+    "boundary": "Ancestry and bounded evidence reconcile the stale source-red claim only. They do not constitute a full exact-2db606fdaf G4 rerun or owner acceptance."
+  },
   "changedPaths": [
     "src/components/AIChat/UnifiedChatPanel.tsx",
     "src/hooks/useAIStream.ts",
@@ -145,7 +154,7 @@
   },
   "openBlockers": [
     "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
-    "Task-specific UI states not reached by the final automated sweep: forbidden, stale."
+    "Full G4 matrix rerun at reconciliation base 2db606fdaf remains NOT_RUN; descendant bounded mounted state evidence must not be represented as an exact-current full sweep."
   ],
   "blockerReconciliation": [
     {
@@ -156,7 +165,8 @@
   ],
   "resolvedBlockers": [
     "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed.",
-    "Exact-current 9931050ca74e6cdefd2b02a1dbf518f0115a4908 proves the previously missing deterministic recovery journey: active disconnect, durable checkpoint, cold discovery without provider invocation, explicit keyboard/click resume, exactly one provider invocation, partial plus continued final output, failure retention and zero residue."
+    "Exact-current 9931050ca74e6cdefd2b02a1dbf518f0115a4908 proves the previously missing deterministic recovery journey: active disconnect, durable checkpoint, cold discovery without provider invocation, explicit keyboard/click resume, exactly one provider invocation, partial plus continued final output, failure retention and zero residue.",
+    "The prior source-red claim for unrendered forbidden/stale and revoked-recovery states is superseded by ancestor commits 4e859a2d58 and b2b9e68cfb at reconciliation base 2db606fdaf."
   ],
   "automatedG4Verdict": {
     "verdict": "PASS_EXACT_SHA",

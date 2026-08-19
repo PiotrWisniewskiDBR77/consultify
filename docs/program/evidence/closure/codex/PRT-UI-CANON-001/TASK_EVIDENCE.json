@@ -51,6 +51,19 @@
     "payout": "stale true values normalize to false and cannot be written",
     "approval": "manual request and independent approval boundary is explicit"
   },
+  "exactCurrentReconciliation": {
+    "baseSha": "2db606fdaf48b1673a1b40d604dd1221ef288c6c",
+    "ancestry": [
+      "0967ca9955ff938c27e518cb39ffe1bec449be96",
+      "c6635b1f488fb39d2454ebfc227e2efb6dc08f89",
+      "acfac9e3de365df71662905ef879cf6fecbb8f4e",
+      "f8660eb6840c1fe50b10ef2fdd623d8c9e9e38b9",
+      "12fc26fd6edfd38b59087e863c5ed2d39ca8e399",
+      "9fca795cd15200d294b06d040837ce512d45328c"
+    ],
+    "technicalFact": "0967ca9955 and c6635b1f48 enforce approved-out economics and a read-only Partner UI; acfac9e3de, f8660eb684 and 12fc26fd6e add signed zero-writer and retained visual evidence; 9fca795cd1 adds the governed immutable non-economic participant referral ledger. All listed commits are ancestors of 2db606fdaf.",
+    "boundary": "This removes the stale source-red interpretation of reachable Partner economics writers. Historical console observations and the legacy Earnings warning still require an exact-current rerun/qualification; owner VoiceOver/persona/brand acceptance remains open."
+  },
   "browserArtifacts": [
     {
       "kind": "mounted_signed_auth_g4_final",
@@ -133,7 +146,7 @@
     "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
     "Task-specific UI states not reached by the final automated sweep: stale.",
     "Observed console HTTP errors require task-specific qualification: total=2, 403=0, 404=2, other=0.",
-    "The legacy Earnings test maximum-update-depth warning and retry remain to be qualified."
+    "The historical legacy Earnings maximum-update-depth warning/retry remains to be rerun and qualified at reconciliation base 2db606fdaf; it is not classified as current source red without reproduction."
   ],
   "blockerReconciliation": [
     {
@@ -143,12 +156,14 @@
     },
     {
       "historicalBlocker": "The legacy Earnings test still emits a pre-existing maximum-update-depth warning and required one retry.",
-      "classification": "RETAINED_OPEN",
-      "detail": "The blocker remains represented in openBlockers as a task-specific, human or environment qualification."
+      "classification": "RETAINED_RERUN_BOUNDARY",
+      "detail": "The historical observation remains represented as an exact-current rerun/qualification boundary, not as a reproduced current source defect."
     }
   ],
   "resolvedBlockers": [
-    "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed."
+    "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed.",
+    "The prior reachable Partner economics writer source-red claim is superseded by ancestor commits 0967ca9955 and c6635b1f48, with signed zero-writer/visual evidence in acfac9e3de, f8660eb684 and 12fc26fd6e at reconciliation base 2db606fdaf.",
+    "Governed non-economic participant referral history remains available through ancestor commit 9fca795cd1."
   ],
   "automatedG4Verdict": {
     "verdict": "PASS_EXACT_SHA",
