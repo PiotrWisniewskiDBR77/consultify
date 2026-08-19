@@ -570,6 +570,16 @@ describe.sequential('Partner legacy cutover guard (real PG)', () => {
     } finally {
       await sql.query('ROLLBACK');
     }
+    await sql.query('BEGIN');
+    try {
+      await sql.query(
+        `ALTER TABLE partner_organizations RENAME COLUMN owner_organization_id TO owner_organization_id_good`
+      );
+      await sql.query(`ALTER TABLE partner_organizations ADD COLUMN owner_organization_id integer`);
+      await expect(sql.query(connectionReceiptMigration)).rejects.toThrow(/incompatible shape/);
+    } finally {
+      await sql.query('ROLLBACK');
+    }
   });
 
   it('self-connects once with durable replay, collision, concurrency and zero-write denials', async () => {
@@ -609,30 +619,50 @@ describe.sequential('Partner legacy cutover guard (real PG)', () => {
       );
       await sql.query(
         `INSERT INTO partner_organizations
-         (id,name,contact_email,status,referral_code,referral_link_slug)
-         VALUES($1,$2,$3,'active',$4,$5)`,
+         (id,name,contact_email,status,referral_code,referral_link_slug,owner_organization_id)
+         VALUES($1,$2,$3,'active',$4,$5,$6)`,
         [
           foreignPartnerForConnectId,
           `Foreign connect partner ${suffix}`,
           `foreign-connect-${suffix}@test.local`,
           `FOREIGN-${suffix}`,
           `foreign-${suffix}`,
+          foreignOrgId,
         ]
       );
       await sql.query(
         `INSERT INTO partner_users(id,partner_org_id,user_id,role,status)
          VALUES($1,$2,$3,'owner','active')`,
-        [randomUUID(), foreignPartnerForConnectId, foreignUserId]
+        [randomUUID(), foreignPartnerForConnectId, connectUserId]
       );
 
       delete process.env.PARTNER_SELF_CONNECT_ENABLED;
       const beforeDisabled = (await state()).rows[0];
+      const crossTenantSnapshot = async () =>
+        (
+          await sql.query(
+            `SELECT
+              (SELECT row_to_json(po)::text FROM (
+                 SELECT id,owner_organization_id,name,contact_email,status,referral_code,referral_link_slug
+                 FROM partner_organizations WHERE id=$1
+               ) po) org_snapshot,
+              (SELECT string_agg(row_to_json(pu)::text,'|' ORDER BY id) FROM (
+                 SELECT id,partner_org_id,user_id,role,status FROM partner_users
+                 WHERE partner_org_id=$1 ORDER BY id
+               ) pu) link_snapshot,
+              (SELECT count(*)::int FROM partner_connection_receipts WHERE organization_id=$2) receipts`,
+            [foreignPartnerForConnectId, connectOrgId]
+          )
+        ).rows[0];
+      const beforeCrossTenantDenied = await crossTenantSnapshot();
       const disabled = await postConnect(`disabled-${suffix}`, {
         name: `Connect Partner ${suffix}`,
         contactEmail: connectEmail,
       });
       expect(disabled.status).toBe(403);
+      expect(disabled.body?.data?.organization).toBeUndefined();
       expect((await state()).rows[0]).toEqual(beforeDisabled);
+      expect(await crossTenantSnapshot()).toEqual(beforeCrossTenantDenied);
 
       process.env.PARTNER_SELF_CONNECT_ENABLED = 'true';
       const missingKey = await postConnect(undefined, {
@@ -677,19 +707,19 @@ describe.sequential('Partner legacy cutover guard (real PG)', () => {
       const partnerIds = new Set(concurrent.map((item) => item.body.data.organization.id));
       expect(partnerIds.size).toBe(1);
       expect([...partnerIds][0]).not.toBe(foreignPartnerForConnectId);
-      expect((await state()).rows[0]).toEqual({ links: 1, receipts: 8 });
+      expect((await state()).rows[0]).toEqual({ links: 2, receipts: 8 });
 
       const replay = await postConnect(`concurrent-${suffix}-0`, payload);
       expect(replay.status).toBe(concurrent[0].status);
       expect(replay.body.data).toEqual(concurrent[0].body.data);
-      expect((await state()).rows[0]).toEqual({ links: 1, receipts: 8 });
+      expect((await state()).rows[0]).toEqual({ links: 2, receipts: 8 });
       const collision = await postConnect(`concurrent-${suffix}-0`, {
         ...payload,
         name: `${payload.name} changed`,
       });
       expect(collision.status).toBe(409);
       expect(collision.body.code).toBe('IDEMPOTENCY_PAYLOAD_MISMATCH');
-      expect((await state()).rows[0]).toEqual({ links: 1, receipts: 8 });
+      expect((await state()).rows[0]).toEqual({ links: 2, receipts: 8 });
 
       const connectionSnapshot = () =>
         sql.query(
@@ -722,7 +752,7 @@ describe.sequential('Partner legacy cutover guard (real PG)', () => {
         .send(payload);
       expect(legacyRollback.status).toBe(200);
       expect(legacyRollback.body.data.organization.id).toBe([...partnerIds][0]);
-      expect((await state()).rows[0]).toEqual({ links: 1, receipts: 8 });
+      expect((await state()).rows[0]).toEqual({ links: 2, receipts: 8 });
       delete process.env[PARTNER_LEGACY_WRITER_ROLLBACK_ENV];
 
       const cold = new Client({ connectionString: DATABASE_URL });
@@ -733,7 +763,7 @@ describe.sequential('Partner legacy cutover guard (real PG)', () => {
                   (SELECT count(*)::int FROM partner_connection_receipts
                     WHERE organization_id=$1 AND user_id=$2) receipts
            FROM partner_organizations po JOIN partner_users pu ON pu.partner_org_id=po.id
-           WHERE pu.user_id::text=$2`,
+           WHERE pu.user_id::text=$2 AND po.owner_organization_id=$1`,
           [connectOrgId, connectUserId]
         );
         expect(coldRows.rows).toHaveLength(1);

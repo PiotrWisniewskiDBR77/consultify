@@ -1,5 +1,46 @@
 -- Durable idempotency receipts for the V8 Partner self-connect command.
 DO $$
+DECLARE column_type TEXT; nullable TEXT; fk_definition TEXT; index_definition TEXT;
+BEGIN
+  SELECT data_type,is_nullable INTO column_type,nullable
+    FROM information_schema.columns
+   WHERE table_schema='public' AND table_name='partner_organizations'
+     AND column_name='owner_organization_id';
+  IF column_type IS NOT NULL AND (column_type <> 'text' OR nullable <> 'YES') THEN
+    RAISE EXCEPTION 'partner_organizations.owner_organization_id has incompatible shape: %/%', column_type,nullable;
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname='partner_organizations_owner_organization_id_fkey') THEN
+    SELECT lower(regexp_replace(pg_get_constraintdef(oid),'[[:space:]()]','','g')) INTO fk_definition
+      FROM pg_constraint WHERE conname='partner_organizations_owner_organization_id_fkey';
+    IF fk_definition <> 'foreignkeyowner_organization_idreferencesorganizationsidondeleterestrict' THEN
+      RAISE EXCEPTION 'partner owner tenant FK is incompatible: %', fk_definition;
+    END IF;
+  END IF;
+  IF to_regclass('public.uq_partner_organizations_active_owner_tenant') IS NOT NULL THEN
+    SELECT lower(regexp_replace(pg_get_indexdef(indexrelid),'[[:space:]()]','','g')) INTO index_definition
+      FROM pg_index WHERE indexrelid='public.uq_partner_organizations_active_owner_tenant'::regclass;
+    IF index_definition NOT LIKE 'createuniqueindexuq_partner_organizations_active_owner_tenantonpublic.partner_organizationsusingbtreeowner_organization_idwhere%'
+       OR index_definition NOT LIKE '%owner_organization_idisnotnull%'
+       OR index_definition NOT LIKE '%lowerstatus%=''active''%' THEN
+      RAISE EXCEPTION 'partner owner tenant index is incompatible: %', index_definition;
+    END IF;
+  END IF;
+END $$;
+
+ALTER TABLE partner_organizations ADD COLUMN IF NOT EXISTS owner_organization_id TEXT;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='partner_organizations_owner_organization_id_fkey') THEN
+    ALTER TABLE partner_organizations ADD CONSTRAINT partner_organizations_owner_organization_id_fkey
+      FOREIGN KEY(owner_organization_id) REFERENCES organizations(id) ON DELETE RESTRICT;
+  END IF;
+END $$;
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_partner_organizations_active_owner_tenant
+  ON partner_organizations(owner_organization_id)
+  WHERE owner_organization_id IS NOT NULL AND lower(status)='active';
+
+DO $$
 DECLARE actual TEXT; fk_count INTEGER; actual_constraints TEXT;
 BEGIN
   IF to_regclass('public.partner_connection_receipts') IS NULL THEN RETURN; END IF;

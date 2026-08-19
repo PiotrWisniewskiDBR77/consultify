@@ -101,10 +101,11 @@ export async function connectPartnerOrganization(params: {
       `SELECT po.* FROM partner_organizations po
        JOIN partner_users pu ON pu.partner_org_id=po.id
        WHERE pu.user_id::text=$1
+         AND po.owner_organization_id=$2
          AND LOWER(COALESCE(pu.status,'active'))='active'
          AND LOWER(COALESCE(po.status,'active'))='active'
        ORDER BY po.updated_at DESC LIMIT 2`,
-      [params.userId]
+      [params.userId, params.organizationId]
     );
     if (currentConnection.rows.length > 1) {
       throw new PartnerConnectionError(
@@ -226,13 +227,8 @@ export async function connectPartnerOrganization(params: {
     );
 
     const existing = await query<any>(
-      `SELECT DISTINCT po.*
-       FROM partner_organizations po
-       JOIN partner_users owner_link ON owner_link.partner_org_id=po.id
-       JOIN organization_members tenant_member ON tenant_member.user_id=owner_link.user_id::text
-       WHERE tenant_member.organization_id=$1
-         AND UPPER(COALESCE(tenant_member.status,''))='ACTIVE'
-         AND LOWER(COALESCE(owner_link.status,'active'))='active'
+      `SELECT po.* FROM partner_organizations po
+       WHERE po.owner_organization_id=$1
          AND LOWER(COALESCE(po.status,'active'))='active'
        ORDER BY po.updated_at DESC LIMIT 2`,
       [params.organizationId]
@@ -274,13 +270,14 @@ export async function connectPartnerOrganization(params: {
       const referralLinkSlug = `partner-${partnerOrgId.toLowerCase()}`;
       await query(
         `INSERT INTO partner_organizations
-         (id,name,contact_email,tier,status,partner_since,public_listing_enabled,
+         (id,name,contact_email,tier,status,partner_since,public_listing_enabled,owner_organization_id,
           created_at,updated_at,created_by,updated_by,referral_code,referral_link_slug)
-         VALUES($1,$2,$3,'registered','active',NOW(),FALSE,NOW(),NOW(),$4::uuid,$4::uuid,$5,$6)`,
+         VALUES($1,$2,$3,'registered','active',NOW(),FALSE,$4,NOW(),NOW(),$5::uuid,$5::uuid,$6,$7)`,
         [
           partnerOrgId,
           requested.name,
           requested.contactEmail,
+          params.organizationId,
           params.userId,
           referralCode,
           referralLinkSlug,
