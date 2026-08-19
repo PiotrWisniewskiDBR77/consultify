@@ -12,6 +12,7 @@ type ProtectedLegacyWriter = {
 export const PARTNER_LEGACY_WRITER_ROLLBACK_ENV = 'PARTNER_LEGACY_ROLLBACK_ENABLED';
 
 export const PROTECTED_PARTNER_LEGACY_WRITERS: ProtectedLegacyWriter[] = [
+  { method: 'POST', path: /^\/connect\/?$/, successor: '/api/v8/partner/connect' },
   { method: 'POST', path: /^\/payouts\/request\/?$/, successor: '/api/v8/partner/payouts/request' },
   { method: 'POST', path: /^\/campaign-links\/?$/, successor: '/api/v8/partner/campaign-links' },
   {

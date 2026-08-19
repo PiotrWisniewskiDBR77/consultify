@@ -15,6 +15,7 @@ import {
   requireV8OrgContext,
 } from '../../../server/src/middleware/v8Auth.middleware.ts';
 import partnerRoutes from '../../../server/src/routes/v8/partner.routes.ts';
+import legacyPartnerRoutes from '../../../server/src/routes/partners.routes.ts';
 
 import {
   PARTNER_LEGACY_WRITER_ROLLBACK_ENV,
@@ -42,10 +43,14 @@ const receiptMigration = readFileSync(
   path.resolve('server/migrations/954_partner_certification_mutation_receipts.sql'),
   'utf8'
 );
+const connectionReceiptMigration = readFileSync(
+  path.resolve('server/migrations/955_partner_connection_receipts.sql'),
+  'utf8'
+);
 
-function token(subject = userId, organizationId = orgId) {
+function token(subject = userId, organizationId = orgId, role = 'ADMIN') {
   return jwt.sign(
-    { id: subject, email: `${subject}@test.local`, role: 'ADMIN', organizationId },
+    { id: subject, email: `${subject}@test.local`, role, organizationId },
     configuredJwtSecret,
     { expiresIn: '5m' }
   );
@@ -55,6 +60,7 @@ function app() {
   const instance = express();
   instance.use(express.json());
   instance.use('/api/v8/partner', verifyToken, requireV8OrgContext, attachV8Context, partnerRoutes);
+  instance.use('/api/partners', legacyPartnerRoutes);
   instance.use((error: Error, _req: any, res: any, _next: any) =>
     res.status(500).json({ error: error.message })
   );
@@ -105,6 +111,8 @@ beforeAll(async () => {
   expect((await sql.query(`SELECT version() AS version`)).rows[0].version).toMatch(/PostgreSQL/);
   await sql.query(receiptMigration);
   await sql.query(receiptMigration);
+  await sql.query(connectionReceiptMigration);
+  await sql.query(connectionReceiptMigration);
   await sql.query(`DELETE FROM partner_legacy_usage_events WHERE request_id LIKE $1`, [
     `${REQUEST_PREFIX}%`,
   ]);
@@ -243,11 +251,12 @@ afterAll(async () => {
 
 describe.sequential('Partner legacy cutover guard (real PG)', () => {
   it('declares every V8-owned legacy writer in the zero-writer guard', () => {
-    expect(PROTECTED_PARTNER_LEGACY_WRITERS).toHaveLength(11);
+    expect(PROTECTED_PARTNER_LEGACY_WRITERS).toHaveLength(12);
     expect(PROTECTED_PARTNER_LEGACY_WRITERS.map((entry) => entry.successor).sort()).toEqual(
       [
         '/api/v8/partner/campaign-links',
         '/api/v8/partner/campaign-links/:linkId',
+        '/api/v8/partner/connect',
         '/api/v8/partner/certifications/:certId/exam/start',
         '/api/v8/partner/certifications/:certId/exam/submit',
         '/api/v8/partner/certifications/:certId/modules/:moduleId/progress',
@@ -297,6 +306,31 @@ describe.sequential('Partner legacy cutover guard (real PG)', () => {
       access_kind: 'rollback_writer',
       successor_path: '/api/v8/partner/campaign-links',
     });
+    delete process.env[PARTNER_LEGACY_WRITER_ROLLBACK_ENV];
+  });
+
+  it('blocks legacy connect by default and permits only the explicit rollback path', async () => {
+    delete process.env[PARTNER_LEGACY_WRITER_ROLLBACK_ENV];
+    const blocked = response();
+    const blockedNext = vi.fn();
+    await partnerLegacyCutoverGuard(
+      request('POST', '/connect', 'connect-blocked'),
+      blocked,
+      blockedNext
+    );
+    expect(blocked.state.status).toBe(410);
+    expect(blocked.state.body.successor).toBe('/api/v8/partner/connect');
+    expect(blockedNext).not.toHaveBeenCalled();
+
+    process.env[PARTNER_LEGACY_WRITER_ROLLBACK_ENV] = 'true';
+    const rollbackNext = vi.fn();
+    await partnerLegacyCutoverGuard(
+      request('POST', '/connect', 'connect-rollback'),
+      response(),
+      rollbackNext
+    );
+    expect(rollbackNext).toHaveBeenCalledOnce();
+    expect((await event('connect-rollback')).access_kind).toBe('rollback_writer');
     delete process.env[PARTNER_LEGACY_WRITER_ROLLBACK_ENV];
   });
 
@@ -522,6 +556,198 @@ describe.sequential('Partner legacy cutover guard (real PG)', () => {
       await expect(sql.query(receiptMigration)).rejects.toThrow(/incompatible columns/);
     } finally {
       await sql.query('ROLLBACK');
+    }
+  });
+
+  it('fails closed on a hostile pre-existing connection receipt shape', async () => {
+    await sql.query('BEGIN');
+    try {
+      await sql.query(
+        `ALTER TABLE partner_connection_receipts RENAME TO partner_connection_receipts_good`
+      );
+      await sql.query(`CREATE TABLE partner_connection_receipts(id text)`);
+      await expect(sql.query(connectionReceiptMigration)).rejects.toThrow(/incompatible columns/);
+    } finally {
+      await sql.query('ROLLBACK');
+    }
+  });
+
+  it('self-connects once with durable replay, collision, concurrency and zero-write denials', async () => {
+    const connectOrgId = randomUUID();
+    const connectUserId = randomUUID();
+    const foreignPartnerForConnectId = randomUUID();
+    const connectEmail = `connect-${suffix}@test.local`;
+    const previousFlag = process.env.PARTNER_SELF_CONNECT_ENABLED;
+    const postConnect = (key?: string, body: Record<string, unknown> = {}, role = 'ADMIN') => {
+      const call = supertest(app())
+        .post('/api/v8/partner/connect')
+        .set('Authorization', `Bearer ${token(connectUserId, connectOrgId, role)}`);
+      if (key) call.set('Idempotency-Key', key);
+      return call.send(body);
+    };
+    const state = () =>
+      sql.query(
+        `SELECT
+          (SELECT count(*)::int FROM partner_users WHERE user_id::text=$1) links,
+          (SELECT count(*)::int FROM partner_connection_receipts WHERE organization_id=$2 AND user_id=$1) receipts`,
+        [connectUserId, connectOrgId]
+      );
+    try {
+      await sql.query(`INSERT INTO organizations(id,name) VALUES($1,$2)`, [
+        connectOrgId,
+        `Connect ${suffix}`,
+      ]);
+      await sql.query(
+        `INSERT INTO users(id,organization_id,email,first_name,last_name,role)
+         VALUES($1,$2,$3,'Connect','Owner','ADMIN')`,
+        [connectUserId, connectOrgId, connectEmail]
+      );
+      await sql.query(
+        `INSERT INTO organization_members(id,organization_id,user_id,role,status)
+         VALUES($1,$2,$3,'ADMIN','ACTIVE')`,
+        [randomUUID(), connectOrgId, connectUserId]
+      );
+      await sql.query(
+        `INSERT INTO partner_organizations
+         (id,name,contact_email,status,referral_code,referral_link_slug)
+         VALUES($1,$2,$3,'active',$4,$5)`,
+        [
+          foreignPartnerForConnectId,
+          `Foreign connect partner ${suffix}`,
+          `foreign-connect-${suffix}@test.local`,
+          `FOREIGN-${suffix}`,
+          `foreign-${suffix}`,
+        ]
+      );
+      await sql.query(
+        `INSERT INTO partner_users(id,partner_org_id,user_id,role,status)
+         VALUES($1,$2,$3,'owner','active')`,
+        [randomUUID(), foreignPartnerForConnectId, foreignUserId]
+      );
+
+      delete process.env.PARTNER_SELF_CONNECT_ENABLED;
+      const beforeDisabled = (await state()).rows[0];
+      const disabled = await postConnect(`disabled-${suffix}`, {
+        name: `Connect Partner ${suffix}`,
+        contactEmail: connectEmail,
+      });
+      expect(disabled.status).toBe(403);
+      expect((await state()).rows[0]).toEqual(beforeDisabled);
+
+      process.env.PARTNER_SELF_CONNECT_ENABLED = 'true';
+      const missingKey = await postConnect(undefined, {
+        name: `Connect Partner ${suffix}`,
+        contactEmail: connectEmail,
+      });
+      expect(missingKey.status).toBe(400);
+      expect((await state()).rows[0]).toEqual(beforeDisabled);
+
+      const payload = { name: `Connect Partner ${suffix}`, contactEmail: connectEmail };
+      await sql.query(
+        `UPDATE organization_members SET status='REVOKED' WHERE organization_id=$1 AND user_id=$2`,
+        [connectOrgId, connectUserId]
+      );
+      const freshRevoked = await postConnect(`fresh-revoked-${suffix}`, payload);
+      expect(freshRevoked.status).toBe(403);
+      expect((await state()).rows[0]).toEqual(beforeDisabled);
+      await sql.query(
+        `UPDATE organization_members SET status='ACTIVE' WHERE organization_id=$1 AND user_id=$2`,
+        [connectOrgId, connectUserId]
+      );
+
+      await sql.query(
+        `UPDATE organization_members SET role='MEMBER' WHERE organization_id=$1 AND user_id=$2`,
+        [connectOrgId, connectUserId]
+      );
+      const memberDenied = await postConnect(`member-${suffix}`, payload, 'MEMBER');
+      expect(memberDenied.status).toBe(403);
+      expect((await state()).rows[0]).toEqual(beforeDisabled);
+      await sql.query(
+        `UPDATE organization_members SET role='ADMIN' WHERE organization_id=$1 AND user_id=$2`,
+        [connectOrgId, connectUserId]
+      );
+
+      const concurrent = await Promise.all(
+        Array.from({ length: 8 }, (_, index) =>
+          postConnect(`concurrent-${suffix}-${index}`, payload)
+        )
+      );
+      expect(concurrent.filter((item) => item.status === 201)).toHaveLength(1);
+      expect(concurrent.filter((item) => item.status === 200)).toHaveLength(7);
+      const partnerIds = new Set(concurrent.map((item) => item.body.data.organization.id));
+      expect(partnerIds.size).toBe(1);
+      expect([...partnerIds][0]).not.toBe(foreignPartnerForConnectId);
+      expect((await state()).rows[0]).toEqual({ links: 1, receipts: 8 });
+
+      const replay = await postConnect(`concurrent-${suffix}-0`, payload);
+      expect(replay.status).toBe(concurrent[0].status);
+      expect(replay.body.data).toEqual(concurrent[0].body.data);
+      expect((await state()).rows[0]).toEqual({ links: 1, receipts: 8 });
+      const collision = await postConnect(`concurrent-${suffix}-0`, {
+        ...payload,
+        name: `${payload.name} changed`,
+      });
+      expect(collision.status).toBe(409);
+      expect(collision.body.code).toBe('IDEMPOTENCY_PAYLOAD_MISMATCH');
+      expect((await state()).rows[0]).toEqual({ links: 1, receipts: 8 });
+
+      process.env[PARTNER_LEGACY_WRITER_ROLLBACK_ENV] = 'true';
+      const legacyRollback = await supertest(app())
+        .post('/api/partners/connect')
+        .set('Authorization', `Bearer ${token(connectUserId, connectOrgId)}`)
+        .send(payload);
+      expect(legacyRollback.status).toBe(200);
+      expect(legacyRollback.body.data.organization.id).toBe([...partnerIds][0]);
+      expect((await state()).rows[0]).toEqual({ links: 1, receipts: 8 });
+      delete process.env[PARTNER_LEGACY_WRITER_ROLLBACK_ENV];
+
+      const cold = new Client({ connectionString: DATABASE_URL });
+      await cold.connect();
+      try {
+        const coldRows = await cold.query(
+          `SELECT po.id,po.referral_code,po.referral_link_slug,
+                  (SELECT count(*)::int FROM partner_connection_receipts
+                    WHERE organization_id=$1 AND user_id=$2) receipts
+           FROM partner_organizations po JOIN partner_users pu ON pu.partner_org_id=po.id
+           WHERE pu.user_id::text=$2`,
+          [connectOrgId, connectUserId]
+        );
+        expect(coldRows.rows).toHaveLength(1);
+        expect(coldRows.rows[0].receipts).toBe(8);
+        expect(coldRows.rows[0].referral_code).toBeTruthy();
+        expect(coldRows.rows[0].referral_link_slug).toBeTruthy();
+      } finally {
+        await cold.end();
+      }
+
+      await sql.query(
+        `UPDATE organization_members SET status='REVOKED' WHERE organization_id=$1 AND user_id=$2`,
+        [connectOrgId, connectUserId]
+      );
+      const beforeRevokedConnect = (await state()).rows[0];
+      const revokedConnect = await postConnect(`revoked-connect-${suffix}`, payload);
+      expect(revokedConnect.status).toBe(403);
+      expect((await state()).rows[0]).toEqual(beforeRevokedConnect);
+    } finally {
+      if (previousFlag === undefined) delete process.env.PARTNER_SELF_CONNECT_ENABLED;
+      else process.env.PARTNER_SELF_CONNECT_ENABLED = previousFlag;
+      delete process.env[PARTNER_LEGACY_WRITER_ROLLBACK_ENV];
+      await sql.query(`DELETE FROM partner_connection_receipts WHERE organization_id=$1`, [
+        connectOrgId,
+      ]);
+      const linked = await sql.query(
+        `SELECT DISTINCT partner_org_id FROM partner_users WHERE user_id::text=$1`,
+        [connectUserId]
+      );
+      for (const row of linked.rows) {
+        await sql.query(`DELETE FROM partner_organizations WHERE id=$1`, [row.partner_org_id]);
+      }
+      await sql.query(`DELETE FROM partner_organizations WHERE id=$1`, [
+        foreignPartnerForConnectId,
+      ]);
+      await sql.query(`DELETE FROM organization_members WHERE organization_id=$1`, [connectOrgId]);
+      await sql.query(`DELETE FROM users WHERE id=$1`, [connectUserId]);
+      await sql.query(`DELETE FROM organizations WHERE id=$1`, [connectOrgId]);
     }
   });
 });

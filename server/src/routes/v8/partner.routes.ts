@@ -25,6 +25,10 @@ import { requireActiveMembership } from '../../services/legacyCutover/requireAct
 import legalService from '../../services/legalService.js';
 import PartnerCommissionService from '../../services/partnerCommissionService.js';
 import {
+  PartnerConnectionError,
+  connectPartnerOrganization,
+} from '../../services/partnerConnectionService.js';
+import {
   startCertificationExam,
   submitCertificationExam,
   updateCertificationModuleProgress,
@@ -67,8 +71,13 @@ router.use(
   requireActiveMembership
 );
 
+// Self-connect acquires Partner capability, so live tenant membership and an
+// ADMIN/OWNER role must be established before any resolver/seeder can write.
+router.use('/connect', requireActiveMembership, requireOrgRole('admin'));
+
 router.use(
   asyncHandler(async (req: AuthRequest, _res: Response, next) => {
+    if (/^\/connect\/?$/.test(req.path)) return next();
     const userId = req.userId || req.user?.id;
     if (userId) {
       const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
@@ -163,6 +172,28 @@ async function certificationActor(req: AuthRequest, res: Response) {
   }
   return { userId, partnerOrgId };
 }
+
+router.post(
+  '/connect',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const idempotencyKey = requireIdempotencyKey(req, res);
+    if (!idempotencyKey) return;
+    const { organizationId, userId } = getV8Context(req);
+    const result = await connectPartnerOrganization({
+      organizationId,
+      userId,
+      idempotencyKey,
+      name: req.body?.name,
+      contactEmail: req.body?.contactEmail,
+      actorName: req.user?.name,
+      actorEmail: req.user?.email,
+    });
+    return res.status(result.status).json({
+      data: result.data,
+      meta: partnerReadMeta(req, result.data.organization.id),
+    });
+  })
+);
 
 /**
  * GET /api/v8/partner/program/status
@@ -1422,6 +1453,9 @@ router.put(
 );
 
 router.use((error: Error, _req: AuthRequest, res: Response, next: NextFunction) => {
+  if (error instanceof PartnerConnectionError) {
+    return res.status(error.status).json({ error: error.message, code: error.code });
+  }
   if (error.message === 'Idempotency replay payload mismatch') {
     return res.status(409).json({
       error: error.message,
