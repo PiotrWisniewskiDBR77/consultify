@@ -6,7 +6,7 @@ describe('NFR-PERF-001 steady-load gate evaluator', () => {
   it('passes an in-budget run and rejects the positive-control breach', () => {
     expect(
       evaluateSteadyLoadGate({
-        apiLatencyMs: [20, 30, 40, 50],
+        readLatencyMs: [20, 30, 40, 50],
         writeLatencyMs: [80, 90, 100],
         totalRequests: 1000,
         errors: 1,
@@ -18,8 +18,8 @@ describe('NFR-PERF-001 steady-load gate evaluator', () => {
     ).toBe(true);
 
     const breach = evaluateSteadyLoadGate({
-      apiLatencyMs: [2000, 2500, 3000],
-      writeLatencyMs: [1300, 1500, 1800],
+      readLatencyMs: [2000, 2500, 3000],
+      writeLatencyMs: [2600, 2700, 2800],
       totalRequests: 100,
       errors: 2,
       crossTenantFalseSuccesses: 1,
@@ -29,7 +29,7 @@ describe('NFR-PERF-001 steady-load gate evaluator', () => {
     });
     expect(breach.pass).toBe(false);
     expect(breach.failures).toEqual([
-      'api_p95', 'api_p99', 'write_p95', 'error_rate',
+      'read_p95', 'write_p95', 'error_rate',
       'cross_tenant_false_success', 'heap_growth', 'heap_monotonic_last_10m',
     ]);
   });

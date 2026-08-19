@@ -78,7 +78,7 @@ async function main(): Promise<void> {
   const users = Array.from({ length: userCount }, (_, index) => `nfr-perf-user-${index}-${tag}`);
   const foreignUser = `nfr-perf-foreign-user-${tag}`;
   const pool = new Pool({ connectionString: databaseUrl, max: 12 });
-  const apiLatencyMs: number[] = [];
+  const readLatencyMs: number[] = [];
   const writeLatencyMs: number[] = [];
   const heapSamples: Array<{ atMs: number; heapMb: number }> = [];
   let totalRequests = 0;
@@ -169,8 +169,7 @@ async function main(): Promise<void> {
               })
             : await requestJson(tokens[index], `/cases/${baselineCaseId}`);
           totalRequests += 1;
-          apiLatencyMs.push(result.latency);
-          if (isWrite) writeLatencyMs.push(result.latency);
+          (isWrite ? writeLatencyMs : readLatencyMs).push(result.latency);
           if (result.response.status < 200 || result.response.status >= 300) errors += 1;
           await result.response.arrayBuffer();
         } catch {
@@ -204,10 +203,10 @@ async function main(): Promise<void> {
     const lastTenMinuteHeapMb = heapSamples
       .filter((sample) => sample.atMs >= Math.max(0, durationMs - 10 * 60_000))
       .map((sample) => sample.heapMb);
-    const gate = evaluateSteadyLoadGate({ apiLatencyMs, writeLatencyMs, totalRequests, errors,
+    const gate = evaluateSteadyLoadGate({ readLatencyMs, writeLatencyMs, totalRequests, errors,
       crossTenantFalseSuccesses, heapWarmMb: warmHeapMb, heapFinalMb: finalHeapMb, lastTenMinuteHeapMb });
     const positiveControl = evaluateSteadyLoadGate({
-      apiLatencyMs: [2000, 2500], writeLatencyMs: [1300, 1600], totalRequests: 100, errors: 2,
+      readLatencyMs: [2000, 2500], writeLatencyMs: [2600, 3000], totalRequests: 100, errors: 2,
       crossTenantFalseSuccesses: 1, heapWarmMb: 100, heapFinalMb: 125,
       lastTenMinuteHeapMb: [100, 110, 120],
     });

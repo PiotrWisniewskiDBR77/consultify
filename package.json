@@ -127,6 +127,8 @@
     "test:e2e:full": "playwright test",
     "test:load": "k6 run tests/performance/load-test.js",
     "test:performance": "vitest run --config vitest.perf.config.ts",
+    "test:nfr-perf:mounted": "tsx scripts/performance/nfr-perf-mounted-gate.ts",
+    "test:nfr-perf:disposable": "tsx scripts/performance/nfr-perf-disposable.ts",
     "test:performance:real": "RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=postgresql://iris:iris_test@localhost:5432/iris_test npm run test:performance",
     "test:memory-leak": "vitest run tests/performance/memory-leak.test.ts --reporter=verbose",
     "test:all": "npm run test:unit && npm run test:component && npm run test:integration",

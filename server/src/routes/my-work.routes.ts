@@ -636,7 +636,7 @@ const resolveCanonicalPersonalTaskIdentity = async (
     );
     const matches: Array<{ id: string; organization_id: string }> = result?.rows || [];
 
-    logger.info('[MyWork] resolveCanonical lookup', {
+    logger.debug('[MyWork] resolveCanonical lookup', {
       email,
       sessionUserId: identity.userId,
       sessionOrgId: identity.orgId,
@@ -1237,7 +1237,7 @@ router.get(
         params
       )) || [];
 
-    logger.info('[MyWork] personal-tasks resolved identity', {
+    logger.debug('[MyWork] personal-tasks resolved identity', {
       sessionEmail: req.user?.email || null,
       sessionUserId: baseIdentity.userId,
       sessionOrgId: baseIdentity.orgId,
