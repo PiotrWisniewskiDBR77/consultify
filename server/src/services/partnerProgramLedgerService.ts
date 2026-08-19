@@ -222,7 +222,7 @@ async function buildOnboardChecklistSnapshot(
     db,
     `SELECT uos.terms_accepted, uos.privacy_accepted, uos.pricing_tier, uos.completed
      FROM partner_users pu
-     LEFT JOIN user_onboarding_status uos ON uos.user_id = pu.user_id
+     LEFT JOIN user_onboarding_status uos ON uos.user_id = pu.user_id::text
      WHERE pu.partner_org_id = ? AND pu.status = 'active'
      ORDER BY pu.joined_at ASC, pu.created_at ASC
      LIMIT 1`,
@@ -572,14 +572,16 @@ export class PartnerProgramLedgerService {
 
     const ledgerReconciled = ledgerBalances.paidOut;
     const paidOut = Math.max(ledgerReconciled, settledPayouts);
-    const unreconciledAmount = Math.round(Math.max(0, settledPayouts - ledgerReconciled) * 10000) / 10000;
+    const unreconciledAmount =
+      Math.round(Math.max(0, settledPayouts - ledgerReconciled) * 10000) / 10000;
 
     return {
       ...ledgerBalances,
       paidOut,
       availableToPayout:
-        Math.round(Math.max(0, ledgerBalances.grossEarned - paidOut - ledgerBalances.heldAmount) * 10000) /
-        10000,
+        Math.round(
+          Math.max(0, ledgerBalances.grossEarned - paidOut - ledgerBalances.heldAmount) * 10000
+        ) / 10000,
       paidReconciliation: {
         status: unreconciledAmount > 0 ? 'LEDGER_BEHIND_REGISTER' : 'RECONCILED',
         ledgerReconciled,

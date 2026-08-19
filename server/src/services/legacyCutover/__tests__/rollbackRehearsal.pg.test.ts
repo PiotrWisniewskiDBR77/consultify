@@ -51,6 +51,7 @@ const user = `${prefix}-user`;
  */
 const SAMPLE_PATHS: Record<string, string> = {
   'FIN-W01': '/models/rehearsal-model/approve',
+  'FIN-W02': '/models/rehearsal-model/approve',
   'PRT-W01': '/payouts/request',
   'PRT-W02': '/campaign-links',
   'PRT-W03': '/campaign-links/rehearsal-link',
@@ -59,6 +60,14 @@ const SAMPLE_PATHS: Record<string, string> = {
   'PRT-W06': '/organization/regions',
   'PRT-W07': '/organization/listing',
   'PRT-W08': '/payout-settings',
+  'PRT-W09': '/connect',
+  'PRT-W10': '/clients',
+  'PRT-W11': '/employees',
+  'PRT-W12': '/access-links',
+  'PRT-W13': '/certifications/rehearsal-cert/modules/rehearsal-module/progress',
+  'PRT-W14': '/certifications/rehearsal-cert/exam/start',
+  'PRT-W15': '/certifications/rehearsal-cert/exam/submit',
+  'PRT-W16': '/licenses/order',
 };
 
 interface Tranche {
@@ -209,7 +218,10 @@ describe.skipIf(!REAL_PG)('Rollback rehearsal for every disabled writer', () => 
         // Every OTHER disabled writer of the same domain config stays refused
         // while this one is open.
         const neighbours = tranche.config.writers.filter(
-          (writer) => writer.state === 'disabled' && writer.writerId !== tranche.writerId
+          (writer) =>
+            writer.state === 'disabled' &&
+            (writer.enforcedBy ?? 'kernel') === 'kernel' &&
+            writer.writerId !== tranche.writerId
         );
         for (const neighbour of neighbours) {
           const neighbourApp = guardedApp(tranche.config, mount);
