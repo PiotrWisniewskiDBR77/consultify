@@ -1,11 +1,11 @@
 {
   "baselineSha": "7ed35487586ab2832445bde01f8e25ec4c320b2c",
-  "productSha": "9931050ca74e6cdefd2b02a1dbf518f0115a4908",
+  "productSha": "8c1cf4f010259b10bd069f312684f2f9fec815c8",
   "leaseSha256": "6cea3c806721c2d385d7f960e88d411966e5bf497bb35ccce222828f8b9819c4",
   "taskId": "CHAT-NFR-001",
   "verdict": "PARTIAL",
   "technicalVerdict": "DONE_CURRENT_SHA",
-  "verdictRationale": "All repository-owned cancellation, bounded retry, durable disconnect checkpoint, cold explicit resume, tenant isolation, telemetry and runbook obligations are proven on exact current 9931050ca74e6cdefd2b02a1dbf518f0115a4908. Overall PARTIAL is retained only because a deployed real external-provider stability window is not repository-owned and was not executed.",
+  "verdictRationale": "All repository-owned cancellation, request-scoped provider-start budgeting, durable disconnect checkpoint, cold explicit resume, tenant isolation, telemetry and runbook obligations are proven on exact current 8c1cf4f010259b10bd069f312684f2f9fec815c8. One user action now owns one HTTP stream lifecycle and one shared maximum-two-start provider ledger across internal retry and cross-model fallback. Overall PARTIAL is retained only because a deployed real external-provider stability window is not repository-owned and was not executed.",
   "open": [
     "A real external-provider stability window remains unverified. Provider credentials, selection policy and external availability were explicitly outside this bounded closure; deterministic retry/cancellation/failure contracts are proven without claiming external reliability."
   ],
@@ -24,7 +24,7 @@
   "thresholds": {
     "mountedDeterministicSse": "complete response, trust bundle and [DONE] in < 2000 ms",
     "providerAttemptTimeout": "60000 ms maximum per provider stream attempt",
-    "providerRetryBudget": "one retry, maximum two streamText starts for a provider call",
+    "providerRetryBudget": "maximum two streamText starts for the entire pipeline request, shared across internal retry and every fallback candidate; explicit manual retry is a new user action",
     "heartbeat": "15000 ms",
     "partialCheckpointCadence": "after each >2000 ms accumulation interval"
   },
@@ -40,12 +40,15 @@
     "exactCurrentUnitAndHook": "77 passed / 77 discovered; exit 0",
     "literalDisconnectColdResume": "1 passed / 1 discovered; exit 0",
     "exactCurrentMigration": "758/758 successful unique ledger rows; repeat 0; dry-run pending 0",
-    "exactCurrentResidue": "0 Chat checkpoint/session/fixture rows for the bounded fixture identity"
+    "exactCurrentResidue": "0 Chat checkpoint/session/fixture rows for the bounded fixture identity",
+    "exactCurrentProviderBudget": "3 files / 44 tests, retry 0: llm transport 14/14, useAIStream 29/29, mounted deterministic SSE 1/1"
   },
   "negativeControls": {
     "clientCancellation": "route AbortController propagates through AIPipeline to llmService; composed provider signal becomes aborted when caller aborts",
     "timeout": "caller cancellation is composed with an enforced 60000 ms provider timeout",
-    "boundedRetry": "first provider startup failure then success invokes streamText exactly twice and emits recovered content",
+    "boundedRetry": "first provider startup failure then success invokes streamText exactly twice; a second fallback candidate is denied before a third start with PROVIDER_START_BUDGET_EXHAUSTED and exact 2/2 attempt metadata",
+    "abortDuringBackoff": "caller abort during the one-second internal retry backoff rejects with AbortError and leaves streamText cardinality exactly 1",
+    "clientRequestCardinality": "useAIStream makes one HTTP stream request per startStream action, synchronously rejects a double-start race, and performs no autonomous HTTP retry; retryLastStream is explicit new user intent",
     "providerThrows": "PROVIDER_UNAVAILABLE 503 and zero phantom proposals",
     "providerNull": "SOURCE_NOT_FOUND 404 and zero phantom proposals",
     "providerEmpty": "EMPTY_SOURCE 422 and zero phantom proposals",
@@ -70,22 +73,24 @@
     "server/migrations/20261010_chat_partial_response_tenant_scope.sql",
     "src/components/AIChat/UnifiedChatPanel.tsx",
     "src/hooks/useAIStream.ts",
+    "tests/unit/hooks/useAIStream.test.ts",
     "tests/components/AIChat/UnifiedChatPanel.test.tsx",
     "tests/e2e/ui-canon-g4/chat-stream-resilience.spec.ts",
     "tests/integration/ai/chat-partial-recovery.realpg.test.ts",
     "tests/integration/ai/chat-stream-disconnect.mounted.realpg.test.ts"
   ],
   "changedPathRationale": {
-    "server/src/routes/ai.routes.ts": "Own the SSE client lifecycle with an AbortController and pass its signal into the pipeline.",
-    "server/src/services/ai/AIPipeline.ts": "Forward caller cancellation and the explicit 60-second stream budget to provider transport.",
-    "server/src/services/ai/llmService.ts": "Compose client cancellation with provider timeout without changing provider selection policy.",
-    "server/src/types/ai.types.ts": "Declare the optional lifecycle signal in the pipeline request contract.",
-    "server/src/services/ai/__tests__/tokenUsageCapture.test.ts": "Prove cancellation reaches provider invocation and retry is bounded to one recovery attempt.",
-    "tests/integration/ai/ai-chat-stream-e2e-mode.test.ts": "Measure the mounted deterministic SSE completion threshold.",
+    "server/src/routes/ai.routes.ts": "Own the SSE client lifecycle and preserve stable provider-start budget code and cardinality metadata in terminal SSE.",
+    "server/src/services/ai/AIPipeline.ts": "Create one shared maximum-two-start ledger for the whole request and pass it through every model fallback.",
+    "server/src/services/ai/llmService.ts": "Reserve a shared permit immediately before streamText, compose cancellation with timeout, and make retry backoff abort-aware.",
+    "server/src/types/ai.types.ts": "Declare the request-scoped provider-start ledger and terminal cardinality metadata contract.",
+    "server/src/services/ai/__tests__/tokenUsageCapture.test.ts": "Prove exact two-start recovery, no third fallback start, and cancellation during backoff with one actual start.",
+    "tests/integration/ai/ai-chat-stream-e2e-mode.test.ts": "Measure mounted deterministic SSE completion and supply the authoritative ACTIVE-membership fixture required by the production route.",
     "docs/runbooks/CHAT_STREAM_RELIABILITY.md": "Document thresholds, signals, safe triage and recovery commands.",
     "server/migrations/20261010_chat_partial_response_tenant_scope.sql": "Persist tenant-scoped interrupted-stream checkpoints with collision-safe identity and late-safe constraints.",
     "src/components/AIChat/UnifiedChatPanel.tsx": "Expose explicit user-controlled recovery without autonomous provider invocation.",
-    "src/hooks/useAIStream.ts": "Own checkpoint discovery, resume request lifecycle and terminal cleanup semantics.",
+    "src/hooks/useAIStream.ts": "Own checkpoint discovery and one HTTP lifecycle per user action, with a synchronous in-flight guard and no autonomous request retry.",
+    "tests/unit/hooks/useAIStream.test.ts": "Prove one request on terminal failure and one request under a same-render double-start race.",
     "tests/components/AIChat/UnifiedChatPanel.test.tsx": "Prove recovery affordance behavior and prevent implicit provider invocation.",
     "tests/e2e/ui-canon-g4/chat-stream-resilience.spec.ts": "Prove mounted explicit recovery, failure retention and strict membership behavior.",
     "tests/integration/ai/chat-partial-recovery.realpg.test.ts": "Prove tenant-scoped persistence, collision, cold readback and cleanup on real PostgreSQL.",
@@ -97,7 +102,9 @@
     {"command": "npm run type-check", "exitCode": 0, "result": "passed"},
     {"command": "npm run build:backend", "exitCode": 0, "result": "runtime mirrors verified 9/9 and TypeScript build passed"},
     {"command": "exact-current fresh migration + repeat + dry-run on disposable tmpfs PostgreSQL", "exitCode": 0, "result": "758/758 successful unique migrations; repeat 0; dry-run pending 0"},
-    {"command": "exact-current focused CHAT qualification", "exitCode": 0, "result": "real PostgreSQL 7/7; mounted browser 2/2; unit/hook 77/77; literal disconnect/cold resume 1/1; residue 0"}
+    {"command": "exact-current focused CHAT qualification", "exitCode": 0, "result": "real PostgreSQL 7/7; mounted browser 2/2; unit/hook 77/77; literal disconnect/cold resume 1/1; residue 0"},
+    {"command": "CI=true NODE_ENV=test E2E_MODE=true npx vitest run server/src/services/ai/__tests__/tokenUsageCapture.test.ts tests/unit/hooks/useAIStream.test.ts tests/integration/ai/ai-chat-stream-e2e-mode.test.ts --no-file-parallelism --maxWorkers=1 --retry=0", "exitCode": 0, "result": "exact integrated SHA 8c1cf4f0: 3/3 files, 44/44 tests, retry 0"},
+    {"command": "exact candidate root and server typechecks plus backend and 8 GiB frontend builds", "exitCode": 0, "result": "both typechecks passed; backend runtime mirrors 9/9; frontend transformed 10444 modules and built successfully"}
   ],
   "fixtures": {
     "postgres": "fresh isolated chat_nfr database",
