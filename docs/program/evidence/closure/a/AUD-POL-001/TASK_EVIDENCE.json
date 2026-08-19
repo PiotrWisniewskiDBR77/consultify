@@ -219,5 +219,51 @@
     "unverifiableAsWritten": [
       "The currentRequalification.pathContinuity claim names a \"17-path AUD technical surface\" but no enumeration of those 17 paths exists anywhere in the repository. The claim can therefore be neither confirmed nor refuted as written. What IS verifiable and true at 4f0fd2cd9b: zero commits in b9cb120075..HEAD touch either changedPath, server/src/services/auditProgramRights/**, server/src/routes/audits/**, or any path matching auditProgram or audit_pack. The substantive drift affecting this record happened BEFORE b9cb120075 (between productSha 78a618942e and b9cb120075), so the b9cb120075..HEAD window is the wrong window in which to look for it."
     ]
+  },
+  "exactCurrentRequalification20260819": {
+    "testedSha": "a0cb8004d94f750970b22cd2a2ebbf142fd87c7a",
+    "repositoryVerdict": "READY_FOR_EXTERNAL_GATE",
+    "overallVerdict": "PARTIAL",
+    "scope": "Exact-current repository requalification of the migration-owned independence cursor, fenced detector tick and default-OFF scheduler flag. No deployment flag, release or policy mutation was performed.",
+    "sourceTruth": {
+      "namedExternalStandards": "OFF; the compile-time ISO 27001 legacy preset gate remains false and the rights decision remains restricted to the internal Transformation Pack.",
+      "detectorCaller": "server/src/jobs/auditIndependenceDetectorJob.ts calls getIndependenceReport through a bounded, checkpointed and fenced tick.",
+      "schedulerAuthority": "server/src/cron/Scheduler.ts registers job 43 but executes it only when AUDIT_INDEPENDENCE_DETECTOR_CRON_ENABLED is exactly true.",
+      "deploymentState": "NOT_EXECUTED_NOT_AUTHORIZED; default-OFF was retained."
+    },
+    "runtime": {
+      "database": "aud_policy_a0cb_20260819 on disposable PostgreSQL 16",
+      "migrations": {
+        "freshApplied": 790,
+        "repeatApplied": 0,
+        "dryRunPending": 0
+      },
+      "tests": {
+        "files": "2/2",
+        "cases": "26/26",
+        "retry": 0,
+        "detail": "21 cases in independenceScanCursor.realdb.test.ts plus 5 cases in auditIndependenceDetectorSchedulerFlag.test.ts. This supersedes the stale 23-case exact-current estimate while preserving the historical 10/10 product-SHA fact."
+      },
+      "negativeControls": [
+        "every non-literal-true flag value performs zero claims",
+        "overlapping workers cannot double-process one lease",
+        "concurrent invocations never share a fence",
+        "superseded workers cannot record cursor progress",
+        "bounded batches walk every program without starvation and wrap the cycle"
+      ],
+      "cleanup": {
+        "auditPrograms": 0,
+        "cursorRows": 0,
+        "advisoryLocks": 0,
+        "databaseDropped": true,
+        "catalogExistenceAfterDrop": 0
+      }
+    },
+    "remainingExternalGates": [
+      "Enable AUDIT_INDEPENDENCE_DETECTOR_CRON_ENABLED=true in the intended deployed environment.",
+      "Observe bounded scheduled ticks, lease/cursor progression and violation/error telemetry in that environment.",
+      "Obtain accountable Methodology/Rights/Legal owner acceptance of the restricted-scope implementation."
+    ],
+    "releaseBoundary": "No push, deploy, environment mutation or release authorization was performed. Repository technical readiness does not satisfy the deployment and owner gates."
   }
 }
