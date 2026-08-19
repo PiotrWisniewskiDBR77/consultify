@@ -55,6 +55,8 @@ const USER_MAKER = `roi-e007-fin-recon-maker-${tag}`;
 const USER_RESOLVER = `roi-e007-fin-recon-resolver-${tag}`;
 const USER_RESOLVER_2 = `roi-e007-fin-recon-resolver-2-${tag}`;
 const USER_GRANTEE = `roi-e007-fin-recon-grantee-${tag}`;
+const USER_MEMBER = `roi-e007-fin-recon-member-${tag}`;
+const USER_REVOKED_CHECKER = `roi-e007-fin-recon-revoked-checker-${tag}`;
 const INITIATIVE_ID = `roi-e007-fin-recon-init-${tag}`;
 
 let client: Client;
@@ -388,7 +390,7 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
     closePgPool = (pgModule as unknown as { closePool?: () => Promise<void> }).closePool;
 
     await insertOrganization();
-    for (const userId of [USER_MAKER, USER_RESOLVER, USER_RESOLVER_2, USER_GRANTEE]) {
+    for (const userId of [USER_MAKER, USER_RESOLVER, USER_RESOLVER_2, USER_GRANTEE, USER_MEMBER, USER_REVOKED_CHECKER]) {
       await client.query(
         `INSERT INTO users (id,organization_id,email,password,role,status,first_name,last_name,created_at)
          VALUES ($1,$2,$3,'x','USER','active','Fin','Recon',now())`,
@@ -397,14 +399,15 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
       await client.query(
         `INSERT INTO organization_members (id,organization_id,user_id,role,status,created_at)
          VALUES ($1,$2,$3,$4,'ACTIVE',now())`,
-        [`${userId}-membership`, ORG_ID, userId, userId === USER_MAKER ? 'OWNER' : 'MEMBER']
+        [`${userId}-membership`, ORG_ID, userId,
+          userId === USER_MAKER ? 'OWNER' : userId === USER_MEMBER ? 'MEMBER' : 'ADMIN']
       );
     }
-    for (const resolverId of [USER_RESOLVER, USER_RESOLVER_2]) await client.query(
+    for (const resolverId of [USER_MAKER, USER_RESOLVER, USER_RESOLVER_2, USER_MEMBER, USER_REVOKED_CHECKER]) await client.query(
       `INSERT INTO rvn_finance_reconciliation_grant_events
        (organization_id,user_id,grant_version,action,acted_by,policy_version,policy_digest)
        VALUES ($1,$2,1,'granted',$3,$4,$5)`,
-      [ORG_ID, resolverId, USER_MAKER,
+      [ORG_ID, resolverId, resolverId === USER_MAKER ? USER_RESOLVER : USER_MAKER,
         'DEC-FIN-RESULTS-RECONCILIATION-001/v1',
         'sha256:a0b04a2bcd42d9fa8a2680f0dd35008f4226bc92db5ecc63756732d7a8854e6d']
     );
@@ -457,7 +460,7 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
       await client.query(`DELETE FROM rvn_roi_visibility_governance WHERE organization_id = $1`, [ORG_ID]);
       await client.query(`DELETE FROM initiatives WHERE organization_id = $1`, [ORG_ID]);
       await client.query(`DELETE FROM organization_members WHERE organization_id = ANY($1::text[])`, [[ORG_ID, SECOND_ORG_ID]]);
-      await client.query(`DELETE FROM users WHERE id = ANY($1::text[])`, [[USER_MAKER, USER_RESOLVER, USER_RESOLVER_2, USER_GRANTEE]]);
+      await client.query(`DELETE FROM users WHERE id = ANY($1::text[])`, [[USER_MAKER, USER_RESOLVER, USER_RESOLVER_2, USER_GRANTEE, USER_MEMBER, USER_REVOKED_CHECKER]]);
       await client.query(`DELETE FROM organizations WHERE id = ANY($1::text[])`, [[ORG_ID, SECOND_ORG_ID]]);
       await client.query('COMMIT');
       inTransaction = false;
@@ -489,7 +492,7 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
            AND tgname=ANY($3::text[])) triggers_enabled`,
         [
           [ORG_ID, SECOND_ORG_ID],
-          [USER_MAKER, USER_RESOLVER, USER_RESOLVER_2, USER_GRANTEE],
+          [USER_MAKER, USER_RESOLVER, USER_RESOLVER_2, USER_GRANTEE, USER_MEMBER, USER_REVOKED_CHECKER],
           [
             'trg_rvn_fin_reconciliation_grant_insert_guard',
             'trg_rvn_fin_reconciliation_decision_append_only',
@@ -635,6 +638,31 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
       source: 'results.finance_projection_consumer',
       payload: { authorityKind: 'finance_projection', sourceEventId },
     });
+  });
+
+  itDB('human open denies MEMBER+grant and elevated actors without a Finance grant before writes', async () => {
+    const fixture = await buildCaseWithFinanceLink('human-authority');
+    const count = async () => (await client.query<{ count: string }>(
+      `SELECT count(*)::text count FROM rvn_roi_finance_reconciliations
+        WHERE organization_id=$1 AND case_id=$2`, [ORG_ID, fixture.caseId]
+    )).rows[0]?.count;
+    const before = await count();
+
+    await expect(openRoiFinanceReconciliation({
+      caseId: fixture.caseId, organizationId: ORG_ID, financeLinkId: fixture.linkId,
+      roiValue: 100, financeValue: 120, actorUserId: USER_MEMBER,
+      actorEffectiveRole: 'owner', idempotencyKey: `member-granted-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: 'ADMIN' },
+    })).rejects.toMatchObject({ code: 'FINANCE_RECONCILIATION_OWNER_ADMIN_REQUIRED' });
+
+    await expect(openRoiFinanceReconciliation({
+      caseId: fixture.caseId, organizationId: ORG_ID, financeLinkId: fixture.linkId,
+      roiValue: 100, financeValue: 120, actorUserId: USER_GRANTEE,
+      actorEffectiveRole: 'admin', idempotencyKey: `admin-ungranted-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: 'ADMIN' },
+    })).rejects.toMatchObject({ code: 'FINANCE_OWNER_GRANT_REQUIRED' });
+
+    expect(await count()).toBe(before);
   });
 
   itDB('materiality policy accepts equal-value currency mismatch, rejects same-currency <=5%, and accepts >5%', async () => {
@@ -800,6 +828,69 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
     expect(resolvedOutcome.result.resolutionNotes).toBe('Confirmed timing difference, both figures correct');
   });
 
+  itDB('terminal decisions recheck active OWNER/ADMIN role and current grant before replay/CAS with zero writes', async () => {
+    const fixture = await buildCaseWithFinanceLink('terminal-authority');
+    const opened = await openRoiFinanceReconciliation({
+      caseId: fixture.caseId, organizationId: ORG_ID, financeLinkId: fixture.linkId,
+      roiValue: 100, financeValue: 120, actorUserId: USER_MAKER,
+      actorEffectiveRole: 'owner', idempotencyKey: `terminal-authority-open-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: 'ADMIN' },
+    });
+    const reconciliationId = opened.result.reconciliationId;
+    const snapshot = async () => (await client.query(
+      `SELECT r.status,r.row_version,
+        (SELECT count(*)::int FROM rvn_finance_reconciliation_decisions d
+          WHERE d.reconciliation_id=r.reconciliation_id) decisions,
+        (SELECT count(*)::int FROM rvn_platform_events e
+          WHERE e.organization_id=r.organization_id
+            AND e.aggregate_id=r.case_id::text
+            AND e.event_type='roi.finance_reconciliation_resolved') terminal_events
+       FROM rvn_roi_finance_reconciliations r
+       WHERE r.reconciliation_id=$1`, [reconciliationId]
+    )).rows[0];
+    const before = await snapshot();
+    const attempt = (actorUserId: string, suffix: string) => updateRoiFinanceReconciliationStatus({
+      reconciliationId, caseId: fixture.caseId, organizationId: ORG_ID,
+      expectedVersion: opened.result.rowVersion, status: 'resolved',
+      actorUserId, actorEffectiveRole: 'admin',
+      idempotencyKey: `terminal-authority-${suffix}-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: 'ADMIN' },
+    });
+
+    await expect(attempt(USER_MEMBER, 'member-granted')).rejects.toMatchObject({
+      code: 'FINANCE_RECONCILIATION_OWNER_ADMIN_REQUIRED',
+    });
+    await expect(attempt(USER_GRANTEE, 'admin-ungranted')).rejects.toMatchObject({
+      code: 'FINANCE_OWNER_GRANT_REQUIRED',
+    });
+
+    await client.query(`UPDATE organization_members SET role='MEMBER' WHERE organization_id=$1 AND user_id=$2`, [ORG_ID, USER_RESOLVER_2]);
+    await expect(attempt(USER_RESOLVER_2, 'downgraded')).rejects.toMatchObject({
+      code: 'FINANCE_RECONCILIATION_OWNER_ADMIN_REQUIRED',
+    });
+    await client.query(`UPDATE organization_members SET role='ADMIN' WHERE organization_id=$1 AND user_id=$2`, [ORG_ID, USER_RESOLVER_2]);
+
+    await client.query(`UPDATE organization_members SET status='REVOKED' WHERE organization_id=$1 AND user_id=$2`, [ORG_ID, USER_RESOLVER_2]);
+    await expect(attempt(USER_RESOLVER_2, 'revoked-member')).rejects.toMatchObject({
+      code: 'ACTIVE_TENANT_MEMBERSHIP_REQUIRED',
+    });
+    await client.query(`UPDATE organization_members SET status='ACTIVE' WHERE organization_id=$1 AND user_id=$2`, [ORG_ID, USER_RESOLVER_2]);
+
+    await client.query(
+      `INSERT INTO rvn_finance_reconciliation_grant_events
+       (organization_id,user_id,grant_version,action,acted_by,policy_version,policy_digest)
+       VALUES ($1,$2,2,'revoked',$3,$4,$5)`,
+      [ORG_ID, USER_REVOKED_CHECKER, USER_MAKER,
+        'DEC-FIN-RESULTS-RECONCILIATION-001/v1',
+        'sha256:a0b04a2bcd42d9fa8a2680f0dd35008f4226bc92db5ecc63756732d7a8854e6d']
+    );
+    await expect(attempt(USER_REVOKED_CHECKER, 'revoked-grant')).rejects.toMatchObject({
+      code: 'FINANCE_OWNER_GRANT_REQUIRED',
+    });
+
+    expect(await snapshot()).toEqual(before);
+  });
+
   itDB(
     'Decision D1 — event fan-out DIFFERS by terminal vs. non-terminal transition: ' +
       "'investigating' fans ONLY to mywork_projection; 'resolved' ALSO fans to finance_projection",
@@ -904,13 +995,13 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
       actorUserId: USER_MAKER,
       idempotencyKey: `self-${randomUUID()}`,
       access: { capabilities: ['*'], platformRole: null },
-    })).rejects.toMatchObject({ code: 'FINANCE_OWNER_GRANT_REQUIRED' });
+    })).rejects.toMatchObject({ code: 'FINANCE_RECONCILIATION_SELF_RESOLUTION_DENIED' });
     await expect(updateRoiFinanceReconciliationStatus({
       ...common,
       actorUserId: USER_MAKER,
       idempotencyKey: `unauthorized-${randomUUID()}`,
       access: { capabilities: [], platformRole: null },
-    })).rejects.toMatchObject({ code: 'FINANCE_OWNER_GRANT_REQUIRED' });
+    })).rejects.toMatchObject({ code: 'FINANCE_RECONCILIATION_SELF_RESOLUTION_DENIED' });
 
     const attempts = await Promise.allSettled([
       updateRoiFinanceReconciliationStatus({
@@ -980,6 +1071,11 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
     expect(outcomes.filter((row) => row.outcome === 'applied')).toHaveLength(1);
     expect(outcomes.filter((row) => row.outcome === 'replayed')).toHaveLength(7);
     expect(new Set(outcomes.map((row) => `${row.receiptId}:${row.grantVersion}`)).size).toBe(1);
+    await expect(recordFinanceOwnerGrantEvent({
+      ...input,
+      userId: USER_MEMBER,
+      idempotencyKey: `member-grant-denied-${tag}`,
+    })).rejects.toMatchObject({ code: 'FINANCE_RECONCILIATION_OWNER_ADMIN_REQUIRED' });
     await client.query(
       `INSERT INTO organizations (id,name,plan,status) VALUES($1,$2,'enterprise','active')`,
       [SECOND_ORG_ID, 'Finance grant second-tenant fixture']
@@ -987,8 +1083,9 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
     for (const userId of [USER_MAKER, USER_GRANTEE]) {
       await client.query(
         `INSERT INTO organization_members (id,organization_id,user_id,role,status,created_at)
-         VALUES($1,$2,$3,'MEMBER','ACTIVE',now())`,
-        [`${SECOND_ORG_ID}-${userId}`, SECOND_ORG_ID, userId]
+         VALUES($1,$2,$3,$4,'ACTIVE',now())`,
+        [`${SECOND_ORG_ID}-${userId}`, SECOND_ORG_ID, userId,
+          userId === USER_MAKER ? 'OWNER' : 'ADMIN']
       );
     }
     const sameRawKeyOtherTenant = await recordFinanceOwnerGrantEvent({ ...input, organizationId: SECOND_ORG_ID });
@@ -1228,22 +1325,10 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
         access: { capabilities: ['*'], platformRole: null },
       });
 
-      // Grant USER_MAKER — the opener — an active Finance-owner grant so the
-      // FINANCE_OWNER_GRANT_REQUIRED check at :541-543 is satisfied and the
-      // self-resolution guard at :547-552 becomes reachable. The seeding
-      // loop in beforeAll (:271-278) only grants USER_RESOLVER/USER_RESOLVER_2,
-      // never USER_MAKER, which is why the guard has never fired in this
-      // suite before. recordFinanceOwnerGrantEvent denies self-grants
-      // (FINANCE_OWNER_GRANT_SELF_DENIED), so a distinct governor
-      // (USER_RESOLVER) performs the grant on USER_MAKER's behalf.
-      await recordFinanceOwnerGrantEvent({
-        organizationId: ORG_ID,
-        userId: USER_MAKER,
-        action: 'granted',
-        actorUserId: USER_RESOLVER,
-        idempotencyKey: `grant-maker-self-guard-${tag}`,
-        access: { capabilities: ['*'], platformRole: null },
-      });
+      // USER_MAKER is seeded as an OWNER with an active Finance grant because
+      // AMD 10A now requires that authority for the open command itself.
+      // Therefore this call reaches the distinct-maker/checker denial without
+      // any fixture-only grant transition here.
 
       await expect(updateRoiFinanceReconciliationStatus({
         reconciliationId: openOutcome.result.reconciliationId,

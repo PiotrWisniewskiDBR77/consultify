@@ -126,6 +126,37 @@ async function assertActiveTenantMember(client: PoolClient, organizationId: stri
   }
 }
 
+const FINANCE_RECONCILIATION_HUMAN_ROLES = new Set(['OWNER', 'ADMIN']);
+
+/** Tenant-authoritative AMD-FIN-RECONCILIATION-SOD-002 (10A) check. */
+async function assertActiveFinanceOwnerRole(
+  client: PoolClient,
+  organizationId: string,
+  userId: string
+): Promise<void> {
+  const membership = await client.query<{ role: string }>(
+    `SELECT role FROM organization_members
+      WHERE organization_id = $1 AND user_id = $2 AND upper(status) = 'ACTIVE'
+      LIMIT 1`,
+    [organizationId, userId]
+  );
+  if (!membership.rowCount) {
+    throw new RoiFinanceReconciliationValidationError(
+      'An active tenant membership is required.',
+      'ACTIVE_TENANT_MEMBERSHIP_REQUIRED',
+      { organizationId, userId }
+    );
+  }
+  const role = String(membership.rows[0]?.role || '').toUpperCase();
+  if (!FINANCE_RECONCILIATION_HUMAN_ROLES.has(role)) {
+    throw new RoiFinanceReconciliationValidationError(
+      'An active tenant OWNER or ADMIN membership is required for Finance reconciliation.',
+      'FINANCE_RECONCILIATION_OWNER_ADMIN_REQUIRED',
+      { organizationId, userId }
+    );
+  }
+}
+
 async function hasActiveExplicitFinanceOwnerGrant(client: PoolClient, organizationId: string, userId: string): Promise<boolean> {
   const result = await client.query<{ action: string }>(
     `SELECT action FROM rvn_finance_reconciliation_grant_events
@@ -200,8 +231,8 @@ export async function recordFinanceOwnerGrantEvent(input: {
   const client = await acquirePgClient();
   try {
     await client.query('BEGIN');
-    await assertActiveTenantMember(client, input.organizationId, input.actorUserId);
-    await assertActiveTenantMember(client, input.organizationId, input.userId);
+    await assertActiveFinanceOwnerRole(client, input.organizationId, input.actorUserId);
+    await assertActiveFinanceOwnerRole(client, input.organizationId, input.userId);
     if (input.actorUserId === input.userId) {
       throw new RoiFinanceReconciliationValidationError('Finance-owner grants require a distinct tenant governor.', 'FINANCE_OWNER_GRANT_SELF_DENIED');
     }
@@ -370,7 +401,13 @@ async function openRoiFinanceReconciliationWithAuthority(
         idempotencyKey,
       ]);
       if (authority.kind === 'human') {
-        await assertActiveTenantMember(client, organizationId, actorUserId);
+        await assertActiveFinanceOwnerRole(client, organizationId, actorUserId);
+        if (!(await hasActiveExplicitFinanceOwnerGrant(client, organizationId, actorUserId))) {
+          throw new RoiFinanceReconciliationValidationError(
+            'An explicit active Finance-owner grant is required to open a reconciliation.',
+            'FINANCE_OWNER_GRANT_REQUIRED'
+          );
+        }
       } else {
         const sourceEvent = await client.query<{ event_type: string }>(
           `SELECT event_type FROM rvn_platform_events
@@ -782,6 +819,7 @@ async function precheckUpdateStatusReplay(
     // still rejected against an already-terminal row; an exact replay skips
     // it entirely.
     if (isTerminalTransition) {
+      await assertActiveFinanceOwnerRole(client, organizationId, actorUserId);
       if (!(await hasActiveExplicitFinanceOwnerGrant(client, organizationId, actorUserId))) {
         throw new RoiFinanceReconciliationValidationError('An explicit active Finance-owner grant is required.', 'FINANCE_OWNER_GRANT_REQUIRED');
       }
@@ -941,6 +979,7 @@ export async function updateRoiFinanceReconciliationStatus(
         throw new RoiFinanceReconciliationValidationError('A terminal reconciliation cannot transition again.', 'FINANCE_RECONCILIATION_ALREADY_TERMINAL');
       }
       if (isTerminalTransition) {
+        await assertActiveFinanceOwnerRole(client, organizationId, actorUserId);
         if (!(await hasActiveExplicitFinanceOwnerGrant(client, organizationId, actorUserId))) {
           throw new RoiFinanceReconciliationValidationError('An explicit active Finance-owner grant is required.', 'FINANCE_OWNER_GRANT_REQUIRED');
         }

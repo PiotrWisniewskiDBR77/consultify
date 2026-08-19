@@ -509,6 +509,17 @@ function handleRoiRouteError(res: Response, err: unknown, op: string): void {
     return;
   }
   if (err instanceof RoiFinanceReconciliationValidationError) {
+    if (
+      err.code === 'ACTIVE_TENANT_MEMBERSHIP_REQUIRED' ||
+      err.code === 'FINANCE_RECONCILIATION_OWNER_ADMIN_REQUIRED' ||
+      err.code === 'FINANCE_OWNER_GRANT_REQUIRED' ||
+      err.code === 'FINANCE_OWNER_GRANT_GOVERNANCE_REQUIRED' ||
+      err.code === 'FINANCE_OWNER_GRANT_SELF_DENIED' ||
+      err.code === 'FINANCE_RECONCILIATION_SELF_RESOLUTION_DENIED'
+    ) {
+      res.status(403).json({ error: err.message, code: err.code, details: err.details });
+      return;
+    }
     res.status(409).json({ error: err.message, code: err.code, details: err.details });
     return;
   }
