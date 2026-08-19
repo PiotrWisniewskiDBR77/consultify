@@ -198,6 +198,23 @@ const LINEAGE_TRANSFORMATION_KIND_VALUES = [
   'RETRACTION',
 ] as const;
 
+interface DerivedAnalysisReplay {
+  artifact_id: string;
+  business_version_id: string;
+  working_revision_id: string;
+  edge_id: string;
+  source_version_id: string;
+}
+
+type DerivedAnalysisResult =
+  | { kind: 'error'; error: 'NOT_FOUND' | 'INVALID_SOURCE_TYPE' | 'IDEMPOTENCY_KEY_COLLISION' }
+  | { kind: 'replay'; replay: DerivedAnalysisReplay }
+  | {
+      kind: 'created';
+      created: Awaited<ReturnType<typeof createArtifact>>;
+      edge: LineageEdgeRow;
+    };
+
 // ---------------------------------------------------------------------------
 // POST /versions/:sourceVersionId/derived-analysis — create the canonical
 // HISTORICAL_ANALYSIS root and its source edge as ONE unit of work. This is
@@ -218,7 +235,7 @@ router.post(
     const keyHash = createHash('sha256').update(idempotencyKey).digest('hex');
     const naturalKey = `derived-analysis:${keyHash}`;
 
-    const result = await withPgTransaction(async (tx) => {
+    const result = await withPgTransaction<DerivedAnalysisResult>(async (tx) => {
       await tx.query(`SELECT pg_advisory_xact_lock(hashtextextended(?, 0))`, [
         `${organizationId}:${naturalKey}`,
       ]);
@@ -237,19 +254,13 @@ router.post(
           [organizationId, sourceVersionId]
         )
       ).rows[0];
-      if (!source) return { error: 'NOT_FOUND' as const };
+      if (!source) return { kind: 'error', error: 'NOT_FOUND' };
       if (source.artifact_type !== 'STATEMENT_PACK') {
-        return { error: 'INVALID_SOURCE_TYPE' as const };
+        return { kind: 'error', error: 'INVALID_SOURCE_TYPE' };
       }
 
       const replay = (
-        await tx.query<{
-          artifact_id: string;
-          business_version_id: string;
-          working_revision_id: string;
-          edge_id: string;
-          source_version_id: string;
-        }>(
+        await tx.query<DerivedAnalysisReplay>(
           `SELECT a.artifact_id, bv.business_version_id, wr.working_revision_id,
                   e.id AS edge_id, e.source_version_id
              FROM finance_artifacts a
@@ -267,9 +278,9 @@ router.post(
       ).rows[0];
       if (replay) {
         if (replay.source_version_id !== sourceVersionId) {
-          return { error: 'IDEMPOTENCY_KEY_COLLISION' as const };
+          return { kind: 'error', error: 'IDEMPOTENCY_KEY_COLLISION' };
         }
-        return { replay };
+        return { kind: 'replay', replay };
       }
 
       const created = await createArtifact({
@@ -289,10 +300,10 @@ router.post(
         authorId: userId,
       });
       if (!lineage.ok) throw new Error(`derived analysis lineage failed: ${lineage.code}`);
-      return { created, edge: lineage.edge, replay: null };
+      return { kind: 'created', created, edge: lineage.edge };
     });
 
-    if ('error' in result) {
+    if (result.kind === 'error') {
       if (result.error === 'NOT_FOUND') {
         return sendError(res, 404, 'NOT_FOUND', 'Source business version not found');
       }
@@ -307,13 +318,15 @@ router.post(
       return sendError(res, 409, 'INVALID_SOURCE_TYPE', 'Source version must be a STATEMENT_PACK');
     }
 
-    const replayed = Boolean(result.replay);
-    const artifactId = result.replay?.artifact_id ?? result.created.artifact.artifact_id;
-    const businessVersionId =
-      result.replay?.business_version_id ?? result.created.businessVersion.business_version_id;
-    const workingRevisionId =
-      result.replay?.working_revision_id ?? result.created.workingRevision.working_revision_id;
-    const edgeId = result.replay?.edge_id ?? result.edge.id;
+    const replayed = result.kind === 'replay';
+    const artifactId = replayed ? result.replay.artifact_id : result.created.artifact.artifact_id;
+    const businessVersionId = replayed
+      ? result.replay.business_version_id
+      : result.created.businessVersion.business_version_id;
+    const workingRevisionId = replayed
+      ? result.replay.working_revision_id
+      : result.created.workingRevision.working_revision_id;
+    const edgeId = replayed ? result.replay.edge_id : result.edge.id;
 
     return res.status(replayed ? 200 : 201).json({
       data: {

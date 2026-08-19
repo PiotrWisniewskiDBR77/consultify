@@ -198,9 +198,9 @@ export async function insertEdge(params: InsertEdgeParams): Promise<InsertEdgeRe
 
   try {
     const insertInTransaction = async (tx: {
-      queryOne<T>(sql: string, params?: unknown[]): Promise<T | null>;
+      queryOne(sql: string, params?: unknown[]): Promise<LineageEdgeRow | null>;
     }) => {
-      const row = await tx.queryOne<LineageEdgeRow>(
+      const row = await tx.queryOne(
         `INSERT INTO finance_lineage_edges (
            id, organization_id, source_version_id, source_artifact_type,
            target_version_id, target_artifact_type, edge_type, transformation_kind,
@@ -228,11 +228,16 @@ export async function insertEdge(params: InsertEdgeParams): Promise<InsertEdgeRe
     const ambient = getCurrentPgTransactionClient();
     if (ambient) {
       return await insertInTransaction({
-        queryOne: async <T>(sql: string, queryParams: unknown[] = []) =>
-          (await ambient.query<T>(sql, queryParams)).rows[0] ?? null,
-    });
+        queryOne: async (sql: string, queryParams: unknown[] = []) =>
+          (await ambient.query<LineageEdgeRow>(sql, queryParams)).rows[0] ?? null,
+      });
     }
-    return await withPinnedPostgresTransaction((tx) => insertInTransaction(tx));
+    return await withPinnedPostgresTransaction((tx) =>
+      insertInTransaction({
+        queryOne: (sql: string, queryParams: unknown[] = []) =>
+          tx.queryOne<LineageEdgeRow>(sql, queryParams),
+      })
+    );
   } catch (error: any) {
     const message = String(error?.message || error);
     if (error?.code === '23505' || /uq_finance_lineage_edge/.test(message)) {
