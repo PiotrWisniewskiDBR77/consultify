@@ -193,6 +193,57 @@ describe.skipIf(!REAL_PG)('RESULTS legacy-cutover guard (fresh real PostgreSQL)'
     expect(mutationRows.rows).toHaveLength(0);
   });
 
+  it.each([
+    {
+      writerId: 'RESULTS-W19', method: 'post' as const,
+      path: '/api/v8/results/deviation-cases/legacy-case/acknowledge',
+      successor: '/api/vnext/results/kpi/deviation-cases/:caseId/acknowledge', body: {},
+    },
+    {
+      writerId: 'RESULTS-W20', method: 'put' as const,
+      path: '/api/v8/results/deviation-cases/legacy-case/rca',
+      successor: '/api/vnext/results/kpi/deviation-cases/:caseId/root-cause', body: { rcaText: 'legacy' },
+    },
+    {
+      writerId: 'RESULTS-W21', method: 'post' as const,
+      path: '/api/v8/results/deviation-cases/legacy-case/actions',
+      successor: '/api/vnext/results/kpi/deviation-cases/:caseId/corrective-actions', body: { title: 'legacy' },
+    },
+    {
+      writerId: 'RESULTS-W22', method: 'put' as const,
+      path: '/api/v8/results/deviation-cases/legacy-case/actions/legacy-action',
+      successor: '/api/vnext/results/kpi/deviation-cases/:caseId/corrective-actions/:actionId', body: { status: 'DONE' },
+    },
+    {
+      writerId: 'RESULTS-W24', method: 'post' as const,
+      path: '/api/v8/results/deviation-cases/legacy-case/close',
+      successor: '/api/vnext/results/kpi/deviation-cases/:caseId/close', body: { evidenceText: 'legacy' },
+    },
+  ])('refuses retired deviation mutation $writerId before handler execution', async (entry) => {
+    const response = await request(app)
+      [entry.method](entry.path)
+      .set('x-request-id', `${prefix}-${entry.writerId.toLowerCase()}`)
+      .send(entry.body);
+
+    expect(response.status).toBe(410);
+    expect(response.body).toMatchObject({
+      code: 'RESULTS_LEGACY_WRITER_DISABLED',
+      writerId: entry.writerId,
+      successor: entry.successor,
+    });
+
+    const legacyCases = await pool.query(
+      `SELECT id FROM kpi_deviation_cases WHERE organization_id = $1 AND id = $2`,
+      [orgA, 'legacy-case']
+    );
+    const legacyActions = await pool.query(
+      `SELECT id FROM kpi_deviation_actions WHERE id = $1`,
+      ['legacy-action']
+    );
+    expect(legacyCases.rows).toHaveLength(0);
+    expect(legacyActions.rows).toHaveLength(0);
+  });
+
   it('records one durable, tenant-scoped observation row per writer', async () => {
     const rows = await pool.query(
       `SELECT writer_id, access_kind, organization_id, tenant_resolution, route_path
@@ -241,6 +292,23 @@ describe.skipIf(!REAL_PG)('RESULTS legacy-cutover guard (fresh real PostgreSQL)'
     const response = await request(app)
       .get('/api/v8/results/scorecards')
       .set('x-request-id', `${prefix}-scorecard-archive`);
+
+    expect(response.status).toBe(200);
+    expect(response.headers['x-consultify-archive-mode']).toBe('read-only');
+    expect(response.body.meta).toMatchObject({ archiveMode: 'read_only' });
+  });
+
+  it('marks the signed legacy KPI drawer and deviation history as read-only archive', async () => {
+    const row = await pool.query(
+      `SELECT id FROM initiative_kpis WHERE organization_id = $1 AND name = $2 LIMIT 1`,
+      [orgA, `${prefix}-kpi`]
+    );
+    const kpiId = String(row.rows[0]?.id || '');
+    expect(kpiId).not.toBe('');
+
+    const response = await request(app)
+      .get(`/api/v8/results/kpis/${encodeURIComponent(kpiId)}/drawer-detail`)
+      .set('x-request-id', `${prefix}-drawer-archive`);
 
     expect(response.status).toBe(200);
     expect(response.headers['x-consultify-archive-mode']).toBe('read-only');

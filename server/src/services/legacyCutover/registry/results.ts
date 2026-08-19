@@ -23,11 +23,12 @@
  * `/cases/:caseId/actuals`, confirmed at
  * `server/src/routes/resultsVnext/roi.routes.ts:2283-2284`).
  *
- * Scorecard writers W33/W35/W36 are the first retired slice. Their sole live
- * product caller was moved to the canonical vNext client in
- * `ResultsKpiScorecardsView.tsx`; the historical GETs stay mounted as a signed
- * read-only archive. Every other writer remains protected/observed until its
- * own caller and identity migration are proven.
+ * Scorecard writers W33/W35/W36 and deviation command writers
+ * W19/W20/W21/W22/W24 are retired slices. Their historical readers and the
+ * unmapped W23 resolve command stay mounted; mapped mutation work is owned by
+ * the canonical vNext tools.
+ * Every other writer remains protected/observed until its own caller and
+ * identity migration are proven.
  */
 
 import type { LegacyCutoverDomainConfig } from '../legacyCutoverKernel.js';
@@ -133,44 +134,44 @@ export const RESULTS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'RESULTS-W19',
       method: 'POST',
       path: /^\/deviation-cases\/[^/]+\/acknowledge\/?$/,
-      state: 'protected',
+      state: 'disabled',
       successor: '/api/vnext/results/kpi/deviation-cases/:caseId/acknowledge',
       legacyTable: 'kpi_deviation_cases',
       legacyIdFromPath: (path) => decodeURIComponent(path.split('/')[2] || ''),
       reason:
-        'UPDATE kpi_deviation_cases, results.routes.ts:1188-1240. Canonical POST .../deviation-cases/:caseId/acknowledge (server/src/routes/resultsVnext/kpiDeviation.routes.ts:334-366, mounted at /api/vnext/results/kpi/deviation-cases) writes rvn_kpi_deviation_cases 1:1.',
+        'Retired after its mounted caller became read-only for acknowledgement. Canonical POST .../acknowledge owns acknowledgement writes in rvn_kpi_deviation_cases.',
     },
     {
       writerId: 'RESULTS-W20',
       method: 'PUT',
       path: /^\/deviation-cases\/[^/]+\/rca\/?$/,
-      state: 'protected',
+      state: 'disabled',
       successor: '/api/vnext/results/kpi/deviation-cases/:caseId/root-cause',
       legacyTable: 'kpi_deviation_cases',
       legacyIdFromPath: (path) => decodeURIComponent(path.split('/')[2] || ''),
       reason:
-        'UPDATE kpi_deviation_cases, results.routes.ts:1241-1305. Canonical PUT .../root-cause (kpiDeviation.routes.ts:372-409) writes rvn_kpi_deviation_cases 1:1.',
+        'Retired after its mounted caller became read-only for RCA persistence. Canonical PUT .../root-cause owns root-cause writes in rvn_kpi_deviation_cases.',
     },
     {
       writerId: 'RESULTS-W21',
       method: 'POST',
       path: /^\/deviation-cases\/[^/]+\/actions\/?$/,
-      state: 'protected',
+      state: 'disabled',
       successor: '/api/vnext/results/kpi/deviation-cases/:caseId/corrective-actions',
       legacyTable: 'kpi_deviation_actions',
       reason:
-        'INSERT INTO kpi_deviation_actions, results.routes.ts:1419-1479. Canonical POST .../corrective-actions (kpiDeviation.routes.ts:415-451) writes rvn_kpi_corrective_actions 1:1.',
+        'Retired after its mounted caller became read-only for action creation. Canonical POST .../corrective-actions owns action creation.',
     },
     {
       writerId: 'RESULTS-W22',
       method: 'PUT',
       path: /^\/deviation-cases\/[^/]+\/actions\/[^/]+\/?$/,
-      state: 'protected',
+      state: 'disabled',
       successor: '/api/vnext/results/kpi/deviation-cases/:caseId/corrective-actions/:actionId',
       legacyTable: 'kpi_deviation_actions',
       legacyIdFromPath: (path) => decodeURIComponent(path.split('/')[4] || ''),
       reason:
-        'UPDATE kpi_deviation_actions, results.routes.ts:1480-1569. Canonical PATCH .../corrective-actions/:actionId (kpiDeviation.routes.ts:492-539) writes rvn_kpi_corrective_actions 1:1.',
+        'Retired after its mounted caller became read-only for action updates. Canonical PATCH .../corrective-actions/:actionId owns action updates.',
     },
     {
       writerId: 'RESULTS-W23',
@@ -187,12 +188,12 @@ export const RESULTS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'RESULTS-W24',
       method: 'POST',
       path: /^\/deviation-cases\/[^/]+\/close\/?$/,
-      state: 'protected',
+      state: 'disabled',
       successor: '/api/vnext/results/kpi/deviation-cases/:caseId/close',
       legacyTable: 'kpi_deviation_cases',
       legacyIdFromPath: (path) => decodeURIComponent(path.split('/')[2] || ''),
       reason:
-        'UPDATE kpi_deviation_cases (two statements), results.routes.ts:1623-1757. Canonical POST .../close (kpiDeviation.routes.ts:742-774) writes rvn_kpi_deviation_cases 1:1.',
+        'Retired after its mounted caller became read-only for closure. Canonical POST .../close owns governed closure writes.',
     },
     {
       writerId: 'RESULTS-W25',

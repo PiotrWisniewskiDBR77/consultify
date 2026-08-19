@@ -221,7 +221,9 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
   const [newActionTitle, setNewActionTitle] = useState('');
   const [newActionDue, setNewActionDue] = useState('');
   const [caseBusy, setCaseBusy] = useState(false);
-  // #M15/OC2: RCA-suggest diagnostics (flag deviationDiagnostics, default OFF).
+  // Only writers with proven canonical successors are retired. Resolve remains
+  // live on the historical case because RESULTS-W23 has no mapped successor.
+  const retiredDeviationMutation = true;
   const [rcaSuggestBusy, setRcaSuggestBusy] = useState(false);
   const [rcaHypotheses, setRcaHypotheses] = useState<V8ResultsRcaHypothesis[] | null>(null);
   const [rcaActions, setRcaActions] = useState<V8ResultsRcaAction[] | null>(null);
@@ -1137,46 +1139,38 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
         ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
         : 'bg-slate-500/10 text-slate-600 border-slate-500/30';
 
-  const handleAcknowledge = useCallback(async () => {
+  const reportRetiredDeviationMutation = useCallback(() => {
+    toast.error(
+      t(
+        'results.deviation.legacyReadOnly',
+        'This legacy command is read-only. Use the canonical KPI tool; Resolve remains available here.'
+      )
+    );
+  }, [t]);
+  const handleAcknowledge = reportRetiredDeviationMutation;
+  const handleClose = reportRetiredDeviationMutation;
+  const handleSaveRca = reportRetiredDeviationMutation;
+  const handleAddAction = reportRetiredDeviationMutation;
+  const handleUpdateActionStatus = useCallback(
+    (_action: DeviationAction, _status: DeviationAction['status']) =>
+      reportRetiredDeviationMutation(),
+    [reportRetiredDeviationMutation]
+  );
+  const handleResolve = useCallback(async () => {
     if (!openCase?.id) return;
     setCaseBusy(true);
     try {
       try {
-        await V8ResultsApi.acknowledgeDeviationCase(openCase.id);
+        await V8ResultsApi.resolveDeviationCase(openCase.id);
       } catch (error) {
-        if (!shouldFallbackToLegacyResults(error)) {
-          throw error;
-        }
-        await Api.post(`/benefits/deviation-cases/${openCase.id}/acknowledge`, {});
+        if (!shouldFallbackToLegacyResults(error)) throw error;
+        await Api.post(`/benefits/deviation-cases/${openCase.id}/resolve`, {});
       }
       fetchData();
     } finally {
       setCaseBusy(false);
     }
   }, [openCase?.id, fetchData]);
-
-  const handleSaveRca = useCallback(async () => {
-    if (!openCase?.id) return;
-    setCaseBusy(true);
-    try {
-      const payload = { rcaText: rcaDraft };
-      try {
-        await V8ResultsApi.updateDeviationCaseRca(openCase.id, payload);
-      } catch (error) {
-        if (!shouldFallbackToLegacyResults(error)) {
-          throw error;
-        }
-        await Api.put(`/benefits/deviation-cases/${openCase.id}/rca`, payload);
-      }
-      fetchData();
-    } finally {
-      setCaseBusy(false);
-    }
-  }, [openCase?.id, rcaDraft, fetchData]);
-
-  // #M15/OC2: pull heuristic RCA hypotheses + actions from the (formerly
-  // orphaned) deviationRcaSuggestService via the V8 rca-suggest endpoint.
-  // Read-only — does NOT persist rca_text; the user still saves via handleSaveRca.
   const handleSuggestRca = useCallback(async () => {
     if (!openCase?.id) return;
     setRcaSuggestBusy(true);
@@ -1185,7 +1179,6 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
       setRcaHypotheses(Array.isArray(res?.hypotheses) ? res.hypotheses : []);
       setRcaActions(Array.isArray(res?.actions) ? res.actions : []);
     } catch (error) {
-      // No legacy fallback exists for this new engine — surface and stop.
       toast.error(t('results.deviation.rcaSuggestError', 'Could not generate RCA suggestions'));
       // eslint-disable-next-line no-console
       console.error('rca-suggest failed', error);
@@ -1193,94 +1186,6 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
       setRcaSuggestBusy(false);
     }
   }, [openCase?.id, t]);
-
-  const handleAddAction = useCallback(async () => {
-    if (!openCase?.id || !newActionTitle.trim()) return;
-    setCaseBusy(true);
-    try {
-      const payload = {
-        title: newActionTitle.trim(),
-        dueDate: newActionDue ? String(newActionDue).slice(0, 10) : undefined,
-      };
-      try {
-        await V8ResultsApi.createDeviationAction(openCase.id, payload);
-      } catch (error) {
-        if (!shouldFallbackToLegacyResults(error)) {
-          throw error;
-        }
-        await Api.post(`/benefits/deviation-cases/${openCase.id}/actions`, payload);
-      }
-      setNewActionTitle('');
-      setNewActionDue('');
-      fetchData();
-    } finally {
-      setCaseBusy(false);
-    }
-  }, [openCase?.id, newActionTitle, newActionDue, fetchData]);
-
-  const handleResolve = useCallback(async () => {
-    if (!openCase?.id) return;
-    setCaseBusy(true);
-    try {
-      try {
-        await V8ResultsApi.resolveDeviationCase(openCase.id);
-      } catch (error) {
-        if (!shouldFallbackToLegacyResults(error)) {
-          throw error;
-        }
-        await Api.post(`/benefits/deviation-cases/${openCase.id}/resolve`, {});
-      }
-      fetchData();
-    } finally {
-      setCaseBusy(false);
-    }
-  }, [openCase?.id, fetchData]);
-
-  const handleUpdateActionStatus = useCallback(
-    async (action: DeviationAction, status: DeviationAction['status']) => {
-      if (!openCase?.id) return;
-      setCaseBusy(true);
-      try {
-        const payload = { status };
-        try {
-          await V8ResultsApi.updateDeviationAction(openCase.id, action.id, payload);
-        } catch (error) {
-          if (!shouldFallbackToLegacyResults(error)) {
-            throw error;
-          }
-          await Api.put(`/benefits/deviation-cases/${openCase.id}/actions/${action.id}`, payload);
-        }
-        fetchData();
-      } finally {
-        setCaseBusy(false);
-      }
-    },
-    [openCase?.id, fetchData]
-  );
-
-  const handleClose = useCallback(async () => {
-    if (!openCase?.id) return;
-    if (!closeEvidenceText.trim() && !closeEvidenceRef.trim()) return;
-    setCaseBusy(true);
-    try {
-      const payload = {
-        evidenceText: closeEvidenceText.trim() || undefined,
-        evidenceRef: closeEvidenceRef.trim() || undefined,
-        resolutionNotes: closeResolutionNotes.trim() || undefined,
-      };
-      try {
-        await V8ResultsApi.closeDeviationCase(openCase.id, payload);
-      } catch (error) {
-        if (!shouldFallbackToLegacyResults(error)) {
-          throw error;
-        }
-        await Api.post(`/benefits/deviation-cases/${openCase.id}/close`, payload);
-      }
-      fetchData();
-    } finally {
-      setCaseBusy(false);
-    }
-  }, [openCase?.id, closeEvidenceRef, closeEvidenceText, closeResolutionNotes, fetchData]);
 
   return (
     <>
@@ -1526,6 +1431,12 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                     id="kpi-drawer-deviation"
                     className="rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 p-4 space-y-3 scroll-mt-4"
                   >
+                    <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-200">
+                      {t(
+                        'results.deviation.legacyArchiveBanner',
+                        'Legacy deviation commands are partially retired. Continue acknowledgements, root-cause analysis, corrective actions and closure in the canonical KPI tool. Resolve remains available here.'
+                      )}
+                    </div>
                     <div className="flex items-center justify-between gap-2">
                       <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                         {t('results.deviation.title', 'Deviation case')}
@@ -1550,7 +1461,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                       {openCase.status === 'OPEN' ? (
                         <button
                           type="button"
-                          disabled={caseBusy}
+                          disabled={retiredDeviationMutation}
                           onClick={() => void handleAcknowledge()}
                           className="h-8 px-3 rounded-full text-xs font-medium border border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-60"
                         >
@@ -1576,7 +1487,8 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                       <button
                         type="button"
                         disabled={
-                          caseBusy || (!closeEvidenceText.trim() && !closeEvidenceRef.trim())
+                          retiredDeviationMutation ||
+                          (!closeEvidenceText.trim() && !closeEvidenceRef.trim())
                         }
                         onClick={() => void handleClose()}
                         className="h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-500 dark:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-white/[0.04] transition-colors disabled:opacity-60"
@@ -1590,6 +1502,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                         {t('results.deviation.rca', 'Root cause analysis')}
                       </div>
                       <textarea
+                        readOnly
                         className={`w-full min-h-[90px] px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-navy-700 bg-white/70 dark:bg-navy-900/40 text-slate-900 dark:text-white placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus:ring-c-focus`}
                         value={rcaDraft}
                         onChange={(e) => setRcaDraft(e.target.value)}
@@ -1600,7 +1513,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                       />
                       <button
                         type="button"
-                        disabled={caseBusy}
+                        disabled={retiredDeviationMutation}
                         onClick={() => void handleSaveRca()}
                         className="h-8 px-3 rounded-full text-xs font-medium border border-primary-500/30 bg-primary-500/10 text-primary-700 dark:text-primary-300 hover:bg-primary-500/15 transition-colors disabled:opacity-60"
                       >
@@ -1677,7 +1590,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                             >
                               <button
                                 type="button"
-                                disabled={caseBusy}
+                                disabled={retiredDeviationMutation}
                                 onClick={() =>
                                   void handleUpdateActionStatus(
                                     a,
@@ -1720,12 +1633,14 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
 
                       <div className="grid grid-cols-2 gap-2">
                         <input
+                          readOnly
                           className={inputCls}
                           value={newActionTitle}
                           onChange={(e) => setNewActionTitle(e.target.value)}
                           placeholder={t('results.deviation.actionPlaceholder', 'New action')}
                         />
                         <input
+                          readOnly
                           className={inputCls}
                           type="date"
                           value={newActionDue}
@@ -1734,7 +1649,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                       </div>
                       <button
                         type="button"
-                        disabled={caseBusy || !newActionTitle.trim()}
+                        disabled={retiredDeviationMutation || !newActionTitle.trim()}
                         onClick={() => void handleAddAction()}
                         className="h-8 px-3 rounded-full text-xs font-medium border border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-60"
                       >
@@ -1747,6 +1662,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                         {t('results.deviation.closeEvidence', 'Closure evidence')}
                       </div>
                       <textarea
+                        readOnly
                         className={`${inputCls} min-h-[88px] resize-none py-2`}
                         value={closeEvidenceText}
                         onChange={(e) => setCloseEvidenceText(e.target.value)}
@@ -1756,6 +1672,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                         )}
                       />
                       <input
+                        readOnly
                         className={inputCls}
                         value={closeEvidenceRef}
                         onChange={(e) => setCloseEvidenceRef(e.target.value)}
@@ -1765,6 +1682,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                         )}
                       />
                       <textarea
+                        readOnly
                         className={`${inputCls} min-h-[72px] resize-none py-2`}
                         value={closeResolutionNotes}
                         onChange={(e) => setCloseResolutionNotes(e.target.value)}

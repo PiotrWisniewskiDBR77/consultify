@@ -23,6 +23,7 @@ vi.mock('../../../src/services/api', () => ({
     post: vi.fn(),
     put: vi.fn(),
     delete: vi.fn(),
+    organizationContextGet: vi.fn().mockResolvedValue(null),
   },
 }));
 
@@ -203,7 +204,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     fireEvent.change(screen.getByDisplayValue(/\d{4}-\d{2}-\d{2}/), {
       target: { value: '2026-03-01' },
     });
-    fireEvent.change(screen.getByPlaceholderText('Notes, source, or audit comment (optional)'), {
+    fireEvent.change(screen.getByPlaceholderText('Notes (optional)'), {
       target: { value: 'March value' },
     });
     fireEvent.click(screen.getByText('Record'));
@@ -255,7 +256,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     fireEvent.change(screen.getByDisplayValue(/\d{4}-\d{2}-\d{2}/), {
       target: { value: '2026-03-01' },
     });
-    fireEvent.change(screen.getByPlaceholderText('Notes, source, or audit comment (optional)'), {
+    fireEvent.change(screen.getByPlaceholderText('Notes (optional)'), {
       target: { value: 'March value' },
     });
     fireEvent.click(screen.getByText('Record'));
@@ -741,7 +742,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     confirmSpy.mockRestore();
   });
 
-  it('acknowledges deviation cases through the governed V8 route before legacy fallback', async () => {
+  it('mounts retired deviation commands read-only while keeping resolve available', async () => {
     vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
       organizationId: 'org-1',
       kpis: [
@@ -768,8 +769,6 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
         actions: [],
       },
     } as any);
-    vi.mocked(V8ResultsApi.acknowledgeDeviationCase).mockResolvedValue({ success: true } as any);
-
     renderDrawer({ kpiId: 'kpi-1', onClose: vi.fn() });
 
     await waitFor(() => {
@@ -780,16 +779,15 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     await waitFor(() => {
       expect(screen.getByText('Acknowledge')).toBeInTheDocument();
     });
-    fireEvent.click(screen.getByText('Acknowledge'));
-
-    await waitFor(() => {
-      expect(V8ResultsApi.acknowledgeDeviationCase).toHaveBeenCalledWith('case-1');
-    });
-
+    expect(screen.getByRole('button', { name: 'Acknowledge' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Add action' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Close' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Resolve' })).toBeEnabled();
     expect(Api.post).not.toHaveBeenCalledWith('/benefits/deviation-cases/case-1/acknowledge', {});
   });
 
-  it('falls back to legacy deviation acknowledge only for bounded compatibility errors', async () => {
+  it.skip('falls back to legacy deviation acknowledge only for bounded compatibility errors', async () => {
     vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
       organizationId: 'org-1',
       kpis: [
@@ -836,7 +834,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     });
   });
 
-  it('saves deviation RCA through the governed V8 route before legacy fallback', async () => {
+  it.skip('saves deviation RCA through the governed V8 route before legacy fallback', async () => {
     vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
       organizationId: 'org-1',
       kpis: [
@@ -893,7 +891,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     );
   });
 
-  it('falls back to legacy deviation RCA save only for bounded compatibility errors', async () => {
+  it.skip('falls back to legacy deviation RCA save only for bounded compatibility errors', async () => {
     vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
       organizationId: 'org-1',
       kpis: [
@@ -946,7 +944,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     });
   });
 
-  it('adds deviation actions through the governed V8 route before legacy fallback', async () => {
+  it.skip('adds deviation actions through the governed V8 route before legacy fallback', async () => {
     vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
       organizationId: 'org-1',
       kpis: [
@@ -1009,7 +1007,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     );
   });
 
-  it('falls back to legacy deviation action create only for bounded compatibility errors', async () => {
+  it.skip('falls back to legacy deviation action create only for bounded compatibility errors', async () => {
     vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
       organizationId: 'org-1',
       kpis: [
@@ -1065,7 +1063,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     });
   });
 
-  it('updates deviation action status through the governed V8 route before legacy fallback', async () => {
+  it.skip('updates deviation action status through the governed V8 route before legacy fallback', async () => {
     vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
       organizationId: 'org-1',
       kpis: [
@@ -1125,7 +1123,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     );
   });
 
-  it('falls back to legacy deviation action status update only for bounded compatibility errors', async () => {
+  it.skip('falls back to legacy deviation action status update only for bounded compatibility errors', async () => {
     vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
       organizationId: 'org-1',
       kpis: [
@@ -1276,7 +1274,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     });
   });
 
-  it('closes deviation cases through the governed V8 route before legacy fallback', async () => {
+  it.skip('closes deviation cases through the governed V8 route before legacy fallback', async () => {
     vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
       organizationId: 'org-1',
       kpis: [
@@ -1338,7 +1336,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     );
   });
 
-  it('falls back to legacy deviation close only for bounded compatibility errors', async () => {
+  it.skip('falls back to legacy deviation close only for bounded compatibility errors', async () => {
     vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
       organizationId: 'org-1',
       kpis: [

@@ -783,39 +783,11 @@ export const V8ResultsApi = {
     v8Delete<V8ResultsDeleteKpiMappingResponse>(
       `/results/kpi-mappings/${encodeURIComponent(mappingId)}`
     ),
-  acknowledgeDeviationCase: (caseId: string) =>
-    v8Post<V8ResultsAcknowledgeDeviationCaseResponse>(
-      `/results/deviation-cases/${encodeURIComponent(caseId)}/acknowledge`,
-      {}
-    ),
-  updateDeviationCaseRca: (caseId: string, payload: V8ResultsUpdateDeviationCaseRcaPayload) =>
-    v8Put<V8ResultsUpdateDeviationCaseRcaResponse>(
-      `/results/deviation-cases/${encodeURIComponent(caseId)}/rca`,
-      payload
-    ),
-  createDeviationAction: (caseId: string, payload: V8ResultsCreateDeviationActionPayload) =>
-    v8Post<V8ResultsCreateDeviationActionResponse>(
-      `/results/deviation-cases/${encodeURIComponent(caseId)}/actions`,
-      payload
-    ),
-  updateDeviationAction: (
-    caseId: string,
-    actionId: string,
-    payload: V8ResultsUpdateDeviationActionPayload
-  ) =>
-    v8Put<V8ResultsUpdateDeviationActionResponse>(
-      `/results/deviation-cases/${encodeURIComponent(caseId)}/actions/${encodeURIComponent(actionId)}`,
-      payload
-    ),
+  // RESULTS-W23 remains live until a canonical resolve successor exists.
   resolveDeviationCase: (caseId: string) =>
     v8Post<V8ResultsResolveDeviationCaseResponse>(
       `/results/deviation-cases/${encodeURIComponent(caseId)}/resolve`,
       {}
-    ),
-  closeDeviationCase: (caseId: string, payload: V8ResultsCloseDeviationCasePayload) =>
-    v8Post<V8ResultsCloseDeviationCaseResponse>(
-      `/results/deviation-cases/${encodeURIComponent(caseId)}/close`,
-      payload
     ),
   // #M15/OC2 (2026-07-15): AI-assisted diagnostics — anomalies/forecast/RCA
   // suggestions. Behind resultsFeatureFlags.deviationDiagnostics; no legacy

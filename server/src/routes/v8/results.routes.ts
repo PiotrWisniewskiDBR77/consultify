@@ -2615,9 +2615,10 @@ router.get(
         code: 'RESULTS_KPI_DRAWER_READ_FAILED',
       });
     }
+    res.set('X-Consultify-Archive-Mode', 'read-only');
     return res.json({
       data: detail,
-      meta: resultsMeta(),
+      meta: { ...resultsMeta(), archiveMode: 'read_only' },
     });
   })
 );
