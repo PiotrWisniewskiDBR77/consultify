@@ -33,6 +33,16 @@ describe.skipIf(!REAL_PG)('Finance legacy cutover telemetry (fresh real PostgreS
       organizationId,
       'Finance cutover fixture',
     ]);
+    await client.query(
+      `INSERT INTO users(id,organization_id,email,password,role,status)
+       VALUES($1,$2,$3,'unused','ADMIN','active')`,
+      [userId, organizationId, `${userId}@example.test`]
+    );
+    await client.query(
+      `INSERT INTO organization_members(id,organization_id,user_id,role,status)
+       VALUES($1,$2,$3,'ADMIN','ACTIVE')`,
+      [`membership-${fixtureId}`, organizationId, userId]
+    );
     const canonical = await createArtifact({
       organizationId,
       artifactType: 'STATEMENT_PACK',

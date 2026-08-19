@@ -47,6 +47,7 @@ import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { mintToken, pgClient, requireLocalDbUrl } from './harness.js';
+import { ensureRoiGovernedVisibility } from '../resultsVnext/roi/roiRealdbOrgFixture.js';
 
 requireLocalDbUrl();
 
@@ -73,6 +74,7 @@ const OWNER_A = `${MARKER}--owner-a`;
 const OWNER_B = `${MARKER}--owner-b`;
 const APPROVER_A = `${MARKER}--approver-a`;
 const APPROVER_B = `${MARKER}--approver-b`;
+const financeArtifactIds: string[] = [];
 
 type CaseCommandsModule = typeof import('../../server/src/services/resultsVnext/roi/roiCaseCommands.js');
 type BaselineCommandsModule = typeof import('../../server/src/services/resultsVnext/roi/roiBaselineCommands.js');
@@ -152,7 +154,12 @@ async function withTransaction<T>(
   }
 }
 
-async function insertOrgAndUser(orgId: string, userId: string, email: string): Promise<void> {
+async function insertOrgAndUser(
+  orgId: string,
+  userId: string,
+  email: string,
+  membershipRole: 'OWNER' | 'ADMIN'
+): Promise<void> {
   const client = pgClient();
   await client.connect();
   try {
@@ -168,20 +175,13 @@ async function insertOrgAndUser(orgId: string, userId: string, email: string): P
        ON CONFLICT (id) DO NOTHING`,
       [userId, orgId, email]
     );
-  } finally {
-    await client.end();
-  }
-}
-
-async function insertVisibilityPolicy(orgId: string, domain: string, mode: string, createdBy: string): Promise<void> {
-  const client = pgClient();
-  await client.connect();
-  try {
     await client.query(
-      `INSERT INTO rvn_platform_visibility_policies
-         (organization_id, domain, policy_version, visibility_mode, is_active, created_by)
-       VALUES ($1, $2, 1, $3, true, $4)`,
-      [orgId, domain, mode, createdBy]
+      `INSERT INTO organization_members
+         (id, organization_id, user_id, role, status, created_at)
+       VALUES ($1, $2, $3, $4, 'ACTIVE', now())
+       ON CONFLICT (organization_id, user_id)
+       DO UPDATE SET role = EXCLUDED.role, status = 'ACTIVE'`,
+      [`${MARKER}--membership--${userId}`, orgId, userId, membershipRole]
     );
   } finally {
     await client.end();
@@ -203,6 +203,67 @@ async function pinLinkMetric(
       pinnedFinanceValue,
       linkId,
     ]);
+  } finally {
+    await client.end();
+  }
+}
+
+async function seedQualifiedFinanceVersion(params: {
+  organizationId: string;
+  artifactId: string;
+  createdBy: string;
+  approvedBy: string;
+  suffix: string;
+}): Promise<string> {
+  const client = pgClient();
+  await client.connect();
+  try {
+    const workingRevisionId = `${MARKER}--wr-${params.suffix}`;
+    const computeSnapshotId = `${MARKER}--compute-${params.suffix}`;
+    const businessVersionId = `${MARKER}--bv-${params.suffix}`;
+    const contentHash = `sha256:${randomUUID().replaceAll('-', '').padEnd(64, '0')}`;
+    const engine = await client.query<{ engine_manifest_id: string }>(
+      `SELECT engine_manifest_id FROM finance_engine_manifests ORDER BY created_at LIMIT 1`
+    );
+    const engineManifestId = engine.rows[0]?.engine_manifest_id;
+    if (!engineManifestId) throw new Error('FIN-BVP acceptance requires a seeded Finance engine manifest.');
+
+    await client.query(
+      `INSERT INTO finance_artifacts
+         (artifact_id, organization_id, artifact_type, natural_key, created_by)
+       VALUES ($1, $2, 'BASELINE_MODEL', $3, $4)`,
+      [params.artifactId, params.organizationId, `${MARKER}--finance-${params.suffix}`, params.createdBy]
+    );
+    await client.query(
+      `INSERT INTO finance_business_versions
+         (business_version_id, artifact_id, organization_id, version_no, status, freshness,
+          engine_manifest_id, content_semantic_hash)
+       VALUES ($1, $2, $3, 1, 'DRAFT', 'NEVER_COMPUTED', $4, $5)`,
+      [businessVersionId, params.artifactId, params.organizationId, engineManifestId, contentHash]
+    );
+    await client.query(
+      `INSERT INTO finance_working_revisions
+         (working_revision_id, artifact_id, organization_id, business_version_id, revision_seq,
+          content_semantic_hash, is_current, edited_by)
+       VALUES ($1, $2, $3, $4, 1, $5, false, $6)`,
+      [workingRevisionId, params.artifactId, params.organizationId, businessVersionId, contentHash, params.createdBy]
+    );
+    await client.query(
+      `INSERT INTO finance_compute_snapshots
+         (compute_snapshot_id, artifact_id, organization_id, working_revision_id,
+          engine_manifest_id, as_of, content_semantic_hash, created_by)
+       VALUES ($1, $2, $3, $4, $5, now(), $6, $7)`,
+      [computeSnapshotId, params.artifactId, params.organizationId, workingRevisionId, engineManifestId, contentHash, params.createdBy]
+    );
+    await client.query(
+      `UPDATE finance_business_versions
+          SET source_working_revision_id=$1, compute_snapshot_id=$2,
+              status='APPROVED', freshness='CURRENT', approved_by=$3, approved_at=now()
+        WHERE business_version_id=$4 AND organization_id=$5`,
+      [workingRevisionId, computeSnapshotId, params.approvedBy, businessVersionId, params.organizationId]
+    );
+    financeArtifactIds.push(params.artifactId);
+    return businessVersionId;
   } finally {
     await client.end();
   }
@@ -242,6 +303,7 @@ async function buildApprovedCase(params: {
     linkCurrency?: string | null;
     trackedMetric?: string | null;
     pinnedFinanceValue?: number | null;
+    seedQualifiedSource?: boolean;
   };
 }): Promise<CaseFixture> {
   const { orgId, ownerUserId, approverId, suffix } = params;
@@ -278,12 +340,21 @@ async function buildApprovedCase(params: {
 
   let linkId: string | undefined;
   if (params.link) {
+    const financeVersionId = params.link.seedQualifiedSource
+      ? await seedQualifiedFinanceVersion({
+          organizationId: orgId,
+          artifactId: params.link.financeArtifactId,
+          createdBy: ownerUserId,
+          approvedBy: approverId,
+          suffix,
+        })
+      : params.link.financeVersionId;
     const linkOutcome = await createRoiFinanceLink({
       caseId,
       organizationId: orgId,
       financeArtifactType: params.link.financeArtifactType,
       financeArtifactId: params.link.financeArtifactId,
-      financeVersionId: params.link.financeVersionId,
+      financeVersionId,
       source: 'finance_enterprise_service',
       asOf: '2026-01-01T00:00:00.000Z',
       currency: params.link.linkCurrency ?? null,
@@ -509,13 +580,21 @@ async function fetchLatestEventAndOutbox(
 
 describe('RN-G6 · finance_projection consumer (eight acceptance proofs + three negative tests)', () => {
   beforeAll(async () => {
-    await insertOrgAndUser(ORG_A, OWNER_A, `${OWNER_A}@acceptance.local`);
-    await insertOrgAndUser(ORG_B, OWNER_B, `${OWNER_B}@acceptance.local`);
-    void APPROVER_A;
-    void APPROVER_B;
+    await insertOrgAndUser(ORG_A, OWNER_A, `${OWNER_A}@acceptance.local`, 'OWNER');
+    await insertOrgAndUser(ORG_B, OWNER_B, `${OWNER_B}@acceptance.local`, 'OWNER');
+    await insertOrgAndUser(ORG_A, APPROVER_A, `${APPROVER_A}@acceptance.local`, 'ADMIN');
+    await insertOrgAndUser(ORG_B, APPROVER_B, `${APPROVER_B}@acceptance.local`, 'ADMIN');
 
-    await insertVisibilityPolicy(ORG_A, 'roi', 'OPEN_ORG', OWNER_A);
-    await insertVisibilityPolicy(ORG_B, 'roi', 'OPEN_ORG', OWNER_B);
+    await ensureRoiGovernedVisibility({
+      organizationId: ORG_A,
+      actorUserId: OWNER_A,
+      idempotencyKey: `${MARKER}--roi-governed-a`,
+    });
+    await ensureRoiGovernedVisibility({
+      organizationId: ORG_B,
+      actorUserId: OWNER_B,
+      idempotencyKey: `${MARKER}--roi-governed-b`,
+    });
 
     const caseCommands: CaseCommandsModule = await import(
       '../../server/src/services/resultsVnext/roi/roiCaseCommands.js'
@@ -610,7 +689,14 @@ describe('RN-G6 · finance_projection consumer (eight acceptance proofs + three 
     const platformCron: PlatformCronModule = await import(
       '../../server/src/services/resultsVnext/platform/platformOutboxDrainCron.js'
     );
-    ({ runOutboxDispatchTick } = platformCron);
+    runOutboxDispatchTick = (batchSize = 1_000) => platformCron.runOutboxDispatchTick(batchSize);
+
+    // Publishing the two canonical ROI_GOVERNED policies creates its own
+    // durable governance work. Drain that setup work with a deliberately
+    // large batch before the acceptance cases begin, so each proof's
+    // historical single-tick assertion is isolated to rows created by that
+    // proof rather than competing with fixture bootstrap rows.
+    await runOutboxDispatchTick(1_000);
 
     const systemAlert: SystemAlertModule = await import('../../server/src/services/systemAlertNotifier.js');
     sendSystemAlertMock = systemAlert.sendSystemAlert;
@@ -712,7 +798,28 @@ describe('RN-G6 · finance_projection consumer (eight acceptance proofs + three 
         [ORG_A, ORG_B],
       ]);
       await client.query(`DELETE FROM initiatives WHERE organization_id = ANY($1::text[])`, [[ORG_A, ORG_B]]);
+      await client.query(`DELETE FROM organization_members WHERE organization_id = ANY($1::text[])`, [
+        [ORG_A, ORG_B],
+      ]);
       await client.query(`DELETE FROM users WHERE organization_id = ANY($1::text[])`, [[ORG_A, ORG_B]]);
+      try {
+        await client.query(`SET session_replication_role = replica`);
+        await client.query(`DELETE FROM finance_compute_snapshots WHERE artifact_id = ANY($1::text[])`, [
+          financeArtifactIds,
+        ]);
+        await client.query(`DELETE FROM finance_working_revisions WHERE artifact_id = ANY($1::text[])`, [
+          financeArtifactIds,
+        ]);
+        await client.query(`DELETE FROM finance_business_versions WHERE artifact_id = ANY($1::text[])`, [
+          financeArtifactIds,
+        ]);
+        await client.query(`DELETE FROM finance_artifacts WHERE artifact_id = ANY($1::text[])`, [financeArtifactIds]);
+        await client.query(`DELETE FROM rvn_roi_visibility_governance WHERE organization_id = ANY($1::text[])`, [
+          [ORG_A, ORG_B],
+        ]);
+      } finally {
+        await client.query(`SET session_replication_role = origin`);
+      }
       await client.query(`DELETE FROM organizations WHERE id = ANY($1::text[])`, [[ORG_A, ORG_B]]);
     } finally {
       await client.end();
@@ -893,9 +1000,43 @@ describe('RN-G6 · finance_projection consumer (eight acceptance proofs + three 
         linkCurrency: 'EUR', // mismatched vs the case's USD
         trackedMetric: 'totalCosts',
         pinnedFinanceValue: 1000, // numerically identical to totalCosts
+        seedQualifiedSource: true,
       },
     });
 
+    let rowVersion = await startTracking({
+      orgId: ORG_A,
+      caseId: fixture.caseId,
+      ownerUserId: OWNER_A,
+      expectedVersion: fixture.rowVersion,
+    });
+    await recordActualEntry({
+      caseId: fixture.caseId,
+      organizationId: ORG_A,
+      entryType: 'cost',
+      costLineId: fixture.costLineId,
+      periodStart: '2026-01-01',
+      periodEnd: '2026-01-31',
+      amount: 1000,
+      currency: 'USD',
+      source: 'invoice-currency-mismatch',
+      recordedBy: OWNER_A,
+      actorEffectiveRole: 'consultant',
+      idempotencyKey: `${MARKER}--p2-currency-entry-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
+    });
+    const actual = await publishRoiActualSnapshot({
+      caseId: fixture.caseId,
+      organizationId: ORG_A,
+      expectedVersion: rowVersion,
+      asOfPeriodEnd: '2026-01-31',
+      publishedBy: OWNER_A,
+      actorEffectiveRole: 'consultant',
+      idempotencyKey: `${MARKER}--p2-currency-actual-${randomUUID()}`,
+      access: { capabilities: ['*'], platformRole: null },
+    });
+    rowVersion = actual.resultingVersion;
+    void rowVersion;
     await runOutboxDispatchTick();
 
     const reconciliations = await listRoiFinanceReconciliations({
@@ -1300,6 +1441,7 @@ describe('RN-G6 · finance_projection consumer (eight acceptance proofs + three 
         linkPurpose: 'cost_reference',
         trackedMetric: 'totalCosts',
         pinnedFinanceValue: 1000,
+        seedQualifiedSource: true,
       },
     });
     let rowVersion = await startTracking({
@@ -1551,6 +1693,7 @@ describe('RN-G6 · finance_projection consumer (eight acceptance proofs + three 
         linkPurpose: 'cost_reference',
         trackedMetric: 'totalCosts',
         pinnedFinanceValue: 1000, // will diverge from BOTH the forecast and the actual below
+        seedQualifiedSource: true,
       },
     });
     let rowVersion = await startTracking({
@@ -1580,45 +1723,21 @@ describe('RN-G6 · finance_projection consumer (eight acceptance proofs + three 
 
     const afterForecastClient = pgClient();
     await afterForecastClient.connect();
-    let reconciliationIdAfterForecast: string;
     try {
       const rows = await afterForecastClient.query(
         `SELECT reconciliation_id, status FROM rvn_roi_finance_reconciliations
           WHERE finance_link_id = $1 AND status IN ('open','investigating')`,
         [fixture.linkId]
       );
-      expect(rows.rows).toHaveLength(1);
-      reconciliationIdAfterForecast = rows.rows[0].reconciliation_id;
+      // Current FIN authority opens reconciliation only from immutable
+      // Results Actual, never from a mutable forecast projection.
+      expect(rows.rows).toHaveLength(0);
     } finally {
       await afterForecastClient.end();
     }
 
-    // Sub-case (a): literal redelivery of the SAME forecast_published event.
-    const { event: forecastEvent, outboxRow: forecastOutboxRow } = await fetchLatestEventAndOutbox(
-      ORG_A,
-      fixture.caseId,
-      'roi.forecast_published',
-      'finance_projection'
-    );
-    await withTransaction(acquirePgClient, (client) => dispatchFinanceProjection(client, forecastEvent, forecastOutboxRow));
-
-    const afterRedeliveryClient = pgClient();
-    await afterRedeliveryClient.connect();
-    try {
-      const rows = await afterRedeliveryClient.query(
-        `SELECT reconciliation_id FROM rvn_roi_finance_reconciliations
-          WHERE finance_link_id = $1 AND status IN ('open','investigating')`,
-        [fixture.linkId]
-      );
-      expect(rows.rows).toHaveLength(1);
-      expect(rows.rows[0].reconciliation_id).toBe(reconciliationIdAfterForecast);
-    } finally {
-      await afterRedeliveryClient.end();
-    }
-
-    // Sub-case (b): a DIFFERENT event (actual_snapshot_published, totalActualCosts
-    // 1800 — different figure than the forecast's 1500, still != pinned 1000)
-    // for the SAME still-diverging link.
+    // The immutable actual snapshot is the first event authorized to open
+    // reconciliation for this still-diverging link.
     const actualEntry = await recordActualEntry({
       caseId: fixture.caseId,
       organizationId: ORG_A,
@@ -1649,8 +1768,16 @@ describe('RN-G6 · finance_projection consumer (eight acceptance proofs + three 
 
     await runOutboxDispatchTick();
 
+    const { event: actualEvent, outboxRow: actualOutboxRow } = await fetchLatestEventAndOutbox(
+      ORG_A,
+      fixture.caseId,
+      'roi.actual_snapshot_published',
+      'finance_projection'
+    );
+
     const finalClient = pgClient();
     await finalClient.connect();
+    let reconciliationIdAfterActual = '';
     try {
       const rows = await finalClient.query(
         `SELECT reconciliation_id, status FROM rvn_roi_finance_reconciliations
@@ -1658,7 +1785,7 @@ describe('RN-G6 · finance_projection consumer (eight acceptance proofs + three 
         [fixture.linkId]
       );
       expect(rows.rows).toHaveLength(1);
-      expect(rows.rows[0].reconciliation_id).toBe(reconciliationIdAfterForecast);
+      reconciliationIdAfterActual = rows.rows[0].reconciliation_id;
 
       // The projection's own lineage DID move on to the actual snapshot
       // (roi_value tracks the latest figure), while the reconciliation stays
@@ -1671,6 +1798,25 @@ describe('RN-G6 · finance_projection consumer (eight acceptance proofs + three 
       expect(projection.rows[0].source_kind).toBe('actual_snapshot');
     } finally {
       await finalClient.end();
+    }
+
+    // Literal redelivery of the same immutable Actual event converges on the
+    // same reconciliation and cannot create a duplicate.
+    await withTransaction(acquirePgClient, (client) =>
+      dispatchFinanceProjection(client, actualEvent, actualOutboxRow)
+    );
+    const afterRedeliveryClient = pgClient();
+    await afterRedeliveryClient.connect();
+    try {
+      const rows = await afterRedeliveryClient.query(
+        `SELECT reconciliation_id FROM rvn_roi_finance_reconciliations
+          WHERE finance_link_id=$1 AND status IN ('open','investigating')`,
+        [fixture.linkId]
+      );
+      expect(rows.rows).toHaveLength(1);
+      expect(rows.rows[0].reconciliation_id).toBe(reconciliationIdAfterActual);
+    } finally {
+      await afterRedeliveryClient.end();
     }
   }, 30_000);
 });
