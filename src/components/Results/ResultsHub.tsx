@@ -2458,8 +2458,16 @@ export const ResultsHub: React.FC = () => {
           <CorrectiveActions />
         ) : activeTab === 'results_kpi' && kpiWorkspaceMode === 'scorecards' ? (
           <div className="flex h-full flex-col overflow-hidden">
-            <div className="h-1/2 min-h-[280px] shrink-0 overflow-hidden border-b border-slate-200 dark:border-slate-700">
-              <ResultsScorecardsTable />
+            <div className="flex h-1/2 min-h-[280px] shrink-0 flex-col overflow-hidden border-b border-slate-200 dark:border-slate-700">
+              <div className="shrink-0 border-b border-slate-200/70 bg-slate-50 px-4 py-2 text-xs text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-slate-300">
+                {t(
+                  'results.kpiScorecards.legacyArchive',
+                  'Legacy scorecards archive — read-only. New work is saved in the canonical registry below.'
+                )}
+              </div>
+              <div className="min-h-0 flex-1 overflow-hidden">
+                <ResultsScorecardsTable />
+              </div>
             </div>
             <div className="flex-1 min-h-0 overflow-auto">
               <ResultsKpiScorecardsView

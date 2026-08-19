@@ -1008,24 +1008,10 @@ export const V8ResultsApi = {
     v8Get<V8ResultsScorecardKpisResponse>(
       `/results/scorecards/${encodeURIComponent(scorecardId)}/kpis`
     ),
-  createScorecard: (payload: V8ResultsCreateScorecardPayload) =>
-    v8Post<{ scorecard: V8ResultsScorecard; ownerDomain: 'results' }>(
-      '/results/scorecards',
-      payload
-    ),
   updateScorecard: (scorecardId: string, payload: V8ResultsUpdateScorecardPayload) =>
     v8Put<{ scorecard: V8ResultsScorecard; ownerDomain: 'results' }>(
       `/results/scorecards/${encodeURIComponent(scorecardId)}`,
       payload
-    ),
-  addKpiToScorecard: (scorecardId: string, kpiId: string, sortOrder?: number) =>
-    v8Post<{ ownerDomain: 'results' }>(
-      `/results/scorecards/${encodeURIComponent(scorecardId)}/kpis`,
-      { kpiId, sortOrder }
-    ),
-  removeKpiFromScorecard: (scorecardId: string, kpiId: string) =>
-    v8Delete<{ ownerDomain: 'results' }>(
-      `/results/scorecards/${encodeURIComponent(scorecardId)}/kpis/${encodeURIComponent(kpiId)}`
     ),
 };
 

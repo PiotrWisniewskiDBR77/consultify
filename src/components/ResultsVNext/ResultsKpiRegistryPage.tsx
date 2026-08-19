@@ -719,11 +719,24 @@ function writeKpiHubUiState(state: KpiHubUiState): void {
   }
 }
 
-export const ResultsKpiRegistryPage: React.FC = () => {
+export interface ResultsKpiRegistryPageProps {
+  /** Lets the historical Results hub mount the canonical scorecards registry directly. */
+  initialTab?: 'my' | 'org' | 'scorecards';
+  /** Existing Results hub create action; a changed non-zero nonce opens the canonical modal. */
+  createNonce?: number;
+  /** Scorecards legacy cutover is already enforced server-side; do not strand this mounted successor behind the rollout flag. */
+  canonicalCutoverMount?: boolean;
+}
+
+export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
+  initialTab,
+  createNonce,
+  canonicalCutoverMount = false,
+}) => {
   const { i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
   const currentUser = useAppStore((s) => s.currentUser);
-  const enabled = isResultsVNextFlagEnabled('kpiRegistry');
+  const enabled = canonicalCutoverMount || isResultsVNextFlagEnabled('kpiRegistry');
 
   const navigate = useNavigate();
   const [rows, setRows] = useState<KpiDefinitionDto[]>([]);
@@ -740,7 +753,9 @@ export const ResultsKpiRegistryPage: React.FC = () => {
   // the my/org KPI-filtering meaning it always had — renamed nowhere, kept
   // separate from `tab` so the scorecards branch never touches KPI-scope
   // logic.
-  const [tab, setTab] = useState<'my' | 'org' | 'scorecards'>(restoredUiState.tab ?? 'my');
+  const [tab, setTab] = useState<'my' | 'org' | 'scorecards'>(
+    initialTab ?? restoredUiState.tab ?? 'my'
+  );
   const scope: 'my' | 'org' = tab === 'org' ? 'org' : 'my';
   const [statusFilter, setStatusFilter] = useState<KpiStatus | null>(restoredUiState.statusFilter ?? null);
   const [selectedId, setSelectedId] = useState<string | null>(restoredUiState.selectedId ?? null);
@@ -795,6 +810,18 @@ export const ResultsKpiRegistryPage: React.FC = () => {
   const [createScorecardBusy, setCreateScorecardBusy] = useState(false);
   const [createScorecardError, setCreateScorecardError] = useState<string | null>(null);
   const [createScorecardIsConflict, setCreateScorecardIsConflict] = useState(false);
+
+  useEffect(() => {
+    if (initialTab) setTab(initialTab);
+  }, [initialTab]);
+
+  useEffect(() => {
+    if (!createNonce || initialTab !== 'scorecards') return;
+    setTab('scorecards');
+    setCreateScorecardError(null);
+    setCreateScorecardIsConflict(false);
+    setCreateScorecardOpen(true);
+  }, [createNonce, initialTab]);
 
   // RN-G2 §G #7 — "Pomiary" sub-view of a selected KPI (see
   // ResultsKpiMeasurementsPanel.tsx header for the "why a sub-view, not a

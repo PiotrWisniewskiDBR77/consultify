@@ -4,8 +4,9 @@
  *
  * Proves the kernel, composed with the REAL `/api/v8/results` router
  * (`server/src/routes/v8/results.routes.ts`) in an express app, does not
- * block RESULTS-W01 (`POST /kpis`) or RESULTS-W33 (`POST /scorecards`) while
- * recording tenant-scoped, idempotent telemetry for each — and that a plain
+ * block RESULTS-W01 (`POST /kpis`), refuses retired RESULTS-W33
+ * (`POST /scorecards`) before mutation, and records tenant-scoped,
+ * idempotent telemetry for each — and that a plain
  * GET is recorded as `legacy_read`, not a writer access.
  *
  * RESULTS has never had a cutover guard before this lane: mounting it here
@@ -136,14 +137,60 @@ describe.skipIf(!REAL_PG)('RESULTS legacy-cutover guard (fresh real PostgreSQL)'
     expect(response.status).toBe(201);
   });
 
-  it('does not block scorecard create (RESULTS-W33)', async () => {
+  it('refuses retired scorecard create (RESULTS-W33) with its canonical successor', async () => {
     const response = await request(app)
       .post('/api/v8/results/scorecards')
       .set('x-request-id', `${prefix}-scorecard-create-1`)
       .send({ name: `${prefix}-scorecard` });
-    expect(response.status).not.toBe(410);
-    expect(response.status).not.toBe(409);
-    expect(response.status).toBe(201);
+    expect(response.status).toBe(410);
+    expect(response.body).toMatchObject({
+      code: 'RESULTS_LEGACY_WRITER_DISABLED',
+      writerId: 'RESULTS-W33',
+      successor: '/api/vnext/results/kpi/scorecards',
+    });
+
+    const legacyRows = await pool.query(
+      `SELECT id FROM kpi_scorecards WHERE organization_id = $1 AND name = $2`,
+      [orgA, `${prefix}-scorecard`]
+    );
+    expect(legacyRows.rows).toHaveLength(0);
+  });
+
+  it.each([
+    {
+      writerId: 'RESULTS-W35',
+      method: 'post' as const,
+      path: '/api/v8/results/scorecards/legacy-card/kpis',
+      successor: '/api/vnext/results/kpi/scorecards/:scorecardId/items',
+      body: { kpiId: 'legacy-kpi' },
+    },
+    {
+      writerId: 'RESULTS-W36',
+      method: 'delete' as const,
+      path: '/api/v8/results/scorecards/legacy-card/kpis/legacy-kpi',
+      successor: '/api/vnext/results/kpi/scorecards/:scorecardId/items/:itemId',
+      body: {},
+    },
+  ])('refuses retired scorecard item mutation $writerId before handler execution', async (entry) => {
+    const requestId = `${prefix}-${entry.writerId.toLowerCase()}`;
+    const response = await request(app)
+      [entry.method](entry.path)
+      .set('x-request-id', requestId)
+      .send(entry.body);
+
+    expect(response.status).toBe(410);
+    expect(response.body).toMatchObject({
+      code: 'RESULTS_LEGACY_WRITER_DISABLED',
+      writerId: entry.writerId,
+      successor: entry.successor,
+    });
+
+    const mutationRows = await pool.query(
+      `SELECT id FROM kpi_scorecard_items
+        WHERE organization_id = $1 AND (scorecard_id = $2 OR kpi_id = $3)`,
+      [orgA, 'legacy-card', 'legacy-kpi']
+    );
+    expect(mutationRows.rows).toHaveLength(0);
   });
 
   it('records one durable, tenant-scoped observation row per writer', async () => {
@@ -165,7 +212,7 @@ describe.skipIf(!REAL_PG)('RESULTS legacy-cutover guard (fresh real PostgreSQL)'
       },
       {
         writer_id: 'RESULTS-W33',
-        access_kind: 'legacy_uncovered_writer',
+        access_kind: 'legacy_writer_blocked',
         organization_id: orgA,
         tenant_resolution: 'resolved',
         route_path: '/api/v8/results/scorecards',
@@ -188,6 +235,16 @@ describe.skipIf(!REAL_PG)('RESULTS legacy-cutover guard (fresh real PostgreSQL)'
     expect(rows.rows).toEqual([
       { access_kind: 'legacy_read', route_path: '/api/v8/results/kpis' },
     ]);
+  });
+
+  it('keeps the signed legacy scorecard list as an explicit read-only archive', async () => {
+    const response = await request(app)
+      .get('/api/v8/results/scorecards')
+      .set('x-request-id', `${prefix}-scorecard-archive`);
+
+    expect(response.status).toBe(200);
+    expect(response.headers['x-consultify-archive-mode']).toBe('read-only');
+    expect(response.body.meta).toMatchObject({ archiveMode: 'read_only' });
   });
 
   it('is idempotent under a retried x-request-id', async () => {

@@ -397,9 +397,10 @@ router.get(
     // see private_to_owner KPIs" as an open policy decision (§10), not yet
     // resolved by Piotr. Fail-closed default until that decision lands.
     const scorecards = await listScorecards(organizationId, { userId, isAdmin: false });
+    res.set('X-Consultify-Archive-Mode', 'read-only');
     return res.json({
       data: { scorecards, count: scorecards.length, ownerDomain: RESULTS_SCORECARD_OWNER_DOMAIN },
-      meta: resultsMeta(),
+      meta: { ...resultsMeta(), archiveMode: 'read_only' },
     });
   })
 );
@@ -414,6 +415,7 @@ router.get(
     if (!result) {
       return res.status(404).json({ error: 'Scorecard not found', code: 'SCORECARD_NOT_FOUND' });
     }
+    res.set('X-Consultify-Archive-Mode', 'read-only');
     return res.json({
       data: {
         scorecard: result.scorecard,
@@ -421,7 +423,7 @@ router.get(
         count: result.kpis.length,
         ownerDomain: RESULTS_SCORECARD_OWNER_DOMAIN,
       },
-      meta: resultsMeta(),
+      meta: { ...resultsMeta(), archiveMode: 'read_only' },
     });
   })
 );

@@ -23,10 +23,11 @@
  * `/cases/:caseId/actuals`, confirmed at
  * `server/src/routes/resultsVnext/roi.routes.ts:2283-2284`).
  *
- * NOTHING here is `disabled` — the lane rule (see kernel doc) is that no
- * writer is retired without a telemetry window, and mounting this guard is
- * what starts that window. `no-successor` findings from the inventory are
- * registered as `observed` with `successor: null`, per the brief.
+ * Scorecard writers W33/W35/W36 are the first retired slice. Their sole live
+ * product caller was moved to the canonical vNext client in
+ * `ResultsKpiScorecardsView.tsx`; the historical GETs stay mounted as a signed
+ * read-only archive. Every other writer remains protected/observed until its
+ * own caller and identity migration are proven.
  */
 
 import type { LegacyCutoverDomainConfig } from '../legacyCutoverKernel.js';
@@ -282,11 +283,11 @@ export const RESULTS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'RESULTS-W33',
       method: 'POST',
       path: /^\/scorecards\/?$/,
-      state: 'protected',
+      state: 'disabled',
       successor: '/api/vnext/results/kpi/scorecards',
       legacyTable: 'kpi_scorecards',
       reason:
-        'INSERT INTO kpi_scorecards, server/src/services/results/kpiScorecardService.ts:226, from results.routes.ts:421-442. Canonical POST /api/vnext/results/kpi/scorecards (server/src/routes/resultsVnext/kpiScorecard.routes.ts:332) writes rvn_kpi_scorecards.',
+        'Retired after the only live UI caller moved to createKpiScorecard. Canonical POST /api/vnext/results/kpi/scorecards writes rvn_kpi_scorecards with tenant scoping, idempotency and row-version state.',
     },
     {
       writerId: 'RESULTS-W34',
@@ -303,23 +304,23 @@ export const RESULTS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'RESULTS-W35',
       method: 'POST',
       path: /^\/scorecards\/[^/]+\/kpis\/?$/,
-      state: 'protected',
+      state: 'disabled',
       successor: '/api/vnext/results/kpi/scorecards/:scorecardId/items',
       legacyTable: 'kpi_scorecard_items',
       legacyIdFromPath: (path) => decodeURIComponent(path.split('/')[2] || ''),
       reason:
-        'UPSERT INTO kpi_scorecard_items, kpiScorecardService.ts:329, from results.routes.ts:475-502. Canonical POST .../items (kpiScorecard.routes.ts:476) writes rvn_kpi_scorecard_items.',
+        'Retired after the only live UI caller moved to addKpiScorecardItem. Canonical POST .../items writes rvn_kpi_scorecard_items using the server-returned scorecard rowVersion.',
     },
     {
       writerId: 'RESULTS-W36',
       method: 'DELETE',
       path: /^\/scorecards\/[^/]+\/kpis\/[^/]+\/?$/,
-      state: 'protected',
+      state: 'disabled',
       successor: '/api/vnext/results/kpi/scorecards/:scorecardId/items/:itemId',
       legacyTable: 'kpi_scorecard_items',
       legacyIdFromPath: (path) => decodeURIComponent(path.split('/')[4] || ''),
       reason:
-        'DELETE FROM kpi_scorecard_items, kpiScorecardService.ts:343, from results.routes.ts:505-520. Canonical DELETE .../items/:itemId (kpiScorecard.routes.ts:519) removes the rvn_kpi_scorecard_items row.',
+        'Retired after the only live UI caller moved from legacy kpiId deletion to canonical itemId deletion. Canonical DELETE .../items/:itemId removes rvn_kpi_scorecard_items using the server-returned scorecard rowVersion.',
     },
     {
       writerId: 'RESULTS-W48',
@@ -345,3 +346,20 @@ export const RESULTS_CUTOVER: LegacyCutoverDomainConfig = {
     },
   ],
 };
+
+/** Machine-readable denominator used by cutover gates and status tooling. */
+export const RESULTS_LEGACY_CUTOVER_DENOMINATOR = Object.freeze({
+  totalDoors: RESULTS_CUTOVER.writers.length,
+  retiredDoors: RESULTS_CUTOVER.writers.filter((writer) => writer.state === 'disabled').map(
+    (writer) => writer.writerId
+  ),
+  openDoors: RESULTS_CUTOVER.writers.filter((writer) => writer.state !== 'disabled').map(
+    (writer) => writer.writerId
+  ),
+  successorBackedDoors: RESULTS_CUTOVER.writers.filter((writer) => writer.successor !== null).map(
+    (writer) => writer.writerId
+  ),
+  unmappedDoors: RESULTS_CUTOVER.writers.filter((writer) => writer.successor === null).map(
+    (writer) => writer.writerId
+  ),
+});
