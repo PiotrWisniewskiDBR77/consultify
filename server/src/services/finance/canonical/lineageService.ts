@@ -76,14 +76,7 @@ export function stageRank(artifactType: FinanceArtifactType): number {
 
 export type EdgeRankValidation =
   | { ok: true }
-  | {
-      ok: false;
-      code:
-        | 'LINEAGE_CYCLE_REJECTED'
-        | 'ASSUMPTION_SNAPSHOT_HASH_REQUIRED'
-        | 'ASSUMPTION_SNAPSHOT_HASH_FORBIDDEN';
-      message: string;
-    };
+  | { ok: false; code: 'LINEAGE_CYCLE_REJECTED' | 'ASSUMPTION_SNAPSHOT_HASH_REQUIRED' | 'ASSUMPTION_SNAPSHOT_HASH_FORBIDDEN'; message: string };
 
 /**
  * WP-B03 §4 rank rule, mirroring the DB trigger `finance_lineage_prevent_cycle`:
@@ -245,10 +238,7 @@ export async function insertEdge(params: InsertEdgeParams): Promise<InsertEdgeRe
     if (error?.code === '23505' || /uq_finance_lineage_edge/.test(message)) {
       return { ok: false, code: 'DUPLICATE_EDGE', message: 'This lineage edge already exists' };
     }
-    if (
-      /finance_lineage_edges: target stage_rank/.test(message) ||
-      /does not match actual artifact_type/.test(message)
-    ) {
+    if (/finance_lineage_edges: target stage_rank/.test(message) || /does not match actual artifact_type/.test(message)) {
       return { ok: false, code: 'LINEAGE_CYCLE_REJECTED', message };
     }
     throw error;

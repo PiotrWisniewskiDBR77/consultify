@@ -148,11 +148,7 @@ async function loadLineageNodeMetadata(
   return map;
 }
 
-function collectVersionIds(
-  focusVersionId: string,
-  ancestors: readonly LineageEdgeRow[],
-  descendants: readonly LineageEdgeRow[]
-): string[] {
+function collectVersionIds(focusVersionId: string, ancestors: readonly LineageEdgeRow[], descendants: readonly LineageEdgeRow[]): string[] {
   const ids = new Set<string>([focusVersionId]);
   for (const edge of ancestors) {
     ids.add(edge.source_version_id);
@@ -168,9 +164,7 @@ function collectVersionIds(
 const TERMINAL_VISIBILITY_VALUES: readonly LineageTerminalVisibility[] = ['show', 'dim', 'hide'];
 
 function isTerminalVisibility(value: unknown): value is LineageTerminalVisibility {
-  return (
-    typeof value === 'string' && (TERMINAL_VISIBILITY_VALUES as readonly string[]).includes(value)
-  );
+  return typeof value === 'string' && (TERMINAL_VISIBILITY_VALUES as readonly string[]).includes(value);
 }
 
 // ---------------------------------------------------------------------------
@@ -363,38 +357,16 @@ router.post(
       return sendError(res, 400, 'INVALID_BODY', 'targetVersionId is required');
     }
     if (!(FinanceArtifactTypeValues as readonly string[]).includes(body.sourceArtifactType)) {
-      return sendError(
-        res,
-        400,
-        'INVALID_BODY',
-        `sourceArtifactType must be one of ${FinanceArtifactTypeValues.join(', ')}`
-      );
+      return sendError(res, 400, 'INVALID_BODY', `sourceArtifactType must be one of ${FinanceArtifactTypeValues.join(', ')}`);
     }
     if (!(FinanceArtifactTypeValues as readonly string[]).includes(body.targetArtifactType)) {
-      return sendError(
-        res,
-        400,
-        'INVALID_BODY',
-        `targetArtifactType must be one of ${FinanceArtifactTypeValues.join(', ')}`
-      );
+      return sendError(res, 400, 'INVALID_BODY', `targetArtifactType must be one of ${FinanceArtifactTypeValues.join(', ')}`);
     }
     if (!(LINEAGE_EDGE_TYPE_VALUES as readonly string[]).includes(body.edgeType)) {
-      return sendError(
-        res,
-        400,
-        'INVALID_BODY',
-        `edgeType must be one of ${LINEAGE_EDGE_TYPE_VALUES.join(', ')}`
-      );
+      return sendError(res, 400, 'INVALID_BODY', `edgeType must be one of ${LINEAGE_EDGE_TYPE_VALUES.join(', ')}`);
     }
-    if (
-      !(LINEAGE_TRANSFORMATION_KIND_VALUES as readonly string[]).includes(body.transformationKind)
-    ) {
-      return sendError(
-        res,
-        400,
-        'INVALID_BODY',
-        `transformationKind must be one of ${LINEAGE_TRANSFORMATION_KIND_VALUES.join(', ')}`
-      );
+    if (!(LINEAGE_TRANSFORMATION_KIND_VALUES as readonly string[]).includes(body.transformationKind)) {
+      return sendError(res, 400, 'INVALID_BODY', `transformationKind must be one of ${LINEAGE_TRANSFORMATION_KIND_VALUES.join(', ')}`);
     }
 
     // Tenant-scoped existence pre-check on BOTH ends — without it, a foreign
@@ -422,10 +394,8 @@ router.post(
       edgeType: body.edgeType,
       transformationKind: body.transformationKind,
       authorId: userId,
-      assumptionSnapshotHash:
-        typeof body.assumptionSnapshotHash === 'string' ? body.assumptionSnapshotHash : undefined,
-      assumptionSnapshotId:
-        typeof body.assumptionSnapshotId === 'string' ? body.assumptionSnapshotId : undefined,
+      assumptionSnapshotHash: typeof body.assumptionSnapshotHash === 'string' ? body.assumptionSnapshotHash : undefined,
+      assumptionSnapshotId: typeof body.assumptionSnapshotId === 'string' ? body.assumptionSnapshotId : undefined,
       computeRunId: typeof body.computeRunId === 'string' ? body.computeRunId : undefined,
     };
 
@@ -465,19 +435,14 @@ router.get(
     const businessVersionId = String(req.params.businessVersionId || '');
 
     const maxDepthRaw = req.query.maxDepth;
-    const maxDepth =
-      typeof maxDepthRaw === 'string' && Number.isFinite(Number(maxDepthRaw))
-        ? Number(maxDepthRaw)
-        : undefined;
+    const maxDepth = typeof maxDepthRaw === 'string' && Number.isFinite(Number(maxDepthRaw)) ? Number(maxDepthRaw) : undefined;
     if (maxDepthRaw !== undefined && maxDepth === undefined) {
       return sendError(res, 400, 'INVALID_QUERY', 'maxDepth must be a finite number');
     }
 
     const maxTrailNodesRaw = req.query.maxTrailNodes;
     const maxTrailNodes =
-      typeof maxTrailNodesRaw === 'string' && Number.isFinite(Number(maxTrailNodesRaw))
-        ? Number(maxTrailNodesRaw)
-        : undefined;
+      typeof maxTrailNodesRaw === 'string' && Number.isFinite(Number(maxTrailNodesRaw)) ? Number(maxTrailNodesRaw) : undefined;
     if (maxTrailNodesRaw !== undefined && maxTrailNodes === undefined) {
       return sendError(res, 400, 'INVALID_QUERY', 'maxTrailNodes must be a finite number');
     }
@@ -486,12 +451,7 @@ router.get(
     let terminalVisibility: LineageTerminalVisibility = LINEAGE_TERMINAL_VISIBILITY_DEFAULT;
     if (terminalVisibilityRaw !== undefined) {
       if (!isTerminalVisibility(terminalVisibilityRaw)) {
-        return sendError(
-          res,
-          400,
-          'INVALID_QUERY',
-          `terminalVisibility must be one of ${TERMINAL_VISIBILITY_VALUES.join(', ')}`
-        );
+        return sendError(res, 400, 'INVALID_QUERY', `terminalVisibility must be one of ${TERMINAL_VISIBILITY_VALUES.join(', ')}`);
       }
       terminalVisibility = terminalVisibilityRaw;
     }
