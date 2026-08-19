@@ -6,6 +6,7 @@ import {
   V8_EXECUTION_CONTROL_MUTATION_CONTRACT,
   V8_EXECUTION_CONTROL_READ_CONTRACT,
   V8_EXECUTION_CONTROL_TOWER_CONTRACT,
+  default as executionControlRoutes,
 } from '../execution-control.routes.js';
 
 const mockDetectRiskSignals = vi.fn();
@@ -137,10 +138,31 @@ vi.mock('../../../middleware/auth.middleware.js', () => ({
 
 import v8Router from '../index.js';
 
-function createApp(): Express {
+function createApp(options: { productionBoundary?: boolean } = {}): Express {
   const app = express();
   app.use(express.json());
-  app.use('/api/v8', v8Router);
+  if (options.productionBoundary) {
+    app.use('/api/v8', v8Router);
+  } else {
+    // Handler characterization remains useful below the production boundary:
+    // it proves the compatibility implementation remains tenant-safe while
+    // the mounted V8 router is structurally read-only for mutations.
+    app.use('/api/v8/execution-control', (req: any, _res, next) => {
+      req.user = mockUser;
+      req.userId = mockUser?.id;
+      req.userRole = mockUser?.role;
+      req.organizationId = mockUser?.organizationId;
+      req.can = () => true;
+      req.v8Context = {
+        organizationId: mockUser?.organizationId,
+        userId: mockUser?.id,
+        userRole: mockUser?.role,
+        isSuperAdmin: mockUser?.isSuperAdmin,
+      };
+      next();
+    });
+    app.use('/api/v8/execution-control', executionControlRoutes);
+  }
   return app;
 }
 
@@ -178,6 +200,23 @@ describe('V8 execution-control read-only routes', () => {
     mockDbAll.mockResolvedValue([]);
     mockDbGet.mockResolvedValue({ id: 'init-1' });
     mockDbRun.mockResolvedValue({ changes: 1 });
+  });
+
+  it('mounted production boundary keeps reads and retires legacy mutations', async () => {
+    const app = createApp({ productionBoundary: true });
+
+    const read = await request(app).get('/api/v8/execution-control/risk-signals');
+    expect(read.status).toBe(200);
+
+    const mutation = await request(app)
+      .post('/api/v8/execution-control/risk-signals/dismiss')
+      .send({ signalId: 'sig-retired' });
+    expect(mutation.status).toBe(409);
+    expect(mutation.body).toMatchObject({
+      code: 'EXECUTION_RUNTIME_V1_WRITE_REQUIRED',
+      canonicalWriter: '/api/initiatives/runtime-v1',
+    });
+    expect(mockDbRun).not.toHaveBeenCalled();
   });
 
   it('GET /api/v8/execution-control/risk-signals returns envelope and org-scoped detection', async () => {

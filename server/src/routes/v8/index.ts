@@ -1,6 +1,7 @@
 import { Router } from 'express';
 
 import verifyToken from '../../middleware/auth.middleware.js';
+import { requireCanonicalExecutionWriter } from '../../middleware/executionSpineLegacyReadOnly.middleware.js';
 import { mutationAbortCanary } from '../../middleware/mutationGuard.middleware.js';
 import { attachV8Context, requireV8OrgContext } from '../../middleware/v8Auth.middleware.js';
 import { v8OrgGate } from '../../middleware/v8FeatureGate.middleware.js';
@@ -102,7 +103,7 @@ v8Router.use('/calendar', calendarRoutes);
 v8Router.use('/calendar/webhooks', calendarWebhookRoutes);
 v8Router.use('/case-workspace', caseWorkspaceRoutes);
 v8Router.use('/execution', executionRoutes);
-v8Router.use('/execution-control', executionControlRoutes);
+v8Router.use('/execution-control', requireCanonicalExecutionWriter, executionControlRoutes);
 // Aliasy specyficzne PRZED catch-all '/finance' (Express dopasowuje prefiks w kolejności).
 // BUG-02/05: FE woła /api/v8/finance/value/* — alias na financeValueRoutes (zgubiony w rebase 2026-06-25, przywrócony).
 v8Router.use('/finance/value', financeValueRoutes);

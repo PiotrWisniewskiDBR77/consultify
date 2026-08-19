@@ -13,6 +13,7 @@ import TaskControllerRaw from '../../controllers/TaskController.js';
 const TaskController = TaskControllerRaw as any;
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
+import { requireCanonicalExecutionWriter } from '../../middleware/executionSpineLegacyReadOnly.middleware.js';
 import { requireTaskCapability } from '../../middleware/effectiveCapability.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess } from '../../middleware/rbac.middleware.js';
@@ -59,6 +60,11 @@ router.use(requireOrgAccess());
 
 // Apply demo context middleware (switches org to demo org if x-demo-mode header is set)
 router.use(demoContextMiddleware);
+// AMD-EXE-SPINE-AUTHORITY-004: retain the legacy PMO task read model during
+// cutover, but route every mutation through the receipt-backed Runtime-v1
+// writer. This runs after auth and tenant resolution to avoid leaking route
+// availability to an unauthenticated or foreign principal.
+router.use(requireCanonicalExecutionWriter);
 
 // ==========================================
 // TASK CRUD

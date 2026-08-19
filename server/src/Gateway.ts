@@ -6,6 +6,7 @@ import { requireActiveAuditsMembership } from './middleware/auditsStrictMembersh
 import { betaGate, createBetaGate } from './middleware/betaGate.middleware.js';
 import { demoContextMiddleware, demoWriteProtection } from './middleware/demoGuard.middleware.js';
 import { deprecationHeader } from './middleware/deprecationHeader.middleware.js';
+import { requireCanonicalExecutionWriter } from './middleware/executionSpineLegacyReadOnly.middleware.js';
 import { highRiskSurfaceGuard } from './middleware/highRiskSurfaceGuard.middleware.js';
 import { requireInternalToolsAccess } from './middleware/internalTools.middleware.js';
 import { trialEntryGuard } from './middleware/trialEntryGuard.middleware.js';
@@ -1349,7 +1350,10 @@ export class ApiGateway {
       app.use('/api/raid', raidRoutes);
       app.use(
         '/api/execution-control',
+        gatewayVerifyToken,
+        tenantStrictMembership,
         deprecationHeader('/api/v8/execution-control'),
+        requireCanonicalExecutionWriter,
         executionControlRoutes
       );
       app.use('/api/portfolio-optimization', portfolioOptimizationRoutes);
@@ -1406,6 +1410,7 @@ export class ApiGateway {
         gatewayVerifyToken,
         requireV8OrgContext,
         attachV8Context,
+        requireCanonicalExecutionWriter,
         v8ExecutionControlManagerRouter
       );
 
