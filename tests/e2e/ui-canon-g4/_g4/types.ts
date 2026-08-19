@@ -109,6 +109,7 @@ export interface CellResult {
   axe: { critical: number; serious: number; violations: AxeViolation[] };
   unnamedControls: { count: number; samples: string[] };
   consoleErrors: string[];
+  httpErrors: Array<{ status: number; method: string; path: string }>;
 }
 
 export interface SurfaceResult {

@@ -370,8 +370,21 @@ export async function sweepCell(
 ): Promise<CellResult> {
   const page = await context.newPage();
   const consoleErrors: string[] = [];
+  const httpErrors: Array<{ status: number; method: string; path: string }> = [];
   page.on('console', (m) => {
     if (m.type() === 'error') consoleErrors.push(m.text().slice(0, 300));
+  });
+  page.on('response', (response) => {
+    if (response.status() < 400) return;
+    const request = response.request();
+    let requestPath = response.url();
+    try {
+      const parsed = new URL(response.url());
+      requestPath = `${parsed.pathname}${parsed.search}`;
+    } catch {
+      // Preserve the raw URL when a non-standard scheme cannot be parsed.
+    }
+    httpErrors.push({ status: response.status(), method: request.method(), path: requestPath });
   });
   await page.setViewportSize(VIEWPORTS[viewport]);
   await applyEnvironment(page, language, theme, spec.flagOverrides || {});
@@ -425,6 +438,7 @@ export async function sweepCell(
     axe,
     unnamedControls,
     consoleErrors: consoleErrors.slice(0, 10),
+    httpErrors,
   };
 }
 
