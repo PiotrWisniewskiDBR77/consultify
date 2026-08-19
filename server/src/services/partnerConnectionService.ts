@@ -70,7 +70,7 @@ function responseFromOrg(
 export async function connectPartnerOrganization(params: {
   organizationId: string;
   userId: string;
-  idempotencyKey: string;
+  idempotencyKey?: string;
   name?: string;
   contactEmail?: string;
   actorName?: string;
@@ -78,36 +78,8 @@ export async function connectPartnerOrganization(params: {
   env?: NodeJS.ProcessEnv;
 }): Promise<{ status: 200 | 201; data: PartnerConnectionResponse }> {
   const env = params.env || process.env;
-  if (env[PARTNER_SELF_CONNECT_ENV] !== 'true') {
-    throw new PartnerConnectionError(
-      'Self-service partner registration is currently disabled.',
-      403,
-      'PARTNER_SELF_CONNECT_DISABLED'
-    );
-  }
-  const idempotencyKey = String(params.idempotencyKey || '').trim();
-  if (!idempotencyKey) {
-    throw new PartnerConnectionError(
-      'Idempotency-Key is required',
-      400,
-      'IDEMPOTENCY_KEY_REQUIRED'
-    );
-  }
-  const requested = normalizedPayload({
-    name:
-      params.name ||
-      (params.actorName ? `${params.actorName.trim()} — Partner` : 'Partner Organization'),
-    contactEmail: params.contactEmail || params.actorEmail,
-  });
-  if (!requested.contactEmail) {
-    throw new PartnerConnectionError('contactEmail is required', 400, 'CONTACT_EMAIL_REQUIRED');
-  }
-  const hash = requestHash(requested);
 
   return withPgTransaction(async (query) => {
-    await query(`SELECT pg_advisory_xact_lock(hashtextextended($1,0))`, [
-      `partner-connect:${params.organizationId}`,
-    ]);
     const authority = await query<any>(
       `SELECT role,status FROM organization_members
        WHERE organization_id=$1 AND user_id=$2 FOR SHARE`,
@@ -125,6 +97,100 @@ export async function connectPartnerOrganization(params: {
         'PARTNER_CONNECT_AUTHORITY_REQUIRED'
       );
     }
+    const currentConnection = await query<any>(
+      `SELECT po.* FROM partner_organizations po
+       JOIN partner_users pu ON pu.partner_org_id=po.id
+       WHERE pu.user_id::text=$1
+         AND LOWER(COALESCE(pu.status,'active'))='active'
+         AND LOWER(COALESCE(po.status,'active'))='active'
+       ORDER BY po.updated_at DESC LIMIT 2`,
+      [params.userId]
+    );
+    if (currentConnection.rows.length > 1) {
+      throw new PartnerConnectionError(
+        'User has multiple active Partner organizations',
+        409,
+        'PARTNER_USER_CONNECTION_AMBIGUOUS'
+      );
+    }
+    if (currentConnection.rows[0]) {
+      const org = currentConnection.rows[0];
+      const specializations = (
+        await query<{ framework: string }>(
+          `SELECT framework FROM partner_specializations WHERE partner_org_id=$1 ORDER BY framework`,
+          [org.id]
+        )
+      ).rows.map((row) => row.framework);
+      const regions = (
+        await query<{ region: string }>(
+          `SELECT region FROM partner_regions WHERE partner_org_id=$1 ORDER BY region`,
+          [org.id]
+        )
+      ).rows.map((row) => row.region);
+      const currentData = responseFromOrg(org, specializations, regions);
+      const suppliedKey = String(params.idempotencyKey || '').trim();
+      if (!suppliedKey) return { status: 200, data: currentData };
+      const suppliedPayload = normalizedPayload({
+        name:
+          params.name ||
+          (params.actorName ? `${params.actorName.trim()} — Partner` : 'Partner Organization'),
+        contactEmail: params.contactEmail || params.actorEmail,
+      });
+      const priorReceipt = await query<any>(
+        `SELECT request_hash,status,response_status,response_json
+         FROM partner_connection_receipts
+         WHERE organization_id=$1 AND user_id=$2 AND idempotency_key=$3`,
+        [params.organizationId, params.userId, suppliedKey]
+      );
+      if (!priorReceipt.rows[0]) return { status: 200, data: currentData };
+      if (priorReceipt.rows[0].request_hash !== requestHash(suppliedPayload)) {
+        throw new PartnerConnectionError(
+          'Idempotency replay payload mismatch',
+          409,
+          'IDEMPOTENCY_PAYLOAD_MISMATCH'
+        );
+      }
+      if (priorReceipt.rows[0].status !== 'COMPLETED') {
+        throw new PartnerConnectionError(
+          'Idempotency request incomplete',
+          409,
+          'IDEMPOTENCY_INCOMPLETE'
+        );
+      }
+      return {
+        status: Number(priorReceipt.rows[0].response_status) as 200 | 201,
+        data: priorReceipt.rows[0].response_json as PartnerConnectionResponse,
+      };
+    }
+
+    if (env[PARTNER_SELF_CONNECT_ENV] !== 'true') {
+      throw new PartnerConnectionError(
+        'Self-service partner registration is currently disabled.',
+        403,
+        'PARTNER_SELF_CONNECT_DISABLED'
+      );
+    }
+    const idempotencyKey = String(params.idempotencyKey || '').trim();
+    if (!idempotencyKey) {
+      throw new PartnerConnectionError(
+        'Idempotency-Key is required',
+        400,
+        'IDEMPOTENCY_KEY_REQUIRED'
+      );
+    }
+    const requested = normalizedPayload({
+      name:
+        params.name ||
+        (params.actorName ? `${params.actorName.trim()} — Partner` : 'Partner Organization'),
+      contactEmail: params.contactEmail || params.actorEmail,
+    });
+    if (!requested.contactEmail) {
+      throw new PartnerConnectionError('contactEmail is required', 400, 'CONTACT_EMAIL_REQUIRED');
+    }
+    const hash = requestHash(requested);
+    await query(`SELECT pg_advisory_xact_lock(hashtextextended($1,0))`, [
+      `partner-connect:${params.organizationId}`,
+    ]);
     const receipt = await query<any>(
       `SELECT request_hash,status,response_status,response_json
        FROM partner_connection_receipts

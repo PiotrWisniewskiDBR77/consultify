@@ -691,6 +691,30 @@ describe.sequential('Partner legacy cutover guard (real PG)', () => {
       expect(collision.body.code).toBe('IDEMPOTENCY_PAYLOAD_MISMATCH');
       expect((await state()).rows[0]).toEqual({ links: 1, receipts: 8 });
 
+      const connectionSnapshot = () =>
+        sql.query(
+          `SELECT
+            (SELECT row_to_json(po)::text FROM (
+               SELECT id,name,contact_email,tier,status,partner_since::text,
+                      public_listing_enabled,created_by,updated_by,referral_code,referral_link_slug
+               FROM partner_organizations WHERE id=$1
+             ) po) org_snapshot,
+            (SELECT string_agg(row_to_json(pu)::text,'|' ORDER BY id) FROM (
+               SELECT id,partner_org_id,user_id,role,status,joined_at::text,created_at::text,updated_at::text
+               FROM partner_users WHERE partner_org_id=$1 ORDER BY id
+             ) pu) link_snapshot,
+            (SELECT string_agg(row_to_json(r)::text,'|' ORDER BY idempotency_key)
+               FROM partner_connection_receipts r WHERE organization_id=$2 AND user_id=$3) receipt_snapshot`,
+          [[...partnerIds][0], connectOrgId, connectUserId]
+        );
+      const beforeFlagOffRead = (await connectionSnapshot()).rows[0];
+      delete process.env.PARTNER_SELF_CONNECT_ENABLED;
+      const existingWithoutKey = await postConnect(undefined, payload);
+      expect(existingWithoutKey.status).toBe(200);
+      expect(existingWithoutKey.body.data.organization.id).toBe([...partnerIds][0]);
+      expect((await connectionSnapshot()).rows[0]).toEqual(beforeFlagOffRead);
+      process.env.PARTNER_SELF_CONNECT_ENABLED = 'true';
+
       process.env[PARTNER_LEGACY_WRITER_ROLLBACK_ENV] = 'true';
       const legacyRollback = await supertest(app())
         .post('/api/partners/connect')

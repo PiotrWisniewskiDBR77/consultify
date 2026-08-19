@@ -176,13 +176,11 @@ async function certificationActor(req: AuthRequest, res: Response) {
 router.post(
   '/connect',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const idempotencyKey = requireIdempotencyKey(req, res);
-    if (!idempotencyKey) return;
     const { organizationId, userId } = getV8Context(req);
     const result = await connectPartnerOrganization({
       organizationId,
       userId,
-      idempotencyKey,
+      idempotencyKey: String(req.headers['idempotency-key'] || '').trim() || undefined,
       name: req.body?.name,
       contactEmail: req.body?.contactEmail,
       actorName: req.user?.name,
