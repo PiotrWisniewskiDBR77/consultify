@@ -14,12 +14,15 @@ const copy = {
     complete: 'Submit interview',
     completed: 'Thank you. Your answers were submitted.',
     conflict: 'This answer changed elsewhere. Reload the latest version and try again.',
+    empty: 'This published interview has no questions. Contact the interview owner.',
     error: 'We could not load this interview.',
     expired: 'This interview link expired or was revoked.',
+    forbidden: 'You do not have access to this interview.',
     heading: 'Interview',
     version: 'Published template version',
     loading: 'Loading interview…',
     required: 'Required',
+    readOnly: 'This interview is complete. Answers are read-only.',
     retry: 'Try again',
     save: 'Save answer',
     saved: 'Answer saved',
@@ -29,12 +32,15 @@ const copy = {
     complete: 'Wyślij wywiad',
     completed: 'Dziękujemy. Odpowiedzi zostały wysłane.',
     conflict: 'Odpowiedź zmieniła się w innym miejscu. Wczytaj aktualną wersję i spróbuj ponownie.',
+    empty: 'Ten opublikowany wywiad nie zawiera pytań. Skontaktuj się z właścicielem wywiadu.',
     error: 'Nie udało się wczytać wywiadu.',
     expired: 'Ten link wygasł albo został cofnięty.',
+    forbidden: 'Nie masz dostępu do tego wywiadu.',
     heading: 'Wywiad',
     version: 'Wersja opublikowanego szablonu',
     loading: 'Ładowanie wywiadu…',
     required: 'Wymagane',
+    readOnly: 'Ten wywiad jest ukończony. Odpowiedzi są tylko do odczytu.',
     retry: 'Spróbuj ponownie',
     save: 'Zapisz odpowiedź',
     saved: 'Odpowiedź zapisana',
@@ -119,7 +125,8 @@ export const PublicInterviewRespondentView: React.FC = () => {
     setBusyId('complete');
     setError(null);
     try {
-      await publicInterviewApi.complete(token);
+      const result = await publicInterviewApi.complete(token);
+      if (result.completed !== true) throw new PublicInterviewApiError('INVALID_RESPONSE', 502);
       setCompleted(true);
     } catch (cause) {
       const apiError = cause instanceof PublicInterviewApiError ? cause : null;
@@ -140,14 +147,16 @@ export const PublicInterviewRespondentView: React.FC = () => {
     );
   if (!snapshot && error) {
     const terminal = error.status === 404 || error.status === 410;
+    const terminalMessage =
+      error.status === 403 ? text.forbidden : terminal ? text.expired : text.error;
     return (
       <main className="min-h-screen grid place-items-center bg-slate-50 p-6 dark:bg-slate-950">
         <section className="max-w-lg rounded-xl bg-white p-8 shadow dark:bg-slate-900">
           <AlertCircle className="mb-4 text-red-600" aria-hidden />
           <h1 className="text-xl font-semibold text-slate-950 dark:text-white">
-            {terminal ? text.expired : text.error}
+            {terminalMessage}
           </h1>
-          {!terminal && (
+          {!terminal && error.status !== 403 && (
             <button
               className="mt-6 rounded bg-indigo-600 px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
               onClick={() => void load()}
@@ -160,16 +169,6 @@ export const PublicInterviewRespondentView: React.FC = () => {
     );
   }
   if (!snapshot) return null;
-  if (completed)
-    return (
-      <main className="min-h-screen grid place-items-center bg-slate-50 p-6 dark:bg-slate-950">
-        <section className="max-w-lg rounded-xl bg-white p-8 text-center shadow dark:bg-slate-900">
-          <CheckCircle2 className="mx-auto mb-4 text-emerald-600" aria-hidden />
-          <h1 className="text-xl font-semibold text-slate-950 dark:text-white">{text.completed}</h1>
-        </section>
-      </main>
-    );
-
   const hasUnsavedAnswers = snapshot.questions.some(
     (question) => (drafts[question.id] ?? '') !== (question.answerText ?? '')
   );
@@ -186,6 +185,18 @@ export const PublicInterviewRespondentView: React.FC = () => {
             {snapshot.templateVersion == null ? '—' : `v${snapshot.templateVersion}`}
           </span>
         </p>
+        {completed && (
+          <div
+            role="status"
+            className="mb-8 rounded-lg border border-emerald-300 bg-emerald-50 p-4 text-emerald-950 dark:border-emerald-700 dark:bg-emerald-950 dark:text-emerald-100"
+          >
+            <h2 className="flex items-center gap-2 font-semibold">
+              <CheckCircle2 aria-hidden />
+              {text.completed}
+            </h2>
+            <p className="mt-1 text-sm">{text.readOnly}</p>
+          </div>
+        )}
         {error && (
           <div
             role="alert"
@@ -197,6 +208,14 @@ export const PublicInterviewRespondentView: React.FC = () => {
             </button>
           </div>
         )}
+        {snapshot.questions.length === 0 && (
+          <div
+            role="status"
+            className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-950 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100"
+          >
+            {text.empty}
+          </div>
+        )}
         <div className="space-y-8">
           {snapshot.questions.map((question, index) => (
             <div key={question.id}>
@@ -205,20 +224,23 @@ export const PublicInterviewRespondentView: React.FC = () => {
                 className="mb-2 block font-medium text-slate-900 dark:text-white"
               >
                 {index + 1}. {question.questionText}{' '}
-                {question.isRequired && <span className="text-red-600">({text.required})</span>}
+                {question.isRequired && (
+                  <span className="text-red-700 dark:text-red-300">({text.required})</span>
+                )}
               </label>
               <textarea
                 id={`answer-${question.id}`}
-                autoFocus={index === 0}
+                autoFocus={!completed && index === 0}
+                readOnly={completed}
                 rows={5}
                 required={question.isRequired}
                 value={drafts[question.id] ?? ''}
                 onChange={(event) =>
                   setDrafts((current) => ({ ...current, [question.id]: event.target.value }))
                 }
-                className="w-full rounded border border-slate-300 bg-white p-3 text-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+                className="w-full max-w-full resize-y rounded border border-slate-300 bg-white p-3 text-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 read-only:cursor-default read-only:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:read-only:bg-slate-800"
               />
-              <div className="mt-2 flex items-center gap-3">
+              {!completed && <div className="mt-2 flex flex-wrap items-center gap-3">
                 <button
                   disabled={
                     busyId !== null || (question.isRequired && !(drafts[question.id] ?? '').trim())
@@ -233,11 +255,11 @@ export const PublicInterviewRespondentView: React.FC = () => {
                     {text.saved}
                   </span>
                 )}
-              </div>
+              </div>}
             </div>
           ))}
         </div>
-        <button
+        {!completed && snapshot.questions.length > 0 && <button
           disabled={
             busyId !== null ||
             hasUnsavedAnswers ||
@@ -247,7 +269,7 @@ export const PublicInterviewRespondentView: React.FC = () => {
           className="mt-10 w-full rounded bg-emerald-700 px-4 py-3 font-semibold text-white disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-emerald-500"
         >
           {busyId === 'complete' ? text.saving : text.complete}
-        </button>
+        </button>}
       </section>
     </main>
   );

@@ -81,4 +81,40 @@ describe('PublicInterviewRespondentView exact delivery', () => {
     expect(second.expectedUpdatedAt).toBe(snapshot.questions[0].updatedAt);
     expect(await screen.findByText('Answer saved')).toBeInTheDocument();
   });
+
+  it('cold-reopens a completed pinned version with read-only answers', async () => {
+    api.load.mockResolvedValue({
+      ...snapshot,
+      status: 'completed',
+      questions: [{ ...snapshot.questions[0], answerText: 'Pinned answer' }],
+    });
+    renderView();
+
+    const answer = await screen.findByLabelText(/Exact v1 question/);
+    expect(answer).toHaveValue('Pinned answer');
+    expect(answer).toHaveAttribute('readonly');
+    expect(screen.getByText('v1')).toBeInTheDocument();
+    expect(screen.getByText(/Answers are read-only/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Submit interview' })).not.toBeInTheDocument();
+  });
+
+  it('shows an honest empty state for a published interview without questions', async () => {
+    api.load.mockResolvedValue({ ...snapshot, questions: [] });
+    renderView();
+    expect(await screen.findByText(/published interview has no questions/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Submit interview' })).not.toBeInTheDocument();
+  });
+
+  it('does not show a false completion when confirmation is missing', async () => {
+    api.complete.mockResolvedValue({ alreadyComplete: false, completed: false });
+    api.load.mockResolvedValue({
+      ...snapshot,
+      questions: [{ ...snapshot.questions[0], answerText: 'Saved answer' }],
+    });
+    renderView();
+    await screen.findByLabelText(/Exact v1 question/);
+    fireEvent.click(screen.getByRole('button', { name: 'Submit interview' }));
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(screen.queryByText(/Thank you/)).not.toBeInTheDocument();
+  });
 });

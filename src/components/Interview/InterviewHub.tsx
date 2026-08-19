@@ -747,6 +747,7 @@ export const InterviewHub: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isUsingDemoData, setIsUsingDemoData] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadRevision, setLoadRevision] = useState(0);
   const [sessionsLoadError, setSessionsLoadError] = useState<string | null>(null);
   const [insightsLoadError, setInsightsLoadError] = useState<string | null>(null);
   const [initiativesLoadError, setInitiativesLoadError] = useState<string | null>(null);
@@ -870,10 +871,9 @@ export const InterviewHub: React.FC = () => {
           ? await V8InterviewApi.getSessions()
               .then((res) => res.sessions)
               .catch(() => Api.get('/interview/sessions'))
-              .catch(() => [])
           : await Api.get(
               `/interview/sessions/managed?lifecycle=${encodeURIComponent(lifecycle)}`
-            ).catch(() => []);
+            );
       return Array.isArray(sessionsRes)
         ? (sessionsRes as InterviewSession[]).map(normalizeInterviewSessionRecord)
         : [];
@@ -899,8 +899,7 @@ export const InterviewHub: React.FC = () => {
   const loadMyAssignments = useCallback(async (): Promise<InterviewAssignment[]> => {
     const assignmentsRes = await V8InterviewApi.getMyAssignments()
       .then((res) => res.assignments)
-      .catch(() => Api.get('/interview/assignments/my'))
-      .catch(() => []);
+      .catch(() => Api.get('/interview/assignments/my'));
     return Array.isArray(assignmentsRes)
       ? (assignmentsRes as InterviewAssignment[]).map(normalizeInterviewAssignmentRecord)
       : [];
@@ -917,10 +916,9 @@ export const InterviewHub: React.FC = () => {
           ? await V8InterviewApi.getManagedAssignments()
               .then((res) => res.assignments)
               .catch(() => Api.get('/interview/assignments/managed'))
-              .catch(() => [])
           : await Api.get(
               `/interview/assignments/managed?lifecycle=${encodeURIComponent(lifecycle)}`
-            ).catch(() => []);
+            );
       return Array.isArray(assignmentsRes)
         ? (assignmentsRes as InterviewAssignment[]).map(normalizeInterviewAssignmentRecord)
         : [];
@@ -931,8 +929,7 @@ export const InterviewHub: React.FC = () => {
   const loadOverdueAssignments = useCallback(async (): Promise<InterviewAssignment[]> => {
     const assignmentsRes = await V8InterviewApi.getOverdueAssignments()
       .then((res) => res.assignments)
-      .catch(() => Api.get('/interview/assignments/overdue'))
-      .catch(() => []);
+      .catch(() => Api.get('/interview/assignments/overdue'));
     return Array.isArray(assignmentsRes)
       ? (assignmentsRes as InterviewAssignment[]).map(normalizeInterviewAssignmentRecord)
       : [];
@@ -1193,7 +1190,7 @@ export const InterviewHub: React.FC = () => {
     };
 
     loadData();
-  }, [isPolish, loadManagedSessions, normalizeTemplateRecord, unwrapApiList]);
+  }, [isPolish, loadManagedSessions, normalizeTemplateRecord, unwrapApiList, loadRevision]);
 
   // #8b — Re-fetch the sessions list when the Active | Archive | Trash filter
   // changes. The first run is skipped (the main load effect already fetched the
@@ -1648,6 +1645,7 @@ export const InterviewHub: React.FC = () => {
     loadOverdueAssignments,
     permissionsCanViewManaged,
     permissionsLoading,
+    loadRevision,
   ]);
 
   const handleOpenDocument = useCallback((doc: OpenDocument) => {
@@ -7032,7 +7030,7 @@ Return ONLY the answer text (no markdown fences).`;
           variant="error"
           title={t('interview.hub.couldNotLoadYourInterviews')}
           description={t('interview.hub.somethingWentWrongLoadingYour')}
-          onRetry={() => window.location.reload()}
+          onRetry={() => setLoadRevision((revision) => revision + 1)}
         />
       );
     }
@@ -7058,6 +7056,13 @@ Return ONLY the answer text (no markdown fences).`;
         >
           <span className="font-semibold">{t('interview.hub.degradedMode')}:</span>{' '}
           {tabDegradedMessage}
+          <button
+            type="button"
+            className="ml-2 rounded px-1 font-semibold underline underline-offset-2 focus:outline-none focus:ring-2 focus:ring-amber-600"
+            onClick={() => setLoadRevision((revision) => revision + 1)}
+          >
+            {t('common.retry')}
+          </button>
         </div>
       ) : null;
 

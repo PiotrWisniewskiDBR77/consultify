@@ -79,4 +79,42 @@ describe('publicInterviewApi', () => {
       idempotencyKey: 'respondent-question-1-key',
     });
   });
+
+  it('fails closed when a successful answer response has no exact readback timestamp', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ replayed: false }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      )
+    );
+
+    await expect(
+      publicInterviewApi.answer('token', 'question-1', {
+        answerText: 'Answer',
+        contextNote: null,
+        expectedUpdatedAt: '2026-08-17T11:00:00.000Z',
+        idempotencyKey: 'stable-key',
+      })
+    ).rejects.toMatchObject({ code: 'INVALID_RESPONSE', status: 502 });
+  });
+
+  it('does not report completion unless the server confirms completed true', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ completed: false }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      )
+    );
+
+    await expect(publicInterviewApi.complete('token')).rejects.toMatchObject({
+      code: 'INVALID_RESPONSE',
+      status: 502,
+    });
+  });
 });

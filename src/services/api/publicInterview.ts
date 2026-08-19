@@ -27,6 +27,18 @@ export class PublicInterviewApiError extends Error {
   }
 }
 
+function requireAnswerResult(value: { replayed?: unknown; updatedAt?: unknown }) {
+  if (typeof value.updatedAt !== 'string' || !value.updatedAt.trim()) {
+    throw new PublicInterviewApiError('INVALID_RESPONSE', 502);
+  }
+  return { replayed: value.replayed === true, updatedAt: value.updatedAt };
+}
+
+function requireCompletionResult(value: { alreadyComplete?: unknown; completed?: unknown }) {
+  if (value.completed !== true) throw new PublicInterviewApiError('INVALID_RESPONSE', 502);
+  return { alreadyComplete: value.alreadyComplete === true, completed: true as const };
+}
+
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, {
     ...init,
@@ -56,13 +68,13 @@ export const publicInterviewApi = {
       idempotencyKey: string;
     }
   ) =>
-    request<{ replayed: boolean; updatedAt: string }>(
+    request<{ replayed?: unknown; updatedAt?: unknown }>(
       `${base(token)}/answers/${encodeURIComponent(questionId)}`,
       { method: 'POST', body: JSON.stringify(input) }
-    ),
+    ).then(requireAnswerResult),
   complete: (token: string) =>
-    request<{ alreadyComplete: boolean; completed: boolean }>(`${base(token)}/complete`, {
+    request<{ alreadyComplete?: unknown; completed?: unknown }>(`${base(token)}/complete`, {
       method: 'POST',
       body: '{}',
-    }),
+    }).then(requireCompletionResult),
 };

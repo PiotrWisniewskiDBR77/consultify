@@ -1,5 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
+import fs from 'node:fs';
+import path from 'node:path';
 import pg from 'pg';
 
 const databaseUrl = process.env.DATABASE_URL || '';
@@ -98,6 +100,7 @@ test.afterAll(async () => {
 
 test('anonymous token-only respondent saves with CAS, reloads cold and completes', async ({
   page,
+  browser,
 }) => {
   test.setTimeout(120_000);
   await page.setViewportSize({ width: 390, height: 844 });
@@ -120,10 +123,56 @@ test('anonymous token-only respondent saves with CAS, reloads cold and completes
   await page.getByRole('button', { name: 'Wyślij wywiad' }).click();
   await expect(page.getByRole('heading', { name: /Dziękujemy/ })).toBeVisible();
 
-  const axe = await new AxeBuilder({ page }).analyze();
-  expect(
-    axe.violations.filter((violation) => ['critical', 'serious'].includes(violation.impact || ''))
-  ).toEqual([]);
+  const evidenceDir = path.resolve(
+    'docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/respondent-canonical'
+  );
+  fs.mkdirSync(evidenceDir, { recursive: true });
+  for (const [viewport, width, height] of [
+    ['desktop', 1440, 900],
+    ['tablet', 768, 1024],
+    ['mobile', 390, 844],
+  ] as const) {
+    for (const language of ['en', 'pl'] as const) {
+      for (const theme of ['light', 'dark'] as const) {
+        const context = await browser.newContext({ viewport: { width, height } });
+        await context.addInitScript(
+          ({ nextLanguage, nextTheme }) => {
+            localStorage.setItem('i18nextLng', nextLanguage);
+            localStorage.setItem(
+              'consultify-storage',
+              JSON.stringify({ state: { theme: nextTheme }, version: 2 })
+            );
+          },
+          { nextLanguage: language, nextTheme: theme }
+        );
+        const evidencePage = await context.newPage();
+        await evidencePage.goto(`/interview/respond/${activeToken}`);
+        await expect
+          .poll(() =>
+            evidencePage.evaluate(() => document.documentElement.classList.contains('dark'))
+          )
+          .toBe(theme === 'dark');
+        await expect(evidencePage.getByLabel(/What should change first/)).toHaveAttribute(
+          'readonly',
+          ''
+        );
+        expect(
+          await evidencePage.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)
+        ).toBe(true);
+        const axe = await new AxeBuilder({ page: evidencePage }).analyze();
+        expect(
+          axe.violations.filter((violation) =>
+            ['critical', 'serious'].includes(violation.impact || '')
+          )
+        ).toEqual([]);
+        await evidencePage.screenshot({
+          path: path.join(evidenceDir, `respondent__${viewport}__${language}__${theme}.png`),
+          fullPage: true,
+        });
+        await context.close();
+      }
+    }
+  }
 
   const row = await withClient((client) =>
     client.query(
