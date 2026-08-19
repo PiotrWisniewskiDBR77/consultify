@@ -169,6 +169,9 @@ export interface DetectAndReconcileParams {
   caseId: string;
   /** `rvn_roi_finance_links.link_id` — the pinned link whose two sides diverged. */
   linkId: string;
+  /** Immutable Results-owned Actual source; never a legacy benefit_tracking row. */
+  resultsActualSnapshotId: string;
+  resultsActualMetric: 'npv' | 'simpleRoi' | 'totalCosts' | 'totalFinancialBenefits';
   /** The value the ROI case holds (the already-recorded truth). */
   roiValue: number;
   /** The value Finance is asserting. */
@@ -211,6 +214,8 @@ export async function detectAndReconcile(
     organizationId,
     caseId,
     linkId,
+    resultsActualSnapshotId,
+    resultsActualMetric,
     roiValue,
     financeValue,
     actorId,
@@ -248,6 +253,8 @@ export async function detectAndReconcile(
     caseId,
     organizationId,
     financeLinkId: linkId,
+    resultsActualSnapshotId,
+    resultsActualMetric,
     roiValue,
     financeValue,
     reconciliationKind,

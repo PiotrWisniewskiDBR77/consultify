@@ -120,6 +120,16 @@ export interface RoiFinanceReconciliationRow {
   request_fingerprint: string | null;
   request_actor_id: string | null;
   idempotency_key: string | null;
+  results_actual_snapshot_id: string | null;
+  results_actual_sequence_number: number | null;
+  results_actual_metric: 'npv' | 'simpleRoi' | 'totalCosts' | 'totalFinancialBenefits' | null;
+  finance_artifact_id: string | null;
+  finance_business_version_id: string | null;
+  finance_working_revision_id: string | null;
+  finance_content_semantic_hash: string | null;
+  finance_tracked_metric: string | null;
+  finance_pinned_value: string | null;
+  source_identity_digest: string | null;
   divergence_reason: string | null;
   status: RoiFinanceReconciliationStatus;
   opened_by: string;
@@ -143,6 +153,17 @@ export interface RoiFinanceReconciliation {
   decisionPolicyDigest: string;
   terminalDecisionId: string | null;
   terminalDecisionVersion: number | null;
+  resultsActualSnapshotId: string | null;
+  resultsActualSequenceNumber: number | null;
+  resultsActualMetric: 'npv' | 'simpleRoi' | 'totalCosts' | 'totalFinancialBenefits' | null;
+  financeArtifactId: string | null;
+  financeBusinessVersionId: string | null;
+  financeWorkingRevisionId: string | null;
+  financeContentSemanticHash: string | null;
+  financeTrackedMetric: string | null;
+  financePinnedValue: number | null;
+  sourceIdentityDigest: string | null;
+  requestIdempotencyKey: string | null;
   divergenceReason: string | null;
   status: RoiFinanceReconciliationStatus;
   openedBy: string;
@@ -167,6 +188,17 @@ export function toRoiFinanceReconciliation(row: RoiFinanceReconciliationRow): Ro
     decisionPolicyDigest: row.decision_policy_digest,
     terminalDecisionId: row.terminal_decision_id,
     terminalDecisionVersion: row.terminal_decision_version,
+    resultsActualSnapshotId: row.results_actual_snapshot_id,
+    resultsActualSequenceNumber: row.results_actual_sequence_number,
+    resultsActualMetric: row.results_actual_metric,
+    financeArtifactId: row.finance_artifact_id,
+    financeBusinessVersionId: row.finance_business_version_id,
+    financeWorkingRevisionId: row.finance_working_revision_id,
+    financeContentSemanticHash: row.finance_content_semantic_hash,
+    financeTrackedMetric: row.finance_tracked_metric,
+    financePinnedValue: toNullableNumber(row.finance_pinned_value),
+    sourceIdentityDigest: row.source_identity_digest,
+    requestIdempotencyKey: row.idempotency_key,
     divergenceReason: row.divergence_reason,
     status: row.status,
     openedBy: row.opened_by,

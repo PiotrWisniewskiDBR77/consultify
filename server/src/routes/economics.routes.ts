@@ -23,13 +23,9 @@ import {
   normalizeFinancialData,
   validateFinancialData,
 } from '../services/economicsFinancials.js';
-import {
-  detectAndReconcile,
-  findReconciliationTargetForInitiative,
-} from '../services/finance/canonical/roiFinanceReconciliationAdapter.js';
+import { findReconciliationTargetForInitiative } from '../services/finance/canonical/roiFinanceReconciliationAdapter.js';
 import { createRegisteredValuation } from '../services/finance/canonical/valuationRegistrationService.js';
 import { FinanceCandidateHandoffError } from '../services/finance/financeCandidateHandoffCore.js';
-import { resolveEffectiveAccess } from '../services/effectiveAccessService.js';
 import * as finAnalysisSvc from '../services/financialAnalysisService.js';
 import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import { resolveInitiativeProjectId } from '../services/initiativeProjectPolicyService.js';
@@ -1633,7 +1629,6 @@ router.put(
 
     // ── Divergence path: record it on the canonical seam BEFORE mutating
     // anything, so a caller that gets 409 knows nothing at all changed. ──
-    let reconciliation: Awaited<ReturnType<typeof detectAndReconcile>> | null = null;
     if (actualWriteRejected) {
       let target: Awaited<ReturnType<typeof findReconciliationTargetForInitiative>>;
       try {
@@ -1677,40 +1672,23 @@ router.put(
         });
       }
 
-      try {
-        const access = await resolveEffectiveAccess({
-          userId: userId || '',
-          organizationId: orgId,
-          applicationRole: req.user?.role,
-        });
-        reconciliation = await detectAndReconcile({
-          organizationId: orgId,
-          caseId: target.target.caseId,
-          linkId: target.target.linkId,
-          roiValue: storedActualBenefits,
-          financeValue: actualBenefits,
-          actorId: userId || 'unknown',
-          divergenceReason:
-            `PUT /api/economics/analyses/${id}/benefits attempted to change ` +
-            `benefit_tracking.actual_cost_savings for tracking_period ${trackingPeriod}`,
-          access,
-        });
-      } catch (error) {
-        logger.error('[economics] opening ROI/Finance reconciliation failed', {
-          caseId: target.target.caseId,
-          error: error instanceof Error ? error.message : String(error),
-        });
-        return res.status(503).json({
-          success: false,
-          error: 'ROI_RECONCILIATION_WRITE_FAILED',
-          actualBenefitsWriteRejected: true,
-          storedActualBenefits,
-          requestedActualBenefits: actualBenefits,
-          message:
-            'Nie udało się zapisać rozbieżności na seamie ROI/Finance — nic nie zostało ' +
-            'zapisane, zarejestrowana wartość rzeczywista pozostaje niezmieniona.',
-        });
-      }
+      // A legacy benefit_tracking scalar is not a Results Actual identity.
+      // Creating a canonical reconciliation from it would produce an
+      // untraceable proposal that could never be cold-replayed.  The caller
+      // must first publish an immutable Results Actual snapshot and use the
+      // canonical Results reconciliation command.
+      return res.status(409).json({
+        success: false,
+        error: 'RESULTS_ACTUAL_SOURCE_REQUIRED',
+        status: 'NEEDS_DECISION',
+        actualBenefitsWriteRejected: true,
+        storedActualBenefits,
+        requestedActualBenefits: actualBenefits,
+        canonicalSuccessor: `/api/vnext/results/roi/cases/${target.target.caseId}/finance-reconciliations`,
+        message:
+          'Wartość rzeczywista pozostaje niezmieniona. Opublikuj snapshot Actual w Results ' +
+          'i otwórz uzgodnienie z jego dokładnym identyfikatorem.',
+      });
     }
 
     try {
@@ -1788,24 +1766,6 @@ router.put(
         });
       }
       throw error;
-    }
-
-    if (actualWriteRejected) {
-      return res.json({
-        success: true,
-        actualBenefitsWriteRejected: true,
-        storedActualBenefits,
-        requestedActualBenefits: actualBenefits,
-        reconciliationId: reconciliation?.reconciliationId ?? null,
-        reconciliationOpened: reconciliation?.reconciliationOpened ?? false,
-        materialityThresholdPercent: reconciliation?.thresholdPercent ?? null,
-        divergencePercent: reconciliation?.divergencePercent ?? null,
-        message: reconciliation?.reconciliationOpened
-          ? 'Zarejestrowanej wartości rzeczywistej nie nadpisano — rozbieżność zapisano jako ' +
-            'uzgodnienie ROI/Finance do wyjaśnienia.'
-          : 'Zarejestrowanej wartości rzeczywistej nie nadpisano — rozbieżność mieści się w ' +
-            'progu istotności, więc nie otwarto uzgodnienia. Pozostałe pola zapisano.',
-      });
     }
 
     return res.json({ success: true });

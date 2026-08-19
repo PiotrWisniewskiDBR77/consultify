@@ -227,6 +227,8 @@ export const RemoveRoiFinanceLinkSchema = z.object({
 // POST .../cases/:caseId/finance-reconciliations — openRoiFinanceReconciliation.
 export const OpenRoiFinanceReconciliationSchema = z.object({
   financeLinkId: z.string().uuid(),
+  resultsActualSnapshotId: z.string().uuid(),
+  resultsActualMetric: z.enum(['npv', 'simpleRoi', 'totalCosts', 'totalFinancialBenefits']),
   reconciliationKind: z.enum(['proposal', 'dispute']).default('dispute'),
   roiValue: z.number().finite(),
   financeValue: z.number().finite(),

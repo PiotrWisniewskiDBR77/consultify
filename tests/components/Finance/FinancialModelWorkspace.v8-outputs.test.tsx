@@ -59,6 +59,11 @@ vi.mock('@/services/api/v8/finance', () => ({
   },
 }));
 
+vi.mock('@/services/api/financeV2.api', () => ({
+  resolveLegacyFinanceArtifact: vi.fn(),
+  approveFinanceModel: vi.fn(),
+}));
+
 vi.mock('../../../src/components/Finance/ExportButton', () => ({
   ExportButton: () => <div>export-button</div>,
 }));
@@ -66,6 +71,10 @@ vi.mock('../../../src/components/Finance/ExportButton', () => ({
 import { FinancialModelWorkspace } from '../../../src/components/Finance/FinancialModelWorkspace';
 import Api from '../../../src/services/api';
 import { V8FinanceApi } from '../../../src/services/api/v8/finance';
+import {
+  approveFinanceModel,
+  resolveLegacyFinanceArtifact,
+} from '../../../src/services/api/financeV2.api';
 
 const baseModel = {
   id: 'model-1',
@@ -235,9 +244,13 @@ describe('FinancialModelWorkspace V8 outputs seam', () => {
     });
   });
 
-  it('prefers governed model approve before legacy fallback in the workspace', async () => {
+  it('resolves the legacy alias and approves only through the canonical artifact writer', async () => {
     vi.mocked(V8FinanceApi.getModelOutputs).mockResolvedValue({ raw: [], grouped: {} } as any);
-    vi.mocked(V8FinanceApi.approveModel).mockResolvedValue({ success: true, status: 'approved' } as any);
+    vi.mocked(resolveLegacyFinanceArtifact).mockResolvedValue({
+      status: 'RESOLVED',
+      artifactId: 'artifact-1',
+    } as any);
+    vi.mocked(approveFinanceModel).mockResolvedValue({ success: true, status: 'approved' } as any);
 
     render(<FinancialModelWorkspace initialModelId="model-1" hideSidebar />);
 
@@ -250,16 +263,20 @@ describe('FinancialModelWorkspace V8 outputs seam', () => {
     });
 
     await waitFor(() => {
-      expect(V8FinanceApi.approveModel).toHaveBeenCalledWith('model-1');
+      expect(resolveLegacyFinanceArtifact).toHaveBeenCalledWith('financial_models', 'model-1');
+      expect(approveFinanceModel).toHaveBeenCalledWith({
+        modelArtifactId: 'artifact-1',
+        idempotencyKey: expect.any(String),
+      });
     });
 
+    expect(V8FinanceApi.approveModel).not.toHaveBeenCalled();
     expect(Api.post).not.toHaveBeenCalledWith('/api/financial-modeling/models/model-1/approve', {});
   });
 
-  it('falls back to legacy model approve in the workspace on bounded compatibility statuses', async () => {
+  it('fails closed when the legacy model has no canonical identity', async () => {
     vi.mocked(V8FinanceApi.getModelOutputs).mockResolvedValue({ raw: [], grouped: {} } as any);
-    vi.mocked(V8FinanceApi.approveModel).mockRejectedValue({ status: 404 });
-    vi.mocked(Api.post).mockResolvedValue({ success: true } as any);
+    vi.mocked(resolveLegacyFinanceArtifact).mockResolvedValue({ status: 'UNMAPPED' } as any);
 
     render(<FinancialModelWorkspace initialModelId="model-1" hideSidebar />);
 
@@ -271,9 +288,10 @@ describe('FinancialModelWorkspace V8 outputs seam', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
     });
 
-    await waitFor(() => {
-      expect(Api.post).toHaveBeenCalledWith('/api/financial-modeling/models/model-1/approve', {});
-    });
+    await waitFor(() => expect(resolveLegacyFinanceArtifact).toHaveBeenCalled());
+    expect(approveFinanceModel).not.toHaveBeenCalled();
+    expect(V8FinanceApi.approveModel).not.toHaveBeenCalled();
+    expect(Api.post).not.toHaveBeenCalledWith('/api/financial-modeling/models/model-1/approve', {});
   });
 
   it('prefers governed model assumptions save before legacy fallback in the workspace', async () => {

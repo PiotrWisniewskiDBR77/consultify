@@ -942,6 +942,17 @@ export interface RoiFinanceReconciliation {
   resolvedAt: string | null;
   resolutionNotes: string | null;
   rowVersion: number;
+  resultsActualSnapshotId: string | null;
+  resultsActualSequenceNumber: number | null;
+  resultsActualMetric: 'npv' | 'simpleRoi' | 'totalCosts' | 'totalFinancialBenefits' | null;
+  financeArtifactId: string | null;
+  financeBusinessVersionId: string | null;
+  financeWorkingRevisionId: string | null;
+  financeContentSemanticHash: string | null;
+  financeTrackedMetric: string | null;
+  financePinnedValue: number | null;
+  sourceIdentityDigest: string | null;
+  requestIdempotencyKey: string | null;
 }
 export async function listRoiFinanceReconciliations(caseId: string): Promise<RoiFinanceReconciliation[]> {
   const { financeReconciliations } = await getJson<{ financeReconciliations: RoiFinanceReconciliation[] }>(
@@ -951,6 +962,8 @@ export async function listRoiFinanceReconciliations(caseId: string): Promise<Roi
 }
 export interface OpenRoiFinanceReconciliationInput {
   financeLinkId: string;
+  resultsActualSnapshotId: string;
+  resultsActualMetric: 'npv' | 'simpleRoi' | 'totalCosts' | 'totalFinancialBenefits';
   roiValue: number;
   financeValue: number;
   divergenceReason?: string | null;

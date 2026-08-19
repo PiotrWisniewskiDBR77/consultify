@@ -71,14 +71,87 @@ type PgModule = typeof import('../../../server/src/database/PostgresDatabase.js'
 
 let createRoiCase: CaseCommandsModule['createRoiCase'];
 let createRoiFinanceLink: FinanceLinkCommandsModule['createRoiFinanceLink'];
-let openRoiFinanceReconciliation: FinanceReconciliationCommandsModule['openRoiFinanceReconciliation'];
-let openRoiFinanceReconciliationFromProjection: FinanceReconciliationCommandsModule['openRoiFinanceReconciliationFromProjection'];
+let openRoiFinanceReconciliation: any;
+let openRoiFinanceReconciliationFromProjection: any;
 let updateRoiFinanceReconciliationStatus: FinanceReconciliationCommandsModule['updateRoiFinanceReconciliationStatus'];
 let setUpdateStatusRaceHooksForTest: FinanceReconciliationCommandsModule['setUpdateStatusRaceHooksForTest'];
 let recordFinanceOwnerGrantEvent: FinanceReconciliationCommandsModule['recordFinanceOwnerGrantEvent'];
 let RoiFinanceLinkNotFoundError: FinanceReconciliationCommandsModule['RoiFinanceLinkNotFoundError'];
 let listRoiFinanceReconciliations: FinanceLinkRepositoryModule['listRoiFinanceReconciliations'];
 let closePgPool: (() => Promise<void>) | undefined;
+
+const governedSourceCache = new Map<string, {
+  resultsActualSnapshotId: string;
+  resultsActualMetric: 'totalFinancialBenefits';
+}>();
+
+async function ensureGovernedSource(input: {
+  organizationId: string; caseId: string; financeLinkId: string; roiValue: number; financeValue: number;
+}): Promise<{ resultsActualSnapshotId: string; resultsActualMetric: 'totalFinancialBenefits' }> {
+  const key = `${input.organizationId}:${input.caseId}:${input.financeLinkId}:${input.roiValue}:${input.financeValue}`;
+  const cached = governedSourceCache.get(key);
+  if (cached) return cached;
+  const actualSnapshotId = randomUUID();
+  const artifactId = randomUUID();
+  const businessVersionId = randomUUID();
+  const workingRevisionId = randomUUID();
+  const computeSnapshotId = randomUUID();
+  const contentHash = `sha256:${randomUUID().replaceAll('-', '').padEnd(64, '0')}`;
+  const engine = await client.query<{ engine_manifest_id: string }>(
+    `SELECT engine_manifest_id FROM finance_engine_manifests ORDER BY created_at LIMIT 1`
+  );
+  await client.query(
+    `INSERT INTO finance_artifacts (artifact_id,organization_id,artifact_type,natural_key,created_by)
+     VALUES($1,$2,'BASELINE_MODEL',$3,$4)`,
+    [artifactId, input.organizationId, `reconciliation-${artifactId}`, USER_MAKER]
+  );
+  await client.query(
+    `INSERT INTO finance_business_versions
+      (business_version_id,artifact_id,organization_id,version_no,status,freshness,engine_manifest_id,content_semantic_hash)
+     VALUES($1,$2,$3,1,'DRAFT','NEVER_COMPUTED',$4,$5)`,
+    [businessVersionId, artifactId, input.organizationId, engine.rows[0]!.engine_manifest_id, contentHash]
+  );
+  await client.query(
+    `INSERT INTO finance_working_revisions
+      (working_revision_id,artifact_id,organization_id,business_version_id,revision_seq,content_semantic_hash,is_current,edited_by)
+     VALUES($1,$2,$3,$4,1,$5,false,$6)`,
+    [workingRevisionId, artifactId, input.organizationId, businessVersionId, contentHash, USER_MAKER]
+  );
+  await client.query(
+    `INSERT INTO finance_compute_snapshots
+      (compute_snapshot_id,artifact_id,organization_id,working_revision_id,engine_manifest_id,as_of,content_semantic_hash,created_by)
+     VALUES($1,$2,$3,$4,$5,now(),$6,$7)`,
+    [computeSnapshotId, artifactId, input.organizationId, workingRevisionId,
+      engine.rows[0]!.engine_manifest_id, contentHash, USER_MAKER]
+  );
+  await client.query(
+    `UPDATE finance_business_versions SET source_working_revision_id=$1,compute_snapshot_id=$2,
+       status='APPROVED',freshness='CURRENT',approved_by=$3,approved_at=now()
+     WHERE business_version_id=$4`,
+    [workingRevisionId, computeSnapshotId, USER_RESOLVER, businessVersionId]
+  );
+  await client.query(
+    `UPDATE rvn_roi_finance_links SET finance_artifact_id=$1,finance_version_id=$2,
+       tracked_metric='totalFinancialBenefits',pinned_finance_value=$5
+      WHERE link_id=$3 AND organization_id=$4`,
+    [artifactId, businessVersionId, input.financeLinkId, input.organizationId, input.financeValue]
+  );
+  const nextSequence = await client.query<{ n: number }>(
+    `SELECT COALESCE(max(sequence_number),0)::int+1 n FROM rvn_roi_actual_snapshots WHERE case_id=$1`,
+    [input.caseId]
+  );
+  await client.query(
+    `INSERT INTO rvn_roi_actual_snapshots
+      (actual_snapshot_id,case_id,organization_id,sequence_number,as_of_period_end,published_by,
+       total_actual_financial_benefits,periods_with_actual_count,periods_expected_count,coverage_pct,
+       unverified_entry_count,disputed_entry_count,entry_ids_included)
+     VALUES($1,$2,$3,$4,'2026-06-30',$5,$6,1,1,100,0,0,'[]'::jsonb)`,
+    [actualSnapshotId, input.caseId, input.organizationId, nextSequence.rows[0]!.n, USER_MAKER, input.roiValue]
+  );
+  const source = { resultsActualSnapshotId: actualSnapshotId, resultsActualMetric: 'totalFinancialBenefits' as const };
+  governedSourceCache.set(key, source);
+  return source;
+}
 
 async function insertOrganization(): Promise<void> {
   await client.query(
@@ -287,8 +360,21 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
     const financeReconciliationCommands: FinanceReconciliationCommandsModule = await import(
       '../../../server/src/services/resultsVnext/roi/roiFinanceReconciliationCommands.js'
     );
-    openRoiFinanceReconciliation = financeReconciliationCommands.openRoiFinanceReconciliation;
-    openRoiFinanceReconciliationFromProjection = financeReconciliationCommands.openRoiFinanceReconciliationFromProjection;
+    const rawOpen = financeReconciliationCommands.openRoiFinanceReconciliation;
+    const rawProjectionOpen = financeReconciliationCommands.openRoiFinanceReconciliationFromProjection;
+    openRoiFinanceReconciliation = async (input: any) => rawOpen({
+      ...input,
+      ...(input.resultsActualSnapshotId ? {} : await ensureGovernedSource(input)),
+    });
+    openRoiFinanceReconciliationFromProjection = async (input: any) => rawProjectionOpen({
+      ...input,
+      ...(input.resultsActualSnapshotId ? {} : ((await client.query(
+        `SELECT 1 FROM rvn_platform_events WHERE event_id=$1 AND organization_id=$2 AND aggregate_id=$3`,
+        [input.sourceEventId, input.organizationId, input.caseId]
+      )).rowCount
+        ? await ensureGovernedSource(input)
+        : { resultsActualSnapshotId: randomUUID(), resultsActualMetric: 'totalFinancialBenefits' })),
+    });
     updateRoiFinanceReconciliationStatus = financeReconciliationCommands.updateRoiFinanceReconciliationStatus;
     setUpdateStatusRaceHooksForTest = financeReconciliationCommands.setUpdateStatusRaceHooksForTest;
     recordFinanceOwnerGrantEvent = financeReconciliationCommands.recordFinanceOwnerGrantEvent;
@@ -346,6 +432,7 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
       await client.query(`DELETE FROM rvn_finance_reconciliation_decisions WHERE organization_id = $1`, [ORG_ID]);
       await client.query(`DELETE FROM rvn_roi_finance_reconciliations WHERE organization_id = $1`, [ORG_ID]);
       await client.query(`DELETE FROM rvn_roi_finance_links WHERE organization_id = $1`, [ORG_ID]);
+      await client.query(`DELETE FROM rvn_roi_actual_snapshots WHERE organization_id = $1`, [ORG_ID]);
       await client.query(
         `DELETE FROM rvn_platform_resource_acl
           WHERE resource_type = 'roi_case'
@@ -361,6 +448,10 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
       await client.query(`DELETE FROM rvn_roi_baselines WHERE organization_id = $1`, [ORG_ID]);
       await client.query(`DELETE FROM rvn_roi_calculation_policy WHERE organization_id = $1`, [ORG_ID]);
       await client.query(`DELETE FROM rvn_roi_cases WHERE organization_id = $1`, [ORG_ID]);
+      await client.query(`DELETE FROM finance_compute_snapshots WHERE organization_id = $1`, [ORG_ID]);
+      await client.query(`DELETE FROM finance_working_revisions WHERE organization_id = $1`, [ORG_ID]);
+      await client.query(`DELETE FROM finance_business_versions WHERE organization_id = $1`, [ORG_ID]);
+      await client.query(`DELETE FROM finance_artifacts WHERE organization_id = $1`, [ORG_ID]);
       await client.query(`DELETE FROM rvn_platform_resource_visibility WHERE organization_id = $1`, [ORG_ID]);
       await client.query(`DELETE FROM rvn_platform_visibility_policies WHERE organization_id = $1`, [ORG_ID]);
       await client.query(`DELETE FROM rvn_roi_visibility_governance WHERE organization_id = $1`, [ORG_ID]);
@@ -921,6 +1012,202 @@ describe('ROI-E007 Finance Reconciliation commands (real Postgres)', () => {
   // the REAL command functions rather than reading code. Do not "fix" the
   // assertions to match current behavior if they fail — a failure here IS
   // the proof the gap exists.
+
+  itDB(
+    'FIN-MVP-RECONCILIATION-001 pins immutable Results Actual and exact Finance artifact/BV/WR/hash with cold readback',
+    async () => {
+      const fixture = await buildCaseWithFinanceLink(`governed-${randomUUID()}`);
+      const actualSnapshotId = randomUUID();
+      const artifactId = randomUUID();
+      const businessVersionId = randomUUID();
+      const workingRevisionId = randomUUID();
+      const computeSnapshotId = randomUUID();
+      const contentHash = `sha256:${'a'.repeat(64)}`;
+      const engine = await client.query<{ engine_manifest_id: string }>(
+        `SELECT engine_manifest_id FROM finance_engine_manifests ORDER BY created_at LIMIT 1`
+      );
+      expect(engine.rows[0]?.engine_manifest_id).toBeTruthy();
+      await client.query(
+        `INSERT INTO finance_artifacts
+          (artifact_id,organization_id,artifact_type,natural_key,created_by)
+         VALUES($1,$2,'BASELINE_MODEL',$3,$4)`,
+        [artifactId, ORG_ID, `reconciliation-${artifactId}`, USER_MAKER]
+      );
+      await client.query(
+        `INSERT INTO finance_business_versions
+          (business_version_id,artifact_id,organization_id,version_no,status,freshness,
+           engine_manifest_id,content_semantic_hash)
+         VALUES($1,$2,$3,1,'DRAFT','NEVER_COMPUTED',$4,$5)`,
+        [businessVersionId, artifactId, ORG_ID, engine.rows[0]!.engine_manifest_id, contentHash]
+      );
+      await client.query(
+        `INSERT INTO finance_working_revisions
+          (working_revision_id,artifact_id,organization_id,business_version_id,revision_seq,
+           content_semantic_hash,is_current,edited_by)
+         VALUES($1,$2,$3,$4,1,$5,false,$6)`,
+        [workingRevisionId, artifactId, ORG_ID, businessVersionId, contentHash, USER_MAKER]
+      );
+      await client.query(
+        `INSERT INTO finance_compute_snapshots
+          (compute_snapshot_id,artifact_id,organization_id,working_revision_id,engine_manifest_id,
+           as_of,content_semantic_hash,created_by)
+         VALUES($1,$2,$3,$4,$5,now(),$6,$7)`,
+        [computeSnapshotId, artifactId, ORG_ID, workingRevisionId,
+          engine.rows[0]!.engine_manifest_id, contentHash, USER_MAKER]
+      );
+      await client.query(
+        `UPDATE finance_business_versions
+            SET source_working_revision_id=$1,compute_snapshot_id=$2,status='APPROVED',
+                freshness='CURRENT',approved_by=$3,approved_at=now()
+          WHERE business_version_id=$4`,
+        [workingRevisionId, computeSnapshotId, USER_RESOLVER, businessVersionId]
+      );
+      await client.query(
+        `UPDATE rvn_roi_finance_links
+            SET finance_artifact_id=$1, finance_version_id=$2,
+                tracked_metric='totalFinancialBenefits', pinned_finance_value=80
+          WHERE link_id=$3 AND organization_id=$4`,
+        [artifactId, businessVersionId, fixture.linkId, ORG_ID]
+      );
+      await client.query(
+        `INSERT INTO rvn_roi_actual_snapshots
+          (actual_snapshot_id,case_id,organization_id,sequence_number,as_of_period_end,
+           published_by,total_actual_costs,total_actual_financial_benefits,actual_simple_roi,
+           periods_with_actual_count,periods_expected_count,coverage_pct,
+           unverified_entry_count,disputed_entry_count,entry_ids_included)
+         VALUES($1,$2,$3,1,'2026-06-30',$4,25,100,3,1,1,100,0,0,'[]'::jsonb)`,
+        [actualSnapshotId, fixture.caseId, ORG_ID, USER_MAKER]
+      );
+
+      const opened = await openRoiFinanceReconciliation({
+        caseId: fixture.caseId,
+        organizationId: ORG_ID,
+        financeLinkId: fixture.linkId,
+        resultsActualSnapshotId: actualSnapshotId,
+        resultsActualMetric: 'totalFinancialBenefits',
+        roiValue: 100,
+        financeValue: 80,
+        actorUserId: USER_MAKER,
+        actorEffectiveRole: 'owner',
+        idempotencyKey: `governed-source-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
+      });
+      expect(opened.outcome).toBe('applied');
+      expect(opened.result).toMatchObject({
+        resultsActualSnapshotId: actualSnapshotId,
+        resultsActualSequenceNumber: 1,
+        resultsActualMetric: 'totalFinancialBenefits',
+        financeArtifactId: artifactId,
+        financeBusinessVersionId: businessVersionId,
+        financeWorkingRevisionId: workingRevisionId,
+        financeContentSemanticHash: contentHash,
+        financeTrackedMetric: 'totalFinancialBenefits',
+        financePinnedValue: 80,
+      });
+      expect(opened.result.sourceIdentityDigest).toMatch(/^[a-f0-9]{64}$/);
+
+      const cold = new Client(buildClientConfig() as ClientConfig);
+      await cold.connect();
+      try {
+        const row = await cold.query(
+          `SELECT results_actual_snapshot_id::text,results_actual_sequence_number,
+                  results_actual_metric,finance_artifact_id,finance_business_version_id,
+                  finance_working_revision_id,finance_content_semantic_hash,
+                  finance_tracked_metric,finance_pinned_value::text,source_identity_digest
+             FROM rvn_roi_finance_reconciliations WHERE reconciliation_id=$1`,
+          [opened.result.reconciliationId]
+        );
+        expect(row.rows[0]).toEqual({
+          results_actual_snapshot_id: actualSnapshotId,
+          results_actual_sequence_number: 1,
+          results_actual_metric: 'totalFinancialBenefits',
+          finance_artifact_id: artifactId,
+          finance_business_version_id: businessVersionId,
+          finance_working_revision_id: workingRevisionId,
+          finance_content_semantic_hash: contentHash,
+          finance_tracked_metric: 'totalFinancialBenefits',
+          finance_pinned_value: '80',
+          source_identity_digest: opened.result.sourceIdentityDigest,
+        });
+      } finally {
+        await cold.end();
+      }
+
+      // Prove the database envelope itself rejects contradictory durable facts,
+      // independently of command validation. Disable only the immutability
+      // trigger inside disposable rollback-only transactions so the CHECK is
+      // the mechanism under test; constraints remain active in replica mode.
+      await client.query('BEGIN');
+      try {
+        await client.query(`SET LOCAL session_replication_role = 'replica'`);
+        await expect(client.query(
+          `UPDATE rvn_roi_finance_reconciliations
+              SET finance_tracked_metric='not-a-governed-metric'
+            WHERE reconciliation_id=$1`,
+          [opened.result.reconciliationId]
+        )).rejects.toMatchObject({ constraint: 'rvn_fin_reconciliation_source_envelope_check' });
+      } finally {
+        await client.query('ROLLBACK');
+      }
+      await client.query('BEGIN');
+      try {
+        await client.query(`SET LOCAL session_replication_role = 'replica'`);
+        await expect(client.query(
+          `UPDATE rvn_roi_finance_reconciliations
+              SET finance_pinned_value=finance_value + 1
+            WHERE reconciliation_id=$1`,
+          [opened.result.reconciliationId]
+        )).rejects.toMatchObject({ constraint: 'rvn_fin_reconciliation_source_envelope_check' });
+      } finally {
+        await client.query('ROLLBACK');
+      }
+
+      const replay = await openRoiFinanceReconciliation({
+        caseId: fixture.caseId,
+        organizationId: ORG_ID,
+        financeLinkId: fixture.linkId,
+        resultsActualSnapshotId: actualSnapshotId,
+        resultsActualMetric: 'totalFinancialBenefits',
+        roiValue: 100,
+        financeValue: 80,
+        actorUserId: USER_MAKER,
+        actorEffectiveRole: 'owner',
+        idempotencyKey: `different-client-key-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
+      });
+      expect(replay.outcome).toBe('duplicate');
+      expect(replay.eventId).toBe(opened.eventId);
+      expect(replay.result.reconciliationId).toBe(opened.result.reconciliationId);
+
+      await expect(openRoiFinanceReconciliation({
+        caseId: fixture.caseId,
+        organizationId: ORG_ID,
+        financeLinkId: fixture.linkId,
+        resultsActualSnapshotId: actualSnapshotId,
+        resultsActualMetric: 'totalFinancialBenefits',
+        roiValue: 100,
+        financeValue: 79,
+        actorUserId: USER_MAKER,
+        actorEffectiveRole: 'owner',
+        idempotencyKey: `finance-value-mismatch-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
+      })).rejects.toMatchObject({ code: 'FINANCE_PINNED_VALUE_MISMATCH' });
+
+      await expect(openRoiFinanceReconciliation({
+        caseId: fixture.caseId,
+        organizationId: ORG_ID,
+        financeLinkId: fixture.linkId,
+        resultsActualSnapshotId: actualSnapshotId,
+        resultsActualMetric: 'totalFinancialBenefits',
+        roiValue: 101,
+        financeValue: 80,
+        actorUserId: USER_MAKER,
+        actorEffectiveRole: 'owner',
+        idempotencyKey: `governed-mismatch-${randomUUID()}`,
+        access: { capabilities: ['*'], platformRole: null },
+      })).rejects.toMatchObject({ code: 'RESULTS_ACTUAL_VALUE_MISMATCH' });
+    }
+  );
 
   itDB(
     'GAP 1 — self-resolution guard (:547-552) is reachable once the opener ' +

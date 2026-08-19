@@ -3341,6 +3341,8 @@ router.post(
         caseId,
         organizationId: auth.organizationId,
         financeLinkId: body.financeLinkId,
+        resultsActualSnapshotId: body.resultsActualSnapshotId,
+        resultsActualMetric: body.resultsActualMetric,
         roiValue: body.roiValue,
         financeValue: body.financeValue,
         reconciliationKind: body.reconciliationKind,

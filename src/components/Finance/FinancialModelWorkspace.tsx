@@ -36,6 +36,7 @@ import { useNavigate } from 'react-router-dom';
 import { EmptyState as SharedEmptyState } from '@/components/shared/states';
 
 import Api from '../../services/api';
+import { approveFinanceModel, resolveLegacyFinanceArtifact } from '../../services/api/financeV2.api';
 import {
   shouldFallbackToLegacyFinance,
   V8FinanceApi,
@@ -190,15 +191,19 @@ async function computeModelWithFallback(modelId: string) {
   }
 }
 
-async function approveModelWithFallback(modelId: string) {
-  try {
-    return await V8FinanceApi.approveModel(modelId);
-  } catch (error) {
-    if (!shouldFallbackToLegacyFinance(error)) {
-      throw error;
-    }
-    return await Api.post(`/api/financial-modeling/models/${modelId}/approve`, {});
+async function approveCanonicalModel(legacyModelId: string) {
+  const identity = await resolveLegacyFinanceArtifact('financial_models', legacyModelId);
+  if (identity.status !== 'RESOLVED') {
+    throw new Error(
+      identity.status === 'QUARANTINED'
+        ? identity.reason || 'Model identity is quarantined'
+        : 'Model has no canonical identity. Run the Finance backfill before approval.'
+    );
   }
+  return approveFinanceModel({
+    modelArtifactId: identity.artifactId,
+    idempotencyKey: crypto.randomUUID(),
+  });
 }
 
 async function refreshModelSourceWithFallback(modelId: string) {
@@ -642,7 +647,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
     if (!selectedModel) return;
     setLoading(true);
     try {
-      const data = await approveModelWithFallback(selectedModel.id);
+      const data = await approveCanonicalModel(selectedModel.id);
       if ((data as any)?.success) {
         trackFunnelEvent('financial_model_approved', { modelId: selectedModel.id });
         await selectModel(selectedModel.id);

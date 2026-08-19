@@ -139,6 +139,7 @@ async function hasActiveExplicitFinanceOwnerGrant(client: PoolClient, organizati
 function reconciliationRequestFingerprint(input: {
   organizationId: string; caseId: string; financeLinkId: string; actorUserId: string;
   roiValue: number; financeValue: number; reconciliationKind: string; divergenceReason: string | null;
+  resultsActualSnapshotId: string; resultsActualMetric: ResultsActualMetric;
   authorityKind?: 'human' | 'finance_projection'; sourceEventId?: string | null;
 }): string {
   return createHash('sha256').update(JSON.stringify(input)).digest('hex');
@@ -277,6 +278,8 @@ export interface OpenRoiFinanceReconciliationInput {
   caseId: string;
   organizationId: string;
   financeLinkId: string;
+  resultsActualSnapshotId: string;
+  resultsActualMetric: ResultsActualMetric;
   roiValue: number;
   financeValue: number;
   reconciliationKind?: 'proposal' | 'dispute';
@@ -300,6 +303,15 @@ export type OpenRoiFinanceProjectionReconciliationInput = Omit<
 type ReconciliationAuthority =
   | { kind: 'human'; access: CommandAccessContext }
   | { kind: 'finance_projection'; sourceEventId: string };
+
+export type ResultsActualMetric = 'npv' | 'simpleRoi' | 'totalCosts' | 'totalFinancialBenefits';
+
+const RESULTS_ACTUAL_VALUE_COLUMN: Record<ResultsActualMetric, string> = {
+  npv: 'actual_npv',
+  simpleRoi: 'actual_simple_roi',
+  totalCosts: 'total_actual_costs',
+  totalFinancialBenefits: 'total_actual_financial_benefits',
+};
 
 export async function openRoiFinanceReconciliation(
   input: OpenRoiFinanceReconciliationInput
@@ -331,6 +343,8 @@ async function openRoiFinanceReconciliationWithAuthority(
     caseId,
     organizationId,
     financeLinkId,
+    resultsActualSnapshotId,
+    resultsActualMetric,
     roiValue,
     financeValue,
     reconciliationKind = 'dispute',
@@ -385,13 +399,112 @@ async function openRoiFinanceReconciliationWithAuthority(
         });
       }
 
-      const linkResult = await client.query<{ link_id: string }>(
-        `SELECT link_id FROM rvn_roi_finance_links WHERE link_id = $1 AND case_id = $2 AND organization_id = $3`,
+      const linkResult = await client.query<{
+        link_id: string; finance_artifact_id: string; finance_version_id: string;
+        tracked_metric: string | null; pinned_finance_value: string | null;
+      }>(
+        `SELECT link_id, finance_artifact_id, finance_version_id, tracked_metric, pinned_finance_value
+           FROM rvn_roi_finance_links
+          WHERE link_id = $1 AND case_id = $2 AND organization_id = $3`,
         [financeLinkId, caseId, organizationId]
       );
-      if (!linkResult.rows[0]) {
+      const financeLink = linkResult.rows[0];
+      if (!financeLink) {
         throw new RoiFinanceLinkNotFoundError(financeLinkId, caseId);
       }
+      if (financeLink.tracked_metric !== resultsActualMetric) {
+        throw new RoiFinanceReconciliationValidationError(
+          'The Finance link tracked metric does not match the pinned Results Actual metric.',
+          'FINANCE_TRACKED_METRIC_MISMATCH'
+        );
+      }
+      if (financeLink.pinned_finance_value === null) {
+        throw new RoiFinanceReconciliationValidationError(
+          'The Finance link has no immutable pinned value.',
+          'FINANCE_PINNED_VALUE_REQUIRED'
+        );
+      }
+      const financeValueMatch = await client.query<{ matches: boolean }>(
+        `SELECT ($1::numeric IS NOT DISTINCT FROM $2::numeric) AS matches`,
+        [financeLink.pinned_finance_value, financeValue]
+      );
+      if (!financeValueMatch.rows[0]?.matches) {
+        throw new RoiFinanceReconciliationValidationError(
+          'financeValue does not equal the canonical value pinned by the Finance link.',
+          'FINANCE_PINNED_VALUE_MISMATCH'
+        );
+      }
+
+      // Results owns Actual.  The scalar in the command is accepted only when
+      // it is a byte-equivalent numeric projection of one immutable snapshot.
+      const actualColumn = RESULTS_ACTUAL_VALUE_COLUMN[resultsActualMetric];
+      const actualResult = await client.query<{ sequence_number: number; value_matches: boolean }>(
+        `SELECT sequence_number, (${actualColumn} IS NOT DISTINCT FROM $4::numeric) AS value_matches
+           FROM rvn_roi_actual_snapshots
+          WHERE actual_snapshot_id=$1 AND case_id=$2 AND organization_id=$3`,
+        [resultsActualSnapshotId, caseId, organizationId, roiValue]
+      );
+      const actual = actualResult.rows[0];
+      if (!actual) {
+        throw new RoiFinanceReconciliationValidationError(
+          'The pinned Results Actual snapshot does not exist in this tenant and case.',
+          'RESULTS_ACTUAL_SOURCE_NOT_FOUND'
+        );
+      }
+      if (!actual.value_matches) {
+        throw new RoiFinanceReconciliationValidationError(
+          'roiValue does not equal the pinned Results Actual metric.',
+          'RESULTS_ACTUAL_VALUE_MISMATCH'
+        );
+      }
+
+      // Finance consumes the link's exact artifact/BV/WR identity.  Never
+      // follow the artifact's current pointer and never reconcile stale or
+      // uncomputed Finance state.
+      const financeSourceResult = await client.query<{
+        artifact_id: string; business_version_id: string; working_revision_id: string;
+        content_semantic_hash: string;
+      }>(
+        `SELECT bv.artifact_id, bv.business_version_id,
+                wr.working_revision_id,
+                COALESCE(wr.content_semantic_hash, bv.content_semantic_hash) AS content_semantic_hash
+           FROM finance_business_versions bv
+           JOIN finance_working_revisions wr
+             ON wr.working_revision_id=bv.source_working_revision_id
+            AND wr.organization_id=bv.organization_id
+            AND wr.artifact_id=bv.artifact_id
+          WHERE bv.business_version_id=$1 AND bv.artifact_id=$2 AND bv.organization_id=$3
+            AND bv.status='APPROVED' AND bv.freshness='CURRENT'
+            AND COALESCE(wr.content_semantic_hash, bv.content_semantic_hash) IS NOT NULL`,
+        [financeLink.finance_version_id, financeLink.finance_artifact_id, organizationId]
+      );
+      const financeSource = financeSourceResult.rows[0];
+      if (!financeSource) {
+        throw new RoiFinanceReconciliationValidationError(
+          'The pinned Finance version is missing, stale, unapproved, or lacks a hashed working revision.',
+          'FINANCE_PINNED_SOURCE_NOT_QUALIFIED'
+        );
+      }
+      const sourceIdentityDigest = createHash('sha256').update(JSON.stringify({
+        organizationId,
+        caseId,
+        financeLinkId,
+        resultsActualSnapshotId,
+        resultsActualSequenceNumber: actual.sequence_number,
+        resultsActualMetric,
+        financeArtifactId: financeSource.artifact_id,
+        financeBusinessVersionId: financeSource.business_version_id,
+        financeWorkingRevisionId: financeSource.working_revision_id,
+        financeContentSemanticHash: financeSource.content_semantic_hash,
+        financeTrackedMetric: financeLink.tracked_metric,
+        financePinnedValue: financeLink.pinned_finance_value,
+      })).digest('hex');
+
+      // The same immutable source pair is one command even when an HTTP
+      // retry arrives with a different client idempotency key.  Serialize on
+      // the source digest before checking/inserting so the unique index can
+      // never leak as a generic 500 under concurrency.
+      await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [sourceIdentityDigest]);
 
       const base = Math.abs(roiValue);
       const divergencePercent = base === 0
@@ -410,10 +523,25 @@ async function openRoiFinanceReconciliationWithAuthority(
       }
       const requestFingerprint = reconciliationRequestFingerprint({
         organizationId, caseId, financeLinkId, actorUserId, roiValue, financeValue,
-        reconciliationKind, divergenceReason,
+        reconciliationKind, divergenceReason, resultsActualSnapshotId, resultsActualMetric,
         authorityKind: authority.kind,
         sourceEventId: authority.kind === 'finance_projection' ? authority.sourceEventId : null,
       });
+      const sourceReplay = await client.query<RoiFinanceReconciliationRow>(
+        `SELECT * FROM rvn_roi_finance_reconciliations
+          WHERE organization_id=$1 AND source_identity_digest=$2 FOR UPDATE`,
+        [organizationId, sourceIdentityDigest]
+      );
+      if (sourceReplay.rows[0]) {
+        if (sourceReplay.rows[0].request_fingerprint !== requestFingerprint ||
+            sourceReplay.rows[0].request_actor_id !== actorUserId) {
+          throw new AtomicWriteConflictError(
+            'The pinned source pair already belongs to a different reconciliation request.',
+            'SOURCE_IDENTITY_CONFLICT'
+          );
+        }
+        return toRoiFinanceReconciliation(sourceReplay.rows[0]);
+      }
       const replay = await client.query<RoiFinanceReconciliationRow>(
         `SELECT * FROM rvn_roi_finance_reconciliations
           WHERE organization_id=$1 AND idempotency_key=$2 FOR UPDATE`,
@@ -431,12 +559,20 @@ async function openRoiFinanceReconciliationWithAuthority(
            case_id, organization_id, finance_link_id, roi_value, finance_value,
            reconciliation_kind, materiality_threshold_pct,
            decision_policy_version, decision_policy_digest,
-           divergence_reason, status, opened_by, request_fingerprint, request_actor_id, idempotency_key
-         ) VALUES ($1,$2,$3,$4,$5,$6,5,$7,$8,$9,'open',$10,$11,$10,$12)
+           divergence_reason, status, opened_by, request_fingerprint, request_actor_id, idempotency_key,
+           results_actual_snapshot_id, results_actual_sequence_number, results_actual_metric,
+           finance_artifact_id, finance_business_version_id, finance_working_revision_id,
+           finance_content_semantic_hash, finance_tracked_metric, finance_pinned_value,
+           source_identity_digest
+         ) VALUES ($1,$2,$3,$4,$5,$6,5,$7,$8,$9,'open',$10,$11,$10,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)
          RETURNING *`,
         [caseId, organizationId, financeLinkId, roiValue, financeValue,
           reconciliationKind, FINANCE_RECONCILIATION_POLICY.version, FINANCE_RECONCILIATION_POLICY.digest,
-          divergenceReason, actorUserId, requestFingerprint, idempotencyKey]
+          divergenceReason, actorUserId, requestFingerprint, idempotencyKey,
+          resultsActualSnapshotId, actual.sequence_number, resultsActualMetric,
+          financeSource.artifact_id, financeSource.business_version_id,
+          financeSource.working_revision_id, financeSource.content_semantic_hash,
+          financeLink.tracked_metric, financeLink.pinned_finance_value, sourceIdentityDigest]
       );
       const row = insertResult.rows[0];
       if (!row) throw new Error('[openRoiFinanceReconciliation] insert returned no row');
@@ -465,7 +601,7 @@ async function openRoiFinanceReconciliationWithAuthority(
         source: authority.kind === 'finance_projection'
           ? FINANCE_PROJECTION_RECONCILIATION_SOURCE
           : ROI_EVENT_SOURCE,
-        idempotencyKey,
+        idempotencyKey: result.requestIdempotencyKey ?? idempotencyKey,
         expectedVersion: null,
         resultingVersion: 1,
         payload: {

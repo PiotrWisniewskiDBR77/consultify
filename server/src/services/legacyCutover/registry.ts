@@ -218,9 +218,11 @@ export const PARTNERS_CUTOVER: LegacyCutoverDomainConfig = {
  *
  * Historical note: FIN-W02 initially remained `protected` while those two live
  * clients still used it, which closed the measurement gap without changing
- * behaviour. Both callers now resolve the legacy alias and invoke the canonical
- * finance-v2 approval writer, so FIN-W02 is currently `disabled`; the scoped
- * rollback remains available for an observed emergency only.
+ * behaviour. Those callers, plus the remaining FinancialModelWorkspace approval
+ * surface, now resolve the legacy alias and invoke the canonical finance-v2
+ * approval writer. No live UI approval caller uses either legacy door, so
+ * FIN-W02 is currently `disabled`; the scoped rollback remains available for an
+ * observed emergency only.
  *
  * (Checked, and worth recording: the client fallback predicate
  * `shouldFallbackToLegacyFinance` — `src/services/api/v8/finance.ts:3-6` —
@@ -244,7 +246,7 @@ export const FINANCE_MODELING_CUTOVER: LegacyCutoverDomainConfig = {
       legacyTable: 'financial_models',
       legacyIdFromPath: (path) => decodeURIComponent(path.split('/')[2] || ''),
       reason:
-        'Same approveModel() write as FIN-W01. Both live UI callers now resolve the legacy model alias and use the canonical finance-v2 approval route, so this second door is retired with writer-scoped rollback.',
+        'Same approveModel() write as FIN-W01. All three live UI approval callers now resolve the legacy model alias and use the canonical finance-v2 approval route, so this second door is retired with writer-scoped rollback.',
     },
   ],
 };

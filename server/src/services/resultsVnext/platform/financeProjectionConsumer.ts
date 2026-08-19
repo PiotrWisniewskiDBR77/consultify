@@ -368,11 +368,13 @@ async function checkAndOpenDivergence(
     caseId: string;
     organizationId: string;
     roiValue: number;
+    resultsActualSnapshotId: string;
+    resultsActualMetric: Exclude<RoiCompareMetric, 'paybackPeriods'>;
     caseCurrency: string;
     eventId: string;
   }
 ): Promise<ReconciliationMirror | null> {
-  const { link, caseId, organizationId, roiValue, caseCurrency, eventId } = params;
+  const { link, caseId, organizationId, roiValue, resultsActualSnapshotId, resultsActualMetric, caseCurrency, eventId } = params;
   const pinnedValue = Number(link.pinned_finance_value);
 
   let divergenceReason: string | null = null;
@@ -400,6 +402,8 @@ async function checkAndOpenDivergence(
       caseId,
       organizationId,
       financeLinkId: link.link_id,
+      resultsActualSnapshotId,
+      resultsActualMetric,
       roiValue,
       financeValue: pinnedValue,
       divergenceReason,
@@ -532,12 +536,14 @@ async function applyFigureToAllLinks(
 
     if (link.tracked_metric !== null && isRoiCompareMetric(link.tracked_metric)) {
       figure = await resolveFigure(link.tracked_metric);
-      if (figure && link.pinned_finance_value !== null) {
+      if (figure?.sourceKind === 'actual_snapshot' && link.pinned_finance_value !== null && link.tracked_metric !== 'paybackPeriods') {
         reconciliation = await checkAndOpenDivergence(client, {
           link: { link_id: link.link_id, pinned_finance_value: link.pinned_finance_value, currency: link.currency },
           caseId,
           organizationId,
           roiValue: figure.value,
+          resultsActualSnapshotId: figure.sourceId,
+          resultsActualMetric: link.tracked_metric,
           caseCurrency: caseContext.currency,
           eventId,
         });
@@ -595,12 +601,14 @@ async function handleFinanceLinkCreated(
   if (link.tracked_metric !== null && isRoiCompareMetric(link.tracked_metric)) {
     // IO-F5: seed priority actual > forecast > approved.
     figure = await resolveSeedFigure(client, { caseId, organizationId, metric: link.tracked_metric, caseContext });
-    if (figure && link.pinned_finance_value !== null) {
+    if (figure?.sourceKind === 'actual_snapshot' && link.pinned_finance_value !== null && link.tracked_metric !== 'paybackPeriods') {
       reconciliation = await checkAndOpenDivergence(client, {
         link: { link_id: linkId, pinned_finance_value: link.pinned_finance_value, currency: link.currency },
         caseId,
         organizationId,
         roiValue: figure.value,
+        resultsActualSnapshotId: figure.sourceId,
+        resultsActualMetric: link.tracked_metric,
         caseCurrency: caseContext.currency,
         eventId,
       });

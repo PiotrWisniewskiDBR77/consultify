@@ -355,6 +355,8 @@ export const RoiFinanceReconciliationFormModal: React.FC<RoiFinanceReconciliatio
   open, financeLinks, onClose, onSubmit, isPolish, busy = false, errorMessage = null, isConflict = false,
 }) => {
   const [financeLinkId, setFinanceLinkId] = useState('');
+  const [resultsActualSnapshotId, setResultsActualSnapshotId] = useState('');
+  const [resultsActualMetric, setResultsActualMetric] = useState<'npv' | 'simpleRoi' | 'totalCosts' | 'totalFinancialBenefits'>('totalFinancialBenefits');
   const [roiValue, setRoiValue] = useState('');
   const [financeValue, setFinanceValue] = useState('');
   const [divergenceReason, setDivergenceReason] = useState('');
@@ -363,17 +365,19 @@ export const RoiFinanceReconciliationFormModal: React.FC<RoiFinanceReconciliatio
   useEffect(() => {
     if (!open) return;
     setFinanceLinkId(financeLinks[0]?.linkId ?? '');
+    setResultsActualSnapshotId(''); setResultsActualMetric('totalFinancialBenefits');
     setRoiValue(''); setFinanceValue(''); setDivergenceReason(''); setTouched(false);
   }, [open, financeLinks]);
 
   const linkError = touched && !financeLinkId;
+  const actualSourceError = touched && !resultsActualSnapshotId;
   const roiError = touched && roiValue.trim() === '';
   const financeError = touched && financeValue.trim() === '';
 
   const handleSubmit = () => {
     setTouched(true);
-    if (!financeLinkId || roiValue.trim() === '' || financeValue.trim() === '') return;
-    onSubmit({ financeLinkId, roiValue: Number(roiValue), financeValue: Number(financeValue), divergenceReason: divergenceReason.trim() || null, reason: null });
+    if (!financeLinkId || !resultsActualSnapshotId || roiValue.trim() === '' || financeValue.trim() === '') return;
+    onSubmit({ financeLinkId, resultsActualSnapshotId, resultsActualMetric, roiValue: Number(roiValue), financeValue: Number(financeValue), divergenceReason: divergenceReason.trim() || null, reason: null });
   };
 
   return (
@@ -396,6 +400,22 @@ export const RoiFinanceReconciliationFormModal: React.FC<RoiFinanceReconciliatio
             {linkError ? <p id="roi-recon-link-error" className="mt-1 text-[11px] text-c-danger">{isPolish ? 'Wybierz powiązanie Finance' : 'Select a finance link'}</p> : null}
           </div>
         )}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={LABEL_CLASS} htmlFor="roi-recon-actual-snapshot">{isPolish ? 'Snapshot Actual (wymagany)' : 'Actual snapshot (required)'}</label>
+            <input id="roi-recon-actual-snapshot" value={resultsActualSnapshotId} onChange={(e) => setResultsActualSnapshotId(e.target.value)} className={FIELD_CLASS} data-testid="roi-recon-actual-snapshot" aria-invalid={actualSourceError || undefined} />
+            {actualSourceError ? <p className="mt-1 text-[11px] text-c-danger">{isPolish ? 'Podaj identyfikator snapshotu Actual' : 'Provide the Actual snapshot id'}</p> : null}
+          </div>
+          <div>
+            <label className={LABEL_CLASS} htmlFor="roi-recon-actual-metric">{isPolish ? 'Metryka Actual' : 'Actual metric'}</label>
+            <select id="roi-recon-actual-metric" value={resultsActualMetric} onChange={(e) => setResultsActualMetric(e.target.value as typeof resultsActualMetric)} className={FIELD_CLASS} data-testid="roi-recon-actual-metric">
+              <option value="totalFinancialBenefits">totalFinancialBenefits</option>
+              <option value="totalCosts">totalCosts</option>
+              <option value="simpleRoi">simpleRoi</option>
+              <option value="npv">npv</option>
+            </select>
+          </div>
+        </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className={LABEL_CLASS} htmlFor="roi-recon-roi-value">{isPolish ? 'Wartość ROI (wymagana)' : 'ROI value (required)'}</label>
