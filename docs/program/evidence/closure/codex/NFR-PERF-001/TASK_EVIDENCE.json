@@ -3,6 +3,7 @@
   "baselineSha": "123aa5065f027c3d827462d9304e0a30ffe4b8f1",
   "productSha": "f71b350b5d57c21c97833f2b37241c9f02f37194",
   "technicalSourceSha": "f71b350b5d57c21c97833f2b37241c9f02f37194",
+  "leaseSha256": "6feeff810179aaa58dc2f837fa4e5f77e138469db0b0ed9d45ccf9271e7e1fee",
   "changedPaths": [
     "server/src/services/caseWorkspace/__tests__/performance/lib/steadyLoadGate.ts",
     "server/src/services/caseWorkspace/__tests__/performance/steadyAuthenticatedLoad.ts",
@@ -81,6 +82,11 @@
     "advisoryLocks": 0,
     "ports3510And3511Listening": 0
   },
+  "browserArtifacts": [
+    "/private/tmp/nfr-perf-web-vitals4.json",
+    "trace sha256:025cf28dab7d3df47e93bbcfb9d7f60d472a3d607da1e4c92518ac680d805065"
+  ],
+  "rollback": "Revert the NFR harness and lazy-load candidate commits. Qualification used only disposable PostgreSQL and runtime fixtures; no production migration, deployment or persistent external mutation occurred.",
   "negativeControls": {
     "foreignAttempts": 1786,
     "foreignFalseSuccesses": 0,

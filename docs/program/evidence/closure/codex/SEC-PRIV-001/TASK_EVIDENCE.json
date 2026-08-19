@@ -1,7 +1,9 @@
 {
   "taskId": "SEC-PRIV-001",
+  "baselineSha": "cab282f3d087f07dda931ad1ab8641da0ceca6c2",
   "productSha": "84f2949cd2f7bdf5be5c91241f794bf084973bcc",
   "technicalSourceSha": "84f2949cd2f7bdf5be5c91241f794bf084973bcc",
+  "leaseSha256": "a2d87cbaf372693049983ba20e87a1f3711031ae2a156b8a9dbea0a4356aaf2c",
   "verdict": "PARTIAL",
   "securityStatus": "BLOCKED_ROTATION_REQUIRED",
   "scope": "Fail-closed privacy/auth runtime, dependency reachability, secret gates and historical inventory",
@@ -38,6 +40,40 @@
     "tests/e2e/smoke/deploy-gate-api-sso-scim-webhooks.spec.ts",
     "tests/unit/backend/v4-smoke/r1-sso.test.ts"
   ],
+  "changedPathRationale": {
+    ".gitleaks.toml": "Defines fail-closed current-tree secret rules and narrow fixture placeholders used by positive and path-negative canaries.",
+    "server/src/routes/integrations/sso.routes.ts": "Keeps mounted SAML/OIDC authorize and callback paths fail-closed before unverified identity can reach session or token issuance.",
+    "server/src/routes/integrations/__tests__/ssoFailClosed.routes.test.ts": "Proves mounted fail-closed SSO paths perform zero provider, database and token side effects.",
+    "server/src/services/ssoService.ts": "Removes unsigned XML and unverified id_token data as mounted authentication authorities.",
+    "tests/e2e/smoke/deploy-gate-api-sso-scim-webhooks.spec.ts": "Covers the deployed-shape API denial contract without enabling unconfigured providers.",
+    "tests/unit/backend/v4-smoke/r1-sso.test.ts": "Provides the focused SSO regression and negative controls."
+  },
+  "ownerTables": [
+    "organization_members",
+    "user_data_export_receipts",
+    "account_deletion_requests",
+    "sso_configurations"
+  ],
+  "commands": [
+    "fresh/repeat/dry PostgreSQL migration gate",
+    "privacy signed RealPG suites",
+    "SAML/OIDC and run_script focused negative controls",
+    "gitleaks current-tree scan with positive and path-negative canaries",
+    "PptxGenJS executable reachability and generated-PPTX reopen gate",
+    "root/server typecheck, backend build and diff-check"
+  ],
+  "denominators": {
+    "mountedSso": "3 files / 21 tests passed",
+    "privacyRealPg": "4 deletion lifecycle + 6 password compatibility + 5 governed export/deletion tests passed",
+    "currentSecrets": "0 findings; canaries 1/1 and 3/3",
+    "historicalSecrets": "119 raw findings / 74 unique path+commit+hash records; BLOCKED_ROTATION_REQUIRED"
+  },
+  "fixtures": {
+    "database": "fresh disposable PostgreSQL; 789 migrations, repeat 0, dry pending 0",
+    "historicalInventory": "HISTORICAL_SECRET_INVENTORY.json stores hashes and metadata only, never secret values",
+    "productionMutation": false
+  },
+  "browserArtifacts": [],
   "negativeControls": {
     "samlAuthorizeDbCalls": 0,
     "samlCallbackDbCalls": 0,
