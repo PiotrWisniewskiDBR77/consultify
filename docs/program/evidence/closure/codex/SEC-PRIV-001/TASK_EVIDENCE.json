@@ -1,5 +1,7 @@
 {
   "taskId": "SEC-PRIV-001",
+  "productSha": "84f2949cd2f7bdf5be5c91241f794bf084973bcc",
+  "technicalSourceSha": "84f2949cd2f7bdf5be5c91241f794bf084973bcc",
   "verdict": "PARTIAL",
   "securityStatus": "BLOCKED_ROTATION_REQUIRED",
   "scope": "Fail-closed privacy/auth runtime, dependency reachability, secret gates and historical inventory",
@@ -12,9 +14,39 @@
   },
   "runtimeEvidence": {
     "privacy": "Fresh disposable real PostgreSQL proves signed ACTIVE/foreign/revoked membership matrix, immutable export receipt and hash/download/replay, deletion request/status/cancel, and absent destructive executor.",
-    "saml": "Unsigned and unregistered organization assertions deny before verifier execution.",
+    "sso": "The production-mounted SAML and OIDC authorize/callback routes return stable fail-closed 503 responses before state lookup/deletion, provider exchange, user/session writes or token issuance. The unsigned XML parser and unverified id_token decoder are no longer reachable mounted authentication authorities.",
     "runScript": "run_script remains fail-closed even when its feature flag is forced on.",
     "presentation": "Exact PptxGenJS 4.0.1 executable bundles do not load image-size; runtime load trap stays at zero and generated PPTX reopens with valid slide/media/content types."
+  },
+  "qualification": {
+    "migrations": {"freshApplied": 789, "repeatApplied": 0, "dryPending": 0},
+    "mountedSso": {"filesPassed": 3, "testsPassed": 21, "testsFailed": 0, "retries": 0},
+    "privacyRealPg": {
+      "accountDeletionLifecycle": {"testsPassed": 4, "testsFailed": 0},
+      "passwordGuardCompatibilityDoors": {"testsPassed": 6, "testsFailed": 0},
+      "governedExportAndDeletion": {"testsPassed": 5, "testsFailed": 0}
+    },
+    "dependencyGate": "PASS: critical=0; high=2 accepted only by exact PptxGenJS 4.0.1 static/runtime/reopen reachability proof with imageSizeLoads=0",
+    "currentSecretGate": "PASS: canaries 1/1 and 3/3; current findings=0",
+    "static": {"rootTypecheck": "PASS", "serverTypecheck": "PASS", "backendBuild": "PASS", "diffCheck": "PASS"}
+  },
+  "changedPaths": [
+    ".gitleaks.toml",
+    "server/src/routes/integrations/sso.routes.ts",
+    "server/src/routes/integrations/__tests__/ssoFailClosed.routes.test.ts",
+    "server/src/services/ssoService.ts",
+    "tests/e2e/smoke/deploy-gate-api-sso-scim-webhooks.spec.ts",
+    "tests/unit/backend/v4-smoke/r1-sso.test.ts"
+  ],
+  "negativeControls": {
+    "samlAuthorizeDbCalls": 0,
+    "samlCallbackDbCalls": 0,
+    "oidcAuthorizeDbCalls": 0,
+    "oidcCallbackDbCalls": 0,
+    "tokensIssuedByUnverifiedFlows": 0,
+    "currentSecretFindings": 0,
+    "foreignAndRevokedPrivacyWrites": 0,
+    "destructiveDeletionExecutorReachable": false
   },
   "secretEvidence": {
     "currentTree": "0 findings after positive 1/1 and path-negative 3/3 canaries",
