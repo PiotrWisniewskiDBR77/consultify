@@ -12,6 +12,7 @@ import { Api } from '@/services/api';
 import {
   V8PartnerApi,
   type V8PartnerAttribution,
+  type V8PartnerParticipantLedgerEntry,
   type V8PartnerProgramStatus,
 } from '@/services/api/v8';
 
@@ -30,6 +31,10 @@ export interface PartnerCanonicalRuntimeSnapshot {
     active: number;
     state: SurfaceState;
   };
+  participantLedger: {
+    entries: V8PartnerParticipantLedgerEntry[];
+    state: SurfaceState;
+  };
   programState: SurfaceState;
 }
 
@@ -39,11 +44,13 @@ const unwrap = (response: any): any => {
 };
 
 export async function loadPartnerCanonicalRuntime(): Promise<PartnerCanonicalRuntimeSnapshot> {
-  const [programResult, attributionResult, certificationResult] = await Promise.allSettled([
-    V8PartnerApi.getProgramStatus(),
-    V8PartnerApi.getAttributions(),
-    Api.get('/api/partners/certifications'),
-  ]);
+  const [programResult, attributionResult, certificationResult, participantLedgerResult] =
+    await Promise.allSettled([
+      V8PartnerApi.getProgramStatus(),
+      V8PartnerApi.getAttributions(),
+      Api.get('/api/partners/certifications'),
+      V8PartnerApi.getParticipantLedger(),
+    ]);
 
   const program = programResult.status === 'fulfilled' ? programResult.value : null;
   const attributions: V8PartnerAttribution[] =
@@ -53,6 +60,11 @@ export async function loadPartnerCanonicalRuntime(): Promise<PartnerCanonicalRun
   const certificationPayload =
     certificationResult.status === 'fulfilled' ? unwrap(certificationResult.value) : null;
   const certifications = Array.isArray(certificationPayload) ? certificationPayload : [];
+  const participantLedgerEntries =
+    participantLedgerResult.status === 'fulfilled' &&
+    Array.isArray(participantLedgerResult.value?.entries)
+      ? participantLedgerResult.value.entries
+      : [];
 
   return {
     program,
@@ -82,6 +94,15 @@ export async function loadPartnerCanonicalRuntime(): Promise<PartnerCanonicalRun
         attributionResult.status === 'rejected'
           ? 'unavailable'
           : attributions.length === 0
+            ? 'empty'
+            : 'ready',
+    },
+    participantLedger: {
+      entries: participantLedgerEntries,
+      state:
+        participantLedgerResult.status === 'rejected'
+          ? 'unavailable'
+          : participantLedgerEntries.length === 0
             ? 'empty'
             : 'ready',
     },
@@ -120,6 +141,7 @@ export const PartnerCanonicalRuntimePanel: React.FC<{
   snapshot: PartnerCanonicalRuntimeSnapshot;
 }> = ({ snapshot }) => {
   const currency = snapshot.program?.balances?.currency || 'EUR';
+  const latestParticipantFact = snapshot.participantLedger.entries[0];
   const cards = [
     {
       id: 'partner',
@@ -152,9 +174,11 @@ export const PartnerCanonicalRuntimePanel: React.FC<{
       id: 'ledger',
       title: 'Participant ledger',
       icon: Calculator,
-      state: snapshot.programState,
-      value: money(snapshot.program?.balances?.grossEarned, currency),
-      detail: `${money(snapshot.program?.balances?.heldAmount, currency)} held · ${money(snapshot.program?.balances?.paidOut, currency)} paid`,
+      state: snapshot.participantLedger.state,
+      value: String(snapshot.participantLedger.entries.length),
+      detail: latestParticipantFact
+        ? `${latestParticipantFact.sourceVersion} · ${latestParticipantFact.sourceDigest.slice(0, 12)}`
+        : 'No immutable referral facts recorded',
     },
     {
       id: 'accrual',
@@ -201,7 +225,10 @@ export const PartnerCanonicalRuntimePanel: React.FC<{
               role="listitem"
             >
               <div className="flex items-start justify-between gap-2">
-                <Icon aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-600 dark:text-slate-300" />
+                <Icon
+                  aria-hidden="true"
+                  className="h-5 w-5 shrink-0 text-slate-600 dark:text-slate-300"
+                />
                 <span
                   className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${stateClass[card.state]}`}
                 >
@@ -228,8 +255,8 @@ export const PartnerCanonicalRuntimePanel: React.FC<{
       >
         <AlertTriangle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
         <span>
-          Automatic payout and self-approval are unavailable. A partner may submit only a manual
-          payout request; independent approval remains outside this workspace.
+          This ledger contains non-economic referral facts only. Accrual, payout requests, automatic
+          payout and self-approval are unavailable under AMD-PRT-ECONOMICS-002.
         </span>
       </div>
     </section>

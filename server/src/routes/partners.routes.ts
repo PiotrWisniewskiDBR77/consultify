@@ -61,6 +61,10 @@ import {
   updatePartnerPayoutSettings,
 } from '../services/partnerPayoutSettingsService.js';
 import PartnerProgramLedgerService from '../services/partnerProgramLedgerService.js';
+import {
+  appendReferralAttributionFact,
+  PartnerParticipantLedgerConflict,
+} from '../services/partnerParticipantLedgerService.js';
 import PartnerReferralService, {
   PartnerPublicClickError,
   ensurePartnerReferralIdentity,
@@ -802,22 +806,22 @@ router.get(
   '/payout-settings',
   ...requirePartnerEconomicsReadAccess,
   async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const partnerOrgId = await requirePartnerOrgId(req, res);
-    if (!partnerOrgId) return;
+    try {
+      const partnerOrgId = await requirePartnerOrgId(req, res);
+      if (!partnerOrgId) return;
 
-    const settings = await getPartnerPayoutSettings(partnerOrgId);
-    return res.json({ success: true, data: settings });
-  } catch (error: any) {
-    logger.error('Error fetching partner payout settings:', error);
-    if (isSchemaMissingError(error)) {
-      return featureUnavailable(
-        res,
-        'Partner payout settings unavailable (database schema missing)'
-      );
+      const settings = await getPartnerPayoutSettings(partnerOrgId);
+      return res.json({ success: true, data: settings });
+    } catch (error: any) {
+      logger.error('Error fetching partner payout settings:', error);
+      if (isSchemaMissingError(error)) {
+        return featureUnavailable(
+          res,
+          'Partner payout settings unavailable (database schema missing)'
+        );
+      }
+      next(error);
     }
-    next(error);
-  }
   }
 );
 
@@ -1016,29 +1020,29 @@ router.get(
   '/earnings',
   ...requirePartnerEconomicsReadAccess,
   async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const partnerOrgId = await requirePartnerOrgId(req, res);
-    if (!partnerOrgId) return;
-
-    // L-07: oznacz legacy surface jako deprecated (RFC 8594) — kanon to v8.
-    res.setHeader('Deprecation', 'true');
-    res.setHeader('Link', '</api/v8/partner/earnings-summary>; rel="successor-version"');
-
-    let earnings;
     try {
-      earnings = await PartnerCommissionService.getEarningsSummary(partnerOrgId);
-    } catch (dbError: any) {
-      logger.error('Earnings: DB query failed:', dbError?.message);
-      return res
-        .status(503)
-        .json({ success: false, error: 'Earnings temporarily unavailable', code: 'DB_ERROR' });
-    }
+      const partnerOrgId = await requirePartnerOrgId(req, res);
+      if (!partnerOrgId) return;
 
-    res.json({ success: true, data: earnings });
-  } catch (error: any) {
-    logger.error('Error fetching earnings:', error);
-    next(error);
-  }
+      // L-07: oznacz legacy surface jako deprecated (RFC 8594) — kanon to v8.
+      res.setHeader('Deprecation', 'true');
+      res.setHeader('Link', '</api/v8/partner/earnings-summary>; rel="successor-version"');
+
+      let earnings;
+      try {
+        earnings = await PartnerCommissionService.getEarningsSummary(partnerOrgId);
+      } catch (dbError: any) {
+        logger.error('Earnings: DB query failed:', dbError?.message);
+        return res
+          .status(503)
+          .json({ success: false, error: 'Earnings temporarily unavailable', code: 'DB_ERROR' });
+      }
+
+      res.json({ success: true, data: earnings });
+    } catch (error: any) {
+      logger.error('Error fetching earnings:', error);
+      next(error);
+    }
   }
 );
 
@@ -1050,37 +1054,37 @@ router.get(
   '/commission-transactions',
   ...requirePartnerEconomicsReadAccess,
   async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const partnerOrgId = await requirePartnerOrgId(req, res);
-    if (!partnerOrgId) return;
-    const status = req.query.status as string | undefined;
-    const startDate = req.query.startDate as string | undefined;
-    const endDate = req.query.endDate as string | undefined;
-    const limit = parseInt(req.query.limit as string) || 50;
-    const offset = parseInt(req.query.offset as string) || 0;
-
-    let commissions;
     try {
-      commissions = await PartnerCommissionService.getCommissions(partnerOrgId, {
-        status: status as any,
-        startDate,
-        endDate,
-        limit,
-        offset,
-      });
-    } catch (dbError: any) {
-      logger.warn(
-        'Commission transactions: DB query failed, using fallback data:',
-        dbError?.message
-      );
-      commissions = [];
-    }
+      const partnerOrgId = await requirePartnerOrgId(req, res);
+      if (!partnerOrgId) return;
+      const status = req.query.status as string | undefined;
+      const startDate = req.query.startDate as string | undefined;
+      const endDate = req.query.endDate as string | undefined;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = parseInt(req.query.offset as string) || 0;
 
-    res.json({ success: true, data: commissions });
-  } catch (error: any) {
-    logger.error('Error fetching commission transactions:', error);
-    next(error);
-  }
+      let commissions;
+      try {
+        commissions = await PartnerCommissionService.getCommissions(partnerOrgId, {
+          status: status as any,
+          startDate,
+          endDate,
+          limit,
+          offset,
+        });
+      } catch (dbError: any) {
+        logger.warn(
+          'Commission transactions: DB query failed, using fallback data:',
+          dbError?.message
+        );
+        commissions = [];
+      }
+
+      res.json({ success: true, data: commissions });
+    } catch (error: any) {
+      logger.error('Error fetching commission transactions:', error);
+      next(error);
+    }
   }
 );
 
@@ -1125,37 +1129,37 @@ router.get(
   '/payouts',
   ...requirePartnerEconomicsReadAccess,
   async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    // FIX (module 19 MVP): previously read `req.user?.partnerOrgId`, which the auth
-    // middleware never sets, so this route was broken (403) for every caller.
-    // Resolve the partner org from the DB like every other route in this file.
-    const partnerOrgId = await requirePartnerOrgId(req, res);
-    if (!partnerOrgId) return;
-    const status = req.query.status as string | undefined;
-    const limit = parseInt(req.query.limit as string) || 50;
-    const offset = parseInt(req.query.offset as string) || 0;
-
     try {
-      const payouts = await PartnerCommissionService.getPayouts(partnerOrgId, {
-        status: status as any,
-        limit,
-        offset,
-      });
-      return res.json({ success: true, data: payouts });
-    } catch (dbError: any) {
-      logger.warn('Payouts: DB query failed:', dbError?.message);
-      if (isSchemaMissingError(dbError)) {
-        return featureUnavailable(
-          res,
-          'Partner payouts unavailable (database schema missing or misconfigured)'
-        );
+      // FIX (module 19 MVP): previously read `req.user?.partnerOrgId`, which the auth
+      // middleware never sets, so this route was broken (403) for every caller.
+      // Resolve the partner org from the DB like every other route in this file.
+      const partnerOrgId = await requirePartnerOrgId(req, res);
+      if (!partnerOrgId) return;
+      const status = req.query.status as string | undefined;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = parseInt(req.query.offset as string) || 0;
+
+      try {
+        const payouts = await PartnerCommissionService.getPayouts(partnerOrgId, {
+          status: status as any,
+          limit,
+          offset,
+        });
+        return res.json({ success: true, data: payouts });
+      } catch (dbError: any) {
+        logger.warn('Payouts: DB query failed:', dbError?.message);
+        if (isSchemaMissingError(dbError)) {
+          return featureUnavailable(
+            res,
+            'Partner payouts unavailable (database schema missing or misconfigured)'
+          );
+        }
+        throw dbError;
       }
-      throw dbError;
+    } catch (error: any) {
+      logger.error('Error fetching payouts:', error);
+      next(error);
     }
-  } catch (error: any) {
-    logger.error('Error fetching payouts:', error);
-    next(error);
-  }
   }
 );
 
@@ -2000,37 +2004,37 @@ router.get(
   '/commissions',
   ...requirePartnerEconomicsReadAccess,
   async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const userId = (req as any).user?.id || (req as any).userId;
-    if (!userId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    try {
+      const userId = (req as any).user?.id || (req as any).userId;
+      if (!userId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
-    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
-    if (!partnerOrgId) {
-      return res.status(403).json({ success: false, error: 'Partner organization required' });
+      const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+      if (!partnerOrgId) {
+        return res.status(403).json({ success: false, error: 'Partner organization required' });
+      }
+
+      const status = req.query.status as string | undefined;
+      const startDate = req.query.startDate as string | undefined;
+      const endDate = req.query.endDate as string | undefined;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = parseInt(req.query.offset as string) || 0;
+
+      const commissions = await PartnerCommissionService.getCommissions(partnerOrgId, {
+        status: status as any,
+        startDate,
+        endDate,
+        limit,
+        offset,
+      });
+
+      return res.json({ success: true, data: commissions });
+    } catch (error: any) {
+      logger.error('Error fetching commissions:', error);
+      if (isSchemaMissingError(error)) {
+        return featureUnavailable(res, 'Partner commissions unavailable (database schema missing)');
+      }
+      next(error);
     }
-
-    const status = req.query.status as string | undefined;
-    const startDate = req.query.startDate as string | undefined;
-    const endDate = req.query.endDate as string | undefined;
-    const limit = parseInt(req.query.limit as string) || 50;
-    const offset = parseInt(req.query.offset as string) || 0;
-
-    const commissions = await PartnerCommissionService.getCommissions(partnerOrgId, {
-      status: status as any,
-      startDate,
-      endDate,
-      limit,
-      offset,
-    });
-
-    return res.json({ success: true, data: commissions });
-  } catch (error: any) {
-    logger.error('Error fetching commissions:', error);
-    if (isSchemaMissingError(error)) {
-      return featureUnavailable(res, 'Partner commissions unavailable (database schema missing)');
-    }
-    next(error);
-  }
   }
 );
 
@@ -2216,9 +2220,7 @@ router.get('/resources', async (req: Request, res: Response, next: NextFunction)
         capability,
         capabilityCode,
         resourcesReadable: capability !== 'DEGRADED_UNAVAILABLE',
-        ...(capabilityDetail && process.env.NODE_ENV !== 'production'
-          ? { capabilityDetail }
-          : {}),
+        ...(capabilityDetail && process.env.NODE_ENV !== 'production' ? { capabilityDetail } : {}),
       },
     });
   } catch (error: any) {
@@ -2915,6 +2917,38 @@ superAdminPartnerRouter.post(
   }
 );
 
+/** Operator records a non-economic immutable fact from an existing attribution. */
+superAdminPartnerRouter.post(
+  '/program/:partnerOrgId/participant-ledger/referral-attribution',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const partnerOrgId = String(req.params.partnerOrgId || '').trim();
+      const attributionId = String(req.body?.attributionId || '').trim();
+      const idempotencyKey = String(req.body?.idempotencyKey || '').trim();
+      const actorId = String((req as any).user?.id || '').trim();
+      if (!partnerOrgId || !attributionId || !idempotencyKey || !actorId) {
+        return res.status(400).json({
+          success: false,
+          code: 'PARTNER_PARTICIPANT_LEDGER_INPUT_REQUIRED',
+          error: 'partnerOrgId, attributionId, idempotencyKey and authenticated actor are required',
+        });
+      }
+      const result = await appendReferralAttributionFact({
+        partnerOrgId,
+        attributionId,
+        actorId,
+        idempotencyKey,
+      });
+      return res.status(result.duplicate ? 200 : 201).json({ success: true, data: result });
+    } catch (error) {
+      if (error instanceof PartnerParticipantLedgerConflict) {
+        return res.status(409).json({ success: false, code: error.code, error: error.message });
+      }
+      next(error);
+    }
+  }
+);
+
 // =============================================================================
 // SUPERADMIN PARTNER CONFIG ROUTES
 // =============================================================================
@@ -2929,10 +2963,7 @@ partnerConfigRouter.use(verifySuperAdmin);
 // AMD-PRT-ECONOMICS-002. commission-rates / discount / payout-settings are the
 // only implementation of the "discount" writer named in the owner decision.
 partnerConfigRouter.use(
-  createPartnerEconomicsPolicyGuard(
-    SUPERADMIN_CONFIG_ECONOMIC_WRITERS,
-    'superadmin_partner_config'
-  )
+  createPartnerEconomicsPolicyGuard(SUPERADMIN_CONFIG_ECONOMIC_WRITERS, 'superadmin_partner_config')
 );
 partnerConfigRouter.use(createLegacyCutoverGuard(PARTNERS_CONFIG_CUTOVER));
 

@@ -50,6 +50,7 @@ import {
   updatePartnerPayoutSettings,
 } from '../../services/partnerPayoutSettingsService.js';
 import PartnerProgramLedgerService from '../../services/partnerProgramLedgerService.js';
+import { listPartnerParticipantLedger } from '../../services/partnerParticipantLedgerService.js';
 import PartnerReferralService from '../../services/partnerReferralService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import * as DbPromise from '../../utils/DbPromise.js';
@@ -348,6 +349,35 @@ router.get(
     return res.json({
       data: { entries },
       meta: { ...partnerProgramMeta(req, partnerOrgId), ...partnerEconomicsPolicyProjection() },
+    });
+  })
+);
+
+/** Non-economic immutable participant/referral facts for the signed-in Partner. */
+router.get(
+  '/program/participant-ledger',
+  requireBoundPartnerTenant,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const partnerOrgId = await getBoundPartnerOrgId(req);
+    if (!partnerOrgId) {
+      return res
+        .status(403)
+        .json({ error: 'Partner organization required', code: 'PARTNER_ORG_REQUIRED' });
+    }
+    const entries = await listPartnerParticipantLedger({
+      tenantOrganizationId: organizationId,
+      partnerOrgId,
+      limit: Number(req.query.limit) || 50,
+    });
+    return res.json({
+      data: { entries },
+      meta: {
+        contract: 'partner_participant_referral_v1',
+        monetaryAccrual: false,
+        payoutAvailable: false,
+        decision: 'AMD-PRT-ECONOMICS-002',
+      },
     });
   })
 );

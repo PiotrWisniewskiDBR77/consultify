@@ -67,6 +67,7 @@ export type {
   V8PartnerPayoutRequestResponse,
   V8PartnerPayoutRequestResult,
   V8PartnerPayoutSettings,
+  V8PartnerParticipantLedgerEntry,
   V8PartnerProgramStatus,
   V8PartnerProject,
   V8PartnerReferralAnalytics,

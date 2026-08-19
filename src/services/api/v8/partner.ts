@@ -52,6 +52,18 @@ export interface V8PartnerProgramStatus {
   degraded?: { reason: string; snapshotAt: string };
 }
 
+export interface V8PartnerParticipantLedgerEntry {
+  id: string;
+  eventType: 'referral.attributed';
+  participantOrganizationId: string;
+  sourceKind: 'partner_attribution';
+  sourceId: string;
+  sourceVersion: string;
+  sourceDigest: string;
+  occurredAt: string;
+  recordedAt: string;
+}
+
 export interface V8PartnerPayoutRequestPayload {
   payoutAccountId?: string;
   notes?: string;
@@ -399,6 +411,8 @@ export const V8PartnerApi = {
   getOnboardingStatus: () =>
     v8Get<{ status: V8PartnerOnboardingStatus }>('/partner/onboarding-status'),
   getProgramStatus: () => v8Get<V8PartnerProgramStatus>('/partner/program/status'),
+  getParticipantLedger: () =>
+    v8Get<{ entries: V8PartnerParticipantLedgerEntry[] }>('/partner/program/participant-ledger'),
   acceptOnboardingTerms: (body: V8PartnerOnboardingAcceptTermsPayload = {}) =>
     v8Post<V8PartnerOnboardingAcceptTermsResult>('/partner/onboarding/accept-terms', body),
   selectOnboardingTier: (body: V8PartnerOnboardingSelectTierPayload) =>
