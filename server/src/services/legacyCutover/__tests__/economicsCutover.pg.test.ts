@@ -3,11 +3,10 @@
  * CLAUDE-NEXT-LEGACY-CUTOVER — ECONOMICS domain guard.
  *
  * Proves the kernel, composed with the REAL `/api/economics` router, blocks
- * ECO-W16/W17 before their legacy handlers mutate anything, while it does not block ECO-W27
- * (`POST /valuations/:id/approve`, the inventory's fourth independent
- * "approve" writer with no protection at all) or ECO-W42 (`PUT
- * /finance-settings`, a collection-level writer) while recording tenant-scoped,
- * idempotent telemetry for each.
+ * ECO-W16/W17 and the canonicalized valuation governance writers ECO-W27/W28
+ * before their legacy handlers mutate anything. Unmapped identities fail 409;
+ * mapped identities fail 410 with exact successor telemetry. ECO-W42 remains
+ * observed and reachable because it has no proven canonical successor.
  *
  * economics.routes.ts calls the real `verifyToken` middleware internally on
  * every route. No bearer token is sent here, so `ENABLE_TEST_AUTH_BYPASS` is
@@ -49,12 +48,15 @@ const orgB = `${prefix}-org-b`;
 const actor = `${prefix}-actor`;
 const valuationId = `${prefix}-valuation-1`;
 const mappedAnalysisId = `${prefix}-mapped-analysis`;
+const mappedValuationId = `${prefix}-mapped-valuation`;
 
 describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL)', () => {
   let pool: Pool;
   let app: express.Express;
   let mappedArtifactId: string;
   let mappedBusinessVersionId: string;
+  let mappedValuationArtifactId: string;
+  let mappedValuationBusinessVersionId: string;
 
   function authenticate(req: any, _res: any, next: any): void {
     const organizationId = String(req.headers['x-test-org'] || orgA);
@@ -90,6 +92,21 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
        VALUES('financial_analyses',$1,NULL,$2,$3,$4,'AUTO_MIGRATE','wave2 realPG readback')`,
       [mappedAnalysisId, mappedArtifactId, orgA, mappedBusinessVersionId]
     );
+    const valuationCanonical = await createArtifact({
+      organizationId: orgA,
+      artifactType: 'VALUATION_CASE',
+      naturalKey: `cutover-${mappedValuationId}`,
+      createdBy: actor,
+    });
+    mappedValuationArtifactId = valuationCanonical.artifact.artifact_id;
+    mappedValuationBusinessVersionId = valuationCanonical.businessVersion.business_version_id;
+    await pool.query(
+      `INSERT INTO finance_artifact_aliases
+        (legacy_table,legacy_id,legacy_version,artifact_id,organization_id,
+         business_version_id,mapping_confidence,mapping_reason)
+       VALUES('valuations',$1,NULL,$2,$3,$4,'AUTO_MIGRATE','wave3 valuation cutover')`,
+      [mappedValuationId, mappedValuationArtifactId, orgA, mappedValuationBusinessVersionId]
+    );
 
     const economicsRouter = (await import('../../../routes/economics.routes.js')).default;
     app = express();
@@ -107,22 +124,35 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
 
   afterAll(async () => {
     if (!pool) return;
-    await cleanupLegacyCutoverTestIntents(pool, { organizationIds: [orgA, orgB], requestIdPrefix: prefix });
+    await cleanupLegacyCutoverTestIntents(pool, {
+      organizationIds: [orgA, orgB],
+      requestIdPrefix: prefix,
+    });
     await pool.query(
       `DELETE FROM organization_settings WHERE organization_id = ANY($1) AND setting_key = 'finance'`,
       [[orgA, orgB]]
     );
     await pool.query('BEGIN');
     await pool.query(`SET LOCAL session_replication_role = replica`);
-    await pool.query(`DELETE FROM finance_artifact_aliases WHERE artifact_id=$1`, [mappedArtifactId]);
-    await pool.query(`DELETE FROM artifact_lifecycle_events WHERE artifact_id=$1`, [mappedArtifactId]);
+    await pool.query(`DELETE FROM finance_artifact_aliases WHERE artifact_id = ANY($1)`, [
+      [mappedArtifactId, mappedValuationArtifactId],
+    ]);
+    await pool.query(`DELETE FROM artifact_lifecycle_events WHERE artifact_id = ANY($1)`, [
+      [mappedArtifactId, mappedValuationArtifactId],
+    ]);
     await pool.query(
-      `UPDATE finance_business_versions SET source_working_revision_id=NULL WHERE artifact_id=$1`,
-      [mappedArtifactId]
+      `UPDATE finance_business_versions SET source_working_revision_id=NULL WHERE artifact_id = ANY($1)`,
+      [[mappedArtifactId, mappedValuationArtifactId]]
     );
-    await pool.query(`DELETE FROM finance_working_revisions WHERE artifact_id=$1`, [mappedArtifactId]);
-    await pool.query(`DELETE FROM finance_business_versions WHERE artifact_id=$1`, [mappedArtifactId]);
-    await pool.query(`DELETE FROM finance_artifacts WHERE artifact_id=$1`, [mappedArtifactId]);
+    await pool.query(`DELETE FROM finance_working_revisions WHERE artifact_id = ANY($1)`, [
+      [mappedArtifactId, mappedValuationArtifactId],
+    ]);
+    await pool.query(`DELETE FROM finance_business_versions WHERE artifact_id = ANY($1)`, [
+      [mappedArtifactId, mappedValuationArtifactId],
+    ]);
+    await pool.query(`DELETE FROM finance_artifacts WHERE artifact_id = ANY($1)`, [
+      [mappedArtifactId, mappedValuationArtifactId],
+    ]);
     await pool.query(`SET LOCAL session_replication_role = origin`);
     await pool.query('COMMIT');
     await pool.query(`DELETE FROM legacy_cutover_usage_events WHERE organization_id = ANY($1)`, [
@@ -233,16 +263,62 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
     ]);
   });
 
-  it('does not block the valuation approve writer (ECO-W27)', async () => {
-    const response = await request(app)
+  it('fails closed for unmapped ECO-W27/W28 before either valuation legacy mutation', async () => {
+    const approve = await request(app)
       .post(`/api/economics/valuations/${valuationId}/approve`)
       .set('x-request-id', `${prefix}-approve-1`)
       .send({});
-    // No valuation exists for this id, so the leaf handler answers 404 — the
-    // point of this assertion is only that the guard let the request through.
-    expect(response.status).not.toBe(410);
-    expect(response.status).not.toBe(409);
-    expect(response.status).toBe(404);
+    const advisor = await request(app)
+      .post(`/api/economics/valuations/${valuationId}/advisory`)
+      .set('x-request-id', `${prefix}-advisor-1`)
+      .send({});
+    expect(approve.status).toBe(409);
+    expect(approve.body).toMatchObject({
+      writerId: 'ECO-W27',
+      code: 'FINANCE_LEGACY_IDENTITY_UNMAPPED',
+    });
+    expect(advisor.status).toBe(409);
+    expect(advisor.body).toMatchObject({
+      writerId: 'ECO-W28',
+      code: 'FINANCE_LEGACY_IDENTITY_UNMAPPED',
+    });
+  });
+
+  it('cold-resolves mapped valuation identity and retires both legacy governance writers', async () => {
+    const approve = await request(app)
+      .post(`/api/economics/valuations/${mappedValuationId}/approve`)
+      .set('x-request-id', `${prefix}-mapped-valuation-approve`)
+      .send({});
+    const advisor = await request(app)
+      .post(`/api/economics/valuations/${mappedValuationId}/advisory`)
+      .set('x-request-id', `${prefix}-mapped-valuation-advisor`)
+      .send({});
+    expect(approve.status).toBe(410);
+    expect(advisor.status).toBe(410);
+
+    const rows = await pool.query(
+      `SELECT writer_id,access_kind,canonical_artifact_id,canonical_business_version_id,successor_path
+         FROM legacy_cutover_usage_events
+        WHERE organization_id=$1 AND request_id IN ($2,$3)
+        ORDER BY writer_id`,
+      [orgA, `${prefix}-mapped-valuation-approve`, `${prefix}-mapped-valuation-advisor`]
+    );
+    expect(rows.rows).toEqual([
+      {
+        writer_id: 'ECO-W27',
+        access_kind: 'legacy_writer_blocked',
+        canonical_artifact_id: mappedValuationArtifactId,
+        canonical_business_version_id: mappedValuationBusinessVersionId,
+        successor_path: '/api/v8/finance-v2/models/:artifactId/approve',
+      },
+      {
+        writer_id: 'ECO-W28',
+        access_kind: 'legacy_writer_blocked',
+        canonical_artifact_id: mappedValuationArtifactId,
+        canonical_business_version_id: mappedValuationBusinessVersionId,
+        successor_path: '/api/v8/finance-v2/valuation/variants/:businessVersionId/advisor/generate',
+      },
+    ]);
   });
 
   it('does not block the finance-settings writer (ECO-W42)', async () => {
@@ -262,20 +338,30 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
               legacy_table, legacy_id, successor_path
          FROM legacy_cutover_usage_events
         WHERE domain = 'finance' AND organization_id = $1
-          AND request_id IN ($2, $3)
+          AND request_id IN ($2, $3, $4)
         ORDER BY writer_id`,
-      [orgA, `${prefix}-approve-1`, `${prefix}-settings-1`]
+      [orgA, `${prefix}-approve-1`, `${prefix}-advisor-1`, `${prefix}-settings-1`]
     );
     expect(rows.rows).toEqual([
       {
         writer_id: 'ECO-W27',
-        access_kind: 'legacy_uncovered_writer',
+        access_kind: 'legacy_identity_unmapped',
         organization_id: orgA,
         tenant_resolution: 'resolved',
         route_path: `/api/economics/valuations/${valuationId}/approve`,
         legacy_table: 'valuations',
         legacy_id: valuationId,
-        successor_path: null,
+        successor_path: '/api/v8/finance-v2/models/:artifactId/approve',
+      },
+      {
+        writer_id: 'ECO-W28',
+        access_kind: 'legacy_identity_unmapped',
+        organization_id: orgA,
+        tenant_resolution: 'resolved',
+        route_path: `/api/economics/valuations/${valuationId}/advisory`,
+        legacy_table: 'valuations',
+        legacy_id: valuationId,
+        successor_path: '/api/v8/finance-v2/valuation/variants/:businessVersionId/advisor/generate',
       },
       {
         writer_id: 'ECO-W42',
@@ -303,7 +389,11 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
       [orgA, `${prefix}-settings-get-1`]
     );
     expect(rows.rows).toEqual([
-      { access_kind: 'legacy_read', route_path: '/api/economics/finance-settings', writer_id: null },
+      {
+        access_kind: 'legacy_read',
+        route_path: '/api/economics/finance-settings',
+        writer_id: null,
+      },
     ]);
   });
 

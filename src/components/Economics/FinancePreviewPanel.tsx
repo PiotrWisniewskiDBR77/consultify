@@ -25,6 +25,7 @@ import { statusChipTone } from '@/components/ui/primitives/chips';
 import { Api } from '@/services/api';
 import {
   approveCanonicalFinancialAnalysis,
+  approveCanonicalValuation,
   approveFinanceModel,
   resolveLegacyFinanceArtifact,
   runCanonicalFinancialAnalysis,
@@ -1189,7 +1190,7 @@ export function useFinancePreview({
             label: t('finance.actions.approve', 'Zatwierdź'),
             onClick: async () => {
               try {
-                await Api.post(`/api/economics/valuations/${row.id}/approve`, {});
+                await approveCanonicalValuation(row.id);
                 await loadValuations();
                 toast.success(t('finance.toast.valuationApproved', 'Wycena zatwierdzona'));
               } catch (e: any) {

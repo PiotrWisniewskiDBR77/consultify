@@ -1035,6 +1035,96 @@ export async function listValuationAdvisorOutputs(
   );
 }
 
+async function resolveCanonicalValuation(legacyValuationId: string) {
+  const identity = await resolveLegacyFinanceArtifact('valuations', legacyValuationId);
+  if (identity.status !== 'RESOLVED' || !identity.businessVersionId) {
+    const error = new Error(
+      identity.status === 'QUARANTINED'
+        ? identity.reason || 'Valuation identity is quarantined'
+        : 'Valuation has no canonical identity. Run the Finance backfill first.'
+    ) as Error & { code?: string };
+    error.code =
+      identity.status === 'QUARANTINED'
+        ? 'LEGACY_IDENTITY_QUARANTINED'
+        : 'LEGACY_IDENTITY_UNMAPPED';
+    throw error;
+  }
+
+  const [artifact, version] = await Promise.all([
+    getFinanceArtifact(identity.artifactId),
+    getFinanceBusinessVersion(identity.businessVersionId),
+  ]);
+  if (
+    identity.artifactType !== 'VALUATION_CASE' ||
+    artifact.currentBusinessVersion?.businessVersionId !== identity.businessVersionId ||
+    version.businessVersionId !== identity.businessVersionId ||
+    version.artifactId !== identity.artifactId
+  ) {
+    const error = new Error(
+      'Valuation alias does not identify the current canonical valuation business version.'
+    ) as Error & { code?: string };
+    error.code = 'CANONICAL_SOURCE_IDENTITY_STALE';
+    throw error;
+  }
+  return { identity, version };
+}
+
+/** Canonical maker-checker approval for a legacy valuation list-row identity. */
+export async function approveCanonicalValuation(legacyValuationId: string) {
+  const { identity, version } = await resolveCanonicalValuation(legacyValuationId);
+  const intentIdentity = `${identity.artifactId}:${identity.businessVersionId}:${version.version}`;
+  const intentNamespace = 'finance-valuation-approve';
+  const result = await approveFinanceModel({
+    modelArtifactId: identity.artifactId,
+    expectedVersion: version.version,
+    idempotencyKey: persistentCommandId(intentNamespace, intentIdentity),
+  });
+  const [artifactReadback, versionReadback] = await Promise.all([
+    getFinanceArtifact(identity.artifactId),
+    getFinanceBusinessVersion(identity.businessVersionId!),
+  ]);
+  if (
+    artifactReadback.currentBusinessVersion?.businessVersionId !== identity.businessVersionId ||
+    artifactReadback.currentBusinessVersion.status !== 'APPROVED' ||
+    versionReadback.status !== 'APPROVED'
+  ) {
+    const error = new Error(
+      'Canonical valuation approval readback did not confirm APPROVED.'
+    ) as Error & {
+      code?: string;
+    };
+    error.code = 'CANONICAL_READBACK_MISMATCH';
+    throw error;
+  }
+  clearPersistentCommandId(intentNamespace, intentIdentity);
+  return result;
+}
+
+/** Canonical, replace-in-place Advisor generation with cold output readback. */
+export async function generateCanonicalValuationAdvisor(legacyValuationId: string) {
+  const { identity } = await resolveCanonicalValuation(legacyValuationId);
+  const result = await generateValuationAdvisorOutput(identity.businessVersionId!, {
+    persist: true,
+  });
+  const readback = await listValuationAdvisorOutputs(identity.businessVersionId!);
+  const returnedIds = new Set(result.findings.map((finding) => finding.id));
+  if (
+    !result.computeSnapshotId ||
+    result.findings.length === 0 ||
+    readback.length !== result.findings.length ||
+    readback.some((finding) => !returnedIds.has(finding.id))
+  ) {
+    const error = new Error(
+      'Canonical valuation Advisor readback did not match generated findings.'
+    ) as Error & {
+      code?: string;
+    };
+    error.code = 'CANONICAL_READBACK_MISMATCH';
+    throw error;
+  }
+  return result;
+}
+
 // --- Cross-cutting, needed by the "Source" step (crosscutting.routes.ts, not Valuation-owned) ---
 //
 // UWAGA (scalenie fan-in wave 1): Pakiet H niezależnie zdefiniował TAKŻE

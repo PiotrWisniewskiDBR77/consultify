@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '@/services/api';
 import {
   approveCanonicalFinancialAnalysis,
+  approveCanonicalValuation,
   approveFinanceModel,
   resolveLegacyFinanceArtifact,
   runCanonicalFinancialAnalysis,
@@ -608,7 +609,7 @@ export function useFinanceRowActions({
             icon: CheckCircle,
             onClick: async () => {
               try {
-                await Api.post(`/api/economics/valuations/${row.id}/approve`, {});
+                await approveCanonicalValuation(row.id);
                 await loadValuations();
                 toast.success(t('finance.toast.valuationApproved', 'Wycena zatwierdzona'));
               } catch (e: any) {

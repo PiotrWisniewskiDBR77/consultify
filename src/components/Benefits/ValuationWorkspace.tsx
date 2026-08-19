@@ -11,6 +11,10 @@ import {
 import { EmptyState, LoadingState } from '@/components/shared/states';
 import { API_URL, getHeaders } from '@/services/api';
 import {
+  approveCanonicalValuation,
+  generateCanonicalValuationAdvisor,
+} from '@/services/api/financeV2.api';
+import {
   confirmValuationRecommendationCandidateHandoff,
   getValuationRecommendationCandidateHandoff,
   previewValuationRecommendationCandidateHandoff,
@@ -442,19 +446,13 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
     if (!selectedId) return;
     setBusy(true);
     try {
-      const res = await fetch(`${API_URL}/economics/valuations/${selectedId}/approve`, {
-        method: 'POST',
-        headers: getHeaders(),
-      });
-      const d = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        toast.error(d?.error || t('valuation.approve.failed', 'Approval failed'));
-        return;
-      }
+      await approveCanonicalValuation(selectedId);
       trackFunnelEvent('valuation_approved', { valuationId: selectedId });
       toast.success(t('valuation.approve.ok', 'Approved'));
       await fetchValuation(selectedId);
       onValuationChanged?.();
+    } catch (error: any) {
+      toast.error(error?.message || t('valuation.approve.failed', 'Approval failed'));
     } finally {
       setBusy(false);
     }
@@ -491,19 +489,13 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
     if (!selectedId) return;
     setBusy(true);
     try {
-      const res = await fetch(`${API_URL}/economics/valuations/${selectedId}/advisory`, {
-        method: 'POST',
-        headers: getHeaders(),
-      });
-      const d = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        toast.error(d?.error || t('valuation.advisory.failed', 'Failed to generate advisory'));
-        return;
-      }
+      await generateCanonicalValuationAdvisor(selectedId);
       trackFunnelEvent('valuation_advisory_generated', { valuationId: selectedId });
       toast.success(t('valuation.advisory.ok', 'Advisory generated'));
       await fetchValuation(selectedId);
       onValuationChanged?.();
+    } catch (error: any) {
+      toast.error(error?.message || t('valuation.advisory.failed', 'Failed to generate advisory'));
     } finally {
       setBusy(false);
     }
