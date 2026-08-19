@@ -547,8 +547,7 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
     roleName?: string;
     language?: string;
   } | null>(null);
-  const retryCountRef = useRef(0);
-  const MAX_AUTO_RETRIES = 3;
+  const streamInFlightRef = useRef(false);
   const thinkingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const thinkingClearTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const streamSessionIdRef = useRef<string | null>(null);
@@ -610,6 +609,8 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
       language?: string,
       throwTerminalError = false
     ) => {
+      if (streamInFlightRef.current) return;
+      streamInFlightRef.current = true;
       // Save for manual retry (best-effort)
       lastRequestRef.current = {
         message,
@@ -622,7 +623,6 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
       };
 
       abortRef.current.aborted = false;
-      retryCountRef.current = 0;
       setIsStreaming(true);
       setIsBotTyping(true);
       resetStreamState();
@@ -1340,73 +1340,20 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
           abortControllerRef.current?.signal
         );
 
-      let terminalError: Error | null = null;
-      while (!abortRef.current.aborted) {
-        try {
-          await runRequest();
-          retryCountRef.current = 0;
-          setRetryInfo(null);
-          return;
-        } catch (error) {
-          const err = error as Error & { code?: string };
-          if (abortRef.current.aborted || err?.name === 'AbortError') break;
-
-          const nonRetryableCodes = new Set([
-            'ACCESS_BLOCKED',
-            'ORG_NOT_FOUND',
-            'ORG_INACTIVE',
-            'UNAUTHORIZED',
-            'AI_BUDGET_EXHAUSTED',
-            'AI_TOKEN_BUDGET_EXCEEDED',
-            'RATE_LIMIT',
-            'RATE_LIMIT_EXCEEDED',
-            'DEEP_THINKING_CONFIRM_REQUIRED',
-          ]);
-          const nonRetryable =
-            nonRetryableCodes.has(String(err.code || '').toUpperCase()) ||
-            /ACCESS_BLOCKED|Unauthorized|AI_BUDGET_EXHAUSTED|RATE_LIMIT_EXCEEDED/i.test(
-              err.message || ''
-            );
-
-          if (nonRetryable || retryCountRef.current >= MAX_AUTO_RETRIES) {
-            terminalError = err;
-            break;
-          }
-
-          retryCountRef.current += 1;
-          const backoffMs = 1500 * Math.pow(2, retryCountRef.current - 1);
-          console.warn(
-            `[useAIStream] Auto-retry ${retryCountRef.current}/${MAX_AUTO_RETRIES} in ${backoffMs}ms…`
-          );
-          setRetryInfo({ attempt: retryCountRef.current, maxRetries: MAX_AUTO_RETRIES, backoffMs });
-          await new Promise((resolve) => setTimeout(resolve, backoffMs));
-          setRetryInfo(null);
-          if (abortRef.current.aborted) break;
-
-          abortControllerRef.current?.abort();
-          abortControllerRef.current = new AbortController();
-          // A retry is a replacement response, not an append to the failed
-          // partial response.
-          fullText = '';
-          rawBuffer = '';
-          reasoningRef.current = '';
-          setReasoning('');
-          nativeReasoning = '';
-          hasNativeReasoning = false;
-          hasReceivedContent = false;
-          setStreamedContent('');
-          setCurrentStreamContent('');
+      try {
+        await runRequest();
+      } catch (error) {
+        const terminalError = error as Error;
+        if (!abortRef.current.aborted && terminalError?.name !== 'AbortError') {
+          setLastError(terminalError);
+          options.onStreamError?.(terminalError);
+          if (throwTerminalError) throw terminalError;
         }
-      }
-
-      retryCountRef.current = 0;
-      setRetryInfo(null);
-      setIsStreaming(false);
-      setIsBotTyping(false);
-      if (terminalError) {
-        setLastError(terminalError);
-        options.onStreamError?.(terminalError);
-        if (throwTerminalError) throw terminalError;
+      } finally {
+        streamInFlightRef.current = false;
+        setRetryInfo(null);
+        setIsStreaming(false);
+        setIsBotTyping(false);
       }
     },
     [

@@ -4729,6 +4729,12 @@ router.post(
         const errObj = (response as any).error;
         const msg = String(errObj?.message || errObj?.error || 'AI request failed');
         const codeFromObj = typeof errObj?.code === 'string' ? errObj.code : undefined;
+        const providerStarts = Number.isInteger(errObj?.providerStarts)
+          ? Number(errObj.providerStarts)
+          : undefined;
+        const maxProviderStarts = Number.isInteger(errObj?.maxProviderStarts)
+          ? Number(errObj.maxProviderStarts)
+          : undefined;
         const code =
           codeFromObj ||
           (/invalid_api_key|incorrect api key/i.test(msg)
@@ -4755,6 +4761,8 @@ router.post(
             `data: ${JSON.stringify({
               error: msg,
               code,
+              ...(providerStarts !== undefined ? { providerStarts } : {}),
+              ...(maxProviderStarts !== undefined ? { maxProviderStarts } : {}),
             })}\n\n`
           );
           res.write('data: [DONE]\n\n');

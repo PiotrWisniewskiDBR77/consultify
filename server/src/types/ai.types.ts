@@ -162,6 +162,13 @@ export interface AIPipelineRequest {
   abortSignal?: AbortSignal;
 }
 
+/** Request-scoped ledger shared by every provider candidate and internal retry. */
+export interface ProviderStartBudget {
+  maxStarts: number;
+  started: number;
+  attempts: Array<{ provider: string; model: string; startedAt: string }>;
+}
+
 export interface AIContext {
   screenId?: string;
   persona?: string;
@@ -322,6 +329,8 @@ export interface AIError {
   message: string;
   details?: string;
   retryable?: boolean;
+  providerStarts?: number;
+  maxProviderStarts?: number;
 }
 
 // ==========================================

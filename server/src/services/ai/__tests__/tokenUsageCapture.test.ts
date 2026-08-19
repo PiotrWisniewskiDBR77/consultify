@@ -242,13 +242,65 @@ describe('llmService.callStream usage capture', () => {
         totalUsage: Promise.resolve(undefined),
       });
     const { llmService } = await import('../llmService.js');
+    const budget = { maxStarts: 2, started: 0, attempts: [] };
     const result = await llmService.callStream({
       type: 'chat',
       modelConfig: { provider: 'openrouter', id: 'openai/gpt-4o', apiKey: 'test-key' },
       messages: [{ role: 'user', content: 'retry once' }],
+      providerStartBudget: budget,
     } as any);
 
     expect(await collect(result.stream as AsyncIterable<string>)).toBe('recovered');
     expect(mockStreamText).toHaveBeenCalledTimes(2);
+    expect(budget.started).toBe(2);
+    expect(budget.attempts).toHaveLength(2);
+  });
+
+  it('does not start a provider retry after cancellation during backoff', async () => {
+    vi.useFakeTimers();
+    mockStreamText.mockRejectedValueOnce(new Error('transient provider failure'));
+    const controller = new AbortController();
+    const { llmService } = await import('../llmService.js');
+    const call = llmService.callStream({
+      type: 'chat',
+      modelConfig: { provider: 'openrouter', id: 'openai/gpt-4o', apiKey: 'test-key' },
+      messages: [{ role: 'user', content: 'cancel during backoff' }],
+      abortSignal: controller.signal,
+      providerStartBudget: { maxStarts: 2, started: 0, attempts: [] },
+    } as any);
+
+    await vi.advanceTimersByTimeAsync(1);
+    controller.abort();
+    await expect(call).rejects.toMatchObject({ name: 'AbortError' });
+    expect(mockStreamText).toHaveBeenCalledTimes(1);
+  });
+
+  it('fails before a third provider start when the shared request budget is exhausted', async () => {
+    vi.useFakeTimers();
+    mockStreamText.mockRejectedValue(new Error('provider unavailable'));
+    const budget = { maxStarts: 2, started: 0, attempts: [] };
+    const { llmService } = await import('../llmService.js');
+
+    const firstExpectation = expect(
+      llmService.callStream({
+        type: 'chat',
+        modelConfig: { provider: 'openrouter', id: 'model-a', apiKey: 'test-key' },
+        messages: [{ role: 'user', content: 'bounded' }],
+        providerStartBudget: budget,
+      } as any)
+    ).rejects.toThrow('provider unavailable');
+    await vi.runAllTimersAsync();
+    await firstExpectation;
+
+    await expect(
+      llmService.callStream({
+        type: 'chat',
+        modelConfig: { provider: 'openrouter', id: 'model-b', apiKey: 'test-key' },
+        messages: [{ role: 'user', content: 'bounded fallback' }],
+        providerStartBudget: budget,
+      } as any)
+    ).rejects.toMatchObject({ code: 'PROVIDER_START_BUDGET_EXHAUSTED' });
+    expect(mockStreamText).toHaveBeenCalledTimes(2);
+    expect(budget.started).toBe(2);
   });
 });

@@ -31,6 +31,25 @@ vi.mock('../../../server/src/middleware/rateLimiting.middleware.js', async () =>
   };
 });
 
+vi.mock('../../../server/src/middleware/auditsStrictMembership.middleware.js', async () => {
+  const actual = (await vi.importActual(
+    '../../../server/src/middleware/auditsStrictMembership.middleware.js'
+  )) as any;
+  return {
+    ...actual,
+    requireActiveTenantMembership: (_req: any, _res: any, next: any) => next(),
+  };
+});
+
+vi.mock('../../../server/src/utils/DbPromise.js', async () => {
+  const actual = (await vi.importActual('../../../server/src/utils/DbPromise.js')) as any;
+  return {
+    ...actual,
+    get: async (sql: string, ...args: any[]) =>
+      /FROM organization_members/i.test(sql) ? { status: 'ACTIVE' } : actual.get(sql, ...args),
+  };
+});
+
 const { default: aiRouter } = await import('../../../server/src/routes/ai.routes.ts');
 
 function parseSseData(text: string): any[] {

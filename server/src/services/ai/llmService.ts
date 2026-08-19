@@ -18,6 +18,7 @@ import {
 import { createHash } from 'crypto';
 import { z } from 'zod';
 
+import type { ProviderStartBudget } from '../../types/ai.types.js';
 import { appCache } from '../redis/CacheService.js';
 import circuitBreaker from './circuitBreaker.js';
 import { embeddingService } from './embeddingService.js';
@@ -197,12 +198,60 @@ type CallParams = {
   timeoutMs?: number;
   /** Caller lifecycle cancellation, composed with the provider timeout. */
   abortSignal?: AbortSignal;
+  /** Shared across all fallback candidates for one pipeline request. */
+  providerStartBudget?: ProviderStartBudget;
   /**
    * Circuit breaker options override (e.g. retryAttempts, retry delays).
    * Use sparingly; interactive UI endpoints should prefer fail-fast.
    */
   breakerOptions?: Record<string, unknown>;
 };
+
+function throwIfAborted(signal?: AbortSignal): void {
+  if (!signal?.aborted) return;
+  const error = new Error('Provider stream was aborted before start.');
+  error.name = 'AbortError';
+  throw error;
+}
+
+function waitForRetryOrAbort(delayMs: number, signal?: AbortSignal): Promise<void> {
+  throwIfAborted(signal);
+  return new Promise((resolve, reject) => {
+    const onAbort = () => {
+      clearTimeout(timer);
+      signal?.removeEventListener('abort', onAbort);
+      const error = new Error('Provider retry was aborted during backoff.');
+      error.name = 'AbortError';
+      reject(error);
+    };
+    const timer = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    }, delayMs);
+    signal?.addEventListener('abort', onAbort, { once: true });
+  });
+}
+
+function reserveProviderStart(params: CallParams, provider: string, model: string): void {
+  throwIfAborted(params.abortSignal);
+  const budget = params.providerStartBudget;
+  if (!budget) return;
+  if (budget.started >= budget.maxStarts) {
+    const error = new Error(
+      `Provider start budget exhausted (${budget.started}/${budget.maxStarts}).`
+    ) as Error & {
+      code?: string;
+      providerStarts?: number;
+      maxProviderStarts?: number;
+    };
+    error.code = 'PROVIDER_START_BUDGET_EXHAUSTED';
+    error.providerStarts = budget.started;
+    error.maxProviderStarts = budget.maxStarts;
+    throw error;
+  }
+  budget.started += 1;
+  budget.attempts.push({ provider, model, startedAt: new Date().toISOString() });
+}
 
 type McpServer = {
   getToolDefinitions: () => ToolDefinition[];
@@ -1270,6 +1319,7 @@ export class LLMService {
       let lastError: Error | null = null;
       for (let attempt = 0; attempt < 2; attempt++) {
         try {
+          reserveProviderStart(params, providerId, String(modelConfig.id));
           const timeoutSignal = AbortSignal.timeout(params.timeoutMs ?? 60_000);
           const abortSignal = params.abortSignal
             ? AbortSignal.any([params.abortSignal, timeoutSignal])
@@ -1530,7 +1580,13 @@ export class LLMService {
             'LLMService',
             `Stream initialization failed (attempt ${attempt + 1}/2): ${lastError.message?.slice(0, 200)}`
           );
-          if (attempt === 0) await new Promise((resolve) => setTimeout(resolve, 1000));
+          if (
+            lastError.name === 'AbortError' ||
+            (lastError as Error & { code?: string }).code === 'PROVIDER_START_BUDGET_EXHAUSTED'
+          ) {
+            throw lastError;
+          }
+          if (attempt === 0) await waitForRetryOrAbort(1000, params.abortSignal);
         }
       }
       throw lastError;

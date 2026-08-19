@@ -19,6 +19,7 @@ import type {
   CapabilityName,
   CapabilityRegistry,
   ChatMessage,
+  ProviderStartBudget,
   StreamCallback,
   ThinkingStep,
   TokenUsage,
@@ -489,6 +490,11 @@ export class AIPipeline {
         let usedModel = modelConfig.model;
         let streamResponse: Record<string, unknown> | null = null;
         let lastError: Error | null = null;
+        const providerStartBudget: ProviderStartBudget = {
+          maxStarts: 2,
+          started: 0,
+          attempts: [],
+        };
 
         // Sink presence is what ENABLES the reasoning path in llmService.callStream
         // (wantsReasoning = !!onReasoning && !!reasoning). Reasoning deltas are now
@@ -537,6 +543,7 @@ export class AIPipeline {
               stream: true,
               abortSignal: request.abortSignal,
               timeoutMs: 60_000,
+              providerStartBudget,
               // Reasoning: request medium-effort native thinking and a sink to
               // capture the deltas. No-ops on providers without reasoning support.
               ...(showReasoning
@@ -577,6 +584,7 @@ export class AIPipeline {
             logger.warn(
               `[AIPipeline] Stream failed (${candidateModelId}): ${msg.slice(0, 200)}${isRateLimit ? ' [RATE_LIMIT]' : ''}`
             );
+            if (err?.code === 'PROVIDER_START_BUDGET_EXHAUSTED') break;
           }
         }
 
@@ -3121,6 +3129,12 @@ export class AIPipeline {
         code: preserved || inferred || 'AI_ERROR',
         message: error.message,
         retryable: true,
+        ...(Number.isInteger(anyErr?.providerStarts)
+          ? { providerStarts: Number(anyErr.providerStarts) }
+          : {}),
+        ...(Number.isInteger(anyErr?.maxProviderStarts)
+          ? { maxProviderStarts: Number(anyErr.maxProviderStarts) }
+          : {}),
       };
     }
     return {
