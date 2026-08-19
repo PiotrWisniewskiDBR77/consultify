@@ -3,7 +3,7 @@
 -- the two tables this retained ingress actually needs instead of relying on the
 -- old route's lazy runtime DDL.
 DO $$
-DECLARE incompatible TEXT; constraint_count INTEGER; fk_definition TEXT; default_expression TEXT;
+DECLARE incompatible TEXT; constraint_count INTEGER; fk_definition TEXT;
 BEGIN
   IF to_regclass('public.partner_referral_clicks') IS NOT NULL THEN
     SELECT string_agg(required.name,',' ORDER BY required.name) INTO incompatible
@@ -26,7 +26,7 @@ BEGIN
       RAISE EXCEPTION 'partner_referral_clicks has incompatible required columns: %', incompatible;
     END IF;
     SELECT string_agg(required.name,',' ORDER BY required.name) INTO incompatible
-      FROM (VALUES ('id'),('partner_org_id'),('referral_code')) required(name)
+      FROM (VALUES ('id'),('partner_org_id'),('referral_code'),('clicked_at'),('converted')) required(name)
       JOIN information_schema.columns actual
         ON actual.table_schema='public' AND actual.table_name='partner_referral_clicks'
        AND actual.column_name=required.name
@@ -48,10 +48,15 @@ BEGIN
     IF fk_definition <> 'foreignkeypartner_org_idreferencespartner_organizationsidondeletecascade' THEN
       RAISE EXCEPTION 'partner_referral_clicks has incompatible Partner FK: %', fk_definition;
     END IF;
-    SELECT column_default INTO default_expression FROM information_schema.columns
-     WHERE table_schema='public' AND table_name='partner_referral_clicks' AND column_name='clicked_at';
-    IF default_expression IS NULL THEN
-      RAISE EXCEPTION 'partner_referral_clicks.clicked_at requires a server default';
+    SELECT string_agg(actual.column_name,',' ORDER BY actual.column_name) INTO incompatible
+      FROM information_schema.columns actual
+     WHERE actual.table_schema='public' AND actual.table_name='partner_referral_clicks'
+       AND ((actual.column_name='clicked_at'
+             AND lower(regexp_replace(COALESCE(actual.column_default,''),'[[:space:]]','','g')) NOT IN ('current_timestamp','now()'))
+         OR (actual.column_name='converted'
+             AND lower(regexp_replace(COALESCE(actual.column_default,''),'[[:space:]]','','g')) NOT IN ('false','false::boolean')));
+    IF incompatible IS NOT NULL THEN
+      RAISE EXCEPTION 'partner_referral_clicks has incompatible critical defaults: %', incompatible;
     END IF;
   END IF;
 
@@ -76,7 +81,10 @@ BEGIN
       RAISE EXCEPTION 'partner_campaign_links has incompatible required columns: %', incompatible;
     END IF;
     SELECT string_agg(required.name,',' ORDER BY required.name) INTO incompatible
-      FROM (VALUES ('id'),('partner_org_id'),('name'),('slug')) required(name)
+      FROM (VALUES
+        ('id'),('partner_org_id'),('name'),('slug'),('click_count'),('signup_count'),
+        ('conversion_count'),('is_active'),('created_at'),('updated_at')
+      ) required(name)
       JOIN information_schema.columns actual
         ON actual.table_schema='public' AND actual.table_name='partner_campaign_links'
        AND actual.column_name=required.name
@@ -98,15 +106,17 @@ BEGIN
     IF fk_definition <> 'foreignkeypartner_org_idreferencespartner_organizationsidondeletecascade' THEN
       RAISE EXCEPTION 'partner_campaign_links has incompatible Partner FK: %', fk_definition;
     END IF;
-    SELECT column_default INTO default_expression FROM information_schema.columns
-     WHERE table_schema='public' AND table_name='partner_campaign_links' AND column_name='click_count';
-    IF default_expression IS NULL THEN
-      RAISE EXCEPTION 'partner_campaign_links.click_count requires a server default';
-    END IF;
-    SELECT column_default INTO default_expression FROM information_schema.columns
-     WHERE table_schema='public' AND table_name='partner_campaign_links' AND column_name='updated_at';
-    IF default_expression IS NULL THEN
-      RAISE EXCEPTION 'partner_campaign_links.updated_at requires a server default';
+    SELECT string_agg(actual.column_name,',' ORDER BY actual.column_name) INTO incompatible
+      FROM information_schema.columns actual
+     WHERE actual.table_schema='public' AND actual.table_name='partner_campaign_links'
+       AND ((actual.column_name IN ('click_count','signup_count','conversion_count')
+             AND lower(regexp_replace(COALESCE(actual.column_default,''),'[[:space:]]','','g')) NOT IN ('0','0::integer'))
+         OR (actual.column_name='is_active'
+             AND lower(regexp_replace(COALESCE(actual.column_default,''),'[[:space:]]','','g')) NOT IN ('true','true::boolean'))
+         OR (actual.column_name IN ('created_at','updated_at')
+             AND lower(regexp_replace(COALESCE(actual.column_default,''),'[[:space:]]','','g')) NOT IN ('current_timestamp','now()')));
+    IF incompatible IS NOT NULL THEN
+      RAISE EXCEPTION 'partner_campaign_links has incompatible critical defaults: %', incompatible;
     END IF;
   END IF;
 END $$;

@@ -632,6 +632,32 @@ describe.sequential('Partner legacy cutover guard (real PG)', () => {
 
     await sql.query('BEGIN');
     try {
+      await sql.query(`ALTER TABLE partner_referral_clicks ALTER COLUMN converted SET DEFAULT true`);
+      await sql.query(`ALTER TABLE partner_campaign_links ALTER COLUMN click_count SET DEFAULT 99`);
+      const snapshot = async () =>
+        (
+          await sql.query(
+            `SELECT
+               (SELECT string_agg(table_name || '.' || column_name || ':' || is_nullable || ':' || COALESCE(column_default,'NULL'), ',' ORDER BY table_name,column_name)
+                  FROM information_schema.columns
+                 WHERE table_schema='public'
+                   AND ((table_name='partner_referral_clicks' AND column_name IN ('clicked_at','converted'))
+                     OR (table_name='partner_campaign_links' AND column_name IN ('click_count','signup_count','conversion_count','is_active','created_at','updated_at')))) semantics,
+               (SELECT COALESCE(string_agg(filename || ':' || checksum, '|' ORDER BY filename),'')
+                  FROM schema_migrations WHERE filename='957_partner_public_referral_click_receipts.sql') ledger`
+          )
+        ).rows[0];
+      const before = await snapshot();
+      await sql.query('SAVEPOINT hostile_public_defaults_migration');
+      await expect(sql.query(publicClickMigration)).rejects.toThrow(/incompatible critical defaults/);
+      await sql.query('ROLLBACK TO SAVEPOINT hostile_public_defaults_migration');
+      expect(await snapshot()).toEqual(before);
+    } finally {
+      await sql.query('ROLLBACK');
+    }
+
+    await sql.query('BEGIN');
+    try {
       await sql.query(`ALTER TABLE partner_campaign_links RENAME TO partner_campaign_links_good`);
       await sql.query(`CREATE TABLE partner_campaign_links(id integer PRIMARY KEY)`);
       await sql.query('SAVEPOINT hostile_campaign_table_migration');
