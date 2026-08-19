@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Pool } from 'pg';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { cleanupInitiativesExecutionOrg } from '../../support/initiativesExecutionOrgCleanup';
 import { MaterialCommandConflictError } from '../../../server/src/domain/initiatives-execution/materialCommand';
 import { PostgresMaterialCommandUnitOfWork } from '../../../server/src/domain/initiatives-execution/postgresMaterialCommandUnitOfWork';
 import { PostgresInitiativeReader } from '../../../server/src/domain/initiatives-execution/postgresInitiativeReader';
@@ -30,7 +31,10 @@ real('Source Submit PostgreSQL vertical', () => {
       'TRUNCATE initiative_candidates, ie_aggregate_relations, ie_command_receipts, ie_audit_events, ie_outbox_delivery_receipts, ie_outbox_events, ie_aggregate_state RESTART IDENTITY'
     )
   );
-  afterAll(async () => pool.end());
+  afterAll(async () => {
+    await cleanupInitiativesExecutionOrg(pool, 'org-source');
+    await pool.end();
+  });
   const command = (request = 'submit-1', proposal = 'proposal-1') => ({
     organizationId: 'org-source',
     actorId: 'assessment-owner',

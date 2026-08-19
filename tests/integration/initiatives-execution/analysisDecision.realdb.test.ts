@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Pool } from 'pg';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { cleanupInitiativesExecutionOrg } from '../../support/initiativesExecutionOrgCleanup';
 import { ANALYSIS_CARD_KEYS } from '../../../server/src/domain/initiatives-execution/analysisReadiness';
 import {
   decideAnalysis,
@@ -59,7 +60,10 @@ real('Analysis Gate realDB', () => {
       ]
     );
   });
-  afterAll(async () => pool.end());
+  afterAll(async () => {
+    await cleanupInitiativesExecutionOrg(pool, 'org-analysis');
+    await pool.end();
+  });
   it('moves only DEFINED to ANALYZING, snapshots reviewed truth, and independent authority approves READY_FOR_DECISION', async () => {
     await startAnalysis(uow, env('owner', 1, 'start-1', 'initiative.analysis.start', {}));
     for (const [i, key] of ANALYSIS_CARD_KEYS.entries()) {

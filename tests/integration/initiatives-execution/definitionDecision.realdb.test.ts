@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { Pool } from 'pg';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { cleanupInitiativesExecutionOrg } from '../../support/initiativesExecutionOrgCleanup';
 
 import {
   decideDefinition,
@@ -181,5 +182,8 @@ describeRealDb('Definition Decision PostgreSQL vertical', () => {
     expect((await pool.query("SELECT 1 FROM ie_aggregate_state WHERE aggregate_type = 'decision'")).rowCount).toBe(0);
   });
 
-  afterAll(async () => pool.end());
+  afterAll(async () => {
+    await cleanupInitiativesExecutionOrg(pool, 'org-definition');
+    await pool.end();
+  });
 });

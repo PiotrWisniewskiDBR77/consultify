@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Pool } from 'pg';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { cleanupInitiativesExecutionOrg } from '../../support/initiativesExecutionOrgCleanup';
 import {
   createReportDefinition,
   transitionReportDefinition,
@@ -92,7 +93,10 @@ real('ACO-45 canonical Report Definition realDB', () => {
     ])
       await pool.query(`DELETE FROM ${table} WHERE organization_id=$1`, [org]);
   });
-  afterAll(async () => pool.end());
+  afterAll(async () => {
+    await cleanupInitiativesExecutionOrg(pool, 'org-aco45');
+    await pool.end();
+  });
 
   it('versions and independently publishes immutable truth; Report Run accepts only exact PUBLISHED version', async () => {
     const create = env(

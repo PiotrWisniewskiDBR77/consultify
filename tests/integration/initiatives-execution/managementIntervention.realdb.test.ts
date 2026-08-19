@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Pool } from 'pg';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { cleanupInitiativesExecutionOrg } from '../../support/initiativesExecutionOrgCleanup';
 import { createExecutionTask } from '../../../server/src/domain/initiatives-execution/executionWork';
 import {
   draftInterventionCase,
@@ -54,7 +55,10 @@ real('Management Intervention realDB', () => {
       ]
     );
   });
-  afterAll(async () => pool.end());
+  afterAll(async () => {
+    await cleanupInitiativesExecutionOrg(pool, 'org-ie074');
+    await pool.end();
+  });
   const env = (
     type: string,
     id: string,

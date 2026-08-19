@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { Pool } from 'pg';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { cleanupInitiativesExecutionOrg } from '../../support/initiativesExecutionOrgCleanup';
 
 import { configureInitiativeCards } from '../../../server/src/domain/initiatives-execution/configureInitiativeCards';
 import { PostgresMaterialCommandUnitOfWork } from '../../../server/src/domain/initiatives-execution/postgresMaterialCommandUnitOfWork';
@@ -101,5 +102,8 @@ describeRealDb('Configure Initiative Cards PostgreSQL vertical', () => {
     expect((await pool.query('SELECT 1 FROM ie_audit_events')).rowCount).toBe(0);
   });
 
-  afterAll(async () => pool.end());
+  afterAll(async () => {
+    await cleanupInitiativesExecutionOrg(pool, 'org-config');
+    await pool.end();
+  });
 });

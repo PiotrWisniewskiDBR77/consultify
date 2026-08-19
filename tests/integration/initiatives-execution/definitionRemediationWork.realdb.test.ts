@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { Pool } from 'pg';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { cleanupInitiativesExecutionOrg } from '../../support/initiativesExecutionOrgCleanup';
 
 import { createDefinitionRemediationWork } from '../../../server/src/domain/initiatives-execution/createDefinitionRemediationWork';
 import { PostgresMaterialCommandUnitOfWork } from '../../../server/src/domain/initiatives-execution/postgresMaterialCommandUnitOfWork';
@@ -151,5 +152,8 @@ describeRealDb('Definition remediation Task and Decision realDB', () => {
     });
   });
 
-  afterAll(async () => pool.end());
+  afterAll(async () => {
+    await cleanupInitiativesExecutionOrg(pool, 'org-work');
+    await pool.end();
+  });
 });

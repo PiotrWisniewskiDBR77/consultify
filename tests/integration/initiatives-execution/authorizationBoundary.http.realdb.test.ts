@@ -5,6 +5,7 @@ import express from 'express';
 import { Pool } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { cleanupInitiativesExecutionOrg } from '../../support/initiativesExecutionOrgCleanup';
 
 import { PostgresInitiativeReader } from '../../../server/src/domain/initiatives-execution/postgresInitiativeReader';
 import { PostgresMaterialCommandUnitOfWork } from '../../../server/src/domain/initiatives-execution/postgresMaterialCommandUnitOfWork';
@@ -226,7 +227,10 @@ real('Initiatives/Execution project authorization boundary HTTP realDB', () => {
       );
   });
 
-  afterAll(async () => pool.end());
+  afterAll(async () => {
+    await cleanupInitiativesExecutionOrg(pool, 'org-auth-boundary');
+    await pool.end();
+  });
 
   const headers = (user: string, organizationId = org, role = 'USER') => ({
     'x-test-user': user,

@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Pool } from 'pg';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { cleanupInitiativesExecutionOrg } from '../../support/initiativesExecutionOrgCleanup';
 import {
   decideClosureCase,
   requestClosureCase,
@@ -108,7 +109,10 @@ real('ACO-55–57 Effectiveness Review, Closure and Archive realDB', () => {
       ]
     );
   });
-  afterAll(async () => pool.end());
+  afterAll(async () => {
+    await cleanupInitiativesExecutionOrg(pool, 'org-ie081');
+    await pool.end();
+  });
   const createAndReview = async (outcome: string, suffix = '') => {
     const id = `${effectId}${suffix}`;
     await createEffectivenessCase(

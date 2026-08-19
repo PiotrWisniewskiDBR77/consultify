@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { Pool } from 'pg';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { cleanupInitiativesExecutionOrg } from '../../support/initiativesExecutionOrgCleanup';
 
 import { MaterialCommandConflictError } from '../../../server/src/domain/initiatives-execution/materialCommand';
 import { PostgresMaterialCommandUnitOfWork } from '../../../server/src/domain/initiatives-execution/postgresMaterialCommandUnitOfWork';
@@ -42,7 +43,10 @@ describeRealDb('Register Initiative PostgreSQL vertical', () => {
        'Reduce median changeover time.','operations-transformation-2027','iwona-owner',
        'PROJECT','READY','CLEAR','pending',2)`);
   });
-  afterAll(async () => pool.end());
+  afterAll(async () => {
+    await cleanupInitiativesExecutionOrg(pool, 'nordwerk-e2e');
+    await pool.end();
+  });
 
   const command = (requestId = 'aco-register-001', initiativeId = 'aco-initiative-001') => ({
     organizationId: 'nordwerk-e2e',

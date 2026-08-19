@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Pool } from 'pg';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { cleanupInitiativesExecutionOrg } from '../../support/initiativesExecutionOrgCleanup';
 import {
   mutateCapacityScenario,
   type CapacityScenario,
@@ -148,7 +149,10 @@ real('Capacity Scenario and Resource Commitment realDB', () => {
       ]
     );
   });
-  afterAll(async () => pool.end());
+  afterAll(async () => {
+    await cleanupInitiativesExecutionOrg(pool, 'org-ie061');
+    await pool.end();
+  });
   it('publishes Capacity without allocation writes and confirms only after named assignee acceptance', async () => {
     await mutateCapacityScenario(
       uow,

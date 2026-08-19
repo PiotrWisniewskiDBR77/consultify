@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { Pool } from 'pg';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { cleanupInitiativesExecutionOrg } from '../../support/initiativesExecutionOrgCleanup';
 
 import { decideSourceProposal } from '../../../server/src/domain/initiatives-execution/decideSourceProposal';
 import { MaterialCommandConflictError } from '../../../server/src/domain/initiatives-execution/materialCommand';
@@ -106,5 +107,8 @@ describeRealDb('Source Proposal Decision PostgreSQL vertical', () => {
     expect((await pool.query('SELECT 1 FROM ie_audit_events')).rowCount).toBe(1);
   });
 
-  afterAll(async () => pool.end());
+  afterAll(async () => {
+    await cleanupInitiativesExecutionOrg(pool, 'org-disposition');
+    await pool.end();
+  });
 });

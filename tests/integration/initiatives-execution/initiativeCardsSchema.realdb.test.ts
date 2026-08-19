@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { cleanupInitiativesExecutionOrg } from '../../support/initiativesExecutionOrgCleanup';
 
 const databaseUrl = process.env.DATABASE_URL?.trim();
 const describeRealDb = databaseUrl ? describe : describe.skip;
@@ -45,5 +46,8 @@ describeRealDb('Initiative Card PostgreSQL schema', () => {
     ).rejects.toThrow();
   });
 
-  afterAll(async () => pool.end());
+  afterAll(async () => {
+    await cleanupInitiativesExecutionOrg(pool, 'org-schema');
+    await pool.end();
+  });
 });

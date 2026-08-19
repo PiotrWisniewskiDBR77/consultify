@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Pool } from 'pg';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { cleanupInitiativesExecutionOrg } from '../../support/initiativesExecutionOrgCleanup';
 import {
   transitionCanonicalDecision,
   transitionCanonicalTask,
@@ -103,7 +104,10 @@ real('Canonical Task Decision My Work hardening realDB', () => {
       ]
     );
   });
-  afterAll(async () => pool.end());
+  afterAll(async () => {
+    await cleanupInitiativesExecutionOrg(pool, 'org-ie042');
+    await pool.end();
+  });
   it('offers/accepts/escalates/cancels/reopens with same canonical IDs and exact versions across read models', async () => {
     const task = (
         actor: string,
