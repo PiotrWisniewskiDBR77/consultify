@@ -390,6 +390,24 @@ describe.skipIf(!enabled)('Finance W01/W02 mounted signed-JWT membership wall', 
 
   it('writer-scoped rollback reopens only FIN-W02 with one observation', async () => {
     const requestId = `${prefix}-rollback-w02`;
+    // Keep Vitest retry deterministic after a late assertion failure: restore
+    // only this suite-owned model to the pre-approval state.
+    await pool.query(`DELETE FROM financial_model_versions WHERE model_id=$1`, [orgModel]);
+    await pool.query(`DELETE FROM financial_model_validations WHERE model_id=$1`, [orgModel]);
+    await pool.query(`DELETE FROM financial_model_outputs WHERE model_id=$1`, [orgModel]);
+    await pool.query(
+      `UPDATE financial_models
+          SET status='draft',version=1,approved_by=NULL,approved_at=NULL,approved_snapshot=NULL
+        WHERE id=$1`,
+      [orgModel]
+    );
+    const before = await pool.query(
+      `SELECT status,version,
+              (SELECT count(*)::int FROM financial_model_versions WHERE model_id=$1) AS history_count
+         FROM financial_models WHERE id=$1`,
+      [orgModel]
+    );
+    expect(before.rows).toEqual([{ status: 'draft', version: 1, history_count: 0 }]);
     process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = 'FIN-W02';
     try {
       const response = await request(w02)
@@ -405,8 +423,43 @@ describe.skipIf(!enabled)('Finance W01/W02 mounted signed-JWT membership wall', 
       expect(observations.rows).toEqual([
         { writer_id: 'FIN-W02', access_kind: 'rollback_writer', count: 1 },
       ]);
+      const approved = await pool.query(
+        `SELECT status,version,approved_by,approved_at IS NOT NULL AS has_approved_at,
+                (SELECT count(*)::int FROM financial_model_versions WHERE model_id=$1) AS history_count
+           FROM financial_models WHERE id=$1`,
+        [orgModel]
+      );
+      expect(approved.rows).toEqual([{
+        status: 'approved', version: 2, approved_by: active,
+        has_approved_at: true, history_count: 1,
+      }]);
     } finally {
       delete process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
     }
+
+    const blockedRequestId = `${prefix}-rollback-closed-w02`;
+    const blocked = await request(w02)
+      .post(`/api/financial-modeling/models/${orgModel}/approve`)
+      .set(authorization(active, org)).set('x-request-id', blockedRequestId).send({});
+    expect(blocked.status).toBe(410);
+    expect(blocked.body).toMatchObject({
+      code: 'FINANCE_LEGACY_WRITER_DISABLED', writerId: 'FIN-W02',
+      canonicalArtifactId: artifactId, canonicalBusinessVersionId: businessVersionId,
+    });
+    const unchanged = await pool.query(
+      `SELECT status,version,
+              (SELECT count(*)::int FROM financial_model_versions WHERE model_id=$1) AS history_count
+         FROM financial_models WHERE id=$1`,
+      [orgModel]
+    );
+    expect(unchanged.rows).toEqual([{ status: 'approved', version: 2, history_count: 1 }]);
+    expect((await pool.query(
+      `SELECT writer_id,access_kind,count(*)::int AS count
+         FROM legacy_cutover_usage_events WHERE request_id=$1
+        GROUP BY writer_id,access_kind`,
+      [blockedRequestId]
+    )).rows).toEqual([
+      { writer_id: 'FIN-W02', access_kind: 'legacy_writer_blocked', count: 1 },
+    ]);
   });
 });

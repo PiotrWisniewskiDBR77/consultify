@@ -216,12 +216,11 @@ export const PARTNERS_CUTOVER: LegacyCutoverDomainConfig = {
  *   `src/components/Economics/FinancePreviewPanel.tsx:73`
  * So the writer was never retired — only one of its two doors was.
  *
- * FIN-W02 is therefore `protected`, NOT `disabled`: the successor is proven (it
- * is FIN-W01's), but two live clients still use this door, and the lane rule is
- * that no writer is disabled without usage evidence. Mounting the guard here
- * closes the measurement gap immediately — the traffic becomes visible per
- * tenant — while leaving behaviour unchanged. Retiring FIN-W02 is the first
- * item of the onward plan, not something to do blind.
+ * Historical note: FIN-W02 initially remained `protected` while those two live
+ * clients still used it, which closed the measurement gap without changing
+ * behaviour. Both callers now resolve the legacy alias and invoke the canonical
+ * finance-v2 approval writer, so FIN-W02 is currently `disabled`; the scoped
+ * rollback remains available for an observed emergency only.
  *
  * (Checked, and worth recording: the client fallback predicate
  * `shouldFallbackToLegacyFinance` — `src/services/api/v8/finance.ts:3-6` —
