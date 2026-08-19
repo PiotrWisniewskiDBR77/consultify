@@ -169,7 +169,8 @@ const formatDate = (value?: string): string => {
 // wizualnie przy weryfikacji tej migracji (zero danych = strona zawsze pusta/
 // crashowała w produkcji, niezależnie od kanonu tabel).
 const unwrapApiData = <T,>(res: any): T | undefined => {
-  const body = res?.data ?? res;
+  const ownData = res ? Object.getOwnPropertyDescriptor(res, 'data')?.value : undefined;
+  const body = ownData ?? res?.data ?? res;
   return (body?.data ?? body) as T | undefined;
 };
 

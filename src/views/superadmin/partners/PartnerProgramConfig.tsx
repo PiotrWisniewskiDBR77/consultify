@@ -139,6 +139,12 @@ const PAYMENT_METHODS = [
 // must not expose authoring controls while Partner economics are approved out.
 const ECONOMICS_OPERATIONS_AVAILABLE = false as const;
 
+const unwrapApiData = <T,>(response: any): T | undefined => {
+  const ownData = response ? Object.getOwnPropertyDescriptor(response, 'data')?.value : undefined;
+  const body = ownData ?? response?.data ?? response;
+  return (body?.data && body.data !== body ? body.data : body) as T | undefined;
+};
+
 export const PartnerProgramConfig: React.FC = () => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
@@ -174,18 +180,21 @@ export const PartnerProgramConfig: React.FC = () => {
       setError(null);
 
       const reviewRes = await Api.get('/api/superadmin/partner-config/review-queue');
-      if (reviewRes?.success && reviewRes?.data) {
-        setReviewQueue(reviewRes.data);
+      if (reviewRes?.success) {
+        const queue = unwrapApiData<CertificationReviewItem[]>(reviewRes);
+        setReviewQueue(Array.isArray(queue) ? queue : []);
       }
 
       const applicationsRes = await Api.get('/api/superadmin/partner-config/applications');
-      if (applicationsRes?.success && applicationsRes?.data) {
-        setPartnerApplications(applicationsRes.data);
+      if (applicationsRes?.success) {
+        const applications = unwrapApiData<PartnerApplicationItem[]>(applicationsRes);
+        setPartnerApplications(Array.isArray(applications) ? applications : []);
       }
 
       const reportingRes = await Api.get('/api/superadmin/partner-config/reporting');
-      if (reportingRes?.success && reportingRes?.data) {
-        setReporting(reportingRes.data);
+      if (reportingRes?.success) {
+        const reportingData = unwrapApiData<PartnerProgramReporting>(reportingRes);
+        setReporting(reportingData && !Array.isArray(reportingData) ? reportingData : null);
       }
     } catch (err: any) {
       console.error('Error fetching config:', err);
