@@ -3871,7 +3871,12 @@ export const contextDocumentService = {
        WHERE d.id = ?
          AND d.organization_id = ?
          AND d.deleted_at IS NULL
-         AND (d.scope = 'project' OR (d.scope = 'user' AND d.owner_id = ?))`,
+         AND (
+           d.scope = 'organization'
+           OR d.scope IS NULL
+           OR d.scope = 'project'
+           OR (d.scope = 'user' AND d.owner_id = ?)
+         )`,
       [params.documentId, params.organizationId, params.userId],
       { fallback: true } as any
     );
