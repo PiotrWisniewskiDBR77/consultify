@@ -40,14 +40,17 @@ describe.skipIf(!realPg)('statement-pack canonical registration (real PostgreSQL
       await client.query('BEGIN');
       await client.query(`SET LOCAL session_replication_role = replica`);
       for (const organizationId of ownedOrganizations) {
-        const aliases = await client.query<{ artifact_id: string }>(
-          `SELECT artifact_id FROM finance_artifact_aliases WHERE organization_id = $1`,
+        const artifacts = await client.query<{ artifact_id: string }>(
+          `SELECT artifact_id FROM finance_artifacts WHERE organization_id = $1`,
           [organizationId]
         );
         await client.query(`DELETE FROM finance_artifact_aliases WHERE organization_id = $1`, [
           organizationId,
         ]);
-        for (const { artifact_id } of aliases.rows) {
+        for (const { artifact_id } of artifacts.rows) {
+          await client.query(`DELETE FROM finance_import_receipts WHERE artifact_id = $1`, [
+            artifact_id,
+          ]);
           await client.query(`DELETE FROM artifact_lifecycle_events WHERE artifact_id = $1`, [
             artifact_id,
           ]);
@@ -59,8 +62,25 @@ describe.skipIf(!realPg)('statement-pack canonical registration (real PostgreSQL
           ]);
           await client.query(`DELETE FROM finance_artifacts WHERE artifact_id = $1`, [artifact_id]);
         }
+        await client.query(`DELETE FROM financial_statement_packs WHERE organization_id = $1`, [
+          organizationId,
+        ]);
+        await client.query(`DELETE FROM financial_statements WHERE organization_id = $1`, [
+          organizationId,
+        ]);
+        const residue = await client.query<{ count: number }>(
+          `SELECT (
+             (SELECT count(*) FROM finance_artifacts WHERE organization_id = $1) +
+             (SELECT count(*) FROM finance_artifact_aliases WHERE organization_id = $1) +
+             (SELECT count(*) FROM financial_statement_packs WHERE organization_id = $1) +
+             (SELECT count(*) FROM financial_statements WHERE organization_id = $1)
+           )::int AS count`,
+          [organizationId]
+        );
+        expect(residue.rows[0]?.count).toBe(0);
         await client.query(`DELETE FROM organizations WHERE id = $1`, [organizationId]);
       }
+      await client.query(`SET LOCAL session_replication_role = origin`);
       await client.query('COMMIT');
     } catch (error) {
       await client.query('ROLLBACK');

@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { randomUUID } from 'node:crypto';
 
 import { expect, test } from '@playwright/test';
 import { Pool } from 'pg';
@@ -30,8 +31,20 @@ test('signed XLSX statement confirm registers a canonical pack and import surviv
   let businessVersionId = '';
   let workingRevisionId = '';
   let foreignArtifactCountBeforeCleanup = 0;
+  const foreignOrganizationId = `org-fin-import-decoy-${randomUUID()}`;
+  const foreignArtifactId = `artifact-fin-import-decoy-${randomUUID()}`;
 
   try {
+    await pool.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
+      foreignOrganizationId,
+      'Finance import foreign cleanup decoy',
+    ]);
+    await pool.query(
+      `INSERT INTO finance_artifacts (artifact_id, organization_id, artifact_type)
+       VALUES ($1, $2, 'STATEMENT_PACK')`,
+      [foreignArtifactId, foreignOrganizationId]
+    );
+
     for (const flagKey of flagKeys) {
       const enabled = await request.post(`${API_BASE_URL}/api/test-support/org-feature-flag`, {
         headers: { 'x-test-support-key': TEST_SUPPORT_KEY },
@@ -243,45 +256,69 @@ test('signed XLSX statement confirm registers a canonical pack and import surviv
       await cold.close();
     }
   } finally {
-    for (const flagKey of flagKeys) {
-      const disabled = await request.post(`${API_BASE_URL}/api/test-support/org-feature-flag`, {
+    let cleanupStatus = 0;
+    let cleanupBody = '';
+    let residue: Record<string, number> | undefined;
+    let foreignArtifactCountAfterCleanup = 0;
+    const flagOffStatuses: Array<{ flagKey: (typeof flagKeys)[number]; status: number }> = [];
+    try {
+      foreignArtifactCountBeforeCleanup = Number(
+        (
+          await pool.query(
+            `SELECT count(*)::int AS count FROM finance_artifacts WHERE artifact_id = $1`,
+            [foreignArtifactId]
+          )
+        ).rows[0]?.count || 0
+      );
+      const cleanup = await request.post(`${API_BASE_URL}/api/test-support/cleanup`, {
         headers: { 'x-test-support-key': TEST_SUPPORT_KEY },
-        data: { flagKey, organizationId: state.organizationId, enabled: false, runId },
+        data: { runId: state.runId },
       });
-      expect(disabled.status(), `disable ${flagKey}`).toBe(200);
-    }
-    foreignArtifactCountBeforeCleanup = Number(
-      (
+      cleanupStatus = cleanup.status();
+      cleanupBody = await cleanup.text();
+      residue = (
         await pool.query(
-          `SELECT count(*)::int AS count FROM finance_artifacts WHERE organization_id <> $1`,
-          [state.organizationId]
+          `SELECT
+             (SELECT count(*)::int FROM financial_statements WHERE id = $1) AS statements,
+             (SELECT count(*)::int FROM financial_statement_packs WHERE id = $2) AS packs,
+             (SELECT count(*)::int FROM finance_artifacts WHERE artifact_id = $3) AS artifacts,
+             (SELECT count(*)::int FROM finance_business_versions WHERE business_version_id = $5) AS business_versions,
+             (SELECT count(*)::int FROM finance_artifact_aliases WHERE artifact_id = $3) AS aliases,
+             (SELECT count(*)::int FROM finance_import_receipts WHERE artifact_id = $3) AS receipts,
+             (SELECT count(*)::int FROM finance_working_revisions WHERE working_revision_id = $4) AS revisions`,
+          [
+            statementId || null,
+            statementPackId || null,
+            artifactId || null,
+            workingRevisionId || null,
+            businessVersionId || null,
+          ]
         )
-      ).rows[0]?.count || 0
-    );
-    expect(foreignArtifactCountBeforeCleanup).toBeGreaterThan(0);
-    const cleanup = await request.post(`${API_BASE_URL}/api/test-support/cleanup`, {
-      headers: { 'x-test-support-key': TEST_SUPPORT_KEY },
-      data: { runId: state.runId },
-    });
-    expect(cleanup.status(), await cleanup.text()).toBe(200);
-    const residue = await pool.query(
-      `SELECT
-         (SELECT count(*)::int FROM financial_statements WHERE id = $1) AS statements,
-         (SELECT count(*)::int FROM financial_statement_packs WHERE id = $2) AS packs,
-         (SELECT count(*)::int FROM finance_artifacts WHERE artifact_id = $3) AS artifacts,
-         (SELECT count(*)::int FROM finance_business_versions WHERE business_version_id = $5) AS business_versions,
-         (SELECT count(*)::int FROM finance_artifact_aliases WHERE artifact_id = $3) AS aliases,
-         (SELECT count(*)::int FROM finance_import_receipts WHERE artifact_id = $3) AS receipts,
-         (SELECT count(*)::int FROM finance_working_revisions WHERE working_revision_id = $4) AS revisions`,
-      [
-        statementId || null,
-        statementPackId || null,
-        artifactId || null,
-        workingRevisionId || null,
-        businessVersionId || null,
-      ]
-    );
-    expect(residue.rows[0]).toEqual({
+      ).rows[0];
+      foreignArtifactCountAfterCleanup = Number(
+        (
+          await pool.query(
+            `SELECT count(*)::int AS count FROM finance_artifacts WHERE artifact_id = $1`,
+            [foreignArtifactId]
+          )
+        ).rows[0]?.count || 0
+      );
+    } finally {
+      for (const flagKey of flagKeys) {
+        const disabled = await request.post(`${API_BASE_URL}/api/test-support/org-feature-flag`, {
+          headers: { 'x-test-support-key': TEST_SUPPORT_KEY },
+          data: { flagKey, organizationId: state.organizationId, enabled: false, runId },
+        });
+        flagOffStatuses.push({ flagKey, status: disabled.status() });
+      }
+      await pool.query(`DELETE FROM finance_artifacts WHERE artifact_id = $1`, [foreignArtifactId]);
+      await pool.query(`DELETE FROM organizations WHERE id = $1`, [foreignOrganizationId]);
+      await pool.end();
+    }
+
+    expect(cleanupStatus, cleanupBody).toBe(200);
+    expect(flagOffStatuses).toEqual(flagKeys.map((flagKey) => ({ flagKey, status: 200 })));
+    expect(residue).toEqual({
       statements: 0,
       packs: 0,
       artifacts: 0,
@@ -290,15 +327,7 @@ test('signed XLSX statement confirm registers a canonical pack and import surviv
       receipts: 0,
       revisions: 0,
     });
-    const foreignArtifactCountAfterCleanup = Number(
-      (
-        await pool.query(
-          `SELECT count(*)::int AS count FROM finance_artifacts WHERE organization_id <> $1`,
-          [state.organizationId]
-        )
-      ).rows[0]?.count || 0
-    );
-    expect(foreignArtifactCountAfterCleanup).toBe(foreignArtifactCountBeforeCleanup);
-    await pool.end();
+    expect(foreignArtifactCountBeforeCleanup).toBe(1);
+    expect(foreignArtifactCountAfterCleanup).toBe(1);
   }
 });
