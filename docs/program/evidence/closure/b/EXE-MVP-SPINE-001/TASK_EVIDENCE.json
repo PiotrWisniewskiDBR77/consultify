@@ -203,8 +203,8 @@
     "exactCurrentQualification": {
       "database": "exe_spine_a_0c20_integrated on PostgreSQL 16; created only for this qualification and dropped afterward",
       "migrations": "fresh exit 0, 792 applied; repeat Applying migrations: 0; dry-run Pending migrations: 0",
-      "runtimeMatrix": "tests/integration/initiatives-execution: 41/41 files, 93/93 tests, retry 0",
-      "spineMatrix": "9/9 files, 78/78 tests, retry 0: legacy read-only scope, change/progress, closure/evidence, delivery BVP, backfill, identity seam, authority, canonical health",
+      "runtimeMatrix": "Requalified at canonical 4adcd4ff6425cfe66617d7c867c36439eb8827e3 on fresh PostgreSQL with both DATABASE_URL and IE_TEST_DATABASE_URL set: tests/integration/initiatives-execution 41/41 files, 93/93 tests, retry 0",
+      "spineMatrix": "COUNT CORRECTION at canonical 4adcd4ff6425cfe66617d7c867c36439eb8827e3: the historical 9/9 files, 78/78 tests string is not a reproducible unit. The eight explicitly scoped legacy-read-only/change-progress/closure-evidence/delivery-BVP/backfill/identity-authority/canonical-health files execute 77/77 with guarded immutable-fixture cleanup and literal residue zero. Adding the execution-control route file identified by the authority diff executes 9/9 files, 107/107 tests. The stable full Runtime-v1 acceptance denominator is the separately recorded 41/41 files, 93/93 tests.",
       "typeChecks": "server tsc exit 0; root tsc with 8 GiB exit 0",
       "builds": "backend build exit 0 with 9 runtime mirrors verified; frontend 8 GiB build exit 0",
       "diff": "git diff --check exit 0"
