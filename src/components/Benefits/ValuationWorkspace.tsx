@@ -12,7 +12,13 @@ import { EmptyState, LoadingState } from '@/components/shared/states';
 import { API_URL, getHeaders } from '@/services/api';
 import {
   approveCanonicalValuation,
+  confirmCanonicalLegacyValuationComputeReadback,
+  computeCanonicalLegacyValuation,
   generateCanonicalValuationAdvisor,
+  getCanonicalValuationInputs,
+  getCanonicalValuationResults,
+  saveCanonicalValuationAssumptions,
+  saveCanonicalValuationPeers,
 } from '@/services/api/financeV2.api';
 import {
   confirmValuationRecommendationCandidateHandoff,
@@ -52,6 +58,8 @@ interface AssumptionsState {
   exitMultiple?: number;
   exitMultipleMetric?: ExitMultipleMetric;
   netDebt?: number;
+  cashTaxRatePct?: number;
+  valuationAsOfDate?: string;
   sharesOutstanding?: number;
   manualForecast?: { years: Array<{ year: number; fcff: number }> };
 }
@@ -221,22 +229,29 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
 
   const fetchValuation = useCallback(async (id: string) => {
     try {
-      const res = await fetch(`${API_URL}/economics/valuations/${id}`, { headers: getHeaders() });
-      if (!res.ok) return;
+      const [res,canonical]=await Promise.all([fetch(`${API_URL}/economics/valuations/${id}`, { headers: getHeaders() }),getCanonicalValuationInputs(id)]);
+      if (!res.ok) throw new Error(t('valuation.load.failed','Valuation archive read failed'));
       const d = (await res.json()) as any;
       const v = d?.valuation || null;
-      setSelected(v);
-      if (!v) return;
-      setAssumptions({ ...DEFAULT_ASSUMPTIONS, ...safeJson(v.assumptions, DEFAULT_ASSUMPTIONS) });
-      const persistedPeers = safeJson<any>(v.peers, DEFAULT_MULTIPLES);
+      if (!v || typeof v !== 'object') throw new Error(t('valuation.load.invalid','Valuation archive response is invalid'));
+      const canonicalResults:any=await getCanonicalValuationResults(canonical.businessVersionId);
+      const dcfMethod=canonicalResults?.methods?.find((method:any)=>method.methodType==='DCF_FCFF');
+      const bridge=canonicalResults?.bridge?.header;
+      const terminal=canonicalResults?.terminal?.find((row:any)=>row.is_primary)??canonicalResults?.terminal?.[0];
+      const dcf=dcfMethod?{enterpriseValue:Number(dcfMethod.result?.valueDecimal),equityValue:bridge?.equity_value_decimal===null?null:Number(bridge?.equity_value_decimal),terminalValue:terminal?.terminal_value_decimal===null?null:Number(terminal?.terminal_value_decimal)}:null;
+      setSelected({...v,results:{dcf}});
+      setAssumptions({ ...DEFAULT_ASSUMPTIONS, ...(canonical.assumptions??{}) } as AssumptionsState);
+      const persistedPeers = canonical.peers;
       setMultiples({
         ...DEFAULT_MULTIPLES,
         ...(Array.isArray(persistedPeers) ? persistedPeers[0] : persistedPeers),
       });
-    } catch {
-      // ignore
+      return {businessVersionId:canonical.businessVersionId,dcf};
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('valuation.inputs.failed','Canonical valuation inputs unavailable'));
+      return undefined;
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void fetchSources();
@@ -380,21 +395,12 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
     }
     setBusy(true);
     try {
-      const res = await fetch(`${API_URL}/economics/valuations/${selectedId}/assumptions`, {
-        method: 'PUT',
-        headers: { ...getHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify(assumptions),
-      });
-      const d = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        toast.error(
-          d?.error || t('valuation.assumptions.saveFailed', 'Failed to save assumptions')
-        );
-        return;
-      }
+      await saveCanonicalValuationAssumptions(selectedId, assumptions as unknown as Record<string,unknown>);
       trackFunnelEvent('valuation_assumption_updated', { valuationId: selectedId });
       toast.success(t('valuation.assumptions.saved', 'Assumptions saved'));
       await fetchValuation(selectedId);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('valuation.assumptions.failed', 'Failed to save assumptions'));
     } finally {
       setBusy(false);
     }
@@ -404,43 +410,21 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
     if (!selectedId) return;
     setBusy(true);
     try {
-      const res = await fetch(`${API_URL}/economics/valuations/${selectedId}/peers`, {
-        method: 'PUT',
-        headers: { ...getHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify(multiples),
-      });
-      const d = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        toast.error(d?.error || t('valuation.comps.saveFailed', 'Failed to save comps'));
-        return;
-      }
+      await saveCanonicalValuationPeers(selectedId, multiples as unknown as Record<string,unknown>);
       toast.success(t('valuation.comps.saved', 'Comps saved'));
+      await fetchValuation(selectedId);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('valuation.comps.failed', 'Failed to save comps'));
     } finally {
       setBusy(false);
     }
-  }, [multiples, selectedId, t]);
+  }, [fetchValuation,multiples, selectedId, t]);
 
   const handleCompute = useCallback(async () => {
     if (!selectedId) return;
     setBusy(true);
-    try {
-      const res = await fetch(`${API_URL}/economics/valuations/${selectedId}/compute`, {
-        method: 'POST',
-        headers: getHeaders(),
-      });
-      const d = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        toast.error(d?.error || t('valuation.compute.failed', 'Compute failed'));
-        return;
-      }
-      toast.success(t('valuation.compute.ok', 'Valuation computed'));
-      await fetchValuation(selectedId);
-      setActiveStep('results');
-      onValuationChanged?.();
-    } finally {
-      setBusy(false);
-    }
-  }, [fetchValuation, selectedId, t, onValuationChanged]);
+    try{const computed=await computeCanonicalLegacyValuation(selectedId);const cold=await fetchValuation(selectedId);if(!cold?.dcf||cold.businessVersionId!==computed.businessVersionId||Number(cold.dcf.enterpriseValue)!==Number(computed.enterpriseValue)||Number(cold.dcf.equityValue)!==Number(computed.equityValue))throw new Error(t('valuation.compute.readbackMismatch','Canonical valuation result readback mismatch'));confirmCanonicalLegacyValuationComputeReadback(selectedId);toast.success(t('valuation.compute.ok','Valuation computed'));setActiveStep('results');onValuationChanged?.();}catch(error){toast.error(error instanceof Error?error.message:t('valuation.compute.failed','Compute failed'));}finally{setBusy(false);}
+  }, [fetchValuation,onValuationChanged,selectedId,t]);
 
   const handleApprove = useCallback(async () => {
     if (!selectedId) return;
@@ -956,12 +940,16 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                 className="mt-1 w-full px-3 py-2 rounded-lg border border-c-border-strong dark:border-c-border-strong bg-white dark:bg-c-surface text-sm text-c-text dark:text-white"
                               >
                                 <option value="EV/EBITDA">EV/EBITDA</option>
-                                <option value="EV/EBIT">EV/EBIT</option>
-                                <option value="EV/Revenue">EV/Revenue</option>
+                                <option value="EV/EBIT" disabled>EV/EBIT — needs canonical lineage</option>
+                                <option value="EV/Revenue" disabled>EV/Revenue — needs canonical lineage</option>
                               </select>
                             </div>
                           </div>
                         )}
+                        <div className="grid grid-cols-2 gap-3">
+                          <div><label className="text-xs text-c-text-muted">{t('valuation.assumptions.cashTax','Cash tax rate (%)')}</label><input type="number" value={assumptions.cashTaxRatePct??''} onChange={(e)=>setAssumptions(p=>({...p,cashTaxRatePct:e.target.value===''?undefined:safeNumber(e.target.value,0)}))} className="mt-1 w-full px-3 py-2 rounded-lg border border-c-border-strong bg-white dark:bg-c-surface text-sm" /></div>
+                          <div><label className="text-xs text-c-text-muted">{t('valuation.assumptions.asOf','Valuation date')}</label><input type="date" value={assumptions.valuationAsOfDate??''} onChange={(e)=>setAssumptions(p=>({...p,valuationAsOfDate:e.target.value||undefined}))} className="mt-1 w-full px-3 py-2 rounded-lg border border-c-border-strong bg-white dark:bg-c-surface text-sm" /></div>
+                        </div>
                         <button
                           disabled={busy}
                           onClick={handleSaveAssumptions}

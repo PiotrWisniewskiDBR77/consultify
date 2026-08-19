@@ -112,28 +112,33 @@ export interface WriteBridgeParams {
   equityValueDecimal: number;
   components: readonly BridgeComponentInput[];
   createdBy: string;
+  sourceWorkingRevisionId?: string | null;
+  sourceWorkingRevisionVersion?: number | null;
 }
 
 export type WriteBridgeResult = { ok: true; bridgeId: string } | ComputeEquityValueError;
 
-export async function writeBridge(params: WriteBridgeParams): Promise<WriteBridgeResult> {
+export async function writeBridge(params: WriteBridgeParams & {tx?:any}): Promise<WriteBridgeResult> {
   const alignment = assertAsOfAlignment(params.asOfDate, params.components);
   if (!alignment.ok) return alignment;
 
   const bridgeId = uuidv4();
-  await withPinnedPostgresTransaction(async (tx) => {
+  const write=async (tx:any) => {
     await tx.queryRun(
       `INSERT INTO finance_valuation_ev_equity_bridge (
-         id, organization_id, business_version_id, as_of_date, enterprise_value_decimal, equity_value_decimal, created_by
-       ) VALUES (?, ?, ?, ?, ?, ?, ?)
+         id, organization_id, business_version_id, as_of_date, enterprise_value_decimal, equity_value_decimal, created_by,
+         source_working_revision_id, source_working_revision_version
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT (business_version_id) DO UPDATE SET
          as_of_date = EXCLUDED.as_of_date, enterprise_value_decimal = EXCLUDED.enterprise_value_decimal,
-         equity_value_decimal = EXCLUDED.equity_value_decimal, updated_at = now()
+         equity_value_decimal = EXCLUDED.equity_value_decimal,
+         source_working_revision_id = EXCLUDED.source_working_revision_id,
+         source_working_revision_version = EXCLUDED.source_working_revision_version, updated_at = now()
        RETURNING id`,
-      [bridgeId, params.organizationId, params.businessVersionId, params.asOfDate, params.enterpriseValueDecimal, params.equityValueDecimal, params.createdBy]
+      [bridgeId, params.organizationId, params.businessVersionId, params.asOfDate, params.enterpriseValueDecimal, params.equityValueDecimal, params.createdBy, params.sourceWorkingRevisionId ?? null, params.sourceWorkingRevisionVersion ?? null]
     );
     const headerId = (
-      await tx.queryOne<{ id: string }>(`SELECT id FROM finance_valuation_ev_equity_bridge WHERE business_version_id = ?`, [params.businessVersionId])
+      await tx.queryOne(`SELECT id FROM finance_valuation_ev_equity_bridge WHERE business_version_id = ?`, [params.businessVersionId])
     )?.id;
     if (!headerId) throw new Error('writeBridge: header row not found after upsert');
 
@@ -150,7 +155,8 @@ export async function writeBridge(params: WriteBridgeParams): Promise<WriteBridg
       );
     }
     return headerId;
-  });
+  };
+  if(params.tx)await write(params.tx);else await withPinnedPostgresTransaction(write);
 
   return { ok: true, bridgeId };
 }

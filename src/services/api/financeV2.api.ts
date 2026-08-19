@@ -126,6 +126,25 @@ async function v8PostRawBody<T>(
   return handleResponse<T>(res, `V8 POST ${path}`);
 }
 
+async function writeCanonicalValuationLegacyInput(legacyId:string,kind:'assumptions'|'peers',payload:Record<string,unknown>){
+  const identity=await v8Get<{artifactId:string;businessVersionId:string;workingRevisionId:string;workingRevisionVersion:number}>(`${BASE}/valuation/legacy/${encodeURIComponent(legacyId)}/input-identity`);
+  const namespace=`finance-valuation-${kind}`;
+  const intent=`${identity.artifactId}:${identity.businessVersionId}:${identity.workingRevisionId}:${identity.workingRevisionVersion}`;
+  const key=persistentCommandId(namespace,intent);
+  const response=await fetchWithRetry(`${V8_BASE}${BASE}/valuation/legacy/${encodeURIComponent(legacyId)}/${kind}`,{method:'PUT',headers:{...getHeaders(),'x-idempotency-key':key},body:JSON.stringify({payload,expected:identity})});
+  const envelope=await handleResponse<{data:typeof identity&{requestSha256:string}}>(response,`canonical valuation ${kind}`);
+  if(envelope.data.workingRevisionId!==identity.workingRevisionId||!/^[0-9a-f]{64}$/.test(envelope.data.requestSha256)) throw new Error('Canonical valuation cold readback mismatch');
+  clearPersistentCommandId(namespace,intent); return envelope.data;
+}
+
+export const saveCanonicalValuationAssumptions=(legacyId:string,payload:Record<string,unknown>)=>writeCanonicalValuationLegacyInput(legacyId,'assumptions',payload);
+export const saveCanonicalValuationPeers=(legacyId:string,payload:Record<string,unknown>)=>writeCanonicalValuationLegacyInput(legacyId,'peers',{...payload,peerSet:Array.isArray(payload.peerSet)?payload.peerSet.map((peer:any)=>typeof peer==='string'?peer:String(peer?.name||'')).filter(Boolean):[]});
+export type CanonicalValuationInputs={artifactId:string;businessVersionId:string;workingRevisionId:string;workingRevisionVersion:number;assumptions:(Record<string,unknown>&{sourceWorkingRevisionId:string;sourceWorkingRevisionVersion:number;requestSha256:string})|null;peers:(Record<string,unknown>&{sourceWorkingRevisionId:string;sourceWorkingRevisionVersion:number;requestSha256:string})|null};
+export const getCanonicalValuationInputs=async(legacyId:string)=>{const result=await v8Get<CanonicalValuationInputs>(`${BASE}/valuation/legacy/${encodeURIComponent(legacyId)}/inputs`);return {...result,peers:result.peers?{...result.peers,peerSet:Array.isArray(result.peers.peerSet)?(result.peers.peerSet as unknown[]).map(name=>({name:String(name)})):[]}:null};};
+export const computeCanonicalLegacyValuation=async(legacyId:string)=>{const ns='finance-valuation-compute';const key=persistentCommandId(ns,legacyId);const requestId=crypto.randomUUID();const response=await fetchWithRetry(`${V8_BASE}${BASE}/valuation/legacy/${encodeURIComponent(legacyId)}/compute`,{method:'POST',headers:{...getHeaders(),'x-idempotency-key':key,'x-request-id':requestId},body:'{}'});const envelope=await handleResponse<{data:{artifactId:string;businessVersionId:string;jobId:string;enterpriseValue:number;equityValue:number|null}}>(response,'canonical valuation compute');return envelope.data;};
+export const confirmCanonicalLegacyValuationComputeReadback=(legacyId:string)=>clearPersistentCommandId('finance-valuation-compute',legacyId);
+export const getCanonicalValuationResults=(businessVersionId:string)=>v8Get<any>(`${BASE}/valuation/variants/${encodeURIComponent(businessVersionId)}/results`);
+
 // ---------------------------------------------------------------------------
 // Artifacts — artifacts.routes.ts
 // ---------------------------------------------------------------------------

@@ -29,8 +29,10 @@ import * as computeJobService from './computeJobService.js';
 import type { ComputeJobRow } from './computeJobService.js';
 import { computeFcffSeries, type FcffYearInput, type FcffYearResult } from './valuationFcffService.js';
 import { computeWacc, loadWaccInputs, persistComputedWacc, type WaccBreakdown } from './valuationWaccService.js';
-import { computeGordonTerminalValue, writeTerminalRow } from './valuationTerminalService.js';
+import { loadCanonicalDirectValuationAssumptions } from './valuationLegacySuccessorService.js';
 import { discountCashFlows, type DiscountCashFlowsResult } from './valuationDiscountService.js';
+import { computeExitMultipleTerminalValue, computeGordonTerminalValue, writeTerminalRow } from './valuationTerminalService.js';
+import { computeEquityValue, writeBridge } from './valuationBridgeService.js';
 
 // ---------------------------------------------------------------------------
 // finance_valuation_methods — find-or-create, result read/write
@@ -81,9 +83,10 @@ export async function findOrCreateMethod(params: {
   methodType: MethodType;
   createdBy: string;
   applicabilityPolicyRef?: string | null;
+  tx?: any;
 }): Promise<FindOrCreateMethodResult> {
-  return withPinnedPostgresTransaction(async (tx) => {
-    const bv = await tx.queryOne<{ business_version_id: string }>(
+  const execute=async (tx:any):Promise<FindOrCreateMethodResult> => {
+    const bv = await tx.queryOne(
       `SELECT business_version_id FROM finance_business_versions WHERE business_version_id = ? AND organization_id = ?`,
       [params.businessVersionId, params.organizationId]
     );
@@ -95,19 +98,20 @@ export async function findOrCreateMethod(params: {
       };
     }
 
-    const existing = await tx.queryOne<MethodRow>(
+    const existing = await tx.queryOne(
       `SELECT * FROM finance_valuation_methods WHERE business_version_id = ? AND organization_id = ? AND method_type = ?`,
       [params.businessVersionId, params.organizationId, params.methodType]
     );
     if (existing) return { ok: true, method: existing };
-    const inserted = await tx.queryOne<MethodRow>(
+    const inserted = await tx.queryOne(
       `INSERT INTO finance_valuation_methods (id, organization_id, business_version_id, method_type, applicability_policy_ref, created_by)
        VALUES (?, ?, ?, ?, ?, ?) RETURNING *`,
       [uuidv4(), params.organizationId, params.businessVersionId, params.methodType, params.applicabilityPolicyRef ?? null, params.createdBy]
     );
     if (!inserted) throw new Error('finance_valuation_methods insert returned no row');
     return { ok: true, method: inserted };
-  });
+  };
+  return params.tx?execute(params.tx):withPinnedPostgresTransaction(execute);
 }
 
 export type SetMethodResultErrorCode = 'RESULT_READINESS_MISMATCH';
@@ -141,15 +145,15 @@ export async function setMethodResult(params: {
   readiness: MethodReadiness;
   resultValueStatus: MethodResultValueStatus;
   resultEvDecimal: number | null;
+  tx?: any;
 }): Promise<SetMethodResultResult> {
   const gate = assertResultReadinessConsistency(params.readiness, params.resultValueStatus);
   if (!gate.ok) return gate;
-  await withPinnedPostgresTransaction((tx) =>
-    tx.queryRun(
+  const write=(tx:any)=>tx.queryRun(
       `UPDATE finance_valuation_methods SET readiness = ?, result_value_status = ?, result_ev_decimal = ?, updated_at = now() WHERE id = ?`,
       [params.readiness, params.resultValueStatus, params.resultEvDecimal, params.methodId]
-    )
-  );
+    );
+  if(params.tx)await write(params.tx);else await withPinnedPostgresTransaction(write);
   return { ok: true };
 }
 
@@ -293,7 +297,21 @@ export interface RunDcfFcffValuationParams {
   requestId?: string | null;
   projectionYears: readonly FcffYearInput[];
   openingWorkingCapital: number | null;
-  terminal: { gPct: number };
+  terminal: { gPct?: number };
+  /** Required when the variant uses a direct legacy discount rate: never infer cash tax as zero. */
+  directCashTaxRatePct?: number;
+  /** Required for the direct-assumption EV-to-equity bridge. */
+  valuationAsOfDate?: string;
+  inputCommandHash?:string;
+  /** When supplied, all user-visible valuation publication joins the caller's receipt transaction. */
+  publicationTx?:any;
+}
+
+export interface DirectDiscountRate {
+  source: 'DIRECT_ASSUMPTION';
+  waccPct: number;
+  sourceWorkingRevisionId: string;
+  sourceWorkingRevisionVersion: number;
 }
 
 export type RunDcfFcffValuationResult =
@@ -302,10 +320,11 @@ export type RunDcfFcffValuationResult =
       job: ComputeJobRow;
       methodId: string;
       fcffYears: FcffYearResult[];
-      wacc: WaccBreakdown;
+      wacc: WaccBreakdown | DirectDiscountRate;
       terminalValue: number;
       discounted: DiscountCashFlowsResult;
       enterpriseValue: number;
+      equityValue: number | null;
     }
   | {
       ok: false;
@@ -318,6 +337,7 @@ export type RunDcfFcffValuationResult =
         | 'WACC_COMPUTE_FAILED'
         | 'FCFF_NOT_FULLY_PRESENT'
         | 'TERMINAL_G_MUST_BE_LESS_THAN_WACC'
+        | 'INVALID_EXIT_MULTIPLE_INPUT'
         | 'BUSINESS_VERSION_NOT_FOUND'
         // W9-B-2 fix: `completeJobSuccess()` reported `NOT_RUNNING` (job
         // cancelled/lease-expired/already terminal before we could commit its
@@ -332,59 +352,43 @@ export type RunDcfFcffValuationResult =
     };
 
 export async function runDcfFcffValuation(params: RunDcfFcffValuationParams): Promise<RunDcfFcffValuationResult> {
-  const fcffResult = await computeFcffSeries({
+  const [waccInputs,directAssumptions] = await Promise.all([
+    loadWaccInputs(params.organizationId, params.valuationBusinessVersionId),
+    loadCanonicalDirectValuationAssumptions(params.organizationId, params.valuationBusinessVersionId),
+  ]);
+  if (!waccInputs && !directAssumptions) {
+    return { ok: false, code: 'NO_WACC_INPUTS', message: `No canonical discount-rate inputs for business_version_id ${params.valuationBusinessVersionId}` };
+  }
+  if (waccInputs && directAssumptions) {
+    return { ok: false, code: 'WACC_COMPUTE_FAILED', message: 'Both computed-WACC inputs and direct assumptions exist; select exactly one canonical discount-rate source' };
+  }
+  if (directAssumptions && (params.directCashTaxRatePct === undefined || !Number.isFinite(params.directCashTaxRatePct))) {
+    return { ok: false, code: 'WACC_COMPUTE_FAILED', message: 'directCashTaxRatePct is required for direct assumptions; cash tax is never inferred as zero' };
+  }
+  const cashTaxRatePct = directAssumptions ? params.directCashTaxRatePct! : Number(waccInputs!.cash_tax_rate_pct);
+  if (!Number.isFinite(cashTaxRatePct)) {
+    return { ok: false, code: 'WACC_COMPUTE_FAILED', message: 'Canonical cash_tax_rate_pct is missing' };
+  }
+  const fcff = await computeFcffSeries({
     organizationId: params.organizationId,
     valuationBusinessVersionId: params.valuationBusinessVersionId,
     entityId: params.entityId,
-    // cashTaxRatePct is filled in once WACC inputs are loaded below; FCFF is recomputed with the
-    // real tax rate before use. A first pass with 0 lets us read currency/lineage cheaply — see note below.
-    cashTaxRatePct: 0,
+    cashTaxRatePct,
     projectionYears: params.projectionYears,
     openingWorkingCapital: params.openingWorkingCapital,
   });
-  if (!fcffResult.ok) return fcffResult;
-
-  const waccInputs = await loadWaccInputs(params.organizationId, params.valuationBusinessVersionId);
-  if (!waccInputs) {
-    return { ok: false, code: 'NO_WACC_INPUTS', message: `No finance_valuation_wacc_inputs row for business_version_id ${params.valuationBusinessVersionId}` };
-  }
-
-  // Recompute FCFF with the REAL cash_tax_rate_pct from WACC inputs (the formula's own tax rate,
-  // WP-D09 section 5 — never hardcoded, never assumed equal to the Baseline's statutory rate).
-  const cashTaxRatePct = waccInputs.cash_tax_rate_pct === null ? 0 : Number(waccInputs.cash_tax_rate_pct);
-  const fcff =
-    cashTaxRatePct === 0
-      ? fcffResult
-      : await computeFcffSeries({
-          organizationId: params.organizationId,
-          valuationBusinessVersionId: params.valuationBusinessVersionId,
-          entityId: params.entityId,
-          cashTaxRatePct,
-          projectionYears: params.projectionYears,
-          openingWorkingCapital: params.openingWorkingCapital,
-        });
   if (!fcff.ok) return fcff;
 
-  const waccResult = computeWacc(waccInputs, fcff.currency);
-  if (!waccResult.ok) {
-    return { ok: false, code: 'WACC_COMPUTE_FAILED', message: `${waccResult.code}: ${waccResult.message}` };
-  }
-  await persistComputedWacc(params.organizationId, params.valuationBusinessVersionId, waccResult.breakdown);
-
-  const methodResult = await findOrCreateMethod({
-    organizationId: params.organizationId,
-    businessVersionId: params.valuationBusinessVersionId,
-    methodType: 'DCF_FCFF',
-    createdBy: params.requestedByUserId,
-  });
-  if (!methodResult.ok) {
-    return { ok: false, code: 'BUSINESS_VERSION_NOT_FOUND', message: methodResult.message };
-  }
-  const method = methodResult.method;
+  const waccResult = directAssumptions
+    ? directAssumptions.currency!==fcff.currency
+      ? {ok:false as const,code:'CURRENCY_MISMATCH',message:'direct assumptions currency does not match FCFF currency'}
+      : {ok:true as const,breakdown:{source:'DIRECT_ASSUMPTION' as const,waccPct:Number(directAssumptions.direct_wacc_pct),sourceWorkingRevisionId:String(directAssumptions.source_working_revision_id),sourceWorkingRevisionVersion:Number(directAssumptions.source_working_revision_version)}}
+    : computeWacc(waccInputs!, fcff.currency);
+  if (!waccResult.ok) return { ok: false, code: 'WACC_COMPUTE_FAILED', message: `${waccResult.code}: ${waccResult.message}` };
+  if(!directAssumptions) await persistComputedWacc(params.organizationId, params.valuationBusinessVersionId, waccResult.breakdown as WaccBreakdown);
 
   const notPresent = fcff.years.filter((y) => y.status !== 'PRESENT');
   if (notPresent.length > 0) {
-    await setMethodResult({ methodId: method.id, readiness: 'DATA_INCOMPLETE', resultValueStatus: 'MISSING', resultEvDecimal: null });
     return {
       ok: false,
       code: 'FCFF_NOT_FULLY_PRESENT',
@@ -393,10 +397,15 @@ export async function runDcfFcffValuation(params: RunDcfFcffValuationParams): Pr
   }
 
   const terminalYearFcff = fcff.years[fcff.years.length - 1].fcff!;
-  const terminal = computeGordonTerminalValue({ fcffTerminalYear: terminalYearFcff, gPct: params.terminal.gPct, waccPct: waccResult.breakdown.waccPct });
+  const terminalMethod = directAssumptions?.terminal_method ?? 'gordon';
+  const gPct = directAssumptions ? Number(directAssumptions.terminal_growth_pct) : params.terminal.gPct;
+  const terminal = terminalMethod === 'gordon'
+    ? (gPct === undefined ? {ok:false as const,code:'G_MUST_BE_LESS_THAN_WACC' as const,message:'terminal.gPct is required'} : computeGordonTerminalValue({ fcffTerminalYear: terminalYearFcff, gPct, waccPct: waccResult.breakdown.waccPct }))
+    : (directAssumptions!.exit_multiple_metric!=='EV/EBITDA' || fcff.years[fcff.years.length-1].ebit===null || fcff.years[fcff.years.length-1].depreciationAmortization===null
+        ? {ok:false as const,code:'INVALID_EXIT_MULTIPLE_INPUT' as const,message:'Pinned terminal-year EBITDA lineage is required for EV/EBITDA'}
+        : computeExitMultipleTerminalValue({terminalMetricValue:fcff.years[fcff.years.length-1].ebit!+fcff.years[fcff.years.length-1].depreciationAmortization!,exitMultiple:Number(directAssumptions!.exit_multiple)}));
   if (!terminal.ok) {
-    await setMethodResult({ methodId: method.id, readiness: 'COMPUTE_FAILED', resultValueStatus: 'MISSING', resultEvDecimal: null });
-    return { ok: false, code: 'TERMINAL_G_MUST_BE_LESS_THAN_WACC', message: terminal.message };
+    return { ok: false, code: terminal.code === 'INVALID_EXIT_MULTIPLE_INPUT' ? 'INVALID_EXIT_MULTIPLE_INPUT' : 'TERMINAL_G_MUST_BE_LESS_THAN_WACC', message: terminal.message };
   }
 
   const discounted = discountCashFlows({
@@ -405,24 +414,25 @@ export async function runDcfFcffValuation(params: RunDcfFcffValuationParams): Pr
     terminalValue: terminal.terminalValue,
   });
 
-  await writeTerminalRow({
-    organizationId: params.organizationId,
-    methodId: method.id,
-    convention: 'GORDON_GROWTH',
-    gPct: params.terminal.gPct,
-    terminalValueDecimal: terminal.terminalValue,
-    terminalSharePct: discounted.terminalSharePct,
-    isPrimary: true,
-    createdBy: params.requestedByUserId,
-  });
+  let equityValue: number | null = null;
+  let bridgeComponents:any[]=[];
+  if (directAssumptions) {
+    if (!params.valuationAsOfDate) return {ok:false,code:'WACC_COMPUTE_FAILED',message:'valuationAsOfDate is required for direct net-debt bridge'};
+    const netDebt = Number(directAssumptions.net_debt_decimal);
+    bridgeComponents = [{sequenceOrder:1,componentKind:(netDebt >= 0 ? 'DEBT' : 'CASH') as 'DEBT'|'CASH',sign:(netDebt >= 0 ? 'SUBTRACT_FROM_EV' : 'ADD_TO_EV') as 'SUBTRACT_FROM_EV'|'ADD_TO_EV',amountDecimal:Math.abs(netDebt),asOfDate:params.valuationAsOfDate,rationale:'Pinned direct net debt'}];
+    const equity = computeEquityValue(discounted.enterpriseValue, bridgeComponents);
+    if (!equity.ok) return {ok:false,code:'WACC_COMPUTE_FAILED',message:equity.message};
+    equityValue=equity.equityValueDecimal;
+  }
 
-  const setResult = await setMethodResult({
-    methodId: method.id,
-    readiness: 'READY',
-    resultValueStatus: discounted.enterpriseValue === 0 ? 'PRESENT_ZERO' : 'PRESENT_NONZERO',
-    resultEvDecimal: discounted.enterpriseValue,
-  });
-  if (!setResult.ok) throw new Error(`runDcfFcffValuation: internal inconsistency writing method result: ${setResult.message}`);
+  const publish=async()=>{
+    const methodResult=await findOrCreateMethod({organizationId:params.organizationId,businessVersionId:params.valuationBusinessVersionId,methodType:'DCF_FCFF',createdBy:params.requestedByUserId,tx:params.publicationTx});
+    if(!methodResult.ok)throw new Error(methodResult.message);const method=methodResult.method;
+    await writeTerminalRow({organizationId:params.organizationId,methodId:method.id,convention:terminalMethod==='gordon'?'GORDON_GROWTH':'EXIT_MULTIPLE',gPct:terminalMethod==='gordon'?gPct:null,exitMultipleValue:terminalMethod==='exit_multiple'?Number(directAssumptions!.exit_multiple):null,terminalValueDecimal:terminal.terminalValue,terminalSharePct:discounted.terminalSharePct,isPrimary:true,createdBy:params.requestedByUserId,sourceWorkingRevisionId:directAssumptions?.source_working_revision_id??null,sourceWorkingRevisionVersion:directAssumptions?Number(directAssumptions.source_working_revision_version):null,tx:params.publicationTx});
+    const setResult=await setMethodResult({methodId:method.id,readiness:'READY',resultValueStatus:discounted.enterpriseValue===0?'PRESENT_ZERO':'PRESENT_NONZERO',resultEvDecimal:discounted.enterpriseValue,tx:params.publicationTx});if(!setResult.ok)throw new Error(setResult.message);
+    if(directAssumptions)await writeBridge({organizationId:params.organizationId,businessVersionId:params.valuationBusinessVersionId,asOfDate:params.valuationAsOfDate!,enterpriseValueDecimal:discounted.enterpriseValue,equityValueDecimal:equityValue!,components:bridgeComponents,createdBy:params.requestedByUserId,sourceWorkingRevisionId:directAssumptions.source_working_revision_id,sourceWorkingRevisionVersion:Number(directAssumptions.source_working_revision_version),tx:params.publicationTx});
+    return method;
+  };
 
   // --- compute_jobs bookkeeping (job_type='VALUATION_COMPUTE', ADR section 13) ---
   const bv = await withPinnedPostgresTransaction((tx) =>
@@ -437,7 +447,7 @@ export async function runDcfFcffValuation(params: RunDcfFcffValuationParams): Pr
   }
 
   const inputRevisionHash = createHash('sha256')
-    .update(JSON.stringify({ businessVersionId: params.valuationBusinessVersionId, entityId: params.entityId, projectionYears: params.projectionYears, terminal: params.terminal }))
+    .update(JSON.stringify({ businessVersionId: params.valuationBusinessVersionId, entityId: params.entityId, projectionYears: params.projectionYears, terminal: params.terminal,inputCommandHash:params.inputCommandHash??null }))
     .digest('hex');
   const { job, wasExisting } = await computeJobService.enqueue({
     organizationId: params.organizationId,
@@ -476,6 +486,7 @@ export async function runDcfFcffValuation(params: RunDcfFcffValuationParams): Pr
     // exact result. This invocation independently recomputed the SAME deterministic values above
     // (Decimal-based, in-memory sorted) — we report the ORIGINAL job's identity, never mint a
     // second compute_jobs/compute_job_outputs row for the same idempotency key.
+    const method=await publish();
     return {
       ok: true,
       job: claimResult.job,
@@ -485,6 +496,7 @@ export async function runDcfFcffValuation(params: RunDcfFcffValuationParams): Pr
       terminalValue: terminal.terminalValue,
       discounted,
       enterpriseValue: discounted.enterpriseValue,
+      equityValue,
     };
   }
   const runningJob = claimResult.job;
@@ -522,6 +534,7 @@ export async function runDcfFcffValuation(params: RunDcfFcffValuationParams): Pr
     computeRunId: runningJob.id,
   });
   const finalJob = completed.ok ? completed.job : ((await computeJobService.getJob(params.organizationId, job.id)) ?? runningJob);
+  const method=await publish();
 
   return {
     ok: true,
@@ -532,5 +545,6 @@ export async function runDcfFcffValuation(params: RunDcfFcffValuationParams): Pr
     terminalValue: terminal.terminalValue,
     discounted,
     enterpriseValue: discounted.enterpriseValue,
+    equityValue,
   };
 }

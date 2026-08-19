@@ -107,6 +107,8 @@ export interface TerminalRowInput {
   isPrimary: boolean;
   rationale?: string | null;
   createdBy: string;
+  sourceWorkingRevisionId?: string | null;
+  sourceWorkingRevisionVersion?: number | null;
 }
 
 /**
@@ -117,7 +119,7 @@ export interface TerminalRowInput {
  * `trg_finance_valuation_terminal_check_g_below_wacc` trigger is still the final, authoritative gate
  * on every INSERT regardless of what this service already checked.
  */
-export async function writeTerminalRow(input: TerminalRowInput): Promise<{ id: string }> {
+export async function writeTerminalRow(input: TerminalRowInput & {tx?:any}): Promise<{ id: string }> {
   if (input.convention === 'GORDON_GROWTH' && (input.gPct === null || input.gPct === undefined)) {
     throw new Error('writeTerminalRow: GORDON_GROWTH convention requires gPct');
   }
@@ -125,18 +127,19 @@ export async function writeTerminalRow(input: TerminalRowInput): Promise<{ id: s
     throw new Error('writeTerminalRow: EXIT_MULTIPLE convention requires exitMultipleValue');
   }
   const id = uuidv4();
-  await withPinnedPostgresTransaction((tx) =>
-    tx.queryRun(
+  const write=(tx:any)=>tx.queryRun(
       `INSERT INTO finance_valuation_terminal (
          id, organization_id, method_id, convention, g_pct, exit_multiple_value,
          reinvestment_rate_pct, roic_pct, terminal_value_decimal, terminal_share_pct, is_primary,
-         rationale, created_by
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         rationale, created_by, source_working_revision_id, source_working_revision_version
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT (method_id, convention) DO UPDATE SET
          g_pct = EXCLUDED.g_pct, exit_multiple_value = EXCLUDED.exit_multiple_value,
          reinvestment_rate_pct = EXCLUDED.reinvestment_rate_pct, roic_pct = EXCLUDED.roic_pct,
          terminal_value_decimal = EXCLUDED.terminal_value_decimal, terminal_share_pct = EXCLUDED.terminal_share_pct,
-         is_primary = EXCLUDED.is_primary, rationale = EXCLUDED.rationale, updated_at = now()`,
+         is_primary = EXCLUDED.is_primary, rationale = EXCLUDED.rationale,
+         source_working_revision_id = EXCLUDED.source_working_revision_id,
+         source_working_revision_version = EXCLUDED.source_working_revision_version, updated_at = now()`,
       [
         id,
         input.organizationId,
@@ -151,9 +154,11 @@ export async function writeTerminalRow(input: TerminalRowInput): Promise<{ id: s
         input.isPrimary,
         input.rationale ?? null,
         input.createdBy,
+        input.sourceWorkingRevisionId ?? null,
+        input.sourceWorkingRevisionVersion ?? null,
       ]
-    )
-  );
+    );
+  if(input.tx)await write(input.tx);else await withPinnedPostgresTransaction(write);
   return { id };
 }
 

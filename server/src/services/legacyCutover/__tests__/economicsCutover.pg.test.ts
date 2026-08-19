@@ -100,6 +100,7 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
     });
     mappedValuationArtifactId = valuationCanonical.artifact.artifact_id;
     mappedValuationBusinessVersionId = valuationCanonical.businessVersion.business_version_id;
+    await pool.query(`INSERT INTO valuations(id,organization_id,title,source_type,currency,status,created_by) VALUES($1,$2,'Wave4 protected','manual','PLN','DRAFT',$3)`,[mappedValuationId,orgA,actor]);
     await pool.query(
       `INSERT INTO finance_artifact_aliases
         (legacy_table,legacy_id,legacy_version,artifact_id,organization_id,
@@ -319,6 +320,17 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
         successor_path: '/api/v8/finance-v2/valuation/variants/:businessVersionId/advisor/generate',
       },
     ]);
+  });
+
+  it('blocks typed assumptions and peers legacy doors before mutation with exact telemetry',async()=>{
+    const before=await pool.query(`SELECT assumptions,peers FROM valuations WHERE id=$1`,[mappedValuationId]);
+    const assumptions=await request(app).put(`/api/economics/valuations/${mappedValuationId}/assumptions`).set('x-request-id',`${prefix}-wave4-assumptions`).send({waccPercent:99});
+    const peers=await request(app).put(`/api/economics/valuations/${mappedValuationId}/peers`).set('x-request-id',`${prefix}-wave4-peers`).send({peerSet:['MUTATION']});
+    expect(assumptions.status).toBe(410); expect(peers.status).toBe(410);
+    expect(assumptions.body).toMatchObject({writerId:'ECO-W24',successor:'/api/v8/finance-v2/valuation/legacy/:legacyId/assumptions'});
+    expect(peers.body).toMatchObject({writerId:'ECO-W25',successor:'/api/v8/finance-v2/valuation/legacy/:legacyId/peers'});
+    const after=await pool.query(`SELECT assumptions,peers FROM valuations WHERE id=$1`,[mappedValuationId]);
+    expect(after.rows).toEqual(before.rows);
   });
 
   it('does not block the finance-settings writer (ECO-W42)', async () => {

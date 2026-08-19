@@ -48,7 +48,7 @@ vi.mock('react-i18next', () => ({
 // vi.mock factories are hoisted above module-level declarations, so the
 // mocks they reference must come from vi.hoisted (plain `const` here would
 // throw "Cannot access before initialization").
-const { toastFn, previewMock, confirmMock, getHandoffMock, navigateMock } = vi.hoisted(() => ({
+const { toastFn, previewMock, confirmMock, getHandoffMock, getInputsMock, getResultsMock, navigateMock } = vi.hoisted(() => ({
   // Capture the render-prop function toast(fn) invocations get called with,
   // so tests can render its returned JSX (the "Otwórz" link) and assert on
   // it, the same way react-hot-toast would when it actually renders.
@@ -59,6 +59,8 @@ const { toastFn, previewMock, confirmMock, getHandoffMock, navigateMock } = vi.h
   // after a successful confirm. Defaults to "no receipt yet" so existing
   // scenarios (which don't care about it) aren't forced to stub it.
   getHandoffMock: vi.fn().mockResolvedValue(null),
+  getInputsMock: vi.fn(),
+  getResultsMock: vi.fn(),
   navigateMock: vi.fn(),
 }));
 
@@ -76,6 +78,11 @@ vi.mock('@/services/api/v8/financeCandidateHandoffValuation', () => ({
   confirmValuationRecommendationCandidateHandoff: (...args: unknown[]) => confirmMock(...args),
   getValuationRecommendationCandidateHandoff: (...args: unknown[]) => getHandoffMock(...args),
 }));
+
+vi.mock('@/services/api/financeV2.api', async()=>{
+  const actual=await vi.importActual<any>('@/services/api/financeV2.api');
+  return {...actual,getCanonicalValuationInputs:(...args:unknown[])=>getInputsMock(...args),getCanonicalValuationResults:(...args:unknown[])=>getResultsMock(...args)};
+});
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
@@ -165,6 +172,9 @@ beforeEach(() => {
   confirmMock.mockReset();
   getHandoffMock.mockReset();
   getHandoffMock.mockResolvedValue(null);
+  getInputsMock.mockResolvedValue({artifactId:'artifact-1',businessVersionId:'bv-1',workingRevisionId:'wr-1',workingRevisionVersion:1,assumptions:null,peers:null});
+  getResultsMock.mockReset();
+  getResultsMock.mockResolvedValue({methods:[],terminal:[],bridge:{header:null,components:[]}});
   toastFn.mockClear();
   navigateMock.mockClear();
   global.fetch = vi.fn(mockFetchImplementation) as unknown as typeof fetch;
@@ -175,6 +185,14 @@ afterEach(() => {
 });
 
 describe('ValuationWorkspace — Send as Initiative Candidate', () => {
+  it('hydrates retired assumptions from canonical DTO and never legacy JSON',async()=>{
+    getInputsMock.mockResolvedValue({artifactId:'artifact-1',businessVersionId:'bv-1',workingRevisionId:'wr-1',workingRevisionVersion:1,assumptions:{waccPercent:12,terminalMethod:'gordon',terminalGrowthPercent:2,netDebt:44,manualForecast:{years:[]}},peers:{metric:'EV/EBITDA',min:6,median:8,max:10,peerSet:['A']}});
+    const legacy={...mockValuationDetail,assumptions:{waccPercent:99},peers:{median:99}};
+    global.fetch=vi.fn((input:RequestInfo|URL)=>{const url=String(input);if(url.endsWith(`/economics/valuations/${VALUATION_ID}`))return Promise.resolve({ok:true,json:async()=>({valuation:legacy})} as Response);return mockFetchImplementation(url) as Promise<Response>;}) as unknown as typeof fetch;
+    renderWorkspace();
+    expect(await screen.findByDisplayValue('12')).toBeInTheDocument();
+    expect(screen.queryByDisplayValue('99')).not.toBeInTheDocument();
+  });
   it('opens the requested valuation even when the sidebar list is empty or delayed', async () => {
     global.fetch = vi.fn((input: RequestInfo | URL) => {
       const url = String(input);

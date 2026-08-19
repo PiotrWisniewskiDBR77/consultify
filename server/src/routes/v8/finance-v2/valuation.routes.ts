@@ -22,6 +22,7 @@ import { Router } from 'express';
 
 import type { AuthRequest } from '../../../middleware/auth.middleware.js';
 import { getV8Context } from '../../../middleware/v8Auth.middleware.js';
+import { requireActiveMembership, requireFinanceEditorMembership } from '../../../services/legacyCutover/requireActiveMembership.js';
 import { getBusinessVersion } from '../../../services/finance/canonical/artifactVersionService.js';
 import {
   compareVariantsForAdvisor,
@@ -65,6 +66,8 @@ import {
   renameVariant,
 } from '../../../services/finance/canonical/valuationVariantService.js';
 import { loadWaccInputs, upsertWaccInputs, type UpsertWaccInputsParams } from '../../../services/finance/canonical/valuationWaccService.js';
+import { getPinnedLegacyValuationIdentity, readCanonicalLegacyValuationInputs, writeCanonicalLegacyPeers, writeCanonicalLegacyWacc } from '../../../services/finance/canonical/valuationLegacySuccessorService.js';
+import { runCanonicalLegacyValuationCompute } from '../../../services/finance/canonical/valuationLegacyComputeAdapterService.js';
 import { asyncHandler } from '../../../utils/asyncHandler.js';
 import { financeV2Meta, sendError } from './_shared.js';
 
@@ -93,6 +96,38 @@ const VALID_BRIDGE_KINDS: readonly BridgeComponentKind[] = [
   'OTHER',
 ];
 const VALID_BRIDGE_SIGNS: readonly BridgeComponentSign[] = ['SUBTRACT_FROM_EV', 'ADD_TO_EV'];
+
+router.get('/valuation/legacy/:legacyId/input-identity', requireActiveMembership, asyncHandler(async (req: AuthRequest,res:Response) => {
+  const {organizationId}=getV8Context(req);
+  const identity=await getPinnedLegacyValuationIdentity(organizationId,String(req.params.legacyId||''));
+  if(!identity) return sendError(res,409,'LEGACY_IDENTITY_UNMAPPED','No exact canonical valuation identity');
+  return res.status(200).json({data:{artifactId:identity.artifact_id,businessVersionId:identity.business_version_id,workingRevisionId:identity.working_revision_id,workingRevisionVersion:Number(identity.working_revision_version)},meta:financeV2Meta()});
+}));
+
+router.get('/valuation/legacy/:legacyId/inputs',requireActiveMembership,asyncHandler(async(req:AuthRequest,res:Response)=>{
+  const {organizationId}=getV8Context(req);
+  try{const result=await readCanonicalLegacyValuationInputs(organizationId,String(req.params.legacyId||''));return res.status(200).json({data:{artifactId:result.identity.artifact_id,businessVersionId:result.identity.business_version_id,workingRevisionId:result.identity.working_revision_id,workingRevisionVersion:Number(result.identity.working_revision_version),assumptions:result.assumptions,peers:result.peers},meta:financeV2Meta()});}
+  catch(error:any){const code=String(error?.code||'CANONICAL_INPUT_READ_FAILED');return sendError(res,409,code,String(error?.message||code));}
+}));
+
+router.post('/valuation/legacy/:legacyId/compute',requireFinanceEditorMembership,asyncHandler(async(req:AuthRequest,res:Response)=>{
+  const {organizationId,userId}=getV8Context(req);
+  const idempotencyKey=String(req.headers['x-idempotency-key']||'').trim();if(!idempotencyKey)return sendError(res,400,'IDEMPOTENCY_KEY_REQUIRED','x-idempotency-key is required');
+  try{const computed=await runCanonicalLegacyValuationCompute({organizationId,userId,legacyId:String(req.params.legacyId||''),idempotencyKey,requestId:typeof req.headers['x-request-id']==='string'?req.headers['x-request-id']:null});return res.status(200).json({data:{artifactId:computed.identity.artifact_id,businessVersionId:computed.identity.business_version_id,workingRevisionId:computed.identity.working_revision_id,workingRevisionVersion:Number(computed.identity.working_revision_version),jobId:computed.result.job.id,enterpriseValue:computed.result.enterpriseValue,equityValue:computed.result.equityValue,terminalValue:computed.result.terminalValue,wacc:'wacc' in computed.result?computed.result.wacc:undefined,replay:computed.replay},meta:financeV2Meta()});}catch(error:any){const code=String(error?.code||'CANONICAL_COMPUTE_FAILED');return sendError(res,code.includes('MISSING')?422:409,code,String(error?.message||code));}
+}));
+
+for(const [suffix,writer] of [['assumptions',writeCanonicalLegacyWacc],['peers',writeCanonicalLegacyPeers]] as const){
+  router.put(`/valuation/legacy/:legacyId/${suffix}`,requireFinanceEditorMembership,asyncHandler(async(req:AuthRequest,res:Response)=>{
+    const {organizationId,userId}=getV8Context(req); const body=req.body??{};
+    const idempotencyKey=String(req.headers['x-idempotency-key']||'').trim();
+    if(!idempotencyKey) return sendError(res,400,'IDEMPOTENCY_KEY_REQUIRED','x-idempotency-key is required');
+    if(!body.payload||typeof body.payload!=='object'||Array.isArray(body.payload)||!body.expected) return sendError(res,400,'INVALID_BODY','typed payload and expected identity are required');
+    try{
+      const result=await writer({organizationId,userId,legacyId:String(req.params.legacyId||''),payload:body.payload,expected:body.expected,idempotencyKey});
+      return res.status(200).json({data:{artifactId:result.identity.artifact_id,businessVersionId:result.identity.business_version_id,workingRevisionId:result.identity.working_revision_id,workingRevisionVersion:Number(result.identity.working_revision_version),requestSha256:result.requestSha256,replay:result.replay,readback:result.readback},meta:financeV2Meta()});
+    }catch(error:any){const code=String(error?.code||'CANONICAL_INPUT_WRITE_FAILED'); return sendError(res,code==='NEEDS_DECISION'?422:409,code,String(error?.message||code));}
+  }));
+}
 
 function mapMethod(m: MethodRow) {
   return {
@@ -469,8 +504,8 @@ router.post(
         return sendError(res, 400, 'INVALID_BODY', `projectionYears[${i}] requires fiscalYear (number) and periodIds (array of strings)`);
       }
     }
-    if (!body.terminal || typeof body.terminal.gPct !== 'number') {
-      return sendError(res, 400, 'INVALID_BODY', 'terminal.gPct (number) is required');
+    if (!body.terminal || typeof body.terminal !== 'object') {
+      return sendError(res, 400, 'INVALID_BODY', 'terminal input is required');
     }
 
     const bv = await getBusinessVersion(organizationId, businessVersionId);
@@ -485,7 +520,11 @@ router.post(
       requestId: typeof body.requestId === 'string' ? body.requestId : null,
       projectionYears: body.projectionYears,
       openingWorkingCapital: typeof body.openingWorkingCapital === 'number' ? body.openingWorkingCapital : null,
-      terminal: { gPct: body.terminal.gPct },
+      terminal: {
+        gPct: typeof body.terminal.gPct === 'number' ? body.terminal.gPct : undefined,
+      },
+      directCashTaxRatePct: typeof body.directCashTaxRatePct === 'number' ? body.directCashTaxRatePct : undefined,
+      valuationAsOfDate: typeof body.valuationAsOfDate === 'string' ? body.valuationAsOfDate : undefined,
     };
 
     const result = await runDcfFcffValuation(params);
@@ -498,6 +537,7 @@ router.post(
         jobStatus: result.job.status,
         methodId: result.methodId,
         enterpriseValue: result.enterpriseValue,
+        equityValue: result.equityValue,
         wacc: result.wacc,
         terminalValue: result.terminalValue,
         discounted: result.discounted,
