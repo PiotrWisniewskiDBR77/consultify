@@ -54,6 +54,12 @@ export interface PinnedGovernedSnapshot extends GovernedSnapshotVersion {
   sourceRefs: GovernedSourceRef[];
 }
 
+export interface GovernedSnapshotRef {
+  snapshotId: string;
+  version: number;
+  contentHash: string;
+}
+
 export interface GovernedDocumentIngestResult {
   success: boolean;
   docId: string;
@@ -103,5 +109,12 @@ export const organizationGovernedContextApi = {
 
   async getVersion(version: number): Promise<PinnedGovernedSnapshot> {
     return (await Api.get(`${root}/versions/${version}`)) as PinnedGovernedSnapshot;
+  },
+
+  async resolveLatest(): Promise<GovernedSnapshotRef> {
+    const response = (await Api.get(`${root}/resolve-latest`)) as {
+      snapshotRef: GovernedSnapshotRef;
+    };
+    return response.snapshotRef;
   },
 };

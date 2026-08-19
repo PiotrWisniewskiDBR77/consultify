@@ -1,9 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const uploadChatAttachment = vi.hoisted(() => vi.fn());
+const { uploadChatAttachment, get } = vi.hoisted(() => ({
+  uploadChatAttachment: vi.fn(),
+  get: vi.fn(),
+}));
 
 vi.mock('../../../src/services/api', () => ({
-  Api: { uploadChatAttachment },
+  Api: { uploadChatAttachment, get },
 }));
 
 import { organizationGovernedContextApi } from '../../../src/services/organizationGovernedContextApi';
@@ -25,6 +28,13 @@ describe('organizationGovernedContextApi.ingestDocument', () => {
     await expect(
       organizationGovernedContextApi.ingestDocument(new File(['x'], 'x.txt'), 'idem-2')
     ).rejects.toThrow('unauthorized');
+  });
+
+  it('resolves latest through the canonical endpoint and returns only the exact immutable ref', async () => {
+    const snapshotRef = { snapshotId: 'snapshot-7', version: 7, contentHash: 'hash-7' };
+    get.mockResolvedValue({ snapshotRef });
+    await expect(organizationGovernedContextApi.resolveLatest()).resolves.toEqual(snapshotRef);
+    expect(get).toHaveBeenCalledWith('/organization-context/governed/resolve-latest');
   });
 
   it('canonical multipart writer sends bearer and the exact optional Idempotency-Key', async () => {

@@ -205,6 +205,16 @@ describe.skipIf(!REAL_DB)('ORG-BVP-001 — mounted organization golden path (rea
   });
 
   it('reopens the exact tenant snapshot through HTTP and a fresh PostgreSQL connection', async () => {
+    const latest = await request(app)
+      .get('/api/organization-context/governed/resolve-latest')
+      .set(auth(memberToken));
+    expect(latest.status).toBe(200);
+    expect(latest.body.snapshotRef).toMatchObject({
+      version: 1,
+      contentHash: publishedHash,
+    });
+    expect(latest.body.snapshotRef.snapshotId).toEqual(expect.any(String));
+
     const reopened = await request(app)
       .get('/api/organization-context/governed/versions/1')
       .set(auth(ownerToken));
@@ -214,6 +224,7 @@ describe.skipIf(!REAL_DB)('ORG-BVP-001 — mounted organization golden path (rea
     expect(reopened.body.sourceRefs).toContainEqual(
       expect.objectContaining({ claimId, sourceDocId: docId, fileHash, docVersion: 1, dangling: false })
     );
+    expect(reopened.body.snapshotId).toBe(latest.body.snapshotRef.snapshotId);
 
     const fresh = new Client({ connectionString: DATABASE_URL });
     await fresh.connect();

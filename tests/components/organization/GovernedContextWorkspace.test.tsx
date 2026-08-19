@@ -9,6 +9,7 @@ const api = vi.hoisted(() => ({
   publish: vi.fn(),
   getVersion: vi.fn(),
   ingestDocument: vi.fn(),
+  resolveLatest: vi.fn(),
 }));
 const translate = (_key: string, fallback: string | Record<string, unknown>) =>
   typeof fallback === 'string'
@@ -60,6 +61,7 @@ describe('GovernedContextWorkspace', () => {
     localStorage.clear();
     api.listClaims.mockResolvedValue([]);
     api.listVersions.mockResolvedValue([]);
+    api.resolveLatest.mockRejectedValue(Object.assign(new Error('not found'), { status: 404 }));
   });
 
   it('renders loading followed by the explicit empty state', async () => {
@@ -226,5 +228,60 @@ describe('GovernedContextWorkspace', () => {
     expect(await screen.findByText('Immutable version 1 was published.')).toBeInTheDocument();
     expect(await screen.findByRole('alert')).toHaveTextContent('deleted or changed');
     expect(screen.getAllByText('abc123')).toHaveLength(2);
+    expect(screen.getByTestId('selected-governed-ref')).toHaveTextContent('snapshot-1 · v1 · abc123');
+  });
+
+  it('shows visible sources and conflicts without exposing server-filtered restricted rows', async () => {
+    api.listClaims.mockResolvedValue([
+      { ...pendingClaim, visibilityScope: 'organization' },
+      { ...pendingClaim, claimId: 'claim-2', itemId: 'item-2', value: { summary: 'Different' }, visibilityScope: 'organization' },
+    ]);
+    render(<GovernedContextWorkspace isAdmin={false} />);
+    expect(await screen.findByRole('heading', { name: 'Sources (2)' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Conflicts (1)' })).toBeInTheDocument();
+    expect(screen.getByText(/Restricted sources and claims are omitted/i)).toBeInTheDocument();
+    expect(screen.getAllByText('attachment_extraction')).toHaveLength(2);
+  });
+
+  it('does not announce publish success until exact canonical readback matches', async () => {
+    api.listClaims.mockResolvedValue([{ ...pendingClaim, reviewState: 'approved', approved: true }]);
+    api.publish.mockResolvedValue(version);
+    api.getVersion.mockResolvedValue({ ...version, snapshotId: 'different', claims: [], sourceRefs: [] });
+    render(<GovernedContextWorkspace isAdmin />);
+    fireEvent.click(await screen.findByRole('button', { name: /Publish approved/i }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('governed state changed');
+    expect(screen.queryByText(/Immutable version 1 was published/i)).not.toBeInTheDocument();
+    expect(screen.queryByTestId('selected-governed-ref')).not.toBeInTheDocument();
+  });
+
+  it('resolves latest once, reopens it exactly, and pins all three immutable fields', async () => {
+    api.listVersions.mockResolvedValue([version]);
+    api.resolveLatest.mockResolvedValue({ snapshotId: 'snapshot-1', version: 1, contentHash: 'abc123' });
+    api.getVersion.mockResolvedValue({ ...version, claims: [], sourceRefs: [] });
+    render(<GovernedContextWorkspace isAdmin />);
+    fireEvent.click(await screen.findByRole('button', { name: /Select latest now/i }));
+    expect(await screen.findByTestId('selected-governed-ref')).toHaveTextContent('snapshot-1 · v1 · abc123');
+    expect(api.resolveLatest).toHaveBeenCalledTimes(1);
+    expect(api.getVersion).toHaveBeenCalledWith(1);
+  });
+
+  it('fails closed when latest readback does not match and renders a typed conflict', async () => {
+    api.listVersions.mockResolvedValue([version]);
+    api.resolveLatest.mockResolvedValue({ snapshotId: 'snapshot-1', version: 1, contentHash: 'abc123' });
+    api.getVersion.mockResolvedValue({ ...version, contentHash: 'changed', claims: [], sourceRefs: [] });
+    render(<GovernedContextWorkspace isAdmin />);
+    fireEvent.click(await screen.findByRole('button', { name: /Select latest now/i }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('governed state changed');
+    expect(screen.queryByTestId('selected-governed-ref')).not.toBeInTheDocument();
+    expect(screen.queryByText(/pinned to this exact/i)).not.toBeInTheDocument();
+  });
+
+  it('cold reopens an explicit version and surfaces permission denial', async () => {
+    api.listVersions.mockResolvedValue([version]);
+    api.getVersion.mockRejectedValue(Object.assign(new Error('forbidden'), { status: 403 }));
+    render(<GovernedContextWorkspace isAdmin={false} />);
+    fireEvent.click(await screen.findByRole('button', { name: /Open exact version/i }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('do not have permission');
+    expect(screen.queryByTestId('selected-governed-ref')).not.toBeInTheDocument();
   });
 });
