@@ -249,10 +249,11 @@ describe('RecoveryCardPanel', () => {
   });
 
   it('3. create flow: fills hypothesis + priority, submits, then shows the card view', async () => {
-    vi.mocked(V8ResultsApi.getRecoveryCard).mockRejectedValue({ status: 404 });
-    vi.mocked(V8ResultsApi.createRecoveryCard).mockResolvedValue(
-      makeCard({ hypothesis: 'My hypothesis text', priority: 'HIGH', lifecycleStatus: 'DRAFT' })
-    );
+    const createdCard = makeCard({ hypothesis: 'My hypothesis text', priority: 'HIGH', lifecycleStatus: 'DRAFT' });
+    vi.mocked(V8ResultsApi.getRecoveryCard)
+      .mockRejectedValueOnce({ status: 404 })
+      .mockResolvedValueOnce(createdCard);
+    vi.mocked(V8ResultsApi.createRecoveryCard).mockResolvedValue(createdCard);
 
     renderPanel();
 
@@ -267,13 +268,14 @@ describe('RecoveryCardPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: rc.createCta }));
 
     await waitFor(() => {
-      expect(V8ResultsApi.createRecoveryCard).toHaveBeenCalledWith('case-1', {
+      expect(V8ResultsApi.createRecoveryCard).toHaveBeenCalledWith('case-1', expect.objectContaining({
         hypothesis: 'My hypothesis text',
         priority: 'HIGH',
         expectedImpact: undefined,
         expectedRecoveryDate: undefined,
         effectivenessCriteria: undefined,
-      });
+        idempotencyKey: expect.any(String),
+      }));
     });
 
     // Panel switched from the create form to the loaded-card view.
@@ -520,7 +522,9 @@ describe('RecoveryCardPanel', () => {
       closedAt: '2026-08-01T12:00:00.000Z',
     };
 
-    vi.mocked(V8ResultsApi.getRecoveryCard).mockResolvedValue(activeCard);
+    vi.mocked(V8ResultsApi.getRecoveryCard)
+      .mockResolvedValueOnce(activeCard)
+      .mockResolvedValueOnce(closedCard);
     vi.mocked(V8ResultsApi.closeRecoveryCard).mockReturnValue(
       new Promise((resolve) => {
         setTimeout(() => resolve(closedCard), 50);

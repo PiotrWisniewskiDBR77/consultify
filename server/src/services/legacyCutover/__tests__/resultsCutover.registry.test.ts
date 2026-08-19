@@ -18,14 +18,26 @@ describe('Results legacy cutover registry', () => {
       'RESULTS-W21',
       'RESULTS-W22',
       'RESULTS-W24',
+      'RESULTS-W25',
+      'RESULTS-W26',
+      'RESULTS-W27',
+      'RESULTS-W28',
+      'RESULTS-W29',
+      'RESULTS-W30',
+      'RESULTS-W31',
+      'RESULTS-W32',
       'RESULTS-W33',
       'RESULTS-W35',
       'RESULTS-W36',
       'RESULTS-W48',
       'RESULTS-W49',
     ]);
-    expect(RESULTS_LEGACY_CUTOVER_DENOMINATOR.openDoors).toHaveLength(13);
-    expect(RESULTS_LEGACY_CUTOVER_DENOMINATOR.unmappedDoors).toHaveLength(13);
+    expect(RESULTS_LEGACY_CUTOVER_DENOMINATOR.openDoors).toEqual([
+      'RESULTS-W05', 'RESULTS-W06', 'RESULTS-W18', 'RESULTS-W23', 'RESULTS-W34',
+    ]);
+    expect(RESULTS_LEGACY_CUTOVER_DENOMINATOR.unmappedDoors).toEqual([
+      'RESULTS-W05', 'RESULTS-W06', 'RESULTS-W18', 'RESULTS-W23', 'RESULTS-W34',
+    ]);
   });
 
   it('retires direct KPI edits and measurements only after mounted callers use canonical contracts', () => {

@@ -19,6 +19,10 @@ import {
   updateRecoveryAction,
 } from '../../services/resultsVnext/kpi/kpiRecoveryChildCommands.js';
 import {
+  closeRecoveryCard,
+  updateRecoveryCard,
+} from '../../services/resultsVnext/kpi/kpiRecoveryCardCommands.js';
+import {
   AtomicWriteAggregateNotFoundError,
   AtomicWriteConflictError,
 } from '../../services/resultsVnext/platform/atomicWrite.js';
@@ -64,6 +68,31 @@ const ResolveCheckpoint = z.object({
   kpiTimeSeriesId: z.string().trim().min(1).max(200).nullable().optional(),
   idempotencyKey: Idempotency,
 });
+const UpdateCard = z.object({
+  expectedVersion: Version,
+  hypothesis: z.string().max(10000).nullable().optional(),
+  confirmedCause: z.string().max(10000).nullable().optional(),
+  impactDescription: z.string().max(10000).nullable().optional(),
+  priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional(),
+  expectedImpact: z.string().max(10000).nullable().optional(),
+  dependencies: z.array(z.object({ description: z.string().trim().min(1), relatedId: z.string().optional(), note: z.string().optional() })).max(50).optional(),
+  risks: z.array(z.object({ description: z.string().trim().min(1), relatedId: z.string().optional(), note: z.string().optional() })).max(50).optional(),
+  expectedRecoveryDate: z.string().date().nullable().optional(),
+  effectivenessCriteria: z.string().max(10000).nullable().optional(),
+  idempotencyKey: Idempotency,
+}).refine((v) => v.hypothesis !== undefined || v.confirmedCause !== undefined ||
+  v.impactDescription !== undefined || v.priority !== undefined || v.expectedImpact !== undefined ||
+  v.dependencies !== undefined || v.risks !== undefined || v.expectedRecoveryDate !== undefined ||
+  v.effectivenessCriteria !== undefined, { message: 'At least one recovery-card field is required' });
+const CloseCard = z.object({
+  expectedVersion: Version,
+  evidenceText: z.string().trim().max(10000).nullable().optional(),
+  evidenceRef: z.string().trim().max(2000).nullable().optional(),
+  effectivenessRating: z.enum(['EFFECTIVE', 'PARTIALLY_EFFECTIVE', 'INEFFECTIVE']),
+  idempotencyKey: Idempotency,
+}).refine((value) => Boolean(value.evidenceText || value.evidenceRef), {
+  message: 'Evidence text or reference is required',
+});
 
 function auth(req: AuthenticatedRequest, res: Response) {
   const organizationId = req.user?.organizationId || req.user?.organization_id;
@@ -102,6 +131,29 @@ function fail(res: Response, err: unknown, op: string): void {
   });
   res.status(500).json({ error: 'Internal server error', code: 'RECOVERY_CHILD_INTERNAL_ERROR' });
 }
+
+router.patch('/:cardId', validateParams(CardParams), validateBody(UpdateCard), async (req: AuthenticatedRequest, res) => {
+  const a = auth(req, res); if (!a) return;
+  try {
+    const b = req.body as z.infer<typeof UpdateCard>;
+    const { expectedVersion, idempotencyKey, ...patch } = b;
+    const outcome = await updateRecoveryCard({ ...(await context(req, a)), cardId: req.params.cardId!,
+      expectedVersion, patch, idempotencyKey: key(idempotencyKey) });
+    res.status(200).json({ ...outcome, card: outcome.result });
+  } catch (err) { fail(res, err, 'updateRecoveryCard'); }
+});
+
+router.post('/:cardId/close', validateParams(CardParams), validateBody(CloseCard), async (req: AuthenticatedRequest, res) => {
+  const a = auth(req, res); if (!a) return;
+  try {
+    const b = req.body as z.infer<typeof CloseCard>;
+    const outcome = await closeRecoveryCard({ ...(await context(req, a)), cardId: req.params.cardId!,
+      expectedVersion: b.expectedVersion, evidenceText: b.evidenceText,
+      evidenceRef: b.evidenceRef, effectivenessRating: b.effectivenessRating,
+      idempotencyKey: key(b.idempotencyKey) });
+    res.status(200).json({ ...outcome, card: outcome.result });
+  } catch (err) { fail(res, err, 'closeRecoveryCard'); }
+});
 
 router.post('/:cardId/actions', validateParams(CardParams), validateBody(CreateAction), async (req: AuthenticatedRequest, res) => {
   const a = auth(req, res); if (!a) return;

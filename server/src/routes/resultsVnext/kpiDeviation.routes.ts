@@ -102,6 +102,7 @@ import {
   listDeviationCases,
   listEffectivenessVerifications,
 } from '../../services/resultsVnext/kpi/kpiDeviationRepository.js';
+import { createRecoveryCard } from '../../services/resultsVnext/kpi/kpiRecoveryCardCommands.js';
 import { CORRECTIVE_ACTION_STATUSES, type CorrectiveActionRow } from '../../services/resultsVnext/kpi/kpiDeviationTypes.js';
 import {
   AtomicWriteAggregateNotFoundError,
@@ -145,6 +146,15 @@ const ListCorrectiveActionsQuerySchema = z.object({
 const ListEffectivenessVerificationsQuerySchema = z.object({
   limit: z.coerce.number().int().positive().max(500).optional(),
   offset: z.coerce.number().int().nonnegative().optional(),
+});
+
+const CreateRecoveryCardSchema = z.object({
+  hypothesis: z.string().trim().min(1).max(10000),
+  priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional(),
+  expectedImpact: z.string().trim().max(10000).optional(),
+  expectedRecoveryDate: z.string().date().optional(),
+  effectivenessCriteria: z.string().trim().max(10000).optional(),
+  idempotencyKey: z.string().trim().min(8).max(200).optional(),
 });
 
 const router = Router();
@@ -297,6 +307,46 @@ router.get(
       res.status(200).json({ cases });
     } catch (err) {
       handleDeviationRouteError(res, err, 'listDeviationCases');
+    }
+  }
+);
+
+// Canonical parent command for the recovery-card aggregate. This route is
+// intentionally colocated with its deviation-case owner; child commands live
+// under /kpi/recovery-cards once this command has returned the exact card id.
+router.post(
+  '/:caseId/recovery-card',
+  validateParams(CaseIdParamsSchema),
+  validateBody(CreateRecoveryCardSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const body = req.body as z.infer<typeof CreateRecoveryCardSchema>;
+      const outcome = await createRecoveryCard({
+        caseId: req.params.caseId!,
+        organizationId: auth.organizationId,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        access: await resolveAccess(req, auth),
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        initialPatch: {
+          hypothesis: body.hypothesis,
+          priority: body.priority,
+          expectedImpact: body.expectedImpact,
+          expectedRecoveryDate: body.expectedRecoveryDate,
+          effectivenessCriteria: body.effectivenessCriteria,
+        },
+      });
+      res.status(outcome.outcome === 'applied' ? 201 : 200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        card: outcome.result,
+      });
+    } catch (err) {
+      handleDeviationRouteError(res, err, 'createRecoveryCard');
     }
   }
 );

@@ -12,6 +12,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { verifyToken } from '../../server/src/middleware/auth.middleware.js';
 import { requireOrgAccess } from '../../server/src/middleware/rbac.middleware.js';
 import recoveryRoutes from '../../server/src/routes/resultsVnext/kpiRecoveryChildren.routes.js';
+import deviationRoutes from '../../server/src/routes/resultsVnext/kpiDeviation.routes.js';
 import resultsRoutes from '../../server/src/routes/v8/results.routes.js';
 import { createLegacyCutoverGuard } from '../../server/src/services/legacyCutover/legacyCutoverKernel.js';
 import { RESULTS_CUTOVER } from '../../server/src/services/legacyCutover/registry/results.js';
@@ -24,6 +25,7 @@ const actorA = `${tag}-actor-a`, actorB = `${tag}-actor-b`, foreignOwner = `${ta
 const kpiA = `${tag}-kpi-a`, kpiB = `${tag}-kpi-b`;
 const caseA = `${tag}-case-a`, caseB = `${tag}-case-b`;
 const cardA = `${tag}-card-a`, cardB = `${tag}-card-b`;
+const kpiParent = `${tag}-kpi-parent`, caseParent = randomUUID();
 
 describe.skipIf(!real)('mounted signed-JWT RESULTS-W27..W31 cutover (real PostgreSQL)', () => {
   let pool: Pool;
@@ -53,9 +55,15 @@ describe.skipIf(!real)('mounted signed-JWT RESULTS-W27..W31 cutover (real Postgr
       [foreignOwner, orgB, `${foreignOwner}@test.invalid`]);
     await pool.query(`INSERT INTO organization_members(id,organization_id,user_id,role,status)
       VALUES($1,$2,$3,'MEMBER','ACTIVE')`, [`${foreignOwner}-membership`, orgB, foreignOwner]);
+    await pool.query(`INSERT INTO initiative_kpis
+      (id,organization_id,name,target_value,direction,threshold_mode,amber_threshold_pct,red_threshold_pct)
+      VALUES($1,$2,$3,100,'HIGHER_IS_BETTER','PERCENT_FROM_TARGET',0.1,0.2)`, [kpiParent, orgA, kpiParent]);
+    await pool.query(`INSERT INTO kpi_deviation_cases(id,kpi_id,organization_id,period_start,severity,owner_user_id)
+      VALUES($1,$2,$3,'2026-08-01','RED',$4)`, [caseParent, kpiParent, orgA, actorA]);
 
     app = express();
     app.use(express.json());
+    app.use('/api/vnext/results/kpi/deviation-cases', deviationRoutes);
     app.use('/api/vnext/results/kpi/recovery-cards', recoveryRoutes);
     app.use('/api/v8/results', verifyToken, requireOrgAccess(), (req: any, _res, next) => {
       req.v8Context = { organizationId: req.user.organizationId, userId: req.user.id, userRole: req.user.role };
@@ -115,6 +123,45 @@ describe.skipIf(!real)('mounted signed-JWT RESULTS-W27..W31 cutover (real Postgr
     ]));
   });
 
+  it('mounts canonical parent create/edit/close and retires W25/W26/W32 before legacy mutation', async () => {
+    const created = await request(app).post(`/api/vnext/results/kpi/deviation-cases/${caseParent}/recovery-card`)
+      .set(auth()).send({ hypothesis: 'Mounted initial cause', priority: 'HIGH',
+        idempotencyKey: `${tag}-parent-create` }).expect(201);
+    const parentCard = created.body.card;
+    expect(parentCard).toMatchObject({ deviationCaseId: caseParent, hypothesis: 'Mounted initial cause',
+      priority: 'HIGH', version: 2, lifecycleStatus: 'ACTIVE' });
+    const replay = await request(app).post(`/api/vnext/results/kpi/deviation-cases/${caseParent}/recovery-card`)
+      .set(auth()).send({ hypothesis: 'Mounted initial cause', priority: 'HIGH',
+        idempotencyKey: `${tag}-parent-create` }).expect(200);
+    expect(replay.body).toMatchObject({ outcome: 'duplicate', card: { id: parentCard.id } });
+
+    const updated = await request(app).patch(`/api/vnext/results/kpi/recovery-cards/${parentCard.id}`)
+      .set(auth()).send({ expectedVersion: 2, hypothesis: 'Mounted canonical cause', priority: 'HIGH',
+        idempotencyKey: `${tag}-parent-update` }).expect(200);
+    expect(updated.body.card).toMatchObject({ hypothesis: 'Mounted canonical cause', version: 3 });
+    await pool.query(`INSERT INTO kpi_time_series(id,kpi_id,organization_id,value,period_start,created_at)
+      VALUES($1,$2,$3,100,'2026-08-20',clock_timestamp()+interval '1 second')`,
+      [`${tag}-parent-measurement`, kpiParent, orgA]);
+    const closed = await request(app).post(`/api/vnext/results/kpi/recovery-cards/${parentCard.id}/close`)
+      .set(auth()).send({ expectedVersion: 3, evidenceText: 'Mounted target recovery', effectivenessRating: 'EFFECTIVE',
+        idempotencyKey: `${tag}-parent-close` }).expect(200);
+    expect(closed.body.card).toMatchObject({ lifecycleStatus: 'CLOSED', version: 4 });
+    const cold = await request(app).get(`/api/v8/results/deviation-cases/${caseParent}/recovery-card`).set(auth()).expect(200);
+    expect(cold.body.data).toMatchObject({ id: parentCard.id, hypothesis: 'Mounted canonical cause',
+      lifecycleStatus: 'CLOSED', effectivenessRating: 'EFFECTIVE', version: 4 });
+
+    const before = await pool.query(`SELECT to_jsonb(c) card FROM kpi_recovery_cards c WHERE id=$1`, [parentCard.id]);
+    await request(app).post(`/api/v8/results/deviation-cases/${caseParent}/recovery-card`).set(auth()).send({}).expect(410);
+    await request(app).put(`/api/v8/results/recovery-cards/${parentCard.id}`).set(auth()).send({ version: 3, hypothesis: 'legacy' }).expect(410);
+    await request(app).post(`/api/v8/results/recovery-cards/${parentCard.id}/close`).set(auth()).send({ version: 3,
+      evidenceText: 'legacy', effectivenessRating: 'EFFECTIVE' }).expect(410);
+    const after = await pool.query(`SELECT to_jsonb(c) card FROM kpi_recovery_cards c WHERE id=$1`, [parentCard.id]);
+    expect(after.rows[0]).toEqual(before.rows[0]);
+    const telemetry = await pool.query(`SELECT DISTINCT writer_id FROM legacy_cutover_usage_events
+      WHERE organization_id=$1 AND writer_id=ANY($2::text[])`, [orgA, ['RESULTS-W25','RESULTS-W26','RESULTS-W32']]);
+    expect(telemetry.rows.map((row) => row.writer_id).sort()).toEqual(['RESULTS-W25','RESULTS-W26','RESULTS-W32']);
+  });
+
   it('returns exact mounted auth/tenant errors with zero mutation', async () => {
     const before = Number((await pool.query(`SELECT count(*) n FROM rvn_kpi_recovery_actions WHERE organization_id=$1`, [orgA])).rows[0].n);
     const foreignOwnerResponse = await request(app).post(`/api/vnext/results/kpi/recovery-cards/${cardA}/actions`)
@@ -128,7 +175,7 @@ describe.skipIf(!real)('mounted signed-JWT RESULTS-W27..W31 cutover (real Postgr
     const revoked = await request(app).post(`/api/vnext/results/kpi/recovery-cards/${cardA}/actions`)
       .set(auth()).send({ title: 'Revoked', actionType: 'IMMEDIATE',
         idempotencyKey: `${tag}-mounted-revoked` }).expect(403);
-    expect(revoked.body.code).toBe('RESULTS_INTERNAL_BETA_VISIBILITY_DENIED');
+    expect(revoked.body.code).toBe('COMMAND_CAPABILITY_DENIED');
     await pool.query(`INSERT INTO organization_members(id,organization_id,user_id,role,status)
       VALUES($1,$2,$3,'ADMIN','ACTIVE')`, [`${actorA}-mounted-restored`, orgA, actorA]);
     expect(Number((await pool.query(`SELECT count(*) n FROM rvn_kpi_recovery_actions WHERE organization_id=$1`, [orgA])).rows[0].n)).toBe(before);

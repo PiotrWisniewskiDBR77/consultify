@@ -16,6 +16,13 @@ const requireCanonicalRecoveryCheckpoint = (response: any): V8ResultsKpiRecovery
   }
   return checkpoint as V8ResultsKpiRecoveryCheckpoint;
 };
+const requireCanonicalRecoveryCard = (response: any): V8ResultsKpiRecoveryCard => {
+  const card = canonicalResponseBody(response)?.card;
+  if (!card?.id || !Number.isInteger(card.version)) {
+    throw new Error('Canonical recovery card response is incomplete');
+  }
+  return card as V8ResultsKpiRecoveryCard;
+};
 
 /**
  * @deprecated V8 Results API (`/api/v8/results/*`) is the canonical SSOT.
@@ -851,15 +858,14 @@ export const V8ResultsApi = {
       `/results/deviation-cases/${encodeURIComponent(caseId)}/recovery-card`
     ),
   createRecoveryCard: (caseId: string, payload?: V8ResultsCreateRecoveryCardPayload) =>
-    v8Post<V8ResultsKpiRecoveryCard>(
-      `/results/deviation-cases/${encodeURIComponent(caseId)}/recovery-card`,
-      payload || {}
-    ),
+    Api.post(`/vnext/results/kpi/deviation-cases/${encodeURIComponent(caseId)}/recovery-card`, payload || {})
+      .then(requireCanonicalRecoveryCard),
   updateRecoveryCard: (cardId: string, payload: V8ResultsUpdateRecoveryCardPayload) =>
-    v8Put<V8ResultsKpiRecoveryCard>(
-      `/results/recovery-cards/${encodeURIComponent(cardId)}`,
-      payload
-    ),
+    Api.patch(`/vnext/results/kpi/recovery-cards/${encodeURIComponent(cardId)}`, {
+      ...payload,
+      expectedVersion: payload.version,
+      version: undefined,
+    }).then(requireCanonicalRecoveryCard),
   // Sub-resource mutations below return ONLY the sub-resource (camelCase),
   // never the full card — callers must refetch getRecoveryCard() afterwards
   // to refresh `actions`/`checkpoints` in local state. Contrast with
@@ -900,10 +906,11 @@ export const V8ResultsApi = {
     Api.patch(`/vnext/results/kpi/recovery-cards/${encodeURIComponent(cardId)}/checkpoints/${encodeURIComponent(checkpointId)}`, payload)
       .then(requireCanonicalRecoveryCheckpoint),
   closeRecoveryCard: (cardId: string, payload: V8ResultsCloseRecoveryCardPayload) =>
-    v8Post<V8ResultsKpiRecoveryCard>(
-      `/results/recovery-cards/${encodeURIComponent(cardId)}/close`,
-      payload
-    ),
+    Api.post(`/vnext/results/kpi/recovery-cards/${encodeURIComponent(cardId)}/close`, {
+      ...payload,
+      expectedVersion: payload.version,
+      version: undefined,
+    }).then(requireCanonicalRecoveryCard),
   continueRecoveryCard: (cardId: string, payload: V8ResultsContinueRecoveryCardPayload) =>
     v8Post<V8ResultsKpiRecoveryCard>(
       `/results/recovery-cards/${encodeURIComponent(cardId)}/continue`,
@@ -1114,6 +1121,7 @@ export interface V8ResultsCreateRecoveryCardPayload {
   expectedImpact?: string;
   expectedRecoveryDate?: string;
   effectivenessCriteria?: string;
+  idempotencyKey?: string;
 }
 
 export interface V8ResultsUpdateRecoveryCardPayload {
@@ -1127,6 +1135,7 @@ export interface V8ResultsUpdateRecoveryCardPayload {
   risks?: V8ResultsRecoveryListItem[];
   expectedRecoveryDate?: string;
   effectivenessCriteria?: string;
+  idempotencyKey?: string;
 }
 
 export interface V8ResultsCreateRecoveryActionPayload {
@@ -1169,6 +1178,7 @@ export interface V8ResultsCloseRecoveryCardPayload {
   evidenceText?: string;
   evidenceRef?: string;
   effectivenessRating: V8ResultsRecoveryEffectivenessRating;
+  idempotencyKey?: string;
 }
 
 /** Shape of the `error.data` payload on a 409 from closeRecoveryCard. */

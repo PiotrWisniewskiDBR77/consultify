@@ -84,6 +84,26 @@ function requireCanonicalCheckpointReadback(
   }
 }
 
+function requireCanonicalCardReadback(
+  actual: V8ResultsKpiRecoveryCard,
+  expected: V8ResultsKpiRecoveryCard
+): void {
+  if (actual.id !== expected.id || actual.version !== expected.version ||
+      actual.lifecycleStatus !== expected.lifecycleStatus || actual.hypothesis !== expected.hypothesis ||
+      actual.confirmedCause !== expected.confirmedCause || actual.impactDescription !== expected.impactDescription ||
+      actual.priority !== expected.priority || actual.expectedImpact !== expected.expectedImpact ||
+      JSON.stringify(actual.dependencies) !== JSON.stringify(expected.dependencies) ||
+      JSON.stringify(actual.risks) !== JSON.stringify(expected.risks) ||
+      actual.expectedRecoveryDate !== expected.expectedRecoveryDate ||
+      actual.effectivenessCriteria !== expected.effectivenessCriteria ||
+      actual.effectivenessRating !== expected.effectivenessRating ||
+      actual.evidenceText !== expected.evidenceText || actual.evidenceRef !== expected.evidenceRef) {
+    const error = new Error('Canonical recovery card readback mismatch') as Error & { code?: string };
+    error.code = 'CANONICAL_READBACK_MISMATCH';
+    throw error;
+  }
+}
+
 interface RecoveryCardPanelProps {
   kpiId: string;
   deviationCaseId: string;
@@ -608,8 +628,16 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
         expectedRecoveryDate: createDraft.expectedRecoveryDate || undefined,
         effectivenessCriteria: createDraft.effectivenessCriteria.trim() || undefined,
       };
-      const data = await V8ResultsApi.createRecoveryCard(deviationCaseId, payload);
-      setCard(data);
+      const fingerprint = recoveryIntentFingerprint('create-card', { deviationCaseId, ...payload });
+      const namespace = 'results-recovery-create-card';
+      const created = await V8ResultsApi.createRecoveryCard(deviationCaseId, {
+        ...payload,
+        idempotencyKey: persistentCommandId(namespace, fingerprint),
+      });
+      const fresh = await V8ResultsApi.getRecoveryCard(deviationCaseId);
+      requireCanonicalCardReadback(fresh, created);
+      setCard(fresh);
+      clearPersistentCommandId(namespace, fingerprint);
       setPhase('ready');
       setCreateDraft(EMPTY_CREATE_DRAFT);
       toast.success(t('results.recoveryCard.saved', 'Changes saved.'));
@@ -642,7 +670,7 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
     if (!card || !editDraft) return;
     setSavingEdit(true);
     try {
-      const data = await V8ResultsApi.updateRecoveryCard(card.id, {
+      const payload = {
         version: card.version,
         hypothesis: editDraft.hypothesis,
         confirmedCause: editDraft.confirmedCause,
@@ -653,8 +681,17 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
         risks: editDraft.risks,
         expectedRecoveryDate: editDraft.expectedRecoveryDate || undefined,
         effectivenessCriteria: editDraft.effectivenessCriteria,
+      };
+      const fingerprint = recoveryIntentFingerprint('update-card', { cardId: card.id, ...payload });
+      const namespace = 'results-recovery-update-card';
+      const updated = await V8ResultsApi.updateRecoveryCard(card.id, {
+        ...payload,
+        idempotencyKey: persistentCommandId(namespace, fingerprint),
       });
-      setCard(data);
+      const fresh = await V8ResultsApi.getRecoveryCard(deviationCaseId);
+      requireCanonicalCardReadback(fresh, updated);
+      setCard(fresh);
+      clearPersistentCommandId(namespace, fingerprint);
       setEditMode(false);
       setEditConflict(false);
       toast.success(t('results.recoveryCard.saved', 'Changes saved.'));
@@ -669,7 +706,7 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
     } finally {
       setSavingEdit(false);
     }
-  }, [card, editDraft, fetchCard, onChanged, t]);
+  }, [card, deviationCaseId, editDraft, fetchCard, onChanged, t]);
 
   const handleAddAction = useCallback(async () => {
     if (!card || !newActionTitle.trim()) return;
@@ -947,15 +984,24 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
     setCloseValidationError(null);
     setClosing(true);
     try {
-      const data = await V8ResultsApi.closeRecoveryCard(card.id, {
+      const payload = {
         version: card.version,
         evidenceText: closeEvidenceText.trim() || undefined,
         evidenceRef: closeEvidenceRef.trim() || undefined,
         effectivenessRating: closeRating,
+      };
+      const fingerprint = recoveryIntentFingerprint('close-card', { cardId: card.id, ...payload });
+      const namespace = 'results-recovery-close-card';
+      const closed = await V8ResultsApi.closeRecoveryCard(card.id, {
+        ...payload,
+        idempotencyKey: persistentCommandId(namespace, fingerprint),
       });
+      const fresh = await V8ResultsApi.getRecoveryCard(deviationCaseId);
+      requireCanonicalCardReadback(fresh, closed);
       // Zero-optimistic-UI: only now, after the 200 response, do we render the
       // card as closed — never before the server confirms it.
-      setCard(data);
+      setCard(fresh);
+      clearPersistentCommandId(namespace, fingerprint);
       setShowCloseForm(false);
       setCloseEvidenceText('');
       setCloseEvidenceRef('');
@@ -979,7 +1025,7 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
     } finally {
       setClosing(false);
     }
-  }, [card, closeRating, closeEvidenceText, closeEvidenceRef, fetchCard, onChanged, t]);
+  }, [card, closeRating, closeEvidenceText, closeEvidenceRef, deviationCaseId, fetchCard, onChanged, t]);
 
   const handleContinue = useCallback(async () => {
     if (!card) return;

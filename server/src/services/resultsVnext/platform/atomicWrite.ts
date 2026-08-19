@@ -159,6 +159,9 @@ export const EVENT_TYPE_CONSUMER_GROUPS: Readonly<Record<string, readonly string
   'kpi.recovery_action_task_linked': ['mywork_projection'],
   'kpi.recovery_checkpoint_created': ['mywork_projection'],
   'kpi.recovery_checkpoint_resolved': ['mywork_projection'],
+  'kpi.recovery_card_created': ['mywork_projection'],
+  'kpi.recovery_card_updated': ['mywork_projection'],
+  'kpi.recovery_card_closed': ['mywork_projection'],
 
   // KPI-E004 (docs/product/results-vnext/KPI_E004_DESIGN.md §B/§D) —
   // Scorecards. The design doc's own task spec names 3 explicitly
