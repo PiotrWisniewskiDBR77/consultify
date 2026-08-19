@@ -1,31 +1,154 @@
 {
   "taskId": "INT-UI-CANON-001",
-  "baselineSha": "ae631f7b10aa0c75ea39ae7695709cecbd0db94a",
-  "status": "READY_FOR_OWNER_ACCEPTANCE",
-  "scope": "Mounted Interview respondent delivery UX and fail-closed API/readback behavior",
-  "productionChanges": [
-    "InterviewHub no longer converts failed V8 and legacy loads into false empty success; retry is stable and local.",
-    "Public answer and completion writes require valid server readback before reporting success.",
-    "Respondent flow distinguishes retryable, forbidden, expired/revoked, empty and completed read-only states; completed cold reopen retains the pinned template version and answers.",
-    "PL/EN, keyboard focus, responsive wrapping and required-marker dark contrast were corrected."
-  ],
+  "lane": "UI-G4",
+  "baselineSha": "c4f84a2baa7f1ce9c7b03a68ebbd1783cdbc581b",
+  "productSha": "4eec1d27952bc5642018495575665f5784e04f71",
+  "verdict": "AUTOMATED_G4_PASS / BLOCKED_HUMAN",
+  "verdictLiteral": "The automatable half of G4 passes on this exact SHA. The gate as a whole is NOT closed: VoiceOver, brand and named-human acceptance are outstanding and are recorded separately below. An automated axe pass is not a human sign-off.",
   "environment": {
-    "database": "fresh disposable PostgreSQL database cwperfprofile_int_ui_20260819, canonical migrations from zero",
-    "application": "real built client plus mounted server",
-    "requestInterception": "none"
+    "mountedApplication": "real backend process (tsx server/src/index.ts) + Vite-served client",
+    "database": "real PostgreSQL 16 (pgvector/pgvector:pg16), schema built from the canonical migration chain from zero",
+    "authentication": "real signed JWT from POST /api/test-support/bootstrap; no anonymous or stubbed session",
+    "requestInterception": "none — the harness never calls page.route()/fulfill()",
+    "harness": "docs/program/evidence/closure/ui-g4/HARNESS.md"
   },
-  "automatedEvidence": {
-    "focusedVitest": "27/27 PASS",
-    "playwright": "2/2 PASS: anonymous CAS save, cold reopen, completion/read-only pinned version, revoked terminal wall",
-    "matrix": "12/12 PASS: 1440/768/390 x PL/EN x light/dark; 12 distinct screenshot hashes",
-    "axe": "0 critical or serious violations in all 12 cells",
-    "horizontalOverflow": "0/12 cells",
-    "screenshots": "screens/respondent-canonical"
+  "surface": {
+    "module": "Interview",
+    "route": "/interview",
+    "gates": [
+      "AppRoutes.tsx:1907-1918 wrapped in V8UnavailableBanner(moduleName=\"Interview\"); content depends on GET /v8/flags, gated server-side by ENABLE_V8_GLOBAL (server/src/middleware/v8FeatureGate.middleware.ts:15).",
+      "This harness runs the backend with ENABLE_V8_GLOBAL=true, so the banner must not appear — if it does, that is a recorded failure, not a skip.",
+      "/discovery renders the identical InterviewHub without the V8 banner (menuConfig.ts:69-73 points the sidebar at /discovery, not /interview)."
+    ]
   },
-  "knownNonBlockingContractDrift": "Two older real-PG acceptance assertions expect 403/409 without the now-required idempotency precondition and receive truthful 428. This packet does not weaken that precondition.",
-  "openHumanGates": [
-    "Manual VoiceOver acceptance",
-    "Product/UX owner visual acceptance"
+  "denominators": {
+    "cells": 13,
+    "primaryCells": 12,
+    "viewports": [
+      "1440x900",
+      "768x1024",
+      "390x844"
+    ],
+    "languages": [
+      "pl",
+      "en"
+    ],
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "primaryCellsRendered": 12,
+    "secondaryCells": 1,
+    "secondaryCellsRendered": 1,
+    "screenshots": 13,
+    "keyboardControlsTraversed": 40,
+    "axeCriticalTotal": 0,
+    "axeSeriousTotal": 0,
+    "axeViolationIds": {},
+    "statesProbed": 0,
+    "statesObserved": 0
+  },
+  "fixtures": {
+    "tenant": "fresh organization created by the test-support bootstrap for this run",
+    "dataState": "a brand-new tenant, so surfaces render their genuine empty state unless a probe seeded data through the real API",
+    "onboarding": "PUT /api/preferences -> 200"
+  },
+  "navigation": {
+    "deepLink": {
+      "ok": true,
+      "detail": "deep-link /interview settled at /interview — surface content matched"
+    },
+    "reload": {
+      "ok": true,
+      "detail": "reload settled at /interview — surface content matched"
+    },
+    "coldReopen": {
+      "ok": true,
+      "detail": "cold context (fresh storage state, no SPA memory) settled at /interview — surface content matched"
+    }
+  },
+  "keyboard": {
+    "reachableControls": 40,
+    "focusAlwaysVisible": true,
+    "invisibleFocusSamples": [],
+    "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
+    "focusReturn": "Focus remained inside the document after Escape.",
+    "tabOrderMonotonic": true
+  },
+  "states": [],
+  "statesNotPresent": [
+    "stale"
   ],
-  "productionAvailability": "NOT_DEPLOYED; no push, deployment or production migration was performed"
+  "negativeControls": {
+    "onboardingRetiredViaRealApi": "PUT /api/preferences -> 200",
+    "noRequestInterception": "This harness never calls page.route()/fulfill(); every response comes from the real backend on real Postgres.",
+    "blockingOverlayDetection": "A surface counts as rendered only when no dialog/aria-modal covers >15% of the viewport.",
+    "themeAndLanguageAreObserved": "Theme and language are set before first paint and each of the 12 cells is captured separately; identical captures across cells would be visible as identical files."
+  },
+  "screenshots": [
+    {
+      "file": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__desktop__en__dark.png",
+      "sha256": "4045fdd19c41b9da87c827af5ad9c6e8bb08be2a17a11d20e05c80609a3d51e8"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__desktop__en__light.png",
+      "sha256": "aaef13303339e61b8bb00d27d9f0002fcdefa02448fdaaa1b720d24eeccee78e"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__desktop__pl__dark.png",
+      "sha256": "f56a733258ea5dbc3b8515876fe541f57115a25150a5f14be9212b373cc631cc"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__desktop__pl__light.png",
+      "sha256": "daba7a72c106f1074b94992d52076c0566422cd0133e752ce2202832ae209f49"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__discovery__desktop__pl__light.png",
+      "sha256": "e2c98f252e79096be1096ccdf9e8fe633b39b0284ccba6378bc2c332b3d6790c"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__mobile__en__dark.png",
+      "sha256": "3049c18c1eff10044ee3debedc636735112dd07fe4b46f91766a5c6898fc7a5f"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__mobile__en__light.png",
+      "sha256": "10b4980a50aef12347d35c4ce0578574ec8f3295f877571ad3cba28b2a65a4dd"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__mobile__pl__dark.png",
+      "sha256": "391dfb7a1c523b93f98e8bf165df105b5fb13d8180030e2f6f8a43079a7ca6a2"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__mobile__pl__light.png",
+      "sha256": "4f280d69e8319c210c7489fb86becdca691d001ca6ffb2de72186b557e7ea08d"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__tablet__en__dark.png",
+      "sha256": "55c61ce78a8b7f8c6a6554d3c73548cb13159c8877704ef1b8df62f8b23f5d3b"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__tablet__en__light.png",
+      "sha256": "47c82130f64218852137307b563e74d516375e8d3276064c004adb11dedbd8ea"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__tablet__pl__dark.png",
+      "sha256": "20bc5f7ecbabcf6b51bbc4b796247af78c86f53283265d8ec263e6af6cb50f4a"
+    },
+    {
+      "file": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__tablet__pl__light.png",
+      "sha256": "2ae71a9424c089573ebfc6f4b8c39cc0b7b357a17b8ef6f4bfadf0f545faf53e"
+    }
+  ],
+  "screenshotBinding": "Every screenshot above was produced by the sweep run recorded in productSha 4eec1d27952bc5642018495575665f5784e04f71; the sha256 of each file is listed so a later re-render cannot be passed off as this run.",
+  "automatedFailures": [],
+  "measurementCaveats": [],
+  "blockedHuman": [
+    "Manual VoiceOver pass — no automated tool substitutes for it.",
+    "Brand/visual acceptance by the UX owner.",
+    "Named target-role human acceptance (per OWNER_DECISIONS_AND_MEASURABLE_GATES §UI aggregate)."
+  ],
+  "rollback": {
+    "method": "This lane adds test/harness/evidence files only; reverting the lane commits removes them with no schema or runtime change. Any source fix is listed per-commit and is individually revertable.",
+    "executed": false
+  }
 }

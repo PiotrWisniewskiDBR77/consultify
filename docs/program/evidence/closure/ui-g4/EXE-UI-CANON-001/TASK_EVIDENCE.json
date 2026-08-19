@@ -2,9 +2,9 @@
   "taskId": "EXE-UI-CANON-001",
   "lane": "UI-G4",
   "baselineSha": "c4f84a2baa7f1ce9c7b03a68ebbd1783cdbc581b",
-  "productSha": "40e1a89bdd118de828fd5f716839789fc340a20a",
-  "verdict": "AUTOMATED_G4_FAIL / BLOCKED_HUMAN",
-  "verdictLiteral": "The automatable half of G4 FAILS on this exact SHA for the reasons listed in automatedFailures. No human sign-off is claimed or implied.",
+  "productSha": "4eec1d27952bc5642018495575665f5784e04f71",
+  "verdict": "AUTOMATED_G4_PASS / BLOCKED_HUMAN",
+  "verdictLiteral": "The automatable half of G4 passes on this exact SHA. The gate as a whole is NOT closed: VoiceOver, brand and named-human acceptance are outstanding and are recorded separately below. An automated axe pass is not a human sign-off.",
   "environment": {
     "mountedApplication": "real backend process (tsx server/src/index.ts) + Vite-served client",
     "database": "real PostgreSQL 16 (pgvector/pgvector:pg16), schema built from the canonical migration chain from zero",
@@ -68,17 +68,8 @@
   },
   "keyboard": {
     "reachableControls": 40,
-    "focusAlwaysVisible": false,
-    "invisibleFocusSamples": [
-      "button..group",
-      "button..group",
-      "button.w-full.flex",
-      "button.w-full.flex",
-      "button.w-full.flex",
-      "button.w-full.flex",
-      "button.w-full.flex",
-      "button.w-full.flex"
-    ],
+    "focusAlwaysVisible": true,
+    "invisibleFocusSamples": [],
     "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
     "focusReturn": "Focus remained inside the document after Escape.",
     "tabOrderMonotonic": true
@@ -96,61 +87,59 @@
   "screenshots": [
     {
       "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__desktop__en__dark.png",
-      "sha256": "4b3e4dde8bcc7eb5a1bb6e62bbb5d9dc178e68ff6d6287e9aba7a2843443f915"
+      "sha256": "baa4a43d9a0cb9a9c6c7b08732d33bc2e064fddca9d400ef9d383a1aeeda6e0f"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__desktop__en__light.png",
-      "sha256": "9eaa3befad17fb411156177bac0ed9fccffaf6e55e19485cb78d5eb755d23cac"
+      "sha256": "340fd222a59148d87770db9c6fab59e2cad75db58c7911f238c1f11716768027"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__desktop__pl__dark.png",
-      "sha256": "51e5a9849bd810474f909f8afdc42b38fd533cbb733071d7891edd78c08fd241"
+      "sha256": "93582125b291dba58e97f66e9680716131cec4cf1021ff02223e627c3e08ab0f"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__desktop__pl__light.png",
-      "sha256": "99adf412fc3db7fbed08293b3a06b0d70ba72d0e2abcfb98ddc8bb024fe86b9c"
+      "sha256": "a0ecdd4756e6aaa82c35b1f62c3ca702f130e6db71f97bf567f391e9152cc6f7"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__execution-tab-rollout__desktop__pl__light.png",
-      "sha256": "848573de5f39ee9080e2017b0198b263f4a2f86c0e1d20eb54d72fe73c12703a"
+      "sha256": "1507706a6e28c387cb2727ae6e5f9cb016a6c7ab121a6774e35323a28f233ce2"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__mobile__en__dark.png",
-      "sha256": "377671148fa057767c84cd35b44ee76eb0e29075a4c5fc24ddff0eec9de5756a"
+      "sha256": "eaa47df65662d2687f0290b31fb4ec6966f12355713297400a1075b4f78199d8"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__mobile__en__light.png",
-      "sha256": "9d6b584404c6b437c8c395bc9bb102cad4b4b9e778d0aef6cc9410fc601b59fa"
+      "sha256": "f505bfd9b1545002d233edb226f5c2f13a01c6d1c1583290f7d10a8eb97577e5"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__mobile__pl__dark.png",
-      "sha256": "d8955343c7ec764a60beffb5a152b7d7ef3574bea2381f72cc06d38b635d4281"
+      "sha256": "9f4234b97fed956e2f157a2069886fb49f3f1d176748ee36460b510dace14312"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__mobile__pl__light.png",
-      "sha256": "dbba5042651bc8413ba505aa69a04a3d73540e8d660cf435e5c959b8c741ca01"
+      "sha256": "75757109ad1095e1844063e0bd2f2634c2315ae85bc7726347fbb1c9a91e6a20"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__tablet__en__dark.png",
-      "sha256": "211736ffe90715c7ab56caf8362f1656181e98f46f162e8ff54488ac89955b53"
+      "sha256": "72f30fa171031763852e0810d1c2b63b5a14be5dfcd12856aff2a9beda68b11f"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__tablet__en__light.png",
-      "sha256": "f75ba8de6b42dac33039462e76b5c80cd9e309bac167fd14e1e882109dae8211"
+      "sha256": "a5bef01209cce3b5b6a02328ee604effe74d3587301af8ec38dd45fcfee3c77f"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__tablet__pl__dark.png",
-      "sha256": "acbdf328d462e451648a2bd8b7001bab2a4244d9f8dda46f24534ed7c19d497f"
+      "sha256": "d305538370c89c7efc2eca18a11633796bf5ba4311c143698075d1a1f63b47f2"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__tablet__pl__light.png",
-      "sha256": "04651eb8078d4204320b514649ebebd98150e06efce546b571522c3ae5e9cf2c"
+      "sha256": "3ad296b42d5ebe20075f0ce872cd6680881e92ce2e4f4a0277246be3a0b0d522"
     }
   ],
-  "screenshotBinding": "Every screenshot above was produced by the sweep run recorded in productSha 40e1a89bdd118de828fd5f716839789fc340a20a; the sha256 of each file is listed so a later re-render cannot be passed off as this run.",
-  "automatedFailures": [
-    "focus indicator not visible on every reachable control (8 sample(s): button..group, button..group, button.w-full.flex, button.w-full.flex)"
-  ],
+  "screenshotBinding": "Every screenshot above was produced by the sweep run recorded in productSha 4eec1d27952bc5642018495575665f5784e04f71; the sha256 of each file is listed so a later re-render cannot be passed off as this run.",
+  "automatedFailures": [],
   "measurementCaveats": [],
   "blockedHuman": [
     "Manual VoiceOver pass — no automated tool substitutes for it.",

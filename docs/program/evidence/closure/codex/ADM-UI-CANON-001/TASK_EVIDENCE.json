@@ -106,7 +106,13 @@
     "currentTypecheckAndBuilds": "PASS"
   },
   "fixtures": {
-    "roles": ["USER", "ADMIN", "OWNER", "SUPERADMIN", "unauthenticated"],
+    "roles": [
+      "USER",
+      "ADMIN",
+      "OWNER",
+      "SUPERADMIN",
+      "unauthenticated"
+    ],
     "runtime": "mounted local frontend/backend with real PostgreSQL"
   },
   "negativeControls": {
@@ -116,43 +122,43 @@
   },
   "browserArtifacts": [
     {
-      "kind": "mounted_signed_auth_g4_final",
-      "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
-      "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+      "kind": "mounted_signed_auth_g4_exact_current",
+      "candidateSha": "4eec1d27952bc5642018495575665f5784e04f71",
+      "reconciliationSha": "4eec1d27952bc5642018495575665f5784e04f71",
       "resultPath": "docs/program/evidence/closure/ui-g4/ADM-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "resultSha256": "65c5ac6405d94c47f87260b46af78d6a440194835d984b20ab36a590db9737a7",
+      "resultSha256": "685e04a1c4ecaec75cc48fcdc9b7bfe9b97be3934b9f08aa7b8fd301f81d13d9",
       "screenshots": [
         {
           "path": "docs/program/evidence/closure/ui-g4/ADM-UI-CANON-001/screens/ADM__desktop__pl__light.png",
-          "sha256": "2b2e90903ff5a60bdedc71db13551e91df16d927928eaa8d2762c9876cd3f0cf"
+          "sha256": "971e6ed5c1f52953b0c001d54637f56f5b2b2c84e2217cfc28c728c6d6be8c4f"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/ADM-UI-CANON-001/screens/ADM__desktop__pl__dark.png",
-          "sha256": "0580ff0fe6504cc49f8af523cc838942dc1493aa584e4d54c7aaa0723bad5345"
+          "sha256": "3f72cccc5bf0672e7e22119e597cbae99fc01259ba0774b6e1281d6c6b828212"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/ADM-UI-CANON-001/screens/ADM__desktop__en__light.png",
-          "sha256": "628d01249f9cfabf8db7755c85e5545d11ac1c164423ede8c89d21572c83c170"
+          "sha256": "36496f8dffd62dfe7bd943214c484b277ecd012543d315c74dfed439f7b979d9"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/ADM-UI-CANON-001/screens/ADM__desktop__en__dark.png",
-          "sha256": "00f449348ae2c80b7dba39fff6d0f1bc871321ba2a30368f4681ea0a4f7fa67b"
+          "sha256": "28f8dad7a3a1a394e3b403f5c53432ac41e1a4494850d1f268d35b0a098c9872"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/ADM-UI-CANON-001/screens/ADM__tablet__pl__light.png",
-          "sha256": "20d3d0c64542aecd964798ca77009f36e56a156864478f8ab6e5b6580153f25f"
+          "sha256": "b0ffbc36743a4efee168bae62c2519c7f0a979f27b462ddd965e3f2c8f9c549f"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/ADM-UI-CANON-001/screens/ADM__tablet__pl__dark.png",
-          "sha256": "9186a6d4d0b7faee076866b8c480401f5008f7b99612255643d87d3b2810b231"
+          "sha256": "73ee3e3bfdd885604d4799fcf8569b4d993c394e6e82f8a2d71218b85ea6c2a1"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/ADM-UI-CANON-001/screens/ADM__tablet__en__light.png",
-          "sha256": "4c12b161f3384b5003aa3cdf771f6d6f2984eed9892efc04d9942cb97b6037ed"
+          "sha256": "a48738aa4f0056236c5c1cc32eb0d05fe09902ac2b4abac144b8573c04f95473"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/ADM-UI-CANON-001/screens/ADM__tablet__en__dark.png",
-          "sha256": "1662c86d3d1a9202a9c7c45dc1bf7e88ee1db3d838ecb3c393192c7bb3d18c58"
+          "sha256": "75361902fe8f2e8c078c6155930aedf8933cebc29d27df9b9024cc5bcd1b629a"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/ADM-UI-CANON-001/screens/ADM__mobile__pl__light.png",
@@ -168,25 +174,25 @@
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/ADM-UI-CANON-001/screens/ADM__mobile__en__dark.png",
-          "sha256": "457dcc0fd31a68a6115571788a80e86588f0e6657b83a356761ebba64be87dda"
+          "sha256": "207ec8c9e7bf2963684d9b57a1412e80afe2a3321a457e350a3801a667e2edda"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/ADM-UI-CANON-001/screens/ADM__admin-people__desktop__pl__light.png",
-          "sha256": "9a7c157833eff11f3287306bc37f8199b3632712a85755bc94b5dbc0b97177e8"
+          "sha256": "a785c4196d710fd6f7065770efd4b1f27b62910193783423918e87e3b88fcfde"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/ADM-UI-CANON-001/screens/ADM__admin-security__desktop__pl__light.png",
-          "sha256": "5c127c4fce5332e925452b76d065eb12b2b94390169d2587c3c90c8126ec25a3"
+          "sha256": "73bf8613329b6258e73a68a8ad48d153670480f0fe3aab2a5aa4fc8bf701c93f"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/ADM-UI-CANON-001/screens/ADM__admin-billing__desktop__pl__light.png",
-          "sha256": "52a277e1ce415c2ff6a57ee614862c62b6e00d7f5a2140b553cdc12e41096651"
+          "sha256": "8df8e57e7c557951c4f79dcac693e0d1827d554a4a9af2c9abbac17c80714109"
         }
       ],
       "consoleErrors": {
-        "total": 2,
+        "total": 0,
         "forbidden403": 0,
-        "notFound404": 2,
+        "notFound404": 0,
         "other": 0
       }
     }
@@ -268,7 +274,31 @@
     "humanAcceptance": "PENDING — automated G4 does not sign VoiceOver, persona or visual-owner acceptance",
     "reachabilityAndStates": {
       "states": [],
-      "statesNotPresent": ["stale"]
+      "statesNotPresent": [
+        "stale"
+      ]
+    }
+  },
+  "exactCurrentG4": {
+    "candidateSha": "4eec1d27952bc5642018495575665f5784e04f71",
+    "verdict": "AUTOMATED_G4_PASS_HUMAN_PENDING",
+    "cells": 15,
+    "axeCritical": 0,
+    "axeSerious": 0,
+    "unnamedControls": 0,
+    "horizontalOverflowCells": 0,
+    "deepLink": true,
+    "reload": true,
+    "coldReopen": true,
+    "focusAlwaysVisible": true,
+    "statesNotPresent": [
+      "stale"
+    ],
+    "consoleErrors": {
+      "total": 0,
+      "forbidden403": 0,
+      "notFound404": 0,
+      "other": 0
     }
   }
 }

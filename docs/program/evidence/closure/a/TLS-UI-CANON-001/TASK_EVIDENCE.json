@@ -72,43 +72,43 @@
   },
   "browserArtifacts": [
     {
-      "kind": "mounted_signed_auth_g4_final",
-      "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
-      "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+      "kind": "mounted_signed_auth_g4_exact_current",
+      "candidateSha": "4eec1d27952bc5642018495575665f5784e04f71",
+      "reconciliationSha": "4eec1d27952bc5642018495575665f5784e04f71",
       "resultPath": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "resultSha256": "adada3e244bf2d9640e1263ab29311a5d8d61f44cd064591462f4a1b1f06d8a0",
+      "resultSha256": "fe28f78c48921fdda263297dc8def0177b8edb2d9ff5b9af84dc74e09c1d0810",
       "screenshots": [
         {
           "path": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__desktop__pl__light.png",
-          "sha256": "3ebe4bbd83eb3f0c8179fab8b5741d11d9467ae951c3e817f14a66d5988c7f30"
+          "sha256": "0c592963ac3b5db3115c3a552fae8e86545384bee5ffb6e98b699c391acd8cc3"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__desktop__pl__dark.png",
-          "sha256": "57cc25cc94b6c5fbcc3f0cdae33c6341dd0976a8cd1b1993233e412ee0a443de"
+          "sha256": "e59397fc44437d90a19f9e0a81ede0cc68a2a43fb1962b8764feaa8162e6b60f"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__desktop__en__light.png",
-          "sha256": "19e9a149db955b864b8a0e7645be6aa78c014de638b8c926f4c86a8373078752"
+          "sha256": "bb354d8950d84546b2ac9af4e062d53a4b297d3dbfe4336d41f5d85d1d0ad609"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__desktop__en__dark.png",
-          "sha256": "b014006f8df6db5d562881e504380cdeebc3afaca4156edc4f009517bc6873dc"
+          "sha256": "96af4eafa8a877f16dbbd0874f9b5b01761c108dac21faaafeab1eb870a9f629"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__tablet__pl__light.png",
-          "sha256": "cc22963eced562b4acad5770c30f2a32c39bbed7e3205ca1cd4171bd67a2c911"
+          "sha256": "1365be8edbf8fa4fb08da752fdb9228441726208af2f2ed2691d010f28b3081d"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__tablet__pl__dark.png",
-          "sha256": "c94e8a7531fdfb23aefdc66019737d2d17b80f6bc78a5764cf568d2d59b749f9"
+          "sha256": "fb94f1ad3e7f46808bc6bbb5a851bf6e70122b5d0755d52412879b48f64f7c39"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__tablet__en__light.png",
-          "sha256": "642908e734536f6f59a1c61e0895e9222ef1656e7c87f4762cfb4efd3035ca19"
+          "sha256": "1dd3646e8a1263f315da7cdf090c1432e6faf996a91f568a867cca4ce585382b"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__tablet__en__dark.png",
-          "sha256": "feb47f421bf982e7078567c08fa18b811e2b4a0e01515ce1b630aa6b177cd5fa"
+          "sha256": "cbe1a4d99b78046b948620e46a8154998eb404e0eed161d8d69b512fb28a75e4"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__mobile__pl__light.png",
@@ -116,27 +116,27 @@
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__mobile__pl__dark.png",
-          "sha256": "f28dc8159eab7ccfdf57d80ed493d4b40ebacde418fc99e2ebbecd04f70aba17"
+          "sha256": "56fc5f11fb01fcf6e6c59524b5c62590dfc0cd7b561de5c4e979838599c58049"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__mobile__en__light.png",
-          "sha256": "ee3e68727d068ab7046ea364b11c3f2e6e73ae5bfd852b75ea3cd4441cce1e0d"
+          "sha256": "53f494f13c242fd9beb4786024357e2c7f8ea3b90e5cd39447c8d531b9ae3f90"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__mobile__en__dark.png",
-          "sha256": "9466aa8e955f4600908b5b453fd5aa2052ffa88965b0db216ec8148227b48083"
+          "sha256": "c06eb0bb8670cf7839e01927a67ddde33f29def253fe77143ae02c6340e0d70c"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__discovery-tools-strategic__desktop__pl__light.png",
-          "sha256": "e1b0224de6517af317049e03dd916c4cc30fd84faac2ddad12b8026b409d706b"
+          "sha256": "ebe3ea1d18bfb30861c2f91f2ef414839667fe3ee3fb4a8484b1d5db801fbf91"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__discovery-tools-operational__desktop__pl__light.png",
-          "sha256": "027ceea3cec114426c3e004ec0d727daaff73c2a088f68b6ecd527de492e75fd"
+          "sha256": "663484c61a9164e29f4ca86f14f8b1352dc65e937464ab9a307c41cdb8da4d6a"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/screens/TLS__discovery-tools-digital__desktop__pl__light.png",
-          "sha256": "27f68c21cf2a8dfea3d6ab8497c15281826ab5dd26f9d3dd2ea0c8c1a27ed364"
+          "sha256": "9669592ba22b9123c5855ea952fb40f91bf45eb34f3afe54ed5355d06e13de40"
         }
       ],
       "consoleErrors": {
@@ -217,6 +217,29 @@
         "forbidden",
         "stale"
       ]
+    }
+  },
+  "exactCurrentG4": {
+    "candidateSha": "4eec1d27952bc5642018495575665f5784e04f71",
+    "verdict": "AUTOMATED_G4_PASS_HUMAN_PENDING",
+    "cells": 15,
+    "axeCritical": 0,
+    "axeSerious": 0,
+    "unnamedControls": 0,
+    "horizontalOverflowCells": 0,
+    "deepLink": true,
+    "reload": true,
+    "coldReopen": true,
+    "focusAlwaysVisible": true,
+    "statesNotPresent": [
+      "forbidden",
+      "stale"
+    ],
+    "consoleErrors": {
+      "total": 0,
+      "forbidden403": 0,
+      "notFound404": 0,
+      "other": 0
     }
   }
 }

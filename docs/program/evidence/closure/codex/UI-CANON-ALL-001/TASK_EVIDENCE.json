@@ -1,9 +1,9 @@
 {
   "taskId": "UI-CANON-ALL-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "748c801eb7ade1661a9ab5d43fd7dc73ca4badde",
-  "technicalSourceSha": "06cf1cdfe91a1342de04a122e8cffc4497655d56",
-  "reconciliationSha": "06cf1cdfe91a1342de04a122e8cffc4497655d56",
+  "productSha": "4eec1d27952bc5642018495575665f5784e04f71",
+  "technicalSourceSha": "4eec1d27952bc5642018495575665f5784e04f71",
+  "reconciliationSha": "4eec1d27952bc5642018495575665f5784e04f71",
   "leaseSha256": "18eb0f2e24aee1d6415a29e1605597117f24c42a1f74439842581e7a92583742",
   "changedPaths": ["docs/program/evidence/closure/codex/UI-CANON-ALL-001/TASK_EVIDENCE.json"],
   "changedPathRationale": {
@@ -18,7 +18,7 @@
     ],
     "scope": "Consumes existing module evidence without replaying or duplicating module E2E. Validates exactly sixteen route/surface/state inventories, frozen authority identity, evidence denominators, commit ancestry or explicit reconciliation, and referenced G4 result hashes.",
     "auditDisposition": "Audits is explicitly MISSING_FROZEN_MODULE_PACKET. Its outside-authority proposal and historical G4 result are inventory inputs only and can never be promoted to synthetic completion by this aggregator.",
-    "runtimeClaim": "No browser, screenshot, deployed runtime or new module journey was executed or claimed by this evidence-only aggregation."
+    "runtimeClaim": "An exact-current mounted browser sweep was executed on product SHA 4eec1d27952bc5642018495575665f5784e04f71 for all fifteen frozen UI packets against fresh PostgreSQL 16 and real signed authentication. Audit remains outside the frozen-82 authority and was not rerun or promoted."
   },
   "ownerTables": [],
   "commands": [
@@ -40,6 +40,11 @@
       "command": "node scripts/cleanup/report-closure-progress.mjs && node scripts/cleanup/verify-closure-plan.mjs",
       "exitCode": 0,
       "result": "82 authority tasks; missing evidence 0; invalid evidence 0; plan, ownership, leases and graph PASS"
+    },
+    {
+      "command": "G4_API_URL=http://127.0.0.1:3943 G4_BASE_URL=http://127.0.0.1:3942 G4_DATABASE_URL=postgresql://consultinity:consultinity@127.0.0.1:34942/consultinity G4_E2E_MODE=false scripts/g4/run-sweep.sh all",
+      "exitCode": 0,
+      "result": "15/15 frozen UI authority surfaces passed without retry on exact candidate 4eec1d27952bc5642018495575665f5784e04f71; fresh PostgreSQL migrations 793 and repeat 0; real signed authentication; no request interception"
     }
   ],
   "denominators": {
@@ -58,18 +63,22 @@
     "aggregatorTests": "3/3",
     "automatedG4Surfaces": "15/15",
     "automatedG4Cells": "206/206",
-    "automatedG4Screenshots": "214/214",
+    "automatedG4Screenshots": "206/206",
+    "automatedG4UniqueScreenshotHashes": 205,
     "automatedG4AxeCriticalSerious": "0/0",
     "automatedG4UnnamedControls": 0,
-    "automatedG4VisibleFocusSurfaces": "15/15"
+    "automatedG4VisibleFocusSurfaces": "15/15",
+    "automatedG4DeepLinkReloadCold": "15/15 each",
+    "automatedG4HorizontalOverflowCells": 0,
+    "automatedG4ConsoleErrors": {"total": 78, "forbidden403": 78, "notFound404": 0, "other": 0}
   },
   "fixtures": {
-    "status": "Module packets include partial mounted evidence, but no one exact-SHA run covers every route, state, viewport, theme and locale."
+    "status": "Exact-current mounted sweep covers all fifteen frozen UI authority packets at three viewports, two themes and two locales. Audit has no frozen task in the 82-task authority; task-specific stale/forbidden/concurrency journeys and human acceptance remain separate gates."
   },
   "negativeControls": {
     "localScreenshotsNotAcceptedAsAggregatePass": true,
-    "mountedAxeAllModules": false,
-    "fullKeyboardFocusReturn": false,
+    "mountedAxeAllModules": true,
+    "fullKeyboardFocusReturn": true,
     "manualVoiceOver": false,
     "fifteenModulesRejected": true,
     "syntheticAuditPassRejected": true,
@@ -79,77 +88,77 @@
     {
       "taskId": "ADM-UI-CANON-001",
       "path": "docs/program/evidence/closure/ui-g4/ADM-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "sha256": "65c5ac6405d94c47f87260b46af78d6a440194835d984b20ab36a590db9737a7"
+      "sha256": "685e04a1c4ecaec75cc48fcdc9b7bfe9b97be3934b9f08aa7b8fd301f81d13d9"
     },
     {
       "taskId": "ASM-UI-CANON-001",
       "path": "docs/program/evidence/closure/ui-g4/ASM-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "sha256": "9b6fd4df6438450cd20614ae952d6b3e481f8fd97ca3ebd28d99052c6ec3fd93"
+      "sha256": "4c1ced84e5dbf08483eca922d4835a0ad96e81f59aeef5ee69a3324832f2fe08"
     },
     {
       "taskId": "CHAT-UI-CANON-001",
       "path": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "sha256": "1123be93166877892802697cf077c9e8183ce9e4bcfb59434b6f90c67757ea39"
+      "sha256": "dc0fdc8328901c7f2b4e552359105801653369ceb228fac3fdd74301aed187f2"
     },
     {
       "taskId": "EXE-UI-CANON-001",
       "path": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "sha256": "c17b5d7f142ef7a1de512bf791e628d049a6ed56a379c65d6ead87272864a11b"
+      "sha256": "3c299879eeaee9512ef53c3e35c71ec35b40fb8f90900e0699b6b80b0178eefd"
     },
     {
       "taskId": "FIN-UI-CANON-001",
       "path": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "sha256": "0c64272aa6598649c40e72c8b0902f640c4aad51db38abbf919a292952809164"
+      "sha256": "ee88feab596a684a09685a92fd7d44a44fd8796944e29035e8508814a247d84b"
     },
     {
       "taskId": "INI-UI-CANON-001",
       "path": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "sha256": "6cfbafd166f44acff21b9d0915761f3c0f5debdad9f2d9aa975f9e060c63775e"
+      "sha256": "43e3198507b05bee9fb9d3a0813c9fdfc7ffe3d334339102b97c78eda4e17f54"
     },
     {
       "taskId": "INT-UI-CANON-001",
       "path": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "sha256": "44ed2d94ccb324e93b1a820ad62e09937e105c09b8522f0f43e336ddc1da98ce"
+      "sha256": "fb45ca1d220ae1fb0a00f4d55ce37ecb7bf945fff2394889c203d55787474de8"
     },
     {
       "taskId": "MAT-UI-CANON-001",
       "path": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "sha256": "83c3acc97b3390e54c6d67576b3008543a309a1a30c4ef3392362ece461260a2"
+      "sha256": "27531c6e2a0ac9c600442a7d842bd9d61487483fe7034b1e8890449fc260995e"
     },
     {
       "taskId": "MTG-UI-CANON-001",
       "path": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "sha256": "66b5d209c90554062faca2a705f0eda69ffd51dca28404325f7b0a329556ac5d"
+      "sha256": "cab7737ab1401312845e7e569ce52823d57b394206211f66a3d2e5ee0821f2f8"
     },
     {
       "taskId": "MYW-AGT-UI-CANON-001",
       "path": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "sha256": "ed6c1c800e022fbfeb1b9890d31ea3e9a73c4d68c744b2cb48208e0981fa4e61"
+      "sha256": "dab5c5b2abf8a3315d56e80d6d15e96a7c1443f3f294f06f3c0694d0b21434c8"
     },
     {
       "taskId": "ORG-UI-CANON-001",
       "path": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "sha256": "b2f29e56a0b1d216d6f6dae37369e14905f31dce959accf29799d3f9be31c806"
+      "sha256": "3f18c047d39eb0d6358cbd9cc1d7c925c6457d79fec9019c3be59b7cfbc7cbaf"
     },
     {
       "taskId": "PRT-UI-CANON-001",
       "path": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "sha256": "4451e2a8479122bb4eb3885c6a587df8bb306a205208720ecfda11ffb605925b"
+      "sha256": "32f94c503866e54329e0f3a8cb1de7725bdf3c15319b8ddcbfc565ba9dbfe5f1"
     },
     {
       "taskId": "RES-UI-CANON-001",
       "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "sha256": "c88c40142e6954071b74d2e06132210c149e3fcb6eb45c461b3d365d573eb75c"
+      "sha256": "49cc2214789a2cbda6696395f5ae76b319206fca7854d93bc45b6aebdd9b3f5b"
     },
     {
       "taskId": "SET-UI-CANON-001",
       "path": "docs/program/evidence/closure/ui-g4/SET-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "sha256": "8cc2f9fe3f0d40887ec9fc5e81d33bcbf94ee73926fa7e224d39e32afc988014"
+      "sha256": "13b01e08b7867c873c656b7d78ae19dad34832edb0da0ad6dcb74e09bb4207c1"
     },
     {
       "taskId": "TLS-UI-CANON-001",
       "path": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "sha256": "adada3e244bf2d9640e1263ab29311a5d8d61f44cd064591462f4a1b1f06d8a0"
+      "sha256": "fe28f78c48921fdda263297dc8def0177b8edb2d9ff5b9af84dc74e09c1d0810"
     }
   ],
   "rollback": {
@@ -160,15 +169,13 @@
   "blockers": [
     "Close the task-specific technical gaps recorded in twelve module inventories.",
     "Create or authorize a frozen-82 Audit UI module packet; the current proposal remains outside authority.",
-    "Requalify the complete matrix on the final frozen candidate without treating historical G4 artifacts as current runtime proof.",
     "Obtain named visual/UX and manual VoiceOver acceptance."
   ],
   "openBlockers": [
     "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
     "Twelve module inventories retain task-specific state, reachability, policy, error or concurrency gaps; UI_MODULE_INVENTORY.json is authoritative for the exact list.",
     "The proposed Audit UI surface is outside the 82-task authority and remains MISSING_FROZEN_MODULE_PACKET.",
-    "The 15-surface G4 run is historical exact-SHA evidence, not an exact-current sixteen-module runtime matrix.",
-    "No aggregator browser or screenshot run was performed; this packet validates evidence integrity only."
+    "The exact-current sweep covers every frozen UI packet, but states explicitly listed in each result's statesNotPresent remain unproven by the aggregate sweep and require their task-specific journeys."
   ],
   "blockerReconciliation": [
     {
@@ -178,18 +185,19 @@
     }
   ],
   "resolvedBlockers": [
-    "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed.",
+    "Final mounted signed-auth automated G4 completed on exact-current candidate 4eec1d27952bc5642018495575665f5784e04f71: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed.",
     "The aggregate now has a machine-validated sixteen-module inventory with explicit route, surface, state coverage and open-gap classification.",
     "All fifteen frozen module evidence packets have readable denominators, valid commit lineage or reconciliation, and verified referenced G4 result hashes.",
     "The verifier fails closed if the denominator falls below sixteen or the Audit proposal is relabeled as synthetic completion."
   ],
   "automatedG4Verdict": {
     "verdict": "PASS_EXACT_SHA",
-    "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
-    "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+    "candidateSha": "4eec1d27952bc5642018495575665f5784e04f71",
+    "reconciliationSha": "4eec1d27952bc5642018495575665f5784e04f71",
     "surfaces": "15/15",
     "cells": "206/206",
-    "screenshots": "214/214",
+    "screenshots": "206/206",
+    "uniqueScreenshotHashes": 205,
     "axe": {
       "critical": 0,
       "serious": 0
@@ -205,9 +213,9 @@
     "authentication": "real signed JWT from /api/test-support/bootstrap",
     "e2eMode": false,
     "consoleErrors": {
-      "total": 98,
+      "total": 78,
       "forbidden403": 78,
-      "notFound404": 20,
+      "notFound404": 0,
       "other": 0
     },
     "humanAcceptance": "PENDING — Piotr must execute and sign OWNER_UAT_VOICEOVER_RUNBOOK.md on the final candidate SHA",

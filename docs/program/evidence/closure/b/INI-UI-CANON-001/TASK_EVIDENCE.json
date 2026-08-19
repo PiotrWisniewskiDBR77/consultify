@@ -83,71 +83,71 @@
   },
   "browserArtifacts": [
     {
-      "kind": "mounted_signed_auth_g4_final",
-      "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
-      "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+      "kind": "mounted_signed_auth_g4_exact_current",
+      "candidateSha": "4eec1d27952bc5642018495575665f5784e04f71",
+      "reconciliationSha": "4eec1d27952bc5642018495575665f5784e04f71",
       "resultPath": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "resultSha256": "6cfbafd166f44acff21b9d0915761f3c0f5debdad9f2d9aa975f9e060c63775e",
+      "resultSha256": "43e3198507b05bee9fb9d3a0813c9fdfc7ffe3d334339102b97c78eda4e17f54",
       "screenshots": [
         {
           "path": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__desktop__pl__light.png",
-          "sha256": "90e5a7d35e4e9f084253480a6ac5276ca551081bcac85d0c6a6bb06c67bf7619"
+          "sha256": "5af6529536565013752b69c2a5af35ca4332ef3c02abdc925f52413fbb98135b"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__desktop__pl__dark.png",
-          "sha256": "7bd0520995ac6ea56d7242f6b68a16d11d3230dd48a0e2c15d88be881dfa304b"
+          "sha256": "a33cbbb388ae8fdb4762c671aee1496e9dda1490a184b7106f0f43a67424023b"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__desktop__en__light.png",
-          "sha256": "7feb173f30afb41575f169e2bbf347580f50eece13745f1f3046bf1a1027e7c6"
+          "sha256": "bcff6f45500ff721127fb9a4ffa55829f644aa31fac110ba3a5941be35008204"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__desktop__en__dark.png",
-          "sha256": "5df83b8a950608343f6349d1c11d1811464fa8e91c73adfe5786d3b3ced53be9"
+          "sha256": "d1b67ed34ffbe47a728321c38dffa616a37a5109c85b2c53bad424ae9e4c67a6"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__tablet__pl__light.png",
-          "sha256": "8fd89ea804d8dc9c4b03ad336a87195f32f4b9c98703f6e21269aec8b1260a19"
+          "sha256": "1a599990f5c8d17f0f45c65a1ee8d67c57898d11f670f3b76ac17312a9b042b0"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__tablet__pl__dark.png",
-          "sha256": "b9abc1ab34233099a8532102dd07167f6597f5bac36b98565befb6198062a023"
+          "sha256": "5dc63bfa0cd639d410d24bae036116ee64756f05bd98bceb64862fdb6db6e566"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__tablet__en__light.png",
-          "sha256": "c8633f73b7948c0bae08f4b29f00d731ab2bb6619e24557a2b10440c5b7826f0"
+          "sha256": "1c58a432a2b6c20ec2d1975b1d050f149a9fabc3d7f2410a412f3a97f1d3b250"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__tablet__en__dark.png",
-          "sha256": "bd791d9e44e402bf6a8d81ac945c28d416f96dc77db523ba8c09d6e32e0bd209"
+          "sha256": "0e44e34873defe5b2504274c07bf93533db7045dba9b823129384e2a8facc64c"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__mobile__pl__light.png",
-          "sha256": "c1d02949ba238c8261d6a61a752d0047b70eb8fe6024f2ccb7a80820e605202c"
+          "sha256": "2bf2d881a7f76fd53485a4e8e02d541c00f1ac5d59a13311329133a47cb20b2f"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__mobile__pl__dark.png",
-          "sha256": "30a7a39a1dbcdea9b1a0af4549ee5f5e0906d7ff256510daf6e28badcafd57cb"
+          "sha256": "4c860d7ca863228642a0e7ab3686e9fba055eee164e10fe06cb98cd875c4a653"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__mobile__en__light.png",
-          "sha256": "e0bef55eccf109eebbb1ff0101a769bda2e94e743be170b437bc4491bc5bde8b"
+          "sha256": "c58a47aedffcfde237aba5c3914e260054c44c03394d77fe5caa6307efac3573"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__mobile__en__dark.png",
-          "sha256": "7e1b5ffb7b4ec6ffba4c08b4cbd47487d5c32ec662b601d66f3305163db86dad"
+          "sha256": "736f20d4917fd91e58cc65fe2a248b2d958befb1ae4fc7c3c870000d64fff042"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__roadmap__desktop__pl__light.png",
-          "sha256": "b1bc471f1f707ccff57ff9d1cdcfbf4437cb042f174db807be8c2b8b83f397f3"
+          "sha256": "8720fc6d0da65df18c8643f1fdac5beb9b5f3830efe7069c72f9773614c4c137"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__portfolio__desktop__pl__light.png",
-          "sha256": "a36d72ece78635edafacf8f52c8888166768ba40485928b31ec7a79d2ff5840e"
+          "sha256": "d081dad8b8169132c7c628540b095fad68cc1d3c4b45974aa2b5d5f7743686a8"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__state-empty.png",
-          "sha256": "b1bc471f1f707ccff57ff9d1cdcfbf4437cb042f174db807be8c2b8b83f397f3"
+          "sha256": "a5a64d516d807aefc8423f43d65b025b54d00ffaf15c633cd4d47edbc8edd170"
         }
       ],
       "consoleErrors": {
@@ -243,6 +243,28 @@
       "statesNotPresent": [
         "stale"
       ]
+    }
+  },
+  "exactCurrentG4": {
+    "candidateSha": "4eec1d27952bc5642018495575665f5784e04f71",
+    "verdict": "AUTOMATED_G4_PASS_HUMAN_PENDING",
+    "cells": 14,
+    "axeCritical": 0,
+    "axeSerious": 0,
+    "unnamedControls": 0,
+    "horizontalOverflowCells": 0,
+    "deepLink": true,
+    "reload": true,
+    "coldReopen": true,
+    "focusAlwaysVisible": true,
+    "statesNotPresent": [
+      "stale"
+    ],
+    "consoleErrors": {
+      "total": 0,
+      "forbidden403": 0,
+      "notFound404": 0,
+      "other": 0
     }
   }
 }

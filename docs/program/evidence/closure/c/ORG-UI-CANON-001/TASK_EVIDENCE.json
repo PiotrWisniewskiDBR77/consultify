@@ -98,55 +98,55 @@
   },
   "browserArtifacts": [
     {
-      "kind": "mounted_signed_auth_g4_final",
-      "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
-      "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+      "kind": "mounted_signed_auth_g4_exact_current",
+      "candidateSha": "4eec1d27952bc5642018495575665f5784e04f71",
+      "reconciliationSha": "4eec1d27952bc5642018495575665f5784e04f71",
       "resultPath": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "resultSha256": "b2f29e56a0b1d216d6f6dae37369e14905f31dce959accf29799d3f9be31c806",
+      "resultSha256": "3f18c047d39eb0d6358cbd9cc1d7c925c6457d79fec9019c3be59b7cfbc7cbaf",
       "screenshots": [
         {
           "path": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/screens/ORG__desktop__pl__light.png",
-          "sha256": "fcdec50cf08aa5ce19c801b9b6f8203e106a1906af77712822185990b220c734"
+          "sha256": "0eb461b5b92785a540dcacb0de62714a7ff57a9269882572c741286fb5d53f79"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/screens/ORG__desktop__pl__dark.png",
-          "sha256": "5e406aca71962751a299afb9ccf4ab17e5221ac9f7f25150083eeba0d757cc03"
+          "sha256": "8922c80be2ea364070128378394a2d7ba671bfe822ced306fd8c1df8156e8901"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/screens/ORG__desktop__en__light.png",
-          "sha256": "53e47189e7df5f97d88215c676d28b0b9ac732773a345911f887ac0bff3fbdd3"
+          "sha256": "62c5b147e3c6392467a13117d4e98c6499f8254b4e57b48fbab69383e9f78278"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/screens/ORG__desktop__en__dark.png",
-          "sha256": "02dcb4a3a91f232eb084ffc652069177d8536f7518c629d302d37ecda4aedcbc"
+          "sha256": "962a7f3f7923c928e98d6d5be97a4958d40d412ad14ca90606c0a4b5773a889e"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/screens/ORG__tablet__pl__light.png",
-          "sha256": "c95b2755fbaaa011e97b853bbf4fa49e781eefe1977d56763b46356c3a747b69"
+          "sha256": "346067f8c3689fe398135482a54ec8fafb6a4370373f03adc09ab5396b96861e"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/screens/ORG__tablet__pl__dark.png",
-          "sha256": "a48afe80296525cbedc03df5c2673cb12f00be85ca8c09fb3efe1815e374b906"
+          "sha256": "9b515f0f6ebf1535ecb25fb226d4bc0b1ad14214bc0d9b64f3b332de4f773f2a"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/screens/ORG__tablet__en__light.png",
-          "sha256": "ba02a98c515b98f34b1cc002ef59fb43c88251696c810b07af4279548311529c"
+          "sha256": "3db543d62f80c9eda676071ec8d6859736e6d3a39ea26ce482598ba12407354f"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/screens/ORG__tablet__en__dark.png",
-          "sha256": "7f868c5b36db4ae4c741b343d66c50e4874b405c5c698379da11ecfcbe3a8e02"
+          "sha256": "d79bbeda57bdbc588b822409724a73b12a2eea94c05ab46a780188227a79a726"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/screens/ORG__mobile__pl__light.png",
-          "sha256": "9b9e8d6a55475121be99fa931b86025f1e5755d36975af1288e922a198a5f8b0"
+          "sha256": "7fb07697dbaef738826d25bece3ce6e628fe3272e57f09d1aab57ee515c35a7b"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/screens/ORG__mobile__pl__dark.png",
-          "sha256": "c678bcc5f414cca65c63fb4798b64f899c6232f6e1469f33e1914b123791f977"
+          "sha256": "9ee3137ae9e6e693e2180148e40b8d3e70fd4239fd4e34e6fe0f26a368ac1abc"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/screens/ORG__mobile__en__light.png",
-          "sha256": "28fee05680255dd3174190a7aa03c79769f487c5a16ddf445e04397b249a5a12"
+          "sha256": "49c21cbe89a724213288f3a337d681bca0da450140f7597ba504f2166af03cc5"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/screens/ORG__mobile__en__dark.png",
@@ -154,15 +154,15 @@
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/screens/ORG__organization-profile__desktop__pl__light.png",
-          "sha256": "cba6c7344bfa981cda4c9d8ace2c8efa47d4d251e6c6fe7452a711dc496cd674"
+          "sha256": "296d3967a7010e0253280a57617c4e1bba9deaa755768de6686c648499ab9282"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/screens/ORG__organization-goals__desktop__pl__light.png",
-          "sha256": "2840643d3b95b7fc4f2315da5f4cb26176e7cd8913176ff533dfb55034379cd3"
+          "sha256": "3e30cb1e04d7f3a5b4638d98843fbe3356721033144fc9c4474287050dd7f7a6"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/screens/ORG__organization-strategy__desktop__pl__light.png",
-          "sha256": "c78dd75356c9079e263cec3377c110c539fda52810560eb6fc9116800c804dcb"
+          "sha256": "7f8da46d030a7e1f2530fef1be75fb7c2f75b5b1a7dd93116b4b9dabf330f893"
         }
       ],
       "consoleErrors": {
@@ -254,7 +254,31 @@
     "humanAcceptance": "PENDING — automated G4 does not sign VoiceOver, persona or visual-owner acceptance",
     "reachabilityAndStates": {
       "states": [],
-      "statesNotPresent": ["stale"]
+      "statesNotPresent": [
+        "stale"
+      ]
+    }
+  },
+  "exactCurrentG4": {
+    "candidateSha": "4eec1d27952bc5642018495575665f5784e04f71",
+    "verdict": "AUTOMATED_G4_PASS_HUMAN_PENDING",
+    "cells": 15,
+    "axeCritical": 0,
+    "axeSerious": 0,
+    "unnamedControls": 0,
+    "horizontalOverflowCells": 0,
+    "deepLink": true,
+    "reload": true,
+    "coldReopen": true,
+    "focusAlwaysVisible": true,
+    "statesNotPresent": [
+      "stale"
+    ],
+    "consoleErrors": {
+      "total": 0,
+      "forbidden403": 0,
+      "notFound404": 0,
+      "other": 0
     }
   }
 }

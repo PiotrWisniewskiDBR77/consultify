@@ -35,55 +35,55 @@
   "negativeControls": {},
   "browserArtifacts": [
     {
-      "kind": "mounted_signed_auth_g4_final",
-      "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
-      "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+      "kind": "mounted_signed_auth_g4_exact_current",
+      "candidateSha": "4eec1d27952bc5642018495575665f5784e04f71",
+      "reconciliationSha": "4eec1d27952bc5642018495575665f5784e04f71",
       "resultPath": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "resultSha256": "83c3acc97b3390e54c6d67576b3008543a309a1a30c4ef3392362ece461260a2",
+      "resultSha256": "27531c6e2a0ac9c600442a7d842bd9d61487483fe7034b1e8890449fc260995e",
       "screenshots": [
         {
           "path": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__desktop__pl__light.png",
-          "sha256": "1f4d2f9b961d543ffed4a83ab94ebdc17450522910512e3c4ea7ff611af419d0"
+          "sha256": "9a6382dd6c35c063721dc92c5ec06ab1e66d04899e0d60e611abab139881a83c"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__desktop__pl__dark.png",
-          "sha256": "8f9b886f2051747cefdaaa42857991cce4e692d35c4b459ae352209c05d911ef"
+          "sha256": "41b8b1dabc1ab416bb19d11e42c29329012275439264e8843e12d287b8ad661f"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__desktop__en__light.png",
-          "sha256": "8e01da0012963f6a607bbb160a767229eb107e60bb76fefe8b3da3a30857bdf9"
+          "sha256": "584f6438406f5eb45bcbe3d119942c88e8f19e76c2921d6fba3d47c184848935"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__desktop__en__dark.png",
-          "sha256": "4a2da518daaf9824814595bb40b4dae6ecab0d0b217dedb43d9d7d2a28d14dd4"
+          "sha256": "0675a06c76584919940b553d5c7ccf3c57821315445ea9df0d7f8e58e7fe324a"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__tablet__pl__light.png",
-          "sha256": "209a4194bcdaa88a5baad2a7c79141c62d31056f10b4bca3deb82f8b3b386fe1"
+          "sha256": "fc3b74e2cd89c89634c6d70f117dfa493145dd8554b7f88c84ef4d47739c3a71"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__tablet__pl__dark.png",
-          "sha256": "d687b16719cd47d169a6b407a910b1db5b79aa2916d49f84265b419d2a61c619"
+          "sha256": "6427a46cf1763ac919b5cc51adbaa1fa7d1c17337ef8922cd66304741ac3df72"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__tablet__en__light.png",
-          "sha256": "5b3164f8b81b38276575c8b462803f1447fc478f5a783900f5f583385446815c"
+          "sha256": "39d5e8da7fc10d7e9887e4effd9aac078b24b2e65c84ff92c8640bac23e6f9de"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__tablet__en__dark.png",
-          "sha256": "87c022ede57c60327deb2cb9de2aa491b376db6758c8d0a63ece8dd9ebf52e9d"
+          "sha256": "b583c7a1807a27d249007b15b6cc963a38b57ea1b2e7760038e3e47fd6dd6536"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__mobile__pl__light.png",
-          "sha256": "75c6b83da8cb53b1591e3831a4c6e98140a54fa2f34cb36282abe5a6e67c2cf4"
+          "sha256": "dc1cf79f11bd69d265912e7ad15b0a2f8ffd619651cbe701c871cc8636a1f117"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__mobile__pl__dark.png",
-          "sha256": "155aef831d1dd919766c078fa28d1e195fd154a8f001bbebbaa3f6f726f7855e"
+          "sha256": "b35e761ae67f151635ba332f7276d795dac1ada301c9474672eded75fd39a16c"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__mobile__en__light.png",
-          "sha256": "e2e634609f0319d68695e12cd73da5e2a9b38cfd2d08515a555be345f542cf0c"
+          "sha256": "386c2a92a0d134b2cd20d849e46c12ce4f6a77c4a37660b00f785de0ae726187"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__mobile__en__dark.png",
@@ -91,11 +91,11 @@
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__document-studio__desktop__pl__light.png",
-          "sha256": "1c3fac83745e8e2dbad99e788902d16d03acf7a5623bb8e220f2891a4afb24df"
+          "sha256": "36fa258165a721c5dc69ba7bc1fb842a4664ec3c6db7061fcfb4241ef6e70a85"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/screens/MAT__tabele__desktop__pl__light.png",
-          "sha256": "8273f2a4afeebfbb28f0187eb7505cc7f91ad153860d1b63fcd8a0d708205489"
+          "sha256": "a85b0740527ea87e7426c683af3926a3a33f9b77f49ab97a8fa449e23a2e4962"
         }
       ],
       "consoleErrors": {
@@ -195,5 +195,27 @@
     },
     "classification": "NO_CURRENT_PRODUCT_SOURCE_RED_REPRODUCED; EVIDENCE_REACHABILITY_GAP_REMAINS",
     "remainingBoundary": "PARTIAL is preserved. The mounted automated sweep still did not reach the task-specific stale state, and manual VoiceOver, named-persona and visual/brand owner acceptance remain pending. The open boundary is therefore not described as solely human G4, and no verdict promotion is claimed."
+  },
+  "exactCurrentG4": {
+    "candidateSha": "4eec1d27952bc5642018495575665f5784e04f71",
+    "verdict": "AUTOMATED_G4_PASS_HUMAN_PENDING",
+    "cells": 14,
+    "axeCritical": 0,
+    "axeSerious": 0,
+    "unnamedControls": 0,
+    "horizontalOverflowCells": 0,
+    "deepLink": true,
+    "reload": true,
+    "coldReopen": true,
+    "focusAlwaysVisible": true,
+    "statesNotPresent": [
+      "stale"
+    ],
+    "consoleErrors": {
+      "total": 0,
+      "forbidden403": 0,
+      "notFound404": 0,
+      "other": 0
+    }
   }
 }

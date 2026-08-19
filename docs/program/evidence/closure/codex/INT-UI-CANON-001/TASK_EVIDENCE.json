@@ -92,47 +92,47 @@
   },
   "browserArtifacts": [
     {
-      "kind": "mounted_signed_auth_g4_final",
-      "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
-      "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+      "kind": "mounted_signed_auth_g4_exact_current",
+      "candidateSha": "4eec1d27952bc5642018495575665f5784e04f71",
+      "reconciliationSha": "4eec1d27952bc5642018495575665f5784e04f71",
       "resultPath": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "resultSha256": "44ed2d94ccb324e93b1a820ad62e09937e105c09b8522f0f43e336ddc1da98ce",
+      "resultSha256": "fb45ca1d220ae1fb0a00f4d55ce37ecb7bf945fff2394889c203d55787474de8",
       "screenshots": [
         {
           "path": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__desktop__pl__light.png",
-          "sha256": "ff47e0ccf31a4368906203570c89de1c2074f599fd35a740e397f6f0bbc3f5ae"
+          "sha256": "daba7a72c106f1074b94992d52076c0566422cd0133e752ce2202832ae209f49"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__desktop__pl__dark.png",
-          "sha256": "f6711df8d82397c112097ff2413c2357ea85c8b2daa9aa6085e47a421b5542b0"
+          "sha256": "f56a733258ea5dbc3b8515876fe541f57115a25150a5f14be9212b373cc631cc"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__desktop__en__light.png",
-          "sha256": "7d12594ee0754310417e6494c2d500ec445aa9f4786f763024965fa30d20f2da"
+          "sha256": "aaef13303339e61b8bb00d27d9f0002fcdefa02448fdaaa1b720d24eeccee78e"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__desktop__en__dark.png",
-          "sha256": "c4add268084c9193b01050931d8422e8889ec7c9c361fabc6c857e8674d9c260"
+          "sha256": "4045fdd19c41b9da87c827af5ad9c6e8bb08be2a17a11d20e05c80609a3d51e8"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__tablet__pl__light.png",
-          "sha256": "135e50dd757ae1e590572707ebd5eb56c6fb17ddee0609111ff6fa70c533d4b4"
+          "sha256": "2ae71a9424c089573ebfc6f4b8c39cc0b7b357a17b8ef6f4bfadf0f545faf53e"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__tablet__pl__dark.png",
-          "sha256": "3de3869c024516b9be30229455bf8e69c507440eb344aaf9dba96e9e3c9eea76"
+          "sha256": "20bc5f7ecbabcf6b51bbc4b796247af78c86f53283265d8ec263e6af6cb50f4a"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__tablet__en__light.png",
-          "sha256": "344a32e7ec14e2c616887a4a1d5b3ebec4a495e60b45734171df48d26b5c03d4"
+          "sha256": "47c82130f64218852137307b563e74d516375e8d3276064c004adb11dedbd8ea"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__tablet__en__dark.png",
-          "sha256": "788016af29bc896a302e1ba6950836643a146a93b2e1acbe5c09229c42326a63"
+          "sha256": "55c61ce78a8b7f8c6a6554d3c73548cb13159c8877704ef1b8df62f8b23f5d3b"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__mobile__pl__light.png",
-          "sha256": "c7152905fe2ab98a17c09741912c36141b4629159ebe3e8fa89c0f8871cf2198"
+          "sha256": "4f280d69e8319c210c7489fb86becdca691d001ca6ffb2de72186b557e7ea08d"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__mobile__pl__dark.png",
@@ -140,15 +140,15 @@
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__mobile__en__light.png",
-          "sha256": "ebe1f17cfb36c87a80c8030a5c1a168282bed3aa9aeb9ffe5f5cee56adf9fdf8"
+          "sha256": "10b4980a50aef12347d35c4ce0578574ec8f3295f877571ad3cba28b2a65a4dd"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__mobile__en__dark.png",
-          "sha256": "0fd9449d0cc89f64a894ff29bc02e215ccc0a6309e0ec808493d461e51c0feea"
+          "sha256": "3049c18c1eff10044ee3debedc636735112dd07fe4b46f91766a5c6898fc7a5f"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/screens/INT__discovery__desktop__pl__light.png",
-          "sha256": "3f74278baa3558fec955c564276fa64683a4550459207ae8b10584a46ad28d7d"
+          "sha256": "e2c98f252e79096be1096ccdf9e8fe633b39b0284ccba6378bc2c332b3d6790c"
         }
       ],
       "consoleErrors": {
@@ -232,6 +232,28 @@
       "statesNotPresent": [
         "stale"
       ]
+    }
+  },
+  "exactCurrentG4": {
+    "candidateSha": "4eec1d27952bc5642018495575665f5784e04f71",
+    "verdict": "AUTOMATED_G4_PASS_HUMAN_PENDING",
+    "cells": 13,
+    "axeCritical": 0,
+    "axeSerious": 0,
+    "unnamedControls": 0,
+    "horizontalOverflowCells": 0,
+    "deepLink": true,
+    "reload": true,
+    "coldReopen": true,
+    "focusAlwaysVisible": true,
+    "statesNotPresent": [
+      "stale"
+    ],
+    "consoleErrors": {
+      "total": 0,
+      "forbidden403": 0,
+      "notFound404": 0,
+      "other": 0
     }
   }
 }

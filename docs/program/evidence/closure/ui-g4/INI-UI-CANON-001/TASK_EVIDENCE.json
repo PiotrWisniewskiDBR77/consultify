@@ -2,9 +2,9 @@
   "taskId": "INI-UI-CANON-001",
   "lane": "UI-G4",
   "baselineSha": "c4f84a2baa7f1ce9c7b03a68ebbd1783cdbc581b",
-  "productSha": "40e1a89bdd118de828fd5f716839789fc340a20a",
-  "verdict": "AUTOMATED_G4_FAIL / BLOCKED_HUMAN",
-  "verdictLiteral": "The automatable half of G4 FAILS on this exact SHA for the reasons listed in automatedFailures. No human sign-off is claimed or implied.",
+  "productSha": "4eec1d27952bc5642018495575665f5784e04f71",
+  "verdict": "AUTOMATED_G4_PASS / BLOCKED_HUMAN",
+  "verdictLiteral": "The automatable half of G4 passes on this exact SHA. The gate as a whole is NOT closed: VoiceOver, brand and named-human acceptance are outstanding and are recorded separately below. An automated axe pass is not a human sign-off.",
   "environment": {
     "mountedApplication": "real backend process (tsx server/src/index.ts) + Vite-served client",
     "database": "real PostgreSQL 16 (pgvector/pgvector:pg16), schema built from the canonical migration chain from zero",
@@ -41,10 +41,8 @@
     "screenshots": 15,
     "keyboardControlsTraversed": 40,
     "axeCriticalTotal": 0,
-    "axeSeriousTotal": 8,
-    "axeViolationIds": {
-      "color-contrast": 8
-    },
+    "axeSeriousTotal": 0,
+    "axeViolationIds": {},
     "statesProbed": 1,
     "statesObserved": 1
   },
@@ -69,17 +67,8 @@
   },
   "keyboard": {
     "reachableControls": 40,
-    "focusAlwaysVisible": false,
-    "invisibleFocusSamples": [
-      "button..group",
-      "button.w-full.flex",
-      "button.w-full.flex",
-      "button.w-full.flex",
-      "button.w-full.flex",
-      "button.w-full.flex",
-      "button.w-full.flex",
-      "button.w-full.flex"
-    ],
+    "focusAlwaysVisible": true,
+    "invisibleFocusSamples": [],
     "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
     "focusReturn": "Focus remained inside the document after Escape.",
     "tabOrderMonotonic": true
@@ -105,70 +94,67 @@
   "screenshots": [
     {
       "file": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__desktop__en__dark.png",
-      "sha256": "93e2e6dbdbe8f2e405ed80552711d208443e92ce0e54ba2a82a9ba55ed74398c"
+      "sha256": "d1b67ed34ffbe47a728321c38dffa616a37a5109c85b2c53bad424ae9e4c67a6"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__desktop__en__light.png",
-      "sha256": "4dc6f261552e6d548039714b2b74c8d58a23b5f6fb89dc92990684d1a89261ac"
+      "sha256": "bcff6f45500ff721127fb9a4ffa55829f644aa31fac110ba3a5941be35008204"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__desktop__pl__dark.png",
-      "sha256": "be1be3a736a4d46f5d989c7fe31957096d1fead29681d659a0059e954ef0cdad"
+      "sha256": "a33cbbb388ae8fdb4762c671aee1496e9dda1490a184b7106f0f43a67424023b"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__desktop__pl__light.png",
-      "sha256": "f063b08a11eda307081e244ba7119821cfbad9d5835c898fe93fcaf55e4e9e79"
+      "sha256": "5af6529536565013752b69c2a5af35ca4332ef3c02abdc925f52413fbb98135b"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__mobile__en__dark.png",
-      "sha256": "74a4298291065051cc61e52db0c09b11fe2d42fd550f695cc13a013fb38e93bb"
+      "sha256": "736f20d4917fd91e58cc65fe2a248b2d958befb1ae4fc7c3c870000d64fff042"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__mobile__en__light.png",
-      "sha256": "02a181f2aa5dbe9c6eac310c90cc05d916576e9444eb7f83616ae6dea2e0f4e2"
+      "sha256": "c58a47aedffcfde237aba5c3914e260054c44c03394d77fe5caa6307efac3573"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__mobile__pl__dark.png",
-      "sha256": "c33017a447267f6f928140728047f4c5a373f60dec1fa40c783a03751b700ad8"
+      "sha256": "4c860d7ca863228642a0e7ab3686e9fba055eee164e10fe06cb98cd875c4a653"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__mobile__pl__light.png",
-      "sha256": "77f540b331a1471bdd7ae156c032b447d2383c282fdc492fdbf914d210941f01"
+      "sha256": "2bf2d881a7f76fd53485a4e8e02d541c00f1ac5d59a13311329133a47cb20b2f"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__portfolio__desktop__pl__light.png",
-      "sha256": "9e5c40714135737eb75649697b7b2c22ffc218cc44178e64eddcf4f1a1e98fdf"
+      "sha256": "d081dad8b8169132c7c628540b095fad68cc1d3c4b45974aa2b5d5f7743686a8"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__roadmap__desktop__pl__light.png",
-      "sha256": "f063b08a11eda307081e244ba7119821cfbad9d5835c898fe93fcaf55e4e9e79"
+      "sha256": "8720fc6d0da65df18c8643f1fdac5beb9b5f3830efe7069c72f9773614c4c137"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__state-empty.png",
-      "sha256": "006a96655cf27c2ad4f7dd4de5fd12cc03588a9d6610a4a56a5fa7bd847d1da4"
+      "sha256": "a5a64d516d807aefc8423f43d65b025b54d00ffaf15c633cd4d47edbc8edd170"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__tablet__en__dark.png",
-      "sha256": "9d915ba33db6c6b4b1eb39e104c6385c766ba2ab3844712626a8558a63740a89"
+      "sha256": "0e44e34873defe5b2504274c07bf93533db7045dba9b823129384e2a8facc64c"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__tablet__en__light.png",
-      "sha256": "b5bc584223e4cef19e95d5022b52979a1e1f61db4baaec2f68cc4ce0061f29e6"
+      "sha256": "1c58a432a2b6c20ec2d1975b1d050f149a9fabc3d7f2410a412f3a97f1d3b250"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__tablet__pl__dark.png",
-      "sha256": "5b0a81dc0fd4e9c03f59f04e9f1af75d9acfff9b1295c9848ed8eb2fd6d89a65"
+      "sha256": "5dc63bfa0cd639d410d24bae036116ee64756f05bd98bceb64862fdb6db6e566"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/screens/INI__tablet__pl__light.png",
-      "sha256": "ad7f45902faffcd3c1f96741e4c3a5825ef898280701afb83299685824f2f175"
+      "sha256": "1a599990f5c8d17f0f45c65a1ee8d67c57898d11f670f3b76ac17312a9b042b0"
     }
   ],
-  "screenshotBinding": "Every screenshot above was produced by the sweep run recorded in productSha 40e1a89bdd118de828fd5f716839789fc340a20a; the sha256 of each file is listed so a later re-render cannot be passed off as this run.",
-  "automatedFailures": [
-    "axe not clean: 0 critical + 8 serious across 14 cells (color-contrast×8)",
-    "focus indicator not visible on every reachable control (8 sample(s): button..group, button.w-full.flex, button.w-full.flex, button.w-full.flex)"
-  ],
+  "screenshotBinding": "Every screenshot above was produced by the sweep run recorded in productSha 4eec1d27952bc5642018495575665f5784e04f71; the sha256 of each file is listed so a later re-render cannot be passed off as this run.",
+  "automatedFailures": [],
   "measurementCaveats": [],
   "blockedHuman": [
     "Manual VoiceOver pass — no automated tool substitutes for it.",

@@ -2,9 +2,9 @@
   "taskId": "MTG-UI-CANON-001",
   "lane": "UI-G4",
   "baselineSha": "c4f84a2baa7f1ce9c7b03a68ebbd1783cdbc581b",
-  "productSha": "40e1a89bdd118de828fd5f716839789fc340a20a",
-  "verdict": "AUTOMATED_G4_FAIL / BLOCKED_HUMAN",
-  "verdictLiteral": "The automatable half of G4 FAILS on this exact SHA for the reasons listed in automatedFailures. No human sign-off is claimed or implied.",
+  "productSha": "4eec1d27952bc5642018495575665f5784e04f71",
+  "verdict": "AUTOMATED_G4_PASS / BLOCKED_HUMAN",
+  "verdictLiteral": "The automatable half of G4 passes on this exact SHA. The gate as a whole is NOT closed: VoiceOver, brand and named-human acceptance are outstanding and are recorded separately below. An automated axe pass is not a human sign-off.",
   "environment": {
     "mountedApplication": "real backend process (tsx server/src/index.ts) + Vite-served client",
     "database": "real PostgreSQL 16 (pgvector/pgvector:pg16), schema built from the canonical migration chain from zero",
@@ -69,17 +69,8 @@
   },
   "keyboard": {
     "reachableControls": 40,
-    "focusAlwaysVisible": false,
-    "invisibleFocusSamples": [
-      "button..group",
-      "button..group",
-      "button.w-full.flex",
-      "button.w-full.flex",
-      "button.w-full.flex",
-      "button.w-full.flex",
-      "button.w-full.flex",
-      "button.w-full.flex"
-    ],
+    "focusAlwaysVisible": true,
+    "invisibleFocusSamples": [],
     "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
     "focusReturn": "Focus remained inside the document after Escape.",
     "tabOrderMonotonic": true
@@ -97,7 +88,7 @@
   "screenshots": [
     {
       "file": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__desktop__en__dark.png",
-      "sha256": "bfe97085286a156e5942e60ba1519a82df00e42b80f215f4ac3bddb6e1d65476"
+      "sha256": "c044db31310a643707055fa836c2a97b82d17be36fb47516f58317b777d4dd70"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__desktop__en__light.png",
@@ -105,7 +96,7 @@
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__desktop__pl__dark.png",
-      "sha256": "d1c0dc791149b4e61c046d5535392c98966995f3c6fecd973e0e2e0a650a1cee"
+      "sha256": "44c83a96a45dbf42323a6092200ac7c63523e27e557f06a39e92c24d94c0ced8"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__desktop__pl__light.png",
@@ -113,11 +104,11 @@
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__mobile__en__dark.png",
-      "sha256": "8b985667676154bb7b8876972f66f62160fba7d79a2e9da05b2488a85ec89465"
+      "sha256": "e31628241be8229191a657f611c3f26c0db977010940411f4502c9d59f7db300"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__mobile__en__light.png",
-      "sha256": "976fea6465f0738b369ddfbb15c3f0c1d84fcb36974f8f18a8195a56980e6d39"
+      "sha256": "02d53be97979fb8619f69a8bb950abe064cb186cfe4535097ebc4bfc8363ecb4"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__mobile__pl__dark.png",
@@ -133,21 +124,19 @@
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__tablet__en__light.png",
-      "sha256": "25e2f93b0a231414ba7ff951a048866e966bf2aab521a84cf48a7a1adc9f42b0"
+      "sha256": "da6226d329153cb5a42c8dc016596a553109ebdc92c248593e746858bb34236a"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__tablet__pl__dark.png",
-      "sha256": "d53e2ac92eba791cd5147aae657531aeb9fe19b934d7ff56577189f074af4ab4"
+      "sha256": "9be6e996ecf10758b4761b3755506532d2e884a9e704e8b736d18f5e6ea5e9ee"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__tablet__pl__light.png",
-      "sha256": "f2b39fdeafc510d6f55af705644f5257452672bdfd14880aafbc137689a99c68"
+      "sha256": "b2977f4c29cdb35b2f726e20e5c58abd2b6fde60f39a1cab18921dd953faa491"
     }
   ],
-  "screenshotBinding": "Every screenshot above was produced by the sweep run recorded in productSha 40e1a89bdd118de828fd5f716839789fc340a20a; the sha256 of each file is listed so a later re-render cannot be passed off as this run.",
-  "automatedFailures": [
-    "focus indicator not visible on every reachable control (8 sample(s): button..group, button..group, button.w-full.flex, button.w-full.flex)"
-  ],
+  "screenshotBinding": "Every screenshot above was produced by the sweep run recorded in productSha 4eec1d27952bc5642018495575665f5784e04f71; the sha256 of each file is listed so a later re-render cannot be passed off as this run.",
+  "automatedFailures": [],
   "measurementCaveats": [],
   "blockedHuman": [
     "Manual VoiceOver pass — no automated tool substitutes for it.",

@@ -2,9 +2,9 @@
   "taskId": "PRT-UI-CANON-001",
   "lane": "UI-G4",
   "baselineSha": "c4f84a2baa7f1ce9c7b03a68ebbd1783cdbc581b",
-  "productSha": "40e1a89bdd118de828fd5f716839789fc340a20a",
-  "verdict": "AUTOMATED_G4_FAIL / BLOCKED_HUMAN",
-  "verdictLiteral": "The automatable half of G4 FAILS on this exact SHA for the reasons listed in automatedFailures. No human sign-off is claimed or implied.",
+  "productSha": "4eec1d27952bc5642018495575665f5784e04f71",
+  "verdict": "AUTOMATED_G4_PASS / BLOCKED_HUMAN",
+  "verdictLiteral": "The automatable half of G4 passes on this exact SHA. The gate as a whole is NOT closed: VoiceOver, brand and named-human acceptance are outstanding and are recorded separately below. An automated axe pass is not a human sign-off.",
   "environment": {
     "mountedApplication": "real backend process (tsx server/src/index.ts) + Vite-served client",
     "database": "real PostgreSQL 16 (pgvector/pgvector:pg16), schema built from the canonical migration chain from zero",
@@ -43,10 +43,8 @@
     "screenshots": 14,
     "keyboardControlsTraversed": 40,
     "axeCriticalTotal": 0,
-    "axeSeriousTotal": 2,
-    "axeViolationIds": {
-      "color-contrast": 2
-    },
+    "axeSeriousTotal": 0,
+    "axeViolationIds": {},
     "statesProbed": 0,
     "statesObserved": 0
   },
@@ -71,17 +69,8 @@
   },
   "keyboard": {
     "reachableControls": 40,
-    "focusAlwaysVisible": false,
-    "invisibleFocusSamples": [
-      "button..group",
-      "button..group",
-      "button.w-full.flex",
-      "button.w-full.flex",
-      "button.w-full.flex",
-      "button.w-full.flex",
-      "button.w-full.flex",
-      "button.w-full.flex"
-    ],
+    "focusAlwaysVisible": true,
+    "invisibleFocusSamples": [],
     "escapeHandled": "Escape pressed on the surface; surface stayed mounted (no dialog was open to close).",
     "focusReturn": "Focus remained inside the document after Escape.",
     "tabOrderMonotonic": true
@@ -99,15 +88,15 @@
   "screenshots": [
     {
       "file": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__desktop__en__dark.png",
-      "sha256": "4920fdc0f16a3990526fde0c6923ffdc6bb7f682b79cb17ccb648db636be898b"
+      "sha256": "13c972453e3ddf4f149089e5fc19ce4b606961e8854ff74f50b2b78948a09e8b"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__desktop__en__light.png",
-      "sha256": "19e7e2996a1a0e6b191a4d184439413b6bbf73b107bc30a102833cc7e58aadda"
+      "sha256": "34ab5b0beb9b0ac29c960a6fd1fc492c4b350bd0a6e9a8d076a3b570b030d187"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__desktop__pl__dark.png",
-      "sha256": "9f85131ec05f01e8896246288a5f71184a83132cd10a28fa2b0fa97c98954a21"
+      "sha256": "17378f1a07023cc91554c06089062a31b5f42bf0817c4fd3b9d456c74fd783d5"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__desktop__pl__light.png",
@@ -115,7 +104,7 @@
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__mobile__en__dark.png",
-      "sha256": "8101ea6e263de289e63b4362f5df031bf2a1c889a9c4a5081c1778c812c6fef8"
+      "sha256": "0c083ae27362f2b530de126ece883cee839e43f7e442bf986676a7517645427a"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__mobile__en__light.png",
@@ -123,7 +112,7 @@
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__mobile__pl__dark.png",
-      "sha256": "236fc048f7fc3f86a02e311e9026918610cd94fc46b8cb8f3ad2c6fee9e613a8"
+      "sha256": "74a2a22e2af6899f6a46c498842452070ae3d0f81d603e715cd3ae3a42946dbd"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__mobile__pl__light.png",
@@ -131,34 +120,31 @@
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__partner-commission__desktop__pl__light.png",
-      "sha256": "bff27c9d022520084b79156d3425640e98f250d11f1bebc46356bb7400685aa0"
+      "sha256": "05195e002900c9cf038e31940fba83fbe9d25b663726a23f3f22e75f4fe7298b"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__partner-dashboard__desktop__pl__light.png",
-      "sha256": "bff27c9d022520084b79156d3425640e98f250d11f1bebc46356bb7400685aa0"
+      "sha256": "05195e002900c9cf038e31940fba83fbe9d25b663726a23f3f22e75f4fe7298b"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__tablet__en__dark.png",
-      "sha256": "fbea159e1642db62e184c877f9b6622f27e76c5058f0d3f8f6ee5959e5ec1377"
+      "sha256": "7852f8c246c141b29e191f3b56e41699bc6cf5175708dac17c82e45900795917"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__tablet__en__light.png",
-      "sha256": "28c524ff9a5f7dcd87490c1aae527febe276d406c593eeb007ce2e0be67e963d"
+      "sha256": "3393e6277d984fc71738687c308fa54ca8aa57bef5393a0673db8bbd4c5e7bb2"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__tablet__pl__dark.png",
-      "sha256": "0de06b0cbadecd0d38196903ef8904ed36e44d408a37c4d7ff44251b28f0f6d0"
+      "sha256": "5c6108c1183abaed4db93ba1110a249b35401abdb4c86f4d2cf5e9d004dcfe51"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__tablet__pl__light.png",
-      "sha256": "87eeb7f6c351add950b5726fa8ef83a0e80143db21a0724c308d124821458135"
+      "sha256": "a0b2f120be8501f05c092db32569fc3aea3961b1d7276423ab95442643a9dec3"
     }
   ],
-  "screenshotBinding": "Every screenshot above was produced by the sweep run recorded in productSha 40e1a89bdd118de828fd5f716839789fc340a20a; the sha256 of each file is listed so a later re-render cannot be passed off as this run.",
-  "automatedFailures": [
-    "axe not clean: 0 critical + 2 serious across 14 cells (color-contrast×2)",
-    "focus indicator not visible on every reachable control (8 sample(s): button..group, button..group, button.w-full.flex, button.w-full.flex)"
-  ],
+  "screenshotBinding": "Every screenshot above was produced by the sweep run recorded in productSha 4eec1d27952bc5642018495575665f5784e04f71; the sha256 of each file is listed so a later re-render cannot be passed off as this run.",
+  "automatedFailures": [],
   "measurementCaveats": [],
   "blockedHuman": [
     "Manual VoiceOver pass — no automated tool substitutes for it.",

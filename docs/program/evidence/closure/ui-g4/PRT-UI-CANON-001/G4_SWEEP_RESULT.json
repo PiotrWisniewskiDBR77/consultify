@@ -3,8 +3,8 @@
   "key": "PRT",
   "module": "Partner Portal",
   "route": "/partner",
-  "productSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
-  "startedAt": "2026-08-17T06:06:45.473Z",
+  "productSha": "4eec1d27952bc5642018495575665f5784e04f71",
+  "startedAt": "2026-08-19T22:11:55.997Z",
   "cells": [
     {
       "viewport": "desktop",
@@ -27,10 +27,7 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": [
-        "Failed to load resource: the server responded with a status of 404 ()",
-        "Failed to load resource: the server responded with a status of 404 ()"
-      ]
+      "consoleErrors": []
     },
     {
       "viewport": "desktop",

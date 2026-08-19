@@ -36,51 +36,51 @@
   "negativeControls": {},
   "browserArtifacts": [
     {
-      "kind": "mounted_signed_auth_g4_final",
-      "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
-      "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+      "kind": "mounted_signed_auth_g4_exact_current",
+      "candidateSha": "4eec1d27952bc5642018495575665f5784e04f71",
+      "reconciliationSha": "4eec1d27952bc5642018495575665f5784e04f71",
       "resultPath": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "resultSha256": "66b5d209c90554062faca2a705f0eda69ffd51dca28404325f7b0a329556ac5d",
+      "resultSha256": "cab7737ab1401312845e7e569ce52823d57b394206211f66a3d2e5ee0821f2f8",
       "screenshots": [
         {
           "path": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__desktop__pl__light.png",
-          "sha256": "113981116efd0a8c53bf46cc8150ef88518b5fd3fee77e36dc84133a18d0d0f9"
+          "sha256": "cf0570e58f6c91feffe284734ac59c38da43b1638a251d4ee656a4c08f1f7a3c"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__desktop__pl__dark.png",
-          "sha256": "0eaf7fde23bed1defc9e3903ead542056747f1819daa0046c1330818931d7c5a"
+          "sha256": "44c83a96a45dbf42323a6092200ac7c63523e27e557f06a39e92c24d94c0ced8"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__desktop__en__light.png",
-          "sha256": "532b9014c4ee0e8c10e754c61155986e681cb76b74f3c4e22aad88945e65ecf1"
+          "sha256": "a753a241e1cbd2272f57e378c8691a8e3225975ca2005f8fe661501690f1ef44"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__desktop__en__dark.png",
-          "sha256": "12bcb59f44c24377114a9ded2e583b51977a1901ec824c4577a422142a73eb27"
+          "sha256": "c044db31310a643707055fa836c2a97b82d17be36fb47516f58317b777d4dd70"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__tablet__pl__light.png",
-          "sha256": "1a2980da094333203427ab68466e16e8958a28ba2effc348267a63bf9366b38c"
+          "sha256": "b2977f4c29cdb35b2f726e20e5c58abd2b6fde60f39a1cab18921dd953faa491"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__tablet__pl__dark.png",
-          "sha256": "a4eba5fb7fac498f1e7ce40ea45b8899f75e84a190643a16f51366ef994e4bf6"
+          "sha256": "9be6e996ecf10758b4761b3755506532d2e884a9e704e8b736d18f5e6ea5e9ee"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__tablet__en__light.png",
-          "sha256": "f9535b21e53dda0751ee0d6a6b11ed4cda43e81bcd8f1430af2ffb7beacc9fd5"
+          "sha256": "da6226d329153cb5a42c8dc016596a553109ebdc92c248593e746858bb34236a"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__tablet__en__dark.png",
-          "sha256": "5b323316bff06f6668ec5a326657c436d3ac2dc9be36a9e846a5a7af14e0c5a3"
+          "sha256": "cf65dc142c9bfcd08d643cfcabe6bfc4d4cc6c634e569579defeaff3b20d67fd"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__mobile__pl__light.png",
-          "sha256": "e72eacfe7cd15918480070e17fe48b0aed6200f3caa9578bf34a6efc32b537c6"
+          "sha256": "025fe2f3e1ed3fc068ab673aa0a1799ebe330ea9a406ef19cbbdd30a2d806233"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__mobile__pl__dark.png",
-          "sha256": "0b45963e2f27147a7e33ad4efbf1b79f48d406b5aebf940485d119cf4cdeedd0"
+          "sha256": "4d36d95890abfb20662d271e6e53ffca0463bd8c2988a838bb5449d5f02f40c2"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__mobile__en__light.png",
@@ -88,7 +88,7 @@
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/screens/MTG__mobile__en__dark.png",
-          "sha256": "8b985667676154bb7b8876972f66f62160fba7d79a2e9da05b2488a85ec89465"
+          "sha256": "e31628241be8229191a657f611c3f26c0db977010940411f4502c9d59f7db300"
         }
       ],
       "consoleErrors": {
@@ -169,6 +169,28 @@
       "statesNotPresent": [
         "stale"
       ]
+    }
+  },
+  "exactCurrentG4": {
+    "candidateSha": "4eec1d27952bc5642018495575665f5784e04f71",
+    "verdict": "AUTOMATED_G4_PASS_HUMAN_PENDING",
+    "cells": 12,
+    "axeCritical": 0,
+    "axeSerious": 0,
+    "unnamedControls": 0,
+    "horizontalOverflowCells": 0,
+    "deepLink": true,
+    "reload": true,
+    "coldReopen": true,
+    "focusAlwaysVisible": true,
+    "statesNotPresent": [
+      "stale"
+    ],
+    "consoleErrors": {
+      "total": 0,
+      "forbidden403": 0,
+      "notFound404": 0,
+      "other": 0
     }
   }
 }

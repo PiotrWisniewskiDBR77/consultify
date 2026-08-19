@@ -51,63 +51,63 @@
   "negativeControls": {},
   "browserArtifacts": [
     {
-      "kind": "mounted_signed_auth_g4_final",
-      "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
-      "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+      "kind": "mounted_signed_auth_g4_exact_current",
+      "candidateSha": "4eec1d27952bc5642018495575665f5784e04f71",
+      "reconciliationSha": "4eec1d27952bc5642018495575665f5784e04f71",
       "resultPath": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "resultSha256": "c17b5d7f142ef7a1de512bf791e628d049a6ed56a379c65d6ead87272864a11b",
+      "resultSha256": "3c299879eeaee9512ef53c3e35c71ec35b40fb8f90900e0699b6b80b0178eefd",
       "screenshots": [
         {
           "path": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__desktop__pl__light.png",
-          "sha256": "0840d8b679e2adcab2ca6acfb2d27a663c6cd64ad9180d383ca883cf2ca82726"
+          "sha256": "a0ecdd4756e6aaa82c35b1f62c3ca702f130e6db71f97bf567f391e9152cc6f7"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__desktop__pl__dark.png",
-          "sha256": "5dba4585586a9e6e1b477a27e93f5bbcc6c9d17448f7bcab055e6abcedce1b01"
+          "sha256": "93582125b291dba58e97f66e9680716131cec4cf1021ff02223e627c3e08ab0f"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__desktop__en__light.png",
-          "sha256": "229d57121f96832e0112fb8d2ed0afa60d5130d103f609e81dd490a64f7ae56b"
+          "sha256": "340fd222a59148d87770db9c6fab59e2cad75db58c7911f238c1f11716768027"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__desktop__en__dark.png",
-          "sha256": "6910c12b6233d26f7623805a18b5e0e9f2c69c90fe5bfee52698630692dc0efa"
+          "sha256": "baa4a43d9a0cb9a9c6c7b08732d33bc2e064fddca9d400ef9d383a1aeeda6e0f"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__tablet__pl__light.png",
-          "sha256": "a044e27e035f2f7ab6467a96df6aa0a58e8b5798c7ebee3415c42a7ee34a9453"
+          "sha256": "3ad296b42d5ebe20075f0ce872cd6680881e92ce2e4f4a0277246be3a0b0d522"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__tablet__pl__dark.png",
-          "sha256": "08f66fd3164637f12ebabf45e0972d58e50aec27179dec0411b2d99bb77b3e7a"
+          "sha256": "d305538370c89c7efc2eca18a11633796bf5ba4311c143698075d1a1f63b47f2"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__tablet__en__light.png",
-          "sha256": "251c0ab2e907e6c67a4df88f1888c089bf6f1254f13a4e5db1f6b132119eb189"
+          "sha256": "a5bef01209cce3b5b6a02328ee604effe74d3587301af8ec38dd45fcfee3c77f"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__tablet__en__dark.png",
-          "sha256": "1a96c86e0ab176953f4c3e2931d5fdad28bb75169039e751a91c56c2402f2c73"
+          "sha256": "72f30fa171031763852e0810d1c2b63b5a14be5dfcd12856aff2a9beda68b11f"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__mobile__pl__light.png",
-          "sha256": "30afe2b92dc7c22d3e4d61aca9b507596e8ef78fb86744c91dc5718888a5d373"
+          "sha256": "75757109ad1095e1844063e0bd2f2634c2315ae85bc7726347fbb1c9a91e6a20"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__mobile__pl__dark.png",
-          "sha256": "4acb778a912f6066b934804debf8b81356ea4d59b3f3b4f0852fe8456236145d"
+          "sha256": "9f4234b97fed956e2f157a2069886fb49f3f1d176748ee36460b510dace14312"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__mobile__en__light.png",
-          "sha256": "9a26d9cec11e97b49295afb58e8c0cd12359e3b3921b06cf83a18747c167b436"
+          "sha256": "f505bfd9b1545002d233edb226f5c2f13a01c6d1c1583290f7d10a8eb97577e5"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__mobile__en__dark.png",
-          "sha256": "6f4296b53de42bfe4e15d06269aa3ee086cbd1747a63cbaffd4057eae7a1e9f4"
+          "sha256": "eaa47df65662d2687f0290b31fb4ec6966f12355713297400a1075b4f78199d8"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__execution-tab-rollout__desktop__pl__light.png",
-          "sha256": "e75b06b5f42b588b2f06c8d4b2c40a7d6c17c3137b0d805197467d900850f1d8"
+          "sha256": "1507706a6e28c387cb2727ae6e5f9cb016a6c7ab121a6774e35323a28f233ce2"
         }
       ],
       "consoleErrors": {
@@ -209,6 +209,28 @@
       "statesNotPresent": [
         "stale"
       ]
+    }
+  },
+  "exactCurrentG4": {
+    "candidateSha": "4eec1d27952bc5642018495575665f5784e04f71",
+    "verdict": "AUTOMATED_G4_PASS_HUMAN_PENDING",
+    "cells": 13,
+    "axeCritical": 0,
+    "axeSerious": 0,
+    "unnamedControls": 0,
+    "horizontalOverflowCells": 0,
+    "deepLink": true,
+    "reload": true,
+    "coldReopen": true,
+    "focusAlwaysVisible": true,
+    "statesNotPresent": [
+      "stale"
+    ],
+    "consoleErrors": {
+      "total": 78,
+      "forbidden403": 78,
+      "notFound404": 0,
+      "other": 0
     }
   }
 }

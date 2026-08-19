@@ -51,71 +51,71 @@
   "negativeControls": {},
   "browserArtifacts": [
     {
-      "kind": "mounted_signed_auth_g4_final",
-      "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
-      "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+      "kind": "mounted_signed_auth_g4_exact_current",
+      "candidateSha": "4eec1d27952bc5642018495575665f5784e04f71",
+      "reconciliationSha": "4eec1d27952bc5642018495575665f5784e04f71",
       "resultPath": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "resultSha256": "ed6c1c800e022fbfeb1b9890d31ea3e9a73c4d68c744b2cb48208e0981fa4e61",
+      "resultSha256": "dab5c5b2abf8a3315d56e80d6d15e96a7c1443f3f294f06f3c0694d0b21434c8",
       "screenshots": [
         {
           "path": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens/MYW__desktop__pl__light.png",
-          "sha256": "c63633ea8e8955781c88da50a540ce64b659040c94e10cbc847308b516e5e5ba"
+          "sha256": "7fdefd2d740cc2f7cb1caf2b291767ad0155dc7d88b04f7a641653a75220c42f"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens/MYW__desktop__pl__dark.png",
-          "sha256": "12d666b3181d76c67e79571581c73a30d167bc77e00388ee18d8208d13fd4168"
+          "sha256": "95ca341b13f72b9c1a5a17e477a03355194298b391f875ed07b699b69c4d24b9"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens/MYW__desktop__en__light.png",
-          "sha256": "b3040f2def5a7a929ae67d112a6cb5c17d43b8dbf9e67568cebc9572263f7659"
+          "sha256": "86f0b1a3cf22a7ed42cecc2a7e3acec391e6e0f7bb52977518c65475f7ca8136"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens/MYW__desktop__en__dark.png",
-          "sha256": "9593a8ed356a3128ce89d11dbb81d4efe1d418a89c08138f690fb89c3ea331c6"
+          "sha256": "daaec6c68acbbd14c5f1f7acd5a7f81d3002c056cc6ebddb90379c84a5c45699"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens/MYW__tablet__pl__light.png",
-          "sha256": "1d9eb90c5fef700318a9b30a407aca5fd9e4e971f4fff13d3f2d9467276375fa"
+          "sha256": "23293e6afd87f3f71232a119553fdd0f0d5982477aa43a27dfa8190def3851ba"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens/MYW__tablet__pl__dark.png",
-          "sha256": "72925994dfea153555d16f4cd1ca1683707fa435309db1458f4acc425769d46f"
+          "sha256": "3d15bbfc361aa885a37233fde55bf72de3486207e42adf4ca538ce725a86680d"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens/MYW__tablet__en__light.png",
-          "sha256": "7a2623f8575bd9fa4672eebb33af91637bb2e7f92ad0a2d0de844769b8d49c5f"
+          "sha256": "e68f9586cdef9ff18f1f8475c45c57bb73f2c5142daf2af1cdc4879cc8793a79"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens/MYW__tablet__en__dark.png",
-          "sha256": "a2941649f38e8654262f15121801eabffb3488a26db191b4e83e1e5103354a0e"
+          "sha256": "e7cac69f653e4892793986033fb7ebbc1a7ff13a90f1bd8f3c36c0c8cffbe77a"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens/MYW__mobile__pl__light.png",
-          "sha256": "8d62c46514c300b0c8a7a0c8c5aee84c8119f630ee918b29b19775f03a7baa74"
+          "sha256": "891dd4d771c25ff8d9f66146994f04c52ecf28adf8d09fd0c6aaa88210c6264f"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens/MYW__mobile__pl__dark.png",
-          "sha256": "0aa8db844d16faaf2b6ccf049cd96079f2d0185486a1d8a6e51a45fc37237c25"
+          "sha256": "102495e1f9f0ab5205a11b68109c02f4d43307956fd1befed660480973d8e01a"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens/MYW__mobile__en__light.png",
-          "sha256": "2a7e9871eda9284c92eed89344114aeada531ef61bb822d39dcd96f31a74214b"
+          "sha256": "d81c83d66f293890cc919d25a9670e7a3251b10bb1eaef54ea2dfbb85f864a0d"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens/MYW__mobile__en__dark.png",
-          "sha256": "89894a84ff2755573b45ed85e9969b6d305610afec0ca4a3bbc9247a861c927d"
+          "sha256": "4cfcf942f913caf5ac1d55067e1066fc352c18b1c5bfc6aa058af318df12f9f4"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens/MYW__my-work-tab-agent__desktop__pl__light.png",
-          "sha256": "6339514e60a6d3c2282efc30eebbfda0b655f6e19345cd391405f2b9cac5c3c3"
+          "sha256": "93eb8a76150954dbe8253b255eb6dc98fe62d6aa27b018b6c51bfd09cb42f78f"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens/MYW__my-work-tab-vault__desktop__pl__light.png",
-          "sha256": "bd49402153662a2d88b64fcdf72c567b51f41ffd261a4313bff18c9d722705b8"
+          "sha256": "23a1b42c21c74e460a7e431e26a36dd81182eabd3df06c03409de1d48300644b"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/screens/MYW__state-empty.png",
-          "sha256": "e9a917f21d4fc56510b8a24fb586018ba09b47379c15336839d20bfa63f0ae70"
+          "sha256": "7f246b9c4fd88b4ef7dc8d35ee40f4131864800defc5d9853f2fc88242e00987"
         }
       ],
       "consoleErrors": {
@@ -130,7 +130,10 @@
     "candidateSha": "c2cced7e93f99e253976ed67514683ed0fe1586a",
     "resultPath": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/MYW_TECHNICAL_RESULT.json",
     "findingsPath": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/MYW_TECHNICAL_FINDINGS.md",
-    "signedRoles": ["USER", "MANAGER"],
+    "signedRoles": [
+      "USER",
+      "MANAGER"
+    ],
     "e2eMode": false,
     "visualCells": "32/32",
     "axeCriticalSerious": "0/0",
@@ -244,6 +247,28 @@
       "statesNotPresent": [
         "stale"
       ]
+    }
+  },
+  "exactCurrentG4": {
+    "candidateSha": "4eec1d27952bc5642018495575665f5784e04f71",
+    "verdict": "AUTOMATED_G4_PASS_HUMAN_PENDING",
+    "cells": 14,
+    "axeCritical": 0,
+    "axeSerious": 0,
+    "unnamedControls": 0,
+    "horizontalOverflowCells": 0,
+    "deepLink": true,
+    "reload": true,
+    "coldReopen": true,
+    "focusAlwaysVisible": true,
+    "statesNotPresent": [
+      "stale"
+    ],
+    "consoleErrors": {
+      "total": 0,
+      "forbidden403": 0,
+      "notFound404": 0,
+      "other": 0
     }
   }
 }

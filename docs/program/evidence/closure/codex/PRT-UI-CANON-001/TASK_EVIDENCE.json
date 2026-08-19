@@ -66,51 +66,51 @@
   },
   "browserArtifacts": [
     {
-      "kind": "mounted_signed_auth_g4_final",
-      "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
-      "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+      "kind": "mounted_signed_auth_g4_exact_current",
+      "candidateSha": "4eec1d27952bc5642018495575665f5784e04f71",
+      "reconciliationSha": "4eec1d27952bc5642018495575665f5784e04f71",
       "resultPath": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "resultSha256": "4451e2a8479122bb4eb3885c6a587df8bb306a205208720ecfda11ffb605925b",
+      "resultSha256": "32f94c503866e54329e0f3a8cb1de7725bdf3c15319b8ddcbfc565ba9dbfe5f1",
       "screenshots": [
         {
           "path": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__desktop__pl__light.png",
-          "sha256": "59f6acf62118f858ef4a677e08c833f55a5b1f362723f46d2e5dfa61ddd563fd"
+          "sha256": "eb523b4c9a35cf80edb1b8200af3c5725be8dd4d8da3c6c236fd0a9be108fee6"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__desktop__pl__dark.png",
-          "sha256": "c3fc59a172e18da6ad2d2a8d330056fb1ab337e00ed217a1f9eb7a53c6c88426"
+          "sha256": "17378f1a07023cc91554c06089062a31b5f42bf0817c4fd3b9d456c74fd783d5"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__desktop__en__light.png",
-          "sha256": "ea7929fa51e754ec30c794654c36798a94f2687509cf0738679b0a3093d21360"
+          "sha256": "34ab5b0beb9b0ac29c960a6fd1fc492c4b350bd0a6e9a8d076a3b570b030d187"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__desktop__en__dark.png",
-          "sha256": "b20ead94e130362a39901e1087187ad0c955c3e7759d7e0424ef191fe7440dcb"
+          "sha256": "13c972453e3ddf4f149089e5fc19ce4b606961e8854ff74f50b2b78948a09e8b"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__tablet__pl__light.png",
-          "sha256": "352992bc308e809c9c4050f8a25907b062492d6b7e29a62c19a0a7ba2d98b7a9"
+          "sha256": "a0b2f120be8501f05c092db32569fc3aea3961b1d7276423ab95442643a9dec3"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__tablet__pl__dark.png",
-          "sha256": "cf9e25ddf5763452a7f2ce3a8c99f29b08f7589de070dd446508fbecfed79365"
+          "sha256": "5c6108c1183abaed4db93ba1110a249b35401abdb4c86f4d2cf5e9d004dcfe51"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__tablet__en__light.png",
-          "sha256": "34acf2a6141b70c8720698f1f90c6fcf4601994a343683f26dd1e96ef6f6ec81"
+          "sha256": "3393e6277d984fc71738687c308fa54ca8aa57bef5393a0673db8bbd4c5e7bb2"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__tablet__en__dark.png",
-          "sha256": "c7df296b9f70a56df71e0933cd9a35a09913eb9b7aa16c332d29356bb71e69b0"
+          "sha256": "7852f8c246c141b29e191f3b56e41699bc6cf5175708dac17c82e45900795917"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__mobile__pl__light.png",
-          "sha256": "fc04efbe9d18f7939f38d519bfa3f215e96f38a73243abba6c6d7d7a5975f7ff"
+          "sha256": "183c4846f01698927eccfa466f47f8fef55ac3e9824a171f8106c52a4159fbf9"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__mobile__pl__dark.png",
-          "sha256": "3e85e2ace3dc626f5d65b02f64a6c836cfec0c7c1deb1dae3b441f73988e93fa"
+          "sha256": "74a2a22e2af6899f6a46c498842452070ae3d0f81d603e715cd3ae3a42946dbd"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__mobile__en__light.png",
@@ -118,21 +118,21 @@
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__mobile__en__dark.png",
-          "sha256": "4f14244ce2f67af4ef4ede33fa349e9a078f1aa9ddac77179360a410abb98381"
+          "sha256": "0c083ae27362f2b530de126ece883cee839e43f7e442bf986676a7517645427a"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__partner-dashboard__desktop__pl__light.png",
-          "sha256": "c1cbcb2fc1a742ae5f81c2c7c7e878a0e53005d5b61fa4675659532649c8fc92"
+          "sha256": "05195e002900c9cf038e31940fba83fbe9d25b663726a23f3f22e75f4fe7298b"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__partner-commission__desktop__pl__light.png",
-          "sha256": "39983a9e7ad3d750d018678764bb32bdb340a5eb6b99853e4ca34654778091d6"
+          "sha256": "05195e002900c9cf038e31940fba83fbe9d25b663726a23f3f22e75f4fe7298b"
         }
       ],
       "consoleErrors": {
-        "total": 2,
+        "total": 0,
         "forbidden403": 0,
-        "notFound404": 2,
+        "notFound404": 0,
         "other": 0
       }
     }
@@ -214,6 +214,28 @@
       "statesNotPresent": [
         "stale"
       ]
+    }
+  },
+  "exactCurrentG4": {
+    "candidateSha": "4eec1d27952bc5642018495575665f5784e04f71",
+    "verdict": "AUTOMATED_G4_PASS_HUMAN_PENDING",
+    "cells": 14,
+    "axeCritical": 0,
+    "axeSerious": 0,
+    "unnamedControls": 0,
+    "horizontalOverflowCells": 0,
+    "deepLink": true,
+    "reload": true,
+    "coldReopen": true,
+    "focusAlwaysVisible": true,
+    "statesNotPresent": [
+      "stale"
+    ],
+    "consoleErrors": {
+      "total": 0,
+      "forbidden403": 0,
+      "notFound404": 0,
+      "other": 0
     }
   }
 }

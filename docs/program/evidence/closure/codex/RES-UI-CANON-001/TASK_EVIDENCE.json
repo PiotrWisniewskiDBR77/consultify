@@ -118,85 +118,85 @@
     "docs/program/evidence/closure/codex/RES-UI-CANON-001/owner-okr-set-pl-dark-390x844.png",
     "docs/program/evidence/closure/codex/RES-UI-CANON-001/owner-roi-en-light-768x1024.png",
     {
-      "kind": "mounted_signed_auth_g4_final",
-      "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
-      "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+      "kind": "mounted_signed_auth_g4_exact_current",
+      "candidateSha": "4eec1d27952bc5642018495575665f5784e04f71",
+      "reconciliationSha": "4eec1d27952bc5642018495575665f5784e04f71",
       "resultPath": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "resultSha256": "c88c40142e6954071b74d2e06132210c149e3fcb6eb45c461b3d365d573eb75c",
+      "resultSha256": "49cc2214789a2cbda6696395f5ae76b319206fca7854d93bc45b6aebdd9b3f5b",
       "screenshots": [
         {
           "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__desktop__pl__light.png",
-          "sha256": "da4c55cab70683a6324597a51b4ca52eeacd456ba5391fca522c7df9ccc26a6a"
+          "sha256": "0bdbcc6f22cdf4bf352a375a59bfbee92ae324456e73d83f7720c08d57204547"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__desktop__pl__dark.png",
-          "sha256": "b9ba069adfa13ce46665d013eacf8f4ac05c68b91b71778d2c26671c15a4a230"
+          "sha256": "20caf75e41f6700b7549388024b116e58c28a22acdce1c3503003c81f29bfd3a"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__desktop__en__light.png",
-          "sha256": "ae04165a8116881fd7f38484ffb5d418de7766f863f8f4ebf24f60bf07e6dc08"
+          "sha256": "c1b98f423285b102e583b91e7eabf17cf81673f0eff5048cbfd853b334ae5b12"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__desktop__en__dark.png",
-          "sha256": "8ca170222a42b7ae000bc51cdcc3b2d1ffa0e35fae4991f399dc34304f8df188"
+          "sha256": "3e748ddd094f01bae88c2329378b2b41c6b8e73527e87d8db26197b245ca3b55"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__tablet__pl__light.png",
-          "sha256": "f4ec2d8039d5588da143e8162cc77ead6028f82b5f00075933140a7a623d1244"
+          "sha256": "da5cb01186c1daea4abef880aabbf645189179e30338528b4f7fd20cf5063df1"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__tablet__pl__dark.png",
-          "sha256": "52b2665769a2a78f45d68ef395c47207c41666c60c77995a522f416bfc0e64c2"
+          "sha256": "798cf9de3dd986a5c9d0fa47a0fcc63f07f3e14bfa42be1b6b606c3761bdedd3"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__tablet__en__light.png",
-          "sha256": "99ecaf49a2e24b4ab9ec2ee140199f126d6bf594654fcce75e689d04d2011dcd"
+          "sha256": "3eb9c28f537865fdc9b02db35e01e6a24c4ebeb9a74b30fb2835167892701e52"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__tablet__en__dark.png",
-          "sha256": "063807df248ac9262a60c5b06b3c93118af3f895eae44973b86ada455c7d30a2"
+          "sha256": "31888e29fa109e4b0fba72ce074a8517c94b5561eb766f4ac3aedcdd7f6d7fa3"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__mobile__pl__light.png",
-          "sha256": "27ccc4435da512e0ddce35044aa11de27faf8265ea3196ca91313fce818f70d0"
+          "sha256": "05b60e1b2af4aa4d1c7341daba517256bc5cf8c043fafbde2bc1934fbbcd7231"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__mobile__pl__dark.png",
-          "sha256": "f4b5fe036f760ddd83316c45c212e63aef7ab3c917cf2da400bffdbad360720b"
+          "sha256": "b995dea82765132699b73601ad2fcb6799b2f8bb05a66104b831ec6baf30ecd7"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__mobile__en__light.png",
-          "sha256": "6f1e6a42b87c4742603908f451d0016bac57c846a726a7910e0a1763d5ab395a"
+          "sha256": "9ec4a9dbd390fb9bb54c43907e5e6f586d11b562c1cc6cde02525679c0838117"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__mobile__en__dark.png",
-          "sha256": "91f93104b2a076d6d16ad253435cdf2981805b946b66cbe1acc81371394ace39"
+          "sha256": "225fc715217e10d7b3511529fcf8a68331c9ae56c8643a57352dbda7490bda18"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__results-kpi__desktop__pl__light.png",
-          "sha256": "bc51328b57310809873619f994fa9e9717dc9bdba5aaf4ea267001b898fbe6ae"
+          "sha256": "fa6945d317282760c1dc6317baa19ebaeaf610cf8d52d97b56c910b49ed64455"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__results-roi__desktop__pl__light.png",
-          "sha256": "ea57b1a492e4420caf9b7189ac068f4741904fcbbd04e5f4ba33e369f64049a6"
+          "sha256": "4665b27903aa5a52e069660377259fe1b4cbd2b1338da4628d4ed92559708f90"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__results-okr__desktop__pl__light.png",
-          "sha256": "c30fbb1642acc44f08f7db24bd22113b443227ab73113fc0ee33831d7694d6c1"
+          "sha256": "052b3a094eea798eeebf4f1576fc8a35e47d4987337e08a4a4e07c25cc168035"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__state-empty.png",
-          "sha256": "c671af25e601c2ff67d488162fead076cbaae93cf36109dd778f5bacbd72f957"
+          "sha256": "e1d4e58a0ed4ccc553456ccc75e520d72395e6c90d91ccedfd3c7fceaddb66ec"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__state-error.png",
-          "sha256": "402d723a279151c63d75925f58d3a77daf0929fef7bcabb22c80c0e047c99846"
+          "sha256": "50528350fc6e427cb09390e92a5f7c9765417db3f05121554c06027be22ff308"
         }
       ],
       "consoleErrors": {
-        "total": 12,
+        "total": 0,
         "forbidden403": 0,
-        "notFound404": 12,
+        "notFound404": 0,
         "other": 0
       }
     }
@@ -312,6 +312,28 @@
       "statesNotPresent": [
         "stale"
       ]
+    }
+  },
+  "exactCurrentG4": {
+    "candidateSha": "4eec1d27952bc5642018495575665f5784e04f71",
+    "verdict": "AUTOMATED_G4_PASS_HUMAN_PENDING",
+    "cells": 15,
+    "axeCritical": 0,
+    "axeSerious": 0,
+    "unnamedControls": 0,
+    "horizontalOverflowCells": 0,
+    "deepLink": true,
+    "reload": true,
+    "coldReopen": true,
+    "focusAlwaysVisible": true,
+    "statesNotPresent": [
+      "stale"
+    ],
+    "consoleErrors": {
+      "total": 0,
+      "forbidden403": 0,
+      "notFound404": 0,
+      "other": 0
     }
   }
 }

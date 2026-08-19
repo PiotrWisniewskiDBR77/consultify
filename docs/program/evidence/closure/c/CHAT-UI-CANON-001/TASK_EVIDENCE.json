@@ -48,9 +48,21 @@
     "ai_partial_responses"
   ],
   "commands": [
-    {"command": "exact-current fresh migration + repeat + dry-run on disposable tmpfs PostgreSQL", "exitCode": 0, "result": "758/758 successful unique migrations; repeat 0; dry-run pending 0"},
-    {"command": "exact-current focused CHAT qualification", "exitCode": 0, "result": "real PostgreSQL 7/7; mounted browser 2/2; unit/hook 77/77; literal disconnect/cold resume 1/1; residue 0"},
-    {"command": "8 GB server TypeScript check + backend build + mounted frontend build", "exitCode": 0, "result": "all static gates passed"}
+    {
+      "command": "exact-current fresh migration + repeat + dry-run on disposable tmpfs PostgreSQL",
+      "exitCode": 0,
+      "result": "758/758 successful unique migrations; repeat 0; dry-run pending 0"
+    },
+    {
+      "command": "exact-current focused CHAT qualification",
+      "exitCode": 0,
+      "result": "real PostgreSQL 7/7; mounted browser 2/2; unit/hook 77/77; literal disconnect/cold resume 1/1; residue 0"
+    },
+    {
+      "command": "8 GB server TypeScript check + backend build + mounted frontend build",
+      "exitCode": 0,
+      "result": "all static gates passed"
+    }
   ],
   "denominators": {
     "automatedG4Cells": "12/12",
@@ -77,67 +89,67 @@
   },
   "browserArtifacts": [
     {
-      "kind": "mounted_signed_auth_g4_final",
-      "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
-      "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+      "kind": "mounted_signed_auth_g4_exact_current",
+      "candidateSha": "4eec1d27952bc5642018495575665f5784e04f71",
+      "reconciliationSha": "4eec1d27952bc5642018495575665f5784e04f71",
       "resultPath": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "resultSha256": "1123be93166877892802697cf077c9e8183ce9e4bcfb59434b6f90c67757ea39",
+      "resultSha256": "dc0fdc8328901c7f2b4e552359105801653369ceb228fac3fdd74301aed187f2",
       "screenshots": [
         {
           "path": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/screens/CHAT__desktop__pl__light.png",
-          "sha256": "3c107093fbc6c2e7eb99fad9820ff9b66752743bcd9947754b18313eaeb62af2"
+          "sha256": "ffe50f3f0af525bd81094ea668eb0842104bf5dc5f4587225605cecb6becde76"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/screens/CHAT__desktop__pl__dark.png",
-          "sha256": "56d5c831ceaf9e2f659117e33f472398cdaceddd17e1234a0be817a0d94a3e70"
+          "sha256": "91e6bbd30e0bb5ef1655ea1f7484fd113020ee8db08ad2cba6d48edb871a6a06"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/screens/CHAT__desktop__en__light.png",
-          "sha256": "ef350facab6fa830f137e547ef146eff2ce11173f3c90516ed61861099e8b8c0"
+          "sha256": "e7ba90cecf2f7a58add3c32ba374f310506c4d788f52b76c13447292094fdfbb"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/screens/CHAT__desktop__en__dark.png",
-          "sha256": "3d3314854cf24a7aad1629a8e38fd457d6a557211b13b1546de7d010f140d699"
+          "sha256": "0d6d5cd34bd0a1cb89cb6b6492b1bf4d38ae3de0f9e5d27dbda9a0dac2addcac"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/screens/CHAT__tablet__pl__light.png",
-          "sha256": "0eafbf79595200fd6177f3630322e1477ea3dc6fbb3bc58dc0dd62dc97985dfb"
+          "sha256": "d653d7be61c74921268491c14c2986bfff8ad32c9f58402819b2f06c25af17f5"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/screens/CHAT__tablet__pl__dark.png",
-          "sha256": "c776f9618da0e2d378d4f3033e510ceee2d9c27d07b0cf492452eb6d602e3445"
+          "sha256": "f340daa776a6eb6159d5f04fd316d8a27010dca95417a590d956f458f2516cf5"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/screens/CHAT__tablet__en__light.png",
-          "sha256": "255099a1aefeddee6b639490baaf4512f12c9f756912add2206d429d84c402a5"
+          "sha256": "654e6e09c9428e037fd4ffc4cd70f0154a5eccfe60dc641b0eb07a1d60270d13"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/screens/CHAT__tablet__en__dark.png",
-          "sha256": "f8b051809986fc5d61c3518bd28765a6d6361dd00e2ecce352fb20c96dfa171b"
+          "sha256": "11cdb8ce56d8ac69e8c7f8fab80c6d52d6fbe2d351687f2c1ce5beb3fb74b7e5"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/screens/CHAT__mobile__pl__light.png",
-          "sha256": "15e14b15a15a7934b42534c7e73076b1558bf45739f6976179629f74a9e3a27f"
+          "sha256": "9f801c9e3c02f7fea55e912168eab979171aa48ee2d445d13710a710b1d4f198"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/screens/CHAT__mobile__pl__dark.png",
-          "sha256": "b08a75a88b069a70446b021db6c08bca99744ff2a25571ceebfc008814d29047"
+          "sha256": "28e9a364115bb7294e4ac91740f7fa2ac81e7e8523f85e8473c7b2a8b0d794a0"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/screens/CHAT__mobile__en__light.png",
-          "sha256": "4414a5c834c4b7a19a961e9142a3fb60c476d5e148e99d968dd88b8c69663fac"
+          "sha256": "f5f235e119d533f0b6854a8e58f387c2325752106838db34828de65e18bef3b1"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/screens/CHAT__mobile__en__dark.png",
-          "sha256": "0d468c5d2e4590e730bfd926696dfabc448642a85d44bae987ac00def54215a7"
+          "sha256": "117540e6b114c3e9ba9a05a2458a57c86d3971d2d8d2ca911a23dd2c60393baf"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/screens/CHAT__state-ready.png",
-          "sha256": "60eefc5e0f1949a3492be3ec7b2f18570fe9482ba2ce8648cdf8329a59f38d37"
+          "sha256": "134864be71485efe2b570fd518d6d24972ec2f75c418b671e939e4c63a527a3c"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/screens/CHAT__state-loading.png",
-          "sha256": "977dfece5fba308d7d6cc50bfedd42d5d7bc352c4a2e4529e2c94c33eafec1e0"
+          "sha256": "d5398960a510b55c800892e2fc1da886d043e35e2c5caeb71dc94d93d5b32a20"
         }
       ],
       "consoleErrors": {
@@ -233,6 +245,29 @@
         "forbidden",
         "stale"
       ]
+    }
+  },
+  "exactCurrentG4": {
+    "candidateSha": "4eec1d27952bc5642018495575665f5784e04f71",
+    "verdict": "AUTOMATED_G4_PASS_HUMAN_PENDING",
+    "cells": 12,
+    "axeCritical": 0,
+    "axeSerious": 0,
+    "unnamedControls": 0,
+    "horizontalOverflowCells": 0,
+    "deepLink": true,
+    "reload": true,
+    "coldReopen": true,
+    "focusAlwaysVisible": true,
+    "statesNotPresent": [
+      "forbidden",
+      "stale"
+    ],
+    "consoleErrors": {
+      "total": 0,
+      "forbidden403": 0,
+      "notFound404": 0,
+      "other": 0
     }
   }
 }
