@@ -183,8 +183,8 @@ test.describe('Partner V8 zero-writer — mounted signed session', () => {
       await expect(page.getByText('PRT V8 Owner', { exact: true })).toBeVisible();
       await expect(page.getByText('DE89370400440532013000', { exact: true })).toBeVisible();
       await expect(page.getByRole('button', { name: 'Save Changes' })).toHaveCount(0);
-      await expect(page.getByDisplayValue('PRT V8 Owner')).toHaveCount(0);
-      await expect(page.getByDisplayValue('DE89370400440532013000')).toHaveCount(0);
+      await expect(page.locator('input[value="PRT V8 Owner"]')).toHaveCount(0);
+      await expect(page.locator('input[value="DE89370400440532013000"]')).toHaveCount(0);
       await expect(page.getByRole('button', { name: /^Bank Transfer/i })).toHaveCount(0);
 
       await page.reload();
