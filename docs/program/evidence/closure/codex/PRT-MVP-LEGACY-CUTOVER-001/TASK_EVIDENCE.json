@@ -3,15 +3,25 @@
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "4f356fb86a8f7b92457e87956f18e70c5e0cd869",
   "historicalTechnicalSourceSha": "74f6a15ffd6b953432531a77b8e2e58a73c4128a",
-  "technicalSourceSha": "edfab2f319af0679adc79e90777eaaa934464070",
+  "technicalSourceSha": "ed342ed686e2c01c1bfbe47908451d7d5f4e0acf",
   "historicalReconciliationSha": "de4100cead8759afcc2ee4e3a8d349242a22fd4a",
-  "reconciliationSha": "edfab2f319af0679adc79e90777eaaa934464070",
+  "reconciliationSha": "ed342ed686e2c01c1bfbe47908451d7d5f4e0acf",
   "zeroWriterTechnicalSourceSha": "1c12bb49c81d9ef2de53df2936214cde6d6c1d5e",
   "cleanupCorrectionSha": "cce2b95e3a1ad00224f75364bbfdbed216644f6a",
   "productIntegrationSha": "3eccbe879ab05b59d99ea67ec490b96b272e2eaf",
   "cleanupIntegrationSha": "edfab2f319af0679adc79e90777eaaa934464070",
-  "technicalVerdict": "PASS_CURRENT_LEGACY_CUTOVER_KERNEL",
-  "currentKernelRequalification": {
+  "technicalVerdict": "PASS_EXACT_CURRENT_DEFAULT_ROUTER_AND_RETAINED_PUBLIC_INGRESS",
+  "exactCurrent": {
+    "testedSha": "ed342ed686e2c01c1bfbe47908451d7d5f4e0acf",
+    "scope": "Repository-local Partner cutover: all sixteen declared default-router mutations have explicit V8 successors or explicit no-write successors; W17 is retained as the canonical public ingress rather than falsely retired; W28/W29 use canonical operator-review successors.",
+    "migration": "Fresh isolated PostgreSQL applied 776 migrations including 957; repeat applied 0 and dry-run reported 0 pending.",
+    "realPg": "The mounted Partner cutover and sibling-router files passed 21/21 in one qualifying run with retry 0. The W17 proof includes atomic click plus campaign increment, replay/collision/concurrency, trusted-proxy abuse bucketing, hostile-schema fail-closed checks, cold telemetry and cleanup.",
+    "static": "Server TypeScript typecheck exited 0.",
+    "cleanup": "Clicks, public-click receipts, campaigns, Partner usage events, signal intents and Partner organizations were 0; only the baseline system organization remained; advisory locks were 0; the owned database was dropped and catalog existence was 0.",
+    "logs": "/private/tmp/w17-ed342-final-{fresh,repeat,dry,realpg,residue-locks,drop,existence}.log and /private/tmp/w17-ed342-server-tsc.log",
+    "nonQualifyingAttempts": "Two earlier harness-only attempts were discarded: one omitted the mandatory B1 cleanup flag and one used a database name outside the enforced consultify_b1_ prefix. A new owned database was created before the single qualifying run."
+  },
+  "historicalKernelRequalification": {
     "migration": "Fresh exact-current PostgreSQL ledger 758/758/758 successful and unique with zero missing checksums; strict repeat applied 0 and dry-run reported 0 pending.",
     "focused": "3 files / 13 tests passed: durable lifecycle 5, mounted Finance/Results/Partner observation 6, atomic bulk user plus ACTIVE membership 2.",
     "fullLegacy": "16 files / 103 tests passed.",
@@ -23,12 +33,12 @@
     "reconciliationNote": "de4100 advances the tested 74f6 product state only through evidence commits relevant to this reconciliation; productSha remains the historical domain implementation authority."
   },
   "currentCoveredWriterRequalification": {
-    "technicalSourceSha": "edfab2f319af0679adc79e90777eaaa934464070",
-    "scope": "Eight V8-owned Partner mutations only; the other eight declared legacy writers remain outside this closure.",
-    "writers": "organization, specializations, regions, public listing, payout settings, campaign create, campaign delete and payout request use governed V8 routes with no client mutation fallback",
+    "technicalSourceSha": "ed342ed686e2c01c1bfbe47908451d7d5f4e0acf",
+    "scope": "All sixteen declared default-router Partner mutations are classified and guarded. This does not claim that every mutation in the wider Partner domain is retired.",
+    "writers": "W01-W08 use governed V8 mutations; W09 and W13-W15 use tenant-bound connection/certification commands; W10-W12 and W16 have explicit no-write V8 503 successors; the three remaining active UI calls select V8 before the request and have no error fallback.",
     "eligibility": "calculatePayoutEligibility is shared by the earnings read projection and transactional requestPayout executor; the UI no longer infers eligibility from ledger balance or a hardcoded threshold",
-    "mounted": "real signed connected ACTIVE Partner completes company, campaign and payout writes; a forced governed failure produces zero /api/partners mutation requests; revoked and foreign callers receive 403",
-    "cleanup": "hard disposable DB prefix plus server current_database check, retained session advisory lock, pinned cleanup transaction, exact immutable ledger trigger restored O, full scoped residue 0 and unlock true",
+    "mounted": "Mounted real PostgreSQL proves exact tenant ownership, same-user cross-tenant denial, durable replay/collision, selective rollback, operator reviews, no-write successors and the retained public ingress. Revoked, foreign and insufficient-role callers are denied before mutation.",
+    "cleanup": "At exact ed342, clicks, click receipts, campaigns, Partner usage, signal intents and Partner organizations were 0; the baseline system organization was the sole organization; advisory locks were 0; the owned database was dropped and catalog existence was 0.",
     "policyBoundary": "PARTNER_ACCRUAL_POLICY_JSON used in the mounted gate is the repository synthetic-test-only fixture, not an owner or release policy"
   },
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
@@ -133,34 +143,66 @@
       "result": "root/server typechecks, backend/frontend builds and exact edfab HEAD stability passed"
     }
   ],
+  "literalExactCurrentGates": [
+    {
+      "command": "DATABASE_URL='<redacted>' ALLOW_LOCAL_POSTGRES=true CI=true npm run db:migrate:strict",
+      "exitCode": 0,
+      "result": "Applying migrations: 776; migration 957 applied; complete"
+    },
+    {
+      "command": "DATABASE_URL='<redacted>' ALLOW_LOCAL_POSTGRES=true CI=true npm run db:migrate:strict; DATABASE_URL='<redacted>' ALLOW_LOCAL_POSTGRES=true CI=true npm run db:migrate:postgres:dry",
+      "exitCode": 0,
+      "result": "repeat Applying migrations: 0; dry Pending migrations: 0"
+    },
+    {
+      "command": "B1_LEGACY_TEST_CLEANUP=1 RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres DATABASE_URL='<redacted>' NODE_OPTIONS=--max-old-space-size=8192 npx vitest run tests/integration/partners/partner-legacy-cutover.realdb.test.ts server/src/services/legacyCutover/__tests__/partnersSiblings.pg.test.ts --maxWorkers=1 --maxConcurrency=1 --no-file-parallelism --reporter=verbose",
+      "exitCode": 0,
+      "result": "2 files; 21/21 passed in one qualifying run; no Vitest retry was used"
+    },
+    {
+      "command": "NODE_OPTIONS=--max-old-space-size=8192 npm --prefix server run typecheck",
+      "exitCode": 0,
+      "result": "server TypeScript exact-current passed"
+    },
+    {
+      "command": "exact scoped residue and advisory-lock query; DROP DATABASE; catalog existence query",
+      "exitCode": 0,
+      "result": "clicks/receipts/campaigns/usage/intents/partner_orgs 0; system organization only; locks 0; DROP DATABASE; existence 0"
+    }
+  ],
   "denominators": {
     "freshMigrationsHistorical": "710/710",
-    "freshMigrationsCurrent": "764/764",
+    "freshMigrationsHistoricalCoveredWriterWaveAtEdfab": "764/764",
     "cutoverAndApiHistorical": "28/28",
     "sequentialRealDbHistorical": "43/43",
     "rollbackAndApiHistorical": "29/29",
     "currentFocusedUiAndRoute": "45/45",
     "currentLegacyGuard": "5/5",
     "currentMountedSigned": "1/1",
-    "coveredLegacyWriters": "8/16"
+    "coveredLegacyWriters": "16/16",
+    "retainedCanonicalPublicIngress": "PRT-W17",
+    "exactCurrentPartnerRealPg": "21/21",
+    "exactCurrentFreshMigrations": "776/776"
   },
   "fixtures": {
     "database": "fresh disposable pgvector PostgreSQL primary DB prt_zero_writer_combined in consultify-mat-prt-combined-pg",
-    "coveredLegacyWriters": 8,
+    "coveredLegacyWriters": 16,
     "declaredLegacyWriters": 16,
     "testOnlyPolicy": "synthetic-test-only-v1; not an owner or release decision",
     "cleanup": "partner organizations, users, campaigns, ledger, commissions, payouts and legacy telemetry 0; ledger trigger O; advisory locks 0"
   },
   "negativeControls": {
-    "default": "covered legacy mutations return 410 and identify their V8 successor",
+    "default": "retired default-router legacy mutations return 410 and identify their V8 or explicit no-write successor",
     "rollback": "legacy access requires an explicit client and server rollback switch and is recorded",
-    "telemetry": "uncovered writers are reported as uncovered rather than falsely classified as cut over",
+    "telemetry": "retired writers use tenant-bound durable cutover intents; retained PRT-W17 records resolved tenant and Partner identity inside its atomic command rather than pretending to use a generic retirement guard",
     "clientZeroWriter": "a governed V8 failure results in zero legacy /api/partners mutation network requests",
     "payoutEligibility": "ledger balance alone cannot enable payout; the shared server projection binds approved rows, fee, currency and policy threshold",
     "membership": "revoked and foreign signed callers are denied before Partner mutation"
   },
   "resolvedBlockers": [
-    "Client mutation fallback is removed for the eight writers that already have canonical V8 successors.",
+    "All sixteen declared default-router mutations now have an explicit successor classification and the active UI mutations select V8 without an error fallback.",
+    "PRT-W17 remains compatible as an anonymous public ingress, but its receipt, click, campaign counter and resolved telemetry now commit atomically with idempotency and abuse bounds.",
+    "W28 and W29 use transactional, idempotent global-operator review successors with the old writers default-disabled.",
     "Payout read and write share one canonical eligibility calculation; the former false-enabled ledger/UI divergence is closed.",
     "Mounted fixture cleanup is pinned, disposable-database guarded, advisory-serialized and proves residue 0 with trigger O."
   ],
@@ -171,7 +213,8 @@
   },
   "verdict": "PARTIAL",
   "openBlockers": [
-    "Eight of sixteen declared legacy mutations still lack a V8 successor and remain deliberately uncovered.",
-    "The legacy mount, 39 direct client references, deployed parity telemetry window, complete historical backfill and production rollback rehearsal remain open."
+    "The wider Partner-domain denominator is not limited to the sixteen default-router writers: retained or policy-governed sibling surfaces W18-W27 still require explicit disposition before any domain-wide zero-legacy-writer claim.",
+    "PRT-W17 is retained current public ingress by repository contract; external compatibility ownership and production abuse thresholds remain release-owner decisions.",
+    "Historical owner_organization_id rows remain deliberately UNBOUND until an owner-approved mapping runbook and production backfill are executed; deployed telemetry window and production rollback rehearsal are NOT_EXECUTED."
   ]
 }
