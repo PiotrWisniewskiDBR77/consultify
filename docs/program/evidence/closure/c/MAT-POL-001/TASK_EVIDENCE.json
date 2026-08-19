@@ -1,9 +1,10 @@
 {
   "taskId": "MAT-POL-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "a62dbe340114d87eda75a0d2da2d77bee2a90685",
-  "technicalSourceSha": "466d4555dd2a38aa08e716f47d6674e99d12a972",
-  "reconciliationSha": "edfab2f319af0679adc79e90777eaaa934464070",
+  "productSha": "7da3efbcdfbf6ffb8c52ee128b6830acbea14887",
+  "testedSha": "7da3efbcdfbf6ffb8c52ee128b6830acbea14887",
+  "technicalSourceSha": "7da3efbcdfbf6ffb8c52ee128b6830acbea14887",
+  "reconciliationSha": "7da3efbcdfbf6ffb8c52ee128b6830acbea14887",
   "technicalSourceChain": [
     "f699ef69116f95578f45b49046cb1915b4c013a9",
     "e22746c4d120a6351620552736efa04279581784",
@@ -26,22 +27,33 @@
   "reopenWhen": "Visual PDF parity, an external renderer or a newly rights-cleared customer template is proposed.",
   "evidenceInvalidation": "Invalidate on engine dependency/version, export label, template inventory, font, image, layout or provenance-gate changes.",
   "owner": "Product + Legal/Privacy + Procurement",
-  "technicalVerdict": "RESTRICTED_ENGINE_POLICY_AND_UNKNOWN_PROVENANCE_QUARANTINE_VERIFIED_CURRENT",
+  "technicalVerdict": "DONE_CURRENT_SHA_REPOSITORY_RESTRICTED_SCOPE",
   "verdict": "PARTIAL",
   "changedPaths": [
     "docs/program/evidence/closure/c/MAT-POL-001/DECISION_PACKET.md",
     "server/migrations/20261017_material_export_policy_provenance.sql",
     "server/src/routes/presentations.routes.ts",
+    "server/src/routes/__tests__/deliverableTemplates.provenance.test.ts",
+    "server/src/routes/deliverableTemplates.routes.ts",
     "server/src/services/artifactHandoff/handoffSpineService.ts",
     "server/src/services/deliverableTemplateService.ts",
     "server/src/services/materialExport/__tests__/materialExportPolicy17.realdb.test.ts",
     "server/src/services/materialExport/__tests__/materialExportReceiptService.pg.test.ts",
+    "server/src/services/materialExport/__tests__/materialsMountedAuth.pg.test.ts",
+    "server/src/services/materialExport/__tests__/templateProvenanceApproval19.realdb.test.ts",
     "server/src/services/materialExport/materialExportPolicyService.ts",
     "server/src/services/materialExport/materialExportReceiptService.ts",
     "server/src/services/materials/__tests__/creationIntentResolver.test.ts",
     "server/src/services/materials/creationIntent.ts",
     "server/src/services/presentationExport/__tests__/presentationExportReceiptService.pg.test.ts",
     "server/src/services/presentationExport/presentationExportReceiptService.ts",
+    "src/components/AIChat/KimiWorkspace/SpreadsheetArtifactStudio.tsx",
+    "src/components/AIChat/KimiWorkspace/__tests__/SpreadsheetArtifactStudio.test.tsx",
+    "src/components/Presentations/DeckBuilder/ShareModal.tsx",
+    "src/components/ReportsAndPresentations/ReportsAndPresentationsHub.tsx",
+    "src/components/ReportsAndPresentations/TemplateProvenanceApprovalDialog.tsx",
+    "src/components/ReportsAndPresentations/__tests__/TemplateProvenanceApprovalDialog.test.tsx",
+    "tests/components/Presentations/ShareModal.invite.p3.1.test.tsx",
     "tests/integration/routes/presentations.export-gate.route.test.ts"
   ],
   "changedPathRationale": {
@@ -69,35 +81,41 @@
   ],
   "commands": [
     {
-      "command": "NODE_ENV=test DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:56984/prt_zero_writer_combined' DB_TYPE=postgres npm run db:migrate:strict; NODE_ENV=test DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:56984/prt_zero_writer_combined' DB_TYPE=postgres npm run db:migrate:strict; NODE_ENV=test DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:56984/prt_zero_writer_combined' DB_TYPE=postgres npm run db:migrate:strict -- --dry-run",
+      "command": "Run db:migrate:strict fresh, repeat and db:migrate:postgres:dry on mat_pol_ae16_20260819_1847 and mat_provenance_81b397_20260819_1855",
       "exitCode": 0,
-      "result": "fresh 764; repeat applying 0; dry pending 0; ledger 764/764/764/checksum-null 0"
+      "result": "both databases fresh 788; repeat applying 0; dry pending 0"
     },
     {
-      "command": "DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:56984/mat_pol_combined' DB_TYPE=postgres NODE_ENV=test CI=true MOCK_DB=false RUN_DB_TESTS=1 MAT_POL_FIXTURE_OPT_IN=1 MAT_POL_FIXTURE_PREFIX=mat_pol_combined npm --prefix server test -- --run src/services/materialExport/__tests__/materialExportPolicy17.realdb.test.ts src/services/materialExport/__tests__/materialExportReceiptService.pg.test.ts src/services/presentationExport/__tests__/presentationExportReceiptService.pg.test.ts src/services/artifactHandoff/__tests__/handoffSpine.pg.test.ts src/services/materials/__tests__/creationIntentResolver.test.ts src/services/__tests__/deliverableTemplateService.docStudioCanon.test.ts --no-file-parallelism --maxWorkers=1",
+      "command": "Exact-current MAT policy/export/receipt/handoff/mounted-auth matrix on mat_pol_ae16_20260819_1847, no file parallelism, one worker, retry 0",
       "exitCode": 0,
-      "result": "76/76"
+      "result": "9/9 files; 127 passed; 17 provenance cases intentionally gated to the separate provenance database"
     },
     {
-      "command": "DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:56984/mat_pol_combined' DB_TYPE=postgres NODE_ENV=test CI=true MOCK_DB=false RUN_DB_TESTS=1 MAT_POL_FIXTURE_OPT_IN=1 MAT_POL_FIXTURE_PREFIX=mat_pol_combined npx vitest run tests/integration/routes/presentations.export-gate.route.test.ts --no-file-parallelism --maxWorkers=1",
+      "command": "Exact-current migration19 plus mounted provenance approval matrix on mat_provenance_81b397_20260819_1855, no file parallelism, one worker, retry 0",
       "exitCode": 0,
-      "result": "7/7"
+      "result": "2/2 files; 56 passed; one explicitly documented nondeterministic lookup-failure case skipped"
     },
     {
-      "command": "set -e; start=$(git rev-parse HEAD); NODE_OPTIONS=--max-old-space-size=8192 npm run type-check; NODE_OPTIONS=--max-old-space-size=8192 npm --prefix server run typecheck; npm run build:backend; NODE_OPTIONS=--max-old-space-size=8192 npm run build; end=$(git rev-parse HEAD); test \"$start\" = \"$end\"; git diff --check; test -z \"$(git status --short)\"",
+      "command": "Exact-current SpreadsheetArtifactStudio, TemplateProvenanceApprovalDialog and presentation ShareModal component matrix, retry 0",
       "exitCode": 0,
-      "result": "root/server typechecks, backend/frontend builds and exact edfab HEAD stability passed"
+      "result": "3/3 files; 30/30 passed"
+    },
+    {
+      "command": "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check; npm --prefix server run typecheck; npm run build:backend; NODE_OPTIONS=--max-old-space-size=8192 npm run build; git diff --check",
+      "exitCode": 0,
+      "result": "root/server typechecks, backend build with 9 runtime mirrors, frontend build with 10444 modules, and diff check passed"
     }
   ],
   "denominators": {
-    "freshMigrations": "764/764",
-    "materialPolicyAndReceiptSuites": "76/76",
-    "presentationRoutePolicy": "7/7",
+    "freshMigrations": "788/788 on each of two disposable databases; repeat 0; dry 0",
+    "materialPolicyAndReceiptSuites": "127/127 executed",
+    "templateProvenanceRealPg": "56/56 executed; one intentional nondeterministic lookup-failure skip",
+    "materialsUiComponents": "30/30",
     "lateShapeMatrix": "valid nonempty apply plus OR-true, superset, wrong and partial shapes refused before persistent mutation"
   },
   "fixtures": {
-    "database": "own disposable PostgreSQL 16 container consultify-mat-prt-combined-pg; MAT clone mat_pol_combined",
-    "cleanup": "material receipts and templates 0; advisory locks 0; immutable receipt trigger enabled O"
+    "database": "owned disposable PostgreSQL 16 databases mat_pol_ae16_20260819_1847 and mat_provenance_81b397_20260819_1855",
+    "cleanup": "policy fixtures 0; provenance exact receipt accounting 11 and two disposable tenant fixtures before database destruction; advisory locks 0; immutable receipt triggers enabled O; all owned databases dropped and catalog existence 0"
   },
   "negativeControls": {
     "partialPolicy": "NULL policy contract cannot coexist with partial engine metadata",
@@ -110,17 +128,18 @@
   "findings": [
     "Restricted engines are native docx 9.5.1, pptxgenjs 4.0.1, exceljs 4.4.0 and pdfkit 0.17.2, each recorded with MIT license provenance.",
     "PDF export remains a pdfkit text summary, not a visual rendering of the deck.",
-    "No authenticated product command approves customer template provenance; creation remains fail-closed for UNKNOWN/quarantined templates."
+    "An authenticated OWNER/ADMIN workflow now approves complete template provenance; MEMBER, revoked, foreign, unsupported-registry, collision and forced-rollback paths remain fail-closed."
   ],
   "resolvedBlockers": [
     "Exact engine/version/license/output semantics are immutable in export receipts.",
     "Presentation PDF is explicitly labelled text-summary and no visual-parity claim is made.",
     "Templates with unknown or incomplete provenance are unavailable to list, resolve and create paths."
+    ,"Mounted OWNER/ADMIN provenance approval, quarantine release, idempotent replay, concurrency, cold readback and UI review are qualified on the current product tree."
   ],
   "openBlockers": [
-    "No authenticated governed owner plus Legal/Procurement workflow exists to approve a new customer template's layout, font, image and redistribution provenance.",
-    "Visual PDF parity, any external renderer and any new rights-cleared template remain reopen gates requiring new owner evidence.",
-    "No production enablement, procurement approval or deployed acceptance is claimed."
+    "Legal/Procurement must supply and approve the actual rights evidence for each new customer template's layout, font, image and redistribution provenance; the product workflow cannot manufacture that authority.",
+    "Visual PDF parity, any external renderer and any newly proposed rights-cleared template remain reopen gates requiring new owner evidence.",
+    "Production enablement, procurement acceptance and deployed acceptance remain NOT_EXECUTED_NOT_AUTHORIZED release gates, not repository coding gaps."
   ],
   "browserArtifacts": [],
   "rollback": {
