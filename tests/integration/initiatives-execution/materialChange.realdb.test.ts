@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Pool } from 'pg';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { cleanupInitiativesExecutionOrg } from '../../support/initiativesExecutionOrgCleanup';
 import {
   createMaterialChange,
   transitionMaterialChange,
@@ -66,7 +67,10 @@ real('Material Change Reapproval realDB', () => {
       [org, planId, JSON.stringify(oldSnapshot)]
     );
   });
-  afterAll(async () => pool.end());
+  afterAll(async () => {
+    await cleanupInitiativesExecutionOrg(pool, org);
+    await pool.end();
+  });
   const impact = { knowledgeState: 'KNOWN' as const, refs: [] },
     newSnapshot = { ...oldSnapshot, targetDate: '2026-10-01' },
     draft = {

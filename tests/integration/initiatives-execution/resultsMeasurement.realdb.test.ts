@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Pool } from 'pg';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { cleanupInitiativesExecutionOrg } from '../../support/initiativesExecutionOrgCleanup';
 import { createEffectivenessCase } from '../../../server/src/domain/initiatives-execution/effectivenessClosure';
 import {
   createFinanceReconciliation,
@@ -70,7 +71,10 @@ real('ACO-53/54 Results and Finance authoritative bridge realDB', () => {
       ]
     );
   });
-  afterAll(async () => pool.end());
+  afterAll(async () => {
+    await cleanupInitiativesExecutionOrg(pool, org);
+    await pool.end();
+  });
   const baseObservation = {
     resultsCaseRef: { resultsCaseId: resultsId, version: 2 },
     kpiId: 'weekly-case-throughput',

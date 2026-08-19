@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { Pool } from 'pg';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { cleanupInitiativesExecutionOrg } from '../../support/initiativesExecutionOrgCleanup';
 
 import {
   GovernancePolicyResolutionError,
@@ -27,7 +28,10 @@ describeRealDb('governance policy PostgreSQL resolution', () => {
   beforeEach(async () => {
     await pool.query(`DELETE FROM ie_governance_policies WHERE organization_id <> '*'`);
   });
-  afterAll(async () => pool.end());
+  afterAll(async () => {
+    await cleanupInitiativesExecutionOrg(pool, 'nordwerk-e2e');
+    await pool.end();
+  });
 
   const insert = async (
     scopeType: 'ORGANIZATION' | 'PROJECT',
