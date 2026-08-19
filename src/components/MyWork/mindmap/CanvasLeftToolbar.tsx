@@ -6,6 +6,7 @@ import {
   Frame,
   GitBranch,
   Grid3x3,
+  GripVertical,
   Hand,
   LayoutGrid,
   LayoutTemplate,
@@ -63,6 +64,8 @@ import { TemplatesPopover } from './toolbar-popovers/TemplatesPopover';
 type PopoverId = 'templates' | 'addNode' | 'knowledge' | 'importExport' | 'ai' | 'more' | null;
 
 interface CanvasLeftToolbarProps {
+  /** Physical canvas edge. The component keeps its legacy name during migration. */
+  side?: 'left' | 'right';
   activeTool: CanvasToolType;
   interactionMode?: MindMapInteractionMode;
   selection: IdeaWorkspaceSelection;
@@ -95,6 +98,10 @@ interface CanvasLeftToolbarProps {
    */
   canvasContainerRef?: React.RefObject<HTMLElement | null>;
 }
+
+type RailPosition = { x: number; y: number };
+
+const railPositionKey = (tool: CanvasToolType) => `consultify:ideas:tool-rail:${tool}:v1`;
 
 type IconComponent = React.ComponentType<{ size?: number; className?: string }>;
 
@@ -416,6 +423,7 @@ function getUndoRedoSlots(activeTool: CanvasToolType): ToolSlot[] {
 }
 
 export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
+  side = 'left',
   activeTool,
   interactionMode = 'select',
   selection,
@@ -460,7 +468,8 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
   const popoverAnchorRef = useRef<HTMLButtonElement | null>(null);
   const popoverLayerRef = useRef<HTMLDivElement | null>(null);
   const [popoverPos, setPopoverPos] = useState<{
-    left: number;
+    left: number | null;
+    right: number | null;
     top: number | null;
     bottom: number | null;
   } | null>(null);
@@ -474,7 +483,11 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
    * odświeżamy także przy przewijaniu samego paska.
    */
   const pointerButtonRef = useRef<HTMLButtonElement | null>(null);
-  const [modeBadgePos, setModeBadgePos] = useState<{ left: number; top: number } | null>(null);
+  const [modeBadgePos, setModeBadgePos] = useState<{
+    left: number | null;
+    right: number | null;
+    top: number;
+  } | null>(null);
 
   /**
    * Z1 (rozdz. 06 §3): realny tryb płótna zgłaszany przez reprezentacje, które
@@ -535,9 +548,19 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
   // UI-L1: track the canvas container's box so the portaled rail floats INSIDE the
   // canvas — not on the app sidebar (x) and not over Menu 1 / Menu 3 (y).
   // Falls back to viewport centering when no ref is given (legacy chrome path).
-  const [railBox, setRailBox] = useState<{ left: number; top: number; height: number } | null>(
-    null
-  );
+  const [railBox, setRailBox] = useState<{
+    left: number | null;
+    right: number | null;
+    top: number;
+    height: number;
+  } | null>(null);
+  const [railPosition, setRailPosition] = useState<RailPosition | null>(null);
+  const dragRef = useRef<{
+    pointerId: number;
+    dx: number;
+    dy: number;
+    canvas: DOMRect;
+  } | null>(null);
   useEffect(() => {
     const el = canvasContainerRef?.current;
     if (!el || typeof window === 'undefined') {
@@ -552,7 +575,12 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
       const rect = (shellCanvas ?? el).getBoundingClientRect();
       // +12px inset (Tailwind left-3) from the canvas's own left edge; top/height
       // bound the rail to the canvas band so it never rides over the shell bars.
-      setRailBox({ left: rect.left + 12, top: rect.top, height: rect.height });
+      setRailBox({
+        left: side === 'left' ? rect.left + 12 : null,
+        right: side === 'right' ? window.innerWidth - rect.right + 12 : null,
+        top: rect.top,
+        height: rect.height,
+      });
     };
     measure();
     const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
@@ -562,7 +590,88 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
       if (ro) ro.disconnect();
       window.removeEventListener('resize', measure);
     };
-  }, [canvasContainerRef]);
+  }, [canvasContainerRef, side]);
+
+  const clampRailPosition = useCallback((point: RailPosition, canvas: DOMRect) => {
+    const rail = toolbarRef.current?.getBoundingClientRect();
+    const width = rail?.width ?? 52;
+    const height = Math.min(rail?.height ?? 320, Math.max(44, canvas.height - 24));
+    return {
+      x: Math.round(Math.max(canvas.left + 12, Math.min(point.x, canvas.right - width - 12))),
+      y: Math.round(Math.max(canvas.top + 12, Math.min(point.y, canvas.bottom - height - 12))),
+    };
+  }, []);
+
+  // Position is intentionally local to each representation: moving the
+  // Whiteboard authoring rail must not unexpectedly relocate the Table rail.
+  useLayoutEffect(() => {
+    if (!railBox || typeof window === 'undefined') return;
+    const canvas = document
+      .querySelector<HTMLElement>('[data-testid="mels-canvas"]')
+      ?.getBoundingClientRect();
+    if (!canvas) return;
+    try {
+      const stored = window.localStorage.getItem(railPositionKey(activeTool));
+      if (!stored) {
+        setRailPosition(null);
+        return;
+      }
+      const parsed = JSON.parse(stored) as RailPosition;
+      if (Number.isFinite(parsed.x) && Number.isFinite(parsed.y)) {
+        setRailPosition(clampRailPosition(parsed, canvas));
+      }
+    } catch {
+      setRailPosition(null);
+    }
+  }, [activeTool, clampRailPosition, railBox?.top, railBox?.height]);
+
+  const beginRailDrag = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
+    const rail = toolbarRef.current?.getBoundingClientRect();
+    const canvas = document
+      .querySelector<HTMLElement>('[data-testid="mels-canvas"]')
+      ?.getBoundingClientRect();
+    if (!rail || !canvas) return;
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    dragRef.current = {
+      pointerId: event.pointerId,
+      dx: event.clientX - rail.left,
+      dy: event.clientY - rail.top,
+      canvas,
+    };
+    setRailPosition({ x: rail.left, y: rail.top });
+  }, []);
+
+  const moveRail = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>) => {
+      const drag = dragRef.current;
+      if (!drag || drag.pointerId !== event.pointerId) return;
+      setRailPosition(
+        clampRailPosition({ x: event.clientX - drag.dx, y: event.clientY - drag.dy }, drag.canvas)
+      );
+    },
+    [clampRailPosition]
+  );
+
+  const finishRailDrag = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>) => {
+      const drag = dragRef.current;
+      if (!drag || drag.pointerId !== event.pointerId) return;
+      dragRef.current = null;
+      event.currentTarget.releasePointerCapture(event.pointerId);
+      setRailPosition((position) => {
+        if (position)
+          window.localStorage.setItem(railPositionKey(activeTool), JSON.stringify(position));
+        return position;
+      });
+    },
+    [activeTool]
+  );
+
+  const resetRailPosition = useCallback(() => {
+    window.localStorage.removeItem(railPositionKey(activeTool));
+    setRailPosition(null);
+  }, [activeTool]);
 
   const contextSlots = CONTEXT_SLOTS[activeTool] || MM_CONTEXT_SLOTS;
 
@@ -637,12 +746,17 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
       const viewportH = window.innerHeight;
       const flipUp = rect.top > viewportH / 2;
       const next = {
-        left: Math.round(rect.right + 8),
+        left: side === 'left' ? Math.round(rect.right + 8) : null,
+        right: side === 'right' ? Math.round(window.innerWidth - rect.left + 8) : null,
         top: flipUp ? null : Math.round(Math.max(8, rect.top)),
         bottom: flipUp ? Math.round(Math.max(8, viewportH - rect.bottom)) : null,
       };
       setPopoverPos((prev) =>
-        prev && prev.left === next.left && prev.top === next.top && prev.bottom === next.bottom
+        prev &&
+        prev.left === next.left &&
+        prev.right === next.right &&
+        prev.top === next.top &&
+        prev.bottom === next.bottom
           ? prev
           : next
       );
@@ -666,7 +780,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
     };
     // `railBox` w zależnościach: gdy powłoka przeliczy pasmo płótna, rail
     // przeskakuje — panel musi pójść za nim.
-  }, [openPopover, railBox]);
+  }, [openPopover, railBox, side]);
 
   /**
    * B3: pozycja wskaźnika trybu. Chowamy go, gdy pstryczek wyjedzie poza
@@ -688,9 +802,15 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
         setModeBadgePos(null);
         return;
       }
-      const next = { left: Math.round(b.right + 6), top: Math.round(b.top + b.height / 2) };
+      const next = {
+        left: side === 'left' ? Math.round(b.right + 6) : null,
+        right: side === 'right' ? Math.round(window.innerWidth - b.left + 6) : null,
+        top: Math.round(b.top + b.height / 2),
+      };
       setModeBadgePos((prev) =>
-        prev && prev.left === next.left && prev.top === next.top ? prev : next
+        prev && prev.left === next.left && prev.right === next.right && prev.top === next.top
+          ? prev
+          : next
       );
     };
     place();
@@ -705,7 +825,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
       window.removeEventListener('resize', place);
       window.removeEventListener('scroll', place, true);
     };
-  }, [railBox, activeTool, dataRail, effectiveMode, onToolChange]);
+  }, [railBox, activeTool, dataRail, effectiveMode, onToolChange, side]);
 
   const handleSlotClick = useCallback(
     (slot: ToolSlot, anchor?: HTMLButtonElement | null) => {
@@ -779,7 +899,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
             title={title}
             aria-label={title}
             aria-disabled="true"
-            className="flex h-9 w-9 items-center justify-center rounded-hig-xl opacity-40 cursor-not-allowed text-c-text-secondary dark:text-c-text-muted"
+            className="flex h-11 w-11 items-center justify-center rounded-hig-xl opacity-40 cursor-not-allowed text-c-text-secondary dark:text-c-text-muted"
           >
             <Icon size={15} />
           </button>
@@ -797,7 +917,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
             onClick={handlePointerToggle}
             title={pointerTooltip}
             aria-label={pointerTooltip}
-            className={`flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 bg-c-surface-raised dark:bg-c-surface text-c-text dark:text-c-text ${FOCUS_RING}`}
+            className={`flex h-11 w-11 items-center justify-center rounded-hig-xl transition-all duration-150 bg-c-surface-raised dark:bg-c-surface text-c-text dark:text-c-text ${FOCUS_RING}`}
           >
             <PointerIcon size={15} />
           </button>
@@ -814,11 +934,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
       activeTool === 'mindmap' && slot.id === 'connect' && interactionMode === 'connect';
     // D2: pstryczek pokazuje stan włączenia (siatka/przyciąganie Przepływu).
     const toggleOn =
-      slot.toggle == null
-        ? null
-        : slot.toggle === 'grid'
-          ? gridState.showGrid
-          : gridState.snap;
+      slot.toggle == null ? null : slot.toggle === 'grid' ? gridState.showGrid : gridState.snap;
     const baseTitle = t(slot.tkey, slot.labelEn);
     const slotTitle =
       activeTool === 'mindmap' && slot.id === 'connect' && interactionMode === 'connect'
@@ -842,7 +958,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
           title={slotTitle}
           aria-label={slotTitle}
           {...(toggleOn == null ? null : { 'aria-pressed': toggleOn })}
-          className={`flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 ${FOCUS_RING} ${
+          className={`flex h-11 w-11 items-center justify-center rounded-hig-xl transition-all duration-150 ${FOCUS_RING} ${
             isActive
               ? 'bg-c-surface-raised dark:bg-c-surface text-c-text dark:text-c-text'
               : 'text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
@@ -885,7 +1001,11 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
         );
       case 'importExport':
         return (
-          <ImportExportPopover isPl={!!isPl} onAction={handlePopoverAction} onClose={closePopover} />
+          <ImportExportPopover
+            isPl={!!isPl}
+            onAction={handlePopoverAction}
+            onClose={closePopover}
+          />
         );
       case 'ai':
         return (
@@ -925,24 +1045,51 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
       // paskow reprezentacji. Nie usuwaj bez poprawienia pomiaru w powloce.
       data-mels-floating-rail-surface="true"
       className={`fixed z-context-menu pointer-events-auto flex flex-col items-center gap-0.5 rounded-hig-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm border border-c-border-subtle dark:border-c-border-subtle shadow-hig-xl px-1 py-1.5 canvas-left-toolbar-enter overflow-y-auto overflow-x-hidden${
-        railBox == null ? ' top-1/2 -translate-y-1/2 left-3' : ''
+        railBox == null
+          ? ` top-1/2 -translate-y-1/2 ${side === 'right' ? 'right-3' : 'left-3'}`
+          : ''
       }`}
       style={
         railBox == null
           ? undefined
-          : {
-              left: `${railBox.left}px`,
-              // Anchor to the TOP of the canvas band (Miro-style) instead of
-              // centring on the viewport. The rail can be taller than the canvas
-              // (many tools), so centring always spilled upward over Menu 1 /
-              // Menu 3 and clipped their first characters. Top-anchoring makes
-              // the overlap structurally impossible; the overflow scrolls.
-              top: `${railBox.top + 12}px`,
-              transform: 'none',
-              maxHeight: `${Math.max(160, railBox.height - 24)}px`,
-            }
+          : railPosition
+            ? {
+                left: `${railPosition.x}px`,
+                top: `${railPosition.y}px`,
+                transform: 'none',
+                maxHeight: `${Math.max(44, railBox.height - 24)}px`,
+              }
+            : {
+                ...(railBox.left != null ? { left: `${railBox.left}px` } : null),
+                ...(railBox.right != null ? { right: `${railBox.right}px` } : null),
+                top: `${railBox.top + railBox.height / 2}px`,
+                transform: 'translateY(-50%)',
+                // Compact/200% layouts may leave less than 184 CSS px for the
+                // canvas. A 160px floor pushed the rail outside the canvas band;
+                // retain only one 44px command as the hard minimum and scroll
+                // the remaining commands inside the surface.
+                maxHeight: `${Math.max(44, railBox.height - 24)}px`,
+              }
       }
     >
+      <button
+        type="button"
+        data-testid="canvas-tool-rail-drag-handle"
+        aria-label={isPl ? 'Przenieś pasek narzędzi' : 'Move tool rail'}
+        title={
+          isPl
+            ? 'Przeciągnij, aby przenieść. Kliknij dwukrotnie, aby wyśrodkować.'
+            : 'Drag to move. Double-click to reset.'
+        }
+        onPointerDown={beginRailDrag}
+        onPointerMove={moveRail}
+        onPointerUp={finishRailDrag}
+        onPointerCancel={finishRailDrag}
+        onDoubleClick={resetRailPosition}
+        className={`flex h-7 w-11 touch-none cursor-grab items-center justify-center rounded-hig-xl text-c-text-muted hover:bg-c-surface-raised active:cursor-grabbing ${FOCUS_RING}`}
+      >
+        <GripVertical size={14} aria-hidden="true" />
+      </button>
       {/* #6a: canvas tool switcher (RAIL zone) — relocated from the top-right
           IdeaWorkspaceToolbar widget. Same icons/tooltips (TOOL_CONFIG),
           just anchored above the rest of the rail so it reads as "which
@@ -961,7 +1108,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
                   onClick={() => onToolChange(tool.id)}
                   title={label}
                   aria-label={label}
-                  className={`flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 ${FOCUS_RING} ${
+                  className={`flex h-11 w-11 items-center justify-center rounded-hig-xl transition-all duration-150 ${FOCUS_RING} ${
                     isActive
                       ? 'bg-c-surface-raised dark:bg-c-surface text-c-text dark:text-c-text'
                       : 'text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
@@ -1005,7 +1152,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
               disabled={isDisabled}
               title={t(slot.tkey, slot.labelEn)}
               aria-label={t(slot.tkey, slot.labelEn)}
-              className={`flex h-9 w-9 items-center justify-center rounded-hig-xl transition-all duration-150 ${FOCUS_RING} ${
+              className={`flex h-11 w-11 items-center justify-center rounded-hig-xl transition-all duration-150 ${FOCUS_RING} ${
                 isDisabled
                   ? 'opacity-40 cursor-not-allowed text-c-text-secondary dark:text-c-text-muted'
                   : 'text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface-raised dark:hover:bg-c-surface-raised'
@@ -1031,7 +1178,8 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
         data-testid={`canvas-left-toolbar-popover-${openPopover}`}
         className="fixed z-context-menu pointer-events-auto"
         style={{
-          left: `${popoverPos.left}px`,
+          ...(popoverPos.left != null ? { left: `${popoverPos.left}px` } : null),
+          ...(popoverPos.right != null ? { right: `${popoverPos.right}px` } : null),
           ...(popoverPos.top != null ? { top: `${popoverPos.top}px` } : null),
           ...(popoverPos.bottom != null ? { bottom: `${popoverPos.bottom}px` } : null),
         }}
@@ -1045,7 +1193,11 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
     <div
       data-testid="canvas-left-toolbar-mode-badge"
       className="fixed z-context-menu -translate-y-1/2 pointer-events-none"
-      style={{ left: `${modeBadgePos.left}px`, top: `${modeBadgePos.top}px` }}
+      style={{
+        ...(modeBadgePos.left != null ? { left: `${modeBadgePos.left}px` } : null),
+        ...(modeBadgePos.right != null ? { right: `${modeBadgePos.right}px` } : null),
+        top: `${modeBadgePos.top}px`,
+      }}
     >
       <span className="px-1.5 py-0.5 rounded text-[8px] font-semibold uppercase tracking-wider whitespace-nowrap bg-c-surface-raised dark:bg-c-surface text-c-text-secondary dark:text-c-text">
         {effectiveMode === 'pan'

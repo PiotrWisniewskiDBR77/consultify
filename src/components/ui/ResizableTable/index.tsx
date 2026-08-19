@@ -30,6 +30,32 @@ export { FilterDropdown } from './FilterDropdown';
 export { PreviewPaneShell } from './PreviewPaneShell';
 export { TableHeader } from './TableHeader';
 
+/**
+ * @deprecated NIE UŻYWAĆ. Kanonicznym register shellem powierzchni T01–T45 jest
+ * `FilterableTable` (`src/components/shared/ModuleHub/FilterableTable.tsx`),
+ * a jego zadeklarowaną fasadą `StandardTable`
+ * (`src/components/standard/StandardTable.tsx`). Nowe rejestry buduje się na nich.
+ *
+ * ── R04-3A (wygaszenie drugiego shella) ─────────────────────────────────────
+ *
+ * `REPAIR_MASTER_PLAN.md` R04 wymaga JEDNEGO register shella i wskazuje
+ * `ResizableTable/*` jako „adapter albo wygaszany wariant". Preflight R04
+ * ustalił, że wygaszenie jest tu jedyną sensowną drogą, bo ten komponent
+ * **nie ma ani jednego konsumenta JSX** — wszystkie odwołania w repo to
+ * ścieżki importu do barrela, który żyje dla zupełnie innych eksportów
+ * (`PreviewPaneShell` ×50, `ColumnResizer` ×22, `FilterDropdown` ×21,
+ * `BulkActionBar`, stałe filtrów, fabryki bulk).
+ *
+ * To NIE jest register shell i nigdy nim nie był: renderuje wyłącznie
+ * `<thead>` + `<tbody>{children}</tbody>`, więc nie ma danych, empty state,
+ * loadingu, kliknięcia wiersza, preview ani persystencji. Sam plik deklaruje to
+ * niżej w wyjątku `§27-exempt: generyczny prymityw tabeli, FilterableTable =
+ * kanon dla list`.
+ *
+ * Sam eksport zostaje — usunięcie go zmieniłoby publiczne API barrela, z którego
+ * korzysta 18 plików. Powrót komponentu jako alternatywnego shella pilnuje
+ * `resizableTableDeprecation.r04-3a.test.ts`.
+ */
 export const ResizableTable: React.FC<ResizableTableProps> = ({
   columns,
   children,

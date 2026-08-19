@@ -40,7 +40,11 @@ import { Building2, FolderKanban, User } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { PreviewDetailsSection, PreviewMetaCard } from '../../components/shared/PreviewPane';
+import {
+  PreviewDetailsSection,
+  PreviewMetaCard,
+  PreviewRelations,
+} from '../../components/shared/PreviewPane';
 import { TableWithPreviewLayout } from '../../components/shared/TableWithPreviewLayout';
 import {
   type StandardRowMenu,
@@ -48,6 +52,7 @@ import {
   type TableColumn,
   type TableRow,
 } from '../../components/standard';
+import { ArtifactPropertiesTable } from '../../components/standard/ArtifactPropertiesTable';
 import { StatusChip } from '../../components/ui/primitives';
 import { Api } from '../../services/api';
 import { formatBytes } from './vaultDocuments';
@@ -332,6 +337,10 @@ export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({ onOpenSafe, se
         if (safe) onOpenSafe(safe);
       }}
       itemIds={tableRows.map((r) => String(r.id))}
+      getItemById={(id) => {
+        const safe = filteredSafes.find((item) => item.id === id);
+        return safe ? { id: safe.id, title: safe.name } : null;
+      }}
       renderPreview={() => {
         if (!previewSafe) return null;
         // ★ Uwaga (jak w AgentHubShell.tsx): `TableWithPreviewLayout` renderuje
@@ -373,14 +382,29 @@ export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({ onOpenSafe, se
               showWordCount={false}
               loading={recentDocsLoading}
               text={
-                recentDocs && recentDocs.length > 0
-                  ? recentDocs
-                      .map((d) => `- ${d.filename} — ${formatDate(d.created_at, isPolish)}`)
-                      .join('\n')
-                  : isPolish
+                recentDocs && recentDocs.length === 0
+                  ? isPolish
                     ? 'Brak dokumentów w tym sejfie.'
                     : 'No documents in this safe yet.'
+                  : undefined
               }
+            >
+              {recentDocs && recentDocs.length > 0 ? (
+                <ArtifactPropertiesTable
+                  propertyLabel={isPolish ? 'Dokument' : 'Document'}
+                  valueLabel={isPolish ? 'Dodano' : 'Added'}
+                  rows={recentDocs.map((document) => ({
+                    id: document.id,
+                    label: document.filename,
+                    value: formatDate(document.created_at, isPolish),
+                    mono: true,
+                  }))}
+                />
+              ) : null}
+            </PreviewDetailsSection>
+            <PreviewRelations
+              items={[]}
+              emptyLabel={t('common.noRelations', isPolish ? 'Brak powiązań' : 'No relations')}
             />
           </div>
         );

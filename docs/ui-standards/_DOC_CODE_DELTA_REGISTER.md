@@ -28,7 +28,7 @@ zmienić), wpis mówi to wprost jako `NIEROZSTRZYGNIĘTA` — nie zgaduje.
 | # | Delta | Kierunek | Status |
 |---|---|---|---|
 | D-01 | Fokus: `ring-primary-*` (crimson) zamiast `ring-c-focus` (niebieski) | dług KODU | OTWARTA |
-| D-02 | Menu 3: wysokość dokument 44 px vs kod ≈48 px | NIEROZSTRZYGNIĘTA | OTWARTA |
+| D-02 | Menu 3: wysokość dokument 44 px vs kod ≈48 px | **48 px jest kanonem**; kod już zgodny wymiarowo | **ZAMKNIĘTA 2026-08-03** |
 | D-03 | Preview listowy: `MyProjects.tsx` omija `TableWithPreviewLayout` (SSOT) | dług KODU | OTWARTA |
 | D-04 | Drawery `IdeaTableTool.tsx` poza zakresem 320–420 px | dług KODU | OTWARTA |
 | D-05 | `primary-500`/`primary-600` jako tło/obramowanie (stan aktywny/akcent) poza fokusem | dług KODU | OTWARTA |
@@ -87,12 +87,11 @@ w kontrakcie tokenów.
 grep -n "MENU_3_ROW_CLASS" -A3 src/components/shared/ModuleMenu3.tsx
 ```
 
-**Kierunek:** NIEROZSTRZYGNIĘTA. Ani wartość dokumentu (44 px), ani wartość kodu (~48 px) nie została
-świadomie wybrana jako docelowa — `FOUNDATION_TOKEN_CONTRACT.md` sam to nazywa i zostawia otwarte. Ten
-rejestr NIE zgaduje, która strona ma się zmienić; wpis istnieje, żeby ktokolwiek podejmujący decyzję miał
-gotowy pomiar zamiast zaczynać od zera.
+**Rozstrzygnięcie 2026-08-03:** 48 px jest wartością kanoniczną dla całego rzędu Menu 3. Interaktywne
+triggery zachowują minimalny hit target 44×44 px, ale nie definiuje on wysokości całego rzędu. Kod
+`MENU_3_ROW_CLASS` + `MENU_3_INNER_CLASS` jest już zgodny wymiarowo; dokumentację zaktualizowano.
 
-**Status:** OTWARTA (czeka na decyzję właściciela/CTO, nie na pomiar — pomiar jest już kompletny).
+**Status:** ZAMKNIĘTA (bez zmiany runtime).
 
 ---
 

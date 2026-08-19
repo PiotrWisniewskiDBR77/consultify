@@ -71,7 +71,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { InitiativeWizardModal } from '@/components/Initiatives/Wizard/InitiativeWizardModal';
 import {
-  MENU_3_ACTION_NEUTRAL,
+  // Stała stylu akcji zniknęła z importów świadomie: po R02-A-FIX-2 żaden
+  // klaster bulk w tym hubie nie składa przycisków ręcznie — robi to prymityw.
   MENU_3_ALL_DOT_CLASS,
   MENU_3_BADGE_ACTIVE,
   MENU_3_BADGE_BASE,
@@ -83,6 +84,7 @@ import {
   MENU_3_LEFT_CLASS,
   MENU_3_RIGHT_CLASS,
   MENU_3_ROW_CLASS,
+  Menu3BulkRow,
 } from '@/components/shared/ModuleMenu3';
 import { EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { EmptyState, LoadingState } from '@/components/shared/states';
@@ -123,9 +125,9 @@ import {
   type ViewMode,
 } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
-import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { RowActionsMenu } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
+import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { AssignInterviewModal } from './AssignInterviewModal';
 import { InsightCreatorModal } from './InsightCreatorModal';
 import { InsightViewer } from './InsightViewer';
@@ -183,6 +185,19 @@ const stripInsightMarkdownPreview = (raw: string): string => {
     .replace(/\s+/g, ' ') // collapse whitespace/newlines
     .trim();
 };
+
+/*
+ * ── R02-A-FIX-2 · ikony akcji bulk ──────────────────────────────────────────
+ *
+ * `Menu3BulkAction.icon` renderuje ikonę jako `<Icon size={14} />`, BEZ
+ * przekazywania `className`. Ręczne klastry używały tu `<Loader2 size={14}
+ * className="animate-spin" />`, więc naiwna migracja zatrzymałaby spinner —
+ * użytkownik straciłby jedyny sygnał, że operacja masowa trwa. Zamiast
+ * rozszerzać API prymitywu (poza zakresem pakietu) opakowujemy ikonę w
+ * komponent MODUŁOWY: zdefiniowany w ciele renderu tworzyłby nowy typ przy
+ * każdym renderze i re-montował ikonę na każdą zmianę stanu.
+ */
+const BulkBusyIcon = () => <Loader2 size={14} className="animate-spin" />;
 
 const INTERVIEW_CREATE_SESSION_TOAST_ID = 'interview-create-session';
 
@@ -766,7 +781,11 @@ export const InterviewHub: React.FC = () => {
   const canViewInsights = permissionsCanViewInsights || isUsingDemoData;
   const canCreateInsights = permissionsCanCreateInsights || isUsingDemoData;
   const canReviewInsights = permissionsCanReviewInsights || isUsingDemoData;
-  const canViewTemplates = canViewManaged || templates.length > 0 || isUsingDemoData;
+  // Templates tab is a manager/admin surface (the full cross-area question
+  // library). Respondents (USER) must only see their own Inbox — the previous
+  // `|| templates.length > 0` leaked the tab (and every org template) to any
+  // respondent once templates were loaded for inbox name-resolution.
+  const canViewTemplates = canViewManaged || isUsingDemoData;
 
   // Interview Inbox preview (Outlook-style) — Assignments
   const [previewAssignmentId, setPreviewAssignmentId] = useState<string | null>(null);
@@ -3193,55 +3212,34 @@ export const InterviewHub: React.FC = () => {
       ];
 
       if (selectedCount > 0) {
+        // R02-A-FIX-2 — klaster 1/6 (Inbox). Anatomia N selected → Clear/X →
+        // neutral → danger-last wymuszona przez prymityw, nie przez kolejność JSX.
         return (
-          <div className={MENU_3_ROW_CLASS}>
-            <div className={MENU_3_INNER_CLASS}>
-              <div className={MENU_3_LEFT_CLASS}>
-                <span className="text-xs font-semibold text-c-text-secondary">
-                  {selectedCount} {t('interview.hub.selected')}
-                </span>
-                {/* Fixed/universal buttons — same look as the rest (MENU_3_ACTION_NEUTRAL) */}
-                <button
-                  type="button"
-                  onClick={() => setSelectedAssignmentIds(new Set())}
-                  className={MENU_3_ACTION_NEUTRAL}
-                >
-                  <X size={14} />
-                  {t('interview.hub.clear')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleBulkAssignmentLifecycle('archive')}
-                  disabled={managedLifecycleBusy}
-                  className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
-                >
-                  {managedLifecycleBusy ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <Archive size={14} />
-                  )}
-                  {t('interview.hub.archive')}
-                </button>
-                <span className="mx-1 h-5 w-px bg-slate-200/80 dark:bg-white/10" />
-                {/* Context (Inbox): Delay +1 / +3 / +7 days — same look */}
-                {[1, 3, 7].map((d) => (
-                  <button
-                    key={d}
-                    type="button"
-                    onClick={() => handleBulkDelay(d)}
-                    disabled={bulkActionBusy}
-                    className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
-                  >
-                    <Clock size={14} />
-                    {d === 1
-                      ? t('interview.hub.plusDaysOne', { count: d })
-                      : t('interview.hub.plusDaysOther', { count: d })}
-                  </button>
-                ))}
-              </div>
-              <div className="shrink-0" />
-            </div>
-          </div>
+          <Menu3BulkRow
+            selectedLabel={`${selectedCount} ${t('interview.hub.selected')}`}
+            clearLabel={t('interview.hub.clear')}
+            onClear={() => setSelectedAssignmentIds(new Set())}
+            actions={[
+              {
+                id: 'archive',
+                label: t('interview.hub.archive'),
+                icon: managedLifecycleBusy ? BulkBusyIcon : Archive,
+                onClick: () => handleBulkAssignmentLifecycle('archive'),
+                disabled: managedLifecycleBusy,
+              },
+              // Kontekst (Inbox): Delay +1 / +3 / +7 dni.
+              ...[1, 3, 7].map((d) => ({
+                id: `delay-${d}`,
+                label:
+                  d === 1
+                    ? t('interview.hub.plusDaysOne', { count: d })
+                    : t('interview.hub.plusDaysOther', { count: d }),
+                icon: Clock,
+                onClick: () => handleBulkDelay(d),
+                disabled: bulkActionBusy,
+              })),
+            ]}
+          />
         );
       }
 
@@ -3341,87 +3339,52 @@ export const InterviewHub: React.FC = () => {
 
       if (selectedCount > 0) {
         return (
-          <div className={MENU_3_ROW_CLASS}>
-            <div className={MENU_3_INNER_CLASS}>
-              <div className={MENU_3_LEFT_CLASS}>
-                <span className="text-xs font-semibold text-c-text-secondary">
-                  {selectedCount} {t('interview.hub.selected')}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setSelectedAssignmentIds(new Set())}
-                  className={MENU_3_ACTION_NEUTRAL}
-                >
-                  <X size={14} />
-                  {t('interview.hub.clear')}
-                </button>
-                <span className="mx-1 h-5 w-px bg-slate-200/80 dark:bg-white/10" />
-                <button
-                  type="button"
-                  onClick={handleBulkApproveAssignments}
-                  disabled={bulkActionBusy}
-                  className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
-                >
-                  {bulkActionBusy ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <Check size={14} />
-                  )}
-                  {t('interview.hub.approve')}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleBulkSendBackAssignments}
-                  disabled={bulkActionBusy}
-                  className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
-                >
-                  <RotateCcw size={14} />
-                  {t('interview.hub.sendBack')}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleBulkRemind}
-                  disabled={bulkActionBusy}
-                  className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
-                >
-                  <Bell size={14} />
-                  {t('interview.hub.remind')}
-                </button>
-                {/* #8 — Bulk Archive (active view) / Restore (archive view),
-                    backed by POST /interview/assignments/:id/{archive,restore}. */}
-                {managedLifecycle === 'archived' ? (
-                  <button
-                    type="button"
-                    onClick={() => handleBulkAssignmentLifecycle('restore')}
-                    disabled={managedLifecycleBusy}
-                    className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
-                  >
-                    {managedLifecycleBusy ? (
-                      <Loader2 size={14} className="animate-spin" />
-                    ) : (
-                      <RotateCcw size={14} />
-                    )}
-                    {t('interview.hub.restore')}
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => handleBulkAssignmentLifecycle('archive')}
-                    disabled={managedLifecycleBusy}
-                    className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
-                  >
-                    {managedLifecycleBusy ? (
-                      <Loader2 size={14} className="animate-spin" />
-                    ) : (
-                      <Archive size={14} />
-                    )}
-                    {t('interview.hub.archive')}
-                  </button>
-                )}
-              </div>
-              <div className="shrink-0" />
-            </div>
-          </div>
+          // R02-A-FIX-2 — klaster 2/6 (Assigned).
+          <Menu3BulkRow
+            selectedLabel={`${selectedCount} ${t('interview.hub.selected')}`}
+            clearLabel={t('interview.hub.clear')}
+            onClear={() => setSelectedAssignmentIds(new Set())}
+            actions={[
+              {
+                id: 'approve',
+                label: t('interview.hub.approve'),
+                icon: bulkActionBusy ? BulkBusyIcon : Check,
+                onClick: handleBulkApproveAssignments,
+                disabled: bulkActionBusy,
+              },
+              {
+                id: 'send-back',
+                label: t('interview.hub.sendBack'),
+                icon: RotateCcw,
+                onClick: handleBulkSendBackAssignments,
+                disabled: bulkActionBusy,
+              },
+              {
+                id: 'remind',
+                label: t('interview.hub.remind'),
+                icon: Bell,
+                onClick: handleBulkRemind,
+                disabled: bulkActionBusy,
+              },
+              // #8 — Bulk Archive (widok aktywny) / Restore (widok archiwum),
+              // oparte o POST /interview/assignments/:id/{archive,restore}.
+              managedLifecycle === 'archived'
+                ? {
+                    id: 'restore',
+                    label: t('interview.hub.restore'),
+                    icon: managedLifecycleBusy ? BulkBusyIcon : RotateCcw,
+                    onClick: () => handleBulkAssignmentLifecycle('restore'),
+                    disabled: managedLifecycleBusy,
+                  }
+                : {
+                    id: 'archive',
+                    label: t('interview.hub.archive'),
+                    icon: managedLifecycleBusy ? BulkBusyIcon : Archive,
+                    onClick: () => handleBulkAssignmentLifecycle('archive'),
+                    disabled: managedLifecycleBusy,
+                  },
+            ]}
+          />
         );
       }
 
@@ -3557,130 +3520,100 @@ export const InterviewHub: React.FC = () => {
 
       if (selectedCount > 0) {
         return (
-          <div className={MENU_3_ROW_CLASS}>
-            <div className={MENU_3_INNER_CLASS}>
-              <div className={MENU_3_LEFT_CLASS}>
-                <span className="text-xs font-semibold text-c-text-secondary">
-                  {selectedCount} {t('interview.hub.selected')}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setSelectedSessionIds(new Set())}
-                  className={MENU_3_ACTION_NEUTRAL}
-                >
-                  <X size={14} />
-                  {t('interview.hub.clear')}
-                </button>
-                <span className="mx-1 h-5 w-px bg-slate-200/80 dark:bg-white/10" />
-                {/* #8 — Bulk Approve / Send back, mapping selected sessions to
-                    their managed assignments and reusing the per-id approve /
-                    send-back handlers (manager scope). */}
-                {canViewManaged ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={handleBulkApproveSessions}
-                      disabled={bulkActionBusy}
-                      className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
-                    >
-                      {bulkActionBusy ? (
-                        <Loader2 size={14} className="animate-spin" />
-                      ) : (
-                        <Check size={14} />
-                      )}
-                      {t('interview.hub.approve')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleBulkSendBackSessions}
-                      disabled={bulkActionBusy}
-                      className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
-                    >
-                      <RotateCcw size={14} />
-                      {t('interview.hub.sendBack')}
-                    </button>
-                  </>
-                ) : null}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedSessionsForInsight(Array.from(selectedSessionIds));
-                    setShowInsightModal(true);
-                  }}
-                  disabled={!canCreateInsights}
-                  className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
-                >
-                  <Sparkles size={14} />
-                  {t('interview.hub.aiInsights')}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleBulkExportSessions}
-                  className={MENU_3_ACTION_NEUTRAL}
-                >
-                  <Download size={14} />
-                  {t('interview.hub.exportCsv')}
-                </button>
-                {/* #8b — Bulk lifecycle actions (scoped to the active filter). */}
-                {sessionLifecycle === 'active' ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => handleBulkSessionLifecycle('archive')}
-                      disabled={sessionLifecycleBusy}
-                      className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
-                    >
-                      <Archive size={14} />
-                      {t('interview.hub.archive')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleBulkSessionLifecycle('trash')}
-                      disabled={sessionLifecycleBusy}
-                      className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
-                    >
-                      <Trash2 size={14} />
-                      {t('interview.hub.trash')}
-                    </button>
-                  </>
-                ) : null}
-                {sessionLifecycle === 'archived' ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => handleBulkSessionLifecycle('restore')}
-                      disabled={sessionLifecycleBusy}
-                      className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
-                    >
-                      <RotateCcw size={14} />
-                      {t('interview.hub.restore')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleBulkSessionLifecycle('trash')}
-                      disabled={sessionLifecycleBusy}
-                      className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
-                    >
-                      <Trash2 size={14} />
-                      {t('interview.hub.trash')}
-                    </button>
-                  </>
-                ) : null}
-                {sessionLifecycle === 'trash' ? (
-                  <button
-                    type="button"
-                    onClick={() => handleBulkSessionLifecycle('untrash')}
-                    disabled={sessionLifecycleBusy}
-                    className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
-                  >
-                    <RotateCcw size={14} />
-                    {t('interview.hub.restore')}
-                  </button>
-                ) : null}
-              </div>
-              <div className="shrink-0" />
-            </div>
-          </div>
+          // R02-A-FIX-2 — klaster 3/6 (Sessions). `trash` dostaje `variant:
+          // 'danger'`: to jedyna nieodwracalna operacja w tym klastrze, a §4
+          // Formuła 2 wymaga danger na końcu. Kolejność faktyczna się nie zmienia
+          // (Trash i tak stał ostatni), zmienia się kolor — świadomie, bo dotąd
+          // usuwanie wyglądało identycznie jak archiwizacja.
+          <Menu3BulkRow
+            selectedLabel={`${selectedCount} ${t('interview.hub.selected')}`}
+            clearLabel={t('interview.hub.clear')}
+            onClear={() => setSelectedSessionIds(new Set())}
+            actions={[
+              // #8 — Bulk Approve / Send back: mapuje wybrane sesje na ich
+              // managed assignments i reużywa handlerów per-id (scope managera).
+              ...(canViewManaged
+                ? [
+                    {
+                      id: 'approve',
+                      label: t('interview.hub.approve'),
+                      icon: bulkActionBusy ? BulkBusyIcon : Check,
+                      onClick: handleBulkApproveSessions,
+                      disabled: bulkActionBusy,
+                    },
+                    {
+                      id: 'send-back',
+                      label: t('interview.hub.sendBack'),
+                      icon: RotateCcw,
+                      onClick: handleBulkSendBackSessions,
+                      disabled: bulkActionBusy,
+                    },
+                  ]
+                : []),
+              {
+                id: 'ai-insights',
+                label: t('interview.hub.aiInsights'),
+                icon: Sparkles,
+                onClick: () => {
+                  setSelectedSessionsForInsight(Array.from(selectedSessionIds));
+                  setShowInsightModal(true);
+                },
+                disabled: !canCreateInsights,
+              },
+              {
+                id: 'export-csv',
+                label: t('interview.hub.exportCsv'),
+                icon: Download,
+                onClick: handleBulkExportSessions,
+              },
+              // #8b — Akcje cyklu życia, zawężone do aktywnego filtra.
+              ...(sessionLifecycle === 'active'
+                ? [
+                    {
+                      id: 'archive',
+                      label: t('interview.hub.archive'),
+                      icon: Archive,
+                      onClick: () => handleBulkSessionLifecycle('archive'),
+                      disabled: sessionLifecycleBusy,
+                    },
+                  ]
+                : []),
+              ...(sessionLifecycle === 'archived'
+                ? [
+                    {
+                      id: 'restore',
+                      label: t('interview.hub.restore'),
+                      icon: RotateCcw,
+                      onClick: () => handleBulkSessionLifecycle('restore'),
+                      disabled: sessionLifecycleBusy,
+                    },
+                  ]
+                : []),
+              ...(sessionLifecycle === 'trash'
+                ? [
+                    {
+                      id: 'untrash',
+                      label: t('interview.hub.restore'),
+                      icon: RotateCcw,
+                      onClick: () => handleBulkSessionLifecycle('untrash'),
+                      disabled: sessionLifecycleBusy,
+                    },
+                  ]
+                : []),
+              ...(sessionLifecycle === 'active' || sessionLifecycle === 'archived'
+                ? [
+                    {
+                      id: 'trash',
+                      label: t('interview.hub.trash'),
+                      icon: Trash2,
+                      onClick: () => handleBulkSessionLifecycle('trash'),
+                      disabled: sessionLifecycleBusy,
+                      variant: 'danger' as const,
+                    },
+                  ]
+                : []),
+            ]}
+          />
         );
       }
 
@@ -3801,68 +3734,40 @@ export const InterviewHub: React.FC = () => {
       if (selectedCount > 0) {
         const isArchived = templateStatusFilter === 'archived';
         return (
-          <div className={MENU_3_ROW_CLASS}>
-            <div className={MENU_3_INNER_CLASS}>
-              <div className={MENU_3_LEFT_CLASS}>
-                <span className="text-xs font-semibold text-c-text-secondary">
-                  {selectedCount} {t('interview.hub.selected')}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setSelectedTemplateIds(new Set())}
-                  className={MENU_3_ACTION_NEUTRAL}
-                >
-                  <X size={14} />
-                  {t('interview.hub.clear')}
-                </button>
-                <span className="mx-1 h-5 w-px bg-slate-200/80 dark:bg-white/10" />
-                <button
-                  type="button"
-                  onClick={handleBulkCloneTemplates}
-                  disabled={bulkActionBusy}
-                  className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
-                >
-                  {bulkActionBusy ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <Copy size={14} />
-                  )}
-                  {t('interview.hub.clone')}
-                </button>
-                {canAssign &&
-                  (isArchived ? (
-                    <button
-                      type="button"
-                      onClick={handleBulkRestoreTemplates}
-                      disabled={bulkActionBusy}
-                      className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
-                    >
-                      {bulkActionBusy ? (
-                        <Loader2 size={14} className="animate-spin" />
-                      ) : (
-                        <RotateCcw size={14} />
-                      )}
-                      {t('interview.hub.restore')}
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleBulkArchiveTemplates}
-                      disabled={bulkActionBusy}
-                      className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
-                    >
-                      {bulkActionBusy ? (
-                        <Loader2 size={14} className="animate-spin" />
-                      ) : (
-                        <Archive size={14} />
-                      )}
-                      {t('interview.hub.archive')}
-                    </button>
-                  ))}
-              </div>
-              <div className="shrink-0" />
-            </div>
-          </div>
+          // R02-A-FIX-2 — klaster 4/6 (Templates).
+          <Menu3BulkRow
+            selectedLabel={`${selectedCount} ${t('interview.hub.selected')}`}
+            clearLabel={t('interview.hub.clear')}
+            onClear={() => setSelectedTemplateIds(new Set())}
+            actions={[
+              {
+                id: 'clone',
+                label: t('interview.hub.clone'),
+                icon: bulkActionBusy ? BulkBusyIcon : Copy,
+                onClick: handleBulkCloneTemplates,
+                disabled: bulkActionBusy,
+              },
+              ...(canAssign
+                ? [
+                    isArchived
+                      ? {
+                          id: 'restore',
+                          label: t('interview.hub.restore'),
+                          icon: bulkActionBusy ? BulkBusyIcon : RotateCcw,
+                          onClick: handleBulkRestoreTemplates,
+                          disabled: bulkActionBusy,
+                        }
+                      : {
+                          id: 'archive',
+                          label: t('interview.hub.archive'),
+                          icon: bulkActionBusy ? BulkBusyIcon : Archive,
+                          onClick: handleBulkArchiveTemplates,
+                          disabled: bulkActionBusy,
+                        },
+                  ]
+                : []),
+            ]}
+          />
         );
       }
 
@@ -3949,52 +3854,33 @@ export const InterviewHub: React.FC = () => {
 
       if (selectedCount > 0) {
         return (
-          <div className={MENU_3_ROW_CLASS}>
-            <div className={MENU_3_INNER_CLASS}>
-              <div className={MENU_3_LEFT_CLASS}>
-                <span className="text-xs font-semibold text-c-text-secondary">
-                  {selectedCount} {t('interview.hub.selected')}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setSelectedInsightIds(new Set())}
-                  className={MENU_3_ACTION_NEUTRAL}
-                >
-                  <X size={14} />
-                  {t('interview.hub.clear')}
-                </button>
-                <span className="mx-1 h-5 w-px bg-slate-200/80 dark:bg-white/10" />
-                <button
-                  type="button"
-                  onClick={handleBulkExportInsights}
-                  className={MENU_3_ACTION_NEUTRAL}
-                >
-                  <Download size={14} />
-                  {t('interview.hub.exportCsv')}
-                </button>
-                {insightScope === 'archived' ? (
-                  <button
-                    type="button"
-                    onClick={() => handleBulkSetInsightsArchived(false)}
-                    className={MENU_3_ACTION_NEUTRAL}
-                  >
-                    <RotateCcw size={14} />
-                    {t('interview.hub.restore')}
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => handleBulkSetInsightsArchived(true)}
-                    className={MENU_3_ACTION_NEUTRAL}
-                  >
-                    <Archive size={14} />
-                    {t('interview.hub.archive')}
-                  </button>
-                )}
-              </div>
-              <div className="shrink-0" />
-            </div>
-          </div>
+          // R02-A-FIX-2 — klaster 5/6 (Insights).
+          <Menu3BulkRow
+            selectedLabel={`${selectedCount} ${t('interview.hub.selected')}`}
+            clearLabel={t('interview.hub.clear')}
+            onClear={() => setSelectedInsightIds(new Set())}
+            actions={[
+              {
+                id: 'export-csv',
+                label: t('interview.hub.exportCsv'),
+                icon: Download,
+                onClick: handleBulkExportInsights,
+              },
+              insightScope === 'archived'
+                ? {
+                    id: 'restore',
+                    label: t('interview.hub.restore'),
+                    icon: RotateCcw,
+                    onClick: () => handleBulkSetInsightsArchived(false),
+                  }
+                : {
+                    id: 'archive',
+                    label: t('interview.hub.archive'),
+                    icon: Archive,
+                    onClick: () => handleBulkSetInsightsArchived(true),
+                  },
+            ]}
+          />
         );
       }
 
@@ -4131,83 +4017,71 @@ export const InterviewHub: React.FC = () => {
           _isPromoted(i.status)
         ).length;
         return (
-          <div className={MENU_3_ROW_CLASS}>
-            <div className={MENU_3_INNER_CLASS}>
-              <div className={MENU_3_LEFT_CLASS}>
-                <span className="text-xs font-semibold text-c-text-secondary">
-                  {selectedCount} {t('interview.hub.selected')}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setSelectedInitiativeIds(new Set())}
-                  className={MENU_3_ACTION_NEUTRAL}
-                >
-                  <X size={14} />
-                  {t('interview.hub.clear')}
-                </button>
-                {/* Separator — status-zależne */}
-                <span className="mx-1 h-5 w-px bg-slate-200/80 dark:bg-white/10" />
-                {/* Wyślij do przeglądu — tylko gdy są zaznaczone drafty */}
-                {draftSelectedCount > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => void bulkInitiativeTransition('PENDING_REVIEW', ['DRAFT'])}
-                    className={MENU_3_ACTION_NEUTRAL}
-                  >
-                    <ArrowRight size={14} />
-                    {t('interview.hub.sendToReview')}
-                  </button>
-                )}
-                {/* Zatwierdź — tylko gdy zaznaczone są pending + canReview */}
-                {canReviewInsights && pendingSelectedCount > 0 && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      void bulkInitiativeTransition('REVIEW', [
-                        'PENDING_REVIEW',
-                        'IN_REVIEW',
-                        'REVIEW',
-                        'SUBMITTED',
-                      ])
-                    }
-                    className={MENU_3_ACTION_NEUTRAL}
-                  >
-                    <Rocket size={14} />
-                    {t('interview.hub.approveMoveForward')}
-                  </button>
-                )}
-                {/* Otwórz w module — dla zaznaczonych promoted (zawsze dostępna akcja) */}
-                {promotedSelectedCount > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const ids = selectedInitiativeList
-                        .filter((i) => _isPromoted(i.status))
-                        .map((i) => i.id);
-                      if (ids[0])
-                        navigate(`/initiatives?open=${encodeURIComponent(ids[0])}&mode=doc`);
-                    }}
-                    className={MENU_3_ACTION_NEUTRAL}
-                  >
-                    <ExternalLink size={14} />
-                    {t('interview.hub.openInModule')}
-                  </button>
-                )}
-                {/* Separator + lifecycle (backlog B-1 — disabled z notą) */}
-                <span className="mx-1 h-5 w-px bg-slate-200/80 dark:bg-white/10" />
-                <button
-                  type="button"
-                  disabled
-                  title={t('interview.hub.comingSoonBackend')}
-                  className={`${MENU_3_ACTION_NEUTRAL} cursor-not-allowed opacity-40`}
-                >
-                  <Archive size={14} />
-                  {t('interview.hub.archive')}
-                </button>
-              </div>
-              <div className="shrink-0" />
-            </div>
-          </div>
+          /*
+           * R02-A-FIX-2 — klaster 6/6 (Initiatives).
+           *
+           * ZMIANA WIDOCZNOŚCI, jedyna w tym pakiecie: znika przycisk „Archiwum"
+           * z tooltipem `interview.hub.comingSoonBackend`. Był `disabled`, BEZ
+           * `onClick` — czyli atrapa, nie funkcja. Kanon §1 („funkcja
+           * niezaimplementowana jest POMIJANA, `Coming soon` niedozwolone")
+           * i wymóg „brak no-op" z tego pakietu wykluczają go w obu kierunkach:
+           * `Menu3BulkAction.onClick` jest wymagane, więc jedyną alternatywą
+           * byłoby dopisanie pustego handlera — dokładnie tego, czego zakazuje
+           * test. Utracona funkcja domenowa: żadna (nigdy nic nie robił).
+           * Backlog B-1 (backend archiwizacji inicjatyw) pozostaje otwarty.
+           */
+          <Menu3BulkRow
+            selectedLabel={`${selectedCount} ${t('interview.hub.selected')}`}
+            clearLabel={t('interview.hub.clear')}
+            onClear={() => setSelectedInitiativeIds(new Set())}
+            actions={[
+              // Wyślij do przeglądu — tylko gdy są zaznaczone drafty.
+              ...(draftSelectedCount > 0
+                ? [
+                    {
+                      id: 'send-to-review',
+                      label: t('interview.hub.sendToReview'),
+                      icon: ArrowRight,
+                      onClick: () => void bulkInitiativeTransition('PENDING_REVIEW', ['DRAFT']),
+                    },
+                  ]
+                : []),
+              // Zatwierdź — tylko gdy zaznaczone są pending + canReview.
+              ...(canReviewInsights && pendingSelectedCount > 0
+                ? [
+                    {
+                      id: 'approve-move-forward',
+                      label: t('interview.hub.approveMoveForward'),
+                      icon: Rocket,
+                      onClick: () =>
+                        void bulkInitiativeTransition('REVIEW', [
+                          'PENDING_REVIEW',
+                          'IN_REVIEW',
+                          'REVIEW',
+                          'SUBMITTED',
+                        ]),
+                    },
+                  ]
+                : []),
+              // Otwórz w module — dla zaznaczonych promoted.
+              ...(promotedSelectedCount > 0
+                ? [
+                    {
+                      id: 'open-in-module',
+                      label: t('interview.hub.openInModule'),
+                      icon: ExternalLink,
+                      onClick: () => {
+                        const ids = selectedInitiativeList
+                          .filter((i) => _isPromoted(i.status))
+                          .map((i) => i.id);
+                        if (ids[0])
+                          navigate(`/initiatives?open=${encodeURIComponent(ids[0])}&mode=doc`);
+                      },
+                    },
+                  ]
+                : []),
+            ]}
+          />
         );
       }
 
@@ -4445,9 +4319,7 @@ export const InterviewHub: React.FC = () => {
           row.submittedAt ? new Date(row.submittedAt).getTime() : 0,
         render: (row: InterviewSession) =>
           row.submittedAt ? (
-            <span className="text-xs text-c-text-secondary">
-              {formatListDate(row.submittedAt)}
-            </span>
+            <span className="text-xs text-c-text-secondary">{formatListDate(row.submittedAt)}</span>
           ) : (
             <span className="text-xs text-c-text-muted">—</span>
           ),
@@ -5333,9 +5205,7 @@ export const InterviewHub: React.FC = () => {
           row.createdAt ? new Date(row.createdAt).getTime() : 0,
         render: (row: (typeof rows)[number]) =>
           row.createdAt ? (
-            <span className="text-xs text-c-text-muted">
-              {formatListDate(row.createdAt)}
-            </span>
+            <span className="text-xs text-c-text-muted">{formatListDate(row.createdAt)}</span>
           ) : (
             <span className="text-xs text-c-text-muted">—</span>
           ),
@@ -6864,9 +6734,7 @@ Return ONLY the answer text (no markdown fences).`;
                   label={dtd.label}
                   risk={dtd.days < 0 ? 'overdue' : dtd.days <= 3 ? 'soon' : 'none'}
                   showIcon
-                  title={
-                    assignment.dueAt ? formatListDate(assignment.dueAt) : undefined
-                  }
+                  title={assignment.dueAt ? formatListDate(assignment.dueAt) : undefined}
                 />
               ) : (
                 <span className="text-xs text-slate-600 dark:text-slate-400">—</span>
@@ -8876,7 +8744,9 @@ Return ONLY the answer text (no markdown fences).`;
                       {insight.createdAt && (
                         <span className="flex items-center gap-1">
                           <Clock size={12} />
-                          {new Date(insight.createdAt).toLocaleDateString(t('interview.hub.enUs', 'en-US'))}
+                          {new Date(insight.createdAt).toLocaleDateString(
+                            t('interview.hub.enUs', 'en-US')
+                          )}
                         </span>
                       )}
                       {findingsCount > 0 && (
@@ -9998,7 +9868,6 @@ Return ONLY the answer text (no markdown fences).`;
           setInsights(Array.isArray(insightsRes) ? insightsRes : []);
         }}
       />
-
     </div>
   );
 };

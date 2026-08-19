@@ -15,7 +15,7 @@ Jedno drzewo kanoniczne nie może wejść w next-weekend state, dopóki żaden m
 | Finance | PARTIAL + DUPLIKAT | V2/V3 mieszane, ryzyko duplikacji | `BLOCKED_ARCHITECTURE` | konflikt ścieżek i ownera danych finansowych | `/src/components/Economics/FinanceHub.tsx`, `src/services/v8/finance-v2` |
 | Materials | LIVE_CONNECTED base / PARTIAL | Podstawa działa | `READY_FOR_RUNTIME_RECHECK` | preview/edit edge-path i canonical templates | doc/presentation/excel routes |
 | Assessment | LIVE_CONNECTED core | Trzon działa, full lifecycle do dokończenia | `READY_FOR_RUNTIME_CHECK` | mapping 5 powierzchni i data quality | `/src/components/Assessment`, `/api/assessment*` |
-| Audits | PARTIAL | UI/Showcase miesza się z lifecycle | `BLOCKED_SCOPE` | wiele ścieżek „do pokazania”, brak pełnego life-cycle | `/src/components/Audits`, `/api/audit*` |
+| Audits | LIVE_CONNECTED core / PARTIAL | Funkcjonalny hub na `/audit-programs` + canonical route `/audits -> /audit-programs` | `READY_FOR_RUNTIME_RECHECK` | legacy showcase copy i brak pełnego lifecycle smoke | `/src/components/Audit`, `/api/audit*`, `AppRoutes` |
 | Organization | PARTIAL | Niski sygnał runtime | `BLOCKED_SCOPE` | brak pełnego remanentu i tabeli evidence | `src/components/organization*` |
 | Settings | PARTIAL | Brak świeżego remanentu | `BLOCKED_SCOPE` | długi backlog odzwierciedlony w planach, bez runtime evidence | `src/components/settings*` |
 | Meetings | PARTIAL | niska kompletność runtime | `BLOCKED_SCOPE` | niezamknięty remanent routingu i evidencji | `src/components/Meeting*` |
@@ -52,4 +52,3 @@ Brama operacyjna:
   - jednoznacznego canonical ownera ścieżek runtime,
   - usunięcia dead duplicate mountów,
   - dowodu migration+fixture+demo smoke w jednym drzewie.
-

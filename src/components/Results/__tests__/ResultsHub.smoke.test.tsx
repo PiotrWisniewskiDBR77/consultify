@@ -8,7 +8,7 @@
  * its tab configuration into the shell.
  */
 
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
@@ -36,15 +36,35 @@ vi.mock('react-hot-toast', () => {
   return { default: Object.assign(fn, { success: vi.fn(), error: vi.fn() }) };
 });
 
-// Mock the ModuleHub shell to a deterministic marker that exposes the tab count.
-vi.mock('../../shared/ModuleHub/ModuleHub', () => ({
-  ModuleHub: ({ tabs, activeTab }: any) => (
-    <div data-testid="results-module-hub" data-active-tab={activeTab} data-tab-count={tabs?.length}>
+// Observe the exact local Menu 2 contract passed to the shared renderer.
+vi.mock('../../standard/StandardModuleBar', () => ({
+  StandardModuleBar: ({
+    tabs,
+    activeTab,
+    onTabChange,
+    viewModes,
+    primaryCta,
+    chips,
+    children,
+  }: any) => (
+    <div
+      data-testid="results-module-bar"
+      data-active-tab={activeTab}
+      data-view-modes={(viewModes || []).join(',')}
+      data-primary-cta={primaryCta?.label || ''}
+      data-menu3={(chips || []).map((chip: any) => chip.id).join(',')}
+    >
       {(tabs || []).map((tab: any) => (
-        <span key={tab.id} data-testid="results-tab">
+        <button
+          key={tab.id}
+          data-testid={`results-tab-${tab.id}`}
+          data-count={tab.count == null ? '' : String(tab.count)}
+          onClick={() => onTabChange(tab.id)}
+        >
           {tab.label}
-        </span>
+        </button>
       ))}
+      {children}
     </div>
   ),
 }));
@@ -60,6 +80,7 @@ vi.mock('../../shared/ModuleHub/useModuleOpenDocuments', () => ({
 
 const { loadResultsKpis } = vi.hoisted(() => ({ loadResultsKpis: vi.fn() }));
 vi.mock('../kpiRuntime', () => ({ loadResultsKpis }));
+vi.mock('../resultsFeatureFlags', () => ({ isResultsFlagEnabled: () => false }));
 
 vi.mock('@/store/useAppStore', () => ({
   useAppStore: (selector: any) =>
@@ -77,7 +98,7 @@ vi.mock('@/services/initiativeWriteTruth', () => ({
 import { ResultsHub } from '../ResultsHub';
 
 describe('ResultsHub smoke', () => {
-  it('mounts the ModuleHub shell with a non-empty tab configuration', async () => {
+  it('passes clean Menu 2 names without counts and preserves tab navigation', async () => {
     loadResultsKpis.mockResolvedValue({ kpis: [], initiatives: [], mappings: [] });
     render(
       <MemoryRouter initialEntries={['/benefits']}>
@@ -86,9 +107,36 @@ describe('ResultsHub smoke', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('results-module-hub')).toBeInTheDocument();
+      expect(screen.getByTestId('results-module-bar')).toBeInTheDocument();
     });
-    const hub = screen.getByTestId('results-module-hub');
-    expect(Number(hub.getAttribute('data-tab-count'))).toBeGreaterThan(0);
+
+    const tabs = screen
+      .getAllByRole('button')
+      .filter((button) => button.getAttribute('data-testid')?.startsWith('results-tab-'));
+    expect(tabs.map((tab) => tab.textContent)).toEqual(['KPI', 'ROI', 'OKR']);
+    expect(tabs.every((tab) => tab.getAttribute('data-count') === '')).toBe(true);
+    expect(screen.getByTestId('results-module-bar')).toHaveAttribute(
+      'data-view-modes',
+      'table,grid'
+    );
+    expect(screen.getByTestId('results-module-bar')).toHaveAttribute(
+      'data-primary-cta',
+      'New KPI scorecard'
+    );
+    expect(screen.getByTestId('results-module-bar')).toHaveAttribute(
+      'data-menu3',
+      'all,active,draft,closed'
+    );
+
+    fireEvent.click(screen.getByTestId('results-tab-roi'));
+    expect(screen.getByTestId('results-module-bar')).toHaveAttribute('data-active-tab', 'roi');
+    expect(screen.getByTestId('results-module-bar')).toHaveAttribute(
+      'data-primary-cta',
+      'New ROI analysis'
+    );
+    expect(screen.getByTestId('results-module-bar')).toHaveAttribute(
+      'data-menu3',
+      'all,active,at-risk,completed'
+    );
   });
 });

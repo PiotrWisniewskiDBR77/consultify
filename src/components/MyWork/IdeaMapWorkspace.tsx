@@ -34,12 +34,9 @@ import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { generateAIProposal } from '@/services/ideaAIGenerator';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
+import { buildIdeaWorkspacePath } from '@/routes/ideaWorkspaceNavigation';
 import { isEvidencePanelEnabled } from '@/utils/evidencePanelFlag';
-import {
-  IDEA_TOP_BAR_SLOT_ID,
-  isIdeaTopBarOneLineEnabled,
-} from '@/utils/ideaTopBarOneLineFlag';
-import { isMelsCanvasEnabled } from '@/utils/melsCanvasFlag';
+import { IDEA_TOP_BAR_SLOT_ID, isIdeaTopBarOneLineEnabled } from '@/utils/ideaTopBarOneLineFlag';
 import { isVf1CanvasSpecAEnabled } from '@/utils/vf1CanvasSpecAFlag';
 
 import {
@@ -470,22 +467,24 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const autoCollapsedTablePanelRef = useRef(false);
 
   const setActiveTool = useCallback(
-    (tool: CanvasToolType) => {
+    (tool: CanvasToolType, options: { persistPreference?: boolean } = {}) => {
       if (onActiveToolChange) onActiveToolChange(tool);
       else setInternalActiveTool(tool);
       // P0-5: persist the view preference LOCALLY (this browser only) so it
       // survives reloads/reopens for THIS user without ever touching the
       // shared idea map row other org members read.
-      writeLocalToolPreference(realIdRef.current || ideaId, tool);
-      try {
-        const url = new URL(window.location.href);
-        url.searchParams.set('tool', tool);
-        window.history.replaceState(null, '', url.toString());
-      } catch {
-        /* ignore */
+      if (options.persistPreference !== false) {
+        writeLocalToolPreference(realIdRef.current || ideaId, tool);
+      }
+      const currentIdeaId = realIdRef.current || ideaId;
+      if (!currentIdeaId.startsWith('new-idea-')) {
+        const nextSearch = new URLSearchParams(window.location.search);
+        nextSearch.delete('tool');
+        const query = nextSearch.toString();
+        navigate(`${buildIdeaWorkspacePath(currentIdeaId, tool)}${query ? `?${query}` : ''}`);
       }
     },
-    [ideaId, onActiveToolChange]
+    [ideaId, navigate, onActiveToolChange]
   );
 
   const setActivePanel = useCallback(
@@ -1537,7 +1536,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         setDirty(true);
 
         if (preferredSeedSystem && !initialTool && !userSelectedToolRef.current) {
-          setActiveTool(preferredSeedSystem);
+          setActiveTool(preferredSeedSystem, { persistPreference: false });
         }
 
         try {
@@ -1631,7 +1630,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                 wlasnaNatura === 'process_flow' ||
                 wlasnaNatura === 'table'
               ) {
-                setActiveTool(wlasnaNatura);
+                // This is the Idea's structural fallback, not a user choice.
+                // Route to the canonical representation without manufacturing
+                // a per-browser preference that would mask later fallbacks.
+                setActiveTool(wlasnaNatura, { persistPreference: false });
               }
             }
           }
@@ -2965,13 +2967,12 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     () => getIdeaWorkspaceToolLabel(activeTool, Boolean(isPolish)),
     [activeTool, isPolish]
   );
-  // ── EditorShell Wave W-1 (flag-gated, default OFF) ──────────────────────
-  // When `isMelsCanvasEnabled()` is true, the four canvases render inside the
-  // EditorShell (`IdeaCanvasMelsView`, `centerMode='canvas'`) instead of the
-  // floating canvas-chrome. Chip descriptors are memoised here (after all
-  // handlers/hooks — TDZ-safe). Flag OFF → nothing below is consumed and the
-  // legacy render is byte-for-byte unchanged.
-  const melsCanvasEnabled = isMelsCanvasEnabled();
+  // ── Canonical EditorShell for all four Ideas tools ──────────────────────
+  // Chip descriptors are memoised here after all handlers/hooks (TDZ-safe).
+  // The canonical Ideas shell is no longer feature-gated. Keeping two runtime
+  // anatomies made navigation fixes non-deterministic and allowed URL flags to
+  // bring the overlapping legacy drawers back.
+  const melsCanvasEnabled = true;
   // ── Górny pasek w JEDNEJ LINII (flaga, domyślnie OFF) ───────────────────
   // ON: Menu 3 (Dodaj · Auto-układ · AI rozwiń · Szablony · Eksport) znika w
   // całości — te same wejścia są w lewym pasku narzędzi (CanvasLeftToolbar),
@@ -3031,7 +3032,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     try {
       await Api.deleteMyIdea(realId);
       toast.success(isPolish ? 'Usunięto' : 'Deleted');
-      navigate('/my-work');
+      navigate('/my-work/ideas');
     } catch (err: any) {
       toast.error(err?.message || (isPolish ? 'Nie udało się usunąć' : 'Failed to delete'));
     }
@@ -3516,7 +3517,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const floatingLeftRailNode = renderFloatingLeftRail();
   // D2: przelacznik w prawym dolnym rogu — portal do body, wiec jeden wezel
   // dziala w obu sciezkach renderu (mels i legacy). OFF => null.
-  const viewSwitcherNode = switcherBottomRight ? (
+  // MELS always exposes the four representations in the canonical bottom bar.
+  // The legacy path still honours its reversible feature flag.
+  const viewSwitcherNode = melsCanvasEnabled || switcherBottomRight ? (
     <IdeaViewSwitcher
       activeTool={activeTool}
       onToolChange={setActiveTool}
@@ -3539,7 +3542,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         <div ref={canvasContainerRef} className="flex-1 min-w-0 min-h-0 relative">
           <IdeaCanvasMelsView
             title={title || safeTitleFromSeed(seedText, isPolish) || t('mindmap.untitled')}
-            onBack={() => navigate('/my-work')}
+            onBack={() => navigate('/my-work/ideas')}
             backLabel={t('mindmap.ideas')}
             moduleLabel={t('mindmap.ideas')}
             topBarChips={melsCanvasChips}
@@ -3571,9 +3574,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             // Sterujemy sekcją TYLKO gdy IDE-025 jest włączone — inaczej
             // `undefined` zostawia powłokę w jej dotychczasowym trybie
             // niesterowanym (zero zmiany zachowania przy fladze OFF).
-            activeRightRailToolId={
-              detaleWPanelu && panel6Enabled ? sekcjaPrawegoPaska : undefined
-            }
+            activeRightRailToolId={detaleWPanelu && panel6Enabled ? sekcjaPrawegoPaska : undefined}
             onActiveRightRailToolChange={setSekcjaPrawegoPaska}
             renderRightRailPanel={renderMelsCanvasRightRailPanel}
             // Układ 6 sekcji: pasek ikon zawsze widoczny (decyzja właściciela).
@@ -3990,6 +3991,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   function renderFloatingLeftRail(): React.ReactNode {
     return (
       <CanvasLeftToolbar
+        side={melsCanvasEnabled ? 'right' : 'left'}
         activeTool={activeTool}
         interactionMode={mindMapInteractionMode}
         selection={selection}
@@ -4007,7 +4009,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         onApplyTemplate={handleApplyTemplate}
         onOpenTemplateGallery={() => setTemplateGalleryOpen(true)}
         // D2: gdy przelacznik jest w prawym dolnym rogu, zdejmujemy go z railа.
-        onToolChange={switcherBottomRight ? undefined : setActiveTool}
+        onToolChange={melsCanvasEnabled || switcherBottomRight ? undefined : setActiveTool}
         familyCounts={familyCounts}
       />
     );
@@ -4073,24 +4075,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           />
         )}
 
-        {/* Ścieżka mels-canvas (default OFF): legacy szuflady bez zmian. Tools jest
-          renderowany embedded w rail shellu (renderMelsCanvasRightRailPanel), więc
-          tu tylko Kontekst + Sugestie jako przesuwane szuflady — parytet z dawnym
-          zachowaniem sprzed konsolidacji. */}
-        {melsCanvasEnabled && (
-          <>
-            <IdeaContextPanel
-              {...ideaContextPanelSharedProps}
-              open={contextPanelOpen}
-              onClose={() => handlePanelChange(null)}
-            />
-            <IdeaAISuggestionsPanel
-              {...ideaAISuggestionsPanelSharedProps}
-              open={aiPanelOpen}
-              onClose={() => handlePanelChange(null)}
-            />
-          </>
-        )}
+        {/* MELS owns exactly one semantic information panel. Legacy Context and
+            AI Suggestions drawers remain available only on ff_melsCanvas=0;
+            mounting them here created a second panel over the canvas. */}
 
         {/* MM-12: AI Governance Panel */}
         <AIGovernancePanel

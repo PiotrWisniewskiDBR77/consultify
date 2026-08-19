@@ -8,6 +8,7 @@
 
 // CRITICAL (ESM): load env via a side-effect module that is imported FIRST.
 import './config/loadEnv.js';
+import './config/localDatabaseSafety.js';
 
 import fs from 'fs';
 import path from 'path';
@@ -241,6 +242,9 @@ if (skipManagedSchema) {
 }
 if (String(process.env.DB_READONLY || '').trim()) {
   logger.warn('[Server] DB_READONLY is enabled (writes blocked).');
+  if (String(process.env.DB_READONLY_ALLOW_AUTH_SESSIONS || '').trim()) {
+    logger.warn('[Server] Read-only auth session writes are enabled (refresh_tokens only).');
+  }
 }
 
 // Bind the port before heavy async startup completes so the frontend proxy does not see ECONNREFUSED.

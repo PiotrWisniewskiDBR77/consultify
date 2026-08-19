@@ -8,6 +8,23 @@ last_reviewed: 2026-08-01
 
 # Board odbioru
 
+## Bieżąca kolejka kontroli
+
+Aktualny stan linii Finance/A/B/C oraz wyjątków D/E znajduje się w
+[`CURRENT_MVP_CONTROL.md`](CURRENT_MVP_CONTROL.md). Ta sekcja ma pierwszeństwo
+przed historycznym przypisaniem pakietów do P0/P1:
+
+`Finance FROZEN_FOR_INTEGRATION → A REVIEW → B FROZEN_FOR_INTEGRATION → C FIX → integracja A→B→C → spine z Finance/Results/Materials`.
+
+Referral i Meeting są zachowanymi wyjątkami poza MVP; nie są aktywnymi
+zależnościami `WK-P0-014`.
+
+Decyzja operacyjna: nowe linie A/B/C już działają i nie są zatrzymywane.
+Przejściowo działają równolegle ze starą linią B/Finance oraz kończącymi rundy
+D/Referral i E/Meeting. D/E następnie przechodzą do
+`PARKED_AFTER_CURRENT_ROUND`, Finance zostaje domknięte, a program naturalnie
+schodzi do trzech stałych zespołów A/B/C.
+
 ## Statusy
 
 `DISCOVERY → CONCEPT → READY → IN_IMPLEMENTATION → IN_REVIEW → RUNTIME_TEST →
@@ -55,7 +72,7 @@ Statusy końcowe alternatywne: `BLOCKED`, `DEFERRED`, `REJECTED`.
 | ID | Zakres | Status | Dowód / następny krok |
 | --- | --- | --- | --- |
 | `MAT-006B` | Presentation lifecycle | BLOCKED | listowy `Ready/11` ≠ builder `0`; naprawić kanoniczną zawartość seeda i powtórzyć E2E |
-| `FIN-005` | Finance demo coherence | BLOCKED | obce dane DBR77/Apator, odrzucone importy, duplikaty, surowe daty i niedostępny value engine |
+| `FIN-005` | Finance demo coherence | CODE_GO_LOCAL / RUNTIME_PENDING | branch `fix/fin-005-atelier-coherence` @ `fbadd3c263` przyjęty do integracji; materializacja i pełny Railway `demo` golden flow pozostają wymagane |
 | `OPS-DEMO-002` | Demo entry auth | BLOCKED | landing → Try demo nie wpuszcza kanonicznego konta Atelier Toys |
 | `RES-005` | Results demo coherence | READY | rdzeń 127/127 PASS, ale staging miesza DBR77 z Atelier i ma legacy/scorecard split-brain |
 | `EXE-003` | Initiative → Execution contract | READY | portfele 71 vs 13, duplikaty i sprzeczne EVM HIGH vs alert OK |

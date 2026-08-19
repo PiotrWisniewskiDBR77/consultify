@@ -11,10 +11,10 @@ import {
   Check,
   CheckCircle2,
   ChevronRight,
-  Clock,
   Cpu,
   DollarSign,
   Edit2,
+  Eye,
   FolderKanban,
   Link2,
   Loader2,
@@ -277,13 +277,6 @@ const isOverdue = (dateStr?: string): boolean => {
   return date < today;
 };
 
-// Days waiting calculation
-const getDaysWaiting = (createdAt: string): number => {
-  const created = new Date(createdAt);
-  const now = new Date();
-  return Math.floor((now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
-};
-
 const getInitials = (name?: string) => {
   if (!name) return '?';
   return name
@@ -372,14 +365,10 @@ const buildDecisionColumns = (
       const d = row as unknown as Decision;
       const dueDate = d.dueDate || d.deadline;
       const overdue = isOverdue(dueDate) && d.status?.toUpperCase() === 'PENDING';
-      const daysWaiting = getDaysWaiting(d.createdAt);
       return dueDate ? (
         <DueChip label={formatDate(dueDate)} risk={overdue ? 'overdue' : 'none'} showIcon />
       ) : (
-        <MetaChip
-          icon={Clock}
-          label={t('myWork.decisionsPanel.daysWaiting', { days: daysWaiting })}
-        />
+        <span className="text-sm text-c-text-muted">—</span>
       );
     },
   },
@@ -436,31 +425,25 @@ interface DecisionRowHandlers {
   onDelete: (id: string) => void;
 }
 
-// Kebab sections — §6.4 5-group anatomy (nawigacja+stan / manipulacja /
-// relacje-wyjście / AI / destrukcyjne). Two variants (My decisions vs
-// Awaiting others) differ only in group 1's status actions
-// (Approve/Reject vs Remind/Escalate) — same shape as the previous
-// DecisionTableRow/AwaitingDecisionTableRow `kebabSections` useMemo. Plain
-// functions (not hooks) since StandardTable calls `rowActions(row)` directly.
+// Closed contract v1: both variants render context → manage → danger.
 const buildDecisionKebabSections = (
   decision: Decision,
   h: DecisionRowHandlers,
   t: TFunction,
   isPolish: boolean
 ): RowActionSection[] => {
-  const dueDate = decision.dueDate || decision.deadline;
   const isPending = decision.status?.toUpperCase() === 'PENDING';
   return [
-    // ── §6.4 grupa 1: NAWIGACJA (Otwórz/Podgląd) + akcje stanu (Approve/Reject) ──
     {
-      id: 'open',
-      kind: 'open',
+      id: 'context',
+      kind: 'context',
       actions: [
         {
           id: 'open',
-          label: t('myWork.decisionsPanel.label', 'Open preview'),
-          icon: ChevronRight,
-          onClick: () => h.onOpenPreview(decision.id),
+          label: t('common.open', 'Open'),
+          icon: Eye,
+          onClick: () =>
+            h.onOpenFull?.(decision.id, decision) ?? h.onClick?.(decision.id, decision),
         },
         ...(isPending
           ? [
@@ -481,11 +464,16 @@ const buildDecisionKebabSections = (
           : []),
       ],
     },
-    // ── §6.4 grupa 2: MANIPULACJA (Edytuj) ─────────────────────────────────────
     {
       id: 'manage',
       kind: 'manage',
       actions: [
+        {
+          id: 'open-preview',
+          label: t('myWork.decisionsPanel.label', 'Open preview'),
+          icon: ChevronRight,
+          onClick: () => h.onOpenPreview(decision.id),
+        },
         {
           id: 'edit',
           label: t('myWork.decisionsPanel.label4', 'Edit'),
@@ -493,13 +481,6 @@ const buildDecisionKebabSections = (
           onClick: () =>
             h.onOpenFull?.(decision.id, decision) ?? h.onClick?.(decision.id, decision),
         },
-      ],
-    },
-    // ── §6.4 grupa 3: RELACJE/WYJŚCIE (Kopiuj link · Odłóż termin) ─────────────
-    {
-      id: 'output',
-      kind: 'output',
-      actions: [
         {
           id: 'copy-link',
           label: t('myWork.decisionsPanel.label5', 'Copy link'),
@@ -514,53 +495,19 @@ const buildDecisionKebabSections = (
             }
           },
         },
-        ...(dueDate
-          ? [
-              {
-                id: 'delay',
-                label: t('myWork.decisionsPanel.label6', 'Delay'),
-                icon: Clock,
-                onClick: () => {},
-                submenu: [1, 3, 7].map((d) => ({
-                  id: `delay-${d}`,
-                  label: t('myWork.decisionsPanel.delayDays', { count: d }),
-                  icon: Clock,
-                  disabled: true,
-                  description: t('myWork.decisionsPanel.description', 'Coming soon (backend)'),
-                  onClick: () => {},
-                })),
-              },
-            ]
-          : []),
-      ],
-    },
-    // ── §6.4 grupa 4: AI ──────────────────────────────────────────────────────
-    {
-      id: 'ai',
-      kind: 'ai',
-      actions: [
         {
           id: 'ai-open',
-          label: t('myWork.decisionsPanel.label7', '✨ AI: open & fill'),
+          label: t('myWork.decisionsPanel.label7', 'AI: open & fill'),
           icon: Sparkles,
           onClick: () =>
             h.onOpenFull?.(decision.id, decision) ?? h.onClick?.(decision.id, decision),
         },
       ],
     },
-    // ── §6.4 grupa 5: DESTRUKCYJNE (Archiwizuj · Usuń — danger, ostatni) ───────
     {
       id: 'danger',
       kind: 'danger',
       actions: [
-        {
-          id: 'archive',
-          label: t('myWork.decisionsPanel.label8', 'Archive'),
-          icon: Archive,
-          disabled: true,
-          description: t('myWork.decisionsPanel.description2', 'Coming soon (backend)'),
-          onClick: () => {},
-        },
         {
           id: 'delete',
           label: t('myWork.decisionsPanel.label9', 'Delete'),
@@ -583,16 +530,16 @@ const buildAwaitingKebabSections = (
   const isPending = decision.status?.toUpperCase() === 'PENDING';
   const overdue = isOverdue(dueDate) && isPending;
   return [
-    // ── §6.4 grupa 1: NAWIGACJA (Otwórz/Podgląd) + akcje stanu (Remind/Escalate) ──
     {
-      id: 'open',
-      kind: 'open',
+      id: 'context',
+      kind: 'context',
       actions: [
         {
           id: 'open',
-          label: t('myWork.decisionsPanel.label10', 'Open preview'),
-          icon: ChevronRight,
-          onClick: () => h.onOpenPreview(decision.id),
+          label: t('common.open', 'Open'),
+          icon: Eye,
+          onClick: () =>
+            h.onOpenFull?.(decision.id, decision) ?? h.onClick?.(decision.id, decision),
         },
         ...(isPending
           ? [
@@ -615,11 +562,16 @@ const buildAwaitingKebabSections = (
           : []),
       ],
     },
-    // ── §6.4 grupa 2: MANIPULACJA (Edytuj) ────────────────────────────────────
     {
       id: 'manage',
       kind: 'manage',
       actions: [
+        {
+          id: 'open-preview',
+          label: t('myWork.decisionsPanel.label10', 'Open preview'),
+          icon: ChevronRight,
+          onClick: () => h.onOpenPreview(decision.id),
+        },
         {
           id: 'edit',
           label: t('myWork.decisionsPanel.label12', 'Edit'),
@@ -627,13 +579,6 @@ const buildAwaitingKebabSections = (
           onClick: () =>
             h.onOpenFull?.(decision.id, decision) ?? h.onClick?.(decision.id, decision),
         },
-      ],
-    },
-    // ── §6.4 grupa 3: RELACJE/WYJŚCIE (Kopiuj link · Odłóż termin) ─────────────
-    {
-      id: 'output',
-      kind: 'output',
-      actions: [
         {
           id: 'copy-link',
           label: t('myWork.decisionsPanel.label13', 'Copy link'),
@@ -648,53 +593,19 @@ const buildAwaitingKebabSections = (
             }
           },
         },
-        ...(dueDate
-          ? [
-              {
-                id: 'delay',
-                label: t('myWork.decisionsPanel.label14', 'Delay'),
-                icon: Clock,
-                onClick: () => {},
-                submenu: [1, 3, 7].map((d) => ({
-                  id: `delay-${d}`,
-                  label: t('myWork.decisionsPanel.delayDays', { count: d }),
-                  icon: Clock,
-                  disabled: true,
-                  description: t('myWork.decisionsPanel.description3', 'Coming soon (backend)'),
-                  onClick: () => {},
-                })),
-              },
-            ]
-          : []),
-      ],
-    },
-    // ── §6.4 grupa 4: AI ──────────────────────────────────────────────────────
-    {
-      id: 'ai',
-      kind: 'ai',
-      actions: [
         {
           id: 'ai-open',
-          label: t('myWork.decisionsPanel.label15', '✨ AI: open & fill'),
+          label: t('myWork.decisionsPanel.label15', 'AI: open & fill'),
           icon: Sparkles,
           onClick: () =>
             h.onOpenFull?.(decision.id, decision) ?? h.onClick?.(decision.id, decision),
         },
       ],
     },
-    // ── §6.4 grupa 5: DESTRUKCYJNE (Archiwizuj · Usuń — danger, ostatni) ───────
     {
       id: 'danger',
       kind: 'danger',
       actions: [
-        {
-          id: 'archive',
-          label: t('myWork.decisionsPanel.label16', 'Archive'),
-          icon: Archive,
-          disabled: true,
-          description: t('myWork.decisionsPanel.description4', 'Coming soon (backend)'),
-          onClick: () => {},
-        },
         {
           id: 'delete',
           label: t('myWork.decisionsPanel.label17', 'Delete'),

@@ -48,7 +48,12 @@ import { VoiceModeLegend } from './VoiceModeLegend';
 // ============================================================================
 
 interface EnhancedChatInputProps {
-  onSend: (message: string, attachments?: any[]) => void;
+  /**
+   * Resolves only after the transport has accepted the message. A rejection
+   * leaves the composer untouched so the user can retry without recreating
+   * their prompt or attachments.
+   */
+  onSend: (message: string, attachments?: any[]) => void | Promise<void>;
   onStopGenerating?: () => void;
   onVoiceConversationStart?: () => void;
   onVoiceConversationEnd?: () => void;
@@ -166,6 +171,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
 
   // Input state
   const [value, setValue] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [attachments, setAttachments] = useState<ComposerAttachment[]>([]);
 
@@ -196,7 +202,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   const isDisabled = disabled || aiFreezeStatus.isFrozen;
   const isInputDisabled = isDisabled || isStreaming;
   const hasText = value.trim().length > 0;
-  const canSend = hasText && !isInputDisabled;
+  const canSend = hasText && !isInputDisabled && !isSubmitting;
   const { activeConversationId, conversations, activeMessages } = useConversationStore();
   const [showMoveToProject, setShowMoveToProject] = useState(false);
 
@@ -783,12 +789,22 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   // Handlers
   // ========================================================================
 
-  const handleSend = useCallback(() => {
+  const handleSend = useCallback(async () => {
     if (!canSend) return;
     if (isStreaming) return;
     stopDictation();
     const outgoing = value.trim();
-    onSend(outgoing, attachments.length > 0 ? attachments : undefined);
+    setIsSubmitting(true);
+    try {
+      await onSend(outgoing, attachments.length > 0 ? attachments : undefined);
+    } catch (error) {
+      // The transport owns the visible error/retry surface. Keeping both the
+      // text and attachments here is deliberate: a failed request must never
+      // destroy an unsent Teresa draft.
+      return;
+    } finally {
+      setIsSubmitting(false);
+    }
     // T-PM2-lite — advisory post-send nudge. Dispatched on `window`
     // so the headless `PiiHeuristicToast` can run the detector
     // without this component knowing anything about toasts. The

@@ -14,6 +14,7 @@ import { Callout } from '@/components/shared/NModeBlocks';
 
 import BenefitsRegisterPanel from './BenefitsRegisterPanel';
 import { isExecutionFlagEnabled } from './executionFeatureFlags';
+import { ExecutionManagementTable, type ManagementLaneRow } from './ExecutionManagementTable';
 import { type ManagerModuleId, ManagerModuleView } from './ManagerModuleView';
 
 interface ManagerLaneCount {
@@ -241,6 +242,23 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
     [managerLaneCounts, t]
   );
 
+  // T35 R12 — canonical table rows: same six lanes/counts as `tiles` above,
+  // reshaped for StandardTable (id/label/total/critical/warning only).
+  const laneRows: ManagementLaneRow[] = useMemo(
+    () =>
+      tiles.map((tile) => {
+        const counts = laneCount(tile.id);
+        return {
+          id: tile.id,
+          label: tile.title,
+          total: counts.total,
+          critical: counts.critical,
+          warning: counts.warning,
+        };
+      }),
+    [tiles, managerLaneCounts]
+  );
+
   const filteredTiles = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     if (!query) return tiles;
@@ -286,84 +304,92 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
     <div className="flex flex-col h-full min-h-0">
       <div className="flex-1 min-h-0 overflow-hidden">
         {subview === 'all' ? (
-          <div className="p-4 space-y-5 h-full overflow-auto">
-            {v8Degraded && (
-              <Callout
-                variant="warning"
-                title={t('execution.manager.v8Degraded', 'Manager cockpit requires V8')}
-              >
-                {t(
-                  'execution.manager.v8DegradedDesc',
-                  'The Manager cockpit (lanes, AI recommendations) is not available because V8 is not enabled on this environment. Contact your administrator to enable V8.'
-                )}
-              </Callout>
-            )}
-            {!hasExecutingInitiatives && (
-              <Callout
-                variant="info"
-                title={t('execution.manager.noInitiatives', 'No executing initiatives')}
-              >
-                {t(
-                  'execution.manager.noInitiativesDesc',
-                  'The Manager cockpit will populate when initiatives enter execution. Currently the portfolio is empty.'
-                )}
-              </Callout>
-            )}
+          <div className="flex h-full flex-col overflow-hidden">
+            {/* T35 R12 — canonical table (six real lanes). Dashboard content
+                below (callouts, benefits register, tile grid) is relocated,
+                not deleted (surfaceRegister.ts T35 relocateFromList). */}
+            <div className="h-1/2 min-h-[280px] shrink-0 overflow-hidden border-b border-slate-200 dark:border-slate-700">
+              <ExecutionManagementTable rows={laneRows} onOpenLane={setSubview} />
+            </div>
+            <div className="flex-1 min-h-0 p-4 space-y-5 overflow-auto">
+              {v8Degraded && (
+                <Callout
+                  variant="warning"
+                  title={t('execution.manager.v8Degraded', 'Manager cockpit requires V8')}
+                >
+                  {t(
+                    'execution.manager.v8DegradedDesc',
+                    'The Manager cockpit (lanes, AI recommendations) is not available because V8 is not enabled on this environment. Contact your administrator to enable V8.'
+                  )}
+                </Callout>
+              )}
+              {!hasExecutingInitiatives && (
+                <Callout
+                  variant="info"
+                  title={t('execution.manager.noInitiatives', 'No executing initiatives')}
+                >
+                  {t(
+                    'execution.manager.noInitiativesDesc',
+                    'The Manager cockpit will populate when initiatives enter execution. Currently the portfolio is empty.'
+                  )}
+                </Callout>
+              )}
 
-            {isExecutionFlagEnabled('benefits') && <BenefitsRegisterPanel />}
+              {isExecutionFlagEnabled('benefits') && <BenefitsRegisterPanel />}
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredTiles.map((tile) => {
-                const hasAlerts = tile.metrics.some(
-                  (metric) => metric.variant === 'critical' || metric.variant === 'warn'
-                );
-                return (
-                  <button
-                    key={tile.id}
-                    type="button"
-                    onClick={() => setSubview(tile.id)}
-                    className={`group text-left rounded-xl border bg-c-surface p-5 transition-all hover:shadow-md hover:border-c-border-strong ${
-                      hasAlerts
-                        ? 'border-amber-200 dark:border-amber-800/40'
-                        : 'border-c-border-subtle'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-3 mb-3">
-                      <div className="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-c-surface-raised group-hover:bg-c-surface-raised transition-colors">
-                        {tile.icon}
-                      </div>
-                      <ChevronRight
-                        size={14}
-                        className="text-c-text-secondary group-hover:text-c-text-secondary transition-colors mt-1"
-                      />
-                    </div>
-                    <h3 className="text-sm font-semibold text-c-text mb-1">{tile.title}</h3>
-                    <p className="text-[11px] text-c-text-muted leading-relaxed mb-3">
-                      {tile.description}
-                    </p>
-                    <div className="flex gap-3">
-                      {tile.metrics.map((metric) => (
-                        <div key={metric.label} className="min-w-0">
-                          <div
-                            className={`text-lg font-bold tabular-nums ${
-                              metric.variant === 'critical'
-                                ? 'text-danger-600 dark:text-danger-400'
-                                : metric.variant === 'warn'
-                                  ? 'text-amber-600 dark:text-amber-400'
-                                  : 'text-c-text'
-                            }`}
-                          >
-                            {metric.value}
-                          </div>
-                          <div className="text-[10px] uppercase tracking-wider text-c-text-muted">
-                            {metric.label}
-                          </div>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {filteredTiles.map((tile) => {
+                  const hasAlerts = tile.metrics.some(
+                    (metric) => metric.variant === 'critical' || metric.variant === 'warn'
+                  );
+                  return (
+                    <button
+                      key={tile.id}
+                      type="button"
+                      onClick={() => setSubview(tile.id)}
+                      className={`group text-left rounded-xl border bg-c-surface p-5 transition-all hover:shadow-md hover:border-c-border-strong ${
+                        hasAlerts
+                          ? 'border-amber-200 dark:border-amber-800/40'
+                          : 'border-c-border-subtle'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <div className="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-c-surface-raised group-hover:bg-c-surface-raised transition-colors">
+                          {tile.icon}
                         </div>
-                      ))}
-                    </div>
-                  </button>
-                );
-              })}
+                        <ChevronRight
+                          size={14}
+                          className="text-c-text-secondary group-hover:text-c-text-secondary transition-colors mt-1"
+                        />
+                      </div>
+                      <h3 className="text-sm font-semibold text-c-text mb-1">{tile.title}</h3>
+                      <p className="text-[11px] text-c-text-muted leading-relaxed mb-3">
+                        {tile.description}
+                      </p>
+                      <div className="flex gap-3">
+                        {tile.metrics.map((metric) => (
+                          <div key={metric.label} className="min-w-0">
+                            <div
+                              className={`text-lg font-bold tabular-nums ${
+                                metric.variant === 'critical'
+                                  ? 'text-danger-600 dark:text-danger-400'
+                                  : metric.variant === 'warn'
+                                    ? 'text-amber-600 dark:text-amber-400'
+                                    : 'text-c-text'
+                              }`}
+                            >
+                              {metric.value}
+                            </div>
+                            <div className="text-[10px] uppercase tracking-wider text-c-text-muted">
+                              {metric.label}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         ) : (

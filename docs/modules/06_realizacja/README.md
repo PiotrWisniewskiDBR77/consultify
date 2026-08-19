@@ -15,6 +15,9 @@ Operacyjne dowodzenie realizacją: portfolio, PMO reports, manager/control tower
 
 ## Contract Layers
 
+- `../INITIATIVES_EXECUTION_FUNCTIONS_CANON.md` — nadrzędny kanon Menu 2, table-first shell, funkcji `Realizacje / Praca / Zasoby / Sterowanie / Raporty` oraz ciągłości z Initiatives. W tym zakresie ma pierwszeństwo przed starszym inventory funkcji.
+- `../initiatives-execution-canon/00_INDEX_AND_AUTHORITY.md` — kompletny pakiet wdrożeniowy: proces, governance, UI/UX, descriptors, data/API/events, migracja, kolejność implementacji, testy i owner decisions.
+
 - `SSOT.md` — priority and source map.
 - `00_META.md` — identity, route, owner and canonicality.
 - `01_PURPOSE.md` — why this module exists.
@@ -32,6 +35,8 @@ Operacyjne dowodzenie realizacją: portfolio, PMO reports, manager/control tower
 - `function-cards/*_EXECUTION_CARD.md` — function-level execution governance cards.
 
 ## Function Inventory (Function-First)
+
+> Target canon: `Realizacje -> Praca -> Zasoby -> Sterowanie -> Raporty`. Poniższe identyfikatory są historycznym/runtime inventory do mapowania i nie ustanawiają docelowego Menu 2.
 
 - `RL_EXECUTION_PORTFOLIO`
 - `RL_EXECUTION_REPORTS`

@@ -94,11 +94,9 @@ import { TaskDetailView } from '../MyWork/TaskDetailView';
 import { InitiativeGridCard } from '../Portfolio/InitiativeGridCard';
 // Portfolio view components
 import { type KanbanScope, PortfolioKanbanView } from '../Portfolio/PortfolioKanbanView';
-import { DEFAULT_INITIATIVES_VIEW_MODE } from './initiativesViewDefaults';
 // ModuleHub components
 import { FilterChip, ModuleTab, OpenDocument, ViewMode } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
-import { StandardModuleBar } from '../standard/StandardModuleBar';
 import {
   MENU_3_ACTION_DANGER,
   MENU_3_ACTION_NEUTRAL,
@@ -111,9 +109,12 @@ import {
   MENU_3_RIGHT_CLASS,
 } from '../shared/ModuleMenu3';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
+import { CanonicalEmptyRegistry, CanonicalMenu3Presets } from '../standard/CanonicalEmptyRegistry';
+import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { PortfolioAnalysisView } from './Analysis';
 import type { AnalysisSubview } from './Analysis/types';
-import { type AcceptCandidatePayload, CandidatesPanel } from './CandidatesPanel';
+import { type AcceptCandidatePayload } from './CandidatesPanel';
+import { CandidatesTable } from './CandidatesTable';
 import {
   getCreatedInitiativeRevealState,
   normalizeInitiativeForPortfolio,
@@ -121,14 +122,19 @@ import {
 } from './initiativeCreateFlow';
 import { InitiativeDocumentView } from './InitiativeDocumentView';
 import { InitiativeObservabilityPanel } from './InitiativeObservabilityPanel';
+import { InitiativeObservabilityTable } from './InitiativeObservabilityTable';
+import { buildInitiativePreviewDetails } from './initiativePreviewDetails';
 import {
   InitiativePreviewV3Body,
   InitiativePreviewV3Footer,
   type InitiativePreviewV3Model,
 } from './InitiativePreviewV3';
 import { createInitiativesDemoDataset, isShowcaseInitiativeId } from './initiativesDemoData';
+import { InitiativesGoalsTable } from './InitiativesGoalsTable';
 import { getSourceDisplayLabel } from './InitiativeSourceLink';
 import { InitiativesTimelineView } from './InitiativesTimelineView';
+import { DEFAULT_INITIATIVES_VIEW_MODE } from './initiativesViewDefaults';
+import { PortfolioHealthTable } from './PortfolioHealthTable';
 import PortfolioHealthView from './PortfolioHealthView';
 import { InitiativeWizardModal } from './Wizard/InitiativeWizardModal';
 
@@ -571,44 +577,41 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     return counts;
   }, [initiatives]);
 
-  // Available view modes — hide when Analysis tab is active
+  // Canonical Initiatives functions: only the registered Initiative surface
+  // currently has proven alternate read projections.
   const availableViewModes: ViewMode[] =
-    activeTab === 'analysis' ||
-    activeTab === 'observability' ||
-    activeTab === 'candidates' ||
-    activeTab === 'portfolioHealth'
-      ? []
-      : ['table', 'kanban', 'timeline', 'grid'];
+    activeTab === 'list'
+      ? ['table', 'kanban']
+      : activeTab === 'goals'
+        ? ['table']
+        : [];
 
-  // V3-F02: Portfolio Analysis tab + main portfolio tab
+  // Owner canon: Inicjatywy -> Portfel -> Plan -> Obciążenie.
   const tabs = useMemo(
     () => [
       {
         id: 'list' as ModuleTab,
-        label: t('initiatives.tabs.portfolio', 'Portfolio'),
+        label: t('initiatives.tabs.initiatives', 'Inicjatywy'),
         icon: <List size={16} />,
       },
       {
-        id: 'analysis' as ModuleTab,
-        label: t('initiatives.tabs.analysis', 'Analysis'),
+        id: 'portfolio' as ModuleTab,
+        label: t('initiatives.tabs.portfolio', 'Portfel'),
         icon: <BarChart3 size={16} />,
       },
       {
-        // UNIFICATION E1/E2 — chain observability (lineage + funnel)
-        id: 'observability' as ModuleTab,
-        label: t('initiatives.tabs.observability', 'Observability'),
+        id: 'plan' as ModuleTab,
+        label: t('initiatives.tabs.plan', 'Plan'),
         icon: <GitBranch size={16} />,
       },
       {
-        // F2 — candidates inbox (AI suggests initiatives from discovery)
-        id: 'candidates' as ModuleTab,
-        label: t('initiatives.tabs.candidates', 'Candidates'),
-        icon: <Sparkles size={16} />,
+        id: 'goals' as ModuleTab,
+        label: t('initiatives.tabs.goals', 'Goals'),
+        icon: <Target size={16} />,
       },
       {
-        // F4 — portfolio health (MECE / gaps / balance / duplicates)
-        id: 'portfolioHealth' as ModuleTab,
-        label: t('initiatives.tabs.portfolioHealth', 'Portfolio Health'),
+        id: 'capacity' as ModuleTab,
+        label: t('initiatives.tabs.capacity', 'Obciążenie'),
         icon: <Activity size={16} />,
       },
     ],
@@ -1444,27 +1447,99 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // ============================================
 
   const renderContent = () => {
-    // USPOJNIENIE E1/E2: Observability tab — lineage + funnel (read-only)
-    if (activeTab === 'observability') {
-      return <InitiativeObservabilityPanel initialInitiativeId={previewInitiativeId} />;
-    }
-    // F2: Candidates inbox — AI proposes initiatives from discovery (insights/assessments/audits).
-    if (activeTab === 'candidates') {
-      return <CandidatesPanel onAccept={handleAcceptCandidate} />;
-    }
-    // F4: Portfolio health — MECE coverage / gaps / balance / duplicate clusters (read-only).
-    if (activeTab === 'portfolioHealth') {
+    if (activeTab === 'portfolio') {
       return (
-        <PortfolioHealthView
-          onOpenInitiative={(id, title) =>
-            handleOpenDocument({
-              id,
-              type: 'initiative',
-              name: title || t('initiatives.document.untitled', 'Untitled initiative'),
-            })
-          }
+        <CanonicalEmptyRegistry
+          surfaceId="INI_PORTFOLIO"
+          title={t('initiatives.canonical.portfolio.empty', 'No persisted portfolio scenario')}
+          description={t(
+            'initiatives.canonical.portfolio.emptyDescription',
+            'The canonical InitiativeSetMembership read model is not available in this runtime. No legacy score or dashboard card is presented as portfolio truth.'
+          )}
+          onRetry={() => fetchData(true)}
         />
       );
+    }
+    if (activeTab === 'plan') {
+      return (
+        <CanonicalEmptyRegistry
+          surfaceId="INI_PLAN"
+          title={t('initiatives.canonical.plan.empty', 'No persisted plan scenario')}
+          description={t(
+            'initiatives.canonical.plan.emptyDescription',
+            'The canonical PlannedInitiativeWindow read model is not available in this runtime. Missing dates are not inferred.'
+          )}
+          onRetry={() => fetchData(true)}
+        />
+      );
+    }
+    if (activeTab === 'capacity') {
+      return (
+        <CanonicalEmptyRegistry
+          surfaceId="INI_CAPACITY"
+          title={t('initiatives.canonical.capacity.empty', 'Capacity evidence unavailable')}
+          description={t(
+            'initiatives.canonical.capacity.emptyDescription',
+            'No governed CapacityConstraint read model is available. Supply, demand and gaps remain EVIDENCE_MISSING instead of being estimated by the UI.'
+          )}
+          onRetry={() => fetchData(true)}
+        />
+      );
+    }
+    // T27 R11: Observability tab — canonical table+preview (real initiatives +
+    // lineage) on top, funnel/cycle-time/lineage-picker dashboard below —
+    // relocated, not deleted (surfaceRegister.ts T27 relocateFromList).
+    if (activeTab === 'observability') {
+      return (
+        <div className="flex h-full flex-col overflow-hidden">
+          <div className="h-1/2 min-h-[320px] shrink-0 overflow-hidden border-b border-slate-200 dark:border-slate-700">
+            <InitiativeObservabilityTable
+              onOpenInitiative={(id, title) =>
+                handleOpenDocument({
+                  id,
+                  type: 'initiative',
+                  name: title || t('initiatives.document.untitled', 'Untitled initiative'),
+                })
+              }
+            />
+          </div>
+          <div className="flex-1 min-h-0 overflow-auto">
+            <InitiativeObservabilityPanel initialInitiativeId={previewInitiativeId} />
+          </div>
+        </div>
+      );
+    }
+    // T28 R11: Candidates tab — canonical table+preview (real Scan/Accept/Dismiss).
+    // Replaces CandidatesPanel's card list as the canonical surface; CandidatesPanel.tsx
+    // itself is untouched (its useCandidates hook is reused here, not duplicated).
+    if (activeTab === 'candidates') {
+      return <CandidatesTable onAccept={handleAcceptCandidate} />;
+    }
+    // T29 R11: Portfolio health tab — canonical table+preview (real readyToLaunch
+    // rows) on top, KPI/coverage/gaps/balance/duplicates dashboard below —
+    // relocated, not deleted (surfaceRegister.ts T29 relocateFromList).
+    if (activeTab === 'portfolioHealth') {
+      const openInitiative = (id: string, title: string) =>
+        handleOpenDocument({
+          id,
+          type: 'initiative',
+          name: title || t('initiatives.document.untitled', 'Untitled initiative'),
+        });
+      return (
+        <div className="flex h-full flex-col overflow-hidden">
+          <div className="h-1/2 min-h-[320px] shrink-0 overflow-hidden border-b border-slate-200 dark:border-slate-700">
+            <PortfolioHealthTable onOpenInitiative={openInitiative} />
+          </div>
+          <div className="flex-1 min-h-0 overflow-auto">
+            <PortfolioHealthView onOpenInitiative={openInitiative} />
+          </div>
+        </div>
+      );
+    }
+    // T30 R13-CORRECTION: Goals tab — canonical table+preview over real Goal
+    // records (Api.goalsGet). No dashboard existed for Goals to relocate.
+    if (activeTab === 'goals') {
+      return <InitiativesGoalsTable />;
     }
     // V3-F02: Analysis tab — portfolio quality gate
     if (activeTab === 'analysis') {
@@ -1864,6 +1939,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     ];
 
     const selectedTableRow: PortfolioInitiative | null = selectedInit;
+    const tablePreviewDetailsText = buildInitiativePreviewDetails(
+      selectedTableRow,
+      i18n.language?.startsWith('pl') ? 'pl' : 'en'
+    );
 
     const tablePreviewActions: StandardPreviewActions | undefined = selectedTableRow
       ? {
@@ -1998,14 +2077,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                     ),
                   }}
                   details={{
-                    text:
-                      selectedTableRow.summary ||
-                      selectedTableRow.description ||
-                      t('initiatives.noDescription', 'No description.'),
+                    text: tablePreviewDetailsText,
                     onCopy: () => {
-                      void navigator.clipboard?.writeText(
-                        `${selectedTableRow.name} — ${selectedTableRow.status}`
-                      );
+                      void navigator.clipboard?.writeText(tablePreviewDetailsText);
                     },
                   }}
                   ai={{
@@ -2483,28 +2557,38 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
         primaryCta={
-          isPilotParticipant
-            ? {
-                label: t('initiatives.form.newInitiative'),
-                onClick: () => dispatchPilotAccessBlocked({ href: '/initiatives' }),
-                locked: true,
-                lockedReason: t(
-                  'initiatives.pilot.createLocked',
-                  'Available in the next project phase'
-                ),
-              }
-            : {
-                label: t('initiatives.form.newInitiative'),
-                onClick: () => setShowInitiativeWizard(true),
-              }
+          activeTab !== 'list'
+            ? undefined
+            : isPilotParticipant
+              ? {
+                  label: t('initiatives.form.newInitiative'),
+                  onClick: () => dispatchPilotAccessBlocked({ href: '/initiatives' }),
+                  locked: true,
+                  lockedReason: t(
+                    'initiatives.pilot.createLocked',
+                    'Available in the next project phase'
+                  ),
+                }
+              : {
+                  label: t('initiatives.form.newInitiative'),
+                  onClick: () => setShowInitiativeWizard(true),
+                }
         }
         filterControls={rightControls}
         commandRowContent={
-          activeTab === 'analysis'
-            ? analysisCommandRow
-            : isBulkMode
-              ? bulkBarContent
-              : commandRowContent
+          activeTab === 'list' ? (
+            isBulkMode ? (
+              bulkBarContent
+            ) : (
+              commandRowContent
+            )
+          ) : activeTab === 'portfolio' ? (
+            <CanonicalMenu3Presets surfaceId="INI_PORTFOLIO" />
+          ) : activeTab === 'plan' ? (
+            <CanonicalMenu3Presets surfaceId="INI_PLAN" />
+          ) : (
+            <CanonicalMenu3Presets surfaceId="INI_CAPACITY" />
+          )
         }
         viewModes={availableViewModes}
       >

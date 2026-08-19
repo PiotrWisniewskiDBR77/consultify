@@ -89,7 +89,7 @@ Dozwolona skala: `space-1=4`, `2=8`, `3=12`, `4=16`, `5=20`, `6=24`, `8=32`, `10
 | sidebar expanded | 240 px |
 | module bar / Menu 2 | 48 px |
 | artifact identity / Menu 1 | 60 px |
-| contextual command / Menu 3 | 44 px — **DŁUG DOC↔KOD, otwarty.** Zmierzone w kodzie: `MENU_3_ROW_CLASS` (`src/components/shared/ModuleMenu3.tsx:53-54`, `px-4 py-2`) + `MENU_3_INNER_CLASS` (`min-h-8`) dają wysokość ≈48 px, nie 44 px. Rozbieżność nie jest tu rozstrzygana (ani doc→48, ani kod→44 nie jest wybrany w tym kroku); do decyzji. |
+| contextual command / Menu 3 | **48 px** — kanon docelowy. Kontener `px-4 py-2` + wnętrze `min-h-8`; interaktywne triggery zachowują minimum 44×44 px. Decyzja zamyka D-02 w `_DOC_CODE_DELTA_REGISTER.md`. |
 | preview listowy (SPEC-L, panel podglądu przy tabeli) | `clamp(340px, 28%, 480px)` |
 | prawy panel właściwości / drawer artefaktu i formularza (SPEC-A) | 360 px domyślnie, zakres 320–420 px |
 | form drawer wide | 420 px |
@@ -243,7 +243,11 @@ Zero bounce/spring jako default. `prefers-reduced-motion`: bez przesunięcia i s
 
 ## 10. Viewport, zoom i reflow
 
-- referencje desktop: 1920, 1600, 1440, 1280 px;
+- kanoniczny viewport odbiorowy desktopu: `1440×900` CSS px przy zoomie 100%;
+- obowiązkowy minimalny test desktopowy: `1280×720` CSS px przy zoomie 100%;
+- dodatkowe szerokości diagnostyczne: 1920 i 1600 px;
+- przy 1280 dozwolone są jawny overflow, logiczne grupowanie i zwijanie elementów drugorzędnych;
+  clipping, overlap, zasłanianie aktywnego elementu i utrata funkcji są niedozwolone;
 - 1024 px: compact shell, overflow kontrolowany, żadna krytyczna akcja nie znika;
 - 125%: obowiązkowy visual regression;
 - 200%: pełna obsługa bez nakładania i utraty funkcji;
@@ -254,7 +258,7 @@ Zero bounce/spring jako default. `prefers-reduced-motion`: bez przesunięcia i s
 
 Ten dokument wygrywa w sprawach wartości liczbowych. Jeśli starszy dokument podaje inną wartość, jest to dług do migracji, nie dozwolony wariant. Review sprawdza co najmniej `src/index.css`, `tailwind.config.js`, `src/styles/typography.ts` i `src/constants/statusColors.ts`. Każda rozbieżność doc↔kod blokuje akceptację; nie wolno arbitralnie uznać jednej wartości za „wystarczająco podobną”.
 
-Rozbieżności zmierzone i nierozstrzygnięte (np. Menu 3 §4, `ring-primary-500` §7) trafiają do rejestru delt doc↔kod `docs/ui-standards/_DOC_CODE_DELTA_REGISTER.md` z liczbą naruszeń i wskazaniem pliku; nie wolno ich usuwać z tego dokumentu przez ciche wybranie „ładniejszej" wartości ani przez pominięcie w kolejnej rewizji.
+Rozbieżności zmierzone i nierozstrzygnięte (np. `ring-primary-500` §7) trafiają do rejestru delt doc↔kod `docs/ui-standards/_DOC_CODE_DELTA_REGISTER.md` z liczbą naruszeń i wskazaniem pliku; nie wolno ich usuwać przez ciche wybranie „ładniejszej" wartości ani przez pominięcie w kolejnej rewizji. Rozstrzygnięcie pozostaje w rejestrze z datą, decyzją i kierunkiem konwergencji.
 
 ---
 

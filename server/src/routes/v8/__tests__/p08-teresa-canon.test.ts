@@ -159,13 +159,14 @@ describe('P08 §2.3.1 — Payload validation', () => {
 // ────────────────────────────────────────────────────────────────
 
 describe('P08 §2.3.2 — Action governance envelope', () => {
-  it('has 6 envelope states', () => {
-    expect(P08_ACTION_ENVELOPE_STATES).toHaveLength(6);
+  it('has 7 envelope states', () => {
+    expect(P08_ACTION_ENVELOPE_STATES).toHaveLength(7);
     expect(P08_ACTION_ENVELOPE_STATES).toContain('proposal');
     expect(P08_ACTION_ENVELOPE_STATES).toContain('pending_approval');
     expect(P08_ACTION_ENVELOPE_STATES).toContain('approved');
     expect(P08_ACTION_ENVELOPE_STATES).toContain('executing');
     expect(P08_ACTION_ENVELOPE_STATES).toContain('completed');
+    expect(P08_ACTION_ENVELOPE_STATES).toContain('undone');
     expect(P08_ACTION_ENVELOPE_STATES).toContain('rejected');
   });
 
@@ -204,8 +205,10 @@ describe('P08 §2.3.2 — Action governance envelope', () => {
     expect(isValidEnvelopeTransition('completed', 'proposal')).toBe(false);
   });
 
-  it('completed and rejected are terminal states', () => {
-    expect(P08_ACTION_ENVELOPE_TRANSITIONS.completed).toHaveLength(0);
+  it('allows completed proposals to be undone, then makes undone terminal', () => {
+    expect(isValidEnvelopeTransition('completed', 'undone')).toBe(true);
+    expect(P08_ACTION_ENVELOPE_TRANSITIONS.completed).toEqual(['undone']);
+    expect(P08_ACTION_ENVELOPE_TRANSITIONS.undone).toHaveLength(0);
     expect(P08_ACTION_ENVELOPE_TRANSITIONS.rejected).toHaveLength(0);
   });
 });

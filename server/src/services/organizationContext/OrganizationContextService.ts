@@ -395,7 +395,14 @@ function mergeUniqueObjects(
 ): Array<Record<string, unknown>> {
   const seen = new Set<string>();
   const merged: Array<Record<string, unknown>> = [];
-  for (const entry of [...current, ...next]) {
+  // Defensive: any upstream source may resolve to a non-array (null / object /
+  // parsed-JSON scalar). Spreading a non-iterable throws "next is not iterable"
+  // and 500s the whole /interview/context load (Data Loading Error for the
+  // respondent). Coerce both inputs to arrays so a malformed source degrades to
+  // empty instead of crashing the context build.
+  const safeCurrent = Array.isArray(current) ? current : [];
+  const safeNext = Array.isArray(next) ? next : [];
+  for (const entry of [...safeCurrent, ...safeNext]) {
     const key = JSON.stringify(entry || {});
     if (seen.has(key)) continue;
     seen.add(key);

@@ -22,7 +22,7 @@ Stan przekazania:
 | --- | --- | --- | --- |
 | 1 — FIN-05 | `PAUSED_FOR_PLAN_HANDOFF` | `feat/fin-005-statement-ingestion-golden-flow` / `03f01021ac` | exactly-once keyed upload: trwały marker/result, fault recovery i cleanup plików |
 | 2 — TLS-04 | `CODE_GO_FROZEN` | `feat/tls-004-teresa-assisted-swot` / `d383ac7106` | nic; nie otwierać ponownie przed integracją |
-| 3 — MAT-10 | `PAUSED_FOR_PLAN_HANDOFF` | `feat/mat-010-canonical-artifact-receipt-lineage` / `48a757ba2c` | real-route Document/Presentation hooks, durable lineage recovery i tenant-safe Workbook cache |
+| 3 — MAT-10 | `CODE_GO_FROZEN` | `feat/mat-010-canonical-artifact-receipt-lineage` / `9949337972` | niezależnie odebrane 84/84 real-PG; kontrolowana integracja i Railway pozostają oddzielnymi bramkami |
 | 4 — EXE-08 | `CODE_GO_FROZEN` | `feat/exe-008-closure-evidence-gate` / `b359a4edad` | nic; nie otwierać ponownie przed integracją |
 | 5 — INT-08 correction | `PAUSED_FOR_PLAN_HANDOFF / RECONCILE_FIRST` | `feat/int-008-canonical-candidate-handoff` / `1c4a430154` + dirty tree | zabezpieczyć diff, porównać z przyjętym `INT-08` na branchu integracyjnym i dopiero wtedy zdecydować, co zachować |
 
@@ -80,11 +80,27 @@ zamknięta; kolejna fala pięciu linii jest przygotowywana osobno.
   **INT-07** (`0ce4640146`) — trwała zakończona generacja insightu z SQL/read-backiem i evidence lineage,
   **INT-02** (`de35c444c4`) — assignment z kontrolą roli i tenantu, trwałym mirror taskiem oraz notification receipt widocznym po świeżym odczycie odbiorcy,
   **RES-05** (`f903185f0b`) — współbieżny Deviation Case z jednym kanonicznym ID oraz pełnym audytem acknowledge→RCA→action→resolve→close,
-  **EXE-02..04** — trwałe planowanie, capacity i RAID, oraz **ASM-05..07**
-  (`a0dad7d024`) — atomowy quality review i immutable output;
-- razem odebrane: **66/93 (71,0%)**;
-- niezamknięte: **27/93**, w tym 26 pozycji w zakresie MVP i 1 pozycja
-  `OUTSIDE_MVP`.
+  **EXE-02..04** — trwałe planowanie, capacity i RAID, **ASM-05..07**
+  (`a0dad7d024`) — atomowy quality review i immutable output, oraz **INT-01**
+  (`0b3381a876`) — atomowy publish wersji Template, immutable snapshot,
+  CAS/rollback/tenant guard i sesje przypięte do właściwej wersji, oraz
+  **RES-12** (`0b3dee1891`) — okresowy immutable KPI snapshot, refresh v2,
+  trwały Report Builder lineage i izolacja tenantów, oraz **CHAT-05**
+  (`36aa6ffc40`) — proposal→approval/reject→atomowe execute→durable receipt,
+  idempotentny completed retry, świeży read-back, pełny audit i izolacja tenantów,
+  oraz **CHAT-02** (`0757748b2e`) — composer/Stop, fragmentowany SSE, governed tool
+  events, trzy bounded retries bez duplikowania partiala, jawny manual retry i
+  brak automatycznych ponowień dla access/budget/rate-limit, oraz **CHAT-07/08/09**
+  (`3dab705084`) — wspólny Chat/Canvas→owner writer dla Material/Note/Table/Initiative,
+  atomowy approval bez duplikacji, durable receipt z URL oraz fresh reopen na real-PG;
+- razem odebrane kodowo: **92/93 (98,9%)**;
+- nierozwiązane pozycje w boardzie 93: **0/93**; jedyna pozycja bez
+  `CODE_GO_FROZEN` to formalnie zamknięty
+  znacznik `OUTSIDE_MVP` (`ASM-09`). Nie oznacza to jednego zadania poza MVP:
+  osobny `POST_MVP_WAVE_1.md` obejmuje **cztery duże taski**: narzędzia
+  Assessment (SIRI i ADMA), pozostałe Tools consultingowe, Audyty oraz
+  Spotkania. Nie wchodzą one do mianownika 93. Referral pozostaje osobno
+  zaparkowany i wymaga nowej decyzji zakresowej.
 
 `ASM-05..07` są ponownie doliczone po korekcie i niezależnym odbiorze atomowej
 transakcji, fault-injection rollbacku oraz testu współbieżnego pojedynczego
@@ -118,14 +134,50 @@ HEAD w tabeli jest snapshotem ostatniego review, nie obietnicą, że branch się
 zmienił. Każdy kolejny odbiór zaczyna się od ponownego `git status`, `rev-parse`
 i porównania z bazą.
 
-## Zatwierdzone wyjątki poza MVP
+## Post-MVP Fala 1
+
+Decyzją Piotra z 2026-08-02 elementy poza bieżącym release gate są prowadzone
+jako jeden kontrolowany program **Post-MVP Fala 1**. Kanoniczny zakres, kolejność
+i bramka startowa znajdują się w [`POST_MVP_WAVE_1.md`](POST_MVP_WAVE_1.md).
+
+Fala obejmuje **cztery duże taski**: (1) narzędzia Assessment — SIRI i ADMA,
+(2) pozostałe Tools consultingowe, (3) Audyty oraz (4) Spotkania. `ASM-09`
+pozostaje jedynym wierszem z licznika 93 oznaczonym `OUTSIDE_MVP`, ale jest tylko
+znacznikiem pierwszego z tych tasków i nie reprezentuje całego backlogu
+post-MVP. Referral pozostaje zachowanym, osobno zaparkowanym foundation i nie
+jest liczony jako piąty task bez nowej decyzji Piotra.
+
+`ASM-09` ma zamkniętą decyzję zakresową: `OUTSIDE_MVP — SCOPE_CLOSED`. Nie
+blokuje MVP i nie jest otwartym taskiem wykonawczym. Nie jest też zaliczany jako
+wdrożony `CODE_GO_FROZEN`; jego SIRI/ADMA pozostają częścią dużego tasku
+„narzędzia Assessment” w Post-MVP Fali 1.
+
+Aktywne FIN-05 oraz INT-08 pozostają w zakresie MVP. `EXE-09`
+zostało odebrane i zintegrowane na `163bcbf395`: real-PG 27/27 plus regresja
+EXE-08 18/18, UI 11/11, type-check i build PASS.
+
+`MW-12` zostało odebrane i zintegrowane na `0c28362f55`: Manager zapisuje
+owner mutation oraz actor-owned audit atomowo, zero-row i awaria audytu kończą
+się rollbackiem; real-PG 3/3, testy service/escalation/UI 12/12, routes 10/10
+i pełny type-check PASS.
+
+`MW-11` zostało odebrane i zintegrowane na `f2468b5eb7` w zakresie bramki MVP
+approval/audit/materialization: side-effect nie uruchamia się przed zgodą,
+zatwierdzony payload pozostaje trwały, `approvedBy`/`approvedAt` są widoczne po
+read-backu, a rezultat jest materializowany i możliwy do ponownego otwarcia.
+Regresja unit/routes 56/56, real router+auth+PostgreSQL 6/6 i pełny type-check
+PASS. Szersze versioning definicji i DAG nie są deklarowane jako część tego
+odbioru.
+
+## Zatwierdzone wyjątki poza MVP — wejście do Fali 1
 
 | Linia | Zakres | Stan | Zasada |
 | --- | --- | --- | --- |
 | D | Referral enrollment foundation | `CONDITIONAL_FOUNDATION_GO` | po backendowym feature gate zatrzymać; nie rozwiązywać DP-16/17/18, nie budować operator UI ani ACTIVE |
 | E | Meeting core session | `OUTSIDE_MVP_REVIEW_ONLY` | zachować wynik i listę blockerów; bez dalszego rozwijania przed domknięciem krytycznego spine'u |
 
-D i E są świadomymi odstępstwami. Nie wchodzą do release gate MVP i nie mogą
+D i E są świadomymi odstępstwami i odpowiednio zasilają strumienie Referral
+oraz Spotkania w Post-MVP Fali 1. Nie wchodzą do release gate MVP i nie mogą
 zabierać slotów wykonawczych liniom Finance/A/B/C bez nowej decyzji Piotra.
 Po zakończeniu obecnych rund ich status operacyjny wynosi
 `PARKED_AFTER_CURRENT_ROUND`; wznowienie wymaga jawnej decyzji Piotra i nowego
@@ -133,16 +185,31 @@ pakietu od Codex.
 
 ## Kolejność dalszego domknięcia
 
-1. Zachować A/B/C jako `CODE_GO_FROZEN`; nie otwierać ich ponownie bez regresji.
-2. Wykonać kontrolowaną integrację ich commitów i rozwiązać kolizje migracji
-   oraz shared files wyłącznie w branchu integracyjnym.
-3. Uruchomić jeden przekrojowy real-PG test i browser runtime dla tych samych ID.
-4. Wykonać Railway `demo` acceptance jako oddzielną bramkę wydania.
-5. Połączyć spine z Finance, Results i Materials zgodnie z `GF-FLOW-01`.
-6. Następnie przejść przez pozostałe moduły MVP bottom-up:
-   Assessment → Tools → Interview → pełne My Work → Chat.
-7. Settings/Admin/SuperAdmin przechodzą końcowy platform/security gate.
-8. Railway `demo` jest jedynym środowiskiem finalnego odbioru; produkcja jest
+1. Zachować 92 odebrane pozycje jako `CODE_GO_FROZEN`; nie otwierać ich
+   ponownie bez potwierdzonej regresji.
+2. Prowadzić szybki tor odbioru: najpierw zadania z kompletnym aktywnym runtime,
+   którym brakuje tylko świeżego testu integracyjnego, real-PG read-backu albo
+   negatywnej kontroli. Nie dopisywać funkcji wyłącznie po to, aby podnieść licznik.
+3. Każdego kandydata najpierw klasyfikować jako `TEST_ONLY`, `SMALL_INTEGRATION`
+   albo `REAL_BUILD`. Do samodzielnego szybkiego domknięcia wybierać tylko dwa
+   pierwsze typy; `REAL_BUILD` wraca do kolejki implementacyjnej.
+4. `RES-12` oraz `CHAT-02..05` zostały domknięte lokalnie i włączone do kanonicznej integracji.
+   Kolejny kandydat musi przejść ponowną klasyfikację dowodów. `INI-05` odpada
+   z szybkiego toru, ponieważ
+   portfolio nadal przełącza się V8→legacy, a resources/roadmap nie mają jednego
+   potwierdzonego ownera zapisu. `MW-12` przeszło już własny flow
+   action→atomowa mutacja+audit→fresh read-back i nie przejmuje dowodu z innego modułu.
+   `RES-03` także jest `REAL_BUILD`: aktywne writery nie mają idempotency i nie
+   wolno zamknąć go samym istniejącym testem jednostkowym.
+5. Po każdym lokalnym odbiorze wykonać fast-forward kanonicznej gałęzi
+   `integrate/mvp-wave1-abc`, pełny type-check/build proporcjonalnie do zmiany i
+   zsynchronizować `MVP_SUBMODULE_CONTROL_BOARD.md` z dokładnym dowodem.
+6. Równolegle zachować zintegrowany spine Finance/Results/Materials i przygotować
+   przekrojowy real-PG/browser runtime dla tych samych ID.
+7. Railway `demo` acceptance pozostaje oddzielną bramką wydania, a nie dowodem
+   lokalnego `CODE_GO_FROZEN`.
+8. Settings/Admin/SuperAdmin przechodzą końcowy platform/security gate.
+9. Railway `demo` jest jedynym środowiskiem finalnego odbioru; produkcja jest
    poza zakresem bez osobnej decyzji Piotra.
 
 ## Bramka integracji A/B/C

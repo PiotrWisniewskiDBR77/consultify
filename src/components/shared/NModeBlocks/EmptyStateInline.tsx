@@ -51,13 +51,13 @@ export const EmptyStateInline: React.FC<EmptyStateInlineProps> = ({
       } border-slate-300/60 dark:border-navy-700/70 bg-white/40 dark:bg-navy-900/40 p-8 text-center ${className}`}
     >
       <Icon size={28} className="mx-auto mb-3 text-slate-600 dark:text-slate-400" />
-      <p className="text-sm text-slate-600 dark:text-slate-500 mb-1">{message}</p>
+      <p className="text-sm text-slate-700 dark:text-slate-300 mb-1">{message}</p>
       {hint && <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">{hint}</p>}
       {action && (
         <button
           onClick={action.onClick}
           disabled={action.disabled}
-          className="mt-2 text-xs font-medium text-primary-500 hover:text-primary-600 transition-colors disabled:opacity-40"
+          className="mt-2 text-xs font-medium text-rose-700 dark:text-rose-300 hover:text-rose-800 dark:hover:text-rose-200 transition-colors disabled:opacity-40"
         >
           + {action.label}
         </button>

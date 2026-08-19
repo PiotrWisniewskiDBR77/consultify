@@ -2530,7 +2530,24 @@ export async function loadManagedInterviewSessionsForManager(
        COALESCE(owner_u.first_name, '') || ' ' || COALESCE(owner_u.last_name, '') as respondent_name,
        a.assignee_user_id as assignee_id,
        COALESCE(assignee_u.first_name, '') || ' ' || COALESCE(assignee_u.last_name, '') as assignee_name,
-       assignee_u.email as assignee_email
+       assignee_u.email as assignee_email,
+       (
+         SELECT COALESCE(
+           json_agg(
+             json_build_object(
+               'id', mu.id,
+               'name', TRIM(COALESCE(mu.first_name, '') || ' ' || COALESCE(mu.last_name, '')),
+               'email', mu.email,
+               'role', mm.role
+             )
+             ORDER BY (mm.role = 'lead') DESC, mu.first_name
+           ),
+           '[]'::json
+         )
+         FROM interview_assignment_members mm
+         JOIN users mu ON mu.id = mm.user_id
+         WHERE mm.assignment_id = a.id
+       ) as team_members
      FROM interview_assignments a
      INNER JOIN interview_sessions s ON s.id = a.session_id
      LEFT JOIN projects p ON p.id = s.project_id
@@ -2596,6 +2613,16 @@ export async function loadManagedInterviewSessionsForManager(
         ? 'Anonymous respondent'
         : String(row.assignee_name || '').trim() || undefined,
       assigneeEmail: wallActive ? undefined : row.assignee_email || undefined,
+      // Team roster for this (team) assignment — leads first. Surfaced so the
+      // Assigned list row and preview can show who is in the team, not just the
+      // lead/assignee. Hidden when the anonymity wall is active, like assignee.
+      teamMembers: wallActive
+        ? undefined
+        : Array.isArray(row.team_members)
+          ? row.team_members
+          : typeof row.team_members === 'string'
+            ? JSON.parse(row.team_members || '[]')
+            : undefined,
       dueAt: row.due_at || undefined,
       submittedAt: row.submitted_at || undefined,
       sentBackAt: row.sent_back_at || undefined,
@@ -4785,7 +4812,24 @@ export const InterviewController = {
          s.answered_questions,
          s.total_questions,
          (u.first_name || ' ' || u.last_name) as assignee_name,
-         u.email as assignee_email
+         u.email as assignee_email,
+         (
+           SELECT COALESCE(
+             json_agg(
+               json_build_object(
+                 'id', mu.id,
+                 'name', TRIM(COALESCE(mu.first_name, '') || ' ' || COALESCE(mu.last_name, '')),
+                 'email', mu.email,
+                 'role', mm.role
+               )
+               ORDER BY (mm.role = 'lead') DESC, mu.first_name
+             ),
+             '[]'::json
+           )
+           FROM interview_assignment_members mm
+           JOIN users mu ON mu.id = mm.user_id
+           WHERE mm.assignment_id = a.id
+         ) as team_members
        FROM interview_assignments a
        LEFT JOIN interview_library_templates t ON t.id = a.template_id
        LEFT JOIN interview_sessions s ON s.id = a.session_id
@@ -4851,6 +4895,13 @@ export const InterviewController = {
               email: r.assignee_email,
             }
           : null,
+        // Full team roster (leads first) so the Assigned row/preview can show
+        // who is in the team, not just the lead/assignee.
+        teamMembers: Array.isArray(r.team_members)
+          ? r.team_members
+          : typeof r.team_members === 'string'
+            ? JSON.parse(r.team_members || '[]')
+            : [],
       };
     });
 

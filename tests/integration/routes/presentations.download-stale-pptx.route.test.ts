@@ -125,9 +125,12 @@ describe('P0 — GET /presentations/decks/:id/download re-renders a stale PPTX',
   let tmpDir: string;
   let exportPath: string;
   let deckRow: any;
+  let priorStorageDir: string | undefined;
 
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'deck-download-test-'));
+    priorStorageDir = process.env.STORAGE_DIR;
+    process.env.STORAGE_DIR = tmpDir;
     exportPath = path.join(tmpDir, 'deck-1.pptx');
 
     // Original "at creation time" export: written to disk BEFORE the edit,
@@ -158,6 +161,8 @@ describe('P0 — GET /presentations/decks/:id/download re-renders a stale PPTX',
   });
 
   afterEach(() => {
+    if (priorStorageDir === undefined) delete process.env.STORAGE_DIR;
+    else process.env.STORAGE_DIR = priorStorageDir;
     vi.doUnmock('../../../server/src/utils/DbPromise.js');
     try {
       fs.rmSync(tmpDir, { recursive: true, force: true });
@@ -175,10 +180,17 @@ describe('P0 — GET /presentations/decks/:id/download re-renders a stale PPTX',
         return null;
       }),
       run: vi.fn(async (sql: string, params: unknown[] = []) => {
-        // Mirrors: UPDATE presentation_decks SET slide_count = ?, exported_at = ?, ... WHERE id = ? AND organization_id = ?
+        // Mirrors the canonical export refresh update, including the first lazy
+        // export_path materialization for direct-created decks.
         if (/UPDATE presentation_decks SET slide_count/i.test(sql)) {
-          const [slideCount, exportedAt] = params as [number, string];
-          deckRow = { ...deckRow, slide_count: slideCount, exported_at: exportedAt };
+          const [slideCount, nextExportPath, exportedAt] = params as [number, string, string];
+          deckRow = {
+            ...deckRow,
+            slide_count: slideCount,
+            export_path: nextExportPath,
+            export_format: 'pptx',
+            exported_at: exportedAt,
+          };
         }
         return { success: true, changes: 1 };
       }),
@@ -202,6 +214,7 @@ describe('P0 — GET /presentations/decks/:id/download re-renders a stale PPTX',
     expect(res.headers['content-type']).toContain(
       'application/vnd.openxmlformats-officedocument.presentationml.presentation'
     );
+    expect(res.headers['x-artifact-version-id']).toBe('deck-1@2');
 
     const buffer = Buffer.from(res.body as any);
     // No longer the stale placeholder written before the edit.
@@ -238,7 +251,36 @@ describe('P0 — GET /presentations/decks/:id/download re-renders a stale PPTX',
       .parse(binaryParser);
 
     expect(res.status).toBe(200);
+    expect(res.headers['x-artifact-version-id']).toBe('deck-1@2');
     const buffer = Buffer.from(res.body as any);
     expect(buffer.equals(freshBytes)).toBe(true);
+  });
+
+  it('lazily creates and persists the first PPTX when export_path is missing', async () => {
+    deckRow = {
+      ...deckRow,
+      export_path: null,
+      export_format: null,
+      exported_at: null,
+      deck_json: buildDeckJson('FIRST LAZY EXPORT TITLE'),
+    };
+
+    const app = await buildApp();
+    const res = await request(app)
+      .get('/presentations/decks/deck-1/download')
+      .buffer(true)
+      .parse(binaryParser);
+
+    expect(res.status).toBe(200);
+    expect(res.headers['x-artifact-version-id']).toBe('deck-1@2');
+    const buffer = Buffer.from(res.body as any);
+    expect(buffer.subarray(0, 4).equals(Buffer.from([0x50, 0x4b, 0x03, 0x04]))).toBe(true);
+    expect(deckRow.export_path).toBe(path.join(tmpDir, 'exports', 'presentations', 'deck-1.pptx'));
+    expect(fs.existsSync(deckRow.export_path)).toBe(true);
+
+    const zip = await JSZip.loadAsync(buffer);
+    const slideFiles = Object.keys(zip.files).filter((f) => /ppt\/slides\/slide\d+\.xml$/.test(f));
+    const slideXmls = await Promise.all(slideFiles.map((f) => zip.files[f].async('string')));
+    expect(slideXmls.join('\n')).toContain('FIRST LAZY EXPORT TITLE');
   });
 });

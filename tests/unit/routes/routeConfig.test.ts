@@ -27,9 +27,16 @@ describe('routeConfig helpers', () => {
     expect(getAppViewFromPath('/chat/abc')).toBe(AppView.AI_CHAT);
   });
 
-  it('does not expose the removed Wnioski route', () => {
-    expect('CONCLUSIONS' in ROUTES).toBe(false);
+  it('maps conclusions route explicitly and keeps legacy /wnioski unmapped', () => {
+    expect(ROUTES.CONCLUSIONS).toBe('/conclusions');
+    expect(getAppViewFromPath('/conclusions')).toBe(AppView.CONCLUSIONS);
     expect(getAppViewFromPath('/wnioski')).toBeNull();
+  });
+
+  it('maps assessment audits AppView and ROUTES entry to canonical /audit-programs', () => {
+    expect(getRouteFromAppView(AppView.ASSESSMENT_AUDITS)).toBe('/audit-programs');
+    expect(ROUTES.ASSESSMENT.AUDITS).toBe('/audit-programs');
+    expect(getAppViewFromPath('/assessment/audits')).toBe(AppView.ASSESSMENT_OVERVIEW);
   });
 
   it('maps AI OS manual-test modules to mounted runtime panels', () => {
@@ -88,7 +95,7 @@ describe('routeConfig helpers', () => {
     expect(getAppViewFromPath('/ai-actions/queue')).toBe(AppView.AI_ACTION_PROPOSALS);
     expect(getAppViewFromPath('/consultant/panel/team')).toBe(AppView.CONSULTANT_PANEL);
     expect(getAppViewFromPath('/consultant/invites')).toBe(AppView.CONSULTANT_INVITES);
-    expect(getAppViewFromPath('/affiliate/overview')).toBe(AppView.AFFILIATE_DASHBOARD);
+    expect(getAppViewFromPath('/affiliate/overview')).toBeNull();
     expect(getAppViewFromPath('/setup/organization')).toBe(AppView.ORG_SETUP_WIZARD);
     expect(getAppViewFromPath('/setup/onboarding/admin')).toBe(AppView.ONBOARDING_WIZARD);
     expect(getAppViewFromPath('/setup/onboarding/seed/persona-a')).toBe(AppView.ONBOARDING_WIZARD);

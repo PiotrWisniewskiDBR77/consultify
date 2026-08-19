@@ -7,9 +7,12 @@ prepared_by: codex
 accepted_by:
 accepted_at:
 last_reviewed: 2026-07-31
+superseded_in_scope_by: ../../../modules/INITIATIVES_EXECUTION_FUNCTIONS_CANON.md
 ---
 
 # Karta uzgodnienia — Execution
+
+> **CURRENT TARGET OVERRIDE (2026-08-09):** Menu 2, table-first shell oraz funkcje `Realizacje / Praca / Zasoby / Sterowanie / Raporty` definiuje [`docs/modules/INITIATIVES_EXECUTION_FUNCTIONS_CANON.md`](../../../modules/INITIATIVES_EXECUTION_FUNCTIONS_CANON.md). Pozostałe granice i rationale tej karty zachowują wartość, o ile nie konkurują z nowym kanonem.
 
 ## 1. Definicja
 

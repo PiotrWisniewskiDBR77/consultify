@@ -8,8 +8,8 @@
  */
 import {
   BookOpen,
-  BringToFront,
   Brain,
+  BringToFront,
   Clipboard,
   Copy,
   GitBranch,
@@ -31,11 +31,11 @@ import {
   Trash2,
   Unlock,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { CanvasContextMenu } from '@/components/shared/CanvasContextMenu';
 import i18n from '@/i18n';
-import { Api } from '@/services/api';
 import { generateAIProposal, type GeneratorType } from '@/services/ideaAIGenerator';
 
 import type { AIProposalBatch, CanvasToolType } from './ideaSelectionTypes';
@@ -305,30 +305,7 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
-  const menuRef = useRef<HTMLDivElement>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!position) return;
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as HTMLElement)) onClose();
-    };
-    const keyHandler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    // CAPTURE PHASE IS LOAD-BEARING — nie zmieniaj na zwykły listener.
-    // d3-zoom (pod ReactFlow) w swoim `mousedowned` woła `nopropagation(event)`
-    // = `event.stopImmediatePropagation()` (d3-zoom/src/zoom.js:280) na
-    // `.react-flow__pane`. Każdy `mousedown` na pustym płótnie Whiteboardu ginie
-    // więc, zanim dojdzie do `document` w fazie bąbelkowania — menu zostawało
-    // otwarte na zawsze (Piotr 07-27: „nie mogę go zamknąć").
-    window.addEventListener('mousedown', handler, true);
-    document.addEventListener('keydown', keyHandler);
-    return () => {
-      window.removeEventListener('mousedown', handler, true);
-      document.removeEventListener('keydown', keyHandler);
-    };
-  }, [onClose, position]);
 
   const handleAction = useCallback(
     async (item: MenuItem) => {
@@ -473,100 +450,83 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
   );
 
   return (
-    <div
-      ref={menuRef}
-      className="fixed z-toast bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl shadow-xl py-1.5 min-w-[200px] animate-in fade-in zoom-in-95 duration-150"
-      style={{ left: position.x, top: position.y }}
-    >
-      {isOnNode && target.nodeLabel && (
-        <div className="px-3 py-1.5 border-b border-slate-200/30 dark:border-white/[0.04]">
-          <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-            {target.nodeType || 'Node'}
+    <CanvasContextMenu
+      x={position.x}
+      y={position.y}
+      onClose={onClose}
+      ariaLabel={t('myWorkIdeas.canvasContextMenu.actions', 'Canvas actions')}
+      testId="idea-canvas-context-menu"
+      header={
+        isOnNode && target.nodeLabel ? (
+          <div>
+            <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              {target.nodeType || 'Node'}
+            </div>
+            <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200 truncate max-w-[180px]">
+              {target.nodeLabel}
+            </div>
           </div>
-          <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200 truncate max-w-[180px]">
-            {target.nodeLabel}
-          </div>
-        </div>
-      )}
-
-      {/* K1 base ops (Miro parity) — plain canvas operations, above the AI
-          section below; every click reuses an existing handler (see
-          handleBaseAction). */}
-      {isOnNode && (
-        <div className="py-1 border-b border-slate-200/30 dark:border-white/[0.04]">
-          {BASE_NODE_ACTIONS.map((item) => {
-            const isLockItem = item.kind === 'lock';
-            const Icon = isLockItem && target.nodeLocked ? Unlock : item.icon;
-            const label = isLockItem
-              ? target.nodeLocked
-                ? isPl
-                  ? 'Odblokuj'
-                  : 'Unlock'
-                : isPl
-                  ? item.labelPl
-                  : item.labelEn
-              : isPl
-                ? item.labelPl
-                : item.labelEn;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => handleBaseAction(item)}
-                disabled={locked}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 text-[11px] font-medium transition-colors disabled:opacity-40 ${
-                  item.danger
-                    ? 'text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20'
-                    : 'text-c-text hover:bg-c-surface-raised'
-                }`}
-              >
-                <Icon
-                  size={14}
-                  className={item.danger ? 'shrink-0' : 'text-c-text-muted shrink-0'}
-                />
-                <span>{label}</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      {!isOnNode && (
-        <div className="px-3 py-1.5 border-b border-slate-200/30 dark:border-white/[0.04]">
+        ) : !isOnNode ? (
           <div className="text-[10px] font-bold text-c-info flex items-center gap-1">
             <Sparkles size={10} />
             {t('myWorkIdeas.canvasContextMenu.aiActions')}
           </div>
-        </div>
-      )}
-
-      {actions.map((item) => {
-        const Icon = item.icon;
-        const isLoading = loadingId === item.id;
-        return (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => handleAction(item)}
-            disabled={!isAccepted || !!loadingId}
-            className="w-full flex items-center gap-2.5 px-3 py-2 text-[11px] font-medium text-slate-700 dark:text-slate-200 hover:bg-c-info/10 transition-colors disabled:opacity-40"
-          >
-            {isLoading ? (
-              <Loader2 size={14} className="animate-spin text-c-info shrink-0" />
+        ) : undefined
+      }
+      items={[
+        ...(isOnNode
+          ? BASE_NODE_ACTIONS.map((item) => {
+              const isLockItem = item.kind === 'lock';
+              const Icon = isLockItem && target.nodeLocked ? Unlock : item.icon;
+              const label = isLockItem
+                ? target.nodeLocked
+                  ? isPl
+                    ? 'Odblokuj'
+                    : 'Unlock'
+                  : isPl
+                    ? item.labelPl
+                    : item.labelEn
+                : isPl
+                  ? item.labelPl
+                  : item.labelEn;
+              return {
+                id: item.id,
+                label,
+                icon: <Icon size={14} className="text-c-text-muted" />,
+                danger: item.danger,
+                disabled: !!locked,
+                disabledReason: locked
+                  ? t('myWorkIdeas.canvasContextMenu.canvasLocked', 'Canvas is locked')
+                  : undefined,
+                separatorBefore: item.kind === 'delete',
+                onSelect: () => handleBaseAction(item),
+              };
+            })
+          : []),
+        ...actions.map((item, index) => {
+          const Icon = item.icon;
+          const isLoading = loadingId === item.id;
+          return {
+            id: item.id,
+            label: isPl ? item.labelPl : item.labelEn,
+            icon: isLoading ? (
+              <Loader2 size={14} className="animate-spin text-c-info" />
             ) : (
-              <Icon size={14} className="text-c-info shrink-0" />
-            )}
-            <span>{isPl ? item.labelPl : item.labelEn}</span>
-          </button>
-        );
-      })}
-
-      {!isAccepted && (
-        <div className="px-3 py-1.5 text-[10px] text-amber-600 dark:text-amber-400 border-t border-slate-200/30 dark:border-white/[0.04]">
-          {t('myWorkIdeas.canvasContextMenu.acceptChallengeUnlockAi')}
-        </div>
-      )}
-    </div>
+              <Icon size={14} className="text-c-info" />
+            ),
+            disabled: !isAccepted || !!loadingId,
+            disabledReason: !isAccepted
+              ? t('myWorkIdeas.canvasContextMenu.acceptChallengeUnlockAi')
+              : loadingId
+                ? t('common.loading', 'Loading')
+                : undefined,
+            separatorBefore: isOnNode && index === 0,
+            closeOnSelect: false,
+            onSelect: () => void handleAction(item),
+          };
+        }),
+      ]}
+    />
   );
 };
 

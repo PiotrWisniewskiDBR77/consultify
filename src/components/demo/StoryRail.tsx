@@ -14,7 +14,7 @@
 import { ArrowLeft, ArrowRight, CalendarClock, Rocket, X } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 import {
@@ -60,12 +60,14 @@ export const StoryRail: React.FC<StoryRailProps> = ({
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const [stopIndex, setStopIndex] = useState<number>(readStoredStop);
   const [hasStarted, setHasStarted] = useState<boolean>(readStoredStarted);
   const [isFinished, setIsFinished] = useState(false);
 
   const stop = STORY_RAIL_STOPS[stopIndex];
   const isLastStop = stopIndex === STORY_RAIL_STOPS.length - 1;
+  const isIdeasCanvas = /^\/my-work\/ideas\/[^/]+\/workspace(?:\/|$)/.test(location.pathname);
 
   useEffect(() => {
     try {
@@ -133,7 +135,12 @@ export const StoryRail: React.FC<StoryRailProps> = ({
   return (
     <div
       data-testid="story-rail"
-      className="fixed bottom-5 left-1/2 z-40 w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2"
+      className={`fixed left-1/2 z-40 w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 ${
+        // Ideas owns the complete bottom canvas band (representation switcher,
+        // zoom, fit, minimap). The global guided rail must yield instead of
+        // guessing another offset and intercepting those controls.
+        isIdeasCanvas ? 'hidden' : 'bottom-5'
+      }`}
     >
       <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white/95 px-4 py-2.5 shadow-2xl backdrop-blur dark:border-white/10 dark:bg-navy-900/95">
         {isFinished ? (

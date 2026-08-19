@@ -31,7 +31,7 @@
     "dev:backend:pg": "node scripts/dev/reject-local-db.mjs dev:backend:pg",
     "dev:backend:railway": "cd server && PORT=3001 DB_TYPE=postgres DEV_RESTART_ON_SHUTDOWN=true LOG_LEVEL=info AI_LOG_LEVEL=INFO DB_POOL_SIZE=10 DISABLE_SCHEDULER=true DISABLE_AI_PROVIDER_SENTINEL=true DISABLE_AI_HEALTH_MONITOR=true DISABLE_STARTUP_HEALTH_MONITOR=true SKIP_STARTUP_VALIDATOR=true DEFER_LLM_CONFIG_INIT_MS=3000 npm run dev",
     "dev:backend:staging": "ENV_FILE=.env.staging.local node scripts/dev/require-env-file.mjs && cd server && PORT=3001 DB_TYPE=postgres DB_MANAGED_SCHEMA=off DB_STATEMENT_TIMEOUT=60000 DOTENV_IGNORE_LOCAL=1 ENV_FILE=.env.staging.local LOG_LEVEL=info AI_LOG_LEVEL=INFO DISABLE_SCHEDULER=true npm run dev:watch",
-    "dev:backend:staging:ro": "ENV_FILE=.env.staging.local node scripts/dev/require-env-file.mjs && cd server && PORT=3001 DB_TYPE=postgres DB_MANAGED_SCHEMA=off DB_READONLY=1 DB_STATEMENT_TIMEOUT=60000 DOTENV_IGNORE_LOCAL=1 ENV_FILE=.env.staging.local LOG_LEVEL=info AI_LOG_LEVEL=INFO DISABLE_SCHEDULER=true npm run dev:watch",
+    "dev:backend:staging:ro": "ENV_FILE=.env.staging.local node scripts/dev/require-env-file.mjs && cd server && PORT=3001 DB_TYPE=postgres DB_MANAGED_SCHEMA=off DB_READONLY=1 DB_READONLY_ALLOW_AUTH_SESSIONS=1 DB_STATEMENT_TIMEOUT=60000 DOTENV_IGNORE_LOCAL=1 ENV_FILE=.env.staging.local LOG_LEVEL=info AI_LOG_LEVEL=INFO DISABLE_SCHEDULER=true npm run dev:watch",
     "dev:staging": "node scripts/dev/preflight-ports.mjs && ENV_FILE=.env.staging.local node scripts/dev/require-env-file.mjs && DOTENV_IGNORE_LOCAL=1 ENV_FILE=.env.staging.local concurrently \"npm run dev:backend:staging\" \"npm run dev:frontend:staging\" --names \"BACKEND,FRONTEND\" --prefix-colors \"blue,green\"",
     "dev:staging:ro": "node scripts/dev/preflight-ports.mjs && ENV_FILE=.env.staging.local node scripts/dev/require-env-file.mjs && DOTENV_IGNORE_LOCAL=1 ENV_FILE=.env.staging.local concurrently \"npm run dev:backend:staging:ro\" \"npm run dev:frontend:staging\" --names \"BACKEND,FRONTEND\" --prefix-colors \"blue,green\"",
     "dev:backend:watch": "npm run dev:backend:staging",
@@ -416,6 +416,7 @@
     "zustand": "^5.0.9"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
     "@commitlint/cli": "^20.3.0",
     "@commitlint/config-conventional": "^20.3.0",
     "@eslint/js": "^9.39.1",

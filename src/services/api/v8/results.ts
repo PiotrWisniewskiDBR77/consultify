@@ -663,6 +663,27 @@ export interface V8ResultsCreateRoiRealizedResponse {
 }
 
 export const V8ResultsApi = {
+  getScorecards: () =>
+    v8Get<{
+      scorecards: Array<{
+        id: string;
+        name: string;
+        department: string | null;
+        periodLabel: string | null;
+        periodStart: string | null;
+        periodEnd: string | null;
+        status: string;
+        kpiCount: number;
+        onTargetCount: number;
+      }>;
+      count: number;
+    }>('/results/scorecards'),
+  getScorecardKpis: (scorecardId: string) =>
+    v8Get<{
+      scorecard: { id: string; name: string };
+      kpis: Array<Record<string, unknown> & { id: string; name: string }>;
+      count: number;
+    }>(`/results/scorecards/${encodeURIComponent(scorecardId)}/kpis`),
   getDashboard: (options?: { initiativeId?: string }) =>
     v8Get<{ snapshot: V8ResultsDashboardSnapshot }>('/results/dashboard', options),
   getKpiCatalog: (params?: { kpiId?: string; initiativeId?: string }) =>

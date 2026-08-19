@@ -9,7 +9,12 @@ import { useTableSchema } from '@/components/MyWork/table/useTableSchema';
 import type { ColumnDef } from '@/components/MyWork/table/tableTypes';
 
 function renderSchema(isPl = false, ideaId = 'test-idea') {
-  return renderHook(() => useTableSchema(isPl, ideaId));
+  return renderHook(() =>
+    useTableSchema(
+      (key, fallback) => fallback ?? key,
+      ideaId
+    )
+  );
 }
 
 describe('useTableSchema', () => {

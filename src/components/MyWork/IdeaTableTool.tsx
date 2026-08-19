@@ -64,6 +64,7 @@ import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { CanvasContextMenu } from '@/components/shared/CanvasContextMenu';
 import { usePortalSlot } from '@/hooks/usePortalSlot';
 import { useV8FeatureFlag } from '@/hooks/useV8FeatureFlag';
 import { Api } from '@/services/api';
@@ -2305,28 +2306,28 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
 
               {/* View context menu */}
               {viewContextMenu && (
-                <div className="fixed inset-0 z-[60]" onClick={() => setViewContextMenu(null)}>
-                  <div
-                    className="absolute bg-c-surface rounded-lg shadow-xl border border-slate-200/60 dark:border-white/[0.03] py-1 min-w-[140px]"
-                    style={{ left: viewContextMenu.x, top: viewContextMenu.y }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <button
-                      className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
-                      onClick={() => {
+                <CanvasContextMenu
+                  x={viewContextMenu.x}
+                  y={viewContextMenu.y}
+                  ariaLabel={t('ideas.table.savedViewActions', 'Saved view actions')}
+                  testId="table-saved-view-context-menu"
+                  onClose={() => setViewContextMenu(null)}
+                  items={[
+                    {
+                      id: 'saved_view_rename',
+                      label: t('ideas.table.rename', 'Rename'),
+                      onSelect: () => {
                         const v = savedViews.find((sv) => sv.id === viewContextMenu.viewId);
                         if (v) {
                           setRenamingViewId(v.id);
                           setRenamingViewName(v.name);
                         }
-                        setViewContextMenu(null);
-                      }}
-                    >
-                      {t('ideas.table.rename', 'Rename')}
-                    </button>
-                    <button
-                      className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
-                      onClick={() => {
+                      },
+                    },
+                    {
+                      id: 'saved_view_update',
+                      label: t('ideas.table.update', 'Update'),
+                      onSelect: () => {
                         updateSavedView(viewContextMenu.viewId, {
                           sort: sort ? [sort] : undefined,
                           filters,
@@ -2339,23 +2340,20 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           })),
                         });
                         toast.success(t('ideas.table.viewUpdated', 'View updated'));
-                        setViewContextMenu(null);
-                      }}
-                    >
-                      {t('ideas.table.update', 'Update')}
-                    </button>
-                    <button
-                      className="w-full px-3 py-1.5 text-xs text-left hover:bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] text-c-danger"
-                      onClick={() => {
+                      },
+                    },
+                    {
+                      id: 'saved_view_delete',
+                      label: t('ideas.table.delete', 'Delete'),
+                      danger: true,
+                      separatorBefore: true,
+                      onSelect: () => {
                         deleteSavedView(viewContextMenu.viewId);
                         toast.success(t('ideas.table.viewDeleted', 'View deleted'));
-                        setViewContextMenu(null);
-                      }}
-                    >
-                      {t('ideas.table.delete', 'Delete')}
-                    </button>
-                  </div>
-                </div>
+                      },
+                    },
+                  ]}
+                />
               )}
 
               <div className="w-px h-5 bg-c-surface-raised" />
@@ -3819,7 +3817,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                                   </button>
                                   <button
                                     onClick={() => setShowFrameworkGen(true)}
-                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-[color-mix(in_srgb,var(--c-warning)_12%,transparent)] text-c-warning hover:bg-[color-mix(in_srgb,var(--c-warning)_20%,transparent)] transition-colors"
+                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-[color-mix(in_srgb,var(--c-warning)_12%,transparent)] text-amber-900 dark:text-amber-200 hover:bg-[color-mix(in_srgb,var(--c-warning)_20%,transparent)] transition-colors"
                                   >
                                     <LayoutGrid size={14} />
                                     {t('ideas.table.buildFramework', 'Build framework')}
@@ -3948,65 +3946,61 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
 
           {/* Column context menu */}
           {colContextMenu && (
-            <div className="fixed inset-0 z-[60]" onClick={() => setColContextMenu(null)}>
-              <div
-                className="absolute bg-c-surface rounded-lg shadow-xl border border-slate-200/60 dark:border-white/[0.03] py-1 min-w-[160px]"
-                style={{ left: colContextMenu.x, top: colContextMenu.y }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button
-                  className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
-                  onClick={() => {
+            <CanvasContextMenu
+              x={colContextMenu.x}
+              y={colContextMenu.y}
+              onClose={() => setColContextMenu(null)}
+              ariaLabel={t('ideas.table.columnActions', 'Column actions')}
+              testId="idea-table-column-context-menu"
+              items={[
+                {
+                  id: 'table.column.rename',
+                  label: t('ideas.table.rename', 'Rename'),
+                  onSelect: () => {
                     setEditingHeaderKey(colContextMenu.colKey);
-                    setColContextMenu(null);
-                  }}
-                >
-                  {t('ideas.table.rename', 'Rename')}
-                </button>
-                <button
-                  className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
-                  onClick={() => {
+                  },
+                },
+                {
+                  id: 'table.column.sort',
+                  label: t('ideas.table.sort', 'Sort'),
+                  onSelect: () => {
                     effectiveCycleSort(colContextMenu.colKey);
-                    setColContextMenu(null);
-                  }}
-                >
-                  {t('ideas.table.sort', 'Sort')}
-                </button>
-                <button
-                  className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
-                  onClick={() => {
+                  },
+                },
+                {
+                  id: 'table.column.hide',
+                  label: t('ideas.table.hideColumn', 'Hide column'),
+                  onSelect: () => {
                     toggleColumn(colContextMenu.colKey);
-                    setColContextMenu(null);
-                  }}
-                >
-                  {t('ideas.table.hideColumn', 'Hide column')}
-                </button>
-                <div className="h-px bg-c-surface-raised my-1" />
-                <button
-                  className="w-full px-3 py-1.5 text-xs text-left hover:bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] text-c-danger"
-                  onClick={() => {
+                  },
+                },
+                {
+                  id: 'table.column.delete',
+                  label: t('ideas.table.deleteColumn', 'Delete column'),
+                  danger: true,
+                  separatorBefore: true,
+                  onSelect: () => {
                     deleteColumn(colContextMenu.colKey);
                     toast.success(t('ideas.table.columnDeleted', 'Column deleted'));
-                    setColContextMenu(null);
-                  }}
-                >
-                  {t('ideas.table.deleteColumn', 'Delete column')}
-                </button>
-              </div>
-            </div>
+                  },
+                },
+              ]}
+            />
           )}
 
           {/* Row context menu (right-click on a data row) */}
           {rowContextMenu && (
-            <div className="fixed inset-0 z-[60]" onClick={() => setRowContextMenu(null)}>
-              <div
-                className="absolute bg-c-surface rounded-lg shadow-xl border border-c-border-subtle py-1 min-w-[160px]"
-                style={{ left: rowContextMenu.x, top: rowContextMenu.y }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button
-                  className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
-                  onClick={() => {
+            <CanvasContextMenu
+              x={rowContextMenu.x}
+              y={rowContextMenu.y}
+              onClose={() => setRowContextMenu(null)}
+              ariaLabel={t('ideas.table.rowActions', 'Row actions')}
+              testId="idea-table-row-context-menu"
+              items={[
+                {
+                  id: 'table.row.edit',
+                  label: t('ideas.table.edit', 'Edit'),
+                  onSelect: () => {
                     const rowId = rowContextMenu.rowId;
                     setDetailInitialTab('properties');
                     if (usePlatform) {
@@ -4015,14 +4009,12 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                       setDetailNodeId(rowId);
                       setDetailMode('full');
                     }
-                    setRowContextMenu(null);
-                  }}
-                >
-                  {t('ideas.table.edit', 'Edit')}
-                </button>
-                <button
-                  className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
-                  onClick={() => {
+                  },
+                },
+                {
+                  id: 'table.row.note',
+                  label: t('ideas.table.addNote', 'Add note'),
+                  onSelect: () => {
                     const rowId = rowContextMenu.rowId;
                     // "Add note" opens the record's Comments tab specifically. RecordExpandModal
                     // (the usePlatform "Edit" target) has no comment thread — RowDetailPanel does
@@ -4032,37 +4024,29 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     setDetailInitialTab('comments');
                     setDetailNodeId(rowId);
                     setDetailMode('full');
-                    setRowContextMenu(null);
-                  }}
-                >
-                  {t('ideas.table.addNote', 'Add note')}
-                </button>
-                {!locked && (
-                  <>
-                    <div className="h-px bg-c-surface-raised my-1" />
-                    <button
-                      className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
-                      onClick={() => {
-                        effectiveHandleDuplicateRow(rowContextMenu.rowId);
-                        setRowContextMenu(null);
-                      }}
-                    >
-                      {t('ideas.table.duplicateRow', 'Duplicate row')}
-                    </button>
-                    <button
-                      className="w-full px-3 py-1.5 text-xs text-left hover:bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] text-c-danger"
-                      onClick={() => {
-                        effectiveHandleDeleteRow(rowContextMenu.rowId);
-                        toast.success(t('ideas.table.rowDeleted', 'Row deleted'));
-                        setRowContextMenu(null);
-                      }}
-                    >
-                      {t('ideas.table.deleteRow', 'Delete row')}
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
+                  },
+                },
+                {
+                  id: 'table.row.duplicate',
+                  label: t('ideas.table.duplicateRow', 'Duplicate row'),
+                  separatorBefore: true,
+                  disabled: locked,
+                  disabledReason: locked ? t('ideas.table.lockedReason', 'Table is locked') : undefined,
+                  onSelect: () => effectiveHandleDuplicateRow(rowContextMenu.rowId),
+                },
+                {
+                  id: 'table.row.delete',
+                  label: t('ideas.table.deleteRow', 'Delete row'),
+                  danger: true,
+                  disabled: locked,
+                  disabledReason: locked ? t('ideas.table.lockedReason', 'Table is locked') : undefined,
+                  onSelect: () => {
+                    effectiveHandleDeleteRow(rowContextMenu.rowId);
+                    toast.success(t('ideas.table.rowDeleted', 'Row deleted'));
+                  },
+                },
+              ]}
+            />
           )}
 
           {/* P2-6 (rozdz. 08 §7b): menu komorki. Kazda pozycja ma realny handler
@@ -4072,15 +4056,17 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               propozycji/parsera formatu, ktorych ta komorka jeszcze nie ma; nie
               dokladam pozycji-atrapy. */}
           {cellContextMenu && (
-            <div className="fixed inset-0 z-[60]" onClick={() => setCellContextMenu(null)}>
-              <div
-                className="absolute bg-c-surface rounded-lg shadow-xl border border-c-border-subtle py-1 min-w-[160px]"
-                style={{ left: cellContextMenu.x, top: cellContextMenu.y }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button
-                  className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
-                  onClick={() => {
+            <CanvasContextMenu
+              x={cellContextMenu.x}
+              y={cellContextMenu.y}
+              onClose={() => setCellContextMenu(null)}
+              ariaLabel={t('ideas.table.cellActions', 'Cell actions')}
+              testId="idea-table-cell-context-menu"
+              items={[
+                {
+                  id: 'table.cell.copy',
+                  label: t('ideas.table.copyValue', 'Copy value'),
+                  onSelect: () => {
                     const v = cellContextMenu.value;
                     const text =
                       v == null
@@ -4092,15 +4078,18 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                       ?.writeText(text)
                       .then(() => toast.success(t('ideas.table.copied', 'Copied')))
                       .catch(() => toast.error(t('ideas.table.copyFailed', 'Copy failed')));
-                    setCellContextMenu(null);
-                  }}
-                >
-                  {t('ideas.table.copyValue', 'Copy value')}
-                </button>
-                {cellContextMenu.editable && !locked && (
-                  <button
-                    className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
-                    onClick={() => {
+                  },
+                },
+                {
+                  id: 'table.cell.paste',
+                  label: t('ideas.table.paste', 'Paste'),
+                  disabled: !cellContextMenu.editable || locked,
+                  disabledReason: locked
+                    ? t('ideas.table.lockedReason', 'Table is locked')
+                    : !cellContextMenu.editable
+                      ? t('ideas.table.readOnlyCell', 'Cell is read-only')
+                      : undefined,
+                  onSelect: () => {
                       const { rowId, colKey } = cellContextMenu;
                       void (async () => {
                         try {
@@ -4112,47 +4101,48 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           );
                         }
                       })();
-                      setCellContextMenu(null);
-                    }}
-                  >
-                    {t('ideas.table.paste', 'Paste')}
-                  </button>
-                )}
-                {cellContextMenu.colKey !== 'type' && (
-                  <button
-                    className="w-full px-3 py-1.5 text-xs text-left hover:bg-c-surface-raised text-c-text-secondary"
-                    onClick={() => {
+                  },
+                },
+                {
+                  id: 'table.cell.expand',
+                  label: t('ideas.table.expandCell', 'Expand cell'),
+                  disabled: cellContextMenu.colKey === 'type',
+                  disabledReason:
+                    cellContextMenu.colKey === 'type'
+                      ? t('ideas.table.typeCannotExpand', 'Type cell cannot be expanded')
+                      : undefined,
+                  onSelect: () => {
                       handleCellExpand(
                         cellContextMenu.rowId,
                         cellContextMenu.colKey,
                         cellContextMenu.rect
                       );
-                      setCellContextMenu(null);
-                    }}
-                  >
-                    {t('ideas.table.expandCell', 'Expand cell')}
-                  </button>
-                )}
-                {cellContextMenu.editable && !locked && (
-                  <>
-                    <div className="h-px bg-c-surface-raised my-1" />
-                    <button
-                      className="w-full px-3 py-1.5 text-xs text-left hover:bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] text-c-danger disabled:opacity-40"
-                      disabled={
-                        cellContextMenu.value == null || cellContextMenu.value === ''
-                      }
-                      onClick={() => {
-                        _fieldChange(cellContextMenu.rowId, cellContextMenu.colKey, '');
-                        toast.success(t('ideas.table.cellCleared', 'Cell cleared'));
-                        setCellContextMenu(null);
-                      }}
-                    >
-                      {t('ideas.table.clearCell', 'Clear cell')}
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
+                  },
+                },
+                {
+                  id: 'table.cell.clear',
+                  label: t('ideas.table.clearCell', 'Clear cell'),
+                  danger: true,
+                  separatorBefore: true,
+                  disabled:
+                    !cellContextMenu.editable ||
+                    locked ||
+                    cellContextMenu.value == null ||
+                    cellContextMenu.value === '',
+                  disabledReason: locked
+                    ? t('ideas.table.lockedReason', 'Table is locked')
+                    : !cellContextMenu.editable
+                      ? t('ideas.table.readOnlyCell', 'Cell is read-only')
+                      : cellContextMenu.value == null || cellContextMenu.value === ''
+                        ? t('ideas.table.alreadyEmpty', 'Cell is already empty')
+                        : undefined,
+                  onSelect: () => {
+                    _fieldChange(cellContextMenu.rowId, cellContextMenu.colKey, '');
+                    toast.success(t('ideas.table.cellCleared', 'Cell cleared'));
+                  },
+                },
+              ]}
+            />
           )}
         </TableDataProvider>
       </div>

@@ -1,4 +1,5 @@
 # ★★★ TRIADA — ABSOLUTNY KANON (Menu · Tabela · Preview · Kanban)
+> **Rozstrzygnięcie dla powierzchni tabelowych web/desktop:** `MY_WORK_TABLE_SURFACE_CONTRACT_V1.md` domyka niejednoznaczności Menu 1/2/3, capabilities, preview, kebaba i menu kontekstowego i ma pierwszeństwo w tym zakresie.
 > **Ustanowiony przez właściciela 2026-07-04 na żywych ekranach My Work (Tasks/Decisions/Inbox).**
 > To jest OSTATECZNY opis. Nie projektujemy tego ponownie. Każdy ekran listowy w aplikacji wygląda DOKŁADNIE tak — różni się wyłącznie treścią kontekstową (nazwy encji, akcje domenowe).
 > Implementacja: `src/components/standard/` (StandardModuleBar · StandardTable · StandardPreview [· StandardKanban]). Moduł DEKLARUJE treść, komponent NARZUCA wygląd. Zmiana wyglądu poza tymi komponentami = błąd.
@@ -38,7 +39,7 @@ Ikona Settings2 → popover „VISIBLE COLUMNS": checkboxy kolumn (Task/Actions 
 1. **Wejście+domknięcie** (zawsze): View/Open + Complete/Done/Approve.
 2. **Przejścia stanu** (wg encji): Task = To do/In progress/Blocked · Decyzja = Approve/Reject · Inbox = Focus → Today/This week/Later.
 3. **Czas** (encje z terminami): Delay › / Snooze-presety (2h · jutro rano · 3 dni · pon.).
-4. **Uniwersalny** (ZAWSZE, identyczny app-wide): Open preview · Edit · Archive — niegotowe pokazujemy disabled z dopiskiem, nigdy nie ukrywamy.
+4. **Manage**: Open preview zawsze; Edit i Archive/Restore zgodnie z zadeklarowanymi capabilities encji. Funkcja wspierana, lecz niedostępna dla rekordu/roli = disabled z prawdziwym powodem; funkcja niezaimplementowana lub niedotycząca domeny = pominięta, bez `Coming soon`.
 5. **Destrukcyjny** (zawsze ostatni, oddzielony): Delete/Reject — czerwony; jedyna czerwień menu.
 
 **Moduł deklaruje WSZYSTKIE 5 bloków, we właściwej kolejności — komponent nic z tego nie egzekwuje ani
@@ -119,7 +120,7 @@ Czerwień = wyłącznie semantyka krytyczna (overdue/error/blocked/delete). Akty
       3 strefy — NIE między każdym z 5 bloków, patrz A6); ikony przy pozycjach
 - [ ] 20. Blok 1: View/Open + akcja domykająca
 - [ ] 21. Blok 2: przejścia stanu właściwe dla encji
-- [ ] 22. Blok 4: Open preview · Edit · Archive (niegotowe = disabled z dopiskiem, nie ukryte)
+- [ ] 22. Blok 4: Open preview zawsze; Edit i Archive/Restore zgodnie z capabilities; zero atrap `Coming soon`
 - [ ] 23. Blok 5: Delete/Reject czerwony, ostatni, oddzielony
 &nbsp;&nbsp;&nbsp;&nbsp;*(blok 3 Czas — tylko encje z terminami: sprawdzić jeśli dotyczy)*
 

@@ -10,11 +10,12 @@ import {
   Scissors,
   Sparkles,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useRef } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { ContextMenuPortal } from './ContextMenuPortal';
-import { MENU_CONTAINER_CLASS, type MenuItemBase, menuItemClass } from './contextMenuTypes';
+import { CanvasContextMenu } from '@/components/shared/CanvasContextMenu';
+
+import { type MenuItemBase } from './contextMenuTypes';
 
 export interface PaneContextMenuProps {
   x: number;
@@ -44,33 +45,6 @@ export const PaneContextMenu: React.FC<PaneContextMenuProps> = ({
   onAction,
 }) => {
   const { t } = useTranslation();
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleMouseDown = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as HTMLElement)) onClose();
-    };
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    // Faza przechwytywania — obowiązkowa: d3-zoom pod ReactFlow woła
-    // `stopImmediatePropagation()` na `mousedown` w `.react-flow__pane`, więc
-    // zwykły listener na `window` nigdy się nie odpali (patrz NodeContextMenu).
-    window.addEventListener('mousedown', handleMouseDown, true);
-    window.addEventListener('keydown', handleKey);
-    return () => {
-      window.removeEventListener('mousedown', handleMouseDown, true);
-      window.removeEventListener('keydown', handleKey);
-    };
-  }, [onClose]);
-
-  const handleClick = useCallback(
-    (action: string) => {
-      onAction(action);
-      onClose();
-    },
-    [onAction, onClose]
-  );
 
   const items: MenuItemBase[] = [
     {
@@ -161,42 +135,28 @@ export const PaneContextMenu: React.FC<PaneContextMenuProps> = ({
     },
   ];
 
-  const clampedX = Math.min(x, window.innerWidth - 240);
-  const clampedY = Math.min(y, window.innerHeight - items.length * 34 - 20);
-
   return (
-    <ContextMenuPortal>
-      <div ref={ref} className={MENU_CONTAINER_CLASS} style={{ left: clampedX, top: clampedY }}>
-        {items.map((item) => {
-          const Icon = item.icon;
-          return (
-            <React.Fragment key={item.id}>
-              <button
-                type="button"
-                disabled={item.disabled}
-                onClick={() => handleClick(item.id)}
-                className={`w-full flex items-center gap-2.5 px-3 py-[7px] text-left text-[11px] font-medium transition-colors ${menuItemClass(item)}`}
-              >
-                <Icon
-                  size={13}
-                  className="text-c-text-secondary dark:text-c-text-secondary shrink-0"
-                />
-                <span className="flex-1">
-                  {t(`myWorkMindmap.paneMenu.${item.id}`, item.labelEn)}
-                </span>
-                {item.shortcut && (
-                  <span className="text-[9px] text-c-text-secondary dark:text-c-text-secondary font-mono ml-3">
-                    {item.shortcut}
-                  </span>
-                )}
-              </button>
-              {item.dividerAfter && (
-                <div className="my-1 mx-2 h-px bg-c-surface-raised dark:bg-c-surface-raised" />
-              )}
-            </React.Fragment>
-          );
-        })}
-      </div>
-    </ContextMenuPortal>
+    <CanvasContextMenu
+      x={x}
+      y={y}
+      onClose={onClose}
+      ariaLabel={t('myWorkMindmap.paneMenu.ariaLabel', 'Mind map canvas actions')}
+      testId="mindmap-pane-context-menu"
+      items={items.map((item) => {
+        const Icon = item.icon;
+        return {
+          id: item.id,
+          label: t(`myWorkMindmap.paneMenu.${item.id}`, item.labelEn),
+          icon: <Icon size={14} />,
+          shortcut: item.shortcut,
+          disabled: item.disabled,
+          disabledReason: item.disabled
+            ? t('myWorkMindmap.paneMenu.disabledReason', 'Unavailable in the current selection')
+            : undefined,
+          separatorAfter: item.dividerAfter,
+          onSelect: () => onAction(item.id),
+        };
+      })}
+    />
   );
 };

@@ -49,12 +49,16 @@ już interpretowana jako kolejność sidebara.
 - `14_mcp-iris` i `15_mcp-marketplace` są dokumentacją techniczną/historyczną,
   a nie pozycjami menu;
 - Assessment i Audits mają kontrakty konsolidujące w `docs/functional/`.
+- Case Workspace / `Zlecenia` jest podsystemem `My Work`; jego kanonicznym
+  kontraktem docelowym jest `docs/product/case-workspace/12_CASE_WORKSPACE_MODULE_SSOT.md`,
+  a nie osobna pozycja sidebara.
 
 ## SSOT (global) dla modułów
 
 - Routing i granice odpowiedzialności modułów: `DRD/consultify/docs/modules/MODULE_ROUTING_ARCHITECTURE.md`
 - Rejestr kanonicznych dokumentów: `DRD/consultify/docs/product/DOCUMENTATION_REGISTRY.md`
 - Standard UI/UX dla modułów (Menu 2/3, huby): `DRD/consultify/docs/ui-standards/03-modules/module-hub-standard.md`
+- Zlecenia / Case Workspace w My Work: `DRD/consultify/docs/product/case-workspace/12_CASE_WORKSPACE_MODULE_SSOT.md`
 
 ## Coverage Manifest
 

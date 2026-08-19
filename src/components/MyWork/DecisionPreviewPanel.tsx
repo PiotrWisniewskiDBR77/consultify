@@ -16,7 +16,6 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import {
-  actionPillClass,
   type ActionRow,
   type DetailsAction,
   type ExtraCopyFormat,
@@ -376,9 +375,6 @@ export const DecisionPreviewFooter: React.FC<{
   onDelegate,
   onRemind,
   onEscalate,
-  snoozeOpen,
-  onToggleSnooze,
-  onCloseSnooze,
   onSnooze,
   onOpenLinkedDecision,
 }) => {
@@ -416,6 +412,7 @@ export const DecisionPreviewFooter: React.FC<{
     ...(canAct
       ? [
           {
+            columns: 2,
             buttons: [
               {
                 label: i18n.t('myWork.decisionPreview.label6', 'Approve'),
@@ -461,74 +458,46 @@ export const DecisionPreviewFooter: React.FC<{
         emptyLabel={i18n.t('myWork.decisionPreview.emptyLabel', 'No relations')}
       />
 
-      <div className="space-y-2.5 py-1">
-        <PreviewActionBar rows={actionRows} />
-
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <button
-              onClick={onToggleSnooze}
-              className={actionPillClass('neutral', 'w-full flex-1')}
-            >
-              <AlarmClockOff size={14} />
-              {i18n.t('myWork.decisionPreview.snooze', 'Snooze')}
-              <ChevronDown
-                size={12}
-                className={`transition-transform ${snoozeOpen ? 'rotate-180' : ''}`}
-              />
-            </button>
-            {snoozeOpen ? (
-              <>
-                <div className="fixed inset-0 z-dropdown" onClick={onCloseSnooze} />
-                <div className="absolute right-0 top-full mt-2 z-overlay w-56 rounded-xl border border-c-border-subtle bg-c-surface-raised shadow-xl overflow-hidden">
-                  {(['1h', '4h', 'tomorrow', 'week'] as const).map((p) => (
-                    <button
-                      key={p}
-                      onClick={() => onSnooze(p)}
-                      className="w-full px-3 py-2 text-left text-xs hover:bg-c-surface text-c-text-secondary"
-                    >
-                      {labelForSnoozePreset(p, isPolish)}
-                    </button>
-                  ))}
-                </div>
-              </>
-            ) : null}
-          </div>
-
-          {/* Menu "..." teraz z PreviewActionBar (overflowActions) — jedno miejsce
-              w calym repo, nie reczny kod per ekran. Decyzja Piotra 2026-07-21:
-              tylko Zatwierdz/Odrzuc/Odloz zawsze widoczne (DOKTRYNA_GESTOSCI §1). */}
-          <PreviewActionBar
-            rows={[]}
-            overflowLabel={i18n.t('myWork.decisionPreview.moreActions', 'More actions')}
-            overflowActions={[
-              // canon §7.3 — "More info" usunięte: wołało dokładnie ten sam handler
-              // co przycisk "Open" w headerze (onOpenFullDetail), czyli duplikat akcji.
-              ...(canAct
-                ? [
-                    {
-                      label: i18n.t('myWork.decisionPreview.label9', 'Delegate'),
-                      icon: UserPlus,
-                      onClick: onDelegate,
-                      colorScheme: 'neutral' as const,
-                    },
-                  ]
-                : []),
-              {
-                label: i18n.t('myWork.decisionPreview.remind', 'Remind'),
-                icon: Bell,
-                onClick: onRemind,
-                colorScheme: 'neutral',
-              },
-              {
-                label: i18n.t('myWork.decisionPreview.escalate', 'Escalate'),
-                icon: TrendingUp,
-                onClick: onEscalate,
-                colorScheme: 'amber',
-              },
-            ]}
-          />
-        </div>
+      <div className="py-1">
+        <PreviewActionBar
+          rows={actionRows}
+          overflowLabel={i18n.t('myWork.decisionPreview.moreActions', 'More actions')}
+          overflowActions={[
+            // canon §7.3 — "More info" usunięte: wołało dokładnie ten sam handler
+            // co przycisk "Open" w headerze (onOpenFullDetail), czyli duplikat akcji.
+            ...(canAct
+              ? [
+                  {
+                    label: i18n.t('myWork.decisionPreview.label9', 'Delegate'),
+                    icon: UserPlus,
+                    onClick: onDelegate,
+                    colorScheme: 'neutral' as const,
+                  },
+                ]
+              : []),
+            {
+              label: i18n.t('myWork.decisionPreview.remind', 'Remind'),
+              icon: Bell,
+              onClick: onRemind,
+              colorScheme: 'neutral',
+            },
+            {
+              label: i18n.t('myWork.decisionPreview.escalate', 'Escalate'),
+              icon: TrendingUp,
+              onClick: onEscalate,
+              colorScheme: 'amber',
+            },
+            ...(['1h', '4h', 'tomorrow', 'week'] as const).map((preset) => ({
+              label: `${i18n.t('myWork.decisionPreview.snooze', 'Snooze')}: ${labelForSnoozePreset(
+                preset,
+                isPolish
+              )}`,
+              icon: AlarmClockOff,
+              onClick: () => onSnooze(preset),
+              colorScheme: 'neutral' as const,
+            })),
+          ]}
+        />
       </div>
     </div>
   );

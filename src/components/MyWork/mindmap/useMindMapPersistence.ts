@@ -116,6 +116,10 @@ function buildLocalDefaultIdeaMap(
   const branchNodes: Node[] = branchSpecs.map((branch) => ({
     id: branch.id,
     type: 'branch',
+    // React Flow 11 hard-codes role="button" for focusable wrappers. Branch
+    // cards already contain native controls, so avoid a nested interactive
+    // wrapper while retaining mouse selection and the actual commands.
+    focusable: false,
     position: branch.position,
     selected: branch.selected === true,
     data: {

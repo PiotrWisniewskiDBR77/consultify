@@ -2,7 +2,7 @@
 doc_kind: UI_UX_DECISION_REGISTER
 spec_status: APPROVED_SPEC
 owner: Piotr Wisniewski
-last_updated: 2026-08-02
+last_updated: 2026-08-03
 authority: docs/ui-standards/CANON.md
 ---
 
@@ -14,7 +14,7 @@ Decyzje właścicielskie (§5) są potwierdzone przez właściciela produktu —
 
 Werdykt dokumentacji jest inny niż poprzednio zapisany tutaj. Trzeci audyt dał `PASS FOR IMPLEMENTATION` (opisane w `DOCUMENTATION_REACCEPTANCE_2026-08-02.md`), ale **czwarty, niezależny audyt (2026-08-02) ten werdykt cofnął** i zwrócił `FAIL` z siedmioma blokerami P0, m.in.: sprzeczność reguły fokusa między `TRIADA_KANON.md` a `00-foundation/light-mode-readability.md` (zmierzony dług kodu 119 vs 3 pliki), martwa paleta fioletowa w `color-system.md`/`visual-language.md`, 12 z 20 sekcji identycznych bajt-w-bajt we wszystkich 26 kartach rodzin komponentów, pięć różnych szerokości panelu w jednym dokumencie oraz dwa konkurujące modele kebaba i preview.
 
-**Aktualny status dokumentacji: `NEEDS_REMEDIATION`** (od 2026-08-02, do czasu niezależnej weryfikacji poprawek na te siedem blokerów — remediation jest w toku). Ten dokument celowo nie wpisuje w to miejsce nowej oceny liczbowej ani samodzielnego werdyktu „gotowe": nawyk pisania dokumentu, który sam sobie wystawia ocenę (np. „9,6/10"), jest dokładnie tym, co czwarty audyt wskazał jako patologię procesu. Runtime nadal wymaga fixture, testów i odbioru — niezależnie od statusu dokumentacji.
+**Aktualny status dokumentacji: `APPROVED_SPEC`** — remediation została niezależnie odebrana 2026-08-03 w `FINAL_CANONICAL_DOCUMENTATION_ACCEPTANCE_2026-08-03.md`. Opis `NEEDS_REMEDIATION` poniżej pozostaje historią stanu z 2026-08-02, nie bieżącym werdyktem. Runtime nadal wymaga fixture, testów i odbioru — niezależnie od statusu dokumentacji.
 
 Screenshot jest domyślnie `AUDIT_EVIDENCE`, nie wzorcem. Aktualnymi referencjami kierunku dla kart rekordów są Zadania i Decyzje. Pozostałe widoki mogą zostać podniesione do rangi referencji wyłącznie po audycie.
 
@@ -25,7 +25,7 @@ Screenshot jest domyślnie `AUDIT_EVIDENCE`, nie wzorcem. Aktualnymi referencjam
 | Biblioteka ikon | `lucide-react`; jedna biblioteka, centralne mapowanie semantyki |
 | Status dokumentacji | osobne `spec_status` i `runtime_status` |
 | Powierzchnie akcji | toolbar = częste; kebab = komplet rekordu; prawy klik = ekspercki kontekst, nigdy jedyny dostęp |
-| Menu artefaktu | Menu 1: 60 px; Menu 2: 48 px; Menu 3 kontekstowe: 44 px |
+| Menu artefaktu | Menu 1: 60 px; Menu 2: 48 px; Menu 3 kontekstowe: **48 px**; minimalny hit target kontrolki 44×44 px |
 | Nagłówek aplikacji | stały i niezależny od trzech menu artefaktu |
 | Panel preview | prawy drawer 360 px domyślnie, dozwolony zakres 320–420 px; nie zmienia trasy |
 | Panel właściwości | 360 px domyślnie; szerszy 420 px tylko dla formularzy wymagających miejsca |

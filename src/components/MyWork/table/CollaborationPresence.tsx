@@ -202,7 +202,7 @@ export const WorkspacePresenceIndicator: React.FC<WorkspacePresenceIndicatorProp
       {presenceStatus === 'degraded' ? (
         <>
           <WifiOff size={11} className="text-amber-500" />
-          <span className="text-[9px] text-amber-700 dark:text-amber-300">
+          <span className="text-[9px] text-amber-900 dark:text-amber-200">
             {t('myWorkTable.collaborationPresence.workspacePresenceUnavailable')}
           </span>
         </>
@@ -293,14 +293,14 @@ export const WorkspaceLockIndicator: React.FC<WorkspaceLockIndicatorProps> = ({
       {lockStatus === 'degraded' ? (
         <>
           <WifiOff size={11} className="text-amber-500" />
-          <span className="text-[9px] text-amber-700 dark:text-amber-300">
+          <span className="text-[9px] text-amber-900 dark:text-amber-200">
             {t('myWorkTable.collaborationPresence.workspaceLocksUnavailable')}
           </span>
         </>
       ) : (
         <>
           <Lock size={11} className="text-amber-500" />
-          <span className="text-[9px] text-amber-700 dark:text-amber-300">
+          <span className="text-[9px] text-amber-900 dark:text-amber-200">
             {activeLocks.length} {t('myWorkTable.collaborationPresence.locked')}
           </span>
           <div className="hidden md:flex items-center gap-1">
@@ -314,7 +314,7 @@ export const WorkspaceLockIndicator: React.FC<WorkspaceLockIndicatorProps> = ({
               </span>
             ))}
             {activeLocks.length > 2 && (
-              <span className="text-[9px] text-amber-700 dark:text-amber-300">
+              <span className="text-[9px] text-amber-900 dark:text-amber-200">
                 +{activeLocks.length - 2}
               </span>
             )}
@@ -435,7 +435,7 @@ export const CollaborationPresence: React.FC<CollaborationPresenceProps> = ({
       {presenceStatus === 'degraded' && (
         <>
           <WifiOff size={11} className="text-amber-500" />
-          <span className="text-[9px] text-amber-700 dark:text-amber-300">
+          <span className="text-[9px] text-amber-900 dark:text-amber-200">
             {presenceDegradedMessage ||
               t('myWorkTable.collaborationPresence.ideaTablePresenceUnavailable')}
           </span>

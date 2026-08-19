@@ -1,9 +1,9 @@
 # DBR77 Visual Language Standard (KANON)
 
-> **Wersja:** 3.0 — "Crimson = marka, nie interakcja" Edition  
-> **Data:** 2026-08-02  
-> **Status:** OBOWIĄZUJĄCY  
-> **Cel:** Jedna, spójna "warstwa wizualna" dla całej aplikacji (kolory, tła, ramki, typografia, spacing, depth, motion) – niezależnie od modułu i niezależnie od trybu prezentacji detail view.  
+> **Wersja:** 3.0 — "Crimson = marka, nie interakcja" Edition
+> **Data:** 2026-08-02
+> **Status:** OBOWIĄZUJĄCY
+> **Cel:** Jedna, spójna "warstwa wizualna" dla całej aplikacji (kolory, tła, ramki, typografia, spacing, depth, motion) – niezależnie od modułu i niezależnie od trybu prezentacji detail view.
 > **Lokalizacja:** `docs/ui-standards/00-foundation/visual-language.md`
 >
 > **Changelog v3.0 (naprawa po zmianie palety):** Po re-poincie `primary/*` na Harvard Crimson (`#85182F`) ten dokument w kilku miejscach nadal kazał używać `primary/*` jako koloru CTA/aktywnego stanu/focusa/selekcji — co dziś oznacza crimson tam, gdzie crimson jest zakazany (§2.1, §8.2, §8.3, §9.3, §10.2, §11.2). Naprawione: `primary/*` = wyłącznie akcent marki (Talk-to-Teresa) + destrukcja; CTA modułu = navy; **focus ma własny token `--c-focus`/`--c-focus-solid` (niebieski)**, nigdy crimson; stan aktywny/zaznaczony = neutralny (`bg-state-selected` / `selectionTokens.ts`), nigdy crimson. Motion §9.1 ujednolicone do ≤220ms (`slow` był 240–320ms — przekraczał twardy limit `FOUNDATION_TOKEN_CONTRACT.md` §9). Dopisano `FOUNDATION_TOKEN_CONTRACT.md` i `src/index.css` `--c-*` do §1 jako źródła prawdy. Skorygowano hex `navy-950` w §3.1 (był nieaktualny).
@@ -73,7 +73,7 @@ DBR77 dopuszcza dwa kolory sygnałowe (nie‑brandowe), **wyłącznie** dla sygn
 - **WARNING / AT RISK:** `amber/*`
 - **INFO:** `blue/*`
 
-**MUST:** ich użycie ograniczamy do `badge/dot/callout` (i ewentualnie tła typu surface).  
+**MUST:** ich użycie ograniczamy do `badge/dot/callout` (i ewentualnie tła typu surface).
 **MUST NOT:** nie używamy ich dla CTA ani jako stałego koloru nawigacji/ramek paneli.
 
 > **Uwaga CENTRAL REMAP (K-P1-06):** `tailwind.config.js` (blok „CENTRAL REMAP", ok. l. 418–660) przepina domyślne rodziny Tailwinda — `blue`, `red`/`rose`, `emerald`/`green`, `amber`/`orange`, `violet`/`purple`/`indigo`, `yellow`, `pink`, `teal`/`cyan` — na paletę HBS (np. `amber-500 = #E87D1E`, `blue-700 = #3B2883`). Klasy typu `bg-amber-500`/`text-blue-800` w tym projekcie więc **nie** renderują standardowych kolorów Tailwinda. Kanoniczny opis remapu: `FOUNDATION_TOKEN_CONTRACT.md` §7.

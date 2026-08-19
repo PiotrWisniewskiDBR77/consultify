@@ -1,7 +1,7 @@
 # Consultify UI/UX — macierz zgodności modułów
 
-> **Status:** operacyjny rejestr zgodności.  
-> **Standard oceny:** [`UI_UX_IMPLEMENTATION_STANDARD.md`](UI_UX_IMPLEMENTATION_STANDARD.md).  
+> **Status:** operacyjny rejestr zgodności.
+> **Standard oceny:** [`UI_UX_IMPLEMENTATION_STANDARD.md`](UI_UX_IMPLEMENTATION_STANDARD.md).
 > **Dozwolone statusy:** `ACCEPTED`, `ACCEPTED_WITH_CORRECTION`, `NEEDS_STANDARD`, `REJECTED`, `NOT_EVIDENCED`, `OUT_OF_SCOPE`.
 
 ## 1. Sposób użycia

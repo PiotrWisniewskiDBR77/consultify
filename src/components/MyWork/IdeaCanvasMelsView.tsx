@@ -3,7 +3,7 @@
  * four Ideas canvases (Mind Map / Process Flow / Idea Table / Whiteboard),
  * EditorShell Wave W-1.
  *
- * Mounted by `<IdeaMapWorkspace>` when `isMelsCanvasEnabled()` is true.
+ * Canonical shell mounted by `<IdeaMapWorkspace>` for every Ideas canvas.
  *
  * PRESENTATIONAL ONLY — exactly like `DeckBuilderMelsView`. IdeaMapWorkspace
  * retains ALL canvas state, effects, autosave, collaboration, refs and
@@ -20,12 +20,12 @@
  *                         ready-made nodes forwarded from the host.
  *   - Menu 3 (secondBar)→ per-tool view actions (`buildIdeaMenu3Actions`),
  *                         rendered by `IdeaCanvasSecondBar`, forwarded here.
- *   - floatingLeftRail  → CanvasLeftToolbar (supplied verbatim as a node).
+ *   - floatingLeftRail  → canvas editing tools, physically docked on the RIGHT.
  *   - canvas            → the active tool's canvas (switch content), supplied
  *                         verbatim; its own in-flow zoom controls / overlays
  *                         stay inside it (they need the ReactFlow context).
- *   - rightRailTools    → up to 5 inspector tabs (Problem · Status ·
- *                         Inspector · Convert · Health), driving `activeToolId`.
+ *   - rightRailTools    → semantic information sections rendered on the LEFT;
+ *                         the historical prop name is retained during migration.
  *   - renderRightRailPanel → the host renders the matching existing panel.
  *   - siblings          → all existing modals / drawers / popovers / voting
  *                         overlay, rendered verbatim as floating siblings.
@@ -173,6 +173,8 @@ export const IdeaCanvasMelsView: React.FC<IdeaCanvasMelsViewProps> = ({
       topBarMergeSlotId={mergeTopBarSlotId}
       secondBar={secondBar}
       centerMode="canvas"
+      inspectorRailSide="left"
+      floatingToolRailSide="right"
       canvas={canvas}
       floatingLeftRail={floatingLeftRail}
       canvasOverlaySlot={canvasOverlaySlot}

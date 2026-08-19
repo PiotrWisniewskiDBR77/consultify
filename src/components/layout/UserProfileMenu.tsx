@@ -264,7 +264,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
               className="w-full h-full rounded-full object-cover"
             />
           ) : initials ? (
-            <div className="w-full h-full rounded-full bg-transparent flex items-center justify-center text-[11px] font-medium text-slate-500 dark:text-slate-400">
+            <div className="w-full h-full rounded-full bg-transparent flex items-center justify-center text-[11px] font-medium text-slate-700 dark:text-slate-300">
               {initials}
             </div>
           ) : (

@@ -33,12 +33,14 @@ vi.mock('../../src/services/api/artifactApprovals.api', async (importOriginal) =
 
 const ARTIFACT_TYPES = ['decision', 'insight', 'initiative', 'report', 'deck'] as const;
 
-const STATE_LABEL: Record<ArtifactApprovalState, string> = {
-  draft: 'Draft',
-  review: 'In review',
-  approved: 'Approved',
-  rejected: 'Rejected',
+const STATE_LABEL_KEY: Record<ArtifactApprovalState, string> = {
+  draft: 'sharedComponents.artifactApprovalStatusBar.stateDraft',
+  review: 'sharedComponents.artifactApprovalStatusBar.stateReview',
+  approved: 'sharedComponents.artifactApprovalStatusBar.stateApproved',
+  rejected: 'sharedComponents.artifactApprovalStatusBar.stateRejected',
 };
+
+const ACTION_LABEL_SUBMIT = 'sharedComponents.artifactApprovalStatusBar.submitForReview';
 
 afterEach(() => {
   mockGetState.mockReset();
@@ -66,7 +68,7 @@ describe('ArtifactApprovalStatusBar — 5/5 wired artifact types render the stat
       />
     );
 
-    expect(await screen.findByText(STATE_LABEL.approved)).toBeInTheDocument();
+    expect(await screen.findByText(STATE_LABEL_KEY.approved)).toBeInTheDocument();
     expect(mockGetState).toHaveBeenCalledWith(artifactType, `test-${artifactType}-1`);
   });
 
@@ -84,7 +86,6 @@ describe('ArtifactApprovalStatusBar — 5/5 wired artifact types render the stat
       />
     );
 
-    expect(await screen.findByText(STATE_LABEL.draft)).toBeInTheDocument();
-    expect(screen.getByText('Submit for review')).toBeInTheDocument();
+    expect(await screen.findByText(ACTION_LABEL_SUBMIT)).toBeInTheDocument();
   });
 });

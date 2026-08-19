@@ -40,7 +40,6 @@ import {
   ChevronUp,
   Clock,
   Copy,
-  Edit2,
   Eye,
   FileText,
   Inbox,
@@ -50,6 +49,7 @@ import {
   MessageSquare,
   Minus,
   Pin,
+  PinOff,
   Scale,
   Sparkles,
   Square,
@@ -67,6 +67,7 @@ import {
   TableSettingsPopover,
 } from '@/components/shared/ModuleHub/TableSettingsPopover';
 import {
+  type ActionButton,
   actionPillClass,
   type ActionRow,
   type ExtraCopyFormat,
@@ -261,6 +262,15 @@ export interface InboxItem {
   /** V4-INBX-01: Canonical type (task|decision|approval|signal) */
   itemType?: 'task' | 'decision' | 'approval' | 'signal';
   _key: InboxItemKey;
+}
+
+export function nextInboxPreviewItem(
+  current: InboxItem | null,
+  requested: InboxItem,
+  pinned: boolean
+): InboxItem | null {
+  if (pinned) return current;
+  return current?.id === requested.id ? null : requested;
 }
 
 interface InboxSummary {
@@ -1189,6 +1199,8 @@ const PreviewPane: React.FC<{
   isPolish: boolean;
   onClose: () => void;
   onOpen: () => void;
+  pinned: boolean;
+  onTogglePin: () => void;
   onTriage: (action: TriageAction) => void;
   onSnooze: (preset: SnoozePreset) => void;
   onSaveAsNote?: (item: InboxItem) => void;
@@ -1200,6 +1212,8 @@ const PreviewPane: React.FC<{
   isPolish,
   onClose,
   onOpen,
+  pinned,
+  onTogglePin,
   onTriage,
   onSnooze,
   onSaveAsNote,
@@ -1217,7 +1231,6 @@ const PreviewPane: React.FC<{
   const kindCfg = ENTITY_KIND_CONFIG[entityKind];
   const KindIcon = kindCfg.icon;
 
-  const [snoozeOpen, setSnoozeOpen] = useState(false);
   const [detailsMenuOpen, setDetailsMenuOpen] = useState(false);
   const [detailsOverride, setDetailsOverride] = useState<string | null>(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
@@ -1440,6 +1453,7 @@ const PreviewPane: React.FC<{
   // Never a color-per-button rainbow (Today green / Save yellow / Done green…).
   const actionRows: ActionRow[] = [
     {
+      columns: 2,
       buttons: [
         {
           label: i18n.t('myWork.inboxContent.label', 'Today'),
@@ -1457,19 +1471,18 @@ const PreviewPane: React.FC<{
           flex: true,
           shortcut: 'W',
         },
+      ],
+    },
+    {
+      columns: 2,
+      buttons: [
         {
           label: i18n.t('myWork.inboxContent.label3', 'Later'),
           icon: Calendar,
           onClick: () => onTriage('accept_later'),
           colorScheme: 'neutral',
-          flex: true,
           shortcut: 'L',
         },
-      ],
-    },
-    {
-      columns: onSaveAsNote ? 4 : 3,
-      buttons: [
         {
           label: i18n.t('myWork.inboxContent.label4', 'Done'),
           icon: CheckCircle2,
@@ -1479,33 +1492,54 @@ const PreviewPane: React.FC<{
           colorScheme: 'emerald',
           shortcut: 'D',
         },
-        {
-          label: i18n.t('myWork.inboxContent.label5', 'Save'),
-          icon: Bookmark,
-          onClick: () => onTriage('save'),
-          colorScheme: 'neutral',
-          shortcut: 'S',
-        },
-        ...(onSaveAsNote
-          ? [
-              {
-                label: i18n.t('myWork.inboxContent.label6', 'Note'),
-                icon: FileText,
-                onClick: () => onSaveAsNote(item),
-                colorScheme: 'neutral' as const,
-                shortcut: 'N',
-              },
-            ]
-          : []),
-        {
-          label: i18n.t('myWork.inboxContent.label7', 'Dismiss'),
-          icon: Archive,
-          onClick: () => onTriage('dismiss'),
-          colorScheme: 'neutral',
-          shortcut: 'X',
-        },
       ],
     },
+  ];
+
+  const overflowActions: ActionButton[] = [
+    {
+      label: i18n.t('myWork.inboxContent.label5', 'Save'),
+      icon: Bookmark,
+      onClick: () => onTriage('save'),
+      colorScheme: 'neutral',
+      shortcut: 'S',
+    },
+    ...(onSaveAsNote
+      ? [
+          {
+            label: i18n.t('myWork.inboxContent.label6', 'Note'),
+            icon: FileText,
+            onClick: () => onSaveAsNote(item),
+            colorScheme: 'neutral' as const,
+            shortcut: 'N',
+          },
+        ]
+      : []),
+    {
+      label: i18n.t('myWork.inboxContent.label7', 'Dismiss'),
+      icon: Archive,
+      onClick: () => onTriage('dismiss'),
+      colorScheme: 'neutral',
+      shortcut: 'X',
+    },
+    ...(onUndoLastAI
+      ? [
+          {
+            label: i18n.t('myWork.inboxContent.undoLastAISuggestion', 'Undo last AI suggestion'),
+            icon: Minus,
+            onClick: onUndoLastAI,
+            colorScheme: 'neutral' as const,
+          },
+        ]
+      : []),
+    ...SNOOZE_PRESETS.map((preset) => ({
+      label: `${i18n.t('myWork.inboxContent.snooze', 'Snooze')}: ${
+        isPolish ? preset.labelPl : preset.labelEn
+      }`,
+      icon: Clock,
+      onClick: () => onSnooze(preset.id),
+      colorScheme: 'neutral' as const,
+    })),
   ];
 
   const extraCopyFormats: ExtraCopyFormat[] = [
@@ -1541,12 +1575,27 @@ const PreviewPane: React.FC<{
       title={item.title || i18n.t('myWork.inboxContent.inboxItem', 'Inbox item')}
       onClose={onClose}
       actions={
-        <button
-          onClick={onOpen}
-          className="inline-flex items-center h-7 px-3 rounded-full text-xs font-medium border border-c-border-subtle bg-c-surface text-c-text-secondary hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors"
-        >
-          {i18n.t('myWork.inboxContent.open', 'Open')}
-        </button>
+        <>
+          <button
+            type="button"
+            onClick={onTogglePin}
+            className={`inline-flex h-7 w-7 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
+              pinned
+                ? 'bg-state-selected text-[var(--c-info)]'
+                : 'text-c-text-muted hover:bg-state-hover'
+            }`}
+            title={pinned ? 'Unpin' : 'Pin for comparison'}
+            aria-pressed={pinned}
+          >
+            {pinned ? <PinOff size={13} /> : <Pin size={13} />}
+          </button>
+          <button
+            onClick={onOpen}
+            className="inline-flex items-center h-7 px-3 rounded-full text-xs font-medium border border-c-border-subtle bg-c-surface text-c-text-secondary hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors"
+          >
+            {i18n.t('myWork.inboxContent.open', 'Open')}
+          </button>
+        </>
       }
       footer={
         // canon §7.3 — footer cards stacked with space-y-2.5, NO dividers between framed cards.
@@ -1569,46 +1618,7 @@ const PreviewPane: React.FC<{
           <PreviewRelations items={relationItems} />
 
           {/* ── Action buttons ── */}
-          <PreviewActionBar rows={actionRows} />
-
-          <div className="pt-1.5">
-            <button
-              onClick={() => setSnoozeOpen(!snoozeOpen)}
-              className="inline-flex items-center gap-1 text-xs font-medium text-c-text-muted hover:text-c-text-secondary transition-colors"
-            >
-              <Clock size={14} />
-              {i18n.t('myWork.inboxContent.snooze', 'Snooze…')}
-              <ChevronDown
-                size={12}
-                className={`transition-transform ${snoozeOpen ? 'rotate-180' : ''}`}
-              />
-            </button>
-            {snoozeOpen ? (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {SNOOZE_PRESETS.map((p) => (
-                  <button
-                    key={p.id}
-                    onClick={() => onSnooze(p.id)}
-                    className={`${actionPillClass('amber', 'h-8 px-3')}`}
-                  >
-                    <Clock size={13} />
-                    {isPolish ? p.labelPl : p.labelEn}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-          </div>
-          {onUndoLastAI ? (
-            <div className="pt-2 border-t border-c-border-subtle">
-              <button
-                onClick={onUndoLastAI}
-                className="inline-flex items-center gap-1 text-xs font-medium text-c-text-muted hover:text-c-text transition-colors"
-              >
-                <Minus size={12} />
-                {i18n.t('myWork.inboxContent.undoLastAISuggestion', 'Undo last AI suggestion')}
-              </button>
-            </div>
-          ) : null}
+          <PreviewActionBar rows={actionRows} overflowActions={overflowActions} />
         </div>
       }
     >
@@ -1789,7 +1799,7 @@ interface InboxRowHandlers {
   onSnooze: (item: InboxItem, preset: SnoozePreset) => void;
 }
 
-const buildInboxKebabSections = (
+export const buildInboxKebabSections = (
   item: InboxItem,
   h: InboxRowHandlers,
   t: (key: string, defaultValue: string) => string,
@@ -1876,14 +1886,6 @@ const buildInboxKebabSections = (
           icon: ChevronRight,
           divider: true,
           onClick: () => h.onOpenPreview(item),
-        },
-        {
-          id: 'edit',
-          label: t('myWork.inboxContent.label14', 'Edit'),
-          icon: Edit2,
-          disabled: true,
-          description: t('myWork.inboxContent.description', 'Coming soon (backend)'),
-          onClick: () => {},
         },
         {
           // Archive = soft-delete (reversible); maps to existing "dismiss" triage.
@@ -2055,6 +2057,10 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
   // Preview pane (A3)
   const [previewItem, setPreviewItem] = useState<InboxItem | null>(null);
+  const [previewPinned, setPreviewPinned] = useState(false);
+  useEffect(() => {
+    if (!previewItem) setPreviewPinned(false);
+  }, [previewItem]);
 
   // N1: Status tabs (Open / Done / Saved)
   const [uncontrolledStatusTab, setUncontrolledStatusTab] = useState<InboxStatusTab>('open');
@@ -2447,9 +2453,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           const item = (row as unknown as InboxStandardRow).__item;
           return (
             <span className="inline-flex items-center gap-1.5 text-xs text-c-text-secondary">
-              <span className="truncate">
-                {inboxTypeLabel(item.type)}
-              </span>
+              <span className="truncate">{inboxTypeLabel(item.type)}</span>
             </span>
           );
         },
@@ -2715,9 +2719,12 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   );
 
   // ── Preview item (single click) ──
-  const preview = useCallback((item: InboxItem) => {
-    setPreviewItem((prev) => (prev?.id === item.id ? null : item));
-  }, []);
+  const preview = useCallback(
+    (item: InboxItem) => {
+      setPreviewItem((current) => nextInboxPreviewItem(current, item, previewPinned));
+    },
+    [previewPinned]
+  );
 
   // ── Open item in full view (double-click or button) ──
   const open = useCallback(
@@ -2743,14 +2750,6 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         icon: ChevronRight,
         divider: true,
         onClick: () => setPreviewItem(item),
-      },
-      {
-        id: 'edit',
-        label: t('myWork.inboxContent.label14', 'Edit'),
-        icon: Edit2,
-        disabled: true,
-        description: t('myWork.inboxContent.description', 'Coming soon (backend)'),
-        onClick: () => {},
       },
       {
         // Archive = soft-delete (reversible). For Inbox this maps to the
@@ -3117,9 +3116,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         {!hiddenSet.has('type') && (
           <td className="px-3 py-2 text-left" style={{ width: columnWidths.type }}>
             <span className="inline-flex items-center gap-1.5 text-xs text-c-text-secondary">
-              <span className="truncate">
-                {inboxTypeLabel(item.type)}
-              </span>
+              <span className="truncate">{inboxTypeLabel(item.type)}</span>
             </span>
           </td>
         )}
@@ -3271,23 +3268,25 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                 onClick: () => handleSnooze(item, p.id),
               })),
             ];
-            const sections: RowActionSection[] = [
-              { id: 'context', kind: 'context', actions: contextActions },
-              { id: 'fixed', kind: 'manage', actions: buildBottomManifest(item) },
+            const sections = buildInboxKebabSections(
+              item,
               {
-                id: 'danger',
-                kind: 'danger',
-                actions: [
-                  {
-                    id: 'reject',
-                    label: t('myWork.inboxContent.label24', 'Reject'),
-                    icon: X,
-                    variant: 'danger',
-                    onClick: () => triage(item, 'reject'),
-                  },
-                ],
+                onOpen: open,
+                onOpenPreview: (it) => setPreviewItem(it),
+                onTriage: (it, action) => void triage(it, action),
+                onApplyAiSuggestion: (it) => {
+                  if (!it.suggestedAction) return;
+                  void triage(it, it.suggestedAction, {
+                    fromAISuggestion: true,
+                    confidence: it.suggestedConfidence,
+                  });
+                },
+                onSaveAsNote: (it) => void handleSaveAsNote(it),
+                onSnooze: (it, preset) => void handleSnooze(it, preset),
               },
-            ];
+              t,
+              !!isPolish
+            );
             return (
               <RowActionsMenu
                 sections={sections}
@@ -3583,7 +3582,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                         ...(handleSaveAsNote
                           ? [
                               {
-                                id: 'save-as-note',
+                                id: 'save-note',
                                 label: t('myWork.inboxContent.label32', 'Save as note'),
                                 icon: FileText,
                                 onClick: () => handleSaveAsNote(item),
@@ -3599,24 +3598,25 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                           onClick: () => handleSnooze(item, p.id),
                         })),
                       ];
-                      const sections: RowActionSection[] = [
-                        { id: 'context', kind: 'context', actions: contextActions },
-                        { id: 'fixed', kind: 'manage', actions: buildBottomManifest(item) },
-                        // canon §9 — strefa danger identyczna jak w wariancie tabelarycznym (parytet kebaba).
+                      const sections = buildInboxKebabSections(
+                        item,
                         {
-                          id: 'danger',
-                          kind: 'danger',
-                          actions: [
-                            {
-                              id: 'reject',
-                              label: t('myWork.inboxContent.label33', 'Reject'),
-                              icon: X,
-                              variant: 'danger',
-                              onClick: () => triage(item, 'reject'),
-                            },
-                          ],
+                          onOpen: open,
+                          onOpenPreview: (it) => setPreviewItem(it),
+                          onTriage: (it, action) => void triage(it, action),
+                          onApplyAiSuggestion: (it) => {
+                            if (!it.suggestedAction) return;
+                            void triage(it, it.suggestedAction, {
+                              fromAISuggestion: true,
+                              confidence: it.suggestedConfidence,
+                            });
+                          },
+                          onSaveAsNote: (it) => void handleSaveAsNote(it),
+                          onSnooze: (it, preset) => void handleSnooze(it, preset),
                         },
-                      ];
+                        t,
+                        !!isPolish
+                      );
                       return <RowActionsMenu sections={sections} iconVariant="vertical" />;
                     })()}
                   </div>
@@ -3978,7 +3978,12 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             <PreviewPane
               item={previewItem}
               isPolish={isPolish}
-              onClose={() => setPreviewItem(null)}
+              pinned={previewPinned}
+              onTogglePin={() => setPreviewPinned((value) => !value)}
+              onClose={() => {
+                setPreviewPinned(false);
+                setPreviewItem(null);
+              }}
               onOpen={() => open(previewItem)}
               onTriage={(action) => {
                 const isFromAI =

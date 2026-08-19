@@ -276,7 +276,7 @@ const getStatusConfig = (status?: string) => {
 
 // Date formatting
 const formatDueDate = (dueDate?: string | Date): string => {
-  if (!dueDate) return 'No due date';
+  if (!dueDate) return '—';
   const date = new Date(dueDate);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -591,8 +591,7 @@ const InlineCellDropdown: React.FC<{
 // ── StandardTable kebab (kanon TRIADA §27, decyzja Piotra #5) ───────────────
 // Plain function (not a hook) — StandardTable calls `rowActions(row)` directly,
 // same pattern as `buildDecisionKebabSections` in DecisionsPanelContent.tsx.
-// Sections 1:1 z legacy `TaskTableRow`'s "Actions" kebab (§6.4 5-grup: open+stan /
-// manipulacja / relacje-wyjście / AI / destrukcyjne) — no redesign of grouping.
+// Zamknięty kontrakt v1: maksymalnie 3 strefy context/manage/danger.
 interface TaskRowHandlers {
   onPreview: (taskId: string, taskData?: Task) => void;
   onOpenFull: (taskId: string, taskData?: Task) => void;
@@ -614,20 +613,14 @@ const buildTaskKebabSections = (
 ): RowActionSection[] => {
   const isCompleted = ['done', 'completed', 'validated'].includes(task.status?.toLowerCase() || '');
   return [
-    // ── §6.4 grupa 1: NAWIGACJA (Otwórz/Podgląd) + akcje stanu ────────
+    // ── CONTEXT: pełne Open + akcje stanu ─────────────────────────────
     {
-      id: 'open',
-      kind: 'open',
+      id: 'context',
+      kind: 'context',
       actions: [
         {
-          id: 'open-preview',
-          label: t('myWork.tasksList.label', 'Open preview'),
-          icon: ChevronRight,
-          onClick: () => h.onPreview(task.id, task),
-        },
-        {
-          id: 'view',
-          label: t('common.view', 'View'),
+          id: 'open',
+          label: t('common.open', 'Open'),
           icon: Eye,
           onClick: () => h.onOpenFull(task.id, task),
         },
@@ -638,7 +631,6 @@ const buildTaskKebabSections = (
             : t('myWork.personalTasks.complete', 'Complete'),
           icon: CheckCircle2,
           onClick: () => h.onToggleComplete(task.id, !isCompleted),
-          divider: true,
         },
         {
           id: 'status_todo',
@@ -665,7 +657,6 @@ const buildTaskKebabSections = (
                 label: t('myWork.triage.acceptToday', 'Accept (Today)'),
                 icon: Zap,
                 onClick: () => h.onTriageAccept?.(task.id),
-                divider: true,
               },
               {
                 id: 'triage_snooze',
@@ -677,24 +668,23 @@ const buildTaskKebabSections = (
           : []),
       ],
     },
-    // ── §6.4 grupa 2: MANIPULACJA (Edytuj) ────────────────────────────
+    // ── MANAGE: preview → edit → link/AI → archive → delay ───────────
     {
       id: 'manage',
       kind: 'manage',
       actions: [
+        {
+          id: 'open-preview',
+          label: t('myWork.tasksList.label', 'Open preview'),
+          icon: ChevronRight,
+          onClick: () => h.onPreview(task.id, task),
+        },
         {
           id: 'edit',
           label: t('common.edit', 'Edit'),
           icon: Edit,
           onClick: () => h.onOpenFull(task.id, task),
         },
-      ],
-    },
-    // ── §6.4 grupa 3: RELACJE/WYJŚCIE (Kopiuj link · Odłóż termin) ─────
-    {
-      id: 'output',
-      kind: 'output',
-      actions: [
         {
           id: 'copy-link',
           label: t('myWork.tasksList.label2', 'Copy link'),
@@ -709,6 +699,22 @@ const buildTaskKebabSections = (
             }
           },
         },
+        {
+          id: 'ai-open',
+          label: t('myWork.tasksList.label4', 'AI: open & fill'),
+          icon: Sparkles,
+          onClick: () => h.onOpenFull(task.id, task),
+        },
+        ...(h.onTriageArchive
+          ? [
+              {
+                id: 'archive',
+                label: t('myWork.triage.archive', 'Archive'),
+                icon: Archive,
+                onClick: () => h.onTriageArchive?.(task.id),
+              } satisfies RowAction,
+            ]
+          : []),
         // Delay ▸ — tasks have a due date, so the slot is present.
         ...(h.onInlineEdit
           ? [
@@ -735,34 +741,11 @@ const buildTaskKebabSections = (
           : []),
       ],
     },
-    // ── §6.4 grupa 4: AI ──────────────────────────────────────────────
-    {
-      id: 'ai',
-      kind: 'ai',
-      actions: [
-        {
-          id: 'ai-open',
-          label: t('myWork.tasksList.label4', '✨ AI: open & fill'),
-          icon: Sparkles,
-          onClick: () => h.onOpenFull(task.id, task),
-        },
-      ],
-    },
-    // ── §6.4 grupa 5: DESTRUKCYJNE (Archiwizuj · Usuń — danger, ostatni) ─
+    // ── DANGER: Delete jako jedyna pozycja ────────────────────────────
     {
       id: 'danger',
       kind: 'danger',
       actions: [
-        {
-          id: 'archive',
-          label: t('myWork.triage.archive', 'Archive'),
-          icon: Archive,
-          disabled: !h.onTriageArchive,
-          description: h.onTriageArchive
-            ? undefined
-            : t('myWork.tasksList.comingSoonBackend', 'Coming soon (backend)'),
-          onClick: () => h.onTriageArchive?.(task.id),
-        },
         {
           id: 'delete',
           label: t('common.delete', 'Delete'),
@@ -1071,168 +1054,23 @@ const TaskTableRow: React.FC<{
           <RowActionsMenu
             size="sm"
             className="opacity-40 transition-opacity group-hover:opacity-100"
-            sections={
-              [
-                // ── §6.4 grupa 1: NAWIGACJA (Otwórz/Podgląd) + akcje stanu ────────
-                {
-                  id: 'open',
-                  kind: 'open',
-                  actions: [
-                    {
-                      id: 'open-preview',
-                      label: t('myWork.tasksList.label', 'Open preview'),
-                      icon: ChevronRight,
-                      onClick: () => onPreview(task.id, task),
-                    },
-                    {
-                      id: 'view',
-                      label: t('common.view', 'View'),
-                      icon: Eye,
-                      onClick: () => onOpenFull(task.id, task),
-                    },
-                    {
-                      id: 'complete',
-                      label: isCompleted
-                        ? t('myWork.personalTasks.reopen', 'Reopen')
-                        : t('myWork.personalTasks.complete', 'Complete'),
-                      icon: CheckCircle2,
-                      onClick: () => onToggleComplete(task.id, !isCompleted),
-                      divider: true,
-                    },
-                    {
-                      id: 'status_todo',
-                      label: t('myWork.personalTasks.status.todo', 'To do'),
-                      icon: CheckSquare,
-                      onClick: () => onSetStatus(task.id, 'todo'),
-                    },
-                    {
-                      id: 'status_in_progress',
-                      label: t('myWork.personalTasks.status.inProgress', 'In progress'),
-                      icon: Clock,
-                      onClick: () => onSetStatus(task.id, 'in_progress'),
-                    },
-                    {
-                      id: 'status_blocked',
-                      label: t('myWork.personalTasks.status.blocked', 'Blocked'),
-                      icon: AlertCircle,
-                      onClick: () => onSetStatus(task.id, 'blocked'),
-                    },
-                    ...(isNew && onTriageAccept
-                      ? [
-                          {
-                            id: 'triage_accept',
-                            label: t('myWork.triage.acceptToday', 'Accept (Today)'),
-                            icon: Zap,
-                            onClick: () => onTriageAccept(task.id),
-                            divider: true,
-                          },
-                          {
-                            id: 'triage_snooze',
-                            label: t('myWork.triage.snooze', 'Snooze 2 days'),
-                            icon: Pause,
-                            onClick: () => onTriageSnooze?.(task.id),
-                          },
-                        ]
-                      : []),
-                  ],
-                },
-                // ── §6.4 grupa 2: MANIPULACJA (Edytuj) ────────────────────────────
-                {
-                  id: 'manage',
-                  kind: 'manage',
-                  actions: [
-                    {
-                      id: 'edit',
-                      label: t('common.edit', 'Edit'),
-                      icon: Edit,
-                      onClick: () => onOpenFull(task.id, task),
-                    },
-                  ],
-                },
-                // ── §6.4 grupa 3: RELACJE/WYJŚCIE (Kopiuj link · Odłóż termin) ─────
-                {
-                  id: 'output',
-                  kind: 'output',
-                  actions: [
-                    {
-                      id: 'copy-link',
-                      label: t('myWork.tasksList.label2', 'Copy link'),
-                      icon: Link2,
-                      onClick: () => {
-                        try {
-                          const url = `${window.location.origin}${getArtifactPath('task', task.id)}`;
-                          void navigator.clipboard?.writeText(url);
-                          toast.success(t('myWork.tasksList.toastSuccess', 'Link copied'));
-                        } catch {
-                          /* clipboard unavailable */
-                        }
-                      },
-                    },
-                    // Delay ▸ — tasks have a due date, so the slot is present.
-                    ...(onInlineEdit
-                      ? [
-                          {
-                            id: 'delay',
-                            label: t('myWork.tasksList.label3', 'Delay'),
-                            icon: Clock,
-                            onClick: () => {},
-                            submenu: [1, 3, 7].map((d) => ({
-                              id: `delay-${d}`,
-                              label: isPolish ? `+${d} ${d === 1 ? 'dzień' : 'dni'}` : `+${d}d`,
-                              icon: Clock,
-                              onClick: () => {
-                                const base =
-                                  task.dueDate && !Number.isNaN(new Date(task.dueDate).getTime())
-                                    ? new Date(task.dueDate)
-                                    : new Date();
-                                base.setDate(base.getDate() + d);
-                                onInlineEdit(task.id, 'dueDate', base.toISOString().split('T')[0]);
-                              },
-                            })),
-                          } satisfies RowAction,
-                        ]
-                      : []),
-                  ],
-                },
-                // ── §6.4 grupa 4: AI ──────────────────────────────────────────────
-                {
-                  id: 'ai',
-                  kind: 'ai',
-                  actions: [
-                    {
-                      id: 'ai-open',
-                      label: t('myWork.tasksList.label4', '✨ AI: open & fill'),
-                      icon: Sparkles,
-                      onClick: () => onOpenFull(task.id, task),
-                    },
-                  ],
-                },
-                // ── §6.4 grupa 5: DESTRUKCYJNE (Archiwizuj · Usuń — danger, ostatni) ─
-                {
-                  id: 'danger',
-                  kind: 'danger',
-                  actions: [
-                    {
-                      id: 'archive',
-                      label: t('myWork.triage.archive', 'Archive'),
-                      icon: Archive,
-                      disabled: !onTriageArchive,
-                      description: onTriageArchive
-                        ? undefined
-                        : t('myWork.tasksList.comingSoonBackend', 'Coming soon (backend)'),
-                      onClick: () => onTriageArchive?.(task.id),
-                    },
-                    {
-                      id: 'delete',
-                      label: t('common.delete', 'Delete'),
-                      icon: Trash2,
-                      onClick: () => onDelete(task.id),
-                      variant: 'danger',
-                    },
-                  ],
-                },
-              ] satisfies RowActionSection[]
-            }
+            sections={buildTaskKebabSections(
+              task,
+              Boolean(isNew),
+              {
+                onPreview,
+                onOpenFull,
+                onToggleComplete,
+                onSetStatus,
+                onInlineEdit,
+                onTriageAccept,
+                onTriageSnooze,
+                onTriageArchive,
+                onDelete,
+              },
+              t,
+              isPolish
+            )}
           />
         </td>
       )}
@@ -2512,7 +2350,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
             const trailing = (
               <span
                 className={`text-[11px] font-semibold ${
-                  due === 'No due date' ? 'text-c-text-muted italic' : 'text-c-text-secondary'
+                  due === '—' ? 'text-c-text-muted' : 'text-c-text-secondary'
                 }`}
               >
                 {due}
@@ -2593,6 +2431,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
             const actionRows: ActionRow[] = [
               {
+                columns: 2,
                 buttons: [
                   {
                     label: t('myWork.tasksList.label7', 'Today'),
@@ -2613,6 +2452,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                 ],
               },
               {
+                columns: 2,
                 buttons: [
                   {
                     label: isCompleted

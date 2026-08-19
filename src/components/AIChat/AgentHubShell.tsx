@@ -130,6 +130,8 @@ import {
   PreviewActionButton,
   PreviewDetailsSection,
   PreviewMetaCard,
+  PreviewRelations,
+  PreviewStructuredList,
 } from '@/components/shared/PreviewPane';
 import { EmptyState, LoadingState } from '@/components/shared/states';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
@@ -323,27 +325,18 @@ const PlanSummaryCard: React.FC<{
         />
       </div>
     ) : null}
-    <div>
-      <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
-        {isPolish ? 'Kroki i bramki' : 'Steps and gates'}
-      </div>
-      <ol className="space-y-1 text-xs text-c-text-secondary">
-        {plan.steps.map((step, idx) => (
-          <li key={step.id} className="flex items-start gap-1.5">
-            <span className="tabular-nums text-c-text-muted">{idx + 1}.</span>
-            <span className="flex-1">
-              {readablePhaseName(step.toolInput) ?? step.toolName}
-              {step.requiresApproval ? (
-                <span className="ml-1.5 text-[10px] text-[var(--c-warning)]">
-                  · {isPolish ? 'wymaga akceptacji' : 'requires approval'}
-                </span>
-              ) : null}
-            </span>
-            <span className="shrink-0 text-c-text-muted">{step.status}</span>
-          </li>
-        ))}
-      </ol>
-    </div>
+    <PreviewStructuredList
+      title={isPolish ? 'Kroki i bramki' : 'Steps and gates'}
+      ordered
+      items={plan.steps.map((step) => ({
+        id: step.id,
+        label: readablePhaseName(step.toolInput) ?? step.toolName,
+        note: step.requiresApproval
+          ? `· ${isPolish ? 'wymaga akceptacji' : 'requires approval'}`
+          : undefined,
+        status: step.status,
+      }))}
+    />
     {plan.resultSummary ? (
       <div>
         <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
@@ -1039,6 +1032,10 @@ export const AgentHubShell: React.FC = () => {
           onSelect={setPreviewPlanId}
           onOpenFull={(id) => handleOpenPlan(id)}
           itemIds={tableRows.map((r) => String(r.id))}
+          getItemById={(id) => {
+            const plan = plans?.find((item) => item.id === id);
+            return plan ? { id: plan.id, title: plan.title } : null;
+          }}
           renderPreview={() => {
             if (!previewPlan) return null;
             // ★ Uwaga: `TableWithPreviewLayout` renderuje WŁASNY `PreviewPaneShell`
@@ -1055,32 +1052,45 @@ export const AgentHubShell: React.FC = () => {
                 <PreviewMetaCard
                   pills={[
                     {
-                      label: isPolish ? 'Status' : 'Status',
-                      value: planStatusLabel(previewPlan.status, isPolish),
+                      label: planStatusLabel(previewPlan.status, isPolish),
                       tone: PLAN_STATUS_TONE[previewPlan.status],
                     },
                     {
-                      label: isPolish ? 'Postęp' : 'Progress',
-                      value: `${previewPlan.completedSteps}/${previewPlan.totalSteps}`,
+                      label: `${previewPlan.completedSteps}/${previewPlan.totalSteps} ${
+                        isPolish ? 'kroków' : 'steps'
+                      }`,
+                      tone: 'neutral',
                     },
                   ]}
                 />
-                <PlanSummaryCard plan={previewPlan} isPolish={isPolish} compact hideMeta />
+                <PreviewDetailsSection
+                  label={isPolish ? 'Szczegóły' : 'Details'}
+                  showWordCount={false}
+                >
+                  <PlanSummaryCard plan={previewPlan} isPolish={isPolish} compact hideMeta />
+                </PreviewDetailsSection>
               </div>
             );
           }}
           renderPreviewFooter={() => {
             if (!previewPlan) return null;
             const cancellable = CANCELLABLE_STATUSES.includes(previewPlan.status);
-            if (!cancellable) return null;
             return (
-              <div className="grid grid-cols-2 gap-2">
-                <PreviewActionButton
-                  variant="destructive"
-                  label={t('agentPlan.hub.rowCancel', isPolish ? 'Anuluj' : 'Cancel')}
-                  icon={XCircle}
-                  onClick={() => void handleCancelPlan(previewPlan.id)}
+              <div className="space-y-2.5">
+                <PreviewRelations
+                  items={[]}
+                  emptyLabel={t('common.noRelations', isPolish ? 'Brak powiązań' : 'No relations')}
                 />
+                {cancellable ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    <PreviewActionButton
+                      variant="destructive"
+                      label={t('agentPlan.hub.rowCancel', isPolish ? 'Anuluj' : 'Cancel')}
+                      icon={XCircle}
+                      onClick={() => void handleCancelPlan(previewPlan.id)}
+                    />
+                  </div>
+                ) : null}
               </div>
             );
           }}
@@ -1297,6 +1307,10 @@ export const AgentHubShell: React.FC = () => {
             if (tpl) handleSelectTemplate(tpl);
           }}
           itemIds={templateRows.map((r) => String(r.id))}
+          getItemById={(id) => {
+            const template = templates.find((item) => item.id === id);
+            return template ? { id: template.id, title: template.name } : null;
+          }}
           renderPreview={() => {
             if (!previewTemplate) return null;
             // (patrz komentarz w renderProcesses powyżej — bez podwójnego
@@ -1327,15 +1341,21 @@ export const AgentHubShell: React.FC = () => {
           renderPreviewFooter={() => {
             if (!previewTemplate) return null;
             return (
-              <div className="grid grid-cols-2 gap-2">
-                <PreviewActionButton
-                  variant="positive"
-                  label={t(
-                    'agentPlan.hub.templates.rowUse',
-                    isPolish ? 'Użyj szablonu' : 'Use template'
-                  )}
-                  onClick={() => handleSelectTemplate(previewTemplate)}
+              <div className="space-y-2.5">
+                <PreviewRelations
+                  items={[]}
+                  emptyLabel={t('common.noRelations', isPolish ? 'Brak powiązań' : 'No relations')}
                 />
+                <div className="grid grid-cols-2 gap-2">
+                  <PreviewActionButton
+                    variant="positive"
+                    label={t(
+                      'agentPlan.hub.templates.rowUse',
+                      isPolish ? 'Użyj szablonu' : 'Use template'
+                    )}
+                    onClick={() => handleSelectTemplate(previewTemplate)}
+                  />
+                </div>
               </div>
             );
           }}
@@ -1381,92 +1401,95 @@ export const AgentHubShell: React.FC = () => {
   // (MyWorkHub) ma JEDYNE Menu 2/3 na ekranie i czyta to, co deklarujemy tu
   // (patrz HubBarSlots.tsx). Wyjątek: `bulk` — patrz `renderBulkBar` wyżej,
   // kontrakt slotu nie ma (jeszcze) pola na pasek zaznaczenia.
-  const filterControlsNode = useMemo(() => {
+  const viewControlsNode = useMemo(() => {
     // Piotr: „My processes/Templates mają sens na poziomie listy; jak jestem
     // w agencie, to już nie ma po co go pokazywać" — ukryty przy otwartej karcie.
     if (activeItemId) return null;
     return (
-      <div className="flex flex-wrap items-center gap-2">
-        <Segmented<AgentHubTab>
-          value={tab}
-          options={[
-            {
-              value: 'processes',
-              label: t('agentPlan.hub.tabs.processes', isPolish ? 'Moje procesy' : 'My processes'),
-            },
-            {
-              value: 'templates',
-              label: t('agentPlan.hub.tabs.templates', isPolish ? 'Szablony' : 'Templates'),
-            },
-          ]}
-          onChange={(id) => setTab(id)}
-          testId="agent-hub-mode-switch"
-        />
+      <Segmented<AgentHubTab>
+        value={tab}
+        options={[
+          {
+            value: 'processes',
+            label: t('agentPlan.hub.tabs.processes', isPolish ? 'Moje procesy' : 'My processes'),
+          },
+          {
+            value: 'templates',
+            label: t('agentPlan.hub.tabs.templates', isPolish ? 'Szablony' : 'Templates'),
+          },
+        ]}
+        onChange={(id) => setTab(id)}
+        testId="agent-hub-mode-switch"
+      />
+    );
+  }, [tab, activeItemId, isPolish, t]);
+
+  const filterControlsNode = useMemo(() => {
+    if (activeItemId || tab !== 'processes' || !foldersAvailable) return null;
+    return (
+      <div className="flex items-center">
         {/* AGT-FOLDERS (2026-07-28) — filtr "Folder", TYLKO na "Moje procesy"
             (foldery grupują PROCESY, nie bibliotekę statycznych szablonów).
             Wzór 1:1 `VaultDocumentsView.tsx` chip "Folder". */}
-        {tab === 'processes' && foldersAvailable ? (
-          <Menu3DropdownChip
-            data-testid="agent-hub-folder-chip"
-            icon={<Folder size={14} className="text-c-text-muted" />}
-            label={
-              activeFolderId
-                ? (folderNameById.get(activeFolderId) ??
-                  t('agentPlan.hub.folders.chip', isPolish ? 'Folder' : 'Folder'))
-                : t('agentPlan.hub.folders.chip', isPolish ? 'Folder' : 'Folder')
-            }
-            active={Boolean(activeFolderId)}
-            ariaLabel={t('agentPlan.hub.folders.chip', isPolish ? 'Folder' : 'Folder')}
-            items={[
-              {
-                id: 'all',
-                label: t(
-                  'agentPlan.hub.folders.allProcesses',
-                  isPolish ? 'Wszystkie procesy' : 'All processes'
-                ),
-                icon: <Layers size={14} />,
-                active: !activeFolderId,
-                onSelect: () => setActiveFolderId(null),
-              },
-              ...folders.map((f) => ({
-                id: f.id,
-                label: f.name,
-                icon: <Folder size={14} />,
-                active: activeFolderId === f.id,
-                trailing: folderScopeLabel(f.scope),
-                onSelect: () => setActiveFolderId(f.id),
-              })),
-              {
-                id: 'new-folder',
-                label: t(
-                  'agentPlan.hub.folders.newFolder',
-                  isPolish ? 'Nowy folder…' : 'New folder…'
-                ),
-                icon: <FolderPlus size={14} />,
-                dividerBefore: true,
-                onSelect: () => void handleCreateFolder(),
-              },
-              ...(activeFolderId
-                ? [
-                    {
-                      id: 'delete-folder',
-                      label: t(
-                        'agentPlan.hub.folders.deleteFolder',
-                        isPolish ? 'Usuń ten folder' : 'Delete this folder'
-                      ),
-                      icon: <Trash2 size={14} />,
-                      danger: true,
-                      onSelect: () => void handleDeleteFolder(activeFolderId),
-                    },
-                  ]
-                : []),
-            ]}
-          />
-        ) : null}
+        <Menu3DropdownChip
+          data-testid="agent-hub-folder-chip"
+          icon={<Folder size={14} className="text-c-text-muted" />}
+          label={
+            activeFolderId
+              ? (folderNameById.get(activeFolderId) ??
+                t('agentPlan.hub.folders.chip', isPolish ? 'Folder' : 'Folder'))
+              : t('agentPlan.hub.folders.chip', isPolish ? 'Folder' : 'Folder')
+          }
+          active={Boolean(activeFolderId)}
+          ariaLabel={t('agentPlan.hub.folders.chip', isPolish ? 'Folder' : 'Folder')}
+          items={[
+            {
+              id: 'all',
+              label: t(
+                'agentPlan.hub.folders.allProcesses',
+                isPolish ? 'Wszystkie procesy' : 'All processes'
+              ),
+              icon: <Layers size={14} />,
+              active: !activeFolderId,
+              onSelect: () => setActiveFolderId(null),
+            },
+            ...folders.map((f) => ({
+              id: f.id,
+              label: f.name,
+              icon: <Folder size={14} />,
+              active: activeFolderId === f.id,
+              trailing: folderScopeLabel(f.scope),
+              onSelect: () => setActiveFolderId(f.id),
+            })),
+            {
+              id: 'new-folder',
+              label: t(
+                'agentPlan.hub.folders.newFolder',
+                isPolish ? 'Nowy folder…' : 'New folder…'
+              ),
+              icon: <FolderPlus size={14} />,
+              dividerBefore: true,
+              onSelect: () => void handleCreateFolder(),
+            },
+            ...(activeFolderId
+              ? [
+                  {
+                    id: 'delete-folder',
+                    label: t(
+                      'agentPlan.hub.folders.deleteFolder',
+                      isPolish ? 'Usuń ten folder' : 'Delete this folder'
+                    ),
+                    icon: <Trash2 size={14} />,
+                    danger: true,
+                    onSelect: () => void handleDeleteFolder(activeFolderId),
+                  },
+                ]
+              : []),
+          ]}
+        />
       </div>
     );
   }, [
-    tab,
     activeItemId,
     isPolish,
     t,
@@ -1502,6 +1525,7 @@ export const AgentHubShell: React.FC = () => {
 
   useHubBarSlot({
     filterControls: filterControlsNode,
+    viewControls: viewControlsNode,
     primaryCta: primaryCtaValue,
     openItems,
     activeItemId,

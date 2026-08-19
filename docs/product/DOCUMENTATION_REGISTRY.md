@@ -219,6 +219,11 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
 
 ### My Work and Radar
 
+- `docs/product/case-workspace/12_CASE_WORKSPACE_MODULE_SSOT.md`
+  - **Owner**: Product Owner + Product + Engineering + UX
+  - **Scope**: canonical product boundary and complete module contract for `Zlecenia`/Case Workspace nested in My Work, including direct-module work, Teresa-orchestrated durable work, planning, V8 execution, approvals, native artifacts and value
+  - **Authority**: Highest for Case Workspace product-target behavior after frozen owner decisions in `docs/product/case-workspace/11_OWNER_DECISION_REGISTER.md`; V8 and owning-module SSOTs remain authoritative for their runtime and native-domain contracts
+
 - `docs/product/MYWORK_RADAR_V8_READINESS_AUDIT.md`
   - **Owner**: Product + Engineering
   - **Scope**: historical readiness audit snapshot for the `MyWork Radar v8` package

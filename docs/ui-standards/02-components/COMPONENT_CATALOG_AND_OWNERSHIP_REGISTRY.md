@@ -2,7 +2,7 @@
 doc_kind: UI_COMPONENT_REGISTRY
 status: canonical_control_layer
 owner: Piotr Wisniewski
-last_updated: 2026-07-31
+last_updated: 2026-08-03
 authority: docs/ui-standards/CANON.md
 ---
 
@@ -42,7 +42,7 @@ Status dotyczy rodziny, a nie automatycznie każdego pliku. Dokładny werdykt na
 | `UI-TOOL-01` | Tool/Assessment/Audit workspace | przeprowadzenie sesji i zatwierdzenie outputu | Tool Wizard i dokumenty trzech modułów | `ToolWizard/*`, Discovery Tool workspace | `PARTIAL`; wspólny lifecycle, specyficzne instrumenty |
 | `UI-EDITOR-01` | Document editor | tworzenie dokumentów i raportów | editor shell canon, Materials contract | TipTap editors, Document Studio | `PARTIAL/DUPLICATE`; jeden kontrakt menu i lifecycle |
 | `UI-DECK-01` | Presentation/Deck | budowa, preview i prezentacja slajdów | Materials + brand export canon | Reports/Presentations runtime | `PARTIAL`; schema + layout engine + presenter |
-| `UI-SHEET-01` | Workbook/Spreadsheet | modelowanie tabelaryczne i obliczenia | Materials/Finance + decyzja silnika arkusza | My Work table, Finance workspaces, Excel import | `PARTIAL`; nie utożsamiać App Table z Excelem |
+| `UI-SHEET-01` | Drawer / Side Panel | pokazać, podejrzeć lub wyedytować jeden obiekt obok listy, tabeli albo canvasu bez opuszczania widoku macierzystego | karta `02-components/families/UI-SHEET-01/STANDARD.md`, `PRIMITIVE_INTERACTION_CONTRACT.md` | `IdeaNodeDetailDrawer`, `InitiativeDrawer` | `PARTIAL`; nie utożsamiać z Workbook/Spreadsheet — inny archetyp, patrz przypis [^ui-sheet-01-korekta] |
 | `UI-CARD-01` | Content/summary card | skanowalny fragment informacji | `CARD_CONTENT_FORMULA.md`, N-mode standard | BaseCard, Card, SummaryCard, domain cards | `DUPLICATE`; semantyczne warianty zamiast lokalnego stylowania |
 | `UI-STATE-01` | Empty/loading/error/streaming | zrozumienie stanu i następnego kroku | `empty-loading-states.md`, error standard | `shared/states/*`, primitives, domain empty states | `DUPLICATE`; `shared/states` kandydatem kanonicznym |
 | `UI-OVERLAY-01` | Modal/Drawer/Popover | zadanie lokalne bez utraty kontekstu | building blocks, micro-interactions | `ui/primitives`, shadcn UI, WizardModal | `DUPLICATE`; jeden wrapper per typ i kontrakt focusu |
@@ -55,6 +55,20 @@ Status dotyczy rodziny, a nie automatycznie każdego pliku. Dokładny werdykt na
 | `UI-NOTIFY-01` | Toast/banner/notification | informacja o wyniku lub ryzyku | notification panel, micro-interactions | Toast variants, Banner, status toast | `DUPLICATE`; toast nie zastępuje trwałego stanu błędu |
 | `UI-CREATE-01` | Create/generator wizard | przygotowanie założeń i utworzenie obiektu | generator contracts | UnifiedCreateLauncher, WizardModal, domain generators | `PARTIAL`; thinking/assumptions preview przed generacją |
 | `UI-PERM-01` | Permission and capability gate | wyjaśnienie dostępności | navigation permissions canon | CapabilityGate, ProtectedRoute, guards | `PARTIAL`; UI jest projekcją decyzji backendu |
+
+[^ui-sheet-01-korekta]: **Korekta tożsamości (2026-08-03, paczka `DOC-CONSISTENCY-UI-SHEET-01`).** Ten wiersz
+opisywał wcześniej `UI-SHEET-01` jako „Workbook/Spreadsheet” (modelowanie tabelaryczne, Excel import,
+Finance workspaces) — sprzeczne z kartą `02-components/families/UI-SHEET-01/STANDARD.md`
+(`family: primitive`, „Drawer and Side Panel”), z `COMPONENT_RUNTIME_BINDING_REGISTRY.md` (`Drawer/sheet`)
+i z `COMPONENT_FAMILY_ACCEPTANCE_APPENDIX.md` (`tytuł, close, scroll ownership, footer actions`) — te
+trzy dokumenty już poprawnie opisywały tę rodzinę jako Drawer/Sheet i nie wymagały korekty. Rozstrzygnięcie:
+`UI-SHEET-01` = Drawer/Side Panel, zgodnie z kartą; Workbook/Spreadsheet NIE używa tego identyfikatora.
+**„Workbook/Spreadsheet” jako pojęcie produktowe pozostaje realne i niezaadresowane** — modelowanie
+tabelaryczne, Excel import i powierzchnie Finance/My Work table opisane w poprzedniej wersji tego wiersza
+nie mają dziś WŁASNEGO ID w tym rejestrze. To nie jest rozstrzygnięte w tej paczce (paczka jest wyłącznie
+korektą sprzeczności nazewniczej, nie przydziałem nowej taksonomii) — przydzielenie osobnego ID dla
+Workbook/Spreadsheet, jeśli okaże się potrzebne, jest odrębną decyzją architektoniczną do podjęcia poza
+tym pakietem, nie mechanicznym następstwem tej korekty.
 
 ## 4. Obowiązkowy kontrakt integracyjny
 

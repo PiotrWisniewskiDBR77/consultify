@@ -24,8 +24,10 @@
  * sam ekran-dziecko zostanie kiedyś osadzony w innym hubie.
  *
  * Kontrakt slotów (mapowanie na kanon triady, `docs/ui-standards/TRIADA_KANON.md`):
+ *   - `searchControl`  → Menu 2, lewy klaster, bezpośrednio po search toggle.
  *   - `filterControls` → Menu 2, lewa część prawego klastra (filtry/przełączniki
- *     widoku). Kanon: filtry NIE mają własnego rzędu.
+ *     zakresu). Kanon: filtry NIE mają własnego rzędu.
+ *   - `viewControls`   → Menu 2, prawy klaster po filtrach (segment widoków).
  *   - `primaryCta`     → Menu 2, prawa krawędź (JEDEN przycisk dodawania,
  *     kontekstowy dla tego, co user właśnie widzi — „Nowy agent" w Run agent,
  *     nie generyczne „Nowy").
@@ -67,7 +69,9 @@ export interface HubBarPrimaryCta {
 
 /** Zestaw deklarowany przez ekran-dziecko. Każde pole opcjonalne. */
 export interface HubBarSlotValue {
+  searchControl?: ReactNode;
   filterControls?: ReactNode;
+  viewControls?: ReactNode;
   primaryCta?: HubBarPrimaryCta | null;
   /** Karty do DOKLEJENIA do Menu 3 huba (obiekty otwarte wewnątrz dziecka). */
   openItems?: OpenDocument[];
@@ -126,7 +130,9 @@ export function useHubBarSlot(value: HubBarSlotValue): void {
   const clear = ctx?.clear;
 
   const {
+    searchControl,
     filterControls,
+    viewControls,
     primaryCta,
     openItems,
     activeItemId,
@@ -138,7 +144,9 @@ export function useHubBarSlot(value: HubBarSlotValue): void {
   useEffect(() => {
     if (!register) return;
     register({
+      searchControl,
       filterControls,
+      viewControls,
       primaryCta,
       openItems,
       activeItemId,
@@ -150,7 +158,9 @@ export function useHubBarSlot(value: HubBarSlotValue): void {
   }, [
     register,
     clear,
+    searchControl,
     filterControls,
+    viewControls,
     primaryCta,
     openItems,
     activeItemId,

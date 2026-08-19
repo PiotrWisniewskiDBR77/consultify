@@ -1,13 +1,23 @@
 {
   "generated": "2026-08-15",
-  "total_untracked": 187,
+  "total_untracked": 193,
   "classification": {
     "keep_docs_evidence": [
+      "docs/cleanup/BLOCKER_CLOSURE_STEP_20260815.md",
+      "docs/cleanup/FIVE_HOUR_ACCELERATION_20260815.md",
       "docs/START_HERE.md",
       "docs/cleanup/CANONICAL_MODULE_STATUS_MATRIX_20260815.md",
+      "docs/cleanup/CLEANUP_ACCEPTANCE_READINESS_20260815.md",
+      "docs/cleanup/INVENTORY_BY_DOMAIN_20260815.json",
+      "docs/cleanup/CLEANUP_MODULE_CLOSURE_20260815.md",
       "docs/cleanup/CLEANUP_RESIDUAL_ASSESSMENT_20260815.md",
+      "docs/cleanup/FINAL_ACCEPTANCE_SPRINT_20260815.md",
+      "docs/cleanup/FIVE_HOUR_EXECUTION_BRIEF_20260815.md",
       "docs/cleanup/MODULES_20260815_EVIDENCE_BATCH_01.md",
-      "docs/cleanup/MODULE_CLOSURE_DECISIONS_20260815.md",
+      "docs/cleanup/MODULE_CLOSURE_STATUS_MATRIX_20260815.md",
+      "docs/cleanup/MODULE_FILE_ACTION_QUEUE_20260815.md",
+      "docs/cleanup/MODULE_NONGREEN_OWNERSHIP_PLAN_20260815.md",
+      "docs/cleanup/MODULE_NONGREEN_ACTION_PACKET_20260815.md",
       "docs/cleanup/MODULE_ROUTING_EVIDENCE_20260815.md",
       "docs/cleanup/MY_WORK_CLOSURE_EVIDENCE_20260815.md",
       "docs/cleanup/P1_PATCH_PLAN_20260815.md",
@@ -69,11 +79,6 @@
       "docs/ui-standards/runtime-mapping-2026-08-03/"
     ],
     "quarantine_local_runtime": [
-      ".tmp-ie-live-acceptance.mjs",
-      "artifacts/visual-acceptance/",
-      "artifacts/visual-current-state/",
-      "artifacts/visual-qa/",
-      "tmp/pdfs/",
       "tools/"
     ],
     "archive_ops_recovery": [
@@ -112,6 +117,7 @@
       "missing-tip-relation-old.tsv"
     ],
     "review_decision": [
+      "tests/components/AppRoutes.audits-route.test.tsx",
       "dev-render/mocks/m04-known-tools.json",
       "dev-render/screens/assessment-five-surfaces.tsx",
       "dev-render/screens/m04-mvp-tools.tsx",
@@ -196,6 +202,7 @@
       "tests/e2e/smoke/my-work-decisions-contract-evidence.spec.ts",
       "tests/e2e/smoke/my-work-inbox-contract-evidence.spec.ts",
       "tests/e2e/smoke/my-work-tasks-contract-evidence.spec.ts"
-    ]
+    ],
+    "review_needed": []
   }
 }

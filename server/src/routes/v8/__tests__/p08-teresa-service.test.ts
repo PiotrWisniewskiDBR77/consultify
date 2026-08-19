@@ -20,6 +20,19 @@ import type { HandoffResult, ProposalRecord } from '../../../services/v8/teresaC
 const mockDbRun = vi.fn().mockResolvedValue({ changes: 1 });
 const mockDbGet = vi.fn().mockResolvedValue(null);
 const mockDbAll = vi.fn().mockResolvedValue([]);
+const mockApplyWorkbookCommand = vi.fn().mockResolvedValue({
+  duplicate: false,
+  commandId: 'teresa.workbook.applyProposal',
+  version: 5,
+  operationCount: 1,
+});
+const mockUndoWorkbookCommand = vi.fn().mockResolvedValue({
+  duplicate: false,
+  commandVersion: 5,
+  version: 6,
+  restoredCommentSheetIds: [],
+  orphanedCommentSheetIds: [],
+});
 
 vi.mock('../../../utils/DbPromise.js', () => ({
   run: (...args: unknown[]) => mockDbRun(...args),
@@ -31,11 +44,26 @@ vi.mock('../../../utils/Logger.js', () => ({
   default: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() },
 }));
 
+vi.mock('../../../services/workbook/workbookCommandService.js', () => ({
+  applyWorkbookCommand: (...args: unknown[]) => mockApplyWorkbookCommand(...args),
+  undoWorkbookCommand: (...args: unknown[]) => mockUndoWorkbookCommand(...args),
+  WorkbookCommandError: class WorkbookCommandError extends Error {
+    constructor(
+      message: string,
+      public readonly code: string,
+      public readonly statusCode: number
+    ) {
+      super(message);
+    }
+  },
+}));
+
 const {
   createProposal,
   approveProposal,
   rejectProposal,
   executeProposal,
+  undoProposal,
   getProposal,
   getProposalHistory,
   getAuditTrail,
@@ -44,9 +72,40 @@ const {
   getAllDegradedScenarios,
   getContractMetadata,
   createChatProposal,
+  buildWorkbookMutationPromptHint,
   toChatProposalEnvelope,
   TeresaCopilotError,
 } = await import('../../../services/v8/teresaCopilotService.js');
+
+describe('workbook mutation prompt contract', () => {
+  it('is absent outside an opened workbook', () => {
+    expect(buildWorkbookMutationPromptHint({ workspaceContext: { type: 'document' } })).toBe('');
+  });
+
+  it('binds an opened workbook, version and explicit selection without authorizing a write', () => {
+    const hint = buildWorkbookMutationPromptHint({
+      workspaceContext: {
+        type: 'workbook',
+        entityId: '947357c0-d7f0-4e8b-9925-a8551acebdd7',
+        entityData: {
+          artifactType: 'spreadsheet',
+          workbookId: '947357c0-d7f0-4e8b-9925-a8551acebdd7',
+          versionId: 12,
+          activeSheetIndex: 1,
+          activeSheetName: 'KPI Control',
+          selection: { address: 'D4', rowIndex: 3, colIndex: 3, columnKey: 'D' },
+        },
+      },
+    });
+
+    expect(hint).toContain('947357c0-d7f0-4e8b-9925-a8551acebdd7');
+    expect(hint).toContain('immutable base version: 12');
+    expect(hint).toContain('Explicit user selection: D4');
+    expect(hint).toContain('DO NOT emit a mutation block');
+    expect(hint).toContain('Never claim the mutation was applied');
+    expect(hint).toContain('setCellStyle');
+  });
+});
 
 const {
   P08_HANDOFF_TARGET_MODULES,
@@ -337,6 +396,118 @@ describe('P08-B §1A — Chat proposal synthesis', () => {
     expect(proposal!.previewLines.length).toBeGreaterThan(0);
   });
 
+  it('preserves explicit workbook, version, sheet and selection context for XLSX proposals', async () => {
+    const workbookId = '00000000-0000-4000-8000-00000000a111';
+    await createChatProposal({
+      organizationId: ORG,
+      userId: USER,
+      sessionId: SESSION,
+      userMessage: 'Wyjaśnij odchylenia w zaznaczonym zakresie arkusza',
+      assistantMessage: 'Przygotuję propozycję analizy zaznaczonych KPI.',
+      context: {
+        workspaceContext: {
+          entityId: workbookId,
+          type: 'workbook',
+          entityData: {
+            artifactType: 'spreadsheet',
+            workbookId,
+            versionId: 12,
+            activeSheetIndex: 1,
+            activeSheetName: 'KPI Control',
+            classification: 'Internal',
+            selection: { kind: 'range', address: 'B2:E6', sheetId: 'sheet-kpi' },
+          },
+        },
+        screenContext: { currentScreen: 'workbook' },
+      },
+      citations: [],
+    });
+
+    const proposalInsert = mockDbRun.mock.calls.find((call) =>
+      String(call[0]).includes('INSERT INTO teresa_proposals')
+    );
+    expect(proposalInsert).toBeDefined();
+    const payload = JSON.parse(String(proposalInsert![1][6]));
+    expect(payload).toMatchObject({
+      proposal_only: true,
+      requires_structured_mutation: true,
+      workbook_context: {
+        workbook_id: workbookId,
+        version_id: 12,
+        active_sheet_index: 1,
+        active_sheet_name: 'KPI Control',
+        classification: 'Internal',
+        selection: { kind: 'range', address: 'B2:E6', sheetId: 'sheet-kpi' },
+      },
+    });
+    expect(payload.evidence_pointers).toEqual(
+      expect.arrayContaining([`workbook:${workbookId}`, 'selection:B2:E6'])
+    );
+  });
+
+  it('carries an explicit fenced workbook mutation diff into the XLSX proposal', async () => {
+    const workbookId = '00000000-0000-4000-8000-00000000a224';
+    await createChatProposal({
+      organizationId: ORG,
+      userId: USER,
+      sessionId: SESSION,
+      userMessage: 'Zmień wartość w zaznaczonej komórce arkusza.',
+      assistantMessage: `Proponuję zmianę po zatwierdzeniu.\n\n\`\`\`workbook-mutation
+{"command_id":"teresa.workbook.setSelectedCell","operations":[{"type":"setCell","sheetIndex":0,"rowIndex":1,"columnKey":"D","value":21.2}]}
+\`\`\``,
+      context: {
+        workspaceContext: {
+          type: 'workbook',
+          entityId: workbookId,
+          entityData: {
+            artifactType: 'spreadsheet',
+            workbookId,
+            versionId: 7,
+            activeSheetIndex: 0,
+            selection: { kind: 'cell', address: 'D2' },
+          },
+        },
+      },
+      citations: [],
+    });
+
+    const proposalInsert = mockDbRun.mock.calls.find((call) =>
+      String(call[0]).includes('INSERT INTO teresa_proposals')
+    );
+    const payload = JSON.parse(String(proposalInsert![1][6]));
+    expect(payload.workbook_mutation).toEqual({
+      command_id: 'teresa.workbook.setSelectedCell',
+      operations: [{ type: 'setCell', sheetIndex: 0, rowIndex: 1, columnKey: 'D', value: 21.2 }],
+    });
+  });
+
+  it('does not treat unfenced JSON prose as an executable workbook mutation', async () => {
+    const workbookId = '00000000-0000-4000-8000-00000000a225';
+    await createChatProposal({
+      organizationId: ORG,
+      userId: USER,
+      sessionId: SESSION,
+      userMessage: 'Zmień tabelę w skoroszycie.',
+      assistantMessage:
+        'Przykład: {"operations":[{"type":"setCell","sheetIndex":0,"rowIndex":1,"columnKey":"D","value":99}]}',
+      context: {
+        workspaceContext: {
+          type: 'workbook',
+          entityId: workbookId,
+          entityData: { artifactType: 'spreadsheet', workbookId, versionId: 3 },
+        },
+      },
+      citations: [],
+    });
+
+    const proposalInsert = mockDbRun.mock.calls.find((call) =>
+      String(call[0]).includes('INSERT INTO teresa_proposals')
+    );
+    const payload = JSON.parse(String(proposalInsert![1][6]));
+    expect(payload.workbook_mutation).toBeUndefined();
+    expect(payload.requires_structured_mutation).toBe(true);
+  });
+
   it('returns null when the chat turn does not imply a safe Teresa handoff', async () => {
     const proposal = await createChatProposal({
       organizationId: ORG,
@@ -349,6 +520,158 @@ describe('P08-B §1A — Chat proposal synthesis', () => {
     });
 
     expect(proposal).toBeNull();
+  });
+});
+
+describe('P08-B — XLSX handoff truthfulness', () => {
+  it('applies a structured mutation to the real workbook using its immutable version', async () => {
+    const workbookId = '00000000-0000-4000-8000-00000000a222';
+    const row = mockProposalRow({
+      id: 'prop-xlsx-real',
+      state: 'approved',
+      target_module: 'excele',
+      target_payload_json: JSON.stringify({
+        prompt: 'Analyze selected KPI range',
+        proposal_only: true,
+        requires_structured_mutation: true,
+        workbook_context: { workbook_id: workbookId, version_id: 4 },
+        workbook_mutation: {
+          command_id: 'teresa.workbook.applyProposal',
+          operations: [
+            { type: 'setCell', sheetIndex: 0, rowIndex: 2, columnKey: 'D', value: 21.2 },
+          ],
+        },
+      }),
+    });
+    mockDbGet.mockResolvedValueOnce(row);
+
+    const result = await executeProposal({
+      proposalId: row.id,
+      organizationId: ORG,
+      userId: USER,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.handoff_result).toMatchObject({
+      workbook_ref: workbookId,
+      mutation_applied: true,
+      version: 5,
+    });
+    expect(mockApplyWorkbookCommand).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workbookId,
+        organizationId: ORG,
+        userId: USER,
+        baseVersion: 4,
+        idempotencyKey: `teresa:${row.id}`,
+      })
+    );
+    const handoffInsert = mockDbRun.mock.calls.find(
+      (call) =>
+        String(call[0]).includes("'excele'") && String(call[0]).includes('teresa_handoff_results')
+    );
+    expect(handoffInsert).toBeDefined();
+    expect(handoffInsert![1][3]).toBe(workbookId);
+  });
+
+  it('undoes the exact applied workbook version and records the rollback', async () => {
+    const workbookId = '00000000-0000-4000-8000-00000000a226';
+    const row = mockProposalRow({
+      id: 'prop-xlsx-undo',
+      state: 'completed',
+      target_module: 'excele',
+    });
+    mockDbGet.mockResolvedValueOnce(row).mockResolvedValueOnce({
+      id: 'audit-execute-1',
+      proposal_id: row.id,
+      action: 'execution_completed',
+      actor: 'excele_service',
+      timestamp: new Date().toISOString(),
+      from_state: 'executing',
+      to_state: 'completed',
+      detail_json: JSON.stringify({
+        handoff_result: {
+          workbook_ref: workbookId,
+          mutation_applied: true,
+          version: 5,
+        },
+      }),
+    });
+
+    const result = await undoProposal({
+      proposalId: row.id,
+      organizationId: ORG,
+      userId: USER,
+    });
+
+    expect(mockUndoWorkbookCommand).toHaveBeenCalledWith({
+      workbookId,
+      organizationId: ORG,
+      userId: USER,
+      commandVersion: 5,
+      baseVersion: 5,
+      idempotencyKey: `teresa:undo:${row.id}`,
+    });
+    expect(result).toMatchObject({
+      success: true,
+      state: 'undone',
+      handoff_result: { mutation_undone: true, version: 6 },
+    });
+    expect(
+      mockDbRun.mock.calls.some(
+        (call) =>
+          String(call[0]).includes('teresa_audit_log') && call[1]?.[2] === 'execution_undone'
+      )
+    ).toBe(true);
+  });
+
+  it('does not execute a context-only workbook proposal without a structured mutation diff', async () => {
+    const workbookId = '00000000-0000-4000-8000-00000000a223';
+    const row = mockProposalRow({
+      id: 'prop-xlsx-context-only',
+      state: 'approved',
+      target_module: 'excele',
+      target_payload_json: JSON.stringify({
+        proposal_only: true,
+        workbook_context: { workbook_id: workbookId, version_id: 4 },
+      }),
+    });
+    mockDbGet.mockResolvedValueOnce(row);
+
+    const result = await executeProposal({
+      proposalId: row.id,
+      organizationId: ORG,
+      userId: USER,
+    });
+
+    expect(result).toMatchObject({ success: false, state: 'rejected', target_module: 'excele' });
+    expect(result.error).toContain('structured mutation diff');
+    expect(mockApplyWorkbookCommand).not.toHaveBeenCalled();
+  });
+
+  it('fails closed when no real workbook context is available', async () => {
+    const row = mockProposalRow({
+      id: 'prop-xlsx-missing',
+      state: 'approved',
+      target_module: 'excele',
+      target_payload_json: JSON.stringify(buildExcelePayload()),
+    });
+    mockDbGet.mockResolvedValueOnce(row);
+
+    const result = await executeProposal({
+      proposalId: row.id,
+      organizationId: ORG,
+      userId: USER,
+    });
+
+    expect(result).toMatchObject({ success: false, state: 'rejected', target_module: 'excele' });
+    expect(result.error).toContain('real, versioned workbook context');
+    expect(
+      mockDbRun.mock.calls.some(
+        (call) =>
+          String(call[0]).includes("'excele'") && String(call[0]).includes('teresa_handoff_results')
+      )
+    ).toBe(false);
   });
 });
 
@@ -781,8 +1104,10 @@ describe('P08-B §10 — Envelope state machine integration', () => {
     expect(isValidEnvelopeTransition('proposal', 'executing')).toBe(false);
   });
 
-  it('completed and rejected are terminal states', () => {
+  it('allows undo after completion but cannot restart completed or rejected proposals', () => {
+    expect(isValidEnvelopeTransition('completed', 'undone')).toBe(true);
     expect(isValidEnvelopeTransition('completed', 'proposal')).toBe(false);
+    expect(isValidEnvelopeTransition('undone', 'proposal')).toBe(false);
     expect(isValidEnvelopeTransition('rejected', 'proposal')).toBe(false);
   });
 });

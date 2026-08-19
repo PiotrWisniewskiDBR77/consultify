@@ -166,6 +166,7 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
   const [tagFilters, setTagFilters] = useState<FilterChip[]>([]);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [previewPinned, setPreviewPinned] = useState(false);
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
 
   const [panelMode, setPanelMode] = useState<'add' | 'edit' | null>(null);
@@ -656,7 +657,9 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
         },
       ],
       universalHandlers: {
-        preview: () => setSelectedId(doc.id),
+        preview: () => {
+          if (!previewPinned) setSelectedId(doc.id);
+        },
         edit: () => openEdit(doc),
         // Brak endpointu archiwizacji dokumentów wiedzy — pozycja zostaje
         // widoczna i wyłączona z powodem (kanon A6 blok 4: nigdy nie ukrywamy).
@@ -671,7 +674,7 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
         onClick: () => void deleteDocuments([doc.id]),
       },
     }),
-    [openEdit, deleteDocuments, handleMoveToFolder, folders, t, isPolish]
+    [openEdit, deleteDocuments, handleMoveToFolder, folders, t, isPolish, previewPinned]
   );
 
   // ── Preview (6 bloków fasady) ────────────────────────────────────────────
@@ -1038,7 +1041,9 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
             error={error}
             onRetry={() => void load()}
             selectedRowId={selectedId}
-            onRowClick={(row) => setSelectedId(String(row.id))}
+            onRowClick={(row) => {
+              if (!previewPinned) setSelectedId(String(row.id));
+            }}
             onRowDoubleClick={(row) => openEdit(row as unknown as VaultDocument)}
             rowDescription={(row) =>
               t('vault.docs.rowDescription', {
@@ -1079,10 +1084,15 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
         </div>
 
         {selectedDocument ? (
-          <aside className="w-[400px] shrink-0 overflow-hidden bg-slate-50 p-3 dark:bg-navy-950">
+          <aside className="w-[clamp(340px,28%,480px)] shrink-0 overflow-hidden bg-slate-50 p-3 dark:bg-navy-950">
             <StandardPreview
               title={selectedDocument.filename}
-              onClose={() => setSelectedId(null)}
+              pinned={previewPinned}
+              onTogglePin={() => setPreviewPinned((value) => !value)}
+              onClose={() => {
+                setPreviewPinned(false);
+                setSelectedId(null);
+              }}
               meta={{
                 pills: [
                   {
@@ -1120,17 +1130,6 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({ safe, on
                     .join('\n');
                   void navigator.clipboard?.writeText(`${selectedDocument.filename}\n${plain}`);
                 },
-              }}
-              ai={{
-                hints: [
-                  t('vault.docs.aiSummarize', isPolish ? 'Streść dokument' : 'Summarize document'),
-                  t('vault.docs.aiFindings', isPolish ? 'Wyciągnij wnioski' : 'Extract findings'),
-                ],
-                disabled: true,
-                disabledTooltip: t(
-                  'common.comingSoonBackend',
-                  isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)'
-                ),
               }}
               relations={[]}
               relationsEmptyLabel={t(

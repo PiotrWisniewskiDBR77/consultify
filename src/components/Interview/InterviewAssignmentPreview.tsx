@@ -69,6 +69,21 @@ export const InterviewAssignmentPreviewBody: React.FC<InterviewAssignmentPreview
             {assignment.assignee?.name || assignment.assignee?.email}
           </div>
         ) : null}
+        {Array.isArray(assignment.teamMembers) && assignment.teamMembers.length > 0 ? (
+          <div className="mt-2 text-xs text-[var(--c-text-secondary)]">
+            <span className="font-medium">
+              {isPolish ? 'Zespół' : 'Team'} ({assignment.teamMembers.length}):
+            </span>{' '}
+            {assignment.teamMembers
+              .map((m: any) =>
+                m?.role === 'lead'
+                  ? `${m?.name || m?.email} (lead)`
+                  : m?.name || m?.email
+              )
+              .filter(Boolean)
+              .join(', ')}
+          </div>
+        ) : null}
       </PreviewMetaCard>
 
       <PreviewDetailsSection

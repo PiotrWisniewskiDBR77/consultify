@@ -92,11 +92,13 @@ export interface ArtifactApprovalStatus {
 
 interface AppError extends Error {
   status?: number;
+  statusCode?: number;
 }
 
 function makeError(message: string, status: number): AppError {
   const error = new Error(message) as AppError;
   error.status = status;
+  error.statusCode = status;
   return error;
 }
 
@@ -212,6 +214,10 @@ export async function submitForReview(params: {
     throw makeError('orgId, artifactType, artifactId, assignedToUserId are required', 400);
   }
 
+  if (submittedBy && submittedBy === assignedToUserId) {
+    throw makeError('Author cannot be assigned as the sole reviewer', 409);
+  }
+
   const active = await findActiveArtifactAssignment(orgId, artifactType, artifactId);
   if (active) {
     throw makeError('Artifact already has an active review', 409);
@@ -279,6 +285,9 @@ export async function acknowledgeReview(params: {
   if (!active || active.status !== ARTIFACT_APPROVAL_STATUSES.PENDING) {
     throw makeError('No pending review found for this artifact', 404);
   }
+  if (active.assigned_to_user_id !== userId) {
+    throw makeError('Only the assigned reviewer can acknowledge this review', 403);
+  }
 
   const result = await DbPromise.run(
     db,
@@ -316,6 +325,9 @@ export async function approveArtifact(params: {
   const active = await findActiveArtifactAssignment(orgId, artifactType, artifactId);
   if (!active) {
     throw makeError('No active review found for this artifact', 404);
+  }
+  if (active.assigned_to_user_id !== approvedByUserId) {
+    throw makeError('Only the assigned reviewer can approve this artifact', 403);
   }
 
   const result = await DbPromise.run(
@@ -357,6 +369,9 @@ export async function rejectArtifact(params: {
   const active = await findActiveArtifactAssignment(orgId, artifactType, artifactId);
   if (!active) {
     throw makeError('No active review found for this artifact', 404);
+  }
+  if (active.assigned_to_user_id !== rejectedByUserId) {
+    throw makeError('Only the assigned reviewer can reject this artifact', 403);
   }
 
   const result = await DbPromise.run(

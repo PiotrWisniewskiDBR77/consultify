@@ -13,7 +13,9 @@
  * ta pozycja świadomie NIE występuje — zamiast atrapy.
  */
 import { ArrowLeftRight, ArrowRight, Paintbrush, Trash2, Type } from 'lucide-react';
-import React, { useCallback, useEffect, useRef } from 'react';
+import React from 'react';
+
+import { CanvasContextMenu } from '@/components/shared/CanvasContextMenu';
 
 interface WhiteboardEdgeContextMenuProps {
   x: number;
@@ -55,34 +57,6 @@ export const WhiteboardEdgeContextMenu: React.FC<WhiteboardEdgeContextMenuProps>
   onReverse,
   onDelete,
 }) => {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleMouseDown = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as HTMLElement)) onClose();
-    };
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    // Faza przechwytywania — obowiązkowa: d3-zoom pod ReactFlow woła
-    // `stopImmediatePropagation()` na `mousedown` w `.react-flow__pane`, więc
-    // zwykły listener nigdy się nie odpali (patrz NodeContextMenu).
-    window.addEventListener('mousedown', handleMouseDown, true);
-    document.addEventListener('keydown', handleKey);
-    return () => {
-      window.removeEventListener('mousedown', handleMouseDown, true);
-      document.removeEventListener('keydown', handleKey);
-    };
-  }, [onClose]);
-
-  const handleClick = useCallback(
-    (run: () => void) => {
-      run();
-      onClose();
-    },
-    [onClose]
-  );
-
   const items: EdgeMenuItem[] = [
     {
       id: 'edge_add_label',
@@ -123,42 +97,31 @@ export const WhiteboardEdgeContextMenu: React.FC<WhiteboardEdgeContextMenuProps>
     },
   ];
 
-  const clampedX = Math.min(x, window.innerWidth - 220);
-  const clampedY = Math.min(y, window.innerHeight - items.length * 36 - 20);
-
   return (
-    <div
-      ref={ref}
-      className="fixed z-toast bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl shadow-xl py-1.5 min-w-[200px] animate-in fade-in zoom-in-95 duration-150"
-      style={{ left: clampedX, top: clampedY }}
-    >
-      {items.map((item) => {
+    <CanvasContextMenu
+      x={x}
+      y={y}
+      onClose={onClose}
+      ariaLabel={isPl ? 'Akcje połączenia tablicy' : 'Whiteboard connection actions'}
+      testId="whiteboard-edge-context-menu"
+      items={items.map((item) => {
         const Icon = item.icon;
-        return (
-          <React.Fragment key={item.id}>
-            {item.dividerBefore && (
-              <div className="my-1 mx-2 h-px bg-slate-200/60 dark:bg-white/[0.06]" />
-            )}
-            <button
-              type="button"
-              disabled={isLocked}
-              onClick={() => handleClick(item.run)}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 text-[11px] font-medium transition-colors disabled:opacity-40 ${
-                item.danger
-                  ? 'text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20'
-                  : 'text-c-text hover:bg-c-surface-raised'
-              }`}
-            >
-              <Icon
-                size={14}
-                className={item.danger ? 'shrink-0' : 'text-c-text-muted shrink-0'}
-              />
-              <span>{isPl ? item.labelPl : item.labelEn}</span>
-            </button>
-          </React.Fragment>
-        );
+        return {
+          id: item.id,
+          label: isPl ? item.labelPl : item.labelEn,
+          icon: <Icon size={14} />,
+          disabled: isLocked,
+          disabledReason: isLocked
+            ? isPl
+              ? 'Połączenie jest zablokowane'
+              : 'Connection is locked'
+            : undefined,
+          danger: item.danger,
+          separatorBefore: item.dividerBefore,
+          onSelect: item.run,
+        };
       })}
-    </div>
+    />
   );
 };
 

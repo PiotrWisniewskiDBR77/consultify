@@ -51,6 +51,24 @@ const KIND_ICON_MAP: Record<FinanceKind, typeof Calculator> = {
   valuation: Target,
 };
 
+export function getValuationSensitivityTable(sensitivity: any): number[][] {
+  const candidates = [sensitivity?.table, sensitivity?.grid, sensitivity?.matrix];
+
+  for (const candidate of candidates) {
+    if (
+      Array.isArray(candidate) &&
+      candidate.length > 0 &&
+      candidate.every(
+        (row) => Array.isArray(row) && row.every((value) => Number.isFinite(Number(value)))
+      )
+    ) {
+      return candidate.map((row) => row.map((value: unknown) => Number(value)));
+    }
+  }
+
+  return [];
+}
+
 async function computeModelWithFallback(modelId: string) {
   try {
     return await V8FinanceApi.computeModel(modelId);
@@ -792,8 +810,8 @@ export function useFinancePreview({
               {valuationPreviewDetail?.sensitivity &&
                 (() => {
                   const sens = valuationPreviewDetail.sensitivity;
-                  const matrix = sens?.matrix || sens?.grid;
-                  if (!Array.isArray(matrix) || matrix.length === 0) return null;
+                  const matrix = getValuationSensitivityTable(sens);
+                  if (matrix.length === 0) return null;
                   return (
                     <div className="rounded-lg border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/50 dark:bg-white/[0.02] p-3 space-y-2">
                       <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">

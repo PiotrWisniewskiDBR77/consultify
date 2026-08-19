@@ -162,7 +162,9 @@ vi.mock('../../../src/services/api', () => ({
 
 vi.mock('../../../src/services/api/v8/results', () => ({
   V8ResultsApi: {
+    getRoiPortfolioSummary: vi.fn(),
     getDashboard: vi.fn(),
+    getScorecards: vi.fn(),
     getKpiCatalog: vi.fn(),
     deleteKpi: vi.fn(),
   },
@@ -227,6 +229,23 @@ describe('ResultsHub V8 runtime strip', () => {
       kpis: [],
       mappings: [],
       initiatives: [],
+    } as any);
+    vi.mocked(V8ResultsApi.getRoiPortfolioSummary).mockResolvedValue({
+      organizationId: 'dbr77',
+      items: [],
+      summary: {
+        totalProjected: 0,
+        totalRealized: 0,
+        totalCapex: 0,
+        totalVariance: 0,
+        initiativeCount: 0,
+        coveragePercent: 0,
+      },
+    } as any);
+    vi.mocked(V8ResultsApi.getScorecards).mockResolvedValue({
+      organizationId: 'dbr77',
+      scorecards: [],
+      count: 0,
     } as any);
   });
 

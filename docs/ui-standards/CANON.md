@@ -1,7 +1,7 @@
 # Consultify UI/UX — CANON
 
 > **JEDYNY AUTORYTET I JEDYNY FRONT** dla wszystkich decyzji UI/UX.
-> Wersja: **v3.1** — konsolidacja 2026-06-14, remediation po czwartym audycie 2026-08-02 (§2.1, §9).
+> Wersja: **v3.2** — finalny odbiór kanoniczny 2026-08-03 po remediation czwartego audytu i panelu adwersaryjnego (§2.1, §7, §9).
 > Kto stosuje: każdy dev, każdy agent AI, każde code review.
 
 To jest jedyny dokument, który **ogłasza** standard. Wszystko inne w `docs/ui-standards/` jest albo **warstwą szczegółu** podległą temu kanonowi, albo **archiwum historii** (`_archive/`). Jeśli czegoś tu nie ma — patrz właściwa warstwa (§7). Jeśli nie ma nigdzie, zastosuj `THEORETICAL_PHASE_CLOSURE_2026-08-02.md`: decyzje systemowe rozstrzygaj przez kanon, a właściciela angażuj wyłącznie w nieredukowalne decyzje biznesowe.
@@ -138,11 +138,11 @@ docs/ui-standards/
 ├── CANON.md                  ← TEN PLIK — jedyny autorytet i front
 ├── UI_UX_IMPLEMENTATION_STANDARD.md ← kompletny kontrakt implementacji i odbioru ekranów
 ├── MODULE_UI_UX_COMPLIANCE_MATRIX.md ← 19 modułów: spec · evidence · status zgodności
-├── THEORETICAL_PHASE_CLOSURE_2026-08-02.md ← decyzje właścicielskie zamknięte, remediation dokumentacji otwarte
-├── SKEPTICAL_DOCUMENTATION_ACCEPTANCE_AUDIT_2026-08-02.md ← niezależny odbiór i blokery P0
-├── DOCUMENTATION_REACCEPTANCE_2026-08-02.md ← PASS FOR IMPLEMENTATION po zamknięciu P0
-├── DEEP_SKEPTICAL_AUDIT_ROUND_3_2026-08-02.md ← trzeci audyt jakości i zgodności z kodem
-├── FINAL_DOCUMENTATION_ACCEPTANCE_2026-08-02.md ← aktualny odbiór 9,6/10
+├── FINAL_CANONICAL_DOCUMENTATION_ACCEPTANCE_2026-08-03.md ← AKTUALNY I JEDYNY odbiór specyfikacji
+├── _DOC_CODE_DELTA_REGISTER.md ← bieżące, zmierzone różnice dokumentacja↔kod
+├── _KOREKTY_PO_PANELU_ADWERSARYJNYM_2026-08-02.md ← zamknięty rejestr remediation K-01–K-45
+├── THEORETICAL_PHASE_CLOSURE_2026-08-02.md ← zatwierdzone decyzje właścicielskie
+├── FINAL_DOCUMENTATION_ACCEPTANCE_2026-08-02.md ← HISTORYCZNY; superseded
 ├── CLAUDE_DOCUMENTATION_HANDOFF.md ← instrukcja zewnętrznego review
 ├── TRIADA_KANON.md           ← ★★★ SSOT ekranów LISTOWYCH (Menu·Tabela·Preview·Kanban) — patrz §7.1
 ├── 00-foundation/            ← tokeny, kolor, typografia, język wizualny, motion
@@ -161,16 +161,23 @@ docs/ui-standards/
 - **[`_DOC_CODE_DELTA_REGISTER.md`](_DOC_CODE_DELTA_REGISTER.md)** — rejestr **zmierzonych** rozbieżności dokumentacja↔kod (§2.1). Wpis wymaga polecenia pomiaru, liczby i ścieżki; zakaz wpisów opartych na deklaracji lub pamięci. Metoda wzorowana na `BRAND_EXPORT_CANON.md` §0.
 - **[`00-foundation/BRAND_EXPORT_CANON.md`](00-foundation/BRAND_EXPORT_CANON.md)** — ★★★ zatwierdzony SSOT eksportów-do-klienta (PPTX·DOCX·XLSX·PDF), analogiczny do TRIADA/ARTIFACT_ANATOMY. **Status: APPROVED_SPEC; bramka B-P5 zamknięta 2026-08-02.** Kod generatorów wymaga jeszcze konwergencji w zadaniach VF3-2/3/4. Uzupełnia `docs/product/DELIVERABLE_FORMATTING_SPEC.md`.
 
+### 7.2 Status i łańcuch odbioru dokumentacji
+
+- **[`FINAL_CANONICAL_DOCUMENTATION_ACCEPTANCE_2026-08-03.md`](FINAL_CANONICAL_DOCUMENTATION_ACCEPTANCE_2026-08-03.md)** — **aktualny i jedyny werdykt**: specyfikacja `APPROVED_SPEC`, runtime `PARTIAL`.
+- **[`_KOREKTY_PO_PANELU_ADWERSARYJNYM_2026-08-02.md`](_KOREKTY_PO_PANELU_ADWERSARYJNYM_2026-08-02.md)** — zamknięty rejestr K-01–K-45 (`CLOSED_AFTER_REMEDIATION`), zachowany jako audytowalna historia.
+- `SKEPTICAL_DOCUMENTATION_ACCEPTANCE_AUDIT_2026-08-02.md`, `DOCUMENTATION_REACCEPTANCE_2026-08-02.md`, `DEEP_SKEPTICAL_AUDIT_ROUND_3_2026-08-02.md` i `FINAL_DOCUMENTATION_ACCEPTANCE_2026-08-02.md` — dokumenty **historyczne/superseded**. Nie ogłaszają aktualnego statusu ani oceny.
+
 ### Warstwy szczegółu
 - **[`UI_UX_IMPLEMENTATION_STANDARD.md`](UI_UX_IMPLEMENTATION_STANDARD.md)** — kompletny, przekrojowy kontrakt ekranu: shell, listy, preview, N-mode, artefakty, wizardy, stany, AI, a11y, responsive, Visual QA i DoD.
 - **[`MODULE_UI_UX_COMPLIANCE_MATRIX.md`](MODULE_UI_UX_COMPLIANCE_MATRIX.md)** — operacyjna macierz 19 modułów, funkcji My Work, evidence i decyzji odbiorowych.
 - **[`STRUCTURE_AND_MIGRATION.md`](STRUCTURE_AND_MIGRATION.md)** — docelowa organizacja, zasady migracji oraz zakaz uznawania nieodebranych screenshotów za referencję.
-- **[`THEORETICAL_PHASE_CLOSURE_2026-08-02.md`](THEORETICAL_PHASE_CLOSURE_2026-08-02.md)** — rejestr zatwierdzonych decyzji właścicielskich; warstwa dokumentacyjna ma status `NEEDS_REMEDIATION`.
+- **[`THEORETICAL_PHASE_CLOSURE_2026-08-02.md`](THEORETICAL_PHASE_CLOSURE_2026-08-02.md)** — rejestr zatwierdzonych decyzji właścicielskich; późniejsza remediation została zamknięta finalnym odbiorem 2026-08-03.
 - **[`SKEPTICAL_DOCUMENTATION_ACCEPTANCE_AUDIT_2026-08-02.md`](SKEPTICAL_DOCUMENTATION_ACCEPTANCE_AUDIT_2026-08-02.md)** — niezależny odbiór dokumentacji, wynik `FAIL`, sześć blokerów P0 i kryteria ponownego odbioru.
-- **[`DOCUMENTATION_REACCEPTANCE_2026-08-02.md`](DOCUMENTATION_REACCEPTANCE_2026-08-02.md)** — ponowny niezależny odbiór po remediation: `PASS FOR IMPLEMENTATION`, 8,8/10; wyraźnie oddziela gotową specyfikację od nieodebranego runtime.
-- **[`DEEP_SKEPTICAL_AUDIT_ROUND_3_2026-08-02.md`](DEEP_SKEPTICAL_AUDIT_ROUND_3_2026-08-02.md)** — trzeci audyt: dryf doc↔kod i ogólność kart wykryte oraz naprawione.
-- **[`FINAL_DOCUMENTATION_ACCEPTANCE_2026-08-02.md`](FINAL_DOCUMENTATION_ACCEPTANCE_2026-08-02.md)** — aktualny odbiór `PASS FOR IMPLEMENTATION`, 9,6/10.
+- **[`DOCUMENTATION_REACCEPTANCE_2026-08-02.md`](DOCUMENTATION_REACCEPTANCE_2026-08-02.md)** — historyczny odbiór rundy 2; `SUPERSEDED`.
+- **[`DEEP_SKEPTICAL_AUDIT_ROUND_3_2026-08-02.md`](DEEP_SKEPTICAL_AUDIT_ROUND_3_2026-08-02.md)** — historyczny audyt rundy 3; `SUPERSEDED`.
+- **[`FINAL_DOCUMENTATION_ACCEPTANCE_2026-08-02.md`](FINAL_DOCUMENTATION_ACCEPTANCE_2026-08-02.md)** — historyczny werdykt cofnięty przez czwarty audyt; `SUPERSEDED_BY_FOURTH_AUDIT`.
 - **[`CLAUDE_DOCUMENTATION_HANDOFF.md`](CLAUDE_DOCUMENTATION_HANDOFF.md)** — kolejność czytania i zadanie dla niezależnego recenzenta.
+- **[`PHASE_1_RUNTIME_MAPPING_BRIEF_2026-08-03.md`](PHASE_1_RUNTIME_MAPPING_BRIEF_2026-08-03.md)** — kanoniczny brief mapowania runtime przed pierwszą falą przebudowy; Claude wykonuje, Codex odbiera, bez zmian implementacyjnych.
 - **[`00-foundation/ICONOGRAPHY_AND_ACTION_STANDARD.md`](00-foundation/ICONOGRAPHY_AND_ACTION_STANDARD.md)** — jedna biblioteka ikon, rozmiary, stałe znaczenia i kontrakt toolbar/kebab/prawy klik/AI.
 - **[`00-foundation/FOUNDATION_TOKEN_CONTRACT.md`](00-foundation/FOUNDATION_TOKEN_CONTRACT.md)** — normatywne wartości typografii, spacingu, wymiarów, ikon, regionów, elevation, z-index, motion, viewportów i kontrastu; rozstrzyga konflikty liczbowe.
 - **[`00-foundation/CONTENT_LOCALE_AND_MICROCOPY_STANDARD.md`](00-foundation/CONTENT_LOCALE_AND_MICROCOPY_STANDARD.md)** — PL/EN, ton, błędy, formaty, overflow, pseudo-locale i AI copy.
@@ -179,8 +186,8 @@ docs/ui-standards/
 - **[`02-components/COMPONENT_FAMILY_ACCEPTANCE_APPENDIX.md`](02-components/COMPONENT_FAMILY_ACCEPTANCE_APPENDIX.md)** — unikalne kryteria akceptacji 26 rodzin.
 - **[`MVP_END_TO_END_UX_FLOWS.md`](MVP_END_TO_END_UX_FLOWS.md)** — backbone i przepływy end-to-end My Work oraz przejścia między modułami.
 - **[`COMPONENT_EVIDENCE_AND_ACCEPTANCE_MATRIX.md`](COMPONENT_EVIDENCE_AND_ACCEPTANCE_MATRIX.md)** — wymagane fixture, baseline, a11y i status odbioru wszystkich 26 rodzin.
-- **[`02-components/families/README.md`](02-components/families/README.md)** — 26 rodzin komponentów; pierwsze pięć ma kompletne karty `APPROVED_SPEC`, pozostałe jawne karty `DRAFT`.
-- **`00-foundation/`** — `color-system.md` · `visual-language.md` · `light-mode-readability.md` · `canvas-mode.md` · `artifact-identity-map.md` · `BRAND_EXPORT_CANON.md` (DRAFT — patrz §7.1)
+- **[`02-components/families/README.md`](02-components/families/README.md)** — 26/26 rodzin komponentów: `APPROVED_SPEC`; runtime każdej rodziny pozostaje `PARTIAL` do osobnego odbioru evidence.
+- **`00-foundation/`** — `color-system.md` · `visual-language.md` · `light-mode-readability.md` · `canvas-mode.md` · `artifact-identity-map.md` · `BRAND_EXPORT_CANON.md` (`APPROVED_SPEC` — patrz §7.1)
 - **`01-shell-layout/`** — `presentation-modes.md` (tryby D/N/C) · `n-mode-card-standard.md` · `shared-nmode-sections-standard.md` · `artifact-shell.md` · `artifact-shell-future-standard.md` · `app-topbar-standard-v3.md`
 - **`02-components/`** — `shared-sections.md` · `decision-panel.md` · `task-panel.md` · `notification-panel.md` · `building-blocks.md` · `empty-loading-states.md` (stany empty/loading uczciwe — CANON §4.1/§5) · `MICRO_INTERACTIONS_CANON.md` (★ katalog 12 wzorców mikro-interakcji ZAMROŻONY — hover-reveal/kebab/accordion/toast/skeleton/lista→preview/drag-kanban/kolumny/modal/focus-ring/streaming/zapis, każdy z tokenem `--motion-*` + plik-binding, Vegas VF0-9) · `help-*` · `workspace-3-tools-strip.md` · `navigation-permissions-canon.md` (nawigacja cross-tool + bramki uprawnień, ref sweepu L1) …
 - **`03-modules/`** — `TABLE_AND_PREVIEW_CANON.md` · `BLOCK_TYPES_CANON.md` · `INSIGHT_CANON.md` · `INITIATIVE_CANON.md` · `TIMELINE_CALENDAR_CANON.md` · `module-hub-standard.md` · `interactive-board-standard.md` · `tools-library-detail-standard.md`
@@ -202,6 +209,8 @@ Każdy agent (Claude, Cursor) **musi przeczytać ten kanon przed pracą nad UI**
 
 | Data | Wersja | Zmiana |
 |---|---|---|
+| 2026-08-03 | v3.2 | **Finalny odbiór kanoniczny:** ustanowiono jeden aktualny werdykt `FINAL_CANONICAL_DOCUMENTATION_ACCEPTANCE_2026-08-03.md`; K-01–K-45 zamknięto jako historię remediation; zsynchronizowano 26/26 kart jako `APPROVED_SPEC / PARTIAL`; rozstrzygnięto Menu 3 na 48 px; usunięto z indeksu roszczenia historycznych odbiorów do aktualności; potwierdzono `BRAND_EXPORT_CANON.md` jako `APPROVED_SPEC`. |
+| 2026-08-03 | v3.2 | Dodano kanoniczny brief Fazy 1: mapowanie runtime przez Claude, niezależny odbiór Codex, trzy checkpointy i bezwzględny zakaz implementacji przed zatwierdzeniem planu. |
 | 2026-08-02 | v3.1 | **Korekta po panelu adwersaryjnym (K-01):** §6 binding „Preview action buttons" wskazywał `previewStyles.ts` jako plik komponentu `PreviewActionBar` — zweryfikowano (`grep -n "PreviewActionBar" src/components/shared/PreviewPane/previewStyles.ts` → 0 trafień); komponent realnie żyje w `PreviewActionBar.tsx`, `previewStyles.ts` ma tylko stałe klas/warianty. Rozdzielono na dwa wiersze bindingu. Źródło: `_KOREKTY_PO_PANELU_ADWERSARYJNYM_2026-08-02.md` K-01. |
 | 2026-08-02 | v3.1 | **Czwarty niezależny audyt — werdykt `FAIL`, remediation wykonana.** Audyt cofnął ocenę 9,6/10 i wykrył 7 blokerów P0, których trzy poprzednie rundy nie złapały, bo mierzyły liczbę dokumentów i nagłówków zamiast treści. Zamknięte: (a) **sprzeczność reguły fokusa** — `light-mode-readability.md` nakazywał `ring-primary-500`, co po zmianie palety znaczy crimson, czyli dokładnie to, czego `TRIADA_KANON.md` §A10 zakazuje jako naruszenie blokujące odbiór; (b) **martwa paleta fioletowa** `#7C3AED` w `color-system.md` i `visual-language.md` (w tym migration guide, który kazał migrować `blue/amber/indigo → primary`, czyli zamalować aplikację crimsonem); (c) **12 z 20 sekcji identycznych bajt-w-bajt we wszystkich 26 kartach rodzin** — po naprawie 17 z 20 sekcji jest unikalnych, 0 identycznych; (d) **pięć różnych szerokości panelu** w `ARTIFACT_ANATOMY_STANDARD.md` → rozdzielone na dwie realne powierzchnie; (e) **dwa konkurujące modele kebaba i preview** (TRIADA vs TABLE_AND_PREVIEW_CANON, oba deklarujące wyłączność) → hierarchia rozstrzygnięta w §2.1; (f) **`FROZEN_LAYOUTS.md` zamrażał stan nieaktualny** (fioletowy chip Menu 3 wobec neutralnego w kodzie); (g) **brak śladu dowodowego decyzji właścicielskich** → wymóg pola źródło/data/forma. Dodano: §2.1 (konflikt dokumentów tego samego poziomu), `_DOC_CODE_DELTA_REGISTER.md`, `npm run lint:focus` jako miernik długu, kontrakt generatora SPEC-W oraz kontrakt zakresu AI, limitów wydajności i klawiatury dla canvasu. **Runtime pozostaje `PARTIAL`** — naprawiono dokumentację, nie produkt. |
 | 2026-08-02 | v3.0 | **Trzeci sceptyczny odbiór:** skorygowano token contract względem kodu SSOT; dodano runtime bindings, unikalne kryteria 26 rodzin, content/locale i handoff. Wynik 9,6/10; runtime nadal `PARTIAL` do evidence per rodzina. |

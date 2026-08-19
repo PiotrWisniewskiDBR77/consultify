@@ -104,7 +104,7 @@ export const ClientDocumentsVault: React.FC = () => {
     [searchQuery, t, isPolish, resyncTick]
   );
 
-  useHubBarSlot({ filterControls: filterControlsNode });
+  useHubBarSlot({ searchControl: filterControlsNode });
 
   if (!isClientVaultEnabled()) return null;
 

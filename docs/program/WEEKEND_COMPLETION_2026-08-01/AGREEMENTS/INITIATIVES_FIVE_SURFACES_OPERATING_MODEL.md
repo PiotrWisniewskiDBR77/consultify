@@ -2,12 +2,15 @@
 document_id: INITIATIVES-FIVE-SURFACES-OPERATING-MODEL
 module: Initiatives
 status: DRAFT_FOR_OWNER_REVIEW
+superseded_in_scope_by: ../../../modules/INITIATIVES_EXECUTION_FUNCTIONS_CANON.md
 owner: piotr
 prepared_by: codex
 last_reviewed: 2026-07-31
 ---
 
 # Pięć powierzchni Initiatives — kompletny model pracy
+
+> **SUPERSEDED IN SCOPE (2026-08-09):** docelowe Menu 2, business lifecycle oraz podział funkcji Initiatives definiuje [`docs/modules/INITIATIVES_EXECUTION_FUNCTIONS_CANON.md`](../../../modules/INITIATIVES_EXECUTION_FUNCTIONS_CANON.md). Ten dokument pozostaje historycznym zapisem modelu pięciu powierzchni i nie ustanawia już docelowego Menu 2.
 
 ## 1. Rozstrzygnięcie
 

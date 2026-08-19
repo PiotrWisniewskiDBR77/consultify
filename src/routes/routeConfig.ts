@@ -67,6 +67,9 @@ export const ROUTES = {
   // Assessment Module
   ASSESSMENT: {
     ROOT: '/assessment',
+    // Legacy "Audits" value was historical; keep canonical navigation in one place.
+    // Canonical entry now resolves via AppView.ASSESSMENT_AUDITS -> '/audit-programs'.
+    AUDITS: '/audit-programs',
     DRD: '/assessment/drd',
     SIRI: '/assessment/siri',
     ADMA: '/assessment/adma',
@@ -74,7 +77,6 @@ export const ROUTES = {
     LEAN: '/assessment/lean',
     OVERVIEW: '/assessment/overview',
     SUMMARY: '/assessment/summary',
-    AUDITS: '/assessment/audits',
   },
 
   // Context Builder

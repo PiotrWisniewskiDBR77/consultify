@@ -4,10 +4,12 @@ status: SUPERSEDED_BY_FOURTH_AUDIT
 score: 9.6/10 (cofnięte)
 runtime_status: PARTIAL
 supersedes: docs/ui-standards/DOCUMENTATION_REACCEPTANCE_2026-08-02.md
-superseded_by: docs/ui-standards/CANON.md §9 (wpis v3.1, 2026-08-02)
+superseded_by: docs/ui-standards/FINAL_CANONICAL_DOCUMENTATION_ACCEPTANCE_2026-08-03.md
 ---
 
 > ## ⚠ DOKUMENT HISTORYCZNY — ocena 9,6/10 została COFNIĘTA
+>
+> Aktualny werdykt: [`FINAL_CANONICAL_DOCUMENTATION_ACCEPTANCE_2026-08-03.md`](FINAL_CANONICAL_DOCUMENTATION_ACCEPTANCE_2026-08-03.md).
 >
 > Czwarty, niezależny audyt (2026-08-02) dał werdykt **`FAIL`** i wykrył **siedem blokerów P0**, których ten odbiór nie zauważył: sprzeczną regułę fokusa między `TRIADA_KANON.md` a `00-foundation/light-mode-readability.md`, martwą paletę fioletową w `color-system.md`/`visual-language.md`, **12 z 20 sekcji identycznych bajt-w-bajt we wszystkich 26 kartach rodzin**, pięć różnych szerokości panelu w jednym dokumencie, dwa konkurujące modele kebaba i preview, nieaktualny `FROZEN_LAYOUTS.md` oraz brak śladu dowodowego decyzji właścicielskich.
 >
@@ -15,7 +17,7 @@ superseded_by: docs/ui-standards/CANON.md §9 (wpis v3.1, 2026-08-02)
 >
 > **Nauka do zapamiętania:** liczba dokumentów nie jest dowodem kompletności, a obecność sekcji nie jest dowodem treści. Nie pisz dokumentu, który ogłasza własną ocenę — ocenę wystawia niezależny odbiór, a jego jedynym dowodem są zmierzone liczby i cytowane ścieżki.
 >
-> Aktualny stan: `CANON.md` §9 (wpis v3.1) oraz [`_DOC_CODE_DELTA_REGISTER.md`](_DOC_CODE_DELTA_REGISTER.md).
+> Aktualny stan: `CANON.md` §7.2 i §9 oraz [`FINAL_CANONICAL_DOCUMENTATION_ACCEPTANCE_2026-08-03.md`](FINAL_CANONICAL_DOCUMENTATION_ACCEPTANCE_2026-08-03.md).
 
 # Końcowy odbiór dokumentacji standardu UI/UX
 
@@ -41,4 +43,3 @@ superseded_by: docs/ui-standards/CANON.md §9 (wpis v3.1, 2026-08-02)
 ## Bramka wdrożenia
 
 Implementacja jest przyjęta tylko, gdy wskazuje: komponent ID; właściwą kartę; runtime binding; fixture/evidence ID; wynik light/dark, PL/EN, keyboard, 125/200%, error/recovery; oraz brak lokalnego forka. Brak któregokolwiek elementu daje `APPROVED_SPEC / RUNTIME_PARTIAL`, nie `RUNTIME_ACCEPTED`.
-

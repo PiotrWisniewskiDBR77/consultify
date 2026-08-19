@@ -109,4 +109,66 @@ describe('mock Database', () => {
     expect(cols.has('edges_json')).toBe(true);
     expect(cols.has('version')).toBe(true);
   });
+
+  it('reports zero changes and preserves the row when optimistic version does not match', async () => {
+    const db = getDatabase();
+
+    await db.run(
+      `CREATE TABLE presentation_decks (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT,
+        title TEXT,
+        deck_json TEXT,
+        version INTEGER
+      )`
+    );
+    await db.run(
+      `INSERT INTO presentation_decks (id, organization_id, title, deck_json, version)
+       VALUES (?, ?, ?, ?, ?)`,
+      ['deck-1', 'org-1', 'Original', '{"title":"Original"}', 1]
+    );
+
+    const result = await db.run(
+      `UPDATE presentation_decks
+       SET title = ?, deck_json = ?, version = ?
+       WHERE id = ? AND organization_id = ? AND version = ?`,
+      ['Changed', '{"title":"Changed"}', 2, 'deck-1', 'org-1', 9]
+    );
+
+    expect(result.changes).toBe(0);
+    expect(
+      await db.get(
+        `SELECT title, deck_json, version FROM presentation_decks
+         WHERE id = ? AND organization_id = ?`,
+        ['deck-1', 'org-1']
+      )
+    ).toMatchObject({ title: 'Original', deck_json: '{"title":"Original"}', version: 1 });
+  });
+
+  it('exposes the personal-task write/read contract when the mock table has no schema', async () => {
+    const cols = await getTableColumns('tasks');
+
+    expect(cols).toEqual(
+      expect.objectContaining(
+        new Set([
+          'id',
+          'organization_id',
+          'title',
+          'description',
+          'status',
+          'priority',
+          'assignee_id',
+          'reporter_id',
+          'due_date',
+          'tags',
+          'task_type',
+          'source_type',
+          'source_id',
+          'created_at',
+          'updated_at',
+          'completed_at',
+        ])
+      )
+    );
+  });
 });

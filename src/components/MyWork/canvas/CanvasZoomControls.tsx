@@ -5,8 +5,18 @@
  * Provides: zoom in/out, visible zoom level, fit view, fullscreen, optional focus/restore,
  * and a toggle link for opening the full-field mini map.
  */
-import { Focus, Grid3x3, Map, Maximize2, Minimize2, Minus, Plus, RotateCcw } from 'lucide-react';
-import React, { useCallback } from 'react';
+import {
+  Focus,
+  Grid3x3,
+  Map,
+  Maximize2,
+  Minimize2,
+  Minus,
+  MoreHorizontal,
+  Plus,
+  RotateCcw,
+} from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 // ★ Zawsze z barrela 'reactflow' — import z '@reactflow/core' podpina DRUGĄ
 //   instancję magazynu i płótno przestaje startować.
 import { useReactFlow, useStore } from 'reactflow';
@@ -57,7 +67,9 @@ const ZoomBtn: React.FC<{
   </button>
 );
 
-const Divider = () => <div className="w-px h-5 bg-c-border-subtle dark:bg-c-border-subtle mx-0.5" />;
+const Divider = () => (
+  <div className="w-px h-5 bg-c-border-subtle dark:bg-c-border-subtle mx-0.5" />
+);
 
 export const CanvasZoomControls: React.FC<CanvasZoomControlsProps> = ({
   isPolish,
@@ -88,6 +100,17 @@ export const CanvasZoomControls: React.FC<CanvasZoomControlsProps> = ({
    */
   const zoomLevel = useStore((s) => s.transform[2]);
   const bottomBarUnified = isIdeaBottomBarUnifiedEnabled();
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!moreOpen) return;
+    const close = (event: MouseEvent) => {
+      if (!moreRef.current?.contains(event.target as Node)) setMoreOpen(false);
+    };
+    document.addEventListener('mousedown', close, true);
+    return () => document.removeEventListener('mousedown', close, true);
+  }, [moreOpen]);
 
   const handleZoomIn = useCallback(() => {
     zoomIn({ duration: ZOOM_DURATION });
@@ -143,109 +166,130 @@ export const CanvasZoomControls: React.FC<CanvasZoomControlsProps> = ({
           <Plus size={15} />
         </ZoomBtn>
         <Divider />
-        {onFullscreenToggle ? (
-          <ZoomBtn
-            onClick={onFullscreenToggle}
-            title={
-              isFullscreen
-                ? isPolish
-                  ? 'Wyłącz pełny ekran'
-                  : 'Exit fullscreen'
-                : isPolish
-                  ? 'Pełny ekran'
-                  : 'Fullscreen'
-            }
+        <div ref={moreRef} className="relative">
+          <button
+            type="button"
+            aria-haspopup="menu"
+            aria-expanded={moreOpen}
+            aria-label={isPolish ? 'Więcej ustawień widoku' : 'More view controls'}
+            title={isPolish ? 'Więcej ustawień widoku' : 'More view controls'}
+            onClick={() => setMoreOpen((open) => !open)}
+            className="flex h-8 w-8 items-center justify-center rounded-hig-xl text-c-text-secondary hover:bg-c-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
-            {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-          </ZoomBtn>
-        ) : (
-          <ZoomBtn onClick={handleFitView} title={isPolish ? 'Dopasuj widok' : 'Fit view'}>
-            <Maximize2 size={14} />
-          </ZoomBtn>
-        )}
-        {selectedNodeId && (
-          <ZoomBtn
-            onClick={handleFocusSelected}
-            title={isPolish ? 'Fokus na zaznaczeniu' : 'Focus selected'}
-          >
-            <Focus size={14} />
-          </ZoomBtn>
-        )}
-        {savedViewport && (
-          <ZoomBtn
-            onClick={handleRestore}
-            title={isPolish ? 'Przywróć zapisany widok' : 'Restore saved viewport'}
-          >
-            <RotateCcw size={13} />
-          </ZoomBtn>
-        )}
-        {onToggleSnap && (
-          <>
-            <Divider />
-            <button
-              type="button"
-              onClick={onToggleSnap}
-              aria-pressed={snapEnabled}
-              className={`flex h-8 w-8 items-center justify-center rounded-hig-xl transition-all duration-150 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
-                snapEnabled
-                  ? 'bg-c-surface dark:bg-c-surface-raised text-c-focus'
-                  : 'text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface dark:hover:bg-c-surface-raised'
-              }`}
-              title={
-                snapEnabled
-                  ? isPolish
-                    ? 'Wyłącz przyciąganie do siatki'
-                    : 'Disable snap to grid'
-                  : isPolish
-                    ? 'Przyciągaj do siatki'
-                    : 'Snap to grid'
-              }
+            <MoreHorizontal size={15} aria-hidden="true" />
+          </button>
+          {moreOpen ? (
+            <div
+              role="menu"
+              className="absolute bottom-full right-0 mb-2 min-w-52 rounded-xl border border-c-border-subtle bg-c-surface p-1 shadow-xl"
             >
-              <Grid3x3 size={14} />
-            </button>
-          </>
-        )}
-        {onToggleMiniMap && (
-          <>
-            <Divider />
-            {/* K2 (decyzja D2, rozdz. 03 §7): minimapa jako IKONA, nie tekst
-                „Mini mapa" — spójnie z resztą kontrolek rogu, ktore sa ikonami.
-                Nazwa idzie do tooltipa i aria-label, stan aktywny podswietla. */}
-            <button
-              type="button"
-              onClick={onToggleMiniMap}
-              aria-pressed={showMiniMap}
-              className={`flex h-8 w-8 items-center justify-center rounded-hig-xl transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
-                showMiniMap
-                  ? 'bg-c-surface dark:bg-c-surface-raised text-c-text dark:text-c-text'
-                  : 'text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface dark:hover:bg-c-surface-raised'
-              }`}
-              title={
-                showMiniMap
-                  ? isPolish
-                    ? 'Ukryj mini mapę'
-                    : 'Hide mini map'
-                  : isPolish
-                    ? 'Pokaż mini mapę'
-                    : 'Show mini map'
-              }
-              aria-label={
-                showMiniMap
-                  ? isPolish
-                    ? 'Ukryj mini mapę'
-                    : 'Hide mini map'
-                  : isPolish
-                    ? 'Pokaż mini mapę'
-                    : 'Show mini map'
-              }
-            >
-              <Map size={14} aria-hidden="true" />
-            </button>
-          </>
-        )}
+              <ViewMenuItem
+                icon={<Maximize2 size={14} />}
+                label={isPolish ? 'Dopasuj widok' : 'Fit view'}
+                onClick={() => {
+                  handleFitView();
+                  setMoreOpen(false);
+                }}
+              />
+              {onFullscreenToggle ? (
+                <ViewMenuItem
+                  icon={isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+                  label={
+                    isFullscreen
+                      ? isPolish
+                        ? 'Wyłącz pełny ekran'
+                        : 'Exit fullscreen'
+                      : isPolish
+                        ? 'Pełny ekran'
+                        : 'Fullscreen'
+                  }
+                  onClick={() => {
+                    onFullscreenToggle();
+                    setMoreOpen(false);
+                  }}
+                />
+              ) : null}
+              {selectedNodeId ? (
+                <ViewMenuItem
+                  icon={<Focus size={14} />}
+                  label={isPolish ? 'Pokaż zaznaczenie' : 'Focus selected'}
+                  onClick={() => {
+                    handleFocusSelected();
+                    setMoreOpen(false);
+                  }}
+                />
+              ) : null}
+              {savedViewport ? (
+                <ViewMenuItem
+                  icon={<RotateCcw size={14} />}
+                  label={isPolish ? 'Przywróć zapisany widok' : 'Restore saved view'}
+                  onClick={() => {
+                    handleRestore();
+                    setMoreOpen(false);
+                  }}
+                />
+              ) : null}
+              {onToggleSnap ? (
+                <ViewMenuItem
+                  icon={<Grid3x3 size={14} />}
+                  label={
+                    snapEnabled
+                      ? isPolish
+                        ? 'Wyłącz przyciąganie'
+                        : 'Disable snap'
+                      : isPolish
+                        ? 'Włącz przyciąganie'
+                        : 'Enable snap'
+                  }
+                  active={snapEnabled}
+                  onClick={() => {
+                    onToggleSnap();
+                    setMoreOpen(false);
+                  }}
+                />
+              ) : null}
+              {onToggleMiniMap ? (
+                <ViewMenuItem
+                  icon={<Map size={14} />}
+                  label={
+                    showMiniMap
+                      ? isPolish
+                        ? 'Ukryj minimapę'
+                        : 'Hide minimap'
+                      : isPolish
+                        ? 'Pokaż minimapę'
+                        : 'Show minimap'
+                  }
+                  active={showMiniMap}
+                  onClick={() => {
+                    onToggleMiniMap();
+                    setMoreOpen(false);
+                  }}
+                />
+              ) : null}
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   );
 };
+
+const ViewMenuItem: React.FC<{
+  icon: React.ReactNode;
+  label: string;
+  active?: boolean;
+  onClick: () => void;
+}> = ({ icon, label, active, onClick }) => (
+  <button
+    type="button"
+    role="menuitem"
+    onClick={onClick}
+    className={`flex min-h-9 w-full items-center gap-2 rounded-lg px-2.5 text-left text-[13px] text-c-text hover:bg-c-surface-raised ${active ? 'text-c-focus' : ''}`}
+  >
+    <span aria-hidden="true">{icon}</span>
+    <span>{label}</span>
+  </button>
+);
 
 export default CanvasZoomControls;

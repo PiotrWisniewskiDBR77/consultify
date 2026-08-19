@@ -4,11 +4,15 @@
 - cel operacyjny: jeden zintegrowany, zabezpieczony canonical, audyt wszystkich modułów przed weekendowym startem
 
 ## 0) Stan wejścia
- - aktywny HEAD: `635fd2d48d`
+ - aktywny HEAD: `869f9c322c`
  - gałąź robocza: `codex/sync-demo-20260729`
-- liczba wpisów `git status --short`: 354 (aktualnie aktywny roboczy kanał zawiera zmiany wielu obszarów)
-- liczba plików tracked (M/D/A): 167
-- liczba plików untracked: 187
+- liczba wpisów `git status --short`: 367 (stan roboczy nadal żyje, do sklasyfikowania)
+- liczba plików tracked (M/D/A): 173
+- liczba plików untracked: 189
+
+### Nota operacyjna dzisiejsza
+- W ramach ostatniej godziny wykonano tylko blok naprawy tras/route-kontraktu (Audits) i dokumentacyjne domknięcie statusów; nie zmieniono warstwy biznesowej/agent-cases.
+- Potwierdzono testem punktowym: `npx vitest run tests/unit/routes/routeConfig.test.ts -t "maps assessment audits AppView and ROUTES entry to canonical /audit-programs" --no-file-parallelism` ✅
 
 ## 1) Freeze / bezpieczeństwo
 ### Akcje wykonane / zachowane

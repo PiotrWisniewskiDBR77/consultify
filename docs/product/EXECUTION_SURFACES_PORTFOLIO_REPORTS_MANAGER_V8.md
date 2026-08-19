@@ -1,8 +1,9 @@
-# Execution Surfaces — Portfolio, Raporty, Manager (V8)
+# Execution Surfaces — Portfolio, Raporty, Manager (V8, superseded target split)
 
-> Status: Canonical v8
+> Status: Superseded in target Menu 2 scope; retained as historical V8 contract and reuse inventory
 > Owner: Product + Engineering
 > Scope: canonical UX and operating split for the `Execution` module across `Portfolio`, `Raporty` and `Manager`
+> Superseded by: [`docs/modules/INITIATIVES_EXECUTION_FUNCTIONS_CANON.md`](../modules/INITIATIVES_EXECUTION_FUNCTIONS_CANON.md) for the 2026-08-09 target split `Realizacje / Praca / Zasoby / Sterowanie / Raporty`
 
 ---
 

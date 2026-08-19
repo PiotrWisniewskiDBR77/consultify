@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   flattenInboxDisplayGroups,
   groupItems,
+  nextInboxPreviewItem,
   type InboxGroup,
   type InboxItem,
 } from '../../src/components/MyWork/InboxContent';
@@ -66,6 +67,20 @@ describe('groupItems (M03 Inbox dedup)', () => {
     const groups = groupItems(items);
     expect(groups).toHaveLength(3);
     expect(groups.every((g) => g.count === 1)).toBe(true);
+  });
+});
+
+describe('Inbox preview comparison pin', () => {
+  const first = makeItem({ id: 'preview-a', _key: 'task:preview-a' });
+  const second = makeItem({ id: 'preview-b', _key: 'task:preview-b' });
+
+  it('keeps the pinned record when another row is requested', () => {
+    expect(nextInboxPreviewItem(first, second, true)).toBe(first);
+  });
+
+  it('switches or closes normally when preview is not pinned', () => {
+    expect(nextInboxPreviewItem(first, second, false)).toBe(second);
+    expect(nextInboxPreviewItem(first, first, false)).toBeNull();
   });
 });
 
@@ -138,7 +153,7 @@ describe('flattenInboxDisplayGroups (StandardTable grouped-rows)', () => {
     expect(collapsed.some((r) => r.id === 'dupe-b')).toBe(false);
   });
 
-  it('cell-facing __item always carries the ROW\'S OWN real values (not mirrored)', () => {
+  it("cell-facing __item always carries the ROW'S OWN real values (not mirrored)", () => {
     const rows = flattenInboxDisplayGroups([{ ...group, isExpanded: true }]);
     const [repRow, childRow] = rows;
     expect(repRow.__item.urgency).toBe('critical');

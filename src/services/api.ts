@@ -6422,7 +6422,9 @@ export const Api = {
 
   getInitiativeById: async (id: string): Promise<any> => {
     const res = await fetchWithRetry(`${API_URL}/initiatives/${id}`, { headers: getHeaders() });
-    return normalizeInitiativeDisplayFields(await handleResponse(res, 'Failed to fetch initiative'));
+    return normalizeInitiativeDisplayFields(
+      await handleResponse(res, 'Failed to fetch initiative')
+    );
   },
 
   createInitiative: async (initiative: any): Promise<any> => {

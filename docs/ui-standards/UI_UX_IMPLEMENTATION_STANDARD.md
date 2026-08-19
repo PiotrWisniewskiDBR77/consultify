@@ -1,8 +1,8 @@
 # Consultify UI/UX — standard implementacyjny
 
-> **Status:** obowiązująca warstwa szczegółu podległa [`CANON.md`](CANON.md).  
-> **Zakres:** wszystkie ekrany desktopowe Consultify: huby, listy, preview, detale, artefakty, wizardy i eksporty.  
-> **Właściciel decyzji:** Product Owner / CTO.  
+> **Status:** obowiązująca warstwa szczegółu podległa [`CANON.md`](CANON.md).
+> **Zakres:** wszystkie ekrany desktopowe Consultify: huby, listy, preview, detale, artefakty, wizardy i eksporty.
+> **Właściciel decyzji:** Product Owner / CTO.
 > **Reguła konfliktu:** ten dokument nie nadpisuje `CANON.md`, `TRIADA_KANON.md` ani zamrożonych układów. W konflikcie obowiązuje hierarchia z `CANON.md` §2.
 
 ## 1. Cel standardu
@@ -58,7 +58,7 @@ Kolejność pionowa:
 
 1. App Topbar — kontekst globalny: Data, Model, inbox/tasks, Teresa, konto.
 2. Module Topbar / Menu 2 — nazwa modułu, główne zakładki, primary CTA.
-3. Command Row / Menu 3 — filtry, widoki, zapisane zestawy i kontekstowe AI actions.
+3. Command Row / Menu 3 — presety/scope z licznikami, bulk, otwarte karty i kontekstowe AI actions. Przełącznik widoku należy do Menu 2.
 4. Content surface — lista, canvas, dokument, workspace lub dashboard.
 5. Preview / context rail — tylko gdy wybrany obiekt lub tryb tego wymaga.
 
@@ -82,7 +82,7 @@ Nie wolno dodawać kolejnego globalnego paska. Kontrolki lokalne żyją wewnątr
 ### 3.4 Command Row / Menu 3
 
 - dokładnie jeden rząd;
-- lewa strona: tryb widoku, zakres, filtry i folder;
+- lewa strona: presety zakresu/etapu z licznikami albo — zależnie od stanu — bulk lub taby otwartych kart; tryb widoku należy do Menu 2;
 - prawa strona: akcje widoku oraz AI, jeśli dotyczą całego bieżącego zbioru;
 - do pięciu widocznych akcji; reszta w overflow;
 - aktywny filtr ma czytelny stan i możliwość resetu;
@@ -347,7 +347,11 @@ Każdy ekran i ważny region dokumentuje minimum:
 
 MVP jest desktop-first; brak mobile nie zwalnia z zachowania przy mniejszym desktopie.
 
-- docelowa kontrola: 1920×1080, 1600×900, 1440×900, 1280×800;
+- kanoniczny odbiór wizualny: viewport CSS 1440×900, zoom 100%;
+- obowiązkowy minimalny desktop: viewport CSS 1280×720, zoom 100%;
+- 1920×1080 i 1600×900 pozostają dodatkowymi kontrolami diagnostycznymi;
+- przy 1280 dozwolone są jawny overflow i logiczne grupowanie, lecz nie clipping, overlap ani
+  utrata funkcji;
 - brak poziomego scrolla całej aplikacji; dopuszczalny wewnątrz tabeli/canvasu;
 - preview może przejść w drawer, ale zachowuje pełną funkcję;
 - toolbar przechodzi do overflow według priorytetu;
@@ -464,4 +468,3 @@ Każda decyzja zmieniająca UI zapisuje:
 - wpływ na a11y, responsive, AI i eksport;
 - właściciela oraz datę akceptacji;
 - link do zadania/PR i changelog kanonu, jeśli zmienia standard.
-

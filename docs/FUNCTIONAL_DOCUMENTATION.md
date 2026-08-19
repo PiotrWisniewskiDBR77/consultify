@@ -63,6 +63,13 @@ Client Vault i Run Agent nie są osobnymi modułami głównego menu. Kod przeni�
 je do zakładek My Work, zachowując trasy zgodności wstecznej. Dokumentujemy je
 zatem wewnątrz My Work.
 
+Docelowym kontraktem rozwoju Run Agent w lekkie `Zlecenia`/Case Workspace jest
+[`product/case-workspace/12_CASE_WORKSPACE_MODULE_SSOT.md`](product/case-workspace/12_CASE_WORKSPACE_MODULE_SSOT.md).
+Jest to podsystem My Work, nie nowa pozycja głównego menu. Zamrożone decyzje
+właściciela znajdują się w `product/case-workspace/11_OWNER_DECISION_REGISTER.md`,
+a plan wykonawczy nie zastępuje kontraktów V8 ani modułów będących właścicielami
+artefaktów.
+
 ## 10. Materials — pakiet zbiorczy
 
 Materials jest jedną pozycją menu i jedną biblioteką wszystkich materiałów.
@@ -94,6 +101,7 @@ zagnieżdżone, infrastruktura albo historia:
 - Presentations — część Materials,
 - Client Vault — część My Work,
 - Run Agent — część My Work,
+- Case Workspace / Zlecenia — docelowy podsystem My Work i następca powierzchni Run Agent,
 - MCP IRIS i MCP Marketplace — trasy wycofane/przekierowane; nie są menu,
 - Conclusions — ukryte decyzją właściciela,
 - SuperAdmin — osobna, uprawniona płaszczyzna sterowania, nie standardowa

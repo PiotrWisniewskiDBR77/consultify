@@ -46,7 +46,11 @@ describe('ValidationBadge', () => {
     render(
       <ValidationBadge status="unverified" allowed={['verified', 'flagged']} onChange={vi.fn()} />
     );
-    fireEvent.click(screen.getByRole('button', { name: /Validation status/i }));
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'myWorkTable.validationBadge.validationStatus: Unverified',
+      })
+    );
     const menu = screen.getByTestId('provenance-validation-badge-menu');
     expect(menu).toBeInTheDocument();
     expect(screen.getByTestId('provenance-validation-badge-menu-verified')).toBeInTheDocument();
@@ -66,7 +70,11 @@ describe('ValidationBadge', () => {
         isSuperAdmin={false}
       />
     );
-    fireEvent.click(screen.getByRole('button', { name: /Validation status/i }));
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'myWorkTable.validationBadge.validationStatus: Verified',
+      })
+    );
     expect(screen.getByTestId('provenance-validation-badge-menu-flagged')).toBeInTheDocument();
     expect(
       screen.queryByTestId('provenance-validation-badge-menu-unverified')
@@ -82,7 +90,11 @@ describe('ValidationBadge', () => {
         isSuperAdmin
       />
     );
-    fireEvent.click(screen.getByRole('button', { name: /Validation status/i }));
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'myWorkTable.validationBadge.validationStatus: Verified',
+      })
+    );
     expect(screen.getByTestId('provenance-validation-badge-menu-unverified')).toBeInTheDocument();
   });
 
@@ -91,7 +103,11 @@ describe('ValidationBadge', () => {
     render(
       <ValidationBadge status="unverified" allowed={['verified', 'flagged']} onChange={onChange} />
     );
-    fireEvent.click(screen.getByRole('button', { name: /Validation status/i }));
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'myWorkTable.validationBadge.validationStatus: Unverified',
+      })
+    );
     fireEvent.click(screen.getByTestId('provenance-validation-badge-menu-verified'));
     expect(onChange).toHaveBeenCalledWith('verified');
     // menu closed
@@ -100,7 +116,9 @@ describe('ValidationBadge', () => {
 
   it('renders a disabled trigger in read-only mode', () => {
     render(<ValidationBadge status="verified" />);
-    const trigger = screen.getByRole('button', { name: /Validation status/i });
+    const trigger = screen.getByRole('button', {
+      name: 'myWorkTable.validationBadge.validationStatus: Verified',
+    });
     expect(trigger).toBeDisabled();
   });
 });

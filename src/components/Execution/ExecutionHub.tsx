@@ -108,7 +108,6 @@ import {
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
-import { StandardModuleBar } from '../standard/StandardModuleBar';
 import {
   MENU_3_ALL_DOT_CLASS,
   MENU_3_BADGE_ACTIVE,
@@ -120,6 +119,8 @@ import {
   MENU_3_RIGHT_CLASS,
   Menu3Chip,
 } from '../shared/ModuleMenu3';
+import { CanonicalEmptyRegistry, CanonicalMenu3Presets } from '../standard/CanonicalEmptyRegistry';
+import { StandardModuleBar } from '../standard/StandardModuleBar';
 import ExecutionChangeSignalsPanel from './ExecutionChangeSignalsPanel';
 import { isExecutionFlagEnabled } from './executionFeatureFlags';
 import { ExecutionInitiativesKanbanView } from './ExecutionInitiativesKanbanView';
@@ -1891,32 +1892,27 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   // fabrykę synchronicznie w renderze → użycie przed deklaracją = ReferenceError/TDZ).
   const summaryOneLookEnabled = isExecutionFlagEnabled('summaryOneLook');
 
-  // Tab configuration
+  // Owner canon: Realizacje -> Praca -> Zasoby -> Sterowanie -> Raporty.
   const tabs = useMemo(
     () => [
-      // #77 / Z94 — Kokpit menedżera „pełna wizja McKinsey" (za flagą OFF do akceptu).
-      ...(summaryOneLookEnabled
-        ? [
-            {
-              id: 'summary' as ModuleTab,
-              label: t('execution.tabs.summary', 'Kokpit'),
-              icon: <LayoutDashboard size={16} />,
-            },
-          ]
-        : []),
       {
         id: 'list' as ModuleTab,
-        label: t('execution.tabs.execution', 'Portfolio'),
+        label: t('execution.tabs.executions', 'Realizacje'),
         icon: <LayoutDashboard size={16} />,
-        count:
-          (stats.blocked ?? 0) +
-          decisions.filter(
-            (d) => String(d.status).toUpperCase() === 'PENDING' && isPastDue(d.dueDate)
-          ).length,
       },
       {
-        id: 'rollout' as ModuleTab,
-        label: t('execution.rollout.tabLabel', 'Rollout'),
+        id: 'work' as ModuleTab,
+        label: t('execution.tabs.work', 'Praca'),
+        icon: <ClipboardList size={16} />,
+      },
+      {
+        id: 'resources' as ModuleTab,
+        label: t('execution.tabs.resources', 'Zasoby'),
+        icon: <Users size={16} />,
+      },
+      {
+        id: 'control' as ModuleTab,
+        label: t('execution.tabs.control', 'Sterowanie'),
         icon: <Rocket size={16} />,
       },
       {
@@ -1924,22 +1920,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         label: t('execution.tabs.reports', 'Raporty'),
         icon: <FileText size={16} />,
       },
-      {
-        id: 'people_change' as ModuleTab,
-        label: t('execution.tabs.peopleChange', 'Manager'),
-        icon: <Shield size={16} />,
-        count: (stats.blocked ?? 0) + (actionQueueItems?.length ?? 0),
-      },
     ],
-    [
-      t,
-      filteredInitiatives.length,
-      stats.blocked,
-      tasks.length,
-      decisions,
-      actionQueueItems,
-      summaryOneLookEnabled,
-    ]
+    [t]
   );
 
   // Handle inline status change from table/grid
@@ -2702,12 +2684,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const buildReportRowMenu = useCallback(
     (report: ReportDef): StandardRowMenu => ({
       primary: [
-        {
-          id: 'open_preview',
-          label: t('common.openPreview', 'Otwórz podgląd'),
-          icon: ChevronRight,
-          onClick: () => setReportPreviewId(report.id),
-        },
         {
           id: 'open_full',
           label: t('common.openFull', 'Otwórz pełny widok'),
@@ -5423,6 +5399,45 @@ Please return:
 
   // Render content
   const renderContent = () => {
+    if (activeTab === 'work') {
+      return (
+        <CanonicalEmptyRegistry
+          surfaceId="EXE_WORK"
+          title={t('execution.canonical.work.empty', 'Canonical work projection unavailable')}
+          description={t(
+            'execution.canonical.work.emptyDescription',
+            'Tasks and Decisions are not presented here until the typed projection preserves their native IDs, lifecycle and authority.'
+          )}
+          onRetry={handleRefresh}
+        />
+      );
+    }
+    if (activeTab === 'resources') {
+      return (
+        <CanonicalEmptyRegistry
+          surfaceId="EXE_RESOURCES"
+          title={t('execution.canonical.resources.empty', 'Resource evidence unavailable')}
+          description={t(
+            'execution.canonical.resources.emptyDescription',
+            'Availability, allocation acceptance and remaining demand are EVIDENCE_MISSING in this runtime. The UI does not infer utilization.'
+          )}
+          onRetry={handleRefresh}
+        />
+      );
+    }
+    if (activeTab === 'control') {
+      return (
+        <CanonicalEmptyRegistry
+          surfaceId="EXE_CONTROL"
+          title={t('execution.canonical.control.empty', 'No governed management signals')}
+          description={t(
+            'execution.canonical.control.emptyDescription',
+            'The ManagementSignal / InterventionCase read model is not available. Legacy dashboard cards are not presented as canonical intervention truth.'
+          )}
+          onRetry={handleRefresh}
+        />
+      );
+    }
     // Rollout tab manages its own data + loading/error states independently of
     // the portfolio fetch, so resolve it before the portfolio loading guards.
     if (activeTab === ('rollout' as ModuleTab)) {
@@ -5612,25 +5627,8 @@ Please return:
 
       return (
         <div className="flex h-full flex-col overflow-hidden">
-          {isExecutionFlagEnabled('intelligence') && (
-            <div className="shrink-0 px-4 pt-3">
-              <ExecutionIntelligencePanel projectId={currentProjectId || 'all'} />
-            </div>
-          )}
-          {isExecutionFlagEnabled('changeSignals') && (
-            <div className="shrink-0 px-4 pt-3">
-              <ExecutionChangeSignalsPanel />
-            </div>
-          )}
-          {isExecutionFlagEnabled('whatIfSandbox') && (
-            <div className="shrink-0 px-4 pt-3">
-              <ExecutionWhatIfSandbox
-                baseline={{
-                  healthScore: portfolioMetrics?.healthScore ?? executionHealth?.healthScore ?? 0,
-                }}
-              />
-            </div>
-          )}
+          {/* T32 R14: EVM/what-if analytics panels moved BELOW the canonical
+              table (T32-TABLE-T13) — relocated, not deleted. */}
           {bulkConfirmDialog}
           <div className="min-h-0 flex-1 flex overflow-hidden">
             <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
@@ -5741,6 +5739,23 @@ Please return:
               </aside>
             ) : null}
           </div>
+          {(isExecutionFlagEnabled('intelligence') ||
+            isExecutionFlagEnabled('changeSignals') ||
+            isExecutionFlagEnabled('whatIfSandbox')) && (
+            <div className="shrink-0 max-h-[45%] space-y-3 overflow-auto border-t border-slate-200 px-4 py-3 dark:border-slate-700">
+              {isExecutionFlagEnabled('intelligence') && (
+                <ExecutionIntelligencePanel projectId={currentProjectId || 'all'} />
+              )}
+              {isExecutionFlagEnabled('changeSignals') && <ExecutionChangeSignalsPanel />}
+              {isExecutionFlagEnabled('whatIfSandbox') && (
+                <ExecutionWhatIfSandbox
+                  baseline={{
+                    healthScore: portfolioMetrics?.healthScore ?? executionHealth?.healthScore ?? 0,
+                  }}
+                />
+              )}
+            </div>
+          )}
         </div>
       );
     }
@@ -5754,11 +5769,7 @@ Please return:
 
   const availableViewModes = useMemo(
     () =>
-      activeTab === 'list'
-        ? (['table', 'kanban', 'timeline'] as ViewMode[])
-        : activeTab === 'reports'
-          ? (['table', 'grid'] as ViewMode[])
-          : ([] as ViewMode[]),
+      activeTab === 'list' ? (['table', 'kanban', 'timeline'] as ViewMode[]) : ([] as ViewMode[]),
     [activeTab]
   );
 
@@ -5809,7 +5820,11 @@ Please return:
       return { onNewItem: undefined, newItemLabel: defaultLabel };
     }
 
-    // Summary ('list') -> keep "New initiative".
+    if (activeTab !== 'list') {
+      return { onNewItem: undefined, newItemLabel: defaultLabel };
+    }
+
+    // Realizacje ('list') retains the governed handoff/create entry.
     return { onNewItem: handleCreateInitiative, newItemLabel: defaultLabel };
   }, [activeTab, handleCreateInitiative, isPilotParticipant, rolloutSubview, t]);
 
@@ -5845,14 +5860,17 @@ Please return:
         filterControls={rightControls}
         viewModes={availableViewModes}
         commandRowContent={
-          activeTab === ('people_change' as ModuleTab)
-            ? managerCommandRowContent
-            : activeTab === ('rollout' as ModuleTab)
-              ? rolloutCommandRowContent
-              : (summaryBulkCommandRowContent ?? reportBulkCommandRowContent ?? commandRowContent)
-        }
-        commandRowRightContent={
-          activeTab === ('people_change' as ModuleTab) ? managerCommandRowRightContent : undefined
+          activeTab === 'list' ? (
+            (summaryBulkCommandRowContent ?? commandRowContent)
+          ) : activeTab === 'reports' ? (
+            (reportBulkCommandRowContent ?? commandRowContent)
+          ) : activeTab === 'work' ? (
+            <CanonicalMenu3Presets surfaceId="EXE_WORK" />
+          ) : activeTab === 'resources' ? (
+            <CanonicalMenu3Presets surfaceId="EXE_RESOURCES" />
+          ) : (
+            <CanonicalMenu3Presets surfaceId="EXE_CONTROL" />
+          )
         }
       >
         {renderContent()}

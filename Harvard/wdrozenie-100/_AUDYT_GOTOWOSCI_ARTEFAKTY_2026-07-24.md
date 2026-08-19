@@ -142,7 +142,8 @@ Trzy razy tej nocy ogłosiłem defekt systemowy, który nie istniał; dwa razy o
 ## 6. ŹRÓDŁA
 - Dziennik pętli z pomiarami: `_PETLA_NOCNA_9_5_2026-07-23.md`
 - Raport poranny (wynik, decyzje, moje błędy): `_RANO_2026-07-24.md`
-- Audyt środowiska (surowy): `AUDYT_SRODOWISKA_ODBIORU.md`
+- Audyt środowiska (surowy):
+  `docs/testing/reports/AUDYT_SRODOWISKA_ODBIORU.md`
 - Standard: `_STANDARD_N_TYPE_2026-07-23/`
 
 ---

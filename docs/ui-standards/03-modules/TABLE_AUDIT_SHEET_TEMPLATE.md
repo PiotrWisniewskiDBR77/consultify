@@ -8,6 +8,8 @@ last_updated: 2026-06-07
 
 # SZABLON AUDYTU TABELI — gotowy do skopiowania przed każdą tabelą
 
+> Dla web/desktop używaj razem z `../MY_WORK_TABLE_SURFACE_CONTRACT_V1.md` oraz `../evidence/MY_WORK_ACCEPTANCE_CHECK_SPEC_2026-08-05.md`. Kontrakt v1 rozstrzyga starsze rozjazdy wartości i capabilities.
+
 > **Jak używać:** skopiuj ten plik → wypełnij META → przejdź fazy 0→6 po kolei.
 > Karta jest NIEZGODNA dopóki jakikolwiek punkt 🔴 ma FAIL.
 > Nie skracaj kroków. Nie skakaj do detali zanim Faza 0 jest 100% PASS.
@@ -87,13 +89,13 @@ last_updated: 2026-06-07
 | **H-1** 🔴 | Kebab wyrównany do ⋮ przycisku | Klik ⋮ → prawa krawędź menu = prawa krawędź przycisku (±5px). Mierz wizualnie. | Menu oddalone od przycisku o >20px | PASS/FAIL |
 | **H-2a** 🔴 | DÓŁ pozycja 1: **Otwórz podgląd** (zawsze) | Otwórz kebab dowolnego wiersza w dowolnym statusie → pierwsza pozycja strefy stałej = „Otwórz podgląd" / „Open preview" + ikona `ChevronRight`. Klik → otwiera boczny panel (NIE nawiguje). | Brak tej pozycji w jakimkolwiek statusie | PASS/FAIL |
 | **H-2b** 🔴 | DÓŁ pozycja 2: **Edytuj** (zawsze) | W strefie stałej jest „Edytuj" / „Edit" + ikona `Pencil`/`Edit2`. Disabled gdy brak uprawnień (z opisem), nie pominięty. | Brak tej pozycji LUB pozycja pominięta gdy brak uprawnień (zamiast disabled) | PASS/FAIL |
-| **H-2c** 🔴 | DÓŁ pozycja 3: **Archiwizuj/Przywróć** (zawsze) | W strefie stałej jest „Archiwizuj" (scope active) lub „Przywróć" (scope archived) + ikona `Archive`/`RotateCcw`. Brak endpointu → `disabled` z „Wkrótce (backend)". Slot NIGDY pominięty. | Brak tej pozycji w jakimkolwiek statusie lub zakładce | PASS/FAIL |
+| **H-2c** 🔴 | DÓŁ pozycja 3: **Archiwizuj/Przywróć** (gdy capability archive jest supported) | W strefie stałej jest „Archiwizuj" (scope active) lub „Przywróć" (scope archived) + ikona `Archive`/`RotateCcw`. Brak lifecycle w deskryptorze = N/A; brak implementacji mimo `supported` = FAIL, bez atrapy `Wkrótce`. | Brak pozycji mimo `archive:supported`; atrapa `Wkrótce`; błędny scope | PASS/FAIL/N-A |
 | **H-2d** | DÓŁ pozycja 4: **Delay ▸** (jeśli encja ma termin) | (N/A jeśli brak pola `due_date`) Pozycja „Delay ▸" + ikona `Clock` + chevron → klik → 3 pod-pozycje: +1 dzień, +3 dni, +7 dni. | Delay wykonuje akcję od razu (bez submenu) | PASS/FAIL/N-A |
 | **H-3** 🔴 | GÓRA kontekstowa zmienia się per status | Otwórz kebab dla wiersza w KAŻDYM statusie → GÓRA ma inne akcje dla każdego statusu. Pusta GÓRA = ukryta (zero pustego separator-only bloku). | GÓRA identyczna w każdym statusie LUB separator bez pozycji gdy strefa pusta | PASS/FAIL |
-| **H-4** 🔴 | DANGER: Usuń (zawsze ostatnia) | Ostatnia sekcja = „Usuń" / „Delete" w kolorze danger (czerwony), oddzielona separatorem. Klik aktywnego → confirm dialog. Brak endpointu → `disabled` z „Wkrótce (backend)". | Brak Usuń LUB Usuń bez separatora LUB brak confirm | PASS/FAIL |
+| **H-4** 🔴 | DANGER: Usuń (zawsze ostatnia) | Ostatnia sekcja = „Usuń" / „Delete" w kolorze danger, oddzielona separatorem. `supported` → confirm; `business-locked` → disabled z prawdziwym powodem. `Wkrótce` jest niedozwolone. | Brak pozycji bez deklaracji wyjątku, brak separatora/confirm, atrapa `Wkrótce` | PASS/FAIL |
 | **H-5** | Ikona przy każdej pozycji | Każda pozycja kebaba = ikona + label (zero pozycji z samym tekstem) | Pozycja bez ikony | PASS/FAIL |
 | **H-6** | Menu portalowe, auto-flip, nieclipowane | Otwórz kebab blisko dolnej krawędzi viewport → menu flip w górę. NIE ucięte przez scroll-container. | Menu ucięte przez overflow | PASS/FAIL |
-| **H-7** 🔴 | Parytet z preview footer | Akcje w kebab = te same co dostępne w preview footer (te same labele, te same uprawnienia — niespójność = FAIL) | Kebab ma „Archiwizuj" ale preview nie, lub odwrotnie | PASS/FAIL |
+| **H-7** 🔴 | Parytet wspólnych akcji z preview | Preview nie musi powielać całego kebaba. Każda akcja występująca w obu miejscach ma ten sam `actionId`, label, uprawnienie, confirmation i skutek. | Wspólny `actionId` ma różny skutek/label/uprawnienie | PASS/FAIL/N-A |
 | **H-8** 🔴 | Sprawdzono w KAŻDEJ zakładce × KAŻDYM statusie | Wpisz: zakładki × statusy sprawdzone: `[___]` | Fix w jednej zakładce/statusie ≠ fix wszędzie | PASS/FAIL |
 
 **Status Fazy 2:** `PASS` / `FAIL (punkty: ___)`
@@ -160,7 +162,7 @@ last_updated: 2026-06-07
 | **D-10** 🔴 | Counter-chipy widoczne z aktualnymi licznikami | Pod Menu 2 widać pasek chipów: „All N · Status1 M · …". Liczniki zgodne z liczbą wierszy. Każdy chip ma licznik (0 = OK, chip widoczny). | Brak chipów; brak liczników | PASS/FAIL |
 | **D-11** 🔴 | Ten sam zestaw chipów na każdej zakładce tej roli | Porównaj chipy na Inbox vs Sessions vs Assigned (ta sama rola użytkownika) → te same kategorie presetu. | Różne zestawy chipów dla tej samej roli | PASS/FAIL |
 | **D-12** 🔴 | Scope chip Aktywne/Zarchiwizowane | Menu 3 ma chip z ikoną `Archive` (scope). Klik → przeładowuje z `?scope=archived`. Kebab w archived → „Przywróć". | Brak scope chipa (jeśli nie backlog B-1) | PASS/FAIL/BACKLOG |
-| **D-13** 🔴 | Specs chipów Menu 3 | Inspect chip → `height: 24px` (h-6), `padding: 0 8px` (px-2), `font-size: 11px`, `border-radius: 9999px`. Aktywny chip = `chipActive` klas (wyróżniony). Nieaktywny = `chipInactive`. | Błędna wysokość/padding/font; brak wyróżnienia aktywnego | PASS/FAIL |
+| **D-13** 🔴 | Specs chipów Menu 3 | Inspect chip → `height: 28px` (h-7), `padding: 0 10px` (px-2.5), `font-size: 11px`, `border-radius: 9999px`. Aktywny chip = neutralnie wyróżniony. | Błędna wysokość/padding/font; brak wyróżnienia aktywnego | PASS/FAIL |
 
 ### 5c — Menu 3 Formuła 3 (otwarte karty — często pomijane!)
 

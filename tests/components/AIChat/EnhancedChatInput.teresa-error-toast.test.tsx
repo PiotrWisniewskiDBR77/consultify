@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import React from 'react';
-import { render } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -87,6 +87,35 @@ vi.mock('../../../src/components/AIChat/NextModelChip', () => ({ NextModelChip: 
 vi.mock('../../../src/components/AIChat/VoiceModeLegend', () => ({ VoiceModeLegend: () => null }));
 
 describe('EnhancedChatInput Teresa toast lifecycle', () => {
+  it('preserves the text and attachments when message transport rejects', async () => {
+    const onSend = vi.fn().mockRejectedValue(new Error('transport unavailable'));
+    render(<EnhancedChatInput onSend={onSend} />, { wrapper: makeQueryWrapper() });
+
+    const attachment = new File(['evidence'], 'evidence.txt', { type: 'text/plain' });
+    act(() => {
+      addFilesMenuPropsRef.current.onFileSelect([attachment]);
+    });
+    fireEvent.change(screen.getByRole('textbox'), {
+      target: { value: 'Do not lose this Teresa draft' },
+    });
+    fireEvent.click(screen.getByTestId('chat-send-btn'));
+
+    await waitFor(() => expect(onSend).toHaveBeenCalledWith('Do not lose this Teresa draft', [attachment]));
+    expect(screen.getByRole('textbox')).toHaveValue('Do not lose this Teresa draft');
+    expect(screen.getByText('evidence.txt')).toBeInTheDocument();
+  });
+
+  it('clears the composer only after message transport succeeds', async () => {
+    const onSend = vi.fn().mockResolvedValue(undefined);
+    render(<EnhancedChatInput onSend={onSend} />, { wrapper: makeQueryWrapper() });
+
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Send this draft' } });
+    fireEvent.click(screen.getByTestId('chat-send-btn'));
+
+    await waitFor(() => expect(screen.getByRole('textbox')).toHaveValue(''));
+    expect(onSend).toHaveBeenCalledWith('Send this draft', undefined);
+  });
+
   it('re-emits same Teresa error toast after leaving error state', () => {
     toastErrorMock.mockReset();
     const props = {

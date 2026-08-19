@@ -6,16 +6,18 @@ initial_score: 7.1/10
 final_score: 9.6/10 (cofnięte)
 runtime_status: PARTIAL
 supersedes: docs/ui-standards/DOCUMENTATION_REACCEPTANCE_2026-08-02.md
-superseded_by: docs/ui-standards/CANON.md §9 (wpis v3.1, 2026-08-02)
+superseded_by: docs/ui-standards/FINAL_CANONICAL_DOCUMENTATION_ACCEPTANCE_2026-08-03.md
 ---
 
 > ## ⚠ DOKUMENT HISTORYCZNY — werdykt `PASS, 9,6/10` został COFNIĘTY
+>
+> Aktualny werdykt: [`FINAL_CANONICAL_DOCUMENTATION_ACCEPTANCE_2026-08-03.md`](FINAL_CANONICAL_DOCUMENTATION_ACCEPTANCE_2026-08-03.md).
 >
 > Czwarty, niezależny audyt (2026-08-02) dał werdykt **`FAIL`** i wykrył **siedem blokerów P0**, których ta runda nie zauważyła: sprzeczną regułę fokusa między `TRIADA_KANON.md` a `00-foundation/light-mode-readability.md`, martwą paletę fioletową w `color-system.md`/`visual-language.md`, **12 z 20 sekcji identycznych bajt-w-bajt we wszystkich 26 kartach rodzin**, pięć różnych szerokości panelu w jednym dokumencie, dwa konkurujące modele kebaba i preview, nieaktualny `FROZEN_LAYOUTS.md` oraz brak śladu dowodowego decyzji właścicielskich.
 >
 > **Dlaczego ta runda tego nie złapała:** metoda opisana niżej w tym pliku sprawdzała rozstrzygalność reguł, zgodność liczb z kodem SSOT i kompletność anatomii/stanów/keyboardu — ale nie policzyła, ile z tekstu pod 20 nagłówkami sekcji było skopiowane bajt-w-bajt między 26 kartami. „26/26 kart ma 20 sekcji" mierzyło obecność nagłówka, nie unikalność treści pod nim — 60% sekcji było tym samym tekstem powielonym 26 razy. To ta sama luka metodyczna, którą ta runda sama zarzucała rundzie 2 w innym miejscu (liczba dokumentów ≠ dowód kompletności), tylko nieprzeprowadzona do końca na własnym wyniku.
 >
-> Po remediation czwartego audytu **panel adwersaryjny** (pięciu recenzentów, ~300 zweryfikowanych twierdzeń o kodzie) znalazł kolejną warstwę tego samego wzorca: sekcje po naprawie są unikalne, ale 25 z nich zawiera fałszywe twierdzenia o kodzie. Rejestr: [`_KOREKTY_PO_PANELU_ADWERSARYJNYM_2026-08-02.md`](_KOREKTY_PO_PANELU_ADWERSARYJNYM_2026-08-02.md) (status `OPEN`).
+> Po remediation czwartego audytu panel adwersaryjny wykrył kolejne defekty. Rejestr K-01–K-45 został następnie zamknięty jako `CLOSED_AFTER_REMEDIATION`.
 >
 > **Nauka do zapamiętania:** rozstrzygalność reguł i zgodność liczb w PRZYKŁADACH nie dowodzi, że CAŁA treść pod każdym nagłówkiem jest unikalna i prawdziwa. Weryfikacja formy (sekcje są, liczby się zgadzają tam, gdzie sprawdzono) nie zastępuje wyczerpującego sprawdzenia treści.
 >
@@ -51,4 +53,3 @@ Dokumentacja jest wystarczająca do spójnego wdrażania i code review. Nie ozna
 ## Pozostałe jawne ryzyko
 
 Brakujące fixture, testy a11y/E2E i baseline visual są pracą implementacyjną, nie luką teoretyczną. Nie wolno podnieść `runtime_status: PARTIAL` zbiorczo; odbiór odbywa się per rodzina i per consumer.
-

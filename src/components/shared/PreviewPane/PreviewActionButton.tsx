@@ -29,8 +29,11 @@ export interface PreviewActionButtonProps {
   disabled?: boolean;
 }
 
+// R03-1: `disabled:opacity-45` — ta sama wartość co w menu wiersza (R01) i pasku
+// bulk (R02-B). Kanon §10 mówi „wyraźnie jaśniejszy"; jedna liczba w trzech
+// pakietach znaczy, że disabled wygląda tak samo wszędzie, a nie „podobnie".
 const BASE =
-  'inline-flex w-full items-center justify-center gap-1.5 h-9 px-3 rounded-full border text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 disabled:opacity-50 disabled:cursor-not-allowed';
+  'inline-flex w-full items-center justify-center gap-1.5 h-9 px-3 rounded-full border text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 disabled:opacity-45 disabled:cursor-not-allowed';
 
 const VARIANTS: Record<PreviewActionVariant, string> = {
   positive:

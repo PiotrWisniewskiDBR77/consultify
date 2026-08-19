@@ -30,6 +30,38 @@ const mockDbAll = vi.fn();
 const mockDbRun = vi.fn();
 const mockDbGet = vi.fn();
 
+let mockDocumentConfidentiality: 'public' | 'internal' = 'public';
+
+vi.mock('../../services/documentStudio/documentStudioService.js', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../../services/documentStudio/documentStudioService.js')>();
+  return {
+    ...actual,
+    getDocumentArtifact: vi.fn(async (artifactId: string, organizationId: string) =>
+      artifactId === 'art-share-test-1' && organizationId === 'org-share-A'
+        ? {
+            documentId: artifactId,
+            artifactId,
+            title: 'Share test',
+            documentType: 'generic_document',
+            language: 'pl',
+            audience: [],
+            goal: 'inform',
+            communicationRegister: 'professional',
+            density: 'standard',
+            languageStyle: 'formal',
+            confidentiality: mockDocumentConfidentiality,
+            formattingSchema: {},
+            sections: [],
+            sourceRefs: [],
+            createdAt: new Date(0).toISOString(),
+            updatedAt: new Date(0).toISOString(),
+          }
+        : null
+    ),
+  };
+});
+
 vi.mock('../../utils/DbPromise.js', () => ({
   all: (...args: unknown[]) => mockDbAll(...args),
   run: (...args: unknown[]) => mockDbRun(...args),
@@ -74,6 +106,7 @@ beforeEach(async () => {
   mockDbAll.mockResolvedValue([]);
   mockDbRun.mockResolvedValue({ rowCount: 0, success: true });
   mockDbGet.mockResolvedValue(null);
+  mockDocumentConfidentiality = 'public';
   await __resetShareLinkRegistryForTests();
   __resetDocumentCommentsForTests();
 });
@@ -116,6 +149,28 @@ describe('POST /api/document-studio/:artifactId/share-links — create', () => {
       .post(`/api/document-studio/${ARTIFACT}/share-links`)
       .send({ accessScope: 'read' });
     expect(res.status).toBe(401);
+  });
+
+  it('fails closed before minting a token for an Internal document', async () => {
+    mockDocumentConfidentiality = 'internal';
+    const res = await request(createApp())
+      .post(`/api/document-studio/${ARTIFACT}/share-links`)
+      .send({ accessScope: 'read' });
+
+    expect(res.status).toBe(409);
+    expect(res.body).toMatchObject({
+      code: 'PUBLIC_LINK_CLASSIFICATION_BLOCKED',
+      blocks: ['PUBLIC_LINK_CLASSIFICATION_BLOCKED'],
+    });
+  });
+
+  it('does not mint a token for an unknown document', async () => {
+    const res = await request(createApp())
+      .post('/api/document-studio/unknown-artifact/share-links')
+      .send({ accessScope: 'read' });
+
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('document_not_found');
   });
 });
 

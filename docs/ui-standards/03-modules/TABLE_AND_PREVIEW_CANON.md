@@ -16,6 +16,8 @@ supersedes_as_index:
 
 # Table + Preview Canon (app-wide) — KANON v1
 
+> **Rozstrzygnięcie web/desktop:** `../MY_WORK_TABLE_SURFACE_CONTRACT_V1.md` jest zamkniętym kontraktem powierzchni tabelowej i ma pierwszeństwo dla Menu 1/2/3, capabilities, preview, kebaba oraz menu kontekstowego.
+
 > **Status (poprawione 2026-08-02 — hierarchia z `TRIADA_KANON.md`):** `TRIADA_KANON.md` jest
 > nadrzędny dla **anatomii i wyglądu** ekranu listowego — co, ile bloków/stref, w jakiej
 > kolejności (Menu, tabela, pstryczek, kebab, preview, kanban). Ten plik jest nadrzędny dla
@@ -570,7 +572,7 @@ komponentem.
 | separator | — | auto między strefami |
 | **DÓŁ — FIXED BOTTOM MANIFEST** | patrz §9.2 — lista ścisła, identyczna wszędzie | niezmienny niezależnie od statusu/roli/zakładki |
 | separator | — | auto |
-| **DANGER** | `Usuń` | zawsze ostatni, ton danger, confirm; brak endpointu → `disabled` z opisem „Wkrótce (backend)" (slot widoczny, nie pomijać) |
+| **DANGER** | `Usuń` | zawsze ostatni, ton danger; `supported` → confirm, `business-locked` → disabled z prawdziwym powodem; zero atrap `Wkrótce` |
 
 ### 9.1a Mapowanie 3 stref (ten dokument) ↔ 5 bloków TRIADY (A6)
 
@@ -579,7 +581,7 @@ komponentem.
 | 1. Wejście+domknięcie (zawsze) | View/Open + Complete/Done/Approve | **GÓRA — kontekst** | akcja domykająca (Approve/Complete/Fix) jest specyficzna dla statusu/roli wiersza → żyje w GÓRZE, nie w dole stałym; przykłady per moduł w §9.3 |
 | 2. Przejścia stanu (wg encji) | Task=To do/In progress/Blocked · Decyzja=Approve/Reject · Inbox=Focus→Today/This week/Later | **GÓRA — kontekst** | j.w. — to jest dokładnie treść „GÓRY" z §9.3 |
 | 3. Czas (encje z terminami) | Delay ▸ / Snooze-presety | **DÓŁ — FIXED BOTTOM MANIFEST, pozycja 4** (`Delay ▸`, §9.2) | jedyny blok TRIADY, który ten dokument trzyma w DOLE zamiast w GÓRZE: etykieta/ikona/submenu (`+1/+3/+7 dni`) są **stałe app-wide**, nie encjo-specyficzne — dlatego geometrycznie żyje obok Open/Edit/Archive. Warunek identyczny jak w TRIADZIE: tylko encje z `due_date` (slot pominięty, gdy brak) |
-| 4. Uniwersalny (ZAWSZE, identyczny app-wide) | Open preview · Edit · Archive | **DÓŁ — FIXED BOTTOM MANIFEST, pozycje 1–3** (§9.2) | niegotowe = `disabled` z dopiskiem, nigdy ukryte — identyczna reguła w obu dokumentach |
+| 4. Manage | Open preview · Edit · Archive | **DÓŁ — FIXED BOTTOM MANIFEST, pozycje 1–3** (§9.2) | Open preview zawsze; Edit/Archive według capabilities. Niedostępność rekordu/roli = disabled z realnym powodem; brak funkcji = pominięcie, bez atrapy |
 | 5. Destrukcyjny (zawsze ostatni, oddzielony) | Delete/Reject, czerwony | **DANGER** | jedyna czerwień menu w obu dokumentach |
 
 **Co faktycznie egzekwuje komponent (`src/components/shared/RowActionsMenu.tsx`):**
@@ -595,15 +597,15 @@ komponentem.
 | # | Pozycja | Ikona | Warunek | Zachowanie |
 |---|---|---|---|---|
 | 1 | **Otwórz podgląd** / Open preview | `ChevronRight` | zawsze | otwiera boczny preview pane (nie nawiguje) |
-| 2 | **Edytuj** / Edit | `Pencil` / `Edit2` | zawsze (disabled gdy brak uprawnień) | manager→modal zarządzania; assignee→edycja odpowiedzi; owner→edycja inline |
-| 3 | **Archiwizuj** / Archive (lub **Przywróć** / Restore) | `Archive` / `RotateCcw` | zawsze (disabled gdy brak endpointu — „Wkrótce") | soft-delete; zmiana scope; brak endpointu → disabled z notą |
+| 2 | **Edytuj** / Edit | `Pencil` / `Edit2` | gdy capability nie jest `not-applicable`; disabled przy realnym braku uprawnień/stanie | manager→modal zarządzania; assignee→edycja odpowiedzi; owner→edycja inline |
+| 3 | **Archiwizuj** / Archive (lub **Przywróć** / Restore) | `Archive` / `RotateCcw` | tylko gdy capability `archive:supported` | soft-delete; zmiana scope |
 | 4 | **Delay ▸** / Delay | `Clock` + chevron | tylko gdy encja ma pole terminu (`due_date`) | submenu inline: +1 dzień · +3 dni · +7 dni |
 
 **MUST:**
 - Kolejność 1→2→3→(4) jest stała i nie zmienia się.
-- Pozycja 3 zmienia label/ikonę kontekstowo (scope `active` → „Archiwizuj"; scope `archived` → „Przywróć") — ale **slot zawsze istnieje**.
+- Pozycja 3 zmienia label/ikonę kontekstowo (scope `active` → „Archiwizuj"; scope `archived` → „Przywróć") i istnieje tylko dla encji deklarującej lifecycle archive.
 - Pozycja 4 = N/A jeśli encja nie ma terminu (nie ma pola `due_date`) → slot pominięty.
-- Brak backend endpointu dla pozycji 2 lub 3 → `disabled: true` z `description: "Wkrótce (backend)"`. **Nigdy cicha pominięcie widocznego slotu.**
+- Brak implementacji mimo zadeklarowanej capability = **FAIL kontraktu**, nie pozycja `Wkrótce`. Disabled służy wyłącznie realnej regule rekordu, roli lub stanu.
 - Każda pozycja = ikona + label (zero pozycji z samym tekstem).
 
 ### 9.3 GÓRA kontekstowa — przykłady per moduł
@@ -815,7 +817,7 @@ Jeden rząd pod Menu 2. SSOT: `ModuleMenu3.tsx`. Przyjmuje jedną z formuł zale
 - **Wygląd przycisków bulk (MUST):** prawdziwe przyciski **w ramkach (outline)**, `rounded-full`, **`h-8`** (mniejsze niż główne CTA `h-9`), ikona+label, spójne na każdej tabeli. Nigdy „gołe słowo". Danger (`Delete/Trash`) wyróżniony tonem `danger` + confirm.
 - **Zestaw STANDARDOWY** (zawsze, gdy dotyczy): `Export CSV` · `Tag` · `Assign/Reassign` · `Change due date` · `Archive` · `Delete`.
 - **Zestaw KONTEKSTOWY** (dokładany per moduł wg deskryptora `menu3.bulkActions`): np. Wywiad `Approve · Send back · AI insights`. Standardowe + kontekstowe w jednym pasku, danger zawsze na końcu.
-- **MUST — nigdy tylko Clear:** pasek MUSI mieć ≥1 akcję poza `Clear`. Jeśli lifecycle/endpoint nie istnieje → przycisk `disabled` z notą „Wkrótce (backend)" (slot widoczny). Status-specific akcje (np. „Wyślij do przeglądu" dla draftu) **nie zastępują** stałych — muszą być OBOK nich.
+- **MUST — nigdy tylko Clear:** pasek MUSI mieć ≥1 realną akcję poza `Clear`. Brak implementacji zadeklarowanej akcji = FAIL, nie disabled `Wkrótce`. Akcje status-specific są dokładane do bezpiecznego wspólnego podzbioru.
 - Po `Clear`/odznaczeniu wraca formuła 1.
 
 **Formuła 3 — OTWARTE KARTY (cross‑module tabs).**
@@ -887,7 +889,7 @@ Cel: każda tabela w aplikacji wygląda tak samo. Lock przez klasy Tailwind + to
 | Element | Token/klasa |
 |---|---|
 | Kontrolki Menu 2 | `h-9`, `rounded-full` |
-| Chipy Menu 3 / status / meta | `h-6 px-2 text-[11px]` (sm) / `h-7 px-2.5 text-xs` (md) |
+| Chipy Menu 3 | `h-7 px-2.5 text-[11px]`; chipy status/meta korzystają z własnych rozmiarów `ChipBase` i nie zmieniają kontraktu Menu 3 |
 | Ikona w chipie | 12px (sm) / 14px (md) |
 | Nagłówek kolumny | `text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400` |
 | Komórka (gęstość) | `px-4 py-3` (comfortable) / `px-4 py-2` (compact) |
@@ -1106,7 +1108,7 @@ Kanon jest **częściowo egzekwowalny dziś**. Komponenty SSOT istnieją, ale wy
 - [ ] 🔴 **Kebab wyrównany do ⋮ przycisku** — prawa krawędź menu = prawa krawędź przycisku (±5px). §9 → `jak:` klik ⋮ → sprawdź wizualnie; jeśli menu oddalone >20px → FAIL. Poprawka: `right = innerWidth - anchorRect.right` (NIE `left = anchorRect.right - panelWidth`).
 - [ ] 🔴 **DÓŁ ZAWSZE TEN SAM i KOMPLETNY**: `Open · Edytuj · Archiwizuj(/Przywróć) · Delay ▸` — identyczny w każdej zakładce/statusie. → `jak:` otwórz kebab dla wiersza w KAŻDYM statusie (draft/approved/archived) i policz pozycje w strefie stałej — musi być ≥2 zawsze (nawet dla wiersza, który nie ma kontekstowych akcji). §9
 - [ ] 🔴 **GÓRA kontekstowa zmienia się per status** wg roli; pusta strefa = ukryta (bez pustego separator-only). §9 → `jak:` otwórz kebab dla wiersza w każdym statusie — GÓRA musi się różnić. Jeśli GÓRA identyczna we wszystkich statusach → akcje kontekstowe są statyczne (bug).
-- [ ] 🔴 **DANGER**: `Usuń` ostatni, oddzielony separatorem, ton danger (czerwony), klik → confirm dialog. Brak backend endpointu → przycisk `disabled` z opisem „Wkrótce (backend)" (slot widoczny, nie pomijaj). §9
+- [ ] 🔴 **DANGER**: `Usuń` ostatni, oddzielony separatorem, ton danger. `supported` → confirm; `business-locked` → disabled z prawdziwym powodem; zero `Wkrótce`. §9
 - [ ] `Edytuj` kontekstowe w działaniu (manager→modal zarządzania; assignee→edycja odpowiedzi), ale stała pozycja w dolnej strefie. §9
 - [ ] `Delay ▸` = **submenu inline** `+1/+3/+7 dni` (chevron, rozwija pod spodem). §9 → `jak:` klik Delay → pojawiają się 3 pod-pozycje. (N/A jeśli encja nie ma terminu)
 - [ ] Każda pozycja = ikona+label (zero pozycji z samym tekstem bez ikony). §9

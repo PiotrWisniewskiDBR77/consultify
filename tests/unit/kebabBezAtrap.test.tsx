@@ -69,9 +69,12 @@ describe('RowActionsMenu — menu bez atrap', () => {
 
     expect(screen.getByText('Otwórz podgląd')).toBeTruthy();
     expect(screen.queryByText('Archiwizuj')).toBeNull();
-    // Blokada z powodem zostaje — uzytkownik ma sie dowiedziec, DLACZEGO.
+    // Blokada z powodem ZOSTAJE jako pozycja — znika tylko jej powód.
+    // Decyzja zarządzająca R01 (2026-08-06), nadrzędna wobec P-17/P-18:
+    // disabled jest widoczny i jaśniejszy, ale bez komentarza w menu (§1/§7/§10).
     expect(screen.getByText('Usuń')).toBeTruthy();
-    expect(screen.getByText(/Safes are automatic/)).toBeTruthy();
+    expect(screen.getByText('Usuń').closest('button')).toBeDisabled();
+    expect(screen.queryByText(/Safes are automatic/)).toBeNull();
   });
 
   it('gdy po odsianiu atrap nie zostaje nic, kebab w ogóle się nie renderuje', () => {
@@ -96,5 +99,16 @@ describe('RowActionsMenu — menu bez atrap', () => {
 
     // Pusty kebab to gorzej niz brak kebaba — obiecuje akcje, ktorych nie ma.
     expect(container.querySelector('button')).toBeNull();
+  });
+
+  it('oznacza osobno menu kebaba i menu otwarte przez PPM', async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(<RowActionsMenu sections={sekcje} />);
+
+    await user.click(screen.getByRole('button'));
+    expect(document.querySelector('[data-row-actions-menu="kebab"]')).toBeTruthy();
+
+    rerender(<RowActionsMenu sections={sekcje} contextMenuAnchor={{ x: 200, y: 200 }} />);
+    expect(document.querySelector('[data-row-actions-menu="context"]')).toBeTruthy();
   });
 });

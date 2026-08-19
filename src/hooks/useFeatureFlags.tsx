@@ -174,6 +174,24 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
     allowLocalOverride: true,
   },
   {
+    id: 'assessmentFiveSurfacesV1',
+    name: 'Assessment: Five-surface Hub (Library/Processes/Outputs/Reports/Initiatives)',
+    description:
+      'T22-INTEGRATION-SHELL: expands AssessmentHub from 3 tab ids (list/reports/initiatives) ' +
+      'to 5 stable, URL-synced tab ids — library (EmptyState placeholder only, no ' +
+      'AssessmentLibraryTab locally; T20 is NOT closed by this), processes (renamed from ' +
+      'list, byte-identical content/columns/preview), outputs (the accepted, isolated ' +
+      'AssessmentOutputsTab — real org-scoped Outputs Library table, T22-TABLE-PREVIEW-' +
+      'COMPONENT), reports (unchanged), initiatives (unchanged). `?tab=` becomes the source ' +
+      'of truth for the active tab when ON; legacy/unknown values (including the old `list`) ' +
+      'resolve to processes. defaultValue is TRUE — T22 FINAL CLOSEOUT (Part B) enables the ' +
+      'accepted five-surface contract; OFF still exists as a local override, reverting to the ' +
+      'byte-identical 3-tab behavior with zero `?tab=` reads/writes.',
+    defaultValue: true,
+    category: 'experimental',
+    allowLocalOverride: true,
+  },
+  {
     id: 'mindmapHeuristicAiOverlays',
     name: 'Mind Map: Heuristic AI Overlays (DP-5)',
     description:

@@ -57,6 +57,9 @@ const DocumentStudioSaveAsTemplateScreen = React.lazy(
 );
 const MenuCanonSidebarCheckScreen = React.lazy(() => import('./screens/menu-canon-sidebar-check'));
 const ToolsSesjaWyjscieScreen = React.lazy(() => import('./screens/tools-sesja-wyjscie'));
+const M04MvpToolsScreen = React.lazy(() => import('./screens/m04-mvp-tools'));
+const M09MvpMaterialsScreen = React.lazy(() => import('./screens/m09-mvp-materials'));
+const M15MvpAdminScreen = React.lazy(() => import('./screens/m15-mvp-admin'));
 
 // TEST-ONLY: must import before `../src/i18n` — see file header. Opt-in via
 // `?slowLocale=<ms>`; no effect otherwise.
@@ -96,6 +99,7 @@ const StandardModuleBarChildrenScreen = React.lazy(
 const AssessmentMenu3StatusChipsScreen = React.lazy(
   () => import('./screens/assessment-menu3-status-chips')
 );
+const AssessmentFiveSurfacesScreen = React.lazy(() => import('./screens/assessment-five-surfaces'));
 const AssessmentReportsPanelScreen = React.lazy(() => import('./screens/assessment-reports-panel'));
 const AssessmentReportsTableScreen = React.lazy(() => import('./screens/assessment-reports-table'));
 const CanvasKebabRestructureScreen = React.lazy(() => import('./screens/canvas-kebab-restructure'));
@@ -313,6 +317,21 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'NARZĘDZIA — otwarta sesja narzędzia: wyjście z sesji (Menu 3 „List" + chip z ×, akcje cyklu życia, Menu 2 wyprowadza z karty)',
     render: () => <ToolsSesjaWyjscieScreen />,
+  },
+  'm04-mvp-tools': {
+    label:
+      'M04 NARZĘDZIA — odbiór MVP: katalog 31 (19 aktywnych + 12 „Coming soon" z realnego seedu), karta, warsztat, autosave, wyjście. ?widok=katalog|karta|warsztat|sesje&tool=<toolType>',
+    render: () => <M04MvpToolsScreen />,
+  },
+  'm09-mvp-materials': {
+    label:
+      'M09 MATERIAŁY — odbiór MVP: realny ReportsAndPresentationsHub (/presentations) na mockowanym rejestrze. ?stan=biblioteka|gate404',
+    render: () => <M09MvpMaterialsScreen />,
+  },
+  'm15-mvp-admin': {
+    label:
+      'M15 PANEL ADMINISTRATORA — odbiór Complete MVP: realny AdminSettingsModule (/admin/*) na zamockowanym backendzie. ?sekcja=people|billing|ai|security|audit|command|health&stan=dane|pusto|blad',
+    render: () => <M15MvpAdminScreen />,
   },
   'menu-canon-sidebar-check': {
     label:
@@ -595,6 +614,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       '#71 REALNY AssessmentHub — Menu 3 klikalne chipy statusu (ff assessmentMenu3StatusChips forced ON)',
     render: () => <AssessmentMenu3StatusChipsScreen />,
+  },
+  'assessment-five-surfaces': {
+    label:
+      'T22 FINAL CLOSEOUT Part E — REALNY AssessmentHub, 5 tabów (ff assessmentFiveSurfacesV1 forced ON, ?tab=outputs itd.)',
+    render: () => <AssessmentFiveSurfacesScreen />,
   },
   'assessment-initiatives-panel': {
     label: '§27-todo: InitiativesManagementPanel (Assessment→Manage→Initiatives) → StandardTable',

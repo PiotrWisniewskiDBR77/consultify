@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 
+import type { BreadcrumbSegment } from '../layouts/MainLayout';
 import { useAppStore } from '../store/useAppStore';
 import { AppView } from '../types';
 
@@ -33,7 +34,7 @@ const ADMIN_SECTION_TITLES: Record<string, string> = {
  * - Economics
  * - Reports
  */
-export const useBreadcrumbs = (): string[] | null => {
+export const useBreadcrumbs = (): BreadcrumbSegment[] | null => {
   const { t } = useTranslation();
   const { currentView } = useAppStore();
   const myWorkBreadcrumbs = useAppStore((s) => s.myWorkBreadcrumbs);

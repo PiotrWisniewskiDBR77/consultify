@@ -1,8 +1,8 @@
 # CLEANUP STATUS SNAPSHOT 2026-08-15
 
-- total status rows: 354
-- tracked modifications by top dir: 167
-- untracked: 187
+- total status rows: 370
+- tracked modifications by top dir: 171
+- untracked: 193
 
 ## Tracked modified top directories
 

@@ -48,7 +48,11 @@ function makeSqliteAdapter(db: sqlite3.Database) {
       db.all(toQuestionMarks(sql), params, callback);
       return this;
     },
-    run(sql: string, params: unknown[], callback: (this: { lastID?: number; changes: number }, err: Error | null) => void) {
+    run(
+      sql: string,
+      params: unknown[],
+      callback: (this: { lastID?: number; changes: number }, err: Error | null) => void
+    ) {
       db.run(toQuestionMarks(sql), params, callback);
       return this;
     },
@@ -68,7 +72,8 @@ describe('ArtifactApprovalService (HP-7)', () => {
       sqliteDb.serialize(() => {
         // Schema matches 000_initdb_core_tables.sql's approval_assignments
         // PLUS the columns added by 20260714_workflow_artifact_approvals.sql.
-        sqliteDb.run(`
+        sqliteDb.run(
+          `
           CREATE TABLE approval_assignments(
             id TEXT PRIMARY KEY,
             org_id TEXT NOT NULL,
@@ -87,7 +92,8 @@ describe('ArtifactApprovalService (HP-7)', () => {
             artifact_id TEXT
           )
         `,
-        (err) => (err ? reject(err) : resolve()));
+          (err) => (err ? reject(err) : resolve())
+        );
       });
     });
 
@@ -139,6 +145,18 @@ describe('ArtifactApprovalService (HP-7)', () => {
       expect(status.state).toBe(ARTIFACT_STATES.REVIEW);
     });
 
+    it('forbids assigning the author as the sole reviewer', async () => {
+      await expect(
+        ArtifactApprovalService.submitForReview({
+          orgId: ORG_ID,
+          artifactType: 'workbook',
+          artifactId: 'workbook-self-review',
+          assignedToUserId: USER_ID,
+          submittedBy: USER_ID,
+        })
+      ).rejects.toMatchObject({ status: 409 });
+    });
+
     it('rejects a second submitForReview while a review is active (409)', async () => {
       await ArtifactApprovalService.submitForReview({
         orgId: ORG_ID,
@@ -179,6 +197,25 @@ describe('ArtifactApprovalService (HP-7)', () => {
         'report-1'
       );
       expect(status.state).toBe(ARTIFACT_STATES.APPROVED);
+    });
+
+    it('allows only the assigned reviewer to approve', async () => {
+      await ArtifactApprovalService.submitForReview({
+        orgId: ORG_ID,
+        artifactType: 'workbook',
+        artifactId: 'workbook-reviewer-check',
+        assignedToUserId: USER_ID,
+        submittedBy: 'author-1',
+      });
+
+      await expect(
+        ArtifactApprovalService.approveArtifact({
+          orgId: ORG_ID,
+          artifactType: 'workbook',
+          artifactId: 'workbook-reviewer-check',
+          approvedByUserId: 'different-user',
+        })
+      ).rejects.toMatchObject({ status: 403 });
     });
 
     it('acknowledgeReview moves PENDING -> ACKED while staying in review state', async () => {

@@ -15,6 +15,9 @@ System planowania i decyzji transformacyjnych: inicjatywa jest podstawowym obiek
 
 ## Contract Layers
 
+- `../INITIATIVES_EXECUTION_FUNCTIONS_CANON.md` — nadrzędny kanon Menu 2, business lifecycle, table-first shell, funkcji `Inicjatywy / Portfel / Plan / Obciążenie` oraz handoffu do Execution. W tym zakresie ma pierwszeństwo przed starszym inventory funkcji i runtime enumem.
+- `../initiatives-execution-canon/00_INDEX_AND_AUTHORITY.md` — kompletny pakiet wdrożeniowy: proces, governance, UI/UX, descriptors, data/API/events, migracja, kolejność implementacji, testy i owner decisions.
+
 - `SSOT.md` — priority and source map.
 - `RAW_TARGET_STATE_2_0_PACKET.md` — Contract 2.0 packet for RAW extraction, delta, function/dependency/evidence baseline and open questions.
 - `INTEGRATION_REPORT.md` — module integration decision, consistency matrix and gate output.
@@ -45,6 +48,8 @@ System planowania i decyzji transformacyjnych: inicjatywa jest podstawowym obiek
 - RAW benchmark analysis confirms the target split: `Inicjatywy` decide what is worth doing and why, `Realizacja` manages how it is delivered, and `My Work`/tasks/decisions carry daily execution.
 
 ## Function Inventory (Function-First)
+
+> Target canon: `Inicjatywy -> Portfel -> Plan -> Obciążenie`. Poniższe identyfikatory są historycznym/runtime inventory do mapowania i nie ustanawiają docelowego Menu 2.
 
 | Function | Responsibility | Owner business | Owner tech | Status |
 | --- | --- | --- | --- | --- |

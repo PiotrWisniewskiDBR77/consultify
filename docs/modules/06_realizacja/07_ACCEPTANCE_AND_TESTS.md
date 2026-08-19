@@ -9,6 +9,8 @@ last_updated: 2026-05-10
 
 # Acceptance & Tests — Realizacja / Implementation & PMO
 
+> The runtime paths below are AS-IS evidence. Target Menu 2 and acceptance direction are defined by `../INITIATIVES_EXECUTION_FUNCTIONS_CANON.md`; the historical Portfolio/Raporty/Manager split is not the current target IA.
+
 ## Acceptance Matrix (As-Is Runtime Paths)
 
 | Path / flow | Current runtime evidence | Status |

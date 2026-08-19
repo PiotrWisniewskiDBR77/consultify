@@ -11,6 +11,10 @@ last_reviewed: 2026-08-01
 
 # Weekend odbioru i dokończenia aplikacji
 
+> Nowy agent lub osoba przejmująca program zaczyna od
+> [`../../START_HERE.md`](../../START_HERE.md) oraz
+> [`00_START_HERE/AGENT_BOOTSTRAP.md`](00_START_HERE/AGENT_BOOTSTRAP.md).
+
 ## Cel
 
 W weekend 1–2 sierpnia 2026 doprowadzamy Consultify do stanu, w którym:
@@ -63,9 +67,12 @@ zakończone na podstawie samej deklaracji implementatora.
 
 ## Dokumenty sterujące
 
-0. [`ENVIRONMENT_AND_NAMING_AUTHORITY.md`](ENVIRONMENT_AND_NAMING_AUTHORITY.md)
+0. [`CURRENT_MVP_CONTROL.md`](CURRENT_MVP_CONTROL.md) — jedyna bieżąca prawda
+   o aktywnych liniach, kolejności, wyjątkach D/E i bramce integracji. W razie
+   konfliktu operacyjnego ma pierwszeństwo przed historycznymi planami i handoffami.
+1. [`ENVIRONMENT_AND_NAMING_AUTHORITY.md`](ENVIRONMENT_AND_NAMING_AUTHORITY.md)
    — twardy kanon Consultify, Railway `demo`, domeny i PostgreSQL stagingu.
-1. [`ACCEPTANCE_BOARD.md`](ACCEPTANCE_BOARD.md) — jedna kolejka i status;
+2. [`ACCEPTANCE_BOARD.md`](ACCEPTANCE_BOARD.md) — kolejka pakietów i status;
    pakiet operacyjny: [`OPS-DEMO-001`](PACKETS/OPS-DEMO-001_CONTROLLED_DEMO_PROMOTION.md)
    — kontrolowana promocja kandydata i rollback na `demo`; bieżące odkrycia runtime:
    [`MAT-006B`](PACKETS/MAT-006B_PRESENTATION_LIFECYCLE_E2E.md) i
@@ -111,6 +118,9 @@ zakończone na podstawie samej deklaracji implementatora.
     — kontrakt syntezy źródeł do zatwierdzanych Insight Candidates.
 20. [`AGREEMENTS/INITIATIVE_PROPOSAL_GENERATOR_CONTRACT.md`](AGREEMENTS/INITIATIVE_PROPOSAL_GENERATOR_CONTRACT.md)
     — współdzielony generator Proposal Drafts dla modułów źródłowych.
+- **Fala 2 — backorder:** [`POST_MVP_WAVE_2_BACKORDER.md`](POST_MVP_WAVE_2_BACKORDER.md)
+    — nieuruchomiony backorder Fali 2; pierwszy wpis `W2-001` opisuje Standard C
+    inspirowany ClickUp wraz z use case'em i obowiązkową bramką discovery.
 21. [`AGREEMENTS/QUESTION_ARTIFACT_CONTRACT.md`](AGREEMENTS/QUESTION_ARTIFACT_CONTRACT.md)
     — kanoniczny, wersjonowany model pytania i jego profile metodologiczne.
 22. [`AGREEMENTS/QUESTION_GENERATOR_CONTRACT.md`](AGREEMENTS/QUESTION_GENERATOR_CONTRACT.md)

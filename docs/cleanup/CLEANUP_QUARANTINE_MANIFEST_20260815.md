@@ -6,11 +6,17 @@
 - To jest dokument operacyjny, nie wdrożeniowy.
 
 ## Autoritative base snapshot
-- HEAD: 635fd2d48d
+- HEAD: 869f9c322c
 - Branch: codex/sync-demo-20260729
-- Pliki w statusie: 354
-- Tracked modified: 167
-- Untracked: 187
+- Pliki w statusie: 370
+- Tracked modified: 171
+- Untracked: 193
+
+## Wydzielona kwarantanna runtime (zewnętrzny backup)
+- `/Users/piotrwisniewski/Developer/consultify-cleanup-runtime-quarantine-20260815/pdfs`
+- `/Users/piotrwisniewski/Developer/consultify-cleanup-runtime-quarantine-20260815/artifacts/{visual-acceptance,visual-current-state,visual-qa}`
+- `/Users/piotrwisniewski/Developer/consultify-cleanup-runtime-quarantine-20260815/scripts/.tmp-ie-live-acceptance.mjs`
+- folder używany jako jednorazowy bufor runtime, **nie część drzewa kanonicznego**
 
 ## Koszyki klasyfikacji
 
@@ -19,12 +25,11 @@
 - docs/cleanup/* newly generated in this cycle
 - docs/ssot/registry.json (ważny rejestr SSOT)
 - .claude/launch.json
-- .tmp-ie-live-acceptance.mjs (tylko po potwierdzeniu test-gate i użyciu jako seed/run script)
+- /tmp-ie-live-acceptance.mjs (zachowane jako backup runtime w katalogu kwarantanny, poza repo)
 
 ### QUARANTINE_LOCAL (tymczasowe aktywa robocze, screenshoty, sesje)
-- tools/
-- tmp/
-- artifacts/
+- tmp/pdfs/
+- artifacts/visual-*/
 - dev-render/*
 - Harvard/legacy screenshoty i pliki tymczasowe
 - root tmp artifacts (m.in. konsultacyjne, logi, pdfy/raporty nieprzydzielone)
@@ -51,6 +56,19 @@
 2) Dla każdego pliku untracked: przypisać jednoznaczny koszyk.
 3) Przenieść tylko to, co nieprodukcyjne, do `_quarantine/` dopiero po decyzji „keep/keep-as-docs/remove”.
 4) Zaktualizować Module Closure Ledger dla 16 modułów i wygenerować „ready-blockers” per moduł.
+
+## Stan wykonany (08:31 CEST)
+
+- Zmapowano aktualny status modułów w:
+  - `docs/cleanup/CANONICAL_MODULE_STATUS_MATRIX_20260815.md`
+  - `docs/cleanup/MODULE_CLOSURE_STATUS_MATRIX_20260815.md`
+  - `docs/cleanup/MODULE_NONGREEN_ACTION_PACKET_20260815.md`
+- Wprowadzono jawny podział:
+  - `KEEP / VERIFY`: Chat, Tools, Interview
+  - `KEEP / PARTIAL`: My Work, Initiatives, Execution, Assessment
+  - `INTEGRATE`: Results, Finance, Materials
+  - `BLOCKER`: Agent/Case, Audit legacy split
+- Kolejność domknięcia po tej inwentaryzacji: Agent/Case → Results/Finance/Materials → reszta.
 
 ## Notatka operacyjna
 Ten manifest jest stanem pochodzącym z obecnego drzewa roboczego. Nie jest jeszcze aktem końcowym.

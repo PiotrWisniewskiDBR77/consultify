@@ -6,6 +6,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  normalizeRowActionSections,
   StandardTable,
   type StandardRowMenu,
   type TableColumn,
@@ -54,12 +55,10 @@ describe('StandardTable', () => {
     expect(screen.getAllByLabelText('Row actions').length).toBe(2);
   });
 
-  it('kebab contract: module blocks + mandatory universal and destructive blocks', () => {
+  it('kebab contract: maps capabilities into context, manage and danger', () => {
     render(<StandardTable columns={columns} data={data} rowMenu={rowMenu} />);
     fireEvent.click(screen.getAllByLabelText('Row actions')[0]);
     expect(screen.getByText('Open in Map')).toBeInTheDocument();
-    // Blok 4 — „Otwórz podgląd" zostaje zawsze: to nie funkcja do zbudowania,
-    // tylko wejście do encji.
     expect(screen.getByText('Open preview')).toBeInTheDocument();
     expect(screen.getByText('Edit')).toBeInTheDocument();
 
@@ -75,8 +74,9 @@ describe('StandardTable', () => {
      */
     expect(screen.queryByText('Archive')).toBeNull();
 
-    // Blok 5 — Delete zawsze ostatni
+    // Danger pozostaje ostatnią strefą.
     expect(screen.getByText('Delete')).toBeInTheDocument();
+    expect(document.querySelectorAll('[role="menu"] > .border-t')).toHaveLength(2);
   });
 
   it('kebab: blokada z POWODEM produktu zostaje widoczna, „jeszcze tego nie ma" znika', () => {
@@ -101,7 +101,11 @@ describe('StandardTable', () => {
 
     const archive = screen.getByText('Archive').closest('button');
     expect(archive).toBeDisabled();
-    expect(screen.getByText(/Finish or cancel it first/)).toBeInTheDocument();
+    // Decyzja zarządzająca R01 (2026-08-06), NADRZĘDNA wobec P-17/P-18: pozycja
+    // ograniczona regułą zostaje widoczna i wyłączona, ale POWÓD nie jest już
+    // prezentowany w menu (kanon §1/§7/§10). Stan biznesowy — obecność pozycji
+    // i `disabled` powyżej — jest nietknięty; powód żyje w deskryptorze capability.
+    expect(screen.queryByText(/Finish or cancel it first/)).toBeNull();
   });
 
   it('renders selection checkboxes when selection prop is provided', () => {
@@ -138,5 +142,52 @@ describe('StandardTable', () => {
   it('shows the mandatory Settings2 view-settings trigger (TableSettingsPopover)', () => {
     render(<StandardTable columns={columns} data={data} rowMenu={rowMenu} />);
     expect(screen.getByLabelText('View settings')).toBeInTheDocument();
+  });
+
+  it('reserves the same description slot when a row description is empty', () => {
+    window.localStorage.setItem('standardTable.rowDesc.description-height', '1');
+    const mixedDescriptions: TableRow[] = [
+      { id: '1', name: 'With description', description: 'Two-line slot' },
+      { id: '2', name: 'Without description' },
+    ];
+
+    const { container } = render(
+      <StandardTable
+        columns={[{ id: 'name', label: 'Name' }]}
+        data={mixedDescriptions}
+        persistKey="description-height"
+      />
+    );
+
+    const slots = container.querySelectorAll('[data-row-description-slot]');
+    expect(slots).toHaveLength(2);
+    expect([...slots].every((slot) => slot.classList.contains('min-h-8'))).toBe(true);
+  });
+
+  it('normalizes low-level rowActions to context, manage and danger without changing actions', () => {
+    const open = vi.fn();
+    const ai = vi.fn();
+    const convert = vi.fn();
+    const remove = vi.fn();
+    const normalized = normalizeRowActionSections([
+      { id: 'open', kind: 'open', actions: [{ id: 'open', label: 'Open', onClick: open }] },
+      { id: 'ai', kind: 'ai', actions: [{ id: 'ai', label: 'AI', onClick: ai }] },
+      {
+        id: 'convert',
+        kind: 'convert',
+        actions: [{ id: 'convert', label: 'Convert', onClick: convert }],
+      },
+      {
+        id: 'danger',
+        kind: 'danger',
+        actions: [{ id: 'delete', label: 'Delete', onClick: remove, variant: 'danger' }],
+      },
+    ]);
+
+    expect(normalized.map((section) => section.kind)).toEqual(['context', 'manage', 'danger']);
+    expect(normalized[1].actions.map((action) => action.id)).toEqual(['ai', 'convert']);
+    expect(
+      normalized.flatMap((section) => section.actions).map((action) => action.onClick)
+    ).toEqual([open, ai, convert, remove]);
   });
 });

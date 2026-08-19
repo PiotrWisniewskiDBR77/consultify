@@ -9,7 +9,13 @@ import { useTableViews } from '@/components/MyWork/table/useTableViews';
 import type { ColumnDef, SavedView } from '@/components/MyWork/table/tableTypes';
 
 function renderViews(isPl = false) {
-  return renderHook(() => useTableViews(isPl, 'test-idea'));
+  return renderHook(() =>
+    useTableViews({
+      t: (key, fallback) => fallback ?? key,
+      ideaId: 'test-idea',
+      onApplyColumns: undefined,
+    })
+  );
 }
 
 describe('useTableViews', () => {
@@ -106,7 +112,7 @@ describe('useTableViews', () => {
   it('calls onApplyColumns when view has columns', () => {
     const onApplyColumns = vi.fn();
     const { result } = renderHook(() =>
-      useTableViews({ isPl: false, ideaId: 'test', onApplyColumns })
+      useTableViews({ t: (key, fallback) => fallback ?? key, ideaId: 'test', onApplyColumns })
     );
     const viewWithCols: SavedView = {
       id: 'custom',

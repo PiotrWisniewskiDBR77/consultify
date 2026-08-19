@@ -46,6 +46,14 @@ vi.mock('../../../../src/components/AIChat/KimiWorkspace/KimiWorkspaceShell', ()
   ),
 }));
 
+vi.mock('../../../../src/components/AIChat/KimiWorkspace/SpreadsheetArtifactStudio', () => ({
+  SpreadsheetArtifactStudio: (props: any) => (
+    <div data-testid="spreadsheet-artifact-studio" data-workbook-id={props.workbookId}>
+      {props.preview?.title || 'none'}
+    </div>
+  ),
+}));
+
 vi.mock('../../../../src/components/AIChat/KimiWorkspace/ExceleRightPanel', () => ({
   ExceleRightPanel: () => <div data-testid="excele-right-panel" />,
 }));
@@ -108,6 +116,7 @@ function renderExcele(initialEntry: string) {
 describe('ExceleView — ?entry=blank auto-create gate', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.localStorage.clear();
     resetPipeline();
   });
 
@@ -143,6 +152,43 @@ describe('ExceleView — ?entry=blank auto-create gate', () => {
     await waitFor(() => {
       expect(screen.getByTestId('kimi-shell')).toBeInTheDocument();
     });
+  });
+
+  it('switches the same loaded workbook to Artifact Studio only when both rollout flags are enabled', async () => {
+    window.localStorage.setItem('ff.artifact_studio', 'true');
+    window.localStorage.setItem('ff.spreadsheet_studio_v2', 'true');
+    mockState.apiPostMock.mockResolvedValue({ data: { id: 'wb-v2' } });
+    mockState.apiGetMock.mockResolvedValue({
+      title: 'Skoroszyt V2',
+      schema_json: { sheets: [{ name: 'KPI', cells: {} }] },
+    });
+
+    renderExcele('/excele?view=new&entry=blank');
+
+    await waitFor(() => {
+      expect(screen.getByTestId('spreadsheet-artifact-studio')).toHaveAttribute(
+        'data-workbook-id',
+        'wb-v2'
+      );
+    });
+    expect(screen.queryByTestId('kimi-shell')).not.toBeInTheDocument();
+  });
+
+  it('keeps the legacy shell as an immediate rollback when the spreadsheet lane flag is off', async () => {
+    window.localStorage.setItem('ff.artifact_studio', 'true');
+    window.localStorage.setItem('ff.spreadsheet_studio_v2', 'false');
+    mockState.apiPostMock.mockResolvedValue({ data: { id: 'wb-legacy' } });
+    mockState.apiGetMock.mockResolvedValue({
+      title: 'Skoroszyt legacy',
+      schema_json: { sheets: [{ name: 'Sheet1', cells: {} }] },
+    });
+
+    renderExcele('/excele?view=new&entry=blank');
+
+    await waitFor(() => {
+      expect(screen.getByTestId('kimi-shell')).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('spreadsheet-artifact-studio')).not.toBeInTheDocument();
   });
 
   it('shows a permanent retry/back state instead of an eternal spinner when creation fails', async () => {

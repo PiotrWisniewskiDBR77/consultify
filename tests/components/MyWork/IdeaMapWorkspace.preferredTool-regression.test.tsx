@@ -141,7 +141,11 @@ vi.mock('@/components/MyWork/IdeaAISuggestionsPanel', () => ({
   IdeaAISuggestionsPanel: () => null,
 }));
 vi.mock('@/components/MyWork/IdeaCanvasMelsView', () => ({
-  IdeaCanvasMelsView: () => null,
+  // MELS is now the sole runtime shell. Preserve its `canvas` slot so this
+  // regression probe still observes which real tool the workspace selected;
+  // dropping the slot would make every tool assertion fail before hydrate is
+  // exercised at all.
+  IdeaCanvasMelsView: ({ canvas }: { canvas?: React.ReactNode }) => <>{canvas}</>,
 }));
 vi.mock('@/components/MyWork/IdeaCanvasMenu1Bits', () => ({
   IdeaSaveIndicator: () => null,

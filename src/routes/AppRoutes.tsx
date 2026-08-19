@@ -443,9 +443,6 @@ const PublicMiniAssessmentView = lazyWithRetry(() =>
 const ToolsShowcasePage = lazyWithRetry(() =>
   import('@/views/ToolsShowcasePage').then((m) => ({ default: m.ToolsShowcasePage }))
 );
-const AuditsShowcasePage = lazyWithRetry(() =>
-  import('@/views/AuditsShowcasePage').then((m) => ({ default: m.AuditsShowcasePage }))
-);
 const ResourcesPage = lazyWithRetry(() =>
   import('@/views/ResourcesPage').then((m) => ({ default: m.ResourcesPage }))
 );
@@ -1143,16 +1140,13 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* Audits Showcase - Industrial Excellence (Public) */}
+        {/* Audits Surface (legacy showcase) -> canonical audit hub redirect.
+            Historical marketing copy for /audits is intentionally preserved as a
+            legacy entry; the canonical functional workspace is now
+            /audit-programs (AppView.ASSESSMENT_AUDITS). */}
         <Route
           path="/audits"
-          element={
-            <AuthLayout>
-              <Suspense fallback={<LoadingScreen message="Loading audits..." />}>
-                <AuditsShowcasePage />
-              </Suspense>
-            </AuthLayout>
-          }
+          element={<Navigate to="/audit-programs" replace />}
         />
 
         {/* Login - stable key prevents remount during auth initialization */}

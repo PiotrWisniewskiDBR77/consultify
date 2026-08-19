@@ -2,11 +2,18 @@
 
 > ⚠️ **AUTORYTET PRZENIESIONY → [CANON.md](CANON.md)** (od 2026-06-14, v3.0).
 > Ten plik pozostaje jako **pomocniczy indeks nawigacyjny**. Jedynym dokumentem, który *ogłasza* standard i rozstrzyga konflikty, jest `CANON.md` (§2 Hierarchia prawdy).
+> Aktualny odbiór: [FINAL_CANONICAL_DOCUMENTATION_ACCEPTANCE_2026-08-03.md](FINAL_CANONICAL_DOCUMENTATION_ACCEPTANCE_2026-08-03.md) — `APPROVED_SPEC / PARTIAL`.
+
+## Finalny odbiór aplikacji — aktywny
+
+- [System finalnego odbioru 16 modułów](CONSULTIFY_16_MODULE_FINAL_ACCEPTANCE_SYSTEM_2026-08-04.md)
+- [Ledger finalnego odbioru 16 modułów](CONSULTIFY_16_MODULE_FINAL_ACCEPTANCE_LEDGER_2026-08-04.csv)
+- [Rejestr powierzchni: tabele, narzędzia i kreatory](CONSULTIFY_SURFACE_REGISTER_2026-08-04.md)
 
 > **Indeks wytycznych UI/UX i specyfikacji komponentów.**
 > **Data konsolidacji:** 2026-05-01 (v2.1 — "DBR77 Tech Sexy 2027" Edition)
 >
-> **v2.1 Changelog:** Golden Standard jako najwyższy SSOT, DBR77 Tech Sexy 2027, Menu 2/3 bez improwizacji, segmented view controls, primary CTA bez plusa, AI actions po prawej stronie Menu 3.
+> **Nota historyczna v2.1:** dawniej Golden Standard był opisywany jako najwyższy SSOT. Od v3 rolę tę pełni wyłącznie `CANON.md`; Golden Standard jest materiałem migracyjnym.
 
 ---
 
@@ -27,7 +34,10 @@
 
 ```
 docs/ui-standards/
-├── README.md                 ← TEN PLIK (index)
+├── CANON.md                  ← JEDYNY FRONT I AUTORYTET
+├── README.md                 ← TEN PLIK (pomocniczy indeks)
+├── CONSULTIFY_APP_WIDE_UI_UX_CURRENT_STATE_AND_REMEDIATION_SPEC_2026-08-04.md ← aktywny stan demo + mapa napraw
+├── FINAL_CANONICAL_DOCUMENTATION_ACCEPTANCE_2026-08-03.md ← aktualny odbiór
 ├── 00-foundation/            ← Fundamenty wizualne (kolory, tokeny, DBR77)
 ├── 01-shell-layout/         ← Shell artefaktów, tryby D/N/C
 ├── 02-components/           ← Katalog WSZYSTKICH komponentów
@@ -46,6 +56,10 @@ docs/ui-standards/
 
 | Obszar                               | Dokument                                                                                                     | Zakres                                                                                                                                       |
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Jedyny front i hierarchia prawdy** | [CANON.md](CANON.md)                                                                                         | Najwyższy autorytet, właściciele obszarów, rozstrzyganie konfliktów i graf dokumentów normatywnych                                           |
+| **Aktualny stan całej aplikacji** | [CONSULTIFY_APP_WIDE_UI_UX_CURRENT_STATE_AND_REMEDIATION_SPEC_2026-08-04.md](CONSULTIFY_APP_WIDE_UI_UX_CURRENT_STATE_AND_REMEDIATION_SPEC_2026-08-04.md) | 16 modułów na aktywnym demo: typy ekranów, potwierdzone odstępstwa, kontrakty tabel/preview oraz kolejność napraw; dokument operacyjny podporządkowany `CANON.md` |
+| **Aktualny odbiór**                  | [FINAL_CANONICAL_DOCUMENTATION_ACCEPTANCE_2026-08-03.md](FINAL_CANONICAL_DOCUMENTATION_ACCEPTANCE_2026-08-03.md) | Finalny odbiór specyfikacji: `APPROVED_SPEC`; runtime pozostaje `PARTIAL`                                                                    |
+| **Faza 1 — mapowanie runtime**       | [PHASE_1_RUNTIME_MAPPING_BRIEF_2026-08-03.md](PHASE_1_RUNTIME_MAPPING_BRIEF_2026-08-03.md)                     | Brief wykonawczy dla Claude, checkpointy oraz zasady niezależnego odbioru przez Codex                                                        |
 | **Kompletny standard implementacyjny** | [UI_UX_IMPLEMENTATION_STANDARD.md](UI_UX_IMPLEMENTATION_STANDARD.md)                                         | Pełny kontrakt shelli, list, preview, detail, artefaktów, wizardów, stanów, AI, a11y, responsive, evidence i odbioru                         |
 | **Macierz zgodności modułów**        | [MODULE_UI_UX_COMPLIANCE_MATRIX.md](MODULE_UI_UX_COMPLIANCE_MATRIX.md)                                       | 19 modułów: bramki SPEC/LIST/PREVIEW/INSIDE/STATES/EVIDENCE oraz status odbioru                                                              |
 | **Golden Standard — materiał migracyjny** | [CONSULTIFY_UI_UX_GOLDEN_STANDARD.md](CONSULTIFY_UI_UX_GOLDEN_STANDARD.md)                              | Historyczny pakiet wartościowej treści, podporządkowany `CANON.md`; nie rozstrzyga konfliktów                                                |
@@ -82,11 +96,11 @@ docs/ui-standards/
 | **Decision Panel**                   | [02-components/decision-panel.md](02-components/decision-panel.md)                                           | DecisionDetailView — layout, sekcje                                                                                                          |
 | **Notification Panel**               | [02-components/notification-panel.md](02-components/notification-panel.md)                                   | NotificationDetailView                                                                                                                       |
 | **Initiative sections**              | [02-components/initiative-sections.md](02-components/initiative-sections.md)                                 | Karty inicjatywy (KPI, Decisions, Gates, RAID…)                                                                                              |
-| **★ Table + Preview CANON (SSOT)**   | [03-modules/TABLE_AND_PREVIEW_CANON.md](03-modules/TABLE_AND_PREVIEW_CANON.md)                               | **JEDEN kanon wszystkich tabel listowych + preview + Menu 1/2/3. Supersedes: app-table, table-preview-pane, view-modes, golden-standard-v3, design-system/TABLES, 31_TABLES_AND_LISTS. Zawsze przywoływany.** |
+| **Mechanika Table + Preview**        | [03-modules/TABLE_AND_PREVIEW_CANON.md](03-modules/TABLE_AND_PREVIEW_CANON.md)                               | Mechanika i szczegół implementacyjny anatomii ustanowionej w `TRIADA_KANON.md`; nie redefiniuje Menu 1/2/3                                  |
 | **Moduł hub**                        | [03-modules/module-hub-standard.md](03-modules/module-hub-standard.md)                                       | Struktura ekranu modułu                                                                                                                      |
 | **Tabele**                           | [03-modules/app-table-standard.md](03-modules/app-table-standard.md)                                         | Złoty standard tabel aplikacyjnych: My Work > Pomysły, dark/light reference, Excel-like boundary resize, chips, row states, settings popover |
 | **Table + Preview**                  | [03-modules/table-preview-pane-standard.md](03-modules/table-preview-pane-standard.md)                       | Kanon “tabela + preview pane” (Outlook style)                                                                                                |
-| **Golden Standard v3**               | [03-modules/golden-standard-table-cards-preview-v3.md](03-modules/golden-standard-table-cards-preview-v3.md) | SSOT: Table + Cards + Preview (Sprint 1)                                                                                                     |
+| **Golden Standard v3 — historyczny** | [03-modules/golden-standard-table-cards-preview-v3.md](03-modules/golden-standard-table-cards-preview-v3.md) | Materiał historyczny `SUPERSEDED`; nie ustanawia standardu                                                                                   |
 | **Interactive boards (v3)**          | [03-modules/interactive-board-standard.md](03-modules/interactive-board-standard.md)                         | Kanon tablic KPI/finanse: definicja kolumn + view modes                                                                                      |
 | **Tools library & detail**           | [03-modules/tools-library-detail-standard.md](03-modules/tools-library-detail-standard.md)                   | Kanon modułu Tools: Goal tab layout, kolory, badge taxonomy, grafiki                                                                         |
 

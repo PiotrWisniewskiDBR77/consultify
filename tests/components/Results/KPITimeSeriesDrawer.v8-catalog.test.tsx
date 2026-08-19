@@ -20,6 +20,7 @@ vi.mock('react-i18next', () => ({
 vi.mock('../../../src/services/api', () => ({
   Api: {
     get: vi.fn(),
+    organizationContextGet: vi.fn(),
     post: vi.fn(),
     put: vi.fn(),
     delete: vi.fn(),
@@ -28,6 +29,7 @@ vi.mock('../../../src/services/api', () => ({
 
 vi.mock('../../../src/services/api/v8/results', () => ({
   V8ResultsApi: {
+    getScorecards: vi.fn(),
     getKpiCatalog: vi.fn(),
     getKpiDrawerDetail: vi.fn(),
     createKpiTimeSeriesValue: vi.fn(),
@@ -63,6 +65,13 @@ function renderDrawer(props: React.ComponentProps<typeof KPITimeSeriesDrawer>) {
 describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(Api.organizationContextGet).mockResolvedValue({
+      data: {
+        organization: { id: 'org-1', name: 'Org 1' },
+        plan: 'default',
+        role: 'owner',
+      },
+    } as any);
     vi.mocked(Api.get).mockImplementation(async (url: string) => {
       if (url === '/initiatives') {
         return { data: [{ id: 'init-1', name: 'Initiative Alpha' }] } as any;

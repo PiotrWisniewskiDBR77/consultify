@@ -83,6 +83,7 @@ import {
   MENU_3_LEFT_CLASS,
   MENU_3_RIGHT_CLASS,
   MENU_3_ROW_CLASS,
+  Menu3BulkRow,
 } from '@/components/shared/ModuleMenu3';
 import { LoadingState } from '@/components/shared/states';
 import {
@@ -93,6 +94,10 @@ import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useUserCan } from '@/hooks/useUserCan';
 import i18n from '@/i18n';
+import {
+  buildIdeaWorkspaceBreadcrumb,
+  parseIdeaWorkspaceTool,
+} from '@/routes/ideaWorkspaceNavigation';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
@@ -510,23 +515,6 @@ function parseMyWorkPathIntent(
   pathname: string,
   isPolish: boolean
 ): { tab: ModuleTab; doc?: OpenDocument; notebookPageId?: string } | null {
-  const parseIdeaTool = (segment?: string): CanvasToolType | undefined => {
-    switch (segment) {
-      case 'mind-map':
-      case 'mindmap':
-        return 'mindmap';
-      case 'whiteboard':
-        return 'whiteboard';
-      case 'process-flow':
-      case 'process_flow':
-      case 'flow':
-        return 'process_flow';
-      case 'table':
-        return 'table';
-      default:
-        return undefined;
-    }
-  };
   const normalized = pathname.replace(/\/+$/, '');
   if (!normalized.startsWith('/my-work')) return null;
   const segments = normalized.split('/').filter(Boolean);
@@ -535,7 +523,7 @@ function parseMyWorkPathIntent(
   if (segments[1] === 'ideas' && segments[2]) {
     const ideaId = decodeURIComponent(segments[2]);
     const openMap = segments[3] === 'workspace';
-    const initialTool = openMap ? parseIdeaTool(segments[4]) : undefined;
+    const initialTool = openMap ? parseIdeaWorkspaceTool(segments[4]) : undefined;
     return {
       tab: 'ideas',
       doc: {
@@ -589,8 +577,17 @@ function parseMyWorkPathIntent(
   if (segments[1] === 'inbox') return { tab: 'inbox' };
   if (segments[1] === 'calendar') return { tab: 'calendar' };
   if (segments[1] === 'manager') return { tab: 'manager' };
+  if (segments[1] === 'vault') return { tab: 'vault' };
+  if (segments[1] === 'agent') return { tab: 'agent' };
 
   return null;
+}
+
+/** Canonical list route for Menu 2. Keeping URL and activeTab in one transaction
+ * prevents the path reconciliation effect from immediately restoring the
+ * previous surface (for example /my-work/ideas after clicking Decisions). */
+export function getMyWorkTabPath(tab: ModuleTab): string {
+  return tab === 'home' ? '/my-work' : `/my-work/${tab}`;
 }
 
 // Main tabs use the shared Menu 2 canon. Menu 3 chip styles below are shared
@@ -779,14 +776,14 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const restoredDocumentState = useMemo(() => readStoredMyWorkDocuments(), []);
   // Tab state — restore the last live document when possible, otherwise land on Home/path intent.
   const [activeTab, setActiveTab] = useState<ModuleTab>(() => {
+    const hasExplicitTabIntent = Boolean(searchParams.get('tab')) || location.pathname !== '/my-work';
     const restoredActiveDoc = restoredDocumentState.activeDocumentId
       ? restoredDocumentState.openDocuments.find(
           (doc) => doc.id === restoredDocumentState.activeDocumentId
         ) || null
       : null;
-    return restoredActiveDoc
-      ? getDocumentTab(restoredActiveDoc.type)
-      : getInitialMyWorkTab(searchParams, canViewManager, !isPilotParticipant);
+    const intendedTab = getInitialMyWorkTab(searchParams, canViewManager, !isPilotParticipant);
+    return hasExplicitTabIntent || !restoredActiveDoc ? intendedTab : getDocumentTab(restoredActiveDoc.type);
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
@@ -1020,6 +1017,15 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       navigate('/my-work', { replace: true });
     }
   }, [activeTab, ideasBetaLocked, location.pathname, navigate, openDocuments, searchParams, t]);
+
+  // If we navigate to a non-list tab (e.g. /my-work?tab=agent), ensure no stale document
+  // overlay from previous sessions remains mounted on top of the active tab.
+  useEffect(() => {
+    if (activeTab === 'tasks' || activeTab === 'ideas' || activeTab === 'decisions' || activeTab === 'inbox') {
+      return;
+    }
+    setActiveDocumentId((current) => (current ? null : current));
+  }, [activeTab]);
   useEffect(() => {
     try {
       window.sessionStorage.setItem(
@@ -1308,15 +1314,28 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     };
     const base = t('myWork.hub.myWork', 'My Work');
     const tabLabel = TAB_LABELS[activeTab] || activeTab;
-    const crumbs = [base, tabLabel];
-
-    if (activeIdeaDoc && activeTab === 'ideas') {
-      crumbs.push(activeIdeaDoc.name || t('myWork.hub.idea', 'Idea'));
-      if (activeIdeaToolLabel) crumbs.push(activeIdeaToolLabel);
-    }
+    const crumbs =
+      activeIdeaDoc && activeTab === 'ideas'
+        ? buildIdeaWorkspaceBreadcrumb(
+            base,
+            tabLabel,
+            activeIdeaDoc.name || t('myWork.hub.idea', 'Idea'),
+            activeIdeaDoc.id,
+            activeIdeaToolLabel,
+            activeIdeaWorkspaceState?.activeTool || ideaActiveTool
+          )
+        : [base, tabLabel];
     setMyWorkBreadcrumbs(crumbs);
     return () => setMyWorkBreadcrumbs(null);
-  }, [activeTab, activeIdeaDoc, activeIdeaToolLabel, isPolish, setMyWorkBreadcrumbs]);
+  }, [
+    activeTab,
+    activeIdeaDoc,
+    activeIdeaToolLabel,
+    activeIdeaWorkspaceState?.activeTool,
+    ideaActiveTool,
+    isPolish,
+    setMyWorkBreadcrumbs,
+  ]);
 
   // Deep link support: header dropdown → open inside My Work
   useEffect(() => {
@@ -1776,9 +1795,11 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       setIdeaWorkspaceStateById((prev) => removeIdeaWorkspaceState(prev, id));
       if (activeDocumentId === id) {
         setActiveDocumentId(null);
+        const closingDocument = openDocuments.find((document) => document.id === id);
+        if (closingDocument?.type === 'idea') navigate('/my-work/ideas');
       }
     },
-    [activeDocumentId]
+    [activeDocumentId, navigate, openDocuments]
   );
 
   // Powrót do listy Idei z rzędu pilli — chip „Lista". Przy scalonym górnym
@@ -1788,7 +1809,8 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   // wraca do listy aktywnej zakładki (dla Idei — listy Idei).
   const handleShowList = useCallback(() => {
     setActiveDocumentId(null);
-  }, []);
+    if (activeTab === 'ideas') navigate('/my-work/ideas');
+  }, [activeTab, navigate]);
 
   // Task handlers
   const handleCreateTask = useCallback(() => {
@@ -1975,9 +1997,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         const stanPrzed = dokumentPrzed
           ? createDefaultIdeaWorkspaceState(dokumentPrzed as any)
           : null;
-        setIdeaWorkspaceStateById((prev) =>
-          moveIdeaWorkspaceState(prev, docId, nextId, stanPrzed)
-        );
+        setIdeaWorkspaceStateById((prev) => moveIdeaWorkspaceState(prev, docId, nextId, stanPrzed));
         setOpenDocuments((prev) => {
           const existing = prev.find((d) => d.id === docId);
           if (!existing) return prev;
@@ -2589,76 +2609,59 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       hubBarSlot.onShowList?.();
     };
 
-    // ★ TRYB EDYCJI OBIEKTU w scalonej linii. Zaznaczenie na płótnie →
-    // narzędzie portaluje pasek edycji do slotu na środku belki. Belka jest
-    // ciasna (tożsamość + ~9 grup kontrolek + 5-elementowy klaster poleceń),
-    // więc lewa strona KURCZY SIĘ do samego tytułu: znikają „Lista",
-    // separator i pille nieaktywnych dokumentów. Odznaczenie = powrót.
-    // Dokładnie to, o co prosił właściciel: „na środku tej belki".
+    // ★ TRYB EDYCJI OBIEKTU. Pasek edycji ma własny, kontekstowy rząd Menu 3
+    // POD paskiem tożsamości. Nie wolno mu konkurować o szerokość z pillami
+    // otwartych Idei ani z klastrem Etap/Zapis/Teresa/Konwertuj — taki układ
+    // nakładał kontrolki na siebie przy realnej szerokości okna (zgłoszenie
+    // właściciela 2026-08-08). Slot pozostaje zamontowany w zwiniętym rzędzie,
+    // żeby portal mógł dostarczyć treść; MutationObserver rozwija rząd dopiero
+    // po pojawieniu się paska.
     const editing = ideaEditBarActive;
-    const visibleHubDocs = editing
-      ? hubDocs.filter((doc) => doc.id === activeDocumentId)
-      : hubDocs;
-    const visibleChildItems = editing
-      ? childItems.filter((doc) => doc.id === childActiveId)
-      : childItems;
-    // CIASNOTA PRZY WĄSKIM OKNIE — kolejność ustępowania jest ŚWIADOMA:
-    // najpierw ustępuje TOŻSAMOŚĆ (jest powtórzona w tytule karty i w prawym
-    // panelu), potem etykieta paska, a NIGDY same kontrolki edycji — właściciel
-    // prosił o nie o to, żeby były pod ręką, więc żadna nie ląduje w kebabie.
-    // Poniżej 1280 px sam TYTUŁ zwija się do zera (`max-w-0`), zostaje ikona +
-    // kropka statusu jako klikalny powrót do dokumentu. Zysk ~300 px dla
-    // kontrolek na oknie 900 px.
-    const docNameClass = editing ? 'max-w-0 xl:max-w-[150px] truncate' : 'max-w-[150px] truncate';
+    const visibleHubDocs = hubDocs;
+    const visibleChildItems = childItems;
+    const docNameClass = 'max-w-[150px] truncate';
 
     return (
-      <div className={MENU_3_ROW_CLASS}>
-        <div
-          className={
-            // ⚠ ZNALEZIONE WZROKIEM (nie z testów): `MENU_3_INNER_CLASS` ma
-            // `overflow-x-auto`, a `overflow-x: auto` wymusza `overflow-y: auto`
-            // — czyli rząd PRZYCINA wszystko, co z niego wystaje w dół. Przy
-            // scalonym pasku mieszka tu kebab `⋯`, więc jego rozwijane menu
-            // było niewidoczne (klik działał, menu nie było widać). Przy fladze
-            // ON zdejmujemy przewijanie z rzędu — przewija się KLASTER PILLI
-            // (własne `overflow-x-auto` niżej), więc nic nie ucieka poza ekran.
-            ideaTopBarOneLine
-              ? 'flex min-h-8 items-center justify-between gap-3 whitespace-nowrap'
-              : MENU_3_INNER_CLASS
-          }
-        >
+      <>
+        <div className={MENU_3_ROW_CLASS}>
           <div
-            className={`${MENU_3_LEFT_CLASS} overflow-x-auto whitespace-nowrap no-scrollbar ${
-              // Jedna linia: pille muszą KURCZYĆ SIĘ i przewijać we własnym
-              // kontenerze, żeby klaster poleceń po prawej nigdy nie uciekł
-              // poza ekran ani nie nachodził na karty (wąskie okno).
-              // W trybie edycji lewa strona przestaje być „elastyczna": oddaje
-              // resztę linii paskowi edycji i sama zwęża się do tytułu.
-              ideaTopBarOneLine ? (editing ? 'min-w-0 flex-none max-w-[38%]' : 'min-w-0 flex-1') : ''
-            }`}
-            data-testid={ideaTopBarOneLine ? 'idea-one-line-identity' : undefined}
-            data-editing={editing ? 'true' : undefined}
+            className={
+              // ⚠ ZNALEZIONE WZROKIEM (nie z testów): `MENU_3_INNER_CLASS` ma
+              // `overflow-x-auto`, a `overflow-x: auto` wymusza `overflow-y: auto`
+              // — czyli rząd PRZYCINA wszystko, co z niego wystaje w dół. Przy
+              // scalonym pasku mieszka tu kebab `⋯`, więc jego rozwijane menu
+              // było niewidoczne (klik działał, menu nie było widać). Przy fladze
+              // ON zdejmujemy przewijanie z rzędu — przewija się KLASTER PILLI
+              // (własne `overflow-x-auto` niżej), więc nic nie ucieka poza ekran.
+              ideaTopBarOneLine
+                ? 'flex min-h-8 items-center justify-between gap-3 whitespace-nowrap'
+                : MENU_3_INNER_CLASS
+            }
           >
-            {/* List button — w trybie edycji ustępuje miejsca kontrolkom. */}
-            {editing ? null : (
-              <>
-                <button
-                  onClick={handleListClick}
-                  className={
-                    isListActive
-                      ? TAB_ACTIVE.replace('border-l-2', '')
-                      : TAB_INACTIVE.replace('border-l-2', '')
-                  }
-                  style={{ flexShrink: 0 }}
-                >
-                  <List size={14} />
-                  <span>{t('myWork.hub.list', 'List')}</span>
-                </button>
+            <div
+              className={`${MENU_3_LEFT_CLASS} overflow-x-auto whitespace-nowrap no-scrollbar ${
+                // Jedna linia: pille muszą KURCZYĆ SIĘ i przewijać we własnym
+                // kontenerze, żeby klaster poleceń po prawej nigdy nie uciekł
+                // poza ekran ani nie nachodził na karty (wąskie okno).
+                ideaTopBarOneLine ? 'min-w-0 flex-1' : ''
+              }`}
+              data-testid={ideaTopBarOneLine ? 'idea-one-line-identity' : undefined}
+            >
+            <button
+              onClick={handleListClick}
+              className={
+                isListActive
+                  ? TAB_ACTIVE.replace('border-l-2', '')
+                  : TAB_INACTIVE.replace('border-l-2', '')
+              }
+              style={{ flexShrink: 0 }}
+            >
+              <List size={14} />
+              <span>{t('myWork.hub.list', 'List')}</span>
+            </button>
 
-                {/* Separator */}
-                <div className="w-px h-6 bg-slate-200/70 dark:bg-white/[0.06] shrink-0" />
-              </>
-            )}
+            {/* Separator */}
+            <div className="w-px h-6 bg-slate-200/70 dark:bg-white/[0.06] shrink-0" />
 
             {/* Document Tabs (hub's own — tasks/ideas/decisions/inbox) */}
             {visibleHubDocs.map((doc) => {
@@ -2736,7 +2739,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 </div>
               );
             })}
-          </div>
+            </div>
 
           {/*
            * UI-L12 (Editor Shell Canon §2 GÓRNA): removed the "AI Kontekst" button.
@@ -2753,40 +2756,37 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
            * go WYŁĄCZNIE przy fladze ON: przy OFF węzła nie ma, więc powłoka
            * sama zostaje przy starym, dwurzędowym układzie.
            */}
-          {/*
-           * ★ PASEK EDYCJI OBIEKTU — DRUGIE GNIAZDO tej samej belki
-           * (`ff_ideaTopBarOneLine` + `ff_canvasObjectEditBar`). Menu 3, gdzie
-           * pasek dokował się dotąd, przy jednej linii nie istnieje; bez tego
-           * węzła narzędzia wracały do PŁYWAJĄCEGO paska nad zaznaczeniem
-           * (zobaczone na zrzucie). Ten sam `id` co gniazdo w Menu 3 — obaj
-           * gospodarze wykluczają się wzajemnie, więc `getElementById` w
-           * `useObjectEditBarSlot()` zawsze trafia w ten, który akurat żyje.
-           *
-           * `contents` gdy pusty: nie tworzy pudełka, nie łapie `gap` rodzica,
-           * więc belka bez zaznaczenia wygląda BAJT W BAJT jak przed zmianą.
-           * `min-w-0` + `flex-1` gdy pełny: kontrolki dostają środek linii i
-           * przewijają się WEWNĄTRZ siebie (`ObjectEditBar` ma własny
-           * `overflow-x-auto`) — klaster poleceń po prawej nigdy nie ucieka
-           * poza ekran, nawet przy 900 px.
-           */}
-          {ideaEditBarDockEnabled ? (
-            <div
-              id={CANVAS_OBJECT_EDIT_BAR_SLOT_ID}
-              ref={ideaEditBarSlotRef}
-              className={editing ? 'flex min-w-0 flex-1 items-center px-1' : 'contents'}
-              data-testid="canvas-object-edit-bar-slot"
-            />
-          ) : null}
-
-          {ideaTopBarOneLine ? (
-            <div
-              id={IDEA_TOP_BAR_SLOT_ID}
-              className="flex shrink-0 items-center gap-1.5 pl-2"
-              data-testid="idea-top-bar-one-line-slot"
-            />
-          ) : null}
+            {ideaTopBarOneLine ? (
+              <div
+                id={IDEA_TOP_BAR_SLOT_ID}
+                className="flex shrink-0 items-center gap-1.5 pl-2"
+                data-testid="idea-top-bar-one-line-slot"
+              />
+            ) : null}
+          </div>
         </div>
-      </div>
+
+        {ideaEditBarDockEnabled ? (
+          <div
+            className={
+              editing
+                ? `${MENU_3_ROW_CLASS} min-h-9 opacity-100 transition-opacity duration-150`
+                : 'h-0 overflow-hidden opacity-0'
+            }
+            data-testid="canvas-object-edit-bar-row"
+            data-active={editing ? 'true' : 'false'}
+          >
+            <div className="flex min-w-0 w-full items-center px-3">
+              <div
+                id={CANVAS_OBJECT_EDIT_BAR_SLOT_ID}
+                ref={ideaEditBarSlotRef}
+                className="flex min-w-0 flex-1 items-center"
+                data-testid="canvas-object-edit-bar-slot"
+              />
+            </div>
+          </div>
+        ) : null}
+      </>
     );
   };
 
@@ -2824,7 +2824,6 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                         ? t('myWork.hub.searchNotes', 'Search notes...')
                         : t('myWork.hub.searchInbox', 'Search inbox...')
               }
-              autoFocus
               className="w-full pl-10 pr-10 py-2 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-900 dark:text-white placeholder:text-slate-500 dark:text-slate-400 dark:placeholder-slate-500 focus:border-c-focus-solid focus:ring-1 focus:ring-c-focus transition-all"
             />
             {searchQuery && (
@@ -2984,44 +2983,41 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       // V3-A03: bulk selection is a *mode* of the same command row (no extra line).
       if (tasksBulkUi?.selectedCount) {
         const bulk = tasksBulkActionsRef.current;
-        const bulkGhostPill =
-          'inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-white/60 dark:text-slate-300 dark:hover:bg-white/[0.06]';
-
         return (
-          <div className={MENU_3_ROW_CLASS}>
-            <div className={MENU_3_INNER_CLASS}>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                  {tasksBulkUi.selectedCount} {t('myWork.hub.selected', 'selected')}
-                </span>
-                <button onClick={() => bulk?.selectAllVisible()} className={bulkGhostPill}>
-                  {t('myWork.hub.selectAll', 'Select all')}
-                </button>
-                <button onClick={() => bulk?.clearSelection()} className={bulkGhostPill}>
-                  {t('myWork.hub.clear', 'Clear')}
-                </button>
-              </div>
-
-              <div className={MENU_3_RIGHT_CLASS}>
-                <button onClick={() => bulk?.changePriority()} className={MENU_3_ACTION_NEUTRAL}>
-                  <Flag size={14} />
-                  {t('myWork.hub.priority', 'Priority')}
-                </button>
-                <button onClick={() => bulk?.changeDueDate()} className={MENU_3_ACTION_NEUTRAL}>
-                  <Calendar size={14} />
-                  {t('myWork.hub.dueDate', 'Due date')}
-                </button>
-                <button onClick={() => bulk?.complete()} className={MENU_3_ACTION_NEUTRAL}>
-                  <CheckSquare size={14} />
-                  {t('myWork.hub.done', 'Done')}
-                </button>
-                <button onClick={() => bulk?.deleteSelected()} className={MENU_3_ACTION_DANGER}>
-                  <Trash2 size={14} />
-                  {t('myWork.hub.delete', 'Delete')}
-                </button>
-              </div>
-            </div>
-          </div>
+          <Menu3BulkRow
+            selectedLabel={`${tasksBulkUi.selectedCount} ${t('myWork.hub.selected', 'selected')}`}
+            selectAllLabel={t('myWork.hub.selectAll', 'Select all')}
+            clearLabel={t('myWork.hub.clear', 'Clear')}
+            onSelectAll={() => bulk?.selectAllVisible()}
+            onClear={() => bulk?.clearSelection()}
+            actions={[
+              {
+                id: 'priority',
+                label: t('myWork.hub.priority', 'Priority'),
+                icon: Flag,
+                onClick: () => bulk?.changePriority(),
+              },
+              {
+                id: 'due-date',
+                label: t('myWork.hub.dueDate', 'Due date'),
+                icon: Calendar,
+                onClick: () => bulk?.changeDueDate(),
+              },
+              {
+                id: 'done',
+                label: t('myWork.hub.done', 'Done'),
+                icon: CheckSquare,
+                onClick: () => bulk?.complete(),
+              },
+              {
+                id: 'delete',
+                label: t('myWork.hub.delete', 'Delete'),
+                icon: Trash2,
+                onClick: () => bulk?.deleteSelected(),
+                variant: 'danger',
+              },
+            ]}
+          />
         );
       }
 
@@ -3122,63 +3118,46 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       // V3-A03: bulk selection is a *mode* of the same command row (no extra line).
       if (inboxBulkUi?.selectedCount) {
         const bulkActions = inboxBulkActionsRef.current;
-        const bulkGhostPill =
-          'inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-white/60 dark:text-slate-300 dark:hover:bg-white/[0.06]';
-
         return (
-          <div className={MENU_3_ROW_CLASS}>
-            <div className={MENU_3_INNER_CLASS}>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                  {inboxBulkUi.selectedCount} {t('myWork.hub.selected2', 'selected')}
-                </span>
-                <button onClick={() => bulkActions?.selectAllVisible()} className={bulkGhostPill}>
-                  {t('myWork.hub.selectAll2', 'Select all')}
-                </button>
-                <button onClick={() => bulkActions?.clearSelection()} className={bulkGhostPill}>
-                  {t('myWork.hub.clear2', 'Clear')}
-                </button>
-              </div>
-
-              <div className={MENU_3_RIGHT_CLASS}>
-                <button
-                  onClick={() => bulkActions?.triage('accept_today')}
-                  className={MENU_3_ACTION_NEUTRAL}
-                >
-                  <Zap size={14} />
-                  {t('myWork.hub.focusToday', 'Focus: Today')}
-                </button>
-                <button
-                  onClick={() => bulkActions?.triage('accept_week')}
-                  className={MENU_3_ACTION_NEUTRAL}
-                >
-                  <CalendarClock size={14} />
-                  {t('myWork.hub.thisWeek', 'This week')}
-                </button>
-                <button
-                  onClick={() => bulkActions?.triage('done')}
-                  className={MENU_3_ACTION_NEUTRAL}
-                >
-                  <CheckSquare size={14} />
-                  {t('myWork.hub.done2', 'Done')}
-                </button>
-                <button
-                  onClick={() => bulkActions?.triage('save')}
-                  className={MENU_3_ACTION_NEUTRAL}
-                >
-                  <FileText size={14} />
-                  {t('myWork.hub.save', 'Save')}
-                </button>
-                <button
-                  onClick={() => bulkActions?.triage('dismiss')}
-                  className={MENU_3_ACTION_NEUTRAL}
-                >
-                  <X size={14} />
-                  {t('myWork.hub.dismiss', 'Dismiss')}
-                </button>
-              </div>
-            </div>
-          </div>
+          <Menu3BulkRow
+            selectedLabel={`${inboxBulkUi.selectedCount} ${t('myWork.hub.selected2', 'selected')}`}
+            selectAllLabel={t('myWork.hub.selectAll2', 'Select all')}
+            clearLabel={t('myWork.hub.clear2', 'Clear')}
+            onSelectAll={() => bulkActions?.selectAllVisible()}
+            onClear={() => bulkActions?.clearSelection()}
+            actions={[
+              {
+                id: 'today',
+                label: t('myWork.hub.focusToday', 'Focus: Today'),
+                icon: Zap,
+                onClick: () => bulkActions?.triage('accept_today'),
+              },
+              {
+                id: 'week',
+                label: t('myWork.hub.thisWeek', 'This week'),
+                icon: CalendarClock,
+                onClick: () => bulkActions?.triage('accept_week'),
+              },
+              {
+                id: 'done',
+                label: t('myWork.hub.done2', 'Done'),
+                icon: CheckSquare,
+                onClick: () => bulkActions?.triage('done'),
+              },
+              {
+                id: 'save',
+                label: t('myWork.hub.save', 'Save'),
+                icon: FileText,
+                onClick: () => bulkActions?.triage('save'),
+              },
+              {
+                id: 'dismiss',
+                label: t('myWork.hub.dismiss', 'Dismiss'),
+                icon: X,
+                onClick: () => bulkActions?.triage('dismiss'),
+              },
+            ]}
+          />
         );
       }
 
@@ -3284,70 +3263,88 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     // Decisions: bulk selection is a *mode* of the same command row (no extra line).
     if (activeTab === 'decisions' && decisionsBulkUi?.selectedCount) {
       const bulk = decisionsBulkActionsRef.current;
-      const bulkGhostPill =
-        'inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-white/60 dark:text-slate-300 dark:hover:bg-white/[0.06]';
-
       return (
-        <div className={MENU_3_ROW_CLASS}>
-          <div className={MENU_3_INNER_CLASS}>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                {decisionsBulkUi.selectedCount} {t('myWork.hub.selected3', 'selected')}
-              </span>
-              <button onClick={() => bulk?.selectAllVisible()} className={bulkGhostPill}>
-                {t('myWork.hub.selectAll3', 'Select all')}
-              </button>
-              <button onClick={() => bulk?.clearSelection()} className={bulkGhostPill}>
-                {t('myWork.hub.clear3', 'Clear')}
-              </button>
-            </div>
-
-            <div className={MENU_3_RIGHT_CLASS}>
-              {bulk?.approve ? (
-                <button onClick={() => bulk?.approve?.()} className={MENU_3_ACTION_NEUTRAL}>
-                  <Check size={14} />
-                  {t('myWork.hub.approve', 'Approve')}
-                </button>
-              ) : null}
-              {bulk?.reject ? (
-                <button onClick={() => bulk?.reject?.()} className={MENU_3_ACTION_DANGER}>
-                  <X size={14} />
-                  {t('myWork.hub.reject', 'Reject')}
-                </button>
-              ) : null}
-              {bulk?.remind ? (
-                <button onClick={() => bulk?.remind?.()} className={MENU_3_ACTION_NEUTRAL}>
-                  <Bell size={14} />
-                  {t('myWork.hub.remind', 'Remind')}
-                </button>
-              ) : null}
-              {bulk?.escalate ? (
-                <button onClick={() => bulk?.escalate?.()} className={MENU_3_ACTION_NEUTRAL}>
-                  <TrendingUp size={14} />
-                  {t('myWork.hub.escalate', 'Escalate')}
-                </button>
-              ) : null}
-              {bulk?.snoozeTomorrow ? (
-                <button onClick={() => bulk?.snoozeTomorrow?.()} className={MENU_3_ACTION_NEUTRAL}>
-                  <Clock size={14} />
-                  {t('myWork.hub.snoozeTomorrow', 'Snooze (tomorrow)')}
-                </button>
-              ) : null}
-              {bulk?.changePriority ? (
-                <button onClick={() => bulk?.changePriority?.()} className={MENU_3_ACTION_NEUTRAL}>
-                  <Flag size={14} />
-                  {t('myWork.hub.priority2', 'Priority')}
-                </button>
-              ) : null}
-              {bulk?.deleteSelected ? (
-                <button onClick={() => bulk?.deleteSelected?.()} className={MENU_3_ACTION_DANGER}>
-                  <Trash2 size={14} />
-                  {t('myWork.hub.delete2', 'Delete')}
-                </button>
-              ) : null}
-            </div>
-          </div>
-        </div>
+        <Menu3BulkRow
+          selectedLabel={`${decisionsBulkUi.selectedCount} ${t('myWork.hub.selected3', 'selected')}`}
+          selectAllLabel={t('myWork.hub.selectAll3', 'Select all')}
+          clearLabel={t('myWork.hub.clear3', 'Clear')}
+          onSelectAll={() => bulk?.selectAllVisible()}
+          onClear={() => bulk?.clearSelection()}
+          actions={[
+            ...(bulk?.approve
+              ? [
+                  {
+                    id: 'approve',
+                    label: t('myWork.hub.approve', 'Approve'),
+                    icon: Check,
+                    onClick: () => bulk.approve?.(),
+                  },
+                ]
+              : []),
+            ...(bulk?.reject
+              ? [
+                  {
+                    id: 'reject',
+                    label: t('myWork.hub.reject', 'Reject'),
+                    icon: X,
+                    onClick: () => bulk.reject?.(),
+                    variant: 'danger' as const,
+                  },
+                ]
+              : []),
+            ...(bulk?.remind
+              ? [
+                  {
+                    id: 'remind',
+                    label: t('myWork.hub.remind', 'Remind'),
+                    icon: Bell,
+                    onClick: () => bulk.remind?.(),
+                  },
+                ]
+              : []),
+            ...(bulk?.escalate
+              ? [
+                  {
+                    id: 'escalate',
+                    label: t('myWork.hub.escalate', 'Escalate'),
+                    icon: TrendingUp,
+                    onClick: () => bulk.escalate?.(),
+                  },
+                ]
+              : []),
+            ...(bulk?.snoozeTomorrow
+              ? [
+                  {
+                    id: 'snooze',
+                    label: t('myWork.hub.snoozeTomorrow', 'Snooze (tomorrow)'),
+                    icon: Clock,
+                    onClick: () => bulk.snoozeTomorrow?.(),
+                  },
+                ]
+              : []),
+            ...(bulk?.changePriority
+              ? [
+                  {
+                    id: 'priority',
+                    label: t('myWork.hub.priority2', 'Priority'),
+                    icon: Flag,
+                    onClick: () => bulk.changePriority?.(),
+                  },
+                ]
+              : []),
+            ...(bulk?.deleteSelected
+              ? [
+                  {
+                    id: 'delete',
+                    label: t('myWork.hub.delete2', 'Delete'),
+                    icon: Trash2,
+                    onClick: () => bulk.deleteSelected?.(),
+                    variant: 'danger' as const,
+                  },
+                ]
+              : []),
+          ]}
+        />
       );
     }
 
@@ -3369,39 +3366,35 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
       if (ideasBulkUi?.selectedCount) {
         const bulk = ideasBulkActionsRef.current;
-        const bulkGhostPill =
-          'inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-100 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-navy-800 dark:ring-offset-navy-900';
-
         return (
-          <div className={menu3RowClass}>
-            <div className={menu3InnerClass}>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                  {ideasBulkUi.selectedCount} {t('myWork.hub.selected4', 'selected')}
-                </span>
-                <button onClick={() => bulk?.selectAllVisible()} className={bulkGhostPill}>
-                  {t('myWork.hub.selectAll4', 'Select all')}
-                </button>
-                <button onClick={() => bulk?.clearSelection()} className={bulkGhostPill}>
-                  {t('myWork.hub.clear4', 'Clear')}
-                </button>
-              </div>
-              <div className={MENU_3_RIGHT_CLASS}>
-                <button onClick={() => bulk?.convert()} className={MENU_3_ACTION_NEUTRAL}>
-                  <Sparkles size={14} />
-                  {t('myWork.hub.convert', 'Convert')}
-                </button>
-                <button onClick={() => bulk?.tag()} className={MENU_3_ACTION_NEUTRAL}>
-                  <Tag size={14} />
-                  {t('myWork.hub.tag', 'Tag')}
-                </button>
-                <button onClick={() => bulk?.deleteSelected()} className={MENU_3_ACTION_DANGER}>
-                  <Trash2 size={14} />
-                  {t('myWork.hub.delete3', 'Delete')}
-                </button>
-              </div>
-            </div>
-          </div>
+          <Menu3BulkRow
+            selectedLabel={`${ideasBulkUi.selectedCount} ${t('myWork.hub.selected4', 'selected')}`}
+            selectAllLabel={t('myWork.hub.selectAll4', 'Select all')}
+            clearLabel={t('myWork.hub.clear4', 'Clear')}
+            onSelectAll={() => bulk?.selectAllVisible()}
+            onClear={() => bulk?.clearSelection()}
+            actions={[
+              {
+                id: 'convert',
+                label: t('myWork.hub.convert', 'Convert'),
+                icon: Sparkles,
+                onClick: () => bulk?.convert(),
+              },
+              {
+                id: 'tag',
+                label: t('myWork.hub.tag', 'Tag'),
+                icon: Tag,
+                onClick: () => bulk?.tag(),
+              },
+              {
+                id: 'delete',
+                label: t('myWork.hub.delete3', 'Delete'),
+                icon: Trash2,
+                onClick: () => bulk?.deleteSelected(),
+                variant: 'danger',
+              },
+            ]}
+          />
         );
       }
 
@@ -4053,6 +4046,8 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               <Search size={18} />
             </button>
 
+            {hubBarSlot.searchControl}
+
             {/* Main Tabs */}
             <div className="flex items-center gap-2 min-w-0 overflow-x-auto whitespace-nowrap">
               {tabs.map((tab) => {
@@ -4076,6 +4071,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                       setActiveTab(tab.id);
                       // Close document when switching tabs to show list view
                       setActiveDocumentId(null);
+                      navigate(getMyWorkTabPath(tab.id));
                     }}
                     className={isActive ? BUTTON_ACTIVE : BUTTON_INACTIVE}
                     data-testid={`mywork-tab-${tab.id}`}
@@ -4138,6 +4134,8 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   />
                 </div>
               )}
+
+              {hubBarSlot.viewControls}
 
               {/* Decisions: priority filter moved INTO the Command Row (Menu-3
                   dropdown chip) — S1-U1 single dynamic line, no topbar select. */}
@@ -4324,14 +4322,6 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               )}
 
               {/* Tools */}
-
-              {/* Ideas workspace — panel strip (block 2: Tools / Context / AI) */}
-              {activeTab === 'ideas' && activeDocumentId && (
-                <WorkspacePanelStrip
-                  value={activeIdeaWorkspaceState?.activePanel || ideaActivePanel}
-                  onChange={handleIdeaPanelChange}
-                />
-              )}
 
               {/* Ideas: canonical view mode switcher — table / grid */}
               {activeTab === 'ideas' && !activeDocumentId && (

@@ -62,7 +62,10 @@ const baseSchema: DocumentSchema = {
   communicationRegister: 'executive',
   density: 'standard',
   languageStyle: 'consulting',
-  confidentiality: 'client_confidential',
+  // Anonymous share-link reader tests must use an explicitly public artifact.
+  // Internal/client-confidential documents are covered by the fail-closed
+  // classification tests on the authenticated share-link route.
+  confidentiality: 'public',
   formattingSchema: {
     fonts: { body: 'Aptos 11', heading: 'Aptos Display' },
     headingStyles: { h1: 'h1', h2: 'h2', h3: 'h3' },
@@ -134,7 +137,10 @@ function createApp(): Express {
   return app;
 }
 
-async function mintLink(app: Express, accessScope: string): Promise<{ token: string; shareLinkId: string }> {
+async function mintLink(
+  app: Express,
+  accessScope: string
+): Promise<{ token: string; shareLinkId: string }> {
   mockUser = { id: 'user-reader-1', organizationId: ORG, role: 'CONSULTANT' };
   const created = await request(app)
     .post(`/api/document-studio/${ARTIFACT}/share-links`)

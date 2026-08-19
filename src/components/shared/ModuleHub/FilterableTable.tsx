@@ -85,7 +85,20 @@ interface FilterableTableProps {
   hideRowActions?: boolean;
   activeFilters: FilterChip[];
   onFilterChange: (filters: FilterChip[]) => void;
-  emptyMessage?: string;
+  /**
+   * R04-2C: `ReactNode`, nie `string` — fasada `StandardTable` przekazuje tu
+   * bogaty stan pusty (ikona + tytuł + opis + CTA). Wcześniej typ `string`
+   * zmuszał ją do renderowania `EmptyState` ZAMIAST tabeli, przez co nagłówek
+   * i geometria znikały — wprost wbrew §5 („empty state zachowuje nagłówek
+   * i geometrię tabeli"). Zwykły string nadal działa bez zmian.
+   */
+  emptyMessage?: React.ReactNode;
+  /**
+   * Komunikat dla stanu „filtry nie dały wyniku" (§5 Stany). Odrębny od
+   * `emptyMessage`, który opisuje brak danych w ogóle. Opcjonalny — bez niego
+   * używany jest kanoniczny fallback i przycisk resetu filtrów.
+   */
+  emptyFilteredMessage?: React.ReactNode;
   /** Outer padding of the table canvas (not the surface). */
   canvasClassName?: string;
   /** Controls row/header density. */
@@ -259,6 +272,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   activeFilters,
   onFilterChange,
   emptyMessage = 'No items found',
+  emptyFilteredMessage,
   canvasClassName = 'p-4',
   density = 'comfortable',
   enableColumnSettings = true,
@@ -269,7 +283,31 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   rowClassName,
 }) => {
   const { t } = useTranslation();
+  /**
+   * ── R04-2A · wysokość rejestru ────────────────────────────────────────────
+   *
+   * Decyzja kanoniczna (2026-08-06): `CANON_TABLE.headerHeight` i `rowHeight`
+   * = 56 px są NADRZĘDNE; padding jest wyłącznie wskazówką i nie wyznacza
+   * wysokości końcowej. Do R04-2A wysokość była wypadkową paddingu i fontu
+   * (≈44 px w `comfortable`, ≈36 px w `compact`) — czyli różna w dwóch trybach
+   * i niemierzalna żadnym testem, bo nie istniała liczba do porównania.
+   *
+   * `h-14` = 56 px. W tabeli CSS `height` na komórce działa jak MINIMUM, więc
+   * wiersz bazowy ma dokładnie 56 px, a wiersz z włączonym opisem może urosnąć —
+   * to jest wymagane, bo slot opisu (`min-h-8`, cudza konsolidacja) sam w sobie
+   * przekracza pozostałą przestrzeń. Zgodne z §5: wysokość jest STABILNA dla
+   * danego trybu, a nie „identyczna niezależnie od treści".
+   *
+   * `density` zostaje w publicznym API i nadal steruje paddingiem — zmienia się
+   * tylko to, że nie steruje już wysokością.
+   *
+   * Wiązanie `h-14` ↔ `CANON_TABLE.rowHeight` (56 px) egzekwuje test R04-2A,
+   * a nie import — klasa jest STATYCZNA (`h-14`), nie budowana z `CANON_TABLE` szablonem —
+   * Tailwind skanuje źródło tekstowo i klasy sklejanej w runtime nigdy by nie
+   * wygenerował. Powiązanie `h-14` ↔ 56 px pilnuje test R04-2A.
+   */
   const cellPadding = density === 'compact' ? 'px-4 py-2' : 'px-4 py-3';
+  const ROW_HEIGHT_CLASS = 'h-14';
 
   // PPM-mirror (ANEKS #3b): right-click on a row opens the SAME
   // RowActionsMenu popover as its kebab, anchored at the cursor instead of
@@ -595,7 +633,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                   return (
                     <th
                       key={column.id}
-                      className={`${cellPadding} relative ${alignToClass(column.align)} text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider`}
+                      className={`${ROW_HEIGHT_CLASS} ${cellPadding} relative ${alignToClass(column.align)} text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider`}
                       style={{
                         width: `${width}px`,
                         minWidth: `${minWidth}px`,
@@ -669,7 +707,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                 })}
                 {!hideRowActions ? (
                   <th
-                    className={`${cellPadding} text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-20`}
+                    className={`${ROW_HEIGHT_CLASS} ${cellPadding} text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-20`}
                   >
                     {enableColumnSettings && rowDescription ? (
                       /* Triada standard: Settings2 → TableSettingsPopover
@@ -723,7 +761,10 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                           resetLabel={t('common.resetColumns')}
                           showDescription={rowDescription.show}
                           onToggleDescription={rowDescription.onToggle}
-                          label={rowDescription.settingsLabel ?? t('common.viewSettings')}
+                          label={
+                            rowDescription.settingsLabel ??
+                            t('common.viewSettings', 'View settings')
+                          }
                           columnsHeading={
                             rowDescription.columnsHeading ?? t('common.visibleColumns')
                           }
@@ -759,9 +800,35 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                   <td
                     colSpan={visibleColumns.length + (hideRowActions ? 0 : 1)}
                     className="px-4 py-14 text-center text-slate-500 dark:text-slate-400"
+                    data-empty-reason={data.length === 0 ? 'no-data' : 'no-filter-results'}
                   >
+                    {/*
+                      R04-2A — §5 Stany: „empty rozróżnia brak danych od braku
+                      wyniku filtra i ma sensowne CTA/reset". Do tej pory obie
+                      sytuacje pokazywały ten sam `emptyMessage`, więc użytkownik
+                      po odfiltrowaniu wszystkiego widział „No items found" i nie
+                      miał jak się dowiedzieć, że wystarczy zdjąć filtr.
+                      Rozróżnienie jest lokalne i pewne: `data` to wejście,
+                      `sortedData` to wynik po filtrach.
+                    */}
                     <div className="mx-auto max-w-2xl rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-slate-50/70 dark:bg-white/[0.03] px-6 py-8 text-sm">
-                      {emptyMessage}
+                      {data.length === 0 ? (
+                        emptyMessage
+                      ) : (
+                        <div className="flex flex-col items-center gap-3">
+                          <span>
+                            {emptyFilteredMessage ??
+                              t('common.noFilterResults', 'No items match the active filters')}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => onFilterChange([])}
+                            className="inline-flex h-8 items-center gap-1.5 rounded-full border border-c-border-subtle px-3 text-xs font-medium text-c-text transition-colors hover:bg-state-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                          >
+                            {t('common.clearFilters', 'Clear filters')}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -805,7 +872,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                     {visibleColumns.map((column) => (
                       <td
                         key={column.id}
-                        className={`${cellPadding} ${column.align ? alignToClass(column.align) : ''}`}
+                        className={`${ROW_HEIGHT_CLASS} ${cellPadding} ${column.align ? alignToClass(column.align) : ''}`}
                       >
                         {column.type === 'select' && selection ? (
                           <input
@@ -853,17 +920,20 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                         column.id === firstDataColumnId
                           ? (() => {
                               const desc = rowDescription.render(row);
-                              return desc ? (
-                                <div className="mt-0.5 text-xs text-c-text-muted line-clamp-2">
-                                  {desc}
+                              return (
+                                <div
+                                  data-row-description-slot
+                                  className="mt-0.5 min-h-8 text-xs text-c-text-muted line-clamp-2"
+                                >
+                                  {desc ?? null}
                                 </div>
-                              ) : null;
+                              );
                             })()
                           : null}
                       </td>
                     ))}
                     {!hideRowActions ? (
-                      <td className={`${cellPadding} text-right`}>
+                      <td className={`${ROW_HEIGHT_CLASS} ${cellPadding} text-right`}>
                         <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
                           {(() => {
                             // PPM-mirror (ANEKS #3b): this row's context-menu
@@ -926,10 +996,17 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
 
                             // #40 — pure-wiring bridge onto the sectional kebab contract
                             // (RowActionsMenu.sections), same contract every other table
-                            // uses. Pre-filter `disabled` here to replicate the legacy
-                            // flat-menu semantics EXACTLY (disabled items were silently
-                            // dropped, never shown greyed-out) — zero visible menu change.
-                            const legacySectionActions = actions.filter((a) => !a.disabled);
+                            // uses.
+                            //
+                            // R01 (wąskie przekazanie ownershipu, 2026-08-06): fallback
+                            // NIE odsiewa już realnych pozycji `disabled`. Kanon §1/§7/§10
+                            // wymaga odwrotnie — funkcja ograniczona uprawnieniem albo
+                            // regułą biznesową ZOSTAJE widoczna, wyraźnie jaśniejsza.
+                            // Atrapy („Coming soon"/„Wkrótce") odsiewa niżej sam renderer
+                            // (`czyAtrapa` w `normalizeZones`), więc przepuszczenie ich
+                            // tutaj niczego użytkownikowi nie obiecuje, a menu złożone
+                            // wyłącznie z atrap nadal nie wyrenderuje nawet triggera.
+                            const legacySectionActions = actions;
 
                             if (!legacySectionActions.length) return null;
 

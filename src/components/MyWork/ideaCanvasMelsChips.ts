@@ -49,11 +49,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
-import {
-  getActionsForSurface,
-  runIdeaAction,
-  type IconName,
-} from '@/actions/ideaActionRegistry';
+import { getActionsForSurface, runIdeaAction, type IconName } from '@/actions/ideaActionRegistry';
 import type {
   RightRailToolDescriptor,
   TopBarChipDescriptor,
@@ -118,12 +114,24 @@ export function buildIdeaMenu1Chips(args: {
     });
   }
 
-  // Kebab `⋯` — document-level actions.
+  // Kebab `⋯` — document-level actions grouped by user outcome.
+  chips.push({
+    id: 'idea-duplicate',
+    label: isPolish ? 'Duplikuj pomysł' : 'Duplicate idea',
+    icon: Copy,
+    group: 'overflow',
+    overflowSection: isPolish ? 'Organizacja' : 'Organize',
+    disabled: !handlers.onDuplicate,
+    onClick: handlers.onDuplicate,
+    tooltip: handlers.onDuplicate ? undefined : soon,
+    testId: 'idea-menu1-duplicate',
+  });
   chips.push({
     id: 'idea-export',
-    label: isPolish ? 'Eksport' : 'Export',
+    label: isPolish ? 'Eksportuj' : 'Export',
     icon: Download,
     group: 'overflow',
+    overflowSection: isPolish ? 'Udostępnianie' : 'Share',
     disabled: !handlers.onExport,
     onClick: handlers.onExport,
     testId: 'idea-menu1-export',
@@ -133,6 +141,7 @@ export function buildIdeaMenu1Chips(args: {
     label: isPolish ? 'Historia' : 'History',
     icon: History,
     group: 'overflow',
+    overflowSection: isPolish ? 'Wersje' : 'Versions',
     // Enabled once a version-history flow is wired (SnapshotHistory, all canvas
     // tools). Stays honest-disabled only if the caller passes no handler.
     disabled: !handlers.onHistory,
@@ -140,28 +149,6 @@ export function buildIdeaMenu1Chips(args: {
     tooltip: handlers.onHistory ? undefined : soon,
     testId: 'idea-menu1-history',
   });
-  chips.push({
-    id: 'idea-duplicate',
-    label: isPolish ? 'Duplikuj' : 'Duplicate',
-    icon: Copy,
-    group: 'overflow',
-    disabled: !handlers.onDuplicate,
-    onClick: handlers.onDuplicate,
-    tooltip: handlers.onDuplicate ? undefined : soon,
-    testId: 'idea-menu1-duplicate',
-  });
-  chips.push({
-    id: 'idea-delete',
-    label: isPolish ? 'Usuń' : 'Delete',
-    icon: Trash2,
-    group: 'overflow',
-    danger: true,
-    disabled: !handlers.onDelete,
-    onClick: handlers.onDelete,
-    tooltip: handlers.onDelete ? undefined : soon,
-    testId: 'idea-menu1-delete',
-  });
-
   // "Więcej" — power-user overflow (kept reachable, never hidden).
   if (handlers.onSearch) {
     chips.push({
@@ -185,6 +172,19 @@ export function buildIdeaMenu1Chips(args: {
       testId: 'idea-menu1-shortcuts',
     });
   }
+
+  chips.push({
+    id: 'idea-delete',
+    label: isPolish ? 'Usuń pomysł' : 'Delete idea',
+    icon: Trash2,
+    group: 'overflow',
+    overflowSection: isPolish ? 'Strefa niebezpieczna' : 'Danger zone',
+    danger: true,
+    disabled: !handlers.onDelete,
+    onClick: handlers.onDelete,
+    tooltip: handlers.onDelete ? undefined : soon,
+    testId: 'idea-menu1-delete',
+  });
 
   return chips;
 }
@@ -414,12 +414,7 @@ export type IdeaCanvasRightToolId =
  * `disabled` / `disabledReasons`, bo host (`IdeaMapWorkspace`, poza zakresem
  * tej zmiany) woła builder starymi kluczami. Mapowanie: patrz `LEGACY_NA_KANON`.
  */
-export type IdeaCanvasRightToolLegacyId =
-  | 'problem'
-  | 'status'
-  | 'inspector'
-  | 'convert'
-  | 'health';
+export type IdeaCanvasRightToolLegacyId = 'problem' | 'status' | 'inspector' | 'convert' | 'health';
 
 const LEGACY_NA_KANON: Record<IdeaCanvasRightToolLegacyId, IdeaCanvasRightToolId | null> = {
   problem: 'overview',
@@ -487,9 +482,7 @@ export function buildIdeaCanvasRightRailTools(args?: {
   disabledReasons?: Partial<Record<KluczEtykiety, string>>;
 }): RightRailToolDescriptor[] {
   const polski = args?.isPolish ?? wykryjPolski(args?.labels);
-  const bazowe = polski
-    ? IDEA_CANVAS_RIGHT_RAIL_LABELS_PL
-    : DEFAULT_IDEA_CANVAS_RIGHT_RAIL_LABELS;
+  const bazowe = polski ? IDEA_CANVAS_RIGHT_RAIL_LABELS_PL : DEFAULT_IDEA_CANVAS_RIGHT_RAIL_LABELS;
 
   // Z kluczy starych bierzemy WYŁĄCZNIE stan wyłączenia i powód — etykiety
   // opisywały inne zakładki, więc byłyby mylące.

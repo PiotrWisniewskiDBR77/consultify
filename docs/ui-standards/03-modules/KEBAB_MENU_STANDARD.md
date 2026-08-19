@@ -1,11 +1,13 @@
 # Kebab (RowActionsMenu) — standard menu wierszy
 
+> Normatywne rozstrzygnięcie capabilities, liczby wyrenderowanych stref i zakazu atrap: `../MY_WORK_TABLE_SURFACE_CONTRACT_V1.md` §7–8.
+
 SSOT dla menu akcji wiersza/karty w całej aplikacji. Uzupełnia `TABLE_AND_PREVIEW_CANON.md` §9.
 Komponent: `src/components/shared/RowActionsMenu.tsx`. Potwierdzone surveyem 2026-07-06
 (My Work + Interview + Initiatives + Execution).
 
-## 1. Struktura — 3 bloki, zawsze w tej kolejności
-Kebab renderuje sekcje z separatorem między nimi, w stałym porządku:
+## 1. Struktura — do 3 bloków, zawsze w tej kolejności
+Kebab renderuje niepuste sekcje z separatorem wyłącznie między wyrenderowanymi sekcjami, w stałym porządku. Typowo są 3 sekcje i 2 separatory; pusta sekcja `context` jest legalnie pomijana.
 
 | Blok (`kind`) | Pozycja | Charakter | Zawartość |
 |---|---|---|---|
@@ -13,8 +15,7 @@ Kebab renderuje sekcje z separatorem między nimi, w stałym porządku:
 | `manage` | ŚRODEK | STAŁY | Open preview · Edit · Archive/Restore · Delay |
 | `danger` | DÓŁ | STAŁY | Delete / Reject / Move to trash (crimson, zawsze ostatni) |
 
-Bloki `open`/`ai`/`convert`/`output` — TYLKO dla encji-artefaktów (Idea): bogate konwersje
-(Initiative/Task/Decision/Chat) + generowanie output. Reszta encji używa wyłącznie context/manage/danger.
+Akcje AI/convert/output dla encji-artefaktów nie tworzą dodatkowych stref wizualnych: są mapowane do `context` albo `manage` według skutku. Każde menu używa wyłącznie context/manage/danger.
 
 REGUŁA ARCHITEKTURY: używać `RowActionSection[]` z `kind` (nie płaskiej `RowAction[]`), żeby
 grupowanie i separatory były spójne. Migracja długu: Gate, Rollout items, Execution Problem
@@ -22,8 +23,8 @@ grupowanie i separatory były spójne. Migracja długu: Gate, Rollout items, Exe
 
 ## 2. STAŁE akcje (identyczne wszędzie — powtarzają się ≥4/6 encji)
 - **Open preview** (manage) — 6/6, ChevronRight, otwiera prawy panel/preview
-- **Edit** (manage) — 5/6, Edit2
-- **Archive / Restore** (manage) — 4/6, wg lifecycle (active↔archived↔trash)
+- **Edit** (manage) — gdy capability encji nie jest `not-applicable`, Edit2
+- **Archive / Restore** (manage) — gdy encja deklaruje lifecycle archive (active↔archived)
 - **Delete / Reject** (danger) — 6/6, crimson, ostatni, z potwierdzeniem
 
 ## 3. KONTEKSTOWE akcje (wg stanu encji — pokazywać warunkowo)
@@ -43,13 +44,12 @@ grupowanie i separatory były spójne. Migracja długu: Gate, Rollout items, Exe
 ## 4. Reguły hinting (podpowiadania)
 - WIDOCZNOŚĆ WG STANU: pokazuj tylko akcje możliwe w danym stanie (nie disabled-bez-powodu).
 - POZYCJA STAŁA: Open preview/Edit/Archive zawsze w tym samym miejscu (manage) → mięśniowa pamięć.
-- DISABLED-Z-NOTĄ: akcja niegotowa = `disabled:true` + `description:'Coming soon (backend)'` (PL: 'Wkrótce (backend)').
-  Nigdy nie ukrywać stałej akcji — pokazać wyszarzoną z powodem.
+- DISABLED-Z-NOTĄ: pozycja wspierana przez produkt, ale niedostępna dla konkretnego rekordu/roli, pozostaje widoczna z prawdziwym powodem. Funkcja niezaimplementowana lub niedotycząca domeny jest pomijana; `Coming soon/Wkrótce` jest niedozwolone.
 - PRIMARY: górna akcja `variant:'primary'` (np. Open/Approve/Use). DANGER: ostatnia, crimson.
 - i18n: wszystkie labelki przez `isPolish`/`t()`.
 
 ## 5. Rejestr luk backendu (do dokończenia — FAZA B, osobno)
-Akcje dziś `Coming soon (backend)` (UI gotowe, brak backendu):
+Luki capabilities do implementacji lub usunięcia z konfiguracji (nie renderować jako `Coming soon`):
 - Edit: Inbox, Notification, Interview Session
 - Archive: Task, Decision, Idea, Notification, Initiative (warunkowo)
 - Delete: Interview Assignment, Initiative (karta), Gate

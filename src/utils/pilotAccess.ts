@@ -1,13 +1,11 @@
 import { isPilotRestrictedRole } from './roleGuards';
 
-// VTS pilot scope: Chat + Interview plus My Work (Ideas stays locked via
-// isPilotAllowedMyWorkTab), Initiatives, Execution and Settings.
+// VTS pilot scope: respondents (USER/GUEST) see ONLY the interview inbox
+// (question lists). Settings stays so they can change their password/profile
+// after the shared-password first login. Admins/Owners are exempt from the
+// pilot restriction and keep the full menu.
 export const PILOT_VISIBLE_MENU_IDS = new Set([
-  'AI_CHAT',
   'INTERVIEW',
-  'MY_WORK',
-  'MODULE_INITIATIVES',
-  'MODULE_EXECUTION',
   'SETTINGS',
 ]);
 
@@ -19,12 +17,7 @@ export const PILOT_ALLOWED_SETTINGS_SECTIONS = new Set([
 ]);
 
 const PILOT_ALLOWED_ROUTE_PREFIXES = [
-  '/chat',
   '/interview',
-  '/my-work',
-  '/initiatives',
-  '/execution',
-  '/implementation',
   '/settings',
   '/share/',
 ] as const;
@@ -142,15 +135,8 @@ export function getPilotBlockedFallbackPath(path?: string | null): string {
   if (normalized.startsWith('/settings')) {
     return getPilotDefaultSettingsRoute();
   }
-  if (normalized.startsWith('/my-work')) {
-    return '/interview';
-  }
-  if (normalized.startsWith('/initiatives')) {
-    return '/initiatives';
-  }
-  if (normalized.startsWith('/execution') || normalized.startsWith('/implementation')) {
-    return '/execution';
-  }
+  // Everything outside the interview inbox (and profile settings) now falls back
+  // to /interview for pilot respondents — these modules are no longer in scope.
   return '/interview';
 }
 

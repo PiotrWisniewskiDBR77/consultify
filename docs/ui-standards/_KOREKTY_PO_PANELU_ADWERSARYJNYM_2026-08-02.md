@@ -1,6 +1,6 @@
 ---
 doc_kind: CORRECTION_BACKLOG
-status: OPEN
+status: CLOSED_AFTER_REMEDIATION
 source: panel adwersaryjny 5 recenzentów, 2026-08-02
 scope: dokumentacja UI/UX po remediation czwartego audytu
 authority: docs/ui-standards/CANON.md
@@ -8,7 +8,19 @@ authority: docs/ui-standards/CANON.md
 
 # Rejestr korekt po panelu adwersaryjnym
 
-**To NIE jest odbiór i NIE zawiera oceny liczbowej.** To lista defektów do usunięcia. Dokument z własną oceną był patologią, którą wykrył czwarty audyt — nie powtarzamy jej.
+> **ZAMKNIĘTY 2026-08-03.** K-01–K-45 zostały rozliczone w dokumentacji. Ten plik jest historycznym rejestrem ustaleń, nie bieżącą listą otwartych defektów i nie stanowi kanonu. Aktualny werdykt: [`FINAL_CANONICAL_DOCUMENTATION_ACCEPTANCE_2026-08-03.md`](FINAL_CANONICAL_DOCUMENTATION_ACCEPTANCE_2026-08-03.md). Dług implementacyjny pozostaje osobno w `_DOC_CODE_DELTA_REGISTER.md` i macierzach runtime.
+
+**To NIE jest odbiór i NIE zawiera oceny liczbowej.** To zamknięty rejestr defektów usuniętych podczas remediation. Dokument z własną oceną był patologią, którą wykrył czwarty audyt — nie powtarzamy jej.
+
+## Status zamknięcia
+
+| Zakres | Status | Dowód |
+|---|---|---|
+| K-01–K-45 | **CLOSED (documentation)** | poprawki w kanonach, kartach rodzin, governance i checkach; commit remediation + odbiór 2026-08-03 |
+| Specyfikacja | **APPROVED_SPEC** | finalny odbiór kanoniczny 2026-08-03 |
+| Runtime | **PARTIAL** | odbierany osobno per rodzina i per consumer; nie jest częścią zamknięcia tego backlogu |
+
+Jeśli przyszły audyt znajdzie nowy defekt, otrzymuje on nowy identyfikator w bieżącym rejestrze delt lub nowym backlogu. Nie otwieramy ponownie K-01–K-45 bez dowodu regresji.
 
 ## 0. Co się stało
 

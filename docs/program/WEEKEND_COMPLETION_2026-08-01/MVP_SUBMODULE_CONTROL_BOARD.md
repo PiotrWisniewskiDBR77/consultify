@@ -33,21 +33,25 @@ Statusy:
 
 ## Licznik postępu
 
-Stan po odbiorach i zatrzymaniu bieżącego planu taryfowego 2026-08-02:
+Stan po końcowym odbiorze RES-11 przez Codex 2026-08-03:
 
 | Kategoria | Liczba | Udział wszystkich 93 podmodułów |
 | --- | ---: | ---: |
-| ✅ Lokalnie zrobione i odebrane (`CODE_GO_FROZEN`) | 66 | 71,0% |
+| ✅ Lokalnie zrobione i odebrane (`CODE_GO_FROZEN`) | 92 | 98,9% |
 | 🔵 Zrobione przez agenta, czekają na odbiór Codex | 0 | 0,0% |
 | 🟡 Aktywnie wykonywane w kończącym się planie | 0 | 0,0% |
-| ⚪ Pozostałe w zakresie MVP | 26 | 28,0% |
-| ⏸ Poza MVP | 1 | 1,1% |
+| ⚪ Pozostałe w zakresie MVP | 0 | 0,0% |
+| ⏸ Znacznik zakresu Post-MVP wewnątrz boardu 93 (`ASM-09`) | 1 | 1,1% |
 
-Trzy work packets wymagają przekazania do kolejnego planu: `FIN-05`, `MAT-10`
-oraz niezintegrowana korekta `INT-08`. Ostatni z nich dotyczy pozycji już
-odebranej na branchu integracyjnym, dlatego nie zwiększa licznika brakujących
-podmodułów; nowy worker ma najpierw rozstrzygnąć relację jego branchu do
-zamrożonego dowodu, a nie automatycznie nadpisywać status `CODE_GO_FROZEN`.
+Wszystkie 92 pozycje kodowe MVP mają lokalny odbiór `CODE_GO_FROZEN`.
+`ASM-09` jest jedyną pozostałą pozycją boardu 93 i ma zamkniętą decyzję
+zakresową `OUTSIDE_MVP — SCOPE_CLOSED`; nie jest deklarowana jako wdrożona.
+
+Liczba `1` w wierszu Post-MVP dotyczy wyłącznie pojedynczego znacznika `ASM-09`
+pozostawionego w boardzie 93. Pełny backlog poza MVP jest liczony osobno w
+`POST_MVP_WAVE_1.md` jako **cztery duże taski**: narzędzia Assessment (SIRI i
+ADMA), pozostałe Tools consultingowe, Audyty i Spotkania. Referral pozostaje
+osobno zaparkowany i nie jest częścią tej czwórki bez nowej decyzji zakresowej.
 
 ### ✅ Zrobione i lokalnie odebrane
 
@@ -58,6 +62,8 @@ zamrożonego dowodu, a nie automatycznie nadpisywać status `CODE_GO_FROZEN`.
 - [x] `MAT-05` — trwały workbook create→edit→formula→reopen→XLSX
 - [x] `MAT-06` — workbook version/checkpoint/restore/share/revoke oraz bezpieczny XLSX/CSV
 - [x] `MW-09` — Ideas owner create→update→read-back→UI reopen
+- [x] `MW-12` — Manager action→atomowa mutacja+audit→fresh read-back
+- [x] `MW-11` — Run Agent approval→audytowalny receipt→wykonanie→trwały rezultat
 - [x] `CHAT-01` — trwała, tenant-scoped historia sesji po hard reloadzie
 - [x] `MAT-08` — historia i restore prezentacji
 - [x] `FIN-01` — Finance Hub / coherence Atelier
@@ -114,8 +120,13 @@ zamrożonego dowodu, a nie automatycznie nadpisywać status `CODE_GO_FROZEN`.
 - [x] `EXE-05` — canonical change/decision lifecycle z idempotency, audit i tenant isolation
 - [x] `EXE-06` — spójny progress/reforecast read-back z concurrency guard
 - [x] `EXE-08` — closure/evidence gate z zatwierdzeniem przed DONE
+- [x] `EXE-09` — trwały closure receipt do Results oraz uczciwy Finance `NEEDS_DECISION`
 - [x] `INT-08` — Interview accepted output→kanoniczny Candidate z receipt i lineage
 - [x] `TLS-07` — SWOT recommendation→kanoniczny Candidate z receipt i lineage
+- [x] `INT-01` — atomowa publikacja wersji szablonu i sesje z immutable snapshotu
+- [x] `RES-12` — okresowy immutable KPI snapshot, refresh v2, Report Builder lineage i tenant isolation
+- [x] `CHAT-03` — cytowania i governed source ledger trwale zapisane i odtwarzane po świeżym odczycie
+- [x] `CHAT-04` — kanoniczny Teresa Action Registry bez aktywnego lokalnego bypassu
 
 Te pozycje są ukończone lokalnie, ale nadal mogą wymagać integracji i testu na
 środowisku demo.
@@ -134,9 +145,10 @@ oddzielną bramką wydania, a nie ponownym otwarciem dziewięciu odebranych zada
 - [ ] `FIN-05` — Statement upload→extract→map — `PAUSED_FOR_PLAN_HANDOFF`,
   branch `feat/fin-005-statement-ingestion-golden-flow`, ostatni odrzucony HEAD
   `03f01021ac`; otwarty blocker: trwały exactly-once result dla keyed uploadu.
-- [ ] `MAT-10` — Artifact Receipt/lineage — `PAUSED_FOR_PLAN_HANDOFF`, branch
-  `feat/mat-010-canonical-artifact-receipt-lineage`, reviewed HEAD
-  `48a757ba2c`; otwarte: pełne real-route hooks, durable recovery i cache tenant leak.
+- [x] `MAT-10` — Artifact Receipt/lineage — `CODE_GO_FROZEN`, branch
+  `feat/mat-010-canonical-artifact-receipt-lineage`, HEAD `9949337972`;
+  niezależny fresh pgvector/PostgreSQL: 8 plików, 84/84 PASS, w tym real routes,
+  durable recovery, concurrency, heartbeat i stale-owner fencing; integracja pending.
 - [x] `INT-08` — status kanoniczny pozostaje `CODE_GO_FROZEN`; osobny branch
   `feat/int-008-canonical-candidate-handoff` / `1c4a430154` ma niezacommitowany
   fix packet i wymaga najpierw audytu kolizji/supersession w nowym planie.
@@ -151,7 +163,7 @@ oddzielną bramką wydania, a nie ponownym otwarciem dziewięciu odebranych zada
 | A frozen | Assessment DRD round-trip | `feat/asm-001a-drd-form-matrix-roundtrip` / `a3205f1151` | `CODE_GO_FROZEN` |
 | B frozen | Results Deviation→Recovery | `feat/res-002-canonical-kpi-recovery-loop` / `882a721a92` | `CODE_GO_FROZEN` |
 | C frozen | Decision→Initiative→Execution | `integrate/decision-initiative-execution-gate` / `7b59d3a63b` | `CODE_GO_FROZEN` |
-| Wave 1+2+EXE-08+INT-08+TLS-07 integration frozen | zintegrowany core MVP, closure gate oraz Interview/SWOT→Candidate | `integrate/mvp-wave1-abc` / `01cb107b2c` | `CODE_GO_FROZEN_INTEGRATION` |
+| Wave 1+2+EXE-08+INT-08+TLS-07+INT-01+RES-12+CHAT-02..05 integration frozen | zintegrowany core MVP, closure gate, Candidate handoffy, Interview Template publication, immutable KPI reporting oraz rdzeń Chat/Teresa: streaming/recovery, provenance, registry akcji i proposal/approval/audit | `integrate/mvp-wave1-abc` / `0757748b2e` | `CODE_GO_FROZEN_INTEGRATION` |
 | Line 2 frozen | Decision create/live | `feat/mw-005-006-decision-create-live` / `59360f9ec1` | `CODE_GO_FROZEN` |
 | Codex Materials frozen | Document share/rotate/revoke | `codex/mat-document-share-revoke` / `f24248bac8` | `CODE_GO_FROZEN` |
 | Codex Materials frozen | Registry list→Document Studio open | `codex/mat-materials-library-list-open` / `783e64dacb` | `CODE_GO_FROZEN` |
@@ -189,11 +201,11 @@ HEAD jest tylko snapshotem. Każdy tracker ma ponownie sprawdzić branch i drzew
 | MAT-03 | Document version/checkpoint/restore | `CODE_GO_FROZEN` | `MAT-005A` | integracja z pełnym lifecycle |
 | MAT-04 | Document export/share/revoke | `CODE_GO_FROZEN` | `f24248bac8`; owner UI→share→public read→rotate (stary token 404)→revoke (nowy token 404) Playwright 1/1; service 36/36, routes 25/25; real-PG cold restart i CAS race rotate/revoke PASS | integracja gałęzi i Railway demo; bez ponownego otwierania MAT-02/03 |
 | MAT-05 | Workbook create/edit/formula/reopen | `CODE_GO_FROZEN` | `598613179c`; create z UI→A2=21→B2=`=A2*2`/wynik 42→hard reload→XLSX read-back na real-PG, cross-tenant 404, fail-closed create; Playwright 1/1, unit/integration 17/17, build i type-check PASS | integracja gałęzi i Railway demo; wersje/share pozostają wyłącznie w MAT-06 |
-| MAT-06 | Workbook version/share/export | `CODE_GO_FROZEN` | `8fac42e85e`; Codex isolated real-PG 11/11: CAS/concurrency, atomowy restore+rollback, tenant isolation, share/public/revoke oraz bezpieczny XLSX/CSV; agent udokumentował real-browser create→edit→checkpoint→restore→reload→share→revoke→export | integracja i niezależny visual capture; przy integracji pominąć nieużywany wpis MAT-006 w `.claude/launch.json` |
-| MAT-07 | Presentation generate/edit/autosave | `CODE_GO_FROZEN` | `edd394c164`; canonical deck create/open, real-browser edit→autosave→hard reload i targeted 10/10 | integracja i niezależny visual capture |
-| MAT-08 | Presentation history/restore | `CODE_GO_FROZEN` | `MAT-006A`, CAS 409/read-back | połączenie z naprawionym deckiem |
-| MAT-09 | Presentation PPTX/PDF/share/revoke | `CODE_GO_FROZEN` | `edd394c164`; quality content→real PPTX/PDF 200, placeholder→uczciwe 422, share→public 200→revoke→404; additive fresh-DB guard | integracja i niezależny visual capture |
-| MAT-10 | Artifact receipt i lineage | `PAUSED_FOR_PLAN_HANDOFF` | `48a757ba2c`; rdzeń receipt i Workbook 12/12 istnieją, lecz review odrzucił niepełne real-route hooks, fail-open lineage oraz tenant leak cache | przejęcie fix packetu w kolejnym planie |
+| MAT-06 | Workbook version/share/export | `CODE_GO_FROZEN` | `beec99bc14` integruje `8fac42e85e`; po integracji real-PG 11/11: CAS/concurrency, atomowy restore+rollback, tenant isolation, share/public/revoke oraz bezpieczny XLSX/CSV; `.claude/launch.json` świadomie pominięty | Railway demo i niezależny visual capture |
+| MAT-07 | Presentation generate/edit/autosave | `CODE_GO_FROZEN` | `beec99bc14` integruje `edd394c164`; canonical deck create/open, real-browser edit→autosave→hard reload; po integracji Presentation 10/10 | Railway demo i niezależny visual capture |
+| MAT-08 | Presentation history/restore | `CODE_GO_FROZEN` | `beec99bc14`; lifecycle połączony z naprawionym deckiem, CAS 409/read-back; pełny build PASS | Railway demo i visual restore/reopen |
+| MAT-09 | Presentation PPTX/PDF/share/revoke | `CODE_GO_FROZEN` | `beec99bc14` integruje `edd394c164`; quality content→real PPTX/PDF 200, placeholder→uczciwe 422, share→public 200→revoke→404; po integracji regresja Presentation 10/10 | Railway demo i niezależny visual capture |
+| MAT-10 | Artifact receipt i lineage | `CODE_GO_FROZEN` | `9949337972`; niezależny fresh pgvector/PostgreSQL 84/84: Document/Presentation/Workbook real routes, dokładnie-jeden receipt, durable recovery, tenant isolation, lease heartbeat i stale-owner fencing | kontrolowana integracja i Railway demo |
 
 ## Finance
 
@@ -201,28 +213,28 @@ HEAD jest tylko snapshotem. Każdy tracker ma ponownie sprawdzić branch i drzew
 | --- | --- | --- | --- | --- |
 | FIN-01 | Finance Hub/coherence Atelier | `CODE_GO_FROZEN` | `fbadd3c263`, testy lokalne i real-PG | integracja i Railway demo |
 | FIN-02 | Investment calculations | `CODE_GO_FROZEN` | NPV/IRR/payback, poprawiony znak OpEx i stopa | integrated UI read-back |
-| FIN-03 | Investment Case save/version/reopen | `CODE_GO_FROZEN` | `4811abcb94`; aktywny `FinancialModelWorkspace`, CAS conflict, success po read-backu, Codex scoped run 20/20 | integracja i niezależny visual capture |
-| FIN-04 | Scenarios/baseline | `CODE_GO_FROZEN` | `4811abcb94`; Base/Upside/Downside, atomowy baseline, backend re-fetch/reopen i cross-org guard | integracja i niezależny visual capture |
-| FIN-05 | Statement upload/extract/map | `PAUSED_FOR_PLAN_HANDOFF` | `03f01021ac`; strict fresh-schema i XLSX/CSV przechodzą, lecz sukces keyed uploadu może istnieć bez trwałego markera | exactly-once marker/result i fault-recovery w kolejnym planie |
-| FIN-06 | Candidate Pack→Initiative | `MISSING` | historyczny direct create i fake receipt | canonical Candidate Pack z dedupe |
-| FIN-07 | Post-investment actuals | `MISSING` | brak zamkniętej pętli | Results/Execution→Finance round-trip |
+| FIN-03 | Investment Case save/version/reopen | `CODE_GO_FROZEN` | `27e359d804` integruje `4811abcb94`; aktywny `FinancialModelWorkspace`, CAS conflict i durable read-back; po integracji real-PG 14/14, kontrakty/UI 79/79; output writer skrócony z timeoutów do pełnego przebiegu w 23 s i fail-closed | Railway demo i niezależny visual capture |
+| FIN-04 | Scenarios/baseline | `CODE_GO_FROZEN` | `27e359d804` integruje `4811abcb94`; Base/Upside/Downside, atomowy baseline, backend re-fetch/reopen, concurrency/idempotency i cross-org guard; type-check/build PASS | Railway demo i niezależny visual capture |
+| FIN-05 | Statement upload/extract/map | `CODE_GO_FROZEN` | `codex/fin05-canonical-statement-ingestion` / `b6fe0a4a88`; real-PG 55/55, mounted upload UI 8/8, XLSX/CSV, multi-section recovery, idempotency i tenant isolation | kontrolowana integracja i Railway smoke |
+| FIN-06 | Candidate Pack→Initiative | `CODE_GO_FROZEN` | `eb157a26a9`; trzy źródła Finance→preview→confirm→canonical Candidate, real-PG 27/27, komponenty 20/20, concurrency/cross-tenant/fail-closed i zero direct Initiative writes | kontrolowana integracja i Railway demo |
+| FIN-07 | Post-investment actuals | `CODE_GO_FROZEN` | `codex/fin-007-post-investment-actuals` / `55bedffaf7`; aktywny flagowany UI, actual→review→fresh read-back, Railway DEV real-PG 12/12 i mounted UI 11/11 | kontrolowana integracja i authenticated Railway smoke |
 
 ## Results/KPI
 
 | ID | Podmoduł | Stan | Dowód bieżący | Następna bramka |
 | --- | --- | --- | --- | --- |
 | RES-01 | Results Hub/canonical route | `CODE_GO_FROZEN` | `61381da0f9`; lokalny mock runtime: `/results`, `/benefits`, `/kpi-okr`, sidebar i query/hash; kontrakt 6/6, browser 5/5 | integracja i Railway demo |
-| RES-02 | KPI catalog/definition | `PARTIAL_EXISTING` | `initiative_kpis` żywe, multi-writer | jeden owner i versioning |
-| RES-03 | KPI measurement/time series | `PARTIAL_EXISTING` | zapis i read-back istnieją | idempotency i wszystkie writery |
-| RES-04 | Threshold evaluation | `PARTIAL_EXISTING` | działa na głównych Results writes | adapter dla Initiative/Execution |
+| RES-02 | KPI catalog/definition | `CODE_GO_FROZEN` | `codex/res02-canonical-owner-versioning` / `238e937e1f`; kanoniczny owner, CAS/versioning, fail-closed validation i mounted UI | kontrolowana integracja |
+| RES-03 | KPI measurement/time series | `CODE_GO_FROZEN` | `codex/res03-canonical-measurement-writer` / `0fddba1d4c`; jeden writer, idempotencja/concurrency i real-PG | kontrolowana integracja |
+| RES-04 | Threshold evaluation | `CODE_GO_FROZEN` | `codex/res04-canonical-threshold-evaluation` / `0a9f9f8c37`; kanoniczna ocena progów i negative controls | kontrolowana integracja |
 | RES-05 | Deviation Case | `CODE_GO_FROZEN` | `f903185f0b`; atomowy upsert po `(organization_id, kpi_id, period_start)` scala 8 równoległych zapisów do jednego case ID i ponownie otwiera ten sam rekord; realny V8 HTTP→PostgreSQL potwierdza acknowledge→RCA→action→resolve→close z evidence, aktorem i 15 trwałymi wpisami audytu; acceptance 1/1, unit/router 63/63, pełny type-check PASS | integracja commita i Railway demo smoke; migracja 750 musi być obecna w środowisku |
 | RES-06 | Recovery Card | `CODE_GO_FROZEN` | `882a721a92`; real owner object i lifecycle | integracja i demo |
 | RES-07 | Recovery→Task handoff | `CODE_GO_FROZEN` | durable reference/read-back/retry | integracja i demo |
 | RES-08 | Effectiveness/close gate | `CODE_GO_FROZEN` | measurement→review→close/continue/escalate | integracja i demo |
-| RES-09 | Strategic OKR | `PARTIAL_EXISTING` | osobny `okr_*` CRUD | definition quality gate `RES-002` |
-| RES-10 | Goals/scorecards | `INTEGRATION_REQUIRED` | UI miesza Initiatives goals z Results | rozdzielenie ownership, bez migracji danych teraz |
-| RES-11 | Visibility/roll-up | `MISSING` | tylko org scope, brak polityki visibility | `RES-004` |
-| RES-12 | Reporting snapshot | `PARTIAL_EXISTING` | cząstkowe raporty | immutable snapshot z lineage |
+| RES-09 | Strategic OKR | `CODE_GO_FROZEN` | `codex/res09-canonical-okr-suggested-value` / `2bc2beb935`; suggested value, tenant guards i deterministyczny check-in order | kontrolowana integracja |
+| RES-10 | Goals/scorecards | `CODE_GO_FROZEN` | `codex/res10-canonical-goals-scorecards-ownership` / `1692855bdf`; rozdzieleni ownerzy Goals/Scorecards, realna migracja, zero lazy DDL | kontrolowana integracja |
+| RES-11 | Visibility/roll-up | `CODE_GO_FROZEN` | `codex/res11-canonical-visibility-rollup` / `2ca76a2dde`; jedna polityka visibility, cztery agregacje, aktywny zapis UI/API, real-PG 10/10, routes 63/63, mounted UI 4/4 | kontrolowana integracja; admin override i snapshot visibility pozostają jawnymi decyzjami Post-MVP |
+| RES-12 | Reporting snapshot | `CODE_GO_FROZEN` | `0b3dee1891`; real-PG okresowy snapshot ignoruje nowszy pomiar spoza okresu, v1 pozostaje immutable po zmianie źródła, refresh tworzy v2; Report Builder ma source lineage i trwałe sekcje; foreign tenant/KPI fail closed; acceptance 3/3, regresje 121/121, type-check i build PASS | Railway migration/demo i authenticated browser smoke |
 | RES-13 | Legacy benefits RBAC parity | `CODE_GO_FROZEN` | fail-closed parity i negative tests w `882a721a92` | integracja i demo |
 
 ## Initiatives
@@ -232,8 +244,8 @@ HEAD jest tylko snapshotem. Każdy tracker ma ponownie sprawdzić branch i drzew
 | INI-01 | Canonical List/routing | `CODE_GO_FROZEN` | browser: realna tabela 71 rekordów; `/portfolio`→`/initiatives` zachowuje query/hash; routing 10/10, statusy 10/10 | integracja i Railway demo |
 | INI-02 | Candidate intake | `CODE_GO_FROZEN` | `63674e692d`; status accepted dopiero po utworzeniu/powiązaniu inicjatywy; błąd pozostawia retry; unit+integration 72/72 | integracja i Railway demo |
 | INI-03 | Candidate dedupe/merge | `CODE_GO_FROZEN` | `63674e692d`; jawny duplicate receipt, retry nie tworzy i nie wypełnia ponownie; unit+integration 72/72 | integracja i Railway demo |
-| INI-04 | Roles/project/approval profile | `PARTIAL_EXISTING` | owner/sponsor/RACI/effective roles | jedna capability matrix |
-| INI-05 | Portfolio/resources/roadmap | `PARTIAL_EXISTING` | kilka realnych read modeli | update→read-back→reopen |
+| INI-04 | Roles/project/approval profile | `CODE_GO_FROZEN` | `codex/ini-004-capability-matrix` / `81dbb9a2cd`; jedna capability matrix owner/sponsor/RACI/approval i parity UI/service | kontrolowana integracja |
+| INI-05 | Portfolio/resources/roadmap | `CODE_GO_FROZEN` | `codex/ini05-canonical-portfolio-resources-roadmap` / `e9c5c1004f`; portfolio/resources/roadmap, capacity, tenant/CAS i read-back | kontrolowana integracja |
 | INI-06 | GO/NO-GO decision gate — C-owned foundation | `CODE_GO_FROZEN` | `06cd5a0c36`; pinned-client recheck, 39/39 real-PG | kontrolowana naprawa Decision writerów |
 | INI-07 | SCHEDULED→EXECUTING same ID | `CODE_GO_FROZEN` | `7b59d3a63b`; Decision BLOCK/UNBLOCK przez canonical transition, 89/89 | integracja i browser demo |
 | INI-08 | Dynamic initiative cards | `CODE_GO_FROZEN` | `c568f0126d`; create→response→real-PG reopen zachowuje cardScope, visibility, order i config; unit 13/13; cleanup 0 rekordów | integracja i Railway demo |
@@ -251,7 +263,7 @@ HEAD jest tylko snapshotem. Każdy tracker ma ponownie sprawdzić branch i drzew
 | EXE-06 | Progress/reforecast/EVM | `CODE_GO_FROZEN` | `fc0eb001a9`; progress/reforecast/audit/reopen, idempotency i concurrency; Codex isolated real-PG 12/12 | integracja i visual capture |
 | EXE-07 | Start/unblock transition — C-owned paths | `CODE_GO_FROZEN` | `06cd5a0c36`; HTTP/cron/unblock przez canonical engine | Decision auto-unblock musi użyć tego samego engine |
 | EXE-08 | Closure/evidence | `CODE_GO_FROZEN` | `0ff97ecc1b`; zintegrowany draft→evidence→submit→return/resubmit→approve→DONE, stale-version 409, idempotentny i współbieżny approve, tenant isolation; pełny Execution real-PG 32/32, komponent+closure 17/17, type-check PASS; aktywna migracja poprawiona do bezbłędnego replay na PostgreSQL | Railway demo i visual capture |
-| EXE-09 | Closure→Results/Finance | `INTEGRATION_REQUIRED` | fire-and-forget handoff | transakcyjny/idempotentny receipt |
+| EXE-09 | Closure→Results/Finance | `CODE_GO_FROZEN` | `163bcbf395`; transakcyjny durable receipt, niezależne retry Results/Finance, restart reconciliation, tenant/RBAC guard, uczciwy Finance `NEEDS_DECISION`; poprawione FK/lineage `initiative_kpis`→benefits i multi-KPI dedupe; real-PG EXE-09 27/27 + EXE-08 18/18, UI 11/11, type-check i build PASS | Railway migration/demo i authenticated visual capture; approval Finance pozostaje jawną decyzją produktową |
 
 ## Assessment
 
@@ -265,7 +277,7 @@ HEAD jest tylko snapshotem. Każdy tracker ma ponownie sprawdzić branch i drzew
 | ASM-06 | Quality review | `CODE_GO_FROZEN` | `a0dad7d024`; pinned-client transaction, row lock, audit/status/snapshot atomowo, fault-injection rollback | integracja i Railway demo |
 | ASM-07 | Immutable output/report | `CODE_GO_FROZEN` | `a0dad7d024`; concurrent double-accept zachowuje dokładnie jeden current snapshot | integracja i Railway demo |
 | ASM-08 | Candidate Pack handoff | `CODE_GO_FROZEN` | `da06ad77a7`; canonical Candidate writer, persistent receipt/lineage, retry/concurrency/rollback; Codex real-PG 10/10 | integracja i visual capture |
-| ASM-09 | SIRI/ADMA packs | `OUTSIDE_MVP` | kod i KB istnieją | po DRD MVP |
+| ASM-09 | SIRI/ADMA packs | `OUTSIDE_MVP` — `SCOPE_CLOSED` | decyzja zakresowa zamknięta: kod i KB zachowane, a SIRI/ADMA tworzą jeden duży task „narzędzia Assessment” w `POST_MVP_WAVE_1.md`; brak deklaracji wdrożenia | nie blokuje MVP; wznowienie wyłącznie po bramce startowej Post-MVP Fali 1 |
 
 ## Tools
 
@@ -283,7 +295,7 @@ HEAD jest tylko snapshotem. Każdy tracker ma ponownie sprawdzić branch i drzew
 
 | ID | Podmoduł | Stan | Dowód bieżący | Następna bramka |
 | --- | --- | --- | --- | --- |
-| INT-01 | Template library/editor | `PARTIAL_EXISTING` | dojrzały Hub | publish/version E2E |
+| INT-01 | Template library/editor | `CODE_GO_FROZEN` | `0b3381a876`; draft v0→atomowy publish v1/v2 z immutable snapshotem, CAS 409, tenant/private guard, rollback oraz sesje przypięte do właściwej wersji; real-PG 6/6, UI 5/5, type-check i build PASS | Railway migration/demo i authenticated browser smoke |
 | INT-02 | Assignment/invitations | `CODE_GO_FROZEN` | `de35c444c4`; real-PG/router: zwykły członek nie może tworzyć assignmentów (403), foreign-admin nie może przypisać użytkownika z obcego tenantu (`ASSIGNEE_NOT_IN_ORG`), owner tworzy assignment ze snapshotem template version i mirror taskiem; SQL potwierdza assignment/task/notification receipt, a odbiorca widzi to samo powiadomienie po świeżym GET `/api/notifications`; acceptance 1/1 i pełny type-check PASS | integracja commita i Railway demo smoke |
 | INT-03 | Respondent session/save/resume | `CODE_GO_FROZEN` | `9ff284e6fd` + `387e662534`; real-PG API/SQL create→question→save→same-ID read-back/progress, obcy user/org ma 404 na read/write bez nadpisania; browser real-PG: jawna tenantowa flaga V8, save przez PATCH, świeży deep-link tego samego `sessionId`, wybór tego samego pytania i identyczna odpowiedź; acceptance 1/1, Playwright 1/1, flag service 38/38, type-check PASS | integracja commita i Railway demo smoke |
 | INT-04 | Teresa answer assistance | `CODE_GO_FROZEN` | `ce9e4cfa09`; fail-closed generate zapisuje actor/source/model/provider/prompt metadata i draft; jawny Save atomowo zapisuje finalną odpowiedź oraz `accepted`, Cancel trwale zapisuje `rejected`; replay accepted suggestion daje 409; real-PG/router lifecycle + foreign tenant 404 + fresh audit read-back 1/1, UI/regresje 25/25, pełny type-check i migracja PASS | integracja commita i Railway demo smoke |
@@ -302,26 +314,26 @@ HEAD jest tylko snapshotem. Każdy tracker ma ponownie sprawdzić branch i drzew
 | MW-04 | Existing Decision collaboration | `CODE_GO_FROZEN` | backend 31/31, frontend 14/14 | live swap po integracji |
 | MW-05 | Decision creation | `CODE_GO_FROZEN` | `59360f9ec1`; create→GET→reopen, real-PG 6/6 | integracja i demo |
 | MW-06 | Decision live wiring | `CODE_GO_FROZEN` | DecisionWorkspace default ON z kill-switchem; test flagi 5/5 | integracja i demo |
-| MW-07 | Calendar/time/capacity | `PARTIAL_EXISTING` | read i integracje istnieją | provider/project markers E2E |
+| MW-07 | Calendar/time/capacity | `CODE_GO_FROZEN` | source `c37123e6b5`, zintegrowane do `integrate/mvp-wave1-abc` @ `1421ae29dc`; real-PG 16/16 w Europe/Warsaw, America/Los_Angeles i UTC, provider/project 5/5, komponenty 28/28, tenant/capacity negative controls; po integracji 6/6 komponentów PASS | Railway authenticated browser smoke; React act warnings pozostają długiem test harnessu |
 | MW-08 | Notes — core lifecycle | `CODE_GO_FROZEN` | `19091b826d`; real-PG API 5/5: create→raw DB→update→same-ID reopen + obcy tenant read/write/delete odrzucony; real-PG browser 1/1: notebook + 2 notes, autosave obu tytułów, przełączenie, tag i reopen; cleanup 0 | UI/UX `FIX_REQUIRED`: responsive, save/conflict state, owner/visibility, minimalizm; potem integracja i Railway demo |
 | MW-09 | Ideas | `CODE_GO_FROZEN` | `86f5c4024b`; real-PG create→update→GET read-back→lista UI→hard reload→open preview; obcy tenant read/write 404 i brak nadpisania właściciela, Playwright 1/1, cleanup wykonany | integracja i Railway demo; odbiór dotyczy owner lifecycle, nie rozszerza zakresu czterech narzędzi Ideas |
-| MW-10 | Vault | `PARTIAL_EXISTING` | realne upload/list/scope, owner-private edit i org-scoped delete; audyt 2026-08-01 potwierdza tylko kolumnę `version`, bez kompletnego create/list/restore canonical-version API i bez golden flow | dodać wersję dokumentu z permission parity, durable read-back/reopen i real-PG browser E2E; do tego czasu nie zamykać |
-| MW-11 | Run Agent | `NOT_VERIFIED` | funkcje istnieją | approval/audit/materialization |
-| MW-12 | Manager | `NOT_VERIFIED` | funkcje istnieją | action ownership i read-back |
+| MW-10 | Vault | `CODE_GO_FROZEN` | `codex/cto-reconcile-mw10` / `a0185d9a7b`; wersjonowanie, permission parity, trwały reopen oraz oczyszczone dowody real-PG | kontrolowana integracja i Railway smoke |
+| MW-11 | Run Agent | `CODE_GO_FROZEN` | `f2468b5eb7`; approval zatrzymuje side-effect przed wykonaniem, zachowuje dokładny `toolInput`, zapisuje i zwraca `approvedBy`/`approvedAt`, po wznowieniu materializuje `result_json`; unit/regresja 56/56, real router+auth+PostgreSQL 6/6, pełny type-check PASS | Railway authenticated approval→execute→reopen smoke; rozbudowane versioning/DAG pozostaje poza tą bramką MVP |
+| MW-12 | Manager | `CODE_GO_FROZEN` | `0c28362f55`; mutacja owner-object i actor-owned audit na jednej transakcji, sugestie również audytowane, zero-row/stale/cross-tenant fail closed, powiadomienie dopiero po commit; real-PG 3/3, service/escalation/UI 12/12, routes 10/10, Closure regresja 11/11, pełny type-check PASS | Railway authenticated Manager action→refresh→audit smoke |
 
 ## Chat/Teresa
 
 | ID | Podmoduł | Stan | Dowód bieżący | Następna bramka |
 | --- | --- | --- | --- | --- |
 | CHAT-01 | History/session context | `CODE_GO_FROZEN` | `bd9bb884b4`; composer→message→hard reload oraz kontrolowany create/message→GET→UI deep-link→hard reload na real-PG; obcy tenant read/write 404, historia właściciela bez zmiany; browser 2/2, routes 6/6, type-check PASS | integracja i Railway demo; retrieval/proposals pozostają osobnymi CHAT-03..05 |
-| CHAT-02 | Composer/streaming/tools | `PARTIAL_EXISTING` | funkcje działają cząstkowo | aktualny smoke i error recovery |
-| CHAT-03 | Retrieval/citations | `PARTIAL_EXISTING` | mechanizmy istnieją | provenance acceptance |
-| CHAT-04 | Teresa action registry | `PARTIAL_EXISTING` | manifest/registry/handlers | usunięcie lokalnych bypassów |
-| CHAT-05 | Proposal/approval/audit | `PARTIAL_EXISTING` | fragmenty | current/proposed i durable receipt |
+| CHAT-02 | Composer/streaming/tools | `CODE_GO_FROZEN` | `0757748b2e`; composer/Stop, fragmentowany SSE i typed tool events; provider SSE error nie kończy się fałszywym sukcesem, faktyczne 3 bounded retries 1,5/3/6 s, replacement partial bez duplikacji, brak retry dla access/org/budget/rate-limit, manual Try again po wyczerpaniu; recovery/transport/tools 34/34 + panel scoped 3/3, type-check i build PASS | Railway authenticated live-provider stream oraz forced disconnect smoke; znany resize i stale voice-test mock pozostają osobnymi długami |
+| CHAT-03 | Retrieval/citations | `CODE_GO_FROZEN` | `8850bdc8d2`; aktywny SSE→hook→UnifiedChatPanel→`conversation_messages.metadata` zachowuje citations i governed source ledger; fresh API/SQL read-back 1/1, transport/helper 25/25, panel 1/1, type-check i build PASS | Railway authenticated stream→hard reload smoke |
+| CHAT-04 | Teresa action registry | `CODE_GO_FROZEN` | `5ab1b7781e`; registry generuje filtrowany manifest, klient wysyła dokładny server shape, SSE wraca do wspólnego `runIdeaAction`; registry default ON, regexy tylko jako jawny kill-switch, unknown tool fail closed i durable mutation wymaga confirm; registry/flags/guards 16/16, panel 30 PASS + 1 niezależny znany fail resize, type-check i build PASS | Railway authenticated tool-call smoke na czterech reprezentacjach i kontrola env flags |
+| CHAT-05 | Proposal/approval/audit | `CODE_GO_FROZEN` | `36aa6ffc40`; real-PG przez real auth/V8 HTTP: brak zapisu przed approval, approve→execute→fresh read-back, atomowy claim przy równoległym execute, dokładnie 1 durable receipt, idempotentny retry completed, pełna sekwencja audytu, terminal reject i cross-tenant 404; acceptance 2/2, regresje Teresa 71/71, type-check PASS | Railway authenticated smoke adapterów target-module; nie mylić z lokalnym odbiorem wspólnego lifecycle |
 | CHAT-06 | Canvas persistence | `CODE_GO_FROZEN` | `CORE-ART-006E/F` | domenowe E2E |
-| CHAT-07 | Canvas→Material/Note/Table | `INTEGRATION_REQUIRED` | canonical artifact persistence istnieje | owner-object handoff |
-| CHAT-08 | Chat→Initiative | `MISSING` | brak przyjętego Candidate receipt | Candidate writer + lineage |
-| CHAT-09 | Cross-module receipt/reopen | `MISSING` | brak jednego E2E | chat receipt otwiera owner object |
+| CHAT-07 | Canvas→Material/Note/Table | `CODE_GO_FROZEN` | `3dab705084`; wspólny approval writer dla artifact/Note/Table, kanoniczne owner rows, trwały receipt z URL i UI „Open created object”; real-PG Note+Table, regresja artifact approvals 4/4 | Railway authenticated smoke otwarcia Note/Table/Material |
+| CHAT-08 | Chat→Initiative | `CODE_GO_FROZEN` | `3dab705084`; Canvas proposal→atomowy approval→kanoniczna Initiative z lineage do draftu; równoległy approval daje dokładnie 1 owner object, retry zwraca ten sam ID | Railway authenticated Chat→Initiative smoke |
+| CHAT-09 | Cross-module receipt/reopen | `CODE_GO_FROZEN` | `3dab705084`; real-PG fresh GET draft odtwarza approved receipt, `targetObjectId` i owner URL dla Initiative/Note/Table; acceptance 2/2, łącznie z concurrency/retry, type-check PASS | Railway hard-reload→open owner-object smoke |
 
 ## Kolejka operacyjna
 

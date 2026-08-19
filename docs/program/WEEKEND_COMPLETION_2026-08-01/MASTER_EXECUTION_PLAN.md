@@ -9,6 +9,13 @@ last_reviewed: 2026-08-01
 
 # Master plan wykonawczy — bottom-up
 
+> **Aktualna kolejność wykonawcza:** ten dokument zachowuje pełną architekturę
+> fal produktu, ale bieżącym SSOT kolejki jest
+> [`CURRENT_MVP_CONTROL.md`](CURRENT_MVP_CONTROL.md). W szczególności poniższa
+> historyczna Fala 1 Partner/Organization/Meeting/Audits nie jest aktywną falą
+> MVP. Meeting i Audits są poza MVP zgodnie z `WK-D-017` i `WK-D-027`, a Referral
+> i Meeting mogą działać wyłącznie jako zatwierdzone, limitowane wyjątki D/E.
+
 ## Zatwierdzony proces domknięcia — siedem etapów
 
 1. Zamknąć pytania decyzyjne i przedstawić rekomendowane odpowiedzi Piotrowi.
@@ -34,7 +41,10 @@ Przed falami domenowymi:
 | `WK-AUTH-001` | minimalna macierz guardów domenowych |
 | `UI-UX-GATE-0` | component ID, brak nowych forków, malejący baseline i visual/behavioral evidence |
 
-## Fala 1 — Partner, Organization, Meeting, Audits
+## Historyczna fala platformowa — Partner, Organization, Meeting, Audits
+
+Status: `NOT_ACTIVE_FOR_CURRENT_MVP`. Tabela pozostaje roadmapą po MVP, nie
+bieżącą kolejką dla agentów.
 
 | Kolejność | Pakiet | Rezultat | Stan wejścia |
 | ---: | --- | --- | --- |

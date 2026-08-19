@@ -25,6 +25,34 @@ Piotr — Product Owner
 Role są logiczne. Jeden agent może pełnić więcej niż jedną rolę przy małym
 pakiecie, ale nie może sam sobie zatwierdzić pracy.
 
+## Model trzech zespołów wykonawczych
+
+Program pracuje maksymalnie przez trzy główne linie równoległe. Główny agent
+każdej linii jest orkiestratorem i integratorem swojego pakietu, a nie jedynym
+wykonawcą. Może prowadzić równolegle do 8–10 ograniczonych zadań Sonnet.
+
+Oznacza to zdolność programu do prowadzenia około 24–30 zadań pomocniczych,
+ale nie 24–30 niezależnych writerów. Równoległość służy skróceniu discovery,
+testowania i review; nie może rozmywać ownership kodu.
+
+Typowy skład jednej linii:
+
+1. route/runtime inventory;
+2. data/schema inventory;
+3. frontend and UX inventory;
+4. security/tenant/role audit;
+5. backend implementation;
+6. frontend implementation;
+7. real-Postgres acceptance tests;
+8. component/browser tests;
+9. negative-control and concurrency pass;
+10. fresh-context adversarial review.
+
+Zadania 1–4 i 7–10 są domyślnie read-only wobec kodu produkcyjnego. Zadania
+5–6 mogą pisać wyłącznie w rozłącznych, wcześniej przydzielonych plikach.
+Jeżeli zakres wymaga więcej writerów, główny agent musi najpierw przedstawić
+Codexowi macierz własności plików.
+
 ## Odpowiedzialność Piotra
 
 - wybór rezultatu biznesowego;
@@ -80,14 +108,30 @@ observability i rollback.
 
 ## Zasady pracy równoległej
 
-- maksymalnie trzy aktywne pakiety, tylko gdy nie dotykają wspólnych ownerów;
+- maksymalnie trzy aktywne linie główne, tylko gdy nie dotykają wspólnych ownerów;
+- każda linia może orkiestrwać do 8–10 zadań Sonnet w swoim zatwierdzonym zakresie;
+- jeden główny agent odpowiada za syntezę, commity, czystość drzewa i raport linii;
 - jeden plik lub owner service ma jednego aktywnego wykonawcę;
+- subagent nie rozszerza zakresu ani nie rozpoczyna follow-upu po zamknięciu rundy;
 - zmiana kontraktu API blokuje równoległy frontend do czasu zamrożenia
   interfejsu;
 - migracje są sekwencyjne;
 - routing i wspólne komponenty mają osobne okno integracyjne;
 - agent nie scala samodzielnie pracy innego agenta;
 - Codex rozstrzyga konflikty i kolejność integracji.
+
+## Fale wewnątrz jednej linii
+
+Główny agent uruchamia pracę w czterech falach:
+
+1. `DISCOVERY` — kilka niezależnych, read-only analiz;
+2. `BUILD` — ograniczeni writerzy na rozłącznych plikach;
+3. `VERIFY` — testy real-PG, frontend, concurrency i negative controls;
+4. `ADVERSARIAL` — świeży reviewer próbuje obalić wszystkie twierdzenia.
+
+Writer nie może być jedynym reviewerem własnej zmiany. Adversarial reviewer nie
+naprawia znalezionych problemów po cichu: zwraca je głównemu agentowi, który
+otwiera jawną rundę naprawczą i ponawia bramki.
 
 ## Assignment card
 

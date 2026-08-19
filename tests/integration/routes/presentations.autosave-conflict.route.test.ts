@@ -79,7 +79,7 @@ vi.mock('../../../server/src/services/v8/reportsPresModelService.js', () => ({
 // plus a no-op sink for `presentation_deck_versions` inserts, so the handler's
 // real SELECT -> [conflict check] -> INSERT (version history) -> UPDATE
 // sequence runs against controllable, observable state instead of a live DB.
-let deckState: { version: number; deck_json: string };
+let deckState: { title: string; version: number; deck_json: string };
 const dbRunCalls: Array<{ sql: string; params: unknown[] }> = [];
 
 // Interleaving gate: lets a test force N concurrent SELECTs to resolve
@@ -93,7 +93,7 @@ function armInterleaveGate(readerCount: number) {
 
 const mockDbGet = vi.fn(async (sql: string) => {
   if (/FROM presentation_decks/i.test(sql)) {
-    const snapshot = { id: 'deck-1', version: deckState.version, deck_json: deckState.deck_json };
+    const snapshot = { id: 'deck-1', ...deckState };
     if (interleaveGate) {
       // Block this reader until every expected concurrent reader has also
       // reached this point, so all of them observe the identical snapshot
@@ -121,7 +121,8 @@ const mockDbRun = vi.fn(async (sql: string, params: unknown[] = []) => {
     // actually executes -- i.e. after any interleave-gate release, so a
     // second writer whose expected version was overtaken by the first
     // writer's commit sees changes: 0, just like a real DB's rowCount.
-    const [, newVersion, , , expectedVersion] = params as [
+    const [newTitle, newDeckJson, newVersion, , , expectedVersion] = params as [
+      string,
       string,
       number,
       string,
@@ -129,8 +130,7 @@ const mockDbRun = vi.fn(async (sql: string, params: unknown[] = []) => {
       number,
     ];
     if (deckState.version === expectedVersion) {
-      const [newDeckJson] = params as [string, number, string, string, number];
-      deckState = { version: newVersion, deck_json: newDeckJson };
+      deckState = { title: newTitle, version: newVersion, deck_json: newDeckJson };
       return { success: true, changes: 1 };
     }
     return { success: true, changes: 0 };
@@ -155,7 +155,11 @@ async function buildApp() {
 
 describe('P0.4 — PUT /presentations/decks/:deckId/autosave version-conflict contract', () => {
   beforeEach(() => {
-    deckState = { version: 1, deck_json: JSON.stringify({ schemaVersion: 1, cards: [] }) };
+    deckState = {
+      title: 'Original title',
+      version: 1,
+      deck_json: JSON.stringify({ schemaVersion: 1, cards: [] }),
+    };
     dbRunCalls.length = 0;
     interleaveGate = null;
     mockDbGet.mockClear();
@@ -168,11 +172,12 @@ describe('P0.4 — PUT /presentations/decks/:deckId/autosave version-conflict co
     const res = await request(app)
       .put('/presentations/decks/deck-1/autosave')
       .set('x-deck-version', '1')
-      .send({ cards: [{ card_id: 'c1', title: 'Edited' }] });
+      .send({ title: 'Renamed deck', cards: [{ card_id: 'c1', title: 'Edited' }] });
 
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ success: true, version: 2 });
     expect(deckState.version).toBe(2);
+    expect(deckState.title).toBe('Renamed deck');
   });
 
   it('no version header sent -> treated as "no conflict check", write proceeds -> 200', async () => {
@@ -187,7 +192,11 @@ describe('P0.4 — PUT /presentations/decks/:deckId/autosave version-conflict co
   });
 
   it('stale client version (behind server) -> 409 VERSION_CONFLICT with server/client version echoed', async () => {
-    deckState = { version: 5, deck_json: JSON.stringify({ schemaVersion: 1, cards: [] }) };
+    deckState = {
+      title: 'Original title',
+      version: 5,
+      deck_json: JSON.stringify({ schemaVersion: 1, cards: [] }),
+    };
     const app = await buildApp();
 
     const res = await request(app)

@@ -22,6 +22,7 @@ W razie sprzeczności między rozdziałami **wygrywa rozdział 01**.
 | 10 | [Konwersja / Eksport / Import / Szablony](10_KONWERSJA_EKSPORT_IMPORT_SZABLONY.md) | Convert ≠ Export; historia konwersji; guard-raile importu |
 | 11 | [Specyfikacje narzędzi](11_SPECYFIKACJE_NARZEDZI.md) | co każda z 4 reprezentacji ma własnego — i dlaczego |
 | 12 | [Backlog i odbiór](12_BACKLOG_I_ODBIOR.md) | P0–P3, kolejność wdrożenia, twarde bramki odbioru |
+| 13 | [Migracja nawigacji 2026-08-09](13_MIGRACJA_NAWIGACJI_2026-08-09.md) | decyzja właścicielska: lewy panel informacji, prawy rail narzędzi, globalna Teresa; program N0–N10 |
 
 ## Materiały pomocnicze (nie są standardem)
 

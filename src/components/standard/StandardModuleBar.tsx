@@ -37,12 +37,9 @@ import {
   MENU_1_BREADCRUMB_LINK,
   MENU_1_PRIMARY_CTA,
   MENU_1_ROW_CLASS,
-  MENU_3_ACTION_DANGER,
-  MENU_3_ACTION_NEUTRAL,
-  MENU_3_INNER_CLASS,
   MENU_3_LEFT_CLASS,
-  MENU_3_RIGHT_CLASS,
   Menu3Badge,
+  Menu3BulkRow,
   Menu3Chip,
 } from '../shared/ModuleMenu3';
 
@@ -292,43 +289,14 @@ export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
   // Menu 3 / tryb 2 — pasek akcji bulk (klasy 1:1 z MyWorkHub command row).
   const bulkContent = bulkActive ? (
     <div className="px-4 pb-3">
-      <div className={MENU_3_INNER_CLASS}>
-        <div className={MENU_3_LEFT_CLASS}>
-          <span className="inline-flex h-7 items-center rounded-full px-2.5 text-[11px] font-semibold text-c-text whitespace-nowrap">
-            {bulk!.selectedLabel ?? `${bulk!.count} selected`}
-          </span>
-          {bulk!.onSelectAll ? (
-            <Menu3Chip onClick={bulk!.onSelectAll}>
-              {bulk!.selectAllLabel ?? 'Select all'}
-            </Menu3Chip>
-          ) : null}
-          {bulk!.onClear ? (
-            <Menu3Chip onClick={bulk!.onClear}>{bulk!.clearLabel ?? 'Clear'}</Menu3Chip>
-          ) : null}
-        </div>
-        <div className={MENU_3_RIGHT_CLASS}>
-          {bulk!.actions.map((action) => {
-            const Icon = action.icon;
-            return (
-              <button
-                key={action.id}
-                type="button"
-                onClick={action.onClick}
-                disabled={action.disabled}
-                title={action.title}
-                aria-disabled={action.disabled}
-                className={`${
-                  action.variant === 'danger' ? MENU_3_ACTION_DANGER : MENU_3_ACTION_NEUTRAL
-                } disabled:cursor-not-allowed disabled:opacity-40`}
-              >
-                {Icon ? <Icon size={12} /> : null}
-                {action.label}
-              </button>
-            );
-          })}
-          {menu3Right}
-        </div>
-      </div>
+      <Menu3BulkRow
+        selectedLabel={bulk!.selectedLabel ?? `${bulk!.count} selected`}
+        selectAllLabel={bulk!.selectAllLabel}
+        clearLabel={bulk!.clearLabel ?? 'Clear'}
+        onSelectAll={bulk!.onSelectAll}
+        onClear={bulk!.onClear ?? noop}
+        actions={bulk!.actions}
+      />
     </div>
   ) : null;
 
@@ -481,7 +449,9 @@ export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
 
   // Z `children`: pełny layout 1:1 z `ModuleHub` (flex-col h-full + scrollowalny content area).
   return (
-    <div className={['flex flex-col h-full bg-c-bg text-c-text', className].filter(Boolean).join(' ')}>
+    <div
+      className={['flex flex-col h-full bg-c-bg text-c-text', className].filter(Boolean).join(' ')}
+    >
       {barContent}
       <div className="flex-1 min-h-0 overflow-auto">{children}</div>
     </div>

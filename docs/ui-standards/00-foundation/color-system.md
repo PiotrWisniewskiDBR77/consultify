@@ -1,8 +1,8 @@
 # DBR77 Color System Standard
 
-> **Wersja**: 3.2 — "Crimson Canon" Edition (usunięty fantom `--color-*` w §1)  
-> **Data**: 2026-08-02  
-> **Autor**: Consultify Design System  
+> **Wersja**: 3.2 — "Crimson Canon" Edition (usunięty fantom `--color-*` w §1)
+> **Data**: 2026-08-02
+> **Autor**: Consultify Design System
 > **Lokalizacja:** `docs/ui-standards/00-foundation/color-system.md`
 >
 > **Changelog v3.2 (2026-08-02, trzecia rewizja — fantomowe `--color-*` z §1):** Poprzednia

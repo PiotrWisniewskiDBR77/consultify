@@ -1441,9 +1441,23 @@ router.get(
 router.get(
   '/home/brief',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const db = req.db!;
+    const db = req.db;
     const userId = req.userId!;
     const orgId = req.organizationId!;
+
+    if (!db) {
+      logger.error('[home-brief] request DB context missing');
+      return res
+        .status(500)
+        .json(
+          buildHomeFailClosedError(
+            req,
+            500,
+            'MY_WORK_HOME_BRIEF_READ_FAILED',
+            'Failed to load My Work brief.'
+          )
+        );
+    }
 
     try {
       const now = new Date();

@@ -116,6 +116,14 @@ export interface V8InterviewAssignment {
     name: string;
     email: string;
   };
+  /** Full team roster for a team assignment (leads first) — surfaced so the
+   * Assigned list row/preview can show everyone in the team, not just the lead. */
+  teamMembers?: Array<{
+    id?: string;
+    name?: string;
+    email?: string;
+    role?: string;
+  }>;
   session?: {
     id: string;
     status: string;

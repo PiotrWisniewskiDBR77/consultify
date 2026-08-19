@@ -5,10 +5,12 @@ audit_date: 2026-08-02
 previous_audit: SKEPTICAL_DOCUMENTATION_ACCEPTANCE_AUDIT_2026-08-02.md
 authority: docs/ui-standards/CANON.md
 supersedes: docs/ui-standards/SKEPTICAL_DOCUMENTATION_ACCEPTANCE_AUDIT_2026-08-02.md
-superseded_by: docs/ui-standards/CANON.md §9 (wpis v3.1, 2026-08-02)
+superseded_by: docs/ui-standards/FINAL_CANONICAL_DOCUMENTATION_ACCEPTANCE_2026-08-03.md
 ---
 
 > ## ⚠ DOKUMENT HISTORYCZNY — werdykt `PASS, 8,8/10` został COFNIĘTY
+>
+> Aktualny werdykt: [`FINAL_CANONICAL_DOCUMENTATION_ACCEPTANCE_2026-08-03.md`](FINAL_CANONICAL_DOCUMENTATION_ACCEPTANCE_2026-08-03.md).
 >
 > Ta runda została najpierw poddana trzeciej rundzie sceptycznej (`DEEP_SKEPTICAL_AUDIT_ROUND_3_2026-08-02.md`, wynik 9,6/10) — ale ta z kolei została COFNIĘTA przez czwarty, niezależny audyt (2026-08-02), werdykt **`FAIL`**, siedem blokerów P0: sprzeczną regułę fokusa między `TRIADA_KANON.md` a `00-foundation/light-mode-readability.md`, martwą paletę fioletową w `color-system.md`/`visual-language.md`, **12 z 20 sekcji identycznych bajt-w-bajt we wszystkich 26 kartach rodzin**, pięć różnych szerokości panelu w jednym dokumencie, dwa konkurujące modele kebaba i preview, nieaktualny `FROZEN_LAYOUTS.md` oraz brak śladu dowodowego decyzji właścicielskich.
 >

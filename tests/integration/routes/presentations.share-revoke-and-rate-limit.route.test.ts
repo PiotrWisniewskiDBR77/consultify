@@ -175,6 +175,45 @@ describe('P3.2 — DELETE /presentations/decks/:id/share revokes the public link
   });
 });
 
+describe('Artifact Studio — public presentation link classification gate', () => {
+  beforeEach(() => {
+    currentRole = 'OWNER';
+    deckRow = freshDeckRow();
+    mockDbGet.mockClear();
+    mockDbRun.mockClear();
+  });
+
+  it('fails closed for an Internal deck even when the caller has share permission', async () => {
+    const app = await buildApp();
+    const res = await request(app)
+      .post('/presentations/decks/deck-1/share')
+      .send({ expiresInDays: 7 });
+
+    expect(res.status).toBe(409);
+    expect(res.body).toMatchObject({
+      success: false,
+      code: 'PUBLIC_LINK_CLASSIFICATION_BLOCKED',
+      blocks: ['PUBLIC_LINK_CLASSIFICATION_BLOCKED'],
+    });
+    expect(mockDbRun).not.toHaveBeenCalledWith(
+      expect.stringMatching(/SET share_token = \?/i),
+      expect.anything()
+    );
+  });
+
+  it('mints a public link after the deck is explicitly classified Public', async () => {
+    deckRow.confidentiality = 'public';
+    const app = await buildApp();
+    const res = await request(app)
+      .post('/presentations/decks/deck-1/share')
+      .send({ expiresInDays: 7 });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.shareToken).toMatch(/^[a-f0-9]{32}$/);
+  });
+});
+
 describe('P3.2 — DELETE /presentations/decks/:id/share requires presentation_share RBAC', () => {
   beforeEach(() => {
     currentRole = 'OWNER';

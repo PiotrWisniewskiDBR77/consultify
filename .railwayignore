@@ -48,14 +48,18 @@ tests/
 /odpowiedzi/
 /public/videos/
 /public/videos/**
-/public/images/
-/public/images/**
-/public/assets/
-/public/assets/**
 /public/screenshots/
 /public/screenshots/**
 /public/demo/
 /public/demo/**
+
+# NIE dodawać tu /public/images/ ani /public/assets/ — to NIE są artefakty
+# testowe, tylko żywe assety frontendu (hero landingu, grafiki partnerskie,
+# obrazki landing/mode_ai_*). Wykluczone 2026-06-13 → `railway up` nie wysyłał
+# ich do build contextu → `vite build` nie miał czego skopiować do dist/ →
+# consultify.ai zwracał ASSET_NOT_FOUND na /images/app-hero-chat.png
+# (pusty hero) i /assets/landing/*. Weryfikacja po deployu:
+#   curl -o /dev/null -w '%{http_code}\n' https://consultify.ai/images/app-hero-chat.png
 
 # SQLite test artifacts (can be large, never needed for Railway builds)
 **/*.test.db

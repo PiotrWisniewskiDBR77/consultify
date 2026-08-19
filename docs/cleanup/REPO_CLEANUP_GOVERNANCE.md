@@ -69,3 +69,32 @@ Before deleting or retiring a file, verify:
 - `wdrozenia/` is a tracked historical implementation tree until selectively migrated.
 - `Consulitinity przegląd/` is tracked audit evidence and review history.
 - `Softs/` is external reference material and must be handled by separate policy.
+
+## Active reconciliation checkpoint (2026-08-15)
+
+1. Canonical consolidation checkpoint is recorded in
+   `docs/cleanup/CANONICAL_CLEANUP_CHECKPOINT_20260815.md` and should be the
+   single file with the current working-state for cleanup operations.
+2. Preservation evidence outside repo is treated as immutable for this phase:
+   `/Users/piotrwisniewski/Developer/consultify-cleanup-evidence-20260814`.
+3. Until module mapping is closed, no bulk feature edits or broad tree deletions.
+4. Last known baseline for clean candidate used in recent hardening is
+   `/Users/piotrwisniewski/Developer/consultify-canonical-full-20260814` (branch `codex/consultify-canonical-cleanup-20260814`, HEAD `0be009202`).
+5. Last full test-gate standard run: runner hash `f6a00552802d3a5d0f2bbd2c72316c05b55b8f82`.
+6. Residual inventory snapshot for this freeze is currently maintained in:
+   - `docs/cleanup/RESIDUAL_INVENTORY_20260815.md`
+   - `docs/cleanup/CLEANUP_QUARANTINE_MANIFEST_20260815.md`
+   - `docs/cleanup/MODULE_CLOSURE_LEDGER_20260815.md`
+   - `docs/cleanup/MY_WORK_CLOSURE_EVIDENCE_20260815.md`
+7. Closure is only valid if every module passes gates A–Q from acceptance system,
+   including explicit residual decisions for `DUPLIKAT`, `DEAD_CANDIDATE`,
+   `UNMOUNTED`, and unconnected work.
+
+### No-go rules (until reconciliation completes)
+
+- no broad feature merge/deploy
+- no silent deletion of tracked material
+- no acceptance claim without:
+  - source mapping to route/component/API
+  - runtime evidence (where required)
+  - residual decision for all legacy or duplicate paths

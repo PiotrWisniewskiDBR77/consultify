@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { StateCreator } from 'zustand';
 
+import type { BreadcrumbSegment } from '../../layouts/MainLayout';
 import { getRouteFromAppView } from '../../routes/routeConfig';
 import { AppView } from '../../types';
 import { NavigationOptions } from '../../types/workspace';
@@ -118,8 +119,8 @@ export interface UISlice {
   setChatContextActions: (actions: ChatContextAction[] | null) => void;
 
   // Dynamic breadcrumbs override set by My Work hub
-  myWorkBreadcrumbs: string[] | null;
-  setMyWorkBreadcrumbs: (crumbs: string[] | null) => void;
+  myWorkBreadcrumbs: BreadcrumbSegment[] | null;
+  setMyWorkBreadcrumbs: (crumbs: BreadcrumbSegment[] | null) => void;
 
   // Dynamic breadcrumbs override set by Interview hub
   interviewBreadcrumbs: string[] | null;

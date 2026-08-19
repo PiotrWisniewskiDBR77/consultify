@@ -16,6 +16,7 @@
  * that as the persistence probe.
  */
 import { expect, test } from '@playwright/test';
+import JSZip from 'jszip';
 
 import { dismissOverlayIfPresent, suppressOnboarding } from '../smoke/work-canvas-helpers';
 
@@ -79,14 +80,17 @@ async function seedAuth(page: import('@playwright/test').Page, token: string) {
 async function createDeck(
   page: import('@playwright/test').Page,
   token: string,
-  title: string
+  title: string,
+  slides: Array<{ type: string; content: { title: string; bullets: string[] } }> = [
+    { type: 'content', content: { title: 'Slide 1', bullets: ['E2E seed bullet'] } },
+  ]
 ): Promise<string | null> {
   const res = await page.request.post(`${API_BASE_URL}/api/presentations/decks`, {
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     data: {
       title,
       theme: 'modern',
-      slides: [{ type: 'content', content: { title: 'Slide 1', bullets: ['E2E seed bullet'] } }],
+      slides,
       source: 'e2e-tools-suite',
     },
   });
@@ -116,29 +120,28 @@ test.describe('Deck Builder — create + edit persistence [@module:presentations
     await page.goto(`/presentations/builder/${deckId}`, { waitUntil: 'domcontentloaded' });
     await dismissOverlayIfPresent(page);
 
-    // KNOWN LIVE GAP: the deck is created via POST /api/presentations/decks with
-    // a seed `slides` array, but under this mock-DB harness the resulting deck
-    // renders with ZERO slides ("New slide" empty-state) -- the seed
-    // `presentation_cards` row does not appear to survive/attach (confirmed via
-    // a full-page screenshot: "SLIDES" panel shows only the "+ New slide"
-    // placeholder, no seeded "Slide 1" card). When that happens the builder
-    // shell renders a different, minimal view WITHOUT
-    // data-testid="deck-builder-mels-root" (a Teresa-chat-first empty state),
-    // so the breadcrumb title button this probe depends on never appears.
-    // Rather than fake persistence with a selector-guessing retry loop, gate
-    // explicitly on the real editor shell and skip with the reason when the
-    // mock-DB harness didn't materialize a usable deck.
+    // The application performs authentication and organization bootstrap before
+    // mounting the route. `locator.isVisible()` is an immediate getter (its
+    // `timeout` option does not wait), so using it here races that bootstrap and
+    // can report an empty body even though the deck chunk has loaded correctly.
+    // Wait for the real editor shell; a timeout remains a hard failure and the
+    // diagnostic below records the resulting route/body.
     const melsRoot = page.locator('[data-testid="deck-builder-mels-root"]');
-    const shellReady = await melsRoot.isVisible({ timeout: 15000 }).catch(() => false);
-    test.skip(
-      !shellReady,
-      'Deck Builder rendered without data-testid="deck-builder-mels-root" -- the seeded slide ' +
-        'did not attach under the mock-DB harness (deck loaded with 0 slides / empty-state), so ' +
-        'the full editor shell (with the title-rename affordance) never mounted. This is an ' +
-        'honest infra gap, not faked: POST /api/presentations/decks returned 201 with a deck id, ' +
-        'but the seed presentation_cards row did not survive to render. Needs a live-demo (real ' +
-        'Postgres) run for a genuine assertion.'
-    );
+    const shellReady = await melsRoot
+      .waitFor({ state: 'visible', timeout: 30000 })
+      .then(() => true)
+      .catch(() => false);
+    const shellDiagnostic = shellReady
+      ? ''
+      : ` URL=${page.url()} BODY=${(await page.locator('body').innerText().catch(() => 'unavailable'))
+          .replace(/\s+/g, ' ')
+          .slice(0, 500)}`;
+    expect(
+      shellReady,
+      'Deck Builder rendered without data-testid="deck-builder-mels-root" after direct deck ' +
+        'creation. The create/open contract must persist deck_json in the initial write so the ' +
+        `full editor can hydrate under the mock-DB harness.${shellDiagnostic}`
+    ).toBe(true);
 
     // Click the breadcrumb title to enter edit mode, then rename. NOTE: a Teresa
     // chat-panel widget also renders a same-named button ("AI sees: Presentation:
@@ -170,5 +173,105 @@ test.describe('Deck Builder — create + edit persistence [@module:presentations
     await expect(page.getByText(newTitle, { exact: false }).first()).toBeVisible({
       timeout: 15000,
     });
+
+    // Exercise the mounted-runtime -> realDB -> export pipeline as one chain.
+    // A successful HTTP status is insufficient: inspect the returned OOXML and
+    // prove that it is a real PPTX generated from the current persisted deck.
+    const download = await page.request.get(
+      `${API_BASE_URL}/api/presentations/decks/${deckId}/download?mode=draft`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        // The first download materializes PPTX from the persisted deck. Keep the
+        // normal 15s interaction budget elsewhere, but allow this export job to
+        // complete on a busy staging-realDB runtime.
+        timeout: 60000,
+      }
+    );
+    const downloadFailure = download.ok() ? '' : await download.text().catch(() => '');
+    expect(
+      download.status(),
+      `Mounted realDB PPTX export failed for deck ${deckId}: ${downloadFailure}`
+    ).toBe(200);
+    expect(download.headers()['content-type']).toContain(
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+    );
+    expect(download.headers()['x-artifact-export-mode']).toBe('draft');
+    expect(download.headers()['x-artifact-draft']).toBe('true');
+
+    // Read the persisted head after export. The mounted editor may flush one
+    // last debounced autosave between reload and download, so a pre-export
+    // version read can legitimately become stale. The export must identify the
+    // exact immutable content revision that is current after materialization.
+    const approvalStateResponse = await page.request.get(
+      `${API_BASE_URL}/api/presentations/decks/${deckId}/approval-state`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    expect(approvalStateResponse.status()).toBe(200);
+    const approvalState = (await approvalStateResponse.json()) as {
+      data?: { versionId?: string };
+    };
+    const persistedVersionId = String(approvalState.data?.versionId || '');
+    expect(persistedVersionId).not.toBe('');
+    expect(download.headers()['x-artifact-version-id']).toBe(
+      `${deckId}@${persistedVersionId}`
+    );
+    expect(download.headers()['content-disposition']).toContain('-DRAFT.pptx');
+    const pptx = await download.body();
+    expect(pptx.subarray(0, 4).equals(Buffer.from([0x50, 0x4b, 0x03, 0x04]))).toBe(true);
+    const zip = await JSZip.loadAsync(pptx);
+    const semanticXmlFiles = Object.keys(zip.files).filter(
+      (name) => /^ppt\/slides\/slide\d+\.xml$/.test(name) || name === 'docProps/core.xml'
+    );
+    expect(semanticXmlFiles.length).toBeGreaterThan(0);
+    const semanticXml = (
+      await Promise.all(semanticXmlFiles.map((name) => zip.files[name].async('string')))
+    ).join('\n');
+    expect(semanticXml).toContain('E2E seed bullet');
+  });
+
+  test('present starts from current slide and presenter view restores the editor with Escape', async ({
+    page,
+  }) => {
+    const token = await bootstrapToken(page);
+    test.skip(!token, 'Could not acquire an auth token.');
+    await seedAuth(page, token);
+    await suppressOnboarding(page);
+
+    const deckId = await createDeck(page, token, `E2E Present ${Date.now()}`, [
+      { type: 'content', content: { title: 'Opening slide', bullets: ['Opening'] } },
+      { type: 'content', content: { title: 'Current slide', bullets: ['Current'] } },
+      { type: 'content', content: { title: 'Next slide', bullets: ['Next'] } },
+    ]);
+    test.skip(!deckId, 'Could not create presentation fixture.');
+
+    await page.goto(`/presentations/builder/${deckId}`, { waitUntil: 'domcontentloaded' });
+    await dismissOverlayIfPresent(page);
+    const root = page.locator('[data-testid="deck-builder-mels-root"]');
+    await expect(root).toBeVisible({ timeout: 30000 });
+
+    await root.locator('[data-testid="deck-slide-1"]').click();
+    await root.getByRole('button', { name: 'Present', exact: true }).click();
+    const audience = page.getByTestId('audience-present-view');
+    await expect(audience).toBeVisible();
+    await expect(audience.getByText('Current slide', { exact: false }).first()).toBeVisible();
+    await expect(audience.getByText('2 / 3')).toBeVisible();
+    await expect(audience.getByText('Private notes', { exact: false })).toHaveCount(0);
+
+    await page.keyboard.press('Escape');
+    await expect(root).toBeVisible();
+    await expect(root.locator('[data-testid="deck-slide-1"]')).toBeVisible();
+
+    const more = root.getByRole('button', { name: /more|więcej/i }).first();
+    await more.click();
+    await page.getByRole('menuitem', { name: 'Presenter view' }).click();
+    const presenter = page.getByTestId('presenter-view');
+    await expect(presenter).toBeVisible();
+    await expect(presenter.getByText('Current slide', { exact: false }).first()).toBeVisible();
+    await expect(presenter.getByText('Next slide', { exact: false }).first()).toBeVisible();
+    await expect(presenter.getByText('Speaker Notes', { exact: false })).toBeVisible();
+
+    await page.keyboard.press('Escape');
+    await expect(root).toBeVisible();
+    await expect(root.locator('[data-testid="deck-slide-1"]')).toBeVisible();
   });
 });

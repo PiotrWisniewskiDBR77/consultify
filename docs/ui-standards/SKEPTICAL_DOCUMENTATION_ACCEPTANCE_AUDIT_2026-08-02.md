@@ -10,9 +10,9 @@ authority: docs/ui-standards/CANON.md
 
 # Sceptyczny odbiór dokumentacji UI/UX Consultify
 
-> Raport zachowuje stan wykryty przed remediation. Zamknięcie P0 i aktualny werdykt opisuje `DOCUMENTATION_REACCEPTANCE_2026-08-02.md`.
+> Raport zachowuje stan wykryty przed remediation. Aktualny werdykt opisuje [`FINAL_CANONICAL_DOCUMENTATION_ACCEPTANCE_2026-08-03.md`](FINAL_CANONICAL_DOCUMENTATION_ACCEPTANCE_2026-08-03.md).
 >
-> **Uwaga (2026-08-02) — dokument historyczny, ale łańcuch po nim nie jest już aktualny.** Blokery P0 wykryte tutaj rzeczywiście zostały zamknięte przez `DOCUMENTATION_REACCEPTANCE_2026-08-02.md`. Problem: obie kolejne rundy (2 i 3), które ten wynik zamykały, okazały się **zbyt łagodne** — mierzyły obecność sekcji i nagłówków, nie treść pod nimi, i przepuściły 12 z 20 sekcji identycznych bajt-w-bajt we wszystkich 26 kartach. Czwarty, niezależny audyt (2026-08-02) cofnął ich werdykty. Pełny łańcuch unieważnień i aktualny stan: `CANON.md` §9 (wpis v3.1) oraz [`_KOREKTY_PO_PANELU_ADWERSARYJNYM_2026-08-02.md`](_KOREKTY_PO_PANELU_ADWERSARYJNYM_2026-08-02.md). Kolejność czytania dla recenzenta: `CLAUDE_DOCUMENTATION_HANDOFF.md`.
+> **Uwaga — dokument historyczny.** Późniejsze rundy 2 i 3 zostały cofnięte przez czwarty audyt. Remediation zakończono 2026-08-03; pełny łańcuch i aktualny stan wskazuje `CANON.md` §7.2 i §9.
 
 ## 1. Werdykt
 

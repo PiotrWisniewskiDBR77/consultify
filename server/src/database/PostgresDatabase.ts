@@ -92,6 +92,46 @@ function isDbReadOnlyEnabled(): boolean {
   return v === '1' || v === 'true' || v === 'yes' || v === 'on';
 }
 
+function isReadOnlyAuthSessionWriteEnabled(): boolean {
+  const v = String(process.env.DB_READONLY_ALLOW_AUTH_SESSIONS || '')
+    .trim()
+    .toLowerCase();
+  return v === '1' || v === 'true' || v === 'yes' || v === 'on';
+}
+
+/**
+ * Allow local read-only review sessions to authenticate without opening writes
+ * to application data. Keep this deliberately narrower than a SQL parser:
+ * only one simple mutation of refresh_tokens is accepted.
+ */
+export function isAllowedReadOnlyAuthSessionWrite(sql: string): boolean {
+  const cleaned = String(sql || '')
+    .trim()
+    .replace(/^(?:\s*--.*\n|\s*\/\*[\s\S]*?\*\/\s*)+/g, '')
+    .trim();
+
+  if (!cleaned || /;\s*\S/.test(cleaned) || /\b(with|join|using)\b/i.test(cleaned)) {
+    return false;
+  }
+
+  const normalized = cleaned.replace(/;\s*$/, '').trim();
+  const normalizedWhitespace = normalized.replace(/\s+/g, ' ');
+  const isSessionLimitRotation =
+    /^update (?:public\.)?refresh_tokens set revoked_at = datetime\('now'\), revoked_reason = 'session_limit' where id in \( select id from (?:public\.)?refresh_tokens where user_id = \? and revoked_at is null order by last_used_at asc limit \? \)$/i.test(
+      normalizedWhitespace
+    );
+
+  if (/\bselect\b/i.test(normalized)) return isSessionLimitRotation;
+
+  return (
+    /^insert\s+into\s+(?:public\.)?refresh_tokens\s*\([^)]*\)\s*values\s*\(/i.test(
+      normalized
+    ) ||
+    /^update\s+(?:public\.)?refresh_tokens\s+set\s+/i.test(normalized) ||
+    /^delete\s+from\s+(?:public\.)?refresh_tokens\s+where\s+/i.test(normalized)
+  );
+}
+
 function looksLikeWriteQuery(sql: string): boolean {
   const s = String(sql || '')
     .trim()
@@ -121,6 +161,7 @@ function looksLikeWriteQuery(sql: string): boolean {
 function enforceReadOnly(sql: string): void {
   if (!isDbReadOnlyEnabled()) return;
   if (!looksLikeWriteQuery(sql)) return;
+  if (isReadOnlyAuthSessionWriteEnabled() && isAllowedReadOnlyAuthSessionWrite(sql)) return;
   const err: any = new Error(
     'DB is in read-only mode (DB_READONLY=1). Blocked a write query. Disable DB_READONLY to proceed.'
   );
