@@ -1,18 +1,198 @@
 {
   "taskId": "SET-BVP-001",
   "baselineSha": "ec125eeb50abde81726d0087a8f5d955f64a3f83",
-  "productSha": "ceb5bbe515e501dd2101d35529da433ad617fa21",
+  "historicalProductSha": "ceb5bbe515e501dd2101d35529da433ad617fa21",
+  "productSha": "043f435288e4c1905a51810e6dd1030847ed0b55",
+  "historicalTechnicalVerdict": "PASS_LOCAL_REALPG",
+  "technicalSourceSha": "043f435288e4c1905a51810e6dd1030847ed0b55",
+  "reconciliationSha": "043f435288e4c1905a51810e6dd1030847ed0b55",
+  "technicalVerdict": "DONE_CURRENT_SHA",
+  "verdict": "DONE_CURRENT_SHA",
+  "verdictScope": "Repository-local mounted Settings persistence on the exact tested SHA; no deployment or human acceptance is claimed.",
+  "verdictRationale": "A signed ACTIVE tenant persists profile, language, appearance, notification and non-secret AI behavior through mounted product routes and reads the same state from a cold browser context. Foreign and revoked actors are denied before mutation. AMD-TECHNICAL-DONE-RELEASE-BOUNDARY-002 separates repository completion from manual/release acceptance.",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
-  "changedPaths": ["server/src/routes/settings.routes.ts", "server/src/routes/users.routes.ts", "tests/integration/settings/settings-cold-session.realdb.test.ts"],
-  "changedPathRationale": {"routes": "persist profile, language, appearance, notification and AI contracts without false success or secret readback", "tests": "cold-session PostgreSQL readback and tenant negatives"},
-  "ownerTables": ["users", "user_preferences", "notification_settings", "user_ai_preferences"],
-  "commands": [{"command": "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:56512/settings_mfa RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test npx vitest run tests/integration/settings/settings-cold-session.realdb.test.ts server/src/routes/__tests__/mfaPersistence.pg.test.ts server/src/services/__tests__/MFAService.pg.test.ts --reporter=dot", "exitCode": 0, "result": "15/15 across 3 files"}, {"command": "DATABASE_URL=<fresh-pg> NODE_ENV=test DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts", "exitCode": 0, "result": "initial 722/722; repeat Applying migrations: 0"}, {"command": "DATABASE_URL=<fresh-pg> NODE_ENV=test DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts --dry-run", "exitCode": 0, "result": "Pending migrations: 0"}, {"command": "npm run type-check", "exitCode": 0}],
-  "denominators": {"combinedRealDb": "15/15 across 3 files; SET-BVP subset 4/4", "freshMigrations": "722/722 success; ledger success:722; repeat 0; dry-run pending 0", "typecheck": "1/1 command"},
-  "fixtures": {"database": "disposable PostgreSQL on loopback port 56512", "session": "new JWT and reopened application database pool"},
-  "negativeControls": {"tenant": "cross-tenant write returns 403", "language": "invalid language returns 400", "secret": "secret is not returned and encryption absence fails closed"},
-  "browserArtifacts": [],
-  "rollback": {"code": "revert 3cf595da94 before deployment", "data": "no production writes executed"},
-  "technicalVerdict": "PASS_LOCAL_REALPG",
-  "verdict": "PARTIAL",
-  "openBlockers": ["G4 browser reload/visual evidence and human sign-off remain for exact-SHA completion."]
+  "changedPaths": [
+    "server/src/routes/ai/ai-settings.routes.ts",
+    "server/src/routes/settings.routes.ts",
+    "server/src/routes/user/users.routes.ts",
+    "tests/e2e/settings/settings-bvp.signed.spec.ts",
+    "tests/integration/settings/settings-cold-session.realdb.test.ts"
+  ],
+  "changedPathRationale": {
+    "server/src/routes/ai/ai-settings.routes.ts": "Requires a current ACTIVE tenant membership before mounted personal AI-setting writes.",
+    "server/src/routes/settings.routes.ts": "Requires ACTIVE membership before appearance and notification preference writes while preserving reads and global surfaces.",
+    "server/src/routes/user/users.routes.ts": "Requires ACTIVE membership before the Gateway-mounted profile and language update handler.",
+    "tests/integration/settings/settings-cold-session.realdb.test.ts": "Proves mounted active persistence, cold PostgreSQL readback, foreign denial, four revoked denials, byte-stable rows, safe DB prefix and cleanup.",
+    "tests/e2e/settings/settings-bvp.signed.spec.ts": "Proves real signed UI writes and cold-context readback plus foreign and revoked denial without interception."
+  },
+  "ownerTables": ["users", "organization_members", "user_preferences", "user_ai_settings"],
+  "exactCurrent": {
+    "testedSha": "043f435288e4c1905a51810e6dd1030847ed0b55",
+    "migration": "Fresh isolated PostgreSQL applied 777 migrations, repeat0 and dry pending0.",
+    "realPg": "Mounted Settings contract 1 file / 5 tests passed in 2.34s.",
+    "signedG4": "Real app/PostgreSQL/Chromium 1/1 passed with retry0; test13.4s, total14.4s; no request interception.",
+    "static": "Root TypeScript and server TypeScript passed on exact043f; signed webServer performed a production frontend build.",
+    "cleanup": "test_support_runs, non-system users, organizations, memberships, user_preferences, user_ai_settings and advisory locks were all0; owned DB dropped existence0; ports3470/3471 free.",
+    "logs": "/private/tmp/consultify-set-bvp-requal-043f-20260819/",
+    "nonQualifyingAttempts": "The first migration command omitted NODE_ENV=test and was refused by the local-database safety guard before writes. Earlier pre-integration browser iterations exposed the revoked-write defect, duplicate unmounted routers, stale runtime listener and harness configuration; none contributes to final denominators."
+  },
+  "commands": [
+    {
+      "command": "NODE_ENV=test DATABASE_URL='<redacted>' DB_TYPE=postgres npm run db:migrate:strict",
+      "exitCode": 0,
+      "result": "fresh Applying migrations: 777; 03-migrate-fresh-qual.log"
+    },
+    {
+      "command": "NODE_ENV=test DATABASE_URL='<redacted>' DB_TYPE=postgres npm run db:migrate:strict",
+      "exitCode": 0,
+      "result": "repeat Applying migrations: 0; 04-migrate-repeat.log"
+    },
+    {
+      "command": "NODE_ENV=test DATABASE_URL='<redacted>' DB_TYPE=postgres npm run db:migrate:postgres:dry",
+      "exitCode": 0,
+      "result": "Pending migrations: 0; 05-migrate-dry.log"
+    },
+    {
+      "command": "DATABASE_URL='<redacted>' DB_TYPE=postgres POSTGRES_SKIP_INIT_IN_TEST=1 SET_BVP_DISPOSABLE_DB_PREFIX=set_bvp_ NODE_ENV=test npx vitest run tests/integration/settings/settings-cold-session.realdb.test.ts --maxWorkers=1 --retry=0",
+      "exitCode": 0,
+      "result": "5/5; 07-realpg.log"
+    },
+    {
+      "command": "NODE_ENV=test PORT=3471 DATABASE_URL='<redacted>' DB_TYPE=postgres DB_MANAGED_SCHEMA=off MOCK_DB=false MOCK_REDIS=true ENABLE_TEST_GATEWAY=true ENABLE_TEST_SUPPORT=true POSTGRES_SKIP_INIT_IN_TEST=1 DISABLE_CONNECTION_POOL=true DISABLE_SCHEDULER=true TEST_SUPPORT_KEY='<redacted>' npx tsx src/index.ts",
+      "exitCode": 0,
+      "result": "backend health200; intentional SIGINT shutdown0; 08-backend.log"
+    },
+    {
+      "command": "NODE_OPTIONS=--max-old-space-size=8192 VITE_API_TARGET='http://127.0.0.1:3471' npm run build",
+      "exitCode": 0,
+      "result": "frontend production build; 09-frontend-build.log"
+    },
+    {
+      "command": "VITE_API_TARGET='http://127.0.0.1:3471' npx vite preview --port 3470 --strictPort",
+      "exitCode": 130,
+      "result": "HTTP200 then intentional SIGINT after test; 10-frontend.log"
+    },
+    {
+      "command": "env -u CI DATABASE_URL='<redacted>' SET_BVP_DISPOSABLE_DB_PREFIX=set_bvp_ E2E_USE_WEB_SERVER=false E2E_REQUIRE_TEST_SUPPORT=false E2E_ALLOW_LOCALHOST_REMOTE=true E2E_API_URL='http://127.0.0.1:3471' E2E_BASE_URL='http://127.0.0.1:3470' E2E_MODE=false TEST_SUPPORT_KEY='<redacted>' npx playwright test tests/e2e/settings/settings-bvp.signed.spec.ts --project=chromium --workers=1 --retries=0 --trace=on",
+      "exitCode": 0,
+      "result": "1/1; passing trace preserved; 11-playwright.log"
+    },
+    {
+      "command": "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check",
+      "exitCode": 0,
+      "result": "root TypeScript passed; /private/tmp/consultify-set-043f-root-typecheck.log"
+    },
+    {
+      "command": "NODE_OPTIONS=--max-old-space-size=8192 npm --prefix server run typecheck",
+      "exitCode": 0,
+      "result": "server TypeScript passed; /private/tmp/consultify-set-bvp-requal-043f-20260819/06-server-tsc.log"
+    },
+    {
+      "command": "docker exec <owned-postgres-container> psql -U <redacted> -d <owned-set-bvp-db> -At -F '|' -c \"SELECT 'test_runs',count(*) FROM test_support_runs WHERE run_id LIKE 'set-bvp-%' UNION ALL SELECT 'users',count(*) FROM users WHERE email LIKE '%set-bvp-%' OR email LIKE 'settings-%@test.local' OR email LIKE 'foreign-%@test.local' UNION ALL SELECT 'orgs',count(*) FROM organizations WHERE name LIKE '%set-bvp-%' OR name IN ('SET-BVP realDB','Foreign') UNION ALL SELECT 'memberships',count(*) FROM organization_members m JOIN users u ON u.id=m.user_id WHERE u.email LIKE '%set-bvp-%' OR u.email LIKE 'settings-%@test.local' OR u.email LIKE 'foreign-%@test.local' UNION ALL SELECT 'prefs',count(*) FROM user_preferences p JOIN users u ON u.id=p.user_id WHERE u.email LIKE '%set-bvp-%' OR u.email LIKE 'settings-%@test.local' OR u.email LIKE 'foreign-%@test.local' UNION ALL SELECT 'ai',count(*) FROM user_ai_settings a JOIN users u ON u.id=a.user_id WHERE u.email LIKE '%set-bvp-%' OR u.email LIKE 'settings-%@test.local' OR u.email LIKE 'foreign-%@test.local' UNION ALL SELECT 'locks',count(*) FROM pg_locks WHERE locktype='advisory' AND granted;\"",
+      "exitCode": 0,
+      "result": "test_runs/users/orgs/memberships/prefs/ai/locks all0; 13-residue.log"
+    },
+    {
+      "command": "docker exec <owned-postgres-container> psql -U <redacted> -d postgres -v ON_ERROR_STOP=1 -c 'DROP DATABASE <owned-set-bvp-db> WITH (FORCE);'",
+      "exitCode": 0,
+      "result": "DROP DATABASE; 14-drop.log"
+    },
+    {
+      "command": "docker exec <owned-postgres-container> psql -U <redacted> -d postgres -At -c \"SELECT count(*) FROM pg_database WHERE datname='<owned-set-bvp-db>';\"",
+      "exitCode": 0,
+      "result": "existence0; 15-existence.log"
+    },
+    {
+      "command": "node scripts/cleanup/report-closure-progress.mjs",
+      "exitCode": 0,
+      "result": "denominator82; DONE46; PARTIAL35; BLOCKED_HUMAN1; missing0; invalid0"
+    },
+    {
+      "command": "node scripts/cleanup/verify-closure-plan.mjs",
+      "exitCode": 0,
+      "result": "plan/ownership/leases/graph PASS"
+    }
+  ],
+  "literalExactCurrentGates": [
+    {
+      "gate": "G0_G1",
+      "result": "exact clean SHA043f; fresh applying777; repeat0; dry0"
+    },
+    {
+      "gate": "G2_G3",
+      "result": "server/root TypeScript0; RealPG5/5; active and negative mounted contracts"
+    },
+    {
+      "gate": "G4",
+      "result": "signed Chromium1/1 retry0; cold second context; no interception; passing trace"
+    },
+    {
+      "gate": "G5",
+      "result": "foreign403; revoked profile/language, appearance, notifications and AI each403 ORG_MEMBERSHIP_REVOKED; byte-stable denied-owner snapshots"
+    },
+    {
+      "gate": "G6",
+      "result": "residue0; locks0; ports free; DB dropped existence0; exact HEAD/status stable"
+    }
+  ],
+  "denominators": {
+    "freshMigrations": "Applying migrations: 777",
+    "repeatMigrations": 0,
+    "pendingMigrations": 0,
+    "settingsRealPg": "5/5",
+    "signedMountedG4": "1/1",
+    "revokedWriteFamilies": "4/4",
+    "retries": 0,
+    "todo": 0,
+    "unhandled": 0
+  },
+  "fixtures": {
+    "database": "Owned disposable set_bvp_ PostgreSQL database on existing local truth container; dropped existence0.",
+    "session": "Signed ACTIVE ADMIN with a second cold browser context; separate ACTIVE foreign tenant and revoked member.",
+    "writes": "Deterministic profile marker, pl language, dark appearance, Minimal notifications and non-secret detailed/friendly AI behavior."
+  },
+  "negativeControls": {
+    "tenant": "ACTIVE foreign actor cannot update primary profile; primary rows unchanged.",
+    "revocation": "Profile/language, appearance, notifications and AI writes all return403 ORG_MEMBERSHIP_REVOKED after membership revocation; users/preferences/AI snapshots remain byte-equivalent.",
+    "secret": "Existing RealPG proof retains write-only secret behavior and fail-closed encryption absence.",
+    "routeTruth": "Tests import and exercise the exact Gateway-mounted nested users and AI routers, not similarly named unmounted siblings."
+  },
+  "browserArtifacts": [
+    {
+      "kind": "trace",
+      "path": "docs/program/evidence/closure/ui-g4/SET-BVP-001/043f435288e4c1905a51810e6dd1030847ed0b55/settings-bvp-trace.zip",
+      "sha256": "978a328165c4448ac10243dc909b70d90d04de70e0487a185f776330075f7c89",
+      "testedSha": "043f435288e4c1905a51810e6dd1030847ed0b55",
+      "persona": "ADMIN",
+      "assertion": "Mounted write, cold-context server readback, foreign denial and all revoked denials."
+    }
+  ],
+  "resolvedBlockers": [
+    "G4 mounted browser reload and cold-session proof now exists on the exact SHA.",
+    "Gateway-mounted personal settings writers uniformly require current ACTIVE membership.",
+    "Old owner-table claims were reconciled to the actual mounted stores: user_preferences and user_ai_settings."
+  ],
+  "rollback": {
+    "repository": "Revert the three route-local middleware additions before deployment if compatibility rollback is authorized; no data migration is involved.",
+    "production": "NOT_EXECUTED / NOT_AUTHORIZED"
+  },
+  "releaseBoundary": {
+    "verdict": "PARTIAL",
+    "manualVoiceOverBrandPersonaAcceptance": "NOT_EXECUTED",
+    "deployment": "NOT_EXECUTED",
+    "authorization": "NOT_AUTHORIZED",
+    "openReleaseBlockers": [
+      "Manual VoiceOver, brand and persona acceptance has not been executed.",
+      "Deployment has not been authorized or executed."
+    ],
+    "note": "Manual accessibility/brand/persona acceptance and deployment are release/UI acceptance gates, not repository technical blockers."
+  },
+  "reopenConditions": [
+    "Mounted users, settings or AI route/middleware ordering changes.",
+    "Membership semantics or organization context resolution changes.",
+    "Settings UI persistence stores or response contracts change.",
+    "Migration checksum or exact release candidate changes."
+  ],
+  "openBlockerScope": "Repository technical scope only; release blockers are listed separately in releaseBoundary.openReleaseBlockers.",
+  "openBlockers": []
 }
