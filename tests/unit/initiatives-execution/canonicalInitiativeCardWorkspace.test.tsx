@@ -453,4 +453,42 @@ describe('CanonicalInitiativeCardWorkspace', () => {
       )
     );
   });
+
+  it('retries a lost Analysis Decision response with the exact same command identity', async () => {
+    vi.mocked(readRegisteredInitiative).mockResolvedValue({
+      ...initiative,
+      initiative: { ...initiative.initiative, lifecycleState: 'ANALYZING' },
+    });
+    vi.mocked(readAnalysisReadiness).mockResolvedValue({
+      ...readiness,
+      lifecycleState: 'ANALYZING',
+      readiness: 'READY',
+    });
+    vi.mocked(requestAnalysisDecision)
+      .mockRejectedValueOnce(new Error('response lost after commit'))
+      .mockResolvedValueOnce({ status: 'REPLAYED', aggregateVersion: 2 });
+
+    render(
+      <CanonicalInitiativeCardWorkspace initiativeId="initiative-card-ui" onBack={vi.fn()} />
+    );
+    await screen.findByText('Analysis · READY');
+    fireEvent.change(screen.getByLabelText('Analysis authority'), {
+      target: { value: 'analysis-authority' },
+    });
+    fireEvent.change(screen.getByLabelText('Decision due'), {
+      target: { value: '2026-08-25T12:00' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Request Analysis Decision' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Analysis decision request failed. The previous durable state remains current.'
+    );
+    expect(screen.queryByText(/waiting for its named authority/i)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Request Analysis Decision' }));
+    await waitFor(() => expect(requestAnalysisDecision).toHaveBeenCalledTimes(2));
+    const first = vi.mocked(requestAnalysisDecision).mock.calls[0][1];
+    const retry = vi.mocked(requestAnalysisDecision).mock.calls[1][1];
+    expect(retry).toEqual(first);
+  });
 });

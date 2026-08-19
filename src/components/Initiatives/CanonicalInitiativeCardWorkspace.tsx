@@ -193,6 +193,9 @@ export const CanonicalInitiativeCardWorkspace: React.FC<Props> = ({
   );
   const sourceRefreshIds = useRef(new Map<string, string>());
   const analysisCommandIds = useRef(new Map<string, string>());
+  const analysisRequestIds = useRef(
+    new Map<number, { clientRequestId: string; decisionId: string }>()
+  );
   const scheduleCommandIds = useRef(
     new Map<string, { clientRequestId: string; decisionId: string }>()
   );
@@ -718,14 +721,20 @@ export const CanonicalInitiativeCardWorkspace: React.FC<Props> = ({
       return;
     setWriteAction('Analysis decision request');
     setWriteState('SAVING');
-    const key = `analysis-request:${initiativeVersion}`;
-    const clientRequestId = analysisCommandIds.current.get(key) ?? crypto.randomUUID();
-    analysisCommandIds.current.set(key, clientRequestId);
+    // A lost HTTP response must be retryable as the exact same command. Keeping
+    // only clientRequestId while minting a new decisionId changes the payload
+    // behind an idempotency key, so the canonical writer correctly rejects the
+    // retry as a collision instead of replaying the already-created decision.
+    const ids = analysisRequestIds.current.get(initiativeVersion) ?? {
+      clientRequestId: crypto.randomUUID(),
+      decisionId: crypto.randomUUID(),
+    };
+    analysisRequestIds.current.set(initiativeVersion, ids);
     try {
       await requestAnalysisDecision(initiativeId, {
         expectedVersion: initiativeVersion,
-        clientRequestId,
-        decisionId: crypto.randomUUID(),
+        clientRequestId: ids.clientRequestId,
+        decisionId: ids.decisionId,
         authorityId: analysisAuthorityId.trim(),
         dueAt: new Date(analysisDueAt).toISOString(),
       });
