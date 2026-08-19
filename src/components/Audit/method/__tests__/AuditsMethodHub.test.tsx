@@ -43,11 +43,25 @@ vi.mock('../auditsMethodApi', async () => {
     getProgram: vi.fn(),
     getProgramCoverage: vi.fn(),
     getProgramLifecycle: vi.fn(),
+    listProgramCriteria: vi.fn(),
   };
 });
 
-import { AuditsMethodHub } from '../AuditsMethodHub';
 import {
+  AUDIT_START_COMMAND_NAMESPACE,
+  AuditsMethodHub,
+  auditStartFingerprint,
+  claimAuditStart,
+} from '../AuditsMethodHub';
+import {
+  clearPersistentCommandId,
+  persistentCommandId,
+} from '@/services/initiatives-execution/persistentCommandId';
+import {
+  getProgram,
+  getProgramCoverage,
+  getProgramLifecycle,
+  listProgramCriteria,
   listOutputs,
   listPacks,
   listPrograms,
@@ -62,6 +76,10 @@ const mockedListPrograms = vi.mocked(listPrograms);
 const mockedListOutputs = vi.mocked(listOutputs);
 const mockedListReports = vi.mocked(listReports);
 const mockedListProposals = vi.mocked(listProposals);
+const mockedGetProgram = vi.mocked(getProgram);
+const mockedGetProgramCoverage = vi.mocked(getProgramCoverage);
+const mockedGetProgramLifecycle = vi.mocked(getProgramLifecycle);
+const mockedListProgramCriteria = vi.mocked(listProgramCriteria);
 
 const packs: AuditPackSummary[] = [
   {
@@ -139,6 +157,22 @@ function setupApiMocks() {
   mockedListOutputs.mockResolvedValue({ items: [], total: 0 });
   mockedListReports.mockResolvedValue({ items: [], total: 0 });
   mockedListProposals.mockResolvedValue({ items: [], total: 0 });
+  mockedGetProgram.mockResolvedValue({
+    ...programs[0], objective: null, scopeText: null, projectId: null, members: [],
+  });
+  mockedGetProgramCoverage.mockResolvedValue({
+    applicableCriteria: 10, concludedCriteria: 4, insufficientEvidenceCriteria: 1,
+    openFindings: 2, unresolvedFindings: 2,
+  });
+  mockedGetProgramLifecycle.mockResolvedValue({ state: 'fieldwork', allowed: [] });
+  mockedListProgramCriteria.mockResolvedValue([
+    {
+      id: 'criterion-1', programId: 'prog-1', parentId: null, ordinal: 1,
+      refCode: 'INT-01', title: 'Customer complaint intake', applicable: true,
+      conformityStatus: 'not_tested', workStatus: 'open', evidenceCount: 2,
+      findingCount: 1, children: [],
+    },
+  ]);
 }
 
 const LocationProbe: React.FC = () => {
@@ -156,6 +190,27 @@ function renderHub(initialEntries: string[] = ['/audit-programs/method']) {
 }
 
 describe('AuditsMethodHub', () => {
+  it('synchronously rejects a duplicate Start dispatch for the same pack', () => {
+    const inFlight = new Set<string>();
+    expect(claimAuditStart(inFlight, 'pack-1')).toBe(true);
+    expect(claimAuditStart(inFlight, 'pack-1')).toBe(false);
+    expect(claimAuditStart(inFlight, 'pack-2')).toBe(true);
+  });
+
+  it('retains the Start key across remount/reload and rotates only after confirmed success', () => {
+    const fingerprint = auditStartFingerprint('org-1', 'user-1', 'pack-1');
+    clearPersistentCommandId(AUDIT_START_COMMAND_NAMESPACE, fingerprint);
+    const firstMountKey = persistentCommandId(AUDIT_START_COMMAND_NAMESPACE, fingerprint);
+    // A new component instance after reload has no refs, but reads the same session command.
+    const remountedKey = persistentCommandId(AUDIT_START_COMMAND_NAMESPACE, fingerprint);
+    expect(remountedKey).toBe(firstMountKey);
+    // Production clears only after exact create→readback→list success.
+    clearPersistentCommandId(AUDIT_START_COMMAND_NAMESPACE, fingerprint);
+    const nextIntentKey = persistentCommandId(AUDIT_START_COMMAND_NAMESPACE, fingerprint);
+    expect(nextIntentKey).not.toBe(firstMountKey);
+    clearPersistentCommandId(AUDIT_START_COMMAND_NAMESPACE, fingerprint);
+  });
+
   it('renders exactly five tabs in the required order — second tab reads "Sessions", not "Processes"', async () => {
     setupApiMocks();
     renderHub();
@@ -223,6 +278,20 @@ describe('AuditsMethodHub', () => {
     expect(document.querySelector('table')).toBeInTheDocument();
     expect(screen.getByTestId('location-probe').textContent).toContain('tab=processes');
     expect(screen.getByRole('tab', { name: 'Sessions', selected: true })).toBeInTheDocument();
+  });
+
+  it('opens a canonical criterion workspace from the selected program', async () => {
+    setupApiMocks();
+    renderHub(['/audit-programs?tab=processes']);
+    await waitFor(() => expect(screen.getByText('Q3 Compliance Audit')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Q3 Compliance Audit'));
+    await waitFor(() => expect(screen.getByText(/Customer complaint intake/)).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('link', { name: /INT-01.*Customer complaint intake/i }));
+    await waitFor(() =>
+      expect(screen.getByTestId('location-probe')).toHaveTextContent(
+        '/audit-programs/prog-1/criteria/criterion-1'
+      )
+    );
   });
 
   it('shows an ErrorState with retry when the Library API call fails', async () => {

@@ -532,18 +532,10 @@ const SharedDocumentReaderPage = lazyWithRetry(
 const PublicBookingView = lazyWithRetry(() =>
   import('@/views/PublicBookingView').then((m) => ({ default: m.PublicBookingView }))
 );
-// Audit Orchestrator hub (audit #19 family) — authenticated module route.
-const AuditProgramsHub = lazyWithRetry(() => import('@/components/Audit/AuditsHub'));
-// U7 — Audits methodical-kernel hub (Library/Processes/Outputs/Reports/
-// Initiatives, 5-surface Triada pattern, /api/audits). Parallel, separate
-// screen from AuditProgramsHub above (/api/audit orchestrator) — does NOT
-// replace it. Flag-gated (auditsFiveSurfacesV1, default OFF) — see
-// AuditsMethodHubRoute below for the OFF→redirect behavior.
+// Canonical Audits product surface over the governed `/api/audits` kernel.
 const AuditsMethodHub = lazyWithRetry(() => import('@/components/Audit/method/AuditsMethodHub'));
 // Criterion Workspace (W1, 2026-08) — the screen where an auditor actually
 // works one criterion through the full evidence→finding→remediation chain.
-// Same flag as AuditsMethodHub above (auditsFiveSurfacesV1); OFF→redirect
-// mirrors CriterionWorkspaceRoute below.
 const CriterionWorkspace = lazyWithRetry(
   () => import('@/components/Audit/method/workspace/CriterionWorkspace')
 );
@@ -751,80 +743,9 @@ const DRDAuditReportRoute: React.FC = () => {
   return <DRDAuditReportView reportId={params.reportId} />;
 };
 
-/**
- * U7 — Audits methodical-kernel hub entry (`AuditsMethodHub`, five surfaces:
- * Library/Processes/Outputs/Reports/Initiatives over `/api/audits`). Flag-gated
- * (`auditsFiveSurfacesV1`, default OFF, see src/hooks/useFeatureFlags.tsx):
- * OFF → redirects to /audit-programs, mirroring how `DRDAuditReportRoute`
- * above gates its own flag. Kept as a separate route/component rather than
- * folded into `AuditProgramsHub` — the two hubs read different backends
- * (`/api/audit` orchestrator vs. `/api/audits` methodical kernel) and neither
- * replaces the other yet.
- */
-/**
- * Decides a flag-gated Audits route only once the flag's value is actually
- * known.
- *
- * Before this existed, the guards read `isEnabled(...)` on first render. The
- * remote (tenant) flags arrive from `GET /api/feature-flags/runtime` after the
- * first paint, so at that moment "no value yet" was indistinguishable from
- * "off", and a cold deep-link to an ENABLED route redirected to the hub and
- * only came back once the flags landed. Measured on a real signed-in session
- * with the tenant flag on: redirected at ~3s, back on the route by ~8s, and
- * across four sweeps the number of method tabs that survived a cold deep-link
- * varied 5/5 → 3/5 → 4/5 → 2/5.
- *
- * The four states are now distinct:
- *  - `loading`         → render a labelled progress state. Never redirect, and
- *                        never render the gated surface's data either.
- *  - `ready` + on      → render the surface.
- *  - `ready` + off     → redirect, deterministically.
- *  - `unauthenticated` → no tenant can carry flags, so code defaults are final;
- *                        treated exactly like a settled `off`. (The auth gate
- *                        wrapping these routes redirects anonymous users first,
- *                        so this is a belt-and-braces branch.)
- *  - `error`           → fail closed to the always-available hub, matching this
- *                        product's default-OFF posture, rather than showing a
- *                        surface whose entitlement could not be established.
- */
-const AuditsFlagGate: React.FC<{
-  enabled: boolean;
-  label: string;
-  children: React.ReactNode;
-}> = ({ enabled, label, children }) => {
-  const { remoteFlagStatus } = useFeatureFlagsContext();
-
-  if (remoteFlagStatus === 'loading') {
-    return <LoadingState variant="progress" label={label} />;
-  }
-  if (!enabled) {
-    return <Navigate to="/audit-programs" replace />;
-  }
-  return <>{children}</>;
-};
-
-const AuditsMethodHubRoute: React.FC = () => {
-  const { isEnabled } = useFeatureFlagsContext();
-  return (
-    <AuditsFlagGate enabled={isEnabled('auditsFiveSurfacesV1')} label="Ładowanie modułu audytów…">
-      <AuditsMethodHub />
-    </AuditsFlagGate>
-  );
-};
-
-/**
- * Criterion Workspace entry (W1, 2026-08) — one criterion's full audit chain
- * (evidence → finding → remediation). Same flag/OFF-redirect pattern as
- * `AuditsMethodHubRoute` above; `CriterionWorkspace` itself reads
- * `:programId`/`:criterionId` via `useParams`.
- */
-const CriterionWorkspaceRoute: React.FC = () => {
-  const { isEnabled } = useFeatureFlagsContext();
-  return (
-    <AuditsFlagGate enabled={isEnabled('auditsFiveSurfacesV1')} label="Ładowanie kryterium audytu…">
-      <CriterionWorkspace />
-    </AuditsFlagGate>
-  );
+const LegacyAuditCriterionRedirect: React.FC = () => {
+  const { programId = '', criterionId = '' } = useParams<{ programId: string; criterionId: string }>();
+  return <Navigate to={`/audit-programs/${encodeURIComponent(programId)}/criteria/${encodeURIComponent(criterionId)}`} replace />;
 };
 
 /** Redirects /auth?action=trial to /trial/start */
@@ -1629,9 +1550,8 @@ export const AppRoutes: React.FC = () => {
           element={<Navigate to={`${ROUTES.MY_WORK}?tab=agent`} replace />}
         />
 
-        {/* Audit Orchestrator (audit #19 family) — authenticated, inside the
-            app shell so it gets nav + bearer token. /audits stays the public
-            showcase; the functional hub lives at /audit-programs. */}
+        {/* Canonical Audits kernel — authenticated inside the app shell.
+            `/audits` remains only the public showcase. */}
         <Route
           path="/audit-programs"
           element={
@@ -1641,7 +1561,7 @@ export const AppRoutes: React.FC = () => {
                   <RouteErrorBoundary>
                     <AnimationWrapper variant="slideUp">
                       <Suspense fallback={<LoadingScreen message="Loading audits..." />}>
-                        <AuditProgramsHub />
+                        <AuditsMethodHub />
                       </Suspense>
                     </AnimationWrapper>
                   </RouteErrorBoundary>
@@ -1675,13 +1595,16 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* U7 — Audits methodical-kernel hub (Library/Processes/Outputs/
-            Reports/Initiatives over /api/audits). Flag-gated
-            (auditsFiveSurfacesV1, default OFF) — see AuditsMethodHubRoute
-            above for the OFF→redirect behavior. Parallel to /audit-programs,
-            does not replace it. */}
+        {/* Retired parallel entry: the canonical kernel now owns /audit-programs. */}
         <Route
           path="/audit-programs/method"
+          element={<Navigate to="/audit-programs" replace />}
+        />
+
+        {/* Canonical criterion workspace: one governed lifecycle from source
+            and evidence through finding, remediation and closure. */}
+        <Route
+          path="/audit-programs/:programId/criteria/:criterionId"
           element={
             <ProtectedRoute requireAuth={true}>
               <BetaGate moduleId="MODULE_AUDITS">
@@ -1689,7 +1612,7 @@ export const AppRoutes: React.FC = () => {
                   <RouteErrorBoundary>
                     <AnimationWrapper variant="slideUp">
                       <Suspense fallback={<LoadingScreen message="Loading audits..." />}>
-                        <AuditsMethodHubRoute />
+                        <CriterionWorkspace />
                       </Suspense>
                     </AnimationWrapper>
                   </RouteErrorBoundary>
@@ -1698,27 +1621,9 @@ export const AppRoutes: React.FC = () => {
             </ProtectedRoute>
           }
         />
-
-        {/* Criterion Workspace (W1, 2026-08) — the screen where an auditor
-            works one criterion through the full chain (criterion/source →
-            ... → closure). Same flag/gate as /audit-programs/method above. */}
         <Route
           path="/audit-programs/method/:programId/criteria/:criterionId"
-          element={
-            <ProtectedRoute requireAuth={true}>
-              <BetaGate moduleId="MODULE_AUDITS">
-                <MainLayout breadcrumbs={breadcrumbs || ['Audits']}>
-                  <RouteErrorBoundary>
-                    <AnimationWrapper variant="slideUp">
-                      <Suspense fallback={<LoadingScreen message="Loading audits..." />}>
-                        <CriterionWorkspaceRoute />
-                      </Suspense>
-                    </AnimationWrapper>
-                  </RouteErrorBoundary>
-                </MainLayout>
-              </BetaGate>
-            </ProtectedRoute>
-          }
+          element={<LegacyAuditCriterionRedirect />}
         />
 
         {/* AI Chat - Full Screen Chat View */}

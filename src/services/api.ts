@@ -11874,11 +11874,11 @@ export const Api = {
     return toAxiosLikeResponse(payload);
   },
 
-  post: async (url: string, data: any) => {
+  post: async (url: string, data: any, options?: { extraHeaders?: Record<string, string> }) => {
     const fullUrl = buildApiUrl(url);
     const res = await fetchWithRetry(fullUrl, {
       method: 'POST',
-      headers: getHeaders(),
+      headers: { ...getHeaders(), ...(options?.extraHeaders || {}) },
       body: JSON.stringify(data),
     });
     const payload = await handleResponse(res, 'Request failed');

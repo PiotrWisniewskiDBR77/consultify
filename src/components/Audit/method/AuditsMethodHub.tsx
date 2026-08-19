@@ -1,20 +1,14 @@
 /**
- * AuditsMethodHub — U7: pięć powierzchni metodycznego kernela Audits
- * (Library · Processes · Outputs · Reports · Initiatives), za flagą
- * `auditsFiveSurfacesV1` (default OFF — patrz `src/hooks/useFeatureFlags.tsx`).
+ * AuditsMethodHub — kanoniczne pięć powierzchni kernela Audits
+ * (Library · Processes · Outputs · Reports · Initiatives), montowane jako
+ * produkt pod `/audit-programs` nad jednym kontraktem `/api/audits`.
  *
  * Wzorzec 1:1 z `src/components/assessment/AssessmentHub.tsx`
  * (`FIVE_SURFACES_TAB_IDS`/`resolveFiveSurfacesTabFromUrl`/`setActiveTab`):
  * `?tab=` jest źródłem prawdy (przetrwa odświeżenie, wstecz/dalej, deep
  * link), domyślna zakładka to `library`, nieznana wartość → `processes`.
- * W przeciwieństwie do AssessmentHub NIE ma trybu dwustanowego (flaga
- * OFF/ON) wewnątrz komponentu — trasa (`src/routes/AppRoutes.tsx`) w ogóle
- * nie montuje tego huba, gdy flaga jest OFF, więc ten plik zawsze zachowuje
- * się jak "ON".
- *
- * NIE dotyka `src/components/Audit/AuditsHub.tsx` (istniejący hub programów
- * orkiestratora `/api/audit`) — to osobny, równoległy ekran pod innym
- * kontraktem (`/api/audits`, liczba mnoga, kernel metodyczny U0-U7).
+ * Dawny równoległy `AuditsHub` nad `/api/audit` nie jest już mounted; jego
+ * write endpoints pozostają wycofane po stronie serwera.
  *
  * Menu 2 (StandardModuleBar): lupa (jedyny slot wyszukiwania w fasadzie) +
  * pięć pigułek zakładek — druga nazywa się „Sesje"/„Sessions" (Piotr,
@@ -29,13 +23,18 @@
  * nawet nie ma pola `count`, więc naruszenie nie jest tu fizycznie możliwe).
  */
 import { ClipboardList, FileText, Library, Lightbulb, Package } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
 import { type StandardCounterChip, StandardModuleBar, type StandardModuleTab } from '@/components/standard';
 import type { StatusTone } from '@/components/ui/primitives/chips';
+import {
+  clearPersistentCommandId,
+  persistentCommandId,
+} from '@/services/initiatives-execution/persistentCommandId';
+import { useAppStore } from '@/store/useAppStore';
 import { formatListDate } from '@/utils/listDateFormat';
 
 import { Menu3Badge, Menu3Chip, MENU_3_LEFT_CLASS } from '../../shared/ModuleMenu3';
@@ -49,6 +48,7 @@ import {
 } from './auditStatusTones';
 import {
   createProgram,
+  getProgram,
   listPacks,
   listPrograms,
   AUDIT_SOURCE_TYPES,
@@ -67,6 +67,18 @@ import { AuditProcessesTab } from './tabs/AuditProcessesTab';
 import { AuditReportsTab } from './tabs/AuditReportsTab';
 
 export type AuditsMethodTabId = 'library' | 'processes' | 'outputs' | 'reports' | 'initiatives';
+
+export function claimAuditStart(inFlight: Set<string>, packId: string): boolean {
+  if (inFlight.has(packId)) return false;
+  inFlight.add(packId);
+  return true;
+}
+
+export const AUDIT_START_COMMAND_NAMESPACE = 'audits.program.start.v1';
+
+export function auditStartFingerprint(organizationId: string, userId: string, packId: string): string {
+  return `${organizationId}:${userId}:${packId}`;
+}
 
 const TAB_IDS: AuditsMethodTabId[] = ['library', 'processes', 'outputs', 'reports', 'initiatives'];
 const TAB_ID_SET = new Set<string>(TAB_IDS);
@@ -99,6 +111,8 @@ export const AuditsMethodHub: React.FC = () => {
   const { t, i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
   const [searchParams, setSearchParams] = useSearchParams();
+  const currentUserId = useAppStore((state) => state.currentUser?.id ?? null);
+  const currentOrganizationId = useAppStore((state) => state.currentOrganization?.id ?? null);
 
   const [activeTab, setActiveTabState] = useState<AuditsMethodTabId>(() =>
     resolveTabFromUrl(searchParams.get('tab'))
@@ -164,7 +178,7 @@ export const AuditsMethodHub: React.FC = () => {
   const loadPrograms = useCallback(() => {
     setProgramsLoading(true);
     setProgramsError(null);
-    listPrograms({ search })
+    return listPrograms({ search })
       .then((result) => setProgramsAll(result.items))
       .catch((e: any) =>
         setProgramsError(
@@ -250,22 +264,40 @@ export const AuditsMethodHub: React.FC = () => {
   );
 
   const [startingPackId, setStartingPackId] = useState<string | null>(null);
+  const startsInFlight = useRef(new Set<string>());
 
   const handleStartAudit = useCallback(
     async (pack: AuditPackSummary) => {
+      if (!claimAuditStart(startsInFlight.current, pack.id)) return;
       setStartingPackId(pack.id);
       const toastId = toast.loading(isPolish ? `Uruchamianie audytu „${pack.title}"…` : `Starting audit "${pack.title}"…`);
       try {
-        await createProgram({
+        if (!currentOrganizationId || !currentUserId) {
+          throw new Error(isPolish ? 'Brak aktywnej organizacji lub użytkownika.' : 'No active organization or user.');
+        }
+        const commandFingerprint = auditStartFingerprint(currentOrganizationId, currentUserId, pack.id);
+        const idempotencyKey = persistentCommandId(AUDIT_START_COMMAND_NAMESPACE, commandFingerprint);
+        const created = await createProgram({
           packId: pack.id,
           // `formatListDate` (SSOT `utils/listDateFormat.ts`), NIE
           // `toLocaleDateString()` bez locale — ten ostatni bierze locale z
           // przeglądarki, nie z języka konta, i to jest dokładnie defekt,
           // który dał `6/18/2026` na koncie polskim (C4 audytu jakości list).
           name: `${pack.title} — ${formatListDate(new Date())}`,
-        });
+        }, idempotencyKey);
+        const readback = await getProgram(created.id);
+        if (!readback || readback.id !== created.id || readback.packId !== pack.id) {
+          throw new Error(
+            isPolish
+              ? 'Nie potwierdzono utworzonego programu w kanonicznym odczycie.'
+              : 'The created program was not confirmed by canonical readback.'
+          );
+        }
+        const refreshed = await listPrograms({ search });
+        setProgramsAll(refreshed.items);
+        setProgramsError(null);
+        clearPersistentCommandId(AUDIT_START_COMMAND_NAMESPACE, commandFingerprint);
         toast.success(isPolish ? 'Program audytowy utworzony' : 'Audit program created', { id: toastId });
-        loadPrograms();
         setActiveTab('processes');
       } catch (e: any) {
         toast.error(
@@ -273,10 +305,11 @@ export const AuditsMethodHub: React.FC = () => {
           { id: toastId }
         );
       } finally {
+        startsInFlight.current.delete(pack.id);
         setStartingPackId(null);
       }
     },
-    [isPolish, loadPrograms, setActiveTab]
+    [currentOrganizationId, currentUserId, isPolish, search, setActiveTab]
   );
 
   const tabs: StandardModuleTab[] = useMemo(

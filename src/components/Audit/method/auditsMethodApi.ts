@@ -236,6 +236,21 @@ export interface CreateProgramInput {
   projectId?: string;
 }
 
+export interface AuditCriterionSummary {
+  id: string;
+  programId: string;
+  parentId: string | null;
+  ordinal: number;
+  refCode: string | null;
+  title: string;
+  applicable: boolean;
+  conformityStatus: string;
+  workStatus: string;
+  evidenceCount: number;
+  findingCount: number;
+  children: AuditCriterionSummary[];
+}
+
 export interface AuditProgramLifecycleGate {
   state: AuditLifecycleState;
   blockers: string[];
@@ -413,12 +428,20 @@ export async function getProgram(id: string): Promise<AuditProgramDetail | null>
   return program && program.id ? program : null;
 }
 
-export async function createProgram(input: CreateProgramInput): Promise<AuditProgramDetail> {
-  const res = await Api.post('/audits/programs', input);
+export async function createProgram(input: CreateProgramInput, idempotencyKey: string): Promise<AuditProgramDetail> {
+  const res = await Api.post('/audits/programs', input, {
+    extraHeaders: { 'Idempotency-Key': idempotencyKey },
+  });
   const payload = unwrapEnvelope(res) as Record<string, unknown> | undefined;
   const program = (payload?.program ?? payload) as AuditProgramDetail | undefined;
   if (!program || !program.id) throw new Error('Program creation returned no id');
   return program;
+}
+
+export async function listProgramCriteria(programId: string): Promise<AuditCriterionSummary[]> {
+  const qs = buildQuery({ programId });
+  const res = await Api.get(`/audits/criteria${qs}`);
+  return toArray<AuditCriterionSummary>(unwrapEnvelope(res), 'criteria', 'items');
 }
 
 export async function getProgramLifecycle(id: string): Promise<AuditProgramLifecycle | null> {

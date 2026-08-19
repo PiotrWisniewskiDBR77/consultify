@@ -15,6 +15,7 @@
  */
 import { ArrowRight, ClipboardList } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import {
   type StandardRowMenu,
@@ -35,11 +36,13 @@ import {
   getProgram,
   getProgramCoverage,
   getProgramLifecycle,
+  listProgramCriteria,
   transitionProgram,
   type AuditProgramCoverage,
   type AuditProgramDetail,
   type AuditProgramLifecycle,
   type AuditProgramSummary,
+  type AuditCriterionSummary,
 } from '../auditsMethodApi';
 
 export interface AuditProcessesTabProps {
@@ -66,6 +69,8 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
   const [lifecycle, setLifecycle] = useState<AuditProgramLifecycle | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [transitioning, setTransitioning] = useState<string | null>(null);
+  const [criteria, setCriteria] = useState<AuditCriterionSummary[]>([]);
+  const [criteriaError, setCriteriaError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!selectedId) {
@@ -76,18 +81,22 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
     }
     let cancelled = false;
     setDetailLoading(true);
-    Promise.all([getProgram(selectedId), getProgramCoverage(selectedId), getProgramLifecycle(selectedId)])
-      .then(([programResult, coverageResult, lifecycleResult]) => {
+    setCriteriaError(null);
+    Promise.all([getProgram(selectedId), getProgramCoverage(selectedId), getProgramLifecycle(selectedId), listProgramCriteria(selectedId)])
+      .then(([programResult, coverageResult, lifecycleResult, criteriaResult]) => {
         if (cancelled) return;
         setDetail(programResult);
         setCoverage(coverageResult);
         setLifecycle(lifecycleResult);
+        setCriteria(criteriaResult);
       })
       .catch(() => {
         if (!cancelled) {
           setDetail(null);
           setCoverage(null);
           setLifecycle(null);
+          setCriteria([]);
+          setCriteriaError(isPolish ? 'Nie udało się wczytać kryteriów.' : 'Could not load criteria.');
         }
       })
       .finally(() => {
@@ -99,6 +108,9 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
   }, [selectedId]);
 
   const selectedProgram = programs.find((p) => p.id === selectedId) || null;
+  const flatCriteria = criteria.flatMap(function flatten(item): AuditCriterionSummary[] {
+    return [item, ...item.children.flatMap(flatten)];
+  });
 
   const handleTransition = async (targetState: string) => {
     if (!selectedId) return;
@@ -334,6 +346,35 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
                         {isPolish ? 'Przejdź' : 'Move'}
                       </button>
                     </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5" data-testid="audit-criteria-navigator">
+              <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
+                {isPolish ? 'Kryteria — otwórz warsztat' : 'Criteria — open workspace'}
+              </div>
+              {criteriaError ? (
+                <p className="text-xs text-c-danger">{criteriaError}</p>
+              ) : flatCriteria.length === 0 ? (
+                <p className="text-xs text-c-text-muted">
+                  {isPolish ? 'Brak kryteriów w tym programie.' : 'This program has no criteria.'}
+                </p>
+              ) : (
+                <div className="max-h-52 space-y-1 overflow-auto">
+                  {flatCriteria.map((item) => (
+                    <Link
+                      key={item.id}
+                      to={`/audit-programs/${selectedId}/criteria/${item.id}`}
+                      className="flex w-full items-center justify-between gap-2 rounded-lg border border-c-border-subtle bg-c-surface px-2 py-1.5 text-left hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                    >
+                      <span className="min-w-0 truncate text-xs font-medium text-c-text">
+                        {item.refCode ? `${item.refCode} · ` : ''}{item.title}
+                      </span>
+                      <span className="shrink-0 text-[10px] text-c-text-muted">
+                        {item.evidenceCount} / {item.findingCount}
+                      </span>
+                    </Link>
                   ))}
                 </div>
               )}

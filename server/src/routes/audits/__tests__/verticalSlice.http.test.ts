@@ -106,6 +106,17 @@ beforeAll(async () => {
   const { apiGateway } = await import('../../../Gateway.js');
   apiGateway.initializeRoutes(app);
   await cleanup();
+  await auditRun(`INSERT INTO organizations (id) VALUES ($1) ON CONFLICT DO NOTHING`, [ORG]);
+  for (const userId of Object.values(USERS)) {
+    await auditRun(`INSERT INTO users (id) VALUES ($1) ON CONFLICT DO NOTHING`, [userId]);
+    await auditRun(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+       VALUES ($1, $2, $3, 'OWNER', 'ACTIVE')
+       ON CONFLICT (organization_id, user_id)
+       DO UPDATE SET role = EXCLUDED.role, status = EXCLUDED.status`,
+      [`slice-membership-${userId}`, ORG, userId],
+    );
+  }
 }, 180_000);
 
 afterAll(cleanup, 60_000);
