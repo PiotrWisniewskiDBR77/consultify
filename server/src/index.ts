@@ -2237,6 +2237,13 @@ if (startServer && shouldStartHttpServer) {
 
           // Stop application intervals before queues and the PostgreSQL pool.
           try {
+            await Scheduler.stop();
+            logger.info('[Shutdown] Scheduler jobs stopped');
+          } catch (err: any) {
+            logger.warn('[Shutdown] Error stopping scheduler:', err.message);
+          }
+
+          try {
             const { stopInitiativeExecutionOutboxConsumer } =
               await import('./services/initiativeExecutionOutboxConsumer.js');
             stopInitiativeExecutionOutboxConsumer();

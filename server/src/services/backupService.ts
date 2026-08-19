@@ -23,9 +23,8 @@
  *   - superadmin / cron  → whole DB (all critical tables, unfiltered)
  *   - admin (org)        → org-scoped (only rows for that organization_id)
  *
- * Restore is intentionally **v2** — `restoreBackup()` throws a typed
- * NotImplemented error and the route surfaces an honest 501 (never a 503 crash).
- * A read-only `getRestoreInfo()` describes what a restore *would* do.
+ * Restore is restricted to an explicitly isolated PostgreSQL target and runs
+ * transactionally after checksum, manifest and tenant-boundary validation.
  */
 
 import { createCipheriv, createDecipheriv, createHash, randomBytes, randomUUID } from 'crypto';
@@ -33,8 +32,9 @@ import type { Readable } from 'stream';
 
 import { Client as PgClient } from 'pg';
 
-import { all as dbAll, columnExists, run as dbRun, tableExists } from '../utils/DbPromise.js';
+import { all as dbAll, columnExists, get as dbGet, run as dbRun, tableExists } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { withPgTransaction } from '../utils/queryHelpers.js';
 import { getStorage } from './storage/index.js';
 
 // ==========================================
@@ -42,29 +42,16 @@ import { getStorage } from './storage/index.js';
 // ==========================================
 
 /**
- * Default critical tables. Verified to exist on the demo/parity schema
- * (1226 tables total — this is the curated, high-value core). Non-existent
- * tables are skipped at runtime, so this list is safe to extend.
- * Override with env `BACKUP_TABLES` (comma-separated).
+ * Canonical v2 acceptance registry. Required owner tables are never replaced,
+ * reordered or duplicated by caller/env input. Optional tables require an
+ * explicit reviewed entry in OPTIONAL_SAFE_TABLES.
  */
-const DEFAULT_CRITICAL_TABLES = [
-  'organizations',
-  'users',
-  'organization_members',
-  'projects',
-  'initiatives',
-  'initiative_kpis',
-  'tasks',
-  'assessments',
-  'tool_sessions',
-  'deliverables',
-  'meetings',
-  'ideas',
-  'decisions',
-  'notebooks',
-  'activity_logs',
-  'audit_logs',
-];
+const REQUIRED_OWNER_TABLES = new Set(['organizations', 'users', 'organization_members']);
+const CANONICAL_V2_TABLES = ['organizations', 'users', 'organization_members'] as const;
+const CANONICAL_V2_TABLE_SET = new Set<string>(CANONICAL_V2_TABLES);
+const OPTIONAL_SAFE_TABLES = new Set<string>();
+const CANONICAL_SCHEMA_VERSION = 2;
+const RPO_THRESHOLD_SECONDS = 15 * 60;
 
 /** Backups older than this are eligible for retention cleanup. */
 function retentionDays(): number {
@@ -76,13 +63,15 @@ function retentionDays(): number {
 const SAFE_IDENT = /^[a-z_][a-z0-9_]*$/;
 
 function criticalTables(explicit?: string[]): string[] {
-  if (explicit && explicit.length) return explicit.filter((t) => SAFE_IDENT.test(t));
-  const fromEnv = (process.env.BACKUP_TABLES || '')
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean);
-  const list = fromEnv.length ? fromEnv : DEFAULT_CRITICAL_TABLES;
-  return list.filter((t) => SAFE_IDENT.test(t));
+  const requested = explicit ?? (process.env.BACKUP_TABLES || '').split(',').map((s) => s.trim()).filter(Boolean);
+  const optional: string[] = [];
+  for (const table of requested) {
+    if (!SAFE_IDENT.test(table)) throw new Error(`BACKUP_UNSAFE_TABLE:${table}`);
+    if (CANONICAL_V2_TABLE_SET.has(table)) continue;
+    if (!OPTIONAL_SAFE_TABLES.has(table)) throw new Error(`BACKUP_OPTIONAL_TABLE_NOT_APPROVED:${table}`);
+    if (!optional.includes(table)) optional.push(table);
+  }
+  return [...CANONICAL_V2_TABLES, ...optional];
 }
 
 // ==========================================
@@ -95,6 +84,7 @@ export type BackupScope = 'system' | 'organization';
 export interface BackupTableEntry {
   name: string;
   rowCount: number;
+  sha256?: string;
   skipped?: boolean;
   reason?: string;
 }
@@ -106,7 +96,15 @@ export interface BackupManifest {
   organizationId: string | null;
   reason: string;
   createdAt: string;
-  format: 'consultify-json-v1';
+  format: 'consultify-logical-backup-v2' | 'consultify-json-v1';
+  sourceWatermark?: string;
+  sourceObservedAt?: string;
+  sourceChangeVersion?: number;
+  sourceDatabase?: string;
+  sourceSha256?: string;
+  payloadSha256?: string;
+  schemaVersion?: number;
+  keyId?: string;
   tables: BackupTableEntry[];
   tableCount: number;
   totalRows: number;
@@ -163,7 +161,7 @@ export interface RestoreResult {
 }
 
 interface EncryptedBackupEnvelope {
-  format: 'consultify-encrypted-json-v1';
+  format: 'consultify-logical-backup-v2' | 'consultify-encrypted-json-v1';
   algorithm: 'aes-256-gcm';
   iv: string;
   authTag: string;
@@ -184,10 +182,23 @@ export class BackupNotImplementedError extends Error {
 // ==========================================
 
 let tableReady: Promise<void> | null = null;
+let tableReadyDatabaseKey = '';
 
 async function ensureTable(): Promise<void> {
+  const databaseKey = `${process.env.DB_TYPE || ''}:${process.env.DATABASE_URL || 'sqlite'}`;
+  if (tableReadyDatabaseKey !== databaseKey) {
+    tableReady = null;
+    tableReadyDatabaseKey = databaseKey;
+  }
   if (!tableReady) {
     tableReady = (async () => {
+      const postgres = process.env.DB_TYPE === 'postgres' || /^postgres/.test(process.env.DATABASE_URL || '');
+      if (postgres) {
+        for (const table of ['backup_manifests', 'backup_access_audit', 'backup_run_receipts', 'backup_restore_receipts', 'backup_source_change_clock']) {
+          if (!(await tableExists(table))) throw new Error(`BACKUP_SCHEMA_NOT_MIGRATED:${table}`);
+        }
+        return;
+      }
       await dbRun(
         `CREATE TABLE IF NOT EXISTS backup_manifests (
           id TEXT PRIMARY KEY,
@@ -233,6 +244,39 @@ async function ensureTable(): Promise<void> {
         )`,
         [],
         { fallback: false }
+      );
+      await dbRun(
+        `CREATE TABLE IF NOT EXISTS backup_run_receipts (
+          id TEXT PRIMARY KEY, schedule_name TEXT NOT NULL, scheduled_for TIMESTAMP NOT NULL,
+          lease_token TEXT NOT NULL, fence INTEGER NOT NULL DEFAULT 1, lease_expires_at TIMESTAMP NOT NULL,
+          status TEXT NOT NULL, backup_id TEXT, source_watermark TIMESTAMP, source_observed_at TIMESTAMP,
+          rpo_seconds INTEGER, rpo_threshold_seconds INTEGER NOT NULL DEFAULT 900,
+          artifact_sha256 TEXT, plaintext_sha256 TEXT, source_sha256 TEXT, key_id TEXT NOT NULL, error_code TEXT,
+          claimed_at TIMESTAMP NOT NULL, completed_at TIMESTAMP,
+          UNIQUE(schedule_name, scheduled_for)
+        )`,
+        [],
+        { fallback: false }
+      );
+      await dbRun(
+        `CREATE TABLE IF NOT EXISTS backup_restore_receipts (
+          id TEXT PRIMARY KEY, backup_id TEXT NOT NULL, actor_id TEXT NOT NULL,
+          source_database TEXT NOT NULL, target_database TEXT NOT NULL, status TEXT NOT NULL,
+          started_at TIMESTAMP NOT NULL, completed_at TIMESTAMP, rto_seconds INTEGER,
+          rto_threshold_seconds INTEGER NOT NULL DEFAULT 3600, rto_met BOOLEAN,
+          restored_rows INTEGER, source_sha256 TEXT, error_code TEXT
+        )`,
+        [],
+        { fallback: false }
+      );
+      await dbRun(
+        `CREATE TABLE IF NOT EXISTS backup_source_change_clock (
+          id TEXT PRIMARY KEY, version INTEGER NOT NULL DEFAULT 0, changed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )`, [], { fallback: false }
+      );
+      await dbRun(
+        `INSERT INTO backup_source_change_clock(id,version,changed_at) VALUES('canonical-owner-graph',0,CURRENT_TIMESTAMP)
+         ON CONFLICT(id) DO NOTHING`, [], { fallback: false }
       );
     })().catch((err) => {
       // Reset so a later call can retry (e.g. transient DB unavailability).
@@ -293,6 +337,11 @@ function encryptionKey(): Buffer {
   return key;
 }
 
+function encryptionKeyId(): string {
+  const configured = process.env.BACKUP_ENCRYPTION_KEY_ID?.trim();
+  return configured || `sha256:${sha256(encryptionKey()).slice(0, 16)}`;
+}
+
 function sha256(value: Buffer): string {
   return createHash('sha256').update(value).digest('hex');
 }
@@ -303,7 +352,7 @@ function encryptPayload(plaintext: Buffer): { body: Buffer; checksumSha256: stri
   const ciphertext = Buffer.concat([cipher.update(plaintext), cipher.final()]);
   const checksumSha256 = sha256(ciphertext);
   const envelope: EncryptedBackupEnvelope = {
-    format: 'consultify-encrypted-json-v1',
+    format: 'consultify-logical-backup-v2',
     algorithm: 'aes-256-gcm',
     iv: iv.toString('base64'),
     authTag: cipher.getAuthTag().toString('base64'),
@@ -313,9 +362,15 @@ function encryptPayload(plaintext: Buffer): { body: Buffer; checksumSha256: stri
   return { body: Buffer.from(JSON.stringify(envelope), 'utf8'), checksumSha256 };
 }
 
-function decryptPayload(body: Buffer, expectedChecksum: string): Buffer {
+function decryptPayload(body: Buffer, expectedChecksum: string): {
+  plaintext: Buffer;
+  format: EncryptedBackupEnvelope['format'];
+} {
   const envelope = JSON.parse(body.toString('utf8')) as EncryptedBackupEnvelope;
-  if (envelope.format !== 'consultify-encrypted-json-v1' || envelope.algorithm !== 'aes-256-gcm') {
+  if (
+    !['consultify-logical-backup-v2', 'consultify-encrypted-json-v1'].includes(envelope.format) ||
+    envelope.algorithm !== 'aes-256-gcm'
+  ) {
     throw new Error('Unsupported or unencrypted backup format');
   }
   const ciphertext = Buffer.from(envelope.ciphertext, 'base64');
@@ -325,7 +380,10 @@ function decryptPayload(body: Buffer, expectedChecksum: string): Buffer {
   }
   const decipher = createDecipheriv('aes-256-gcm', encryptionKey(), Buffer.from(envelope.iv, 'base64'));
   decipher.setAuthTag(Buffer.from(envelope.authTag, 'base64'));
-  return Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+  return {
+    plaintext: Buffer.concat([decipher.update(ciphertext), decipher.final()]),
+    format: envelope.format,
+  };
 }
 
 async function streamToBuffer(stream: Readable): Promise<Buffer> {
@@ -358,6 +416,133 @@ async function writeAccessAudit(input: {
 // ==========================================
 
 class BackupService {
+  async reconcileUnboundBackup(backupId: string, error: string): Promise<void> {
+    await ensureTable();
+    const row = await dbGet<{ storage_key?: string; status?: string }>(
+      `SELECT storage_key,status FROM backup_manifests WHERE id=?`, [backupId], { fallback: false }
+    );
+    if (!row) return;
+    const objectCompensated = row.storage_key
+      ? await getStorage().delete(row.storage_key).then(() => true).catch(() => false)
+      : true;
+    const updated = await dbRun(
+      `UPDATE backup_manifests SET status='failed',error=? WHERE id=? AND status IN ('creating','completed')`,
+      [`UNBOUND_RECEIPT:${error.slice(0, 120)};object_compensated=${objectCompensated}`, backupId],
+      { fallback: false }
+    );
+    if (updated.changes !== 1) throw new Error('BACKUP_UNBOUND_RECONCILIATION_FAILED');
+    await writeAccessAudit({
+      backupId, actorId: 'backup-coordinator', action: 'BACKUP_RECONCILED_UNBOUND', outcome: 'FAILED',
+      details: { error: error.slice(0, 120), objectCompensated },
+    }).catch((auditError) => logger.error('[BackupService] unbound reconciliation audit failed', auditError));
+  }
+
+  async claimBackupRun(input: {
+    scheduleName: string;
+    scheduledFor: string;
+  }): Promise<{ claimed: boolean; receiptId?: string; leaseToken?: string; fence?: number }> {
+    await ensureTable();
+    const receiptId = randomUUID();
+    const leaseToken = randomUUID();
+    const result = await dbGet<{ id: string; lease_token: string; fence: number }>(
+      `INSERT INTO backup_run_receipts
+        (id,schedule_name,scheduled_for,lease_token,fence,lease_expires_at,status,key_id,claimed_at)
+       VALUES (?,?,?,?,1,?,'CLAIMED',?,CURRENT_TIMESTAMP)
+       ON CONFLICT(schedule_name,scheduled_for) DO UPDATE SET
+         lease_token=excluded.lease_token,
+         fence=backup_run_receipts.fence+1,
+         lease_expires_at=excluded.lease_expires_at,
+         claimed_at=excluded.claimed_at,
+         error_code='LEASE_RECLAIMED'
+       WHERE backup_run_receipts.status='CLAIMED' AND backup_run_receipts.lease_expires_at<CURRENT_TIMESTAMP
+       RETURNING id,lease_token,fence`,
+      [receiptId, input.scheduleName, input.scheduledFor, leaseToken, new Date(Date.now() + 20 * 60_000).toISOString(), encryptionKeyId()],
+      { fallback: false }
+    );
+    if (!result) return { claimed: false };
+    return { claimed: true, receiptId: result.id, leaseToken: result.lease_token, fence: Number(result.fence) };
+  }
+
+  async finishBackupRun(input: {
+    receiptId: string;
+    leaseToken: string;
+    fence: number;
+    status: 'COMPLETED' | 'FAILED';
+    backupId?: string;
+    error?: string;
+  }): Promise<{ status: 'COMPLETED' | 'FAILED' | 'MISSED'; rpoSeconds: number | null }> {
+    await ensureTable();
+    const manifest = input.backupId
+      ? await dbGet<{ checksum_sha256?: string; manifest_json?: string }>(
+          `SELECT checksum_sha256,manifest_json FROM backup_manifests WHERE id=?`,
+          [input.backupId],
+          { fallback: false }
+        )
+      : undefined;
+    const sourceWatermark = (() => {
+      try {
+        return manifest?.manifest_json
+          ? (JSON.parse(manifest.manifest_json) as BackupManifest).sourceWatermark || null
+          : null;
+      } catch {
+        return null;
+      }
+    })();
+    const manifestFacts = (() => {
+      try {
+        return manifest?.manifest_json ? JSON.parse(manifest.manifest_json) as BackupManifest : null;
+      } catch {
+        return null;
+      }
+    })();
+    const sourceObservedAt = manifestFacts?.sourceObservedAt || null;
+    const rpoSeconds = sourceWatermark && sourceObservedAt
+      ? Math.max(0, Math.floor((Date.now() - new Date(sourceWatermark).getTime()) / 1000))
+      : null;
+    const effectiveStatus = input.status === 'COMPLETED' && rpoSeconds !== null && rpoSeconds > RPO_THRESHOLD_SECONDS
+      ? 'MISSED'
+      : input.status;
+    const result = await dbRun(
+      `UPDATE backup_run_receipts
+          SET status=?, backup_id=?, source_watermark=?, source_observed_at=?, rpo_seconds=?,
+              artifact_sha256=?, plaintext_sha256=?, source_sha256=?, error_code=?, completed_at=CURRENT_TIMESTAMP
+        WHERE id=? AND lease_token=? AND fence=? AND status='CLAIMED'`,
+      [
+        effectiveStatus,
+        input.backupId ?? null,
+        sourceWatermark,
+        sourceObservedAt,
+        rpoSeconds,
+        manifest?.checksum_sha256 ?? null,
+        manifestFacts?.payloadSha256 ?? null,
+        manifestFacts?.sourceSha256 ?? null,
+        (effectiveStatus === 'MISSED' ? 'RPO_THRESHOLD_EXCEEDED' : input.error)?.slice(0, 200) ?? null,
+        input.receiptId,
+        input.leaseToken,
+        input.fence,
+      ],
+      { fallback: false }
+    );
+    if (result.changes !== 1) throw new Error('BACKUP_RUN_FENCE_LOST');
+    return { status: effectiveStatus, rpoSeconds };
+  }
+
+  async recordScheduledAttempt(input: {
+    outcome: 'STARTED' | 'SUCCESS' | 'FAILED' | 'SKIPPED_OVERLAP';
+    backupId?: string;
+    error?: string;
+    durationMs?: number;
+  }): Promise<void> {
+    await ensureTable();
+    await writeAccessAudit({
+      backupId: input.backupId,
+      actorId: 'backup-cron',
+      action: 'SCHEDULED_BACKUP',
+      outcome: input.outcome,
+      details: { error: input.error ?? null, durationMs: input.durationMs ?? null },
+    });
+  }
+
   /**
    * Create a logical JSON backup of the critical tables and persist it to the
    * storage seam + a `backup_manifests` manifest row.
@@ -368,6 +553,7 @@ class BackupService {
     options: CreateBackupOptions = {}
   ): Promise<BackupRecord> {
     await ensureTable();
+    if (type !== 'full') throw new Error('BACKUP_INCREMENTAL_NOT_IMPLEMENTED');
 
     const id = `backup-${new Date().toISOString().replace(/[:.]/g, '-')}-${randomUUID().slice(0, 8)}`;
     const organizationId = options.organizationId?.trim() || null;
@@ -379,46 +565,85 @@ class BackupService {
     const provider = storage.provider;
     const storageKey = `backups/${organizationId || 'system'}/${id}.json`;
 
-    const tables: BackupTableEntry[] = [];
-    const data: Record<string, unknown[]> = {};
-    let totalRows = 0;
-
-    for (const table of criticalTables(options.tables)) {
-      try {
-        if (!(await tableExists(table))) {
-          tables.push({ name: table, rowCount: 0, skipped: true, reason: 'table_missing' });
-          continue;
-        }
-
-        let rows: unknown[];
-        if (scope === 'organization') {
-          // `organizations` is keyed by `id`; everything else by `organization_id`.
-          if (table === 'organizations') {
-            rows = await dbAll(`SELECT * FROM ${table} WHERE id = ?`, [organizationId]);
-          } else if (await columnExists(table, 'organization_id')) {
-            rows = await dbAll(`SELECT * FROM ${table} WHERE organization_id = ?`, [
-              organizationId,
-            ]);
-          } else {
-            // No org boundary → skip in org scope to avoid cross-tenant leakage.
-            tables.push({ name: table, rowCount: 0, skipped: true, reason: 'not_org_scoped' });
+    const selectedTables = criticalTables(options.tables);
+    const snapshot = await withPgTransaction(async (tx) => {
+      await tx.query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY');
+      const sourceIdentity = await dbGet<{ database_name: string; version_num: string }>(
+        `SELECT current_database() database_name, current_setting('server_version_num') version_num`,
+        [],
+        { fallback: false }
+      );
+      if (!sourceIdentity?.database_name) throw new Error('BACKUP_SOURCE_IDENTITY_UNAVAILABLE');
+      if (!String(sourceIdentity.version_num).startsWith('16')) throw new Error('BACKUP_SOURCE_PG16_REQUIRED');
+      const tables: BackupTableEntry[] = [];
+      const data: Record<string, unknown[]> = {};
+      let totalRows = 0;
+      for (const table of selectedTables) {
+        try {
+          if (!(await tableExists(table))) {
+            if (REQUIRED_OWNER_TABLES.has(table)) throw new Error(`BACKUP_REQUIRED_TABLE_MISSING:${table}`);
+            tables.push({ name: table, rowCount: 0, skipped: true, reason: 'table_missing' });
             continue;
           }
-        } else {
-          rows = await dbAll(`SELECT * FROM ${table}`, []);
+          let rows: unknown[];
+          if (scope === 'organization') {
+            if (table === 'organizations') {
+              rows = (await dbAll<{ row: Record<string, unknown> }>(
+                `SELECT to_jsonb(owner_row) AS row FROM ${table} owner_row WHERE id = ? ORDER BY id`,
+                [organizationId]
+              )).map(({ row }) => row);
+            } else if (table === 'users') {
+              rows = (await dbAll<{ row: Record<string, unknown> }>(
+                `SELECT to_jsonb(u) AS row FROM users u
+                  WHERE EXISTS (
+                    SELECT 1 FROM organization_members om
+                     WHERE om.organization_id = ? AND om.user_id = u.id
+                  ) ORDER BY u.id`,
+                [organizationId]
+              )).map(({ row }) => row);
+            } else if (table === 'organization_members') {
+              rows = (await dbAll<{ row: Record<string, unknown> }>(
+                `SELECT to_jsonb(owner_row) AS row FROM organization_members owner_row WHERE organization_id = ? ORDER BY id`,
+                [organizationId]
+              )).map(({ row }) => row);
+            } else if (await columnExists(table, 'organization_id')) {
+              rows = (await dbAll<{ row: Record<string, unknown> }>(
+                `SELECT to_jsonb(owner_row) AS row FROM ${table} owner_row WHERE organization_id = ? ORDER BY id`,
+                [organizationId]
+              )).map(({ row }) => row);
+            } else {
+              throw new Error(`BACKUP_OPTIONAL_TABLE_NOT_ORG_SCOPED:${table}`);
+            }
+          } else {
+            rows = (await dbAll<{ row: Record<string, unknown> }>(
+              `SELECT to_jsonb(owner_row) AS row FROM ${table} owner_row ORDER BY id`,
+              []
+            )).map(({ row }) => row);
+          }
+          data[table] = rows;
+          const tableSha = sha256(Buffer.from(JSON.stringify(rows)));
+          tables.push({ name: table, rowCount: rows.length, sha256: tableSha });
+          totalRows += rows.length;
+        } catch (err: any) {
+          if (REQUIRED_OWNER_TABLES.has(table)) {
+            throw new Error(`BACKUP_REQUIRED_TABLE_EXPORT_FAILED:${table}:${err?.message || err}`);
+          }
+          throw err;
         }
-
-        data[table] = rows;
-        tables.push({ name: table, rowCount: rows.length });
-        totalRows += rows.length;
-      } catch (err: any) {
-        logger.warn(`[BackupService] table "${table}" export failed: ${err?.message || err}`);
-        tables.push({ name: table, rowCount: 0, skipped: true, reason: 'export_error' });
       }
-    }
-
+      const sourceChange = await this.resolveSourceWatermark();
+      return { data, tables, totalRows, ...sourceChange, sourceDatabase: sourceIdentity.database_name };
+    });
+    const { data, tables, totalRows, sourceWatermark, sourceChangeVersion, sourceDatabase } = snapshot;
     const includedTables = tables.filter((t) => !t.skipped);
-
+    const sourceObservedAt = new Date().toISOString();
+    const sourceSha256 = sha256(Buffer.from(JSON.stringify({
+      schemaVersion: CANONICAL_SCHEMA_VERSION,
+      organizationId,
+      sourceWatermark,
+      sourceChangeVersion,
+      tables: includedTables.map(({ name, rowCount, sha256: tableSha }) => ({ name, rowCount, sha256: tableSha })),
+    })));
     const manifest: BackupManifest = {
       id,
       type,
@@ -426,7 +651,14 @@ class BackupService {
       organizationId,
       reason,
       createdAt,
-      format: 'consultify-json-v1',
+      format: 'consultify-logical-backup-v2',
+      sourceWatermark,
+      sourceObservedAt,
+      sourceChangeVersion,
+      sourceDatabase,
+      sourceSha256,
+      schemaVersion: CANONICAL_SCHEMA_VERSION,
+      keyId: encryptionKeyId(),
       tables,
       tableCount: includedTables.length,
       totalRows,
@@ -436,49 +668,55 @@ class BackupService {
       encryptionAlgorithm: 'aes-256-gcm',
     };
 
+    manifest.payloadSha256 = sha256(Buffer.from(JSON.stringify({ manifest, data })));
+
     const plaintext = Buffer.from(JSON.stringify({ manifest, data }), 'utf8');
     const { body, checksumSha256 } = encryptPayload(plaintext);
     const sizeBytes = body.byteLength;
 
-    // Persist the object first; only record a row once the bytes are durable.
-    await storage.putObject({ key: storageKey, body, contentType: 'application/json' });
-
+    // The manifest is the durable reconciliation authority. A failure never
+    // disappears into an orphan object or an ambiguous "completed" row.
     await dbRun(
       `INSERT INTO backup_manifests
-        (id, type, scope, organization_id, reason, status, storage_key, provider,
-         table_count, row_count, size_bytes, manifest_json, created_at, expires_at,
-         checksum_sha256, encrypted)
-       VALUES (?, ?, ?, ?, ?, 'completed', ?, ?, ?, ?, ?, ?, ?, ?, ?, true)`,
-      [
-        id,
-        type,
-        scope,
-        organizationId,
-        reason,
-        storageKey,
-        provider,
-        includedTables.length,
-        totalRows,
-        sizeBytes,
-        JSON.stringify(manifest),
-        createdAt,
-        expiresAt,
-        checksumSha256,
-      ],
+        (id,type,scope,organization_id,reason,status,storage_key,provider,table_count,row_count,
+         size_bytes,manifest_json,created_at,expires_at,checksum_sha256,encrypted)
+       VALUES (?,?,?,?,?,'creating',?,?,?,?,?,?,?,?,?,true)`,
+      [id,type,scope,organizationId,reason,storageKey,provider,includedTables.length,totalRows,
+        sizeBytes,JSON.stringify(manifest),createdAt,expiresAt,checksumSha256],
       { fallback: false }
     );
-
-    logger.info(
-      `[BackupService] backup ${id} created (scope=${scope}, tables=${includedTables.length}, rows=${totalRows}, ${sizeBytes}B, provider=${provider})`
-    );
-    await writeAccessAudit({
-      backupId: id,
-      actorId: options.actorId || 'system',
-      action: 'BACKUP_CREATED',
-      outcome: 'SUCCESS',
-      organizationId,
-      details: { checksumSha256, encrypted: true, tableCount: includedTables.length, totalRows },
-    });
+    try {
+      await storage.putObject({ key: storageKey, body, contentType: 'application/json' });
+      await writeAccessAudit({
+        backupId: id,
+        actorId: options.actorId || 'system',
+        action: 'BACKUP_CREATED',
+        outcome: 'SUCCESS',
+        organizationId,
+        details: { checksumSha256, encrypted: true, tableCount: includedTables.length, totalRows },
+      });
+      const finalized = await dbRun(
+        `UPDATE backup_manifests SET status='completed',error=NULL WHERE id=? AND status='creating'`,
+        [id],
+        { fallback: false }
+      );
+      if (finalized.changes !== 1) throw new Error('BACKUP_MANIFEST_FINALIZE_CONFLICT');
+      logger.info(
+        `[BackupService] backup ${id} created (scope=${scope}, tables=${includedTables.length}, rows=${totalRows}, ${sizeBytes}B, provider=${provider})`
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const objectCompensated = await storage.delete(storageKey).then(() => true).catch(() => false);
+      const reconciled = await dbRun(
+        `UPDATE backup_manifests SET status='failed',error=? WHERE id=? AND status<>'completed'`,
+        [`${message.slice(0, 160)};object_compensated=${objectCompensated}`, id],
+        { fallback: false }
+      ).catch(() => null);
+      if (!reconciled || reconciled.changes !== 1) {
+        throw new Error(`BACKUP_RECONCILIATION_PERSIST_FAILED:${message}`);
+      }
+      throw error;
+    }
 
     return {
       id,
@@ -501,6 +739,15 @@ class BackupService {
       hasS3: provider === 's3' || provider === 'r2',
       hasGCS: provider === 'gcs',
     };
+  }
+
+  private async resolveSourceWatermark(): Promise<{ sourceWatermark: string; sourceChangeVersion: number }> {
+    const row = await dbGet<{ changed_at?: string; version?: number }>(
+      `SELECT changed_at,version FROM backup_source_change_clock WHERE id='canonical-owner-graph'`,
+      [], { fallback: false }
+    );
+    if (!row?.changed_at || !Number.isFinite(Number(row.version))) throw new Error('BACKUP_SOURCE_WATERMARK_UNAVAILABLE');
+    return { sourceWatermark: new Date(row.changed_at).toISOString(), sourceChangeVersion: Number(row.version) };
   }
 
   /** List backup records, newest first. Excludes expired unless asked. */
@@ -527,6 +774,11 @@ class BackupService {
   }> {
     await ensureTable();
     const rows = await dbAll<any>(`SELECT * FROM backup_manifests`, [], { fallback: true });
+    const runHealth = await dbGet<{ failed: number }>(
+      `SELECT count(*) AS failed FROM backup_run_receipts WHERE status IN ('FAILED','MISSED')`,
+      [],
+      { fallback: false }
+    );
     const now = Date.now();
     let lastBackup: number | null = null;
     let failed = 0;
@@ -545,7 +797,7 @@ class BackupService {
       total: rows.length,
       lastBackup: lastBackup === null ? null : new Date(lastBackup).toISOString(),
       nextBackup: nextQuarterHourUtc(),
-      failed,
+      failed: failed + Number(runHealth?.failed || 0),
       expired,
     };
   }
@@ -596,9 +848,7 @@ class BackupService {
     return { deleted };
   }
 
-  /**
-   * Read-only description of a restore. Restore execution itself is v2.
-   */
+  /** Read-only description of the supervised isolated restore. */
   async getRestoreInfo(backupId: string): Promise<{
     backupId: string;
     implemented: true;
@@ -638,10 +888,24 @@ class BackupService {
       try { return new URL(process.env.DATABASE_URL || '').pathname.replace(/^\//, ''); } catch { return ''; }
     })();
     const localHost = ['127.0.0.1', 'localhost', '::1'].includes(target.hostname);
-    const isolatedName = /(restore|recovery|test)/i.test(targetDatabase);
+    const isolatedName = /^consultify_(?:adm_backup_restore|data_dr_restore)_[a-z0-9_]+$/.test(targetDatabase);
     if ((!localHost && process.env.BACKUP_ALLOW_REMOTE_RESTORE !== 'true') || !isolatedName || targetDatabase === sourceDatabase) {
       await writeAccessAudit({ backupId, actorId: options.actorId, action: 'RESTORE', outcome: 'ACCESS_DENIED', targetDatabase });
       throw new Error('RESTORE_TARGET_NOT_ISOLATED');
+    }
+
+    let liveSourceDatabase = '';
+    const sourceIdentityClient = new PgClient({ connectionString: process.env.DATABASE_URL });
+    await sourceIdentityClient.connect();
+    try {
+      const identity = await sourceIdentityClient.query<{ database_name: string; version_num: string }>(
+        `SELECT current_database() database_name, current_setting('server_version_num') version_num`
+      );
+      if (identity.rows[0]?.database_name !== sourceDatabase) throw new Error('BACKUP_SOURCE_IDENTITY_MISMATCH');
+      if (!String(identity.rows[0]?.version_num || '').startsWith('16')) throw new Error('BACKUP_SOURCE_PG16_REQUIRED');
+      liveSourceDatabase = identity.rows[0].database_name;
+    } finally {
+      await sourceIdentityClient.end();
     }
 
     const rows = await dbAll<any>(`SELECT * FROM backup_manifests WHERE id = ?`, [backupId]);
@@ -651,27 +915,133 @@ class BackupService {
       throw new Error('BACKUP_NOT_RESTORABLE_ENCRYPTED_FORMAT');
     }
 
-    await writeAccessAudit({ backupId, actorId: options.actorId, action: 'RESTORE_STARTED', outcome: 'STARTED', targetDatabase, organizationId: record.organizationId });
+    const restoreReceiptId = randomUUID();
+    const restoreStartedMs = Date.now();
+    await dbRun(
+      `INSERT INTO backup_restore_receipts
+        (id,backup_id,actor_id,source_database,target_database,status,started_at)
+       VALUES (?,?,?,?,?,'STARTED',CURRENT_TIMESTAMP)`,
+      [restoreReceiptId, backupId, options.actorId, liveSourceDatabase, targetDatabase],
+      { fallback: false }
+    );
+    try {
+      await writeAccessAudit({ backupId, actorId: options.actorId, action: 'RESTORE_STARTED', outcome: 'STARTED', targetDatabase, organizationId: record.organizationId });
+    } catch (error) {
+      await dbRun(
+        `UPDATE backup_restore_receipts SET status='FAILED',completed_at=CURRENT_TIMESTAMP,error_code=? WHERE id=? AND status='STARTED'`,
+        ['RESTORE_START_AUDIT_FAILED', restoreReceiptId],
+        { fallback: false }
+      );
+      throw error;
+    }
     let client: PgClient | null = null;
+    let targetCommitted = false;
     try {
       const object = await getStorage().getObject(record.storageKey);
-      const plaintext = decryptPayload(await streamToBuffer(object.stream), record.checksumSha256);
-      const payload = JSON.parse(plaintext.toString('utf8')) as { manifest: BackupManifest; data: Record<string, Array<Record<string, unknown>>> };
+      const decrypted = decryptPayload(await streamToBuffer(object.stream), record.checksumSha256);
+      const payload = JSON.parse(decrypted.plaintext.toString('utf8')) as { manifest: BackupManifest; data: Record<string, Array<Record<string, unknown>>> };
+      const restoreSourceSha = payload.manifest?.sourceSha256 || sha256(decrypted.plaintext);
+      const compatibleFormat =
+        (decrypted.format === 'consultify-logical-backup-v2' && payload.manifest.format === 'consultify-logical-backup-v2') ||
+        (decrypted.format === 'consultify-encrypted-json-v1' && payload.manifest.format === 'consultify-json-v1');
+      if (!compatibleFormat) throw new Error('BACKUP_FORMAT_MISMATCH');
       if (payload.manifest.id !== backupId || payload.manifest.organizationId !== record.organizationId) {
         throw new Error('BACKUP_MANIFEST_MISMATCH');
       }
       if (options.expectedOrganizationId && payload.manifest.organizationId !== options.expectedOrganizationId) {
         throw new Error('RESTORE_ORGANIZATION_MISMATCH');
       }
+      if (decrypted.format === 'consultify-logical-backup-v2' && payload.manifest.sourceDatabase !== liveSourceDatabase) {
+        throw new Error('BACKUP_SOURCE_DATABASE_MISMATCH');
+      }
+
+      if (!payload.manifest || !payload.data || !Array.isArray(payload.manifest.tables)) {
+        throw new Error('BACKUP_PAYLOAD_INVALID');
+      }
+      const includedEntries = payload.manifest.tables.filter((entry) => !entry.skipped);
+      if (decrypted.format === 'consultify-logical-backup-v2') {
+        const names = includedEntries.map((entry) => entry.name);
+        if (
+          names.length !== CANONICAL_V2_TABLES.length ||
+          names.some((name, index) => name !== CANONICAL_V2_TABLES[index]) ||
+          payload.manifest.tableCount !== CANONICAL_V2_TABLES.length ||
+          Object.keys(payload.data).some((name) => !CANONICAL_V2_TABLES.includes(name as any))
+        ) {
+          throw new Error('BACKUP_V2_TABLE_CONTRACT_MISMATCH');
+        }
+        if (
+          payload.manifest.schemaVersion !== CANONICAL_SCHEMA_VERSION ||
+          !payload.manifest.sourceDatabase ||
+          !payload.manifest.sourceWatermark ||
+          !payload.manifest.sourceObservedAt ||
+          !Number.isFinite(Number(payload.manifest.sourceChangeVersion)) ||
+          !payload.manifest.keyId ||
+          !/^[0-9a-f]{64}$/.test(payload.manifest.sourceSha256 || '') ||
+          !/^[0-9a-f]{64}$/.test(payload.manifest.payloadSha256 || '')
+        ) {
+          throw new Error('BACKUP_V2_MANIFEST_INTEGRITY_MISSING');
+        }
+      }
+      let validatedTotalRows = 0;
+      for (const entry of includedEntries) {
+        if (!SAFE_IDENT.test(entry.name) || !Array.isArray(payload.data[entry.name])) {
+          throw new Error('BACKUP_PAYLOAD_INVALID');
+        }
+        if (payload.data[entry.name].length !== entry.rowCount) {
+          throw new Error(`BACKUP_TABLE_ROW_COUNT_MISMATCH:${entry.name}`);
+        }
+        const tableSha = sha256(Buffer.from(JSON.stringify(payload.data[entry.name])));
+        if (decrypted.format === 'consultify-logical-backup-v2' && entry.sha256 !== tableSha) {
+          throw new Error(`BACKUP_TABLE_HASH_MISMATCH:${entry.name}`);
+        }
+        validatedTotalRows += entry.rowCount;
+      }
+      if (validatedTotalRows !== payload.manifest.totalRows) {
+        throw new Error('BACKUP_TOTAL_ROW_COUNT_MISMATCH');
+      }
+      if (decrypted.format === 'consultify-logical-backup-v2') {
+        const { payloadSha256, ...manifestWithoutPayloadSha } = payload.manifest;
+        const actualPayloadSha = sha256(Buffer.from(JSON.stringify({ manifest: manifestWithoutPayloadSha, data: payload.data })));
+        if (actualPayloadSha !== payloadSha256) throw new Error('BACKUP_PLAINTEXT_HASH_MISMATCH');
+        const sourceSha = sha256(Buffer.from(JSON.stringify({
+          schemaVersion: payload.manifest.schemaVersion,
+          organizationId: payload.manifest.organizationId,
+          sourceWatermark: payload.manifest.sourceWatermark,
+          sourceChangeVersion: payload.manifest.sourceChangeVersion,
+          tables: includedEntries.map(({ name, rowCount, sha256: tableSha }) => ({ name, rowCount, sha256: tableSha })),
+        })));
+        if (sourceSha !== payload.manifest.sourceSha256) throw new Error('BACKUP_SOURCE_HASH_MISMATCH');
+      }
 
       // Validate every row before opening the transaction: a tenant backup may
       // never contain a row belonging to another organization.
       if (payload.manifest.scope === 'organization' && payload.manifest.organizationId) {
         const orgId = payload.manifest.organizationId;
+        const organizations = payload.data.organizations || [];
+        const users = payload.data.users || [];
+        const memberships = payload.data.organization_members || [];
+        if (organizations.length !== 1 || String(organizations[0]?.id || '') !== orgId) {
+          throw new Error('BACKUP_CROSS_TENANT_ORGANIZATION');
+        }
+        const memberUserIds = new Set<string>();
+        for (const membership of memberships) {
+          if (String(membership.organization_id || '') !== orgId || !membership.user_id) {
+            throw new Error('BACKUP_CROSS_TENANT_MEMBERSHIP');
+          }
+          memberUserIds.add(String(membership.user_id));
+        }
+        if (decrypted.format === 'consultify-logical-backup-v2') {
+          if (users.some((user) => !memberUserIds.has(String(user.id || '')))) {
+            throw new Error('BACKUP_USER_WITHOUT_MEMBERSHIP');
+          }
+          if (memberUserIds.size !== users.length) throw new Error('BACKUP_MEMBERSHIP_USER_MISMATCH');
+        } else if (users.some((user) => String(user.organization_id || '') !== orgId)) {
+          throw new Error('BACKUP_CROSS_TENANT_USER');
+        }
         for (const [table, tableRows] of Object.entries(payload.data)) {
-          for (const row of tableRows) {
-            const rowOrg = table === 'organizations' ? row.id : row.organization_id;
-            if (String(rowOrg ?? '') !== orgId) throw new Error('BACKUP_CROSS_TENANT_ROW');
+          if (CANONICAL_V2_TABLE_SET.has(table)) continue;
+          if (tableRows.some((row) => String(row.organization_id || '') !== orgId)) {
+            throw new Error('BACKUP_CROSS_TENANT_ROW');
           }
         }
       }
@@ -679,7 +1049,16 @@ class BackupService {
       client = new PgClient({ connectionString: options.targetDatabaseUrl });
       client.on('error', (error) => logger.error('[BackupService] restore target client error:', error));
       await client.connect();
+      const targetIdentity = await client.query<{ database_name: string; version_num: string }>(
+        `SELECT current_database() database_name, current_setting('server_version_num') version_num`
+      );
+      if (targetIdentity.rows[0]?.database_name !== targetDatabase) throw new Error('RESTORE_TARGET_IDENTITY_MISMATCH');
+      if (!String(targetIdentity.rows[0]?.version_num || '').startsWith('16')) throw new Error('RESTORE_TARGET_PG16_REQUIRED');
       await client.query('BEGIN');
+      for (const ownerTable of ['organizations', 'users', 'organization_members']) {
+        const existing = await client.query<{ n: number }>(`SELECT count(*)::int n FROM "${ownerTable}"`);
+        if ((existing.rows[0]?.n || 0) !== 0) throw new Error(`RESTORE_TARGET_NOT_PRISTINE:${ownerTable}`);
+      }
       let restoredTables = 0;
       let restoredRows = 0;
       for (const tableEntry of payload.manifest.tables.filter((entry) => !entry.skipped)) {
@@ -698,22 +1077,85 @@ class BackupService {
           if (!columns.length) continue;
           const placeholders = columns.map((_, index) => `$${index + 1}`).join(', ');
           const quoted = columns.map((column) => `"${column}"`).join(', ');
-          await client.query(
-            `INSERT INTO "${table}" (${quoted}) VALUES (${placeholders}) ON CONFLICT DO NOTHING`,
+          const inserted = await client.query(
+            `INSERT INTO "${table}" (${quoted}) VALUES (${placeholders})`,
             columns.map((column) => row[column])
           );
-          restoredRows += 1;
+          if (inserted.rowCount !== 1) throw new Error('RESTORE_ROW_COUNT_MISMATCH');
+          restoredRows += inserted.rowCount;
         }
         restoredTables += 1;
       }
+      for (const ownerTable of ['organizations', 'users', 'organization_members']) {
+        const expected = payload.data[ownerTable];
+        if (!expected) continue;
+        const ids = expected.map((row) => String(row.id || ''));
+        if (ids.some((id) => !id)) throw new Error(`BACKUP_OWNER_ID_MISSING:${ownerTable}`);
+        const actual = await client.query<{ row: Record<string, unknown> }>(
+          `SELECT to_jsonb(owner_row) AS row FROM "${ownerTable}" owner_row WHERE id = ANY($1::text[]) ORDER BY id`,
+          [ids]
+        );
+        if (actual.rows.length !== expected.length) throw new Error(`RESTORE_OWNER_COUNT_MISMATCH:${ownerTable}`);
+        const projected = actual.rows.map(({ row }) => {
+          const source = expected.find((candidate) => String(candidate.id) === String(row.id))!;
+          return Object.fromEntries(Object.keys(source).sort().map((key) => [key, row[key]]));
+        });
+        const normalizedExpected = expected
+          .map((row) => Object.fromEntries(Object.keys(row).sort().map((key) => [key, row[key]])))
+          .sort((a, b) => String(a.id).localeCompare(String(b.id)));
+        if (sha256(Buffer.from(JSON.stringify(projected))) !== sha256(Buffer.from(JSON.stringify(normalizedExpected)))) {
+          throw new Error(`RESTORE_OWNER_HASH_MISMATCH:${ownerTable}`);
+        }
+      }
       await client.query('COMMIT');
+      targetCommitted = true;
       const result: RestoreResult = { backupId, targetDatabase, restoredTables, restoredRows, checksumVerified: true, organizationId: record.organizationId };
-      await writeAccessAudit({ backupId, actorId: options.actorId, action: 'RESTORE_COMPLETED', outcome: 'SUCCESS', targetDatabase, organizationId: record.organizationId, details: { ...result } });
+      const cold = new PgClient({ connectionString: options.targetDatabaseUrl });
+      await cold.connect();
+      try {
+        for (const ownerTable of CANONICAL_V2_TABLES) {
+          const expected = payload.data[ownerTable] || [];
+          const ids = expected.map((row) => String(row.id || ''));
+          const actual = ids.length
+            ? await cold.query<{ row: Record<string, unknown> }>(`SELECT to_jsonb(owner_row) AS row FROM "${ownerTable}" owner_row WHERE id=ANY($1::text[]) ORDER BY id`, [ids])
+            : { rows: [] };
+          if (actual.rows.length !== expected.length) throw new Error(`RESTORE_COLD_COUNT_MISMATCH:${ownerTable}`);
+          const projected = actual.rows.map(({ row }) => {
+            const source = expected.find((candidate) => String(candidate.id) === String(row.id))!;
+            return Object.fromEntries(Object.keys(source).sort().map((key) => [key, row[key]]));
+          });
+          const normalizedExpected = expected
+            .map((row) => Object.fromEntries(Object.keys(row).sort().map((key) => [key, row[key]])))
+            .sort((a, b) => String(a.id).localeCompare(String(b.id)));
+          if (sha256(Buffer.from(JSON.stringify(projected))) !== sha256(Buffer.from(JSON.stringify(normalizedExpected)))) {
+            throw new Error(`RESTORE_COLD_HASH_MISMATCH:${ownerTable}`);
+          }
+        }
+      } finally {
+        await cold.end();
+      }
+      const rtoSeconds = Math.max(0, Math.floor((Date.now() - restoreStartedMs) / 1000));
+      const completedReceipt = await dbRun(
+        `UPDATE backup_restore_receipts
+            SET status='COMPLETED',completed_at=CURRENT_TIMESTAMP,rto_seconds=?,rto_met=?,restored_rows=?,source_sha256=?
+          WHERE id=? AND status='STARTED'`,
+        [rtoSeconds, rtoSeconds <= 3600, restoredRows, restoreSourceSha, restoreReceiptId],
+        { fallback: false }
+      );
+      if (completedReceipt.changes !== 1) throw new Error('RESTORE_RECEIPT_FINALIZE_CONFLICT');
+      await writeAccessAudit({ backupId, actorId: options.actorId, action: 'RESTORE_COMPLETED', outcome: 'SUCCESS', targetDatabase, organizationId: record.organizationId, details: { ...result, rtoSeconds } })
+        .catch((error) => logger.error('[BackupService] restore committed but completion audit failed', error));
       return result;
     } catch (error) {
-      if (client) await client.query('ROLLBACK').catch(() => undefined);
+      if (client && !targetCommitted) await client.query('ROLLBACK').catch(() => undefined);
       const message = error instanceof Error ? error.message : String(error);
-      await writeAccessAudit({ backupId, actorId: options.actorId, action: 'RESTORE_FAILED', outcome: 'FAILED', targetDatabase, organizationId: record.organizationId, details: { message } });
+      await dbRun(
+        `UPDATE backup_restore_receipts SET status=?,completed_at=CURRENT_TIMESTAMP,error_code=? WHERE id=? AND status='STARTED'`,
+        [targetCommitted ? 'COMMITTED_UNVERIFIED' : 'FAILED', message.slice(0, 200), restoreReceiptId],
+        { fallback: false }
+      ).catch((receiptError) => logger.error('[BackupService] restore failure receipt could not be finalized', receiptError));
+      await writeAccessAudit({ backupId, actorId: options.actorId, action: 'RESTORE_FAILED', outcome: 'FAILED', targetDatabase, organizationId: record.organizationId, details: { message } })
+        .catch((auditError) => logger.error('[BackupService] restore failure audit could not be persisted', auditError));
       throw error;
     } finally {
       if (client) await client.end().catch(() => undefined);

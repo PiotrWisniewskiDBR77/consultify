@@ -2312,13 +2312,15 @@ router.post(
       // T7b-2 (2026-07-19): backupService is now a REAL implementation
       // (finding_42_self_import_wrappers_services_2026-07-15). The 503 catch below is genuine
       // fail-soft, no longer a guaranteed-dead self-import wrapper.
-      const BackupService = (await import('../services/backupService.js').then(
-        (m) => m.default || m
-      )) as typeof import('../services/backupService.js')['default'];
-      const backup = await BackupService.createBackup(
-        req.body?.type || 'full',
-        req.body?.reason || 'superadmin_manual'
-      );
+      const type = req.body?.type || 'full';
+      if (type !== 'full') {
+        return res.status(400).json({ success: false, code: 'BACKUP_TYPE_INVALID' });
+      }
+      const { triggerManualBackup } = await import('../cron/BackupCron.js');
+      const backup = await triggerManualBackup(req.body?.reason || 'superadmin_manual', {
+        type,
+        actorId: String(req.user?.id || 'system'),
+      });
       return res.json({ success: true, backup });
     } catch (error: any) {
       logger.warn('[SuperAdmin] Manual backup unavailable:', error?.message || error);

@@ -11,6 +11,7 @@ import { Router } from 'express';
 import { verifyAdmin } from '../../middleware/admin.middleware.js';
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { verifySuperAdmin } from '../../middleware/superAdmin.middleware.js';
+import { requireActiveMembership } from '../../services/legacyCutover/requireActiveMembership.js';
 import logger from '../../utils/Logger.js';
 
 const router = Router();
@@ -128,7 +129,7 @@ router.post('/restore', verifySuperAdmin, async (req, res) => {
     logger.warn(`[BackupRoutes] restore rejected: ${code}`);
     if (code === 'BACKUP_NOT_FOUND') return res.status(404).json({ success: false, code });
     if (code === 'RESTORE_TARGET_NOT_ISOLATED') return res.status(403).json({ success: false, code });
-    if (/REQUIRED|MISMATCH|UNSAFE|UNENCRYPTED|CHECKSUM/.test(code)) {
+    if (/REQUIRED|MISMATCH|UNSAFE|UNENCRYPTED|CHECKSUM|HASH|FORMAT|PAYLOAD|ROW_COUNT|INTEGRITY/.test(code)) {
       return res.status(400).json({ success: false, code });
     }
     return res.status(500).json({ success: false, code: 'RESTORE_FAILED' });
@@ -165,11 +166,13 @@ router.delete('/:id', verifySuperAdmin, async (req, res) => {
  */
 router.post('/manual', verifySuperAdmin, async (req, res) => {
   try {
-    const BackupService = (await import('../../services/backupService.js').then(
-      (m) => m.default || m
-    )) as typeof import('../../services/backupService.js')['default'];
     const { type = 'full', reason = 'manual' } = req.body;
-    const backup = await BackupService.createBackup(type, reason, {
+    if (type !== 'full') {
+      return res.status(400).json({ success: false, code: 'BACKUP_TYPE_INVALID' });
+    }
+    const { triggerManualBackup } = await import('../../cron/BackupCron.js');
+    const backup = await triggerManualBackup(reason, {
+      type,
       actorId: String((req as any).user?.id || 'system'),
     });
     return res.json({ success: true, backup });
@@ -184,15 +187,18 @@ router.post('/manual', verifySuperAdmin, async (req, res) => {
 });
 
 /** Create an encrypted export limited to the authenticated admin's tenant. */
-router.post('/organization/manual', async (req, res) => {
+router.post('/organization/manual', requireActiveMembership, async (req, res) => {
   try {
-    const BackupService = (await import('../../services/backupService.js').then(
-      (m) => m.default || m
-    )) as typeof import('../../services/backupService.js')['default'];
     const organizationId = String((req as any).user?.organizationId || '');
     const actorId = String((req as any).user?.id || '');
     if (!organizationId || !actorId) return res.status(403).json({ success: false, code: 'TENANT_CONTEXT_REQUIRED' });
-    const backup = await BackupService.createBackup(req.body?.type || 'full', req.body?.reason || 'tenant-manual', {
+    const type = req.body?.type || 'full';
+    if (type !== 'full') {
+      return res.status(400).json({ success: false, code: 'BACKUP_TYPE_INVALID' });
+    }
+    const { triggerManualBackup } = await import('../../cron/BackupCron.js');
+    const backup = await triggerManualBackup(req.body?.reason || 'tenant-manual', {
+      type,
       organizationId,
       actorId,
     });

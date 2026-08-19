@@ -1,146 +1,93 @@
-/**
- * Backup Cron Job Tests
- * ETAP 6: Testy dla cron jobs (80%+ coverage)
- */
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import BackupCron from '../../../../server/src/cron/BackupCron.js';
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-// Removed createRequire
+const makeDeps = () => {
+  const backupService = {
+    claimBackupRun: vi.fn().mockResolvedValue({ claimed: true, receiptId: 'receipt-1', leaseToken: 'lease-1', fence: 1 }),
+    finishBackupRun: vi.fn().mockResolvedValue({ status: 'COMPLETED', rpoSeconds: 10 }),
+    createBackup: vi.fn().mockResolvedValue({ id: 'backup-1' }),
+    runRetentionPolicy: vi.fn().mockResolvedValue({ deleted: 0 }),
+    reconcileUnboundBackup: vi.fn().mockResolvedValue(undefined),
+    getBackupStatus: vi.fn(),
+  };
+  return { backupService, sentry: { captureException: vi.fn() } };
+};
 
-describe('BackupCron', () => {
-    let BackupCron;
-    let mockBackupService;
-    let mockCron;
+describe('DATA-DR BackupCron tick coordinator', () => {
+  beforeEach(() => vi.restoreAllMocks());
 
-    beforeEach(async () => { // Async beforeEach
-        vi.resetModules();
+  it('claims and completes one durable scheduled slot', async () => {
+    const deps = makeDeps();
+    const coordinator = new BackupCron(deps as any);
+    await expect(coordinator.runBackupTick({ scheduleName: 'internal-beta-15m', scheduledFor: '2026-08-19T12:00:00.000Z' }))
+      .resolves.toMatchObject({ claimed: true, backupId: 'backup-1' });
+    expect(deps.backupService.createBackup).toHaveBeenCalledWith('full', 'scheduled-rpo-15m', { actorId: 'backup-cron', organizationId: undefined, tables: undefined });
+    expect(deps.backupService.finishBackupRun).toHaveBeenCalledWith(expect.objectContaining({ status: 'COMPLETED', backupId: 'backup-1' }));
+  });
 
-        // Mock BackupService
-        mockBackupService = {
-            createBackup: vi.fn().mockResolvedValue({ id: 'backup-123' }),
-            runRetentionPolicy: vi.fn().mockResolvedValue({ deleted: 5 })
-        };
+  it('replays an occupied schedule slot without a second artifact', async () => {
+    const deps = makeDeps();
+    deps.backupService.claimBackupRun.mockResolvedValue({ claimed: false } as any);
+    const coordinator = new BackupCron(deps as any);
+    await expect(coordinator.runBackupTick({ scheduleName: 'internal-beta-15m', scheduledFor: '2026-08-19T12:00:00.000Z' }))
+      .resolves.toEqual({ claimed: false });
+    expect(deps.backupService.createBackup).not.toHaveBeenCalled();
+  });
 
-        vi.doMock('../../../../server/services/backupService', () => ({
-            default: mockBackupService
-        }));
+  it('single-flights concurrent ticks before a second durable claim', async () => {
+    const deps = makeDeps();
+    let release!: () => void;
+    deps.backupService.createBackup.mockImplementation(() => new Promise((resolve) => { release = () => resolve({ id: 'backup-1' }); }));
+    const coordinator = new BackupCron(deps as any);
+    const first = coordinator.runBackupTick({ scheduleName: 'internal-beta-15m', scheduledFor: '2026-08-19T12:00:00.000Z' });
+    await vi.waitFor(() => expect(coordinator.getMetrics().running).toBe(true));
+    await expect(coordinator.runBackupTick({ scheduleName: 'internal-beta-15m', scheduledFor: '2026-08-19T12:15:00.000Z' }))
+      .resolves.toEqual({ claimed: false });
+    expect(deps.backupService.claimBackupRun).toHaveBeenCalledTimes(2);
+    expect(deps.backupService.finishBackupRun).toHaveBeenCalledWith(expect.objectContaining({ status: 'FAILED', error: 'BACKUP_SKIPPED_OVERLAP' }));
+    release();
+    await first;
+  });
 
-        // Mock node-cron
-        mockCron = {
-            schedule: vi.fn().mockReturnValue({
-                stop: vi.fn()
-            })
-        };
+  it('persists FAILED and releases idle waiters', async () => {
+    const deps = makeDeps();
+    deps.backupService.createBackup.mockRejectedValue(new Error('missing key'));
+    const coordinator = new BackupCron(deps as any);
+    await expect(coordinator.runBackupTick({ scheduleName: 'internal-beta-15m', scheduledFor: '2026-08-19T12:00:00.000Z' }))
+      .resolves.toEqual({ claimed: true });
+    expect(deps.backupService.finishBackupRun).toHaveBeenCalledWith(expect.objectContaining({ status: 'FAILED', error: 'missing key' }));
+    await expect(coordinator.waitForIdle()).resolves.toBeUndefined();
+  });
 
-        vi.doMock('node-cron', () => ({
-            default: mockCron
-        }));
+  it('reconciles a created artifact when the terminal receipt fence is lost', async () => {
+    const deps = makeDeps();
+    deps.backupService.finishBackupRun.mockRejectedValueOnce(new Error('BACKUP_RUN_FENCE_LOST'));
+    const coordinator = new BackupCron(deps as any);
+    await expect(coordinator.runBackupTick({ scheduleName: 'internal-beta-15m', scheduledFor: '2026-08-19T12:00:00.000Z' }))
+      .resolves.toEqual({ claimed: true });
+    expect(deps.backupService.reconcileUnboundBackup).toHaveBeenCalledWith('backup-1', 'BACKUP_RUN_FENCE_LOST');
+  });
 
-        // Mock Sentry
-        vi.doMock('../../../../server/config/sentry', () => ({
-            captureException: vi.fn()
-        }));
+  it('routes manual backup through the same durable coordinator', async () => {
+    const deps = makeDeps();
+    const coordinator = new BackupCron(deps as any);
+    await expect(coordinator.triggerManualBackup('operator')).resolves.toEqual({ id: 'backup-1' });
+    expect(deps.backupService.claimBackupRun).toHaveBeenCalledWith(expect.objectContaining({ scheduleName: 'manual' }));
+    expect(deps.backupService.createBackup).toHaveBeenCalledWith('full', 'operator', { actorId: 'manual-backup', organizationId: undefined, tables: undefined });
+  });
 
-        // Dynamic import
-        const module = await import('../../../../server/cron/backupCron.ts');
-        BackupCron = module.default;
+  it('preserves tenant scope and actor through the shared manual coordinator', async () => {
+    const deps = makeDeps();
+    const coordinator = new BackupCron(deps as any);
+    await coordinator.triggerManualBackup('tenant-export', {
+      type: 'full',
+      organizationId: 'org-a',
+      actorId: 'admin-a',
     });
-
-    afterEach(() => {
-        vi.restoreAllMocks();
-        vi.doUnmock('../../../../server/services/backupService');
-        vi.doUnmock('node-cron');
-        vi.doUnmock('../../../../server/config/sentry');
+    expect(deps.backupService.createBackup).toHaveBeenCalledWith('full', 'tenant-export', {
+      actorId: 'admin-a',
+      organizationId: 'org-a',
+      tables: undefined,
     });
-
-    describe('startBackupJob', () => {
-        it('should schedule backup job when not disabled', () => {
-            delete process.env.DISABLE_BACKUP_CRON;
-
-            BackupCron.startBackupJob();
-
-            expect(mockCron.schedule).toHaveBeenCalledWith(
-                '*/15 * * * *',
-                expect.any(Function),
-                { timezone: 'UTC' }
-            );
-        });
-
-        it('should not schedule job when DISABLE_BACKUP_CRON is true', () => {
-            process.env.DISABLE_BACKUP_CRON = 'true';
-
-            BackupCron.startBackupJob();
-
-            expect(mockCron.schedule).not.toHaveBeenCalled();
-
-            delete process.env.DISABLE_BACKUP_CRON;
-        });
-
-        it('should create backup when scheduled job runs', async () => {
-            delete process.env.DISABLE_BACKUP_CRON;
-
-            BackupCron.startBackupJob();
-
-            // Get the scheduled callback
-            const scheduledCallback = mockCron.schedule.mock.calls[0][1];
-
-            await scheduledCallback();
-
-            expect(mockBackupService.createBackup).toHaveBeenCalledWith('incremental', 'scheduled-rpo-15m');
-            expect(mockBackupService.runRetentionPolicy).toHaveBeenCalled();
-        });
-
-        it('should handle backup errors gracefully', async () => {
-            delete process.env.DISABLE_BACKUP_CRON;
-            mockBackupService.createBackup.mockRejectedValue(new Error('Backup failed'));
-
-            BackupCron.startBackupJob();
-
-            const scheduledCallback = mockCron.schedule.mock.calls[0][1];
-
-            // Should not throw
-            await expect(scheduledCallback()).resolves.not.toThrow();
-        });
-    });
-
-    describe('stopBackupJob', () => {
-        it('should stop scheduled job', () => {
-            delete process.env.DISABLE_BACKUP_CRON;
-            const mockJob = { stop: vi.fn() };
-            mockCron.schedule.mockReturnValue(mockJob);
-
-            BackupCron.startBackupJob();
-            BackupCron.stopBackupJob();
-
-            expect(mockJob.stop).toHaveBeenCalled();
-        });
-
-        it('should handle stop when no job is running', () => {
-            // Should not throw
-            expect(() => BackupCron.stopBackupJob()).not.toThrow();
-        });
-    });
-
-    describe('triggerManualBackup', () => {
-        it('should trigger manual backup', async () => {
-            const result = await BackupCron.triggerManualBackup('test-reason');
-
-            expect(mockBackupService.createBackup).toHaveBeenCalledWith('full', 'test-reason');
-            expect(result.id).toBe('backup-123');
-        });
-
-        it('should use default reason when not provided', async () => {
-            await BackupCron.triggerManualBackup();
-
-            expect(mockBackupService.createBackup).toHaveBeenCalledWith('full', 'manual');
-        });
-    });
+  });
 });
-
-
-
-
-
-
-
-
-

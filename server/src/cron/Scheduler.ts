@@ -73,9 +73,45 @@ export async function runAdminIamAlertSchedulerTick(): Promise<void> {
   }
 }
 
+export function registerInternalBetaBackupJob(
+  schedule: typeof cron.schedule = cron.schedule
+): cron.ScheduledTask {
+  return schedule(
+    '*/15 * * * *',
+    async () => {
+      if (process.env.DISABLE_BACKUP_CRON === 'true') return;
+      const now = new Date();
+      now.setUTCSeconds(0, 0);
+      now.setUTCMinutes(Math.floor(now.getUTCMinutes() / 15) * 15);
+      try {
+        const { runBackupTick } = await import('./BackupCron.js');
+        await runBackupTick({ scheduleName: 'internal-beta-15m', scheduledFor: now.toISOString() });
+      } catch (err: any) {
+        logger.error('[Scheduler] Internal-beta backup tick failed:', err?.message || err);
+      }
+    },
+    { timezone: 'UTC' }
+  );
+}
+
 export const Scheduler = {
   jobs: [] as cron.ScheduledTask[],
+  initPromise: null as Promise<void> | null,
   async init(): Promise<void> {
+    if (this.initPromise) return this.initPromise;
+    const pending = this.initialize();
+    this.initPromise = pending;
+    try {
+      await pending;
+    } finally {
+      if (this.initPromise === pending) this.initPromise = null;
+    }
+  },
+  async initialize(): Promise<void> {
+    if (this.jobs.length > 0) {
+      logger.warn('[Scheduler] Initialization ignored: jobs are already registered');
+      return;
+    }
     logger.info('[Scheduler] Initializing Cron Jobs...');
 
     // Resolve lazy services
@@ -912,16 +948,24 @@ export const Scheduler = {
     const job44 = cron.schedule('*/5 * * * *', runAdminIamAlertSchedulerTick);
     this.jobs.push(job44);
 
+    // 45. DATA-DR internal-beta backup. Scheduler is the sole lifecycle
+    // authority; BackupCron owns only the durable single-flight tick body.
+    const job45 = registerInternalBetaBackupJob();
+    this.jobs.push(job45);
+
     logger.info(
       '[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min), AI Pattern Extraction (Every 6h), AI Consolidation (Daily 4:30AM), AI Cleanup (Weekly Mon 5AM), AI Memory Cleanup (Weekly Sun 2AM), Partial Response Cleanup (Hourly), Feedback Consolidation (Daily 4AM), Memory Cleanup (Every 6h), Webhook Retry (Every 5min), Auto Recovery (Every 2min), Invoice Reminders (Daily 9AM), Interview Reminders (Hourly), Idea Map Auto-Snapshots (Every 15min default), Agent Plan Scheduler (Every 2min), Artifact Lineage Reconciliation (Every 5min), Compute Job Lease Reaper (Every 1min), Audit Independence Detector Sweep (Every 15min tick, default-off), Admin IAM Alert Evaluation (Every 5min, default-on)'
     );
   },
-  stop(): void {
+  async stop(): Promise<void> {
     logger.info('[Scheduler] Stopping all cron jobs...');
+    if (this.initPromise) await this.initPromise;
     this.jobs.forEach((job) => {
       job.stop();
     });
     this.jobs = [];
+    const { waitForBackupIdle } = await import('./BackupCron.js');
+    await waitForBackupIdle();
     logger.info('[Scheduler] All cron jobs stopped');
   },
 };
