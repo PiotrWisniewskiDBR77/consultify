@@ -1,7 +1,7 @@
 {
   "taskId": "EXE-MVP-SPINE-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "99406b784bf1332beb369be161e75a2422f00fc6",
+  "productSha": "0c20f81d04850e96f3684d6bfd37635997606028",
   "technicalSourceSha": "aa118bbdcbab2a811740eda2684eff5428aa981d",
   "integratedProductSha": "39341f3ffbd60b1a18461f925abf3c327bd97b43",
   "reconciliationSha": "3b55f6b627b74d1e3397b75582d3912bf3e9c557",
@@ -53,8 +53,8 @@
   "rollback": {
     "method": "Revert the lane commits; all changes are additive application code plus new tests. NO migration was added by this lane, so no schema rollback is required and old readers are unaffected."
   },
-  "verdict": "PARTIAL",
-  "openBlocker": "The exact-current governed delivery-closure slice is proven, but broader legacy execution-model and health-formula unification remains outside this packet and requires its separate cutover authority.",
+  "verdict": "DONE_CURRENT_SHA",
+  "openBlocker": "Repository technical scope is complete. Production backfill, deployed compatibility-window observation, push, deploy and release remain NOT_EXECUTED_NOT_AUTHORIZED and are release boundaries rather than repository product blockers.",
   "resolvedBlockers": [
     "Exact-current execution delivery spine integrated patch-equivalent at 6de1fe8532/39341f3ffb (source bf55070e2f/aa118bbdcb): realPG 4/4 and signed mounted UI 2/2 prove canonical capacity, actions, four-eyes, close and immutable Results receipt with stale/tenant/revoked/cold controls."
   ],
@@ -175,6 +175,67 @@
     "verdictDiscipline": {
       "verdict": "PARTIAL — UNCHANGED, and deliberately not uplifted.",
       "why": "The 2/2 UI denominator covers the delivery-closure slice only. All nine governed action UIs remain unproven. A 2/2 on one slice is not evidence about nine surfaces, and no combination of backend green, realPG green or build green substitutes for it. The openBlocker stands verbatim."
+    }
+  },
+  "authorityCompletion20260819": {
+    "supersedesVerdictOnly": "All historical observations above remain preserved. This block supersedes the historical PARTIAL verdict after owner decision 26A and exact-current implementation qualification.",
+    "ownerAuthority": {
+      "decision": "AMD-EXE-SPINE-AUTHORITY-004 / option A",
+      "acceptedBy": "Piotr Wisniewski",
+      "acceptedOn": "2026-08-19",
+      "contract": "Runtime-v1 is the sole execution-work writer; Case Workspace owns governed lifecycle; execution_case_links owns cross-model identity; legacy PMO/V8 execution writers are read-only compatibility; execution-health-v1 is the sole health formula."
+    },
+    "identity": {
+      "integratedSha": "0c20f81d04850e96f3684d6bfd37635997606028",
+      "qualifiedSourceSha": "9ddf36bea1724a91ae67936d4d8f37f2538bf4cd",
+      "sourceBaseSha": "2135e12d43",
+      "branch": "codex/chat-shared-recovery-seam",
+      "statusBeforeAndAfter": "clean",
+      "integration": "12 single-parent EXE commits cherry-picked without conflict onto clean canonical 759f2019e2; no push, deploy or release"
+    },
+    "implementedScope": {
+      "identityAndBackfill": "20261038_execution_spine_authority_completion.sql plus executionSpineBackfillService: dry-run zero-write plan, exactly-one alias/mapping, explicit quarantine, immutable receipts and cold readback",
+      "writerAuthority": "Stable 409 EXECUTION_RUNTIME_V1_WRITE_REQUIRED on legacy execution mutations after tenant/auth middleware; unrelated Initiative discovery/authoring and governed change/progress remain mounted",
+      "health": "execution-health-v1 replaces the four independent formulas in ExecutionController, reports, PMO tasks and three-axis reporting",
+      "frontendCutover": "Legacy hidden Timeline/Gantt mutation and ExecutionHub V8 fallback removed; canonical Runtime-v1 surfaces remain the writer",
+      "compatibility": "Legacy milestone/resource/staffing/budget/RAID and execution lifecycle writer families are denied; authenticated compatibility reads remain available"
+    },
+    "exactCurrentQualification": {
+      "database": "exe_spine_a_0c20_integrated on PostgreSQL 16; created only for this qualification and dropped afterward",
+      "migrations": "fresh exit 0, 792 applied; repeat Applying migrations: 0; dry-run Pending migrations: 0",
+      "runtimeMatrix": "tests/integration/initiatives-execution: 41/41 files, 93/93 tests, retry 0",
+      "spineMatrix": "9/9 files, 78/78 tests, retry 0: legacy read-only scope, change/progress, closure/evidence, delivery BVP, backfill, identity seam, authority, canonical health",
+      "typeChecks": "server tsc exit 0; root tsc with 8 GiB exit 0",
+      "builds": "backend build exit 0 with 9 runtime mirrors verified; frontend 8 GiB build exit 0",
+      "diff": "git diff --check exit 0"
+    },
+    "negativeControls": [
+      "legacy execution mutations return exact 409 and produce zero milestone/resource/RAID/task rows",
+      "unrelated Initiative authoring command is not intercepted by the execution read-only middleware",
+      "cross-tenant and stale change/progress commands fail before mutation",
+      "same idempotency key replays one decision; changed payload and concurrent collision do not duplicate",
+      "legacy complete reaches its canonical fail-closed CLOSURE_REQUEST_REQUIRED 410 contract",
+      "backfill dry-run writes zero; injected failure rolls back mapping/quarantine/receipt",
+      "cold identity and closure reads preserve stable linked IDs"
+    ],
+    "residueAndDisposal": {
+      "measured": "organizations=0, users=0, memberships=0, initiatives=0, projects=0, tasks=0, execution_case_links=0, identity aliases=0, backfill runs/receipts/quarantine=0, Runtime aggregates/receipts/outbox/audits/relations/cards/nonbaseline policies=0, closure requests/evidence=0, advisory locks=0",
+      "databaseDrop": "DROP DATABASE exit 0; pg_database existence count 0",
+      "fixtureCorrection": "A run-owned organization cleanup helper now makes the full Runtime-v1 suite prove residue zero instead of relying on database destruction alone. Immutable consumer receipts remain outside ordinary DELETE cleanup."
+    },
+    "nonQualifyingRuns": [
+      "A mechanical first cleanup rewrite produced malformed SQL and was discarded before qualification.",
+      "An over-broad Initiative middleware initially intercepted governed change/progress and closure 410; source was narrowed and all affected tests were rerun.",
+      "One combined 50-file run produced an order-dependent Runtime 404; the isolated Runtime file immediately passed 12/12, and final qualification used explicit clean denominators on a fresh database.",
+      "Pre-final runs exposed nonzero Runtime fixture residue; cleanup ownership was corrected and exact-current reruns proved literal zero."
+    ],
+    "releaseBoundary": {
+      "repositoryTechnicalVerdict": "DONE_CURRENT_SHA",
+      "productionBackfill": "NOT_EXECUTED_NOT_AUTHORIZED",
+      "deployedCompatibilityObservation": "NOT_EXECUTED_NOT_AUTHORIZED",
+      "push": "NOT_EXECUTED_NOT_AUTHORIZED",
+      "deploy": "NOT_EXECUTED_NOT_AUTHORIZED",
+      "release": "NOT_AUTHORIZED"
     }
   }
 }
