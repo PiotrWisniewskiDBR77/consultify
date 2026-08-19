@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { expect, test } from '@playwright/test';
+import { Pool } from 'pg';
 
 import { readTestSupportState } from '../_helpers/testSupportState';
 
@@ -22,6 +23,13 @@ test('signed XLSX statement confirm registers a canonical pack and import surviv
     'financeWorkspacePlatformV1',
     'financeExportImportV1',
   ] as const;
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  let statementId = '';
+  let statementPackId = '';
+  let artifactId = '';
+  let businessVersionId = '';
+  let workingRevisionId = '';
+  let foreignArtifactCountBeforeCleanup = 0;
 
   try {
     for (const flagKey of flagKeys) {
@@ -88,6 +96,7 @@ test('signed XLSX statement confirm registers a canonical pack and import surviv
     const staged = stagedResponse.data || stagedResponse;
     expect(staged).toMatchObject({ mode: 'fallback', statementPackId: null });
     expect(staged.statementIds).toHaveLength(1);
+    statementId = String(staged.statementIds[0]);
 
     await page.locator('select').first().selectOption('BS');
     await page.getByPlaceholder('e.g. 2024').fill('2026');
@@ -116,6 +125,15 @@ test('signed XLSX statement confirm registers a canonical pack and import surviv
     await continueToConfirm.waitFor({ state: 'visible', timeout: 30_000 });
     await continueToConfirm.click();
 
+    const beforeConfirm = await pool.query(
+      `SELECT
+         (SELECT count(*)::int FROM financial_statements WHERE id = $1 AND statement_pack_id IS NOT NULL) AS pack_items,
+         (SELECT count(*)::int FROM finance_artifact_aliases WHERE legacy_table = 'financial_statement_packs' AND organization_id = $2) AS aliases,
+         (SELECT count(*)::int FROM finance_artifacts WHERE organization_id = $2 AND artifact_type = 'STATEMENT_PACK') AS artifacts`,
+      [statementId, state.organizationId]
+    );
+    expect(beforeConfirm.rows[0]).toEqual({ pack_items: 0, aliases: 0, artifacts: 0 });
+
     const confirmResponsePromise = page.waitForResponse(
       (response) =>
         /\/api\/(?:v8\/finance\/statements|finance-statements)\/[^/]+\/confirm$/.test(
@@ -134,6 +152,9 @@ test('signed XLSX statement confirm registers a canonical pack and import surviv
     expect(confirmed.canonicalArtifactId).toBeTruthy();
     expect(confirmed.canonicalBusinessVersionId).toBeTruthy();
     expect(confirmed.canonicalWorkingRevisionId).toBeTruthy();
+    statementPackId = String(confirmed.statementPackId);
+    artifactId = String(confirmed.canonicalArtifactId);
+    businessVersionId = String(confirmed.canonicalBusinessVersionId);
 
     await page.goto(`${WEB_BASE_URL}/finance/statements/${confirmed.statementPackId}`);
     await page.getByRole('button', { name: 'Excel', exact: true }).click();
@@ -165,6 +186,7 @@ test('signed XLSX statement confirm registers a canonical pack and import surviv
     const applied = await applyResponse.json();
     const appliedData = applied.data || applied;
     const appliedWorkingRevisionId = String(appliedData.newWorkingRevisionId);
+    workingRevisionId = appliedWorkingRevisionId;
     await expect(panel.getByTestId('import-applied')).toContainText(appliedWorkingRevisionId);
 
     const cold = await browser.newPage();
@@ -197,10 +219,61 @@ test('signed XLSX statement confirm registers a canonical pack and import surviv
     }
   } finally {
     for (const flagKey of flagKeys) {
-      await request.post(`${API_BASE_URL}/api/test-support/org-feature-flag`, {
+      const disabled = await request.post(`${API_BASE_URL}/api/test-support/org-feature-flag`, {
         headers: { 'x-test-support-key': TEST_SUPPORT_KEY },
         data: { flagKey, organizationId: state.organizationId, enabled: false, runId },
       });
+      expect(disabled.status(), `disable ${flagKey}`).toBe(200);
     }
+    foreignArtifactCountBeforeCleanup = Number(
+      (
+        await pool.query(
+          `SELECT count(*)::int AS count FROM finance_artifacts WHERE organization_id <> $1`,
+          [state.organizationId]
+        )
+      ).rows[0]?.count || 0
+    );
+    expect(foreignArtifactCountBeforeCleanup).toBeGreaterThan(0);
+    const cleanup = await request.post(`${API_BASE_URL}/api/test-support/cleanup`, {
+      headers: { 'x-test-support-key': TEST_SUPPORT_KEY },
+      data: { runId: state.runId },
+    });
+    expect(cleanup.status(), await cleanup.text()).toBe(200);
+    const residue = await pool.query(
+      `SELECT
+         (SELECT count(*)::int FROM financial_statements WHERE id = $1) AS statements,
+         (SELECT count(*)::int FROM financial_statement_packs WHERE id = $2) AS packs,
+         (SELECT count(*)::int FROM finance_artifacts WHERE artifact_id = $3) AS artifacts,
+         (SELECT count(*)::int FROM finance_business_versions WHERE business_version_id = $5) AS business_versions,
+         (SELECT count(*)::int FROM finance_artifact_aliases WHERE artifact_id = $3) AS aliases,
+         (SELECT count(*)::int FROM finance_import_receipts WHERE artifact_id = $3) AS receipts,
+         (SELECT count(*)::int FROM finance_working_revisions WHERE working_revision_id = $4) AS revisions`,
+      [
+        statementId || null,
+        statementPackId || null,
+        artifactId || null,
+        workingRevisionId || null,
+        businessVersionId || null,
+      ]
+    );
+    expect(residue.rows[0]).toEqual({
+      statements: 0,
+      packs: 0,
+      artifacts: 0,
+      business_versions: 0,
+      aliases: 0,
+      receipts: 0,
+      revisions: 0,
+    });
+    const foreignArtifactCountAfterCleanup = Number(
+      (
+        await pool.query(
+          `SELECT count(*)::int AS count FROM finance_artifacts WHERE organization_id <> $1`,
+          [state.organizationId]
+        )
+      ).rows[0]?.count || 0
+    );
+    expect(foreignArtifactCountAfterCleanup).toBe(foreignArtifactCountBeforeCleanup);
+    await pool.end();
   }
 });

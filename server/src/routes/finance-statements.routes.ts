@@ -1213,7 +1213,9 @@ router.post(
           parseMethod: effectiveParseMethod,
           overallConfidence: detection.confidence,
           documentClass: documentProfile.documentClass,
-          extractionStrategy: documentProfile.extractionStrategy,
+          extractionStrategy: structuredInput
+            ? 'spreadsheet_structured_staged'
+            : documentProfile.extractionStrategy,
           templateFamily: documentProfile.templateFamily,
           createdBy: userId,
         });
@@ -1793,6 +1795,10 @@ router.post(
       parseMethod: stmt.parse_method,
       text,
     });
+    const extractionStrategy =
+      stmt.extraction_strategy === 'spreadsheet_structured_staged'
+        ? 'spreadsheet_structured_staged'
+        : documentProfile.extractionStrategy;
 
     try {
       await updateStatementMetadata(statementId, {
@@ -1804,7 +1810,7 @@ router.post(
         scaling: detection.scaling,
         overallConfidence: detection.confidence,
         documentClass: documentProfile.documentClass,
-        extractionStrategy: documentProfile.extractionStrategy,
+        extractionStrategy,
         templateFamily: documentProfile.templateFamily,
       });
     } catch (error) {
@@ -1818,7 +1824,10 @@ router.post(
         }
       );
     }
-    const statementPackId = await syncStatementToPack(statementId);
+    const statementPackId =
+      extractionStrategy === 'spreadsheet_structured_staged'
+        ? null
+        : await syncStatementToPack(statementId);
     await recordStatementSourceArtifact({
       statementId,
       ingestRunId,
@@ -1832,7 +1841,7 @@ router.post(
       currentStage: 'detect',
       runStatus: 'running',
       documentClass: documentProfile.documentClass,
-      extractionStrategy: documentProfile.extractionStrategy,
+      extractionStrategy,
       templateFamily: documentProfile.templateFamily,
       rawTextLength: text.length,
     });
@@ -1843,7 +1852,7 @@ router.post(
         stage: 'detect',
         resultStatus: autoDetection.statementType === 'UNKNOWN' ? 'warning' : 'pass',
         readinessStatus: 'pending',
-        strategy: documentProfile.extractionStrategy,
+        strategy: extractionStrategy,
         summary: 'Detection metadata persisted for statement.',
         reasonCodes:
           autoDetection.statementType === 'UNKNOWN'

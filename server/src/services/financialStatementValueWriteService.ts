@@ -91,6 +91,16 @@ async function loadSelectedMappingLookup(statementId: string): Promise<Map<strin
   return lookup;
 }
 
+export async function syncStatementPackAfterValues(
+  statementId: string,
+  statement: Record<string, any>
+): Promise<string | null> {
+  const isUnconfirmedStructuredStage =
+    statement.extraction_strategy === 'spreadsheet_structured_staged' &&
+    String(statement.status || '').toLowerCase() !== 'confirmed';
+  return isUnconfirmedStructuredStage ? null : await syncStatementToPack(statementId);
+}
+
 export async function saveStatementValuesFlow(params: {
   statementId: string;
   organizationId?: string;
@@ -215,7 +225,11 @@ export async function saveStatementValuesFlow(params: {
       periodLabel: value.periodLabel ? String(value.periodLabel) : null,
       periodIndex: value.periodIndex != null ? Number(value.periodIndex) : 0,
       lineageType: (value.lineageType ? String(value.lineageType) : 'direct') as
-        'direct' | 'aggregated' | 'split' | 'derived' | 'manual_note',
+        | 'direct'
+        | 'aggregated'
+        | 'split'
+        | 'derived'
+        | 'manual_note',
       derivedFromLineCodes: Array.isArray(value.derivedFromLineCodes)
         ? value.derivedFromLineCodes.map((code: unknown) => String(code))
         : [],
@@ -247,7 +261,11 @@ export async function saveStatementValuesFlow(params: {
             ? String(evidence.candidateRowId)
             : row.sourceCandidateRowId || null,
           evidenceType: String(evidence.evidenceType || normalized?.lineageType || 'direct') as
-            'direct' | 'aggregated' | 'split' | 'derived' | 'manual_note',
+            | 'direct'
+            | 'aggregated'
+            | 'split'
+            | 'derived'
+            | 'manual_note',
           weight: evidence.weight != null ? Number(evidence.weight) : 1,
           contributionValue:
             evidence.contributionValue != null ? Number(evidence.contributionValue) : row.value,
@@ -381,7 +399,7 @@ export async function saveStatementValuesFlow(params: {
     createdBy: userId,
     summary: readiness.summary,
   });
-  const statementPackId = await syncStatementToPack(statementId);
+  const statementPackId = await syncStatementPackAfterValues(statementId, statement);
   await recordStatementSourceArtifact({
     statementId,
     ingestRunId,

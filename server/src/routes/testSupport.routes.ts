@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 
 import config from '../config/Config.js';
+import { withPgTransaction } from '../database/PostgresDatabase.js';
 import adminAuditService from '../services/adminAuditService.js';
 import { setV8OrgFlag } from '../services/v8/featureFlagService.js';
 import { __resetApprovalServiceForTests } from '../services/documentStudio/documentApprovalService.js';
@@ -531,6 +532,61 @@ async function listColumns(table: string): Promise<string[]> {
 }
 
 async function purgeByOrganizationId(organizationId: string): Promise<void> {
+  if (isPostgres()) {
+    await withPgTransaction(async (query) => {
+      // Import receipts are immutable in product traffic. Test cleanup is the
+      // sole scoped exception: disable user triggers on this pinned connection
+      // only, delete this exact tenant's receipts, and restore the setting
+      // before any other cleanup statement executes.
+      await query(`SET LOCAL session_replication_role = replica`);
+      try {
+        await query(`DELETE FROM finance_import_receipts WHERE organization_id = $1`, [
+          organizationId,
+        ]);
+        await query(`DELETE FROM artifact_lifecycle_events WHERE organization_id = $1`, [
+          organizationId,
+        ]);
+      } finally {
+        await query(`SET LOCAL session_replication_role = origin`);
+      }
+
+      // Break the intentional artifact/BV/WR cycle explicitly, then delete in
+      // dependency order. Every predicate is the authenticated run's exact org.
+      await query(`DELETE FROM finance_artifact_aliases WHERE organization_id = $1`, [
+        organizationId,
+      ]);
+      await query(`DELETE FROM finance_stmt_lines WHERE organization_id = $1`, [organizationId]);
+      await query(`DELETE FROM finance_stmt_periods WHERE organization_id = $1`, [organizationId]);
+      await query(`DELETE FROM finance_stmt_entities WHERE organization_id = $1`, [organizationId]);
+      await query(
+        `UPDATE finance_artifacts SET current_business_version_id = NULL WHERE organization_id = $1`,
+        [organizationId]
+      );
+      await query(
+        `UPDATE finance_business_versions SET source_working_revision_id = NULL WHERE organization_id = $1`,
+        [organizationId]
+      );
+      await query(`DELETE FROM finance_working_revisions WHERE organization_id = $1`, [
+        organizationId,
+      ]);
+      await query(`DELETE FROM finance_business_versions WHERE organization_id = $1`, [
+        organizationId,
+      ]);
+      await query(`DELETE FROM finance_artifacts WHERE organization_id = $1`, [organizationId]);
+
+      // Legacy statement children retain their normal FK cascades: detach the
+      // pack edge, delete packs, then statements while triggers are back ON.
+      await query(
+        `UPDATE financial_statements SET statement_pack_id = NULL WHERE organization_id = $1`,
+        [organizationId]
+      );
+      await query(`DELETE FROM financial_statement_packs WHERE organization_id = $1`, [
+        organizationId,
+      ]);
+      await query(`DELETE FROM financial_statements WHERE organization_id = $1`, [organizationId]);
+    });
+  }
+
   // `presentation_analytics` is keyed ONLY by `deck_id` — it carries neither
   // `organization_id` nor `org_id`, so the generic loop below (which matches on
   // exactly those two columns) skips it entirely, and `deck_id` has no foreign
