@@ -34,6 +34,8 @@ const apiMocks = vi.hoisted(() => ({
   approveWorkbook: vi.fn(),
   rejectWorkbook: vi.fn(),
   getWorkbookSchema: vi.fn(),
+  shareWorkbook: vi.fn(),
+  revokeWorkbookShare: vi.fn(),
 }));
 
 vi.mock('@/services/api', () => ({ Api: apiMocks }));
@@ -216,6 +218,12 @@ describe('SpreadsheetArtifactStudio', () => {
         status: 'REJECTED',
       },
     });
+    apiMocks.shareWorkbook.mockResolvedValue({
+      shareToken: 'share-token-1',
+      expiresAt: '2026-08-26T10:00:00.000Z',
+      shareUrl: 'https://app.test/shared/workbook/share-token-1',
+    });
+    apiMocks.revokeWorkbookShare.mockResolvedValue({ revoked: true });
     apiMocks.listWorkbookComments.mockResolvedValue({ comments: [] });
     apiMocks.createWorkbookComment.mockResolvedValue({ id: 'comment-2', duplicate: false });
     apiMocks.setWorkbookCommentStatus.mockResolvedValue({
@@ -1035,5 +1043,47 @@ describe('SpreadsheetArtifactStudio', () => {
     expect(await screen.findByText('CRM snapshot 2026-08-05')).toBeInTheDocument();
     expect(screen.getByText('KPI Control · B2')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Usuń powiązanie' })).toBeInTheDocument();
+  });
+
+  it('mints, rotates and revokes a persisted public workbook share', async () => {
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText: vi.fn().mockResolvedValue(undefined) },
+    });
+    render(
+      <MemoryRouter>
+        <SpreadsheetArtifactStudio
+          preview={{ ...preview, workbookClassification: 'public', workbookShareActive: true }}
+          workbookId="wb-1"
+          onDownload={vi.fn()}
+          onCopyLink={vi.fn()}
+        />
+      </MemoryRouter>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Zarządzaj udostępnieniem' }));
+    expect(screen.getByRole('dialog', { name: 'Udostępnianie skoroszytu' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Rotuj link i skopiuj' }));
+    await waitFor(() => expect(apiMocks.shareWorkbook).toHaveBeenCalledWith('wb-1', 7));
+    expect(await screen.findByRole('button', { name: 'Kopiuj nowy link' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Cofnij udostępnienie' }));
+    await waitFor(() => expect(apiMocks.revokeWorkbookShare).toHaveBeenCalledWith('wb-1'));
+    expect(screen.getByText('Brak aktywnego linku')).toBeInTheDocument();
+  });
+
+  it('requests final export only from the current approved readback', async () => {
+    const onDownload = vi.fn();
+    render(
+      <MemoryRouter>
+        <SpreadsheetArtifactStudio
+          preview={{ ...preview, workbookApprovalCurrent: true, workbookLifecycle: 'approved' }}
+          workbookId="wb-1"
+          onDownload={onDownload}
+          onCopyLink={vi.fn()}
+        />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Eksportuj XLSX' }));
+    expect(onDownload).toHaveBeenCalledWith('final');
   });
 });

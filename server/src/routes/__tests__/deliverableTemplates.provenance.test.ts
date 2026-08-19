@@ -62,6 +62,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 // be referenced from inside a factory declared further down the file — same
 // convention as workbook-commands.routes.test.ts.
 const mockApproveTemplateProvenance = vi.fn();
+const mockListPendingTemplateProvenance = vi.fn();
 
 const AUTH_USER_ID = 'auth-user-1';
 const AUTH_ORG_ID = 'auth-org-1';
@@ -139,6 +140,8 @@ vi.mock('../../services/deliverableTemplateService.js', () => {
   }
   return {
     approveTemplateProvenance: (...args: unknown[]) => mockApproveTemplateProvenance(...args),
+    listPendingTemplateProvenance: (...args: unknown[]) =>
+      mockListPendingTemplateProvenance(...args),
     createDeliverableTemplate: vi.fn(),
     deleteDeliverableTemplate: vi.fn(),
     getDeliverableTemplate: vi.fn(),
@@ -204,6 +207,44 @@ function freshReceipt() {
 
 beforeEach(() => {
   mockApproveTemplateProvenance.mockReset();
+  mockListPendingTemplateProvenance.mockReset();
+});
+
+describe('GET /api/deliverables/templates-provenance/pending', () => {
+  it('returns only the authenticated tenant rights queue', async () => {
+    const templates = [
+      {
+        registry: 'presentation_templates',
+        templateId: 'template-1',
+        name: 'Board update',
+        provenanceStatus: 'quarantined',
+      },
+    ];
+    mockListPendingTemplateProvenance.mockResolvedValueOnce(templates);
+
+    const res = await request(createApp()).get('/api/deliverables/templates-provenance/pending');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ templates });
+    expect(mockListPendingTemplateProvenance).toHaveBeenCalledWith({
+      organizationId: AUTH_ORG_ID,
+      actorUserId: AUTH_USER_ID,
+    });
+  });
+
+  it('fails closed when the service rejects the caller role', async () => {
+    mockListPendingTemplateProvenance.mockRejectedValueOnce(
+      new TemplateProvenanceForbiddenError(
+        'PROVENANCE_ROLE_REQUIRED',
+        'Owner or admin role required'
+      )
+    );
+
+    const res = await request(createApp()).get('/api/deliverables/templates-provenance/pending');
+
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('PROVENANCE_ROLE_REQUIRED');
+  });
 });
 
 describe('POST /api/deliverables/templates/:id/provenance/approve — status mapping', () => {
@@ -332,9 +373,7 @@ describe('POST /api/deliverables/templates/:id/provenance/approve — status map
   });
 
   it('maps TemplateNotFoundError to 404 without a coded response', async () => {
-    mockApproveTemplateProvenance.mockRejectedValueOnce(
-      new TemplateNotFoundError(TEMPLATE_ID)
-    );
+    mockApproveTemplateProvenance.mockRejectedValueOnce(new TemplateNotFoundError(TEMPLATE_ID));
 
     const res = await request(createApp())
       .post(APPROVE_URL)
@@ -651,7 +690,10 @@ describe.skipIf(!REAL_PG)(
       return id;
     }
 
-    async function provenanceStatusOf(registry: string, templateId: string): Promise<string | null> {
+    async function provenanceStatusOf(
+      registry: string,
+      templateId: string
+    ): Promise<string | null> {
       const idColumn = MAT_PROV_19_REGISTRY_ID_COLUMN[registry];
       const result = await pool.query<{ provenance_status: string }>(
         `SELECT provenance_status FROM ${registry} WHERE ${idColumn}::text = $1`,
@@ -690,7 +732,9 @@ describe.skipIf(!REAL_PG)(
       // disposable MAT-PROV-19 scratch database, before a single fixture row
       // is written.
       const expectedDbName = matProv19ParseDatabaseNameFromUrl(DATABASE_URL);
-      const actualDbNameResult = await pool.query<{ name: string }>('SELECT current_database() AS name');
+      const actualDbNameResult = await pool.query<{ name: string }>(
+        'SELECT current_database() AS name'
+      );
       const actualDbName = String(actualDbNameResult.rows[0]?.name || '');
       if (
         !expectedDbName ||
@@ -806,10 +850,9 @@ describe.skipIf(!REAL_PG)(
             );
           }
           if (createdTemplateIds.tp_base_templates.length) {
-            await cleanupClient.query(
-              `DELETE FROM tp_base_templates WHERE id = ANY($1::uuid[])`,
-              [createdTemplateIds.tp_base_templates]
-            );
+            await cleanupClient.query(`DELETE FROM tp_base_templates WHERE id = ANY($1::uuid[])`, [
+              createdTemplateIds.tp_base_templates,
+            ]);
           }
           if (createdMemberIds.length) {
             await cleanupClient.query(
@@ -1102,134 +1145,122 @@ describe.skipIf(!REAL_PG)(
       // Intentionally empty — see the skip reason above.
     });
 
-    it(
-      '9. Registry gate: the three canonical registries are approvable; legacy + invented registries are 400 with zero writes',
-      async () => {
-        expect(canonicalRegistries).toEqual([
-          'document_studio_templates',
-          'presentation_templates',
-          'tp_base_templates',
-        ]);
+    it('9. Registry gate: the three canonical registries are approvable; legacy + invented registries are 400 with zero writes', async () => {
+      expect(canonicalRegistries).toEqual([
+        'document_studio_templates',
+        'presentation_templates',
+        'tp_base_templates',
+      ]);
 
-        // document_studio_templates and presentation_templates are already
-        // proven approvable by tests 1 and 2 above (distinct actors and
-        // registries); this test adds the third canonical registry so all
-        // three are covered, then both rejection cases.
-        const tpBaseTemplateId = await seedTpBaseTemplate(orgA, 'registry-gate-tp-base');
-        const tpBaseKey = `m19-registry-tpbase-${randomUUID()}`;
-        const okRes = await request(mountRealApp())
-          .post(`/api/deliverables/templates/${tpBaseTemplateId}/provenance/approve`)
-          .set('Authorization', `Bearer ${ownerA.token}`)
-          .set('Idempotency-Key', tpBaseKey)
-          .send(realProvenanceBody('tp_base_templates'));
-        expect(okRes.status).toBe(201);
-        expect(await provenanceStatusOf('tp_base_templates', tpBaseTemplateId)).toBe('approved');
+      // document_studio_templates and presentation_templates are already
+      // proven approvable by tests 1 and 2 above (distinct actors and
+      // registries); this test adds the third canonical registry so all
+      // three are covered, then both rejection cases.
+      const tpBaseTemplateId = await seedTpBaseTemplate(orgA, 'registry-gate-tp-base');
+      const tpBaseKey = `m19-registry-tpbase-${randomUUID()}`;
+      const okRes = await request(mountRealApp())
+        .post(`/api/deliverables/templates/${tpBaseTemplateId}/provenance/approve`)
+        .set('Authorization', `Bearer ${ownerA.token}`)
+        .set('Idempotency-Key', tpBaseKey)
+        .send(realProvenanceBody('tp_base_templates'));
+      expect(okRes.status).toBe(201);
+      expect(await provenanceStatusOf('tp_base_templates', tpBaseTemplateId)).toBe('approved');
 
-        // report_builder_templates is legacy and deliberately unsupported
-        // (deliverableTemplateService.ts:1225-1231). The templateId path
-        // param below targets a REAL document_studio_templates row, so a 400
-        // here can only be the registry gate rejecting before any DB lookup
-        // — not a 404 for a missing id.
-        const legacyTargetId = await seedDocStudioTemplate(orgA, 'registry-gate-legacy-attempt');
-        const legacyKey = `m19-registry-legacy-${randomUUID()}`;
-        const legacyRes = await request(mountRealApp())
-          .post(`/api/deliverables/templates/${legacyTargetId}/provenance/approve`)
-          .set('Authorization', `Bearer ${ownerA.token}`)
-          .set('Idempotency-Key', legacyKey)
-          .send(realProvenanceBody('report_builder_templates'));
-        expect(legacyRes.status).toBe(400);
-        expect(legacyRes.body.code).toBe('UNSUPPORTED_TEMPLATE_REGISTRY');
-        expect(await receiptCount(orgA, legacyKey)).toBe(0);
-        expect(await provenanceStatusOf('document_studio_templates', legacyTargetId)).toBe('unknown');
+      // report_builder_templates is legacy and deliberately unsupported
+      // (deliverableTemplateService.ts:1225-1231). The templateId path
+      // param below targets a REAL document_studio_templates row, so a 400
+      // here can only be the registry gate rejecting before any DB lookup
+      // — not a 404 for a missing id.
+      const legacyTargetId = await seedDocStudioTemplate(orgA, 'registry-gate-legacy-attempt');
+      const legacyKey = `m19-registry-legacy-${randomUUID()}`;
+      const legacyRes = await request(mountRealApp())
+        .post(`/api/deliverables/templates/${legacyTargetId}/provenance/approve`)
+        .set('Authorization', `Bearer ${ownerA.token}`)
+        .set('Idempotency-Key', legacyKey)
+        .send(realProvenanceBody('report_builder_templates'));
+      expect(legacyRes.status).toBe(400);
+      expect(legacyRes.body.code).toBe('UNSUPPORTED_TEMPLATE_REGISTRY');
+      expect(await receiptCount(orgA, legacyKey)).toBe(0);
+      expect(await provenanceStatusOf('document_studio_templates', legacyTargetId)).toBe('unknown');
 
-        const inventedKey = `m19-registry-invented-${randomUUID()}`;
-        const inventedRes = await request(mountRealApp())
-          .post(`/api/deliverables/templates/${legacyTargetId}/provenance/approve`)
-          .set('Authorization', `Bearer ${ownerA.token}`)
-          .set('Idempotency-Key', inventedKey)
-          .send(realProvenanceBody('not_a_real_registry_xyz'));
-        expect(inventedRes.status).toBe(400);
-        expect(inventedRes.body.code).toBe('UNSUPPORTED_TEMPLATE_REGISTRY');
-        expect(await receiptCount(orgA, inventedKey)).toBe(0);
-      },
-      20000
-    );
+      const inventedKey = `m19-registry-invented-${randomUUID()}`;
+      const inventedRes = await request(mountRealApp())
+        .post(`/api/deliverables/templates/${legacyTargetId}/provenance/approve`)
+        .set('Authorization', `Bearer ${ownerA.token}`)
+        .set('Idempotency-Key', inventedKey)
+        .send(realProvenanceBody('not_a_real_registry_xyz'));
+      expect(inventedRes.status).toBe(400);
+      expect(inventedRes.body.code).toBe('UNSUPPORTED_TEMPLATE_REGISTRY');
+      expect(await receiptCount(orgA, inventedKey)).toBe(0);
+    }, 20000);
 
-    it(
-      '10. 8 concurrent identical approvals -> exactly one 201, seven 200 replays, one receipt row, status flips once',
-      async () => {
-        const templateId = await seedPresentationTemplate(orgA, 'concurrency-target');
-        const key = `m19-concurrency-${randomUUID()}`;
-        const body = realProvenanceBody('presentation_templates');
+    it('10. 8 concurrent identical approvals -> exactly one 201, seven 200 replays, one receipt row, status flips once', async () => {
+      const templateId = await seedPresentationTemplate(orgA, 'concurrency-target');
+      const key = `m19-concurrency-${randomUUID()}`;
+      const body = realProvenanceBody('presentation_templates');
 
-        const responses = await Promise.all(
-          Array.from({ length: 8 }, () =>
-            request(mountRealApp())
-              .post(`/api/deliverables/templates/${templateId}/provenance/approve`)
-              .set('Authorization', `Bearer ${ownerA.token}`)
-              .set('Idempotency-Key', key)
-              .send(body)
-          )
-        );
+      const responses = await Promise.all(
+        Array.from({ length: 8 }, () =>
+          request(mountRealApp())
+            .post(`/api/deliverables/templates/${templateId}/provenance/approve`)
+            .set('Authorization', `Bearer ${ownerA.token}`)
+            .set('Idempotency-Key', key)
+            .send(body)
+        )
+      );
 
-        const created = responses.filter((r) => r.status === 201);
-        const replayed = responses.filter((r) => r.status === 200);
-        expect(created.length).toBe(1);
-        expect(replayed.length).toBe(7);
-        expect(created[0].body.replayed).toBe(false);
-        for (const r of replayed) expect(r.body.replayed).toBe(true);
+      const created = responses.filter((r) => r.status === 201);
+      const replayed = responses.filter((r) => r.status === 200);
+      expect(created.length).toBe(1);
+      expect(replayed.length).toBe(7);
+      expect(created[0].body.replayed).toBe(false);
+      for (const r of replayed) expect(r.body.replayed).toBe(true);
 
-        expect(await receiptCount(orgA, key)).toBe(1);
-        expect(await provenanceStatusOf('presentation_templates', templateId)).toBe('approved');
-      },
-      20000
-    );
+      expect(await receiptCount(orgA, key)).toBe(1);
+      expect(await provenanceStatusOf('presentation_templates', templateId)).toBe('approved');
+    }, 20000);
 
-    it(
-      '11. Cold replay through a NEW Pool and a NEW express mount returns the same receipt with replayed:true',
-      async () => {
-        const templateId = await seedDocStudioTemplate(orgA, 'cold-replay-target');
-        const key = `m19-coldreplay-${randomUUID()}`;
-        const body = realProvenanceBody('document_studio_templates');
+    it('11. Cold replay through a NEW Pool and a NEW express mount returns the same receipt with replayed:true', async () => {
+      const templateId = await seedDocStudioTemplate(orgA, 'cold-replay-target');
+      const key = `m19-coldreplay-${randomUUID()}`;
+      const body = realProvenanceBody('document_studio_templates');
 
-        const firstRes = await request(mountRealApp())
+      const firstRes = await request(mountRealApp())
+        .post(`/api/deliverables/templates/${templateId}/provenance/approve`)
+        .set('Authorization', `Bearer ${ownerA.token}`)
+        .set('Idempotency-Key', key)
+        .send(body);
+      expect(firstRes.status).toBe(201);
+
+      // A genuinely new Pool (not the fixture `pool` above) and a
+      // genuinely new Express mount around the same router module
+      // instance — the router itself carries no per-request state, so a
+      // matching replay here proves the replay comes from the database
+      // row, not from any in-memory cache tied to a specific
+      // app/connection instance.
+      const coldPool = new Pool({ connectionString: DATABASE_URL });
+      try {
+        const coldApp = mountRealApp();
+        const replayRes = await request(coldApp)
           .post(`/api/deliverables/templates/${templateId}/provenance/approve`)
           .set('Authorization', `Bearer ${ownerA.token}`)
           .set('Idempotency-Key', key)
           .send(body);
-        expect(firstRes.status).toBe(201);
 
-        // A genuinely new Pool (not the fixture `pool` above) and a
-        // genuinely new Express mount around the same router module
-        // instance — the router itself carries no per-request state, so a
-        // matching replay here proves the replay comes from the database
-        // row, not from any in-memory cache tied to a specific
-        // app/connection instance.
-        const coldPool = new Pool({ connectionString: DATABASE_URL });
-        try {
-          const coldApp = mountRealApp();
-          const replayRes = await request(coldApp)
-            .post(`/api/deliverables/templates/${templateId}/provenance/approve`)
-            .set('Authorization', `Bearer ${ownerA.token}`)
-            .set('Idempotency-Key', key)
-            .send(body);
+        expect(replayRes.status).toBe(200);
+        expect(replayRes.body.replayed).toBe(true);
+        expect(replayRes.body.receipt).toEqual(firstRes.body.receipt);
 
-          expect(replayRes.status).toBe(200);
-          expect(replayRes.body.replayed).toBe(true);
-          expect(replayRes.body.receipt).toEqual(firstRes.body.receipt);
-
-          const coldCheck = await coldPool.query<{ count: number }>(
-            `SELECT count(*)::int AS count FROM template_provenance_approval_receipts
+        const coldCheck = await coldPool.query<{ count: number }>(
+          `SELECT count(*)::int AS count FROM template_provenance_approval_receipts
               WHERE organization_id = $1 AND idempotency_key = $2`,
-            [orgA, key]
-          );
-          expect(Number(coldCheck.rows[0]?.count ?? 0)).toBe(1);
-        } finally {
-          await coldPool.end();
-        }
-      },
-      20000
-    );
+          [orgA, key]
+        );
+        expect(Number(coldCheck.rows[0]?.count ?? 0)).toBe(1);
+      } finally {
+        await coldPool.end();
+      }
+    }, 20000);
 
     it('12. Same key, different authorized actor -> 409 IDEMPOTENCY_KEY_REUSED (the digest binds the actor), zero new receipt', async () => {
       const templateX = await seedDocStudioTemplate(orgA, 'actor-binding-first');
@@ -1334,88 +1365,82 @@ describe.skipIf(!REAL_PG)(
       expect(await receiptCountForTarget(orgA, 'presentation_templates', templateId)).toBe(1);
     });
 
-    it(
-      '16. Forced rollback atomicity: a poisoned CHECK constraint fails the status UPDATE mid-transaction -> zero receipt residue, provenance_status unchanged',
-      async () => {
-        const poisonId = randomUUID();
-        const constraintName = `ck_m19_poison_${randomUUID().replace(/-/g, '_')}`;
+    it('16. Forced rollback atomicity: a poisoned CHECK constraint fails the status UPDATE mid-transaction -> zero receipt residue, provenance_status unchanged', async () => {
+      const poisonId = randomUUID();
+      const constraintName = `ck_m19_poison_${randomUUID().replace(/-/g, '_')}`;
 
-        await pool.query(
-          `INSERT INTO presentation_templates
+      await pool.query(
+        `INSERT INTO presentation_templates
              (id, organization_id, name, deck_type, outline_json, is_system, is_active)
            VALUES ($1, $2, $3, 'policy', '[]', FALSE, TRUE)`,
-          [poisonId, orgA, 'atomicity-poison-fixture']
-        );
-        // poisonId is a crypto.randomUUID() output (fixed hex/dash charset,
-        // never user input), so interpolating it into DDL here carries no
-        // injection risk. The CHECK only ever evaluates false for THIS row
-        // transitioning to 'approved' — for every other row `id = poisonId`
-        // is false, so the CHECK is trivially true for them regardless of
-        // their own provenance_status. This reproduces
-        // deliverableTemplateService.ts:1521-1532 (the status UPDATE, which
-        // has no try/catch of its own unlike the receipt INSERT above it)
-        // failing mid-transaction WITHOUT touching any file under server/.
-        await pool.query(
-          `ALTER TABLE presentation_templates ADD CONSTRAINT ${constraintName}
+        [poisonId, orgA, 'atomicity-poison-fixture']
+      );
+      // poisonId is a crypto.randomUUID() output (fixed hex/dash charset,
+      // never user input), so interpolating it into DDL here carries no
+      // injection risk. The CHECK only ever evaluates false for THIS row
+      // transitioning to 'approved' — for every other row `id = poisonId`
+      // is false, so the CHECK is trivially true for them regardless of
+      // their own provenance_status. This reproduces
+      // deliverableTemplateService.ts:1521-1532 (the status UPDATE, which
+      // has no try/catch of its own unlike the receipt INSERT above it)
+      // failing mid-transaction WITHOUT touching any file under server/.
+      await pool.query(
+        `ALTER TABLE presentation_templates ADD CONSTRAINT ${constraintName}
              CHECK (NOT (id = '${poisonId}' AND provenance_status = 'approved'))`
-        );
+      );
 
-        try {
-          const key = `m19-atomicity-${randomUUID()}`;
-          const res = await request(mountRealApp())
-            .post(`/api/deliverables/templates/${poisonId}/provenance/approve`)
-            .set('Authorization', `Bearer ${ownerA.token}`)
-            .set('Idempotency-Key', key)
-            .send(realProvenanceBody('presentation_templates'));
-
-          // The CHECK violation (23514) is a raw, un-typed Postgres error —
-          // it matches none of the route's typed `instanceof` branches
-          // (deliverableTemplates.routes.ts:308-338), so it falls through to
-          // the generic 500 branch: same shape as the mock-only "never
-          // echoes the raw error text" test earlier in this file.
-          expect(res.status).toBe(500);
-          expect(res.body).toEqual({ error: 'Failed to approve template provenance' });
-
-          expect(await receiptCount(orgA, key)).toBe(0);
-          expect(await provenanceStatusOf('presentation_templates', poisonId)).toBe('unknown');
-        } finally {
-          await pool.query(`ALTER TABLE presentation_templates DROP CONSTRAINT IF EXISTS ${constraintName}`);
-          await pool.query(`DELETE FROM presentation_templates WHERE id = $1`, [poisonId]);
-        }
-      },
-      20000
-    );
-
-    it(
-      '17. Quarantine visibility through the real listDeliverableTemplates (GET /templates?type=deck): absent before approval, present after',
-      async () => {
-        const templateId = await seedPresentationTemplate(orgA, 'quarantine-visibility-target');
-
-        const before = await request(mountRealApp())
-          .get('/api/deliverables/templates?type=deck')
-          .set('Authorization', `Bearer ${ownerA.token}`);
-        expect(before.status).toBe(200);
-        // listDeckTemplates (deliverableTemplateService.ts:135-150, legacy
-        // fallback at :116-119) filters `provenance_status = 'approved'`;
-        // this row starts 'unknown' (the m19 migration's column default), so
-        // it must be absent from the list.
-        expect(before.body.templates.map((t: { id: string }) => t.id)).not.toContain(templateId);
-
-        const key = `m19-quarantine-${randomUUID()}`;
-        const approveRes = await request(mountRealApp())
-          .post(`/api/deliverables/templates/${templateId}/provenance/approve`)
+      try {
+        const key = `m19-atomicity-${randomUUID()}`;
+        const res = await request(mountRealApp())
+          .post(`/api/deliverables/templates/${poisonId}/provenance/approve`)
           .set('Authorization', `Bearer ${ownerA.token}`)
           .set('Idempotency-Key', key)
           .send(realProvenanceBody('presentation_templates'));
-        expect(approveRes.status).toBe(201);
 
-        const after = await request(mountRealApp())
-          .get('/api/deliverables/templates?type=deck')
-          .set('Authorization', `Bearer ${ownerA.token}`);
-        expect(after.status).toBe(200);
-        expect(after.body.templates.map((t: { id: string }) => t.id)).toContain(templateId);
-      },
-      20000
-    );
+        // The CHECK violation (23514) is a raw, un-typed Postgres error —
+        // it matches none of the route's typed `instanceof` branches
+        // (deliverableTemplates.routes.ts:308-338), so it falls through to
+        // the generic 500 branch: same shape as the mock-only "never
+        // echoes the raw error text" test earlier in this file.
+        expect(res.status).toBe(500);
+        expect(res.body).toEqual({ error: 'Failed to approve template provenance' });
+
+        expect(await receiptCount(orgA, key)).toBe(0);
+        expect(await provenanceStatusOf('presentation_templates', poisonId)).toBe('unknown');
+      } finally {
+        await pool.query(
+          `ALTER TABLE presentation_templates DROP CONSTRAINT IF EXISTS ${constraintName}`
+        );
+        await pool.query(`DELETE FROM presentation_templates WHERE id = $1`, [poisonId]);
+      }
+    }, 20000);
+
+    it('17. Quarantine visibility through the real listDeliverableTemplates (GET /templates?type=deck): absent before approval, present after', async () => {
+      const templateId = await seedPresentationTemplate(orgA, 'quarantine-visibility-target');
+
+      const before = await request(mountRealApp())
+        .get('/api/deliverables/templates?type=deck')
+        .set('Authorization', `Bearer ${ownerA.token}`);
+      expect(before.status).toBe(200);
+      // listDeckTemplates (deliverableTemplateService.ts:135-150, legacy
+      // fallback at :116-119) filters `provenance_status = 'approved'`;
+      // this row starts 'unknown' (the m19 migration's column default), so
+      // it must be absent from the list.
+      expect(before.body.templates.map((t: { id: string }) => t.id)).not.toContain(templateId);
+
+      const key = `m19-quarantine-${randomUUID()}`;
+      const approveRes = await request(mountRealApp())
+        .post(`/api/deliverables/templates/${templateId}/provenance/approve`)
+        .set('Authorization', `Bearer ${ownerA.token}`)
+        .set('Idempotency-Key', key)
+        .send(realProvenanceBody('presentation_templates'));
+      expect(approveRes.status).toBe(201);
+
+      const after = await request(mountRealApp())
+        .get('/api/deliverables/templates?type=deck')
+        .set('Authorization', `Bearer ${ownerA.token}`);
+      expect(after.status).toBe(200);
+      expect(after.body.templates.map((t: { id: string }) => t.id)).toContain(templateId);
+    }, 20000);
   }
 );

@@ -1303,6 +1303,74 @@ export type TemplateProvenanceApprovalResult = {
   replayed: boolean;
 };
 
+export type PendingTemplateProvenance = {
+  registry: TemplateProvenanceRegistry;
+  templateId: string;
+  name: string;
+  provenanceStatus: 'unknown' | 'quarantined';
+};
+
+/**
+ * Rights queue for the mounted Materials UI. This is deliberately separate
+ * from the generation list: pending rows stay unusable/quarantined while an
+ * authorized tenant owner can see exactly what still needs an attestation.
+ */
+export async function listPendingTemplateProvenance(params: {
+  organizationId: string;
+  actorUserId: string;
+}): Promise<PendingTemplateProvenance[]> {
+  const organizationId = requireNonEmpty(params.organizationId, 'organizationId');
+  const actorUserId = requireNonEmpty(params.actorUserId, 'actorUserId');
+  return withPgTransaction(async (client) => {
+    const membership = await client.query<{ role: string }>(
+      `SELECT role FROM organization_members
+        WHERE organization_id = ? AND user_id = ? AND UPPER(status) = 'ACTIVE'`,
+      [organizationId, actorUserId]
+    );
+    const tenantRole = String(membership.rows[0]?.role || '').toUpperCase();
+    if (!membership.rows.length) {
+      throw new TemplateProvenanceForbiddenError(
+        'ORG_MEMBERSHIP_REVOKED',
+        'Active organization membership required'
+      );
+    }
+    if (!(PROVENANCE_APPROVER_ROLES as readonly string[]).includes(tenantRole)) {
+      throw new TemplateProvenanceForbiddenError(
+        'PROVENANCE_ROLE_REQUIRED',
+        'Organization OWNER or ADMIN role required'
+      );
+    }
+
+    const rows = await client.query<{
+      registry: TemplateProvenanceRegistry;
+      template_id: string;
+      name: string;
+      provenance_status: 'unknown' | 'quarantined';
+    }>(
+      `SELECT 'document_studio_templates'::text AS registry,
+              template_id::text AS template_id, name, provenance_status
+         FROM document_studio_templates
+        WHERE organization_id = ? AND provenance_status IN ('unknown','quarantined')
+       UNION ALL
+       SELECT 'presentation_templates'::text, id::text, name, provenance_status
+         FROM presentation_templates
+        WHERE organization_id = ? AND provenance_status IN ('unknown','quarantined')
+       UNION ALL
+       SELECT 'tp_base_templates'::text, id::text, name, provenance_status
+         FROM tp_base_templates
+        WHERE organization_id = ? AND provenance_status IN ('unknown','quarantined')
+       ORDER BY name, template_id`,
+      [organizationId, organizationId, organizationId]
+    );
+    return rows.rows.map((row) => ({
+      registry: row.registry,
+      templateId: row.template_id,
+      name: row.name,
+      provenanceStatus: row.provenance_status,
+    }));
+  });
+}
+
 function requireNonEmpty(value: unknown, field: string): string {
   const text = typeof value === 'string' ? value.trim() : '';
   if (!text) throw new TemplateProvenanceInvalidError(field);

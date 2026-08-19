@@ -254,6 +254,8 @@ export const ExceleView: React.FC = () => {
         workbookClassification: wbData?.classification ?? 'internal',
         workbookLifecycle: wbData?.lifecycleStatus ?? 'draft',
         workbookApprovalCurrent: wbData?.approvalCurrent === true,
+        workbookShareActive: wbData?.shareActive === true,
+        workbookShareExpiresAt: wbData?.shareExpiresAt ?? null,
         sourcePack: wbData?.sourcePack,
         evidenceRefs: Array.isArray(wbData?.evidenceRefs) ? wbData.evidenceRefs : [],
         qualityReport: wbData?.qualityReport ?? null,
@@ -336,6 +338,21 @@ export const ExceleView: React.FC = () => {
   // artefaktu-arkusza dla kebaba (kod obiektu/link) i prawego panelu.
   const effectiveWorkbookId =
     (effectivePreview as any)?.workbookId || reopenWorkbookId || artifactId || null;
+
+  const downloadGovernedWorkbook = useCallback(
+    (mode: 'draft' | 'final' = 'draft') => {
+      if (!effectiveWorkbookId) {
+        void pipeline.handleDownload();
+        return;
+      }
+      window.open(
+        `/api/workbook/${encodeURIComponent(effectiveWorkbookId)}/download${mode === 'final' ? '?mode=final' : ''}`,
+        '_blank',
+        'noopener,noreferrer'
+      );
+    },
+    [effectiveWorkbookId, pipeline]
+  );
 
   const copyObjectCode = useCallback(async () => {
     if (!effectiveWorkbookId) return;
@@ -500,7 +517,7 @@ export const ExceleView: React.FC = () => {
       <SpreadsheetArtifactStudio
         preview={effectivePreview}
         workbookId={effectiveWorkbookId}
-        onDownload={pipeline.handleDownload}
+        onDownload={downloadGovernedWorkbook}
         onCopyLink={() => {
           const href = buildArtifactPermalink('sheet', effectiveWorkbookId);
           void navigator.clipboard.writeText(href);

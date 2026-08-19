@@ -19,11 +19,13 @@ import userEvent from '@testing-library/user-event';
 const writeTextMock = vi.fn().mockResolvedValue(undefined);
 
 const postMock = vi.fn();
+const getMock = vi.fn();
+const deleteMock = vi.fn();
 vi.mock('@/services/api', () => ({
   Api: {
     post: (...args: any[]) => postMock(...args),
-    get: vi.fn(),
-    delete: vi.fn(),
+    get: (...args: any[]) => getMock(...args),
+    delete: (...args: any[]) => deleteMock(...args),
   },
 }));
 
@@ -56,6 +58,10 @@ describe('ShareModal — Collaborate invite (P3.1)', () => {
     vi.clearAllMocks();
     (import.meta.env as any).VITE_ENABLE_DECK_COLLABORATE = 'true';
     postMock.mockResolvedValue({ data: { data: { shareToken: 'tok_abc123', expiresAt: 'x' } } });
+    getMock.mockResolvedValue({
+      data: { data: { active: false, shareToken: null, expiresAt: null } },
+    });
+    deleteMock.mockResolvedValue({ data: { data: { revoked: true } } });
     writeTextMock.mockClear();
     // navigator.clipboard may be getter-only / present in jsdom → ensure a
     // no-throw stub exists so the invite's copy step doesn't blow up.
@@ -119,7 +125,7 @@ describe('ShareModal — Collaborate invite (P3.1)', () => {
     );
     renderModal();
 
-    await user.click(screen.getByRole('button', { name: 'OFF' }));
+    await user.click(await screen.findByRole('button', { name: 'OFF' }));
 
     await waitFor(() =>
       expect(screen.getByDisplayValue(/presentations\/shared\/tok_runtime/)).toBeInTheDocument()
@@ -155,5 +161,36 @@ describe('ShareModal — Collaborate invite (P3.1)', () => {
     await user.click(editorBtn);
     expect(editorBtn).toHaveAttribute('aria-pressed', 'true');
     expect(viewerBtn).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('cold-reopens an active link, rotates it and revokes it through the mounted lifecycle', async () => {
+    const user = userEvent.setup();
+    getMock.mockResolvedValue(
+      proxiedApiResponse({
+        success: true,
+        data: { active: true, shareToken: 'tok_old', expiresAt: '2026-08-26T10:00:00.000Z' },
+      })
+    );
+    postMock.mockResolvedValue(
+      proxiedApiResponse({
+        success: true,
+        data: { shareToken: 'tok_new', expiresAt: '2026-08-27T10:00:00.000Z' },
+      })
+    );
+    renderModal();
+
+    expect(await screen.findByDisplayValue(/presentations\/shared\/tok_old/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Rotate link' }));
+    await waitFor(() =>
+      expect(postMock).toHaveBeenCalledWith('/presentations/decks/deck-1/share', {
+        expiresInDays: 7,
+      })
+    );
+    expect(await screen.findByDisplayValue(/presentations\/shared\/tok_new/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'ON' }));
+    await waitFor(() =>
+      expect(deleteMock).toHaveBeenCalledWith('/presentations/decks/deck-1/share')
+    );
+    expect(screen.getByRole('button', { name: 'OFF' })).toBeInTheDocument();
   });
 });

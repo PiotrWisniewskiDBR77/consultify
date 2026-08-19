@@ -15,7 +15,7 @@ import {
   MessageCircle,
   X,
 } from 'lucide-react';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -60,6 +60,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   const [linkCopied, setLinkCopied] = useState(false);
   const [publicLink, setPublicLink] = useState(false);
   const [shareToken, setShareToken] = useState<string | null>(null);
+  const [shareExpiresAt, setShareExpiresAt] = useState<string | null>(null);
   const [generatingLink, setGeneratingLink] = useState(false);
   // P3.3 — invite state (Collaborate tab). Invite now creates a real per-user
   // membership row (presentation_deck_collaborators) with the chosen role, and
@@ -69,35 +70,85 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   const [invitePermission, setInvitePermission] = useState<'viewer' | 'editor'>('viewer');
   const [inviting, setInviting] = useState(false);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    setGeneratingLink(true);
+    void Api.get(`/presentations/decks/${deckId}/share`)
+      .then((res) => {
+        if (cancelled) return;
+        const data = unwrapApiEnvelope<{
+          active?: boolean;
+          shareToken?: string | null;
+          expiresAt?: string | null;
+        }>(res);
+        setPublicLink(data?.active === true);
+        setShareToken(data?.active ? data.shareToken || null : null);
+        setShareExpiresAt(data?.active ? data.expiresAt || null : null);
+      })
+      .catch(() => {
+        if (!cancelled) toast.error('Failed to load share state');
+      })
+      .finally(() => {
+        if (!cancelled) setGeneratingLink(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [deckId, isOpen]);
+
   // Ensures a share token exists, returning it. Reuses the existing
   // POST /decks/:id/share endpoint (org-scoped, audited, rate-limited).
-  const ensureShareToken = useCallback(async (): Promise<string | null> => {
-    if (shareToken) {
-      setPublicLink(true);
-      return shareToken;
-    }
-    setGeneratingLink(true);
-    try {
-      const res = await Api.post(`/presentations/decks/${deckId}/share`, { expiresInDays: 7 });
-      const data = unwrapApiEnvelope<{ shareToken?: string }>(res);
-      if (data?.shareToken) {
-        setShareToken(data.shareToken);
+  const ensureShareToken = useCallback(
+    async (forceRotate = false): Promise<string | null> => {
+      if (shareToken && !forceRotate) {
         setPublicLink(true);
-        return data.shareToken as string;
+        return shareToken;
       }
-      toast.error('Failed to generate share link');
-      return null;
-    } catch {
-      toast.error('Failed to generate share link');
-      return null;
-    } finally {
-      setGeneratingLink(false);
-    }
-  }, [deckId, shareToken]);
+      setGeneratingLink(true);
+      try {
+        const res = await Api.post(`/presentations/decks/${deckId}/share`, { expiresInDays: 7 });
+        const data = unwrapApiEnvelope<{ shareToken?: string; expiresAt?: string }>(res);
+        if (data?.shareToken) {
+          setShareToken(data.shareToken);
+          setShareExpiresAt(data.expiresAt || null);
+          setPublicLink(true);
+          return data.shareToken as string;
+        }
+        toast.error('Failed to generate share link');
+        return null;
+      } catch {
+        toast.error('Failed to generate share link');
+        return null;
+      } finally {
+        setGeneratingLink(false);
+      }
+    },
+    [deckId, shareToken]
+  );
 
   const generateShareLink = useCallback(async () => {
     await ensureShareToken();
   }, [ensureShareToken]);
+
+  const rotateShareLink = useCallback(async () => {
+    await ensureShareToken(true);
+  }, [ensureShareToken]);
+
+  const revokeShareLink = useCallback(async () => {
+    setGeneratingLink(true);
+    try {
+      await Api.delete(`/presentations/decks/${deckId}/share`);
+      setPublicLink(false);
+      setShareToken(null);
+      setShareExpiresAt(null);
+      toast.success(t('presentations.builder.share.revoked', 'Share link revoked'));
+    } catch {
+      toast.error(t('presentations.builder.share.revokeFailed', 'Failed to revoke share link'));
+    } finally {
+      setGeneratingLink(false);
+    }
+  }, [deckId, t]);
 
   // P3.3 — real invite handler. Creates a per-user membership row
   // (POST /decks/:id/collaborators with the chosen role), then hands the
@@ -182,9 +233,9 @@ export const ShareModal: React.FC<ShareModalProps> = ({
 
   const handleTogglePublicLink = () => {
     if (!publicLink) {
-      generateShareLink();
+      void generateShareLink();
     } else {
-      setPublicLink(false);
+      void revokeShareLink();
     }
   };
 
@@ -368,6 +419,20 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                       'Anyone with the link can view'
                     )}
                   </p>
+                  {shareExpiresAt ? (
+                    <p className="text-xs text-c-text-secondary">
+                      {t('presentations.builder.share.expires', 'Expires')}:{' '}
+                      {new Date(shareExpiresAt).toLocaleString()}
+                    </p>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => void rotateShareLink()}
+                    disabled={generatingLink}
+                    className="w-full rounded-lg border border-c-border-subtle px-3 py-2 text-sm text-c-text hover:bg-c-surface-raised disabled:opacity-50"
+                  >
+                    {t('presentations.builder.share.rotate', 'Rotate link')}
+                  </button>
                 </>
               )}
             </div>

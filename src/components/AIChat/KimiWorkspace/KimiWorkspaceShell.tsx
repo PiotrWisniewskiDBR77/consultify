@@ -96,6 +96,8 @@ export interface ArtifactPreview {
   workbookClassification?: 'public' | 'internal' | 'confidential';
   workbookLifecycle?: 'draft' | 'in_review' | 'approved' | 'final';
   workbookApprovalCurrent?: boolean;
+  workbookShareActive?: boolean;
+  workbookShareExpiresAt?: string | null;
   sourcePack?: unknown;
   evidenceRefs?: unknown[];
   qualityReport?: {
@@ -950,27 +952,27 @@ function ArtifactPreviewPane({
         preview.sheetNames &&
         preview.sheetNames.length > 0 &&
         !(isExceleEditEnabled() && preview.rawSheets && preview.rawSheets.length > 0) && (
-        <div
-          role="tablist"
-          className="flex items-center gap-0.5 px-2 py-1.5 border-t border-c-border-subtle bg-c-surface-raised overflow-x-auto shrink-0"
-        >
-          {preview.sheetNames.map((name, i) => (
-            <button
-              key={i}
-              role="tab"
-              aria-selected={activeSheet === i}
-              onClick={() => setActiveSheet(i)}
-              className={`px-3 py-1 text-xs rounded-hig-xs whitespace-nowrap transition-colors ${
-                activeSheet === i
-                  ? 'bg-c-surface text-c-text font-medium shadow-sm'
-                  : 'text-c-text-secondary hover:text-c-text'
-              }`}
-            >
-              {name}
-            </button>
-          ))}
-        </div>
-      )}
+          <div
+            role="tablist"
+            className="flex items-center gap-0.5 px-2 py-1.5 border-t border-c-border-subtle bg-c-surface-raised overflow-x-auto shrink-0"
+          >
+            {preview.sheetNames.map((name, i) => (
+              <button
+                key={i}
+                role="tab"
+                aria-selected={activeSheet === i}
+                onClick={() => setActiveSheet(i)}
+                className={`px-3 py-1 text-xs rounded-hig-xs whitespace-nowrap transition-colors ${
+                  activeSheet === i
+                    ? 'bg-c-surface text-c-text font-medium shadow-sm'
+                    : 'text-c-text-secondary hover:text-c-text'
+                }`}
+              >
+                {name}
+              </button>
+            ))}
+          </div>
+        )}
 
       {/* Download bar */}
       {(onPreviewFile || onAllFiles) && (

@@ -18,6 +18,7 @@ import {
   Package2,
   PenLine,
   Presentation,
+  ShieldCheck,
   Sparkles,
   Table2,
   Wand2,
@@ -56,6 +57,7 @@ import { PresentationsTabContent } from './PresentationsTabContent';
 import { ReportsTabContent } from './ReportsTabContent';
 import { type SheetsSubView, SheetsTabContent } from './SheetsTabContent';
 import { TemplatesTabContent } from './TemplatesTabContent';
+import { TemplateProvenanceApprovalDialog } from './TemplateProvenanceApprovalDialog';
 import type {
   PresentationSourceType,
   PresentationStatus,
@@ -575,6 +577,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   // szablonów otwiera zamiast niego tablicę format→tryb→architekt (item 4
   // briefu Materiały-entry — decyzja świadoma, patrz handoff/renderNotes).
   const [templateBuilderOpen, setTemplateBuilderOpen] = useState(false);
+  const [templateProvenanceOpen, setTemplateProvenanceOpen] = useState(false);
 
   const handleNewItem = useCallback(() => {
     switch (activeTab) {
@@ -930,6 +933,17 @@ export const ReportsAndPresentationsHub: React.FC = () => {
 
     return (
       <div className="relative flex items-center gap-2">
+        {activeTab === 'templates' ? (
+          <button
+            type="button"
+            onClick={() => setTemplateProvenanceOpen(true)}
+            className={`${chipBase} bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus`}
+            title={t('rap.templates.provenanceQueue', 'Pochodzenie i prawa')}
+          >
+            <ShieldCheck size={16} />
+            <span>{t('rap.templates.provenanceQueue', 'Pochodzenie i prawa')}</span>
+          </button>
+        ) : null}
         {draftsToggle}
         {reportCanon}
         <button
@@ -1147,6 +1161,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     t,
     templatesView,
     toggleFilter,
+    setTemplateProvenanceOpen,
   ]);
 
   const commandRowLeftSlot = useMemo(() => {
@@ -1631,6 +1646,11 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         modeTiles={templateModeTiles}
         onSelect={handleTemplateLauncherSelect}
         testId="template-library-create-launcher"
+      />
+      <TemplateProvenanceApprovalDialog
+        open={templateProvenanceOpen}
+        onClose={() => setTemplateProvenanceOpen(false)}
+        onApproved={() => void refetchArtifactOutputs(showDrafts)}
       />
 
       {/* #83c/#83d — „Nowy szablon" (Biblioteka wzorców) → wizard→builder, za flagą

@@ -3147,6 +3147,35 @@ const shareRateLimiter = rateLimit({
   message: { success: false, error: 'Too many share operations, slow down.' },
 });
 
+// Cold-reopen state for the mounted share dialog. Same-tenant/capability
+// checks mirror mint/revoke; the token is returned only to an authenticated
+// caller already allowed to manage this deck's share lifecycle.
+router.get(
+  '/decks/:id/share',
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'presentation_share')) return;
+    const orgId = getOrgId(req);
+    const deck = (await dbGet(
+      `SELECT share_token, share_expires_at FROM presentation_decks
+        WHERE id = ? AND organization_id = ?`,
+      [req.params.id, orgId]
+    )) as { share_token?: string | null; share_expires_at?: string | null } | undefined;
+    if (!deck) return res.status(404).json({ success: false, error: 'Deck not found' });
+    const active = Boolean(
+      deck.share_token &&
+      (!deck.share_expires_at || new Date(deck.share_expires_at).getTime() > Date.now())
+    );
+    res.json({
+      success: true,
+      data: {
+        active,
+        shareToken: active ? deck.share_token : null,
+        expiresAt: active ? deck.share_expires_at : null,
+      },
+    });
+  })
+);
+
 // Share link
 router.post(
   '/decks/:id/share',

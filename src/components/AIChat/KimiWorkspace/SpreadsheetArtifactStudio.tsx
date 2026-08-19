@@ -49,7 +49,7 @@ import { recalcWorkbook, type FormulaSheet } from '@/utils/workbookFormulaEngine
 interface SpreadsheetArtifactStudioProps {
   preview: ArtifactPreview;
   workbookId: string;
-  onDownload: () => void;
+  onDownload: (mode?: 'draft' | 'final') => void;
   onCopyLink: () => void;
 }
 
@@ -170,6 +170,13 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
   const [approvalState, setApprovalState] = useState<Awaited<
     ReturnType<typeof Api.getWorkbookApprovalState>
   > | null>(null);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [shareActive, setShareActive] = useState(preview.workbookShareActive === true);
+  const [shareExpiresAt, setShareExpiresAt] = useState<string | null>(
+    preview.workbookShareExpiresAt ?? null
+  );
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [shareState, setShareState] = useState<'idle' | 'saving' | 'error'>('idle');
   const [reviewUsers, setReviewUsers] = useState<ReviewUser[]>([]);
   const [reviewerSearch, setReviewerSearch] = useState('');
   const [selectedReviewerId, setSelectedReviewerId] = useState('');
@@ -314,6 +321,44 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
     () => setLifecycleStatus(preview.workbookLifecycle ?? 'draft'),
     [preview.workbookLifecycle]
   );
+  useEffect(
+    () => setShareActive(preview.workbookShareActive === true),
+    [preview.workbookShareActive]
+  );
+  useEffect(
+    () => setShareExpiresAt(preview.workbookShareExpiresAt ?? null),
+    [preview.workbookShareExpiresAt]
+  );
+
+  const mintOrRotateShare = useCallback(async (): Promise<void> => {
+    setShareState('saving');
+    try {
+      const result = await Api.shareWorkbook(workbookId, 7);
+      const url =
+        result.shareUrl ||
+        `${window.location.origin}/shared/workbook/${encodeURIComponent(result.shareToken)}`;
+      setShareActive(true);
+      setShareExpiresAt(result.expiresAt);
+      setShareUrl(url);
+      setShareState('idle');
+      await navigator.clipboard?.writeText(url);
+    } catch {
+      setShareState('error');
+    }
+  }, [workbookId]);
+
+  const revokeShare = useCallback(async (): Promise<void> => {
+    setShareState('saving');
+    try {
+      await Api.revokeWorkbookShare(workbookId);
+      setShareActive(false);
+      setShareExpiresAt(null);
+      setShareUrl(null);
+      setShareState('idle');
+    } catch {
+      setShareState('error');
+    }
+  }, [workbookId]);
 
   const updateGovernance = useCallback(
     async (
@@ -1117,22 +1162,48 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
         },
       },
       {
-        id: 'copy-link',
-        label: 'Kopiuj link',
+        id: 'share',
+        label: shareActive ? 'Zarządzaj udostępnieniem' : 'Udostępnij',
         icon: Link2,
+        group: 'secondary',
+        dotTone: shareActive ? 'success' : null,
+        onClick: () => {
+          setShareState('idle');
+          setShareDialogOpen(true);
+        },
+      },
+      {
+        id: 'copy-link',
+        label: 'Kopiuj link wewnętrzny',
+        icon: Copy,
         group: 'overflow',
         onClick: onCopyLink,
       },
       {
         id: 'export',
         label: 'Eksportuj XLSX',
+        tooltip:
+          approvalState?.currentForVersion || preview.workbookApprovalCurrent
+            ? 'Eksport finalny z aktualnie zatwierdzonej wersji'
+            : 'Eksport roboczy; finalny wymaga aktualnego zatwierdzenia',
         icon: Download,
         kind: 'primary',
         group: 'primary',
-        onClick: onDownload,
+        onClick: () =>
+          onDownload(
+            approvalState?.currentForVersion || preview.workbookApprovalCurrent ? 'final' : 'draft'
+          ),
       },
     ],
-    [classification, lifecycleStatus, onCopyLink, onDownload]
+    [
+      approvalState?.currentForVersion,
+      classification,
+      lifecycleStatus,
+      onCopyLink,
+      onDownload,
+      preview.workbookApprovalCurrent,
+      shareActive,
+    ]
   );
 
   const registry = useMemo(
@@ -1503,7 +1574,10 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
           type="button"
           onClick={() => void bindSourceToSelection()}
           disabled={
-            !sourceLabelDraft.trim() || !activeSheetId || !selection?.address || sourceState === 'saving'
+            !sourceLabelDraft.trim() ||
+            !activeSheetId ||
+            !selection?.address ||
+            sourceState === 'saving'
           }
           className="min-h-10 w-full rounded-md bg-c-text px-3 text-sm font-medium text-c-surface disabled:opacity-50"
         >
@@ -2214,6 +2288,99 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
             {governanceState === 'error' ? (
               <p role="alert" className="mt-3 text-sm text-c-danger">
                 Zmiana została odrzucona przez politykę lub wystąpił konflikt wersji.
+              </p>
+            ) : null}
+          </section>
+        </div>
+      ) : null}
+      {shareDialogOpen ? (
+        <div
+          className="fixed inset-0 z-overlay flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm"
+          onMouseDown={(event) => {
+            if (event.currentTarget === event.target && shareState !== 'saving') {
+              setShareDialogOpen(false);
+            }
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="workbook-share-title"
+            className="w-full max-w-md rounded-xl border border-c-border bg-c-surface p-5 shadow-2xl"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 id="workbook-share-title" className="text-base font-semibold text-c-text">
+                  Udostępnianie skoroszytu
+                </h2>
+                <p className="mt-1 text-sm text-c-text-secondary">
+                  Publiczny link działa wyłącznie dla klasyfikacji Publiczny. Ponowne utworzenie
+                  rotuje token i natychmiast unieważnia poprzedni.
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-label="Zamknij"
+                disabled={shareState === 'saving'}
+                onClick={() => setShareDialogOpen(false)}
+                className="inline-flex size-10 items-center justify-center rounded-lg text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-45"
+              >
+                <X size={18} aria-hidden="true" />
+              </button>
+            </div>
+            <div className="mt-5 rounded-lg border border-c-border bg-c-surface-raised p-3 text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-c-text-secondary">Status</span>
+                <span className="font-medium text-c-text">
+                  {shareActive ? 'Aktywny' : 'Brak aktywnego linku'}
+                </span>
+              </div>
+              {shareExpiresAt ? (
+                <div className="mt-2 flex items-center justify-between gap-3">
+                  <span className="text-c-text-secondary">Wygasa</span>
+                  <span className="text-c-text">
+                    {new Date(shareExpiresAt).toLocaleString('pl-PL')}
+                  </span>
+                </div>
+              ) : null}
+            </div>
+            {shareUrl ? (
+              <button
+                type="button"
+                onClick={() => void navigator.clipboard?.writeText(shareUrl)}
+                className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-c-border px-4 text-sm font-medium text-c-text hover:bg-c-surface-raised"
+              >
+                <Copy size={16} aria-hidden="true" />
+                Kopiuj nowy link
+              </button>
+            ) : null}
+            <div className="mt-4 grid gap-2">
+              <button
+                type="button"
+                disabled={classification !== 'public' || shareState === 'saving'}
+                title={
+                  classification !== 'public' ? 'Najpierw ustaw klasyfikację Publiczny' : undefined
+                }
+                onClick={() => void mintOrRotateShare()}
+                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-c-text px-4 text-sm font-medium text-c-surface disabled:cursor-not-allowed disabled:opacity-45"
+              >
+                <Link2 size={16} aria-hidden="true" />
+                {shareActive ? 'Rotuj link i skopiuj' : 'Utwórz link na 7 dni'}
+              </button>
+              {shareActive ? (
+                <button
+                  type="button"
+                  disabled={shareState === 'saving'}
+                  onClick={() => void revokeShare()}
+                  className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-c-danger px-4 text-sm font-medium text-c-danger disabled:opacity-45"
+                >
+                  Cofnij udostępnienie
+                </button>
+              ) : null}
+            </div>
+            {shareState === 'error' ? (
+              <p role="alert" className="mt-3 text-sm text-c-danger">
+                Operacja została odrzucona. Sprawdź klasyfikację, uprawnienia i aktualny stan.
               </p>
             ) : null}
           </section>

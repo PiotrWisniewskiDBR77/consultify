@@ -21,6 +21,7 @@ import {
   createDeliverableTemplate,
   deleteDeliverableTemplate,
   getDeliverableTemplate,
+  listPendingTemplateProvenance,
   listDeliverableTemplates,
   syncWorkbookTemplateArtifactLifecycle,
   TemplateForbiddenError,
@@ -66,6 +67,25 @@ router.get('/templates', async (req, res) => {
   } catch (err) {
     logger.error('[deliverableTemplates] Failed to load templates', { err, type });
     res.status(500).json({ error: 'Failed to load templates' });
+  }
+});
+
+// Pending provenance never joins the normal template list: those rows remain
+// quarantined and unusable until the explicit governed command succeeds.
+router.get('/templates-provenance/pending', async (req, res) => {
+  try {
+    const templates = await listPendingTemplateProvenance({
+      organizationId: getOrgId(req),
+      actorUserId: getUserId(req),
+    });
+    res.json({ templates });
+  } catch (err) {
+    if (err instanceof TemplateProvenanceForbiddenError) {
+      res.status(403).json({ error: err.message, code: err.code });
+      return;
+    }
+    logger.error('[deliverableTemplates] Failed to load pending provenance', { err });
+    res.status(500).json({ error: 'Failed to load pending template provenance' });
   }
 });
 
