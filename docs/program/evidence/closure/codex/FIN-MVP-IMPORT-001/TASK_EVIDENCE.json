@@ -2,6 +2,9 @@
   "taskId": "FIN-MVP-IMPORT-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
   "productSha": "c4b242882ba9bade05184b22c75dc7761d8ac1d2",
+  "technicalSourceSha": "6c3da01c0cee01485dcf6b239ec96edc77f1e92c",
+  "testedSha": "ee0b7aac4935be380bc1cab359b6917625435a00",
+  "reconciliationSha": "ee0b7aac4935be380bc1cab359b6917625435a00",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
   "changedPaths": [
     "server/migrations/20260918_finance_import_receipts.sql",
@@ -17,7 +20,11 @@
   },
   "ownerTables": ["finance_working_revisions", "finance_import_receipts", "finance_stmt_lines"],
   "commands": [
-    {"command": "RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=<isolated-local-pg> npx vitest run server/src/routes/v8/finance-v2/__tests__/export-import.routes.pg.test.ts", "exitCode": 0, "result": "11 tests passed; XLSX export/parse/preview/correct/apply/readback, CAS and cross-tenant controls"}
+    {
+      "command": "RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=<isolated-local-pg> npx vitest run server/src/routes/v8/finance-v2/__tests__/export-import.routes.pg.test.ts",
+      "exitCode": 0,
+      "result": "11 tests passed; XLSX export/parse/preview/correct/apply/readback, CAS and cross-tenant controls"
+    }
   ],
   "technicalClosure20260817": {
     "candidateSha": "6738c593779557f6e41f49895824adf2147b4740",
@@ -25,22 +32,158 @@
     "typecheck": "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check; exit 0",
     "focusedRealPostgres": "exit 0; 1/1 file; 14/14 tests; 0 failed/skipped/todo"
   },
-  "denominators": {"xlsxCsvRouteTests": "14/14"},
-  "fixtures": {"database": "fresh disposable local PostgreSQL", "format": "representative XLSX workbook and CSV Values file"},
+  "denominators": { "xlsxCsvRouteTests": "14/14" },
+  "fixtures": {
+    "database": "fresh disposable local PostgreSQL",
+    "format": "representative XLSX workbook and CSV Values file"
+  },
   "negativeControls": [
     "stale working revision returns 409 and is not silently applied twice",
     "cross-tenant export and preview return uniform 404",
-    "malformed cross-tenant request does not disclose validation shape before authorization"
-    ,"invalid numeric CSV/XLSX-mapped row returns rowErrors and leaves canonical value byte-equivalent"
-    ,"same idempotency key with changed payload returns 409 IDEMPOTENCY_PAYLOAD_COLLISION"
-    ,"8 concurrent identical applies create one revision effect and one immutable receipt"
-    ,"direct receipt UPDATE is rejected by the database trigger"
+    "malformed cross-tenant request does not disclose validation shape before authorization",
+    "invalid numeric CSV/XLSX-mapped row returns rowErrors and leaves canonical value byte-equivalent",
+    "same idempotency key with changed payload returns 409 IDEMPOTENCY_PAYLOAD_COLLISION",
+    "8 concurrent identical applies create one revision effect and one immutable receipt",
+    "direct receipt UPDATE is rejected by the database trigger"
   ],
   "browserArtifacts": [],
-  "rollback": {"code": "Revert the four technical changed paths after disabling new imports.", "data": "Non-destructive: retain immutable receipts and additive schema for audit; do not drop receipt evidence."},
+  "currentTechnicalReconciliation20260819": {
+    "scope": "Repository-technical closure for the signed Statement Pack import journey. Historical productSha and its original four changedPaths remain unchanged; the successor lineage below records the additional prerequisite, governed Statement Pack creation, staged mapping, explicit confirmation, canonical import and cleanup-hygiene work.",
+    "productLineage": [
+      {
+        "sha": "d25c354994b54e247aef791cf5adcfa4ba606ad3",
+        "role": "prerequisite",
+        "paths": [
+          "server/scripts/finance-v3-backfill-dry-run.ts",
+          "server/src/routes/testSupport.routes.ts",
+          "tests/e2e/ui-canon-g4/flag-fixture-safety.spec.ts",
+          "tests/unit/backend/scripts/financeV3BackfillOptionalTables.test.ts"
+        ]
+      },
+      {
+        "sha": "5e6dc2d7c36aec3fb635e2dca4f26aac60b0beac",
+        "candidateSourceSha": "0c866772558df37877f09014dffc6d12b05fc72d",
+        "role": "atomic legacy confirm and canonical Statement Pack registration",
+        "paths": [
+          "server/src/routes/finance-statements.routes.ts",
+          "server/src/services/finance/canonical/__tests__/statementPackRegistrationService.pg.test.ts",
+          "server/src/services/finance/canonical/artifactVersionService.ts",
+          "server/src/services/finance/canonical/statementPackRegistrationService.ts",
+          "server/src/services/financialStatementPackService.ts",
+          "server/src/utils/DbPromise.ts",
+          "tests/e2e/finance/finance-import.signed.spec.ts"
+        ]
+      },
+      {
+        "sha": "b6081ba7227462d6e19098cd7c43c35a2d4162c3",
+        "candidateSourceSha": "4ab87a2d44d66c109e96fb061425139939696323",
+        "role": "structured XLSX staging, Balance Sheet scoping and explicit reviewable aggregate derivation",
+        "paths": [
+          "server/src/routes/finance-statements.routes.ts",
+          "server/src/routes/v8/finance.routes.ts",
+          "server/src/services/__tests__/financialStatementSpreadsheetSection.test.ts",
+          "server/src/services/financialStatementService.ts",
+          "tests/e2e/finance/finance-import.signed.spec.ts"
+        ]
+      },
+      {
+        "sha": "4c8d498914c6598bdd0e12d9ceec41e786609a38",
+        "candidateSourceSha": "324500c259f58c872184610d609b1ebd47f9832b",
+        "role": "defer Statement Pack creation throughout staged detect and value writes",
+        "paths": [
+          "server/src/routes/finance-statements.routes.ts",
+          "server/src/routes/testSupport.routes.ts",
+          "server/src/routes/v8/finance.routes.ts",
+          "server/src/services/__tests__/financialStatementValueWriteService.stagedPack.test.ts",
+          "server/src/services/financialStatementValueWriteService.ts",
+          "tests/e2e/finance/finance-import.signed.spec.ts"
+        ]
+      },
+      {
+        "sha": "6c3da01c0cee01485dcf6b239ec96edc77f1e92c",
+        "candidateSourceSha": "aa3ba5e1122464c2585dd067cd5175b1b3b427f3",
+        "role": "preserve staged marker and remain packless through explicit validation",
+        "paths": [
+          "server/src/routes/finance-statements.routes.ts",
+          "server/src/routes/v8/finance.routes.ts",
+          "server/src/services/__tests__/financialStatementValueWriteService.stagedPack.test.ts",
+          "server/src/services/financialStatementValueWriteService.ts",
+          "tests/e2e/finance/finance-import.signed.spec.ts"
+        ]
+      },
+      {
+        "sha": "ee0b7aac4935be380bc1cab359b6917625435a00",
+        "candidateSourceSha": "7c032a9c79f22b66e7630cf227b5585db782bb48",
+        "role": "test hygiene and exact-current integration",
+        "paths": [
+          "server/src/services/finance/canonical/__tests__/statementPackRegistrationService.pg.test.ts",
+          "tests/e2e/finance/finance-import.signed.spec.ts"
+        ]
+      }
+    ],
+    "literalGates": [
+      {
+        "command": "npx vitest run server/src/services/__tests__/financialStatementValueWriteService.stagedPack.test.ts --reporter=verbose --maxWorkers=1",
+        "exitCode": 0,
+        "result": "1 file; 2/2 tests passed"
+      },
+      {
+        "command": "DATABASE_URL=<isolated-local-pg> RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test npx vitest run server/src/services/finance/canonical/__tests__/statementPackRegistrationService.pg.test.ts --reporter=verbose --maxWorkers=1",
+        "exitCode": 0,
+        "result": "1 file; 5/5 real PostgreSQL tests passed"
+      },
+      {
+        "command": "DATABASE_URL=<isolated-local-pg> E2E_USE_WEB_SERVER=true E2E_MOCK_DB=false E2E_MODE=false E2E_API_URL=http://127.0.0.1:3411 E2E_BASE_URL=http://127.0.0.1:3410 ENABLE_V8_GLOBAL=true npx playwright test --config playwright.config.ts tests/e2e/finance/finance-import.signed.spec.ts --project=chromium --workers=1",
+        "exitCode": 0,
+        "result": "1/1 signed Playwright test passed in 1.1m; real PostgreSQL and browser; no request interception or mock persistence"
+      },
+      {
+        "command": "git diff --check && npx prettier --check tests/e2e/finance/finance-import.signed.spec.ts server/src/services/finance/canonical/__tests__/statementPackRegistrationService.pg.test.ts",
+        "exitCode": 0,
+        "result": "diff check and focused formatting passed"
+      },
+      {
+        "command": "node scripts/cleanup/report-closure-progress.mjs",
+        "exitCode": 0,
+        "result": "denominator 82; DONE_CURRENT_SHA 44; PARTIAL 37; BLOCKED_HUMAN 1; missingEvidence 0; invalidPresentEvidence 0; FIN-MVP-IMPORT-001 transitioned from PARTIAL to DONE_CURRENT_SHA"
+      },
+      {
+        "command": "node scripts/cleanup/verify-closure-plan.mjs",
+        "exitCode": 0,
+        "result": "74 module plus 8 cross-program equals 82 unique tasks; ownership, leases and graph PASS"
+      }
+    ],
+    "journey": {
+      "input": "repository XLSX tests/fixtures/finance/dbr77-financial-statements.xlsx",
+      "signedFlow": "signed tenant upload -> Balance Sheet section -> canonical numeric extraction -> explicit correction of reviewable CFO-derived FIXED_ASSETS aggregate to 9500000 -> Save and Validate -> explicit validate -> Confirm and Save -> canonical Statement Pack workspace -> Excel export -> setInputFiles -> manifest parse -> preview -> apply -> cold reopen",
+      "preConfirmTruth": "persisted extraction_strategy spreadsheet_structured_staged; statement_pack_id null after values and explicit validate; aliases 0; artifacts 0",
+      "confirmTruth": "HTTP 200; canonicalReplay false; one legacy Statement Pack plus canonical artifact, business version, current working revision and exact alias committed atomically",
+      "coldReadback": "cold browser GET returned the exact artifactId, businessVersionId and applied sourceWorkingRevisionId; import panel reopened",
+      "cleanupTruth": "cleanup HTTP 200; all three run-owned feature flags disabled with HTTP 200; run-owned statement, pack, artifact, business version, alias, import receipt and working revision each residue 0; explicit foreign-tenant artifact decoy remained exactly 1 through scoped cleanup and was then removed by the test; test database was dropped and catalog count was 0"
+    },
+    "negativeControls": [
+      "one PostgreSQL backend PID and transaction covers legacy and canonical mutations",
+      "pre-commit failure rolls back legacy and canonical lineage",
+      "replay and concurrent confirmation yield one lineage",
+      "foreign organization confirmation is denied without owner mutation",
+      "post-commit shadow observation failure does not roll back or misreport the committed core",
+      "structured staged values and explicit validation cannot create a pack before confirmation",
+      "ordinary non-staged value writes preserve their existing pack-sync behavior",
+      "foreign-tenant cleanup decoy remains unchanged"
+    ],
+    "shaQualification": "The focused, realPG and signed-browser gates ran on candidate 7c032a9c79. The two FIN test paths and all FIN product paths are byte-identical at integrated testedSha ee0b7aac49; intervening commits touch Partner Certification only. ee0b7aac49 is therefore the exact-current tested product state for this reconciliation.",
+    "artifactDurability": "No screenshots or traces are committed. Playwright runtime artifacts and console logs were ephemeral supporting material only and are not represented as durable repository evidence.",
+    "remainingBoundaries": [
+      "No production deployment, release approval or production tenant execution was performed or authorized.",
+      "No human financial-accounting approval of the imported values is claimed; the journey proves the governed review and explicit-confirmation mechanism.",
+      "External AI-assisted extraction is not required or claimed for this deterministic structured-XLSX closure."
+    ]
+  },
+  "rollback": {
+    "code": "Revert the four technical changed paths after disabling new imports.",
+    "data": "Non-destructive: retain immutable receipts and additive schema for audit; do not drop receipt evidence."
+  },
   "technicalVerdict": "DONE_CURRENT_SHA",
-  "verdict": "PARTIAL",
-  "openBlockers": [
-    "Browser map/correct/confirm evidence on the final integrated SHA remains required."
-  ]
+  "verdict": "DONE_CURRENT_SHA",
+  "openBlockers": []
 }
