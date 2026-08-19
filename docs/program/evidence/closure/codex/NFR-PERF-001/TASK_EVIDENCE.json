@@ -1,8 +1,8 @@
 {
   "taskId": "NFR-PERF-001",
   "baselineSha": "123aa5065f027c3d827462d9304e0a30ffe4b8f1",
-  "productSha": "aa521e63de43a93f6d50344d1ebe4036a7b67bd3",
-  "technicalSourceSha": "aa521e63de43a93f6d50344d1ebe4036a7b67bd3",
+  "productSha": "5969fb06a2a41711c772b51d073e56585d542272",
+  "technicalSourceSha": "5969fb06a2a41711c772b51d073e56585d542272",
   "leaseSha256": "6feeff810179aaa58dc2f837fa4e5f77e138469db0b0ed9d45ccf9271e7e1fee",
   "changedPaths": [
     "server/src/services/caseWorkspace/__tests__/performance/lib/steadyLoadGate.ts",
@@ -25,7 +25,8 @@
     {"command": "npx playwright test tests/e2e/performance/nfr-perf-web-vitals.signed.spec.ts --project=chromium --workers=1 --retries=0 --trace=on", "exitCode": 0},
     {"command": "focused CaseWorkspace RealPG regression plus steadyLoadGate", "exitCode": 0},
     {"command": "root/server typecheck, backend/frontend build, diff-check", "exitCode": 0},
-    {"command": "NFR_PERF_RELEASE_GATE=1 NFR_PERF_DURATION_MS=1800000 NFR_PERF_PRODUCT_SHA=aa521e63de43a93f6d50344d1ebe4036a7b67bd3 npx tsx scripts/performance/nfr-perf-disposable.ts", "exitCode": 0, "startedAt": "2026-08-19T21:16:09.715Z", "finishedAt": "2026-08-19T21:46:10.535Z"}
+    {"command": "NFR_PERF_RELEASE_GATE=1 NFR_PERF_DURATION_MS=1800000 NFR_PERF_PRODUCT_SHA=aa521e63de43a93f6d50344d1ebe4036a7b67bd3 npx tsx scripts/performance/nfr-perf-disposable.ts", "exitCode": 0, "startedAt": "2026-08-19T21:16:09.715Z", "finishedAt": "2026-08-19T21:46:10.535Z"},
+    {"command": "NFR_PERF_RELEASE_GATE=1 NFR_PERF_DURATION_MS=1800000 NFR_PERF_PRODUCT_SHA=5969fb06a2a41711c772b51d073e56585d542272 npx tsx scripts/performance/nfr-perf-disposable.ts", "exitCode": 0, "startedAt": "2026-08-19T22:28:50.071Z", "finishedAt": "2026-08-19T22:58:50.716Z"}
   ],
   "denominators": {
     "focusedRegression": {"filesPassed": 4, "filesFailed": 0, "testsPassed": 33, "testsFailed": 0, "retries": 0},
@@ -62,39 +63,39 @@
     },
     "exactCurrentRelease30m": {
       "gateKind": "RELEASE_30M_50U",
-      "productSha": "aa521e63de43a93f6d50344d1ebe4036a7b67bd3",
-      "mountedSha": "aa521e63de43a93f6d50344d1ebe4036a7b67bd3",
+      "productSha": "5969fb06a2a41711c772b51d073e56585d542272",
+      "mountedSha": "5969fb06a2a41711c772b51d073e56585d542272",
       "durationMsRequested": 1800000,
-      "durationMsActual": 1800820,
+      "durationMsActual": 1800645,
       "authenticatedUsers": 50,
-      "totalRequests": 111396,
+      "totalRequests": 111400,
       "errors": 0,
       "errorRatePct": 0,
-      "readSamples": 89896,
-      "readP95Ms": 114.70383300003596,
+      "readSamples": 89900,
+      "readP95Ms": 115.5392920000013,
       "writeSamples": 17900,
-      "writeP95Ms": 208.78987500001676,
+      "writeP95Ms": 214.15120800002478,
       "expectedWriteIds": 8950,
       "reconciledWriteIds": 8950,
       "lostWriteIds": 0,
       "duplicateWriteIds": 0,
       "tenantFalseSuccesses": 0,
-      "perModuleReads": {"case": 16190, "myWork": 16190, "settings": 16190, "initiatives": 16186, "finance": 16190},
+      "perModuleReads": {"case": 16190, "myWork": 16190, "settings": 16190, "initiatives": 16190, "finance": 16190},
       "perModuleWrites": {"case": 1790, "myWork": 1790, "settings": 1790, "initiatives": 1790, "finance": 1790},
       "webVitals": {
         "verdict": "PASS",
         "desktopSamples": 9,
-        "desktopLcpP75Ms": 568,
+        "desktopLcpP75Ms": 532,
         "desktopClsP75": 0.00023668638211055387,
         "desktopInpP75Ms": 16,
         "mobileSamples": 9,
-        "mobileLcpP75Ms": 516,
+        "mobileLcpP75Ms": 512,
         "mobileClsP75": 0,
         "mobileInpP75Ms": 16
       },
-      "reportSha256": "d417bd6dee7d40061e6e497d46cc505bd54222318bdb80d32eb867fedb765eb2",
-      "profileSha256": "77a204b989cbf383ac32b45cfcfe761632b7a0faf40fb9cebf699a9856d6b02a",
-      "webVitalsInputSha256": "39a3105f1342a2b4b96911f663a4d3450ef5222cf86baf78727075219d58c863",
+      "reportSha256": "ea4684ec7b856435c8419f95b3deab0e0bac75a5bc729fae65d438529a7ae021",
+      "profileSha256": "e07204d42c3913ba4158f33ddfa4a1dba606b4df9727d76361f90ea64fc2a638",
+      "webVitalsInputSha256": "e5a2c2d035c59d1fc4ee789a4c38c28c332e5e3b3426f12f0ee908375481a8b2",
       "credentialsPersisted": false
     }
   },
@@ -120,22 +121,23 @@
     "advisoryLocks": 0,
     "ports3510And3511Listening": 0,
     "exactCurrentDisposableQualification": {
-      "database": "cwperfprofile_nfr_1787174097328_884af3 on isolated PostgreSQL 16 tmpfs",
+      "database": "cwperfprofile_nfr_1787178457995_59d271 on isolated PostgreSQL 16 tmpfs",
       "migrationExitCode": 0,
-      "migrationDurationMs": 5270,
+      "migrationDurationMs": 5070,
       "databaseDropped": true,
       "containerRemoved": true,
       "privateCredentialsRemoved": true,
-      "artifactDirectory": "/private/tmp/nfr-perf-final-aa521",
-      "manifest": "/private/tmp/nfr-perf-final-aa521/manifest.json"
+      "artifactDirectory": "/private/tmp/nfr-perf-final-5969",
+      "manifest": "/private/tmp/nfr-perf-final-5969/manifest.json"
     }
   },
   "browserArtifacts": [
     "/private/tmp/nfr-perf-web-vitals4.json",
     "trace sha256:025cf28dab7d3df47e93bbcfb9d7f60d472a3d607da1e4c92518ac680d805065",
     "/private/tmp/nfr-perf-final-aa521/nfr-perf-report.json (sha256:d417bd6dee7d40061e6e497d46cc505bd54222318bdb80d32eb867fedb765eb2)",
-    "/private/tmp/nfr-perf-final-aa521/web-vitals.json (input sha256:39a3105f1342a2b4b96911f663a4d3450ef5222cf86baf78727075219d58c863)",
-    "/private/tmp/nfr-perf-final-aa521/manifest.json"
+    "/private/tmp/nfr-perf-final-5969/nfr-perf-report.json (sha256:ea4684ec7b856435c8419f95b3deab0e0bac75a5bc729fae65d438529a7ae021)",
+    "/private/tmp/nfr-perf-final-5969/web-vitals.json (input sha256:e5a2c2d035c59d1fc4ee789a4c38c28c332e5e3b3426f12f0ee908375481a8b2)",
+    "/private/tmp/nfr-perf-final-5969/manifest.json"
   ],
   "rollback": "Revert the NFR harness and lazy-load candidate commits. Qualification used only disposable PostgreSQL and runtime fixtures; no production migration, deployment or persistent external mutation occurred.",
   "negativeControls": {
