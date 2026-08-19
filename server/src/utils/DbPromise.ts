@@ -549,10 +549,15 @@ export async function transaction(statements: TransactionStatement[]): Promise<T
  */
 export async function tableExists(tableName: string): Promise<boolean> {
   const schemas = tableName.startsWith('v8_') ? ['v8', 'public'] : ['public'];
+  const schemaPlaceholders = schemas.map((_, index) => `$${index + 1}`).join(', ');
+  const tableNamePlaceholder = `$${schemas.length + 1}`;
   const result = await get<{ table_name: string }>(
     `SELECT table_name FROM information_schema.tables
-     WHERE table_schema = ANY($1) AND table_type = 'BASE TABLE' AND table_name = $2`,
-    [schemas, tableName]
+     WHERE table_schema IN (${schemaPlaceholders})
+       AND table_type = 'BASE TABLE'
+       AND table_name = ${tableNamePlaceholder}`,
+    [...schemas, tableName],
+    { fallback: false }
   );
   return result !== null;
 }
