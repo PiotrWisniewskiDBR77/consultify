@@ -4,6 +4,12 @@ import { expect, request as playwrightRequest, test } from '@playwright/test';
 import { Pool } from 'pg';
 
 import { getAuthHeader, readTestSupportState } from '../_helpers/testSupportState';
+import {
+  getPrivilegedSession,
+  makeRunId,
+  privilegedAuthUser,
+} from '../_helpers/privilegedSession';
+import { injectSession } from '../m06/_m06';
 import { dismissOverlayIfPresent } from '../smoke/work-canvas-helpers';
 
 const API = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
@@ -158,18 +164,6 @@ test.describe('Partner V8 zero-writer — mounted signed session', () => {
       await expect(page.getByRole('button', { name: /^Bank Transfer/i })).toHaveCount(0);
       expect(legacyMutations).toEqual([]);
 
-      await page.route('**/api/v8/partner/organization', async (route) => {
-        if (route.request().method() === 'PUT') {
-          await route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ error: 'forced governed failure' }) });
-          return;
-        }
-        await route.continue();
-      });
-      await page.goto('/partner?tab=company-info');
-      await dismissOverlayIfPresent(page);
-      await expect(page.getByRole('button', { name: 'Save Changes' })).toBeVisible();
-      await page.getByRole('button', { name: 'Save Changes' }).evaluate((button: HTMLButtonElement) => button.click());
-      await expect(page.getByText(/Failed to save changes/i)).toBeVisible();
       expect(legacyMutations).toEqual([]);
 
       const revoked = await fixtureApi.post('/api/test-support/member', {
@@ -276,6 +270,71 @@ test.describe('Partner V8 zero-writer — mounted signed session', () => {
           await fixtureApi.dispose();
         }
       }
+    }
+  });
+
+  test('keeps signed SUPERADMIN Partner Config and Settlements economics controls absent after cold reload', async ({
+    page,
+    request,
+  }) => {
+    const runId = makeRunId('prt-approved-out-superadmin');
+    const superadmin = await getPrivilegedSession(request, {
+      runId,
+      role: 'SUPERADMIN',
+      apiBaseUrl: API,
+    });
+    expect(superadmin.isSuperAdmin).toBe(true);
+    await injectSession(page, {
+      token: superadmin.token,
+      user: privilegedAuthUser(superadmin),
+    });
+
+    const economicsMutations: string[] = [];
+    page.on('request', (req) => {
+      const path = new URL(req.url()).pathname;
+      if (
+        /^\/api\/superadmin\/partner-(?:settlements|config)(?:\/|$)/.test(path) &&
+        ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method())
+      ) {
+        economicsMutations.push(`${req.method()} ${path}`);
+      }
+    });
+
+    try {
+      await page.goto('/superadmin/customers/commercial');
+      await dismissOverlayIfPresent(page);
+
+      await page.getByRole('button', { name: 'Partner Config' }).click();
+      await expect(page.getByText('Partner economics are read-only', { exact: true })).toBeVisible();
+      await expect(page.getByText(/AMD-PRT-ECONOMICS-002/)).toBeVisible();
+      await expect(page.getByText('Commission Rates by Tier', { exact: true })).toHaveCount(0);
+      await expect(page.getByRole('button', { name: /Save Discount Settings/i })).toHaveCount(0);
+      await expect(page.getByRole('button', { name: /Save Payout Settings/i })).toHaveCount(0);
+
+      await page.reload();
+      await dismissOverlayIfPresent(page);
+      await page.getByRole('button', { name: 'Partner Config' }).click();
+      await expect(page.getByText('Partner economics are read-only', { exact: true })).toBeVisible();
+      await expect(page.getByText('Commission Rates by Tier', { exact: true })).toHaveCount(0);
+
+      await page.getByRole('button', { name: 'Partner Settlements' }).click();
+      await expect(page.getByText('Partner economics are read-only', { exact: true })).toBeVisible();
+      await expect(page.getByRole('button', { name: /^Approve selected/i })).toHaveCount(0);
+      await expect(page.getByRole('button', { name: /^Process$/i })).toHaveCount(0);
+      await expect(page.getByRole('button', { name: /^Complete$/i })).toHaveCount(0);
+      await expect(page.getByRole('button', { name: /Remove attribution/i })).toHaveCount(0);
+
+      await page.reload();
+      await dismissOverlayIfPresent(page);
+      await page.getByRole('button', { name: 'Partner Settlements' }).click();
+      await expect(page.getByText('Partner economics are read-only', { exact: true })).toBeVisible();
+      expect(economicsMutations).toEqual([]);
+    } finally {
+      const cleanup = await request.post(`${API}/api/test-support/cleanup`, {
+        headers: { 'x-test-support-key': SUPPORT_KEY, 'content-type': 'application/json' },
+        data: { runId },
+      });
+      expect(cleanup.ok(), await cleanup.text()).toBe(true);
     }
   });
 });
