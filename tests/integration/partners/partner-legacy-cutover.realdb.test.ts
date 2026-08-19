@@ -18,6 +18,7 @@ import partnerRoutes from '../../../server/src/routes/v8/partner.routes.ts';
 import legacyPartnerRoutes from '../../../server/src/routes/partners.routes.ts';
 
 import {
+  PARTNER_LEGACY_ROLLBACK_WRITERS_ENV,
   PARTNER_LEGACY_WRITER_ROLLBACK_ENV,
   PROTECTED_PARTNER_LEGACY_WRITERS,
   partnerLegacyCutoverGuard,
@@ -38,6 +39,9 @@ const revokedOrgId = randomUUID();
 const revokedUserId = randomUUID();
 const revokedPartnerOrgId = randomUUID();
 const revokedCertificationId = randomUUID();
+const unboundOrgId = randomUUID();
+const unboundUserId = randomUUID();
+const unboundPartnerOrgId = randomUUID();
 const jwtSecret = 'prt-cutover-realdb-secret-minimum-32-characters';
 const configuredJwtSecret = process.env.JWT_SECRET || jwtSecret;
 const receiptMigration = readFileSync(
@@ -73,7 +77,7 @@ function request(method: string, path: string, suffix: string): any {
     method,
     path,
     headers: { 'x-request-id': `${REQUEST_PREFIX}${suffix}` },
-    user: { id: 'f1000000-0000-4000-8000-000000000099' },
+    user: { id: userId, organizationId: orgId },
   };
 }
 
@@ -89,13 +93,16 @@ function response() {
       state.body = body;
       return this;
     },
+    once() {
+      return this;
+    },
   } as any;
 }
 
 async function event(suffix: string) {
   const result = await sql.query(
     `SELECT method,route_path,access_kind,successor_path
-     FROM partner_legacy_usage_events WHERE request_id=$1`,
+     FROM legacy_cutover_usage_events WHERE domain='partners' AND request_id=$1`,
     [`${REQUEST_PREFIX}${suffix}`]
   );
   return result.rows[0];
@@ -114,21 +121,26 @@ beforeAll(async () => {
   await sql.query(receiptMigration);
   await sql.query(connectionReceiptMigration);
   await sql.query(connectionReceiptMigration);
-  await sql.query(`DELETE FROM partner_legacy_usage_events WHERE request_id LIKE $1`, [
+  await sql.query(`DELETE FROM legacy_cutover_usage_events WHERE domain='partners' AND request_id LIKE $1`, [
     `${REQUEST_PREFIX}%`,
   ]);
-  await sql.query(`INSERT INTO organizations(id,name) VALUES($1,$2),($3,$4),($5,$6)`, [
+  await sql.query(`DELETE FROM legacy_cutover_signal_intents WHERE domain='partners' AND request_id LIKE $1`, [
+    `${REQUEST_PREFIX}%`,
+  ]);
+  await sql.query(`INSERT INTO organizations(id,name) VALUES($1,$2),($3,$4),($5,$6),($7,$8)`, [
     orgId,
     `PRT ${suffix}`,
     foreignOrgId,
     `Foreign ${suffix}`,
     revokedOrgId,
     `Revoked ${suffix}`,
+    unboundOrgId,
+    `Unbound ${suffix}`,
   ]);
   await sql.query(
     `INSERT INTO users(id,organization_id,email,first_name,last_name,role)
      VALUES($1,$2,$3,'Partner','Owner','ADMIN'),($4,$5,$6,'Foreign','User','ADMIN'),
-           ($7,$8,$9,'Revoked','User','ADMIN')`,
+           ($7,$8,$9,'Revoked','User','ADMIN'),($10,$11,$12,'Unbound','User','ADMIN')`,
     [
       userId,
       orgId,
@@ -139,12 +151,16 @@ beforeAll(async () => {
       revokedUserId,
       revokedOrgId,
       `${revokedUserId}@test.local`,
+      unboundUserId,
+      unboundOrgId,
+      `${unboundUserId}@test.local`,
     ]
   );
   await sql.query(
     `INSERT INTO organization_members(id,organization_id,user_id,role,status)
      VALUES($1,$2,$3,'ADMIN','ACTIVE'),($4,$5,$6,'ADMIN','ACTIVE'),
-           ($7,$8,$9,'ADMIN','REVOKED')`,
+           ($7,$8,$9,'ADMIN','REVOKED'),($10,$11,$12,'ADMIN','ACTIVE'),
+           ($13,$14,$15,'ADMIN','ACTIVE')`,
     [
       randomUUID(),
       orgId,
@@ -155,6 +171,12 @@ beforeAll(async () => {
       randomUUID(),
       revokedOrgId,
       revokedUserId,
+      randomUUID(),
+      foreignOrgId,
+      userId,
+      randomUUID(),
+      unboundOrgId,
+      unboundUserId,
     ]
   );
   await sql.query(
@@ -196,6 +218,21 @@ beforeAll(async () => {
     [randomUUID(), partnerOrgId, userId]
   );
   await sql.query(
+    `INSERT INTO partner_organizations(id,name,contact_email,status,referral_code,referral_link_slug)
+     VALUES($1,$2,$3,'active',$4,$5)`,
+    [
+      unboundPartnerOrgId,
+      `Unbound partner ${suffix}`,
+      `unbound-${suffix}@test.local`,
+      `UNBOUND-${suffix}`,
+      `unbound-${suffix}`,
+    ]
+  );
+  await sql.query(
+    `INSERT INTO partner_users(id,partner_org_id,user_id,role,status) VALUES($1,$2,$3,'owner','active')`,
+    [randomUUID(), unboundPartnerOrgId, unboundUserId]
+  );
+  await sql.query(
     `INSERT INTO partner_certifications
       (id,partner_org_id,user_id,certification_name,certification_type,certification_track,
        certification_level,status,progress_percent,exam_mode,review_state,recertification_policy,tier_target)
@@ -213,8 +250,12 @@ beforeAll(async () => {
 afterAll(async () => {
   vi.unstubAllEnvs();
   delete process.env[PARTNER_LEGACY_WRITER_ROLLBACK_ENV];
+  delete process.env[PARTNER_LEGACY_ROLLBACK_WRITERS_ENV];
   if (sql) {
-    await sql.query(`DELETE FROM partner_legacy_usage_events WHERE request_id LIKE $1`, [
+    await sql.query(`DELETE FROM legacy_cutover_usage_events WHERE domain='partners' AND request_id LIKE $1`, [
+      `${REQUEST_PREFIX}%`,
+    ]);
+    await sql.query(`DELETE FROM legacy_cutover_signal_intents WHERE domain='partners' AND request_id LIKE $1`, [
       `${REQUEST_PREFIX}%`,
     ]);
     if (
@@ -229,24 +270,28 @@ afterAll(async () => {
         [partnerOrgId, revokedPartnerOrgId]
       );
     }
-    await sql.query(`DELETE FROM partner_organizations WHERE id IN ($1,$2)`, [
+    await sql.query(`DELETE FROM partner_organizations WHERE id IN ($1,$2,$3)`, [
       partnerOrgId,
       revokedPartnerOrgId,
+      unboundPartnerOrgId,
     ]);
-    await sql.query(`DELETE FROM organization_members WHERE organization_id IN ($1,$2,$3)`, [
+    await sql.query(`DELETE FROM organization_members WHERE organization_id IN ($1,$2,$3,$4)`, [
       orgId,
       foreignOrgId,
       revokedOrgId,
+      unboundOrgId,
     ]);
-    await sql.query(`DELETE FROM users WHERE id IN ($1,$2,$3)`, [
+    await sql.query(`DELETE FROM users WHERE id IN ($1,$2,$3,$4)`, [
       userId,
       foreignUserId,
       revokedUserId,
+      unboundUserId,
     ]);
-    await sql.query(`DELETE FROM organizations WHERE id IN ($1,$2,$3)`, [
+    await sql.query(`DELETE FROM organizations WHERE id IN ($1,$2,$3,$4)`, [
       orgId,
       foreignOrgId,
       revokedOrgId,
+      unboundOrgId,
     ]);
     await sql.end();
   }
@@ -300,10 +345,35 @@ describe.sequential('Partner legacy cutover guard (real PG)', () => {
       access_kind: 'legacy_writer_blocked',
       successor_path: '/api/v8/partner/organization/listing',
     });
+    const replayResponse = response();
+    await partnerLegacyCutoverGuard(
+      request('PUT', '/organization/listing', 'blocked'),
+      replayResponse,
+      vi.fn()
+    );
+    expect(replayResponse.state.status).toBe(410);
+    const durable = await sql.query(
+      `SELECT
+         (SELECT count(*)::int FROM legacy_cutover_usage_events
+           WHERE domain='partners' AND request_id=$1) observations,
+         (SELECT count(*)::int FROM legacy_cutover_signal_intents
+           WHERE domain='partners' AND request_id=$1) intents,
+         (SELECT status FROM legacy_cutover_signal_intents
+           WHERE domain='partners' AND request_id=$1) status,
+         (SELECT terminal_result FROM legacy_cutover_signal_intents
+           WHERE domain='partners' AND request_id=$1) terminal_result`,
+      [`${REQUEST_PREFIX}blocked`]
+    );
+    expect(durable.rows[0]).toEqual({
+      observations: 1,
+      intents: 1,
+      status: 'COMPLETED',
+      terminal_result: 'refused_gone',
+    });
   });
 
   it('exercises the explicit rollback switch and records rollback usage', async () => {
-    process.env[PARTNER_LEGACY_WRITER_ROLLBACK_ENV] = 'true';
+    process.env[PARTNER_LEGACY_ROLLBACK_WRITERS_ENV] = 'PRT-W02';
     const res = response();
     const next = vi.fn();
     await partnerLegacyCutoverGuard(request('POST', '/campaign-links', 'rollback'), res, next);
@@ -316,7 +386,92 @@ describe.sequential('Partner legacy cutover guard (real PG)', () => {
       access_kind: 'rollback_writer',
       successor_path: '/api/v8/partner/campaign-links',
     });
+    const sibling = response();
+    await partnerLegacyCutoverGuard(
+      request('PUT', '/organization/listing', 'selective-sibling'),
+      sibling,
+      vi.fn()
+    );
+    expect(sibling.state.status).toBe(410);
+    delete process.env[PARTNER_LEGACY_ROLLBACK_WRITERS_ENV];
+
+    process.env.VITE_PARTNER_LEGACY_ROLLBACK_ENABLED = 'true';
+    const mismatch = response();
+    await partnerLegacyCutoverGuard(
+      request('POST', '/campaign-links', 'frontend-only-mismatch'),
+      mismatch,
+      vi.fn()
+    );
+    expect(mismatch.state.status).toBe(410);
+    delete process.env.VITE_PARTNER_LEGACY_ROLLBACK_ENABLED;
+
+    process.env[PARTNER_LEGACY_WRITER_ROLLBACK_ENV] = 'true';
+    const domainNext = vi.fn();
+    await partnerLegacyCutoverGuard(
+      request('PUT', '/organization/listing', 'domain-rollback'),
+      response(),
+      domainNext
+    );
+    expect(domainNext).toHaveBeenCalledOnce();
     delete process.env[PARTNER_LEGACY_WRITER_ROLLBACK_ENV];
+  });
+
+  it('denies same-user foreign tenant and historical unbound Partner writers before writes', async () => {
+    const snapshot = async () =>
+      (
+        await sql.query(
+          `SELECT
+             (SELECT row_to_json(x)::text FROM (
+                SELECT id,name,contact_phone,website,public_listing_enabled,updated_at::text
+                FROM partner_organizations WHERE id=$1
+              ) x) partner,
+             (SELECT count(*)::int FROM partner_campaign_links WHERE partner_org_id=$1) campaigns,
+             (SELECT count(*)::int FROM partner_specializations WHERE partner_org_id=$1) specializations,
+             (SELECT count(*)::int FROM partner_regions WHERE partner_org_id=$1) regions,
+             (SELECT count(*)::int FROM partner_certification_mutation_receipts WHERE partner_org_id=$1) receipts,
+             (SELECT count(*)::int FROM partner_certification_attempts WHERE partner_org_id=$1) attempts`,
+          [partnerOrgId]
+        )
+      ).rows[0];
+    const before = await snapshot();
+    const foreignTenantToken = token(userId, foreignOrgId);
+    const foreignCalls = [
+      supertest(app())
+        .post('/api/v8/partner/campaign-links')
+        .set('Authorization', `Bearer ${foreignTenantToken}`)
+        .send({ name: `forbidden-${suffix}` }),
+      supertest(app())
+        .put('/api/v8/partner/organization')
+        .set('Authorization', `Bearer ${foreignTenantToken}`)
+        .send({ website: 'https://forbidden.invalid' }),
+      supertest(app())
+        .post(`/api/v8/partner/certifications/${certificationId}/modules/foreign/progress`)
+        .set('Authorization', `Bearer ${foreignTenantToken}`)
+        .set('Idempotency-Key', `foreign-${suffix}`)
+        .send({ progress: 100 }),
+    ];
+    for (const result of await Promise.all(foreignCalls)) {
+      expect(result.status).toBe(403);
+      expect(result.body.code).toBe('PARTNER_ORG_REQUIRED');
+    }
+    expect(await snapshot()).toEqual(before);
+
+    const unbound = await supertest(app())
+      .post('/api/v8/partner/campaign-links')
+      .set('Authorization', `Bearer ${token(unboundUserId, unboundOrgId)}`)
+      .send({ name: `unbound-${suffix}` });
+    expect(unbound.status).toBe(403);
+    expect(unbound.body.code).toBe('PARTNER_ORG_REQUIRED');
+    expect(
+      (
+        await sql.query(
+          `SELECT owner_organization_id,
+                  (SELECT count(*)::int FROM partner_campaign_links WHERE partner_org_id=$1) campaigns
+             FROM partner_organizations WHERE id=$1`,
+          [unboundPartnerOrgId]
+        )
+      ).rows[0]
+    ).toEqual({ owner_organization_id: null, campaigns: 0 });
   });
 
   it('blocks legacy connect by default and permits only the explicit rollback path', async () => {

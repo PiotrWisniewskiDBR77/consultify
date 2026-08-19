@@ -1,7 +1,5 @@
-import type { NextFunction, Request, Response } from 'express';
-
-import * as DbPromise from '../utils/DbPromise.js';
-import logger from '../utils/Logger.js';
+import { createLegacyCutoverGuard, rollbackDecision } from './legacyCutover/legacyCutoverKernel.js';
+import { PARTNERS_CUTOVER } from './legacyCutover/registry.js';
 
 type ProtectedLegacyWriter = {
   method: string;
@@ -9,7 +7,8 @@ type ProtectedLegacyWriter = {
   successor: string;
 };
 
-export const PARTNER_LEGACY_WRITER_ROLLBACK_ENV = 'PARTNER_LEGACY_ROLLBACK_ENABLED';
+export const PARTNER_LEGACY_WRITER_ROLLBACK_ENV = PARTNERS_CUTOVER.rollbackEnv;
+export const PARTNER_LEGACY_ROLLBACK_WRITERS_ENV = PARTNERS_CUTOVER.rollbackWritersEnv;
 
 export const PROTECTED_PARTNER_LEGACY_WRITERS: ProtectedLegacyWriter[] = [
   { method: 'POST', path: /^\/connect\/?$/, successor: '/api/v8/partner/connect' },
@@ -67,7 +66,9 @@ export const PROTECTED_PARTNER_LEGACY_WRITERS: ProtectedLegacyWriter[] = [
 ];
 
 export function partnerLegacyRollbackEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
-  return env[PARTNER_LEGACY_WRITER_ROLLBACK_ENV] === 'true';
+  return PARTNERS_CUTOVER.writers.some(
+    (writer) => rollbackDecision(PARTNERS_CUTOVER, writer.writerId, env).enabled
+  );
 }
 
 export function findProtectedPartnerLegacyWriter(
@@ -83,73 +84,9 @@ export function findProtectedPartnerLegacyWriter(
   );
 }
 
-async function recordUsage(params: {
-  req: Request;
-  accessKind:
-    | 'legacy_read'
-    | 'legacy_uncovered_writer'
-    | 'legacy_writer_blocked'
-    | 'rollback_writer';
-  successorPath?: string | null;
-}): Promise<void> {
-  const userId = String((params.req as any).user?.id || (params.req as any).userId || '').trim();
-  const requestId = String(params.req.headers['x-request-id'] || '').trim();
-  await DbPromise.run(
-    `INSERT INTO partner_legacy_usage_events
-       (request_id,user_id,method,route_path,access_kind,successor_path)
-     VALUES (?,?,?,?,?,?)`,
-    [
-      requestId || null,
-      userId || null,
-      String(params.req.method || 'UNKNOWN').toUpperCase(),
-      String(params.req.path || '/'),
-      params.accessKind,
-      params.successorPath || null,
-    ],
-    { fallback: false }
-  );
-}
-
-export async function partnerLegacyCutoverGuard(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
-  const protectedWriter = findProtectedPartnerLegacyWriter(req.method, req.path);
-  const isWrite = !['GET', 'HEAD', 'OPTIONS'].includes(String(req.method || '').toUpperCase());
-
-  if (protectedWriter && !partnerLegacyRollbackEnabled()) {
-    try {
-      await recordUsage({
-        req,
-        accessKind: 'legacy_writer_blocked',
-        successorPath: protectedWriter.successor,
-      });
-    } catch (error) {
-      logger.error('[PartnerCutover] Failed to persist blocked legacy writer telemetry', error);
-    }
-    res.status(410).json({
-      success: false,
-      code: 'PARTNER_LEGACY_WRITER_DISABLED',
-      message: 'This legacy Partner writer has been cut over to V8.',
-      successor: protectedWriter.successor,
-      rollbackEnv: PARTNER_LEGACY_WRITER_ROLLBACK_ENV,
-    });
-    return;
-  }
-
-  const accessKind = protectedWriter
-    ? 'rollback_writer'
-    : isWrite
-      ? 'legacy_uncovered_writer'
-      : 'legacy_read';
-  try {
-    await recordUsage({ req, accessKind, successorPath: protectedWriter?.successor });
-  } catch (error) {
-    // Reads and not-yet-covered endpoints retain availability while telemetry
-    // rollout is repaired. A protected writer is still blocked above even if
-    // its audit insert failed.
-    logger.error('[PartnerCutover] Failed to persist legacy usage telemetry', error);
-  }
-  next();
-}
+/**
+ * Compatibility export for tests and older imports.  The actual legacy router
+ * mounts the same generic guard directly; no separate Partner decision or
+ * telemetry engine remains.
+ */
+export const partnerLegacyCutoverGuard = createLegacyCutoverGuard(PARTNERS_CUTOVER);

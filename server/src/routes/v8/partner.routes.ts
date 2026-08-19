@@ -6,8 +6,9 @@
  * - Same auth/context stack as other V8 routes: JWT + `req.organizationId` tenant context.
  * - This bridge bypasses tenant-wide v8OrgGate because partner access is scoped
  *   by partner membership, not by the tenant-wide V8 rollout flag.
- * - Partner rows are loaded only for `partnerOrgId` from `getActivePartnerOrgIdForUser(userId)`.
- * - `v8TenantOrganizationId` in meta is the JWT org (V8 gate); it must not be used as partner scope.
+ * - Reads retain the historical Partner membership projection.
+ * - Every mutation additionally requires the Partner organization to be
+ *   durably bound to the exact V8 tenant through `owner_organization_id`.
  *
  * @module routes/v8/partner.routes
  */
@@ -39,7 +40,10 @@ import {
   createPartnerEconomicsPolicyGuard,
   partnerEconomicsPolicyProjection,
 } from '../../services/partnerEconomicsPolicy.js';
-import { getActivePartnerOrgIdForUser } from '../../services/partnerOrgResolution.js';
+import {
+  getActivePartnerOrgIdForTenantUser,
+  getActivePartnerOrgIdForUser,
+} from '../../services/partnerOrgResolution.js';
 import {
   getPartnerPayoutSettings,
   isPartnerPayoutDestinationComplete,
@@ -53,6 +57,8 @@ import { ensureUserOnboardingStatusTable } from '../../utils/ensureUserOnboardin
 import logger from '../../utils/Logger.js';
 
 const router = Router();
+
+type BoundPartnerRequest = AuthRequest & { boundPartnerOrgId?: string };
 
 export const V8_PARTNER_READ_CONTRACT = 'partner_runtime_read_v1';
 export const V8_PARTNER_PROGRAM_CONTRACT = 'partner_program_p29_v1';
@@ -70,27 +76,24 @@ const unavailablePartnerWriter = (capability: string) =>
 const requireBoundPartnerTenant = asyncHandler(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     const { organizationId, userId } = getV8Context(req);
-    const binding = await DbPromise.get<{ id: string }>(
-      `SELECT po.id
-         FROM partner_organizations po
-         JOIN partner_users pu ON pu.partner_org_id=po.id
-        WHERE po.owner_organization_id=?
-          AND pu.user_id=?
-          AND lower(po.status)='active'
-          AND lower(pu.status)='active'
-        LIMIT 1`,
-      [organizationId, userId],
-      { fallback: false }
-    );
-    if (!binding) {
+    const partnerOrgId = await getActivePartnerOrgIdForTenantUser(organizationId, userId);
+    if (!partnerOrgId) {
       return res.status(403).json({
         error: 'Partner organization required',
         code: 'PARTNER_ORG_REQUIRED',
       });
     }
+    (req as BoundPartnerRequest).boundPartnerOrgId = partnerOrgId;
     next();
   }
 );
+
+async function getBoundPartnerOrgId(req: AuthRequest): Promise<string | null> {
+  const cached = (req as BoundPartnerRequest).boundPartnerOrgId;
+  if (cached) return cached;
+  const { organizationId, userId } = getV8Context(req);
+  return getActivePartnerOrgIdForTenantUser(organizationId, userId);
+}
 
 // AMD-PRT-ECONOMICS-002: economic mutations are refused here, as the FIRST
 // middleware on this router. Placement is load-bearing: the demo-dataset
@@ -109,6 +112,15 @@ router.use(
 // Self-connect acquires Partner capability, so live tenant membership and an
 // ADMIN/OWNER role must be established before any resolver/seeder can write.
 router.use('/connect', requireActiveMembership, requireOrgRole('admin'));
+
+// Every real V8 successor for PRT-W01..W08 and PRT-W13..W15 must prove the
+// exact tenant-to-Partner binding before the shared demo seeder can write.
+// Historical owner_organization_id=NULL rows intentionally fail this guard.
+router.use(
+  /^(?:\/payouts\/request|\/campaign-links(?:\/[^/]+)?|\/organization(?:\/specializations|\/regions|\/listing)?|\/payout-settings|\/certifications\/[^/]+\/(?:modules\/[^/]+\/progress|exam\/(?:start|submit)))\/?$/,
+  requireActiveMembership,
+  requireBoundPartnerTenant
+);
 
 // These four legacy endpoints were deliberate no-write 503 stubs. Their V8
 // successors preserve that honest contract until the corresponding business
@@ -233,7 +245,7 @@ async function certificationActor(req: AuthRequest, res: Response) {
     res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     return null;
   }
-  const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+  const partnerOrgId = await getBoundPartnerOrgId(req);
   if (!partnerOrgId) {
     res.status(403).json({ error: 'Partner organization required', code: 'PARTNER_ORG_REQUIRED' });
     return null;
@@ -1042,7 +1054,7 @@ router.post(
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
-    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    const partnerOrgId = await getBoundPartnerOrgId(req);
     if (!partnerOrgId) {
       return res.status(403).json({
         error: 'Partner organization required',
@@ -1126,7 +1138,7 @@ router.post(
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
-    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    const partnerOrgId = await getBoundPartnerOrgId(req);
     if (!partnerOrgId) {
       return res.status(403).json({
         error: 'Partner organization required',
@@ -1167,7 +1179,7 @@ router.delete(
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
-    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    const partnerOrgId = await getBoundPartnerOrgId(req);
     if (!partnerOrgId) {
       return res.status(403).json({
         error: 'Partner organization required',
@@ -1198,7 +1210,7 @@ router.put(
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
-    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    const partnerOrgId = await getBoundPartnerOrgId(req);
     if (!partnerOrgId) {
       return res.status(403).json({
         error: 'Partner organization required',
@@ -1239,7 +1251,7 @@ router.put(
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
-    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    const partnerOrgId = await getBoundPartnerOrgId(req);
     if (!partnerOrgId) {
       return res.status(403).json({
         error: 'Partner organization required',
@@ -1299,7 +1311,7 @@ router.put(
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
-    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    const partnerOrgId = await getBoundPartnerOrgId(req);
     if (!partnerOrgId) {
       return res.status(403).json({
         error: 'Partner organization required',
@@ -1359,7 +1371,7 @@ router.put(
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
-    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    const partnerOrgId = await getBoundPartnerOrgId(req);
     if (!partnerOrgId) {
       return res.status(403).json({
         error: 'Partner organization required',
@@ -1502,7 +1514,7 @@ router.put(
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
-    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    const partnerOrgId = await getBoundPartnerOrgId(req);
     if (!partnerOrgId) {
       return res.status(403).json({
         error: 'Partner organization required',

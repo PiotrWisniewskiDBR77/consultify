@@ -96,3 +96,32 @@ export async function getActivePartnerOrgIdForUser(userId: string): Promise<stri
 
   return fallbackOrg.id;
 }
+
+/**
+ * Resolve a Partner organization only when it is durably bound to the current
+ * Consultify tenant and the caller has an active Partner link.  This resolver
+ * is deliberately read-only: historical Partner rows whose
+ * `owner_organization_id` is NULL remain unbound and are denied by V8 writers
+ * until an explicit, owner-authorized backfill supplies the relationship.
+ */
+export async function getActivePartnerOrgIdForTenantUser(
+  organizationId: string,
+  userId: string
+): Promise<string | null> {
+  const db = getDatabase();
+  const row = await DbPromise.get<{ partner_org_id: string }>(
+    db,
+    `SELECT po.id AS partner_org_id
+       FROM partner_organizations po
+       JOIN partner_users pu ON pu.partner_org_id = po.id
+      WHERE po.owner_organization_id = ?
+        AND pu.user_id = ?
+        AND LOWER(COALESCE(po.status, 'active')) = 'active'
+        AND LOWER(COALESCE(pu.status, 'active')) = 'active'
+      ORDER BY COALESCE(pu.updated_at, pu.joined_at, pu.created_at) DESC
+      LIMIT 1`,
+    [organizationId, userId],
+    { fallback: false }
+  );
+  return row?.partner_org_id || null;
+}

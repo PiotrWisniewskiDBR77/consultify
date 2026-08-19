@@ -54,7 +54,8 @@ import {
   SUPERADMIN_SETTLEMENT_ECONOMIC_WRITERS,
   createPartnerEconomicsPolicyGuard,
 } from '../services/partnerEconomicsPolicy.js';
-import { partnerLegacyCutoverGuard } from '../services/partnerLegacyCutover.js';
+import { createLegacyCutoverGuard } from '../services/legacyCutover/legacyCutoverKernel.js';
+import { PARTNERS_CUTOVER } from '../services/legacyCutover/registry.js';
 import { getActivePartnerOrgIdForUser } from '../services/partnerOrgResolution.js';
 import {
   getPartnerPayoutSettings,
@@ -270,7 +271,7 @@ router.use(verifyToken);
 // writers now excluded by owner policy. Policy wins the ordering so the stable
 // code and the telemetry receipt are the policy ones.
 router.use(createPartnerEconomicsPolicyGuard(LEGACY_PARTNER_ECONOMIC_WRITERS, 'legacy_partner'));
-router.use(partnerLegacyCutoverGuard);
+router.use(createLegacyCutoverGuard(PARTNERS_CUTOVER));
 
 // =============================================================================
 // PARTNER CONNECTION (ONBOARDING)
