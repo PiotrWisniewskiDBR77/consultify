@@ -77,6 +77,36 @@ function makeApi(overrides: Partial<ValuationWorkspaceApi> = {}): ValuationWorks
 }
 
 describe('ValuationWorkspace — nawigacja siedmiu kroków', () => {
+  it('hydrates the assumptions draft from the asynchronous cold-read response', async () => {
+    const api = makeApi({
+      getValuationWaccInputs: vi.fn().mockResolvedValue({
+        organization_id: 'org-1',
+        business_version_id: BV_ID,
+        currency: 'EUR',
+        nominal_or_real: 'NOMINAL',
+        pre_or_post_tax: 'POST_TAX',
+        risk_free_rate_pct: '3.75',
+        equity_risk_premium_pct: null,
+        beta_unlevered: null,
+        target_capital_structure_debt_pct: null,
+        target_capital_structure_equity_pct: null,
+        current_capital_structure_debt_pct: null,
+        current_capital_structure_equity_pct: null,
+        cost_of_debt_pretax_pct: null,
+        credit_spread_pct: null,
+        cash_tax_rate_pct: null,
+        wacc_computed_pct: null,
+        created_by: 'user-1',
+        created_at: '2026-08-19T00:00:00Z',
+        updated_at: '2026-08-19T00:00:00Z',
+      }),
+    });
+    render(<ValuationWorkspace businessVersionId={BV_ID} api={api} initialStepId="assumptions" />);
+
+    await waitFor(() => expect(screen.getByTestId('wacc-currency')).toHaveValue('EUR'));
+    expect(screen.getByTestId('wacc-risk-free-rate')).toHaveValue(3.75);
+  });
+
   it('renderuje krok Source jako domyślny i pokazuje nazwę wariantu w pasku', async () => {
     render(<ValuationWorkspace businessVersionId={BV_ID} api={makeApi()} />);
     await waitFor(() =>

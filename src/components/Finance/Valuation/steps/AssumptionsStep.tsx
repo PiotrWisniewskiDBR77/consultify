@@ -9,7 +9,7 @@
  * WACC's own currency field until an actual FCFF run supplies a measured one (there is no
  * currency-only endpoint), documented inline.
  */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import type { UpsertValuationWaccInputsParams } from '@/services/api/financeV2.api';
 import {
@@ -48,6 +48,25 @@ export function AssumptionsStep(props: AssumptionsStepProps): React.ReactElement
     creditSpreadPct: numOrNull(wacc?.credit_spread_pct ?? null),
     cashTaxRatePct: numOrNull(wacc?.cash_tax_rate_pct ?? null),
   }));
+
+  useEffect(() => {
+    if (!wacc) return;
+    setDraft({
+      currency: wacc.currency,
+      nominalOrReal: wacc.nominal_or_real,
+      preOrPostTax: wacc.pre_or_post_tax,
+      riskFreeRatePct: numOrNull(wacc.risk_free_rate_pct),
+      equityRiskPremiumPct: numOrNull(wacc.equity_risk_premium_pct),
+      betaUnlevered: numOrNull(wacc.beta_unlevered),
+      targetCapitalStructureDebtPct: numOrNull(wacc.target_capital_structure_debt_pct),
+      targetCapitalStructureEquityPct: numOrNull(wacc.target_capital_structure_equity_pct),
+      currentCapitalStructureDebtPct: numOrNull(wacc.current_capital_structure_debt_pct),
+      currentCapitalStructureEquityPct: numOrNull(wacc.current_capital_structure_equity_pct),
+      costOfDebtPretaxPct: numOrNull(wacc.cost_of_debt_pretax_pct),
+      creditSpreadPct: numOrNull(wacc.credit_spread_pct),
+      cashTaxRatePct: numOrNull(wacc.cash_tax_rate_pct),
+    });
+  }, [wacc]);
 
   // The engine's own FCFF is always NOMINAL/PLN-or-whatever-the-statement-currency-is — until a
   // real DCF run exists, the honest comparison is "does WACC's own declared convention satisfy
