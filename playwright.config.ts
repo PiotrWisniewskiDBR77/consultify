@@ -10,6 +10,7 @@ const useWebServer = process.env.E2E_USE_WEB_SERVER === 'true';
 const enableGlobalTestSupport = process.env.E2E_REQUIRE_TEST_SUPPORT === 'true' || useWebServer;
 const backendRunner = process.env.E2E_BACKEND_RUNNER || 'tsx'; // 'tsx' | 'build'
 const testSupportKey = process.env.TEST_SUPPORT_KEY || 'local-test-support-key-change-me';
+const partnerAccrualPolicyJson = process.env.PARTNER_ACCRUAL_POLICY_JSON || '';
 // tsx's IPC pipe is a unix socket under TMPDIR; on deep worktree paths (e.g. long
 // scratchpad dirs) the default `<cwd>/.tmp/e2e` path exceeds the OS socket-path
 // length limit (EINVAL). Allow overriding with a short path via E2E_TMP_DIR.
@@ -55,6 +56,7 @@ const backendEnv = [
   'SKIP_STARTUP_VALIDATOR=true',
   `ENABLE_V8_GLOBAL=${process.env.ENABLE_V8_GLOBAL === 'true' ? 'true' : 'false'}`,
   `PARTNER_SELF_CONNECT_ENABLED=${process.env.PARTNER_SELF_CONNECT_ENABLED === 'true' ? 'true' : 'false'}`,
+  `PARTNER_ACCRUAL_POLICY_JSON=${JSON.stringify(partnerAccrualPolicyJson)}`,
   `TEST_SUPPORT_KEY=${testSupportKey}`,
   `E2E_MODE=${process.env.E2E_MODE || 'false'}`,
 ].join(' ');
