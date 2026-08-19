@@ -32,7 +32,7 @@ describe('Results legacy cutover registry', () => {
     expect(RESULTS_CUTOVER.rollbackWritersEnv).toBe('RESULTS_LEGACY_ROLLBACK_WRITERS');
   });
 
-  it('does not retire W01 and keeps unmapped W23 resolve usable', () => {
+  it('does not retire W01 and keeps the guarded W23 resolve usable', () => {
     expect(RESULTS_CUTOVER.writers.find((entry) => entry.writerId === 'RESULTS-W01')?.state).toBe(
       'protected'
     );
@@ -41,7 +41,7 @@ describe('Results legacy cutover registry', () => {
     expect(resolve?.successor).toBeNull();
   });
 
-  it('retires only mapped drawer commands and preserves unmapped resolve', () => {
+  it('keeps resolve on the guarded V8 owner and removes the benefits fallback', () => {
     const drawer = readFileSync(
       path.resolve(__dirname, '../../../../../src/components/Results/KPITimeSeriesDrawer.tsx'),
       'utf8'
@@ -54,7 +54,9 @@ describe('Results legacy cutover registry', () => {
     expect(drawer).not.toMatch(
       /Api\.(?:post|put)\(`\/benefits\/deviation-cases\/\$\{openCase\.id\}\/(?:acknowledge|rca|actions|close)/
     );
-    expect(drawer).toContain('Api.post(`/benefits/deviation-cases/${openCase.id}/resolve`, {})');
+    expect(drawer).not.toContain(
+      'Api.post(`/benefits/deviation-cases/${openCase.id}/resolve`, {})'
+    );
 
     const legacyClient = readFileSync(
       path.resolve(__dirname, '../../../../../src/services/api/v8/results.ts'),

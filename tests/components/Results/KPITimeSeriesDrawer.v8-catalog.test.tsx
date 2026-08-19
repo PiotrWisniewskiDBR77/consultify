@@ -1227,7 +1227,7 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     expect(Api.post).not.toHaveBeenCalledWith('/benefits/deviation-cases/case-1/resolve', {});
   });
 
-  it('falls back to legacy deviation resolve only for bounded compatibility errors', async () => {
+  it('does not reopen the retired benefits writer when governed resolve fails', async () => {
     vi.mocked(V8ResultsApi.getKpiCatalog).mockResolvedValue({
       organizationId: 'org-1',
       kpis: [
@@ -1255,7 +1255,6 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
       },
     } as any);
     vi.mocked(V8ResultsApi.resolveDeviationCase).mockRejectedValue({ status: 404 });
-    vi.mocked(Api.post).mockResolvedValue({ success: true } as any);
 
     renderDrawer({ kpiId: 'kpi-1', onClose: vi.fn() });
 
@@ -1270,8 +1269,9 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
     fireEvent.click(screen.getByText('Resolve'));
 
     await waitFor(() => {
-      expect(Api.post).toHaveBeenCalledWith('/benefits/deviation-cases/case-1/resolve', {});
+      expect(V8ResultsApi.resolveDeviationCase).toHaveBeenCalledWith('case-1');
     });
+    expect(Api.post).not.toHaveBeenCalledWith('/benefits/deviation-cases/case-1/resolve', {});
   });
 
   it.skip('closes deviation cases through the governed V8 route before legacy fallback', async () => {

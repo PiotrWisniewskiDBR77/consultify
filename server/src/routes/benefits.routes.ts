@@ -916,7 +916,6 @@ router.put(
 
 router.post(
   '/deviation-cases/:caseId/resolve',
-  requireAudit as any,
   asyncHandler(async (req, res) => {
     if (!(await assertKpiPermission(req as any, res, 'manage_deviation'))) return;
     const orgId = getOrgId(req);
@@ -924,35 +923,19 @@ router.post(
     if (!orgId) return res.status(401).json({ success: false, error: 'Unauthorized' });
     if (!caseId) return res.status(400).json({ success: false, error: 'caseId is required' });
 
-    const before = await dbGet<any>(
-      `SELECT status, kpi_id FROM kpi_deviation_cases WHERE id = ? AND organization_id = ?`,
-      [caseId, orgId]
-    );
-
-    await dbRun(
-      `
-      UPDATE kpi_deviation_cases
-      SET status = 'RESOLVED', resolved_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-      WHERE id = ? AND organization_id = ?
-      `,
-      [caseId, orgId]
-    );
-
-    try {
-      await req.emitAuditEvent?.({
-        actorType: 'USER',
-        action: 'deviation_case.resolve',
-        resourceType: 'kpi_deviation_case',
-        resourceId: String(caseId),
-        before: before ? { status: before.status } : undefined,
-        after: { status: 'RESOLVED' },
-        metadata: { kpiId: before?.kpi_id },
-      });
-    } catch {
-      /* audit best-effort */
-    }
-
-    res.json({ success: true });
+    // The Results drawer and every supported caller resolve through the guarded
+    // V8 ownership spine. Keeping a second direct UPDATE here allowed a bounded
+    // compatibility error to escape the cutover guard and mutate the same
+    // legacy row through a different mount. This compatibility door is now
+    // permanently read-only; rollback belongs to the writer-scoped V8 cutover,
+    // never to an unobserved /benefits fallback.
+    return res.status(410).json({
+      success: false,
+      error: 'Legacy deviation resolve writer is retired',
+      code: 'RESULTS_LEGACY_WRITER_DISABLED',
+      writerId: 'RESULTS-W23-BENEFITS-SECOND-DOOR',
+      successor: `/api/v8/results/deviation-cases/${encodeURIComponent(caseId)}/resolve`,
+    });
   })
 );
 

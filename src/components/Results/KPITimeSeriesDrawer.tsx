@@ -1160,17 +1160,19 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
     if (!openCase?.id) return;
     setCaseBusy(true);
     try {
-      try {
-        await V8ResultsApi.resolveDeviationCase(openCase.id);
-      } catch (error) {
-        if (!shouldFallbackToLegacyResults(error)) throw error;
-        await Api.post(`/benefits/deviation-cases/${openCase.id}/resolve`, {});
-      }
+      await V8ResultsApi.resolveDeviationCase(openCase.id);
       fetchData();
+    } catch {
+      toast.error(
+        t(
+          'results.deviation.resolveFailed',
+          'The deviation could not be resolved through the governed Results service. Reload and retry.'
+        )
+      );
     } finally {
       setCaseBusy(false);
     }
-  }, [openCase?.id, fetchData]);
+  }, [openCase?.id, fetchData, t]);
   const handleSuggestRca = useCallback(async () => {
     if (!openCase?.id) return;
     setRcaSuggestBusy(true);
