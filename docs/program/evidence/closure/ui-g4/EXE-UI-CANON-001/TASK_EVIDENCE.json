@@ -2,7 +2,7 @@
   "taskId": "EXE-UI-CANON-001",
   "lane": "UI-G4",
   "baselineSha": "c4f84a2baa7f1ce9c7b03a68ebbd1783cdbc581b",
-  "productSha": "4eec1d27952bc5642018495575665f5784e04f71",
+  "productSha": "287aab619142f2990d46d04d04faaccb1cadf696",
   "verdict": "AUTOMATED_G4_PASS / BLOCKED_HUMAN",
   "verdictLiteral": "The automatable half of G4 passes on this exact SHA. The gate as a whole is NOT closed: VoiceOver, brand and named-human acceptance are outstanding and are recorded separately below. An automated axe pass is not a human sign-off.",
   "environment": {
@@ -87,58 +87,58 @@
   "screenshots": [
     {
       "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__desktop__en__dark.png",
-      "sha256": "baa4a43d9a0cb9a9c6c7b08732d33bc2e064fddca9d400ef9d383a1aeeda6e0f"
+      "sha256": "b78d0f38b7fa2cd25e58838ed31bfc9d5a10680674b694b9e7f351902fc19b30"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__desktop__en__light.png",
-      "sha256": "340fd222a59148d87770db9c6fab59e2cad75db58c7911f238c1f11716768027"
+      "sha256": "e6192adb2ae785cef2032e39f62ddfab5f831710ec98e69daae63d297a9144f3"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__desktop__pl__dark.png",
-      "sha256": "93582125b291dba58e97f66e9680716131cec4cf1021ff02223e627c3e08ab0f"
+      "sha256": "3fbed07f3d6e331593ea6fbdb61ed12534d8dca4b07f352e2407417620f3ea50"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__desktop__pl__light.png",
-      "sha256": "a0ecdd4756e6aaa82c35b1f62c3ca702f130e6db71f97bf567f391e9152cc6f7"
+      "sha256": "9f22e3c752ad95903d5afcd1911c5c0978271402c9fb2dd9eec205abd36cd69e"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__execution-tab-rollout__desktop__pl__light.png",
-      "sha256": "1507706a6e28c387cb2727ae6e5f9cb016a6c7ab121a6774e35323a28f233ce2"
+      "sha256": "adfabfdcab691ed8eacf60f2225790ba05105da9b39b5b4a3baf40d50b9eeef0"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__mobile__en__dark.png",
-      "sha256": "eaa47df65662d2687f0290b31fb4ec6966f12355713297400a1075b4f78199d8"
+      "sha256": "893452518066e70ac2a3e4ab0c2beef20c99a2eda49b350dc4cfd4e1be4e914d"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__mobile__en__light.png",
-      "sha256": "f505bfd9b1545002d233edb226f5c2f13a01c6d1c1583290f7d10a8eb97577e5"
+      "sha256": "cec1088d671801522308113377daae48a99adcb244e9b975129b40351b71b2cb"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__mobile__pl__dark.png",
-      "sha256": "9f4234b97fed956e2f157a2069886fb49f3f1d176748ee36460b510dace14312"
+      "sha256": "10f275cdb4fce091f49beec8c1aa1778d69a77d894e1655f02685230f176854a"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__mobile__pl__light.png",
-      "sha256": "75757109ad1095e1844063e0bd2f2634c2315ae85bc7726347fbb1c9a91e6a20"
+      "sha256": "017c0ca1c36de60b5fecceb6bb53d9a82deb96c1a3d2bc9b233aaf62fb9b759a"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__tablet__en__dark.png",
-      "sha256": "72f30fa171031763852e0810d1c2b63b5a14be5dfcd12856aff2a9beda68b11f"
+      "sha256": "dfc5bc7a6a864036f4a78563b1cd9aabe2767ece1f00bba34bbca2d2a9206568"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__tablet__en__light.png",
-      "sha256": "a5bef01209cce3b5b6a02328ee604effe74d3587301af8ec38dd45fcfee3c77f"
+      "sha256": "38fca687e8acbb4d64978386f9a65de7f5e12d4675cc3c4fbc70022bb98fe718"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__tablet__pl__dark.png",
-      "sha256": "d305538370c89c7efc2eca18a11633796bf5ba4311c143698075d1a1f63b47f2"
+      "sha256": "d0dfeb3c9a4b67c6fff172c9bc86795f070b2c995938503dab890a1b32059cdd"
     },
     {
       "file": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/screens/EXE__tablet__pl__light.png",
-      "sha256": "3ad296b42d5ebe20075f0ce872cd6680881e92ce2e4f4a0277246be3a0b0d522"
+      "sha256": "44707d5518e3816588de5683b1016ae8f5f8429034a32cc5778a931f61a54b16"
     }
   ],
-  "screenshotBinding": "Every screenshot above was produced by the sweep run recorded in productSha 4eec1d27952bc5642018495575665f5784e04f71; the sha256 of each file is listed so a later re-render cannot be passed off as this run.",
+  "screenshotBinding": "Every screenshot above was produced by the sweep run recorded in productSha 287aab619142f2990d46d04d04faaccb1cadf696; the sha256 of each file is listed so a later re-render cannot be passed off as this run.",
   "automatedFailures": [],
   "measurementCaveats": [],
   "blockedHuman": [

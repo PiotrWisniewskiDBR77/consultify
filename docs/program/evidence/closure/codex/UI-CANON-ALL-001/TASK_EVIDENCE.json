@@ -70,7 +70,8 @@
     "automatedG4VisibleFocusSurfaces": "15/15",
     "automatedG4DeepLinkReloadCold": "15/15 each",
     "automatedG4HorizontalOverflowCells": 0,
-    "automatedG4ConsoleErrors": {"total": 78, "forbidden403": 78, "notFound404": 0, "other": 0}
+    "automatedG4ConsoleErrors": {"total": 0, "forbidden403": 0, "notFound404": 0, "other": 0},
+    "executionPermissionRequalificationSha": "287aab619142f2990d46d04d04faaccb1cadf696"
   },
   "fixtures": {
     "status": "Exact-current mounted sweep covers all fifteen frozen UI authority packets at three viewports, two themes and two locales. Audit has no frozen task in the 82-task authority; task-specific stale/forbidden/concurrency journeys and human acceptance remain separate gates."
@@ -103,7 +104,7 @@
     {
       "taskId": "EXE-UI-CANON-001",
       "path": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "sha256": "3c299879eeaee9512ef53c3e35c71ec35b40fb8f90900e0699b6b80b0178eefd"
+      "sha256": "d9a3496aee7f4331de1621c9bf8233aa8efebd597e6d63879a481fb88f2124bc"
     },
     {
       "taskId": "FIN-UI-CANON-001",
@@ -188,6 +189,7 @@
     "Final mounted signed-auth automated G4 completed on exact-current candidate 4eec1d27952bc5642018495575665f5784e04f71: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed.",
     "The aggregate now has a machine-validated sixteen-module inventory with explicit route, surface, state coverage and open-gap classification.",
     "All fifteen frozen module evidence packets have readable denominators, valid commit lineage or reconciliation, and verified referenced G4 result hashes.",
+    "The six Execution manager-lane endpoints were requalified on 287aab619142f2990d46d04d04faaccb1cadf696 after the canonical role-permission seed; all 78 prior ADMIN 403 responses are now zero, with MEMBER/VIEWER roles remaining ungranted.",
     "The verifier fails closed if the denominator falls below sixteen or the Audit proposal is relabeled as synthetic completion."
   ],
   "automatedG4Verdict": {
@@ -213,8 +215,8 @@
     "authentication": "real signed JWT from /api/test-support/bootstrap",
     "e2eMode": false,
     "consoleErrors": {
-      "total": 78,
-      "forbidden403": 78,
+      "total": 0,
+      "forbidden403": 0,
       "notFound404": 0,
       "other": 0
     },

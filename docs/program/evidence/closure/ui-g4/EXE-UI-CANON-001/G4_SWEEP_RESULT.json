@@ -3,8 +3,8 @@
   "key": "EXE",
   "module": "Execution",
   "route": "/execution",
-  "productSha": "4eec1d27952bc5642018495575665f5784e04f71",
-  "startedAt": "2026-08-19T22:01:14.745Z",
+  "productSha": "287aab619142f2990d46d04d04faaccb1cadf696",
+  "startedAt": "2026-08-19T22:25:39.254Z",
   "cells": [
     {
       "viewport": "desktop",
@@ -27,14 +27,8 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": [
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)"
-      ]
+      "consoleErrors": [],
+      "httpErrors": []
     },
     {
       "viewport": "desktop",
@@ -57,14 +51,8 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": [
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)"
-      ]
+      "consoleErrors": [],
+      "httpErrors": []
     },
     {
       "viewport": "desktop",
@@ -87,14 +75,8 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": [
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)"
-      ]
+      "consoleErrors": [],
+      "httpErrors": []
     },
     {
       "viewport": "desktop",
@@ -117,14 +99,8 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": [
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)"
-      ]
+      "consoleErrors": [],
+      "httpErrors": []
     },
     {
       "viewport": "tablet",
@@ -147,14 +123,8 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": [
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)"
-      ]
+      "consoleErrors": [],
+      "httpErrors": []
     },
     {
       "viewport": "tablet",
@@ -177,14 +147,8 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": [
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)"
-      ]
+      "consoleErrors": [],
+      "httpErrors": []
     },
     {
       "viewport": "tablet",
@@ -207,14 +171,8 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": [
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)"
-      ]
+      "consoleErrors": [],
+      "httpErrors": []
     },
     {
       "viewport": "tablet",
@@ -237,14 +195,8 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": [
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)"
-      ]
+      "consoleErrors": [],
+      "httpErrors": []
     },
     {
       "viewport": "mobile",
@@ -267,14 +219,8 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": [
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)"
-      ]
+      "consoleErrors": [],
+      "httpErrors": []
     },
     {
       "viewport": "mobile",
@@ -297,14 +243,8 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": [
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)"
-      ]
+      "consoleErrors": [],
+      "httpErrors": []
     },
     {
       "viewport": "mobile",
@@ -327,14 +267,8 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": [
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)"
-      ]
+      "consoleErrors": [],
+      "httpErrors": []
     },
     {
       "viewport": "mobile",
@@ -357,14 +291,8 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": [
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)"
-      ]
+      "consoleErrors": [],
+      "httpErrors": []
     },
     {
       "viewport": "desktop",
@@ -387,14 +315,8 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": [
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)",
-        "Failed to load resource: the server responded with a status of 403 (Forbidden)"
-      ]
+      "consoleErrors": [],
+      "httpErrors": []
     }
   ],
   "deepLink": {
