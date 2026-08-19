@@ -122,7 +122,10 @@ import {
   validateStatement,
   withStatementUploadIdempotencyLock,
 } from '../services/financialStatementService.js';
-import { saveStatementValuesFlow } from '../services/financialStatementValueWriteService.js';
+import {
+  saveStatementValuesFlow,
+  shouldDeferStatementPackSync,
+} from '../services/financialStatementValueWriteService.js';
 import {
   applyLlmProposals,
   applySecondPassProposals,
@@ -1982,6 +1985,10 @@ router.post(
           : documentProfile.documentClass === 'spreadsheet'
             ? 'spreadsheet_structured'
             : 'local_parser';
+    const persistedExtractionStrategy =
+      stmt.extraction_strategy === 'spreadsheet_structured_staged'
+        ? 'spreadsheet_structured_staged'
+        : strategy;
 
     logFinanceEvent('statement.extract.completed', {
       traceId,
@@ -1999,7 +2006,7 @@ router.post(
       currency: effectiveCurrency,
       scaling: effectiveScaling,
       documentClass: documentProfile.documentClass,
-      extractionStrategy: strategy,
+      extractionStrategy: persistedExtractionStrategy,
       templateFamily: documentProfile.templateFamily,
     });
     const persistedSections = await persistStatementExtractedSections({
@@ -2040,7 +2047,7 @@ router.post(
       currentStage: 'extract',
       runStatus: extraction.lines.length > 0 ? 'running' : 'failed',
       documentClass: documentProfile.documentClass,
-      extractionStrategy: strategy,
+      extractionStrategy: persistedExtractionStrategy,
       templateFamily: documentProfile.templateFamily,
       rawTextLength: text.length,
       reasonCodes:
@@ -2412,7 +2419,9 @@ router.post(
       createdBy: userId,
       summary: readiness.summary,
     });
-    const statementPackId = await syncStatementToPack(statementId);
+    const statementPackId = shouldDeferStatementPackSync(stmt)
+      ? null
+      : await syncStatementToPack(statementId);
     await recordStatementSourceArtifact({
       statementId,
       ingestRunId,

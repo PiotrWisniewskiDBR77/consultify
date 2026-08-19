@@ -91,14 +91,18 @@ async function loadSelectedMappingLookup(statementId: string): Promise<Map<strin
   return lookup;
 }
 
+export function shouldDeferStatementPackSync(statement: Record<string, any>): boolean {
+  return (
+    statement.extraction_strategy === 'spreadsheet_structured_staged' &&
+    String(statement.status || '').toLowerCase() !== 'confirmed'
+  );
+}
+
 export async function syncStatementPackAfterValues(
   statementId: string,
   statement: Record<string, any>
 ): Promise<string | null> {
-  const isUnconfirmedStructuredStage =
-    statement.extraction_strategy === 'spreadsheet_structured_staged' &&
-    String(statement.status || '').toLowerCase() !== 'confirmed';
-  return isUnconfirmedStructuredStage ? null : await syncStatementToPack(statementId);
+  return shouldDeferStatementPackSync(statement) ? null : await syncStatementToPack(statementId);
 }
 
 export async function saveStatementValuesFlow(params: {

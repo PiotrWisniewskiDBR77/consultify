@@ -6,12 +6,21 @@ const { syncStatementToPack } = vi.hoisted(() => ({
 
 vi.mock('../financialStatementPackService.js', () => ({ syncStatementToPack }));
 
-import { syncStatementPackAfterValues } from '../financialStatementValueWriteService.js';
+import {
+  shouldDeferStatementPackSync,
+  syncStatementPackAfterValues,
+} from '../financialStatementValueWriteService.js';
 
 describe('statement value writes for staged structured imports', () => {
   beforeEach(() => syncStatementToPack.mockClear());
 
   it('keeps a staged import pack-null until confirm', async () => {
+    expect(
+      shouldDeferStatementPackSync({
+        extraction_strategy: 'spreadsheet_structured_staged',
+        status: 'mapped',
+      })
+    ).toBe(true);
     await expect(
       syncStatementPackAfterValues('statement-staged', {
         extraction_strategy: 'spreadsheet_structured_staged',
@@ -22,6 +31,12 @@ describe('statement value writes for staged structured imports', () => {
   });
 
   it('preserves ordinary value-write pack sync and resumes it after confirm', async () => {
+    expect(
+      shouldDeferStatementPackSync({
+        extraction_strategy: 'spreadsheet_structured',
+        status: 'mapped',
+      })
+    ).toBe(false);
     await expect(
       syncStatementPackAfterValues('statement-ordinary', {
         extraction_strategy: 'spreadsheet_structured',

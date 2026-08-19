@@ -125,6 +125,31 @@ test('signed XLSX statement confirm registers a canonical pack and import surviv
     await continueToConfirm.waitFor({ state: 'visible', timeout: 30_000 });
     await continueToConfirm.click();
 
+    const stagedState = await pool.query(
+      `SELECT extraction_strategy, status, statement_pack_id FROM financial_statements WHERE id = $1`,
+      [statementId]
+    );
+    expect(stagedState.rows[0]).toMatchObject({
+      extraction_strategy: 'spreadsheet_structured_staged',
+      statement_pack_id: null,
+    });
+    expect(String(stagedState.rows[0]?.status).toLowerCase()).not.toBe('confirmed');
+
+    const explicitValidation = await request.post(
+      `${API_BASE_URL}/api/finance-statements/${statementId}/validate`,
+      {
+        headers: {
+          Authorization: `Bearer ${state.token}`,
+          'x-org-context': state.organizationId,
+        },
+      }
+    );
+    expect(explicitValidation.status(), await explicitValidation.text()).toBe(200);
+    expect(await explicitValidation.json()).toMatchObject({
+      statementId,
+      statementPackId: null,
+    });
+
     const beforeConfirm = await pool.query(
       `SELECT
          (SELECT count(*)::int FROM financial_statements WHERE id = $1 AND statement_pack_id IS NOT NULL) AS pack_items,

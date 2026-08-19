@@ -2365,6 +2365,10 @@ router.post(
           : documentProfile.documentClass === 'spreadsheet'
             ? 'spreadsheet_structured'
             : 'local_parser';
+    const persistedExtractionStrategy =
+      statement.extraction_strategy === 'spreadsheet_structured_staged'
+        ? 'spreadsheet_structured_staged'
+        : strategy;
 
     logFinanceEvent('statement.extract.completed', {
       traceId,
@@ -2382,7 +2386,7 @@ router.post(
       currency: effectiveCurrency,
       scaling: effectiveScaling,
       documentClass: documentProfile.documentClass,
-      extractionStrategy: strategy,
+      extractionStrategy: persistedExtractionStrategy,
       templateFamily: documentProfile.templateFamily,
     });
     const persistedSections = await persistStatementExtractedSections({
@@ -2423,7 +2427,7 @@ router.post(
       currentStage: 'extract',
       runStatus: extraction.lines.length > 0 ? 'running' : 'failed',
       documentClass: documentProfile.documentClass,
-      extractionStrategy: strategy,
+      extractionStrategy: persistedExtractionStrategy,
       templateFamily: documentProfile.templateFamily,
       rawTextLength: text.length,
       reasonCodes:
