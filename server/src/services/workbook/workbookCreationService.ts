@@ -1,6 +1,8 @@
 import { createHash } from 'node:crypto';
 
 import * as queryHelpers from '../../utils/queryHelpers.js';
+import { createPinnedClientContext } from '../../utils/pinnedTransactionClient.js';
+import type { PgTransactionClient } from '../../utils/queryHelpers.js';
 import { buildWorkbookBuffer } from './WorkbookBuilder.js';
 import { assertWorkbookSchema } from './workbookSchemaGuard.js';
 import type { WorkbookSchema } from './WorkbookSchema.js';
@@ -36,6 +38,31 @@ export interface CanonicalWorkbookResult {
   replayed: boolean;
 }
 
+const workbookOwnerTransaction = createPinnedClientContext('workbook_owner');
+
+export function withWorkbookOwnerClient<T>(
+  client: PgTransactionClient,
+  fn: () => Promise<T>
+): Promise<T> {
+  return workbookOwnerTransaction.withClient(client, fn);
+}
+
+async function workbookQueryOne<T>(sql: string, params: unknown[]): Promise<T | undefined> {
+  const client = workbookOwnerTransaction.current();
+  return client
+    ? (await client.query<T>(sql, params)).rows[0]
+    : (await queryHelpers.queryOne<T>(sql, params)) ?? undefined;
+}
+
+async function workbookQueryRun(sql: string, params: unknown[]) {
+  const client = workbookOwnerTransaction.current();
+  if (client) {
+    const result = await client.query(sql, params);
+    return { success: true, changes: result.rowCount ?? 0 };
+  }
+  return queryHelpers.queryRun(sql, params);
+}
+
 const digest = (value: unknown) =>
   createHash('sha256').update(typeof value === 'string' ? value : JSON.stringify(value)).digest('hex');
 
@@ -50,7 +77,7 @@ export async function createCanonicalWorkbook(
   }
   const schema = { ...input.schema, title: input.title };
   const contentHash = digest({ schema, sourceIdentity: input.sourceIdentity, sourceHash: input.sourceHash });
-  const existing = await queryHelpers.queryOne<{ organization_id:string; schema_json: string; version: number; evidence_refs_json: string; action_contract_json:string }>(
+  const existing = await workbookQueryOne<{ organization_id:string; schema_json: string; version: number; evidence_refs_json: string; action_contract_json:string }>(
     `SELECT organization_id,schema_json, COALESCE(version,0) version, evidence_refs_json,action_contract_json
        FROM generated_workbooks WHERE id=?`,
     [input.workbookId]
@@ -66,7 +93,7 @@ export async function createCanonicalWorkbook(
       bytesHash: digest(bytes), contentHash, replayed: true };
   }
   const bytes = input.prebuiltBuffer ?? await buildWorkbookBuffer(schema);
-  const inserted = await queryHelpers.queryRun(
+  const inserted = await workbookQueryRun(
     `INSERT INTO generated_workbooks
       (id,organization_id,title,description,prompt,schema_json,sheet_count,file_name,file_size,
        validation_errors,quality_score,pipeline_log,action_contract_json,source_pack_json,

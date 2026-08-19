@@ -7,6 +7,7 @@ import {
   Copy,
   Edit2,
   ExternalLink,
+  FileText,
   Flower2,
   Folder,
   FolderMinus,
@@ -32,7 +33,7 @@ import {
   Workflow,
   X,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -387,6 +388,20 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   const [activeTag, setActiveTag] = useState<string>('all');
   const [convertIdea, setConvertIdea] = useState<MyIdea | null>(null);
   const [converting, setConverting] = useState(false);
+  const [artifactApproval, setArtifactApproval] = useState<{
+    ideaId: string;
+    proposalId: string;
+    target: 'document' | 'presentation' | 'workbook';
+  } | null>(null);
+  const conversionIntentKeys = useRef(new Map<string, string>());
+  const intentKey = useCallback((ideaId: string, target: string) => {
+    const identity = `${ideaId}:${target}`;
+    const existing = conversionIntentKeys.current.get(identity);
+    if (existing) return existing;
+    const created = crypto.randomUUID();
+    conversionIntentKeys.current.set(identity, created);
+    return created;
+  }, []);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const [tagModalOpen, setTagModalOpen] = useState(false);
@@ -1050,7 +1065,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
         const result = await Api.convertMyIdea(sourceIdea.id, {
           target,
           options: { language: i18n.language },
+          idempotencyKey: intentKey(sourceIdea.id, target),
         });
+        conversionIntentKeys.current.delete(`${sourceIdea.id}:${target}`);
         trackFunnelEvent(`idea_converted_${target}`, {
           ideaId: sourceIdea.id,
           surface: 'ideas-list',
@@ -1079,8 +1096,57 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
         setConverting(false);
       }
     },
-    [convertIdea, fetchIdeas, i18n.language, isPolish]
+    [convertIdea, fetchIdeas, i18n.language, intentKey, isPolish]
   );
+
+  const proposeArtifact = useCallback(async (
+    target: 'document' | 'presentation' | 'workbook'
+  ) => {
+    if (!convertIdea?.id) return;
+    try {
+      setConverting(true);
+      const result = await Api.proposeIdeaArtifact(
+        convertIdea.id,
+        target,
+        intentKey(convertIdea.id, target)
+      );
+      setArtifactApproval({
+        ideaId: convertIdea.id,
+        proposalId: result.proposal.proposalId,
+        target,
+      });
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to create artifact proposal');
+    } finally {
+      setConverting(false);
+    }
+  }, [convertIdea, intentKey]);
+
+  const approveAndMaterializeArtifact = useCallback(async () => {
+    if (!artifactApproval) return;
+    try {
+      setConverting(true);
+      await Api.decideIdeaArtifact(artifactApproval.ideaId, artifactApproval.proposalId);
+      const result = await Api.materializeIdeaArtifact(
+        artifactApproval.ideaId,
+        artifactApproval.proposalId
+      );
+      const targetId = result.receipt.targetRecordId;
+      conversionIntentKeys.current.delete(`${artifactApproval.ideaId}:${artifactApproval.target}`);
+      const href = artifactApproval.target === 'document'
+        ? `/document-studio/${targetId}`
+        : artifactApproval.target === 'presentation'
+          ? `/presentations/builder/${targetId}`
+          : `/excele?artifactId=${encodeURIComponent(targetId)}`;
+      setArtifactApproval(null);
+      setConvertIdea(null);
+      window.location.assign(href);
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to materialize artifact');
+    } finally {
+      setConverting(false);
+    }
+  }, [artifactApproval]);
 
   const handleOpenIdeaAiChat = useCallback(
     async (idea: MyIdea) => {
@@ -1618,6 +1684,30 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
               </button>
             ))}
           </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-c-border-subtle">
+            {([
+              { target: 'document' as const, icon: FileText, label: 'Document' },
+              { target: 'presentation' as const, icon: Presentation, label: 'Presentation' },
+              { target: 'workbook' as const, icon: Table2, label: 'Workbook' },
+            ]).map(({ target, icon: Icon, label }) => (
+              <button key={target} onClick={() => proposeArtifact(target)} disabled={converting || Boolean(artifactApproval)}
+                className="text-left p-3 rounded-xl border border-c-border-subtle disabled:opacity-60">
+                <div className="flex items-center gap-2 text-sm font-semibold"><Icon size={16} />{label}</div>
+                <div className="mt-1 text-[11px] text-c-text-muted">Create governed proposal</div>
+              </button>
+            ))}
+          </div>
+          {artifactApproval && (
+            <div className="rounded-xl border border-c-border-subtle p-3 space-y-2">
+              <div className="text-xs text-c-text-secondary">
+                Review complete. Approval will create the real {artifactApproval.target} and an immutable receipt.
+              </div>
+              <button onClick={approveAndMaterializeArtifact} disabled={converting}
+                className="px-3 py-2 rounded-lg bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 text-xs font-semibold disabled:opacity-60">
+                Approve and create
+              </button>
+            </div>
+          )}
         </div>
         <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-c-border-subtle bg-c-surface-raised">
           <button

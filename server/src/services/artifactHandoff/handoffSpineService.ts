@@ -631,6 +631,11 @@ export interface MaterializeProposalResult {
   replayed: boolean;
 }
 
+export type HandoffTransactionQuery = <T = unknown>(
+  sql: string,
+  params?: unknown[]
+) => Promise<{ rows: T[]; rowCount: number }>;
+
 /**
  * Turns an APPROVED proposal into exactly one receipt, atomically flipping
  * the proposal to 'materialized' in the SAME transaction.
@@ -644,7 +649,8 @@ export interface MaterializeProposalResult {
  * path that reaches the INSERT without holding that lock.
  */
 export async function materializeProposal(
-  input: MaterializeProposalInput
+  input: MaterializeProposalInput,
+  donatedQuery?: HandoffTransactionQuery
 ): Promise<MaterializeProposalResult> {
   const organizationId = requireNonEmpty(input.organizationId, 'organizationId');
   const proposalId = requireNonEmpty(input.proposalId, 'proposalId');
@@ -653,7 +659,7 @@ export async function materializeProposal(
   const outputContentHash =
     input.outputPayload !== undefined ? canonicalSourceHash(input.outputPayload) : null;
 
-  return withPgTransaction(async (query) => {
+  const execute = async (query: HandoffTransactionQuery) => {
     const proposalRows = await query<ProposalRow>(
       `SELECT * FROM artifact_handoff_proposals
         WHERE proposal_id = $1 AND organization_id = $2
@@ -733,7 +739,8 @@ export async function materializeProposal(
       throw new HandoffSpineError('receipt not found after insert', 'INSERT_READBACK_FAILED');
     }
     return { receipt: mapReceiptRow(inserted.rows[0]), replayed: false };
-  });
+  };
+  return donatedQuery ? execute(donatedQuery) : withPgTransaction(execute);
 }
 
 // ---------------------------------------------------------------------------

@@ -18,6 +18,11 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
+import {
+  getCurrentPgTransactionClient,
+  queryAll,
+  queryRun,
+} from '../../utils/queryHelpers.js';
 
 // ==========================================
 // TYPES — EvidenceEnvelope (kontrakt §3.1)
@@ -213,6 +218,22 @@ function rowToEnvelope(row: any): EvidenceEnvelope {
 // SERVICE
 // ==========================================
 
+async function envelopeQuery<T>(sql: string, params: unknown[] = []): Promise<T[]> {
+  if (getCurrentPgTransactionClient()) return queryAll<T>(sql, params);
+  const db = await getDatabase();
+  const result = await db.query<T>(sql, params);
+  return result.rows ?? [];
+}
+
+async function envelopeRun(sql: string, params: unknown[] = []): Promise<void> {
+  if (getCurrentPgTransactionClient()) {
+    await queryRun(sql, params);
+    return;
+  }
+  const db = await getDatabase();
+  await db.run(sql, params);
+}
+
 /**
  * Pobiera envelope dla artefaktu, org-scoped. Zwraca `null` gdy brak (BRAK
  * envelope ≠ błąd — artefakt może jeszcze nie przejść przez bramę
@@ -226,12 +247,11 @@ export async function getEnvelope(
   artifactId: string,
   organizationId: string
 ): Promise<EvidenceEnvelope | null> {
-  const db = await getDatabase();
-  const result = await db.query<any>(
+  const rows = await envelopeQuery<any>(
     `SELECT * FROM artifact_evidence WHERE artifact_type = ? AND artifact_id = ? AND organization_id = ? LIMIT 1`,
     [artifactType, artifactId, organizationId]
   );
-  const row = result.rows?.[0];
+  const row = rows[0];
   return row ? rowToEnvelope(row) : null;
 }
 
@@ -248,12 +268,11 @@ async function envelopeExistsForAnyOrg(
   artifactType: EvidenceArtifactType,
   artifactId: string
 ): Promise<boolean> {
-  const db = await getDatabase();
-  const result = await db.query<{ id: string }>(
+  const rows = await envelopeQuery<{ id: string }>(
     `SELECT id FROM artifact_evidence WHERE artifact_type = ? AND artifact_id = ? LIMIT 1`,
     [artifactType, artifactId]
   );
-  return Boolean(result.rows?.[0]);
+  return Boolean(rows[0]);
 }
 
 /**
@@ -266,7 +285,6 @@ async function envelopeExistsForAnyOrg(
  *   już istnieje, ale pod inną organizacją (RES-011 fail-closed guard).
  */
 export async function upsertEnvelope(input: UpsertEnvelopeInput): Promise<EvidenceEnvelope> {
-  const db = await getDatabase();
   const existing = await getEnvelope(input.artifactType, input.artifactId, input.organizationId);
   const now = new Date().toISOString();
 
@@ -279,7 +297,7 @@ export async function upsertEnvelope(input: UpsertEnvelopeInput): Promise<Eviden
     input.computedBy !== undefined ? input.computedBy : (existing?.computedBy ?? null);
 
   if (existing) {
-    await db.run(
+    await envelopeRun(
       `UPDATE artifact_evidence
        SET sources = ?, assumptions = ?, confidence = ?, to_verify = ?, computed_by = ?, updated_at = ?
        WHERE id = ? AND organization_id = ?`,
@@ -306,7 +324,7 @@ export async function upsertEnvelope(input: UpsertEnvelopeInput): Promise<Eviden
   }
 
   const id = uuidv4();
-  await db.run(
+  await envelopeRun(
     `INSERT INTO artifact_evidence (
       id, organization_id, artifact_type, artifact_id, sources, assumptions,
       confidence, to_verify, computed_by, created_by, created_at, updated_at
@@ -364,13 +382,12 @@ export async function attachSource(input: AttachSourceInput): Promise<EvidenceEn
 
 async function tryLinkGraphEdge(input: AttachSourceInput): Promise<void> {
   try {
-    const db = await getDatabase();
-    const cols = await db.query<any>(
+    const cols = await envelopeQuery<any>(
       `SELECT column_name FROM information_schema.columns WHERE table_name = 'link_graph_edges'`
     );
-    if (!cols.rows || cols.rows.length === 0) return; // table not present (fresh/sqlite dev) — skip silently
+    if (cols.length === 0) return; // table not present (fresh/sqlite dev) — skip silently
     const id = uuidv4();
-    await db.run(
+    await envelopeRun(
       `INSERT INTO link_graph_edges (
         id, organization_id, created_by, source_type, source_id, target_type, target_id, relation, created_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -401,7 +418,6 @@ export async function listToVerify(
   organizationId: string,
   artifactType?: EvidenceArtifactType
 ): Promise<EvidenceEnvelope[]> {
-  const db = await getDatabase();
   const params: unknown[] = [organizationId];
   let sql = `SELECT * FROM artifact_evidence WHERE organization_id = ? AND jsonb_array_length(to_verify) > 0`;
   if (artifactType) {
@@ -409,8 +425,8 @@ export async function listToVerify(
     params.push(artifactType);
   }
   sql += ` ORDER BY updated_at DESC`;
-  const result = await db.query<any>(sql, params);
-  return (result.rows || []).map(rowToEnvelope);
+  const rows = await envelopeQuery<any>(sql, params);
+  return rows.map(rowToEnvelope);
 }
 
 export default {

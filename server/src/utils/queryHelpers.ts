@@ -48,6 +48,8 @@ interface Query {
  * Promise-based wrapper for db.all
  */
 export function queryAll<T = any>(sql: string, params: unknown[] = []): Promise<T[]> {
+  const pinned = getCurrentPgTransactionClient();
+  if (pinned) return pinned.query<T>(sql, params).then((result) => result.rows || []);
   return new Promise((resolve, reject) => {
     getDatabase().all(sql, params, (err: Error | null, rows: unknown[]) => {
       if (err) {
@@ -64,6 +66,8 @@ export function queryAll<T = any>(sql: string, params: unknown[] = []): Promise<
  * Promise-based wrapper for db.get
  */
 export function queryOne<T = any>(sql: string, params: unknown[] = []): Promise<T | null> {
+  const pinned = getCurrentPgTransactionClient();
+  if (pinned) return pinned.query<T>(sql, params).then((result) => result.rows[0] ?? null);
   return new Promise((resolve, reject) => {
     getDatabase().get(sql, params, (err: Error | null, row: unknown) => {
       if (err) {
@@ -87,6 +91,13 @@ export function queryFirst<T = any>(sql: string, params: unknown[] = []): Promis
  * Promise-based wrapper for db.run
  */
 export function queryRun(sql: string, params: unknown[] = []): Promise<RunQueryResult> {
+  const pinned = getCurrentPgTransactionClient();
+  if (pinned) {
+    return pinned.query(sql, params).then((result) => ({
+      lastID: undefined,
+      changes: result.rowCount,
+    }));
+  }
   return new Promise((resolve, reject) => {
     getDatabase().run(
       sql,

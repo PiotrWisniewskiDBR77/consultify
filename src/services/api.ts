@@ -74,6 +74,7 @@ const _normalizedEnvApiUrl =
       })()
     : null;
 export const API_URL = (_normalizedEnvApiUrl || '/api') as string;
+const ideaConversionIntentKeys = new Map<string, string>();
 
 const buildApiUrl = (url: string): string => {
   if (/^https?:\/\//i.test(url)) return url;
@@ -5259,14 +5260,47 @@ export const Api = {
     payload: {
       target: 'initiative' | 'task_set' | 'decision' | 'team_chat' | 'report' | 'presentation';
       options?: Record<string, unknown>;
+      idempotencyKey?: string;
     }
   ): Promise<{ sourceSessionId?: string; [key: string]: any }> => {
+    const intentIdentity = `${ideaId}:${payload.target}:${JSON.stringify(payload.options || {})}`;
+    const key = payload.idempotencyKey
+      ?? ideaConversionIntentKeys.get(intentIdentity)
+      ?? crypto.randomUUID();
+    ideaConversionIntentKeys.set(intentIdentity, key);
     const res = await fetch(`${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/convert`, {
       method: 'POST',
-      headers: getHeaders(),
+      headers: { ...getHeaders(), 'Idempotency-Key': key },
       body: JSON.stringify(payload),
     });
-    return handleResponse(res, 'Failed to convert idea');
+    const result = await handleResponse(res, 'Failed to convert idea');
+    ideaConversionIntentKeys.delete(intentIdentity);
+    return result;
+  },
+
+  proposeIdeaArtifact: async (
+    ideaId: string,
+    targetKind: 'document' | 'presentation' | 'workbook',
+    idempotencyKey: string
+  ): Promise<any> => {
+    const res = await fetch(`${API_URL}/idea-business-case/${encodeURIComponent(ideaId)}/artifact-proposals`, {
+      method: 'POST', headers: getHeaders(), body: JSON.stringify({ targetKind, idempotencyKey }),
+    });
+    return handleResponse(res, 'Failed to create artifact proposal');
+  },
+
+  decideIdeaArtifact: async (ideaId: string, proposalId: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/idea-business-case/${encodeURIComponent(ideaId)}/artifact-proposals/${encodeURIComponent(proposalId)}/decision`, {
+      method: 'POST', headers: getHeaders(), body: JSON.stringify({ action: 'approve' }),
+    });
+    return handleResponse(res, 'Failed to approve artifact proposal');
+  },
+
+  materializeIdeaArtifact: async (ideaId: string, proposalId: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/idea-business-case/${encodeURIComponent(ideaId)}/artifact-proposals/${encodeURIComponent(proposalId)}/materialize`, {
+      method: 'POST', headers: getHeaders(), body: JSON.stringify({}),
+    });
+    return handleResponse(res, 'Failed to materialize artifact');
   },
 
   /**

@@ -22,6 +22,7 @@
 import { randomUUID } from 'node:crypto';
 
 import logger from '../../utils/Logger.js';
+import { getCurrentPgTransactionClient } from '../../utils/queryHelpers.js';
 import { safePersistEvidenceContract } from '../evidence/evidenceContractBridge.js';
 import {
   buildWave5ExportManifest,
@@ -1171,16 +1172,26 @@ export async function materializeDocumentArtifact(
   // the evidence panel (fala 9, ArtifactRightPanel) has something to render.
   // Previously: `finalSchema.evidence` was computed and returned to the caller
   // but never persisted — panel showed empty state for documents despite the
-  // engine having real data. Fire-and-forget + fail-safe: a write failure NEVER
-  // blocks document materialization.
+  // engine having real data. This write is awaited: when the caller donates an
+  // ambient transaction, owner content + evidence + its downstream receipt are
+  // one unit. A failed evidence write must fail materialization rather than
+  // report a document whose governed evidence was silently lost.
   if (finalSchema.evidence) {
-    void safePersistEvidenceContract(finalSchema.evidence, {
+    const persistEvidence = () => safePersistEvidenceContract(finalSchema.evidence!, {
       organizationId: params.organizationId,
       artifactType: 'document',
       artifactId,
       service: 'documentContentGenerator',
       createdBy: params.userId,
-    }).catch(() => {});
+    });
+    if (getCurrentPgTransactionClient()) {
+      const evidencePersisted = await persistEvidence();
+      if (!evidencePersisted) {
+        throw new Error('Failed to persist document evidence envelope');
+      }
+    } else {
+      void persistEvidence().catch(() => {});
+    }
   }
 
   // Slice E14.recordUsage.wiring — when a template was actually

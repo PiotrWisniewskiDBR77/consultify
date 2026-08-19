@@ -195,6 +195,16 @@ export const IDEA_CONVERT_TARGETS: IdeaConvertTargetMeta[] = [
   },
 ];
 
+/** Governed owner-artifact targets use proposal -> explicit approval ->
+ * materialization, not the legacy `/convert` switch mirrored above. Keeping
+ * the registry separate prevents older workspace callers from accidentally
+ * sending these ids to the legacy endpoint. */
+export const IDEA_GOVERNED_ARTIFACT_TARGETS = [
+  { id: 'document', labelEn: 'Document', labelPl: 'Dokument' },
+  { id: 'presentation', labelEn: 'Presentation', labelPl: 'Prezentacja' },
+  { id: 'workbook', labelEn: 'Workbook', labelPl: 'Arkusz' },
+] as const;
+
 /** Server-backed targets (handler exists). Derived — do not hand-edit the membership. */
 export const LIVE_CONVERT_TARGETS: IdeaConvertTarget[] = IDEA_CONVERT_TARGETS.filter(
   (t) => t.status === 'live'

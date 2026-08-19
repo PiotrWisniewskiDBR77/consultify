@@ -31,6 +31,7 @@ import {
   selectReadableMapRow,
 } from '../realtime/ideaMapAccess.js';
 import auditEventsService from '../services/AuditEventsService.js';
+import { canonicalSourceHash } from '../services/artifactHandoff/handoffSpineService.js';
 import {
   getIdeaConfidentiality,
   IDEA_CONFIDENTIALITY_BLOCKED_RESPONSE,
@@ -43,6 +44,7 @@ import inboxService from '../services/inboxService.js';
 import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import NotificationService from '../services/notificationService.js';
 import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
+import { createNativeDeck } from '../services/presentationGeneratorService.js';
 import projectionService from '../services/tablePlatform/ProjectionService.js';
 import TaskAssignmentService from '../services/taskAssignmentService.js';
 import {
@@ -7025,6 +7027,14 @@ router.post(
       return res.status(400).json({ error: 'Invalid target' });
     }
 
+    const idempotencyKey = String(req.get('Idempotency-Key') || '').trim();
+    if (!idempotencyKey) {
+      return res.status(428).json({ error: 'Idempotency-Key is required', code: 'IDEMPOTENCY_KEY_REQUIRED' });
+    }
+
+    return queryHelpers.withPgTransaction(async () => {
+    await queryHelpers.queryRun(`SELECT pg_advisory_xact_lock(hashtext(?), hashtext(?))`, [orgId, idempotencyKey]);
+
     const idea = await queryHelpers.queryOne<any>(
       `
       SELECT
@@ -7049,6 +7059,39 @@ router.post(
       [ideaId, userId, orgId]
     );
     if (!idea) return res.status(404).json({ error: 'Idea not found' });
+
+    const conversionSourceHash = canonicalSourceHash({
+      source: {
+        id: idea.id,
+        title: idea.title,
+        body: idea.body,
+        tags: idea.tags,
+        seedText: idea.seedText,
+        aiExpansion: idea.aiExpansion,
+        summaryData: idea.summaryData,
+        potential: idea.potential,
+        complexity: idea.complexity,
+        area: idea.area,
+        priority: idea.priority,
+      },
+      target,
+      options,
+      nodeIds,
+    });
+    const existingConversion = await queryHelpers.queryOne<{
+      source_content_hash: string | null;
+      response_json: string | null;
+    }>(
+      `SELECT source_content_hash, response_json FROM my_idea_conversions
+        WHERE organization_id = ? AND idempotency_key = ? LIMIT 1`,
+      [orgId, idempotencyKey]
+    );
+    if (existingConversion) {
+      if (existingConversion.source_content_hash !== conversionSourceHash) {
+        return res.status(409).json({ error: 'Idempotency key collision', code: 'IDEMPOTENCY_COLLISION' });
+      }
+      return res.json({ ...(JSON.parse(existingConversion.response_json || '{}')), replayed: true });
+    }
 
     const tags = parseTagsArray(idea?.tags);
     // F15 (data-integrity): idea.title may already carry entities escaped by the
@@ -7113,7 +7156,12 @@ router.post(
     // 'selection' fallback — behavior for them is unchanged.
     const conversionScope = isWholeIdeaScope ? 'workspace' : explicitScope || 'selection';
 
-    const promote = async (promotedTo: string, promotedEntityId: string | null) => {
+    const promote = async (
+      promotedTo: string,
+      promotedEntityId: string | null,
+      response: Record<string, unknown>
+    ) => {
+      response.replayed = false;
       // Historia KAŻDEJ konwersji — insert, NIGDY update. Zastępuje pojedyncze pole
       // `promoted_to`, które nadpisywało się bezwarunkowo niezależnie od zakresu
       // (defekt P0-1). Best-effort: brak tabeli (migracja 20260723_idea_conversion_history
@@ -7144,6 +7192,9 @@ router.post(
           'node_ids_json',
           'source_link_json',
           'created_by',
+          'idempotency_key',
+          'source_content_hash',
+          'response_json',
         ];
         const insertVals: any[] = [
           uuidv4(),
@@ -7155,6 +7206,9 @@ router.post(
           JSON.stringify(nodeIds),
           sourceLink,
           userId,
+          idempotencyKey,
+          conversionSourceHash,
+          JSON.stringify(response),
         ];
         if (hasMappingVersion) {
           insertCols.push('mapping_version');
@@ -7166,9 +7220,7 @@ router.post(
           insertVals
         );
       } catch (err: any) {
-        logger.warn(
-          `[my-work.convert] nie udało się zapisać wpisu my_idea_conversions (migracja 20260723 odpalona?): ${err?.message}`
-        );
+        throw new Error(`idea_conversion_receipt_failed: ${err?.message || String(err)}`);
       }
 
       // `promoted_to`/`promoted_entity_id`/`stage` Idei zostają dla zgodności wstecznej,
@@ -7313,7 +7365,10 @@ router.post(
         );
       }
 
-      await promote('initiative', initiativeId);
+      await promote('initiative', initiativeId, {
+        promotedTo: 'initiative', promotedEntityId: initiativeId,
+        created: { initiativeId }, sourceSessionId: toolSessionId, sourceNodeIds: nodeIds,
+      });
 
       await linkGraphAddEdge({
         orgId,
@@ -7329,6 +7384,7 @@ router.post(
       });
 
       return res.json({
+        replayed: false,
         promotedTo: 'initiative',
         promotedEntityId: initiativeId,
         created: { initiativeId },
@@ -7440,9 +7496,13 @@ router.post(
         });
       }
 
-      await promote('task_set', JSON.stringify(taskIds));
+      await promote('task_set', JSON.stringify(taskIds), {
+        promotedTo: 'task_set', promotedEntityId: JSON.stringify(taskIds),
+        created: { taskIds }, sourceSessionId: toolSessionId,
+      });
 
       return res.json({
+        replayed: false,
         promotedTo: 'task_set',
         promotedEntityId: JSON.stringify(taskIds),
         created: { taskIds },
@@ -7501,7 +7561,10 @@ router.post(
         insertParams
       );
 
-      await promote('decision', decisionId);
+      await promote('decision', decisionId, {
+        promotedTo: 'decision', promotedEntityId: decisionId,
+        created: { decisionId }, sourceSessionId: toolSessionId,
+      });
 
       await linkGraphAddEdge({
         orgId,
@@ -7527,6 +7590,7 @@ router.post(
       });
 
       return res.json({
+        replayed: false,
         promotedTo: 'decision',
         promotedEntityId: decisionId,
         created: { decisionId },
@@ -7588,7 +7652,10 @@ router.post(
         insertParams
       );
 
-      await promote('report', reportId);
+      await promote('report', reportId, {
+        promotedTo: 'report', promotedEntityId: reportId, outputId: reportId,
+        created: { reportId }, sourceSessionId: toolSessionId,
+      });
 
       await linkGraphAddEdge({
         orgId,
@@ -7603,6 +7670,7 @@ router.post(
       });
 
       return res.json({
+        replayed: false,
         promotedTo: 'report',
         promotedEntityId: reportId,
         outputId: reportId,
@@ -7613,10 +7681,6 @@ router.post(
 
     // ----- Convert: Presentation -----
     if (target === 'presentation') {
-      const presTbl = await getTableColumns('presentations');
-      if (!presTbl || presTbl.size === 0) {
-        return res.status(501).json({ error: 'Presentations table not available' });
-      }
       const toolSessionId = await createMyWorkToolSession({
         userId,
         orgId,
@@ -7628,43 +7692,41 @@ router.post(
 
       const presId = uuidv4();
       const now = new Date().toISOString();
-      const insertCols: string[] = ['id'];
-      const insertVals: string[] = ['?'];
-      const insertParams: any[] = [presId];
-      const add = (col: string, val: any) => {
-        if (!presTbl.has(col)) return;
-        insertCols.push(col);
-        insertVals.push('?');
-        insertParams.push(val);
-      };
+      await createNativeDeck({
+        organizationId: orgId,
+        deckId: presId,
+        title: safeTitle.slice(0, 255),
+        unifiedJson: {
+          meta: {
+            client: orgId,
+            project: safeTitle,
+            date: now.slice(0, 10),
+            author: userId,
+            confidentiality: 'internal',
+            language: typeof options?.language === 'string' && options.language.startsWith('en') ? 'en' : 'pl',
+          },
+          slides: [{
+            intent: 'cover',
+            key_message: safeTitle,
+            content: {
+              type: 'cover', title: safeTitle,
+              subtitle: safeBody || safeExpansion || undefined,
+              organization: orgId, date: now.slice(0, 10), confidentiality: 'internal',
+            },
+          }],
+        },
+        sourceType: 'idea',
+        sourceId: ideaId,
+        createdBy: userId,
+        createdAt: now,
+        status: 'draft',
+        registerArtifact: false,
+      });
 
-      add('organization_id', orgId);
-      add('user_id', userId);
-      add('created_by', userId);
-      add('title', safeTitle.slice(0, 255));
-      add(
-        'description',
-        [
-          safeBody ? `Idea:\n${safeBody}` : null,
-          safeExpansion ? `\nAI expansion:\n${safeExpansion}` : null,
-        ]
-          .filter(Boolean)
-          .join('\n')
-          .slice(0, 12000)
-      );
-      add('status', 'draft');
-      add('source_type', 'idea');
-      add('source_id', ideaId);
-      add('tags', JSON.stringify(tags));
-      add('created_at', now);
-      add('updated_at', now);
-
-      await queryHelpers.queryRun(
-        `INSERT INTO presentations (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
-        insertParams
-      );
-
-      await promote('presentation', presId);
+      await promote('presentation', presId, {
+        promotedTo: 'presentation', promotedEntityId: presId, outputId: presId,
+        created: { presentationId: presId }, sourceSessionId: toolSessionId,
+      });
 
       await linkGraphAddEdge({
         orgId,
@@ -7679,6 +7741,7 @@ router.post(
       });
 
       return res.json({
+        replayed: false,
         promotedTo: 'presentation',
         promotedEntityId: presId,
         outputId: presId,
@@ -7823,14 +7886,19 @@ router.post(
         );
       }
 
-      await promote('team_chat', conversationId);
+      await promote('team_chat', conversationId, {
+        promotedTo: 'team_chat', promotedEntityId: conversationId,
+        created: { conversationId, chatProjectId },
+      });
 
       return res.json({
+        replayed: false,
         promotedTo: 'team_chat',
         promotedEntityId: conversationId,
         created: { conversationId, chatProjectId },
       });
     }
+    });
   })
 );
 

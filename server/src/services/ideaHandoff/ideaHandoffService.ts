@@ -34,36 +34,15 @@
  * `requireIdeaScopedProposal` below also rejects a proposal id that belongs
  * to a different producer, e.g. `chat` or `meeting`).
  *
- * ── CROSS-LANE CONTRACT (read this before wiring a consumer) ───────────────
- * `materializeIdeaArtifact` records the approval as FINAL and creates exactly
- * one `artifact_handoff_receipts` row — but it deliberately does NOT insert
- * into `documents`, `presentation_decks`, or `generated_workbooks`. Those
- * tables, and the "create one from scratch" entry points for them
- * (`documentStudioService.materializeDocumentArtifact`, the presentation
- * generator, `workbookCommandService`), are owned by other lanes and pull in
- * template resolution / AI generation / export pipelines far outside this
- * worker's lease and this brief's scope — importing them "blind" to satisfy
- * a checklist item would be the same class of mistake the brief warns
- * against (never write a foreign owner table directly).
- *
- * Instead, `target_record_id` on the receipt is the deterministic string
- * `idea-artifact:<proposalId>` — a stable handle, not a real foreign key.
- * The owning lane for each `targetKind` is expected to:
- *   1. Poll or subscribe to `artifact_handoff_proposals` /
- *      `artifact_handoff_receipts` WHERE `producer_kind = 'idea'` AND
- *      `state = 'materialized'`.
- *   2. Create the real `document` / `presentation_decks` / workbook row from
- *      `payload_json` (schema: `IdeaArtifactPayload` below, `contractVersion
- *      'idea-artifact-v1'`).
- *   3. That lane owns whether it records its own id back onto the receipt
- *      (a future migration could add a nullable `owner_record_id` column) or
- *      treats the receipt's existence alone as sufficient provenance — this
- *      file does not decide that for them.
- * Until step 2 happens for a given proposal, `idea-artifact:<proposalId>` is
- * a valid, stable, reopenable answer to "was this approved and exactly-once
- * materialized" even though no downstream document/deck/workbook exists yet.
+ * ── OWNER CONTRACT ─────────────────────────────────────────────────────────
+ * Materialization invokes the real deterministic owner command for Document,
+ * Presentation, or Workbook and writes the handoff receipt in the SAME pinned
+ * transaction. `target_record_id` is the real cold-reader/deep-link id, not a
+ * placeholder. Owner commands run provider-free from the frozen proposal
+ * payload; any owner/readback/receipt failure rolls the durable unit back.
  */
 import { getDatabase } from '../../database/Database.js';
+import { withPgTransaction } from '../../utils/queryHelpers.js';
 import {
   approveProposal,
   canonicalSourceHash,
@@ -74,6 +53,20 @@ import {
   type HandoffProposal,
   type HandoffReceipt,
 } from '../artifactHandoff/handoffSpineService.js';
+import {
+  getDocumentArtifact,
+  materializeDocumentArtifact,
+} from '../documentStudio/documentStudioService.js';
+import {
+  createNativeDeck,
+  withPresentationOwnerClient,
+} from '../presentationGeneratorService.js';
+import type { UnifiedReportJSON } from '../report/pptx/types.js';
+import {
+  createCanonicalWorkbook,
+  withWorkbookOwnerClient,
+} from '../workbook/workbookCreationService.js';
+import type { WorkbookSchema } from '../workbook/WorkbookSchema.js';
 import {
   recordGovernedConsumerBinding,
   validateGovernedSnapshotRef,
@@ -352,6 +345,8 @@ export interface MaterializeIdeaArtifactInput {
   ideaId: string;
   proposalId: string;
   materializedBy: string;
+  /** Test-only deterministic rollback probe; never accepted by the HTTP route. */
+  failureInjection?: 'after-owner';
 }
 
 export interface MaterializeIdeaArtifactResult {
@@ -360,26 +355,162 @@ export interface MaterializeIdeaArtifactResult {
 }
 
 /**
- * On an APPROVED proposal, records EXACTLY ONE receipt via the spine's
- * `materializeProposal` (unique index on `proposal_id` — a DB guarantee, not
- * just application logic). Per the CROSS-LANE CONTRACT at the top of this
- * file, `target_record_id` is the deterministic placeholder
- * `idea-artifact:<proposalId>` — this function never writes to `documents`,
- * `presentation_decks`, or any generated-workbook table, because those are
- * owned by other lanes.
+ * On an APPROVED proposal, creates the real owner record and EXACTLY ONE
+ * receipt via the spine in one pinned transaction.
  */
 export async function materializeIdeaArtifact(
   input: MaterializeIdeaArtifactInput
 ): Promise<MaterializeIdeaArtifactResult> {
-  await requireIdeaScopedProposal(input.organizationId, input.ideaId, input.proposalId);
-  const targetRecordId = `idea-artifact:${input.proposalId}`;
-  const { receipt, replayed } = await materializeProposal({
-    organizationId: input.organizationId,
-    proposalId: input.proposalId,
-    targetRecordId,
-    materializedBy: input.materializedBy,
+  return withPgTransaction(async (client) => {
+    const scoped = await client.query<RawProposalRow>(
+      `SELECT * FROM artifact_handoff_proposals
+        WHERE proposal_id = ? AND organization_id = ? AND producer_kind = 'idea'
+          AND producer_record_id = ? FOR UPDATE`,
+      [input.proposalId, input.organizationId, input.ideaId]
+    );
+    const proposal = scoped.rows[0];
+    if (!proposal) {
+      throw new IdeaHandoffError('Artifact proposal not found', 'PROPOSAL_NOT_FOUND');
+    }
+
+    if (proposal.state === 'materialized') {
+      const replay = await materializeProposal(
+        {
+          organizationId: input.organizationId,
+          proposalId: input.proposalId,
+          targetRecordId: `idea-${proposal.target_kind}-${input.proposalId}`,
+          materializedBy: input.materializedBy,
+        },
+        client.query.bind(client)
+      );
+      return replay;
+    }
+    if (proposal.state !== 'approved') {
+      throw new HandoffSpineError('proposal must be approved before materialization', 'NOT_APPROVED');
+    }
+
+    const payload = parseJsonField(proposal.payload_json, {}) as IdeaArtifactPayload;
+    const targetRecordId = `idea-${proposal.target_kind}-${input.proposalId}`;
+    let outputPayload: unknown;
+
+    if (proposal.target_kind === 'document') {
+      const created = await materializeDocumentArtifact({
+        organizationId: input.organizationId,
+        userId: input.materializedBy,
+        externalArtifactId: targetRecordId,
+        ownerSourceIdentity: `idea-proposal:${input.proposalId}`,
+        ownerSourceHash: proposal.source_content_hash,
+        intake: {
+          title: payload.title,
+          description: payload.body || payload.title,
+          documentType: 'executive_memo',
+          language: 'pl',
+        },
+        useLlm: false,
+      });
+      const reopened = await getDocumentArtifact(created.artifactId, input.organizationId);
+      if (!reopened) throw new IdeaHandoffError('Document owner readback failed', 'OWNER_READBACK_FAILED');
+      outputPayload = { targetRecordId: created.artifactId, schema: reopened };
+    } else if (proposal.target_kind === 'presentation') {
+      const unifiedJson: UnifiedReportJSON = {
+        meta: {
+          client: input.organizationId,
+          project: payload.title,
+          date: new Date().toISOString().slice(0, 10),
+          author: input.materializedBy,
+          confidentiality: 'internal',
+          language: 'pl',
+        },
+        slides: [
+          {
+            intent: 'cover',
+            key_message: payload.title,
+            content: {
+              type: 'cover',
+              title: payload.title,
+              subtitle: payload.body || undefined,
+              organization: input.organizationId,
+              date: new Date().toISOString().slice(0, 10),
+            },
+          },
+        ],
+      };
+      const created = await withPresentationOwnerClient(client, () =>
+        createNativeDeck({
+          organizationId: input.organizationId,
+          deckId: targetRecordId,
+          title: payload.title,
+          unifiedJson,
+          sourceType: 'idea_artifact_proposal',
+          sourceId: input.proposalId,
+          createdBy: input.materializedBy,
+          createdAt: new Date().toISOString(),
+          status: 'draft',
+          registerArtifact: false,
+        })
+      );
+      const deckReadback = await client.query<{ id: string; unified_json: string }>(
+        `SELECT id, unified_json FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+        [created.deckId, input.organizationId]
+      );
+      if (!deckReadback.rows[0]) {
+        throw new IdeaHandoffError('Presentation owner readback failed', 'OWNER_READBACK_FAILED');
+      }
+      outputPayload = { targetRecordId: created.deckId, slideCount: created.slideCount };
+    } else if (proposal.target_kind === 'workbook') {
+      const schema: WorkbookSchema = {
+        title: payload.title,
+        description: payload.body,
+        sheets: [
+          {
+            name: 'Idea',
+            columns: [
+              { key: 'field', header: 'Field', type: 'text' },
+              { key: 'value', header: 'Value', type: 'text' },
+            ],
+            rows: [
+              { cells: { field: { value: 'Title' }, value: { value: payload.title } } },
+              { cells: { field: { value: 'Description' }, value: { value: payload.body } } },
+            ],
+          },
+        ],
+        metadata: { ideaId: input.ideaId, proposalId: input.proposalId },
+      };
+      const created = await withWorkbookOwnerClient(client, () =>
+        createCanonicalWorkbook({
+          workbookId: targetRecordId,
+          organizationId: input.organizationId,
+          userId: input.materializedBy,
+          title: payload.title,
+          schema,
+          sourceIdentity: `idea-proposal:${input.proposalId}`,
+          sourceHash: proposal.source_content_hash,
+        })
+      );
+      const workbookReadback = await client.query<{ id: string; schema_json: string }>(
+        `SELECT id, schema_json FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
+        [created.workbookId, input.organizationId]
+      );
+      if (!workbookReadback.rows[0]) {
+        throw new IdeaHandoffError('Workbook owner readback failed', 'OWNER_READBACK_FAILED');
+      }
+      outputPayload = { targetRecordId: created.workbookId, contentHash: created.contentHash };
+    } else {
+      throw new IdeaHandoffError('Unsupported idea artifact target', 'INVALID_TARGET_KIND');
+    }
+
+    if (input.failureInjection === 'after-owner') {
+      throw new IdeaHandoffError('Injected failure after owner creation', 'INJECTED_FAILURE');
+    }
+
+    return materializeProposal({
+      organizationId: input.organizationId,
+      proposalId: input.proposalId,
+      targetRecordId,
+      materializedBy: input.materializedBy,
+      outputPayload,
+    }, client.query.bind(client));
   });
-  return { receipt, replayed };
 }
 
 // ---------------------------------------------------------------------------
