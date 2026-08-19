@@ -75,11 +75,38 @@ export function renderTemplate<T>(input: T, variables: Record<string, string>): 
   return render(input) as T;
 }
 
+function templateVariables(value: unknown): Set<string> {
+  const found = new Set<string>();
+  const visit = (node: unknown): void => {
+    if (typeof node === 'string') {
+      for (const match of node.matchAll(/\{\{([A-Z_]+)\}\}/g)) found.add(match[1]);
+      return;
+    }
+    if (Array.isArray(node)) node.forEach(visit);
+    else if (node && typeof node === 'object') Object.values(node).forEach(visit);
+  };
+  visit(value);
+  return found;
+}
+
 export function validateProfile(profile: MountedProfile): void {
   if (profile.schemaVersion !== 1 || !/^[0-9a-f]{40}$/.test(profile.productSha)) throw new Error('exact 40-hex productSha required');
   if (!/^https?:\/\//.test(profile.baseUrl)) throw new Error('absolute baseUrl required');
   if (!profile.shaProbe || (!profile.shaProbe.shaJsonPointer && !profile.shaProbe.shaHeader)) throw new Error('mounted candidate SHA probe required');
   if (profile.variables && Object.values(profile.variables).some((value) => typeof value !== 'string' || !value)) throw new Error('profile variables must be non-empty strings');
+  const availableVariables = new Set([
+    ...Object.keys(profile.variables || {}),
+    'REQUEST_ID',
+    'USER_INDEX',
+    'AUTH_USER_ID',
+    'ID',
+  ]);
+  const unresolvedVariables = [...templateVariables({ shaProbe: profile.shaProbe, modules: profile.modules })]
+    .filter((name) => !availableVariables.has(name))
+    .sort();
+  if (unresolvedVariables.length) {
+    throw new Error(`profile template variables missing: ${unresolvedVariables.join(', ')}`);
+  }
   const names = profile.modules.map((entry) => entry.name);
   const required: ModuleName[] = ['case', 'my-work', 'settings', 'initiative', 'finance'];
   if (names.length !== required.length || required.some((name) => names.filter((item) => item === name).length !== 1)) {

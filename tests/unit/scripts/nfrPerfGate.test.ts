@@ -12,6 +12,11 @@ describe('NFR-PERF-001 authority and positive controls', () => {
     expect(renderTemplate({ path: '/w/{{ID}}' }, { ID: 'w-1' })).toEqual({ path: '/w/w-1' });
   });
 
+  it('fails readiness before load when a profile template variable is missing', () => {
+    const operation = (name: any) => ({ name, read: { method: 'GET', path: '/r/{{MISSING_TARGET}}', expectedStatus: 200 }, write: { method: 'POST', path: '/w', expectedStatus: 201, idJsonPointer: '/data/id', reconcile: { method: 'GET', path: '/w/{{ID}}', expectedStatus: 200, idJsonPointer: '/data/id' } }, crossTenantRead: { method: 'GET', path: '/r', expectedStatus: 200 } });
+    expect(() => validateProfile({ schemaVersion: 1, productSha: sha, baseUrl: 'http://127.0.0.1:3001', shaProbe: { method: 'GET', path: '/health', expectedStatus: 200, shaHeader: 'x-product-sha' }, modules: ['case', 'my-work', 'settings', 'initiative', 'finance'].map(operation) })).toThrow('profile template variables missing: MISSING_TARGET');
+  });
+
   it('detects every workload breach and the exact 1 percent boundary', () => {
     const breach = evaluateWorkloadGate({ readsMs: [1600], writesMs: [2600], requests: 100, errors: 1, writeLoss: 1, writeDuplicate: 1, tenantFalseSuccess: 1 });
     expect(breach.pass).toBe(false);

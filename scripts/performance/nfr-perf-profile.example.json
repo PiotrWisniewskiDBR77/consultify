@@ -3,7 +3,7 @@
   "productSha": "0000000000000000000000000000000000000000",
   "baseUrl": "http://127.0.0.1:3001",
   "shaProbe": { "method": "GET", "path": "/api/health", "expectedStatus": 200, "shaJsonPointer": "/gitSha" },
-  "variables": { "CASE_ID": "replace-primary-case-id", "PRIMARY_ORG_ID": "replace-primary-org-id", "PRIMARY_INITIATIVE_ID": "replace-primary-initiative-id", "PRIMARY_ROI_CASE_ID": "replace-primary-roi-case-id", "TARGET_SETTINGS_USER_ID": "replace-primary-settings-user-id", "PRIMARY_SETTINGS_MARKER": "replace-primary-settings-marker" },
+  "variables": { "CASE_ID": "replace-primary-case-id", "PRIMARY_ORG_ID": "replace-primary-org-id", "PRIMARY_TASK_ID": "replace-primary-task-id", "PRIMARY_INITIATIVE_ID": "replace-primary-initiative-id", "PRIMARY_ROI_CASE_ID": "replace-primary-roi-case-id", "TARGET_SETTINGS_USER_ID": "replace-primary-settings-user-id", "PRIMARY_SETTINGS_MARKER": "replace-primary-settings-marker" },
   "modules": [
     {
       "name": "case",
