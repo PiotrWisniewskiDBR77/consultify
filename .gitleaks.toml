@@ -29,6 +29,10 @@ description = "Vendored dependencies are scanned by their publishers, not as fir
 paths = ['''(^|/)node_modules/''']
 
 [[allowlists]]
+description = "Nested Codex worktrees are independent Git trees and are scanned from their own roots"
+paths = ['''(^|/)\.codex-worktrees/''']
+
+[[allowlists]]
 description = "Explicit placeholders and local-only development defaults are not credentials"
 regexTarget = "match"
 regexes = [
