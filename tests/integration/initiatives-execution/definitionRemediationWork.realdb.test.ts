@@ -26,7 +26,7 @@ describeRealDb('Definition remediation Task and Decision realDB', () => {
 
   beforeEach(async () => {
     await pool.query(
-      'TRUNCATE ie_aggregate_relations, ie_command_receipts, ie_audit_events, ie_outbox_events, ie_aggregate_state RESTART IDENTITY'
+      'TRUNCATE ie_aggregate_relations, ie_command_receipts, ie_audit_events, ie_outbox_delivery_receipts, ie_outbox_events, ie_aggregate_state RESTART IDENTITY'
     );
     await pool.query(`INSERT INTO ie_aggregate_state
       (organization_id, aggregate_type, aggregate_id, version, payload_json)

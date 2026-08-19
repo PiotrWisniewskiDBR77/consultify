@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   EXECUTION_SPINE_LEGACY_READ_ONLY_CODE,
   requireCanonicalExecutionWriter,
+  requireCanonicalInitiativeExecutionWriter,
 } from '../executionSpineLegacyReadOnly.middleware.js';
 
 function invoke(method: string) {
@@ -12,8 +13,19 @@ function invoke(method: string) {
   status.mockReturnValue({ json });
   const next = vi.fn() as NextFunction;
 
-  requireCanonicalExecutionWriter(
-    { method } as Request,
+  requireCanonicalExecutionWriter({ method } as Request, { status } as unknown as Response, next);
+
+  return { status, json, next };
+}
+
+function invokeInitiative(method: string, path: string) {
+  const status = vi.fn();
+  const json = vi.fn();
+  status.mockReturnValue({ json });
+  const next = vi.fn() as NextFunction;
+
+  requireCanonicalInitiativeExecutionWriter(
+    { method, path } as Request,
     { status } as unknown as Response,
     next
   );
@@ -41,4 +53,32 @@ describe('execution spine legacy read-only boundary', () => {
       });
     }
   );
+
+  it.each([
+    '/initiative-1/milestones',
+    '/initiative-1/resources/resource-1',
+    '/initiative-1/staffing-plans/plan-1/roles',
+    '/initiative-1/budget-items/item-1',
+    '/initiative-1/raid/risk-1',
+    '/initiative-1/start-execution',
+    '/initiative-1/lifecycle-gate-decisions',
+    '/initiative-1/apply-template',
+  ])('denies the legacy Initiative execution writer %s', (path) => {
+    const result = invokeInitiative('POST', path);
+    expect(result.next).not.toHaveBeenCalled();
+    expect(result.status).toHaveBeenCalledWith(409);
+  });
+
+  it.each([
+    '/wizard/sessions',
+    '/similarity-check',
+    '/initiative-1/merge-from-insight',
+    '/templates',
+    '/initiative-1/profile',
+    '/initiative-1/comments',
+  ])('keeps the unrelated Initiative writer %s mounted', (path) => {
+    const result = invokeInitiative('POST', path);
+    expect(result.next).toHaveBeenCalledOnce();
+    expect(result.status).not.toHaveBeenCalled();
+  });
 });

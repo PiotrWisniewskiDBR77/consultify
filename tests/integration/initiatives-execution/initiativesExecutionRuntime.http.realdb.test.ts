@@ -65,7 +65,7 @@ describeRealDb('Initiatives Execution runtime HTTP realDB', () => {
   });
   beforeEach(async () => {
     await pool.query(
-      'TRUNCATE initiative_candidates, ie_initiative_card_versions, ie_initiative_card_selection, ie_aggregate_relations, ie_command_receipts, ie_audit_events, ie_outbox_events, ie_aggregate_state RESTART IDENTITY'
+      'TRUNCATE initiative_candidates, ie_initiative_card_versions, ie_initiative_card_selection, ie_aggregate_relations, ie_command_receipts, ie_audit_events, ie_outbox_delivery_receipts, ie_outbox_events, ie_aggregate_state RESTART IDENTITY'
     );
     await pool.query(`INSERT INTO initiative_candidates
       (id, organization_id, source_type, source_id, source_version, title, problem,

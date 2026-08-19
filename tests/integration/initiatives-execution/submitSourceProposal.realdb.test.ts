@@ -27,7 +27,7 @@ real('Source Submit PostgreSQL vertical', () => {
   });
   beforeEach(async () =>
     pool.query(
-      'TRUNCATE initiative_candidates, ie_aggregate_relations, ie_command_receipts, ie_audit_events, ie_outbox_events, ie_aggregate_state RESTART IDENTITY'
+      'TRUNCATE initiative_candidates, ie_aggregate_relations, ie_command_receipts, ie_audit_events, ie_outbox_delivery_receipts, ie_outbox_events, ie_aggregate_state RESTART IDENTITY'
     )
   );
   afterAll(async () => pool.end());
