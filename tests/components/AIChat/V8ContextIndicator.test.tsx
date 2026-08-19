@@ -2,7 +2,8 @@
  * @vitest-environment jsdom
  */
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import axe from 'axe-core';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { V8ContextIndicator } from '../../../src/components/AIChat/V8ContextIndicator';
@@ -11,6 +12,9 @@ const useV8SnapshotsMock = vi.fn();
 const useV8HandoffsMock = vi.fn();
 const createHandoffMutateAsync = vi.fn();
 const useV8ConversationRetrievalTracesMock = vi.fn();
+const refetchSnapshots = vi.fn();
+const refetchHandoffs = vi.fn();
+const refetchRetrieval = vi.fn();
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -39,17 +43,22 @@ vi.mock('../../../src/hooks/useV8Chat', () => ({
 }));
 
 vi.mock('../../../src/hooks/useV8Retrieval', () => ({
-  useV8ConversationRetrievalTraces: (...args: any[]) => useV8ConversationRetrievalTracesMock(...args),
+  useV8ConversationRetrievalTraces: (...args: any[]) =>
+    useV8ConversationRetrievalTracesMock(...args),
 }));
 
 describe('V8ContextIndicator', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     createHandoffMutateAsync.mockReset();
+    refetchSnapshots.mockResolvedValue({});
+    refetchHandoffs.mockResolvedValue({});
+    refetchRetrieval.mockResolvedValue({});
     useV8SnapshotsMock.mockReturnValue({
       data: [{ snapshotId: 'snap-1' }, { snapshotId: 'snap-2' }],
       isLoading: false,
       isError: false,
+      refetch: refetchSnapshots,
     });
     useV8HandoffsMock.mockReturnValue({
       data: [
@@ -73,6 +82,7 @@ describe('V8ContextIndicator', () => {
       ],
       isLoading: false,
       isError: false,
+      refetch: refetchHandoffs,
     });
     useV8ConversationRetrievalTracesMock.mockReturnValue({
       data: [
@@ -103,6 +113,7 @@ describe('V8ContextIndicator', () => {
       ],
       isLoading: false,
       isError: false,
+      refetch: refetchRetrieval,
     });
   });
 
@@ -121,7 +132,9 @@ describe('V8ContextIndicator', () => {
     expect(screen.getByTestId('v8-handoff-summary')).toHaveTextContent('Handoffs');
     expect(screen.getByTestId('v8-handoff-summary')).toHaveTextContent('1');
     expect(screen.getByTestId('v8-handoff-summary')).toHaveTextContent('governed_work');
-    expect(screen.getByTestId('v8-handoff-summary')).toHaveTextContent('Create a board update deck');
+    expect(screen.getByTestId('v8-handoff-summary')).toHaveTextContent(
+      'Create a board update deck'
+    );
     expect(screen.getByTestId('v8-handoff-summary')).toHaveTextContent('run-9');
     expect(screen.getByTestId('v8-retrieval-summary')).toHaveTextContent('workspace_broad');
     expect(screen.getByTestId('v8-retrieval-summary')).toHaveTextContent('Results');
@@ -135,11 +148,13 @@ describe('V8ContextIndicator', () => {
       data: [],
       isLoading: false,
       isError: false,
+      refetch: refetchRetrieval,
     });
     useV8HandoffsMock.mockReturnValue({
       data: [],
       isLoading: false,
       isError: false,
+      refetch: refetchHandoffs,
     });
 
     render(<V8ContextIndicator conversationId="conv-1" defaultGoal="Create a board update deck" />);
@@ -155,6 +170,7 @@ describe('V8ContextIndicator', () => {
       data: [],
       isLoading: false,
       isError: false,
+      refetch: refetchHandoffs,
     });
     createHandoffMutateAsync.mockResolvedValue({
       handoffId: 'handoff-new',
@@ -171,5 +187,72 @@ describe('V8ContextIndicator', () => {
       contextSnapshotId: 'snap-2',
       goal: 'Create a board update deck',
     });
+  });
+
+  it('keeps provider failures visible, guarded, and retryable instead of disappearing', async () => {
+    useV8SnapshotsMock.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      refetch: refetchSnapshots,
+    });
+    useV8HandoffsMock.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      refetch: refetchHandoffs,
+    });
+    useV8ConversationRetrievalTracesMock.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      refetch: refetchRetrieval,
+    });
+
+    render(<V8ContextIndicator conversationId="conv-1" defaultGoal="Create a board update deck" />);
+
+    const trigger = screen.getByTestId('v8-context-indicator');
+    expect(trigger).toBeVisible();
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(trigger);
+    expect(screen.getByTestId('v8-context-degraded')).toHaveTextContent(
+      'Some governed context is unavailable'
+    );
+    expect(screen.queryByText(/stack|sql|provider key/i)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    await waitFor(() => {
+      expect(refetchSnapshots).toHaveBeenCalledTimes(1);
+      expect(refetchHandoffs).toHaveBeenCalledTimes(1);
+      expect(refetchRetrieval).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('closes on Escape and returns keyboard focus to its trigger', () => {
+    render(<V8ContextIndicator conversationId="conv-1" defaultGoal="Create a board update deck" />);
+
+    const trigger = screen.getByTestId('v8-context-indicator');
+    trigger.focus();
+    fireEvent.click(trigger);
+    expect(screen.getByTestId('v8-context-panel')).toHaveAttribute('role', 'dialog');
+    fireEvent.keyDown(document, { key: 'Escape' });
+
+    expect(screen.queryByTestId('v8-context-panel')).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+  });
+
+  it('has no critical or serious axe violations in the governed context dialog', async () => {
+    const { container } = render(
+      <V8ContextIndicator conversationId="conv-1" defaultGoal="Create a board update deck" />
+    );
+
+    fireEvent.click(screen.getByTestId('v8-context-indicator'));
+    const results = await axe.run(container, {
+      rules: { 'color-contrast': { enabled: false } },
+    });
+
+    expect(
+      results.violations.filter(({ impact }) => impact === 'critical' || impact === 'serious')
+    ).toEqual([]);
   });
 });

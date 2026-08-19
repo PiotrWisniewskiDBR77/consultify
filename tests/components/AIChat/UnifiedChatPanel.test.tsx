@@ -515,6 +515,8 @@ describe('UnifiedChatPanel (L2)', () => {
       displayMode: 'full',
       draftChatLanguage: null,
       chatLanguageByConversationId: {},
+      _activeConversationState: null,
+      _activeConversationStateMessage: null,
     };
 
     aiStreamState = {
@@ -615,6 +617,32 @@ describe('UnifiedChatPanel (L2)', () => {
     expect(screen.getByTestId('chat-new-button')).toBeInTheDocument();
     expect(screen.getByTestId('chat-history-button')).toBeInTheDocument();
   });
+
+  it.each([
+    ['permission_denied', 'You do not have access to this conversation'],
+    ['not_found', 'This conversation does not exist'],
+    ['deleted', 'This conversation has been deleted'],
+    ['archived', 'This conversation is archived'],
+  ] as const)(
+    'renders the %s deep-link state instead of a false welcome and disables writes',
+    (state, expectedCopy) => {
+      conversationStoreState.activeConversationId = `conv-${state}`;
+      conversationStoreState._activeConversationState = state;
+      conversationStoreState._activeConversationStateMessage = null;
+
+      renderWithRouter(<UnifiedChatPanel mode="full" />);
+
+      const stateCard = screen.getByTestId('chat-conversation-state');
+      expect(stateCard).toHaveAttribute('data-state', state);
+      expect(stateCard).toHaveTextContent(expectedCopy);
+      expect(screen.queryByTestId('chat-full-welcome')).not.toBeInTheDocument();
+      expect(screen.getByTestId('chat-input')).toBeDisabled();
+      expect(screen.getByTestId('send-button')).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Start a new conversation' })).toBeVisible();
+      expect(screen.getByRole('button', { name: 'Open conversation history' })).toBeVisible();
+      expect(startStreamMock).not.toHaveBeenCalled();
+    }
+  );
 
   it('discovers a cold partial response and resumes only after explicit user action', async () => {
     conversationStoreState.activeConversationId = 'conv-partial';

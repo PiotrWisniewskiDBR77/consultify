@@ -15903,6 +15903,12 @@
     "conversationLandmark": "Rozmowa"
   },
   "aiChat": {
+    "archivedBanner": "Ta rozmowa jest zarchiwizowana. Cofnij archiwizację, aby kontynuować.",
+    "deletedBanner": "Ta rozmowa została usunięta.",
+    "permissionDenied": "Nie masz dostępu do tej rozmowy. Poproś właściciela folderu o dostęp.",
+    "notFound": "Ta rozmowa nie istnieje lub została trwale usunięta.",
+    "startNewConversation": "Rozpocznij nową rozmowę",
+    "openHistory": "Otwórz historię rozmów",
     "composer": {
       "commands": {
         "research": {

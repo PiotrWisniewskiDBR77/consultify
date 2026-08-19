@@ -1247,7 +1247,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const isSplitMode =
     isWorkPanelMode || mode === 'split' || (mode !== 'full' && displayMode === 'split');
   const isCompact = isSplitMode;
-  const isDisabled = disabled || aiFreezeStatus.isFrozen;
+  const isConversationReadOnly =
+    _activeConversationState === 'archived' ||
+    _activeConversationState === 'deleted' ||
+    _activeConversationState === 'permission_denied' ||
+    _activeConversationState === 'not_found';
+  const isDisabled = disabled || aiFreezeStatus.isFrozen || isConversationReadOnly;
   const isPrivateMode = Boolean((aiConfig as any)?.privateMode);
   const isRtlChatLanguage = isRtlLanguage(chatLanguage);
 
@@ -6239,7 +6244,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   });
   const isRehydratingConversation =
     !hasRenderableMessages && activeConversationId && isConversationLoading;
-  const isWelcomeEmptyState = !hasRenderableMessages && !isRehydratingConversation;
+  // A denied/deleted/missing/archived deep link is a first-class state, not an
+  // empty conversation. Previously these four states fell through to the
+  // marketing welcome screen whenever no messages were returned, hiding the
+  // actual access/lifecycle result and leaving the composer apparently usable.
+  const isWelcomeEmptyState =
+    !hasRenderableMessages && !isRehydratingConversation && !isConversationReadOnly;
 
   // Latest completed AI reply — fed to TeresaTTSPlayer for "talking Teresa" read-aloud.
   const latestAiMessageText = useMemo(() => {
@@ -6439,7 +6449,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   return (
     <div
       ref={splitShellRef}
-      className={`relative flex h-full overflow-hidden bg-c-bg ${
+      className={`relative flex h-full overflow-hidden bg-c-bg pb-16 md:pb-0 ${
         isPrivateMode ? 'ring-1 ring-c-accent/30' : 'ring-1 ring-transparent'
       } ${className}`}
       style={rootStyle}
@@ -6950,7 +6960,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             <>
               {/* Conversation state banners (§2.3.5 — deep-link + degraded posture) */}
               {_activeConversationState === 'archived' && (
-                <div className="mx-2 mb-3 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200/60 dark:border-amber-700/40 flex items-center gap-2">
+                <div
+                  data-testid="chat-conversation-state"
+                  data-state="archived"
+                  role="status"
+                  className="mx-2 mb-3 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200/60 dark:border-amber-700/40 flex items-center gap-2"
+                >
                   <svg
                     className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0"
                     fill="none"
@@ -6973,7 +6988,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 </div>
               )}
               {_activeConversationState === 'deleted' && (
-                <div className="mx-2 mb-3 px-3 py-2 rounded-lg bg-danger-50 dark:bg-danger-900/20 border border-danger-200/60 dark:border-danger-700/40 flex items-center gap-2">
+                <div
+                  data-testid="chat-conversation-state"
+                  data-state="deleted"
+                  role="alert"
+                  className="mx-2 mb-3 px-3 py-2 rounded-lg bg-danger-50 dark:bg-danger-900/20 border border-danger-200/60 dark:border-danger-700/40 flex items-center gap-2"
+                >
                   <svg
                     className="w-4 h-4 text-danger-600 dark:text-danger-400 shrink-0"
                     fill="none"
@@ -6988,13 +7008,17 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     />
                   </svg>
                   <span className="text-xs text-danger-700 dark:text-danger-400">
-                    {_activeConversationStateMessage ||
-                      t('aiChat.deletedBanner', 'This conversation has been deleted.')}
+                    {t('aiChat.deletedBanner', 'This conversation has been deleted.')}
                   </span>
                 </div>
               )}
               {_activeConversationState === 'permission_denied' && (
-                <div className="mx-2 mb-3 px-3 py-2 rounded-lg bg-c-surface-raised border border-c-border-subtle flex items-center gap-2">
+                <div
+                  data-testid="chat-conversation-state"
+                  data-state="permission_denied"
+                  role="alert"
+                  className="mx-2 mb-3 px-3 py-2 rounded-lg bg-c-surface-raised border border-c-border-subtle flex items-center gap-2"
+                >
                   <svg
                     className="w-4 h-4 text-c-text-muted shrink-0"
                     fill="none"
@@ -7009,16 +7033,20 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     />
                   </svg>
                   <span className="text-xs text-c-text-secondary">
-                    {_activeConversationStateMessage ||
-                      t(
-                        'aiChat.permissionDenied',
-                        'You do not have access to this conversation. Contact the folder owner for access.'
-                      )}
+                    {t(
+                      'aiChat.permissionDenied',
+                      'You do not have access to this conversation. Contact the folder owner for access.'
+                    )}
                   </span>
                 </div>
               )}
               {_activeConversationState === 'not_found' && (
-                <div className="mx-2 mb-3 px-3 py-2 rounded-lg bg-c-surface-raised border border-c-border-subtle flex items-center gap-2">
+                <div
+                  data-testid="chat-conversation-state"
+                  data-state="not_found"
+                  role="alert"
+                  className="mx-2 mb-3 px-3 py-2 rounded-lg bg-c-surface-raised border border-c-border-subtle flex items-center gap-2"
+                >
                   <svg
                     className="w-4 h-4 text-c-text-muted shrink-0"
                     fill="none"
@@ -7038,6 +7066,26 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                       'This conversation does not exist or has been permanently removed.'
                     )}
                   </span>
+                </div>
+              )}
+              {isConversationReadOnly && (
+                <div className="mx-2 mb-4 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleNewChat}
+                    className="inline-flex h-8 items-center justify-center rounded-lg border border-c-border-strong bg-c-surface px-3 text-xs font-medium text-c-text transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                  >
+                    <Plus size={14} className="mr-1.5" />
+                    {t('aiChat.startNewConversation', 'Start a new conversation')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => toggleSidebar()}
+                    className="inline-flex h-8 items-center justify-center rounded-lg px-3 text-xs font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                  >
+                    <History size={14} className="mr-1.5" />
+                    {t('aiChat.openHistory', 'Open conversation history')}
+                  </button>
                 </div>
               )}
               {displayMessages.map((msg, index) => renderMessage(msg, index))}

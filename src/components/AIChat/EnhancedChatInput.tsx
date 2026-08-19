@@ -140,12 +140,18 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   teresaVoiceStatus,
   teresaVoiceError,
   teresaVoiceAvailable = true,
-  teresaVoiceUnavailableReason,
   onTeresaVoiceToggle,
   teresaVoiceMuted,
   onTeresaVoiceMuteToggle,
 }) => {
   const { t, i18n } = useTranslation();
+  // Provider/config reason codes are operational diagnostics, not product
+  // copy. Never expose values such as `server_missing_gemini_live_key` in a
+  // title or accessible name; the user only needs the safe next action.
+  const safeVoiceUnavailableLabel = t(
+    'aiChat.voiceUnavailable',
+    'Voice is unavailable. You can continue by text or dictation.'
+  );
   const { aiFreezeStatus, setAIConfig } = useAppStore();
   const uiLangBase = String(i18n.language || 'pl')
     .split('-')[0]
@@ -1340,7 +1346,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                 className={`relative p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center text-white shadow-lg ${
                   teresaVoiceStatus === 'live'
                     ? 'bg-danger-600 hover:bg-danger-500 shadow-danger-500/25'
-                    : 'bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] shadow-primary-500/25'
+                    : 'bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] shadow-black/10'
                 }`}
                 title={t('aiChat.stopVoiceConversation', 'Stop voice conversation')}
               >
@@ -1355,38 +1361,39 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
               </button>
             ) : (
               <>
-              <button
-                type="button"
-                onClick={handleSend}
-                disabled
-                data-testid="chat-send-btn"
-                className="p-2 rounded-xl min-w-[44px] flex items-center justify-center bg-navy-900/35 text-white/70 dark:bg-[#F4F7FB]/35 dark:text-navy-950/50 cursor-not-allowed shadow-none"
-                title={t('aiChat.send', 'Send')}
-                aria-label={t('aiChat.send', 'Send') as string}
-              >
-                <ArrowUp size={18} />
-              </button>
-              <button
-                type="button"
-                onClick={() => onTeresaVoiceToggle?.()}
-                disabled={isDisabled || !teresaVoiceAvailable}
-                className={`p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center text-white shadow-lg group ${
-                  teresaVoiceAvailable
-                    ? 'bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] shadow-primary-500/25'
-                    : 'bg-primary-600/40 cursor-not-allowed shadow-none'
-                }`}
-                title={
-                  teresaVoiceAvailable
-                    ? t('aiChat.startVoiceConversation', 'Start voice conversation with Teresa')
-                    : teresaVoiceUnavailableReason ||
-                      t(
-                        'aiChat.voiceUnavailable',
-                        'Voice is unavailable. You can continue by text or dictation.'
-                      )
-                }
-              >
-                <AudioLines size={18} className="group-hover:scale-110 transition-transform" />
-              </button>
+                <button
+                  type="button"
+                  onClick={handleSend}
+                  disabled
+                  data-testid="chat-send-btn"
+                  className="p-2 rounded-xl min-w-[44px] flex items-center justify-center bg-navy-900/35 text-white/70 dark:bg-[#F4F7FB]/35 dark:text-navy-950/50 cursor-not-allowed shadow-none"
+                  title={t('aiChat.send', 'Send')}
+                  aria-label={t('aiChat.send', 'Send') as string}
+                >
+                  <ArrowUp size={18} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onTeresaVoiceToggle?.()}
+                  disabled={isDisabled || !teresaVoiceAvailable}
+                  className={`p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center text-white shadow-lg group ${
+                    teresaVoiceAvailable
+                      ? 'bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] shadow-black/10'
+                      : 'bg-c-surface-raised text-c-text-muted cursor-not-allowed shadow-none'
+                  }`}
+                  title={
+                    teresaVoiceAvailable
+                      ? t('aiChat.startVoiceConversation', 'Start voice conversation with Teresa')
+                      : safeVoiceUnavailableLabel
+                  }
+                  aria-label={
+                    teresaVoiceAvailable
+                      ? t('aiChat.startVoiceConversation', 'Start voice conversation with Teresa')
+                      : safeVoiceUnavailableLabel
+                  }
+                >
+                  <AudioLines size={18} className="group-hover:scale-110 transition-transform" />
+                </button>
               </>
             )}
           </div>

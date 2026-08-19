@@ -15057,6 +15057,12 @@
     "conversationLandmark": "Conversation"
   },
   "aiChat": {
+    "archivedBanner": "This conversation is archived. Unarchive it to continue chatting.",
+    "deletedBanner": "This conversation has been deleted.",
+    "permissionDenied": "You do not have access to this conversation. Contact the folder owner for access.",
+    "notFound": "This conversation does not exist or has been permanently removed.",
+    "startNewConversation": "Start a new conversation",
+    "openHistory": "Open conversation history",
     "composer": {
       "commands": {
         "research": {

@@ -223,6 +223,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   // Only show sidebar/header for actual app views, not Welcome/Auth
   const isSessionView = true; // MainLayout is only used for session views
   const mobileGlobalRailBottomOffset = isMobile ? 64 + (safeAreaInsets.bottom || 0) + 12 : null;
+  const hideGlobalRailInMobileChat = isMobile && currentView === AppView.AI_CHAT;
 
   return (
     <CommandPaletteProvider
@@ -244,11 +245,14 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
          * są zresztą tak zaprojektowane: `rounded-l-md rounded-r-none`, czyli zakładka
          * przy krawędzi), a `<main>` rezerwuje na ten pas `md:pr-8` (32px = szerokość
          * przycisku). Dzięki temu żadna treść nigdy nie trafia pod rail — niezależnie
-         * od ekranu, hovera, dotyku czy nawigacji klawiaturą.
+         * od ekranu, hovera, dotyku czy nawigacji klawiaturą. Full-screen mobile
+         * chat is the one exception: its persistent composer, suggestions and
+         * bottom navigation already consume the narrow viewport, so the desktop
+         * rail is suppressed instead of covering actionable chat cards.
          */}
         <div
           data-testid="global-fab-rail"
-          className={`fixed z-dropdown flex flex-col gap-1 items-end pointer-events-none ${isMobile ? 'right-3' : 'right-0 top-[70%]'}`}
+          className={`fixed z-dropdown flex flex-col gap-1 items-end pointer-events-none ${hideGlobalRailInMobileChat ? 'hidden' : ''} ${isMobile ? 'right-3' : 'right-0 top-[70%]'}`}
           style={
             mobileGlobalRailBottomOffset
               ? { bottom: `${mobileGlobalRailBottomOffset}px` }

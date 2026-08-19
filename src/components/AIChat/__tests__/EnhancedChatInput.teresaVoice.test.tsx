@@ -139,7 +139,7 @@ describe('EnhancedChatInput — Teresa voice CTA', () => {
     expect(onTeresaVoiceToggle).toHaveBeenCalledTimes(1);
   });
 
-  it('disables the voice button and surfaces the reason when unavailable', () => {
+  it('disables voice with product-safe guidance without leaking provider diagnostics', () => {
     renderInput(
       <EnhancedChatInput
         onSend={vi.fn()}
@@ -150,8 +150,15 @@ describe('EnhancedChatInput — Teresa voice CTA', () => {
       />
     );
 
-    const button = screen.getByTitle('Voice needs a server key');
+    const button = screen.getByRole('button', {
+      name: 'Voice is unavailable. You can continue by text or dictation.',
+    });
     expect((button as HTMLButtonElement).disabled).toBe(true);
+    expect(button).toHaveAttribute(
+      'title',
+      'Voice is unavailable. You can continue by text or dictation.'
+    );
+    expect(screen.queryByText('Voice needs a server key')).not.toBeInTheDocument();
   });
 
   it('switches to a stop affordance while voice is live', async () => {

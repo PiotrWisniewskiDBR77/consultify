@@ -1,5 +1,14 @@
-import { GitBranch, Loader2, Search, ShieldCheck, Sparkles } from 'lucide-react';
-import React, { useState } from 'react';
+import {
+  AlertTriangle,
+  GitBranch,
+  Loader2,
+  RefreshCw,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  X,
+} from 'lucide-react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -16,31 +25,29 @@ export function V8ContextIndicator({ conversationId, defaultGoal = '' }: V8Conte
   const { t } = useTranslation();
   const { showV8Chat } = useV8Gate();
   const [isOpen, setIsOpen] = useState(false);
+  const panelId = useId();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const {
     data: snapshots,
     isLoading,
     isError,
+    refetch: refetchSnapshots,
   } = useV8Snapshots(showV8Chat && conversationId ? conversationId : undefined);
   const {
     data: handoffs,
     isLoading: handoffsLoading,
     isError: handoffsError,
+    refetch: refetchHandoffs,
   } = useV8Handoffs(showV8Chat && conversationId ? conversationId : undefined);
   const createHandoff = useV8CreateHandoff();
   const {
     data: retrievalTraces,
     isLoading: retrievalLoading,
     isError: retrievalError,
+    refetch: refetchRetrieval,
   } = useV8ConversationRetrievalTraces(showV8Chat && conversationId ? conversationId : undefined);
-
-  if (!showV8Chat) return null;
-  if (
-    (isLoading || isError) &&
-    (retrievalLoading || retrievalError) &&
-    (handoffsLoading || handoffsError)
-  )
-    return null;
 
   const items = Array.isArray(snapshots) ? snapshots : [];
   const handoffItems = Array.isArray(handoffs) ? handoffs : [];
@@ -48,6 +55,8 @@ export function V8ContextIndicator({ conversationId, defaultGoal = '' }: V8Conte
   const latestSnapshot = items.length > 0 ? items[items.length - 1] : null;
   const latestTrace = traces.length > 0 ? traces[traces.length - 1] : null;
   const latestHandoff = handoffItems.length > 0 ? handoffItems[handoffItems.length - 1] : null;
+  const isAnyLoading = isLoading || retrievalLoading || handoffsLoading;
+  const isDegraded = isError || retrievalError || handoffsError;
   const normalizedGoal = defaultGoal.trim();
   const canCreateHandoff =
     Boolean(conversationId) &&
@@ -55,7 +64,44 @@ export function V8ContextIndicator({ conversationId, defaultGoal = '' }: V8Conte
     normalizedGoal.length > 0 &&
     latestHandoff?.goal !== normalizedGoal;
 
-  if (items.length === 0 && traces.length === 0 && handoffItems.length === 0) return null;
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      setIsOpen(false);
+      triggerRef.current?.focus();
+    };
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (panelRef.current?.contains(target) || triggerRef.current?.contains(target)) return;
+      setIsOpen(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('pointerdown', onPointerDown);
+    };
+  }, [isOpen]);
+
+  const handleRetry = async () => {
+    const retries: Array<Promise<unknown>> = [];
+    if (typeof refetchSnapshots === 'function') retries.push(refetchSnapshots());
+    if (typeof refetchHandoffs === 'function') retries.push(refetchHandoffs());
+    if (typeof refetchRetrieval === 'function') retries.push(refetchRetrieval());
+    await Promise.allSettled(retries);
+  };
+
+  if (!showV8Chat || !conversationId) return null;
+  if (
+    !isAnyLoading &&
+    !isDegraded &&
+    items.length === 0 &&
+    traces.length === 0 &&
+    handoffItems.length === 0
+  )
+    return null;
 
   const handleCreateHandoff = async () => {
     if (!conversationId || !latestSnapshot?.snapshotId || !normalizedGoal) return;
@@ -80,16 +126,30 @@ export function V8ContextIndicator({ conversationId, defaultGoal = '' }: V8Conte
   return (
     <div className="relative">
       <button
+        ref={triggerRef}
         type="button"
         data-testid="v8-context-indicator"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-800/70 dark:bg-emerald-900/25 dark:text-emerald-300 dark:hover:bg-emerald-900/35"
+        aria-expanded={isOpen}
+        aria-controls={panelId}
+        aria-haspopup="dialog"
+        className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
+          isDegraded
+            ? 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200'
+            : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800/70 dark:bg-emerald-900/25 dark:text-emerald-300 dark:hover:bg-emerald-900/35'
+        }`}
         title={t('v8.contextSnapshots', 'V8 Context Snapshots: {{count}}', { count: items.length })}
       >
-        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
+        {isDegraded ? (
+          <AlertTriangle size={11} aria-hidden="true" />
+        ) : isAnyLoading ? (
+          <Loader2 size={11} className="animate-spin" aria-hidden="true" />
+        ) : (
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
+        )}
         V8 {items.length}
         {traces.length > 0 && (
-          <span className="ml-1 inline-flex items-center gap-1 rounded-full border border-primary-200 bg-white/80 px-1.5 py-0.5 text-[10px] text-primary-700 dark:border-primary-800/70 dark:bg-primary-950/50 dark:text-primary-300">
+          <span className="ml-1 inline-flex items-center gap-1 rounded-full border border-sky-200 bg-white/80 px-1.5 py-0.5 text-[10px] text-sky-700 dark:border-sky-800/70 dark:bg-sky-950/50 dark:text-sky-300">
             <Search size={10} />
             RAG {traces.length}
           </span>
@@ -103,12 +163,59 @@ export function V8ContextIndicator({ conversationId, defaultGoal = '' }: V8Conte
 
       {isOpen && (
         <div
+          ref={panelRef}
+          id={panelId}
           data-testid="v8-context-panel"
-          className="absolute right-0 top-[calc(100%+8px)] z-30 w-[320px] rounded-2xl border border-slate-200 bg-white p-3 shadow-xl dark:border-slate-800 dark:bg-slate-950"
+          role="dialog"
+          aria-modal="false"
+          aria-labelledby={`${panelId}-title`}
+          className="fixed inset-x-3 top-14 z-30 max-h-[calc(100dvh-4.5rem)] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-3 shadow-xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-[calc(100%+8px)] sm:max-h-[min(70vh,640px)] sm:w-[min(360px,calc(100vw-24px))] dark:border-slate-800 dark:bg-slate-950"
         >
-          <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-            {t('v8.contextSummary', 'Governed V8 context')}
+          <div className="flex items-start justify-between gap-3">
+            <div
+              id={`${panelId}-title`}
+              className="text-sm font-semibold text-slate-900 dark:text-slate-100"
+            >
+              {t('v8.contextSummary', 'Governed V8 context')}
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setIsOpen(false);
+                triggerRef.current?.focus();
+              }}
+              className="-mr-1 -mt-1 inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus dark:hover:bg-slate-900 dark:hover:text-slate-100"
+              aria-label={t('common.close', 'Close')}
+            >
+              <X size={16} />
+            </button>
           </div>
+
+          {isDegraded && (
+            <div
+              data-testid="v8-context-degraded"
+              role="alert"
+              className="mt-3 rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100"
+            >
+              <div className="font-medium">
+                {t('v8.contextUnavailable', 'Some governed context is unavailable')}
+              </div>
+              <div className="mt-1">
+                {t(
+                  'v8.contextUnavailableHint',
+                  'No missing source is treated as loaded. Retry, or continue without creating a handoff.'
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => void handleRetry()}
+                className="mt-3 inline-flex items-center gap-2 rounded-lg border border-amber-400 bg-white px-3 py-1.5 font-medium hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus dark:border-amber-700 dark:bg-amber-950/60 dark:hover:bg-amber-900/50"
+              >
+                <RefreshCw size={14} />
+                {t('common.tryAgain', 'Try again')}
+              </button>
+            </div>
+          )}
 
           <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50/80 p-3 dark:border-emerald-900/60 dark:bg-emerald-950/20">
             <div className="text-[11px] font-medium text-emerald-800 dark:text-emerald-300">
@@ -191,7 +298,7 @@ export function V8ContextIndicator({ conversationId, defaultGoal = '' }: V8Conte
           <div
             className={`mt-3 rounded-xl border p-3 ${
               traces.length > 0
-                ? 'border-primary-200 bg-primary-50/80 dark:border-primary-900/60 dark:bg-primary-950/20'
+                ? 'border-sky-200 bg-sky-50/80 dark:border-sky-900/60 dark:bg-sky-950/20'
                 : 'border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/70'
             }`}
           >
@@ -206,16 +313,16 @@ export function V8ContextIndicator({ conversationId, defaultGoal = '' }: V8Conte
                 className="mt-2 space-y-2 text-xs text-slate-700 dark:text-slate-200"
               >
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-lg border border-primary-200/80 bg-white/80 px-2 py-1.5 dark:border-primary-900/60 dark:bg-primary-950/40">
+                  <div className="rounded-lg border border-sky-200/80 bg-white/80 px-2 py-1.5 dark:border-sky-900/60 dark:bg-sky-950/40">
                     <div className="opacity-70">{t('v8.retrievalPreset', 'Preset')}</div>
                     <div className="mt-0.5 font-medium">{latestTrace.presetUsed}</div>
                   </div>
-                  <div className="rounded-lg border border-primary-200/80 bg-white/80 px-2 py-1.5 dark:border-primary-900/60 dark:bg-primary-950/40">
+                  <div className="rounded-lg border border-sky-200/80 bg-white/80 px-2 py-1.5 dark:border-sky-900/60 dark:bg-sky-950/40">
                     <div className="opacity-70">{t('v8.retrievalResults', 'Results')}</div>
                     <div className="mt-0.5 font-medium">{latestTrace.resultsReturned}</div>
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-2 text-[11px] text-primary-800 dark:text-primary-200">
+                <div className="flex flex-wrap gap-2 text-[11px] text-sky-800 dark:text-sky-200">
                   <span>
                     {t('v8.retrievalDenied', 'Denied')}: {latestTrace.deniedEntries.length}
                   </span>

@@ -1,0 +1,42 @@
+{
+  "taskId": "CHAT-UI-CANON-001",
+  "baseline": "3c7b2b244b0092ca1d0c06331069dc9c795ed2b2",
+  "route": "/chat",
+  "status": "READY_FOR_OWNER_ACCEPTANCE",
+  "productionClosure": [
+    "Permission-denied, deleted, not-found and archived deep links no longer render a false welcome or writable composer.",
+    "Governed V8 loading/provider failures remain visible, retryable and keyboard-dismissible without raw diagnostics.",
+    "Voice provider reason codes are replaced with safe user guidance in title and accessible name.",
+    "The desktop floating action rail is suppressed in full-screen mobile chat so it cannot cover suggestion cards; the chat shell reserves the mobile bottom-navigation lane.",
+    "Lifecycle actions and messages have explicit English and Polish copy."
+  ],
+  "automated": {
+    "component": "PASS: 68/68 scoped tests",
+    "axe": "PASS: 0 critical/serious violations in the governed context dialog (color contrast excluded in jsdom)",
+    "rootTypecheck": "PASS",
+    "serverTypecheck": "PASS"
+  },
+  "mountedBrowser": {
+    "runtime": "local signed-in demo runtime on 127.0.0.1; no external writes",
+    "responsive": "PASS: 1440x900, 768x900 and 390x844; document horizontal overflow 0",
+    "themesAndLocales": "PASS: current EN light/dark and PL light/dark representative captures",
+    "provider": "PASS: mounted unavailable voice control exposes safe guidance, not server_missing_gemini_live_key",
+    "permission": "PASS: random conversation deep link renders Polish permission alert, next actions and disabled composer/send",
+    "keyboard": "PASS: component Escape closes V8 dialog and restores trigger focus",
+    "unnamedControls": "PASS: 0 at inspected 768px and 390px states"
+  },
+  "screens": [
+    "screens/chat-current-desktop-en-light-1440x900.png",
+    "screens/chat-current-desktop-pl-light-1440x900.png",
+    "screens/chat-current-tablet-en-dark-768x900.png",
+    "screens/chat-current-mobile-en-dark-390x844.png",
+    "screens/chat-current-mobile-pl-light-390x844.png",
+    "screens/chat-current-mobile-pl-dark-390x844.png",
+    "screens/chat-current-permission-denied-pl-dark-390x844.png"
+  ],
+  "ownerGates": [
+    "Human visual sign-off on the repository screenshots.",
+    "Human VoiceOver and target-persona acceptance."
+  ],
+  "notPerformed": ["push", "deploy", "production migration"]
+}
