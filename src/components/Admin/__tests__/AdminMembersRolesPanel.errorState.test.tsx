@@ -95,6 +95,6 @@ describe('M15-H03 — błąd odczytu członków jest jawnym stanem błędu', () 
     await waitFor(() => {
       expect(screen.queryByTestId('members-load-error')).not.toBeInTheDocument();
     });
-    expect(screen.getByText(/No members found for this workspace/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/No members found for this workspace/i).length).toBeGreaterThan(0);
   });
 });

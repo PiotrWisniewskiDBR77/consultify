@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 import { OwnershipManagementView } from '../../views/admin/OwnershipManagementView';
+import { useConfirmDialog } from '../MyWork/shared/ConfirmDialog';
 import { StandardTable } from '../standard/StandardTable';
 import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
 import type { TableColumn } from '../shared/ModuleHub/FilterableTable';
@@ -27,7 +28,7 @@ type InvitationRow = {
   expiresAt?: string;
   resendCount?: number;
   lastResentAt?: string;
-  delivery?: 'SENT' | 'NOT_SENT' | 'UNKNOWN';
+  delivery?: 'SENT' | 'FAILED' | 'NOT_ATTEMPTED' | 'UNKNOWN';
 };
 
 const inviteCommandStorageKey = (orgId: string, email: string, role: string) =>
@@ -87,7 +88,10 @@ export const AdminMembersRolesPanel: React.FC = () => {
   // administrator widział organizację bez ludzi zamiast informacji o awarii.
   const [loadError, setLoadError] = useState<string | null>(null);
   const [invitationLoadError, setInvitationLoadError] = useState<string | null>(null);
+  const [invitationsLoading, setInvitationsLoading] = useState(true);
   const [savingInvitationId, setSavingInvitationId] = useState<string | null>(null);
+  const [operationNotice, setOperationNotice] = useState<string | null>(null);
+  const { dialog: removeMemberDialog, confirm: confirmRemoveMember } = useConfirmDialog();
 
   const orgId = currentOrganization?.id;
   const viewerMembership = useMemo(
@@ -97,35 +101,35 @@ export const AdminMembersRolesPanel: React.FC = () => {
       ),
     [members, currentUser?.id]
   );
-  // Org membership role is authoritative when present. When the viewer's own
-  // membership row is not in the loaded list yet (or the list is empty), fall
-  // back to the platform role so a real admin/owner is never blocked with a
-  // silent no-op. The server remains the final authority (requireRole + controller).
-  const platformRole = String(currentUser?.role || '').toUpperCase();
-  const platformCanManage = ['OWNER', 'ADMIN', 'SUPERADMIN', 'SUPER_ADMIN'].includes(platformRole);
-  const canManageTeam =
-    ['OWNER', 'ADMIN'].includes(String(viewerMembership?.role || '').toUpperCase()) ||
-    platformCanManage;
+  // Tenant membership is the only authority for tenant IAM controls. A platform
+  // role must never widen access to an organization where the viewer is not an
+  // active OWNER/ADMIN member. The backend re-checks this invariant on commands.
+  const viewerRole = String(viewerMembership?.role || '').toUpperCase();
+  const viewerStatus = String(viewerMembership?.status || 'ACTIVE').toUpperCase();
+  const canManageTeam = viewerStatus === 'ACTIVE' && ['OWNER', 'ADMIN'].includes(viewerRole);
 
-  const loadMembers = useCallback(async () => {
+  const loadMembers = useCallback(async (): Promise<any[]> => {
     if (!orgId) {
       setMembers([]);
       setLoadError(null);
       setLoading(false);
-      return;
+      return [];
     }
 
     try {
       setLoading(true);
       setLoadError(null);
       const data = await Api.getOrganizationMembers(orgId);
-      setMembers(Array.isArray(data) ? data : []);
+      const rows = Array.isArray(data) ? data : [];
+      setMembers(rows);
+      return rows;
     } catch (error: any) {
       const message = error?.message || 'Failed to load members';
       toast.error(message);
       // Świadomie NIE czyścimy listy do pustej — brak danych z powodu awarii to
       // stan degraded, nie „zero członków".
       setLoadError(message);
+      return [];
     } finally {
       setLoading(false);
     }
@@ -135,9 +139,11 @@ export const AdminMembersRolesPanel: React.FC = () => {
     if (!orgId) {
       setInvitations([]);
       setInvitationLoadError(null);
+      setInvitationsLoading(false);
       return [];
     }
     try {
+      setInvitationsLoading(true);
       setInvitationLoadError(null);
       const data = await Api.getInvitations(orgId);
       const rows = Array.isArray(data) ? data : [];
@@ -148,6 +154,8 @@ export const AdminMembersRolesPanel: React.FC = () => {
         error?.message || 'Failed to load invitations'
       );
       return [];
+    } finally {
+      setInvitationsLoading(false);
     }
   }, [orgId]);
 
@@ -255,6 +263,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
   const handleInvitationAction = async (invitation: InvitationRow, action: 'resend' | 'revoke') => {
     if (!canManageTeam) return;
     try {
+      setOperationNotice(null);
       setSavingInvitationId(invitation.id);
       const storageKey = `consultify:admin-invite-${action}:${orgId}:${invitation.id}`;
       let commandId = sessionStorage.getItem(storageKey);
@@ -267,11 +276,22 @@ export const AdminMembersRolesPanel: React.FC = () => {
       const fresh = await loadInvitations();
       const exact = fresh.find((row) => row.id === invitation.id);
       const expected = action === 'revoke' ? 'revoked' : 'pending';
-      if (!exact || String(exact.status).toLowerCase() !== expected) {
+      const resendAdvanced =
+        action !== 'resend' ||
+        Number(exact?.resend_count ?? exact?.resendCount ?? 0) >
+          Number(invitation.resend_count ?? invitation.resendCount ?? 0);
+      if (!exact || String(exact.status).toLowerCase() !== expected || !resendAdvanced) {
         throw new Error('Command completed without exact invitation read-back.');
       }
       sessionStorage.removeItem(storageKey);
-      toast.success(action === 'resend' ? 'Invitation resent' : 'Invitation revoked');
+      const message = action === 'resend'
+        ? t('admin.membersRoles.invitations.resent', 'Invitation resend recorded. Delivery: {{delivery}}.', {
+            delivery: exact.delivery || 'UNKNOWN',
+          })
+        : t('admin.membersRoles.invitations.revoked', 'Invitation revoked.');
+      setOperationNotice(message);
+      if (action === 'resend' && exact.delivery !== 'SENT') toast.error(message);
+      else toast.success(message);
     } catch (error: any) {
       toast.error(error?.message || `Failed to ${action} invitation`);
     } finally {
@@ -294,14 +314,28 @@ export const AdminMembersRolesPanel: React.FC = () => {
       return;
     }
     try {
+      setOperationNotice(null);
       setSavingMemberId(memberId);
       const key = `consultify:admin-role:${orgId}:${memberId}:${expectedRole}:${role}`;
       let commandId = sessionStorage.getItem(key) || globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
       sessionStorage.setItem(key, commandId);
       await Api.changeAdminOrganizationMemberRole(orgId, memberId, role, expectedRole, commandId);
-      toast.success(t('admin.membersRoles.role.updated', 'Member role updated'));
-      await loadMembers();
+      const fresh = await loadMembers();
+      const exact = fresh.find(
+        (member: any) => String(member.user_id ?? member.id ?? '') === String(memberId)
+      );
+      if (!exact || String(exact.role || '').toUpperCase() !== role) {
+        throw new Error(
+          t('admin.membersRoles.role.readbackFailed', 'Role command completed without exact member read-back.')
+        );
+      }
+      setMembers((rows) => rows.map((member) =>
+        String(member.user_id ?? member.id ?? '') === String(memberId) ? exact : member
+      ));
       sessionStorage.removeItem(key);
+      const message = t('admin.membersRoles.role.updated', 'Member role updated');
+      setOperationNotice(message);
+      toast.success(message);
     } catch (error: any) {
       toast.error(
         error?.message || t('admin.membersRoles.role.updateFailed', 'Failed to update role')
@@ -319,15 +353,44 @@ export const AdminMembersRolesPanel: React.FC = () => {
       );
       return;
     }
+    const member = members.find(
+      (row) => String(row.user_id ?? row.id ?? '') === String(memberId)
+    );
+    const confirmed = await confirmRemoveMember({
+      title: t('admin.membersRoles.remove.confirmTitle', 'Remove workspace member?'),
+      description: t(
+        'admin.membersRoles.remove.confirmBody',
+        '{{member}} will immediately lose workspace access and active sessions will be revoked.',
+        { member: member?.email || member?.name || memberId }
+      ),
+      confirmLabel: t('admin.membersRoles.remove.confirm', 'Remove member'),
+      cancelLabel: t('common.cancel', 'Cancel'),
+      variant: 'danger',
+    });
+    if (!confirmed) return;
     try {
+      setOperationNotice(null);
       setSavingMemberId(memberId);
       const key = `consultify:admin-revoke-member:${orgId}:${memberId}:${expectedRole}`;
       let commandId = sessionStorage.getItem(key) || globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
       sessionStorage.setItem(key, commandId);
       await Api.revokeAdminOrganizationMember(orgId, memberId, expectedRole, commandId);
-      toast.success(t('admin.membersRoles.remove.removed', 'Member removed'));
-      await loadMembers();
+      const fresh = await Api.getOrganizationMembers(orgId);
+      const stillActive = fresh.find(
+        (row: any) =>
+          String(row.user_id ?? row.id ?? '') === String(memberId) &&
+          String(row.status || 'ACTIVE').toUpperCase() === 'ACTIVE'
+      );
+      if (stillActive) {
+        throw new Error(
+          t('admin.membersRoles.remove.readbackFailed', 'Removal command completed without exact member read-back.')
+        );
+      }
+      setMembers(Array.isArray(fresh) ? fresh : []);
       sessionStorage.removeItem(key);
+      const message = t('admin.membersRoles.remove.removed', 'Member removed');
+      setOperationNotice(message);
+      toast.success(message);
     } catch (error: any) {
       toast.error(
         error?.message || t('admin.membersRoles.remove.failed', 'Failed to remove member')
@@ -392,6 +455,12 @@ export const AdminMembersRolesPanel: React.FC = () => {
     MEMBER: t('admin.membersRoles.roles.member', 'Member'),
     GUEST: t('admin.membersRoles.roles.guest', 'Guest'),
   };
+  const deliveryLabel = (delivery?: InvitationRow['delivery']) => {
+    const normalized = delivery || 'NOT_ATTEMPTED';
+    return t(`admin.membersRoles.invitations.deliveryStates.${normalized.toLowerCase()}`, normalized);
+  };
+  const deliveryToneStatus = (delivery?: InvitationRow['delivery']) =>
+    delivery === 'SENT' ? 'active' : delivery === 'FAILED' ? 'failed' : delivery === 'UNKNOWN' ? 'unknown' : 'pending';
 
   const memberColumns: TableColumn[] = [
     {
@@ -485,7 +554,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
       id: 'delivery',
       label: t('admin.membersRoles.invitations.delivery', 'Delivery'),
       width: '130px',
-      render: (row) => <EntityStatusChip status={String(row.delivery || 'NOT_ATTEMPTED').toLowerCase()} />,
+      render: (row) => <EntityStatusChip status={deliveryToneStatus(row.delivery)} label={deliveryLabel(row.delivery)} />,
     },
     {
       id: 'expiresAt',
@@ -522,13 +591,13 @@ export const AdminMembersRolesPanel: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6" aria-busy={loading || invitationsLoading}>
       {/* Role guidance cards */}
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {ROLE_GUIDANCE.map((item) => (
           <div
             key={item.role}
-            className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-4"
+            className="rounded-xl border border-slate-200/60 bg-c-surface p-4 dark:border-white/[0.08]"
           >
             <div className="flex items-center gap-2 text-sm font-semibold text-c-text">
               {item.role === 'OWNER' ? (
@@ -554,12 +623,12 @@ export const AdminMembersRolesPanel: React.FC = () => {
       </div>
 
       {/* Members table + invite */}
-      <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-5">
+      <section aria-labelledby="admin-members-title" className="rounded-2xl border border-slate-200/60 bg-c-surface p-4 sm:p-5 dark:border-white/[0.08]">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-c-text">
+            <h2 id="admin-members-title" className="text-lg font-semibold text-c-text">
               {t('admin.membersRoles.title', 'Members & Roles')}
-            </h3>
+            </h2>
             <p className="text-sm text-c-text-muted">
               {t(
                 'admin.membersRoles.subtitle',
@@ -567,7 +636,13 @@ export const AdminMembersRolesPanel: React.FC = () => {
               )}
             </p>
           </div>
-          {canManageTeam ? <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr),160px,auto] sm:items-end">
+          {canManageTeam ? <form
+            className="grid w-full gap-3 lg:max-w-2xl sm:grid-cols-[minmax(0,1fr),160px,auto] sm:items-end"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void handleInvite();
+            }}
+          >
             <Input
               type="email"
               value={inviteEmail}
@@ -596,14 +671,14 @@ export const AdminMembersRolesPanel: React.FC = () => {
               />
             </div>
             <Button
+              type="submit"
               variant="primary"
-              onClick={() => void handleInvite()}
               loading={inviting}
               icon={<UserPlus className="h-4 w-4" />}
             >
               {t('admin.membersRoles.invite.cta', 'Add member')}
             </Button>
-          </div> : (
+          </form> : (
             <p role="status" className="text-sm text-c-text-muted">
               {t('admin.membersRoles.readOnly', 'Read-only access. Management controls are available only to workspace owners and admins.')}
             </p>
@@ -626,6 +701,15 @@ export const AdminMembersRolesPanel: React.FC = () => {
             {inviteNotice}
           </div>
         )}
+        {operationNotice && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="mt-4 rounded-lg border border-c-info/40 bg-c-info/10 px-3 py-2 text-sm text-c-text"
+          >
+            {operationNotice}
+          </div>
+        )}
 
         {loading ? (
           <div className="mt-5 py-8 text-center text-sm text-c-text-muted">
@@ -636,9 +720,9 @@ export const AdminMembersRolesPanel: React.FC = () => {
           <div
             role="alert"
             data-testid="members-load-error"
-            className="mt-5 rounded-xl border border-c-danger/40 bg-c-danger/10 p-5 text-center"
+            className="mt-5 rounded-xl border border-c-danger/40 bg-c-danger/10 p-5 text-center text-c-text"
           >
-            <div className="text-sm font-semibold text-c-danger">
+            <div className="text-sm font-semibold text-c-text">
               {t(
                 'admin.membersRoles.loadErrorTitle',
                 'Nie udało się wczytać listy członków tej organizacji.'
@@ -662,7 +746,63 @@ export const AdminMembersRolesPanel: React.FC = () => {
           </div>
         ) : (
           <div className="mt-5">
-            <FilterableTable
+            <div className="space-y-3 sm:hidden">
+              {members.length === 0 ? (
+                <p className="py-6 text-center text-sm text-c-text-muted">
+                  {t('admin.membersRoles.empty', 'No members found for this workspace.')}
+                </p>
+              ) : members.map((member) => {
+                const memberId = String(member.user_id || member.id);
+                const name = `${member.first_name || ''} ${member.last_name || ''}`.trim() || member.email?.split('@')[0] || t('admin.membersRoles.unknownMember', 'Unknown member');
+                const role = String(member.role || 'MEMBER').toUpperCase() as RoleOption;
+                const busy = savingMemberId === memberId;
+                const protectedMember = role === 'OWNER' || memberId === currentUser?.id;
+                return (
+                  <article key={memberId} className="rounded-xl border border-slate-200/70 p-4 dark:border-white/[0.08]">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h3 className="truncate font-medium text-c-text">{name}</h3>
+                        <p className="truncate text-sm text-c-text-secondary">{member.email}</p>
+                      </div>
+                      <EntityStatusChip status={String(member.status || 'ACTIVE').toLowerCase()} />
+                    </div>
+                    <div className="mt-3">
+                      <label htmlFor={`admin-mobile-member-role-${memberId}`} className="mb-1 block text-xs font-medium text-c-text-muted">
+                        {t('admin.membersRoles.columns.role', 'Role')}
+                      </label>
+                      {canManageTeam ? (
+                        <SelectField
+                          id={`admin-mobile-member-role-${memberId}`}
+                          value={role}
+                          disabled={busy || role === 'OWNER'}
+                          onChange={(value) => void handleRoleChange(memberId, value as RoleOption, role)}
+                          placeholder=""
+                          options={[
+                            { value: 'OWNER', label: roleLabels.OWNER, disabled: true },
+                            { value: 'ADMIN', label: roleLabels.ADMIN },
+                            { value: 'MEMBER', label: roleLabels.MEMBER },
+                            { value: 'GUEST', label: roleLabels.GUEST },
+                          ]}
+                        />
+                      ) : <p className="text-sm text-c-text-secondary">{roleLabels[role]}</p>}
+                    </div>
+                    {canManageTeam && !protectedMember && (
+                      <Button
+                        variant="danger"
+                        className="mt-3 min-h-11 w-full"
+                        disabled={busy}
+                        icon={<Trash2 className="h-4 w-4" />}
+                        onClick={() => void handleRemove(memberId, role)}
+                      >
+                        {t('admin.membersRoles.remove.action', 'Remove')}
+                      </Button>
+                    )}
+                  </article>
+                );
+              })}
+            </div>
+            <div className="hidden sm:block">
+              <FilterableTable
               columns={memberColumns}
               data={members.map((member) => ({
                 id: member.user_id || member.id,
@@ -695,17 +835,18 @@ export const AdminMembersRolesPanel: React.FC = () => {
               emptyMessage={t('admin.membersRoles.empty', 'No members found for this workspace.')}
               persistKey="admin-members-table"
               canvasClassName=""
-            />
+              />
+            </div>
           </div>
         )}
-      </div>
+      </section>
 
-      <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-5">
+      <section aria-labelledby="admin-invitations-title" className="rounded-2xl border border-slate-200/60 bg-c-surface p-4 sm:p-5 dark:border-white/[0.08]">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h3 className="text-lg font-semibold text-c-text">
+            <h2 id="admin-invitations-title" className="text-lg font-semibold text-c-text">
               {t('admin.membersRoles.invitations.title', 'Invitations')}
-            </h3>
+            </h2>
             <p className="text-sm text-c-text-muted">
               {t(
                 'admin.membersRoles.invitations.subtitle',
@@ -713,13 +854,22 @@ export const AdminMembersRolesPanel: React.FC = () => {
               )}
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={() => void loadInvitations()}>
+          <Button
+            variant="outline"
+            size="sm"
+            loading={invitationsLoading}
+            onClick={() => void loadInvitations()}
+          >
             {t('admin.membersRoles.invitations.refresh', 'Refresh')}
           </Button>
         </div>
 
-        {invitationLoadError ? (
-          <div role="alert" data-testid="invitations-load-error" className="mt-4 rounded-lg border border-c-danger/40 bg-c-danger/10 p-3 text-sm text-c-danger">
+        {invitationsLoading && invitations.length === 0 && !invitationLoadError ? (
+          <p role="status" className="mt-4 text-sm text-c-text-muted">
+            {t('admin.membersRoles.invitations.loading', 'Loading invitations…')}
+          </p>
+        ) : invitationLoadError ? (
+          <div role="alert" data-testid="invitations-load-error" className="mt-4 rounded-lg border border-c-danger/40 bg-c-danger/10 p-3 text-sm text-c-text">
             {invitationLoadError}
           </div>
         ) : invitations.length === 0 ? (
@@ -728,23 +878,49 @@ export const AdminMembersRolesPanel: React.FC = () => {
           </p>
         ) : (
           <div className="mt-4">
-            <StandardTable
+            <div className="space-y-3 sm:hidden">
+              {invitations.map((invitation) => {
+                const pending = String(invitation.status).toLowerCase() === 'pending';
+                const busy = savingInvitationId === invitation.id;
+                const role = String(invitation.role_to_assign || invitation.role || 'MEMBER').toUpperCase() as RoleOption;
+                return (
+                  <article key={invitation.id} className="rounded-xl border border-slate-200/70 p-4 dark:border-white/[0.08]">
+                    <h3 className="break-all font-medium text-c-text">{invitation.email}</h3>
+                    <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                      <div><dt className="text-xs text-c-text-muted">{t('admin.membersRoles.columns.role', 'Role')}</dt><dd className="mt-1 text-c-text">{roleLabels[role] || role}</dd></div>
+                      <div><dt className="text-xs text-c-text-muted">{t('admin.membersRoles.columns.status', 'Status')}</dt><dd className="mt-1"><EntityStatusChip status={String(invitation.status || 'unknown').toLowerCase()} /></dd></div>
+                      <div><dt className="text-xs text-c-text-muted">{t('admin.membersRoles.invitations.delivery', 'Delivery')}</dt><dd className="mt-1"><EntityStatusChip status={deliveryToneStatus(invitation.delivery)} label={deliveryLabel(invitation.delivery)} /></dd></div>
+                      <div><dt className="text-xs text-c-text-muted">{t('admin.membersRoles.invitations.expiry', 'Expires')}</dt><dd className="mt-1 text-c-text-secondary">{invitation.expires_at || invitation.expiresAt ? new Date(invitation.expires_at || invitation.expiresAt).toLocaleString() : '—'}</dd></div>
+                    </dl>
+                    {canManageTeam && pending && (
+                      <div className="mt-4 grid grid-cols-2 gap-2">
+                        <Button variant="outline" className="min-h-11" disabled={busy} icon={<RotateCw className="h-4 w-4" />} onClick={() => void handleInvitationAction(invitation, 'resend')}>{t('admin.membersRoles.invitations.resend', 'Resend')}</Button>
+                        <Button variant="outline" className="min-h-11" disabled={busy} icon={<XCircle className="h-4 w-4" />} onClick={() => void handleInvitationAction(invitation, 'revoke')}>{t('admin.membersRoles.invitations.revoke', 'Revoke')}</Button>
+                      </div>
+                    )}
+                  </article>
+                );
+              })}
+            </div>
+            <div className="hidden sm:block">
+              <StandardTable
               columns={invitationColumns}
               data={invitations}
               persistKey="admin-invitations-table"
               canvasClassName=""
-            />
+              />
+            </div>
           </div>
         )}
-      </div>
+      </section>
 
       {/* Forbidden controls are not rendered for non-managing personas. */}
-      {canManageTeam && <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-5">
+      {canManageTeam && <section aria-labelledby="admin-invite-code-title" className="rounded-2xl border border-slate-200/60 bg-c-surface p-4 sm:p-5 dark:border-white/[0.08]">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-c-text">
+            <h2 id="admin-invite-code-title" className="text-lg font-semibold text-c-text">
               {t('admin.membersRoles.code.title', 'Team Invite Code')}
-            </h3>
+            </h2>
             <p className="text-sm text-c-text-muted">
               {t(
                 'admin.membersRoles.code.subtitle',
@@ -852,9 +1028,10 @@ export const AdminMembersRolesPanel: React.FC = () => {
             </div>
           </div>
         )}
-      </div>}
+      </section>}
 
       {canManageTeam && <OwnershipManagementView />}
+      {removeMemberDialog}
     </div>
   );
 };

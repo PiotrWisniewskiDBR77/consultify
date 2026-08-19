@@ -8,6 +8,7 @@
 
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
+import { toast } from 'react-hot-toast';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Api } from '../../../services/api';
@@ -46,6 +47,9 @@ vi.mock('../../../services/api', () => ({
 
 const mockedApi = Api as unknown as Record<string, ReturnType<typeof vi.fn>>;
 
+const findTableText = async (text: string) =>
+  (await screen.findAllByText(text)).find((node) => node.closest('tr'))!;
+
 const members = [
   { user_id: 'viewer-admin', email: 'admin@acme.test', role: 'ADMIN', name: 'Admin User' },
   { user_id: 'member-1', email: 'member@acme.test', role: 'MEMBER', name: 'Member One' },
@@ -63,12 +67,12 @@ describe('AdminMembersRolesPanel', () => {
   it('loads members for the active organization', async () => {
     render(<AdminMembersRolesPanel />);
     await waitFor(() => expect(mockedApi.getOrganizationMembers).toHaveBeenCalledWith('org-1'));
-    expect(await screen.findByText('member@acme.test')).toBeInTheDocument();
+    expect((await screen.findAllByText('member@acme.test')).length).toBeGreaterThan(0);
   });
 
   it('renders the role guidance matrix for all roles', async () => {
     render(<AdminMembersRolesPanel />);
-    await screen.findByText('member@acme.test');
+    await screen.findAllByText('member@acme.test');
     // Each role label appears at least once (guidance card; some also as select options).
     expect(screen.getAllByText('Owner').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Admin').length).toBeGreaterThan(0);
@@ -82,8 +86,16 @@ describe('AdminMembersRolesPanel', () => {
   });
 
   it('routes a role change through the organization member API', async () => {
+    let changed = false;
+    mockedApi.changeAdminOrganizationMemberRole.mockImplementation(async () => {
+      changed = true;
+      return { success: true };
+    });
+    mockedApi.getOrganizationMembers.mockImplementation(async () =>
+      changed ? members.map((member) => member.user_id === 'member-1' ? { ...member, role: 'ADMIN' } : member) : members
+    );
     render(<AdminMembersRolesPanel />);
-    const emailCell = await screen.findByText('member@acme.test');
+    const emailCell = await findTableText('member@acme.test');
 
     // Locate the member-1 table row and its role <select>.
     const row = emailCell.closest('tr');
@@ -103,6 +115,21 @@ describe('AdminMembersRolesPanel', () => {
         expect.any(String)
       )
     );
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Member role updated'));
+  });
+
+  it('does not report role success when exact read-back contradicts the command', async () => {
+    render(<AdminMembersRolesPanel />);
+    const row = (await findTableText('member@acme.test')).closest('tr')!;
+    fireEvent.change(row.querySelector('select')!, { target: { value: 'ADMIN' } });
+
+    await waitFor(() => expect(mockedApi.changeAdminOrganizationMemberRole).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        'Role command completed without exact member read-back.'
+      )
+    );
+    expect(toast.success).not.toHaveBeenCalledWith('Member role updated');
   });
 
   it('creates an invitation and accepts it only after exact server read-back', async () => {
@@ -118,7 +145,7 @@ describe('AdminMembersRolesPanel', () => {
     );
 
     render(<AdminMembersRolesPanel />);
-    await screen.findByText('member@acme.test');
+    await screen.findAllByText('member@acme.test');
     fireEvent.change(screen.getByLabelText('Member email'), {
       target: { value: 'new@acme.test' },
     });
@@ -132,17 +159,21 @@ describe('AdminMembersRolesPanel', () => {
         expect.any(String)
       )
     );
-    expect((await screen.findByText('new@acme.test')).closest('tr')).toBeInTheDocument();
+    expect((await findTableText('new@acme.test')).closest('tr')).toBeInTheDocument();
   });
 
   it('resends and revokes a pending invitation with exact cold read-back', async () => {
-    const pending = { id: 'invite-1', email: 'new@acme.test', role: 'MEMBER', status: 'pending' };
-    mockedApi.getInvitations.mockResolvedValue([pending]);
-    mockedApi.resendOrganizationInvitation.mockResolvedValue({ success: true });
+    let resendCount = 0;
+    const pending = { id: 'invite-1', email: 'new@acme.test', role: 'MEMBER', status: 'pending', resend_count: 0 };
+    mockedApi.getInvitations.mockImplementation(async () => [{ ...pending, resend_count: resendCount }]);
+    mockedApi.resendOrganizationInvitation.mockImplementation(async () => {
+      resendCount += 1;
+      return { success: true };
+    });
     mockedApi.revokeOrganizationInvitation.mockResolvedValue({ success: true });
 
     render(<AdminMembersRolesPanel />);
-    const row = (await screen.findByText('new@acme.test')).closest('tr')!;
+    const row = (await findTableText('new@acme.test')).closest('tr')!;
     fireEvent.click(within(row).getByRole('button', { name: 'Resend' }));
     await waitFor(() =>
       expect(mockedApi.resendOrganizationInvitation).toHaveBeenCalledWith('org-1', 'invite-1', expect.any(String))
@@ -151,10 +182,34 @@ describe('AdminMembersRolesPanel', () => {
     mockedApi.getInvitations.mockResolvedValue([
       { ...pending, status: 'revoked' },
     ]);
-    fireEvent.click(within((await screen.findByText('new@acme.test')).closest('tr')!).getByRole('button', { name: 'Revoke' }));
+    fireEvent.click(within((await findTableText('new@acme.test')).closest('tr')!).getByRole('button', { name: 'Revoke' }));
     await waitFor(() =>
       expect(mockedApi.revokeOrganizationInvitation).toHaveBeenCalledWith('org-1', 'invite-1', expect.any(String))
     );
-    await waitFor(() => expect(within(screen.getByText('new@acme.test').closest('tr')!).queryByRole('button', { name: 'Revoke' })).not.toBeInTheDocument());
+    await waitFor(async () => expect(within((await findTableText('new@acme.test')).closest('tr')!).queryByRole('button', { name: 'Revoke' })).not.toBeInTheDocument());
+  });
+
+  it('requires confirmation and exact absence before reporting a member removal', async () => {
+    let removed = false;
+    mockedApi.revokeAdminOrganizationMember.mockImplementation(async () => {
+      removed = true;
+      return { success: true };
+    });
+    mockedApi.getOrganizationMembers.mockImplementation(async () =>
+      removed ? members.filter((member) => member.user_id !== 'member-1') : members
+    );
+
+    render(<AdminMembersRolesPanel />);
+    const row = (await findTableText('member@acme.test')).closest('tr')!;
+    fireEvent.click(within(row).getByRole('button', { name: /row actions/i }));
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Remove' }));
+
+    expect(mockedApi.revokeAdminOrganizationMember).not.toHaveBeenCalled();
+    const dialog = await screen.findByRole('dialog', { name: 'Remove workspace member?' });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Remove member' }));
+
+    await waitFor(() => expect(mockedApi.revokeAdminOrganizationMember).toHaveBeenCalled());
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Member removed'));
+    expect(screen.queryByText('member@acme.test')).not.toBeInTheDocument();
   });
 });

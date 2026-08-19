@@ -373,6 +373,25 @@ export async function getMembers(orgId: string): Promise<Member[]> {
 }
 
 /**
+ * Directory-safe tenant membership read used by the mounted Admin/IAM screen.
+ * Revoked/inactive rows remain in the ledger for audit, but they are neither an
+ * authorization edge nor part of the current member directory.
+ */
+export async function getActiveMembers(orgId: string): Promise<Member[]> {
+  const rows = await DbPromise.all<Member>(
+    db,
+    `SELECT m.id, m.user_id, m.role, m.status, m.created_at, u.first_name, u.last_name, u.email
+         FROM organization_members m
+         JOIN users u ON m.user_id = u.id
+         WHERE m.organization_id = ?
+           AND UPPER(COALESCE(m.status, '')) = 'ACTIVE'`,
+    [orgId]
+  );
+
+  return rows || [];
+}
+
+/**
  * Get organizations for a user
  */
 export async function getUserOrganizations(userId: string): Promise<UserOrganization[]> {
@@ -556,6 +575,7 @@ const OrganizationService = {
   getOrganization,
   addMember,
   getMembers,
+  getActiveMembers,
   getUserOrganizations,
   activateBilling,
   updateAISettings,

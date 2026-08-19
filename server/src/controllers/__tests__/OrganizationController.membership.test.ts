@@ -4,6 +4,7 @@ import OrganizationController from '../OrganizationController.js';
 
 const dbGet = vi.fn();
 const getMembers = vi.fn();
+const getActiveMembers = vi.fn();
 const addMember = vi.fn();
 const updateMemberRole = vi.fn();
 const removeMember = vi.fn();
@@ -23,6 +24,7 @@ vi.mock('../../services/adminAuditService.js', () => ({
 
 vi.mock('../../services/organizationService.js', () => ({
   getMembers: (...args: any[]) => getMembers(...args),
+  getActiveMembers: (...args: any[]) => getActiveMembers(...args),
   addMember: (...args: any[]) => addMember(...args),
   updateMemberRole: (...args: any[]) => updateMemberRole(...args),
   removeMember: (...args: any[]) => removeMember(...args),
@@ -63,6 +65,7 @@ describe('OrganizationController membership safeguards', () => {
   beforeEach(() => {
     dbGet.mockReset();
     getMembers.mockReset();
+    getActiveMembers.mockReset();
     addMember.mockReset();
     updateMemberRole.mockReset();
     removeMember.mockReset();
@@ -72,6 +75,23 @@ describe('OrganizationController membership safeguards', () => {
     changeOrganizationMemberRoleAtomicallyViaIam.mockResolvedValue({ denied: false });
     removeOrganizationMemberAtomicallyViaIam.mockResolvedValue({ denied: false });
     logAction.mockResolvedValue({ id: 'audit-1' });
+  });
+
+  it('lists only active members and denies when the actor has no active tenant edge', async () => {
+    getActiveMembers.mockResolvedValue([
+      { user_id: 'active-owner', role: 'OWNER', status: 'ACTIVE' },
+    ]);
+    const req: any = {
+      params: { orgId: 'org-1' },
+      user: { id: 'revoked-admin', role: 'ADMIN' },
+    };
+    const res = createResponse();
+
+    await OrganizationController.getMembers(req, res, vi.fn());
+
+    expect(getActiveMembers).toHaveBeenCalledWith('org-1');
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.body.code).toBe('ORG_MEMBERSHIP_REQUIRED');
   });
 
   it('rejects addMember for non-admin actors with explicit denial guidance', async () => {

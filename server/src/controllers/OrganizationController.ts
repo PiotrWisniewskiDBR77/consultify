@@ -192,13 +192,14 @@ export class OrganizationController {
         return;
       }
 
-      const { getMembers } = await import('../services/organizationService.js');
+      const { getActiveMembers } = await import('../services/organizationService.js');
 
-      // Security check
-      const members = await getMembers(orgId);
+      // Only an ACTIVE tenant edge authorizes this directory read. Revoked and
+      // inactive rows are intentionally excluded from both the gate and body.
+      const members = await getActiveMembers(orgId);
       const isMember = members.some((m) => m.user_id === userId);
       if (!isMember && req.user?.role !== 'SUPERADMIN') {
-        res.status(403).json({ error: 'Access denied' });
+        res.status(403).json({ error: 'Access denied', code: 'ORG_MEMBERSHIP_REQUIRED' });
         return;
       }
 
