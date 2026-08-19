@@ -1252,7 +1252,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     _activeConversationState === 'deleted' ||
     _activeConversationState === 'permission_denied' ||
     _activeConversationState === 'not_found';
-  const isDisabled = disabled || aiFreezeStatus.isFrozen || isConversationReadOnly;
+  // Partial-response discovery performs an uncached ACTIVE-membership check.
+  // Treat its forbidden result as an authority signal for the whole composer,
+  // even while adjacent conversation reads are still inside a positive cache.
+  const isConversationAccessForbidden =
+    _activeConversationState === 'permission_denied' || Boolean(partialRecovery?.forbidden);
+  const isDisabled =
+    disabled || aiFreezeStatus.isFrozen || isConversationReadOnly || isConversationAccessForbidden;
   const isPrivateMode = Boolean((aiConfig as any)?.privateMode);
   const isRtlChatLanguage = isRtlLanguage(chatLanguage);
 
@@ -5239,6 +5245,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   );
 
   const handleNewChat = useCallback(async () => {
+    // A revoked membership must not escape the fail-closed state by opening a
+    // fresh composer. Reloading the preserved deep link re-checks membership.
+    if (isConversationAccessForbidden) return;
     clearActiveChat();
     // BUG 1a fix: also clear the legacy global chat store (useAppStore.activeChatMessages).
     // clearActiveChat() only resets the conversation store; without this, embedded views
@@ -5255,7 +5264,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       console.error('[UnifiedChatPanel] Failed to create new chat:', err);
       toast.error(getTeresaStartFailureMessage(i18n.language));
     }
-  }, [clearActiveChat, createConversation, i18n.language, setActiveConversation]);
+  }, [
+    clearActiveChat,
+    createConversation,
+    i18n.language,
+    isConversationAccessForbidden,
+    setActiveConversation,
+  ]);
 
   const handleSelectConversation = useCallback(
     (id: string) => {
@@ -6486,8 +6501,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           <div className="flex items-center gap-0.5">
             <button
               onClick={handleNewChat}
+              disabled={isConversationAccessForbidden}
               data-testid="chat-new-button"
-              className="p-1.5 rounded-lg transition-colors text-c-text-muted hover:bg-c-surface-raised hover:text-c-text"
+              className="p-1.5 rounded-lg transition-colors text-c-text-muted hover:bg-c-surface-raised hover:text-c-text disabled:cursor-not-allowed disabled:opacity-50"
               title={t('aiChat.newChat', 'New chat')}
               aria-label={t('aiChat.newChat', 'New chat')}
             >
@@ -7073,7 +7089,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                   <button
                     type="button"
                     onClick={handleNewChat}
-                    className="inline-flex h-8 items-center justify-center rounded-lg border border-c-border-strong bg-c-surface px-3 text-xs font-medium text-c-text transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                    disabled={isConversationAccessForbidden}
+                    className="inline-flex h-8 items-center justify-center rounded-lg border border-c-border-strong bg-c-surface px-3 text-xs font-medium text-c-text transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Plus size={14} className="mr-1.5" />
                     {t('aiChat.startNewConversation', 'Start a new conversation')}

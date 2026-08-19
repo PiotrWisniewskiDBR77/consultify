@@ -149,7 +149,8 @@ describe('useConversationStore chat root rehydration', () => {
     await vi.runAllTimersAsync();
 
     expect(mockApi.getConversation).toHaveBeenCalledTimes(1);
-    expect(replaceStateSpy).toHaveBeenCalledWith(null, '', '/chat');
+    expect(replaceStateSpy).not.toHaveBeenCalled();
+    expect(window.location.pathname).toBe('/chat/unauthorized-id');
     expect(useConversationStore.getState().activeConversationId).toBeNull();
     expect(useConversationStore.getState().isLoading).toBe(false);
     expect(useConversationStore.getState()._activeConversationState).toBe('permission_denied');

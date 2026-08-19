@@ -249,6 +249,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
     <div className={`relative ${className}`} ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
+        aria-label={t('userProfile.openMenu', 'Open user profile menu')}
         className="flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-white/5 rounded-lg p-1 transition-colors cursor-pointer text-left focus:outline-none"
       >
         {showName && (

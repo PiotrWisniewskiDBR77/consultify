@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
+import AxeBuilder from '@axe-core/playwright';
 import jwt from 'jsonwebtoken';
 import { Pool } from 'pg';
 import { expect, test } from '@playwright/test';
@@ -170,5 +171,95 @@ test.describe('CHAT-UI canonical interrupted-stream recovery', () => {
       [conversationId, userId, organizationId]
     );
     expect(residue.rows).toEqual([{ content: 'Retryable partial evidence. ' }]);
+  });
+
+  test('a superseded checkpoint stays explicit across cold reload and never calls the provider', async ({
+    page,
+  }) => {
+    await pool.query(
+      `INSERT INTO ai_partial_responses
+         (id,session_id,user_id,organization_id,content,updated_at)
+       VALUES ($1,$2,$3,$4,$5,CURRENT_TIMESTAMP - INTERVAL '5 seconds')
+       ON CONFLICT(organization_id,user_id,session_id)
+       DO UPDATE SET content=excluded.content,updated_at=excluded.updated_at`,
+      [randomUUID(), conversationId, userId, organizationId, 'Superseded partial evidence. ']
+    );
+    await pool.query(
+      `INSERT INTO conversation_messages (id,conversation_id,role,content,metadata,created_at)
+       VALUES ($1,$2,'ai',$3,'{}'::jsonb,CURRENT_TIMESTAMP)`,
+      [randomUUID(), conversationId, 'A newer canonical answer']
+    );
+
+    let providerCalls = 0;
+    page.on('request', (request) => {
+      if (request.method() === 'POST' && request.url().includes('/api/ai/chat/stream')) {
+        providerCalls += 1;
+      }
+    });
+    await seedBrowserAuth(page);
+    await page.goto(`/chat/${conversationId}`);
+
+    const recovery = page.getByTestId('chat-partial-recovery');
+    await expect(recovery).toHaveAttribute('data-state', 'stale');
+    await expect(recovery).toContainText('This interrupted response is out of date');
+    await expect(recovery.getByRole('button', { name: 'Resume' })).toHaveCount(0);
+    expect(providerCalls).toBe(0);
+
+    await page.reload();
+    await expect(recovery).toHaveAttribute('data-state', 'stale');
+    expect(providerCalls).toBe(0);
+    const dismiss = recovery.getByRole('button', { name: 'Dismiss' });
+    await dismiss.focus();
+    await expect(dismiss).toBeFocused();
+    const axe = await new AxeBuilder({ page }).analyze();
+    expect(
+      axe.violations.filter((violation) => ['critical', 'serious'].includes(violation.impact || ''))
+    ).toEqual([]);
+  });
+
+  test('revoked membership renders a forbidden read-only chat without a provider call', async ({
+    page,
+  }) => {
+    await pool.query(
+      `UPDATE organization_members SET status='REVOKED'
+        WHERE organization_id=$1 AND user_id=$2`,
+      [organizationId, userId]
+    );
+    try {
+      let providerCalls = 0;
+      page.on('request', (request) => {
+        if (request.method() === 'POST' && request.url().includes('/api/ai/chat/stream')) {
+          providerCalls += 1;
+        }
+      });
+      await seedBrowserAuth(page);
+      await page.goto(`/chat/${conversationId}`);
+
+      const forbidden = page.getByTestId('chat-partial-recovery');
+      await expect(forbidden).toHaveAttribute('data-state', 'forbidden');
+      await expect(forbidden).toContainText('Your access to this workspace was revoked');
+      const composer = page.getByTestId('chat-input');
+      await expect(composer).toBeDisabled();
+      await expect(page.getByTestId('chat-new-button')).toBeDisabled();
+      await composer.press('Enter');
+      expect(providerCalls).toBe(0);
+
+      await page.reload();
+      await expect(forbidden).toHaveAttribute('data-state', 'forbidden');
+      await expect(composer).toBeDisabled();
+      expect(providerCalls).toBe(0);
+      const axe = await new AxeBuilder({ page }).analyze();
+      expect(
+        axe.violations.filter((violation) =>
+          ['critical', 'serious'].includes(violation.impact || '')
+        )
+      ).toEqual([]);
+    } finally {
+      await pool.query(
+        `UPDATE organization_members SET status='ACTIVE'
+          WHERE organization_id=$1 AND user_id=$2`,
+        [organizationId, userId]
+      );
+    }
   });
 });

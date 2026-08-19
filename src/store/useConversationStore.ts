@@ -961,7 +961,9 @@ export const useConversationStore = create<ConversationState>()(
                     ? 'Your session is no longer authorized for this conversation.'
                     : 'You do not have access to this conversation.'),
               });
-              replaceChatRoute();
+              // Preserve the denied deep link. A cold reload must re-run the
+              // mounted membership check instead of silently falling back to
+              // a writable blank `/chat` composer.
               return;
             }
             if (status === 404) {
