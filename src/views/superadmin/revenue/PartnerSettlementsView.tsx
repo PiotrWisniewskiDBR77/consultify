@@ -261,142 +261,9 @@ export const PartnerSettlementsView: React.FC = () => {
     fetchData();
   }, [fetchData]);
 
-  // Approve selected commissions (bulk or single-row reuse)
-  const handleApproveCommissions = useCallback(
-    async (ids?: string[]) => {
-      const targetIds = ids ?? Array.from(selectedCommissions);
-      if (targetIds.length === 0) {
-        toast.error('No commissions selected');
-        return;
-      }
-
-      try {
-        setProcessing(true);
-        const response = await Api.post('/api/superadmin/partner-settlements/approve-commissions', {
-          commissionIds: targetIds,
-        });
-
-        if (response?.success) {
-          toast.success(`Approved ${targetIds.length} commissions`);
-          setSelectedCommissions(new Set());
-          setPreviewCommissionId((prev) => (prev && targetIds.includes(prev) ? null : prev));
-          await fetchData();
-        } else {
-          toast.error(response?.error || 'Failed to approve commissions');
-        }
-      } catch (err: any) {
-        console.error('Error approving commissions:', err);
-        toast.error(err?.message || 'Failed to approve commissions');
-      } finally {
-        setProcessing(false);
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    },
-    [selectedCommissions, fetchData]
-  );
-
-  // Process payout
-  const handleProcessPayout = async (payoutId: string) => {
-    const reason = window.prompt(
-      'Podaj powód zatwierdzenia payoutu do processing:',
-      'Approve payout'
-    );
-    if (!reason || reason.trim().length < 3) {
-      toast.error('Confirmation reason is required');
-      return;
-    }
-
-    try {
-      setProcessing(true);
-      const response = await Api.post(
-        `/api/superadmin/partner-settlements/process-payout/${payoutId}`,
-        {
-          payoutId,
-          confirmation: true,
-          reason: reason.trim(),
-        }
-      );
-
-      if (response?.success) {
-        toast.success('Payout marked as processing');
-        await fetchData();
-      } else {
-        toast.error(response?.error || 'Failed to process payout');
-      }
-    } catch (err: any) {
-      console.error('Error processing payout:', err);
-      toast.error(err?.message || 'Failed to process payout');
-    } finally {
-      setProcessing(false);
-    }
-  };
-
-  // Complete payout
-  const handleCompletePayout = async (payoutId: string) => {
-    const reason = window.prompt(
-      'Podaj powód wykonania i reconciliacji payoutu:',
-      'Reconciled provider payout'
-    );
-    if (!reason || reason.trim().length < 3) {
-      toast.error('Confirmation reason is required');
-      return;
-    }
-
-    try {
-      setProcessing(true);
-      const response = await Api.post(
-        `/api/superadmin/partner-settlements/complete-payout/${payoutId}`,
-        {
-          payoutId,
-          confirmation: true,
-          reason: reason.trim(),
-        }
-      );
-
-      if (response?.success) {
-        toast.success('Payout completed successfully');
-        await fetchData();
-      } else {
-        toast.error(response?.error || 'Failed to complete payout');
-      }
-    } catch (err: any) {
-      console.error('Error completing payout:', err);
-      toast.error(err?.message || 'Failed to complete payout');
-    } finally {
-      setProcessing(false);
-    }
-  };
-
-  // Remove attribution
-  const handleRemoveAttribution = useCallback(
-    async (attributionId: string) => {
-      if (!confirm('Are you sure you want to remove this attribution?')) {
-        return;
-      }
-
-      try {
-        setProcessing(true);
-        const response = await Api.delete(
-          `/api/superadmin/partner-settlements/attributions/${attributionId}`
-        );
-
-        if (response?.success) {
-          toast.success('Attribution removed');
-          setPreviewAttributionId((prev) => (prev === attributionId ? null : prev));
-          await fetchData();
-        } else {
-          toast.error(response?.error || 'Failed to remove attribution');
-        }
-      } catch (err: any) {
-        console.error('Error removing attribution:', err);
-        toast.error(err?.message || 'Failed to remove attribution');
-      } finally {
-        setProcessing(false);
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    },
-    [fetchData]
-  );
+  // AMD-PRT-ECONOMICS-002: this surface is historical read-only. Economic
+  // commands are deliberately absent from the client, not merely allowed to
+  // fail with the server's 410 policy response.
 
   // ── Zakladka Commissions: filtrowanie + wiersze + kolumny + kebab ─────────
   const filteredCommissions = useMemo(() => {
@@ -489,42 +356,17 @@ export const PartnerSettlementsView: React.FC = () => {
     []
   );
 
-  const commissionRowMenu = useCallback(
-    (row: TableRow): StandardRowMenu => {
-      const commission = row as unknown as PendingCommission;
-      return {
-        primary: [
-          {
-            id: 'approve',
-            label: 'Approve',
-            icon: Check,
-            disabled: processing,
-            onClick: () => handleApproveCommissions([commission.id]),
-          },
-        ],
-        universalHandlers: {
-          preview: () => setPreviewCommissionId(commission.id),
-        },
-        destructive: { note: 'Commissions are approved, not deleted' },
-      };
-    },
-    [processing, handleApproveCommissions]
-  );
+  const commissionRowMenu = useCallback((row: TableRow): StandardRowMenu => {
+    const commission = row as unknown as PendingCommission;
+    return {
+      universalHandlers: {
+        preview: () => setPreviewCommissionId(commission.id),
+      },
+      destructive: { note: 'Historical read-only under AMD-PRT-ECONOMICS-002' },
+    };
+  }, []);
 
-  const commissionPreviewActions: StandardPreviewActions | undefined = previewCommission
-    ? {
-        resolutions: [
-          {
-            id: 'approve',
-            variant: 'positive',
-            label: 'Approve',
-            icon: Check,
-            disabled: processing,
-            onClick: () => handleApproveCommissions([previewCommission.id]),
-          },
-        ],
-      }
-    : undefined;
+  const commissionPreviewActions: StandardPreviewActions | undefined = undefined;
 
   // ── Zakladka Attribution: filtrowanie + wiersze + kolumny + kebab ────────
   const filteredAttributions = useMemo(() => {
@@ -628,37 +470,17 @@ export const PartnerSettlementsView: React.FC = () => {
     []
   );
 
-  const attributionRowMenu = useCallback(
-    (row: TableRow): StandardRowMenu => {
-      const attribution = row as unknown as Attribution;
-      return {
-        universalHandlers: {
-          preview: () => setPreviewAttributionId(attribution.id),
-        },
-        destructive: {
-          label: 'Remove attribution',
-          icon: Unlink,
-          onClick: () => handleRemoveAttribution(attribution.id),
-        },
-      };
-    },
-    [handleRemoveAttribution]
-  );
+  const attributionRowMenu = useCallback((row: TableRow): StandardRowMenu => {
+    const attribution = row as unknown as Attribution;
+    return {
+      universalHandlers: {
+        preview: () => setPreviewAttributionId(attribution.id),
+      },
+      destructive: { note: 'Historical read-only under AMD-PRT-ECONOMICS-002' },
+    };
+  }, []);
 
-  const attributionPreviewActions: StandardPreviewActions | undefined = previewAttribution
-    ? {
-        resolutions: [
-          {
-            id: 'remove',
-            variant: 'destructive',
-            label: 'Remove attribution',
-            icon: Unlink,
-            disabled: processing,
-            onClick: () => handleRemoveAttribution(previewAttribution.id),
-          },
-        ],
-      }
-    : undefined;
+  const attributionPreviewActions: StandardPreviewActions | undefined = undefined;
 
   // ── Zakladka Expiring: wiersze + kolumny + kebab (read-only) ─────────────
   const expiringRows = useMemo<TableRow[]>(
@@ -905,7 +727,7 @@ export const PartnerSettlementsView: React.FC = () => {
             {t('superadmin.settlements.title', 'Partner Settlements')}
           </h1>
           <p className="text-c-text-secondary">
-            {t('superadmin.settlements.subtitle', 'Manage partner commissions and payouts')}
+            {t('superadmin.settlements.subtitle', 'Review historical partner economics')}
           </p>
         </div>
         <button
@@ -915,6 +737,14 @@ export const PartnerSettlementsView: React.FC = () => {
           <RefreshCw className="w-4 h-4" />
           Refresh
         </button>
+      </div>
+
+      <div role="status" className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
+        <p className="font-medium text-c-text">Partner economics are read-only</p>
+        <p className="mt-1 text-sm text-c-text-secondary">
+          Commission, attribution, accrual and payout mutations are unavailable under
+          AMD-PRT-ECONOMICS-002.
+        </p>
       </div>
 
       {/* Summary Cards */}
@@ -997,15 +827,7 @@ export const PartnerSettlementsView: React.FC = () => {
               ? attributionSearch
               : undefined
         }
-        primaryCta={
-          activeTab === 'attribution'
-            ? {
-                label: t('superadmin.settlements.createAttribution', 'Create Attribution'),
-                icon: Plus,
-                onClick: () => toast('Attribution creation flow not yet implemented'),
-              }
-            : undefined
-        }
+        primaryCta={undefined}
         filterControls={
           activeTab === 'expiring' ? (
             <div className="flex items-center gap-2">
@@ -1038,27 +860,7 @@ export const PartnerSettlementsView: React.FC = () => {
             </button>
           ) : undefined
         }
-        bulk={
-          activeTab === 'commissions' && selectedCommissions.size > 0
-            ? {
-                count: selectedCommissions.size,
-                selectedLabel: `${selectedCommissions.size} selected`,
-                onSelectAll: () =>
-                  setSelectedCommissions(new Set(commissionRows.map((r) => String(r.id)))),
-                selectAllLabel: 'Select all',
-                onClear: () => setSelectedCommissions(new Set()),
-                clearLabel: 'Clear',
-                actions: [
-                  {
-                    id: 'approve',
-                    label: `Approve Selected (${selectedCommissions.size})`,
-                    icon: Check,
-                    onClick: () => handleApproveCommissions(),
-                  },
-                ],
-              }
-            : null
-        }
+        bulk={null}
         activeFilters={
           activeTab === 'commissions'
             ? commissionFilters
@@ -1176,34 +978,9 @@ export const PartnerSettlementsView: React.FC = () => {
                       {payout.fees.toLocaleString()}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {payout.status === 'PENDING' && (
-                      <button
-                        onClick={() => handleProcessPayout(payout.id)}
-                        disabled={processing}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium disabled:opacity-50"
-                      >
-                        <ArrowRight className="w-4 h-4" />
-                        Process
-                      </button>
-                    )}
-                    {payout.status === 'PROCESSING' && (
-                      <button
-                        onClick={() => handleCompletePayout(payout.id)}
-                        disabled={processing}
-                        className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-medium disabled:opacity-50"
-                      >
-                        <Check className="w-4 h-4" />
-                        Complete
-                      </button>
-                    )}
-                    <button
-                      className="p-2 text-c-text-secondary hover:text-danger-400 rounded transition-colors"
-                      title="Reject"
-                    >
-                      <XCircle className="w-5 h-5" />
-                    </button>
-                  </div>
+                  <span className="rounded-full bg-c-surface-raised px-3 py-1 text-xs text-c-text-muted">
+                    Historical read-only · economics unavailable
+                  </span>
                 </div>
               </div>
             </div>

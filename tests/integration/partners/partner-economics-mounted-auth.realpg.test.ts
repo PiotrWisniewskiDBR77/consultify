@@ -1156,6 +1156,93 @@ describeReal('AMD-PRT-ECONOMICS-002 — every listed economic mutation route ref
   });
 });
 
+// The legacy cutover rollback variables are deliberately NOT an enablement
+// mechanism for owner-excluded Partner economics.  The production routers run
+// authentication and the immutable economics-policy guard before the generic
+// legacy-cutover guard, so even an operator who enables either legacy rollback
+// switch must still receive the policy refusal.  Keep this denominator tied to
+// the stable sibling-writer ids: it is the executable proof for PRT-W18-W27.
+const SIBLING_ROLLBACK_CASES: Array<{
+  writerId: `PRT-W${number}`;
+  surface: SurfaceFixture;
+  mutation: MutationCase;
+}> = [
+  { writerId: 'PRT-W18', surface: SURFACES[2], mutation: SETTLEMENTS_MUTATIONS[0] },
+  { writerId: 'PRT-W19', surface: SURFACES[2], mutation: SETTLEMENTS_MUTATIONS[1] },
+  { writerId: 'PRT-W20', surface: SURFACES[2], mutation: SETTLEMENTS_MUTATIONS[2] },
+  { writerId: 'PRT-W21', surface: SURFACES[2], mutation: SETTLEMENTS_MUTATIONS[3] },
+  { writerId: 'PRT-W22', surface: SURFACES[2], mutation: SETTLEMENTS_MUTATIONS[6] },
+  { writerId: 'PRT-W23', surface: SURFACES[2], mutation: SETTLEMENTS_MUTATIONS[4] },
+  { writerId: 'PRT-W24', surface: SURFACES[2], mutation: SETTLEMENTS_MUTATIONS[5] },
+  { writerId: 'PRT-W25', surface: SURFACES[3], mutation: CONFIG_MUTATIONS[0] },
+  { writerId: 'PRT-W26', surface: SURFACES[3], mutation: CONFIG_MUTATIONS[1] },
+  { writerId: 'PRT-W27', surface: SURFACES[3], mutation: CONFIG_MUTATIONS[2] },
+];
+
+describeReal('AMD-PRT-ECONOMICS-002 — legacy rollback cannot reactivate PRT-W18-W27', () => {
+  itDB(
+    'global and writer-selective rollback leave all ten mounted writers auth-first, policy-disabled and byte-stable',
+    async (h) => {
+      const globalEnv = 'PARTNER_LEGACY_ROLLBACK_ENABLED';
+      const selectiveEnv = 'PARTNER_LEGACY_ROLLBACK_WRITERS';
+      const previousGlobal = process.env[globalEnv];
+      const previousSelective = process.env[selectiveEnv];
+      const coldClient = new Client({ connectionString: process.env.DATABASE_URL as string });
+
+      await coldClient.connect();
+      try {
+        for (const { writerId, surface, mutation } of SIBLING_ROLLBACK_CASES) {
+          for (const mode of ['global', 'selective'] as const) {
+            if (mode === 'global') {
+              process.env[globalEnv] = 'true';
+              delete process.env[selectiveEnv];
+            } else {
+              delete process.env[globalEnv];
+              process.env[selectiveEnv] = writerId;
+            }
+
+            const requestId = `${h.prefix}-rollback-${mode}-${writerId.toLowerCase()}`;
+            const app = surface.buildApp();
+            const token = surface.token(h);
+            const before = await snapshotZeroMutationTables(h.client);
+
+            // Same authenticated request identity is replayed deliberately:
+            // refusal remains stable and the durable receipt stays exactly one.
+            const first = await sendMutation(app, surface.basePath, token, mutation, requestId);
+            const replay = await sendMutation(app, surface.basePath, token, mutation, requestId);
+
+            expect(first.status, `${mode} ${writerId} first`).toBe(410);
+            expect(replay.status, `${mode} ${writerId} replay`).toBe(410);
+            assertPolicyDeniedBody(first.body, mutation.operation);
+            assertPolicyDeniedBody(replay.body, mutation.operation);
+            expect(replay.body).toEqual(first.body);
+            expect(await snapshotZeroMutationTables(h.client)).toEqual(before);
+
+            // Query through an independent connection after both requests so
+            // the assertion is a committed/cold read, not connection-local state.
+            const receipts = await receiptRowsForRequestId(coldClient, requestId);
+            expect(receipts, `${mode} ${writerId} receipt`).toHaveLength(1);
+            expect(receipts[0]).toMatchObject({
+              surface: surface.surface,
+              operation: mutation.operation,
+              method: mutation.method,
+              decision: PARTNER_ECONOMICS_POLICY_DECISION,
+              denial_code: PARTNER_ECONOMICS_POLICY_CODE,
+            });
+          }
+        }
+      } finally {
+        await coldClient.end().catch(() => undefined);
+        if (previousGlobal === undefined) delete process.env[globalEnv];
+        else process.env[globalEnv] = previousGlobal;
+        if (previousSelective === undefined) delete process.env[selectiveEnv];
+        else process.env[selectiveEnv] = previousSelective;
+      }
+    },
+    60_000
+  );
+});
+
 // =============================================================================
 // Actor matrix: ACTIVE owner/admin, revoked member, foreign tenant, and
 // SUPERADMIN-without-membership, each against ONE representative economic

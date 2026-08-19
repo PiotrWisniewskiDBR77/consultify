@@ -14,12 +14,13 @@
  * router was therefore describing a subset of the domain while reading as though
  * it described the domain.
  *
- * Every retiring writer here is `observed` unless a successor is named. W17 is
- * different: it is the retained canonical public ingress and is not eligible
- * for legacy retirement. The remaining writers have no V8 successor located in code, and
- * the superadmin surfaces have no V8 equivalent at all. The value of registering
- * them is that their traffic becomes attributable per tenant before anyone
- * proposes retiring anything in this domain.
+ * W17 is retained as the canonical public ingress. W18-W27 are not awaiting a
+ * successor: owner decision AMD-PRT-ECONOMICS-002 explicitly approved Partner
+ * economics out of scope and requires those operations to stay unavailable.
+ * They are therefore domain-enforced `disabled` writers, not misleadingly
+ * `observed` or `owner-blocked`. The policy has no runtime rollback lever: a
+ * new owner decision and code change are required to reopen it. W28-W29 have
+ * transactional V8 operator-review successors and are disabled.
  */
 
 import type { LegacyCutoverDomainConfig } from '../legacyCutoverKernel.js';
@@ -71,60 +72,76 @@ export const PARTNERS_SUPERADMIN_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'PRT-W18',
       method: 'POST',
       path: /^\/approve-commissions\/?$/,
-      state: 'observed',
+      state: 'disabled',
+      enforcedBy: 'domain',
+      enforcedByDecision: 'AMD-PRT-ECONOMICS-002',
       successor: null,
       reason:
-        'Commission approval (partners.routes.ts:2416) on the unguarded superadmin settlements router. No V8 counterpart located.',
+        'APPROVED_OUT by AMD-PRT-ECONOMICS-002: commission approval is unavailable and fails closed before a writer.',
     },
     {
       writerId: 'PRT-W19',
       method: 'POST',
       path: /^\/process-payout(\/[^/]+)?\/?$/,
-      state: 'observed',
+      state: 'disabled',
+      enforcedBy: 'domain',
+      enforcedByDecision: 'AMD-PRT-ECONOMICS-002',
       successor: null,
       reason:
-        'Payout processing (partners.routes.ts:2460), registered for both the collection and the :payoutId form. No V8 counterpart located.',
+        'APPROVED_OUT by AMD-PRT-ECONOMICS-002: payout processing is unavailable and fails closed before a writer.',
     },
     {
       writerId: 'PRT-W20',
       method: 'POST',
       path: /^\/complete-payout(\/[^/]+)?\/?$/,
-      state: 'observed',
+      state: 'disabled',
+      enforcedBy: 'domain',
+      enforcedByDecision: 'AMD-PRT-ECONOMICS-002',
       successor: null,
-      reason: 'Payout completion (partners.routes.ts:2501). No V8 counterpart located.',
+      reason: 'APPROVED_OUT by AMD-PRT-ECONOMICS-002: payout completion is unavailable.',
     },
     {
       writerId: 'PRT-W21',
       method: 'POST',
       path: /^\/fail-payout(\/[^/]+)?\/?$/,
-      state: 'observed',
+      state: 'disabled',
+      enforcedBy: 'domain',
+      enforcedByDecision: 'AMD-PRT-ECONOMICS-002',
       successor: null,
-      reason: 'Payout failure marking (partners.routes.ts:2542). No V8 counterpart located.',
+      reason: 'APPROVED_OUT by AMD-PRT-ECONOMICS-002: payout mutation is unavailable.',
     },
     {
       writerId: 'PRT-W22',
       method: 'DELETE',
       path: /^\/attributions\/[^/]+\/?$/,
-      state: 'observed',
+      state: 'disabled',
+      enforcedBy: 'domain',
+      enforcedByDecision: 'AMD-PRT-ECONOMICS-002',
       successor: null,
       reason:
-        'Attribution deletion (partners.routes.ts:2594) — the only DELETE on this surface, and the one whose retirement would need the strongest evidence because it removes rows rather than adding them.',
+        'APPROVED_OUT by AMD-PRT-ECONOMICS-002: attribution deletion is unavailable; historical rows remain read-only.',
     },
     {
       writerId: 'PRT-W23',
       method: 'POST',
       path: /^\/program\/[^/]+\/lifecycle\/?$/,
-      state: 'observed',
+      state: 'disabled',
+      enforcedBy: 'domain',
+      enforcedByDecision: 'AMD-PRT-ECONOMICS-002',
       successor: null,
-      reason: 'Partner program lifecycle transition (partners.routes.ts:2699).',
+      reason:
+        'APPROVED_OUT by AMD-PRT-ECONOMICS-002: payout-bearing operator lifecycle mutation is unavailable.',
     },
     {
       writerId: 'PRT-W24',
       method: 'POST',
       path: /^\/program\/[^/]+\/ledger-entry\/?$/,
-      state: 'observed',
+      state: 'disabled',
+      enforcedBy: 'domain',
+      enforcedByDecision: 'AMD-PRT-ECONOMICS-002',
       successor: null,
-      reason: 'Partner program ledger entry (partners.routes.ts:2748).',
+      reason:
+        'APPROVED_OUT by AMD-PRT-ECONOMICS-002: direct accrual/ledger mutation is unavailable.',
     },
   ],
 };
@@ -141,26 +158,32 @@ export const PARTNERS_CONFIG_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'PRT-W25',
       method: 'PUT',
       path: /^\/commission-rates\/?$/,
-      state: 'observed',
+      state: 'disabled',
+      enforcedBy: 'domain',
+      enforcedByDecision: 'AMD-PRT-ECONOMICS-002',
       successor: null,
-      reason: 'Commission rate configuration (partners.routes.ts:2829).',
+      reason: 'APPROVED_OUT by AMD-PRT-ECONOMICS-002: commission-rate authoring is unavailable.',
     },
     {
       writerId: 'PRT-W26',
       method: 'PUT',
       path: /^\/discount\/?$/,
-      state: 'observed',
+      state: 'disabled',
+      enforcedBy: 'domain',
+      enforcedByDecision: 'AMD-PRT-ECONOMICS-002',
       successor: null,
-      reason: 'Partner discount configuration (partners.routes.ts:2866).',
+      reason: 'APPROVED_OUT by AMD-PRT-ECONOMICS-002: discount authoring is unavailable.',
     },
     {
       writerId: 'PRT-W27',
       method: 'PUT',
       path: /^\/payout-settings\/?$/,
-      state: 'observed',
+      state: 'disabled',
+      enforcedBy: 'domain',
+      enforcedByDecision: 'AMD-PRT-ECONOMICS-002',
       successor: null,
       reason:
-        'Superadmin payout settings (partners.routes.ts:2898). Note the path collides with PRT-W08, which IS retired on the tenant-facing router — the same router-local path, two different mounts, two different states. This is why telemetry records the full path.',
+        'APPROVED_OUT by AMD-PRT-ECONOMICS-002: superadmin payout settings are unavailable. This remains distinct from retired tenant writer PRT-W08.',
     },
     {
       writerId: 'PRT-W28',

@@ -24,7 +24,10 @@ import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { cleanupLegacyCutoverTestIntents } from './legacyCutoverTestCleanup.js';
 
-import { createLegacyCutoverGuard, type LegacyCutoverDomainConfig } from '../legacyCutoverKernel.js';
+import {
+  createLegacyCutoverGuard,
+  type LegacyCutoverDomainConfig,
+} from '../legacyCutoverKernel.js';
 import { CUTOVER_REGISTRY } from '../registry.js';
 
 const CONNECTION_STRING = process.env.DATABASE_URL || '';
@@ -129,24 +132,28 @@ describe.skipIf(!REAL_PG)('Rollback rehearsal for every disabled writer', () => 
 
   afterAll(async () => {
     if (!pool) return;
-    await cleanupLegacyCutoverTestIntents(pool, { organizationIds: [org], requestIdPrefix: prefix });
+    await cleanupLegacyCutoverTestIntents(pool, {
+      organizationIds: [org],
+      requestIdPrefix: prefix,
+    });
     for (const tranche of TRANCHES) delete process.env[tranche.rollbackWritersEnv];
     await pool.query(`DELETE FROM legacy_cutover_usage_events WHERE organization_id = $1`, [org]);
     await pool.query(`DELETE FROM organizations WHERE id = $1`, [org]);
     await pool.end();
   });
 
-  it('requires every domain-enforced disabled writer to name its real rollback lever', () => {
+  it('requires every domain-enforced disabled writer to name exactly one real authority', () => {
     const domainEnforced = Object.values(CUTOVER_REGISTRY).flatMap((config) =>
       config.writers.filter(
         (writer) => writer.state === 'disabled' && writer.enforcedBy === 'domain'
       )
     );
     for (const writer of domainEnforced) {
-      // Without this, the report would advertise the kernel's rollback variable
-      // for a writer the kernel cannot re-open.
-      expect(writer.enforcedByEnv, `${writer.writerId} must name its rollback lever`).toBeTruthy();
-      expect(writer.reason).toContain(String(writer.enforcedByEnv));
+      const authorities = [writer.enforcedByEnv, writer.enforcedByDecision].filter(Boolean);
+      expect(authorities, `${writer.writerId} must name exactly one domain authority`).toHaveLength(
+        1
+      );
+      expect(writer.reason).toContain(String(authorities[0]));
     }
   });
 
@@ -157,7 +164,10 @@ describe.skipIf(!REAL_PG)('Rollback rehearsal for every disabled writer', () => 
       const rule = tranche.config.writers.find((writer) => writer.writerId === tranche.writerId);
       // The sample must still match the rule it stands for, or the rehearsal
       // below would pass by never reaching the writer at all.
-      expect(rule?.path.test(tranche.samplePath), `sample path no longer matches ${tranche.writerId}`).toBe(true);
+      expect(
+        rule?.path.test(tranche.samplePath),
+        `sample path no longer matches ${tranche.writerId}`
+      ).toBe(true);
     }
   });
 
@@ -182,7 +192,12 @@ describe.skipIf(!REAL_PG)('Rollback rehearsal for every disabled writer', () => 
       // 2. NARROW — naming this one writer re-opens exactly this one.
       process.env[tranche.rollbackWritersEnv] = tranche.writerId;
       try {
-        const reopened = await send(app, tranche.method, url, `${prefix}-${tranche.writerId}-during`);
+        const reopened = await send(
+          app,
+          tranche.method,
+          url,
+          `${prefix}-${tranche.writerId}-during`
+        );
         expect(reopened.status).toBe(200);
         expect(reopened.body.reachedLeaf).toBe(true);
 
@@ -217,7 +232,12 @@ describe.skipIf(!REAL_PG)('Rollback rehearsal for every disabled writer', () => 
       expect(await rowsFor(`${prefix}-${tranche.writerId}-before`)).toEqual(beforeRows);
 
       // 4. REVERSIBLE — removing the variable returns it to refusing.
-      const refusedAgain = await send(app, tranche.method, url, `${prefix}-${tranche.writerId}-after`);
+      const refusedAgain = await send(
+        app,
+        tranche.method,
+        url,
+        `${prefix}-${tranche.writerId}-after`
+      );
       expect([409, 410]).toContain(refusedAgain.status);
       expect(refusedAgain.body.reachedLeaf).toBeUndefined();
     }

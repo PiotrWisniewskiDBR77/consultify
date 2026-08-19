@@ -33,7 +33,10 @@ import type { NextFunction, Request, Response } from 'express';
 
 import * as DbPromise from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
-import { resolveCanonicalIdentity, type CanonicalIdentityStatus } from './canonicalIdentityBridge.js';
+import {
+  resolveCanonicalIdentity,
+  type CanonicalIdentityStatus,
+} from './canonicalIdentityBridge.js';
 import {
   completeLegacyCutoverIntent,
   registerLegacyCutoverIntent,
@@ -82,11 +85,14 @@ export interface LegacyWriterRule {
    * records them as `disabled` because that is the true state of the system,
    * but the kernel does NOT add a second gate: doing so would advertise a
    * rollback lever that cannot actually restore the route, since the domain's
-   * own check would still refuse it. Name the real lever in `enforcedByEnv`.
+   * own check would still refuse it. Name either the real reversible lever in
+   * `enforcedByEnv` or the immutable owner decision in `enforcedByDecision`.
    */
   enforcedBy?: 'kernel' | 'domain';
   /** The operative rollback variable when `enforcedBy` is `domain`. */
   enforcedByEnv?: string;
+  /** The immutable owner authority when domain enforcement has no runtime rollback lever. */
+  enforcedByDecision?: string;
   /** Human-readable reason, surfaced in the report. */
   reason: string;
 }
@@ -267,10 +273,14 @@ export function createLegacyCutoverGuard(config: LegacyCutoverDomainConfig) {
     const tenant = resolveTenant(req);
     const requestId = String(req.headers?.['x-request-id'] || '').trim() || null;
     const legacyTable = rule?.legacyTable || null;
-    const legacyId = rule?.legacyIdFromPath ? rule.legacyIdFromPath(routePath).trim() || null : null;
+    const legacyId = rule?.legacyIdFromPath
+      ? rule.legacyIdFromPath(routePath).trim() || null
+      : null;
 
     // --- decision, taken before any I/O that could fail -------------------
-    const rollback = rule ? rollbackDecision(config, rule.writerId) : { enabled: false, scope: 'none' as const };
+    const rollback = rule
+      ? rollbackDecision(config, rule.writerId)
+      : { enabled: false, scope: 'none' as const };
     // A writer whose refusal is enforced by its own domain mechanism is recorded
     // as disabled but not gated again here — see `enforcedBy`.
     const isDisabled =
@@ -342,10 +352,14 @@ export function createLegacyCutoverGuard(config: LegacyCutoverDomainConfig) {
 
     let intentId: string;
     try {
-      intentId = (await registerLegacyCutoverIntent(
-        usage,
-        String(req.headers?.['idempotency-key'] || req.headers?.['x-idempotency-key'] || '').trim() || null
-      )).intentId;
+      intentId = (
+        await registerLegacyCutoverIntent(
+          usage,
+          String(
+            req.headers?.['idempotency-key'] || req.headers?.['x-idempotency-key'] || ''
+          ).trim() || null
+        )
+      ).intentId;
     } catch (error) {
       logger.error(`[LegacyCutover:${config.domain}] durable intent registration failed`, error);
       res.status(503).json({
@@ -371,7 +385,9 @@ export function createLegacyCutoverGuard(config: LegacyCutoverDomainConfig) {
       const complete = (source: 'finish' | 'close') => {
         if (completed) return;
         completed = true;
-        const responseFinished = Boolean((res as Response & { writableFinished?: boolean }).writableFinished);
+        const responseFinished = Boolean(
+          (res as Response & { writableFinished?: boolean }).writableFinished
+        );
         const result: LegacyIntentTerminalResult =
           source === 'close' && !responseFinished
             ? 'aborted_unknown'
@@ -383,7 +399,9 @@ export function createLegacyCutoverGuard(config: LegacyCutoverDomainConfig) {
           terminalStatus: Number.isFinite(res.statusCode) ? res.statusCode : null,
           terminalResult: result,
           source,
-        }).catch((error) => logger.error(`[LegacyCutover:${config.domain}] intent completion failed`, error));
+        }).catch((error) =>
+          logger.error(`[LegacyCutover:${config.domain}] intent completion failed`, error)
+        );
       };
       res.once('finish', () => complete('finish'));
       res.once('close', () => complete('close'));

@@ -7,7 +7,10 @@
  * the two superadmin routers — settlement approval, payout processing,
  * commission rates — have been invisible to the Partner cutover since it began.
  *
- * These tests prove the authenticated sibling mounts observe without blocking.
+ * These tests pin the generic-kernel side of the contract. W18-W27 are
+ * domain-enforced disabled writers: the generic kernel deliberately does not
+ * add a second rollback gate, while the production economics policy guard
+ * refuses them before their leaf handlers.
  * PRT-W17 is deliberately different: the production public router is not mounted
  * behind the generic guard. Its retained canonical command resolves the owner
  * tenant and records telemetry in the same transaction as the click. This file
@@ -119,7 +122,26 @@ describe.skipIf(!REAL_PG)('Partner sibling routers (fresh real PostgreSQL)', () 
     expect(await rows(`${prefix}-public-write`)).toHaveLength(0);
   });
 
-  it('observes the superadmin payout money path per tenant without blocking it', async () => {
+  it('classifies W18-W27 as immutable decision-enforced disabled writers', () => {
+    const economics = [
+      ...PARTNERS_SUPERADMIN_CUTOVER.writers,
+      ...PARTNERS_CONFIG_CUTOVER.writers,
+    ].filter((writer) => /^PRT-W(?:1[89]|2[0-7])$/.test(writer.writerId));
+
+    expect(economics).toHaveLength(10);
+    for (const writer of economics) {
+      expect(writer).toMatchObject({
+        state: 'disabled',
+        successor: null,
+        enforcedBy: 'domain',
+        enforcedByDecision: 'AMD-PRT-ECONOMICS-002',
+      });
+      expect(writer.enforcedByEnv).toBeUndefined();
+      expect(writer.reason).toContain('AMD-PRT-ECONOMICS-002');
+    }
+  });
+
+  it('leaves domain-enforced payout refusal to the production policy guard', async () => {
     const instance = app(PARTNERS_SUPERADMIN_CUTOVER, '/api/superadmin/partner-settlements', true);
     const response = await request(instance)
       .post('/api/superadmin/partner-settlements/process-payout/payout-1')
@@ -139,9 +161,9 @@ describe.skipIf(!REAL_PG)('Partner sibling routers (fresh real PostgreSQL)', () 
     ]);
   });
 
-  it('keeps two writers that share a router-local path separable by mount', async () => {
-    // PRT-W08 (retired, tenant-facing) and PRT-W27 (superadmin, observed) are
-    // both `PUT /payout-settings`. Only the full path distinguishes them.
+  it('keeps two disabled writers that share a router-local path separable by mount', async () => {
+    // PRT-W08 (kernel-enforced) and PRT-W27 (domain-enforced) are both
+    // `PUT /payout-settings`. Only the full path distinguishes them.
     const response = await request(
       app(PARTNERS_CONFIG_CUTOVER, '/api/superadmin/partner-config', true)
     )
@@ -149,7 +171,8 @@ describe.skipIf(!REAL_PG)('Partner sibling routers (fresh real PostgreSQL)', () 
       .set('x-test-org', orgA)
       .set('x-request-id', `${prefix}-collision`)
       .send({});
-    // The superadmin one must NOT inherit PRT-W08's retirement.
+    // The generic kernel must not pretend it can reopen the immutable domain
+    // policy. The production composition blocks this route one layer earlier.
     expect(response.status).toBe(200);
 
     expect(await rows(`${prefix}-collision`)).toEqual([
