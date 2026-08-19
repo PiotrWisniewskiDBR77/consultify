@@ -450,8 +450,15 @@ describe.sequential('Partner legacy cutover guard (real PG)', () => {
              SELECT certificate_id,certificate_url,passed_exam_at::text,completed_at::text,
                     status,review_state,valid_until::text
              FROM partner_certifications WHERE id=$2
-           ) c) certification_snapshot,
+          ) c) certification_snapshot,
           (SELECT count(*)::int FROM partner_certificates WHERE certification_id=$2) certificate_count,
+          (SELECT string_agg(row_to_json(cert)::text,'|' ORDER BY id) FROM (
+             SELECT id,partner_org_id,user_id,certification_id,certificate_type,
+                    earned_at::text,expires_at::text,revoked_at::text,revoked_by,revoke_reason,
+                    share_token,created_at::text,certification_track,certification_level,
+                    review_state,valid_until::text
+             FROM partner_certificates WHERE certification_id=$2 ORDER BY id
+           ) cert) certificate_snapshot,
           (SELECT string_agg(row_to_json(r)::text,'|' ORDER BY operation,idempotency_key)
              FROM partner_certification_mutation_receipts r
             WHERE partner_org_id=$3 AND user_id=$4) receipt_snapshot,
