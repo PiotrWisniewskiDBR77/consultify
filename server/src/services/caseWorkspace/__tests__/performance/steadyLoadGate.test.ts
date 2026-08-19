@@ -10,7 +10,7 @@ describe('NFR-PERF-001 steady-load gate evaluator', () => {
   it('passes an in-budget run and rejects the positive-control breach', () => {
     expect(
       evaluateSteadyLoadGate({
-        readLatencyMs: [20, 30, 40, 50],
+        apiLatencyMs: [20, 30, 40, 50],
         writeLatencyMs: [80, 90, 100],
         totalRequests: 1000,
         errors: 1,

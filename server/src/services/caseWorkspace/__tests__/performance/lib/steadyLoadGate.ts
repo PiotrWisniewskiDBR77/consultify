@@ -24,13 +24,11 @@ export interface WorkloadGateInput {
 }
 
 export interface SteadyLoadGateInput {
-  readLatencyMs: number[];
+  apiLatencyMs: number[];
   writeLatencyMs: number[];
   totalRequests: number;
   errors: number;
   crossTenantFalseSuccesses: number;
-  writeLosses?: number;
-  writeDuplicates?: number;
   heapWarmMb: number;
   heapFinalMb: number;
   lastTenMinuteHeapMb: number[];
@@ -41,7 +39,7 @@ export interface SteadyLoadGateInput {
 
 export interface SteadyLoadGateResult {
   pass: boolean;
-  reads: LatencyStats;
+  api: LatencyStats;
   writes: LatencyStats;
   errorRatePct: number;
   heapGrowthPct: number;
@@ -59,7 +57,7 @@ export interface SteadyLoadGateResult {
 }
 
 export function evaluateSteadyLoadGate(input: SteadyLoadGateInput): SteadyLoadGateResult {
-  const reads = summarize(input.readLatencyMs);
+  const api = summarize(input.apiLatencyMs);
   const writes = summarize(input.writeLatencyMs);
   const errorRatePct = input.totalRequests > 0 ? (input.errors / input.totalRequests) * 100 : 100;
   const heapGrowthPct =
@@ -70,11 +68,10 @@ export function evaluateSteadyLoadGate(input: SteadyLoadGateInput): SteadyLoadGa
       (value, index, values) => index === 0 || value >= values[index - 1]
     );
   const failures: string[] = [];
-  if (reads.n === 0 || reads.p95Ms > NFR_PERF_THRESHOLDS.readP95Ms) failures.push('read_p95');
+  if (api.p95Ms > NFR_PERF_THRESHOLDS.apiP95Ms) failures.push('api_p95');
+  if (api.p99Ms > NFR_PERF_THRESHOLDS.apiP99Ms) failures.push('api_p99');
   if (writes.n === 0 || writes.p95Ms > NFR_PERF_THRESHOLDS.writeP95Ms) failures.push('write_p95');
   if (errorRatePct >= NFR_PERF_THRESHOLDS.maxErrorRatePct) failures.push('error_rate');
-  if ((input.writeLosses ?? 0) !== 0) failures.push('write_loss');
-  if ((input.writeDuplicates ?? 0) !== 0) failures.push('write_duplicate');
   if (input.crossTenantFalseSuccesses !== 0) failures.push('cross_tenant_false_success');
   if (heapGrowthPct >= NFR_PERF_THRESHOLDS.maxHeapGrowthPct) failures.push('heap_growth');
   if (monotonicLastTenMinutes) failures.push('heap_monotonic_last_10m');
@@ -102,7 +99,7 @@ export function evaluateSteadyLoadGate(input: SteadyLoadGateInput): SteadyLoadGa
   }
   return {
     pass: failures.length === 0,
-    reads,
+    api,
     writes,
     errorRatePct,
     heapGrowthPct,

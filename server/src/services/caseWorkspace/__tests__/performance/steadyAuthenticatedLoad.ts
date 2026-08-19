@@ -88,7 +88,7 @@ async function main(): Promise<void> {
   const users = Array.from({ length: userCount }, (_, index) => `nfr-perf-user-${index}-${tag}`);
   const foreignUser = `nfr-perf-foreign-user-${tag}`;
   const pool = new Pool({ connectionString: databaseUrl, max: 12 });
-  const readLatencyMs: number[] = [];
+  const apiLatencyMs: number[] = [];
   const writeLatencyMs: number[] = [];
   const workloads = NFR_PERF_WORKLOADS.reduce(
     (result, name) => {
