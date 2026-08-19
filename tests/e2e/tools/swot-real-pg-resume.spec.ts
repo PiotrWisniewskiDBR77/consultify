@@ -556,6 +556,7 @@ test('TLS-05: signed creator and separate approver freeze, promote, replay and c
       .click();
     await expect(page.locator('[data-synthesis-section]')).toHaveCount(9);
     await expect(page.getByText(/^Validated$/)).toHaveCount(0);
+    await page.getByText(/Show supporting analysis/i).click();
     const draftCandidateAction = page.getByRole('button', { name: /Send to candidates/i }).first();
     await expect(draftCandidateAction).toBeDisabled();
     await expect(page.getByText(/Approve this SWOT before sending/i).first()).toBeVisible();
@@ -625,6 +626,7 @@ test('TLS-05: signed creator and separate approver freeze, promote, replay and c
       .getByRole('button', { name: /Synthesis & Insights/i })
       .first()
       .click();
+    await approverPage.getByText(/Show supporting analysis/i).click();
     const handoffResponsePromise = approverPage.waitForResponse(
       (response) =>
         response.url().includes(`/api/tools/${sessionId}/swot-candidates`) &&
