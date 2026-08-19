@@ -8,6 +8,7 @@ import { v8MetricsMiddleware } from '../../middleware/v8Metrics.middleware.js';
 import featureFlagRoutes from './admin/feature-flags.routes.js';
 import adminHealthRoutes from './admin/health.routes.js';
 import adminMetricsRoutes from './admin/metrics.routes.js';
+import partnerReviewRoutes from './admin/partner-review.routes.js';
 import shadowRoutes from './admin/shadow.routes.js';
 import advisoryRoutes from './advisory.routes.js';
 import agentProcessTemplateRoutes from './agent-process-templates.routes.js';
@@ -61,6 +62,7 @@ v8Router.use(requireV8OrgContext);
 v8Router.use('/admin/flags', featureFlagRoutes);
 v8Router.use('/admin/health', adminHealthRoutes);
 v8Router.use('/admin/metrics', adminMetricsRoutes);
+v8Router.use('/admin/partners', partnerReviewRoutes);
 v8Router.use('/admin/shadow', shadowRoutes);
 
 // Agent tenant activation is itself the action that makes v8OrgGate pass.

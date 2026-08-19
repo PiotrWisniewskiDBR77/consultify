@@ -15,7 +15,10 @@ import {
   requireV8OrgContext,
 } from '../../../server/src/middleware/v8Auth.middleware.ts';
 import partnerRoutes from '../../../server/src/routes/v8/partner.routes.ts';
-import legacyPartnerRoutes from '../../../server/src/routes/partners.routes.ts';
+import partnerReviewRoutes from '../../../server/src/routes/v8/admin/partner-review.routes.ts';
+import legacyPartnerRoutes, {
+  partnerConfigRouter,
+} from '../../../server/src/routes/partners.routes.ts';
 
 import {
   PARTNER_LEGACY_ROLLBACK_WRITERS_ENV,
@@ -35,6 +38,8 @@ const userId = randomUUID();
 const foreignUserId = randomUUID();
 const partnerOrgId = randomUUID();
 const certificationId = randomUUID();
+const operatorCertificationId = randomUUID();
+const operatorApplicationId = `operator-application-${suffix}`;
 const revokedOrgId = randomUUID();
 const revokedUserId = randomUUID();
 const revokedPartnerOrgId = randomUUID();
@@ -52,10 +57,20 @@ const connectionReceiptMigration = readFileSync(
   path.resolve('server/migrations/955_partner_connection_receipts.sql'),
   'utf8'
 );
+const operatorReviewMigration = readFileSync(
+  path.resolve('server/migrations/956_partner_operator_review_receipts.sql'),
+  'utf8'
+);
 
 function token(subject = userId, organizationId = orgId, role = 'ADMIN') {
   return jwt.sign(
-    { id: subject, email: `${subject}@test.local`, role, organizationId },
+    {
+      id: subject,
+      email: `${subject}@test.local`,
+      role,
+      organizationId,
+      ...(role === 'SUPERADMIN' ? { isSuperAdmin: true } : {}),
+    },
     configuredJwtSecret,
     { expiresIn: '5m' }
   );
@@ -65,7 +80,14 @@ function app() {
   const instance = express();
   instance.use(express.json());
   instance.use('/api/v8/partner', verifyToken, requireV8OrgContext, attachV8Context, partnerRoutes);
+  instance.use(
+    '/api/v8/admin/partners',
+    verifyToken,
+    requireV8OrgContext,
+    partnerReviewRoutes
+  );
   instance.use('/api/partners', legacyPartnerRoutes);
+  instance.use('/api/superadmin/partner-config', partnerConfigRouter);
   instance.use((error: Error, _req: any, res: any, _next: any) =>
     res.status(500).json({ error: error.message })
   );
@@ -121,6 +143,8 @@ beforeAll(async () => {
   await sql.query(receiptMigration);
   await sql.query(connectionReceiptMigration);
   await sql.query(connectionReceiptMigration);
+  await sql.query(operatorReviewMigration);
+  await sql.query(operatorReviewMigration);
   await sql.query(`DELETE FROM legacy_cutover_usage_events WHERE domain='partners' AND request_id LIKE $1`, [
     `${REQUEST_PREFIX}%`,
   ]);
@@ -139,7 +163,7 @@ beforeAll(async () => {
   ]);
   await sql.query(
     `INSERT INTO users(id,organization_id,email,first_name,last_name,role)
-     VALUES($1,$2,$3,'Partner','Owner','ADMIN'),($4,$5,$6,'Foreign','User','ADMIN'),
+     VALUES($1,$2,$3,'Partner','Owner','SUPERADMIN'),($4,$5,$6,'Foreign','User','ADMIN'),
            ($7,$8,$9,'Revoked','User','ADMIN'),($10,$11,$12,'Unbound','User','ADMIN')`,
     [
       userId,
@@ -245,6 +269,20 @@ beforeAll(async () => {
      FROM partner_learning_modules WHERE certification_type='sales_foundation' AND COALESCE(language,'en')='en'`,
     [certificationId]
   );
+  await sql.query(
+    `INSERT INTO partner_certifications
+      (id,partner_org_id,user_id,certification_name,certification_type,certification_track,
+       certification_level,status,progress_percent,exam_mode,review_state,recertification_policy)
+     VALUES($1,$2,$3,'Operator review proof','delivery_advanced','delivery','advanced',
+            'in_progress',100,'review','pending','annual_refresh')`,
+    [operatorCertificationId, partnerOrgId, userId]
+  );
+  await sql.query(
+    `INSERT INTO public_partner_applications
+      (id,full_name,email,company,status,created_at)
+     VALUES($1,'Operator Applicant',$2,'Operator Company','pending',NOW())`,
+    [operatorApplicationId, `operator-${suffix}@test.local`]
+  );
 });
 
 afterAll(async () => {
@@ -270,6 +308,11 @@ afterAll(async () => {
         [partnerOrgId, revokedPartnerOrgId]
       );
     }
+    await sql.query(
+      `DELETE FROM partner_operator_review_receipts WHERE actor_user_id IN ($1,$2,$3,$4)`,
+      [userId, foreignUserId, revokedUserId, unboundUserId]
+    );
+    await sql.query(`DELETE FROM public_partner_applications WHERE id=$1`, [operatorApplicationId]);
     await sql.query(`DELETE FROM partner_organizations WHERE id IN ($1,$2,$3)`, [
       partnerOrgId,
       revokedPartnerOrgId,
@@ -472,6 +515,160 @@ describe.sequential('Partner legacy cutover guard (real PG)', () => {
         )
       ).rows[0]
     ).toEqual({ owner_organization_id: null, campaigns: 0 });
+  });
+
+  it('fails closed on a hostile pre-existing operator review receipt shape', async () => {
+    await sql.query(
+      `ALTER TABLE partner_operator_review_receipts RENAME TO partner_operator_review_receipts_good`
+    );
+    try {
+      await sql.query(`CREATE TABLE partner_operator_review_receipts(actor_user_id integer)`);
+      await expect(sql.query(operatorReviewMigration)).rejects.toThrow(
+        /partner_operator_review_receipts has incompatible columns/
+      );
+      await sql.query(`DROP TABLE partner_operator_review_receipts`);
+    } finally {
+      await sql.query(
+        `ALTER TABLE partner_operator_review_receipts_good RENAME TO partner_operator_review_receipts`
+      );
+    }
+  });
+
+  it('mounts global-superadmin operator reviews with exact replay, collision and rollback', async () => {
+    const superToken = token(userId, orgId, 'SUPERADMIN');
+    const postCertification = (key: string, reviewState = 'approved') =>
+      supertest(app())
+        .post(`/api/v8/admin/partners/certifications/${operatorCertificationId}/review`)
+        .set('Authorization', `Bearer ${superToken}`)
+        .set('Idempotency-Key', key)
+        .send({ reviewState, notes: 'operator proof' });
+    const state = async (client: Client = sql) =>
+      (
+        await client.query(
+          `SELECT
+             (SELECT row_to_json(x)::text FROM (
+                SELECT id,status,review_state,review_notes,certificate_id,certificate_url,
+                       completed_at::text,valid_until::text,updated_at::text
+                  FROM partner_certifications WHERE id=$1
+              ) x) certification,
+             (SELECT COALESCE(string_agg(row_to_json(x)::text,'|' ORDER BY id),'') FROM (
+                SELECT id,partner_org_id,user_id,certification_id,certificate_type,share_token,
+                       certification_track,certification_level,review_state,valid_until::text,
+                       earned_at::text,created_at::text
+                  FROM partner_certificates WHERE certification_id=$1 ORDER BY id
+              ) x) certificates,
+             (SELECT count(*)::int FROM partner_operator_review_receipts
+               WHERE actor_user_id=$2) receipts`,
+          [operatorCertificationId, userId]
+        )
+      ).rows[0];
+
+    const before = await state();
+    const ordinary = await supertest(app())
+      .post(`/api/v8/admin/partners/certifications/${operatorCertificationId}/review`)
+      .set('Authorization', `Bearer ${token(foreignUserId, foreignOrgId)}`)
+      .set('Idempotency-Key', `ordinary-${suffix}`)
+      .send({ reviewState: 'approved' });
+    expect(ordinary.status).toBe(403);
+    const revoked = await supertest(app())
+      .post(`/api/v8/admin/partners/certifications/${operatorCertificationId}/review`)
+      .set('Authorization', `Bearer ${token(revokedUserId, revokedOrgId, 'SUPERADMIN')}`)
+      .set('Idempotency-Key', `revoked-${suffix}`)
+      .send({ reviewState: 'approved' });
+    expect(revoked.status).toBe(403);
+    expect(await state()).toEqual(before);
+
+    const missing = await supertest(app())
+      .post(`/api/v8/admin/partners/certifications/${randomUUID()}/review`)
+      .set('Authorization', `Bearer ${superToken}`)
+      .set('Idempotency-Key', `missing-${suffix}`)
+      .send({ reviewState: 'approved' });
+    expect(missing.status).toBe(404);
+    expect(missing.body.code).toBe('PARTNER_CERTIFICATION_NOT_FOUND');
+    expect(await state()).toEqual(before);
+
+    const key = `cert-review-${suffix}`;
+    const concurrent = await Promise.all(Array.from({ length: 6 }, () => postCertification(key)));
+    expect(concurrent.every((result) => result.status === 200)).toBe(true);
+    for (const result of concurrent) expect(result.body).toEqual(concurrent[0].body);
+    const approved = await state();
+    expect(approved.receipts).toBe(1);
+    expect(approved.certificates.split('|')).toHaveLength(1);
+    const replay = await postCertification(key);
+    expect(replay.status).toBe(200);
+    expect(replay.body).toEqual(concurrent[0].body);
+    expect(await state()).toEqual(approved);
+    const collision = await postCertification(key, 'changes_requested');
+    expect(collision.status).toBe(409);
+    expect(collision.body.code).toBe('IDEMPOTENCY_PAYLOAD_MISMATCH');
+    expect(await state()).toEqual(approved);
+
+    const applicationKey = `application-review-${suffix}`;
+    const application = await supertest(app())
+      .post(`/api/v8/admin/partners/applications/${operatorApplicationId}/review`)
+      .set('Authorization', `Bearer ${superToken}`)
+      .set('Idempotency-Key', applicationKey)
+      .send({ status: 'approved', reviewNote: 'approved by proof' });
+    expect(application.status).toBe(200);
+    const applicationReplay = await supertest(app())
+      .post(`/api/v8/admin/partners/applications/${operatorApplicationId}/review`)
+      .set('Authorization', `Bearer ${superToken}`)
+      .set('Idempotency-Key', applicationKey)
+      .send({ status: 'approved', reviewNote: 'approved by proof' });
+    expect(applicationReplay.body).toEqual(application.body);
+    const applicationCollision = await supertest(app())
+      .post(`/api/v8/admin/partners/applications/${operatorApplicationId}/review`)
+      .set('Authorization', `Bearer ${superToken}`)
+      .set('Idempotency-Key', applicationKey)
+      .send({ status: 'rejected', reviewNote: 'changed' });
+    expect(applicationCollision.status).toBe(409);
+
+    const cold = new Client({ connectionString: DATABASE_URL });
+    await cold.connect();
+    try {
+      expect(await state(cold)).toEqual({ ...approved, receipts: 2 });
+      const applicationRow = (
+        await cold.query(
+          `SELECT status,review_note,reviewed_by FROM public_partner_applications WHERE id=$1`,
+          [operatorApplicationId]
+        )
+      ).rows[0];
+      expect(applicationRow).toEqual({
+        status: 'approved',
+        review_note: 'approved by proof',
+        reviewed_by: userId,
+      });
+    } finally {
+      await cold.end();
+    }
+
+    const legacyCert = await supertest(app())
+      .post(`/api/superadmin/partner-config/review-queue/${operatorCertificationId}`)
+      .set('Authorization', `Bearer ${superToken}`)
+      .set('X-Request-Id', `${REQUEST_PREFIX}w28-default`)
+      .send({ reviewState: 'pending' });
+    expect(legacyCert.status).toBe(410);
+    const legacyApplication = await supertest(app())
+      .post(`/api/superadmin/partner-config/applications/${operatorApplicationId}/review`)
+      .set('Authorization', `Bearer ${superToken}`)
+      .set('X-Request-Id', `${REQUEST_PREFIX}w29-default`)
+      .send({ status: 'pending' });
+    expect(legacyApplication.status).toBe(410);
+
+    process.env.PARTNER_LEGACY_ROLLBACK_WRITERS = 'PRT-W28';
+    const selectiveCert = await supertest(app())
+      .post(`/api/superadmin/partner-config/review-queue/${operatorCertificationId}`)
+      .set('Authorization', `Bearer ${superToken}`)
+      .set('X-Request-Id', `${REQUEST_PREFIX}w28-rollback`)
+      .send({ reviewState: 'pending', notes: 'rollback path' });
+    expect(selectiveCert.status).toBe(200);
+    const selectiveApplication = await supertest(app())
+      .post(`/api/superadmin/partner-config/applications/${operatorApplicationId}/review`)
+      .set('Authorization', `Bearer ${superToken}`)
+      .set('X-Request-Id', `${REQUEST_PREFIX}w29-still-blocked`)
+      .send({ status: 'pending' });
+    expect(selectiveApplication.status).toBe(410);
+    delete process.env.PARTNER_LEGACY_ROLLBACK_WRITERS;
   });
 
   it('blocks legacy connect by default and permits only the explicit rollback path', async () => {

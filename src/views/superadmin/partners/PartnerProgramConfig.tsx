@@ -27,6 +27,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { v8Post } from '@/services/api/v8/client';
 import { cn } from '@/utils/cn';
 
 import { LoadingState } from '../../../components/ui/primitives';
@@ -81,6 +82,12 @@ interface PartnerApplicationItem {
   review_note?: string | null;
   created_at?: string;
 }
+
+const useLegacyPartnerOperatorReview = () =>
+  String(import.meta.env.VITE_PARTNER_LEGACY_ROLLBACK_ENABLED || '').toLowerCase() === 'true';
+
+const operatorReviewKey = (operation: string, targetId: string) =>
+  `${operation}:${targetId}:${Date.now()}:${globalThis.crypto.randomUUID()}`;
 
 interface PartnerProgramReporting {
   certificationsByTrack: Array<{
@@ -255,12 +262,23 @@ export const PartnerProgramConfig: React.FC = () => {
   ) => {
     try {
       setSaving(true);
-      const response = await Api.post(
-        `/api/superadmin/partner-config/applications/${applicationId}/review`,
-        { status }
-      );
+      const useLegacy = useLegacyPartnerOperatorReview();
+      const response = useLegacy
+        ? await Api.post(
+            `/api/superadmin/partner-config/applications/${applicationId}/review`,
+            { status }
+          )
+        : await v8Post(
+            `/admin/partners/applications/${encodeURIComponent(applicationId)}/review`,
+            { status },
+            {
+              extraHeaders: {
+                'Idempotency-Key': operatorReviewKey('partner-application-review', applicationId),
+              },
+            }
+          );
 
-      if (response?.success) {
+      if (!useLegacy || response?.success) {
         setPartnerApplications((prev) =>
           prev.map((item) => (item.id === applicationId ? { ...item, status } : item))
         );
@@ -314,13 +332,24 @@ export const PartnerProgramConfig: React.FC = () => {
   ) => {
     try {
       setSaving(true);
-      const response = await Api.post(
-        `/api/superadmin/partner-config/review-queue/${certificationId}`,
-        {
-          reviewState,
-        }
-      );
-      if (response?.success) {
+      const useLegacy = useLegacyPartnerOperatorReview();
+      const response = useLegacy
+        ? await Api.post(`/api/superadmin/partner-config/review-queue/${certificationId}`, {
+            reviewState,
+          })
+        : await v8Post(
+            `/admin/partners/certifications/${encodeURIComponent(certificationId)}/review`,
+            { reviewState },
+            {
+              extraHeaders: {
+                'Idempotency-Key': operatorReviewKey(
+                  'partner-certification-review',
+                  certificationId
+                ),
+              },
+            }
+          );
+      if (!useLegacy || response?.success) {
         toast.success(
           reviewState === 'approved' ? 'Certification approved' : 'Changes requested sent'
         );
