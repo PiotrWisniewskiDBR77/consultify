@@ -534,6 +534,38 @@ describe.sequential('Partner legacy cutover guard (real PG)', () => {
     }
   });
 
+  it('fails closed without mutating a hostile pre-existing public application shape', async () => {
+    await sql.query(`ALTER TABLE public_partner_applications RENAME TO public_partner_applications_good`);
+    try {
+      await sql.query(`CREATE TABLE public_partner_applications(id integer PRIMARY KEY, payload text)`);
+      await sql.query(`INSERT INTO public_partner_applications(id,payload) VALUES(7,'hostile-shape-proof')`);
+      const snapshot = async () =>
+        (
+          await sql.query(
+            `SELECT
+               (SELECT string_agg(column_name || ':' || data_type || ':' || is_nullable, ',' ORDER BY ordinal_position)
+                  FROM information_schema.columns
+                 WHERE table_schema='public' AND table_name='public_partner_applications') columns,
+               (SELECT string_agg(row_to_json(x)::text, '|' ORDER BY id) FROM (
+                  SELECT id,payload FROM public_partner_applications ORDER BY id
+                ) x) data,
+               (SELECT COALESCE(string_agg(filename || ':' || checksum, '|' ORDER BY filename), '')
+                  FROM schema_migrations WHERE filename='956_partner_operator_review_receipts.sql') ledger`
+          )
+        ).rows[0];
+      const before = await snapshot();
+      await expect(sql.query(operatorReviewMigration)).rejects.toThrow(
+        /public_partner_applications has incompatible columns/
+      );
+      expect(await snapshot()).toEqual(before);
+    } finally {
+      await sql.query(`DROP TABLE IF EXISTS public_partner_applications`);
+      await sql.query(
+        `ALTER TABLE public_partner_applications_good RENAME TO public_partner_applications`
+      );
+    }
+  });
+
   it('mounts global-superadmin operator reviews with exact replay, collision and rollback', async () => {
     const superToken = token(userId, orgId, 'SUPERADMIN');
     const postCertification = (key: string, reviewState = 'approved') =>
@@ -604,6 +636,29 @@ describe.sequential('Partner legacy cutover guard (real PG)', () => {
     expect(await state()).toEqual(approved);
 
     const applicationKey = `application-review-${suffix}`;
+    const applicationState = async () =>
+      (
+        await sql.query(
+          `SELECT
+             (SELECT row_to_json(x)::text FROM (
+                SELECT id,status,review_note,reviewed_by,reviewed_at::text
+                  FROM public_partner_applications WHERE id=$1
+              ) x) application,
+             (SELECT count(*)::int FROM partner_operator_review_receipts
+               WHERE actor_user_id=$2) receipts`,
+          [operatorApplicationId, userId]
+        )
+      ).rows[0];
+    const applicationBeforeMissing = await applicationState();
+    const missingApplication = await supertest(app())
+      .post(`/api/v8/admin/partners/applications/missing-${suffix}/review`)
+      .set('Authorization', `Bearer ${superToken}`)
+      .set('Idempotency-Key', `missing-application-${suffix}`)
+      .send({ status: 'approved', reviewNote: 'must not write' });
+    expect(missingApplication.status).toBe(404);
+    expect(missingApplication.body.code).toBe('PARTNER_APPLICATION_NOT_FOUND');
+    expect(await applicationState()).toEqual(applicationBeforeMissing);
+
     const application = await supertest(app())
       .post(`/api/v8/admin/partners/applications/${operatorApplicationId}/review`)
       .set('Authorization', `Bearer ${superToken}`)
