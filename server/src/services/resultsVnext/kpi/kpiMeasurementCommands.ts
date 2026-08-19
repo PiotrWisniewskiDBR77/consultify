@@ -48,6 +48,7 @@ import { randomUUID } from 'node:crypto';
 import type { PoolClient } from 'pg';
 
 import {
+  AtomicWriteConflictError,
   executeAtomicCreate,
   type AtomicCommandOutcome,
   type AtomicEventInput,
@@ -60,6 +61,7 @@ import {
 import { computeStateHash, KPI_EVENT_SOURCE } from './kpiDefinitionCommands.js';
 import { openOrEscalateDeviationCase } from './kpiDeviationCommands.js';
 import { toKpiMeasurement, type KpiMeasurement, type KpiMeasurementRow } from './kpiTypes.js';
+import { evaluatePerformanceStatus } from './targetGeometryEvaluator.js';
 
 // ==========================================
 // RN-G5 — command capability names (docs/product/results-vnext/RN_G5_AUTHZ_DESIGN.md)
@@ -143,10 +145,9 @@ export interface RecordMeasurementInput {
   periodStart: string;
   periodEnd: string;
   actualValue: number | null;
-  /** `evaluatePerformanceStatus()` output (targetGeometryEvaluator.ts) —
-   * this command does not evaluate it itself (it has no target-geometry
-   * bounds in scope; the caller already has the definition version loaded
-   * to pick `definitionVersionId` and can evaluate before calling). */
+  /** Compatibility-only caller hint. The command loads the immutable
+   * definition version and recomputes status itself; this value is never
+   * trusted for persistence or deviation handling. */
   performanceStatus: KpiMeasurementRow['performance_status'];
   source: string;
   evidenceRefs?: unknown[];
@@ -193,7 +194,45 @@ export async function recordMeasurement(
 
   return executeAtomicCreate<KpiMeasurement>({
     organizationId,
+    idempotencyKey,
     applyMutation: async (client) => {
+      const definitionResult = await client.query<{
+        kpi_id: string;
+        target_geometry: any;
+        target_value: string | null;
+        target_min: string | null;
+        target_max: string | null;
+        warning_low: string | null;
+        warning_high: string | null;
+        critical_low: string | null;
+        critical_high: string | null;
+        binary_success_value: string | null;
+      }>(
+        `SELECT kpi_id, target_geometry, target_value, target_min, target_max,
+                warning_low, warning_high, critical_low, critical_high, binary_success_value
+           FROM rvn_kpi_definition_versions
+          WHERE definition_version_id=$1 AND organization_id=$2
+          FOR SHARE`,
+        [definitionVersionId, organizationId]
+      );
+      const definition = definitionResult.rows[0];
+      if (!definition || definition.kpi_id !== kpiId) {
+        throw new KpiMeasurementNotFoundError(definitionVersionId, organizationId);
+      }
+      const numeric = (value: string | null): number | null =>
+        value == null ? null : Number(value);
+      const evaluatedPerformanceStatus = evaluatePerformanceStatus({
+        geometry: definition.target_geometry,
+        actualValue,
+        targetValue: numeric(definition.target_value),
+        targetMin: numeric(definition.target_min),
+        targetMax: numeric(definition.target_max),
+        warningLow: numeric(definition.warning_low),
+        warningHigh: numeric(definition.warning_high),
+        criticalLow: numeric(definition.critical_low),
+        criticalHigh: numeric(definition.critical_high),
+        binarySuccessValue: numeric(definition.binary_success_value),
+      });
       const insertResult = await client.query<KpiMeasurementRow>(
         `INSERT INTO rvn_kpi_measurements
            (kpi_id, definition_version_id, organization_id, period_start, period_end,
@@ -207,7 +246,7 @@ export async function recordMeasurement(
           periodStart,
           periodEnd,
           actualValue,
-          performanceStatus,
+          evaluatedPerformanceStatus,
           source,
           JSON.stringify(evidenceRefs),
           notes,
@@ -228,7 +267,7 @@ export async function recordMeasurement(
         organizationId,
         kpiId,
         measurementId: row.measurement_id,
-        performanceStatus,
+        performanceStatus: evaluatedPerformanceStatus,
         ownerUserId,
         managerUserId: deviationManagerUserId,
         responseHoursOverride: deviationResponseHoursOverride,
@@ -264,6 +303,37 @@ export async function recordMeasurement(
         resultingVersion: 1,
         payload: { measurementId: result.measurementId },
       } satisfies AtomicEventInput;
+    },
+    loadExistingResult: async (_client, existingEvent) => {
+      const measurement = (existingEvent.after_state as { measurement?: KpiMeasurement } | null)
+        ?.measurement;
+      if (!measurement) {
+        throw new Error(
+          `[recordMeasurement] idempotent event ${existingEvent.event_id} has no measurement result`
+        );
+      }
+      return measurement;
+    },
+    validateExistingResult: (existing) => {
+      const sameInstant = (left: string, right: string): boolean =>
+        new Date(left).getTime() === new Date(right).getTime();
+      const exactReplay =
+        existing.kpiId === kpiId &&
+        existing.definitionVersionId === definitionVersionId &&
+        sameInstant(existing.periodStart, periodStart) &&
+        sameInstant(existing.periodEnd, periodEnd) &&
+        existing.actualValue === actualValue &&
+        existing.source === source &&
+        existing.notes === notes &&
+        existing.recordedBy === recordedBy &&
+        JSON.stringify(existing.evidenceRefs ?? []) === JSON.stringify(evidenceRefs);
+      if (!exactReplay) {
+        throw new AtomicWriteConflictError(
+          'Idempotency key was already used for a different KPI measurement request.',
+          'IDEMPOTENCY_FINGERPRINT_CONFLICT',
+          { kpiId, definitionVersionId }
+        );
+      }
     },
   });
 }

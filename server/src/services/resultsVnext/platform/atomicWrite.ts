@@ -670,6 +670,7 @@ export interface ExecuteAtomicCommandParams<TAggregateRow, TResult> {
    * cannot be reconstructed from `after_state` alone should supply this.
    */
   loadExistingResult?: (client: PoolClient, existingEvent: ExistingEventRow) => Promise<TResult>;
+
 }
 
 export interface ExistingEventRow {
@@ -916,6 +917,11 @@ export interface ExecuteAtomicCreateParams<TResult> {
    * under this organization_id, same as `executeAtomicCommand`. */
   organizationId: string;
 
+  /** Optional early key used to serialize/check retries before a domain
+   * INSERT whose own uniqueness constraint could otherwise fire before the
+   * event-ledger idempotency guard. */
+  idempotencyKey?: string;
+
   /**
    * Performs the domain INSERT(s) for the new aggregate on the pinned
    * client and returns whatever shape the caller wants back as the command
@@ -942,6 +948,13 @@ export interface ExecuteAtomicCreateParams<TResult> {
    * `TResult`.
    */
   loadExistingResult?: (client: PoolClient, existingEvent: ExistingEventRow) => Promise<TResult>;
+
+  /** Fail closed when a reused key belongs to a different request. Invoked
+   * while the per-key advisory lock is held and before replay is returned. */
+  validateExistingResult?: (
+    existingResult: TResult,
+    existingEvent: ExistingEventRow
+  ) => void | Promise<void>;
 }
 
 /**
@@ -958,11 +971,45 @@ export interface ExecuteAtomicCreateParams<TResult> {
 export async function executeAtomicCreate<TResult>(
   params: ExecuteAtomicCreateParams<TResult>
 ): Promise<AtomicCommandOutcome<TResult>> {
-  const { organizationId, applyMutation, buildEvent, loadExistingResult } = params;
+  const {
+    organizationId,
+    idempotencyKey,
+    applyMutation,
+    buildEvent,
+    loadExistingResult,
+    validateExistingResult,
+  } = params;
 
   const client: PoolClient = await acquirePgClient();
   try {
     await client.query('BEGIN');
+
+    if (idempotencyKey) {
+      await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [
+        `${organizationId}:${idempotencyKey}`,
+      ]);
+      const existingResult = await client.query<ExistingEventRow>(
+        `SELECT event_id, sequence, event_type, aggregate_type, aggregate_id, organization_id,
+                occurred_at, recorded_at, before_state, after_state, resulting_version, idempotency_key
+           FROM rvn_platform_events
+          WHERE organization_id = $1 AND idempotency_key = $2`,
+        [organizationId, idempotencyKey]
+      );
+      const existingEvent = existingResult.rows[0];
+      if (existingEvent) {
+        const duplicateResult = loadExistingResult
+          ? await loadExistingResult(client, existingEvent)
+          : ((existingEvent.after_state ?? {}) as unknown as TResult);
+        await validateExistingResult?.(duplicateResult, existingEvent);
+        await client.query('COMMIT');
+        return {
+          outcome: 'duplicate',
+          eventId: existingEvent.event_id,
+          resultingVersion: existingEvent.resulting_version,
+          result: duplicateResult,
+        };
+      }
+    }
 
     // Domain insert(s), same pinned client.
     const result = await applyMutation(client);

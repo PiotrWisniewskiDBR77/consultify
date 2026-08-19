@@ -581,6 +581,8 @@ export interface RecordKpiMeasurementInput {
   source: string;
   notes?: string | null;
   reason?: string | null;
+  /** Stable across retries of the same row submission. */
+  idempotencyKey?: string;
 }
 
 export async function recordKpiMeasurement(
@@ -595,6 +597,7 @@ export async function recordKpiMeasurement(
     source: input.source,
     notes: input.notes ?? null,
     reason: input.reason ?? null,
+    idempotencyKey: input.idempotencyKey ?? newKpiIdempotencyKey(),
   });
   return resp?.measurement as KpiMeasurementDto;
 }

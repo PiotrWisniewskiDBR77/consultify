@@ -59,12 +59,12 @@ export const RESULTS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'RESULTS-W02',
       method: 'PUT',
       path: /^\/kpis\/[^/]+\/?$/,
-      state: 'protected',
+      state: 'disabled',
       successor: '/api/vnext/results/kpi/:kpiId/draft',
       legacyTable: 'initiative_kpis',
       legacyIdFromPath: (path) => decodeURIComponent(path.split('/')[2] || ''),
       reason:
-        'UPDATE initiative_kpis via updateKpiDefinition (kpiDefinitionService.ts:441,498), called from results.routes.ts:843-1016. Canonical PUT /api/vnext/results/kpi/:kpiId/draft (resultsVnext/kpi.routes.ts:438) writes rvn_kpi_definition_versions but is a draft/submit/approve flow, not a direct in-place edit — semantically narrower, so retirement is not a mechanical redirect even once telemetry is clean.',
+        'Retired after mounted editing moved to the canonical definition lifecycle. Canonical draft edit must be submitted and independently approved before it becomes active; direct in-place legacy mutation is no longer offered.',
     },
     {
       writerId: 'RESULTS-W03',
@@ -81,12 +81,12 @@ export const RESULTS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'RESULTS-W04',
       method: 'POST',
       path: /^\/kpis\/[^/]+\/time-series\/?$/,
-      state: 'protected',
+      state: 'disabled',
       successor: '/api/vnext/results/kpi/:kpiId/measurements',
       legacyTable: 'kpi_time_series',
       legacyIdFromPath: (path) => decodeURIComponent(path.split('/')[2] || ''),
       reason:
-        'INSERT ... kpi_time_series ON CONFLICT DO UPDATE via recordKpiMeasurement (server/src/services/results/kpiMeasurementWriterService.ts:243) plus UPDATE initiative_kpis.current_value (same file:281), from results.routes.ts:2605-2686. A THIRD table (kpi_deviation_cases) is also upserted as a side effect by kpiDeviationService.ts:282 (handleTimeSeriesRecorded) and has no canonical equivalent traced anywhere — protected on the strength of the primary rvn_kpi_measurements successor (resultsVnext/kpi.routes.ts:737), but the deviation-case side effect is a real coverage gap this guard cannot close.',
+        'Retired after mounted recording moved to canonical measurements. recordMeasurement evaluates the immutable definition version and atomically opens/escalates rvn_kpi_deviation_cases in the same pinned transaction.',
     },
     {
       writerId: 'RESULTS-W05',

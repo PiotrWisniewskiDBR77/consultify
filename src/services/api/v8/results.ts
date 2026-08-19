@@ -744,11 +744,6 @@ export const V8ResultsApi = {
     ),
   getKpiDrawerDetail: (kpiId: string) =>
     v8Get<V8ResultsKpiDrawerDetail>(`/results/kpis/${encodeURIComponent(kpiId)}/drawer-detail`),
-  createKpiTimeSeriesValue: (kpiId: string, payload: V8ResultsCreateKpiTimeSeriesPayload) =>
-    v8Post<V8ResultsCreateKpiTimeSeriesResponse>(
-      `/results/kpis/${encodeURIComponent(kpiId)}/time-series`,
-      payload
-    ),
   getRoiPortfolioSummary: (options?: { initiativeId?: string }) =>
     v8Get<V8ResultsRoiPortfolioSummary>('/results/roi/portfolio-summary', options),
   getRoiInitiativeDetail: (initiativeId: string) =>
@@ -771,8 +766,6 @@ export const V8ResultsApi = {
    */
   pullReconciliation: (payload: V8ReconciliationPullPayload) =>
     v8Post<V8ReconciliationPullResult>('/results/reconciliations/pull', payload),
-  updateKpi: (kpiId: string, payload: V8ResultsUpdateKpiPayload) =>
-    v8Put<V8ResultsUpdateKpiResponse>(`/results/kpis/${encodeURIComponent(kpiId)}`, payload),
   deleteKpiMapping: (mappingId: string) =>
     v8Delete<V8ResultsDeleteKpiMappingResponse>(
       `/results/kpi-mappings/${encodeURIComponent(mappingId)}`

@@ -9,7 +9,9 @@ describe('Results legacy cutover registry', () => {
     expect(RESULTS_LEGACY_CUTOVER_DENOMINATOR.totalDoors).toBe(28);
     expect(RESULTS_LEGACY_CUTOVER_DENOMINATOR.retiredDoors).toEqual([
       'RESULTS-W01',
+      'RESULTS-W02',
       'RESULTS-W03',
+      'RESULTS-W04',
       'RESULTS-W17',
       'RESULTS-W19',
       'RESULTS-W20',
@@ -22,8 +24,34 @@ describe('Results legacy cutover registry', () => {
       'RESULTS-W48',
       'RESULTS-W49',
     ]);
-    expect(RESULTS_LEGACY_CUTOVER_DENOMINATOR.openDoors).toHaveLength(15);
+    expect(RESULTS_LEGACY_CUTOVER_DENOMINATOR.openDoors).toHaveLength(13);
     expect(RESULTS_LEGACY_CUTOVER_DENOMINATOR.unmappedDoors).toHaveLength(13);
+  });
+
+  it('retires direct KPI edits and measurements only after mounted callers use canonical contracts', () => {
+    const drawer = readFileSync(
+      path.resolve(__dirname, '../../../../../src/components/Results/KPITimeSeriesDrawer.tsx'),
+      'utf8'
+    );
+    const sheet = readFileSync(
+      path.resolve(__dirname, '../../../../../src/components/Results/KpiSignalSheetView.tsx'),
+      'utf8'
+    );
+    const client = readFileSync(
+      path.resolve(__dirname, '../../../../../src/services/api/v8/results.ts'),
+      'utf8'
+    );
+
+    expect(client).not.toMatch(/^\s+(?:updateKpi|createKpiTimeSeriesValue):/m);
+    expect(drawer).not.toMatch(/V8ResultsApi\.(?:updateKpi|createKpiTimeSeriesValue)\b/);
+    expect(drawer).not.toMatch(/Api\.(?:put|post)\(`\/benefits\/kpis\/\$\{kpiId\}/);
+    expect(sheet).toContain('recordKpiMeasurement');
+    expect(sheet).toContain('getKpiCurrentDefinitionVersion');
+    expect(sheet).toContain('definitionVersionId: definition.definitionVersionId');
+    expect(sheet).toContain('idempotencyKey: draft.idempotencyKey');
+    expect(sheet).toContain('readback.some((row) => row.measurementId === measurement.measurementId)');
+    expect(sheet).not.toContain('createKpiTimeSeriesValue');
+    expect(sheet).not.toContain('/benefits/kpis/');
   });
 
   it('gives every retired door a real canonical successor and narrow rollback unit', () => {

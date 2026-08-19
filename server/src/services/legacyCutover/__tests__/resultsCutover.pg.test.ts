@@ -34,9 +34,16 @@ import {
   ROI_GOVERNED_VISIBILITY_POLICY,
 } from '../../resultsVnext/platform/visibilityResolver.js';
 import { createDefinition } from '../../results/kpiDefinitionService.js';
-import { archiveKpi, createKpiDraft } from '../../resultsVnext/kpi/kpiDefinitionCommands.js';
+import {
+  approveDefinitionVersion,
+  archiveKpi,
+  createKpiDraft,
+  editDraft,
+  submitDefinition,
+} from '../../resultsVnext/kpi/kpiDefinitionCommands.js';
+import { recordMeasurement } from '../../resultsVnext/kpi/kpiMeasurementCommands.js';
 import { proposeInitiativeKpiImpact } from '../../resultsVnext/kpi/kpiInitiativeImpactCommands.js';
-import { getKpi } from '../../resultsVnext/kpi/kpiRepository.js';
+import { getKpi, listMeasurements } from '../../resultsVnext/kpi/kpiRepository.js';
 
 const CONNECTION_STRING = process.env.DATABASE_URL || '';
 const REAL_PG =
@@ -52,6 +59,7 @@ const prefix = `results-${randomUUID().slice(0, 8)}`;
 const orgA = `${prefix}-org-a`;
 const orgB = `${prefix}-org-b`;
 const actor = `${prefix}-actor`;
+const checker = `${prefix}-checker`;
 
 describe.skipIf(!REAL_PG)('RESULTS legacy-cutover guard (fresh real PostgreSQL)', () => {
   let pool: Pool;
@@ -86,12 +94,22 @@ describe.skipIf(!REAL_PG)('RESULTS legacy-cutover guard (fresh real PostgreSQL)'
        VALUES($1,$2,$3,'unused','ADMIN','active',$4) ON CONFLICT(id) DO NOTHING`,
       [actor, orgA, `${actor}@test.invalid`, now]
     );
+    await pool.query(
+      `INSERT INTO users(id,organization_id,email,password,role,status,created_at)
+       VALUES($1,$2,$3,'unused','ADMIN','active',$4) ON CONFLICT(id) DO NOTHING`,
+      [checker, orgA, `${checker}@test.invalid`, now]
+    );
     for (const org of [orgA, orgB])
       await pool.query(
         `INSERT INTO organization_members(id,organization_id,user_id,role,status,created_at)
          VALUES($1,$2,$3,'ADMIN','ACTIVE',$4) ON CONFLICT(organization_id,user_id) DO NOTHING`,
         [`${prefix}-${org}-membership`, org, actor, now]
       );
+    await pool.query(
+      `INSERT INTO organization_members(id,organization_id,user_id,role,status,created_at)
+       VALUES($1,$2,$3,'ADMIN','ACTIVE',$4) ON CONFLICT(organization_id,user_id) DO NOTHING`,
+      [`${prefix}-checker-membership`, orgA, checker, now]
+    );
 
     const resultsRouter = (await import('../../../routes/v8/results.routes.js')).default;
     app = express();
@@ -146,6 +164,15 @@ describe.skipIf(!REAL_PG)('RESULTS legacy-cutover guard (fresh real PostgreSQL)'
     await pool.query(`DELETE FROM rvn_roi_baselines WHERE organization_id = ANY($1)`, [
       [orgA, orgB],
     ]);
+    await pool.query(`DELETE FROM rvn_platform_obligations WHERE organization_id = ANY($1)`, [
+      [orgA, orgB],
+    ]);
+    await pool.query(`DELETE FROM rvn_kpi_deviation_cases WHERE organization_id = ANY($1)`, [
+      [orgA, orgB],
+    ]);
+    await pool.query(`DELETE FROM rvn_kpi_measurements WHERE organization_id = ANY($1)`, [
+      [orgA, orgB],
+    ]);
     await pool.query(
       `DELETE FROM rvn_platform_outbox WHERE event_id IN
          (SELECT event_id FROM rvn_platform_events WHERE organization_id = ANY($1))`,
@@ -171,7 +198,7 @@ describe.skipIf(!REAL_PG)('RESULTS legacy-cutover guard (fresh real PostgreSQL)'
     await pool.query(`DELETE FROM organization_members WHERE organization_id = ANY($1)`, [
       [orgA, orgB],
     ]);
-    await pool.query(`DELETE FROM users WHERE id=$1`, [actor]);
+    await pool.query(`DELETE FROM users WHERE id = ANY($1)`, [[actor, checker]]);
     // rvn_roi_visibility_governance is deliberately append-only. The fresh
     // disposable consultify_b1_* database is dropped by the calling gate;
     // do not disable its trigger merely to erase the published policy.
@@ -180,19 +207,23 @@ describe.skipIf(!REAL_PG)('RESULTS legacy-cutover guard (fresh real PostgreSQL)'
 
   it.each([
     { writerId: 'RESULTS-W01', method: 'post' as const, path: '/api/v8/results/kpis', successor: '/api/vnext/results/kpi', body: { name: `${prefix}-kpi` } },
+    { writerId: 'RESULTS-W02', method: 'put' as const, path: '/api/v8/results/kpis/legacy-kpi', successor: '/api/vnext/results/kpi/:kpiId/draft', body: { name: 'forbidden direct edit' } },
     { writerId: 'RESULTS-W03', method: 'delete' as const, path: '/api/v8/results/kpis/legacy-kpi', successor: '/api/vnext/results/kpi/:kpiId/archive', body: {} },
+    { writerId: 'RESULTS-W04', method: 'post' as const, path: '/api/v8/results/kpis/legacy-kpi/time-series', successor: '/api/vnext/results/kpi/:kpiId/measurements', body: { value: 99, periodStart: '2026-08-19' } },
     { writerId: 'RESULTS-W17', method: 'post' as const, path: '/api/v8/results/kpi-mappings', successor: '/api/vnext/results/initiatives/initiative-impacts', body: { initiativeId: 'legacy-initiative', kpiId: 'legacy-kpi' } },
   ])('refuses Wave 4 writer $writerId before mutation', async (entry) => {
     const requestId = `${prefix}-${entry.writerId.toLowerCase()}`;
     const before = await pool.query(`SELECT
       (SELECT count(*)::int FROM initiative_kpis WHERE organization_id=$1) kpis,
-      (SELECT count(*)::int FROM initiative_kpi_mappings m JOIN initiatives i ON i.id=m.initiative_id WHERE i.organization_id=$1) mappings`, [orgA]);
+      (SELECT count(*)::int FROM initiative_kpi_mappings m JOIN initiatives i ON i.id=m.initiative_id WHERE i.organization_id=$1) mappings,
+      (SELECT count(*)::int FROM kpi_time_series ts JOIN initiative_kpis k ON k.id=ts.kpi_id WHERE k.organization_id=$1) measurements`, [orgA]);
     const response = await request(app)[entry.method](entry.path).set('x-request-id', requestId).send(entry.body);
     expect(response.status).toBe(410);
     expect(response.body).toMatchObject({ code: 'RESULTS_LEGACY_WRITER_DISABLED', writerId: entry.writerId, successor: entry.successor });
     const after = await pool.query(`SELECT
       (SELECT count(*)::int FROM initiative_kpis WHERE organization_id=$1) kpis,
-      (SELECT count(*)::int FROM initiative_kpi_mappings m JOIN initiatives i ON i.id=m.initiative_id WHERE i.organization_id=$1) mappings`, [orgA]);
+      (SELECT count(*)::int FROM initiative_kpi_mappings m JOIN initiatives i ON i.id=m.initiative_id WHERE i.organization_id=$1) mappings,
+      (SELECT count(*)::int FROM kpi_time_series ts JOIN initiative_kpis k ON k.id=ts.kpi_id WHERE k.organization_id=$1) measurements`, [orgA]);
     expect(after.rows).toEqual(before.rows);
   });
 
@@ -222,6 +253,137 @@ describe.skipIf(!REAL_PG)('RESULTS legacy-cutover guard (fresh real PostgreSQL)'
     expect(archived.result.status).toBe('archived');
     const cold = await getKpi({ userId: actor, organizationId: orgA, kpiId });
     expect(cold).toMatchObject({ kpiId, status: 'archived' });
+  });
+
+  it('runs governed definition lifecycle and atomically records threshold status plus deviation', async () => {
+    await pool.query(
+      `INSERT INTO rvn_platform_visibility_policies
+       (organization_id, domain, policy_version, visibility_mode, is_active, created_by)
+       VALUES ($1,'kpi',2,'OPEN_ORG',true,$2) ON CONFLICT DO NOTHING`,
+      [orgA, actor]
+    );
+    const access = { capabilities: ['*'], platformRole: 'ADMIN' as const };
+    const created = await createKpiDraft({
+      organizationId: orgA,
+      kpiCode: `${prefix}-wave5`,
+      name: 'Wave 5 governed KPI',
+      targetGeometry: 'threshold_min',
+      targetValue: 100,
+      warningLow: 80,
+      createdBy: actor,
+      actorEffectiveRole: 'ADMIN',
+      idempotencyKey: `${prefix}-w5-create`,
+      access,
+    });
+    const { kpi, definitionVersion } = created.result;
+    const edited = await editDraft({
+      definitionVersionId: definitionVersion.definitionVersionId,
+      organizationId: orgA,
+      expectedVersion: definitionVersion.rowVersion,
+      name: 'Wave 5 governed KPI edited',
+      targetValue: 110,
+      warningLow: 90,
+      actorUserId: actor,
+      actorEffectiveRole: 'ADMIN',
+      idempotencyKey: `${prefix}-w5-edit`,
+      access,
+    });
+    const submitted = await submitDefinition({
+      definitionVersionId: definitionVersion.definitionVersionId,
+      organizationId: orgA,
+      expectedVersion: edited.result.rowVersion,
+      actorUserId: actor,
+      actorEffectiveRole: 'ADMIN',
+      idempotencyKey: `${prefix}-w5-submit`,
+      access,
+    });
+    const approved = await approveDefinitionVersion({
+      definitionVersionId: definitionVersion.definitionVersionId,
+      organizationId: orgA,
+      expectedVersion: submitted.result.rowVersion,
+      approverId: checker,
+      actorEffectiveRole: 'ADMIN',
+      idempotencyKey: `${prefix}-w5-approve`,
+      access,
+    });
+    expect(approved.result).toMatchObject({ approvalStatus: 'approved', targetValue: 110 });
+
+    const measurementInput = {
+      kpiId: kpi.kpiId,
+      definitionVersionId: definitionVersion.definitionVersionId,
+      organizationId: orgA,
+      periodStart: '2026-08-01T00:00:00.000Z',
+      periodEnd: '2026-08-31T23:59:59.999Z',
+      actualValue: 50,
+      // Deliberately forged: the command must recompute from immutable bounds.
+      performanceStatus: 'on_target' as const,
+      source: 'results-wave5-realpg',
+      recordedBy: actor,
+      actorEffectiveRole: 'ADMIN',
+      idempotencyKey: `${prefix}-w5-measure`,
+      reason: 'W04 canonical successor proof',
+    };
+    const first = await recordMeasurement(measurementInput);
+    const retry = await recordMeasurement(measurementInput);
+    expect(retry.result.measurementId).toBe(first.result.measurementId);
+    expect(first.result.performanceStatus).toBe('critical');
+    await expect(
+      recordMeasurement({ ...measurementInput, actualValue: 51 })
+    ).rejects.toMatchObject({ code: 'IDEMPOTENCY_FINGERPRINT_CONFLICT' });
+    const sameKeyRows = await pool.query(
+      `SELECT count(*)::int count FROM rvn_kpi_measurements
+        WHERE organization_id=$1 AND kpi_id=$2 AND period_start=$3`,
+      [orgA, kpi.kpiId, measurementInput.periodStart]
+    );
+    expect(sameKeyRows.rows).toEqual([{ count: 1 }]);
+
+    const concurrentInput = {
+      ...measurementInput,
+      periodStart: '2026-09-01T00:00:00.000Z',
+      periodEnd: '2026-09-30T23:59:59.999Z',
+      idempotencyKey: `${prefix}-w5-measure-concurrent`,
+    };
+    const concurrent = await Promise.all([
+      recordMeasurement(concurrentInput),
+      recordMeasurement(concurrentInput),
+    ]);
+    expect(new Set(concurrent.map((result) => result.result.measurementId)).size).toBe(1);
+    await expect(
+      recordMeasurement({ ...concurrentInput, idempotencyKey: `${prefix}-w5-period-collision` })
+    ).rejects.toMatchObject({ code: '23505' });
+
+    const cold = await listMeasurements({
+      userId: actor,
+      organizationId: orgA,
+      kpiId: kpi.kpiId,
+      includeSuperseded: true,
+    });
+    expect(cold).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+        measurementId: first.result.measurementId,
+        definitionVersionId: definitionVersion.definitionVersionId,
+        performanceStatus: 'critical',
+        }),
+      ])
+    );
+    const deviations = await pool.query(
+      `SELECT case_id, kpi_id, trigger_measurement_id, severity, status
+         FROM rvn_kpi_deviation_cases
+        WHERE organization_id=$1 AND kpi_id=$2`,
+      [orgA, kpi.kpiId]
+    );
+    expect(deviations.rows).toEqual([
+      expect.objectContaining({
+        kpi_id: kpi.kpiId,
+        trigger_measurement_id: first.result.measurementId,
+        severity: 'critical',
+      }),
+    ]);
+
+    await expect(
+      recordMeasurement({ ...measurementInput, organizationId: orgB, idempotencyKey: `${prefix}-foreign` })
+    ).rejects.toMatchObject({ code: 'MEASUREMENT_NOT_FOUND' });
   });
 
   it('refuses retired scorecard create (RESULTS-W33) with its canonical successor', async () => {

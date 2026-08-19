@@ -448,133 +448,11 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
     );
   }, [kpi, editMode]);
 
-  const handleRecord = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!newValue) return;
-      setSubmitting(true);
-      try {
-        const payload = {
-          value: Number(newValue),
-          periodStart: String(newDate).slice(0, 10),
-          source: newSource.trim() || undefined,
-          notes: newNotes.trim() || undefined,
-        };
-        try {
-          await V8ResultsApi.createKpiTimeSeriesValue(kpiId, payload);
-        } catch (error) {
-          if (!shouldFallbackToLegacyResults(error)) {
-            throw error;
-          }
-          await Api.post(`/benefits/kpis/${kpiId}/time-series`, payload);
-        }
-        setNewValue('');
-        setNewSource('');
-        setNewNotes('');
-        fetchData();
-        onValueRecorded?.();
-        toast.success(t('results.drawer.recorded', 'Measurement recorded'));
-      } catch (error: any) {
-        toast.error(
-          error?.message || t('results.drawer.recordFailed', 'Failed to record measurement')
-        );
-      } finally {
-        setSubmitting(false);
-      }
-    },
-    [kpiId, newValue, newDate, newSource, newNotes, fetchData, onValueRecorded]
-  );
-
-  const handleSaveSettings = useCallback(async () => {
-    if (!settingsName.trim()) return;
-    setSavingSettings(true);
-    try {
-      const kpiDirection =
-        settingsDirection === 'decrease' ? 'LOWER_IS_BETTER' : 'HIGHER_IS_BETTER';
-      const payload: V8ResultsUpdateKpiPayload = {
-        name: settingsName.trim(),
-        description: settingsDescription.trim() || undefined,
-        unit: settingsUnit.trim() || undefined,
-        baselineValue: settingsBaseline !== '' ? Number(settingsBaseline) : null,
-        targetValue: settingsTarget !== '' ? Number(settingsTarget) : null,
-        measurementFrequency: settingsFrequency,
-        direction: kpiDirection,
-        thresholdMode: settingsThresholdMode,
-        amberThresholdPct:
-          settingsThresholdMode === 'PERCENT_FROM_TARGET' && settingsAmberThreshold !== ''
-            ? Number(settingsAmberThreshold)
-            : null,
-        redThresholdPct:
-          settingsThresholdMode === 'PERCENT_FROM_TARGET' && settingsRedThreshold !== ''
-            ? Number(settingsRedThreshold)
-            : null,
-        amberThresholdAbs:
-          settingsThresholdMode === 'ABSOLUTE' && settingsAmberThreshold !== ''
-            ? Number(settingsAmberThreshold)
-            : null,
-        redThresholdAbs:
-          settingsThresholdMode === 'ABSOLUTE' && settingsRedThreshold !== ''
-            ? Number(settingsRedThreshold)
-            : null,
-        visibility: settingsVisibility,
-        // RES-02: round-trip the version this drawer last read so the backend
-        // can reject (409) a save based on stale data instead of silently
-        // overwriting a concurrent edit.
-        expectedVersion: kpi?.currentDefinitionVersion ?? undefined,
-      };
-      try {
-        await V8ResultsApi.updateKpi(kpiId, payload);
-      } catch (error) {
-        if (!shouldFallbackToLegacyResults(error)) {
-          throw error;
-        }
-        await Api.put(`/benefits/kpis/${kpiId}`, payload);
-      }
-      setEditMode(false);
-      fetchData();
-      onValueRecorded?.();
-      toast.success(t('results.drawer.saved', 'KPI settings saved'));
-    } catch (error: any) {
-      // RES-02: a version conflict is not a generic failure — the save was
-      // correctly rejected because someone else changed this KPI first. Never
-      // treat this as success, and reload the current server state instead of
-      // leaving the user staring at a stale form that will just conflict again.
-      if (error?.status === 409 && error?.data?.code === 'RESULTS_KPI_VERSION_CONFLICT') {
-        toast.error(
-          t(
-            'results.drawer.saveConflict',
-            'This KPI was changed by someone else in the meantime. Reloading the latest version.'
-          )
-        );
-        setEditMode(false);
-        fetchData();
-        return;
-      }
-      toast.error(error?.message || t('results.drawer.saveFailed', 'Failed to save KPI settings'));
-    } finally {
-      setSavingSettings(false);
-    }
-  }, [
-    fetchData,
-    kpi,
-    kpiId,
-    onValueRecorded,
-    settingsBaseline,
-    settingsAmberThreshold,
-    settingsDescription,
-    settingsDirection,
-    settingsFrequency,
-    settingsName,
-    settingsRedThreshold,
-    settingsTarget,
-    settingsThresholdMode,
-    settingsUnit,
-    settingsVisibility,
-  ]);
-
   const openCanonicalKpiRegistry = useCallback(() => {
-    window.location.assign(`/results/kpi?kpiId=${encodeURIComponent(kpiId)}`);
-  }, [kpiId]);
+    // This drawer reads a legacy archive identity. Never infer that it is a
+    // canonical KPI UUID; the registry is the truthful selection boundary.
+    window.location.assign('/results/kpi');
+  }, []);
 
   const openKpiAiChat = useCallback(
     async (prompt: string) => {
@@ -1739,123 +1617,12 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
               {normalizedSection === 'record' && (
                 <div id="kpi-drawer-record" className="scroll-mt-4">
                   <h3 className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase mb-3">
-                    {t('results.drawer.recordTitle', 'Record New Value')}
+                    {t('results.drawer.recordTitleCanonical', 'Canonical measurement entry')}
                   </h3>
-                  {/* CB-04/RB-014: governed measurement context — unit, cadence,
-                      owner — so whoever records a value sees what they're
-                      measuring against instead of a bare number+date form. All
-                      three already exist on the catalog entry; this form
-                      previously never surfaced them. */}
-                  {kpi && (
-                    <div
-                      className="mb-3 flex flex-wrap gap-x-4 gap-y-1 rounded-lg border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.02] px-3 py-2 text-[11px] text-slate-600 dark:text-slate-300"
-                      data-testid="kpi-record-descriptor"
-                    >
-                      <span>
-                        <span className="text-slate-400 dark:text-slate-500">
-                          {t('results.drawer.descriptorUnit', 'Unit')}:
-                        </span>{' '}
-                        {kpi.unit || t('results.drawer.descriptorNone', '—')}
-                      </span>
-                      <span>
-                        <span className="text-slate-400 dark:text-slate-500">
-                          {t('results.drawer.descriptorCadence', 'Cadence')}:
-                        </span>{' '}
-                        {kpi.measurementFrequency || t('results.drawer.descriptorNone', '—')}
-                      </span>
-                      <span>
-                        <span className="text-slate-400 dark:text-slate-500">
-                          {t('results.drawer.descriptorOwner', 'Owner')}:
-                        </span>{' '}
-                        {(kpi as any).ownerName || t('results.drawer.descriptorNone', '—')}
-                      </span>
-                    </div>
-                  )}
-                  <form onSubmit={handleRecord} className="space-y-3">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label
-                          htmlFor="kpi-drawer-new-value"
-                          className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block mb-1"
-                        >
-                          {t('results.drawer.historyValue', 'Value')}
-                        </label>
-                        <input
-                          id="kpi-drawer-new-value"
-                          className={inputCls}
-                          type="number"
-                          step="any"
-                          value={newValue}
-                          onChange={(e) => setNewValue(e.target.value)}
-                          placeholder={t('results.drawer.valuePlaceholder', 'Value')}
-                          required
-                          aria-required="true"
-                        />
-                      </div>
-                      <div>
-                        <label
-                          htmlFor="kpi-drawer-new-date"
-                          className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block mb-1"
-                        >
-                          {t('results.drawer.historyDate', 'Date')}
-                        </label>
-                        <input
-                          id="kpi-drawer-new-date"
-                          className={inputCls}
-                          type="date"
-                          value={newDate}
-                          onChange={(e) => setNewDate(e.target.value)}
-                        />
-                      </div>
-                    </div>
-                    {/* CB-04/RB-014: split out of the old single ambiguous
-                        "Notes, source, or audit comment" field — `source` maps
-                        to the payload's existing (previously-unused) `source`
-                        property, evidence provenance now travels distinctly
-                        from freeform notes. */}
-                    <div>
-                      <label
-                        htmlFor="kpi-drawer-new-source"
-                        className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block mb-1"
-                      >
-                        {t('results.drawer.historySource', 'Source')}
-                      </label>
-                      <input
-                        id="kpi-drawer-new-source"
-                        className={inputCls}
-                        value={newSource}
-                        onChange={(e) => setNewSource(e.target.value)}
-                        placeholder={t(
-                          'results.drawer.sourcePlaceholder',
-                          'Source / evidence (e.g. system, report, link)'
-                        )}
-                      />
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="kpi-drawer-new-notes"
-                        className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block mb-1"
-                      >
-                        {t('results.drawer.historyNotes', 'Notes')}
-                      </label>
-                      <input
-                        id="kpi-drawer-new-notes"
-                        className={inputCls}
-                        value={newNotes}
-                        onChange={(e) => setNewNotes(e.target.value)}
-                        placeholder={t('results.drawer.notesPlaceholder', 'Notes (optional)')}
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      disabled={!newValue || submitting}
-                      className="w-full h-9 text-sm font-medium rounded-full bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      {submitting
-                        ? t('common.saving', 'Saving...')
-                        : t('results.drawer.record', 'Record')}
-                    </button>
-                  </form>
+                  <p className="mb-3 text-sm text-c-text-secondary">{t('results.drawer.legacyMeasurementArchive', 'This legacy KPI is read-only. Record governed measurements against the approved immutable definition in the KPI registry.')}</p>
+                  <button type="button" onClick={openCanonicalKpiRegistry} className="w-full h-9 rounded-full border border-c-border bg-c-surface text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors">
+                    {t('results.actions.openCanonicalMeasurements', 'Open canonical measurements')}
+                  </button>
                 </div>
               )}
 
@@ -2013,18 +1780,9 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                         ? t('results.drawer.definitionTitle', 'Definition')
                         : t('results.drawer.targetsTitle', 'Targets')}
                     </div>
-                    {!editMode ? (
-                      <button
-                        type="button"
-                        onClick={() => setEditMode(true)}
-                        className="h-8 px-3 rounded-full text-xs font-medium border border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors"
-                      >
-                        <span className="inline-flex items-center gap-2">
-                          <Pencil size={14} />
-                          {t('common.edit', 'Edit')}
-                        </span>
-                      </button>
-                    ) : null}
+                    <button type="button" onClick={openCanonicalKpiRegistry} className="h-8 px-3 rounded-full text-xs font-medium border border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-raised transition-colors">
+                      <span className="inline-flex items-center gap-2"><Pencil size={14} />{t('results.actions.editGovernedDefinition', 'Edit governed definition')}</span>
+                    </button>
                   </div>
 
                   {normalizedSection === 'definition' ? (
@@ -2319,72 +2077,6 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                       </div>
                     </>
                   )}
-
-                  {editMode ? (
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        disabled={savingSettings || !settingsName.trim()}
-                        onClick={() => void handleSaveSettings()}
-                        className="h-8 px-3 rounded-full text-xs font-medium border border-primary-500/30 bg-primary-500/10 text-primary-700 dark:text-primary-300 hover:bg-primary-500/15 transition-colors disabled:opacity-60"
-                      >
-                        {savingSettings
-                          ? t('common.saving', 'Saving...')
-                          : t('common.save', 'Save')}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={savingSettings}
-                        onClick={() => {
-                          setEditMode(false);
-                          setSettingsName(String((kpi as any)?.name || ''));
-                          setSettingsDescription(String((kpi as any)?.description || ''));
-                          setSettingsUnit(String((kpi as any)?.unit || ''));
-                          setSettingsBaseline(
-                            (kpi as any)?.baselineValue != null
-                              ? String((kpi as any).baselineValue)
-                              : ''
-                          );
-                          setSettingsTarget(
-                            (kpi as any)?.targetValue != null
-                              ? String((kpi as any).targetValue)
-                              : ''
-                          );
-                          setSettingsFrequency(
-                            ((kpi as any)?.measurementFrequency || 'MONTHLY') as any
-                          );
-                          setSettingsDirection(
-                            (kpi as any)?.direction === 'LOWER_IS_BETTER' ? 'decrease' : 'increase'
-                          );
-                          setSettingsThresholdMode(
-                            ((kpi as any)?.thresholdMode || 'PERCENT_FROM_TARGET') as any
-                          );
-                          setSettingsVisibility(((kpi as any)?.visibility || 'org_visible') as any);
-                          setSettingsAmberThreshold(
-                            (kpi as any)?.thresholdMode === 'ABSOLUTE'
-                              ? (kpi as any)?.amberThresholdAbs != null
-                                ? String((kpi as any).amberThresholdAbs)
-                                : ''
-                              : (kpi as any)?.amberThresholdPct != null
-                                ? String((kpi as any).amberThresholdPct)
-                                : ''
-                          );
-                          setSettingsRedThreshold(
-                            (kpi as any)?.thresholdMode === 'ABSOLUTE'
-                              ? (kpi as any)?.redThresholdAbs != null
-                                ? String((kpi as any).redThresholdAbs)
-                                : ''
-                              : (kpi as any)?.redThresholdPct != null
-                                ? String((kpi as any).redThresholdPct)
-                                : ''
-                          );
-                        }}
-                        className="h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-500 dark:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-white/[0.04] transition-colors disabled:opacity-60"
-                      >
-                        {t('common.cancel', 'Cancel')}
-                      </button>
-                    </div>
-                  ) : null}
 
                   {normalizedSection === 'definition' && (
                     <div id="kpi-drawer-canonical-management" className="rounded-lg border border-slate-200 dark:border-navy-700 p-4 scroll-mt-4">
