@@ -12,6 +12,7 @@ describe('EXE-MVP-ACTIONS mounted UI source contract', () => {
     const execution = read('src/components/CaseWorkspace/RealizacjaView.tsx');
     const results = read('src/components/CaseWorkspace/RezultatyView.tsx');
     const budget = read('src/components/Execution/BudgetControlPanel.tsx');
+    const initiativeResources = read('src/components/Initiatives/sections/ResourcesSection.tsx');
 
     expect(cases).toContain('cancelCase(');
     expect(detail).toContain('closeCase(');
@@ -23,6 +24,8 @@ describe('EXE-MVP-ACTIONS mounted UI source contract', () => {
     expect(execution).toContain("kind: 'proposal-revoke'");
     expect(budget).toContain("method: 'DELETE'");
     expect(budget).toContain('canonical readback');
+    expect(initiativeResources).toContain('<BudgetControlPanel');
+    expect(initiativeResources).toContain('initiativeId={String(initiativeId)}');
   });
 
   it('does not surface the four HIDDEN registry actions in these mounted controls', () => {

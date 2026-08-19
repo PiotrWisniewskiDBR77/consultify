@@ -15,6 +15,22 @@ export type ExecutionSeed = {
   artifactLinkId: string;
 };
 
+export type GovernedActionMatrixSeed = ExecutionSeed & {
+  organizationId: string;
+  closeCaseId: string;
+  cancelCaseId: string;
+  planVersionId: string;
+  runId: string;
+  runVersion: number;
+  waitId: string;
+  waitVersion: number;
+  decideProposalId: string;
+  executeProposalId: string;
+  revokeProposalId: string;
+  budgetInitiativeId: string;
+  budgetEntryId: string;
+};
+
 /**
  * The five Menu-2 tabs `ExecutionHub.renderContent()` actually resolves. Each of
  * these has an unconditional early `return` at the TOP of `renderContent`
@@ -162,6 +178,306 @@ export async function seedExecution(persona: ExecutionPersona): Promise<Executio
   }
 }
 
+async function caseWorkspaceCommand<T>(
+  request: APIRequestContext,
+  persona: ExecutionPersona,
+  method: 'post' | 'get',
+  path: string,
+  data?: unknown,
+  idempotencyKey?: string
+): Promise<T> {
+  const response = await request[method](`${API}/api/v8/case-workspace${path}`, {
+    headers: {
+      ...authHeaders(persona),
+      ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}),
+    },
+    ...(data === undefined ? {} : { data }),
+  });
+  if (!response.ok()) {
+    throw new Error(
+      `${method.toUpperCase()} ${path}: ${response.status()} ${await response.text()}`
+    );
+  }
+  const body = (await response.json()) as { data: T };
+  return body.data;
+}
+
+/**
+ * Materializes every state needed by the nine governed UI commands. Setup uses
+ * the real signed HTTP command routes for plans/runs/waits/proposals; direct SQL
+ * is limited to independent top-level Case/Initiative rows and their test-only
+ * budget fixture. No command under qualification is executed during setup.
+ */
+export async function seedGovernedActionMatrix(
+  request: APIRequestContext,
+  persona: ExecutionPersona,
+  approver: ExecutionPersona
+): Promise<GovernedActionMatrixSeed> {
+  const seed = await seedExecution(persona);
+  const suffix = persona.runId.replace(/[^a-zA-Z0-9-]/g, '').slice(-28);
+  await withDb((db) =>
+    db
+      .query(
+        `UPDATE case_core SET case_profile='STANDARD', governance_tier='STANDARD'
+         WHERE case_id=$1 AND organization_id=$2`,
+        [seed.caseId, persona.organizationId]
+      )
+      .then(() => undefined)
+  );
+  const graph = {
+    schemaVersion: '1.0',
+    graphId: `graph-${suffix}`,
+    entryNodeIds: ['start'],
+    terminalNodeIds: ['end'],
+    nodes: [
+      { nodeId: 'start', type: 'START' },
+      { nodeId: 'end', type: 'END' },
+    ],
+    edges: [{ edgeId: 'edge-1', sourceNodeId: 'start', targetNodeId: 'end', edgeType: 'SEQUENCE' }],
+    variables: [],
+  };
+  const draft = await caseWorkspaceCommand<{ casePlanVersionId: string; version: number }>(
+    request,
+    persona,
+    'post',
+    `/cases/${seed.caseId}/plan-versions`,
+    { semanticGraph: graph, changeReason: 'nine governed action browser fixture' },
+    `matrix-plan-${suffix}`
+  );
+  const proposed = await caseWorkspaceCommand<{ version: number }>(
+    request,
+    persona,
+    'post',
+    `/plan-versions/${draft.casePlanVersionId}/propose`,
+    { expectedVersion: draft.version },
+    `matrix-plan-propose-${suffix}`
+  );
+  await caseWorkspaceCommand(
+    request,
+    approver,
+    'post',
+    `/plan-versions/${draft.casePlanVersionId}/publish`,
+    { expectedVersion: proposed.version },
+    `matrix-plan-publish-${suffix}`
+  );
+  const run = await caseWorkspaceCommand<{ runId: string; version: number }>(
+    request,
+    persona,
+    'post',
+    `/cases/${seed.caseId}/runs`,
+    { casePlanVersionId: draft.casePlanVersionId, idempotencyKey: `matrix-run-${suffix}` },
+    `matrix-run-${suffix}`
+  );
+  const wait = await caseWorkspaceCommand<{ waitId: string; version: number }>(
+    request,
+    persona,
+    'post',
+    `/cases/${seed.caseId}/waits`,
+    {
+      runId: run.runId,
+      waitType: 'DOMAIN_EVENT',
+      correlationKey: `matrix-wait-${suffix}`,
+      expectedEventType: 'matrix.ready',
+    },
+    `matrix-wait-${suffix}`
+  );
+
+  const createProposal = async (
+    tag: 'decide' | 'execute' | 'revoke',
+    effectClass: 'SENSITIVE_UPDATE' | 'DESTRUCTIVE' | 'GOVERNANCE_TRANSITION',
+    approve: boolean
+  ) => {
+    const digest = `sha256:matrix-${tag}-${suffix}`;
+    const created = await caseWorkspaceCommand<{
+      actionProposalId: string;
+      proposalVersion: number;
+    }>(
+      request,
+      persona,
+      'post',
+      `/cases/${seed.caseId}/proposals`,
+      {
+        runId: run.runId,
+        nodeRunId: `matrix-node-${tag}-${suffix}`,
+        casePlanVersionId: draft.casePlanVersionId,
+        payloadDigest: digest,
+        policySnapshotRef: `matrix-policy-${tag}`,
+        effectClass,
+        previewRef: `matrix-preview-${tag}`,
+        proposerType: 'AGENT',
+      },
+      `matrix-proposal-${tag}-${suffix}`
+    );
+    const submitted = await caseWorkspaceCommand<{ version: number }>(
+      request,
+      persona,
+      'post',
+      `/proposals/${created.actionProposalId}/submit-for-review`,
+      { expectedVersion: 1 },
+      `matrix-submit-${tag}-${suffix}`
+    );
+    if (approve) {
+      await caseWorkspaceCommand(
+        request,
+        approver,
+        'post',
+        `/proposals/${created.actionProposalId}/decision`,
+        {
+          proposalVersion: created.proposalVersion,
+          payloadDigest: digest,
+          decision: 'APPROVE',
+          source: 'BUTTON',
+          authenticationAssurance: 'SESSION_MFA',
+          approvalChannelPolicy: 'UI_BUTTON_ONLY',
+          policyVersion: 'v1',
+          reason: 'prepare signed browser action fixture',
+          expectedVersion: submitted.version,
+        },
+        `matrix-approve-${tag}-${suffix}`
+      );
+    }
+    return created.actionProposalId;
+  };
+
+  const decideProposalId = await createProposal('decide', 'SENSITIVE_UPDATE', false);
+  const executeProposalId = await createProposal('execute', 'GOVERNANCE_TRANSITION', true);
+  const revokeProposalId = await createProposal('revoke', 'DESTRUCTIVE', true);
+  const closeCaseId = `exe-ui-close-success-${suffix}`;
+  const cancelCaseId = `exe-ui-cancel-success-${suffix}`;
+  const budgetInitiativeId = `exe-ui-budget-initiative-${suffix}`;
+  const budgetEntryId = `exe-ui-budget-entry-${suffix}`;
+  await withDb(async (db) => {
+    for (const [caseId, name] of [
+      [closeCaseId, `Close matrix ${suffix}`],
+      [cancelCaseId, `Cancel matrix ${suffix}`],
+    ]) {
+      await db.query(
+        `INSERT INTO case_core(case_id,organization_id,project_id,contracted_closure_type,created_by_actor_id,case_name)
+         VALUES($1,$2,$3,'COMPLETED_PARTIAL',$4,$5)`,
+        [caseId, persona.organizationId, seed.projectId, persona.userId, name]
+      );
+    }
+    await db.query(
+      `INSERT INTO initiatives(id,organization_id,project_id,name,status,created_by)
+       VALUES($1,$2,$3,$4,'DRAFT',$5)`,
+      [
+        budgetInitiativeId,
+        persona.organizationId,
+        seed.projectId,
+        `Budget matrix ${suffix}`,
+        persona.userId,
+      ]
+    );
+    await db.query(
+      `INSERT INTO budget_entries(id,organization_id,initiative_id,project_id,entry_type,cost_type,amount,created_by)
+       VALUES($1,$2,$3,$4,'FORECAST','OPEX',100,$5)`,
+      [budgetEntryId, persona.organizationId, budgetInitiativeId, seed.projectId, persona.userId]
+    );
+  });
+  return {
+    ...seed,
+    organizationId: persona.organizationId,
+    closeCaseId,
+    cancelCaseId,
+    planVersionId: draft.casePlanVersionId,
+    runId: run.runId,
+    runVersion: run.version,
+    waitId: wait.waitId,
+    waitVersion: wait.version,
+    decideProposalId,
+    executeProposalId,
+    revokeProposalId,
+    budgetInitiativeId,
+    budgetEntryId,
+  };
+}
+
+export async function readGovernedActionMatrixState(seed: GovernedActionMatrixSeed) {
+  return withDb(async (db) => {
+    const cases = await db.query<{
+      case_id: string;
+      case_status: string;
+      closure_type: string | null;
+    }>(
+      `SELECT case_id,case_status,closure_type FROM case_core WHERE case_id=ANY($1::text[]) ORDER BY case_id`,
+      [[seed.closeCaseId, seed.cancelCaseId]]
+    );
+    const proposals = await db.query<{ action_proposal_id: string; status: string }>(
+      `SELECT action_proposal_id,status FROM case_workspace_action_proposals
+       WHERE action_proposal_id=ANY($1::text[]) ORDER BY action_proposal_id`,
+      [[seed.decideProposalId, seed.executeProposalId, seed.revokeProposalId]]
+    );
+    const run = await db.query<{ status: string }>(
+      `SELECT status FROM case_workspace_runs WHERE run_id=$1`,
+      [seed.runId]
+    );
+    const wait = await db.query<{ status: string }>(
+      `SELECT status FROM case_workspace_waits WHERE wait_id=$1`,
+      [seed.waitId]
+    );
+    const link = await db.query<{ link_status: string }>(
+      `SELECT link_status FROM case_workspace_artifact_links WHERE link_id=$1`,
+      [seed.artifactLinkId]
+    );
+    const budget = await db.query<{ id: string }>(`SELECT id FROM budget_entries WHERE id=$1`, [
+      seed.budgetEntryId,
+    ]);
+    const governedTargets: ReadonlyArray<readonly [string, string]> = [
+      ['case.close', seed.closeCaseId],
+      ['case.cancel', seed.cancelCaseId],
+      ['case.wait.cancel', seed.waitId],
+      ['case.run.cancel', seed.runId],
+      ['case.artifact.unlink', seed.artifactLinkId],
+      ['case.proposal.decide', seed.decideProposalId],
+      ['case.proposal.execute', seed.executeProposalId],
+      ['case.proposal.revoke', seed.revokeProposalId],
+      ['execution.budget.delete', seed.budgetEntryId],
+    ];
+    const audit = await db.query<{
+      action_id: string;
+      target_id: string;
+      outcome: string;
+      count: string;
+    }>(
+      `SELECT action_id,target_id,outcome,COUNT(*)::text AS count
+       FROM execution_action_audit
+       WHERE organization_id=$1 AND action_id=ANY($2::text[])
+       GROUP BY action_id,target_id,outcome ORDER BY action_id,target_id,outcome`,
+      [seed.organizationId, governedTargets.map(([actionId]) => actionId)]
+    );
+    const auditTrigger = await db.query<{ tgenabled: string }>(
+      `SELECT tgenabled FROM pg_trigger
+       WHERE tgrelid='execution_action_audit'::regclass
+         AND tgname='trg_execution_action_audit_immutable'
+         AND NOT tgisinternal`
+    );
+    return {
+      cases: Object.fromEntries(
+        cases.rows.map((row) => [
+          row.case_id,
+          { status: row.case_status, closureType: row.closure_type },
+        ])
+      ),
+      proposals: Object.fromEntries(
+        proposals.rows.map((row) => [row.action_proposal_id, row.status])
+      ),
+      run: run.rows[0]?.status ?? null,
+      wait: wait.rows[0]?.status ?? null,
+      link: link.rows[0]?.link_status ?? null,
+      budgetExists: budget.rowCount === 1,
+      audit: Object.fromEntries(
+        governedTargets.map(([actionId, targetId]) => {
+          const row = audit.rows.find(
+            (candidate) => candidate.action_id === actionId && candidate.target_id === targetId
+          );
+          return [actionId, row ? { outcome: row.outcome, count: row.count } : null];
+        })
+      ),
+      auditTriggerEnabled: auditTrigger.rows[0]?.tgenabled ?? null,
+    };
+  });
+}
+
 export async function signedContext(
   browser: Browser,
   persona: ExecutionPersona,
@@ -266,7 +582,9 @@ export async function readActionRegistry(): Promise<{
       `SELECT action_id, runtime_state FROM execution_action_registry ORDER BY action_id`
     );
     return {
-      implemented: rows.rows.filter((r) => r.runtime_state === 'IMPLEMENTED').map((r) => r.action_id),
+      implemented: rows.rows
+        .filter((r) => r.runtime_state === 'IMPLEMENTED')
+        .map((r) => r.action_id),
       hidden: rows.rows.filter((r) => r.runtime_state === 'HIDDEN').map((r) => r.action_id),
     };
   });
@@ -473,9 +791,7 @@ async function releaseAdvisoryLockWithProof(db: pg.Client): Promise<void> {
       WHERE locktype='advisory' AND pid=pg_backend_pid()`
   );
   if (Number(held.rows[0]?.count ?? '-1') !== 0) {
-    throw new Error(
-      `session still holds ${held.rows[0]?.count} advisory lock(s) after unlock`
-    );
+    throw new Error(`session still holds ${held.rows[0]?.count} advisory lock(s) after unlock`);
   }
 }
 

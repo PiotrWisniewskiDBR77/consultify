@@ -17,9 +17,11 @@ import {
   measureResidue,
   readActionRegistry,
   readCaseState,
+  readGovernedActionMatrixState,
   REACHABLE_EXECUTION_TABS,
   revokeMembership,
   seedExecution,
+  seedGovernedActionMatrix,
   signedContext,
   type ExecutionPersona,
 } from './_helpers/executionUiTechnicalFixture';
@@ -484,9 +486,9 @@ test.describe.serial('EXE-UI-CANON capacity and governed action reachability', (
     // --- FORCED FAILURE. A cleanup path that has never failed is not a proven
     // cleanup path. Abort the pinned transaction after the first delete and
     // require the harness to surface it honestly rather than swallow it.
-    await expect(
-      cleanup(request, subject, { failAfterFirstDelete: true })
-    ).rejects.toThrow(/INJECTED_CLEANUP_FAILURE_AFTER_FIRST_DELETE/);
+    await expect(cleanup(request, subject, { failAfterFirstDelete: true })).rejects.toThrow(
+      /INJECTED_CLEANUP_FAILURE_AFTER_FIRST_DELETE/
+    );
 
     // The rollback must leave the tenant's data INTACT — a partial delete that
     // silently committed would be worse than no cleanup at all.
@@ -558,5 +560,143 @@ test.describe.serial('EXE-UI-CANON capacity and governed action reachability', (
       Object.fromEntries(FIXTURE_WRITTEN_TABLES.map((table) => [table, 0]))
     );
     expect(residue.harnessAdvisoryLocksOnFixedKey).toBe(0);
+  });
+});
+
+test.describe('EXE-MVP-ACTIONS signed nine-command matrix', () => {
+  test('executes all nine mounted controls and proves exact cold state', async ({
+    browser,
+    request,
+  }) => {
+    test.setTimeout(600_000);
+    const owner = await bootstrap(request, `exe-ui-nine-${Date.now().toString(36)}`);
+    const approver = await addAdmin(request, owner);
+    const seed = await seedGovernedActionMatrix(request, owner, approver);
+    const ownerContext = await signedContext(browser, owner, { 'ff.caseWorkspace': '1' });
+    const approverContext = await signedContext(browser, approver, { 'ff.caseWorkspace': '1' });
+    const page = await ownerContext.newPage();
+
+    const confirmCommand = async (label: string, reason?: string) => {
+      const dialog = page.getByRole('dialog');
+      await expect(dialog).toBeVisible();
+      if (reason) await dialog.getByRole('textbox').fill(reason);
+      await dialog.getByRole('button', { name: label, exact: true }).click();
+      await expect(dialog).toHaveCount(0, { timeout: 60_000 });
+    };
+
+    // 1 — case.close: partial closure with explicit evidence, then exact CLOSED readback.
+    await page.goto(`/zlecenia/${encodeURIComponent(seed.closeCaseId)}?zakladka=plan`);
+    await page.getByRole('button', { name: 'Zamknij zlecenie' }).click();
+    const closeDialog = page.getByRole('dialog');
+    await closeDialog
+      .getByLabel('Dowód / opis pozostałego zakresu')
+      .fill('signed-browser:nine-actions');
+    await closeDialog.getByRole('button', { name: 'Zamknij zlecenie', exact: true }).click();
+    await expect(closeDialog).toHaveCount(0, { timeout: 60_000 });
+
+    // 2 — case.cancel from the mounted list preview.
+    await page.goto('/zlecenia');
+    const cancelRow = page.getByRole('row', {
+      name: new RegExp(`Cancel matrix .*${seed.cancelCaseId.slice(-8)}`),
+    });
+    await cancelRow.getByRole('button', { name: 'Row actions' }).click();
+    await page.getByRole('menuitem', { name: 'Anuluj zlecenie' }).click();
+    await confirmCommand('Anuluj zlecenie', 'signed browser cancellation');
+
+    const openRealization = async (targetPage = page) => {
+      await targetPage.goto(`/zlecenia/${encodeURIComponent(seed.caseId)}?zakladka=realizacja`);
+      await expect(targetPage.getByText('Na co czekamy').first()).toBeVisible({ timeout: 60_000 });
+    };
+
+    // 3 — case.proposal.decide under a distinct signed approver.
+    const approverPage = await approverContext.newPage();
+    await openRealization(approverPage);
+    await approverPage.locator(`[data-realizacja-wiersz="${seed.decideProposalId}"]`).click();
+    await approverPage.getByRole('button', { name: 'Zatwierdź', exact: true }).click();
+    const decideDialog = approverPage.getByRole('dialog');
+    await decideDialog.getByRole('button', { name: 'Zatwierdzić', exact: true }).click();
+    await expect(decideDialog).toHaveCount(0, { timeout: 60_000 });
+
+    // 4 — case.proposal.execute.
+    await openRealization();
+    await page.locator(`[data-realizacja-wiersz="${seed.executeProposalId}"]`).click();
+    await page.getByRole('button', { name: 'Rozpocznij wykonanie' }).click();
+    await confirmCommand('Rozpocznij wykonanie');
+
+    // 5 — case.proposal.revoke.
+    await openRealization();
+    await page.locator(`[data-realizacja-wiersz="${seed.revokeProposalId}"]`).click();
+    await page.getByRole('button', { name: 'Cofnij zatwierdzenie' }).click();
+    await confirmCommand('Cofnij zatwierdzenie', 'signed browser revoke');
+
+    // 6 — case.wait.cancel.
+    await openRealization();
+    await page.locator(`[data-realizacja-wiersz="${seed.waitId}"]`).click();
+    await page.getByRole('button', { name: 'Anuluj oczekiwanie' }).click();
+    await confirmCommand('Anuluj oczekiwanie', 'signed browser wait cancel');
+
+    // 7 — case.run.cancel.
+    await openRealization();
+    await page.locator(`[data-realizacja-wiersz="${seed.runId}"]`).click();
+    await page.getByRole('button', { name: 'Anuluj przebieg' }).click();
+    await confirmCommand('Anuluj przebieg', 'signed browser run cancel');
+
+    // 8 — case.artifact.unlink from the mounted Results tab.
+    await page.goto(`/zlecenia/${encodeURIComponent(seed.caseId)}?zakladka=rezultaty`);
+    await page.getByText('Dokument', { exact: true }).first().click();
+    await page.getByRole('button', { name: 'Odepnij od zlecenia' }).click();
+    await confirmCommand('Odepnij', 'signed browser unlink');
+
+    // 9 — execution.budget.delete from the canonical initiative Resources card.
+    await page.goto(`/initiatives?open=${encodeURIComponent(seed.budgetInitiativeId)}&mode=doc`);
+    await page.getByRole('button', { name: /Resources|Zasoby/i }).click();
+    const governedBudget = page.getByRole('region', {
+      name: /Execution budget control|Kontrola budżetu realizacji/i,
+    });
+    await page.evaluate(() => {
+      window.confirm = () => true;
+    });
+    const deleteResponse = page.waitForResponse(
+      (response) =>
+        response.request().method() === 'DELETE' &&
+        response.url().includes(`/api/execution-control/budget/entries/${seed.budgetEntryId}`)
+    );
+    await governedBudget
+      .getByRole('button', { name: /Delete budget entry|Usuń wpis budżetu/i })
+      .click();
+    expect((await deleteResponse).status()).toBe(200);
+
+    await expect
+      .poll(async () => readGovernedActionMatrixState(seed), { timeout: 60_000 })
+      .toMatchObject({
+        cases: {
+          [seed.closeCaseId]: { status: 'CLOSED', closureType: 'COMPLETED_PARTIAL' },
+          [seed.cancelCaseId]: { status: 'CANCELLED' },
+        },
+        proposals: {
+          [seed.decideProposalId]: 'APPROVED',
+          [seed.executeProposalId]: 'EXECUTING',
+          [seed.revokeProposalId]: 'REVOKED',
+        },
+        run: 'CANCELLED',
+        wait: 'CANCELLED',
+        link: 'UNLINKED',
+        budgetExists: false,
+        audit: {
+          'case.close': { outcome: 'SUCCEEDED', count: '2' },
+          'case.cancel': { outcome: 'SUCCEEDED', count: '1' },
+          'case.wait.cancel': { outcome: 'SUCCEEDED', count: '1' },
+          'case.run.cancel': { outcome: 'SUCCEEDED', count: '1' },
+          'case.artifact.unlink': { outcome: 'SUCCEEDED', count: '1' },
+          'case.proposal.decide': { outcome: 'SUCCEEDED', count: '1' },
+          'case.proposal.execute': { outcome: 'SUCCEEDED', count: '1' },
+          'case.proposal.revoke': { outcome: 'SUCCEEDED', count: '1' },
+          'execution.budget.delete': { outcome: 'SUCCEEDED', count: '1' },
+        },
+        auditTriggerEnabled: 'O',
+      });
+
+    await approverContext.close();
+    await ownerContext.close();
   });
 });

@@ -7,13 +7,17 @@ import {
   requireCanonicalInitiativeExecutionWriter,
 } from '../executionSpineLegacyReadOnly.middleware.js';
 
-function invoke(method: string) {
+function invoke(method: string, path = '') {
   const status = vi.fn();
   const json = vi.fn();
   status.mockReturnValue({ json });
   const next = vi.fn() as NextFunction;
 
-  requireCanonicalExecutionWriter({ method } as Request, { status } as unknown as Response, next);
+  requireCanonicalExecutionWriter(
+    { method, path } as Request,
+    { status } as unknown as Response,
+    next
+  );
 
   return { status, json, next };
 }
@@ -53,6 +57,22 @@ describe('execution spine legacy read-only boundary', () => {
       });
     }
   );
+
+  it('allows only the receipted governed budget delete command through the legacy namespace guard', () => {
+    const exact = invoke('DELETE', '/budget/entries/entry-1');
+    expect(exact.next).toHaveBeenCalledOnce();
+    expect(exact.status).not.toHaveBeenCalled();
+
+    for (const path of [
+      '/budget/entries',
+      '/budget/entries/entry-1/other',
+      '/budget/initiative/initiative-1',
+    ]) {
+      const nearMiss = invoke('DELETE', path);
+      expect(nearMiss.next).not.toHaveBeenCalled();
+      expect(nearMiss.status).toHaveBeenCalledWith(409);
+    }
+  });
 
   it.each([
     '/initiative-1/milestones',

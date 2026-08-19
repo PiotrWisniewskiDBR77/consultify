@@ -32,6 +32,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 
+import { BudgetControlPanel } from '@/components/Execution/BudgetControlPanel';
 import { Api } from '@/services/api';
 
 import { useInitiativeContext } from './InitiativeContext';
@@ -1748,6 +1749,14 @@ export const ResourcesSection: React.FC = () => {
         onUpdate={handleUpdateBudgetItem}
         onDelete={handleDeleteBudgetItem}
       />
+
+      {/* The execution ledger is the governed authority for committed/forecast
+          budget commands. Keep it mounted beside the initiative planning
+          budget so users can inspect and mutate the exact execution entries
+          without falling through to the retired compact-panel route. */}
+      <section aria-label={t('execution.budget.controlTitle', 'Execution budget control')}>
+        <BudgetControlPanel initiativeId={String(initiativeId)} />
+      </section>
 
       {/* 2. TEAM / FTE */}
       <TeamTable
