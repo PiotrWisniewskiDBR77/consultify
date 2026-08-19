@@ -883,6 +883,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
                 const pending = String(invitation.status).toLowerCase() === 'pending';
                 const busy = savingInvitationId === invitation.id;
                 const role = String(invitation.role_to_assign || invitation.role || 'MEMBER').toUpperCase() as RoleOption;
+                const expiresAt = invitation.expires_at || invitation.expiresAt;
                 return (
                   <article key={invitation.id} className="rounded-xl border border-slate-200/70 p-4 dark:border-white/[0.08]">
                     <h3 className="break-all font-medium text-c-text">{invitation.email}</h3>
@@ -890,7 +891,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
                       <div><dt className="text-xs text-c-text-muted">{t('admin.membersRoles.columns.role', 'Role')}</dt><dd className="mt-1 text-c-text">{roleLabels[role] || role}</dd></div>
                       <div><dt className="text-xs text-c-text-muted">{t('admin.membersRoles.columns.status', 'Status')}</dt><dd className="mt-1"><EntityStatusChip status={String(invitation.status || 'unknown').toLowerCase()} /></dd></div>
                       <div><dt className="text-xs text-c-text-muted">{t('admin.membersRoles.invitations.delivery', 'Delivery')}</dt><dd className="mt-1"><EntityStatusChip status={deliveryToneStatus(invitation.delivery)} label={deliveryLabel(invitation.delivery)} /></dd></div>
-                      <div><dt className="text-xs text-c-text-muted">{t('admin.membersRoles.invitations.expiry', 'Expires')}</dt><dd className="mt-1 text-c-text-secondary">{invitation.expires_at || invitation.expiresAt ? new Date(invitation.expires_at || invitation.expiresAt).toLocaleString() : '—'}</dd></div>
+                      <div><dt className="text-xs text-c-text-muted">{t('admin.membersRoles.invitations.expiry', 'Expires')}</dt><dd className="mt-1 text-c-text-secondary">{expiresAt ? new Date(expiresAt).toLocaleString() : '—'}</dd></div>
                     </dl>
                     {canManageTeam && pending && (
                       <div className="mt-4 grid grid-cols-2 gap-2">
