@@ -174,5 +174,26 @@
         "stale"
       ]
     }
+  },
+  "exactCurrentReconciliation20260819": {
+    "reconciledAtSha": "2db606fdaf48b1673a1b40d604dd1221ef288c6c",
+    "reconciledOn": "2026-08-19",
+    "scope": "Bounded no-PostgreSQL/no-full-build reconciliation of current automated evidence and the stale deep-link harness result; no production or test source was edited.",
+    "aggregateEvidenceVerifier": {
+      "command": "node scripts/cleanup/verify-ui-canon-all.mjs",
+      "result": "PASS; 16 modules; 15 frozen packets; MAT artifact hashes valid; aggregate ceiling PARTIAL"
+    },
+    "focusedCurrentChecks": {
+      "conflictBanner": "PASS in the bounded exact-current Vitest run",
+      "documentHydrationAutosave": "PASS in the bounded exact-current Vitest run"
+    },
+    "deepLinkHarness": {
+      "result": "RED; 2/2 assertions in tests/components/ReportsAndPresentations/PresentationsTabContent.deeplink.test.tsx",
+      "classification": "STALE_TEST_HARNESS_NOT_PRODUCT_SOURCE_RED",
+      "basis": "The test mocks the retired TableWithPreviewLayout/old ModuleHub seam and asserts its test-only selected-id output. The current component renders StandardTable and StandardPreview directly, while the production deep-link selection branch remains present in PresentationsTabContent.tsx. The obsolete mock is therefore not mounted and its test-only marker cannot appear.",
+      "disposition": "No production fix is justified by this failure. The historical automated G4 deep-link result remains historical evidence at its recorded candidate SHA; this bounded reconciliation does not promote it to exact-current mounted browser proof."
+    },
+    "classification": "NO_CURRENT_PRODUCT_SOURCE_RED_REPRODUCED; EVIDENCE_REACHABILITY_GAP_REMAINS",
+    "remainingBoundary": "PARTIAL is preserved. The mounted automated sweep still did not reach the task-specific stale state, and manual VoiceOver, named-persona and visual/brand owner acceptance remain pending. The open boundary is therefore not described as solely human G4, and no verdict promotion is claimed."
   }
 }

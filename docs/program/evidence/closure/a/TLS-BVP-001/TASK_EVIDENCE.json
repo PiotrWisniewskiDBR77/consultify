@@ -213,7 +213,7 @@
     "g4": "NOT_VERIFIED; no browser evidence added in this bounded technical pass"
   },
   "verdict": "PARTIAL",
-  "verdictRationale": "PARTIAL retained at 4f0fd2cd9b. The task's own guard is intact and unchanged (toolOutputSnapshotService.ts:204/:261, ToolController.ts:2317), and all five changedPaths are byte-identical from productSha 4dfe3ebaa7 through 184 commits to canonical, so the recorded backend gates remain attributable to an unmodified surface. The literal task remains PARTIAL for two reasons, neither of which is the one previously recorded. First, G4 is required by this task's frozen gate set and carries an explicit human dependency: manual VoiceOver and brand/UX sign-off for the Dynamic SWOT freeze/promote flow, for which no browser evidence exists at any SHA. (The superseded wording said G4 \"belongs to Settings\"; that was a copy artifact from another record.) Second, the blocking integrator change request this record raised is NOT stale — tests/integration/tools/tool-session-roundtrip.contract.test.ts is red again at canonical, 11/11 failing in 481s, but from an unrelated cause: commit 208ce122fe mounted a strict tenant-membership middleware on the Tools router (tools.routes.ts:34) whose DbPromise path throws on a missing export in the test's partial queryHelpers mock, leaving the promise permanently unsettled. That commit is a descendant of this task's productSha, so the regression is not attributable to this task's change, and all four implicated paths lie outside lane A's lease. See exactCurrentReconciliation20260818 for the controlled A/B evidence, the bisect, the source-bound mechanism and the one-file minimal allowlist.",
+  "verdictRationale": "PARTIAL retained at exact canonical 2db606fdaf48b1673a1b40d604dd1221ef288c6c. The previously live default-suite regression is resolved: the named tool-session roundtrip contract passes 11/11 and the strict-membership middleware regression suite passes 18/18 on this exact SHA. No current technical source red was reproduced in this bounded no-PostgreSQL reconciliation. The literal remaining boundary is unchanged: mounted browser evidence for the Dynamic SWOT freeze/promote flow plus named human G4/VoiceOver/brand acceptance are still absent. Historical regression diagnosis remains preserved below but is superseded as a current blocker by integratorHarnessResolution20260818 and exactCurrentReconciliation20260819.",
   "ownerTables": [],
   "fixtures": {
     "prefix": "bvp001-*",
@@ -358,5 +358,21 @@
     "productionGuardRegressionResult": "1 file / 18 tests passed / exit 0",
     "supersedesIntegratorBoundaryOnly": "The live default-suite regression and integrator harness-fix boundary documented in exactCurrentReconciliation20260818 are resolved. Historical bisect, diagnosis and command results remain retained above.",
     "remainingBoundary": "PARTIAL remains correct: the Dynamic SWOT freeze/promote mounted browser and named human G4/VoiceOver/brand acceptance are still not present. This harness repair alone does not satisfy them."
+  },
+  "exactCurrentReconciliation20260819": {
+    "reconciledAtSha": "2db606fdaf48b1673a1b40d604dd1221ef288c6c",
+    "reconciledOn": "2026-08-19",
+    "scope": "Read-only-first bounded reconciliation of the stale technical-red claim; no PostgreSQL, full build, product edit, push or deploy.",
+    "toolSessionRoundtrip": {
+      "command": "npx vitest run tests/integration/tools/tool-session-roundtrip.contract.test.ts --retry=0 --no-file-parallelism --maxWorkers=1 --reporter=dot",
+      "result": "PASS; 1 file; 11/11 tests"
+    },
+    "strictMembershipMiddleware": {
+      "command": "npx vitest run server/src/middleware/__tests__/auditsStrictMembership.middleware.test.ts --retry=0 --no-file-parallelism --maxWorkers=1 --reporter=dot",
+      "result": "PASS; 1 file; 18/18 tests"
+    },
+    "classification": "NO_CURRENT_TECHNICAL_SOURCE_RED_REPRODUCED",
+    "supersedes": "Any wording in exactCurrentReconciliation20260818 that describes the default-suite regression or an integrator harness fix as a current open blocker. That diagnosis remains historical evidence only.",
+    "remainingBoundary": "PARTIAL is preserved. Mounted browser evidence for the Dynamic SWOT freeze/promote flow and named human G4/VoiceOver/brand acceptance remain open; no verdict promotion is claimed."
   }
 }
