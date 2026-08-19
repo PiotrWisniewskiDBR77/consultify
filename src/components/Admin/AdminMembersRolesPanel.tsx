@@ -91,6 +91,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
   const [invitationsLoading, setInvitationsLoading] = useState(true);
   const [savingInvitationId, setSavingInvitationId] = useState<string | null>(null);
   const [operationNotice, setOperationNotice] = useState<string | null>(null);
+  const [operationError, setOperationError] = useState<string | null>(null);
   const { dialog: removeMemberDialog, confirm: confirmRemoveMember } = useConfirmDialog();
 
   const orgId = currentOrganization?.id;
@@ -264,6 +265,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
     if (!canManageTeam) return;
     try {
       setOperationNotice(null);
+      setOperationError(null);
       setSavingInvitationId(invitation.id);
       const storageKey = `consultify:admin-invite-${action}:${orgId}:${invitation.id}`;
       let commandId = sessionStorage.getItem(storageKey);
@@ -293,7 +295,9 @@ export const AdminMembersRolesPanel: React.FC = () => {
       if (action === 'resend' && exact.delivery !== 'SENT') toast.error(message);
       else toast.success(message);
     } catch (error: any) {
-      toast.error(error?.message || `Failed to ${action} invitation`);
+      const message = error?.message || `Failed to ${action} invitation`;
+      setOperationError(message);
+      toast.error(message);
     } finally {
       setSavingInvitationId(null);
     }
@@ -315,6 +319,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
     }
     try {
       setOperationNotice(null);
+      setOperationError(null);
       setSavingMemberId(memberId);
       const key = `consultify:admin-role:${orgId}:${memberId}:${expectedRole}:${role}`;
       let commandId = sessionStorage.getItem(key) || globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
@@ -337,9 +342,47 @@ export const AdminMembersRolesPanel: React.FC = () => {
       setOperationNotice(message);
       toast.success(message);
     } catch (error: any) {
-      toast.error(
-        error?.message || t('admin.membersRoles.role.updateFailed', 'Failed to update role')
+      const raw = error?.message || t('admin.membersRoles.role.updateFailed', 'Failed to update role');
+      const key = `consultify:admin-role:${orgId}:${memberId}:${expectedRole}:${role}`;
+      const fresh = await loadMembers();
+      const exact = fresh.find(
+        (member: any) => String(member.user_id ?? member.id ?? '') === String(memberId)
       );
+      const currentRole = String(exact?.role || '').toUpperCase();
+
+      if (exact && currentRole === role) {
+        // The write may have committed even if the response was lost. Only the
+        // authoritative cold read-back is allowed to recover it as success.
+        sessionStorage.removeItem(key);
+        const message = t(
+          'admin.membersRoles.role.recovered',
+          'Member role was already updated and has been reconciled from the server.'
+        );
+        setOperationNotice(message);
+        toast.success(message);
+      } else {
+        let message = `${raw} ${t(
+          'admin.membersRoles.role.retryIdentity',
+          'Retry uses the same command identity.'
+        )}`;
+        if (exact && currentRole && currentRole !== String(expectedRole).toUpperCase()) {
+          // The optimistic precondition is permanently stale. Keeping its
+          // command ID would replay a conflict forever, so reconcile the row
+          // and let the next explicit user intent start a new command.
+          sessionStorage.removeItem(key);
+          const staleTemplate = t(
+            'admin.membersRoles.role.staleReconciled',
+            'Membership changed on the server. Current role: {{role}}. Review and retry.',
+            { role: roleLabels[currentRole as RoleOption] || currentRole }
+          );
+          message = String(staleTemplate).replace(
+            '{{role}}',
+            roleLabels[currentRole as RoleOption] || currentRole
+          );
+        }
+        setOperationError(message);
+        toast.error(message);
+      }
     } finally {
       setSavingMemberId(null);
     }
@@ -370,6 +413,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
     if (!confirmed) return;
     try {
       setOperationNotice(null);
+      setOperationError(null);
       setSavingMemberId(memberId);
       const key = `consultify:admin-revoke-member:${orgId}:${memberId}:${expectedRole}`;
       let commandId = sessionStorage.getItem(key) || globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
@@ -392,9 +436,9 @@ export const AdminMembersRolesPanel: React.FC = () => {
       setOperationNotice(message);
       toast.success(message);
     } catch (error: any) {
-      toast.error(
-        error?.message || t('admin.membersRoles.remove.failed', 'Failed to remove member')
-      );
+      const message = error?.message || t('admin.membersRoles.remove.failed', 'Failed to remove member');
+      setOperationError(message);
+      toast.error(message);
     } finally {
       setSavingMemberId(null);
     }
@@ -708,6 +752,16 @@ export const AdminMembersRolesPanel: React.FC = () => {
             className="mt-4 rounded-lg border border-c-info/40 bg-c-info/10 px-3 py-2 text-sm text-c-text"
           >
             {operationNotice}
+          </div>
+        )}
+        {operationError && (
+          <div
+            role="alert"
+            aria-live="assertive"
+            data-testid="admin-operation-error"
+            className="mt-4 rounded-lg border border-c-danger/40 bg-c-danger/10 px-3 py-2 text-sm text-c-danger"
+          >
+            {operationError}
           </div>
         )}
 

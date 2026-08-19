@@ -126,10 +126,45 @@ describe('AdminMembersRolesPanel', () => {
     await waitFor(() => expect(mockedApi.changeAdminOrganizationMemberRole).toHaveBeenCalled());
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith(
-        'Role command completed without exact member read-back.'
+        'Role command completed without exact member read-back. Retry uses the same command identity.'
       )
     );
     expect(toast.success).not.toHaveBeenCalledWith('Member role updated');
+  });
+
+  it('reconciles a stale role conflict and gives the next intent a fresh command identity', async () => {
+    const serverMembers = members.map((member) =>
+      member.user_id === 'member-1' ? { ...member, role: 'GUEST' } : member
+    );
+    mockedApi.getOrganizationMembers
+      .mockResolvedValueOnce(members)
+      .mockResolvedValue(serverMembers);
+    mockedApi.changeAdminOrganizationMemberRole
+      .mockRejectedValueOnce(new Error('Membership changed; refresh before retrying'))
+      .mockResolvedValueOnce({ success: true });
+
+    render(<AdminMembersRolesPanel />);
+    const initialRow = (await findTableText('member@acme.test')).closest('tr')!;
+    fireEvent.change(initialRow.querySelector('select')!, { target: { value: 'ADMIN' } });
+
+    await waitFor(() =>
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'Membership changed on the server. Current role: Guest. Review and retry.'
+      )
+    );
+    const firstCommandId = mockedApi.changeAdminOrganizationMemberRole.mock.calls[0][4];
+    const reconciledRow = (await findTableText('member@acme.test')).closest('tr')!;
+    expect((reconciledRow.querySelector('select') as HTMLSelectElement).value).toBe('GUEST');
+
+    mockedApi.getOrganizationMembers.mockResolvedValue(
+      serverMembers.map((member) =>
+        member.user_id === 'member-1' ? { ...member, role: 'ADMIN' } : member
+      )
+    );
+    fireEvent.change(reconciledRow.querySelector('select')!, { target: { value: 'ADMIN' } });
+    await waitFor(() => expect(mockedApi.changeAdminOrganizationMemberRole).toHaveBeenCalledTimes(2));
+    expect(mockedApi.changeAdminOrganizationMemberRole.mock.calls[1][3]).toBe('GUEST');
+    expect(mockedApi.changeAdminOrganizationMemberRole.mock.calls[1][4]).not.toBe(firstCommandId);
   });
 
   it('creates an invitation and accepts it only after exact server read-back', async () => {
