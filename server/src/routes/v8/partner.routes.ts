@@ -14,7 +14,7 @@
 
 import crypto from 'node:crypto';
 
-import type { Response } from 'express';
+import type { NextFunction, Response } from 'express';
 import { Router } from 'express';
 
 import { getDatabase } from '../../database/Database.js';
@@ -58,6 +58,14 @@ export const V8_PARTNER_PROGRAM_CONTRACT = 'partner_program_p29_v1';
 // middleware below performs writes (seeding), so guarding after it would let a
 // policy-denied request mutate the database before being refused.
 router.use(createPartnerEconomicsPolicyGuard(V8_PARTNER_ECONOMIC_WRITERS, 'v8_partner'));
+
+// Certification mutations must fail closed before the shared partner demo
+// seeder below can perform any write. Route-level membership checks remain as
+// defence in depth, but this ordering is what makes revoked requests no-write.
+router.use(
+  /^\/certifications\/[^/]+\/(?:modules\/[^/]+\/progress|exam\/(?:start|submit))\/?$/,
+  requireActiveMembership
+);
 
 router.use(
   asyncHandler(async (req: AuthRequest, _res: Response, next) => {
@@ -1308,6 +1316,7 @@ router.post(
       ...actor,
       status,
       progress,
+      idempotencyKey: key,
     });
     return res.json({ data, meta: partnerReadMeta(req, actor.partnerOrgId) });
   })
@@ -1411,5 +1420,15 @@ router.put(
     });
   })
 );
+
+router.use((error: Error, _req: AuthRequest, res: Response, next: NextFunction) => {
+  if (error.message === 'Idempotency replay payload mismatch') {
+    return res.status(409).json({
+      error: error.message,
+      code: 'IDEMPOTENCY_PAYLOAD_MISMATCH',
+    });
+  }
+  next(error);
+});
 
 export default router;

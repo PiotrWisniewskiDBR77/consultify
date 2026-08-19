@@ -1,5 +1,7 @@
 /** PRT-MVP-LEGACY-CUTOVER-001 — real PostgreSQL cutover/rollback telemetry. */
 import { randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 
 import express from 'express';
 import jwt from 'jsonwebtoken';
@@ -30,8 +32,16 @@ const userId = randomUUID();
 const foreignUserId = randomUUID();
 const partnerOrgId = randomUUID();
 const certificationId = randomUUID();
+const revokedOrgId = randomUUID();
+const revokedUserId = randomUUID();
+const revokedPartnerOrgId = randomUUID();
+const revokedCertificationId = randomUUID();
 const jwtSecret = 'prt-cutover-realdb-secret-minimum-32-characters';
 const configuredJwtSecret = process.env.JWT_SECRET || jwtSecret;
+const receiptMigration = readFileSync(
+  path.resolve('server/migrations/954_partner_certification_mutation_receipts.sql'),
+  'utf8'
+);
 
 function token(subject = userId, organizationId = orgId) {
   return jwt.sign(
@@ -93,18 +103,23 @@ beforeAll(async () => {
   process.env.DB_TYPE = 'postgres';
   process.env.JWT_SECRET = configuredJwtSecret;
   expect((await sql.query(`SELECT version() AS version`)).rows[0].version).toMatch(/PostgreSQL/);
+  await sql.query(receiptMigration);
+  await sql.query(receiptMigration);
   await sql.query(`DELETE FROM partner_legacy_usage_events WHERE request_id LIKE $1`, [
     `${REQUEST_PREFIX}%`,
   ]);
-  await sql.query(`INSERT INTO organizations(id,name) VALUES($1,$2),($3,$4)`, [
+  await sql.query(`INSERT INTO organizations(id,name) VALUES($1,$2),($3,$4),($5,$6)`, [
     orgId,
     `PRT ${suffix}`,
     foreignOrgId,
     `Foreign ${suffix}`,
+    revokedOrgId,
+    `Revoked ${suffix}`,
   ]);
   await sql.query(
     `INSERT INTO users(id,organization_id,email,first_name,last_name,role)
-     VALUES($1,$2,$3,'Partner','Owner','ADMIN'),($4,$5,$6,'Foreign','User','ADMIN')`,
+     VALUES($1,$2,$3,'Partner','Owner','ADMIN'),($4,$5,$6,'Foreign','User','ADMIN'),
+           ($7,$8,$9,'Revoked','User','ADMIN')`,
     [
       userId,
       orgId,
@@ -112,12 +127,26 @@ beforeAll(async () => {
       foreignUserId,
       foreignOrgId,
       `${foreignUserId}@test.local`,
+      revokedUserId,
+      revokedOrgId,
+      `${revokedUserId}@test.local`,
     ]
   );
   await sql.query(
     `INSERT INTO organization_members(id,organization_id,user_id,role,status)
-     VALUES($1,$2,$3,'ADMIN','ACTIVE'),($4,$5,$6,'ADMIN','ACTIVE')`,
-    [randomUUID(), orgId, userId, randomUUID(), foreignOrgId, foreignUserId]
+     VALUES($1,$2,$3,'ADMIN','ACTIVE'),($4,$5,$6,'ADMIN','ACTIVE'),
+           ($7,$8,$9,'ADMIN','REVOKED')`,
+    [
+      randomUUID(),
+      orgId,
+      userId,
+      randomUUID(),
+      foreignOrgId,
+      foreignUserId,
+      randomUUID(),
+      revokedOrgId,
+      revokedUserId,
+    ]
   );
   await sql.query(
     `INSERT INTO partner_organizations(id,name,contact_email,status,referral_code,referral_link_slug)
@@ -129,6 +158,27 @@ beforeAll(async () => {
       `PRT-${suffix}`,
       `prt-${suffix}`,
     ]
+  );
+  await sql.query(
+    `INSERT INTO partner_organizations(id,name,contact_email,status,referral_code,referral_link_slug)
+     VALUES($1,$2,$3,'active',$4,$5)`,
+    [
+      revokedPartnerOrgId,
+      `Revoked partner ${suffix}`,
+      `revoked-${suffix}@test.local`,
+      `REVOKED-${suffix}`,
+      `revoked-${suffix}`,
+    ]
+  );
+  await sql.query(
+    `INSERT INTO partner_users(id,partner_org_id,user_id,role,status) VALUES($1,$2,$3,'owner','active')`,
+    [randomUUID(), revokedPartnerOrgId, revokedUserId]
+  );
+  await sql.query(
+    `INSERT INTO partner_certifications
+      (id,partner_org_id,user_id,certification_name,certification_type,status,progress_percent,exam_mode)
+     VALUES($1,$2,$3,'Revoked proof','sales_foundation','in_progress',100,'exam')`,
+    [revokedCertificationId, revokedPartnerOrgId, revokedUserId]
   );
   await sql.query(
     `INSERT INTO partner_users(id,partner_org_id,user_id,role,status) VALUES($1,$2,$3,'owner','active')`,
@@ -156,13 +206,37 @@ afterAll(async () => {
     await sql.query(`DELETE FROM partner_legacy_usage_events WHERE request_id LIKE $1`, [
       `${REQUEST_PREFIX}%`,
     ]);
-    await sql.query(`DELETE FROM partner_organizations WHERE id=$1`, [partnerOrgId]);
-    await sql.query(`DELETE FROM organization_members WHERE organization_id IN ($1,$2)`, [
+    if (
+      (
+        await sql.query(
+          `SELECT to_regclass('public.partner_certification_mutation_receipts') table_name`
+        )
+      ).rows[0].table_name
+    ) {
+      await sql.query(
+        `DELETE FROM partner_certification_mutation_receipts WHERE partner_org_id IN ($1,$2)`,
+        [partnerOrgId, revokedPartnerOrgId]
+      );
+    }
+    await sql.query(`DELETE FROM partner_organizations WHERE id IN ($1,$2)`, [
+      partnerOrgId,
+      revokedPartnerOrgId,
+    ]);
+    await sql.query(`DELETE FROM organization_members WHERE organization_id IN ($1,$2,$3)`, [
       orgId,
       foreignOrgId,
+      revokedOrgId,
     ]);
-    await sql.query(`DELETE FROM users WHERE id IN ($1,$2)`, [userId, foreignUserId]);
-    await sql.query(`DELETE FROM organizations WHERE id IN ($1,$2)`, [orgId, foreignOrgId]);
+    await sql.query(`DELETE FROM users WHERE id IN ($1,$2,$3)`, [
+      userId,
+      foreignUserId,
+      revokedUserId,
+    ]);
+    await sql.query(`DELETE FROM organizations WHERE id IN ($1,$2,$3)`, [
+      orgId,
+      foreignOrgId,
+      revokedOrgId,
+    ]);
     await sql.end();
   }
 });
@@ -257,6 +331,34 @@ describe.sequential('Partner legacy cutover guard (real PG)', () => {
   });
 
   it('mounts signed V8 certification successors with tenant denial, replay and cold readback', async () => {
+    const revokedBefore = await sql.query(
+      `SELECT referral_code,referral_link_slug,
+        (SELECT count(*)::int FROM partner_campaign_links WHERE partner_org_id=$1) campaigns,
+        (SELECT count(*)::int FROM partner_referral_clicks WHERE partner_org_id=$1) clicks,
+        (SELECT count(*)::int FROM partner_attributions WHERE partner_org_id=$1) attributions,
+        (SELECT count(*)::int FROM partner_commission_transactions WHERE partner_org_id=$1) commissions,
+        (SELECT count(*)::int FROM partner_payouts WHERE partner_org_id=$1) payouts
+       FROM partner_organizations WHERE id=$1`,
+      [revokedPartnerOrgId]
+    );
+    const freshRevoked = await supertest(app())
+      .post(`/api/v8/partner/certifications/${revokedCertificationId}/exam/start`)
+      .set('Authorization', `Bearer ${token(revokedUserId, revokedOrgId)}`)
+      .set('Idempotency-Key', `revoked-fresh-${suffix}`)
+      .send({ language: 'en' });
+    expect(freshRevoked.status).toBe(403);
+    const revokedAfter = await sql.query(
+      `SELECT referral_code,referral_link_slug,
+        (SELECT count(*)::int FROM partner_campaign_links WHERE partner_org_id=$1) campaigns,
+        (SELECT count(*)::int FROM partner_referral_clicks WHERE partner_org_id=$1) clicks,
+        (SELECT count(*)::int FROM partner_attributions WHERE partner_org_id=$1) attributions,
+        (SELECT count(*)::int FROM partner_commission_transactions WHERE partner_org_id=$1) commissions,
+        (SELECT count(*)::int FROM partner_payouts WHERE partner_org_id=$1) payouts
+       FROM partner_organizations WHERE id=$1`,
+      [revokedPartnerOrgId]
+    );
+    expect(revokedAfter.rows[0]).toEqual(revokedBefore.rows[0]);
+
     const foreign = await supertest(app())
       .post(`/api/v8/partner/certifications/${certificationId}/exam/start`)
       .set('Authorization', `Bearer ${token(foreignUserId, foreignOrgId)}`)
@@ -275,6 +377,23 @@ describe.sequential('Partner legacy cutover guard (real PG)', () => {
       .set('Idempotency-Key', `progress-${suffix}`)
       .send({ status: 'completed', progress: 100 });
     expect(progress.status, JSON.stringify(progress.body)).toBe(200);
+    const progressReplay = await supertest(app())
+      .post(
+        `/api/v8/partner/certifications/${certificationId}/modules/${moduleRow.rows[0].id}/progress`
+      )
+      .set('Authorization', `Bearer ${token()}`)
+      .set('Idempotency-Key', `progress-${suffix}`)
+      .send({ status: 'completed', progress: 100 });
+    expect(progressReplay.status).toBe(200);
+    expect(progressReplay.body.data).toEqual(progress.body.data);
+    const progressCollision = await supertest(app())
+      .post(
+        `/api/v8/partner/certifications/${certificationId}/modules/${moduleRow.rows[0].id}/progress`
+      )
+      .set('Authorization', `Bearer ${token()}`)
+      .set('Idempotency-Key', `progress-${suffix}`)
+      .send({ status: 'in_progress', progress: 50 });
+    expect(progressCollision.status).toBe(409);
 
     const start = () =>
       supertest(app())
@@ -287,6 +406,12 @@ describe.sequential('Partner legacy cutover guard (real PG)', () => {
     expect(first.status).toBe(200);
     expect(replay.status).toBe(200);
     expect(replay.body.data.attemptId).toBe(first.body.data.attemptId);
+    const startCollision = await supertest(app())
+      .post(`/api/v8/partner/certifications/${certificationId}/exam/start`)
+      .set('Authorization', `Bearer ${token()}`)
+      .set('Idempotency-Key', `start-${suffix}`)
+      .send({ language: 'pl' });
+    expect(startCollision.status).toBe(409);
     expect(
       (
         await sql.query(
@@ -323,11 +448,39 @@ describe.sequential('Partner legacy cutover guard (real PG)', () => {
     expect(cold.rows[0].passed).toBe(true);
     expect(cold.rows[0].certificate_id).toBeTruthy();
 
+    const beforeRevoked = await sql.query(
+      `SELECT
+        (SELECT count(*)::int FROM partner_client_organizations WHERE partner_org_id=$1) clients,
+        (SELECT count(*)::int FROM partner_projects WHERE partner_org_id=$1) projects,
+        (SELECT count(*)::int FROM partner_commissions WHERE partner_org_id=$1) commissions`,
+      [partnerOrgId]
+    );
     await sql.query(
       `UPDATE organization_members SET status='REVOKED' WHERE organization_id=$1 AND user_id=$2`,
       [orgId, userId]
     );
     const revoked = await start();
     expect(revoked.status).toBe(403);
+    const afterRevoked = await sql.query(
+      `SELECT
+        (SELECT count(*)::int FROM partner_client_organizations WHERE partner_org_id=$1) clients,
+        (SELECT count(*)::int FROM partner_projects WHERE partner_org_id=$1) projects,
+        (SELECT count(*)::int FROM partner_commissions WHERE partner_org_id=$1) commissions`,
+      [partnerOrgId]
+    );
+    expect(afterRevoked.rows[0]).toEqual(beforeRevoked.rows[0]);
+  });
+
+  it('fails closed on a hostile pre-existing receipt shape', async () => {
+    await sql.query('BEGIN');
+    try {
+      await sql.query(
+        `ALTER TABLE partner_certification_mutation_receipts RENAME TO partner_cert_receipts_good`
+      );
+      await sql.query(`CREATE TABLE partner_certification_mutation_receipts(id text)`);
+      await expect(sql.query(receiptMigration)).rejects.toThrow(/incompatible columns/);
+    } finally {
+      await sql.query('ROLLBACK');
+    }
   });
 });

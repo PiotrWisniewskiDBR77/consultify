@@ -545,6 +545,7 @@ export async function updateCertificationModuleProgress(params: {
   userId: string;
   status?: 'not_started' | 'in_progress' | 'completed';
   progress?: number;
+  idempotencyKey: string;
 }): Promise<{ status: string; progressPercent: number }> {
   if (!params.status && !Number.isFinite(params.progress)) {
     throw new Error('status or progress required');
@@ -552,7 +553,33 @@ export async function updateCertificationModuleProgress(params: {
   const progress = Number.isFinite(params.progress)
     ? Math.max(0, Math.min(100, Number(params.progress)))
     : null;
+  const operation = `progress:${params.certificationId}:${params.moduleId}`;
+  const requestHash = crypto
+    .createHash('sha256')
+    .update(JSON.stringify({ status: params.status || null, progress }))
+    .digest('hex');
   return withPgTransaction(async (query) => {
+    await query(`SELECT pg_advisory_xact_lock(hashtextextended($1,0))`, [
+      `${params.partnerOrgId}:${params.userId}:${operation}:${params.idempotencyKey}`,
+    ]);
+    const receipt = await query<any>(
+      `SELECT request_hash,status,response_json FROM partner_certification_mutation_receipts
+       WHERE partner_org_id=$1 AND user_id=$2 AND operation=$3 AND idempotency_key=$4`,
+      [params.partnerOrgId, params.userId, operation, params.idempotencyKey]
+    );
+    if (receipt.rows[0]) {
+      if (receipt.rows[0].request_hash !== requestHash) {
+        throw new Error('Idempotency replay payload mismatch');
+      }
+      if (receipt.rows[0].status !== 'COMPLETED') throw new Error('Idempotency request incomplete');
+      return receipt.rows[0].response_json as { status: string; progressPercent: number };
+    }
+    await query(
+      `INSERT INTO partner_certification_mutation_receipts
+       (partner_org_id,user_id,operation,idempotency_key,request_hash)
+       VALUES($1,$2,$3,$4,$5)`,
+      [params.partnerOrgId, params.userId, operation, params.idempotencyKey, requestHash]
+    );
     const cert = await query<any>(
       `SELECT id, certification_type, exam_mode, review_state, certificate_id, passed_exam_at,
               completed_at
@@ -611,7 +638,23 @@ export async function updateCertificationModuleProgress(params: {
        WHERE certification_id=$1 AND module_id=$2`,
       [params.certificationId, params.moduleId]
     );
-    return { status: row.rows[0].status, progressPercent: Number(row.rows[0].progress_percent) };
+    const response = {
+      status: row.rows[0].status,
+      progressPercent: Number(row.rows[0].progress_percent),
+    };
+    await query(
+      `UPDATE partner_certification_mutation_receipts
+       SET status='COMPLETED',response_json=$1,completed_at=NOW()
+       WHERE partner_org_id=$2 AND user_id=$3 AND operation=$4 AND idempotency_key=$5`,
+      [
+        JSON.stringify(response),
+        params.partnerOrgId,
+        params.userId,
+        operation,
+        params.idempotencyKey,
+      ]
+    );
+    return response;
   });
 }
 
@@ -643,6 +686,9 @@ export async function startCertificationExam(params: {
       )
     : null;
   if (existingAttempt) {
+    if (existingAttempt.language !== params.language) {
+      throw new Error('Idempotency replay payload mismatch');
+    }
     const ids = parseJson<Array<{ questionId: string }>>(existingAttempt.questions_json, []).map(
       (item) => item.questionId
     );
