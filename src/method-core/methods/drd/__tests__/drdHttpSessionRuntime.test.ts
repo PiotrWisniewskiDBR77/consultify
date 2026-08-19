@@ -265,8 +265,8 @@ describe('requirement 8 — frozen Output only ever comes from a server response
   });
 });
 
-describe('offline write queue (requirement 4) and reconnect reconciliation (requirement 5)', () => {
-  it('a network failure on recordAnswer queues the write and flips status to recovery — never silently dropped', async () => {
+describe('mounted production write contract — API confirmation is mandatory', () => {
+  it('a network failure rejects the save, exposes offline state, and creates no local write queue', async () => {
     const storage = makeMemoryStorage();
     hoisted.getSession.mockResolvedValue({ session: makeSession(), roles: ['owner'] });
     hoisted.listEvents.mockResolvedValue([]);
@@ -275,61 +275,13 @@ describe('offline write queue (requirement 4) and reconnect reconciliation (requ
     const runtime = new DrdHttpSessionRuntime('sess-1', storage);
     await runtime.refresh();
 
-    await runtime.recordAnswer({ unitId: 'unit-1', level: 1, questionId: 'q1', answerState: 'confirmed', text: 'x' });
+    await expect(runtime.recordAnswer({ unitId: 'unit-1', level: 1, questionId: 'q1', answerState: 'confirmed', text: 'x' }))
+      .rejects.toMatchObject({ isNetworkError: true });
 
-    expect(runtime.getState().status).toBe('recovery');
-    expect(runtime.getState().pendingWriteCount).toBe(1);
-    expect(runtime.hasPendingWrites()).toBe(true);
-    // The queue itself is real localStorage content — never lost.
-    const raw = storage.getItem('method-core:pending-writes:sess-1');
-    expect(raw).toBeTruthy();
-    expect(JSON.parse(raw!)).toHaveLength(1);
-  });
-
-  it('reconnecting never auto-flushes the queue — retryPending() must be called explicitly', async () => {
-    const storage = makeMemoryStorage();
-    hoisted.getSession.mockResolvedValue({ session: makeSession(), roles: ['owner'] });
-    hoisted.listEvents.mockResolvedValue([]);
-    hoisted.appendEvent.mockRejectedValue(networkError());
-
-    const runtime = new DrdHttpSessionRuntime('sess-1', storage);
-    await runtime.refresh();
-    await runtime.recordAnswer({ unitId: 'unit-1', level: 1, questionId: 'q1', answerState: 'confirmed', text: 'x' });
-    expect(runtime.getState().status).toBe('recovery');
-
-    // Simulate "connectivity is back" the ONLY way this runtime learns about
-    // it passively — a refresh() that now succeeds. This must NOT, by
-    // itself, flush or discard the queued write.
-    hoisted.appendEvent.mockClear();
-    await runtime.refresh();
-    expect(runtime.getState().pendingWriteCount).toBe(1);
-    expect(hoisted.appendEvent).not.toHaveBeenCalled();
-
-    // Only an explicit retryPending() call resolves it.
-    hoisted.appendEvent.mockResolvedValue({ id: 'evt-1', type: 'ANSWER_CONFIRMED' });
-    const result = await runtime.retryPending();
-    expect(result).toEqual({ succeeded: 1, stillPending: 0 });
+    expect(runtime.getState()).toMatchObject({ status: 'offline', pendingWriteCount: 0 });
+    expect(runtime.hasPendingWrites()).toBe(false);
+    expect(storage.getItem('method-core:pending-writes:sess-1')).toBeNull();
     expect(runtime.getState().pendingWriteCount).toBe(0);
-    expect(runtime.getState().status).toBe('ready');
-  });
-
-  it('discardPendingAndReloadServer() is the explicit "server wins" choice — drops the queue without attempting it', async () => {
-    const storage = makeMemoryStorage();
-    hoisted.getSession.mockResolvedValue({ session: makeSession(), roles: ['owner'] });
-    hoisted.listEvents.mockResolvedValue([]);
-    hoisted.appendEvent.mockRejectedValue(networkError());
-
-    const runtime = new DrdHttpSessionRuntime('sess-1', storage);
-    await runtime.refresh();
-    await runtime.recordAnswer({ unitId: 'unit-1', level: 1, questionId: 'q1', answerState: 'confirmed', text: 'x' });
-    expect(runtime.getState().pendingWriteCount).toBe(1);
-
-    hoisted.appendEvent.mockClear();
-    await runtime.discardPendingAndReloadServer();
-
-    expect(hoisted.appendEvent).not.toHaveBeenCalled();
-    expect(runtime.getState().pendingWriteCount).toBe(0);
-    expect(runtime.getState().status).toBe('ready');
   });
 });
 

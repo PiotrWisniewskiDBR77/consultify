@@ -285,20 +285,20 @@ export class DrdHttpSessionRuntime {
   }
 
   // -- writes ------------------------------------------------------------
-  // Every write: try the network first. On a genuine offline failure, queue
-  // it (status -> 'recovery') instead of losing it or pretending it landed.
+  // Every production write is server-confirmed or fails. The old pilot queued
+  // offline writes in localStorage and returned success to the workspace;
+  // that is not an acceptable source-of-truth contract for the mounted DRD
+  // flow because a local draft could look persisted. Existing queue helpers
+  // remain only so an old browser can explicitly discard/reconcile residue.
 
-  private async runWrite(kind: PendingWrite['kind'], idempotencyKey: string, payload: unknown, exec: () => Promise<void>): Promise<void> {
+  private async runWrite(_kind: PendingWrite['kind'], _idempotencyKey: string, _payload: unknown, exec: () => Promise<void>): Promise<void> {
     try {
       await exec();
       await this.refresh();
     } catch (err) {
       if (isOfflineError(err)) {
-        const pending = readPending(this.storage, this.sessionId);
-        pending.push({ id: newIdempotencyKey(), kind, idempotencyKey, payload });
-        writePending(this.storage, this.sessionId, pending);
-        this.setState({ status: 'recovery', pendingWriteCount: pending.length, error: 'Zapis w kolejce — offline.' });
-        return;
+        this.setState({ status: 'offline', error: 'Brak połączenia — zmiana nie została zapisana.' });
+        throw err;
       }
       this.handleFailure(err);
       throw err;

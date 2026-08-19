@@ -76,6 +76,7 @@ export interface MethodWorkspaceShellProps {
   degradedMessage?: string | null;
   loading?: boolean;
   errorMessage?: string | null;
+  readOnly?: boolean;
 
   className?: string;
 }
@@ -123,6 +124,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
   degradedMessage,
   loading = false,
   errorMessage,
+  readOnly = false,
   className = '',
 }) => {
   const [internalViewMode, setInternalViewMode] = useState<MethodWorkspaceViewMode>(() =>
@@ -237,6 +239,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
           <button
             type="button"
             onClick={() => onModeChange('guided_manual')}
+            disabled={readOnly}
             aria-pressed={mode === 'guided_manual'}
             className={`rounded-md px-2 py-1 font-medium transition-colors ${
               mode === 'guided_manual' ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:text-c-text'
@@ -247,6 +250,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
           <button
             type="button"
             onClick={() => onModeChange('teresa_led')}
+            disabled={readOnly}
             aria-pressed={mode === 'teresa_led'}
             className={`rounded-md px-2 py-1 font-medium transition-colors ${
               mode === 'teresa_led' ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:text-c-text'
@@ -269,6 +273,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
         <button
           type="button"
           onClick={onSaveNow}
+          disabled={readOnly}
           className="shrink-0 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           Zapisz teraz
@@ -372,7 +377,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
               <MethodNavigator {...navigatorProps} />
             </div>
             <div className="min-w-0 flex-1 overflow-y-auto p-4">
-              <InterviewFocusPanel {...interviewProps} />
+              <InterviewFocusPanel {...interviewProps} readOnly={readOnly} />
               {viewMode === 'split' && (
                 <div className="mt-4 rounded-xl border border-c-border-subtle p-3">
                   <LiveMatrix {...matrixProps} methodName={methodName} legendCollapsed />
@@ -380,7 +385,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
               )}
             </div>
             <div className="hidden w-72 shrink-0 overflow-y-auto border-l border-c-border-subtle p-3 xl:block">
-              <TeresaPreviewPanel {...teresaProps} />
+              <TeresaPreviewPanel {...teresaProps} readOnly={readOnly} />
             </div>
           </div>
         )}

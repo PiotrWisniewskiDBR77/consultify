@@ -448,12 +448,15 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
   });
 
   const isOnline = state?.status !== 'offline' && state?.status !== 'recovery';
+  const canWrite = (state?.roles ?? []).some((role) =>
+    ['owner', 'lead_assessor', 'assessor', 'respondent', 'evidence_owner'].includes(role)
+  );
 
   const { state: saveState, lastSavedAt, errorMessage: saveErrorMessage, markDirty, saveNow } = useMethodWorkspaceSave({
     isOnline,
     debounceMs: 800,
     save: async () => {
-      if (!runtime) return { ok: false, error: 'Sesja jeszcze nie gotowa.' };
+      if (!runtime || !canWrite) return { ok: false, error: 'Sesja jest tylko do odczytu.' };
       const entry = Object.entries(draftAnswerText).find(([qid]) => focusQuestions.some((q) => q.questionId === qid));
       if (!entry) return { ok: true };
       const [questionId, text] = entry;
@@ -484,7 +487,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
 
   const handleAnswerStateChange = useCallback(
     async (questionId: string, answerState: InterviewFocusQuestion['answerState'], justification?: string) => {
-      if (!answerState || !runtime) return;
+      if (!answerState || !runtime || !canWrite) return;
       await runtime.recordAnswer({
         unitId: activeArea.id,
         level: focusLevelFallback,
@@ -494,13 +497,13 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
         justification,
       });
     },
-    [runtime, activeArea.id, focusLevelFallback, draftAnswerText]
+    [runtime, canWrite, activeArea.id, focusLevelFallback, draftAnswerText]
   );
 
   const handleEvidenceDrop = useCallback(
     async (questionId: string, files: FileList) => {
       const file = files[0];
-      if (!file || !runtime) return;
+      if (!file || !runtime || !canWrite) return;
       await runtime.recordEvidence({
         unitId: activeArea.id,
         level: focusLevelFallback,
@@ -510,12 +513,12 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
         linkedQuestionIds: [questionId],
       });
     },
-    [runtime, activeArea.id, focusLevelFallback]
+    [runtime, canWrite, activeArea.id, focusLevelFallback]
   );
 
   const handleAskTeresa = useCallback(
     async (questionId: string) => {
-      if (!runtime) return;
+      if (!runtime || !canWrite) return;
       const evidence = evidenceEventsFor(events, activeArea.id);
       await runtime.createTeresaPreview({
         capabilityId: 'draft_score_proposal',
@@ -533,12 +536,12 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
         quality: { verdict: evidence.length > 0 ? 'valid' : 'needs_human_review', failedChecks: evidence.length > 0 ? [] : ['lists_supporting_evidence'] },
       });
     },
-    [runtime, events, activeArea.id, focusLevelFallback]
+    [runtime, canWrite, events, activeArea.id, focusLevelFallback]
   );
 
   const handleCommit = useCallback(
     async (request: TeresaCommitRequest) => {
-      if (!runtime) return;
+      if (!runtime || !canWrite) return;
       const outcome = await runtime.commitTeresaPreview({ previewId: request.previewId, decision: request.decision, editedChanges: request.editedChanges });
       if (outcome.ok && (request.decision === 'accept' || request.decision === 'accept_with_edits')) {
         const preview = pendingPreviews.find((p) => p.previewId === request.previewId);
@@ -554,7 +557,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
         }
       }
     },
-    [runtime, pendingPreviews, activeArea.id]
+    [runtime, canWrite, pendingPreviews, activeArea.id]
   );
 
   const readiness: MethodReadiness = useMemo(() => {
@@ -628,6 +631,12 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
       />
     );
   }
+  // Mounted production DRD is fail-closed: a cached session may help explain
+  // what the user was viewing, but it is never an editable fallback when the
+  // API is unavailable.
+  if (state.status === 'offline') {
+    return <ErrorRetryView message="Brak połączenia z serwerem. Tryb DRD jest tylko do odczytu po potwierdzeniu serwera; żadna zmiana nie została zapisana." onRetry={() => void runReconciliation(() => runtime?.refresh() ?? Promise.resolve())} onExit={onExit ?? (() => {})} />;
+  }
   if (state.status === 'error' && !state.session) {
     return <ErrorRetryView message={state.error ?? 'Nieznany błąd.'} onRetry={() => void runReconciliation(() => runtime?.refresh() ?? Promise.resolve())} onExit={onExit ?? (() => {})} />;
   }
@@ -649,39 +658,43 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
         state={state}
         sourceKind={sourceKind}
         onGenerateReport={() =>
-          runtime?.generateReport({
-            title: 'Raport DRD',
-            content: {
-              executiveSummary: 'Sesja DRD — wynik cząstkowy.',
-              participants: ['Piotr (Owner)', 'Anna (Approver)'],
-              strengths: ['Proces sprzedaży ma podstawową dokumentację.'],
-            },
-          })
+          canWrite
+            ? runtime?.generateReport({
+                title: 'Raport DRD',
+                content: {
+                  executiveSummary: 'Sesja DRD — wynik cząstkowy.',
+                  participants: ['Piotr (Owner)', 'Anna (Approver)'],
+                  strengths: ['Proces sprzedaży ma podstawową dokumentację.'],
+                },
+              })
+            : undefined
         }
         onGenerateInitiative={() =>
-          runtime?.generateInitiativeDraft({
-            title: 'Domknij automatyzację procesu sprzedaży w CRM',
-            findingIds: (state.output?.findings ?? []).map((f) => f.id),
-            rationale: 'Znaleziska Outputu wskazują lukę między current a target.',
-            expectedOutcome: 'Podniesienie poziomu dojrzałości.',
-            confidence: 'medium',
-          })
+          canWrite
+            ? runtime?.generateInitiativeDraft({
+                title: 'Domknij automatyzację procesu sprzedaży w CRM',
+                findingIds: (state.output?.findings ?? []).map((f) => f.id),
+                rationale: 'Znaleziska Outputu wskazują lukę między current a target.',
+                expectedOutcome: 'Podniesienie poziomu dojrzałości.',
+                confidence: 'medium',
+              })
+            : undefined
         }
+        readOnly={!canWrite}
         onExit={onExit ?? (() => {})}
       />
     );
   }
 
-  const canSendToReview = session.state === 'active';
-  const canSendBack = session.state === 'in_review';
+  const canSendToReview = canWrite && session.state === 'active';
+  const canSendBack = canWrite && session.state === 'in_review';
   const canFreeze = session.state === 'in_review' && state.roles.includes('approver');
 
   return (
     <div className="flex h-full flex-col">
-      {state.status === 'offline' && <OfflineBanner onRetry={() => void runReconciliation(() => runtime?.refresh() ?? Promise.resolve())} />}
       <div className="flex items-center gap-3 border-b border-c-border-subtle bg-c-warning/5 px-4 py-1.5 text-[11px] text-c-text-secondary">
         <AlertTriangle size={12} className="shrink-0 text-c-warning" />
-        <span>Sesja DRD przez HTTP — {DRD_METHOD_PACK_ID} — demo bypass gotowości packa (methodology_review), jak w legacy runtime.</span>
+        <span>Sesja DRD przez HTTP — {DRD_METHOD_PACK_ID} — kanoniczny stan serwera.</span>
         <DrdSourceIndicator
           source={sourceKind}
           title={sourceKind === 'SERVER' ? 'Świeżo potwierdzone przez serwer.' : 'Nie w pełni zsynchronizowane z serwerem.'}
@@ -732,12 +745,9 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<HttpScreenProps & { forceSta
           viewMode={viewMode}
           onViewModeChange={setViewMode}
           loading={state.status === 'loading' && Boolean(state.session)}
+          readOnly={!canWrite}
           degradedMessage={
-            state.status === 'offline'
-              ? 'Offline — praca kolejkowana lokalnie, nie potwierdzona przez serwer.'
-              : session.state === 'active'
-                ? null
-                : `Status: ${session.state}`
+            session.state === 'active' ? null : `Status: ${session.state}`
           }
           navigatorProps={{
             nodes: navigatorNodes,
@@ -847,7 +857,8 @@ const FrozenOutputHttpView: React.FC<{
   onGenerateReport: () => void;
   onGenerateInitiative: () => void;
   onExit: () => void;
-}> = ({ state, sourceKind, onGenerateReport, onGenerateInitiative, onExit }) => {
+  readOnly?: boolean;
+}> = ({ state, sourceKind, onGenerateReport, onGenerateInitiative, onExit, readOnly = false }) => {
   const session = state.session!;
   const output = state.output;
 
@@ -914,7 +925,7 @@ const FrozenOutputHttpView: React.FC<{
             <FileText size={14} className="text-c-text-secondary" />
             <h2 className="text-sm font-semibold text-c-text">Report Snapshot</h2>
           </div>
-          <button type="button" onClick={onGenerateReport} disabled={!output} className="rounded-md border border-c-border px-2 py-1 text-[11px] font-medium text-c-text-secondary disabled:opacity-40 hover:bg-c-surface-raised">
+          <button type="button" onClick={onGenerateReport} disabled={!output || readOnly} className="rounded-md border border-c-border px-2 py-1 text-[11px] font-medium text-c-text-secondary disabled:opacity-40 hover:bg-c-surface-raised">
             Generuj raport z Outputu
           </button>
         </div>
@@ -940,7 +951,7 @@ const FrozenOutputHttpView: React.FC<{
             <Lightbulb size={14} className="text-c-text-secondary" />
             <h2 className="text-sm font-semibold text-c-text">Initiative Proposal Draft (lokalny, NIE Registered Initiative)</h2>
           </div>
-          <button type="button" onClick={onGenerateInitiative} disabled={!output} className="rounded-md border border-c-border px-2 py-1 text-[11px] font-medium text-c-text-secondary disabled:opacity-40 hover:bg-c-surface-raised">
+          <button type="button" onClick={onGenerateInitiative} disabled={!output || readOnly} className="rounded-md border border-c-border px-2 py-1 text-[11px] font-medium text-c-text-secondary disabled:opacity-40 hover:bg-c-surface-raised">
             Wygeneruj z findingów
           </button>
         </div>

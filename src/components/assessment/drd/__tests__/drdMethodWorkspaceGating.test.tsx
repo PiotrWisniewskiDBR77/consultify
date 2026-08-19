@@ -65,13 +65,13 @@ function makeMemoryStorage(): Storage {
   } as Storage;
 }
 
-describe('shouldMountDrdMethodWorkspace — the exact gate the view branches on', () => {
-  it('true only for framework === "drd" AND the flag enabled', () => {
+describe('shouldMountDrdMethodWorkspace — mounted DRD is canonical regardless of rollout flag', () => {
+  it('true for DRD when the historical flag is enabled', () => {
     expect(shouldMountDrdMethodWorkspace('drd', true)).toBe(true);
   });
 
-  it('false when the flag is OFF, even for drd — legacy editor stays reachable', () => {
-    expect(shouldMountDrdMethodWorkspace('drd', false)).toBe(false);
+  it('remains true when the historical flag is OFF — legacy/local writer is not a production fallback', () => {
+    expect(shouldMountDrdMethodWorkspace('drd', false)).toBe(true);
   });
 
   it('false for every other framework, flag ON or OFF — this slice is DRD-only', () => {

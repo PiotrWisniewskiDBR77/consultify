@@ -344,6 +344,30 @@ async function loadOwnedSession(
   return session;
 }
 
+const METHOD_SESSION_WRITE_ROLES: ReadonlySet<MethodProcessRole> = new Set([
+  'owner',
+  'lead_assessor',
+  'assessor',
+  'respondent',
+  'evidence_owner',
+]);
+
+/**
+ * Viewer/observer and same-tenant bystanders may read a session, but never
+ * append assessment truth. Tenant scope alone is not write authority.
+ */
+async function requireSessionWriteRole(
+  res: Response,
+  organizationId: string,
+  sessionId: string,
+  actorUserId: string
+): Promise<boolean> {
+  const roles = await sessionService.getRoles(organizationId, sessionId, actorUserId);
+  if (roles.some((role) => METHOD_SESSION_WRITE_ROLES.has(role))) return true;
+  res.status(403).json({ error: 'session_read_only', roles });
+  return false;
+}
+
 /**
  * Walks `output.revisionOfOutputId` back through a reopen/correction chain
  * (bounded — a runaway chain refuses to loop forever rather than hang a
@@ -680,7 +704,6 @@ router.post(
     if (!actorUserId) return;
     const session = await loadOwnedSession(req, res, req.params.id);
     if (!session) return;
-
     const body = (req.body ?? {}) as Record<string, unknown>;
     const targetUserId = body.userId;
     const role = body.role;
@@ -840,6 +863,7 @@ router.post(
     if (!actorUserId) return;
     const session = await loadOwnedSession(req, res, req.params.id);
     if (!session) return;
+    if (!(await requireSessionWriteRole(res, organizationId, session.id, actorUserId))) return;
 
     const body = (req.body ?? {}) as Record<string, unknown>;
     const type = body.type;
@@ -1070,6 +1094,7 @@ router.post(
     if (!actorUserId) return;
     const session = await loadOwnedSession(req, res, req.params.id);
     if (!session) return;
+    if (!(await requireSessionWriteRole(res, organizationId, session.id, actorUserId))) return;
 
     const body = (req.body ?? {}) as Record<string, unknown>;
     const capabilityId = body.capabilityId as TeresaCapabilityId | undefined;
@@ -1142,6 +1167,7 @@ router.post(
     if (!actorUserId) return;
     const session = await loadOwnedSession(req, res, req.params.id);
     if (!session) return;
+    if (!(await requireSessionWriteRole(res, organizationId, session.id, actorUserId))) return;
 
     const body = (req.body ?? {}) as Record<string, unknown>;
     const previewId = body.previewId;
@@ -1410,11 +1436,14 @@ async function createArtefactSnapshot(
 ): Promise<void> {
   const organizationId = requireOrg(req, res);
   if (!organizationId) return;
+  const actorUserId = requireActor(req, res);
+  if (!actorUserId) return;
   const output = await methodOutputService.getOutput(organizationId, firstParam(req.params.id));
   if (!output) {
     res.status(404).json({ error: 'Output not found' });
     return;
   }
+  if (!(await requireSessionWriteRole(res, organizationId, output.sessionId, actorUserId))) return;
   const body = (req.body ?? {}) as Record<string, unknown>;
   if (!isNonEmptyString(body.title)) {
     res.status(400).json({ error: 'title is required' });
@@ -1595,11 +1624,14 @@ router.post(
   asyncHandler(async (req: AuthedRequest, res: Response) => {
     const organizationId = requireOrg(req, res);
     if (!organizationId) return;
+    const actorUserId = requireActor(req, res);
+    if (!actorUserId) return;
     const output = await methodOutputService.getOutput(organizationId, firstParam(req.params.id));
     if (!output) {
       res.status(404).json({ error: 'Output not found' });
       return;
     }
+    if (!(await requireSessionWriteRole(res, organizationId, output.sessionId, actorUserId))) return;
     const body = (req.body ?? {}) as Record<string, unknown>;
     const findingIds = Array.isArray(body.findingIds) ? (body.findingIds as string[]) : [];
     if (findingIds.length === 0) {

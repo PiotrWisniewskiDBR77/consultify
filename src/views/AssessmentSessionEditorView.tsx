@@ -113,9 +113,12 @@ export function isAssessmentReadOnly(opts: {
  */
 export function shouldMountDrdMethodWorkspace(
   framework: string | undefined,
-  flagEnabled: boolean
+  _flagEnabled: boolean
 ): boolean {
-  return framework === 'drd' && flagEnabled;
+  // Mounted DRD routes are canonical method-core HTTP routes. The flag is
+  // retained in the signature for existing harness compatibility only; it
+  // may no longer select the legacy/local demo writer in production.
+  return framework === 'drd';
 }
 
 function calcConfidenceAvgFromCompletion(completionPercent: number): number {
@@ -1749,6 +1752,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
     return (
       <DrdMethodWorkspaceScreen
         demoSessionId={assessmentId}
+        forceHttpSourceOfTruth
         onExit={() => navigate('/assessment/overview')}
       />
     );

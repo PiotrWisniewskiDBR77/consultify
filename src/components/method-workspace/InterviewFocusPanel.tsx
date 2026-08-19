@@ -36,6 +36,7 @@ export interface InterviewFocusPanelProps {
   onAskTeresa: (questionId: string, topic: 'explain' | 'compare_levels' | 'examples') => void;
   canGoBack: boolean;
   canGoNext: boolean;
+  readOnly?: boolean;
   className?: string;
 }
 
@@ -63,6 +64,7 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
   onAskTeresa,
   canGoBack,
   canGoNext,
+  readOnly = false,
   className = '',
 }) => {
   const [skipJustification, setSkipJustification] = useState('');
@@ -128,12 +130,14 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
               <textarea
                 id={`answer-${q.question.questionId}`}
                 value={q.answerText}
+                disabled={readOnly}
                 onChange={(e) => onAnswerChange(q.question.questionId, e.target.value)}
                 rows={3}
                 className="flex-1 rounded-lg border border-c-border bg-c-surface p-2.5 text-sm text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 placeholder="Opisz sytuację własnymi słowami…"
               />
               <VoiceAnswerChannel
+                disabled={readOnly}
                 onTranscript={(text, isFinal) => {
                   if (isFinal) onAnswerChange(q.question.questionId, `${q.answerText} ${text}`.trim());
                 }}
@@ -142,6 +146,7 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
           </div>
 
           <AnswerStateControl
+            disabled={readOnly}
             value={q.answerState}
             onChange={(state, justification) => onAnswerStateChange(q.question.questionId, state, justification)}
             resolutionData={{ ...resolutionData, questionId: q.question.questionId }}
@@ -152,11 +157,13 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
           <div
             data-testid="evidence-drop-zone"
             onDragOver={(e) => {
+              if (readOnly) return;
               e.preventDefault();
               setDragActive(q.question.questionId);
             }}
             onDragLeave={() => setDragActive(null)}
             onDrop={(e) => {
+              if (readOnly) return;
               e.preventDefault();
               setDragActive(null);
               if (e.dataTransfer.files.length > 0) onEvidenceDrop(q.question.questionId, e.dataTransfer.files);
@@ -170,10 +177,11 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
             <span className="flex items-center gap-1.5 text-c-text-secondary">
               <Paperclip size={13} />
               Przeciągnij dowód lub{' '}
-              <label className="cursor-pointer underline underline-offset-2 hover:text-c-text">
+              <label className={readOnly ? 'cursor-not-allowed opacity-50' : 'cursor-pointer underline underline-offset-2 hover:text-c-text'}>
                 wybierz plik
                 <input
                   type="file"
+                  disabled={readOnly}
                   className="sr-only"
                   onChange={(e) => {
                     if (e.target.files && e.target.files.length > 0) {
@@ -233,6 +241,7 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
         <button
           type="button"
           onClick={onSave}
+          disabled={readOnly}
           className="inline-flex items-center gap-1.5 rounded-lg border border-c-border px-3 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           Zapisz
@@ -253,6 +262,7 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
         <button
           type="button"
           onClick={() => onAskTeresa(primary.question.questionId, 'explain')}
+          disabled={readOnly}
           className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs text-c-info hover:bg-c-info/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           <Sparkles size={13} />
@@ -263,6 +273,7 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
           <button
             type="button"
             onClick={() => setSkipping(true)}
+            disabled={readOnly}
             className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs text-c-text-muted hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
             <SkipForward size={13} />

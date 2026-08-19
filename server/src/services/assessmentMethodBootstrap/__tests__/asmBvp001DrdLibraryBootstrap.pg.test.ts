@@ -55,9 +55,12 @@ describe.skipIf(!REAL_DB)('ASM-BVP-001 — DRD Library bootstrap, real PostgreSQ
   const ORG_B = `org-bvp1-b-${SUFFIX}`;
   const USER_A = `user-bvp1-a-${SUFFIX}`;
   const USER_B = `user-bvp1-b-${SUFFIX}`;
+  const USER_VIEWER = `user-bvp1-viewer-${SUFFIX}`;
 
   let tokenA = '';
   let tokenB = '';
+  let viewerToken = '';
+  let ownerSessionId = '';
 
   let DRD_METHOD_PACK_ID: string;
   let DRD_METHOD_PACK_VERSION: string;
@@ -87,6 +90,7 @@ describe.skipIf(!REAL_DB)('ASM-BVP-001 — DRD Library bootstrap, real PostgreSQ
     for (const [id, org] of [
       [USER_A, ORG_A],
       [USER_B, ORG_B],
+      [USER_VIEWER, ORG_A],
     ] as const) {
       await pool.query(
         `INSERT INTO users (id, organization_id, email, role) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING`,
@@ -103,6 +107,7 @@ describe.skipIf(!REAL_DB)('ASM-BVP-001 — DRD Library bootstrap, real PostgreSQ
       });
     tokenA = sign(USER_A, ORG_A);
     tokenB = sign(USER_B, ORG_B);
+    viewerToken = sign(USER_VIEWER, ORG_A);
 
     const registryModule = await import('../../../method-core/MethodPackRegistry.js');
     DRD_METHOD_PACK_ID = registryModule.DRD_METHOD_PACK_ID;
@@ -128,7 +133,7 @@ describe.skipIf(!REAL_DB)('ASM-BVP-001 — DRD Library bootstrap, real PostgreSQ
     // organizations (ON DELETE CASCADE, see
     // server/migrations/20260813_method_core_1_kernel.sql). users has no
     // cascade from organizations, so users must go first.
-    await pool.query(`DELETE FROM users WHERE id = ANY($1)`, [[USER_A, USER_B]]);
+    await pool.query(`DELETE FROM users WHERE id = ANY($1)`, [[USER_A, USER_B, USER_VIEWER]]);
     await pool.query(`DELETE FROM organizations WHERE id = ANY($1)`, [[ORG_A, ORG_B]]);
     await pool.end();
   });
@@ -158,6 +163,7 @@ describe.skipIf(!REAL_DB)('ASM-BVP-001 — DRD Library bootstrap, real PostgreSQ
 
     expect(res.status).toBe(201);
     const sessionId = res.body.session.id;
+    ownerSessionId = sessionId;
     expect(typeof sessionId).toBe('string');
 
     const row = await pool.query(`SELECT * FROM method_sessions WHERE id = $1`, [sessionId]);
@@ -174,6 +180,39 @@ describe.skipIf(!REAL_DB)('ASM-BVP-001 — DRD Library bootstrap, real PostgreSQ
     );
     expect(pack.rows).toHaveLength(1);
     expect(pack.rows[0].readiness).toBe(DRD_REGISTRATION_READINESS);
+  });
+
+  it('1b. same-tenant viewer can cold-read the canonical session but cannot append assessment truth', async () => {
+    const read = await request(app)
+      .get(`/api/method/sessions/${ownerSessionId}`)
+      .set('Authorization', `Bearer ${viewerToken}`);
+    expect(read.status).toBe(200);
+    expect(read.body.session.id).toBe(ownerSessionId);
+    expect(read.body.roles).toEqual([]);
+
+    const before = await pool.query(
+      `SELECT count(*)::int AS n FROM method_events WHERE session_id = $1`,
+      [ownerSessionId]
+    );
+    const refused = await request(app)
+      .post(`/api/method/sessions/${ownerSessionId}/events`)
+      .set('Authorization', `Bearer ${viewerToken}`)
+      .set('Idempotency-Key', `viewer-write:${randomUUID()}`)
+      .send({
+        type: 'ANSWER_CONFIRMED',
+        unitId: '1A',
+        level: 1,
+        actorKind: 'human',
+        payload: { questionId: '1A-L1-Q1', answerState: 'confirmed', text: 'must not land' },
+      });
+    expect(refused.status).toBe(403);
+    expect(refused.body.error).toBe('session_read_only');
+
+    const after = await pool.query(
+      `SELECT count(*)::int AS n FROM method_events WHERE session_id = $1`,
+      [ownerSessionId]
+    );
+    expect(after.rows[0].n).toBe(before.rows[0].n);
   });
 
   // ---------------------------------------------------------------------------

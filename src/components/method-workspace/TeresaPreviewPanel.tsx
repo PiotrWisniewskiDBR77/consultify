@@ -25,6 +25,7 @@ export interface TeresaPreviewPanelProps {
   onTakeLead: () => void;
   onLetMeWorkManually: () => void;
   mode: 'guided_manual' | 'teresa_led';
+  readOnly?: boolean;
   className?: string;
 }
 
@@ -47,9 +48,10 @@ function renderDiffValue(value: unknown): string {
   }
 }
 
-const ProposalCard: React.FC<{ preview: TeresaPreview; onCommit: (r: TeresaCommitRequest) => void }> = ({
+const ProposalCard: React.FC<{ preview: TeresaPreview; onCommit: (r: TeresaCommitRequest) => void; readOnly?: boolean }> = ({
   preview,
   onCommit,
+  readOnly = false,
 }) => {
   const isExpired = new Date(preview.expiresAt).getTime() < Date.now();
   const decide = (decision: TeresaCommitRequest['decision']) => {
@@ -116,7 +118,7 @@ const ProposalCard: React.FC<{ preview: TeresaPreview; onCommit: (r: TeresaCommi
         <button
           type="button"
           onClick={() => decide('accept')}
-          disabled={isExpired}
+          disabled={isExpired || readOnly}
           className="rounded-md border border-c-success/40 bg-c-success/10 px-2 py-1 text-xs font-medium text-c-success hover:bg-c-success/20 disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           Zaakceptuj
@@ -124,7 +126,7 @@ const ProposalCard: React.FC<{ preview: TeresaPreview; onCommit: (r: TeresaCommi
         <button
           type="button"
           onClick={() => decide('accept_with_edits')}
-          disabled={isExpired}
+          disabled={isExpired || readOnly}
           className="rounded-md border border-c-border px-2 py-1 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           Zaakceptuj z edycją
@@ -132,6 +134,7 @@ const ProposalCard: React.FC<{ preview: TeresaPreview; onCommit: (r: TeresaCommi
         <button
           type="button"
           onClick={() => decide('reject')}
+          disabled={readOnly}
           className="rounded-md border border-c-border px-2 py-1 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           Odrzuć
@@ -139,6 +142,7 @@ const ProposalCard: React.FC<{ preview: TeresaPreview; onCommit: (r: TeresaCommi
         <button
           type="button"
           onClick={() => decide('rethink')}
+          disabled={readOnly}
           className="rounded-md border border-c-border px-2 py-1 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           Przemyśl ponownie
@@ -155,6 +159,7 @@ export const TeresaPreviewPanel: React.FC<TeresaPreviewPanelProps> = ({
   onTakeLead,
   onLetMeWorkManually,
   mode,
+  readOnly = false,
   className = '',
 }) => {
   return (
@@ -171,6 +176,7 @@ export const TeresaPreviewPanel: React.FC<TeresaPreviewPanelProps> = ({
         <button
           type="button"
           onClick={mode === 'teresa_led' ? onLetMeWorkManually : onTakeLead}
+          disabled={readOnly}
           className="rounded-md border border-c-border px-2 py-1 text-[11px] font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           {mode === 'teresa_led' ? 'Pracuję samodzielnie' : 'Prowadź Ty'}
@@ -207,7 +213,7 @@ export const TeresaPreviewPanel: React.FC<TeresaPreviewPanelProps> = ({
         ) : (
           <div className="space-y-2">
             {proposalQueue.map((preview) => (
-              <ProposalCard key={preview.previewId} preview={preview} onCommit={onCommit} />
+              <ProposalCard key={preview.previewId} preview={preview} onCommit={onCommit} readOnly={readOnly} />
             ))}
           </div>
         )}
