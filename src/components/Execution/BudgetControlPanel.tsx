@@ -86,6 +86,7 @@ interface BudgetEntry {
   description: string | null;
   periodMonth: number | null;
   periodYear: number | null;
+  version: number;
 }
 
 // ── Config ─────────────────────────────────────────────────────
@@ -215,13 +216,18 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
       }
       setDeletingEntryId(entry.id);
       try {
-        const requestId = deleteRequestIdsRef.current.get(entry.id) || crypto.randomUUID();
+        const storageKey = `consultify.execution.budget.delete.${initiativeId}.${entry.id}`;
+        const requestId =
+          deleteRequestIdsRef.current.get(entry.id) ||
+          sessionStorage.getItem(storageKey) ||
+          crypto.randomUUID();
         deleteRequestIdsRef.current.set(entry.id, requestId);
+        sessionStorage.setItem(storageKey, requestId);
         const response = await fetch(
-          `/api/execution-control/budget/entries/${encodeURIComponent(entry.id)}?initiativeId=${encodeURIComponent(initiativeId)}`,
+          `/api/execution-control/budget/entries/${encodeURIComponent(entry.id)}?initiativeId=${encodeURIComponent(initiativeId)}&expectedVersion=${entry.version}`,
           {
             method: 'DELETE',
-            headers: { Authorization: `Bearer ${token}`, 'X-Request-ID': requestId },
+            headers: { Authorization: `Bearer ${token}`, 'X-Idempotency-Key': requestId },
           }
         );
         if (!response.ok) {
@@ -231,6 +237,23 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
               (failure as any)?.message ||
               `Delete failed (${response.status})`
           );
+        }
+        const receiptReadback = await fetch(
+          `/api/execution-control/budget/entries/${encodeURIComponent(entry.id)}/delete-receipts/${encodeURIComponent(requestId)}?initiativeId=${encodeURIComponent(initiativeId)}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (!receiptReadback.ok) {
+          throw new Error(
+            'Delete was accepted, but its command receipt is not readable. Refresh and verify.'
+          );
+        }
+        const receiptBody = await receiptReadback.json();
+        if (
+          receiptBody?.receipt?.outcome !== 'SUCCEEDED' ||
+          receiptBody?.receipt?.entryId !== entry.id ||
+          receiptBody?.receipt?.expectedVersion !== entry.version
+        ) {
+          throw new Error('Delete receipt does not match this command. Refresh and verify.');
         }
         const readback = await fetch(
           `/api/execution-control/budget/entries/${encodeURIComponent(initiativeId)}`,
@@ -247,6 +270,7 @@ export const BudgetControlPanel: React.FC<BudgetControlPanelProps> = ({
         }
         setBudgetEntries(nextEntries);
         deleteRequestIdsRef.current.delete(entry.id);
+        sessionStorage.removeItem(storageKey);
         await loadData();
         onSaved?.();
         toast.success(t('execution.budget.entryDeleted', 'Budget entry deleted'));

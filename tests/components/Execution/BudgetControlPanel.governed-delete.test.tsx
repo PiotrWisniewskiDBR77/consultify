@@ -42,6 +42,7 @@ const entry = {
   description: null,
   periodMonth: 8,
   periodYear: 2026,
+  version: 1,
 };
 
 describe('BudgetControlPanel governed delete', () => {
@@ -57,13 +58,28 @@ describe('BudgetControlPanel governed delete', () => {
     global.fetch = vi
       .fn()
       .mockResolvedValueOnce({ ok: true, json: async () => ({ entries: [entry] }) })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ success: true }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          success: true,
+          receipt: { outcome: 'SUCCEEDED', entryId: entry.id, expectedVersion: entry.version },
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          receipt: { outcome: 'SUCCEEDED', entryId: entry.id, expectedVersion: entry.version },
+        }),
+      })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ entries: [] }) })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ entries: [] }) }) as any;
     render(<BudgetControlPanel initiativeId="initiative-1" />);
     fireEvent.click(await screen.findByRole('button', { name: 'Delete budget entry' }));
     await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith('Budget entry deleted'));
     expect(screen.queryByText(/Cloud/)).not.toBeInTheDocument();
+    expect(
+      sessionStorage.getItem('consultify.execution.budget.delete.initiative-1.entry-1')
+    ).toBeNull();
   });
 
   it('preserves a governed 409 error and never reports success', async () => {

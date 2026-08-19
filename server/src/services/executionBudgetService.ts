@@ -26,6 +26,7 @@ export interface BudgetEntry {
   source: string;
   createdBy: string | null;
   createdAt: string;
+  version: number;
 }
 
 export interface InitiativeBudgetSummary {
@@ -154,7 +155,7 @@ export async function getBudgetEntries(
 ): Promise<BudgetEntry[]> {
   const rows = ((await dbAll(
     `SELECT id, initiative_id, entry_type, cost_type, category, amount, currency,
-            description, period_month, period_year, source, created_by, created_at
+            description, period_month, period_year, source, created_by, created_at, version
      FROM budget_entries
      WHERE organization_id = ? AND initiative_id = ?
      ORDER BY period_year DESC NULLS LAST, period_month DESC NULLS LAST, created_at DESC`,
@@ -173,6 +174,7 @@ export async function getBudgetEntries(
     source: string;
     created_by: string | null;
     created_at: string;
+    version: number;
   }>;
 
   return rows.map((r) => ({
@@ -189,29 +191,46 @@ export async function getBudgetEntries(
     source: r.source,
     createdBy: r.created_by,
     createdAt: r.created_at,
+    version: Number(r.version),
   }));
 }
 
 export async function deleteBudgetEntry(
   organizationId: string,
   entryId: string,
-  initiativeId: string
+  initiativeId: string,
+  expectedVersion?: number,
+  options?: { deferSideEffects?: boolean }
 ): Promise<boolean> {
   const transactionClient = getCurrentPgTransactionClient();
   let deletedCount = 0;
   if (transactionClient) {
-    const deleted = await transactionClient.query(
-      `DELETE FROM budget_entries WHERE id = ? AND organization_id = ? AND initiative_id = ?`,
-      [entryId, organizationId, initiativeId]
-    );
+    const deleted =
+      expectedVersion === undefined
+        ? await transactionClient.query(
+            `DELETE FROM budget_entries WHERE id = ? AND organization_id = ? AND initiative_id = ?`,
+            [entryId, organizationId, initiativeId]
+          )
+        : await transactionClient.query(
+            `DELETE FROM budget_entries WHERE id = ? AND organization_id = ? AND initiative_id = ? AND version = ?`,
+            [entryId, organizationId, initiativeId, expectedVersion]
+          );
     deletedCount = deleted.rowCount;
   } else {
-    const deleted = await dbRun(
-      `DELETE FROM budget_entries
-      WHERE id = ? AND organization_id = ? AND initiative_id = ?`,
-      [entryId, organizationId, initiativeId],
-      { fallback: false }
-    );
+    const deleted =
+      expectedVersion === undefined
+        ? await dbRun(
+            `DELETE FROM budget_entries
+           WHERE id = ? AND organization_id = ? AND initiative_id = ?`,
+            [entryId, organizationId, initiativeId],
+            { fallback: false }
+          )
+        : await dbRun(
+            `DELETE FROM budget_entries
+           WHERE id = ? AND organization_id = ? AND initiative_id = ? AND version = ?`,
+            [entryId, organizationId, initiativeId, expectedVersion],
+            { fallback: false }
+          );
     deletedCount = deleted.changes ?? 0;
   }
   if (!deletedCount) return false;
@@ -229,7 +248,21 @@ export async function deleteBudgetEntry(
     await recalcInitiativeActualTotal(organizationId, initiativeId);
   }
 
-  // M14→M15 feed-forward: budget composition changed (non-blocking)
+  if (!options?.deferSideEffects) {
+    await emitBudgetDeleteSideEffects(organizationId, initiativeId, entryId, null);
+  }
+  return true;
+}
+
+export async function emitBudgetDeleteSideEffects(
+  organizationId: string,
+  initiativeId: string,
+  entryId: string,
+  actorUserId: string | null
+): Promise<void> {
+  // M14→M15 feed-forward: budget composition changed after the owning
+  // transaction committed. A failed receipt insert can therefore never emit
+  // a false downstream success signal.
   const { fireBudgetHealthExport } = await import('./executionResultsBridge.js');
   fireBudgetHealthExport(organizationId, initiativeId);
   // Writer observability for Execution -> Results (side-channel). Same call-site
@@ -237,13 +270,12 @@ export async function deleteBudgetEntry(
   // this path, so actor is honestly null rather than a guessed identity.
   observeWriter({
     organizationId,
-    actorUserId: null,
+    actorUserId,
     writerFamily: 'execution_results',
     operation: 'budgetHealthExport',
     endpoint: 'service:executionBudgetService.deleteBudgetEntry',
     correlationId: entryId,
   });
-  return true;
 }
 
 // ── Budget Summary (Initiative Level) ──────────────────────────

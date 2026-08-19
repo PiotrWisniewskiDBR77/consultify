@@ -28,16 +28,15 @@ import {
 } from '../services/delayDetectionService.js';
 import {
   createBudgetEntry,
-  deleteBudgetEntry,
   detectOverspendSignals,
   getBudgetEntries,
   getInitiativeBudgetSummary,
   getPortfolioBudgetSummary,
 } from '../services/executionBudgetService.js';
 import {
-  executeGovernedExecutionAction,
-} from '../services/executionActionRegistryService.js';
-import { requireOrgMember } from '../services/caseWorkspace/caseWorkspaceAuthContext.js';
+  executeBudgetDeleteCommand,
+  getBudgetDeleteReceipt,
+} from '../services/executionBudgetDeleteCommandService.js';
 import { getTimelineWarningsSnapshot } from '../services/executionControlReadService.js';
 import { dispatchProjectCommunicationEvent } from '../services/integrations/communicationSyncService.js';
 import { detectRiskSignals } from '../services/riskDetectionService.js';
@@ -541,40 +540,99 @@ router.post(
 // T042: Budget entries — delete
 // ================================================================
 
+const BudgetDeleteQuerySchema = z.object({
+  initiativeId: z.string().min(1),
+  expectedVersion: z.coerce.number().int().positive(),
+});
+
+router.get(
+  '/budget/entries/:entryId/delete-receipts/:idempotencyKey',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    const actorId = String(req.user?.id || '');
+    if (!orgId || !actorId) return res.status(401).json({ error: 'Unauthorized' });
+    const initiativeId = String(req.query.initiativeId || '').trim();
+    if (!initiativeId) return res.status(400).json({ error: 'initiativeId is required' });
+    try {
+      const receipt = await getBudgetDeleteReceipt({
+        organizationId: orgId,
+        actorId,
+        entryId: String(req.params.entryId),
+        initiativeId,
+        idempotencyKey: String(req.params.idempotencyKey),
+      });
+      if (!receipt) return res.status(404).json({ error: 'Delete receipt not found' });
+      return res.json({ receipt });
+    } catch (error) {
+      const authCode = String((error as { code?: unknown })?.code || '');
+      if (
+        /insufficient_org_role|not_org_member/.test(authCode) ||
+        (error instanceof Error && /insufficient_org_role|not_org_member/.test(error.message))
+      ) {
+        return res.status(403).json({ error: 'Forbidden', code: 'INSUFFICIENT_ORG_ROLE' });
+      }
+      throw error;
+    }
+  })
+);
+
 router.delete(
   '/budget/entries/:entryId',
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
-    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-
-    const { initiativeId } = req.query;
-    if (!initiativeId) return res.status(400).json({ error: 'initiativeId is required' });
-
-    const requestId = String(req.headers['x-request-id'] || '').trim() || null;
-    const membership = await requireOrgMember(String(req.user?.id || ''), orgId);
-    let deleted: boolean;
+    const actorId = String(req.user?.id || '');
+    if (!orgId || !actorId) return res.status(401).json({ error: 'Unauthorized' });
+    const parsed = BudgetDeleteQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      return res
+        .status(400)
+        .json({ error: 'initiativeId and positive expectedVersion are required' });
+    }
+    const idempotencyKey = String(req.headers['x-idempotency-key'] || '').trim();
+    if (!idempotencyKey) {
+      return res.status(400).json({ error: 'X-Idempotency-Key is required' });
+    }
     try {
-      deleted = await executeGovernedExecutionAction({
+      const receipt = await executeBudgetDeleteCommand({
         organizationId: orgId,
-        actionId: 'execution.budget.delete',
-        targetId: String(req.params.entryId),
-        actorId: String(req.user?.id || ''),
-        membershipRole: membership.role === 'CONSULTANT' ? 'MEMBER' : membership.role,
-        requestId,
-        operation: () => deleteBudgetEntry(orgId, String(req.params.entryId), String(initiativeId)),
+        actorId,
+        entryId: String(req.params.entryId),
+        initiativeId: parsed.data.initiativeId,
+        expectedVersion: parsed.data.expectedVersion,
+        idempotencyKey,
       });
+      if (receipt.outcome === 'DENIED') {
+        return res.status(403).json({ error: 'Forbidden', code: 'INSUFFICIENT_ORG_ROLE', receipt });
+      }
+      if (receipt.outcome === 'NOT_FOUND') {
+        return res.status(404).json({ error: 'Budget entry not found', receipt });
+      }
+      if (receipt.outcome === 'CONFLICT') {
+        return res.status(409).json({ error: 'Budget entry changed; refresh first', receipt });
+      }
+      return res.json({ success: true, receipt });
     } catch (error) {
-      if (error instanceof Error && error.message === 'insufficient_org_role') {
+      const authCode = String((error as { code?: unknown })?.code || '');
+      if (
+        /insufficient_org_role|not_org_member/.test(authCode) ||
+        (error instanceof Error && /insufficient_org_role|not_org_member/.test(error.message))
+      ) {
         return res.status(403).json({ error: 'Forbidden', code: 'INSUFFICIENT_ORG_ROLE' });
+      }
+      if (
+        error instanceof Error &&
+        error.message === 'execution_budget_delete_idempotency_conflict'
+      ) {
+        return res
+          .status(409)
+          .json({ error: 'Idempotency key was already used for another command' });
       }
       throw error;
     }
-    if (!deleted) {
-      return res.status(404).json({ error: 'Budget entry not found' });
-    }
-    return res.json({ success: true });
   })
 );
 
