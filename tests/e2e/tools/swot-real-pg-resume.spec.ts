@@ -490,8 +490,8 @@ test('TLS-05: signed creator and separate approver freeze, promote, replay and c
     );
     await page.getByRole('button', { name: /^Outcomes$/i }).click();
     await expect(page.getByRole('button', { name: /^Outcomes$/i })).toBeVisible();
-    await page.getByRole('button', { name: /^Example$/i }).click();
-    await expect(page.getByRole('button', { name: /^Example$/i })).toBeVisible();
+    await page.getByRole('button', { name: /^Example$/i }).nth(1).click();
+    await expect(page.getByRole('button', { name: /^Example$/i }).nth(1)).toBeVisible();
     await expect(page.getByText(/Context:/i)).toHaveCount(1);
     await expect(page.getByRole('button', { name: /^Start$/i })).toHaveCount(1);
     const create = await request.post(`${API_BASE_URL}/api/tools`, {
