@@ -76,7 +76,7 @@
       },
       {
         "sha": "b6081ba7227462d6e19098cd7c43c35a2d4162c3",
-        "candidateSourceSha": "4ab87a2d44d66c109e96fb061425139939696323",
+        "candidateSourceSha": "4ab87a2d44ce1db990a6c31766f96ae9300a5d17",
         "role": "structured XLSX staging, Balance Sheet scoping and explicit reviewable aggregate derivation",
         "paths": [
           "server/src/routes/finance-statements.routes.ts",
@@ -123,19 +123,19 @@
     ],
     "literalGates": [
       {
-        "command": "npx vitest run server/src/services/__tests__/financialStatementValueWriteService.stagedPack.test.ts --reporter=verbose --maxWorkers=1",
+        "command": "npx vitest run server/src/services/__tests__/financialStatementValueWriteService.stagedPack.test.ts server/src/services/__tests__/financialStatementSpreadsheetSection.test.ts --reporter=verbose --maxWorkers=1",
         "exitCode": 0,
-        "result": "1 file; 2/2 tests passed"
+        "result": "exact-current log 04-focused.log; 2 files; 3/3 tests passed; duration 926ms"
       },
       {
         "command": "DATABASE_URL=<isolated-local-pg> RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test npx vitest run server/src/services/finance/canonical/__tests__/statementPackRegistrationService.pg.test.ts --reporter=verbose --maxWorkers=1",
         "exitCode": 0,
-        "result": "1 file; 5/5 real PostgreSQL tests passed"
+        "result": "exact-current log 05-atomic.log; 1 file; 5/5 real PostgreSQL tests passed; duration 1.03s"
       },
       {
-        "command": "DATABASE_URL=<isolated-local-pg> E2E_USE_WEB_SERVER=true E2E_MOCK_DB=false E2E_MODE=false E2E_API_URL=http://127.0.0.1:3411 E2E_BASE_URL=http://127.0.0.1:3410 ENABLE_V8_GLOBAL=true npx playwright test --config playwright.config.ts tests/e2e/finance/finance-import.signed.spec.ts --project=chromium --workers=1",
+        "command": "DATABASE_URL=<isolated-local-pg> E2E_USE_WEB_SERVER=true E2E_MOCK_DB=false E2E_MODE=false E2E_API_URL=http://127.0.0.1:3431 E2E_BASE_URL=http://127.0.0.1:3430 ENABLE_V8_GLOBAL=true npx playwright test --config playwright.config.ts tests/e2e/finance/finance-import.signed.spec.ts --project=chromium --workers=1",
         "exitCode": 0,
-        "result": "1/1 signed Playwright test passed in 1.1m; real PostgreSQL and browser; no request interception or mock persistence"
+        "result": "exact-current log 06b-signed-v8.log; 1/1 signed Playwright test passed in 55.4s; real PostgreSQL and browser; no request interception or mock persistence"
       },
       {
         "command": "git diff --check && npx prettier --check tests/e2e/finance/finance-import.signed.spec.ts server/src/services/finance/canonical/__tests__/statementPackRegistrationService.pg.test.ts",
@@ -171,8 +171,24 @@
       "ordinary non-staged value writes preserve their existing pack-sync behavior",
       "foreign-tenant cleanup decoy remains unchanged"
     ],
-    "shaQualification": "The focused, realPG and signed-browser gates ran on candidate 7c032a9c79. The two FIN test paths and all FIN product paths are byte-identical at integrated testedSha ee0b7aac49; intervening commits touch Partner Certification only. ee0b7aac49 is therefore the exact-current tested product state for this reconciliation.",
-    "artifactDurability": "No screenshots or traces are committed. Playwright runtime artifacts and console logs were ephemeral supporting material only and are not represented as durable repository evidence.",
+    "exactCurrentRequalification": {
+      "sha": "ee0b7aac4935be380bc1cab359b6917625435a00",
+      "ephemeralLogDirectory": "/private/tmp/consultify-fin-final-ee0b7aac/",
+      "logs": {
+        "01-fresh.log": "strict fresh PostgreSQL migrations; exit 0",
+        "02-repeat.log": "strict repeat; Applying migrations: 0; exit 0",
+        "03-dry.log": "dry run; Pending migrations: 0; exit 0",
+        "04-focused.log": "2 files; 3/3 passed; exit 0",
+        "05-atomic.log": "1 file; 5/5 passed; exit 0",
+        "06b-signed-v8.log": "ports 3430/3431; 1/1 passed in 55.4s; exit 0",
+        "07-server-type.log": "server typecheck; exit 0",
+        "08-residue.log": "runs=0, decoy_orgs=0, decoy_artifacts=0, fin_artifacts=0, fin_receipts=0, fin_statements=0, fin_packs=0, flag_overrides=0, locks=0",
+        "09-ports.log": "only the existing PostgreSQL container mapping remained after runtime teardown",
+        "10-teardown.log": "DB_EXISTS=0"
+      }
+    },
+    "shaQualification": "The authoritative focused, realPG and signed-browser requalification ran on testedSha ee0b7aac49 itself. The earlier candidate run is historical supporting context only and is not used as the exact-current gate.",
+    "artifactDurability": "No screenshots or traces are committed. The exact-current logs under /private/tmp/consultify-fin-final-ee0b7aac/ are ephemeral supporting material only and are not represented as durable repository evidence.",
     "remainingBoundaries": [
       "No production deployment, release approval or production tenant execution was performed or authorized.",
       "No human financial-accounting approval of the imported values is claimed; the journey proves the governed review and explicit-confirmation mechanism.",
