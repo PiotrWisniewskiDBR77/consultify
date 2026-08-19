@@ -34,6 +34,11 @@ import {
 } from '../services/initiative/initiativeCandidateService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
+import {
+  certifyFlowTransformLineage,
+  FlowTransformLineageError,
+  type FlowSourceKind,
+} from '../services/flowTransform/flowTransformLineageService.js';
 
 const router = Router();
 
@@ -42,6 +47,41 @@ const router = Router();
 router.use(verifyToken, validateOrgMembership);
 
 const VALID_STATUSES: ReadonlyArray<CandidateStatus> = ['pending', 'accepted', 'dismissed'];
+const FLOW_SOURCE_KINDS: readonly FlowSourceKind[] = ['organization', 'interview', 'drd', 'swot'];
+
+router.post(
+  '/flow-transform/certify',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const organizationId = req.user?.organizationId;
+    const actorId = req.user?.id;
+    const sourceKind = String(req.body?.sourceKind || '') as FlowSourceKind;
+    const sourceReceiptId = String(req.body?.sourceReceiptId || '');
+    if (!organizationId || !actorId) return void res.status(401).json({ error: 'Unauthorized' });
+    if (!FLOW_SOURCE_KINDS.includes(sourceKind) || !sourceReceiptId) {
+      return void res
+        .status(400)
+        .json({
+          error: 'Valid sourceKind and sourceReceiptId are required',
+          code: 'FLOW_SOURCE_REF_INVALID',
+        });
+    }
+    try {
+      const result = await certifyFlowTransformLineage({
+        organizationId,
+        actorId,
+        sourceKind,
+        sourceReceiptId,
+        correlationId:
+          typeof req.body?.correlationId === 'string' ? req.body.correlationId : undefined,
+      });
+      res.status(result.created ? 201 : 200).json(result);
+    } catch (error) {
+      if (error instanceof FlowTransformLineageError)
+        return void res.status(error.status).json({ error: error.message, code: error.code });
+      throw error;
+    }
+  })
+);
 
 // ==================== LIST ====================
 /**

@@ -10,6 +10,11 @@ import organizationContextService, {
   NoApprovedGovernedClaimsError,
 } from '../services/organizationContext/OrganizationContextService.js';
 import { resolveLatestGovernedSnapshotRef } from '../services/organizationContext/governedSnapshotConsumerBindingService.js';
+import {
+  getOrganizationSnapshotCandidateHandoff,
+  handoffOrganizationSnapshotToCandidate,
+  OrganizationSnapshotCandidateHandoffError,
+} from '../services/organizationContext/organizationSnapshotCandidateHandoffService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
@@ -251,6 +256,54 @@ router.get(
       return;
     }
     res.json(snapshot);
+  })
+);
+
+router.post(
+  '/governed/versions/:version/candidate',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = requireOrgId(req, res);
+    if (!orgId) return;
+    if (!isAdminLike(req)) return void res.status(403).json({ error: 'Admin access required' });
+    const actorId = req.user?.id;
+    if (!actorId) return void res.status(401).json({ error: 'Unauthorized' });
+    try {
+      const result = await handoffOrganizationSnapshotToCandidate({
+        organizationId: orgId,
+        snapshotId: String(req.body?.snapshotId || ''),
+        snapshotVersion: Number(req.params.version),
+        snapshotContentHash: String(req.body?.contentHash || ''),
+        actorId,
+      });
+      res.status(result.created ? 201 : 200).json(result);
+    } catch (error) {
+      if (error instanceof OrganizationSnapshotCandidateHandoffError) {
+        return void res.status(error.status).json({ error: error.message, code: error.code });
+      }
+      throw error;
+    }
+  })
+);
+
+router.get(
+  '/governed/versions/:version/candidate',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = requireOrgId(req, res);
+    if (!orgId) return;
+    const snapshot = await organizationContextService.getSnapshotVersion(
+      orgId,
+      Number(req.params.version),
+      {
+        includeRestricted: isAdminLike(req),
+      }
+    );
+    if (!snapshot) return void res.status(404).json({ error: 'Snapshot version not found' });
+    const receipt = await getOrganizationSnapshotCandidateHandoff(orgId, snapshot.snapshotId);
+    if (!receipt)
+      return void res
+        .status(404)
+        .json({ error: 'No candidate handoff exists', code: 'NO_CANDIDATE_HANDOFF' });
+    res.json({ receipt });
   })
 );
 

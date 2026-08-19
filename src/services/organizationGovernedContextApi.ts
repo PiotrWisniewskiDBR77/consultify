@@ -60,6 +60,15 @@ export interface GovernedSnapshotRef {
   contentHash: string;
 }
 
+export interface OrganizationSnapshotCandidateReceipt {
+  receiptId: string;
+  snapshotId: string;
+  snapshotVersion: number;
+  snapshotContentHash: string;
+  candidateId: string;
+  createdAt: string;
+}
+
 export interface GovernedDocumentIngestResult {
   success: boolean;
   docId: string;
@@ -71,10 +80,7 @@ export interface GovernedDocumentIngestResult {
 const root = '/organization-context/governed';
 
 export const organizationGovernedContextApi = {
-  async ingestDocument(
-    file: File,
-    idempotencyKey: string
-  ): Promise<GovernedDocumentIngestResult> {
+  async ingestDocument(file: File, idempotencyKey: string): Promise<GovernedDocumentIngestResult> {
     return Api.uploadChatAttachment(file, idempotencyKey);
   },
 
@@ -116,5 +122,15 @@ export const organizationGovernedContextApi = {
       snapshotRef: GovernedSnapshotRef;
     };
     return response.snapshotRef;
+  },
+
+  async handoffCandidate(snapshot: GovernedSnapshotRef): Promise<{
+    created: boolean;
+    receipt: OrganizationSnapshotCandidateReceipt;
+  }> {
+    return (await Api.post(`${root}/versions/${snapshot.version}/candidate`, {
+      snapshotId: snapshot.snapshotId,
+      contentHash: snapshot.contentHash,
+    })) as { created: boolean; receipt: OrganizationSnapshotCandidateReceipt };
   },
 };

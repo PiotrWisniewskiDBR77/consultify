@@ -30,6 +30,7 @@
  * committed state. No separate advisory lock or mutex is introduced.
  */
 import { v4 as uuidv4 } from 'uuid';
+import { createHash } from 'node:crypto';
 
 import { withPinnedPostgresTransaction } from '../../database/PostgresDatabase.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
@@ -75,6 +76,8 @@ export interface HandoffRecord {
   sourceType: string;
   createdBy: string;
   createdAt: string;
+  sourceVersion: string | null;
+  snapshotContentHash: string | null;
 }
 
 type CandidateHandoffFaultStage = 'candidate-created' | 'receipt-inserted';
@@ -115,6 +118,8 @@ interface HandoffRow {
   source_type: string;
   created_by: string;
   created_at: string | Date;
+  source_version: string | null;
+  snapshot_content_hash: string | null;
 }
 
 interface CandidateRow {
@@ -139,6 +144,8 @@ function toHandoffRecord(row: HandoffRow): HandoffRecord {
     sourceType: row.source_type,
     createdBy: row.created_by,
     createdAt: toIsoString(row.created_at),
+    sourceVersion: row.source_version ?? null,
+    snapshotContentHash: row.snapshot_content_hash ?? null,
   };
 }
 
@@ -191,12 +198,36 @@ export async function handoffAssessmentToCandidate(params: {
 
     // Idempotency check: a receipt already exists for this assessment -> retry.
     const existingHandoff = await tx.queryOne<HandoffRow>(
-      `SELECT id, organization_id, assessment_id, output_id, review_id, candidate_id, source_type, created_by, created_at
+      `SELECT id, organization_id, assessment_id, output_id, review_id, candidate_id, source_type, created_by, created_at,
+              source_version, snapshot_content_hash
        FROM assessment_candidate_handoffs
        WHERE organization_id = ? AND assessment_id = ?`,
       [organizationId, assessmentId]
     );
     if (existingHandoff) {
+      const sourceVersion = currentSnapshot.id;
+      const snapshotContentHash = createHash('sha256')
+        .update(currentSnapshot.snapshot_json ?? '')
+        .update('\u0000')
+        .update(currentSnapshot.provenance_json ?? '')
+        .digest('hex');
+      if (!existingHandoff.source_version || !existingHandoff.snapshot_content_hash) {
+        throw new CandidateHandoffError(
+          'CANDIDATE_HANDOFF_LINEAGE_MISSING',
+          409,
+          'Historical receipt has no immutable output hash; replay cannot infer it'
+        );
+      }
+      if (
+        existingHandoff.source_version !== sourceVersion ||
+        existingHandoff.snapshot_content_hash !== snapshotContentHash
+      ) {
+        throw new CandidateHandoffError(
+          'CANDIDATE_HANDOFF_OUTPUT_MISMATCH',
+          409,
+          'Receipt belongs to different accepted output bytes'
+        );
+      }
       const existingCandidate = await tx.queryOne<CandidateRow>(
         `SELECT id, title, rationale, status FROM initiative_candidates WHERE id = ? AND organization_id = ?`,
         [existingHandoff.candidate_id, organizationId]
@@ -232,6 +263,12 @@ export async function handoffAssessmentToCandidate(params: {
       assessmentId;
     const title = `Assessment: ${assessmentLabel}`;
     const reviewId = currentSnapshot.review_id ?? null;
+    const sourceVersion = currentSnapshot.id;
+    const snapshotContentHash = createHash('sha256')
+      .update(currentSnapshot.snapshot_json ?? '')
+      .update('\u0000')
+      .update(currentSnapshot.provenance_json ?? '')
+      .digest('hex');
     const rationale = `Promoted from accepted DRD assessment output (review ${
       reviewId ?? currentSnapshot.id
     }).`;
@@ -251,8 +288,9 @@ export async function handoffAssessmentToCandidate(params: {
     const now = new Date().toISOString();
     const inserted = await tx.queryOne<HandoffRow>(
       `INSERT INTO assessment_candidate_handoffs
-         (id, organization_id, assessment_id, output_id, review_id, candidate_id, source_type, created_by, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, 'assessment_accepted_output', ?, ?)
+         (id, organization_id, assessment_id, output_id, review_id, candidate_id, source_type, created_by, created_at,
+          source_version, snapshot_content_hash)
+       VALUES (?, ?, ?, ?, ?, ?, 'assessment_accepted_output', ?, ?, ?, ?)
        ON CONFLICT (organization_id, assessment_id) DO NOTHING
        RETURNING *`,
       [
@@ -264,6 +302,8 @@ export async function handoffAssessmentToCandidate(params: {
         candidate.id,
         actorId,
         now,
+        sourceVersion,
+        snapshotContentHash,
       ]
     );
     await testFaultInjector?.('receipt-inserted');
@@ -274,7 +314,8 @@ export async function handoffAssessmentToCandidate(params: {
     const receiptRow =
       inserted ??
       (await tx.queryOne<HandoffRow>(
-        `SELECT id, organization_id, assessment_id, output_id, review_id, candidate_id, source_type, created_by, created_at
+        `SELECT id, organization_id, assessment_id, output_id, review_id, candidate_id, source_type, created_by, created_at,
+                source_version, snapshot_content_hash
          FROM assessment_candidate_handoffs
          WHERE organization_id = ? AND assessment_id = ?`,
         [organizationId, assessmentId]

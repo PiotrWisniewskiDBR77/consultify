@@ -88,6 +88,7 @@
  * duplicate.
  */
 import { v4 as uuidv4 } from 'uuid';
+import { createHash } from 'node:crypto';
 
 import { withPinnedPostgresTransaction } from '../../database/PostgresDatabase.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
@@ -147,6 +148,8 @@ export interface InterviewHandoffRecord {
   candidateId: string;
   createdBy: string;
   createdAt: string;
+  sourceVersion: string | null;
+  snapshotContentHash: string | null;
 }
 
 type CandidateHandoffFaultStage = 'candidate-created' | 'receipt-inserted';
@@ -172,6 +175,12 @@ interface SubmissionSnapshotRow {
   saved_at: string | Date;
 }
 
+interface SubmissionSnapshotEntryRow {
+  id: string;
+  question_id: string;
+  answer_text: string | null;
+}
+
 interface FindingRow {
   id: string;
   organization_id: string;
@@ -194,6 +203,8 @@ interface HandoffRow {
   candidate_id: string;
   created_by: string;
   created_at: string | Date;
+  source_version: string | null;
+  snapshot_content_hash: string | null;
 }
 
 interface CandidateRow {
@@ -231,6 +242,8 @@ function toHandoffRecord(row: HandoffRow): InterviewHandoffRecord {
     candidateId: row.candidate_id,
     createdBy: row.created_by,
     createdAt: toIsoString(row.created_at),
+    sourceVersion: row.source_version ?? null,
+    snapshotContentHash: row.snapshot_content_hash ?? null,
   };
 }
 
@@ -245,7 +258,7 @@ function toHandoffRecord(row: HandoffRow): InterviewHandoffRecord {
  * gets a plain (non-locking) read.
  */
 async function resolveEligibleSource(
-  db: Pick<CandidateDb, 'queryOne'>,
+  db: Pick<CandidateDb, 'queryOne' | 'queryAll'>,
   organizationId: string,
   source: InterviewCandidateSource,
   opts: { forUpdate: boolean }
@@ -256,6 +269,8 @@ async function resolveEligibleSource(
   submissionId: string | null;
   insightId: string | null;
   acceptedSnapshotId: string;
+  sourceVersion: string;
+  snapshotContentHash: string;
   title: string;
   rationale: string;
 }> {
@@ -317,6 +332,15 @@ async function resolveEligibleSource(
       : null;
 
     const acceptedSnapshotId = `${assignment.id}:${toIsoString(latestSubmission!.saved_at)}`;
+    const snapshotEntries = await db.queryAll<SubmissionSnapshotEntryRow>(
+      `SELECT id, question_id, answer_text FROM interview_answer_history
+       WHERE organization_id = ? AND assignment_id = ? AND reason = 'submission' AND saved_at = ?
+       ORDER BY question_id, id`,
+      [organizationId, assignment.id, latestSubmission!.saved_at]
+    );
+    const snapshotContentHash = createHash('sha256')
+      .update(JSON.stringify(snapshotEntries))
+      .digest('hex');
     const label = (template?.name && template.name.trim()) || assignment.id;
 
     return {
@@ -326,6 +350,8 @@ async function resolveEligibleSource(
       submissionId: acceptedSnapshotId,
       insightId: null,
       acceptedSnapshotId,
+      sourceVersion: acceptedSnapshotId,
+      snapshotContentHash,
       title: `Interview submission: ${label}`,
       rationale: `Promoted from an approved interview submission (assignment ${assignment.id}).`,
     };
@@ -354,6 +380,18 @@ async function resolveEligibleSource(
   }
 
   const acceptedSnapshotId = `${finding.insight_id}:${finding.id}:${toIsoString(finding.updated_at)}`;
+  const snapshotContentHash = createHash('sha256')
+    .update(
+      JSON.stringify({
+        id: finding.id,
+        insightId: finding.insight_id,
+        statement: finding.finding_statement,
+        reviewStatus: finding.review_status,
+        readbackStatus: finding.readback_status,
+        updatedAt: toIsoString(finding.updated_at),
+      })
+    )
+    .digest('hex');
   const statement = (finding.finding_statement || '').trim();
   const summary = statement.length > 160 ? `${statement.slice(0, 157)}...` : statement;
 
@@ -364,6 +402,8 @@ async function resolveEligibleSource(
     submissionId: null,
     insightId: finding.insight_id,
     acceptedSnapshotId,
+    sourceVersion: acceptedSnapshotId,
+    snapshotContentHash,
     title: summary ? `Interview insight: ${summary}` : `Interview insight finding ${finding.id}`,
     rationale: `Promoted from a published, client-confirmed interview insight finding (${finding.id}).`,
   };
@@ -384,6 +424,8 @@ export async function previewInterviewCandidate(params: {
   sourceType: InterviewCandidateSourceType;
   sourceId: string;
   acceptedSnapshotId: string;
+  sourceVersion: string;
+  snapshotContentHash: string;
   title: string;
   rationale: string;
   alreadyHandedOff: boolean;
@@ -402,6 +444,8 @@ export async function previewInterviewCandidate(params: {
     sourceType: resolved.sourceType,
     sourceId: resolved.sourceId,
     acceptedSnapshotId: resolved.acceptedSnapshotId,
+    sourceVersion: resolved.sourceVersion,
+    snapshotContentHash: resolved.snapshotContentHash,
     title: resolved.title,
     rationale: resolved.rationale,
     alreadyHandedOff: Boolean(existing),
@@ -437,6 +481,23 @@ export async function approveInterviewCandidateHandoff(params: {
       [organizationId, resolved.sourceType, resolved.acceptedSnapshotId]
     );
     if (existingHandoff) {
+      if (!existingHandoff.source_version || !existingHandoff.snapshot_content_hash) {
+        throw new InterviewCandidateHandoffError(
+          'HANDOFF_LINEAGE_MISSING',
+          409,
+          'Historical receipt has no immutable snapshot hash; replay cannot infer it'
+        );
+      }
+      if (
+        existingHandoff.source_version !== resolved.sourceVersion ||
+        existingHandoff.snapshot_content_hash !== resolved.snapshotContentHash
+      ) {
+        throw new InterviewCandidateHandoffError(
+          'HANDOFF_SOURCE_MISMATCH',
+          409,
+          'Receipt belongs to different source bytes'
+        );
+      }
       const existingCandidate = await tx.queryOne<CandidateRow>(
         `SELECT id, title, rationale, status FROM initiative_candidates WHERE id = ? AND organization_id = ?`,
         [existingHandoff.candidate_id, organizationId]
@@ -537,8 +598,9 @@ export async function approveInterviewCandidateHandoff(params: {
     const now = new Date().toISOString();
     const inserted = await tx.queryOne<HandoffRow>(
       `INSERT INTO interview_candidate_handoffs
-         (id, organization_id, source_type, source_id, interview_session_id, submission_id, insight_id, accepted_snapshot_id, candidate_id, created_by, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         (id, organization_id, source_type, source_id, interview_session_id, submission_id, insight_id, accepted_snapshot_id, candidate_id, created_by, created_at,
+          source_version, snapshot_content_hash)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT (organization_id, source_type, accepted_snapshot_id) DO NOTHING
        RETURNING *`,
       [
@@ -553,6 +615,8 @@ export async function approveInterviewCandidateHandoff(params: {
         candidate.id,
         actorId,
         now,
+        resolved.sourceVersion,
+        resolved.snapshotContentHash,
       ]
     );
     await testFaultInjector?.('receipt-inserted');
@@ -631,10 +695,10 @@ export async function getInterviewCandidateHandoff(params: {
   const candidateRow = await queryHelpers.queryOne<{
     source_type: string | null;
     source_id: string | null;
-  }>(`SELECT source_type, source_id FROM initiative_candidates WHERE id = ? AND organization_id = ?`, [
-    row.candidate_id,
-    organizationId,
-  ]);
+  }>(
+    `SELECT source_type, source_id FROM initiative_candidates WHERE id = ? AND organization_id = ?`,
+    [row.candidate_id, organizationId]
+  );
 
   const initiativeRow =
     candidateRow?.source_type && candidateRow?.source_id

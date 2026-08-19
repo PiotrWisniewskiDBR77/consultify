@@ -10,6 +10,7 @@ const api = vi.hoisted(() => ({
   getVersion: vi.fn(),
   ingestDocument: vi.fn(),
   resolveLatest: vi.fn(),
+  handoffCandidate: vi.fn(),
 }));
 const translate = (_key: string, fallback: string | Record<string, unknown>) =>
   typeof fallback === 'string'
@@ -90,9 +91,9 @@ describe('GovernedContextWorkspace', () => {
     api.decide.mockImplementation(async () => {
       currentClaims = [{ ...pendingClaim, reviewState: 'rejected' }];
       return {
-      claimId: 'claim-1',
-      reviewState: 'rejected',
-      wonDecision: false,
+        claimId: 'claim-1',
+        reviewState: 'rejected',
+        wonDecision: false,
       };
     });
     render(<GovernedContextWorkspace isAdmin />);
@@ -116,9 +117,11 @@ describe('GovernedContextWorkspace', () => {
 
   it('ingests one admin document, reloads its pending claim, and ignores a duplicate change while busy', async () => {
     let release!: (value: { success: boolean; docId: string; filename: string }) => void;
-    const receipt = new Promise<{ success: boolean; docId: string; filename: string }>((resolve) => {
-      release = resolve;
-    });
+    const receipt = new Promise<{ success: boolean; docId: string; filename: string }>(
+      (resolve) => {
+        release = resolve;
+      }
+    );
     api.ingestDocument.mockReturnValue(receipt);
     api.listClaims.mockResolvedValueOnce([]).mockResolvedValueOnce([pendingClaim]);
     render(<GovernedContextWorkspace isAdmin />);
@@ -145,7 +148,9 @@ describe('GovernedContextWorkspace', () => {
     render(<GovernedContextWorkspace isAdmin />);
     await screen.findByText(/No sourced claims/i);
     const file = new File(['strategy'], 'strategy.pdf', { type: 'application/pdf' });
-    fireEvent.change(screen.getByLabelText(/Upload source document/i), { target: { files: [file] } });
+    fireEvent.change(screen.getByLabelText(/Upload source document/i), {
+      target: { files: [file] },
+    });
     expect(await screen.findByRole('alert')).toHaveTextContent('No governed claim was accepted');
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Retry/i }));
@@ -183,10 +188,7 @@ describe('GovernedContextWorkspace', () => {
 
   it.each([
     ['an empty claim set', []],
-    [
-      'an all-rejected claim set',
-      [{ ...pendingClaim, reviewState: 'rejected', approved: false }],
-    ],
+    ['an all-rejected claim set', [{ ...pendingClaim, reviewState: 'rejected', approved: false }]],
   ])('does not call publish for %s', async (_label, claims) => {
     api.listClaims.mockResolvedValue(claims);
     render(<GovernedContextWorkspace isAdmin />);
@@ -198,8 +200,10 @@ describe('GovernedContextWorkspace', () => {
   });
 
   it('publishes approved claims and reopens the exact immutable version with stale-source warning', async () => {
-    api.listClaims.mockResolvedValue([{ ...pendingClaim, reviewState: 'approved', approved: true }]);
-    let currentVersions: typeof version[] = [];
+    api.listClaims.mockResolvedValue([
+      { ...pendingClaim, reviewState: 'approved', approved: true },
+    ]);
+    let currentVersions: (typeof version)[] = [];
     api.listVersions.mockImplementation(async () => currentVersions);
     api.publish.mockImplementation(async () => {
       currentVersions = [version];
@@ -228,13 +232,21 @@ describe('GovernedContextWorkspace', () => {
     expect(await screen.findByText('Immutable version 1 was published.')).toBeInTheDocument();
     expect(await screen.findByRole('alert')).toHaveTextContent('deleted or changed');
     expect(screen.getAllByText('abc123')).toHaveLength(2);
-    expect(screen.getByTestId('selected-governed-ref')).toHaveTextContent('snapshot-1 · v1 · abc123');
+    expect(screen.getByTestId('selected-governed-ref')).toHaveTextContent(
+      'snapshot-1 · v1 · abc123'
+    );
   });
 
   it('shows visible sources and conflicts without exposing server-filtered restricted rows', async () => {
     api.listClaims.mockResolvedValue([
       { ...pendingClaim, visibilityScope: 'organization' },
-      { ...pendingClaim, claimId: 'claim-2', itemId: 'item-2', value: { summary: 'Different' }, visibilityScope: 'organization' },
+      {
+        ...pendingClaim,
+        claimId: 'claim-2',
+        itemId: 'item-2',
+        value: { summary: 'Different' },
+        visibilityScope: 'organization',
+      },
     ]);
     render(<GovernedContextWorkspace isAdmin={false} />);
     expect(await screen.findByRole('heading', { name: 'Sources (2)' })).toBeInTheDocument();
@@ -244,9 +256,16 @@ describe('GovernedContextWorkspace', () => {
   });
 
   it('does not announce publish success until exact canonical readback matches', async () => {
-    api.listClaims.mockResolvedValue([{ ...pendingClaim, reviewState: 'approved', approved: true }]);
+    api.listClaims.mockResolvedValue([
+      { ...pendingClaim, reviewState: 'approved', approved: true },
+    ]);
     api.publish.mockResolvedValue(version);
-    api.getVersion.mockResolvedValue({ ...version, snapshotId: 'different', claims: [], sourceRefs: [] });
+    api.getVersion.mockResolvedValue({
+      ...version,
+      snapshotId: 'different',
+      claims: [],
+      sourceRefs: [],
+    });
     render(<GovernedContextWorkspace isAdmin />);
     fireEvent.click(await screen.findByRole('button', { name: /Publish approved/i }));
     expect(await screen.findByRole('alert')).toHaveTextContent('governed state changed');
@@ -256,19 +275,70 @@ describe('GovernedContextWorkspace', () => {
 
   it('resolves latest once, reopens it exactly, and pins all three immutable fields', async () => {
     api.listVersions.mockResolvedValue([version]);
-    api.resolveLatest.mockResolvedValue({ snapshotId: 'snapshot-1', version: 1, contentHash: 'abc123' });
+    api.resolveLatest.mockResolvedValue({
+      snapshotId: 'snapshot-1',
+      version: 1,
+      contentHash: 'abc123',
+    });
     api.getVersion.mockResolvedValue({ ...version, claims: [], sourceRefs: [] });
     render(<GovernedContextWorkspace isAdmin />);
     fireEvent.click(await screen.findByRole('button', { name: /Select latest now/i }));
-    expect(await screen.findByTestId('selected-governed-ref')).toHaveTextContent('snapshot-1 · v1 · abc123');
+    expect(await screen.findByTestId('selected-governed-ref')).toHaveTextContent(
+      'snapshot-1 · v1 · abc123'
+    );
     expect(api.resolveLatest).toHaveBeenCalledTimes(1);
     expect(api.getVersion).toHaveBeenCalledWith(1);
   });
 
+  it('hands the exact selected snapshot to canonical Candidates and renders its cold receipt', async () => {
+    api.listVersions.mockResolvedValue([version]);
+    api.resolveLatest.mockResolvedValue({
+      snapshotId: 'snapshot-1',
+      version: 1,
+      contentHash: 'abc123',
+    });
+    api.getVersion.mockResolvedValue({ ...version, claims: [], sourceRefs: [] });
+    api.handoffCandidate.mockResolvedValue({
+      created: true,
+      receipt: {
+        receiptId: 'receipt-1',
+        snapshotId: 'snapshot-1',
+        snapshotVersion: 1,
+        snapshotContentHash: 'abc123',
+        candidateId: 'candidate-1',
+        createdAt: '2026-08-19T10:00:00.000Z',
+      },
+    });
+    render(<GovernedContextWorkspace isAdmin />);
+    fireEvent.click(await screen.findByRole('button', { name: /Select latest now/i }));
+    fireEvent.click(
+      await screen.findByRole('button', { name: /Send exact snapshot to Candidates/i })
+    );
+    await waitFor(() =>
+      expect(api.handoffCandidate).toHaveBeenCalledWith({
+        snapshotId: 'snapshot-1',
+        version: 1,
+        contentHash: 'abc123',
+      })
+    );
+    expect(await screen.findByTestId('organization-candidate-receipt')).toHaveTextContent(
+      'candidate-1 · source v1 · abc123'
+    );
+  });
+
   it('fails closed when latest readback does not match and renders a typed conflict', async () => {
     api.listVersions.mockResolvedValue([version]);
-    api.resolveLatest.mockResolvedValue({ snapshotId: 'snapshot-1', version: 1, contentHash: 'abc123' });
-    api.getVersion.mockResolvedValue({ ...version, contentHash: 'changed', claims: [], sourceRefs: [] });
+    api.resolveLatest.mockResolvedValue({
+      snapshotId: 'snapshot-1',
+      version: 1,
+      contentHash: 'abc123',
+    });
+    api.getVersion.mockResolvedValue({
+      ...version,
+      contentHash: 'changed',
+      claims: [],
+      sourceRefs: [],
+    });
     render(<GovernedContextWorkspace isAdmin />);
     fireEvent.click(await screen.findByRole('button', { name: /Select latest now/i }));
     expect(await screen.findByRole('alert')).toHaveTextContent('governed state changed');
