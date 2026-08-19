@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const toastSuccess = vi.fn();
@@ -113,7 +113,7 @@ describe('EarningsSection V8 payout settings seam', () => {
     vi.mocked(V8PartnerApi.getPayouts).mockResolvedValue({ payouts: [] } as any);
   });
 
-  it('prefers governed payout-settings read and update before legacy fallback', async () => {
+  it('renders governed payout settings as historical read-only data', async () => {
     vi.mocked(V8PartnerApi.getPayoutSettings).mockResolvedValue({
       settings: {
         minimumThreshold: 500,
@@ -127,45 +127,18 @@ describe('EarningsSection V8 payout settings seam', () => {
         },
       },
     } as any);
-    vi.mocked(V8PartnerApi.updatePayoutSettings).mockResolvedValue({
-      success: true,
-      settings: {
-        minimumThreshold: 500,
-        payoutMethod: 'PAYPAL',
-        autoPayoutEnabled: true,
-        payoutAccount: {
-          accountHolderName: 'Updated Partner Co',
-          iban: 'DE00 0000 0000 0000 0000 00',
-          bicSwift: 'REVODEFF',
-          bankName: 'Revolut Bank',
-        },
-      },
-    } as any);
-
     render(<EarningsSection subsection="payout-settings" />);
 
-    const holderInput = await screen.findByDisplayValue('Partner Co', {}, { timeout: 10000 });
-    fireEvent.change(holderInput, { target: { value: 'Updated Partner Co' } });
-    fireEvent.click(await screen.findByRole('button', { name: 'Save Changes' }, { timeout: 10000 }));
-
-    await waitFor(() => {
-      expect(V8PartnerApi.updatePayoutSettings).toHaveBeenCalledWith({
-        minimumThreshold: 500,
-        payoutMethod: 'PAYPAL',
-        autoPayoutEnabled: false,
-        payoutAccount: {
-          accountHolderName: 'Updated Partner Co',
-          iban: 'DE89 3704 0044 0532 0130 00',
-          bicSwift: 'COBADEFFXXX',
-          bankName: 'Commerzbank AG',
-        },
-      });
-    }, { timeout: 10000 });
-
-    expect(Api.put).not.toHaveBeenCalledWith('/api/partners/payout-settings', expect.anything());
-    expect(screen.queryByRole('button', { name: /auto-request payout/i })).not.toBeInTheDocument();
-    expect(screen.getByText('Manual payout requests only')).toBeInTheDocument();
-    expect(toastSuccess).toHaveBeenCalledWith('Payout settings updated');
+    expect(await screen.findByText('Partner Co', {}, { timeout: 10000 })).toBeInTheDocument();
+    expect(screen.getByText('DE89 3704 0044 0532 0130 00')).toBeInTheDocument();
+    expect(screen.getByTestId('historical-payout-method')).toHaveTextContent('PAYPAL');
+    expect(screen.getByText('Payout operations unavailable')).toBeInTheDocument();
+    expect(screen.getByText(/AMD-PRT-ECONOMICS-002/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Save Changes' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+    expect(V8PartnerApi.updatePayoutSettings).not.toHaveBeenCalled();
+    expect(Api.put).not.toHaveBeenCalled();
   });
 
   it('does not enable payout from ledger balance when canonical eligibility is below policy minimum', async () => {
@@ -201,12 +174,13 @@ describe('EarningsSection V8 payout settings seam', () => {
 
     render(<EarningsSection />);
 
-    expect(await screen.findByRole('button', { name: /Request payout|Zażądaj wypłaty/i })).toBeDisabled();
+    expect(await screen.findByTestId('partner-economics-approved-out')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Request payout|Zażądaj wypłaty/i })).not.toBeInTheDocument();
+    expect(V8PartnerApi.requestPayout).not.toHaveBeenCalled();
   });
 
   it('keeps legacy reads but fails closed without a legacy payout-settings mutation', async () => {
     vi.mocked(V8PartnerApi.getPayoutSettings).mockRejectedValue({ status: 404 });
-    vi.mocked(V8PartnerApi.updatePayoutSettings).mockRejectedValue({ status: 404 });
     vi.mocked(Api.get).mockImplementation(async (url: string) => {
       if (url === '/api/partners/earnings') {
         return {
@@ -246,31 +220,15 @@ describe('EarningsSection V8 payout settings seam', () => {
       }
       throw new Error(`Unexpected GET ${url}`);
     });
-    vi.mocked(Api.put).mockResolvedValue({
-      success: true,
-      data: {
-        minimumThreshold: 250,
-        payoutMethod: 'BANK_TRANSFER',
-        autoPayoutEnabled: false,
-        payoutAccount: {
-          accountHolderName: 'Legacy Updated',
-          iban: 'PL009999',
-          bicSwift: 'WBKPPLPP',
-          bankName: 'Legacy Bank',
-        },
-      },
-    } as any);
-
     render(<EarningsSection subsection="payout-settings" />);
 
-    const holderInput = await screen.findByDisplayValue('Legacy Partner Co', {}, { timeout: 10000 });
-    fireEvent.change(holderInput, { target: { value: 'Legacy Updated' } });
-    fireEvent.click(await screen.findByRole('button', { name: 'Save Changes' }, { timeout: 10000 }));
-
-    await waitFor(() => expect(toastError).toHaveBeenCalled(), { timeout: 10000 });
+    expect(await screen.findByText('Legacy Partner Co', {}, { timeout: 10000 })).toBeInTheDocument();
+    expect(screen.getByText('PL001234')).toBeInTheDocument();
 
     expect(Api.get).toHaveBeenCalledWith('/api/partners/payout-settings');
-    expect(Api.put).not.toHaveBeenCalledWith('/api/partners/payout-settings', expect.anything());
-    expect(toastSuccess).not.toHaveBeenCalledWith('Payout settings updated');
+    expect(V8PartnerApi.updatePayoutSettings).not.toHaveBeenCalled();
+    expect(Api.put).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: 'Save Changes' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
   });
 });
