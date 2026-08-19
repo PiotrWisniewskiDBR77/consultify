@@ -16,6 +16,7 @@ const UserController = UserControllerRaw as any;
 import { AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
+import { requireActiveMembership } from '../../services/legacyCutover/requireActiveMembership.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -75,7 +76,12 @@ router.get('/:id', UserController.getUserById);
  * PUT /api/users/:id
  * Update user
  */
-router.put('/:id', validateBody(UpdateUserSchema), UserController.updateUser);
+router.put(
+  '/:id',
+  requireActiveMembership,
+  validateBody(UpdateUserSchema),
+  UserController.updateUser
+);
 
 /**
  * PATCH /api/users/:id/role

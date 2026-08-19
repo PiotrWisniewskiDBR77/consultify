@@ -20,6 +20,8 @@ describe('SET-BVP-001 settings persistence across a cold session (real PostgreSQ
   let settingsRouter: any;
   let usersRouter: any;
   let authRouter: any;
+  let aiSettingsRouter: any;
+  let suiteLockHeld = false;
 
   const token = (claims: Record<string, unknown> = {}) =>
     jwt.sign(
@@ -40,6 +42,7 @@ describe('SET-BVP-001 settings persistence across a cold session (real PostgreSQ
     app.use('/api/settings', settingsRouter);
     app.use('/api/users', usersRouter);
     app.use('/api/auth', authRouter);
+    app.use('/api/ai-settings', aiSettingsRouter);
     return app;
   };
 
@@ -60,6 +63,13 @@ describe('SET-BVP-001 settings persistence across a cold session (real PostgreSQ
     resetConnection = database.resetConnection;
     await resetConnection();
     db = await database.getDatabaseAsync();
+    const databaseName = String((await db.get(`SELECT current_database() name`))?.name || '');
+    const databasePrefix = String(process.env.SET_BVP_DISPOSABLE_DB_PREFIX || '');
+    if (databasePrefix !== 'set_bvp_' || !databaseName.startsWith(databasePrefix)) {
+      throw new Error(`SET_BVP_DISPOSABLE_DB_REFUSED:${databaseName}`);
+    }
+    await db.get(`SELECT pg_advisory_lock(hashtext('SET-BVP-001-realdb'))`);
+    suiteLockHeld = true;
     await db.run(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [orgId, 'SET-BVP realDB']);
     await db.run(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [foreignOrgId, 'Foreign']);
     await db.run(
@@ -72,19 +82,40 @@ describe('SET-BVP-001 settings persistence across a cold session (real PostgreSQ
        VALUES (?, ?, ?, ?, ?, ?)`,
       [foreignUserId, foreignOrgId, `foreign-${suffix}@test.local`, 'Foreign', 'User', 'MEMBER']
     );
+    await db.run(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+       VALUES (?, ?, ?, ?, ?)`,
+      [randomUUID(), orgId, userId, 'MEMBER', 'ACTIVE']
+    );
+    await db.run(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+       VALUES (?, ?, ?, ?, ?)`,
+      [randomUUID(), foreignOrgId, foreignUserId, 'MEMBER', 'ACTIVE']
+    );
     settingsRouter = (await import('../../../server/src/routes/settings.routes.ts')).default;
-    usersRouter = (await import('../../../server/src/routes/users.routes.ts')).default;
+    usersRouter = (await import('../../../server/src/routes/user/users.routes.ts')).default;
     authRouter = (await import('../../../server/src/routes/auth.routes.ts')).default;
+    aiSettingsRouter = (await import('../../../server/src/routes/ai/ai-settings.routes.ts'))
+      .default;
   }, 30_000);
 
   afterAll(async () => {
     try {
       if (db) {
         await db.run(`DELETE FROM user_preferences WHERE user_id = ?`, [userId]);
+        await db.run(`DELETE FROM user_ai_settings WHERE user_id = ?`, [userId]);
+        await db.run(`DELETE FROM organization_members WHERE user_id IN (?, ?)`, [
+          userId,
+          foreignUserId,
+        ]);
         await db.run(`DELETE FROM users WHERE id = ?`, [foreignUserId]);
         await db.run(`DELETE FROM users WHERE id = ?`, [userId]);
         await db.run(`DELETE FROM organizations WHERE id = ?`, [foreignOrgId]);
         await db.run(`DELETE FROM organizations WHERE id = ?`, [orgId]);
+        if (suiteLockHeld) {
+          await db.get(`SELECT pg_advisory_unlock(hashtext('SET-BVP-001-realdb'))`);
+          suiteLockHeld = false;
+        }
       }
       await resetConnection?.();
     } finally {
@@ -96,14 +127,11 @@ describe('SET-BVP-001 settings persistence across a cold session (real PostgreSQ
     const profileWrite = await request(makeApp())
       .put(`/api/users/${userId}`)
       .set('Authorization', `Bearer ${token()}`)
-      .send({ firstName: 'Persisted', jobTitle: 'Transformation Lead', languagePreference: 'pl' });
+      .send({ firstName: 'Persisted', jobTitle: 'Transformation Lead', language: 'pl' });
     expect(profileWrite.status).toBe(200);
-    expect(profileWrite.body.data).toEqual(
-      expect.objectContaining({
-        first_name: 'Persisted',
-        job_title: 'Transformation Lead',
-        language: 'pl',
-      })
+    expect(profileWrite.body).toEqual({ id: userId, message: 'User updated successfully' });
+    expect(await db.get(`SELECT first_name, language FROM users WHERE id = ?`, [userId])).toEqual(
+      expect.objectContaining({ first_name: 'Persisted', language: 'pl' })
     );
 
     expect(
@@ -141,6 +169,12 @@ describe('SET-BVP-001 settings persistence across a cold session (real PostgreSQ
     ]);
     expect(row.value).not.toContain(secret);
     expect(row.value).toContain('enc:');
+
+    const aiBehaviorWrite = await auth('put', '/api/ai-settings/user').send({
+      response_style: 'detailed',
+      writing_tone: 'friendly',
+    });
+    expect(aiBehaviorWrite.status).toBe(200);
   });
 
   it('reads identical values through a new JWT and reopened database connection without secret readback', async () => {
@@ -234,5 +268,44 @@ describe('SET-BVP-001 settings persistence across a cold session (real PostgreSQ
 
     const persisted = await db.get(`SELECT first_name, language FROM users WHERE id = ?`, [userId]);
     expect(persisted).toEqual(expect.objectContaining({ first_name: 'Persisted', language: 'pl' }));
+  });
+
+  it('denies every mounted personal-setting write after membership revocation without mutation', async () => {
+    const snapshot = async () => ({
+      user: await db.get(
+        `SELECT first_name,last_name,job_title,language,updated_at FROM users WHERE id=?`,
+        [userId]
+      ),
+      preferences: await db.all(
+        `SELECT key,value,updated_at FROM user_preferences
+          WHERE user_id=? AND key IN ('settings:appearance','settings:notifications') ORDER BY key`,
+        [userId]
+      ),
+      ai: await db.all(`SELECT * FROM user_ai_settings WHERE user_id=? ORDER BY user_id`, [userId]),
+    });
+    const before = await snapshot();
+    await db.run(
+      `UPDATE organization_members SET status='REVOKED'
+        WHERE organization_id=? AND user_id=?`,
+      [orgId, userId]
+    );
+
+    const attempts = [
+      request(makeApp())
+        .put(`/api/users/${userId}`)
+        .set('Authorization', `Bearer ${token()}`)
+        .send({ firstName: 'Revoked profile', language: 'en' }),
+      auth('put', '/api/settings/preferences/appearance').send({ theme: 'light' }),
+      auth('put', '/api/settings/preferences/notifications').send({
+        preferences: { email: true },
+      }),
+      auth('put', '/api/ai-settings/user').send({ writing_tone: 'casual' }),
+    ];
+    const responses = await Promise.all(attempts);
+    for (const response of responses) {
+      expect(response.status).toBe(403);
+      expect(response.body).toEqual({ success: false, code: 'ORG_MEMBERSHIP_REVOKED' });
+    }
+    expect(await snapshot()).toEqual(before);
   });
 });

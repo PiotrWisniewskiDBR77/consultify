@@ -12,6 +12,7 @@ import { NextFunction, Request, Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
+import { requireActiveMembership } from '../../services/legacyCutover/requireActiveMembership.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { AppError } from '../../utils/ErrorHandler.js';
 import logger from '../../utils/Logger.js';
@@ -354,6 +355,7 @@ router.get(
 router.put(
   '/user',
   verifyToken,
+  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!AISettingsService?.updateUserSettings || !AISettingsService?.getOrgSettings) {
       return respondServiceNotConfigured(req as Request, res, 'ai-settings');

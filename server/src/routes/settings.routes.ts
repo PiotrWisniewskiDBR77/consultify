@@ -10,6 +10,7 @@ import { requireActiveAuditsMembership } from '../middleware/auditsStrictMembers
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { getSettingsActorRole, isRequestSuperAdmin } from '../middleware/requestAccess.js';
 import { createAccountDeletionRequest, createDataExportRequest } from '../services/gdprService.js';
+import { requireActiveMembership } from '../services/legacyCutover/requireActiveMembership.js';
 import { logIntegrationConnectionEvent } from '../services/integrationConnectionLogService.js';
 import { CONNECTORS } from '../services/integrationHubService.js';
 import { disconnectIntegration } from '../services/integrationHubService.js';
@@ -529,6 +530,7 @@ router.get(
 router.put(
   '/preferences/notifications',
   verifyToken,
+  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
     const { preferences } = req.body;
@@ -5676,6 +5678,7 @@ router.get(
 router.put(
   '/preferences/appearance',
   verifyToken,
+  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
     const preferences = req.body;
