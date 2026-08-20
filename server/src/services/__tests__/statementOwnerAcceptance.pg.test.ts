@@ -1,10 +1,14 @@
 import crypto from 'crypto';
+import express from 'express';
 import fs from 'fs/promises';
 import path from 'path';
 
 import { Pool } from 'pg';
+import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { inputSanitizationMiddleware } from '../../middleware/inputSanitization.middleware.js';
+import financeRoutes from '../../routes/v8/finance.routes.js';
 import PDFParserService from '../pdfParserService.js';
 import {
   createStatement,
@@ -228,27 +232,44 @@ describe.runIf(enabled)('Finance Statement owner acceptance — real PostgreSQL 
       overallConfidence: 0.36,
       createdBy: userId,
     });
-    const staged = await stageSelectedStatementSections({
-      primaryStatementId: primary,
-      organizationId,
-      userId,
-      statement: {
-        source_file_path: PDF_PATH,
-        source_file_name: 'CD_PROJEKT_Skonsolidowane_Sprawozdanie_FY2025.pdf',
-        parse_method: 'text_extraction',
-        document_class: 'mixed_report',
-        period_start: '2025-01-01',
-        period_end: '2025-12-31',
+    await pool.query(`UPDATE financial_statements SET notes=$1 WHERE id=$2`, [pdfText, primary]);
+    const app = express();
+    app.use(express.json());
+    app.use(inputSanitizationMiddleware);
+    app.use((req, _res, next) => {
+      (req as any).userId = userId;
+      (req as any).organizationId = organizationId;
+      (req as any).user = { id: userId, organizationId, role: 'OWNER' };
+      (req as any).v8Context = {
+        userId,
+        organizationId,
+        userRole: 'OWNER',
+        isSuperAdmin: false,
+      };
+      next();
+    });
+    app.use('/api/v8/finance', financeRoutes);
+    const mounted = await request(app)
+      .post(`/api/v8/finance/statements/${primary}/extract`)
+      .send({
+        statementType: 'BS',
+        statementTypes: ['P&L', 'BS', 'CF'],
+        periodLabel: '2025',
         currency: 'PLN',
         scaling: 'thousands',
-      },
-      text: pdfText,
-      statementTypes: ['CF', 'BS', 'P&L'],
-      periodLabel: '2025',
-      currency: 'PLN',
-      scaling: 'thousands',
-      entityName: 'CD PROJEKT S.A.',
-    });
+        entityName: 'CD PROJEKT S.A.',
+      });
+    expect(mounted.status, JSON.stringify(mounted.body)).toBe(200);
+    expect(mounted.body.data.selectedStatementTypes).toEqual(['P&L', 'BS', 'CF']);
+    const staged = {
+      statements: mounted.body.data.statements as Array<{
+        statementId: string;
+        statementType: 'P&L' | 'BS' | 'CF';
+        periodLabel: string;
+        sourceReceiptId: string;
+        sourceSha256: string;
+      }>,
+    };
     expect(staged.statements.map((item) => `${item.statementType}:${item.periodLabel}`)).toEqual([
       'P&L:2025',
       'P&L:2024',

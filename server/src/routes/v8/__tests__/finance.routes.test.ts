@@ -2,6 +2,7 @@ import express, { type Express } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { inputSanitizationMiddleware } from '../../../middleware/inputSanitization.middleware.js';
 import { V8_FINANCE_READ_CONTRACT } from '../finance.routes.js';
 
 const mockFinanceEditorGate = vi.hoisted(() => vi.fn());
@@ -367,6 +368,14 @@ import v8Router from '../index.js';
 function createApp(): Express {
   const app = express();
   app.use(express.json());
+  app.use('/api/v8', v8Router);
+  return app;
+}
+
+function createSanitizedApp(): Express {
+  const app = express();
+  app.use(express.json());
+  app.use(inputSanitizationMiddleware);
   app.use('/api/v8', v8Router);
   return app;
 }
@@ -1505,6 +1514,54 @@ describe('V8 finance read-only routes', () => {
         organizationId: ORG,
         stage: 'extract',
       })
+    );
+  });
+
+  it('preserves browser-selected P&L/BS/CF through the mounted global sanitizer boundary', async () => {
+    mockGetStatementDetail.mockResolvedValue({
+      id: 'statement-1',
+      statement_type: 'BS',
+      period_label: '2025',
+      currency: 'PLN',
+      scaling: 'thousands',
+      source_file_name: 'official.pdf',
+      source_file_path: '/tmp/official.pdf',
+      parse_method: 'text_extraction',
+      document_class: 'mixed_report',
+      extraction_strategy: 'table',
+      template_family: 'standard',
+      notes: 'official statement text',
+    });
+    const statements = (['P&L', 'BS', 'CF'] as const).flatMap((statementType) =>
+      ['2025', '2024'].map((periodLabel) => ({
+        statementId: `${statementType}-${periodLabel}`,
+        statementType,
+        periodLabel,
+        sourceReceiptId: `receipt-${statementType}-${periodLabel}`,
+        lines: [],
+      }))
+    );
+    mockStageSelectedStatementSections.mockResolvedValue({
+      selectedTypes: ['P&L', 'BS', 'CF'],
+      statements,
+    });
+
+    const res = await request(createSanitizedApp())
+      .post('/api/v8/finance/statements/statement-1/extract')
+      .send({
+        statementType: 'BS',
+        statementTypes: ['P&L', 'BS', 'CF'],
+        periodLabel: '2025',
+        currency: 'PLN',
+        scaling: 'thousands',
+        entityName: 'CD PROJEKT S.A.',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.selectedStatementTypes).toEqual(['P&L', 'BS', 'CF']);
+    expect(res.body.data.statements).toHaveLength(6);
+    expect(mockStageSelectedStatementSections).toHaveBeenCalledWith(
+      expect.objectContaining({ statementTypes: ['P&L', 'BS', 'CF'] })
     );
   });
 
