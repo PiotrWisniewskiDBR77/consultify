@@ -38,6 +38,7 @@ const mockUpdateBudgetScenarioAdjustments = vi.fn();
 const mockApproveBudgetCommand = vi.fn();
 const mockDiscardBudgetCommand = vi.fn();
 const mockImportBudgetDocumentCommand = vi.fn();
+const mockLinkBudgetInitiativeCommand = vi.fn();
 const mockExtractDocumentTextFromBuffer = vi.fn();
 const mockListAnalyses = vi.fn();
 const mockGetAnalysisRatios = vi.fn();
@@ -373,6 +374,12 @@ vi.mock('../../../services/finance/canonical/budgetDocumentImportCommandService.
   },
   importBudgetDocumentCommand: (...args: unknown[]) => mockImportBudgetDocumentCommand(...args),
 }));
+vi.mock('../../../services/finance/canonical/budgetInitiativeLinkCommandService.js', () => ({
+  BudgetInitiativeLinkCommandError: class BudgetInitiativeLinkCommandError extends Error {
+    constructor(public code: string, public status: number, message: string, public details?: Record<string, unknown>) { super(message); }
+  },
+  linkBudgetInitiativeCommand: (...args: unknown[]) => mockLinkBudgetInitiativeCommand(...args),
+}));
 vi.mock('../../../services/documentTextExtractor.js', () => ({
   extractTextFromBuffer: (...args: unknown[]) => mockExtractDocumentTextFromBuffer(...args),
 }));
@@ -518,6 +525,10 @@ describe('V8 finance read-only routes', () => {
       },
       budgetVersion: 2,
       replay: false,
+    });
+    mockLinkBudgetInitiativeCommand.mockResolvedValue({
+      budgetId: 'budget-new', initiativeId: 'initiative-1', budgetVersion: 2,
+      snapshot: { revenueUplift: '0', costSavings: '0', capexRequired: '0' }, replay: false,
     });
     mockProjectBudgetScenario.mockResolvedValue({
       budgetId: 'budget-new',
@@ -1978,6 +1989,32 @@ describe('V8 finance read-only routes', () => {
     expect(res.status).toBe(400);
     expect(res.body.code).toBe('INVALID_BODY');
     expect(mockApplyBudgetLineCommand).not.toHaveBeenCalled();
+  });
+
+  it('POST /api/v8/finance/budgets/:budgetId/initiatives/:initiativeId binds CAS and idempotency', async () => {
+    const res = await request(createApp())
+      .post('/api/v8/finance/budgets/budget-new/initiatives/initiative-1')
+      .set('Idempotency-Key', 'link-command-key')
+      .send({ expectedVersion: 1 });
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({ budgetVersion: 2, initiativeId: 'initiative-1', replay: false });
+    expect(mockLinkBudgetInitiativeCommand).toHaveBeenCalledWith({
+      organizationId: ORG, userId: UID, budgetId: 'budget-new', initiativeId: 'initiative-1',
+      expectedVersion: 1, idempotencyKey: 'link-command-key',
+    });
+  });
+
+  it.each([
+    [{}, 'INVALID_BODY'],
+    [{ expectedVersion: 0 }, 'INVALID_EXPECTED_VERSION'],
+    [{ expectedVersion: 1.5 }, 'INVALID_EXPECTED_VERSION'],
+    [{ expectedVersion: '1' }, 'INVALID_EXPECTED_VERSION'],
+    [{ expectedVersion: 1, extra: true }, 'INVALID_BODY'],
+  ])('rejects invalid initiative-link body %j', async (body, code) => {
+    const res=await request(createApp()).post('/api/v8/finance/budgets/budget-new/initiatives/initiative-1').set('Idempotency-Key','link-command-key').send(body);
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe(code);
+    expect(mockLinkBudgetInitiativeCommand).not.toHaveBeenCalled();
   });
 
   it('POST /api/v8/finance/budgets/:budgetId/scenarios/:scenarioId/project binds CAS and idempotency', async () => {

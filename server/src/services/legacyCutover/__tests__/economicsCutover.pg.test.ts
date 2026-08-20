@@ -1395,6 +1395,40 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
     }
   });
 
+  it('retires ECO-W40 initiative link and preserves W41 as a separate door', async () => {
+    const budgetId = `${prefix}-link-retired-budget`, initiativeId = `${prefix}-link-retired-initiative`, requestId = `${prefix}-link-retired-request`;
+    await pool.query(`INSERT INTO budgets(id,organization_id,title,status,period_start,period_end,granularity,currency,version,created_by) VALUES($1,$2,'Retired link budget','DRAFT','2028-01-01','2028-12-31','monthly','PLN',1,$3)`, [budgetId,orgA,actor]);
+    await pool.query(`INSERT INTO initiatives(id,organization_id,name,title,status) VALUES($1,$2,'Link initiative','Link initiative','DRAFT')`, [initiativeId,orgA]);
+    try {
+      const response=await request(productionMountedApp).post(`/api/economics/budgets/${budgetId}/initiatives`).set('x-request-id',requestId).send({initiativeId});
+      expect(response.status).toBe(410);
+      expect(response.body).toMatchObject({writerId:'ECO-W40',successor:'/api/v8/finance/budgets/:budgetId/initiatives/:initiativeId'});
+      expect((await pool.query(`SELECT count(*)::int count FROM budget_initiative_links WHERE budget_id=$1`,[budgetId])).rows[0].count).toBe(0);
+    } finally {
+      await pool.query(`DELETE FROM budget_initiative_links WHERE budget_id=$1`,[budgetId]);
+      await pool.query(`DELETE FROM budgets WHERE id=$1`,[budgetId]);
+      await pool.query(`DELETE FROM initiatives WHERE id=$1`,[initiativeId]);
+    }
+  });
+
+  it('restores only ECO-W40 through the writer-scoped rollback lever', async () => {
+    const previous=process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+    const budgetId=`${prefix}-link-rollback-budget`,initiativeId=`${prefix}-link-rollback-initiative`;
+    process.env.FINANCE_LEGACY_ROLLBACK_WRITERS='ECO-W40';
+    await pool.query(`INSERT INTO budgets(id,organization_id,title,status,period_start,period_end,granularity,currency,version,created_by) VALUES($1,$2,'Rollback link budget','DRAFT','2028-01-01','2028-12-31','monthly','PLN',1,$3)`,[budgetId,orgA,actor]);
+    await pool.query(`INSERT INTO initiatives(id,organization_id,name,title,status,estimated_revenue_uplift) VALUES($1,$2,'Rollback link initiative','Rollback link initiative','DRAFT',12)`,[initiativeId,orgA]);
+    try {
+      const response=await request(productionMountedApp).post(`/api/economics/budgets/${budgetId}/initiatives`).set('x-request-id',`${prefix}-link-rollback-request`).send({initiativeId});
+      expect(response.status).toBe(200);
+      expect((await pool.query(`SELECT revenue_uplift::text value FROM budget_initiative_links WHERE budget_id=$1`,[budgetId])).rows).toEqual([{value:'12'}]);
+    } finally {
+      await pool.query(`DELETE FROM budget_initiative_links WHERE budget_id=$1`,[budgetId]);
+      await pool.query(`DELETE FROM budgets WHERE id=$1`,[budgetId]);
+      await pool.query(`DELETE FROM initiatives WHERE id=$1`,[initiativeId]);
+      if(previous===undefined) delete process.env.FINANCE_LEGACY_ROLLBACK_WRITERS; else process.env.FINANCE_LEGACY_ROLLBACK_WRITERS=previous;
+    }
+  });
+
   it('restores only ECO-W31 through the writer-scoped rollback lever', async () => {
     const previous = process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
     const requestId = `${prefix}-wave11-pptx-rollback`;

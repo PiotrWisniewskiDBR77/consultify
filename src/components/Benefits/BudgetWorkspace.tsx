@@ -11,7 +11,7 @@ import {
   Upload,
   X,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -117,6 +117,13 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
   const [startPeriod, setStartPeriod] = useState('');
   const [endPeriod, setEndPeriod] = useState('');
   const [createIntentKey, setCreateIntentKey] = useState(() => crypto.randomUUID());
+  const [linkIntentKey, setLinkIntentKey] = useState(() => crypto.randomUUID());
+  const pendingLinkAttempts = useRef<Map<string, {
+    budgetId: string;
+    initiativeId: string;
+    expectedVersion: number;
+    idempotencyKey: string;
+  }>>(new Map());
 
   const fetchBudgets = useCallback(async () => {
     try {
@@ -327,24 +334,39 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
     async (initiativeId: string) => {
       if (!selected) return;
       setLinkingInitiative(true);
+      const attemptIdentity = `${selected.id}:${initiativeId}`;
+      const pendingAttempt = pendingLinkAttempts.current.get(attemptIdentity);
+      const attempt =
+        pendingAttempt
+          ? pendingAttempt
+          : {
+              budgetId: selected.id,
+              initiativeId,
+              expectedVersion: selected.version,
+              idempotencyKey: pendingLinkAttempts.current.size > 0 ? crypto.randomUUID() : linkIntentKey,
+            };
+      pendingLinkAttempts.current.set(attemptIdentity, attempt);
       try {
-        const res = await fetch(`${API_URL}/economics/budgets/${selected.id}/initiatives`, {
-          method: 'POST',
-          headers: { ...getHeaders(), 'Content-Type': 'application/json' },
-          body: JSON.stringify({ initiativeId }),
-        });
-        if (res.ok) {
-          toast.success(t('finance.budget.initiativeLinked', 'Initiative linked'));
-          await fetchLinkedInitiatives(selected.id);
-          setShowLinkPicker(false);
-        }
+        const result = await V8FinanceApi.linkBudgetInitiative(
+          attempt.budgetId,
+          attempt.initiativeId,
+          attempt.expectedVersion,
+          attempt.idempotencyKey
+        );
+        setSelected((current) => current?.id === selected.id ? { ...current, version: result.budgetVersion } : current);
+        setLinkIntentKey(crypto.randomUUID());
+        pendingLinkAttempts.current.delete(attemptIdentity);
+        toast.success(t('finance.budget.initiativeLinked', 'Initiative linked'));
+        await fetchLinkedInitiatives(selected.id);
+        setShowLinkPicker(false);
       } catch {
+        await selectBudget(selected);
         toast.error(t('finance.budget.linkFailed', 'Failed to link initiative'));
       } finally {
         setLinkingInitiative(false);
       }
     },
-    [selected, t, fetchLinkedInitiatives]
+    [selected, t, fetchLinkedInitiatives, linkIntentKey, selectBudget]
   );
 
   const handleUnlinkInitiative = useCallback(

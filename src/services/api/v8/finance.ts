@@ -335,6 +335,14 @@ export interface V8FinanceBudgetDocumentImportResult {
   replay: boolean;
 }
 
+export interface V8FinanceBudgetInitiativeLinkResult {
+  budgetId: string;
+  initiativeId: string;
+  budgetVersion: number;
+  snapshot: { revenueUplift: string; costSavings: string; capexRequired: string };
+  replay: boolean;
+}
+
 export interface V8FinanceStatementPackSummary {
   id: string;
   entity_name?: string | null;
@@ -808,6 +816,17 @@ export const V8FinanceApi = {
       }
     );
   },
+  linkBudgetInitiative: (
+    budgetId: string,
+    initiativeId: string,
+    expectedVersion: number,
+    idempotencyKey: string
+  ) =>
+    v8Post<V8FinanceBudgetInitiativeLinkResult>(
+      `/finance/budgets/${encodeURIComponent(budgetId)}/initiatives/${encodeURIComponent(initiativeId)}`,
+      { expectedVersion },
+      { extraHeaders: { 'Idempotency-Key': idempotencyKey } }
+    ),
   getStatementPacks: (params?: { readiness?: string }) =>
     v8Get<{ statementPacks: V8FinanceStatementPackSummary[]; count: number }>(
       '/finance/statement-packs',

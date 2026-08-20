@@ -177,6 +177,10 @@ import {
   importBudgetDocumentCommand,
   BudgetDocumentImportCommandError,
 } from '../../services/finance/canonical/budgetDocumentImportCommandService.js';
+import {
+  linkBudgetInitiativeCommand,
+  BudgetInitiativeLinkCommandError,
+} from '../../services/finance/canonical/budgetInitiativeLinkCommandService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -1462,6 +1466,35 @@ router.post(
       throw error;
     } finally {
       if (file.path) await fs.unlink(file.path).catch(() => undefined);
+    }
+  })
+);
+
+router.post(
+  '/budgets/:budgetId/initiatives/:initiativeId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const keys = Object.keys(req.body || {});
+      if (keys.length !== 1 || keys[0] !== 'expectedVersion')
+        return res.status(400).json({ code: 'INVALID_BODY', error: 'Only expectedVersion is allowed' });
+      if (!Number.isInteger(req.body.expectedVersion) || req.body.expectedVersion < 1)
+        return res.status(400).json({ code: 'INVALID_EXPECTED_VERSION', error: 'expectedVersion must be a positive integer' });
+      const { organizationId } = getV8Context(req);
+      const userId = String(req.user?.id || (req.user as any)?.user_id || '');
+      const expectedVersion = req.body?.expectedVersion;
+      const result = await linkBudgetInitiativeCommand({
+        organizationId,
+        userId,
+        budgetId: String(req.params.budgetId),
+        initiativeId: String(req.params.initiativeId),
+        expectedVersion,
+        idempotencyKey: String(req.header('Idempotency-Key') || ''),
+      });
+      return res.status(200).json({ data: result, meta: financeMeta() });
+    } catch (error) {
+      if (error instanceof BudgetInitiativeLinkCommandError)
+        return res.status(error.status).json({ code: error.code, error: error.message, ...(error.details || {}) });
+      throw error;
     }
   })
 );

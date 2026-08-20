@@ -3324,6 +3324,7 @@ router.get(
 router.post(
   '/budgets/:id/initiatives',
   verifyToken,
+  economicsCutoverGuard,
   validateBody(linkBudgetInitiativeSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;

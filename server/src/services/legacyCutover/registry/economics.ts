@@ -464,10 +464,10 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'ECO-W40',
       method: 'POST',
       path: /^\/budgets\/[^/]+\/initiatives\/?$/,
-      state: 'observed',
-      successor: null,
+      state: 'disabled',
+      successor: '/api/v8/finance/budgets/:budgetId/initiatives/:initiativeId',
       reason:
-        'Links an initiative to the budget addressed by :id: INSERT OR IGNORE INTO budget_initiative_links (economics.routes.ts:3363, inline INSERT at :3378). No proven successor.',
+        'The mounted Budget Workspace uses a DRAFT-only canonical link command with live Finance-editor authority, exact parent-version CAS, same-tenant initiative snapshot, immutable receipt and writer-scoped rollback.',
     },
     {
       writerId: 'ECO-W41',
