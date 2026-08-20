@@ -16,6 +16,7 @@ import {
   locateStatementSections,
 } from '../financialStatementService.js';
 import { getStatementDetail } from '../financialStatementReadService.js';
+import { syncStatementToPack } from '../financialStatementPackService.js';
 import { stageSelectedStatementSections } from '../statementMultiSectionImportService.js';
 
 const DATABASE_URL = process.env.DATABASE_URL || '';
@@ -151,6 +152,8 @@ describe.runIf(enabled)('Finance Statement owner acceptance — real PostgreSQL 
       'durable smart-upload source text',
       failedPrimary,
     ]);
+    const failedPackId = await syncStatementToPack(failedPrimary);
+    expect(failedPackId).toBeTruthy();
     expect(await loadStatementSourceText(failedPrimary)).toBe('durable smart-upload source text');
     const before = await pool.query(
       `SELECT count(*)::int count FROM financial_statements WHERE organization_id=$1`,
@@ -172,6 +175,7 @@ describe.runIf(enabled)('Finance Statement owner acceptance — real PostgreSQL 
           parse_method: 'text_extraction',
           period_start: '2025-01-01',
           period_end: '2025-12-31',
+          statement_pack_id: failedPackId,
         },
         // Use the locator's official-PDF P&L boundary: it is independently
         // stageable, contains both comparative periods, and intentionally has
@@ -233,6 +237,8 @@ describe.runIf(enabled)('Finance Statement owner acceptance — real PostgreSQL 
       createdBy: userId,
     });
     await pool.query(`UPDATE financial_statements SET notes=$1 WHERE id=$2`, [pdfText, primary]);
+    const mountedPackId = await syncStatementToPack(primary);
+    expect(mountedPackId).toBeTruthy();
     const app = express();
     app.use(express.json());
     app.use(inputSanitizationMiddleware);
@@ -281,6 +287,48 @@ describe.runIf(enabled)('Finance Statement owner acceptance — real PostgreSQL 
     expect(new Set(staged.statements.map((item) => item.statementId)).size).toBe(6);
     expect(new Set(staged.statements.map((item) => item.sourceReceiptId)).size).toBe(6);
     expect(staged.statements.every((item) => item.sourceSha256 === EXPECTED_PDF_SHA)).toBe(true);
+    const packMembership = await pool.query(
+      `SELECT id, statement_pack_id
+         FROM financial_statements
+        WHERE id = ANY($1::text[])
+        ORDER BY id`,
+      [staged.statements.map((item) => item.statementId)]
+    );
+    expect(packMembership.rows).toHaveLength(6);
+    expect(packMembership.rows.every((row) => Boolean(row.statement_pack_id))).toBe(true);
+    expect(new Set(packMembership.rows.map((row) => row.statement_pack_id)).size).toBe(1);
+    const statementPackId = String(packMembership.rows[0].statement_pack_id);
+    const coldPack = await request(app).get(`/api/v8/finance/statement-packs/${statementPackId}`);
+    expect(coldPack.status, JSON.stringify(coldPack.body)).toBe(200);
+    expect(coldPack.body.data.pack.id).toBe(statementPackId);
+    expect(
+      new Set(
+        coldPack.body.data.pack.statements.map(
+          (item: any) => `${item.statement_type}:${item.period_label}`
+        )
+      )
+    ).toEqual(new Set(['P&L:2025', 'P&L:2024', 'BS:2025', 'BS:2024', 'CF:2025', 'CF:2024']));
+    expect(Number(coldPack.body.data.pack.source_statement_count)).toBe(6);
+    const duplicatePeriod = await createStatement({
+      organizationId,
+      statementType: 'P&L',
+      periodStart: '2025-01-01',
+      periodEnd: '2025-12-31',
+      periodLabel: '2025',
+      currency: 'PLN',
+      scaling: 'thousands',
+      sourceFileName: 'duplicate-period.pdf',
+      sourceFilePath: PDF_PATH,
+      parseMethod: 'text_extraction',
+      overallConfidence: 0.5,
+      createdBy: userId,
+    });
+    await expect(
+      pool.query(`UPDATE financial_statements SET statement_pack_id=$1 WHERE id=$2`, [
+        statementPackId,
+        duplicatePeriod,
+      ])
+    ).rejects.toMatchObject({ code: '23505' });
     const coldDetail = await getStatementDetail(organizationId, primary);
     expect(coldDetail?.sourceSiblings).toHaveLength(6);
     expect(
@@ -342,6 +390,8 @@ describe.runIf(enabled)('Finance Statement owner acceptance — real PostgreSQL 
       overallConfidence: 0.36,
       createdBy: userId,
     });
+    const secondPackId = await syncStatementToPack(secondPrimary);
+    expect(secondPackId).toBeTruthy();
     await stageSelectedStatementSections({
       primaryStatementId: secondPrimary,
       organizationId,
@@ -355,6 +405,7 @@ describe.runIf(enabled)('Finance Statement owner acceptance — real PostgreSQL 
         period_end: '2025-12-31',
         currency: 'PLN',
         scaling: 'thousands',
+        statement_pack_id: secondPackId,
       },
       text: pdfText,
       statementTypes: ['P&L', 'BS', 'CF'],

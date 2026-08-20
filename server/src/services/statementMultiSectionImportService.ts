@@ -4,6 +4,7 @@ import path from 'path';
 import { run as dbRun } from '../utils/DbPromise.js';
 import { withPgTransaction } from '../utils/queryHelpers.js';
 import { registerStatementSourceReceipt } from './finance/canonical/statementSourceReceiptService.js';
+import { recomputeStatementPack } from './financialStatementPackService.js';
 import {
   autoMapLines,
   createStatement,
@@ -114,6 +115,17 @@ async function stageSelectedStatementSectionsTx(params: {
             ? 'application/vnd.ms-excel'
             : 'application/octet-stream';
   const sourceSha256 = sha256Hex(sourceBytes);
+  // The mounted upload/detect boundary loads the primary row through the
+  // tenant-scoped Statement read and assigns its durable pack before extract.
+  // Carry that already-authorized identity into this transaction; creating or
+  // reclassifying a pack here would make the six-sibling proposal ambiguous.
+  const statementPackId = String(params.statement.statement_pack_id || '').trim();
+  if (!statementPackId) {
+    throw Object.assign(new Error('Unable to establish Statement pack identity.'), {
+      code: 'STATEMENT_PACK_REQUIRED',
+      statusCode: 422,
+    });
+  }
 
   const staged: StagedStatementSection[] = [];
   let primaryUsed = false;
@@ -239,12 +251,14 @@ async function stageSelectedStatementSectionsTx(params: {
       });
       await dbRun(
         `UPDATE financial_statements
-         SET entity_name=?, period_start=COALESCE(?,period_start), period_end=COALESCE(?,period_end)
+         SET entity_name=?, period_start=COALESCE(?,period_start), period_end=COALESCE(?,period_end),
+             statement_pack_id=?
          WHERE id=? AND organization_id=?`,
         [
           params.entityName.trim(),
           dates.start || null,
           dates.end || null,
+          statementPackId,
           statementId,
           params.organizationId,
         ]
@@ -353,6 +367,8 @@ async function stageSelectedStatementSectionsTx(params: {
       });
     }
   }
+
+  await recomputeStatementPack(statementPackId, { deferShadow: true });
 
   return { statements: staged, selectedTypes };
 }

@@ -4,6 +4,8 @@ const state = vi.hoisted(() => ({ statements: [] as string[], rows: [] as string
 const mocks = vi.hoisted(() => ({
   locate: vi.fn(),
   create: vi.fn(),
+  dbRun: vi.fn(),
+  recomputePack: vi.fn(),
 }));
 
 vi.mock('fs/promises', () => ({
@@ -27,7 +29,12 @@ vi.mock('../../utils/queryHelpers.js', () => ({
   },
 }));
 
-vi.mock('../../utils/DbPromise.js', () => ({ run: vi.fn(async () => ({ changes: 1 })) }));
+vi.mock('../../utils/DbPromise.js', () => ({
+  run: (...args: unknown[]) => mocks.dbRun(...args),
+}));
+vi.mock('../financialStatementPackService.js', () => ({
+  recomputeStatementPack: (...args: unknown[]) => mocks.recomputePack(...args),
+}));
 vi.mock('../financialStatementService.js', () => ({
   locateStatementSections: (...args: unknown[]) => mocks.locate(...args),
   resolveStatementColumnSelection: vi.fn(() => ({
@@ -71,6 +78,8 @@ describe('statementMultiSectionImportService atomic staging', () => {
     state.statements.length = 0;
     state.rows.length = 0;
     state.receipts.length = 0;
+    mocks.dbRun.mockReset().mockResolvedValue({ changes: 1 });
+    mocks.recomputePack.mockReset().mockResolvedValue('pack-1');
     mocks.create.mockReset().mockImplementation(async () => {
       const id = `statement-${state.statements.length + 1}`;
       state.statements.push(id);
@@ -90,6 +99,31 @@ describe('statementMultiSectionImportService atomic staging', () => {
           ]
         : []
     );
+  });
+
+  it('fails closed before staging when the tenant-scoped primary pack identity is absent', async () => {
+    await expect(
+      stageSelectedStatementSections({
+        primaryStatementId: 'primary-1',
+        organizationId: 'org-1',
+        userId: 'user-1',
+        statement: {
+          source_file_path: '/tmp/source.pdf',
+          source_file_name: 'source.pdf',
+          parse_method: 'pdf-parse',
+          document_class: 'mixed_report',
+        },
+        text: 'P&L 2025 2024',
+        statementTypes: ['P&L'],
+        periodLabel: '2025',
+        currency: 'PLN',
+        scaling: 'thousands',
+        entityName: 'Entity',
+      })
+    ).rejects.toMatchObject({ code: 'STATEMENT_PACK_REQUIRED' });
+    expect(state.rows).toEqual([]);
+    expect(state.receipts).toEqual([]);
+    expect(mocks.recomputePack).not.toHaveBeenCalled();
   });
 
   it('rolls back earlier type and period staging when a later selected section is missing', async () => {
@@ -122,6 +156,7 @@ describe('statementMultiSectionImportService atomic staging', () => {
           source_file_name: 'source.pdf',
           parse_method: 'pdf-parse',
           document_class: 'mixed_report',
+          statement_pack_id: 'pack-1',
         },
         text: 'P&L then no balance sheet',
         statementTypes: ['P&L', 'BS'],
@@ -158,6 +193,7 @@ describe('statementMultiSectionImportService atomic staging', () => {
         source_file_name: 'CD_PROJEKT_Skonsolidowane_Sprawozdanie_FY2025.pdf',
         parse_method: 'pdf-parse',
         document_class: 'mixed_report',
+        statement_pack_id: 'pack-1',
       },
       text: 'P&L, balance sheet and cash flow with comparative columns',
       statementTypes: ['P&L', 'BS', 'CF'],
@@ -191,6 +227,13 @@ describe('statementMultiSectionImportService atomic staging', () => {
         }),
       ])
     );
+    const membershipUpdates = mocks.dbRun.mock.calls.filter(([sql]) =>
+      String(sql).includes('statement_pack_id=?')
+    );
+    expect(membershipUpdates).toHaveLength(6);
+    expect(membershipUpdates.every(([, params]) => params[3] === 'pack-1')).toBe(true);
+    expect(mocks.recomputePack).toHaveBeenCalledTimes(1);
+    expect(mocks.recomputePack).toHaveBeenCalledWith('pack-1', { deferShadow: true });
   });
 
   it('canonicalizes permutations and duplicates so P&L always owns the primary upload row', async () => {
@@ -214,6 +257,7 @@ describe('statementMultiSectionImportService atomic staging', () => {
         source_file_name: 'source.pdf',
         parse_method: 'pdf-parse',
         document_class: 'mixed_report',
+        statement_pack_id: 'pack-1',
       },
       text: 'all sections',
       statementTypes: ['CF', 'BS', 'P&L', 'CF', 'PL'],
