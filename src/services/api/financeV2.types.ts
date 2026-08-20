@@ -2020,6 +2020,25 @@ export type FinancePredictionCalculateResultDto =
   | FinancePredictionCalculateStandardBaseResultDto
   | FinancePredictionCalculateComputedResultDto;
 
+export interface FinancePredictionAuthoringDto {
+  configured: boolean;
+  businessVersionId: string;
+  revision: number;
+  draft: import('@/components/Finance/Prediction/predictionScenarioModel').ScenarioDraft | null;
+  computeContext: {
+    ready: boolean;
+    entityIds: string[];
+    forecastPeriodIds: string[];
+    openingBalanceSheetPeriodId: string | null;
+  };
+  results: {
+    scenarioValues: Record<string, number>;
+    baselineValues: Record<string, number>;
+  };
+  replay?: boolean;
+  requestSha256?: string;
+}
+
 export const PREDICTION_SCENARIO_MODE_VALUES = [
   'STANDARD_BASE',
   'STANDARD_UPSIDE',

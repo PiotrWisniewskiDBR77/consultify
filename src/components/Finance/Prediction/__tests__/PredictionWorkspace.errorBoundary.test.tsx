@@ -28,6 +28,8 @@ import type { FinanceBusinessVersionDetailDto } from '../../../../services/api/f
 
 const apiMocks = vi.hoisted(() => ({
   getFinanceBusinessVersion: vi.fn(),
+  getFinancePredictionAuthoring: vi.fn(),
+  saveFinancePredictionAuthoring: vi.fn(),
   runFinancePredictionPreflight: vi.fn(),
   runFinancePredictionCalculate: vi.fn(),
 }));
@@ -75,6 +77,19 @@ afterEach(() => {
 describe('PredictionWorkspace — FinanceErrorBoundary (AP_MOUNT §D)', () => {
   it('a crash in the assumptions view is caught locally, not propagated to the caller', async () => {
     apiMocks.getFinanceBusinessVersion.mockResolvedValue(CONFIRMED_VERSION);
+    apiMocks.getFinancePredictionAuthoring.mockResolvedValue({
+      configured: false,
+      businessVersionId: 'bv-eb-1',
+      revision: 0,
+      draft: null,
+      computeContext: {
+        ready: false,
+        entityIds: [],
+        forecastPeriodIds: [],
+        openingBalanceSheetPeriodId: null,
+      },
+      results: { scenarioValues: {}, baselineValues: {} },
+    });
     setFeatureFlagOverrides({ financePredictionWorkspaceV1: true });
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     expect(() =>

@@ -2947,10 +2947,13 @@ export const FinanceHub: React.FC = () => {
     const canonicalArtifactId = searchParams.get('canonicalArtifactId');
     const canonicalBusinessVersionId = searchParams.get('canonicalBusinessVersionId');
     if (
-      canonicalArtifactType === 'HISTORICAL_ANALYSIS' &&
+      (canonicalArtifactType === 'HISTORICAL_ANALYSIS' ||
+        canonicalArtifactType === 'PREDICTION_SCENARIO') &&
       canonicalArtifactId &&
       canonicalBusinessVersionId &&
-      financeV3AnalysisFlag.enabled
+      (canonicalArtifactType === 'HISTORICAL_ANALYSIS'
+        ? financeV3AnalysisFlag.enabled
+        : financeV3PredictionFlag.enabled)
     ) {
       const closeCanonical = () => {
         const next = new URLSearchParams(searchParams);
@@ -2962,18 +2965,32 @@ export const FinanceHub: React.FC = () => {
       return (
         <div className="p-4 lg:p-6">
           <div className="h-[calc(100vh-120px)] min-h-[620px] overflow-hidden rounded-xl border border-c-border-subtle bg-c-surface">
-            <CanonicalFinanceWorkspaceMount
-              artifactId={canonicalArtifactId}
-              businessVersionId={canonicalBusinessVersionId}
-              artifactType="HISTORICAL_ANALYSIS"
-            >
-              <FinanceV3AnalysisWorkspace
+            {canonicalArtifactType === 'HISTORICAL_ANALYSIS' ? (
+              <CanonicalFinanceWorkspaceMount
                 artifactId={canonicalArtifactId}
                 businessVersionId={canonicalBusinessVersionId}
-                role="preparer"
-                onNavigateBack={closeCanonical}
-              />
-            </CanonicalFinanceWorkspaceMount>
+                artifactType="HISTORICAL_ANALYSIS"
+              >
+                <FinanceV3AnalysisWorkspace
+                  artifactId={canonicalArtifactId}
+                  businessVersionId={canonicalBusinessVersionId}
+                  role="preparer"
+                  onNavigateBack={closeCanonical}
+                />
+              </CanonicalFinanceWorkspaceMount>
+            ) : (
+              <CanonicalFinanceWorkspaceMount
+                artifactId={canonicalArtifactId}
+                businessVersionId={canonicalBusinessVersionId}
+                artifactType="PREDICTION_SCENARIO"
+              >
+                <FinanceV3PredictionWorkspace
+                  artifactId={canonicalArtifactId}
+                  businessVersionId={canonicalBusinessVersionId}
+                  onNavigateBack={closeCanonical}
+                />
+              </CanonicalFinanceWorkspaceMount>
+            )}
           </div>
         </div>
       );
@@ -3534,7 +3551,8 @@ export const FinanceHub: React.FC = () => {
       );
     if (
       (activeDocumentId && activeDocument) ||
-      (searchParams.get('canonicalArtifactType') === 'HISTORICAL_ANALYSIS' &&
+      ((searchParams.get('canonicalArtifactType') === 'HISTORICAL_ANALYSIS' ||
+        searchParams.get('canonicalArtifactType') === 'PREDICTION_SCENARIO') &&
         searchParams.get('canonicalArtifactId') &&
         searchParams.get('canonicalBusinessVersionId'))
     )

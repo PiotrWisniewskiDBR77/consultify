@@ -28,6 +28,8 @@ import {
 
 const apiMocks = vi.hoisted(() => ({
   getFinanceBusinessVersion: vi.fn(),
+  getFinancePredictionAuthoring: vi.fn(),
+  saveFinancePredictionAuthoring: vi.fn(),
   runFinancePredictionPreflight: vi.fn(),
   runFinancePredictionCalculate: vi.fn(),
 }));
@@ -81,6 +83,19 @@ describe('PredictionWorkspace — flag gate (AP_MOUNT §A)', () => {
 
   it('ON (local override) + real businessVersionId: mounts the real bar and the assumptions view', async () => {
     apiMocks.getFinanceBusinessVersion.mockResolvedValue(CONFIRMED_VERSION);
+    apiMocks.getFinancePredictionAuthoring.mockResolvedValue({
+      configured: false,
+      businessVersionId: 'bv-flag-1',
+      revision: 0,
+      draft: null,
+      computeContext: {
+        ready: false,
+        entityIds: [],
+        forecastPeriodIds: [],
+        openingBalanceSheetPeriodId: null,
+      },
+      results: { scenarioValues: {}, baselineValues: {} },
+    });
     setFeatureFlagOverrides({ financePredictionWorkspaceV1: true });
     render(<PredictionWorkspace artifactId="artifact-1" businessVersionId="bv-flag-1" />);
     expect(await screen.findByTestId('finance-workspace-bar')).toBeInTheDocument();

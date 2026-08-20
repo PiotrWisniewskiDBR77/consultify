@@ -60,10 +60,14 @@ export async function v8PostMultipart<T>(
   return json.data;
 }
 
-export async function v8Put<T>(path: string, body?: unknown): Promise<T> {
+export async function v8Put<T>(
+  path: string,
+  body?: unknown,
+  options?: { extraHeaders?: Record<string, string> }
+): Promise<T> {
   const res = await fetchWithRetry(`${V8_BASE}${path}`, {
     method: 'PUT',
-    headers: getHeaders(),
+    headers: options?.extraHeaders ? { ...getHeaders(), ...options.extraHeaders } : getHeaders(),
     body: body ? JSON.stringify(body) : undefined,
   });
   const json = await handleResponse<{ data: T }>(res, `V8 PUT ${path}`);

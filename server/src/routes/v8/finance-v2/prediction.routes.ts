@@ -21,12 +21,91 @@ import { Router } from 'express';
 import type { AuthRequest } from '../../../middleware/auth.middleware.js';
 import { getV8Context } from '../../../middleware/v8Auth.middleware.js';
 import { getBusinessVersion } from '../../../services/finance/canonical/artifactVersionService.js';
-import { runPreflight, type RunPreflightParams } from '../../../services/finance/canonical/predictionPreflightService.js';
-import { runPredictionCompute, type RunPredictionComputeParams } from '../../../services/finance/canonical/predictionComputeService.js';
+import {
+  readPredictionAuthoring,
+  savePredictionAuthoring,
+} from '../../../services/finance/canonical/predictionAuthoringService.js';
+import {
+  runPreflight,
+  type RunPreflightParams,
+} from '../../../services/finance/canonical/predictionPreflightService.js';
+import {
+  runPredictionCompute,
+  type RunPredictionComputeParams,
+} from '../../../services/finance/canonical/predictionComputeService.js';
+import {
+  requireActiveMembership,
+  requireFinanceEditorMembership,
+} from '../../../services/legacyCutover/requireActiveMembership.js';
 import { asyncHandler } from '../../../utils/asyncHandler.js';
 import { financeV2Meta, sendError } from './_shared.js';
 
 const router = Router();
+
+router.get(
+  '/prediction/:businessVersionId/authoring',
+  requireActiveMembership,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    try {
+      const result = await readPredictionAuthoring(
+        organizationId,
+        String(req.params.businessVersionId || '')
+      );
+      return res.status(200).json({ data: result, meta: financeV2Meta() });
+    } catch (error: any) {
+      const code = String(error?.code || 'PREDICTION_AUTHORING_READ_FAILED');
+      return sendError(
+        res,
+        code === 'PREDICTION_NOT_FOUND' ? 404 : 409,
+        code,
+        String(error?.message || code)
+      );
+    }
+  })
+);
+
+router.put(
+  '/prediction/:businessVersionId/authoring',
+  requireFinanceEditorMembership,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const idempotencyKey = String(req.headers['x-idempotency-key'] || '').trim();
+    const body = req.body ?? {};
+    if (!idempotencyKey)
+      return sendError(res, 400, 'IDEMPOTENCY_KEY_REQUIRED', 'x-idempotency-key is required');
+    if (
+      !Number.isInteger(body.expectedRevision) ||
+      body.expectedRevision < 0 ||
+      !body.draft ||
+      typeof body.draft !== 'object'
+    ) {
+      return sendError(res, 400, 'INVALID_BODY', 'expectedRevision and draft are required');
+    }
+    try {
+      const result = await savePredictionAuthoring({
+        organizationId,
+        userId,
+        businessVersionId: String(req.params.businessVersionId || ''),
+        idempotencyKey,
+        expectedRevision: body.expectedRevision,
+        draft: body.draft,
+      });
+      return res.status(200).json({ data: result, meta: financeV2Meta() });
+    } catch (error: any) {
+      const code = String(error?.code || 'PREDICTION_AUTHORING_WRITE_FAILED');
+      const status =
+        code === 'PREDICTION_INPUT_INVALID' || code === 'PREDICTION_REFERENCE_INVALID'
+          ? 422
+          : code === 'PREDICTION_NOT_FOUND'
+            ? 404
+            : code === 'ORG_MEMBERSHIP_REVOKED' || code === 'FINANCE_EDIT_FORBIDDEN'
+              ? 403
+              : 409;
+      return sendError(res, status, code, String(error?.message || code));
+    }
+  })
+);
 
 // ---------------------------------------------------------------------------
 // POST /prediction/:businessVersionId/preflight — stage 1 (DEC-FIN-004)
@@ -35,6 +114,7 @@ const router = Router();
 
 router.post(
   '/prediction/:businessVersionId/preflight',
+  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
     const businessVersionId = String(req.params.businessVersionId || '');
@@ -49,7 +129,10 @@ router.post(
       organizationId,
       businessVersionId,
       runBy: userId,
-      openingBalanceSheetPeriodId: typeof body.openingBalanceSheetPeriodId === 'string' ? body.openingBalanceSheetPeriodId : undefined,
+      openingBalanceSheetPeriodId:
+        typeof body.openingBalanceSheetPeriodId === 'string'
+          ? body.openingBalanceSheetPeriodId
+          : undefined,
       entityId: typeof body.entityId === 'string' ? body.entityId : undefined,
     };
 
@@ -78,6 +161,7 @@ router.post(
 
 router.post(
   '/prediction/:businessVersionId/calculate',
+  requireFinanceEditorMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
     const businessVersionId = String(req.params.businessVersionId || '');
@@ -90,10 +174,21 @@ router.post(
     if (typeof body.entityId !== 'string' || !body.entityId.trim()) {
       return sendError(res, 400, 'INVALID_BODY', 'entityId is required');
     }
-    if (!Array.isArray(body.forecastPeriodIds) || body.forecastPeriodIds.some((p: unknown) => typeof p !== 'string')) {
-      return sendError(res, 400, 'INVALID_BODY', 'forecastPeriodIds must be an array of period id strings');
+    if (
+      !Array.isArray(body.forecastPeriodIds) ||
+      body.forecastPeriodIds.some((p: unknown) => typeof p !== 'string')
+    ) {
+      return sendError(
+        res,
+        400,
+        'INVALID_BODY',
+        'forecastPeriodIds must be an array of period id strings'
+      );
     }
-    if (typeof body.openingBalanceSheetPeriodId !== 'string' || !body.openingBalanceSheetPeriodId.trim()) {
+    if (
+      typeof body.openingBalanceSheetPeriodId !== 'string' ||
+      !body.openingBalanceSheetPeriodId.trim()
+    ) {
       return sendError(res, 400, 'INVALID_BODY', 'openingBalanceSheetPeriodId is required');
     }
 
@@ -101,7 +196,8 @@ router.post(
       organizationId,
       businessVersionId,
       requestedByUserId: userId,
-      engineManifestId: typeof body.engineManifestId === 'string' ? body.engineManifestId : bv.engine_manifest_id,
+      engineManifestId:
+        typeof body.engineManifestId === 'string' ? body.engineManifestId : bv.engine_manifest_id,
       entityId: body.entityId,
       forecastPeriodIds: body.forecastPeriodIds,
       openingBalanceSheetPeriodId: body.openingBalanceSheetPeriodId,
@@ -123,13 +219,25 @@ router.post(
 
     if (result.mode === 'STANDARD_BASE') {
       return res.status(200).json({
-        data: { mode: result.mode, jobId: result.job.id, jobStatus: result.job.status, baselineJobId: result.baselineJob?.id ?? null, passthroughRowCount: result.passthroughRowCount },
+        data: {
+          mode: result.mode,
+          jobId: result.job.id,
+          jobStatus: result.job.status,
+          baselineJobId: result.baselineJob?.id ?? null,
+          passthroughRowCount: result.passthroughRowCount,
+        },
         meta: financeV2Meta(),
       });
     }
 
     return res.status(200).json({
-      data: { mode: result.mode, jobId: result.job.id, jobStatus: result.job.status, periodsComputed: result.periodsComputed, periods: result.periods },
+      data: {
+        mode: result.mode,
+        jobId: result.job.id,
+        jobStatus: result.job.status,
+        periodsComputed: result.periodsComputed,
+        periods: result.periods,
+      },
       meta: financeV2Meta(),
     });
   })

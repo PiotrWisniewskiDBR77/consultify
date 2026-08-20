@@ -32,14 +32,10 @@
  *     niżej) — więc "pobierz dane" fizycznie nie istnieje jako operacja do
  *     wykonania. Ekran to teraz PRZYZNAJE zamiast to ukrywać.
  *
- * ★ LUKA (niezmieniona przez tę poprawkę): preflight/calculate wołają REALNE
- * endpointy (`financeV2.api.ts` PKG-G blok) gdy `draft.businessVersionId`
- * istnieje; bez realnego scenariusza (brak CRUD zapisu, patrz
- * `predictionScenarioModel.ts` nagłówek) przyciski pokazują honest-UI
- * komunikat zamiast fejkować sukces. Ta poprawka NIE dodaje CRUD-u
- * scenariusza (osobny, większy pakiet) — dodaje uczciwość na mouncie.
+ * Authoring jest kanoniczny: mount odczytuje trwały snapshot, zapis ma CAS i
+ * idempotency receipt, a preflight/calculate startują dopiero po exact cold readback.
  */
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { FinanceErrorBoundary } from '@/components/Finance/shared/FinanceErrorBoundary';
 import { FinanceWorkspaceBar } from '@/components/Finance/shared/FinanceWorkspaceBar';
@@ -49,13 +45,20 @@ import { useFinanceFocusMode } from '@/hooks/useFinanceFocusMode';
 import { useFinancePredictionWorkspaceFlag } from '@/hooks/useFinancePredictionWorkspaceFlag';
 import {
   getFinanceBusinessVersion,
+  getFinancePredictionAuthoring,
   runFinancePredictionCalculate,
   runFinancePredictionPreflight,
+  saveFinancePredictionAuthoring,
 } from '@/services/api/financeV2.api';
+import {
+  clearPersistentCommandId,
+  persistentCommandId,
+} from '@/services/initiatives-execution/persistentCommandId';
 import {
   businessVersionStatusLabel,
   describeFinanceV2Error,
   type FinanceBusinessVersionDetailDto,
+  type FinancePredictionAuthoringDto,
 } from '@/services/api/financeV2.types';
 
 import {
@@ -105,6 +108,26 @@ type MountCheckState =
   | { kind: 'not-found' }
   | { kind: 'error'; message: string };
 
+type AuthoringState =
+  | { kind: 'idle' }
+  | { kind: 'loading' }
+  | { kind: 'ready'; revision: number }
+  | { kind: 'saving'; revision: number }
+  | { kind: 'error'; message: string };
+
+const AUTHORING_COMMAND_NAMESPACE = 'finance-prediction-authoring-v1';
+const authoringContent = (draft: ScenarioDraft) =>
+  JSON.stringify({
+    scenarioMode: draft.scenarioMode,
+    name: draft.name,
+    driverOverrides: draft.driverOverrides,
+    initiatives: draft.initiatives,
+    impacts: draft.impacts,
+    financing: draft.financing,
+  });
+const authoringIntent = (businessVersionId: string, revision: number, draft: ScenarioDraft) =>
+  `${businessVersionId}:${revision}:${authoringContent(draft)}`;
+
 function PredictionWorkspaceInner(props: PredictionWorkspaceProps): React.ReactElement {
   const businessVersionId = props.businessVersionId ?? null;
 
@@ -146,24 +169,105 @@ function PredictionWorkspaceInner(props: PredictionWorkspaceProps): React.ReactE
   const [draft, setDraft] = useState<ScenarioDraft>(
     props.initialDraft ?? createEmptyScenarioDraft({ name: 'Nowy scenariusz' })
   );
+  const [authoringState, setAuthoringState] = useState<AuthoringState>({ kind: 'idle' });
+  const [authoringAttempt, setAuthoringAttempt] = useState(0);
+  const [confirmedAuthoringContent, setConfirmedAuthoringContent] = useState<string | null>(null);
+  const [computeContext, setComputeContext] = useState<
+    FinancePredictionAuthoringDto['computeContext'] | null
+  >(null);
+  const [canonicalResults, setCanonicalResults] = useState<
+    FinancePredictionAuthoringDto['results']
+  >({
+    scenarioValues: {},
+    baselineValues: {},
+  });
   const [activeViewId, setActiveViewId] = useState<PredictionViewId>(
     PREDICTION_VIEW_IDS.assumptions
   );
   const [exceptionLedger, setExceptionLedger] = useState<readonly ExceptionLedgerEntry[]>([]);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
-  // Once a real version is confirmed, thread its id into the draft so
-  // preflight/calculate (which already gate on `draft.businessVersionId`)
-  // work exactly as before this fix for a real, resolved record.
+  // Load the canonical authoring snapshot. An unavailable read is fail-closed:
+  // never render an editable local scratch that could be mistaken for server state.
   useEffect(() => {
+    if (mountCheck.kind !== 'confirmed') return;
+    let cancelled = false;
+    const confirmedId = mountCheck.version.businessVersionId;
+    setAuthoringState({ kind: 'loading' });
+    getFinancePredictionAuthoring(confirmedId)
+      .then((snapshot) => {
+        if (cancelled) return;
+        setDraft(
+          snapshot.draft
+            ? { ...snapshot.draft, businessVersionId: confirmedId }
+            : {
+                ...(props.initialDraft ?? createEmptyScenarioDraft({ name: 'Nowy scenariusz' })),
+                businessVersionId: confirmedId,
+              }
+        );
+        setComputeContext(snapshot.computeContext);
+        setCanonicalResults(snapshot.results);
+        setConfirmedAuthoringContent(
+          snapshot.configured
+            ? authoringContent(
+                snapshot.draft
+                  ? { ...snapshot.draft, businessVersionId: confirmedId }
+                  : {
+                      ...(props.initialDraft ??
+                        createEmptyScenarioDraft({ name: 'Nowy scenariusz' })),
+                      businessVersionId: confirmedId,
+                    }
+              )
+            : null
+        );
+        setAuthoringState({ kind: 'ready', revision: snapshot.revision });
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setAuthoringState({ kind: 'error', message: describeFinanceV2Error(error).detail });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [authoringAttempt, mountCheck, props.initialDraft]);
+
+  const saveAuthoring = useCallback(async (): Promise<ScenarioDraft> => {
     if (
-      mountCheck.kind === 'confirmed' &&
-      draft.businessVersionId !== mountCheck.version.businessVersionId
+      !draft.businessVersionId ||
+      (authoringState.kind !== 'ready' && authoringState.kind !== 'saving')
     ) {
-      setDraft((d) => ({ ...d, businessVersionId: mountCheck.version.businessVersionId }));
+      throw new Error('Canonical prediction authoring is not ready');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mountCheck]);
+    if (confirmedAuthoringContent === authoringContent(draft)) return draft;
+    const revision = authoringState.revision;
+    const intent = authoringIntent(draft.businessVersionId, revision, draft);
+    const idempotencyKey = persistentCommandId(AUTHORING_COMMAND_NAMESPACE, intent);
+    setAuthoringState({ kind: 'saving', revision });
+    try {
+      const written = await saveFinancePredictionAuthoring({
+        businessVersionId: draft.businessVersionId,
+        expectedRevision: revision,
+        draft,
+        idempotencyKey,
+      });
+      const cold = await getFinancePredictionAuthoring(draft.businessVersionId);
+      if (!written.draft || !cold.draft || cold.revision !== written.revision) {
+        throw new Error('Canonical prediction readback did not confirm the saved revision');
+      }
+      clearPersistentCommandId(AUTHORING_COMMAND_NAMESPACE, intent);
+      const confirmed = { ...cold.draft, businessVersionId: draft.businessVersionId };
+      setDraft(confirmed);
+      setComputeContext(cold.computeContext);
+      setCanonicalResults(cold.results);
+      setConfirmedAuthoringContent(authoringContent(confirmed));
+      setAuthoringState({ kind: 'ready', revision: cold.revision });
+      setStatusMessage(`Założenia zapisane i potwierdzone (rewizja ${cold.revision}).`);
+      return confirmed;
+    } catch (error) {
+      setAuthoringState({ kind: 'ready', revision });
+      throw error;
+    }
+  }, [authoringState, confirmedAuthoringContent, draft]);
 
   const focusMode = useFinanceFocusMode({ workspaceState: draft, activeViewId });
 
@@ -184,13 +288,18 @@ function PredictionWorkspaceInner(props: PredictionWorkspaceProps): React.ReactE
   async function handlePreflight(): Promise<void> {
     if (!draft.businessVersionId) {
       setStatusMessage(
-        'Brak realnego scenariusza na serwerze — CRUD zapisu (driver overrides/inicjatywy/impact chain/financing) jeszcze nie istnieje (patrz raport pakietu G). Preflight działa tylko na już zapisanym businessVersionId.'
+        'Brak realnego scenariusza na serwerze — preflight wymaga kanonicznego businessVersionId.'
       );
       return;
     }
     try {
+      const confirmedDraft = await saveAuthoring();
       const result = await runFinancePredictionPreflight({
-        businessVersionId: draft.businessVersionId,
+        businessVersionId: confirmedDraft.businessVersionId!,
+        ...(computeContext?.entityIds[0] ? { entityId: computeContext.entityIds[0] } : {}),
+        ...(computeContext?.openingBalanceSheetPeriodId
+          ? { openingBalanceSheetPeriodId: computeContext.openingBalanceSheetPeriodId }
+          : {}),
       });
       setStatusMessage(
         `Preflight: ${result.findingsCount} znalezisk, ${result.requiredResolutionsCount} wymaga rozstrzygnięcia.`
@@ -208,13 +317,35 @@ function PredictionWorkspaceInner(props: PredictionWorkspaceProps): React.ReactE
       return;
     }
     try {
+      const confirmedDraft = await saveAuthoring();
+      if (
+        !computeContext?.ready ||
+        !computeContext.entityIds[0] ||
+        !computeContext.openingBalanceSheetPeriodId
+      ) {
+        setStatusMessage(
+          'Obliczenie jest zablokowane: kanoniczny model bazowy nie ma jeszcze kompletnego zestawu encja + okresy prognozy + okres otwarcia.'
+        );
+        return;
+      }
       await runFinancePredictionCalculate({
-        businessVersionId: draft.businessVersionId,
-        entityId: 'entity-1',
-        forecastPeriodIds: [],
-        openingBalanceSheetPeriodId: '',
+        businessVersionId: confirmedDraft.businessVersionId!,
+        entityId: computeContext.entityIds[0],
+        forecastPeriodIds: computeContext.forecastPeriodIds,
+        openingBalanceSheetPeriodId: computeContext.openingBalanceSheetPeriodId,
       });
-      setDraft((d) => ({ ...d, lastComputeAt: new Date().toISOString() }));
+      const cold = await getFinancePredictionAuthoring(confirmedDraft.businessVersionId!);
+      if (
+        !cold.draft ||
+        cold.businessVersionId !== confirmedDraft.businessVersionId ||
+        Object.keys(cold.results.scenarioValues).length === 0
+      ) {
+        throw new Error('Canonical prediction result readback did not match the saved scenario');
+      }
+      setDraft({ ...cold.draft, businessVersionId: confirmedDraft.businessVersionId });
+      setComputeContext(cold.computeContext);
+      setCanonicalResults(cold.results);
+      setStatusMessage('Obliczenie zakończone i potwierdzone odczytem kanonicznych wyników.');
       setActiveViewId(PREDICTION_VIEW_IDS.results);
     } catch (err) {
       setStatusMessage(describeFinanceV2Error(err).detail);
@@ -278,6 +409,30 @@ function PredictionWorkspaceInner(props: PredictionWorkspaceProps): React.ReactE
     );
   }
 
+  if (authoringState.kind === 'idle' || authoringState.kind === 'loading') {
+    return (
+      <div className="p-6" data-testid="prediction-authoring-loading">
+        <LoadingState template="panel" />
+      </div>
+    );
+  }
+  if (authoringState.kind === 'error') {
+    return (
+      <div className="p-4" data-testid="prediction-authoring-error">
+        <EmptyStateInline
+          message="Nie udało się odczytać zapisanych założeń scenariusza."
+          hint={authoringState.message}
+          action={{
+            label: 'Spróbuj ponownie',
+            onClick: () => setAuthoringAttempt((n) => n + 1),
+            showPrefix: false,
+            neutralAccent: true,
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <FinanceErrorBoundary
       documentLabel={draft.name}
@@ -302,20 +457,27 @@ function PredictionWorkspaceInner(props: PredictionWorkspaceProps): React.ReactE
           }}
         />
 
-        {/* ★ Anty-cicha-pustka: wersja jest potwierdzona (realny rekord istnieje),
-            ale ten ekran nie ma dziś GET-u treści scenariusza (LUKA w nagłówku
-            pliku) — więc ZAWSZE mówimy to wprost, zamiast dać widzowi zgadywać,
-            czy to, co widzi, jest "prawdziwym" stanem czy pustym szkicem. */}
         <div
           className="border-b border-c-border-subtle bg-c-surface-raised px-4 py-2 text-xs text-c-text-secondary"
           role="status"
-          data-testid="prediction-honest-scratch-banner"
+          data-testid="prediction-canonical-authoring-banner"
         >
           Realny rekord (wersja {mountCheck.version.versionNo}, status:{' '}
-          {businessVersionStatusLabel(mountCheck.version.status)}) został potwierdzony w nowym
-          systemie. Ten ekran pokazuje nowy szkic założeń — odczyt zapisanej treści scenariusza nie
-          jest dziś dostępny (brak endpointu GET), więc żadne wcześniejsze założenia nie zostały
-          pobrane.
+          {businessVersionStatusLabel(mountCheck.version.status)}) i kanoniczna treść założeń
+          zostały odczytane. Rewizja authoringu: {authoringState.revision}.
+          <button
+            type="button"
+            className="ml-3 rounded border border-c-border px-3 py-1 font-medium text-c-text-primary disabled:opacity-50"
+            disabled={authoringState.kind === 'saving'}
+            onClick={() =>
+              void saveAuthoring().catch((error) =>
+                setStatusMessage(describeFinanceV2Error(error).detail)
+              )
+            }
+            data-testid="prediction-save-authoring"
+          >
+            {authoringState.kind === 'saving' ? 'Zapisywanie…' : 'Zapisz założenia'}
+          </button>
         </div>
 
         {statusMessage && (
@@ -335,8 +497,8 @@ function PredictionWorkspaceInner(props: PredictionWorkspaceProps): React.ReactE
           {activeViewId === PREDICTION_VIEW_IDS.results && (
             <ScenarioResultsView
               draft={draft}
-              scenarioValues={props.scenarioValues ?? {}}
-              baselineValues={props.baselineValues ?? {}}
+              scenarioValues={props.scenarioValues ?? canonicalResults.scenarioValues}
+              baselineValues={props.baselineValues ?? canonicalResults.baselineValues}
               exceptionLedger={exceptionLedger}
             />
           )}

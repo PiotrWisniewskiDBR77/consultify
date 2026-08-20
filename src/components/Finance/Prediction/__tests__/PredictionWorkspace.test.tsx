@@ -38,6 +38,8 @@ import { createEmptyScenarioDraft } from '../predictionScenarioModel';
 
 const apiMocks = vi.hoisted(() => ({
   getFinanceBusinessVersion: vi.fn(),
+  getFinancePredictionAuthoring: vi.fn(),
+  saveFinancePredictionAuthoring: vi.fn(),
   runFinancePredictionPreflight: vi.fn(),
   runFinancePredictionCalculate: vi.fn(),
 }));
@@ -81,6 +83,20 @@ describe('PredictionWorkspace — smoke render (real businessVersionId confirmed
   beforeEach(() => {
     setFeatureFlagOverrides({ financePredictionWorkspaceV1: true });
     apiMocks.getFinanceBusinessVersion.mockReset().mockResolvedValue(CONFIRMED_VERSION);
+    apiMocks.getFinancePredictionAuthoring.mockReset().mockResolvedValue({
+      configured: false,
+      businessVersionId: 'bv-prediction-1',
+      revision: 0,
+      draft: null,
+      computeContext: {
+        ready: false,
+        entityIds: [],
+        forecastPeriodIds: [],
+        openingBalanceSheetPeriodId: null,
+      },
+      results: { scenarioValues: {}, baselineValues: {} },
+    });
+    apiMocks.saveFinancePredictionAuthoring.mockReset();
     apiMocks.runFinancePredictionPreflight.mockReset();
     apiMocks.runFinancePredictionCalculate.mockReset();
   });
@@ -95,13 +111,13 @@ describe('PredictionWorkspace — smoke render (real businessVersionId confirmed
     expect(apiMocks.getFinanceBusinessVersion).toHaveBeenCalledWith('bv-prediction-1');
   });
 
-  it('gdy businessVersionId jest potwierdzony ale bez zapisanej treści, ekran mówi to WPROST (baner), nie pokazuje cichego formularza', async () => {
+  it('gdy businessVersionId jest potwierdzony, ekran pokazuje exact kanoniczną rewizję authoringu', async () => {
     render(<PredictionWorkspace artifactId="artifact-1" businessVersionId="bv-prediction-1" />);
     await waitFor(() =>
-      expect(screen.getByTestId('prediction-honest-scratch-banner')).toBeInTheDocument()
+      expect(screen.getByTestId('prediction-canonical-authoring-banner')).toBeInTheDocument()
     );
-    expect(screen.getByTestId('prediction-honest-scratch-banner').textContent).toMatch(
-      /nowy szkic|odczyt zapisanej treści scenariusza nie jest dziś dostępny/
+    expect(screen.getByTestId('prediction-canonical-authoring-banner')).toHaveTextContent(
+      /Rewizja authoringu: 0/
     );
   });
 
@@ -144,11 +160,33 @@ describe('PredictionWorkspace — smoke render (real businessVersionId confirmed
     await waitFor(() => expect(screen.getByTestId('add-initiative')).toBeInTheDocument());
   });
 
-  it('gdy realny endpoint preflight odrzuca wywołanie (brak zapisanego scenariusza po stronie serwera — CRUD nie istnieje), klik "Uruchom preflight" pokazuje honest-UI komunikat, nie fejkuje sukcesu i nie crashuje', async () => {
-    // Realny stan tej LUKI (patrz nagłówek pliku i `predictionScenarioModel.ts`): businessVersionId
-    // jest teraz zawsze potwierdzony/prawdziwy (ID_BRIDGE fix), ale sam ENDPOINT preflight wciąż
-    // odrzuca wywołanie, bo nie ma zapisanej treści scenariusza po stronie serwera — więc to REALNY
-    // request, który realnie kończy się błędem, nie klient-side guard na brakującym id.
+  it('zapisuje authoring z trwałym kluczem przed preflight i pokazuje jawny błąd endpointu', async () => {
+    const savedDraft = {
+      ...createEmptyScenarioDraft({ name: 'Nowy scenariusz' }),
+      businessVersionId: 'bv-prediction-1',
+    };
+    const savedSnapshot = {
+      configured: true,
+      businessVersionId: 'bv-prediction-1',
+      revision: 1,
+      draft: savedDraft,
+      computeContext: {
+        ready: false,
+        entityIds: [],
+        forecastPeriodIds: [],
+        openingBalanceSheetPeriodId: null,
+      },
+      results: { scenarioValues: {}, baselineValues: {} },
+    };
+    apiMocks.saveFinancePredictionAuthoring.mockResolvedValue(savedSnapshot);
+    apiMocks.getFinancePredictionAuthoring
+      .mockResolvedValueOnce({
+        ...savedSnapshot,
+        configured: false,
+        revision: 0,
+        draft: null,
+      })
+      .mockResolvedValue(savedSnapshot);
     apiMocks.runFinancePredictionPreflight.mockRejectedValue(apiError(404, 'NOT_FOUND'));
     render(<PredictionWorkspace artifactId="artifact-1" businessVersionId="bv-prediction-1" />);
     await waitFor(() => expect(screen.getByTestId('finance-workspace-bar')).toBeInTheDocument());
@@ -163,6 +201,70 @@ describe('PredictionWorkspace — smoke render (real businessVersionId confirmed
     expect(apiMocks.runFinancePredictionPreflight).toHaveBeenCalledWith({
       businessVersionId: 'bv-prediction-1',
     });
+    expect(apiMocks.saveFinancePredictionAuthoring).toHaveBeenCalledWith(
+      expect.objectContaining({
+        businessVersionId: 'bv-prediction-1',
+        expectedRevision: 0,
+        idempotencyKey: expect.any(String),
+      })
+    );
+  });
+
+  it('save -> calculate używa wyłącznie kanonicznego compute context i pokazuje cold-read results', async () => {
+    const draft = {
+      ...createEmptyScenarioDraft({ name: 'Base scenario' }),
+      businessVersionId: 'bv-prediction-1',
+    };
+    const context = {
+      ready: true,
+      entityIds: ['entity-real'],
+      forecastPeriodIds: ['period-forecast'],
+      openingBalanceSheetPeriodId: 'period-opening',
+    };
+    const initial = {
+      configured: false,
+      businessVersionId: 'bv-prediction-1',
+      revision: 0,
+      draft: null,
+      computeContext: context,
+      results: { scenarioValues: {}, baselineValues: {} },
+    };
+    const saved = { ...initial, configured: true, revision: 1, draft };
+    const computed = {
+      ...saved,
+      draft: { ...draft, lastComputeAt: '2026-08-20T12:00:00.000Z' },
+      results: {
+        scenarioValues: { 'REVENUE::period-forecast': 123 },
+        baselineValues: { 'REVENUE::period-forecast': 123 },
+      },
+    };
+    apiMocks.getFinancePredictionAuthoring
+      .mockReset()
+      .mockResolvedValueOnce(initial)
+      .mockResolvedValueOnce(saved)
+      .mockResolvedValueOnce(computed);
+    apiMocks.saveFinancePredictionAuthoring.mockResolvedValue(saved);
+    apiMocks.runFinancePredictionCalculate.mockResolvedValue({
+      mode: 'STANDARD_BASE',
+      jobId: 'job-1',
+      jobStatus: 'succeeded',
+      baselineJobId: null,
+      passthroughRowCount: 1,
+    });
+    render(<PredictionWorkspace artifactId="artifact-1" businessVersionId="bv-prediction-1" />);
+    fireEvent.click(await screen.findByRole('button', { name: /Przelicz scenariusz/i }));
+    await waitFor(() =>
+      expect(screen.getByTestId('prediction-status-message')).toHaveTextContent(
+        /potwierdzone odczytem kanonicznych wyników/i
+      )
+    );
+    expect(apiMocks.runFinancePredictionCalculate).toHaveBeenCalledWith({
+      businessVersionId: 'bv-prediction-1',
+      entityId: 'entity-real',
+      forecastPeriodIds: ['period-forecast'],
+      openingBalanceSheetPeriodId: 'period-opening',
+    });
+    expect(screen.getByTestId('prediction-results-view')).toBeInTheDocument();
   });
 });
 
@@ -179,6 +281,19 @@ describe('PredictionWorkspace — ANTY-CICHA-PUSTKA (ID_BRIDGE Gate E)', () => {
   beforeEach(() => {
     setFeatureFlagOverrides({ financePredictionWorkspaceV1: true });
     apiMocks.getFinanceBusinessVersion.mockReset();
+    apiMocks.getFinancePredictionAuthoring.mockReset().mockResolvedValue({
+      configured: false,
+      businessVersionId: 'bv-1',
+      revision: 0,
+      draft: null,
+      computeContext: {
+        ready: false,
+        entityIds: [],
+        forecastPeriodIds: [],
+        openingBalanceSheetPeriodId: null,
+      },
+      results: { scenarioValues: {}, baselineValues: {} },
+    });
     apiMocks.runFinancePredictionPreflight.mockReset();
     apiMocks.runFinancePredictionCalculate.mockReset();
   });
