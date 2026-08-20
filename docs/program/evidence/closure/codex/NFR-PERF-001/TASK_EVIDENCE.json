@@ -189,7 +189,6 @@
   "verdict": "PARTIAL",
   "openBlockers": [
     "The provisional repository Web Vitals thresholds require explicit Product owner acceptance before literal task DONE.",
-    "The staging rollback rehearsal failed fail-closed on a historical migration checksum mismatch; a rollback-compatible recovery candidate must be qualified and rehearsed.",
     "Production deployment remains NOT_AUTHORIZED."
   ],
   "releaseBoundary": {
@@ -197,7 +196,7 @@
     "exactCurrentRelease30m": "PASS_ON_DEPLOYED_STAGING_E6CA",
     "ownerThresholdAcceptance": "NOT_RECORDED",
     "deployedStabilityWindow": "PASS_2_OF_2_ON_STAGING",
-    "rollbackRehearsal": "FAIL_CHECKSUM_MISMATCH_CANDIDATE_RESTORED_ZERO_DATA_LOSS",
+    "rollbackRehearsal": "PASS_FORWARD_ONLY_RECOVERY_3F8156CE_AND_FINAL_E6CA_RESTORE_16_OF_16_ZERO_DATA_LOSS",
     "release": "NOT_AUTHORIZED"
   }
 }

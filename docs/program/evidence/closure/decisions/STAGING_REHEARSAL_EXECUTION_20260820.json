@@ -106,8 +106,33 @@
       "observedDataLossSeconds": 0,
       "mountedJourneysAfterRestore": "16/16"
     },
-    "verdict": "STOP_ROLLBACK_COMPATIBILITY",
+    "rollbackCompatibilityResolution": {
+      "status": "PASS",
+      "strategy": "FORWARD_ONLY_SCHEMA_APPLICATION_ROLLBACK",
+      "details": "Use the previous application tree while preserving the current approved bytes of the sole migration changed since that product. The release migration gate remains enabled and the historical ledgers are not rewritten.",
+      "recoverySha": "3f8156ce0572529226883a85efb88e34f7002f2c",
+      "recoveryRef": "refs/recovery/rollback-compatible-a977-20260820",
+      "baseProductSha": "a97750b5d3c9f821f1b2f44b21611734b2876964",
+      "changedFiles": [
+        "server/migrations/20261038_execution_spine_authority_completion.sql"
+      ],
+      "migrationSha256": "a062b6e6f0096839304852114e4a9d7aec91181ec07e0fe6bf4735ed6fff592a",
+      "recoveryDeploymentId": "f18923f3-64d1-465d-8c64-86bcb4d587bf",
+      "recoveryReadyAt": "2026-08-20T09:47:31Z",
+      "recoveryRtoSeconds": 352,
+      "recoveryReadiness": "PASS_200_MIGRATIONS_ZERO_DRIFT",
+      "recoveryMountedJourneys": "16/16",
+      "recoverySentinel": "PASS_MARKER_PRESERVED_ZERO_DATA_LOSS",
+      "finalCandidateRestoreDeploymentId": "ee7e0b92-791f-4a74-b374-1932f807a1e6",
+      "finalCandidateReadyAt": "2026-08-20T09:53:09Z",
+      "finalCandidateRestoreSeconds": 242,
+      "finalCandidateMountedJourneys": "16/16",
+      "finalCandidateSentinel": "PASS_MARKER_PRESERVED_ZERO_DATA_LOSS",
+      "productionTouched": false,
+      "unsafeWorkaroundUsed": false
+    },
+    "verdict": "STAGING_REHEARSAL_PASS_PRODUCTION_NOT_AUTHORIZED",
     "releaseGo": false,
-    "nextGate": "Build and qualify a rollback-compatible candidate or an explicitly tested forward-fix recovery strategy, then repeat the staging rollback rehearsal on the new exact SHA. Production remains NOT_AUTHORIZED."
+    "nextGate": "Obtain the remaining owner/human/provider task receipts and a separate explicit D7=A production authorization. The staging technical rehearsal, including forward-only rollback and final candidate restore, is complete."
   }
 }
