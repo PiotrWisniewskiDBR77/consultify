@@ -71,6 +71,7 @@ import { getPinnedLegacyValuationIdentity, readCanonicalLegacyValuationInputs, w
 import { runCanonicalLegacyValuationCompute } from '../../../services/finance/canonical/valuationLegacyComputeAdapterService.js';
 import { generateCanonicalLegacyNegotiationPack } from '../../../services/finance/canonical/valuationNegotiationPackService.js';
 import { exportCanonicalLegacyValuationPptx } from '../../../services/finance/canonical/valuationPptxExportService.js';
+import { discardCanonicalLegacyValuation } from '../../../services/finance/canonical/valuationDiscardService.js';
 import { createRegisteredValuation, ValuationRegistrationError } from '../../../services/finance/canonical/valuationRegistrationService.js';
 import { asyncHandler } from '../../../utils/asyncHandler.js';
 import { financeV2Meta, sendError } from './_shared.js';
@@ -165,6 +166,16 @@ router.get('/valuation/legacy/:legacyId/inputs',requireActiveMembership,asyncHan
   const {organizationId}=getV8Context(req);
   try{const result=await readCanonicalLegacyValuationInputs(organizationId,String(req.params.legacyId||''));return res.status(200).json({data:{artifactId:result.identity.artifact_id,businessVersionId:result.identity.business_version_id,workingRevisionId:result.identity.working_revision_id,workingRevisionVersion:Number(result.identity.working_revision_version),assumptions:result.assumptions,peers:result.peers},meta:financeV2Meta()});}
   catch(error:any){const code=String(error?.code||'CANONICAL_INPUT_READ_FAILED');return sendError(res,409,code,String(error?.message||code));}
+}));
+
+router.delete('/valuation/legacy/:legacyId',requireFinanceEditorMembership,asyncHandler(async(req:AuthRequest,res:Response)=>{
+  const {organizationId,userId}=getV8Context(req);const body=req.body??{};
+  const idempotencyKey=String(req.headers['x-idempotency-key']||'').trim();
+  if(!idempotencyKey)return sendError(res,400,'IDEMPOTENCY_KEY_REQUIRED','x-idempotency-key is required');
+  if(!body.expected||typeof body.expected!=='object')return sendError(res,400,'INVALID_BODY','expected canonical identity is required');
+  const reason=typeof body.reason==='string'?body.reason:'User discarded valuation';
+  try{const result=await discardCanonicalLegacyValuation({organizationId,userId,legacyId:String(req.params.legacyId||''),expected:body.expected,idempotencyKey,reason});return res.status(200).json({data:result,meta:financeV2Meta()});}
+  catch(error:any){const code=String(error?.code||'CANONICAL_VALUATION_DISCARD_FAILED');const status=code==='NOT_FOUND'?404:code==='IDEMPOTENCY_KEY_REQUIRED'||code==='INVALID_REASON'?400:409;return sendError(res,status,code,String(error?.message||code));}
 }));
 
 router.post('/valuation/legacy/:legacyId/compute',requireFinanceEditorMembership,asyncHandler(async(req:AuthRequest,res:Response)=>{

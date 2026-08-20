@@ -44,6 +44,7 @@ async function snapshot(tx: any, organizationId: string, legacyId: string) {
     JOIN valuations v ON v.organization_id=aa.organization_id AND v.id=aa.legacy_id
     JOIN organizations o ON o.id=aa.organization_id
     WHERE aa.organization_id=? AND aa.legacy_table='valuations' AND aa.legacy_id=? AND a.artifact_type='VALUATION_CASE' AND a.current_business_version_id=aa.business_version_id
+      AND a.archived_at IS NULL AND v.status <> 'ARCHIVED'
     ORDER BY aa.created_at DESC LIMIT 1`,
     [organizationId, legacyId]
   );

@@ -617,11 +617,16 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
     ]);
   });
 
-  it('blocks depth, compute, negotiation pack, PPTX export, typed assumptions and peers legacy doors before mutation with exact telemetry', async () => {
+  it('blocks discard, depth, compute, negotiation pack, PPTX export, typed assumptions and peers legacy doors before mutation with exact telemetry', async () => {
     const before = await pool.query(
-      `SELECT assumptions,peers,negotiation_pack,export_path,exported_at FROM valuations WHERE id=$1`,
+      `SELECT status,assumptions,peers,negotiation_pack,export_path,exported_at,
+        (SELECT count(*)::int FROM valuation_snapshots WHERE valuation_id=$1) AS snapshot_count
+       FROM valuations WHERE id=$1`,
       [mappedValuationId]
     );
+    const discard = await request(app)
+      .delete(`/api/economics/valuations/${mappedValuationId}`)
+      .set('x-request-id', `${prefix}-wave12-discard`);
     const assumptions = await request(app)
       .put(`/api/economics/valuations/${mappedValuationId}/assumptions`)
       .set('x-request-id', `${prefix}-wave4-assumptions`)
@@ -652,6 +657,11 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
     expect(compute.status).toBe(410);
     expect(negotiation.status).toBe(410);
     expect(pptx.status).toBe(410);
+    expect(discard.status).toBe(410);
+    expect(discard.body).toMatchObject({
+      writerId: 'ECO-W32',
+      successor: '/api/v8/finance-v2/valuation/legacy/:legacyId',
+    });
     expect(depth.body).toMatchObject({
       writerId: 'ECO-W23',
       successor: '/api/v8/finance-v2/valuation/legacy/:legacyId/depth',
@@ -677,10 +687,49 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
       successor: '/api/v8/finance-v2/valuation/legacy/:legacyId/peers',
     });
     const after = await pool.query(
-      `SELECT assumptions,peers,negotiation_pack,export_path,exported_at FROM valuations WHERE id=$1`,
+      `SELECT status,assumptions,peers,negotiation_pack,export_path,exported_at,
+        (SELECT count(*)::int FROM valuation_snapshots WHERE valuation_id=$1) AS snapshot_count
+       FROM valuations WHERE id=$1`,
       [mappedValuationId]
     );
     expect(after.rows).toEqual(before.rows);
+  });
+
+  it('restores only ECO-W32 through the writer-scoped rollback lever', async () => {
+    const previous = process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+    const rollbackId = `${prefix}-wave12-rollback`;
+    const requestId = `${prefix}-wave12-discard-rollback`;
+    process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = 'ECO-W32';
+    try {
+      await pool.query(
+        `INSERT INTO valuations(id,organization_id,title,source_type,currency,status,created_by)
+         VALUES($1,$2,'Wave12 rollback only','manual','PLN','DRAFT',$3)`,
+        [rollbackId, orgA, actor]
+      );
+      await pool.query(
+        `INSERT INTO valuation_snapshots(id,valuation_id,version,snapshot_data,approved_by)
+         VALUES($1,$2,1,'{}'::jsonb,$3)`,
+        [randomUUID(), rollbackId, actor]
+      );
+      const response = await request(app)
+        .delete(`/api/economics/valuations/${rollbackId}`)
+        .set('x-request-id', requestId);
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ success: true, deleted: rollbackId });
+      expect((await pool.query(`SELECT id FROM valuations WHERE id=$1`, [rollbackId])).rows).toHaveLength(0);
+      expect((await pool.query(`SELECT id FROM valuation_snapshots WHERE valuation_id=$1`, [rollbackId])).rows).toHaveLength(0);
+      expect(
+        (await pool.query(`SELECT idempotency_key FROM finance_valuation_discard_receipts WHERE organization_id=$1 AND legacy_valuation_id=$2`, [orgA, rollbackId])).rows
+      ).toHaveLength(0);
+      expect(
+        (await pool.query(`SELECT writer_id,access_kind,successor_path FROM legacy_cutover_usage_events WHERE organization_id=$1 AND request_id=$2`, [orgA, requestId])).rows
+      ).toEqual([{writer_id:'ECO-W32',access_kind:'rollback_writer',successor_path:'/api/v8/finance-v2/valuation/legacy/:legacyId'}]);
+    } finally {
+      await pool.query(`DELETE FROM valuation_snapshots WHERE valuation_id=$1`, [rollbackId]);
+      await pool.query(`DELETE FROM valuations WHERE organization_id=$1 AND id=$2`, [orgA, rollbackId]);
+      if (previous === undefined) delete process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+      else process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = previous;
+    }
   });
 
   it('restores only ECO-W31 through the writer-scoped rollback lever', async () => {

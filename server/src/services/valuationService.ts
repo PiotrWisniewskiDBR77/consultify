@@ -13,7 +13,7 @@ import {
 } from './financialModelingService.js';
 import { confirmValuationRecommendationCandidateHandoff } from './finance/financeValuationRecommendationCandidateHandoff.js';
 
-export type ValuationStatus = 'DRAFT' | 'REVIEW' | 'APPROVED';
+export type ValuationStatus = 'DRAFT' | 'REVIEW' | 'APPROVED' | 'ARCHIVED';
 export type ValuationSourceType = 'financial_model' | 'financial_analysis' | 'budget' | 'manual';
 
 export type TerminalMethod = 'gordon' | 'exit_multiple';
@@ -114,6 +114,7 @@ function normalizeStatus(raw: any): ValuationStatus {
   const s = String(raw || '').toUpperCase();
   if (s === 'REVIEW') return 'REVIEW';
   if (s === 'APPROVED') return 'APPROVED';
+  if (s === 'ARCHIVED') return 'ARCHIVED';
   return 'DRAFT';
 }
 
@@ -304,7 +305,7 @@ export async function createValuation(
 export async function listValuations(orgId: string): Promise<any[]> {
   const rows = await dbAll<any>(
     `SELECT id, title, description, status, source_type, source_id, horizon_years, currency, approved_at, updated_at
-     FROM valuations WHERE organization_id = ? ORDER BY updated_at DESC`,
+     FROM valuations WHERE organization_id = ? AND status <> 'ARCHIVED' ORDER BY updated_at DESC`,
     [orgId]
   );
   return (rows || []).map((r: any) => ({
@@ -322,7 +323,7 @@ export async function listValuations(orgId: string): Promise<any[]> {
 }
 
 export async function getValuation(orgId: string, valuationId: string): Promise<any | null> {
-  const row = await dbGet<any>(`SELECT * FROM valuations WHERE id = ? AND organization_id = ?`, [
+  const row = await dbGet<any>(`SELECT * FROM valuations WHERE id = ? AND organization_id = ? AND status <> 'ARCHIVED'`, [
     valuationId,
     orgId,
   ]);

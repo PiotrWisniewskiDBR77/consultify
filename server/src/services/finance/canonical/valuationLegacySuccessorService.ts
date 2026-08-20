@@ -11,6 +11,8 @@ type PinnedIdentity = {
   working_revision_version: number;
   currency: string;
   status: string;
+  legacy_status: string;
+  archived_at: string | null;
 };
 
 function canonicalJson(value: unknown): string {
@@ -29,7 +31,7 @@ async function pinnedIdentity(tx: any, organizationId: string, legacyId: string)
   return tx.queryOne(
     `SELECT aa.artifact_id,aa.business_version_id,
             wr.working_revision_id,wr.version AS working_revision_version,
-            v.currency,bv.status
+            v.currency,bv.status,v.status AS legacy_status,a.archived_at
        FROM finance_artifact_aliases aa
        JOIN finance_artifacts a ON a.artifact_id=aa.artifact_id AND a.organization_id=aa.organization_id
        JOIN finance_business_versions bv ON bv.business_version_id=aa.business_version_id
@@ -50,7 +52,7 @@ function exactNumber(value: unknown, name: string): number {
 }
 
 function assertIdentity(identity: PinnedIdentity, expected: any) {
-  if (identity.status !== 'DRAFT') throw Object.assign(new Error('Canonical valuation is not editable'), { code: 'STATUS_IMMUTABLE' });
+  if (identity.status !== 'DRAFT' || identity.legacy_status === 'ARCHIVED' || identity.archived_at !== null) throw Object.assign(new Error('Canonical valuation is not editable'), { code: 'STATUS_IMMUTABLE' });
   if (
     identity.artifact_id !== expected.artifactId ||
     identity.business_version_id !== expected.businessVersionId ||
@@ -77,6 +79,7 @@ export async function readCanonicalLegacyValuationInputs(organizationId:string,l
   return withPinnedPostgresTransaction(async(tx)=>{
     const identity=await pinnedIdentity(tx,organizationId,legacyId);
     if(!identity) throw Object.assign(new Error('Legacy valuation is not mapped'),{code:'LEGACY_IDENTITY_UNMAPPED'});
+    if(identity.legacy_status==='ARCHIVED'||identity.archived_at!==null) throw Object.assign(new Error('Canonical valuation is archived'),{code:'STATUS_IMMUTABLE'});
     const assumptions=await tx.queryOne<any>(`SELECT direct_wacc_pct,terminal_method,terminal_growth_pct,exit_multiple,exit_multiple_metric,net_debt_decimal,cash_tax_rate_pct,valuation_as_of_date::text,source_working_revision_id,source_working_revision_version,command_request_sha256 FROM finance_valuation_direct_assumptions WHERE organization_id=? AND business_version_id=?`,[organizationId,identity.business_version_id]);
     const method=await tx.queryOne<any>(`SELECT id,comps_metric_type,comps_min_multiple,comps_median_multiple,comps_max_multiple,source_working_revision_id,source_working_revision_version,command_request_sha256 FROM finance_valuation_methods WHERE organization_id=? AND business_version_id=? AND method_type='TRADING_COMPS'`,[organizationId,identity.business_version_id]);
     const peers=method?await tx.queryAll<any>(`SELECT peer_name FROM finance_valuation_comps WHERE organization_id=? AND method_id=? ORDER BY peer_name`,[organizationId,method.id]):[];

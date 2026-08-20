@@ -390,12 +390,12 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'ECO-W32',
       method: 'DELETE',
       path: /^\/valuations\/[^/]+\/?$/,
-      state: 'observed',
-      successor: null,
+      state: 'disabled',
+      successor: '/api/v8/finance-v2/valuation/legacy/:legacyId',
       legacyTable: 'valuations',
       legacyIdFromPath: idAt2,
       reason:
-        'Deletes the valuations row addressed by :id (economics.routes.ts:3061). No proven successor; irreversible delete with zero protection before this registration.',
+        'Mounted delete now records an immutable tenant-bound canonical discard receipt, archives the exact canonical artifact and legacy list identity atomically, and preserves every valuation row and lineage edge for audit.',
     },
     {
       writerId: 'ECO-W33',

@@ -24,8 +24,8 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
       legacyMutationDoors: 52,
       canonicalMutationDoors: 1,
       nonMutationDoors: 6,
-      retiredLegacyMutationDoors: 16,
-      openLegacyMutationDoors: 36,
+      retiredLegacyMutationDoors: 17,
+      openLegacyMutationDoors: 35,
     });
   });
 
@@ -61,5 +61,14 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
       expect(source).toContain('exportCanonicalLegacyValuationPptx');
       expect(source).not.toMatch(/Api\.post\([^\n]*\/api\/economics\/valuations\/.*export\/pptx/);
     }
+  });
+
+  it('routes the mounted valuation discard caller through the canonical successor', () => {
+    const source = fs.readFileSync(
+      path.resolve(process.cwd(), 'src/components/Economics/hooks/useFinanceRowActions.ts'),
+      'utf8'
+    );
+    expect(source).toContain('discardCanonicalLegacyValuation');
+    expect(source).not.toMatch(/Api\.delete\([^\n]*\/api\/economics\/valuations/);
   });
 });

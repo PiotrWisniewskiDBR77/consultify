@@ -20,6 +20,7 @@ import {
   approveCanonicalValuation,
   approveFinanceModel,
   createRegisteredValuation,
+  discardCanonicalLegacyValuation,
   exportCanonicalLegacyValuationPptx,
   resolveLegacyFinanceArtifact,
   runCanonicalFinancialAnalysis,
@@ -211,7 +212,7 @@ export function useFinanceRowActions({
           await V8FinanceApi.deleteAnalysis(row.id);
           await loadAnalyses();
         } else if (row.kind === 'valuation') {
-          await Api.delete(`/api/economics/valuations/${row.id}`);
+          await discardCanonicalLegacyValuation(row.id);
           await loadValuations();
         }
         toast.success(t('finance.toast.deleted', 'Usunięto'));
