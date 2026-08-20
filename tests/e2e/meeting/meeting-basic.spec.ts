@@ -82,6 +82,8 @@ type MeetingFixture = {
   noteSummary?: string;
   proposalId?: string;
   receiptId?: string;
+  staleNoteId?: string;
+  staleProposalId?: string;
   foreignRunId?: string;
 };
 
@@ -180,6 +182,18 @@ test.afterEach(async ({ request }) => {
         [fixture.noteId, fixture.meetingId, fixture.organizationId, fixture.userId]
       );
     }
+    if (fixture.staleNoteId) {
+      await client.query(
+        `DELETE FROM meeting_notes WHERE id=$1 AND meeting_id=$2 AND organization_id=$3 AND created_by=$4`,
+        [fixture.staleNoteId, fixture.meetingId, fixture.organizationId, fixture.userId]
+      );
+    }
+    if (fixture.staleProposalId) {
+      await client.query(
+        `DELETE FROM artifact_handoff_proposals WHERE proposal_id=$1 AND producer_record_id=$2 AND organization_id=$3`,
+        [fixture.staleProposalId, fixture.meetingId, fixture.organizationId]
+      );
+    }
     // Ownership was locked above through the parent meeting. The follow-up
     // table is scoped by that FK and does not duplicate organization_id.
     await client.query(`DELETE FROM meeting_follow_ups WHERE meeting_id=$1`, [fixture.meetingId]);
@@ -228,7 +242,8 @@ test.describe('M21 Meeting — governed note approval + cold readback [@module:m
     request,
   }) => {
     const runId = makeRunId('mtg-ui');
-    const session = await getPrivilegedSession(request, { runId, role: 'ADMIN' });
+    const session = await getPrivilegedSession(request, { runId, role: 'OWNER' });
+    expect(session.role).toBe('OWNER');
     await injectSession(page, {
       token: session.token,
       user: {
@@ -351,6 +366,51 @@ test.describe('M21 Meeting — governed note approval + cold readback [@module:m
       { headers: authHeaders(revoked.token), data: { action: 'approve' } }
     );
     expect(revokedDecision.status()).toBe(403);
+
+    // A second active administrator decides the proposal after this OWNER's
+    // page loaded it. The OWNER's now-stale action must fail closed, reload the
+    // authoritative state and expose no false materialization receipt.
+    const concurrentAdmin = await addMember(request, runId, 'ADMIN');
+    const concurrentReject = await request.post(
+      `${API}/api/meeting/${fixture.meetingId}/notes/${fixture.noteId}/decision`,
+      { headers: authHeaders(concurrentAdmin.token), data: { action: 'reject' } }
+    );
+    expect(concurrentReject.status(), await concurrentReject.text()).toBe(200);
+
+    fixture.staleNoteId = fixture.noteId;
+    fixture.staleProposalId = fixture.proposalId;
+    const staleApprove = page.getByRole('button', { name: /Approve and materialize/i });
+    const staleResponsePromise = page.waitForResponse(
+      (response) =>
+        response.url().includes(`/notes/${fixture!.staleNoteId}/decision`) &&
+        response.request().method() === 'POST'
+    );
+    await staleApprove.click();
+    const staleResponse = await staleResponsePromise;
+    expect(staleResponse.status()).toBe(409);
+    await expect(page.getByText(/proposal changed.*Reloading/i)).toBeVisible();
+    await expect(page.getByText(/Rejected/i).first()).toBeVisible();
+    expect(await page.getByText(/Materialization receipt/i).count()).toBe(0);
+
+    // Generate a fresh proposal after authoritative reconciliation. This
+    // proves the stale command did not poison the OWNER's next explicit intent.
+    await transcriptField.fill(`${TRANSCRIPT} Fresh owner-reviewed version.`);
+    const freshGenerateResponsePromise = page.waitForResponse(
+      (response) =>
+        response.url().includes('/generate-notes') && response.request().method() === 'POST'
+    );
+    await generateBtn.click();
+    const freshGenerateResponse = await freshGenerateResponsePromise;
+    expect(freshGenerateResponse.status()).toBe(201);
+    const freshGenerated = (await freshGenerateResponse.json()) as any;
+    fixture.noteId = String(freshGenerated.meetingNoteId || '');
+    fixture.noteSummary = String(
+      freshGenerated.meetingNote?.summary || freshGenerated.note?.summary || ''
+    );
+    fixture.proposalId = String(freshGenerated.proposal?.proposalId || '');
+    expect(fixture.noteId).not.toBe(fixture.staleNoteId);
+    expect(fixture.proposalId).not.toBe(fixture.staleProposalId);
+    await page.getByRole('button', { name: /Back to proposals/i }).click();
 
     const approve = page.getByRole('button', { name: /Approve and materialize/i });
     await expect(approve).toBeVisible();

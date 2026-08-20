@@ -652,8 +652,9 @@ router.post(
       .trim()
       .toUpperCase();
 
-    // Accepted personas: SUPERADMIN, ADMIN, USER, GUEST
-    const VALID_ROLES = ['SUPERADMIN', 'ADMIN', 'USER', 'GUEST'] as const;
+    // OWNER is required for mounted owner-persona acceptance. This route is
+    // disabled in production, so the signed role exists only in test support.
+    const VALID_ROLES = ['SUPERADMIN', 'OWNER', 'ADMIN', 'USER', 'GUEST'] as const;
     type ValidRole = (typeof VALID_ROLES)[number];
     const userRole: ValidRole = (VALID_ROLES as readonly string[]).includes(requestedRole)
       ? (requestedRole as ValidRole)
@@ -717,6 +718,8 @@ router.post(
           'E2E',
           userRole === 'SUPERADMIN'
             ? 'SuperAdmin'
+            : userRole === 'OWNER'
+              ? 'Owner'
             : userRole === 'ADMIN'
               ? 'Admin'
               : userRole === 'GUEST'
@@ -764,6 +767,8 @@ router.post(
     const displayName =
       userRole === 'SUPERADMIN'
         ? 'E2E SuperAdmin'
+        : userRole === 'OWNER'
+          ? 'E2E Owner'
         : userRole === 'ADMIN'
           ? 'E2E Admin'
           : userRole === 'GUEST'

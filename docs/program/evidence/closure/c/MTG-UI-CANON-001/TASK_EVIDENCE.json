@@ -15,22 +15,55 @@
   "gateG3": "PASS — strict migrate on FRESH from-zero DB exit 0; repeat run applied 0; --dry-run 0 pending; schema_migrations 709 success / 0 failed / 0 pending.",
   "taskId": "MTG-UI-CANON-001",
   "verdict": "PARTIAL",
+  "technicalVerdict": "DONE_CURRENT_SHA",
   "open": [
-    "The integrated governed-note UI packet is repository-qualified, but literal current real stale and concurrent-update browser proof remains open.",
-    "A separate mounted OWNER browser journey remains required; a generic authenticated persona does not prove OWNER behavior.",
-    "Recording and consent policy remains an owner-controlled boundary and is not inferred from the UI implementation.",
     "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending."
   ],
-  "changedPaths": [],
-  "changedPathRationale": {},
+  "changedPaths": [
+    "server/src/routes/testSupport.routes.ts",
+    "tests/e2e/_helpers/privilegedSession.ts",
+    "tests/e2e/meeting/meeting-basic.spec.ts",
+    "docs/program/evidence/closure/c/MTG-UI-CANON-001/TASK_EVIDENCE.json"
+  ],
+  "changedPathRationale": {
+    "testSupportOwner": "Mint a distinct server-signed OWNER persona without client-side role override; the route remains disabled in production.",
+    "mountedJourney": "Prove approved-out capture OFF, real concurrent decision, stale authoritative reload, fresh retry and cold receipt readback on fresh PostgreSQL.",
+    "evidence": "Reconcile the completed repository gates while preserving human acceptance."
+  },
   "ownerTables": [],
-  "commands": [],
+  "commands": [
+    {
+      "command": "fresh PostgreSQL migration, repeat and dry-run at exact base 0529405e9f",
+      "exitCode": 0,
+      "result": "fresh 794; repeat applying 0; dry pending 0"
+    },
+    {
+      "command": "signed OWNER mounted Meeting Playwright journey on fresh PostgreSQL",
+      "exitCode": 0,
+      "result": "1/1; server-signed OWNER, capture OFF, concurrent ADMIN reject, stale OWNER 409 plus authoritative rejected reload and zero false receipt, fresh OWNER proposal materialized once, hard-reload receipt readback"
+    },
+    {
+      "command": "focused MeetingHub and mounted meeting-boundary suites",
+      "exitCode": 0,
+      "result": "MeetingHub 10/10; mounted real-auth PostgreSQL boundary 4/4"
+    },
+    {
+      "command": "root and server TypeScript checks plus diff-check",
+      "exitCode": 0,
+      "result": "root tsc PASS; server tsc PASS; git diff --check PASS"
+    }
+  ],
   "denominators": {
     "automatedG4Cells": "12/12",
     "automatedG4Screenshots": "12/12",
     "automatedG4AxeCriticalSerious": "0/0",
     "automatedG4UnnamedControls": 0,
-    "automatedG4VisibleFocus": "PASS"
+    "automatedG4VisibleFocus": "PASS",
+    "exactCurrentSignedOwnerMounted": "1/1",
+    "exactCurrentMeetingHub": "10/10",
+    "exactCurrentMountedBoundaryRealPg": "4/4",
+    "exactCurrentMigration": "fresh 794; repeat 0; dry pending 0",
+    "exactCurrentTypechecks": "root PASS; server PASS"
   },
   "fixtures": {},
   "negativeControls": {},
@@ -104,21 +137,29 @@
     "executed": false
   },
   "openBlockers": [
-    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
-    "Literal current real stale and concurrency behavior is not proven through the mounted browser journey.",
-    "A distinct OWNER browser proof is missing; the existing automated G4 persona is not accepted as an OWNER substitute.",
-    "Recording and consent policy remains owner-controlled and unresolved by this technical packet."
+    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md."
   ],
+  "exactCurrentReconciliation": {
+    "baseSha": "0529405e9f3ef7b182ada28a6a3a1aab836ac007",
+    "sourceRed": "The mounted journey could not obtain a server-signed OWNER because production-disabled test support normalized OWNER to ADMIN.",
+    "boundedFix": "Test support now signs an explicit OWNER persona; no Meeting production path changed.",
+    "technicalFact": "A fresh-PostgreSQL mounted browser journey proves the OWNER surface, an external active ADMIN decision after the OWNER loaded the proposal, stale OWNER 409 handling with authoritative rejected-state reload and zero false receipt, a fresh subsequent OWNER intent, exactly one materialization receipt and hard-reload persistence.",
+    "policyBoundary": "Recording and automatic transcription remain OFF under MTG-POL-001 technicalVerdict APPROVED_OUT_DEFAULT_OFF_VERIFIED at productSha 061b47c8fe3a182b3efd8f49e54404557386298d.",
+    "verdictBoundary": "Repository-technical MTG-UI evidence is complete at this base. Top-level PARTIAL is preserved for manual VoiceOver, named-persona and visual/brand owner acceptance only."
+  },
   "blockerReconciliation": [
     {
       "historicalBlocker": "Meeting note governance lacked a bound current UI implementation.",
-      "classification": "PARTIALLY_RESOLVED",
-      "detail": "Technical source a408f409ffbc8479c1927804161d816cc782a412 hardens the integrated governed-note proposal UI and its acceptance harness. It does not close literal real stale/concurrency, distinct OWNER-browser, recording/consent-policy or human acceptance gates."
+      "classification": "RESOLVED_REPOSITORY_HUMAN_PENDING",
+      "detail": "Technical source a408f409ffbc8479c1927804161d816cc782a412 hardens the integrated governed-note proposal UI. Exact-base reconciliation adds literal stale/concurrency and a distinct signed OWNER browser journey; MTG-POL-001 keeps recording/transcription approved-out OFF. Human acceptance remains open."
     }
   ],
   "resolvedBlockers": [
     "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed.",
-    "Integrated technical source a408f409ffbc8479c1927804161d816cc782a412 binds and hardens the governed-note proposal UI packet; its ancestry is reconciled at c8da53f1f4469bc39734fa0fee76298dd4d41e3f."
+    "Integrated technical source a408f409ffbc8479c1927804161d816cc782a412 binds and hardens the governed-note proposal UI packet; its ancestry is reconciled at c8da53f1f4469bc39734fa0fee76298dd4d41e3f.",
+    "Exact-current mounted browser proof now uses a distinct server-signed OWNER persona.",
+    "Literal stale/concurrency is proven: a concurrent active ADMIN rejects after the OWNER loaded the proposal; the stale OWNER write receives 409, reloads the authoritative rejected state and emits no false receipt before a fresh OWNER proposal succeeds.",
+    "The recording/consent source blocker is superseded by MTG-POL-001 APPROVED_OUT_DEFAULT_OFF_VERIFIED; capture remains OFF and was asserted in the signed OWNER journey."
   ],
   "automatedG4Verdict": {
     "verdict": "PASS_EXACT_SHA",

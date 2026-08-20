@@ -39,7 +39,7 @@
 import type { APIRequestContext, Page } from '@playwright/test';
 
 /** Roles the bootstrap endpoint accepts (`VALID_ROLES` in testSupport.routes.ts). */
-export const PRIVILEGED_ROLES = ['SUPERADMIN', 'ADMIN', 'USER', 'GUEST'] as const;
+export const PRIVILEGED_ROLES = ['SUPERADMIN', 'OWNER', 'ADMIN', 'USER', 'GUEST'] as const;
 export type PrivilegedRole = (typeof PRIVILEGED_ROLES)[number];
 
 /** Roles that actually carry organization-administration privilege. */
