@@ -6,12 +6,22 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mappingEditorState = vi.hoisted(() => ({ props: null as any }));
+const translationState = vi.hoisted(() => ({ language: 'en' }));
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback?: any) =>
-      typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key),
-    i18n: { language: 'en' },
+    t: (key: string, fallback?: any) => {
+      if (translationState.language === 'pl') {
+        const pl: Record<string, string> = {
+          'finance.importWizard.units': 'Jednostki',
+          'finance.importWizard.thousands': 'Tysiące',
+          'finance.importWizard.millions': 'Miliony',
+        };
+        if (pl[key]) return pl[key];
+      }
+      return typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? key);
+    },
+    i18n: { get language() { return translationState.language; } },
   }),
 }));
 
@@ -83,6 +93,7 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mappingEditorState.props = null;
+    translationState.language = 'en';
     vi.mocked(V8FinanceApi.getStatementSourceReceipt).mockResolvedValue({
       receipt: {
         receipt_id: 'receipt-1',
@@ -394,6 +405,7 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
   });
 
   it('reconstructs the durable review after unmount and a new deep-link mount', async () => {
+    translationState.language = 'pl';
     const detailFor = (id: string) => ({
       statement: {
         id,
@@ -419,6 +431,31 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
             line_name_pl: 'Przychody',
             source_row: 1,
           },
+          ...(id === 'statement-current'
+            ? [
+                {
+                  original_label: 'Ujawnienie jednostki zależnej',
+                  value: 10,
+                  confidence: 0.61,
+                  canonical_line_id: null,
+                  source_row: 12,
+                  mapping_status: 'manual_exclude',
+                  mapping_tier: 'excluded',
+                  is_non_financial: true,
+                  classification_reason: 'APPENDIX_ENTITY_DISCLOSURE',
+                  suggested_exclusion_reason: 'APPENDIX_ENTITY_DISCLOSURE',
+                  manual_decision: {
+                    decisionId: 'decision-exclude-1',
+                    action: 'EXCLUDE',
+                    reason: 'APPENDIX_ENTITY_DISCLOSURE',
+                    sourceReceiptId: 'receipt-statement-current',
+                    statementValuesVersion: 3,
+                    decidedBy: 'owner-1',
+                    decidedAt: '2026-08-20T00:00:00.000Z',
+                  },
+                },
+              ]
+            : []),
         ],
       },
     });
@@ -449,6 +486,25 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
     const first = render(<FinancialStatementImportWizard initialStatementId="statement-current" />);
     await waitFor(() => expect(screen.getByTestId('statement-comparison-side-by-side')).toBeTruthy());
     expect(screen.getByTestId('durable-source-summary').textContent).toContain('FY2025 / FY2024');
+    expect(screen.getByTestId('cold-exclusion-audit').textContent).toContain(
+      'APPENDIX_ENTITY_DISCLOSURE · v3 · potwierdzenie źródła receipt-statement-current'
+    );
+    expect(mappingEditorState.props.mappedValues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sourceRow: 12,
+          confidence: 0.61,
+          isNonFinancial: true,
+          suggestedExclusionReason: 'APPENDIX_ENTITY_DISCLOSURE',
+          manualDecision: expect.objectContaining({
+            decisionId: 'decision-exclude-1',
+            action: 'EXCLUDE',
+            statementValuesVersion: 3,
+            sourceReceiptId: 'receipt-statement-current',
+          }),
+        }),
+      ])
+    );
     expect(screen.getByTestId('statement-recovery-link').getAttribute('href')).toContain(
       'statementId=statement-current'
     );
@@ -456,7 +512,9 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
 
     render(<FinancialStatementImportWizard initialStatementId="statement-current" />);
     await waitFor(() => expect(screen.getByTestId('statement-comparison-side-by-side')).toBeTruthy());
-    expect(screen.getByTestId('durable-source-summary').textContent).toContain('PLN · Thousands');
+    expect(screen.getByTestId('durable-source-summary').textContent).toContain('PLN · Tysiące');
+    expect(screen.queryByText('thousands')).toBeNull();
+    expect(screen.getByTestId('cold-exclusion-audit').textContent).toContain('APPENDIX_ENTITY_DISCLOSURE');
     expect(screen.queryByText('statement-current')).toBeNull();
     expect(V8FinanceApi.getStatement).toHaveBeenCalledTimes(4);
     expect(V8FinanceApi.getStatementSourceReceipt).toHaveBeenCalledTimes(4);

@@ -96,7 +96,17 @@ type CanonicalLine = FinancialStatementCanonicalLineOption & {
   line_code: string;
 };
 
-type MappedValue = FinancialStatementMappedValue;
+type MappedValue = FinancialStatementMappedValue & {
+  manualDecision?: {
+    decisionId: string;
+    action: 'ACCEPT' | 'REJECT' | 'EXCLUDE';
+    reason: string;
+    sourceReceiptId: string;
+    statementValuesVersion: number;
+    decidedBy: string;
+    decidedAt: string;
+  };
+};
 type ReviewStatement = {
   statementId: string;
   statementType: string;
@@ -402,6 +412,11 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                   isNonFinancial: Boolean(value.is_non_financial ?? value.isNonFinancial),
                   classificationReason:
                     value.classification_reason || value.classificationReason || undefined,
+                  suggestedExclusionReason:
+                    value.suggested_exclusion_reason ||
+                    value.suggestedExclusionReason ||
+                    undefined,
+                  manualDecision: value.manual_decision || value.manualDecision || undefined,
                 };
               }),
             } satisfies ReviewStatement;
@@ -1884,6 +1899,29 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                 );
               }}
             />
+
+            {mappedValues.some((value) => value.manualDecision?.action === 'EXCLUDE') && (
+              <div
+                className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-slate-200"
+                data-testid="cold-exclusion-audit"
+              >
+                <div className="font-semibold">
+                  {isPl ? 'Zapisane decyzje o wykluczeniu' : 'Recorded exclusion decisions'}
+                </div>
+                <ul className="mt-2 space-y-1">
+                  {mappedValues
+                    .filter((value) => value.manualDecision?.action === 'EXCLUDE')
+                    .map((value) => (
+                      <li key={`${value.manualDecision?.decisionId}-${value.sourceRow}`}>
+                        {value.originalLabel}: {value.manualDecision?.reason} · v
+                        {value.manualDecision?.statementValuesVersion} ·{' '}
+                        {isPl ? 'potwierdzenie źródła' : 'source receipt'}{' '}
+                        {value.manualDecision?.sourceReceiptId}
+                      </li>
+                    ))}
+                </ul>
+              </div>
+            )}
 
             {mappedValues.length === 0 && (
               <div className="text-center py-12 text-slate-600">

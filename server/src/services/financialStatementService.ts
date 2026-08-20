@@ -7888,6 +7888,7 @@ export async function persistStatementCandidateRows(params: {
           JSON.stringify({
             mappingReason: row.mappingReason || null,
             isNonFinancial: !!row.isNonFinancial,
+            suggestedExclusionReason: row.suggestedExclusionReason || null,
             sectionKey: row.sectionKey || sectionKey,
             rowType: row.rowType || null,
             hierarchyDepth: row.hierarchyDepth ?? null,
@@ -8076,6 +8077,7 @@ export async function loadPersistedStatementCandidateRows(params: {
         classificationReason:
           row.classification_reason || metadata.classificationReason || undefined,
         mappingReason: metadata.mappingReason || undefined,
+        suggestedExclusionReason: metadata.suggestedExclusionReason || undefined,
       } satisfies ExtractedLine;
     });
   } catch (error) {

@@ -401,6 +401,12 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
+  const scalingLabel = (scaling: string) => {
+    if (scaling === 'units') return isPl ? 'Jednostki' : 'Units';
+    if (scaling === 'thousands') return isPl ? 'Tysiące' : 'Thousands';
+    if (scaling === 'millions') return isPl ? 'Miliony' : 'Millions';
+    return scaling;
+  };
   const [detail, setDetail] = useState<StatementDetail | null>(null);
   const [ratios, setRatios] = useState<RatioResult | null>(null);
   const [canonicalLines, setCanonicalLines] = useState<FinancialStatementCanonicalLineOption[]>([]);
@@ -795,7 +801,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
 
           <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
             {[
-              [t('finance.statements.scaling', 'Scaling'), detail.scaling],
+              [t('finance.statements.scaling', 'Scaling'), scalingLabel(detail.scaling)],
               [t('finance.statements.status', 'Status'), detail.status],
               [t('finance.statements.readiness', 'Readiness'), detail.readinessStatus || 'pending'],
               [t('finance.statements.validation', 'Validation'), detail.validation_status],

@@ -410,6 +410,31 @@ describe.runIf(enabled)('Finance Statement owner acceptance — real PostgreSQL 
       );
       expect(mappedResponse.status, JSON.stringify(mappedResponse.body)).toBe(200);
       const mappedLines = mappedResponse.body.data.mappedLines as Array<any>;
+      const suggestedExclusions = mappedLines.filter(
+        (line) => Boolean(line.suggestedExclusionReason) && !line.suggestedCanonicalId
+      );
+      if (suggestedExclusions.length > 0) {
+        const durableSuggestions = await pool.query(
+          `SELECT candidate.source_row, candidate.metadata_json
+             FROM financial_statement_candidate_rows candidate
+             JOIN financial_statements statement
+               ON statement.id=candidate.statement_id
+              AND statement.organization_id=$1
+            WHERE candidate.statement_id=$2 AND candidate.ingest_run_id IS NOT NULL`,
+          [organizationId, item.statementId]
+        );
+        const durableReasonByRow = new Map(
+          durableSuggestions.rows.map((row) => [
+            Number(row.source_row),
+            JSON.parse(row.metadata_json || '{}').suggestedExclusionReason,
+          ])
+        );
+        for (const line of suggestedExclusions) {
+          expect(durableReasonByRow.get(Number(line.sourceRow))).toBe(
+            line.suggestedExclusionReason
+          );
+        }
+      }
       const values = mappedLines.map((line) => {
         const excluded = Boolean(line.suggestedExclusionReason) && !line.suggestedCanonicalId;
         const manualAccept =
@@ -453,12 +478,11 @@ describe.runIf(enabled)('Finance Statement owner acceptance — real PostgreSQL 
         (entry) => ['manual', 'manual_exclude'].includes(entry.mappingStatus)
       )) {
         const action = value.mappingStatus === 'manual_exclude' ? 'EXCLUDE' : 'ACCEPT';
+        const decisionKey =
+          `owner-${action.toLowerCase()}-${item.statementId}-${value.sourceRow}-${valuesVersion}`;
         const decision = await request(app)
           .post(`/api/v8/finance/statements/${item.statementId}/manual-mapping-decisions`)
-          .set(
-            'Idempotency-Key',
-            `owner-${action.toLowerCase()}-${item.statementId}-${value.sourceRow}-${valuesVersion}`
-          )
+          .set('Idempotency-Key', decisionKey)
           .send({
             sourceRow: value.sourceRow,
             canonicalLineId: action === 'ACCEPT' ? value.canonicalLineId : null,
@@ -471,6 +495,24 @@ describe.runIf(enabled)('Finance Statement owner acceptance — real PostgreSQL 
             expectedValuesVersion: valuesVersion,
           });
         expect(decision.status, JSON.stringify(decision.body)).toBe(200);
+        const replay = await request(app)
+          .post(`/api/v8/finance/statements/${item.statementId}/manual-mapping-decisions`)
+          .set('Idempotency-Key', decisionKey)
+          .send({
+            sourceRow: value.sourceRow,
+            canonicalLineId: action === 'ACCEPT' ? value.canonicalLineId : null,
+            action,
+            reason:
+              action === 'EXCLUDE'
+                ? value.classificationReason
+                : 'Owner verified deterministic canonical suggestion',
+            sourceReceiptId: item.sourceReceiptId,
+            expectedValuesVersion: valuesVersion,
+          });
+        expect(replay.status, JSON.stringify(replay.body)).toBe(200);
+        expect(replay.body.data.decision.decisionId).toBe(
+          decision.body.data.decision.decisionId
+        );
       }
       const detail = await request(app).get(
         `/api/v8/finance/statements/${item.statementId}`
@@ -480,6 +522,25 @@ describe.runIf(enabled)('Finance Statement owner acceptance — real PostgreSQL 
         detail.body.data.statement.readinessStatus,
         JSON.stringify(detail.body.data.statement)
       ).toBe('ready');
+      for (const excluded of values.filter((entry) => entry.mappingStatus === 'manual_exclude')) {
+        const coldValue = detail.body.data.statement.values.find(
+          (entry: any) => Number(entry.source_row) === Number(excluded.sourceRow)
+        );
+        expect(Number(coldValue.confidence)).toBeCloseTo(Number(excluded.confidence), 6);
+        expect(coldValue).toMatchObject({
+          is_non_financial: true,
+          classification_reason: excluded.classificationReason,
+          suggested_exclusion_reason: excluded.classificationReason,
+          manual_decision: {
+            action: 'EXCLUDE',
+            reason: excluded.classificationReason,
+            sourceReceiptId: item.sourceReceiptId,
+            statementValuesVersion: valuesVersion,
+          },
+        });
+        expect(coldValue.manual_decision.decisionId).toBeTruthy();
+        expect(coldValue.manual_decision).not.toHaveProperty('idempotencyKey');
+      }
       const confirmed = await request(app)
         .post(`/api/v8/finance/statements/${item.statementId}/confirm`)
         .set('Idempotency-Key', `confirm-${item.statementId}-${valuesVersion}`)

@@ -5,10 +5,12 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const translationState = vi.hoisted(() => ({ language: 'en' }));
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (_key: string, fallback?: any) => (typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key)),
-    i18n: { language: 'en' },
+    i18n: { get language() { return translationState.language; } },
   }),
 }));
 
@@ -53,6 +55,28 @@ import { V8FinanceApi } from '../../../src/services/api/v8/finance';
 describe('FinancialStatementPackWorkspace V8 read seam', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    translationState.language = 'en';
+  });
+
+  it('localizes the durable pack scaling token in Polish cold view', async () => {
+    translationState.language = 'pl';
+    vi.mocked(V8FinanceApi.getStatementPack).mockResolvedValue({
+      pack: {
+        id: 'pack-pl', entity_name: 'CD PROJEKT S.A.', period_label: '2025 / 2024',
+        period_start: '2024-01-01', period_end: '2025-12-31', currency: 'PLN',
+        scaling: 'thousands', pack_status: 'pending', pack_readiness_status: 'recoverable',
+        source_statement_count: 1,
+        statements: [{ id: 'statement-pl', statement_type: 'P&L', source_file_name: 'statement.pdf' }],
+        validations: [],
+      },
+    } as any);
+    vi.mocked(V8FinanceApi.getStatement).mockResolvedValue({
+      statement: { id: 'statement-pl', statement_type: 'P&L', period_label: '2025', values: [], validationLedger: [] },
+    } as any);
+
+    render(<FinancialStatementPackWorkspace statementPackId="pack-pl" />);
+    await waitFor(() => expect(screen.getByText('Tysiące')).toBeInTheDocument());
+    expect(screen.queryByText('thousands')).not.toBeInTheDocument();
   });
 
   it('prefers governed statement-pack detail before legacy fallback in the workspace', async () => {

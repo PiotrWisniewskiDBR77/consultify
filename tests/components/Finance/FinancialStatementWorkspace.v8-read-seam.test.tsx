@@ -5,11 +5,13 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const translationState = vi.hoisted(() => ({ language: 'en' }));
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (_key: string, fallback?: string | { defaultValue?: string }) =>
       (typeof fallback === 'string' ? fallback : fallback?.defaultValue) || _key,
-    i18n: { language: 'en' },
+    i18n: { get language() { return translationState.language; } },
   }),
 }));
 
@@ -56,6 +58,7 @@ import { V8FinanceApi } from '../../../src/services/api/v8/finance';
 describe('FinancialStatementWorkspace V8 read seam', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    translationState.language = 'en';
   });
 
   it('prefers governed child statement detail before legacy fallback in the workspace', async () => {
@@ -847,5 +850,27 @@ describe('FinancialStatementWorkspace V8 read seam', () => {
     expect(V8FinanceApi.putStatementValues).toHaveBeenCalledWith('statement-1', {
       values: expect.any(Array),
     });
+  });
+
+  it('localizes the durable scaling token in a Polish cold detail', async () => {
+    translationState.language = 'pl';
+    vi.mocked(V8FinanceApi.getStatement).mockResolvedValue({
+      statement: {
+        id: 'statement-pl', statement_type: 'BS', period_label: '2025',
+        period_start: '2025-01-01', period_end: '2025-12-31', currency: 'PLN',
+        scaling: 'thousands', source_file_name: 'statement.pdf', validation_status: 'pending',
+        status: 'draft', readinessStatus: 'recoverable', validationMessages: [], values: [],
+        qualityRuns: [], ingestRuns: [],
+      },
+    } as any);
+    vi.mocked(V8FinanceApi.getStatements).mockResolvedValue({ statements: [], count: 0 } as any);
+    vi.mocked(V8FinanceApi.getStatementRatios).mockResolvedValue({
+      ratios: { statementId: 'statement-pl', periodLabel: '2025', ratios: [], coverageSummary: { coveragePct: 0, computed: 0, total: 0 } },
+    } as any);
+    vi.mocked(V8FinanceApi.getCanonicalLines).mockResolvedValue({ canonicalLines: [], count: 0 } as any);
+
+    render(<FinancialStatementWorkspace statementId="statement-pl" />);
+    await waitFor(() => expect(screen.getByText('Tysiące')).toBeInTheDocument());
+    expect(screen.queryByText('thousands')).not.toBeInTheDocument();
   });
 });

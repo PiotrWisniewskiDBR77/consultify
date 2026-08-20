@@ -133,12 +133,33 @@ export async function getStatementDetail(
               fsv.mapping_status, fsv.is_manually_corrected, fsv.is_non_financial, fsv.classification_reason,
               fsv.value_origin, fsv.mapping_confidence, fsv.evidence_json, fsv.source_candidate_row_id,
               fsv.selected_mapping_candidate_id, fsv.period_granularity,
+              candidate.metadata_json AS candidate_metadata_json,
+              decision.decision_id AS manual_decision_id,
+              decision.action AS manual_decision_action,
+              decision.reason AS manual_decision_reason,
+              decision.source_receipt_id AS manual_decision_source_receipt_id,
+              decision.statement_values_version AS manual_decision_values_version,
+              decision.decided_by AS manual_decision_decided_by,
+              decision.decided_at AS manual_decision_decided_at,
               fsl.line_code, fsl.line_name, fsl.line_name_en, fsl.line_name_pl, fsl.parent_line_id, fsl.aggregation_level, fsl.required_level,
               fsl.sign_convention, fsl.is_total, fsl.is_subtotal, fsl.is_computed, fsl.formula_json, fsl.deaggregation_ready
          FROM financial_statement_values fsv
          LEFT JOIN financial_statement_lines fsl ON fsv.canonical_line_id = fsl.id
+         LEFT JOIN financial_statement_candidate_rows candidate
+           ON candidate.id = fsv.source_candidate_row_id
+          AND candidate.statement_id = fsv.statement_id
+         LEFT JOIN LATERAL (
+           SELECT decision_id, action, reason, source_receipt_id,
+                  statement_values_version, decided_by, decided_at
+             FROM finance_statement_manual_mapping_decisions
+            WHERE organization_id = ?
+              AND statement_id = fsv.statement_id
+              AND candidate_row_id = fsv.source_candidate_row_id
+            ORDER BY decided_at DESC, decision_id DESC
+            LIMIT 1
+         ) decision ON TRUE
         WHERE fsv.statement_id = ? ORDER BY fsv.source_row`,
-      [statementId],
+      [organizationId, statementId],
       { fallback: false }
     );
     qualityRuns = await dbAll(
@@ -249,6 +270,47 @@ export async function getStatementDetail(
   const mappedLineCount = activeValues.filter((value: any) => value?.line_code).length;
   const unmappedLineCount = Math.max(0, totalLineCount - mappedLineCount);
   const validationMessages = parseValidationMessages(stmt.validation_messages);
+  values = (values || []).map((value: any) => {
+    let candidateMetadata: Record<string, unknown> = {};
+    try {
+      candidateMetadata = value.candidate_metadata_json
+        ? typeof value.candidate_metadata_json === 'string'
+          ? JSON.parse(value.candidate_metadata_json)
+          : value.candidate_metadata_json
+        : {};
+    } catch {
+      candidateMetadata = {};
+    }
+    const {
+      candidate_metadata_json: _candidateMetadataJson,
+      manual_decision_id: _manualDecisionId,
+      manual_decision_action: _manualDecisionAction,
+      manual_decision_reason: _manualDecisionReason,
+      manual_decision_source_receipt_id: _manualDecisionSourceReceiptId,
+      manual_decision_values_version: _manualDecisionValuesVersion,
+      manual_decision_decided_by: _manualDecisionDecidedBy,
+      manual_decision_decided_at: _manualDecisionDecidedAt,
+      ...rest
+    } = value;
+    return {
+      ...rest,
+      suggested_exclusion_reason:
+        typeof candidateMetadata.suggestedExclusionReason === 'string'
+          ? candidateMetadata.suggestedExclusionReason
+          : null,
+      manual_decision: value.manual_decision_id
+        ? {
+            decisionId: value.manual_decision_id,
+            action: value.manual_decision_action,
+            reason: value.manual_decision_reason,
+            sourceReceiptId: value.manual_decision_source_receipt_id,
+            statementValuesVersion: Number(value.manual_decision_values_version),
+            decidedBy: value.manual_decision_decided_by,
+            decidedAt: value.manual_decision_decided_at,
+          }
+        : null,
+    };
+  });
   const latestVersionSnapshot = await loadLatestStatementVersionSnapshot(statementId);
   const readiness = evaluateStatementReadiness({
     rawStatus: stmt.status,
