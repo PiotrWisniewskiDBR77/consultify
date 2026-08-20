@@ -239,5 +239,31 @@
       "notFound404": 0,
       "other": 0
     }
+  },
+  "ownerHeaderStopCheckpoint20260820": {
+    "packetId": "UIA001-SWOT-OWNER-HEADER-FIX",
+    "classification": "HOLD_NOT_ACCEPTED",
+    "integrationDecision": "DO_NOT_INTEGRATE",
+    "repoStatus": "The existing bounded TLS UI technical evidence remains historical and is not promoted to owner acceptance by this packet.",
+    "exactBaseAndHead": "8e5c694ec6bf7082e595793ec09f2a220d39903f",
+    "worktree": "/private/tmp/consultify-uia001-owner-header-fix-8e5c",
+    "dirtyScope": [
+      "src/components/DiscoveryTools/KnownToolDetailView.tsx",
+      "src/components/shared/NModeLayout/NModeHeader.tsx",
+      "src/components/shared/NModeLayout/NModeShell.tsx",
+      "src/components/shared/NModeLayout/types.ts",
+      "src/components/shared/NModeLayout/__tests__/NModeHeader.ownerActions.test.tsx"
+    ],
+    "checkpointFingerprint": "7a2f024f10ac1393fca43130a5af2741e0fdc368ef24cc9a5c111640c35cfdba",
+    "completedGates": "Focused tests 8/8 PASS; root typecheck PASS; diff-check PASS.",
+    "runtimeStatus": "NOT_RUN",
+    "browserAcceptance": "NOT_TESTED",
+    "ownerStatus": "NOT_ACCEPTED",
+    "auditHold": [
+      "Unconditional data-nmode-header and data-nmode-toolbar-shell attributes mutate non-opt-in DOM.",
+      "The negative test is not a true legacy consumer contract proof.",
+      "A jsdom innerWidth loop is not responsive clipping evidence."
+    ],
+    "boundary": "No commit, fan-in, counter promotion or DONE inference is authorized from this checkpoint."
   }
 }
