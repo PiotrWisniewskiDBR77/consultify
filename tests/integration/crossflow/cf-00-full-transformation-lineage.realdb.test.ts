@@ -445,7 +445,7 @@ describe('FLOW full transformation lineage (real PostgreSQL)', () => {
     });
   });
 
-  it('carries the immutable APPROVED SWOT output into the canonical Runtime-v1 analysis spine', async () => {
+  it('carries one immutable APPROVED SWOT through canonical Runtime-v1 execution, Results and Closure', async () => {
     const source = await createApprovedSwotSource(client, 'runtime-v1');
     const projectId = cfId('project', 'runtime-v1');
     await client.query(
@@ -788,6 +788,170 @@ describe('FLOW full transformation lineage (real PostgreSQL)', () => {
         initiativeId: runtime.initiativeId,
         handoffPackageId,
       });
+      const deliveryDecisionId = `${runtime.initiativeId}-delivery`;
+      const benefitsPackId = `${runtime.initiativeId}-benefits-pack`;
+      await api(TENANT_A.owner)
+        .post(`${runtimeBasePath}/delivery-acceptances/${deliveryDecisionId}/request`)
+        .send({
+          expectedVersion: 0,
+          clientRequestId: `${deliveryDecisionId}-request`,
+          initiativeId: runtime.initiativeId,
+          executionCaseId,
+          initiativeVersion,
+          executionCaseVersion: 1,
+          authorityId: TENANT_A.reviewer.id,
+          ownerId: TENANT_A.owner.id,
+          baselineRef: { ref: `handoff:${handoffPackageId}:baseline`, version: 1 },
+          scopeRef: { ref: `handoff:${handoffPackageId}:scope`, version: 1 },
+          deliverableRefs: [{ ref: `deliverable:${runtime.initiativeId}`, version: 1 }],
+          milestoneRefs: [], openTaskRefs: [], openDecisionRefs: [], riskResiduals: [],
+          financeActualRefs: [{ ref: `finance-actual:${runtime.initiativeId}`, version: 1 }],
+          operationalHandoverRef: { ref: `operations:${runtime.initiativeId}`, version: 1 },
+          benefitOwnerId: TENANT_A.owner.id,
+          kpiMeasurementContractRefs: [{ ref: `kpi-contract:${runtime.initiativeId}`, version: 1 }],
+        }).expect(200);
+      await api(TENANT_A.reviewer)
+        .post(`${runtimeBasePath}/delivery-acceptances/${deliveryDecisionId}/decide`)
+        .send({
+          expectedVersion: 1,
+          clientRequestId: `${deliveryDecisionId}-decide`,
+          outcome: 'ACCEPT',
+          rationale: 'Independent delivery evidence acceptance.',
+          packId: benefitsPackId,
+        }).expect(200);
+      initiativeVersion += 1;
+      const delivered = await api(TENANT_A.owner)
+        .get(`${runtimeBasePath}/initiatives/${runtime.initiativeId}`).expect(200);
+      expect(delivered.body.initiative.lifecycleState).toBe('DELIVERED');
+
+      const resultsCaseId = `${runtime.initiativeId}-results-acceptance`;
+      await api(TENANT_A.owner)
+        .post(`${runtimeBasePath}/results-acceptances/${resultsCaseId}/request`)
+        .send({
+          expectedVersion: 0,
+          clientRequestId: `${resultsCaseId}-request`,
+          packId: benefitsPackId,
+          packVersion: 1,
+          initiativeId: runtime.initiativeId,
+          authorityId: TENANT_A.reviewer.id,
+        }).expect(200);
+      await api(TENANT_A.reviewer)
+        .post(`${runtimeBasePath}/results-acceptances/${resultsCaseId}/decide`)
+        .send({
+          expectedVersion: 1,
+          clientRequestId: `${resultsCaseId}-decide`,
+          outcome: 'ACCEPT',
+          rationale: 'Independent Results acceptance.',
+          gaps: [], blockers: [],
+        }).expect(200);
+      initiativeVersion += 1;
+      const tracking = await api(TENANT_A.owner)
+        .get(`${runtimeBasePath}/initiatives/${runtime.initiativeId}`).expect(200);
+      expect(tracking.body.initiative.lifecycleState).toBe('BENEFITS_TRACKING');
+
+      const observationId = `${runtime.initiativeId}-kpi-observation`;
+      await api(TENANT_A.owner)
+        .post(`${runtimeBasePath}/results-observations/${observationId}`)
+        .send({
+          expectedVersion: 0,
+          clientRequestId: `${observationId}-create`,
+          resultsCaseRef: { resultsCaseId, version: 2 },
+          kpiId: 'wave02-cycle-time',
+          baselineValue: 10,
+          observedValue: 7,
+          targetValue: 8,
+          formula: 'elapsed_days(end-start)',
+          unit: 'days', currency: null,
+          window: { start: '2026-08-24T00:00:00.000Z', end: '2026-08-31T00:00:00.000Z', cadence: 'P1W' },
+          sourceRef: { ref: `results-store:${runtime.initiativeId}:cycle-time`, version: 1 },
+          asOf: '2026-08-31T00:00:00.000Z',
+          confidence: 'HIGH', knowledgeState: 'KNOWN', measurementState: 'MEASURED',
+          financeReconciliationRef: null,
+          rationale: 'Canonical measured outcome for the preserved SWOT lineage.',
+          producerId: TENANT_A.owner.id,
+        }).expect(200);
+      const effectivenessCaseId = `${runtime.initiativeId}-effectiveness`;
+      const effectivenessSnapshotId = `${runtime.initiativeId}-effectiveness-snapshot`;
+      await api(TENANT_A.owner)
+        .post(`${runtimeBasePath}/effectiveness/${effectivenessCaseId}`)
+        .send({
+          expectedVersion: 0,
+          clientRequestId: `${effectivenessCaseId}-create`,
+          initiativeId: runtime.initiativeId,
+          executionCaseId,
+          benefitsHandoffPackRef: { packId: benefitsPackId, version: 1 },
+          resultsAcceptanceRef: { resultsCaseId, version: 2 },
+          observationRefs: [{ observationId, version: 1 }],
+          benefitOwnerId: TENANT_A.owner.id,
+          reviewerId: TENANT_A.reviewer.id,
+          closureAuthorityId: TENANT_A.admin.id,
+        }).expect(200);
+      await api(TENANT_A.owner)
+        .post(`${runtimeBasePath}/effectiveness/${effectivenessCaseId}/transitions`)
+        .send({ expectedVersion: 1, clientRequestId: `${effectivenessCaseId}-review-request`, action: 'REQUEST_REVIEW' })
+        .expect(200);
+      await api(TENANT_A.reviewer)
+        .post(`${runtimeBasePath}/effectiveness/${effectivenessCaseId}/transitions`)
+        .send({
+          expectedVersion: 2,
+          clientRequestId: `${effectivenessCaseId}-review-decide`,
+          action: 'DECIDE', outcome: 'CONFIRMED',
+          rationale: 'Independent effectiveness review confirms measured benefit.',
+          expectedInitiativeVersion: initiativeVersion,
+          snapshotId: effectivenessSnapshotId,
+        }).expect(200);
+      initiativeVersion += 1;
+      const effectivenessReviewed = await api(TENANT_A.owner)
+        .get(`${runtimeBasePath}/initiatives/${runtime.initiativeId}`).expect(200);
+      expect(effectivenessReviewed.body.initiative.lifecycleState).toBe('EFFECTIVENESS_REVIEWED');
+      const closureCaseId = `${runtime.initiativeId}-closure`;
+      const closureSnapshotId = `${runtime.initiativeId}-closure-snapshot`;
+      await api(TENANT_A.owner)
+        .post(`${runtimeBasePath}/closures/${closureCaseId}/requests`)
+        .send({
+          expectedVersion: 0,
+          clientRequestId: `${closureCaseId}-request`,
+          initiativeId: runtime.initiativeId,
+          executionCaseId,
+          expectedInitiativeVersion: initiativeVersion,
+          expectedExecutionCaseVersion: 2,
+          effectivenessSnapshotRef: { snapshotId: effectivenessSnapshotId, version: 1 },
+          authorityId: TENANT_A.admin.id,
+          lessons: ['Preserve immutable source identity across every material gate.'],
+          lineageRefs: [
+            { ref: `tool-output:${source.toolOutputId}`, version: source.toolOutputVersion },
+            { ref: `results-acceptance:${resultsCaseId}`, version: 2 },
+          ],
+          followUps: [{
+            kind: 'OWNED_ITEM',
+            itemId: `${runtime.initiativeId}-sustainment-follow-up`,
+            description: 'Review the sustained KPI after the next measurement window.',
+            ownerId: TENANT_A.owner.id,
+            dueAt: '2026-09-30T12:00:00.000Z',
+          }],
+          retention: {
+            classification: 'TRANSFORMATION_RECORD',
+            policyRef: { ref: 'wave02-retention-policy', version: 1 },
+            legalHold: false,
+          },
+        }).expect(200);
+      const closureQuorum = await signOff('CLOSURE', closureCaseId);
+      await api(TENANT_A.admin)
+        .post(`${runtimeBasePath}/closures/${closureCaseId}/decisions`)
+        .send({
+          expectedVersion: 1,
+          clientRequestId: `${closureCaseId}-decide`,
+          outcome: 'CLOSE',
+          rationale: 'Independent closure accepts lessons, lineage, retention and follow-up ownership.',
+          snapshotId: closureSnapshotId,
+          expectedInitiativeVersion: initiativeVersion,
+          expectedExecutionCaseVersion: 2,
+          governanceQuorumRef: closureQuorum,
+        }).expect(200);
+      initiativeVersion += 1;
+      const closed = await api(TENANT_A.owner)
+        .get(`${runtimeBasePath}/initiatives/${runtime.initiativeId}`).expect(200);
+      expect(closed.body.initiative.lifecycleState).toBe('CLOSED');
       const cold = await coldRead((db) =>
         db.query<{ payload_json: { source?: { sourceId?: string; sourceType?: string } } }>(
           `SELECT payload_json FROM ie_aggregate_state
@@ -799,12 +963,19 @@ describe('FLOW full transformation lineage (real PostgreSQL)', () => {
         sourceId: source.toolOutputId,
         sourceType: 'approved_swot_output',
       });
+      expect(cold.rows[0]?.payload_json).toMatchObject({
+        lifecycleState: 'CLOSED',
+        closureSnapshotId,
+      });
     } finally {
       await pool.end();
     }
   }, 30_000);
 
-  it('uses distinct signed humans for explicit A05 approval before PROMOTED and PLANNING', async () => {
+  // RETIRED: this historical proof drives the legacy Initiative lifecycle router,
+  // whose execution writes now fail closed with EXECUTION_RUNTIME_V1_WRITE_REQUIRED.
+  // The test immediately above is its mounted, signed, real-PostgreSQL Runtime-v1 replacement.
+  it.skip('RETIRED legacy A05 lifecycle and closure adapter proof', async () => {
     const lineage = await createApprovedSwotInitiative(client, 'governed-lifecycle');
     const context = await seedTransformationContextForInitiative(client, lineage.initiativeId);
 
