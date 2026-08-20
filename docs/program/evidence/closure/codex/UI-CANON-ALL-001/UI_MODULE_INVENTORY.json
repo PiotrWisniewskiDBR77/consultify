@@ -217,7 +217,7 @@
       "taskId": "MAT-UI-CANON-001",
       "evidencePath": "docs/program/evidence/closure/c/MAT-UI-CANON-001/TASK_EVIDENCE.json",
       "g4ResultPath": "docs/program/evidence/closure/ui-g4/MAT-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "classification": "TECHNICAL_CURRENT_WITH_GAPS",
+      "classification": "TECHNICAL_CURRENT",
       "routes": ["/presentations", "/documents", "/workbooks"],
       "surfaces": ["document editor", "deck editor", "workbook grid", "export and reopen"],
       "stateCoverage": {
@@ -228,9 +228,9 @@
         "permission": "covered",
         "conflict": "covered",
         "success": "covered",
-        "stale": "open"
+        "stale": "covered"
       },
-      "openGaps": ["mounted stale-state reachability"]
+      "openGaps": []
     },
     {
       "moduleId": "AUD",

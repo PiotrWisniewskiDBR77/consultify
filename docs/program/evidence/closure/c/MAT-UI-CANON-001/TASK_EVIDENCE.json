@@ -1,9 +1,9 @@
 {
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "a62dbe340114d87eda75a0d2da2d77bee2a90685",
+  "productSha": "e6ca206c0035f653118d9aadbfddf61d452ab52e",
   "reconciliationSha": "80c4a5fc6f",
-  "technicalSourceSha": "68bfe27977",
-  "currentRequalification": "Mounted signed-auth exact-current DOC/PPT/XLSX journey passed 1/1, including edit, version/restore, reload/cold readback and export. Workbook locale-robust PL/EN formula-bar interaction is deterministic. Existing automated G4 remains 14/14; typecheck and both builds passed; residue was zero.",
+  "technicalSourceSha": "e6ca206c0035f653118d9aadbfddf61d452ab52e",
+  "currentRequalification": "Internal-beta technical closure is complete. The mounted signed editor stale-state test passed 2/2 on a fresh PostgreSQL database with 794 migrations and replay 0: an independent write advanced the document, the mounted editor rendered its conflict state, and the stale local edit did not overwrite durable data. The exact-current DOC/PPT/XLSX journey and automated G4 remain green. Human UAT is waived for internal beta by owner decision D6=B; production authorization remains separate.",
   "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
   "environment": {
     "node": "v24.12.0",
@@ -15,11 +15,8 @@
   "gateG1": "PASS — npm run type-check exit 0; npm run build:backend exit 0; test:discovery-gate PASS 4997/4997 discovered, 4698 executed.",
   "gateG3": "PASS — strict migrate on FRESH from-zero DB exit 0; repeat run applied 0; --dry-run 0 pending; schema_migrations 709 success / 0 failed / 0 pending.",
   "taskId": "MAT-UI-CANON-001",
-  "verdict": "PARTIAL",
-  "open": [
-    "The exact-current mounted technical journey is proven, and historical automated G4 remains 14/14. Human VoiceOver, persona and brand/visual-owner acceptance are not automated technical claims.",
-    "Manual VoiceOver and human brand/UX acceptance remain literally BLOCKED_HUMAN per the gate catalog regardless of automated results."
-  ],
+  "verdict": "DONE_CURRENT_SHA",
+  "open": [],
   "changedPaths": [],
   "changedPathRationale": {},
   "ownerTables": [],
@@ -110,10 +107,7 @@
     "method": "Not recorded by the lane; no rollback execution or completion claim is inferred.",
     "executed": false
   },
-  "openBlockers": [
-    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
-    "Task-specific UI states not reached by the final automated sweep: stale."
-  ],
+  "openBlockers": [],
   "blockerReconciliation": [
     {
       "historicalBlocker": null,
@@ -167,12 +161,12 @@
       "notFound404": 0,
       "other": 0
     },
-    "humanAcceptance": "PENDING — automated G4 does not sign VoiceOver, persona or visual-owner acceptance",
+    "humanAcceptance": "WAIVED_FOR_INTERNAL_BETA_ONLY by owner decision D6=B; production approval remains separate",
     "reachabilityAndStates": {
-      "states": [],
-      "statesNotPresent": [
+      "states": [
         "stale"
-      ]
+      ],
+      "statesNotPresent": []
     }
   },
   "exactCurrentReconciliation20260819": {
@@ -194,11 +188,11 @@
       "disposition": "No production fix is justified by this failure. The historical automated G4 deep-link result remains historical evidence at its recorded candidate SHA; this bounded reconciliation does not promote it to exact-current mounted browser proof."
     },
     "classification": "NO_CURRENT_PRODUCT_SOURCE_RED_REPRODUCED; EVIDENCE_REACHABILITY_GAP_REMAINS",
-    "remainingBoundary": "PARTIAL is preserved. The mounted automated sweep still did not reach the task-specific stale state, and manual VoiceOver, named-persona and visual/brand owner acceptance remain pending. The open boundary is therefore not described as solely human G4, and no verdict promotion is claimed."
+    "remainingBoundary": "Superseded on 2026-08-20: mounted stale-state reachability is now proven, and owner decision D6=B waives human UAT for internal beta only."
   },
   "exactCurrentG4": {
     "candidateSha": "4eec1d27952bc5642018495575665f5784e04f71",
-    "verdict": "AUTOMATED_G4_PASS_HUMAN_PENDING",
+    "verdict": "PASS_INTERNAL_BETA_D6_B",
     "cells": 14,
     "axeCritical": 0,
     "axeSerious": 0,
@@ -208,14 +202,24 @@
     "reload": true,
     "coldReopen": true,
     "focusAlwaysVisible": true,
-    "statesNotPresent": [
-      "stale"
-    ],
+    "statesNotPresent": [],
     "consoleErrors": {
       "total": 0,
       "forbidden403": 0,
       "notFound404": 0,
       "other": 0
     }
+  },
+  "exactCurrentMountedStaleEvidence20260820": {
+    "candidateProductSha": "e6ca206c0035f653118d9aadbfddf61d452ab52e",
+    "test": "tests/e2e/documents/autosave-optimistic-lock.spec.ts",
+    "result": "PASS 2/2 on chromium with one worker and real PostgreSQL",
+    "authentication": "signed test-support session through production auth/membership middleware",
+    "database": "fresh disposable pgvector PostgreSQL 16; 794 migrations; strict replay Applying migrations: 0",
+    "mountedAssertion": "An independent server write advanced the document version; the mounted editor rendered Save conflict - latest version was reloaded.",
+    "durableAssertion": "Cold API readback retained the independent server winner and contained no LOCAL-STALE marker.",
+    "negativeControl": "The mock-DB attempt failed closed with LINEAGE_RECOVERY_REQUIRED and was excluded from evidence.",
+    "humanUatDisposition": "D6=B: automated evidence accepted instead of human UAT for internal beta only.",
+    "productionAuthorization": "NOT_AUTHORIZED"
   }
 }

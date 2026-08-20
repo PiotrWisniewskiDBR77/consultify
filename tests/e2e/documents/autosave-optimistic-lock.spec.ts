@@ -27,6 +27,7 @@ import {
   authHeaders,
   collectSchemaText,
   fetchArtifactSchema,
+  openArtifact,
   seedDocumentArtifact,
   setupDocumentStudioSession,
 } from './_document-studio-helpers';
@@ -173,5 +174,54 @@ test.describe('Document Studio — manual autosave + optimistic-lock', () => {
         'DOC_CONTENT_SECTIONS_REQUIRED'
       );
     });
+  });
+
+  test('the mounted signed editor renders a conflict after another session advances the version', async ({
+    page,
+  }) => {
+    const token = await setupDocumentStudioSession(page);
+    const { artifactId } = await seedDocumentArtifact(page.request, token, {
+      description: 'Mounted stale-state proof for the internal-beta Materials gate.',
+      documentType: 'operating_model_review',
+    });
+    await openArtifact(page, artifactId);
+    const loaded = await fetchArtifactSchema(page.request, token, artifactId);
+    await expect(page.getByTestId('document-tiptap-editor')).toBeVisible();
+
+    const serverSections = JSON.parse(JSON.stringify(loaded.sections));
+    const serverMarker = `SERVER-WINNER-${Date.now()}`;
+    serverSections[0].blocks[0].content = { text: serverMarker };
+    const winner = await page.request.put(
+      `${DOC_STUDIO_BASE}/${encodeURIComponent(artifactId)}/content`,
+      {
+        headers: authHeaders(token),
+        data: { sections: serverSections, expectedVersion: loaded.updatedAt },
+        timeout: 40000,
+      }
+    );
+    expect(winner.status(), await winner.text()).toBe(200);
+
+    const editor = page
+      .getByTestId('document-tiptap-editor')
+      .locator('[contenteditable="true"]')
+      .first();
+    await editor.click();
+    await editor.press('End');
+    await editor.type(` LOCAL-STALE-${Date.now()}`);
+
+    const artifactStatus = page.getByTestId('document-artifact-status');
+    if (await artifactStatus.count()) {
+      await expect(artifactStatus).toContainText(/Konflikt|Conflict/, { timeout: 10000 });
+    } else {
+      await page.getByTestId('document-file-menu-trigger').click();
+      await expect(page.getByTestId('document-file-menu-save')).toContainText(
+        /Konflikt|[Cc]onflict/,
+        { timeout: 10000 }
+      );
+    }
+
+    const durable = await fetchArtifactSchema(page.request, token, artifactId);
+    expect(collectSchemaText(durable)).toContain(serverMarker);
+    expect(collectSchemaText(durable)).not.toContain('LOCAL-STALE-');
   });
 });
