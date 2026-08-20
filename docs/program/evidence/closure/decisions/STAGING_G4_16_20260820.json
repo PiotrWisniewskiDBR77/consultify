@@ -1,0 +1,73 @@
+{
+  "receiptId": "STAGING-G4-16-20260820",
+  "recordedAt": "2026-08-20T06:30:53+02:00",
+  "verdict": "PASS",
+  "environment": "staging",
+  "publicBaseUrl": "https://staging.consultify.ai",
+  "productSha": "e6ca206c0035f653118d9aadbfddf61d452ab52e",
+  "deploymentId": "183e7151-684a-4078-8eca-3eced4c7cf23",
+  "database": {
+    "serviceId": "fc377fcb-2f98-4fb7-b772-932012fd7dd3",
+    "engine": "PostgreSQL 18",
+    "migrationState": "794 applied; replay 0; pending 0"
+  },
+  "runtimeConfiguration": {
+    "APP_ENV": "staging",
+    "NODE_ENV": "production",
+    "ENABLE_V8_GLOBAL": true,
+    "ENABLE_TEST_SUPPORT": false,
+    "ENABLE_TEST_GATEWAY": false,
+    "TEST_SUPPORT_KEY": "BLANK",
+    "organizationRollout": "Nine explicit V8 module rows enabled for each of the two isolated rehearsal organizations."
+  },
+  "coverage": {
+    "modules": 16,
+    "cells": 223,
+    "viewports": ["desktop", "tablet", "mobile"],
+    "languages": ["pl", "en"],
+    "themes": ["light", "dark"],
+    "renderFailures": 0,
+    "horizontalOverflowFailures": 0,
+    "axeCriticalOrSerious": 0,
+    "consoleErrors": 0,
+    "httpErrors": 0,
+    "deepLinkFailures": 0,
+    "reloadFailures": 0,
+    "coldReopenFailures": 0,
+    "keyboardFocusFailures": 0
+  },
+  "modules": [
+    "CHAT",
+    "MYW",
+    "INT",
+    "TLS",
+    "ASM",
+    "INI",
+    "EXE",
+    "RES",
+    "FIN",
+    "MAT",
+    "MTG",
+    "ORG",
+    "ADM",
+    "SET",
+    "PRT",
+    "AUD"
+  ],
+  "auditHarness": {
+    "fixCommit": "55a6b25cea32f92046ef9a2e41aa4eeec4ce48b3",
+    "productImpact": "NONE_TEST_ONLY",
+    "finding": "The prior four AUD failures exercised retired /audit-programs/method tab URLs. The corrected harness exercises the sole canonical /audit-programs?tab=... mount."
+  },
+  "negativeControls": {
+    "requestInterception": false,
+    "testSupportAtFinalReadback": false,
+    "testGatewayAtFinalReadback": false,
+    "foreignOrganization": "Separate active tenant retained for denial tests."
+  },
+  "nonClaims": [
+    "This receipt proves mounted UI G4 only, not all sixteen business write journeys.",
+    "It does not prove the 30-minute 50-user NFR gate.",
+    "It does not prove two 60-minute telemetry windows, alert positive control, rollback rehearsal, production deployment or owner acceptance."
+  ]
+}

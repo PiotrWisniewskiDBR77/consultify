@@ -3,8 +3,8 @@
   "key": "EXE",
   "module": "Execution",
   "route": "/execution",
-  "productSha": "287aab619142f2990d46d04d04faaccb1cadf696",
-  "startedAt": "2026-08-19T22:25:39.254Z",
+  "productSha": "e6ca206c0035f653118d9aadbfddf61d452ab52e",
+  "startedAt": "2026-08-20T04:19:48.309Z",
   "cells": [
     {
       "viewport": "desktop",

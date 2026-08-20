@@ -26,7 +26,6 @@ import {
   assertNoFixtureResidue,
   cleanupRbacFixture,
   createRbacFixture,
-  enableOrgFlag,
   harnessEnvNegativeControls,
   loginViaApi,
   revokeMembership,
@@ -92,11 +91,9 @@ async function contextForPersona(
  * Where does this persona end up when it deep-links to a route?
  *
  * The path is sampled early and then polled until it stops changing, because
- * flag-gated Audits routes visibly bounce: the route guard reads
- * `auditsFiveSurfacesV1` before `GET /api/feature-flags/runtime` has answered,
- * redirects to `/audit-programs`, and only returns to the requested route once
- * the remote flags arrive. Both the first and the settled path are recorded so
- * the race is evidence rather than something the harness sleeps away.
+ * compatibility redirects and asynchronous shell hydration can change the
+ * first path. Both the first and settled path are recorded so this remains
+ * evidence rather than something the harness sleeps away.
  */
 async function landingFor(ctx: BrowserContext, route: string) {
   const page = await ctx.newPage();
@@ -145,8 +142,8 @@ test.describe('UI-CANON G4 — AUD (Audits) signed-auth matrix', () => {
     const anonymous: Array<{ route: string; finalPath: string; leaked: string[] }> = [];
     for (const route of [
       '/audit-programs',
-      '/audit-programs/method?tab=library',
-      '/audit-programs/method/p/criteria/c',
+      '/audit-programs?tab=library',
+      '/audit-programs/p/criteria/c',
       '/audit-programs/drd-report/r?ff_drd_report=1',
     ]) {
       const anon = await browser.newContext({ storageState: undefined });
@@ -178,8 +175,6 @@ test.describe('UI-CANON G4 — AUD (Audits) signed-auth matrix', () => {
     let cleanup: Awaited<ReturnType<typeof cleanupRbacFixture>> | null = null;
     let residue: number | null = null;
     try {
-    const flagDetail = await enableOrgFlag('auditsFiveSurfacesV1', fixture.primaryOrgId, runId);
-
     // Capture a token for the soon-to-be-revoked persona while its membership is
     // still ACTIVE. The persona matrix below revokes it, so this is the only
     // moment a genuinely "valid at issuance" token can be obtained.
@@ -195,17 +190,17 @@ test.describe('UI-CANON G4 — AUD (Audits) signed-auth matrix', () => {
     const member = await contextForPersona(browser, fixture, 'member');
     const foreign = await contextForPersona(browser, fixture, 'foreignTenant');
 
-    // ── Flag ON vs OFF, proven simultaneously on two real tenants ───────────
-    // The primary tenant carries the DB-scoped flag row; the foreign tenant
-    // never does, so it exercises the production default without anyone
-    // changing that default.
-    const flagOn = await landingFor(admin.ctx, '/audit-programs/method?tab=library');
-    const flagOff = await landingFor(foreign.ctx, '/audit-programs/method?tab=library');
-    expect(flagOn.path, 'flag ON tenant must stay on the method hub').toContain(
-      '/audit-programs/method'
+    // ── One canonical mount, proven simultaneously on two real tenants ──────
+    const flagOn = await landingFor(admin.ctx, '/audit-programs?tab=library');
+    const flagOff = await landingFor(foreign.ctx, '/audit-programs?tab=library');
+    expect(flagOn.path, 'primary tenant must remain on the canonical Audits hub').toBe(
+      '/audit-programs?tab=library'
     );
-    expect(flagOff.path, 'flag OFF tenant must be redirected to the hub').toBe('/audit-programs');
-    expect(flagOff.auditsHub, 'the OFF redirect must land on the real hub, not a blank').toBe(true);
+    expect(flagOff.path, 'foreign tenant must use the same canonical mount').toBe(
+      '/audit-programs?tab=library'
+    );
+    expect(flagOn.auditsHub).toBe(true);
+    expect(flagOff.auditsHub).toBe(true);
 
     // ── Cross-tenant: the foreign admin must not see the primary tenant ─────
     const foreignApi = await apiRequest.newContext({
@@ -295,7 +290,6 @@ test.describe('UI-CANON G4 — AUD (Audits) signed-auth matrix', () => {
     //    60s membership cache window can be measured without disturbing the
     //    persona matrix (and so two fixtures genuinely run side by side).
     const mountFixture = await createRbacFixture(`${runId}-mounts`);
-    await enableOrgFlag('auditsFiveSurfacesV1', mountFixture.primaryOrgId, `${runId}-mounts`);
     let mountMatrix: Awaited<ReturnType<typeof runMountMatrix>> | null = null;
     try {
       const mountStale = await loginViaApi(
@@ -405,7 +399,7 @@ test.describe('UI-CANON G4 — AUD (Audits) signed-auth matrix', () => {
 
     // ── Role landings recorded verbatim, policy not invented ────────────────
     const readyCriterionPath = seed.firstCriterionId
-      ? `/audit-programs/method/${seed.programId}/criteria/${seed.firstCriterionId}`
+      ? `/audit-programs/${seed.programId}/criteria/${seed.firstCriterionId}`
       : null;
     const roleLandings = {
       platformAdminHub: await landingFor(admin.ctx, '/audit-programs'),
@@ -414,7 +408,7 @@ test.describe('UI-CANON G4 — AUD (Audits) signed-auth matrix', () => {
       foreignHub: await landingFor(foreign.ctx, '/audit-programs'),
       staleCriterion: await landingFor(
         admin.ctx,
-        '/audit-programs/method/00000000-0000-0000-0000-000000000000/criteria/00000000-0000-0000-0000-000000000000'
+        '/audit-programs/00000000-0000-0000-0000-000000000000/criteria/00000000-0000-0000-0000-000000000000'
       ),
       staleDrdReport: await landingFor(
         admin.ctx,
@@ -473,13 +467,10 @@ test.describe('UI-CANON G4 — AUD (Audits) signed-auth matrix', () => {
       negativeControls: {
         ...bypass,
         ...harnessEnvNegativeControls(),
-        tenantScopedFlagEnabled: flagDetail,
-        flagOnTenantLanding: `settled ${flagOn.path} (first ${flagOn.firstPath}, bounced=${flagOn.bounced}, audits-hub=${flagOn.auditsHub})`,
-        flagOffTenantLanding: `settled ${flagOff.path} (first ${flagOff.firstPath}, bounced=${flagOff.bounced}, audits-hub=${flagOff.auditsHub}) — production default FALSE exercised by a tenant with no flag row`,
-        flagRaceOnColdDeepLink:
-          'Flag-gated Audits routes redirect to /audit-programs before GET /api/feature-flags/runtime answers, then return to the requested route once the remote flags arrive. Measured: redirected at ~3s, back on the route by ~8s. Recorded as finding AUD-G4-F1; the harness measures the settled path and reports the bounce rather than hiding it.',
-        flagDoesNotLeakAcrossTenants:
-          'GET /api/feature-flags/runtime as the foreign-tenant admin returns auditsFiveSurfacesV1 = false',
+        primaryTenantLanding: `settled ${flagOn.path} (first ${flagOn.firstPath}, bounced=${flagOn.bounced}, audits-hub=${flagOn.auditsHub})`,
+        foreignTenantLanding: `settled ${flagOff.path} (first ${flagOff.firstPath}, bounced=${flagOff.bounced}, audits-hub=${flagOff.auditsHub})`,
+        retiredFlagDoesNotLeakAcrossTenants:
+          'GET /api/feature-flags/runtime as the foreign-tenant admin returns auditsFiveSurfacesV1 = false; the canonical /audit-programs mount no longer depends on it',
         revokedMembershipSequence: `login BEFORE revocation -> ${revokedLogin.status}; ${revokeDetail}; re-login AFTER revocation -> ${reLogin.status} ${reLogin.text.slice(0, 120)}`,
         revokedTokenOnUnguardedRoute: `GET /api/auth/me with the pre-revocation token -> ${staleMe.status()}`,
         revokedTokenOnMembershipGuardedRoute: `GET /api/conversations (one of only two routes carrying validateOrgMembership) -> ${staleGuarded.status()}`,

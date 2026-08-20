@@ -3,8 +3,8 @@
   "key": "PRT",
   "module": "Partner Portal",
   "route": "/partner",
-  "productSha": "0529405e9f3ef7b182ada28a6a3a1aab836ac007",
-  "startedAt": "2026-08-20T01:19:57.356Z",
+  "productSha": "e6ca206c0035f653118d9aadbfddf61d452ab52e",
+  "startedAt": "2026-08-20T04:29:12.139Z",
   "cells": [
     {
       "viewport": "desktop",

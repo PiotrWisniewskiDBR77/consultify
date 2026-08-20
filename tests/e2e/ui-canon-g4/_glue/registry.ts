@@ -307,16 +307,15 @@ export const SURFACES: SurfaceSpec[] = [
     key: 'AUD',
     module: 'Audits',
     route: '/audit-programs',
-    // `/audit-programs/method` and the criterion workspace only mount when the
-    // tenant-scoped `auditsFiveSurfacesV1` flag is on; the DRD report route
-    // needs its own client-side flag. Both are opened per-tenant by the AUD
-    // spec, never by changing a production default.
+    // `/audit-programs` is the sole canonical Audits mount. The retired
+    // `/audit-programs/method` entry redirects here, so G4 must exercise the
+    // current tab URLs rather than score the compatibility redirect.
     secondaryRoutes: [
-      '/audit-programs/method?tab=library',
-      '/audit-programs/method?tab=processes',
-      '/audit-programs/method?tab=outputs',
-      '/audit-programs/method?tab=reports',
-      '/audit-programs/method?tab=initiatives',
+      '/audit-programs?tab=library',
+      '/audit-programs?tab=processes',
+      '/audit-programs?tab=outputs',
+      '/audit-programs?tab=reports',
+      '/audit-programs?tab=initiatives',
     ],
     // The hub renders `data-testid="audits-hub"` (AuditsHub.tsx:764). Text is
     // used here because the shared sweep matches on text; the AUD spec
@@ -337,11 +336,11 @@ export const SURFACES: SurfaceSpec[] = [
     // the five tabs is active is established by the deep-link URL and by the
     // per-tab screenshot, not by this text signal.
     routeSignals: {
-      '/audit-programs/method?tab=library': /OutputsReports|WynikiRaporty/,
-      '/audit-programs/method?tab=processes': /OutputsReports|WynikiRaporty/,
-      '/audit-programs/method?tab=outputs': /OutputsReports|WynikiRaporty/,
-      '/audit-programs/method?tab=reports': /OutputsReports|WynikiRaporty/,
-      '/audit-programs/method?tab=initiatives': /OutputsReports|WynikiRaporty/,
+      '/audit-programs?tab=library': /OutputsReports|WynikiRaporty/,
+      '/audit-programs?tab=processes': /OutputsReports|WynikiRaporty/,
+      '/audit-programs?tab=outputs': /OutputsReports|WynikiRaporty/,
+      '/audit-programs?tab=reports': /OutputsReports|WynikiRaporty/,
+      '/audit-programs?tab=initiatives': /OutputsReports|WynikiRaporty/,
     },
     // Each tab gets its OWN marker: the *selected* tab carrying that tab's
     // label. A redirect to the hub cannot satisfy it (the hub's tab bar has
@@ -349,21 +348,21 @@ export const SURFACES: SurfaceSpec[] = [
     // concatenating sibling labels. Both locales are listed because the labels
     // are translated now that `audits.method.tabs.*` exists in pl and en.
     routeSelectors: {
-      '/audit-programs/method?tab=library':
+      '/audit-programs?tab=library':
         '[role="tab"][aria-selected="true"]:has-text("Biblioteka"), [role="tab"][aria-selected="true"]:has-text("Library")',
-      '/audit-programs/method?tab=processes':
+      '/audit-programs?tab=processes':
         '[role="tab"][aria-selected="true"]:has-text("Sesje"), [role="tab"][aria-selected="true"]:has-text("Sessions")',
-      '/audit-programs/method?tab=outputs':
+      '/audit-programs?tab=outputs':
         '[role="tab"][aria-selected="true"]:has-text("Wyniki"), [role="tab"][aria-selected="true"]:has-text("Outputs")',
-      '/audit-programs/method?tab=reports':
+      '/audit-programs?tab=reports':
         '[role="tab"][aria-selected="true"]:has-text("Raporty"), [role="tab"][aria-selected="true"]:has-text("Reports")',
-      '/audit-programs/method?tab=initiatives':
+      '/audit-programs?tab=initiatives':
         '[role="tab"][aria-selected="true"]:has-text("Inicjatywy"), [role="tab"][aria-selected="true"]:has-text("Initiatives")',
     },
     gates: [
       "AppRoutes.tsx:1573-1587 — BetaGate moduleId='MODULE_AUDITS', status 'open' (betaAccess.ts:48), so it never blocks.",
-      'AppRoutes.tsx:754-759 / 768-773 — /audit-programs/method and the criterion workspace redirect to /audit-programs unless auditsFiveSurfacesV1 is enabled; default is FALSE (useFeatureFlags.tsx:263-272) and stays FALSE in production.',
-      'The flag is enabled for the test tenant only, as a feature_flags row scoped by organization_id, evaluated by GET /api/feature-flags/runtime — the product mechanism, not a code change.',
+      'AppRoutes.tsx — /audit-programs is the sole canonical Audits UI; /audit-programs/method is a compatibility redirect and is not scored as a separate surface.',
+      'The retired auditsFiveSurfacesV1 flag is not enabled by this harness and does not control the canonical mount.',
       'AppRoutes.tsx:736-741 — /audit-programs/drd-report/:reportId redirects unless isDrdReportEnabled(); that flag has NO server/tenant scoping (query/localStorage/env only, src/utils/drdReportFlag.ts), which is recorded as a finding.',
       '/audits is a public marketing showcase under AuthLayout with no BetaGate and no auth requirement (AuditsShowcasePage.tsx) and is NOT the working application.',
     ],

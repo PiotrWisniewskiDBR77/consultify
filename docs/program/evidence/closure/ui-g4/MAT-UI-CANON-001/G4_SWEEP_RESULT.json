@@ -3,8 +3,8 @@
   "key": "MAT",
   "module": "Materials",
   "route": "/presentations",
-  "productSha": "4eec1d27952bc5642018495575665f5784e04f71",
-  "startedAt": "2026-08-19T22:05:34.477Z",
+  "productSha": "e6ca206c0035f653118d9aadbfddf61d452ab52e",
+  "startedAt": "2026-08-20T04:23:38.693Z",
   "cells": [
     {
       "viewport": "desktop",
@@ -27,7 +27,8 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": []
+      "consoleErrors": [],
+      "httpErrors": []
     },
     {
       "viewport": "desktop",
@@ -50,7 +51,8 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": []
+      "consoleErrors": [],
+      "httpErrors": []
     },
     {
       "viewport": "desktop",
@@ -73,7 +75,8 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": []
+      "consoleErrors": [],
+      "httpErrors": []
     },
     {
       "viewport": "desktop",
@@ -96,7 +99,8 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": []
+      "consoleErrors": [],
+      "httpErrors": []
     },
     {
       "viewport": "tablet",
@@ -119,7 +123,8 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": []
+      "consoleErrors": [],
+      "httpErrors": []
     },
     {
       "viewport": "tablet",
@@ -142,7 +147,8 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": []
+      "consoleErrors": [],
+      "httpErrors": []
     },
     {
       "viewport": "tablet",
@@ -165,7 +171,8 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": []
+      "consoleErrors": [],
+      "httpErrors": []
     },
     {
       "viewport": "tablet",
@@ -188,7 +195,8 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": []
+      "consoleErrors": [],
+      "httpErrors": []
     },
     {
       "viewport": "mobile",
@@ -211,7 +219,8 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": []
+      "consoleErrors": [],
+      "httpErrors": []
     },
     {
       "viewport": "mobile",
@@ -234,7 +243,8 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": []
+      "consoleErrors": [],
+      "httpErrors": []
     },
     {
       "viewport": "mobile",
@@ -257,7 +267,8 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": []
+      "consoleErrors": [],
+      "httpErrors": []
     },
     {
       "viewport": "mobile",
@@ -280,7 +291,8 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": []
+      "consoleErrors": [],
+      "httpErrors": []
     },
     {
       "viewport": "desktop",
@@ -303,7 +315,8 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": []
+      "consoleErrors": [],
+      "httpErrors": []
     },
     {
       "viewport": "desktop",
@@ -326,7 +339,8 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": []
+      "consoleErrors": [],
+      "httpErrors": []
     }
   ],
   "deepLink": {
