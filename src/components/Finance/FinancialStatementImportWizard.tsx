@@ -677,6 +677,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
         }));
         const data = await saveStatementValuesWithFallback(review.statementId, values);
         const valuesVersion = Number((data as any)?.valuesVersion || 0);
+        let decisionReadiness: ReadinessState | null = null;
         for (const value of review.mappedValues) {
           if (value.mappingStatus !== 'manual' || !value.userVerified) continue;
           if (!review.sourceReceiptId)
@@ -690,17 +691,38 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
           };
           const key = `statement-map-${review.statementId}-${value.sourceRow}-${valuesVersion}`;
           try {
-            await V8FinanceApi.recordStatementManualMappingDecision(review.statementId, body, key);
+            const result = await V8FinanceApi.recordStatementManualMappingDecision(
+              review.statementId,
+              body,
+              key
+            );
+            const decision = (result as any)?.decision;
+            if (decision?.readinessStatus) {
+              decisionReadiness = {
+                readinessStatus: decision.readinessStatus,
+                summary: String(decision.summary || ''),
+                reasonCodes: Array.isArray(decision.reasonCodes) ? decision.reasonCodes : [],
+              };
+            }
           } catch (decisionError) {
             if (!shouldFallbackToLegacyFinance(decisionError)) throw decisionError;
-            await Api.post(
+            const result = await Api.post(
               `/api/finance-statements/${review.statementId}/manual-mapping-decisions`,
               body,
               { extraHeaders: { 'Idempotency-Key': key } }
             );
+            const decision = (result as any)?.decision;
+            if (decision?.readinessStatus) {
+              decisionReadiness = {
+                readinessStatus: decision.readinessStatus,
+                summary: String(decision.summary || ''),
+                reasonCodes: Array.isArray(decision.reasonCodes) ? decision.reasonCodes : [],
+              };
+            }
           }
         }
-        const ready = (data as any)?.readiness?.readinessStatus === 'ready';
+        const effectiveReadiness = decisionReadiness || (data as any)?.readiness || null;
+        const ready = effectiveReadiness?.readinessStatus === 'ready';
         saved.push({ ...review, savedReady: ready, valuesVersion });
         const receiptStatementId = activeReviewStatementId || stagedReviews[0]?.statementId;
         if (
@@ -718,7 +740,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
             setSourceReceipt(((legacy as any)?.receipt || legacy) as Record<string, any>);
           }
         }
-        lastData = data;
+        lastData = decisionReadiness ? { ...data, readiness: decisionReadiness } : data;
         if (!ready)
           throw new Error(
             `${review.statementType} ${review.periodLabel || ''}: mapping requires review`
@@ -1584,6 +1606,10 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                   {sourceReceipt?.imported_by || '—'}
                 </span>
                 <span>
+                  {t('finance.importWizard.sourceKind', 'Source channel')}:{' '}
+                  {sourceReceipt?.source_kind || '—'}
+                </span>
+                <span>
                   {t('finance.importWizard.pages', 'Pages')}:{' '}
                   {(sourceReceipt?.page_ranges_json || [])
                     .map((range: any) =>
@@ -1804,6 +1830,10 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                 <span>
                   {t('finance.importWizard.importedBy', 'Imported by')}:{' '}
                   {sourceReceipt?.imported_by || '—'}
+                </span>
+                <span>
+                  {t('finance.importWizard.sourceKind', 'Source channel')}:{' '}
+                  {sourceReceipt?.source_kind || '—'}
                 </span>
                 <span>
                   {t('finance.importWizard.pages', 'Pages')}:{' '}

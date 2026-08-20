@@ -179,7 +179,13 @@ export async function recordManualMappingDecision(input: RecordManualMappingDeci
           409,
           'Decision key collision'
         );
-      return { ...replay, replay: true };
+      const refreshed = await refreshReadinessFromDurableDecisions(
+        tx,
+        input.organizationId,
+        input.statementId,
+        input.expectedValuesVersion
+      );
+      return { ...replay, ...refreshed, replay: true };
     }
     const statement = (
       await tx.query<any>(

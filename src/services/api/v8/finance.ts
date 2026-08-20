@@ -403,6 +403,7 @@ export interface V8FinanceStatementSourceReceipt {
   imported_at: string;
   importer_name?: string;
   importer_version?: string;
+  source_kind?: string;
 }
 
 export interface V8FinanceStatementAnalyticsResult {
