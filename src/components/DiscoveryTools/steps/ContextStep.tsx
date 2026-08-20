@@ -1203,7 +1203,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center rounded-full border border-primary-400/20 bg-primary-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-primary-700 dark:text-primary-200">
-                  Mission & Context
+                  {isPolish ? 'Misja i kontekst' : 'Mission & Context'}
                 </span>
                 <span className="inline-flex items-center rounded-full border border-slate-200/70 bg-white/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300">
                   {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.consultantProposal')}
