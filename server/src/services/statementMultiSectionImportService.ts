@@ -6,6 +6,7 @@ import { withPgTransaction } from '../utils/queryHelpers.js';
 import { registerStatementSourceReceipt } from './finance/canonical/statementSourceReceiptService.js';
 import { recomputeStatementPack } from './financialStatementPackService.js';
 import {
+  assertAtomicStatementImportSchema,
   autoMapLines,
   createStatement,
   extractFinancialLines,
@@ -230,6 +231,7 @@ async function stageSelectedStatementSectionsTx(params: {
             extractionStrategy: 'deterministic_multi_section_staged',
             templateFamily: params.statement.template_family,
             createdBy: params.userId,
+            strictSchema: true,
           });
       primaryUsed = true;
       if (!currentPeriodStatementId) currentPeriodStatementId = statementId;
@@ -248,7 +250,7 @@ async function stageSelectedStatementSectionsTx(params: {
         documentClass: params.statement.document_class || 'mixed_report',
         extractionStrategy: 'deterministic_multi_section_staged',
         templateFamily: params.statement.template_family,
-      });
+      }, { strictSchema: true });
       await dbRun(
         `UPDATE financial_statements
          SET entity_name=?, period_start=COALESCE(?,period_start), period_end=COALESCE(?,period_end),
@@ -281,11 +283,13 @@ async function stageSelectedStatementSectionsTx(params: {
           comparisonOfStatementId: period.comparisonOf ? currentPeriodStatementId : null,
         },
         createdBy: params.userId,
+        strictSchema: true,
       });
       const persistedSections = await persistStatementExtractedSections({
         statementId,
         ingestRunId,
         sections,
+        strictSchema: true,
       });
       const sectionIdsByKey = Object.fromEntries(
         persistedSections.map((section) => [section.sectionKey, section.sectionId])
@@ -298,9 +302,11 @@ async function stageSelectedStatementSectionsTx(params: {
         statementType,
         currency: params.currency || params.statement.currency,
         scaling: params.scaling || params.statement.scaling,
+        strictSchema: true,
       });
       const mapped = await autoMapLines(period.lines, statementType, {
         organizationId: params.organizationId,
+        strictSchema: true,
       });
       await updateStatementIngestRun({
         ingestRunId,
@@ -312,6 +318,7 @@ async function stageSelectedStatementSectionsTx(params: {
           periodLabel: period.label,
           candidateRows: period.lines.length,
         },
+        strictSchema: true,
       });
       const sourceReceipt = await registerStatementSourceReceipt({
         organizationId: params.organizationId,
@@ -379,5 +386,6 @@ export async function stageSelectedStatementSections(
   // Six type/period siblings, candidate rows and source receipts are one
   // proposal. If any selected section is missing or malformed, leave no
   // partial sibling lineage behind.
+  await assertAtomicStatementImportSchema();
   return withPgTransaction(async () => stageSelectedStatementSectionsTx(params));
 }

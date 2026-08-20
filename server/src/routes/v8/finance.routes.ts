@@ -2159,18 +2159,30 @@ router.post(
       return res.status(400).json({ error: 'No extracted text' });
     }
 
-    const ingestRunId = await ensureStatementIngestRun({
-      statementId,
-      organizationId,
-      createdBy: userId,
-      sourceFileName: statement.source_file_name,
-      sourceFilePath: statement.source_file_path,
-      parseMethod: statement.parse_method,
-      documentClass: statement.document_class,
-      extractionStrategy: statement.extraction_strategy,
-      templateFamily: statement.template_family,
-      rawTextLength: text.length,
-    });
+    const rawRequestedStatementTypes: unknown[] = Array.isArray(req.body?.statementTypes)
+      ? (req.body.statementTypes as unknown[])
+      : [];
+    const requestedStatementTypes = rawRequestedStatementTypes
+      .map((value) => normalizeStatementTypeInput(value))
+      .filter((value): value is 'P&L' | 'BS' | 'CF' => value !== null);
+    // Multi-section staging owns all ingest runs inside its one atomic
+    // transaction. Creating a primary run here used to leave a durable draft
+    // even when schema preflight or a later section failed.
+    const ingestRunId =
+      requestedStatementTypes.length > 0
+        ? null
+        : await ensureStatementIngestRun({
+            statementId,
+            organizationId,
+            createdBy: userId,
+            sourceFileName: statement.source_file_name,
+            sourceFilePath: statement.source_file_path,
+            parseMethod: statement.parse_method,
+            documentClass: statement.document_class,
+            extractionStrategy: statement.extraction_strategy,
+            templateFamily: statement.template_family,
+            rawTextLength: text.length,
+          });
     const documentProfile = classifyStatementDocument({
       fileName: statement.source_file_name,
       parseMethod: statement.parse_method,
@@ -2190,12 +2202,6 @@ router.post(
       undefined;
     const effectiveScaling =
       String(req.body?.scaling || '').trim() || String(statement.scaling || '').trim() || undefined;
-    const rawRequestedStatementTypes: unknown[] = Array.isArray(req.body?.statementTypes)
-      ? (req.body.statementTypes as unknown[])
-      : [];
-    const requestedStatementTypes = rawRequestedStatementTypes
-      .map((value) => normalizeStatementTypeInput(value))
-      .filter((value): value is 'P&L' | 'BS' | 'CF' => value !== null);
     if (requestedStatementTypes.length > 0) {
       try {
         const batch = await stageSelectedStatementSections({

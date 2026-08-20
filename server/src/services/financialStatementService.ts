@@ -225,6 +225,114 @@ function isSchemaCompatError(error: unknown): boolean {
   );
 }
 
+/**
+ * Atomic multi-section imports cannot use the legacy catch-and-retry schema
+ * compatibility path once BEGIN has run: PostgreSQL aborts the transaction at
+ * the first missing table/column and a retry can only surface 25P02. Probe the
+ * exact durable write surface before entering the transaction instead.
+ */
+export async function assertAtomicStatementImportSchema(): Promise<void> {
+  const required: Record<string, string[]> = {
+    financial_statements: [
+      'id',
+      'organization_id',
+      'entity_name',
+      'statement_type',
+      'period_start',
+      'period_end',
+      'period_label',
+      'currency',
+      'scaling',
+      'status',
+      'readiness_status',
+      'readiness_score',
+      'quality_summary',
+      'source_file_name',
+      'source_file_path',
+      'parse_method',
+      'overall_confidence',
+      'created_by',
+      'notes',
+      'document_class',
+      'extraction_strategy',
+      'template_family',
+      'statement_pack_id',
+    ],
+    financial_statement_ingest_runs: [
+      'id', 'statement_id', 'organization_id', 'run_status', 'current_stage',
+      'source_file_name', 'source_file_path', 'parse_method', 'document_class',
+      'extraction_strategy', 'template_family', 'raw_text_length',
+      'summary_json', 'latest_reason_codes', 'created_by', 'completed_at', 'updated_at',
+    ],
+    financial_statement_extracted_sections: [
+      'id', 'statement_id', 'ingest_run_id', 'section_key', 'section_label',
+      'statement_type', 'source_page_start', 'source_page_end', 'line_start',
+      'line_end', 'confidence', 'text_excerpt', 'metadata_json',
+    ],
+    financial_statement_candidate_rows: [
+      'id', 'statement_id', 'ingest_run_id', 'section_id', 'row_key', 'row_label',
+      'normalized_label', 'source_row', 'source_page', 'selected_period_label',
+      'raw_value', 'normalized_value', 'currency', 'scaling', 'confidence',
+      'classification_reason', 'metadata_json',
+    ],
+    financial_statement_lines: [
+      'id', 'statement_type', 'line_code', 'line_name', 'line_name_pl',
+      'organization_id', 'is_system',
+    ],
+    financial_statement_line_aliases: [
+      'organization_id',
+      'statement_line_id',
+      'statement_type',
+      'normalized_alias',
+      'template_family',
+    ],
+    finance_statement_source_receipts: [
+      'receipt_id', 'organization_id', 'statement_id', 'ingest_run_id', 'upload_id',
+      'durable_object_id', 'original_file_name', 'content_sha256', 'size_bytes',
+      'mime_type', 'source_kind', 'importer_name', 'importer_version', 'entity_name',
+      'periods_json', 'page_ranges_json', 'imported_by',
+    ],
+    financial_statement_packs: [
+      'id', 'organization_id', 'entity_name', 'period_start', 'period_end',
+      'period_label', 'currency', 'scaling', 'pack_status', 'pack_readiness_status',
+      'pack_readiness_score', 'pack_quality_summary', 'pack_quality_reason_codes',
+      'source_statement_count', 'missing_statement_types', 'metadata_json', 'updated_at',
+    ],
+    financial_statement_validations: [
+      'id', 'statement_id', 'statement_pack_id', 'validation_scope', 'status',
+      'check_code', 'check_name', 'severity', 'expected_value', 'actual_value',
+      'difference', 'tolerance', 'message', 'details_json',
+    ],
+    organization_members: ['organization_id', 'user_id', 'role', 'status'],
+  };
+  const rows = await dbAll<{ table_name: string; column_name: string }>(
+    `SELECT table_name, column_name
+       FROM information_schema.columns
+      WHERE table_schema = current_schema()
+        AND table_name IN (${Object.keys(required)
+          .map(() => '?')
+          .join(', ')})`,
+    Object.keys(required),
+    { fallback: false }
+  );
+  const actual = new Map<string, Set<string>>();
+  for (const row of rows) {
+    const columns = actual.get(row.table_name) || new Set<string>();
+    columns.add(row.column_name);
+    actual.set(row.table_name, columns);
+  }
+  const missing = Object.entries(required).flatMap(([table, columns]) =>
+    columns.filter((column) => !actual.get(table)?.has(column)).map((column) => `${table}.${column}`)
+  );
+  if (missing.length > 0) {
+    throw Object.assign(new Error(`Statement import schema is incomplete: ${missing.join(', ')}`), {
+      code: 'STATEMENT_IMPORT_SCHEMA_INCOMPLETE',
+      statusCode: 503,
+      missing,
+    });
+  }
+}
+
 function normalizeStatementTypeToken(value: unknown): string {
   const normalized = String(value || '')
     .trim()
@@ -5190,7 +5298,7 @@ function detectCrossContamination(normalizedLabel: string, statementType: string
 export async function autoMapLines(
   extractedLines: ExtractedLine[],
   statementType: string,
-  options?: { organizationId?: string; templateFamily?: string | null }
+  options?: { organizationId?: string; templateFamily?: string | null; strictSchema?: boolean }
 ): Promise<ExtractedLine[]> {
   const normalizedStatementType = normalizeStatementTypeToken(statementType);
   const organizationScope = String(options?.organizationId || '').trim();
@@ -5204,7 +5312,8 @@ export async function autoMapLines(
          AND (is_system = TRUE OR organization_id = ? OR organization_id IS NULL)`,
       [normalizedStatementType, organizationScope]
     )) as CanonicalLine[];
-  } catch {
+  } catch (error) {
+    if (options?.strictSchema) throw error;
     canonicalLines = [];
   }
   for (const fallbackLine of buildFallbackCanonicalLines(normalizedStatementType)) {
@@ -5229,6 +5338,7 @@ export async function autoMapLines(
         [normalizedStatementType, organizationScope, templateFamily]
       )) as Array<{ statement_line_id: string; normalized_alias: string; template_family: string }>;
     } catch (error) {
+      if (options?.strictSchema) throw error;
       if (!isSchemaCompatError(error)) throw error;
       aliasRows = [];
       aliasTableSupport = false;
@@ -7499,6 +7609,7 @@ export async function startStatementIngestRun(params: {
   rawTextLength?: number | null;
   summary?: Record<string, unknown> | null;
   createdBy?: string | null;
+  strictSchema?: boolean;
 }): Promise<string | null> {
   try {
     const id = uuidv4();
@@ -7525,6 +7636,7 @@ export async function startStatementIngestRun(params: {
     );
     return id;
   } catch (error) {
+    if (params.strictSchema) throw error;
     if (!isSchemaCompatError(error)) throw error;
     return null;
   }
@@ -7557,6 +7669,7 @@ export async function updateStatementIngestRun(params: {
   rawTextLength?: number | null;
   reasonCodes?: string[] | null;
   summary?: Record<string, unknown> | null;
+  strictSchema?: boolean;
 }): Promise<void> {
   if (!params.ingestRunId) return;
   try {
@@ -7588,6 +7701,7 @@ export async function updateStatementIngestRun(params: {
       { fallback: false }
     );
   } catch (error) {
+    if (params.strictSchema) throw error;
     if (!isSchemaCompatError(error)) throw error;
   }
 }
@@ -7678,6 +7792,7 @@ export async function persistStatementExtractedSections(params: {
   statementId: string;
   ingestRunId?: string | null;
   sections: StatementSectionRecord[];
+  strictSchema?: boolean;
 }): Promise<Array<{ sectionId: string; sectionKey: string }>> {
   if (!Array.isArray(params.sections) || params.sections.length === 0) return [];
   try {
@@ -7718,6 +7833,7 @@ export async function persistStatementExtractedSections(params: {
     }
     return created;
   } catch (error) {
+    if (params.strictSchema) throw error;
     if (!isSchemaCompatError(error)) throw error;
     return [];
   }
@@ -7731,6 +7847,7 @@ export async function persistStatementCandidateRows(params: {
   statementType?: string | null;
   currency?: string | null;
   scaling?: string | null;
+  strictSchema?: boolean;
 }): Promise<Array<{ candidateRowId: string; sourceRow?: number }>> {
   if (!Array.isArray(params.rows)) return [];
   try {
@@ -7786,6 +7903,7 @@ export async function persistStatementCandidateRows(params: {
     }
     return created;
   } catch (error) {
+    if (params.strictSchema) throw error;
     if (!isSchemaCompatError(error)) throw error;
     return [];
   }
@@ -8398,7 +8516,8 @@ export async function updateStatementMetadata(
     documentClass?: StatementDocumentClass | null;
     extractionStrategy?: string | null;
     templateFamily?: string | null;
-  }
+  },
+  options?: { strictSchema?: boolean }
 ): Promise<void> {
   const normalizedStatementType = patch.statementType
     ? normalizeStatementTypeToken(patch.statementType)
@@ -8436,6 +8555,7 @@ export async function updateStatementMetadata(
       [0]
     );
   } catch (error) {
+    if (options?.strictSchema) throw error;
     if (!isSchemaCompatError(error)) throw error;
     await runStatementTypeAwareWrite(
       `UPDATE financial_statements
@@ -9270,6 +9390,7 @@ export async function createStatement(params: {
   extractionStrategy?: string;
   templateFamily?: string | null;
   createdBy: string;
+  strictSchema?: boolean;
 }): Promise<string> {
   const id = uuidv4();
   const normalizedStatementType = normalizeStatementTypeToken(params.statementType);
@@ -9299,6 +9420,7 @@ export async function createStatement(params: {
       [2]
     );
   } catch (error) {
+    if (params.strictSchema) throw error;
     if (!isSchemaCompatError(error)) throw error;
     insertRes = await runStatementTypeAwareWrite(
       `INSERT INTO financial_statements (id, organization_id, statement_type, period_start, period_end, period_label, currency, scaling, source_file_name, source_file_path, parse_method, overall_confidence, created_by)

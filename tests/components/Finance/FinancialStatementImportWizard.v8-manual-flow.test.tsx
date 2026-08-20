@@ -161,6 +161,49 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
     );
   });
 
+  it('uses one multi-section selection for checkboxes, summary and extract request without raw labels', async () => {
+    vi.mocked(V8FinanceApi.uploadAndAnalyzeStatement).mockResolvedValue({
+      mode: 'smart',
+      statementIds: ['statement-1'],
+      analysis: {
+        entityName: 'ACME',
+        periodLabel: '2025',
+        currency: 'PLN',
+        scaling: 'thousands',
+        sectionTypes: ['BS', 'CF', 'P&L'],
+      },
+    } as any);
+    vi.mocked(V8FinanceApi.extractStatement).mockResolvedValue({
+      statements: [],
+      lines: [],
+    } as any);
+
+    const view = render(<FinancialStatementImportWizard />);
+    fireEvent.change(view.container.querySelector('input[type="file"]') as HTMLInputElement, {
+      target: { files: [new File(['report'], 'statement.pdf', { type: 'application/pdf' })] },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Upload & Analyze' }));
+
+    await waitFor(() => expect(screen.getByText('Detection Results')).toBeTruthy());
+    expect(screen.queryByText('Show steps')).toBeNull();
+    expect(screen.queryByText('BS (Balance Sheet)')).toBeNull();
+    expect(screen.getByTestId('multi-section-selection-summary')).toHaveTextContent(
+      'Balance sheet · Cash flow statement · Income statement'
+    );
+    expect(screen.getAllByRole('checkbox').filter((item) => (item as HTMLInputElement).checked)).toHaveLength(3);
+    expect(screen.getAllByRole('combobox')).toHaveLength(2);
+    expect(screen.queryByRole('option', { name: 'Choose statement type' })).toBeNull();
+    expect(screen.queryByText('thousands')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Extract selected statement section' }));
+    await waitFor(() =>
+      expect(V8FinanceApi.extractStatement).toHaveBeenCalledWith(
+        'statement-1',
+        expect.objectContaining({ statementTypes: ['BS', 'CF', 'P&L'] })
+      )
+    );
+  });
+
   it('falls back to legacy upload-and-analyze in the wizard on bounded compatibility statuses', async () => {
     vi.mocked(V8FinanceApi.uploadAndAnalyzeStatement).mockRejectedValue({ status: 404 });
 
@@ -342,7 +385,7 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
     expect(screen.getByTestId('durable-source-summary').textContent).toContain('P&L');
     expect(screen.getByTestId('durable-source-summary').textContent).toContain('FY2025');
     expect(screen.getByTestId('durable-source-summary').textContent).toContain('FY2024');
-    expect(screen.getByTestId('durable-source-summary').textContent).toContain('PLN · thousands');
+    expect(screen.getByTestId('durable-source-summary').textContent).toContain('PLN · Thousands');
     expect(screen.getByTestId('durable-source-summary').textContent).toContain('owner-1');
     expect(screen.getByTestId('durable-source-summary').textContent).toContain('12–13');
     expect(screen.getAllByText('CD_PROJEKT_Skonsolidowane_Sprawozdanie_FY2025.pdf').length).toBeGreaterThan(0);
@@ -413,7 +456,7 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
 
     render(<FinancialStatementImportWizard initialStatementId="statement-current" />);
     await waitFor(() => expect(screen.getByTestId('statement-comparison-side-by-side')).toBeTruthy());
-    expect(screen.getByTestId('durable-source-summary').textContent).toContain('PLN · thousands');
+    expect(screen.getByTestId('durable-source-summary').textContent).toContain('PLN · Thousands');
     expect(screen.queryByText('statement-current')).toBeNull();
     expect(V8FinanceApi.getStatement).toHaveBeenCalledTimes(4);
     expect(V8FinanceApi.getStatementSourceReceipt).toHaveBeenCalledTimes(4);
@@ -1032,8 +1075,8 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
     fireEvent.click(
       await screen.findByRole('button', { name: 'Extract selected statement section' })
     );
-    expect(await screen.findByRole('tab', { name: /P&L · 2025/ })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /BS · 2025 · comparison/ })).toBeInTheDocument();
+    expect(await screen.findByRole('tab', { name: /Income statement · 2025/ })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Balance sheet · 2025 · comparison/ })).toBeInTheDocument();
     expect(screen.queryByText('Import Financial Statement')).not.toBeInTheDocument();
     expect(screen.getByRole('complementary', { name: 'Statement metrics' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Save & Validate' }));

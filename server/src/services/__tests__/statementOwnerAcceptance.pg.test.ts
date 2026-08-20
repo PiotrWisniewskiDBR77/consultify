@@ -162,6 +162,76 @@ describe.runIf(enabled)('Finance Statement owner acceptance — real PostgreSQL 
       `SELECT count(*)::int count FROM financial_statements WHERE organization_id=$1`,
       [organizationId]
     );
+    const app = express();
+    app.use(express.json());
+    app.use(inputSanitizationMiddleware);
+    app.use((req, _res, next) => {
+      (req as any).userId = userId;
+      (req as any).organizationId = organizationId;
+      (req as any).user = { id: userId, organizationId, role: 'OWNER' };
+      (req as any).v8Context = {
+        userId,
+        organizationId,
+        userRole: 'OWNER',
+        isSuperAdmin: false,
+      };
+      next();
+    });
+    app.use('/api/v8/finance', financeRoutes);
+
+    // Every table reached by the atomic writer is capability-checked before
+    // BEGIN. Cover an ingest column, the immutable receipt ledger, and pack
+    // recompute so no late missing-schema error can degrade into 25P02.
+    for (const capability of [
+      { table: 'financial_statement_ingest_runs', column: 'latest_reason_codes' },
+      { table: 'finance_statement_source_receipts', column: 'periods_json' },
+      { table: 'financial_statement_packs', column: 'pack_readiness_status' },
+      { table: 'financial_statement_validations', column: 'expected_value' },
+    ]) {
+      const hidden = `${capability.column}_missing_test`;
+      await pool.query(
+        `ALTER TABLE ${capability.table} RENAME COLUMN ${capability.column} TO ${hidden}`
+      );
+      let schemaFailure: any;
+      try {
+        schemaFailure = await request(app)
+          .post(`/api/v8/finance/statements/${failedPrimary}/extract`)
+          .send({
+            statementType: 'BS',
+            statementTypes: ['P&L', 'BS', 'CF'],
+            periodLabel: '2025',
+            currency: 'PLN',
+            scaling: 'thousands',
+            entityName: 'CD PROJEKT S.A.',
+          });
+      } finally {
+        await pool.query(
+          `ALTER TABLE ${capability.table} RENAME COLUMN ${hidden} TO ${capability.column}`
+        );
+      }
+      expect(schemaFailure.status, capability.table).toBe(503);
+      expect(schemaFailure.body).toMatchObject({ code: 'STATEMENT_IMPORT_SCHEMA_INCOMPLETE' });
+      expect(schemaFailure.body.error).toContain(`${capability.table}.${capability.column}`);
+      expect(JSON.stringify(schemaFailure.body)).not.toContain('25P02');
+      const afterSchemaFailure = await pool.query(
+        `SELECT count(*)::int count FROM financial_statements WHERE organization_id=$1`,
+        [organizationId]
+      );
+      expect(afterSchemaFailure.rows[0].count).toBe(before.rows[0].count);
+      for (const table of [
+        'financial_statement_ingest_runs',
+        'financial_statement_extracted_sections',
+        'financial_statement_candidate_rows',
+        'financial_statement_mapping_candidates',
+        'finance_statement_source_receipts',
+      ]) {
+        const result = await pool.query(
+          `SELECT count(*)::int count FROM ${table} WHERE statement_id=$1`,
+          [failedPrimary]
+        );
+        expect(result.rows[0].count, `${capability.table}:${table}`).toBe(0);
+      }
+    }
     const officialProfitAndLoss = locateStatementSections(pdfText, 'P&L').find(
       (section) => section.confidence >= 0.5
     );
@@ -242,22 +312,6 @@ describe.runIf(enabled)('Finance Statement owner acceptance — real PostgreSQL 
     await pool.query(`UPDATE financial_statements SET notes=$1 WHERE id=$2`, [pdfText, primary]);
     const mountedPackId = await syncStatementToPack(primary);
     expect(mountedPackId).toBeTruthy();
-    const app = express();
-    app.use(express.json());
-    app.use(inputSanitizationMiddleware);
-    app.use((req, _res, next) => {
-      (req as any).userId = userId;
-      (req as any).organizationId = organizationId;
-      (req as any).user = { id: userId, organizationId, role: 'OWNER' };
-      (req as any).v8Context = {
-        userId,
-        organizationId,
-        userRole: 'OWNER',
-        isSuperAdmin: false,
-      };
-      next();
-    });
-    app.use('/api/v8/finance', financeRoutes);
     const mounted = await request(app)
       .post(`/api/v8/finance/statements/${primary}/extract`)
       .send({

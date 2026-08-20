@@ -36,6 +36,7 @@ vi.mock('../financialStatementPackService.js', () => ({
   recomputeStatementPack: (...args: unknown[]) => mocks.recomputePack(...args),
 }));
 vi.mock('../financialStatementService.js', () => ({
+  assertAtomicStatementImportSchema: vi.fn(async () => undefined),
   locateStatementSections: (...args: unknown[]) => mocks.locate(...args),
   resolveStatementColumnSelection: vi.fn(() => ({
     selectedPeriodLabel: '2025',
