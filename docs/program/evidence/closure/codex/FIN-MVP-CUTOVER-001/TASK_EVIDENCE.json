@@ -1,9 +1,9 @@
 {
   "taskId": "FIN-MVP-CUTOVER-001",
   "baselineSha": "14889d7b087585ae6f5d4a74e86c1b5e344e7c1c",
-  "productSha": "4bad55ada98b4b3d326569b1912be2b423789d61",
-  "technicalSourceSha": "4bad55ada98b4b3d326569b1912be2b423789d61",
-  "requalificationSha": "4bad55ada98b4b3d326569b1912be2b423789d61",
+  "productSha": "884e5734008948e65e51a87bfe8a078032a22cf9",
+  "technicalSourceSha": "884e5734008948e65e51a87bfe8a078032a22cf9",
+  "requalificationSha": "884e5734008948e65e51a87bfe8a078032a22cf9",
   "reconciliationSha": "163a702f128518965bcdb132dda9c664231a75fa",
   "currentTwoDoorRequalification": {
     "scope": "HISTORICAL mounted signed-auth two-door proof and organization scoping; superseded for the current denominator by exactCurrentInventory20260820.",
@@ -12,7 +12,7 @@
   },
   "technicalVerdict": "PASS_CURRENT_LEGACY_CUTOVER_KERNEL",
   "exactCurrentInventory20260820": {
-    "productSha": "4bad55ada98b4b3d326569b1912be2b423789d61",
+    "productSha": "884e5734008948e65e51a87bfe8a078032a22cf9",
     "scope": "All currently registered Finance legacy-route families: /api/v8/finance, /api/financial-modeling, /api/economics and /api/finance-statements.",
     "result": {
       "totalRouteRules": 59,
@@ -273,9 +273,9 @@
     "boundary": "This closes only ECO-W32. No push, deploy, release or tenant rollout was performed. The full FIN-MVP-CUTOVER task remains PARTIAL with 35 open legacy mutation doors."
   },
   "exactCurrentEcoW33Requalification20260820": {
-    "productSha": "4bad55ada98b4b3d326569b1912be2b423789d61",
+    "productSha": "884e5734008948e65e51a87bfe8a078032a22cf9",
     "scope": "Bounded retirement of ECO-W33 POST /api/economics/budgets in favor of POST /api/v8/finance/budgets.",
-    "productTruth": "Both mounted budget-create callers use the canonical V8 command and require explicit ordered periods. The command rechecks live ACTIVE Finance-editor authority before replay, validates tenant project/tool-session provenance, serializes retries, creates exactly one budget with 15 lines and 3 scenarios inside one pinned transaction, and binds the aggregate to one immutable tenant-scoped receipt. Same-key replay returns the exact identity; changed payload, foreign source, revoked authority and receipt failure are fail-closed with zero duplicate or partial aggregate. The legacy route returns 410/no-write by default and its exact writer-scoped rollback reaches only the prior compatibility handler with durable telemetry.",
+    "productTruth": "All four mounted budget-create callers (MyWork conversion, Benefits Budget Workspace, Finance create modal and Finance row duplication) use the canonical V8 command; interactive creators require explicit ordered periods. The command rechecks live ACTIVE Finance-editor authority before replay, validates tenant project/tool-session provenance, serializes retries, creates exactly one budget with 15 lines and 3 scenarios inside one pinned transaction, and binds the aggregate to one immutable tenant-scoped receipt. Same-key replay returns the exact identity; changed payload, foreign source, revoked authority and receipt failure are fail-closed with zero duplicate or partial aggregate. The legacy route returns 410/no-write by default and its exact writer-scoped rollback reaches only the prior compatibility handler with durable telemetry.",
     "commands": [
       {
         "command": "NODE_ENV=test DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32772/consultify_b1_eco_w33 DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts; repeat; --dry-run",
@@ -288,14 +288,14 @@
         "result": "3 files, 31/31 tests: 6 canonical budget RealPG, 20 mounted cutover RealPG and 5 inventory tests. Proof includes atomic/cold provenance, manual and tool-session sources, 8-way convergence, collision, authority-before-winning replay, foreign source and invalid-period zero-write, receipt-failure rollback, legacy 410/no-write, writer-scoped rollback and exact 18 retired/34 open inventory."
       },
       {
-        "command": "npx vitest run server/src/routes/v8/__tests__/finance.routes.test.ts -t 'POST /api/v8/finance/budgets' && npx vitest run tests/components/MyWork/ConvertToDialog.budget.test.tsx server/src/services/legacyCutover/__tests__/financeCutoverInventory.test.ts",
+        "command": "npx vitest run server/src/routes/v8/__tests__/finance.routes.test.ts -t 'POST /api/v8/finance/budgets'; npx vitest run tests/components/Economics/useFinanceRowActions.v8-analysis-mutations.test.tsx tests/components/Economics/CreateBudgetModal.v8-create.test.tsx server/src/services/legacyCutover/__tests__/financeCutoverInventory.test.ts; npx vitest run tests/components/MyWork/ConvertToDialog.budget.test.tsx",
         "exitCode": 0,
-        "result": "HTTP route 3/3 proves create 201, replay 200 and strict unknown-field no-write; UI plus inventory 6/6 proves explicit period configuration and both mounted callers canonical."
+        "result": "HTTP route 3/3 proves create 201, replay 200 and strict unknown-field no-write. Finance row actions, create modal and inventory passed 14/14, including mounted budget duplication through canonical registration; MyWork explicit-period UI passed 1/1. Inventory scans all four mounted create callers and rejects an exact legacy root POST."
       },
       {
         "command": "NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p server/tsconfig.json --noEmit && NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit && NODE_OPTIONS=--max-old-space-size=8192 npm run build:backend && NODE_OPTIONS=--max-old-space-size=8192 npm run build",
         "exitCode": 0,
-        "result": "Server and root TypeScript noEmit, backend production build and frontend production build passed; only existing CSS, chunk-size and mixed-import warnings remained."
+        "result": "Server and root TypeScript noEmit, backend production build and frontend production build with the qualifying 8 GiB heap passed; only existing CSS, chunk-size and mixed-import warnings remained. A default 4 GiB frontend build attempt reached chunk rendering and ended OOM, so it is recorded as harness capacity rather than qualification evidence."
       },
       {
         "command": "git diff --cached --check",
