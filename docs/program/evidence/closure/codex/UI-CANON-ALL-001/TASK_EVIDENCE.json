@@ -169,11 +169,9 @@
   "verdict": "PARTIAL",
   "blockers": [
     "Close the task-specific technical gaps recorded in twelve module inventories.",
-    "Create or authorize a frozen-82 Audit UI module packet; the current proposal remains outside authority.",
-    "Obtain named visual/UX and manual VoiceOver acceptance."
+    "Create or authorize a frozen-82 Audit UI module packet; the current proposal remains outside authority."
   ],
   "openBlockers": [
-    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
     "Twelve module inventories retain task-specific state, reachability, policy, error or concurrency gaps; UI_MODULE_INVENTORY.json is authoritative for the exact list.",
     "The proposed Audit UI surface is outside the 82-task authority and remains MISSING_FROZEN_MODULE_PACKET.",
     "The exact-current sweep covers every frozen UI packet, but states explicitly listed in each result's statesNotPresent remain unproven by the aggregate sweep and require their task-specific journeys."
@@ -220,7 +218,19 @@
       "notFound404": 0,
       "other": 0
     },
-    "humanAcceptance": "PENDING — Piotr must execute and sign OWNER_UAT_VOICEOVER_RUNBOOK.md on the final candidate SHA",
+    "humanAcceptance": "WAIVED_FOR_INTERNAL_BETA_BY_OWNER — automated evidence accepted by Piotr for exact staging candidate e6ca206c0035f653118d9aadbfddf61d452ab52e; manual UAT remains recommended before wider production release",
     "auditSurface": "NOT_IN_82_AUTHORITY — see ui-g4/AUD-UI-CANON-001/PROPOSAL_EVIDENCE.json"
+  },
+  "internalBetaOwnerDecision20260820": {
+    "decision": "D6=B",
+    "ownerStatement": "Akceptuję automatyczne dowody zamiast human UAT dla internal beta",
+    "candidateProductSha": "e6ca206c0035f653118d9aadbfddf61d452ab52e",
+    "effect": "Closes the manual VoiceOver, named-persona and visual/brand gate for internal beta only.",
+    "doesNotWaive": [
+      "task-specific technical gaps",
+      "missing frozen Audit UI authority",
+      "approved-out product boundaries",
+      "production deployment authorization"
+    ]
   }
 }

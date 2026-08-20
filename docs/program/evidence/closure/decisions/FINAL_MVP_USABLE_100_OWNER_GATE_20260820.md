@@ -144,7 +144,19 @@ decisions or grant production authority.
 - `D1=A` remains the accepted internal-beta performance contract. It does not
   need to be reaccepted for each candidate SHA unless the thresholds change.
 - `D3=A`, `D4=A` and `D5=A` remain the accepted beta boundaries.
-- `D6=A` authorized owner UAT but did not itself execute or sign the exact-e6ca
-  named-persona, VoiceOver and visual/brand runbook. That receipt remains open.
+- `D6=B` was explicitly accepted by Piotr after the staging qualification:
+  automated exact-candidate evidence is sufficient for internal beta. Manual
+  named-persona, VoiceOver and visual/brand acceptance are waived for internal
+  beta only and remain recommended before a wider production release.
 - `D7=A` has not been granted. Production deploy, production migration, traffic
   switch and production rollback remain `NOT_AUTHORIZED`.
+
+### D6 superseding owner decision — 2026-08-20
+
+Piotr recorded: `Akceptuję automatyczne dowody zamiast human UAT dla internal beta`.
+
+This supersedes the earlier `D6=A` scheduling choice with `D6=B` for the exact
+staging candidate `e6ca206c0035f653118d9aadbfddf61d452ab52e`. It closes only the
+human UI acceptance gate for internal beta. It does not waive task-specific
+technical gaps, create missing Audit authority, authorize production, or change
+any approved-out product boundary.
