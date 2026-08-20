@@ -70,6 +70,7 @@ interface ExtractedLine {
   suggestedCanonicalLabel?: string;
   isNonFinancial?: boolean;
   classificationReason?: string;
+  suggestedExclusionReason?: string;
   mappingTier?: 'auto' | 'llm_confirmed' | 'review_required' | 'excluded';
 }
 
@@ -711,6 +712,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
             sourceRow: l.sourceRow,
             isNonFinancial: !!l.isNonFinancial,
             classificationReason: l.classificationReason,
+            suggestedExclusionReason: l.suggestedExclusionReason,
             mappingTier: l.mappingTier,
           })),
         });
@@ -808,7 +810,10 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
           value: v.value,
           confidence: v.confidence,
           sourceRow: v.sourceRow,
-          mappingStatus: v.mappingStatus,
+          mappingStatus:
+            v.userVerified && v.canonicalLineId && v.mappingTier === 'review_required'
+              ? 'manual'
+              : v.mappingStatus,
           isNonFinancial: v.isNonFinancial,
           classificationReason: v.classificationReason,
           userVerified: Boolean(v.userVerified),
@@ -818,15 +823,21 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
         let decisionReadiness: ReadinessState | null = null;
         for (const value of review.mappedValues) {
           const requiresHumanDecision =
-            value.mappingStatus === 'manual' || value.mappingTier === 'review_required';
+            value.mappingStatus === 'manual' ||
+            value.mappingStatus === 'manual_exclude' ||
+            value.mappingTier === 'review_required';
           if (!requiresHumanDecision || !value.userVerified) continue;
-          if (!value.canonicalLineId) continue;
+          const isExclude = value.mappingStatus === 'manual_exclude';
+          if (!isExclude && !value.canonicalLineId) continue;
           if (!review.sourceReceiptId)
             throw new Error(`${review.statementType}: source receipt is required`);
           const body = {
             sourceRow: value.sourceRow,
-            canonicalLineId: value.canonicalLineId,
-            reason: 'Zweryfikowane przez użytkownika podczas przeglądu importu',
+            canonicalLineId: isExclude ? null : value.canonicalLineId,
+            action: isExclude ? 'EXCLUDE' : 'ACCEPT',
+            reason: isExclude
+              ? value.classificationReason || 'OWNER_CONFIRMED_EXCLUSION'
+              : 'Zweryfikowane przez użytkownika podczas przeglądu importu',
             sourceReceiptId: review.sourceReceiptId,
             expectedValuesVersion: valuesVersion,
           };
@@ -1807,6 +1818,50 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                               : value
                           ),
                         }
+                      : item
+                  )
+                );
+              }}
+              onExcludeChange={(idx, excluded, reason) => {
+                const update = (value: FinancialStatementMappedValue, index: number) =>
+                  index === idx
+                    ? {
+                        ...value,
+                        isNonFinancial: excluded,
+                        mappingStatus: excluded ? 'manual_exclude' : 'unmapped',
+                        mappingTier: excluded ? ('excluded' as const) : ('review_required' as const),
+                        classificationReason: excluded ? reason : undefined,
+                        userVerified: excluded,
+                      }
+                    : value;
+                setMappedValues((current) => current.map(update));
+                setReviewStatements((current) =>
+                  current.map((item) =>
+                    item.statementId === activeReviewStatementId
+                      ? { ...item, mappedValues: item.mappedValues.map(update) }
+                      : item
+                  )
+                );
+              }}
+              onExcludeAllSuggested={() => {
+                const update = (value: FinancialStatementMappedValue) =>
+                  !value.canonicalLineId &&
+                  value.suggestedExclusionReason &&
+                  !value.isNonFinancial
+                    ? {
+                        ...value,
+                        isNonFinancial: true,
+                        mappingStatus: 'manual_exclude',
+                        mappingTier: 'excluded' as const,
+                        classificationReason: value.suggestedExclusionReason,
+                        userVerified: true,
+                      }
+                    : value;
+                setMappedValues((current) => current.map(update));
+                setReviewStatements((current) =>
+                  current.map((item) =>
+                    item.statementId === activeReviewStatementId
+                      ? { ...item, mappedValues: item.mappedValues.map(update) }
                       : item
                   )
                 );

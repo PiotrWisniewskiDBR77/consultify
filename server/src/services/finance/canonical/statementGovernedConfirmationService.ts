@@ -120,8 +120,10 @@ export async function confirmGovernedStatement(input: ConfirmGovernedStatementIn
       ).rows[0];
       if (
         !decision ||
-        decision.action !== 'ACCEPT' ||
-        decision.canonical_line_id !== value.canonicalLineId ||
+        (value.isNonFinancial
+          ? decision.action !== 'EXCLUDE' || decision.canonical_line_id !== null
+          : decision.action !== 'ACCEPT' ||
+            decision.canonical_line_id !== value.canonicalLineId) ||
         decision.source_receipt_id !== input.sourceReceiptId ||
         Number(decision.statement_values_version) !== input.expectedValuesVersion
       )

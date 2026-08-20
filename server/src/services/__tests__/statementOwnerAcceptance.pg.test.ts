@@ -16,7 +16,10 @@ import {
   locateStatementSections,
 } from '../financialStatementService.js';
 import { getStatementDetail } from '../financialStatementReadService.js';
-import { syncStatementToPack } from '../financialStatementPackService.js';
+import {
+  recomputeStatementPack,
+  syncStatementToPack,
+} from '../financialStatementPackService.js';
 import { stageSelectedStatementSections } from '../statementMultiSectionImportService.js';
 
 const DATABASE_URL = process.env.DATABASE_URL || '';
@@ -274,6 +277,12 @@ describe.runIf(enabled)('Finance Statement owner acceptance — real PostgreSQL 
         periodLabel: string;
         sourceReceiptId: string;
         sourceSha256: string;
+        lines: Array<{
+          originalLabel: string;
+          suggestedCanonicalId?: string;
+          suggestedExclusionReason?: string;
+          isNonFinancial?: boolean;
+        }>;
       }>,
     };
     expect(staged.statements.map((item) => `${item.statementType}:${item.periodLabel}`)).toEqual([
@@ -286,6 +295,17 @@ describe.runIf(enabled)('Finance Statement owner acceptance — real PostgreSQL 
     ]);
     expect(new Set(staged.statements.map((item) => item.statementId)).size).toBe(6);
     expect(new Set(staged.statements.map((item) => item.sourceReceiptId)).size).toBe(6);
+    const unresolvedWithoutGovernedPath = staged.statements.flatMap((item) =>
+      item.lines
+        .filter(
+          (line) =>
+            !line.suggestedCanonicalId &&
+            !line.suggestedExclusionReason &&
+            !line.isNonFinancial
+        )
+        .map((line) => `${item.statementType}:${item.periodLabel}:${line.originalLabel}`)
+    );
+    expect(unresolvedWithoutGovernedPath).toEqual([]);
     expect(staged.statements.every((item) => item.sourceSha256 === EXPECTED_PDF_SHA)).toBe(true);
     const packMembership = await pool.query(
       `SELECT id, statement_pack_id
@@ -330,6 +350,177 @@ describe.runIf(enabled)('Finance Statement owner acceptance — real PostgreSQL 
       [organizationId, primary]
     );
     expect(rejectedDecisionCount.rows[0].count).toBe(0);
+    for (const item of staged.statements) {
+      const mappedResponse = await request(app).post(
+        `/api/v8/finance/statements/${item.statementId}/map`
+      );
+      expect(mappedResponse.status, JSON.stringify(mappedResponse.body)).toBe(200);
+      const mappedLines = mappedResponse.body.data.mappedLines as Array<any>;
+      const values = mappedLines.map((line) => {
+        const excluded = Boolean(line.suggestedExclusionReason) && !line.suggestedCanonicalId;
+        const manualAccept =
+          Boolean(line.suggestedCanonicalId) && line.mappingTier === 'review_required';
+        return {
+          canonicalLineId: excluded ? null : line.suggestedCanonicalId || null,
+          originalLabel: line.originalLabel,
+          value: line.value,
+          confidence: line.confidence,
+          sourceRow: line.sourceRow,
+          mappingStatus: excluded ? 'manual_exclude' : manualAccept ? 'manual' : 'auto',
+          isNonFinancial: excluded || Boolean(line.isNonFinancial),
+          classificationReason: excluded
+            ? line.suggestedExclusionReason
+            : line.classificationReason,
+          userVerified: excluded || manualAccept,
+        };
+      });
+      const saved = await request(app)
+        .put(`/api/v8/finance/statements/${item.statementId}/values`)
+        .send({ values });
+      expect(saved.status, JSON.stringify(saved.body)).toBe(200);
+      const valuesVersion = Number(saved.body.data.valuesVersion);
+      if (values.some((entry) => entry.mappingStatus === 'manual_exclude')) {
+        const beforeExclusionAudit = await request(app).get(
+          `/api/v8/finance/statements/${item.statementId}`
+        );
+        expect(beforeExclusionAudit.status).toBe(200);
+        expect(beforeExclusionAudit.body.data.statement.readinessStatus).not.toBe('ready');
+        const rejectedConfirmation = await request(app)
+          .post(`/api/v8/finance/statements/${item.statementId}/confirm`)
+          .set('Idempotency-Key', `confirm-before-exclude-${item.statementId}-${valuesVersion}`)
+          .send({
+            sourceReceiptId: item.sourceReceiptId,
+            expectedValuesVersion: valuesVersion,
+          });
+        expect(rejectedConfirmation.status).toBe(409);
+        expect(rejectedConfirmation.body.code).toBe('MANUAL_MAPPING_AUDIT_MISSING');
+      }
+      for (const value of values.filter(
+        (entry) => ['manual', 'manual_exclude'].includes(entry.mappingStatus)
+      )) {
+        const action = value.mappingStatus === 'manual_exclude' ? 'EXCLUDE' : 'ACCEPT';
+        const decision = await request(app)
+          .post(`/api/v8/finance/statements/${item.statementId}/manual-mapping-decisions`)
+          .set(
+            'Idempotency-Key',
+            `owner-${action.toLowerCase()}-${item.statementId}-${value.sourceRow}-${valuesVersion}`
+          )
+          .send({
+            sourceRow: value.sourceRow,
+            canonicalLineId: action === 'ACCEPT' ? value.canonicalLineId : null,
+            action,
+            reason:
+              action === 'EXCLUDE'
+                ? value.classificationReason
+                : 'Owner verified deterministic canonical suggestion',
+            sourceReceiptId: item.sourceReceiptId,
+            expectedValuesVersion: valuesVersion,
+          });
+        expect(decision.status, JSON.stringify(decision.body)).toBe(200);
+      }
+      const detail = await request(app).get(
+        `/api/v8/finance/statements/${item.statementId}`
+      );
+      expect(detail.status).toBe(200);
+      expect(
+        detail.body.data.statement.readinessStatus,
+        JSON.stringify(detail.body.data.statement)
+      ).toBe('ready');
+      const confirmed = await request(app)
+        .post(`/api/v8/finance/statements/${item.statementId}/confirm`)
+        .set('Idempotency-Key', `confirm-${item.statementId}-${valuesVersion}`)
+        .send({
+          sourceReceiptId: item.sourceReceiptId,
+          expectedValuesVersion: valuesVersion,
+        });
+      expect(confirmed.status, JSON.stringify(confirmed.body)).toBe(200);
+    }
+    const confirmedPack = await request(app).get(
+      `/api/v8/finance/statement-packs/${statementPackId}`
+    );
+    expect(confirmedPack.status).toBe(200);
+    expect(
+      confirmedPack.body.data.pack.pack_readiness_status,
+      JSON.stringify(confirmedPack.body.data.pack)
+    ).toBe('ready');
+    expect(
+      confirmedPack.body.data.pack.statements.filter(
+        (statement: any) => statement.status === 'confirmed'
+      )
+    ).toHaveLength(6);
+    const comparativeCf = staged.statements.find(
+      (item) => item.statementType === 'CF' && item.periodLabel === '2024'
+    )!;
+    await pool.query(`UPDATE financial_statements SET statement_pack_id=NULL WHERE id=$1`, [
+      comparativeCf.statementId,
+    ]);
+    await recomputeStatementPack(statementPackId, { deferShadow: true });
+    const missingComparative = await request(app).get(
+      `/api/v8/finance/statement-packs/${statementPackId}`
+    );
+    expect(missingComparative.body.data.pack.pack_readiness_status).not.toBe('ready');
+    expect(JSON.parse(missingComparative.body.data.pack.pack_quality_reason_codes)).toContain(
+      'MISSING_PERIOD_STATEMENT'
+    );
+    await pool.query(`UPDATE financial_statements SET statement_pack_id=$1 WHERE id=$2`, [
+      statementPackId,
+      comparativeCf.statementId,
+    ]);
+    await recomputeStatementPack(statementPackId, { deferShadow: true });
+
+    const comparativeStatements = staged.statements.filter((item) => item.periodLabel === '2024');
+    await pool.query(`UPDATE financial_statements SET statement_pack_id=NULL WHERE id=ANY($1::text[])`, [
+      comparativeStatements.map((item) => item.statementId),
+    ]);
+    await recomputeStatementPack(statementPackId, { deferShadow: true });
+    const onePeriodPack = await request(app).get(
+      `/api/v8/finance/statement-packs/${statementPackId}`
+    );
+    expect(onePeriodPack.body.data.pack.pack_readiness_status).not.toBe('ready');
+    expect(JSON.parse(onePeriodPack.body.data.pack.pack_quality_reason_codes)).toContain(
+      'INVALID_PERIOD_COUNT'
+    );
+    await pool.query(`UPDATE financial_statements SET statement_pack_id=$1 WHERE id=ANY($2::text[])`, [
+      statementPackId,
+      comparativeStatements.map((item) => item.statementId),
+    ]);
+    await recomputeStatementPack(statementPackId, { deferShadow: true });
+
+    const thirdPeriodIds: string[] = [];
+    for (const statementType of ['P&L', 'BS', 'CF']) {
+      thirdPeriodIds.push(
+        await createStatement({
+          organizationId,
+          statementType,
+          periodStart: '2023-01-01',
+          periodEnd: '2023-12-31',
+          periodLabel: '2023',
+          currency: 'PLN',
+          scaling: 'thousands',
+          sourceFileName: 'generic-third-period.pdf',
+          sourceFilePath: PDF_PATH,
+          parseMethod: 'text_extraction',
+          overallConfidence: 0.5,
+          createdBy: userId,
+        })
+      );
+    }
+    await pool.query(`UPDATE financial_statements SET statement_pack_id=$1 WHERE id=ANY($2::text[])`, [
+      statementPackId,
+      thirdPeriodIds,
+    ]);
+    await recomputeStatementPack(statementPackId, { deferShadow: true });
+    const threePeriodPack = await request(app).get(
+      `/api/v8/finance/statement-packs/${statementPackId}`
+    );
+    expect(threePeriodPack.body.data.pack.pack_readiness_status).not.toBe('ready');
+    expect(JSON.parse(threePeriodPack.body.data.pack.pack_quality_reason_codes)).toContain(
+      'INVALID_PERIOD_COUNT'
+    );
+    await pool.query(`UPDATE financial_statements SET statement_pack_id=NULL WHERE id=ANY($1::text[])`, [
+      thirdPeriodIds,
+    ]);
+    await recomputeStatementPack(statementPackId, { deferShadow: true });
     const duplicatePeriod = await createStatement({
       organizationId,
       statementType: 'P&L',

@@ -55,15 +55,21 @@ async function refreshReadinessFromDurableDecisions(
       `SELECT count(*)::int AS count
          FROM financial_statement_values value
         WHERE value.statement_id=?
-          AND lower(coalesce(value.mapping_status,''))='manual'
+          AND lower(coalesce(value.mapping_status,'')) IN ('manual','manual_exclude')
           AND NOT EXISTS (
             SELECT 1
               FROM finance_statement_manual_mapping_decisions decision
              WHERE decision.organization_id=?
                AND decision.statement_id=value.statement_id
                AND decision.candidate_row_id=value.source_candidate_row_id
-               AND decision.action='ACCEPT'
-               AND decision.canonical_line_id=value.canonical_line_id
+               AND ((lower(coalesce(value.mapping_status,''))='manual'
+                     AND coalesce(value.is_non_financial,FALSE)=FALSE
+                     AND decision.action='ACCEPT'
+                     AND decision.canonical_line_id=value.canonical_line_id)
+                    OR (lower(coalesce(value.mapping_status,'')) IN ('manual','manual_exclude')
+                        AND coalesce(value.is_non_financial,FALSE)=TRUE
+                        AND decision.action='EXCLUDE'
+                        AND decision.canonical_line_id IS NULL))
                AND decision.statement_values_version=?
                AND decision.source_receipt_id=(
                  SELECT receipt.receipt_id
@@ -245,6 +251,14 @@ export async function recordManualMappingDecision(input: RecordManualMappingDeci
         ]
       )
     ).rows[0];
+    if (input.action === 'EXCLUDE') {
+      await tx.query(
+        `UPDATE financial_statement_values
+            SET is_non_financial=TRUE,mapping_status='manual',classification_reason=?
+          WHERE statement_id=? AND source_candidate_row_id=?`,
+        [input.reason.trim(), input.statementId, input.candidateRowId]
+      );
+    }
     const refreshed = await refreshReadinessFromDurableDecisions(
       tx,
       input.organizationId,

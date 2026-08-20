@@ -73,6 +73,7 @@ export interface ExtractedLine {
   mappingReason?: string;
   isNonFinancial?: boolean;
   classificationReason?: string;
+  suggestedExclusionReason?: string;
   /** RC-00: notation used to read this row's separators (`en` = 1,234.56 · `eu` = 1.234,56). */
   numberNotation?: NumberNotation;
   /** RC-00: the row's magnitude could not be resolved from the document — needs human attention. */
@@ -2437,6 +2438,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'coûts de distribution',
   ],
   'fsl-pl-gna': [
+    'koszty prac badawczych',
     'general and administrative',
     'general and administrative expenses',
     'selling and administrative expenses',
@@ -2680,6 +2682,8 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'immobilisations',
   ],
   'fsl-bs-intangibles': [
+    'aktywa niematerialne',
+    'nakłady na prace rozwojowe',
     'intangible assets',
     'intangibles',
     'digital assets',
@@ -3712,6 +3716,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'neubewertung leistungsorientierter pensionspläne',
   ],
   'fsl-pl-comprehensive-income': [
+    'suma dochodów całkowitych w tym',
     'total comprehensive income',
     'total comprehensive income attributable to shareholders',
     'total comprehensive income attributable to',
@@ -4749,6 +4754,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'rückzahlung von leasingverbindlichkeiten',
   ],
   'fsl-cf-operating-sbc': [
+    'koszty programów motywacyjnych rozliczanych w akcjach',
     'stock based compensation',
     'stock based compensation expense',
     'share based compensation',
@@ -4792,6 +4798,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'koszty sprzedaży i ogólnego zarządu',
   ],
   'fsl-bs-st-investments': [
+    'lokaty bankowe powyżej 3 miesięcy',
     'short-term investments',
     'marketable securities',
     'total cash cash equivalents and short-term investments',
@@ -4849,6 +4856,8 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     "acquisitions d'entreprises",
   ],
   'fsl-cf-investing-securities': [
+    'założenie lokat bankowych powyżej 3 miesięcy',
+    'zakup obligacji oraz koszty ich nabycia',
     'purchases of investments',
     'proceeds from sales and maturities of investments',
     'investments in marketable securities and investment funds',
@@ -5021,6 +5030,8 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'wpływy ze sprzedaży rzeczowych aktywów trwałych',
   ],
   'fsl-cf-investing-maturity-proceeds': [
+    'wygaśnięcie lokat bankowych powyżej 3 miesięcy',
+    'wykup obligacji',
     'proceeds from maturities of investments',
     'wpływy z zapadalności inwestycji',
   ],
@@ -6919,10 +6930,30 @@ export async function autoMapLines(
         mappingCandidates,
       };
     }
+    const suggestedExclusionReason = (() => {
+      if (
+        normalizedStatementType === 'CF' &&
+        (/udział procentowy/.test(label) ||
+          /przychody ogółem jednostki dominującej/.test(label) ||
+          /\b(?:ltd|inc|sp z o o|s a)\b/.test(label))
+      ) {
+        return 'APPENDIX_ENTITY_DISCLOSURE';
+      }
+      if (
+        normalizedStatementType === 'BS' &&
+        /(podział zysku netto|zakup akcji własnych w celu|utworzenie kapitału rezerwowego)/.test(
+          label
+        )
+      ) {
+        return 'EQUITY_ROLLFORWARD_DISCLOSURE';
+      }
+      return undefined;
+    })();
     return {
       ...line,
       mappingReason: 'no_alias_match',
       isNonFinancial: false,
+      suggestedExclusionReason,
       mappingCandidates,
     };
   });
@@ -6961,6 +6992,7 @@ export function resolveDuplicateSuggestedMappings(
         suggestedCanonicalId: undefined,
         suggestedCanonicalLabel: undefined,
         mappingReason: 'duplicate_candidate_conflict',
+        suggestedExclusionReason: 'DETAIL_COVERED_BY_CANONICAL_TOTAL',
         mappingCandidates: (current.mappingCandidates || []).map((candidate) => ({
           ...candidate,
           selected: false,
@@ -7942,6 +7974,22 @@ export async function persistStatementMappingCandidates(params: {
 }): Promise<void> {
   if (!Array.isArray(params.rows)) return;
   try {
+    const candidateIds = Array.from(
+      new Set(
+        params.rows.flatMap((row) =>
+          (Array.isArray(row.mappingCandidates) ? row.mappingCandidates : []).map(
+            (candidate) => candidate.canonicalLineId
+          )
+        )
+      )
+    );
+    const durableCanonicalIds = new Set<string>();
+    for (const candidateId of candidateIds) {
+      const durable = await dbGet(`SELECT id FROM financial_statement_lines WHERE id = ?`, [
+        candidateId,
+      ]);
+      if (durable?.id) durableCanonicalIds.add(String(durable.id));
+    }
     if (params.ingestRunId) {
       await dbRun(
         `DELETE FROM financial_statement_mapping_candidates WHERE ingest_run_id = ?`,
@@ -7956,6 +8004,10 @@ export async function persistStatementMappingCandidates(params: {
       const candidateRowId =
         row.sourceRow != null ? params.candidateRowIdsBySourceRow?.[row.sourceRow] || null : null;
       for (const candidate of candidates) {
+        // Compatibility hints may include synthetic canonical IDs. They remain useful
+        // for ranking, but must never enter the durable candidate ledger unless the
+        // tenant-visible canonical taxonomy actually owns that ID.
+        if (!durableCanonicalIds.has(candidate.canonicalLineId)) continue;
         await dbRun(
           `INSERT INTO financial_statement_mapping_candidates
             (id, statement_id, ingest_run_id, candidate_row_id, canonical_line_id, score, match_reason, is_selected, selected_by, metadata_json)

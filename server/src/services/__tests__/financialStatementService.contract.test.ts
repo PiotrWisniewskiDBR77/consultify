@@ -412,6 +412,11 @@ describe('financialStatementService — contract tests', () => {
 
       const cleared = result.filter((l: any) => l.mappingReason === 'duplicate_candidate_conflict');
       expect(cleared).toHaveLength(1);
+      expect(cleared[0]).toMatchObject({
+        suggestedCanonicalId: undefined,
+        suggestedExclusionReason: 'DETAIL_COVERED_BY_CANONICAL_TOTAL',
+      });
+      expect(cleared[0].isNonFinancial).not.toBe(true);
     });
 
     it('returns unchanged lines when no duplicates', () => {

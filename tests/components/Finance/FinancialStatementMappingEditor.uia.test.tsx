@@ -112,4 +112,39 @@ describe('FinancialStatementMappingEditor acceptance states', () => {
     fireEvent.click(screen.getByLabelText('Koszty pozostałe: Verify extracted value'));
     expect(onVerifiedChange).toHaveBeenCalledWith(1, true);
   });
+
+  it('requires an explicit owner action before applying a reasoned exclusion suggestion', () => {
+    const onExcludeAllSuggested = vi.fn();
+    const onExcludeChange = vi.fn();
+    render(
+      <FinancialStatementMappingEditor
+        mappedValues={[
+          {
+            originalLabel: 'Szczegół pokryty sumą',
+            value: 25,
+            confidence: 0.6,
+            canonicalLineId: null,
+            mappingStatus: 'unmapped',
+            mappingTier: 'review_required',
+            suggestedExclusionReason: 'DETAIL_COVERED_BY_CANONICAL_TOTAL',
+          },
+        ]}
+        canonicalLines={[]}
+        onValueChange={vi.fn()}
+        onCanonicalChange={vi.fn()}
+        onExcludeChange={onExcludeChange}
+        onExcludeAllSuggested={onExcludeAllSuggested}
+      />
+    );
+
+    expect(screen.getByText('Szczegół pokryty sumą')).not.toHaveTextContent('non-fin');
+    fireEvent.click(screen.getByRole('button', { name: /Review and exclude suggested/ }));
+    expect(onExcludeAllSuggested).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Exclude with reason' }));
+    expect(onExcludeChange).toHaveBeenCalledWith(
+      0,
+      true,
+      'DETAIL_COVERED_BY_CANONICAL_TOTAL'
+    );
+  });
 });

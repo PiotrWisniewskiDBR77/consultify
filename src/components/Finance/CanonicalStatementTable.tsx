@@ -16,8 +16,8 @@ interface Props {
   currency?: string;
 }
 
-function formatValue(value: number): string {
-  return new Intl.NumberFormat('en-US', {
+function formatValue(value: number, locale: string): string {
+  return new Intl.NumberFormat(locale, {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
     useGrouping: true,
@@ -203,7 +203,7 @@ export const CanonicalStatementTable: React.FC<Props> = ({
                     role="gridcell"
                     className={`text-right font-mono tabular-nums ${fontWeight} text-c-text-muted`}
                   >
-                    {row.olderValue != null ? formatValue(row.olderValue) : '—'}
+                    {row.olderValue != null ? formatValue(row.olderValue, isPl ? 'pl-PL' : 'en-US') : '—'}
                   </div>
 
                   {/* Newer period (right, bolder) */}
@@ -211,7 +211,7 @@ export const CanonicalStatementTable: React.FC<Props> = ({
                     role="gridcell"
                     className={`text-right font-mono tabular-nums ${fontWeight} ${textColor}`}
                   >
-                    {row.newerValue != null ? formatValue(row.newerValue) : '—'}
+                    {row.newerValue != null ? formatValue(row.newerValue, isPl ? 'pl-PL' : 'en-US') : '—'}
                   </div>
 
                   {/* Delta % */}
@@ -246,7 +246,7 @@ export const CanonicalStatementTable: React.FC<Props> = ({
                   role="gridcell"
                   className={`text-right font-mono tabular-nums ${fontWeight} ${textColor}`}
                 >
-                  {row.olderValue != null ? formatValue(row.olderValue) : '—'}
+                  {row.olderValue != null ? formatValue(row.olderValue, isPl ? 'pl-PL' : 'en-US') : '—'}
                 </div>
               )}
             </button>

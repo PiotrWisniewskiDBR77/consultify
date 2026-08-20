@@ -2722,11 +2722,21 @@ router.post(
     const { organizationId } = getV8Context(req);
     const userId = String(req.user?.id || '');
     const statementId = String(req.params.statementId);
+    const action = String(req.body?.action || 'ACCEPT').trim().toUpperCase();
+    if (!['ACCEPT', 'EXCLUDE'].includes(action)) {
+      return res.status(400).json({ error: 'Unsupported mapping decision', code: 'MANUAL_MAPPING_ACTION_INVALID' });
+    }
     const canonicalLineId = String(req.body?.canonicalLineId || '').trim();
-    if (!canonicalLineId) {
+    if (action === 'ACCEPT' && !canonicalLineId) {
       return res.status(400).json({
         error: 'Canonical mapping target is required for an ACCEPT decision',
         code: 'MANUAL_MAPPING_TARGET_REQUIRED',
+      });
+    }
+    if (action === 'EXCLUDE' && canonicalLineId) {
+      return res.status(400).json({
+        error: 'EXCLUDE decisions cannot carry a canonical mapping target',
+        code: 'MANUAL_EXCLUSION_TARGET_FORBIDDEN',
       });
     }
     const sourceRow = Number(req.body?.sourceRow);
@@ -2743,7 +2753,7 @@ router.post(
         statementId,
         candidateRowId: candidate.id,
         canonicalLineId,
-        action: 'ACCEPT',
+        action: action as 'ACCEPT' | 'EXCLUDE',
         reason: String(req.body?.reason || ''),
         sourceReceiptId: String(req.body?.sourceReceiptId || ''),
         expectedValuesVersion: Number(req.body?.expectedValuesVersion),

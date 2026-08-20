@@ -906,7 +906,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
           >
             <FileBarChart size={11} />
             <span className="hidden lg:inline">
-              {t('finance.pack.section.cta', 'Report section')}
+              {t('finance.pack.section.cta', 'Generate report section')}
             </span>
             {sectionLoading ? (
               <RefreshCw size={11} className="animate-spin" />
