@@ -1,9 +1,9 @@
 {
   "taskId": "UI-CANON-ALL-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "5c6690e6fea5cabaa7e74340b418770fe223c262",
+  "productSha": "0a7a3dfedc55f8b1469a6e457519e167b2ac3559",
   "technicalSourceSha": "d4258a47261dd2916ec7fd95300edc0aba32c4ed",
-  "reconciliationSha": "5c6690e6fea5cabaa7e74340b418770fe223c262",
+  "reconciliationSha": "0a7a3dfedc55f8b1469a6e457519e167b2ac3559",
   "leaseSha256": "18eb0f2e24aee1d6415a29e1605597117f24c42a1f74439842581e7a92583742",
   "changedPaths": ["docs/program/evidence/closure/codex/UI-CANON-ALL-001/TASK_EVIDENCE.json"],
   "changedPathRationale": {
@@ -29,7 +29,7 @@
     {
       "command": "node scripts/cleanup/verify-ui-canon-all.mjs",
       "exitCode": 0,
-      "result": "16 modules; 15 frozen packets; AUD missing explicitly; 14 technical-current; FIN is the sole technical-current-with-gaps module; 16 referenced result hashes verified; verdict ceiling PARTIAL"
+      "result": "16 modules; 15 frozen packets; AUD missing explicitly; all 15 frozen UI packets technical-current; 16 referenced result hashes verified; verdict ceiling PARTIAL only because AUD has no frozen authority"
     },
     {
       "command": "node --test scripts/cleanup/__tests__/verify-ui-canon-all.test.mjs",
@@ -58,8 +58,8 @@
     "currentFrozenModulePackets": "15/16",
     "currentMissingFrozenModulePackets": ["AUD"],
     "currentTechnicalHumanOnly": "0/16 after D6=B internal-beta waiver",
-    "currentTechnicalComplete": "14/16",
-    "currentTechnicalWithTaskGaps": "1/16 (FIN)",
+    "currentTechnicalComplete": "15/16 frozen-authority modules",
+    "currentTechnicalWithTaskGaps": "0/16",
     "currentVerifiedResultHashes": "16 references across 15 frozen packets",
     "aggregatorTests": "3/3",
     "automatedG4Surfaces": "15/15",
@@ -76,7 +76,7 @@
     "executionPermissionRequalificationSha": "287aab619142f2990d46d04d04faaccb1cadf696"
   },
   "fixtures": {
-    "status": "Exact-current mounted evidence covers all fifteen frozen UI authority packets at three viewports, two themes and two locales. Audit has no frozen task in the 82-task authority; Finance is the sole module with task-specific technical journeys remaining. Human acceptance is waived for internal beta by D6=B."
+    "status": "Exact-current mounted evidence covers all fifteen frozen UI authority packets at three viewports, two themes and two locales. All frozen UI packets are technical-current for internal beta under D6=B. Audit has no frozen task in the 82-task authority and is the only aggregate boundary."
   },
   "negativeControls": {
     "localScreenshotsNotAcceptedAsAggregatePass": true,
@@ -174,7 +174,6 @@
     "Create or authorize a frozen-82 Audit UI module packet; the current proposal remains outside authority."
   ],
   "openBlockers": [
-    "Finance retains mounted Prediction authoring and explicit conflict evidence gaps; UI_MODULE_INVENTORY.json is authoritative.",
     "The proposed Audit UI surface is outside the 82-task authority and remains MISSING_FROZEN_MODULE_PACKET.",
     "Production deployment and release acceptance remain outside this internal-beta automated-evidence qualification."
   ],

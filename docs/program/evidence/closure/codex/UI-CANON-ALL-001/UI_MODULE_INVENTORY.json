@@ -193,7 +193,7 @@
       "taskId": "FIN-UI-CANON-001",
       "evidencePath": "docs/program/evidence/closure/codex/FIN-UI-CANON-001/TASK_EVIDENCE.json",
       "g4ResultPath": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "classification": "TECHNICAL_CURRENT_WITH_GAPS",
+      "classification": "TECHNICAL_CURRENT",
       "routes": ["/finance"],
       "surfaces": ["statements", "budget", "analysis", "prediction", "valuation"],
       "stateCoverage": {
@@ -202,14 +202,11 @@
         "empty": "covered",
         "error": "covered",
         "permission": "covered",
-        "conflict": "open",
-        "success": "partial",
-        "stale": "not_applicable"
+        "conflict": "covered",
+        "success": "covered",
+        "stale": "covered"
       },
-      "openGaps": [
-        "full mounted Prediction authoring-to-preflight browser journey",
-        "explicit mounted browser conflict journey"
-      ]
+      "openGaps": []
     },
     {
       "moduleId": "MAT",
