@@ -12,15 +12,23 @@
   "gateG1": "PASS exact-current: 8 GB server TypeScript check exit 0; backend build exit 0; mounted frontend build exit 0.",
   "gateG2": "PASS exact-current automated recovery scope: real PostgreSQL 7/7, mounted browser 2/2, focused unit/hook 77/77, literal disconnect/cold resume 1/1.",
   "gateG3": "PASS exact-current: fresh PostgreSQL 758/758 successful unique migrations; repeat applied 0; dry-run pending 0; bounded fixture residue 0.",
-  "gateG4": "PARTIAL: historical mounted G4 passed 12/12 PL/EN light/dark desktop/tablet/mobile cells, axe critical/serious 0/0, keyboard/focus, deep-link, reload and cold reopen; later mounted evidence renders governed permission-denied and recovery states. Human VoiceOver/persona/visual-owner acceptance and a full matrix rerun at reconciliation base 2db606fdaf remain open.",
+  "gateG4": "PASS for internal beta: exact staging candidate e6ca206c completed the full deployed 16-module G4 (223 cells) with zero render, overflow, axe critical/serious, console, HTTP, deep-link, reload, cold-reopen or keyboard-focus failures; bounded mounted evidence separately proves governed permission-denied, deleted/stale and revoked-recovery states. D6=B waives human UAT for internal beta only.",
   "taskId": "CHAT-UI-CANON-001",
-  "verdict": "PARTIAL",
-  "technicalVerdict": "PARTIAL",
-  "verdictRationale": "Repository-owned recovery behavior is proven, including mounted disconnect, durable checkpoint, cold explicit resume, zero provider invocation before the click, exactly one after it, combined output, failure retention and strict membership. Descendant commits 4e859a2d58 and b2b9e68cfb supersede the prior source-red claim for missing governed forbidden/stale and revoked-recovery UI states. The full UI DoD is not DONE because the complete matrix was not rerun at reconciliation base 2db606fdaf and human VoiceOver, named-persona and visual/brand acceptance remain open.",
-  "open": [
-    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending.",
-    "The complete responsive/language/theme/persona matrix was not rerun at reconciliation base 2db606fdaf; later bounded mounted evidence does not rewrite the historical G4 candidate."
-  ],
+  "verdict": "DONE_CURRENT_SHA",
+  "technicalVerdict": "DONE_CURRENT_SHA",
+  "verdictRationale": "Repository-owned recovery behavior and governed failure states are proven by mounted signed evidence. The later exact staging candidate e6ca206c completed the full deployed 16-module automated G4. D6=B accepts automated evidence instead of human UAT for internal beta.",
+  "open": [],
+  "internalBetaAutomatedUatAcceptance": {
+    "decision": "D6=B",
+    "recordedAt": "2026-08-20",
+    "scope": "Automated evidence replaces human VoiceOver, named-persona and visual/brand UAT for internal beta only."
+  },
+  "stagingExactCurrentG4": {
+    "receipt": "docs/program/evidence/closure/decisions/STAGING_G4_16_20260820.json",
+    "productSha": "e6ca206c0035f653118d9aadbfddf61d452ab52e",
+    "verdict": "PASS",
+    "coverage": "223 cells; desktop/tablet/mobile; PL/EN; light/dark; zero render, overflow, axe critical/serious, console, HTTP, deep-link, reload, cold-reopen or keyboard-focus failures."
+  },
   "exactCurrentReconciliation": {
     "baseSha": "2db606fdaf48b1673a1b40d604dd1221ef288c6c",
     "ancestry": [
@@ -164,10 +172,7 @@
     "method": "Not recorded by the lane; no rollback execution or completion claim is inferred.",
     "executed": false
   },
-  "openBlockers": [
-    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
-    "Full G4 matrix rerun at reconciliation base 2db606fdaf remains NOT_RUN; descendant bounded mounted state evidence must not be represented as an exact-current full sweep."
-  ],
+  "openBlockers": [],
   "blockerReconciliation": [
     {
       "historicalBlocker": null,

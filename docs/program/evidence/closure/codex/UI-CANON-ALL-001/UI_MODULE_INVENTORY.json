@@ -25,7 +25,7 @@
       "taskId": "CHAT-UI-CANON-001",
       "evidencePath": "docs/program/evidence/closure/c/CHAT-UI-CANON-001/TASK_EVIDENCE.json",
       "g4ResultPath": "docs/program/evidence/closure/ui-g4/CHAT-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "classification": "TECHNICAL_CURRENT_WITH_GAPS",
+      "classification": "TECHNICAL_CURRENT",
       "routes": ["/chat"],
       "surfaces": ["conversation", "composer", "stream recovery", "handoff"],
       "stateCoverage": {
@@ -38,7 +38,7 @@
         "success": "covered",
         "stale": "covered"
       },
-      "openGaps": ["exact-current full G4 matrix rerun after bounded forbidden, deleted and revoked recovery evidence"]
+      "openGaps": []
     },
     {
       "moduleId": "MYW",
