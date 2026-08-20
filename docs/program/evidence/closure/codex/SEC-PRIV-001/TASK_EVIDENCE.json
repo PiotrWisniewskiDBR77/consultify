@@ -4,8 +4,8 @@
   "productSha": "84f2949cd2f7bdf5be5c91241f794bf084973bcc",
   "technicalSourceSha": "84f2949cd2f7bdf5be5c91241f794bf084973bcc",
   "leaseSha256": "a2d87cbaf372693049983ba20e87a1f3711031ae2a156b8a9dbea0a4356aaf2c",
-  "verdict": "PARTIAL",
-  "securityStatus": "BLOCKED_ROTATION_REQUIRED",
+  "verdict": "DONE_CURRENT_SHA",
+  "securityStatus": "PROVIDER_RECONCILED_HISTORY_REWRITE_OPTIONAL",
   "scope": "Fail-closed privacy/auth runtime, dependency reachability, secret gates and historical inventory",
   "guarantees": {
     "productionTouched": false,
@@ -66,7 +66,7 @@
     "mountedSso": "3 files / 21 tests passed",
     "privacyRealPg": "4 deletion lifecycle + 6 password compatibility + 5 governed export/deletion tests passed",
     "currentSecrets": "0 findings; canaries 1/1 and 3/3",
-    "historicalSecrets": "119 raw findings / 74 unique path+commit+hash records; BLOCKED_ROTATION_REQUIRED"
+    "historicalSecrets": "119 raw findings / 74 unique path+commit+hash records; provider-side current credentials reconciled, optional history rewrite not authorized"
   },
   "fixtures": {
     "database": "fresh disposable PostgreSQL; 789 migrations, repeat 0, dry pending 0",
@@ -87,17 +87,23 @@
   "secretEvidence": {
     "currentTree": "0 findings after positive 1/1 and path-negative 3/3 canaries",
     "history": {
-      "status": "BLOCKED_ROTATION_REQUIRED",
+      "status": "PROVIDER_RECONCILED_HISTORY_REWRITE_OPTIONAL",
       "inventory": "HISTORICAL_SECRET_INVENTORY.json",
       "rawFindings": 119,
       "uniquePathCommitHashRecords": 74,
       "recordFields": ["path", "historyCommit", "sha256", "providerType", "rules", "lines", "status"]
     }
   },
-  "openBlockers": [
-    "Optional Git history rewrite remains NOT_AUTHORIZED and was not performed; provider-side current credentials have been reconciled and the exposed FizzUp production Google Speech key was rotated and revoked.",
-    "Production Consultify deployment remains NOT_AUTHORIZED; this receipt authorizes only continuation of the staging rehearsal."
-  ],
-  "ownerDecisionRequired": "Approve and coordinate provider rotation; separately decide whether repository history rewrite is authorized after rotation.",
+  "openBlockers": [],
+  "ownerDecisionRequired": null,
+  "technicalVerdict": "DONE_CURRENT_SHA_PROVIDER_RECONCILED",
+  "providerReconciliation20260820": {
+    "openAi": "Current active Consultify key does not match the historical inventory; all other listed keys are inactive.",
+    "gcp": "All current authenticated project keys were compared by SHA-256 with the historical inventory; matches zero.",
+    "linkedIn": "Current Consultify application postdates the historical finding and its current credential does not match the historical SHA-256.",
+    "fizzUpGoogleSpeech": "Production key rotated under owner authorization; replacement passed real STT and TTS before the previous key was deleted.",
+    "historyRewrite": "OPTIONAL_NOT_AUTHORIZED_NOT_REQUIRED_FOR_INTERNAL_BETA",
+    "productionDeploy": "SEPARATE_REL_001_BOUNDARY_NOT_AUTHORIZED"
+  },
   "rollback": "Revert the candidate commit; no migration, production data mutation, deployment, push or history rewrite occurred."
 }
