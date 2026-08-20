@@ -64,7 +64,13 @@
     "oauthAvailabilityMountedConfiguredFalse": "3/3",
     "oauthAvailabilityAxeCriticalSerious": "0/0",
     "oauthAvailabilityFixtureResidue": "0/0/0/0 run/org/user/member",
-    "oauthAvailabilitySchema": "fresh 758; repeat 0; pending 0"
+    "oauthAvailabilitySchema": "fresh 758; repeat 0; pending 0",
+    "exactCurrentSchema20260820": "fresh 794/794; repeat 0; dry-run pending 0",
+    "exactCurrentMfaMounted20260820": "1/1 PASS with VITE_MFA_MVP_ENABLED=true",
+    "exactCurrentExportMounted20260820": "1/1 PASS",
+    "exactCurrentDeletionLifecycle20260820": "4/4 PASS",
+    "exactCurrentMfaDeletionFocused20260820": "20 PASS; 4 intentional skips",
+    "exactCurrentV8DisabledQualification20260820": "17/17 PASS"
   },
   "fixtures": {
     "states": [
@@ -163,8 +169,7 @@
   "verdict": "PARTIAL",
   "openBlockers": [
     "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
-    "Task-specific UI states not reached by the final automated sweep: stale.",
-    "Account deletion remains blocked on the legal/retention decision and is not requalified by OAuth availability evidence."
+    "Destructive account deletion remains blocked on the legal/retention decision; only the reversible request/cancel lifecycle is technically qualified."
   ],
   "blockerReconciliation": [
     {
@@ -287,5 +292,34 @@
       "notFound404": 0,
       "other": 0
     }
+  },
+  "exactCurrentStaleConflictRequalification20260820": {
+    "canonicalSha": "0529405e9f3ef7b182ada28a6a3a1aab836ac007",
+    "scope": "Mounted signed Settings stale/conflict qualification for MFA, receipt-backed export and reversible account-deletion requests. OAuth start and destructive deletion execution remain approved-out. No product source was changed because no product red reproduced.",
+    "database": "Fresh isolated PostgreSQL 16 schema at 794 migrations; dedicated guarded databases used for the export and MFA browser suites.",
+    "mfa": {
+      "browser": "1/1 PASS with VITE_MFA_MVP_ENABLED=true: enrolment, invalid/replayed recovery credential rejection, recovery regeneration, membership revocation denial, disable and zero critical/serious axe findings.",
+      "realPg": "MFA persistence and login challenge suites passed inside the 20-test focused combined gate.",
+      "flagBoundary": "With VITE_MFA_MVP_ENABLED absent, the mounted UI truthfully renders the approved-out 'Not available in the MVP demo' state. This is intentional availability gating, not a missing Settings route or product failure."
+    },
+    "export": {
+      "browser": "1/1 PASS: exact immutable bytes, cold replay, pending/not-ready 404, expiry 410, foreign tenant denial, revoked-membership denial and zero receipt mutation.",
+      "classification": "The pending and expired responses are truthful lifecycle states; neither is false success or an unhandled stale write."
+    },
+    "deletionRequest": {
+      "realPg": "4/4 PASS: password reauthentication, idempotent retry/read-back, exact owned cancellation, cold empty read-back, immutable receipt and absence of any destructive executor.",
+      "guard": "Both request routes passed missing-password, wrong-password and correct-password boundaries in the focused combined gate.",
+      "approvedOut": "Only the reversible request/cancel lifecycle is qualified. Legal/retention approval and destructive account deletion remain outside authority and unexecuted."
+    },
+    "historical404Qualification": {
+      "command": "npx vitest run tests/unit/backend/middleware/v8FeatureGate.middleware.test.ts --retry=0 --no-file-parallelism --maxWorkers=1 --reporter=dot",
+      "result": "17/17 PASS",
+      "classification": "The historical four 404 observations were intentional GET /api/v8/admin/flags responses carrying V8_DISABLED while ENABLE_V8_GLOBAL=false. They are not missing Settings routes and do not represent a current Settings source defect."
+    },
+    "invalidHarnessRuns": [
+      "The first combined browser invocation used a generic set_ui_ database name and failed only the suites' explicit set_export_/set_mfa_ disposable-database guards before product interaction.",
+      "The first corrected MFA browser invocation omitted VITE_MFA_MVP_ENABLED and truthfully reached the approved-out UI instead of the enabled MFA control. Both harness runs are excluded from product evidence."
+    ],
+    "verdictBoundary": "PARTIAL remains unchanged solely for named human acceptance and the separately owner/legal-gated destructive deletion execution. The former task-specific stale-state evidence gap is closed for the bounded MFA/export/deletion-request surfaces; no OAuth or deletion-execution authorization is inferred."
   }
 }
