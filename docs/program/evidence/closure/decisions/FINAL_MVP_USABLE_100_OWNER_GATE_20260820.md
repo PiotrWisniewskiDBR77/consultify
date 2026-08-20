@@ -113,3 +113,38 @@ Piotr accepted the recommended sequence with the instruction `działaj zgodnie z
 - `D7=B` — a staging-only rehearsal is authorized. Production deployment, production traffic, production migration and production rollback remain `NOT_AUTHORIZED`.
 
 The staging rehearsal may proceed only after provider-side D2 receipts are recorded and the existing GO conditions remain satisfied. A successful staging rehearsal does not automatically promote `D7` to option A.
+
+## Superseding staging qualification — exact candidate `e6ca206c0035f653118d9aadbfddf61d452ab52e`
+
+The authorized `D7=B` staging rehearsal is complete. This section supersedes only
+the earlier pre-rehearsal technical counts; it does not change the recorded owner
+decisions or grant production authority.
+
+- Provider reconciliation closed the `D2` staging gate: current OpenAI, GCP and
+  LinkedIn credentials do not match the historical inventory; the separately
+  exposed FizzUp production Google Speech key was rotated, the replacement was
+  proven by real STT/TTS, and the previous key was deleted. Optional Git history
+  rewrite remains `NOT_AUTHORIZED`.
+- Exact staging SHA, health and readiness: PASS for `e6ca206c0035f653118d9aadbfddf61d452ab52e`.
+- Fresh managed rehearsal database, migration replay and drift checks: PASS.
+- Deployed mounted business journeys: 16/16 before rollback and 16/16 after the
+  exact candidate restore.
+- `RELEASE_30M_50U`: PASS with 109,118 requests, zero errors, 8,782/8,782 command
+  reconciliation, zero loss, zero duplicates and zero tenant false-successes.
+- Two consecutive 60-minute staging observation windows: PASS; zero HTTP 5xx.
+- Alert exercise: DETECTED, RECOVERED and ACKNOWLEDGED.
+- Forward-only schema/application rollback: PASS through recovery SHA
+  `3f8156ce0572529226883a85efb88e34f7002f2c`; RTO 352 seconds, observed data
+  loss zero, sentinel preserved, recovery 16/16. Final e6ca restore also passed
+  readiness, zero migration drift, sentinel readback and 16/16.
+- Production was not touched.
+
+### Decisions still required
+
+- `D1=A` remains the accepted internal-beta performance contract. It does not
+  need to be reaccepted for each candidate SHA unless the thresholds change.
+- `D3=A`, `D4=A` and `D5=A` remain the accepted beta boundaries.
+- `D6=A` authorized owner UAT but did not itself execute or sign the exact-e6ca
+  named-persona, VoiceOver and visual/brand runbook. That receipt remains open.
+- `D7=A` has not been granted. Production deploy, production migration, traffic
+  switch and production rollback remain `NOT_AUTHORIZED`.
