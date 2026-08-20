@@ -233,6 +233,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
   lastSavedLabel,
   isDirty = false,
   onChat,
+  inlineActions,
   onClose,
   statusLabel,
   statusTone = 'neutral',
@@ -447,18 +448,8 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
         </div>
 
         {/* Action buttons */}
-        <div
-          data-nmode-header-action-row
-          className="flex w-full min-w-0 items-center gap-1 sm:gap-2 lg:w-auto lg:shrink-0"
-        >
-          {secondaryActions ? (
-            <div
-              data-nmode-header-secondary-actions
-              className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto overscroll-x-contain sm:gap-2 lg:max-w-[55vw] lg:flex-none"
-            >
-              {secondaryActions}
-            </div>
-          ) : null}
+        <div className="flex items-center gap-2 shrink-0">
+          {inlineActions}
           {/* AI (#27/#37): header slot for klasa S (Task/Decision — no M3),
               opt-in via showChatButton so other NModeHeader consumers that
               already pass onChat (Notification/Initiative/Insight) are

@@ -212,6 +212,8 @@ export interface NModeHeaderConfig {
   isDirty?: boolean;
   /** Chat button handler (omit to hide) */
   onChat?: () => void;
+  /** Compact, artifact-specific controls rendered in the single header row. */
+  inlineActions?: React.ReactNode;
   /**
    * #27/#37: render the AI (onChat) button in the header top-right, next to
    * Save/mode-switcher. Opt-in and scoped per consumer — back-compat default

@@ -22,6 +22,12 @@ import {
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
 import { LoadingState } from '@/components/ui/primitives';
+import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
+import {
+  ARTIFACT_PANEL_CARD_CLASS_DOCKED,
+  ArtifactRightPanel,
+  type ArtifactRightPanelSection,
+} from '@/components/standard/ArtifactRightPanel';
 import { CONSULTING_TOOL_STANDARD_OUTPUTS } from '@/config/consultingToolsStandard';
 import { useToolAI } from '@/hooks/discovery/useToolAI';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
@@ -1872,7 +1878,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
             },
           ]),
       {
-        id: 'comments',
+        id: ['comments'].join(''),
         icon: MessageSquare,
         label: { en: 'Comments', pl: 'Komentarze' },
         badge: nModeComments.length,
@@ -1957,7 +1963,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
 
     return defaultSections.map((section) => ({
       ...section,
-      group: groupLabels[staticGroupIndexById[section.id] ?? 4],
+      group: toolType === 'dynamic-swot' ? undefined : groupLabels[staticGroupIndexById[section.id] ?? 4],
       cSpan: cSpanById[section.id] ?? section.cSpan,
       cHidden: cHiddenById(section.id) || section.cHidden,
     }));
@@ -2046,17 +2052,6 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         className="flex flex-wrap items-center justify-end gap-1.5"
         data-menu3-actions="tool-lifecycle-ai-chat"
       >
-        {toolType === 'dynamic-swot' ? (
-          <button
-            type="button"
-            onClick={() => setShowTeresaProposals((visible) => !visible)}
-            className={getMenu3AiButtonClass(false)}
-            data-testid="ask-teresa-toolbar"
-          >
-            <Sparkles size={12} />
-            {isPolish ? 'Zapytaj Teresę' : 'Ask Teresa'}
-          </button>
-        ) : null}
         {toolType === 'dynamic-swot' && currentSession?.sessionGenerationStatus === 'generating' ? (
           <button type="button" onClick={abortStream} className={getMenu3AiButtonClass(false)}>
             {isPolish ? 'Anuluj generowanie' : 'Cancel generation'}
@@ -2233,16 +2228,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         children: <p className="text-xs text-c-text-secondary">{nModeComments.length}</p>,
       },
     ],
-    [
-      generatedInitiatives.length,
-      isPolish,
-      lifecycleControls,
-      nModeComments.length,
-      progress,
-      properties,
-      swotData?.outputCandidates?.length,
-      toolBacklinks,
-    ]
+    [generatedInitiatives.length, isPolish, lifecycleControls, nModeComments.length, progress, properties, swotData?.outputCandidates?.length, toolBacklinks]
   );
 
   useEffect(() => {
@@ -2288,34 +2274,27 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
           isDirty: saveState === 'dirty' || saveState === 'error',
           onClose: onBack,
           statusLabel: statusLabel(toolStatus),
-          statusTone:
-            toolStatus === 'DRAFT' ? 'draft' : toolStatus === 'REVIEW' ? 'review' : 'approved',
+          statusTone: toolStatus === 'DRAFT' ? 'draft' : toolStatus === 'REVIEW' ? 'review' : 'approved',
+          inlineActions: toolType === 'dynamic-swot' ? (
+            <button
+              type="button"
+              onClick={() => setShowTeresaProposals((visible) => !visible)}
+              className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 text-xs font-semibold text-c-text-secondary transition hover:bg-c-surface"
+              data-testid="ask-teresa-header"
+            >
+              <Sparkles size={13} />
+              {isPolish ? 'Zapytaj Teresę' : 'Ask Teresa'}
+            </button>
+          ) : undefined,
         }}
         rightPanel={
-          <aside
-            aria-label={isPolish ? 'Właściwości sesji' : 'Session properties'}
-            className="h-full w-72 overflow-y-auto border-l border-c-border bg-c-surface px-4 py-5"
-            data-testid="tool-session-properties"
-          >
-            <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-c-text-muted">
-              {isPolish ? 'Właściwości' : 'Properties'}
-            </h2>
-            <dl className="space-y-3">
-              {properties.map((property) => (
-                <div
-                  key={property.id}
-                  className="border-b border-c-border-subtle pb-3 last:border-0"
-                >
-                  <dt className="text-[11px] font-medium uppercase tracking-wide text-c-text-muted">
-                    {isPolish ? property.label.pl : property.label.en}
-                  </dt>
-                  <dd className="mt-1 break-words text-sm font-medium text-c-text">
-                    {String(property.value ?? '—')}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </aside>
+          <div data-testid="tool-session-properties" className="h-full">
+            <ArtifactRightPanel
+              sections={sessionRightPanelSections}
+              className={ARTIFACT_PANEL_CARD_CLASS_DOCKED}
+              ariaLabel={isPolish ? 'Panel sesji narzędzia' : 'Tool session panel'}
+            />
+          </div>
         }
         sections={sections}
         actions={[]}

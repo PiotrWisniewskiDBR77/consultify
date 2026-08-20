@@ -44,7 +44,6 @@ import { humanizeEnum } from '@/utils/enumLabels';
 
 import {
   type CardLayout,
-  Menu2AIButton,
   Menu2HowToButton,
   NCardAIAnalysisPanel,
   type NModeArtifactType,
@@ -2438,6 +2437,37 @@ export function KnownToolDetailView(props: {
               ? t('discoveryToolsMain.knownToolDetailView.statusActive', 'Active')
               : t('discoveryToolsMain.knownToolDetailView.statusInactive', 'Inactive'),
           statusTone: tool?.isActive && !tool?.isComingSoon ? 'approved' : 'neutral',
+          inlineActions: (
+            <div className="flex items-center gap-2" data-testid="tool-single-header-actions">
+              <SectionsManagerMenu layout={toolCardLayout} isPolish={isPolish} />
+              <Menu2HowToButton
+                variant="knowledge"
+                isPolish={isPolish}
+                label={isPolish ? 'How to / Baza wiedzy' : 'How to / Knowledge base'}
+                onClick={openKb}
+                disabled={!tool}
+              />
+              <button
+                type="button"
+                aria-expanded={toolCardAnalysis.open}
+                disabled={!tool || toolCardAnalysis.loading}
+                onClick={toolCardAnalysis.run}
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 text-xs font-semibold text-c-text-secondary transition hover:bg-c-surface disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <Sparkles size={13} />
+                {isPolish ? 'Analizuj z AI' : 'Analyze with AI'}
+              </button>
+              <button
+                type="button"
+                onClick={startSession}
+                disabled={starting || !tool || !tool.isActive}
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/70 bg-white px-3 text-xs font-semibold text-navy-950 shadow-sm transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-white dark:text-navy-950"
+              >
+                <ArrowRight size={13} />
+                Start
+              </button>
+            </div>
+          ),
         }}
         hideToolbarWhenEmpty
         sections={orderedToolSections}
@@ -2494,49 +2524,6 @@ export function KnownToolDetailView(props: {
         // ("karta nie ma zadnej akcji AI") byla prawdziwa dla AI-ktore-PISZE.
         // Analiza niczego nie pisze — ocenia gotowosc karty przed sesja, a
         // wlasciciel wylicza dla Narzedzia szesc kryteriow tej oceny.
-        renderActionBar={() => (
-          <NModeMenu2
-            isPolish={isPolish}
-            // ── LEWA STREFA — „Sekcje" ZAWSZE (naprawa 2026-07-24, fala 2) ────
-            // Było: tylko przy `?cardContract=1`, więc domyślnie lewe 2/3 paska
-            // świeciło pustką (zgłoszenie sędziego grafiki, największy brak tej
-            // karty). Picker steruje WIDOCZNOŚCIĄ sekcji — to preferencja widoku,
-            // nie zapis danych, więc charakter read-only karty go nie unieważnia
-            // i nie jest to atrapa: kliknięcie realnie chowa/pokazuje sekcję w
-            // lewej nawigacji i w centrum (patrz `orderedToolSections`).
-            sectionsMenu={<SectionsManagerMenu layout={toolCardLayout} isPolish={isPolish} />}
-            readMode={readMode}
-            howToButton={
-              <Menu2HowToButton
-                variant="knowledge"
-                isPolish={isPolish}
-                label={isPolish ? 'How to / Baza wiedzy' : 'How to / Knowledge base'}
-                onClick={openKb}
-                disabled={!tool}
-              />
-            }
-            aiButton={
-              <Menu2AIButton
-                isPolish={isPolish}
-                busy={toolCardAnalysis.loading}
-                aria-expanded={toolCardAnalysis.open}
-                disabled={!tool}
-                onClick={toolCardAnalysis.run}
-              />
-            }
-            primaryButton={
-              <button
-                type="button"
-                onClick={startSession}
-                disabled={starting || !tool || !tool.isActive}
-                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/70 bg-white px-3 text-xs font-semibold text-navy-950 shadow-sm transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-white dark:text-navy-950"
-              >
-                <ArrowRight size={13} />
-                {isPolish ? 'Start' : 'Start'}
-              </button>
-            }
-          />
-        )}
         activeSection={activeSection}
         onSectionChange={setActiveSection}
         rightPanel={

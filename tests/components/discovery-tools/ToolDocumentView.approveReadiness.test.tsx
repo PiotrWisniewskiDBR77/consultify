@@ -90,7 +90,7 @@ vi.mock('@/components/shared/NModeLayout', () => ({
     return (
       <div data-testid="nmode-shell">
         <div data-testid="nmode-shell-active">{active?.component}</div>
-        <div data-testid="nmode-shell-right-panel">{props.rightPanel}</div>
+        {props.rightPanel}
         {props.children}
       </div>
     );

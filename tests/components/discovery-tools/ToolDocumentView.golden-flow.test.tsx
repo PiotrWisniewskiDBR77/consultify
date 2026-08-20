@@ -132,6 +132,7 @@ vi.mock('@/components/shared/NModeLayout', () => ({
     const active = sections.find((s: any) => s.id === activeSection);
     return (
       <div data-testid="nmode-shell">
+        {props.header?.inlineActions}
         <div data-testid="nmode-shell-nav">
           {sections.map((s: any) => (
             <button
@@ -259,7 +260,7 @@ describe('ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav 
     expect(within(properties).getByText('Current step')).toBeInTheDocument();
     expect(within(properties).getByText('Progress')).toBeInTheDocument();
 
-    fireEvent.click(await screen.findByTestId('ask-teresa-toolbar'));
+    fireEvent.click(await screen.findByTestId('ask-teresa-header'));
     expect(screen.getByRole('dialog', { name: 'Teresa proposals' })).toBeInTheDocument();
     expect(screen.getByTestId('governed-teresa-proposals')).toBeInTheDocument();
 
