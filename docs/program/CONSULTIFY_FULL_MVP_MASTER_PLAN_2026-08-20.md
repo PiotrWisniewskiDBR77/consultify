@@ -166,6 +166,8 @@ Bramka: wszystkie ograniczenia są widoczne w produkcie, dokumentacji i zachowan
 
 ## Kolejność najbliższej pracy
 
+Szczegółowe wykonanie każdej fali znajduje się w osobnym dokumencie `WAVE_XX`. Integrator nie rozpoczyna następnej fali, dopóki nie opublikuje wyniku bramki poprzedniej: `PASS`, `PARTIAL_WITH_DECISION` albo `STOP`.
+
 ### Wave A — teraz
 
 - dokończyć klasyfikację worktree/branchy tylko dla pięciu luk technicznych i Teresy;
@@ -212,3 +214,15 @@ Raport ma mieć najwyżej jedną stronę:
 - licznik: moduły `OWNER_ACCEPTED`, wertykale `PASS`, Teresa actions z parytetem, otwarte P0/P1 oraz pozostałe `PARTIAL`.
 
 Nie raportujemy „agent nadal pracuje” jako postępu. Postęp oznacza nowy commit, nowy dowód, nową diagnozę albo jawną decyzję stop-loss.
+
+## Mapa fal
+
+| Wave | Cel | Orientacyjny czas ciągłej pracy | Warunek wyjścia |
+|---|---|---:|---|
+| 1 — Recovery & Root Cause | odzyskać unikalny kod, wyjaśnić Finance i Chat, zbudować parytet Teresa/UI | 24–48 h | decyzje dla wszystkich krytycznych kandydatów i reprodukowalne root causes |
+| 2 — Core Closure | naprawić Finance, Results, Transform i potrzebne kontrakty Teresa | 48–96 h | jeden czysty kandydat, focused gates i real-DB readback |
+| 3 — Owner UI/UX | przeprowadzić moduły przez rundy Piotra i automatyczne retesty | 3–7 dni | wszystkie moduły `OWNER_ACCEPTED` albo jawnie ograniczone |
+| 4 — Vertical MVP | dziesięć przepływów wielomodułowych i pełny parytet Teresa | 2–4 dni | wszystkie krytyczne wertykale PASS na jednym SHA |
+| 5 — Release Candidate | pełna regresja, staging, NFR, rollback i owner click-gate | 1–3 dni | udokumentowana decyzja `GO/STOP` |
+
+Czasy są przedziałami kalendarzowymi dla pracy ciągłej LLM z szybkimi decyzjami właściciela, a nie estymacją roboczogodzin człowieka. Po każdym wave prognoza jest przeliczana z faktycznej przepustowości.
