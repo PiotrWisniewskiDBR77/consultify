@@ -11,8 +11,11 @@ describe('dynamic SWOT step locale contract', () => {
       { id: 'input', name: 'Input & Exploration', namePl: 'Materiały i eksploracja' },
       { id: 'swot', name: 'SWOT Build', namePl: 'Budowa SWOT' },
       { id: 'insights', name: 'Synthesis & Insights', namePl: 'Synteza i wnioski' },
-      { id: 'outputs', name: 'Outputs & Actions', namePl: 'Rezultaty i działania' },
+      { id: 'outputs', name: 'Outputs & Actions', namePl: 'Wyniki i działania' },
     ]);
+
+    const outputsStep = SWOT_STEPS.find(({ id }) => id === 'outputs');
+    expect(outputsStep?.namePl).toBe('Wyniki i działania');
 
     const documentView = readFileSync(
       path.resolve(process.cwd(), 'src/components/DiscoveryTools/ToolDocumentView.tsx'),
@@ -20,6 +23,8 @@ describe('dynamic SWOT step locale contract', () => {
     );
     expect(documentView).toContain('en: step.name');
     expect(documentView).toContain('pl: step.namePl');
+    expect(documentView).toContain('? currentStepDef.namePl');
     expect(documentView).not.toContain("pl: isOutputs ? 'Outputs & Actions'");
+    expect(documentView).not.toContain('Rezultaty i działania');
   });
 });

@@ -1396,7 +1396,7 @@ export const SWOT_STEPS: StepDefinition[] = [
   {
     id: 'outputs',
     name: 'Outputs & Actions',
-    namePl: 'Rezultaty i działania',
+    namePl: 'Wyniki i działania',
     description: 'Prepare the final source summary and generate downstream outputs and initiatives',
     descriptionPl: 'Przygotuj final source summary oraz wygeneruj outputy i inicjatywy',
     required: true,
