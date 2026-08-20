@@ -466,6 +466,10 @@ describe('FLOW full transformation lineage (real PostgreSQL)', () => {
       gates: {
         DEFINITION: { quorum: 1, requiredRoles: ['GATE_AUTHORITY'], separation: true, slaHours: 48 },
         ANALYSIS: { quorum: 1, requiredRoles: ['GATE_AUTHORITY'], separation: true, slaHours: 48 },
+        PORTFOLIO: { quorum: 1, requiredRoles: ['GATE_AUTHORITY'], separation: true, slaHours: 48 },
+        SCHEDULE: { quorum: 1, requiredRoles: ['GATE_AUTHORITY'], separation: true, slaHours: 48 },
+        HANDOFF: { quorum: 1, requiredRoles: ['GATE_AUTHORITY'], separation: true, slaHours: 48 },
+        CLOSURE: { quorum: 1, requiredRoles: ['GATE_AUTHORITY'], separation: true, slaHours: 48 },
       },
     };
     await client.query(
@@ -542,6 +546,247 @@ describe('FLOW full transformation lineage (real PostgreSQL)', () => {
       expect(runtime).toMatchObject({
         lifecycleState: 'READY_FOR_DECISION',
         sourceVersion: source.toolOutputVersion,
+      });
+      const runtimeBasePath = '/api/initiatives/runtime-v1';
+      const api = (actor: (typeof ALL_ACTORS)[number]) => ({
+        get: (path: string) => request(runtimeApp).get(path).set('Authorization', bearer(actor)),
+        post: (path: string) => request(runtimeApp).post(path).set('Authorization', bearer(actor)),
+      });
+      let initiativeVersion = runtime.initiativeVersion;
+      const signOff = async (gate: 'PORTFOLIO' | 'SCHEDULE' | 'HANDOFF' | 'CLOSURE', decisionId: string) => {
+        const queue = await api(TENANT_A.reviewer)
+          .get(`${runtimeBasePath}/my-work/gate-signoffs`)
+          .expect(200);
+        const item = queue.body.items.find((candidate: any) => candidate.decisionId === decisionId);
+        expect(item, JSON.stringify(queue.body)).toBeDefined();
+        const binding = item.actorBindings.find((candidate: any) => candidate.eligible);
+        expect(binding).toBeDefined();
+        await api(TENANT_A.reviewer)
+          .post(`${runtimeBasePath}/initiatives/${runtime.initiativeId}/gate-signoffs`)
+          .send({
+            expectedVersion: 0,
+            expectedQuorumVersion: item.quorum.version,
+            clientRequestId: `${runtime.initiativeId}-${gate.toLowerCase()}-signoff`,
+            gate,
+            decisionId,
+            requesterId: TENANT_A.owner.id,
+            roleKey: binding.roleKey,
+            outcome: 'APPROVE',
+            delegationProof: binding.delegationProof,
+            rationale: 'Wave 02 independent gate evidence accepted.',
+          })
+          .expect(200);
+        const after = await api(TENANT_A.reviewer)
+          .get(`${runtimeBasePath}/my-work/gate-signoffs`)
+          .expect(200);
+        const satisfied = after.body.items.find((candidate: any) => candidate.decisionId === decisionId);
+        return {
+          quorumId: satisfied.quorum.quorumId,
+          version: satisfied.quorum.version,
+          receiptId: satisfied.quorum.receiptId,
+        };
+      };
+
+      const portfolioScenarioId = `${runtime.initiativeId}-portfolio`;
+      const portfolioScenario = {
+        scenarioId: portfolioScenarioId,
+        scenarioVersion: 0,
+        status: 'DRAFT',
+        scope: { portfolioId: projectId, goalIds: ['wave-02-mvp'], asOf: '2026-08-20T08:00:00.000Z' },
+        model: { modelId: 'wave02-value-readiness', version: 1 },
+        memberships: [{
+          initiativeId: runtime.initiativeId,
+          initiativeVersion,
+          disposition: 'INCLUDED',
+          scoreDecomposition: { value: 9, readiness: 8 },
+          rank: 1,
+          rankOverride: null,
+          coverage: { state: 'KNOWN', value: 1, basis: 'Single canonical Wave 02 lineage.' },
+          overlap: { state: 'KNOWN', value: [], basis: 'Single-initiative scenario.' },
+          roughDemand: { state: 'ESTIMATED', value: { unit: 'FTE', low: 0.5, base: 1, high: 1.5 }, basis: 'Bounded MVP wave.' },
+          confidence: 'HIGH',
+          rationale: 'Approved SWOT recommendation is ready for portfolio admission.',
+        }],
+        decompositionKeys: ['value', 'readiness'],
+        createdBy: '', updatedBy: '', publishedBy: null, publishedAt: null,
+        previousPublishedVersion: null,
+      };
+      await api(TENANT_A.owner).post(`${runtimeBasePath}/portfolio-scenarios/${portfolioScenarioId}`)
+        .send({ expectedVersion: 0, clientRequestId: `${portfolioScenarioId}-create`, operation: 'CREATE', scenario: portfolioScenario })
+        .expect(201);
+      await api(TENANT_A.owner).post(`${runtimeBasePath}/portfolio-scenarios/${portfolioScenarioId}`)
+        .send({ expectedVersion: 1, clientRequestId: `${portfolioScenarioId}-publish`, operation: 'PUBLISH', scenario: portfolioScenario })
+        .expect(201);
+
+      const portfolioDecisionId = `${runtime.initiativeId}-portfolio-decision`;
+      const portfolioRequested = await api(TENANT_A.owner)
+        .post(`${runtimeBasePath}/initiatives/${runtime.initiativeId}/gates/portfolio/requests`)
+        .send({
+          expectedVersion: initiativeVersion,
+          clientRequestId: `${portfolioDecisionId}-request`,
+          decisionId: portfolioDecisionId,
+          authorityId: TENANT_A.reviewer.id,
+          scenarioId: portfolioScenarioId,
+          scenarioVersion: 2,
+          dueAt: '2026-08-25T12:00:00.000Z',
+        }).expect(201);
+      initiativeVersion = portfolioRequested.body.aggregateVersion;
+      const portfolioQuorum = await signOff('PORTFOLIO', portfolioDecisionId);
+      const portfolioDecided = await api(TENANT_A.reviewer)
+        .post(`${runtimeBasePath}/initiatives/${runtime.initiativeId}/gates/portfolio/decisions`)
+        .send({
+          expectedVersion: initiativeVersion,
+          clientRequestId: `${portfolioDecisionId}-decide`,
+          decisionId: portfolioDecisionId,
+          outcome: 'APPROVED',
+          rationale: 'Independent portfolio admission.',
+          conditions: [],
+          mergeTargetInitiativeId: null,
+          governanceQuorumRef: portfolioQuorum,
+        }).expect(201);
+      initiativeVersion = portfolioDecided.body.aggregateVersion;
+      const admitted = await api(TENANT_A.owner)
+        .get(`${runtimeBasePath}/initiatives/${runtime.initiativeId}`).expect(200);
+      expect(admitted.body.initiative.lifecycleState).toBe('APPROVED_BACKLOG');
+
+      const period = { periodId: '2026-W35', start: '2026-08-24T00:00:00.000Z', end: '2026-08-31T00:00:00.000Z' };
+      const planScenarioId = `${runtime.initiativeId}-plan`;
+      const planScenario = {
+        scenarioId: planScenarioId,
+        scenarioVersion: 0,
+        status: 'DRAFT',
+        portfolioScenarioId,
+        portfolioScenarioVersion: 2,
+        windowUnit: 'WEEK',
+        timezone: 'Europe/Warsaw',
+        periods: [period],
+        windows: [{
+          initiativeId: runtime.initiativeId,
+          initiativeVersion,
+          earliest: period.start,
+          target: '2026-08-27T00:00:00.000Z',
+          latest: period.end,
+          confidence: 'HIGH',
+          rationale: 'Wave 02 bounded execution window.',
+          dependencySnapshot: [],
+          constraintSnapshot: [],
+        }],
+        assumptions: ['Canonical Runtime-v1 path only'],
+        createdBy: '', updatedBy: '', publishedBy: null, publishedAt: null,
+      };
+      await api(TENANT_A.owner).post(`${runtimeBasePath}/plan-scenarios/${planScenarioId}`)
+        .send({ expectedVersion: 0, clientRequestId: `${planScenarioId}-create`, operation: 'CREATE', scenario: planScenario }).expect(201);
+      await api(TENANT_A.owner).post(`${runtimeBasePath}/plan-scenarios/${planScenarioId}`)
+        .send({ expectedVersion: 1, clientRequestId: `${planScenarioId}-publish`, operation: 'PUBLISH', scenario: planScenario }).expect(201);
+
+      const capacityScenarioId = `${runtime.initiativeId}-capacity`;
+      const capacityRange = {
+        knowledgeState: 'KNOWN', low: 0.5, base: 1, high: 1.5,
+        sourceRef: 'wave02-capacity-baseline', sourceVersion: 1,
+        asOf: '2026-08-20T08:00:00.000Z', confidence: 'HIGH',
+        ownerId: TENANT_A.admin.id, reason: 'Explicit bounded test capacity.',
+      };
+      const capacityScenario = {
+        scenarioId: capacityScenarioId,
+        scenarioVersion: 0,
+        status: 'DRAFT',
+        planScenarioId,
+        planScenarioVersion: 2,
+        windowUnit: 'WEEK',
+        timezone: 'Europe/Warsaw',
+        periods: [{ ...period, demand: capacityRange, supply: capacityRange }],
+        constraints: [],
+        proposedAssignments: [],
+        createdBy: '', updatedBy: '', publishedBy: null, publishedAt: null,
+      };
+      await api(TENANT_A.owner).post(`${runtimeBasePath}/capacity-scenarios/${capacityScenarioId}`)
+        .send({ expectedVersion: 0, clientRequestId: `${capacityScenarioId}-create`, operation: 'CREATE', scenario: capacityScenario }).expect(201);
+      await api(TENANT_A.owner).post(`${runtimeBasePath}/capacity-scenarios/${capacityScenarioId}`)
+        .send({ expectedVersion: 1, clientRequestId: `${capacityScenarioId}-publish`, operation: 'PUBLISH', scenario: capacityScenario }).expect(201);
+
+      const scheduleDecisionId = `${runtime.initiativeId}-schedule-decision`;
+      const scheduledFromVersion = initiativeVersion;
+      const scheduleRequested = await api(TENANT_A.owner)
+        .post(`${runtimeBasePath}/initiatives/${runtime.initiativeId}/gates/schedule/requests`)
+        .send({
+          expectedVersion: initiativeVersion,
+          clientRequestId: `${scheduleDecisionId}-request`,
+          decisionId: scheduleDecisionId,
+          authorityId: TENANT_A.reviewer.id,
+          executionManagerId: TENANT_A.admin.id,
+          dueAt: '2026-08-25T12:00:00.000Z',
+          portfolioScenarioId, portfolioScenarioVersion: 2,
+          planScenarioId, planScenarioVersion: 2,
+          capacityScenarioId, capacityScenarioVersion: 2,
+          commitmentIds: [], criticalPeriodIds: [period.periodId], criticalDependencies: [],
+          handoff: {
+            scope: { sourceOutputId: source.toolOutputId },
+            selectedOptions: { path: 'canonical-runtime-v1' },
+            success: { criterion: 'preserve-source-lineage' },
+            baseline: { status: 'approved-swot' },
+            openWork: [], raid: [],
+            outcomeRefs: [`tool-output:${source.toolOutputId}`],
+            sourceVersions: { initiative: initiativeVersion, swotOutput: source.toolOutputVersion },
+          },
+        }).expect(201);
+      initiativeVersion = scheduleRequested.body.aggregateVersion;
+      const scheduleQuorum = await signOff('SCHEDULE', scheduleDecisionId);
+      const scheduleDecided = await api(TENANT_A.reviewer)
+        .post(`${runtimeBasePath}/initiatives/${runtime.initiativeId}/gates/schedule/decisions`)
+        .send({
+          expectedVersion: initiativeVersion,
+          clientRequestId: `${scheduleDecisionId}-decide`, decisionId: scheduleDecisionId,
+          outcome: 'APPROVED', rationale: 'Independent schedule approval.', conditions: [],
+          governanceQuorumRef: scheduleQuorum,
+        }).expect(201);
+      initiativeVersion = scheduleDecided.body.aggregateVersion;
+      const scheduleReadback = await api(TENANT_A.owner)
+        .get(`${runtimeBasePath}/initiatives/${runtime.initiativeId}`).expect(200);
+      expect(scheduleReadback.body.initiative.lifecycleState).toBe('SCHEDULED');
+      const handoffPackageId = `handoff:${runtime.initiativeId}:v${scheduledFromVersion + 2}`;
+      const handoffPack = await api(TENANT_A.owner)
+        .get(`${runtimeBasePath}/handoff-packages/${handoffPackageId}`).expect(200);
+      expect(handoffPack.body.snapshot.sourceVersions).toMatchObject({
+        initiative: scheduledFromVersion,
+        swotOutput: source.toolOutputVersion,
+      });
+      const handoffDecisionId = `${runtime.initiativeId}-handoff-decision`;
+      const executionCaseId = `${runtime.initiativeId}-execution`;
+      const handoffRequested = await api(TENANT_A.owner)
+        .post(`${runtimeBasePath}/initiatives/${runtime.initiativeId}/handoff/requests`)
+        .send({
+          expectedVersion: initiativeVersion,
+          clientRequestId: `${handoffDecisionId}-request`,
+          decisionId: handoffDecisionId,
+          handoffPackageId,
+          handoffPackageVersion: 1,
+          executionCaseId,
+          authorityId: TENANT_A.admin.id,
+          dueAt: '2026-08-25T12:00:00.000Z',
+          rolloutChildren: { pilot: [], waves: [] },
+        }).expect(201);
+      initiativeVersion = handoffRequested.body.aggregateVersion;
+      const handoffQuorum = await signOff('HANDOFF', handoffDecisionId);
+      const handoffDecided = await api(TENANT_A.admin)
+        .post(`${runtimeBasePath}/initiatives/${runtime.initiativeId}/handoff/decisions`)
+        .send({
+          expectedVersion: initiativeVersion,
+          clientRequestId: `${handoffDecisionId}-decide`,
+          decisionId: handoffDecisionId,
+          outcome: 'ACCEPT',
+          gaps: [], blockers: [],
+          rationale: 'Independent execution handoff acceptance.',
+          governanceQuorumRef: handoffQuorum,
+        }).expect(201);
+      initiativeVersion = handoffDecided.body.aggregateVersion;
+      const executing = await api(TENANT_A.owner)
+        .get(`${runtimeBasePath}/initiatives/${runtime.initiativeId}`).expect(200);
+      expect(executing.body.initiative.lifecycleState).toBe('IN_EXECUTION');
+      const executionCase = await api(TENANT_A.owner)
+        .get(`${runtimeBasePath}/execution-cases/${executionCaseId}`).expect(200);
+      expect(executionCase.body.detail).toMatchObject({
+        initiativeId: runtime.initiativeId,
+        handoffPackageId,
       });
       const cold = await coldRead((db) =>
         db.query<{ payload_json: { source?: { sourceId?: string; sourceType?: string } } }>(
