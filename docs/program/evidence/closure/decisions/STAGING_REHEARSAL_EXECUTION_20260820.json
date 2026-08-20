@@ -1,0 +1,37 @@
+{
+  "receiptId": "MVP-USABLE-100-STAGING-REHEARSAL-20260820-01",
+  "candidateSha": "71316e4125ba3f912cbcd0612639bb463b41dae7",
+  "environment": "staging",
+  "productionTouched": false,
+  "result": "STOP_MIGRATION_LEDGER",
+  "providerGate": "PASS",
+  "freshDatabase": {
+    "serviceId": "fc377fcb-2f98-4fb7-b772-932012fd7dd3",
+    "serviceName": "Postgres-Rehearsal-20260820-71316e",
+    "deploymentId": "e6b34f0f-3679-4ce1-9d0b-7a6ade9b5d72",
+    "databaseEngine": "PostgreSQL 18 Railway managed template",
+    "preservedAfterFailure": true
+  },
+  "migration": {
+    "candidateCount": 794,
+    "failedFile": "20261038_execution_spine_authority_completion.sql",
+    "error": "execution_spine_backfill_runs has incompatible constraints",
+    "transactionRolledBack": true,
+    "applicationRewired": false,
+    "candidateDeployed": false
+  },
+  "diagnosis": {
+    "classification": "POSTGRESQL_18_CONSTRAINT_INTROSPECTION_INCOMPATIBILITY",
+    "details": "PostgreSQL 18 exposes column NOT NULL constraints as named pg_constraint rows. The frozen migration requires an exact constraint-name array that omits those rows, so its fail-closed shape assertion rejects the freshly created table.",
+    "readOnlyProof": "The exact CREATE TABLE executed inside an explicit rollback transaction produced the nine expected named constraints plus ten PostgreSQL 18 generated *_not_null constraints.",
+    "unsafeWorkaroundUsed": false
+  },
+  "preservation": {
+    "historicalStagingDatabaseChanged": false,
+    "historicalStagingDatabaseDeleted": false,
+    "freshDatabaseDeleted": false,
+    "stagingApplicationVariablesChanged": false,
+    "stagingApplicationDeploymentChanged": false
+  },
+  "nextGate": "Create and qualify a bounded migration compatibility fix, freeze a new immutable candidate, then restart from migration apply/replay/dry-run. Do not reuse or edit the historical staging migration ledger."
+}

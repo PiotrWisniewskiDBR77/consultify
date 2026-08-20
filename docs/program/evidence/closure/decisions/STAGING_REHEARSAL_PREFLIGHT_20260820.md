@@ -38,6 +38,16 @@
 
 ## Verdict and next gate
 
-`GO_FOR_STAGING_REHEARSAL_ONLY`.
+Provider verdict: `GO_FOR_STAGING_REHEARSAL_ONLY`.
 
 Provider reconciliation is complete. The rehearsal may now provision a fresh staging-only Postgres service, run strict migrations plus replay-zero, deploy the exact candidate SHA, execute the 16 mounted flows, two 60-minute telemetry windows, alert exercise and rollback rehearsal. The old staging database must remain preserved. A green staging result does not authorize production.
+
+## Execution update — 2026-08-20
+
+- Fresh managed staging database `Postgres-Rehearsal-20260820-71316e` was created and kept isolated from the application.
+- Candidate migration apply reached `20261038_execution_spine_authority_completion.sql` and failed closed with `execution_spine_backfill_runs has incompatible constraints`.
+- Read-only reproduction proved a PostgreSQL 18 compatibility defect: PG18 exposes ten generated `*_not_null` rows in `pg_constraint`, while the frozen migration's exact-name assertion expects only the nine explicitly named constraints.
+- The migration transaction rolled back. The application was not rewired or deployed; neither the historical staging database nor production was changed.
+- Execution receipt: `docs/program/evidence/closure/decisions/STAGING_REHEARSAL_EXECUTION_20260820.json`.
+
+Current rehearsal verdict: `STOP_MIGRATION_LEDGER` pending a bounded PG18-compatible migration fix and a newly frozen candidate SHA.
