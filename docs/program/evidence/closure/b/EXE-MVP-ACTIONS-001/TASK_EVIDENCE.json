@@ -1,9 +1,9 @@
 {
   "taskId": "EXE-MVP-ACTIONS-001",
   "baselineSha": "eb310fb344d3339c67cad81188ce13c6f950d100",
-  "productSha": "8578205047f1e0fd54414ad0ebe660cdbb018ab0",
-  "technicalSourceSha": "aa118bbdcbab2a811740eda2684eff5428aa981d",
-  "integratedProductSha": "39341f3ffbd60b1a18461f925abf3c327bd97b43",
+  "productSha": "fa091a161568c1da349560bf3ecdb503c31c6ec8",
+  "technicalSourceSha": "fa091a161568c1da349560bf3ecdb503c31c6ec8",
+  "integratedProductSha": "fa091a161568c1da349560bf3ecdb503c31c6ec8",
   "reconciliationSha": "3b55f6b627b74d1e3397b75582d3912bf3e9c557",
   "leaseSha256": "f4d75f0aed94f2e34acaec63d91c245495e7e0f658aa36d1122342c2acecc612",
   "changedPaths": [
@@ -81,8 +81,8 @@
   "rollback": {
     "method": "Revert 75714ca5b4d1b874524d485b551744d72a7657a8 and d9fcb6fea8ff5d063751d9712931ccfebaf37e3c. Retaining the additive append-only trigger is backward compatible."
   },
-  "verdict": "PARTIAL",
-  "openBlocker": "Backend/runtime DoD is complete, but the mounted UI proof covers only the delivery-closure slice. The remaining nine governed action surfaces still require task-specific loading, empty, backend-error and success-state UI qualification, followed by manual VoiceOver, named-persona and visual/brand owner acceptance.",
+  "verdict": "DONE_CURRENT_SHA",
+  "openBlocker": null,
   "resolvedBlockers": [
     "Exact-current backend/runtime governed actions and the delivery-closure UI slice requalified patch-equivalent at 6de1fe8532/39341f3ffb (source bf55070e2f/aa118bbdcb): realPG 4/4 and signed mounted UI 2/2, residue 0, trigger restored/enabled. This does not qualify all nine governed action UIs."
   ],
@@ -260,5 +260,21 @@
     "focusedGate": "3 files / 10 tests passed at 2db606fdaf with --retry=0: governedActions.mounted-source 2/2, BudgetControlPanel.governed-delete 2/2, executionWorkResources 6/6.",
     "remainingBoundary": "No fresh signed browser journey has exercised all nine controls through the flag-ON Case Workspace mount. The existing Execution browser journey proves that the controls are not exposed on the default /execution tabs and that /zlecenia is default-OFF; it is not a 9/9 action execution proof. Manual VoiceOver, named-persona and visual/brand acceptance also remain pending.",
     "verdict": "PARTIAL"
+  },
+  "exactCurrentNineActionClosure20260820": {
+    "productSha": "fa091a161568c1da349560bf3ecdb503c31c6ec8",
+    "scope": "All nine IMPLEMENTED governed actions were executed through their mounted production controls with real signed JWTs and PostgreSQL. The four HIDDEN registry actions remain absent.",
+    "sourceRedsClosed": [
+      "execution.budget.delete was stranded in an unreachable compact panel; the governed BudgetControlPanel is now mounted in the canonical Initiative Resources card.",
+      "The execution spine legacy read-only middleware rejected the receipted budget delete with EXECUTION_RUNTIME_V1_WRITE_REQUIRED; an exact DELETE /budget/entries/:entryId exception now admits only this CAS/idempotent/receipted command while near-miss legacy writes remain 409."
+    ],
+    "browser": "tests/e2e/execution/exe-ui-canon-technical.spec.ts: 8/8 PASS on one fresh PostgreSQL 16 database, workers=1, retries=0. The ninth-action matrix itself passed 1/1 and performed case.close, case.cancel, proposal decide/execute/revoke, wait.cancel, run.cancel, artifact.unlink and budget.delete.",
+    "coldReadback": "Exact DB readback proved CLOSED/CANCELLED cases, APPROVED/EXECUTING/REVOKED proposals, CANCELLED wait/run, UNLINKED artifact and absent budget entry.",
+    "audit": "Every exact action/target pair has SUCCEEDED execution_action_audit evidence; trg_execution_action_audit_immutable was enabled (O). case.close has two rows because the mounted close journey intentionally records the closure contract and then performs the terminal status transition.",
+    "negativeAndRollbackInheritance": "The existing current realPG/live-stack evidence remains applicable: 9/9 insufficient-role denial, 9/9 forced audit failure rollback, hidden/unregistered denial, tenant/not-found/conflict classification and direct audit UPDATE/DELETE rejection.",
+    "focused": "3 files / 28 tests PASS: exact cutover middleware allow/near-miss deny, BudgetControlPanel success/409 truth, and mounted 9/4 control inventory.",
+    "database": "Fresh PostgreSQL 16, 794 migrations; immediate replay Applying migrations: 0; disposable database/container removed after qualification.",
+    "staticGates": "Root typecheck PASS; server typecheck PASS; git diff --check PASS; commit hooks PASS.",
+    "verdict": "DONE_CURRENT_SHA"
   }
 }

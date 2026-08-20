@@ -1,9 +1,9 @@
 {
   "taskId": "EXE-UI-CANON-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "287aab619142f2990d46d04d04faaccb1cadf696",
-  "technicalSourceSha": "e6c3169db91981e9a27f594df76f01cf6ff5bbf8",
-  "integratedProductSha": "39341f3ffbd60b1a18461f925abf3c327bd97b43",
+  "productSha": "fa091a161568c1da349560bf3ecdb503c31c6ec8",
+  "technicalSourceSha": "fa091a161568c1da349560bf3ecdb503c31c6ec8",
+  "integratedProductSha": "fa091a161568c1da349560bf3ecdb503c31c6ec8",
   "reconciliationSha": "3b55f6b627b74d1e3397b75582d3912bf3e9c557",
   "leaseSha256": "f4d75f0aed94f2e34acaec63d91c245495e7e0f658aa36d1122342c2acecc612",
   "toolchain": {
@@ -126,11 +126,9 @@
     "method": "Revert the lane commits; all changes are additive application code plus new tests. NO migration was added by this lane, so no schema rollback is required and old readers are unaffected."
   },
   "verdict": "PARTIAL",
-  "openBlocker": "All nine governed controls and their production state handling are present, but a fresh signed flag-ON Case Workspace browser matrix for the nine controls remains open. Owner disposition for five dead surfaces plus one flag-ON unreachable surface and manual VoiceOver, named-persona and visual/brand acceptance also remain pending.",
+  "openBlocker": "All nine governed controls now have fresh signed end-to-end browser execution and exact cold readback. Owner disposition for the remaining dead surfaces and manual VoiceOver, named-persona and visual/brand acceptance remain pending.",
   "openBlockers": [
-    "A fresh signed flag-ON Case Workspace browser matrix must exercise all nine governed controls; current production source and focused component evidence prove the controls and states, but the historical browser packet does not execute all nine.",
     "Five dead surfaces and one flag-ON but unreachable surface require explicit owner disposition before canonical UI closure.",
-    "The exact-current seven-scenario technical browser gate is green with zero historical manager-lane 403s, but it does not execute all nine governed mutation controls end to end.",
     "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md."
   ],
   "blockerReconciliation": [
@@ -249,5 +247,16 @@
       "stale"
     ],
     "httpErrors": []
+  },
+  "exactCurrentNineActionBrowser20260820": {
+    "productSha": "fa091a161568c1da349560bf3ecdb503c31c6ec8",
+    "runtime": "production build, real mounted router, real signed owner and distinct approver JWTs, ENABLE_V8_GLOBAL=true, Case Workspace flag ON",
+    "database": "fresh disposable PostgreSQL 16; 794 migrations; immediate replay 0; container removed",
+    "fullSuite": "8/8 PASS, workers=1, retries=0",
+    "nineActionMatrix": "1/1 PASS: all nine mounted controls executed; exact DB cold state and immutable audit readback matched",
+    "budgetMount": "BudgetControlPanel is now reachable from the canonical Initiative Resources card; its exact receipted DELETE passes the cutover boundary while sibling legacy writes remain denied.",
+    "technicalGapClosed": "The prior open blocker requiring a fresh signed 9/9 flag-ON browser matrix is resolved.",
+    "remainingBoundary": "PARTIAL is preserved solely for explicit owner disposition of dead surfaces and human VoiceOver, named-persona and visual/brand acceptance.",
+    "verdict": "AUTOMATED_TECHNICAL_ACCEPTANCE_PASS_HUMAN_PENDING"
   }
 }
