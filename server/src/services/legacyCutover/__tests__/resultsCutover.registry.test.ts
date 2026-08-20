@@ -38,6 +38,10 @@ describe('Results legacy cutover registry', () => {
     expect(RESULTS_LEGACY_CUTOVER_DENOMINATOR.unmappedDoors).toEqual([
       'RESULTS-W05', 'RESULTS-W06', 'RESULTS-W18', 'RESULTS-W23', 'RESULTS-W34',
     ]);
+    expect(RESULTS_LEGACY_CUTOVER_DENOMINATOR.canonicalCurrentDoors).toEqual([
+      'RESULTS-W05', 'RESULTS-W06', 'RESULTS-W18', 'RESULTS-W23', 'RESULTS-W34',
+    ]);
+    expect(RESULTS_LEGACY_CUTOVER_DENOMINATOR.unresolvedDoors).toEqual([]);
   });
 
   it('retires direct KPI edits and measurements only after mounted callers use canonical contracts', () => {
@@ -80,6 +84,7 @@ describe('Results legacy cutover registry', () => {
     const resolve = RESULTS_CUTOVER.writers.find((entry) => entry.writerId === 'RESULTS-W23');
     expect(resolve?.state).toBe('observed');
     expect(resolve?.successor).toBeNull();
+    expect(resolve?.disposition).toBe('canonical_current');
   });
 
   it('keeps resolve on the guarded V8 owner and removes the benefits fallback', () => {

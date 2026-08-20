@@ -85,6 +85,12 @@ export interface LegacyWriterRule {
   effect?: LegacyRouteEffect;
   /** Canonical successor route. Required for `disabled`; informational otherwise. */
   successor: string | null;
+  /**
+   * Explicit MVP disposition for an open writer. `canonical_current` means the
+   * existing guarded writer is the sole supported contract for the current
+   * MVP; it is not waiting for an invented look-alike successor.
+   */
+  disposition?: 'successor_backed' | 'canonical_current' | 'approved_out';
   /** Legacy table this writer mutates, when it addresses a single record. */
   legacyTable?: string;
   /** Extracts the legacy record id from the router-local path. */

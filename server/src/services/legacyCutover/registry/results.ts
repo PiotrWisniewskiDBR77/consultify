@@ -94,6 +94,7 @@ export const RESULTS_CUTOVER: LegacyCutoverDomainConfig = {
       path: /^\/benefits\/[^/]+\/promote\/?$/,
       state: 'observed',
       successor: null,
+      disposition: 'canonical_current',
       legacyTable: 'initiative_benefits',
       legacyIdFromPath: (path) => decodeURIComponent(path.split('/')[2] || ''),
       reason:
@@ -105,6 +106,7 @@ export const RESULTS_CUTOVER: LegacyCutoverDomainConfig = {
       path: /^\/benefits\/[^/]+\/dismiss\/?$/,
       state: 'observed',
       successor: null,
+      disposition: 'canonical_current',
       legacyTable: 'initiative_benefits',
       legacyIdFromPath: (path) => decodeURIComponent(path.split('/')[2] || ''),
       reason:
@@ -126,6 +128,7 @@ export const RESULTS_CUTOVER: LegacyCutoverDomainConfig = {
       path: /^\/kpi-mappings\/[^/]+\/?$/,
       state: 'observed',
       successor: null,
+      disposition: 'canonical_current',
       legacyTable: 'initiative_kpi_mappings',
       legacyIdFromPath: (path) => decodeURIComponent(path.split('/')[2] || ''),
       reason:
@@ -180,6 +183,7 @@ export const RESULTS_CUTOVER: LegacyCutoverDomainConfig = {
       path: /^\/deviation-cases\/[^/]+\/resolve\/?$/,
       state: 'observed',
       successor: null,
+      disposition: 'canonical_current',
       legacyTable: 'kpi_deviation_cases',
       legacyIdFromPath: (path) => decodeURIComponent(path.split('/')[2] || ''),
       reason:
@@ -297,6 +301,7 @@ export const RESULTS_CUTOVER: LegacyCutoverDomainConfig = {
       path: /^\/scorecards\/[^/]+\/?$/,
       state: 'observed',
       successor: null,
+      disposition: 'canonical_current',
       legacyTable: 'kpi_scorecards',
       legacyIdFromPath: (path) => decodeURIComponent(path.split('/')[2] || ''),
       reason:
@@ -363,5 +368,11 @@ export const RESULTS_LEGACY_CUTOVER_DENOMINATOR = Object.freeze({
     .map((writer) => writer.writerId),
   unmappedDoors: RESULTS_CUTOVER.writers
     .filter((writer) => writer.successor === null)
+    .map((writer) => writer.writerId),
+  canonicalCurrentDoors: RESULTS_CUTOVER.writers
+    .filter((writer) => writer.disposition === 'canonical_current')
+    .map((writer) => writer.writerId),
+  unresolvedDoors: RESULTS_CUTOVER.writers
+    .filter((writer) => writer.state !== 'disabled' && !writer.disposition)
     .map((writer) => writer.writerId),
 });
