@@ -1200,7 +1200,7 @@ describe('V8 finance read-only routes', () => {
     );
   });
 
-  it('POST /api/v8/finance/models/:id/approve returns envelope and delegates to approveModel', async () => {
+  it('POST /api/v8/finance/models/:id/approve stays retired and points at canonical approval', async () => {
     mockGetModel.mockResolvedValue({
       id: 'model-1',
       organization_id: ORG,
@@ -1211,13 +1211,12 @@ describe('V8 finance read-only routes', () => {
     const app = createApp();
     const res = await request(app).post('/api/v8/finance/models/model-1/approve').send({});
 
-    expect(res.status).toBe(200);
-    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
-    expect(res.body.data).toEqual({ success: true, status: 'approved' });
-    expect(mockGetModel).toHaveBeenCalledWith('model-1', ORG);
-    expect(mockApproveModel).toHaveBeenCalledWith('model-1', UID, {
-      expectedVersion: undefined,
+    expect(res.status).toBe(410);
+    expect(res.body).toMatchObject({
+      code: 'FINANCE_LEGACY_WRITER_DISABLED',
+      successor: '/api/v8/finance-v2/models/:artifactId/approve',
     });
+    expect(mockApproveModel).not.toHaveBeenCalled();
   });
 
   it('PUT /api/v8/finance/models/:id returns envelope and delegates to updateModel', async () => {
@@ -1313,24 +1312,14 @@ describe('V8 finance read-only routes', () => {
     expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
     expect(res.body.data).toEqual({ success: true, deleted: 'model-1' });
     expect(mockGetModel).toHaveBeenCalledWith('model-1', ORG);
-    expect(mockDbRun).toHaveBeenCalledTimes(4);
-    expect(mockDbRun).toHaveBeenNthCalledWith(
-      1,
-      'DELETE FROM financial_model_outputs WHERE model_id = ?',
-      ['model-1']
+    const modelDeleteCalls = mockDbRun.mock.calls.filter(([sql]) =>
+      String(sql).startsWith('DELETE FROM financial_model')
     );
-    expect(mockDbRun).toHaveBeenNthCalledWith(
-      2,
-      'DELETE FROM financial_model_validations WHERE model_id = ?',
-      ['model-1']
-    );
-    expect(mockDbRun).toHaveBeenNthCalledWith(
-      3,
-      'DELETE FROM financial_model_events WHERE model_id = ?',
-      ['model-1']
-    );
-    expect(mockDbRun).toHaveBeenNthCalledWith(4, 'DELETE FROM financial_models WHERE id = ?', [
-      'model-1',
+    expect(modelDeleteCalls).toEqual([
+      ['DELETE FROM financial_model_outputs WHERE model_id = ?', ['model-1']],
+      ['DELETE FROM financial_model_validations WHERE model_id = ?', ['model-1']],
+      ['DELETE FROM financial_model_events WHERE model_id = ?', ['model-1']],
+      ['DELETE FROM financial_models WHERE id = ?', ['model-1']],
     ]);
   });
 
@@ -2414,7 +2403,7 @@ describe('V8 finance read-only routes', () => {
     expect(mockGetAnalysisInsights).toHaveBeenCalledWith('analysis-1');
   });
 
-  it('POST /api/v8/finance/analyses/:id/initiatives creates initiatives from accepted proposals', async () => {
+  it('POST /api/v8/finance/analyses/:id/initiatives stays retired without direct Initiative writes', async () => {
     mockDbGet.mockResolvedValue({
       id: 'analysis-1',
       organization_id: ORG,
@@ -2435,13 +2424,13 @@ describe('V8 finance read-only routes', () => {
       .post('/api/v8/finance/analyses/analysis-1/initiatives')
       .send({ acceptedProposalIds: ['proposal-1'] });
 
-    expect(res.status).toBe(201);
-    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
-    expect(res.body.data?.success).toBe(true);
-    expect(res.body.data?.initiativeIds).toHaveLength(1);
-    expect(mockDbGet).toHaveBeenCalled();
-    expect(mockDbAll).toHaveBeenCalled();
-    expect(mockDbRun).toHaveBeenCalledTimes(1);
+    expect(res.status).toBe(410);
+    expect(res.body).toMatchObject({ code: 'DIRECT_INITIATIVE_CREATION_DISABLED' });
+    expect(mockDbGet).not.toHaveBeenCalled();
+    expect(mockDbAll).not.toHaveBeenCalled();
+    expect(
+      mockDbRun.mock.calls.some(([sql]) => String(sql).includes('INSERT INTO initiatives'))
+    ).toBe(false);
   });
 
   it('POST /api/v8/finance/analyses/:id/run delegates to runFullAnalysis', async () => {

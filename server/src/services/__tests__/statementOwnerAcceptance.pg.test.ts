@@ -100,7 +100,7 @@ describe.runIf(enabled)('Finance Statement owner acceptance — real PostgreSQL 
       await client.query(`INSERT INTO financial_statement_mapping_candidates VALUES ('mapping',8)`);
       await client.query(`INSERT INTO financial_statement_value_evidence VALUES ('evidence',-5)`);
       const migration = await fs.readFile(
-        path.resolve('server/migrations/20261054_finance_statement_confidence_bounds.sql'),
+        path.resolve('server/migrations/20261057_finance_statement_confidence_bounds.sql'),
         'utf8'
       );
       await client.query(migration);

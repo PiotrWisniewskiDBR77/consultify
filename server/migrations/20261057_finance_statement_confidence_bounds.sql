@@ -54,4 +54,3 @@ ALTER TABLE financial_statement_value_evidence
   DROP CONSTRAINT IF EXISTS financial_statement_value_evidence_weight_bounds,
   ADD CONSTRAINT financial_statement_value_evidence_weight_bounds
     CHECK (weight >= 0 AND weight <= 1);
-

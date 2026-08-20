@@ -1557,7 +1557,7 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
   });
 
   it('W40 migration fails closed before DDL on a hostile estimate-column shape', async () => {
-    const migration=fs.readFileSync(path.resolve(process.cwd(),'server/migrations/20261056_finance_budget_initiative_link_command.sql'),'utf8');
+    const migration=fs.readFileSync(path.resolve(process.cwd(),'server/migrations/20261058_finance_budget_initiative_link_command.sql'),'utf8');
     await client.query('BEGIN');
     try {
       await client.query(`DROP TABLE finance_budget_initiative_link_receipts CASCADE`);
