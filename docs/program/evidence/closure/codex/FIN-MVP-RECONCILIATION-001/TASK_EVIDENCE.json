@@ -68,11 +68,9 @@
     {"formerBlocker": "Finance/Results owner decision on Actual writer and materiality threshold.", "resolution": "DEC-FIN approved Results as sole immutable Actual writer, Finance proposal/dispute only, and strictly greater than 5 percent as material."},
     {"formerBlocker": "Post-fan-in test fixture residue.", "resolution": "Cleanup SHA 8b642f83c7 uses exact fixture IDs, FK-safe transaction and named triggers; post-suite residue is 0."}
   ],
-  "technicalVerdict": "PASS_REPOSITORY_FAIL_CLOSED_PARTIAL_ENVIRONMENT_DATA",
-  "verdict": "PARTIAL",
-  "openBlockers": [
-    "ENVIRONMENT_QUARANTINE: any target database containing pre-DEC-FIN reconciliation rows is excluded from the internal beta until row-by-row disposition is recorded. The verified migration refuses those rows without changing, deleting, inferring or auto-backfilling them."
-  ],
+  "technicalVerdict": "DONE_CURRENT_SHA_INTERNAL_BETA_ENVIRONMENT_QUARANTINE",
+  "verdict": "DONE_CURRENT_SHA",
+  "openBlockers": [],
   "roiGovernedVisibilityPostFanInRequalification20260818": {
     "technicalSourceSha": "dead405937f11755321186f983ecc596cec95fe3",
     "reconciliationSha": "dead405937f11755321186f983ecc596cec95fe3",
@@ -95,5 +93,12 @@
     "remainingBlockers": [
       "ENVIRONMENT_QUARANTINE: pre-DEC-FIN historical target rows require recorded row-by-row disposition; no automatic inference, deletion, backfill or release is authorized."
     ]
+  },
+  "internalBetaClosure20260820": {
+    "candidateProductSha": "e6ca206c0035f653118d9aadbfddf61d452ab52e",
+    "ownerDecision": "D4=A preserves and quarantines historical rows for internal beta; no inferred retirement or backfill.",
+    "stagingDatabase": "Fresh managed rehearsal database passed migration, replay-zero and drift checks and contains no pre-decision reconciliation rows.",
+    "scope": "DONE for repository and internal-beta staging contract.",
+    "productionPreflight": "Any future production target containing pre-DEC-FIN rows remains fail-closed until row-by-row disposition; production is a separate REL-001 boundary."
   }
 }
