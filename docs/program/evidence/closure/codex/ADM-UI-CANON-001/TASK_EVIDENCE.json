@@ -1,7 +1,7 @@
 {
   "taskId": "ADM-UI-CANON-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "995ca54c511678305cca3bd360796e236ebfb1d9",
+  "productSha": "b95518f212b787f05f2ff3a5b8d635ac7d2e73a4",
   "technicalSourceSha": "3051c89d4c7705b57dbec95dcdc587fb4fb8ef37",
   "reconciliationSha": "3051c89d4c7705b57dbec95dcdc587fb4fb8ef37",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
@@ -32,17 +32,17 @@
       "tests/unit/components/Admin/AdminIamPolicyPanel.test.tsx"
     ],
     "scope": "IAM, audit and health persistent load/error/retry states; safe-data preservation; IAM stale 409 authoritative reload; route-local current ACTIVE tenant membership and role/capability authorization; bounded backup UI read-only characterization.",
-    "authorization": "Signed OWNER and ADMIN succeed; MEMBER, GUEST and revoked membership fail closed; foreign selectors and body organization values are not authority; platform SUPERADMIN does not bypass tenant membership, role or delegated-capability checks, including ACTIVE MEMBER and null or unknown membership roles.",
+    "authorization": "Signed organization ADMIN succeeds; MEMBER, GUEST and revoked membership fail closed. Global SUPERADMIN remains routed to the global console and can inspect its global audit and health APIs; it is not represented as an organization-scoped member persona.",
     "backupCharacterization": "The mounted UI invoked zero restore requests. This is read-only UI characterization only and is not evidence of backup create/export, encryption, restore, RPO or RTO."
   },
   "exactCurrentReconciliation": {
-    "baseSha": "2db606fdaf48b1673a1b40d604dd1221ef288c6c",
+    "baseSha": "b95518f212b787f05f2ff3a5b8d635ac7d2e73a4",
     "ancestry": [
       "2c99b4e04081146740bc437d69ad94b4fbce7386",
       "759f2019e2512b05abc2c23550a2c0456ca3517f"
     ],
-    "technicalFact": "2c99b4e040 closes the canonical members access UI and includes a mounted PostgreSQL active-member test; 759f2019e2 preserves stable role-command identity and reconciles a stale 409 through authoritative member reload. Both commits are ancestors of 2db606fdaf.",
-    "boundary": "The stale role-command source defect is superseded. A full mounted stale/concurrency and persistent recovery browser journey was not rerun at 2db606fdaf, and owner/mobile/VoiceOver acceptance remains open."
+    "technicalFact": "2c99b4e040 closes the canonical members access UI; 759f2019e2 preserves stable role-command identity and stale reconciliation; b95518f212 proves the exact mounted stale 409, authoritative cold reconciliation, fresh command identity and lost-response recovery against fresh PostgreSQL.",
+    "boundary": "The technical stale/conflict/persistent-recovery browser gap is closed. Owner mobile, VoiceOver, persona and visual/brand acceptance, deployed observation and backup operations remain open."
   },
   "ownerTables": [],
   "commands": [
@@ -85,23 +85,33 @@
       "command": "8GB root typecheck, backend build, frontend build and diff checks",
       "exitCode": 0,
       "result": "PASS; fixture residue organizations/users/members/admin_audit_logs = 0/0/0/0"
+    },
+    {
+      "command": "exact-current mounted Admin Playwright on fresh PostgreSQL",
+      "exitCode": 0,
+      "result": "3/3; role and tenant boundaries, backup read-only state, stale 409 authoritative reconciliation, fresh retry identity and lost-response recovery after exact cold read-back"
+    },
+    {
+      "command": "exact-current Admin focused UI plus root and server typechecks",
+      "exitCode": 0,
+      "result": "12/12 UI tests; root typecheck PASS; server typecheck PASS; git diff --check PASS"
     }
   ],
   "denominators": {
     "focusedTests": "27/27",
     "unauthenticatedMountedGuard": "1/1",
-    "authenticatedBrowserSmoke": "0/2",
+    "authenticatedBrowserSmoke": "3/3 exact-current mounted Admin suite",
     "automatedG4Cells": "15/15",
     "automatedG4Screenshots": "15/15",
     "automatedG4AxeCriticalSerious": "0/0",
     "automatedG4UnnamedControls": 0,
     "automatedG4VisibleFocus": "PASS",
-    "currentFreshMigrations": "758/758",
+    "currentFreshMigrations": "794/794",
     "currentMigrationRepeat": "0",
     "currentMigrationDryRun": "0",
     "currentBackendAuthorization": "26/26",
-    "currentUiStates": "9/9",
-    "currentMountedRuntime": "2/2",
+    "currentUiStates": "12/12",
+    "currentMountedRuntime": "3/3",
     "currentFixtureResidue": "0/0/0/0",
     "currentTypecheckAndBuilds": "PASS"
   },
@@ -198,14 +208,13 @@
     }
   ],
   "rollback": {
-    "code": "revert 995ca54c51 before deployment",
+    "code": "revert b95518f212 before deployment",
     "data": "no schema or production data change"
   },
   "verdict": "PARTIAL",
   "openBlockers": [
     "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
     "The mobile interstitial and final small-screen Admin navigation behavior remain an owner/UI acceptance decision outside this bounded packet.",
-    "IAM stale role-command source handling is present through 759f2019e2, but full mounted stale/concurrency and persistent error-recovery browser journeys remain unproven at reconciliation base 2db606fdaf.",
     "No deployed-environment Admin runtime observation was authorized or performed.",
     "Backup was characterized as read-only with zero restore calls; backup create/export, encryption, restore, RPO and RTO are not proved by this UI packet."
   ],
@@ -225,8 +234,9 @@
     "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed.",
     "Historical blocker resolved by exact-SHA G4: Authenticated responsive and axe browser journey did not complete.",
     "Current bounded packet proves persistent IAM/audit/health load-error-retry behavior without replacing safe prior data.",
-    "Current mounted runtime proves tenant-bound signed ADMIN/OWNER access and fail-closed MEMBER/GUEST/revoked/SUPERADMIN-without-tenant-authority controls.",
-    "The prior stale role-command source-red claim is superseded by ancestor commits 2c99b4e040 and 759f2019e2 at reconciliation base 2db606fdaf."
+    "Current mounted runtime proves tenant-bound signed organization ADMIN access, fail-closed MEMBER/GUEST/revoked controls and truthful routing of global SUPERADMIN to the global console.",
+    "The prior stale role-command source-red claim is superseded by ancestor commits 2c99b4e040 and 759f2019e2.",
+    "Exact-current mounted browser proof at b95518f212 closes stale 409 reconciliation, fresh-intent command rotation and lost-response recovery after canonical cold read-back."
   ],
   "automatedG4Verdict": {
     "verdict": "PASS_EXACT_SHA",
