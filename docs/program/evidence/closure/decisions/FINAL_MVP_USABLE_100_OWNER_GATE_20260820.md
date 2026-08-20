@@ -99,3 +99,17 @@ GO for a staging rehearsal only when D1-D6 are recorded, historical credentials 
 STOP on any SHA drift, migration-ledger mismatch, missing role/tenant denial, command loss/duplication, false success, unapproved provider dependency, missing rollback owner or unrecorded production authority.
 
 Nothing in this packet itself grants deployment, production migration, history rewrite, provider contact or destructive data action authority.
+
+## Owner decision recorded — 2026-08-20
+
+Piotr accepted the recommended sequence with the instruction `działaj zgodnie z rekomendacjami`:
+
+- `D1=A` — internal-beta Web Vitals thresholds accepted.
+- `D2=A` — provider owners are authorized to rotate/revoke every credential family in the safe historical inventory. This records the decision and authorization; completion remains pending until provider-side receipts confirm rotation/revocation. Git history rewrite is not authorized by this decision.
+- `D3=A` — the listed internal-beta approved-out/restricted boundaries remain fail-closed.
+- `D4=A` — remaining legacy/historical rows and null-successor writers remain preserved or quarantined; no inferred retirement/backfill.
+- `D5=A` — dead/unmounted surfaces remain unmounted for beta; no inferred deletion or connection.
+- `D6=A` — pre-release owner UAT is authorized and must record named signer, date and exact deployed SHA.
+- `D7=B` — a staging-only rehearsal is authorized. Production deployment, production traffic, production migration and production rollback remain `NOT_AUTHORIZED`.
+
+The staging rehearsal may proceed only after provider-side D2 receipts are recorded and the existing GO conditions remain satisfied. A successful staging rehearsal does not automatically promote `D7` to option A.
