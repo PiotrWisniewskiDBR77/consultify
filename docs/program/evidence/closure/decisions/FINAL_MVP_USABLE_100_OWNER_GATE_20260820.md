@@ -160,3 +160,25 @@ staging candidate `e6ca206c0035f653118d9aadbfddf61d452ab52e`. It closes only the
 human UI acceptance gate for internal beta. It does not waive task-specific
 technical gaps, create missing Audit authority, authorize production, or change
 any approved-out product boundary.
+
+### Exact closure state after applying D6=B
+
+The evidence register now reports 82 tasks: 63 `DONE_CURRENT_SHA`, 19
+`PARTIAL`, zero missing records and zero invalid records. The remaining 19 are
+not human-UAT blockers:
+
+- Repo-actionable technical or exact-current evidence gaps: `CHAT-NFR-001`,
+  `CHAT-UI-CANON-001`, `INI-UI-CANON-001`, `EXE-UI-CANON-001`,
+  `RES-UI-CANON-001`, `FIN-BVP-001`, `FIN-UI-CANON-001`,
+  `MAT-UI-CANON-001`, `ORG-UI-CANON-001`.
+- Preserved/approved-out or owner-policy boundaries: `RES-MVP-LEGACY-CUTOVER-001`,
+  `FIN-MVP-CUTOVER-001`, `MAT-POL-001`, `AUD-POL-001`,
+  `ADM-MVP-BACKUP-001`, `SET-MVP-DELETE-001`, `PRT-MVP-ACCRUAL-001`,
+  `FLOW-TRANSFORM-MVP-001`.
+- Aggregate/release records: `UI-CANON-ALL-001` and `REL-001-T01`; these can
+  close only after their remaining technical/authority dependencies. Production
+  remains `NOT_AUTHORIZED`.
+
+No record may be promoted merely because D6=B was accepted. Each promotion
+still requires exact-candidate automated evidence or an already recorded
+approved-out boundary that truthfully satisfies the internal-beta contract.
