@@ -158,6 +158,7 @@ import {
 import {
   BudgetProjectionCommandError,
   projectBudgetScenario,
+  updateBudgetScenarioAdjustments,
 } from '../../services/finance/canonical/budgetProjectionCommandService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
@@ -1483,6 +1484,52 @@ router.post(
         idempotencyKey: String(
           req.header('Idempotency-Key') || req.header('x-idempotency-key') || ''
         ),
+      });
+      return res.status(200).json({ data: result, meta: financeMeta() });
+    } catch (error) {
+      if (error instanceof BudgetProjectionCommandError) {
+        return res.status(error.status).json({
+          code: error.code,
+          error: error.message,
+          ...(error.details || {}),
+        });
+      }
+      throw error;
+    }
+  })
+);
+
+router.put(
+  '/budgets/:budgetId/scenarios/:scenarioId/adjustments',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const userId = String(req.user?.id || (req.user as any)?.user_id || '');
+    const body =
+      req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
+    if (Object.keys(body).some((key) => !['expectedVersion', 'adjustments'].includes(key))) {
+      return res.status(400).json({ code: 'INVALID_BODY', error: 'Unknown adjustment field' });
+    }
+    if (!Number.isInteger(body.expectedVersion) || body.expectedVersion < 1) {
+      return res.status(400).json({ code: 'INVALID_BODY', error: 'Invalid expectedVersion' });
+    }
+    if (
+      !body.adjustments ||
+      typeof body.adjustments !== 'object' ||
+      Array.isArray(body.adjustments)
+    ) {
+      return res.status(400).json({ code: 'INVALID_BODY', error: 'Invalid adjustments' });
+    }
+    try {
+      const result = await updateBudgetScenarioAdjustments({
+        organizationId,
+        userId,
+        budgetId: req.params.budgetId,
+        scenarioId: req.params.scenarioId,
+        expectedVersion: body.expectedVersion,
+        idempotencyKey: String(
+          req.header('Idempotency-Key') || req.header('x-idempotency-key') || ''
+        ),
+        adjustments: body.adjustments,
       });
       return res.status(200).json({ data: result, meta: financeMeta() });
     } catch (error) {

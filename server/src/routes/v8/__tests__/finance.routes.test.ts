@@ -31,6 +31,7 @@ const mockListBudgets = vi.fn();
 const mockRegisterBudget = vi.fn();
 const mockApplyBudgetLineCommand = vi.fn();
 const mockProjectBudgetScenario = vi.fn();
+const mockUpdateBudgetScenarioAdjustments = vi.fn();
 const mockListAnalyses = vi.fn();
 const mockGetAnalysisRatios = vi.fn();
 const mockGetAnalysisInsights = vi.fn();
@@ -322,6 +323,8 @@ vi.mock('../../../services/finance/canonical/budgetProjectionCommandService.js',
     }
   },
   projectBudgetScenario: (...args: unknown[]) => mockProjectBudgetScenario(...args),
+  updateBudgetScenarioAdjustments: (...args: unknown[]) =>
+    mockUpdateBudgetScenarioAdjustments(...args),
 }));
 
 vi.mock('../../../services/ratioAnalysisService.js', () => ({
@@ -476,6 +479,17 @@ describe('V8 finance read-only routes', () => {
       },
       budgetVersion: 2,
       projectionSha256: 'a'.repeat(64),
+      replay: false,
+    });
+    mockUpdateBudgetScenarioAdjustments.mockResolvedValue({
+      budgetId: 'budget-new',
+      scenario: {
+        id: 'scenario-1',
+        scenarioType: 'base',
+        adjustments: { revenueGrowth: 7 },
+      },
+      budgetVersion: 2,
+      adjustmentsSha256: 'b'.repeat(64),
       replay: false,
     });
     mockListAnalyses.mockResolvedValue([]);
@@ -1927,6 +1941,38 @@ describe('V8 finance read-only routes', () => {
     expect(res.status).toBe(400);
     expect(res.body.code).toBe('INVALID_BODY');
     expect(mockProjectBudgetScenario).not.toHaveBeenCalled();
+  });
+
+  it('PUT /api/v8/finance/budgets/:budgetId/scenarios/:scenarioId/adjustments binds CAS and idempotency', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .put('/api/v8/finance/budgets/budget-new/scenarios/scenario-1/adjustments')
+      .set('Idempotency-Key', 'adjustment-command-key')
+      .send({ expectedVersion: 1, adjustments: { revenueGrowth: 7 } });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({ budgetVersion: 2, replay: false });
+    expect(mockUpdateBudgetScenarioAdjustments).toHaveBeenCalledWith({
+      organizationId: ORG,
+      userId: UID,
+      budgetId: 'budget-new',
+      scenarioId: 'scenario-1',
+      expectedVersion: 1,
+      idempotencyKey: 'adjustment-command-key',
+      adjustments: { revenueGrowth: 7 },
+    });
+  });
+
+  it('PUT /api/v8/finance/budgets/:budgetId/scenarios/:scenarioId/adjustments rejects unknown fields', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .put('/api/v8/finance/budgets/budget-new/scenarios/scenario-1/adjustments')
+      .set('Idempotency-Key', 'adjustment-command-key')
+      .send({ expectedVersion: 1, adjustments: {}, projections: {} });
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('INVALID_BODY');
+    expect(mockUpdateBudgetScenarioAdjustments).not.toHaveBeenCalled();
   });
 
   it('POST /api/v8/finance/analyses returns envelope and delegates to createAnalysis', async () => {

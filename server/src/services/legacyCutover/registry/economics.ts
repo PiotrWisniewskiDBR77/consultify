@@ -428,10 +428,10 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'ECO-W36',
       method: 'PUT',
       path: /^\/budgets\/[^/]+\/scenarios\/[^/]+\/adjustments\/?$/,
-      state: 'observed',
-      successor: null,
+      state: 'disabled',
+      successor: '/api/v8/finance/budgets/:budgetId/scenarios/:scenarioId/adjustments',
       reason:
-        'Writes adjustments onto a budget_scenarios row (economics.routes.ts:3146, budgetingService.ts:406 updateScenarioAdjustments). No proven successor.',
+        'The scenario adjustment writer now uses a DRAFT-only canonical command with exact tenant/budget/scenario binding, parent-version CAS, normalized adjustment hashing, invalidated stale projections, immutable receipt and writer-scoped legacy rollback.',
     },
     {
       writerId: 'ECO-W37',

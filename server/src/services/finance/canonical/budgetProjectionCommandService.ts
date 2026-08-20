@@ -34,6 +34,28 @@ export interface BudgetProjectionCommandResult {
   replay: boolean;
 }
 
+export interface UpdateBudgetScenarioAdjustmentsParams {
+  organizationId: string;
+  userId: string;
+  budgetId: string;
+  scenarioId: string;
+  expectedVersion: number;
+  idempotencyKey: string;
+  adjustments: Record<string, number>;
+}
+
+export interface BudgetScenarioAdjustmentCommandResult {
+  budgetId: string;
+  scenario: {
+    id: string;
+    scenarioType: string;
+    adjustments: Record<string, number>;
+  };
+  budgetVersion: number;
+  adjustmentsSha256: string;
+  replay: boolean;
+}
+
 export class BudgetProjectionCommandError extends Error {
   constructor(
     public readonly code: string,
@@ -68,6 +90,38 @@ function validateAdjustments(value: unknown): ScenarioAdjustment {
       );
     }
     result[key] = raw;
+  }
+  return result;
+}
+
+function normalizeAdjustmentCommand(value: unknown): Record<string, number> {
+  const source = asObject(value);
+  const entries = Object.entries(source);
+  if (entries.length > 100) {
+    throw new BudgetProjectionCommandError(
+      'INVALID_ADJUSTMENTS',
+      400,
+      'At most 100 scenario adjustments are allowed'
+    );
+  }
+  const result: Record<string, number> = {};
+  for (const [rawKey, rawValue] of entries.sort(([left], [right]) => left.localeCompare(right))) {
+    const key = rawKey.trim();
+    if (!key || key.length > 120 || key !== rawKey) {
+      throw new BudgetProjectionCommandError(
+        'INVALID_ADJUSTMENTS',
+        400,
+        'Adjustment keys must be non-blank and at most 120 characters'
+      );
+    }
+    if (typeof rawValue !== 'number' || !Number.isFinite(rawValue)) {
+      throw new BudgetProjectionCommandError(
+        'INVALID_ADJUSTMENTS',
+        400,
+        'Scenario adjustments must contain finite numbers'
+      );
+    }
+    result[key] = rawValue;
   }
   return result;
 }
@@ -343,6 +397,180 @@ export async function projectBudgetScenario(
         idempotencyKey,
         requestSha256,
         projectionSha256,
+        params.expectedVersion,
+        appliedVersion,
+        JSON.stringify(response),
+        params.userId,
+      ]
+    );
+    return response;
+  });
+}
+
+export async function updateBudgetScenarioAdjustments(
+  params: UpdateBudgetScenarioAdjustmentsParams
+): Promise<BudgetScenarioAdjustmentCommandResult> {
+  const idempotencyKey = params.idempotencyKey.trim();
+  if (!idempotencyKey || idempotencyKey.length > 200) {
+    throw new BudgetProjectionCommandError(
+      'IDEMPOTENCY_KEY_REQUIRED',
+      400,
+      'Idempotency-Key is required'
+    );
+  }
+  if (!Number.isInteger(params.expectedVersion) || params.expectedVersion < 1) {
+    throw new BudgetProjectionCommandError(
+      'INVALID_EXPECTED_VERSION',
+      400,
+      'expectedVersion must be a positive integer'
+    );
+  }
+  const adjustments = normalizeAdjustmentCommand(params.adjustments);
+  const adjustmentsSha256 = sha256(adjustments);
+  const requestSha256 = sha256({
+    budgetId: params.budgetId,
+    scenarioId: params.scenarioId,
+    expectedVersion: params.expectedVersion,
+    adjustments,
+  });
+
+  return withPgTransaction(async (tx) => {
+    const member = (
+      await tx.query<{ status: string; role: string }>(
+        `SELECT status,role FROM organization_members
+          WHERE organization_id=? AND user_id=? FOR UPDATE`,
+        [params.organizationId, params.userId]
+      )
+    ).rows[0];
+    if (String(member?.status || '').toUpperCase() !== 'ACTIVE') {
+      throw new BudgetProjectionCommandError(
+        'ORG_MEMBERSHIP_REVOKED',
+        403,
+        'Active organization membership is required'
+      );
+    }
+    if (!hasFinanceEditRole(member.role)) {
+      throw new BudgetProjectionCommandError(
+        'FINANCE_EDIT_FORBIDDEN',
+        403,
+        'Finance editor role is required'
+      );
+    }
+
+    await tx.query(`SELECT pg_advisory_xact_lock(hashtextextended(?,0))`, [
+      `${params.organizationId}:${params.budgetId}:BUDGET_SCENARIO_ADJUSTMENT_COMMAND`,
+    ]);
+    const budget = (
+      await tx.query<{ id: string; status: string; version: number }>(
+        `SELECT id,status,version FROM budgets
+          WHERE id=? AND organization_id=? FOR UPDATE`,
+        [params.budgetId, params.organizationId]
+      )
+    ).rows[0];
+    if (!budget) {
+      throw new BudgetProjectionCommandError('BUDGET_NOT_FOUND', 404, 'Budget not found');
+    }
+
+    const prior = (
+      await tx.query<{
+        request_sha256: string;
+        response_json: BudgetScenarioAdjustmentCommandResult;
+      }>(
+        `SELECT request_sha256,response_json
+           FROM finance_budget_scenario_adjustment_command_receipts
+          WHERE organization_id=? AND budget_id=? AND idempotency_key=?`,
+        [params.organizationId, params.budgetId, idempotencyKey]
+      )
+    ).rows[0];
+    if (prior) {
+      if (prior.request_sha256 !== requestSha256) {
+        throw new BudgetProjectionCommandError(
+          'IDEMPOTENCY_PAYLOAD_COLLISION',
+          409,
+          'Idempotency key is bound to another scenario adjustment command'
+        );
+      }
+      return { ...prior.response_json, replay: true };
+    }
+    if (budget.status !== 'DRAFT') {
+      throw new BudgetProjectionCommandError(
+        'BUDGET_IMMUTABLE',
+        409,
+        'Only a DRAFT budget can be adjusted'
+      );
+    }
+    if (Number(budget.version) !== params.expectedVersion) {
+      throw new BudgetProjectionCommandError(
+        'BUDGET_VERSION_CONFLICT',
+        409,
+        'Budget version changed',
+        { currentVersion: Number(budget.version) }
+      );
+    }
+    const scenario = (
+      await tx.query<{ id: string; scenario_type: string }>(
+        `SELECT id,scenario_type FROM budget_scenarios
+          WHERE id=? AND budget_id=? FOR UPDATE`,
+        [params.scenarioId, params.budgetId]
+      )
+    ).rows[0];
+    if (!scenario) {
+      throw new BudgetProjectionCommandError(
+        'BUDGET_SCENARIO_NOT_FOUND',
+        404,
+        'Budget scenario not found'
+      );
+    }
+    if (!['base', 'optimistic', 'conservative'].includes(scenario.scenario_type)) {
+      throw new BudgetProjectionCommandError(
+        'BUDGET_SCENARIO_NOT_READY',
+        409,
+        'Scenario type is invalid'
+      );
+    }
+
+    await tx.query(
+      `UPDATE budget_scenarios
+          SET adjustments=?::jsonb,projections='{}'::jsonb,summary_metrics='{}'::jsonb,updated_at=now()
+        WHERE id=? AND budget_id=?`,
+      [JSON.stringify(adjustments), params.scenarioId, params.budgetId]
+    );
+    const appliedVersion = params.expectedVersion + 1;
+    const updated = await tx.query(
+      `UPDATE budgets SET version=?,updated_at=now()
+        WHERE id=? AND organization_id=? AND version=?`,
+      [appliedVersion, params.budgetId, params.organizationId, params.expectedVersion]
+    );
+    if (updated.rowCount !== 1) {
+      throw new BudgetProjectionCommandError(
+        'BUDGET_VERSION_CONFLICT',
+        409,
+        'Budget version changed'
+      );
+    }
+    const response: BudgetScenarioAdjustmentCommandResult = {
+      budgetId: params.budgetId,
+      scenario: {
+        id: params.scenarioId,
+        scenarioType: scenario.scenario_type,
+        adjustments,
+      },
+      budgetVersion: appliedVersion,
+      adjustmentsSha256,
+      replay: false,
+    };
+    await tx.query(
+      `INSERT INTO finance_budget_scenario_adjustment_command_receipts
+       (organization_id,budget_id,scenario_id,idempotency_key,request_sha256,
+        adjustments_sha256,expected_budget_version,applied_budget_version,response_json,created_by)
+       VALUES (?,?,?,?,?,?,?,?,?::jsonb,?)`,
+      [
+        params.organizationId,
+        params.budgetId,
+        params.scenarioId,
+        idempotencyKey,
+        requestSha256,
+        adjustmentsSha256,
         params.expectedVersion,
         appliedVersion,
         JSON.stringify(response),

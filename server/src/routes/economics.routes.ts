@@ -3103,6 +3103,7 @@ router.post(
 router.put(
   '/budgets/:budgetId/scenarios/:scenarioId/adjustments',
   verifyToken,
+  economicsCutoverGuard,
   validateBody(updateScenarioAdjustmentsSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;

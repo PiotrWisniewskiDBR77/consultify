@@ -19,6 +19,7 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
   let registerBudget: typeof import('../budgetRegistrationService.js').registerBudget;
   let applyBudgetLineCommand: typeof import('../budgetLineCommandService.js').applyBudgetLineCommand;
   let projectBudgetScenario: typeof import('../budgetProjectionCommandService.js').projectBudgetScenario;
+  let updateBudgetScenarioAdjustments: typeof import('../budgetProjectionCommandService.js').updateBudgetScenarioAdjustments;
 
   const counts = async () =>
     (
@@ -34,7 +35,9 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
           (SELECT count(*)::int FROM finance_budget_line_command_receipts
              WHERE organization_id=$1) line_receipts,
           (SELECT count(*)::int FROM finance_budget_projection_command_receipts
-             WHERE organization_id=$1) projection_receipts`,
+             WHERE organization_id=$1) projection_receipts,
+          (SELECT count(*)::int FROM finance_budget_scenario_adjustment_command_receipts
+             WHERE organization_id=$1) adjustment_receipts`,
         [orgId]
       )
     ).rows[0];
@@ -45,7 +48,8 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
     await client.connect();
     ({ registerBudget } = await import('../budgetRegistrationService.js'));
     ({ applyBudgetLineCommand } = await import('../budgetLineCommandService.js'));
-    ({ projectBudgetScenario } = await import('../budgetProjectionCommandService.js'));
+    ({ projectBudgetScenario, updateBudgetScenarioAdjustments } =
+      await import('../budgetProjectionCommandService.js'));
     await client.query(
       `INSERT INTO organizations(id,name) VALUES($1,'Budget registration'),($2,'Foreign budget registration')`,
       [orgId, foreignOrgId]
@@ -73,6 +77,10 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
     await client.query('BEGIN');
     try {
       await client.query(`SET LOCAL session_replication_role=replica`);
+      await client.query(
+        `DELETE FROM finance_budget_scenario_adjustment_command_receipts WHERE organization_id=$1`,
+        [orgId]
+      );
       await client.query(
         `DELETE FROM finance_budget_projection_command_receipts WHERE organization_id=$1`,
         [orgId]
@@ -113,6 +121,7 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
       receipts: 0,
       line_receipts: 0,
       projection_receipts: 0,
+      adjustment_receipts: 0,
     });
     expect(
       (
@@ -674,6 +683,140 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
       });
     } finally {
       await client.query(`DROP TRIGGER ${trg} ON finance_budget_projection_command_receipts`);
+      await client.query(`DROP FUNCTION ${fn}()`);
+    }
+  });
+
+  it('updates one exact scenario adjustment aggregate and replays without stale projections', async () => {
+    const budget = await registerBudget(command(`adjustment-happy-budget-${randomUUID()}`));
+    const scenario = (
+      await client.query(
+        `SELECT id FROM budget_scenarios WHERE budget_id=$1 AND scenario_type='optimistic'`,
+        [budget.budget.id]
+      )
+    ).rows[0];
+    await client.query(
+      `UPDATE budget_scenarios SET projections='{"periods":["stale"]}'::jsonb,
+        summary_metrics='{"totalRevenue":1}'::jsonb WHERE id=$1`,
+      [scenario.id]
+    );
+    const input = {
+      organizationId: orgId,
+      userId,
+      budgetId: budget.budget.id,
+      scenarioId: scenario.id,
+      expectedVersion: 1,
+      idempotencyKey: `adjustment-happy-${randomUUID()}`,
+      adjustments: { revenueGrowth: 12.5, costReduction: 3 },
+    };
+    const first = await updateBudgetScenarioAdjustments(input);
+    expect(first).toMatchObject({ budgetVersion: 2, replay: false });
+    expect(first.adjustmentsSha256).toMatch(/^[0-9a-f]{64}$/);
+    expect(await updateBudgetScenarioAdjustments(input)).toEqual({ ...first, replay: true });
+    const cold = (
+      await client.query(
+        `SELECT b.version,s.adjustments,s.projections,s.summary_metrics,
+          (SELECT count(*)::int FROM finance_budget_scenario_adjustment_command_receipts
+            WHERE organization_id=$1 AND budget_id=$2) receipt_count
+         FROM budgets b JOIN budget_scenarios s ON s.budget_id=b.id
+         WHERE b.organization_id=$1 AND b.id=$2 AND s.id=$3`,
+        [orgId, budget.budget.id, scenario.id]
+      )
+    ).rows[0];
+    expect(cold).toMatchObject({
+      version: 2,
+      adjustments: input.adjustments,
+      projections: {},
+      summary_metrics: {},
+      receipt_count: 1,
+    });
+    await expect(
+      updateBudgetScenarioAdjustments({
+        ...input,
+        adjustments: { revenueGrowth: 99 },
+      })
+    ).rejects.toMatchObject({ code: 'IDEMPOTENCY_PAYLOAD_COLLISION', status: 409 });
+    await expect(
+      client.query(
+        `DELETE FROM finance_budget_scenario_adjustment_command_receipts
+          WHERE organization_id=$1 AND budget_id=$2 AND idempotency_key=$3`,
+        [orgId, budget.budget.id, input.idempotencyKey]
+      )
+    ).rejects.toThrow(/immutable/);
+  });
+
+  it('converges adjustment retries, checks live authority and rolls back receipt failure', async () => {
+    const budget = await registerBudget(command(`adjustment-concurrent-budget-${randomUUID()}`));
+    const scenario = (
+      await client.query(`SELECT id FROM budget_scenarios WHERE budget_id=$1 LIMIT 1`, [
+        budget.budget.id,
+      ])
+    ).rows[0];
+    const input = {
+      organizationId: orgId,
+      userId,
+      budgetId: budget.budget.id,
+      scenarioId: scenario.id,
+      expectedVersion: 1,
+      idempotencyKey: `adjustment-concurrent-${randomUUID()}`,
+      adjustments: { revenueGrowth: 7 },
+    };
+    const results = await Promise.all(
+      Array.from({ length: 8 }, () => updateBudgetScenarioAdjustments(input))
+    );
+    expect(results.filter((row) => !row.replay)).toHaveLength(1);
+    expect(results.filter((row) => row.replay)).toHaveLength(7);
+    await client.query(
+      `UPDATE organization_members SET status='REVOKED' WHERE organization_id=$1 AND user_id=$2`,
+      [orgId, userId]
+    );
+    await expect(updateBudgetScenarioAdjustments(input)).rejects.toMatchObject({
+      code: 'ORG_MEMBERSHIP_REVOKED',
+      status: 403,
+    });
+    await client.query(
+      `UPDATE organization_members SET status='ACTIVE' WHERE organization_id=$1 AND user_id=$2`,
+      [orgId, userId]
+    );
+
+    const rollbackBudget = await registerBudget(
+      command(`adjustment-rollback-budget-${randomUUID()}`)
+    );
+    const rollbackScenario = (
+      await client.query(`SELECT id,adjustments FROM budget_scenarios WHERE budget_id=$1 LIMIT 1`, [
+        rollbackBudget.budget.id,
+      ])
+    ).rows[0];
+    const fn = `reject_budget_adjustment_receipt_${randomUUID().replaceAll('-', '')}`;
+    const trg = `reject_budget_adjustment_receipt_${randomUUID().replaceAll('-', '')}`;
+    await client.query(
+      `CREATE FUNCTION ${fn}() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'injected budget adjustment receipt failure'; END $$`
+    );
+    await client.query(
+      `CREATE TRIGGER ${trg} BEFORE INSERT ON finance_budget_scenario_adjustment_command_receipts FOR EACH ROW EXECUTE FUNCTION ${fn}()`
+    );
+    try {
+      await expect(
+        updateBudgetScenarioAdjustments({
+          ...input,
+          budgetId: rollbackBudget.budget.id,
+          scenarioId: rollbackScenario.id,
+          idempotencyKey: `adjustment-rollback-${randomUUID()}`,
+        })
+      ).rejects.toThrow(/injected budget adjustment receipt failure/);
+      expect(
+        (
+          await client.query(
+            `SELECT b.version,s.adjustments FROM budgets b JOIN budget_scenarios s ON s.budget_id=b.id
+             WHERE b.id=$1 AND s.id=$2`,
+            [rollbackBudget.budget.id, rollbackScenario.id]
+          )
+        ).rows[0]
+      ).toEqual({ version: 1, adjustments: rollbackScenario.adjustments });
+    } finally {
+      await client.query(
+        `DROP TRIGGER ${trg} ON finance_budget_scenario_adjustment_command_receipts`
+      );
       await client.query(`DROP FUNCTION ${fn}()`);
     }
   });
