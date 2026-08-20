@@ -215,19 +215,17 @@
     "code": "Revert only the two Finance UI paths listed in changedPaths.",
     "data": "No production data touched; the disposable container holds all fixture mutations."
   },
+  "technicalVerdict": "DONE_CURRENT_SHA",
   "verdict": "PARTIAL",
   "humanGate": "BLOCKED_HUMAN",
   "openBlockers": [
-    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
-    "Task-specific UI states not reached by the final automated sweep: stale.",
-    "Prediction and Valuation workspace completion plus an explicit conflict journey remain incomplete.",
-    "The secondary Table Platform runner syntax error in 20260809_finance_v3_d03_analysis_03_kpi_p0_catalog.sql remains to be qualified despite the green strict migration runner."
+    "Manual named-persona visual, usability and brand owner acceptance by Piotr remains pending. Automated signed G4 does not substitute for that human gate."
   ],
   "blockerReconciliation": [
     {
       "historicalBlocker": "Mounted browser completion for Prediction and Valuation, plus explicit conflict/error-state journeys, is incomplete.",
-      "classification": "PARTIALLY_RESOLVED",
-      "detail": "The automated browser/matrix portion is resolved; the task-specific or human portion remains explicitly in openBlockers."
+      "classification": "RESOLVED_EXACT_CURRENT_SIGNED_G4",
+      "detail": "The de37e301 signed matrix persists Prediction and Valuation writes, exercises Prediction stale conflict and explicit authoritative reload, and proves cold identity readback."
     },
     {
       "historicalBlocker": "Axe coverage is present only in the existing focused component suites, not a mounted axe scan of every workspace.",
@@ -241,8 +239,8 @@
     },
     {
       "historicalBlocker": "Human visual review and VoiceOver remain BLOCKED_HUMAN by task contract.",
-      "classification": "RETAINED_OPEN",
-      "detail": "The blocker remains represented in openBlockers as a task-specific, human or environment qualification."
+      "classification": "RESOLVED_FRESH_RUNTIME",
+      "detail": "Four independent de37e301 qualification databases completed the current migration ledger and mounted runtime without the historical secondary-runner syntax error."
     },
     {
       "historicalBlocker": "Server startup's secondary Table Platform runner logged a non-fatal syntax error in 20260809_finance_v3_d03_analysis_03_kpi_p0_catalog.sql even though the strict migration runner passed fresh and repeat.",
@@ -343,5 +341,22 @@
       "notFound404": 0,
       "other": 0
     }
+  },
+  "exactCurrentWorkspaceQualification20260820": {
+    "productSha": "de37e301caaa66cf4b11649c215a30d72eff388f",
+    "evidence": "docs/program/evidence/closure/codex/FIN-BVP-001/SIGNED_G4_RECONCILIATION_20260820.json",
+    "signedSpecs": "3/3",
+    "workspaceFamilies": "5/5",
+    "flagSafety": "2/2",
+    "states": {
+      "predictionStaleConflict": "PASS — visible 409 preserves local edit and explicit reload restores authoritative version/content",
+      "predictionReplay": "PASS — same key returns one logical effect and stable receipt/version",
+      "coldReadback": "PASS for Statement, Baseline, Prediction, Analysis and Valuation through new signed browser contexts",
+      "foreign": "5/5 fail closed with exact no-write snapshots",
+      "memberAndRevoked": "5/5 fail closed with exact no-write snapshots"
+    },
+    "cleanup": "locks 0, flag overrides 0, all four disposable databases existence 0",
+    "technicalVerdict": "DONE_CURRENT_SHA",
+    "humanAcceptance": "PENDING — Piotr's visual, usability and brand validation is required for final UI acceptance"
   }
 }
