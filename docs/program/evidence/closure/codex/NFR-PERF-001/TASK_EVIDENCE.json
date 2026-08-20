@@ -1,7 +1,7 @@
 {
   "taskId": "NFR-PERF-001",
   "baselineSha": "123aa5065f027c3d827462d9304e0a30ffe4b8f1",
-  "productSha": "1665af2961c0ad2aea6a6eae8433bc8ba22547e4",
+  "productSha": "a97750b5d3c9f821f1b2f44b21611734b2876964",
   "technicalSourceSha": "5969fb06a2a41711c772b51d073e56585d542272",
   "leaseSha256": "6feeff810179aaa58dc2f837fa4e5f77e138469db0b0ed9d45ccf9271e7e1fee",
   "changedPaths": [
@@ -27,7 +27,8 @@
     {"command": "root/server typecheck, backend/frontend build, diff-check", "exitCode": 0},
     {"command": "NFR_PERF_RELEASE_GATE=1 NFR_PERF_DURATION_MS=1800000 NFR_PERF_PRODUCT_SHA=aa521e63de43a93f6d50344d1ebe4036a7b67bd3 npx tsx scripts/performance/nfr-perf-disposable.ts", "exitCode": 0, "startedAt": "2026-08-19T21:16:09.715Z", "finishedAt": "2026-08-19T21:46:10.535Z"},
     {"command": "NFR_PERF_RELEASE_GATE=1 NFR_PERF_DURATION_MS=1800000 NFR_PERF_PRODUCT_SHA=5969fb06a2a41711c772b51d073e56585d542272 npx tsx scripts/performance/nfr-perf-disposable.ts", "exitCode": 0, "startedAt": "2026-08-19T22:28:50.071Z", "finishedAt": "2026-08-19T22:58:50.716Z"},
-    {"command": "NFR_PERF_ADMIN_DATABASE_URL=<owned-admin-pg> NFR_PERF_RELEASE_GATE=1 NFR_PERF_DURATION_MS=1800000 NFR_PERF_USERS=50 NFR_PERF_PRODUCT_SHA=1665af2961c0ad2aea6a6eae8433bc8ba22547e4 npx tsx scripts/performance/nfr-perf-disposable.ts", "exitCode": 0, "startedAt": "2026-08-20T00:32:21.827Z", "finishedAt": "2026-08-20T01:02:22.753Z"}
+    {"command": "NFR_PERF_ADMIN_DATABASE_URL=<owned-admin-pg> NFR_PERF_RELEASE_GATE=1 NFR_PERF_DURATION_MS=1800000 NFR_PERF_USERS=50 NFR_PERF_PRODUCT_SHA=1665af2961c0ad2aea6a6eae8433bc8ba22547e4 npx tsx scripts/performance/nfr-perf-disposable.ts", "exitCode": 0, "startedAt": "2026-08-20T00:32:21.827Z", "finishedAt": "2026-08-20T01:02:22.753Z"},
+    {"command": "NFR_PERF_ADMIN_DATABASE_URL=<owned-admin-pg> NFR_PERF_RELEASE_GATE=1 NFR_PERF_DURATION_MS=1800000 NFR_PERF_USERS=50 NFR_PERF_PRODUCT_SHA=a97750b5d3c9f821f1b2f44b21611734b2876964 NFR_PERF_EVIDENCE_DIR=/private/tmp/nfr-perf-a977-final npx tsx scripts/performance/nfr-perf-disposable.ts", "exitCode": 0, "startedAt": "2026-08-20T01:24:36.758Z", "finishedAt": "2026-08-20T01:54:37.552Z"}
   ],
   "denominators": {
     "focusedRegression": {"filesPassed": 4, "filesFailed": 0, "testsPassed": 33, "testsFailed": 0, "retries": 0},
@@ -64,18 +65,18 @@
     },
     "exactCurrentRelease30m": {
       "gateKind": "RELEASE_30M_50U",
-      "productSha": "1665af2961c0ad2aea6a6eae8433bc8ba22547e4",
-      "mountedSha": "1665af2961c0ad2aea6a6eae8433bc8ba22547e4",
+      "productSha": "a97750b5d3c9f821f1b2f44b21611734b2876964",
+      "mountedSha": "a97750b5d3c9f821f1b2f44b21611734b2876964",
       "durationMsRequested": 1800000,
-      "durationMsActual": 1800926,
+      "durationMsActual": 1800794,
       "authenticatedUsers": 50,
       "totalRequests": 111400,
       "errors": 0,
       "errorRatePct": 0,
       "readSamples": 89900,
-      "readP95Ms": 116.95962500013411,
+      "readP95Ms": 114.1339999998454,
       "writeSamples": 17900,
-      "writeP95Ms": 202.78029199992307,
+      "writeP95Ms": 200.42129199998453,
       "expectedWriteIds": 8950,
       "reconciledWriteIds": 8950,
       "lostWriteIds": 0,
@@ -90,13 +91,13 @@
         "desktopClsP75": 0.00023668638211055387,
         "desktopInpP75Ms": 16,
         "mobileSamples": 5,
-        "mobileLcpP75Ms": 596,
+        "mobileLcpP75Ms": 476,
         "mobileClsP75": 0,
         "mobileInpP75Ms": 16
       },
-      "reportSha256": "baf962479470a06688b002e1d28752a7b02b43b86a73c1ae33a36e7ccf9ebe00",
-      "profileSha256": "c37e19bd289be74dedd603ec7d639cf3a202e902f6d74ec11ab9777dd5f44efe",
-      "webVitalsInputSha256": "21c0eb9da73b01981488cc5547e61ff547676bf3dcb4fcbd630cfa213be055ce",
+      "reportSha256": "795cf6dee5a62f1593a6d348adf450d7b4f0edaa2923f8b6b99cf15680bf1dc8",
+      "profileSha256": "b0cc557694f2705eeff1c4654c3516950eb80abc04c2d131b169606864d3c5ae",
+      "webVitalsInputSha256": "bdd219d3df68261b7341a4fd63f1aa114d1611fa9295cfe5af76e63af9f10876",
       "credentialsPersisted": false
     }
   },
@@ -122,14 +123,16 @@
     "advisoryLocks": 0,
     "ports3510And3511Listening": 0,
     "exactCurrentDisposableQualification": {
-      "database": "cwperfprofile_nfr_1787185896735_5aeea8 on isolated PostgreSQL 16",
+      "database": "cwperfprofile_nfr_1787189033042_e39d5d on isolated PostgreSQL 16",
       "migrationExitCode": 0,
       "migrationDurationMs": 8540,
       "databaseDropped": true,
       "containerRemoved": true,
       "privateCredentialsRemoved": true,
-      "artifactDirectory": "/private/tmp/nfr-perf-1665af-final",
-      "manifest": "/private/tmp/nfr-perf-1665af-final/manifest.json"
+      "artifactDirectory": "/private/tmp/nfr-perf-a977-final",
+      "manifest": "/private/tmp/nfr-perf-a977-final/manifest.json",
+      "manifestSha256": "1c39aca88ca8b84534e85f9c8035756aac872f98446088cc2eae0c98385b6ba4",
+      "migrationSha256": "da42bcb354c812416fe7fe832cc5040ebe44d0358b5a958106ce8a59a74b2585"
     }
   },
   "browserArtifacts": [
@@ -141,7 +144,10 @@
     "/private/tmp/nfr-perf-final-5969/manifest.json",
     "/private/tmp/nfr-perf-1665af-final/nfr-perf-report.json (sha256:baf962479470a06688b002e1d28752a7b02b43b86a73c1ae33a36e7ccf9ebe00)",
     "/private/tmp/nfr-perf-1665af-final/web-vitals.json (input sha256:21c0eb9da73b01981488cc5547e61ff547676bf3dcb4fcbd630cfa213be055ce)",
-    "/private/tmp/nfr-perf-1665af-final/manifest.json (sha256:37bdabd6d6544394de5463392ca5984ded6d686507a867c1bd2f5b42eceef7e6)"
+    "/private/tmp/nfr-perf-1665af-final/manifest.json (sha256:37bdabd6d6544394de5463392ca5984ded6d686507a867c1bd2f5b42eceef7e6)",
+    "/private/tmp/nfr-perf-a977-final/nfr-perf-report.json (sha256:795cf6dee5a62f1593a6d348adf450d7b4f0edaa2923f8b6b99cf15680bf1dc8)",
+    "/private/tmp/nfr-perf-a977-final/web-vitals.json (input sha256:bdd219d3df68261b7341a4fd63f1aa114d1611fa9295cfe5af76e63af9f10876)",
+    "/private/tmp/nfr-perf-a977-final/manifest.json (sha256:1c39aca88ca8b84534e85f9c8035756aac872f98446088cc2eae0c98385b6ba4)"
   ],
   "rollback": "Revert the NFR harness and lazy-load candidate commits. Qualification used only disposable PostgreSQL and runtime fixtures; no production migration, deployment or persistent external mutation occurred.",
   "negativeControls": {
