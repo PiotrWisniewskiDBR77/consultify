@@ -1317,6 +1317,84 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
     }
   });
 
+  it('retires ECO-W39 document import before any legacy line mutation', async () => {
+    const budgetId = `${prefix}-document-retired-budget`;
+    const requestId = `${prefix}-document-retired-request`;
+    await pool.query(
+      `INSERT INTO budgets(id,organization_id,title,status,period_start,period_end,granularity,currency,version,created_by) VALUES($1,$2,'Retired document budget','DRAFT','2028-01-01','2028-12-31','monthly','PLN',1,$3)`,
+      [budgetId, orgA, actor]
+    );
+    try {
+      const response = await request(productionMountedApp)
+        .post(`/api/economics/budgets/${budgetId}/import-document`)
+        .set('x-request-id', requestId)
+        .send({ documentText: 'Revenue 100' });
+      expect(response.status).toBe(410);
+      expect(response.body).toMatchObject({
+        writerId: 'ECO-W39',
+        successor: '/api/v8/finance/budgets/:budgetId/import-document',
+      });
+      expect(
+        (
+          await pool.query(`SELECT count(*)::int count FROM budget_lines WHERE budget_id=$1`, [
+            budgetId,
+          ])
+        ).rows[0].count
+      ).toBe(0);
+      expect(
+        (
+          await pool.query(
+            `SELECT writer_id,access_kind FROM legacy_cutover_usage_events WHERE organization_id=$1 AND request_id=$2`,
+            [orgA, requestId]
+          )
+        ).rows
+      ).toEqual([{ writer_id: 'ECO-W39', access_kind: 'legacy_writer_blocked' }]);
+    } finally {
+      await pool.query(`DELETE FROM budget_lines WHERE budget_id=$1`, [budgetId]);
+      await pool.query(`DELETE FROM budgets WHERE id=$1`, [budgetId]);
+    }
+  });
+
+  it('restores only ECO-W39 through the writer-scoped rollback lever', async () => {
+    const previous = process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+    const budgetId = `${prefix}-document-rollback-budget`;
+    const requestId = `${prefix}-document-rollback-request`;
+    process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = 'ECO-W39';
+    await pool.query(
+      `INSERT INTO budgets(id,organization_id,title,status,period_start,period_end,granularity,currency,version,created_by) VALUES($1,$2,'Rollback document budget','DRAFT','2028-01-01','2028-12-31','monthly','PLN',1,$3)`,
+      [budgetId, orgA, actor]
+    );
+    try {
+      const response = await request(productionMountedApp)
+        .post(`/api/economics/budgets/${budgetId}/import-document`)
+        .set('x-request-id', requestId)
+        .send({ documentText: 'Revenue 100' });
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({ linesImported: 1 });
+      expect(
+        (
+          await pool.query(
+            `SELECT line_code,source,baseline_value::text value FROM budget_lines WHERE budget_id=$1`,
+            [budgetId]
+          )
+        ).rows
+      ).toEqual([{ line_code: 'REVENUE', source: 'baseline', value: '100' }]);
+      expect(
+        (
+          await pool.query(
+            `SELECT writer_id,access_kind FROM legacy_cutover_usage_events WHERE organization_id=$1 AND request_id=$2`,
+            [orgA, requestId]
+          )
+        ).rows
+      ).toEqual([{ writer_id: 'ECO-W39', access_kind: 'rollback_writer' }]);
+    } finally {
+      await pool.query(`DELETE FROM budget_lines WHERE budget_id=$1`, [budgetId]);
+      await pool.query(`DELETE FROM budgets WHERE id=$1`, [budgetId]);
+      if (previous === undefined) delete process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+      else process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = previous;
+    }
+  });
+
   it('restores only ECO-W31 through the writer-scoped rollback lever', async () => {
     const previous = process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
     const requestId = `${prefix}-wave11-pptx-rollback`;

@@ -3180,6 +3180,7 @@ router.delete(
 router.post(
   '/budgets/:id/import-document',
   verifyToken,
+  economicsCutoverGuard,
   validateBody(importBudgetDocumentSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
@@ -3225,31 +3226,31 @@ router.post(
     const { v4: uuidv4 } = await import('uuid');
     const lineDefinitions = [
       {
-        code: 'revenue',
+        code: 'REVENUE',
         name: 'Revenue',
         type: 'P&L',
         keywords: ['revenue', 'sales', 'turnover'],
       },
       {
-        code: 'cogs',
+        code: 'COGS',
         name: 'Cost of Goods Sold',
         type: 'P&L',
         keywords: ['cost of goods sold', 'cogs'],
       },
       {
-        code: 'opex',
+        code: 'OPEX',
         name: 'Operating Expenses',
         type: 'P&L',
         keywords: ['operating expenses', 'opex'],
       },
       {
-        code: 'capex',
+        code: 'CAPEX',
         name: 'Capital Expenditure',
         type: 'CF',
         keywords: ['capital expenditure', 'capex'],
       },
       {
-        code: 'depreciation',
+        code: 'DEPRECIATION',
         name: 'Depreciation & Amortization',
         type: 'P&L',
         keywords: ['depreciation', 'amortization'],
@@ -3277,7 +3278,7 @@ router.post(
       if (!existing) {
         await dbRun(
           `INSERT INTO budget_lines (id, budget_id, line_code, line_name, statement_type, source, baseline_value, is_locked, display_order, created_at)
-           VALUES (?, ?, ?, ?, ?, 'document', ?, 0, ?, datetime('now'))`,
+           VALUES (?, ?, ?, ?, ?, 'baseline', ?, FALSE, ?, datetime('now'))`,
           [
             uuidv4().replace(/-/g, ''),
             budgetId,

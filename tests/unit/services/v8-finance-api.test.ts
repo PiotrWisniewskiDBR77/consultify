@@ -424,6 +424,28 @@ describe('V8FinanceApi', () => {
     );
   });
 
+  it('imports a budget document as multipart with parent CAS and a stable intent key', async () => {
+    vi.mocked(v8PostMultipart).mockResolvedValue({
+      budgetId: 'budget-1',
+      budgetVersion: 8,
+      linesImported: 2,
+      replay: false,
+    } as any);
+    const file = new File(['Przychody;1 234,50'], 'budget.csv', { type: 'text/csv' });
+    await V8FinanceApi.importBudgetDocument('budget-1', file, 7, 'stable-import-key');
+    expect(v8PostMultipart).toHaveBeenCalledWith(
+      '/finance/budgets/budget-1/import-document',
+      expect.any(FormData),
+      {
+        'Idempotency-Key': 'stable-import-key',
+        'x-expected-budget-version': '7',
+      }
+    );
+    const formData = vi.mocked(v8PostMultipart).mock.calls[0][1] as FormData;
+    expect(formData.get('file')).toBe(file);
+    expect(formData.get('expectedVersion')).toBe('7');
+  });
+
   it('requests governed finance statement ratios from the V8 namespace', async () => {
     vi.mocked(v8Get).mockResolvedValue({
       ratios: {
@@ -459,10 +481,13 @@ describe('V8FinanceApi', () => {
       limit: 3,
     });
 
-    expect(v8Get).toHaveBeenCalledWith('/finance/statements/statement-1/document-intelligence/search', {
-      q: 'revenue',
-      limit: '3',
-    });
+    expect(v8Get).toHaveBeenCalledWith(
+      '/finance/statements/statement-1/document-intelligence/search',
+      {
+        q: 'revenue',
+        limit: '3',
+      }
+    );
     expect(data.statementId).toBe('statement-1');
     expect(data.matches[0].chunkText).toBe('Revenue increased due to seasonality.');
   });

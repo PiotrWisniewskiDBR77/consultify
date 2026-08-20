@@ -1,4 +1,6 @@
 import { randomUUID } from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Client } from 'pg';
@@ -25,6 +27,7 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
   let updateBudgetScenarioAdjustments: typeof import('../budgetProjectionCommandService.js').updateBudgetScenarioAdjustments;
   let approveBudgetCommand: typeof import('../budgetApprovalCommandService.js').approveBudgetCommand;
   let discardBudgetCommand: typeof import('../budgetDiscardCommandService.js').discardBudgetCommand;
+  let importBudgetDocumentCommand: typeof import('../budgetDocumentImportCommandService.js').importBudgetDocumentCommand;
   let listBudgets: typeof import('../../../budgetingService.js').listBudgets;
   let getBudget: typeof import('../../../budgetingService.js').getBudget;
 
@@ -47,6 +50,8 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
              WHERE organization_id=$1) adjustment_receipts,
           (SELECT count(*)::int FROM finance_budget_approval_command_receipts
              WHERE organization_id=$1) approval_receipts,
+          (SELECT count(*)::int FROM finance_budget_document_import_receipts
+             WHERE organization_id=$1) document_receipts,
           (SELECT count(*)::int FROM budget_snapshots WHERE budget_id IN
              (SELECT id FROM budgets WHERE organization_id=$1)) snapshots`,
         [orgId]
@@ -63,6 +68,7 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
       await import('../budgetProjectionCommandService.js'));
     ({ approveBudgetCommand } = await import('../budgetApprovalCommandService.js'));
     ({ discardBudgetCommand } = await import('../budgetDiscardCommandService.js'));
+    ({ importBudgetDocumentCommand } = await import('../budgetDocumentImportCommandService.js'));
     ({ listBudgets, getBudget } = await import('../../../budgetingService.js'));
     await client.query(
       `INSERT INTO organizations(id,name) VALUES($1,'Budget registration'),($2,'Foreign budget registration')`,
@@ -115,6 +121,10 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
     await client.query('BEGIN');
     try {
       await client.query(`SET LOCAL session_replication_role=replica`);
+      await client.query(
+        `DELETE FROM finance_budget_document_import_receipts WHERE organization_id=$1`,
+        [orgId]
+      );
       await client.query(
         `DELETE FROM finance_budget_discard_command_receipts WHERE organization_id=$1`,
         [orgId]
@@ -181,6 +191,7 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
       projection_receipts: 0,
       adjustment_receipts: 0,
       approval_receipts: 0,
+      document_receipts: 0,
       snapshots: 0,
     });
     expect(
@@ -1104,7 +1115,9 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
 
     const active = await registerBudget(command(`discard-move-source-${randomUUID()}`));
     const activeLine = (
-      await client.query(`SELECT id FROM budget_lines WHERE budget_id=$1 LIMIT 1`, [active.budget.id])
+      await client.query(`SELECT id FROM budget_lines WHERE budget_id=$1 LIMIT 1`, [
+        active.budget.id,
+      ])
     ).rows[0].id;
     await expect(
       client.query(`UPDATE budget_lines SET budget_id=$1 WHERE id=$2`, [
@@ -1145,9 +1158,10 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
         [orgId, userId]
       );
     }
-    await expect(
-      discardBudgetCommand({ ...input, userId: viewerId })
-    ).rejects.toMatchObject({ code: 'FINANCE_EDIT_FORBIDDEN', status: 403 });
+    await expect(discardBudgetCommand({ ...input, userId: viewerId })).rejects.toMatchObject({
+      code: 'FINANCE_EDIT_FORBIDDEN',
+      status: 403,
+    });
     await expect(
       discardBudgetCommand({
         ...input,
@@ -1169,9 +1183,7 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
       idempotencyKey: key,
       reason: 'Concurrent discard',
     };
-    const results = await Promise.all(
-      Array.from({ length: 8 }, () => discardBudgetCommand(input))
-    );
+    const results = await Promise.all(Array.from({ length: 8 }, () => discardBudgetCommand(input)));
     expect(results.filter((result) => !result.replay)).toHaveLength(1);
     expect(results.filter((result) => result.replay)).toHaveLength(7);
     expect(
@@ -1238,6 +1250,293 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
     } finally {
       await client.query(`DROP TRIGGER ${trg} ON finance_budget_discard_command_receipts`);
       await client.query(`DROP FUNCTION ${fn}()`);
+    }
+  });
+
+  const documentImport = (
+    budgetId: string,
+    expectedVersion: number,
+    key: string,
+    overrides: Partial<Parameters<typeof importBudgetDocumentCommand>[0]> = {}
+  ) => ({
+    organizationId: orgId,
+    userId,
+    budgetId,
+    expectedVersion,
+    idempotencyKey: key,
+    sourceFileName: 'budzet.csv',
+    sourceMimeType: 'text/csv',
+    sourceFileSize: 42,
+    sourceFileSha256: 'a'.repeat(64),
+    documentText: 'Przychody;1 234,50\nKoszty operacyjne;234,50\nInna pozycja;99,00',
+    ...overrides,
+  });
+
+  it('atomically replaces canonical values with locale parsing, diagnostics and immutable provenance', async () => {
+    const budget = await registerBudget(command(`document-happy-${randomUUID()}`));
+    const result = await importBudgetDocumentCommand(
+      documentImport(budget.budget.id, 1, `document-happy-${randomUUID()}`)
+    );
+    expect(result).toMatchObject({ budgetVersion: 2, linesImported: 2, replay: false });
+    expect(result.unappliedDiagnostics).toEqual(
+      expect.arrayContaining([expect.objectContaining({ reason: 'UNSUPPORTED_ROW' })])
+    );
+    expect(
+      (
+        await client.query(
+          `SELECT line_code,baseline_value::text value,source FROM budget_lines WHERE budget_id=$1 AND line_code IN ('REVENUE','OPEX') ORDER BY line_code`,
+          [budget.budget.id]
+        )
+      ).rows
+    ).toEqual([
+      { line_code: 'OPEX', value: '234.5', source: 'baseline' },
+      { line_code: 'REVENUE', value: '1234.5', source: 'baseline' },
+    ]);
+    const receipt = (
+      await client.query(
+        `SELECT source_file_name,source_file_sha256,imported_by FROM finance_budget_document_import_receipts WHERE budget_id=$1`,
+        [budget.budget.id]
+      )
+    ).rows[0];
+    expect(receipt).toEqual({
+      source_file_name: 'budzet.csv',
+      source_file_sha256: 'a'.repeat(64),
+      imported_by: userId,
+    });
+    await expect(
+      client.query(
+        `UPDATE finance_budget_document_import_receipts SET source_file_name='tampered.csv' WHERE budget_id=$1`,
+        [budget.budget.id]
+      )
+    ).rejects.toThrow(/immutable/);
+    await expect(
+      client.query(`DELETE FROM finance_budget_document_import_receipts WHERE budget_id=$1`, [
+        budget.budget.id,
+      ])
+    ).rejects.toThrow(/immutable/);
+  });
+
+  it('authorizes before replay and rejects revoked, wrong-role and cross-tenant callers', async () => {
+    const budget = await registerBudget(command(`document-auth-${randomUUID()}`));
+    const input = documentImport(budget.budget.id, 1, `document-auth-${randomUUID()}`);
+    await importBudgetDocumentCommand(input);
+    await client.query(
+      `UPDATE organization_members SET status='REVOKED' WHERE organization_id=$1 AND user_id=$2`,
+      [orgId, userId]
+    );
+    await expect(importBudgetDocumentCommand(input)).rejects.toMatchObject({
+      code: 'ORG_MEMBERSHIP_REVOKED',
+    });
+    await client.query(
+      `UPDATE organization_members SET status='ACTIVE' WHERE organization_id=$1 AND user_id=$2`,
+      [orgId, userId]
+    );
+    await expect(importBudgetDocumentCommand({ ...input, userId: viewerId })).rejects.toMatchObject(
+      { code: 'FINANCE_EDIT_FORBIDDEN' }
+    );
+    await expect(
+      importBudgetDocumentCommand({
+        ...input,
+        organizationId: foreignOrgId,
+        userId: foreignUserId,
+        idempotencyKey: `document-foreign-${randomUUID()}`,
+      })
+    ).rejects.toMatchObject({ code: 'BUDGET_NOT_FOUND' });
+  });
+
+  it('fails the whole command for locked or stale aggregates without partial writes', async () => {
+    const budget = await registerBudget(command(`document-locked-${randomUUID()}`));
+    await client.query(
+      `UPDATE budget_lines SET is_locked=true WHERE budget_id=$1 AND line_code='OPEX'`,
+      [budget.budget.id]
+    );
+    await expect(
+      importBudgetDocumentCommand(
+        documentImport(budget.budget.id, 1, `document-locked-${randomUUID()}`)
+      )
+    ).rejects.toMatchObject({ code: 'BUDGET_LINE_LOCKED' });
+    expect(
+      (
+        await client.query(
+          `SELECT count(*)::int count FROM budget_lines WHERE budget_id=$1 AND baseline_value<>0`,
+          [budget.budget.id]
+        )
+      ).rows[0].count
+    ).toBe(0);
+    await expect(
+      importBudgetDocumentCommand(
+        documentImport(budget.budget.id, 2, `document-stale-${randomUUID()}`, {
+          documentText: 'Przychody;100',
+        })
+      )
+    ).rejects.toMatchObject({ code: 'BUDGET_VERSION_CONFLICT' });
+  });
+
+  it('provides exact replay/collision and concurrency exactly-one semantics', async () => {
+    const budget = await registerBudget(command(`document-replay-${randomUUID()}`));
+    const input = documentImport(budget.budget.id, 1, `document-replay-${randomUUID()}`, {
+      documentText: 'Przychody;100',
+    });
+    expect((await importBudgetDocumentCommand(input)).replay).toBe(false);
+    expect((await importBudgetDocumentCommand(input)).replay).toBe(true);
+    await expect(
+      importBudgetDocumentCommand({ ...input, sourceFileSha256: 'b'.repeat(64) })
+    ).rejects.toMatchObject({ code: 'IDEMPOTENCY_PAYLOAD_COLLISION' });
+
+    const concurrent = await registerBudget(command(`document-concurrent-${randomUUID()}`));
+    const settled = await Promise.allSettled([
+      importBudgetDocumentCommand(
+        documentImport(concurrent.budget.id, 1, `document-concurrent-a-${randomUUID()}`, {
+          documentText: 'Przychody;100',
+        })
+      ),
+      importBudgetDocumentCommand(
+        documentImport(concurrent.budget.id, 1, `document-concurrent-b-${randomUUID()}`, {
+          documentText: 'Przychody;200',
+          sourceFileSha256: 'c'.repeat(64),
+        })
+      ),
+    ]);
+    expect(settled.filter((entry) => entry.status === 'fulfilled')).toHaveLength(1);
+    expect(settled.filter((entry) => entry.status === 'rejected')).toHaveLength(1);
+    expect(
+      (
+        await client.query(
+          `SELECT count(*)::int count FROM finance_budget_document_import_receipts WHERE budget_id=$1`,
+          [concurrent.budget.id]
+        )
+      ).rows[0].count
+    ).toBe(1);
+  });
+
+  it('rolls back all line and version changes when receipt persistence fails', async () => {
+    const budget = await registerBudget(command(`document-rollback-${randomUUID()}`));
+    const fn = `reject_budget_document_${randomUUID().replaceAll('-', '')}`;
+    const trg = `reject_budget_document_${randomUUID().replaceAll('-', '')}`;
+    await client.query(
+      `CREATE FUNCTION ${fn}() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'injected document receipt failure'; END $$`
+    );
+    await client.query(
+      `CREATE TRIGGER ${trg} BEFORE INSERT ON finance_budget_document_import_receipts FOR EACH ROW EXECUTE FUNCTION ${fn}()`
+    );
+    try {
+      await expect(
+        importBudgetDocumentCommand(
+          documentImport(budget.budget.id, 1, `document-rollback-${randomUUID()}`, {
+            documentText: 'Przychody;100',
+          })
+        )
+      ).rejects.toThrow(/injected document receipt/);
+      expect(
+        (
+          await client.query(
+            `SELECT b.version,l.baseline_value::text value FROM budgets b JOIN budget_lines l ON l.budget_id=b.id AND l.line_code='REVENUE' WHERE b.id=$1`,
+            [budget.budget.id]
+          )
+        ).rows[0]
+      ).toEqual({ version: 1, value: '0' });
+    } finally {
+      await client.query(`DROP TRIGGER ${trg} ON finance_budget_document_import_receipts`);
+      await client.query(`DROP FUNCTION ${fn}()`);
+    }
+  });
+
+  it('migration fails closed before DDL on an occupied partial receipt identity', async () => {
+    const migration = fs.readFileSync(
+      path.resolve(
+        process.cwd(),
+        'server/migrations/20261055_finance_budget_document_import_command.sql'
+      ),
+      'utf8'
+    );
+    await client.query('BEGIN');
+    try {
+      await client.query(`DROP TABLE finance_budget_document_import_receipts CASCADE`);
+      await client.query(`DROP FUNCTION finance_budget_document_import_receipt_immutable()`);
+      await client.query(
+        `CREATE TABLE finance_budget_document_import_receipts(hostile_marker TEXT NOT NULL)`
+      );
+      await expect(client.query(migration)).rejects.toThrow(
+        /ECO-W39 owned migration identity already exists/
+      );
+    } finally {
+      await client.query('ROLLBACK');
+    }
+    expect(
+      (
+        await client.query(
+          `SELECT count(*)::int count FROM information_schema.columns WHERE table_schema='public' AND table_name='finance_budget_document_import_receipts'`
+        )
+      ).rows[0].count
+    ).toBeGreaterThan(1);
+  });
+
+  it('DatabaseInitializer boot fails hostile W39 and never blesses its ledger row', async () => {
+    const { discoverTablePlatformMigrationFiles, initializeDatabase } =
+      await import('../../../../database/DatabaseInitializer.js');
+    const migrationsDir = path.resolve(process.cwd(), 'server/migrations');
+    const target = '20261055_finance_budget_document_import_command.sql';
+    const migration = fs.readFileSync(path.join(migrationsDir, target), 'utf8');
+    await client.query(`CREATE TABLE IF NOT EXISTS tp_migration_history (
+      id SERIAL PRIMARY KEY, filename TEXT NOT NULL UNIQUE, executed_at TIMESTAMPTZ NOT NULL DEFAULT now(), checksum TEXT, duration_ms INTEGER
+    )`);
+    const existing = new Set(
+      (await client.query(`SELECT filename FROM tp_migration_history`)).rows.map(
+        (row) => row.filename as string
+      )
+    );
+    const added = discoverTablePlatformMigrationFiles(migrationsDir).filter(
+      (filename) => filename !== target && !existing.has(filename)
+    );
+    for (const filename of added) {
+      await client.query(
+        `INSERT INTO tp_migration_history(filename,duration_ms) VALUES($1,0) ON CONFLICT DO NOTHING`,
+        [filename]
+      );
+    }
+    try {
+      await client.query(`DROP TABLE finance_budget_document_import_receipts CASCADE`);
+      await client.query(`DROP FUNCTION finance_budget_document_import_receipt_immutable()`);
+      await client.query(
+        `CREATE TABLE finance_budget_document_import_receipts(hostile_marker TEXT NOT NULL)`
+      );
+      const priorSkip = process.env.POSTGRES_SKIP_INIT_IN_TEST;
+      delete process.env.POSTGRES_SKIP_INIT_IN_TEST;
+      try {
+        const boot = await initializeDatabase();
+        expect(boot.success).toBe(false);
+        expect(boot.message).toMatch(
+          /Table Platform migration 20261055_finance_budget_document_import_command\.sql failed: ECO-W39 owned migration identity already exists/
+        );
+      } finally {
+        if (priorSkip === undefined) delete process.env.POSTGRES_SKIP_INIT_IN_TEST;
+        else process.env.POSTGRES_SKIP_INIT_IN_TEST = priorSkip;
+      }
+      expect(
+        (
+          await client.query(
+            `SELECT count(*)::int count FROM tp_migration_history WHERE filename=$1`,
+            [target]
+          )
+        ).rows[0].count
+      ).toBe(0);
+      expect(
+        (
+          await client.query(
+            `SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name='finance_budget_document_import_receipts'`
+          )
+        ).rows
+      ).toEqual([{ column_name: 'hostile_marker' }]);
+    } finally {
+      await client.query(`DROP TABLE IF EXISTS finance_budget_document_import_receipts CASCADE`);
+      await client.query(
+        `DROP FUNCTION IF EXISTS finance_budget_document_import_receipt_immutable()`
+      );
+      await client.query(migration);
+      if (added.length > 0)
+        await client.query(`DELETE FROM tp_migration_history WHERE filename=ANY($1::text[])`, [
+          added,
+        ]);
     }
   });
 });

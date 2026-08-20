@@ -1,7 +1,10 @@
+import { createHash } from 'node:crypto';
 import express, { type Express } from 'express';
+import JSZip from 'jszip';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { FILE_UPLOAD_SIGNATURE_MISMATCH_CODE } from '../../../middleware/fileUpload.middleware.js';
 import { V8_FINANCE_READ_CONTRACT } from '../finance.routes.js';
 
 const mockFinanceEditorGate = vi.hoisted(() => vi.fn());
@@ -34,6 +37,8 @@ const mockProjectBudgetScenario = vi.fn();
 const mockUpdateBudgetScenarioAdjustments = vi.fn();
 const mockApproveBudgetCommand = vi.fn();
 const mockDiscardBudgetCommand = vi.fn();
+const mockImportBudgetDocumentCommand = vi.fn();
+const mockExtractDocumentTextFromBuffer = vi.fn();
 const mockListAnalyses = vi.fn();
 const mockGetAnalysisRatios = vi.fn();
 const mockGetAnalysisInsights = vi.fn();
@@ -354,6 +359,22 @@ vi.mock('../../../services/finance/canonical/budgetDiscardCommandService.js', ()
     }
   },
   discardBudgetCommand: (...args: unknown[]) => mockDiscardBudgetCommand(...args),
+}));
+vi.mock('../../../services/finance/canonical/budgetDocumentImportCommandService.js', () => ({
+  BudgetDocumentImportCommandError: class BudgetDocumentImportCommandError extends Error {
+    constructor(
+      public code: string,
+      public status: number,
+      message: string,
+      public details?: Record<string, unknown>
+    ) {
+      super(message);
+    }
+  },
+  importBudgetDocumentCommand: (...args: unknown[]) => mockImportBudgetDocumentCommand(...args),
+}));
+vi.mock('../../../services/documentTextExtractor.js', () => ({
+  extractTextFromBuffer: (...args: unknown[]) => mockExtractDocumentTextFromBuffer(...args),
 }));
 
 vi.mock('../../../services/ratioAnalysisService.js', () => ({
@@ -2077,6 +2098,143 @@ describe('V8 finance read-only routes', () => {
       .send({ expectedVersion: 3, reason: 'Superseded', hardDelete: true });
     expect(response.status).toBe(400);
     expect(mockDiscardBudgetCommand).not.toHaveBeenCalled();
+  });
+
+  it('POST /api/v8/finance/budgets/:budgetId/import-document extracts multipart and binds CAS', async () => {
+    const csv = Buffer.from('Przychody;1 234,50');
+    mockExtractDocumentTextFromBuffer.mockResolvedValue('Przychody;1 234,50');
+    mockImportBudgetDocumentCommand.mockResolvedValue({
+      budgetId: 'budget-new',
+      budgetVersion: 4,
+      linesImported: 1,
+      replay: false,
+    });
+    const app = createApp();
+    const response = await request(app)
+      .post('/api/v8/finance/budgets/budget-new/import-document')
+      .set('Idempotency-Key', 'document-import-key')
+      .set('x-expected-budget-version', '3')
+      .field('expectedVersion', '3')
+      .attach('file', csv, {
+        filename: 'budget.csv',
+        contentType: 'text/csv',
+      });
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    expect(mockExtractDocumentTextFromBuffer).toHaveBeenCalledWith(
+      expect.any(Buffer),
+      'budget.csv',
+      'text/csv'
+    );
+    expect(mockImportBudgetDocumentCommand).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: ORG,
+        userId: UID,
+        budgetId: 'budget-new',
+        expectedVersion: 3,
+        idempotencyKey: 'document-import-key',
+        sourceFileName: 'budget.csv',
+        sourceFileSize: csv.length,
+        sourceFileSha256: createHash('sha256').update(csv).digest('hex'),
+        documentText: 'Przychody;1 234,50',
+      })
+    );
+  });
+
+  it.each([
+    ['body only', '5', undefined],
+    ['header only', undefined, '6'],
+  ])('accepts a literal positive expectedVersion from %s', async (_label, body, header) => {
+    mockExtractDocumentTextFromBuffer.mockResolvedValue('Revenue,100');
+    mockImportBudgetDocumentCommand.mockResolvedValue({
+      budgetId: 'budget-new',
+      budgetVersion: Number(body ?? header) + 1,
+      linesImported: 1,
+      replay: false,
+    });
+    let call = request(createApp())
+      .post('/api/v8/finance/budgets/budget-new/import-document')
+      .set('Idempotency-Key', `document-${_label}-key`);
+    if (header) call = call.set('x-expected-budget-version', header);
+    if (body) call = call.field('expectedVersion', body);
+    const response = await call.attach('file', Buffer.from('Revenue,100'), {
+      filename: 'budget.csv',
+      contentType: 'text/csv',
+    });
+    expect(response.status).toBe(200);
+    expect(mockImportBudgetDocumentCommand).toHaveBeenCalledWith(
+      expect.objectContaining({ expectedVersion: Number(body ?? header) })
+    );
+  });
+
+  it.each([
+    ['spoofed PDF', 'fake.pdf', 'application/pdf', Buffer.from('not a pdf')],
+    ['spoofed XLS', 'fake.xls', 'application/vnd.ms-excel', Buffer.from('not ole2')],
+    ['spoofed CSV', 'fake.csv', 'text/csv', Buffer.from('%PDF-1.4 disguised')],
+  ])('rejects %s before extraction', async (_label, filename, contentType, content) => {
+    const response = await request(createApp())
+      .post('/api/v8/finance/budgets/budget-new/import-document')
+      .set('Idempotency-Key', 'document-negative-key')
+      .set('x-expected-budget-version', '3')
+      .attach('file', content, { filename, contentType });
+    expect(response.status).toBe(400);
+    expect(response.body.code).toBe(FILE_UPLOAD_SIGNATURE_MISMATCH_CODE);
+    expect(mockExtractDocumentTextFromBuffer).not.toHaveBeenCalled();
+    expect(mockImportBudgetDocumentCommand).not.toHaveBeenCalled();
+  });
+
+  it('rejects a ZIP that is not an XLSX workbook before extraction', async () => {
+    const zip = new JSZip();
+    zip.file('word/document.xml', '<w:document/>');
+    zip.file('[Content_Types].xml', '<Types/>');
+    const content = await zip.generateAsync({ type: 'nodebuffer' });
+    const response = await request(createApp())
+      .post('/api/v8/finance/budgets/budget-new/import-document')
+      .set('Idempotency-Key', 'document-xlsx-negative-key')
+      .set('x-expected-budget-version', '3')
+      .attach('file', content, {
+        filename: 'fake.xlsx',
+        contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+    expect(response.status).toBe(400);
+    expect(response.body.code).toBe(FILE_UPLOAD_SIGNATURE_MISMATCH_CODE);
+    expect(mockExtractDocumentTextFromBuffer).not.toHaveBeenCalled();
+  });
+
+  it('rejects DOCX even when its ZIP signature is genuine', async () => {
+    const zip = new JSZip();
+    zip.file('word/document.xml', '<w:document/>');
+    const content = await zip.generateAsync({ type: 'nodebuffer' });
+    const response = await request(createApp())
+      .post('/api/v8/finance/budgets/budget-new/import-document')
+      .set('Idempotency-Key', 'document-docx-negative-key')
+      .set('x-expected-budget-version', '3')
+      .attach('file', content, {
+        filename: 'fake.docx',
+        contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      });
+    expect(response.status).toBe(400);
+    expect(response.body.code).toBe(FILE_UPLOAD_SIGNATURE_MISMATCH_CODE);
+    expect(mockExtractDocumentTextFromBuffer).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['missing', undefined, undefined, 'INVALID_EXPECTED_VERSION'],
+    ['invalid header', undefined, '3.5', 'INVALID_EXPECTED_VERSION'],
+    ['invalid body', '0', undefined, 'INVALID_EXPECTED_VERSION'],
+    ['conflicting', '4', '3', 'EXPECTED_VERSION_CONFLICT'],
+  ])('rejects %s expectedVersion before command execution', async (_label, body, header, code) => {
+    let call = request(createApp())
+      .post('/api/v8/finance/budgets/budget-new/import-document')
+      .set('Idempotency-Key', 'document-version-negative-key');
+    if (header) call = call.set('x-expected-budget-version', header);
+    if (body !== undefined) call = call.field('expectedVersion', body);
+    const response = await call.attach('file', Buffer.from('Revenue,100'), {
+      filename: 'budget.csv',
+      contentType: 'text/csv',
+    });
+    expect(response.status).toBe(400);
+    expect(response.body.code).toBe(code);
+    expect(mockImportBudgetDocumentCommand).not.toHaveBeenCalled();
   });
 
   it('POST /api/v8/finance/analyses returns envelope and delegates to createAnalysis', async () => {

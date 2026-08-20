@@ -112,6 +112,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
   const [showDocImport, setShowDocImport] = useState(false);
   const [docImportFile, setDocImportFile] = useState<File | null>(null);
   const [docImporting, setDocImporting] = useState(false);
+  const [docImportIntentKey, setDocImportIntentKey] = useState(() => crypto.randomUUID());
   const [newTitle, setNewTitle] = useState('');
   const [startPeriod, setStartPeriod] = useState('');
   const [endPeriod, setEndPeriod] = useState('');
@@ -384,37 +385,28 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
     if (!docImportFile || !selected) return;
     setDocImporting(true);
     try {
-      const documentText = await docImportFile.text();
-      const res = await fetch(`${API_URL}/economics/budgets/${selected.id}/import-document`, {
-        method: 'POST',
-        headers: {
-          Authorization: getHeaders()['Authorization'] || '',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          filename: docImportFile.name,
-          documentText,
-        }),
-      });
-      if (res.ok) {
-        const d = await res.json();
-        toast.success(
-          t('finance.budget.docImported', `Imported ${d.linesImported || 0} budget lines`)
-        );
-        setShowDocImport(false);
-        setDocImportFile(null);
-        await selectBudget(selected);
-        onBudgetChanged?.();
-      } else {
-        const err = await res.json().catch(() => ({}));
-        toast.error(err.error || t('finance.budget.importFailed', 'Import failed'));
-      }
-    } catch {
-      toast.error(t('finance.budget.documentImportFailed', 'Document import failed'));
+      const result = await V8FinanceApi.importBudgetDocument(
+        selected.id,
+        docImportFile,
+        selected.version,
+        docImportIntentKey
+      );
+      toast.success(
+        t('finance.budget.docImported', `Imported ${result.linesImported || 0} budget lines`)
+      );
+      setShowDocImport(false);
+      setDocImportFile(null);
+      setDocImportIntentKey(crypto.randomUUID());
+      await selectBudget({ ...selected, version: result.budgetVersion });
+      onBudgetChanged?.();
+    } catch (error: any) {
+      toast.error(
+        error?.message || t('finance.budget.documentImportFailed', 'Document import failed')
+      );
     } finally {
       setDocImporting(false);
     }
-  }, [docImportFile, selected, t, selectBudget, onBudgetChanged]);
+  }, [docImportFile, selected, docImportIntentKey, t, selectBudget, onBudgetChanged]);
 
   const initiativeImpactTotal = useMemo(
     () => ({
@@ -1146,7 +1138,10 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                 id="doc-import-input"
                 type="file"
                 accept=".pdf,.xlsx,.xls,.csv"
-                onChange={(e) => setDocImportFile(e.target.files?.[0] || null)}
+                onChange={(e) => {
+                  setDocImportFile(e.target.files?.[0] || null);
+                  setDocImportIntentKey(crypto.randomUUID());
+                }}
                 className="hidden"
               />
             </div>

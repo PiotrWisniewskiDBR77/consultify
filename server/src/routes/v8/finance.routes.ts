@@ -15,7 +15,12 @@ import JSZip from 'jszip';
 import { v4 as uuidv4 } from 'uuid';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
-import { upload } from '../../middleware/fileUpload.middleware.js';
+import {
+  FILE_UPLOAD_SIGNATURE_MISMATCH_CODE,
+  sniffFileSignature,
+  upload,
+} from '../../middleware/fileUpload.middleware.js';
+import { extractTextFromBuffer as extractDocumentTextFromBuffer } from '../../services/documentTextExtractor.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import { listBudgets } from '../../services/budgetingService.js';
 import { searchStatementDocumentIntelligence } from '../../services/documentIntelligenceService.js';
@@ -168,11 +173,100 @@ import {
   discardBudgetCommand,
   BudgetDiscardCommandError,
 } from '../../services/finance/canonical/budgetDiscardCommandService.js';
+import {
+  importBudgetDocumentCommand,
+  BudgetDocumentImportCommandError,
+} from '../../services/finance/canonical/budgetDocumentImportCommandService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 
 const router = Router();
+
+const BUDGET_IMPORT_MIME_BY_EXT: Record<string, ReadonlySet<string>> = {
+  pdf: new Set(['application/pdf']),
+  xlsx: new Set(['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']),
+  xls: new Set(['application/vnd.ms-excel']),
+  csv: new Set([
+    'text/csv',
+    'application/csv',
+    'application/vnd.ms-excel',
+    'text/plain',
+    'application/octet-stream',
+  ]),
+};
+
+async function verifyBudgetImportFile(
+  sourceFile: Buffer,
+  originalName: string,
+  mimeType: string
+): Promise<void> {
+  const ext = path.extname(originalName).slice(1).toLowerCase();
+  const mime = mimeType.split(';')[0].trim().toLowerCase();
+  if (!BUDGET_IMPORT_MIME_BY_EXT[ext]?.has(mime) || !sniffFileSignature(sourceFile, ext)) {
+    throw new BudgetDocumentImportCommandError(
+      FILE_UPLOAD_SIGNATURE_MISMATCH_CODE,
+      400,
+      'File content does not match an allowed PDF, XLS, XLSX, or CSV type'
+    );
+  }
+  if (ext === 'xls') {
+    const ole2 = Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]);
+    if (!sourceFile.subarray(0, 8).equals(ole2)) {
+      throw new BudgetDocumentImportCommandError(
+        FILE_UPLOAD_SIGNATURE_MISMATCH_CODE,
+        400,
+        'Legacy XLS requires an OLE2 workbook signature'
+      );
+    }
+  }
+  if (ext === 'xlsx') {
+    try {
+      const zip = await JSZip.loadAsync(sourceFile);
+      if (!zip.file('xl/workbook.xml') || !zip.file('[Content_Types].xml')) throw new Error();
+    } catch {
+      throw new BudgetDocumentImportCommandError(
+        FILE_UPLOAD_SIGNATURE_MISMATCH_CODE,
+        400,
+        'XLSX content is not a spreadsheet workbook'
+      );
+    }
+  }
+}
+
+function resolveBudgetImportExpectedVersion(req: AuthRequest): number {
+  const bodyRaw = req.body?.expectedVersion;
+  const headerRaw = req.header('x-expected-budget-version');
+  const bodyPresent = bodyRaw !== undefined && bodyRaw !== null && String(bodyRaw).trim() !== '';
+  const headerPresent = headerRaw !== undefined && headerRaw !== null && headerRaw.trim() !== '';
+  const parse = (raw: unknown): number | null => {
+    const literal = String(raw).trim();
+    if (!/^[1-9]\d*$/.test(literal)) return null;
+    const value = Number(literal);
+    return Number.isSafeInteger(value) ? value : null;
+  };
+  const body = bodyPresent ? parse(bodyRaw) : null;
+  const header = headerPresent ? parse(headerRaw) : null;
+  if (
+    (!bodyPresent && !headerPresent) ||
+    (bodyPresent && body === null) ||
+    (headerPresent && header === null)
+  ) {
+    throw new BudgetDocumentImportCommandError(
+      'INVALID_EXPECTED_VERSION',
+      400,
+      'A positive integer expectedVersion is required'
+    );
+  }
+  if (body !== null && header !== null && body !== header) {
+    throw new BudgetDocumentImportCommandError(
+      'EXPECTED_VERSION_CONFLICT',
+      400,
+      'Body and header expectedVersion values must match'
+    );
+  }
+  return body ?? (header as number);
+}
 
 // FIN-MVP-CUTOVER-001: observe the complete legacy surface and fail closed
 // only for writers with an explicitly proven canonical successor.
@@ -1324,6 +1418,51 @@ router.get(
       exportedAt: new Date().toISOString(),
       exportVersion: '1.0',
     });
+  })
+);
+
+router.post(
+  '/budgets/:budgetId/import-document',
+  upload.single('file'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const file = req.file;
+    if (!file) return res.status(400).json({ code: 'FILE_REQUIRED', error: 'File required' });
+    try {
+      const { organizationId } = getV8Context(req);
+      const userId = String(req.user?.id || (req.user as any)?.user_id || '');
+      const sourceFile = file.buffer || (await fs.readFile(file.path));
+      await verifyBudgetImportFile(sourceFile, file.originalname, file.mimetype);
+      const expectedVersion = resolveBudgetImportExpectedVersion(req);
+      const documentText = await extractDocumentTextFromBuffer(
+        sourceFile,
+        file.originalname,
+        file.mimetype
+      );
+      const result = await importBudgetDocumentCommand({
+        organizationId,
+        userId,
+        budgetId: req.params.budgetId,
+        expectedVersion,
+        idempotencyKey: String(
+          req.header('Idempotency-Key') || req.header('x-idempotency-key') || ''
+        ),
+        sourceFileName: file.originalname,
+        sourceMimeType: file.mimetype,
+        sourceFileSize: file.size,
+        sourceFileSha256: sha256(sourceFile),
+        documentText,
+      });
+      return res.status(200).json({ data: result, meta: financeMeta() });
+    } catch (error) {
+      if (error instanceof BudgetDocumentImportCommandError) {
+        return res
+          .status(error.status)
+          .json({ code: error.code, error: error.message, ...(error.details || {}) });
+      }
+      throw error;
+    } finally {
+      if (file.path) await fs.unlink(file.path).catch(() => undefined);
+    }
   })
 );
 

@@ -455,10 +455,10 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'ECO-W39',
       method: 'POST',
       path: /^\/budgets\/[^/]+\/import-document\/?$/,
-      state: 'observed',
-      successor: null,
+      state: 'disabled',
+      successor: '/api/v8/finance/budgets/:budgetId/import-document',
       reason:
-        'Parses free-text document content and inserts budget_lines rows for the budget addressed by :id (economics.routes.ts:3220, inline INSERT at :3311). No proven successor.',
+        'The mounted document-import caller uses a multipart canonical command with hardened PDF/XLS/XLSX/CSV extraction, locale-aware parsing, DRAFT/version CAS, atomic replacement of existing canonical lines, immutable provenance receipt and writer-scoped legacy rollback.',
     },
     {
       writerId: 'ECO-W40',

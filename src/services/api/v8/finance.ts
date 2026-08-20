@@ -323,6 +323,18 @@ export interface V8FinanceBudgetDiscardResult {
   replay: boolean;
 }
 
+export interface V8FinanceBudgetDocumentImportResult {
+  budgetId: string;
+  budgetVersion: number;
+  linesImported: number;
+  mappings: Array<{ lineId: string; lineCode: string; value: string }>;
+  unappliedDiagnostics: Array<{ sourceRow: number; raw: string; reason: string }>;
+  source: { fileName: string; mimeType: string; fileSha256: string; textSha256: string };
+  importedBy: string;
+  importedAt: string;
+  replay: boolean;
+}
+
 export interface V8FinanceStatementPackSummary {
   id: string;
   entity_name?: string | null;
@@ -778,6 +790,24 @@ export const V8FinanceApi = {
       { expectedVersion, reason },
       idempotencyKey
     ),
+  importBudgetDocument: (
+    budgetId: string,
+    file: File,
+    expectedVersion: number,
+    idempotencyKey: string
+  ) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('expectedVersion', String(expectedVersion));
+    return v8PostMultipart<V8FinanceBudgetDocumentImportResult>(
+      `/finance/budgets/${budgetId}/import-document`,
+      formData,
+      {
+        'Idempotency-Key': idempotencyKey,
+        'x-expected-budget-version': String(expectedVersion),
+      }
+    );
+  },
   getStatementPacks: (params?: { readiness?: string }) =>
     v8Get<{ statementPacks: V8FinanceStatementPackSummary[]; count: number }>(
       '/finance/statement-packs',

@@ -7,6 +7,8 @@
  */
 
 import { Document, Packer, Paragraph, TextRun } from 'docx';
+import fs from 'node:fs';
+import path from 'node:path';
 import JSZip from 'jszip';
 import { describe, expect, it } from 'vitest';
 import * as XLSX from 'xlsx';
@@ -45,6 +47,12 @@ function makeXlsx(): Buffer {
   return XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }) as Buffer;
 }
 
+function makeXls(): Buffer {
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Revenue', MARKER]]), 'Budget');
+  return XLSX.write(wb, { type: 'buffer', bookType: 'biff8' }) as Buffer;
+}
+
 async function makePptx(): Promise<Buffer> {
   // Minimalny OOXML PPTX: extractor czyta ppt/slides/slideN.xml → <a:t>.
   const zip = new JSZip();
@@ -76,6 +84,28 @@ describe('HP-23 documentTextExtractor — 3 formaty biurowe', () => {
     expect(text).toContain(MARKER);
     expect(text).toContain('Revenue');
     expect(text).toContain('Sheet1');
+  });
+
+  it('advertised Finance import formats use genuine extractor fixtures', async () => {
+    const pdf = fs.readFileSync(
+      path.resolve(process.cwd(), 'tests/fixtures/finance/dbr77-balance-sheet.pdf')
+    );
+    expect(await extractTextFromBuffer(pdf, 'statement.pdf', 'application/pdf')).toMatch(
+      /Balance Sheet/i
+    );
+    expect(
+      await extractTextFromBuffer(makeXls(), 'budget.xls', 'application/vnd.ms-excel')
+    ).toContain(MARKER);
+    expect(
+      await extractTextFromBuffer(
+        makeXlsx(),
+        'budget.xlsx',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      )
+    ).toContain(MARKER);
+    expect(
+      await extractTextFromBuffer(Buffer.from(`Revenue,${MARKER}`), 'budget.csv', 'text/csv')
+    ).toContain(MARKER);
   });
 
   it('PPTX → tekst zawiera treść slajdów z <a:t>', async () => {
