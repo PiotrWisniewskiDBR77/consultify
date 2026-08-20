@@ -219,8 +219,8 @@
   "humanGate": "BLOCKED_HUMAN",
   "openBlockers": [
     "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
-    "Task-specific UI states not reached by the final automated sweep: stale.",
-    "Prediction and Valuation workspace completion plus an explicit conflict journey remain incomplete."
+    "A full mounted Prediction authoring-to-preflight browser journey remains incomplete; focused exact-current UI proof covers loading, not-found, transport failure, retry and honest preflight rejection.",
+    "An explicit mounted browser conflict journey remains incomplete. The task registry declares stale outside the Finance state denominator, while canonical valuation service tests cover stale CAS and exact cold readback."
   ],
   "blockerReconciliation": [
     {
@@ -343,5 +343,22 @@
       "notFound404": 0,
       "other": 0
     }
+  },
+  "exactCurrentFinanceFocusedRequalification20260820": {
+    "candidateProductSha": "e6ca206c0035f653118d9aadbfddf61d452ab52e",
+    "command": "npx vitest run src/components/Finance/Prediction/__tests__/PredictionWorkspace.test.tsx src/components/Finance/Prediction/__tests__/PredictionWorkspace.errorBoundary.test.tsx src/components/Finance/Valuation/__tests__/ValuationWorkspace.test.tsx src/components/Finance/Valuation/__tests__/ValuationWorkspace.flag.test.tsx server/src/services/finance/canonical/__tests__/valuationFcffOrderDeterminism.test.ts server/src/services/finance/canonical/__tests__/predictionPreflightOrderDeterminism.test.ts --no-file-parallelism --maxWorkers=1 --retry=0",
+    "result": "PASS 6 files / 36 tests",
+    "proved": [
+      "Prediction renders truthful loading, not-found and transport-error states; retry performs a fresh server check and only then mounts the real workspace.",
+      "Prediction preflight rejection remains an explicit failure and never fabricates success.",
+      "Valuation hydrates canonical assumptions from asynchronous cold readback, surfaces typed load failures and contains local render failures.",
+      "Valuation and prediction calculations are deterministic under input-order churn with negative controls."
+    ],
+    "denominatorReconciliation": "The G4 registry explicitly lists stale in statesNotPresent for FIN. Absence of a stale screen is therefore not a failed required state and the former generic stale blocker was removed.",
+    "notClaimed": [
+      "No full mounted Prediction authoring-to-preflight browser lifecycle was run in this requalification.",
+      "No mounted browser conflict journey was run in this requalification.",
+      "Human VoiceOver, named-persona and visual-owner acceptance remain pending."
+    ]
   }
 }
