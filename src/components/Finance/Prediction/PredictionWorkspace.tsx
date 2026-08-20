@@ -264,6 +264,42 @@ function PredictionWorkspaceInner(props: PredictionWorkspaceProps): React.ReactE
       setStatusMessage(`Założenia zapisane i potwierdzone (rewizja ${cold.revision}).`);
       return confirmed;
     } catch (error) {
+      const described = describeFinanceV2Error(error);
+      if (described.code === 'PREDICTION_AUTHORING_CONFLICT') {
+        try {
+          const cold = await getFinancePredictionAuthoring(draft.businessVersionId);
+          if (!cold.draft || cold.revision <= revision) {
+            throw new Error('Conflict readback did not return a newer canonical revision');
+          }
+          clearPersistentCommandId(AUTHORING_COMMAND_NAMESPACE, intent);
+          const authoritative = { ...cold.draft, businessVersionId: draft.businessVersionId };
+          setDraft(authoritative);
+          setComputeContext(cold.computeContext);
+          setCanonicalResults(cold.results);
+          setConfirmedAuthoringContent(authoringContent(authoritative));
+          setAuthoringState({ kind: 'ready', revision: cold.revision });
+          const reconciled = Object.assign(
+            new Error(
+              `Założenia zostały zmienione w innym miejscu. Wczytano kanoniczną rewizję ${cold.revision}; sprawdź dane i ponów świadomą zmianę.`
+            ),
+            {
+              status: 409,
+              data: { code: 'PREDICTION_AUTHORING_CONFLICT_RECONCILED' },
+            }
+          );
+          throw reconciled;
+        } catch (reconciliationError) {
+          if (
+            reconciliationError instanceof Error &&
+            (reconciliationError as Error & { data?: { code?: string } }).data?.code ===
+              'PREDICTION_AUTHORING_CONFLICT_RECONCILED'
+          ) {
+            throw reconciliationError;
+          }
+          setAuthoringState({ kind: 'ready', revision });
+          throw error;
+        }
+      }
       setAuthoringState({ kind: 'ready', revision });
       throw error;
     }

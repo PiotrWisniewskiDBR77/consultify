@@ -210,6 +210,77 @@ describe('PredictionWorkspace — smoke render (real businessVersionId confirmed
     );
   });
 
+  it('409 cold-reconciles exact newer revision and a subsequent conscious intent saves with a fresh command', async () => {
+    const canonicalDraft = {
+      ...createEmptyScenarioDraft({ name: 'Zmiana z innej sesji' }),
+      businessVersionId: 'bv-prediction-1',
+    };
+    const initial = {
+      configured: false,
+      businessVersionId: 'bv-prediction-1',
+      revision: 0,
+      draft: null,
+      computeContext: {
+        ready: false,
+        entityIds: [],
+        forecastPeriodIds: [],
+        openingBalanceSheetPeriodId: null,
+      },
+      results: { scenarioValues: {}, baselineValues: {} },
+    };
+    const external = { ...initial, configured: true, revision: 1, draft: canonicalDraft };
+    const resaved = {
+      ...external,
+      revision: 2,
+      draft: { ...canonicalDraft, name: 'Świadoma zmiana po konflikcie' },
+    };
+    apiMocks.getFinancePredictionAuthoring
+      .mockReset()
+      .mockResolvedValueOnce(initial)
+      .mockResolvedValueOnce(external)
+      .mockResolvedValueOnce(resaved);
+    apiMocks.saveFinancePredictionAuthoring
+      .mockRejectedValueOnce(apiError(409, 'PREDICTION_AUTHORING_CONFLICT'))
+      .mockResolvedValueOnce(resaved);
+
+    render(<PredictionWorkspace artifactId="artifact-1" businessVersionId="bv-prediction-1" />);
+    await waitFor(() =>
+      expect(screen.getByTestId('prediction-canonical-authoring-banner')).toHaveTextContent(
+        'Rewizja authoringu: 0'
+      )
+    );
+    fireEvent.click(screen.getByTestId('prediction-save-authoring'));
+    await waitFor(() =>
+      expect(screen.getByTestId('prediction-status-message')).toHaveTextContent(
+        /Wczytano kanoniczną rewizję 1/i
+      )
+    );
+    expect(screen.getByTestId('prediction-canonical-authoring-banner')).toHaveTextContent(
+      'Rewizja authoringu: 1'
+    );
+    expect(screen.getByTestId('finance-workspace-bar-name')).toHaveTextContent(
+      'Zmiana z innej sesji'
+    );
+
+    fireEvent.click(screen.getByTestId('finance-workspace-bar-name'));
+    const renameInput = await screen.findByDisplayValue('Zmiana z innej sesji');
+    fireEvent.change(renameInput, { target: { value: 'Świadoma zmiana po konflikcie' } });
+    fireEvent.keyDown(renameInput, { key: 'Enter' });
+    fireEvent.click(screen.getByTestId('prediction-save-authoring'));
+    await waitFor(() =>
+      expect(screen.getByTestId('prediction-canonical-authoring-banner')).toHaveTextContent(
+        'Rewizja authoringu: 2'
+      )
+    );
+    expect(apiMocks.saveFinancePredictionAuthoring).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ expectedRevision: 1, idempotencyKey: expect.any(String) })
+    );
+    expect(apiMocks.saveFinancePredictionAuthoring.mock.calls[0]?.[0]?.idempotencyKey).not.toBe(
+      apiMocks.saveFinancePredictionAuthoring.mock.calls[1]?.[0]?.idempotencyKey
+    );
+  });
+
   it('save -> calculate używa wyłącznie kanonicznego compute context i pokazuje cold-read results', async () => {
     const draft = {
       ...createEmptyScenarioDraft({ name: 'Base scenario' }),

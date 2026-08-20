@@ -1664,6 +1664,18 @@ export function describeFinanceV2Error(err: unknown): {
         detail: err.message || 'Sprawdź dane i spróbuj ponownie.',
         code,
       };
+    case 'PREDICTION_AUTHORING_CONFLICT':
+      return {
+        title: 'Założenia zmieniły się na serwerze',
+        detail: 'Odświeżono stan kanoniczny. Sprawdź aktualne dane i ponów świadomą zmianę.',
+        code,
+      };
+    case 'PREDICTION_AUTHORING_CONFLICT_RECONCILED':
+      return {
+        title: 'Założenia zmieniły się na serwerze',
+        detail: err.message,
+        code,
+      };
     default:
       return {
         title: 'Nie udało się wykonać operacji',

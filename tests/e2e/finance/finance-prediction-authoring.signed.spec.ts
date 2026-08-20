@@ -164,6 +164,65 @@ test('signed Prediction authoring saves, preflights, calculates and cold-reopens
       'Rewizja authoringu: 1'
     );
 
+    const externalRead = await request.get(
+      `${API}/api/v8/finance-v2/prediction/${prediction.businessVersionId}/authoring`,
+      { headers }
+    );
+    expect(externalRead.status()).toBe(200);
+    const externalSnapshot = (await externalRead.json()).data as { draft: Record<string, unknown> };
+    const externalWrite = await request.put(
+      `${API}/api/v8/finance-v2/prediction/${prediction.businessVersionId}/authoring`,
+      {
+        headers: { ...headers, 'x-idempotency-key': randomUUID() },
+        data: {
+          expectedRevision: 1,
+          draft: { ...externalSnapshot.draft, name: 'Równoległa zmiana kanoniczna' },
+        },
+      }
+    );
+    expect(externalWrite.status()).toBe(200);
+
+    await page.getByTestId('finance-workspace-bar-name').click();
+    const staleRename = page.getByRole('textbox');
+    await staleRename.fill('Lokalna zmiana skazana na konflikt');
+    await staleRename.press('Enter');
+    const conflictResponse = page.waitForResponse(
+      (response) =>
+        response.request().method() === 'PUT' &&
+        new URL(response.url()).pathname.endsWith(
+          `/prediction/${prediction.businessVersionId}/authoring`
+        )
+    );
+    await page.getByTestId('prediction-save-authoring').click();
+    expect((await conflictResponse).status()).toBe(409);
+    await expect(page.getByTestId('prediction-status-message')).toContainText(
+      'Wczytano kanoniczną rewizję 2'
+    );
+    await expect(page.getByTestId('prediction-canonical-authoring-banner')).toContainText(
+      'Rewizja authoringu: 2'
+    );
+    await expect(page.getByTestId('finance-workspace-bar-name')).toContainText(
+      'Równoległa zmiana kanoniczna'
+    );
+
+    await page.getByTestId('finance-workspace-bar-name').click();
+    const consciousRename = page.getByRole('textbox');
+    await expect(consciousRename).toHaveValue('Równoległa zmiana kanoniczna');
+    await consciousRename.fill('Świadoma zmiana po konflikcie');
+    await consciousRename.press('Enter');
+    const resaveResponse = page.waitForResponse(
+      (response) =>
+        response.request().method() === 'PUT' &&
+        new URL(response.url()).pathname.endsWith(
+          `/prediction/${prediction.businessVersionId}/authoring`
+        )
+    );
+    await page.getByTestId('prediction-save-authoring').click();
+    expect((await resaveResponse).status()).toBe(200);
+    await expect(page.getByTestId('prediction-canonical-authoring-banner')).toContainText(
+      'Rewizja authoringu: 3'
+    );
+
     const preflightResponse = page.waitForResponse((response) =>
       new URL(response.url()).pathname.endsWith(
         `/prediction/${prediction.businessVersionId}/preflight`
@@ -188,7 +247,7 @@ test('signed Prediction authoring saves, preflights, calculates and cold-reopens
 
     await page.reload();
     await expect(page.getByTestId('prediction-canonical-authoring-banner')).toContainText(
-      'Rewizja authoringu: 1',
+      'Rewizja authoringu: 3',
       { timeout: 30_000 }
     );
     await page.getByRole('tab', { name: /Modele.*Wyniki/i }).click();
@@ -201,7 +260,7 @@ test('signed Prediction authoring saves, preflights, calculates and cold-reopens
          FROM finance_prediction_scenarios s WHERE s.organization_id=$1 AND s.business_version_id=$2`,
       [state.organizationId, prediction.businessVersionId]
     );
-    expect(persisted.rows[0]).toEqual({ revision: '1', receipts: '1', outputs: '1' });
+    expect(persisted.rows[0]).toEqual({ revision: '3', receipts: '3', outputs: '1' });
   } finally {
     await pool.end();
   }
