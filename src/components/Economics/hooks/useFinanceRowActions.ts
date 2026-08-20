@@ -270,11 +270,17 @@ export function useFinanceRowActions({
         ) {
           const rawId = getBudgetRawId(row.id);
           const detail = (await Api.get(`/api/economics/budgets/${rawId}`)) as any;
-          await Api.post('/api/economics/budgets', {
-            title: copyTitle,
-            periodStart: detail.periodStart || detail.period_start,
-            periodEnd: detail.periodEnd || detail.period_end,
-          });
+          await V8FinanceApi.createBudget(
+            {
+              title: copyTitle,
+              periodStart: String(detail.periodStart || detail.period_start),
+              periodEnd: String(detail.periodEnd || detail.period_end),
+              granularity: detail.granularity || 'monthly',
+              currency: detail.currency || 'PLN',
+              sourceKind: 'manual',
+            },
+            crypto.randomUUID()
+          );
           await loadBudgets();
         } else if (row.kind === 'analysis' || row.kind === 'investment') {
           // FIN-005: was hardcoded 'PLN', so duplicating a EUR analysis minted a

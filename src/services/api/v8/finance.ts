@@ -159,7 +159,21 @@ export interface V8FinanceBudgetRegistrationPayload {
 }
 
 export interface V8FinanceBudgetRegistrationResult {
-  budget: V8FinanceBudgetSummary;
+  budget: {
+    id: string;
+    organizationId: string;
+    projectId?: string;
+    title: string;
+    description?: string;
+    status: string;
+    periodStart: string;
+    periodEnd: string;
+    granularity: string;
+    currency: string;
+    version: number;
+    createdAt: string;
+    updatedAt: string;
+  };
   lineCount: number;
   scenarioCount: number;
   replay: boolean;

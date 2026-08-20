@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { Api } from '@/services/api';
+import { V8FinanceApi } from '@/services/api/v8/finance';
 
 import { type FinanceModelRow, normalizeStatus } from '../financeTypes';
 
@@ -19,22 +19,29 @@ export const CreateBudgetModal: React.FC<CreateBudgetModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const [title, setTitle] = useState(initialTitle);
-  const [periodStart, setPeriodStart] = useState('2026-01');
-  const [periodEnd, setPeriodEnd] = useState('2026-12');
+  const [periodStart, setPeriodStart] = useState('');
+  const [periodEnd, setPeriodEnd] = useState('');
   const [granularity, setGranularity] = useState<'monthly' | 'quarterly' | 'annual'>('monthly');
   const [creating, setCreating] = useState(false);
+  const [intentKey, setIntentKey] = useState(() => crypto.randomUUID());
 
   const handleCreate = useCallback(async () => {
-    if (!title.trim()) return;
+    if (!title.trim() || !periodStart || !periodEnd || periodStart > periodEnd) return;
     setCreating(true);
     try {
-      const result = await Api.post('/api/economics/budgets', {
-        title: title.trim(),
-        periodStart,
-        periodEnd,
-        granularity,
-      });
-      const created = (result as any)?.budget || result;
+      const [endYear, endMonth] = periodEnd.split('-').map(Number);
+      const result = await V8FinanceApi.createBudget(
+        {
+          title: title.trim(),
+          periodStart: `${periodStart}-01`,
+          periodEnd: new Date(Date.UTC(endYear, endMonth, 0)).toISOString().slice(0, 10),
+          granularity,
+          currency: 'PLN',
+          sourceKind: 'manual',
+        },
+        intentKey
+      );
+      const created = result.budget;
       toast.success(t('finance.toast.budgetCreated', 'Budżet utworzony'));
       onCreated({
         id: `budget-${created.id}`,
@@ -45,11 +52,12 @@ export const CreateBudgetModal: React.FC<CreateBudgetModalProps> = ({
         scenario: 'base/opt/cons',
         currency: String(created.currency || 'PLN'),
         horizonMonths: 0,
-        startDate: String(created.periodStart || periodStart),
-        periodStart: String(created.periodStart || periodStart),
-        periodEnd: String(created.periodEnd || periodEnd),
-        updatedAt: String(created.updated_at || new Date().toISOString()),
+        startDate: String(created.periodStart),
+        periodStart: String(created.periodStart),
+        periodEnd: String(created.periodEnd),
+        updatedAt: String(created.updatedAt),
       });
+      setIntentKey(crypto.randomUUID());
     } catch (e: any) {
       toast.error(
         e?.response?.data?.error || t('finance.toast.createFailed', 'Nie udało się utworzyć')
@@ -57,7 +65,7 @@ export const CreateBudgetModal: React.FC<CreateBudgetModalProps> = ({
     } finally {
       setCreating(false);
     }
-  }, [title, periodStart, periodEnd, granularity, onCreated, t]);
+  }, [title, periodStart, periodEnd, granularity, intentKey, onCreated, t]);
 
   return (
     <div className="fixed inset-0 z-overlay bg-black/40 flex items-center justify-center p-4">
@@ -71,7 +79,10 @@ export const CreateBudgetModal: React.FC<CreateBudgetModalProps> = ({
           </label>
           <input
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              setIntentKey(crypto.randomUUID());
+            }}
             placeholder={
               t('finance.prediction.namePlaceholder', 'e.g., Budget 2026 Q1-Q4') as string
             }
@@ -86,7 +97,10 @@ export const CreateBudgetModal: React.FC<CreateBudgetModalProps> = ({
             <input
               type="month"
               value={periodStart}
-              onChange={(e) => setPeriodStart(e.target.value)}
+              onChange={(e) => {
+                setPeriodStart(e.target.value);
+                setIntentKey(crypto.randomUUID());
+              }}
               className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800"
             />
           </div>
@@ -97,7 +111,10 @@ export const CreateBudgetModal: React.FC<CreateBudgetModalProps> = ({
             <input
               type="month"
               value={periodEnd}
-              onChange={(e) => setPeriodEnd(e.target.value)}
+              onChange={(e) => {
+                setPeriodEnd(e.target.value);
+                setIntentKey(crypto.randomUUID());
+              }}
               className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800"
             />
           </div>
@@ -108,7 +125,10 @@ export const CreateBudgetModal: React.FC<CreateBudgetModalProps> = ({
           </label>
           <select
             value={granularity}
-            onChange={(e) => setGranularity(e.target.value as any)}
+            onChange={(e) => {
+              setGranularity(e.target.value as 'monthly' | 'quarterly' | 'annual');
+              setIntentKey(crypto.randomUUID());
+            }}
             className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800"
           >
             <option value="monthly">{t('finance.prediction.monthly', 'Miesięczna')}</option>
@@ -125,7 +145,9 @@ export const CreateBudgetModal: React.FC<CreateBudgetModalProps> = ({
           </button>
           <button
             onClick={handleCreate}
-            disabled={!title.trim() || creating}
+            disabled={
+              !title.trim() || !periodStart || !periodEnd || periodStart > periodEnd || creating
+            }
             className="px-4 py-2 bg-c-text text-c-bg text-sm rounded-lg hover:opacity-90 disabled:opacity-50"
           >
             {t('common.create', 'Create')}

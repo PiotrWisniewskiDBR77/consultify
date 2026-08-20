@@ -76,11 +76,13 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
     const files = [
       'src/services/conversionService.ts',
       'src/components/Benefits/BudgetWorkspace.tsx',
+      'src/components/Economics/modals/CreateBudgetModal.tsx',
+      'src/components/Economics/hooks/useFinanceRowActions.ts',
     ];
     for (const file of files) {
       const source = fs.readFileSync(path.resolve(process.cwd(), file), 'utf8');
       expect(source).toContain('V8FinanceApi.createBudget');
-      expect(source).not.toMatch(/Api\.post\([^\n]*\/economics\/budgets/);
+      expect(source).not.toMatch(/Api\.post\(['"`]\/api\/economics\/budgets['"`]/);
       expect(source).not.toMatch(
         /fetch\(`\$\{API_URL\}\/economics\/budgets`,\s*\{\s*method:\s*'POST'/
       );
