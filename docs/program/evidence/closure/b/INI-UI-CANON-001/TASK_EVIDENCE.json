@@ -274,5 +274,20 @@
       "notFound404": 0,
       "other": 0
     }
+  },
+  "stagingCandidateRequalification20260820": {
+    "candidateProductSha": "e6ca206c0035f653118d9aadbfddf61d452ab52e",
+    "deployedJourney": "STG-JOURNEY-16 INI passed: a canonical draft document survived update, exact independent GET and cold deep-link reopen; the complete deployed suite passed 16/16.",
+    "focusedCommand": "npx vitest run tests/unit/initiatives-execution/canonicalInitiativeCardWorkspace.test.tsx tests/unit/initiatives-execution/initiativesHubCanonicalTabs.test.tsx --no-file-parallelism --maxWorkers=1 --retry=0",
+    "focusedResult": "PASS 2 files / 12 tests",
+    "focusedProof": [
+      "candidate deep-link remains canonical and preserves proposal context",
+      "schedule command pins exact scenario and frozen handoff identity",
+      "linked Execution opens the exact case",
+      "409 schedule conflict is labelled truthfully and offers bounded reload",
+      "lost Analysis Decision response retries with the same command identity"
+    ],
+    "realPgRerun": "NOT_EXECUTED in this evidence worktree because no explicitly named disposable DATABASE_URL was available; the attempted acceptance-config import failed closed before test collection and is not counted as product evidence.",
+    "remainingBoundary": "The deployed cold journey, focused rendered contract and historical signed RealPG remain separate evidence. A single literal signed-browser stale-conflict lifecycle is still not proven, and human VoiceOver/persona/brand acceptance remains pending."
   }
 }
