@@ -57,6 +57,19 @@ async function newActorContext(browser, email) {
       loggedIn = !page.url().includes('/login');
     }
     if (!loggedIn) throw new Error(`LOGIN FAILED for ${email}`);
+
+    // Exact-current shell may show the first-login Teresa onboarding above
+    // the requested Results route.  This is not part of the Results journey,
+    // so dismiss it through the real mounted control before interacting with
+    // the page underneath.  Keep both languages because the same harness is
+    // used for PL/EN qualification.
+    const skipOnboarding = page.getByRole('button', {
+      name: /^(Skip for now|Pomiń na razie)$/i,
+    });
+    if (await skipOnboarding.isVisible({ timeout: 2_000 }).catch(() => false)) {
+      await skipOnboarding.click();
+      await page.waitForTimeout(500);
+    }
   }
   return { context, page };
 }

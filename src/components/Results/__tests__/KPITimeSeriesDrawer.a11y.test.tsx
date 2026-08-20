@@ -2,8 +2,8 @@
  * @vitest-environment jsdom
  *
  * CB-01 / RB-001, RB-002, RV-022 — the KPI drawer must be a named dialog,
- * take focus on open, close on Escape, and return focus to the trigger; its
- * Record New Value form must have labelled Value/Date/Notes fields.
+ * take focus on open, close on Escape, and return focus to the trigger. The
+ * retired legacy writer must remain read-only and expose a named canonical CTA.
  */
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
@@ -132,12 +132,17 @@ describe('KPITimeSeriesDrawer — dialog accessible contract (EN)', () => {
     await waitFor(() => expect(trigger).toHaveFocus());
   });
 
-  it('labels the Value, Date and Notes fields of the record-value form, in English', async () => {
+  it('keeps the retired writer read-only and names the canonical measurement action', async () => {
     await mountAndOpen('en');
 
-    await waitFor(() => expect(screen.getByLabelText('Value')).toBeInTheDocument());
-    expect(screen.getByLabelText('Date')).toBeInTheDocument();
-    expect(screen.getByLabelText('Notes')).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', { name: 'Open canonical measurements' })
+      ).toBeInTheDocument()
+    );
+    expect(screen.queryByLabelText('Value')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Date')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Notes')).not.toBeInTheDocument();
   });
 });
 
@@ -157,12 +162,16 @@ describe('KPITimeSeriesDrawer — dialog accessible contract (PL)', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('labels the Value, Date and Notes fields of the record-value form, in real Polish', async () => {
+  it('keeps the retired writer read-only in Polish instead of restoring legacy fields', async () => {
     await mountAndOpen('pl');
 
-    // Real PL strings: historyValue="Wartość", historyDate="Data", historyNotes="Notatki"
-    await waitFor(() => expect(screen.getByLabelText('Wartość')).toBeInTheDocument());
-    expect(screen.getByLabelText('Data')).toBeInTheDocument();
-    expect(screen.getByLabelText('Notatki')).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', { name: 'Open canonical measurements' })
+      ).toBeInTheDocument()
+    );
+    expect(screen.queryByLabelText('Wartość')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Data')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Notatki')).not.toBeInTheDocument();
   });
 });

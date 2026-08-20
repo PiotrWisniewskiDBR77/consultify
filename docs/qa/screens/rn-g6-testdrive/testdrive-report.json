@@ -9,217 +9,213 @@
       ],
       "apiErrors": [
         {
-          "url": "http://localhost:3197/api/v8/admin/flags",
+          "url": "http://127.0.0.1:4310/api/v8/admin/flags",
           "status": 404
         }
       ],
       "apiCalls": [
         {
-          "url": "http://localhost:3197/src/services/api/organizationContextWorker.api.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/organizationContextWorker.api.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/settings.api.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/settings.api.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/assessment.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/assessment.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/my-work.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/my-work.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/types/api/requests.ts",
+          "url": "http://127.0.0.1:4310/src/types/api/requests.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/types/api/responses.ts",
+          "url": "http://127.0.0.1:4310/src/types/api/responses.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/baseClient.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/baseClient.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/client.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/client.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/index.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/index.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/admin.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/ai-core.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/chat.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/execution-control.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/finance.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/interview.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/kb.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/multiplayer.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/partner.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/planning.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/prompt-os.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/results.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/retrieval.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/sync.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/workCanvas.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/tablePlatform.api.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/artifactRuns.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8Execution.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/api/settings/preferences/accessibility",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/admin.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/ai-core.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/chat.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/execution-control.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/finance.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/interview.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/kb.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/multiplayer.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/partner.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/planning.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/prompt-os.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/retrieval.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/results.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/sync.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/tablePlatform.api.ts",
+          "status": 304
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/artifactRuns.ts",
+          "status": 304
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8Execution.ts",
+          "status": 304
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/workCanvas.ts",
+          "status": 304
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-event",
           "status": 202
         },
         {
-          "url": "http://localhost:3197/api/v8/admin/flags",
+          "url": "http://127.0.0.1:4310/api/settings/preferences/accessibility",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/v8/admin/flags",
           "status": 404
         },
         {
-          "url": "http://localhost:3197/api/organizations/current",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-config",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/auth/me",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/api/feature-flags/runtime",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-event",
           "status": 202
         },
         {
-          "url": "http://localhost:3197/api/v10/teresa/voice-config",
+          "url": "http://127.0.0.1:4310/api/organizations/current",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/feature-flags/runtime",
+          "url": "http://127.0.0.1:4310/api/auth/me",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/organization-context",
+          "url": "http://127.0.0.1:4310/api/feature-flags/runtime",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/v10/teresa/voice-config",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-config",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/organization-context",
+          "url": "http://127.0.0.1:4310/api/organization-context",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/health",
+          "url": "http://127.0.0.1:4310/api/feature-flags/runtime",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "url": "http://127.0.0.1:4310/api/organization-context",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/health",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-event",
           "status": 202
         },
         {
-          "url": "http://localhost:3197/api/llm/providers/health?timeoutMs=4000",
+          "url": "http://127.0.0.1:4310/api/llm/providers/health?timeoutMs=4000",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/health",
+          "url": "http://127.0.0.1:4310/api/health",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/preferences",
+          "url": "http://127.0.0.1:4310/api/my-work/personal-tasks",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/organizations/current",
+          "url": "http://127.0.0.1:4310/api/organizations/current",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "url": "http://127.0.0.1:4310/api/my-work/personal-tasks",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/organizations/current",
+          "url": "http://127.0.0.1:4310/api/demo/status",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/demo/status",
+          "url": "http://127.0.0.1:4310/api/organizations/current",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "url": "http://127.0.0.1:4310/api/notifications/unread-count",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/notifications?limit=20",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/api/notifications/unread-count",
+          "url": "http://127.0.0.1:4310/api/notifications?limit=20",
           "status": 200
         }
       ],
-      "notes": "landed on: http://localhost:3197/interview"
+      "notes": "landed on: http://127.0.0.1:4310/interview"
     },
     {
       "n": 1.2,
@@ -230,221 +226,221 @@
       ],
       "apiErrors": [
         {
-          "url": "http://localhost:3197/api/v8/admin/flags",
+          "url": "http://127.0.0.1:4310/api/v8/admin/flags",
           "status": 404
         }
       ],
       "apiCalls": [
         {
-          "url": "http://localhost:3197/src/services/api/organizationContextWorker.api.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/organizationContextWorker.api.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/settings.api.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/settings.api.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/assessment.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/assessment.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/my-work.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/my-work.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/types/api/requests.ts",
+          "url": "http://127.0.0.1:4310/src/types/api/requests.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/types/api/responses.ts",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/baseClient.ts",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/client.ts",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/index.ts",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/admin.ts",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/ai-core.ts",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/chat.ts",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/execution-control.ts",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/finance.ts",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/interview.ts",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/kb.ts",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/multiplayer.ts",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/partner.ts",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/planning.ts",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/prompt-os.ts",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/retrieval.ts",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/results.ts",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/sync.ts",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/workCanvas.ts",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/tablePlatform.api.ts",
+          "url": "http://127.0.0.1:4310/src/types/api/responses.ts",
           "status": 304
         },
         {
-          "url": "http://localhost:3197/src/services/api/artifactRuns.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8Execution.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/api/settings/preferences/accessibility",
+          "url": "http://127.0.0.1:4310/src/services/api/baseClient.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/v8/admin/flags",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/client.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/index.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/admin.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/chat.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/execution-control.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/ai-core.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/finance.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/interview.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/kb.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/multiplayer.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/partner.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/planning.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/prompt-os.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/results.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/retrieval.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/sync.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/tablePlatform.api.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/workCanvas.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/artifactRuns.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8Execution.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/settings/preferences/accessibility",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/v8/admin/flags",
           "status": 404
         },
         {
-          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-event",
           "status": 202
         },
         {
-          "url": "http://localhost:3197/api/organizations/current",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/api/auth/me",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/api/feature-flags/runtime",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/api/v10/teresa/voice-config",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/api/feature-flags/runtime",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-event",
           "status": 202
         },
         {
-          "url": "http://localhost:3197/api/organization-context",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-config",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/v10/teresa/voice-config",
+          "url": "http://127.0.0.1:4310/api/feature-flags/runtime",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/organization-context",
+          "url": "http://127.0.0.1:4310/api/organizations/current",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/health",
+          "url": "http://127.0.0.1:4310/api/auth/me",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-config",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/feature-flags/runtime",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/organization-context",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/organization-context",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/health",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-event",
           "status": 202
         },
         {
-          "url": "http://localhost:3197/api/llm/providers/health?timeoutMs=4000",
+          "url": "http://127.0.0.1:4310/api/llm/providers/health?timeoutMs=4000",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/health",
+          "url": "http://127.0.0.1:4310/api/health",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/partners/connection",
+          "url": "http://127.0.0.1:4310/api/organizations/current",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "url": "http://127.0.0.1:4310/api/my-work/personal-tasks",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/organizations/current",
+          "url": "http://127.0.0.1:4310/api/vnext/results/kpi?limit=200&offset=0",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/vnext/results/kpi?limit=200&offset=0",
+          "url": "http://127.0.0.1:4310/api/demo/status",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/demo/status",
+          "url": "http://127.0.0.1:4310/api/organizations/current",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "url": "http://127.0.0.1:4310/api/my-work/personal-tasks",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/organizations/current",
+          "url": "http://127.0.0.1:4310/api/partners/connection",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/notifications/unread-count",
+          "url": "http://127.0.0.1:4310/api/notifications/unread-count",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/notifications?limit=20",
+          "url": "http://127.0.0.1:4310/api/notifications?limit=20",
           "status": 200
         }
       ],
-      "notes": "landed on: http://localhost:3197/results/kpi?ff_resultsVNextKpi=1"
+      "notes": "landed on: http://127.0.0.1:4310/results/kpi?ff_resultsVNextKpi=1"
     },
     {
       "n": 2,
@@ -463,11 +459,11 @@
       "apiErrors": [],
       "apiCalls": [
         {
-          "url": "http://localhost:3197/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/version",
+          "url": "http://127.0.0.1:4310/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/version",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/measurements?limit=1",
+          "url": "http://127.0.0.1:4310/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/measurements?limit=1",
           "status": 200
         }
       ],
@@ -482,217 +478,241 @@
       ],
       "apiErrors": [
         {
-          "url": "http://localhost:3197/api/v8/admin/flags",
+          "url": "http://127.0.0.1:4310/api/v8/admin/flags",
           "status": 404
         }
       ],
       "apiCalls": [
         {
-          "url": "http://localhost:3197/src/types/api/requests.ts",
+          "url": "http://127.0.0.1:4310/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/types/api/responses.ts",
+          "url": "http://127.0.0.1:4310/api/vnext/results/kpi/deviation-cases?kpiId=4d5db4f3-454e-4813-8813-4d5db4454ebd&limit=100&offset=0",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/organizationContextWorker.api.ts",
+          "url": "http://127.0.0.1:4310/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/initiative-impacts?limit=100&offset=0",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/settings.api.ts",
+          "url": "http://127.0.0.1:4310/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/version",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/assessment.ts",
+          "url": "http://127.0.0.1:4310/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/measurements?limit=1",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/my-work.ts",
+          "url": "http://127.0.0.1:4310/src/types/api/requests.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/baseClient.ts",
+          "url": "http://127.0.0.1:4310/src/types/api/responses.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/client.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/organizationContextWorker.api.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/index.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/settings.api.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/admin.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/assessment.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/ai-core.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/my-work.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/chat.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/index.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/interview.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/baseClient.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/execution-control.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/client.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/finance.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/ai-core.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/kb.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/chat.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/multiplayer.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/execution-control.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/partner.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/admin.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/planning.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/finance.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/prompt-os.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/interview.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/sync.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/kb.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/retrieval.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/multiplayer.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/results.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/partner.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/workCanvas.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/planning.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/tablePlatform.api.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/retrieval.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/artifactRuns.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/results.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8Execution.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/sync.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/settings/preferences/accessibility",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/prompt-os.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "url": "http://127.0.0.1:4310/src/services/api/tablePlatform.api.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/workCanvas.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8Execution.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/artifactRuns.ts",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-event",
           "status": 202
         },
         {
-          "url": "http://localhost:3197/api/v8/admin/flags",
+          "url": "http://127.0.0.1:4310/api/settings/preferences/accessibility",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/v8/admin/flags",
           "status": 404
         },
         {
-          "url": "http://localhost:3197/api/v10/teresa/voice-config",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-config",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/feature-flags/runtime",
+          "url": "http://127.0.0.1:4310/api/organizations/current",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "url": "http://127.0.0.1:4310/api/auth/me",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-event",
           "status": 202
         },
         {
-          "url": "http://localhost:3197/api/auth/me",
+          "url": "http://127.0.0.1:4310/api/feature-flags/runtime",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/organizations/current",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-config",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/feature-flags/runtime",
+          "url": "http://127.0.0.1:4310/api/feature-flags/runtime",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/v10/teresa/voice-config",
+          "url": "http://127.0.0.1:4310/api/health",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/health",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-event",
           "status": 202
         },
         {
-          "url": "http://localhost:3197/api/health",
+          "url": "http://127.0.0.1:4310/api/llm/providers/health?timeoutMs=4000",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/llm/providers/health?timeoutMs=4000",
+          "url": "http://127.0.0.1:4310/api/health",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/partners/connection",
+          "url": "http://127.0.0.1:4310/api/my-work/personal-tasks",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "url": "http://127.0.0.1:4310/api/organizations/current",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd",
+          "url": "http://127.0.0.1:4310/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/demo/status",
+          "url": "http://127.0.0.1:4310/api/demo/status",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/vnext/results/kpi/deviation-cases?kpiId=4d5db4f3-454e-4813-8813-4d5db4454ebd&limit=100&offset=0",
+          "url": "http://127.0.0.1:4310/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/version",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/organizations/current",
+          "url": "http://127.0.0.1:4310/api/vnext/results/kpi/deviation-cases?kpiId=4d5db4f3-454e-4813-8813-4d5db4454ebd&limit=100&offset=0",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/initiative-impacts?limit=100&offset=0",
+          "url": "http://127.0.0.1:4310/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/measurements?limit=1",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "url": "http://127.0.0.1:4310/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/initiative-impacts?limit=100&offset=0",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/measurements?limit=1",
+          "url": "http://127.0.0.1:4310/api/my-work/personal-tasks",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/organizations/current",
+          "url": "http://127.0.0.1:4310/api/organizations/current",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/partners/connection",
           "status": 200
         }
       ],
-      "notes": "kpiId=4d5db4f3-454e-4813-8813-4d5db4454ebd, url after in-app Open click=http://localhost:3197/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd | flag was dropped by in-app nav (known defect) — re-navigated with flag: http://localhost:3197/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd?ff_resultsVNextKpi=1"
+      "notes": "kpiId=4d5db4f3-454e-4813-8813-4d5db4454ebd, url after in-app Open click=http://127.0.0.1:4310/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd | flag was dropped by in-app nav (known defect) — re-navigated with flag: http://127.0.0.1:4310/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd?ff_resultsVNextKpi=1"
     },
     {
       "n": 5,
@@ -702,27 +722,27 @@
       "apiErrors": [],
       "apiCalls": [
         {
-          "url": "http://localhost:3197/api/notifications?limit=20",
+          "url": "http://127.0.0.1:4310/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/measurements?limit=200",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/notifications/unread-count",
+          "url": "http://127.0.0.1:4310/api/notifications?limit=20",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/measurements?limit=200",
+          "url": "http://127.0.0.1:4310/api/notifications/unread-count",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/measurements",
+          "url": "http://127.0.0.1:4310/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/measurements",
           "status": 201
         },
         {
-          "url": "http://localhost:3197/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/measurements?limit=200",
+          "url": "http://127.0.0.1:4310/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/measurements?limit=200",
           "status": 200
         }
       ],
-      "notes": "source marker used for DB verification: rn-g6-testdrive-1786557097986"
+      "notes": "source marker used for DB verification: rn-g6-testdrive-1787228648634"
     },
     {
       "n": 6,
@@ -733,217 +753,217 @@
       ],
       "apiErrors": [
         {
-          "url": "http://localhost:3197/api/v8/admin/flags",
+          "url": "http://127.0.0.1:4310/api/v8/admin/flags",
           "status": 404
         }
       ],
       "apiCalls": [
         {
-          "url": "http://localhost:3197/src/types/api/requests.ts",
+          "url": "http://127.0.0.1:4310/src/types/api/requests.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/types/api/responses.ts",
+          "url": "http://127.0.0.1:4310/src/types/api/responses.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/organizationContextWorker.api.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/organizationContextWorker.api.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/assessment.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/assessment.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/settings.api.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/settings.api.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/my-work.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/my-work.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/index.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/index.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/baseClient.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/baseClient.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/client.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/client.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/admin.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/admin.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/ai-core.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/ai-core.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/chat.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/chat.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/execution-control.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/execution-control.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/finance.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/finance.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/interview.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/interview.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/kb.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/kb.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/multiplayer.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/multiplayer.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/partner.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/partner.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/planning.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/planning.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/prompt-os.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/prompt-os.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/retrieval.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/retrieval.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/sync.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/sync.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/results.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/results.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/workCanvas.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/tablePlatform.api.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/tablePlatform.api.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/artifactRuns.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8Execution.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8Execution.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/artifactRuns.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/workCanvas.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/settings/preferences/accessibility",
+          "url": "http://127.0.0.1:4310/api/settings/preferences/accessibility",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/v10/teresa/voice-event",
-          "status": 202
-        },
-        {
-          "url": "http://localhost:3197/api/v8/admin/flags",
+          "url": "http://127.0.0.1:4310/api/v8/admin/flags",
           "status": 404
         },
         {
-          "url": "http://localhost:3197/api/v10/teresa/voice-config",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/api/auth/me",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-event",
           "status": 202
         },
         {
-          "url": "http://localhost:3197/api/feature-flags/runtime",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-config",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/organizations/current",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/api/v10/teresa/voice-config",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/api/feature-flags/runtime",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/api/health",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-event",
           "status": 202
         },
         {
-          "url": "http://localhost:3197/src/services/api/initiatives.api.ts",
+          "url": "http://127.0.0.1:4310/api/auth/me",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/health",
+          "url": "http://127.0.0.1:4310/api/feature-flags/runtime",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/llm/providers/health?timeoutMs=4000",
+          "url": "http://127.0.0.1:4310/api/feature-flags/runtime",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/partners/connection",
+          "url": "http://127.0.0.1:4310/api/organizations/current",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-config",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/demo/status",
+          "url": "http://127.0.0.1:4310/api/health",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/organizations/current",
+          "url": "http://127.0.0.1:4310/src/services/api/initiatives.api.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/organizations/current",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-event",
+          "status": 202
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/llm/providers/health?timeoutMs=4000",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "url": "http://127.0.0.1:4310/api/health",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/vnext/results/roi/cases?limit=200",
+          "url": "http://127.0.0.1:4310/api/vnext/results/roi/cases?limit=200",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/vnext/results/roi/cases?limit=200",
+          "url": "http://127.0.0.1:4310/api/my-work/personal-tasks",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/notifications?limit=20",
+          "url": "http://127.0.0.1:4310/api/organizations/current",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/notifications/unread-count",
+          "url": "http://127.0.0.1:4310/api/vnext/results/roi/cases?limit=200",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/my-work/personal-tasks",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/demo/status",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/organizations/current",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/partners/connection",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/notifications?limit=20",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/notifications/unread-count",
           "status": 200
         }
       ],
@@ -958,213 +978,213 @@
       ],
       "apiErrors": [
         {
-          "url": "http://localhost:3197/api/v8/admin/flags",
+          "url": "http://127.0.0.1:4310/api/v8/admin/flags",
           "status": 404
         }
       ],
       "apiCalls": [
         {
-          "url": "http://localhost:3197/src/services/api/settings.api.ts",
+          "url": "http://127.0.0.1:4310/src/types/api/requests.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/organizationContextWorker.api.ts",
+          "url": "http://127.0.0.1:4310/src/types/api/responses.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/assessment.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/organizationContextWorker.api.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/my-work.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/settings.api.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/types/api/requests.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/assessment.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/types/api/responses.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/my-work.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/baseClient.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/index.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/client.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/baseClient.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/index.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/client.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/admin.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/admin.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/ai-core.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/ai-core.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/chat.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/chat.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/execution-control.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/execution-control.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/finance.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/finance.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/interview.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/interview.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/kb.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/kb.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/multiplayer.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/multiplayer.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/partner.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/partner.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/planning.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/planning.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/prompt-os.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/prompt-os.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/retrieval.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/retrieval.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/sync.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/sync.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/results.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/results.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/workCanvas.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/tablePlatform.api.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/tablePlatform.api.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/workCanvas.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/artifactRuns.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/artifactRuns.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8Execution.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8Execution.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/settings/preferences/accessibility",
+          "url": "http://127.0.0.1:4310/api/settings/preferences/accessibility",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/v10/teresa/voice-event",
-          "status": 202
-        },
-        {
-          "url": "http://localhost:3197/api/v8/admin/flags",
+          "url": "http://127.0.0.1:4310/api/v8/admin/flags",
           "status": 404
         },
         {
-          "url": "http://localhost:3197/api/v10/teresa/voice-config",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/api/feature-flags/runtime",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/api/auth/me",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/api/organizations/current",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-event",
           "status": 202
         },
         {
-          "url": "http://localhost:3197/api/feature-flags/runtime",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-config",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/v10/teresa/voice-config",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/api/health",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-event",
           "status": 202
         },
         {
-          "url": "http://localhost:3197/api/llm/providers/health?timeoutMs=4000",
+          "url": "http://127.0.0.1:4310/api/feature-flags/runtime",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/health",
+          "url": "http://127.0.0.1:4310/api/organizations/current",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/partners/connection",
+          "url": "http://127.0.0.1:4310/api/auth/me",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/demo/status",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-config",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/organizations/current",
+          "url": "http://127.0.0.1:4310/api/feature-flags/runtime",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/organizations/current",
+          "url": "http://127.0.0.1:4310/api/health",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-event",
+          "status": 202
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/llm/providers/health?timeoutMs=4000",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/vnext/results/okr/sets?limit=200",
+          "url": "http://127.0.0.1:4310/api/health",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/vnext/results/okr/sets?limit=200",
+          "url": "http://127.0.0.1:4310/api/my-work/personal-tasks",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "url": "http://127.0.0.1:4310/api/organizations/current",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/notifications/unread-count",
+          "url": "http://127.0.0.1:4310/api/vnext/results/okr/sets?limit=200",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/notifications?limit=20",
+          "url": "http://127.0.0.1:4310/api/demo/status",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/my-work/personal-tasks",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/organizations/current",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/vnext/results/okr/sets?limit=200",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/partners/connection",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/notifications?limit=20",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/notifications/unread-count",
           "status": 200
         }
       ],
@@ -1179,213 +1199,213 @@
       ],
       "apiErrors": [
         {
-          "url": "http://localhost:3197/api/v8/admin/flags",
+          "url": "http://127.0.0.1:4310/api/v8/admin/flags",
           "status": 404
         }
       ],
       "apiCalls": [
         {
-          "url": "http://localhost:3197/src/services/api/organizationContextWorker.api.ts",
+          "url": "http://127.0.0.1:4310/src/types/api/requests.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/assessment.ts",
+          "url": "http://127.0.0.1:4310/src/types/api/responses.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/settings.api.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/organizationContextWorker.api.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/my-work.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/settings.api.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/types/api/requests.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/assessment.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/types/api/responses.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/my-work.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/baseClient.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/index.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/client.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/baseClient.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/index.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/client.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/admin.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/admin.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/ai-core.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/ai-core.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/kb.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/chat.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/chat.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/execution-control.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/execution-control.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/finance.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/finance.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/interview.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/interview.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/kb.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/partner.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/multiplayer.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/planning.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/partner.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/prompt-os.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/retrieval.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/multiplayer.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/sync.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/sync.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/results.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/retrieval.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/planning.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/results.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/prompt-os.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/workCanvas.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/workCanvas.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/tablePlatform.api.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/tablePlatform.api.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8Execution.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/artifactRuns.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/artifactRuns.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8Execution.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "url": "http://127.0.0.1:4310/api/settings/preferences/accessibility",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-event",
           "status": 202
         },
         {
-          "url": "http://localhost:3197/api/v8/admin/flags",
+          "url": "http://127.0.0.1:4310/api/v8/admin/flags",
           "status": 404
         },
         {
-          "url": "http://localhost:3197/api/settings/preferences/accessibility",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-config",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/v10/teresa/voice-config",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-event",
           "status": 202
         },
         {
-          "url": "http://localhost:3197/api/auth/me",
+          "url": "http://127.0.0.1:4310/api/auth/me",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/feature-flags/runtime",
+          "url": "http://127.0.0.1:4310/api/feature-flags/runtime",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/v10/teresa/voice-config",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-config",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/feature-flags/runtime",
+          "url": "http://127.0.0.1:4310/api/feature-flags/runtime",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/organizations/current",
+          "url": "http://127.0.0.1:4310/api/organizations/current",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/health",
+          "url": "http://127.0.0.1:4310/api/health",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-event",
           "status": 202
         },
         {
-          "url": "http://localhost:3197/api/llm/providers/health?timeoutMs=4000",
+          "url": "http://127.0.0.1:4310/api/llm/providers/health?timeoutMs=4000",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/health",
+          "url": "http://127.0.0.1:4310/api/health",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "url": "http://127.0.0.1:4310/api/demo/status",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/partners/connection",
+          "url": "http://127.0.0.1:4310/api/my-work/personal-tasks",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/organizations/current",
+          "url": "http://127.0.0.1:4310/api/organizations/current",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "url": "http://127.0.0.1:4310/api/my-work/personal-tasks",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/organizations/current",
+          "url": "http://127.0.0.1:4310/api/organizations/current",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/demo/status",
+          "url": "http://127.0.0.1:4310/api/partners/connection",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/vnext/results/kpi/attention",
+          "url": "http://127.0.0.1:4310/api/vnext/results/kpi/attention",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/notifications?limit=20",
+          "url": "http://127.0.0.1:4310/api/notifications?limit=20",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/notifications/unread-count",
+          "url": "http://127.0.0.1:4310/api/notifications/unread-count",
           "status": 200
         }
       ],
-      "notes": "url=http://localhost:3197/results/attention?ff_resultsVNextKpi=1&ff_resultsVNextOkr=1"
+      "notes": "url=http://127.0.0.1:4310/results/attention?ff_resultsVNextKpi=1&ff_resultsVNextOkr=1"
     },
     {
       "n": 8.2,
@@ -1396,225 +1416,225 @@
       ],
       "apiErrors": [
         {
-          "url": "http://localhost:3197/api/v8/admin/flags",
+          "url": "http://127.0.0.1:4310/api/v8/admin/flags",
           "status": 404
         }
       ],
       "apiCalls": [
         {
-          "url": "http://localhost:3197/src/services/api/organizationContextWorker.api.ts",
+          "url": "http://127.0.0.1:4310/src/types/api/requests.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/settings.api.ts",
+          "url": "http://127.0.0.1:4310/src/types/api/responses.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/assessment.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/organizationContextWorker.api.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/my-work.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/settings.api.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/types/api/responses.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/assessment.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/types/api/requests.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/my-work.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/baseClient.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/index.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/client.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/baseClient.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/index.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/client.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/admin.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/admin.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/ai-core.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/ai-core.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/chat.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/chat.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/execution-control.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/execution-control.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/kb.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/finance.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/interview.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/interview.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/finance.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/kb.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/multiplayer.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/multiplayer.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/partner.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/partner.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/planning.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/planning.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/prompt-os.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/prompt-os.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/results.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/retrieval.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/retrieval.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/sync.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/sync.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/results.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/workCanvas.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/tablePlatform.api.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/tablePlatform.api.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/workCanvas.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8Execution.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/artifactRuns.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/artifactRuns.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8Execution.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/v10/teresa/voice-event",
-          "status": 202
-        },
-        {
-          "url": "http://localhost:3197/api/v8/admin/flags",
+          "url": "http://127.0.0.1:4310/api/v8/admin/flags",
           "status": 404
         },
         {
-          "url": "http://localhost:3197/api/v10/teresa/voice-config",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/api/settings/preferences/accessibility",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-event",
           "status": 202
         },
         {
-          "url": "http://localhost:3197/api/organizations/current",
+          "url": "http://127.0.0.1:4310/api/settings/preferences/accessibility",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/feature-flags/runtime",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-config",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/auth/me",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/api/v10/teresa/voice-config",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/api/feature-flags/runtime",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/api/health",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-event",
           "status": 202
         },
         {
-          "url": "http://localhost:3197/api/llm/providers/health?timeoutMs=4000",
+          "url": "http://127.0.0.1:4310/api/feature-flags/runtime",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/health",
+          "url": "http://127.0.0.1:4310/api/organizations/current",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "url": "http://127.0.0.1:4310/api/auth/me",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/organizations/current",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-config",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/cloud/providers",
+          "url": "http://127.0.0.1:4310/api/feature-flags/runtime",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/conversations?",
+          "url": "http://127.0.0.1:4310/api/health",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/partners/connection",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-event",
+          "status": 202
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/llm/providers/health?timeoutMs=4000",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/demo/status",
+          "url": "http://127.0.0.1:4310/api/health",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/ai/agent-audit/agents",
+          "url": "http://127.0.0.1:4310/api/cloud/providers",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/chat-projects",
+          "url": "http://127.0.0.1:4310/api/my-work/personal-tasks",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/ai/agent-audit/agents",
+          "url": "http://127.0.0.1:4310/api/organizations/current",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "url": "http://127.0.0.1:4310/api/ai/agent-audit/agents",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/organizations/current",
+          "url": "http://127.0.0.1:4310/api/conversations?",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/cloud/providers",
+          "url": "http://127.0.0.1:4310/api/chat-projects",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/my-work/personal-tasks",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/demo/status",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/cloud/providers",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/ai/agent-audit/agents",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/organizations/current",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/partners/connection",
           "status": 200
         }
       ],
-      "notes": "landed on: http://localhost:3197/chat"
+      "notes": "landed on: http://127.0.0.1:4310/chat"
     },
     {
       "n": 9,
@@ -1626,437 +1646,445 @@
       ],
       "apiErrors": [
         {
-          "url": "http://localhost:3197/api/v8/admin/flags",
+          "url": "http://127.0.0.1:4310/api/v8/admin/flags",
           "status": 404
         },
         {
-          "url": "http://localhost:3197/api/v8/admin/flags",
+          "url": "http://127.0.0.1:4310/api/v8/admin/flags",
           "status": 404
         }
       ],
       "apiCalls": [
         {
-          "url": "http://localhost:3197/src/types/api/requests.ts",
+          "url": "http://127.0.0.1:4310/src/types/api/requests.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/types/api/responses.ts",
+          "url": "http://127.0.0.1:4310/src/types/api/responses.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/organizationContextWorker.api.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/organizationContextWorker.api.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/settings.api.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/settings.api.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/assessment.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/assessment.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/my-work.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/my-work.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/index.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/index.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/baseClient.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/baseClient.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/client.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/client.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/admin.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/admin.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/ai-core.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/ai-core.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/chat.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/chat.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/execution-control.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/execution-control.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/finance.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/finance.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/interview.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/interview.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/multiplayer.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/kb.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/kb.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/multiplayer.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/partner.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/partner.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/planning.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/planning.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/prompt-os.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/prompt-os.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/results.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/retrieval.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/retrieval.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/results.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8/sync.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8/sync.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/workCanvas.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/tablePlatform.api.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/tablePlatform.api.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/workCanvas.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/artifactRuns.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/artifactRuns.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/v8Execution.ts",
+          "url": "http://127.0.0.1:4310/src/services/api/v8Execution.ts",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/v8/admin/flags",
+          "url": "http://127.0.0.1:4310/api/v8/admin/flags",
           "status": 404
         },
         {
-          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-event",
           "status": 202
         },
         {
-          "url": "http://localhost:3197/api/settings/preferences/accessibility",
+          "url": "http://127.0.0.1:4310/api/settings/preferences/accessibility",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/organizations/current",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-config",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/v10/teresa/voice-config",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/api/feature-flags/runtime",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-event",
           "status": 202
         },
         {
-          "url": "http://localhost:3197/api/auth/me",
+          "url": "http://127.0.0.1:4310/api/organizations/current",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/v10/teresa/voice-config",
+          "url": "http://127.0.0.1:4310/api/auth/me",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/feature-flags/runtime",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-config",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/health",
+          "url": "http://127.0.0.1:4310/api/feature-flags/runtime",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "url": "http://127.0.0.1:4310/api/feature-flags/runtime",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/health",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-event",
           "status": 202
         },
         {
-          "url": "http://localhost:3197/api/health",
+          "url": "http://127.0.0.1:4310/api/llm/providers/health?timeoutMs=4000",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/llm/providers/health?timeoutMs=4000",
+          "url": "http://127.0.0.1:4310/api/health",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/partners/connection",
+          "url": "http://127.0.0.1:4310/api/organizations/current",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "url": "http://127.0.0.1:4310/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd",
+          "url": "http://127.0.0.1:4310/api/my-work/personal-tasks",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/demo/status",
+          "url": "http://127.0.0.1:4310/api/demo/status",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/measurements?limit=1",
+          "url": "http://127.0.0.1:4310/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/measurements?limit=1",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/initiative-impacts?limit=100&offset=0",
+          "url": "http://127.0.0.1:4310/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/version",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/organizations/current",
+          "url": "http://127.0.0.1:4310/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/initiative-impacts?limit=100&offset=0",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/vnext/results/kpi/deviation-cases?kpiId=4d5db4f3-454e-4813-8813-4d5db4454ebd&limit=100&offset=0",
+          "url": "http://127.0.0.1:4310/api/vnext/results/kpi/deviation-cases?kpiId=4d5db4f3-454e-4813-8813-4d5db4454ebd&limit=100&offset=0",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "url": "http://127.0.0.1:4310/api/my-work/personal-tasks",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/organizations/current",
+          "url": "http://127.0.0.1:4310/api/organizations/current",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/src/services/api/organizationContextWorker.api.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/settings.api.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/assessment.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/my-work.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/baseClient.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/client.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/types/api/requests.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/types/api/responses.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/index.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/chat.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/admin.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/ai-core.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/finance.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/interview.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/kb.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/execution-control.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/planning.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/multiplayer.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/partner.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/prompt-os.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/results.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/retrieval.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8/sync.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/workCanvas.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/tablePlatform.api.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/artifactRuns.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/src/services/api/v8Execution.ts",
-          "status": 304
-        },
-        {
-          "url": "http://localhost:3197/api/settings/preferences/accessibility",
+          "url": "http://127.0.0.1:4310/api/partners/connection",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/v10/teresa/voice-event",
-          "status": 202
+          "url": "http://127.0.0.1:4310/src/services/api/organizationContextWorker.api.ts",
+          "status": 304
         },
         {
-          "url": "http://localhost:3197/api/v8/admin/flags",
+          "url": "http://127.0.0.1:4310/src/services/api/settings.api.ts",
+          "status": 304
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/assessment.ts",
+          "status": 304
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/my-work.ts",
+          "status": 304
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/client.ts",
+          "status": 304
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/baseClient.ts",
+          "status": 304
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/types/api/requests.ts",
+          "status": 304
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/types/api/responses.ts",
+          "status": 304
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/index.ts",
+          "status": 304
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/admin.ts",
+          "status": 304
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/ai-core.ts",
+          "status": 304
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/chat.ts",
+          "status": 304
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/execution-control.ts",
+          "status": 304
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/finance.ts",
+          "status": 304
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/interview.ts",
+          "status": 304
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/kb.ts",
+          "status": 304
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/multiplayer.ts",
+          "status": 304
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/partner.ts",
+          "status": 304
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/planning.ts",
+          "status": 304
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/prompt-os.ts",
+          "status": 304
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/results.ts",
+          "status": 304
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/retrieval.ts",
+          "status": 304
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8/sync.ts",
+          "status": 304
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/workCanvas.ts",
+          "status": 304
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/tablePlatform.api.ts",
+          "status": 304
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/artifactRuns.ts",
+          "status": 304
+        },
+        {
+          "url": "http://127.0.0.1:4310/src/services/api/v8Execution.ts",
+          "status": 304
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/settings/preferences/accessibility",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/v8/admin/flags",
           "status": 404
         },
         {
-          "url": "http://localhost:3197/api/v10/teresa/voice-config",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/api/feature-flags/runtime",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/api/organizations/current",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-event",
           "status": 202
         },
         {
-          "url": "http://localhost:3197/api/auth/me",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-config",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/v10/teresa/voice-config",
+          "url": "http://127.0.0.1:4310/api/organizations/current",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/feature-flags/runtime",
+          "url": "http://127.0.0.1:4310/api/auth/me",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/health",
-          "status": 200
-        },
-        {
-          "url": "http://localhost:3197/api/v10/teresa/voice-event",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-event",
           "status": 202
         },
         {
-          "url": "http://localhost:3197/api/llm/providers/health?timeoutMs=4000",
+          "url": "http://127.0.0.1:4310/api/feature-flags/runtime",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/health",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-config",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/partners/connection",
+          "url": "http://127.0.0.1:4310/api/feature-flags/runtime",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/demo/status",
+          "url": "http://127.0.0.1:4310/api/health",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd",
+          "url": "http://127.0.0.1:4310/api/v10/teresa/voice-event",
+          "status": 202
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/llm/providers/health?timeoutMs=4000",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/organizations/current",
+          "url": "http://127.0.0.1:4310/api/health",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "url": "http://127.0.0.1:4310/api/my-work/personal-tasks",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/measurements?limit=1",
+          "url": "http://127.0.0.1:4310/api/organizations/current",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/initiative-impacts?limit=100&offset=0",
+          "url": "http://127.0.0.1:4310/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/organizations/current",
+          "url": "http://127.0.0.1:4310/api/demo/status",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/my-work/personal-tasks",
+          "url": "http://127.0.0.1:4310/api/vnext/results/kpi/deviation-cases?kpiId=4d5db4f3-454e-4813-8813-4d5db4454ebd&limit=100&offset=0",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/vnext/results/kpi/deviation-cases?kpiId=4d5db4f3-454e-4813-8813-4d5db4454ebd&limit=100&offset=0",
+          "url": "http://127.0.0.1:4310/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/measurements?limit=1",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/notifications/unread-count",
+          "url": "http://127.0.0.1:4310/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/version",
           "status": 200
         },
         {
-          "url": "http://localhost:3197/api/notifications?limit=20",
+          "url": "http://127.0.0.1:4310/api/my-work/personal-tasks",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/vnext/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd/initiative-impacts?limit=100&offset=0",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/organizations/current",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/partners/connection",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/notifications/unread-count",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:4310/api/notifications?limit=20",
           "status": 200
         }
       ],
-      "notes": "url after reload=http://localhost:3197/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd?ff_resultsVNextKpi=1"
+      "notes": "url after reload=http://127.0.0.1:4310/results/kpi/4d5db4f3-454e-4813-8813-4d5db4454ebd?ff_resultsVNextKpi=1"
     }
   ],
   "ids": {
     "kpiId": "4d5db4f3-454e-4813-8813-4d5db4454ebd",
-    "measurementSource": "rn-g6-testdrive-1786557097986"
+    "measurementSource": "rn-g6-testdrive-1787228648634"
   }
 }

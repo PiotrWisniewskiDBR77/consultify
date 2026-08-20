@@ -3,8 +3,8 @@
   "key": "RES",
   "module": "Results",
   "route": "/results",
-  "productSha": "e6ca206c0035f653118d9aadbfddf61d452ab52e",
-  "startedAt": "2026-08-20T04:21:10.409Z",
+  "productSha": "d4258a47261dd2916ec7fd95300edc0aba32c4ed",
+  "startedAt": "2026-08-20T12:36:13.609Z",
   "cells": [
     {
       "viewport": "desktop",
@@ -27,8 +27,28 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": [],
-      "httpErrors": []
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpErrors": [
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/admin/flags"
+        },
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/results/kpis/catalog"
+        },
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/results/roi/portfolio-summary"
+        }
+      ]
     },
     {
       "viewport": "desktop",
@@ -51,8 +71,28 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": [],
-      "httpErrors": []
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpErrors": [
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/admin/flags"
+        },
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/results/kpis/catalog"
+        },
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/results/roi/portfolio-summary"
+        }
+      ]
     },
     {
       "viewport": "desktop",
@@ -75,8 +115,28 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": [],
-      "httpErrors": []
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpErrors": [
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/admin/flags"
+        },
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/results/kpis/catalog"
+        },
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/results/roi/portfolio-summary"
+        }
+      ]
     },
     {
       "viewport": "desktop",
@@ -99,8 +159,28 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": [],
-      "httpErrors": []
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpErrors": [
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/admin/flags"
+        },
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/results/kpis/catalog"
+        },
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/results/roi/portfolio-summary"
+        }
+      ]
     },
     {
       "viewport": "tablet",
@@ -123,8 +203,28 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": [],
-      "httpErrors": []
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpErrors": [
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/admin/flags"
+        },
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/results/kpis/catalog"
+        },
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/results/roi/portfolio-summary"
+        }
+      ]
     },
     {
       "viewport": "tablet",
@@ -147,8 +247,28 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": [],
-      "httpErrors": []
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpErrors": [
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/admin/flags"
+        },
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/results/kpis/catalog"
+        },
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/results/roi/portfolio-summary"
+        }
+      ]
     },
     {
       "viewport": "tablet",
@@ -171,8 +291,28 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": [],
-      "httpErrors": []
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpErrors": [
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/admin/flags"
+        },
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/results/kpis/catalog"
+        },
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/results/roi/portfolio-summary"
+        }
+      ]
     },
     {
       "viewport": "tablet",
@@ -195,8 +335,28 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": [],
-      "httpErrors": []
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpErrors": [
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/admin/flags"
+        },
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/results/kpis/catalog"
+        },
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/results/roi/portfolio-summary"
+        }
+      ]
     },
     {
       "viewport": "mobile",
@@ -219,8 +379,28 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": [],
-      "httpErrors": []
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpErrors": [
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/admin/flags"
+        },
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/results/kpis/catalog"
+        },
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/results/roi/portfolio-summary"
+        }
+      ]
     },
     {
       "viewport": "mobile",
@@ -243,8 +423,28 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": [],
-      "httpErrors": []
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpErrors": [
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/admin/flags"
+        },
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/results/kpis/catalog"
+        },
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/results/roi/portfolio-summary"
+        }
+      ]
     },
     {
       "viewport": "mobile",
@@ -267,8 +467,28 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": [],
-      "httpErrors": []
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpErrors": [
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/admin/flags"
+        },
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/results/kpis/catalog"
+        },
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/results/roi/portfolio-summary"
+        }
+      ]
     },
     {
       "viewport": "mobile",
@@ -291,8 +511,28 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": [],
-      "httpErrors": []
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpErrors": [
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/admin/flags"
+        },
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/results/kpis/catalog"
+        },
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/results/roi/portfolio-summary"
+        }
+      ]
     },
     {
       "viewport": "desktop",
@@ -315,8 +555,16 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": [],
-      "httpErrors": []
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpErrors": [
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/admin/flags"
+        }
+      ]
     },
     {
       "viewport": "desktop",
@@ -339,8 +587,16 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": [],
-      "httpErrors": []
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpErrors": [
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/admin/flags"
+        }
+      ]
     },
     {
       "viewport": "desktop",
@@ -363,8 +619,16 @@
         "count": 0,
         "samples": []
       },
-      "consoleErrors": [],
-      "httpErrors": []
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "httpErrors": [
+        {
+          "status": 404,
+          "method": "GET",
+          "path": "/api/v8/admin/flags"
+        }
+      ]
     }
   ],
   "deepLink": {

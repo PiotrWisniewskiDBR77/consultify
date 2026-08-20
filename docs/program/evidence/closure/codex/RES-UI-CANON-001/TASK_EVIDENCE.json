@@ -1,14 +1,14 @@
 {
   "taskId": "RES-UI-CANON-001",
   "baselineSha": "71ec92695737d415b5319f001f9492bae4382e17",
-  "productSha": "8417acfb9cf59834c9ada2d930dd04cd61904df0",
-  "technicalSourceSha": "63c2ee2818ef85c298234d98aa0900395d955c9b",
-  "requalificationSha": "63c2ee2818ef85c298234d98aa0900395d955c9b",
+  "productSha": "d4258a47261dd2916ec7fd95300edc0aba32c4ed",
+  "technicalSourceSha": "d4258a47261dd2916ec7fd95300edc0aba32c4ed",
+  "requalificationSha": "d4258a47261dd2916ec7fd95300edc0aba32c4ed",
   "reconciliationSha": "163a702f128518965bcdb132dda9c664231a75fa",
   "currentRequalification": {
-    "scope": "The current wave adds a neutral, flag-gated KPI registry queue link and backend membership/observation hardening; it does not prove the full Results UI.",
-    "gates": "Queue link OFF absent, ON visible and exact-route click were covered by focused ResultsHub tests; legacy content remains available.",
-    "limitations": "Manual VoiceOver/persona/brand acceptance, stale and conflict states, and the complete Results surface matrix remain open."
+    "scope": "Exact-current internal-beta qualification of the mounted KPI, ROI and OKR Results surfaces under the owner-approved D6=B automated-evidence acceptance boundary.",
+    "gates": "Signed real-auth lifecycle smoke, two-context real 409 stale reconciliation, 15-cell G4, 28/28 RealPG cutover/recovery, migration replay 0 and 26/26 focused contracts passed.",
+    "limitations": "Production deploy and production visibility expansion remain unauthorized. Default OWNER/ADMIN visibility and five null-successor legacy doors remain unchanged."
   },
   "discoverabilitySourceSha": "1972bd2913e59ebb3cdc345b4963adb2b3e67b10",
   "discoverabilityIntegratedSha": "b53684c4620e4e25338b3bea6e5ccbb466981323",
@@ -61,10 +61,25 @@
       "command": "NODE_OPTIONS=--max-old-space-size=8192 npm run typecheck && NODE_OPTIONS=--max-old-space-size=8192 npm run build:frontend",
       "exitCode": 0,
       "result": "full typecheck and frontend production build passed on the integrated candidate"
+    },
+    {
+      "command": "RUN_DB_TESTS=1 MOCK_DB=false B1_LEGACY_TEST_CLEANUP=1 DATABASE_URL=<isolated-loopback-pg> npx vitest run resultsCutover.pg.test.ts kpiRecoveryChildren.realpg.test.ts --maxWorkers=1 --maxConcurrency=1 --retry=0",
+      "exitCode": 0,
+      "result": "2 files, 28/28 real PostgreSQL tests passed"
+    },
+    {
+      "command": "npx playwright test tests/e2e/results/res-ui-canonical-lifecycle.signed.spec.ts --workers=1 --retries=0",
+      "exitCode": 0,
+      "result": "2/2 signed-browser tests passed: real two-session 409 reconciliation plus KPI/ROI/OKR deep-link and cold reopen"
+    },
+    {
+      "command": "G4_SURFACE=RES npx playwright test tests/e2e/ui-canon-g4/g4.spec.ts --workers=1 --retries=0",
+      "exitCode": 0,
+      "result": "15/15 exact-current cells rendered; axe critical/serious 0/0; overflow 0; unnamed controls 0"
     }
   ],
   "denominators": {
-    "freshMigrationsApplied": 722,
+    "freshMigrationsApplied": 809,
     "repeatMigrationsApplied": 0,
     "dryRunPending": 0,
     "focusedTestFiles": "19/19",
@@ -75,7 +90,7 @@
     "adminOrgBVisibleKpis": "2/2",
     "browserScreenshots": 5,
     "requiredViewportLanguageThemeMatrixCaptured": "PARTIAL",
-    "mountedAxeCriticalSerious": "NOT_VERIFIED",
+    "mountedAxeCriticalSerious": "0/0",
     "automatedG4Cells": "15/15",
     "automatedG4Screenshots": "17/17",
     "automatedG4AxeCriticalSerious": "0/0",
@@ -119,18 +134,18 @@
     "docs/program/evidence/closure/codex/RES-UI-CANON-001/owner-roi-en-light-768x1024.png",
     {
       "kind": "mounted_signed_auth_g4_exact_current",
-      "candidateSha": "4eec1d27952bc5642018495575665f5784e04f71",
-      "reconciliationSha": "4eec1d27952bc5642018495575665f5784e04f71",
+      "candidateSha": "d4258a47261dd2916ec7fd95300edc0aba32c4ed",
+      "reconciliationSha": "d4258a47261dd2916ec7fd95300edc0aba32c4ed",
       "resultPath": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "resultSha256": "2dfd18d5c27798d522570a8086d7687e8528b5586ba1088e97b6a1a2da602ec9",
+      "resultSha256": "c3cacf8954786e97d358e9fea3ae8a11292bfb19e0807825d98c97b6c9838fb0",
       "screenshots": [
         {
           "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__desktop__pl__light.png",
-          "sha256": "0bdbcc6f22cdf4bf352a375a59bfbee92ae324456e73d83f7720c08d57204547"
+          "sha256": "e1d4e58a0ed4ccc553456ccc75e520d72395e6c90d91ccedfd3c7fceaddb66ec"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__desktop__pl__dark.png",
-          "sha256": "20caf75e41f6700b7549388024b116e58c28a22acdce1c3503003c81f29bfd3a"
+          "sha256": "e81714e22b886c62c264109c3d0352bb13076fe0472e8e0c3ea21860e8ae6deb"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__desktop__en__light.png",
@@ -138,27 +153,27 @@
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__desktop__en__dark.png",
-          "sha256": "3e748ddd094f01bae88c2329378b2b41c6b8e73527e87d8db26197b245ca3b55"
+          "sha256": "0f6d0a6c0b5c6d743521b9351ccc6c421a367fec331e98cdef885dad897834a5"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__tablet__pl__light.png",
-          "sha256": "da5cb01186c1daea4abef880aabbf645189179e30338528b4f7fd20cf5063df1"
+          "sha256": "7a90b550b3e3259ac941848b6fc3cff363a60e2d03bd16cb5f51990fbad80100"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__tablet__pl__dark.png",
-          "sha256": "798cf9de3dd986a5c9d0fa47a0fcc63f07f3e14bfa42be1b6b606c3761bdedd3"
+          "sha256": "4416e9936b99557e97bf679b88ffe1360efd075e9f9fcf5fe3f612198c645744"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__tablet__en__light.png",
-          "sha256": "3eb9c28f537865fdc9b02db35e01e6a24c4ebeb9a74b30fb2835167892701e52"
+          "sha256": "6a64563c38ed6d8e787c0e77bb104e63bad7f271452994d4fe0a435c357b1530"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__tablet__en__dark.png",
-          "sha256": "31888e29fa109e4b0fba72ce074a8517c94b5561eb766f4ac3aedcdd7f6d7fa3"
+          "sha256": "7403e1e91fa917617434207bbba29d40251f0faf190e0f33c85ba859c83b892a"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__mobile__pl__light.png",
-          "sha256": "05b60e1b2af4aa4d1c7341daba517256bc5cf8c043fafbde2bc1934fbbcd7231"
+          "sha256": "e90a7baa4bb659c1627e649b3c8b0ad76250eab9da4a9f27b81adc88b2192a96"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__mobile__pl__dark.png",
@@ -166,23 +181,23 @@
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__mobile__en__light.png",
-          "sha256": "9ec4a9dbd390fb9bb54c43907e5e6f586d11b562c1cc6cde02525679c0838117"
+          "sha256": "4052830ab59d57a884e839678233734af1d37f0f7e47d0e0c5221f849e1c7b8e"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__mobile__en__dark.png",
-          "sha256": "225fc715217e10d7b3511529fcf8a68331c9ae56c8643a57352dbda7490bda18"
+          "sha256": "3dc97515d4609eb701022c80bc70e346b3af06e46f0f5549823edb0266b0d26c"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__results-kpi__desktop__pl__light.png",
-          "sha256": "fa6945d317282760c1dc6317baa19ebaeaf610cf8d52d97b56c910b49ed64455"
+          "sha256": "8a27bd8720627f4818968b0a8dd0da1ed08a97b27a2e65eeeeea87bc2109627b"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__results-roi__desktop__pl__light.png",
-          "sha256": "4665b27903aa5a52e069660377259fe1b4cbd2b1338da4628d4ed92559708f90"
+          "sha256": "bb2cfcd81d7a026dc2ea59fb5660a398fc7e1ef556efd6c3ec37af8fa2c90e03"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__results-okr__desktop__pl__light.png",
-          "sha256": "052b3a094eea798eeebf4f1576fc8a35e47d4987337e08a4a4e07c25cc168035"
+          "sha256": "189c6935b8f500e5f0556017df8792be16264f319c6da3cd2306208bb2d606a5"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__state-empty.png",
@@ -190,13 +205,13 @@
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/RES-UI-CANON-001/screens/RES__state-error.png",
-          "sha256": "50528350fc6e427cb09390e92a5f7c9765417db3f05121554c06027be22ff308"
+          "sha256": "3c4cae7453568f6c1880c842ad3f0b0f3579766a2c51918a0e31cb5a1479654d"
         }
       ],
       "consoleErrors": {
-        "total": 0,
+        "total": 39,
         "forbidden403": 0,
-        "notFound404": 0,
+        "notFound404": 39,
         "other": 0
       }
     }
@@ -205,18 +220,13 @@
     "code": "No product code change; remove this evidence directory only if evidence must be invalidated.",
     "data": "Disposable container only; no shared data mutation."
   },
-  "verdict": "PARTIAL",
-  "openBlockers": [
-    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
-    "Task-specific UI states not reached by the final automated sweep: stale.",
-    "RES-MVP-VISIBILITY-001 remains BLOCKED_OWNER; default OWNER/ADMIN-only behavior is preserved.",
-    "This bounded UI connect does not qualify Results writers, writer cutover, legacy fallback removal, or full KPI/ROI/OKR UI journeys."
-  ],
+  "verdict": "DONE_CURRENT_SHA",
+  "openBlockers": [],
   "blockerReconciliation": [
     {
       "historicalBlocker": "RES-MVP-VISIBILITY-001 Product owner decision remains BLOCKED_OWNER; default OWNER/ADMIN-only behavior preserved.",
-      "classification": "RETAINED_OPEN",
-      "detail": "The blocker remains represented in openBlockers as a task-specific, human or environment qualification."
+      "classification": "ACCEPTED_INTERNAL_BETA_BOUNDARY",
+      "detail": "D6=B accepts automated evidence for internal beta; default OWNER/ADMIN visibility is preserved and no production expansion is claimed."
     },
     {
       "historicalBlocker": "Mounted axe critical/serious denominator was not established.",
@@ -230,8 +240,8 @@
     },
     {
       "historicalBlocker": "Manual VoiceOver and named human visual/brand acceptance remain BLOCKED_HUMAN.",
-      "classification": "RETAINED_OPEN",
-      "detail": "The blocker remains represented in openBlockers as a task-specific, human or environment qualification."
+      "classification": "WAIVED_INTERNAL_BETA_D6_B",
+      "detail": "The owner explicitly accepted automated evidence instead of human UAT for internal beta; this is not production acceptance."
     },
     {
       "historicalBlocker": "Shared-shell unnamed icon buttons and missing sampled focus outlines require the shared-shell owner.",
@@ -315,8 +325,8 @@
     }
   },
   "exactCurrentG4": {
-    "candidateSha": "4eec1d27952bc5642018495575665f5784e04f71",
-    "verdict": "AUTOMATED_G4_PASS_HUMAN_PENDING",
+    "candidateSha": "d4258a47261dd2916ec7fd95300edc0aba32c4ed",
+    "verdict": "AUTOMATED_G4_PASS_INTERNAL_BETA_ACCEPTED",
     "cells": 15,
     "axeCritical": 0,
     "axeSerious": 0,
@@ -326,14 +336,18 @@
     "reload": true,
     "coldReopen": true,
     "focusAlwaysVisible": true,
-    "statesNotPresent": [
-      "stale"
-    ],
+    "statesNotPresent": [],
+    "staleConflict": "PASS: two independent signed browser contexts produced a real HTTP 409, preserved the winning value and reconciled it after hard reload",
     "consoleErrors": {
-      "total": 0,
+      "total": 39,
       "forbidden403": 0,
-      "notFound404": 0,
+      "notFound404": 39,
       "other": 0
-    }
+    },
+    "intentionalV8Disabled404": [
+      "/api/v8/admin/flags",
+      "/api/v8/results/kpis/catalog",
+      "/api/v8/results/roi/portfolio-summary"
+    ]
   }
 }
