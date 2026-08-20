@@ -1,7 +1,7 @@
 {
   "taskId": "REL-001-T01",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "71316e4125ba3f912cbcd0612639bb463b41dae7",
+  "productSha": "e6ca206c0035f653118d9aadbfddf61d452ab52e",
   "technicalSourceSha": "28585dd058c263c73c5f2a3f5a2295049a08cd58",
   "reconciliationSha": "f138eba6b17fdb11d87e0bbe8c4175b0a5d755af",
   "leaseSha256": "18eb0f2e24aee1d6415a29e1605597117f24c42a1f74439842581e7a92583742",
@@ -112,12 +112,27 @@
       "A production rollback rehearsal or owner release authorization."
     ]
   },
-  "technicalVerdict": "TECHNICAL_BUNDLE_READY_WITH_UNATTESTED_LOCAL_RECEIPTS_NOT_AUTHORIZED",
+  "stagingRehearsal20260820": {
+    "authority": "D7=B_STAGING_ONLY",
+    "candidateSha": "e6ca206c0035f653118d9aadbfddf61d452ab52e",
+    "exactShaDeployment": "PASS",
+    "freshMigrationAndReplay": "PASS",
+    "mountedJourneys": "16/16 before and 16/16 after candidate restore",
+    "release30m50u": "PASS",
+    "telemetryWindows": "2/2 PASS",
+    "alertPositiveControl": "PASS_DETECTED_RECOVERED_ACKNOWLEDGED",
+    "rollbackTargetSha": "a97750b5d3c9f821f1b2f44b21611734b2876964",
+    "rollback": "FAIL_CHECKSUM_MISMATCH_20261038",
+    "candidateRestore": "PASS_EXACT_SHA_READY_MIGRATIONS_ZERO_SENTINEL_ZERO_LOSS",
+    "productionTouched": false,
+    "releaseGo": false
+  },
+  "technicalVerdict": "STAGING_QUALIFIED_ROLLBACK_FAILED_CANDIDATE_RESTORED_NOT_AUTHORIZED",
   "verdict": "PARTIAL",
   "blockers": [
     "Every preceding task must be DONE_CURRENT_SHA or explicitly approved out.",
-    "Exact-SHA deployment identity and 16 deployed golden flows are missing.",
-    "Two consecutive 60-minute telemetry windows and rollback rehearsal are missing.",
+    "Exact-SHA deployment, 16 mounted flows, 30-minute/50-user NFR and two consecutive 60-minute staging windows passed.",
+    "Rollback rehearsal failed fail-closed because the previous build's migration checksum for 20261038 does not match the forward database ledger; a rollback-compatible recovery candidate must be qualified and rehearsed.",
     "Explicit Piotr release authorization has not been requested or granted."
   ]
 }

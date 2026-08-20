@@ -1,7 +1,7 @@
 {
   "taskId": "NFR-PERF-001",
   "baselineSha": "123aa5065f027c3d827462d9304e0a30ffe4b8f1",
-  "productSha": "a97750b5d3c9f821f1b2f44b21611734b2876964",
+  "productSha": "e6ca206c0035f653118d9aadbfddf61d452ab52e",
   "technicalSourceSha": "5969fb06a2a41711c772b51d073e56585d542272",
   "leaseSha256": "6feeff810179aaa58dc2f837fa4e5f77e138469db0b0ed9d45ccf9271e7e1fee",
   "changedPaths": [
@@ -162,17 +162,42 @@
     "Three-sample mobile p75 was mathematically the maximum; the minimum was corrected to four cold samples without weakening thresholds.",
     "Earlier UI bundle failures were corrected by lazy-loading the global chat panel; the final 40-context run is the qualifying run."
   ],
-  "technicalVerdict": "PASS_EXACT_CURRENT_SHA_RELEASE_30M_50U",
+  "exactDeployedRequalification": {
+    "candidateSha": "e6ca206c0035f653118d9aadbfddf61d452ab52e",
+    "environment": "staging",
+    "status": "PASS_EXACT_DEPLOYED_SHA_RELEASE_30M_50U",
+    "durationSeconds": 1800.952,
+    "users": 50,
+    "requests": 109118,
+    "errors": 0,
+    "readP95Ms": 289.94,
+    "writeP95Ms": 612.42,
+    "commandsExpected": 8782,
+    "commandsReconciled": 8782,
+    "commandLoss": 0,
+    "commandDuplicates": 0,
+    "tenantFalseSuccess": 0,
+    "webVitals": {
+      "status": "PASS",
+      "desktop": {"lcpP75Ms": 660, "cls": 0.000236686, "inpMs": 16},
+      "mobile": {"lcpP75Ms": 572, "cls": 0, "inpMs": 16}
+    },
+    "stabilityWindows": "2/2 PASS, each 60 minutes, 0 HTTP 5xx, 16/16 mounted journeys",
+    "productionTouched": false
+  },
+  "technicalVerdict": "PASS_EXACT_DEPLOYED_SHA_RELEASE_30M_50U",
   "verdict": "PARTIAL",
   "openBlockers": [
     "The provisional repository Web Vitals thresholds require explicit Product owner acceptance before literal task DONE.",
-    "A deployed stability window and production alert-breach exercise remain release-only and were not authorized."
+    "The staging rollback rehearsal failed fail-closed on a historical migration checksum mismatch; a rollback-compatible recovery candidate must be qualified and rehearsed.",
+    "Production deployment remains NOT_AUTHORIZED."
   ],
   "releaseBoundary": {
     "repositoryImplementation": "QUALIFIED_EXACT_CURRENT_SHA",
-    "exactCurrentRelease30m": "PASS",
+    "exactCurrentRelease30m": "PASS_ON_DEPLOYED_STAGING_E6CA",
     "ownerThresholdAcceptance": "NOT_RECORDED",
-    "deployedStabilityWindow": "NOT_EXECUTED_NOT_AUTHORIZED",
+    "deployedStabilityWindow": "PASS_2_OF_2_ON_STAGING",
+    "rollbackRehearsal": "FAIL_CHECKSUM_MISMATCH_CANDIDATE_RESTORED_ZERO_DATA_LOSS",
     "release": "NOT_AUTHORIZED"
   }
 }

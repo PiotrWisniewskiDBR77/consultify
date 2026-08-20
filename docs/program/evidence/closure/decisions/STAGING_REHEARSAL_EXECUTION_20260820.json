@@ -33,5 +33,81 @@
     "stagingApplicationVariablesChanged": false,
     "stagingApplicationDeploymentChanged": false
   },
-  "nextGate": "Create and qualify a bounded migration compatibility fix, freeze a new immutable candidate, then restart from migration apply/replay/dry-run. Do not reuse or edit the historical staging migration ledger."
+  "nextGate": "Create and qualify a bounded migration compatibility fix, freeze a new immutable candidate, then restart from migration apply/replay/dry-run. Do not reuse or edit the historical staging migration ledger.",
+  "supersedingAttempt": {
+    "receiptId": "MVP-USABLE-100-STAGING-REHEARSAL-20260820-02",
+    "candidateSha": "e6ca206c0035f653118d9aadbfddf61d452ab52e",
+    "authority": "D7=B_STAGING_ONLY",
+    "productionTouched": false,
+    "result": "STAGING_PASS_ROLLBACK_FAIL_CANDIDATE_RESTORED",
+    "deployment": {
+      "url": "https://staging.consultify.ai",
+      "projectId": "a6d59e88-263d-45f3-96bc-861f66bf467b",
+      "environmentId": "487a33ba-84b0-4e2e-b18b-7f981ae5334d",
+      "serviceId": "8f65b820-3d55-4dd9-8076-929d01cc4157",
+      "candidateDeploymentId": "fdd79892-4041-4289-aa26-91573f2ff52e",
+      "restoreDeploymentId": "55b77890-c255-45e4-9883-f9eb653a4bf9",
+      "healthSha": "e6ca206c0035f653118d9aadbfddf61d452ab52e",
+      "readiness": "PASS_200",
+      "migrationReadback": "0 applied, 645 already up to date; pending=0; failed=0; unexplainedDrift=0"
+    },
+    "qualification": {
+      "release30m50u": {
+        "status": "PASS",
+        "durationSeconds": 1800.952,
+        "users": 50,
+        "requests": 109118,
+        "errors": 0,
+        "readP95Ms": 289.94,
+        "writeP95Ms": 612.42,
+        "commandsReconciled": "8782/8782",
+        "commandLoss": 0,
+        "commandDuplicates": 0,
+        "tenantFalseSuccess": 0,
+        "webVitals": "PASS after pre-navigation LCP capture correction"
+      },
+      "window1": {
+        "status": "PASS",
+        "durationMinutes": 60,
+        "samples": 119,
+        "availabilityPct": 100,
+        "errorRatePct": 0.6772,
+        "http5xx": 0,
+        "mountedJourneys": "16/16"
+      },
+      "window2": {
+        "status": "PASS",
+        "durationMinutes": 60,
+        "samples": 120,
+        "availabilityPct": 100,
+        "errorRatePct": 0.9988901220865706,
+        "http5xx": 0,
+        "mountedJourneys": "16/16"
+      },
+      "alertPositiveControl": "WRITE_FAILURE_RATE DETECTED, RECOVERED and ACKNOWLEDGED with delivered receipts"
+    },
+    "rollback": {
+      "targetSha": "a97750b5d3c9f821f1b2f44b21611734b2876964",
+      "firstUploadDeploymentId": "f0afc657-4533-494d-a31d-3e43452d3009",
+      "firstUploadResult": "FAILED_PACKAGING_PREFIX",
+      "runtimeDeploymentId": "4cd95e9c-2b3f-4035-a072-b199d64f4bdb",
+      "runtimeResult": "CRASHED_FAIL_CLOSED",
+      "rootCause": "Checksum mismatch for already-applied migration 20261038_execution_spine_authority_completion.sql between the previous build and the forward schema ledger.",
+      "rto": "FAIL_NOT_ACHIEVED",
+      "dataLoss": 0,
+      "unsafeWorkaroundUsed": false
+    },
+    "candidateRestore": {
+      "status": "PASS",
+      "deploymentId": "55b77890-c255-45e4-9883-f9eb653a4bf9",
+      "restoredSha": "e6ca206c0035f653118d9aadbfddf61d452ab52e",
+      "ready": true,
+      "sentinelMarkerPreserved": true,
+      "observedDataLossSeconds": 0,
+      "mountedJourneysAfterRestore": "16/16"
+    },
+    "verdict": "STOP_ROLLBACK_COMPATIBILITY",
+    "releaseGo": false,
+    "nextGate": "Build and qualify a rollback-compatible candidate or an explicitly tested forward-fix recovery strategy, then repeat the staging rollback rehearsal on the new exact SHA. Production remains NOT_AUTHORIZED."
+  }
 }
