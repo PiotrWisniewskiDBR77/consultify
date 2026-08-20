@@ -19468,7 +19468,15 @@
       "sourceFile": "Plik źródłowy",
       "doneGoToReview": "Gotowe — przejdź do przeglądu",
       "errorsLabel": "błędów",
-      "warningsLabel": "ostrzeżeń"
+      "warningsLabel": "ostrzeżeń",
+      "validationPass": "Sprawozdanie jest zbilansowane i gotowe do zamknięcia",
+      "validationWarnings": "Sprawozdanie nadal wymaga uzupełnienia",
+      "backToBlockingItems": "Wróć do blokujących pozycji",
+      "confirmAndSave": "Zamknij zbilansowane sprawozdanie",
+      "closureChecklist": "Kontrola zamknięcia sprawozdania",
+      "closureChecklistHint": "Każda sekcja i okres muszą przejść mapowanie, wymaganą weryfikację człowieka oraz kontrole spójności.",
+      "readyToClose": "Gotowe do zamknięcia",
+      "requiresCompletion": "Wymaga uzupełnienia"
     },
     "lane": {
       "kpi": {
@@ -19608,7 +19616,15 @@
       "noResults": "Brak wyników",
       "mapped": "zmapowane",
       "unmappedCount": "do uzupełnienia",
-      "toReview": "do weryfikacji"
+      "toReview": "do weryfikacji",
+      "verified": "Weryfikacja",
+      "userVerified": "Zweryfikowane ręcznie",
+      "systemVerified": "Zweryfikowane systemowo",
+      "verifyAllReady": "Zweryfikuj wszystkie gotowe",
+      "verifyManually": "Zweryfikuj",
+      "mapFirst": "Najpierw przypisz",
+      "mapBeforeVerify": "Przed weryfikacją wybierz kategorię docelową",
+      "confirmMapping": "Potwierdź to mapowanie"
     },
     "explainPanel": {
       "evidenceType": {
