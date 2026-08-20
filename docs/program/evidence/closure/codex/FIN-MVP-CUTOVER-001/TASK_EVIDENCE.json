@@ -1,8 +1,8 @@
 {
   "taskId": "FIN-MVP-CUTOVER-001",
   "baselineSha": "14889d7b087585ae6f5d4a74e86c1b5e344e7c1c",
-  "productSha": "e14dbe596a4617ec0a8e81e15f1cd2f704f45123",
-  "technicalSourceSha": "4ea5bc3349f8f27f2302941980939e66c5744ced",
+  "productSha": "f1d517cfdca8641a189aa0982d677a3fc8074618",
+  "technicalSourceSha": "f1d517cfdca8641a189aa0982d677a3fc8074618",
   "requalificationSha": "bd0e076fd6f6ecf2553bad4db571954fd2b11051",
   "reconciliationSha": "163a702f128518965bcdb132dda9c664231a75fa",
   "currentTwoDoorRequalification": {
@@ -12,17 +12,17 @@
   },
   "technicalVerdict": "PASS_CURRENT_LEGACY_CUTOVER_KERNEL",
   "exactCurrentInventory20260820": {
-    "productSha": "14e2ac1f4c884db18562c7f946a2a3646f10665e",
+    "productSha": "f1d517cfdca8641a189aa0982d677a3fc8074618",
     "scope": "All currently registered Finance legacy-route families: /api/v8/finance, /api/financial-modeling, /api/economics and /api/finance-statements.",
     "result": {
       "totalRouteRules": 59,
       "actualLegacyMutationDoors": 52,
       "alreadyCanonicalMutationDoors": 1,
       "nonMutationOrExplicitRefusalDoors": 6,
-      "retiredLegacyMutationDoors": 11,
-      "openLegacyMutationDoors": 41
+      "retiredLegacyMutationDoors": 12,
+      "openLegacyMutationDoors": 40
     },
-    "correction": "The historical 1/30 denominator mixed an incomplete route inventory with POST-shaped routes that do not write legacy state. The current denominator is source-derived and separates persistence effect from HTTP verb. ECO-W14 create and ECO-W21 delete are retired after all mounted callers removed their legacy fallback. ECO-W15 update is retired behind the new strict tenant-scoped canonical V8 Finance update command; no mounted caller uses the duplicate economics route.",
+    "correction": "The historical 1/30 denominator mixed an incomplete route inventory with POST-shaped routes that do not write legacy state. The current denominator is source-derived and separates persistence effect from HTTP verb. ECO-W14 create and ECO-W21 delete are retired after all mounted callers removed their legacy fallback. ECO-W15 update is retired behind the strict tenant-scoped canonical V8 Finance update command. ECO-W22 is now retired after every mounted valuation-create caller moved to the idempotent canonical registration command; the legacy path is authenticated, tenant-observed, fail-closed by default and retains a writer-scoped tested rollback path.",
     "commands": [
       {
         "command": "npx vitest run server/src/services/legacyCutover/__tests__/financeCutoverInventory.test.ts tests/components/Benefits/FinancialAnalysisWorkspace.v8-read-seam.test.tsx tests/components/Economics/useFinanceRowActions.v8-analysis-delete.test.tsx tests/components/Economics/useFinanceRowActions.v8-analysis-create.test.tsx tests/components/Economics/CreateAnalysisModal.v8-create.test.tsx --retry=0 --reporter=dot",
@@ -60,9 +60,55 @@
         "result": "passed"
       }
     ],
-    "cleanup": "The exact-current RealPG run used guarded database consultify_b1_wave6; test-scoped rows cleaned, database dropped and existence readback returned 0. The prior wave5 run followed the same cleanup/drop boundary. Two earlier invalid pre-runs each passed 11 assertions but were excluded because cleanup guards rejected their database name; their exact run-owned econ-5b4c00fc/econ-2415884c residue was subsequently removed under an explicit pinned transaction with owned_residue=0.",
+    "cleanup": "The ECO-W22 exact-current qualification used guarded database consultify_b1_wave7 on 127.0.0.1:32772. Test-scoped rollback identities and immutable receipts were removed on a pinned PoolClient with post-commit residue0; the database was then dropped and existence readback returned 0. Earlier wave5/wave6 runs followed the same guarded drop boundary.",
     "knownHarnessSignal": "An unfiltered run of server/src/routes/v8/__tests__/finance.routes.test.ts was not used as evidence: 41 tests passed and seven historical assertions failed because they still expect success from routes now intentionally retired/refused or rely on unrelated stale statement mocks. The new canonical analysis-update test itself passed in that run and passed again as the exact selected 1/1 command above. This packet does not claim the historical whole file is green.",
-    "verdictImpact": "PARTIAL is retained. Eleven of 52 actual legacy mutation doors are retired; 41 still require canonical parity, identity/backfill and retirement qualification."
+    "verdictImpact": "PARTIAL is retained. Twelve of 52 actual legacy mutation doors are retired; 40 still require canonical parity, identity/backfill and retirement qualification."
+  },
+  "exactCurrentEcoW22Requalification20260820": {
+    "productSha": "f1d517cfdca8641a189aa0982d677a3fc8074618",
+    "scope": "Bounded retirement of ECO-W22 POST /api/economics/valuations in favor of POST /api/v8/finance-v2/valuation/registrations.",
+    "productTruth": "The canonical command atomically creates the legacy list identity, canonical artifact/business version/working revision, valuation case/variant, alias and immutable idempotency receipt. All mounted create callers use the canonical client. The legacy route executes verifyToken then the route-local cutover guard; disabled state returns tenant-scoped 410 telemetry and zero writes. The explicit writer-scoped rollback lever reaches the strict canonical registration handler and is tested for exactly one identity and receipt.",
+    "commands": [
+      {
+        "command": "RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32772/consultify_b1_wave7 npx vitest run server/src/services/finance/canonical/__tests__/valuationRegistrationService.pg.test.ts --pool=forks --maxWorkers=1",
+        "exitCode": 0,
+        "result": "1 file, 7/7 RealPG tests: atomic identity, rollback, foreign source, replay/collision, mounted strict HTTP contract, live authority before winning replay, 8-way convergence and immutable receipt."
+      },
+      {
+        "command": "RUN_DB_TESTS=1 MOCK_DB=false B1_LEGACY_TEST_CLEANUP=1 DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32772/consultify_b1_wave7 npx vitest run server/src/services/legacyCutover/__tests__/economicsCutover.pg.test.ts --pool=forks --maxWorkers=1",
+        "exitCode": 0,
+        "result": "1 file, 13/13 production-shaped mounted-router RealPG tests; ECO-W22 disabled 410/no-write/telemetry and writer-scoped rollback 201/one identity/receipt/residue0."
+      },
+      {
+        "command": "npx vitest run server/src/routes/__tests__/economics.routes.validation.test.ts server/src/services/legacyCutover/__tests__/financeCutoverInventory.test.ts tests/components/Economics/CreateValuationModal.source-currency.test.tsx tests/components/Economics/useFinanceRowActions.v8-analysis-mutations.test.tsx --pool=forks --maxWorkers=1",
+        "exitCode": 0,
+        "result": "4 files, 51/51 focused route, registry and mounted-caller tests."
+      },
+      {
+        "command": "npm run type-check && npm --prefix server run typecheck",
+        "exitCode": 0,
+        "result": "Root and server TypeScript noEmit passed with 8 GiB heap for the root run."
+      },
+      {
+        "command": "NODE_OPTIONS=--max-old-space-size=8192 npm run build",
+        "exitCode": 0,
+        "result": "Frontend production build passed; existing chunk-size and mixed dynamic/static import warnings recorded."
+      },
+      {
+        "command": "npx playwright test tests/e2e/finance/finance-valuation-assumptions.signed.spec.ts --list",
+        "exitCode": 0,
+        "result": "Canonical signed valuation journey discovered 1/1. This is compile/discovery evidence only; it is not claimed as a fresh executed browser journey for ECO-W22."
+      },
+      {
+        "command": "git diff --check",
+        "exitCode": 0,
+        "result": "passed"
+      }
+    ],
+    "migration": "Fresh migration ledger applied 797 migrations; strict repeat applied 0 and dry-run reported 0 pending before the qualification tests.",
+    "cleanup": "Pinned test cleanup proved exact valuation/receipt/alias/artifact/version/revision/case/variant/lifecycle residue0. Guarded database consultify_b1_wave7 was dropped and pg_database existence readback returned 0.",
+    "independentAudit": "Three independent source/runtime auditors returned GO after rollback parity, signed receipt cleanup and pinned-client cleanup were corrected.",
+    "boundary": "This closes only ECO-W22. No push, deploy, release or tenant rollout was performed. The full FIN-MVP-CUTOVER task remains PARTIAL with 40 open legacy mutation doors."
   },
   "currentKernelRequalification": {
     "migration": "Fresh exact-current PostgreSQL ledger 758/758/758 successful and unique with zero missing checksums; strict repeat applied 0 and dry-run reported 0 pending.",
@@ -78,7 +124,7 @@
   "leaseSha256": "not_applicable_integrator_bounded_task",
   "verdict": "PARTIAL",
   "open": [
-    "The exact-current mounted-route inventory contains 52 actual legacy mutation doors. Eleven are retired and 41 remain open pending route-by-route canonical parity, identity/backfill, usage and rollback evidence.",
+    "The exact-current mounted-route inventory contains 52 actual legacy mutation doors. Twelve are retired and 40 remain open pending route-by-route canonical parity, identity/backfill, usage and rollback evidence.",
     "Rollout timing and Finance/Results reconciliation remain owner decisions; this evidence does not authorize rollout or change Results Actual ownership."
   ],
   "environment": {
@@ -106,7 +152,7 @@
   "denominators": {
     "focused": "8 passed / 8 discovered in 2 files",
     "realPostgres": "4 passed / 4 discovered, including real mounted Finance router",
-    "legacyV8Writers": "11 safely retired / 52 actual legacy mutation doors; 41 remain open",
+    "legacyV8Writers": "12 safely retired / 52 actual legacy mutation doors; 40 remain open",
     "migration": "731/731 ledger rows on fresh database",
     "typeCheck": "1/1 exit 0"
   },
@@ -123,12 +169,12 @@
     "rollback": "only explicit FINANCE_LEGACY_WRITER_ROLLBACK_ENABLED=true reaches the legacy leaf; rollback observation is durable",
     "tenant": "same legacy ID in a foreign tenant resolves no canonical artifact/version",
     "coldReadback": "independent pg.Client reads stable canonical artifact and business-version IDs with one row per request/access kind",
-    "unprovenSurfaces": "41 actual legacy mutation doors remain enabled and visibly classified; no false zero-writer claim"
+    "unprovenSurfaces": "40 actual legacy mutation doors remain enabled and visibly classified; no false zero-writer claim"
   },
   "browserArtifacts": [],
   "rollback": {
-    "method": "Set FINANCE_LEGACY_WRITER_ROLLBACK_ENABLED=true to temporarily re-enable only the proven model-approval tranche. Remove the new unique index to revert telemetry deduplication; no Finance business data is deleted or rewritten.",
+    "method": "Set FINANCE_LEGACY_ROLLBACK_WRITERS=ECO-W22 to temporarily re-enable only the proven valuation-registration compatibility route. The handler still uses the canonical atomic registration service; no migration rollback or Finance business-data rewrite is required.",
     "executed": true,
-    "proof": "focused unit and real-PG tests observe rollback_writer and next() exactly once"
+    "proof": "The production-shaped RealPG suite observes rollback_writer, one 201 registration, one valuation/canonical identity/receipt set, then pinned cleanup and exact post-commit residue0."
   }
 }
