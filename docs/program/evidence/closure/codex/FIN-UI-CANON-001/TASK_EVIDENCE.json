@@ -5,9 +5,9 @@
   "technicalSourceSha": "35661751edb4fc737ee58b10ab166b626c9a2751",
   "reconciliationSha": "35661751edb4fc737ee58b10ab166b626c9a2751",
   "currentRequalification": {
-    "scope": "Integrated Statement owner-acceptance/browser chain plus governed budget initiative linking on the exact internal-beta candidate.",
-    "gates": "Fresh 811 migrations and replay 0; Finance focused 154/154; root/server typechecks; production build; exact-current mounted G4 12/12 with zero HTTP/console errors.",
-    "limitations": "The hash-pinned external official PDF was not present in this workspace, so its prior SHA-bound RealPG acceptance receipt is retained rather than falsely claimed as rerun."
+    "scope": "Governed budget initiative linking remains qualified. Finance Statement is explicitly limited for internal beta under the 2026-08-20 stop-loss terminal handoff.",
+    "gates": "The earlier integrated gates remain historical evidence. The later exact f5c6a7f16f Statement run passed bounded source gates but failed its single authorized terminal mounted browser outcome with HTTP 422 / PostgreSQL 25P02 before exact-six creation.",
+    "limitations": "Finance Statement owner acceptance did not pass. Exact-six, ACCEPT/EXCLUDE, 6/6 ready, Save/Validate, explicit confirm, immutable receipt/list/detail/deep-link, cold signed ready context and downstream readback are excluded and must remain fail-closed."
   },
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
   "observedCandidateSha": "6b5587aca30ca8a1d2c1ae7d9ced694595ac87f4",
@@ -222,9 +222,12 @@
     "code": "Revert only the two Finance UI paths listed in changedPaths.",
     "data": "No production data touched; the disposable container holds all fixture mutations."
   },
-  "verdict": "DONE_CURRENT_SHA",
+  "verdict": "PARTIAL",
   "humanGate": "ACCEPTED_AUTOMATED_INTERNAL_BETA",
-  "openBlockers": [],
+  "openBlockers": [
+    "INTERNAL_BETA_LIMITATION: Finance Statement owner acceptance failed at exact product SHA f5c6a7f16f95a6b800afb19b08832d2c6930514c with mounted HTTP 422 / PostgreSQL 25P02 before exact-six creation.",
+    "Statement-dependent downstream claims remain excluded and fail-closed. Per owner stop-loss, no additional Finance successor is authorized and this limitation does not globally block the remaining internal-beta program."
+  ],
   "blockerReconciliation": [
     {
       "historicalBlocker": "Mounted browser completion for Prediction and Valuation, plus explicit conflict/error-state journeys, is incomplete.",
@@ -383,5 +386,35 @@
     "databaseReadback": "The final scenario had authoring_revision=3, exactly 3 authoring receipts and exactly 1 compute output.",
     "gates": "Fresh 795 migrations, repeat 0, focused UI 18/18, root typecheck, production browser build, signed browser 1/1, diff-check and commit hooks PASS.",
     "acceptance": "DONE_CURRENT_SHA for internal beta under the owner's automated-evidence authority. Production deploy remains separately NOT_AUTHORIZED."
+  },
+  "statementStopLossTerminalHandoff20260820": {
+    "classification": "PARTIAL_INTERNAL_BETA_LIMITATION",
+    "integrationDecision": "DO_NOT_INTEGRATE_PRODUCT_SHA",
+    "lastCleanProductSha": "f5c6a7f16f95a6b800afb19b08832d2c6930514c",
+    "sourceParentSha": "c40218c4fe9d647d6bb43c44e7efe6795c3e1fb4",
+    "sourceGates": {
+      "focused": "PASS 51/51",
+      "officialPdfRealPg": "PASS 2/2 with residue 0",
+      "typechecks": "root and server PASS",
+      "builds": "backend and frontend PASS",
+      "coldSuggestionAndAuditPersistence": "PASS"
+    },
+    "singleAuthorizedTerminalBrowserOutcome": {
+      "request": "statementType empty; statementTypes BS, CF and P&L; year 2025; currency PLN; company CD PROJEKT S.A.",
+      "result": "HTTP 422; PostgreSQL 25P02 current transaction is aborted",
+      "databaseState": "one upload-created draft; no exact-six siblings"
+    },
+    "unmet": [
+      "exact-six",
+      "owner ACCEPT/EXCLUDE end-to-end",
+      "6/6 ready",
+      "Save/Validate",
+      "explicit confirm",
+      "immutable receipt/list/detail/deep-link",
+      "cold ready signed context",
+      "downstream API and database readback"
+    ],
+    "stopLossAuthority": "Do not create another Finance successor and do not let Statement block the wider program.",
+    "boundary": "Statement-dependent downstream claims remain excluded and fail-closed; release, push and deploy are not authorized."
   }
 }
