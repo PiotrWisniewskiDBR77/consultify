@@ -3074,6 +3074,7 @@ router.get(
 router.put(
   '/budgets/:budgetId/lines/:lineId',
   verifyToken,
+  economicsCutoverGuard,
   validateBody(updateBudgetLineSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;

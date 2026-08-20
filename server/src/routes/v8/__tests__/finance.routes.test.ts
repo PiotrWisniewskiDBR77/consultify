@@ -29,6 +29,7 @@ const mockListEvents = vi.fn();
 const mockListValuations = vi.fn();
 const mockListBudgets = vi.fn();
 const mockRegisterBudget = vi.fn();
+const mockApplyBudgetLineCommand = vi.fn();
 const mockListAnalyses = vi.fn();
 const mockGetAnalysisRatios = vi.fn();
 const mockGetAnalysisInsights = vi.fn();
@@ -294,6 +295,20 @@ vi.mock('../../../services/finance/canonical/budgetRegistrationService.js', () =
   registerBudget: (...args: unknown[]) => mockRegisterBudget(...args),
 }));
 
+vi.mock('../../../services/finance/canonical/budgetLineCommandService.js', () => ({
+  BudgetLineCommandError: class BudgetLineCommandError extends Error {
+    constructor(
+      public code: string,
+      public status: number,
+      message: string,
+      public details?: Record<string, unknown>
+    ) {
+      super(message);
+    }
+  },
+  applyBudgetLineCommand: (...args: unknown[]) => mockApplyBudgetLineCommand(...args),
+}));
+
 vi.mock('../../../services/ratioAnalysisService.js', () => ({
   computeRatios: (...args: unknown[]) => mockComputeRatios(...args),
 }));
@@ -420,6 +435,20 @@ describe('V8 finance read-only routes', () => {
       budget: { id: 'budget-new', title: 'Test Budget', status: 'DRAFT' },
       lineCount: 15,
       scenarioCount: 3,
+      replay: false,
+    });
+    mockApplyBudgetLineCommand.mockResolvedValue({
+      budgetId: 'budget-new',
+      line: {
+        id: 'line-1',
+        lineCode: 'REVENUE',
+        baselineValue: '42',
+        source: 'manual',
+        driverKpiId: null,
+        driverFormula: null,
+        isLocked: false,
+      },
+      budgetVersion: 2,
       replay: false,
     });
     mockListAnalyses.mockResolvedValue([]);
@@ -1808,6 +1837,38 @@ describe('V8 finance read-only routes', () => {
     expect(res.status).toBe(400);
     expect(res.body.code).toBe('INVALID_BODY');
     expect(mockRegisterBudget).not.toHaveBeenCalled();
+  });
+
+  it('PUT /api/v8/finance/budgets/:budgetId/lines/:lineId binds CAS and idempotency', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .put('/api/v8/finance/budgets/budget-new/lines/line-1')
+      .set('Idempotency-Key', 'line-command-key')
+      .send({ expectedVersion: 1, baselineValue: '42' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({ budgetVersion: 2, replay: false });
+    expect(mockApplyBudgetLineCommand).toHaveBeenCalledWith({
+      organizationId: ORG,
+      userId: UID,
+      budgetId: 'budget-new',
+      lineId: 'line-1',
+      expectedVersion: 1,
+      idempotencyKey: 'line-command-key',
+      patch: { baselineValue: '42' },
+    });
+  });
+
+  it('PUT /api/v8/finance/budgets/:budgetId/lines/:lineId rejects numeric transport', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .put('/api/v8/finance/budgets/budget-new/lines/line-1')
+      .set('Idempotency-Key', 'line-command-key')
+      .send({ expectedVersion: 1, baselineValue: 42 });
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('INVALID_BODY');
+    expect(mockApplyBudgetLineCommand).not.toHaveBeenCalled();
   });
 
   it('POST /api/v8/finance/analyses returns envelope and delegates to createAnalysis', async () => {

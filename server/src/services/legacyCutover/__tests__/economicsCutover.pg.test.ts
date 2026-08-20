@@ -866,6 +866,98 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
     }
   });
 
+  it('retires ECO-W34 line update before the legacy row can mutate', async () => {
+    const budgetId = `${prefix}-line-retired-budget`;
+    const lineId = `${prefix}-line-retired`;
+    const requestId = `${prefix}-line-update-retired`;
+    await pool.query(
+      `INSERT INTO budgets(id,organization_id,title,status,period_start,period_end,granularity,currency,version)
+       VALUES($1,$2,'Retired line budget','DRAFT','2028-01-01','2028-12-31','monthly','PLN',1)`,
+      [budgetId, orgA]
+    );
+    await pool.query(
+      `INSERT INTO budget_lines(id,budget_id,line_code,line_name,statement_type,source,baseline_value)
+       VALUES($1,$2,'REVENUE','Revenue','P&L','manual',10)`,
+      [lineId, budgetId]
+    );
+    try {
+      const response = await request(productionMountedApp)
+        .put(`/api/economics/budgets/${budgetId}/lines/${lineId}`)
+        .set('x-request-id', requestId)
+        .send({ baselineValue: 99 });
+      expect(response.status).toBe(410);
+      expect(response.body).toMatchObject({
+        writerId: 'ECO-W34',
+        successor: '/api/v8/finance/budgets/:budgetId/lines/:lineId',
+      });
+      expect(
+        (await pool.query(`SELECT baseline_value::text FROM budget_lines WHERE id=$1`, [lineId]))
+          .rows
+      ).toEqual([{ baseline_value: '10' }]);
+      expect(
+        (
+          await pool.query(
+            `SELECT writer_id,access_kind,successor_path FROM legacy_cutover_usage_events
+              WHERE organization_id=$1 AND request_id=$2`,
+            [orgA, requestId]
+          )
+        ).rows
+      ).toEqual([
+        {
+          writer_id: 'ECO-W34',
+          access_kind: 'legacy_writer_blocked',
+          successor_path: '/api/v8/finance/budgets/:budgetId/lines/:lineId',
+        },
+      ]);
+    } finally {
+      await pool.query(`DELETE FROM budget_lines WHERE id=$1`, [lineId]);
+      await pool.query(`DELETE FROM budgets WHERE id=$1`, [budgetId]);
+    }
+  });
+
+  it('restores only ECO-W34 through the writer-scoped rollback lever', async () => {
+    const previous = process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+    const budgetId = `${prefix}-line-rollback-budget`;
+    const lineId = `${prefix}-line-rollback`;
+    const requestId = `${prefix}-line-update-rollback`;
+    process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = 'ECO-W34';
+    await pool.query(
+      `INSERT INTO budgets(id,organization_id,title,status,period_start,period_end,granularity,currency,version)
+       VALUES($1,$2,'Rollback line budget','DRAFT','2028-01-01','2028-12-31','monthly','PLN',1)`,
+      [budgetId, orgA]
+    );
+    await pool.query(
+      `INSERT INTO budget_lines(id,budget_id,line_code,line_name,statement_type,source,baseline_value)
+       VALUES($1,$2,'REVENUE','Revenue','P&L','manual',10)`,
+      [lineId, budgetId]
+    );
+    try {
+      const response = await request(productionMountedApp)
+        .put(`/api/economics/budgets/${budgetId}/lines/${lineId}`)
+        .set('x-request-id', requestId)
+        .send({ baselineValue: 99 });
+      expect(response.status).toBe(200);
+      expect(
+        (await pool.query(`SELECT baseline_value::text FROM budget_lines WHERE id=$1`, [lineId]))
+          .rows
+      ).toEqual([{ baseline_value: '99' }]);
+      expect(
+        (
+          await pool.query(
+            `SELECT writer_id,access_kind FROM legacy_cutover_usage_events
+              WHERE organization_id=$1 AND request_id=$2`,
+            [orgA, requestId]
+          )
+        ).rows
+      ).toEqual([{ writer_id: 'ECO-W34', access_kind: 'rollback_writer' }]);
+    } finally {
+      await pool.query(`DELETE FROM budget_lines WHERE id=$1`, [lineId]);
+      await pool.query(`DELETE FROM budgets WHERE id=$1`, [budgetId]);
+      if (previous === undefined) delete process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+      else process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = previous;
+    }
+  });
+
   it('restores only ECO-W31 through the writer-scoped rollback lever', async () => {
     const previous = process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
     const requestId = `${prefix}-wave11-pptx-rollback`;

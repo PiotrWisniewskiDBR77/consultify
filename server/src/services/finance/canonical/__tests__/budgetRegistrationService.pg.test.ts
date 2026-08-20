@@ -17,6 +17,7 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
   const foreignSourceId = `tool-budget-registration-foreign-${randomUUID()}`;
   let client: Client;
   let registerBudget: typeof import('../budgetRegistrationService.js').registerBudget;
+  let applyBudgetLineCommand: typeof import('../budgetLineCommandService.js').applyBudgetLineCommand;
 
   const counts = async () =>
     (
@@ -28,7 +29,9 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
           (SELECT count(*)::int FROM budget_scenarios WHERE budget_id IN
              (SELECT id FROM budgets WHERE organization_id=$1)) scenarios,
           (SELECT count(*)::int FROM finance_budget_registration_receipts
-             WHERE organization_id=$1) receipts`,
+             WHERE organization_id=$1) receipts,
+          (SELECT count(*)::int FROM finance_budget_line_command_receipts
+             WHERE organization_id=$1) line_receipts`,
         [orgId]
       )
     ).rows[0];
@@ -38,6 +41,7 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
     client = new Client({ connectionString: DATABASE_URL });
     await client.connect();
     ({ registerBudget } = await import('../budgetRegistrationService.js'));
+    ({ applyBudgetLineCommand } = await import('../budgetLineCommandService.js'));
     await client.query(
       `INSERT INTO organizations(id,name) VALUES($1,'Budget registration'),($2,'Foreign budget registration')`,
       [orgId, foreignOrgId]
@@ -66,6 +70,10 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
     try {
       await client.query(`SET LOCAL session_replication_role=replica`);
       await client.query(
+        `DELETE FROM finance_budget_line_command_receipts WHERE organization_id=$1`,
+        [orgId]
+      );
+      await client.query(
         `DELETE FROM finance_budget_registration_receipts WHERE organization_id=$1`,
         [orgId]
       );
@@ -90,7 +98,13 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
       await client.query('ROLLBACK');
       throw error;
     }
-    expect(await counts()).toEqual({ budgets: 0, lines: 0, scenarios: 0, receipts: 0 });
+    expect(await counts()).toEqual({
+      budgets: 0,
+      lines: 0,
+      scenarios: 0,
+      receipts: 0,
+      line_receipts: 0,
+    });
     expect(
       (
         await client.query(
@@ -251,6 +265,201 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
       expect(await counts()).toEqual(before);
     } finally {
       await client.query(`DROP TRIGGER ${trg} ON finance_budget_registration_receipts`);
+      await client.query(`DROP FUNCTION ${fn}()`);
+    }
+  });
+
+  it('updates one exact line, increments the parent version and replays byte-stably', async () => {
+    const budget = await registerBudget(command(`line-happy-budget-${randomUUID()}`));
+    const line = (
+      await client.query(
+        `SELECT id FROM budget_lines WHERE budget_id=$1 ORDER BY display_order LIMIT 1`,
+        [budget.budget.id]
+      )
+    ).rows[0];
+    const key = `line-happy-${randomUUID()}`;
+    const input = {
+      organizationId: orgId,
+      userId,
+      budgetId: budget.budget.id,
+      lineId: line.id,
+      expectedVersion: 1,
+      idempotencyKey: key,
+      patch: { baselineValue: '1234.50', isLocked: true },
+    };
+    const first = await applyBudgetLineCommand(input);
+    expect(first).toMatchObject({ budgetVersion: 2, replay: false });
+    expect(first.line).toMatchObject({ baselineValue: '1234.50', isLocked: true });
+    expect(await applyBudgetLineCommand(input)).toEqual({ ...first, replay: true });
+    const cold = (
+      await client.query(
+        `SELECT b.version,bl.baseline_value::text,bl.is_locked,
+          (SELECT count(*)::int FROM finance_budget_line_command_receipts
+            WHERE organization_id=$1 AND budget_id=$2) receipt_count
+         FROM budgets b JOIN budget_lines bl ON bl.budget_id=b.id
+         WHERE b.organization_id=$1 AND b.id=$2 AND bl.id=$3`,
+        [orgId, budget.budget.id, line.id]
+      )
+    ).rows[0];
+    expect(cold).toEqual({
+      version: 2,
+      baseline_value: '1234.50',
+      is_locked: true,
+      receipt_count: 1,
+    });
+    await expect(
+      applyBudgetLineCommand({ ...input, patch: { baselineValue: '999' } })
+    ).rejects.toMatchObject({ code: 'IDEMPOTENCY_PAYLOAD_COLLISION', status: 409 });
+    await expect(
+      client.query(
+        `UPDATE finance_budget_line_command_receipts
+            SET request_sha256=request_sha256
+          WHERE organization_id=$1 AND budget_id=$2 AND idempotency_key=$3`,
+        [orgId, budget.budget.id, key]
+      )
+    ).rejects.toThrow(/immutable/);
+    await expect(
+      client.query(
+        `DELETE FROM finance_budget_line_command_receipts
+          WHERE organization_id=$1 AND budget_id=$2 AND idempotency_key=$3`,
+        [orgId, budget.budget.id, key]
+      )
+    ).rejects.toThrow(/immutable/);
+    await expect(
+      applyBudgetLineCommand({
+        ...input,
+        idempotencyKey: `stale-${randomUUID()}`,
+        patch: { baselineValue: '999' },
+      })
+    ).rejects.toMatchObject({ code: 'BUDGET_VERSION_CONFLICT', status: 409 });
+  });
+
+  it('converges eight line-command retries and checks live authority before replay', async () => {
+    const budget = await registerBudget(command(`line-concurrent-budget-${randomUUID()}`));
+    const line = (
+      await client.query(
+        `SELECT id FROM budget_lines WHERE budget_id=$1 ORDER BY display_order LIMIT 1`,
+        [budget.budget.id]
+      )
+    ).rows[0];
+    const input = {
+      organizationId: orgId,
+      userId,
+      budgetId: budget.budget.id,
+      lineId: line.id,
+      expectedVersion: 1,
+      idempotencyKey: `line-concurrent-${randomUUID()}`,
+      patch: { source: 'manual' as const, driverFormula: 'revenue * 0.9' },
+    };
+    const results = await Promise.all(
+      Array.from({ length: 8 }, () => applyBudgetLineCommand(input))
+    );
+    expect(results.filter((row) => !row.replay)).toHaveLength(1);
+    expect(results.filter((row) => row.replay)).toHaveLength(7);
+    expect(new Set(results.map((row) => row.budgetVersion))).toEqual(new Set([2]));
+    await client.query(
+      `UPDATE organization_members SET status='REVOKED' WHERE organization_id=$1 AND user_id=$2`,
+      [orgId, userId]
+    );
+    await expect(applyBudgetLineCommand(input)).rejects.toMatchObject({
+      code: 'ORG_MEMBERSHIP_REVOKED',
+      status: 403,
+    });
+    await client.query(
+      `UPDATE organization_members SET status='ACTIVE' WHERE organization_id=$1 AND user_id=$2`,
+      [orgId, userId]
+    );
+  });
+
+  it('rejects foreign line ownership and terminal budget mutation with zero line effect', async () => {
+    const first = await registerBudget(command(`line-owner-a-${randomUUID()}`));
+    const second = await registerBudget(command(`line-owner-b-${randomUUID()}`));
+    const foreignLine = (
+      await client.query(
+        `SELECT id FROM budget_lines WHERE budget_id=$1 ORDER BY display_order LIMIT 1`,
+        [second.budget.id]
+      )
+    ).rows[0];
+    await expect(
+      applyBudgetLineCommand({
+        organizationId: orgId,
+        userId,
+        budgetId: first.budget.id,
+        lineId: foreignLine.id,
+        expectedVersion: 1,
+        idempotencyKey: `foreign-line-${randomUUID()}`,
+        patch: { baselineValue: '7' },
+      })
+    ).rejects.toMatchObject({ code: 'BUDGET_LINE_NOT_FOUND', status: 404 });
+    await client.query(`UPDATE budgets SET status='APPROVED' WHERE id=$1`, [first.budget.id]);
+    await expect(
+      applyBudgetLineCommand({
+        organizationId: orgId,
+        userId,
+        budgetId: first.budget.id,
+        lineId: (
+          await client.query(
+            `SELECT id FROM budget_lines WHERE budget_id=$1 ORDER BY display_order LIMIT 1`,
+            [first.budget.id]
+          )
+        ).rows[0].id,
+        expectedVersion: 1,
+        idempotencyKey: `terminal-line-${randomUUID()}`,
+        patch: { baselineValue: '8' },
+      })
+    ).rejects.toMatchObject({ code: 'BUDGET_IMMUTABLE', status: 409 });
+    expect(
+      (
+        await client.query(
+          `SELECT count(*)::int count FROM finance_budget_line_command_receipts
+            WHERE organization_id=$1 AND budget_id=$2`,
+          [orgId, first.budget.id]
+        )
+      ).rows[0].count
+    ).toBe(0);
+  });
+
+  it('rolls the line and parent version back when its receipt insert fails', async () => {
+    const budget = await registerBudget(command(`line-rollback-budget-${randomUUID()}`));
+    const line = (
+      await client.query(
+        `SELECT id,baseline_value::text FROM budget_lines
+          WHERE budget_id=$1 ORDER BY display_order LIMIT 1`,
+        [budget.budget.id]
+      )
+    ).rows[0];
+    const fn = `reject_budget_line_receipt_${randomUUID().replaceAll('-', '')}`;
+    const trg = `reject_budget_line_receipt_${randomUUID().replaceAll('-', '')}`;
+    await client.query(
+      `CREATE FUNCTION ${fn}() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'injected budget line receipt failure'; END $$`
+    );
+    await client.query(
+      `CREATE TRIGGER ${trg} BEFORE INSERT ON finance_budget_line_command_receipts FOR EACH ROW EXECUTE FUNCTION ${fn}()`
+    );
+    try {
+      await expect(
+        applyBudgetLineCommand({
+          organizationId: orgId,
+          userId,
+          budgetId: budget.budget.id,
+          lineId: line.id,
+          expectedVersion: 1,
+          idempotencyKey: `line-rollback-${randomUUID()}`,
+          patch: { baselineValue: '77' },
+        })
+      ).rejects.toThrow(/injected budget line receipt failure/);
+      expect(
+        (
+          await client.query(
+            `SELECT b.version,bl.baseline_value::text FROM budgets b
+              JOIN budget_lines bl ON bl.budget_id=b.id
+             WHERE b.id=$1 AND bl.id=$2`,
+            [budget.budget.id, line.id]
+          )
+        ).rows[0]
+      ).toEqual({ version: 1, baseline_value: line.baseline_value });
+    } finally {
+      await client.query(`DROP TRIGGER ${trg} ON finance_budget_line_command_receipts`);
       await client.query(`DROP FUNCTION ${fn}()`);
     }
   });

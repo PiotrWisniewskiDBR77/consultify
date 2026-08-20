@@ -179,6 +179,30 @@ export interface V8FinanceBudgetRegistrationResult {
   replay: boolean;
 }
 
+export interface V8FinanceBudgetLineCommandPayload {
+  expectedVersion: number;
+  baselineValue?: string;
+  source?: 'baseline' | 'manual' | 'driver' | 'formula';
+  driverKpiId?: string | null;
+  driverFormula?: string | null;
+  isLocked?: boolean;
+}
+
+export interface V8FinanceBudgetLineCommandResult {
+  budgetId: string;
+  line: {
+    id: string;
+    lineCode: string;
+    baselineValue: string;
+    source: 'baseline' | 'manual' | 'driver' | 'formula';
+    driverKpiId: string | null;
+    driverFormula: string | null;
+    isLocked: boolean;
+  };
+  budgetVersion: number;
+  replay: boolean;
+}
+
 export interface V8FinanceCaseScenario {
   id: string;
   name: string;
@@ -640,6 +664,15 @@ export const V8FinanceApi = {
   getBudgets: () => v8Get<{ budgets: V8FinanceBudgetSummary[]; count: number }>('/finance/budgets'),
   createBudget: (body: V8FinanceBudgetRegistrationPayload, idempotencyKey: string) =>
     v8Post<V8FinanceBudgetRegistrationResult>('/finance/budgets', body, {
+      extraHeaders: { 'Idempotency-Key': idempotencyKey },
+    }),
+  updateBudgetLine: (
+    budgetId: string,
+    lineId: string,
+    body: V8FinanceBudgetLineCommandPayload,
+    idempotencyKey: string
+  ) =>
+    v8Put<V8FinanceBudgetLineCommandResult>(`/finance/budgets/${budgetId}/lines/${lineId}`, body, {
       extraHeaders: { 'Idempotency-Key': idempotencyKey },
     }),
   getStatementPacks: (params?: { readiness?: string }) =>

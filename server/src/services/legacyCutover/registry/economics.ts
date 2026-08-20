@@ -410,10 +410,10 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'ECO-W34',
       method: 'PUT',
       path: /^\/budgets\/[^/]+\/lines\/[^/]+\/?$/,
-      state: 'observed',
-      successor: null,
+      state: 'disabled',
+      successor: '/api/v8/finance/budgets/:budgetId/lines/:lineId',
       reason:
-        'Updates a budget_lines row for the budget/line pair addressed by :budgetId/:lineId (economics.routes.ts:3119, budgetingService.ts:282). No proven successor.',
+        'The mounted Budget Workspace now uses a DRAFT-only canonical line command with exact tenant/budget/line binding, parent-version CAS, normalized patch hashing, immutable receipt and writer-scoped legacy rollback.',
     },
     {
       writerId: 'ECO-W35',

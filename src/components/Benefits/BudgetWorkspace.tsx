@@ -155,6 +155,15 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
         const res = await fetch(`${API_URL}/economics/budgets/${b.id}`, { headers: getHeaders() });
         if (res.ok) {
           const d = await res.json();
+          setSelected((current) =>
+            current?.id === b.id
+              ? {
+                  ...current,
+                  version: Number(d.version ?? current.version),
+                  status: String(d.status ?? current.status),
+                }
+              : current
+          );
           setLines(d.lines || []);
           setScenarios(d.scenarios || []);
         }
@@ -253,34 +262,58 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
     async (lineId: string, value: number) => {
       if (!selected) return;
       try {
-        await fetch(`${API_URL}/economics/budgets/${selected.id}/lines/${lineId}`, {
-          method: 'PUT',
-          headers: { ...getHeaders(), 'Content-Type': 'application/json' },
-          body: JSON.stringify({ baselineValue: value }),
-        });
-        setLines((prev) => prev.map((l) => (l.id === lineId ? { ...l, baselineValue: value } : l)));
+        const result = await V8FinanceApi.updateBudgetLine(
+          selected.id,
+          lineId,
+          { expectedVersion: selected.version, baselineValue: String(value) },
+          crypto.randomUUID()
+        );
+        setSelected((current) =>
+          current?.id === selected.id ? { ...current, version: result.budgetVersion } : current
+        );
+        setLines((prev) =>
+          prev.map((line) =>
+            line.id === lineId
+              ? { ...line, baselineValue: Number(result.line.baselineValue) }
+              : line
+          )
+        );
       } catch {
-        /* ignore */
+        await selectBudget(selected);
+        toast.error(
+          t('finance.budget.lineUpdateFailed', 'Budget line changed; current data reloaded')
+        );
       }
     },
-    [selected]
+    [selected, selectBudget, t]
   );
 
   const handleToggleLock = useCallback(
     async (lineId: string, isLocked: boolean) => {
       if (!selected) return;
       try {
-        await fetch(`${API_URL}/economics/budgets/${selected.id}/lines/${lineId}`, {
-          method: 'PUT',
-          headers: { ...getHeaders(), 'Content-Type': 'application/json' },
-          body: JSON.stringify({ isLocked: !isLocked }),
-        });
-        setLines((prev) => prev.map((l) => (l.id === lineId ? { ...l, isLocked: !isLocked } : l)));
+        const result = await V8FinanceApi.updateBudgetLine(
+          selected.id,
+          lineId,
+          { expectedVersion: selected.version, isLocked: !isLocked },
+          crypto.randomUUID()
+        );
+        setSelected((current) =>
+          current?.id === selected.id ? { ...current, version: result.budgetVersion } : current
+        );
+        setLines((prev) =>
+          prev.map((line) =>
+            line.id === lineId ? { ...line, isLocked: result.line.isLocked } : line
+          )
+        );
       } catch {
-        /* ignore */
+        await selectBudget(selected);
+        toast.error(
+          t('finance.budget.lineUpdateFailed', 'Budget line changed; current data reloaded')
+        );
       }
     },
-    [selected]
+    [selected, selectBudget, t]
   );
 
   const handleLinkInitiative = useCallback(

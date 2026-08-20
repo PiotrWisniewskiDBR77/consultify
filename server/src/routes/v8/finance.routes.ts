@@ -150,6 +150,11 @@ import {
   BudgetRegistrationError,
   registerBudget,
 } from '../../services/finance/canonical/budgetRegistrationService.js';
+import {
+  applyBudgetLineCommand,
+  BudgetLineCommandError,
+  type BudgetLinePatch,
+} from '../../services/finance/canonical/budgetLineCommandService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -1386,6 +1391,65 @@ router.post(
     } catch (error) {
       if (error instanceof BudgetRegistrationError) {
         return res.status(error.status).json({ code: error.code, error: error.message });
+      }
+      throw error;
+    }
+  })
+);
+
+router.put(
+  '/budgets/:budgetId/lines/:lineId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const userId = String(req.user?.id || (req.user as any)?.user_id || '');
+    const body =
+      req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
+    const allowed = new Set([
+      'expectedVersion',
+      'baselineValue',
+      'source',
+      'driverKpiId',
+      'driverFormula',
+      'isLocked',
+    ]);
+    if (Object.keys(body).some((key) => !allowed.has(key))) {
+      return res.status(400).json({ code: 'INVALID_BODY', error: 'Unknown budget line field' });
+    }
+    if (!Number.isInteger(body.expectedVersion) || body.expectedVersion < 1) {
+      return res.status(400).json({ code: 'INVALID_BODY', error: 'Invalid expectedVersion' });
+    }
+    const patch: BudgetLinePatch = {};
+    if (body.baselineValue !== undefined) {
+      if (typeof body.baselineValue !== 'string')
+        return res
+          .status(400)
+          .json({ code: 'INVALID_BODY', error: 'baselineValue must be a decimal string' });
+      patch.baselineValue = body.baselineValue;
+    }
+    if (body.source !== undefined) patch.source = body.source;
+    if (body.driverKpiId !== undefined) patch.driverKpiId = body.driverKpiId;
+    if (body.driverFormula !== undefined) patch.driverFormula = body.driverFormula;
+    if (body.isLocked !== undefined) patch.isLocked = body.isLocked;
+    try {
+      const result = await applyBudgetLineCommand({
+        organizationId,
+        userId,
+        budgetId: req.params.budgetId,
+        lineId: req.params.lineId,
+        expectedVersion: body.expectedVersion,
+        idempotencyKey: String(
+          req.header('Idempotency-Key') || req.header('x-idempotency-key') || ''
+        ),
+        patch,
+      });
+      return res.status(200).json({ data: result, meta: financeMeta() });
+    } catch (error) {
+      if (error instanceof BudgetLineCommandError) {
+        return res.status(error.status).json({
+          code: error.code,
+          error: error.message,
+          ...(error.details || {}),
+        });
       }
       throw error;
     }

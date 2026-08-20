@@ -24,8 +24,8 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
       legacyMutationDoors: 52,
       canonicalMutationDoors: 1,
       nonMutationDoors: 6,
-      retiredLegacyMutationDoors: 18,
-      openLegacyMutationDoors: 34,
+      retiredLegacyMutationDoors: 19,
+      openLegacyMutationDoors: 33,
     });
   });
 
@@ -87,5 +87,16 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
         /fetch\(`\$\{API_URL\}\/economics\/budgets`,\s*\{\s*method:\s*'POST'/
       );
     }
+  });
+
+  it('routes every mounted budget-line mutation through the canonical CAS command', () => {
+    const source = fs.readFileSync(
+      path.resolve(process.cwd(), 'src/components/Benefits/BudgetWorkspace.tsx'),
+      'utf8'
+    );
+    expect(source).toContain('V8FinanceApi.updateBudgetLine');
+    expect(source).not.toMatch(
+      /fetch\(`\$\{API_URL\}\/economics\/budgets\/\$\{selected\.id\}\/lines\//
+    );
   });
 });
