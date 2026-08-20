@@ -73,7 +73,10 @@ const buildDocKey = (row: {
   ].join(':');
 };
 
-const chunkText = (text: string, opts?: { chunkSize?: number; overlap?: number }): string[] => {
+export const chunkText = (
+  text: string,
+  opts?: { chunkSize?: number; overlap?: number }
+): string[] => {
   const chunkSize = Math.max(200, Math.min(2000, opts?.chunkSize ?? 1000));
   const overlap = Math.max(0, Math.min(chunkSize - 50, opts?.overlap ?? 200));
   const normalized = String(text || '').replace(/\r\n/g, '\n');
@@ -85,6 +88,7 @@ const chunkText = (text: string, opts?: { chunkSize?: number; overlap?: number }
     const end = Math.min(normalized.length, i + chunkSize);
     const slice = normalized.slice(i, end).trim();
     if (slice.length >= 40) chunks.push(slice);
+    if (end >= normalized.length) break;
     i = end - overlap;
     if (i <= 0) i = end;
   }
