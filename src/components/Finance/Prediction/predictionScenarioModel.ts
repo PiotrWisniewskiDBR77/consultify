@@ -20,13 +20,8 @@
  * bezpieczeństwa/matematyki, DEC-FIN-009; pierwsze dwa gate'ują tylko COMPUTE, nigdy budowanie
  * założeń).
  *
- * ★ LUKA (zaraportowana w PKG_G_PREDICTION_report.md jako EVIDENCE_MISSING/BLOCKED_EXTERNAL): NIE
- * istnieje HTTP CRUD do zapisu `finance_prediction_scenarios` / `_driver_overrides` / `_initiatives`
- * / `_impact_chain` / `_financing` — tylko odczyt pośredni przez preflight/calculate. Ten moduł
- * modeluje "draft" (stan roboczy w pamięci przeglądarki, kształt POLE-PO-POLU identyczny ze
- * schematem DB — `server/migrations/20260809_finance_v3_d07_prediction_01_tables.sql` — żeby
- * podłączenie prawdziwego zapisu, gdy powstanie, było wymianą jednej funkcji, nie przepisywaniem
- * modelu) i odtwarza semantykę SERWEROWEJ analizy double-counting (grupowanie
+ * Trwały aggregate jest ładowany i zapisywany przez kanoniczne endpointy draftu. Ten moduł
+ * pozostaje modelem UI i odtwarza semantykę SERWEROWEJ analizy double-counting (grupowanie
  * entity+canonical_line+period, `finance_prediction_detect_overlaps()`, plik `..._03_readiness.sql`
  * linie 45-98) jako NATYCHMIASTOWĄ, nieautorytatywną podpowiedź podczas budowy — autorytatywne jest
  * zawsze wywołanie `POST /prediction/:id/preflight` (Layer 1 SQL + Layer 2 real-currency preview),
@@ -96,7 +91,7 @@ export interface DraftDriverOverride {
   unit: string;
   baselineValueDecimal: number | null;
   rationale: string | null;
-  /** Nie jest kolumną DB — most do `finance_prediction_driver_line_map` (schedule_type -> canonical_line_id), potrzebny grupowaniu double-counting po tej stronie. */
+  /** Trwałe, jednoznaczne powiązanie z `canonical_line_id`, zwracane jako line code dla UI. */
   canonicalLineCode: string;
 }
 
@@ -182,6 +177,7 @@ export interface ScenarioDraft {
   businessVersionId: string | null;
   scenarioMode: ScenarioMode;
   name: string;
+  description?: string | null;
   driverOverrides: DraftDriverOverride[];
   initiatives: DraftInitiative[];
   impacts: DraftImpact[];
@@ -196,6 +192,7 @@ export function createEmptyScenarioDraft(params: { name: string; scenarioMode?: 
     businessVersionId: null,
     scenarioMode: params.scenarioMode ?? 'STANDARD_BASE',
     name: params.name,
+    description: null,
     driverOverrides: [],
     initiatives: [],
     impacts: [],
@@ -920,8 +917,8 @@ export function canonicalScenarioDraftFingerprint(draft: ScenarioDraft): string 
 /**
  * Dowód "exact cold reopen" na WARSTWIE DRAFTU przeglądarki: serializacja -> JSON round-trip
  * (symuluje "zamknij kartę, otwórz na zimno") -> serializacja ponownie muszą dać bajtowo identyczny
- * odcisk. Realny cold-reopen PERSYSTOWANYCH wartości wymaga zapisu do bazy (brakujący CRUD, patrz
- * luka w nagłówku pliku) — to jest lokalny, ale realny dowód niezmienności modelu, nie atrapa;
+ * odcisk. Realny cold-reopen persystowanych wartości jest osobno dowodzony przez kanoniczny
+ * endpoint draftu; ten helper pozostaje lokalnym dowodem niezmienności modelu UI.
  * serwer ma WŁASNY, niezależny dowód tej samej własności dla swojej warstwy (`contentSemanticHash`
  * + trzy funkcje sortujące wymienione wyżej, live-tested w istniejących testach determinizmu PKG-A).
  */

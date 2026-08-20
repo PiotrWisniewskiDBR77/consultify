@@ -14,43 +14,40 @@ import {
   setFeatureFlagOverrides,
 } from '@/test-utils/featureFlagOverrides';
 
-import type { FinanceBusinessVersionDetailDto } from '../../../../services/api/financeV2.types';
+import type { FinancePredictionDraftDto } from '../../../../services/api/financeV2.types';
 
 const apiMocks = vi.hoisted(() => ({
-  getFinanceBusinessVersion: vi.fn(),
+  getFinancePredictionDraft: vi.fn(),
+  saveFinancePredictionDraft: vi.fn(),
   runFinancePredictionPreflight: vi.fn(),
   runFinancePredictionCalculate: vi.fn(),
 }));
 vi.mock('@/services/api/financeV2.api', () => apiMocks);
 
-import { createEmptyScenarioDraft } from '../predictionScenarioModel';
 import { PredictionWorkspace } from '../PredictionWorkspace';
 
-const CONFIRMED_VERSION: FinanceBusinessVersionDetailDto = {
+const PERSISTED_DRAFT: FinancePredictionDraftDto = {
   businessVersionId: 'bv-focus-1',
-  artifactId: 'artifact-1',
-  versionNo: 1,
   version: 1,
-  status: 'DRAFT',
-  freshness: 'NEVER_COMPUTED',
-  freshnessReason: null,
-  staleSince: null,
-  riskTier: 'LOW',
-  versionKind: 'MAIN',
-  parentVersionId: null,
-  supersededByVersionId: null,
-  computeSnapshotId: null,
-  computeRunId: null,
-  contentSemanticHash: null,
-  submittedBy: null,
-  submittedAt: null,
-  approvedBy: null,
-  approvedAt: null,
-  reopenReason: null,
-  reopenedBy: null,
-  reopenedAt: null,
-  createdAt: '2026-08-01T00:00:00Z',
-  updatedAt: '2026-08-01T00:00:00Z',
+  sourceBaselineVersionId: 'bv-baseline-1',
+  sourceBaselineContextVersion: 1,
+  sourceBaselineContextHash: 'a'.repeat(64),
+  sourceStatementVersionId: 'bv-statement-1',
+  sourceAnalysisVersionId: 'bv-analysis-1',
+  name: 'Scenariusz zachowany',
+  description: null,
+  scenarioMode: 'STANDARD_BASE',
+  computeContext: {
+    entityId: 'entity-real',
+    openingBalanceSheetPeriodId: 'period-opening',
+    forecastPeriods: [{ periodId: 'period-1', label: '01/2026', periodStart: '2026-01-01', periodEnd: '2026-01-31' }],
+  },
+  driverOverrides: [],
+  initiatives: [],
+  impacts: [],
+  financing: [],
+  lastAssumptionChangeAt: '2026-08-01T00:00:00Z',
+  lastComputeAt: null,
 };
 
 afterEach(() => {
@@ -60,22 +57,16 @@ afterEach(() => {
 
 describe('PredictionWorkspace — Focus Mode no-refetch (AP_MOUNT §E)', () => {
   it('entering and exiting focus mode calls zero Prediction network functions and preserves the active view; Esc exits', async () => {
-    apiMocks.getFinanceBusinessVersion.mockResolvedValue(CONFIRMED_VERSION);
+    apiMocks.getFinancePredictionDraft.mockResolvedValue(PERSISTED_DRAFT);
     setFeatureFlagOverrides({ financePredictionWorkspaceV1: true });
-    const draft = createEmptyScenarioDraft({ name: 'Scenariusz zachowany' });
-    render(
-      <PredictionWorkspace
-        artifactId="artifact-1"
-        businessVersionId="bv-focus-1"
-        initialDraft={draft}
-      />
-    );
+    render(<PredictionWorkspace artifactId="artifact-1" businessVersionId="bv-focus-1" />);
 
     await waitFor(() =>
       expect(screen.getByTestId('prediction-assumptions-view')).toBeInTheDocument()
     );
     expect(apiMocks.runFinancePredictionPreflight).not.toHaveBeenCalled();
     expect(apiMocks.runFinancePredictionCalculate).not.toHaveBeenCalled();
+    expect(apiMocks.getFinancePredictionDraft).toHaveBeenCalledTimes(1);
 
     fireEvent.click(screen.getByTestId('finance-workspace-bar-fullscreen'));
     await waitFor(() =>
@@ -88,6 +79,7 @@ describe('PredictionWorkspace — Focus Mode no-refetch (AP_MOUNT §E)', () => {
     );
     expect(apiMocks.runFinancePredictionPreflight).not.toHaveBeenCalled();
     expect(apiMocks.runFinancePredictionCalculate).not.toHaveBeenCalled();
+    expect(apiMocks.getFinancePredictionDraft).toHaveBeenCalledTimes(1);
 
     fireEvent.keyDown(document, { key: 'Escape' });
     await waitFor(() =>
@@ -96,6 +88,7 @@ describe('PredictionWorkspace — Focus Mode no-refetch (AP_MOUNT §E)', () => {
 
     expect(apiMocks.runFinancePredictionPreflight).not.toHaveBeenCalled();
     expect(apiMocks.runFinancePredictionCalculate).not.toHaveBeenCalled();
+    expect(apiMocks.getFinancePredictionDraft).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId('prediction-assumptions-view')).toBeInTheDocument();
     expect(screen.getByTestId('finance-workspace-bar-name')).toHaveTextContent(
       'Scenariusz zachowany'

@@ -2013,6 +2013,69 @@ export interface FinancePredictionPreflightResultDto {
   findings: FinancePredictionPreflightFindingDto[];
 }
 
+export interface FinancePredictionDriverOverrideDto {
+  id: string;
+  scheduleType: string;
+  driverCode: string;
+  entityId: string;
+  periodId: string;
+  overrideSource: string;
+  valueStatus: string;
+  valueDecimal: string | null;
+  unit: string;
+  baselineValueDecimal: string | null;
+  rationale: string | null;
+  canonicalLineCode: string;
+}
+
+export interface FinancePredictionInitiativeDto {
+  id: string; initiativeCode: string; name: string; description: string | null;
+  source: string | null; owner: string | null; confidencePct: string | null;
+  defaultStartPeriodId: string | null; defaultRampMonths: number | null;
+  defaultDurationMonths: number | null; implementationCostDecimal: string | null;
+  status: string;
+}
+
+export interface FinancePredictionImpactDto {
+  id: string; initiativeId: string; assumptionLabel: string;
+  driverScheduleType: string | null; driverCode: string | null; kpiCatalogId: string | null;
+  statementLineCode: string; entityId: string; amountKind: string; amountDecimal: string;
+  amountUnit: string; sign: string; startPeriodId: string | null; rampMonths: number | null;
+  durationMonths: number | null; decayPctPerPeriod: string | null;
+  implementationCostDecimal: string | null; confidencePct: string | null;
+  probabilityPct: string | null; cannibalizesImpactId: string | null;
+}
+
+export interface FinancePredictionFinancingDto {
+  id: string; financingKind: string; entityId: string; periodId: string | null;
+  payload: Record<string, unknown>; sourceRef: Record<string, unknown> | null; rationale: string | null;
+}
+
+export interface FinancePredictionDraftDto {
+  businessVersionId: string;
+  version: number;
+  sourceBaselineVersionId: string;
+  sourceBaselineContextVersion: number;
+  sourceBaselineContextHash: string;
+  sourceStatementVersionId: string;
+  sourceAnalysisVersionId: string;
+  name: string;
+  description: string | null;
+  scenarioMode: string;
+  computeContext: {
+    entityId: string;
+    openingBalanceSheetPeriodId: string;
+    forecastPeriods: Array<{ periodId: string; label: string; periodStart: string; periodEnd: string }>;
+  };
+  driverOverrides: FinancePredictionDriverOverrideDto[];
+  initiatives: FinancePredictionInitiativeDto[];
+  impacts: FinancePredictionImpactDto[];
+  financing: FinancePredictionFinancingDto[];
+  lastAssumptionChangeAt: string;
+  lastComputeAt: string | null;
+  replay?: boolean;
+}
+
 /** `prediction.routes.ts` `POST /prediction/:businessVersionId/calculate`, mode='STANDARD_BASE'. */
 export interface FinancePredictionCalculateStandardBaseResultDto {
   mode: 'STANDARD_BASE';

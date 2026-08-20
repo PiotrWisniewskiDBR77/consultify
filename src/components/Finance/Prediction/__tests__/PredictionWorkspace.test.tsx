@@ -9,9 +9,7 @@
  *     PO potwierdzeniu realnego `businessVersionId` (nie od razu — patrz sekcja niżej), przełączanie
  *     widoków (Budowa założeń <-> Modele/Wyniki) faktycznie zmienia DOM.
  *   - przełączanie trybu budowy (A/B/C) w widoku założeń renderuje odpowiedni panel.
- *   - bez realnego zapisanego scenariusza (luka CRUD, patrz predictionScenarioModel.ts nagłówek)
- *     kliknięcie "Uruchom preflight"/"Przelicz scenariusz" pokazuje honest-UI komunikat zamiast
- *     fejkować sukces lub crashować.
+ *   - preflight/calculate używają trwałego kontekstu pobranego z serwera.
  *
  * ★★ NAJWAŻNIEJSZY BLOK ("Anty-cicha-pustka" niżej): dowodzi, że komponent NIGDY nie renderuje
  * pustego formularza założeń bez jawnego sygnału — trzy stany (brak id / 404 / błąd sieci) mają
@@ -33,11 +31,11 @@ import {
   setFeatureFlagOverrides,
 } from '@/test-utils/featureFlagOverrides';
 
-import type { FinanceBusinessVersionDetailDto } from '../../../../services/api/financeV2.types';
-import { createEmptyScenarioDraft } from '../predictionScenarioModel';
+import type { FinancePredictionDraftDto } from '../../../../services/api/financeV2.types';
 
 const apiMocks = vi.hoisted(() => ({
-  getFinanceBusinessVersion: vi.fn(),
+  getFinancePredictionDraft: vi.fn(),
+  saveFinancePredictionDraft: vi.fn(),
   runFinancePredictionPreflight: vi.fn(),
   runFinancePredictionCalculate: vi.fn(),
 }));
@@ -45,31 +43,35 @@ vi.mock('@/services/api/financeV2.api', () => apiMocks);
 
 import { PredictionWorkspace } from '../PredictionWorkspace';
 
-const CONFIRMED_VERSION: FinanceBusinessVersionDetailDto = {
+const PERSISTED_DRAFT: FinancePredictionDraftDto = {
   businessVersionId: 'bv-prediction-1',
-  artifactId: 'artifact-1',
-  versionNo: 1,
   version: 1,
-  status: 'DRAFT',
-  freshness: 'NEVER_COMPUTED',
-  freshnessReason: null,
-  staleSince: null,
-  riskTier: 'LOW',
-  versionKind: 'MAIN',
-  parentVersionId: null,
-  supersededByVersionId: null,
-  computeSnapshotId: null,
-  computeRunId: null,
-  contentSemanticHash: null,
-  submittedBy: null,
-  submittedAt: null,
-  approvedBy: null,
-  approvedAt: null,
-  reopenReason: null,
-  reopenedBy: null,
-  reopenedAt: null,
-  createdAt: '2026-08-01T00:00:00Z',
-  updatedAt: '2026-08-01T00:00:00Z',
+  sourceBaselineVersionId: 'bv-baseline-1',
+  sourceBaselineContextVersion: 3,
+  sourceBaselineContextHash: 'a'.repeat(64),
+  sourceStatementVersionId: 'bv-statement-1',
+  sourceAnalysisVersionId: 'bv-analysis-1',
+  name: 'Scenariusz zapisany',
+  description: null,
+  scenarioMode: 'STANDARD_BASE',
+  computeContext: {
+    entityId: 'entity-real',
+    openingBalanceSheetPeriodId: 'period-opening',
+    forecastPeriods: [
+      {
+        periodId: 'period-forecast',
+        label: '01/2026',
+        periodStart: '2026-01-01',
+        periodEnd: '2026-01-31',
+      },
+    ],
+  },
+  driverOverrides: [],
+  initiatives: [],
+  impacts: [],
+  financing: [],
+  lastAssumptionChangeAt: '2026-08-01T00:00:00Z',
+  lastComputeAt: null,
 };
 
 /** Same error shape `isFinanceV2ApiError`/`describeFinanceV2Error` expect — `.status`/`.data.code`. */
@@ -80,7 +82,8 @@ function apiError(status: number, code: string, message = 'boom'): Error {
 describe('PredictionWorkspace — smoke render (real businessVersionId confirmed)', () => {
   beforeEach(() => {
     setFeatureFlagOverrides({ financePredictionWorkspaceV1: true });
-    apiMocks.getFinanceBusinessVersion.mockReset().mockResolvedValue(CONFIRMED_VERSION);
+    apiMocks.getFinancePredictionDraft.mockReset().mockResolvedValue(PERSISTED_DRAFT);
+    apiMocks.saveFinancePredictionDraft.mockReset();
     apiMocks.runFinancePredictionPreflight.mockReset();
     apiMocks.runFinancePredictionCalculate.mockReset();
   });
@@ -92,17 +95,14 @@ describe('PredictionWorkspace — smoke render (real businessVersionId confirmed
     render(<PredictionWorkspace artifactId="artifact-1" businessVersionId="bv-prediction-1" />);
     await waitFor(() => expect(screen.getByTestId('finance-workspace-bar')).toBeInTheDocument());
     expect(screen.getByTestId('prediction-assumptions-view')).toBeInTheDocument();
-    expect(apiMocks.getFinanceBusinessVersion).toHaveBeenCalledWith('bv-prediction-1');
+    expect(apiMocks.getFinancePredictionDraft).toHaveBeenCalledWith('bv-prediction-1');
   });
 
-  it('gdy businessVersionId jest potwierdzony ale bez zapisanej treści, ekran mówi to WPROST (baner), nie pokazuje cichego formularza', async () => {
+  it('pokazuje wersję trwałego draftu i wersję kontekstu Baseline zamiast scratch bannera', async () => {
     render(<PredictionWorkspace artifactId="artifact-1" businessVersionId="bv-prediction-1" />);
-    await waitFor(() =>
-      expect(screen.getByTestId('prediction-honest-scratch-banner')).toBeInTheDocument()
-    );
-    expect(screen.getByTestId('prediction-honest-scratch-banner').textContent).toMatch(
-      /nowy szkic|odczyt zapisanej treści scenariusza nie jest dziś dostępny/
-    );
+    await waitFor(() => expect(screen.getByTestId('prediction-draft-version')).toBeInTheDocument());
+    expect(screen.getByTestId('prediction-draft-version')).toHaveTextContent('Draft v1');
+    expect(screen.getByTestId('prediction-draft-version')).toHaveTextContent('Baseline context v3');
   });
 
   it('przełączenie widoku na Modele/Wyniki faktycznie zmienia DOM (real render, nie atrapa)', async () => {
@@ -116,15 +116,12 @@ describe('PredictionWorkspace — smoke render (real businessVersionId confirmed
     expect(screen.queryByTestId('prediction-assumptions-view')).not.toBeInTheDocument();
   });
 
-  it('KONTROLA NEGATYWNA: zmiana initialDraft.name propaguje się do wyświetlanej nazwy (dowód, że renderuje realne propsy)', async () => {
-    const draft = createEmptyScenarioDraft({ name: 'Scenariusz XYZ-Unikalny' });
-    render(
-      <PredictionWorkspace
-        artifactId="artifact-1"
-        businessVersionId="bv-prediction-1"
-        initialDraft={draft}
-      />
-    );
+  it('kanoniczny GET jest źródłem nazwy wyświetlanej w workspace', async () => {
+    apiMocks.getFinancePredictionDraft.mockResolvedValue({
+      ...PERSISTED_DRAFT,
+      name: 'Scenariusz XYZ-Unikalny',
+    });
+    render(<PredictionWorkspace artifactId="artifact-1" businessVersionId="bv-prediction-1" />);
     await waitFor(() =>
       expect(screen.getByTestId('finance-workspace-bar-name')).toHaveTextContent(
         'Scenariusz XYZ-Unikalny'
@@ -133,22 +130,133 @@ describe('PredictionWorkspace — smoke render (real businessVersionId confirmed
   });
 
   it('tryb C (fundamentalny) renderuje panel inicjatyw z przyciskiem "Dodaj inicjatywę"', async () => {
-    const draft = createEmptyScenarioDraft({ name: 'x', scenarioMode: 'FUNDAMENTAL_INITIATIVE' });
-    render(
-      <PredictionWorkspace
-        artifactId="artifact-1"
-        businessVersionId="bv-prediction-1"
-        initialDraft={draft}
-      />
-    );
+    apiMocks.getFinancePredictionDraft.mockResolvedValue({
+      ...PERSISTED_DRAFT,
+      name: 'x',
+      scenarioMode: 'FUNDAMENTAL_INITIATIVE',
+    });
+    render(<PredictionWorkspace artifactId="artifact-1" businessVersionId="bv-prediction-1" />);
     await waitFor(() => expect(screen.getByTestId('add-initiative')).toBeInTheDocument());
   });
 
-  it('gdy realny endpoint preflight odrzuca wywołanie (brak zapisanego scenariusza po stronie serwera — CRUD nie istnieje), klik "Uruchom preflight" pokazuje honest-UI komunikat, nie fejkuje sukcesu i nie crashuje', async () => {
-    // Realny stan tej LUKI (patrz nagłówek pliku i `predictionScenarioModel.ts`): businessVersionId
-    // jest teraz zawsze potwierdzony/prawdziwy (ID_BRIDGE fix), ale sam ENDPOINT preflight wciąż
-    // odrzuca wywołanie, bo nie ma zapisanej treści scenariusza po stronie serwera — więc to REALNY
-    // request, który realnie kończy się błędem, nie klient-side guard na brakującym id.
+  it('przeliczenie używa wyłącznie encji i okresów z trwałego kontekstu', async () => {
+    apiMocks.runFinancePredictionCalculate.mockResolvedValue({
+      mode: 'STANDARD_BASE',
+      jobId: 'job-1',
+      jobStatus: 'SUCCEEDED',
+      baselineJobId: 'baseline-job-1',
+      passthroughRowCount: 1,
+    });
+    render(<PredictionWorkspace artifactId="artifact-1" businessVersionId="bv-prediction-1" />);
+    await waitFor(() => expect(screen.getByTestId('finance-workspace-bar')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('button', { name: /Przelicz/i }));
+
+    await waitFor(() =>
+      expect(apiMocks.runFinancePredictionCalculate).toHaveBeenCalledWith({
+        businessVersionId: 'bv-prediction-1',
+        entityId: 'entity-real',
+        forecastPeriodIds: ['period-forecast'],
+        openingBalanceSheetPeriodId: 'period-opening',
+      })
+    );
+  });
+
+  it('zapisuje zmieniony draft z bieżącą wersją i po sukcesie pokazuje nową wersję', async () => {
+    const fundamental = {
+      ...PERSISTED_DRAFT,
+      scenarioMode: 'FUNDAMENTAL_INITIATIVE',
+    };
+    apiMocks.getFinancePredictionDraft.mockResolvedValue(fundamental);
+    apiMocks.saveFinancePredictionDraft.mockResolvedValue({
+      ...fundamental,
+      version: 2,
+      name: 'Nazwa znormalizowana przez serwer',
+    });
+    render(<PredictionWorkspace artifactId="artifact-1" businessVersionId="bv-prediction-1" />);
+    await waitFor(() => expect(screen.getByTestId('add-initiative')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByTestId('add-initiative'));
+    fireEvent.click(screen.getByTestId('prediction-draft-save'));
+
+    await waitFor(() => expect(apiMocks.saveFinancePredictionDraft).toHaveBeenCalledTimes(1));
+    expect(apiMocks.saveFinancePredictionDraft).toHaveBeenCalledWith(
+      expect.objectContaining({
+        businessVersionId: 'bv-prediction-1',
+        expectedVersion: 1,
+        idempotencyKey: expect.any(String),
+        draft: expect.objectContaining({
+          scenarioMode: 'FUNDAMENTAL_INITIATIVE',
+          initiatives: expect.arrayContaining([expect.objectContaining({ name: 'Nowa inicjatywa' })]),
+        }),
+      })
+    );
+    await waitFor(() => expect(screen.getByTestId('prediction-draft-version')).toHaveTextContent('Draft v2'));
+    expect(screen.getByTestId('finance-workspace-bar-name')).toHaveTextContent(
+      'Nazwa znormalizowana przez serwer'
+    );
+    expect(screen.getByTestId('prediction-status-message')).toHaveTextContent('Draft zapisany');
+  });
+
+  it('nie uruchamia preflight dla niezapisanego draftu', async () => {
+    apiMocks.getFinancePredictionDraft.mockResolvedValue({
+      ...PERSISTED_DRAFT,
+      scenarioMode: 'FUNDAMENTAL_INITIATIVE',
+    });
+    render(<PredictionWorkspace artifactId="artifact-1" businessVersionId="bv-prediction-1" />);
+    await waitFor(() => expect(screen.getByTestId('add-initiative')).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId('add-initiative'));
+    fireEvent.click(screen.getByRole('button', { name: /Uruchom preflight/i }));
+    expect(apiMocks.runFinancePredictionPreflight).not.toHaveBeenCalled();
+    expect(screen.getByTestId('prediction-status-message')).toHaveTextContent(/Zapisz bieżący draft/);
+  });
+
+  it('po konflikcie zachowuje edycję do jawnego wczytania wersji serwera', async () => {
+    const fundamental = { ...PERSISTED_DRAFT, scenarioMode: 'FUNDAMENTAL_INITIATIVE' };
+    apiMocks.getFinancePredictionDraft
+      .mockResolvedValueOnce(fundamental)
+      .mockResolvedValueOnce({ ...fundamental, version: 4, name: 'Wersja serwera po konflikcie' });
+    apiMocks.saveFinancePredictionDraft.mockRejectedValue(
+      apiError(409, 'PREDICTION_DRAFT_VERSION_CONFLICT', 'Draft changed')
+    );
+    render(<PredictionWorkspace artifactId="artifact-1" businessVersionId="bv-prediction-1" />);
+    await waitFor(() => expect(screen.getByTestId('add-initiative')).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId('add-initiative'));
+    fireEvent.click(screen.getByTestId('prediction-draft-save'));
+    await waitFor(() => expect(screen.getByTestId('prediction-conflict-reload')).toBeInTheDocument());
+    expect(screen.getAllByTestId(/^initiative-card-/)).toHaveLength(1);
+    fireEvent.click(screen.getByTestId('prediction-conflict-reload'));
+    await waitFor(() => expect(screen.getByTestId('finance-workspace-bar-name')).toHaveTextContent('Wersja serwera po konflikcie'));
+    expect(screen.getByTestId('prediction-draft-version')).toHaveTextContent('Draft v4');
+  });
+
+  it('nie zaokrągla nieedytowanego decimal string przy niezwiązanej zmianie draftu', async () => {
+    const precise = {
+      ...PERSISTED_DRAFT,
+      scenarioMode: 'FUNDAMENTAL_INITIATIVE',
+      initiatives: [{
+        id: 'initiative-precise', initiativeCode: 'PRECISE', name: 'Precise', description: null,
+        source: null, owner: null, confidencePct: '80.123456789012345678',
+        defaultStartPeriodId: null, defaultRampMonths: null, defaultDurationMonths: null,
+        implementationCostDecimal: '10.123456789012345678', status: 'DRAFT',
+      }],
+      impacts: [],
+    };
+    apiMocks.getFinancePredictionDraft.mockResolvedValue(precise);
+    apiMocks.saveFinancePredictionDraft.mockResolvedValue({ ...precise, version: 2 });
+    render(<PredictionWorkspace artifactId="artifact-1" businessVersionId="bv-prediction-1" />);
+    await waitFor(() => expect(screen.getByTestId('add-initiative')).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId('add-initiative'));
+    fireEvent.click(screen.getByTestId('prediction-draft-save'));
+    await waitFor(() => expect(apiMocks.saveFinancePredictionDraft).toHaveBeenCalled());
+    const command = apiMocks.saveFinancePredictionDraft.mock.calls.at(-1)?.[0];
+    expect(command.draft.initiatives[0]).toMatchObject({
+      confidencePct: '80.123456789012345678',
+      implementationCostDecimal: '10.123456789012345678',
+    });
+  });
+
+  it('gdy realny endpoint preflight odrzuca wywołanie, pokazuje honest-UI komunikat bez fałszywego sukcesu', async () => {
     apiMocks.runFinancePredictionPreflight.mockRejectedValue(apiError(404, 'NOT_FOUND'));
     render(<PredictionWorkspace artifactId="artifact-1" businessVersionId="bv-prediction-1" />);
     await waitFor(() => expect(screen.getByTestId('finance-workspace-bar')).toBeInTheDocument());
@@ -162,6 +270,8 @@ describe('PredictionWorkspace — smoke render (real businessVersionId confirmed
     );
     expect(apiMocks.runFinancePredictionPreflight).toHaveBeenCalledWith({
       businessVersionId: 'bv-prediction-1',
+      entityId: 'entity-real',
+      openingBalanceSheetPeriodId: 'period-opening',
     });
   });
 });
@@ -178,7 +288,8 @@ describe('PredictionWorkspace — smoke render (real businessVersionId confirmed
 describe('PredictionWorkspace — ANTY-CICHA-PUSTKA (ID_BRIDGE Gate E)', () => {
   beforeEach(() => {
     setFeatureFlagOverrides({ financePredictionWorkspaceV1: true });
-    apiMocks.getFinanceBusinessVersion.mockReset();
+    apiMocks.getFinancePredictionDraft.mockReset();
+    apiMocks.saveFinancePredictionDraft.mockReset();
     apiMocks.runFinancePredictionPreflight.mockReset();
     apiMocks.runFinancePredictionCalculate.mockReset();
   });
@@ -207,11 +318,11 @@ describe('PredictionWorkspace — ANTY-CICHA-PUSTKA (ID_BRIDGE Gate E)', () => {
     expect(screen.queryByTestId('finance-workspace-bar')).not.toBeInTheDocument();
 
     // I nie ma żadnej próby pobrania czegokolwiek — nie ma czego (świadomie, nie przez przypadek).
-    expect(apiMocks.getFinanceBusinessVersion).not.toHaveBeenCalled();
+    expect(apiMocks.getFinancePredictionDraft).not.toHaveBeenCalled();
   });
 
   it('businessVersionId ustawiony, ale rekord nie istnieje w nowym systemie (404) -> JAWNY komunikat "nie znaleziono", nie pusty formularz', async () => {
-    apiMocks.getFinanceBusinessVersion.mockRejectedValue(apiError(404, 'NOT_FOUND'));
+    apiMocks.getFinancePredictionDraft.mockRejectedValue(apiError(404, 'NOT_FOUND'));
     render(
       <PredictionWorkspace
         artifactId="artifact-1"
@@ -228,7 +339,7 @@ describe('PredictionWorkspace — ANTY-CICHA-PUSTKA (ID_BRIDGE Gate E)', () => {
   });
 
   it('błąd sieci/serwera przy sprawdzaniu businessVersionId -> JAWNY komunikat błędu z przyciskiem "Spróbuj ponownie", nie pusty formularz', async () => {
-    apiMocks.getFinanceBusinessVersion.mockRejectedValue(apiError(500, 'INTERNAL_ERROR'));
+    apiMocks.getFinancePredictionDraft.mockRejectedValue(apiError(500, 'INTERNAL_ERROR'));
     render(
       <PredictionWorkspace
         artifactId="artifact-1"
@@ -243,8 +354,8 @@ describe('PredictionWorkspace — ANTY-CICHA-PUSTKA (ID_BRIDGE Gate E)', () => {
   });
 
   it('"Spróbuj ponownie" po błędzie faktycznie odpytuje serwer jeszcze raz i przechodzi do prawdziwego workspace po sukcesie', async () => {
-    apiMocks.getFinanceBusinessVersion.mockRejectedValueOnce(apiError(500, 'INTERNAL_ERROR'));
-    apiMocks.getFinanceBusinessVersion.mockResolvedValueOnce(CONFIRMED_VERSION);
+    apiMocks.getFinancePredictionDraft.mockRejectedValueOnce(apiError(500, 'INTERNAL_ERROR'));
+    apiMocks.getFinancePredictionDraft.mockResolvedValueOnce(PERSISTED_DRAFT);
     render(
       <PredictionWorkspace
         artifactId="artifact-1"
@@ -259,12 +370,12 @@ describe('PredictionWorkspace — ANTY-CICHA-PUSTKA (ID_BRIDGE Gate E)', () => {
     await waitFor(() =>
       expect(screen.getByTestId('prediction-assumptions-view')).toBeInTheDocument()
     );
-    expect(apiMocks.getFinanceBusinessVersion).toHaveBeenCalledTimes(2);
+    expect(apiMocks.getFinancePredictionDraft).toHaveBeenCalledTimes(2);
   });
 
   it('podczas sprawdzania (przed odpowiedzią serwera) pokazuje stan ładowania, nie pusty formularz', async () => {
-    let resolvePromise!: (v: FinanceBusinessVersionDetailDto) => void;
-    apiMocks.getFinanceBusinessVersion.mockReturnValue(
+    let resolvePromise!: (v: FinancePredictionDraftDto) => void;
+    apiMocks.getFinancePredictionDraft.mockReturnValue(
       new Promise((resolve) => {
         resolvePromise = resolve;
       })
@@ -280,7 +391,7 @@ describe('PredictionWorkspace — ANTY-CICHA-PUSTKA (ID_BRIDGE Gate E)', () => {
     expect(screen.getByTestId('prediction-mount-checking')).toBeInTheDocument();
     expect(screen.queryByTestId('prediction-assumptions-view')).not.toBeInTheDocument();
 
-    resolvePromise(CONFIRMED_VERSION);
+    resolvePromise(PERSISTED_DRAFT);
     await waitFor(() =>
       expect(screen.getByTestId('prediction-assumptions-view')).toBeInTheDocument()
     );

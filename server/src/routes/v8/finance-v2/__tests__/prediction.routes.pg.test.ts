@@ -91,13 +91,108 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — prediction (real HTTP + real
     return { scenarioBvId, baselineBvId };
   }
 
+  async function makeGovernedDraftScenario(scenarioMode = 'STANDARD_BASE') {
+    const { scenarioBvId, baselineBvId } = await makeScenario(scenarioMode);
+    const statement = await av.createArtifact({ organizationId: orgId, artifactType: 'STATEMENT_PACK', createdBy: userId });
+    const analysis = await av.createArtifact({ organizationId: orgId, artifactType: 'HISTORICAL_ANALYSIS', createdBy: userId });
+    const statementBvId = statement.businessVersion.business_version_id;
+    const analysisBvId = analysis.businessVersion.business_version_id;
+    const ids = await withPinnedPostgresTransaction(async (tx) => {
+      const calendar = await tx.queryOne<{ fiscal_calendar_id: string }>(
+        `INSERT INTO finance_stmt_calendars
+          (organization_id, calendar_type, fiscal_year_end_month, fiscal_year_end_reference, effective_from, created_by)
+         VALUES (?, 'STANDARD', 12, 'LAST_DAY_OF_MONTH', '2025-01-01', ?)
+         RETURNING fiscal_calendar_id`, [orgId, userId]);
+      const entity = await tx.queryOne<{ id: string }>(
+        `INSERT INTO finance_stmt_entities
+          (organization_id, business_version_id, entity_code, legal_name, role, consolidation_method,
+           functional_currency, created_by)
+         VALUES (?, ?, ?, 'Prediction Entity', 'GROUP_PARENT', 'NOT_CONSOLIDATED', 'PLN', ?)
+         RETURNING id`, [orgId, statementBvId, `PRED-${randomUUID()}`, userId]);
+      const opening = await tx.queryOne<{ period_id: string }>(
+        `INSERT INTO finance_stmt_periods
+          (organization_id, fiscal_calendar_id, period_type, fiscal_year, fiscal_month,
+           period_start, period_end, label, created_by)
+         VALUES (?, ?, 'MONTH', 2025, 12, '2025-12-01', '2025-12-31', '12/2025', ?)
+         RETURNING period_id`, [orgId, calendar!.fiscal_calendar_id, userId]);
+      const forecast = await tx.queryOne<{ period_id: string }>(
+        `INSERT INTO finance_stmt_periods
+          (organization_id, fiscal_calendar_id, period_type, fiscal_year, fiscal_month,
+           period_start, period_end, label, previous_period_id, created_by)
+         VALUES (?, ?, 'MONTH', 2026, 1, '2026-01-01', '2026-01-31', '1/2026', ?, ?)
+         RETURNING period_id`, [orgId, calendar!.fiscal_calendar_id, opening!.period_id, userId]);
+      const bsLine = await tx.queryOne<{ id: string }>(
+        `SELECT id FROM financial_statement_lines WHERE statement_type = 'BS' ORDER BY id LIMIT 1`);
+      await tx.queryRun(
+        `INSERT INTO finance_stmt_lines
+          (id, organization_id, business_version_id, statement_type, canonical_line_id,
+           entity_id, period_id, value_status, value_decimal, native_currency,
+           presentation_currency, unit, accounting_policy, created_by)
+         VALUES (?, ?, ?, 'BS', ?, ?, ?, 'PRESENT_NONZERO', 1, 'PLN', 'PLN', 'UNITS', 'IFRS', ?)`,
+        [randomUUID(), orgId, statementBvId, bsLine!.id, entity!.id, opening!.period_id, userId]);
+      await tx.queryRun(
+        `INSERT INTO finance_baseline_assumptions
+          (id, organization_id, business_version_id, schedule_type, driver_code, entity_id,
+           period_id, rule, value_status, value_decimal, unit, quality, created_by)
+         VALUES (?, ?, ?, 'revenue_pvm', 'PRICE', ?, ?, 'HISTORICAL_AVERAGE',
+                 'PRESENT_NONZERO', 1, 'PLN', 'ESTIMATED', ?)`,
+        [randomUUID(), orgId, baselineBvId, entity!.id, forecast!.period_id, userId]);
+      await tx.queryRun(`SET LOCAL session_replication_role = replica`);
+      await tx.queryRun(
+        `UPDATE finance_business_versions SET status = 'APPROVED'
+          WHERE organization_id = ? AND business_version_id IN (?, ?, ?)`,
+        [orgId, statementBvId, analysisBvId, baselineBvId]);
+      await tx.queryRun(`SET LOCAL session_replication_role = origin`);
+      await tx.queryRun(
+        `INSERT INTO finance_lineage_edges
+          (id, organization_id, source_version_id, source_artifact_type, target_version_id,
+           target_artifact_type, edge_type, transformation_kind, assumption_snapshot_hash, author_id)
+         VALUES
+          (?, ?, ?, 'STATEMENT_PACK', ?, 'BASELINE_MODEL', 'STATEMENT_TO_MODEL', 'COMPUTE', NULL, ?),
+          (?, ?, ?, 'STATEMENT_PACK', ?, 'HISTORICAL_ANALYSIS', 'STATEMENT_TO_ANALYSIS', 'COMPUTE', NULL, ?),
+          (?, ?, ?, 'HISTORICAL_ANALYSIS', ?, 'BASELINE_MODEL', 'ANALYSIS_TO_MODEL', 'COMPUTE', ?, ?)`,
+        [randomUUID(), orgId, statementBvId, baselineBvId, userId,
+          randomUUID(), orgId, statementBvId, analysisBvId, userId,
+          randomUUID(), orgId, analysisBvId, baselineBvId, 'c'.repeat(64), userId]);
+      await tx.queryRun(
+        `INSERT INTO finance_baseline_workspace_contexts
+          (organization_id, business_version_id, source_statement_version_id,
+           source_analysis_version_id, entity_id, opening_balance_sheet_period_id,
+           forecast_period_ids, version, configured_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?::jsonb, 1, ?)`,
+        [orgId, baselineBvId, statementBvId, analysisBvId, entity!.id, opening!.period_id,
+          JSON.stringify([forecast!.period_id]), userId]);
+      return { entityId: entity!.id, openingPeriodId: opening!.period_id, forecastPeriodId: forecast!.period_id };
+    });
+    return { scenarioBvId, baselineBvId, ...ids };
+  }
+
   beforeAll(async () => {
     ({ withPinnedPostgresTransaction } = await import('../../../../database/PostgresDatabase.js'));
     av = await import('../../../../services/finance/canonical/artifactVersionService.js');
     lineageService = await import('../../../../services/finance/canonical/lineageService.js');
     financeV2Router = (await import('../index.js')).default;
 
+    const database = await withPinnedPostgresTransaction((tx) =>
+      tx.queryOne<{ name: string }>(`SELECT current_database() AS name`)
+    );
+    if (!database?.name.startsWith('fin_bvp_prediction')) {
+      throw new Error(`Prediction RealPG requires a disposable fin_bvp_prediction* database, got ${database?.name ?? 'unknown'}`);
+    }
+
     await withPinnedPostgresTransaction((tx) => tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [orgId, 'PkgB2 Prediction Test Org']));
+    await withPinnedPostgresTransaction(async (tx) => {
+      await tx.queryRun(
+        `INSERT INTO users (id, email, password, first_name, last_name, role, organization_id)
+         VALUES (?, ?, 'test', 'Prediction', 'Admin', 'ADMIN', ?)`,
+        [userId, `${userId}@example.test`, orgId]
+      );
+      await tx.queryRun(
+        `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+         VALUES (?, ?, ?, 'ADMIN', 'ACTIVE')`,
+        [randomUUID(), orgId, userId]
+      );
+    });
 
     app = appAs('finance_admin');
   });
@@ -150,5 +245,255 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — prediction (real HTTP + real
       .send({ entityId: randomUUID(), forecastPeriodIds: [], openingBalanceSheetPeriodId: randomUUID() });
     expect(res.status).toBe(404);
     expect(res.body.code).toBe('NOT_FOUND');
+  });
+
+  it('GET/PUT draft persists one governed aggregate with CAS, replay and collision', async () => {
+    const fixture = await makeGovernedDraftScenario();
+    const cold = await request(app).get(`/api/v8/finance-v2/prediction/${fixture.scenarioBvId}/draft`);
+    expect(cold.status, JSON.stringify(cold.body)).toBe(200);
+    expect(cold.body.data).toMatchObject({
+      businessVersionId: fixture.scenarioBvId,
+      sourceBaselineVersionId: fixture.baselineBvId,
+      version: 1,
+      computeContext: {
+        entityId: fixture.entityId,
+        openingBalanceSheetPeriodId: fixture.openingPeriodId,
+      },
+    });
+    expect(cold.body.data.computeContext.forecastPeriods.map((p: any) => p.periodId)).toEqual([
+      fixture.forecastPeriodId,
+    ]);
+    const key = `prediction-draft-${randomUUID()}`;
+    const body = {
+      expectedVersion: 1,
+      draft: {
+        name: 'Governed base scenario', description: 'cold persisted', scenarioMode: 'STANDARD_BASE',
+        driverOverrides: [], initiatives: [], impacts: [], financing: [],
+      },
+    };
+    const saved = await request(app).put(`/api/v8/finance-v2/prediction/${fixture.scenarioBvId}/draft`)
+      .set('Idempotency-Key', key).send(body);
+    expect(saved.status).toBe(200);
+    expect(saved.body.data).toMatchObject({ version: 2, name: 'Governed base scenario', replay: false });
+    const replay = await request(app).put(`/api/v8/finance-v2/prediction/${fixture.scenarioBvId}/draft`)
+      .set('Idempotency-Key', key).send(body);
+    expect(replay.status).toBe(200);
+    expect(replay.body.data).toMatchObject({ version: 2, replay: true });
+    await withPinnedPostgresTransaction((tx) => tx.queryRun(
+      `UPDATE organization_members SET status = 'REVOKED' WHERE organization_id = ? AND user_id = ?`,
+      [orgId, userId]
+    ));
+    const revokedReplay = await request(app).put(`/api/v8/finance-v2/prediction/${fixture.scenarioBvId}/draft`)
+      .set('Idempotency-Key', key).send(body);
+    expect(revokedReplay.status).toBe(403);
+    expect(revokedReplay.body.code).toBe('ORG_MEMBERSHIP_REVOKED');
+    await withPinnedPostgresTransaction((tx) => tx.queryRun(
+      `UPDATE organization_members SET status = 'ACTIVE' WHERE organization_id = ? AND user_id = ?`,
+      [orgId, userId]
+    ));
+    const collision = await request(app).put(`/api/v8/finance-v2/prediction/${fixture.scenarioBvId}/draft`)
+      .set('Idempotency-Key', key).send({ ...body, draft: { ...body.draft, name: 'Changed' } });
+    expect(collision.status).toBe(409);
+    expect(collision.body.code).toBe('IDEMPOTENCY_PAYLOAD_COLLISION');
+    const counts = await withPinnedPostgresTransaction((tx) => tx.queryOne<{ receipts: string }>(
+      `SELECT count(*)::text AS receipts FROM finance_prediction_draft_command_receipts
+        WHERE organization_id = ? AND business_version_id = ?`, [orgId, fixture.scenarioBvId]));
+    expect(counts?.receipts).toBe('1');
+  });
+
+  it('draft fails closed for stale CAS, concurrent writers, revoked/member authority, stale source and immutable receipt', async () => {
+    const fixture = await makeGovernedDraftScenario();
+    const baseDraft = {
+      name: 'Governed concurrent scenario',
+      description: null,
+      scenarioMode: 'STANDARD_BASE',
+      driverOverrides: [],
+      initiatives: [],
+      impacts: [],
+      financing: [],
+    };
+    const url = `/api/v8/finance-v2/prediction/${fixture.scenarioBvId}/draft`;
+
+    const [first, second] = await Promise.all([
+      request(app).put(url).set('Idempotency-Key', `concurrent-a-${randomUUID()}`).send({ expectedVersion: 1, draft: baseDraft }),
+      request(app).put(url).set('Idempotency-Key', `concurrent-b-${randomUUID()}`).send({ expectedVersion: 1, draft: { ...baseDraft, name: 'Competing writer' } }),
+    ]);
+    expect([first.status, second.status].sort()).toEqual([200, 409]);
+    expect([first.body.code, second.body.code]).toContain('PREDICTION_DRAFT_VERSION_CONFLICT');
+
+    const stale = await request(app).put(url)
+      .set('Idempotency-Key', `stale-${randomUUID()}`)
+      .send({ expectedVersion: 1, draft: baseDraft });
+    expect(stale.status).toBe(409);
+    expect(stale.body.code).toBe('PREDICTION_DRAFT_VERSION_CONFLICT');
+
+    await withPinnedPostgresTransaction((tx) => tx.queryRun(
+      `UPDATE organization_members SET role = 'MEMBER' WHERE organization_id = ? AND user_id = ?`,
+      [orgId, userId]
+    ));
+    const member = await request(app).put(url)
+      .set('Idempotency-Key', `member-${randomUUID()}`)
+      .send({ expectedVersion: 2, draft: baseDraft });
+    expect(member.status).toBe(403);
+    expect(member.body.code).toBe('FINANCE_EDIT_FORBIDDEN');
+
+    await withPinnedPostgresTransaction((tx) => tx.queryRun(
+      `UPDATE organization_members SET role = 'ADMIN', status = 'REVOKED' WHERE organization_id = ? AND user_id = ?`,
+      [orgId, userId]
+    ));
+    const revoked = await request(app).put(url)
+      .set('Idempotency-Key', `revoked-${randomUUID()}`)
+      .send({ expectedVersion: 2, draft: baseDraft });
+    expect(revoked.status).toBe(403);
+    expect(revoked.body.code).toBe('ORG_MEMBERSHIP_REVOKED');
+    await withPinnedPostgresTransaction((tx) => tx.queryRun(
+      `UPDATE organization_members SET status = 'ACTIVE' WHERE organization_id = ? AND user_id = ?`,
+      [orgId, userId]
+    ));
+
+    await withPinnedPostgresTransaction(async (tx) => {
+      await tx.queryRun(`SET LOCAL session_replication_role = replica`);
+      await tx.queryRun(
+        `UPDATE finance_business_versions SET status = 'DRAFT'
+          WHERE organization_id = ? AND business_version_id = ?`,
+        [orgId, fixture.baselineBvId]
+      );
+      await tx.queryRun(`SET LOCAL session_replication_role = origin`);
+    });
+    const staleSource = await request(app).get(url);
+    expect(staleSource.status).toBe(409);
+    expect(staleSource.body.code).toBe('PREDICTION_SOURCE_NOT_READY');
+    await withPinnedPostgresTransaction(async (tx) => {
+      await tx.queryRun(`SET LOCAL session_replication_role = replica`);
+      await tx.queryRun(
+        `UPDATE finance_business_versions SET status = 'APPROVED'
+          WHERE organization_id = ? AND business_version_id = ?`,
+        [orgId, fixture.baselineBvId]
+      );
+      await tx.queryRun(`SET LOCAL session_replication_role = origin`);
+    });
+
+    await expect(withPinnedPostgresTransaction((tx) => tx.queryRun(
+      `UPDATE finance_prediction_draft_command_receipts SET applied_version = applied_version + 1
+        WHERE organization_id = ? AND business_version_id = ?`,
+      [orgId, fixture.scenarioBvId]
+    ))).rejects.toThrow(/immutable/);
+    await expect(withPinnedPostgresTransaction((tx) => tx.queryRun(
+      `DELETE FROM finance_prediction_draft_command_receipts
+        WHERE organization_id = ? AND business_version_id = ?`,
+      [orgId, fixture.scenarioBvId]
+    ))).rejects.toThrow(/immutable/);
+  });
+
+  it('cold round-trips all four child families without duplicating a driver override', async () => {
+    const fixture = await makeGovernedDraftScenario('FUNDAMENTAL_INITIATIVE');
+    const statementLine = await withPinnedPostgresTransaction((tx) => tx.queryOne<{ line_code: string }>(
+      `SELECT line_code FROM financial_statement_lines WHERE statement_type = 'BS' ORDER BY id LIMIT 1`
+    ));
+    const initiativeId = randomUUID();
+    const driverId = randomUUID();
+    const impactId = randomUUID();
+    const financingId = randomUUID();
+    const draft = {
+      name: 'Populated governed scenario',
+      description: 'all child families',
+      scenarioMode: 'FUNDAMENTAL_INITIATIVE',
+      driverOverrides: [{
+        id: driverId,
+        scheduleType: 'revenue_pvm',
+        driverCode: 'PRICE',
+        canonicalLineCode: statementLine!.line_code,
+        entityId: fixture.entityId,
+        periodId: fixture.forecastPeriodId,
+        overrideSource: 'MANUAL',
+        valueStatus: 'PRESENT_NONZERO',
+        valueDecimal: 2,
+        unit: 'PLN',
+        baselineValueDecimal: 1,
+        rationale: 'test',
+      }],
+      initiatives: [{
+        id: initiativeId,
+        initiativeCode: 'INIT-1',
+        name: 'Initiative one',
+        description: null,
+        source: 'TEST',
+        owner: 'Owner',
+        confidencePct: 80,
+        defaultStartPeriodId: fixture.forecastPeriodId,
+        defaultRampMonths: 1,
+        defaultDurationMonths: 3,
+        implementationCostDecimal: 10,
+        status: 'DRAFT',
+      }],
+      impacts: [{
+        id: impactId,
+        initiativeId,
+        assumptionLabel: 'Impact one',
+        driverScheduleType: 'revenue_pvm',
+        driverCode: 'PRICE',
+        kpiCatalogId: null,
+        statementLineCode: statementLine!.line_code,
+        entityId: fixture.entityId,
+        amountKind: 'ABSOLUTE_AMOUNT',
+        amountDecimal: 5,
+        amountUnit: 'PLN',
+        sign: 'POSITIVE',
+        startPeriodId: fixture.forecastPeriodId,
+        rampMonths: 1,
+        durationMonths: 3,
+        decayPctPerPeriod: null,
+        implementationCostDecimal: null,
+        confidencePct: 80,
+        probabilityPct: 75,
+        cannibalizesImpactId: null,
+      }],
+      financing: [{
+        id: financingId,
+        financingKind: 'EQUITY_INJECTION',
+        entityId: fixture.entityId,
+        periodId: fixture.forecastPeriodId,
+        payload: { amount: 100 },
+        sourceRef: null,
+        rationale: 'test',
+      }],
+    };
+    const url = `/api/v8/finance-v2/prediction/${fixture.scenarioBvId}/draft`;
+    const saved = await request(app).put(url)
+      .set('Idempotency-Key', `populated-${randomUUID()}`)
+      .send({ expectedVersion: 1, draft });
+    expect(saved.status, JSON.stringify(saved.body)).toBe(200);
+    const cold = await request(app).get(url);
+    expect(cold.status).toBe(200);
+    expect(cold.body.data.driverOverrides).toHaveLength(1);
+    expect(cold.body.data.driverOverrides[0]).toMatchObject({ id: driverId, canonicalLineCode: statementLine!.line_code });
+    expect(cold.body.data.driverOverrides[0].valueDecimal).toBe('2');
+    expect(cold.body.data.initiatives).toHaveLength(1);
+    expect(cold.body.data.initiatives[0].confidencePct).toBe('80');
+    expect(cold.body.data.impacts).toHaveLength(1);
+    expect(cold.body.data.impacts[0].amountDecimal).toBe('5');
+    expect(cold.body.data.financing).toHaveLength(1);
+
+    const invalidAfterDelete = await request(app).put(url)
+      .set('Idempotency-Key', `populated-invalid-${randomUUID()}`)
+      .send({
+        expectedVersion: 2,
+        draft: {
+          ...draft,
+          impacts: [{ ...draft.impacts[0], statementLineCode: `UNKNOWN-${randomUUID()}` }],
+        },
+      });
+    expect(invalidAfterDelete.status).toBe(400);
+    expect(invalidAfterDelete.body.code).toBe('INVALID_DRAFT');
+    const afterRollback = await request(app).get(url);
+    expect(afterRollback.body.data.version).toBe(2);
+    expect(afterRollback.body.data.driverOverrides).toHaveLength(1);
+    expect(afterRollback.body.data.impacts[0].statementLineCode).toBe(statementLine!.line_code);
+
+    const second = await request(app).put(url)
+      .set('Idempotency-Key', `populated-second-${randomUUID()}`)
+      .send({ expectedVersion: 2, draft });
+    expect(second.status, JSON.stringify(second.body)).toBe(200);
+    expect(second.body.data.driverOverrides).toHaveLength(1);
   });
 });

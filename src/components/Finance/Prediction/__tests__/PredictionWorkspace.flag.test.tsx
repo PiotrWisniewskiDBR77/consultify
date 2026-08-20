@@ -27,40 +27,26 @@ import {
 } from '@/test-utils/featureFlagOverrides';
 
 const apiMocks = vi.hoisted(() => ({
-  getFinanceBusinessVersion: vi.fn(),
+  getFinancePredictionDraft: vi.fn(),
+  saveFinancePredictionDraft: vi.fn(),
   runFinancePredictionPreflight: vi.fn(),
   runFinancePredictionCalculate: vi.fn(),
 }));
 vi.mock('@/services/api/financeV2.api', () => apiMocks);
 
-import type { FinanceBusinessVersionDetailDto } from '../../../../services/api/financeV2.types';
+import type { FinancePredictionDraftDto } from '../../../../services/api/financeV2.types';
 import { PredictionWorkspace } from '../PredictionWorkspace';
 
-const CONFIRMED_VERSION: FinanceBusinessVersionDetailDto = {
+const PERSISTED_DRAFT: FinancePredictionDraftDto = {
   businessVersionId: 'bv-flag-1',
-  artifactId: 'artifact-1',
-  versionNo: 1,
   version: 1,
-  status: 'DRAFT',
-  freshness: 'NEVER_COMPUTED',
-  freshnessReason: null,
-  staleSince: null,
-  riskTier: 'LOW',
-  versionKind: 'MAIN',
-  parentVersionId: null,
-  supersededByVersionId: null,
-  computeSnapshotId: null,
-  computeRunId: null,
-  contentSemanticHash: null,
-  submittedBy: null,
-  submittedAt: null,
-  approvedBy: null,
-  approvedAt: null,
-  reopenReason: null,
-  reopenedBy: null,
-  reopenedAt: null,
-  createdAt: '2026-08-01T00:00:00Z',
-  updatedAt: '2026-08-01T00:00:00Z',
+  sourceBaselineVersionId: 'bv-baseline-1', sourceBaselineContextVersion: 1,
+  sourceBaselineContextHash: 'a'.repeat(64), sourceStatementVersionId: 'bv-statement-1',
+  sourceAnalysisVersionId: 'bv-analysis-1', name: 'Scenariusz', description: null,
+  scenarioMode: 'STANDARD_BASE',
+  computeContext: { entityId: 'entity-1', openingBalanceSheetPeriodId: 'period-opening', forecastPeriods: [{ periodId: 'period-1', label: '01/2026', periodStart: '2026-01-01', periodEnd: '2026-01-31' }] },
+  driverOverrides: [], initiatives: [], impacts: [], financing: [],
+  lastAssumptionChangeAt: '2026-08-01T00:00:00Z', lastComputeAt: null,
 };
 
 afterEach(() => {
@@ -74,13 +60,13 @@ describe('PredictionWorkspace — flag gate (AP_MOUNT §A)', () => {
       <PredictionWorkspace artifactId="artifact-1" businessVersionId="bv-flag-1" />
     );
     expect(container).toBeEmptyDOMElement();
-    expect(apiMocks.getFinanceBusinessVersion).not.toHaveBeenCalled();
+    expect(apiMocks.getFinancePredictionDraft).not.toHaveBeenCalled();
     expect(apiMocks.runFinancePredictionPreflight).not.toHaveBeenCalled();
     expect(apiMocks.runFinancePredictionCalculate).not.toHaveBeenCalled();
   });
 
   it('ON (local override) + real businessVersionId: mounts the real bar and the assumptions view', async () => {
-    apiMocks.getFinanceBusinessVersion.mockResolvedValue(CONFIRMED_VERSION);
+    apiMocks.getFinancePredictionDraft.mockResolvedValue(PERSISTED_DRAFT);
     setFeatureFlagOverrides({ financePredictionWorkspaceV1: true });
     render(<PredictionWorkspace artifactId="artifact-1" businessVersionId="bv-flag-1" />);
     expect(await screen.findByTestId('finance-workspace-bar')).toBeInTheDocument();
@@ -93,6 +79,6 @@ describe('PredictionWorkspace — flag gate (AP_MOUNT §A)', () => {
     expect(container).not.toBeEmptyDOMElement();
     expect(screen.getByTestId('prediction-mount-no-id')).toBeInTheDocument();
     expect(screen.queryByTestId('prediction-assumptions-view')).not.toBeInTheDocument();
-    expect(apiMocks.getFinanceBusinessVersion).not.toHaveBeenCalled();
+    expect(apiMocks.getFinancePredictionDraft).not.toHaveBeenCalled();
   });
 });

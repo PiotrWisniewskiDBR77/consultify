@@ -23,10 +23,65 @@ import { getV8Context } from '../../../middleware/v8Auth.middleware.js';
 import { getBusinessVersion } from '../../../services/finance/canonical/artifactVersionService.js';
 import { runPreflight, type RunPreflightParams } from '../../../services/finance/canonical/predictionPreflightService.js';
 import { runPredictionCompute, type RunPredictionComputeParams } from '../../../services/finance/canonical/predictionComputeService.js';
+import {
+  getPredictionDraft,
+  PredictionDraftError,
+  replacePredictionDraft,
+} from '../../../services/finance/canonical/predictionDraftService.js';
 import { asyncHandler } from '../../../utils/asyncHandler.js';
 import { financeV2Meta, sendError } from './_shared.js';
 
 const router = Router();
+
+router.get(
+  '/prediction/:businessVersionId/draft',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    try {
+      const data = await getPredictionDraft(
+        organizationId,
+        String(req.params.businessVersionId || '')
+      );
+      return res.status(200).json({ data, meta: financeV2Meta() });
+    } catch (error) {
+      if (error instanceof PredictionDraftError) {
+        return sendError(res, error.status, error.code, error.message, error.details);
+      }
+      throw error;
+    }
+  })
+);
+
+router.put(
+  '/prediction/:businessVersionId/draft',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const body = req.body ?? {};
+    const idempotencyKey = String(req.header('Idempotency-Key') || '');
+    if (!Number.isInteger(body.expectedVersion) || body.expectedVersion < 1) {
+      return sendError(res, 400, 'INVALID_EXPECTED_VERSION', 'expectedVersion must be a positive integer');
+    }
+    if (!body.draft || typeof body.draft !== 'object' || Array.isArray(body.draft)) {
+      return sendError(res, 400, 'INVALID_DRAFT', 'draft object is required');
+    }
+    try {
+      const data = await replacePredictionDraft({
+        organizationId,
+        businessVersionId: String(req.params.businessVersionId || ''),
+        actorId: userId,
+        expectedVersion: body.expectedVersion,
+        idempotencyKey,
+        draft: body.draft,
+      });
+      return res.status(200).json({ data, meta: financeV2Meta() });
+    } catch (error) {
+      if (error instanceof PredictionDraftError) {
+        return sendError(res, error.status, error.code, error.message, error.details);
+      }
+      throw error;
+    }
+  })
+);
 
 // ---------------------------------------------------------------------------
 // POST /prediction/:businessVersionId/preflight — stage 1 (DEC-FIN-004)

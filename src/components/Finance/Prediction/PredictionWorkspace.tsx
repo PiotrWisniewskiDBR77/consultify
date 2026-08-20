@@ -11,33 +11,32 @@
  * DODATKOWY, nie jedyny — komponent nigdy nie polega wyłącznie na tym, że
  * caller sprawdził flagę poprawnie (AP_MOUNT §A).
  *
- * ★★ ID_BRIDGE (Gate E) fix — ANTY-CICHA-PUSTKA: przed tą zmianą ten
- * komponent NIE ROBIŁ ŻADNEGO pobrania danych na mount — po prostu tworzył
- * pusty `ScenarioDraft` i renderował go tak, jakby to był poprawny,
- * gotowy ekran. Właściciel patrzący na taki ekran wyciągnąłby wniosek
- * "funkcja jest pusta/zepsuta", podczas gdy system nawet nie próbował
- * sprawdzić, czy za `businessVersionId` stoi realny rekord. Teraz:
- *   - `businessVersionId` (nowy prop, ustawiany przez `FinanceHub.tsx` z
- *     `FinanceLegacyBridgeGate` — patrz ten plik dla mostu legacy->canoniczny
- *     id) jest NA MOUNCIE zweryfikowany realnym `GET .../versions/:id`
- *     (`getFinanceBusinessVersion`) — jedyny endpoint, który dziś realnie
- *     potwierdza istnienie wersji (nie ma GET-u treści scenariusza, patrz
- *     niżej).
- *   - Brak `businessVersionId` / 404 / błąd sieci/serwera to TRZY różne,
- *     jawne, POLSKIE komunikaty — żaden z nich nie renderuje cichego pustego
- *     formularza.
- *   - Nawet gdy wersja POTWIERDZONA istnieje, ekran mówi wprost, że to nowy
- *     szkic bez pobranych założeń — bo `finance-v2/prediction` nie ma dziś
- *     GET-u treści scenariusza (tylko `preflight`/`calculate`, zobacz LUKA
- *     niżej) — więc "pobierz dane" fizycznie nie istnieje jako operacja do
- *     wykonania. Ekran to teraz PRZYZNAJE zamiast to ukrywać.
+ * ★★ ID_BRIDGE + trwały draft: `businessVersionId` pochodzi z
+ * `FinanceLegacyBridgeGate`, a workspace ładuje kanoniczny aggregate przez
+ * `GET /prediction/:id/draft`. Brak id, 404 i błąd serwera są trzema jawnymi
+ * stanami. Edycje zapisuje wersjonowany `PUT` z idempotency key; preflight i
+ * calculate używają wyłącznie utrwalonego kontekstu Baseline.
  *
- * ★ LUKA (niezmieniona przez tę poprawkę): preflight/calculate wołają REALNE
- * endpointy (`financeV2.api.ts` PKG-G blok) gdy `draft.businessVersionId`
- * istnieje; bez realnego scenariusza (brak CRUD zapisu, patrz
- * `predictionScenarioModel.ts` nagłówek) przyciski pokazują honest-UI
- * komunikat zamiast fejkować sukces. Ta poprawka NIE dodaje CRUD-u
- * scenariusza (osobny, większy pakiet) — dodaje uczciwość na mouncie.
+ * Historyczne zachowanie pustego scratch draftu zostało usunięte.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
 import React, { useEffect, useState } from 'react';
 
@@ -48,14 +47,14 @@ import { LoadingState } from '@/components/shared/states';
 import { useFinanceFocusMode } from '@/hooks/useFinanceFocusMode';
 import { useFinancePredictionWorkspaceFlag } from '@/hooks/useFinancePredictionWorkspaceFlag';
 import {
-  getFinanceBusinessVersion,
+  getFinancePredictionDraft,
   runFinancePredictionCalculate,
   runFinancePredictionPreflight,
+  saveFinancePredictionDraft,
 } from '@/services/api/financeV2.api';
 import {
-  businessVersionStatusLabel,
   describeFinanceV2Error,
-  type FinanceBusinessVersionDetailDto,
+  type FinancePredictionDraftDto,
 } from '@/services/api/financeV2.types';
 
 import {
@@ -101,9 +100,51 @@ export function PredictionWorkspace(props: PredictionWorkspaceProps): React.Reac
 type MountCheckState =
   | { kind: 'no-id' }
   | { kind: 'checking' }
-  | { kind: 'confirmed'; version: FinanceBusinessVersionDetailDto }
+  | { kind: 'confirmed'; persisted: FinancePredictionDraftDto }
   | { kind: 'not-found' }
   | { kind: 'error'; message: string };
+
+function toScenarioDraft(persisted: FinancePredictionDraftDto): ScenarioDraft {
+  const decimal = (value: string | null): number | null => (value == null ? null : Number(value));
+  return {
+    businessVersionId: persisted.businessVersionId,
+    scenarioMode: persisted.scenarioMode as ScenarioDraft['scenarioMode'],
+    name: persisted.name,
+    description: persisted.description,
+    driverOverrides: persisted.driverOverrides.map((row) => ({
+      ...row,
+      scheduleType: row.scheduleType as ScenarioDraft['driverOverrides'][number]['scheduleType'],
+      overrideSource: row.overrideSource as ScenarioDraft['driverOverrides'][number]['overrideSource'],
+      valueStatus: row.valueStatus as ScenarioDraft['driverOverrides'][number]['valueStatus'],
+      valueDecimal: decimal(row.valueDecimal),
+      baselineValueDecimal: decimal(row.baselineValueDecimal),
+    })),
+    initiatives: persisted.initiatives.map((row) => ({
+      ...row,
+      confidencePct: decimal(row.confidencePct),
+      implementationCostDecimal: decimal(row.implementationCostDecimal),
+      status: row.status as ScenarioDraft['initiatives'][number]['status'],
+    })),
+    impacts: persisted.impacts.map((row) => ({
+      ...row,
+      driverScheduleType: row.driverScheduleType as ScenarioDraft['impacts'][number]['driverScheduleType'],
+      amountKind: row.amountKind as ScenarioDraft['impacts'][number]['amountKind'],
+      amountDecimal: Number(row.amountDecimal),
+      sign: row.sign as ScenarioDraft['impacts'][number]['sign'],
+      decayPctPerPeriod: decimal(row.decayPctPerPeriod),
+      implementationCostDecimal: decimal(row.implementationCostDecimal),
+      confidencePct: decimal(row.confidencePct),
+      probabilityPct: decimal(row.probabilityPct),
+    })),
+    financing: persisted.financing.map((row) => ({
+      ...row,
+      financingKind: row.financingKind as ScenarioDraft['financing'][number]['financingKind'],
+      payload: row.payload as ScenarioDraft['financing'][number]['payload'],
+    })),
+    lastAssumptionChangeAt: persisted.lastAssumptionChangeAt,
+    lastComputeAt: persisted.lastComputeAt,
+  };
+}
 
 function PredictionWorkspaceInner(props: PredictionWorkspaceProps): React.ReactElement {
   const businessVersionId = props.businessVersionId ?? null;
@@ -123,10 +164,10 @@ function PredictionWorkspaceInner(props: PredictionWorkspaceProps): React.ReactE
     }
     let cancelled = false;
     setMountCheck({ kind: 'checking' });
-    getFinanceBusinessVersion(businessVersionId)
-      .then((version) => {
+    getFinancePredictionDraft(businessVersionId)
+      .then((persisted) => {
         if (cancelled) return;
-        setMountCheck({ kind: 'confirmed', version });
+        setMountCheck({ kind: 'confirmed', persisted });
       })
       .catch((err) => {
         if (cancelled) return;
@@ -151,16 +192,22 @@ function PredictionWorkspaceInner(props: PredictionWorkspaceProps): React.ReactE
   );
   const [exceptionLedger, setExceptionLedger] = useState<readonly ExceptionLedgerEntry[]>([]);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [draftVersion, setDraftVersion] = useState(1);
+  const [saveIntentKey, setSaveIntentKey] = useState(() => crypto.randomUUID());
+  const [saving, setSaving] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [conflict, setConflict] = useState(false);
 
   // Once a real version is confirmed, thread its id into the draft so
   // preflight/calculate (which already gate on `draft.businessVersionId`)
   // work exactly as before this fix for a real, resolved record.
   useEffect(() => {
-    if (
-      mountCheck.kind === 'confirmed' &&
-      draft.businessVersionId !== mountCheck.version.businessVersionId
-    ) {
-      setDraft((d) => ({ ...d, businessVersionId: mountCheck.version.businessVersionId }));
+    if (mountCheck.kind === 'confirmed') {
+      const persisted = mountCheck.persisted;
+      setDraft(toScenarioDraft(persisted));
+      setDraftVersion(persisted.version);
+      setDirty(false);
+      setConflict(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mountCheck]);
@@ -184,13 +231,22 @@ function PredictionWorkspaceInner(props: PredictionWorkspaceProps): React.ReactE
   async function handlePreflight(): Promise<void> {
     if (!draft.businessVersionId) {
       setStatusMessage(
-        'Brak realnego scenariusza na serwerze — CRUD zapisu (driver overrides/inicjatywy/impact chain/financing) jeszcze nie istnieje (patrz raport pakietu G). Preflight działa tylko na już zapisanym businessVersionId.'
+        'Brak realnego scenariusza na serwerze. Preflight działa tylko na zapisanym businessVersionId.'
       );
+      return;
+    }
+    if (dirty) {
+      setStatusMessage('Zapisz bieżący draft przed uruchomieniem preflight.');
       return;
     }
     try {
       const result = await runFinancePredictionPreflight({
         businessVersionId: draft.businessVersionId,
+        entityId: mountCheck.kind === 'confirmed' ? mountCheck.persisted.computeContext.entityId : undefined,
+        openingBalanceSheetPeriodId:
+          mountCheck.kind === 'confirmed'
+            ? mountCheck.persisted.computeContext.openingBalanceSheetPeriodId
+            : undefined,
       });
       setStatusMessage(
         `Preflight: ${result.findingsCount} znalezisk, ${result.requiredResolutionsCount} wymaga rozstrzygnięcia.`
@@ -208,16 +264,100 @@ function PredictionWorkspaceInner(props: PredictionWorkspaceProps): React.ReactE
       return;
     }
     try {
+      if (mountCheck.kind !== 'confirmed' || dirty) {
+        setStatusMessage('Zapisz bieżący draft przed przeliczeniem.');
+        return;
+      }
       await runFinancePredictionCalculate({
         businessVersionId: draft.businessVersionId,
-        entityId: 'entity-1',
-        forecastPeriodIds: [],
-        openingBalanceSheetPeriodId: '',
+        entityId: mountCheck.persisted.computeContext.entityId,
+        forecastPeriodIds: mountCheck.persisted.computeContext.forecastPeriods.map((p) => p.periodId),
+        openingBalanceSheetPeriodId:
+          mountCheck.persisted.computeContext.openingBalanceSheetPeriodId,
       });
       setDraft((d) => ({ ...d, lastComputeAt: new Date().toISOString() }));
       setActiveViewId(PREDICTION_VIEW_IDS.results);
     } catch (err) {
       setStatusMessage(describeFinanceV2Error(err).detail);
+    }
+  }
+
+  async function handleSave(): Promise<void> {
+    if (!draft.businessVersionId || mountCheck.kind !== 'confirmed') return;
+    const original = mountCheck.persisted;
+    const preserveDecimal = (value: number | null, canonical: string | null | undefined) =>
+      value == null ? null : canonical != null && Number(canonical) === value ? canonical : String(value);
+    setSaving(true);
+    setStatusMessage(null);
+    try {
+      const saved = await saveFinancePredictionDraft({
+        businessVersionId: draft.businessVersionId,
+        expectedVersion: draftVersion,
+        idempotencyKey: saveIntentKey,
+        draft: {
+          name: draft.name,
+          description: draft.description ?? null,
+          scenarioMode: draft.scenarioMode,
+          driverOverrides: draft.driverOverrides.map((row) => ({
+            ...row,
+            valueDecimal: preserveDecimal(
+              row.valueDecimal,
+              original.driverOverrides.find((savedRow) => savedRow.id === row.id)?.valueDecimal
+            ),
+            baselineValueDecimal: preserveDecimal(
+              row.baselineValueDecimal,
+              original.driverOverrides.find((savedRow) => savedRow.id === row.id)?.baselineValueDecimal
+            ),
+          })),
+          initiatives: draft.initiatives.map((row) => ({
+            ...row,
+            confidencePct: preserveDecimal(
+              row.confidencePct,
+              original.initiatives.find((savedRow) => savedRow.id === row.id)?.confidencePct
+            ),
+            implementationCostDecimal: preserveDecimal(
+              row.implementationCostDecimal,
+              original.initiatives.find((savedRow) => savedRow.id === row.id)?.implementationCostDecimal
+            ),
+          })),
+          impacts: draft.impacts.map((row) => ({
+            ...row,
+            amountDecimal: preserveDecimal(
+              row.amountDecimal,
+              original.impacts.find((savedRow) => savedRow.id === row.id)?.amountDecimal
+            )!,
+            decayPctPerPeriod: preserveDecimal(
+              row.decayPctPerPeriod,
+              original.impacts.find((savedRow) => savedRow.id === row.id)?.decayPctPerPeriod
+            ),
+            implementationCostDecimal: preserveDecimal(
+              row.implementationCostDecimal,
+              original.impacts.find((savedRow) => savedRow.id === row.id)?.implementationCostDecimal
+            ),
+            confidencePct: preserveDecimal(
+              row.confidencePct,
+              original.impacts.find((savedRow) => savedRow.id === row.id)?.confidencePct
+            ),
+            probabilityPct: preserveDecimal(
+              row.probabilityPct,
+              original.impacts.find((savedRow) => savedRow.id === row.id)?.probabilityPct
+            ),
+          })),
+          financing: draft.financing,
+        },
+      });
+      setDraft(toScenarioDraft(saved));
+      setDraftVersion(saved.version);
+      setDirty(false);
+      setConflict(false);
+      setSaveIntentKey(crypto.randomUUID());
+      setStatusMessage('Draft zapisany.');
+    } catch (error) {
+      const described = describeFinanceV2Error(error);
+      setConflict(described.code === 'PREDICTION_DRAFT_VERSION_CONFLICT');
+      setStatusMessage(described.detail);
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -297,25 +437,30 @@ function PredictionWorkspaceInner(props: PredictionWorkspaceProps): React.ReactE
           onMoreItem={() => {}}
           onEnterFocusMode={() => focusMode.enter('finance-workspace-bar-fullscreen')}
           onCommitRename={async (nextName) => {
+            if (saving) return { ok: false, message: 'Poczekaj na zakończenie zapisu.' };
             setDraft((d) => ({ ...d, name: nextName }));
+            setDirty(true);
+            setSaveIntentKey(crypto.randomUUID());
             return { ok: true };
           }}
         />
 
-        {/* ★ Anty-cicha-pustka: wersja jest potwierdzona (realny rekord istnieje),
-            ale ten ekran nie ma dziś GET-u treści scenariusza (LUKA w nagłówku
-            pliku) — więc ZAWSZE mówimy to wprost, zamiast dać widzowi zgadywać,
-            czy to, co widzi, jest "prawdziwym" stanem czy pustym szkicem. */}
         <div
           className="border-b border-c-border-subtle bg-c-surface-raised px-4 py-2 text-xs text-c-text-secondary"
           role="status"
-          data-testid="prediction-honest-scratch-banner"
+          data-testid="prediction-draft-version"
         >
-          Realny rekord (wersja {mountCheck.version.versionNo}, status:{' '}
-          {businessVersionStatusLabel(mountCheck.version.status)}) został potwierdzony w nowym
-          systemie. Ten ekran pokazuje nowy szkic założeń — odczyt zapisanej treści scenariusza nie
-          jest dziś dostępny (brak endpointu GET), więc żadne wcześniejsze założenia nie zostały
-          pobrane.
+          Draft v{draftVersion} · Baseline context v
+          {mountCheck.persisted.sourceBaselineContextVersion}
+          <button
+            type="button"
+            className="ml-3 rounded border border-c-border-subtle px-2 py-1"
+            data-testid="prediction-draft-save"
+            disabled={!dirty || saving}
+            onClick={() => void handleSave()}
+          >
+            {saving ? 'Zapisywanie…' : 'Zapisz draft'}
+          </button>
         </div>
 
         {statusMessage && (
@@ -327,10 +472,35 @@ function PredictionWorkspaceInner(props: PredictionWorkspaceProps): React.ReactE
             {statusMessage}
           </div>
         )}
+        {conflict && (
+          <div className="border-b border-c-border-subtle bg-c-surface-raised px-4 py-2">
+            <button
+              type="button"
+              data-testid="prediction-conflict-reload"
+              className="rounded border border-c-border-subtle px-2 py-1 text-sm"
+              onClick={() => setCheckAttempt((attempt) => attempt + 1)}
+            >
+              Wczytaj wersję serwera
+            </button>
+          </div>
+        )}
 
         <div className="min-h-0 flex-1">
           {activeViewId === PREDICTION_VIEW_IDS.assumptions && (
-            <ScenarioAssumptionsView draft={draft} onChange={setDraft} />
+            <ScenarioAssumptionsView
+              draft={draft}
+              allowedScenarioModes={
+                mountCheck.persisted.scenarioMode === 'DRIVER_OVERRIDE'
+                  ? ['DRIVER_OVERRIDE', 'FUNDAMENTAL_INITIATIVE']
+                  : [mountCheck.persisted.scenarioMode as ScenarioDraft['scenarioMode']]
+              }
+              onChange={(next) => {
+                if (saving) return;
+                setDraft(next);
+                setDirty(true);
+                setSaveIntentKey(crypto.randomUUID());
+              }}
+            />
           )}
           {activeViewId === PREDICTION_VIEW_IDS.results && (
             <ScenarioResultsView

@@ -59,6 +59,7 @@ import type {
   FinanceLineageEdgeCreatedDto,
   FinanceLineageNavigatorDto,
   FinancePredictionCalculateResultDto,
+  FinancePredictionDraftDto,
   FinancePredictionPreflightResultDto,
   FinanceRenameArtifactResultDto,
   FinanceReopenModelResultDto,
@@ -1298,6 +1299,27 @@ export async function runFinancePredictionPreflight(
         : {}),
       ...(params.entityId !== undefined ? { entityId: params.entityId } : {}),
     }
+  );
+}
+
+export async function getFinancePredictionDraft(
+  businessVersionId: string
+): Promise<FinancePredictionDraftDto> {
+  return v8Get<FinancePredictionDraftDto>(
+    `${BASE}/prediction/${encodeURIComponent(businessVersionId)}/draft`
+  );
+}
+
+export async function saveFinancePredictionDraft(params: {
+  businessVersionId: string;
+  expectedVersion: number;
+  idempotencyKey: string;
+  draft: Record<string, unknown>;
+}): Promise<FinancePredictionDraftDto> {
+  return v8Put<FinancePredictionDraftDto>(
+    `${BASE}/prediction/${encodeURIComponent(params.businessVersionId)}/draft`,
+    { expectedVersion: params.expectedVersion, draft: params.draft },
+    { extraHeaders: { 'Idempotency-Key': params.idempotencyKey } }
   );
 }
 
