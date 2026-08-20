@@ -145,6 +145,7 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       method: 'POST',
       path: /^\/analyses\/[^/]+\/calculate-metrics\/?$/,
       state: 'observed',
+      effect: 'read-only',
       successor: null,
       reason:
         'Verified NO database write: reads analysis_financials for the analysis addressed by :id and returns computed metrics only (economics.routes.ts:1818). Registered for completeness as a POST route on this router; performs no mutation.',
@@ -154,6 +155,7 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       method: 'POST',
       path: /^\/analyses\/[^/]+\/business-case\/?$/,
       state: 'observed',
+      effect: 'refusal',
       successor: null,
       reason:
         'Verified NO database write: unconditionally answers 501 with a pointer to POST /api/v8/advisory/business-case (economics.routes.ts:1897-1926, BUG-07 fix — this used to be a stub silently claiming success). Registered for completeness; the handler already refuses to write.',
@@ -241,6 +243,7 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       method: 'POST',
       path: /^\/financial-analyses\/[^/]+\/insights\/?$/,
       state: 'observed',
+      effect: 'read-only',
       successor: null,
       reason:
         'Verified NO database write: BUG-06 stub returns a fabricated "generated" insight object without persisting it (economics.routes.ts:2406-2427). Registered for completeness; performs no mutation.',
@@ -250,6 +253,7 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       method: 'POST',
       path: /^\/financial-analyses\/[^/]+\/initiatives\/?$/,
       state: 'observed',
+      effect: 'refusal',
       successor: null,
       reason:
         'Verified NO database write: unconditionally answers 410 DIRECT_INITIATIVE_CREATION_DISABLED (economics.routes.ts:2489-2508, FIN-06 — this used to INSERT INTO initiatives directly from financial_analysis_insights proposals, both the funnel and legacy-insert branches were removed). Registered for completeness; the handler already refuses to write.',
@@ -259,6 +263,7 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       method: 'POST',
       path: /^\/financial-analyses\/live-preview\/?$/,
       state: 'observed',
+      effect: 'read-only',
       successor: null,
       reason:
         'Verified NO database write: finAnalysisSvc.computeLivePreview (economics.routes.ts:2511) computes ratios from the latest model without persisting an analysis. Registered for completeness; performs no mutation.',
@@ -365,6 +370,7 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       method: 'POST',
       path: /^\/valuations\/[^/]+\/advisory\/[^/]+\/convert-to-initiative\/?$/,
       state: 'observed',
+      effect: 'canonical-write',
       successor: null,
       reason:
         'CORRECTION to inventory (FINANCE-W080 called this a "possible split-brain pair, not confirmed"): the handler no longer writes valuations or initiatives directly. FIN-06 rewired it through confirmValuationRecommendationCandidateHandoff, the same canonical Finance Candidate handoff seam financeCandidateHandoffCore.ts uses (economics.routes.ts:2970, valuationService.ts:1712-1742 convertAdvisoryRecommendationToInitiative). It already writes the canonical destination, so it carries no legacyTable and needs no successor.',
@@ -479,7 +485,7 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       state: 'observed',
       successor: null,
       reason:
-        'Upserts the organization-scoped finance settings row keyed by (organization_id, setting_key=\'finance\') — a collection-level write, not addressed by a path id (economics.routes.ts:3431, valuationService.ts:210,219 setOrgFinanceSettings -> INSERT INTO organization_settings ... ON CONFLICT). No proven successor.',
+        "Upserts the organization-scoped finance settings row keyed by (organization_id, setting_key='finance') — a collection-level write, not addressed by a path id (economics.routes.ts:3431, valuationService.ts:210,219 setOrgFinanceSettings -> INSERT INTO organization_settings ... ON CONFLICT). No proven successor.",
     },
   ],
 };

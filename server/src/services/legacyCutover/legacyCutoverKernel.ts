@@ -53,6 +53,16 @@ export type LegacyWriterState =
   /** Retiring it would require editing an integrator-owned file or an owner decision. */
   | 'owner-blocked';
 
+export type LegacyRouteEffect =
+  /** The route mutates a legacy owner table and belongs in the cutover denominator. */
+  | 'legacy-write'
+  /** The route already delegates its only mutation to the canonical owner. */
+  | 'canonical-write'
+  /** The route is read/compute only despite using a write-shaped HTTP verb. */
+  | 'read-only'
+  /** The route terminates with an explicit refusal and performs no mutation. */
+  | 'refusal';
+
 export type LegacyAccessKind =
   | 'legacy_read'
   | 'legacy_uncovered_writer'
@@ -67,6 +77,12 @@ export interface LegacyWriterRule {
   /** Matched against the ROUTER-LOCAL path, because the guard runs on `router.use()`. */
   path: RegExp;
   state: LegacyWriterState;
+  /**
+   * Actual persistence effect. Defaults to `legacy-write` for compatibility.
+   * This is deliberately independent from the HTTP verb: a POST may be a pure
+   * calculation, an explicit 410, or an already-canonical command.
+   */
+  effect?: LegacyRouteEffect;
   /** Canonical successor route. Required for `disabled`; informational otherwise. */
   successor: string | null;
   /** Legacy table this writer mutates, when it addresses a single record. */
@@ -95,6 +111,34 @@ export interface LegacyWriterRule {
   enforcedByDecision?: string;
   /** Human-readable reason, surfaced in the report. */
   reason: string;
+}
+
+export interface LegacyCutoverInventorySummary {
+  totalRules: number;
+  legacyMutationDoors: number;
+  canonicalMutationDoors: number;
+  nonMutationDoors: number;
+  retiredLegacyMutationDoors: number;
+  openLegacyMutationDoors: number;
+}
+
+export function summarizeLegacyCutoverInventory(
+  configs: readonly LegacyCutoverDomainConfig[]
+): LegacyCutoverInventorySummary {
+  const rules = configs.flatMap((config) => config.writers);
+  const effectOf = (rule: LegacyWriterRule): LegacyRouteEffect => rule.effect ?? 'legacy-write';
+  const legacy = rules.filter((rule) => effectOf(rule) === 'legacy-write');
+  return {
+    totalRules: rules.length,
+    legacyMutationDoors: legacy.length,
+    canonicalMutationDoors: rules.filter((rule) => effectOf(rule) === 'canonical-write').length,
+    nonMutationDoors: rules.filter((rule) => {
+      const effect = effectOf(rule);
+      return effect === 'read-only' || effect === 'refusal';
+    }).length,
+    retiredLegacyMutationDoors: legacy.filter((rule) => rule.state === 'disabled').length,
+    openLegacyMutationDoors: legacy.filter((rule) => rule.state !== 'disabled').length,
+  };
 }
 
 export interface LegacyCutoverDomainConfig {
