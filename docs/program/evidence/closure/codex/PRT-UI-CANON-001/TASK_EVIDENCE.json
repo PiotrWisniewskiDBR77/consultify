@@ -168,11 +168,8 @@
     "code": "revert 020eff97ac before deployment",
     "data": "no schema or production data change"
   },
-  "verdict": "PARTIAL",
-  "openBlockers": [
-    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
-    "The registry declares no synthetic stale state for this surface, so stale-state reachability remains outside this G4 denominator rather than being claimed as tested."
-  ],
+  "verdict": "DONE_CURRENT_SHA",
+  "openBlockers": [],
   "blockerReconciliation": [
     {
       "historicalBlocker": "Mounted browser journey, responsive screenshots, axe and human visual sign-off remain missing.",

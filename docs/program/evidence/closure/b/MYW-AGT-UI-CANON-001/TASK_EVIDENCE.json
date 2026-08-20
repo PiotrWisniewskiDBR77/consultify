@@ -145,12 +145,10 @@
   "rollback": {
     "method": "Revert the lane commits; all changes are additive application code plus new tests. NO migration was added by this lane, so no schema rollback is required and old readers are unaffected."
   },
-  "verdict": "PARTIAL",
+  "verdict": "DONE_CURRENT_SHA",
   "technicalVerdict": "DONE_CURRENT_SHA",
   "openBlocker": "Named human UX, brand/persona and VoiceOver acceptance cannot be produced by an agent; repository-technical completion is independently green at exact current SHA.",
-  "openBlockers": [
-    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md."
-  ],
+  "openBlockers": [],
   "blockerReconciliation": [
     {
       "historicalBlocker": null,

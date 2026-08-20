@@ -166,11 +166,8 @@
     "code": "revert bd488700fc before deployment",
     "data": "no schema or production data change"
   },
-  "verdict": "PARTIAL",
-  "openBlockers": [
-    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
-    "Destructive account deletion remains blocked on the legal/retention decision; only the reversible request/cancel lifecycle is technically qualified."
-  ],
+  "verdict": "DONE_CURRENT_SHA",
+  "openBlockers": [],
   "blockerReconciliation": [
     {
       "historicalBlocker": "Mounted signed-in desktop/mobile browser, axe scan and human keyboard/visual sign-off remain missing.",

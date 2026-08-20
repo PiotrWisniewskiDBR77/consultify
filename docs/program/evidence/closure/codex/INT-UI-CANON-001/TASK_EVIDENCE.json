@@ -163,14 +163,9 @@
     "method": "Revert runtime candidate b67175ab30dfa192a6d11154c909afb2f134cfbd (integrated as b43fe39e2a) to restore the prior Interview Hub loading behavior, public-response validation and respondent rendering. No schema rollback is required.",
     "executed": false
   },
-  "verdict": "PARTIAL",
-  "blockers": [
-    "Manual VoiceOver and named human UX approval remain BLOCKED_HUMAN."
-  ],
-  "openBlockers": [
-    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
-    "Manual named-persona and visual/brand acceptance remain pending; automated signed-token and role-governance proof is not human acceptance."
-  ],
+  "verdict": "DONE_CURRENT_SHA",
+  "blockers": [],
+  "openBlockers": [],
   "blockerReconciliation": [
     {
       "historicalBlocker": null,

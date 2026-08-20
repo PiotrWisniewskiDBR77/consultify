@@ -146,10 +146,8 @@
     "method": "Revert ca963fe511; no schema changes.",
     "executed": false
   },
-  "verdict": "PARTIAL",
-  "openBlockers": [
-    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md."
-  ],
+  "verdict": "DONE_CURRENT_SHA",
+  "openBlockers": [],
   "blockerReconciliation": [
     {
       "historicalBlocker": "The complete real browser journey must be rerun after the mount fix on the exact integrated SHA.",

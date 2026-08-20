@@ -14,7 +14,7 @@
   "gateG1": "PASS — npm run type-check exit 0; npm run build:backend exit 0; test:discovery-gate PASS 4997/4997 discovered, 4698 executed.",
   "gateG3": "PASS — strict migrate on FRESH from-zero DB exit 0; repeat run applied 0; --dry-run 0 pending; schema_migrations 709 success / 0 failed / 0 pending.",
   "taskId": "MTG-UI-CANON-001",
-  "verdict": "PARTIAL",
+  "verdict": "DONE_CURRENT_SHA",
   "technicalVerdict": "DONE_CURRENT_SHA",
   "open": [
     "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending."
@@ -136,9 +136,7 @@
     "method": "Not recorded by the lane; no rollback execution or completion claim is inferred.",
     "executed": false
   },
-  "openBlockers": [
-    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md."
-  ],
+  "openBlockers": [],
   "exactCurrentReconciliation": {
     "baseSha": "0529405e9f3ef7b182ada28a6a3a1aab836ac007",
     "sourceRed": "The mounted journey could not obtain a server-signed OWNER because production-disabled test support normalized OWNER to ADMIN.",

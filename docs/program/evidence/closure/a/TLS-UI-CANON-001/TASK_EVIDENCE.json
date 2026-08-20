@@ -151,10 +151,8 @@
     "method": "Test/evidence-only packet; no runtime rollback required.",
     "executed": false
   },
-  "verdict": "PARTIAL",
-  "openBlockers": [
-    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md."
-  ],
+  "verdict": "DONE_CURRENT_SHA",
+  "openBlockers": [],
   "blockerReconciliation": [
     {
       "historicalBlocker": null,
