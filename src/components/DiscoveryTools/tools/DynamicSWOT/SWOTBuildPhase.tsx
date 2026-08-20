@@ -513,7 +513,7 @@ export function SWOTBuildPhase({ session, isPolish, isGeneratingAI = false }: Bu
   };
 
   return (
-    <div className="space-y-6 p-1">
+    <div className="dark space-y-6 rounded-[28px] bg-navy-950 p-4 text-white">
       <div className="rounded-[28px] border border-c-border bg-c-surface p-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="max-w-3xl">

@@ -1367,7 +1367,7 @@ export const SWOT_STEPS: StepDefinition[] = [
   {
     id: 'input',
     name: 'Input & Exploration',
-    namePl: 'Materiały i eksploracja',
+    namePl: 'Wejście i eksploracja',
     description: 'Capture interview notes, materials, and external context as shared signals',
     descriptionPl: 'Zbierz wywiad, materiały i kontekst zewnętrzny jako wspólne sygnały',
     required: true,
