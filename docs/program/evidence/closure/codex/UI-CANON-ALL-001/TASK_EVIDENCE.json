@@ -1,9 +1,9 @@
 {
   "taskId": "UI-CANON-ALL-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "35661751edb4fc737ee58b10ab166b626c9a2751",
-  "technicalSourceSha": "35661751edb4fc737ee58b10ab166b626c9a2751",
-  "reconciliationSha": "35661751edb4fc737ee58b10ab166b626c9a2751",
+  "productSha": "0115b8bb8534b72ac4aa1d7411b60ecff3c30b56",
+  "technicalSourceSha": "0115b8bb8534b72ac4aa1d7411b60ecff3c30b56",
+  "reconciliationSha": "0115b8bb8534b72ac4aa1d7411b60ecff3c30b56",
   "leaseSha256": "18eb0f2e24aee1d6415a29e1605597117f24c42a1f74439842581e7a92583742",
   "changedPaths": ["docs/program/evidence/closure/codex/UI-CANON-ALL-001/TASK_EVIDENCE.json"],
   "changedPathRationale": {
@@ -18,7 +18,7 @@
     ],
     "scope": "Consumes existing module evidence without replaying or duplicating module E2E. Validates exactly sixteen route/surface/state inventories, frozen authority identity, evidence denominators, commit ancestry or explicit reconciliation, and referenced G4 result hashes.",
     "auditDisposition": "Audits is explicitly MISSING_FROZEN_MODULE_PACKET. Its outside-authority proposal and historical G4 result are inventory inputs only and can never be promoted to synthetic completion by this aggregator.",
-    "runtimeClaim": "An exact-current mounted browser sweep was executed on product SHA 4eec1d27952bc5642018495575665f5784e04f71 for all fifteen frozen UI packets against fresh PostgreSQL 16 and real signed authentication. Audit remains outside the frozen-82 authority and was not rerun or promoted."
+    "runtimeClaim": "The aggregate consumes the exact mounted browser sweep on SHA 4eec1d27952bc5642018495575665f5784e04f71 plus later module-specific exact-current Results and Finance qualifications and verified ancestry/reconciliation through product SHA 0115b8bb8534b72ac4aa1d7411b60ecff3c30b56. Audit remains outside the frozen-82 authority and was not promoted."
   },
   "ownerTables": [],
   "commands": [
@@ -170,7 +170,6 @@
   },
   "verdict": "PARTIAL",
   "blockers": [
-    "Close the task-specific technical gaps recorded in seven module inventories.",
     "Create or authorize a frozen-82 Audit UI module packet; the current proposal remains outside authority."
   ],
   "openBlockers": [
@@ -225,7 +224,7 @@
   "internalBetaOwnerDecision20260820": {
     "decision": "D6=B",
     "ownerStatement": "Akceptuję automatyczne dowody zamiast human UAT dla internal beta",
-    "candidateProductSha": "e6ca206c0035f653118d9aadbfddf61d452ab52e",
+    "candidateProductSha": "0115b8bb8534b72ac4aa1d7411b60ecff3c30b56",
     "effect": "Closes the manual VoiceOver, named-persona and visual/brand gate for internal beta only.",
     "doesNotWaive": [
       "task-specific technical gaps",
