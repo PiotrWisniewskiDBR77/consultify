@@ -41,7 +41,7 @@ describe('FinancialStatementMappingEditor acceptance states', () => {
     );
     expect(screen.getByText('73%')).toBeInTheDocument();
     expect(screen.getByText('review')).toBeInTheDocument();
-    fireEvent.click(screen.getByLabelText('Przychody netto Verified'));
+    fireEvent.click(screen.getByLabelText('Przychody netto: Verify extracted value'));
     expect(onVerifiedChange).toHaveBeenCalledWith(0, true);
     expect(onCanonicalChange).not.toHaveBeenCalled();
   });
@@ -53,17 +53,28 @@ describe('FinancialStatementMappingEditor acceptance states', () => {
       <FinancialStatementMappingEditor
         mappedValues={[
           {
-            originalLabel: 'Przychody', value: 100, confidence: 0.9,
-            canonicalLineId: 'revenue', mappingStatus: 'auto', mappingTier: 'auto',
+            originalLabel: 'Przychody',
+            value: 100,
+            confidence: 0.9,
+            canonicalLineId: 'revenue',
+            mappingStatus: 'auto',
+            mappingTier: 'auto',
           },
           {
-            originalLabel: 'Koszty pozostałe', value: 20, confidence: 0.6,
-            canonicalLineId: 'other-costs', mappingStatus: 'manual',
+            originalLabel: 'Koszty pozostałe',
+            value: 20,
+            confidence: 0.6,
+            canonicalLineId: 'other-costs',
+            mappingStatus: 'manual',
             mappingTier: 'review_required',
           },
           {
-            originalLabel: 'Nieznana pozycja', value: 5, confidence: 0.4,
-            canonicalLineId: null, mappingStatus: 'unmapped', mappingTier: 'review_required',
+            originalLabel: 'Nieznana pozycja',
+            value: 5,
+            confidence: 0.4,
+            canonicalLineId: null,
+            mappingStatus: 'unmapped',
+            mappingTier: 'review_required',
           },
         ]}
         canonicalLines={[
@@ -77,11 +88,11 @@ describe('FinancialStatementMappingEditor acceptance states', () => {
       />
     );
 
-    expect(screen.getByText('System verified')).toBeInTheDocument();
-    expect(screen.getByText('Map first')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Verify all ready (1)' }));
+    expect(screen.getByLabelText('Przychody: System verified')).toBeChecked();
+    expect(screen.getByLabelText('Nieznana pozycja: Verify extracted value')).toBeEnabled();
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Verify all eligible extracted values' }));
     expect(onVerifyAllReady).toHaveBeenCalledTimes(1);
-    fireEvent.click(screen.getByLabelText('Koszty pozostałe Verified'));
+    fireEvent.click(screen.getByLabelText('Koszty pozostałe: Verify extracted value'));
     expect(onVerifiedChange).toHaveBeenCalledWith(1, true);
   });
 });

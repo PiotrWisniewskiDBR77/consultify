@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle2, Edit3, Search, ShieldCheck, X } from 'lucide-react';
+import { AlertTriangle, Edit3, Search, X } from 'lucide-react';
 import React, { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -231,9 +231,7 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
   const reviewCount = mappedValues.filter((v) => v.mappingTier === 'review_required').length;
   const readyForManualVerificationCount = mappedValues.filter(
     (value) =>
-      Boolean(value.canonicalLineId) &&
-      !value.userVerified &&
-      (value.mappingStatus === 'manual' || value.mappingTier === 'review_required')
+      !value.userVerified && !(value.confidence >= 0.85 && value.mappingTier !== 'review_required')
   ).length;
 
   return (
@@ -276,7 +274,7 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
         >
           <thead className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur-sm dark:bg-navy-900/95">
             <tr>
-              <th className="text-left px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
+              <th className="w-[30%] px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
                 {t('finance.importWizard.originalLabel', 'Original Label')}
               </th>
               <th className="text-right px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
@@ -285,21 +283,31 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
               <th className="text-center px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
                 {t('finance.importWizard.conf', 'Conf.')}
               </th>
-              <th className="text-left px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
+              <th className="w-[22%] px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
                 {t('finance.importWizard.mappedTo', 'Mapped To')}
               </th>
               <th className="w-10" />
               <th className="px-3 py-2.5 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
-                <div className="flex flex-col items-center gap-1.5">
+                <div className="flex items-center justify-center gap-2">
+                  {readyForManualVerificationCount > 0 && (
+                    <input
+                      type="checkbox"
+                      checked={false}
+                      onChange={() => onVerifyAllReady?.()}
+                      className="h-4 w-4 rounded border-slate-300 accent-emerald-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                      aria-label={t(
+                        'finance.mappingEditor.verifyAllEligible',
+                        'Verify all eligible extracted values'
+                      )}
+                      title={`${t('finance.mappingEditor.verifyAllReady', 'Verify eligible values')} (${readyForManualVerificationCount})`}
+                    />
+                  )}
                   <span>{t('finance.mappingEditor.verified', 'Verified')}</span>
-                  <button
-                    type="button"
-                    onClick={onVerifyAllReady}
-                    disabled={readyForManualVerificationCount === 0}
-                    className="whitespace-nowrap rounded-md border border-emerald-300 px-2 py-1 text-[9px] font-semibold normal-case tracking-normal text-emerald-700 transition-colors hover:bg-emerald-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400 dark:border-emerald-500/30 dark:text-emerald-300 dark:hover:bg-emerald-500/10 dark:disabled:border-white/[0.06] dark:disabled:text-slate-600"
-                  >
-                    {t('finance.mappingEditor.verifyAllReady', 'Verify all ready')} ({readyForManualVerificationCount})
-                  </button>
+                  {readyForManualVerificationCount > 0 && (
+                    <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+                      {readyForManualVerificationCount}
+                    </span>
+                  )}
                 </div>
               </th>
             </tr>
@@ -359,7 +367,7 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
                 <td className="px-3 py-2 text-center">
                   <ConfidenceDot confidence={value.confidence} />
                 </td>
-                <td className="px-4 py-2">
+                <td className="px-3 py-2">
                   <SearchableSelect
                     value={value.canonicalLineId || ''}
                     options={canonicalLines}
@@ -378,52 +386,26 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
                   </button>
                 </td>
                 <td className="px-3 py-2 text-center">
-                  {value.userVerified ? (
-                    <label className="inline-flex items-center gap-1.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-300">
+                  {(() => {
+                    const systemVerified =
+                      value.confidence >= 0.85 && value.mappingTier !== 'review_required';
+                    const label = systemVerified
+                      ? t('finance.mappingEditor.systemVerified', 'System verified')
+                      : value.userVerified
+                        ? t('finance.mappingEditor.userVerified', 'User verified')
+                        : t('finance.mappingEditor.verifyExtractedValue', 'Verify extracted value');
+                    return (
                       <input
                         type="checkbox"
-                        checked
+                        checked={systemVerified || Boolean(value.userVerified)}
+                        disabled={systemVerified}
                         onChange={(event) => onVerifiedChange?.(idx, event.target.checked)}
-                        aria-label={`${value.originalLabel} ${t('finance.mappingEditor.userVerified', 'User verified')}`}
+                        className="h-4 w-4 rounded border-slate-300 accent-emerald-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:opacity-100"
+                        aria-label={`${value.originalLabel}: ${label}`}
+                        title={label}
                       />
-                      <CheckCircle2 size={13} />
-                      {t('finance.mappingEditor.userVerified', 'User verified')}
-                    </label>
-                  ) : value.canonicalLineId &&
-                    value.mappingTier !== 'review_required' &&
-                    value.mappingStatus !== 'manual' ? (
-                    <span className="inline-flex items-center gap-1.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-300">
-                      <ShieldCheck size={14} />
-                      {t('finance.mappingEditor.systemVerified', 'System verified')}
-                    </span>
-                  ) : (
-                    <label
-                      className={`inline-flex items-center gap-1.5 text-[10px] ${
-                        value.canonicalLineId
-                          ? 'cursor-pointer font-medium text-amber-700 dark:text-amber-300'
-                          : 'cursor-not-allowed text-slate-400 dark:text-slate-600'
-                      }`}
-                      title={
-                        value.canonicalLineId
-                          ? t('finance.mappingEditor.confirmMapping', 'Confirm this mapping')
-                          : t(
-                              'finance.mappingEditor.mapBeforeVerify',
-                              'Select a target category before verification'
-                            )
-                      }
-                    >
-                      <input
-                        type="checkbox"
-                        checked={false}
-                        disabled={!value.canonicalLineId}
-                        onChange={(event) => onVerifiedChange?.(idx, event.target.checked)}
-                        aria-label={`${value.originalLabel} ${t('finance.mappingEditor.verified', 'Verified')}`}
-                      />
-                      {value.canonicalLineId
-                        ? t('finance.mappingEditor.verifyManually', 'Verify')
-                        : t('finance.mappingEditor.mapFirst', 'Map first')}
-                    </label>
-                  )}
+                    );
+                  })()}
                 </td>
               </tr>
             ))}

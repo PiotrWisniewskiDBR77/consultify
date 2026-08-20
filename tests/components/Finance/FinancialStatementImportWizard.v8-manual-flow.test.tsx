@@ -762,6 +762,8 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
     );
     expect(await screen.findByRole('tab', { name: /P&L · 2025/ })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /BS · 2025 · comparison/ })).toBeInTheDocument();
+    expect(screen.queryByText('Import Financial Statement')).not.toBeInTheDocument();
+    expect(screen.getByRole('complementary', { name: 'Statement metrics' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Save & Validate' }));
     return view;
   }
@@ -790,7 +792,9 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
 
   it('fails closed when any staged statement is not ready', async () => {
     await stageTwoStatementSections('recoverable');
-    expect(await screen.findByRole('button', { name: 'Return to blocking items' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('button', { name: 'Return to blocking items' })
+    ).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Confirm & Save' })).not.toBeInTheDocument();
     expect(V8FinanceApi.confirmStatement).not.toHaveBeenCalled();
   });
