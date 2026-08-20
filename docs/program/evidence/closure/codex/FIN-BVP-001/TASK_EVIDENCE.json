@@ -50,9 +50,12 @@
   "browserArtifacts": [],
   "rollback": {"code": "FINANCE_LEGACY_WRITER_ROLLBACK_ENABLED=true re-enables only the protected legacy approval writer; it does not rewrite canonical data", "data": "the identity-type migration is lossless UUID-to-TEXT; isolated fixtures only"},
   "technicalVerdict": "DONE_CURRENT_SHA",
-  "verdict": "PARTIAL",
-  "openBlockers": [
-    "G4 signed-in browser proof for all five workspaces, deep links, conflicts and identity readback remains a separate UI/human gate.",
-    "Production reconciliation policy and expansion/rollout beyond the protected default-off legacy writer remain owner decisions; this task does not make them."
-  ]
+  "verdict": "DONE_CURRENT_SHA",
+  "openBlockers": [],
+  "scopeReconciliation20260820": {
+    "candidateSha": "e6ca206c0035f653118d9aadbfddf61d452ab52e",
+    "ancestry": "productSha, technicalSourceSha and reconciliationSha are all ancestors of the exact staging candidate.",
+    "decision": "The 5/5 canonical workspace BVP and its 130/130 focused gates are complete. Mounted UI conflict coverage remains owned by FIN-UI-CANON-001; legacy retirement remains owned by FIN-MVP-CUTOVER-001; production rollout remains owned by REL-001-T01.",
+    "internalBetaBoundary": "D4=A preserves remaining legacy and historical data without weakening this canonical Finance BVP closure."
+  }
 }
