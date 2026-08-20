@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import { AppView } from '../../types';
@@ -17,5 +20,18 @@ describe('Finance canonical route', () => {
         hash: '#assumptions',
       })
     ).toBe('/finance?tab=analysis&case=case-1#assumptions');
+  });
+
+  it('mounts all five canonical Finance detail routes, including Prediction', () => {
+    const appRoutes = readFileSync(resolve(process.cwd(), 'src/routes/AppRoutes.tsx'), 'utf8');
+    for (const path of [
+      '/finance/statements/:id',
+      '/finance/models/:id',
+      '/finance/analyses/:id',
+      '/finance/predictions/:id',
+      '/finance/valuations/:id',
+    ]) {
+      expect(appRoutes).toContain(`path="${path}"`);
+    }
   });
 });
