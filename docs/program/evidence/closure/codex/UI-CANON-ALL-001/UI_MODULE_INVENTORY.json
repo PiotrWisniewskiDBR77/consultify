@@ -285,7 +285,7 @@
       "taskId": "ORG-UI-CANON-001",
       "evidencePath": "docs/program/evidence/closure/c/ORG-UI-CANON-001/TASK_EVIDENCE.json",
       "g4ResultPath": "docs/program/evidence/closure/ui-g4/ORG-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "classification": "TECHNICAL_CURRENT_WITH_GAPS",
+      "classification": "TECHNICAL_CURRENT",
       "routes": ["/organization"],
       "surfaces": ["sources", "claims", "snapshots", "governed publish"],
       "stateCoverage": {
@@ -298,9 +298,7 @@
         "success": "covered",
         "stale": "covered"
       },
-      "openGaps": [
-        "upload-to-governed-claim seam"
-      ]
+      "openGaps": []
     },
     {
       "moduleId": "ADM",

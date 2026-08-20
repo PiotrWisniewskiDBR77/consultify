@@ -14,11 +14,18 @@
   "gateG1": "PASS — npm run type-check exit 0; npm run build:backend exit 0; test:discovery-gate PASS 4997/4997 discovered, 4698 executed.",
   "gateG3": "PASS — strict migrate on FRESH from-zero DB exit 0; repeat run applied 0; --dry-run 0 pending; schema_migrations 709 success / 0 failed / 0 pending.",
   "taskId": "ORG-UI-CANON-001",
-  "verdict": "PARTIAL",
-  "open": [
-    "Disposition of superseded dead or unmounted organization components remains incomplete; their historical presence is not treated as a live product surface.",
-    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending."
-  ],
+  "verdict": "DONE_CURRENT_SHA",
+  "technicalVerdict": "DONE_CURRENT_SHA",
+  "open": [],
+  "internalBetaAutomatedUatAcceptance": {
+    "decision": "D6=B",
+    "recordedAt": "2026-08-20",
+    "scope": "Automated evidence replaces human VoiceOver, named-persona and visual/brand UAT for internal beta only."
+  },
+  "deadSurfaceDisposition": {
+    "decision": "D5=A",
+    "scope": "Superseded dead or unmounted Organization components remain unmounted for internal beta; no deletion or connection is inferred."
+  },
   "changedPaths": [
     "server/migrations/20261016_org_context_upload_idempotency.sql",
     "server/src/routes/__tests__/ai.routes.attachments-ingest.test.ts",
@@ -177,10 +184,7 @@
     "method": "Not recorded by the lane; no rollback execution or completion claim is inferred.",
     "executed": false
   },
-  "openBlockers": [
-    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
-    "Superseded dead or unmounted organization components still require explicit KEEP/CONNECT/DELETE disposition."
-  ],
+  "openBlockers": [],
   "blockerReconciliation": [
     {
       "historicalBlocker": "No live UI surface for the governed claims review journey.",
@@ -206,7 +210,7 @@
     ],
     "gates": "fresh 763; repeat 0; dry pending 0; migration 16/16; mounted 5/5; focused 22/22; root/server TypeScript and backend/frontend builds passed",
     "cleanup": "upload receipts, claims, context items, documents and advisory locks 0; named immutable trigger enabled O",
-    "scope": "Automated technical document-to-claim-to-publish-to-cold-reopen closure only; human G4 and dead-component disposition remain open."
+    "scope": "Automated technical document-to-claim-to-publish-to-cold-reopen closure. D5=A and D6=B close the remaining internal-beta disposition and human-UAT boundaries."
   },
   "automatedG4Verdict": {
     "verdict": "PASS_EXACT_SHA",
