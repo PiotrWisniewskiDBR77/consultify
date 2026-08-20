@@ -232,6 +232,44 @@ describe.runIf(enabled)('Finance Statement owner acceptance — real PostgreSQL 
         expect(result.rows[0].count, `${capability.table}:${table}`).toBe(0);
       }
     }
+
+    await pool.query(`DROP INDEX idx_fs_pack_active_type_period`);
+    await pool.query(
+      `CREATE UNIQUE INDEX idx_fs_pack_active_type
+         ON financial_statements(statement_pack_id, statement_type)
+       WHERE statement_pack_id IS NOT NULL AND COALESCE(status, 'draft') <> 'archived'`
+    );
+    let indexDriftFailure: any;
+    try {
+      indexDriftFailure = await request(app)
+        .post(`/api/v8/finance/statements/${failedPrimary}/extract`)
+        .send({
+          statementType: 'BS',
+          statementTypes: ['P&L', 'BS', 'CF'],
+          periodLabel: '2025',
+          currency: 'PLN',
+          scaling: 'thousands',
+          entityName: 'CD PROJEKT S.A.',
+        });
+    } finally {
+      await pool.query(`DROP INDEX IF EXISTS idx_fs_pack_active_type`);
+      await pool.query(
+        `CREATE UNIQUE INDEX idx_fs_pack_active_type_period
+           ON financial_statements(
+             statement_pack_id, statement_type,
+             COALESCE(period_start, DATE '0001-01-01'),
+             COALESCE(period_end, DATE '0001-01-01')
+           )
+         WHERE statement_pack_id IS NOT NULL AND COALESCE(status, 'draft') <> 'archived'`
+      );
+    }
+    expect(indexDriftFailure.status).toBe(503);
+    expect(indexDriftFailure.body).toMatchObject({
+      code: 'STATEMENT_IMPORT_SCHEMA_INCOMPLETE',
+      invalidIndexes: expect.arrayContaining(['idx_fs_pack_active_type']),
+    });
+    expect(JSON.stringify(indexDriftFailure.body)).not.toContain('25P02');
+
     const officialProfitAndLoss = locateStatementSections(pdfText, 'P&L').find(
       (section) => section.confidence >= 0.5
     );

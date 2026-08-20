@@ -331,6 +331,39 @@ export async function assertAtomicStatementImportSchema(): Promise<void> {
       missing,
     });
   }
+
+  // The exact-six contract requires two active periods per statement type in
+  // one pack. A restored legacy baseline can resurrect the older type-only
+  // index even after migration 20261057 was recorded as successful. Detect
+  // the effective schema here, before BEGIN, so the user sees the real drift
+  // instead of a secondary PostgreSQL 25P02 from the next statement.
+  const packIndexes = await dbAll<{ indexname: string; indexdef: string }>(
+    `SELECT indexname, indexdef
+       FROM pg_indexes
+      WHERE schemaname = current_schema()
+        AND tablename = 'financial_statements'
+        AND indexname IN ('idx_fs_pack_active_type', 'idx_fs_pack_active_type_period')`,
+    [],
+    { fallback: false }
+  );
+  const indexByName = new Map(packIndexes.map((row) => [row.indexname, row.indexdef]));
+  const periodIndex = indexByName.get('idx_fs_pack_active_type_period') || '';
+  const invalidIndexes = [
+    ...(indexByName.has('idx_fs_pack_active_type') ? ['idx_fs_pack_active_type'] : []),
+    ...(!periodIndex.includes('period_start') || !periodIndex.includes('period_end')
+      ? ['idx_fs_pack_active_type_period']
+      : []),
+  ];
+  if (invalidIndexes.length > 0) {
+    throw Object.assign(
+      new Error(`Statement import schema has incompatible pack identity indexes: ${invalidIndexes.join(', ')}`),
+      {
+        code: 'STATEMENT_IMPORT_SCHEMA_INCOMPLETE',
+        statusCode: 503,
+        invalidIndexes,
+      }
+    );
+  }
 }
 
 function normalizeStatementTypeToken(value: unknown): string {

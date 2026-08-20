@@ -1836,6 +1836,10 @@ router.post(
           error: error?.message || 'Multi-section extraction failed',
           code: error?.code || 'MULTI_SECTION_EXTRACTION_FAILED',
           statementType: error?.statementType,
+          ...(Array.isArray(error?.missing) ? { missing: error.missing } : {}),
+          ...(Array.isArray(error?.invalidIndexes)
+            ? { invalidIndexes: error.invalidIndexes }
+            : {}),
         });
       }
     }

@@ -62753,7 +62753,10 @@ CREATE INDEX IF NOT EXISTS idx_fs_org ON public.financial_statements USING btree
 -- Name: idx_fs_pack_active_type; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_fs_pack_active_type ON public.financial_statements USING btree (statement_pack_id, statement_type) WHERE ((statement_pack_id IS NOT NULL) AND (COALESCE(status, 'draft'::text) <> 'archived'::text));
+-- Retired by the comparative-period Statement contract. A pack contains one
+-- active statement per type AND period, not one per type globally. The
+-- authoritative replacement is idx_fs_pack_active_type_period, installed by
+-- the current migration chain after this historical baseline.
 
 
 --
@@ -86003,4 +86006,3 @@ ALTER TABLE ONLY v8.v8_version_snapshots
 --
 
 \unrestrict 5NElNgB1v7he7TS6k45Ah1OeSbV5G0k6INo41WO1uNaqPyXWSA1mECgT8G4mRFG
-
