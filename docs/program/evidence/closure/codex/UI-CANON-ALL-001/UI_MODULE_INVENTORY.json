@@ -130,7 +130,7 @@
       "taskId": "INI-UI-CANON-001",
       "evidencePath": "docs/program/evidence/closure/b/INI-UI-CANON-001/TASK_EVIDENCE.json",
       "g4ResultPath": "docs/program/evidence/closure/ui-g4/INI-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "classification": "TECHNICAL_CURRENT_WITH_GAPS",
+      "classification": "TECHNICAL_CURRENT",
       "routes": ["/initiatives", "/initiatives/candidates/:id", "/initiatives/:id"],
       "surfaces": ["candidates", "portfolio", "cards", "profile", "linked execution"],
       "stateCoverage": {
@@ -141,9 +141,9 @@
         "permission": "covered",
         "conflict": "covered",
         "success": "covered",
-        "stale": "partial"
+        "stale": "covered"
       },
-      "openGaps": ["literal rendered signed-auth stale conflict in the otherwise complete candidate-to-schedule lifecycle"]
+      "openGaps": []
     },
     {
       "moduleId": "EXE",
