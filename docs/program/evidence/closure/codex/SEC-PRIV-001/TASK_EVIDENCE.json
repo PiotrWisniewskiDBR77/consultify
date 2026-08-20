@@ -95,8 +95,8 @@
     }
   },
   "openBlockers": [
-    "Historical provider credentials require owner-coordinated provider rotation before any optional history rewrite.",
-    "No release or DONE verdict is permitted while the historical rotation gate remains open."
+    "Optional Git history rewrite remains NOT_AUTHORIZED and was not performed; provider-side current credentials have been reconciled and the exposed FizzUp production Google Speech key was rotated and revoked.",
+    "Production Consultify deployment remains NOT_AUTHORIZED; this receipt authorizes only continuation of the staging rehearsal."
   ],
   "ownerDecisionRequired": "Approve and coordinate provider rotation; separately decide whether repository history rewrite is authorized after rotation.",
   "rollback": "Revert the candidate commit; no migration, production data mutation, deployment, push or history rewrite occurred."

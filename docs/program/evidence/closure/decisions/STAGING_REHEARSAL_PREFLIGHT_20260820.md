@@ -24,16 +24,20 @@
 - Blocking ledger record: `20260228_budget_initiative_links.sql` is recorded with checksum prefix `12b4cafd6a7958b2`; candidate bytes hash prefix `50e3c21219cae784`.
 - The existing staging database must remain preserved under D4. Recommended rehearsal path: provision a new staging-only database, apply the full chain from empty, switch only the staging application after a green migration/replay gate, and retain the old database for rollback/evidence until explicit cleanup authority.
 
-## Historical credential preflight
+## Historical credential preflight and provider reconciliation
 
 - Safe inventory: 74 unique historical records across `OPENAI_API_KEY`, `GCP_API_KEY`, `LINKEDIN_CLIENT_SECRET`, JWT/generic credential signatures and public identifiers. No secret value was read into or written to this document.
 - Current Railway values were compared only by SHA-256 against the historical inventory for `dev`, `demo`, `staging` and `production`.
 - Result: zero historical-hash matches in every environment.
-- OpenAI provider dashboards were not authenticated in either available browser session. No login credential was requested or entered; no provider key was created, rotated or revoked.
-- Therefore D2 authorization is recorded and active Railway replacement is evidenced, but provider-side revocation receipts remain `PENDING_EXTERNAL_OWNER` for OpenAI, GCP and LinkedIn.
+- Authenticated provider reconciliation completed on 2026-08-20. OpenAI's only active Consultify key is current and does not match the historical inventory; all other listed keys are inactive.
+- All four current keys in the authenticated GCP Gemini API project were compared by SHA-256 with the historical GCP inventory; matches: zero.
+- The current LinkedIn Consultify application postdates the historical finding, and its current Railway credential does not match the historical SHA-256.
+- A separately exposed production Google Speech key used by `fizzup-api / production` was rotated under explicit owner authorization. Railway deployment `ec14fa73-5d7a-4186-a4f6-ef0452de272b` reached `SUCCESS`; health, real Google STT and real Google TTS passed; only then was the previous Google key deleted.
+- Safe receipt: `docs/program/evidence/closure/codex/SEC-PRIV-001/PROVIDER_ROTATION_RECEIPT_20260820.json`. It contains no credential values.
+- Optional Git history rewrite remains `NOT_AUTHORIZED` and was not performed. Provider reconciliation is sufficient to close the D2 staging gate; it does not authorize a Consultify production deploy.
 
 ## Verdict and next gate
 
-`STOP_BEFORE_STAGING_DEPLOY`.
+`GO_FOR_STAGING_REHEARSAL_ONLY`.
 
-The rehearsal may resume after provider owners confirm rotation/revocation. Then provision a fresh staging-only Postgres service, run strict migrations plus replay-zero, deploy the exact candidate SHA, execute the 16 mounted flows, two 60-minute telemetry windows, alert exercise and rollback rehearsal. A green staging result does not authorize production.
+Provider reconciliation is complete. The rehearsal may now provision a fresh staging-only Postgres service, run strict migrations plus replay-zero, deploy the exact candidate SHA, execute the 16 mounted flows, two 60-minute telemetry windows, alert exercise and rollback rehearsal. The old staging database must remain preserved. A green staging result does not authorize production.

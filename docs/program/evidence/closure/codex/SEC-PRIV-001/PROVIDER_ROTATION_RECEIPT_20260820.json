@@ -1,0 +1,45 @@
+{
+  "receiptId": "SEC-PRIV-001-PROVIDER-ROTATION-20260820",
+  "recordedAt": "2026-08-20T04:56:44+02:00",
+  "containsSecretValues": false,
+  "providers": {
+    "openai": {
+      "status": "HISTORICAL_CREDENTIAL_NOT_ACTIVE",
+      "evidence": "The only active Consultify key in the authenticated provider organization is current and does not match any historical-inventory SHA-256. All other listed keys are inactive."
+    },
+    "gcpHistoricalInventory": {
+      "status": "HISTORICAL_CREDENTIALS_NOT_ACTIVE",
+      "evidence": "All current API keys in the authenticated Gemini API project were compared by SHA-256 with the historical GCP inventory; matches: 0."
+    },
+    "linkedin": {
+      "status": "HISTORICAL_CREDENTIAL_NOT_CURRENT",
+      "evidence": "The current Consultify application postdates the historical finding and its current Railway credential does not match the historical SHA-256."
+    },
+    "fizzupGoogleSpeechProduction": {
+      "status": "ROTATED_AND_OLD_KEY_DELETED",
+      "ownerAuthorization": "Explicit production rotation authorization received in this task on 2026-08-20.",
+      "railwayProjectId": "c4f6f50c-064c-4542-bd30-dbe3cb32d1bb",
+      "railwayEnvironment": "production",
+      "railwayServiceId": "f6684e32-a13a-4be6-9c83-eec450b1e7f9",
+      "oldKeyResourceId": "12c05ef5-d9a3-430b-a9ae-a6bd37768856",
+      "oldKeySha256": "c030130697b326b229020dd193bf8b38cc2509e0282b95fe3d52cae085335a95",
+      "newKeyResourceId": "e12867dc-a917-4fd6-a1f9-742eafe57c87",
+      "newKeySha256": "e8e106402985459df245db84b6627c66fb52ce0d16e7eaa5f6c3fd24445504fa",
+      "railwayDeploymentId": "ec14fa73-5d7a-4186-a4f6-ef0452de272b",
+      "deployedReleaseSha": "48fdc2196ba24e2f221758fd431c8830b545ef95",
+      "deploymentStatus": "SUCCESS",
+      "healthStatus": 200,
+      "voiceReadback": {
+        "enabled": true,
+        "sttProvider": "google",
+        "ttsProvider": "google"
+      },
+      "providerTests": {
+        "textToSpeech": "PASS_HTTP_200_MP3_28992_BYTES",
+        "speechToText": "PASS_HTTP_200_EXPECTED_TRANSCRIPT"
+      },
+      "oldKeyDisposition": "Deleted in Google Cloud after green Railway, health, STT and TTS checks; provider recovery window remains 30 days."
+    }
+  },
+  "remainingBoundary": "Optional Git history rewrite is NOT_AUTHORIZED and was not performed. This does not block staging rehearsal because provider-side current credentials are reconciled and the exposed FizzUp production key was rotated and revoked."
+}
