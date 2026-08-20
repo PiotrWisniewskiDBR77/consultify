@@ -3404,6 +3404,18 @@ export const FinanceHub: React.FC = () => {
             embedded
             onClose={() => setShowImportWizard(false)}
             onComplete={handleImportWizardComplete}
+            onOpenKnowledgeBase={() => navigate('/knowledge-base')}
+            onOpenAi={() =>
+              openChatWithContext({
+                entityType: 'finance_statement_import',
+                entityId: 'statement-import',
+                entityName: t('finance.importWizard.title', 'Financial statement import'),
+                contextData: {
+                  activeTab: 'statements',
+                  organizationName: currentOrganization?.name,
+                },
+              })
+            }
           />
         </Suspense>
       );

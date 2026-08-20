@@ -8,6 +8,7 @@
 import {
   AlertTriangle,
   ArrowRight,
+  BookOpen,
   Check,
   CheckCircle2,
   ChevronLeft,
@@ -15,6 +16,7 @@ import {
   FileText,
   Info,
   Loader2,
+  MessageCircle,
   Search,
   Upload,
   X,
@@ -121,6 +123,8 @@ type WizardStep = 'upload' | 'detect' | 'map' | 'confirm';
 interface Props {
   onClose?: () => void;
   onComplete?: (statementId: string) => void;
+  onOpenKnowledgeBase?: () => void;
+  onOpenAi?: () => void;
   /**
    * When true, the wizard renders as an in-layout instrument panel inside the
    * finance shell (sidebar + topbar stay visible) instead of a full-screen
@@ -254,6 +258,8 @@ async function uploadAndAnalyzeWithFallback(formData: FormData, idempotencyKey?:
 export const FinancialStatementImportWizard: React.FC<Props> = ({
   onClose,
   onComplete,
+  onOpenKnowledgeBase,
+  onOpenAi,
   embedded = false,
 }) => {
   const { t, i18n } = useTranslation();
@@ -819,6 +825,16 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
 
   const confidenceBadge = (conf: number) => {
     const pct = Math.round(conf * 100);
+    if (conf < 0.55) {
+      return (
+        <span className="rounded bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700 dark:bg-white/[0.06] dark:text-slate-300">
+          {t(
+            'finance.importWizard.detectionNotReliable',
+            'Could not detect reliably — review the fields below'
+          )}
+        </span>
+      );
+    }
     const color =
       pct >= 70
         ? 'text-emerald-600 bg-emerald-50'
@@ -865,7 +881,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
     <div
       className={
         embedded
-          ? 'h-full overflow-y-auto bg-white dark:bg-navy-950 p-6 pb-10'
+          ? `h-full overflow-y-auto bg-white dark:bg-navy-950 ${step === 'map' ? 'p-2' : 'p-6 pb-10'}`
           : 'min-h-full bg-white dark:bg-navy-950 p-6 pb-10'
       }
     >
@@ -891,7 +907,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
             </div>
           )}
         </div>
-        <div className="text-right" data-testid="import-progress">
+        <div className="ml-auto text-right" data-testid="import-progress">
           <div className="font-medium text-slate-800 dark:text-slate-200">
             {stepLabels[displaySteps.indexOf(step)]}
           </div>
@@ -899,122 +915,158 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
             {displaySteps.indexOf(step) + 1}/{displaySteps.length}
           </div>
         </div>
-      </div>
-
-      {/* Header — in embedded mode a breadcrumb replaces the oversized page
-          title that collided with the app logo (H2.10). */}
-      <div className="flex items-center justify-between mb-8">
-        <div className="min-w-0">
-          {embedded ? (
-            <>
+        {step === 'map' && (
+          <div className="flex items-center gap-1">
+            {onOpenKnowledgeBase && (
               <button
-                onClick={handleDismiss}
-                className="group inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                type="button"
+                onClick={onOpenKnowledgeBase}
+                className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-600 hover:bg-white dark:text-slate-300 dark:hover:bg-white/[0.06]"
               >
-                <ChevronLeft
-                  size={16}
-                  className="transition-transform group-hover:-translate-x-0.5"
-                />
-                <span>{t('finance.importWizard.breadcrumbFinance', 'Finance')}</span>
-                <span className="text-slate-300 dark:text-slate-600">/</span>
-                <span className="text-slate-800 dark:text-slate-200">
-                  {t('finance.importWizard.breadcrumbImport', 'Import')}
-                </span>
+                <BookOpen size={14} />
+                {t('finance.importWizard.knowledgeBase', 'Knowledge base')}
               </button>
-              <h2 className="mt-1 text-lg font-semibold text-slate-900 dark:text-white">
-                {t('finance.importWizard.title', 'Import Financial Statement')}
-              </h2>
-              <p className="text-sm text-slate-500 mt-0.5">
-                {t(
-                  'finance.importWizard.subtitle',
-                  'Upload a PDF to extract and standardize financial data'
-                )}
-              </p>
-            </>
-          ) : (
-            <>
-              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                {t('finance.importWizard.title', 'Import Financial Statement')}
-              </h1>
-              <p className="text-sm text-slate-500 mt-1">
-                {t(
-                  'finance.importWizard.subtitle',
-                  'Upload a PDF to extract and standardize financial data'
-                )}
-              </p>
-            </>
-          )}
-        </div>
+            )}
+            {onOpenAi && (
+              <button
+                type="button"
+                onClick={onOpenAi}
+                className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-600 hover:bg-white dark:text-slate-300 dark:hover:bg-white/[0.06]"
+              >
+                <MessageCircle size={14} /> AI
+              </button>
+            )}
+          </div>
+        )}
         {onClose && (
           <button
             onClick={handleDismiss}
             aria-label={t('finance.importWizard.ariaCloseImport', 'Close import')}
-            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
+            className="rounded-lg p-1.5 hover:bg-slate-200 dark:hover:bg-navy-800"
           >
-            <X size={20} className="text-slate-500" />
+            <X size={18} className="text-slate-500" />
           </button>
         )}
       </div>
 
-      {/* Steps indicator with progress line */}
-      <button
-        type="button"
-        className="mb-2 text-xs font-medium text-blue-600"
-        onClick={() => setStepsExpanded((value) => !value)}
-        aria-expanded={stepsExpanded}
-      >
-        {stepsExpanded
-          ? t('finance.importWizard.hideSteps', 'Hide steps')
-          : t('finance.importWizard.showSteps', 'Show steps')}
-      </button>
-      <div
-        className={`${stepsExpanded ? 'flex' : 'hidden'} items-center mb-5 rounded-xl border border-slate-200 p-3 dark:border-white/[0.08]`}
-        role="navigation"
-        aria-label={t('finance.importWizard.ariaImportSteps', 'Import steps')}
-      >
-        {displaySteps.map((s, i) => {
-          const displayStepIdx = displaySteps.indexOf(step);
-          const isCompleted = i < displayStepIdx;
-          const isCurrent = i === displayStepIdx;
-          return (
-            <React.Fragment key={s}>
-              <div className="flex items-center gap-2">
-                <div
-                  className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-all duration-300 ${
-                    isCompleted
-                      ? 'bg-emerald-500 text-white shadow-sm'
-                      : isCurrent
-                        ? 'bg-blue-600 text-white shadow-sm ring-4 ring-blue-100 dark:ring-blue-500/20'
-                        : 'border-2 border-slate-200 text-slate-600 dark:border-white/[0.1] dark:text-slate-500'
-                  }`}
-                  aria-current={isCurrent ? 'step' : undefined}
-                >
-                  {isCompleted ? <Check size={14} strokeWidth={3} /> : i + 1}
-                </div>
-                <span
-                  className={`text-sm font-medium transition-colors ${
-                    isCompleted
-                      ? 'text-emerald-600 dark:text-emerald-400'
-                      : isCurrent
-                        ? 'text-slate-900 dark:text-white'
-                        : 'text-slate-600 dark:text-slate-500'
-                  } hidden sm:inline`}
-                >
-                  {stepLabels[i]}
-                </span>
-              </div>
-              {i < displaySteps.length - 1 && (
-                <div className="mx-3 h-0.5 flex-1 rounded-full bg-slate-200 dark:bg-white/[0.08]">
-                  <div
-                    className="h-full rounded-full bg-emerald-500 transition-all duration-500"
-                    style={{ width: isCompleted ? '100%' : isCurrent ? '50%' : '0%' }}
-                  />
-                </div>
+      {step !== 'map' && (
+        <>
+          {/* Header — in embedded mode a breadcrumb replaces the oversized page
+          title that collided with the app logo (H2.10). */}
+          <div className="flex items-center justify-between mb-8">
+            <div className="min-w-0">
+              {embedded ? (
+                <>
+                  <button
+                    onClick={handleDismiss}
+                    className="group inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                  >
+                    <ChevronLeft
+                      size={16}
+                      className="transition-transform group-hover:-translate-x-0.5"
+                    />
+                    <span>{t('finance.importWizard.breadcrumbFinance', 'Finance')}</span>
+                    <span className="text-slate-300 dark:text-slate-600">/</span>
+                    <span className="text-slate-800 dark:text-slate-200">
+                      {t('finance.importWizard.breadcrumbImport', 'Import')}
+                    </span>
+                  </button>
+                  <h2 className="mt-1 text-lg font-semibold text-slate-900 dark:text-white">
+                    {t('finance.importWizard.title', 'Import Financial Statement')}
+                  </h2>
+                  <p className="text-sm text-slate-500 mt-0.5">
+                    {t(
+                      'finance.importWizard.subtitle',
+                      'Upload a PDF to extract and standardize financial data'
+                    )}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+                    {t('finance.importWizard.title', 'Import Financial Statement')}
+                  </h1>
+                  <p className="text-sm text-slate-500 mt-1">
+                    {t(
+                      'finance.importWizard.subtitle',
+                      'Upload a PDF to extract and standardize financial data'
+                    )}
+                  </p>
+                </>
               )}
-            </React.Fragment>
-          );
-        })}
-      </div>
+            </div>
+            {onClose && (
+              <button
+                onClick={handleDismiss}
+                aria-label={t('finance.importWizard.ariaCloseImport', 'Close import')}
+                className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
+              >
+                <X size={20} className="text-slate-500" />
+              </button>
+            )}
+          </div>
+
+          {/* Steps indicator with progress line */}
+          <button
+            type="button"
+            className="mb-2 text-xs font-medium text-blue-600"
+            onClick={() => setStepsExpanded((value) => !value)}
+            aria-expanded={stepsExpanded}
+          >
+            {stepsExpanded
+              ? t('finance.importWizard.hideSteps', 'Hide steps')
+              : t('finance.importWizard.showSteps', 'Show steps')}
+          </button>
+          <div
+            className={`${stepsExpanded ? 'flex' : 'hidden'} items-center mb-5 rounded-xl border border-slate-200 p-3 dark:border-white/[0.08]`}
+            role="navigation"
+            aria-label={t('finance.importWizard.ariaImportSteps', 'Import steps')}
+          >
+            {displaySteps.map((s, i) => {
+              const displayStepIdx = displaySteps.indexOf(step);
+              const isCompleted = i < displayStepIdx;
+              const isCurrent = i === displayStepIdx;
+              return (
+                <React.Fragment key={s}>
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-all duration-300 ${
+                        isCompleted
+                          ? 'bg-emerald-500 text-white shadow-sm'
+                          : isCurrent
+                            ? 'bg-blue-600 text-white shadow-sm ring-4 ring-blue-100 dark:ring-blue-500/20'
+                            : 'border-2 border-slate-200 text-slate-600 dark:border-white/[0.1] dark:text-slate-500'
+                      }`}
+                      aria-current={isCurrent ? 'step' : undefined}
+                    >
+                      {isCompleted ? <Check size={14} strokeWidth={3} /> : i + 1}
+                    </div>
+                    <span
+                      className={`text-sm font-medium transition-colors ${
+                        isCompleted
+                          ? 'text-emerald-600 dark:text-emerald-400'
+                          : isCurrent
+                            ? 'text-slate-900 dark:text-white'
+                            : 'text-slate-600 dark:text-slate-500'
+                      } hidden sm:inline`}
+                    >
+                      {stepLabels[i]}
+                    </span>
+                  </div>
+                  {i < displaySteps.length - 1 && (
+                    <div className="mx-3 h-0.5 flex-1 rounded-full bg-slate-200 dark:bg-white/[0.08]">
+                      <div
+                        className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                        style={{ width: isCompleted ? '100%' : isCurrent ? '50%' : '0%' }}
+                      />
+                    </div>
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </div>
+        </>
+      )}
 
       {error && (
         <div className="mb-6 p-3 bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 rounded-xl flex items-start gap-2">
@@ -1356,166 +1408,214 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
 
       {/* Step 3: Map & Correct */}
       {step === 'map' && (
-        <div className="max-w-4xl mx-auto space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-              {t('finance.importWizard.mappingTitle', 'Map Extracted Lines')}
-            </h3>
-            <span className="text-sm text-slate-500">
-              {mappedValues.filter((v) => v.canonicalLineId).length}/{mappedValues.length}{' '}
-              {t('finance.importWizard.mapped', 'mapped')}
-            </span>
-          </div>
-          {reviewStatements.length > 1 && (
+        <div className="grid min-w-0 gap-3 xl:grid-cols-[10rem_minmax(0,1fr)_17rem]">
+          <aside className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-2 dark:border-white/[0.08] dark:bg-navy-900">
+            <div className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              {t('finance.importWizard.reviewStatements', 'Sections and periods')}
+            </div>
             <div
-              className="flex flex-wrap gap-2"
+              className="flex gap-1.5 overflow-x-auto xl:flex-col"
               role="tablist"
               aria-label={t(
                 'finance.importWizard.reviewStatements',
                 'Statement sections and periods'
               )}
             >
-              {reviewStatements.map((item) => (
+              {(reviewStatements.length > 0 ? reviewStatements : []).map((item) => (
                 <button
                   key={item.statementId}
                   type="button"
                   role="tab"
+                  aria-label={`${item.statementType} · ${item.periodLabel || '—'}${item.comparisonOfStatementId ? ` · ${t('finance.importWizard.comparison', 'comparison')}` : ''}`}
                   aria-selected={item.statementId === activeReviewStatementId}
-                  className={`rounded-full border px-3 py-1.5 text-xs ${item.statementId === activeReviewStatementId ? 'bg-blue-600 text-white' : 'bg-white text-slate-700'}`}
+                  className={`shrink-0 rounded-lg border px-2.5 py-2 text-left text-xs xl:w-full ${item.statementId === activeReviewStatementId ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 bg-white text-slate-700 dark:border-white/[0.08] dark:bg-navy-950 dark:text-slate-200'}`}
                   onClick={() => {
                     setActiveReviewStatementId(item.statementId);
                     setMappedValues(item.mappedValues);
                   }}
                 >
-                  {item.statementType} · {item.periodLabel || '—'}
-                  {item.comparisonOfStatementId
-                    ? ` · ${t('finance.importWizard.comparison', 'comparison')}`
-                    : ''}
+                  <span className="block font-semibold">{item.statementType}</span>
+                  <span className="block opacity-80">
+                    {item.periodLabel || '—'}
+                    {item.comparisonOfStatementId
+                      ? ` · ${t('finance.importWizard.comparison', 'comparison')}`
+                      : ''}
+                  </span>
                 </button>
               ))}
             </div>
-          )}
+          </aside>
 
-          {extractionDiagnostics && (
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm dark:border-navy-700 dark:bg-navy-900">
-              <div className="flex flex-wrap gap-3 text-slate-600 dark:text-slate-300">
-                <span>
-                  {t('finance.importWizard.selectedSection', 'Selected section')}:&nbsp;
-                  <strong>{overrideType || detection?.statementType || '—'}</strong>
-                </span>
-                <span>
-                  {t('finance.importWizard.period', 'Period')}:&nbsp;
-                  <strong>
-                    {extractionDiagnostics.columnSelection?.selectedPeriodLabel ||
-                      overridePeriod ||
-                      detection?.periodLabel ||
-                      '—'}
-                  </strong>
-                </span>
-                <span>
-                  {t('finance.importWizard.comparisonPeriod', 'Comparison period')}:{' '}
-                  <strong>
-                    {extractionDiagnostics.columnSelection?.comparisonPeriodLabel || '—'}
-                  </strong>
-                </span>
-                {extractionDiagnostics.extractionStrategy && (
-                  <span>
-                    {t('finance.importWizard.extractionStrategy', 'Extraction strategy')}:&nbsp;
-                    <strong>{extractionDiagnostics.extractionStrategy}</strong>
-                  </span>
-                )}
+          <main className="min-w-0 space-y-3">
+            <div className="flex items-center justify-between px-1">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                {t('finance.importWizard.mappingTitle', 'Map Extracted Lines')}
+              </h3>
+              <span className="text-sm text-slate-500">
+                {mappedValues.filter((v) => v.canonicalLineId).length}/{mappedValues.length}{' '}
+                {t('finance.importWizard.mapped', 'mapped')}
+              </span>
+            </div>
+
+            <FinancialStatementMappingEditor
+              mappedValues={mappedValues}
+              canonicalLines={canonicalLines}
+              onValueChange={handleValueChange}
+              onCanonicalChange={handleCanonicalChange}
+              onVerifiedChange={(idx, verified) => {
+                setMappedValues((current) =>
+                  current.map((value, index) =>
+                    index === idx ? { ...value, userVerified: verified } : value
+                  )
+                );
+                setReviewStatements((current) =>
+                  current.map((item) =>
+                    item.statementId === activeReviewStatementId
+                      ? {
+                          ...item,
+                          mappedValues: item.mappedValues.map((value, index) =>
+                            index === idx ? { ...value, userVerified: verified } : value
+                          ),
+                        }
+                      : item
+                  )
+                );
+              }}
+              onVerifyAllReady={() => {
+                const verifyEligible = (value: MappedValue) =>
+                  value.confidence < 0.85 || value.mappingTier === 'review_required';
+                setMappedValues((current) =>
+                  current.map((value) =>
+                    verifyEligible(value) ? { ...value, userVerified: true } : value
+                  )
+                );
+                setReviewStatements((current) =>
+                  current.map((item) =>
+                    item.statementId === activeReviewStatementId
+                      ? {
+                          ...item,
+                          mappedValues: item.mappedValues.map((value) =>
+                            verifyEligible(value) ? { ...value, userVerified: true } : value
+                          ),
+                        }
+                      : item
+                  )
+                );
+              }}
+            />
+
+            {mappedValues.length === 0 && (
+              <div className="text-center py-12 text-slate-600">
+                <AlertTriangle size={32} className="mx-auto mb-3" />
+                <p>
+                  {t(
+                    'finance.importWizard.noLinesExtracted',
+                    'No financial lines were extracted. The PDF may need OCR or manual entry.'
+                  )}
+                </p>
               </div>
-              {extractionDiagnostics.warnings && extractionDiagnostics.warnings.length > 0 && (
-                <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-100">
-                  <div className="font-medium">
-                    {t('finance.importWizard.extractionWarnings', 'Extraction warnings')}
-                  </div>
-                  <div className="mt-1 space-y-1">
-                    {extractionDiagnostics.warnings.map((warning) => (
-                      <div key={warning}>{warning}</div>
-                    ))}
-                  </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setStep('detect')}
+                className="flex items-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-navy-600 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800"
+              >
+                <ChevronLeft size={16} /> {t('common.back', 'Back')}
+              </button>
+              <button
+                onClick={handleSaveMapping}
+                disabled={loading || mappedValues.length === 0}
+                className="flex-1 flex items-center justify-center gap-2 px-6 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-500 disabled:opacity-50"
+              >
+                {loading ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                {t('finance.importWizard.saveAndValidate', 'Save & Validate')}
+              </button>
+            </div>
+          </main>
+
+          <aside
+            className="min-w-0 rounded-xl border border-slate-200 bg-white p-3 text-xs dark:border-white/[0.08] dark:bg-navy-900"
+            aria-label={t('finance.importWizard.statementMetrics', 'Statement metrics')}
+          >
+            <div className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              {t('finance.importWizard.statementMetrics', 'Statement metrics')}
+            </div>
+            <dl className="space-y-2.5">
+              <div>
+                <dt className="text-slate-500">{t('finance.importWizard.source', 'Source')}</dt>
+                <dd
+                  className="truncate font-medium text-slate-800 dark:text-slate-200"
+                  title={file?.name}
+                >
+                  {file?.name || '—'}
+                </dd>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <dt className="text-slate-500">
+                    {t('finance.importWizard.selectedSection', 'Section')}
+                  </dt>
+                  <dd className="font-semibold text-slate-800 dark:text-slate-200">
+                    {reviewStatements.find((item) => item.statementId === activeReviewStatementId)
+                      ?.statementType ||
+                      overrideType ||
+                      detection?.statementType ||
+                      '—'}
+                  </dd>
                 </div>
-              )}
-            </div>
-          )}
-
-          <FinancialStatementMappingEditor
-            mappedValues={mappedValues}
-            canonicalLines={canonicalLines}
-            onValueChange={handleValueChange}
-            onCanonicalChange={handleCanonicalChange}
-            onVerifiedChange={(idx, verified) => {
-              setMappedValues((current) =>
-                current.map((value, index) =>
-                  index === idx ? { ...value, userVerified: verified } : value
-                )
-              );
-              setReviewStatements((current) =>
-                current.map((item) =>
-                  item.statementId === activeReviewStatementId
-                    ? {
-                        ...item,
-                        mappedValues: item.mappedValues.map((value, index) =>
-                          index === idx ? { ...value, userVerified: verified } : value
-                        ),
-                      }
-                    : item
-                )
-              );
-            }}
-            onVerifyAllReady={() => {
-              const verifyEligible = (value: MappedValue) =>
-                Boolean(value.canonicalLineId) &&
-                (value.mappingStatus === 'manual' || value.mappingTier === 'review_required');
-              setMappedValues((current) =>
-                current.map((value) =>
-                  verifyEligible(value) ? { ...value, userVerified: true } : value
-                )
-              );
-              setReviewStatements((current) =>
-                current.map((item) =>
-                  item.statementId === activeReviewStatementId
-                    ? {
-                        ...item,
-                        mappedValues: item.mappedValues.map((value) =>
-                          verifyEligible(value) ? { ...value, userVerified: true } : value
-                        ),
-                      }
-                    : item
-                )
-              );
-            }}
-          />
-
-          {mappedValues.length === 0 && (
-            <div className="text-center py-12 text-slate-600">
-              <AlertTriangle size={32} className="mx-auto mb-3" />
-              <p>
-                {t(
-                  'finance.importWizard.noLinesExtracted',
-                  'No financial lines were extracted. The PDF may need OCR or manual entry.'
-                )}
-              </p>
-            </div>
-          )}
-
-          <div className="flex gap-3">
-            <button
-              onClick={() => setStep('detect')}
-              className="flex items-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-navy-600 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800"
-            >
-              <ChevronLeft size={16} /> {t('common.back', 'Back')}
-            </button>
-            <button
-              onClick={handleSaveMapping}
-              disabled={loading || mappedValues.length === 0}
-              className="flex-1 flex items-center justify-center gap-2 px-6 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-500 disabled:opacity-50"
-            >
-              {loading ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
-              {t('finance.importWizard.saveAndValidate', 'Save & Validate')}
-            </button>
-          </div>
+                <div>
+                  <dt className="text-slate-500">{t('finance.importWizard.period', 'Period')}</dt>
+                  <dd className="font-semibold text-slate-800 dark:text-slate-200">
+                    {reviewStatements.find((item) => item.statementId === activeReviewStatementId)
+                      ?.periodLabel ||
+                      extractionDiagnostics?.columnSelection?.selectedPeriodLabel ||
+                      '—'}
+                  </dd>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <dt className="text-slate-500">
+                    {t('finance.importWizard.currency', 'Currency')}
+                  </dt>
+                  <dd className="font-medium text-slate-800 dark:text-slate-200">
+                    {overrideCurrency || detection?.currency || '—'}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-slate-500">{t('finance.importWizard.scaling', 'Scale')}</dt>
+                  <dd className="font-medium text-slate-800 dark:text-slate-200">
+                    {overrideScaling || detection?.scaling || '—'}
+                  </dd>
+                </div>
+              </div>
+              <div>
+                <dt className="text-slate-500">{t('finance.importWizard.mapping', 'Mapping')}</dt>
+                <dd className="font-medium text-slate-800 dark:text-slate-200">
+                  {mappedValues.filter((value) => value.canonicalLineId).length} /{' '}
+                  {mappedValues.length} {t('finance.importWizard.mapped', 'mapped')}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">
+                  {t('finance.importWizard.readiness', 'Readiness')}
+                </dt>
+                <dd className="font-medium text-slate-800 dark:text-slate-200">
+                  {readiness?.readinessStatus ||
+                    t('finance.importWizard.reviewInProgress', 'Review in progress')}
+                </dd>
+              </div>
+              {extractionDiagnostics?.warnings?.length ? (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-amber-900 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-100">
+                  <dt className="font-semibold">
+                    {t('finance.importWizard.extractionWarnings', 'Warnings')}
+                  </dt>
+                  <dd className="mt-1">{extractionDiagnostics.warnings[0]}</dd>
+                </div>
+              ) : null}
+            </dl>
+          </aside>
         </div>
       )}
 
@@ -1792,10 +1892,16 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                 <div className="min-w-0 flex-1">
                   <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                     {isReadyForConfirm
-                      ? t('finance.importWizard.validationPass', 'Statement is balanced and ready to close')
+                      ? t(
+                          'finance.importWizard.validationPass',
+                          'Statement is balanced and ready to close'
+                        )
                       : readiness?.readinessStatus === 'recoverable' ||
                           validation.status === 'warnings'
-                        ? t('finance.importWizard.validationWarnings', 'Statement still requires completion')
+                        ? t(
+                            'finance.importWizard.validationWarnings',
+                            'Statement still requires completion'
+                          )
                         : t('finance.importWizard.validationErrors', 'Review required')}
                   </h3>
                   <div className="mt-1 flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
