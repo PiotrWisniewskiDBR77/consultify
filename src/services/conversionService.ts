@@ -5,6 +5,8 @@
  */
 
 import { Api } from '@/services/api';
+import { createRegisteredValuation } from '@/services/api/financeV2.api';
+import { V8FinanceApi } from '@/services/api/v8/finance';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { materializeMyWorkSession } from '@/services/traceabilityService';
 import type { MyWorkDerivedSource } from '@/types/domain/traceability';
@@ -27,6 +29,13 @@ export interface ConversionResult {
   error?: string;
 }
 
+export interface BudgetConversionConfig {
+  periodStart: string;
+  periodEnd: string;
+  granularity: 'monthly' | 'quarterly' | 'annual';
+  currency: string;
+}
+
 export interface ConvertMyWorkItemParams {
   sourceType: ConversionSourceType;
   sourceId: string;
@@ -42,10 +51,11 @@ export interface ConvertMyWorkItemParams {
 export async function createOutputFromSession(
   sessionId: string,
   targetType: ConversionTargetType,
-  sourceTitle: string
+  sourceTitle: string,
+  budgetConfig?: BudgetConversionConfig
 ): Promise<ConversionResult> {
   try {
-    const { outputId } = await createTargetOutput(sessionId, targetType, sourceTitle);
+    const { outputId } = await createTargetOutput(sessionId, targetType, sourceTitle, budgetConfig);
     trackFunnelEvent('mywork_convert_completed', {
       toType: targetType,
       has_source: true,
@@ -71,7 +81,8 @@ export async function createOutputFromSession(
 async function createTargetOutput(
   sessionId: string,
   targetType: ConversionTargetType,
-  sourceTitle: string
+  sourceTitle: string,
+  budgetConfig?: BudgetConversionConfig
 ): Promise<{ outputId: string }> {
   if (targetType === 'initiative') {
     // Chain gap #5 (Ideas/MyWork → Inicjatywy): the live POST /api/initiatives is
@@ -140,23 +151,30 @@ async function createTargetOutput(
     return { outputId: String(response?.id ?? '') };
   }
   if (targetType === 'valuation') {
-    const response = await Api.post('/economics/valuations', {
+    const response = await createRegisteredValuation({
       title: sourceTitle.slice(0, 255),
-      description: `Converted from MyWork session`,
-      sourceType: 'tool_session',
-      sourceId: sessionId,
+      description: `Converted from MyWork session ${sessionId}`,
+      sourceType: 'manual',
+      sourceId: null,
     });
     return { outputId: String(response?.id ?? '') };
   }
   if (targetType === 'budget') {
-    const response = await Api.post('/economics/budgets', {
-      name: sourceTitle.slice(0, 255),
-      description: `Converted from MyWork session`,
-      sourceType: 'tool_session',
-      sourceId: sessionId,
-    });
-    const budget = response?.budget ?? response;
-    return { outputId: String(budget?.id ?? '') };
+    if (!budgetConfig) throw new Error('Budget period configuration is required');
+    const response = await V8FinanceApi.createBudget(
+      {
+        title: sourceTitle.slice(0, 255),
+        description: 'Converted from MyWork session',
+        periodStart: budgetConfig.periodStart,
+        periodEnd: budgetConfig.periodEnd,
+        granularity: budgetConfig.granularity,
+        currency: budgetConfig.currency,
+        sourceKind: 'tool_session',
+        sourceToolSessionId: sessionId,
+      },
+      `mywork-budget:${sessionId}`
+    );
+    return { outputId: String(response.budget.id ?? '') };
   }
   throw new Error(`Unknown target type: ${targetType}`);
 }

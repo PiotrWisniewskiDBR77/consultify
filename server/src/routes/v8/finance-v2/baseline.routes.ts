@@ -22,6 +22,11 @@ import type { AuthRequest } from '../../../middleware/auth.middleware.js';
 import { getV8Context } from '../../../middleware/v8Auth.middleware.js';
 import { getBusinessVersion } from '../../../services/finance/canonical/artifactVersionService.js';
 import {
+  BaselineContextError,
+  configureBaselineWorkspaceContext,
+  getBaselineWorkspaceContext,
+} from '../../../services/finance/canonical/baselineContextService.js';
+import {
   BASELINE_ASSUMPTION_RULES,
   BASELINE_SCHEDULE_TYPES,
   listBaselineAssumptions,
@@ -37,6 +42,76 @@ import { asyncHandler } from '../../../utils/asyncHandler.js';
 import { financeV2Meta, sendError } from './_shared.js';
 
 const router = Router();
+
+router.get(
+  '/baseline/:businessVersionId/context',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    try {
+      const data = await getBaselineWorkspaceContext(
+        organizationId,
+        String(req.params.businessVersionId || '')
+      );
+      return res.status(200).json({ data, meta: financeV2Meta() });
+    } catch (error) {
+      if (error instanceof BaselineContextError) {
+        return sendError(res, error.status, error.code, error.message, error.details);
+      }
+      throw error;
+    }
+  })
+);
+
+router.put(
+  '/baseline/:businessVersionId/context',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const body = req.body ?? {};
+    if (!Number.isInteger(body.expectedVersion) || body.expectedVersion < 0) {
+      return sendError(
+        res,
+        400,
+        'INVALID_EXPECTED_VERSION',
+        'expectedVersion must be a non-negative integer'
+      );
+    }
+    if (
+      !Array.isArray(body.forecastPeriodIds) ||
+      body.forecastPeriodIds.length === 0 ||
+      body.forecastPeriodIds.some(
+        (value: unknown) => typeof value !== 'string' || !value.trim()
+      )
+    ) {
+      return sendError(
+        res,
+        400,
+        'INVALID_CONTEXT',
+        'forecastPeriodIds must be a non-empty array of non-blank strings'
+      );
+    }
+    try {
+      const data = await configureBaselineWorkspaceContext({
+        organizationId,
+        businessVersionId: String(req.params.businessVersionId || ''),
+        actorId: userId,
+        expectedVersion: body.expectedVersion,
+        idempotencyKey: String(req.header('Idempotency-Key') || ''),
+        entityId: typeof body.entityId === 'string' ? body.entityId : '',
+        openingBalanceSheetPeriodId:
+          typeof body.openingBalanceSheetPeriodId === 'string'
+            ? body.openingBalanceSheetPeriodId
+            : '',
+        forecastPeriodIds: body.forecastPeriodIds,
+      });
+      return res.status(200).json({ data, meta: financeV2Meta() });
+    } catch (error) {
+      if (error instanceof BaselineContextError) {
+        return sendError(res, error.status, error.code, error.message, error.details);
+      }
+      throw error;
+    }
+  })
+);
 
 function isScheduleType(v: unknown): v is BaselineScheduleType {
   return typeof v === 'string' && (BASELINE_SCHEDULE_TYPES as readonly string[]).includes(v);

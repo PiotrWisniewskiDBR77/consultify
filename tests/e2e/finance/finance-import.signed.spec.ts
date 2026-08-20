@@ -13,6 +13,7 @@ const TEST_SUPPORT_KEY = process.env.TEST_SUPPORT_KEY || 'local-test-support-key
 
 test('signed XLSX statement confirm registers a canonical pack and import survives cold reopen', async ({
   browser,
+  context,
   page,
   request,
 }) => {
@@ -33,6 +34,7 @@ test('signed XLSX statement confirm registers a canonical pack and import surviv
   let foreignArtifactCountBeforeCleanup = 0;
   const foreignOrganizationId = `org-fin-import-decoy-${randomUUID()}`;
   const foreignArtifactId = `artifact-fin-import-decoy-${randomUUID()}`;
+  let denialForeignRunId = '';
 
   try {
     await pool.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [
@@ -52,30 +54,6 @@ test('signed XLSX statement confirm registers a canonical pack and import surviv
       });
       expect(enabled.status(), `enable ${flagKey}`).toBe(200);
     }
-
-    await page.addInitScript(({ token, organizationId, userId }) => {
-      const user = {
-        id: userId,
-        organizationId,
-        email: 'finance-import@local.test',
-        role: 'OWNER',
-        isAuthenticated: true,
-        accessLevel: 'full',
-      };
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-      localStorage.setItem(
-        'consultinity-storage',
-        JSON.stringify({
-          state: {
-            sessionMode: 'FULL',
-            currentUser: user,
-            currentOrganization: { id: organizationId, name: 'E2E Organization' },
-          },
-          version: 0,
-        })
-      );
-    }, state);
 
     await page.goto(`${WEB_BASE_URL}/finance?tab=statements`);
     const skip = page.getByText(/Skip for now|Pomiń/i).last();
@@ -227,15 +205,9 @@ test('signed XLSX statement confirm registers a canonical pack and import surviv
     workingRevisionId = appliedWorkingRevisionId;
     await expect(panel.getByTestId('import-applied')).toContainText(appliedWorkingRevisionId);
 
-    const cold = await browser.newPage();
+    const coldContext = await browser.newContext({ storageState: await context.storageState() });
+    const cold = await coldContext.newPage();
     try {
-      await cold.addInitScript(({ token, organizationId, userId }) => {
-        localStorage.setItem('token', token);
-        localStorage.setItem(
-          'user',
-          JSON.stringify({ id: userId, organizationId, role: 'OWNER', isAuthenticated: true })
-        );
-      }, state);
       const coldVersionPromise = cold.waitForResponse(
         (response) =>
           new URL(response.url()).pathname ===
@@ -253,8 +225,54 @@ test('signed XLSX statement confirm registers a canonical pack and import surviv
       await cold.getByRole('button', { name: 'Excel', exact: true }).click();
       await expect(cold.getByTestId('finance-export-import-panel')).toBeVisible();
     } finally {
-      await cold.close();
+      await coldContext.close();
     }
+
+    const beforeDenied = await pool.query(
+      `SELECT natural_key FROM finance_artifacts
+        WHERE organization_id=$1 AND artifact_id=$2`,
+      [state.organizationId, artifactId]
+    );
+    const memberResponse = await request.post(`${API_BASE_URL}/api/test-support/member`, {
+      headers: { 'x-test-support-key': TEST_SUPPORT_KEY },
+      data: { runId: state.runId, role: 'USER' },
+    });
+    expect(memberResponse.status(), await memberResponse.text()).toBe(201);
+    const member = await memberResponse.json();
+    denialForeignRunId = `fin-import-foreign-${Date.now()}`;
+    const foreignResponse = await request.post(`${API_BASE_URL}/api/test-support/bootstrap`, {
+      headers: { 'x-test-support-key': TEST_SUPPORT_KEY },
+      data: { runId: denialForeignRunId, role: 'ADMIN' },
+    });
+    expect(foreignResponse.status(), await foreignResponse.text()).toBe(200);
+    const foreign = await foreignResponse.json();
+    const deniedRename = (token: string, marker: string) =>
+      request.post(`${API_BASE_URL}/api/v8/finance-v2/artifacts/${artifactId}/rename`, {
+        headers: { Authorization: `Bearer ${token}` },
+        data: { naturalKey: `Denied ${marker}` },
+      });
+    expect((await deniedRename(String(member.token), 'member')).status()).toBe(403);
+    expect((await deniedRename(String(foreign.token), 'foreign')).status()).toBe(404);
+    await pool.query(
+      `UPDATE organization_members SET status='REVOKED'
+        WHERE organization_id=$1 AND user_id=$2`,
+      [state.organizationId, state.userId]
+    );
+    try {
+      expect((await deniedRename(state.token, 'revoked')).status()).toBe(403);
+    } finally {
+      await pool.query(
+        `UPDATE organization_members SET status='ACTIVE'
+          WHERE organization_id=$1 AND user_id=$2`,
+        [state.organizationId, state.userId]
+      );
+    }
+    const afterDenied = await pool.query(
+      `SELECT natural_key FROM finance_artifacts
+        WHERE organization_id=$1 AND artifact_id=$2`,
+      [state.organizationId, artifactId]
+    );
+    expect(afterDenied.rows[0]).toEqual(beforeDenied.rows[0]);
   } finally {
     let cleanupStatus = 0;
     let cleanupBody = '';
@@ -262,6 +280,13 @@ test('signed XLSX statement confirm registers a canonical pack and import surviv
     let foreignArtifactCountAfterCleanup = 0;
     const flagOffStatuses: Array<{ flagKey: (typeof flagKeys)[number]; status: number }> = [];
     try {
+      if (denialForeignRunId) {
+        const foreignCleanup = await request.post(`${API_BASE_URL}/api/test-support/cleanup`, {
+          headers: { 'x-test-support-key': TEST_SUPPORT_KEY },
+          data: { runId: denialForeignRunId },
+        });
+        expect(foreignCleanup.status(), await foreignCleanup.text()).toBe(200);
+      }
       foreignArtifactCountBeforeCleanup = Number(
         (
           await pool.query(

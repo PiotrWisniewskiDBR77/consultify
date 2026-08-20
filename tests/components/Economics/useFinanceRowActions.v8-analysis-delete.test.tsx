@@ -76,7 +76,7 @@ describe('useFinanceRowActions V8 analysis delete seam', () => {
     vi.stubGlobal('confirm', vi.fn(() => true));
   });
 
-  it('prefers governed analysis deletion before legacy fallback', async () => {
+  it('uses the governed analysis deletion command', async () => {
     vi.mocked(V8FinanceApi.deleteAnalysis).mockResolvedValue({
       success: true,
       deleted: 'analysis-1',
@@ -94,9 +94,8 @@ describe('useFinanceRowActions V8 analysis delete seam', () => {
     expect(Api.delete).not.toHaveBeenCalledWith('/api/economics/financial-analyses/analysis-1');
   });
 
-  it('falls back to legacy analysis deletion on bounded compatibility statuses', async () => {
+  it('fails closed without reopening legacy analysis deletion', async () => {
     vi.mocked(V8FinanceApi.deleteAnalysis).mockRejectedValue({ status: 404 });
-    vi.mocked(Api.delete).mockResolvedValue({ success: true } as any);
 
     const { result } = renderHook(() => useFinanceRowActions(baseParams));
     const actions = result.current.getRowActions(analysisRow);
@@ -106,7 +105,8 @@ describe('useFinanceRowActions V8 analysis delete seam', () => {
       await deleteAction?.onClick();
     });
 
-    expect(Api.delete).toHaveBeenCalledWith('/api/economics/financial-analyses/analysis-1');
+    expect(V8FinanceApi.deleteAnalysis).toHaveBeenCalledWith('analysis-1');
+    expect(Api.delete).not.toHaveBeenCalledWith('/api/economics/financial-analyses/analysis-1');
   });
 
   it('prefers governed model deletion before legacy fallback', async () => {

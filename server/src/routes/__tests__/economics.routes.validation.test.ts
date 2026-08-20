@@ -83,6 +83,16 @@ vi.mock('../../utils/pgFlags.js', () => ({
   parseMaybeJson: (v: unknown) => v,
 }));
 
+vi.mock('../../services/legacyCutover/legacyCutoverKernel.js', () => ({
+  createLegacyCutoverGuard:
+    () => (_req: unknown, res: { status: (code: number) => { json: (body: unknown) => void } }) =>
+      res.status(410).json({
+        code: 'LEGACY_WRITER_DISABLED',
+        writerId: 'ECO-W22',
+        successor: '/api/v8/finance-v2/valuation/registrations',
+      }),
+}));
+
 const ORG = 'org-1';
 let mockUser: { id: string; organizationId: string } | null = null;
 
@@ -319,18 +329,23 @@ describe('economics routes — input validation', () => {
     expect(finAnalysisSvc.updateAnalysis).not.toHaveBeenCalled();
   });
 
-  // ── POST /valuations → valuationSvc.createValuation ──
-  it('POST /valuations — valid body → 201', async () => {
+  // ── POST /valuations — retired duplicate writer ──
+  it('POST /valuations — fails closed and advertises the canonical successor', async () => {
     const res = await request(createApp())
       .post('/api/economics/valuations')
       .send({ title: 'DCF', sourceType: 'manual', horizonYears: 5 });
-    expect(res.status).toBe(201);
-    expect(valuationSvc.createValuation).toHaveBeenCalled();
+    expect(res.status).toBe(410);
+    expect(res.body).toMatchObject({
+      code: 'LEGACY_WRITER_DISABLED',
+      writerId: 'ECO-W22',
+      successor: '/api/v8/finance-v2/valuation/registrations',
+    });
+    expect(valuationSvc.createValuation).not.toHaveBeenCalled();
   });
 
   it('POST /valuations — missing sourceType → 400, service not reached', async () => {
     const res = await request(createApp()).post('/api/economics/valuations').send({ title: 'DCF' });
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(410);
     expect(valuationSvc.createValuation).not.toHaveBeenCalled();
   });
 
@@ -338,7 +353,7 @@ describe('economics routes — input validation', () => {
     const res = await request(createApp())
       .post('/api/economics/valuations')
       .send({ title: 'DCF', sourceType: 'wat' });
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(410);
     expect(valuationSvc.createValuation).not.toHaveBeenCalled();
   });
 

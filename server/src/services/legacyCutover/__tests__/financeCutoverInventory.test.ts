@@ -1,0 +1,151 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { describe, expect, it } from 'vitest';
+
+import {
+  summarizeLegacyCutoverInventory,
+  type LegacyCutoverDomainConfig,
+} from '../legacyCutoverKernel.js';
+import { FINANCE_CUTOVER, FINANCE_MODELING_CUTOVER } from '../registry.js';
+import { ECONOMICS_CUTOVER } from '../registry/economics.js';
+import { FINANCE_STATEMENTS_CUTOVER } from '../registry/financeStatements.js';
+
+const CONFIGS: LegacyCutoverDomainConfig[] = [
+  FINANCE_CUTOVER,
+  FINANCE_MODELING_CUTOVER,
+  ECONOMICS_CUTOVER,
+  FINANCE_STATEMENTS_CUTOVER,
+];
+
+describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
+  it('separates actual legacy mutations from POST-shaped reads, refusals and canonical handoffs', () => {
+    expect(summarizeLegacyCutoverInventory(CONFIGS)).toEqual({
+      totalRules: 59,
+      legacyMutationDoors: 52,
+      canonicalMutationDoors: 1,
+      nonMutationDoors: 6,
+      retiredLegacyMutationDoors: 24,
+      openLegacyMutationDoors: 28,
+    });
+  });
+
+  it('requires every non-legacy classification to carry a literal reason that names its effect', () => {
+    const classified = CONFIGS.flatMap((config) => config.writers).filter(
+      (rule) => rule.effect && rule.effect !== 'legacy-write'
+    );
+
+    expect(classified.map((rule) => rule.writerId).sort()).toEqual([
+      'ECO-W08',
+      'ECO-W09',
+      'ECO-W18',
+      'ECO-W19',
+      'ECO-W20',
+      'ECO-W30',
+      'FS-W14',
+    ]);
+    for (const rule of classified) {
+      if (rule.effect === 'read-only') expect(rule.reason).toContain('NO database write');
+      if (rule.effect === 'refusal') expect(rule.reason).toMatch(/410|501/);
+      if (rule.effect === 'canonical-write') expect(rule.reason).toContain('canonical');
+    }
+  });
+
+  it('routes every mounted valuation PPTX export caller through the canonical successor', () => {
+    const files = [
+      'src/components/Benefits/ValuationWorkspace.tsx',
+      'src/components/Economics/FinancePreviewPanel.tsx',
+      'src/components/Economics/hooks/useFinanceRowActions.ts',
+    ];
+    for (const file of files) {
+      const source = fs.readFileSync(path.resolve(process.cwd(), file), 'utf8');
+      expect(source).toContain('exportCanonicalLegacyValuationPptx');
+      expect(source).not.toMatch(/Api\.post\([^\n]*\/api\/economics\/valuations\/.*export\/pptx/);
+    }
+  });
+
+  it('routes the mounted valuation discard caller through the canonical successor', () => {
+    const source = fs.readFileSync(
+      path.resolve(process.cwd(), 'src/components/Economics/hooks/useFinanceRowActions.ts'),
+      'utf8'
+    );
+    expect(source).toContain('discardCanonicalLegacyValuation');
+    expect(source).not.toMatch(/Api\.delete\([^\n]*\/api\/economics\/valuations/);
+  });
+
+  it('routes every mounted budget-create caller through one canonical registration command', () => {
+    const files = [
+      'src/services/conversionService.ts',
+      'src/components/Benefits/BudgetWorkspace.tsx',
+      'src/components/Economics/modals/CreateBudgetModal.tsx',
+      'src/components/Economics/hooks/useFinanceRowActions.ts',
+    ];
+    for (const file of files) {
+      const source = fs.readFileSync(path.resolve(process.cwd(), file), 'utf8');
+      expect(source).toContain('V8FinanceApi.createBudget');
+      expect(source).not.toMatch(/Api\.post\(['"`]\/api\/economics\/budgets['"`]/);
+      expect(source).not.toMatch(
+        /fetch\(`\$\{API_URL\}\/economics\/budgets`,\s*\{\s*method:\s*'POST'/
+      );
+    }
+  });
+
+  it('routes the mounted budget document import through multipart V8 without a legacy fallback', () => {
+    const source = fs.readFileSync(
+      path.resolve(process.cwd(), 'src/components/Benefits/BudgetWorkspace.tsx'),
+      'utf8'
+    );
+    expect(source).toContain('V8FinanceApi.importBudgetDocument');
+    expect(source).not.toContain('/economics/budgets/${selected.id}/import-document');
+    expect(source).not.toContain('docImportFile.text()');
+  });
+
+  it('routes every mounted budget-line mutation through the canonical CAS command', () => {
+    const source = fs.readFileSync(
+      path.resolve(process.cwd(), 'src/components/Benefits/BudgetWorkspace.tsx'),
+      'utf8'
+    );
+    expect(source).toContain('V8FinanceApi.updateBudgetLine');
+    expect(source).not.toMatch(
+      /fetch\(`\$\{API_URL\}\/economics\/budgets\/\$\{selected\.id\}\/lines\//
+    );
+  });
+
+  it('routes every mounted budget projection through the canonical CAS command', () => {
+    const files = [
+      'src/components/Benefits/BudgetWorkspace.tsx',
+      'src/components/Economics/FinancePreviewPanel.tsx',
+      'src/components/Economics/hooks/useFinanceRowActions.ts',
+    ];
+    for (const file of files) {
+      const source = fs.readFileSync(path.resolve(process.cwd(), file), 'utf8');
+      expect(source).toContain('V8FinanceApi.projectBudgetScenario');
+      expect(source).not.toMatch(
+        /(?:Api\.post|fetch)\([^\n]*\/api\/economics\/budgets\/.*\/scenarios\/.*\/project/
+      );
+    }
+  });
+
+  it('routes every mounted budget approval through the canonical maker-checker command', () => {
+    const files = [
+      'src/components/Benefits/BudgetWorkspace.tsx',
+      'src/components/Economics/FinancePreviewPanel.tsx',
+      'src/components/Economics/hooks/useFinanceRowActions.ts',
+    ];
+    for (const file of files) {
+      const source = fs.readFileSync(path.resolve(process.cwd(), file), 'utf8');
+      expect(source).toContain('V8FinanceApi.approveBudget');
+      expect(source).not.toMatch(
+        /(?:Api\.post|fetch)\([^\n]*\/api\/economics\/budgets\/.*\/approve/
+      );
+    }
+  });
+
+  it('routes the mounted budget discard caller through the canonical successor', () => {
+    const source = fs.readFileSync(
+      path.resolve(process.cwd(), 'src/components/Economics/hooks/useFinanceRowActions.ts'),
+      'utf8'
+    );
+    expect(source).toContain('V8FinanceApi.discardBudget');
+    expect(source).not.toMatch(/Api\.delete\([^\n]*\/api\/economics\/budgets/);
+  });
+});

@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { ConvertToConfirmation } from '@/components/MyWork/ConvertToConfirmation';
 import {
+  type BudgetConversionConfig,
   type ConversionResult,
   type ConversionSourceType,
   type ConversionTargetType,
@@ -28,7 +29,11 @@ export interface UseConvertToReturn {
   showConvertDialog: boolean;
   setShowConvertDialog: (show: boolean) => void;
   handleConvert: (targetType: ConversionTargetType) => Promise<void>;
-  handleConvertFromDialog: (session: MyWorkSession, targetType: string) => Promise<void>;
+  handleConvertFromDialog: (
+    session: MyWorkSession,
+    targetType: string,
+    budgetConfig?: BudgetConversionConfig
+  ) => Promise<void>;
   isConverting: boolean;
   lastResult: ConversionResult | null;
   /** Sources for ConvertToDialog */
@@ -108,14 +113,15 @@ export function useConvertTo({
   );
 
   const handleConvertFromDialog = useCallback(
-    async (session: MyWorkSession, targetType: string) => {
+    async (session: MyWorkSession, targetType: string, budgetConfig?: BudgetConversionConfig) => {
       setIsConverting(true);
       setLastResult(null);
       try {
         const result = await createOutputFromSession(
           session.id,
           targetType as ConversionTargetType,
-          sourceTitle
+          sourceTitle,
+          budgetConfig
         );
         setLastResult(result);
         if (result.success) {

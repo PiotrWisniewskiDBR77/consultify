@@ -1,21 +1,27 @@
 import { randomUUID } from 'node:crypto';
+import fs from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
 import express from 'express';
 import request from 'supertest';
+import { exportsDir } from '../../../../utils/storagePaths.js';
 
 const REAL = process.env.RUN_DB_TESTS==='1'&&process.env.MOCK_DB==='false'&&String(process.env.DATABASE_URL||'').startsWith('postgres');
 if(REAL) process.env.DB_TYPE='postgres';
 
 describe.skipIf(!REAL)('FIN-CANONICAL-SUCCESSORS-WAVE4 realPG',()=>{
-  let txWrap:any,createArtifact:any,writeWacc:any,writePeers:any,loadDirect:any,readInputs:any,runLegacyCompute:any,findOrCreateMethod:any,computeGordon:any,discountFlows:any,computeEquity:any,writeTerminal:any,writeBridge:any;
+  let txWrap:any,createArtifact:any,writeWacc:any,writePeers:any,writeDepth:any,loadDirect:any,readInputs:any,runLegacyCompute:any,generateNegotiationPack:any,exportPptx:any,discardValuation:any,listLegacyValuations:any,getLegacyValuation:any,findOrCreateMethod:any,computeGordon:any,discountFlows:any,computeEquity:any,writeTerminal:any,writeBridge:any;
   const orgId=`org-fin-wave4-${randomUUID()}`, userId=`user-fin-wave4-${randomUUID()}`, legacyId=randomUUID();
   let identity:any;
   beforeAll(async()=>{
     ({withPinnedPostgresTransaction:txWrap}=await import('../../../../database/PostgresDatabase.js'));
     ({createArtifact}=await import('../artifactVersionService.js'));
-    ({writeCanonicalLegacyWacc:writeWacc,writeCanonicalLegacyPeers:writePeers}=await import('../valuationLegacySuccessorService.js'));
+    ({writeCanonicalLegacyWacc:writeWacc,writeCanonicalLegacyPeers:writePeers,writeCanonicalLegacyValuationDepth:writeDepth}=await import('../valuationLegacySuccessorService.js'));
     ({loadCanonicalDirectValuationAssumptions:loadDirect,readCanonicalLegacyValuationInputs:readInputs}=await import('../valuationLegacySuccessorService.js'));
     ({runCanonicalLegacyValuationCompute:runLegacyCompute}=await import('../valuationLegacyComputeAdapterService.js'));
+    ({generateCanonicalLegacyNegotiationPack:generateNegotiationPack}=await import('../valuationNegotiationPackService.js'));
+    ({exportCanonicalLegacyValuationPptx:exportPptx}=await import('../valuationPptxExportService.js'));
+    ({discardCanonicalLegacyValuation:discardValuation}=await import('../valuationDiscardService.js'));
+    ({listValuations:listLegacyValuations,getValuation:getLegacyValuation}=await import('../../../valuationService.js'));
     ({findOrCreateMethod}=await import('../valuationComputeService.js'));
     ({computeGordonTerminalValue:computeGordon,writeTerminalRow:writeTerminal}=await import('../valuationTerminalService.js'));
     ({discountCashFlows:discountFlows}=await import('../valuationDiscountService.js'));
@@ -54,6 +60,28 @@ describe.skipIf(!REAL)('FIN-CANONICAL-SUCCESSORS-WAVE4 realPG',()=>{
     const legacy=await txWrap((tx:any)=>tx.queryOne(`SELECT assumptions,peers FROM valuations WHERE id=?`,[legacyId]));
     expect(legacy.assumptions).toEqual({}); expect(legacy.peers).toEqual([]);
     await expect(writeWacc({...params,payload:{...params.payload,waccPercent:12}})).rejects.toMatchObject({code:'IDEMPOTENCY_KEY_REUSED'});
+  });
+
+  it('writes depth once, replays exactly, projects compatibly and denies replay after revocation',async()=>{
+    const key=`depth-${randomUUID()}`;
+    const params={organizationId:orgId,userId,legacyId,expected:identity,idempotencyKey:key,depth:'managerial' as const};
+    const [a,b]=await Promise.all([writeDepth(params),writeDepth(params)]);
+    expect([a.replay,b.replay].sort()).toEqual([false,true]);
+    expect(a).toMatchObject({artifactId:identity.artifactId,businessVersionId:identity.businessVersionId,legacyValuationId:legacyId,depth:'managerial'});
+    const cold=await txWrap(async(tx:any)=>({
+      state:await tx.queryOne(`SELECT valuation_depth,command_request_sha256 FROM finance_valuation_depth_states WHERE organization_id=? AND business_version_id=?`,[orgId,identity.businessVersionId]),
+      receipt:await tx.queryOne(`SELECT valuation_depth,request_sha256 FROM finance_valuation_depth_command_receipts WHERE organization_id=? AND idempotency_key=?`,[orgId,key]),
+      legacy:await tx.queryOne(`SELECT assumptions FROM valuations WHERE organization_id=? AND id=?`,[orgId,legacyId]),
+    }));
+    expect(cold.state).toEqual({valuation_depth:'managerial',command_request_sha256:a.requestSha256});
+    expect(cold.receipt).toEqual({valuation_depth:'managerial',request_sha256:a.requestSha256});
+    expect(cold.legacy.assumptions.depth).toBe('managerial');
+    await expect(writeDepth({...params,depth:'banking'})).rejects.toMatchObject({code:'IDEMPOTENCY_KEY_REUSED'});
+    await expect(txWrap((tx:any)=>tx.queryRun(`DELETE FROM finance_valuation_depth_command_receipts WHERE organization_id=? AND idempotency_key=?`,[orgId,key]))).rejects.toThrow(/append-only/);
+    await txWrap((tx:any)=>tx.queryRun(`UPDATE organization_members SET status='REVOKED' WHERE organization_id=? AND user_id=?`,[orgId,userId]));
+    await expect(writeDepth(params)).rejects.toMatchObject({code:'ORG_MEMBERSHIP_REVOKED'});
+    await txWrap((tx:any)=>tx.queryRun(`UPDATE organization_members SET status='ACTIVE' WHERE organization_id=? AND user_id=?`,[orgId,userId]));
+    expect((await writeDepth(params)).replay).toBe(true);
   });
 
   it('service boundary denies viewer and revoked membership with zero mutation',async()=>{
@@ -164,6 +192,42 @@ describe.skipIf(!REAL)('FIN-CANONICAL-SUCCESSORS-WAVE4 realPG',()=>{
     expect(cold.job_id).toBe(first.body.data.jobId);expect(Number(cold.enterprise_value_decimal)).toBeCloseTo(Number(first.body.data.enterpriseValue),8);expect(Number(cold.equity_value_decimal)).toBeCloseTo(Number(first.body.data.equityValue),8);
   });
 
+  it('generates one canonical negotiation pack, replays exactly, projects compatibly and checks authority before replay',async()=>{
+    await txWrap((tx:any)=>tx.queryRun(`UPDATE valuations SET status='APPROVED' WHERE organization_id=? AND id=?`,[orgId,legacyId]));
+    const key=`negotiation-${randomUUID()}`;
+    const params={organizationId:orgId,userId,legacyId,expected:identity,idempotencyKey:key};
+    const results=await Promise.all(Array.from({length:8},()=>generateNegotiationPack(params)));
+    expect(results.filter((row:any)=>row.replay===false)).toHaveLength(1);
+    expect(results.filter((row:any)=>row.replay===true)).toHaveLength(7);
+    expect(new Set(results.map((row:any)=>row.sourceResultSha256)).size).toBe(1);
+    const first=results[0];
+    const cold=await txWrap(async(tx:any)=>({
+      pack:await tx.queryOne(`SELECT source_result_sha256,pack_json FROM finance_valuation_negotiation_packs WHERE organization_id=? AND business_version_id=?`,[orgId,identity.businessVersionId]),
+      receipts:await tx.queryAll(`SELECT request_sha256,response_json FROM finance_valuation_negotiation_pack_receipts WHERE organization_id=? AND idempotency_key=?`,[orgId,key]),
+      legacy:await tx.queryOne(`SELECT negotiation_pack FROM valuations WHERE organization_id=? AND id=?`,[orgId,legacyId]),
+    }));
+    expect(cold.receipts).toHaveLength(1);expect(cold.pack.source_result_sha256).toBe(first.sourceResultSha256);expect(cold.pack.pack_json).toEqual(first.pack);expect(cold.legacy.negotiation_pack).toEqual(first.pack);
+    await expect(generateNegotiationPack({...params,expected:{...identity,workingRevisionVersion:999}})).rejects.toMatchObject({code:'CANONICAL_IDENTITY_CAS_CONFLICT'});
+    await expect(txWrap((tx:any)=>tx.queryRun(`UPDATE finance_valuation_negotiation_pack_receipts SET request_sha256=repeat('0',64) WHERE organization_id=? AND idempotency_key=?`,[orgId,key]))).rejects.toThrow(/append-only/);
+    await expect(txWrap((tx:any)=>tx.queryRun(`DELETE FROM finance_valuation_negotiation_pack_receipts WHERE organization_id=? AND idempotency_key=?`,[orgId,key]))).rejects.toThrow(/append-only/);
+    await txWrap((tx:any)=>tx.queryRun(`UPDATE organization_members SET status='REVOKED' WHERE organization_id=? AND user_id=?`,[orgId,userId]));
+    await expect(generateNegotiationPack(params)).rejects.toMatchObject({code:'ORG_MEMBERSHIP_REVOKED'});
+    await txWrap((tx:any)=>tx.queryRun(`UPDATE organization_members SET status='ACTIVE' WHERE organization_id=? AND user_id=?`,[orgId,userId]));
+    expect((await generateNegotiationPack(params)).replay).toBe(true);
+  });
+
+  it('renders one real canonical PPTX with byte hash, exact replay and authority before replay',async()=>{
+    const key=`pptx-${randomUUID()}`;const params={organizationId:orgId,userId,legacyId,expected:identity,idempotencyKey:key,options:{language:'en' as const,theme:'corporate' as const,confidentiality:'confidential' as const}};
+    const [first,replay]=await Promise.all([exportPptx(params),exportPptx(params)]);
+    expect([first.replay,replay.replay].sort()).toEqual([false,true]);expect(first.exportReceiptId).toBe(replay.exportReceiptId);expect(first.outputContentHash).toBe(replay.outputContentHash);
+    const cold=await txWrap(async(tx:any)=>({receipt:await tx.queryOne(`SELECT status,source_content_hash,output_content_hash,output_byte_size FROM artifact_export_receipts WHERE organization_id=? AND idempotency_key=?`,[orgId,key]),binding:await tx.queryOne(`SELECT export_path,slide_count,output_content_hash FROM finance_valuation_pptx_exports WHERE organization_id=? AND export_receipt_id=?`,[orgId,first.exportReceiptId]),legacy:await tx.queryOne(`SELECT export_path,exported_at FROM valuations WHERE organization_id=? AND id=?`,[orgId,legacyId])}));
+    expect(cold.receipt).toMatchObject({status:'succeeded',source_content_hash:first.sourceContentHash,output_content_hash:first.outputContentHash});expect(Number(cold.receipt.output_byte_size)).toBeGreaterThan(1000);expect(cold.binding.export_path).toBe(cold.legacy.export_path);expect(cold.legacy.exported_at).toBeTruthy();
+    const filePath=cold.binding.export_path.replace('/exports/valuations/',`${exportsDir('valuations')}/`);const bytes=fs.readFileSync(filePath);expect(bytes.subarray(0,2).toString()).toBe('PK');
+    await expect(txWrap((tx:any)=>tx.queryRun(`UPDATE artifact_export_receipts SET output_byte_size=1 WHERE organization_id=? AND idempotency_key=?`,[orgId,key]))).rejects.toThrow(/terminal|immutable/);
+    await txWrap((tx:any)=>tx.queryRun(`UPDATE organization_members SET status='REVOKED' WHERE organization_id=? AND user_id=?`,[orgId,userId]));await expect(exportPptx(params)).rejects.toMatchObject({code:'ORG_MEMBERSHIP_REVOKED'});await txWrap((tx:any)=>tx.queryRun(`UPDATE organization_members SET status='ACTIVE' WHERE organization_id=? AND user_id=?`,[orgId,userId]));expect((await exportPptx(params)).replay).toBe(true);
+    fs.unlinkSync(filePath);
+  });
+
   it('rolls back method, terminal and bridge publication when receipt insertion fails',async()=>{
     const snapshot=()=>txWrap(async(tx:any)=>({methods:await tx.queryAll(`SELECT id,readiness,result_value_status,result_ev_decimal::text FROM finance_valuation_methods WHERE organization_id=? AND business_version_id=? ORDER BY id`,[orgId,identity.businessVersionId]),terminal:await tx.queryAll(`SELECT t.method_id,t.convention,t.terminal_value_decimal::text FROM finance_valuation_terminal t JOIN finance_valuation_methods m ON m.id=t.method_id WHERE m.organization_id=? AND m.business_version_id=? ORDER BY t.method_id,t.convention`,[orgId,identity.businessVersionId]),bridge:await tx.queryAll(`SELECT enterprise_value_decimal::text,equity_value_decimal::text FROM finance_valuation_ev_equity_bridge WHERE organization_id=? AND business_version_id=?`,[orgId,identity.businessVersionId])}));
     const before=await snapshot();
@@ -206,5 +270,46 @@ describe.skipIf(!REAL)('FIN-CANONICAL-SUCCESSORS-WAVE4 realPG',()=>{
     await rejected;
     await txWrap((tx:any)=>tx.queryRun(`UPDATE finance_artifact_aliases SET artifact_id=?,business_version_id=? WHERE organization_id=? AND legacy_table='valuations' AND legacy_id=?`,[identity.artifactId,identity.businessVersionId,orgId,legacyId]));
     const receipt=await txWrap((tx:any)=>tx.queryOne(`SELECT job_id FROM finance_valuation_compute_command_receipts WHERE organization_id=? AND idempotency_key=?`,[orgId,key]));expect(receipt).toBeNull();
+  });
+
+  it('soft-discards one exact mapped valuation, converges, replays after archival and hides it without deleting lineage',async()=>{
+    await txWrap(async(tx:any)=>{
+      await tx.queryRun(`UPDATE valuations SET status='DRAFT' WHERE organization_id=? AND id=?`,[orgId,legacyId]);
+      await tx.queryRun(`UPDATE finance_artifacts SET archived_at=NULL,archived_reason=NULL WHERE organization_id=? AND artifact_id=?`,[orgId,identity.artifactId]);
+    });
+    const key=`discard-${randomUUID()}`;
+    const params={organizationId:orgId,userId,legacyId,expected:identity,idempotencyKey:key,reason:'Owner discarded draft valuation'};
+    const {default:valuationRouter}=await import('../../../../routes/v8/finance-v2/valuation.routes.js');
+    const app=express();app.use(express.json());app.use((req:any,_res,next)=>{req.v8Context={organizationId:orgId,userId};next();});app.use('/api/v8/finance-v2',valuationRouter);
+    const requestDiscard=()=>request(app).delete(`/api/v8/finance-v2/valuation/legacy/${legacyId}`).set('x-idempotency-key',key).send({expected:identity,reason:params.reason});
+    const [firstHttp,replayHttp]=await Promise.all([requestDiscard(),requestDiscard()]);
+    expect(firstHttp.status).toBe(200);expect(replayHttp.status).toBe(200);
+    const [first,replay]=[firstHttp.body.data,replayHttp.body.data];
+    expect([first.replay,replay.replay].sort()).toEqual([false,true]);
+    expect(first).toMatchObject({...identity,legacyValuationId:legacyId,status:'ARCHIVED'});
+    const retryIdentity=await request(app).get(`/api/v8/finance-v2/valuation/legacy/${legacyId}/input-identity`);
+    expect(retryIdentity.status).toBe(200);expect(retryIdentity.body.data).toEqual(identity);
+    expect((await discardValuation(params)).replay).toBe(true);
+    await expect(discardValuation({...params,reason:'different reason'})).rejects.toMatchObject({code:'IDEMPOTENCY_KEY_REUSED'});
+    const cold=await txWrap(async(tx:any)=>({
+      valuation:await tx.queryOne(`SELECT status,title FROM valuations WHERE organization_id=? AND id=?`,[orgId,legacyId]),
+      artifact:await tx.queryOne(`SELECT archived_at,archived_reason FROM finance_artifacts WHERE organization_id=? AND artifact_id=?`,[orgId,identity.artifactId]),
+      receipts:await tx.queryAll(`SELECT prior_status,reason,created_by FROM finance_valuation_discard_receipts WHERE organization_id=? AND legacy_valuation_id=?`,[orgId,legacyId]),
+      alias:await tx.queryOne(`SELECT artifact_id,business_version_id FROM finance_artifact_aliases WHERE organization_id=? AND legacy_table='valuations' AND legacy_id=?`,[orgId,legacyId]),
+      bv:await tx.queryOne(`SELECT business_version_id FROM finance_business_versions WHERE organization_id=? AND business_version_id=?`,[orgId,identity.businessVersionId]),
+      wr:await tx.queryOne(`SELECT working_revision_id FROM finance_working_revisions WHERE organization_id=? AND working_revision_id=?`,[orgId,identity.workingRevisionId]),
+    }));
+    expect(cold.valuation.status).toBe('ARCHIVED');expect(cold.artifact.archived_at).toBeTruthy();expect(cold.artifact.archived_reason).toBe(params.reason);
+    expect(cold.receipts).toEqual([{prior_status:'DRAFT',reason:params.reason,created_by:userId}]);
+    expect(cold.alias).toEqual({artifact_id:identity.artifactId,business_version_id:identity.businessVersionId});expect(cold.bv).not.toBeNull();expect(cold.wr).not.toBeNull();
+    expect((await listLegacyValuations(orgId)).some((row:any)=>row.id===legacyId)).toBe(false);
+    expect(await getLegacyValuation(orgId,legacyId)).toBeNull();
+    await expect(readInputs(orgId,legacyId)).rejects.toMatchObject({code:'STATUS_IMMUTABLE'});
+    await expect(txWrap((tx:any)=>tx.queryRun(`UPDATE finance_valuation_discard_receipts SET reason='tampered' WHERE organization_id=? AND idempotency_key=?`,[orgId,key]))).rejects.toThrow(/immutable/);
+    await expect(txWrap((tx:any)=>tx.queryRun(`DELETE FROM finance_valuation_discard_receipts WHERE organization_id=? AND idempotency_key=?`,[orgId,key]))).rejects.toThrow(/immutable/);
+    await expect(txWrap((tx:any)=>tx.queryRun(`DELETE FROM valuations WHERE organization_id=? AND id=?`,[orgId,legacyId]))).rejects.toThrow(/archived valuation is immutable/);
+    await txWrap((tx:any)=>tx.queryRun(`UPDATE organization_members SET status='REVOKED' WHERE organization_id=? AND user_id=?`,[orgId,userId]));
+    await expect(discardValuation(params)).rejects.toMatchObject({code:'ORG_MEMBERSHIP_REVOKED'});
+    await txWrap((tx:any)=>tx.queryRun(`UPDATE organization_members SET status='ACTIVE' WHERE organization_id=? AND user_id=?`,[orgId,userId]));
   });
 });

@@ -340,15 +340,7 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
   const handleCreate = useCallback(async () => {
     if (!newTitle.trim()) return;
     try {
-      let data: any;
-      try {
-        data = await V8FinanceApi.createAnalysis({ title: newTitle.trim() });
-      } catch (error) {
-        if (!shouldFallbackToLegacyFinance(error)) {
-          throw error;
-        }
-        data = await Api.post('/api/economics/financial-analyses', { title: newTitle.trim() });
-      }
+      const data: any = await V8FinanceApi.createAnalysis({ title: newTitle.trim() });
       setShowCreate(false);
       setNewTitle('');
       await fetchAnalyses();

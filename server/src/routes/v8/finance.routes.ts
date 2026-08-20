@@ -15,13 +15,21 @@ import JSZip from 'jszip';
 import { v4 as uuidv4 } from 'uuid';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
-import { upload } from '../../middleware/fileUpload.middleware.js';
+import {
+  FILE_UPLOAD_SIGNATURE_MISMATCH_CODE,
+  sniffFileSignature,
+  upload,
+} from '../../middleware/fileUpload.middleware.js';
+import { extractTextFromBuffer as extractDocumentTextFromBuffer } from '../../services/documentTextExtractor.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
-import { createBudget, listBudgets } from '../../services/budgetingService.js';
+import { listBudgets } from '../../services/budgetingService.js';
 import { searchStatementDocumentIntelligence } from '../../services/documentIntelligenceService.js';
 import { ensureCanonicalRegistryInDatabase } from '../../services/financeCanonicalRegistrySyncService.js';
 import { financeLegacyCutoverGuard } from '../../services/financeLegacyCutover.js';
-import { requireActiveMembership } from '../../services/legacyCutover/requireActiveMembership.js';
+import {
+  requireActiveMembership,
+  requireFinanceEditorMembership,
+} from '../../services/legacyCutover/requireActiveMembership.js';
 import {
   getFinanceTraceId,
   logFinanceError,
@@ -43,6 +51,7 @@ import {
   getAnalysisRatios,
   listAnalyses,
   runFullAnalysis,
+  updateAnalysis,
 } from '../../services/financialAnalysisService.js';
 import { appraiseComputeResult } from '../../services/financialModelAppraisalAdapter.js';
 import {
@@ -83,6 +92,7 @@ import {
   cleanupUnpersistedUpload,
   confirmStatement as confirmFinancialStatement,
   createStatement,
+  detectContainedStatementTypes,
   detectStatementType,
   evaluateStatementReadiness,
   extractFinancialLines,
@@ -118,7 +128,13 @@ import {
   withStatementUploadIdempotencyLock,
 } from '../../services/financialStatementService.js';
 import { saveStatementValuesFlow } from '../../services/financialStatementValueWriteService.js';
-import { confirmAndRegisterStatementPack } from '../../services/finance/canonical/statementPackRegistrationService.js';
+import { stageSelectedStatementSections } from '../../services/statementMultiSectionImportService.js';
+import { confirmGovernedStatement } from '../../services/finance/canonical/statementGovernedConfirmationService.js';
+import { recordManualMappingDecision } from '../../services/finance/canonical/statementManualMappingDecisionService.js';
+import {
+  readStatementSourceReceipt,
+  StatementGovernanceError,
+} from '../../services/finance/canonical/statementSourceReceiptService.js';
 import {
   applyLlmProposals,
   applySecondPassProposals,
@@ -134,11 +150,123 @@ import PDFParserService from '../../services/pdfParserService.js';
 import { computeRatios } from '../../services/ratioAnalysisService.js';
 import { getFinanceDashboard } from '../../services/v8/financeIntegrationService.js';
 import { listValuations } from '../../services/valuationService.js';
+import {
+  type BudgetGranularity,
+  BudgetRegistrationError,
+  registerBudget,
+} from '../../services/finance/canonical/budgetRegistrationService.js';
+import {
+  applyBudgetLineCommand,
+  BudgetLineCommandError,
+  type BudgetLinePatch,
+} from '../../services/finance/canonical/budgetLineCommandService.js';
+import {
+  BudgetProjectionCommandError,
+  projectBudgetScenario,
+  updateBudgetScenarioAdjustments,
+} from '../../services/finance/canonical/budgetProjectionCommandService.js';
+import {
+  approveBudgetCommand,
+  BudgetApprovalCommandError,
+} from '../../services/finance/canonical/budgetApprovalCommandService.js';
+import {
+  discardBudgetCommand,
+  BudgetDiscardCommandError,
+} from '../../services/finance/canonical/budgetDiscardCommandService.js';
+import {
+  importBudgetDocumentCommand,
+  BudgetDocumentImportCommandError,
+} from '../../services/finance/canonical/budgetDocumentImportCommandService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 
 const router = Router();
+
+const BUDGET_IMPORT_MIME_BY_EXT: Record<string, ReadonlySet<string>> = {
+  pdf: new Set(['application/pdf']),
+  xlsx: new Set(['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']),
+  xls: new Set(['application/vnd.ms-excel']),
+  csv: new Set([
+    'text/csv',
+    'application/csv',
+    'application/vnd.ms-excel',
+    'text/plain',
+    'application/octet-stream',
+  ]),
+};
+
+async function verifyBudgetImportFile(
+  sourceFile: Buffer,
+  originalName: string,
+  mimeType: string
+): Promise<void> {
+  const ext = path.extname(originalName).slice(1).toLowerCase();
+  const mime = mimeType.split(';')[0].trim().toLowerCase();
+  if (!BUDGET_IMPORT_MIME_BY_EXT[ext]?.has(mime) || !sniffFileSignature(sourceFile, ext)) {
+    throw new BudgetDocumentImportCommandError(
+      FILE_UPLOAD_SIGNATURE_MISMATCH_CODE,
+      400,
+      'File content does not match an allowed PDF, XLS, XLSX, or CSV type'
+    );
+  }
+  if (ext === 'xls') {
+    const ole2 = Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]);
+    if (!sourceFile.subarray(0, 8).equals(ole2)) {
+      throw new BudgetDocumentImportCommandError(
+        FILE_UPLOAD_SIGNATURE_MISMATCH_CODE,
+        400,
+        'Legacy XLS requires an OLE2 workbook signature'
+      );
+    }
+  }
+  if (ext === 'xlsx') {
+    try {
+      const zip = await JSZip.loadAsync(sourceFile);
+      if (!zip.file('xl/workbook.xml') || !zip.file('[Content_Types].xml')) throw new Error();
+    } catch {
+      throw new BudgetDocumentImportCommandError(
+        FILE_UPLOAD_SIGNATURE_MISMATCH_CODE,
+        400,
+        'XLSX content is not a spreadsheet workbook'
+      );
+    }
+  }
+}
+
+function resolveBudgetImportExpectedVersion(req: AuthRequest): number {
+  const bodyRaw = req.body?.expectedVersion;
+  const headerRaw = req.header('x-expected-budget-version');
+  const bodyPresent = bodyRaw !== undefined && bodyRaw !== null && String(bodyRaw).trim() !== '';
+  const headerPresent = headerRaw !== undefined && headerRaw !== null && headerRaw.trim() !== '';
+  const parse = (raw: unknown): number | null => {
+    const literal = String(raw).trim();
+    if (!/^[1-9]\d*$/.test(literal)) return null;
+    const value = Number(literal);
+    return Number.isSafeInteger(value) ? value : null;
+  };
+  const body = bodyPresent ? parse(bodyRaw) : null;
+  const header = headerPresent ? parse(headerRaw) : null;
+  if (
+    (!bodyPresent && !headerPresent) ||
+    (bodyPresent && body === null) ||
+    (headerPresent && header === null)
+  ) {
+    throw new BudgetDocumentImportCommandError(
+      'INVALID_EXPECTED_VERSION',
+      400,
+      'A positive integer expectedVersion is required'
+    );
+  }
+  if (body !== null && header !== null && body !== header) {
+    throw new BudgetDocumentImportCommandError(
+      'EXPECTED_VERSION_CONFLICT',
+      400,
+      'Body and header expectedVersion values must match'
+    );
+  }
+  return body ?? (header as number);
+}
 
 // FIN-MVP-CUTOVER-001: observe the complete legacy surface and fail closed
 // only for writers with an explicitly proven canonical successor.
@@ -146,6 +274,14 @@ const router = Router();
 // re-read membership state. Writers need this per-request wall so a revoked
 // token cannot mutate Finance until its JWT expires.
 router.use(requireActiveMembership);
+// Statement reads remain available to every active tenant member. Every V8
+// Statement mutation, including upload and the detect/extract/map/confirm
+// stages, must re-read the established Finance editor role from membership.
+router.use((req, res, next) => {
+  const mutating = !['GET', 'HEAD', 'OPTIONS'].includes(req.method.toUpperCase());
+  if (!mutating || !req.path.startsWith('/statements')) return next();
+  void requireFinanceEditorMembership(req as AuthRequest, res, next);
+});
 router.use(financeLegacyCutoverGuard);
 
 const FINANCE_PACKAGE_ROOT = process.env.FINANCE_PACKAGE_ROOT || '/data/finance-packages';
@@ -162,11 +298,13 @@ function parseObject(value: unknown): Record<string, any> {
 }
 
 function safePackageName(value: unknown): string {
-  return String(value || 'finance')
-    .normalize('NFKD')
-    .replace(/[^a-zA-Z0-9_-]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 80) || 'finance';
+  return (
+    String(value || 'finance')
+      .normalize('NFKD')
+      .replace(/[^a-zA-Z0-9_-]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 80) || 'finance'
+  );
 }
 
 function jsonText(value: unknown): string {
@@ -207,7 +345,10 @@ function addRowsSheet(
   header.font = { bold: true, color: { argb: 'FFFFFFFF' } };
   header.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF243B53' } };
   header.alignment = { vertical: 'middle' };
-  sheet.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: Math.max(1, keys.length) } };
+  sheet.autoFilter = {
+    from: { row: 1, column: 1 },
+    to: { row: 1, column: Math.max(1, keys.length) },
+  };
   sheet.eachRow((row, rowNumber) => {
     if (rowNumber > 1 && rowNumber % 2 === 0) {
       row.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEFF4F8' } };
@@ -1280,6 +1421,51 @@ router.get(
   })
 );
 
+router.post(
+  '/budgets/:budgetId/import-document',
+  upload.single('file'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const file = req.file;
+    if (!file) return res.status(400).json({ code: 'FILE_REQUIRED', error: 'File required' });
+    try {
+      const { organizationId } = getV8Context(req);
+      const userId = String(req.user?.id || (req.user as any)?.user_id || '');
+      const sourceFile = file.buffer || (await fs.readFile(file.path));
+      await verifyBudgetImportFile(sourceFile, file.originalname, file.mimetype);
+      const expectedVersion = resolveBudgetImportExpectedVersion(req);
+      const documentText = await extractDocumentTextFromBuffer(
+        sourceFile,
+        file.originalname,
+        file.mimetype
+      );
+      const result = await importBudgetDocumentCommand({
+        organizationId,
+        userId,
+        budgetId: req.params.budgetId,
+        expectedVersion,
+        idempotencyKey: String(
+          req.header('Idempotency-Key') || req.header('x-idempotency-key') || ''
+        ),
+        sourceFileName: file.originalname,
+        sourceMimeType: file.mimetype,
+        sourceFileSize: file.size,
+        sourceFileSha256: sha256(sourceFile),
+        documentText,
+      });
+      return res.status(200).json({ data: result, meta: financeMeta() });
+    } catch (error) {
+      if (error instanceof BudgetDocumentImportCommandError) {
+        return res
+          .status(error.status)
+          .json({ code: error.code, error: error.message, ...(error.details || {}) });
+      }
+      throw error;
+    } finally {
+      if (file.path) await fs.unlink(file.path).catch(() => undefined);
+    }
+  })
+);
+
 router.get(
   '/valuations',
   asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -1309,16 +1495,270 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const userId = String(req.user?.id || (req.user as any)?.user_id || '');
-    const { title, periodStart, periodEnd, currency, granularity, description } = req.body || {};
-    if (!title || !periodStart || !periodEnd) {
-      return res.status(400).json({ error: 'title, periodStart, periodEnd required' });
+    const body =
+      req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
+    const allowed = new Set([
+      'title',
+      'description',
+      'projectId',
+      'periodStart',
+      'periodEnd',
+      'granularity',
+      'currency',
+      'sourceKind',
+      'sourceToolSessionId',
+    ]);
+    if (Object.keys(body).some((key) => !allowed.has(key))) {
+      return res.status(400).json({ code: 'INVALID_BODY', error: 'Unknown budget field' });
     }
-    const budget = await createBudget(
-      organizationId,
-      { title, periodStart, periodEnd, currency, granularity, description },
-      userId
-    );
-    return res.status(201).json({ data: { budget }, meta: financeMeta() });
+    if (
+      body.granularity !== undefined &&
+      body.granularity !== 'monthly' &&
+      body.granularity !== 'quarterly' &&
+      body.granularity !== 'annual'
+    ) {
+      return res.status(400).json({ code: 'INVALID_BODY', error: 'Invalid budget granularity' });
+    }
+    if (body.sourceKind !== 'tool_session' && body.sourceKind !== 'manual') {
+      return res.status(400).json({ code: 'INVALID_BODY', error: 'Invalid budget source' });
+    }
+    const key = String(req.header('Idempotency-Key') || req.header('x-idempotency-key') || '');
+    try {
+      const result = await registerBudget({
+        organizationId,
+        userId,
+        title: typeof body.title === 'string' ? body.title : '',
+        description: typeof body.description === 'string' ? body.description : undefined,
+        projectId: typeof body.projectId === 'string' ? body.projectId : undefined,
+        periodStart: typeof body.periodStart === 'string' ? body.periodStart : '',
+        periodEnd: typeof body.periodEnd === 'string' ? body.periodEnd : '',
+        granularity: body.granularity as BudgetGranularity | undefined,
+        currency: typeof body.currency === 'string' ? body.currency : undefined,
+        sourceToolSessionId:
+          typeof body.sourceToolSessionId === 'string' ? body.sourceToolSessionId : '',
+        sourceKind: body.sourceKind,
+        idempotencyKey: key,
+      });
+      return res.status(result.replay ? 200 : 201).json({ data: result, meta: financeMeta() });
+    } catch (error) {
+      if (error instanceof BudgetRegistrationError) {
+        return res.status(error.status).json({ code: error.code, error: error.message });
+      }
+      throw error;
+    }
+  })
+);
+
+router.put(
+  '/budgets/:budgetId/lines/:lineId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const userId = String(req.user?.id || (req.user as any)?.user_id || '');
+    const body =
+      req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
+    const allowed = new Set([
+      'expectedVersion',
+      'baselineValue',
+      'source',
+      'driverKpiId',
+      'driverFormula',
+      'isLocked',
+    ]);
+    if (Object.keys(body).some((key) => !allowed.has(key))) {
+      return res.status(400).json({ code: 'INVALID_BODY', error: 'Unknown budget line field' });
+    }
+    if (!Number.isInteger(body.expectedVersion) || body.expectedVersion < 1) {
+      return res.status(400).json({ code: 'INVALID_BODY', error: 'Invalid expectedVersion' });
+    }
+    const patch: BudgetLinePatch = {};
+    if (body.baselineValue !== undefined) {
+      if (typeof body.baselineValue !== 'string')
+        return res
+          .status(400)
+          .json({ code: 'INVALID_BODY', error: 'baselineValue must be a decimal string' });
+      patch.baselineValue = body.baselineValue;
+    }
+    if (body.source !== undefined) patch.source = body.source;
+    if (body.driverKpiId !== undefined) patch.driverKpiId = body.driverKpiId;
+    if (body.driverFormula !== undefined) patch.driverFormula = body.driverFormula;
+    if (body.isLocked !== undefined) patch.isLocked = body.isLocked;
+    try {
+      const result = await applyBudgetLineCommand({
+        organizationId,
+        userId,
+        budgetId: req.params.budgetId,
+        lineId: req.params.lineId,
+        expectedVersion: body.expectedVersion,
+        idempotencyKey: String(
+          req.header('Idempotency-Key') || req.header('x-idempotency-key') || ''
+        ),
+        patch,
+      });
+      return res.status(200).json({ data: result, meta: financeMeta() });
+    } catch (error) {
+      if (error instanceof BudgetLineCommandError) {
+        return res.status(error.status).json({
+          code: error.code,
+          error: error.message,
+          ...(error.details || {}),
+        });
+      }
+      throw error;
+    }
+  })
+);
+
+router.post(
+  '/budgets/:budgetId/scenarios/:scenarioId/project',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const userId = String(req.user?.id || (req.user as any)?.user_id || '');
+    const body =
+      req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
+    if (Object.keys(body).some((key) => key !== 'expectedVersion')) {
+      return res.status(400).json({ code: 'INVALID_BODY', error: 'Unknown projection field' });
+    }
+    if (!Number.isInteger(body.expectedVersion) || body.expectedVersion < 1) {
+      return res.status(400).json({ code: 'INVALID_BODY', error: 'Invalid expectedVersion' });
+    }
+    try {
+      const result = await projectBudgetScenario({
+        organizationId,
+        userId,
+        budgetId: req.params.budgetId,
+        scenarioId: req.params.scenarioId,
+        expectedVersion: body.expectedVersion,
+        idempotencyKey: String(
+          req.header('Idempotency-Key') || req.header('x-idempotency-key') || ''
+        ),
+      });
+      return res.status(200).json({ data: result, meta: financeMeta() });
+    } catch (error) {
+      if (error instanceof BudgetProjectionCommandError) {
+        return res.status(error.status).json({
+          code: error.code,
+          error: error.message,
+          ...(error.details || {}),
+        });
+      }
+      throw error;
+    }
+  })
+);
+
+router.put(
+  '/budgets/:budgetId/scenarios/:scenarioId/adjustments',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const userId = String(req.user?.id || (req.user as any)?.user_id || '');
+    const body =
+      req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
+    if (Object.keys(body).some((key) => !['expectedVersion', 'adjustments'].includes(key))) {
+      return res.status(400).json({ code: 'INVALID_BODY', error: 'Unknown adjustment field' });
+    }
+    if (!Number.isInteger(body.expectedVersion) || body.expectedVersion < 1) {
+      return res.status(400).json({ code: 'INVALID_BODY', error: 'Invalid expectedVersion' });
+    }
+    if (
+      !body.adjustments ||
+      typeof body.adjustments !== 'object' ||
+      Array.isArray(body.adjustments)
+    ) {
+      return res.status(400).json({ code: 'INVALID_BODY', error: 'Invalid adjustments' });
+    }
+    try {
+      const result = await updateBudgetScenarioAdjustments({
+        organizationId,
+        userId,
+        budgetId: req.params.budgetId,
+        scenarioId: req.params.scenarioId,
+        expectedVersion: body.expectedVersion,
+        idempotencyKey: String(
+          req.header('Idempotency-Key') || req.header('x-idempotency-key') || ''
+        ),
+        adjustments: body.adjustments,
+      });
+      return res.status(200).json({ data: result, meta: financeMeta() });
+    } catch (error) {
+      if (error instanceof BudgetProjectionCommandError) {
+        return res.status(error.status).json({
+          code: error.code,
+          error: error.message,
+          ...(error.details || {}),
+        });
+      }
+      throw error;
+    }
+  })
+);
+
+router.post(
+  '/budgets/:budgetId/approve',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const userId = String(req.user?.id || (req.user as any)?.user_id || '');
+    const body =
+      req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
+    if (Object.keys(body).some((key) => key !== 'expectedVersion')) {
+      return res.status(400).json({ code: 'INVALID_BODY', error: 'Unknown approval field' });
+    }
+    if (!Number.isInteger(body.expectedVersion) || body.expectedVersion < 1) {
+      return res.status(400).json({ code: 'INVALID_BODY', error: 'Invalid expectedVersion' });
+    }
+    try {
+      const result = await approveBudgetCommand({
+        organizationId,
+        userId,
+        budgetId: req.params.budgetId,
+        expectedVersion: body.expectedVersion,
+        idempotencyKey: String(
+          req.header('Idempotency-Key') || req.header('x-idempotency-key') || ''
+        ),
+      });
+      return res.status(200).json({ data: result, meta: financeMeta() });
+    } catch (error) {
+      if (error instanceof BudgetApprovalCommandError) {
+        return res.status(error.status).json({
+          code: error.code,
+          error: error.message,
+          ...(error.details || {}),
+        });
+      }
+      throw error;
+    }
+  })
+);
+
+router.delete(
+  '/budgets/:budgetId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const userId = String(req.user?.id || (req.user as any)?.user_id || '');
+    const body =
+      req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
+    if (Object.keys(body).some((key) => !['expectedVersion', 'reason'].includes(key))) {
+      return res.status(400).json({ code: 'INVALID_BODY', error: 'Unknown discard field' });
+    }
+    try {
+      const result = await discardBudgetCommand({
+        organizationId,
+        userId,
+        budgetId: req.params.budgetId,
+        expectedVersion: body.expectedVersion,
+        reason: typeof body.reason === 'string' ? body.reason : '',
+        idempotencyKey: String(
+          req.header('Idempotency-Key') || req.header('x-idempotency-key') || ''
+        ),
+      });
+      return res.status(200).json({ data: result, meta: financeMeta() });
+    } catch (error) {
+      if (error instanceof BudgetDiscardCommandError) {
+        return res
+          .status(error.status)
+          .json({ code: error.code, error: error.message, ...(error.details || {}) });
+      }
+      throw error;
+    }
   })
 );
 
@@ -1374,15 +1814,17 @@ router.post(
   '/statements/upload-and-analyze',
   upload.single('file'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
+    const { organizationId: requestedOrganizationId } = getV8Context(req);
     const userId = String(req.user?.id || '');
-    const file = req.file;
-    if (!file) {
+    const uploadedFile = req.file;
+    if (!uploadedFile) {
       return res.status(400).json({ error: 'File required (PDF, XLSX, XLS, or CSV)' });
     }
-    if (!userId || !organizationId) {
+    if (!userId || !requestedOrganizationId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
+    const file = uploadedFile;
+    const organizationId = requestedOrganizationId;
 
     const traceId = getFinanceTraceId((req as any).correlationId);
 
@@ -1448,7 +1890,7 @@ router.post(
       });
 
       const structuredInput = isStructuredStatementInput(file.originalname);
-      const analysis = structuredInput
+      const analysisResult = structuredInput
         ? null
         : await analyzeAndExtractFullDocument({
             filePath: file.path,
@@ -1456,7 +1898,7 @@ router.post(
             traceId,
           });
 
-      if (!analysis || analysis.sections.length === 0) {
+      if (!analysisResult || analysisResult.sections.length === 0) {
         const detection = detectStatementType(text);
         const documentProfile = classifyStatementDocument({
           fileName: file.originalname,
@@ -1503,6 +1945,12 @@ router.post(
               statementPackId,
               statementIds: [statementId],
               analysis: null,
+              detection: {
+                ...detection,
+                containedStatementTypes: detectContainedStatementTypes(text),
+                containsMultipleStatements: detectContainedStatementTypes(text).length > 1,
+                entityName: null,
+              },
               message: structuredInput
                 ? 'Structured statement staged for explicit detection, mapping, and confirmation.'
                 : 'LLM analysis unavailable — created single statement with heuristic detection.',
@@ -1511,6 +1959,7 @@ router.post(
           },
         };
       }
+      const analysis = analysisResult;
 
       const normalizeLineageLabel = (value: unknown) =>
         String(value || '')
@@ -1563,6 +2012,60 @@ router.post(
           },
         };
       }
+
+      const proposedPrimaryType = analysisWithLineage.sections[0].statementType;
+      const stagedStatementId = await createStatement({
+        organizationId,
+        statementType: proposedPrimaryType,
+        periodStart: analysis.periodStart || `${new Date().getFullYear()}-01-01`,
+        periodEnd: analysis.periodEnd || `${new Date().getFullYear()}-12-31`,
+        periodLabel: analysis.periodLabel || undefined,
+        currency: analysis.currency,
+        scaling: analysis.scaling,
+        sourceFileName: file.originalname,
+        sourceFilePath: file.path,
+        parseMethod: effectiveParseMethod,
+        overallConfidence: 0,
+        documentClass: 'mixed_report',
+        extractionStrategy: 'llm_full_document_staged',
+        templateFamily: null,
+        createdBy: userId,
+      });
+      anyStatementPersisted = true;
+      primaryStatementId = stagedStatementId;
+      createdStatementIds.push(stagedStatementId);
+      await dbRun(`UPDATE financial_statements SET notes = ? WHERE id = ?`, [
+        text.substring(0, 100000),
+        stagedStatementId,
+      ]);
+      return {
+        statusCode: 201,
+        body: {
+          data: {
+            success: true,
+            mode: 'fallback',
+            statementPackId: null,
+            statementIds: [stagedStatementId],
+            detection: {
+              statementType: proposedPrimaryType,
+              confidence: 0,
+              containedStatementTypes: analysisWithLineage.sections.map(
+                (section) => section.statementType
+              ),
+              containsMultipleStatements: analysisWithLineage.sections.length > 1,
+              periodStart: analysis.periodStart,
+              periodEnd: analysis.periodEnd,
+              periodLabel: analysis.periodLabel,
+              currency: analysis.currency,
+              scaling: analysis.scaling,
+              language: analysis.language,
+              entityName: analysis.entityName,
+            },
+            message: 'Document staged for explicit section, period and mapping review.',
+          },
+          meta: financeMeta(),
+        },
+      };
 
       const createdStatements: Array<{
         statementId: string;
@@ -1660,7 +2163,8 @@ router.post(
           sourcePage: line.sourcePage,
           sourceRow: line.sourceRow,
           mappingStatus: ((line as any).suggestedCanonicalId ? 'auto' : 'unmapped') as
-            'auto' | 'unmapped',
+            | 'auto'
+            | 'unmapped',
           isNonFinancial: !!(line as any).isNonFinancial,
         }));
 
@@ -1718,8 +2222,9 @@ router.post(
       }
 
       if (packId) {
+        const completedPackId = packId;
         try {
-          await recomputeStatementPackForOrganization(organizationId, packId);
+          await recomputeStatementPackForOrganization(organizationId, String(completedPackId));
         } catch (recomputeError) {
           logger.warn('[V8 SmartUpload] Pack recompute failed', {
             packId,
@@ -2298,6 +2803,43 @@ router.post(
       undefined;
     const effectiveScaling =
       String(req.body?.scaling || '').trim() || String(statement.scaling || '').trim() || undefined;
+    const requestedStatementTypes = Array.isArray(req.body?.statementTypes)
+      ? req.body.statementTypes
+      : [];
+    if (requestedStatementTypes.length > 0) {
+      try {
+        const batch = await stageSelectedStatementSections({
+          primaryStatementId: statementId,
+          organizationId,
+          userId,
+          statement,
+          text,
+          statementTypes: requestedStatementTypes,
+          periodLabel: effectivePeriodLabel,
+          currency: effectiveCurrency,
+          scaling: effectiveScaling,
+          entityName: String(req.body?.entityName || '').trim(),
+        });
+        return res.json({
+          data: {
+            statementId,
+            ingestRunId,
+            lines: batch.statements[0]?.lines || [],
+            statements: batch.statements,
+            selectedStatementTypes: batch.selectedTypes,
+            extractionStrategy: 'deterministic_multi_section_staged',
+          },
+          meta: financeMeta(),
+        });
+      } catch (error: any) {
+        const status = Number(error?.statusCode || 422);
+        return res.status(status).json({
+          error: error?.message || 'Multi-section extraction failed',
+          code: error?.code || 'MULTI_SECTION_EXTRACTION_FAILED',
+          statementType: error?.statementType,
+        });
+      }
+    }
     const minimumAiLines =
       effectiveStatementType === 'CF' ? 2 : ['BS', 'P&L'].includes(effectiveStatementType) ? 3 : 2;
 
@@ -2717,66 +3259,106 @@ router.post(
     }
 
     const statementId = String(req.params.statementId || '');
-    const statement = (await getStatementDetail(organizationId, statementId)) as Record<
-      string,
-      any
-    > | null;
-    if (!statement) {
-      return res.status(404).json({ error: 'Statement not found' });
+    const expectedValuesVersion = req.body?.expectedValuesVersion;
+    const sourceReceiptId = String(req.body?.sourceReceiptId || '').trim();
+    const idempotencyKey = String(req.header('Idempotency-Key') || '').trim();
+    if (!Number.isInteger(expectedValuesVersion) || expectedValuesVersion < 0) {
+      return res
+        .status(400)
+        .json({ error: 'expectedValuesVersion must be a non-negative integer' });
+    }
+    if (!sourceReceiptId || !idempotencyKey) {
+      return res.status(400).json({ error: 'sourceReceiptId and Idempotency-Key are required' });
     }
 
-    const valueRows = Array.isArray(statement.values)
-      ? statement.values.map((value: any) => ({
-          canonicalLineId: value?.canonicalLineId ?? value?.canonical_line_id ?? null,
-          value: Number(value?.value || 0),
-          isNonFinancial: Boolean(value?.isNonFinancial ?? value?.is_non_financial),
-        }))
-      : [];
-    const validationMessages = Array.isArray(statement.validationMessages)
-      ? statement.validationMessages
-      : [];
-    const readiness = evaluateStatementReadiness({
-      rawStatus: statement.status,
-      statementType: statement.statement_type,
-      validationStatus: statement.validation_status,
-      currency: statement.currency,
-      scaling: statement.scaling,
-      validationMessages,
-      values: valueRows,
-    });
-
-    if (!readiness.isReady) {
-      return res.status(400).json({
-        error: 'Statement is not ready to confirm',
-        readiness,
+    let registration;
+    try {
+      registration = await confirmGovernedStatement({
+        statementId,
+        organizationId,
+        userId,
+        sourceReceiptId,
+        expectedValuesVersion,
+        idempotencyKey,
       });
+    } catch (error) {
+      if (error instanceof StatementGovernanceError) {
+        return res.status(error.status).json({ error: error.message, code: error.code });
+      }
+      throw error;
     }
-
-    const registration = await confirmAndRegisterStatementPack({
-      statementId,
-      organizationId,
-      userId,
-      statement,
-      values: valueRows,
-      validations: validationMessages,
-      readiness,
-    });
 
     return res.json({
       data: {
         success: true,
         statementId,
         statementPackId: registration.statementPackId,
-        ingestRunId: registration.ingestRunId,
+        sourceReceiptId,
+        valuesVersion: expectedValuesVersion,
         canonicalArtifactId: registration.artifactId,
         canonicalBusinessVersionId: registration.businessVersionId,
         canonicalWorkingRevisionId: registration.workingRevisionId,
         canonicalReplay: registration.replayed,
         status: 'confirmed',
-        readiness,
       },
       meta: financeMeta(),
     });
+  })
+);
+
+router.get(
+  '/statements/:statementId/source-receipt',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const userId = String(req.user?.id || '');
+    try {
+      const receipt = await readStatementSourceReceipt({
+        organizationId,
+        statementId: String(req.params.statementId),
+        userId,
+      });
+      return res.json({ data: { receipt }, meta: financeMeta() });
+    } catch (error) {
+      if (error instanceof StatementGovernanceError)
+        return res.status(error.status).json({ error: error.message, code: error.code });
+      throw error;
+    }
+  })
+);
+
+router.post(
+  '/statements/:statementId/manual-mapping-decisions',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const userId = String(req.user?.id || '');
+    const statementId = String(req.params.statementId);
+    const sourceRow = Number(req.body?.sourceRow);
+    const candidate = Number.isInteger(sourceRow)
+      ? await dbGet<any>(
+          `SELECT id FROM financial_statement_candidate_rows WHERE statement_id=? AND source_row=? ORDER BY created_at DESC,id DESC LIMIT 1`,
+          [statementId, sourceRow]
+        )
+      : null;
+    if (!candidate) return res.status(404).json({ error: 'Candidate row not found' });
+    try {
+      const decision = await recordManualMappingDecision({
+        organizationId,
+        statementId,
+        candidateRowId: candidate.id,
+        canonicalLineId: String(req.body?.canonicalLineId || '') || null,
+        action: 'ACCEPT',
+        reason: String(req.body?.reason || ''),
+        sourceReceiptId: String(req.body?.sourceReceiptId || ''),
+        expectedValuesVersion: Number(req.body?.expectedValuesVersion),
+        idempotencyKey: String(req.header('Idempotency-Key') || ''),
+        userId,
+      });
+      return res.json({ data: { decision }, meta: financeMeta() });
+    } catch (error) {
+      if (error instanceof StatementGovernanceError)
+        return res.status(error.status).json({ error: error.message, code: error.code });
+      throw error;
+    }
   })
 );
 
@@ -2862,6 +3444,65 @@ router.post(
     const analysis = await createAnalysis(organizationId, req.body ?? {}, userId);
     return res.status(201).json({
       data: { analysis },
+      meta: financeMeta(),
+    });
+  })
+);
+
+router.put(
+  '/analyses/:analysisId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const analysisId = String(req.params.analysisId || '');
+    const body = req.body;
+    const allowed = new Set([
+      'title',
+      'description',
+      'periods',
+      'statementData',
+      'currency',
+      'sourceStatementIds',
+      'sourceStatementPackId',
+      'rebuildFromStatements',
+    ]);
+    const invalid =
+      !body ||
+      typeof body !== 'object' ||
+      Array.isArray(body) ||
+      Object.keys(body).some((key) => !allowed.has(key)) ||
+      (body.title !== undefined &&
+        (typeof body.title !== 'string' || !body.title.trim() || body.title.length > 300)) ||
+      (body.description !== undefined &&
+        (typeof body.description !== 'string' || body.description.length > 10_000)) ||
+      (body.currency !== undefined &&
+        (typeof body.currency !== 'string' || body.currency.length > 10)) ||
+      (body.periods !== undefined &&
+        (!Array.isArray(body.periods) ||
+          body.periods.some((value: unknown) => typeof value !== 'string' || value.length > 60))) ||
+      (body.sourceStatementIds !== undefined &&
+        (!Array.isArray(body.sourceStatementIds) ||
+          body.sourceStatementIds.some(
+            (value: unknown) => typeof value !== 'string' || value.length > 64
+          ))) ||
+      (body.statementData !== undefined &&
+        (!body.statementData ||
+          typeof body.statementData !== 'object' ||
+          Array.isArray(body.statementData))) ||
+      (body.sourceStatementPackId !== undefined &&
+        typeof body.sourceStatementPackId !== 'string') ||
+      (body.rebuildFromStatements !== undefined && typeof body.rebuildFromStatements !== 'boolean');
+    if (invalid)
+      return res.status(400).json({ error: 'Invalid analysis update', code: 'INVALID_BODY' });
+
+    const existing = await dbGet<{ id: string }>(
+      `SELECT id FROM financial_analyses WHERE id = ? AND organization_id = ?`,
+      [analysisId, organizationId]
+    );
+    if (!existing) return res.status(404).json({ error: 'Analysis not found' });
+
+    await updateAnalysis(organizationId, analysisId, body);
+    return res.json({
+      data: { success: true, analysisId },
       meta: financeMeta(),
     });
   })
@@ -3457,7 +4098,8 @@ router.post(
         artifacts: sourceArtifacts,
       });
     }
-    const readme = `# Consultify Finance acceptance package\n\n` +
+    const readme =
+      `# Consultify Finance acceptance package\n\n` +
       `Company: ${pack.entity_name}\n\nPack: ${packId}\n\nCurrency / scale: ${pack.currency} / ${pack.scaling}\n\n` +
       `Generated: ${generatedAt}\n\nThe workbook contains historical statements, 34-ratio catalogue output, ` +
       `Base/Bull/Bear models, assumptions, forecast P&L/BS/CF, validations, valuations, sensitivity/tornado data, sources and audit lineage. ` +
@@ -3474,13 +4116,31 @@ router.post(
       'ratios.json': Buffer.from(jsonText(ratioResult)),
       'scenarios.json': Buffer.from(jsonText({ models, outputs })),
       'assumptions.json': Buffer.from(
-        jsonText(models.map((row) => ({ modelId: row.id, scenario: row.scenario, assumptions: parseObject(row.assumptions_json) })))
+        jsonText(
+          models.map((row) => ({
+            modelId: row.id,
+            scenario: row.scenario,
+            assumptions: parseObject(row.assumptions_json),
+          }))
+        )
       ),
       'valuations.json': Buffer.from(jsonText({ valuations, valuationSnapshots })),
       'checks.json': Buffer.from(jsonText(validations)),
       'evidence-acceptance.json': Buffer.from(jsonText(acceptance)),
       'audit-backup.json': Buffer.from(
-        jsonText({ organizationId, pack, statements, values, sources, analyses, models, outputs, validations, valuations, valuationSnapshots })
+        jsonText({
+          organizationId,
+          pack,
+          statements,
+          values,
+          sources,
+          analyses,
+          models,
+          outputs,
+          validations,
+          valuations,
+          valuationSnapshots,
+        })
       ),
     };
     const manifest = {
@@ -3528,7 +4188,16 @@ router.post(
         title_snapshot, owner_user_id, canonical_home, visibility_scope,
         origin_summary_json, created_by, created_at, last_transition_at)
        VALUES (?, ?, 'sheet', 'ready', 'sheet', ?, ?, 'outputs_library', 'private', ?, ?, ?, ?)`,
-      [artifactId, organizationId, `${pack.entity_name} Finance package`, userId, jsonText(metadata), userId, generatedAt, generatedAt]
+      [
+        artifactId,
+        organizationId,
+        `${pack.entity_name} Finance package`,
+        userId,
+        jsonText(metadata),
+        userId,
+        generatedAt,
+        generatedAt,
+      ]
     );
     await dbRun(
       `INSERT INTO v8_output_exports
@@ -3560,7 +4229,13 @@ router.get(
       data: rows.map((row) => {
         const metadata = parseObject(row.origin_summary_json);
         delete metadata.filePath;
-        return { artifactId: row.artifact_id, title: row.title_snapshot, status: row.delivery_state, createdAt: row.created_at, ...metadata };
+        return {
+          artifactId: row.artifact_id,
+          title: row.title_snapshot,
+          status: row.delivery_state,
+          createdAt: row.created_at,
+          ...metadata,
+        };
       }),
       meta: { ...financeMeta(), contract: 'finance_acceptance_package_v1' },
     });
@@ -3589,7 +4264,10 @@ router.get(
       return res.status(409).json({ error: 'Finance package checksum mismatch' });
     }
     res.setHeader('Content-Type', 'application/zip');
-    res.setHeader('Content-Disposition', `attachment; filename="${safePackageName(String(metadata.fileName).replace(/\.zip$/i, ''))}.zip"`);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${safePackageName(String(metadata.fileName).replace(/\.zip$/i, ''))}.zip"`
+    );
     res.setHeader('X-Content-SHA256', String(metadata.zipSha256));
     return res.send(data);
   })

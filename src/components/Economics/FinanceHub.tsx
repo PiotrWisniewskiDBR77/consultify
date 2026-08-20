@@ -3121,12 +3121,9 @@ export const FinanceHub: React.FC = () => {
                 // (Gate E) fix: `activeDocument.id` is a LEGACY `financial_models.id`
                 // — resolved through `FinanceLegacyBridgeGate` (reads
                 // `finance_artifact_aliases`) into the real canonical
-                // `{artifactId, businessVersionId}` before this workspace ever
-                // mounts, instead of passing the legacy id through as if it were a
-                // canonical one. `entityId`/`forecastPeriods`/`assumptionRowOrder`
-                // still can't be honestly supplied by the legacy list row today
-                // (unchanged from before this fix) — passed as empty (component
-                // renders its own honest empty state, never fabricated rows).
+                // `{artifactId, businessVersionId}`. The workspace then loads its
+                // persisted entity/opening/forecast context from the canonical API;
+                // the legacy list row is never treated as authority for those values.
                 <FinanceLegacyBridgeGate
                   legacyTable="financial_models"
                   legacyId={activeDocument.id}
@@ -3141,15 +3138,11 @@ export const FinanceHub: React.FC = () => {
                       <FinanceV3BaselineWorkspace
                         artifactId={resolved.artifactId}
                         businessVersionId={resolved.businessVersionId ?? ''}
-                        entityId=""
                         name={activeDocument.title}
                         status={mapLegacyFinanceStatusToV3(activeDocument.status)}
                         freshness="NEVER_COMPUTED"
                         version={1}
                         role="preparer"
-                        forecastPeriods={[]}
-                        openingBalanceSheetPeriodId=""
-                        assumptionRowOrder={[]}
                         contextValues={{ type: 'Model bazowy (Baseline)' }}
                         onNavigateBack={handleShowList}
                       />
@@ -3616,6 +3609,10 @@ export const FinanceHub: React.FC = () => {
       </div>
     );
   }
+
+  // Import is a focused document workflow. Generic Finance search, filters,
+  // view switches, AI and duplicate CTA would act on the list behind it.
+  if (showImportWizard) return <>{content}</>;
 
   return (
     <>

@@ -49,6 +49,7 @@ interface Detection {
   containedStatementTypes?: string[];
   containsMultipleStatements?: boolean;
   documentClass?: string;
+  entityName?: string | null;
 }
 
 interface ExtractedLine {
@@ -91,6 +92,16 @@ type CanonicalLine = FinancialStatementCanonicalLineOption & {
 };
 
 type MappedValue = FinancialStatementMappedValue;
+type ReviewStatement = {
+  statementId: string;
+  statementType: string;
+  periodLabel?: string | null;
+  comparisonOfStatementId?: string | null;
+  sourceReceiptId?: string;
+  mappedValues: MappedValue[];
+  savedReady?: boolean;
+  valuesVersion?: number;
+};
 
 interface ValidationMessage {
   type: 'error' | 'warning' | 'info';
@@ -179,14 +190,27 @@ async function saveStatementValuesWithFallback(
   }
 }
 
-async function confirmStatementWithFallback(statementId: string) {
+async function confirmStatementWithFallback(
+  statementId: string,
+  sourceReceiptId: string,
+  expectedValuesVersion: number,
+  idempotencyKey: string
+) {
   try {
-    return await V8FinanceApi.confirmStatement(statementId);
+    return await V8FinanceApi.confirmStatement(
+      statementId,
+      { sourceReceiptId, expectedValuesVersion },
+      idempotencyKey
+    );
   } catch (error) {
     if (!shouldFallbackToLegacyFinance(error)) {
       throw error;
     }
-    return await Api.post(`/api/finance-statements/${statementId}/confirm`, {});
+    return await Api.post(
+      `/api/finance-statements/${statementId}/confirm`,
+      { sourceReceiptId, expectedValuesVersion },
+      { extraHeaders: { 'Idempotency-Key': idempotencyKey } }
+    );
   }
 }
 
@@ -260,6 +284,8 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
 
   // Map state
   const [mappedValues, setMappedValues] = useState<MappedValue[]>([]);
+  const [reviewStatements, setReviewStatements] = useState<ReviewStatement[]>([]);
+  const [activeReviewStatementId, setActiveReviewStatementId] = useState<string>('');
   const [canonicalLines, setCanonicalLines] = useState<CanonicalLine[]>([]);
 
   // Validation state
@@ -268,11 +294,16 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
     messages: ValidationMessage[];
   } | null>(null);
   const [readiness, setReadiness] = useState<ReadinessState | null>(null);
+  const [sourceReceipt, setSourceReceipt] = useState<Record<string, any> | null>(null);
 
   // Override detection
   const [overrideType, setOverrideType] = useState<string>('');
   const [overrideCurrency, setOverrideCurrency] = useState<string>('');
   const [overridePeriod, setOverridePeriod] = useState<string>('');
+  const [overrideScaling, setOverrideScaling] = useState<string>('');
+  const [overrideEntity, setOverrideEntity] = useState<string>('');
+  const [selectedSections, setSelectedSections] = useState<string[]>([]);
+  const [stepsExpanded, setStepsExpanded] = useState(false);
 
   const STEPS: WizardStep[] = ['upload', 'detect', 'map', 'confirm'];
   const stepIdx = STEPS.indexOf(step);
@@ -373,30 +404,63 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
           statementPackId: data.statementPackId,
           statements: data.statements,
         });
-        setStatementId(data.statementPackId || data.statementIds?.[0]);
+        setStatementId(
+          data.statementIds?.[0] || data.statements?.[0]?.statementId || data.statementPackId
+        );
         trackFunnelEvent('financial_statement_import_started', {
           packId: data.statementPackId,
           sections: data.analysis.sectionTypes?.length,
           totalLines: data.analysis.totalLines,
         });
-        setStep('confirm');
+        const smartTypes = (data.analysis.sectionTypes || []).filter(Boolean);
+        setDetection({
+          statementType: smartTypes.length === 1 ? smartTypes[0] : '',
+          confidence: 1,
+          periodStart: null,
+          periodEnd: null,
+          periodLabel: data.analysis.periodLabel || null,
+          currency: data.analysis.currency || 'PLN',
+          scaling: data.analysis.scaling || 'units',
+          language: 'pl',
+          containedStatementTypes: smartTypes,
+          containsMultipleStatements: smartTypes.length > 1,
+          documentClass: 'financial_statement',
+        });
+        setOverrideType(smartTypes.length === 1 ? smartTypes[0] : '');
+        setOverrideCurrency(data.analysis.currency || 'PLN');
+        setOverridePeriod(data.analysis.periodLabel || '');
+        setOverrideScaling(data.analysis.scaling || 'units');
+        setOverrideEntity(data.analysis.entityName || '');
+        setSelectedSections(smartTypes);
+        // Smart detection is evidence, not confirmation. Every returned
+        // section still passes through the same mapping/verification review.
+        setStep('detect');
       } else {
         // Fallback: old flow with manual section selection
         setStatementId(data.statementIds?.[0] || data.statementPackId);
+        const detected = data.detection as Partial<Detection> | undefined;
         const fallbackDetection: Detection = {
-          statementType: 'P&L',
-          confidence: 0.5,
+          statementType: '',
+          confidence: 0,
           periodStart: null,
           periodEnd: null,
           periodLabel: null,
           currency: 'PLN',
           scaling: 'units',
           language: 'pl',
+          ...detected,
         };
         setDetection(fallbackDetection);
         setOverrideType(fallbackDetection.statementType);
         setOverrideCurrency(fallbackDetection.currency);
         setOverridePeriod(fallbackDetection.periodLabel || '');
+        setOverrideScaling(fallbackDetection.scaling);
+        setOverrideEntity(String(fallbackDetection.entityName || ''));
+        setSelectedSections(
+          fallbackDetection.containsMultipleStatements
+            ? fallbackDetection.containedStatementTypes || []
+            : []
+        );
         trackFunnelEvent('financial_statement_import_started', {
           statementId: data.statementIds?.[0],
         });
@@ -443,13 +507,20 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
     try {
       await detectStatementWithFallback(statementId, {
         statementType: overrideType,
+        ...(selectedSections.length ? { statementTypes: selectedSections } : {}),
         periodLabel: overridePeriod,
         currency: overrideCurrency,
+        ...(overrideEntity.trim() ? { entityName: overrideEntity.trim() } : {}),
       });
       const extractData = await extractStatementWithFallback(statementId, {
         statementType: overrideType,
+        ...(selectedSections.length ? { statementTypes: selectedSections } : {}),
         periodLabel: overridePeriod,
         currency: overrideCurrency,
+        ...(overrideEntity.trim() ? { entityName: overrideEntity.trim() } : {}),
+        ...(overrideScaling && overrideScaling !== detection?.scaling
+          ? { scaling: overrideScaling }
+          : {}),
       });
       const { lines } = extractData as { lines: ExtractedLine[] };
       setExtractedLines(lines);
@@ -469,32 +540,56 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
         extractionStrategy: String((extractData as any)?.extractionStrategy || ''),
         documentClass: String((extractData as any)?.documentClass || ''),
       });
-
-      // Auto-map
-      const mapData = await mapStatementWithFallback(statementId);
-      const { mappedLines } = mapData as { mappedLines: ExtractedLine[] };
+      const staged = Array.isArray((extractData as any)?.statements)
+        ? (extractData as any).statements
+        : [{ statementId, statementType: overrideType, periodLabel: overridePeriod, lines }];
 
       // Load canonical lines for dropdown
       const canonData = await getCanonicalLinesWithFallback();
       setCanonicalLines(canonData as CanonicalLine[]);
 
-      // Build mapped values
-      const mv: MappedValue[] = (mappedLines as ExtractedLine[]).map((l) => ({
-        originalLabel: l.originalLabel,
-        value: l.value,
-        confidence: l.confidence,
-        canonicalLineId: l.suggestedCanonicalId || null,
-        canonicalLabel: l.suggestedCanonicalLabel || '',
-        mappingStatus: l.isNonFinancial ? 'unmapped' : l.suggestedCanonicalId ? 'auto' : 'unmapped',
-        sourceRow: l.sourceRow,
-        isNonFinancial: !!l.isNonFinancial,
-        classificationReason: l.classificationReason,
-        mappingTier: l.mappingTier,
-      }));
-      setMappedValues(mv);
+      const reviews: ReviewStatement[] = [];
+      for (const item of staged) {
+        const mapData = await mapStatementWithFallback(String(item.statementId));
+        const mappedLines = Array.isArray((mapData as any)?.mappedLines)
+          ? (mapData as any).mappedLines
+          : item.lines || [];
+        reviews.push({
+          statementId: String(item.statementId),
+          statementType: String(item.statementType || overrideType),
+          periodLabel: item.periodLabel || null,
+          comparisonOfStatementId: item.comparisonOfStatementId || null,
+          sourceReceiptId: item.sourceReceiptId ? String(item.sourceReceiptId) : undefined,
+          mappedValues: (mappedLines as ExtractedLine[]).map((l) => ({
+            originalLabel: l.originalLabel,
+            value: l.value,
+            confidence: l.confidence,
+            canonicalLineId: l.suggestedCanonicalId || null,
+            canonicalLabel: l.suggestedCanonicalLabel || '',
+            mappingStatus: l.isNonFinancial
+              ? 'unmapped'
+              : l.suggestedCanonicalId
+                ? 'auto'
+                : 'unmapped',
+            sourceRow: l.sourceRow,
+            isNonFinancial: !!l.isNonFinancial,
+            classificationReason: l.classificationReason,
+            mappingTier: l.mappingTier,
+          })),
+        });
+      }
+      setReviewStatements(reviews);
+      setActiveReviewStatementId(reviews[0]?.statementId || statementId);
+      setMappedValues(reviews[0]?.mappedValues || []);
       setStep('map');
     } catch (e: any) {
-      setError(e?.response?.data?.error || e?.message || String(e));
+      const detail = e?.response?.data?.error || e?.data?.error || e?.message;
+      setError(
+        `${t(
+          'finance.importWizard.detectionFailedHonest',
+          'We could not reliably detect or extract a financial statement. Nothing has been confirmed. Review the document type and try again, or replace the source file.'
+        )}${detail ? ` (${String(detail)})` : ''}`
+      );
     } finally {
       setLoading(false);
     }
@@ -504,6 +599,18 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
 
   const handleValueChange = (idx: number, field: string, val: any) => {
     setMappedValues((prev) => prev.map((v, i) => (i === idx ? { ...v, [field]: val } : v)));
+    setReviewStatements((current) =>
+      current.map((item) =>
+        item.statementId === activeReviewStatementId
+          ? {
+              ...item,
+              mappedValues: item.mappedValues.map((value, index) =>
+                index === idx ? { ...value, [field]: val } : value
+              ),
+            }
+          : item
+      )
+    );
   };
 
   const handleCanonicalChange = (idx: number, canonId: string) => {
@@ -516,10 +623,32 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
               canonicalLineId: canonId || null,
               canonicalLabel: canon ? (isPl ? canon.line_name_pl : canon.line_name) : '',
               mappingStatus: canonId ? 'manual' : 'unmapped',
+              userVerified: false,
               isNonFinancial: false,
               classificationReason: canonId ? undefined : v.classificationReason,
             }
           : v
+      )
+    );
+    setReviewStatements((current) =>
+      current.map((item) =>
+        item.statementId === activeReviewStatementId
+          ? {
+              ...item,
+              mappedValues: item.mappedValues.map((value, index) =>
+                index === idx
+                  ? {
+                      ...value,
+                      canonicalLineId: canonId || null,
+                      canonicalLabel: canon ? (isPl ? canon.line_name_pl : canon.line_name) : '',
+                      mappingStatus: canonId ? 'manual' : 'unmapped',
+                      userVerified: false,
+                      isNonFinancial: false,
+                    }
+                  : value
+              ),
+            }
+          : item
       )
     );
   };
@@ -529,29 +658,107 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
     setLoading(true);
     setError(null);
     try {
-      const values = mappedValues.map((v) => ({
-        canonicalLineId: v.canonicalLineId,
-        originalLabel: v.originalLabel,
-        value: v.value,
-        confidence: v.confidence,
-        sourceRow: v.sourceRow,
-        mappingStatus: v.mappingStatus,
-        isNonFinancial: v.isNonFinancial,
-        classificationReason: v.classificationReason,
-      }));
-      const data = await saveStatementValuesWithFallback(statementId, values);
-      setValidation((data as any)?.validation || null);
+      const stagedReviews = reviewStatements.length
+        ? reviewStatements
+        : [{ statementId, statementType: overrideType, mappedValues }];
+      let lastData: any = null;
+      const saved: ReviewStatement[] = [];
+      for (const review of stagedReviews) {
+        const values = review.mappedValues.map((v) => ({
+          canonicalLineId: v.canonicalLineId,
+          originalLabel: v.originalLabel,
+          value: v.value,
+          confidence: v.confidence,
+          sourceRow: v.sourceRow,
+          mappingStatus: v.mappingStatus,
+          isNonFinancial: v.isNonFinancial,
+          classificationReason: v.classificationReason,
+          userVerified: Boolean(v.userVerified),
+        }));
+        const data = await saveStatementValuesWithFallback(review.statementId, values);
+        const valuesVersion = Number((data as any)?.valuesVersion || 0);
+        let decisionReadiness: ReadinessState | null = null;
+        for (const value of review.mappedValues) {
+          if (value.mappingStatus !== 'manual' || !value.userVerified) continue;
+          if (!review.sourceReceiptId)
+            throw new Error(`${review.statementType}: source receipt is required`);
+          const body = {
+            sourceRow: value.sourceRow,
+            canonicalLineId: value.canonicalLineId,
+            reason: 'Zweryfikowane przez użytkownika podczas przeglądu importu',
+            sourceReceiptId: review.sourceReceiptId,
+            expectedValuesVersion: valuesVersion,
+          };
+          const key = `statement-map-${review.statementId}-${value.sourceRow}-${valuesVersion}`;
+          try {
+            const result = await V8FinanceApi.recordStatementManualMappingDecision(
+              review.statementId,
+              body,
+              key
+            );
+            const decision = (result as any)?.decision;
+            if (decision?.readinessStatus) {
+              decisionReadiness = {
+                readinessStatus: decision.readinessStatus,
+                summary: String(decision.summary || ''),
+                reasonCodes: Array.isArray(decision.reasonCodes) ? decision.reasonCodes : [],
+              };
+            }
+          } catch (decisionError) {
+            if (!shouldFallbackToLegacyFinance(decisionError)) throw decisionError;
+            const result = await Api.post(
+              `/api/finance-statements/${review.statementId}/manual-mapping-decisions`,
+              body,
+              { extraHeaders: { 'Idempotency-Key': key } }
+            );
+            const decision = (result as any)?.decision;
+            if (decision?.readinessStatus) {
+              decisionReadiness = {
+                readinessStatus: decision.readinessStatus,
+                summary: String(decision.summary || ''),
+                reasonCodes: Array.isArray(decision.reasonCodes) ? decision.reasonCodes : [],
+              };
+            }
+          }
+        }
+        const effectiveReadiness = decisionReadiness || (data as any)?.readiness || null;
+        const ready = effectiveReadiness?.readinessStatus === 'ready';
+        saved.push({ ...review, savedReady: ready, valuesVersion });
+        const receiptStatementId = activeReviewStatementId || stagedReviews[0]?.statementId;
+        if (
+          review.statementId === receiptStatementId &&
+          typeof V8FinanceApi.getStatementSourceReceipt === 'function'
+        ) {
+          try {
+            const receiptResult = await V8FinanceApi.getStatementSourceReceipt(review.statementId);
+            setSourceReceipt(receiptResult.receipt as Record<string, any>);
+          } catch (receiptError) {
+            if (!shouldFallbackToLegacyFinance(receiptError)) throw receiptError;
+            const legacy = await Api.get(
+              `/api/finance-statements/${review.statementId}/source-receipt`
+            );
+            setSourceReceipt(((legacy as any)?.receipt || legacy) as Record<string, any>);
+          }
+        }
+        lastData = decisionReadiness ? { ...data, readiness: decisionReadiness } : data;
+        if (!ready)
+          throw new Error(
+            `${review.statementType} ${review.periodLabel || ''}: mapping requires review`
+          );
+      }
+      setReviewStatements(saved);
+      setValidation(lastData?.validation || null);
       setReadiness(
-        (data as any)?.readiness
+        lastData?.readiness
           ? {
-              readinessStatus: String((data as any).readiness.readinessStatus || 'pending') as
+              readinessStatus: String(lastData.readiness.readinessStatus || 'pending') as
                 | 'pending'
                 | 'recoverable'
                 | 'ready'
                 | 'rejected',
-              summary: String((data as any).readiness.summary || ''),
-              reasonCodes: Array.isArray((data as any).readiness.reasonCodes)
-                ? (data as any).readiness.reasonCodes.map((code: unknown) => String(code))
+              summary: String(lastData.readiness.summary || ''),
+              reasonCodes: Array.isArray(lastData.readiness.reasonCodes)
+                ? lastData.readiness.reasonCodes.map((code: unknown) => String(code))
                 : [],
             }
           : null
@@ -573,7 +780,22 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
     if (!statementId) return;
     setLoading(true);
     try {
-      await confirmStatementWithFallback(statementId);
+      const stagedIds = reviewStatements.length
+        ? reviewStatements.map((item) => item.statementId)
+        : [statementId];
+      if (reviewStatements.some((item) => !item.savedReady))
+        throw new Error('Every statement section must be saved and ready before confirmation');
+      for (const id of stagedIds) {
+        const review = reviewStatements.find((item) => item.statementId === id);
+        if (!review?.sourceReceiptId || review.valuesVersion == null)
+          throw new Error('Source receipt and saved values version are required');
+        await confirmStatementWithFallback(
+          id,
+          review.sourceReceiptId,
+          review.valuesVersion,
+          `statement-confirm-${id}-${review.valuesVersion}`
+        );
+      }
       onComplete?.(statementId);
     } catch (e: any) {
       setError(e?.response?.data?.error || e?.message || String(e));
@@ -601,20 +823,14 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
     return <CheckCircle2 size={14} className="text-emerald-500" />;
   };
 
-  const stepLabels = smartAnalysis
-    ? [
-        t('finance.importWizard.smartStepUpload', 'Upload'),
-        t('finance.importWizard.smartStepAnalysis', 'AI Analysis'),
-        t('finance.importWizard.smartStepDone', 'Done'),
-      ]
-    : [
-        t('finance.importWizard.stepUpload', 'Upload'),
-        t('finance.importWizard.stepDetect', 'Detect'),
-        t('finance.importWizard.stepMap', 'Map & Correct'),
-        t('finance.importWizard.stepConfirm', 'Confirm'),
-      ];
+  const stepLabels = [
+    t('finance.importWizard.stepUpload', 'Upload'),
+    t('finance.importWizard.stepDetect', 'Detect'),
+    t('finance.importWizard.stepMap', 'Map & Correct'),
+    t('finance.importWizard.stepConfirm', 'Confirm'),
+  ];
 
-  const displaySteps = smartAnalysis ? (['upload', 'detect', 'confirm'] as WizardStep[]) : STEPS;
+  const displaySteps = STEPS;
   const detectedStatementTypes = Array.isArray(detection?.containedStatementTypes)
     ? detection!.containedStatementTypes.filter(Boolean)
     : [];
@@ -627,7 +843,12 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
     'finance.importWizard.confidenceAutoDetection',
     'Heuristic confidence from automatic document detection.'
   );
-  const isReadyForConfirm = readiness?.readinessStatus === 'ready';
+  const isReadyForConfirm =
+    readiness?.readinessStatus === 'ready' &&
+    reviewStatements.length > 0 &&
+    reviewStatements.every(
+      (item) => item.savedReady && item.sourceReceiptId && item.valuesVersion != null
+    );
 
   return (
     <div
@@ -637,6 +858,38 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
           : 'min-h-full bg-white dark:bg-navy-950 p-6 pb-10'
       }
     >
+      {/* Persistent source identity: stays visible throughout recovery and review. */}
+      <div
+        className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm dark:border-white/[0.08] dark:bg-navy-900"
+        data-testid="import-current-document"
+      >
+        <div className="min-w-0">
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+            {t('finance.importWizard.currentDocument', 'Current document')}
+          </div>
+          <div className="truncate font-medium text-slate-900 dark:text-white">
+            {file?.name || t('finance.importWizard.noDocumentSelected', 'No document selected')}
+          </div>
+          {(reviewStatements.find((item) => item.statementId === activeReviewStatementId)
+            ?.sourceReceiptId ||
+            statementId) && (
+            <div className="font-mono text-[10px] text-slate-500">
+              {t('finance.importWizard.receipt', 'Receipt')}:{' '}
+              {reviewStatements.find((item) => item.statementId === activeReviewStatementId)
+                ?.sourceReceiptId || t('finance.importWizard.pendingReceipt', 'pending')}
+            </div>
+          )}
+        </div>
+        <div className="text-right" data-testid="import-progress">
+          <div className="font-medium text-slate-800 dark:text-slate-200">
+            {stepLabels[displaySteps.indexOf(step)]}
+          </div>
+          <div className="text-xs text-slate-500">
+            {displaySteps.indexOf(step) + 1}/{displaySteps.length}
+          </div>
+        </div>
+      </div>
+
       {/* Header — in embedded mode a breadcrumb replaces the oversized page
           title that collided with the app logo (H2.10). */}
       <div className="flex items-center justify-between mb-8">
@@ -693,8 +946,18 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
       </div>
 
       {/* Steps indicator with progress line */}
+      <button
+        type="button"
+        className="mb-2 text-xs font-medium text-blue-600"
+        onClick={() => setStepsExpanded((value) => !value)}
+        aria-expanded={stepsExpanded}
+      >
+        {stepsExpanded
+          ? t('finance.importWizard.hideSteps', 'Hide steps')
+          : t('finance.importWizard.showSteps', 'Show steps')}
+      </button>
       <div
-        className="flex items-center mb-8"
+        className={`${stepsExpanded ? 'flex' : 'hidden'} items-center mb-5 rounded-xl border border-slate-200 p-3 dark:border-white/[0.08]`}
         role="navigation"
         aria-label={t('finance.importWizard.ariaImportSteps', 'Import steps')}
       >
@@ -881,23 +1144,55 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                 <div className="mt-1">
                   {t(
                     'finance.importWizard.multiStatementWarningBody',
-                    'The selector below does not describe the whole source file. It only chooses which section of the report will be extracted now.'
+                    'Choose every section that belongs to this import. Each selected section and comparative period will be staged for separate review.'
                   )}
                 </div>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {detectedStatementTypes.map((type) => (
-                    <span
+                    <label
                       key={type}
                       className="rounded-full border border-amber-300 bg-white px-2.5 py-1 text-xs font-medium text-amber-800 dark:border-amber-800 dark:bg-navy-900 dark:text-amber-200"
                     >
+                      <input
+                        type="checkbox"
+                        className="mr-1.5"
+                        checked={selectedSections.includes(type)}
+                        onChange={(event) =>
+                          setSelectedSections((current) =>
+                            event.target.checked
+                              ? [...new Set([...current, type])]
+                              : current.filter((item) => item !== type)
+                          )
+                        }
+                      />
                       {type}
-                    </span>
+                    </label>
                   ))}
+                </div>
+                <div className="mt-2 text-xs">
+                  {t(
+                    'finance.importWizard.wholeStatementHint',
+                    'Select all sections to import the whole financial statement.'
+                  )}
                 </div>
               </div>
             )}
 
             <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2">
+                <label className="text-xs text-slate-500 uppercase tracking-wider">
+                  {t('finance.importWizard.entity', 'Entity')}
+                </label>
+                <input
+                  value={overrideEntity}
+                  onChange={(event) => setOverrideEntity(event.target.value)}
+                  placeholder={t(
+                    'finance.importWizard.entityRequired',
+                    'Confirm the reporting entity'
+                  )}
+                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-navy-600 dark:bg-navy-800"
+                />
+              </div>
               <div>
                 <label className="text-xs text-slate-500 uppercase tracking-wider">
                   {containsMultipleStatements
@@ -912,10 +1207,35 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                   onChange={(e) => setOverrideType(e.target.value)}
                   className="mt-1 w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-sm"
                 >
+                  <option value="">
+                    {t('finance.importWizard.chooseStatementType', 'Choose statement type')}
+                  </option>
                   <option value="P&L">P&L (Income Statement)</option>
                   <option value="BS">BS (Balance Sheet)</option>
                   <option value="CF">CF (Cash Flow)</option>
                 </select>
+              </div>
+              <div>
+                <label className="text-xs text-slate-500 uppercase tracking-wider">
+                  {t('finance.importWizard.scaling', 'Scaling')}
+                </label>
+                <select
+                  value={overrideScaling || detection.scaling}
+                  onChange={(event) => setOverrideScaling(event.target.value)}
+                  className="mt-1 w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-sm"
+                >
+                  <option value="units">{t('finance.importWizard.units', 'Units')}</option>
+                  <option value="thousands">
+                    {t('finance.importWizard.thousands', 'Thousands')}
+                  </option>
+                  <option value="millions">{t('finance.importWizard.millions', 'Millions')}</option>
+                </select>
+                <div className="mt-1 text-xs text-slate-500">
+                  {t(
+                    'finance.importWizard.scaleProvenance',
+                    'Detected automatically; your override is recorded with this import.'
+                  )}
+                </div>
               </div>
               <div>
                 <label className="text-xs text-slate-500 uppercase tracking-wider">
@@ -1008,7 +1328,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
             </button>
             <button
               onClick={handleExtract}
-              disabled={loading}
+              disabled={loading || (!overrideType && selectedSections.length === 0)}
               className="flex-1 flex items-center justify-center gap-2 px-6 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-500 disabled:opacity-50"
             >
               {loading ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
@@ -1035,6 +1355,35 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
               {t('finance.importWizard.mapped', 'mapped')}
             </span>
           </div>
+          {reviewStatements.length > 1 && (
+            <div
+              className="flex flex-wrap gap-2"
+              role="tablist"
+              aria-label={t(
+                'finance.importWizard.reviewStatements',
+                'Statement sections and periods'
+              )}
+            >
+              {reviewStatements.map((item) => (
+                <button
+                  key={item.statementId}
+                  type="button"
+                  role="tab"
+                  aria-selected={item.statementId === activeReviewStatementId}
+                  className={`rounded-full border px-3 py-1.5 text-xs ${item.statementId === activeReviewStatementId ? 'bg-blue-600 text-white' : 'bg-white text-slate-700'}`}
+                  onClick={() => {
+                    setActiveReviewStatementId(item.statementId);
+                    setMappedValues(item.mappedValues);
+                  }}
+                >
+                  {item.statementType} · {item.periodLabel || '—'}
+                  {item.comparisonOfStatementId
+                    ? ` · ${t('finance.importWizard.comparison', 'comparison')}`
+                    : ''}
+                </button>
+              ))}
+            </div>
+          )}
 
           {extractionDiagnostics && (
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm dark:border-navy-700 dark:bg-navy-900">
@@ -1050,6 +1399,12 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                       overridePeriod ||
                       detection?.periodLabel ||
                       '—'}
+                  </strong>
+                </span>
+                <span>
+                  {t('finance.importWizard.comparisonPeriod', 'Comparison period')}:{' '}
+                  <strong>
+                    {extractionDiagnostics.columnSelection?.comparisonPeriodLabel || '—'}
                   </strong>
                 </span>
                 {extractionDiagnostics.extractionStrategy && (
@@ -1079,6 +1434,25 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
             canonicalLines={canonicalLines}
             onValueChange={handleValueChange}
             onCanonicalChange={handleCanonicalChange}
+            onVerifiedChange={(idx, verified) => {
+              setMappedValues((current) =>
+                current.map((value, index) =>
+                  index === idx ? { ...value, userVerified: verified } : value
+                )
+              );
+              setReviewStatements((current) =>
+                current.map((item) =>
+                  item.statementId === activeReviewStatementId
+                    ? {
+                        ...item,
+                        mappedValues: item.mappedValues.map((value, index) =>
+                          index === idx ? { ...value, userVerified: verified } : value
+                        ),
+                      }
+                    : item
+                )
+              );
+            }}
           />
 
           {mappedValues.length === 0 && (
@@ -1202,17 +1576,78 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
               </span>
               <p className="font-medium text-slate-900 dark:text-white truncate">{file?.name}</p>
             </div>
+            <div className="col-span-2 border-t border-slate-200 pt-3 dark:border-navy-700">
+              <span className="text-slate-500">
+                {t('finance.importWizard.sourceIdentity', 'Source document identity')}
+              </span>
+              <p className="break-all font-medium text-slate-900 dark:text-white">
+                {sourceReceipt?.original_file_name || file?.name || '—'}
+              </p>
+              <div className="mt-1 grid gap-1 text-xs text-slate-600 dark:text-slate-300 md:grid-cols-2">
+                <span>{overrideEntity || sourceReceipt?.entity_name || '—'}</span>
+                <span>
+                  {(sourceReceipt?.periods_json || reviewStatements.map((item) => item.periodLabel))
+                    .map((period: any) => period?.label || period)
+                    .filter(Boolean)
+                    .join(', ') || '—'}
+                </span>
+                <span>
+                  {t('finance.importWizard.uploadedAt', 'Uploaded')}:{' '}
+                  {sourceReceipt?.imported_at || '—'}
+                </span>
+                <span>
+                  {t('finance.importWizard.importer', 'Importer')}:{' '}
+                  {[sourceReceipt?.importer_name, sourceReceipt?.importer_version]
+                    .filter(Boolean)
+                    .join(' ') || '—'}
+                </span>
+                <span>
+                  {t('finance.importWizard.importedBy', 'Imported by')}:{' '}
+                  {sourceReceipt?.imported_by || '—'}
+                </span>
+                <span>
+                  {t('finance.importWizard.sourceKind', 'Source channel')}:{' '}
+                  {sourceReceipt?.source_kind || '—'}
+                </span>
+                <span>
+                  {t('finance.importWizard.pages', 'Pages')}:{' '}
+                  {(sourceReceipt?.page_ranges_json || [])
+                    .map((range: any) =>
+                      range?.pageStart === range?.pageEnd
+                        ? range?.pageStart
+                        : `${range?.pageStart || '—'}–${range?.pageEnd || '—'}`
+                    )
+                    .filter(Boolean)
+                    .join(', ') || '—'}
+                </span>
+                <span>
+                  {sourceReceipt?.mime_type || '—'} · {sourceReceipt?.size_bytes || '—'} B
+                </span>
+                <span className="md:col-span-2 font-mono break-all">
+                  SHA-256: {sourceReceipt?.content_sha256 || '—'}
+                </span>
+              </div>
+              {(activeReviewStatementId || statementId) && (
+                <a
+                  href={`/api/finance-statements/${activeReviewStatementId || statementId}/source-document`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-2 inline-flex text-sm font-medium text-blue-600 hover:underline"
+                >
+                  {t('finance.importWizard.openSource', 'Open / download source')}
+                </a>
+              )}
+            </div>
           </div>
 
           <div className="flex gap-3">
             <button
-              onClick={() => {
-                onComplete?.(smartAnalysis.statementPackId || statementId || '');
-              }}
+              onClick={handleConfirm}
+              disabled={loading || reviewStatements.some((item) => !item.savedReady)}
               className="flex-1 flex items-center justify-center gap-2 px-6 py-2.5 bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-500"
             >
               <CheckCircle2 size={16} />
-              {t('finance.importWizard.doneGoToReview', 'Done — go to review')}
+              {t('finance.importWizard.confirmAndSave', 'Confirm & Save')}
             </button>
           </div>
         </div>
@@ -1366,6 +1801,68 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
             <div>
               <span className="text-slate-500">{t('finance.importWizard.file', 'Source')}</span>
               <p className="font-medium text-slate-900 dark:text-white truncate">{file?.name}</p>
+            </div>
+            <div className="col-span-2 border-t border-slate-200 pt-3 dark:border-navy-700">
+              <span className="text-slate-500">
+                {t('finance.importWizard.sourceIdentity', 'Source document identity')}
+              </span>
+              <p className="break-all font-medium text-slate-900 dark:text-white">
+                {sourceReceipt?.original_file_name || file?.name || '—'}
+              </p>
+              <div className="mt-1 grid gap-1 text-xs text-slate-600 dark:text-slate-300 md:grid-cols-2">
+                <span>{overrideEntity || sourceReceipt?.entity_name || '—'}</span>
+                <span>
+                  {(sourceReceipt?.periods_json || reviewStatements.map((item) => item.periodLabel))
+                    .map((period: any) => period?.label || period)
+                    .filter(Boolean)
+                    .join(', ') || '—'}
+                </span>
+                <span>
+                  {t('finance.importWizard.uploadedAt', 'Uploaded')}:{' '}
+                  {sourceReceipt?.imported_at || '—'}
+                </span>
+                <span>
+                  {t('finance.importWizard.importer', 'Importer')}:{' '}
+                  {[sourceReceipt?.importer_name, sourceReceipt?.importer_version]
+                    .filter(Boolean)
+                    .join(' ') || '—'}
+                </span>
+                <span>
+                  {t('finance.importWizard.importedBy', 'Imported by')}:{' '}
+                  {sourceReceipt?.imported_by || '—'}
+                </span>
+                <span>
+                  {t('finance.importWizard.sourceKind', 'Source channel')}:{' '}
+                  {sourceReceipt?.source_kind || '—'}
+                </span>
+                <span>
+                  {t('finance.importWizard.pages', 'Pages')}:{' '}
+                  {(sourceReceipt?.page_ranges_json || [])
+                    .map((range: any) =>
+                      range?.pageStart === range?.pageEnd
+                        ? range?.pageStart
+                        : `${range?.pageStart || '—'}–${range?.pageEnd || '—'}`
+                    )
+                    .filter(Boolean)
+                    .join(', ') || '—'}
+                </span>
+                <span>
+                  {sourceReceipt?.mime_type || '—'} · {sourceReceipt?.size_bytes || '—'} B
+                </span>
+                <span className="md:col-span-2 break-all font-mono">
+                  SHA-256: {sourceReceipt?.content_sha256 || '—'}
+                </span>
+              </div>
+              {(activeReviewStatementId || statementId) && (
+                <a
+                  href={`/api/finance-statements/${activeReviewStatementId || statementId}/source-document`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-2 inline-flex text-sm font-medium text-blue-600 hover:underline"
+                >
+                  {t('finance.importWizard.openSource', 'Open / download source')}
+                </a>
+              )}
             </div>
           </div>
 

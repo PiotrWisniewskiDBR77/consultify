@@ -19,6 +19,9 @@ import {
   approveCanonicalFinancialAnalysis,
   approveCanonicalValuation,
   approveFinanceModel,
+  createRegisteredValuation,
+  discardCanonicalLegacyValuation,
+  exportCanonicalLegacyValuationPptx,
   resolveLegacyFinanceArtifact,
   runCanonicalFinancialAnalysis,
 } from '@/services/api/financeV2.api';
@@ -203,20 +206,21 @@ export function useFinanceRowActions({
           (row as FinanceModelRow).predictionType === 'budget'
         ) {
           const rawId = getBudgetRawId(row.id);
-          await Api.delete(`/api/economics/budgets/${rawId}`);
+          const version = Number((row as any).version);
+          if (!Number.isInteger(version) || version < 1)
+            throw new Error('Budget version is required');
+          await V8FinanceApi.discardBudget(
+            rawId,
+            version,
+            'Discarded from Finance workspace',
+            crypto.randomUUID()
+          );
           await loadBudgets();
         } else if (row.kind === 'analysis' || row.kind === 'investment') {
-          try {
-            await V8FinanceApi.deleteAnalysis(row.id);
-          } catch (error) {
-            if (!shouldFallbackToLegacyFinance(error)) {
-              throw error;
-            }
-            await Api.delete(`/api/economics/financial-analyses/${row.id}`);
-          }
+          await V8FinanceApi.deleteAnalysis(row.id);
           await loadAnalyses();
         } else if (row.kind === 'valuation') {
-          await Api.delete(`/api/economics/valuations/${row.id}`);
+          await discardCanonicalLegacyValuation(row.id);
           await loadValuations();
         }
         toast.success(t('finance.toast.deleted', 'Usunięto'));
@@ -274,11 +278,17 @@ export function useFinanceRowActions({
         ) {
           const rawId = getBudgetRawId(row.id);
           const detail = (await Api.get(`/api/economics/budgets/${rawId}`)) as any;
-          await Api.post('/api/economics/budgets', {
-            title: copyTitle,
-            periodStart: detail.periodStart || detail.period_start,
-            periodEnd: detail.periodEnd || detail.period_end,
-          });
+          await V8FinanceApi.createBudget(
+            {
+              title: copyTitle,
+              periodStart: String(detail.periodStart || detail.period_start),
+              periodEnd: String(detail.periodEnd || detail.period_end),
+              granularity: detail.granularity || 'monthly',
+              currency: detail.currency || 'PLN',
+              sourceKind: 'manual',
+            },
+            crypto.randomUUID()
+          );
           await loadBudgets();
         } else if (row.kind === 'analysis' || row.kind === 'investment') {
           // FIN-005: was hardcoded 'PLN', so duplicating a EUR analysis minted a
@@ -292,19 +302,12 @@ export function useFinanceRowActions({
               | 'comprehensive',
             currency: sourceCurrency || 'PLN',
           };
-          try {
-            await V8FinanceApi.createAnalysis(analysisPayload);
-          } catch (error) {
-            if (!shouldFallbackToLegacyFinance(error)) {
-              throw error;
-            }
-            await Api.post('/api/economics/financial-analyses', analysisPayload);
-          }
+          await V8FinanceApi.createAnalysis(analysisPayload);
           await loadAnalyses();
         } else if (row.kind === 'valuation') {
           const detail = (await Api.get(`/api/economics/valuations/${row.id}`)) as any;
           const v = detail?.valuation || detail;
-          await Api.post('/api/economics/valuations', {
+          await createRegisteredValuation({
             title: copyTitle,
             sourceType: v?.source_type || v?.sourceType || 'manual',
             sourceId: v?.source_id || v?.sourceId || null,
@@ -527,8 +530,18 @@ export function useFinanceRowActions({
                 const rawId = getBudgetRawId(row.id);
                 const detail = await Api.get(`/api/economics/budgets/${rawId}`);
                 const scens = (detail as any)?.scenarios || [];
-                for (const sc of scens)
-                  await Api.post(`/api/economics/budgets/${rawId}/scenarios/${sc.id}/project`, {});
+                let currentVersion = Number((detail as any)?.version);
+                if (!Number.isInteger(currentVersion) || currentVersion < 1)
+                  throw new Error('Budget version is unavailable');
+                for (const sc of scens) {
+                  const result = await V8FinanceApi.projectBudgetScenario(
+                    rawId,
+                    sc.id,
+                    currentVersion,
+                    crypto.randomUUID()
+                  );
+                  currentVersion = result.budgetVersion;
+                }
                 await loadBudgetPreviewScenarios(rawId);
                 toast.success(t('finance.toast.projected', 'Prognozy wygenerowane'));
               } catch (e: any) {
@@ -548,7 +561,11 @@ export function useFinanceRowActions({
               onClick: async () => {
                 try {
                   const rawId = getBudgetRawId(row.id);
-                  await Api.post(`/api/economics/budgets/${rawId}/approve`, {});
+                  const detail = await Api.get(`/api/economics/budgets/${rawId}`);
+                  const expectedVersion = Number((detail as any)?.version);
+                  if (!Number.isInteger(expectedVersion) || expectedVersion < 1)
+                    throw new Error('Budget version is unavailable');
+                  await V8FinanceApi.approveBudget(rawId, expectedVersion, crypto.randomUUID());
                   await loadBudgets();
                   toast.success(t('finance.toast.budgetApproved', 'Budżet zatwierdzony'));
                 } catch (e: any) {
@@ -627,13 +644,13 @@ export function useFinanceRowActions({
           icon: Download,
           onClick: async () => {
             try {
-              const result = await Api.post(`/api/economics/valuations/${row.id}/export/pptx`, {
+              const result = await exportCanonicalLegacyValuationPptx(row.id, {
                 language: i18n.language?.startsWith('pl') ? 'pl' : 'en',
                 theme: 'corporate',
                 confidentiality: 'confidential',
               });
               toast.success(t('finance.toast.pptxExported', 'PPTX wygenerowany'));
-              const downloadUrl = (result as any)?.downloadUrl;
+              const downloadUrl = result.downloadUrl;
               if (downloadUrl) window.open(downloadUrl, '_blank');
             } catch (e: any) {
               toast.error(

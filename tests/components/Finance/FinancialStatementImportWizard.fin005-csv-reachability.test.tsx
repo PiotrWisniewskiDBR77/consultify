@@ -38,7 +38,13 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('@/services/api', () => {
-  const api = { get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn(), postMultipart: vi.fn() };
+  const api = {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    delete: vi.fn(),
+    postMultipart: vi.fn(),
+  };
   return { Api: api, default: api };
 });
 
@@ -52,7 +58,8 @@ vi.mock('@/services/api/v8/finance', () => ({
     confirmStatement: vi.fn(),
     getCanonicalLines: vi.fn(),
   },
-  shouldFallbackToLegacyFinance: (error: any) => [400, 404, 405, 501].includes(Number(error?.status)),
+  shouldFallbackToLegacyFinance: (error: any) =>
+    [400, 404, 405, 501].includes(Number(error?.status)),
 }));
 
 vi.mock('@/services/funnelAnalytics', () => ({ trackFunnelEvent: vi.fn() }));
@@ -97,7 +104,7 @@ describe('FinancialStatementImportWizard — FIN-005 CSV real-screen reachabilit
     expect(screen.getByText(/Supported formats:.*CSV/i)).toBeTruthy();
   });
 
-  it('the hidden file input\'s accept attribute includes .csv (native file-picker reachability, not just drag-and-drop)', () => {
+  it("the hidden file input's accept attribute includes .csv (native file-picker reachability, not just drag-and-drop)", () => {
     const { container } = render(<FinancialStatementImportWizard />);
     const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
     expect(fileInput.getAttribute('accept')).toBe('.pdf,.xlsx,.xls,.csv');
@@ -108,10 +115,21 @@ describe('FinancialStatementImportWizard — FIN-005 CSV real-screen reachabilit
       mode: 'v8',
       statementIds: ['statement-csv-1'],
     } as any);
-    vi.mocked(V8FinanceApi.detectStatement).mockResolvedValue({ statementId: 'statement-csv-1' } as any);
+    vi.mocked(V8FinanceApi.detectStatement).mockResolvedValue({
+      statementId: 'statement-csv-1',
+    } as any);
     vi.mocked(V8FinanceApi.extractStatement).mockResolvedValue({
       statementId: 'statement-csv-1',
       lines: [{ originalLabel: 'Revenue', value: 100, confidence: 0.9 }],
+      statements: [
+        {
+          statementId: 'statement-csv-1',
+          statementType: 'P&L',
+          periodLabel: '2024',
+          sourceReceiptId: 'receipt-csv-1',
+          lines: [{ originalLabel: 'Revenue', value: 100, confidence: 0.9 }],
+        },
+      ],
     } as any);
     vi.mocked(V8FinanceApi.mapStatement).mockResolvedValue({
       statementId: 'statement-csv-1',
@@ -126,12 +144,15 @@ describe('FinancialStatementImportWizard — FIN-005 CSV real-screen reachabilit
       ],
     } as any);
     vi.mocked(V8FinanceApi.getCanonicalLines).mockResolvedValue({
-      canonicalLines: [{ id: 'line-1', statement_type: 'P&L', line_code: 'revenue', line_name: 'Revenue' }],
+      canonicalLines: [
+        { id: 'line-1', statement_type: 'P&L', line_code: 'revenue', line_name: 'Revenue' },
+      ],
       count: 1,
     } as any);
     vi.mocked(V8FinanceApi.putStatementValues).mockResolvedValue({
       statementId: 'statement-csv-1',
       savedCount: 1,
+      valuesVersion: 1,
       readiness: { readinessStatus: 'ready', summary: 'Ready', reasonCodes: [] },
       validation: { status: 'pass', messages: [] },
     } as any);
@@ -150,6 +171,7 @@ describe('FinancialStatementImportWizard — FIN-005 CSV real-screen reachabilit
     expect(screen.queryByText(/Supported formats:/i)).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Upload & Analyze' }));
+    fireEvent.change((await screen.findAllByRole('combobox'))[0], { target: { value: 'P&L' } });
     fireEvent.click(await screen.findByRole('button', { name: 'Extract Financial Lines' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Save & Validate' }));
 
@@ -163,7 +185,11 @@ describe('FinancialStatementImportWizard — FIN-005 CSV real-screen reachabilit
     fireEvent.click(screen.getByRole('button', { name: 'Confirm & Save' }));
 
     await waitFor(() => {
-      expect(V8FinanceApi.confirmStatement).toHaveBeenCalledWith('statement-csv-1');
+      expect(V8FinanceApi.confirmStatement).toHaveBeenCalledWith(
+        'statement-csv-1',
+        { sourceReceiptId: 'receipt-csv-1', expectedValuesVersion: 1 },
+        'statement-confirm-statement-csv-1-1'
+      );
       expect(onComplete).toHaveBeenCalledWith('statement-csv-1');
     });
   });

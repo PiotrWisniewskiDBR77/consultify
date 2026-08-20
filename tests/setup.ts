@@ -929,21 +929,45 @@ vi.mock('multer', () => {
     const contentType = String(req?.headers?.['content-type'] ?? '');
     if (!contentType.includes('multipart/form-data')) return undefined;
 
-    const bodyText = body.toString('binary');
-    const filenameMatch = bodyText.match(/filename="([^"]+)"/i);
-    const contentTypeMatch = bodyText.match(/Content-Type:\s*([^\r\n]+)/i);
+    const boundary = contentType.match(/boundary=(?:"([^"]+)"|([^;]+))/i)?.slice(1).find(Boolean);
+    const filePart = boundary
+      ? body
+          .toString('binary')
+          .split(`--${boundary}`)
+          .find((part) => /filename="/i.test(part))
+      : undefined;
+    if (!filePart) return undefined;
+    const filenameMatch = filePart.match(/filename="([^"]+)"/i);
+    const contentTypeMatch = filePart.match(/Content-Type:\s*([^\r\n]+)/i);
     if (!filenameMatch) return undefined;
     const originalname = filenameMatch?.[1] ?? 'upload.bin';
     const mimetype = contentTypeMatch?.[1]?.trim() || inferMimeType(originalname);
 
+    const headerEnd = filePart.indexOf('\r\n\r\n');
+    const binaryContent =
+      headerEnd >= 0 ? filePart.slice(headerEnd + 4).replace(/\r\n$/, '') : '';
+    const fileBuffer = Buffer.from(binaryContent, 'binary');
     return {
       fieldname: fieldName,
       originalname,
       encoding: '7bit',
       mimetype,
-      size: body.length,
-      buffer: body,
+      size: fileBuffer.length,
+      buffer: fileBuffer,
     };
+  };
+
+  const parseMultipartFields = (req: any, body: Buffer): void => {
+    const contentType = String(req?.headers?.['content-type'] ?? '');
+    const boundary = contentType.match(/boundary=(?:"([^"]+)"|([^;]+))/i)?.slice(1).find(Boolean);
+    if (!boundary) return;
+    req.body ||= {};
+    for (const part of body.toString('utf8').split(`--${boundary}`)) {
+      if (/filename="/i.test(part)) continue;
+      const name = part.match(/name="([^"]+)"/i)?.[1];
+      const separator = part.indexOf('\r\n\r\n');
+      if (name && separator >= 0) req.body[name] = part.slice(separator + 4).replace(/\r\n$/, '');
+    }
   };
 
   const mock = vi.fn().mockReturnValue({
@@ -953,6 +977,7 @@ vi.mock('multer', () => {
     }),
     single: vi.fn((fieldName = 'file') => async (req: any, res: any, next: any) => {
       const body = await readRequestBody(req);
+      parseMultipartFields(req, body);
       const file = buildMockFile(fieldName, req, body);
       if (file) req.file = file;
       next();

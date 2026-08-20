@@ -33,6 +33,7 @@ const BUTTON_CLASS =
 export interface ScenarioAssumptionsViewProps {
   draft: ScenarioDraft;
   onChange: (next: ScenarioDraft) => void;
+  allowedScenarioModes?: readonly ScenarioMode[];
 }
 
 const MODE_TABS: Array<{ track: 'STANDARD' | 'DRIVER_OVERRIDE' | 'FUNDAMENTAL_INITIATIVE'; label: string }> = [
@@ -41,10 +42,11 @@ const MODE_TABS: Array<{ track: 'STANDARD' | 'DRIVER_OVERRIDE' | 'FUNDAMENTAL_IN
   { track: 'FUNDAMENTAL_INITIATIVE', label: 'C · Fundamentalny (inicjatywy)' },
 ];
 
-export function ScenarioAssumptionsView({ draft, onChange }: ScenarioAssumptionsViewProps): React.ReactElement {
+export function ScenarioAssumptionsView({ draft, onChange, allowedScenarioModes }: ScenarioAssumptionsViewProps): React.ReactElement {
   const activeTrack = scenarioModeToTrack(draft.scenarioMode);
 
   function setMode(mode: ScenarioMode): void {
+    if (allowedScenarioModes && !allowedScenarioModes.includes(mode)) return;
     onChange({ ...draft, scenarioMode: mode, lastAssumptionChangeAt: new Date().toISOString() });
   }
 
@@ -63,6 +65,10 @@ export function ScenarioAssumptionsView({ draft, onChange }: ScenarioAssumptions
             type="button"
             role="tab"
             aria-selected={activeTrack === tab.track}
+            disabled={
+              allowedScenarioModes != null &&
+              !allowedScenarioModes.some((mode) => scenarioModeToTrack(mode) === tab.track)
+            }
             onClick={() => selectTrack(tab.track)}
             className={`min-h-9 rounded-md px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
               activeTrack === tab.track ? 'bg-c-surface text-c-text shadow-sm' : 'text-c-text-secondary hover:bg-c-surface'
@@ -73,7 +79,7 @@ export function ScenarioAssumptionsView({ draft, onChange }: ScenarioAssumptions
         ))}
       </div>
 
-      {activeTrack === 'STANDARD' && <StandardScenarioPanel draft={draft} onChange={onChange} />}
+      {activeTrack === 'STANDARD' && <StandardScenarioPanel draft={draft} onChange={onChange} allowedScenarioModes={allowedScenarioModes} />}
       {activeTrack === 'DRIVER_OVERRIDE' && <DriverOverridePanel draft={draft} onChange={onChange} />}
       {activeTrack === 'FUNDAMENTAL_INITIATIVE' && <FundamentalInitiativePanel draft={draft} onChange={onChange} />}
     </div>
@@ -84,7 +90,7 @@ export function ScenarioAssumptionsView({ draft, onChange }: ScenarioAssumptions
 // A — standardowy: Base / Upside / Downside
 // ---------------------------------------------------------------------------
 
-function StandardScenarioPanel({ draft, onChange }: ScenarioAssumptionsViewProps): React.ReactElement {
+function StandardScenarioPanel({ draft, onChange, allowedScenarioModes }: ScenarioAssumptionsViewProps): React.ReactElement {
   const isBase = draft.scenarioMode === 'STANDARD_BASE';
   const passthrough = isBaseModeStructurallyPassthrough(draft);
 
@@ -103,6 +109,7 @@ function StandardScenarioPanel({ draft, onChange }: ScenarioAssumptionsViewProps
             type="button"
             role="radio"
             aria-checked={draft.scenarioMode === opt.mode}
+            disabled={allowedScenarioModes != null && !allowedScenarioModes.includes(opt.mode)}
             onClick={() => onChange({ ...draft, scenarioMode: opt.mode, lastAssumptionChangeAt: new Date().toISOString() })}
             className={`${BUTTON_CLASS} ${draft.scenarioMode === opt.mode ? 'border-c-text bg-c-surface-raised' : ''}`}
           >

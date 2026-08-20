@@ -181,6 +181,7 @@ export const FINANCE_STATEMENTS_CUTOVER: LegacyCutoverDomainConfig = {
       method: 'POST',
       path: /^\/ratios\/growth\/?$/,
       state: 'observed',
+      effect: 'read-only',
       successor: null,
       reason:
         'Verified NO database write: computeGrowthRatios (finance-statements.routes.ts:3403, ratioAnalysisService.ts:1028) only reads financial_statement_values/financial_statement_lines and returns a computed ratio list. Registered for completeness because it is a POST route on this router; the reason records that it performs no mutation despite the verb.',

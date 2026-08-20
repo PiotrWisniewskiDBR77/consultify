@@ -420,7 +420,10 @@ import workModeRoutes from './routes/workMode.routes.js';
 import workqueueRoutes from './routes/workqueue.routes.js';
 import workspaceDefaultsRoutes from './routes/workspace-defaults.routes.js';
 import { initializeLayoutCapacityPersistence } from './services/presentationStudioLayoutCapacityPersistenceService.js';
-import { requireActiveMembership } from './services/legacyCutover/requireActiveMembership.js';
+import {
+  requireActiveMembership,
+  requireFinanceEditorMembership,
+} from './services/legacyCutover/requireActiveMembership.js';
 import logger from './utils/Logger.js';
 import { safeFetchHtml, SsrfBlockedError } from './utils/ssrfGuard.js';
 
@@ -434,6 +437,13 @@ const gatewayVerifyToken = verifyToken as unknown as RequestHandler;
  */
 const auditsStrictMembership = requireActiveAuditsMembership as unknown as RequestHandler;
 const tenantStrictMembership = requireActiveMembership as unknown as RequestHandler;
+const financeStatementsMutationAuthority: RequestHandler = (req, res, next) => {
+  if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
+    next();
+    return;
+  }
+  void requireFinanceEditorMembership(req as any, res, next);
+};
 const orgMembershipGuard = validateOrgMembership as unknown as RequestHandler;
 
 export class ApiGateway {
@@ -1362,6 +1372,8 @@ export class ApiGateway {
       app.use(
         '/api/finance-statements',
         gatewayVerifyToken,
+        tenantStrictMembership,
+        financeStatementsMutationAuthority,
         highRiskSurfaceGuard({ categories: ['upload', 'export'] }),
         deprecationHeader('/api/v8/finance'),
         financeStatementsRoutes

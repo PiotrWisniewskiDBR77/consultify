@@ -1144,6 +1144,9 @@ router.post(
  */
 const G4_OVERRIDABLE_FLAGS = new Set([
   'auditsFiveSurfacesV1',
+  'financeAnalysisWorkspaceV1',
+  'financeBaselineWorkspaceV1',
+  'financePredictionWorkspaceV1',
   'financeStatementPackWorkspaceV2',
   'financeWorkspacePlatformV1',
   'financeExportImportV1',

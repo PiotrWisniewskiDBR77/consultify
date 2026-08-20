@@ -1,16 +1,505 @@
 {
   "taskId": "FIN-MVP-CUTOVER-001",
   "baselineSha": "14889d7b087585ae6f5d4a74e86c1b5e344e7c1c",
-  "productSha": "e14dbe596a4617ec0a8e81e15f1cd2f704f45123",
-  "technicalSourceSha": "4ea5bc3349f8f27f2302941980939e66c5744ced",
-  "requalificationSha": "bd0e076fd6f6ecf2553bad4db571954fd2b11051",
+  "productSha": "117adaef6b9305ded7b6d0ac5069ecc03d00cec8",
+  "technicalSourceSha": "117adaef6b9305ded7b6d0ac5069ecc03d00cec8",
+  "requalificationSha": "117adaef6b9305ded7b6d0ac5069ecc03d00cec8",
   "reconciliationSha": "163a702f128518965bcdb132dda9c664231a75fa",
   "currentTwoDoorRequalification": {
-    "scope": "Mounted signed-auth two-door proof and organization scoping; no rollout or broad writer retirement is inferred.",
+    "scope": "HISTORICAL mounted signed-auth two-door proof and organization scoping; superseded for the current denominator by exactCurrentInventory20260820.",
     "gates": "Canonical signer, ACTIVE membership success and fail-closed authorization controls passed on the integrated candidate.",
-    "limitations": "Only 1 of 30 inventoried legacy V8 writers is safely retired; 29 remain deliberately enabled pending usage/parity and owner rollout decisions."
+    "limitations": "At that historical SHA only 1 of an incomplete 30-rule inventory was safely retired. Do not use this block as the exact-current denominator."
   },
   "technicalVerdict": "PASS_CURRENT_LEGACY_CUTOVER_KERNEL",
+  "exactCurrentInventory20260820": {
+    "productSha": "117adaef6b9305ded7b6d0ac5069ecc03d00cec8",
+    "scope": "All currently registered Finance legacy-route families: /api/v8/finance, /api/financial-modeling, /api/economics and /api/finance-statements.",
+    "result": {
+      "totalRouteRules": 59,
+      "actualLegacyMutationDoors": 52,
+      "alreadyCanonicalMutationDoors": 1,
+      "nonMutationOrExplicitRefusalDoors": 6,
+      "retiredLegacyMutationDoors": 24,
+      "openLegacyMutationDoors": 28
+    },
+    "correction": "The historical 1/30 denominator mixed an incomplete route inventory with POST-shaped routes that do not write legacy state. The current denominator is source-derived and separates persistence effect from HTTP verb. ECO-W14 create and ECO-W21 delete are retired after all mounted callers removed their legacy fallback. ECO-W15 update is retired behind the strict tenant-scoped canonical V8 Finance update command. ECO-W22 is retired after every mounted valuation-create caller moved to the idempotent canonical registration command. ECO-W23 is retired behind the exact identity CAS depth command with tenant-bound state and immutable receipt. ECO-W26 is retired after its mounted caller moved to the atomic, lineage-fingerprinted canonical compute adapter. ECO-W29 is retired behind the exact-identity negotiation-pack command with canonical result fingerprint, immutable receipt and cold pack readback. ECO-W31 is retired after every mounted PPTX caller moved to the exact-identity canonical renderer, shared immutable byte/source receipt and tenant-bound export binding. ECO-W32 is retired behind an exact-identity soft-discard command that archives the legacy list identity and canonical artifact, preserves the full valuation lineage and records an immutable tenant-bound receipt. ECO-W33 is retired after all mounted budget-create callers moved to one canonical idempotent registration command with explicit periods, source provenance and immutable tenant-bound receipt. ECO-W34 is retired after the mounted Budget Workspace moved both baseline-value and lock mutations to one tenant-bound, versioned and replay-safe canonical line command. ECO-W35 is retired after all mounted budget-projection callers moved to one exact-scenario, parent-version-CAS canonical projection command with immutable tenant-bound receipt. ECO-W36 is retired behind a DRAFT-only exact-scenario adjustment command that invalidates stale projections, increments the parent version and records an immutable tenant-bound receipt. ECO-W37 is retired after all mounted approval callers moved to a material maker-checker command with exact version, full line/scenario snapshot and immutable approval receipt. ECO-W38 is retired after the mounted budget delete caller moved to a DRAFT-only soft-discard command that preserves the complete aggregate, hides archived budgets from normal reads and writes an immutable tenant-bound receipt. ECO-W39 is retired after the mounted document import moved to a signature-verified PDF/XLS/XLSX/CSV canonical command with DRAFT-only exact parent CAS, atomic recognized baseline replacement, immutable provenance receipt and diagnostic unapplied rows. All thirteen retired Economics writers retain writer-scoped tested rollback.",
+    "commands": [
+      {
+        "command": "npx vitest run server/src/services/legacyCutover/__tests__/financeCutoverInventory.test.ts tests/components/Benefits/FinancialAnalysisWorkspace.v8-read-seam.test.tsx tests/components/Economics/useFinanceRowActions.v8-analysis-delete.test.tsx tests/components/Economics/useFinanceRowActions.v8-analysis-create.test.tsx tests/components/Economics/CreateAnalysisModal.v8-create.test.tsx --retry=0 --reporter=dot",
+        "exitCode": 0,
+        "result": "5/5 files; 16/16 focused registry and mounted-caller tests"
+      },
+      {
+        "command": "RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test DB_TYPE=postgres ENABLE_TEST_AUTH_BYPASS=true B1_LEGACY_TEST_CLEANUP=1 DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32772/consultify_b1_wave5 npx vitest run server/src/services/legacyCutover/__tests__/economicsCutover.pg.test.ts --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot",
+        "exitCode": 0,
+        "result": "Superseded by the exact-current wave6 rerun below; this prior 11/11 qualified ECO-W14/W21 only."
+      },
+      {
+        "command": "npx vitest run server/src/routes/v8/__tests__/finance.routes.test.ts -t \"PUT /api/v8/finance/analyses/:id validates\" --retry=0 --reporter=dot",
+        "exitCode": 0,
+        "result": "1/1 selected canonical route test passed; 47 unrelated tests skipped; strict body validation, tenant-scoped existence check and update delegation"
+      },
+      {
+        "command": "RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test DB_TYPE=postgres ENABLE_TEST_AUTH_BYPASS=true B1_LEGACY_TEST_CLEANUP=1 DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32772/consultify_b1_wave6 npx vitest run server/src/services/legacyCutover/__tests__/economicsCutover.pg.test.ts --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot",
+        "exitCode": 0,
+        "result": "1/1 file; 11/11 real mounted-router PostgreSQL tests; ECO-W14/W15/W21 all 410 before leaf, exact canonical identity/successor telemetry and zero financial_analyses delta"
+      },
+      {
+        "command": "NODE_OPTIONS=--max-old-space-size=8192 npm --prefix server run typecheck",
+        "exitCode": 0,
+        "result": "server TypeScript noEmit passed"
+      },
+      {
+        "command": "npm run type-check",
+        "exitCode": 0,
+        "result": "root TypeScript noEmit passed"
+      },
+      {
+        "command": "git diff --check",
+        "exitCode": 0,
+        "result": "passed"
+      }
+    ],
+    "cleanup": "The ECO-W22 exact-current qualification used guarded database consultify_b1_wave7 on 127.0.0.1:32772. Test-scoped rollback identities and immutable receipts were removed on a pinned PoolClient with post-commit residue0; the database was then dropped and existence readback returned 0. Earlier wave5/wave6 runs followed the same guarded drop boundary.",
+    "knownHarnessSignal": "An unfiltered run of server/src/routes/v8/__tests__/finance.routes.test.ts was not used as evidence: 41 tests passed and seven historical assertions failed because they still expect success from routes now intentionally retired/refused or rely on unrelated stale statement mocks. The new canonical analysis-update test itself passed in that run and passed again as the exact selected 1/1 command above. This packet does not claim the historical whole file is green.",
+    "verdictImpact": "PARTIAL is retained. Twenty-four of 52 actual legacy mutation doors are retired; 28 still require canonical parity, identity/backfill and retirement qualification."
+  },
+  "exactCurrentEcoW22Requalification20260820": {
+    "productSha": "f1d517cfdca8641a189aa0982d677a3fc8074618",
+    "scope": "Bounded retirement of ECO-W22 POST /api/economics/valuations in favor of POST /api/v8/finance-v2/valuation/registrations.",
+    "productTruth": "The canonical command atomically creates the legacy list identity, canonical artifact/business version/working revision, valuation case/variant, alias and immutable idempotency receipt. All mounted create callers use the canonical client. The legacy route executes verifyToken then the route-local cutover guard; disabled state returns tenant-scoped 410 telemetry and zero writes. The explicit writer-scoped rollback lever reaches the strict canonical registration handler and is tested for exactly one identity and receipt.",
+    "commands": [
+      {
+        "command": "RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32772/consultify_b1_wave7 npx vitest run server/src/services/finance/canonical/__tests__/valuationRegistrationService.pg.test.ts --pool=forks --maxWorkers=1",
+        "exitCode": 0,
+        "result": "1 file, 7/7 RealPG tests: atomic identity, rollback, foreign source, replay/collision, mounted strict HTTP contract, live authority before winning replay, 8-way convergence and immutable receipt."
+      },
+      {
+        "command": "RUN_DB_TESTS=1 MOCK_DB=false B1_LEGACY_TEST_CLEANUP=1 DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32772/consultify_b1_wave7 npx vitest run server/src/services/legacyCutover/__tests__/economicsCutover.pg.test.ts --pool=forks --maxWorkers=1",
+        "exitCode": 0,
+        "result": "1 file, 13/13 production-shaped mounted-router RealPG tests; ECO-W22 disabled 410/no-write/telemetry and writer-scoped rollback 201/one identity/receipt/residue0."
+      },
+      {
+        "command": "npx vitest run server/src/routes/__tests__/economics.routes.validation.test.ts server/src/services/legacyCutover/__tests__/financeCutoverInventory.test.ts tests/components/Economics/CreateValuationModal.source-currency.test.tsx tests/components/Economics/useFinanceRowActions.v8-analysis-mutations.test.tsx --pool=forks --maxWorkers=1",
+        "exitCode": 0,
+        "result": "4 files, 51/51 focused route, registry and mounted-caller tests."
+      },
+      {
+        "command": "npm run type-check && npm --prefix server run typecheck",
+        "exitCode": 0,
+        "result": "Root and server TypeScript noEmit passed with 8 GiB heap for the root run."
+      },
+      {
+        "command": "NODE_OPTIONS=--max-old-space-size=8192 npm run build",
+        "exitCode": 0,
+        "result": "Frontend production build passed; existing chunk-size and mixed dynamic/static import warnings recorded."
+      },
+      {
+        "command": "npx playwright test tests/e2e/finance/finance-valuation-assumptions.signed.spec.ts --list",
+        "exitCode": 0,
+        "result": "Canonical signed valuation journey discovered 1/1. This is compile/discovery evidence only; it is not claimed as a fresh executed browser journey for ECO-W22."
+      },
+      {
+        "command": "git diff --check",
+        "exitCode": 0,
+        "result": "passed"
+      }
+    ],
+    "migration": "Fresh migration ledger applied 797 migrations; strict repeat applied 0 and dry-run reported 0 pending before the qualification tests.",
+    "cleanup": "Pinned test cleanup proved exact valuation/receipt/alias/artifact/version/revision/case/variant/lifecycle residue0. Guarded database consultify_b1_wave7 was dropped and pg_database existence readback returned 0.",
+    "independentAudit": "Three independent source/runtime auditors returned GO after rollback parity, signed receipt cleanup and pinned-client cleanup were corrected.",
+    "boundary": "This closes only ECO-W22. No push, deploy, release or tenant rollout was performed. The full FIN-MVP-CUTOVER task remains PARTIAL with 40 open legacy mutation doors."
+  },
+  "exactCurrentEcoW23Requalification20260820": {
+    "productSha": "e4e0a390f6bd65402122f8d3fc64f4746c635c0b",
+    "scope": "Bounded retirement of ECO-W23 PUT /api/economics/valuations/:id/depth in favor of PUT /api/v8/finance-v2/valuation/legacy/:legacyId/depth.",
+    "productTruth": "The canonical command rechecks live Finance-editor authority before receipt replay, serializes by tenant and valuation, pins the exact artifact/business-version/current-working-revision identity, writes canonical depth state plus immutable receipt and projects the legacy assumptions JSON in the same pinned transaction. The old route is authenticated, tenant-observed and disabled by default; the writer-scoped rollback lever reaches the prior validated writer without creating a canonical receipt.",
+    "commands": [
+      {
+        "command": "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32772/fin_eco_w23_eeff DB_TYPE=postgres NODE_ENV=test npx tsx server/scripts/migrate.postgres.ts; repeat; --dry-run",
+        "exitCode": 0,
+        "result": "Fresh 799 migrations applied; strict repeat applied 0; dry-run reported 0 pending."
+      },
+      {
+        "command": "RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32772/fin_eco_w23_eeff npx vitest run server/src/services/finance/canonical/__tests__/valuationLegacySuccessor.pg.test.ts --no-file-parallelism",
+        "exitCode": 0,
+        "result": "13/13 RealPG tests; ECO-W23 concurrency converged one write plus replay, cold canonical and compatibility readback matched, collision failed closed, immutable receipt denied DELETE and revoked winning replay was denied before receipt replay."
+      },
+      {
+        "command": "RUN_DB_TESTS=1 MOCK_DB=false B1_LEGACY_TEST_CLEANUP=1 DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32772/consultify_b1_eco_w23 npx vitest run server/src/services/legacyCutover/__tests__/economicsCutover.pg.test.ts --no-file-parallelism",
+        "exitCode": 0,
+        "result": "14/14 production-shaped mounted-router RealPG tests; ECO-W23 returned 410 with exact successor and zero mutation, while writer-scoped rollback returned 200, wrote only the legacy compatibility path and emitted rollback telemetry."
+      },
+      {
+        "command": "NODE_OPTIONS=--max-old-space-size=8192 npm run type-check && npm run build:backend && NODE_OPTIONS=--max-old-space-size=8192 npm run build",
+        "exitCode": 0,
+        "result": "Root TypeScript, backend production build and frontend production build passed; only existing CSS, chunk-size and mixed-import warnings remained."
+      },
+      {
+        "command": "git diff --cached --check",
+        "exitCode": 0,
+        "result": "passed before product commit"
+      }
+    ],
+    "cleanup": "Both disposable qualification databases fin_eco_w23_eeff and consultify_b1_eco_w23 were dropped; pg_database readback returned zero rows. No acceptance runtime or manual-acceptance database was touched.",
+    "boundary": "This closes only ECO-W23. No push, deploy, release or tenant rollout was performed. The full FIN-MVP-CUTOVER task remains PARTIAL with 39 open legacy mutation doors."
+  },
+  "exactCurrentEcoW26Requalification20260820": {
+    "productSha": "5b512de52b7f1bcb2943699a9e1e071721cb5df3",
+    "scope": "Bounded retirement of ECO-W26 POST /api/economics/valuations/:id/compute in favor of POST /api/v8/finance-v2/valuation/legacy/:legacyId/compute.",
+    "productTruth": "The mounted product caller already uses the canonical adapter. That adapter rechecks live Finance-editor authority, pins exact canonical identity and source-lineage fingerprint, publishes typed method, terminal and bridge rows plus immutable receipt atomically, then cold-reads exact EV/equity. The old computation is now cut off before its UPDATE/valuation_snapshots writer; writer-scoped rollback reaches the previous validated handler and emits rollback telemetry without a canonical receipt.",
+    "commands": [
+      {
+        "command": "RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres B1_LEGACY_TEST_CLEANUP=1 DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32772/consultify_b1_eco_w26 npx vitest run server/src/services/legacyCutover/__tests__/economicsCutover.pg.test.ts server/src/services/legacyCutover/__tests__/financeCutoverInventory.test.ts --no-file-parallelism",
+        "exitCode": 0,
+        "result": "17/17 tests: exact inventory 14 retired/38 open; ECO-W26 410 with exact successor and no mutation; writer-scoped rollback 200 with legacy result, rollback telemetry and zero canonical compute receipt."
+      },
+      {
+        "command": "RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32772/fin_eco_w23_eeff npx vitest run server/src/services/finance/canonical/__tests__/valuationLegacySuccessor.pg.test.ts --no-file-parallelism",
+        "exitCode": 0,
+        "result": "Inherited exact-current canonical adapter proof: 13/13 RealPG including mounted HTTP compute, concurrent replay, immutable receipt, atomic rollback, source-fingerprint race and canonical alias race."
+      },
+      {
+        "command": "NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p server/tsconfig.json --noEmit",
+        "exitCode": 0,
+        "result": "server TypeScript noEmit passed"
+      },
+      {
+        "command": "git diff --cached --check",
+        "exitCode": 0,
+        "result": "passed before product commit"
+      }
+    ],
+    "cleanup": "Guarded database consultify_b1_eco_w26 was dropped after the suite; pg_database readback returned zero rows. No acceptance runtime or manual-acceptance database was touched.",
+    "boundary": "This closes only ECO-W26. No push, deploy, release or tenant rollout was performed. The full FIN-MVP-CUTOVER task remains PARTIAL with 38 open legacy mutation doors."
+  },
+  "exactCurrentEcoW29Requalification20260820": {
+    "productSha": "44712ba11f511cb49c1072639a0350ae86dc383b",
+    "scope": "Bounded retirement of ECO-W29 POST /api/economics/valuations/:id/negotiation-pack in favor of POST /api/v8/finance-v2/valuation/legacy/:legacyId/negotiation-pack.",
+    "productTruth": "The mounted Valuation workspace now invokes a canonical command. The command rechecks live Finance-editor authority before replay, serializes by tenant and valuation, pins the exact artifact/business-version/current-working-revision identity, fingerprints persisted canonical method, terminal and EV/equity results, stores a canonical pack plus immutable receipt atomically, cold-verifies the pack and only then writes the legacy negotiation_pack compatibility projection. The legacy writer is disabled by default and its narrow rollback remains functional with exact telemetry and zero canonical receipt.",
+    "commands": [
+      {
+        "command": "NODE_ENV=test DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32772/consultify_b1_eco_w29 DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts; repeat; --dry-run",
+        "exitCode": 0,
+        "result": "Fresh 800 migrations applied; strict repeat applied 0; dry-run reported 0 pending."
+      },
+      {
+        "command": "RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32772/consultify_b1_eco_w29 npx vitest run server/src/services/finance/canonical/__tests__/valuationLegacySuccessor.pg.test.ts --no-file-parallelism",
+        "exitCode": 0,
+        "result": "14/14 RealPG tests. ECO-W29 converged eight same-key calls to one canonical pack plus seven replays; exact canonical and compatibility readback matched; stale CAS, immutable UPDATE/DELETE and revoked winning replay failed closed."
+      },
+      {
+        "command": "RUN_DB_TESTS=1 MOCK_DB=false B1_LEGACY_TEST_CLEANUP=1 DB_TYPE=postgres DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32772/consultify_b1_eco_w29 npx vitest run server/src/services/legacyCutover/__tests__/economicsCutover.pg.test.ts server/src/services/legacyCutover/__tests__/financeCutoverInventory.test.ts --no-file-parallelism",
+        "exitCode": 0,
+        "result": "18/18 tests. Exact inventory is 15 retired/37 open; ECO-W29 returned 410 with exact successor and no mutation; writer-scoped rollback generated the legacy pack, emitted rollback telemetry and created zero canonical receipts."
+      },
+      {
+        "command": "NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p server/tsconfig.json --noEmit && npx tsc --noEmit && npm run build:backend && npm run build",
+        "exitCode": 0,
+        "result": "Server and root TypeScript, backend production build and frontend production build passed; only existing CSS, chunk-size and mixed-import warnings remained."
+      }
+    ],
+    "cleanup": "Guarded qualification database consultify_b1_eco_w29 was dropped after all gates and pg_database existence readback returned zero rows. No acceptance runtime or manual-acceptance database was touched.",
+    "boundary": "This closes only ECO-W29. No push, deploy, release or tenant rollout was performed. The full FIN-MVP-CUTOVER task remains PARTIAL with 37 open legacy mutation doors."
+  },
+  "exactCurrentEcoW31Requalification20260820": {
+    "productSha": "5eb3ce1106ce6e8070e1bcd7c6d01f0f5c4bb212",
+    "scope": "Bounded retirement of ECO-W31 POST /api/economics/valuations/:id/export/pptx in favor of POST /api/v8/finance-v2/valuation/legacy/:legacyId/export/pptx.",
+    "productTruth": "All three mounted valuation PPTX callers use the canonical client. The command rechecks live Finance-editor authority before replay, pins exact artifact/business-version/current-working-revision identity, fingerprints canonical methods, terminal values, EV/equity bridge and render options, renders real PPTX bytes, records the exact byte and source hashes in the shared immutable artifact_export_receipts ledger under mat-policy-v1, persists a tenant-bound canonical export binding and only then projects export_path/exported_at for the read-only compatibility download. The old writer is disabled by default; its writer-scoped rollback generates a real legacy PPTX and exact telemetry without a canonical receipt.",
+    "commands": [
+      {
+        "command": "NODE_ENV=test DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32772/consultify_b1_eco_w31 DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts; repeat; --dry-run",
+        "exitCode": 0,
+        "result": "Fresh 801 migrations applied; strict repeat applied 0; dry-run reported 0 pending."
+      },
+      {
+        "command": "RUN_DB_TESTS=1 MOCK_DB=false B1_LEGACY_TEST_CLEANUP=1 DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32772/consultify_b1_eco_w31 npx vitest run server/src/services/finance/canonical/__tests__/valuationLegacySuccessor.pg.test.ts server/src/services/legacyCutover/__tests__/economicsCutover.pg.test.ts server/src/services/legacyCutover/__tests__/financeCutoverInventory.test.ts --config vitest.config.ts",
+        "exitCode": 0,
+        "result": "3 files, 35/35 tests. Canonical RealPG rendered a valid PK-prefixed PPTX, proved concurrent one-effect replay, exact source/output hash and byte receipt, cold binding, terminal immutability and authority-before-replay. Mounted cutover proved 410/no-write and writer-scoped real-PPTX rollback; inventory proved 16 retired/36 open and all three callers canonical."
+      },
+      {
+        "command": "NODE_OPTIONS=--max-old-space-size=8192 npm --prefix server run typecheck && npm run build:backend && NODE_OPTIONS=--max-old-space-size=8192 npm run type-check && npm run build",
+        "exitCode": 0,
+        "result": "Server and root TypeScript noEmit, backend production build and frontend production build passed; only existing CSS, chunk-size and mixed-import warnings remained."
+      },
+      {
+        "command": "git diff --cached --check",
+        "exitCode": 0,
+        "result": "passed before product commit"
+      },
+      {
+        "command": "node scripts/cleanup/report-closure-progress.mjs",
+        "exitCode": 0,
+        "result": "82/82 evidence files present and valid; exact program reporter remains 50 DONE_CURRENT_SHA / 32 PARTIAL. ECO-W31 advances the internal Finance cutover denominator without overclaiming the parent task as complete."
+      }
+    ],
+    "migration": "Migration 20261047 created the tenant-bound canonical valuation PPTX export binding on the fresh qualification database; canonical runner repeat and dry-run both reported zero pending.",
+    "cleanup": "Guarded qualification database consultify_b1_eco_w31 was dropped after all gates and pg_database existence readback returned zero rows. Generated canonical and rollback PPTX fixtures were removed by their focused tests. No acceptance runtime or manual-acceptance database was touched.",
+    "boundary": "This closes only ECO-W31. No push, deploy, release or tenant rollout was performed. The full FIN-MVP-CUTOVER task remains PARTIAL with 36 open legacy mutation doors."
+  },
+  "exactCurrentEcoW32Requalification20260820": {
+    "productSha": "1e69ae9f1b29bb8891f82f15e81a7265dce9e132",
+    "scope": "Bounded retirement of ECO-W32 DELETE /api/economics/valuations/:id in favor of DELETE /api/v8/finance-v2/valuation/legacy/:legacyId.",
+    "productTruth": "The only mounted valuation-delete caller uses the canonical client. The command rechecks live Finance-editor authority before replay, serializes by tenant and valuation, pins exact artifact/business-version/current-working-revision identity, rejects approved valuations, atomically changes a DRAFT or REVIEW legacy list identity to ARCHIVED, archives its canonical artifact and writes one immutable tenant-bound discard receipt. The valuation row, alias, business version, working revision and full lineage remain intact. Archived identities disappear from legacy list/detail reads and all canonical input, negotiation and PPTX writers fail closed. The identity read remains available only to the same tenant so a persistent idempotent retry can recover after a lost success response. The old hard-delete writer is disabled by default; its writer-scoped rollback was exercised only on an unmapped disposable DRAFT valuation and deleted that legacy row/snapshot with exact telemetry and no canonical receipt.",
+    "commands": [
+      {
+        "command": "NODE_ENV=test DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32772/consultify_b1_eco_w32 DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts; repeat; --dry-run",
+        "exitCode": 0,
+        "result": "Fresh 802 migrations applied; strict repeat applied 0; dry-run reported 0 pending; both ECO-W32 immutability triggers were enabled O."
+      },
+      {
+        "command": "B1_LEGACY_TEST_CLEANUP=1 RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test DB_TYPE=postgres DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32772/consultify_b1_eco_w32 NODE_OPTIONS=--max-old-space-size=8192 npx vitest run server/src/services/finance/canonical/__tests__/valuationLegacySuccessor.pg.test.ts server/src/services/legacyCutover/__tests__/economicsCutover.pg.test.ts server/src/services/legacyCutover/__tests__/financeCutoverInventory.test.ts --config vitest.config.ts",
+        "exitCode": 0,
+        "result": "3 files, 38/38 tests: 16 canonical RealPG, 18 mounted cutover RealPG and 4 inventory tests. Mounted canonical DELETE converged to one effect plus replay, survived cold identity retry, preserved alias/BV/WR, hid the archived row, blocked subsequent writers and receipt/archived-row mutation, and denied revoked replay. Legacy cutover returned 410/no-write and proved writer-scoped hard-delete rollback on an isolated unmapped valuation. Inventory proved 17 retired/35 open and the mounted caller canonical."
+      },
+      {
+        "command": "NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p server/tsconfig.json --noEmit && NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit && NODE_OPTIONS=--max-old-space-size=8192 npm run build:backend && NODE_OPTIONS=--max-old-space-size=8192 npm run build",
+        "exitCode": 0,
+        "result": "Server and root TypeScript noEmit, backend production build and frontend production build passed; only existing browserslist, CSS, chunk-size and mixed-import warnings remained."
+      },
+      {
+        "command": "git diff --check",
+        "exitCode": 0,
+        "result": "passed before product commit"
+      },
+      {
+        "command": "node scripts/cleanup/report-closure-progress.mjs",
+        "exitCode": 0,
+        "result": "82/82 evidence files present and valid; exact program reporter remains 50 DONE_CURRENT_SHA / 32 PARTIAL. ECO-W32 advances the internal Finance cutover denominator without overclaiming the parent task as complete."
+      }
+    ],
+    "migration": "Migration 20261048 extends the legacy valuation status contract with ARCHIVED, creates the composite-tenant-bound discard receipt and installs UPDATE/DELETE immutability for both receipts and archived valuations. Fresh runner, repeat and dry-run all passed on the guarded qualification database.",
+    "cleanup": "Guarded qualification database consultify_b1_eco_w32 was used exclusively for ECO-W32. It was dropped after all product/evidence gates and pg_database existence readback returned zero rows. No acceptance runtime or manual-acceptance database was touched.",
+    "boundary": "This closes only ECO-W32. No push, deploy, release or tenant rollout was performed. The full FIN-MVP-CUTOVER task remains PARTIAL with 35 open legacy mutation doors."
+  },
+  "exactCurrentEcoW33Requalification20260820": {
+    "productSha": "884e5734008948e65e51a87bfe8a078032a22cf9",
+    "scope": "Bounded retirement of ECO-W33 POST /api/economics/budgets in favor of POST /api/v8/finance/budgets.",
+    "productTruth": "All four mounted budget-create callers (MyWork conversion, Benefits Budget Workspace, Finance create modal and Finance row duplication) use the canonical V8 command; interactive creators require explicit ordered periods. The command rechecks live ACTIVE Finance-editor authority before replay, validates tenant project/tool-session provenance, serializes retries, creates exactly one budget with 15 lines and 3 scenarios inside one pinned transaction, and binds the aggregate to one immutable tenant-scoped receipt. Same-key replay returns the exact identity; changed payload, foreign source, revoked authority and receipt failure are fail-closed with zero duplicate or partial aggregate. The legacy route returns 410/no-write by default and its exact writer-scoped rollback reaches only the prior compatibility handler with durable telemetry.",
+    "commands": [
+      {
+        "command": "NODE_ENV=test DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32772/consultify_b1_eco_w33 DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts; repeat; --dry-run",
+        "exitCode": 0,
+        "result": "Fresh 803 migrations applied; strict repeat applied 0; dry-run reported 0 pending; the ECO-W33 receipt immutability trigger was enabled O."
+      },
+      {
+        "command": "B1_LEGACY_TEST_CLEANUP=1 RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test DB_TYPE=postgres DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32772/consultify_b1_eco_w33 NODE_OPTIONS=--max-old-space-size=8192 npx vitest run server/src/services/finance/canonical/__tests__/budgetRegistrationService.pg.test.ts server/src/services/legacyCutover/__tests__/economicsCutover.pg.test.ts server/src/services/legacyCutover/__tests__/financeCutoverInventory.test.ts --config vitest.config.ts --no-file-parallelism --maxWorkers=1 --retry=0",
+        "exitCode": 0,
+        "result": "3 files, 31/31 tests: 6 canonical budget RealPG, 20 mounted cutover RealPG and 5 inventory tests. Proof includes atomic/cold provenance, manual and tool-session sources, 8-way convergence, collision, authority-before-winning replay, foreign source and invalid-period zero-write, receipt-failure rollback, legacy 410/no-write, writer-scoped rollback and exact 18 retired/34 open inventory."
+      },
+      {
+        "command": "npx vitest run server/src/routes/v8/__tests__/finance.routes.test.ts -t 'POST /api/v8/finance/budgets'; npx vitest run tests/components/Economics/useFinanceRowActions.v8-analysis-mutations.test.tsx tests/components/Economics/CreateBudgetModal.v8-create.test.tsx server/src/services/legacyCutover/__tests__/financeCutoverInventory.test.ts; npx vitest run tests/components/MyWork/ConvertToDialog.budget.test.tsx",
+        "exitCode": 0,
+        "result": "HTTP route 3/3 proves create 201, replay 200 and strict unknown-field no-write. Finance row actions, create modal and inventory passed 14/14, including mounted budget duplication through canonical registration; MyWork explicit-period UI passed 1/1. Inventory scans all four mounted create callers and rejects an exact legacy root POST."
+      },
+      {
+        "command": "NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p server/tsconfig.json --noEmit && NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit && NODE_OPTIONS=--max-old-space-size=8192 npm run build:backend && NODE_OPTIONS=--max-old-space-size=8192 npm run build",
+        "exitCode": 0,
+        "result": "Server and root TypeScript noEmit, backend production build and frontend production build with the qualifying 8 GiB heap passed; only existing CSS, chunk-size and mixed-import warnings remained. A default 4 GiB frontend build attempt reached chunk rendering and ended OOM, so it is recorded as harness capacity rather than qualification evidence."
+      },
+      {
+        "command": "git diff --cached --check",
+        "exitCode": 0,
+        "result": "passed before product commit"
+      }
+    ],
+    "migration": "Migration 20261049 adds explicit budget source provenance and the composite-tenant-bound immutable registration receipt. Fresh runner, repeat and dry-run passed on the guarded qualification database.",
+    "cleanup": "Guarded qualification database consultify_b1_eco_w33 was dropped after all product gates and pg_database existence readback returned zero. No acceptance runtime or manual-acceptance database was touched.",
+    "boundary": "This closes only ECO-W33. No push, deploy, release or tenant rollout was performed. The full FIN-MVP-CUTOVER task remains PARTIAL with 34 open legacy mutation doors."
+  },
+  "exactCurrentEcoW34Requalification20260820": {
+    "productSha": "850d904bb2f203f8c6bb25a1ff7113dcb587f954",
+    "scope": "Bounded retirement of ECO-W34 PUT /api/economics/budgets/:budgetId/lines/:lineId in favor of PUT /api/v8/finance/budgets/:budgetId/lines/:lineId.",
+    "productTruth": "Both mounted Budget Workspace line mutations use the canonical V8 command with the current parent budget version and a stable idempotency key. The command rechecks current ACTIVE Finance-editor authority before receipt replay, locks the exact tenant budget and line, permits writes only while the budget is DRAFT, applies parent-version CAS, atomically updates the line and increments the parent version, and persists one immutable tenant-bound response receipt. Same-key retries converge to one effect; changed payload, stale version, foreign line, terminal budget, revoked authority and receipt failure are fail-closed. The legacy writer returns tenant-scoped 410/no-write by default and its exact writer-scoped rollback reaches only the prior compatibility handler with durable telemetry.",
+    "commands": [
+      {
+        "command": "NODE_ENV=test DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32772/consultify_b1_eco_w34 DB_TYPE=postgres npx tsx server/scripts/migrate.postgres.ts; repeat; --dry-run",
+        "exitCode": 0,
+        "result": "Fresh 804 migrations applied; strict repeat applied 0; dry-run reported 0 pending; the ECO-W34 receipt immutability trigger was enabled O."
+      },
+      {
+        "command": "B1_LEGACY_TEST_CLEANUP=1 RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test DB_TYPE=postgres DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32772/consultify_b1_eco_w34 NODE_OPTIONS=--max-old-space-size=8192 npx vitest run server/src/services/finance/canonical/__tests__/budgetRegistrationService.pg.test.ts server/src/services/legacyCutover/__tests__/economicsCutover.pg.test.ts server/src/services/legacyCutover/__tests__/financeCutoverInventory.test.ts --config vitest.config.ts --no-file-parallelism --maxWorkers=1 --retry=0",
+        "exitCode": 0,
+        "result": "3 files, 38/38 tests: 10 canonical budget RealPG, 22 mounted cutover RealPG and 6 inventory tests. Proof includes exact line/version cold readback, replay/collision, 8-way convergence, live authority before winning replay, foreign/terminal no-write, receipt-failure rollback, legacy 410/no-write, writer-scoped rollback and exact 19 retired/33 open inventory. An earlier full attempt had one non-reproducible supertest HTTP parser error in the already-qualified W33 refusal; its isolated rerun passed and the complete no-retry rerun then passed 38/38."
+      },
+      {
+        "command": "npx vitest run server/src/routes/v8/__tests__/finance.routes.test.ts -t 'PUT /api/v8/finance/budgets'; npx vitest run server/src/services/legacyCutover/__tests__/financeCutoverInventory.test.ts",
+        "exitCode": 0,
+        "result": "Canonical route tests passed 6/6 for line CAS/idempotency and decimal-string validation; standalone inventory passed 6/6 and statically rejects mounted legacy line calls."
+      },
+      {
+        "command": "NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p server/tsconfig.json --noEmit && NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit && NODE_OPTIONS=--max-old-space-size=8192 npm run build:backend && NODE_OPTIONS=--max-old-space-size=8192 npm run build",
+        "exitCode": 0,
+        "result": "Server and root TypeScript noEmit, backend production build and frontend production build passed on the exact dirty product tree; only existing CSS, mixed-import and chunk-size warnings remained."
+      },
+      {
+        "command": "git diff --cached --check",
+        "exitCode": 0,
+        "result": "passed before product commit"
+      }
+    ],
+    "migration": "Migration 20261050 adds the exact line+budget owner key and a composite-tenant-bound immutable command receipt. Fresh runner, repeat and dry-run passed on the guarded qualification database.",
+    "cleanup": "Guarded qualification database consultify_b1_eco_w34 was used exclusively for ECO-W34. It was dropped after the product gates and pg_database existence readback returned zero. No acceptance runtime or manual-acceptance database was touched.",
+    "boundary": "This closes only ECO-W34. No push, deploy, release or tenant rollout was performed. The full FIN-MVP-CUTOVER task remains PARTIAL with 33 open legacy mutation doors."
+  },
+  "exactCurrentEcoW35Requalification20260820": {
+    "productSha": "eadabeb3d7d5633131b8b2b7e0b0077740bf2257",
+    "scope": "Bounded retirement of ECO-W35 POST /api/economics/budgets/:budgetId/scenarios/:scenarioId/project in favor of POST /api/v8/finance/budgets/:budgetId/scenarios/:scenarioId/project.",
+    "productTruth": "All three mounted budget-projection callers use the canonical V8 command. The command rechecks current ACTIVE Finance-editor authority before receipt replay, serializes by tenant and budget, locks the exact DRAFT budget and governed scenario, applies parent-version CAS, computes deterministic monthly projection and summary rows, increments the budget version and writes one immutable tenant-bound response receipt in the same transaction. Replay, collision, stale version, foreign scenario, terminal budget, revoked authority and non-finite results fail closed. The legacy writer returns tenant-scoped 410/no-write by default and its writer-scoped rollback reaches only the prior compatibility handler with durable telemetry.",
+    "commands": [
+      {
+        "command": "B1_LEGACY_TEST_CLEANUP=1 RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test DB_TYPE=postgres DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32772/consultify_b1_eco_w35 npx vitest run server/src/services/finance/canonical/__tests__/budgetRegistrationService.pg.test.ts server/src/services/legacyCutover/__tests__/economicsCutover.pg.test.ts --reporter=dot",
+        "exitCode": 0,
+        "result": "2 files, 38/38 RealPG tests. Exact projection cold readback, replay/collision, 8-way convergence, authority-before-winning-replay, stale/foreign/terminal/no-write, receipt rollback, legacy 410/no-write and writer-scoped rollback all passed on the exact product SHA."
+      },
+      {
+        "command": "npx vitest run server/src/routes/v8/__tests__/finance.routes.test.ts -t 'budgets/:budgetId/scenarios/:scenarioId/project' --reporter=dot; npx vitest run server/src/services/legacyCutover/__tests__/financeCutoverInventory.test.ts --reporter=dot",
+        "exitCode": 0,
+        "result": "Canonical route passed 2/2 with 52 unrelated tests skipped; exact inventory passed 7/7 and proved 20 retired / 32 open with no mounted legacy projection caller."
+      },
+      {
+        "command": "NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit && NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p server/tsconfig.json --noEmit",
+        "exitCode": 0,
+        "result": "Root and server TypeScript noEmit passed on exact product SHA."
+      },
+      {
+        "command": "npm run build:backend && NODE_OPTIONS=--max-old-space-size=8192 npm run build",
+        "exitCode": 0,
+        "result": "Backend and frontend production builds passed; only existing chunk-size and mixed-import warnings remained."
+      },
+      {
+        "command": "git diff --check",
+        "exitCode": 0,
+        "result": "passed"
+      }
+    ],
+    "migration": "Migration 20261051 adds the exact scenario+budget owner key and composite-tenant-bound immutable budget projection command receipt. Fresh runner applied 805 migrations; strict repeat applied 0 and dry-run reported 0 pending on the guarded qualification database.",
+    "cleanup": "Guarded qualification database consultify_b1_eco_w35 was used exclusively for ECO-W35 and is removed only after the evidence commit; pg_database existence0 is the final cleanup gate. No acceptance runtime or manual-acceptance database is touched.",
+    "boundary": "This closes only ECO-W35. No push, deploy, release or tenant rollout was performed. The full FIN-MVP-CUTOVER task remains PARTIAL with 32 open legacy mutation doors."
+  },
+  "exactCurrentEcoW36Requalification20260820": {
+    "productSha": "ca868d2ffaa04d46eb976355f2ca0fba5a4f782c",
+    "scope": "Bounded retirement of ECO-W36 PUT /api/economics/budgets/:budgetId/scenarios/:scenarioId/adjustments in favor of PUT /api/v8/finance/budgets/:budgetId/scenarios/:scenarioId/adjustments.",
+    "productTruth": "The canonical command rechecks current ACTIVE Finance-editor authority before receipt replay, serializes by tenant and budget, locks the exact DRAFT budget and governed scenario, normalizes a finite numeric adjustment map, applies parent-version CAS, replaces adjustments, clears stale projection and summary JSON, increments the budget version and stores one immutable tenant-bound response receipt atomically. Same-key retries converge; changed payload, stale version, foreign scenario, terminal budget, revoked authority and receipt failure are fail-closed. The legacy writer is tenant-observed and disabled by default; its exact writer-scoped rollback reaches only the prior compatibility handler.",
+    "commands": [
+      {
+        "command": "B1_LEGACY_TEST_CLEANUP=1 RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test DB_TYPE=postgres DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32772/consultify_b1_eco_w36 npx vitest run server/src/services/finance/canonical/__tests__/budgetRegistrationService.pg.test.ts server/src/services/legacyCutover/__tests__/economicsCutover.pg.test.ts --reporter=dot",
+        "exitCode": 0,
+        "result": "2 files, 42/42 RealPG tests on exact product SHA. Adjustment cold readback, stale projection invalidation, replay/collision, 8-way convergence, authority before winning replay, receipt-failure rollback, immutable receipt, legacy 410/no-write and writer-scoped rollback passed."
+      },
+      {
+        "command": "npx vitest run server/src/routes/v8/__tests__/finance.routes.test.ts -t 'budgets/:budgetId/scenarios/:scenarioId/adjustments' --reporter=dot; npx vitest run server/src/services/legacyCutover/__tests__/financeCutoverInventory.test.ts --reporter=dot",
+        "exitCode": 0,
+        "result": "Canonical route passed 2/2 with 54 unrelated tests skipped; inventory passed 7/7 and proved 21 retired / 31 open."
+      },
+      {
+        "command": "NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit && NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p server/tsconfig.json --noEmit",
+        "exitCode": 0,
+        "result": "Root and server TypeScript noEmit passed on exact product SHA."
+      },
+      {
+        "command": "npm run build:backend && NODE_OPTIONS=--max-old-space-size=8192 npm run build",
+        "exitCode": 0,
+        "result": "Backend and frontend production builds passed on the committed product bytes; only existing CSS, chunk-size and mixed-import warnings remained."
+      },
+      {
+        "command": "git diff --check",
+        "exitCode": 0,
+        "result": "passed"
+      }
+    ],
+    "migration": "Migration 20261052 creates the composite-tenant-bound immutable scenario adjustment receipt. Fresh runner applied 806 migrations; strict repeat applied 0 and dry-run reported 0 pending.",
+    "cleanup": "Guarded qualification database consultify_b1_eco_w36 is removed after the evidence commit and pg_database existence0 is the final cleanup gate. No acceptance runtime or manual-acceptance database is touched.",
+    "boundary": "This closes only ECO-W36. No push, deploy, release or tenant rollout was performed. The full FIN-MVP-CUTOVER task remains PARTIAL with 31 open legacy mutation doors."
+  },
+  "exactCurrentEcoW37Requalification20260820": {
+    "productSha": "855ea535f3fbfda48c925f59bc58b75d9b7c5497",
+    "scope": "Bounded retirement of ECO-W37 POST /api/economics/budgets/:id/approve in favor of POST /api/v8/finance/budgets/:budgetId/approve.",
+    "productTruth": "All three mounted approval callers use the canonical V8 command. Approval rechecks current ACTIVE OWNER, ADMIN or FINANCE_ADMIN authority before replay, serializes by tenant and budget, forbids creator self-approval, locks the exact DRAFT/version, requires governed CAPEX plus current projections for every scenario, persists a full deterministic line/scenario snapshot, transitions the budget with CAS and writes one immutable tenant-bound receipt atomically. Stale, self, revoked, role, not-ready, collision and receipt-failure paths are fail-closed. The old writer is disabled by default and writer-scoped rollback still reaches only the prior compatibility handler.",
+    "commands": [
+      {
+        "command": "B1_LEGACY_TEST_CLEANUP=1 RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test DB_TYPE=postgres DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32772/consultify_b1_eco_w37 npx vitest run server/src/services/finance/canonical/__tests__/budgetRegistrationService.pg.test.ts server/src/services/legacyCutover/__tests__/economicsCutover.pg.test.ts --reporter=dot",
+        "exitCode": 0,
+        "result": "2 files, 46/46 RealPG tests on exact product SHA. Distinct creator/approver, full 15-line/3-scenario snapshot, replay, revoked winning replay denial, self-approval denial, immutable receipt, atomic failure rollback, legacy 410/no-write and writer-scoped rollback passed."
+      },
+      {
+        "command": "npx vitest run server/src/routes/v8/__tests__/finance.routes.test.ts -t 'budgets/:budgetId/approve' --reporter=dot; npx vitest run server/src/services/legacyCutover/__tests__/financeCutoverInventory.test.ts --reporter=dot",
+        "exitCode": 0,
+        "result": "Canonical approval route passed 2/2 with 56 unrelated tests skipped; exact inventory and all three mounted approval caller scans passed 8/8 and proved 22 retired / 30 open."
+      },
+      {
+        "command": "NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit && NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p server/tsconfig.json --noEmit",
+        "exitCode": 0,
+        "result": "Root and server TypeScript noEmit passed on exact product SHA."
+      },
+      {
+        "command": "npm run build:backend && NODE_OPTIONS=--max-old-space-size=8192 npm run build",
+        "exitCode": 0,
+        "result": "Backend and frontend production builds passed on committed product bytes; existing CSS, chunk-size and mixed-import warnings remained."
+      }
+    ],
+    "migration": "Migration 20261053 adds exact snapshot owner/version keys and the composite-tenant-bound immutable approval receipt. Fresh runner applied 807 migrations; strict repeat applied 0 and dry-run reported 0 pending.",
+    "cleanup": "Guarded qualification database consultify_b1_eco_w37 is removed after the evidence commit and pg_database existence0 is the final cleanup gate. No acceptance runtime or manual-acceptance database is touched.",
+    "boundary": "This closes only ECO-W37. No push, deploy, release or tenant rollout was performed. The full FIN-MVP-CUTOVER task remains PARTIAL with 30 open legacy mutation doors."
+  },
+  "exactCurrentEcoW38Requalification20260820": {
+    "productSha": "a18a9bcb871223baa3fb08e522c0044f24a8e66c",
+    "scope": "Bounded retirement of ECO-W38 DELETE /api/economics/budgets/:id in favor of DELETE /api/v8/finance/budgets/:budgetId.",
+    "productTruth": "The mounted Finance caller carries the real budget version from the list mapper into a tenant-bound DRAFT-only soft-discard command. The command checks current ACTIVE Finance-editor authority before replay, serializes by tenant and budget, binds exact version and request hash, preserves lines, scenarios, snapshots and initiative links, increments the parent version and writes one immutable receipt atomically. Archived parents, children and receipts are database-immutable; archived budgets disappear from normal list/detail reads. Stale, approved, revoked, wrong-role, foreign-tenant, collision, concurrency and receipt-failure paths are fail-closed. The legacy hard-delete writer is disabled by default and the writer-scoped rollback lever remains tested.",
+    "commands": [
+      {
+        "command": "pnpm exec vitest run server/src/routes/v8/__tests__/finance.routes.test.ts -t 'DELETE /api/v8/finance/budgets' --no-file-parallelism; pnpm exec vitest run tests/components/Economics/useFinanceRowActions.v8-budget-discard.test.tsx server/src/services/legacyCutover/__tests__/financeCutoverInventory.test.ts --no-file-parallelism",
+        "exitCode": 0,
+        "result": "Canonical route 2/2; mounted mapper/action and exact inventory 11/11; inventory proves 23 retired / 29 open."
+      },
+      {
+        "command": "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32772/consultify_b1_eco_w38_exact_a18a DB_TYPE=postgres NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false pnpm exec vitest run server/src/services/finance/canonical/__tests__/budgetRegistrationService.pg.test.ts --no-file-parallelism; B1_LEGACY_TEST_CLEANUP=1 DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32772/consultify_b1_eco_w38_exact_a18a DB_TYPE=postgres NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false pnpm exec vitest run server/src/services/legacyCutover/__tests__/economicsCutover.pg.test.ts --no-file-parallelism",
+        "exitCode": 0,
+        "result": "2 files, 52/52 RealPG tests: governed discard 22/22 and production-shaped Economics cutover 30/30."
+      },
+      {
+        "command": "npm run type-check && npm --prefix server run typecheck; git diff --check HEAD^ HEAD",
+        "exitCode": 0,
+        "result": "Root and server TypeScript noEmit plus exact commit diff check passed."
+      },
+      {
+        "command": "node scripts/cleanup/report-closure-progress.mjs",
+        "exitCode": 0,
+        "result": "82/82 evidence files present and valid; program reporter remains 50 DONE_CURRENT_SHA / 32 PARTIAL with zero missing or invalid evidence. The parent FIN-MVP-CUTOVER task correctly remains PARTIAL."
+      }
+    ],
+    "migration": "Migration 20261054 adds the composite-tenant-bound immutable discard receipt and terminal aggregate immutability guards. Fresh runner applied 808 migrations; strict repeat applied 0 and dry-run reported 0 pending.",
+    "cleanup": "Exact-SHA qualification database consultify_b1_eco_w38_exact_a18a in disposable container consultify-fin-wave4-pg was dropped after proof; pg_database existence readback returned 0.",
+    "boundary": "This closes only ECO-W38. No push, deploy, release or tenant rollout was performed. The full FIN-MVP-CUTOVER task remains PARTIAL with 29 open legacy mutation doors."
+  },
+  "exactCurrentEcoW39Requalification20260820": {
+    "productSha": "117adaef6b9305ded7b6d0ac5069ecc03d00cec8",
+    "requalificationSha": "117adaef6b9305ded7b6d0ac5069ecc03d00cec8",
+    "scope": "Bounded retirement of ECO-W39 POST /api/economics/budgets/:id/import in favor of POST /api/v8/finance/budgets/:budgetId/import-document.",
+    "productTruth": "The mounted Budget Workspace sends the exact parent version to a tenant-bound DRAFT-only canonical command. The route accepts only signature-verified PDF, XLS, XLSX or CSV content; expectedVersion must be one literal positive integer resolved from body or header, with matching values when both are present. The command verifies live authority before replay, atomically replaces recognized baseline values on existing canonical codes, rejects locked or duplicate targets and ambiguous/no-match imports, returns unsupported rows as unapplied diagnostics, increments the parent version and writes immutable source provenance. Writer-scoped rollback remains tested.",
+    "commands": [
+      {
+        "command": "npx vitest run server/src/routes/v8/__tests__/finance.routes.test.ts -t 'import-document|expectedVersion|spoofed|DOCX|ZIP' --reporter=dot; npx vitest run tests/backend/harvey-vault/documentTextExtractor.test.ts -t 'advertised Finance import formats' --reporter=dot; npx vitest run tests/unit/services/v8-finance-api.test.ts -t 'budget document' --reporter=dot; npx vitest run server/src/services/legacyCutover/__tests__/financeCutoverInventory.test.ts --reporter=dot",
+        "exitCode": 0,
+        "result": "Exact-SHA focused gates passed: route 12/12, genuine PDF/XLS/XLSX/CSV extractor 1/1, multipart API bytes/hash 1/1 and inventory 10/10. Inventory proves 24 retired / 28 open."
+      },
+      {
+        "command": "NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres B1_LEGACY_TEST_CLEANUP=1 DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32772/consultify_b1_w39_exact_117adaef_20260820 npx vitest run server/src/services/finance/canonical/__tests__/budgetRegistrationService.pg.test.ts server/src/services/legacyCutover/__tests__/economicsCutover.pg.test.ts --no-file-parallelism --reporter=dot",
+        "exitCode": 0,
+        "result": "2 files, 61/61 RealPG tests, including hostile partial migration identity, fail-closed full DatabaseInitializer boot without false ledger blessing, live authority, tenant, collision, exact replay and concurrent exactly-one receipt coverage."
+      },
+      {
+        "command": "npm run type-check -- --pretty false; npm --prefix server run typecheck -- --pretty false; git diff --check HEAD^ HEAD",
+        "exitCode": 0,
+        "result": "Root and server TypeScript noEmit plus exact product commit diff check passed."
+      }
+    ],
+    "migration": "Migration 20261055 adds the tenant-bound immutable budget-document import receipt with exact occupied-object preflight. Fresh runner applied 809 migrations; strict repeat applied 0 and dry-run reported 0 pending.",
+    "cleanup": "Exact-SHA qualification database consultify_b1_w39_exact_117adaef_20260820 in disposable container consultify-fin-wave4-pg was dropped after proof; pg_database existence readback returned 0.",
+    "evidenceRoot": "/private/tmp/consultify-w39-exact-117adaef6b93/",
+    "limitation": "No broad-suite-green claim is made. Four accepted My Work failures reproduce from unchanged baseline multer.array behavior and unchanged out-of-scope implementation/assertion paths; focused W39 multipart and extraction coverage is green.",
+    "boundary": "This closes only ECO-W39. No push, deploy, release or tenant rollout was performed. The full FIN-MVP-CUTOVER task remains PARTIAL with 28 open legacy mutation doors."
+  },
   "currentKernelRequalification": {
     "migration": "Fresh exact-current PostgreSQL ledger 758/758/758 successful and unique with zero missing checksums; strict repeat applied 0 and dry-run reported 0 pending.",
     "focused": "3 files / 13 tests passed: durable lifecycle 5, mounted Finance/Results/Partner observation 6, atomic bulk user plus ACTIVE membership 2.",
@@ -25,13 +514,13 @@
   "leaseSha256": "not_applicable_integrator_bounded_task",
   "verdict": "PARTIAL",
   "open": [
-    "Only 1 of 30 inventoried legacy V8 Finance writers has a proven canonical successor and is disabled by default. The remaining 29 stay available and are classified as legacy_uncovered_writer until route-by-route parity, backfill and usage evidence exists.",
+    "The exact-current mounted-route inventory contains 52 actual legacy mutation doors. Twenty-four are retired and 28 remain open pending route-by-route canonical parity, identity/backfill, usage and rollback evidence.",
     "Rollout timing and Finance/Results reconciliation remain owner decisions; this evidence does not authorize rollout or change Results Actual ownership."
   ],
   "environment": {
     "node": "v24.12.0",
     "postgres": "16 (pgvector/pgvector:pg16)",
-    "dbUrl": "127.0.0.1:32929/fin_cutover in disposable container consultify-fin-cutover-14889d"
+    "dbUrl": "127.0.0.1:32772/consultify_b1_w39_exact_117adaef_20260820 in disposable container consultify-fin-wave4-pg; exact database was dropped after qualification and existence readback returned zero"
   },
   "changedPaths": [
     "server/migrations/20260920_finance_legacy_usage_idempotency.sql",
@@ -51,11 +540,11 @@
     {"command": "git diff --check", "exitCode": 0, "result": "passed"}
   ],
   "denominators": {
-    "focused": "8 passed / 8 discovered in 2 files",
-    "realPostgres": "4 passed / 4 discovered, including real mounted Finance router",
-    "legacyV8Writers": "1 safely retired / 30 inventoried; 29 deliberately not disabled",
-    "migration": "731/731 ledger rows on fresh database",
-    "typeCheck": "1/1 exit 0"
+    "focused": "W39 route 12/12, genuine PDF/XLS/XLSX/CSV extraction 1/1, multipart API 1/1 and exact inventory 10/10",
+    "realPostgres": "61 passed / 61 discovered across canonical budget-registration and production-shaped Economics cutover suites",
+    "legacyV8Writers": "24 safely retired / 52 actual legacy mutation doors; 28 remain open",
+    "migration": "809/809 migrations on the exact-current fresh qualification database; repeat 0 and dry pending 0",
+    "typeCheck": "Root and server noEmit 2/2 exit 0; exact commit diff check exit 0"
   },
   "fixtures": {
     "database": "fresh isolated PostgreSQL database removed after proof",
@@ -70,12 +559,12 @@
     "rollback": "only explicit FINANCE_LEGACY_WRITER_ROLLBACK_ENABLED=true reaches the legacy leaf; rollback observation is durable",
     "tenant": "same legacy ID in a foreign tenant resolves no canonical artifact/version",
     "coldReadback": "independent pg.Client reads stable canonical artifact and business-version IDs with one row per request/access kind",
-    "unprovenSurfaces": "29 uncovered writers remain enabled and visibly classified; no false zero-writer claim"
+    "unprovenSurfaces": "29 actual legacy mutation doors remain enabled and visibly classified; no false zero-writer claim"
   },
   "browserArtifacts": [],
   "rollback": {
-    "method": "Set FINANCE_LEGACY_WRITER_ROLLBACK_ENABLED=true to temporarily re-enable only the proven model-approval tranche. Remove the new unique index to revert telemetry deduplication; no Finance business data is deleted or rewritten.",
+    "method": "Set FINANCE_LEGACY_ROLLBACK_WRITERS to one exact proven writer id: ECO-W22, ECO-W23, ECO-W26, ECO-W29, ECO-W31, ECO-W32, ECO-W33, ECO-W34, ECO-W35, ECO-W36, ECO-W37, ECO-W38 or ECO-W39. This temporarily re-enables only that corresponding compatibility route. No migration rollback or Finance business-data rewrite is required.",
     "executed": true,
-    "proof": "focused unit and real-PG tests observe rollback_writer and next() exactly once"
+    "proof": "The production-shaped RealPG suite proves each listed writer-scoped rollback independently. ECO-W39 reaches exactly the prior document-import mutation while disabled state remains 410/no-write; canonical signature validation, DRAFT-only exact CAS, atomic baseline replacement, replay, live authority and provenance receipt rollback are proven separately."
   }
 }

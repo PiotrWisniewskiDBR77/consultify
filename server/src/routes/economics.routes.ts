@@ -374,9 +374,9 @@ const updateFinancialAnalysisSchema = z
   })
   .strict();
 
-// valuationService.createValuation allowlist (service §211):
-// title (req), description?, projectId?, initiativeId?, sourceType (req),
-// sourceId?, horizonYears?, currency?
+// Rollback-only contract for the retired ECO-W22 route. The cutover guard runs
+// before validation, so this handler is reachable only through the explicit,
+// writer-scoped rollback lever.
 const valuationSourceTypeSchema = z.enum([
   'financial_model',
   'financial_analysis',
@@ -391,14 +391,15 @@ const createValuationSchema = z
     initiativeId: idLike.nullish(),
     sourceType: valuationSourceTypeSchema,
     sourceId: idLike.nullish(),
-    horizonYears: z.number().optional(),
-    currency: z.string().max(10).optional(),
-    // F-4 EV depth switch (D-2, additive) — optional; omitted = existing behavior
-    // (valuationService.createValuation defaults, untouched).
+    horizonYears: z.number().int().min(1).max(20).optional(),
+    currency: z.string().trim().min(3).max(10).optional(),
     depth: z.enum(['managerial', 'banking']).optional(),
   })
   .strict();
 
+// valuationService.createValuation allowlist (service §211):
+// title (req), description?, projectId?, initiativeId?, sourceType (req),
+// sourceId?, horizonYears?, currency?
 // valuationDepthProfileService.setValuationDepth — PUT /valuations/:id/depth.
 const updateValuationDepthSchema = z
   .object({
@@ -2603,38 +2604,18 @@ router.get(
 router.post(
   '/valuations',
   verifyToken,
+  economicsCutoverGuard,
   validateBody(createValuationSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+    const organizationId = req.user?.organizationId || (req.user as any)?.organization_id;
     const userId = req.user?.id || (req.user as any)?.user_id;
-    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-
-    const {
-      title,
-      description,
-      projectId,
-      initiativeId,
-      sourceType,
-      sourceId,
-      horizonYears,
-      currency,
-      depth,
-    } = req.body || {};
-    if (!title || !sourceType)
-      return res.status(400).json({ error: 'title and sourceType required' });
-
+    if (!organizationId || !userId) return res.status(401).json({ error: 'Unauthorized' });
     const created = await createRegisteredValuation({
-      organizationId: orgId,
+      organizationId,
       userId,
-      title,
-      description,
-      projectId,
-      initiativeId,
-      sourceType,
-      sourceId,
-      horizonYears,
-      currency,
-      depth,
+      ...req.body,
+      idempotencyKey:
+        String(req.get('idempotency-key') || req.get('x-request-id') || '').trim() || uuidv4(),
       actor: {
         userId,
         userEmail: (req.user as any)?.email,
@@ -2642,7 +2623,7 @@ router.post(
         userAgent: req.get('user-agent') || undefined,
       },
     });
-    return res.status(201).json({ success: true, id: created.id });
+    return res.status(created.replay ? 200 : 201).json({ success: true, id: created.id });
   })
 );
 
@@ -2654,6 +2635,7 @@ router.post(
 router.put(
   '/valuations/:id/depth',
   verifyToken,
+  economicsCutoverGuard,
   validateBody(updateValuationDepthSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
@@ -2742,6 +2724,7 @@ router.put(
 router.post(
   '/valuations/:id/compute',
   verifyToken,
+  economicsCutoverGuard,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
@@ -2865,6 +2848,7 @@ router.post(
 router.post(
   '/valuations/:id/negotiation-pack',
   verifyToken,
+  economicsCutoverGuard,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
@@ -2966,6 +2950,7 @@ router.post(
 router.post(
   '/valuations/:id/export/pptx',
   verifyToken,
+  economicsCutoverGuard,
   validateBody(exportPptxSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
@@ -3029,6 +3014,7 @@ router.get(
 router.delete(
   '/valuations/:id',
   verifyToken,
+  economicsCutoverGuard,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
@@ -3052,6 +3038,7 @@ router.delete(
 router.post(
   '/budgets',
   verifyToken,
+  economicsCutoverGuard,
   validateBody(createBudgetSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
@@ -3087,6 +3074,7 @@ router.get(
 router.put(
   '/budgets/:budgetId/lines/:lineId',
   verifyToken,
+  economicsCutoverGuard,
   validateBody(updateBudgetLineSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
@@ -3100,6 +3088,7 @@ router.put(
 router.post(
   '/budgets/:budgetId/scenarios/:scenarioId/project',
   verifyToken,
+  economicsCutoverGuard,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
@@ -3114,6 +3103,7 @@ router.post(
 router.put(
   '/budgets/:budgetId/scenarios/:scenarioId/adjustments',
   verifyToken,
+  economicsCutoverGuard,
   validateBody(updateScenarioAdjustmentsSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
@@ -3131,6 +3121,7 @@ router.put(
 router.post(
   '/budgets/:id/approve',
   verifyToken,
+  economicsCutoverGuard,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
     const userId = req.user?.id || (req.user as any)?.user_id;
@@ -3163,6 +3154,7 @@ router.post(
 router.delete(
   '/budgets/:id',
   verifyToken,
+  economicsCutoverGuard,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
@@ -3188,6 +3180,7 @@ router.delete(
 router.post(
   '/budgets/:id/import-document',
   verifyToken,
+  economicsCutoverGuard,
   validateBody(importBudgetDocumentSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
@@ -3233,31 +3226,31 @@ router.post(
     const { v4: uuidv4 } = await import('uuid');
     const lineDefinitions = [
       {
-        code: 'revenue',
+        code: 'REVENUE',
         name: 'Revenue',
         type: 'P&L',
         keywords: ['revenue', 'sales', 'turnover'],
       },
       {
-        code: 'cogs',
+        code: 'COGS',
         name: 'Cost of Goods Sold',
         type: 'P&L',
         keywords: ['cost of goods sold', 'cogs'],
       },
       {
-        code: 'opex',
+        code: 'OPEX',
         name: 'Operating Expenses',
         type: 'P&L',
         keywords: ['operating expenses', 'opex'],
       },
       {
-        code: 'capex',
+        code: 'CAPEX',
         name: 'Capital Expenditure',
         type: 'CF',
         keywords: ['capital expenditure', 'capex'],
       },
       {
-        code: 'depreciation',
+        code: 'DEPRECIATION',
         name: 'Depreciation & Amortization',
         type: 'P&L',
         keywords: ['depreciation', 'amortization'],
@@ -3285,7 +3278,7 @@ router.post(
       if (!existing) {
         await dbRun(
           `INSERT INTO budget_lines (id, budget_id, line_code, line_name, statement_type, source, baseline_value, is_locked, display_order, created_at)
-           VALUES (?, ?, ?, ?, ?, 'document', ?, 0, ?, datetime('now'))`,
+           VALUES (?, ?, ?, ?, ?, 'baseline', ?, FALSE, ?, datetime('now'))`,
           [
             uuidv4().replace(/-/g, ''),
             budgetId,

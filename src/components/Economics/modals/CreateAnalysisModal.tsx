@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
-import { shouldFallbackToLegacyFinance, V8FinanceApi } from '@/services/api/v8/finance';
+import { V8FinanceApi } from '@/services/api/v8/finance';
 
 import {
   type FinanceAnalysisRow,
@@ -70,27 +70,13 @@ export const CreateAnalysisModal: React.FC<CreateAnalysisModalProps> = ({
             annualBenefits: annualBenefits ? parseFloat(annualBenefits) : undefined,
           }
         : {};
-      let result: any;
-      try {
-        result = await V8FinanceApi.createAnalysis({
-          title: title.trim(),
-          analysisType: defaultAnalysisType,
-          currency: selectedStatementPack?.currency || 'PLN',
-          sourceStatementPackId: selectedStatementPackId || undefined,
-          ...investmentPayload,
-        });
-      } catch (error) {
-        if (!shouldFallbackToLegacyFinance(error)) {
-          throw error;
-        }
-        result = await Api.post('/api/economics/financial-analyses', {
-          title: title.trim(),
-          analysisType: defaultAnalysisType,
-          currency: selectedStatementPack?.currency || 'PLN',
-          sourceStatementPackId: selectedStatementPackId || undefined,
-          ...investmentPayload,
-        });
-      }
+      const result: any = await V8FinanceApi.createAnalysis({
+        title: title.trim(),
+        analysisType: defaultAnalysisType,
+        currency: selectedStatementPack?.currency || 'PLN',
+        sourceStatementPackId: selectedStatementPackId || undefined,
+        ...investmentPayload,
+      });
       const created = result as any;
       const analysis = created?.analysis || created;
       toast.success(t('finance.toast.analysisCreated', 'Analiza utworzona'));

@@ -27,6 +27,7 @@ import {
   approveCanonicalFinancialAnalysis,
   approveCanonicalValuation,
   approveFinanceModel,
+  exportCanonicalLegacyValuationPptx,
   resolveLegacyFinanceArtifact,
   runCanonicalFinancialAnalysis,
 } from '@/services/api/financeV2.api';
@@ -1116,8 +1117,18 @@ export function useFinancePreview({
               try {
                 const detail = await Api.get(`/api/economics/budgets/${rawId}`);
                 const scens = (detail as any)?.scenarios || [];
-                for (const sc of scens)
-                  await Api.post(`/api/economics/budgets/${rawId}/scenarios/${sc.id}/project`, {});
+                let currentVersion = Number((detail as any)?.version);
+                if (!Number.isInteger(currentVersion) || currentVersion < 1)
+                  throw new Error('Budget version is unavailable');
+                for (const sc of scens) {
+                  const result = await V8FinanceApi.projectBudgetScenario(
+                    rawId,
+                    sc.id,
+                    currentVersion,
+                    crypto.randomUUID()
+                  );
+                  currentVersion = result.budgetVersion;
+                }
                 await loadBudgetPreviewScenarios(rawId);
                 toast.success(t('finance.toast.projected', 'Prognozy wygenerowane'));
               } catch (e: any) {
@@ -1134,7 +1145,11 @@ export function useFinancePreview({
               label: t('finance.actions.approve', 'Zatwierdź'),
               onClick: async () => {
                 try {
-                  await Api.post(`/api/economics/budgets/${rawId}/approve`, {});
+                  const detail = await Api.get(`/api/economics/budgets/${rawId}`);
+                  const expectedVersion = Number((detail as any)?.version);
+                  if (!Number.isInteger(expectedVersion) || expectedVersion < 1)
+                    throw new Error('Budget version is unavailable');
+                  await V8FinanceApi.approveBudget(rawId, expectedVersion, crypto.randomUUID());
                   await loadBudgets();
                   toast.success(t('finance.toast.budgetApproved', 'Budżet zatwierdzony'));
                 } catch (e: any) {
@@ -1207,7 +1222,7 @@ export function useFinancePreview({
           label: t('finance.actions.exportPptx', 'Eksportuj PPTX'),
           onClick: async () => {
             try {
-              const result = await Api.post(`/api/economics/valuations/${row.id}/export/pptx`, {
+              const result = await exportCanonicalLegacyValuationPptx(row.id, {
                 language: i18n.language?.startsWith('pl') ? 'pl' : 'en',
                 theme: 'corporate',
                 confidentiality: 'confidential',

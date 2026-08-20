@@ -76,15 +76,19 @@ export async function confirmAndRegisterStatementPack(
       params.organizationId,
       `financial_statement:${params.statementId}`,
     ]);
-    const owned = await tx.query<{ id: string; statement_pack_id: string | null }>(
-      `SELECT id, statement_pack_id FROM financial_statements WHERE id = ? AND organization_id = ? FOR UPDATE`,
+    const owned = await tx.query<{ id: string; statement_pack_id: string | null; status: string }>(
+      `SELECT id, statement_pack_id, status FROM financial_statements WHERE id = ? AND organization_id = ? FOR UPDATE`,
       [params.statementId, params.organizationId]
     );
     if (!owned.rows[0]) throw new Error('Financial statement not found for organization');
     await params.beforeLegacyMutation?.();
 
     const existingPackId = owned.rows[0].statement_pack_id;
-    if (existingPackId) {
+    // An existing canonical alias proves registration identity only. It does
+    // not prove that the current statement values_version has been terminally
+    // confirmed: a confirmed statement can be reopened by a later values save.
+    // Only an already-confirmed owner may take the early replay branch.
+    if (existingPackId && String(owned.rows[0].status || '').toLowerCase() === 'confirmed') {
       const existingAlias = await tx.query<{
         artifact_id: string;
         business_version_id: string;

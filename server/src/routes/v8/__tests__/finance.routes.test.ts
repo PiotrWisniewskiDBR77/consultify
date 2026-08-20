@@ -1,11 +1,16 @@
+import { createHash } from 'node:crypto';
 import express, { type Express } from 'express';
+import JSZip from 'jszip';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { FILE_UPLOAD_SIGNATURE_MISMATCH_CODE } from '../../../middleware/fileUpload.middleware.js';
 import { V8_FINANCE_READ_CONTRACT } from '../finance.routes.js';
 
+const mockFinanceEditorGate = vi.hoisted(() => vi.fn());
 vi.mock('../../../services/legacyCutover/requireActiveMembership.js', () => ({
   requireActiveMembership: (_req: unknown, _res: unknown, next: () => void) => next(),
+  requireFinanceEditorMembership: (...args: unknown[]) => mockFinanceEditorGate(...args),
 }));
 
 const mockGetFinanceDashboard = vi.fn();
@@ -26,12 +31,20 @@ const mockGetValidations = vi.fn();
 const mockListEvents = vi.fn();
 const mockListValuations = vi.fn();
 const mockListBudgets = vi.fn();
-const mockCreateBudget = vi.fn();
+const mockRegisterBudget = vi.fn();
+const mockApplyBudgetLineCommand = vi.fn();
+const mockProjectBudgetScenario = vi.fn();
+const mockUpdateBudgetScenarioAdjustments = vi.fn();
+const mockApproveBudgetCommand = vi.fn();
+const mockDiscardBudgetCommand = vi.fn();
+const mockImportBudgetDocumentCommand = vi.fn();
+const mockExtractDocumentTextFromBuffer = vi.fn();
 const mockListAnalyses = vi.fn();
 const mockGetAnalysisRatios = vi.fn();
 const mockGetAnalysisInsights = vi.fn();
 const mockApproveAnalysis = vi.fn();
 const mockCreateAnalysis = vi.fn();
+const mockUpdateAnalysis = vi.fn();
 const mockComputeRatios = vi.fn();
 const mockBuildStatementAnalytics = vi.fn();
 const mockSearchStatementDocumentIntelligence = vi.fn();
@@ -85,6 +98,10 @@ const mockDbAll = vi.fn();
 const mockDbRun = vi.fn();
 const mockSyncStatementToPack = vi.fn();
 const mockAutoMapLines = vi.fn();
+const mockAppendCfoDerivedMappingSuggestions = vi.fn();
+const mockBackfillStatementValueSourcePages = vi.fn();
+const mockStageSelectedStatementSections = vi.fn();
+const mockConfirmGovernedStatement = vi.fn();
 const mockPersistComputeResult = vi.fn();
 // FIN-005 Fix 2: /statements/upload-and-analyze now goes through the same
 // idempotency primitives /finance-statements/upload already used (moved to
@@ -112,6 +129,7 @@ vi.mock('../../../services/financialAnalysisService.js', () => ({
   getAnalysisInsights: (...args: unknown[]) => mockGetAnalysisInsights(...args),
   approveAnalysis: (...args: unknown[]) => mockApproveAnalysis(...args),
   runFullAnalysis: (...args: unknown[]) => mockRunFullAnalysis(...args),
+  updateAnalysis: (...args: unknown[]) => mockUpdateAnalysis(...args),
 }));
 
 vi.mock('../../../services/financialModelingService.js', () => ({
@@ -148,9 +166,14 @@ vi.mock('../../../services/financeStatementAnalyticsService.js', () => ({
 
 vi.mock('../../../services/financialStatementService.js', () => ({
   autoMapLines: (...args: unknown[]) => mockAutoMapLines(...args),
+  appendCfoDerivedMappingSuggestions: (...args: unknown[]) =>
+    mockAppendCfoDerivedMappingSuggestions(...args),
+  backfillStatementValueSourcePages: (...args: unknown[]) =>
+    mockBackfillStatementValueSourcePages(...args),
   classifyStatementDocument: (...args: unknown[]) => mockClassifyStatementDocument(...args),
   confirmStatement: (...args: unknown[]) => mockConfirmStatement(...args),
   createStatement: (...args: unknown[]) => mockCreateStatement(...args),
+  detectContainedStatementTypes: vi.fn(() => ['P&L']),
   detectStatementType: (...args: unknown[]) => mockDetectStatementType(...args),
   evaluateStatementReadiness: (...args: unknown[]) => mockEvaluateStatementReadiness(...args),
   extractFinancialLines: (...args: unknown[]) => mockExtractFinancialLines(...args),
@@ -186,11 +209,38 @@ vi.mock('../../../services/financialStatementService.js', () => ({
   finalizeIdempotentUpload: (...args: unknown[]) => mockFinalizeIdempotentUpload(...args),
   getIdempotencyKey: (...args: unknown[]) => mockGetIdempotencyKey(...args),
   IdempotencyKeyTooLongError: class IdempotencyKeyTooLongError extends Error {},
+  isStructuredStatementInput: vi.fn(() => false),
   MAX_IDEMPOTENCY_KEY_CHARS: 200,
   reserveIdempotentUpload: (...args: unknown[]) => mockReserveIdempotentUpload(...args),
   sha256Hex: (...args: unknown[]) => mockSha256Hex(...args),
   withStatementUploadIdempotencyLock: (...args: unknown[]) =>
     mockWithStatementUploadIdempotencyLock(...(args as [string, string, () => Promise<unknown>])),
+}));
+
+vi.mock('../../../services/statementMultiSectionImportService.js', () => ({
+  stageSelectedStatementSections: (...args: unknown[]) =>
+    mockStageSelectedStatementSections(...args),
+}));
+
+vi.mock('../../../services/finance/canonical/statementGovernedConfirmationService.js', () => ({
+  confirmGovernedStatement: (...args: unknown[]) => mockConfirmGovernedStatement(...args),
+}));
+
+vi.mock('../../../services/finance/canonical/statementManualMappingDecisionService.js', () => ({
+  recordManualMappingDecision: vi.fn(),
+}));
+
+vi.mock('../../../services/finance/canonical/statementSourceReceiptService.js', () => ({
+  readStatementSourceReceipt: vi.fn(),
+  StatementGovernanceError: class StatementGovernanceError extends Error {
+    status: number;
+    code: string;
+    constructor(code: string, message: string, status: number) {
+      super(message);
+      this.code = code;
+      this.status = status;
+    }
+  },
 }));
 
 vi.mock('../../../services/financeCanonicalRegistrySyncService.js', () => ({
@@ -239,7 +289,92 @@ vi.mock('../../../services/valuationService.js', () => ({
 
 vi.mock('../../../services/budgetingService.js', () => ({
   listBudgets: (...args: unknown[]) => mockListBudgets(...args),
-  createBudget: (...args: unknown[]) => mockCreateBudget(...args),
+}));
+
+vi.mock('../../../services/finance/canonical/budgetRegistrationService.js', () => ({
+  BudgetRegistrationError: class BudgetRegistrationError extends Error {
+    constructor(
+      public code: string,
+      public status: number,
+      message: string
+    ) {
+      super(message);
+    }
+  },
+  registerBudget: (...args: unknown[]) => mockRegisterBudget(...args),
+}));
+
+vi.mock('../../../services/finance/canonical/budgetLineCommandService.js', () => ({
+  BudgetLineCommandError: class BudgetLineCommandError extends Error {
+    constructor(
+      public code: string,
+      public status: number,
+      message: string,
+      public details?: Record<string, unknown>
+    ) {
+      super(message);
+    }
+  },
+  applyBudgetLineCommand: (...args: unknown[]) => mockApplyBudgetLineCommand(...args),
+}));
+
+vi.mock('../../../services/finance/canonical/budgetProjectionCommandService.js', () => ({
+  BudgetProjectionCommandError: class BudgetProjectionCommandError extends Error {
+    constructor(
+      public code: string,
+      public status: number,
+      message: string,
+      public details?: Record<string, unknown>
+    ) {
+      super(message);
+    }
+  },
+  projectBudgetScenario: (...args: unknown[]) => mockProjectBudgetScenario(...args),
+  updateBudgetScenarioAdjustments: (...args: unknown[]) =>
+    mockUpdateBudgetScenarioAdjustments(...args),
+}));
+
+vi.mock('../../../services/finance/canonical/budgetApprovalCommandService.js', () => ({
+  BudgetApprovalCommandError: class BudgetApprovalCommandError extends Error {
+    constructor(
+      public code: string,
+      public status: number,
+      message: string,
+      public details?: Record<string, unknown>
+    ) {
+      super(message);
+    }
+  },
+  approveBudgetCommand: (...args: unknown[]) => mockApproveBudgetCommand(...args),
+}));
+vi.mock('../../../services/finance/canonical/budgetDiscardCommandService.js', () => ({
+  BudgetDiscardCommandError: class BudgetDiscardCommandError extends Error {
+    constructor(
+      public code: string,
+      public status: number,
+      message: string,
+      public details?: Record<string, unknown>
+    ) {
+      super(message);
+    }
+  },
+  discardBudgetCommand: (...args: unknown[]) => mockDiscardBudgetCommand(...args),
+}));
+vi.mock('../../../services/finance/canonical/budgetDocumentImportCommandService.js', () => ({
+  BudgetDocumentImportCommandError: class BudgetDocumentImportCommandError extends Error {
+    constructor(
+      public code: string,
+      public status: number,
+      message: string,
+      public details?: Record<string, unknown>
+    ) {
+      super(message);
+    }
+  },
+  importBudgetDocumentCommand: (...args: unknown[]) => mockImportBudgetDocumentCommand(...args),
+}));
+vi.mock('../../../services/documentTextExtractor.js', () => ({
+  extractTextFromBuffer: (...args: unknown[]) => mockExtractDocumentTextFromBuffer(...args),
 }));
 
 vi.mock('../../../services/ratioAnalysisService.js', () => ({
@@ -337,6 +472,9 @@ const UID = 'user-finance-v8';
 describe('V8 finance read-only routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockFinanceEditorGate.mockImplementation((_req: unknown, _res: unknown, next: () => void) =>
+      next()
+    );
     mockUser = { id: UID, role: 'ADMIN', organizationId: ORG, isSuperAdmin: false };
     mockGetFinanceDashboard.mockResolvedValue({
       ingestionPipeline: {
@@ -361,7 +499,67 @@ describe('V8 finance read-only routes', () => {
     mockListModels.mockResolvedValue([]);
     mockListValuations.mockResolvedValue([]);
     mockListBudgets.mockResolvedValue([]);
-    mockCreateBudget.mockResolvedValue({ id: 'budget-new', title: 'Test Budget', status: 'DRAFT' });
+    mockRegisterBudget.mockResolvedValue({
+      budget: { id: 'budget-new', title: 'Test Budget', status: 'DRAFT' },
+      lineCount: 15,
+      scenarioCount: 3,
+      replay: false,
+    });
+    mockApplyBudgetLineCommand.mockResolvedValue({
+      budgetId: 'budget-new',
+      line: {
+        id: 'line-1',
+        lineCode: 'REVENUE',
+        baselineValue: '42',
+        source: 'manual',
+        driverKpiId: null,
+        driverFormula: null,
+        isLocked: false,
+      },
+      budgetVersion: 2,
+      replay: false,
+    });
+    mockProjectBudgetScenario.mockResolvedValue({
+      budgetId: 'budget-new',
+      scenario: {
+        id: 'scenario-1',
+        scenarioType: 'base',
+        projections: { periods: ['2028-01'], lines: { REVENUE: { '2028-01': 42 } } },
+        summaryMetrics: { totalRevenue: 42 },
+      },
+      budgetVersion: 2,
+      projectionSha256: 'a'.repeat(64),
+      replay: false,
+    });
+    mockUpdateBudgetScenarioAdjustments.mockResolvedValue({
+      budgetId: 'budget-new',
+      scenario: {
+        id: 'scenario-1',
+        scenarioType: 'base',
+        adjustments: { revenueGrowth: 7 },
+      },
+      budgetVersion: 2,
+      adjustmentsSha256: 'b'.repeat(64),
+      replay: false,
+    });
+    mockApproveBudgetCommand.mockResolvedValue({
+      budgetId: 'budget-new',
+      snapshotId: 'snapshot-1',
+      status: 'APPROVED',
+      budgetVersion: 2,
+      snapshotSha256: 'c'.repeat(64),
+      approvedBy: UID,
+      approvedAt: '2026-08-20T10:00:00.000Z',
+      replay: false,
+    });
+    mockDiscardBudgetCommand.mockResolvedValue({
+      budgetId: 'budget-new',
+      status: 'ARCHIVED',
+      budgetVersion: 4,
+      archivedBy: 'user-1',
+      archivedAt: '2026-08-20T00:00:00.000Z',
+      replay: false,
+    });
     mockListAnalyses.mockResolvedValue([]);
     mockGetAnalysisRatios.mockResolvedValue([]);
     mockGetAnalysisInsights.mockResolvedValue([]);
@@ -486,6 +684,27 @@ describe('V8 finance read-only routes', () => {
         isNonFinancial: false,
       },
     ]);
+    mockAppendCfoDerivedMappingSuggestions.mockReturnValue(undefined);
+    mockBackfillStatementValueSourcePages.mockResolvedValue(undefined);
+    mockStageSelectedStatementSections.mockResolvedValue({
+      selectedTypes: ['P&L'],
+      statements: [
+        {
+          statementId: 'statement-1',
+          statementType: 'P&L',
+          periodLabel: 'Q1 2026',
+          sourceReceiptId: 'receipt-1',
+          lines: [{ originalLabel: 'Revenue', value: 100, confidence: 0.9, sourceRow: 1 }],
+        },
+      ],
+    });
+    mockConfirmGovernedStatement.mockResolvedValue({
+      statementPackId: 'pack-1',
+      artifactId: 'artifact-1',
+      businessVersionId: 'business-version-1',
+      workingRevisionId: 'working-revision-1',
+      replayed: false,
+    });
   });
 
   it('GET /api/v8/finance/dashboard returns envelope and delegates to getFinanceDashboard', async () => {
@@ -1216,6 +1435,28 @@ describe('V8 finance read-only routes', () => {
     expect(mockListStatements).toHaveBeenCalledWith(ORG, 'recoverable');
   });
 
+  it('keeps Statement reads mounted but denies mutations when Finance editor authority fails', async () => {
+    mockListStatements.mockResolvedValue([]);
+    const app = createApp();
+
+    expect((await request(app).get('/api/v8/finance/statements')).status).toBe(200);
+    expect(mockFinanceEditorGate).not.toHaveBeenCalled();
+
+    mockFinanceEditorGate.mockImplementation((_req: unknown, res: any) =>
+      res.status(403).json({ success: false, code: 'FINANCE_EDIT_FORBIDDEN' })
+    );
+    const denied = await request(app)
+      .post('/api/v8/finance/statements/upload-and-analyze')
+      .attach('file', Buffer.from('%PDF-1.4 denied'), {
+        filename: 'denied.pdf',
+        contentType: 'application/pdf',
+      });
+
+    expect(denied.status).toBe(403);
+    expect(denied.body).toEqual({ success: false, code: 'FINANCE_EDIT_FORBIDDEN' });
+    expect(mockCreateStatement).not.toHaveBeenCalled();
+  });
+
   it('POST /api/v8/finance/statements/upload-and-analyze returns envelope and delegates to the governed upload seam', async () => {
     const app = createApp();
     const res = await request(app)
@@ -1495,54 +1736,36 @@ describe('V8 finance read-only routes', () => {
     });
 
     const app = createApp();
-    const res = await request(app).post('/api/v8/finance/statements/statement-1/confirm').send({});
+    const res = await request(app)
+      .post('/api/v8/finance/statements/statement-1/confirm')
+      .set('Idempotency-Key', 'confirm-statement-1-v1')
+      .send({ sourceReceiptId: 'receipt-1', expectedValuesVersion: 0 });
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
     expect(res.body.data?.success).toBe(true);
     expect(res.body.data?.statementId).toBe('statement-1');
     expect(res.body.data?.status).toBe('confirmed');
-    expect(mockEvaluateStatementReadiness).toHaveBeenCalledWith({
-      rawStatus: 'mapped',
-      statementType: 'P&L',
-      validationStatus: 'pass',
-      currency: 'PLN',
-      scaling: 'units',
-      validationMessages: [],
-      values: [{ canonicalLineId: 'line-1', value: 100, isNonFinancial: false }],
+    expect(res.body.data).toEqual(
+      expect.objectContaining({
+        statementPackId: 'pack-1',
+        sourceReceiptId: 'receipt-1',
+        valuesVersion: 0,
+        canonicalArtifactId: 'artifact-1',
+        canonicalBusinessVersionId: 'business-version-1',
+        canonicalWorkingRevisionId: 'working-revision-1',
+        canonicalReplay: false,
+      })
+    );
+    expect(mockConfirmGovernedStatement).toHaveBeenCalledWith({
+      statementId: 'statement-1',
+      organizationId: ORG,
+      userId: UID,
+      sourceReceiptId: 'receipt-1',
+      expectedValuesVersion: 0,
+      idempotencyKey: 'confirm-statement-1-v1',
     });
-    expect(mockConfirmStatement).toHaveBeenCalledWith(
-      'statement-1',
-      UID,
-      expect.objectContaining({ readinessStatus: 'ready' })
-    );
-    expect(mockSnapshotCanonicalStatementVersion).toHaveBeenCalledWith(
-      expect.objectContaining({
-        statementId: 'statement-1',
-        versionKind: 'confirmed',
-      })
-    );
-    expect(mockSyncStatementToPack).toHaveBeenCalledWith('statement-1');
-    expect(mockRecordStatementSourceArtifact).toHaveBeenCalledWith(
-      expect.objectContaining({
-        statementId: 'statement-1',
-        artifactType: 'confirmation',
-      })
-    );
-    expect(mockUpdateStatementIngestRun).toHaveBeenCalledWith(
-      expect.objectContaining({
-        ingestRunId: 'ingest-run-1',
-        currentStage: 'confirm',
-        runStatus: 'completed',
-      })
-    );
-    expect(mockRecordStatementQualityRun).toHaveBeenCalledWith(
-      expect.objectContaining({
-        statementId: 'statement-1',
-        organizationId: ORG,
-        stage: 'confirm',
-      })
-    );
+    expect(mockConfirmStatement).not.toHaveBeenCalled();
   });
 
   it('PUT /api/v8/finance/statements/:id/values returns envelope and delegates to shared values flow', async () => {
@@ -1649,39 +1872,369 @@ describe('V8 finance read-only routes', () => {
   });
 
   it('POST /api/v8/finance/budgets creates a budget and returns 201', async () => {
-    mockCreateBudget.mockResolvedValue({
-      id: 'budget-created',
-      organizationId: ORG,
-      title: 'FY26 Budget',
-      status: 'DRAFT',
-      periodStart: '2026-01-01',
-      periodEnd: '2026-12-31',
-      currency: 'PLN',
-      granularity: 'monthly',
+    mockRegisterBudget.mockResolvedValue({
+      budget: {
+        id: 'budget-created',
+        organizationId: ORG,
+        title: 'FY26 Budget',
+        status: 'DRAFT',
+        periodStart: '2026-01-01',
+        periodEnd: '2026-12-31',
+        currency: 'PLN',
+        granularity: 'monthly',
+      },
+      lineCount: 15,
+      scenarioCount: 3,
+      replay: false,
     });
     const app = createApp();
-    const res = await request(app).post('/api/v8/finance/budgets').send({
-      title: 'FY26 Budget',
-      periodStart: '2026-01-01',
-      periodEnd: '2026-12-31',
-    });
+    const res = await request(app)
+      .post('/api/v8/finance/budgets')
+      .set('Idempotency-Key', 'budget-test-key')
+      .send({
+        title: 'FY26 Budget',
+        periodStart: '2026-01-01',
+        periodEnd: '2026-12-31',
+        sourceKind: 'manual',
+      });
     // finance.routes.ts:982 explicitly returns 201 (standard REST for a
     // creation endpoint) — this test's expectation of 200 was simply wrong.
     expect(res.status).toBe(201);
     expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
     expect(res.body.data?.budget?.id).toBe('budget-created');
-    expect(mockCreateBudget).toHaveBeenCalledWith(
-      ORG,
-      expect.objectContaining({ title: 'FY26 Budget', periodStart: '2026-01-01' }),
-      expect.any(String)
+    expect(mockRegisterBudget).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: ORG,
+        userId: UID,
+        title: 'FY26 Budget',
+        periodStart: '2026-01-01',
+        sourceKind: 'manual',
+        idempotencyKey: 'budget-test-key',
+      })
     );
   });
 
-  it('POST /api/v8/finance/budgets — 400 when required fields missing', async () => {
+  it('POST /api/v8/finance/budgets returns 200 for an idempotent replay', async () => {
+    mockRegisterBudget.mockResolvedValue({
+      budget: { id: 'budget-created', title: 'FY26 Budget', status: 'DRAFT' },
+      lineCount: 15,
+      scenarioCount: 3,
+      replay: true,
+    });
     const app = createApp();
-    const res = await request(app).post('/api/v8/finance/budgets').send({ title: 'No dates' });
+    const res = await request(app)
+      .post('/api/v8/finance/budgets')
+      .set('Idempotency-Key', 'budget-test-key')
+      .send({
+        title: 'FY26 Budget',
+        periodStart: '2026-01-01',
+        periodEnd: '2026-12-31',
+        sourceKind: 'manual',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual(
+      expect.objectContaining({ replay: true, lineCount: 15, scenarioCount: 3 })
+    );
+  });
+
+  it('POST /api/v8/finance/budgets — 400 and no write for unknown fields', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/v8/finance/budgets')
+      .send({ title: 'No dates', unknown: true });
     expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/required/i);
+    expect(res.body.code).toBe('INVALID_BODY');
+    expect(mockRegisterBudget).not.toHaveBeenCalled();
+  });
+
+  it('PUT /api/v8/finance/budgets/:budgetId/lines/:lineId binds CAS and idempotency', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .put('/api/v8/finance/budgets/budget-new/lines/line-1')
+      .set('Idempotency-Key', 'line-command-key')
+      .send({ expectedVersion: 1, baselineValue: '42' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({ budgetVersion: 2, replay: false });
+    expect(mockApplyBudgetLineCommand).toHaveBeenCalledWith({
+      organizationId: ORG,
+      userId: UID,
+      budgetId: 'budget-new',
+      lineId: 'line-1',
+      expectedVersion: 1,
+      idempotencyKey: 'line-command-key',
+      patch: { baselineValue: '42' },
+    });
+  });
+
+  it('PUT /api/v8/finance/budgets/:budgetId/lines/:lineId rejects numeric transport', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .put('/api/v8/finance/budgets/budget-new/lines/line-1')
+      .set('Idempotency-Key', 'line-command-key')
+      .send({ expectedVersion: 1, baselineValue: 42 });
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('INVALID_BODY');
+    expect(mockApplyBudgetLineCommand).not.toHaveBeenCalled();
+  });
+
+  it('POST /api/v8/finance/budgets/:budgetId/scenarios/:scenarioId/project binds CAS and idempotency', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/v8/finance/budgets/budget-new/scenarios/scenario-1/project')
+      .set('Idempotency-Key', 'projection-command-key')
+      .send({ expectedVersion: 1 });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({ budgetVersion: 2, replay: false });
+    expect(mockProjectBudgetScenario).toHaveBeenCalledWith({
+      organizationId: ORG,
+      userId: UID,
+      budgetId: 'budget-new',
+      scenarioId: 'scenario-1',
+      expectedVersion: 1,
+      idempotencyKey: 'projection-command-key',
+    });
+  });
+
+  it('POST /api/v8/finance/budgets/:budgetId/scenarios/:scenarioId/project rejects unknown fields', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/v8/finance/budgets/budget-new/scenarios/scenario-1/project')
+      .set('Idempotency-Key', 'projection-command-key')
+      .send({ expectedVersion: 1, projections: {} });
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('INVALID_BODY');
+    expect(mockProjectBudgetScenario).not.toHaveBeenCalled();
+  });
+
+  it('PUT /api/v8/finance/budgets/:budgetId/scenarios/:scenarioId/adjustments binds CAS and idempotency', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .put('/api/v8/finance/budgets/budget-new/scenarios/scenario-1/adjustments')
+      .set('Idempotency-Key', 'adjustment-command-key')
+      .send({ expectedVersion: 1, adjustments: { revenueGrowth: 7 } });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({ budgetVersion: 2, replay: false });
+    expect(mockUpdateBudgetScenarioAdjustments).toHaveBeenCalledWith({
+      organizationId: ORG,
+      userId: UID,
+      budgetId: 'budget-new',
+      scenarioId: 'scenario-1',
+      expectedVersion: 1,
+      idempotencyKey: 'adjustment-command-key',
+      adjustments: { revenueGrowth: 7 },
+    });
+  });
+
+  it('PUT /api/v8/finance/budgets/:budgetId/scenarios/:scenarioId/adjustments rejects unknown fields', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .put('/api/v8/finance/budgets/budget-new/scenarios/scenario-1/adjustments')
+      .set('Idempotency-Key', 'adjustment-command-key')
+      .send({ expectedVersion: 1, adjustments: {}, projections: {} });
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('INVALID_BODY');
+    expect(mockUpdateBudgetScenarioAdjustments).not.toHaveBeenCalled();
+  });
+
+  it('POST /api/v8/finance/budgets/:budgetId/approve binds CAS and idempotency', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/v8/finance/budgets/budget-new/approve')
+      .set('Idempotency-Key', 'approval-command-key')
+      .send({ expectedVersion: 1 });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({ status: 'APPROVED', budgetVersion: 2, replay: false });
+    expect(mockApproveBudgetCommand).toHaveBeenCalledWith({
+      organizationId: ORG,
+      userId: UID,
+      budgetId: 'budget-new',
+      expectedVersion: 1,
+      idempotencyKey: 'approval-command-key',
+    });
+  });
+
+  it('POST /api/v8/finance/budgets/:budgetId/approve rejects unknown fields', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/v8/finance/budgets/budget-new/approve')
+      .set('Idempotency-Key', 'approval-command-key')
+      .send({ expectedVersion: 1, approvedBy: 'spoofed' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('INVALID_BODY');
+    expect(mockApproveBudgetCommand).not.toHaveBeenCalled();
+  });
+
+  it('DELETE /api/v8/finance/budgets/:budgetId binds version, reason and idempotency', async () => {
+    const app = createApp();
+    const response = await request(app)
+      .delete('/api/v8/finance/budgets/budget-new')
+      .set('Idempotency-Key', 'discard-key')
+      .send({ expectedVersion: 3, reason: 'Superseded draft' });
+    expect(response.status).toBe(200);
+    expect(mockDiscardBudgetCommand).toHaveBeenCalledWith({
+      organizationId: ORG,
+      userId: UID,
+      budgetId: 'budget-new',
+      expectedVersion: 3,
+      reason: 'Superseded draft',
+      idempotencyKey: 'discard-key',
+    });
+  });
+
+  it('DELETE /api/v8/finance/budgets/:budgetId rejects unknown fields', async () => {
+    const app = createApp();
+    const response = await request(app)
+      .delete('/api/v8/finance/budgets/budget-new')
+      .set('Idempotency-Key', 'discard-key')
+      .send({ expectedVersion: 3, reason: 'Superseded', hardDelete: true });
+    expect(response.status).toBe(400);
+    expect(mockDiscardBudgetCommand).not.toHaveBeenCalled();
+  });
+
+  it('POST /api/v8/finance/budgets/:budgetId/import-document extracts multipart and binds CAS', async () => {
+    const csv = Buffer.from('Przychody;1 234,50');
+    mockExtractDocumentTextFromBuffer.mockResolvedValue('Przychody;1 234,50');
+    mockImportBudgetDocumentCommand.mockResolvedValue({
+      budgetId: 'budget-new',
+      budgetVersion: 4,
+      linesImported: 1,
+      replay: false,
+    });
+    const app = createApp();
+    const response = await request(app)
+      .post('/api/v8/finance/budgets/budget-new/import-document')
+      .set('Idempotency-Key', 'document-import-key')
+      .set('x-expected-budget-version', '3')
+      .field('expectedVersion', '3')
+      .attach('file', csv, {
+        filename: 'budget.csv',
+        contentType: 'text/csv',
+      });
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    expect(mockExtractDocumentTextFromBuffer).toHaveBeenCalledWith(
+      expect.any(Buffer),
+      'budget.csv',
+      'text/csv'
+    );
+    expect(mockImportBudgetDocumentCommand).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: ORG,
+        userId: UID,
+        budgetId: 'budget-new',
+        expectedVersion: 3,
+        idempotencyKey: 'document-import-key',
+        sourceFileName: 'budget.csv',
+        sourceFileSize: csv.length,
+        sourceFileSha256: createHash('sha256').update(csv).digest('hex'),
+        documentText: 'Przychody;1 234,50',
+      })
+    );
+  });
+
+  it.each([
+    ['body only', '5', undefined],
+    ['header only', undefined, '6'],
+  ])('accepts a literal positive expectedVersion from %s', async (_label, body, header) => {
+    mockExtractDocumentTextFromBuffer.mockResolvedValue('Revenue,100');
+    mockImportBudgetDocumentCommand.mockResolvedValue({
+      budgetId: 'budget-new',
+      budgetVersion: Number(body ?? header) + 1,
+      linesImported: 1,
+      replay: false,
+    });
+    let call = request(createApp())
+      .post('/api/v8/finance/budgets/budget-new/import-document')
+      .set('Idempotency-Key', `document-${_label}-key`);
+    if (header) call = call.set('x-expected-budget-version', header);
+    if (body) call = call.field('expectedVersion', body);
+    const response = await call.attach('file', Buffer.from('Revenue,100'), {
+      filename: 'budget.csv',
+      contentType: 'text/csv',
+    });
+    expect(response.status).toBe(200);
+    expect(mockImportBudgetDocumentCommand).toHaveBeenCalledWith(
+      expect.objectContaining({ expectedVersion: Number(body ?? header) })
+    );
+  });
+
+  it.each([
+    ['spoofed PDF', 'fake.pdf', 'application/pdf', Buffer.from('not a pdf')],
+    ['spoofed XLS', 'fake.xls', 'application/vnd.ms-excel', Buffer.from('not ole2')],
+    ['spoofed CSV', 'fake.csv', 'text/csv', Buffer.from('%PDF-1.4 disguised')],
+  ])('rejects %s before extraction', async (_label, filename, contentType, content) => {
+    const response = await request(createApp())
+      .post('/api/v8/finance/budgets/budget-new/import-document')
+      .set('Idempotency-Key', 'document-negative-key')
+      .set('x-expected-budget-version', '3')
+      .attach('file', content, { filename, contentType });
+    expect(response.status).toBe(400);
+    expect(response.body.code).toBe(FILE_UPLOAD_SIGNATURE_MISMATCH_CODE);
+    expect(mockExtractDocumentTextFromBuffer).not.toHaveBeenCalled();
+    expect(mockImportBudgetDocumentCommand).not.toHaveBeenCalled();
+  });
+
+  it('rejects a ZIP that is not an XLSX workbook before extraction', async () => {
+    const zip = new JSZip();
+    zip.file('word/document.xml', '<w:document/>');
+    zip.file('[Content_Types].xml', '<Types/>');
+    const content = await zip.generateAsync({ type: 'nodebuffer' });
+    const response = await request(createApp())
+      .post('/api/v8/finance/budgets/budget-new/import-document')
+      .set('Idempotency-Key', 'document-xlsx-negative-key')
+      .set('x-expected-budget-version', '3')
+      .attach('file', content, {
+        filename: 'fake.xlsx',
+        contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+    expect(response.status).toBe(400);
+    expect(response.body.code).toBe(FILE_UPLOAD_SIGNATURE_MISMATCH_CODE);
+    expect(mockExtractDocumentTextFromBuffer).not.toHaveBeenCalled();
+  });
+
+  it('rejects DOCX even when its ZIP signature is genuine', async () => {
+    const zip = new JSZip();
+    zip.file('word/document.xml', '<w:document/>');
+    const content = await zip.generateAsync({ type: 'nodebuffer' });
+    const response = await request(createApp())
+      .post('/api/v8/finance/budgets/budget-new/import-document')
+      .set('Idempotency-Key', 'document-docx-negative-key')
+      .set('x-expected-budget-version', '3')
+      .attach('file', content, {
+        filename: 'fake.docx',
+        contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      });
+    expect(response.status).toBe(400);
+    expect(response.body.code).toBe(FILE_UPLOAD_SIGNATURE_MISMATCH_CODE);
+    expect(mockExtractDocumentTextFromBuffer).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['missing', undefined, undefined, 'INVALID_EXPECTED_VERSION'],
+    ['invalid header', undefined, '3.5', 'INVALID_EXPECTED_VERSION'],
+    ['invalid body', '0', undefined, 'INVALID_EXPECTED_VERSION'],
+    ['conflicting', '4', '3', 'EXPECTED_VERSION_CONFLICT'],
+  ])('rejects %s expectedVersion before command execution', async (_label, body, header, code) => {
+    let call = request(createApp())
+      .post('/api/v8/finance/budgets/budget-new/import-document')
+      .set('Idempotency-Key', 'document-version-negative-key');
+    if (header) call = call.set('x-expected-budget-version', header);
+    if (body !== undefined) call = call.field('expectedVersion', body);
+    const response = await call.attach('file', Buffer.from('Revenue,100'), {
+      filename: 'budget.csv',
+      contentType: 'text/csv',
+    });
+    expect(response.status).toBe(400);
+    expect(response.body.code).toBe(code);
+    expect(mockImportBudgetDocumentCommand).not.toHaveBeenCalled();
   });
 
   it('POST /api/v8/finance/analyses returns envelope and delegates to createAnalysis', async () => {
@@ -1819,6 +2372,30 @@ describe('V8 finance read-only routes', () => {
     expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
     expect(res.body.data?.success).toBe(true);
     expect(mockApproveAnalysis).toHaveBeenCalledWith(ORG, 'analysis-1', UID);
+  });
+
+  it('PUT /api/v8/finance/analyses/:id validates and delegates the canonical update', async () => {
+    mockDbGet.mockResolvedValue({ id: 'analysis-1' });
+    const app = createApp();
+    const body = {
+      title: 'Updated analysis',
+      currency: 'EUR',
+      sourceStatementIds: ['statement-1'],
+      rebuildFromStatements: true,
+    };
+    const res = await request(app).put('/api/v8/finance/analyses/analysis-1').send(body);
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data).toEqual({ success: true, analysisId: 'analysis-1' });
+    expect(mockUpdateAnalysis).toHaveBeenCalledWith(ORG, 'analysis-1', body);
+
+    const invalid = await request(app)
+      .put('/api/v8/finance/analyses/analysis-1')
+      .send({ title: '', unknownField: true });
+    expect(invalid.status).toBe(400);
+    expect(invalid.body.code).toBe('INVALID_BODY');
+    expect(mockUpdateAnalysis).toHaveBeenCalledTimes(1);
   });
 
   it('DELETE /api/v8/finance/analyses/:id deletes a non-approved analysis', async () => {

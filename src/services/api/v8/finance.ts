@@ -1,4 +1,19 @@
 import { v8Delete, v8Get, v8Post, v8PostMultipart, v8Put } from './client';
+import { fetchWithRetry, getHeaders, handleResponse } from '../baseClient';
+
+async function discardBudgetRequest<T>(
+  budgetId: string,
+  body: unknown,
+  idempotencyKey: string
+): Promise<T> {
+  const res = await fetchWithRetry(`/api/v8/finance/budgets/${budgetId}`, {
+    method: 'DELETE',
+    headers: { ...getHeaders(), 'Idempotency-Key': idempotencyKey },
+    body: JSON.stringify(body),
+  });
+  const json = await handleResponse<{ data: T }>(res, 'V8 DELETE budget');
+  return json.data;
+}
 
 export const shouldFallbackToLegacyFinance = (error: any) => {
   const status = Number(error?.status);
@@ -146,6 +161,102 @@ export interface V8FinanceModelCreatePayload {
   idempotencyKey?: string;
 }
 
+export interface V8FinanceBudgetRegistrationPayload {
+  title: string;
+  description?: string;
+  projectId?: string;
+  periodStart: string;
+  periodEnd: string;
+  granularity: 'monthly' | 'quarterly' | 'annual';
+  currency: string;
+  sourceKind: 'manual' | 'tool_session';
+  sourceToolSessionId?: string;
+}
+
+export interface V8FinanceBudgetRegistrationResult {
+  budget: {
+    id: string;
+    organizationId: string;
+    projectId?: string;
+    title: string;
+    description?: string;
+    status: string;
+    periodStart: string;
+    periodEnd: string;
+    granularity: string;
+    currency: string;
+    version: number;
+    createdAt: string;
+    updatedAt: string;
+  };
+  lineCount: number;
+  scenarioCount: number;
+  replay: boolean;
+}
+
+export interface V8FinanceBudgetLineCommandPayload {
+  expectedVersion: number;
+  baselineValue?: string;
+  source?: 'baseline' | 'manual' | 'driver' | 'formula';
+  driverKpiId?: string | null;
+  driverFormula?: string | null;
+  isLocked?: boolean;
+}
+
+export interface V8FinanceBudgetLineCommandResult {
+  budgetId: string;
+  line: {
+    id: string;
+    lineCode: string;
+    baselineValue: string;
+    source: 'baseline' | 'manual' | 'driver' | 'formula';
+    driverKpiId: string | null;
+    driverFormula: string | null;
+    isLocked: boolean;
+  };
+  budgetVersion: number;
+  replay: boolean;
+}
+
+export interface V8FinanceBudgetProjectionCommandResult {
+  budgetId: string;
+  scenario: {
+    id: string;
+    scenarioType: string;
+    projections: {
+      periods: string[];
+      lines: Record<string, Record<string, number>>;
+    };
+    summaryMetrics: Record<string, number>;
+  };
+  budgetVersion: number;
+  projectionSha256: string;
+  replay: boolean;
+}
+
+export interface V8FinanceBudgetScenarioAdjustmentCommandResult {
+  budgetId: string;
+  scenario: {
+    id: string;
+    scenarioType: string;
+    adjustments: Record<string, number>;
+  };
+  budgetVersion: number;
+  adjustmentsSha256: string;
+  replay: boolean;
+}
+
+export interface V8FinanceBudgetApprovalCommandResult {
+  budgetId: string;
+  snapshotId: string;
+  status: 'APPROVED';
+  budgetVersion: number;
+  snapshotSha256: string;
+  approvedBy: string;
+  approvedAt: string;
+  replay: boolean;
+}
+
 export interface V8FinanceCaseScenario {
   id: string;
   name: string;
@@ -201,6 +312,27 @@ export interface V8FinanceBudgetSummary {
   scenario?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
+}
+
+export interface V8FinanceBudgetDiscardResult {
+  budgetId: string;
+  status: 'ARCHIVED';
+  budgetVersion: number;
+  archivedBy: string;
+  archivedAt: string;
+  replay: boolean;
+}
+
+export interface V8FinanceBudgetDocumentImportResult {
+  budgetId: string;
+  budgetVersion: number;
+  linesImported: number;
+  mappings: Array<{ lineId: string; lineCode: string; value: string }>;
+  unappliedDiagnostics: Array<{ sourceRow: number; raw: string; reason: string }>;
+  source: { fileName: string; mimeType: string; fileSha256: string; textSha256: string };
+  importedBy: string;
+  importedAt: string;
+  replay: boolean;
 }
 
 export interface V8FinanceStatementPackSummary {
@@ -385,8 +517,25 @@ export interface V8FinanceStatementValuesSaveResult {
   statementPackId?: string | null;
   ingestRunId?: string | null;
   savedCount: number;
+  valuesVersion: number;
   readiness?: Record<string, unknown>;
   validation?: Record<string, unknown>;
+}
+
+export interface V8FinanceStatementSourceReceipt {
+  receipt_id: string;
+  original_file_name: string;
+  content_sha256: string;
+  size_bytes: number;
+  mime_type: string;
+  entity_name: string;
+  periods_json: Array<Record<string, unknown>>;
+  page_ranges_json: Array<Record<string, unknown>>;
+  imported_by: string;
+  imported_at: string;
+  importer_name?: string;
+  importer_version?: string;
+  source_kind?: string;
 }
 
 export interface V8FinanceStatementAnalyticsResult {
@@ -400,6 +549,7 @@ export interface V8FinanceStatementUploadAnalyzeResult {
   statementPackId?: string | null;
   statementIds: string[];
   analysis?: Record<string, unknown> | null;
+  detection?: Record<string, unknown> | null;
   statements?: Array<Record<string, unknown>>;
   message?: string;
 }
@@ -519,6 +669,12 @@ export interface V8FinanceAnalysisCreatePayload {
   sourceStatementPackId?: string;
 }
 
+export type V8FinanceAnalysisUpdatePayload = Partial<
+  Omit<V8FinanceAnalysisCreatePayload, 'projectId' | 'analysisType'> & {
+    rebuildFromStatements: boolean;
+  }
+>;
+
 export const V8FinanceApi = {
   getDashboard: () => v8Get<{ dashboard: V8FinanceDashboard }>('/finance/dashboard'),
   getModels: () => v8Get<{ models: V8FinanceModelSummary[]; count: number }>('/finance/models'),
@@ -581,6 +737,77 @@ export const V8FinanceApi = {
   getValuations: () =>
     v8Get<{ valuations: V8FinanceValuationSummary[]; count: number }>('/finance/valuations'),
   getBudgets: () => v8Get<{ budgets: V8FinanceBudgetSummary[]; count: number }>('/finance/budgets'),
+  createBudget: (body: V8FinanceBudgetRegistrationPayload, idempotencyKey: string) =>
+    v8Post<V8FinanceBudgetRegistrationResult>('/finance/budgets', body, {
+      extraHeaders: { 'Idempotency-Key': idempotencyKey },
+    }),
+  updateBudgetLine: (
+    budgetId: string,
+    lineId: string,
+    body: V8FinanceBudgetLineCommandPayload,
+    idempotencyKey: string
+  ) =>
+    v8Put<V8FinanceBudgetLineCommandResult>(`/finance/budgets/${budgetId}/lines/${lineId}`, body, {
+      extraHeaders: { 'Idempotency-Key': idempotencyKey },
+    }),
+  projectBudgetScenario: (
+    budgetId: string,
+    scenarioId: string,
+    expectedVersion: number,
+    idempotencyKey: string
+  ) =>
+    v8Post<V8FinanceBudgetProjectionCommandResult>(
+      `/finance/budgets/${budgetId}/scenarios/${scenarioId}/project`,
+      { expectedVersion },
+      { extraHeaders: { 'Idempotency-Key': idempotencyKey } }
+    ),
+  updateBudgetScenarioAdjustments: (
+    budgetId: string,
+    scenarioId: string,
+    expectedVersion: number,
+    adjustments: Record<string, number>,
+    idempotencyKey: string
+  ) =>
+    v8Put<V8FinanceBudgetScenarioAdjustmentCommandResult>(
+      `/finance/budgets/${budgetId}/scenarios/${scenarioId}/adjustments`,
+      { expectedVersion, adjustments },
+      { extraHeaders: { 'Idempotency-Key': idempotencyKey } }
+    ),
+  approveBudget: (budgetId: string, expectedVersion: number, idempotencyKey: string) =>
+    v8Post<V8FinanceBudgetApprovalCommandResult>(
+      `/finance/budgets/${budgetId}/approve`,
+      { expectedVersion },
+      { extraHeaders: { 'Idempotency-Key': idempotencyKey } }
+    ),
+  discardBudget: (
+    budgetId: string,
+    expectedVersion: number,
+    reason: string,
+    idempotencyKey: string
+  ) =>
+    discardBudgetRequest<V8FinanceBudgetDiscardResult>(
+      budgetId,
+      { expectedVersion, reason },
+      idempotencyKey
+    ),
+  importBudgetDocument: (
+    budgetId: string,
+    file: File,
+    expectedVersion: number,
+    idempotencyKey: string
+  ) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('expectedVersion', String(expectedVersion));
+    return v8PostMultipart<V8FinanceBudgetDocumentImportResult>(
+      `/finance/budgets/${budgetId}/import-document`,
+      formData,
+      {
+        'Idempotency-Key': idempotencyKey,
+        'x-expected-budget-version': String(expectedVersion),
+      }
+    );
+  },
   getStatementPacks: (params?: { readiness?: string }) =>
     v8Get<{ statementPacks: V8FinanceStatementPackSummary[]; count: number }>(
       '/finance/statement-packs',
@@ -625,10 +852,30 @@ export const V8FinanceApi = {
     v8Post<V8FinanceStatementExtractResult>(`/finance/statements/${statementId}/extract`, body),
   mapStatement: (statementId: string, body: { lines?: Record<string, unknown>[] } = {}) =>
     v8Post<V8FinanceStatementMapResult>(`/finance/statements/${statementId}/map`, body),
-  confirmStatement: (statementId: string) =>
-    v8Post<V8FinanceStatementConfirmResult>(`/finance/statements/${statementId}/confirm`, {}),
+  confirmStatement: (
+    statementId: string,
+    body: { sourceReceiptId: string; expectedValuesVersion: number },
+    idempotencyKey: string
+  ) =>
+    v8Post<V8FinanceStatementConfirmResult>(`/finance/statements/${statementId}/confirm`, body, {
+      extraHeaders: { 'Idempotency-Key': idempotencyKey },
+    }),
   putStatementValues: (statementId: string, body: { values: Record<string, unknown>[] }) =>
     v8Put<V8FinanceStatementValuesSaveResult>(`/finance/statements/${statementId}/values`, body),
+  getStatementSourceReceipt: (statementId: string) =>
+    v8Get<{ receipt: V8FinanceStatementSourceReceipt }>(
+      `/finance/statements/${statementId}/source-receipt`
+    ),
+  recordStatementManualMappingDecision: (
+    statementId: string,
+    body: Record<string, unknown>,
+    idempotencyKey: string
+  ) =>
+    v8Post<{ decision: Record<string, unknown> }>(
+      `/finance/statements/${statementId}/manual-mapping-decisions`,
+      body,
+      { extraHeaders: { 'Idempotency-Key': idempotencyKey } }
+    ),
   getCanonicalLines: () =>
     v8Get<{ canonicalLines: V8FinanceCanonicalLineOption[]; count: number }>(
       '/finance/canonical-lines'
@@ -651,6 +898,8 @@ export const V8FinanceApi = {
       '/finance/analyses',
       body
     ),
+  updateAnalysis: (analysisId: string, body: V8FinanceAnalysisUpdatePayload) =>
+    v8Put<{ success: boolean; analysisId: string }>(`/finance/analyses/${analysisId}`, body),
   deleteAnalysis: (analysisId: string) =>
     v8Delete<{ success: boolean; deleted: string }>(`/finance/analyses/${analysisId}`),
   runAnalysis: (analysisId: string) =>

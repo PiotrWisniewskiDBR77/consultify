@@ -247,6 +247,9 @@ test.describe('feature-flag fixture safety', () => {
       crashed = await makeFixture(crashRunId);
 
       for (const flagKey of [
+        'financeAnalysisWorkspaceV1',
+        'financeBaselineWorkspaceV1',
+        'financePredictionWorkspaceV1',
         'financeStatementPackWorkspaceV2',
         'financeWorkspacePlatformV1',
         'financeExportImportV1',

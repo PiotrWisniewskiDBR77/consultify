@@ -3282,25 +3282,8 @@ async function runTablePlatformMigrations(db: any): Promise<void> {
     } catch (err: any) {
       await db.query('ROLLBACK').catch(() => {});
       const msg = err?.message || '';
-      const isAlreadyExists =
-        msg.includes('already exists') ||
-        msg.includes('duplicate key') ||
-        msg.includes('duplicate_column') ||
-        msg.includes('duplicate_object');
-      if (isAlreadyExists) {
-        logger.warn(`${TAG} ⚠ ${file} skipped (schema already up-to-date): ${msg}`);
-        try {
-          await db.query(
-            'INSERT INTO tp_migration_history (filename, duration_ms) VALUES ($1, $2)',
-            [file, Date.now() - startMs]
-          );
-        } catch {
-          /* ignore if already recorded */
-        }
-      } else {
-        logger.error(`${TAG} ✗ ${file} failed: ${msg}`);
-        throw new Error(`Table Platform migration ${file} failed: ${msg}`);
-      }
+      logger.error(`${TAG} ✗ ${file} failed: ${msg}`);
+      throw new Error(`Table Platform migration ${file} failed: ${msg}`);
     }
   }
 
@@ -3475,10 +3458,8 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
           );
         }
       } catch (tpErr: any) {
-        logger.error(
-          `[DatabaseInitializer] Table Platform migrations failed (non-fatal): ${tpErr?.message}`
-        );
-        // Non-fatal: legacy app still works without table platform
+        logger.error(`[DatabaseInitializer] Table Platform migrations failed: ${tpErr?.message}`);
+        throw tpErr;
       }
     } else {
       // SQLite: Check if schema exists, if not, initialize

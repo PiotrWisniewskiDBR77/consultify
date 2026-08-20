@@ -13,7 +13,12 @@
  * Finance route/service file, per this work package's scope boundary.
  */
 
-import { Router } from 'express';
+import { Router, type RequestHandler } from 'express';
+
+import {
+  requireActiveMembership,
+  requireFinanceEditorMembership,
+} from '../../../services/legacyCutover/requireActiveMembership.js';
 
 import analysisRoutes from './analysis.routes.js';
 import artifactsRoutes from './artifacts.routes.js';
@@ -32,6 +37,29 @@ import valuationRoutes from './valuation.routes.js';
 import versionsRoutes from './versions.routes.js';
 
 const financeV2Router = Router();
+
+// Finance-v2 JWT claims are discovery context, not durable authorization.
+// Re-read membership for every request. Canonical workspace commands also
+// require the live Finance mutation role; read-like compare/export helpers and
+// collaboration surfaces retain their own policies below.
+const requireCanonicalFinanceMutation: RequestHandler = (req, res, next) => {
+  if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
+    next();
+    return;
+  }
+  const canonicalWorkspaceCommand =
+    /^\/(models|artifacts|versions|compute|statements|analysis|baseline|prediction|valuation)(?:\/|$)/.test(
+      req.path
+    ) || /^\/import\/apply\/?$/.test(req.path);
+  if (!canonicalWorkspaceCommand) {
+    next();
+    return;
+  }
+  void requireFinanceEditorMembership(req as any, res, next);
+};
+
+financeV2Router.use(requireActiveMembership);
+financeV2Router.use(requireCanonicalFinanceMutation);
 
 financeV2Router.use(modelsRoutes);
 // Pakiet B (API & Runtime Integration) — artifact lifecycle + compute job

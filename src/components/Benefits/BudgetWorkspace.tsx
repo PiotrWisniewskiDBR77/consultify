@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { LoadingState } from '@/components/shared/states';
+import { V8FinanceApi } from '@/services/api/v8/finance';
 
 import { API_URL, getHeaders } from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
@@ -111,9 +112,11 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
   const [showDocImport, setShowDocImport] = useState(false);
   const [docImportFile, setDocImportFile] = useState<File | null>(null);
   const [docImporting, setDocImporting] = useState(false);
+  const [docImportIntentKey, setDocImportIntentKey] = useState(() => crypto.randomUUID());
   const [newTitle, setNewTitle] = useState('');
-  const [startPeriod, setStartPeriod] = useState('2026-01');
-  const [endPeriod, setEndPeriod] = useState('2026-12');
+  const [startPeriod, setStartPeriod] = useState('');
+  const [endPeriod, setEndPeriod] = useState('');
+  const [createIntentKey, setCreateIntentKey] = useState(() => crypto.randomUUID());
 
   const fetchBudgets = useCallback(async () => {
     try {
@@ -153,6 +156,15 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
         const res = await fetch(`${API_URL}/economics/budgets/${b.id}`, { headers: getHeaders() });
         if (res.ok) {
           const d = await res.json();
+          setSelected((current) =>
+            current?.id === b.id
+              ? {
+                  ...current,
+                  version: Number(d.version ?? current.version),
+                  status: String(d.status ?? current.status),
+                }
+              : current
+          );
           setLines(d.lines || []);
           setScenarios(d.scenarios || []);
         }
@@ -172,42 +184,66 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
   }, [initialBudgetId, budgets, selected, selectBudget]);
 
   const handleCreate = useCallback(async () => {
-    if (!newTitle.trim()) return;
+    if (!newTitle.trim() || !startPeriod || !endPeriod || startPeriod > endPeriod) return;
     try {
-      const res = await fetch(`${API_URL}/economics/budgets`, {
-        method: 'POST',
-        headers: { ...getHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: newTitle, periodStart: startPeriod, periodEnd: endPeriod }),
-      });
-      if (res.ok) {
-        const d = await res.json();
-        trackFunnelEvent('budget_created', { budgetId: d.budget?.id });
-        setShowCreate(false);
-        setNewTitle('');
-        await fetchBudgets();
-        if (d.budget) selectBudget(d.budget);
-        onBudgetChanged?.();
-      }
+      const [endYear, endMonth] = endPeriod.split('-').map(Number);
+      const result = await V8FinanceApi.createBudget(
+        {
+          title: newTitle.trim(),
+          periodStart: `${startPeriod}-01`,
+          periodEnd: new Date(Date.UTC(endYear, endMonth, 0)).toISOString().slice(0, 10),
+          granularity: 'monthly',
+          currency: 'PLN',
+          sourceKind: 'manual',
+        },
+        createIntentKey
+      );
+      trackFunnelEvent('budget_created', { budgetId: result.budget.id });
+      setShowCreate(false);
+      setNewTitle('');
+      setStartPeriod('');
+      setEndPeriod('');
+      setCreateIntentKey(crypto.randomUUID());
+      await fetchBudgets();
+      if (result.budget) selectBudget(result.budget as BudgetSummary);
+      onBudgetChanged?.();
     } catch {
       toast.error(t('finance.budget.createFailed', 'Failed to create budget'));
     }
-  }, [newTitle, startPeriod, endPeriod, fetchBudgets, selectBudget, onBudgetChanged]);
+  }, [
+    newTitle,
+    startPeriod,
+    endPeriod,
+    createIntentKey,
+    fetchBudgets,
+    selectBudget,
+    onBudgetChanged,
+    t,
+  ]);
 
   const handleGenerate = useCallback(async () => {
     if (!selected || scenarios.length === 0) return;
     setGenerating(true);
     try {
+      let currentVersion = selected.version;
       for (const sc of scenarios) {
-        await fetch(`${API_URL}/economics/budgets/${selected.id}/scenarios/${sc.id}/project`, {
-          method: 'POST',
-          headers: getHeaders(),
-        });
+        const result = await V8FinanceApi.projectBudgetScenario(
+          selected.id,
+          sc.id,
+          currentVersion,
+          crypto.randomUUID()
+        );
+        currentVersion = result.budgetVersion;
+        setSelected((current) =>
+          current?.id === selected.id ? { ...current, version: currentVersion } : current
+        );
       }
       toast.success(t('finance.budget.projected', 'Projections generated'));
-      await selectBudget(selected);
+      await selectBudget({ ...selected, version: currentVersion });
       onBudgetChanged?.();
     } catch {
       toast.error(t('finance.budget.projectFailed', 'Generation failed'));
+      await selectBudget(selected);
     } finally {
       setGenerating(false);
     }
@@ -216,16 +252,14 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
   const handleApprove = useCallback(async () => {
     if (!selected) return;
     try {
-      const res = await fetch(`${API_URL}/economics/budgets/${selected.id}/approve`, {
-        method: 'POST',
-        headers: getHeaders(),
-      });
-      if (res.ok) {
-        toast.success(t('finance.budget.approved', 'Budget approved'));
-        trackFunnelEvent('budget_approved', { budgetId: selected.id });
-        await fetchBudgets();
-        onBudgetChanged?.();
-      }
+      const expectedVersion = Number(selected.version);
+      if (!Number.isInteger(expectedVersion) || expectedVersion < 1)
+        throw new Error('Budget version is unavailable');
+      await V8FinanceApi.approveBudget(selected.id, expectedVersion, crypto.randomUUID());
+      toast.success(t('finance.budget.approved', 'Budget approved'));
+      trackFunnelEvent('budget_approved', { budgetId: selected.id });
+      await fetchBudgets();
+      onBudgetChanged?.();
     } catch {
       toast.error(t('finance.budget.approveFailed', 'Approve failed'));
     }
@@ -235,34 +269,58 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
     async (lineId: string, value: number) => {
       if (!selected) return;
       try {
-        await fetch(`${API_URL}/economics/budgets/${selected.id}/lines/${lineId}`, {
-          method: 'PUT',
-          headers: { ...getHeaders(), 'Content-Type': 'application/json' },
-          body: JSON.stringify({ baselineValue: value }),
-        });
-        setLines((prev) => prev.map((l) => (l.id === lineId ? { ...l, baselineValue: value } : l)));
+        const result = await V8FinanceApi.updateBudgetLine(
+          selected.id,
+          lineId,
+          { expectedVersion: selected.version, baselineValue: String(value) },
+          crypto.randomUUID()
+        );
+        setSelected((current) =>
+          current?.id === selected.id ? { ...current, version: result.budgetVersion } : current
+        );
+        setLines((prev) =>
+          prev.map((line) =>
+            line.id === lineId
+              ? { ...line, baselineValue: Number(result.line.baselineValue) }
+              : line
+          )
+        );
       } catch {
-        /* ignore */
+        await selectBudget(selected);
+        toast.error(
+          t('finance.budget.lineUpdateFailed', 'Budget line changed; current data reloaded')
+        );
       }
     },
-    [selected]
+    [selected, selectBudget, t]
   );
 
   const handleToggleLock = useCallback(
     async (lineId: string, isLocked: boolean) => {
       if (!selected) return;
       try {
-        await fetch(`${API_URL}/economics/budgets/${selected.id}/lines/${lineId}`, {
-          method: 'PUT',
-          headers: { ...getHeaders(), 'Content-Type': 'application/json' },
-          body: JSON.stringify({ isLocked: !isLocked }),
-        });
-        setLines((prev) => prev.map((l) => (l.id === lineId ? { ...l, isLocked: !isLocked } : l)));
+        const result = await V8FinanceApi.updateBudgetLine(
+          selected.id,
+          lineId,
+          { expectedVersion: selected.version, isLocked: !isLocked },
+          crypto.randomUUID()
+        );
+        setSelected((current) =>
+          current?.id === selected.id ? { ...current, version: result.budgetVersion } : current
+        );
+        setLines((prev) =>
+          prev.map((line) =>
+            line.id === lineId ? { ...line, isLocked: result.line.isLocked } : line
+          )
+        );
       } catch {
-        /* ignore */
+        await selectBudget(selected);
+        toast.error(
+          t('finance.budget.lineUpdateFailed', 'Budget line changed; current data reloaded')
+        );
       }
     },
-    [selected]
+    [selected, selectBudget, t]
   );
 
   const handleLinkInitiative = useCallback(
@@ -327,37 +385,28 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
     if (!docImportFile || !selected) return;
     setDocImporting(true);
     try {
-      const documentText = await docImportFile.text();
-      const res = await fetch(`${API_URL}/economics/budgets/${selected.id}/import-document`, {
-        method: 'POST',
-        headers: {
-          Authorization: getHeaders()['Authorization'] || '',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          filename: docImportFile.name,
-          documentText,
-        }),
-      });
-      if (res.ok) {
-        const d = await res.json();
-        toast.success(
-          t('finance.budget.docImported', `Imported ${d.linesImported || 0} budget lines`)
-        );
-        setShowDocImport(false);
-        setDocImportFile(null);
-        await selectBudget(selected);
-        onBudgetChanged?.();
-      } else {
-        const err = await res.json().catch(() => ({}));
-        toast.error(err.error || t('finance.budget.importFailed', 'Import failed'));
-      }
-    } catch {
-      toast.error(t('finance.budget.documentImportFailed', 'Document import failed'));
+      const result = await V8FinanceApi.importBudgetDocument(
+        selected.id,
+        docImportFile,
+        selected.version,
+        docImportIntentKey
+      );
+      toast.success(
+        t('finance.budget.docImported', `Imported ${result.linesImported || 0} budget lines`)
+      );
+      setShowDocImport(false);
+      setDocImportFile(null);
+      setDocImportIntentKey(crypto.randomUUID());
+      await selectBudget({ ...selected, version: result.budgetVersion });
+      onBudgetChanged?.();
+    } catch (error: any) {
+      toast.error(
+        error?.message || t('finance.budget.documentImportFailed', 'Document import failed')
+      );
     } finally {
       setDocImporting(false);
     }
-  }, [docImportFile, selected, t, selectBudget, onBudgetChanged]);
+  }, [docImportFile, selected, docImportIntentKey, t, selectBudget, onBudgetChanged]);
 
   const initiativeImpactTotal = useMemo(
     () => ({
@@ -995,7 +1044,10 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
             <div className="space-y-3 mb-4">
               <input
                 value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
+                onChange={(e) => {
+                  setNewTitle(e.target.value);
+                  setCreateIntentKey(crypto.randomUUID());
+                }}
                 placeholder={t('finance.budget.titlePlaceholder', 'e.g., 2026 Operating Budget')}
                 className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white text-sm"
               />
@@ -1007,7 +1059,10 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                   <input
                     type="month"
                     value={startPeriod}
-                    onChange={(e) => setStartPeriod(e.target.value)}
+                    onChange={(e) => {
+                      setStartPeriod(e.target.value);
+                      setCreateIntentKey(crypto.randomUUID());
+                    }}
                     className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white text-sm"
                   />
                 </div>
@@ -1018,7 +1073,10 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                   <input
                     type="month"
                     value={endPeriod}
-                    onChange={(e) => setEndPeriod(e.target.value)}
+                    onChange={(e) => {
+                      setEndPeriod(e.target.value);
+                      setCreateIntentKey(crypto.randomUUID());
+                    }}
                     className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white text-sm"
                   />
                 </div>
@@ -1033,6 +1091,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
               </button>
               <button
                 onClick={handleCreate}
+                disabled={!newTitle.trim() || !startPeriod || !endPeriod || startPeriod > endPeriod}
                 className="px-4 py-2 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-medium rounded-lg hover:bg-navy-800"
               >
                 {t('common.create', 'Create')}
@@ -1079,7 +1138,10 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                 id="doc-import-input"
                 type="file"
                 accept=".pdf,.xlsx,.xls,.csv"
-                onChange={(e) => setDocImportFile(e.target.files?.[0] || null)}
+                onChange={(e) => {
+                  setDocImportFile(e.target.files?.[0] || null);
+                  setDocImportIntentKey(crypto.randomUUID());
+                }}
                 className="hidden"
               />
             </div>

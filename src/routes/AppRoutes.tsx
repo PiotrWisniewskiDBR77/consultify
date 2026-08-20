@@ -2296,6 +2296,23 @@ export const AppRoutes: React.FC = () => {
           }
         />
         <Route
+          path="/finance/predictions/:id"
+          element={
+            <BetaGate moduleId="MODULE_ECONOMICS">
+              <MainLayout breadcrumbs={breadcrumbs || ['Finance', 'Prediction']} noPadding>
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Finance"
+                >
+                  <RouteErrorBoundary>
+                    <EconomicsView />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        <Route
           path="/finance/valuations/:id"
           element={
             <BetaGate moduleId="MODULE_ECONOMICS">

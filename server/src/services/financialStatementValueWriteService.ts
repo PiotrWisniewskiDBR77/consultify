@@ -1,4 +1,4 @@
-import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { syncStatementToPack } from './financialStatementPackService.js';
 import {
   evaluateStatementReadiness,
@@ -51,18 +51,37 @@ async function ensureStatementIngestRun(params: {
   });
 }
 
-async function loadCandidateRowLookup(
-  statementId: string
-): Promise<Map<number, { candidateRowId: string; sourcePage: number | null; rowLabel: string }>> {
+async function loadCandidateRowLookup(statementId: string): Promise<
+  Map<
+    number,
+    {
+      candidateRowId: string;
+      sourcePage: number | null;
+      rowLabel: string;
+      extractionConfidence: number;
+    }
+  >
+> {
   const rows = (await dbAll(
-    `SELECT id, source_row, source_page, row_label
+    `SELECT id, source_row, source_page, row_label, confidence
      FROM financial_statement_candidate_rows
      WHERE statement_id = ?`,
     [statementId]
-  )) as Array<{ id: string; source_row?: number; source_page?: number | null; row_label?: string }>;
+  )) as Array<{
+    id: string;
+    source_row?: number;
+    source_page?: number | null;
+    row_label?: string;
+    confidence?: number | null;
+  }>;
   const lookup = new Map<
     number,
-    { candidateRowId: string; sourcePage: number | null; rowLabel: string }
+    {
+      candidateRowId: string;
+      sourcePage: number | null;
+      rowLabel: string;
+      extractionConfidence: number;
+    }
   >();
   for (const row of rows || []) {
     if (row.source_row == null) continue;
@@ -70,31 +89,40 @@ async function loadCandidateRowLookup(
       candidateRowId: String(row.id),
       sourcePage: row.source_page != null ? Number(row.source_page) : null,
       rowLabel: String(row.row_label || ''),
+      extractionConfidence: Number(row.confidence || 0),
     });
   }
   return lookup;
 }
 
-async function loadSelectedMappingLookup(statementId: string): Promise<Map<string, string>> {
+async function loadSelectedMappingLookup(
+  statementId: string
+): Promise<Map<string, { id: string; score: number }>> {
   const rows = (await dbAll(
-    `SELECT candidate_row_id, canonical_line_id, id
+    `SELECT candidate_row_id, canonical_line_id, id, score
      FROM financial_statement_mapping_candidates
      WHERE statement_id = ? AND is_selected = TRUE`,
     [statementId]
-  )) as Array<{ candidate_row_id?: string; canonical_line_id?: string; id: string }>;
-  const lookup = new Map<string, string>();
+  )) as Array<{
+    candidate_row_id?: string;
+    canonical_line_id?: string;
+    id: string;
+    score?: number | null;
+  }>;
+  const lookup = new Map<string, { id: string; score: number }>();
   for (const row of rows || []) {
     const key = `${String(row.candidate_row_id || '')}:${String(row.canonical_line_id || '')}`;
     if (!key || key === ':') continue;
-    lookup.set(key, String(row.id));
+    lookup.set(key, { id: String(row.id), score: Number(row.score || 0) });
   }
   return lookup;
 }
 
 export function shouldDeferStatementPackSync(statement: Record<string, any>): boolean {
   return (
-    statement.extraction_strategy === 'spreadsheet_structured_staged' &&
-    String(statement.status || '').toLowerCase() !== 'confirmed'
+    ['spreadsheet_structured_staged', 'deterministic_multi_section_staged'].includes(
+      String(statement.extraction_strategy || '')
+    ) && String(statement.status || '').toLowerCase() !== 'confirmed'
   );
 }
 
@@ -183,7 +211,7 @@ export async function saveStatementValuesFlow(params: {
           : canonicalLineId
             ? 'mapped'
             : 'source')) as 'source' | 'mapped' | 'manual' | 'computed' | 'estimated';
-    const evidenceJson =
+    const suppliedEvidence =
       value.evidenceJson && typeof value.evidenceJson === 'object'
         ? value.evidenceJson
         : {
@@ -200,19 +228,36 @@ export async function saveStatementValuesFlow(params: {
               ? value.derivedFromLineCodes.map((code: unknown) => String(code))
               : [],
           };
-    const selectedMappingCandidateId =
-      value.selectedMappingCandidateId ||
-      (candidate?.candidateRowId && canonicalLineId
+    // Human verification is an audit fact, not a model-confidence rewrite.
+    // Bind it to the authenticated actor and server clock; never accept actor
+    // or timestamp fields supplied by the browser.
+    const evidenceJson = {
+      ...suppliedEvidence,
+      userVerification:
+        mappingStatus === 'manual'
+          ? {
+              verified: Boolean(value.userVerified),
+              verifiedBy: Boolean(value.userVerified) ? userId : null,
+              verifiedAt: Boolean(value.userVerified) ? new Date().toISOString() : null,
+              method: 'manual_mapping_review',
+            }
+          : undefined,
+    };
+    const selectedMapping =
+      candidate?.candidateRowId && canonicalLineId
         ? selectedMappingLookup.get(`${candidate.candidateRowId}:${canonicalLineId}`) || null
-        : null);
+        : null;
+    const selectedMappingCandidateId = selectedMapping?.id || null;
+    const serverMappingConfidence = Number(selectedMapping?.score || 0);
 
     return {
       canonicalLineId,
-      originalLabel: String(value.originalLabel || ''),
+      originalLabel: String(candidate?.rowLabel || value.originalLabel || ''),
       value: numericValue,
-      confidence: Number(value.confidence || 0),
-      sourcePage:
-        value.sourcePage != null ? Number(value.sourcePage) : (candidate?.sourcePage ?? null),
+      // Extraction/model confidence is server-owned. The browser may display
+      // it, but cannot upgrade it by echoing a larger number on save.
+      confidence: Number(candidate?.extractionConfidence || 0),
+      sourcePage: candidate?.sourcePage ?? null,
       sourceRow,
       mappingStatus,
       isNonFinancial,
@@ -222,8 +267,8 @@ export async function saveStatementValuesFlow(params: {
           ? 'NON_FINANCIAL_LINE'
           : undefined,
       valueOrigin,
-      mappingConfidence: Number(value.mappingConfidence ?? value.confidence ?? 0),
-      sourceCandidateRowId: value.sourceCandidateRowId || candidate?.candidateRowId || null,
+      mappingConfidence: serverMappingConfidence,
+      sourceCandidateRowId: candidate?.candidateRowId || null,
       selectedMappingCandidateId,
       periodGranularity: String(value.periodGranularity || 'annual'),
       periodLabel: value.periodLabel ? String(value.periodLabel) : null,
@@ -291,7 +336,7 @@ export async function saveStatementValuesFlow(params: {
     })
   );
 
-  const validationResult = validateStatement(
+  const baseValidationResult = validateStatement(
     normalizedValues.map((value: any) => ({
       canonicalLineId: value.canonicalLineId,
       value: value.value,
@@ -302,6 +347,25 @@ export async function saveStatementValuesFlow(params: {
     })),
     statement.statement_type
   );
+  // A browser assertion is useful UI evidence, but never the authoritative
+  // audit. The append-only decision is written after this save against the new
+  // values_version; until that durable row exists readiness must remain closed.
+  const unauditedManualValues = normalizedValues.filter(
+    (value: any) => value.mappingStatus === 'manual'
+  );
+  const validationResult = unauditedManualValues.length
+    ? {
+        status: 'needs_review' as const,
+        messages: [
+          ...baseValidationResult.messages,
+          {
+            type: 'error' as const,
+            code: 'MANUAL_MAPPING_NOT_VERIFIED',
+            message: `${unauditedManualValues.length} manual mapping(s) require an append-only verification decision.`,
+          },
+        ],
+      }
+    : baseValidationResult;
   const readiness = evaluateStatementReadiness({
     rawStatus: 'mapped',
     statementType: statement.statement_type,
@@ -480,11 +544,17 @@ export async function saveStatementValuesFlow(params: {
     });
   }
 
+  const persistedVersion = await dbGet<{ values_version: number }>(
+    `SELECT values_version FROM financial_statements WHERE id = ?`,
+    [statementId]
+  );
+
   return {
     statementId,
     statementPackId,
     ingestRunId,
     savedCount: normalizedValues.length,
+    valuesVersion: Number(persistedVersion?.values_version || 0),
     readiness,
     validation: validationResult,
   };

@@ -84,6 +84,18 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — baseline (real HTTP + real P
         'PkgB2 Baseline Test Org',
       ])
     );
+    await withPinnedPostgresTransaction(async (tx) => {
+      await tx.queryRun(
+        `INSERT INTO users (id, email, password, first_name, last_name, role, organization_id)
+         VALUES (?, ?, 'test', 'Baseline', 'Admin', 'ADMIN', ?)`,
+        [userId, `${userId}@example.test`, orgId]
+      );
+      await tx.queryRun(
+        `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+         VALUES (?, ?, ?, 'ADMIN', 'ACTIVE')`,
+        [randomUUID(), orgId, userId]
+      );
+    });
 
     const cal = await withPinnedPostgresTransaction((tx) =>
       tx.queryOne<{ fiscal_calendar_id: string }>(
@@ -202,6 +214,32 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — baseline (real HTTP + real P
     expect(res.body.code).toBe('INVALID_BODY');
   });
 
+  it('PUT /baseline/:id/context rejects coerced versions and mixed forecast arrays before writes', async () => {
+    const invalidVersion = await request(app)
+      .put(`/api/v8/finance-v2/baseline/${randomUUID()}/context`)
+      .set('Idempotency-Key', randomUUID())
+      .send({
+        expectedVersion: '0',
+        entityId: randomUUID(),
+        openingBalanceSheetPeriodId: randomUUID(),
+        forecastPeriodIds: [randomUUID()],
+      });
+    expect(invalidVersion.status).toBe(400);
+    expect(invalidVersion.body.code).toBe('INVALID_EXPECTED_VERSION');
+
+    const mixedPeriods = await request(app)
+      .put(`/api/v8/finance-v2/baseline/${randomUUID()}/context`)
+      .set('Idempotency-Key', randomUUID())
+      .send({
+        expectedVersion: 0,
+        entityId: randomUUID(),
+        openingBalanceSheetPeriodId: randomUUID(),
+        forecastPeriodIds: [randomUUID(), 7],
+      });
+    expect(mixedPeriods.status).toBe(400);
+    expect(mixedPeriods.body.code).toBe('INVALID_CONTEXT');
+  });
+
   it('POST /baseline/:id/compute on a fresh Baseline Model with no STATEMENT_TO_MODEL lineage edge -> 404 NO_SOURCE_STATEMENT_PACK_EDGE (the real first gate `loadContext` checks, before even looking for a finance_baseline_models row)', async () => {
     const created = await request(app)
       .post('/api/v8/finance-v2/artifacts')
@@ -278,6 +316,8 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — baseline (real HTTP + real P
     const OPENING_RETAINED_EARNINGS = 40_000_000;
 
     let bvId2 = '';
+    let approvedStatementBvId = '';
+    let approvedAnalysisBvId = '';
     let happyEntityId = '';
     let happyOpeningPeriodId = '';
     let happyForecastPeriodIds: string[] = [];
@@ -299,6 +339,7 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — baseline (real HTTP + real P
         .post('/api/v8/finance-v2/artifacts')
         .send({ artifactType: 'STATEMENT_PACK' });
       const stmtBvId = stmt.body.data.currentBusinessVersion.businessVersionId as string;
+      approvedStatementBvId = stmtBvId;
 
       const calRow = await withPinnedPostgresTransaction((tx) =>
         tx.queryOne<{ fiscal_calendar_id: string }>(
@@ -317,11 +358,12 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — baseline (real HTTP + real P
         start: string;
         end: string;
         label: string;
+        previousPeriodId?: string | null;
       }): Promise<string> {
         const row = await withPinnedPostgresTransaction((tx) =>
           tx.queryOne<{ period_id: string }>(
-            `INSERT INTO finance_stmt_periods (organization_id, fiscal_calendar_id, period_type, fiscal_year, fiscal_month, period_start, period_end, label, created_by)
-             VALUES (?, ?, 'MONTH', ?, ?, ?, ?, ?, ?) RETURNING period_id`,
+            `INSERT INTO finance_stmt_periods (organization_id, fiscal_calendar_id, period_type, fiscal_year, fiscal_month, period_start, period_end, label, previous_period_id, created_by)
+             VALUES (?, ?, 'MONTH', ?, ?, ?, ?, ?, ?, ?) RETURNING period_id`,
             [
               orgId,
               calendarId2,
@@ -330,6 +372,7 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — baseline (real HTTP + real P
               opts.start,
               opts.end,
               opts.label,
+              opts.previousPeriodId ?? null,
               userId,
             ]
           )
@@ -372,6 +415,7 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — baseline (real HTTP + real P
           start: `2025-${String(m).padStart(2, '0')}-01`,
           end: monthEnd(2025, m),
           label: `${m}/2025`,
+          previousPeriodId: lastFy2025PeriodId || null,
         });
         await insertStmtLine('REVENUE', pid, monthlyRevenue, 'P&L');
         lastFy2025PeriodId = pid;
@@ -403,6 +447,8 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — baseline (real HTTP + real P
             start: `2026-${String(m).padStart(2, '0')}-01`,
             end: monthEnd(2026, m),
             label: `${m}/2026`,
+            previousPeriodId:
+              happyForecastPeriodIds.at(-1) ?? happyOpeningPeriodId,
           })
         );
       }
@@ -438,6 +484,36 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — baseline (real HTTP + real P
           ]
         )
       );
+      const analysis = await request(app)
+        .post('/api/v8/finance-v2/artifacts')
+        .send({ artifactType: 'HISTORICAL_ANALYSIS' });
+      const analysisBvId = analysis.body.data.currentBusinessVersion.businessVersionId as string;
+      approvedAnalysisBvId = analysisBvId;
+      await withPinnedPostgresTransaction(async (tx) => {
+        await tx.queryRun(`SET LOCAL session_replication_role = replica`);
+        await tx.queryRun(
+          `UPDATE finance_business_versions
+              SET status = 'APPROVED', approved_by = ?, approved_at = now()
+            WHERE organization_id = ? AND business_version_id IN (?, ?)`,
+          [userId, orgId, stmtBvId, analysisBvId]
+        );
+        await tx.queryRun(`SET LOCAL session_replication_role = origin`);
+        await tx.queryRun(
+          `INSERT INTO finance_lineage_edges
+             (id, organization_id, source_version_id, source_artifact_type,
+              target_version_id, target_artifact_type, edge_type, transformation_kind,
+              assumption_snapshot_hash, author_id)
+           VALUES
+             (?, ?, ?, 'STATEMENT_PACK', ?, 'HISTORICAL_ANALYSIS',
+              'STATEMENT_TO_ANALYSIS', 'COMPUTE', NULL, ?),
+             (?, ?, ?, 'HISTORICAL_ANALYSIS', ?, 'BASELINE_MODEL',
+              'ANALYSIS_TO_MODEL', 'COMPUTE', ?, ?)`,
+          [
+            randomUUID(), orgId, stmtBvId, analysisBvId, userId,
+            randomUUID(), orgId, analysisBvId, bvId2, 'a'.repeat(64), userId,
+          ]
+        );
+      });
 
       const assumption = (scheduleType: string, driverCode: string, value: number, unit: string) =>
         withPinnedPostgresTransaction((tx) =>
@@ -548,6 +624,227 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — baseline (real HTTP + real P
       expect(jobRow?.status).toBe('succeeded');
     }, 120_000);
 
+    it('persists an explicit Baseline workspace context with CAS and durable idempotent replay', async () => {
+      const emptyBaseline = await request(app)
+        .post('/api/v8/finance-v2/artifacts')
+        .send({ artifactType: 'BASELINE_MODEL' });
+      const emptyBaselineBvId = emptyBaseline.body.data.currentBusinessVersion
+        .businessVersionId as string;
+      await withPinnedPostgresTransaction(async (tx) => {
+        await tx.queryRun(
+          `INSERT INTO finance_baseline_models
+             (id, organization_id, business_version_id, horizon_months,
+              horizon_rationale, horizon_rationale_note, circularity_max_iterations,
+              circularity_tolerance_currency, interest_income_on_cash_modeled,
+              mandatory_contractual_cash_sweep_modeled, created_by)
+           VALUES (?, ?, ?, 12, 'DEBT_MATURITY', 'zero-assumption negative', 50, 1, false, true, ?)`,
+          [randomUUID(), orgId, emptyBaselineBvId, userId]
+        );
+        await tx.queryRun(
+          `INSERT INTO finance_lineage_edges
+             (id, organization_id, source_version_id, source_artifact_type,
+              target_version_id, target_artifact_type, edge_type, transformation_kind,
+              assumption_snapshot_hash, author_id)
+           VALUES
+             (?, ?, ?, 'STATEMENT_PACK', ?, 'BASELINE_MODEL',
+              'STATEMENT_TO_MODEL', 'COMPUTE', NULL, ?),
+             (?, ?, ?, 'HISTORICAL_ANALYSIS', ?, 'BASELINE_MODEL',
+              'ANALYSIS_TO_MODEL', 'COMPUTE', ?, ?)`,
+          [
+            randomUUID(), orgId, approvedStatementBvId, emptyBaselineBvId, userId,
+            randomUUID(), orgId, approvedAnalysisBvId, emptyBaselineBvId, 'b'.repeat(64), userId,
+          ]
+        );
+      });
+      const emptyDenied = await request(app)
+        .put(`/api/v8/finance-v2/baseline/${emptyBaselineBvId}/context`)
+        .set('Idempotency-Key', `baseline-context-empty-${randomUUID()}`)
+        .send({
+          expectedVersion: 0,
+          entityId: happyEntityId,
+          openingBalanceSheetPeriodId: happyOpeningPeriodId,
+          forecastPeriodIds: happyForecastPeriodIds,
+        });
+      expect(emptyDenied.status).toBe(409);
+      expect(emptyDenied.body.code).toBe('BASELINE_CONTEXT_NOT_READY');
+      const emptyResidue = await withPinnedPostgresTransaction((tx) =>
+        tx.queryOne<{ contexts: string; receipts: string }>(
+          `SELECT
+             (SELECT count(*)::text FROM finance_baseline_workspace_contexts
+               WHERE business_version_id = ?) AS contexts,
+             (SELECT count(*)::text FROM finance_baseline_context_command_receipts
+               WHERE business_version_id = ?) AS receipts`,
+          [emptyBaselineBvId, emptyBaselineBvId]
+        )
+      );
+      expect(emptyResidue).toEqual({ contexts: '0', receipts: '0' });
+
+      const idempotencyKey = `baseline-context-${randomUUID()}`;
+      const payload = {
+        expectedVersion: 0,
+        entityId: happyEntityId,
+        openingBalanceSheetPeriodId: happyOpeningPeriodId,
+        forecastPeriodIds: happyForecastPeriodIds,
+      };
+      await withPinnedPostgresTransaction((tx) =>
+        tx.queryRun(
+          `UPDATE organization_members SET role = 'MEMBER'
+            WHERE organization_id = ? AND user_id = ?`,
+          [orgId, userId]
+        )
+      );
+      const memberDenied = await request(app)
+        .put(`/api/v8/finance-v2/baseline/${bvId2}/context`)
+        .set('Idempotency-Key', `baseline-context-member-${randomUUID()}`)
+        .send(payload);
+      expect(memberDenied.status).toBe(403);
+      expect(memberDenied.body.code).toBe('FINANCE_EDIT_FORBIDDEN');
+      await withPinnedPostgresTransaction((tx) =>
+        tx.queryRun(
+          `UPDATE organization_members SET role = 'ADMIN'
+            WHERE organization_id = ? AND user_id = ?`,
+          [orgId, userId]
+        )
+      );
+
+      const competingKey = `baseline-context-competing-${randomUUID()}`;
+      const concurrent = await Promise.all(
+        [idempotencyKey, competingKey].map((key) =>
+          request(app)
+            .put(`/api/v8/finance-v2/baseline/${bvId2}/context`)
+            .set('Idempotency-Key', key)
+            .send(payload)
+        )
+      );
+      expect(concurrent.map((result) => result.status).sort()).toEqual([200, 409]);
+      const created = concurrent.find((result) => result.status === 200)!;
+      const winningKey = created === concurrent[0] ? idempotencyKey : competingKey;
+      expect(created.status).toBe(200);
+      expect(created.body.data).toMatchObject({
+        businessVersionId: bvId2,
+        entityId: happyEntityId,
+        openingBalanceSheetPeriodId: happyOpeningPeriodId,
+        version: 1,
+        replay: false,
+      });
+      expect(created.body.data.forecastPeriods.map((p: any) => p.periodId)).toEqual(
+        happyForecastPeriodIds
+      );
+      expect(created.body.data.assumptionRowOrder.length).toBeGreaterThan(0);
+
+      const replay = await request(app)
+        .put(`/api/v8/finance-v2/baseline/${bvId2}/context`)
+        .set('Idempotency-Key', winningKey)
+        .send(payload);
+      expect(replay.status).toBe(200);
+      expect(replay.body.data.version).toBe(1);
+      expect(replay.body.data.replay).toBe(true);
+
+      const collision = await request(app)
+        .put(`/api/v8/finance-v2/baseline/${bvId2}/context`)
+        .set('Idempotency-Key', winningKey)
+        .send({ ...payload, forecastPeriodIds: [...happyForecastPeriodIds].reverse() });
+      expect(collision.status).toBe(409);
+      expect(collision.body.code).toBe('IDEMPOTENCY_PAYLOAD_COLLISION');
+
+      const stale = await request(app)
+        .put(`/api/v8/finance-v2/baseline/${bvId2}/context`)
+        .set('Idempotency-Key', `baseline-context-stale-${randomUUID()}`)
+        .send(payload);
+      expect(stale.status).toBe(409);
+      expect(stale.body.code).toBe('BASELINE_CONTEXT_VERSION_CONFLICT');
+
+      await withPinnedPostgresTransaction((tx) =>
+        tx.queryRun(
+          `UPDATE organization_members SET status = 'REVOKED'
+            WHERE organization_id = ? AND user_id = ?`,
+          [orgId, userId]
+        )
+      );
+      const revokedReplay = await request(app)
+        .put(`/api/v8/finance-v2/baseline/${bvId2}/context`)
+        .set('Idempotency-Key', winningKey)
+        .send(payload);
+      expect(revokedReplay.status).toBe(403);
+      expect(revokedReplay.body.code).toBe('ORG_MEMBERSHIP_REVOKED');
+      await withPinnedPostgresTransaction((tx) =>
+        tx.queryRun(
+          `UPDATE organization_members SET status = 'ACTIVE'
+            WHERE organization_id = ? AND user_id = ?`,
+          [orgId, userId]
+        )
+      );
+
+      const cold = await request(app).get(`/api/v8/finance-v2/baseline/${bvId2}/context`);
+      expect(cold.status).toBe(200);
+      expect(cold.body.data.version).toBe(1);
+      expect(cold.body.data.entityId).toBe(happyEntityId);
+      expect(cold.body.data.sourceStatementVersionId).toBe(approvedStatementBvId);
+      expect(cold.body.data.sourceAnalysisVersionId).toBe(approvedAnalysisBvId);
+
+      await withPinnedPostgresTransaction(async (tx) => {
+        await tx.queryRun(`SET LOCAL session_replication_role = replica`);
+        await tx.queryRun(
+          `UPDATE finance_business_versions SET status = 'DRAFT'
+            WHERE organization_id = ? AND business_version_id = ?`,
+          [orgId, approvedAnalysisBvId]
+        );
+        await tx.queryRun(`SET LOCAL session_replication_role = origin`);
+      });
+      const staleAnalysis = await request(app).get(
+        `/api/v8/finance-v2/baseline/${bvId2}/context`
+      );
+      expect(staleAnalysis.status).toBe(409);
+      expect(staleAnalysis.body.code).toBe('BASELINE_CONTEXT_SOURCE_STALE');
+      await withPinnedPostgresTransaction(async (tx) => {
+        await tx.queryRun(`SET LOCAL session_replication_role = replica`);
+        await tx.queryRun(
+          `UPDATE finance_business_versions SET status = 'APPROVED'
+            WHERE organization_id = ? AND business_version_id = ?`,
+          [orgId, approvedAnalysisBvId]
+        );
+        await tx.queryRun(`SET LOCAL session_replication_role = origin`);
+      });
+
+      const restored = await request(app).get(`/api/v8/finance-v2/baseline/${bvId2}/context`);
+      expect(restored.status).toBe(200);
+
+      const counts = await withPinnedPostgresTransaction((tx) =>
+        tx.queryOne<{ contexts: string; receipts: string }>(
+          `SELECT
+             (SELECT count(*)::text FROM finance_baseline_workspace_contexts WHERE business_version_id = ?) AS contexts,
+             (SELECT count(*)::text FROM finance_baseline_context_command_receipts WHERE business_version_id = ?) AS receipts`,
+          [bvId2, bvId2]
+        )
+      );
+      expect(counts).toEqual({ contexts: '1', receipts: '1' });
+
+      await expect(
+        withPinnedPostgresTransaction((tx) =>
+          tx.queryRun(
+            `UPDATE finance_baseline_context_command_receipts SET request_hash = request_hash
+              WHERE business_version_id = ?`,
+            [bvId2]
+          )
+        )
+      ).rejects.toThrow(/immutable/);
+      await expect(
+        withPinnedPostgresTransaction((tx) =>
+          tx.queryRun(
+            `DELETE FROM finance_baseline_context_command_receipts WHERE business_version_id = ?`,
+            [bvId2]
+          )
+        )
+      ).rejects.toThrow(/immutable/);
+      const trigger = await withPinnedPostgresTransaction((tx) =>
+        tx.queryOne<{ tgenabled: string }>(
+          `SELECT tgenabled FROM pg_trigger
+            WHERE tgname = 'trg_finance_baseline_context_receipt_immutable' AND NOT tgisinternal`
+        )
+      );
+      expect(trigger?.tgenabled).toBe('O');
+    });
+
     it("CROSS-TENANT: org B computing org A's real Baseline Model business_version_id -> 404, zero finance_baseline_outputs rows for org B", async () => {
       const orgB = `org-pkgb2-base-xt-${randomUUID()}`;
       const userBId = `user-pkgb2-base-xt-${randomUUID()}`;
@@ -557,6 +854,18 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — baseline (real HTTP + real P
           'PkgB2 Baseline XT Tenant B',
         ])
       );
+      await withPinnedPostgresTransaction(async (tx) => {
+        await tx.queryRun(
+          `INSERT INTO users (id, email, password, first_name, last_name, role, organization_id)
+           VALUES (?, ?, 'test', 'Foreign', 'Admin', 'ADMIN', ?)`,
+          [userBId, `${userBId}@example.test`, orgB]
+        );
+        await tx.queryRun(
+          `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+           VALUES (?, ?, ?, 'ADMIN', 'ACTIVE')`,
+          [randomUUID(), orgB, userBId]
+        );
+      });
       const appB = express();
       appB.use(express.json());
       appB.use((req: any, _res, next) => {
@@ -576,6 +885,12 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — baseline (real HTTP + real P
       });
       expect(res.status).toBe(404);
       expect(res.body.code).toBe('NOT_FOUND');
+
+      const foreignContext = await request(appB).get(
+        `/api/v8/finance-v2/baseline/${bvId2}/context`
+      );
+      expect(foreignContext.status).toBe(404);
+      expect(foreignContext.body.code).toBe('NOT_FOUND');
 
       const orgBOutputs = await withPinnedPostgresTransaction((tx) =>
         tx.queryAll<{ id: string }>(
