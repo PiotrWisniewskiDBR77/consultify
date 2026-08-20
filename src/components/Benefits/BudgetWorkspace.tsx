@@ -251,16 +251,14 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
   const handleApprove = useCallback(async () => {
     if (!selected) return;
     try {
-      const res = await fetch(`${API_URL}/economics/budgets/${selected.id}/approve`, {
-        method: 'POST',
-        headers: getHeaders(),
-      });
-      if (res.ok) {
-        toast.success(t('finance.budget.approved', 'Budget approved'));
-        trackFunnelEvent('budget_approved', { budgetId: selected.id });
-        await fetchBudgets();
-        onBudgetChanged?.();
-      }
+      const expectedVersion = Number(selected.version);
+      if (!Number.isInteger(expectedVersion) || expectedVersion < 1)
+        throw new Error('Budget version is unavailable');
+      await V8FinanceApi.approveBudget(selected.id, expectedVersion, crypto.randomUUID());
+      toast.success(t('finance.budget.approved', 'Budget approved'));
+      trackFunnelEvent('budget_approved', { budgetId: selected.id });
+      await fetchBudgets();
+      onBudgetChanged?.();
     } catch {
       toast.error(t('finance.budget.approveFailed', 'Approve failed'));
     }

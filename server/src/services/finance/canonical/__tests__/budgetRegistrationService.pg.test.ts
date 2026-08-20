@@ -13,6 +13,7 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
   const orgId = `org-budget-registration-${randomUUID()}`;
   const foreignOrgId = `org-budget-registration-foreign-${randomUUID()}`;
   const userId = `user-budget-registration-${randomUUID()}`;
+  const approverId = `user-budget-approver-${randomUUID()}`;
   const sourceId = `tool-budget-registration-${randomUUID()}`;
   const foreignSourceId = `tool-budget-registration-foreign-${randomUUID()}`;
   let client: Client;
@@ -20,6 +21,7 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
   let applyBudgetLineCommand: typeof import('../budgetLineCommandService.js').applyBudgetLineCommand;
   let projectBudgetScenario: typeof import('../budgetProjectionCommandService.js').projectBudgetScenario;
   let updateBudgetScenarioAdjustments: typeof import('../budgetProjectionCommandService.js').updateBudgetScenarioAdjustments;
+  let approveBudgetCommand: typeof import('../budgetApprovalCommandService.js').approveBudgetCommand;
 
   const counts = async () =>
     (
@@ -37,7 +39,11 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
           (SELECT count(*)::int FROM finance_budget_projection_command_receipts
              WHERE organization_id=$1) projection_receipts,
           (SELECT count(*)::int FROM finance_budget_scenario_adjustment_command_receipts
-             WHERE organization_id=$1) adjustment_receipts`,
+             WHERE organization_id=$1) adjustment_receipts,
+          (SELECT count(*)::int FROM finance_budget_approval_command_receipts
+             WHERE organization_id=$1) approval_receipts,
+          (SELECT count(*)::int FROM budget_snapshots WHERE budget_id IN
+             (SELECT id FROM budgets WHERE organization_id=$1)) snapshots`,
         [orgId]
       )
     ).rows[0];
@@ -50,19 +56,26 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
     ({ applyBudgetLineCommand } = await import('../budgetLineCommandService.js'));
     ({ projectBudgetScenario, updateBudgetScenarioAdjustments } =
       await import('../budgetProjectionCommandService.js'));
+    ({ approveBudgetCommand } = await import('../budgetApprovalCommandService.js'));
     await client.query(
       `INSERT INTO organizations(id,name) VALUES($1,'Budget registration'),($2,'Foreign budget registration')`,
       [orgId, foreignOrgId]
     );
     await client.query(
       `INSERT INTO users(id,organization_id,email,first_name,last_name,role)
-       VALUES($1,$2,$3,'Budget','Owner','ADMIN')`,
-      [userId, orgId, `${userId}@test.local`]
+       VALUES($1,$2,$3,'Budget','Owner','ADMIN'),
+             ($4,$2,$5,'Budget','Approver','ADMIN')`,
+      [userId, orgId, `${userId}@test.local`, approverId, `${approverId}@test.local`]
     );
     await client.query(
       `INSERT INTO organization_members(id,organization_id,user_id,role,status,created_at)
        VALUES($1,$2,$3,'OWNER','ACTIVE',now())`,
       [randomUUID(), orgId, userId]
+    );
+    await client.query(
+      `INSERT INTO organization_members(id,organization_id,user_id,role,status,created_at)
+       VALUES($1,$2,$3,'ADMIN','ACTIVE',now())`,
+      [randomUUID(), orgId, approverId]
     );
     await client.query(
       `INSERT INTO tool_sessions(id,organization_id,tool_type,name,created_by)
@@ -77,6 +90,10 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
     await client.query('BEGIN');
     try {
       await client.query(`SET LOCAL session_replication_role=replica`);
+      await client.query(
+        `DELETE FROM finance_budget_approval_command_receipts WHERE organization_id=$1`,
+        [orgId]
+      );
       await client.query(
         `DELETE FROM finance_budget_scenario_adjustment_command_receipts WHERE organization_id=$1`,
         [orgId]
@@ -94,6 +111,10 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
         [orgId]
       );
       await client.query(
+        `DELETE FROM budget_snapshots WHERE budget_id IN (SELECT id FROM budgets WHERE organization_id=$1)`,
+        [orgId]
+      );
+      await client.query(
         `DELETE FROM budget_scenarios WHERE budget_id IN (SELECT id FROM budgets WHERE organization_id=$1)`,
         [orgId]
       );
@@ -107,7 +128,7 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
         foreignSourceId,
       ]);
       await client.query(`DELETE FROM organization_members WHERE organization_id=$1`, [orgId]);
-      await client.query(`DELETE FROM users WHERE id=$1`, [userId]);
+      await client.query(`DELETE FROM users WHERE id IN ($1,$2)`, [userId, approverId]);
       await client.query(`DELETE FROM organizations WHERE id IN ($1,$2)`, [orgId, foreignOrgId]);
       await client.query('COMMIT');
     } catch (error) {
@@ -122,6 +143,8 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
       line_receipts: 0,
       projection_receipts: 0,
       adjustment_receipts: 0,
+      approval_receipts: 0,
+      snapshots: 0,
     });
     expect(
       (
@@ -817,6 +840,148 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
       await client.query(
         `DROP TRIGGER ${trg} ON finance_budget_scenario_adjustment_command_receipts`
       );
+      await client.query(`DROP FUNCTION ${fn}()`);
+    }
+  });
+
+  it('approves a fully projected budget with maker-checker, exact snapshot and replay', async () => {
+    const budget = await registerBudget(command(`approval-happy-budget-${randomUUID()}`));
+    const scenarios = (
+      await client.query(`SELECT id FROM budget_scenarios WHERE budget_id=$1 ORDER BY id`, [
+        budget.budget.id,
+      ])
+    ).rows;
+    let currentVersion = 1;
+    for (const scenario of scenarios) {
+      const projection = await projectBudgetScenario({
+        organizationId: orgId,
+        userId,
+        budgetId: budget.budget.id,
+        scenarioId: scenario.id,
+        expectedVersion: currentVersion,
+        idempotencyKey: `approval-projection-${scenario.id}-${randomUUID()}`,
+      });
+      currentVersion = projection.budgetVersion;
+    }
+    const input = {
+      organizationId: orgId,
+      userId: approverId,
+      budgetId: budget.budget.id,
+      expectedVersion: currentVersion,
+      idempotencyKey: `approval-happy-${randomUUID()}`,
+    };
+    const first = await approveBudgetCommand(input);
+    expect(first).toMatchObject({
+      status: 'APPROVED',
+      budgetVersion: currentVersion + 1,
+      approvedBy: approverId,
+      replay: false,
+    });
+    expect(first.snapshotSha256).toMatch(/^[0-9a-f]{64}$/);
+    expect(await approveBudgetCommand(input)).toEqual({ ...first, replay: true });
+    const cold = (
+      await client.query(
+        `SELECT b.status,b.version,b.approved_by,s.snapshot_data,
+          r.snapshot_sha256,r.response_json,
+          (SELECT count(*)::int FROM budget_snapshots WHERE budget_id=b.id) snapshot_count
+         FROM budgets b
+         JOIN finance_budget_approval_command_receipts r
+           ON r.budget_id=b.id AND r.organization_id=b.organization_id
+         JOIN budget_snapshots s ON s.id=r.snapshot_id AND s.budget_id=b.id
+         WHERE b.organization_id=$1 AND b.id=$2`,
+        [orgId, budget.budget.id]
+      )
+    ).rows[0];
+    expect(cold).toMatchObject({
+      status: 'APPROVED',
+      version: currentVersion + 1,
+      approved_by: approverId,
+      snapshot_sha256: first.snapshotSha256,
+      snapshot_count: 1,
+    });
+    expect(cold.snapshot_data.lines).toHaveLength(15);
+    expect(cold.snapshot_data.scenarios).toHaveLength(3);
+    await expect(
+      client.query(
+        `UPDATE finance_budget_approval_command_receipts SET snapshot_sha256=snapshot_sha256
+          WHERE organization_id=$1 AND budget_id=$2`,
+        [orgId, budget.budget.id]
+      )
+    ).rejects.toThrow(/immutable/);
+    await client.query(
+      `UPDATE organization_members SET status='REVOKED' WHERE organization_id=$1 AND user_id=$2`,
+      [orgId, approverId]
+    );
+    await expect(approveBudgetCommand(input)).rejects.toMatchObject({
+      code: 'ORG_MEMBERSHIP_REVOKED',
+      status: 403,
+    });
+    await client.query(
+      `UPDATE organization_members SET status='ACTIVE' WHERE organization_id=$1 AND user_id=$2`,
+      [orgId, approverId]
+    );
+  });
+
+  it('rejects self approval and rolls snapshot/status back when receipt insertion fails', async () => {
+    const budget = await registerBudget(command(`approval-negative-budget-${randomUUID()}`));
+    const scenarios = (
+      await client.query(`SELECT id FROM budget_scenarios WHERE budget_id=$1 ORDER BY id`, [
+        budget.budget.id,
+      ])
+    ).rows;
+    let currentVersion = 1;
+    for (const scenario of scenarios) {
+      currentVersion = (
+        await projectBudgetScenario({
+          organizationId: orgId,
+          userId,
+          budgetId: budget.budget.id,
+          scenarioId: scenario.id,
+          expectedVersion: currentVersion,
+          idempotencyKey: `approval-negative-projection-${scenario.id}-${randomUUID()}`,
+        })
+      ).budgetVersion;
+    }
+    await expect(
+      approveBudgetCommand({
+        organizationId: orgId,
+        userId,
+        budgetId: budget.budget.id,
+        expectedVersion: currentVersion,
+        idempotencyKey: `approval-self-${randomUUID()}`,
+      })
+    ).rejects.toMatchObject({ code: 'SELF_APPROVAL_FORBIDDEN', status: 403 });
+
+    const fn = `reject_budget_approval_receipt_${randomUUID().replaceAll('-', '')}`;
+    const trg = `reject_budget_approval_receipt_${randomUUID().replaceAll('-', '')}`;
+    await client.query(
+      `CREATE FUNCTION ${fn}() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'injected budget approval receipt failure'; END $$`
+    );
+    await client.query(
+      `CREATE TRIGGER ${trg} BEFORE INSERT ON finance_budget_approval_command_receipts FOR EACH ROW EXECUTE FUNCTION ${fn}()`
+    );
+    try {
+      await expect(
+        approveBudgetCommand({
+          organizationId: orgId,
+          userId: approverId,
+          budgetId: budget.budget.id,
+          expectedVersion: currentVersion,
+          idempotencyKey: `approval-rollback-${randomUUID()}`,
+        })
+      ).rejects.toThrow(/injected budget approval receipt failure/);
+      expect(
+        (
+          await client.query(
+            `SELECT status,version,
+              (SELECT count(*)::int FROM budget_snapshots WHERE budget_id=$1) snapshot_count
+             FROM budgets WHERE id=$1`,
+            [budget.budget.id]
+          )
+        ).rows[0]
+      ).toEqual({ status: 'DRAFT', version: currentVersion, snapshot_count: 0 });
+    } finally {
+      await client.query(`DROP TRIGGER ${trg} ON finance_budget_approval_command_receipts`);
       await client.query(`DROP FUNCTION ${fn}()`);
     }
   });

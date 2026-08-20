@@ -1145,7 +1145,11 @@ export function useFinancePreview({
               label: t('finance.actions.approve', 'Zatwierdź'),
               onClick: async () => {
                 try {
-                  await Api.post(`/api/economics/budgets/${rawId}/approve`, {});
+                  const detail = await Api.get(`/api/economics/budgets/${rawId}`);
+                  const expectedVersion = Number((detail as any)?.version);
+                  if (!Number.isInteger(expectedVersion) || expectedVersion < 1)
+                    throw new Error('Budget version is unavailable');
+                  await V8FinanceApi.approveBudget(rawId, expectedVersion, crypto.randomUUID());
                   await loadBudgets();
                   toast.success(t('finance.toast.budgetApproved', 'Budżet zatwierdzony'));
                 } catch (e: any) {

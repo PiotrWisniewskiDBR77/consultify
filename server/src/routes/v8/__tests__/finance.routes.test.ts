@@ -32,6 +32,7 @@ const mockRegisterBudget = vi.fn();
 const mockApplyBudgetLineCommand = vi.fn();
 const mockProjectBudgetScenario = vi.fn();
 const mockUpdateBudgetScenarioAdjustments = vi.fn();
+const mockApproveBudgetCommand = vi.fn();
 const mockListAnalyses = vi.fn();
 const mockGetAnalysisRatios = vi.fn();
 const mockGetAnalysisInsights = vi.fn();
@@ -327,6 +328,20 @@ vi.mock('../../../services/finance/canonical/budgetProjectionCommandService.js',
     mockUpdateBudgetScenarioAdjustments(...args),
 }));
 
+vi.mock('../../../services/finance/canonical/budgetApprovalCommandService.js', () => ({
+  BudgetApprovalCommandError: class BudgetApprovalCommandError extends Error {
+    constructor(
+      public code: string,
+      public status: number,
+      message: string,
+      public details?: Record<string, unknown>
+    ) {
+      super(message);
+    }
+  },
+  approveBudgetCommand: (...args: unknown[]) => mockApproveBudgetCommand(...args),
+}));
+
 vi.mock('../../../services/ratioAnalysisService.js', () => ({
   computeRatios: (...args: unknown[]) => mockComputeRatios(...args),
 }));
@@ -490,6 +505,16 @@ describe('V8 finance read-only routes', () => {
       },
       budgetVersion: 2,
       adjustmentsSha256: 'b'.repeat(64),
+      replay: false,
+    });
+    mockApproveBudgetCommand.mockResolvedValue({
+      budgetId: 'budget-new',
+      snapshotId: 'snapshot-1',
+      status: 'APPROVED',
+      budgetVersion: 2,
+      snapshotSha256: 'c'.repeat(64),
+      approvedBy: UID,
+      approvedAt: '2026-08-20T10:00:00.000Z',
       replay: false,
     });
     mockListAnalyses.mockResolvedValue([]);
@@ -1973,6 +1998,36 @@ describe('V8 finance read-only routes', () => {
     expect(res.status).toBe(400);
     expect(res.body.code).toBe('INVALID_BODY');
     expect(mockUpdateBudgetScenarioAdjustments).not.toHaveBeenCalled();
+  });
+
+  it('POST /api/v8/finance/budgets/:budgetId/approve binds CAS and idempotency', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/v8/finance/budgets/budget-new/approve')
+      .set('Idempotency-Key', 'approval-command-key')
+      .send({ expectedVersion: 1 });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({ status: 'APPROVED', budgetVersion: 2, replay: false });
+    expect(mockApproveBudgetCommand).toHaveBeenCalledWith({
+      organizationId: ORG,
+      userId: UID,
+      budgetId: 'budget-new',
+      expectedVersion: 1,
+      idempotencyKey: 'approval-command-key',
+    });
+  });
+
+  it('POST /api/v8/finance/budgets/:budgetId/approve rejects unknown fields', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/v8/finance/budgets/budget-new/approve')
+      .set('Idempotency-Key', 'approval-command-key')
+      .send({ expectedVersion: 1, approvedBy: 'spoofed' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('INVALID_BODY');
+    expect(mockApproveBudgetCommand).not.toHaveBeenCalled();
   });
 
   it('POST /api/v8/finance/analyses returns envelope and delegates to createAnalysis', async () => {

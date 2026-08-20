@@ -231,6 +231,17 @@ export interface V8FinanceBudgetScenarioAdjustmentCommandResult {
   replay: boolean;
 }
 
+export interface V8FinanceBudgetApprovalCommandResult {
+  budgetId: string;
+  snapshotId: string;
+  status: 'APPROVED';
+  budgetVersion: number;
+  snapshotSha256: string;
+  approvedBy: string;
+  approvedAt: string;
+  replay: boolean;
+}
+
 export interface V8FinanceCaseScenario {
   id: string;
   name: string;
@@ -724,6 +735,12 @@ export const V8FinanceApi = {
     v8Put<V8FinanceBudgetScenarioAdjustmentCommandResult>(
       `/finance/budgets/${budgetId}/scenarios/${scenarioId}/adjustments`,
       { expectedVersion, adjustments },
+      { extraHeaders: { 'Idempotency-Key': idempotencyKey } }
+    ),
+  approveBudget: (budgetId: string, expectedVersion: number, idempotencyKey: string) =>
+    v8Post<V8FinanceBudgetApprovalCommandResult>(
+      `/finance/budgets/${budgetId}/approve`,
+      { expectedVersion },
       { extraHeaders: { 'Idempotency-Key': idempotencyKey } }
     ),
   getStatementPacks: (params?: { readiness?: string }) =>

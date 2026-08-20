@@ -437,10 +437,10 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'ECO-W37',
       method: 'POST',
       path: /^\/budgets\/[^/]+\/approve\/?$/,
-      state: 'observed',
-      successor: null,
+      state: 'disabled',
+      successor: '/api/v8/finance/budgets/:budgetId/approve',
       reason:
-        'Approves the budget addressed by :id: INSERT INTO budget_snapshots plus UPDATE budgets SET status=APPROVED (economics.routes.ts:3163, budgetingService.ts:434,438 approveBudget). This is FINANCE-W071 in the inventory ("a THIRD independent approve writer" alongside model-approve and analysis-approve). No proven successor.',
+        'All mounted budget approval callers use a canonical material-operation command with current OWNER/ADMIN/FINANCE_ADMIN authority, creator-versus-approver separation, DRAFT/version CAS, exact lines/scenarios snapshot hash, immutable receipt and writer-scoped legacy rollback.',
     },
     {
       writerId: 'ECO-W38',

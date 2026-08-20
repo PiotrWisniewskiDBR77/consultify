@@ -160,6 +160,10 @@ import {
   projectBudgetScenario,
   updateBudgetScenarioAdjustments,
 } from '../../services/finance/canonical/budgetProjectionCommandService.js';
+import {
+  approveBudgetCommand,
+  BudgetApprovalCommandError,
+} from '../../services/finance/canonical/budgetApprovalCommandService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -1534,6 +1538,43 @@ router.put(
       return res.status(200).json({ data: result, meta: financeMeta() });
     } catch (error) {
       if (error instanceof BudgetProjectionCommandError) {
+        return res.status(error.status).json({
+          code: error.code,
+          error: error.message,
+          ...(error.details || {}),
+        });
+      }
+      throw error;
+    }
+  })
+);
+
+router.post(
+  '/budgets/:budgetId/approve',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const userId = String(req.user?.id || (req.user as any)?.user_id || '');
+    const body =
+      req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
+    if (Object.keys(body).some((key) => key !== 'expectedVersion')) {
+      return res.status(400).json({ code: 'INVALID_BODY', error: 'Unknown approval field' });
+    }
+    if (!Number.isInteger(body.expectedVersion) || body.expectedVersion < 1) {
+      return res.status(400).json({ code: 'INVALID_BODY', error: 'Invalid expectedVersion' });
+    }
+    try {
+      const result = await approveBudgetCommand({
+        organizationId,
+        userId,
+        budgetId: req.params.budgetId,
+        expectedVersion: body.expectedVersion,
+        idempotencyKey: String(
+          req.header('Idempotency-Key') || req.header('x-idempotency-key') || ''
+        ),
+      });
+      return res.status(200).json({ data: result, meta: financeMeta() });
+    } catch (error) {
+      if (error instanceof BudgetApprovalCommandError) {
         return res.status(error.status).json({
           code: error.code,
           error: error.message,
