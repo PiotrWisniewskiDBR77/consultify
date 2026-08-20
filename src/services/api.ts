@@ -1332,6 +1332,40 @@ export interface SwotProposal {
   decidedAt: string | null;
 }
 
+const listAssessmentsLegacy = async (params?: {
+  projectId?: string;
+  status?: string;
+  assessmentType?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<{
+  items: any[];
+  total: number;
+  limit: number;
+  offset: number;
+  assessments?: any[];
+}> => {
+  const query = new URLSearchParams();
+  if (params?.projectId) query.set('projectId', params.projectId);
+  if (params?.status) query.set('status', params.status);
+  if (params?.assessmentType) query.set('assessmentType', params.assessmentType);
+  if (params?.limit) query.set('limit', String(params.limit));
+  if (params?.offset) query.set('offset', String(params.offset));
+
+  const url = `${API_URL}/assessment-workflow-v2${query.toString() ? `?${query.toString()}` : ''}`;
+  const res = await fetch(url, { headers: getHeaders() });
+  const data = await handleResponse(res, 'Failed to list assessments');
+  const rows = (data?.items || data?.assessments || data || []) as any[];
+
+  return {
+    items: Array.isArray(rows) ? rows : [],
+    total: Number(data?.total ?? (Array.isArray(rows) ? rows.length : 0)) || 0,
+    limit: Number(params?.limit ?? data?.limit ?? 100) || 100,
+    offset: Number(params?.offset ?? data?.offset ?? 0) || 0,
+    assessments: Array.isArray(data?.assessments) ? data.assessments : undefined,
+  };
+};
+
 export const Api = {
   // --- AUTH ---
   login: async (
@@ -8077,28 +8111,13 @@ export const Api = {
       if (!shouldFallbackToLegacy(error)) {
         throw error;
       }
-
-      const query = new URLSearchParams();
-      if (params?.projectId) query.set('projectId', params.projectId);
-      if (params?.status) query.set('status', params.status);
-      if (params?.assessmentType) query.set('assessmentType', params.assessmentType);
-      if (params?.limit) query.set('limit', String(params.limit));
-      if (params?.offset) query.set('offset', String(params.offset));
-
-      const url = `${API_URL}/assessment-workflow-v2${query.toString() ? `?${query.toString()}` : ''}`;
-      const res = await fetch(url, { headers: getHeaders() });
-      const data = await handleResponse(res, 'Failed to list assessments');
-
-      const rows = (data?.items || data?.assessments || data || []) as any[];
-      return {
-        items: Array.isArray(rows) ? rows : [],
-        total: Number(data?.total ?? (Array.isArray(rows) ? rows.length : 0)) || 0,
-        limit: Number(params?.limit ?? data?.limit ?? 100) || 100,
-        offset: Number(params?.offset ?? data?.offset ?? 0) || 0,
-        assessments: Array.isArray(data?.assessments) ? data.assessments : undefined,
-      };
+      return listAssessmentsLegacy(params);
     }
   },
+
+  // Discovery bootstrap deliberately uses the stable legacy read surface. It
+  // must not probe a feature-gated V8 route merely to fall back when V8 is off.
+  listAssessmentsLegacy,
 
   deleteAssessment: async (assessmentId: string): Promise<any> => {
     const res = await fetch(`${API_URL}/assessment-workflow/${assessmentId}`, {

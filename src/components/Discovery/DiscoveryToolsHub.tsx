@@ -1003,7 +1003,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             ),
             resolveBootstrapRequest(
               'assessments',
-              Api.listAssessments({
+              Api.listAssessmentsLegacy({
                 projectId: currentProjectId || undefined,
                 limit: 100,
                 offset: 0,

@@ -425,6 +425,8 @@ import {
   requireActiveMembership,
   requireFinanceEditorMembership,
 } from './services/legacyCutover/requireActiveMembership.js';
+import { getV8Flags } from './services/v8/featureFlagService.js';
+import { asyncHandler } from './utils/asyncHandler.js';
 import logger from './utils/Logger.js';
 import { safeFetchHtml, SsrfBlockedError } from './utils/ssrfGuard.js';
 
@@ -1425,6 +1427,21 @@ export class ApiGateway {
         attachV8Context,
         requireCanonicalExecutionWriter,
         v8ExecutionControlManagerRouter
+      );
+
+      // Capability discovery must work when the global V8 gate is disabled;
+      // otherwise the authenticated shell can only learn that V8 is unavailable
+      // by issuing a guaranteed 404. Keep this exception deliberately exact and
+      // read-only: /all, PUT, and every other V8 route still hit the gates below.
+      app.get(
+        '/api/v8/admin/flags',
+        gatewayVerifyToken,
+        requireV8OrgContext,
+        asyncHandler(async (req, res) => {
+          const organizationId = (req as any).organizationId as string;
+          const flags = await getV8Flags(organizationId);
+          res.json({ data: flags, meta: { version: 'v8', organizationId } });
+        })
       );
 
       // V8 API namespace — feature-gated

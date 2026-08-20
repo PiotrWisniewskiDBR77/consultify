@@ -1358,7 +1358,7 @@ export const SWOT_STEPS: StepDefinition[] = [
   {
     id: 'mission',
     name: 'Mission & Context',
-    namePl: 'Mission & Context',
+    namePl: 'Misja i kontekst',
     description: 'Define the strategic question, scope, success criteria, and decision frame',
     descriptionPl: 'Zdefiniuj pytanie strategiczne, zakres, kryteria sukcesu i ramę decyzji',
     required: true,
@@ -1367,7 +1367,7 @@ export const SWOT_STEPS: StepDefinition[] = [
   {
     id: 'input',
     name: 'Input & Exploration',
-    namePl: 'Input & Exploration',
+    namePl: 'Materiały i eksploracja',
     description: 'Capture interview notes, materials, and external context as shared signals',
     descriptionPl: 'Zbierz wywiad, materiały i kontekst zewnętrzny jako wspólne sygnały',
     required: true,
@@ -1376,7 +1376,7 @@ export const SWOT_STEPS: StepDefinition[] = [
   {
     id: 'swot',
     name: 'SWOT Build',
-    namePl: 'SWOT Build',
+    namePl: 'Budowa SWOT',
     description:
       'Turn signals into a concrete matrix of strengths, weaknesses, opportunities, and threats',
     descriptionPl:
@@ -1387,7 +1387,7 @@ export const SWOT_STEPS: StepDefinition[] = [
   {
     id: 'insights',
     name: 'Synthesis & Insights',
-    namePl: 'Synthesis & Insights',
+    namePl: 'Synteza i wnioski',
     description: 'Convert the matrix into tensions, applied conclusions, and strategic moves',
     descriptionPl: 'Przekształć macierz w napięcia, wnioski aplikowalne i ruchy strategiczne',
     required: true,
@@ -1396,7 +1396,7 @@ export const SWOT_STEPS: StepDefinition[] = [
   {
     id: 'outputs',
     name: 'Outputs & Actions',
-    namePl: 'Outputs & Actions',
+    namePl: 'Rezultaty i działania',
     description: 'Prepare the final source summary and generate downstream outputs and initiatives',
     descriptionPl: 'Przygotuj final source summary oraz wygeneruj outputy i inicjatywy',
     required: true,
