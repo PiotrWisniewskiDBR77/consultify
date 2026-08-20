@@ -121,7 +121,7 @@ describe('FinancialAnalysisWorkspace V8 read seam', () => {
     expect(Api.get).toHaveBeenCalledWith('/api/economics/financial-analyses/analysis-legacy-1/ratios');
   });
 
-  it('prefers governed analysis creation before legacy fallback in the workspace', async () => {
+  it('uses governed analysis creation in the workspace', async () => {
     vi.mocked(V8FinanceApi.getAnalyses).mockResolvedValue({ analyses: [], count: 0 } as any);
     vi.mocked(V8FinanceApi.createAnalysis).mockResolvedValue({
       analysis: {
@@ -149,17 +149,9 @@ describe('FinancialAnalysisWorkspace V8 read seam', () => {
     });
   });
 
-  it('falls back to legacy analysis creation in the workspace on bounded compatibility statuses', async () => {
+  it('fails closed without reopening legacy analysis creation in the workspace', async () => {
     vi.mocked(V8FinanceApi.getAnalyses).mockResolvedValue({ analyses: [], count: 0 } as any);
     vi.mocked(V8FinanceApi.createAnalysis).mockRejectedValue({ status: 404 });
-    vi.mocked(Api.post).mockResolvedValue({
-      analysis: {
-        id: 'analysis-legacy-1',
-        title: 'Legacy created analysis',
-        status: 'DRAFT',
-        currency: 'PLN',
-      },
-    } as any);
 
     render(<FinancialAnalysisWorkspace />);
 
@@ -174,9 +166,13 @@ describe('FinancialAnalysisWorkspace V8 read seam', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Create' }));
 
     await waitFor(() => {
-      expect(Api.post).toHaveBeenCalledWith('/api/economics/financial-analyses', {
+      expect(V8FinanceApi.createAnalysis).toHaveBeenCalledWith({
         title: 'Legacy created analysis',
       });
     });
+    expect(Api.post).not.toHaveBeenCalledWith(
+      '/api/economics/financial-analyses',
+      expect.anything(),
+    );
   });
 });

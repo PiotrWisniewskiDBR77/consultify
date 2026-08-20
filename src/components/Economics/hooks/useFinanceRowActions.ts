@@ -206,14 +206,7 @@ export function useFinanceRowActions({
           await Api.delete(`/api/economics/budgets/${rawId}`);
           await loadBudgets();
         } else if (row.kind === 'analysis' || row.kind === 'investment') {
-          try {
-            await V8FinanceApi.deleteAnalysis(row.id);
-          } catch (error) {
-            if (!shouldFallbackToLegacyFinance(error)) {
-              throw error;
-            }
-            await Api.delete(`/api/economics/financial-analyses/${row.id}`);
-          }
+          await V8FinanceApi.deleteAnalysis(row.id);
           await loadAnalyses();
         } else if (row.kind === 'valuation') {
           await Api.delete(`/api/economics/valuations/${row.id}`);
@@ -292,14 +285,7 @@ export function useFinanceRowActions({
               | 'comprehensive',
             currency: sourceCurrency || 'PLN',
           };
-          try {
-            await V8FinanceApi.createAnalysis(analysisPayload);
-          } catch (error) {
-            if (!shouldFallbackToLegacyFinance(error)) {
-              throw error;
-            }
-            await Api.post('/api/economics/financial-analyses', analysisPayload);
-          }
+          await V8FinanceApi.createAnalysis(analysisPayload);
           await loadAnalyses();
         } else if (row.kind === 'valuation') {
           const detail = (await Api.get(`/api/economics/valuations/${row.id}`)) as any;

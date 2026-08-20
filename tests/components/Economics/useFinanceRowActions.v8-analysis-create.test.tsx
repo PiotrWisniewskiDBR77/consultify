@@ -78,7 +78,7 @@ describe('useFinanceRowActions V8 analysis create seam', () => {
     vi.clearAllMocks();
   });
 
-  it('prefers governed analysis creation for duplicate before legacy fallback', async () => {
+  it('uses governed analysis creation for duplicate', async () => {
     vi.mocked(V8FinanceApi.createAnalysis).mockResolvedValue({
       analysis: { id: 'analysis-copy-1', title: 'Working capital analysis (copy)' },
     } as any);
@@ -99,9 +99,8 @@ describe('useFinanceRowActions V8 analysis create seam', () => {
     expect(Api.post).not.toHaveBeenCalledWith('/api/economics/financial-analyses', expect.anything());
   });
 
-  it('falls back to legacy analysis creation for duplicate on bounded compatibility statuses', async () => {
+  it('fails closed without reopening legacy analysis creation for duplicate', async () => {
     vi.mocked(V8FinanceApi.createAnalysis).mockRejectedValue({ status: 404 });
-    vi.mocked(Api.post).mockResolvedValue({ analysis: { id: 'analysis-copy-legacy-1' } } as any);
 
     const { result } = renderHook(() => useFinanceRowActions(baseParams));
     const actions = result.current.getRowActions(analysisRow);
@@ -111,11 +110,12 @@ describe('useFinanceRowActions V8 analysis create seam', () => {
       await duplicateAction?.onClick();
     });
 
-    expect(Api.post).toHaveBeenCalledWith(
+    expect(V8FinanceApi.createAnalysis).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Working capital analysis (copy)' }),
+    );
+    expect(Api.post).not.toHaveBeenCalledWith(
       '/api/economics/financial-analyses',
-      expect.objectContaining({
-        title: 'Working capital analysis (copy)',
-      }),
+      expect.anything(),
     );
   });
 

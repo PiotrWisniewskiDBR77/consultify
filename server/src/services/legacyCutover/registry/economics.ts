@@ -200,10 +200,10 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'ECO-W14',
       method: 'POST',
       path: /^\/financial-analyses\/?$/,
-      state: 'observed',
-      successor: null,
+      state: 'disabled',
+      successor: '/api/v8/finance/analyses',
       reason:
-        'Creates a financial_analyses row via finAnalysisSvc.createAnalysis (economics.routes.ts:2301, financialAnalysisService.ts:399 INSERT INTO financial_analyses). financial_analyses is one of the four legacy tables the identity bridge knows, but this is a collection-level create with no path id yet, so legacyTable/legacyIdFromPath do not apply here. No proven successor.',
+        'All mounted Financial Analysis creation callers now invoke the canonical V8 Finance create command directly. The prior fallback to this duplicate economics writer was removed; failures remain visible instead of reopening split-brain persistence.',
     },
     {
       writerId: 'ECO-W15',
@@ -272,12 +272,12 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'ECO-W21',
       method: 'DELETE',
       path: /^\/financial-analyses\/[^/]+\/?$/,
-      state: 'observed',
-      successor: null,
+      state: 'disabled',
+      successor: '/api/v8/finance/analyses/:analysisId',
       legacyTable: 'financial_analyses',
       legacyIdFromPath: idAt2,
       reason:
-        'Deletes a financial_analyses row and its financial_analysis_insights/financial_analysis_ratios children, addressed by :id (economics.routes.ts:2532, inline DELETEs at :2547-2549). Refuses if status=APPROVED. No proven successor.',
+        'The mounted Finance row action now invokes the tenant-scoped canonical V8 Finance delete command directly. Its previous economics fallback was removed, so the duplicate destructive writer is retired fail-closed.',
     },
     {
       writerId: 'ECO-W22',

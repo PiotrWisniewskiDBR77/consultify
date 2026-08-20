@@ -56,7 +56,7 @@ describe('CreateAnalysisModal V8 create seam', () => {
     vi.clearAllMocks();
   });
 
-  it('prefers governed analysis creation before legacy fallback', async () => {
+  it('uses governed analysis creation', async () => {
     const onCreated = vi.fn();
     vi.mocked(V8FinanceApi.createAnalysis).mockResolvedValue({
       analysis: {
@@ -97,22 +97,9 @@ describe('CreateAnalysisModal V8 create seam', () => {
     expect(onCreated).toHaveBeenCalled();
   });
 
-  it('falls back to legacy analysis creation on bounded compatibility statuses', async () => {
+  it('fails closed without reopening legacy analysis creation', async () => {
     const onCreated = vi.fn();
     vi.mocked(V8FinanceApi.createAnalysis).mockRejectedValue({ status: 404 });
-    vi.mocked(Api.post).mockResolvedValue({
-      analysis: {
-        id: 'analysis-legacy-1',
-        title: 'Legacy analysis',
-        status: 'DRAFT',
-        analysisType: 'comprehensive',
-        periods: [],
-        currency: 'PLN',
-        source_statement_ids: ['statement-1'],
-        source_statement_pack_id: 'pack-1',
-        updated_at: '2026-03-26T10:00:00.000Z',
-      },
-    } as any);
 
     render(
       <CreateAnalysisModal
@@ -127,15 +114,14 @@ describe('CreateAnalysisModal V8 create seam', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Create' }));
 
     await waitFor(() => {
-      expect(Api.post).toHaveBeenCalledWith(
-        '/api/economics/financial-analyses',
-        expect.objectContaining({
-          title: 'Legacy analysis',
-          sourceStatementPackId: 'pack-1',
-        }),
+      expect(V8FinanceApi.createAnalysis).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Legacy analysis', sourceStatementPackId: 'pack-1' }),
       );
     });
-
-    expect(onCreated).toHaveBeenCalled();
+    expect(Api.post).not.toHaveBeenCalledWith(
+      '/api/economics/financial-analyses',
+      expect.anything(),
+    );
+    expect(onCreated).not.toHaveBeenCalled();
   });
 });

@@ -22,8 +22,8 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
       legacyMutationDoors: 52,
       canonicalMutationDoors: 1,
       nonMutationDoors: 6,
-      retiredLegacyMutationDoors: 8,
-      openLegacyMutationDoors: 44,
+      retiredLegacyMutationDoors: 10,
+      openLegacyMutationDoors: 42,
     });
   });
 

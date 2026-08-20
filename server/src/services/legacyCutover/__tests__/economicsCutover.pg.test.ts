@@ -264,6 +264,64 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
     ]);
   });
 
+  it('retires duplicate analysis create and delete doors before either legacy handler runs', async () => {
+    const before = await pool.query<{ count: string }>(
+      `SELECT count(*)::text AS count FROM financial_analyses WHERE organization_id=$1`,
+      [orgA]
+    );
+
+    const createResponse = await request(app)
+      .post('/api/economics/financial-analyses')
+      .set('x-request-id', `${prefix}-analysis-create-retired`)
+      .send({ title: 'Must not be created' });
+    const deleteResponse = await request(app)
+      .delete(`/api/economics/financial-analyses/${mappedAnalysisId}`)
+      .set('x-request-id', `${prefix}-analysis-delete-retired`);
+
+    expect(createResponse.status).toBe(410);
+    expect(createResponse.body).toMatchObject({
+      code: 'FINANCE_LEGACY_WRITER_DISABLED',
+      writerId: 'ECO-W14',
+      successor: '/api/v8/finance/analyses',
+    });
+    expect(deleteResponse.status).toBe(410);
+    expect(deleteResponse.body).toMatchObject({
+      code: 'FINANCE_LEGACY_WRITER_DISABLED',
+      writerId: 'ECO-W21',
+      successor: '/api/v8/finance/analyses/:analysisId',
+    });
+
+    const after = await pool.query<{ count: string }>(
+      `SELECT count(*)::text AS count FROM financial_analyses WHERE organization_id=$1`,
+      [orgA]
+    );
+    expect(after.rows).toEqual(before.rows);
+
+    const usage = await pool.query(
+      `SELECT writer_id,access_kind,canonical_artifact_id,canonical_business_version_id,successor_path
+         FROM legacy_cutover_usage_events
+        WHERE organization_id=$1 AND request_id IN ($2,$3)
+        ORDER BY writer_id`,
+      [orgA, `${prefix}-analysis-create-retired`, `${prefix}-analysis-delete-retired`]
+    );
+    expect(usage.rows).toEqual([
+      {
+        writer_id: 'ECO-W14',
+        access_kind: 'legacy_writer_blocked',
+        canonical_artifact_id: null,
+        canonical_business_version_id: null,
+        successor_path: '/api/v8/finance/analyses',
+      },
+      {
+        writer_id: 'ECO-W21',
+        access_kind: 'legacy_writer_blocked',
+        canonical_artifact_id: mappedArtifactId,
+        canonical_business_version_id: mappedBusinessVersionId,
+        successor_path: '/api/v8/finance/analyses/:analysisId',
+      },
+    ]);
+  });
+
   it('fails closed for unmapped ECO-W27/W28 before either valuation legacy mutation', async () => {
     const approve = await request(app)
       .post(`/api/economics/valuations/${valuationId}/approve`)
