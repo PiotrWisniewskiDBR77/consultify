@@ -551,7 +551,7 @@ export function SWOTInputExplorationPhase({
   onRethinkCard?: (cardType: ProposalCardType, cardId: string, comment?: string) => void;
 }) {
   const { t } = useTranslation();
-  const { addSWOTSignal, removeSWOTSignal, updateSWOTSignal } = useToolStore();
+  const { addSWOTSignal, removeSWOTSignal, updateSWOTSignal, updateInputData } = useToolStore();
   const swotData = session.inputData as SWOTData;
   const signals = React.useMemo(() => swotData.signals || [], [swotData.signals]);
 
@@ -564,7 +564,8 @@ export function SWOTInputExplorationPhase({
   >(() =>
     STREAM_ORDER.reduce<Record<StreamId, LocalizedProposal>>(
       (acc, streamId) => {
-        acc[streamId] = getLocalizedProposal(streamId, 0, isPolish);
+        acc[streamId] =
+          swotData.inputProposalDrafts?.[streamId] || getLocalizedProposal(streamId, 0, isPolish);
         return acc;
       },
       {} as Record<StreamId, LocalizedProposal>
@@ -735,10 +736,18 @@ export function SWOTInputExplorationPhase({
     if (!instruction) return;
 
     if (activeAction.target === 'proposal') {
-      setWorkingProposalByStream((current) => ({
-        ...current,
-        [streamId]: buildRewrittenProposal(current[streamId], instruction, activeAction.mode),
-      }));
+      const rewritten = buildRewrittenProposal(
+        workingProposalByStream[streamId],
+        instruction,
+        activeAction.mode
+      );
+      setWorkingProposalByStream((current) => ({ ...current, [streamId]: rewritten }));
+      updateInputData({
+        inputProposalDrafts: {
+          ...(swotData.inputProposalDrafts || {}),
+          [streamId]: rewritten,
+        },
+      });
     }
 
     if (activeAction.target === 'accepted' && activeAction.signalId) {
@@ -819,16 +828,22 @@ export function SWOTInputExplorationPhase({
     setFillAllError(null);
     try {
       const response = await Api.createSwotProposals(session.id);
+      const proposalPatch: Partial<Record<StreamId, LocalizedProposal>> = {};
+      for (const proposal of response.proposals || []) {
+        if (proposal.status !== 'pending' || !proposal.proposedAfter?.text) continue;
+        proposalPatch[proposal.quadrant] = {
+          title: proposal.proposedAfter.text,
+          explanation: proposal.rationale,
+        };
+      }
       setWorkingProposalByStream((current) => {
-        const next = { ...current };
-        for (const proposal of response.proposals || []) {
-          if (proposal.status !== 'pending' || !proposal.proposedAfter?.text) continue;
-          next[proposal.quadrant] = {
-            title: proposal.proposedAfter.text,
-            explanation: proposal.rationale,
-          };
-        }
-        return next;
+        return { ...current, ...proposalPatch };
+      });
+      updateInputData({
+        inputProposalDrafts: {
+          ...(swotData.inputProposalDrafts || {}),
+          ...proposalPatch,
+        },
       });
     } catch {
       setFillAllError(

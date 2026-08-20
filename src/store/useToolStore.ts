@@ -239,6 +239,12 @@ export interface SWOTData {
   tensions: SWOTTension[];
   recommendedMoves: SWOTMove[];
   outputCandidates: SWOTOutputCandidate[];
+  inputProposalDrafts?: Partial<
+    Record<
+      'strengths' | 'weaknesses' | 'opportunities' | 'threats',
+      { title: string; explanation: string }
+    >
+  >;
   summary?: ConsultingSummarySnapshot & {
     proposalId?: string;
     proposalStatus?: ProposalStatus;

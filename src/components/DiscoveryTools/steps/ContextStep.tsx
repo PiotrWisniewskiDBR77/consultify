@@ -905,7 +905,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
       {
         label: isPolish ? 'Następny etap' : 'Next phase',
         value: isPolish
-          ? 'Input & Exploration — zebranie i ocena sygnałów przed budową macierzy.'
+          ? 'Wejście i eksploracja — zebranie i ocena sygnałów przed budową macierzy.'
           : 'Input & Exploration — collect and assess signals before building the matrix.',
       },
     ];
@@ -1656,7 +1656,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                     {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.executiveSummaryHeading')}
                   </div>
                   <span className="inline-flex rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200">
-                    Summary
+                    {isPolish ? 'Podsumowanie' : 'Summary'}
                   </span>
                 </div>
                 <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -1686,7 +1686,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                   {onContinue ? (
                     <button type="button" onClick={onContinue} className={primaryNavButtonClass}>
                       {isPolish
-                        ? 'Przejdź do Input & Exploration'
+                        ? 'Przejdź do wejścia i eksploracji'
                         : 'Continue to Input & Exploration'}
                     </button>
                   ) : null}
@@ -1768,7 +1768,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                     {t('discoveryToolsSteps.contextStep.dynamicSwot.jsx.moveToNextPhases')}
                   </div>
                   <span className="inline-flex rounded-full border border-emerald-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-emerald-800 dark:border-emerald-800/50 dark:bg-white/[0.05] dark:text-emerald-200">
-                    Session
+                    {isPolish ? 'Sesja' : 'Session'}
                   </span>
                 </div>
                 <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-200">

@@ -34317,7 +34317,7 @@
           "question4Description": "To pytanie jest już zależne od wcześniejszych odpowiedzi i pomaga doprecyzować właściwy kontekst strategiczny.",
           "question5Heading": "5. Jakie granice i realia ta strategia musi respektować?",
           "question5Description": "Na końcu doprecyzowujemy ograniczenia, których ta strategia nie może ignorować.",
-          "executiveSummaryHeading": "Executive summary tej sesji",
+          "executiveSummaryHeading": "Podsumowanie wykonawcze tej sesji",
           "aiMissionBriefHeading": "Propozycja AI dla mission brief",
           "strategicQuestionLabel": "Pytanie strategiczne:",
           "scopeLabel": "Zakres:",
@@ -34326,7 +34326,7 @@
           "applyToMissionBrief": "Zastosuj do mission brief",
           "discardSuggestion": "Odrzuć propozycję",
           "moveToNextPhases": "Przejście do kolejnych faz",
-          "moveToNextPhasesDescription": "Kiedy Mission & Context są już uzgodnione, AI może przygotować dalszą część sesji: input map, macierz SWOT, napięcia, ruchy i outputy.",
+          "moveToNextPhasesDescription": "Kiedy misja i kontekst są już uzgodnione, AI może przygotować dalszą część sesji: mapę wejść, macierz SWOT, napięcia, ruchy i wyniki.",
           "generatingFullSession": "AI buduje pełną sesję...",
           "generateFullSession": "Generuj dalszą część sesji"
         }
