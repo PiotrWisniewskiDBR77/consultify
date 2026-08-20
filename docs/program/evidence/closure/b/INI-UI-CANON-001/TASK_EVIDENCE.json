@@ -1,7 +1,7 @@
 {
   "taskId": "INI-UI-CANON-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "b962d7c6bcfa1fe42c03d025f9ff76cc6decc9b3",
+  "productSha": "d437f85ee357c53cec20f59348055f5a8538ba2a",
   "technicalSourceSha": "0900a2a828bb407b50e0f8bf59e5b3e1dbb4fb24",
   "integrationBaselineSha": "8883e410b8fa5ad4c67421f16804062cf40e8416",
   "leaseSha256": "f4d75f0aed94f2e34acaec63d91c245495e7e0f658aa36d1122342c2acecc612",
@@ -33,14 +33,18 @@
     "src/components/Initiatives/CanonicalInitiativeCardWorkspace.tsx",
     "tests/acceptance/ini-ui-canonical-mounted.realpg.test.ts",
     "tests/unit/initiatives-execution/canonicalInitiativeCardWorkspace.test.tsx",
-    "tests/unit/initiatives-execution/initiativesHubCanonicalTabs.test.tsx"
+    "tests/unit/initiatives-execution/initiativesHubCanonicalTabs.test.tsx",
+    "tests/e2e/fixtures/initiatives-execution-aco.tsx",
+    "tests/e2e/initiatives-execution/aco-definition-browser.spec.ts"
   ],
   "changedPathRationale": {
     "src/components/Initiatives/InitiativesHub.tsx": "Makes governed candidates a canonical deep-link-stable tab and routes an exact linked Execution case into the canonical Execution surface.",
     "src/components/Initiatives/CanonicalInitiativeCardWorkspace.tsx": "Reads the neutral runtime-v1 Initiative-to-Execution relation, renders exact case identity/state, and adds action-specific conflict/failure recovery without changing policy.",
     "tests/acceptance/ini-ui-canonical-mounted.realpg.test.ts": "Proves signed auth, active roles, revoked/foreign denial, exact candidate and linked Execution readback, and cold new-Pool persistence on real PostgreSQL.",
     "tests/unit/initiatives-execution/canonicalInitiativeCardWorkspace.test.tsx": "Covers exact linked-case response shape, CTA identity, action-specific conflict and bounded reload.",
-    "tests/unit/initiatives-execution/initiativesHubCanonicalTabs.test.tsx": "Prevents regression to the historical unreachable candidates deep link and missing Execution navigation."
+    "tests/unit/initiatives-execution/initiativesHubCanonicalTabs.test.tsx": "Prevents regression to the historical unreachable candidates deep link and missing Execution navigation.",
+    "tests/e2e/fixtures/initiatives-execution-aco.tsx": "Supplies the exact current aggregate version to the portfolio surface instead of recreating the retired unknown-version fixture.",
+    "tests/e2e/initiatives-execution/aco-definition-browser.spec.ts": "Makes the long lifecycle gate safe for a disposable database, removes obsolete manual version editing, and proves the rendered candidate-to-closure lifecycle on the current schema."
   },
   "commands": [
     "node scripts/cleanup/verify-closure-lane.mjs b closure-execution-baseline-v2-20260816",
@@ -51,7 +55,9 @@
     "npx vitest run tests/unit/initiatives-execution/canonicalInitiativeCardWorkspace.test.tsx tests/unit/initiatives-execution/initiativesHubCanonicalTabs.test.tsx",
     "NODE_OPTIONS=--max-old-space-size=8192 npx tsc -p tsconfig.json --noEmit",
     "npm run build:backend",
-    "NODE_OPTIONS=--max-old-space-size=8192 npm run build"
+    "NODE_OPTIONS=--max-old-space-size=8192 npm run build",
+    "NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=<fresh-disposable-pg> npx playwright test --config playwright.initiatives-execution.config.ts aco-definition-browser.spec.ts --workers=1 --retries=0",
+    "NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=<same-fresh-pg> npx vitest run --config vitest.acceptance.config.ts tests/acceptance/ini-ui-canonical-mounted.realpg.test.ts --maxWorkers=1 --retry=0"
   ],
   "denominators": {
     "task": "Historical lane denominator: mounted 4 (list/portfolio/plan/capacity), gated 0, dead 3 (+3 unreachable-but-imported). Current technical product: candidates is a fifth canonical reachable tab; observability/portfolioHealth remain outside this bounded packet.",
@@ -63,8 +69,9 @@
     "automatedG4UnnamedControls": 0,
     "automatedG4VisibleFocus": "PASS",
     "technicalFreshMigration": "756/756 successful unique filenames; repeat Applying migrations: 0; dry Pending migrations: 0; empty checksum count 0",
-    "technicalMountedRealPg": "1 file, 5/5 passed",
-    "technicalFocusedUnit": "2 files, 11/11 passed",
+    "technicalMountedRealPg": "1 file, 5/5 passed exact-current",
+    "technicalFocusedUnit": "2 files, 12/12 passed exact-current",
+    "renderedLifecycleBrowser": "2/2 exact-current on fresh PostgreSQL: candidate registration and cold card reopen; definition and analysis decisions; exact-version portfolio, schedule/handoff, linked Execution, delivery/results/effectiveness and closure. Browser actor header is an isolated harness identity, not a signed-auth claim.",
     "technicalResidue": "organizations/users/organization_members/initiative_candidates/ie_aggregate_state/ie_aggregate_relations = 0/0/0/0/0/0"
   },
   "fixtures": {
@@ -162,10 +169,10 @@
     "method": "Revert the lane commits; all changes are additive application code plus new tests. NO migration was added by this lane, so no schema rollback is required and old readers are unaffected."
   },
   "verdict": "PARTIAL",
-  "openBlocker": "The repo-owned technical reachability blocker is closed. Remaining acceptance is human VoiceOver/brand/persona review plus task-specific browser lifecycle coverage that has not yet literally exercised every definition, analysis and schedule transition state through the rendered UI.",
+  "openBlocker": "The repo-owned reachability and rendered lifecycle gaps are closed. Remaining acceptance is human VoiceOver/brand/persona review plus a literal rendered stale-conflict state under signed mounted auth.",
   "openBlockers": [
     "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
-    "The historical generic G4 sweep did not exercise the full rendered candidate→cards→definition→analysis→schedule authority lifecycle; its only explicit missing state was stale. Focused unit and mounted HTTP/realPG tests close reachability, conflict, role, tenant and linked-Execution persistence, but are not a substitute for a literal full browser lifecycle."
+    "The exact-current rendered lifecycle is proven, but its isolated browser harness uses an actor header. Signed mounted RealPG separately proves role, tenant, revoked and cold-read boundaries; a literal rendered signed-auth stale conflict remains unproven."
   ],
   "blockerReconciliation": [
     {
@@ -184,7 +191,8 @@
     "Candidate registration is now canonical and deep-link reachable from /initiatives; the legacy unreachable branch is no longer the only mount.",
     "SCHEDULED Initiative truth now exposes exact linked Execution identity/state and a bounded Open Execution action.",
     "Write conflicts and failures are action-specific and offer bounded reload of durable truth instead of the misleading universal Publish failed message.",
-    "Fresh-current technical qualification passed at integrated product b962d7c6bc: migrations 756, mounted signed-JWT realPG 5/5, focused unit 11/11, cold readback, role/tenant negatives, residue zero, typecheck and both builds."
+    "Fresh-current technical qualification passed at integrated product b962d7c6bc: migrations 756, mounted signed-JWT realPG 5/5, focused unit 11/11, cold readback, role/tenant negatives, residue zero, typecheck and both builds.",
+    "Exact-current d437f85ee3 restored the disposable browser harness without global TRUNCATE, pins the exact aggregate version, and passes the full two-journey rendered lifecycle 2/2 on fresh PostgreSQL; signed mounted RealPG 5/5, focused UI 12/12, root/server typechecks and migration replay 0 also pass."
   ],
   "automatedG4Verdict": {
     "verdict": "PASS_EXACT_SHA",
