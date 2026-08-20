@@ -33,7 +33,7 @@ export async function listStatements(
     .toLowerCase();
   try {
     return await dbAll(
-      `SELECT fs.id, fs.statement_type, fs.period_start, fs.period_end, fs.period_label, fs.currency, fs.scaling, fs.source_file_name,
+      `SELECT fs.id, fs.entity_name, fs.statement_type, fs.period_start, fs.period_end, fs.period_label, fs.currency, fs.scaling, fs.source_file_name,
               fs.overall_confidence, fs.validation_status, fs.status, fs.created_at, fs.updated_at,
               fs.readiness_status, fs.readiness_score, fs.quality_summary, fs.quality_reason_codes,
               fs.document_class, fs.extraction_strategy, fs.template_family, fs.values_version,
@@ -60,7 +60,7 @@ export async function listStatements(
       throw error;
     }
     return await dbAll(
-      `SELECT fs.id, fs.statement_type, fs.period_start, fs.period_end, fs.period_label, fs.currency, fs.scaling, fs.source_file_name,
+      `SELECT fs.id, fs.entity_name, fs.statement_type, fs.period_start, fs.period_end, fs.period_label, fs.currency, fs.scaling, fs.source_file_name,
               fs.overall_confidence, fs.validation_status, fs.status, fs.created_at, fs.updated_at,
               COUNT(fsv.id) AS total_line_count,
               COUNT(fsv.id) FILTER (WHERE fsv.canonical_line_id IS NOT NULL) AS mapped_line_count,
@@ -125,6 +125,7 @@ export async function getStatementDetail(
   let mappingCandidates: any[] = [];
   let validationLedger: any[] = [];
   let versions: any[] = [];
+  let sourceSiblings: any[] = [];
 
   try {
     values = await dbAll(
@@ -204,6 +205,27 @@ export async function getStatementDetail(
       [statementId],
       { fallback: false }
     );
+    sourceSiblings = await dbAll(
+      `SELECT sibling.id, sibling.entity_name, sibling.statement_type, sibling.period_label,
+              sibling.currency, sibling.scaling, sibling.source_file_name,
+              sibling.status, sibling.readiness_status, sibling.values_version,
+              sibling_receipt.receipt_id AS source_receipt_id,
+              sibling_receipt.original_file_name, sibling_receipt.content_sha256
+         FROM finance_statement_source_receipts anchor_receipt
+         JOIN finance_statement_source_receipts sibling_receipt
+           ON sibling_receipt.organization_id = anchor_receipt.organization_id
+          AND sibling_receipt.upload_id = anchor_receipt.upload_id
+          AND sibling_receipt.content_sha256 = anchor_receipt.content_sha256
+         JOIN financial_statements sibling
+           ON sibling.id = sibling_receipt.statement_id
+          AND sibling.organization_id = sibling_receipt.organization_id
+        WHERE anchor_receipt.statement_id = ?
+          AND anchor_receipt.organization_id = ?
+        ORDER BY CASE sibling.statement_type WHEN 'P&L' THEN 1 WHEN 'BS' THEN 2 WHEN 'CF' THEN 3 ELSE 9 END,
+                 sibling.period_label DESC, sibling.id`,
+      [statementId, organizationId],
+      { fallback: false }
+    );
   } catch (error) {
     if (!isSchemaCompatError(error)) {
       throw error;
@@ -263,6 +285,7 @@ export async function getStatementDetail(
     mappingCandidates: mappingCandidates || [],
     validationLedger: validationLedger || [],
     versions: versions || [],
+    sourceSiblings: sourceSiblings || [],
     latestVersionNo: Number(latestVersionSnapshot?.versionNo || stmt.values_version || 0),
     values: values || [],
   };

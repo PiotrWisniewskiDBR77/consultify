@@ -199,6 +199,7 @@ export function TeresaVoiceProvider({ children }: { children: React.ReactNode })
   hydrateVoiceBackoff();
   const { i18n } = useTranslation();
   const currentUser = useAppStore((s) => s.currentUser);
+  const isAuthInitializing = useAppStore((s) => s.isAuthInitializing);
   const currentOrganization = useAppStore((s) => s.currentOrganization);
   const currentProjectId = useAppStore((s) => s.currentProjectId);
   const currentView = useAppStore((s) => s.currentView);
@@ -250,12 +251,20 @@ export function TeresaVoiceProvider({ children }: { children: React.ReactNode })
   useEffect(() => {
     let cancelled = false;
 
-    // NOTE: do NOT pre-gate on localStorage('token'). Auth here is cookie-based
-    // (the fetch below uses credentials: 'include'), so a missing localStorage
-    // token is a false negative that wrongly disabled voice with
-    // "requires an authenticated session" for logged-in users. The server is the
-    // auth authority: the voice-config fetch returns 401/403 when unauthenticated,
-    // which the .catch() handles with backoff.
+    // The root provider is mounted on public auth routes too. Wait for the auth
+    // store to finish hydrating and require its signed-in user before contacting
+    // an authenticated endpoint. Cookie auth remains supported after this gate;
+    // a localStorage token is deliberately not required.
+    if (isAuthInitializing || currentUser?.isAuthenticated !== true) {
+      setVoiceConfig({
+        enabled: false,
+        apiKey: null,
+        unavailableReason: 'Voice requires an authenticated workspace session.',
+      });
+      return () => {
+        cancelled = true;
+      };
+    }
 
     if (Date.now() < voiceConfigBlockedUntil) {
       setVoiceConfig({
@@ -323,7 +332,7 @@ export function TeresaVoiceProvider({ children }: { children: React.ReactNode })
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [currentUser?.isAuthenticated, isAuthInitializing]);
 
   const systemInstruction = useMemo(() => {
     const base = buildTeresaVoiceSystemInstruction({

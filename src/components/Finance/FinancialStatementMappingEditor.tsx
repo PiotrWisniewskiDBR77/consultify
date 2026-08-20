@@ -22,6 +22,14 @@ export interface FinancialStatementMappedValue {
   userVerified?: boolean;
 }
 
+export function isFinancialStatementValueVerified(
+  value: Pick<FinancialStatementMappedValue, 'userVerified' | 'confidence' | 'mappingTier'>
+): boolean {
+  return Boolean(
+    value.userVerified || (value.confidence >= 0.85 && value.mappingTier !== 'review_required')
+  );
+}
+
 interface Props {
   mappedValues: FinancialStatementMappedValue[];
   canonicalLines: FinancialStatementCanonicalLineOption[];
@@ -231,7 +239,7 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
   const reviewCount = mappedValues.filter((v) => v.mappingTier === 'review_required').length;
   const readyForManualVerificationCount = mappedValues.filter(
     (value) =>
-      !value.userVerified && !(value.confidence >= 0.85 && value.mappingTier !== 'review_required')
+      !isFinancialStatementValueVerified(value)
   ).length;
 
   return (
@@ -388,7 +396,7 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
                 <td className="px-3 py-2 text-center">
                   {(() => {
                     const systemVerified =
-                      value.confidence >= 0.85 && value.mappingTier !== 'review_required';
+                      !value.userVerified && isFinancialStatementValueVerified(value);
                     const label = systemVerified
                       ? t('finance.mappingEditor.systemVerified', 'System verified')
                       : value.userVerified

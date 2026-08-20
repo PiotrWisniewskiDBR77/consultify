@@ -93,6 +93,25 @@ describe('statementMultiSectionImportService atomic staging', () => {
   });
 
   it('rolls back earlier type and period staging when a later selected section is missing', async () => {
+    mocks.locate.mockImplementation((_text: string, type: string) => {
+      if (type === 'BS') {
+        // P&L current+comparison writes must have happened inside the same
+        // transaction before the later BS-specific failure is raised.
+        expect(state.rows.length).toBe(2);
+        expect(state.receipts.length).toBe(2);
+        return [];
+      }
+      return [
+        {
+          sectionKey: 'P&L_1',
+          statementType: 'P&L',
+          confidence: 0.98,
+          lineStart: 1,
+          lineEnd: 5,
+          text: 'Revenue 100 90',
+        },
+      ];
+    });
     await expect(
       stageSelectedStatementSections({
         primaryStatementId: 'primary-1',
@@ -116,5 +135,107 @@ describe('statementMultiSectionImportService atomic staging', () => {
     expect(state.statements).toEqual([]);
     expect(state.rows).toEqual([]);
     expect(state.receipts).toEqual([]);
+  });
+
+  it('stages P&L, BS and CF for both detected periods with distinct sibling identities and receipts', async () => {
+    mocks.locate.mockImplementation((_text: string, type: string) => [
+      {
+        sectionKey: `${type}_1`,
+        statementType: type,
+        confidence: 0.98,
+        lineStart: 1,
+        lineEnd: 5,
+        text: `${type} 2025 2024\nRevenue 100 90`,
+      },
+    ]);
+
+    const result = await stageSelectedStatementSections({
+      primaryStatementId: 'primary-1',
+      organizationId: 'org-1',
+      userId: 'user-1',
+      statement: {
+        source_file_path: '/tmp/CD_PROJEKT_FY2025.pdf',
+        source_file_name: 'CD_PROJEKT_Skonsolidowane_Sprawozdanie_FY2025.pdf',
+        parse_method: 'pdf-parse',
+        document_class: 'mixed_report',
+      },
+      text: 'P&L, balance sheet and cash flow with comparative columns',
+      statementTypes: ['P&L', 'BS', 'CF'],
+      periodLabel: '2025',
+      currency: 'PLN',
+      scaling: 'thousands',
+      entityName: 'CD PROJEKT S.A.',
+    });
+
+    expect(result.selectedTypes).toEqual(['P&L', 'BS', 'CF']);
+    expect(result.statements).toHaveLength(6);
+    expect(result.statements.map(({ statementType, periodLabel }) => `${statementType}:${periodLabel}`)).toEqual([
+      'P&L:2025',
+      'P&L:2024',
+      'BS:2025',
+      'BS:2024',
+      'CF:2025',
+      'CF:2024',
+    ]);
+    expect(new Set(result.statements.map(({ statementId }) => statementId)).size).toBe(6);
+    expect(new Set(result.statements.map(({ sourceReceiptId }) => sourceReceiptId)).size).toBe(6);
+    expect(result.statements.filter(({ comparisonOfStatementId }) => comparisonOfStatementId)).toHaveLength(3);
+    expect(result.statements).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          entityName: 'CD PROJEKT S.A.',
+          sourceFileName: 'CD_PROJEKT_Skonsolidowane_Sprawozdanie_FY2025.pdf',
+          sourceSha256: 'a'.repeat(64),
+          currency: 'PLN',
+          scaling: 'thousands',
+        }),
+      ])
+    );
+  });
+
+  it('canonicalizes permutations and duplicates so P&L always owns the primary upload row', async () => {
+    mocks.locate.mockImplementation((_text: string, type: string) => [
+      {
+        sectionKey: `${type}_1`,
+        statementType: type,
+        confidence: 0.98,
+        lineStart: 1,
+        lineEnd: 5,
+        text: `${type} 2025 2024\nRevenue 100 90`,
+      },
+    ]);
+
+    const result = await stageSelectedStatementSections({
+      primaryStatementId: 'primary-1',
+      organizationId: 'org-1',
+      userId: 'user-1',
+      statement: {
+        source_file_path: '/tmp/source.pdf',
+        source_file_name: 'source.pdf',
+        parse_method: 'pdf-parse',
+        document_class: 'mixed_report',
+      },
+      text: 'all sections',
+      statementTypes: ['CF', 'BS', 'P&L', 'CF', 'PL'],
+      periodLabel: '2025',
+      currency: 'PLN',
+      scaling: 'thousands',
+      entityName: 'Entity',
+    });
+
+    expect(result.selectedTypes).toEqual(['P&L', 'BS', 'CF']);
+    expect(result.statements.map(({ statementType, periodLabel }) => `${statementType}:${periodLabel}`)).toEqual([
+      'P&L:2025',
+      'P&L:2024',
+      'BS:2025',
+      'BS:2024',
+      'CF:2025',
+      'CF:2024',
+    ]);
+    expect(result.statements[0]).toMatchObject({
+      statementId: 'primary-1',
+      statementType: 'P&L',
+      periodLabel: '2025',
+    });
   });
 });

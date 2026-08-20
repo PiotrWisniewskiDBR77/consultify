@@ -10,9 +10,21 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 
-import { FinancialStatementMappingEditor } from '../../../src/components/Finance/FinancialStatementMappingEditor';
+import {
+  FinancialStatementMappingEditor,
+  isFinancialStatementValueVerified,
+} from '../../../src/components/Finance/FinancialStatementMappingEditor';
 
 describe('FinancialStatementMappingEditor acceptance states', () => {
+  it('counts user, system, and unverified rows with the exact editor predicate', () => {
+    expect(
+      [
+        { confidence: 0.2, mappingTier: 'review_required' as const, userVerified: true },
+        { confidence: 0.85, mappingTier: 'auto' as const, userVerified: false },
+        { confidence: 0.99, mappingTier: 'review_required' as const, userVerified: false },
+      ].map(isFinancialStatementValueVerified)
+    ).toEqual([true, true, false]);
+  });
   it('keeps algorithm confidence while rendering PL numbers and explicit user verification', () => {
     const onCanonicalChange = vi.fn();
     const onVerifiedChange = vi.fn();

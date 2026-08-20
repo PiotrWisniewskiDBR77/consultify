@@ -35,6 +35,7 @@ vi.mock('@/services/api/v8/finance', () => ({
     mapStatement: vi.fn(),
     putStatementValues: vi.fn(),
     confirmStatement: vi.fn(),
+    getStatement: vi.fn(),
     getCanonicalLines: vi.fn(),
     getStatementSourceReceipt: vi.fn(),
   },
@@ -48,9 +49,18 @@ vi.mock('@/services/funnelAnalytics', () => ({
   trackFunnelEvent: vi.fn(),
 }));
 
-vi.mock('../../../src/components/Finance/FinancialStatementMappingEditor', () => ({
-  FinancialStatementMappingEditor: () => <div>financial-statement-mapping-editor</div>,
-}));
+vi.mock(
+  '../../../src/components/Finance/FinancialStatementMappingEditor',
+  async (importOriginal) => {
+    const actual = await importOriginal<
+      typeof import('../../../src/components/Finance/FinancialStatementMappingEditor')
+    >();
+    return {
+      ...actual,
+      FinancialStatementMappingEditor: () => <div>financial-statement-mapping-editor</div>,
+    };
+  }
+);
 
 import Api from '../../../src/services/api';
 import { V8FinanceApi } from '../../../src/services/api/v8/finance';
@@ -239,6 +249,164 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
     );
     expect(Api.post).not.toHaveBeenCalledWith('/api/finance-statements/statement-1/map', {});
     expect(Api.get).not.toHaveBeenCalledWith('/api/finance-statements/canonical-lines');
+  });
+
+  it('renders the current-session durable source summary and comparative periods without raw statement ids', async () => {
+    vi.mocked(V8FinanceApi.detectStatement).mockResolvedValue({ statementId: 'statement-current' } as any);
+    vi.mocked(V8FinanceApi.extractStatement).mockResolvedValue({
+      statementId: 'statement-current',
+      lines: [{ originalLabel: 'Przychody', value: 3233, confidence: 0.9 }],
+      statements: [
+        {
+          statementId: 'statement-current',
+          statementType: 'P&L',
+          periodLabel: 'FY2025',
+          sourceReceiptId: 'receipt-current',
+          currency: 'PLN',
+          scaling: 'thousands',
+          entityName: 'CD PROJEKT S.A.',
+          sourceFileName: 'CD_PROJEKT_Skonsolidowane_Sprawozdanie_FY2025.pdf',
+          sourceSha256: 'a'.repeat(64),
+          lines: [{ originalLabel: 'Przychody', value: 3233, confidence: 0.9 }],
+        },
+        {
+          statementId: 'statement-comparison',
+          statementType: 'P&L',
+          periodLabel: 'FY2024',
+          comparisonOfStatementId: 'statement-current',
+          sourceReceiptId: 'receipt-comparison',
+          currency: 'PLN',
+          scaling: 'thousands',
+          entityName: 'CD PROJEKT S.A.',
+          sourceFileName: 'CD_PROJEKT_Skonsolidowane_Sprawozdanie_FY2025.pdf',
+          sourceSha256: 'a'.repeat(64),
+          lines: [{ originalLabel: 'Przychody', value: 2980, confidence: 0.9 }],
+        },
+      ],
+    } as any);
+    vi.mocked(V8FinanceApi.mapStatement).mockImplementation(async (statementId: string) => ({
+      statementId,
+      mappedLines: [
+        {
+          originalLabel: 'Przychody',
+          value: statementId === 'statement-current' ? 3233 : 2980,
+          confidence: 0.9,
+          suggestedCanonicalId: 'line-revenue',
+          suggestedCanonicalLabel: 'Przychody',
+        },
+      ],
+    }) as any);
+    vi.mocked(V8FinanceApi.getCanonicalLines).mockResolvedValue({
+      canonicalLines: [
+        { id: 'line-revenue', statement_type: 'P&L', line_code: 'revenue', line_name: 'Revenue' },
+      ],
+      count: 1,
+    } as any);
+    vi.mocked(V8FinanceApi.getStatementSourceReceipt).mockImplementation(async (statementId: string) => ({
+      receipt: {
+        receipt_id: statementId === 'statement-current' ? 'receipt-current' : 'receipt-comparison',
+        original_file_name: 'CD_PROJEKT_Skonsolidowane_Sprawozdanie_FY2025.pdf',
+        content_sha256: 'a'.repeat(64),
+        size_bytes: 123456,
+        mime_type: 'application/pdf',
+        entity_name: 'CD PROJEKT S.A.',
+        periods_json: [
+          {
+            label: statementId === 'statement-current' ? 'FY2025' : 'FY2024',
+            statementType: 'P&L',
+            currency: 'PLN',
+            scaling: 'thousands',
+          },
+        ],
+        page_ranges_json: [{ pageStart: 12, pageEnd: 13 }],
+        importer_name: 'consultify-statement-import',
+        importer_version: '2026-08-20',
+        imported_by: 'owner-1',
+        imported_at: '2026-08-20T00:00:00.000Z',
+      },
+    })) as any;
+
+    await advanceToMapStep();
+
+    expect(screen.getByTestId('statement-comparison-side-by-side')).toBeTruthy();
+    expect(screen.getByTestId('durable-source-summary').textContent).toContain('P&L');
+    expect(screen.getByTestId('durable-source-summary').textContent).toContain('FY2025');
+    expect(screen.getByTestId('durable-source-summary').textContent).toContain('FY2024');
+    expect(screen.getByTestId('durable-source-summary').textContent).toContain('PLN · thousands');
+    expect(screen.getByTestId('durable-source-summary').textContent).toContain('owner-1');
+    expect(screen.getByTestId('durable-source-summary').textContent).toContain('12–13');
+    expect(screen.getAllByText('CD_PROJEKT_Skonsolidowane_Sprawozdanie_FY2025.pdf').length).toBeGreaterThan(0);
+    expect(screen.queryByText('statement-current')).toBeNull();
+    expect(screen.queryByText('statement-comparison')).toBeNull();
+  });
+
+  it('reconstructs the durable review after unmount and a new deep-link mount', async () => {
+    const detailFor = (id: string) => ({
+      statement: {
+        id,
+        entity_name: 'CD PROJEKT S.A.',
+        statement_type: 'P&L',
+        period_label: id === 'statement-current' ? 'FY2025' : 'FY2024',
+        currency: 'PLN',
+        scaling: 'thousands',
+        source_file_name: 'CD_PROJEKT_Skonsolidowane_Sprawozdanie_FY2025.pdf',
+        readinessStatus: 'recoverable',
+        readinessSummary: 'Requires mapping review',
+        values_version: 3,
+        sourceSiblings: [
+          { id: 'statement-current' },
+          { id: 'statement-comparison' },
+        ],
+        values: [
+          {
+            original_label: 'Przychody',
+            value: id === 'statement-current' ? 3233 : 2980,
+            confidence: 0.9,
+            canonical_line_id: 'line-revenue',
+            line_name_pl: 'Przychody',
+            source_row: 1,
+          },
+        ],
+      },
+    });
+    vi.mocked(V8FinanceApi.getStatement).mockImplementation(async (id: string) => detailFor(id) as any);
+    vi.mocked(V8FinanceApi.getCanonicalLines).mockResolvedValue({
+      canonicalLines: [
+        { id: 'line-revenue', statement_type: 'P&L', line_code: 'revenue', line_name: 'Revenue' },
+      ],
+      count: 1,
+    } as any);
+    vi.mocked(V8FinanceApi.getStatementSourceReceipt).mockImplementation(async (id: string) => ({
+      receipt: {
+        receipt_id: `receipt-${id}`,
+        original_file_name: 'CD_PROJEKT_Skonsolidowane_Sprawozdanie_FY2025.pdf',
+        content_sha256: 'a'.repeat(64),
+        entity_name: 'CD PROJEKT S.A.',
+        periods_json: [
+          { label: id === 'statement-current' ? 'FY2025' : 'FY2024', currency: 'PLN', scaling: 'thousands' },
+        ],
+        page_ranges_json: [{ pageStart: 12, pageEnd: 13 }],
+        importer_name: 'consultify-statement-import',
+        importer_version: '2026-08-20',
+        imported_by: 'owner-1',
+        imported_at: '2026-08-20T00:00:00.000Z',
+      },
+    })) as any;
+
+    const first = render(<FinancialStatementImportWizard initialStatementId="statement-current" />);
+    await waitFor(() => expect(screen.getByTestId('statement-comparison-side-by-side')).toBeTruthy());
+    expect(screen.getByTestId('durable-source-summary').textContent).toContain('FY2025 / FY2024');
+    expect(screen.getByTestId('statement-recovery-link').getAttribute('href')).toContain(
+      'statementId=statement-current'
+    );
+    first.unmount();
+
+    render(<FinancialStatementImportWizard initialStatementId="statement-current" />);
+    await waitFor(() => expect(screen.getByTestId('statement-comparison-side-by-side')).toBeTruthy());
+    expect(screen.getByTestId('durable-source-summary').textContent).toContain('PLN · thousands');
+    expect(screen.queryByText('statement-current')).toBeNull();
+    expect(V8FinanceApi.getStatement).toHaveBeenCalledTimes(4);
+    expect(V8FinanceApi.getStatementSourceReceipt).toHaveBeenCalledTimes(4);
   });
 
   it('falls back to legacy detect/extract/map and canonical lines in the wizard manual flow on bounded compatibility statuses', async () => {
