@@ -325,12 +325,12 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'ECO-W26',
       method: 'POST',
       path: /^\/valuations\/[^/]+\/compute\/?$/,
-      state: 'observed',
-      successor: null,
+      state: 'disabled',
+      successor: '/api/v8/finance-v2/valuation/legacy/:legacyId/compute',
       legacyTable: 'valuations',
       legacyIdFromPath: idAt2,
       reason:
-        'Runs the DCF/comps computation for the valuation addressed by :id: UPDATE valuations plus INSERT INTO valuation_snapshots (economics.routes.ts:2774, valuationService.ts:1008,1123). A canonical DCF compute exists at finance-v2 POST /valuation/variants/:businessVersionId/compute/dcf but the inventory explicitly notes it is not proven bit-identical, so successor stays null.',
+        'The mounted caller uses the canonical legacy-identity adapter, which rechecks live Finance-editor authority, pins the artifact/business-version/current-working-revision and source-lineage fingerprint, publishes typed method/terminal/bridge rows plus immutable compute receipt atomically, and cold-reads the exact result. The former legacy computation is retired fail-closed with writer-scoped rollback.',
     },
     {
       writerId: 'ECO-W27',

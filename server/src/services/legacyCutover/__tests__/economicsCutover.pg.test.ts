@@ -116,6 +116,29 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
       [mappedValuationId, orgA, actor]
     );
     await pool.query(
+      `UPDATE valuations SET assumptions=$1::jsonb WHERE organization_id=$2 AND id=$3`,
+      [
+        JSON.stringify({
+          horizonYears: 5,
+          waccPercent: 10,
+          terminalMethod: 'gordon',
+          terminalGrowthPercent: 2,
+          netDebt: 0,
+          manualForecast: {
+            years: [
+              { year: 2027, fcff: 100 },
+              { year: 2028, fcff: 105 },
+              { year: 2029, fcff: 110 },
+              { year: 2030, fcff: 115 },
+              { year: 2031, fcff: 120 },
+            ],
+          },
+        }),
+        orgA,
+        mappedValuationId,
+      ]
+    );
+    await pool.query(
       `INSERT INTO finance_artifact_aliases
         (legacy_table,legacy_id,legacy_version,artifact_id,organization_id,
          business_version_id,mapping_confidence,mapping_reason)
@@ -591,7 +614,7 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
     ]);
   });
 
-  it('blocks depth, typed assumptions and peers legacy doors before mutation with exact telemetry', async () => {
+  it('blocks depth, compute, typed assumptions and peers legacy doors before mutation with exact telemetry', async () => {
     const before = await pool.query(`SELECT assumptions,peers FROM valuations WHERE id=$1`, [
       mappedValuationId,
     ]);
@@ -607,12 +630,21 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
       .put(`/api/economics/valuations/${mappedValuationId}/depth`)
       .set('x-request-id', `${prefix}-wave8-depth`)
       .send({ depth: 'managerial' });
+    const compute = await request(app)
+      .post(`/api/economics/valuations/${mappedValuationId}/compute`)
+      .set('x-request-id', `${prefix}-wave9-compute`)
+      .send({});
     expect(assumptions.status).toBe(410);
     expect(peers.status).toBe(410);
     expect(depth.status).toBe(410);
+    expect(compute.status).toBe(410);
     expect(depth.body).toMatchObject({
       writerId: 'ECO-W23',
       successor: '/api/v8/finance-v2/valuation/legacy/:legacyId/depth',
+    });
+    expect(compute.body).toMatchObject({
+      writerId: 'ECO-W26',
+      successor: '/api/v8/finance-v2/valuation/legacy/:legacyId/compute',
     });
     expect(assumptions.body).toMatchObject({
       writerId: 'ECO-W24',
@@ -659,6 +691,45 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
         `SELECT idempotency_key FROM finance_valuation_depth_command_receipts
           WHERE organization_id=$1 AND legacy_valuation_id=$2`,
         [orgA, mappedValuationId]
+      );
+      expect(canonical.rows).toHaveLength(0);
+    } finally {
+      if (previous === undefined) delete process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+      else process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = previous;
+    }
+  });
+
+  it('restores only ECO-W26 through the writer-scoped rollback lever', async () => {
+    const previous = process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+    process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = 'ECO-W26';
+    try {
+      const response = await request(app)
+        .post(`/api/economics/valuations/${mappedValuationId}/compute`)
+        .set('x-request-id', `${prefix}-wave9-compute-rollback`)
+        .send({});
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({ success: true });
+      const legacy = await pool.query(
+        `SELECT results FROM valuations WHERE organization_id=$1 AND id=$2`,
+        [orgA, mappedValuationId]
+      );
+      expect(legacy.rows[0].results).toBeTruthy();
+      const event = await pool.query(
+        `SELECT writer_id,access_kind,successor_path FROM legacy_cutover_usage_events
+          WHERE organization_id=$1 AND request_id=$2`,
+        [orgA, `${prefix}-wave9-compute-rollback`]
+      );
+      expect(event.rows).toEqual([
+        {
+          writer_id: 'ECO-W26',
+          access_kind: 'rollback_writer',
+          successor_path: '/api/v8/finance-v2/valuation/legacy/:legacyId/compute',
+        },
+      ]);
+      const canonical = await pool.query(
+        `SELECT idempotency_key FROM finance_valuation_compute_command_receipts
+          WHERE organization_id=$1 AND business_version_id=$2`,
+        [orgA, mappedValuationBusinessVersionId]
       );
       expect(canonical.rows).toHaveLength(0);
     } finally {
