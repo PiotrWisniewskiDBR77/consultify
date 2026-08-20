@@ -20,6 +20,7 @@ import {
   approveCanonicalValuation,
   approveFinanceModel,
   createRegisteredValuation,
+  exportCanonicalLegacyValuationPptx,
   resolveLegacyFinanceArtifact,
   runCanonicalFinancialAnalysis,
 } from '@/services/api/financeV2.api';
@@ -614,13 +615,13 @@ export function useFinanceRowActions({
           icon: Download,
           onClick: async () => {
             try {
-              const result = await Api.post(`/api/economics/valuations/${row.id}/export/pptx`, {
+              const result = await exportCanonicalLegacyValuationPptx(row.id, {
                 language: i18n.language?.startsWith('pl') ? 'pl' : 'en',
                 theme: 'corporate',
                 confidentiality: 'confidential',
               });
               toast.success(t('finance.toast.pptxExported', 'PPTX wygenerowany'));
-              const downloadUrl = (result as any)?.downloadUrl;
+              const downloadUrl = result.downloadUrl;
               if (downloadUrl) window.open(downloadUrl, '_blank');
             } catch (e: any) {
               toast.error(

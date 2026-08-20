@@ -16,6 +16,8 @@
  * the `authenticate` middleware below relies on.
  */
 import { randomUUID } from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
 import express from 'express';
 import { Pool } from 'pg';
 import request from 'supertest';
@@ -25,6 +27,7 @@ import { cleanupLegacyCutoverTestIntents } from './legacyCutoverTestCleanup.js';
 import { createArtifact } from '../../finance/canonical/artifactVersionService.js';
 import { createLegacyCutoverGuard } from '../legacyCutoverKernel.js';
 import { ECONOMICS_CUTOVER } from '../registry/economics.js';
+import { exportsDir } from '../../../utils/storagePaths.js';
 
 const CONNECTION_STRING = process.env.DATABASE_URL || '';
 const REAL_PG =
@@ -614,10 +617,11 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
     ]);
   });
 
-  it('blocks depth, compute, negotiation pack, typed assumptions and peers legacy doors before mutation with exact telemetry', async () => {
-    const before = await pool.query(`SELECT assumptions,peers,negotiation_pack FROM valuations WHERE id=$1`, [
-      mappedValuationId,
-    ]);
+  it('blocks depth, compute, negotiation pack, PPTX export, typed assumptions and peers legacy doors before mutation with exact telemetry', async () => {
+    const before = await pool.query(
+      `SELECT assumptions,peers,negotiation_pack,export_path,exported_at FROM valuations WHERE id=$1`,
+      [mappedValuationId]
+    );
     const assumptions = await request(app)
       .put(`/api/economics/valuations/${mappedValuationId}/assumptions`)
       .set('x-request-id', `${prefix}-wave4-assumptions`)
@@ -638,11 +642,16 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
       .post(`/api/economics/valuations/${mappedValuationId}/negotiation-pack`)
       .set('x-request-id', `${prefix}-wave10-negotiation`)
       .send({});
+    const pptx = await request(app)
+      .post(`/api/economics/valuations/${mappedValuationId}/export/pptx`)
+      .set('x-request-id', `${prefix}-wave11-pptx`)
+      .send({ language: 'en', theme: 'corporate', confidentiality: 'internal' });
     expect(assumptions.status).toBe(410);
     expect(peers.status).toBe(410);
     expect(depth.status).toBe(410);
     expect(compute.status).toBe(410);
     expect(negotiation.status).toBe(410);
+    expect(pptx.status).toBe(410);
     expect(depth.body).toMatchObject({
       writerId: 'ECO-W23',
       successor: '/api/v8/finance-v2/valuation/legacy/:legacyId/depth',
@@ -651,7 +660,14 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
       writerId: 'ECO-W26',
       successor: '/api/v8/finance-v2/valuation/legacy/:legacyId/compute',
     });
-    expect(negotiation.body).toMatchObject({writerId:'ECO-W29',successor:'/api/v8/finance-v2/valuation/legacy/:legacyId/negotiation-pack'});
+    expect(negotiation.body).toMatchObject({
+      writerId: 'ECO-W29',
+      successor: '/api/v8/finance-v2/valuation/legacy/:legacyId/negotiation-pack',
+    });
+    expect(pptx.body).toMatchObject({
+      writerId: 'ECO-W31',
+      successor: '/api/v8/finance-v2/valuation/legacy/:legacyId/export/pptx',
+    });
     expect(assumptions.body).toMatchObject({
       writerId: 'ECO-W24',
       successor: '/api/v8/finance-v2/valuation/legacy/:legacyId/assumptions',
@@ -660,28 +676,131 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
       writerId: 'ECO-W25',
       successor: '/api/v8/finance-v2/valuation/legacy/:legacyId/peers',
     });
-    const after = await pool.query(`SELECT assumptions,peers,negotiation_pack FROM valuations WHERE id=$1`, [
-      mappedValuationId,
-    ]);
+    const after = await pool.query(
+      `SELECT assumptions,peers,negotiation_pack,export_path,exported_at FROM valuations WHERE id=$1`,
+      [mappedValuationId]
+    );
     expect(after.rows).toEqual(before.rows);
   });
 
-  it('restores only ECO-W29 through the writer-scoped rollback lever',async()=>{
-    const previous=process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
-    process.env.FINANCE_LEGACY_ROLLBACK_WRITERS='ECO-W29';
-    try{
-      await pool.query(`UPDATE valuations SET status='APPROVED',negotiation_pack=NULL,results=$3::jsonb WHERE organization_id=$1 AND id=$2`,[orgA,mappedValuationId,JSON.stringify({dcf:{enterpriseValue:1000,discountRatePercent:11,terminalMethod:'gordon'},tornado:[{driver:'WACC'}]})]);
-      const requestId=`${prefix}-wave10-negotiation-rollback`;
-      const response=await request(app).post(`/api/economics/valuations/${mappedValuationId}/negotiation-pack`).set('x-request-id',requestId).send({});
-      expect(response.status).toBe(200);expect(response.body).toMatchObject({success:true});
-      const legacy=await pool.query(`SELECT negotiation_pack FROM valuations WHERE organization_id=$1 AND id=$2`,[orgA,mappedValuationId]);
-      expect(legacy.rows[0].negotiation_pack).toMatchObject({valuationId:mappedValuationId});
-      const event=await pool.query(`SELECT writer_id,access_kind,successor_path FROM legacy_cutover_usage_events WHERE organization_id=$1 AND request_id=$2`,[orgA,requestId]);
-      expect(event.rows).toEqual([{writer_id:'ECO-W29',access_kind:'rollback_writer',successor_path:'/api/v8/finance-v2/valuation/legacy/:legacyId/negotiation-pack'}]);
-      const canonical=await pool.query(`SELECT idempotency_key FROM finance_valuation_negotiation_pack_receipts WHERE organization_id=$1 AND legacy_valuation_id=$2`,[orgA,mappedValuationId]);expect(canonical.rows).toHaveLength(0);
-    }finally{
-      await pool.query(`UPDATE valuations SET status='DRAFT' WHERE organization_id=$1 AND id=$2`,[orgA,mappedValuationId]);
-      if(previous===undefined)delete process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;else process.env.FINANCE_LEGACY_ROLLBACK_WRITERS=previous;
+  it('restores only ECO-W31 through the writer-scoped rollback lever', async () => {
+    const previous = process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+    const requestId = `${prefix}-wave11-pptx-rollback`;
+    const exportFile = path.join(exportsDir('valuations'), `${mappedValuationId}.pptx`);
+    process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = 'ECO-W31';
+    try {
+      await pool.query(
+        `UPDATE valuations SET status='APPROVED',export_path=NULL,exported_at=NULL,
+          results=$3::jsonb WHERE organization_id=$1 AND id=$2`,
+        [
+          orgA,
+          mappedValuationId,
+          JSON.stringify({
+            dcf: {
+              enterpriseValue: 1000,
+              equityValue: 900,
+              discountRatePercent: 11,
+              terminalMethod: 'gordon',
+              terminalGrowthPercent: 2,
+              pvExplicit: 400,
+              pvTerminal: 600,
+            },
+          }),
+        ]
+      );
+      const response = await request(app)
+        .post(`/api/economics/valuations/${mappedValuationId}/export/pptx`)
+        .set('x-request-id', requestId)
+        .send({ language: 'en', theme: 'corporate', confidentiality: 'internal' });
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({ success: true });
+      expect(fs.readFileSync(exportFile).subarray(0, 2).toString()).toBe('PK');
+      const legacy = await pool.query(
+        `SELECT export_path,exported_at FROM valuations WHERE organization_id=$1 AND id=$2`,
+        [orgA, mappedValuationId]
+      );
+      expect(legacy.rows[0].export_path).toBe(`/exports/valuations/${mappedValuationId}.pptx`);
+      expect(legacy.rows[0].exported_at).toBeTruthy();
+      const event = await pool.query(
+        `SELECT writer_id,access_kind,successor_path FROM legacy_cutover_usage_events
+          WHERE organization_id=$1 AND request_id=$2`,
+        [orgA, requestId]
+      );
+      expect(event.rows).toEqual([
+        {
+          writer_id: 'ECO-W31',
+          access_kind: 'rollback_writer',
+          successor_path: '/api/v8/finance-v2/valuation/legacy/:legacyId/export/pptx',
+        },
+      ]);
+      const canonical = await pool.query(
+        `SELECT e.export_receipt_id FROM finance_valuation_pptx_exports e
+          WHERE e.organization_id=$1 AND e.legacy_valuation_id=$2`,
+        [orgA, mappedValuationId]
+      );
+      expect(canonical.rows).toHaveLength(0);
+    } finally {
+      fs.rmSync(exportFile, { force: true });
+      await pool.query(
+        `UPDATE valuations SET status='DRAFT',export_path=NULL,exported_at=NULL
+          WHERE organization_id=$1 AND id=$2`,
+        [orgA, mappedValuationId]
+      );
+      if (previous === undefined) delete process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+      else process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = previous;
+    }
+  });
+
+  it('restores only ECO-W29 through the writer-scoped rollback lever', async () => {
+    const previous = process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+    process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = 'ECO-W29';
+    try {
+      await pool.query(
+        `UPDATE valuations SET status='APPROVED',negotiation_pack=NULL,results=$3::jsonb WHERE organization_id=$1 AND id=$2`,
+        [
+          orgA,
+          mappedValuationId,
+          JSON.stringify({
+            dcf: { enterpriseValue: 1000, discountRatePercent: 11, terminalMethod: 'gordon' },
+            tornado: [{ driver: 'WACC' }],
+          }),
+        ]
+      );
+      const requestId = `${prefix}-wave10-negotiation-rollback`;
+      const response = await request(app)
+        .post(`/api/economics/valuations/${mappedValuationId}/negotiation-pack`)
+        .set('x-request-id', requestId)
+        .send({});
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({ success: true });
+      const legacy = await pool.query(
+        `SELECT negotiation_pack FROM valuations WHERE organization_id=$1 AND id=$2`,
+        [orgA, mappedValuationId]
+      );
+      expect(legacy.rows[0].negotiation_pack).toMatchObject({ valuationId: mappedValuationId });
+      const event = await pool.query(
+        `SELECT writer_id,access_kind,successor_path FROM legacy_cutover_usage_events WHERE organization_id=$1 AND request_id=$2`,
+        [orgA, requestId]
+      );
+      expect(event.rows).toEqual([
+        {
+          writer_id: 'ECO-W29',
+          access_kind: 'rollback_writer',
+          successor_path: '/api/v8/finance-v2/valuation/legacy/:legacyId/negotiation-pack',
+        },
+      ]);
+      const canonical = await pool.query(
+        `SELECT idempotency_key FROM finance_valuation_negotiation_pack_receipts WHERE organization_id=$1 AND legacy_valuation_id=$2`,
+        [orgA, mappedValuationId]
+      );
+      expect(canonical.rows).toHaveLength(0);
+    } finally {
+      await pool.query(`UPDATE valuations SET status='DRAFT' WHERE organization_id=$1 AND id=$2`, [
+        orgA,
+        mappedValuationId,
+      ]);
+      if (previous === undefined) delete process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+      else process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = previous;
     }
   });
 

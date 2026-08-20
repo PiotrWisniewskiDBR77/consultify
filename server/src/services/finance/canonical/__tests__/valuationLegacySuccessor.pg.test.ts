@@ -1,13 +1,15 @@
 import { randomUUID } from 'node:crypto';
+import fs from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
 import express from 'express';
 import request from 'supertest';
+import { exportsDir } from '../../../../utils/storagePaths.js';
 
 const REAL = process.env.RUN_DB_TESTS==='1'&&process.env.MOCK_DB==='false'&&String(process.env.DATABASE_URL||'').startsWith('postgres');
 if(REAL) process.env.DB_TYPE='postgres';
 
 describe.skipIf(!REAL)('FIN-CANONICAL-SUCCESSORS-WAVE4 realPG',()=>{
-  let txWrap:any,createArtifact:any,writeWacc:any,writePeers:any,writeDepth:any,loadDirect:any,readInputs:any,runLegacyCompute:any,generateNegotiationPack:any,findOrCreateMethod:any,computeGordon:any,discountFlows:any,computeEquity:any,writeTerminal:any,writeBridge:any;
+  let txWrap:any,createArtifact:any,writeWacc:any,writePeers:any,writeDepth:any,loadDirect:any,readInputs:any,runLegacyCompute:any,generateNegotiationPack:any,exportPptx:any,findOrCreateMethod:any,computeGordon:any,discountFlows:any,computeEquity:any,writeTerminal:any,writeBridge:any;
   const orgId=`org-fin-wave4-${randomUUID()}`, userId=`user-fin-wave4-${randomUUID()}`, legacyId=randomUUID();
   let identity:any;
   beforeAll(async()=>{
@@ -17,6 +19,7 @@ describe.skipIf(!REAL)('FIN-CANONICAL-SUCCESSORS-WAVE4 realPG',()=>{
     ({loadCanonicalDirectValuationAssumptions:loadDirect,readCanonicalLegacyValuationInputs:readInputs}=await import('../valuationLegacySuccessorService.js'));
     ({runCanonicalLegacyValuationCompute:runLegacyCompute}=await import('../valuationLegacyComputeAdapterService.js'));
     ({generateCanonicalLegacyNegotiationPack:generateNegotiationPack}=await import('../valuationNegotiationPackService.js'));
+    ({exportCanonicalLegacyValuationPptx:exportPptx}=await import('../valuationPptxExportService.js'));
     ({findOrCreateMethod}=await import('../valuationComputeService.js'));
     ({computeGordonTerminalValue:computeGordon,writeTerminalRow:writeTerminal}=await import('../valuationTerminalService.js'));
     ({discountCashFlows:discountFlows}=await import('../valuationDiscountService.js'));
@@ -209,6 +212,18 @@ describe.skipIf(!REAL)('FIN-CANONICAL-SUCCESSORS-WAVE4 realPG',()=>{
     await expect(generateNegotiationPack(params)).rejects.toMatchObject({code:'ORG_MEMBERSHIP_REVOKED'});
     await txWrap((tx:any)=>tx.queryRun(`UPDATE organization_members SET status='ACTIVE' WHERE organization_id=? AND user_id=?`,[orgId,userId]));
     expect((await generateNegotiationPack(params)).replay).toBe(true);
+  });
+
+  it('renders one real canonical PPTX with byte hash, exact replay and authority before replay',async()=>{
+    const key=`pptx-${randomUUID()}`;const params={organizationId:orgId,userId,legacyId,expected:identity,idempotencyKey:key,options:{language:'en' as const,theme:'corporate' as const,confidentiality:'confidential' as const}};
+    const [first,replay]=await Promise.all([exportPptx(params),exportPptx(params)]);
+    expect([first.replay,replay.replay].sort()).toEqual([false,true]);expect(first.exportReceiptId).toBe(replay.exportReceiptId);expect(first.outputContentHash).toBe(replay.outputContentHash);
+    const cold=await txWrap(async(tx:any)=>({receipt:await tx.queryOne(`SELECT status,source_content_hash,output_content_hash,output_byte_size FROM artifact_export_receipts WHERE organization_id=? AND idempotency_key=?`,[orgId,key]),binding:await tx.queryOne(`SELECT export_path,slide_count,output_content_hash FROM finance_valuation_pptx_exports WHERE organization_id=? AND export_receipt_id=?`,[orgId,first.exportReceiptId]),legacy:await tx.queryOne(`SELECT export_path,exported_at FROM valuations WHERE organization_id=? AND id=?`,[orgId,legacyId])}));
+    expect(cold.receipt).toMatchObject({status:'succeeded',source_content_hash:first.sourceContentHash,output_content_hash:first.outputContentHash});expect(Number(cold.receipt.output_byte_size)).toBeGreaterThan(1000);expect(cold.binding.export_path).toBe(cold.legacy.export_path);expect(cold.legacy.exported_at).toBeTruthy();
+    const filePath=cold.binding.export_path.replace('/exports/valuations/',`${exportsDir('valuations')}/`);const bytes=fs.readFileSync(filePath);expect(bytes.subarray(0,2).toString()).toBe('PK');
+    await expect(txWrap((tx:any)=>tx.queryRun(`UPDATE artifact_export_receipts SET output_byte_size=1 WHERE organization_id=? AND idempotency_key=?`,[orgId,key]))).rejects.toThrow(/terminal|immutable/);
+    await txWrap((tx:any)=>tx.queryRun(`UPDATE organization_members SET status='REVOKED' WHERE organization_id=? AND user_id=?`,[orgId,userId]));await expect(exportPptx(params)).rejects.toMatchObject({code:'ORG_MEMBERSHIP_REVOKED'});await txWrap((tx:any)=>tx.queryRun(`UPDATE organization_members SET status='ACTIVE' WHERE organization_id=? AND user_id=?`,[orgId,userId]));expect((await exportPptx(params)).replay).toBe(true);
+    fs.unlinkSync(filePath);
   });
 
   it('rolls back method, terminal and bridge publication when receipt insertion fails',async()=>{

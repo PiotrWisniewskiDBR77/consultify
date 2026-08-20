@@ -379,12 +379,12 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'ECO-W31',
       method: 'POST',
       path: /^\/valuations\/[^/]+\/export\/pptx\/?$/,
-      state: 'observed',
-      successor: null,
+      state: 'disabled',
+      successor: '/api/v8/finance-v2/valuation/legacy/:legacyId/export/pptx',
       legacyTable: 'valuations',
       legacyIdFromPath: idAt2,
       reason:
-        'Exports a PPTX and stamps export_path/exported_at on the valuation addressed by :id: UPDATE valuations (economics.routes.ts:2998, valuationExportService.ts:280). No proven successor.',
+        'Mounted callers render canonical method/terminal/EV-equity data, bind exact artifact/BV/current-WR identity and source hash to the shared immutable artifact_export_receipts ledger, persist a tenant-bound canonical export path and only then project export_path/exported_at for the legacy download reader.',
     },
     {
       writerId: 'ECO-W32',

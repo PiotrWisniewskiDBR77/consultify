@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -22,8 +24,8 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
       legacyMutationDoors: 52,
       canonicalMutationDoors: 1,
       nonMutationDoors: 6,
-      retiredLegacyMutationDoors: 15,
-      openLegacyMutationDoors: 37,
+      retiredLegacyMutationDoors: 16,
+      openLegacyMutationDoors: 36,
     });
   });
 
@@ -45,6 +47,19 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
       if (rule.effect === 'read-only') expect(rule.reason).toContain('NO database write');
       if (rule.effect === 'refusal') expect(rule.reason).toMatch(/410|501/);
       if (rule.effect === 'canonical-write') expect(rule.reason).toContain('canonical');
+    }
+  });
+
+  it('routes every mounted valuation PPTX export caller through the canonical successor', () => {
+    const files = [
+      'src/components/Benefits/ValuationWorkspace.tsx',
+      'src/components/Economics/FinancePreviewPanel.tsx',
+      'src/components/Economics/hooks/useFinanceRowActions.ts',
+    ];
+    for (const file of files) {
+      const source = fs.readFileSync(path.resolve(process.cwd(), file), 'utf8');
+      expect(source).toContain('exportCanonicalLegacyValuationPptx');
+      expect(source).not.toMatch(/Api\.post\([^\n]*\/api\/economics\/valuations\/.*export\/pptx/);
     }
   });
 });

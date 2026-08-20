@@ -27,6 +27,7 @@ import {
   approveCanonicalFinancialAnalysis,
   approveCanonicalValuation,
   approveFinanceModel,
+  exportCanonicalLegacyValuationPptx,
   resolveLegacyFinanceArtifact,
   runCanonicalFinancialAnalysis,
 } from '@/services/api/financeV2.api';
@@ -1207,7 +1208,7 @@ export function useFinancePreview({
           label: t('finance.actions.exportPptx', 'Eksportuj PPTX'),
           onClick: async () => {
             try {
-              const result = await Api.post(`/api/economics/valuations/${row.id}/export/pptx`, {
+              const result = await exportCanonicalLegacyValuationPptx(row.id, {
                 language: i18n.language?.startsWith('pl') ? 'pl' : 'en',
                 theme: 'corporate',
                 confidentiality: 'confidential',

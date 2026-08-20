@@ -17,6 +17,7 @@ import {
   createRegisteredValuation,
   generateCanonicalValuationAdvisor,
   generateCanonicalLegacyNegotiationPack,
+  exportCanonicalLegacyValuationPptx,
   getCanonicalValuationInputs,
   getCanonicalValuationResults,
   saveCanonicalValuationAssumptions,
@@ -439,23 +440,14 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
     if (!selectedId) return;
     setBusy(true);
     try {
-      const res = await fetch(`${API_URL}/economics/valuations/${selectedId}/export/pptx`, {
-        method: 'POST',
-        headers: { ...getHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          language: i18n.language?.toLowerCase().startsWith('pl') ? 'pl' : 'en',
-          theme: 'corporate',
-          confidentiality: 'confidential',
-        }),
+      const d = await exportCanonicalLegacyValuationPptx(selectedId, {
+        language: i18n.language?.toLowerCase().startsWith('pl') ? 'pl' : 'en',
+        theme: 'corporate',
+        confidentiality: 'confidential',
       });
-      const d = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        toast.error(d?.error || t('valuation.export.failed', 'Export failed'));
-        return;
-      }
       trackFunnelEvent('valuation_exported', { valuationId: selectedId, format: 'pptx' });
       toast.success(t('valuation.export.ok', 'PPTX generated'));
-      if (d?.downloadUrl) window.open(d.downloadUrl, '_blank');
+      if (d.downloadUrl) window.open(d.downloadUrl, '_blank');
       onValuationChanged?.();
     } finally {
       setBusy(false);

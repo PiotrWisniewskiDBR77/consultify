@@ -70,6 +70,7 @@ import { loadWaccInputs, upsertWaccInputs, type UpsertWaccInputsParams } from '.
 import { getPinnedLegacyValuationIdentity, readCanonicalLegacyValuationInputs, writeCanonicalLegacyPeers, writeCanonicalLegacyValuationDepth, writeCanonicalLegacyWacc } from '../../../services/finance/canonical/valuationLegacySuccessorService.js';
 import { runCanonicalLegacyValuationCompute } from '../../../services/finance/canonical/valuationLegacyComputeAdapterService.js';
 import { generateCanonicalLegacyNegotiationPack } from '../../../services/finance/canonical/valuationNegotiationPackService.js';
+import { exportCanonicalLegacyValuationPptx } from '../../../services/finance/canonical/valuationPptxExportService.js';
 import { createRegisteredValuation, ValuationRegistrationError } from '../../../services/finance/canonical/valuationRegistrationService.js';
 import { asyncHandler } from '../../../utils/asyncHandler.js';
 import { financeV2Meta, sendError } from './_shared.js';
@@ -179,6 +180,15 @@ router.post('/valuation/legacy/:legacyId/negotiation-pack',requireFinanceEditorM
   if(!body.expected||typeof body.expected!=='object')return sendError(res,400,'INVALID_BODY','expected canonical identity is required');
   try{const result=await generateCanonicalLegacyNegotiationPack({organizationId,userId,legacyId:String(req.params.legacyId||''),expected:body.expected,idempotencyKey});return res.status(200).json({data:result,meta:financeV2Meta()});}
   catch(error:any){const code=String(error?.code||'CANONICAL_NEGOTIATION_PACK_FAILED');const status=code==='LEGACY_IDENTITY_UNMAPPED'?404:code==='IDEMPOTENCY_KEY_REQUIRED'?400:code==='CANONICAL_RESULTS_NOT_READY'?422:409;return sendError(res,status,code,String(error?.message||code));}
+}));
+
+router.post('/valuation/legacy/:legacyId/export/pptx',requireFinanceEditorMembership,asyncHandler(async(req:AuthRequest,res:Response)=>{
+  const {organizationId,userId}=getV8Context(req);const body=req.body??{};const idempotencyKey=String(req.headers['x-idempotency-key']||'').trim();
+  if(!idempotencyKey)return sendError(res,400,'IDEMPOTENCY_KEY_REQUIRED','x-idempotency-key is required');
+  if(!body.expected||typeof body.expected!=='object')return sendError(res,400,'INVALID_BODY','expected canonical identity is required');
+  const language=body.language==='pl'?'pl':'en';const theme=['minimal','modern'].includes(body.theme)?body.theme:'corporate';const confidentiality=['public','internal'].includes(body.confidentiality)?body.confidentiality:'confidential';
+  try{const result=await exportCanonicalLegacyValuationPptx({organizationId,userId,legacyId:String(req.params.legacyId||''),expected:body.expected,idempotencyKey,options:{language,theme,confidentiality}});return res.status(200).json({data:result,meta:financeV2Meta()});}
+  catch(error:any){const code=String(error?.code||'CANONICAL_PPTX_EXPORT_FAILED');const status=code==='LEGACY_IDENTITY_UNMAPPED'?404:code==='IDEMPOTENCY_KEY_REQUIRED'?400:code==='CANONICAL_RESULTS_NOT_READY'?422:409;return sendError(res,status,code,String(error?.message||code));}
 }));
 
 router.put('/valuation/legacy/:legacyId/depth',requireFinanceEditorMembership,asyncHandler(async(req:AuthRequest,res:Response)=>{
