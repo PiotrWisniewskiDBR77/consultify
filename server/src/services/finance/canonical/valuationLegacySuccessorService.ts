@@ -2,6 +2,7 @@ import crypto, { randomUUID } from 'node:crypto';
 
 import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
 import { hasFinanceEditRole } from '../../legacyCutover/requireActiveMembership.js';
+import { getAssumptionsPatchForDepth, type ValuationDepth } from '../../valuationDepthProfileService.js';
 
 type PinnedIdentity = {
   artifact_id: string;
@@ -181,5 +182,55 @@ export async function writeCanonicalLegacyPeers(params: any) {
     const methodReadback=await tx.queryOne<any>(`SELECT comps_metric_type,comps_min_multiple,comps_median_multiple,comps_max_multiple,source_working_revision_id,source_working_revision_version,command_request_sha256 FROM finance_valuation_methods WHERE id=? AND organization_id=?`,[method.id,params.organizationId]);
     if(readback.length!==typed.peerSet.length||readback.some((row:any,index:number)=>row.peer_name!==typed.peerSet[index]||row.metric_type!==typed.metric)||!methodReadback||methodReadback.comps_metric_type!==typed.metric||Number(methodReadback.comps_min_multiple)!==typed.min||Number(methodReadback.comps_median_multiple)!==typed.median||Number(methodReadback.comps_max_multiple)!==typed.max||methodReadback.source_working_revision_id!==identity.working_revision_id||Number(methodReadback.source_working_revision_version)!==Number(identity.working_revision_version)||methodReadback.command_request_sha256!==requestSha) throw new Error('CANONICAL_COLD_READBACK_MISMATCH');
     return { identity, replay:Boolean(replay), requestSha256:requestSha, methodId:method.id, readback:{method:methodReadback,peers:readback} };
+  });
+}
+
+export type CanonicalLegacyValuationDepthResult = {
+  artifactId: string;
+  businessVersionId: string;
+  workingRevisionId: string;
+  workingRevisionVersion: number;
+  legacyValuationId: string;
+  depth: ValuationDepth;
+  requestSha256: string;
+  replay: boolean;
+};
+
+/** ECO-W23 canonical owner write; valuations.assumptions is compatibility projection only. */
+export async function writeCanonicalLegacyValuationDepth(params: {
+  organizationId: string;
+  userId: string;
+  legacyId: string;
+  depth: ValuationDepth;
+  expected: { artifactId: string; businessVersionId: string; workingRevisionId: string; workingRevisionVersion: number };
+  idempotencyKey: string;
+  actor?: { userId?: string; userEmail?: string; ip?: string; userAgent?: string };
+}): Promise<CanonicalLegacyValuationDepthResult> {
+  const idempotencyKey=params.idempotencyKey.trim();
+  if(!idempotencyKey) throw Object.assign(new Error('Idempotency-Key is required'),{code:'IDEMPOTENCY_KEY_REQUIRED'});
+  if(params.depth!=='managerial'&&params.depth!=='banking') throw Object.assign(new Error('depth must be managerial or banking'),{code:'INVALID_DEPTH'});
+  return withPinnedPostgresTransaction(async(tx)=>{
+    await assertFinanceEditor(tx,params.organizationId,params.userId);
+    await tx.queryOne(`SELECT pg_advisory_xact_lock(hashtextextended(?,0))`,[`${params.organizationId}:${params.legacyId}:VALUATION_DEPTH`]);
+    const identity=await pinnedIdentity(tx,params.organizationId,params.legacyId);
+    if(!identity) throw Object.assign(new Error('Legacy valuation is not mapped'),{code:'LEGACY_IDENTITY_UNMAPPED'});
+    assertIdentity(identity,params.expected);
+    const command={legacyValuationId:params.legacyId,artifactId:identity.artifact_id,businessVersionId:identity.business_version_id,workingRevisionId:identity.working_revision_id,workingRevisionVersion:Number(identity.working_revision_version),depth:params.depth};
+    const requestSha256=hash(command);
+    const prior=await tx.queryOne<any>(`SELECT request_sha256,response_json FROM finance_valuation_depth_command_receipts WHERE organization_id=? AND idempotency_key=?`,[params.organizationId,idempotencyKey]);
+    if(prior&&prior.request_sha256!==requestSha256) throw Object.assign(new Error('Idempotency key reused'),{code:'IDEMPOTENCY_KEY_REUSED'});
+    if(!prior){
+      const compatibilityPatch=getAssumptionsPatchForDepth(params.depth);
+      await tx.queryRun(`UPDATE valuations SET assumptions=COALESCE(assumptions,'{}'::jsonb)||?::jsonb,updated_at=now() WHERE organization_id=? AND id=?`,[JSON.stringify(compatibilityPatch),params.organizationId,params.legacyId]);
+      await tx.queryRun(`INSERT INTO finance_valuation_depth_states (organization_id,legacy_valuation_id,artifact_id,business_version_id,source_working_revision_id,source_working_revision_version,valuation_depth,command_request_sha256,updated_by) VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT (organization_id,business_version_id) DO UPDATE SET legacy_valuation_id=EXCLUDED.legacy_valuation_id,artifact_id=EXCLUDED.artifact_id,source_working_revision_id=EXCLUDED.source_working_revision_id,source_working_revision_version=EXCLUDED.source_working_revision_version,valuation_depth=EXCLUDED.valuation_depth,command_request_sha256=EXCLUDED.command_request_sha256,updated_by=EXCLUDED.updated_by,updated_at=now()`,[params.organizationId,params.legacyId,identity.artifact_id,identity.business_version_id,identity.working_revision_id,Number(identity.working_revision_version),params.depth,requestSha256,params.userId]);
+      const response:Omit<CanonicalLegacyValuationDepthResult,'replay'>={...command,requestSha256};
+      await tx.queryRun(`INSERT INTO finance_valuation_depth_command_receipts (organization_id,idempotency_key,request_sha256,legacy_valuation_id,artifact_id,business_version_id,working_revision_id,working_revision_version,valuation_depth,response_json,created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?)`,[params.organizationId,idempotencyKey,requestSha256,params.legacyId,identity.artifact_id,identity.business_version_id,identity.working_revision_id,Number(identity.working_revision_version),params.depth,JSON.stringify(response),params.userId]);
+    }
+    const state=await tx.queryOne<any>(`SELECT valuation_depth,command_request_sha256 FROM finance_valuation_depth_states WHERE organization_id=? AND business_version_id=?`,[params.organizationId,identity.business_version_id]);
+    const legacy=await tx.queryOne<any>(`SELECT assumptions FROM valuations WHERE organization_id=? AND id=?`,[params.organizationId,params.legacyId]);
+    const assumptions=legacy?.assumptions&&typeof legacy.assumptions==='string'?JSON.parse(legacy.assumptions):legacy?.assumptions||{};
+    if(!state||state.valuation_depth!==params.depth||state.command_request_sha256!==requestSha256||assumptions.depth!==params.depth) throw Object.assign(new Error('Canonical depth projection drift'),{code:'CANONICAL_DEPTH_PROJECTION_DRIFT'});
+    const response=prior?.response_json||{...command,requestSha256};
+    return {...response,replay:Boolean(prior)} as CanonicalLegacyValuationDepthResult;
   });
 }

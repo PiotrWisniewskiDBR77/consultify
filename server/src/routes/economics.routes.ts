@@ -2635,6 +2635,7 @@ router.post(
 router.put(
   '/valuations/:id/depth',
   verifyToken,
+  economicsCutoverGuard,
   validateBody(updateValuationDepthSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;

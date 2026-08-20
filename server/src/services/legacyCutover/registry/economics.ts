@@ -292,12 +292,12 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'ECO-W23',
       method: 'PUT',
       path: /^\/valuations\/[^/]+\/depth\/?$/,
-      state: 'observed',
-      successor: null,
+      state: 'disabled',
+      successor: '/api/v8/finance-v2/valuation/legacy/:legacyId/depth',
       legacyTable: 'valuations',
       legacyIdFromPath: idAt2,
       reason:
-        'Changes the EV depth (managerial/banking) on the valuation addressed by :id: setValuationDepth delegates to updateAssumptions, UPDATE valuations (economics.routes.ts:2686, valuationDepthProfileService.ts:238, valuationService.ts:355). No proven successor.',
+        'The canonical command pins the exact artifact/business-version/current-working-revision identity, records tenant-bound depth state plus an immutable idempotency receipt, and updates the legacy assumptions JSON only as an atomic compatibility projection. The former direct writer is retired fail-closed with writer-scoped rollback.',
     },
     {
       writerId: 'ECO-W24',

@@ -67,7 +67,7 @@ import {
   renameVariant,
 } from '../../../services/finance/canonical/valuationVariantService.js';
 import { loadWaccInputs, upsertWaccInputs, type UpsertWaccInputsParams } from '../../../services/finance/canonical/valuationWaccService.js';
-import { getPinnedLegacyValuationIdentity, readCanonicalLegacyValuationInputs, writeCanonicalLegacyPeers, writeCanonicalLegacyWacc } from '../../../services/finance/canonical/valuationLegacySuccessorService.js';
+import { getPinnedLegacyValuationIdentity, readCanonicalLegacyValuationInputs, writeCanonicalLegacyPeers, writeCanonicalLegacyValuationDepth, writeCanonicalLegacyWacc } from '../../../services/finance/canonical/valuationLegacySuccessorService.js';
 import { runCanonicalLegacyValuationCompute } from '../../../services/finance/canonical/valuationLegacyComputeAdapterService.js';
 import { createRegisteredValuation, ValuationRegistrationError } from '../../../services/finance/canonical/valuationRegistrationService.js';
 import { asyncHandler } from '../../../utils/asyncHandler.js';
@@ -169,6 +169,17 @@ router.post('/valuation/legacy/:legacyId/compute',requireFinanceEditorMembership
   const {organizationId,userId}=getV8Context(req);
   const idempotencyKey=String(req.headers['x-idempotency-key']||'').trim();if(!idempotencyKey)return sendError(res,400,'IDEMPOTENCY_KEY_REQUIRED','x-idempotency-key is required');
   try{const computed=await runCanonicalLegacyValuationCompute({organizationId,userId,legacyId:String(req.params.legacyId||''),idempotencyKey,requestId:typeof req.headers['x-request-id']==='string'?req.headers['x-request-id']:null});return res.status(200).json({data:{artifactId:computed.identity.artifact_id,businessVersionId:computed.identity.business_version_id,workingRevisionId:computed.identity.working_revision_id,workingRevisionVersion:Number(computed.identity.working_revision_version),jobId:computed.result.job.id,enterpriseValue:computed.result.enterpriseValue,equityValue:computed.result.equityValue,terminalValue:computed.result.terminalValue,wacc:'wacc' in computed.result?computed.result.wacc:undefined,replay:computed.replay},meta:financeV2Meta()});}catch(error:any){const code=String(error?.code||'CANONICAL_COMPUTE_FAILED');return sendError(res,code.includes('MISSING')?422:409,code,String(error?.message||code));}
+}));
+
+router.put('/valuation/legacy/:legacyId/depth',requireFinanceEditorMembership,asyncHandler(async(req:AuthRequest,res:Response)=>{
+  const {organizationId,userId}=getV8Context(req); const body=req.body??{};
+  const idempotencyKey=String(req.headers['x-idempotency-key']||'').trim();
+  if(!idempotencyKey) return sendError(res,400,'IDEMPOTENCY_KEY_REQUIRED','x-idempotency-key is required');
+  if(!body.expected||typeof body.expected!=='object'||!['managerial','banking'].includes(body.depth)) return sendError(res,400,'INVALID_BODY','depth and expected identity are required');
+  try{
+    const result=await writeCanonicalLegacyValuationDepth({organizationId,userId,legacyId:String(req.params.legacyId||''),depth:body.depth,expected:body.expected,idempotencyKey,actor:{userId,userEmail:(req.user as any)?.email,ip:req.ip,userAgent:req.get('user-agent')||undefined}});
+    return res.status(200).json({data:result,meta:financeV2Meta()});
+  }catch(error:any){const code=String(error?.code||'CANONICAL_DEPTH_WRITE_FAILED');const status=code==='LEGACY_IDENTITY_UNMAPPED'?404:code==='INVALID_DEPTH'||code==='IDEMPOTENCY_KEY_REQUIRED'?400:409;return sendError(res,status,code,String(error?.message||code));}
 }));
 
 for(const [suffix,writer] of [['assumptions',writeCanonicalLegacyWacc],['peers',writeCanonicalLegacyPeers]] as const){

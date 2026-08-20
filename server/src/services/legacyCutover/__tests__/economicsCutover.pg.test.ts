@@ -591,7 +591,7 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
     ]);
   });
 
-  it('blocks typed assumptions and peers legacy doors before mutation with exact telemetry', async () => {
+  it('blocks depth, typed assumptions and peers legacy doors before mutation with exact telemetry', async () => {
     const before = await pool.query(`SELECT assumptions,peers FROM valuations WHERE id=$1`, [
       mappedValuationId,
     ]);
@@ -603,8 +603,17 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
       .put(`/api/economics/valuations/${mappedValuationId}/peers`)
       .set('x-request-id', `${prefix}-wave4-peers`)
       .send({ peerSet: ['MUTATION'] });
+    const depth = await request(app)
+      .put(`/api/economics/valuations/${mappedValuationId}/depth`)
+      .set('x-request-id', `${prefix}-wave8-depth`)
+      .send({ depth: 'managerial' });
     expect(assumptions.status).toBe(410);
     expect(peers.status).toBe(410);
+    expect(depth.status).toBe(410);
+    expect(depth.body).toMatchObject({
+      writerId: 'ECO-W23',
+      successor: '/api/v8/finance-v2/valuation/legacy/:legacyId/depth',
+    });
     expect(assumptions.body).toMatchObject({
       writerId: 'ECO-W24',
       successor: '/api/v8/finance-v2/valuation/legacy/:legacyId/assumptions',
@@ -617,6 +626,45 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
       mappedValuationId,
     ]);
     expect(after.rows).toEqual(before.rows);
+  });
+
+  it('restores only ECO-W23 through the writer-scoped rollback lever', async () => {
+    const previous = process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+    process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = 'ECO-W23';
+    try {
+      const response = await request(app)
+        .put(`/api/economics/valuations/${mappedValuationId}/depth`)
+        .set('x-request-id', `${prefix}-wave8-depth-rollback`)
+        .send({ depth: 'banking' });
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({ success: true, depth: 'banking' });
+      const legacy = await pool.query(
+        `SELECT assumptions FROM valuations WHERE organization_id=$1 AND id=$2`,
+        [orgA, mappedValuationId]
+      );
+      expect(legacy.rows[0].assumptions.depth).toBe('banking');
+      const event = await pool.query(
+        `SELECT writer_id,access_kind,successor_path FROM legacy_cutover_usage_events
+          WHERE organization_id=$1 AND request_id=$2`,
+        [orgA, `${prefix}-wave8-depth-rollback`]
+      );
+      expect(event.rows).toEqual([
+        {
+          writer_id: 'ECO-W23',
+          access_kind: 'rollback_writer',
+          successor_path: '/api/v8/finance-v2/valuation/legacy/:legacyId/depth',
+        },
+      ]);
+      const canonical = await pool.query(
+        `SELECT idempotency_key FROM finance_valuation_depth_command_receipts
+          WHERE organization_id=$1 AND legacy_valuation_id=$2`,
+        [orgA, mappedValuationId]
+      );
+      expect(canonical.rows).toHaveLength(0);
+    } finally {
+      if (previous === undefined) delete process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+      else process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = previous;
+    }
   });
 
   it('does not block the finance-settings writer (ECO-W42)', async () => {

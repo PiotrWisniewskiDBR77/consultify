@@ -7,13 +7,13 @@ const REAL = process.env.RUN_DB_TESTS==='1'&&process.env.MOCK_DB==='false'&&Stri
 if(REAL) process.env.DB_TYPE='postgres';
 
 describe.skipIf(!REAL)('FIN-CANONICAL-SUCCESSORS-WAVE4 realPG',()=>{
-  let txWrap:any,createArtifact:any,writeWacc:any,writePeers:any,loadDirect:any,readInputs:any,runLegacyCompute:any,findOrCreateMethod:any,computeGordon:any,discountFlows:any,computeEquity:any,writeTerminal:any,writeBridge:any;
+  let txWrap:any,createArtifact:any,writeWacc:any,writePeers:any,writeDepth:any,loadDirect:any,readInputs:any,runLegacyCompute:any,findOrCreateMethod:any,computeGordon:any,discountFlows:any,computeEquity:any,writeTerminal:any,writeBridge:any;
   const orgId=`org-fin-wave4-${randomUUID()}`, userId=`user-fin-wave4-${randomUUID()}`, legacyId=randomUUID();
   let identity:any;
   beforeAll(async()=>{
     ({withPinnedPostgresTransaction:txWrap}=await import('../../../../database/PostgresDatabase.js'));
     ({createArtifact}=await import('../artifactVersionService.js'));
-    ({writeCanonicalLegacyWacc:writeWacc,writeCanonicalLegacyPeers:writePeers}=await import('../valuationLegacySuccessorService.js'));
+    ({writeCanonicalLegacyWacc:writeWacc,writeCanonicalLegacyPeers:writePeers,writeCanonicalLegacyValuationDepth:writeDepth}=await import('../valuationLegacySuccessorService.js'));
     ({loadCanonicalDirectValuationAssumptions:loadDirect,readCanonicalLegacyValuationInputs:readInputs}=await import('../valuationLegacySuccessorService.js'));
     ({runCanonicalLegacyValuationCompute:runLegacyCompute}=await import('../valuationLegacyComputeAdapterService.js'));
     ({findOrCreateMethod}=await import('../valuationComputeService.js'));
@@ -54,6 +54,28 @@ describe.skipIf(!REAL)('FIN-CANONICAL-SUCCESSORS-WAVE4 realPG',()=>{
     const legacy=await txWrap((tx:any)=>tx.queryOne(`SELECT assumptions,peers FROM valuations WHERE id=?`,[legacyId]));
     expect(legacy.assumptions).toEqual({}); expect(legacy.peers).toEqual([]);
     await expect(writeWacc({...params,payload:{...params.payload,waccPercent:12}})).rejects.toMatchObject({code:'IDEMPOTENCY_KEY_REUSED'});
+  });
+
+  it('writes depth once, replays exactly, projects compatibly and denies replay after revocation',async()=>{
+    const key=`depth-${randomUUID()}`;
+    const params={organizationId:orgId,userId,legacyId,expected:identity,idempotencyKey:key,depth:'managerial' as const};
+    const [a,b]=await Promise.all([writeDepth(params),writeDepth(params)]);
+    expect([a.replay,b.replay].sort()).toEqual([false,true]);
+    expect(a).toMatchObject({artifactId:identity.artifactId,businessVersionId:identity.businessVersionId,legacyValuationId:legacyId,depth:'managerial'});
+    const cold=await txWrap(async(tx:any)=>({
+      state:await tx.queryOne(`SELECT valuation_depth,command_request_sha256 FROM finance_valuation_depth_states WHERE organization_id=? AND business_version_id=?`,[orgId,identity.businessVersionId]),
+      receipt:await tx.queryOne(`SELECT valuation_depth,request_sha256 FROM finance_valuation_depth_command_receipts WHERE organization_id=? AND idempotency_key=?`,[orgId,key]),
+      legacy:await tx.queryOne(`SELECT assumptions FROM valuations WHERE organization_id=? AND id=?`,[orgId,legacyId]),
+    }));
+    expect(cold.state).toEqual({valuation_depth:'managerial',command_request_sha256:a.requestSha256});
+    expect(cold.receipt).toEqual({valuation_depth:'managerial',request_sha256:a.requestSha256});
+    expect(cold.legacy.assumptions.depth).toBe('managerial');
+    await expect(writeDepth({...params,depth:'banking'})).rejects.toMatchObject({code:'IDEMPOTENCY_KEY_REUSED'});
+    await expect(txWrap((tx:any)=>tx.queryRun(`DELETE FROM finance_valuation_depth_command_receipts WHERE organization_id=? AND idempotency_key=?`,[orgId,key]))).rejects.toThrow(/append-only/);
+    await txWrap((tx:any)=>tx.queryRun(`UPDATE organization_members SET status='REVOKED' WHERE organization_id=? AND user_id=?`,[orgId,userId]));
+    await expect(writeDepth(params)).rejects.toMatchObject({code:'ORG_MEMBERSHIP_REVOKED'});
+    await txWrap((tx:any)=>tx.queryRun(`UPDATE organization_members SET status='ACTIVE' WHERE organization_id=? AND user_id=?`,[orgId,userId]));
+    expect((await writeDepth(params)).replay).toBe(true);
   });
 
   it('service boundary denies viewer and revoked membership with zero mutation',async()=>{
