@@ -30,6 +30,21 @@ type StatementDetail = {
   values?: StatementValueRow[];
 };
 
+export function canComputeStatementPackRatios(statements: Array<Record<string, unknown>>): boolean {
+  return (
+    statements.length > 0 &&
+    statements.every((statement) => {
+      const readiness = String(statement.readiness_status || '')
+        .trim()
+        .toLowerCase();
+      const status = String(statement.status || '')
+        .trim()
+        .toLowerCase();
+      return readiness === 'ready' || status === 'confirmed' || status === 'approved';
+    })
+  );
+}
+
 const SCENARIO_VARIANTS: ScenarioVariant[] = ['base', 'optimistic', 'conservative'];
 
 async function getStatementPackDetailWithFallback(packId: string) {
@@ -729,7 +744,10 @@ export function useFinanceSelection(activeTab: ModuleTab) {
       });
 
       const firstStatementId = statements[0]?.id;
-      if (firstStatementId) {
+      // Ratio computation is a statement-ready capability. A newly staged
+      // pack is deliberately recoverable/pending, so probing the endpoint here
+      // creates a misleading 404 during a successful cold recovery journey.
+      if (firstStatementId && canComputeStatementPackRatios(statements)) {
         try {
           const ratiosData = await V8FinanceApi.getStatementRatios(String(firstStatementId));
           const ratioResult = ratiosData?.ratios;

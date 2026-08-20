@@ -10,6 +10,7 @@ import {
   type StatementReadinessEvaluation,
 } from '../../financialStatementService.js';
 import {
+  recomputeStatementPack,
   runStatementPackShadowReconcile,
   syncStatementToPack,
 } from '../../financialStatementPackService.js';
@@ -132,7 +133,13 @@ export async function confirmAndRegisterStatementPack(
       createdBy: params.userId,
       summary: 'Confirmed statement-ready snapshot.',
     });
-    const statementPackId = await syncStatementToPack(params.statementId, { deferShadow: true });
+    // Multi-section imports bind all comparative siblings to one tenant-owned
+    // pack before review. Confirmation must preserve that durable identity;
+    // re-syncing by the individual statement period fragments the six-sibling
+    // document into period-specific packs and breaks cold/deep-link recovery.
+    const statementPackId =
+      existingPackId ||
+      (await syncStatementToPack(params.statementId, { deferShadow: true }));
     if (!statementPackId) throw new Error('Statement pack registration produced no pack');
 
     await recordStatementSourceArtifact({
@@ -226,6 +233,10 @@ export async function confirmAndRegisterStatementPack(
     };
   });
 
+  // Refresh from the current transaction state after the owner statement was
+  // confirmed. Skipping re-sync for an existing comparative pack must not
+  // leave the aggregate with the pre-confirm pending snapshot.
+  await recomputeStatementPack(result.statementPackId, { deferShadow: true });
   const shadowRunner = params.afterCommitShadowRunner || runStatementPackShadowReconcile;
   await shadowRunner(result.statementPackId).catch((error) => {
     logger.warn('[FinanceStatements] post-commit pack shadow reconcile failed', {

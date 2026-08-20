@@ -5,11 +5,23 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const mappingEditorState = vi.hoisted(() => ({ props: null as any }));
+const translationState = vi.hoisted(() => ({ language: 'en' }));
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback?: any) =>
-      typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key),
-    i18n: { language: 'en' },
+    t: (key: string, fallback?: any) => {
+      if (translationState.language === 'pl') {
+        const pl: Record<string, string> = {
+          'finance.importWizard.units': 'Jednostki',
+          'finance.importWizard.thousands': 'Tysiące',
+          'finance.importWizard.millions': 'Miliony',
+        };
+        if (pl[key]) return pl[key];
+      }
+      return typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? key);
+    },
+    i18n: { get language() { return translationState.language; } },
   }),
 }));
 
@@ -38,6 +50,7 @@ vi.mock('@/services/api/v8/finance', () => ({
     getStatement: vi.fn(),
     getCanonicalLines: vi.fn(),
     getStatementSourceReceipt: vi.fn(),
+    recordStatementManualMappingDecision: vi.fn(),
   },
   shouldFallbackToLegacyFinance: (error: any) => {
     const status = Number(error?.status);
@@ -57,7 +70,17 @@ vi.mock(
     >();
     return {
       ...actual,
-      FinancialStatementMappingEditor: () => <div>financial-statement-mapping-editor</div>,
+      FinancialStatementMappingEditor: (props: any) => {
+        mappingEditorState.props = props;
+        return (
+          <div>
+            financial-statement-mapping-editor
+            <button type="button" onClick={() => props.onVerifyAllReady?.()}>
+              verify-eligible-test
+            </button>
+          </div>
+        );
+      },
     };
   }
 );
@@ -69,6 +92,8 @@ import { FinancialStatementImportWizard } from '../../../src/components/Finance/
 describe('FinancialStatementImportWizard V8 manual flow seam', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mappingEditorState.props = null;
+    translationState.language = 'en';
     vi.mocked(V8FinanceApi.getStatementSourceReceipt).mockResolvedValue({
       receipt: {
         receipt_id: 'receipt-1',
@@ -144,6 +169,49 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
       '/api/finance-statements/upload-and-analyze',
       expect.any(FormData),
       expect.anything()
+    );
+  });
+
+  it('uses one multi-section selection for checkboxes, summary and extract request without raw labels', async () => {
+    vi.mocked(V8FinanceApi.uploadAndAnalyzeStatement).mockResolvedValue({
+      mode: 'smart',
+      statementIds: ['statement-1'],
+      analysis: {
+        entityName: 'ACME',
+        periodLabel: '2025',
+        currency: 'PLN',
+        scaling: 'thousands',
+        sectionTypes: ['BS', 'CF', 'P&L'],
+      },
+    } as any);
+    vi.mocked(V8FinanceApi.extractStatement).mockResolvedValue({
+      statements: [],
+      lines: [],
+    } as any);
+
+    const view = render(<FinancialStatementImportWizard />);
+    fireEvent.change(view.container.querySelector('input[type="file"]') as HTMLInputElement, {
+      target: { files: [new File(['report'], 'statement.pdf', { type: 'application/pdf' })] },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Upload & Analyze' }));
+
+    await waitFor(() => expect(screen.getByText('Detection Results')).toBeTruthy());
+    expect(screen.queryByText('Show steps')).toBeNull();
+    expect(screen.queryByText('BS (Balance Sheet)')).toBeNull();
+    expect(screen.getByTestId('multi-section-selection-summary')).toHaveTextContent(
+      'Balance sheet · Cash flow statement · Income statement'
+    );
+    expect(screen.getAllByRole('checkbox').filter((item) => (item as HTMLInputElement).checked)).toHaveLength(3);
+    expect(screen.getAllByRole('combobox')).toHaveLength(2);
+    expect(screen.queryByRole('option', { name: 'Choose statement type' })).toBeNull();
+    expect(screen.queryByText('thousands')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Extract selected statement section' }));
+    await waitFor(() =>
+      expect(V8FinanceApi.extractStatement).toHaveBeenCalledWith(
+        'statement-1',
+        expect.objectContaining({ statementTypes: ['BS', 'CF', 'P&L'] })
+      )
     );
   });
 
@@ -328,7 +396,7 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
     expect(screen.getByTestId('durable-source-summary').textContent).toContain('P&L');
     expect(screen.getByTestId('durable-source-summary').textContent).toContain('FY2025');
     expect(screen.getByTestId('durable-source-summary').textContent).toContain('FY2024');
-    expect(screen.getByTestId('durable-source-summary').textContent).toContain('PLN · thousands');
+    expect(screen.getByTestId('durable-source-summary').textContent).toContain('PLN · Thousands');
     expect(screen.getByTestId('durable-source-summary').textContent).toContain('owner-1');
     expect(screen.getByTestId('durable-source-summary').textContent).toContain('12–13');
     expect(screen.getAllByText('CD_PROJEKT_Skonsolidowane_Sprawozdanie_FY2025.pdf').length).toBeGreaterThan(0);
@@ -337,6 +405,7 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
   });
 
   it('reconstructs the durable review after unmount and a new deep-link mount', async () => {
+    translationState.language = 'pl';
     const detailFor = (id: string) => ({
       statement: {
         id,
@@ -362,6 +431,31 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
             line_name_pl: 'Przychody',
             source_row: 1,
           },
+          ...(id === 'statement-current'
+            ? [
+                {
+                  original_label: 'Ujawnienie jednostki zależnej',
+                  value: 10,
+                  confidence: 0.61,
+                  canonical_line_id: null,
+                  source_row: 12,
+                  mapping_status: 'manual_exclude',
+                  mapping_tier: 'excluded',
+                  is_non_financial: true,
+                  classification_reason: 'APPENDIX_ENTITY_DISCLOSURE',
+                  suggested_exclusion_reason: 'APPENDIX_ENTITY_DISCLOSURE',
+                  manual_decision: {
+                    decisionId: 'decision-exclude-1',
+                    action: 'EXCLUDE',
+                    reason: 'APPENDIX_ENTITY_DISCLOSURE',
+                    sourceReceiptId: 'receipt-statement-current',
+                    statementValuesVersion: 3,
+                    decidedBy: 'owner-1',
+                    decidedAt: '2026-08-20T00:00:00.000Z',
+                  },
+                },
+              ]
+            : []),
         ],
       },
     });
@@ -392,6 +486,25 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
     const first = render(<FinancialStatementImportWizard initialStatementId="statement-current" />);
     await waitFor(() => expect(screen.getByTestId('statement-comparison-side-by-side')).toBeTruthy());
     expect(screen.getByTestId('durable-source-summary').textContent).toContain('FY2025 / FY2024');
+    expect(screen.getByTestId('cold-exclusion-audit').textContent).toContain(
+      'APPENDIX_ENTITY_DISCLOSURE · v3 · potwierdzenie źródła receipt-statement-current'
+    );
+    expect(mappingEditorState.props.mappedValues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sourceRow: 12,
+          confidence: 0.61,
+          isNonFinancial: true,
+          suggestedExclusionReason: 'APPENDIX_ENTITY_DISCLOSURE',
+          manualDecision: expect.objectContaining({
+            decisionId: 'decision-exclude-1',
+            action: 'EXCLUDE',
+            statementValuesVersion: 3,
+            sourceReceiptId: 'receipt-statement-current',
+          }),
+        }),
+      ])
+    );
     expect(screen.getByTestId('statement-recovery-link').getAttribute('href')).toContain(
       'statementId=statement-current'
     );
@@ -399,7 +512,9 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
 
     render(<FinancialStatementImportWizard initialStatementId="statement-current" />);
     await waitFor(() => expect(screen.getByTestId('statement-comparison-side-by-side')).toBeTruthy());
-    expect(screen.getByTestId('durable-source-summary').textContent).toContain('PLN · thousands');
+    expect(screen.getByTestId('durable-source-summary').textContent).toContain('PLN · Tysiące');
+    expect(screen.queryByText('thousands')).toBeNull();
+    expect(screen.getByTestId('cold-exclusion-audit').textContent).toContain('APPENDIX_ENTITY_DISCLOSURE');
     expect(screen.queryByText('statement-current')).toBeNull();
     expect(V8FinanceApi.getStatement).toHaveBeenCalledTimes(4);
     expect(V8FinanceApi.getStatementSourceReceipt).toHaveBeenCalledTimes(4);
@@ -539,6 +654,97 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
     expect(Api.put).not.toHaveBeenCalledWith('/api/finance-statements/statement-1/values', {
       values: expect.any(Array),
     });
+  });
+
+  it('bulk-verifies only rows with a canonical target and never records ACCEPT for unmapped rows', async () => {
+    vi.mocked(V8FinanceApi.extractStatement).mockResolvedValue({
+      statementId: 'statement-1',
+      lines: [
+        { originalLabel: 'Revenue', value: 100, confidence: 0.6, sourceRow: 10 },
+        { originalLabel: 'Unknown', value: 5, confidence: 0.4, sourceRow: 11 },
+      ],
+      statements: [
+        {
+          statementId: 'statement-1',
+          statementType: 'P&L',
+          periodLabel: '2025',
+          sourceReceiptId: 'receipt-1',
+          lines: [
+            { originalLabel: 'Revenue', value: 100, confidence: 0.6, sourceRow: 10 },
+            { originalLabel: 'Unknown', value: 5, confidence: 0.4, sourceRow: 11 },
+          ],
+        },
+      ],
+    } as any);
+    vi.mocked(V8FinanceApi.mapStatement).mockResolvedValue({
+      statementId: 'statement-1',
+      mappedLines: [
+        {
+          originalLabel: 'Revenue',
+          value: 100,
+          confidence: 0.6,
+          sourceRow: 10,
+          suggestedCanonicalId: 'line-1',
+          suggestedCanonicalLabel: 'Revenue',
+          mappingTier: 'review_required',
+        },
+        {
+          originalLabel: 'Unknown',
+          value: 5,
+          confidence: 0.4,
+          sourceRow: 11,
+          suggestedCanonicalId: null,
+          mappingTier: 'review_required',
+        },
+      ],
+    } as any);
+    vi.mocked(V8FinanceApi.getCanonicalLines).mockResolvedValue({
+      canonicalLines: [
+        { id: 'line-1', statement_type: 'P&L', line_code: 'revenue', line_name: 'Revenue' },
+      ],
+      count: 1,
+    } as any);
+    vi.mocked(V8FinanceApi.putStatementValues).mockResolvedValue({
+      statementId: 'statement-1',
+      savedCount: 2,
+      valuesVersion: 1,
+      readiness: {
+        readinessStatus: 'recoverable',
+        summary: 'Unmapped row remains',
+        reasonCodes: ['UNMAPPED_ROWS'],
+      },
+      validation: { status: 'warnings', messages: [] },
+    } as any);
+    vi.mocked(V8FinanceApi.recordStatementManualMappingDecision).mockResolvedValue({
+      decision: {
+        readinessStatus: 'recoverable',
+        summary: 'Unmapped row remains',
+        reasonCodes: ['UNMAPPED_ROWS'],
+      },
+    } as any);
+
+    await advanceToMapStep();
+    fireEvent.click(screen.getByRole('button', { name: 'verify-eligible-test' }));
+
+    await waitFor(() => {
+      expect(mappingEditorState.props.mappedValues[0].userVerified).toBe(true);
+      expect(mappingEditorState.props.mappedValues[1].userVerified).not.toBe(true);
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save & Validate' }));
+
+    await waitFor(() => {
+      expect(V8FinanceApi.recordStatementManualMappingDecision).toHaveBeenCalledTimes(1);
+    });
+    expect(V8FinanceApi.recordStatementManualMappingDecision).toHaveBeenCalledWith(
+      'statement-1',
+      expect.objectContaining({ sourceRow: 10, canonicalLineId: 'line-1' }),
+      expect.any(String)
+    );
+    expect(V8FinanceApi.recordStatementManualMappingDecision).not.toHaveBeenCalledWith(
+      'statement-1',
+      expect.objectContaining({ sourceRow: 11, canonicalLineId: null }),
+      expect.any(String)
+    );
   });
 
   it('falls back to legacy values save in the wizard manual flow on bounded compatibility statuses', async () => {
@@ -927,8 +1133,8 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
     fireEvent.click(
       await screen.findByRole('button', { name: 'Extract selected statement section' })
     );
-    expect(await screen.findByRole('tab', { name: /P&L · 2025/ })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /BS · 2025 · comparison/ })).toBeInTheDocument();
+    expect(await screen.findByRole('tab', { name: /Income statement · 2025/ })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Balance sheet · 2025 · comparison/ })).toBeInTheDocument();
     expect(screen.queryByText('Import Financial Statement')).not.toBeInTheDocument();
     expect(screen.getByRole('complementary', { name: 'Statement metrics' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Save & Validate' }));

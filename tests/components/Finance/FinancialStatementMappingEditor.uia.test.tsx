@@ -19,11 +19,12 @@ describe('FinancialStatementMappingEditor acceptance states', () => {
   it('counts user, system, and unverified rows with the exact editor predicate', () => {
     expect(
       [
-        { confidence: 0.2, mappingTier: 'review_required' as const, userVerified: true },
-        { confidence: 0.85, mappingTier: 'auto' as const, userVerified: false },
-        { confidence: 0.99, mappingTier: 'review_required' as const, userVerified: false },
+        { canonicalLineId: 'a', confidence: 0.2, mappingTier: 'review_required' as const, userVerified: true },
+        { canonicalLineId: 'b', confidence: 0.85, mappingTier: 'auto' as const, userVerified: false },
+        { canonicalLineId: 'c', confidence: 0.99, mappingTier: 'review_required' as const, userVerified: false },
+        { canonicalLineId: null, confidence: 0.99, mappingTier: 'auto' as const, userVerified: true },
       ].map(isFinancialStatementValueVerified)
-    ).toEqual([true, true, false]);
+    ).toEqual([true, true, false, false]);
   });
   it('keeps algorithm confidence while rendering PL numbers and explicit user verification', () => {
     const onCanonicalChange = vi.fn();
@@ -101,10 +102,49 @@ describe('FinancialStatementMappingEditor acceptance states', () => {
     );
 
     expect(screen.getByLabelText('Przychody: System verified')).toBeChecked();
-    expect(screen.getByLabelText('Nieznana pozycja: Verify extracted value')).toBeEnabled();
+    expect(
+      screen.getByLabelText(
+        'Nieznana pozycja: Select a target category before verification'
+      )
+    ).toBeDisabled();
     fireEvent.click(screen.getByRole('checkbox', { name: 'Verify all eligible extracted values' }));
     expect(onVerifyAllReady).toHaveBeenCalledTimes(1);
     fireEvent.click(screen.getByLabelText('Koszty pozostałe: Verify extracted value'));
     expect(onVerifiedChange).toHaveBeenCalledWith(1, true);
+  });
+
+  it('requires an explicit owner action before applying a reasoned exclusion suggestion', () => {
+    const onExcludeAllSuggested = vi.fn();
+    const onExcludeChange = vi.fn();
+    render(
+      <FinancialStatementMappingEditor
+        mappedValues={[
+          {
+            originalLabel: 'Szczegół pokryty sumą',
+            value: 25,
+            confidence: 0.6,
+            canonicalLineId: null,
+            mappingStatus: 'unmapped',
+            mappingTier: 'review_required',
+            suggestedExclusionReason: 'DETAIL_COVERED_BY_CANONICAL_TOTAL',
+          },
+        ]}
+        canonicalLines={[]}
+        onValueChange={vi.fn()}
+        onCanonicalChange={vi.fn()}
+        onExcludeChange={onExcludeChange}
+        onExcludeAllSuggested={onExcludeAllSuggested}
+      />
+    );
+
+    expect(screen.getByText('Szczegół pokryty sumą')).not.toHaveTextContent('non-fin');
+    fireEvent.click(screen.getByRole('button', { name: /Review and exclude suggested/ }));
+    expect(onExcludeAllSuggested).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Exclude with reason' }));
+    expect(onExcludeChange).toHaveBeenCalledWith(
+      0,
+      true,
+      'DETAIL_COVERED_BY_CANONICAL_TOTAL'
+    );
   });
 });

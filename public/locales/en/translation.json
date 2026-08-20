@@ -18985,6 +18985,9 @@
       "statementSectionToExtract": "Statement sections to extract",
       "statementType": "Statement type",
       "chooseStatementType": "Choose statement type",
+      "statementPL": "Income statement",
+      "statementBS": "Balance sheet",
+      "statementCF": "Cash flow statement",
       "units": "Units",
       "thousands": "Thousands",
       "millions": "Millions",
@@ -19160,7 +19163,15 @@
       "noSourceFiles": "No source files.",
       "clickRowHint": "Click a table row to see line item details.",
       "noDocumentSelected": "No document selected for this table.",
-      "notFound": "Statement pack not found"
+      "notFound": "Statement pack not found",
+      "section": {
+        "cta": "Generate report section"
+      },
+      "validation": {
+        "MAPPING_COVERAGE": "Mapping coverage",
+        "DUAL_PERIOD": "Dual period",
+        "LOW_MAPPING_COVERAGE": "Low mapping coverage"
+      }
     },
     "mappingEditor": {
       "tierReview": "review",
@@ -19180,6 +19191,9 @@
       "confirmMapping": "Confirm this mapping",
       "verifyAllEligible": "Verify every row requiring a decision",
       "verifyExtractedValue": "Verify extracted value"
+      ,"excludeWithReason": "Exclude with reason",
+      "undoExclude": "Undo exclusion"
+      ,"excludeSuggested": "Review and exclude suggested"
     },
     "explainPanel": {
       "evidenceType": {

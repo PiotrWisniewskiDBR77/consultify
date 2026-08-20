@@ -15,14 +15,9 @@ import JSZip from 'jszip';
 import { v4 as uuidv4 } from 'uuid';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
-import {
-  FILE_UPLOAD_SIGNATURE_MISMATCH_CODE,
-  sniffFileSignature,
-  upload,
-} from '../../middleware/fileUpload.middleware.js';
-import { extractTextFromBuffer as extractDocumentTextFromBuffer } from '../../services/documentTextExtractor.js';
+import { upload } from '../../middleware/fileUpload.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
-import { listBudgets } from '../../services/budgetingService.js';
+import { createBudget, listBudgets } from '../../services/budgetingService.js';
 import { searchStatementDocumentIntelligence } from '../../services/documentIntelligenceService.js';
 import { ensureCanonicalRegistryInDatabase } from '../../services/financeCanonicalRegistrySyncService.js';
 import { financeLegacyCutoverGuard } from '../../services/financeLegacyCutover.js';
@@ -150,127 +145,11 @@ import PDFParserService from '../../services/pdfParserService.js';
 import { computeRatios } from '../../services/ratioAnalysisService.js';
 import { getFinanceDashboard } from '../../services/v8/financeIntegrationService.js';
 import { listValuations } from '../../services/valuationService.js';
-import {
-  type BudgetGranularity,
-  BudgetRegistrationError,
-  registerBudget,
-} from '../../services/finance/canonical/budgetRegistrationService.js';
-import {
-  applyBudgetLineCommand,
-  BudgetLineCommandError,
-  type BudgetLinePatch,
-} from '../../services/finance/canonical/budgetLineCommandService.js';
-import {
-  BudgetProjectionCommandError,
-  projectBudgetScenario,
-  updateBudgetScenarioAdjustments,
-} from '../../services/finance/canonical/budgetProjectionCommandService.js';
-import {
-  approveBudgetCommand,
-  BudgetApprovalCommandError,
-} from '../../services/finance/canonical/budgetApprovalCommandService.js';
-import {
-  discardBudgetCommand,
-  BudgetDiscardCommandError,
-} from '../../services/finance/canonical/budgetDiscardCommandService.js';
-import {
-  importBudgetDocumentCommand,
-  BudgetDocumentImportCommandError,
-} from '../../services/finance/canonical/budgetDocumentImportCommandService.js';
-import {
-  linkBudgetInitiativeCommand,
-  BudgetInitiativeLinkCommandError,
-} from '../../services/finance/canonical/budgetInitiativeLinkCommandService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 
 const router = Router();
-
-const BUDGET_IMPORT_MIME_BY_EXT: Record<string, ReadonlySet<string>> = {
-  pdf: new Set(['application/pdf']),
-  xlsx: new Set(['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']),
-  xls: new Set(['application/vnd.ms-excel']),
-  csv: new Set([
-    'text/csv',
-    'application/csv',
-    'application/vnd.ms-excel',
-    'text/plain',
-    'application/octet-stream',
-  ]),
-};
-
-async function verifyBudgetImportFile(
-  sourceFile: Buffer,
-  originalName: string,
-  mimeType: string
-): Promise<void> {
-  const ext = path.extname(originalName).slice(1).toLowerCase();
-  const mime = mimeType.split(';')[0].trim().toLowerCase();
-  if (!BUDGET_IMPORT_MIME_BY_EXT[ext]?.has(mime) || !sniffFileSignature(sourceFile, ext)) {
-    throw new BudgetDocumentImportCommandError(
-      FILE_UPLOAD_SIGNATURE_MISMATCH_CODE,
-      400,
-      'File content does not match an allowed PDF, XLS, XLSX, or CSV type'
-    );
-  }
-  if (ext === 'xls') {
-    const ole2 = Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]);
-    if (!sourceFile.subarray(0, 8).equals(ole2)) {
-      throw new BudgetDocumentImportCommandError(
-        FILE_UPLOAD_SIGNATURE_MISMATCH_CODE,
-        400,
-        'Legacy XLS requires an OLE2 workbook signature'
-      );
-    }
-  }
-  if (ext === 'xlsx') {
-    try {
-      const zip = await JSZip.loadAsync(sourceFile);
-      if (!zip.file('xl/workbook.xml') || !zip.file('[Content_Types].xml')) throw new Error();
-    } catch {
-      throw new BudgetDocumentImportCommandError(
-        FILE_UPLOAD_SIGNATURE_MISMATCH_CODE,
-        400,
-        'XLSX content is not a spreadsheet workbook'
-      );
-    }
-  }
-}
-
-function resolveBudgetImportExpectedVersion(req: AuthRequest): number {
-  const bodyRaw = req.body?.expectedVersion;
-  const headerRaw = req.header('x-expected-budget-version');
-  const bodyPresent = bodyRaw !== undefined && bodyRaw !== null && String(bodyRaw).trim() !== '';
-  const headerPresent = headerRaw !== undefined && headerRaw !== null && headerRaw.trim() !== '';
-  const parse = (raw: unknown): number | null => {
-    const literal = String(raw).trim();
-    if (!/^[1-9]\d*$/.test(literal)) return null;
-    const value = Number(literal);
-    return Number.isSafeInteger(value) ? value : null;
-  };
-  const body = bodyPresent ? parse(bodyRaw) : null;
-  const header = headerPresent ? parse(headerRaw) : null;
-  if (
-    (!bodyPresent && !headerPresent) ||
-    (bodyPresent && body === null) ||
-    (headerPresent && header === null)
-  ) {
-    throw new BudgetDocumentImportCommandError(
-      'INVALID_EXPECTED_VERSION',
-      400,
-      'A positive integer expectedVersion is required'
-    );
-  }
-  if (body !== null && header !== null && body !== header) {
-    throw new BudgetDocumentImportCommandError(
-      'EXPECTED_VERSION_CONFLICT',
-      400,
-      'Body and header expectedVersion values must match'
-    );
-  }
-  return body ?? (header as number);
-}
 
 // FIN-MVP-CUTOVER-001: observe the complete legacy surface and fail closed
 // only for writers with an explicitly proven canonical successor.
@@ -1428,80 +1307,6 @@ router.get(
   })
 );
 
-router.post(
-  '/budgets/:budgetId/import-document',
-  upload.single('file'),
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    const file = req.file;
-    if (!file) return res.status(400).json({ code: 'FILE_REQUIRED', error: 'File required' });
-    try {
-      const { organizationId } = getV8Context(req);
-      const userId = String(req.user?.id || (req.user as any)?.user_id || '');
-      const sourceFile = file.buffer || (await fs.readFile(file.path));
-      await verifyBudgetImportFile(sourceFile, file.originalname, file.mimetype);
-      const expectedVersion = resolveBudgetImportExpectedVersion(req);
-      const documentText = await extractDocumentTextFromBuffer(
-        sourceFile,
-        file.originalname,
-        file.mimetype
-      );
-      const result = await importBudgetDocumentCommand({
-        organizationId,
-        userId,
-        budgetId: req.params.budgetId,
-        expectedVersion,
-        idempotencyKey: String(
-          req.header('Idempotency-Key') || req.header('x-idempotency-key') || ''
-        ),
-        sourceFileName: file.originalname,
-        sourceMimeType: file.mimetype,
-        sourceFileSize: file.size,
-        sourceFileSha256: sha256(sourceFile),
-        documentText,
-      });
-      return res.status(200).json({ data: result, meta: financeMeta() });
-    } catch (error) {
-      if (error instanceof BudgetDocumentImportCommandError) {
-        return res
-          .status(error.status)
-          .json({ code: error.code, error: error.message, ...(error.details || {}) });
-      }
-      throw error;
-    } finally {
-      if (file.path) await fs.unlink(file.path).catch(() => undefined);
-    }
-  })
-);
-
-router.post(
-  '/budgets/:budgetId/initiatives/:initiativeId',
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    try {
-      const keys = Object.keys(req.body || {});
-      if (keys.length !== 1 || keys[0] !== 'expectedVersion')
-        return res.status(400).json({ code: 'INVALID_BODY', error: 'Only expectedVersion is allowed' });
-      if (!Number.isInteger(req.body.expectedVersion) || req.body.expectedVersion < 1)
-        return res.status(400).json({ code: 'INVALID_EXPECTED_VERSION', error: 'expectedVersion must be a positive integer' });
-      const { organizationId } = getV8Context(req);
-      const userId = String(req.user?.id || (req.user as any)?.user_id || '');
-      const expectedVersion = req.body?.expectedVersion;
-      const result = await linkBudgetInitiativeCommand({
-        organizationId,
-        userId,
-        budgetId: String(req.params.budgetId),
-        initiativeId: String(req.params.initiativeId),
-        expectedVersion,
-        idempotencyKey: String(req.header('Idempotency-Key') || ''),
-      });
-      return res.status(200).json({ data: result, meta: financeMeta() });
-    } catch (error) {
-      if (error instanceof BudgetInitiativeLinkCommandError)
-        return res.status(error.status).json({ code: error.code, error: error.message, ...(error.details || {}) });
-      throw error;
-    }
-  })
-);
-
 router.get(
   '/valuations',
   asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -1531,270 +1336,16 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const userId = String(req.user?.id || (req.user as any)?.user_id || '');
-    const body =
-      req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
-    const allowed = new Set([
-      'title',
-      'description',
-      'projectId',
-      'periodStart',
-      'periodEnd',
-      'granularity',
-      'currency',
-      'sourceKind',
-      'sourceToolSessionId',
-    ]);
-    if (Object.keys(body).some((key) => !allowed.has(key))) {
-      return res.status(400).json({ code: 'INVALID_BODY', error: 'Unknown budget field' });
+    const { title, periodStart, periodEnd, currency, granularity, description } = req.body || {};
+    if (!title || !periodStart || !periodEnd) {
+      return res.status(400).json({ error: 'title, periodStart, periodEnd required' });
     }
-    if (
-      body.granularity !== undefined &&
-      body.granularity !== 'monthly' &&
-      body.granularity !== 'quarterly' &&
-      body.granularity !== 'annual'
-    ) {
-      return res.status(400).json({ code: 'INVALID_BODY', error: 'Invalid budget granularity' });
-    }
-    if (body.sourceKind !== 'tool_session' && body.sourceKind !== 'manual') {
-      return res.status(400).json({ code: 'INVALID_BODY', error: 'Invalid budget source' });
-    }
-    const key = String(req.header('Idempotency-Key') || req.header('x-idempotency-key') || '');
-    try {
-      const result = await registerBudget({
-        organizationId,
-        userId,
-        title: typeof body.title === 'string' ? body.title : '',
-        description: typeof body.description === 'string' ? body.description : undefined,
-        projectId: typeof body.projectId === 'string' ? body.projectId : undefined,
-        periodStart: typeof body.periodStart === 'string' ? body.periodStart : '',
-        periodEnd: typeof body.periodEnd === 'string' ? body.periodEnd : '',
-        granularity: body.granularity as BudgetGranularity | undefined,
-        currency: typeof body.currency === 'string' ? body.currency : undefined,
-        sourceToolSessionId:
-          typeof body.sourceToolSessionId === 'string' ? body.sourceToolSessionId : '',
-        sourceKind: body.sourceKind,
-        idempotencyKey: key,
-      });
-      return res.status(result.replay ? 200 : 201).json({ data: result, meta: financeMeta() });
-    } catch (error) {
-      if (error instanceof BudgetRegistrationError) {
-        return res.status(error.status).json({ code: error.code, error: error.message });
-      }
-      throw error;
-    }
-  })
-);
-
-router.put(
-  '/budgets/:budgetId/lines/:lineId',
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
-    const userId = String(req.user?.id || (req.user as any)?.user_id || '');
-    const body =
-      req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
-    const allowed = new Set([
-      'expectedVersion',
-      'baselineValue',
-      'source',
-      'driverKpiId',
-      'driverFormula',
-      'isLocked',
-    ]);
-    if (Object.keys(body).some((key) => !allowed.has(key))) {
-      return res.status(400).json({ code: 'INVALID_BODY', error: 'Unknown budget line field' });
-    }
-    if (!Number.isInteger(body.expectedVersion) || body.expectedVersion < 1) {
-      return res.status(400).json({ code: 'INVALID_BODY', error: 'Invalid expectedVersion' });
-    }
-    const patch: BudgetLinePatch = {};
-    if (body.baselineValue !== undefined) {
-      if (typeof body.baselineValue !== 'string')
-        return res
-          .status(400)
-          .json({ code: 'INVALID_BODY', error: 'baselineValue must be a decimal string' });
-      patch.baselineValue = body.baselineValue;
-    }
-    if (body.source !== undefined) patch.source = body.source;
-    if (body.driverKpiId !== undefined) patch.driverKpiId = body.driverKpiId;
-    if (body.driverFormula !== undefined) patch.driverFormula = body.driverFormula;
-    if (body.isLocked !== undefined) patch.isLocked = body.isLocked;
-    try {
-      const result = await applyBudgetLineCommand({
-        organizationId,
-        userId,
-        budgetId: req.params.budgetId,
-        lineId: req.params.lineId,
-        expectedVersion: body.expectedVersion,
-        idempotencyKey: String(
-          req.header('Idempotency-Key') || req.header('x-idempotency-key') || ''
-        ),
-        patch,
-      });
-      return res.status(200).json({ data: result, meta: financeMeta() });
-    } catch (error) {
-      if (error instanceof BudgetLineCommandError) {
-        return res.status(error.status).json({
-          code: error.code,
-          error: error.message,
-          ...(error.details || {}),
-        });
-      }
-      throw error;
-    }
-  })
-);
-
-router.post(
-  '/budgets/:budgetId/scenarios/:scenarioId/project',
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
-    const userId = String(req.user?.id || (req.user as any)?.user_id || '');
-    const body =
-      req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
-    if (Object.keys(body).some((key) => key !== 'expectedVersion')) {
-      return res.status(400).json({ code: 'INVALID_BODY', error: 'Unknown projection field' });
-    }
-    if (!Number.isInteger(body.expectedVersion) || body.expectedVersion < 1) {
-      return res.status(400).json({ code: 'INVALID_BODY', error: 'Invalid expectedVersion' });
-    }
-    try {
-      const result = await projectBudgetScenario({
-        organizationId,
-        userId,
-        budgetId: req.params.budgetId,
-        scenarioId: req.params.scenarioId,
-        expectedVersion: body.expectedVersion,
-        idempotencyKey: String(
-          req.header('Idempotency-Key') || req.header('x-idempotency-key') || ''
-        ),
-      });
-      return res.status(200).json({ data: result, meta: financeMeta() });
-    } catch (error) {
-      if (error instanceof BudgetProjectionCommandError) {
-        return res.status(error.status).json({
-          code: error.code,
-          error: error.message,
-          ...(error.details || {}),
-        });
-      }
-      throw error;
-    }
-  })
-);
-
-router.put(
-  '/budgets/:budgetId/scenarios/:scenarioId/adjustments',
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
-    const userId = String(req.user?.id || (req.user as any)?.user_id || '');
-    const body =
-      req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
-    if (Object.keys(body).some((key) => !['expectedVersion', 'adjustments'].includes(key))) {
-      return res.status(400).json({ code: 'INVALID_BODY', error: 'Unknown adjustment field' });
-    }
-    if (!Number.isInteger(body.expectedVersion) || body.expectedVersion < 1) {
-      return res.status(400).json({ code: 'INVALID_BODY', error: 'Invalid expectedVersion' });
-    }
-    if (
-      !body.adjustments ||
-      typeof body.adjustments !== 'object' ||
-      Array.isArray(body.adjustments)
-    ) {
-      return res.status(400).json({ code: 'INVALID_BODY', error: 'Invalid adjustments' });
-    }
-    try {
-      const result = await updateBudgetScenarioAdjustments({
-        organizationId,
-        userId,
-        budgetId: req.params.budgetId,
-        scenarioId: req.params.scenarioId,
-        expectedVersion: body.expectedVersion,
-        idempotencyKey: String(
-          req.header('Idempotency-Key') || req.header('x-idempotency-key') || ''
-        ),
-        adjustments: body.adjustments,
-      });
-      return res.status(200).json({ data: result, meta: financeMeta() });
-    } catch (error) {
-      if (error instanceof BudgetProjectionCommandError) {
-        return res.status(error.status).json({
-          code: error.code,
-          error: error.message,
-          ...(error.details || {}),
-        });
-      }
-      throw error;
-    }
-  })
-);
-
-router.post(
-  '/budgets/:budgetId/approve',
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
-    const userId = String(req.user?.id || (req.user as any)?.user_id || '');
-    const body =
-      req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
-    if (Object.keys(body).some((key) => key !== 'expectedVersion')) {
-      return res.status(400).json({ code: 'INVALID_BODY', error: 'Unknown approval field' });
-    }
-    if (!Number.isInteger(body.expectedVersion) || body.expectedVersion < 1) {
-      return res.status(400).json({ code: 'INVALID_BODY', error: 'Invalid expectedVersion' });
-    }
-    try {
-      const result = await approveBudgetCommand({
-        organizationId,
-        userId,
-        budgetId: req.params.budgetId,
-        expectedVersion: body.expectedVersion,
-        idempotencyKey: String(
-          req.header('Idempotency-Key') || req.header('x-idempotency-key') || ''
-        ),
-      });
-      return res.status(200).json({ data: result, meta: financeMeta() });
-    } catch (error) {
-      if (error instanceof BudgetApprovalCommandError) {
-        return res.status(error.status).json({
-          code: error.code,
-          error: error.message,
-          ...(error.details || {}),
-        });
-      }
-      throw error;
-    }
-  })
-);
-
-router.delete(
-  '/budgets/:budgetId',
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
-    const userId = String(req.user?.id || (req.user as any)?.user_id || '');
-    const body =
-      req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
-    if (Object.keys(body).some((key) => !['expectedVersion', 'reason'].includes(key))) {
-      return res.status(400).json({ code: 'INVALID_BODY', error: 'Unknown discard field' });
-    }
-    try {
-      const result = await discardBudgetCommand({
-        organizationId,
-        userId,
-        budgetId: req.params.budgetId,
-        expectedVersion: body.expectedVersion,
-        reason: typeof body.reason === 'string' ? body.reason : '',
-        idempotencyKey: String(
-          req.header('Idempotency-Key') || req.header('x-idempotency-key') || ''
-        ),
-      });
-      return res.status(200).json({ data: result, meta: financeMeta() });
-    } catch (error) {
-      if (error instanceof BudgetDiscardCommandError) {
-        return res
-          .status(error.status)
-          .json({ code: error.code, error: error.message, ...(error.details || {}) });
-      }
-      throw error;
-    }
+    const budget = await createBudget(
+      organizationId,
+      { title, periodStart, periodEnd, currency, granularity, description },
+      userId
+    );
+    return res.status(201).json({ data: { budget }, meta: financeMeta() });
   })
 );
 
@@ -2608,18 +2159,30 @@ router.post(
       return res.status(400).json({ error: 'No extracted text' });
     }
 
-    const ingestRunId = await ensureStatementIngestRun({
-      statementId,
-      organizationId,
-      createdBy: userId,
-      sourceFileName: statement.source_file_name,
-      sourceFilePath: statement.source_file_path,
-      parseMethod: statement.parse_method,
-      documentClass: statement.document_class,
-      extractionStrategy: statement.extraction_strategy,
-      templateFamily: statement.template_family,
-      rawTextLength: text.length,
-    });
+    const rawRequestedStatementTypes: unknown[] = Array.isArray(req.body?.statementTypes)
+      ? (req.body.statementTypes as unknown[])
+      : [];
+    const requestedStatementTypes = rawRequestedStatementTypes
+      .map((value) => normalizeStatementTypeInput(value))
+      .filter((value): value is 'P&L' | 'BS' | 'CF' => value !== null);
+    // Multi-section staging owns all ingest runs inside its one atomic
+    // transaction. Creating a primary run here used to leave a durable draft
+    // even when schema preflight or a later section failed.
+    const ingestRunId =
+      requestedStatementTypes.length > 0
+        ? null
+        : await ensureStatementIngestRun({
+            statementId,
+            organizationId,
+            createdBy: userId,
+            sourceFileName: statement.source_file_name,
+            sourceFilePath: statement.source_file_path,
+            parseMethod: statement.parse_method,
+            documentClass: statement.document_class,
+            extractionStrategy: statement.extraction_strategy,
+            templateFamily: statement.template_family,
+            rawTextLength: text.length,
+          });
     const documentProfile = classifyStatementDocument({
       fileName: statement.source_file_name,
       parseMethod: statement.parse_method,
@@ -2639,12 +2202,6 @@ router.post(
       undefined;
     const effectiveScaling =
       String(req.body?.scaling || '').trim() || String(statement.scaling || '').trim() || undefined;
-    const rawRequestedStatementTypes: unknown[] = Array.isArray(req.body?.statementTypes)
-      ? (req.body.statementTypes as unknown[])
-      : [];
-    const requestedStatementTypes = rawRequestedStatementTypes
-      .map((value) => normalizeStatementTypeInput(value))
-      .filter((value): value is 'P&L' | 'BS' | 'CF' => value !== null);
     if (requestedStatementTypes.length > 0) {
       try {
         const batch = await stageSelectedStatementSections({
@@ -2676,6 +2233,10 @@ router.post(
           error: error?.message || 'Multi-section extraction failed',
           code: error?.code || 'MULTI_SECTION_EXTRACTION_FAILED',
           statementType: error?.statementType,
+          ...(Array.isArray(error?.missing) ? { missing: error.missing } : {}),
+          ...(Array.isArray(error?.invalidIndexes)
+            ? { invalidIndexes: error.invalidIndexes }
+            : {}),
         });
       }
     }
@@ -3171,6 +2732,23 @@ router.post(
     const { organizationId } = getV8Context(req);
     const userId = String(req.user?.id || '');
     const statementId = String(req.params.statementId);
+    const action = String(req.body?.action || 'ACCEPT').trim().toUpperCase();
+    if (!['ACCEPT', 'EXCLUDE'].includes(action)) {
+      return res.status(400).json({ error: 'Unsupported mapping decision', code: 'MANUAL_MAPPING_ACTION_INVALID' });
+    }
+    const canonicalLineId = String(req.body?.canonicalLineId || '').trim();
+    if (action === 'ACCEPT' && !canonicalLineId) {
+      return res.status(400).json({
+        error: 'Canonical mapping target is required for an ACCEPT decision',
+        code: 'MANUAL_MAPPING_TARGET_REQUIRED',
+      });
+    }
+    if (action === 'EXCLUDE' && canonicalLineId) {
+      return res.status(400).json({
+        error: 'EXCLUDE decisions cannot carry a canonical mapping target',
+        code: 'MANUAL_EXCLUSION_TARGET_FORBIDDEN',
+      });
+    }
     const sourceRow = Number(req.body?.sourceRow);
     const candidate = Number.isInteger(sourceRow)
       ? await dbGet<any>(
@@ -3184,8 +2762,8 @@ router.post(
         organizationId,
         statementId,
         candidateRowId: candidate.id,
-        canonicalLineId: String(req.body?.canonicalLineId || '') || null,
-        action: 'ACCEPT',
+        canonicalLineId,
+        action: action as 'ACCEPT' | 'EXCLUDE',
         reason: String(req.body?.reason || ''),
         sourceReceiptId: String(req.body?.sourceReceiptId || ''),
         expectedValuesVersion: Number(req.body?.expectedValuesVersion),

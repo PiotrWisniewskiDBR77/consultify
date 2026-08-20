@@ -4,7 +4,9 @@ import path from 'path';
 import { run as dbRun } from '../utils/DbPromise.js';
 import { withPgTransaction } from '../utils/queryHelpers.js';
 import { registerStatementSourceReceipt } from './finance/canonical/statementSourceReceiptService.js';
+import { recomputeStatementPack } from './financialStatementPackService.js';
 import {
+  assertAtomicStatementImportSchema,
   autoMapLines,
   createStatement,
   extractFinancialLines,
@@ -114,6 +116,17 @@ async function stageSelectedStatementSectionsTx(params: {
             ? 'application/vnd.ms-excel'
             : 'application/octet-stream';
   const sourceSha256 = sha256Hex(sourceBytes);
+  // The mounted upload/detect boundary loads the primary row through the
+  // tenant-scoped Statement read and assigns its durable pack before extract.
+  // Carry that already-authorized identity into this transaction; creating or
+  // reclassifying a pack here would make the six-sibling proposal ambiguous.
+  const statementPackId = String(params.statement.statement_pack_id || '').trim();
+  if (!statementPackId) {
+    throw Object.assign(new Error('Unable to establish Statement pack identity.'), {
+      code: 'STATEMENT_PACK_REQUIRED',
+      statusCode: 422,
+    });
+  }
 
   const staged: StagedStatementSection[] = [];
   let primaryUsed = false;
@@ -218,6 +231,7 @@ async function stageSelectedStatementSectionsTx(params: {
             extractionStrategy: 'deterministic_multi_section_staged',
             templateFamily: params.statement.template_family,
             createdBy: params.userId,
+            strictSchema: true,
           });
       primaryUsed = true;
       if (!currentPeriodStatementId) currentPeriodStatementId = statementId;
@@ -236,15 +250,17 @@ async function stageSelectedStatementSectionsTx(params: {
         documentClass: params.statement.document_class || 'mixed_report',
         extractionStrategy: 'deterministic_multi_section_staged',
         templateFamily: params.statement.template_family,
-      });
+      }, { strictSchema: true });
       await dbRun(
         `UPDATE financial_statements
-         SET entity_name=?, period_start=COALESCE(?,period_start), period_end=COALESCE(?,period_end)
+         SET entity_name=?, period_start=COALESCE(?,period_start), period_end=COALESCE(?,period_end),
+             statement_pack_id=?
          WHERE id=? AND organization_id=?`,
         [
           params.entityName.trim(),
           dates.start || null,
           dates.end || null,
+          statementPackId,
           statementId,
           params.organizationId,
         ]
@@ -267,11 +283,13 @@ async function stageSelectedStatementSectionsTx(params: {
           comparisonOfStatementId: period.comparisonOf ? currentPeriodStatementId : null,
         },
         createdBy: params.userId,
+        strictSchema: true,
       });
       const persistedSections = await persistStatementExtractedSections({
         statementId,
         ingestRunId,
         sections,
+        strictSchema: true,
       });
       const sectionIdsByKey = Object.fromEntries(
         persistedSections.map((section) => [section.sectionKey, section.sectionId])
@@ -284,9 +302,11 @@ async function stageSelectedStatementSectionsTx(params: {
         statementType,
         currency: params.currency || params.statement.currency,
         scaling: params.scaling || params.statement.scaling,
+        strictSchema: true,
       });
       const mapped = await autoMapLines(period.lines, statementType, {
         organizationId: params.organizationId,
+        strictSchema: true,
       });
       await updateStatementIngestRun({
         ingestRunId,
@@ -298,6 +318,7 @@ async function stageSelectedStatementSectionsTx(params: {
           periodLabel: period.label,
           candidateRows: period.lines.length,
         },
+        strictSchema: true,
       });
       const sourceReceipt = await registerStatementSourceReceipt({
         organizationId: params.organizationId,
@@ -354,6 +375,8 @@ async function stageSelectedStatementSectionsTx(params: {
     }
   }
 
+  await recomputeStatementPack(statementPackId, { deferShadow: true });
+
   return { statements: staged, selectedTypes };
 }
 
@@ -363,5 +386,6 @@ export async function stageSelectedStatementSections(
   // Six type/period siblings, candidate rows and source receipts are one
   // proposal. If any selected section is missing or malformed, leave no
   // partial sibling lineage behind.
+  await assertAtomicStatementImportSchema();
   return withPgTransaction(async () => stageSelectedStatementSectionsTx(params));
 }

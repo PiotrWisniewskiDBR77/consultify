@@ -1,5 +1,6 @@
 import { AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { type FinanceStatementValidation } from '../Economics/financeTypes';
 
@@ -30,6 +31,7 @@ const STATUS_CONFIG: Record<
 };
 
 export const StatementValidationBadges: React.FC<Props> = ({ validations, emptyLabel }) => {
+  const { t } = useTranslation();
   if (!validations.length) {
     if (!emptyLabel) return null;
     return <div className="text-xs text-slate-500 dark:text-slate-400">{emptyLabel}</div>;
@@ -39,15 +41,19 @@ export const StatementValidationBadges: React.FC<Props> = ({ validations, emptyL
     <div className="flex flex-wrap gap-1.5" role="list" aria-label="Validation results">
       {validations.map((validation) => {
         const cfg = STATUS_CONFIG[validation.status] || STATUS_CONFIG.pass;
+        const localizedName = t(
+          `finance.pack.validation.${validation.checkCode}`,
+          validation.checkName
+        );
         return (
           <span
             key={`${validation.checkCode}-${validation.computedAt || ''}`}
             role="listitem"
             className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[11px] font-medium ${cfg.bg} ${cfg.text}`}
-            title={validation.message || validation.checkName}
+            title={validation.message || localizedName}
           >
             {cfg.icon}
-            {validation.checkName}
+            {localizedName}
           </span>
         );
       })}

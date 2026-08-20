@@ -18,15 +18,33 @@ export interface FinancialStatementMappedValue {
   sourceRow?: number;
   isNonFinancial?: boolean;
   classificationReason?: string;
+  suggestedExclusionReason?: string;
   mappingTier?: 'auto' | 'llm_confirmed' | 'review_required' | 'excluded';
   userVerified?: boolean;
 }
 
 export function isFinancialStatementValueVerified(
-  value: Pick<FinancialStatementMappedValue, 'userVerified' | 'confidence' | 'mappingTier'>
+  value: Pick<
+    FinancialStatementMappedValue,
+    'canonicalLineId' | 'userVerified' | 'confidence' | 'mappingTier'
+  >
 ): boolean {
+  if (!value.canonicalLineId) return false;
   return Boolean(
     value.userVerified || (value.confidence >= 0.85 && value.mappingTier !== 'review_required')
+  );
+}
+
+export function isFinancialStatementManualVerificationEligible(
+  value: Pick<
+    FinancialStatementMappedValue,
+    'canonicalLineId' | 'userVerified' | 'confidence' | 'mappingTier'
+  >
+): boolean {
+  return Boolean(
+    value.canonicalLineId &&
+      !value.userVerified &&
+      (value.confidence < 0.85 || value.mappingTier === 'review_required')
   );
 }
 
@@ -37,6 +55,8 @@ interface Props {
   onCanonicalChange: (idx: number, canonId: string) => void;
   onVerifiedChange?: (idx: number, verified: boolean) => void;
   onVerifyAllReady?: () => void;
+  onExcludeChange?: (idx: number, excluded: boolean, reason: string) => void;
+  onExcludeAllSuggested?: () => void;
   className?: string;
 }
 
@@ -219,6 +239,8 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
   onCanonicalChange,
   onVerifiedChange,
   onVerifyAllReady,
+  onExcludeChange,
+  onExcludeAllSuggested,
   className = '',
 }) => {
   const { t, i18n } = useTranslation();
@@ -238,8 +260,11 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
   const unmappedCount = mappedValues.length - mappedCount;
   const reviewCount = mappedValues.filter((v) => v.mappingTier === 'review_required').length;
   const readyForManualVerificationCount = mappedValues.filter(
+    isFinancialStatementManualVerificationEligible
+  ).length;
+  const suggestedExclusionCount = mappedValues.filter(
     (value) =>
-      !isFinancialStatementValueVerified(value)
+      !value.canonicalLineId && value.suggestedExclusionReason && !value.isNonFinancial
   ).length;
 
   return (
@@ -271,6 +296,15 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
               }}
             />
           </div>
+          {suggestedExclusionCount > 0 && (
+            <button
+              type="button"
+              onClick={onExcludeAllSuggested}
+              className="rounded-lg border border-slate-300 px-2 py-1 text-[10px] font-medium text-slate-700 hover:bg-slate-50 dark:border-white/[0.12] dark:text-slate-200 dark:hover:bg-white/[0.05]"
+            >
+              {t('finance.mappingEditor.excludeSuggested', 'Review and exclude suggested')} ({suggestedExclusionCount})
+            </button>
+          )}
         </div>
       )}
 
@@ -384,29 +418,56 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
                   />
                 </td>
                 <td className="px-2 py-2">
-                  <button
-                    type="button"
-                    onClick={() => setEditingIdx(idx)}
-                    className="rounded-lg p-1.5 text-slate-600 opacity-0 transition-all hover:bg-slate-100 hover:text-slate-700 group-hover:opacity-100 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
-                    aria-label={`Edit ${value.originalLabel}`}
-                  >
-                    <Edit3 size={12} />
-                  </button>
+                  {!value.canonicalLineId && value.suggestedExclusionReason ? (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onExcludeChange?.(
+                          idx,
+                          !value.isNonFinancial,
+                          value.suggestedExclusionReason || 'OWNER_CONFIRMED_EXCLUSION'
+                        )
+                      }
+                      className="rounded-lg px-1.5 py-1 text-[10px] text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/[0.06]"
+                    >
+                      {value.isNonFinancial
+                        ? t('finance.mappingEditor.undoExclude', 'Undo exclusion')
+                        : t('finance.mappingEditor.excludeWithReason', 'Exclude with reason')}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setEditingIdx(idx)}
+                      className="rounded-lg p-1.5 text-slate-600 opacity-0 transition-all hover:bg-slate-100 hover:text-slate-700 group-hover:opacity-100 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
+                      aria-label={`Edit ${value.originalLabel}`}
+                    >
+                      <Edit3 size={12} />
+                    </button>
+                  )}
                 </td>
                 <td className="px-3 py-2 text-center">
                   {(() => {
                     const systemVerified =
                       !value.userVerified && isFinancialStatementValueVerified(value);
-                    const label = systemVerified
-                      ? t('finance.mappingEditor.systemVerified', 'System verified')
-                      : value.userVerified
-                        ? t('finance.mappingEditor.userVerified', 'User verified')
-                        : t('finance.mappingEditor.verifyExtractedValue', 'Verify extracted value');
+                    const hasCanonicalTarget = Boolean(value.canonicalLineId);
+                    const label = !hasCanonicalTarget
+                      ? t(
+                          'finance.mappingEditor.mapBeforeVerify',
+                          'Select a target category before verification'
+                        )
+                      : systemVerified
+                        ? t('finance.mappingEditor.systemVerified', 'System verified')
+                        : value.userVerified
+                          ? t('finance.mappingEditor.userVerified', 'User verified')
+                          : t(
+                              'finance.mappingEditor.verifyExtractedValue',
+                              'Verify extracted value'
+                            );
                     return (
                       <input
                         type="checkbox"
-                        checked={systemVerified || Boolean(value.userVerified)}
-                        disabled={systemVerified}
+                        checked={hasCanonicalTarget && (systemVerified || Boolean(value.userVerified))}
+                        disabled={systemVerified || !hasCanonicalTarget}
                         onChange={(event) => onVerifiedChange?.(idx, event.target.checked)}
                         className="h-4 w-4 rounded border-slate-300 accent-emerald-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:opacity-100"
                         aria-label={`${value.originalLabel}: ${label}`}

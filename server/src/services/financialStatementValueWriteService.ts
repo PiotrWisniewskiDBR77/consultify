@@ -154,7 +154,13 @@ export async function saveStatementValuesFlow(params: {
   });
   const candidateRowLookup = await loadCandidateRowLookup(statementId);
   const selectedMappingLookup = await loadSelectedMappingLookup(statementId);
-  const allowedMappingStatuses = new Set(['auto', 'suggested', 'manual', 'unmapped']);
+  const allowedMappingStatuses = new Set([
+    'auto',
+    'suggested',
+    'manual',
+    'manual_exclude',
+    'unmapped',
+  ]);
 
   const normalizedValues: Array<{
     canonicalLineId: string | null;
@@ -185,10 +191,17 @@ export async function saveStatementValuesFlow(params: {
     const requestedMappingStatus = String(
       value.mappingStatus || (canonicalLineId ? 'auto' : 'unmapped')
     );
+    // `manual_exclude` is the UI/audit intent. The durable value schema keeps
+    // the long-standing `manual` status and records exclusion separately via
+    // is_non_financial + classification_reason + the append-only EXCLUDE
+    // decision. This remains compatible with databases whose CHECK predates
+    // the explicit exclusion action.
     const mappingStatus =
-      isNonFinancial && !allowedMappingStatuses.has(requestedMappingStatus)
-        ? 'unmapped'
-        : requestedMappingStatus;
+      requestedMappingStatus === 'manual_exclude'
+        ? 'manual'
+        : isNonFinancial && !allowedMappingStatuses.has(requestedMappingStatus)
+          ? 'unmapped'
+          : requestedMappingStatus;
     if (!allowedMappingStatuses.has(mappingStatus)) {
       throw new Error(`Unsupported financial statement mapping status: ${requestedMappingStatus}`);
     }
@@ -204,7 +217,7 @@ export async function saveStatementValuesFlow(params: {
       );
     }
     const valueOrigin = (String(value.valueOrigin || '').trim() ||
-      (mappingStatus === 'manual'
+      (mappingStatus === 'manual' || mappingStatus === 'manual_exclude'
         ? 'manual'
         : mappingStatus === 'computed'
           ? 'computed'
@@ -234,7 +247,7 @@ export async function saveStatementValuesFlow(params: {
     const evidenceJson = {
       ...suppliedEvidence,
       userVerification:
-        mappingStatus === 'manual'
+        mappingStatus === 'manual' || mappingStatus === 'manual_exclude'
           ? {
               verified: Boolean(value.userVerified),
               verifiedBy: Boolean(value.userVerified) ? userId : null,
@@ -350,8 +363,8 @@ export async function saveStatementValuesFlow(params: {
   // A browser assertion is useful UI evidence, but never the authoritative
   // audit. The append-only decision is written after this save against the new
   // values_version; until that durable row exists readiness must remain closed.
-  const unauditedManualValues = normalizedValues.filter(
-    (value: any) => value.mappingStatus === 'manual'
+  const unauditedManualValues = normalizedValues.filter((value: any) =>
+    ['manual', 'manual_exclude'].includes(String(value.mappingStatus || ''))
   );
   const validationResult = unauditedManualValues.length
     ? {

@@ -73,6 +73,7 @@ export interface ExtractedLine {
   mappingReason?: string;
   isNonFinancial?: boolean;
   classificationReason?: string;
+  suggestedExclusionReason?: string;
   /** RC-00: notation used to read this row's separators (`en` = 1,234.56 · `eu` = 1.234,56). */
   numberNotation?: NumberNotation;
   /** RC-00: the row's magnitude could not be resolved from the document — needs human attention. */
@@ -222,6 +223,147 @@ function isSchemaCompatError(error: unknown): boolean {
     message.includes('no such table') ||
     message.includes('undefined column')
   );
+}
+
+/**
+ * Atomic multi-section imports cannot use the legacy catch-and-retry schema
+ * compatibility path once BEGIN has run: PostgreSQL aborts the transaction at
+ * the first missing table/column and a retry can only surface 25P02. Probe the
+ * exact durable write surface before entering the transaction instead.
+ */
+export async function assertAtomicStatementImportSchema(): Promise<void> {
+  const required: Record<string, string[]> = {
+    financial_statements: [
+      'id',
+      'organization_id',
+      'entity_name',
+      'statement_type',
+      'period_start',
+      'period_end',
+      'period_label',
+      'currency',
+      'scaling',
+      'status',
+      'readiness_status',
+      'readiness_score',
+      'quality_summary',
+      'source_file_name',
+      'source_file_path',
+      'parse_method',
+      'overall_confidence',
+      'created_by',
+      'notes',
+      'document_class',
+      'extraction_strategy',
+      'template_family',
+      'statement_pack_id',
+    ],
+    financial_statement_ingest_runs: [
+      'id', 'statement_id', 'organization_id', 'run_status', 'current_stage',
+      'source_file_name', 'source_file_path', 'parse_method', 'document_class',
+      'extraction_strategy', 'template_family', 'raw_text_length',
+      'summary_json', 'latest_reason_codes', 'created_by', 'completed_at', 'updated_at',
+    ],
+    financial_statement_extracted_sections: [
+      'id', 'statement_id', 'ingest_run_id', 'section_key', 'section_label',
+      'statement_type', 'source_page_start', 'source_page_end', 'line_start',
+      'line_end', 'confidence', 'text_excerpt', 'metadata_json',
+    ],
+    financial_statement_candidate_rows: [
+      'id', 'statement_id', 'ingest_run_id', 'section_id', 'row_key', 'row_label',
+      'normalized_label', 'source_row', 'source_page', 'selected_period_label',
+      'raw_value', 'normalized_value', 'currency', 'scaling', 'confidence',
+      'classification_reason', 'metadata_json',
+    ],
+    financial_statement_lines: [
+      'id', 'statement_type', 'line_code', 'line_name', 'line_name_pl',
+      'organization_id', 'is_system',
+    ],
+    financial_statement_line_aliases: [
+      'organization_id',
+      'statement_line_id',
+      'statement_type',
+      'normalized_alias',
+      'template_family',
+    ],
+    finance_statement_source_receipts: [
+      'receipt_id', 'organization_id', 'statement_id', 'ingest_run_id', 'upload_id',
+      'durable_object_id', 'original_file_name', 'content_sha256', 'size_bytes',
+      'mime_type', 'source_kind', 'importer_name', 'importer_version', 'entity_name',
+      'periods_json', 'page_ranges_json', 'imported_by',
+    ],
+    financial_statement_packs: [
+      'id', 'organization_id', 'entity_name', 'period_start', 'period_end',
+      'period_label', 'currency', 'scaling', 'pack_status', 'pack_readiness_status',
+      'pack_readiness_score', 'pack_quality_summary', 'pack_quality_reason_codes',
+      'source_statement_count', 'missing_statement_types', 'metadata_json', 'updated_at',
+    ],
+    financial_statement_validations: [
+      'id', 'statement_id', 'statement_pack_id', 'validation_scope', 'status',
+      'check_code', 'check_name', 'severity', 'expected_value', 'actual_value',
+      'difference', 'tolerance', 'message', 'details_json',
+    ],
+    organization_members: ['organization_id', 'user_id', 'role', 'status'],
+  };
+  const rows = await dbAll<{ table_name: string; column_name: string }>(
+    `SELECT table_name, column_name
+       FROM information_schema.columns
+      WHERE table_schema = current_schema()
+        AND table_name IN (${Object.keys(required)
+          .map(() => '?')
+          .join(', ')})`,
+    Object.keys(required),
+    { fallback: false }
+  );
+  const actual = new Map<string, Set<string>>();
+  for (const row of rows) {
+    const columns = actual.get(row.table_name) || new Set<string>();
+    columns.add(row.column_name);
+    actual.set(row.table_name, columns);
+  }
+  const missing = Object.entries(required).flatMap(([table, columns]) =>
+    columns.filter((column) => !actual.get(table)?.has(column)).map((column) => `${table}.${column}`)
+  );
+  if (missing.length > 0) {
+    throw Object.assign(new Error(`Statement import schema is incomplete: ${missing.join(', ')}`), {
+      code: 'STATEMENT_IMPORT_SCHEMA_INCOMPLETE',
+      statusCode: 503,
+      missing,
+    });
+  }
+
+  // The exact-six contract requires two active periods per statement type in
+  // one pack. A restored legacy baseline can resurrect the older type-only
+  // index even after migration 20261057 was recorded as successful. Detect
+  // the effective schema here, before BEGIN, so the user sees the real drift
+  // instead of a secondary PostgreSQL 25P02 from the next statement.
+  const packIndexes = await dbAll<{ indexname: string; indexdef: string }>(
+    `SELECT indexname, indexdef
+       FROM pg_indexes
+      WHERE schemaname = current_schema()
+        AND tablename = 'financial_statements'
+        AND indexname IN ('idx_fs_pack_active_type', 'idx_fs_pack_active_type_period')`,
+    [],
+    { fallback: false }
+  );
+  const indexByName = new Map(packIndexes.map((row) => [row.indexname, row.indexdef]));
+  const periodIndex = indexByName.get('idx_fs_pack_active_type_period') || '';
+  const invalidIndexes = [
+    ...(indexByName.has('idx_fs_pack_active_type') ? ['idx_fs_pack_active_type'] : []),
+    ...(!periodIndex.includes('period_start') || !periodIndex.includes('period_end')
+      ? ['idx_fs_pack_active_type_period']
+      : []),
+  ];
+  if (invalidIndexes.length > 0) {
+    throw Object.assign(
+      new Error(`Statement import schema has incompatible pack identity indexes: ${invalidIndexes.join(', ')}`),
+      {
+        code: 'STATEMENT_IMPORT_SCHEMA_INCOMPLETE',
+        statusCode: 503,
+        invalidIndexes,
+      }
+    );
+  }
 }
 
 function normalizeStatementTypeToken(value: unknown): string {
@@ -2437,6 +2579,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'coûts de distribution',
   ],
   'fsl-pl-gna': [
+    'koszty prac badawczych',
     'general and administrative',
     'general and administrative expenses',
     'selling and administrative expenses',
@@ -2680,6 +2823,8 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'immobilisations',
   ],
   'fsl-bs-intangibles': [
+    'aktywa niematerialne',
+    'nakłady na prace rozwojowe',
     'intangible assets',
     'intangibles',
     'digital assets',
@@ -3712,6 +3857,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'neubewertung leistungsorientierter pensionspläne',
   ],
   'fsl-pl-comprehensive-income': [
+    'suma dochodów całkowitych w tym',
     'total comprehensive income',
     'total comprehensive income attributable to shareholders',
     'total comprehensive income attributable to',
@@ -4749,6 +4895,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'rückzahlung von leasingverbindlichkeiten',
   ],
   'fsl-cf-operating-sbc': [
+    'koszty programów motywacyjnych rozliczanych w akcjach',
     'stock based compensation',
     'stock based compensation expense',
     'share based compensation',
@@ -4792,6 +4939,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'koszty sprzedaży i ogólnego zarządu',
   ],
   'fsl-bs-st-investments': [
+    'lokaty bankowe powyżej 3 miesięcy',
     'short-term investments',
     'marketable securities',
     'total cash cash equivalents and short-term investments',
@@ -4849,6 +4997,8 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     "acquisitions d'entreprises",
   ],
   'fsl-cf-investing-securities': [
+    'założenie lokat bankowych powyżej 3 miesięcy',
+    'zakup obligacji oraz koszty ich nabycia',
     'purchases of investments',
     'proceeds from sales and maturities of investments',
     'investments in marketable securities and investment funds',
@@ -5021,6 +5171,8 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'wpływy ze sprzedaży rzeczowych aktywów trwałych',
   ],
   'fsl-cf-investing-maturity-proceeds': [
+    'wygaśnięcie lokat bankowych powyżej 3 miesięcy',
+    'wykup obligacji',
     'proceeds from maturities of investments',
     'wpływy z zapadalności inwestycji',
   ],
@@ -5179,7 +5331,7 @@ function detectCrossContamination(normalizedLabel: string, statementType: string
 export async function autoMapLines(
   extractedLines: ExtractedLine[],
   statementType: string,
-  options?: { organizationId?: string; templateFamily?: string | null }
+  options?: { organizationId?: string; templateFamily?: string | null; strictSchema?: boolean }
 ): Promise<ExtractedLine[]> {
   const normalizedStatementType = normalizeStatementTypeToken(statementType);
   const organizationScope = String(options?.organizationId || '').trim();
@@ -5193,7 +5345,8 @@ export async function autoMapLines(
          AND (is_system = TRUE OR organization_id = ? OR organization_id IS NULL)`,
       [normalizedStatementType, organizationScope]
     )) as CanonicalLine[];
-  } catch {
+  } catch (error) {
+    if (options?.strictSchema) throw error;
     canonicalLines = [];
   }
   for (const fallbackLine of buildFallbackCanonicalLines(normalizedStatementType)) {
@@ -5218,6 +5371,7 @@ export async function autoMapLines(
         [normalizedStatementType, organizationScope, templateFamily]
       )) as Array<{ statement_line_id: string; normalized_alias: string; template_family: string }>;
     } catch (error) {
+      if (options?.strictSchema) throw error;
       if (!isSchemaCompatError(error)) throw error;
       aliasRows = [];
       aliasTableSupport = false;
@@ -6919,10 +7073,30 @@ export async function autoMapLines(
         mappingCandidates,
       };
     }
+    const suggestedExclusionReason = (() => {
+      if (
+        normalizedStatementType === 'CF' &&
+        (/udział procentowy/.test(label) ||
+          /przychody ogółem jednostki dominującej/.test(label) ||
+          /\b(?:ltd|inc|sp z o o|s a)\b/.test(label))
+      ) {
+        return 'APPENDIX_ENTITY_DISCLOSURE';
+      }
+      if (
+        normalizedStatementType === 'BS' &&
+        /(podział zysku netto|zakup akcji własnych w celu|utworzenie kapitału rezerwowego)/.test(
+          label
+        )
+      ) {
+        return 'EQUITY_ROLLFORWARD_DISCLOSURE';
+      }
+      return undefined;
+    })();
     return {
       ...line,
       mappingReason: 'no_alias_match',
       isNonFinancial: false,
+      suggestedExclusionReason,
       mappingCandidates,
     };
   });
@@ -6961,6 +7135,7 @@ export function resolveDuplicateSuggestedMappings(
         suggestedCanonicalId: undefined,
         suggestedCanonicalLabel: undefined,
         mappingReason: 'duplicate_candidate_conflict',
+        suggestedExclusionReason: 'DETAIL_COVERED_BY_CANONICAL_TOTAL',
         mappingCandidates: (current.mappingCandidates || []).map((candidate) => ({
           ...candidate,
           selected: false,
@@ -7467,6 +7642,7 @@ export async function startStatementIngestRun(params: {
   rawTextLength?: number | null;
   summary?: Record<string, unknown> | null;
   createdBy?: string | null;
+  strictSchema?: boolean;
 }): Promise<string | null> {
   try {
     const id = uuidv4();
@@ -7493,6 +7669,7 @@ export async function startStatementIngestRun(params: {
     );
     return id;
   } catch (error) {
+    if (params.strictSchema) throw error;
     if (!isSchemaCompatError(error)) throw error;
     return null;
   }
@@ -7525,6 +7702,7 @@ export async function updateStatementIngestRun(params: {
   rawTextLength?: number | null;
   reasonCodes?: string[] | null;
   summary?: Record<string, unknown> | null;
+  strictSchema?: boolean;
 }): Promise<void> {
   if (!params.ingestRunId) return;
   try {
@@ -7556,6 +7734,7 @@ export async function updateStatementIngestRun(params: {
       { fallback: false }
     );
   } catch (error) {
+    if (params.strictSchema) throw error;
     if (!isSchemaCompatError(error)) throw error;
   }
 }
@@ -7646,6 +7825,7 @@ export async function persistStatementExtractedSections(params: {
   statementId: string;
   ingestRunId?: string | null;
   sections: StatementSectionRecord[];
+  strictSchema?: boolean;
 }): Promise<Array<{ sectionId: string; sectionKey: string }>> {
   if (!Array.isArray(params.sections) || params.sections.length === 0) return [];
   try {
@@ -7686,6 +7866,7 @@ export async function persistStatementExtractedSections(params: {
     }
     return created;
   } catch (error) {
+    if (params.strictSchema) throw error;
     if (!isSchemaCompatError(error)) throw error;
     return [];
   }
@@ -7699,6 +7880,7 @@ export async function persistStatementCandidateRows(params: {
   statementType?: string | null;
   currency?: string | null;
   scaling?: string | null;
+  strictSchema?: boolean;
 }): Promise<Array<{ candidateRowId: string; sourceRow?: number }>> {
   if (!Array.isArray(params.rows)) return [];
   try {
@@ -7739,6 +7921,7 @@ export async function persistStatementCandidateRows(params: {
           JSON.stringify({
             mappingReason: row.mappingReason || null,
             isNonFinancial: !!row.isNonFinancial,
+            suggestedExclusionReason: row.suggestedExclusionReason || null,
             sectionKey: row.sectionKey || sectionKey,
             rowType: row.rowType || null,
             hierarchyDepth: row.hierarchyDepth ?? null,
@@ -7754,6 +7937,7 @@ export async function persistStatementCandidateRows(params: {
     }
     return created;
   } catch (error) {
+    if (params.strictSchema) throw error;
     if (!isSchemaCompatError(error)) throw error;
     return [];
   }
@@ -7926,6 +8110,7 @@ export async function loadPersistedStatementCandidateRows(params: {
         classificationReason:
           row.classification_reason || metadata.classificationReason || undefined,
         mappingReason: metadata.mappingReason || undefined,
+        suggestedExclusionReason: metadata.suggestedExclusionReason || undefined,
       } satisfies ExtractedLine;
     });
   } catch (error) {
@@ -7942,6 +8127,22 @@ export async function persistStatementMappingCandidates(params: {
 }): Promise<void> {
   if (!Array.isArray(params.rows)) return;
   try {
+    const candidateIds = Array.from(
+      new Set(
+        params.rows.flatMap((row) =>
+          (Array.isArray(row.mappingCandidates) ? row.mappingCandidates : []).map(
+            (candidate) => candidate.canonicalLineId
+          )
+        )
+      )
+    );
+    const durableCanonicalIds = new Set<string>();
+    for (const candidateId of candidateIds) {
+      const durable = await dbGet(`SELECT id FROM financial_statement_lines WHERE id = ?`, [
+        candidateId,
+      ]);
+      if (durable?.id) durableCanonicalIds.add(String(durable.id));
+    }
     if (params.ingestRunId) {
       await dbRun(
         `DELETE FROM financial_statement_mapping_candidates WHERE ingest_run_id = ?`,
@@ -7956,6 +8157,10 @@ export async function persistStatementMappingCandidates(params: {
       const candidateRowId =
         row.sourceRow != null ? params.candidateRowIdsBySourceRow?.[row.sourceRow] || null : null;
       for (const candidate of candidates) {
+        // Compatibility hints may include synthetic canonical IDs. They remain useful
+        // for ranking, but must never enter the durable candidate ledger unless the
+        // tenant-visible canonical taxonomy actually owns that ID.
+        if (!durableCanonicalIds.has(candidate.canonicalLineId)) continue;
         await dbRun(
           `INSERT INTO financial_statement_mapping_candidates
             (id, statement_id, ingest_run_id, candidate_row_id, canonical_line_id, score, match_reason, is_selected, selected_by, metadata_json)
@@ -8346,7 +8551,8 @@ export async function updateStatementMetadata(
     documentClass?: StatementDocumentClass | null;
     extractionStrategy?: string | null;
     templateFamily?: string | null;
-  }
+  },
+  options?: { strictSchema?: boolean }
 ): Promise<void> {
   const normalizedStatementType = patch.statementType
     ? normalizeStatementTypeToken(patch.statementType)
@@ -8384,6 +8590,7 @@ export async function updateStatementMetadata(
       [0]
     );
   } catch (error) {
+    if (options?.strictSchema) throw error;
     if (!isSchemaCompatError(error)) throw error;
     await runStatementTypeAwareWrite(
       `UPDATE financial_statements
@@ -9218,6 +9425,7 @@ export async function createStatement(params: {
   extractionStrategy?: string;
   templateFamily?: string | null;
   createdBy: string;
+  strictSchema?: boolean;
 }): Promise<string> {
   const id = uuidv4();
   const normalizedStatementType = normalizeStatementTypeToken(params.statementType);
@@ -9247,6 +9455,7 @@ export async function createStatement(params: {
       [2]
     );
   } catch (error) {
+    if (params.strictSchema) throw error;
     if (!isSchemaCompatError(error)) throw error;
     insertRes = await runStatementTypeAwareWrite(
       `INSERT INTO financial_statements (id, organization_id, statement_type, period_start, period_end, period_label, currency, scaling, source_file_name, source_file_path, parse_method, overall_confidence, created_by)

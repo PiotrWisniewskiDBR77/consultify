@@ -19510,6 +19510,9 @@
       "statementSectionToExtract": "Części sprawozdania do odczytania",
       "statementType": "Rodzaj sprawozdania",
       "chooseStatementType": "Wybierz rodzaj sprawozdania",
+      "statementPL": "Rachunek zysków i strat",
+      "statementBS": "Bilans",
+      "statementCF": "Rachunek przepływów pieniężnych",
       "units": "Jednostki",
       "thousands": "Tysiące",
       "millions": "Miliony",
@@ -19685,7 +19688,15 @@
       "noSourceFiles": "Brak plików źródłowych.",
       "clickRowHint": "Kliknij wiersz w tabeli, aby zobaczyć szczegóły pozycji.",
       "noDocumentSelected": "Brak wybranego dokumentu dla tej tabeli.",
-      "notFound": "Nie znaleziono pakietu sprawozdań"
+      "notFound": "Nie znaleziono pakietu sprawozdań",
+      "section": {
+        "cta": "Generuj sekcję raportu"
+      },
+      "validation": {
+        "MAPPING_COVERAGE": "Pokrycie mapowania",
+        "DUAL_PERIOD": "Dwa okresy porównawcze",
+        "LOW_MAPPING_COVERAGE": "Niskie pokrycie mapowania"
+      }
     },
     "mappingEditor": {
       "tierReview": "do weryfikacji",
@@ -19705,6 +19716,9 @@
       "confirmMapping": "Potwierdź to mapowanie",
       "verifyAllEligible": "Zweryfikuj wszystkie pozycje wymagające decyzji",
       "verifyExtractedValue": "Zweryfikuj odczytaną wartość"
+      ,"excludeWithReason": "Wyklucz z uzasadnieniem",
+      "undoExclude": "Cofnij wykluczenie"
+      ,"excludeSuggested": "Sprawdź i wyklucz sugerowane"
     },
     "explainPanel": {
       "evidenceType": {

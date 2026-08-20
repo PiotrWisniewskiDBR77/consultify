@@ -398,7 +398,14 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
   onCreateAnalysisFromPack,
   onAddFile,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isPl = i18n.language?.startsWith('pl');
+  const scalingLabel = (scaling: string) => {
+    if (scaling === 'units') return isPl ? 'Jednostki' : 'Units';
+    if (scaling === 'thousands') return isPl ? 'Tysiące' : 'Thousands';
+    if (scaling === 'millions') return isPl ? 'Miliony' : 'Millions';
+    return scaling;
+  };
   const [detail, setDetail] = useState<PackDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -746,7 +753,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
             <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-500 dark:text-slate-400">
               <span>{packRow.periodLabel || `${packRow.periodStart} → ${packRow.periodEnd}`}</span>
               <span>{packRow.currency}</span>
-              <span>{packRow.scaling}</span>
+              <span>{scalingLabel(packRow.scaling)}</span>
               <span>
                 {childStatements.length} {t('finance.pack.docsAbbrev', 'docs')}
               </span>
@@ -906,7 +913,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
           >
             <FileBarChart size={11} />
             <span className="hidden lg:inline">
-              {t('finance.pack.section.cta', 'Report section')}
+              {t('finance.pack.section.cta', 'Generate report section')}
             </span>
             {sectionLoading ? (
               <RefreshCw size={11} className="animate-spin" />

@@ -99,22 +99,36 @@ function computePackAggregate(statements: PackStatementRow[]): PackAggregate {
 
   const statementTypesPresent = Array.from(byType.keys());
   const missingStatementTypes = requiredTypes.filter((type) => !byType.has(type));
-  const duplicateTypes = Array.from(byType.entries())
-    .filter(([, rows]) => rows.length > 1)
-    .map(([type]) => type);
+  const periodIdentity = (statement: PackStatementRow) =>
+    normalizeText(statement.period_label) ||
+    `${normalizeText(statement.period_start)}:${normalizeText(statement.period_end)}`;
+  const identityCounts = new Map<string, number>();
+  for (const statement of normalized) {
+    const key = `${normalizeStatementType(statement.statement_type)}:${periodIdentity(statement)}`;
+    identityCounts.set(key, (identityCounts.get(key) || 0) + 1);
+  }
+  const duplicateTypes = Array.from(identityCounts.entries())
+    .filter(([, count]) => count > 1)
+    .map(([identity]) => identity);
   const currencySet = new Set(
     normalized.map((statement) => normalizeText(statement.currency).toUpperCase()).filter(Boolean)
   );
   const scalingSet = new Set(
     normalized.map((statement) => normalizeText(statement.scaling).toLowerCase()).filter(Boolean)
   );
-  const periodSet = new Set(
-    normalized
-      .map(
-        (statement) =>
-          `${normalizeText(statement.period_start)}:${normalizeText(statement.period_end)}:${normalizeText(statement.period_label)}`
+  const periodSet = new Set(normalized.map(periodIdentity).filter(Boolean));
+  const incompletePeriods = Array.from(periodSet).filter((period) =>
+    requiredTypes.some(
+      (type) => !normalized.some((statement) =>
+        normalizeStatementType(statement.statement_type) === type && periodIdentity(statement) === period
       )
-      .filter(Boolean)
+    )
+  );
+  const entitySet = new Set(
+    normalized.map((statement) => normalizeText(statement.entity_name)).filter(Boolean)
+  );
+  const sourceSet = new Set(
+    normalized.map((statement) => normalizeText(statement.source_file_name)).filter(Boolean)
   );
   const readinessValues = normalized.map((statement) =>
     normalizeText(statement.readiness_status).toLowerCase()
@@ -132,9 +146,13 @@ function computePackAggregate(statements: PackStatementRow[]): PackAggregate {
   if (missingStatementTypes.includes('BS')) reasonCodes.push('MISSING_BS');
   if (missingStatementTypes.includes('CF')) reasonCodes.push('MISSING_CF');
   if (duplicateTypes.length > 0) reasonCodes.push('DUPLICATE_STATEMENT_TYPE');
+  if (periodSet.size !== 2) reasonCodes.push('INVALID_PERIOD_COUNT');
+  if (normalized.length !== requiredTypes.length * 2) reasonCodes.push('INVALID_MEMBER_COUNT');
+  if (incompletePeriods.length > 0) reasonCodes.push('MISSING_PERIOD_STATEMENT');
+  if (entitySet.size > 1) reasonCodes.push('INCONSISTENT_ENTITY');
+  if (sourceSet.size > 1) reasonCodes.push('INCONSISTENT_SOURCE');
   if (currencySet.size > 1) reasonCodes.push('INCONSISTENT_CURRENCY');
   if (scalingSet.size > 1) reasonCodes.push('INCONSISTENT_SCALING');
-  if (periodSet.size > 1) reasonCodes.push('INCONSISTENT_PERIOD');
   if (rejectedCount > 0) reasonCodes.push('HAS_REJECTED_STATEMENT');
   if (pendingCount > 0) reasonCodes.push('HAS_PENDING_STATEMENT');
   if (recoverableCount > 0) reasonCodes.push('HAS_RECOVERABLE_STATEMENT');
@@ -145,10 +163,15 @@ function computePackAggregate(statements: PackStatementRow[]): PackAggregate {
   } else if (
     missingStatementTypes.length === 0 &&
     duplicateTypes.length === 0 &&
+    periodSet.size === 2 &&
+    normalized.length === requiredTypes.length * 2 &&
+    incompletePeriods.length === 0 &&
+    entitySet.size <= 1 &&
+    sourceSet.size <= 1 &&
     currencySet.size <= 1 &&
     scalingSet.size <= 1 &&
-    periodSet.size <= 1 &&
-    readyCount === requiredTypes.length
+    readyCount === normalized.length &&
+    normalized.every((statement) => normalizeText(statement.status).toLowerCase() === 'confirmed')
   ) {
     packReadinessStatus = 'ready';
   } else if (rejectedCount === normalized.length && normalized.length > 0) {
@@ -165,9 +188,11 @@ function computePackAggregate(statements: PackStatementRow[]): PackAggregate {
   const penalty =
     missingStatementTypes.length * 15 +
     duplicateTypes.length * 10 +
+    incompletePeriods.length * 15 +
+    Math.max(0, entitySet.size - 1) * 20 +
+    Math.max(0, sourceSet.size - 1) * 20 +
     Math.max(0, currencySet.size - 1) * 15 +
-    Math.max(0, scalingSet.size - 1) * 10 +
-    Math.max(0, periodSet.size - 1) * 20;
+    Math.max(0, scalingSet.size - 1) * 10;
   const packReadinessScore = Math.max(0, Math.min(100, scoreBase + completenessBonus - penalty));
 
   const allConfirmed =

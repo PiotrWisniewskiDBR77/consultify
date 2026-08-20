@@ -32,6 +32,7 @@ import {
   type FinancialStatementCanonicalLineOption,
   type FinancialStatementMappedValue,
   FinancialStatementMappingEditor,
+  isFinancialStatementManualVerificationEligible,
   isFinancialStatementValueVerified,
 } from './FinancialStatementMappingEditor';
 import { statementReasonSentences } from './statementReadinessCopy';
@@ -69,6 +70,7 @@ interface ExtractedLine {
   suggestedCanonicalLabel?: string;
   isNonFinancial?: boolean;
   classificationReason?: string;
+  suggestedExclusionReason?: string;
   mappingTier?: 'auto' | 'llm_confirmed' | 'review_required' | 'excluded';
 }
 
@@ -94,7 +96,17 @@ type CanonicalLine = FinancialStatementCanonicalLineOption & {
   line_code: string;
 };
 
-type MappedValue = FinancialStatementMappedValue;
+type MappedValue = FinancialStatementMappedValue & {
+  manualDecision?: {
+    decisionId: string;
+    action: 'ACCEPT' | 'REJECT' | 'EXCLUDE';
+    reason: string;
+    sourceReceiptId: string;
+    statementValuesVersion: number;
+    decidedBy: string;
+    decidedAt: string;
+  };
+};
 type ReviewStatement = {
   statementId: string;
   statementType: string;
@@ -330,7 +342,6 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
   const [overrideScaling, setOverrideScaling] = useState<string>('');
   const [overrideEntity, setOverrideEntity] = useState<string>('');
   const [selectedSections, setSelectedSections] = useState<string[]>([]);
-  const [stepsExpanded, setStepsExpanded] = useState(false);
 
   const STEPS: WizardStep[] = ['upload', 'detect', 'map', 'confirm'];
   const stepIdx = STEPS.indexOf(step);
@@ -401,6 +412,11 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                   isNonFinancial: Boolean(value.is_non_financial ?? value.isNonFinancial),
                   classificationReason:
                     value.classification_reason || value.classificationReason || undefined,
+                  suggestedExclusionReason:
+                    value.suggested_exclusion_reason ||
+                    value.suggestedExclusionReason ||
+                    undefined,
+                  manualDecision: value.manual_decision || value.manualDecision || undefined,
                 };
               }),
             } satisfies ReviewStatement;
@@ -584,7 +600,9 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
           ...detected,
         };
         setDetection(fallbackDetection);
-        setOverrideType(fallbackDetection.statementType);
+        setOverrideType(
+          fallbackDetection.containsMultipleStatements ? '' : fallbackDetection.statementType
+        );
         setOverrideCurrency(fallbackDetection.currency);
         setOverridePeriod(fallbackDetection.periodLabel || '');
         setOverrideScaling(fallbackDetection.scaling);
@@ -710,6 +728,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
             sourceRow: l.sourceRow,
             isNonFinancial: !!l.isNonFinancial,
             classificationReason: l.classificationReason,
+            suggestedExclusionReason: l.suggestedExclusionReason,
             mappingTier: l.mappingTier,
           })),
         });
@@ -807,7 +826,10 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
           value: v.value,
           confidence: v.confidence,
           sourceRow: v.sourceRow,
-          mappingStatus: v.mappingStatus,
+          mappingStatus:
+            v.userVerified && v.canonicalLineId && v.mappingTier === 'review_required'
+              ? 'manual'
+              : v.mappingStatus,
           isNonFinancial: v.isNonFinancial,
           classificationReason: v.classificationReason,
           userVerified: Boolean(v.userVerified),
@@ -817,14 +839,21 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
         let decisionReadiness: ReadinessState | null = null;
         for (const value of review.mappedValues) {
           const requiresHumanDecision =
-            value.mappingStatus === 'manual' || value.mappingTier === 'review_required';
+            value.mappingStatus === 'manual' ||
+            value.mappingStatus === 'manual_exclude' ||
+            value.mappingTier === 'review_required';
           if (!requiresHumanDecision || !value.userVerified) continue;
+          const isExclude = value.mappingStatus === 'manual_exclude';
+          if (!isExclude && !value.canonicalLineId) continue;
           if (!review.sourceReceiptId)
             throw new Error(`${review.statementType}: source receipt is required`);
           const body = {
             sourceRow: value.sourceRow,
-            canonicalLineId: value.canonicalLineId,
-            reason: 'Zweryfikowane przez użytkownika podczas przeglądu importu',
+            canonicalLineId: isExclude ? null : value.canonicalLineId,
+            action: isExclude ? 'EXCLUDE' : 'ACCEPT',
+            reason: isExclude
+              ? value.classificationReason || 'OWNER_CONFIRMED_EXCLUSION'
+              : 'Zweryfikowane przez użytkownika podczas przeglądu importu',
             sourceReceiptId: review.sourceReceiptId,
             expectedValuesVersion: valuesVersion,
           };
@@ -996,6 +1025,18 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
     detection?.containsMultipleStatements || detectedStatementTypes.length > 1
   );
   const selectedStatementSection = overrideType || detection?.statementType || '';
+  const statementTypeLabel = (type: string) => {
+    if (type === 'P&L') return t('finance.importWizard.statementPL', 'Income statement');
+    if (type === 'BS') return t('finance.importWizard.statementBS', 'Balance sheet');
+    if (type === 'CF') return t('finance.importWizard.statementCF', 'Cash flow statement');
+    return type;
+  };
+  const scalingLabel = (scale: string) => {
+    if (scale === 'units') return t('finance.importWizard.units', 'Units');
+    if (scale === 'thousands') return t('finance.importWizard.thousands', 'Thousands');
+    if (scale === 'millions') return t('finance.importWizard.millions', 'Millions');
+    return scale;
+  };
   const displayedDetectionConfidence = detection?.confidence || 0;
   const detectionConfidenceHint = t(
     'finance.importWizard.confidenceAutoDetection',
@@ -1092,7 +1133,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
             <div className="text-xs text-slate-600 dark:text-slate-300">
               {t('finance.importWizard.entity', 'Entity')}: {sourceReceipt?.entity_name || activeReview?.entityName || overrideEntity}
               {' · '}
-              {t('finance.importWizard.scaling', 'Scaling')}: {durableScaling}
+              {t('finance.importWizard.scaling', 'Scaling')}: {scalingLabel(durableScaling)}
             </div>
           )}
           {sourceReceipt?.content_sha256 && (
@@ -1106,7 +1147,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
               data-testid="durable-source-summary"
             >
               <span>{durableSections.join(' + ') || '—'} · {durablePeriods.join(' / ') || '—'}</span>
-              <span>{durableCurrency} · {durableScaling}</span>
+              <span>{durableCurrency} · {scalingLabel(durableScaling)}</span>
               <span>
                 {sourceReceipt.importer_name || '—'} {sourceReceipt.importer_version || ''} ·{' '}
                 {t('finance.importWizard.importedBy', 'Imported by')}: {sourceReceipt.imported_by || '—'} ·{' '}
@@ -1251,19 +1292,9 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
             )}
           </div>
 
-          {/* Steps indicator with progress line */}
-          <button
-            type="button"
-            className="mb-2 text-xs font-medium text-blue-600"
-            onClick={() => setStepsExpanded((value) => !value)}
-            aria-expanded={stepsExpanded}
-          >
-            {stepsExpanded
-              ? t('finance.importWizard.hideSteps', 'Hide steps')
-              : t('finance.importWizard.showSteps', 'Show steps')}
-          </button>
+          {/* Compact progress indicator; no extra show/hide chrome in the import workspace. */}
           <div
-            className={`${stepsExpanded ? 'flex' : 'hidden'} items-center mb-5 rounded-xl border border-slate-200 p-3 dark:border-white/[0.08]`}
+            className="mb-3 flex items-center rounded-xl border border-slate-200 p-2 dark:border-white/[0.08]"
             role="navigation"
             aria-label={t('finance.importWizard.ariaImportSteps', 'Import steps')}
           >
@@ -1473,7 +1504,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                           )
                         }
                       />
-                      {type}
+                      {statementTypeLabel(type)}
                     </label>
                   ))}
                 </div>
@@ -1510,18 +1541,27 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                       )
                     : t('finance.importWizard.statementType', 'Statement Type')}
                 </label>
-                <select
-                  value={overrideType || detection.statementType}
-                  onChange={(e) => setOverrideType(e.target.value)}
-                  className="mt-1 w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-sm"
-                >
-                  <option value="">
-                    {t('finance.importWizard.chooseStatementType', 'Choose statement type')}
-                  </option>
-                  <option value="P&L">P&L (Income Statement)</option>
-                  <option value="BS">BS (Balance Sheet)</option>
-                  <option value="CF">CF (Cash Flow)</option>
-                </select>
+                {containsMultipleStatements ? (
+                  <div
+                    className="mt-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-navy-600 dark:bg-navy-800"
+                    data-testid="multi-section-selection-summary"
+                  >
+                    {selectedSections.map(statementTypeLabel).join(' · ')}
+                  </div>
+                ) : (
+                  <select
+                    value={overrideType || detection.statementType}
+                    onChange={(e) => setOverrideType(e.target.value)}
+                    className="mt-1 w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-sm"
+                  >
+                    <option value="">
+                      {t('finance.importWizard.chooseStatementType', 'Choose statement type')}
+                    </option>
+                    <option value="P&L">{statementTypeLabel('P&L')}</option>
+                    <option value="BS">{statementTypeLabel('BS')}</option>
+                    <option value="CF">{statementTypeLabel('CF')}</option>
+                  </select>
+                )}
               </div>
               <div>
                 <label className="text-xs text-slate-500 uppercase tracking-wider">
@@ -1555,7 +1595,12 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                   <>
                     <div className="mt-1 flex items-center gap-2">
                       <span className="inline-flex rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-200">
-                        {selectedStatementSection || 'P&L'}
+                        {(selectedSections.length
+                          ? selectedSections
+                          : [selectedStatementSection || 'P&L']
+                        )
+                          .map(statementTypeLabel)
+                          .join(' · ')}
                       </span>
                       <span className="text-sm text-slate-600 dark:text-slate-300">
                         {detection.language?.toUpperCase()}
@@ -1616,7 +1661,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
               <Info size={12} />
               <span>
                 {t('finance.importWizard.scaleDetected', 'Scale detected')}:{' '}
-                <strong>{detection.scaling}</strong>
+                <strong>{scalingLabel(detection.scaling)}</strong>
               </span>
               {detection.documentClass && (
                 <span>
@@ -1671,7 +1716,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                   key={item.statementId}
                   type="button"
                   role="tab"
-                  aria-label={`${item.statementType} · ${item.periodLabel || '—'}${item.comparisonOfStatementId ? ` · ${t('finance.importWizard.comparison', 'comparison')}` : ''}`}
+                  aria-label={`${statementTypeLabel(item.statementType)} · ${item.periodLabel || '—'}${item.comparisonOfStatementId ? ` · ${t('finance.importWizard.comparison', 'comparison')}` : ''}`}
                   aria-selected={item.statementId === activeReviewStatementId}
                   className={`shrink-0 rounded-lg border px-2.5 py-2 text-left text-xs xl:w-full ${item.statementId === activeReviewStatementId ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 bg-white text-slate-700 dark:border-white/[0.08] dark:bg-navy-950 dark:text-slate-200'}`}
                   onClick={() => {
@@ -1680,7 +1725,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                     setSourceReceipt(item.sourceReceipt || null);
                   }}
                 >
-                  <span className="block font-semibold">{item.statementType}</span>
+                  <span className="block font-semibold">{statementTypeLabel(item.statementType)}</span>
                   <span className="block opacity-80">
                     {item.periodLabel || '—'}
                     {item.comparisonOfStatementId
@@ -1700,7 +1745,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                 aria-label={t('finance.importWizard.comparisonTable', 'Period comparison')}
               >
                 <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  {activeReview?.statementType} · {t('finance.importWizard.comparisonTable', 'Period comparison')}
+                  {statementTypeLabel(activeReview?.statementType || '')} · {t('finance.importWizard.comparisonTable', 'Period comparison')}
                 </div>
                 <div className="grid gap-2 md:grid-cols-2">
                   {activeTypeComparisons.slice(0, 2).map((periodStatement) => (
@@ -1787,11 +1832,11 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                 );
               }}
               onVerifyAllReady={() => {
-                const verifyEligible = (value: MappedValue) =>
-                  value.confidence < 0.85 || value.mappingTier === 'review_required';
                 setMappedValues((current) =>
                   current.map((value) =>
-                    verifyEligible(value) ? { ...value, userVerified: true } : value
+                    isFinancialStatementManualVerificationEligible(value)
+                      ? { ...value, userVerified: true }
+                      : value
                   )
                 );
                 setReviewStatements((current) =>
@@ -1800,14 +1845,83 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                       ? {
                           ...item,
                           mappedValues: item.mappedValues.map((value) =>
-                            verifyEligible(value) ? { ...value, userVerified: true } : value
+                            isFinancialStatementManualVerificationEligible(value)
+                              ? { ...value, userVerified: true }
+                              : value
                           ),
                         }
                       : item
                   )
                 );
               }}
+              onExcludeChange={(idx, excluded, reason) => {
+                const update = (value: FinancialStatementMappedValue, index: number) =>
+                  index === idx
+                    ? {
+                        ...value,
+                        isNonFinancial: excluded,
+                        mappingStatus: excluded ? 'manual_exclude' : 'unmapped',
+                        mappingTier: excluded ? ('excluded' as const) : ('review_required' as const),
+                        classificationReason: excluded ? reason : undefined,
+                        userVerified: excluded,
+                      }
+                    : value;
+                setMappedValues((current) => current.map(update));
+                setReviewStatements((current) =>
+                  current.map((item) =>
+                    item.statementId === activeReviewStatementId
+                      ? { ...item, mappedValues: item.mappedValues.map(update) }
+                      : item
+                  )
+                );
+              }}
+              onExcludeAllSuggested={() => {
+                const update = (value: FinancialStatementMappedValue) =>
+                  !value.canonicalLineId &&
+                  value.suggestedExclusionReason &&
+                  !value.isNonFinancial
+                    ? {
+                        ...value,
+                        isNonFinancial: true,
+                        mappingStatus: 'manual_exclude',
+                        mappingTier: 'excluded' as const,
+                        classificationReason: value.suggestedExclusionReason,
+                        userVerified: true,
+                      }
+                    : value;
+                setMappedValues((current) => current.map(update));
+                setReviewStatements((current) =>
+                  current.map((item) =>
+                    item.statementId === activeReviewStatementId
+                      ? { ...item, mappedValues: item.mappedValues.map(update) }
+                      : item
+                  )
+                );
+              }}
             />
+
+            {mappedValues.some((value) => value.manualDecision?.action === 'EXCLUDE') && (
+              <div
+                className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-slate-200"
+                data-testid="cold-exclusion-audit"
+              >
+                <div className="font-semibold">
+                  {isPl ? 'Zapisane decyzje o wykluczeniu' : 'Recorded exclusion decisions'}
+                </div>
+                <ul className="mt-2 space-y-1">
+                  {mappedValues
+                    .filter((value) => value.manualDecision?.action === 'EXCLUDE')
+                    .map((value) => (
+                      <li key={`${value.manualDecision?.decisionId}-${value.sourceRow}`}>
+                        {value.originalLabel}: {value.manualDecision?.reason} · v
+                        {value.manualDecision?.statementValuesVersion} ·{' '}
+                        {isPl ? 'potwierdzenie źródła' : 'source receipt'}{' '}
+                        {value.manualDecision?.sourceReceiptId}
+                      </li>
+                    ))}
+                </ul>
+              </div>
+            )}
 
             {mappedValues.length === 0 && (
               <div className="text-center py-12 text-slate-600">
@@ -1862,11 +1976,10 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                     {t('finance.importWizard.selectedSection', 'Section')}
                   </dt>
                   <dd className="font-semibold text-slate-800 dark:text-slate-200">
-                    {reviewStatements.find((item) => item.statementId === activeReviewStatementId)
-                      ?.statementType ||
-                      overrideType ||
-                      detection?.statementType ||
-                      '—'}
+                    {statementTypeLabel(
+                      reviewStatements.find((item) => item.statementId === activeReviewStatementId)
+                        ?.statementType || overrideType || detection?.statementType || '—'
+                    )}
                   </dd>
                 </div>
                 <div>
@@ -1891,7 +2004,9 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                 <div>
                   <dt className="text-slate-500">{t('finance.importWizard.scaling', 'Scale')}</dt>
                   <dd className="font-medium text-slate-800 dark:text-slate-200">
-                    {overrideScaling || detection?.scaling || '—'}
+                    {overrideScaling || detection?.scaling
+                      ? scalingLabel(overrideScaling || detection?.scaling || '')
+                      : '—'}
                   </dd>
                 </div>
               </div>
@@ -1960,7 +2075,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                       className="flex items-center gap-2 rounded-xl bg-white/70 px-3 py-2 text-sm dark:bg-white/[0.06]"
                     >
                       <span className="inline-flex items-center justify-center h-6 w-10 rounded-md bg-blue-100 text-[10px] font-bold text-blue-700 dark:bg-blue-500/20 dark:text-blue-300">
-                        {stmt.statementType}
+                        {statementTypeLabel(stmt.statementType)}
                       </span>
                       <span className="text-slate-700 dark:text-slate-300">
                         {stmt.lineCount} {t('finance.importWizard.linesUnit', 'lines')}
@@ -1997,7 +2112,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
             <div>
               <span className="text-slate-500">{t('finance.importWizard.scaling', 'Scaling')}</span>
               <p className="font-medium text-slate-900 dark:text-white">
-                {smartAnalysis.scaling || 'units'}
+                {scalingLabel(smartAnalysis.scaling || 'units')}
               </p>
             </div>
             <div>
@@ -2128,7 +2243,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                   className="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-200 px-3 py-2 text-left hover:bg-slate-50 dark:border-white/[0.08] dark:hover:bg-white/[0.03]"
                 >
                   <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
-                    {item.statementType} · {item.periodLabel}
+                    {statementTypeLabel(item.statementType)} · {item.periodLabel}
                   </span>
                   <span
                     className={`inline-flex items-center gap-1 text-xs font-semibold ${
@@ -2275,7 +2390,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
             <div>
               <span className="text-slate-500">{t('finance.importWizard.type', 'Type')}</span>
               <p className="font-medium text-slate-900 dark:text-white">
-                {overrideType || detection?.statementType}
+                {statementTypeLabel(overrideType || detection?.statementType || '')}
               </p>
             </div>
             <div>

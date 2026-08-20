@@ -16,6 +16,10 @@ import {
   locateStatementSections,
 } from '../financialStatementService.js';
 import { getStatementDetail } from '../financialStatementReadService.js';
+import {
+  recomputeStatementPack,
+  syncStatementToPack,
+} from '../financialStatementPackService.js';
 import { stageSelectedStatementSections } from '../statementMultiSectionImportService.js';
 
 const DATABASE_URL = process.env.DATABASE_URL || '';
@@ -100,7 +104,7 @@ describe.runIf(enabled)('Finance Statement owner acceptance — real PostgreSQL 
       await client.query(`INSERT INTO financial_statement_mapping_candidates VALUES ('mapping',8)`);
       await client.query(`INSERT INTO financial_statement_value_evidence VALUES ('evidence',-5)`);
       const migration = await fs.readFile(
-        path.resolve('server/migrations/20261057_finance_statement_confidence_bounds.sql'),
+        path.resolve('server/migrations/20261054_finance_statement_confidence_bounds.sql'),
         'utf8'
       );
       await client.query(migration);
@@ -151,11 +155,121 @@ describe.runIf(enabled)('Finance Statement owner acceptance — real PostgreSQL 
       'durable smart-upload source text',
       failedPrimary,
     ]);
+    const failedPackId = await syncStatementToPack(failedPrimary);
+    expect(failedPackId).toBeTruthy();
     expect(await loadStatementSourceText(failedPrimary)).toBe('durable smart-upload source text');
     const before = await pool.query(
       `SELECT count(*)::int count FROM financial_statements WHERE organization_id=$1`,
       [organizationId]
     );
+    const app = express();
+    app.use(express.json());
+    app.use(inputSanitizationMiddleware);
+    app.use((req, _res, next) => {
+      (req as any).userId = userId;
+      (req as any).organizationId = organizationId;
+      (req as any).user = { id: userId, organizationId, role: 'OWNER' };
+      (req as any).v8Context = {
+        userId,
+        organizationId,
+        userRole: 'OWNER',
+        isSuperAdmin: false,
+      };
+      next();
+    });
+    app.use('/api/v8/finance', financeRoutes);
+
+    // Every table reached by the atomic writer is capability-checked before
+    // BEGIN. Cover an ingest column, the immutable receipt ledger, and pack
+    // recompute so no late missing-schema error can degrade into 25P02.
+    for (const capability of [
+      { table: 'financial_statement_ingest_runs', column: 'latest_reason_codes' },
+      { table: 'finance_statement_source_receipts', column: 'periods_json' },
+      { table: 'financial_statement_packs', column: 'pack_readiness_status' },
+      { table: 'financial_statement_validations', column: 'expected_value' },
+    ]) {
+      const hidden = `${capability.column}_missing_test`;
+      await pool.query(
+        `ALTER TABLE ${capability.table} RENAME COLUMN ${capability.column} TO ${hidden}`
+      );
+      let schemaFailure: any;
+      try {
+        schemaFailure = await request(app)
+          .post(`/api/v8/finance/statements/${failedPrimary}/extract`)
+          .send({
+            statementType: 'BS',
+            statementTypes: ['P&L', 'BS', 'CF'],
+            periodLabel: '2025',
+            currency: 'PLN',
+            scaling: 'thousands',
+            entityName: 'CD PROJEKT S.A.',
+          });
+      } finally {
+        await pool.query(
+          `ALTER TABLE ${capability.table} RENAME COLUMN ${hidden} TO ${capability.column}`
+        );
+      }
+      expect(schemaFailure.status, capability.table).toBe(503);
+      expect(schemaFailure.body).toMatchObject({ code: 'STATEMENT_IMPORT_SCHEMA_INCOMPLETE' });
+      expect(schemaFailure.body.error).toContain(`${capability.table}.${capability.column}`);
+      expect(JSON.stringify(schemaFailure.body)).not.toContain('25P02');
+      const afterSchemaFailure = await pool.query(
+        `SELECT count(*)::int count FROM financial_statements WHERE organization_id=$1`,
+        [organizationId]
+      );
+      expect(afterSchemaFailure.rows[0].count).toBe(before.rows[0].count);
+      for (const table of [
+        'financial_statement_ingest_runs',
+        'financial_statement_extracted_sections',
+        'financial_statement_candidate_rows',
+        'financial_statement_mapping_candidates',
+        'finance_statement_source_receipts',
+      ]) {
+        const result = await pool.query(
+          `SELECT count(*)::int count FROM ${table} WHERE statement_id=$1`,
+          [failedPrimary]
+        );
+        expect(result.rows[0].count, `${capability.table}:${table}`).toBe(0);
+      }
+    }
+
+    await pool.query(`DROP INDEX idx_fs_pack_active_type_period`);
+    await pool.query(
+      `CREATE UNIQUE INDEX idx_fs_pack_active_type
+         ON financial_statements(statement_pack_id, statement_type)
+       WHERE statement_pack_id IS NOT NULL AND COALESCE(status, 'draft') <> 'archived'`
+    );
+    let indexDriftFailure: any;
+    try {
+      indexDriftFailure = await request(app)
+        .post(`/api/v8/finance/statements/${failedPrimary}/extract`)
+        .send({
+          statementType: 'BS',
+          statementTypes: ['P&L', 'BS', 'CF'],
+          periodLabel: '2025',
+          currency: 'PLN',
+          scaling: 'thousands',
+          entityName: 'CD PROJEKT S.A.',
+        });
+    } finally {
+      await pool.query(`DROP INDEX IF EXISTS idx_fs_pack_active_type`);
+      await pool.query(
+        `CREATE UNIQUE INDEX idx_fs_pack_active_type_period
+           ON financial_statements(
+             statement_pack_id, statement_type,
+             COALESCE(period_start, DATE '0001-01-01'),
+             COALESCE(period_end, DATE '0001-01-01')
+           )
+         WHERE statement_pack_id IS NOT NULL AND COALESCE(status, 'draft') <> 'archived'`
+      );
+    }
+    expect(indexDriftFailure.status).toBe(503);
+    expect(indexDriftFailure.body).toMatchObject({
+      code: 'STATEMENT_IMPORT_SCHEMA_INCOMPLETE',
+      invalidIndexes: expect.arrayContaining(['idx_fs_pack_active_type']),
+    });
+    expect(JSON.stringify(indexDriftFailure.body)).not.toContain('25P02');
+
     const officialProfitAndLoss = locateStatementSections(pdfText, 'P&L').find(
       (section) => section.confidence >= 0.5
     );
@@ -172,6 +286,7 @@ describe.runIf(enabled)('Finance Statement owner acceptance — real PostgreSQL 
           parse_method: 'text_extraction',
           period_start: '2025-01-01',
           period_end: '2025-12-31',
+          statement_pack_id: failedPackId,
         },
         // Use the locator's official-PDF P&L boundary: it is independently
         // stageable, contains both comparative periods, and intentionally has
@@ -233,22 +348,8 @@ describe.runIf(enabled)('Finance Statement owner acceptance — real PostgreSQL 
       createdBy: userId,
     });
     await pool.query(`UPDATE financial_statements SET notes=$1 WHERE id=$2`, [pdfText, primary]);
-    const app = express();
-    app.use(express.json());
-    app.use(inputSanitizationMiddleware);
-    app.use((req, _res, next) => {
-      (req as any).userId = userId;
-      (req as any).organizationId = organizationId;
-      (req as any).user = { id: userId, organizationId, role: 'OWNER' };
-      (req as any).v8Context = {
-        userId,
-        organizationId,
-        userRole: 'OWNER',
-        isSuperAdmin: false,
-      };
-      next();
-    });
-    app.use('/api/v8/finance', financeRoutes);
+    const mountedPackId = await syncStatementToPack(primary);
+    expect(mountedPackId).toBeTruthy();
     const mounted = await request(app)
       .post(`/api/v8/finance/statements/${primary}/extract`)
       .send({
@@ -268,6 +369,12 @@ describe.runIf(enabled)('Finance Statement owner acceptance — real PostgreSQL 
         periodLabel: string;
         sourceReceiptId: string;
         sourceSha256: string;
+        lines: Array<{
+          originalLabel: string;
+          suggestedCanonicalId?: string;
+          suggestedExclusionReason?: string;
+          isNonFinancial?: boolean;
+        }>;
       }>,
     };
     expect(staged.statements.map((item) => `${item.statementType}:${item.periodLabel}`)).toEqual([
@@ -280,7 +387,313 @@ describe.runIf(enabled)('Finance Statement owner acceptance — real PostgreSQL 
     ]);
     expect(new Set(staged.statements.map((item) => item.statementId)).size).toBe(6);
     expect(new Set(staged.statements.map((item) => item.sourceReceiptId)).size).toBe(6);
+    const unresolvedWithoutGovernedPath = staged.statements.flatMap((item) =>
+      item.lines
+        .filter(
+          (line) =>
+            !line.suggestedCanonicalId &&
+            !line.suggestedExclusionReason &&
+            !line.isNonFinancial
+        )
+        .map((line) => `${item.statementType}:${item.periodLabel}:${line.originalLabel}`)
+    );
+    expect(unresolvedWithoutGovernedPath).toEqual([]);
     expect(staged.statements.every((item) => item.sourceSha256 === EXPECTED_PDF_SHA)).toBe(true);
+    const packMembership = await pool.query(
+      `SELECT id, statement_pack_id
+         FROM financial_statements
+        WHERE id = ANY($1::text[])
+        ORDER BY id`,
+      [staged.statements.map((item) => item.statementId)]
+    );
+    expect(packMembership.rows).toHaveLength(6);
+    expect(packMembership.rows.every((row) => Boolean(row.statement_pack_id))).toBe(true);
+    expect(new Set(packMembership.rows.map((row) => row.statement_pack_id)).size).toBe(1);
+    const statementPackId = String(packMembership.rows[0].statement_pack_id);
+    const coldPack = await request(app).get(`/api/v8/finance/statement-packs/${statementPackId}`);
+    expect(coldPack.status, JSON.stringify(coldPack.body)).toBe(200);
+    expect(coldPack.body.data.pack.id).toBe(statementPackId);
+    expect(
+      new Set(
+        coldPack.body.data.pack.statements.map(
+          (item: any) => `${item.statement_type}:${item.period_label}`
+        )
+      )
+    ).toEqual(new Set(['P&L:2025', 'P&L:2024', 'BS:2025', 'BS:2024', 'CF:2025', 'CF:2024']));
+    expect(Number(coldPack.body.data.pack.source_statement_count)).toBe(6);
+    const rejectedUnmappedAccept = await request(app)
+      .post(`/api/v8/finance/statements/${primary}/manual-mapping-decisions`)
+      .set('Idempotency-Key', `unmapped-accept-${nonce}`)
+      .send({
+        sourceRow: 11,
+        canonicalLineId: null,
+        reason: 'Zweryfikowane przez użytkownika podczas przeglądu importu',
+        sourceReceiptId: staged.statements[0].sourceReceiptId,
+        expectedValuesVersion: 1,
+      });
+    expect(rejectedUnmappedAccept.status).toBe(400);
+    expect(rejectedUnmappedAccept.body).toMatchObject({
+      code: 'MANUAL_MAPPING_TARGET_REQUIRED',
+    });
+    const rejectedDecisionCount = await pool.query(
+      `SELECT count(*)::int count
+         FROM finance_statement_manual_mapping_decisions
+        WHERE organization_id=$1 AND statement_id=$2`,
+      [organizationId, primary]
+    );
+    expect(rejectedDecisionCount.rows[0].count).toBe(0);
+    for (const item of staged.statements) {
+      const mappedResponse = await request(app).post(
+        `/api/v8/finance/statements/${item.statementId}/map`
+      );
+      expect(mappedResponse.status, JSON.stringify(mappedResponse.body)).toBe(200);
+      const mappedLines = mappedResponse.body.data.mappedLines as Array<any>;
+      const suggestedExclusions = mappedLines.filter(
+        (line) => Boolean(line.suggestedExclusionReason) && !line.suggestedCanonicalId
+      );
+      if (suggestedExclusions.length > 0) {
+        const durableSuggestions = await pool.query(
+          `SELECT candidate.source_row, candidate.metadata_json
+             FROM financial_statement_candidate_rows candidate
+             JOIN financial_statements statement
+               ON statement.id=candidate.statement_id
+              AND statement.organization_id=$1
+            WHERE candidate.statement_id=$2 AND candidate.ingest_run_id IS NOT NULL`,
+          [organizationId, item.statementId]
+        );
+        const durableReasonByRow = new Map(
+          durableSuggestions.rows.map((row) => [
+            Number(row.source_row),
+            JSON.parse(row.metadata_json || '{}').suggestedExclusionReason,
+          ])
+        );
+        for (const line of suggestedExclusions) {
+          expect(durableReasonByRow.get(Number(line.sourceRow))).toBe(
+            line.suggestedExclusionReason
+          );
+        }
+      }
+      const values = mappedLines.map((line) => {
+        const excluded = Boolean(line.suggestedExclusionReason) && !line.suggestedCanonicalId;
+        const manualAccept =
+          Boolean(line.suggestedCanonicalId) && line.mappingTier === 'review_required';
+        return {
+          canonicalLineId: excluded ? null : line.suggestedCanonicalId || null,
+          originalLabel: line.originalLabel,
+          value: line.value,
+          confidence: line.confidence,
+          sourceRow: line.sourceRow,
+          mappingStatus: excluded ? 'manual_exclude' : manualAccept ? 'manual' : 'auto',
+          isNonFinancial: excluded || Boolean(line.isNonFinancial),
+          classificationReason: excluded
+            ? line.suggestedExclusionReason
+            : line.classificationReason,
+          userVerified: excluded || manualAccept,
+        };
+      });
+      const saved = await request(app)
+        .put(`/api/v8/finance/statements/${item.statementId}/values`)
+        .send({ values });
+      expect(saved.status, JSON.stringify(saved.body)).toBe(200);
+      const valuesVersion = Number(saved.body.data.valuesVersion);
+      if (values.some((entry) => entry.mappingStatus === 'manual_exclude')) {
+        const beforeExclusionAudit = await request(app).get(
+          `/api/v8/finance/statements/${item.statementId}`
+        );
+        expect(beforeExclusionAudit.status).toBe(200);
+        expect(beforeExclusionAudit.body.data.statement.readinessStatus).not.toBe('ready');
+        const rejectedConfirmation = await request(app)
+          .post(`/api/v8/finance/statements/${item.statementId}/confirm`)
+          .set('Idempotency-Key', `confirm-before-exclude-${item.statementId}-${valuesVersion}`)
+          .send({
+            sourceReceiptId: item.sourceReceiptId,
+            expectedValuesVersion: valuesVersion,
+          });
+        expect(rejectedConfirmation.status).toBe(409);
+        expect(rejectedConfirmation.body.code).toBe('MANUAL_MAPPING_AUDIT_MISSING');
+      }
+      for (const value of values.filter(
+        (entry) => ['manual', 'manual_exclude'].includes(entry.mappingStatus)
+      )) {
+        const action = value.mappingStatus === 'manual_exclude' ? 'EXCLUDE' : 'ACCEPT';
+        const decisionKey =
+          `owner-${action.toLowerCase()}-${item.statementId}-${value.sourceRow}-${valuesVersion}`;
+        const decision = await request(app)
+          .post(`/api/v8/finance/statements/${item.statementId}/manual-mapping-decisions`)
+          .set('Idempotency-Key', decisionKey)
+          .send({
+            sourceRow: value.sourceRow,
+            canonicalLineId: action === 'ACCEPT' ? value.canonicalLineId : null,
+            action,
+            reason:
+              action === 'EXCLUDE'
+                ? value.classificationReason
+                : 'Owner verified deterministic canonical suggestion',
+            sourceReceiptId: item.sourceReceiptId,
+            expectedValuesVersion: valuesVersion,
+          });
+        expect(decision.status, JSON.stringify(decision.body)).toBe(200);
+        const replay = await request(app)
+          .post(`/api/v8/finance/statements/${item.statementId}/manual-mapping-decisions`)
+          .set('Idempotency-Key', decisionKey)
+          .send({
+            sourceRow: value.sourceRow,
+            canonicalLineId: action === 'ACCEPT' ? value.canonicalLineId : null,
+            action,
+            reason:
+              action === 'EXCLUDE'
+                ? value.classificationReason
+                : 'Owner verified deterministic canonical suggestion',
+            sourceReceiptId: item.sourceReceiptId,
+            expectedValuesVersion: valuesVersion,
+          });
+        expect(replay.status, JSON.stringify(replay.body)).toBe(200);
+        expect(replay.body.data.decision.decisionId).toBe(
+          decision.body.data.decision.decisionId
+        );
+      }
+      const detail = await request(app).get(
+        `/api/v8/finance/statements/${item.statementId}`
+      );
+      expect(detail.status).toBe(200);
+      expect(
+        detail.body.data.statement.readinessStatus,
+        JSON.stringify(detail.body.data.statement)
+      ).toBe('ready');
+      for (const excluded of values.filter((entry) => entry.mappingStatus === 'manual_exclude')) {
+        const coldValue = detail.body.data.statement.values.find(
+          (entry: any) => Number(entry.source_row) === Number(excluded.sourceRow)
+        );
+        expect(Number(coldValue.confidence)).toBeCloseTo(Number(excluded.confidence), 6);
+        expect(coldValue).toMatchObject({
+          is_non_financial: true,
+          classification_reason: excluded.classificationReason,
+          suggested_exclusion_reason: excluded.classificationReason,
+          manual_decision: {
+            action: 'EXCLUDE',
+            reason: excluded.classificationReason,
+            sourceReceiptId: item.sourceReceiptId,
+            statementValuesVersion: valuesVersion,
+          },
+        });
+        expect(coldValue.manual_decision.decisionId).toBeTruthy();
+        expect(coldValue.manual_decision).not.toHaveProperty('idempotencyKey');
+      }
+      const confirmed = await request(app)
+        .post(`/api/v8/finance/statements/${item.statementId}/confirm`)
+        .set('Idempotency-Key', `confirm-${item.statementId}-${valuesVersion}`)
+        .send({
+          sourceReceiptId: item.sourceReceiptId,
+          expectedValuesVersion: valuesVersion,
+        });
+      expect(confirmed.status, JSON.stringify(confirmed.body)).toBe(200);
+    }
+    const confirmedPack = await request(app).get(
+      `/api/v8/finance/statement-packs/${statementPackId}`
+    );
+    expect(confirmedPack.status).toBe(200);
+    expect(
+      confirmedPack.body.data.pack.pack_readiness_status,
+      JSON.stringify(confirmedPack.body.data.pack)
+    ).toBe('ready');
+    expect(
+      confirmedPack.body.data.pack.statements.filter(
+        (statement: any) => statement.status === 'confirmed'
+      )
+    ).toHaveLength(6);
+    const comparativeCf = staged.statements.find(
+      (item) => item.statementType === 'CF' && item.periodLabel === '2024'
+    )!;
+    await pool.query(`UPDATE financial_statements SET statement_pack_id=NULL WHERE id=$1`, [
+      comparativeCf.statementId,
+    ]);
+    await recomputeStatementPack(statementPackId, { deferShadow: true });
+    const missingComparative = await request(app).get(
+      `/api/v8/finance/statement-packs/${statementPackId}`
+    );
+    expect(missingComparative.body.data.pack.pack_readiness_status).not.toBe('ready');
+    expect(JSON.parse(missingComparative.body.data.pack.pack_quality_reason_codes)).toContain(
+      'MISSING_PERIOD_STATEMENT'
+    );
+    await pool.query(`UPDATE financial_statements SET statement_pack_id=$1 WHERE id=$2`, [
+      statementPackId,
+      comparativeCf.statementId,
+    ]);
+    await recomputeStatementPack(statementPackId, { deferShadow: true });
+
+    const comparativeStatements = staged.statements.filter((item) => item.periodLabel === '2024');
+    await pool.query(`UPDATE financial_statements SET statement_pack_id=NULL WHERE id=ANY($1::text[])`, [
+      comparativeStatements.map((item) => item.statementId),
+    ]);
+    await recomputeStatementPack(statementPackId, { deferShadow: true });
+    const onePeriodPack = await request(app).get(
+      `/api/v8/finance/statement-packs/${statementPackId}`
+    );
+    expect(onePeriodPack.body.data.pack.pack_readiness_status).not.toBe('ready');
+    expect(JSON.parse(onePeriodPack.body.data.pack.pack_quality_reason_codes)).toContain(
+      'INVALID_PERIOD_COUNT'
+    );
+    await pool.query(`UPDATE financial_statements SET statement_pack_id=$1 WHERE id=ANY($2::text[])`, [
+      statementPackId,
+      comparativeStatements.map((item) => item.statementId),
+    ]);
+    await recomputeStatementPack(statementPackId, { deferShadow: true });
+
+    const thirdPeriodIds: string[] = [];
+    for (const statementType of ['P&L', 'BS', 'CF']) {
+      thirdPeriodIds.push(
+        await createStatement({
+          organizationId,
+          statementType,
+          periodStart: '2023-01-01',
+          periodEnd: '2023-12-31',
+          periodLabel: '2023',
+          currency: 'PLN',
+          scaling: 'thousands',
+          sourceFileName: 'generic-third-period.pdf',
+          sourceFilePath: PDF_PATH,
+          parseMethod: 'text_extraction',
+          overallConfidence: 0.5,
+          createdBy: userId,
+        })
+      );
+    }
+    await pool.query(`UPDATE financial_statements SET statement_pack_id=$1 WHERE id=ANY($2::text[])`, [
+      statementPackId,
+      thirdPeriodIds,
+    ]);
+    await recomputeStatementPack(statementPackId, { deferShadow: true });
+    const threePeriodPack = await request(app).get(
+      `/api/v8/finance/statement-packs/${statementPackId}`
+    );
+    expect(threePeriodPack.body.data.pack.pack_readiness_status).not.toBe('ready');
+    expect(JSON.parse(threePeriodPack.body.data.pack.pack_quality_reason_codes)).toContain(
+      'INVALID_PERIOD_COUNT'
+    );
+    await pool.query(`UPDATE financial_statements SET statement_pack_id=NULL WHERE id=ANY($1::text[])`, [
+      thirdPeriodIds,
+    ]);
+    await recomputeStatementPack(statementPackId, { deferShadow: true });
+    const duplicatePeriod = await createStatement({
+      organizationId,
+      statementType: 'P&L',
+      periodStart: '2025-01-01',
+      periodEnd: '2025-12-31',
+      periodLabel: '2025',
+      currency: 'PLN',
+      scaling: 'thousands',
+      sourceFileName: 'duplicate-period.pdf',
+      sourceFilePath: PDF_PATH,
+      parseMethod: 'text_extraction',
+      overallConfidence: 0.5,
+      createdBy: userId,
+    });
+    await expect(
+      pool.query(`UPDATE financial_statements SET statement_pack_id=$1 WHERE id=$2`, [
+        statementPackId,
+        duplicatePeriod,
+      ])
+    ).rejects.toMatchObject({ code: '23505' });
     const coldDetail = await getStatementDetail(organizationId, primary);
     expect(coldDetail?.sourceSiblings).toHaveLength(6);
     expect(
@@ -342,6 +755,8 @@ describe.runIf(enabled)('Finance Statement owner acceptance — real PostgreSQL 
       overallConfidence: 0.36,
       createdBy: userId,
     });
+    const secondPackId = await syncStatementToPack(secondPrimary);
+    expect(secondPackId).toBeTruthy();
     await stageSelectedStatementSections({
       primaryStatementId: secondPrimary,
       organizationId,
@@ -355,6 +770,7 @@ describe.runIf(enabled)('Finance Statement owner acceptance — real PostgreSQL 
         period_end: '2025-12-31',
         currency: 'PLN',
         scaling: 'thousands',
+        statement_pack_id: secondPackId,
       },
       text: pdfText,
       statementTypes: ['P&L', 'BS', 'CF'],
