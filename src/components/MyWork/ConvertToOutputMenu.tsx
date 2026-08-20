@@ -23,6 +23,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAnchorFixedMenuPosition } from '@/hooks/useFixedMenuPosition';
 import { Api } from '@/services/api';
 import {
+  type BudgetConversionConfig,
   type ConversionSourceType,
   type ConversionTargetType,
   createOutputFromSession,
@@ -151,13 +152,18 @@ export const ConvertToOutputMenu: React.FC<ConvertToOutputMenuProps> = ({
     setDialogOpen(true);
   };
 
-  const handleDialogConvert = async (session: MyWorkSession, targetType: string) => {
+  const handleDialogConvert = async (
+    session: MyWorkSession,
+    targetType: string,
+    budgetConfig?: BudgetConversionConfig
+  ) => {
     setConverting(true);
     try {
       const result = await createOutputFromSession(
         session.id,
         targetType as ConversionTargetType,
-        sourceTitle
+        sourceTitle,
+        budgetConfig
       );
       if (result.success) {
         if (sourceType === 'notebook') {

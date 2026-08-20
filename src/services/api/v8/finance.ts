@@ -146,6 +146,25 @@ export interface V8FinanceModelCreatePayload {
   idempotencyKey?: string;
 }
 
+export interface V8FinanceBudgetRegistrationPayload {
+  title: string;
+  description?: string;
+  projectId?: string;
+  periodStart: string;
+  periodEnd: string;
+  granularity: 'monthly' | 'quarterly' | 'annual';
+  currency: string;
+  sourceKind: 'manual' | 'tool_session';
+  sourceToolSessionId?: string;
+}
+
+export interface V8FinanceBudgetRegistrationResult {
+  budget: V8FinanceBudgetSummary;
+  lineCount: number;
+  scenarioCount: number;
+  replay: boolean;
+}
+
 export interface V8FinanceCaseScenario {
   id: string;
   name: string;
@@ -605,6 +624,10 @@ export const V8FinanceApi = {
   getValuations: () =>
     v8Get<{ valuations: V8FinanceValuationSummary[]; count: number }>('/finance/valuations'),
   getBudgets: () => v8Get<{ budgets: V8FinanceBudgetSummary[]; count: number }>('/finance/budgets'),
+  createBudget: (body: V8FinanceBudgetRegistrationPayload, idempotencyKey: string) =>
+    v8Post<V8FinanceBudgetRegistrationResult>('/finance/budgets', body, {
+      extraHeaders: { 'Idempotency-Key': idempotencyKey },
+    }),
   getStatementPacks: (params?: { readiness?: string }) =>
     v8Get<{ statementPacks: V8FinanceStatementPackSummary[]; count: number }>(
       '/finance/statement-packs',

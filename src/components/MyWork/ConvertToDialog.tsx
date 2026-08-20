@@ -10,6 +10,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
+import type { BudgetConversionConfig } from '@/services/conversionService';
 import { materializeMyWorkSession } from '@/services/traceabilityService';
 import type { MyWorkDerivedSource, MyWorkSession } from '@/types/domain/traceability';
 
@@ -27,7 +28,11 @@ export interface ConvertToDialogProps {
   onClose: () => void;
   sources: MyWorkDerivedSource[];
   targetType?: ConvertTargetType;
-  onConvert: (session: MyWorkSession, targetType: string) => void;
+  onConvert: (
+    session: MyWorkSession,
+    targetType: string,
+    budgetConfig?: BudgetConversionConfig
+  ) => void;
 }
 
 const TARGET_LABELS: Record<ConvertTargetType, { en: string; pl: string }> = {
@@ -52,6 +57,12 @@ export const ConvertToDialog: React.FC<ConvertToDialogProps> = ({
     initialTargetType ?? 'initiative'
   );
   const [creating, setCreating] = useState(false);
+  const [budgetConfig, setBudgetConfig] = useState<BudgetConversionConfig>({
+    periodStart: '',
+    periodEnd: '',
+    granularity: 'monthly',
+    currency: 'PLN',
+  });
 
   const targetLabel = t(
     `traceability.convertTo.${targetType}`,
@@ -60,6 +71,13 @@ export const ConvertToDialog: React.FC<ConvertToDialogProps> = ({
 
   const handleConfirm = async () => {
     if (!sources?.length) return;
+    if (
+      targetType === 'budget' &&
+      (!budgetConfig.periodStart ||
+        !budgetConfig.periodEnd ||
+        budgetConfig.periodStart >= budgetConfig.periodEnd)
+    )
+      return;
     setCreating(true);
     try {
       const session = await materializeMyWorkSession(sources);
@@ -67,7 +85,7 @@ export const ConvertToDialog: React.FC<ConvertToDialogProps> = ({
         from: sources.map((s) => s.type).join(','),
         to: targetType,
       });
-      onConvert(session, targetType);
+      onConvert(session, targetType, targetType === 'budget' ? budgetConfig : undefined);
       onClose();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to create session';
@@ -151,6 +169,94 @@ export const ConvertToDialog: React.FC<ConvertToDialogProps> = ({
               </div>
             </div>
           )}
+
+          {targetType === 'budget' && (
+            <fieldset className="space-y-3 rounded-lg border border-slate-200/60 p-3 dark:border-white/10">
+              <legend className="px-1 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                {t('traceability.convertTo.budgetPeriod', 'Budget period')}
+              </legend>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {t(
+                  'traceability.convertTo.budgetPeriodHint',
+                  'Choose the exact governed period. Dates are never inferred from today.'
+                )}
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="text-xs text-slate-600 dark:text-slate-400">
+                  {t('common.startDate', 'Start date')}
+                  <input
+                    aria-label={t('common.startDate', 'Start date')}
+                    type="date"
+                    value={budgetConfig.periodStart}
+                    onChange={(event) =>
+                      setBudgetConfig((current) => ({
+                        ...current,
+                        periodStart: event.target.value,
+                      }))
+                    }
+                    className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm dark:border-white/10 dark:bg-navy-800"
+                  />
+                </label>
+                <label className="text-xs text-slate-600 dark:text-slate-400">
+                  {t('common.endDate', 'End date')}
+                  <input
+                    aria-label={t('common.endDate', 'End date')}
+                    type="date"
+                    value={budgetConfig.periodEnd}
+                    onChange={(event) =>
+                      setBudgetConfig((current) => ({
+                        ...current,
+                        periodEnd: event.target.value,
+                      }))
+                    }
+                    className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm dark:border-white/10 dark:bg-navy-800"
+                  />
+                </label>
+                <label className="text-xs text-slate-600 dark:text-slate-400">
+                  {t('finance.granularity', 'Granularity')}
+                  <select
+                    aria-label={t('finance.granularity', 'Granularity')}
+                    value={budgetConfig.granularity}
+                    onChange={(event) =>
+                      setBudgetConfig((current) => ({
+                        ...current,
+                        granularity: event.target.value as BudgetConversionConfig['granularity'],
+                      }))
+                    }
+                    className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm dark:border-white/10 dark:bg-navy-800"
+                  >
+                    <option value="monthly">{t('finance.monthly', 'Monthly')}</option>
+                    <option value="quarterly">{t('finance.quarterly', 'Quarterly')}</option>
+                    <option value="annual">{t('finance.annual', 'Annual')}</option>
+                  </select>
+                </label>
+                <label className="text-xs text-slate-600 dark:text-slate-400">
+                  {t('finance.currency', 'Currency')}
+                  <select
+                    aria-label={t('finance.currency', 'Currency')}
+                    value={budgetConfig.currency}
+                    onChange={(event) =>
+                      setBudgetConfig((current) => ({ ...current, currency: event.target.value }))
+                    }
+                    className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm dark:border-white/10 dark:bg-navy-800"
+                  >
+                    {['PLN', 'EUR', 'USD', 'GBP'].map((currency) => (
+                      <option key={currency} value={currency}>
+                        {currency}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              {budgetConfig.periodStart &&
+                budgetConfig.periodEnd &&
+                budgetConfig.periodStart >= budgetConfig.periodEnd && (
+                  <p role="alert" className="text-xs text-red-600">
+                    {t('finance.periodOrderError', 'End date must be after start date.')}
+                  </p>
+                )}
+            </fieldset>
+          )}
         </div>
 
         {/* Footer */}
@@ -163,7 +269,14 @@ export const ConvertToDialog: React.FC<ConvertToDialogProps> = ({
           </button>
           <button
             onClick={handleConfirm}
-            disabled={creating || !sources?.length}
+            disabled={
+              creating ||
+              !sources?.length ||
+              (targetType === 'budget' &&
+                (!budgetConfig.periodStart ||
+                  !budgetConfig.periodEnd ||
+                  budgetConfig.periodStart >= budgetConfig.periodEnd))
+            }
             className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-c-text text-c-bg text-xs font-semibold hover:bg-c-text-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             {creating && <Loader2 size={12} className="animate-spin" />}

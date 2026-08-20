@@ -28,7 +28,7 @@ const mockGetValidations = vi.fn();
 const mockListEvents = vi.fn();
 const mockListValuations = vi.fn();
 const mockListBudgets = vi.fn();
-const mockCreateBudget = vi.fn();
+const mockRegisterBudget = vi.fn();
 const mockListAnalyses = vi.fn();
 const mockGetAnalysisRatios = vi.fn();
 const mockGetAnalysisInsights = vi.fn();
@@ -279,7 +279,19 @@ vi.mock('../../../services/valuationService.js', () => ({
 
 vi.mock('../../../services/budgetingService.js', () => ({
   listBudgets: (...args: unknown[]) => mockListBudgets(...args),
-  createBudget: (...args: unknown[]) => mockCreateBudget(...args),
+}));
+
+vi.mock('../../../services/finance/canonical/budgetRegistrationService.js', () => ({
+  BudgetRegistrationError: class BudgetRegistrationError extends Error {
+    constructor(
+      public code: string,
+      public status: number,
+      message: string
+    ) {
+      super(message);
+    }
+  },
+  registerBudget: (...args: unknown[]) => mockRegisterBudget(...args),
 }));
 
 vi.mock('../../../services/ratioAnalysisService.js', () => ({
@@ -377,8 +389,8 @@ const UID = 'user-finance-v8';
 describe('V8 finance read-only routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockFinanceEditorGate.mockImplementation(
-      (_req: unknown, _res: unknown, next: () => void) => next()
+    mockFinanceEditorGate.mockImplementation((_req: unknown, _res: unknown, next: () => void) =>
+      next()
     );
     mockUser = { id: UID, role: 'ADMIN', organizationId: ORG, isSuperAdmin: false };
     mockGetFinanceDashboard.mockResolvedValue({
@@ -404,7 +416,12 @@ describe('V8 finance read-only routes', () => {
     mockListModels.mockResolvedValue([]);
     mockListValuations.mockResolvedValue([]);
     mockListBudgets.mockResolvedValue([]);
-    mockCreateBudget.mockResolvedValue({ id: 'budget-new', title: 'Test Budget', status: 'DRAFT' });
+    mockRegisterBudget.mockResolvedValue({
+      budget: { id: 'budget-new', title: 'Test Budget', status: 'DRAFT' },
+      lineCount: 15,
+      scenarioCount: 3,
+      replay: false,
+    });
     mockListAnalyses.mockResolvedValue([]);
     mockGetAnalysisRatios.mockResolvedValue([]);
     mockGetAnalysisInsights.mockResolvedValue([]);
@@ -1717,39 +1734,80 @@ describe('V8 finance read-only routes', () => {
   });
 
   it('POST /api/v8/finance/budgets creates a budget and returns 201', async () => {
-    mockCreateBudget.mockResolvedValue({
-      id: 'budget-created',
-      organizationId: ORG,
-      title: 'FY26 Budget',
-      status: 'DRAFT',
-      periodStart: '2026-01-01',
-      periodEnd: '2026-12-31',
-      currency: 'PLN',
-      granularity: 'monthly',
+    mockRegisterBudget.mockResolvedValue({
+      budget: {
+        id: 'budget-created',
+        organizationId: ORG,
+        title: 'FY26 Budget',
+        status: 'DRAFT',
+        periodStart: '2026-01-01',
+        periodEnd: '2026-12-31',
+        currency: 'PLN',
+        granularity: 'monthly',
+      },
+      lineCount: 15,
+      scenarioCount: 3,
+      replay: false,
     });
     const app = createApp();
-    const res = await request(app).post('/api/v8/finance/budgets').send({
-      title: 'FY26 Budget',
-      periodStart: '2026-01-01',
-      periodEnd: '2026-12-31',
-    });
+    const res = await request(app)
+      .post('/api/v8/finance/budgets')
+      .set('Idempotency-Key', 'budget-test-key')
+      .send({
+        title: 'FY26 Budget',
+        periodStart: '2026-01-01',
+        periodEnd: '2026-12-31',
+        sourceKind: 'manual',
+      });
     // finance.routes.ts:982 explicitly returns 201 (standard REST for a
     // creation endpoint) — this test's expectation of 200 was simply wrong.
     expect(res.status).toBe(201);
     expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
     expect(res.body.data?.budget?.id).toBe('budget-created');
-    expect(mockCreateBudget).toHaveBeenCalledWith(
-      ORG,
-      expect.objectContaining({ title: 'FY26 Budget', periodStart: '2026-01-01' }),
-      expect.any(String)
+    expect(mockRegisterBudget).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: ORG,
+        userId: UID,
+        title: 'FY26 Budget',
+        periodStart: '2026-01-01',
+        sourceKind: 'manual',
+        idempotencyKey: 'budget-test-key',
+      })
     );
   });
 
-  it('POST /api/v8/finance/budgets — 400 when required fields missing', async () => {
+  it('POST /api/v8/finance/budgets returns 200 for an idempotent replay', async () => {
+    mockRegisterBudget.mockResolvedValue({
+      budget: { id: 'budget-created', title: 'FY26 Budget', status: 'DRAFT' },
+      lineCount: 15,
+      scenarioCount: 3,
+      replay: true,
+    });
     const app = createApp();
-    const res = await request(app).post('/api/v8/finance/budgets').send({ title: 'No dates' });
+    const res = await request(app)
+      .post('/api/v8/finance/budgets')
+      .set('Idempotency-Key', 'budget-test-key')
+      .send({
+        title: 'FY26 Budget',
+        periodStart: '2026-01-01',
+        periodEnd: '2026-12-31',
+        sourceKind: 'manual',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual(
+      expect.objectContaining({ replay: true, lineCount: 15, scenarioCount: 3 })
+    );
+  });
+
+  it('POST /api/v8/finance/budgets — 400 and no write for unknown fields', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/v8/finance/budgets')
+      .send({ title: 'No dates', unknown: true });
     expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/required/i);
+    expect(res.body.code).toBe('INVALID_BODY');
+    expect(mockRegisterBudget).not.toHaveBeenCalled();
   });
 
   it('POST /api/v8/finance/analyses returns envelope and delegates to createAnalysis', async () => {

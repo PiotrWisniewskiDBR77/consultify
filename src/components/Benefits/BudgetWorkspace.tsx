@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { LoadingState } from '@/components/shared/states';
+import { V8FinanceApi } from '@/services/api/v8/finance';
 
 import { API_URL, getHeaders } from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
@@ -112,8 +113,9 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
   const [docImportFile, setDocImportFile] = useState<File | null>(null);
   const [docImporting, setDocImporting] = useState(false);
   const [newTitle, setNewTitle] = useState('');
-  const [startPeriod, setStartPeriod] = useState('2026-01');
-  const [endPeriod, setEndPeriod] = useState('2026-12');
+  const [startPeriod, setStartPeriod] = useState('');
+  const [endPeriod, setEndPeriod] = useState('');
+  const [createIntentKey, setCreateIntentKey] = useState(() => crypto.randomUUID());
 
   const fetchBudgets = useCallback(async () => {
     try {
@@ -172,26 +174,42 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
   }, [initialBudgetId, budgets, selected, selectBudget]);
 
   const handleCreate = useCallback(async () => {
-    if (!newTitle.trim()) return;
+    if (!newTitle.trim() || !startPeriod || !endPeriod || startPeriod > endPeriod) return;
     try {
-      const res = await fetch(`${API_URL}/economics/budgets`, {
-        method: 'POST',
-        headers: { ...getHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: newTitle, periodStart: startPeriod, periodEnd: endPeriod }),
-      });
-      if (res.ok) {
-        const d = await res.json();
-        trackFunnelEvent('budget_created', { budgetId: d.budget?.id });
-        setShowCreate(false);
-        setNewTitle('');
-        await fetchBudgets();
-        if (d.budget) selectBudget(d.budget);
-        onBudgetChanged?.();
-      }
+      const [endYear, endMonth] = endPeriod.split('-').map(Number);
+      const result = await V8FinanceApi.createBudget(
+        {
+          title: newTitle.trim(),
+          periodStart: `${startPeriod}-01`,
+          periodEnd: new Date(Date.UTC(endYear, endMonth, 0)).toISOString().slice(0, 10),
+          granularity: 'monthly',
+          currency: 'PLN',
+          sourceKind: 'manual',
+        },
+        createIntentKey
+      );
+      trackFunnelEvent('budget_created', { budgetId: result.budget.id });
+      setShowCreate(false);
+      setNewTitle('');
+      setStartPeriod('');
+      setEndPeriod('');
+      setCreateIntentKey(crypto.randomUUID());
+      await fetchBudgets();
+      if (result.budget) selectBudget(result.budget as BudgetSummary);
+      onBudgetChanged?.();
     } catch {
       toast.error(t('finance.budget.createFailed', 'Failed to create budget'));
     }
-  }, [newTitle, startPeriod, endPeriod, fetchBudgets, selectBudget, onBudgetChanged]);
+  }, [
+    newTitle,
+    startPeriod,
+    endPeriod,
+    createIntentKey,
+    fetchBudgets,
+    selectBudget,
+    onBudgetChanged,
+    t,
+  ]);
 
   const handleGenerate = useCallback(async () => {
     if (!selected || scenarios.length === 0) return;
@@ -995,7 +1013,10 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
             <div className="space-y-3 mb-4">
               <input
                 value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
+                onChange={(e) => {
+                  setNewTitle(e.target.value);
+                  setCreateIntentKey(crypto.randomUUID());
+                }}
                 placeholder={t('finance.budget.titlePlaceholder', 'e.g., 2026 Operating Budget')}
                 className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white text-sm"
               />
@@ -1007,7 +1028,10 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                   <input
                     type="month"
                     value={startPeriod}
-                    onChange={(e) => setStartPeriod(e.target.value)}
+                    onChange={(e) => {
+                      setStartPeriod(e.target.value);
+                      setCreateIntentKey(crypto.randomUUID());
+                    }}
                     className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white text-sm"
                   />
                 </div>
@@ -1018,7 +1042,10 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                   <input
                     type="month"
                     value={endPeriod}
-                    onChange={(e) => setEndPeriod(e.target.value)}
+                    onChange={(e) => {
+                      setEndPeriod(e.target.value);
+                      setCreateIntentKey(crypto.randomUUID());
+                    }}
                     className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white text-sm"
                   />
                 </div>
@@ -1033,6 +1060,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
               </button>
               <button
                 onClick={handleCreate}
+                disabled={!newTitle.trim() || !startPeriod || !endPeriod || startPeriod > endPeriod}
                 className="px-4 py-2 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-sm font-medium rounded-lg hover:bg-navy-800"
               >
                 {t('common.create', 'Create')}

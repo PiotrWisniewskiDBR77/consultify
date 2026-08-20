@@ -17,7 +17,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { upload } from '../../middleware/fileUpload.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
-import { createBudget, listBudgets } from '../../services/budgetingService.js';
+import { listBudgets } from '../../services/budgetingService.js';
 import { searchStatementDocumentIntelligence } from '../../services/documentIntelligenceService.js';
 import { ensureCanonicalRegistryInDatabase } from '../../services/financeCanonicalRegistrySyncService.js';
 import { financeLegacyCutoverGuard } from '../../services/financeLegacyCutover.js';
@@ -145,6 +145,11 @@ import PDFParserService from '../../services/pdfParserService.js';
 import { computeRatios } from '../../services/ratioAnalysisService.js';
 import { getFinanceDashboard } from '../../services/v8/financeIntegrationService.js';
 import { listValuations } from '../../services/valuationService.js';
+import {
+  type BudgetGranularity,
+  BudgetRegistrationError,
+  registerBudget,
+} from '../../services/finance/canonical/budgetRegistrationService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -1333,16 +1338,57 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const userId = String(req.user?.id || (req.user as any)?.user_id || '');
-    const { title, periodStart, periodEnd, currency, granularity, description } = req.body || {};
-    if (!title || !periodStart || !periodEnd) {
-      return res.status(400).json({ error: 'title, periodStart, periodEnd required' });
+    const body =
+      req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
+    const allowed = new Set([
+      'title',
+      'description',
+      'projectId',
+      'periodStart',
+      'periodEnd',
+      'granularity',
+      'currency',
+      'sourceKind',
+      'sourceToolSessionId',
+    ]);
+    if (Object.keys(body).some((key) => !allowed.has(key))) {
+      return res.status(400).json({ code: 'INVALID_BODY', error: 'Unknown budget field' });
     }
-    const budget = await createBudget(
-      organizationId,
-      { title, periodStart, periodEnd, currency, granularity, description },
-      userId
-    );
-    return res.status(201).json({ data: { budget }, meta: financeMeta() });
+    if (
+      body.granularity !== undefined &&
+      body.granularity !== 'monthly' &&
+      body.granularity !== 'quarterly' &&
+      body.granularity !== 'annual'
+    ) {
+      return res.status(400).json({ code: 'INVALID_BODY', error: 'Invalid budget granularity' });
+    }
+    if (body.sourceKind !== 'tool_session' && body.sourceKind !== 'manual') {
+      return res.status(400).json({ code: 'INVALID_BODY', error: 'Invalid budget source' });
+    }
+    const key = String(req.header('Idempotency-Key') || req.header('x-idempotency-key') || '');
+    try {
+      const result = await registerBudget({
+        organizationId,
+        userId,
+        title: typeof body.title === 'string' ? body.title : '',
+        description: typeof body.description === 'string' ? body.description : undefined,
+        projectId: typeof body.projectId === 'string' ? body.projectId : undefined,
+        periodStart: typeof body.periodStart === 'string' ? body.periodStart : '',
+        periodEnd: typeof body.periodEnd === 'string' ? body.periodEnd : '',
+        granularity: body.granularity as BudgetGranularity | undefined,
+        currency: typeof body.currency === 'string' ? body.currency : undefined,
+        sourceToolSessionId:
+          typeof body.sourceToolSessionId === 'string' ? body.sourceToolSessionId : '',
+        sourceKind: body.sourceKind,
+        idempotencyKey: key,
+      });
+      return res.status(result.replay ? 200 : 201).json({ data: result, meta: financeMeta() });
+    } catch (error) {
+      if (error instanceof BudgetRegistrationError) {
+        return res.status(error.status).json({ code: error.code, error: error.message });
+      }
+      throw error;
+    }
   })
 );
 

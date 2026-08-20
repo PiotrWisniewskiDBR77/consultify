@@ -716,17 +716,151 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
         .set('x-request-id', requestId);
       expect(response.status).toBe(200);
       expect(response.body).toEqual({ success: true, deleted: rollbackId });
-      expect((await pool.query(`SELECT id FROM valuations WHERE id=$1`, [rollbackId])).rows).toHaveLength(0);
-      expect((await pool.query(`SELECT id FROM valuation_snapshots WHERE valuation_id=$1`, [rollbackId])).rows).toHaveLength(0);
       expect(
-        (await pool.query(`SELECT idempotency_key FROM finance_valuation_discard_receipts WHERE organization_id=$1 AND legacy_valuation_id=$2`, [orgA, rollbackId])).rows
+        (await pool.query(`SELECT id FROM valuations WHERE id=$1`, [rollbackId])).rows
       ).toHaveLength(0);
       expect(
-        (await pool.query(`SELECT writer_id,access_kind,successor_path FROM legacy_cutover_usage_events WHERE organization_id=$1 AND request_id=$2`, [orgA, requestId])).rows
-      ).toEqual([{writer_id:'ECO-W32',access_kind:'rollback_writer',successor_path:'/api/v8/finance-v2/valuation/legacy/:legacyId'}]);
+        (await pool.query(`SELECT id FROM valuation_snapshots WHERE valuation_id=$1`, [rollbackId]))
+          .rows
+      ).toHaveLength(0);
+      expect(
+        (
+          await pool.query(
+            `SELECT idempotency_key FROM finance_valuation_discard_receipts WHERE organization_id=$1 AND legacy_valuation_id=$2`,
+            [orgA, rollbackId]
+          )
+        ).rows
+      ).toHaveLength(0);
+      expect(
+        (
+          await pool.query(
+            `SELECT writer_id,access_kind,successor_path FROM legacy_cutover_usage_events WHERE organization_id=$1 AND request_id=$2`,
+            [orgA, requestId]
+          )
+        ).rows
+      ).toEqual([
+        {
+          writer_id: 'ECO-W32',
+          access_kind: 'rollback_writer',
+          successor_path: '/api/v8/finance-v2/valuation/legacy/:legacyId',
+        },
+      ]);
     } finally {
       await pool.query(`DELETE FROM valuation_snapshots WHERE valuation_id=$1`, [rollbackId]);
-      await pool.query(`DELETE FROM valuations WHERE organization_id=$1 AND id=$2`, [orgA, rollbackId]);
+      await pool.query(`DELETE FROM valuations WHERE organization_id=$1 AND id=$2`, [
+        orgA,
+        rollbackId,
+      ]);
+      if (previous === undefined) delete process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+      else process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = previous;
+    }
+  });
+
+  it('retires ECO-W33 create with no budget aggregate mutation', async () => {
+    const requestId = `${prefix}-budget-create-retired`;
+    const before = await pool.query(
+      `SELECT
+        (SELECT count(*)::int FROM budgets WHERE organization_id=$1) budgets,
+        (SELECT count(*)::int FROM budget_lines WHERE budget_id IN (SELECT id FROM budgets WHERE organization_id=$1)) lines,
+        (SELECT count(*)::int FROM budget_scenarios WHERE budget_id IN (SELECT id FROM budgets WHERE organization_id=$1)) scenarios`,
+      [orgA]
+    );
+    const response = await request(productionMountedApp)
+      .post('/api/economics/budgets')
+      .set('x-request-id', requestId)
+      .send({ title: 'Blocked budget', periodStart: '2028-01-01', periodEnd: '2028-12-31' });
+    expect(response.status).toBe(410);
+    expect(response.body).toMatchObject({
+      writerId: 'ECO-W33',
+      successor: '/api/v8/finance/budgets',
+      code: 'FINANCE_LEGACY_WRITER_DISABLED',
+    });
+    expect(
+      (
+        await pool.query(
+          `SELECT
+        (SELECT count(*)::int FROM budgets WHERE organization_id=$1) budgets,
+        (SELECT count(*)::int FROM budget_lines WHERE budget_id IN (SELECT id FROM budgets WHERE organization_id=$1)) lines,
+        (SELECT count(*)::int FROM budget_scenarios WHERE budget_id IN (SELECT id FROM budgets WHERE organization_id=$1)) scenarios`,
+          [orgA]
+        )
+      ).rows
+    ).toEqual(before.rows);
+    expect(
+      (
+        await pool.query(
+          `SELECT writer_id,access_kind,successor_path FROM legacy_cutover_usage_events
+        WHERE organization_id=$1 AND request_id=$2`,
+          [orgA, requestId]
+        )
+      ).rows
+    ).toEqual([
+      {
+        writer_id: 'ECO-W33',
+        access_kind: 'legacy_writer_blocked',
+        successor_path: '/api/v8/finance/budgets',
+      },
+    ]);
+  });
+
+  it('restores only ECO-W33 through the writer-scoped rollback lever', async () => {
+    const previous = process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+    const requestId = `${prefix}-budget-create-rollback`;
+    let budgetId = '';
+    process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = 'ECO-W33';
+    try {
+      const response = await request(productionMountedApp)
+        .post('/api/economics/budgets')
+        .set('x-request-id', requestId)
+        .send({ title: 'Rollback budget', periodStart: '2028-01-01', periodEnd: '2028-12-31' });
+      expect(response.status).toBe(201);
+      budgetId = String(response.body.budget?.id || '');
+      expect(budgetId).toBeTruthy();
+      expect(
+        (
+          await pool.query(`SELECT count(*)::int count FROM budget_lines WHERE budget_id=$1`, [
+            budgetId,
+          ])
+        ).rows[0].count
+      ).toBe(15);
+      expect(
+        (
+          await pool.query(`SELECT count(*)::int count FROM budget_scenarios WHERE budget_id=$1`, [
+            budgetId,
+          ])
+        ).rows[0].count
+      ).toBe(3);
+      expect(
+        (
+          await pool.query(
+            `SELECT count(*)::int count FROM finance_budget_registration_receipts WHERE organization_id=$1 AND budget_id=$2`,
+            [orgA, budgetId]
+          )
+        ).rows[0].count
+      ).toBe(0);
+      expect(
+        (
+          await pool.query(
+            `SELECT writer_id,access_kind,successor_path FROM legacy_cutover_usage_events WHERE organization_id=$1 AND request_id=$2`,
+            [orgA, requestId]
+          )
+        ).rows
+      ).toEqual([
+        {
+          writer_id: 'ECO-W33',
+          access_kind: 'rollback_writer',
+          successor_path: '/api/v8/finance/budgets',
+        },
+      ]);
+    } finally {
+      if (budgetId) {
+        await pool.query(`DELETE FROM budget_lines WHERE budget_id=$1`, [budgetId]);
+        await pool.query(`DELETE FROM budget_scenarios WHERE budget_id=$1`, [budgetId]);
+        await pool.query(`DELETE FROM budgets WHERE organization_id=$1 AND id=$2`, [
+          orgA,
+          budgetId,
+        ]);
+      }
       if (previous === undefined) delete process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
       else process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = previous;
     }

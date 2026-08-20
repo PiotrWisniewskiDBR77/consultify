@@ -401,10 +401,10 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'ECO-W33',
       method: 'POST',
       path: /^\/budgets\/?$/,
-      state: 'observed',
-      successor: null,
+      state: 'disabled',
+      successor: '/api/v8/finance/budgets',
       reason:
-        'Creates a budgets row plus its initial budget_lines and budget_scenarios rows via budgetingSvc.createBudget (economics.routes.ts:3084, budgetingService.ts:179,197,202,207). budgets is not one of the four legacy tables the identity bridge knows; no proven successor.',
+        'Mounted MyWork conversion now requires an explicit period and uses the replay-safe canonical registration command, which creates the Budget aggregate, 15 governed lines, three scenarios, source-session provenance and immutable receipt in one pinned transaction. The duplicate economics writer is disabled with writer-scoped rollback.',
     },
     {
       writerId: 'ECO-W34',

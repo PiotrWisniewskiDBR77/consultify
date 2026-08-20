@@ -24,8 +24,8 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
       legacyMutationDoors: 52,
       canonicalMutationDoors: 1,
       nonMutationDoors: 6,
-      retiredLegacyMutationDoors: 17,
-      openLegacyMutationDoors: 35,
+      retiredLegacyMutationDoors: 18,
+      openLegacyMutationDoors: 34,
     });
   });
 
@@ -70,5 +70,20 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
     );
     expect(source).toContain('discardCanonicalLegacyValuation');
     expect(source).not.toMatch(/Api\.delete\([^\n]*\/api\/economics\/valuations/);
+  });
+
+  it('routes every mounted budget-create caller through one canonical registration command', () => {
+    const files = [
+      'src/services/conversionService.ts',
+      'src/components/Benefits/BudgetWorkspace.tsx',
+    ];
+    for (const file of files) {
+      const source = fs.readFileSync(path.resolve(process.cwd(), file), 'utf8');
+      expect(source).toContain('V8FinanceApi.createBudget');
+      expect(source).not.toMatch(/Api\.post\([^\n]*\/economics\/budgets/);
+      expect(source).not.toMatch(
+        /fetch\(`\$\{API_URL\}\/economics\/budgets`,\s*\{\s*method:\s*'POST'/
+      );
+    }
   });
 });
