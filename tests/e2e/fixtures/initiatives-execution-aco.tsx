@@ -112,13 +112,22 @@ const Harness: React.FC = () => {
   }
   if (mode === 'portfolio') {
     const portfolioInitiativeId = initialParams.get('initiativeId');
+    const portfolioInitiativeVersion = Number(initialParams.get('initiativeVersion'));
     return (
       <main aria-label="Portfolio acceptance harness" className="min-h-screen bg-c-app">
         <PortfolioScenarioSurface
           portfolioId="operations-transformation-2027"
           initiatives={
-            portfolioInitiativeId
-              ? [{ id: portfolioInitiativeId, name: 'Automated Changeover Optimization' }]
+            portfolioInitiativeId &&
+            Number.isInteger(portfolioInitiativeVersion) &&
+            portfolioInitiativeVersion > 0
+              ? [
+                  {
+                    id: portfolioInitiativeId,
+                    name: 'Automated Changeover Optimization',
+                    version: portfolioInitiativeVersion,
+                  },
+                ]
               : []
           }
         />

@@ -12,6 +12,12 @@ import { createInitiativesExecutionRuntimeRouter } from '../../../server/src/rou
 
 const databaseUrl = process.env.DATABASE_URL?.trim();
 test.skip(!databaseUrl, 'DATABASE_URL is required for Initiatives/Execution browser acceptance');
+const databaseName = databaseUrl ? new URL(databaseUrl).pathname.slice(1) : '';
+if (databaseUrl && !databaseName.startsWith('consultify_b1_')) {
+  throw new Error(
+    `Initiatives/Execution browser acceptance requires a disposable consultify_b1_ database, received ${databaseName || 'UNKNOWN'}`
+  );
+}
 
 const pool = new Pool({ connectionString: databaseUrl, max: 5 });
 let server: Server;
@@ -31,9 +37,6 @@ test.beforeAll(async () => {
   ]) {
     await pool.query(await readFile(path.resolve('server/migrations', migrationName), 'utf8'));
   }
-  await pool.query(
-    'TRUNCATE initiative_candidates, ie_initiative_card_versions, ie_initiative_card_selection, ie_aggregate_relations, ie_command_receipts, ie_audit_events, ie_outbox_events, ie_aggregate_state RESTART IDENTITY'
-  );
   const app = express();
   app.use(express.json());
   app.use((req, _res, next) => {
@@ -103,9 +106,11 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-  await new Promise<void>((resolve, reject) =>
-    server.close((error) => (error ? reject(error) : resolve()))
-  );
+  if (server) {
+    await new Promise<void>((resolve, reject) =>
+      server.close((error) => (error ? reject(error) : resolve()))
+    );
+  }
   await pool.end();
 });
 
@@ -456,13 +461,13 @@ test('READY_FOR_DECISION → persistent published Portfolio Scenario without lif
 
   await page.setExtraHTTPHeaders({ 'x-e2e-actor': 'portfolio-owner' });
   await page.goto(
-    `/tests/e2e/fixtures/initiatives-execution-aco.html?mode=portfolio&initiativeId=${encodeURIComponent(initiativeId)}`
+    `/tests/e2e/fixtures/initiatives-execution-aco.html?mode=portfolio&initiativeId=${encodeURIComponent(initiativeId)}&initiativeVersion=${frozenVersion}`
   );
   await page.getByRole('button', { name: 'Nowy wariant' }).click();
   await page.getByLabel('Scenario ID').fill(portfolioScenarioId);
   await page.getByRole('button', { name: 'Utwórz wariant' }).click();
   await page.getByLabel('Add Initiative').selectOption(initiativeId);
-  await page.getByLabel(`Version ${initiativeId}`).fill(String(frozenVersion));
+  await expect(page.getByText(`Exact aggregate v${frozenVersion}`)).toBeVisible();
   await page.getByLabel(`Rank ${initiativeId}`).fill('1');
   await page.getByLabel(`Confidence ${initiativeId}`).selectOption('MEDIUM');
   await page
