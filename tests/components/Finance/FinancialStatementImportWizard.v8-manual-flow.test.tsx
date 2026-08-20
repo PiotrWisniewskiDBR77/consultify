@@ -177,7 +177,7 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
     expect(legacyKey).toBe(v8Key);
   });
 
-  it('prefers governed detect/extract/map and canonical lines before legacy fallback in the wizard manual flow', async () => {
+  it('uses governed extract/map without a redundant detect probe in the wizard manual flow', async () => {
     vi.mocked(V8FinanceApi.detectStatement).mockResolvedValue({
       statementId: 'statement-1',
     } as any);
@@ -227,11 +227,7 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
 
     await advanceToMapStep();
 
-    expect(V8FinanceApi.detectStatement).toHaveBeenCalledWith('statement-1', {
-      statementType: 'P&L',
-      periodLabel: '',
-      currency: 'PLN',
-    });
+    expect(V8FinanceApi.detectStatement).not.toHaveBeenCalled();
     expect(V8FinanceApi.extractStatement).toHaveBeenCalledWith('statement-1', {
       statementType: 'P&L',
       periodLabel: '',
@@ -466,11 +462,7 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
 
     await advanceToMapStep();
 
-    expect(V8FinanceApi.detectStatement).toHaveBeenCalledWith('statement-1', {
-      statementType: 'P&L',
-      periodLabel: '',
-      currency: 'PLN',
-    });
+    expect(V8FinanceApi.detectStatement).not.toHaveBeenCalled();
     expect(V8FinanceApi.extractStatement).toHaveBeenCalledWith('statement-1', {
       statementType: 'P&L',
       periodLabel: '',
@@ -478,11 +470,10 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
     });
     expect(V8FinanceApi.mapStatement).toHaveBeenCalledWith('statement-1', {});
     expect(V8FinanceApi.getCanonicalLines).toHaveBeenCalled();
-    expect(Api.post).toHaveBeenCalledWith('/api/finance-statements/statement-1/detect', {
-      statementType: 'P&L',
-      periodLabel: '',
-      currency: 'PLN',
-    });
+    expect(Api.post).not.toHaveBeenCalledWith(
+      '/api/finance-statements/statement-1/detect',
+      expect.anything()
+    );
     expect(Api.post).toHaveBeenCalledWith('/api/finance-statements/statement-1/extract', {
       statementType: 'P&L',
       periodLabel: '',
@@ -786,25 +777,26 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
         periodLabel: '2025',
         currency: 'PLN',
         scaling: 'units',
-        sectionTypes: ['P&L'],
+        sectionTypes: ['P&L', 'BS', 'CF'],
         totalLines: 1,
       },
       statements: [{ statementId: 'smart-1', statementType: 'P&L', lineCount: 1 }],
     } as any);
     vi.mocked(V8FinanceApi.extractStatement).mockResolvedValue({
-      statements: [
-        {
-          statementId: 'smart-1',
-          statementType: 'P&L',
-          periodLabel: '2025',
-          sourceReceiptId: 'receipt-smart-1',
+      statements: (['P&L', 'BS', 'CF'] as const).flatMap((statementType, typeIndex) =>
+        ['2025', '2024'].map((periodLabel, periodIndex) => ({
+          statementId: `smart-${typeIndex}-${periodIndex}`,
+          statementType,
+          periodLabel,
+          sourceReceiptId: `receipt-${typeIndex}-${periodIndex}`,
           lines: [],
-        },
-      ],
+        }))
+      ),
     } as any);
     vi.mocked(V8FinanceApi.mapStatement).mockResolvedValue({
       mappedLines: [
-        { originalLabel: 'Revenue', value: 100, confidence: 0.9, suggestedCanonicalId: 'line-1' },
+        { originalLabel: 'Revenue', value: 100, confidence: 0.9, suggestedCanonicalId: 'line-1', sourceRow: 41 },
+        { originalLabel: 'Revenue detail', value: 90, confidence: 0.9, suggestedCanonicalId: 'line-2', sourceRow: 41 },
       ],
     } as any);
     vi.mocked(V8FinanceApi.getCanonicalLines).mockResolvedValue({
@@ -829,15 +821,22 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
         name: /Extract selected statement section|Extract Financial Lines/,
       })
     );
+    await waitFor(() =>
+      expect(V8FinanceApi.extractStatement).toHaveBeenCalledWith('smart-1', {
+        statementType: '',
+        statementTypes: ['P&L', 'BS', 'CF'],
+        periodLabel: '2025',
+        currency: 'PLN',
+        entityName: 'ACME',
+      })
+    );
+    expect(V8FinanceApi.detectStatement).not.toHaveBeenCalled();
+    expect(screen.getAllByRole('tab')).toHaveLength(6);
     fireEvent.click(await screen.findByRole('button', { name: 'Save & Validate' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Confirm & Save' }));
 
     await waitFor(() =>
-      expect(V8FinanceApi.confirmStatement).toHaveBeenCalledWith(
-        'smart-1',
-        { sourceReceiptId: 'receipt-smart-1', expectedValuesVersion: 7 },
-        'statement-confirm-smart-1-7'
-      )
+      expect(V8FinanceApi.confirmStatement).toHaveBeenCalledTimes(6)
     );
   });
 

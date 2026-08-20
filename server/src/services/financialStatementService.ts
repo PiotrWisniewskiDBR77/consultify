@@ -1717,6 +1717,9 @@ export function extractFinancialLines(
     String(options?.comparisonPeriodLabel || columnSelection.comparisonPeriodLabel || '').trim() ||
     null;
   const rawLines = scopedText.split(/\r?\n/);
+  const hasExplicitNoteColumn = rawLines.slice(0, 30).some(
+    (line) => /(?:^|\t)\s*(?:nota|note)\s*(?:\t|$)/i.test(line) && /(?:19|20)\d{2}/.test(line)
+  );
   let rawTableCount = 0;
   let pendingLabel: string | null = null;
 
@@ -1916,7 +1919,13 @@ export function extractFinancialLines(
 
     return merged;
   };
-  const isLikelyNoteRef = (raw: string, tokenIndex: number, tokenCount: number): boolean => {
+  const isLikelyNoteRef = (
+    raw: string,
+    tokenIndex: number,
+    tokenCount: number,
+    charIndex: number,
+    lineValue: string
+  ): boolean => {
     // Polish listed-company statements render cross-note references as e.g.
     // `10,13`, `15,34`, `17,34`, `20,34`. They are coordinates into the
     // notes, not decimal statement values. Treat both separators identically
@@ -1928,9 +1937,11 @@ export function extractFinancialLines(
       // column with enough later tokens to fill every detected period column.
       // The same glyph in a value column (for example a genuine 10,13 decimal)
       // remains a value.
+      const tabColumn = (lineValue.slice(0, charIndex).match(/\t/g) || []).length;
       return (
         tokenIndex === 0 &&
-        tokenCount >= expectedValueColumns + 1 &&
+        (tokenCount >= expectedValueColumns + 1 ||
+          (hasExplicitNoteColumn && tabColumn === 1 && tokenCount >= 2)) &&
         Number.isFinite(val) &&
         val >= 1 &&
         val < 100
@@ -1947,7 +1958,8 @@ export function extractFinancialLines(
     raw: string,
     index: number,
     tokenIndex: number,
-    tokenCount: number
+    tokenCount: number,
+    lineValue: string
   ): {
     raw: string;
     normalizedValue: number | null;
@@ -1965,7 +1977,7 @@ export function extractFinancialLines(
         periodLabel: cleaned,
       };
     }
-    if (isLikelyNoteRef(cleaned, tokenIndex, tokenCount)) {
+    if (isLikelyNoteRef(cleaned, tokenIndex, tokenCount, index, lineValue)) {
       return {
         raw: cleaned,
         normalizedValue: parseFloat(cleaned),
@@ -1991,18 +2003,35 @@ export function extractFinancialLines(
       periodLabel?: string;
     }>
   ) => {
-    const hasRealValues = numericTokens.some(
+    const inlinePeriodIndex = numericTokens.findIndex((token) => token.tokenType === 'period');
+    const withInlineNoteCoordinates = numericTokens.map((token, index) => {
+      // `Akcje własne 2025 23,24 (22 424)`: 23,24 is a Notes
+      // coordinate because it immediately follows the inline period and a
+      // later financial value exists. `Marża 2025 10,13` remains decimal.
+      const hasLaterValue = numericTokens
+        .slice(index + 1)
+        .some((candidate) => candidate.tokenType === 'value' && candidate.normalizedValue !== null);
+      const isCompoundCoordinate = /^\d{1,2}[.,]\d{1,3}$/.test(token.raw);
+      return inlinePeriodIndex >= 0 &&
+        index === inlinePeriodIndex + 1 &&
+        token.tokenType === 'value' &&
+        isCompoundCoordinate &&
+        hasLaterValue
+        ? { ...token, tokenType: 'note_ref' as const }
+        : token;
+    });
+    const hasRealValues = withInlineNoteCoordinates.some(
       (t) =>
         t.tokenType === 'value' && t.normalizedValue !== null && Math.abs(t.normalizedValue) >= 1
     );
     const expectedPeriodValues = Math.max(1, columnSelection.periodGrid.length);
-    const noteTokens = numericTokens.filter((token) => token.tokenType === 'note_ref');
+    const noteTokens = withInlineNoteCoordinates.filter((token) => token.tokenType === 'note_ref');
     const trailingPeriodTokens = new Set(
       !hasRealValues && noteTokens.length > expectedPeriodValues
         ? noteTokens.slice(-expectedPeriodValues)
         : []
     );
-    return numericTokens.map((token) =>
+    return withInlineNoteCoordinates.map((token) =>
       token.tokenType === 'note_ref' && trailingPeriodTokens.has(token)
         ? { ...token, tokenType: 'value' as const }
         : token
@@ -2112,7 +2141,7 @@ export function extractFinancialLines(
     const numericSpans = extractNumericSpans(line);
     const numericTokens = numericSpans
       .map((match, tokenIndex) =>
-        normalizeNumericToken(match.raw, match.index ?? -1, tokenIndex, numericSpans.length)
+        normalizeNumericToken(match.raw, match.index ?? -1, tokenIndex, numericSpans.length, line)
       )
       .filter((item) => item.index >= 0);
     const effectiveTokens = classifyPeriodValueTokens(numericTokens);
@@ -2121,7 +2150,12 @@ export function extractFinancialLines(
     );
     const effectiveNonNoteTokens = effectiveTokens.filter((t) => t.tokenType !== 'note_ref');
 
-    const requiredPeriodValueCount = comparisonPeriodLabel ? 2 : 1;
+    // A dash in the comparison column is an explicit missing value, not a
+    // reason to discard the current-period row. This is common in official
+    // statements (for example newly acquired treasury shares).
+    const hasExplicitMissingComparison =
+      Boolean(comparisonPeriodLabel) && /(?:\t|\s)[-–—]\s*$/.test(line);
+    const requiredPeriodValueCount = comparisonPeriodLabel && !hasExplicitMissingComparison ? 2 : 1;
     if (
       effectiveNonNoteTokens.length < requiredPeriodValueCount ||
       valueTokens.length < requiredPeriodValueCount
@@ -7590,7 +7624,22 @@ export async function loadStatementSourceText(
   } catch (error) {
     if (!isSchemaCompatError(error)) throw error;
   }
-  return String(fallbackText || '');
+  const suppliedFallback = String(fallbackText || '').trim();
+  if (suppliedFallback) return suppliedFallback;
+
+  // Read DTOs intentionally omit `financial_statements.notes`, so callers
+  // cannot pass legacy extracted text back here. Recover it server-side by
+  // the already tenant-qualified statement id.
+  try {
+    const statement = await dbGet<{ notes?: string | null }>(
+      `SELECT notes FROM financial_statements WHERE id = ?`,
+      [statementId]
+    );
+    return String(statement?.notes || '').trim();
+  } catch (error) {
+    if (!isSchemaCompatError(error)) throw error;
+    return '';
+  }
 }
 
 export async function persistStatementExtractedSections(params: {
