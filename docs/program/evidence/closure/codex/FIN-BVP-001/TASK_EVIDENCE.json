@@ -48,11 +48,19 @@
     "durableBridge": "blocked and rollback telemetry resolves and stores the canonical artifact/business-version pair"
   },
   "browserArtifacts": [],
+  "exactCurrentSignedG4Reconciliation20260820": {
+    "productSha": "de37e301caaa66cf4b11649c215a30d72eff388f",
+    "evidence": "docs/program/evidence/closure/codex/FIN-BVP-001/SIGNED_G4_RECONCILIATION_20260820.json",
+    "result": "AUTOMATED_SIGNED_G4_PASS",
+    "denominator": "3/3 signed specs; 5/5 mounted workspace families; flag safety 2/2",
+    "cleanup": "four fresh disposable databases dropped; database existence 0; advisory locks 0; flag overrides 0",
+    "artifactBoundary": "Passing-run screenshots and traces were not retained by the configured Chromium project, so manual visual/usability/brand acceptance is not claimed."
+  },
   "rollback": {"code": "FINANCE_LEGACY_WRITER_ROLLBACK_ENABLED=true re-enables only the protected legacy approval writer; it does not rewrite canonical data", "data": "the identity-type migration is lossless UUID-to-TEXT; isolated fixtures only"},
   "technicalVerdict": "DONE_CURRENT_SHA",
   "verdict": "PARTIAL",
   "openBlockers": [
-    "G4 signed-in browser proof for all five workspaces, deep links, conflicts and identity readback remains a separate UI/human gate.",
-    "Production reconciliation policy and expansion/rollout beyond the protected default-off legacy writer remain owner decisions; this task does not make them."
+    "Automated signed G4 for all five workspace families passed at de37e301, but passing-run screenshots/traces were not retained and Piotr's manual visual, usability and brand validation remains required before UI acceptance.",
+    "Production reconciliation policy and expansion/rollout beyond the protected default-off legacy writer remain owner/release decisions; this task does not make them."
   ]
 }

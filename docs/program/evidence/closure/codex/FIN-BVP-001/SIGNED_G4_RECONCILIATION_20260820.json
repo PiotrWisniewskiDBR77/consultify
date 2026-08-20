@@ -1,0 +1,81 @@
+{
+  "taskId": "FIN-BVP-001",
+  "gate": "REPOSITORY_LOCAL_SIGNED_G4",
+  "productSha": "de37e301caaa66cf4b11649c215a30d72eff388f",
+  "worktree": "/private/tmp/consultify-fin-bvp-g4-1665",
+  "executedAt": "2026-08-20",
+  "environment": {
+    "browser": "Chromium",
+    "workers": 1,
+    "retries": 0,
+    "router": "real mounted frontend and backend",
+    "persistence": "fresh disposable PostgreSQL per signed spec",
+    "requestInterception": false,
+    "mockPersistence": false,
+    "identityOrFlagStorageInjection": false
+  },
+  "commands": [
+    {
+      "scope": "Baseline, Prediction and Analysis",
+      "spec": "tests/e2e/finance/finance-bvp-five-workspaces.signed.spec.ts",
+      "result": "1/1 PASS",
+      "duration": "1.4m",
+      "logSha256": "d84c16216d5f4fd751797aef7f56e689c3578a18ff991c57183e5a75212fc9a5",
+      "database": "fin_bvp_g4_de37_core",
+      "locksAfter": 0,
+      "databaseExistenceAfterDrop": 0
+    },
+    {
+      "scope": "Statement",
+      "spec": "tests/e2e/finance/finance-import.signed.spec.ts",
+      "result": "1/1 PASS",
+      "duration": "1.3m",
+      "logSha256": "bfd435df3ebe0eda43be91a9affd20ee345c92eea47f2807dd8d550293dd6f69",
+      "database": "fin_bvp_g4_de37_stmt",
+      "locksAfter": 0,
+      "databaseExistenceAfterDrop": 0
+    },
+    {
+      "scope": "Valuation",
+      "spec": "tests/e2e/finance/finance-valuation-assumptions.signed.spec.ts",
+      "result": "1/1 PASS",
+      "duration": "1.3m",
+      "logSha256": "5cd524ef4ce38fcd8fe9e8f18a97a537399948beac87ba3eb09127de01b590e8",
+      "database": "fin_bvp_g4_de37_val",
+      "locksAfter": 0,
+      "databaseExistenceAfterDrop": 0
+    },
+    {
+      "scope": "Feature flag fixture safety",
+      "spec": "tests/e2e/ui-canon-g4/flag-fixture-safety.spec.ts",
+      "result": "2/2 PASS",
+      "duration": "2.0m",
+      "logSha256": "7674c8c0e22ff4c55f9aa047dff3e5d65c8b3ac449c117c20331c33db2cfab85",
+      "database": "fin_bvp_g4_de37_flags",
+      "locksAfter": 0,
+      "flagOverridesAfter": 0,
+      "databaseExistenceAfterDrop": 0
+    }
+  ],
+  "denominator": {
+    "signedSpecs": "3/3",
+    "flagSafety": "2/2",
+    "mountedWorkspaceFamilies": "5/5",
+    "workspaceFamilies": ["statement", "baseline", "prediction", "analysis", "valuation"],
+    "foreignDenials": "5/5",
+    "memberAndRevokedDenials": "5/5"
+  },
+  "qualifiedBehavior": {
+    "statement": "signed XLSX confirmation, canonical registration/import and cold reopen",
+    "baseline": "mounted assumption write and cold owner-table readback",
+    "prediction": "mounted draft save, same-key replay, stale conflict, preserved local edit, explicit authoritative reload and cold readback",
+    "analysis": "mounted compute and cold KPI row readback scoped to CURRENT_RATIO",
+    "valuation": "mounted WACC write plus recommendation preview, explicit confirm, durable candidate/receipt and new-signed-context candidate deep link"
+  },
+  "verdict": "AUTOMATED_SIGNED_G4_PASS",
+  "boundaries": [
+    "No passing-run screenshots or traces were retained by the configured Playwright project; visual and usability acceptance is therefore not claimed.",
+    "Manual visual, usability and brand validation by Piotr remains a separate required acceptance gate for every active tool/workspace UI.",
+    "No push, deployment, production rollout or release was performed or authorized."
+  ]
+}
