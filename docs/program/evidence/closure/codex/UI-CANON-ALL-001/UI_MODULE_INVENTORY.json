@@ -308,7 +308,7 @@
       "taskId": "ADM-UI-CANON-001",
       "evidencePath": "docs/program/evidence/closure/codex/ADM-UI-CANON-001/TASK_EVIDENCE.json",
       "g4ResultPath": "docs/program/evidence/closure/ui-g4/ADM-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "classification": "TECHNICAL_CURRENT_WITH_GAPS",
+      "classification": "TECHNICAL_CURRENT",
       "routes": ["/admin", "/superadmin/system"],
       "surfaces": ["IAM", "audit", "health", "backup read-only characterization"],
       "stateCoverage": {
@@ -321,10 +321,7 @@
         "success": "covered",
         "stale": "partial"
       },
-      "openGaps": [
-        "mobile interstitial and final small-screen Admin navigation owner disposition",
-        "deployed-environment Admin runtime observation"
-      ]
+      "openGaps": []
     },
     {
       "moduleId": "SET",

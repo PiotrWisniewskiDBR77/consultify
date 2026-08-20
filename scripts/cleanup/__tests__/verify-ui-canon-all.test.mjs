@@ -18,8 +18,8 @@ test('accepts the exact sixteen-module current evidence inventory', () => {
   assert.equal(result.modules, 16);
   assert.equal(result.frozenModulePackets, 15);
   assert.deepEqual(result.missingFrozenModulePackets, ['AUD']);
-  assert.equal(result.technicalCurrent, 7);
-  assert.equal(result.technicalCurrentWithGaps, 8);
+  assert.equal(result.technicalCurrent, 8);
+  assert.equal(result.technicalCurrentWithGaps, 7);
   assert.equal(result.aggregateVerdictCeiling, 'PARTIAL');
 });
 

@@ -211,13 +211,8 @@
     "code": "revert b95518f212 before deployment",
     "data": "no schema or production data change"
   },
-  "verdict": "PARTIAL",
-  "openBlockers": [
-    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
-    "The mobile interstitial and final small-screen Admin navigation behavior remain an owner/UI acceptance decision outside this bounded packet.",
-    "No deployed-environment Admin runtime observation was authorized or performed.",
-    "Backup was characterized as read-only with zero restore calls; backup create/export, encryption, restore, RPO and RTO are not proved by this UI packet."
-  ],
+  "verdict": "DONE_CURRENT_SHA",
+  "openBlockers": [],
   "blockerReconciliation": [
     {
       "historicalBlocker": "Authenticated responsive and axe browser journey did not complete.",
@@ -310,5 +305,13 @@
       "notFound404": 0,
       "other": 0
     }
+  },
+  "internalBetaClosure20260820": {
+    "candidateProductSha": "e6ca206c0035f653118d9aadbfddf61d452ab52e",
+    "deployedJourney": "PASS: invitation command replayed, cold-opened and revoked with exact readback in STG-JOURNEY-16.",
+    "staleRecovery": "PASS: mounted role command recovered authoritative stale truth and a subsequent explicit intent succeeded.",
+    "responsive": "PASS at 390, 768 and 1440 with axe critical/serious zero in the bounded Admin qualification.",
+    "ownerDecision": "D6=B automated evidence accepted for internal beta",
+    "nonclaim": "Backup create/export, encryption, production restore, RPO and RTO remain in ADM-MVP-BACKUP-001 and are not claimed by this UI verdict."
   }
 }

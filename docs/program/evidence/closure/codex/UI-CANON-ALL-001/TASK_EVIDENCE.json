@@ -29,7 +29,7 @@
     {
       "command": "node scripts/cleanup/verify-ui-canon-all.mjs",
       "exitCode": 0,
-      "result": "16 modules; 15 frozen packets; AUD missing explicitly; 7 technical-current; 8 technical-current with gaps; internal-beta human gate waived by owner; 15 referenced result hashes verified; verdict ceiling PARTIAL"
+      "result": "16 modules; 15 frozen packets; AUD missing explicitly; 8 technical-current; 7 technical-current with gaps; internal-beta human gate waived by owner; 15 referenced result hashes verified; verdict ceiling PARTIAL"
     },
     {
       "command": "node --test scripts/cleanup/__tests__/verify-ui-canon-all.test.mjs",
@@ -58,8 +58,8 @@
     "currentFrozenModulePackets": "15/16",
     "currentMissingFrozenModulePackets": ["AUD"],
     "currentTechnicalHumanOnly": "0/16 after D6=B internal-beta waiver",
-    "currentTechnicalComplete": "7/16",
-    "currentTechnicalWithTaskGaps": "8/16",
+    "currentTechnicalComplete": "8/16",
+    "currentTechnicalWithTaskGaps": "7/16",
     "currentVerifiedResultHashes": "15/15 referenced",
     "aggregatorTests": "3/3",
     "automatedG4Surfaces": "15/15",
@@ -75,7 +75,7 @@
     "executionPermissionRequalificationSha": "287aab619142f2990d46d04d04faaccb1cadf696"
   },
   "fixtures": {
-    "status": "Exact-current mounted sweep covers all fifteen frozen UI authority packets at three viewports, two themes and two locales. Audit has no frozen task in the 82-task authority; eight task-specific technical journeys remain. Human acceptance is waived for internal beta by D6=B."
+    "status": "Exact-current mounted sweep covers all fifteen frozen UI authority packets at three viewports, two themes and two locales. Audit has no frozen task in the 82-task authority; seven task-specific technical journeys remain. Human acceptance is waived for internal beta by D6=B."
   },
   "negativeControls": {
     "localScreenshotsNotAcceptedAsAggregatePass": true,
@@ -169,11 +169,11 @@
   },
   "verdict": "PARTIAL",
   "blockers": [
-    "Close the task-specific technical gaps recorded in eight module inventories.",
+    "Close the task-specific technical gaps recorded in seven module inventories.",
     "Create or authorize a frozen-82 Audit UI module packet; the current proposal remains outside authority."
   ],
   "openBlockers": [
-    "Eight module inventories retain task-specific state, reachability, policy, error or concurrency gaps; UI_MODULE_INVENTORY.json is authoritative for the exact list.",
+    "Seven module inventories retain task-specific state, reachability, policy, error or concurrency gaps; UI_MODULE_INVENTORY.json is authoritative for the exact list.",
     "The proposed Audit UI surface is outside the 82-task authority and remains MISSING_FROZEN_MODULE_PACKET.",
     "The exact-current sweep covers every frozen UI packet, but states explicitly listed in each result's statesNotPresent remain unproven by the aggregate sweep and require their task-specific journeys."
   ],
