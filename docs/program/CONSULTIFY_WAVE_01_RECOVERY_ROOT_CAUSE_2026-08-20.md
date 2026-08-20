@@ -1,6 +1,6 @@
 # Consultify — Wave 01: Recovery & Root Cause
 
-Status: `IN_PROGRESS`  
+Status: `PASS`
 Branch integracyjny: `codex/full-mvp-recovery-20260820`  
 Punkt startowy: `737917bb92`  
 Budżet kalendarzowy: 24–48 godzin ciągłej pracy  
@@ -152,3 +152,13 @@ Jeśli jeden element jest zablokowany zewnętrznie, dopuszczalne jest `PARTIAL_W
 - decyzje wymagane od Piotra;
 - skorygowany przedział czasu do MVP;
 - gotowe polecenia dla wykonawców Wave 02.
+
+## Wynik końcowy
+
+Brama Wave 01: `PASS`.
+
+- Finance root cause: potwierdzony konflikt starego indeksu type-only z kontraktem exact-six; istnieje reprodukcja i dokładny fix packet.
+- Chat NFR: `DONE_CURRENT_SHA`; zewnętrzny provider window przeniesiony zgodnie z decyzją właścicielską do bramki wydania. Reporter: 72 `DONE_CURRENT_SHA` / 10 `PARTIAL`, 0 missing, 0 invalid.
+- Teresa/UI: inwentaryzacja potwierdziła pełny parytet w Idea Workspace, częściowy zakres Dynamic SWOT i brak globalnego mianownika aplikacji; powstał kontrakt federacji.
+- Recovery: krytyczne źródła sklasyfikowane; Finance jest małym portem po naprawie, Results/Transform już są w kanonie, SWOT pozostaje chronionym pięciościeżkowym checkpointem.
+- Wave 02 ma zamknięty, rozłączny backlog w `docs/program/waves/WAVE_02_CORE_CLOSURE_BACKLOG.md`.
