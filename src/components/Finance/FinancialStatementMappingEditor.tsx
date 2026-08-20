@@ -1,4 +1,4 @@
-import { AlertTriangle, Edit3, Search, X } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Edit3, Search, ShieldCheck, X } from 'lucide-react';
 import React, { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -28,6 +28,7 @@ interface Props {
   onValueChange: (idx: number, field: string, val: any) => void;
   onCanonicalChange: (idx: number, canonId: string) => void;
   onVerifiedChange?: (idx: number, verified: boolean) => void;
+  onVerifyAllReady?: () => void;
   className?: string;
 }
 
@@ -209,6 +210,7 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
   onValueChange,
   onCanonicalChange,
   onVerifiedChange,
+  onVerifyAllReady,
   className = '',
 }) => {
   const { t, i18n } = useTranslation();
@@ -227,6 +229,12 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
   const mappedCount = mappedValues.filter((v) => v.canonicalLineId).length;
   const unmappedCount = mappedValues.length - mappedCount;
   const reviewCount = mappedValues.filter((v) => v.mappingTier === 'review_required').length;
+  const readyForManualVerificationCount = mappedValues.filter(
+    (value) =>
+      Boolean(value.canonicalLineId) &&
+      !value.userVerified &&
+      (value.mappingStatus === 'manual' || value.mappingTier === 'review_required')
+  ).length;
 
   return (
     <div
@@ -282,7 +290,17 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
               </th>
               <th className="w-10" />
               <th className="px-3 py-2.5 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
-                {t('finance.mappingEditor.verified', 'Verified')}
+                <div className="flex flex-col items-center gap-1.5">
+                  <span>{t('finance.mappingEditor.verified', 'Verified')}</span>
+                  <button
+                    type="button"
+                    onClick={onVerifyAllReady}
+                    disabled={readyForManualVerificationCount === 0}
+                    className="whitespace-nowrap rounded-md border border-emerald-300 px-2 py-1 text-[9px] font-semibold normal-case tracking-normal text-emerald-700 transition-colors hover:bg-emerald-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400 dark:border-emerald-500/30 dark:text-emerald-300 dark:hover:bg-emerald-500/10 dark:disabled:border-white/[0.06] dark:disabled:text-slate-600"
+                  >
+                    {t('finance.mappingEditor.verifyAllReady', 'Verify all ready')} ({readyForManualVerificationCount})
+                  </button>
+                </div>
               </th>
             </tr>
           </thead>
@@ -360,18 +378,52 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
                   </button>
                 </td>
                 <td className="px-3 py-2 text-center">
-                  <label className="inline-flex items-center gap-1.5 text-[10px] text-slate-600 dark:text-slate-300">
-                    <input
-                      type="checkbox"
-                      checked={Boolean(value.userVerified)}
-                      disabled={!value.canonicalLineId}
-                      onChange={(event) => onVerifiedChange?.(idx, event.target.checked)}
-                      aria-label={`${value.originalLabel} ${t('finance.mappingEditor.verified', 'Verified')}`}
-                    />
-                    {value.userVerified
-                      ? t('finance.mappingEditor.userVerified', 'User verified')
-                      : ''}
-                  </label>
+                  {value.userVerified ? (
+                    <label className="inline-flex items-center gap-1.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-300">
+                      <input
+                        type="checkbox"
+                        checked
+                        onChange={(event) => onVerifiedChange?.(idx, event.target.checked)}
+                        aria-label={`${value.originalLabel} ${t('finance.mappingEditor.userVerified', 'User verified')}`}
+                      />
+                      <CheckCircle2 size={13} />
+                      {t('finance.mappingEditor.userVerified', 'User verified')}
+                    </label>
+                  ) : value.canonicalLineId &&
+                    value.mappingTier !== 'review_required' &&
+                    value.mappingStatus !== 'manual' ? (
+                    <span className="inline-flex items-center gap-1.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-300">
+                      <ShieldCheck size={14} />
+                      {t('finance.mappingEditor.systemVerified', 'System verified')}
+                    </span>
+                  ) : (
+                    <label
+                      className={`inline-flex items-center gap-1.5 text-[10px] ${
+                        value.canonicalLineId
+                          ? 'cursor-pointer font-medium text-amber-700 dark:text-amber-300'
+                          : 'cursor-not-allowed text-slate-400 dark:text-slate-600'
+                      }`}
+                      title={
+                        value.canonicalLineId
+                          ? t('finance.mappingEditor.confirmMapping', 'Confirm this mapping')
+                          : t(
+                              'finance.mappingEditor.mapBeforeVerify',
+                              'Select a target category before verification'
+                            )
+                      }
+                    >
+                      <input
+                        type="checkbox"
+                        checked={false}
+                        disabled={!value.canonicalLineId}
+                        onChange={(event) => onVerifiedChange?.(idx, event.target.checked)}
+                        aria-label={`${value.originalLabel} ${t('finance.mappingEditor.verified', 'Verified')}`}
+                      />
+                      {value.canonicalLineId
+                        ? t('finance.mappingEditor.verifyManually', 'Verify')
+                        : t('finance.mappingEditor.mapFirst', 'Map first')}
+                    </label>
+                  )}
                 </td>
               </tr>
             ))}

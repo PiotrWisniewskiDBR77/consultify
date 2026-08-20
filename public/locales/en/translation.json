@@ -18943,7 +18943,15 @@
       "sourceFile": "Source file",
       "doneGoToReview": "Done — go to review",
       "errorsLabel": "errors",
-      "warningsLabel": "warnings"
+      "warningsLabel": "warnings",
+      "validationPass": "Statement is balanced and ready to close",
+      "validationWarnings": "Statement still requires completion",
+      "backToBlockingItems": "Return to blocking items",
+      "confirmAndSave": "Close balanced statement",
+      "closureChecklist": "Statement closure checklist",
+      "closureChecklistHint": "Every section and period must pass mapping, human review when required, and consistency checks.",
+      "readyToClose": "Ready to close",
+      "requiresCompletion": "Requires completion"
     },
     "lane": {
       "kpi": {
@@ -19083,7 +19091,15 @@
       "noResults": "No results",
       "mapped": "mapped",
       "unmappedCount": "unmapped",
-      "toReview": "to review"
+      "toReview": "to review",
+      "verified": "Verification",
+      "userVerified": "User verified",
+      "systemVerified": "System verified",
+      "verifyAllReady": "Verify all ready",
+      "verifyManually": "Verify",
+      "mapFirst": "Map first",
+      "mapBeforeVerify": "Select a target category before verification",
+      "confirmMapping": "Confirm this mapping"
     },
     "explainPanel": {
       "evidenceType": {

@@ -790,7 +790,7 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
 
   it('fails closed when any staged statement is not ready', async () => {
     await stageTwoStatementSections('recoverable');
-    expect(await screen.findByText(/BS 2025: mapping requires review/)).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Return to blocking items' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Confirm & Save' })).not.toBeInTheDocument();
     expect(V8FinanceApi.confirmStatement).not.toHaveBeenCalled();
   });

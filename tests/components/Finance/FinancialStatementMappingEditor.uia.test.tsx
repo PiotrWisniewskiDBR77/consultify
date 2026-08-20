@@ -45,4 +45,43 @@ describe('FinancialStatementMappingEditor acceptance states', () => {
     expect(onVerifiedChange).toHaveBeenCalledWith(0, true);
     expect(onCanonicalChange).not.toHaveBeenCalled();
   });
+
+  it('distinguishes system verification and lets the user verify every eligible reviewed row', () => {
+    const onVerifiedChange = vi.fn();
+    const onVerifyAllReady = vi.fn();
+    render(
+      <FinancialStatementMappingEditor
+        mappedValues={[
+          {
+            originalLabel: 'Przychody', value: 100, confidence: 0.9,
+            canonicalLineId: 'revenue', mappingStatus: 'auto', mappingTier: 'auto',
+          },
+          {
+            originalLabel: 'Koszty pozostałe', value: 20, confidence: 0.6,
+            canonicalLineId: 'other-costs', mappingStatus: 'manual',
+            mappingTier: 'review_required',
+          },
+          {
+            originalLabel: 'Nieznana pozycja', value: 5, confidence: 0.4,
+            canonicalLineId: null, mappingStatus: 'unmapped', mappingTier: 'review_required',
+          },
+        ]}
+        canonicalLines={[
+          { id: 'revenue', line_name: 'Revenue', line_name_pl: 'Przychody' },
+          { id: 'other-costs', line_name: 'Other costs', line_name_pl: 'Koszty pozostałe' },
+        ]}
+        onValueChange={vi.fn()}
+        onCanonicalChange={vi.fn()}
+        onVerifiedChange={onVerifiedChange}
+        onVerifyAllReady={onVerifyAllReady}
+      />
+    );
+
+    expect(screen.getByText('System verified')).toBeInTheDocument();
+    expect(screen.getByText('Map first')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Verify all ready (1)' }));
+    expect(onVerifyAllReady).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByLabelText('Koszty pozostałe Verified'));
+    expect(onVerifiedChange).toHaveBeenCalledWith(1, true);
+  });
 });

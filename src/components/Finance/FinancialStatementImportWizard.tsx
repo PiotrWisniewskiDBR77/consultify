@@ -679,7 +679,9 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
         const valuesVersion = Number((data as any)?.valuesVersion || 0);
         let decisionReadiness: ReadinessState | null = null;
         for (const value of review.mappedValues) {
-          if (value.mappingStatus !== 'manual' || !value.userVerified) continue;
+          const requiresHumanDecision =
+            value.mappingStatus === 'manual' || value.mappingTier === 'review_required';
+          if (!requiresHumanDecision || !value.userVerified) continue;
           if (!review.sourceReceiptId)
             throw new Error(`${review.statementType}: source receipt is required`);
           const body = {
@@ -741,10 +743,6 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
           }
         }
         lastData = decisionReadiness ? { ...data, readiness: decisionReadiness } : data;
-        if (!ready)
-          throw new Error(
-            `${review.statementType} ${review.periodLabel || ''}: mapping requires review`
-          );
       }
       setReviewStatements(saved);
       setValidation(lastData?.validation || null);
@@ -767,6 +765,10 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
         statementId,
         lineCount: mappedValues.length,
       });
+      // The confirmation step is also the governed closure workbench. A
+      // recoverable statement must reach it so the user can see the exact
+      // balancing/mapping blockers and return to the affected rows. Readiness
+      // still controls the final close action on both UI and server.
       setStep('confirm');
     } catch (e: any) {
       setError(e?.response?.data?.error || e?.message || String(e));
@@ -802,6 +804,15 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleReturnToBlockingItems = () => {
+    const blockingReview = reviewStatements.find((item) => !item.savedReady);
+    if (blockingReview) {
+      setActiveReviewStatementId(blockingReview.statementId);
+      setMappedValues(blockingReview.mappedValues);
+    }
+    setStep('map');
   };
 
   // ── Rendering ──
@@ -1453,6 +1464,28 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                 )
               );
             }}
+            onVerifyAllReady={() => {
+              const verifyEligible = (value: MappedValue) =>
+                Boolean(value.canonicalLineId) &&
+                (value.mappingStatus === 'manual' || value.mappingTier === 'review_required');
+              setMappedValues((current) =>
+                current.map((value) =>
+                  verifyEligible(value) ? { ...value, userVerified: true } : value
+                )
+              );
+              setReviewStatements((current) =>
+                current.map((item) =>
+                  item.statementId === activeReviewStatementId
+                    ? {
+                        ...item,
+                        mappedValues: item.mappedValues.map((value) =>
+                          verifyEligible(value) ? { ...value, userVerified: true } : value
+                        ),
+                      }
+                    : item
+                )
+              );
+            }}
           />
 
           {mappedValues.length === 0 && (
@@ -1656,6 +1689,56 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
       {/* Step 4: Confirm — Manual flow (old) */}
       {step === 'confirm' && !smartAnalysis && validation && (
         <div className="max-w-2xl mx-auto space-y-6">
+          <section
+            className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-white/[0.08] dark:bg-navy-900"
+            aria-label={t('finance.importWizard.closureChecklist', 'Statement closure checklist')}
+          >
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div>
+                <h3 className="font-semibold text-slate-900 dark:text-white">
+                  {t('finance.importWizard.closureChecklist', 'Statement closure checklist')}
+                </h3>
+                <p className="text-xs text-slate-500">
+                  {t(
+                    'finance.importWizard.closureChecklistHint',
+                    'Every section and period must pass mapping, human review when required, and consistency checks.'
+                  )}
+                </p>
+              </div>
+              <span className="text-xs font-medium text-slate-500">
+                {reviewStatements.filter((item) => item.savedReady).length}/
+                {reviewStatements.length}
+              </span>
+            </div>
+            <div className="space-y-2">
+              {reviewStatements.map((item) => (
+                <button
+                  key={item.statementId}
+                  type="button"
+                  onClick={() => {
+                    setActiveReviewStatementId(item.statementId);
+                    setMappedValues(item.mappedValues);
+                    if (!item.savedReady) setStep('map');
+                  }}
+                  className="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-200 px-3 py-2 text-left hover:bg-slate-50 dark:border-white/[0.08] dark:hover:bg-white/[0.03]"
+                >
+                  <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                    {item.statementType} · {item.periodLabel}
+                  </span>
+                  <span
+                    className={`inline-flex items-center gap-1 text-xs font-semibold ${
+                      item.savedReady ? 'text-emerald-600' : 'text-amber-600'
+                    }`}
+                  >
+                    {item.savedReady ? <CheckCircle2 size={14} /> : <AlertTriangle size={14} />}
+                    {item.savedReady
+                      ? t('finance.importWizard.readyToClose', 'Ready to close')
+                      : t('finance.importWizard.requiresCompletion', 'Requires completion')}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </section>
           {/* Readiness gauge + validation summary */}
           <div
             className={`overflow-hidden rounded-2xl border ${
@@ -1709,10 +1792,10 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                 <div className="min-w-0 flex-1">
                   <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                     {isReadyForConfirm
-                      ? t('finance.importWizard.validationPass', 'All validations passed')
+                      ? t('finance.importWizard.validationPass', 'Statement is balanced and ready to close')
                       : readiness?.readinessStatus === 'recoverable' ||
                           validation.status === 'warnings'
-                        ? t('finance.importWizard.validationWarnings', 'Imported with warnings')
+                        ? t('finance.importWizard.validationWarnings', 'Statement still requires completion')
                         : t('finance.importWizard.validationErrors', 'Review required')}
                   </h3>
                   <div className="mt-1 flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
@@ -1868,14 +1951,14 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
 
           <div className="flex gap-3">
             <button
-              onClick={() => setStep('map')}
+              onClick={handleReturnToBlockingItems}
               className="flex items-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-navy-600 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800"
             >
               <ChevronLeft size={16} /> {t('finance.importWizard.backToMapping', 'Back to Mapping')}
             </button>
             <button
-              onClick={handleConfirm}
-              disabled={loading || !isReadyForConfirm}
+              onClick={isReadyForConfirm ? handleConfirm : handleReturnToBlockingItems}
+              disabled={loading}
               className="flex-1 flex items-center justify-center gap-2 px-6 py-2.5 bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-500 disabled:opacity-50"
             >
               {loading ? (
@@ -1885,7 +1968,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
               )}
               {isReadyForConfirm
                 ? t('finance.importWizard.confirmAndSave', 'Confirm & Save')
-                : t('finance.importWizard.reviewBeforeConfirm', 'Fix mapping to continue')}
+                : t('finance.importWizard.backToBlockingItems', 'Return to blocking items')}
             </button>
           </div>
         </div>
