@@ -1,13 +1,13 @@
 {
   "taskId": "AUD-UI-CANON-001",
-  "kind": "NON_AUTHORITY_TASK_PROPOSAL",
-  "authorityStatus": "NON_AUTHORITY_PROPOSAL",
-  "verdict": "BLOCKED_HUMAN",
-  "authorityMutation": false,
+  "kind": "AUTHORIZED_INTERNAL_BETA_AUTHORITY_AMENDMENT",
+  "authorityStatus": "AUTHORIZED_SUPPLEMENTAL_INTERNAL_BETA",
+  "verdict": "DONE_CURRENT_SHA",
+  "authorityMutation": true,
   "authorityTaskDenominatorBefore": 82,
-  "authorityTaskDenominatorAfter": 82,
+  "authorityTaskDenominatorAfter": "82_CORE_PLUS_1_SUPPLEMENTAL_INTERNAL_BETA",
   "allocationOrLease": "NONE",
-  "reason": "Automated G4 is current-SHA PASS for the proposed sixteenth Audit surface, but the proposal remains outside the 82-task authority denominator and requires human VoiceOver, brand and persona acceptance.",
+  "reason": "Piotr explicitly authorized the existing Audit UI as a supplemental internal-beta authority packet and accepted its automated evidence instead of human UAT. Production release and new Audit scope remain unauthorized.",
   "proposedScope": {
     "route": "/audit-programs and governed Audit deep links",
     "states": [
@@ -35,8 +35,13 @@
     "SCREENS_SHA256.txt: 19 exact screenshot hashes",
     "PostgreSQL migration ledger 756; repeat 0; dry-run 0; reconciliation SHA 8883e410b8fa5ad4c67421f16804062cf40e8416"
   ],
-  "humanAcceptance": "PENDING",
-  "releasePredecessorSatisfied": false,
-  "nextAuthorityAction": "Complete human VoiceOver, brand and persona acceptance, then explicitly decide whether to admit this proposed sixteenth surface into authority.",
-  "prohibitedInference": "This placeholder is not proof of route reachability, UI acceptance, module completion or release readiness."
+  "humanAcceptance": "WAIVED_FOR_INTERNAL_BETA_BY_OWNER",
+  "releasePredecessorSatisfied": true,
+  "nextAuthorityAction": "None for internal-beta UI authority; production deployment remains a separate REL-001 decision.",
+  "ownerAuthorization": {
+    "date": "2026-08-20",
+    "decision": "AUTHORIZED_EXISTING_AUDIT_UI_AUTOMATED_UAT",
+    "statement": "Autoryzuję dodanie AUD-UI-CANON-001 do authority internal beta w ograniczonym zakresie istniejącego Audit UI i akceptuję jego automatyczne dowody jako UAT."
+  },
+  "prohibitedInference": "This authorization does not permit production deployment, licensed audit content, a new Audit surface or scope beyond the existing mounted Audit UI."
 }

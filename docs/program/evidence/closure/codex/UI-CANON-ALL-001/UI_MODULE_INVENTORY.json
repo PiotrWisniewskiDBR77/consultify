@@ -232,28 +232,24 @@
     {
       "moduleId": "AUD",
       "module": "Audits",
-      "taskId": null,
-      "evidencePath": null,
+      "taskId": "AUD-UI-CANON-001",
+      "evidencePath": "docs/program/evidence/closure/codex/AUD-UI-CANON-001/TASK_EVIDENCE.json",
       "g4ResultPath": "docs/program/evidence/closure/ui-g4/AUD-UI-CANON-001/G4_SWEEP_RESULT.json",
       "proposalPath": "docs/program/evidence/closure/ui-g4/AUD-UI-CANON-001/PROPOSAL_EVIDENCE.json",
-      "classification": "MISSING_FROZEN_MODULE_PACKET",
+      "classification": "TECHNICAL_CURRENT",
       "routes": ["/audit-programs"],
       "surfaces": ["program list", "program lifecycle", "findings and evidence"],
       "stateCoverage": {
-        "default": "historical",
-        "loading": "open",
-        "empty": "historical",
-        "error": "open",
-        "permission": "open",
-        "conflict": "open",
-        "success": "historical",
-        "stale": "open"
+        "default": "covered",
+        "loading": "covered",
+        "empty": "covered",
+        "error": "covered",
+        "permission": "covered",
+        "conflict": "covered",
+        "success": "covered",
+        "stale": "covered"
       },
-      "openGaps": [
-        "no frozen-82 AUD-UI-CANON-001 authority task",
-        "proposal evidence is not completion evidence",
-        "frozen-82 authority decision"
-      ]
+      "openGaps": []
     },
     {
       "moduleId": "MTG",

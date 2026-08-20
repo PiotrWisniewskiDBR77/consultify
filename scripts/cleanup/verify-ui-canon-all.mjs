@@ -80,25 +80,22 @@ for (const entry of modules) {
   }
   if (!existsSync(absolute(entry.g4ResultPath))) fail(`${entry.moduleId}: missing G4 result`);
 
-  if (entry.moduleId === 'AUD') {
-    if (
-      entry.classification !== 'MISSING_FROZEN_MODULE_PACKET' ||
-      entry.taskId !== null ||
-      entry.evidencePath !== null
-    ) {
-      fail('Audits must remain MISSING_FROZEN_MODULE_PACKET with no synthetic authority evidence');
-    }
-    if (!entry.proposalPath || !existsSync(absolute(entry.proposalPath)))
-      fail('Audits proposal must remain explicitly referenced');
-    continue;
-  }
-
   if (!entry.taskId || !frozenTasks.has(entry.taskId))
     fail(`${entry.moduleId}: task is not in frozen authority`);
   if (!entry.evidencePath || !existsSync(absolute(entry.evidencePath)))
     fail(`${entry.moduleId}: evidence missing`);
   const evidence = readJson(entry.evidencePath);
   if (evidence.taskId !== entry.taskId) fail(`${entry.moduleId}: evidence taskId mismatch`);
+  if (entry.moduleId === 'AUD') {
+    if (!entry.proposalPath || !existsSync(absolute(entry.proposalPath)))
+      fail('Audits historical proposal must remain explicitly referenced');
+    if (
+      evidence.internalBetaOwnerAuthorization?.decision !==
+      'AUTHORIZED_EXISTING_AUDIT_UI_AUTOMATED_UAT'
+    ) {
+      fail('Audits requires the exact internal-beta owner authorization');
+    }
+  }
   if (!evidence.denominators || Object.keys(evidence.denominators).length === 0)
     fail(`${entry.moduleId}: evidence denominators missing`);
   if (!commitExists(evidence.productSha)) fail(`${entry.moduleId}: unknown productSha`);
@@ -140,6 +137,9 @@ const result = {
   ).length,
   technicalCurrent: modules.filter((entry) => entry.classification === 'TECHNICAL_CURRENT').length,
   verifiedHashReferences,
-  aggregateVerdictCeiling: 'PARTIAL',
+  aggregateVerdictCeiling:
+    modules.every((entry) => entry.classification === 'TECHNICAL_CURRENT')
+      ? 'DONE_CURRENT_SHA_INTERNAL_BETA'
+      : 'PARTIAL',
 };
 console.log(JSON.stringify(result, null, 2));

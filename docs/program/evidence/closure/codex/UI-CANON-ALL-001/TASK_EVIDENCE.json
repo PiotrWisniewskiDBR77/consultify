@@ -17,8 +17,8 @@
       "docs/program/evidence/closure/codex/UI-CANON-ALL-001/TASK_EVIDENCE.json"
     ],
     "scope": "Consumes existing module evidence without replaying or duplicating module E2E. Validates exactly sixteen route/surface/state inventories, frozen authority identity, evidence denominators, commit ancestry or explicit reconciliation, and referenced G4 result hashes.",
-    "auditDisposition": "Audits is explicitly MISSING_FROZEN_MODULE_PACKET. Its outside-authority proposal and historical G4 result are inventory inputs only and can never be promoted to synthetic completion by this aggregator.",
-    "runtimeClaim": "The aggregate consumes the exact mounted browser sweep on SHA 4eec1d27952bc5642018495575665f5784e04f71 plus later module-specific exact-current Results and Finance qualifications and verified ancestry/reconciliation through product SHA 0115b8bb8534b72ac4aa1d7411b60ecff3c30b56. Audit remains outside the frozen-82 authority and was not promoted."
+    "auditDisposition": "Piotr explicitly admitted the existing AUD-UI-CANON-001 surface as a supplemental internal-beta authority packet and accepted its automated evidence instead of human UAT. The historical 74+8 denominator and production-release boundary remain unchanged.",
+    "runtimeClaim": "The aggregate consumes the exact mounted browser sweep on SHA 4eec1d27952bc5642018495575665f5784e04f71, the Audit G4 on e6ca206c0035f653118d9aadbfddf61d452ab52e, and later module-specific exact-current Results and Finance qualifications with verified ancestry/reconciliation through product SHA 0115b8bb8534b72ac4aa1d7411b60ecff3c30b56."
   },
   "ownerTables": [],
   "commands": [
@@ -29,12 +29,12 @@
     {
       "command": "node scripts/cleanup/verify-ui-canon-all.mjs",
       "exitCode": 0,
-      "result": "16 modules; 15 frozen packets; AUD missing explicitly; all 15 frozen UI packets technical-current; 16 referenced result hashes verified; verdict ceiling PARTIAL only because AUD has no frozen authority"
+      "result": "16 modules; 16 authorized packets; all 16 technical-current; 17 referenced result hashes verified; verdict DONE_CURRENT_SHA_INTERNAL_BETA"
     },
     {
       "command": "node --test scripts/cleanup/__tests__/verify-ui-canon-all.test.mjs",
       "exitCode": 0,
-      "result": "3/3 including fail-closed 15-module and synthetic-Audit negative controls"
+      "result": "4/4 including fail-closed 15-module, historical-proposal and missing-owner-authorization negative controls"
     },
     {
       "command": "node scripts/cleanup/report-closure-progress.mjs && node scripts/cleanup/verify-closure-plan.mjs",
@@ -53,30 +53,30 @@
     "requiredThemes": 2,
     "requiredLocales": 2,
     "requiredAxeCriticalSerious": 0,
-    "aggregateMatrixComplete": false,
+    "aggregateMatrixComplete": true,
     "currentInventories": "16/16",
-    "currentFrozenModulePackets": "15/16",
-    "currentMissingFrozenModulePackets": ["AUD"],
+    "currentFrozenModulePackets": "16/16",
+    "currentMissingFrozenModulePackets": [],
     "currentTechnicalHumanOnly": "0/16 after D6=B internal-beta waiver",
-    "currentTechnicalComplete": "15/16 frozen-authority modules",
+    "currentTechnicalComplete": "16/16 authorized internal-beta modules",
     "currentTechnicalWithTaskGaps": "0/16",
-    "currentVerifiedResultHashes": "16 references across 15 frozen packets",
-    "aggregatorTests": "3/3",
-    "automatedG4Surfaces": "15/15",
-    "automatedG4Cells": "206/206",
-    "automatedG4Screenshots": "206/206",
-    "automatedG4UniqueScreenshotHashes": 205,
+    "currentVerifiedResultHashes": "17 references across 16 authorized packets",
+    "aggregatorTests": "4/4",
+    "automatedG4Surfaces": "16/16",
+    "automatedG4Cells": "223/223",
+    "automatedG4Screenshots": "225/225",
+    "automatedG4UniqueScreenshotHashes": 224,
     "automatedG4AxeCriticalSerious": "0/0",
     "automatedG4UnnamedControls": 0,
-    "automatedG4VisibleFocusSurfaces": "15/15",
-    "automatedG4DeepLinkReloadCold": "15/15 each",
+    "automatedG4VisibleFocusSurfaces": "16/16",
+    "automatedG4DeepLinkReloadCold": "16/16 each",
     "automatedG4HorizontalOverflowCells": 0,
     "automatedG4ConsoleErrors": {"total": 39, "forbidden403": 0, "notFound404": 39, "other": 0},
     "intentionalApprovedOut404": "Results exact-current cells observed only V8_DISABLED on admin flags, legacy KPI catalog and legacy ROI summary; no missing canonical route",
     "executionPermissionRequalificationSha": "287aab619142f2990d46d04d04faaccb1cadf696"
   },
   "fixtures": {
-    "status": "Exact-current mounted evidence covers all fifteen frozen UI authority packets at three viewports, two themes and two locales. All frozen UI packets are technical-current for internal beta under D6=B. Audit has no frozen task in the 82-task authority and is the only aggregate boundary."
+    "status": "Mounted evidence covers all sixteen authorized internal-beta UI packets at three viewports, two themes and two locales, with exact ancestry/reconciliation through 0115b8bb. Human UAT is waived for internal beta under D6=B and the explicit Audit authority amendment."
   },
   "negativeControls": {
     "localScreenshotsNotAcceptedAsAggregatePass": true,
@@ -162,20 +162,21 @@
       "taskId": "TLS-UI-CANON-001",
       "path": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/G4_SWEEP_RESULT.json",
       "sha256": "fe28f78c48921fdda263297dc8def0177b8edb2d9ff5b9af84dc74e09c1d0810"
+    },
+    {
+      "taskId": "AUD-UI-CANON-001",
+      "path": "docs/program/evidence/closure/ui-g4/AUD-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "sha256": "c60661bdd0f2aa0db5ac45338e32ca56f8e8df3f06204b297785076814169913"
     }
   ],
   "rollback": {
     "method": "Evidence-only record; no runtime or schema change.",
     "executed": false
   },
-  "verdict": "PARTIAL",
-  "blockers": [
-    "Create or authorize a frozen-82 Audit UI module packet; the current proposal remains outside authority."
-  ],
-  "openBlockers": [
-    "The proposed Audit UI surface is outside the 82-task authority and remains MISSING_FROZEN_MODULE_PACKET.",
-    "Production deployment and release acceptance remain outside this internal-beta automated-evidence qualification."
-  ],
+  "verdict": "DONE_CURRENT_SHA",
+  "blockers": [],
+  "openBlockers": [],
+  "releaseBoundary": "PRODUCTION_DEPLOYMENT_AND_RELEASE_ACCEPTANCE_REMAIN_SEPARATE_REL_001_AUTHORITY",
   "blockerReconciliation": [
     {
       "historicalBlocker": null,
@@ -186,29 +187,29 @@
   "resolvedBlockers": [
     "Final mounted signed-auth automated G4 completed on exact-current candidate 4eec1d27952bc5642018495575665f5784e04f71: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed.",
     "The aggregate now has a machine-validated sixteen-module inventory with explicit route, surface, state coverage and open-gap classification.",
-    "All fifteen frozen module evidence packets have readable denominators, valid commit lineage or reconciliation, and verified referenced G4 result hashes.",
+    "All sixteen authorized module evidence packets have readable denominators, valid commit lineage or reconciliation, and verified referenced G4 result hashes.",
     "The six Execution manager-lane endpoints were requalified on 287aab619142f2990d46d04d04faaccb1cadf696 after the canonical role-permission seed; all 78 prior ADMIN 403 responses are now zero, with MEMBER/VIEWER roles remaining ungranted.",
-    "The verifier fails closed if the denominator falls below sixteen or the Audit proposal is relabeled as synthetic completion."
+    "The verifier fails closed if the denominator falls below sixteen, Audit points at its historical proposal, or the exact Audit owner authorization is absent."
   ],
   "automatedG4Verdict": {
     "verdict": "PASS_EXACT_SHA",
     "candidateSha": "4eec1d27952bc5642018495575665f5784e04f71",
     "reconciliationSha": "4eec1d27952bc5642018495575665f5784e04f71",
-    "surfaces": "15/15",
-    "cells": "206/206",
-    "screenshots": "206/206",
-    "uniqueScreenshotHashes": 205,
+    "surfaces": "16/16",
+    "cells": "223/223",
+    "screenshots": "225/225",
+    "uniqueScreenshotHashes": 224,
     "axe": {
       "critical": 0,
       "serious": 0
     },
     "unnamedControls": 0,
     "keyboard": {
-      "surfacesPassed": "15/15",
+      "surfacesPassed": "16/16",
       "reachableControls": 599,
       "invisibleFocusSamples": 0
     },
-    "deepLinkReloadCold": "15/15 each",
+    "deepLinkReloadCold": "16/16 each",
     "horizontalOverflowCells": 0,
     "authentication": "real signed JWT from /api/test-support/bootstrap",
     "e2eMode": false,
@@ -219,7 +220,7 @@
       "other": 0
     },
     "humanAcceptance": "WAIVED_FOR_INTERNAL_BETA_BY_OWNER — automated evidence accepted by Piotr for exact staging candidate e6ca206c0035f653118d9aadbfddf61d452ab52e; manual UAT remains recommended before wider production release",
-    "auditSurface": "NOT_IN_82_AUTHORITY — see ui-g4/AUD-UI-CANON-001/PROPOSAL_EVIDENCE.json"
+    "auditSurface": "AUTHORIZED_SUPPLEMENTAL_INTERNAL_BETA_EXISTING_UI_ONLY"
   },
   "internalBetaOwnerDecision20260820": {
     "decision": "D6=B",
@@ -228,7 +229,6 @@
     "effect": "Closes the manual VoiceOver, named-persona and visual/brand gate for internal beta only.",
     "doesNotWaive": [
       "task-specific technical gaps",
-      "missing frozen Audit UI authority",
       "approved-out product boundaries",
       "production deployment authorization"
     ]

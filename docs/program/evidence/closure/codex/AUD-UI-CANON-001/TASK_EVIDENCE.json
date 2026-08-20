@@ -1,0 +1,80 @@
+{
+  "taskId": "AUD-UI-CANON-001",
+  "baselineSha": "8883e410b8fa5ad4c67421f16804062cf40e8416",
+  "productSha": "e6ca206c0035f653118d9aadbfddf61d452ab52e",
+  "reconciliationSha": "0115b8bb8534b72ac4aa1d7411b60ecff3c30b56",
+  "leaseSha256": "334564cf74b402e79dc692d839bc82761eb595730c11970434a9ca4765983e8e",
+  "changedPaths": [
+    "docs/cleanup/POST_CLEANUP_COMPLETION_PLAN.md",
+    "docs/program/evidence/closure/codex/AUD-UI-CANON-001/TASK_EVIDENCE.json",
+    "docs/program/evidence/closure/codex/UI-CANON-ALL-001/UI_MODULE_INVENTORY.json",
+    "docs/program/evidence/closure/codex/UI-CANON-ALL-001/TASK_EVIDENCE.json",
+    "docs/program/evidence/closure/ui-g4/AUD-UI-CANON-001/PROPOSAL_EVIDENCE.json",
+    "scripts/cleanup/verify-ui-canon-all.mjs",
+    "scripts/cleanup/__tests__/verify-ui-canon-all.test.mjs"
+  ],
+  "changedPathRationale": {
+    "docs/cleanup/POST_CLEANUP_COMPLETION_PLAN.md": "Records Piotr's supplemental internal-beta authority amendment without rewriting the historical 74+8 production denominator.",
+    "docs/program/evidence/closure/codex/AUD-UI-CANON-001/TASK_EVIDENCE.json": "Binds exact Audit UI automated evidence and the owner authorization.",
+    "docs/program/evidence/closure/codex/UI-CANON-ALL-001/UI_MODULE_INVENTORY.json": "Moves Audit from missing authority to the sixteenth technical-current module.",
+    "docs/program/evidence/closure/codex/UI-CANON-ALL-001/TASK_EVIDENCE.json": "Reconciles the aggregate to 16/16 for internal beta.",
+    "docs/program/evidence/closure/ui-g4/AUD-UI-CANON-001/PROPOSAL_EVIDENCE.json": "Preserves the proposal history and records its explicit authorization.",
+    "scripts/cleanup/verify-ui-canon-all.mjs": "Requires exact Audit owner authorization and real evidence rather than a synthetic promotion.",
+    "scripts/cleanup/__tests__/verify-ui-canon-all.test.mjs": "Keeps fail-closed denominator and synthetic-evidence controls after authorization."
+  },
+  "ownerTables": [],
+  "commands": [
+    {"command": "mounted signed Audit G4 on e6ca206c0035f653118d9aadbfddf61d452ab52e", "exitCode": 0, "result": "17/17 rendered cells; axe critical 0 serious 0; HTTP errors 0; console errors 0"},
+    {"command": "RBAC_MATRIX + FLAG_FIXTURE_SAFETY", "exitCode": 0, "result": "signed ACTIVE membership, revoke/cross-tenant negatives and isolated flag residue proof"},
+    {"command": "git diff e6ca206c..0115b8bb -- Audit production paths", "exitCode": 0, "result": "no Audit production change; shared AppRoutes delta is Finance-only"},
+    {"command": "node scripts/cleanup/verify-ui-canon-all.mjs", "exitCode": 0, "result": "16/16 authorized technical-current UI packets"}
+  ],
+  "denominators": {
+    "authorizedUiModules": "16/16",
+    "renderedAuditCells": "17/17",
+    "auditScreenshots": 19,
+    "axeCritical": 0,
+    "axeSerious": 0,
+    "httpErrors": 0,
+    "consoleErrors": 0,
+    "humanUat": "WAIVED_FOR_INTERNAL_BETA_BY_OWNER"
+  },
+  "fixtures": {
+    "authentication": "real signed JWT and ACTIVE membership",
+    "database": "fresh PostgreSQL with migration repeat 0",
+    "scope": "existing /audit-programs UI and governed Audit deep links only",
+    "currentLineage": "Audit production paths unchanged between G4 SHA e6ca206c and reconciliation SHA 0115b8bb"
+  },
+  "negativeControls": {
+    "revokedMembershipDenied": true,
+    "crossTenantDenied": true,
+    "syntheticProposalRejectedByVerifier": true,
+    "productionDeploymentAuthorized": false,
+    "licensedAuditContentAuthorized": false,
+    "newAuditSurfaceAuthorized": false
+  },
+  "browserArtifacts": [
+    {
+      "resultPath": "docs/program/evidence/closure/ui-g4/AUD-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "resultSha256": "c60661bdd0f2aa0db5ac45338e32ca56f8e8df3f06204b297785076814169913"
+    },
+    {
+      "path": "docs/program/evidence/closure/ui-g4/AUD-UI-CANON-001/RBAC_MATRIX.json",
+      "sha256": "9a99561b01ef378f4c2185cdaede704382f8d02cad80f02ab40258ba7866eb50"
+    },
+    {
+      "path": "docs/program/evidence/closure/ui-g4/AUD-UI-CANON-001/FLAG_FIXTURE_SAFETY.json",
+      "sha256": "756fb3e564ddf9045942f0db868700e7d12a60a4b622e6bbe7c11d9134d9c8e7"
+    }
+  ],
+  "rollback": "Revert this supplemental authority/evidence amendment. No production source, database, provider or deployment mutation was performed.",
+  "internalBetaOwnerAuthorization": {
+    "date": "2026-08-20",
+    "decision": "AUTHORIZED_EXISTING_AUDIT_UI_AUTOMATED_UAT",
+    "statement": "Autoryzuję dodanie AUD-UI-CANON-001 do authority internal beta w ograniczonym zakresie istniejącego Audit UI i akceptuję jego automatyczne dowody jako UAT."
+  },
+  "technicalVerdict": "DONE_CURRENT_SHA_INTERNAL_BETA",
+  "verdict": "DONE_CURRENT_SHA",
+  "openBlockers": [],
+  "releaseBoundary": "PRODUCTION_DEPLOYMENT_NOT_AUTHORIZED"
+}

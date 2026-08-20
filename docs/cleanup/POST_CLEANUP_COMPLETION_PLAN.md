@@ -386,6 +386,17 @@ impact/invalidation matrix.
 | `UI-CANON-ALL-001` | `OPEN` | Aggregate 16 UI packets, all viewports/themes/languages, axe and human brand/UX approval. |
 | `REL-001-T01` | `NOT_AUTHORIZED / OPEN` | Frozen release SHA, push without force, snapshot/preflight, migrations, deploy, server/client SHA, DB/flag/data readback, 16 deployed flows, stable telemetry window and rollback rehearsal. |
 
+## Internal-beta authority amendment — 1 supplemental task
+
+- `AUD-UI-CANON-001` — `AUTHORIZED / DONE_CURRENT_SHA_INTERNAL_BETA`:
+  existing `/audit-programs` UI only; automated mounted G4 is accepted instead
+  of human UAT for internal beta. Authorized by Piotr on 2026-08-20 with the
+  exact statement: “Autoryzuję dodanie AUD-UI-CANON-001 do authority internal
+  beta w ograniczonym zakresie istniejącego Audit UI i akceptuję jego
+  automatyczne dowody jako UAT.” This supplemental authority does not rewrite
+  the historical 74+8 denominator and does not authorize production deployment,
+  licensed audit content or a new Audit surface.
+
 ## Execution waves and dependencies
 
 ### Four-branch ownership
