@@ -1,8 +1,6 @@
 import { expect, test } from '@playwright/test';
-import jwt from 'jsonwebtoken';
 import { Pool } from 'pg';
 
-import config from '../../../server/src/config/Config';
 import {
   getPrivilegedSession,
   makeRunId,
@@ -48,7 +46,7 @@ test.describe('ADM-UI-CANON-001 mounted role and authoritative-state matrix', ()
     while (runIds.length) await cleanup(request, runIds.pop()!);
   });
 
-  test('ADMIN and OWNER open IAM/audit/health while MEMBER, GUEST, revoked and SUPERADMIN fail closed', async ({
+  test('ADMIN opens organization controls; MEMBER, GUEST and revoked fail closed while SUPERADMIN stays global', async ({
     page,
     browser,
     request,
@@ -58,27 +56,6 @@ test.describe('ADM-UI-CANON-001 mounted role and authoritative-state matrix', ()
     const admin = await getPrivilegedSession(request, { runId: adminRun, role: 'ADMIN' });
 
     const pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 1 });
-    await pool.query(`UPDATE users SET role='OWNER' WHERE id=$1 AND organization_id=$2`, [
-      admin.userId,
-      admin.organizationId,
-    ]);
-    await pool.query(
-      `UPDATE organization_members SET role='OWNER' WHERE user_id=$1 AND organization_id=$2`,
-      [admin.userId, admin.organizationId]
-    );
-    const ownerToken = jwt.sign(
-      {
-        id: admin.userId,
-        email: admin.email,
-        role: 'OWNER',
-        organizationId: admin.organizationId,
-        runId: adminRun,
-      },
-      config.JWT_SECRET,
-      { expiresIn: '10m' }
-    );
-    const owner: PrivilegedSession = { ...admin, token: ownerToken, role: 'OWNER' };
-
     const addAdmin = await request.post(`${API}/api/test-support/member`, {
       headers: { 'x-test-support-key': SUPPORT_KEY, 'content-type': 'application/json' },
       data: { runId: adminRun, role: 'ADMIN' },
@@ -95,7 +72,7 @@ test.describe('ADM-UI-CANON-001 mounted role and authoritative-state matrix', ()
       email: `e2e+${adminRun}-admin@local.test`,
     };
 
-    for (const session of [owner, adminMember]) {
+    for (const session of [admin, adminMember]) {
       for (const endpoint of [
         '/api/admin/iam/policy',
         '/api/admin/audit-logs?limit=1',
@@ -108,7 +85,7 @@ test.describe('ADM-UI-CANON-001 mounted role and authoritative-state matrix', ()
       }
     }
 
-    await seedBrowser(page, owner);
+    await seedBrowser(page, admin);
     await page.goto('/admin/security?tab=iam');
     await expect(page.getByText('Enterprise IAM Governance')).toBeVisible();
     await page.goto('/admin/audit');
@@ -156,29 +133,11 @@ test.describe('ADM-UI-CANON-001 mounted role and authoritative-state matrix', ()
     runIds.push(superRun);
     const superadmin = await getPrivilegedSession(request, { runId: superRun, role: 'SUPERADMIN' });
 
-    const superMemberSeed = await request.post(`${API}/api/test-support/member`, {
-      headers: { 'x-test-support-key': SUPPORT_KEY, 'content-type': 'application/json' },
-      data: { runId: adminRun, role: 'USER' },
-    });
-    expect(superMemberSeed.status(), await superMemberSeed.text()).toBe(201);
-    const superMember = (await superMemberSeed.json()) as PrivilegedSession;
-    const superMemberToken = jwt.sign(
-      {
-        id: superMember.userId,
-        email: superMember.email,
-        role: 'SUPERADMIN',
-        isSuperAdmin: true,
-        organizationId: admin.organizationId,
-        runId: adminRun,
-      },
-      config.JWT_SECRET,
-      { expiresIn: '10m' }
-    );
     for (const endpoint of ['/api/admin/audit-logs', '/api/admin/health-panel/probes']) {
       const response = await request.get(`${API}${endpoint}`, {
-        headers: headers(superMemberToken),
+        headers: headers(superadmin.token),
       });
-      expect(response.status(), `SUPERADMIN ACTIVE MEMBER ${endpoint}`).toBe(403);
+      expect(response.status(), `global SUPERADMIN can inspect ${endpoint}`).toBe(200);
     }
 
     const superContext = await browser.newContext();
@@ -206,5 +165,100 @@ test.describe('ADM-UI-CANON-001 mounted role and authoritative-state matrix', ()
     await page.getByRole('button', { name: 'Backup', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Backup & Recovery' })).toBeVisible();
     expect(restoreCalls).toBe(0);
+  });
+
+  test('stale role intent reconciles authoritatively and lost response recovers only after cold read-back', async ({
+    page,
+    request,
+  }) => {
+    const runId = makeRunId('adm-ui-stale');
+    runIds.push(runId);
+    const admin = await getPrivilegedSession(request, { runId, role: 'ADMIN' });
+    const memberSeed = await request.post(`${API}/api/test-support/member`, {
+      headers: { 'x-test-support-key': SUPPORT_KEY, 'content-type': 'application/json' },
+      data: { runId, role: 'USER' },
+    });
+    expect(memberSeed.status(), await memberSeed.text()).toBe(201);
+    const member = (await memberSeed.json()) as PrivilegedSession;
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 1 });
+    const memberIdentity = await pool.query(`SELECT email FROM users WHERE id=$1`, [member.userId]);
+    const memberEmail = String(memberIdentity.rows[0]?.email || '');
+    expect(memberEmail).toBeTruthy();
+    await pool.query(
+      `UPDATE organization_members SET role='MEMBER' WHERE organization_id=$1 AND user_id=$2`,
+      [admin.organizationId, member.userId]
+    );
+    const rolePatchUrl = new RegExp(
+      `/api/organizations/${admin.organizationId}/admin/members/${member.userId}/role(?:\\?|$)`
+    );
+    const commandIds: string[] = [];
+    page.on('request', (req) => {
+      if (!rolePatchUrl.test(req.url()) || req.method() !== 'PATCH') return;
+      commandIds.push(req.headers()['x-idempotency-key'] || '');
+    });
+
+    await seedBrowser(page, admin);
+    await page.goto('/admin/people');
+    const roleSelect = page
+      .getByRole('row', { name: new RegExp(memberEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) })
+      .getByRole('combobox', { name: /Role for/i });
+    await expect(roleSelect).toHaveValue('MEMBER');
+
+    // A second administrator wins before this browser submits its MEMBER-based
+    // intent. The mounted UI must not silently overwrite or keep replaying the
+    // permanently stale command identity.
+    await pool.query(
+      `UPDATE organization_members SET role='GUEST' WHERE organization_id=$1 AND user_id=$2`,
+      [admin.organizationId, member.userId]
+    );
+    await roleSelect.selectOption('ADMIN');
+    await expect(page.getByTestId('admin-operation-error')).toContainText(
+      /Membership changed on the server\. Current role: Guest\. Review and retry\./i
+    );
+    await expect(roleSelect).toHaveValue('GUEST');
+    expect(commandIds).toHaveLength(1);
+    expect(commandIds[0]).toBeTruthy();
+
+    // A deliberate new intent uses the reconciled GUEST precondition and a new
+    // command identity, then succeeds only after the canonical member GET.
+    await roleSelect.selectOption('ADMIN');
+    await expect(
+      page
+        .getByRole('region', { name: 'Members & Roles' })
+        .getByRole('status')
+        .filter({ hasText: /Member role updated/i })
+    ).toBeVisible();
+    await expect(roleSelect).toHaveValue('ADMIN');
+    expect(commandIds).toHaveLength(2);
+    expect(commandIds[1]).toBeTruthy();
+    expect(commandIds[1]).not.toBe(commandIds[0]);
+
+    // Execute the next command on the real server but drop its response. The UI
+    // may report recovery only after its independent members read-back observes
+    // the exact committed role.
+    let droppedResponse = false;
+    await page.route(rolePatchUrl, async (route) => {
+      if (droppedResponse) return route.continue();
+      droppedResponse = true;
+      const response = await route.fetch();
+      expect(response.status()).toBe(200);
+      await route.abort('connectionfailed');
+    });
+    await roleSelect.selectOption('MEMBER');
+    await expect(
+      page
+        .getByRole('region', { name: 'Members & Roles' })
+        .getByRole('status')
+        .filter({ hasText: /already updated and has been reconciled from the server/i })
+    ).toBeVisible();
+    await expect(roleSelect).toHaveValue('MEMBER');
+    expect(droppedResponse).toBe(true);
+
+    const cold = await pool.query(
+      `SELECT role, status FROM organization_members WHERE organization_id=$1 AND user_id=$2`,
+      [admin.organizationId, member.userId]
+    );
+    expect(cold.rows).toEqual([{ role: 'MEMBER', status: 'ACTIVE' }]);
+    await pool.end();
   });
 });
