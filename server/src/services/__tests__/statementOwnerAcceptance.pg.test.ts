@@ -6,7 +6,11 @@ import { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import PDFParserService from '../pdfParserService.js';
-import { createStatement, locateStatementSections } from '../financialStatementService.js';
+import {
+  createStatement,
+  loadStatementSourceText,
+  locateStatementSections,
+} from '../financialStatementService.js';
 import { getStatementDetail } from '../financialStatementReadService.js';
 import { stageSelectedStatementSections } from '../statementMultiSectionImportService.js';
 
@@ -139,6 +143,11 @@ describe.runIf(enabled)('Finance Statement owner acceptance — real PostgreSQL 
       overallConfidence: 0.5,
       createdBy: userId,
     });
+    await pool.query(`UPDATE financial_statements SET notes=$1 WHERE id=$2`, [
+      'durable smart-upload source text',
+      failedPrimary,
+    ]);
+    expect(await loadStatementSourceText(failedPrimary)).toBe('durable smart-upload source text');
     const before = await pool.query(
       `SELECT count(*)::int count FROM financial_statements WHERE organization_id=$1`,
       [organizationId]
@@ -281,6 +290,22 @@ describe.runIf(enabled)('Finance Statement owner acceptance — real PostgreSQL 
       [staged.statements.map((item) => item.statementId)]
     );
     expect(forbidden.rows[0].count).toBe(0);
+    const treasuryShares = await pool.query(
+      `SELECT normalized_value, metadata_json
+         FROM financial_statement_candidate_rows
+        WHERE statement_id=$1 AND row_label ILIKE 'Akcje własne%'
+        ORDER BY source_row LIMIT 1`,
+      [staged.statements.find((item) => item.statementType === 'BS' && item.periodLabel === '2025')!
+        .statementId]
+    );
+    expect(Number(treasuryShares.rows[0]?.normalized_value)).toBe(-22424);
+    const treasuryMetadata =
+      typeof treasuryShares.rows[0]?.metadata_json === 'string'
+        ? JSON.parse(treasuryShares.rows[0].metadata_json)
+        : treasuryShares.rows[0]?.metadata_json;
+    expect(treasuryMetadata?.numericTokens).toEqual(
+      expect.arrayContaining([expect.objectContaining({ raw: '23,24', tokenType: 'note_ref' })])
+    );
 
     const secondPrimary = await createStatement({
       organizationId,

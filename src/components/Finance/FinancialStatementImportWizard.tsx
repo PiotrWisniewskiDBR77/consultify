@@ -143,17 +143,6 @@ interface Props {
   initialStatementId?: string;
 }
 
-async function detectStatementWithFallback(statementId: string, body: Record<string, unknown>) {
-  try {
-    return await V8FinanceApi.detectStatement(statementId, body);
-  } catch (error) {
-    if (!shouldFallbackToLegacyFinance(error)) {
-      throw error;
-    }
-    return await Api.post(`/api/finance-statements/${statementId}/detect`, body);
-  }
-}
-
 async function extractStatementWithFallback(statementId: string, body: Record<string, unknown>) {
   try {
     return await V8FinanceApi.extractStatement(statementId, body);
@@ -649,13 +638,9 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
     setLoading(true);
     setError(null);
     try {
-      await detectStatementWithFallback(statementId, {
-        statementType: overrideType,
-        ...(selectedSections.length ? { statementTypes: selectedSections } : {}),
-        periodLabel: overridePeriod,
-        currency: overrideCurrency,
-        ...(overrideEntity.trim() ? { entityName: overrideEntity.trim() } : {}),
-      });
+      // Upload analysis already produced the reviewable detection proposal.
+      // Extraction performs deterministic detection from durable source text;
+      // a second /detect probe was redundant and produced expected red 400s.
       const extractData = await extractStatementWithFallback(statementId, {
         statementType: overrideType,
         ...(selectedSections.length ? { statementTypes: selectedSections } : {}),
@@ -1747,7 +1732,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                       <div className="max-h-40 overflow-y-auto">
                         {periodStatement.mappedValues.map((value, index) => (
                           <div
-                            key={`${periodStatement.statementId}-${value.sourceRow ?? index}`}
+                            key={`${periodStatement.statementId}-${value.sourceRow ?? 'row'}-${index}`}
                             className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 border-t border-slate-100 py-1 text-[11px] dark:border-white/[0.05]"
                           >
                             <span className="truncate text-slate-600 dark:text-slate-300">

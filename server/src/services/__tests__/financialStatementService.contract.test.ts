@@ -68,6 +68,24 @@ describe('financialStatementService — contract tests', () => {
     const margin = result.lines.find((line) => line.originalLabel.startsWith('Marża brutto'));
     expect(margin?.value).toBe(10.13);
   });
+
+  it('treats an inline-period compound note coordinate as a note and keeps the later value', () => {
+    const text = [
+      'Skonsolidowane sprawozdanie z sytuacji finansowej',
+      'Nota \t31.12.2025 \t31.12.2024',
+      'Akcje własne \t23,24 \t(22 424) \t-',
+      ...Array.from({ length: 20 }, (_, index) => `Pozycja bilansowa ${index} \t${100 + index} \t${90 + index}`),
+    ].join('\n');
+    const result = extractFinancialLines(text, 'BS', {
+      selectedPeriodLabel: '2025',
+      comparisonPeriodLabel: '2024',
+    });
+    const treasuryShares = result.lines.find((line) => line.originalLabel.startsWith('Akcje własne'));
+    expect(treasuryShares?.value).toBe(-22424);
+    expect(treasuryShares?.numericTokens).toEqual(
+      expect.arrayContaining([expect.objectContaining({ raw: '23,24', tokenType: 'note_ref' })])
+    );
+  });
   it('recognizes a Polish cash-flow heading split across PDF lines', () => {
     const text = [
       'Skonsolidowane sprawozdanie z przepływów',
