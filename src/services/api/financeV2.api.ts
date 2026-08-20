@@ -31,6 +31,7 @@ import type {
   BaselineOutputDto,
   BaselineScheduleType,
   BaselineStatementType,
+  BaselineWorkspaceContextDto,
   // --- AP-CLIENT ---
   CompareErrorCodeDto,
   CompareResultDto,
@@ -522,6 +523,46 @@ export async function getFinanceVersionLineage(
 // ---------------------------------------------------------------------------
 
 const BASELINE_BASE = `${BASE}/baseline`;
+
+export async function getBaselineWorkspaceContext(
+  businessVersionId: string
+): Promise<BaselineWorkspaceContextDto> {
+  return v8Get<BaselineWorkspaceContextDto>(
+    `${BASELINE_BASE}/${encodeURIComponent(businessVersionId)}/context`
+  );
+}
+
+export interface ConfigureBaselineWorkspaceContextParams {
+  businessVersionId: string;
+  expectedVersion: number;
+  idempotencyKey: string;
+  entityId: string;
+  openingBalanceSheetPeriodId: string;
+  forecastPeriodIds: string[];
+}
+
+export async function configureBaselineWorkspaceContext(
+  params: ConfigureBaselineWorkspaceContextParams
+): Promise<BaselineWorkspaceContextDto & { replay: boolean }> {
+  const res = await fetchWithRetry(
+    `${V8_BASE}${BASELINE_BASE}/${encodeURIComponent(params.businessVersionId)}/context`,
+    {
+      method: 'PUT',
+      headers: { ...getHeaders(), 'Idempotency-Key': params.idempotencyKey },
+      body: JSON.stringify({
+        expectedVersion: params.expectedVersion,
+        entityId: params.entityId,
+        openingBalanceSheetPeriodId: params.openingBalanceSheetPeriodId,
+        forecastPeriodIds: params.forecastPeriodIds,
+      }),
+    }
+  );
+  const json = await handleResponse<{ data: BaselineWorkspaceContextDto & { replay: boolean } }>(
+    res,
+    `V8 PUT ${BASELINE_BASE}/:id/context`
+  );
+  return json.data;
+}
 
 export interface ListBaselineAssumptionsParams {
   scheduleType?: BaselineScheduleType;

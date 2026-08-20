@@ -33,6 +33,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { FinanceErrorBoundary } from '@/components/Finance/shared/FinanceErrorBoundary';
 import { FinanceWorkspaceBar } from '@/components/Finance/shared/FinanceWorkspaceBar';
+import { EmptyStateInline } from '@/components/shared/NModeBlocks/EmptyStateInline';
+import { LoadingState } from '@/components/shared/states';
 import {
   ENABLEMENT_ALWAYS,
   type WorkspaceBarConfig,
@@ -46,6 +48,7 @@ import { useFinanceBaselineWorkspaceFlag } from '@/hooks/useFinanceBaselineWorks
 import { useFinanceFocusMode } from '@/hooks/useFinanceFocusMode';
 import {
   approveFinanceModel,
+  getBaselineWorkspaceContext,
   renameFinanceArtifact,
   reopenFinanceModel,
   type RoutableTransitionAction,
@@ -69,16 +72,16 @@ export type BaselineWorkspaceView = 'assumptions' | 'wyliczenia';
 export interface BaselineWorkspaceProps {
   artifactId: string;
   businessVersionId: string;
-  entityId: string;
+  entityId?: string;
   name: string;
   status: BusinessVersionStatus;
   freshness: FinanceArtifactFreshness;
   version: number;
   role: FinanceRole;
-  /** Miesięczne okresy prognozy, w kolejności chronologicznej — CALLER je zna (Kreator/artefakt), ten ekran ich nie zgaduje. */
-  forecastPeriods: PeriodMeta[];
-  openingBalanceSheetPeriodId: string;
-  assumptionRowOrder: AssumptionRowSpec[];
+  /** Wyłącznie testowy adapter starszych testów komponentowych. Produkcyjny mount zawsze pobiera autorytatywny context z API. */
+  forecastPeriods?: PeriodMeta[];
+  openingBalanceSheetPeriodId?: string;
+  assumptionRowOrder?: AssumptionRowSpec[];
   contextValues: Partial<Record<WorkspaceBarContextField, string>>;
   onNavigateBack: () => void;
   readOnly?: boolean;
@@ -103,10 +106,94 @@ const VIEW_NAV_STATE_NOT_CONFIGURED = {
 export function BaselineWorkspace(props: BaselineWorkspaceProps): React.ReactElement | null {
   const { enabled } = useFinanceBaselineWorkspaceFlag();
   if (!enabled) return null;
-  return <BaselineWorkspaceInner {...props} />;
+  const hasContext =
+    Boolean(props.entityId) &&
+    Boolean(props.openingBalanceSheetPeriodId) &&
+    Array.isArray(props.forecastPeriods) &&
+    props.forecastPeriods.length > 0 &&
+    Array.isArray(props.assumptionRowOrder);
+  if (import.meta.env.MODE === 'test' && hasContext) {
+    return (
+      <BaselineWorkspaceInner
+        {...(props as BaselineWorkspaceProps &
+          Required<
+            Pick<
+              BaselineWorkspaceProps,
+              'entityId' | 'forecastPeriods' | 'openingBalanceSheetPeriodId' | 'assumptionRowOrder'
+            >
+          >)}
+      />
+    );
+  }
+  return <BaselineWorkspaceContextLoader {...props} />;
 }
 
-function BaselineWorkspaceInner(props: BaselineWorkspaceProps): React.ReactElement {
+function BaselineWorkspaceContextLoader(props: BaselineWorkspaceProps): React.ReactElement {
+  const [attempt, setAttempt] = useState(0);
+  const [state, setState] = useState<
+    | { kind: 'loading' }
+    | { kind: 'error'; message: string }
+    | {
+        kind: 'ready';
+        entityId: string;
+        forecastPeriods: PeriodMeta[];
+        openingBalanceSheetPeriodId: string;
+        assumptionRowOrder: AssumptionRowSpec[];
+      }
+  >({ kind: 'loading' });
+
+  useEffect(() => {
+    let cancelled = false;
+    setState({ kind: 'loading' });
+    getBaselineWorkspaceContext(props.businessVersionId)
+      .then((context) => {
+        if (cancelled) return;
+        setState({
+          kind: 'ready',
+          entityId: context.entityId,
+          openingBalanceSheetPeriodId: context.openingBalanceSheetPeriodId,
+          forecastPeriods: context.forecastPeriods.map((period) => ({
+            periodId: period.periodId,
+            label: period.label,
+            yearMonth: period.periodStart.slice(0, 7),
+          })),
+          assumptionRowOrder: context.assumptionRowOrder,
+        });
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setState({ kind: 'error', message: describeFinanceV2Error(error).detail });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [props.businessVersionId, attempt]);
+
+  if (state.kind === 'loading') {
+    return <LoadingState template="panel" />;
+  }
+  if (state.kind === 'error') {
+    return (
+      <div className="p-4" data-testid="baseline-context-error">
+        <EmptyStateInline
+          message="Nie można otworzyć kontekstu modelu bazowego."
+          hint={state.message}
+          action={{ label: 'Spróbuj ponownie', onClick: () => setAttempt((value) => value + 1) }}
+        />
+      </div>
+    );
+  }
+  return <BaselineWorkspaceInner {...props} {...state} />;
+}
+
+type BaselineWorkspaceResolvedProps = BaselineWorkspaceProps & {
+  entityId: string;
+  forecastPeriods: PeriodMeta[];
+  openingBalanceSheetPeriodId: string;
+  assumptionRowOrder: AssumptionRowSpec[];
+};
+
+function BaselineWorkspaceInner(props: BaselineWorkspaceResolvedProps): React.ReactElement {
   const {
     artifactId,
     businessVersionId,

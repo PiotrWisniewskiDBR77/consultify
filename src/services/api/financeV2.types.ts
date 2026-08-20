@@ -1687,6 +1687,27 @@ export function describeFinanceV2Error(err: unknown): {
 // Blok ciągnie się do końca pliku (ostatni blok pliku na 2026-08-11).
 // ---------------------------------------------------------------------------
 
+export interface BaselineWorkspacePeriodDto {
+  periodId: string;
+  label: string;
+  periodStart: string;
+  periodEnd: string;
+}
+
+export interface BaselineWorkspaceContextDto {
+  businessVersionId: string;
+  entityId: string;
+  openingBalanceSheetPeriodId: string;
+  forecastPeriods: BaselineWorkspacePeriodDto[];
+  assumptionRowOrder: Array<{
+    scheduleType: BaselineScheduleType;
+    driverCode: string;
+    entityId: string;
+    periodId: string;
+  }>;
+  version: number;
+}
+
 export const BaselineScheduleTypeValues = [
   'revenue_pvm',
   'headcount',
