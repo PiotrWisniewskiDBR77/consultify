@@ -1,0 +1,127 @@
+{
+  "recordId": "STAGING-JOURNEY-16-FINAL-20260820",
+  "recordedAt": "2026-08-20T07:30:50+02:00",
+  "environment": "Railway staging rehearsal",
+  "productSha": "e6ca206c0035f653118d9aadbfddf61d452ab52e",
+  "health": {
+    "status": "ok",
+    "database": "connected",
+    "gitShaMatches": true
+  },
+  "configuration": {
+    "testSupport": false,
+    "requestInterception": false,
+    "workers": 1,
+    "retries": 0,
+    "primaryTenantOnly": true,
+    "reviewer": "independent active same-tenant ADMIN session",
+    "organizationPlanFixture": "The exact rehearsal organization was changed from TRIAL to enterprise/PAID because the deployed invitation contract correctly rejects trial invitations. No other tenant or production configuration was changed."
+  },
+  "command": "E2E_BASE_URL=<staging> E2E_API_URL=<staging> E2E_STORAGE_STATE_PATH=<redacted-path> STAGING_SESSION_PATH=<redacted-path> STAGING_REVIEWER_SESSION_PATH=<redacted-path> E2E_USE_WEB_SERVER=false E2E_REQUIRE_TEST_SUPPORT=false npx playwright test tests/e2e/release/staging-journey-16.spec.ts --project=chromium --workers=1 --retries=0 --reporter=line",
+  "result": {
+    "tests": 16,
+    "passed": 16,
+    "failed": 0,
+    "skipped": 0,
+    "flaky": 0,
+    "duration": "2.3m"
+  },
+  "journeys": [
+    {
+      "module": "CHAT",
+      "flow": "conversation + persisted message -> independent GET -> cold deep-link/reload",
+      "status": "PASS"
+    },
+    {
+      "module": "SET",
+      "flow": "appearance write -> independent GET -> cold Settings readback",
+      "status": "PASS"
+    },
+    {
+      "module": "PRT",
+      "flow": "non-economic Partner connection -> independent GET -> cold UI",
+      "status": "PASS",
+      "boundary": "No economics, accrual or payout writer."
+    },
+    {
+      "module": "RES",
+      "flow": "canonical KPI draft + immutable definition version -> independent GET -> cold registry",
+      "status": "PASS"
+    },
+    {
+      "module": "MAT",
+      "flow": "deterministic document generation -> canonical GET -> cold Document Studio",
+      "status": "PASS"
+    },
+    {
+      "module": "TLS",
+      "flow": "Dynamic SWOT -> review -> independent approval -> immutable output -> replayable promotion -> cold UI",
+      "status": "PASS"
+    },
+    {
+      "module": "INT",
+      "flow": "canonical interview session -> independent detail/list -> cold Hub",
+      "status": "PASS"
+    },
+    {
+      "module": "ORG",
+      "flow": "claim decisions -> immutable governed snapshot publication -> exact latest/version/hash readback -> cold UI",
+      "status": "PASS"
+    },
+    {
+      "module": "ADM",
+      "flow": "invitation command -> exact replay -> list/cold UI -> revoke/readback",
+      "status": "PASS"
+    },
+    {
+      "module": "MYW",
+      "flow": "idempotent personal task -> exact API readback -> cold Tasks deep-link",
+      "status": "PASS"
+    },
+    {
+      "module": "INI",
+      "flow": "canonical draft initiative -> document update -> exact GET -> cold deep-link",
+      "status": "PASS"
+    },
+    {
+      "module": "ASM",
+      "flow": "idempotent DRD method session -> exact pack/version GET -> cold session UI",
+      "status": "PASS"
+    },
+    {
+      "module": "MTG",
+      "flow": "governed note proposal -> independent approval/materialization -> exact receipt -> cold UI",
+      "status": "PASS"
+    },
+    {
+      "module": "EXE",
+      "flow": "canonical Case create -> controlled cancel -> independent GET -> cold flag-opted Case Workspace",
+      "status": "PASS"
+    },
+    {
+      "module": "FIN",
+      "flow": "canonical artifact -> immutable compute snapshot -> exact replay -> independent artifact/version GET -> cold Finance mount",
+      "status": "PASS",
+      "boundary": "Lifecycle submit remained correctly denied because neither staging persona had a specialist Finance role; the test did not bypass RBAC."
+    },
+    {
+      "module": "AUD",
+      "flow": "published internal demo pack -> program -> server-created criterion snapshot -> independent GET -> cold criterion workspace",
+      "status": "PASS"
+    }
+  ],
+  "verdict": "STG_JOURNEY_16_PASS",
+  "nextGates": [
+    "Exact-SHA NFR 30-minute/50-user release qualification.",
+    "Two independent 60-minute staging observation windows.",
+    "Rollback rehearsal and post-rollback health/readback.",
+    "Explicit release authorization before any production deployment."
+  ],
+  "nonClaims": [
+    "Not NFR-PERF-001 complete.",
+    "Not telemetry-window qualification.",
+    "Not rollback rehearsal.",
+    "Not production deployment or release approval.",
+    "No production database, provider credential or external customer mutation was performed."
+  ]
+}
