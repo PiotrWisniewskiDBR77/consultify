@@ -241,6 +241,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
   showModeSwitcher = false,
   buildArtifactCode,
   titleInputId,
+  secondaryActions,
   primaryAction,
   extraOverflowItems,
   showChatButton = false,
@@ -330,6 +331,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
 
   return (
     <motion.div
+      data-nmode-header
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -446,6 +448,14 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
 
         {/* Action buttons */}
         <div className="flex items-center gap-2 shrink-0">
+          {secondaryActions ? (
+            <div
+              data-nmode-header-secondary-actions
+              className="flex min-w-0 max-w-[55vw] items-center gap-2 overflow-x-auto overscroll-x-contain"
+            >
+              {secondaryActions}
+            </div>
+          ) : null}
           {/* AI (#27/#37): header slot for klasa S (Task/Decision — no M3),
               opt-in via showChatButton so other NModeHeader consumers that
               already pass onChat (Notification/Initiative/Insight) are
@@ -471,7 +481,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
           {/* Mode Switcher */}
           {showModeSwitcher && (
             <>
-              <div className="w-px h-6 bg-c-border-subtle" />
+              <div className="w-px h-6 bg-c-border-subtle" aria-hidden="true" />
               <PresentationModeSwitcher
                 value={presentationMode}
                 onChange={onPresentationModeChange}

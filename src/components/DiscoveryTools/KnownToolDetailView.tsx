@@ -49,7 +49,6 @@ import {
   NCardAIAnalysisPanel,
   type NModeArtifactType,
   NModeContentBlock,
-  NModeMenu2,
   type NModePropertyField,
   type NModeSection,
   NModeShell,
@@ -2451,8 +2450,29 @@ export function KnownToolDetailView(props: {
               ? t('discoveryToolsMain.knownToolDetailView.statusActive', 'Active')
               : t('discoveryToolsMain.knownToolDetailView.statusInactive', 'Inactive'),
           statusTone: tool?.isActive && !tool?.isComingSoon ? 'approved' : 'neutral',
+          secondaryActions: (
+            <>
+              <SectionsManagerMenu layout={toolCardLayout} isPolish={isPolish} />
+              <Menu2HowToButton
+                variant="knowledge"
+                isPolish={isPolish}
+                label={isPolish ? 'How to / Baza wiedzy' : 'How to / Knowledge base'}
+                onClick={openKb}
+                disabled={!tool}
+              />
+              <Menu2AIButton
+                isPolish={isPolish}
+                busy={toolCardAnalysis.loading}
+                aria-expanded={toolCardAnalysis.open}
+                disabled={!tool}
+                onClick={toolCardAnalysis.run}
+                className="!border-c-border-subtle !bg-transparent !text-c-text-secondary hover:!bg-state-hover"
+              />
+            </>
+          ),
           primaryAction,
         }}
+        hideToolbarWhenEmpty
         sections={orderedToolSections}
         /* ETAP 1.2: `actions`/`actionsVisible` USUNIETE — przy podanym
          `renderActionBar` powloka i tak ich nie czyta (NModeShell.tsx), a
@@ -2507,38 +2527,7 @@ export function KnownToolDetailView(props: {
         // ("karta nie ma zadnej akcji AI") byla prawdziwa dla AI-ktore-PISZE.
         // Analiza niczego nie pisze — ocenia gotowosc karty przed sesja, a
         // wlasciciel wylicza dla Narzedzia szesc kryteriow tej oceny.
-        renderActionBar={() => (
-          <NModeMenu2
-            isPolish={isPolish}
-            // ── LEWA STREFA — „Sekcje" ZAWSZE (naprawa 2026-07-24, fala 2) ────
-            // Było: tylko przy `?cardContract=1`, więc domyślnie lewe 2/3 paska
-            // świeciło pustką (zgłoszenie sędziego grafiki, największy brak tej
-            // karty). Picker steruje WIDOCZNOŚCIĄ sekcji — to preferencja widoku,
-            // nie zapis danych, więc charakter read-only karty go nie unieważnia
-            // i nie jest to atrapa: kliknięcie realnie chowa/pokazuje sekcję w
-            // lewej nawigacji i w centrum (patrz `orderedToolSections`).
-            sectionsMenu={<SectionsManagerMenu layout={toolCardLayout} isPolish={isPolish} />}
-            readMode={readMode}
-            howToButton={
-              <Menu2HowToButton
-                variant="knowledge"
-                isPolish={isPolish}
-                label={isPolish ? 'How to / Baza wiedzy' : 'How to / Knowledge base'}
-                onClick={openKb}
-                disabled={!tool}
-              />
-            }
-            aiButton={
-              <Menu2AIButton
-                isPolish={isPolish}
-                busy={toolCardAnalysis.loading}
-                aria-expanded={toolCardAnalysis.open}
-                disabled={!tool}
-                onClick={toolCardAnalysis.run}
-              />
-            }
-          />
-        )}
+        renderActionBar={() => null}
         activeSection={activeSection}
         onSectionChange={setActiveSection}
         rightPanel={

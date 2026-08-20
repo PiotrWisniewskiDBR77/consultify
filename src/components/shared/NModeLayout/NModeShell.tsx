@@ -116,6 +116,7 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
   aiContextActions = [],
   toolAIActions = [],
   renderActionBar,
+  hideToolbarWhenEmpty = false,
   activeSection,
   onSectionChange,
   onSectionReorder,
@@ -143,6 +144,10 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
   // żeby nie tworzyć dwóch drzew i nie ryzykować rozjazdu. Liczone PO bramce
   // `loading`, bo dawniej `renderActionBar()` też nie było wołane w ładowaniu.
   const actionBarNode = renderActionBar ? renderActionBar() : null;
+  const hasToolbarContent = renderActionBar
+    ? actionBarNode !== null && actionBarNode !== undefined && actionBarNode !== false
+    : (actionsVisible && actions.length > 0) || toolAIActions.length > 0;
+  const showToolbarShell = !hideToolbarWhenEmpty || hasToolbarContent;
   const effectiveReadMode = readMode ?? resolveReadMode(actionBarNode);
 
   return (
@@ -175,12 +180,12 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
             (`NMODE_TOOLBAR_SHELL_CLASS`), więc sticky-tło dalej biegnie od
             krawędzi do krawędzi. Zmiana jest wspólna dla wszystkich sześciu
             kart N na tej powłoce. */}
-        <div className={NMODE_TOOLBAR_SHELL_CLASS}>
+        {showToolbarShell ? <div className={NMODE_TOOLBAR_SHELL_CLASS} data-nmode-toolbar-shell>
           <div className="px-6 py-2">
             <div className="max-w-6xl mx-auto">
               {renderActionBar
                 ? actionBarNode
-                : ((actionsVisible && actions.length > 0) || toolAIActions.length > 0) && (
+                : hasToolbarContent && (
                     <NModeActionBar
                       actions={actionsVisible ? actions : []}
                       aiContextActions={aiContextActions}
@@ -190,7 +195,7 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
                   )}
             </div>
           </div>
-        </div>
+        </div> : null}
 
         {/* ── Segment 3: Main content (scrollable, padded) ──────────────────────── */}
         <div className="px-6 pb-6">

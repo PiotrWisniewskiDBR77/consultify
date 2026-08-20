@@ -248,6 +248,8 @@ export interface NModeHeaderConfig {
    * unchanged (back-compat default for Task/Decision/other consumers).
    */
   primaryAction?: NModeHeaderPrimaryAction;
+  /** Compact neutral actions rendered immediately before the sole primary CTA. */
+  secondaryActions?: React.ReactNode;
   /**
    * Dodatkowe pozycje menu trzech kropek (⋮) Menu 1 — DOKLEJANE pod stałymi
    * pozycjami powłoki (Kopiuj kod obiektu · Kopiuj link).
@@ -305,6 +307,8 @@ export interface NModeShellProps {
    * NModeActionBar with arbitrary content inside the same styled container.
    */
   renderActionBar?: () => React.ReactNode;
+  /** Opt-in omission of the toolbar host when its resolved content is empty. */
+  hideToolbarWhenEmpty?: boolean;
   /** Currently active section id */
   activeSection: string;
   /** Section change handler */
