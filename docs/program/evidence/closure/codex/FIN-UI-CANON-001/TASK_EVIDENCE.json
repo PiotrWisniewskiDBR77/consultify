@@ -1,7 +1,14 @@
 {
   "taskId": "FIN-UI-CANON-001",
   "baselineSha": "71ec92695737d415b5319f001f9492bae4382e17",
-  "productSha": "4fb5e5ed29c37fda366ba8b1ebae97518f9ec8d4",
+  "productSha": "35661751edb4fc737ee58b10ab166b626c9a2751",
+  "technicalSourceSha": "35661751edb4fc737ee58b10ab166b626c9a2751",
+  "reconciliationSha": "35661751edb4fc737ee58b10ab166b626c9a2751",
+  "currentRequalification": {
+    "scope": "Integrated Statement owner-acceptance/browser chain plus governed budget initiative linking on the exact internal-beta candidate.",
+    "gates": "Fresh 811 migrations and replay 0; Finance focused 154/154; root/server typechecks; production build; exact-current mounted G4 12/12 with zero HTTP/console errors.",
+    "limitations": "The hash-pinned external official PDF was not present in this workspace, so its prior SHA-bound RealPG acceptance receipt is retained rather than falsely claimed as rerun."
+  },
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
   "observedCandidateSha": "6b5587aca30ca8a1d2c1ae7d9ced694595ac87f4",
   "ownerTables": [
@@ -129,42 +136,42 @@
   "browserArtifacts": [
     {
       "kind": "mounted_signed_auth_g4_exact_current",
-      "candidateSha": "4eec1d27952bc5642018495575665f5784e04f71",
-      "reconciliationSha": "4eec1d27952bc5642018495575665f5784e04f71",
+      "candidateSha": "35661751edb4fc737ee58b10ab166b626c9a2751",
+      "reconciliationSha": "35661751edb4fc737ee58b10ab166b626c9a2751",
       "resultPath": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "resultSha256": "0bcb5b282fed88d135cb4550885fadac191f6c318144f763001691f54c5f9866",
+      "resultSha256": "c7032ea33c29ced2d7d865ed7c10a1afb6ba1fa77e0fd85a9456c8b96465071f",
       "screenshots": [
         {
           "path": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__desktop__pl__light.png",
-          "sha256": "f2579ca0cfd8e794dabbd261cac8b56f9a0b90fb76c755b72505215cca49167e"
+          "sha256": "d9a712aae65db3371893311f2ef4b5fa93f09b0354a7fd4d843264a4b37e8248"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__desktop__pl__dark.png",
-          "sha256": "e209d73550eb7617ce78364f1268d249abcab77c2d8addf5c60f5c2fb1a9cefa"
+          "sha256": "5ec4529e970e2f4beea4de50f2771c11ade5dc97f47a6df7c6bf751489762664"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__desktop__en__light.png",
-          "sha256": "75dd3cd6cbd972938491b27c73ee5e11ce08ec58fe039fd3ecaefaa377286ec6"
+          "sha256": "c044b175593280910aefc1d4863848ba741c81fa33d82afdddfa22712c07d88b"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__desktop__en__dark.png",
-          "sha256": "8ebe358b6283be36df3d88f998d1a57787dd28cf684905844299fb7fef9b2a6e"
+          "sha256": "3fdf882f814deb9635e242e10426b7aec2c77d28dfbbaba24ebc08f999ed6821"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__tablet__pl__light.png",
-          "sha256": "98c30e3df954e6e7243b62ffc2e1ad06114fabcb1a70d6c7a7655ef13835efa3"
+          "sha256": "4eba9a5d3b8c7671fef42855eb62cbf22d0d3be941fca774446c899781b191ae"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__tablet__pl__dark.png",
-          "sha256": "6049702b1b29a4f4342580425a0957c8494cf1a8950f4050b536ccea24b101c0"
+          "sha256": "6ca8d4e51a22ec653927500a04313f1d762e34fec40378f3dfb1df3477e9898e"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__tablet__en__light.png",
-          "sha256": "7515b896dc441d266b3a6f90287ad4ce69c60cfcd11191d7dbed01314f1784d8"
+          "sha256": "d85231cfcd487c502bde02376b6ce203520ac9604c75e1ffb274376ad41a90af"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__tablet__en__dark.png",
-          "sha256": "fd4b45b9a2567420bc4ab875b2371795732c88786d4913ad4473fc39ad1338bf"
+          "sha256": "fdbfa99e80df0e3d0a804e66ef443f2abff05430907800ee073064c3a3150c71"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__mobile__pl__light.png",
@@ -172,7 +179,7 @@
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__mobile__pl__dark.png",
-          "sha256": "74e5d35635960a50abecd10583a5ed49e27959d754110fea0151ba7c003438db"
+          "sha256": "45043aa209d9d52f183bea39a88944b612e1ea2151b0a87e703ca2347069412a"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__mobile__en__light.png",
@@ -180,15 +187,15 @@
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__mobile__en__dark.png",
-          "sha256": "b7f94b640c6a554e400eadb3d057f0401b0975e8c2413e4a382b188e919141ee"
+          "sha256": "1353bada6206174838f4b1c86db3a3beb5eb73b64de54291dad5e040af7b1f4e"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__state-empty.png",
-          "sha256": "f2579ca0cfd8e794dabbd261cac8b56f9a0b90fb76c755b72505215cca49167e"
+          "sha256": "13b7454aef5ebf06369c60fe3abf19023467ea6035d1331da354bd230538792b"
         },
         {
           "path": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/screens/FIN__state-error.png",
-          "sha256": "c5a2834f81dc948bb7b6c9ae2b7ab42bab9ae1585bd0a9484bdbcaaaf404ee78"
+          "sha256": "1a0c35eb1f2dd7b9873ca2496486d96b946d9b88582574b869acc448e6205974"
         }
       ],
       "consoleErrors": {
@@ -319,8 +326,8 @@
     }
   },
   "exactCurrentG4": {
-    "candidateSha": "4eec1d27952bc5642018495575665f5784e04f71",
-    "verdict": "AUTOMATED_G4_PASS_HUMAN_PENDING",
+    "candidateSha": "35661751edb4fc737ee58b10ab166b626c9a2751",
+    "verdict": "AUTOMATED_G4_PASS_INTERNAL_BETA_ACCEPTED",
     "cells": 12,
     "axeCritical": 0,
     "axeSerious": 0,

@@ -1,9 +1,9 @@
 {
   "taskId": "UI-CANON-ALL-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "0a7a3dfedc55f8b1469a6e457519e167b2ac3559",
-  "technicalSourceSha": "d4258a47261dd2916ec7fd95300edc0aba32c4ed",
-  "reconciliationSha": "0a7a3dfedc55f8b1469a6e457519e167b2ac3559",
+  "productSha": "35661751edb4fc737ee58b10ab166b626c9a2751",
+  "technicalSourceSha": "35661751edb4fc737ee58b10ab166b626c9a2751",
+  "reconciliationSha": "35661751edb4fc737ee58b10ab166b626c9a2751",
   "leaseSha256": "18eb0f2e24aee1d6415a29e1605597117f24c42a1f74439842581e7a92583742",
   "changedPaths": ["docs/program/evidence/closure/codex/UI-CANON-ALL-001/TASK_EVIDENCE.json"],
   "changedPathRationale": {
@@ -111,7 +111,7 @@
     {
       "taskId": "FIN-UI-CANON-001",
       "path": "docs/program/evidence/closure/ui-g4/FIN-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "sha256": "ee88feab596a684a09685a92fd7d44a44fd8796944e29035e8508814a247d84b"
+      "sha256": "c7032ea33c29ced2d7d865ed7c10a1afb6ba1fa77e0fd85a9456c8b96465071f"
     },
     {
       "taskId": "INI-UI-CANON-001",

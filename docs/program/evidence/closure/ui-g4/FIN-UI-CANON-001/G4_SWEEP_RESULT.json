@@ -3,8 +3,8 @@
   "key": "FIN",
   "module": "Finance",
   "route": "/finance",
-  "productSha": "e6ca206c0035f653118d9aadbfddf61d452ab52e",
-  "startedAt": "2026-08-20T04:22:22.985Z",
+  "productSha": "35661751edb4fc737ee58b10ab166b626c9a2751",
+  "startedAt": "2026-08-20T13:05:01.448Z",
   "cells": [
     {
       "viewport": "desktop",
