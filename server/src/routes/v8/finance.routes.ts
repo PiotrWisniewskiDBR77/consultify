@@ -438,7 +438,10 @@ function normalizeStatementTypeInput(value: unknown): 'P&L' | 'BS' | 'CF' | null
   const normalized = String(value || '')
     .trim()
     .toUpperCase();
-  if (normalized === 'PL' || normalized === 'P&L') return 'P&L';
+  // The global JSON sanitizer correctly escapes ampersands before this mounted
+  // router runs. Decode only this closed financial enum alias; never apply a
+  // general HTML decode to request data at the business boundary.
+  if (normalized === 'PL' || normalized === 'P&L' || normalized === 'P&AMP;L') return 'P&L';
   if (normalized === 'BS') return 'BS';
   if (normalized === 'CF') return 'CF';
   return null;
@@ -2636,9 +2639,12 @@ router.post(
       undefined;
     const effectiveScaling =
       String(req.body?.scaling || '').trim() || String(statement.scaling || '').trim() || undefined;
-    const requestedStatementTypes = Array.isArray(req.body?.statementTypes)
-      ? req.body.statementTypes
+    const rawRequestedStatementTypes: unknown[] = Array.isArray(req.body?.statementTypes)
+      ? (req.body.statementTypes as unknown[])
       : [];
+    const requestedStatementTypes = rawRequestedStatementTypes
+      .map((value) => normalizeStatementTypeInput(value))
+      .filter((value): value is 'P&L' | 'BS' | 'CF' => value !== null);
     if (requestedStatementTypes.length > 0) {
       try {
         const batch = await stageSelectedStatementSections({

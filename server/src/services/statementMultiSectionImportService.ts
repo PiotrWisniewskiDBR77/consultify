@@ -45,7 +45,11 @@ function normalizeTypes(values: unknown): ImportableStatementType[] {
         .trim()
         .toUpperCase()
     )
-      .map((value) => (value === 'PL' || value === 'P&L' ? 'P&L' : value))
+      // Defense in depth for callers mounted behind the global JSON sanitizer.
+      // This is a closed enum alias, not general entity decoding.
+      .map((value) =>
+        value === 'PL' || value === 'P&L' || value === 'P&AMP;L' ? 'P&L' : value
+      )
       .filter((value): value is ImportableStatementType => ['P&L', 'BS', 'CF'].includes(value))
   );
   // Caller/detector order must never decide which section reuses the primary
