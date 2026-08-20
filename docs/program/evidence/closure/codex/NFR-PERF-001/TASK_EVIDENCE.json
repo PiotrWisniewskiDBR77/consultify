@@ -186,17 +186,24 @@
     "productionTouched": false
   },
   "technicalVerdict": "PASS_EXACT_DEPLOYED_SHA_RELEASE_30M_50U",
-  "verdict": "PARTIAL",
-  "openBlockers": [
-    "The provisional repository Web Vitals thresholds require explicit Product owner acceptance before literal task DONE.",
-    "Production deployment remains NOT_AUTHORIZED."
-  ],
+  "verdict": "DONE_CURRENT_SHA",
+  "openBlockers": [],
   "releaseBoundary": {
     "repositoryImplementation": "QUALIFIED_EXACT_CURRENT_SHA",
     "exactCurrentRelease30m": "PASS_ON_DEPLOYED_STAGING_E6CA",
-    "ownerThresholdAcceptance": "NOT_RECORDED",
+    "ownerThresholdAcceptance": "D1=A_RECORDED_20260820",
     "deployedStabilityWindow": "PASS_2_OF_2_ON_STAGING",
     "rollbackRehearsal": "PASS_FORWARD_ONLY_RECOVERY_3F8156CE_AND_FINAL_E6CA_RESTORE_16_OF_16_ZERO_DATA_LOSS",
-    "release": "NOT_AUTHORIZED"
+    "release": "NOT_AUTHORIZED_SEPARATE_REL_001_BOUNDARY"
+  },
+  "ownerThresholdDecision20260820": {
+    "decision": "D1=A",
+    "acceptedThresholds": {
+      "desktopLcpP75Ms": 2500,
+      "mobileLcpP75Ms": 4000,
+      "cls": 0.1,
+      "inpMs": 200
+    },
+    "scope": "Internal beta performance contract; production deployment remains a separate REL-001 authorization boundary."
   }
 }
