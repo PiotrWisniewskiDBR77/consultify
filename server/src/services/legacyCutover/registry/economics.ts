@@ -419,10 +419,10 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'ECO-W35',
       method: 'POST',
       path: /^\/budgets\/[^/]+\/scenarios\/[^/]+\/project\/?$/,
-      state: 'observed',
-      successor: null,
+      state: 'disabled',
+      successor: '/api/v8/finance/budgets/:budgetId/scenarios/:scenarioId/project',
       reason:
-        'Writes generated projections onto a budget_scenarios row (economics.routes.ts:3132, budgetingService.ts:389 generateScenarioProjections). No proven successor.',
+        'All mounted projection callers now use a DRAFT-only canonical command with exact tenant/budget/scenario binding, parent-version CAS, deterministic projection fingerprint, immutable receipt and writer-scoped legacy rollback.',
     },
     {
       writerId: 'ECO-W36',

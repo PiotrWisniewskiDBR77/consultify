@@ -30,6 +30,7 @@ const mockListValuations = vi.fn();
 const mockListBudgets = vi.fn();
 const mockRegisterBudget = vi.fn();
 const mockApplyBudgetLineCommand = vi.fn();
+const mockProjectBudgetScenario = vi.fn();
 const mockListAnalyses = vi.fn();
 const mockGetAnalysisRatios = vi.fn();
 const mockGetAnalysisInsights = vi.fn();
@@ -309,6 +310,20 @@ vi.mock('../../../services/finance/canonical/budgetLineCommandService.js', () =>
   applyBudgetLineCommand: (...args: unknown[]) => mockApplyBudgetLineCommand(...args),
 }));
 
+vi.mock('../../../services/finance/canonical/budgetProjectionCommandService.js', () => ({
+  BudgetProjectionCommandError: class BudgetProjectionCommandError extends Error {
+    constructor(
+      public code: string,
+      public status: number,
+      message: string,
+      public details?: Record<string, unknown>
+    ) {
+      super(message);
+    }
+  },
+  projectBudgetScenario: (...args: unknown[]) => mockProjectBudgetScenario(...args),
+}));
+
 vi.mock('../../../services/ratioAnalysisService.js', () => ({
   computeRatios: (...args: unknown[]) => mockComputeRatios(...args),
 }));
@@ -449,6 +464,18 @@ describe('V8 finance read-only routes', () => {
         isLocked: false,
       },
       budgetVersion: 2,
+      replay: false,
+    });
+    mockProjectBudgetScenario.mockResolvedValue({
+      budgetId: 'budget-new',
+      scenario: {
+        id: 'scenario-1',
+        scenarioType: 'base',
+        projections: { periods: ['2028-01'], lines: { REVENUE: { '2028-01': 42 } } },
+        summaryMetrics: { totalRevenue: 42 },
+      },
+      budgetVersion: 2,
+      projectionSha256: 'a'.repeat(64),
       replay: false,
     });
     mockListAnalyses.mockResolvedValue([]);
@@ -1869,6 +1896,37 @@ describe('V8 finance read-only routes', () => {
     expect(res.status).toBe(400);
     expect(res.body.code).toBe('INVALID_BODY');
     expect(mockApplyBudgetLineCommand).not.toHaveBeenCalled();
+  });
+
+  it('POST /api/v8/finance/budgets/:budgetId/scenarios/:scenarioId/project binds CAS and idempotency', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/v8/finance/budgets/budget-new/scenarios/scenario-1/project')
+      .set('Idempotency-Key', 'projection-command-key')
+      .send({ expectedVersion: 1 });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({ budgetVersion: 2, replay: false });
+    expect(mockProjectBudgetScenario).toHaveBeenCalledWith({
+      organizationId: ORG,
+      userId: UID,
+      budgetId: 'budget-new',
+      scenarioId: 'scenario-1',
+      expectedVersion: 1,
+      idempotencyKey: 'projection-command-key',
+    });
+  });
+
+  it('POST /api/v8/finance/budgets/:budgetId/scenarios/:scenarioId/project rejects unknown fields', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/v8/finance/budgets/budget-new/scenarios/scenario-1/project')
+      .set('Idempotency-Key', 'projection-command-key')
+      .send({ expectedVersion: 1, projections: {} });
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('INVALID_BODY');
+    expect(mockProjectBudgetScenario).not.toHaveBeenCalled();
   });
 
   it('POST /api/v8/finance/analyses returns envelope and delegates to createAnalysis', async () => {

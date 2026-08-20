@@ -203,6 +203,22 @@ export interface V8FinanceBudgetLineCommandResult {
   replay: boolean;
 }
 
+export interface V8FinanceBudgetProjectionCommandResult {
+  budgetId: string;
+  scenario: {
+    id: string;
+    scenarioType: string;
+    projections: {
+      periods: string[];
+      lines: Record<string, Record<string, number>>;
+    };
+    summaryMetrics: Record<string, number>;
+  };
+  budgetVersion: number;
+  projectionSha256: string;
+  replay: boolean;
+}
+
 export interface V8FinanceCaseScenario {
   id: string;
   name: string;
@@ -675,6 +691,17 @@ export const V8FinanceApi = {
     v8Put<V8FinanceBudgetLineCommandResult>(`/finance/budgets/${budgetId}/lines/${lineId}`, body, {
       extraHeaders: { 'Idempotency-Key': idempotencyKey },
     }),
+  projectBudgetScenario: (
+    budgetId: string,
+    scenarioId: string,
+    expectedVersion: number,
+    idempotencyKey: string
+  ) =>
+    v8Post<V8FinanceBudgetProjectionCommandResult>(
+      `/finance/budgets/${budgetId}/scenarios/${scenarioId}/project`,
+      { expectedVersion },
+      { extraHeaders: { 'Idempotency-Key': idempotencyKey } }
+    ),
   getStatementPacks: (params?: { readiness?: string }) =>
     v8Get<{ statementPacks: V8FinanceStatementPackSummary[]; count: number }>(
       '/finance/statement-packs',

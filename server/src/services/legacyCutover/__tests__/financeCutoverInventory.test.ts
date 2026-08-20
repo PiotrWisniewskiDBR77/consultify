@@ -24,8 +24,8 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
       legacyMutationDoors: 52,
       canonicalMutationDoors: 1,
       nonMutationDoors: 6,
-      retiredLegacyMutationDoors: 19,
-      openLegacyMutationDoors: 33,
+      retiredLegacyMutationDoors: 20,
+      openLegacyMutationDoors: 32,
     });
   });
 
@@ -98,5 +98,20 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
     expect(source).not.toMatch(
       /fetch\(`\$\{API_URL\}\/economics\/budgets\/\$\{selected\.id\}\/lines\//
     );
+  });
+
+  it('routes every mounted budget projection through the canonical CAS command', () => {
+    const files = [
+      'src/components/Benefits/BudgetWorkspace.tsx',
+      'src/components/Economics/FinancePreviewPanel.tsx',
+      'src/components/Economics/hooks/useFinanceRowActions.ts',
+    ];
+    for (const file of files) {
+      const source = fs.readFileSync(path.resolve(process.cwd(), file), 'utf8');
+      expect(source).toContain('V8FinanceApi.projectBudgetScenario');
+      expect(source).not.toMatch(
+        /(?:Api\.post|fetch)\([^\n]*\/api\/economics\/budgets\/.*\/scenarios\/.*\/project/
+      );
+    }
   });
 });

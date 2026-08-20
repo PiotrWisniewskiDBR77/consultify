@@ -1117,8 +1117,18 @@ export function useFinancePreview({
               try {
                 const detail = await Api.get(`/api/economics/budgets/${rawId}`);
                 const scens = (detail as any)?.scenarios || [];
-                for (const sc of scens)
-                  await Api.post(`/api/economics/budgets/${rawId}/scenarios/${sc.id}/project`, {});
+                let currentVersion = Number((detail as any)?.version);
+                if (!Number.isInteger(currentVersion) || currentVersion < 1)
+                  throw new Error('Budget version is unavailable');
+                for (const sc of scens) {
+                  const result = await V8FinanceApi.projectBudgetScenario(
+                    rawId,
+                    sc.id,
+                    currentVersion,
+                    crypto.randomUUID()
+                  );
+                  currentVersion = result.budgetVersion;
+                }
                 await loadBudgetPreviewScenarios(rawId);
                 toast.success(t('finance.toast.projected', 'Prognozy wygenerowane'));
               } catch (e: any) {

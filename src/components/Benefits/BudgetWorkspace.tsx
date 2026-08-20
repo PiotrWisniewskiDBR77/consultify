@@ -224,17 +224,25 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
     if (!selected || scenarios.length === 0) return;
     setGenerating(true);
     try {
+      let currentVersion = selected.version;
       for (const sc of scenarios) {
-        await fetch(`${API_URL}/economics/budgets/${selected.id}/scenarios/${sc.id}/project`, {
-          method: 'POST',
-          headers: getHeaders(),
-        });
+        const result = await V8FinanceApi.projectBudgetScenario(
+          selected.id,
+          sc.id,
+          currentVersion,
+          crypto.randomUUID()
+        );
+        currentVersion = result.budgetVersion;
+        setSelected((current) =>
+          current?.id === selected.id ? { ...current, version: currentVersion } : current
+        );
       }
       toast.success(t('finance.budget.projected', 'Projections generated'));
-      await selectBudget(selected);
+      await selectBudget({ ...selected, version: currentVersion });
       onBudgetChanged?.();
     } catch {
       toast.error(t('finance.budget.projectFailed', 'Generation failed'));
+      await selectBudget(selected);
     } finally {
       setGenerating(false);
     }
