@@ -11,6 +11,37 @@
     "limitations": "Only 1 of 30 inventoried legacy V8 writers is safely retired; 29 remain deliberately enabled pending usage/parity and owner rollout decisions."
   },
   "technicalVerdict": "PASS_CURRENT_LEGACY_CUTOVER_KERNEL",
+  "exactCurrentInventory20260820": {
+    "productSha": "238ff80c9abafbaef364c905a8929585bbfd1fd2",
+    "scope": "All currently registered Finance legacy-route families: /api/v8/finance, /api/financial-modeling, /api/economics and /api/finance-statements.",
+    "result": {
+      "totalRouteRules": 59,
+      "actualLegacyMutationDoors": 52,
+      "alreadyCanonicalMutationDoors": 1,
+      "nonMutationOrExplicitRefusalDoors": 6,
+      "retiredLegacyMutationDoors": 8,
+      "openLegacyMutationDoors": 44
+    },
+    "correction": "The historical 1/30 denominator mixed an incomplete route inventory with POST-shaped routes that do not write legacy state. The current denominator is source-derived and separates persistence effect from HTTP verb.",
+    "commands": [
+      {
+        "command": "npx vitest run server/src/services/legacyCutover/__tests__/financeCutoverInventory.test.ts server/src/services/legacyCutover/__tests__/resultsCutover.registry.test.ts --retry=0 --reporter=dot",
+        "exitCode": 0,
+        "result": "2/2 files; 10/10 tests"
+      },
+      {
+        "command": "NODE_OPTIONS=--max-old-space-size=8192 npm --prefix server run typecheck",
+        "exitCode": 0,
+        "result": "server TypeScript noEmit passed"
+      },
+      {
+        "command": "git diff --check",
+        "exitCode": 0,
+        "result": "passed"
+      }
+    ],
+    "verdictImpact": "PARTIAL is retained. The denominator is now truthful; 44 actual legacy mutation doors still require canonical parity, identity/backfill and retirement qualification."
+  },
   "currentKernelRequalification": {
     "migration": "Fresh exact-current PostgreSQL ledger 758/758/758 successful and unique with zero missing checksums; strict repeat applied 0 and dry-run reported 0 pending.",
     "focused": "3 files / 13 tests passed: durable lifecycle 5, mounted Finance/Results/Partner observation 6, atomic bulk user plus ACTIVE membership 2.",
@@ -25,7 +56,7 @@
   "leaseSha256": "not_applicable_integrator_bounded_task",
   "verdict": "PARTIAL",
   "open": [
-    "Only 1 of 30 inventoried legacy V8 Finance writers has a proven canonical successor and is disabled by default. The remaining 29 stay available and are classified as legacy_uncovered_writer until route-by-route parity, backfill and usage evidence exists.",
+    "The exact-current mounted-route inventory contains 52 actual legacy mutation doors. Eight are retired and 44 remain open pending route-by-route canonical parity, identity/backfill, usage and rollback evidence.",
     "Rollout timing and Finance/Results reconciliation remain owner decisions; this evidence does not authorize rollout or change Results Actual ownership."
   ],
   "environment": {
