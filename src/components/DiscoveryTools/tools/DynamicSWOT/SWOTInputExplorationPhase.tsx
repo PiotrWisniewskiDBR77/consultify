@@ -530,7 +530,7 @@ const applyContextToProposal = (
   isPolish: boolean
 ): LocalizedProposal => ({
   title: proposal.title,
-  explanation: `${sanitizeGeneratedSentence(proposal.explanation)} ${
+  explanation: `${proposal.explanation.trim()} ${
     isPolish
       ? 'Ten kolejny punkt rozwijamy tak, aby był spójny z wcześniejszymi ustaleniami.'
       : 'This next point is framed to stay consistent with the earlier decisions.'
@@ -605,6 +605,11 @@ export function SWOTInputExplorationPhase({
     setWorkingProposalByStream((current) =>
       STREAM_ORDER.reduce<Record<StreamId, LocalizedProposal>>(
         (acc, streamId) => {
+          const persisted = swotData.inputProposalDrafts?.[streamId];
+          if (persisted) {
+            acc[streamId] = persisted;
+            return acc;
+          }
           const existing = current[streamId];
           if (!existing) {
             acc[streamId] = getLocalizedProposal(
@@ -620,7 +625,7 @@ export function SWOTInputExplorationPhase({
         {} as Record<StreamId, LocalizedProposal>
       )
     );
-  }, [isPolish, proposalPointerByStream]);
+  }, [isPolish, proposalPointerByStream, swotData.inputProposalDrafts]);
 
   const P = 'discoveryToolsTools.dynamicSwot.inputExplorationPhase';
   const labels = {

@@ -72,4 +72,26 @@ describe('SWOTInputExplorationPhase AI fill', () => {
     );
     expect((useToolStore.getState().currentSession!.inputData as any).signals).toHaveLength(0);
   });
+
+  it('persists an applied proposal comment across a remount', async () => {
+    const view = render(<Harness />);
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'discoveryToolsTools.common.comment' })
+    );
+    fireEvent.change(screen.getAllByRole('textbox').at(-1)!, {
+      target: { value: 'Focus on premium customer concentration' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'discoveryToolsTools.common.apply' }));
+
+    expect(
+      (useToolStore.getState().currentSession!.inputData as any).inputProposalDrafts.strengths
+        .explanation
+    ).toContain('premium customer concentration');
+    expect(await screen.findByText(/premium customer concentration/i)).toBeInTheDocument();
+
+    view.unmount();
+    render(<Harness />);
+    expect(await screen.findByText(/premium customer concentration/i)).toBeInTheDocument();
+  });
 });
