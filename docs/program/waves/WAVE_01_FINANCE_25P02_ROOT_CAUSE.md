@@ -12,6 +12,8 @@ Mounted request:
 
 Body selected `P&L`, `BS` and `CF` for period 2025. Upload succeeded with HTTP 201. Extract returned HTTP 422 and PostgreSQL `25P02`.
 
+The executable, rollback-only contract reproducer is `scripts/finance/reproduce-statement-pack-index-conflict.sql`. It proves that the legacy index rejects the second P&L period and that the period-aware index accepts both periods after the legacy index is removed.
+
 ## First error, previously swallowed
 
 The PostgreSQL container log proves the preceding error on the same transaction connection:
@@ -52,4 +54,3 @@ This establishes schema resurrection/drift after the corrective migration. A suc
 Required result: six distinct statement IDs and six source receipts in one pack (`P&L:2025`, `P&L:2024`, `BS:2025`, `BS:2024`, `CF:2025`, `CF:2024`), followed by mapping, confirmation, receipt, downstream deep link and independent cold readback.
 
 No production migration is authorized by this packet.
-

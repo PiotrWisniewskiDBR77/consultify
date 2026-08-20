@@ -9,7 +9,7 @@ Production: `NOT_TOUCHED / NOT_AUTHORIZED`
 | Gate | Result | Evidence |
 |---|---|---|
 | Finance first root cause | PASS | PostgreSQL log: `idx_fs_pack_active_type` duplicate precedes `25P02`; effective schema contains obsolete and current indexes |
-| Finance reproducibility | PASS | mounted upload 201 then extract 422 on exact `f5c6a7f16f`; failing pack/statement/request retained |
+| Finance reproducibility | PASS | mounted upload 201 then extract 422 on exact `f5c6a7f16f`; rollback-only SQL reproducer confirms legacy-index conflict and period-aware success |
 | Chat disposition | PASS | owner boundary applied; current focused suite 3 files / 100 tests PASS |
 | Teresa/UI inventory | PASS | three registries measured; Idea 135/135 generated parity; SWOT 23 declared / 6 handlers; global denominator missing and specified for Wave 02 |
 | Critical recovery triage | PASS | Finance, SWOT, Results, Transform, Chat and Teresa candidates classified; no broad merges |
