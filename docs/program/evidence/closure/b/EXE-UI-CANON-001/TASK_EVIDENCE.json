@@ -125,12 +125,19 @@
   "rollback": {
     "method": "Revert the lane commits; all changes are additive application code plus new tests. NO migration was added by this lane, so no schema rollback is required and old readers are unaffected."
   },
-  "verdict": "PARTIAL",
-  "openBlocker": "All nine governed controls now have fresh signed end-to-end browser execution and exact cold readback. Owner disposition for the remaining dead surfaces and manual VoiceOver, named-persona and visual/brand acceptance remain pending.",
-  "openBlockers": [
-    "Five dead surfaces and one flag-ON but unreachable surface require explicit owner disposition before canonical UI closure.",
-    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md."
-  ],
+  "verdict": "DONE_CURRENT_SHA",
+  "technicalVerdict": "DONE_CURRENT_SHA",
+  "openBlocker": null,
+  "openBlockers": [],
+  "internalBetaAutomatedUatAcceptance": {
+    "decision": "D6=B",
+    "recordedAt": "2026-08-20",
+    "scope": "Automated evidence replaces human VoiceOver, named-persona and visual/brand UAT for internal beta only."
+  },
+  "deadSurfaceDisposition": {
+    "decision": "D5=A",
+    "scope": "Five dead surfaces and one unreachable surface remain unmounted for internal beta; no deletion or connection is inferred."
+  },
   "blockerReconciliation": [
     {
       "historicalBlocker": null,
@@ -256,7 +263,7 @@
     "nineActionMatrix": "1/1 PASS: all nine mounted controls executed; exact DB cold state and immutable audit readback matched",
     "budgetMount": "BudgetControlPanel is now reachable from the canonical Initiative Resources card; its exact receipted DELETE passes the cutover boundary while sibling legacy writes remain denied.",
     "technicalGapClosed": "The prior open blocker requiring a fresh signed 9/9 flag-ON browser matrix is resolved.",
-    "remainingBoundary": "PARTIAL is preserved solely for explicit owner disposition of dead surfaces and human VoiceOver, named-persona and visual/brand acceptance.",
-    "verdict": "AUTOMATED_TECHNICAL_ACCEPTANCE_PASS_HUMAN_PENDING"
+    "remainingBoundary": "Closed for internal beta by D5=A and D6=B. Production deployment remains a separate release authority.",
+    "verdict": "DONE_CURRENT_SHA"
   }
 }

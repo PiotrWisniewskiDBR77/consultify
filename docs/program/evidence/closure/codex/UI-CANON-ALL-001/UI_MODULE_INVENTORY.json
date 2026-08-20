@@ -151,7 +151,7 @@
       "taskId": "EXE-UI-CANON-001",
       "evidencePath": "docs/program/evidence/closure/b/EXE-UI-CANON-001/TASK_EVIDENCE.json",
       "g4ResultPath": "docs/program/evidence/closure/ui-g4/EXE-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "classification": "TECHNICAL_CURRENT_WITH_GAPS",
+      "classification": "TECHNICAL_CURRENT",
       "routes": ["/execution", "/execution/:caseId"],
       "surfaces": ["case list", "case workspace", "capacity", "governed actions"],
       "stateCoverage": {
@@ -164,7 +164,7 @@
         "success": "partial",
         "stale": "covered"
       },
-      "openGaps": ["fresh signed Case Workspace flag-ON browser matrix for the nine governed actions"]
+      "openGaps": []
     },
     {
       "moduleId": "RES",
