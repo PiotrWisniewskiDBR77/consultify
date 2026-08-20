@@ -188,6 +188,8 @@ export interface NModeHeaderPrimaryAction {
 // ── Header Configuration ────────────────────────────────────────────────────
 
 export interface NModeHeaderConfig {
+  /** Keep the single artifact header visible inside the shell scroll container. */
+  sticky?: boolean;
   /** Current title value */
   title: string;
   /** Title change handler */

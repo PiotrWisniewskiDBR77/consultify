@@ -32,6 +32,7 @@ interface ContextStepProps {
   session: ToolSession;
   isPolish: boolean;
   onGenerateFullSession?: () => void;
+  onContinue?: () => void;
   sessionGenerationStatus?: SessionGenerationStatus;
   missionSuggestion?: Partial<SWOTData['context']> | null;
   onApplyMissionSuggestion?: () => void;
@@ -254,6 +255,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
   session,
   isPolish,
   onGenerateFullSession,
+  onContinue,
   sessionGenerationStatus,
   missionSuggestion,
   onApplyMissionSuggestion,
@@ -867,33 +869,46 @@ export const ContextStep: React.FC<ContextStepProps> = ({
       .filter((option) => (displayedContext.question5Choices || []).includes(option.id))
       .map((option) => option.label);
 
-    const executiveSummaryIntro = t('discoveryToolsSteps.contextStep.dynamicSwot.summary.intro');
-
-    const executiveSummaryBody = t('discoveryToolsSteps.contextStep.dynamicSwot.summary.body', {
-      direction: composeList(
-        selectedDirectionLabels.length ? selectedDirectionLabels : [displayedContext.goal]
-      ),
-      scope: composeList(
-        selectedScopeLabels.length ? selectedScopeLabels : [displayedContext.scope]
-      ),
-    });
-
-    const executiveSummaryDelivery = t(
-      'discoveryToolsSteps.contextStep.dynamicSwot.summary.delivery',
+    const summaryCards = [
       {
-        success: composeList(
+        label: isPolish ? 'Kierunek strategiczny' : 'Strategic direction',
+        value: composeList(
+          selectedDirectionLabels.length ? selectedDirectionLabels : [displayedContext.goal]
+        ),
+      },
+      {
+        label: isPolish ? 'Zakres decyzji' : 'Decision scope',
+        value: composeList(
+          selectedScopeLabels.length ? selectedScopeLabels : [displayedContext.scope]
+        ),
+      },
+      {
+        label: isPolish ? 'Sygnał sukcesu' : 'Success signal',
+        value: composeList(
           selectedSuccessLabels.length ? selectedSuccessLabels : [displayedContext.successSignal]
         ),
-        question4: composeList(
+      },
+      {
+        label: isPolish ? 'Założenia i dowody' : 'Assumptions and evidence',
+        value: composeList(
           selectedQuestion4Labels.length
             ? selectedQuestion4Labels
             : [displayedContext.assumptions].filter((value): value is string => Boolean(value))
         ),
-        question5: composeList(
+      },
+      {
+        label: isPolish ? 'Ograniczenia i kompromisy' : 'Constraints and trade-offs',
+        value: composeList(
           selectedQuestion5Labels.length ? selectedQuestion5Labels : [displayedContext.constraints]
         ),
-      }
-    );
+      },
+      {
+        label: isPolish ? 'Następny etap' : 'Next phase',
+        value: isPolish
+          ? 'Input & Exploration — zebranie i ocena sygnałów przed budową macierzy.'
+          : 'Input & Exploration — collect and assess signals before building the matrix.',
+      },
+    ];
 
     const deepDiveOptions: Record<
       'understanding' | 'direction' | 'scope' | 'success' | 'constraints',
@@ -1644,23 +1659,38 @@ export const ContextStep: React.FC<ContextStepProps> = ({
                     Summary
                   </span>
                 </div>
-                <div className="mt-4 text-base font-semibold leading-relaxed text-slate-900 dark:text-white">
-                  {executiveSummaryIntro}
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  {summaryCards.map((card) => (
+                    <div
+                      key={card.label}
+                      className="rounded-2xl border border-c-border bg-c-surface-raised p-4"
+                    >
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-c-text-secondary">
+                        {card.label}
+                      </div>
+                      <div className="mt-2 text-sm leading-relaxed text-c-text">
+                        {card.value || (isPolish ? 'Do uzupełnienia' : 'To be completed')}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="mt-4 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
-                  {executiveSummaryBody}
+                <div className="mt-4 flex items-center justify-between gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setActiveMissionQuestion(5)}
+                    data-testid="mission-prev"
+                    className={navButtonClass}
+                  >
+                    {labelsUi.previous}
+                  </button>
+                  {onContinue ? (
+                    <button type="button" onClick={onContinue} className={primaryNavButtonClass}>
+                      {isPolish
+                        ? 'Przejdź do Input & Exploration'
+                        : 'Continue to Input & Exploration'}
+                    </button>
+                  ) : null}
                 </div>
-                <div className="mt-4 rounded-2xl border border-primary-200/70 bg-primary-500/5 px-4 py-4 text-sm leading-relaxed text-slate-700 dark:border-primary-900/40 dark:text-slate-200">
-                  {executiveSummaryDelivery}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setActiveMissionQuestion(5)}
-                  data-testid="mission-prev"
-                  className={`${navButtonClass} mt-4`}
-                >
-                  {labelsUi.previous}
-                </button>
               </div>
             )}
 

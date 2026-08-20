@@ -113,6 +113,7 @@ interface ToolCanvasProps {
   onOpenInitiatives?: () => void;
   generatedInitiatives?: { id: string; title: string; status?: string }[];
   onGenerateFullSession?: () => void;
+  onContinue?: () => void;
   missionSuggestion?: Partial<ConsultingMissionContext> | null;
   onApplyMissionSuggestion?: () => void;
   onDismissMissionSuggestion?: () => void;
@@ -137,6 +138,7 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
   onOpenInitiatives,
   generatedInitiatives,
   onGenerateFullSession,
+  onContinue,
   missionSuggestion,
   onApplyMissionSuggestion,
   onDismissMissionSuggestion,
@@ -165,6 +167,7 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
             session={session}
             isPolish={isPolish}
             onGenerateFullSession={onGenerateFullSession}
+            onContinue={onContinue}
             sessionGenerationStatus={sessionGenerationStatus}
             missionSuggestion={missionSuggestion}
             onApplyMissionSuggestion={onApplyMissionSuggestion}
@@ -212,24 +215,14 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
 
       if (stepDefinition.id === 'outputs') {
         return (
-          <div className="space-y-6">
-            <SummaryStep
-              toolType={toolType}
-              session={session}
-              isPolish={isPolish}
-              onAcceptCard={onAcceptCard}
-              onRejectCard={onRejectCard}
-              onRethinkCard={onRethinkCard}
-            />
-            <InitiativesStep
-              toolType={toolType}
-              session={session}
-              isPolish={isPolish}
-              generatedInitiatives={generatedInitiatives}
-              onOpenInitiatives={onOpenInitiatives}
-              onOpenChat={onOpenChat}
-            />
-          </div>
+          <SummaryStep
+            toolType={toolType}
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
         );
       }
     }

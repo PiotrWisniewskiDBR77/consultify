@@ -173,7 +173,9 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
         className="flex-1 min-w-0 h-full min-h-0 overflow-y-auto bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950"
       >
         {/* ── Segment 1: Header + PropertiesStrip (scrolls away) ────────────────── */}
-        <div className="px-6 pt-4 pb-0">
+        <div
+          className={`${header.sticky ? 'sticky top-0 z-30 bg-c-bg/90 pb-2 backdrop-blur-xl' : 'pb-0'} px-6 pt-4`}
+        >
           <div className="max-w-6xl mx-auto">
             <NModeHeader
               {...header}
@@ -198,22 +200,24 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
             (`NMODE_TOOLBAR_SHELL_CLASS`), więc sticky-tło dalej biegnie od
             krawędzi do krawędzi. Zmiana jest wspólna dla wszystkich sześciu
             kart N na tej powłoce. */}
-        {hasActionBar && <div className={NMODE_TOOLBAR_SHELL_CLASS}>
-          <div className="px-6 py-2">
-            <div className="max-w-6xl mx-auto">
-              {renderActionBar
-                ? actionBarNode
-                : ((actionsVisible && actions.length > 0) || toolAIActions.length > 0) && (
-                    <NModeActionBar
-                      actions={actionsVisible ? actions : []}
-                      aiContextActions={aiContextActions}
-                      toolAIActions={toolAIActions}
-                      activeSection={activeSection}
-                    />
-                  )}
+        {hasActionBar && (
+          <div className={NMODE_TOOLBAR_SHELL_CLASS}>
+            <div className="px-6 py-2">
+              <div className="max-w-6xl mx-auto">
+                {renderActionBar
+                  ? actionBarNode
+                  : ((actionsVisible && actions.length > 0) || toolAIActions.length > 0) && (
+                      <NModeActionBar
+                        actions={actionsVisible ? actions : []}
+                        aiContextActions={aiContextActions}
+                        toolAIActions={toolAIActions}
+                        activeSection={activeSection}
+                      />
+                    )}
+              </div>
             </div>
           </div>
-        </div>}
+        )}
 
         {/* ── Segment 3: Main content (scrollable, padded) ──────────────────────── */}
         <div className="px-6 pb-6">

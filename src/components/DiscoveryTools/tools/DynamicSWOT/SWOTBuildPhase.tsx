@@ -41,26 +41,25 @@ const QUADRANT_META: Record<
     title: { en: 'Strengths', pl: 'Mocne strony' },
     subtitle: { en: 'Internal advantages', pl: 'Wewnętrzne przewagi' },
     accent: 'text-emerald-700 dark:text-emerald-300',
-    surface:
-      'border-emerald-200 bg-emerald-50/80 dark:border-emerald-900/40 dark:bg-emerald-950/20',
+    surface: 'border-emerald-500/30 bg-c-surface',
   },
   weaknesses: {
     title: { en: 'Weaknesses', pl: 'Słabe strony' },
     subtitle: { en: 'Internal constraints', pl: 'Wewnętrzne ograniczenia' },
     accent: 'text-amber-700 dark:text-amber-300',
-    surface: 'border-amber-200 bg-amber-50/80 dark:border-amber-900/40 dark:bg-amber-950/20',
+    surface: 'border-amber-500/30 bg-c-surface',
   },
   opportunities: {
     title: { en: 'Opportunities', pl: 'Szanse' },
     subtitle: { en: 'External upside', pl: 'Zewnętrzny upside' },
     accent: 'text-sky-700 dark:text-sky-300',
-    surface: 'border-sky-200 bg-sky-50/80 dark:border-sky-900/40 dark:bg-sky-950/20',
+    surface: 'border-sky-500/30 bg-c-surface',
   },
   threats: {
     title: { en: 'Threats', pl: 'Zagrożenia' },
     subtitle: { en: 'External risk', pl: 'Zewnętrzne ryzyko' },
     accent: 'text-danger-700 dark:text-danger-300',
-    surface: 'border-danger-200 bg-danger-50/80 dark:border-danger-900/40 dark:bg-danger-900/20',
+    surface: 'border-danger-500/30 bg-c-surface',
   },
 };
 
@@ -131,7 +130,7 @@ function QuadrantCard({
             {isPolish ? meta.subtitle.pl : meta.subtitle.en}
           </div>
         </div>
-        <div className="rounded-full border border-white/70 bg-white/70 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200">
+        <div className="rounded-full border border-c-border bg-c-surface-raised px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-c-text-secondary">
           {items.length}
         </div>
       </div>
@@ -147,16 +146,80 @@ function QuadrantCard({
             }
           }}
           placeholder={t('discoveryToolsTools.dynamicSwot.buildPhase.addPointPlaceholder')}
-          className="h-10 flex-1 rounded-lg border border-white/70 bg-white px-3 text-sm dark:border-navy-700 dark:bg-navy-900"
+          className="h-10 flex-1 rounded-lg border border-c-border bg-c-surface-raised px-3 text-sm text-c-text"
         />
         <button
           type="button"
           onClick={addItem}
           disabled={!draft.trim()}
-          className="inline-flex h-10 items-center justify-center rounded-lg bg-slate-900 px-3 text-white disabled:opacity-50 dark:bg-white dark:text-slate-900"
+          className="inline-flex h-10 items-center justify-center rounded-lg bg-c-text px-3 text-c-surface disabled:opacity-50"
         >
           <Plus className="h-4 w-4" />
         </button>
+      </div>
+
+      <div className="space-y-2">
+        {items.length === 0 ? (
+          <div className="rounded-xl border-2 border-dashed border-c-border bg-c-surface-raised p-5 text-center text-sm text-c-text-secondary">
+            {t('discoveryToolsTools.dynamicSwot.buildPhase.noPoints')}
+          </div>
+        ) : (
+          items.map((item) => (
+            <div
+              key={item.id}
+              className="rounded-2xl border border-c-border bg-c-surface-raised p-3"
+            >
+              <div className="mb-2 flex items-start justify-between gap-2">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600">
+                  {t('discoveryToolsTools.dynamicSwot.buildPhase.swotPoint')}
+                </div>
+                <div className="flex items-center gap-1">
+                  <label className="sr-only" htmlFor={`impact-${item.id}`}>
+                    {t('discoveryToolsTools.dynamicSwot.quadrantStep.highImpact')}
+                  </label>
+                  <select
+                    id={`impact-${item.id}`}
+                    value={item.impact}
+                    onChange={(e) =>
+                      updateSWOTItem(item.id, {
+                        impact: e.target.value as 'high' | 'medium' | 'low',
+                      })
+                    }
+                    className="h-7 rounded-lg border border-slate-200 bg-white px-1.5 text-[11px] text-slate-700 focus:outline-none focus:ring-1 focus:ring-c-focus dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200"
+                  >
+                    <option value="high">
+                      {t('discoveryToolsTools.dynamicSwot.quadrantStep.highImpact')}
+                    </option>
+                    <option value="medium">
+                      {t('discoveryToolsTools.dynamicSwot.quadrantStep.mediumImpact')}
+                    </option>
+                    <option value="low">
+                      {t('discoveryToolsTools.dynamicSwot.quadrantStep.lowImpact')}
+                    </option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => removeSWOTItem(item.id)}
+                    className="rounded-lg p-1.5 text-slate-600 transition hover:bg-danger-50 hover:text-danger-600 dark:hover:bg-danger-900/30"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+              <textarea
+                value={item.text}
+                onChange={(e) => updateSWOTItem(item.id, { text: e.target.value })}
+                rows={3}
+                className="w-full resize-none rounded-xl border border-transparent bg-transparent px-0 py-0 text-sm font-medium leading-relaxed text-slate-900 outline-none dark:text-slate-100"
+              />
+              <EvidenceEditor
+                item={item}
+                isPolish={isPolish}
+                onChange={(patch) => updateSWOTItem(item.id, patch)}
+              />
+            </div>
+          ))
+        )}
       </div>
 
       {proposals.length > 0 ? (
@@ -167,7 +230,7 @@ function QuadrantCard({
           {proposals.map((proposal) => (
             <div
               key={proposal.id}
-              className="rounded-2xl border border-primary-200/70 bg-white/90 p-3 shadow-[0_8px_24px_-18px_rgba(76,29,149,0.35)] dark:border-primary-900/40 dark:bg-primary-950/20"
+              className="rounded-2xl border border-c-border-strong bg-c-surface-raised p-3"
             >
               <div className="mb-2 flex items-start justify-between gap-2">
                 <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-primary-500 dark:text-primary-300">
@@ -451,10 +514,21 @@ export function SWOTBuildPhase({ session, isPolish, isGeneratingAI = false }: Bu
 
   return (
     <div className="space-y-6 p-1">
-      {isGeneratingAI ? (
-        <div className="inline-flex items-center gap-2 self-start rounded-2xl border border-sky-300/50 bg-sky-50 px-4 py-2 text-sm font-medium text-sky-700 dark:border-sky-900/40 dark:bg-sky-950/20 dark:text-sky-300">
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-          {t('discoveryToolsTools.dynamicSwot.buildPhase.aiPreparing')}
+      <div className="rounded-[28px] border border-c-border bg-c-surface p-5">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+          <div className="max-w-3xl">
+            <div className="text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+              {t('discoveryToolsTools.dynamicSwot.buildPhase.oneMatrixNote')}
+            </div>
+            <InlineAssist hint={t('discoveryToolsTools.dynamicSwot.buildPhase.acceptHint')} />
+          </div>
+
+          {isGeneratingAI ? (
+            <div className="inline-flex items-center gap-2 rounded-2xl border border-sky-300/50 bg-sky-50 px-4 py-2 text-sm font-medium text-sky-700 dark:border-sky-900/40 dark:bg-sky-950/20 dark:text-sky-300">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              {t('discoveryToolsTools.dynamicSwot.buildPhase.aiPreparing')}
+            </div>
+          ) : null}
         </div>
       ) : null}
 

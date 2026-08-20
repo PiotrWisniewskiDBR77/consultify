@@ -302,7 +302,7 @@ describe('SWOTBuildPhase — dark-theme class presence (structural only, not ren
     // assert. Real dark-theme verification belongs to the browser evidence
     // this lane could not obtain (see UI_INVENTORY.md).
     const html = container.innerHTML;
-    expect(html).toMatch(/dark:border-emerald-900/);
-    expect(html).toMatch(/dark:bg-navy-950\/30/);
+    expect(html).toMatch(/border-emerald-500\/30 bg-c-surface/);
+    expect(html).toMatch(/border-c-border bg-c-surface-raised/);
   });
 });

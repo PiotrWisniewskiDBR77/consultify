@@ -60,8 +60,8 @@ import { GrowthPathsLibraryGraphic } from './GrowthPathsLibraryGraphic';
 import { MarketForcesLibraryGraphic } from './MarketForcesLibraryGraphic';
 import { PortfolioPriorityLibraryGraphic } from './PortfolioPriorityLibraryGraphic';
 import { RiskUncertaintyLibraryGraphic } from './RiskUncertaintyLibraryGraphic';
-import { ToolProcessDiagram } from './ToolProcessDiagram';
 import { TOOL_CARD_RENDER_IDS, TOOL_CARD_SPEC } from './toolCards.contract';
+import { ToolProcessDiagram } from './ToolProcessDiagram';
 
 type KnownTool = Awaited<ReturnType<typeof Api.getKnownTool>>['tool'];
 
@@ -1080,17 +1080,19 @@ export function KnownToolDetailView(props: {
         </div>
 
         {caseGrid(
-          t('discoveryToolsMain.knownToolDetail.dynamicSwot.example.cases', {
-            returnObjects: true,
-          }) as Array<{
-            title: string;
-            context: string;
-            question: string;
-            evidence: string[];
-            aiDraft: string;
-            approvedUse: string;
-            outcome: string;
-          }>,
+          (
+            t('discoveryToolsMain.knownToolDetail.dynamicSwot.example.cases', {
+              returnObjects: true,
+            }) as Array<{
+              title: string;
+              context: string;
+              question: string;
+              evidence: string[];
+              aiDraft: string;
+              approvedUse: string;
+              outcome: string;
+            }>
+          ).slice(0, 1),
           true
         )}
 
@@ -2416,6 +2418,7 @@ export function KnownToolDetailView(props: {
         // ETAP 1.1 n-Type: karta N ma JEDEN widok — bez przełącznika N/C.
         showModeSwitcher={false}
         header={{
+          sticky: true,
           title: tool?.name || toolType,
           onTitleChange: () => {},
           titleReadOnly: true,
