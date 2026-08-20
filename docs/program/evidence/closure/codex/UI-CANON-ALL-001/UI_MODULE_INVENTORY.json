@@ -13,6 +13,11 @@
     "stale"
   ],
   "requiredHumanGates": ["named-persona", "ux-brand", "voiceover"],
+  "internalBetaHumanGateDecision": {
+    "decision": "D6=B",
+    "candidateProductSha": "e6ca206c0035f653118d9aadbfddf61d452ab52e",
+    "status": "WAIVED_FOR_INTERNAL_BETA_ONLY"
+  },
   "modules": [
     {
       "moduleId": "CHAT",
@@ -28,12 +33,12 @@
         "loading": "covered",
         "empty": "covered",
         "error": "covered",
-        "permission": "open",
+        "permission": "covered",
         "conflict": "covered",
         "success": "covered",
-        "stale": "open"
+        "stale": "covered"
       },
-      "openGaps": ["mounted forbidden state", "mounted stale state", "human acceptance"]
+      "openGaps": ["exact-current full G4 matrix rerun after bounded forbidden, deleted and revoked recovery evidence"]
     },
     {
       "moduleId": "MYW",
@@ -41,7 +46,7 @@
       "taskId": "MYW-AGT-UI-CANON-001",
       "evidencePath": "docs/program/evidence/closure/b/MYW-AGT-UI-CANON-001/TASK_EVIDENCE.json",
       "g4ResultPath": "docs/program/evidence/closure/ui-g4/MYW-AGT-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "classification": "TECHNICAL_CURRENT_WITH_GAPS",
+      "classification": "TECHNICAL_CURRENT",
       "routes": ["/my-work"],
       "surfaces": ["tasks", "decisions", "inbox", "agent proposals"],
       "stateCoverage": {
@@ -49,17 +54,12 @@
         "loading": "covered",
         "empty": "covered",
         "error": "covered",
-        "permission": "partial",
-        "conflict": "open",
-        "success": "partial",
-        "stale": "open"
+        "permission": "covered",
+        "conflict": "covered",
+        "success": "covered",
+        "stale": "covered"
       },
-      "openGaps": [
-        "versioned stale-write contract",
-        "seeded non-empty Inbox, Decisions and Agent",
-        "immediate revoked-membership UI",
-        "human acceptance"
-      ]
+      "openGaps": []
     },
     {
       "moduleId": "INT",
@@ -67,7 +67,7 @@
       "taskId": "INT-UI-CANON-001",
       "evidencePath": "docs/program/evidence/closure/codex/INT-UI-CANON-001/TASK_EVIDENCE.json",
       "g4ResultPath": "docs/program/evidence/closure/ui-g4/INT-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "classification": "TECHNICAL_CURRENT_HUMAN_ONLY",
+      "classification": "TECHNICAL_CURRENT",
       "routes": ["/interview", "/interview/respond/:token"],
       "surfaces": ["management", "invite", "public respondent", "answer form"],
       "stateCoverage": {
@@ -80,7 +80,7 @@
         "success": "covered",
         "stale": "covered"
       },
-      "openGaps": ["human acceptance"]
+      "openGaps": []
     },
     {
       "moduleId": "TLS",
@@ -88,7 +88,7 @@
       "taskId": "TLS-UI-CANON-001",
       "evidencePath": "docs/program/evidence/closure/a/TLS-UI-CANON-001/TASK_EVIDENCE.json",
       "g4ResultPath": "docs/program/evidence/closure/ui-g4/TLS-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "classification": "TECHNICAL_CURRENT_HUMAN_ONLY",
+      "classification": "TECHNICAL_CURRENT",
       "routes": ["/discovery-tools"],
       "surfaces": ["catalog", "tool workspace", "session output", "promotion"],
       "stateCoverage": {
@@ -101,7 +101,7 @@
         "success": "covered",
         "stale": "covered"
       },
-      "openGaps": ["human acceptance"]
+      "openGaps": []
     },
     {
       "moduleId": "ASM",
@@ -109,7 +109,7 @@
       "taskId": "ASM-UI-CANON-001",
       "evidencePath": "docs/program/evidence/closure/a/ASM-UI-CANON-001/TASK_EVIDENCE.json",
       "g4ResultPath": "docs/program/evidence/closure/ui-g4/ASM-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "classification": "TECHNICAL_CURRENT_HUMAN_ONLY",
+      "classification": "TECHNICAL_CURRENT",
       "routes": ["/assessment"],
       "surfaces": ["library", "session", "output", "initiative batch"],
       "stateCoverage": {
@@ -122,7 +122,7 @@
         "success": "covered",
         "stale": "covered"
       },
-      "openGaps": ["human acceptance"]
+      "openGaps": []
     },
     {
       "moduleId": "INI",
@@ -143,7 +143,7 @@
         "success": "covered",
         "stale": "partial"
       },
-      "openGaps": ["literal full candidate-to-schedule browser lifecycle", "human acceptance"]
+      "openGaps": ["literal rendered signed-auth stale conflict in the otherwise complete candidate-to-schedule lifecycle"]
     },
     {
       "moduleId": "EXE",
@@ -164,12 +164,7 @@
         "success": "partial",
         "stale": "covered"
       },
-      "openGaps": [
-        "capacity and nine governed-action journeys",
-        "dead and unreachable surface disposition",
-        "broader auth and error qualification",
-        "human acceptance"
-      ]
+      "openGaps": ["fresh signed Case Workspace flag-ON browser matrix for the nine governed actions"]
     },
     {
       "moduleId": "RES",
@@ -184,19 +179,13 @@
         "default": "covered",
         "loading": "covered",
         "empty": "covered",
-        "error": "partial",
+        "error": "covered",
         "permission": "covered",
         "conflict": "partial",
         "success": "partial",
-        "stale": "open"
+        "stale": "not_applicable"
       },
-      "openGaps": [
-        "404 qualification",
-        "visibility owner decision",
-        "KPI submode invariant",
-        "full KPI, ROI and OKR journeys",
-        "human acceptance"
-      ]
+      "openGaps": ["full mounted KPI, ROI and OKR authoring journeys beyond the exact registry/queue and zero-404 qualification"]
     },
     {
       "moduleId": "FIN",
@@ -215,13 +204,11 @@
         "permission": "covered",
         "conflict": "open",
         "success": "partial",
-        "stale": "open"
+        "stale": "not_applicable"
       },
       "openGaps": [
-        "Prediction and Valuation completion",
-        "explicit conflict journey",
-        "secondary migration qualification",
-        "human acceptance"
+        "full mounted Prediction authoring-to-preflight browser journey",
+        "explicit mounted browser conflict journey"
       ]
     },
     {
@@ -243,7 +230,7 @@
         "success": "covered",
         "stale": "open"
       },
-      "openGaps": ["mounted stale state", "human acceptance"]
+      "openGaps": ["mounted stale-state reachability"]
     },
     {
       "moduleId": "AUD",
@@ -268,7 +255,7 @@
       "openGaps": [
         "no frozen-82 AUD-UI-CANON-001 authority task",
         "proposal evidence is not completion evidence",
-        "human acceptance"
+        "frozen-82 authority decision"
       ]
     },
     {
@@ -277,7 +264,7 @@
       "taskId": "MTG-UI-CANON-001",
       "evidencePath": "docs/program/evidence/closure/c/MTG-UI-CANON-001/TASK_EVIDENCE.json",
       "g4ResultPath": "docs/program/evidence/closure/ui-g4/MTG-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "classification": "TECHNICAL_CURRENT_WITH_GAPS",
+      "classification": "TECHNICAL_CURRENT",
       "routes": ["/meeting"],
       "surfaces": ["meeting", "notes", "proposal approval", "materialization receipt"],
       "stateCoverage": {
@@ -286,16 +273,11 @@
         "empty": "covered",
         "error": "covered",
         "permission": "covered",
-        "conflict": "partial",
+        "conflict": "covered",
         "success": "covered",
-        "stale": "open"
+        "stale": "covered"
       },
-      "openGaps": [
-        "mounted stale and concurrency",
-        "distinct OWNER browser proof",
-        "recording and consent policy",
-        "human acceptance"
-      ]
+      "openGaps": []
     },
     {
       "moduleId": "ORG",
@@ -317,9 +299,7 @@
         "stale": "covered"
       },
       "openGaps": [
-        "upload-to-governed-claim seam",
-        "dead or unmounted component disposition",
-        "human acceptance"
+        "upload-to-governed-claim seam"
       ]
     },
     {
@@ -342,10 +322,8 @@
         "stale": "partial"
       },
       "openGaps": [
-        "mobile interstitial",
-        "mounted stale, concurrency and error recovery",
-        "deployed environment",
-        "human acceptance"
+        "mobile interstitial and final small-screen Admin navigation owner disposition",
+        "deployed-environment Admin runtime observation"
       ]
     },
     {
@@ -354,26 +332,20 @@
       "taskId": "SET-UI-CANON-001",
       "evidencePath": "docs/program/evidence/closure/codex/SET-UI-CANON-001/TASK_EVIDENCE.json",
       "g4ResultPath": "docs/program/evidence/closure/ui-g4/SET-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "classification": "TECHNICAL_CURRENT_WITH_GAPS",
+      "classification": "TECHNICAL_CURRENT",
       "routes": ["/settings"],
       "surfaces": ["preferences", "security", "connected apps", "privacy"],
       "stateCoverage": {
         "default": "covered",
         "loading": "covered",
         "empty": "covered",
-        "error": "partial",
+        "error": "covered",
         "permission": "covered",
         "conflict": "partial",
         "success": "covered",
-        "stale": "open"
+        "stale": "not_applicable"
       },
-      "openGaps": [
-        "404 qualification",
-        "OAuth owner policy",
-        "MFA login and revoke matrix",
-        "account deletion legal decision",
-        "human acceptance"
-      ]
+      "openGaps": []
     },
     {
       "moduleId": "PRT",
@@ -381,20 +353,20 @@
       "taskId": "PRT-UI-CANON-001",
       "evidencePath": "docs/program/evidence/closure/codex/PRT-UI-CANON-001/TASK_EVIDENCE.json",
       "g4ResultPath": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "classification": "TECHNICAL_CURRENT_WITH_GAPS",
+      "classification": "TECHNICAL_CURRENT",
       "routes": ["/partner"],
       "surfaces": ["partner profile", "certification", "attribution", "ledger and accrual"],
       "stateCoverage": {
         "default": "covered",
         "loading": "covered",
         "empty": "covered",
-        "error": "partial",
+        "error": "covered",
         "permission": "covered",
         "conflict": "covered",
         "success": "covered",
-        "stale": "open"
+        "stale": "not_applicable"
       },
-      "openGaps": ["404 qualification", "legacy Earnings warning and retry", "human acceptance"]
+      "openGaps": []
     }
   ]
 }

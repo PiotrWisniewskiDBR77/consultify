@@ -67,8 +67,11 @@ for (const entry of modules) {
     fail(`${entry.moduleId}: routes empty`);
   if (!Array.isArray(entry.surfaces) || entry.surfaces.length === 0)
     fail(`${entry.moduleId}: surfaces empty`);
-  if (!Array.isArray(entry.openGaps) || entry.openGaps.length === 0)
-    fail(`${entry.moduleId}: openGaps empty`);
+  if (!Array.isArray(entry.openGaps)) fail(`${entry.moduleId}: openGaps missing`);
+  if (entry.classification === 'TECHNICAL_CURRENT' && entry.openGaps.length !== 0)
+    fail(`${entry.moduleId}: TECHNICAL_CURRENT must have no openGaps`);
+  if (entry.classification !== 'TECHNICAL_CURRENT' && entry.openGaps.length === 0)
+    fail(`${entry.moduleId}: unresolved classification must retain openGaps`);
   if (Object.keys(entry.stateCoverage ?? {}).length !== requiredStates.length)
     fail(`${entry.moduleId}: incomplete state checklist`);
   for (const state of requiredStates) {
@@ -135,6 +138,7 @@ const result = {
   technicalCurrentWithGaps: modules.filter(
     (entry) => entry.classification === 'TECHNICAL_CURRENT_WITH_GAPS'
   ).length,
+  technicalCurrent: modules.filter((entry) => entry.classification === 'TECHNICAL_CURRENT').length,
   verifiedHashReferences,
   aggregateVerdictCeiling: 'PARTIAL',
 };

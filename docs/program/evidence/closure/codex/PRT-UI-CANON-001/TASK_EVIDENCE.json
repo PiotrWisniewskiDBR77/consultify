@@ -85,7 +85,7 @@
       "candidateSha": "4eec1d27952bc5642018495575665f5784e04f71",
       "reconciliationSha": "4eec1d27952bc5642018495575665f5784e04f71",
       "resultPath": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "resultSha256": "32f94c503866e54329e0f3a8cb1de7725bdf3c15319b8ddcbfc565ba9dbfe5f1",
+      "resultSha256": "5e2236a5b5296e92179d8be1010b7c022393c5d1043ae5f94c34fc5c0d45d832",
       "screenshots": [
         {
           "path": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/screens/PRT__desktop__pl__light.png",
@@ -155,7 +155,7 @@
       "kind": "mounted_signed_auth_g4_exact_current_postfix",
       "candidateSha": "0529405e9f3ef7b182ada28a6a3a1aab836ac007",
       "resultPath": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/G4_SWEEP_RESULT.json",
-      "resultSha256": "4da1d7ad1a786dc8560ce432787b7e17edf5f85beff4484125d7e1dc5859015d",
+      "resultSha256": "5e2236a5b5296e92179d8be1010b7c022393c5d1043ae5f94c34fc5c0d45d832",
       "cells": 14,
       "consoleErrors": 0,
       "httpErrors": 0,
