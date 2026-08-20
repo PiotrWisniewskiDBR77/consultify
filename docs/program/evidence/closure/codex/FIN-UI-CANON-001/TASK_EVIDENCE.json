@@ -1,7 +1,7 @@
 {
   "taskId": "FIN-UI-CANON-001",
   "baselineSha": "71ec92695737d415b5319f001f9492bae4382e17",
-  "productSha": "748c801eb7ade1661a9ab5d43fd7dc73ca4badde",
+  "productSha": "6af8ad991e03abe75b61abdc045308c8261e1616",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
   "observedCandidateSha": "6b5587aca30ca8a1d2c1ae7d9ced694595ac87f4",
   "ownerTables": [
@@ -216,11 +216,9 @@
     "data": "No production data touched; the disposable container holds all fixture mutations."
   },
   "verdict": "PARTIAL",
-  "humanGate": "BLOCKED_HUMAN",
+  "humanGate": "ACCEPTED_AUTOMATED_INTERNAL_BETA",
   "openBlockers": [
-    "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
-    "A full mounted Prediction authoring-to-preflight browser journey remains incomplete; focused exact-current UI proof covers loading, not-found, transport failure, retry and honest preflight rejection.",
-    "An explicit mounted browser conflict journey remains incomplete. The task registry declares stale outside the Finance state denominator, while canonical valuation service tests cover stale CAS and exact cold readback."
+    "An explicit mounted browser conflict journey remains incomplete. The task registry declares stale outside the Finance state denominator, while canonical service and RealPG tests cover CAS conflicts and exact cold readback."
   ],
   "blockerReconciliation": [
     {
@@ -356,9 +354,23 @@
     ],
     "denominatorReconciliation": "The G4 registry explicitly lists stale in statesNotPresent for FIN. Absence of a stale screen is therefore not a failed required state and the former generic stale blocker was removed.",
     "notClaimed": [
-      "No full mounted Prediction authoring-to-preflight browser lifecycle was run in this requalification.",
+      "No full mounted Prediction authoring-to-preflight browser lifecycle was run in this earlier requalification.",
       "No mounted browser conflict journey was run in this requalification.",
-      "Human VoiceOver, named-persona and visual-owner acceptance remain pending."
+      "Human VoiceOver, named-persona and visual-owner acceptance were pending at this earlier checkpoint."
+    ]
+  },
+  "predictionAuthoringClosure20260820": {
+    "productSha": "6af8ad991e03abe75b61abdc045308c8261e1616",
+    "internalBetaAcceptanceAuthority": "Owner accepted automated evidence instead of human UAT for internal beta on 2026-08-20; this does not authorize production deployment.",
+    "migration": "Fresh PostgreSQL applied 795 migrations including 20261041; strict repeat reported Applying migrations: 0.",
+    "realPg": "prediction.routes.pg.test.ts PASS 7/7: authoring CAS, durable replay/collision, active-role and revoked denial with zero mutation, source-pinned preflight, calculation and cold result readback.",
+    "focusedUi": "PredictionWorkspace focused suites PASS 4 files / 17 tests.",
+    "signedBrowser": "PASS 1/1 on real PostgreSQL: canonical PREDICTION_SCENARIO deep-link, revision 0 to 1 save, preflight, calculate, canonical result rendering and hard-reload cold reopen.",
+    "buildAndStatic": "Browser webServer production build PASS; root and server typechecks PASS; git diff-check and commit hooks PASS.",
+    "materialFix": "The signed browser gate reproduced and fixed a production routing defect where the final FinanceHub full-view selector admitted canonical HISTORICAL_ANALYSIS deep-links but omitted PREDICTION_SCENARIO.",
+    "notClaimed": [
+      "No production deployment or production migration was run.",
+      "The separate mounted conflict journey remains open and keeps the task verdict PARTIAL."
     ]
   }
 }
