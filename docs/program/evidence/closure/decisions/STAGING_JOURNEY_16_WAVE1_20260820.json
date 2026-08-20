@@ -1,0 +1,69 @@
+{
+  "recordId": "STAGING-JOURNEY-16-WAVE1-20260820",
+  "recordedAt": "2026-08-20T04:49:00+02:00",
+  "environment": "Railway staging rehearsal",
+  "productSha": "e6ca206c0035f653118d9aadbfddf61d452ab52e",
+  "deploymentId": "fdd79892-4041-4289-aa26-91573f2ff52e",
+  "health": {
+    "status": "ok",
+    "database": "connected",
+    "gitShaMatches": true
+  },
+  "configuration": {
+    "partnerSelfConnect": "enabled only on staging for the approved non-economic Partner journey",
+    "resultsKpiPolicy": "one rehearsal-only active KPI policy, constrained by AMD-RES-VISIBILITY-001",
+    "resultsUiFlag": "explicit per-browser query opt-in; production default remains OFF",
+    "testSupport": false,
+    "requestInterception": false
+  },
+  "command": "E2E_BASE_URL=<staging> E2E_API_URL=<staging> E2E_STORAGE_STATE_PATH=<redacted-path> STAGING_SESSION_PATH=<redacted-path> E2E_USE_WEB_SERVER=false E2E_REQUIRE_TEST_SUPPORT=false npx playwright test tests/e2e/release/staging-journey-16.spec.ts --project=chromium --workers=1 --retries=0 --reporter=json",
+  "result": {
+    "tests": 5,
+    "passed": 5,
+    "failed": 0,
+    "skipped": 0,
+    "flaky": 0,
+    "durationMs": 33958.336
+  },
+  "journeys": [
+    {
+      "module": "CHAT",
+      "flow": "create conversation -> persist user message -> independent API GET -> cold browser deep-link -> hard reload",
+      "status": "PASS"
+    },
+    {
+      "module": "SET",
+      "flow": "read appearance -> write changed theme -> independent API GET -> cold browser settings view",
+      "status": "PASS"
+    },
+    {
+      "module": "PRT",
+      "flow": "non-economic self-connect -> independent connection GET -> cold company view -> hard reload",
+      "status": "PASS",
+      "boundary": "No accrual, payout, economics or provider mutation."
+    },
+    {
+      "module": "RES",
+      "flow": "canonical KPI draft -> identity GET -> exact immutable definition-version GET -> explicit-opt-in registry cold reopen -> hard reload",
+      "status": "PASS",
+      "boundary": "Maker-checker approval and activation still require the common SoD wave."
+    },
+    {
+      "module": "MAT",
+      "flow": "deterministic no-LLM plan -> generate -> canonical document GET -> cold Document Studio reopen -> hard reload",
+      "status": "PASS"
+    }
+  ],
+  "remaining": {
+    "modules": ["MYW", "INT", "TLS", "ASM", "INI", "EXE", "FIN", "MTG", "ORG", "ADM", "AUD"],
+    "sharedGate": "Provision a second active same-tenant reviewer persona for maker-checker and role-separated deployed journeys.",
+    "verdict": "PARTIAL_WAVE_1"
+  },
+  "nonClaims": [
+    "Not STG-JOURNEY-16 complete.",
+    "Not NFR-PERF-001.",
+    "Not telemetry qualification.",
+    "Not rollback rehearsal.",
+    "Not production deployment or release approval."
+  ]
+}
