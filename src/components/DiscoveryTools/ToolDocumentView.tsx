@@ -1810,8 +1810,8 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
             id: step.id,
             icon: phaseIcon(step.id),
             label: {
-              en: isOutputs ? 'Outputs & Actions' : step.name,
-              pl: isOutputs ? 'Outputs & Actions' : step.namePl,
+              en: step.name,
+              pl: step.namePl,
             },
             badge: isOutputs
               ? generatedInitiatives.length + (swotData?.outputCandidates?.length || 0)
