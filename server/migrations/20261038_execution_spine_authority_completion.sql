@@ -97,8 +97,14 @@ BEGIN
        AND regexp_replace(pg_get_expr(d.adbin,d.adrelid),'\s+','','g')='now()'
   ) THEN RAISE EXCEPTION 'execution_spine_backfill_runs has incompatible defaults'; END IF;
 
+  -- PostgreSQL 18 represents column NOT NULL attributes in pg_constraint as
+  -- contype='n'. PostgreSQL 16 does not. Column nullability is verified above
+  -- through pg_attribute, so exclude only that version-specific duplicate
+  -- representation while retaining the exact fail-closed named-constraint
+  -- inventory on both server versions.
   SELECT array_agg(conname ORDER BY conname) INTO actual FROM pg_constraint
-   WHERE conrelid='public.execution_spine_backfill_runs'::regclass;
+   WHERE conrelid='public.execution_spine_backfill_runs'::regclass
+     AND contype <> 'n';
   IF actual <> ARRAY[
     'ck_execution_spine_backfill_checksum','ck_execution_spine_backfill_mapped',
     'ck_execution_spine_backfill_quarantined','ck_execution_spine_backfill_source_sha',
@@ -107,7 +113,8 @@ BEGIN
   ] THEN RAISE EXCEPTION 'execution_spine_backfill_runs has incompatible constraints'; END IF;
 
   SELECT array_agg(conname ORDER BY conname) INTO actual FROM pg_constraint
-   WHERE conrelid='public.execution_spine_backfill_receipts'::regclass;
+   WHERE conrelid='public.execution_spine_backfill_receipts'::regclass
+     AND contype <> 'n';
   IF actual <> ARRAY[
     'ck_execution_spine_receipt_digest','fk_execution_spine_receipt_canonical_link',
     'fk_execution_spine_receipt_case','fk_execution_spine_receipt_initiative',
@@ -118,7 +125,8 @@ BEGIN
   ] THEN RAISE EXCEPTION 'execution_spine_backfill_receipts has incompatible constraints'; END IF;
 
   SELECT array_agg(conname ORDER BY conname) INTO actual FROM pg_constraint
-   WHERE conrelid='public.execution_spine_identity_quarantine'::regclass;
+   WHERE conrelid='public.execution_spine_identity_quarantine'::regclass
+     AND contype <> 'n';
   IF actual <> ARRAY[
     'ck_execution_spine_quarantine_digest','ck_execution_spine_quarantine_reason',
     'ck_execution_spine_quarantine_snapshot','fk_execution_spine_quarantine_case',
