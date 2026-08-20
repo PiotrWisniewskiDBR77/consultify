@@ -12,17 +12,17 @@
   },
   "technicalVerdict": "PASS_CURRENT_LEGACY_CUTOVER_KERNEL",
   "exactCurrentInventory20260820": {
-    "productSha": "8342fcf10415fa4e70406f35aa941d9be4784ae2",
+    "productSha": "14e2ac1f4c884db18562c7f946a2a3646f10665e",
     "scope": "All currently registered Finance legacy-route families: /api/v8/finance, /api/financial-modeling, /api/economics and /api/finance-statements.",
     "result": {
       "totalRouteRules": 59,
       "actualLegacyMutationDoors": 52,
       "alreadyCanonicalMutationDoors": 1,
       "nonMutationOrExplicitRefusalDoors": 6,
-      "retiredLegacyMutationDoors": 10,
-      "openLegacyMutationDoors": 42
+      "retiredLegacyMutationDoors": 11,
+      "openLegacyMutationDoors": 41
     },
-    "correction": "The historical 1/30 denominator mixed an incomplete route inventory with POST-shaped routes that do not write legacy state. The current denominator is source-derived and separates persistence effect from HTTP verb. ECO-W14 create and ECO-W21 delete are now also retired after all mounted callers removed their legacy fallback and use the canonical V8 Finance commands directly.",
+    "correction": "The historical 1/30 denominator mixed an incomplete route inventory with POST-shaped routes that do not write legacy state. The current denominator is source-derived and separates persistence effect from HTTP verb. ECO-W14 create and ECO-W21 delete are retired after all mounted callers removed their legacy fallback. ECO-W15 update is retired behind the new strict tenant-scoped canonical V8 Finance update command; no mounted caller uses the duplicate economics route.",
     "commands": [
       {
         "command": "npx vitest run server/src/services/legacyCutover/__tests__/financeCutoverInventory.test.ts tests/components/Benefits/FinancialAnalysisWorkspace.v8-read-seam.test.tsx tests/components/Economics/useFinanceRowActions.v8-analysis-delete.test.tsx tests/components/Economics/useFinanceRowActions.v8-analysis-create.test.tsx tests/components/Economics/CreateAnalysisModal.v8-create.test.tsx --retry=0 --reporter=dot",
@@ -32,7 +32,17 @@
       {
         "command": "RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test DB_TYPE=postgres ENABLE_TEST_AUTH_BYPASS=true B1_LEGACY_TEST_CLEANUP=1 DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32772/consultify_b1_wave5 npx vitest run server/src/services/legacyCutover/__tests__/economicsCutover.pg.test.ts --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot",
         "exitCode": 0,
-        "result": "1/1 file; 11/11 real mounted-router PostgreSQL tests; ECO-W14/W21 both 410 before leaf, exact successor telemetry, zero financial_analyses delta"
+        "result": "Superseded by the exact-current wave6 rerun below; this prior 11/11 qualified ECO-W14/W21 only."
+      },
+      {
+        "command": "npx vitest run server/src/routes/v8/__tests__/finance.routes.test.ts -t \"PUT /api/v8/finance/analyses/:id validates\" --retry=0 --reporter=dot",
+        "exitCode": 0,
+        "result": "1/1 selected canonical route test passed; 47 unrelated tests skipped; strict body validation, tenant-scoped existence check and update delegation"
+      },
+      {
+        "command": "RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test DB_TYPE=postgres ENABLE_TEST_AUTH_BYPASS=true B1_LEGACY_TEST_CLEANUP=1 DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:32772/consultify_b1_wave6 npx vitest run server/src/services/legacyCutover/__tests__/economicsCutover.pg.test.ts --no-file-parallelism --maxWorkers=1 --retry=0 --reporter=dot",
+        "exitCode": 0,
+        "result": "1/1 file; 11/11 real mounted-router PostgreSQL tests; ECO-W14/W15/W21 all 410 before leaf, exact canonical identity/successor telemetry and zero financial_analyses delta"
       },
       {
         "command": "NODE_OPTIONS=--max-old-space-size=8192 npm --prefix server run typecheck",
@@ -50,8 +60,9 @@
         "result": "passed"
       }
     ],
-    "cleanup": "The valid RealPG run used guarded database consultify_b1_wave5; test-scoped rows cleaned, database dropped and existence readback returned 0. Two invalid pre-runs each passed 11 assertions but were excluded because cleanup guards rejected their database name; their exact run-owned econ-5b4c00fc/econ-2415884c residue was subsequently removed under an explicit pinned transaction with owned_residue=0.",
-    "verdictImpact": "PARTIAL is retained. Ten of 52 actual legacy mutation doors are retired; 42 still require canonical parity, identity/backfill and retirement qualification."
+    "cleanup": "The exact-current RealPG run used guarded database consultify_b1_wave6; test-scoped rows cleaned, database dropped and existence readback returned 0. The prior wave5 run followed the same cleanup/drop boundary. Two earlier invalid pre-runs each passed 11 assertions but were excluded because cleanup guards rejected their database name; their exact run-owned econ-5b4c00fc/econ-2415884c residue was subsequently removed under an explicit pinned transaction with owned_residue=0.",
+    "knownHarnessSignal": "An unfiltered run of server/src/routes/v8/__tests__/finance.routes.test.ts was not used as evidence: 41 tests passed and seven historical assertions failed because they still expect success from routes now intentionally retired/refused or rely on unrelated stale statement mocks. The new canonical analysis-update test itself passed in that run and passed again as the exact selected 1/1 command above. This packet does not claim the historical whole file is green.",
+    "verdictImpact": "PARTIAL is retained. Eleven of 52 actual legacy mutation doors are retired; 41 still require canonical parity, identity/backfill and retirement qualification."
   },
   "currentKernelRequalification": {
     "migration": "Fresh exact-current PostgreSQL ledger 758/758/758 successful and unique with zero missing checksums; strict repeat applied 0 and dry-run reported 0 pending.",
@@ -67,7 +78,7 @@
   "leaseSha256": "not_applicable_integrator_bounded_task",
   "verdict": "PARTIAL",
   "open": [
-    "The exact-current mounted-route inventory contains 52 actual legacy mutation doors. Ten are retired and 42 remain open pending route-by-route canonical parity, identity/backfill, usage and rollback evidence.",
+    "The exact-current mounted-route inventory contains 52 actual legacy mutation doors. Eleven are retired and 41 remain open pending route-by-route canonical parity, identity/backfill, usage and rollback evidence.",
     "Rollout timing and Finance/Results reconciliation remain owner decisions; this evidence does not authorize rollout or change Results Actual ownership."
   ],
   "environment": {
@@ -95,7 +106,7 @@
   "denominators": {
     "focused": "8 passed / 8 discovered in 2 files",
     "realPostgres": "4 passed / 4 discovered, including real mounted Finance router",
-    "legacyV8Writers": "10 safely retired / 52 actual legacy mutation doors; 42 remain open",
+    "legacyV8Writers": "11 safely retired / 52 actual legacy mutation doors; 41 remain open",
     "migration": "731/731 ledger rows on fresh database",
     "typeCheck": "1/1 exit 0"
   },
@@ -112,7 +123,7 @@
     "rollback": "only explicit FINANCE_LEGACY_WRITER_ROLLBACK_ENABLED=true reaches the legacy leaf; rollback observation is durable",
     "tenant": "same legacy ID in a foreign tenant resolves no canonical artifact/version",
     "coldReadback": "independent pg.Client reads stable canonical artifact and business-version IDs with one row per request/access kind",
-    "unprovenSurfaces": "42 actual legacy mutation doors remain enabled and visibly classified; no false zero-writer claim"
+    "unprovenSurfaces": "41 actual legacy mutation doors remain enabled and visibly classified; no false zero-writer claim"
   },
   "browserArtifacts": [],
   "rollback": {
