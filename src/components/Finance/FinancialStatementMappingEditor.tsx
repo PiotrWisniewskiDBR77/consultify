@@ -23,10 +23,27 @@ export interface FinancialStatementMappedValue {
 }
 
 export function isFinancialStatementValueVerified(
-  value: Pick<FinancialStatementMappedValue, 'userVerified' | 'confidence' | 'mappingTier'>
+  value: Pick<
+    FinancialStatementMappedValue,
+    'canonicalLineId' | 'userVerified' | 'confidence' | 'mappingTier'
+  >
 ): boolean {
+  if (!value.canonicalLineId) return false;
   return Boolean(
     value.userVerified || (value.confidence >= 0.85 && value.mappingTier !== 'review_required')
+  );
+}
+
+export function isFinancialStatementManualVerificationEligible(
+  value: Pick<
+    FinancialStatementMappedValue,
+    'canonicalLineId' | 'userVerified' | 'confidence' | 'mappingTier'
+  >
+): boolean {
+  return Boolean(
+    value.canonicalLineId &&
+      !value.userVerified &&
+      (value.confidence < 0.85 || value.mappingTier === 'review_required')
   );
 }
 
@@ -238,8 +255,7 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
   const unmappedCount = mappedValues.length - mappedCount;
   const reviewCount = mappedValues.filter((v) => v.mappingTier === 'review_required').length;
   const readyForManualVerificationCount = mappedValues.filter(
-    (value) =>
-      !isFinancialStatementValueVerified(value)
+    isFinancialStatementManualVerificationEligible
   ).length;
 
   return (
@@ -397,16 +413,25 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
                   {(() => {
                     const systemVerified =
                       !value.userVerified && isFinancialStatementValueVerified(value);
-                    const label = systemVerified
-                      ? t('finance.mappingEditor.systemVerified', 'System verified')
-                      : value.userVerified
-                        ? t('finance.mappingEditor.userVerified', 'User verified')
-                        : t('finance.mappingEditor.verifyExtractedValue', 'Verify extracted value');
+                    const hasCanonicalTarget = Boolean(value.canonicalLineId);
+                    const label = !hasCanonicalTarget
+                      ? t(
+                          'finance.mappingEditor.mapBeforeVerify',
+                          'Select a target category before verification'
+                        )
+                      : systemVerified
+                        ? t('finance.mappingEditor.systemVerified', 'System verified')
+                        : value.userVerified
+                          ? t('finance.mappingEditor.userVerified', 'User verified')
+                          : t(
+                              'finance.mappingEditor.verifyExtractedValue',
+                              'Verify extracted value'
+                            );
                     return (
                       <input
                         type="checkbox"
-                        checked={systemVerified || Boolean(value.userVerified)}
-                        disabled={systemVerified}
+                        checked={hasCanonicalTarget && (systemVerified || Boolean(value.userVerified))}
+                        disabled={systemVerified || !hasCanonicalTarget}
                         onChange={(event) => onVerifiedChange?.(idx, event.target.checked)}
                         className="h-4 w-4 rounded border-slate-300 accent-emerald-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:opacity-100"
                         aria-label={`${value.originalLabel}: ${label}`}

@@ -19,11 +19,12 @@ describe('FinancialStatementMappingEditor acceptance states', () => {
   it('counts user, system, and unverified rows with the exact editor predicate', () => {
     expect(
       [
-        { confidence: 0.2, mappingTier: 'review_required' as const, userVerified: true },
-        { confidence: 0.85, mappingTier: 'auto' as const, userVerified: false },
-        { confidence: 0.99, mappingTier: 'review_required' as const, userVerified: false },
+        { canonicalLineId: 'a', confidence: 0.2, mappingTier: 'review_required' as const, userVerified: true },
+        { canonicalLineId: 'b', confidence: 0.85, mappingTier: 'auto' as const, userVerified: false },
+        { canonicalLineId: 'c', confidence: 0.99, mappingTier: 'review_required' as const, userVerified: false },
+        { canonicalLineId: null, confidence: 0.99, mappingTier: 'auto' as const, userVerified: true },
       ].map(isFinancialStatementValueVerified)
-    ).toEqual([true, true, false]);
+    ).toEqual([true, true, false, false]);
   });
   it('keeps algorithm confidence while rendering PL numbers and explicit user verification', () => {
     const onCanonicalChange = vi.fn();
@@ -101,7 +102,11 @@ describe('FinancialStatementMappingEditor acceptance states', () => {
     );
 
     expect(screen.getByLabelText('Przychody: System verified')).toBeChecked();
-    expect(screen.getByLabelText('Nieznana pozycja: Verify extracted value')).toBeEnabled();
+    expect(
+      screen.getByLabelText(
+        'Nieznana pozycja: Select a target category before verification'
+      )
+    ).toBeDisabled();
     fireEvent.click(screen.getByRole('checkbox', { name: 'Verify all eligible extracted values' }));
     expect(onVerifyAllReady).toHaveBeenCalledTimes(1);
     fireEvent.click(screen.getByLabelText('Koszty pozostałe: Verify extracted value'));

@@ -32,6 +32,7 @@ import {
   type FinancialStatementCanonicalLineOption,
   type FinancialStatementMappedValue,
   FinancialStatementMappingEditor,
+  isFinancialStatementManualVerificationEligible,
   isFinancialStatementValueVerified,
 } from './FinancialStatementMappingEditor';
 import { statementReasonSentences } from './statementReadinessCopy';
@@ -819,6 +820,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
           const requiresHumanDecision =
             value.mappingStatus === 'manual' || value.mappingTier === 'review_required';
           if (!requiresHumanDecision || !value.userVerified) continue;
+          if (!value.canonicalLineId) continue;
           if (!review.sourceReceiptId)
             throw new Error(`${review.statementType}: source receipt is required`);
           const body = {
@@ -1787,11 +1789,11 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                 );
               }}
               onVerifyAllReady={() => {
-                const verifyEligible = (value: MappedValue) =>
-                  value.confidence < 0.85 || value.mappingTier === 'review_required';
                 setMappedValues((current) =>
                   current.map((value) =>
-                    verifyEligible(value) ? { ...value, userVerified: true } : value
+                    isFinancialStatementManualVerificationEligible(value)
+                      ? { ...value, userVerified: true }
+                      : value
                   )
                 );
                 setReviewStatements((current) =>
@@ -1800,7 +1802,9 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                       ? {
                           ...item,
                           mappedValues: item.mappedValues.map((value) =>
-                            verifyEligible(value) ? { ...value, userVerified: true } : value
+                            isFinancialStatementManualVerificationEligible(value)
+                              ? { ...value, userVerified: true }
+                              : value
                           ),
                         }
                       : item

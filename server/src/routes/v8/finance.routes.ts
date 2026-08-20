@@ -2722,6 +2722,13 @@ router.post(
     const { organizationId } = getV8Context(req);
     const userId = String(req.user?.id || '');
     const statementId = String(req.params.statementId);
+    const canonicalLineId = String(req.body?.canonicalLineId || '').trim();
+    if (!canonicalLineId) {
+      return res.status(400).json({
+        error: 'Canonical mapping target is required for an ACCEPT decision',
+        code: 'MANUAL_MAPPING_TARGET_REQUIRED',
+      });
+    }
     const sourceRow = Number(req.body?.sourceRow);
     const candidate = Number.isInteger(sourceRow)
       ? await dbGet<any>(
@@ -2735,7 +2742,7 @@ router.post(
         organizationId,
         statementId,
         candidateRowId: candidate.id,
-        canonicalLineId: String(req.body?.canonicalLineId || '') || null,
+        canonicalLineId,
         action: 'ACCEPT',
         reason: String(req.body?.reason || ''),
         sourceReceiptId: String(req.body?.sourceReceiptId || ''),

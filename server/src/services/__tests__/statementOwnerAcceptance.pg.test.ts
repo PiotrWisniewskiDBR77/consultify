@@ -309,6 +309,27 @@ describe.runIf(enabled)('Finance Statement owner acceptance — real PostgreSQL 
       )
     ).toEqual(new Set(['P&L:2025', 'P&L:2024', 'BS:2025', 'BS:2024', 'CF:2025', 'CF:2024']));
     expect(Number(coldPack.body.data.pack.source_statement_count)).toBe(6);
+    const rejectedUnmappedAccept = await request(app)
+      .post(`/api/v8/finance/statements/${primary}/manual-mapping-decisions`)
+      .set('Idempotency-Key', `unmapped-accept-${nonce}`)
+      .send({
+        sourceRow: 11,
+        canonicalLineId: null,
+        reason: 'Zweryfikowane przez użytkownika podczas przeglądu importu',
+        sourceReceiptId: staged.statements[0].sourceReceiptId,
+        expectedValuesVersion: 1,
+      });
+    expect(rejectedUnmappedAccept.status).toBe(400);
+    expect(rejectedUnmappedAccept.body).toMatchObject({
+      code: 'MANUAL_MAPPING_TARGET_REQUIRED',
+    });
+    const rejectedDecisionCount = await pool.query(
+      `SELECT count(*)::int count
+         FROM finance_statement_manual_mapping_decisions
+        WHERE organization_id=$1 AND statement_id=$2`,
+      [organizationId, primary]
+    );
+    expect(rejectedDecisionCount.rows[0].count).toBe(0);
     const duplicatePeriod = await createStatement({
       organizationId,
       statementType: 'P&L',

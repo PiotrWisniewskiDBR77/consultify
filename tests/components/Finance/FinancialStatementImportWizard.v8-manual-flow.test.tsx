@@ -5,6 +5,8 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const mappingEditorState = vi.hoisted(() => ({ props: null as any }));
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (_key: string, fallback?: any) =>
@@ -38,6 +40,7 @@ vi.mock('@/services/api/v8/finance', () => ({
     getStatement: vi.fn(),
     getCanonicalLines: vi.fn(),
     getStatementSourceReceipt: vi.fn(),
+    recordStatementManualMappingDecision: vi.fn(),
   },
   shouldFallbackToLegacyFinance: (error: any) => {
     const status = Number(error?.status);
@@ -57,7 +60,17 @@ vi.mock(
     >();
     return {
       ...actual,
-      FinancialStatementMappingEditor: () => <div>financial-statement-mapping-editor</div>,
+      FinancialStatementMappingEditor: (props: any) => {
+        mappingEditorState.props = props;
+        return (
+          <div>
+            financial-statement-mapping-editor
+            <button type="button" onClick={() => props.onVerifyAllReady?.()}>
+              verify-eligible-test
+            </button>
+          </div>
+        );
+      },
     };
   }
 );
@@ -69,6 +82,7 @@ import { FinancialStatementImportWizard } from '../../../src/components/Finance/
 describe('FinancialStatementImportWizard V8 manual flow seam', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mappingEditorState.props = null;
     vi.mocked(V8FinanceApi.getStatementSourceReceipt).mockResolvedValue({
       receipt: {
         receipt_id: 'receipt-1',
@@ -539,6 +553,97 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
     expect(Api.put).not.toHaveBeenCalledWith('/api/finance-statements/statement-1/values', {
       values: expect.any(Array),
     });
+  });
+
+  it('bulk-verifies only rows with a canonical target and never records ACCEPT for unmapped rows', async () => {
+    vi.mocked(V8FinanceApi.extractStatement).mockResolvedValue({
+      statementId: 'statement-1',
+      lines: [
+        { originalLabel: 'Revenue', value: 100, confidence: 0.6, sourceRow: 10 },
+        { originalLabel: 'Unknown', value: 5, confidence: 0.4, sourceRow: 11 },
+      ],
+      statements: [
+        {
+          statementId: 'statement-1',
+          statementType: 'P&L',
+          periodLabel: '2025',
+          sourceReceiptId: 'receipt-1',
+          lines: [
+            { originalLabel: 'Revenue', value: 100, confidence: 0.6, sourceRow: 10 },
+            { originalLabel: 'Unknown', value: 5, confidence: 0.4, sourceRow: 11 },
+          ],
+        },
+      ],
+    } as any);
+    vi.mocked(V8FinanceApi.mapStatement).mockResolvedValue({
+      statementId: 'statement-1',
+      mappedLines: [
+        {
+          originalLabel: 'Revenue',
+          value: 100,
+          confidence: 0.6,
+          sourceRow: 10,
+          suggestedCanonicalId: 'line-1',
+          suggestedCanonicalLabel: 'Revenue',
+          mappingTier: 'review_required',
+        },
+        {
+          originalLabel: 'Unknown',
+          value: 5,
+          confidence: 0.4,
+          sourceRow: 11,
+          suggestedCanonicalId: null,
+          mappingTier: 'review_required',
+        },
+      ],
+    } as any);
+    vi.mocked(V8FinanceApi.getCanonicalLines).mockResolvedValue({
+      canonicalLines: [
+        { id: 'line-1', statement_type: 'P&L', line_code: 'revenue', line_name: 'Revenue' },
+      ],
+      count: 1,
+    } as any);
+    vi.mocked(V8FinanceApi.putStatementValues).mockResolvedValue({
+      statementId: 'statement-1',
+      savedCount: 2,
+      valuesVersion: 1,
+      readiness: {
+        readinessStatus: 'recoverable',
+        summary: 'Unmapped row remains',
+        reasonCodes: ['UNMAPPED_ROWS'],
+      },
+      validation: { status: 'warnings', messages: [] },
+    } as any);
+    vi.mocked(V8FinanceApi.recordStatementManualMappingDecision).mockResolvedValue({
+      decision: {
+        readinessStatus: 'recoverable',
+        summary: 'Unmapped row remains',
+        reasonCodes: ['UNMAPPED_ROWS'],
+      },
+    } as any);
+
+    await advanceToMapStep();
+    fireEvent.click(screen.getByRole('button', { name: 'verify-eligible-test' }));
+
+    await waitFor(() => {
+      expect(mappingEditorState.props.mappedValues[0].userVerified).toBe(true);
+      expect(mappingEditorState.props.mappedValues[1].userVerified).not.toBe(true);
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save & Validate' }));
+
+    await waitFor(() => {
+      expect(V8FinanceApi.recordStatementManualMappingDecision).toHaveBeenCalledTimes(1);
+    });
+    expect(V8FinanceApi.recordStatementManualMappingDecision).toHaveBeenCalledWith(
+      'statement-1',
+      expect.objectContaining({ sourceRow: 10, canonicalLineId: 'line-1' }),
+      expect.any(String)
+    );
+    expect(V8FinanceApi.recordStatementManualMappingDecision).not.toHaveBeenCalledWith(
+      'statement-1',
+      expect.objectContaining({ sourceRow: 11, canonicalLineId: null }),
+      expect.any(String)
+    );
   });
 
   it('falls back to legacy values save in the wizard manual flow on bounded compatibility statuses', async () => {
