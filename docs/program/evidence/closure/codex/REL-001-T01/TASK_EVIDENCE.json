@@ -49,13 +49,13 @@
   "denominators": {
     "precedingTasks": 81,
     "precedingTasksDoneOrApprovedOut": false,
-    "deployedGoldenFlows": "0/16 on this exact SHA",
-    "telemetryWindows": "0/2",
-    "rollbackRehearsals": 0,
+    "deployedGoldenFlows": "16/16 on exact staging candidate e6ca206c0035f653118d9aadbfddf61d452ab52e before rollback and 16/16 after final candidate restore",
+    "telemetryWindows": "2/2 consecutive 60-minute staging windows PASS with zero HTTP 5xx and 16/16 mounted journey probes",
+    "rollbackRehearsals": "1/1 staging PASS through forward-only schema/application rollback; sentinel observed data loss 0; exact candidate restore PASS",
     "releaseVerifierTestsHistorical": "7/7",
     "releaseBundleTestsCurrent": "10/10 plus exact-current bundle generation and independent verification",
-    "exactCurrentCandidateSha": "71316e4125ba3f912cbcd0612639bb463b41dae7",
-    "exactCurrentTreeSha": "8990b4cdb7cc1fcaf51c1effec62143b56af4c36",
+    "exactCurrentCandidateSha": "e6ca206c0035f653118d9aadbfddf61d452ab52e",
+    "exactCurrentTreeSha": "8e6f5b4c6c081ef8837cc308b25892be87d9fc03",
     "exactCurrentPreviousVerifiedProductSha": "a97750b5d3c9f821f1b2f44b21611734b2876964",
     "exactCurrentMigrationsInventoried": 1191,
     "canonicalLockVersionedNonRootEntries": "2222/2222",
@@ -64,7 +64,7 @@
     "releaseGo": false
   },
   "fixtures": {
-    "deployment": "No production or release-candidate deployment was authorized in this program run.",
+    "deployment": "Staging-only deployment was authorized and executed for exact candidate e6ca206c0035f653118d9aadbfddf61d452ab52e. No production deployment was authorized or executed.",
     "exactCurrentLocalBundle": {
       "path": "/private/tmp/consultify-release-713.pzFhjh/bundle",
       "manifestFileSha256": "b4e66cef8c9ff6071c8bbdae440fefb7489b5ab9a30920a526f0b599b0043cb5",
@@ -86,8 +86,14 @@
   },
   "browserArtifacts": [],
   "rollback": {
-    "method": "No deployment occurred, so no environment rollback was executed.",
-    "executed": false
+    "method": "Staging forward-only schema/application rollback used recovery SHA 3f8156ce0572529226883a85efb88e34f7002f2c (previous application code plus current migration authority), followed by exact e6ca candidate restore.",
+    "executed": true,
+    "environment": "staging only",
+    "rtoSeconds": 352,
+    "dataLossObservedSeconds": 0,
+    "recoveryJourneys": "16/16",
+    "restoredCandidateJourneys": "16/16",
+    "productionTouched": false
   },
   "currentTechnicalRequalification": {
     "technicalSourceSha": "28585dd058c263c73c5f2a3f5a2295049a08cd58",
@@ -106,10 +112,9 @@
       "exactCurrentBundle": "Candidate 71316e4125 / tree 8990b4cdb7, immutable recovery ref refs/recovery/mvp-usable-100-release-candidate-20260820, previous verified product a97750b5d3, four fresh local receipts, canonical SBOM regeneration, 1191 migration paths inventoried, verifier errors 0, releaseGo false."
     },
     "doesNotProve": [
-      "A trusted-signed receipt or deployed release-candidate identity.",
-      "Any of the 16 deployed golden flows.",
-      "Two consecutive 60-minute production telemetry windows.",
-      "A production rollback rehearsal or owner release authorization."
+      "A production deployment or production release identity.",
+      "Production telemetry windows or a production rollback rehearsal.",
+      "Owner production-release authorization."
     ]
   },
   "stagingRehearsal20260820": {
