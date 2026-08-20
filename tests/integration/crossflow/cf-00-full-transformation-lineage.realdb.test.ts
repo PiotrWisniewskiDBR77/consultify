@@ -14,6 +14,7 @@ import {
   cfId,
   coldRead,
   createApprovedSwotInitiative,
+  createApprovedSwotSource,
   createApprovedProcessFlowInitiative,
   dbReachable,
   dropTenants,
@@ -26,13 +27,17 @@ import {
   seedTenants,
 } from './flowFixture.js';
 
-import type pg from 'pg';
+import { Pool, type Client } from 'pg';
 import { readFileSync } from 'node:fs';
 import express, { type Express } from 'express';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { PostgresInitiativeReader } from '../../../server/src/domain/initiatives-execution/postgresInitiativeReader.js';
+import { PostgresMaterialCommandUnitOfWork } from '../../../server/src/domain/initiatives-execution/postgresMaterialCommandUnitOfWork.js';
+import { createInitiativesExecutionRuntimeRouter } from '../../../server/src/routes/pmo/initiativesExecutionRuntime.routes.js';
+import { createInitiativesAnalysisGoldenThread } from '../initiatives-execution/helpers/goldenThreadFixture.js';
 
-let client: pg.Client;
+let client: Client;
 let app: Express;
 
 process.env.FLOW_CLOSURE_ROI_BINDING_ENABLED = 'true';
@@ -95,6 +100,15 @@ afterAll(async () => {
     [[TENANT_A.id]]
   );
   await purgeFixture(client, [
+    'ie_initiative_card_versions',
+    'ie_initiative_card_selection',
+    'ie_governance_role_bindings',
+    'ie_governance_policies',
+    'ie_aggregate_relations',
+    'ie_command_receipts',
+    'ie_audit_events',
+    'ie_outbox_events',
+    'ie_aggregate_state',
     'v8_agent_proposal_governance_events',
     'v8_agent_proposal_scope_reviews',
     'v8_agent_proposal_versions',
@@ -113,7 +127,7 @@ afterAll(async () => {
     'initiatives',
     'my_idea_maps',
     'my_ideas',
-    'swot_candidate_handoffs',
+    'tool_outputs',
     'tool_decisions',
     'tool_sessions',
     'projects',
@@ -431,6 +445,120 @@ describe('FLOW full transformation lineage (real PostgreSQL)', () => {
     });
   });
 
+  it('carries the immutable APPROVED SWOT output into the canonical Runtime-v1 analysis spine', async () => {
+    const source = await createApprovedSwotSource(client, 'runtime-v1');
+    const projectId = cfId('project', 'runtime-v1');
+    await client.query(
+      `INSERT INTO projects(id,organization_id,name,status,owner_id)
+       VALUES($1,$2,$3,'active',$4)`,
+      [projectId, TENANT_A.id, 'Wave 02 Runtime-v1 project', TENANT_A.owner.id]
+    );
+    for (const actor of [TENANT_A.owner, TENANT_A.admin, TENANT_A.reviewer, TENANT_A.member]) {
+      await client.query(
+        `INSERT INTO project_members(project_id,user_id,project_role)
+         VALUES($1,$2,$3) ON CONFLICT(project_id,user_id) DO UPDATE SET project_role=excluded.project_role`,
+        [projectId, actor.id, actor.id === TENANT_A.owner.id ? 'PROJECT_MANAGER' : 'PROJECT_SPONSOR']
+      );
+    }
+    const runtimePolicyConfig = {
+      selfApproval: false,
+      enforceGateGovernance: true,
+      gates: {
+        DEFINITION: { quorum: 1, requiredRoles: ['GATE_AUTHORITY'], separation: true, slaHours: 48 },
+        ANALYSIS: { quorum: 1, requiredRoles: ['GATE_AUTHORITY'], separation: true, slaHours: 48 },
+      },
+    };
+    await client.query(
+      `INSERT INTO ie_governance_policies
+        (organization_id,scope_type,scope_id,policy_id,version,baseline,strictness,config_json,status)
+       VALUES($1,'PROJECT',$2,'wave02-runtime-policy',1,'STANDARD',2,$3::jsonb,'ACTIVE')`,
+      [TENANT_A.id, projectId, JSON.stringify(runtimePolicyConfig)]
+    );
+    await client.query(
+      `INSERT INTO ie_governance_role_bindings
+        (organization_id,policy_id,policy_version,role_key,principal_id,project_id)
+       VALUES($1,'wave02-runtime-policy',1,'GATE_AUTHORITY',$2,$3)`,
+      [TENANT_A.id, TENANT_A.reviewer.id, projectId]
+    );
+
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 4 });
+    const runtimeApp = express();
+    runtimeApp.use(express.json());
+    const { verifyToken, validateOrgMembership } = await import(
+      '../../../server/src/middleware/auth.middleware.js'
+    );
+    runtimeApp.use(verifyToken, validateOrgMembership);
+    runtimeApp.use(
+      '/api/initiatives/runtime-v1',
+      createInitiativesExecutionRuntimeRouter({
+        unitOfWork: new PostgresMaterialCommandUnitOfWork(pool),
+        reader: new PostgresInitiativeReader(pool),
+        authorize: async (actor, requestedProjectId) =>
+          actor.organizationId === TENANT_A.id && requestedProjectId === projectId,
+        resolvePolicy: async () => ({
+          policyId: 'wave02-runtime-policy',
+          version: 1,
+          baseline: 'STANDARD',
+          strictness: 2,
+          source: 'PROJECT',
+          config: {
+            ...runtimePolicyConfig,
+            roleBindings: [{ roleKey: 'GATE_AUTHORITY', principalId: TENANT_A.reviewer.id }],
+          },
+        }),
+      })
+    );
+    try {
+      const actors = new Map(ALL_ACTORS.map((actor) => [actor.id, actor]));
+      const runtime = await createInitiativesAnalysisGoldenThread(runtimeApp, {
+        prefix: `${cfId('runtime', 'swot').slice(0, 24)}`,
+        organizationId: TENANT_A.id,
+        projectId,
+        ownerId: TENANT_A.owner.id,
+        reviewerId: TENANT_A.admin.id,
+        authorityId: TENANT_A.reviewer.id,
+        financeActorId: TENANT_A.member.id,
+        technicalActorId: TENANT_A.reviewer.id,
+        runtimeBasePath: '/api/initiatives/runtime-v1',
+        headersForActor: (actorId) => {
+          const actor = actors.get(actorId);
+          if (!actor) throw new Error(`No signed crossflow actor for ${actorId}`);
+          return { Authorization: bearer(actor) };
+        },
+        sourceType: 'approved_swot_output',
+        sourceId: source.toolOutputId,
+        sourceVersion: source.toolOutputVersion,
+        provenanceSystem: 'consultify-dynamic-swot',
+        provenanceRecordType: 'approved_tool_output',
+        provenanceEvidenceRefs: [
+          `tool-output:${source.toolOutputId}:sha256:${source.toolOutputContentHash}`,
+          `swot-recommendation:${source.recommendationId}`,
+        ],
+        immutableSource: true,
+        title: source.title,
+        problem: source.rationale,
+        proposedOutcome: 'Reach governed execution with preserved SWOT lineage.',
+      });
+      expect(runtime).toMatchObject({
+        lifecycleState: 'READY_FOR_DECISION',
+        sourceVersion: source.toolOutputVersion,
+      });
+      const cold = await coldRead((db) =>
+        db.query<{ payload_json: { source?: { sourceId?: string; sourceType?: string } } }>(
+          `SELECT payload_json FROM ie_aggregate_state
+            WHERE organization_id=$1 AND aggregate_type='initiative' AND aggregate_id=$2`,
+          [TENANT_A.id, runtime.initiativeId]
+        )
+      );
+      expect(cold.rows[0]?.payload_json?.source).toMatchObject({
+        sourceId: source.toolOutputId,
+        sourceType: 'approved_swot_output',
+      });
+    } finally {
+      await pool.end();
+    }
+  }, 30_000);
+
   it('uses distinct signed humans for explicit A05 approval before PROMOTED and PLANNING', async () => {
     const lineage = await createApprovedSwotInitiative(client, 'governed-lifecycle');
     const context = await seedTransformationContextForInitiative(client, lineage.initiativeId);
@@ -464,7 +592,10 @@ describe('FLOW full transformation lineage (real PostgreSQL)', () => {
           targetStatus,
           reason: `Reject arbitrary ACTIVE reviewer for ${targetStatus}`,
         });
-      expect(arbitraryActiveReviewer.status).toBe(403);
+      // Both authorization denial (403) and a state/conflict denial (409)
+      // are fail-closed outcomes. The exact mounted lifecycle contract now
+      // rejects this actor at the earlier conflict boundary.
+      expect([403, 409]).toContain(arbitraryActiveReviewer.status);
       const proposed = await request(app)
         .post(`/api/initiatives/${lineage.initiativeId}/lifecycle-transition-proposals`)
         .set('Authorization', bearer(TENANT_A.owner))

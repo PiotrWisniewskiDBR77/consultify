@@ -171,8 +171,24 @@ export function bearer(actor: CfActor): string {
 
 export interface ApprovedSwotInitiativeLineage {
   toolSessionId: string;
+  recommendationId: string;
+  toolOutputId: string;
+  toolOutputVersion: number;
+  toolOutputContentHash: string;
+  sourceRevision: number;
   candidateId: string;
   initiativeId: string;
+}
+
+export interface ApprovedSwotSourceLineage {
+  toolSessionId: string;
+  recommendationId: string;
+  toolOutputId: string;
+  toolOutputVersion: number;
+  toolOutputContentHash: string;
+  sourceRevision: number;
+  title: string;
+  rationale: string;
 }
 
 export interface ApprovedProcessFlowInitiativeLineage {
@@ -325,22 +341,103 @@ export async function seedTransformationContextForInitiative(
  * Initiative in the canonical DRAFT state: later lifecycle steps must be
  * explicit production commands, never fixture-side status fabrication.
  */
-export async function createApprovedSwotInitiative(
+export async function createApprovedSwotSource(
   client: pg.Client,
   suffix: string,
   actor: CfActor = TENANT_A.owner
-): Promise<ApprovedSwotInitiativeLineage> {
+): Promise<ApprovedSwotSourceLineage> {
   const toolSessionId = cfId('tool', `full-lineage-${suffix}`);
   // Tools' public contract accepts the stable recommendation key shape
   // `rec-<digits>`; the surrounding session id provides lineage uniqueness.
   const recommendationId = `rec-${Number.parseInt(createHash('sha256').update(suffix).digest('hex').slice(0, 6), 16)}`;
   await client.query(
     `INSERT INTO tool_sessions
-       (id, organization_id, tool_type, name, status, approved_at, created_by)
-     VALUES ($1, $2, 'dynamic-swot', $3, 'APPROVED', $4, $5)`,
-    [toolSessionId, actor.organizationId, `Approved SWOT ${suffix}`, CF_EPOCH, actor.id]
+       (id, organization_id, tool_type, name, status, approved_at, created_by,
+        answers_json, completion_percent, confidence_avg, version)
+     VALUES ($1, $2, 'dynamic-swot', $3, 'APPROVED', $4, $5, $6, 100, 4.5, 1)`,
+    [
+      toolSessionId,
+      actor.organizationId,
+      `Approved SWOT ${suffix}`,
+      CF_EPOCH,
+      actor.id,
+      JSON.stringify({
+        items: [
+          { id: `${recommendationId}-s`, text: 'Confirmed delivery strength', quadrant: 'strengths', impact: 'high', proposalStatus: 'accepted', evidenceStatus: 'confirmed' },
+          { id: `${recommendationId}-o`, text: 'Confirmed market opportunity', quadrant: 'opportunities', impact: 'high', proposalStatus: 'accepted', evidenceStatus: 'confirmed' },
+        ],
+        tensions: [{ id: `${recommendationId}-t`, title: 'Strength meets opportunity', type: 'attack', linkedItemIds: [`${recommendationId}-s`, `${recommendationId}-o`], linkedCorrelationIds: [], insight: 'A bounded transformation validates the opportunity.' }],
+        recommendedMoves: [{
+          id: recommendationId,
+          title: `Approved transformation ${suffix}`,
+          category: 'quick-win',
+          rationale: 'Approved SWOT source for the full transformation lineage proof',
+          linkedTensionIds: [`${recommendationId}-t`],
+          linkedItemIds: [`${recommendationId}-s`, `${recommendationId}-o`],
+          expectedImpact: 'high',
+          estimatedEffort: 'medium',
+          firstStep: 'Start governed planning',
+          ownerRole: 'Transformation Owner',
+          tradeoff: { chosen: 'Bounded delivery', deferred: 'Broad rollout', cost: 'One planning cycle' },
+          rejectedAlternative: { option: 'Immediate rollout', reason: 'Requires governed validation' },
+        }],
+      }),
+    ]
   );
 
+  const toolsRouter = (await import('../../../server/src/routes/tools.routes.js')).default;
+  const app = express();
+  app.use(express.json());
+  app.use('/api/tools', toolsRouter);
+
+  const frozen = await request(app)
+    .post(`/api/tools/${toolSessionId}/promote`)
+    .set('Authorization', bearer(actor))
+    .send({
+      outputType: 'idea',
+      title: `Approved transformation ${suffix}`,
+      description: 'Frozen SWOT lineage for the full transformation flow',
+    });
+  if (frozen.status !== 200) {
+    throw new Error(`approved SWOT freeze failed: ${frozen.status} ${JSON.stringify(frozen.body)}`);
+  }
+
+  const output = await client.query<{
+    id: string;
+    version: number;
+    content_hash: string;
+    payload_json: { sourceRevision?: number } | string;
+  }>(
+    `SELECT id,version,content_hash,payload_json FROM tool_outputs
+      WHERE organization_id=$1 AND tool_session_id=$2 AND status='approved'
+      ORDER BY version DESC LIMIT 1`,
+    [actor.organizationId, toolSessionId]
+  );
+  const row = output.rows[0];
+  if (!row) throw new Error('approved SWOT freeze produced no durable output');
+  const payload = typeof row.payload_json === 'string' ? JSON.parse(row.payload_json) : row.payload_json;
+  const sourceRevision = Number(payload?.sourceRevision);
+  if (!Number.isInteger(sourceRevision) || sourceRevision < 1) {
+    throw new Error('approved SWOT output has no durable source revision');
+  }
+  return {
+    toolSessionId,
+    recommendationId,
+    toolOutputId: row.id,
+    toolOutputVersion: Number(row.version),
+    toolOutputContentHash: row.content_hash,
+    sourceRevision,
+    title: `Approved transformation ${suffix}`,
+    rationale: 'Approved SWOT source for the full transformation lineage proof',
+  };
+}
+
+export async function createApprovedSwotInitiative(
+  client: pg.Client,
+  suffix: string,
+  actor: CfActor = TENANT_A.owner
+): Promise<ApprovedSwotInitiativeLineage> {
+  const source = await createApprovedSwotSource(client, suffix, actor);
   const toolsRouter = (await import('../../../server/src/routes/tools.routes.js')).default;
   const candidatesRouter = (
     await import('../../../server/src/routes/initiativeCandidates.routes.js')
@@ -351,13 +448,9 @@ export async function createApprovedSwotInitiative(
   app.use('/api/initiatives', candidatesRouter);
 
   const handoff = await request(app)
-    .post(`/api/tools/${toolSessionId}/swot-candidates`)
+    .post(`/api/tools/${source.toolSessionId}/swot-candidates`)
     .set('Authorization', bearer(actor))
-    .send({
-      id: recommendationId,
-      title: `Approved transformation ${suffix}`,
-      rationale: 'Approved SWOT source for the full transformation lineage proof',
-    });
+    .send({ id: source.recommendationId });
   if (handoff.status !== 201 || !handoff.body?.candidate?.id) {
     throw new Error(`approved SWOT handoff failed: ${handoff.status} ${JSON.stringify(handoff.body)}`);
   }
@@ -369,7 +462,7 @@ export async function createApprovedSwotInitiative(
   if (accepted.status !== 200 || accepted.body?.accepted !== true || !accepted.body?.initiativeId) {
     throw new Error(`candidate acceptance failed: ${accepted.status} ${JSON.stringify(accepted.body)}`);
   }
-  return { toolSessionId, candidateId, initiativeId: String(accepted.body.initiativeId) };
+  return { ...source, candidateId, initiativeId: String(accepted.body.initiativeId) };
 }
 
 // ---------------------------------------------------------------------------
@@ -565,6 +658,7 @@ export async function purgeResultsLineageFixture(client: pg.Client): Promise<voi
   if (!requiredPrefix || callerDb !== actualDb || !actualDb.startsWith(requiredPrefix) || !/^flow_[a-z0-9_]+$/.test(actualDb))
     throw new Error('FLOW Results cleanup requires a flow_* disposable database');
   const tables = [
+    'swot_candidate_handoffs',
     'idea_process_flow_candidate_handoffs',
     'rvn_finance_reconciliation_decisions', 'rvn_finance_reconciliation_grant_events',
     // AMD-FLOW-ROI-VISIBILITY-002 — same append-only shape as the line above

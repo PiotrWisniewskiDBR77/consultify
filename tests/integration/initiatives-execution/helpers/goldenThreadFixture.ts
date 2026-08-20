@@ -35,6 +35,17 @@ export async function createInitiativesAnalysisGoldenThread(
     ownerId?: string;
     reviewerId?: string;
     authorityId?: string;
+    financeActorId?: string;
+    technicalActorId?: string;
+    runtimeBasePath?: string;
+    headersForActor?: (actorId: string) => Record<string, string>;
+    sourceType?: string;
+    sourceId?: string;
+    sourceVersion?: number;
+    provenanceSystem?: string;
+    provenanceRecordType?: string;
+    provenanceEvidenceRefs?: string[];
+    immutableSource?: boolean;
   } = {}
 ): Promise<GoldenThreadFixture> {
   const prefix = input.prefix ?? 'golden';
@@ -45,30 +56,43 @@ export async function createInitiativesAnalysisGoldenThread(
   const owner = input.ownerId ?? `${prefix}-owner`;
   const reviewer = input.reviewerId ?? `${prefix}-reviewer`;
   const authority = input.authorityId ?? `${prefix}-gate-authority`;
+  const financeActor = input.financeActorId ?? `${prefix}-finance`;
+  const technicalActor = input.technicalActorId ?? `${prefix}-technical`;
   const title = input.title ?? 'Golden thread initiative';
   const problem = input.problem ?? 'Observed operating loss requires governed intervention.';
   const proposedOutcome = input.proposedOutcome ?? 'Recover measurable operating capacity.';
+  const runtimeBasePath = input.runtimeBasePath ?? '/runtime-v1';
+  const sourceType = input.sourceType ?? 'discovery-insight';
+  const sourceId = input.sourceId ?? `${prefix}-source`;
+  const sourceVersion = input.sourceVersion ?? 1;
+  const provenanceSystem = input.provenanceSystem ?? 'golden-thread';
+  const provenanceRecordType = input.provenanceRecordType ?? sourceType;
+  const provenanceEvidenceRefs = input.provenanceEvidenceRefs ?? [`evidence:${prefix}:source:v1`];
+  const withActor = <T extends request.Test>(test: T, actor: string): T => {
+    test.set('x-test-user', actor).set('x-test-org', organizationId);
+    const headers = input.headersForActor?.(actor);
+    if (headers) test.set(headers);
+    return test;
+  };
   const api = (actor: string) => ({
-    get: (url: string) =>
-      request(app).get(url).set('x-test-user', actor).set('x-test-org', organizationId),
-    post: (url: string) =>
-      request(app).post(url).set('x-test-user', actor).set('x-test-org', organizationId),
+    get: (url: string) => withActor(request(app).get(url), actor),
+    post: (url: string) => withActor(request(app).post(url), actor),
   });
 
   const submitted = await api(owner)
-    .post('/runtime-v1/source-proposals')
+    .post(`${runtimeBasePath}/source-proposals`)
     .send({
       proposalId,
       expectedVersion: 0,
       clientRequestId: `${prefix}-source-submit`,
-      sourceType: 'discovery-insight',
-      sourceId: `${prefix}-source`,
-      sourceVersion: 1,
+      sourceType,
+      sourceId,
+      sourceVersion,
       provenance: {
-        system: 'golden-thread',
-        recordType: 'discovery-insight',
+        system: provenanceSystem,
+        recordType: provenanceRecordType,
         capturedAt: '2026-08-10T00:00:00.000Z',
-        evidenceRefs: [`evidence:${prefix}:source:v1`],
+        evidenceRefs: provenanceEvidenceRefs,
       },
       title,
       problem,
@@ -86,16 +110,16 @@ export async function createInitiativesAnalysisGoldenThread(
       submitted.body.response.policy.policyVersion,
   };
   const registered = await api(owner)
-    .post('/runtime-v1/registrations')
+    .post(`${runtimeBasePath}/registrations`)
     .send({
       initiativeId,
       expectedVersion: 0,
       clientRequestId: `${prefix}-register`,
       proposalId,
       proposalVersion: 1,
-      sourceType: 'discovery-insight',
-      sourceId: `${prefix}-source`,
-      sourceVersion: 1,
+      sourceType,
+      sourceId,
+      sourceVersion,
       title,
       problem,
       proposedOutcome,
@@ -128,7 +152,7 @@ export async function createInitiativesAnalysisGoldenThread(
   ) => {
     const expectedCardVersion = cardVersions[cardKey] ?? 0;
     const published = await api(owner)
-      .post(`/runtime-v1/initiatives/${initiativeId}/cards/${cardKey}/publications`)
+      .post(`${runtimeBasePath}/initiatives/${initiativeId}/cards/${cardKey}/publications`)
       .send({
         expectedVersion: initiativeVersion,
         expectedCardVersion,
@@ -146,7 +170,7 @@ export async function createInitiativesAnalysisGoldenThread(
     initiativeVersion = published.body.aggregateVersion;
     cardVersions[cardKey] = expectedCardVersion + 1;
     const reviewed = await api(reviewer)
-      .post(`/runtime-v1/initiatives/${initiativeId}/cards/${cardKey}/reviews`)
+      .post(`${runtimeBasePath}/initiatives/${initiativeId}/cards/${cardKey}/reviews`)
       .send({
         expectedVersion: initiativeVersion,
         expectedCardVersion: cardVersions[cardKey],
@@ -162,7 +186,7 @@ export async function createInitiativesAnalysisGoldenThread(
     await publishReview(key, content, 'definition-v1');
 
   const remediation = await api(owner)
-    .post(`/runtime-v1/initiatives/${initiativeId}/definition-remediation`)
+    .post(`${runtimeBasePath}/initiatives/${initiativeId}/definition-remediation`)
     .send({
       expectedVersion: initiativeVersion,
       clientRequestId: `${prefix}-remediation`,
@@ -170,21 +194,21 @@ export async function createInitiativesAnalysisGoldenThread(
       financeTask: {
         taskId: `${prefix}-finance-task`,
         title: 'Reconcile evidence',
-        assigneeId: `${prefix}-finance`,
+        assigneeId: financeActor,
         dueAt: '2026-08-20T12:00:00.000Z',
       },
       technicalDecision: {
         decisionId: `${prefix}-technical-decision`,
         title: 'Select option',
-        authorityId: `${prefix}-technical`,
+        authorityId: technicalActor,
         dueAt: '2026-08-20T12:00:00.000Z',
         options: ['Do nothing', 'SMED'],
       },
     })
     .expect(201);
   initiativeVersion = remediation.body.aggregateVersion;
-  await api(`${prefix}-finance`)
-    .post(`/runtime-v1/my-work/definition-remediation/task/${prefix}-finance-task/resolve`)
+  await api(financeActor)
+    .post(`${runtimeBasePath}/my-work/definition-remediation/task/${prefix}-finance-task/resolve`)
     .send({
       expectedVersion: 1,
       clientRequestId: `${prefix}-finance-resolve`,
@@ -192,9 +216,9 @@ export async function createInitiativesAnalysisGoldenThread(
       evidenceRefs: [`finance:${prefix}:v1`],
     })
     .expect(200);
-  await api(`${prefix}-technical`)
+  await api(technicalActor)
     .post(
-      `/runtime-v1/my-work/definition-remediation/decision/${prefix}-technical-decision/resolve`
+      `${runtimeBasePath}/my-work/definition-remediation/decision/${prefix}-technical-decision/resolve`
     )
     .send({
       expectedVersion: 1,
@@ -205,48 +229,54 @@ export async function createInitiativesAnalysisGoldenThread(
     })
     .expect(200);
 
-  await api(owner)
-    .post(`/runtime-v1/source-proposals/${proposalId}/revisions`)
-    .send({
-      expectedVersion: 1,
-      expectedProposalVersion: 2,
-      expectedSourceVersion: 1,
-      sourceVersion: 2,
-      clientRequestId: `${prefix}-source-revise`,
-      projectId,
-      provenance: {
-        system: 'golden-thread',
-        recordType: 'discovery-insight',
-        capturedAt: '2026-08-11T00:00:00.000Z',
-        evidenceRefs: [`evidence:${prefix}:source:v2`],
-      },
-    })
-    .expect(201);
+  let finalProposalVersion = 1;
+  let finalSourceVersion = sourceVersion;
+  if (!input.immutableSource) {
+    await api(owner)
+      .post(`${runtimeBasePath}/source-proposals/${proposalId}/revisions`)
+      .send({
+        expectedVersion: 1,
+        expectedProposalVersion: 2,
+        expectedSourceVersion: sourceVersion,
+        sourceVersion: sourceVersion + 1,
+        clientRequestId: `${prefix}-source-revise`,
+        projectId,
+        provenance: {
+          system: provenanceSystem,
+          recordType: provenanceRecordType,
+          capturedAt: '2026-08-11T00:00:00.000Z',
+          evidenceRefs: [...provenanceEvidenceRefs, `evidence:${prefix}:source:revision`],
+        },
+      })
+      .expect(201);
 
-  const refreshed = await api(owner)
-    .post(`/runtime-v1/initiatives/${initiativeId}/source-refresh`)
-    .send({
-      expectedVersion: initiativeVersion,
-      clientRequestId: `${prefix}-source-refresh`,
-      expectedProposalVersion: 3,
-      expectedSourceVersion: 2,
-    })
-    .expect(201);
-  initiativeVersion = refreshed.body.aggregateVersion;
-  for (const key of Object.keys(definition)) cardVersions[key] += 1;
-  for (const [key, content] of Object.entries(definition))
-    await publishReview(key, content, 'definition-v2');
+    const refreshed = await api(owner)
+      .post(`${runtimeBasePath}/initiatives/${initiativeId}/source-refresh`)
+      .send({
+        expectedVersion: initiativeVersion,
+        clientRequestId: `${prefix}-source-refresh`,
+        expectedProposalVersion: 3,
+        expectedSourceVersion: sourceVersion + 1,
+      })
+      .expect(201);
+    initiativeVersion = refreshed.body.aggregateVersion;
+    for (const key of Object.keys(definition)) cardVersions[key] += 1;
+    for (const [key, content] of Object.entries(definition))
+      await publishReview(key, content, 'definition-v2');
+    finalProposalVersion = 3;
+    finalSourceVersion = sourceVersion + 1;
+  }
 
   const quorumRefs = {} as GoldenThreadFixture['quorumRefs'];
   const decideGate = async (gate: 'DEFINITION' | 'ANALYSIS', decisionId: string) => {
     const base = gate.toLowerCase();
     const readiness = await api(owner)
-      .get(`/runtime-v1/initiatives/${initiativeId}/gates/${base}/readiness`)
+      .get(`${runtimeBasePath}/initiatives/${initiativeId}/gates/${base}/readiness`)
       .expect(200);
     if (readiness.body.readiness !== 'READY')
       throw new Error(`${gate} readiness: ${JSON.stringify(readiness.body)}`);
     const requested = await api(owner)
-      .post(`/runtime-v1/initiatives/${initiativeId}/gates/${base}/requests`)
+      .post(`${runtimeBasePath}/initiatives/${initiativeId}/gates/${base}/requests`)
       .send({
         expectedVersion: initiativeVersion,
         clientRequestId: `${prefix}-${base}-request`,
@@ -256,11 +286,11 @@ export async function createInitiativesAnalysisGoldenThread(
       })
       .expect(201);
     initiativeVersion = requested.body.aggregateVersion;
-    const queue = await api(authority).get('/runtime-v1/my-work/gate-signoffs').expect(200);
+    const queue = await api(authority).get(`${runtimeBasePath}/my-work/gate-signoffs`).expect(200);
     const item = queue.body.items.find((candidate: any) => candidate.decisionId === decisionId);
     const binding = item.actorBindings.find((candidate: any) => candidate.eligible);
     await api(authority)
-      .post(`/runtime-v1/initiatives/${initiativeId}/gate-signoffs`)
+      .post(`${runtimeBasePath}/initiatives/${initiativeId}/gate-signoffs`)
       .send({
         expectedVersion: 0,
         expectedQuorumVersion: item.quorum.version,
@@ -274,7 +304,7 @@ export async function createInitiativesAnalysisGoldenThread(
         rationale: 'Gate evidence accepted.',
       })
       .expect(200);
-    const after = await api(authority).get('/runtime-v1/my-work/gate-signoffs').expect(200);
+    const after = await api(authority).get(`${runtimeBasePath}/my-work/gate-signoffs`).expect(200);
     const satisfied = after.body.items.find(
       (candidate: any) => candidate.decisionId === decisionId
     );
@@ -284,7 +314,7 @@ export async function createInitiativesAnalysisGoldenThread(
       receiptId: satisfied.quorum.receiptId,
     };
     const decided = await api(authority)
-      .post(`/runtime-v1/initiatives/${initiativeId}/gates/${base}/decisions`)
+      .post(`${runtimeBasePath}/initiatives/${initiativeId}/gates/${base}/decisions`)
       .send({
         expectedVersion: initiativeVersion,
         clientRequestId: `${prefix}-${base}-decide`,
@@ -300,7 +330,7 @@ export async function createInitiativesAnalysisGoldenThread(
   await decideGate('DEFINITION', definitionDecisionId);
 
   const started = await api(owner)
-    .post(`/runtime-v1/initiatives/${initiativeId}/gates/analysis/start`)
+    .post(`${runtimeBasePath}/initiatives/${initiativeId}/gates/analysis/start`)
     .send({ expectedVersion: initiativeVersion, clientRequestId: `${prefix}-analysis-start` })
     .expect(201);
   initiativeVersion = started.body.aggregateVersion;
@@ -331,7 +361,7 @@ export async function createInitiativesAnalysisGoldenThread(
   const aiCard = 'technical-specification';
   const aiProposalId = `${prefix}-ai-proposal`;
   await api(owner)
-    .post(`/runtime-v1/ai-analysis-proposals/${aiProposalId}`)
+    .post(`${runtimeBasePath}/ai-analysis-proposals/${aiProposalId}`)
     .send({
       expectedVersion: 0,
       clientRequestId: `${prefix}-ai-create`,
@@ -339,11 +369,11 @@ export async function createInitiativesAnalysisGoldenThread(
       initiativeVersion,
       cardKey: aiCard,
       cardVersion: cardVersions[aiCard],
-      sourceRef: { aggregateType: 'source_proposal', aggregateId: proposalId, version: 2 },
+      sourceRef: { aggregateType: 'source_proposal', aggregateId: proposalId, version: finalProposalVersion },
       model: { provider: 'openai', model: 'golden-model', version: '1' },
       prompt: { promptId: 'analysis', version: 1 },
       template: { templateId: aiCard, version: 1 },
-      inputHash: aiInputHash({ proposalId, version: 2 }),
+      inputHash: aiInputHash({ proposalId, version: finalProposalVersion }),
       output: { technicalAssessment: 'AI candidate' },
       evidenceRefs: [{ ref: 'evidence:ai', version: 1 }],
       counterEvidenceRefs: [{ ref: 'counter:ai', version: 1 }],
@@ -353,7 +383,7 @@ export async function createInitiativesAnalysisGoldenThread(
     })
     .expect(200);
   await api(reviewer)
-    .post(`/runtime-v1/ai-analysis-proposals/${aiProposalId}/review`)
+    .post(`${runtimeBasePath}/ai-analysis-proposals/${aiProposalId}/review`)
     .send({
       expectedVersion: 1,
       clientRequestId: `${prefix}-ai-review`,
@@ -368,11 +398,11 @@ export async function createInitiativesAnalysisGoldenThread(
   initiativeVersion += 1;
   cardVersions[aiCard] += 1;
   const cardsAfterAi = await api(owner)
-    .get(`/runtime-v1/initiatives/${initiativeId}/cards`)
+    .get(`${runtimeBasePath}/initiatives/${initiativeId}/cards`)
     .expect(200);
   const aiTruthCard = cardsAfterAi.body.cards.find((card: any) => card.cardKey === aiCard);
   const republishedAiTruth = await api(owner)
-    .post(`/runtime-v1/initiatives/${initiativeId}/cards/${aiCard}/publications`)
+    .post(`${runtimeBasePath}/initiatives/${initiativeId}/cards/${aiCard}/publications`)
     .send({
       expectedVersion: initiativeVersion,
       expectedCardVersion: cardVersions[aiCard],
@@ -390,7 +420,7 @@ export async function createInitiativesAnalysisGoldenThread(
   initiativeVersion = republishedAiTruth.body.aggregateVersion;
   cardVersions[aiCard] += 1;
   const aiReviewed = await api(reviewer)
-    .post(`/runtime-v1/initiatives/${initiativeId}/cards/${aiCard}/reviews`)
+    .post(`${runtimeBasePath}/initiatives/${initiativeId}/cards/${aiCard}/reviews`)
     .send({
       expectedVersion: initiativeVersion,
       expectedCardVersion: cardVersions[aiCard],
@@ -404,15 +434,15 @@ export async function createInitiativesAnalysisGoldenThread(
 
   const analysisDecisionId = `${prefix}-analysis-decision`;
   await decideGate('ANALYSIS', analysisDecisionId);
-  const reloaded = await api(owner).get(`/runtime-v1/initiatives/${initiativeId}`).expect(200);
+  const reloaded = await api(owner).get(`${runtimeBasePath}/initiatives/${initiativeId}`).expect(200);
   if (reloaded.body.initiative.lifecycleState !== 'READY_FOR_DECISION')
     throw new Error('Golden thread did not reach READY_FOR_DECISION');
   return {
     organizationId,
     projectId,
     proposalId,
-    proposalVersion: 3,
-    sourceVersion: 2,
+    proposalVersion: finalProposalVersion,
+    sourceVersion: finalSourceVersion,
     initiativeId,
     initiativeVersion,
     lifecycleState: 'READY_FOR_DECISION',
