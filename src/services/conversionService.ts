@@ -5,6 +5,7 @@
  */
 
 import { Api } from '@/services/api';
+import { createRegisteredValuation } from '@/services/api/financeV2.api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { materializeMyWorkSession } from '@/services/traceabilityService';
 import type { MyWorkDerivedSource } from '@/types/domain/traceability';
@@ -140,11 +141,11 @@ async function createTargetOutput(
     return { outputId: String(response?.id ?? '') };
   }
   if (targetType === 'valuation') {
-    const response = await Api.post('/economics/valuations', {
+    const response = await createRegisteredValuation({
       title: sourceTitle.slice(0, 255),
-      description: `Converted from MyWork session`,
-      sourceType: 'tool_session',
-      sourceId: sessionId,
+      description: `Converted from MyWork session ${sessionId}`,
+      sourceType: 'manual',
+      sourceId: null,
     });
     return { outputId: String(response?.id ?? '') };
   }

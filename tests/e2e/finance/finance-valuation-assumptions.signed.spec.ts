@@ -52,13 +52,17 @@ test('signed valuation wizard reaches canonical assumptions and persists WACC ac
     const createResponse = page.waitForResponse(
       (response) =>
         response.request().method() === 'POST' &&
-        new URL(response.url()).pathname === '/api/economics/valuations'
+        new URL(response.url()).pathname === '/api/v8/finance-v2/valuation/registrations'
     );
     await modal.getByRole('button', { name: /Create|Utwórz/i }).click();
     const created = await createResponse;
     expect(created.status()).toBe(201);
     const createdBody = await created.json();
-    valuationId = String(createdBody.id ?? createdBody.valuation?.id ?? '');
+    expect(createdBody.data).toMatchObject({ replay: false });
+    expect(createdBody.data.artifactId).toBeTruthy();
+    expect(createdBody.data.businessVersionId).toBeTruthy();
+    expect(createdBody.data.workingRevisionId).toBeTruthy();
+    valuationId = String(createdBody.data.id ?? '');
     expect(valuationId).toBeTruthy();
     recommendationId = `valuation-rec-${runId}`;
     await pool.query(
@@ -227,6 +231,11 @@ test('signed valuation wizard reaches canonical assumptions and persists WACC ac
       try {
         await client.query('BEGIN');
         await client.query(`SET LOCAL session_replication_role=replica`);
+        await client.query(
+          `DELETE FROM finance_valuation_registration_command_receipts
+            WHERE organization_id=$1 AND legacy_valuation_id=$2`,
+          [state.organizationId, valuationId]
+        );
         if (recommendationId) {
           await client.query(
             `DELETE FROM finance_candidate_handoffs
@@ -331,7 +340,9 @@ test('signed valuation wizard reaches canonical assumptions and persists WACC ac
          (SELECT count(*)::int FROM artifact_lifecycle_events WHERE organization_id=$1 AND artifact_id = ANY($3::text[])) lifecycle_events,
          (SELECT count(*)::int FROM finance_candidate_handoffs
            WHERE organization_id=$1 AND source_type='finance_valuation_recommendation' AND source_id=$6) candidate_receipts,
-         (SELECT count(*)::int FROM initiative_candidates WHERE organization_id=$1 AND id=$7) candidates`,
+         (SELECT count(*)::int FROM initiative_candidates WHERE organization_id=$1 AND id=$7) candidates,
+         (SELECT count(*)::int FROM finance_valuation_registration_command_receipts
+           WHERE organization_id=$1 AND legacy_valuation_id=$2) registration_receipts`,
       [
         state.organizationId,
         valuationId,
@@ -354,6 +365,7 @@ test('signed valuation wizard reaches canonical assumptions and persists WACC ac
       lifecycle_events: 0,
       candidate_receipts: 0,
       candidates: 0,
+      registration_receipts: 0,
     });
     await pool.end();
   }

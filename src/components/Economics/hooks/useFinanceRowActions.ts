@@ -19,6 +19,7 @@ import {
   approveCanonicalFinancialAnalysis,
   approveCanonicalValuation,
   approveFinanceModel,
+  createRegisteredValuation,
   resolveLegacyFinanceArtifact,
   runCanonicalFinancialAnalysis,
 } from '@/services/api/financeV2.api';
@@ -290,7 +291,7 @@ export function useFinanceRowActions({
         } else if (row.kind === 'valuation') {
           const detail = (await Api.get(`/api/economics/valuations/${row.id}`)) as any;
           const v = detail?.valuation || detail;
-          await Api.post('/api/economics/valuations', {
+          await createRegisteredValuation({
             title: copyTitle,
             sourceType: v?.source_type || v?.sourceType || 'manual',
             sourceId: v?.source_id || v?.sourceId || null,

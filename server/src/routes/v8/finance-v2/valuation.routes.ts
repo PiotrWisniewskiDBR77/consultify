@@ -19,6 +19,7 @@
 
 import type { Response } from 'express';
 import { Router } from 'express';
+import { z } from 'zod';
 
 import type { AuthRequest } from '../../../middleware/auth.middleware.js';
 import { getV8Context } from '../../../middleware/v8Auth.middleware.js';
@@ -68,6 +69,7 @@ import {
 import { loadWaccInputs, upsertWaccInputs, type UpsertWaccInputsParams } from '../../../services/finance/canonical/valuationWaccService.js';
 import { getPinnedLegacyValuationIdentity, readCanonicalLegacyValuationInputs, writeCanonicalLegacyPeers, writeCanonicalLegacyWacc } from '../../../services/finance/canonical/valuationLegacySuccessorService.js';
 import { runCanonicalLegacyValuationCompute } from '../../../services/finance/canonical/valuationLegacyComputeAdapterService.js';
+import { createRegisteredValuation, ValuationRegistrationError } from '../../../services/finance/canonical/valuationRegistrationService.js';
 import { asyncHandler } from '../../../utils/asyncHandler.js';
 import { financeV2Meta, sendError } from './_shared.js';
 
@@ -96,6 +98,59 @@ const VALID_BRIDGE_KINDS: readonly BridgeComponentKind[] = [
   'OTHER',
 ];
 const VALID_BRIDGE_SIGNS: readonly BridgeComponentSign[] = ['SUBTRACT_FROM_EV', 'ADD_TO_EV'];
+
+const valuationRegistrationSchema=z.object({
+  title:z.string().trim().min(1).max(300),
+  description:z.string().max(10000).nullish(),
+  projectId:z.string().trim().min(1).max(255).nullish(),
+  initiativeId:z.string().trim().min(1).max(255).nullish(),
+  sourceType:z.enum(['financial_model','financial_analysis','budget','manual']),
+  sourceId:z.string().trim().min(1).max(255).nullish(),
+  horizonYears:z.number().int().min(1).max(20).optional(),
+  currency:z.string().trim().min(1).max(10).optional(),
+  depth:z.enum(['managerial','banking']).optional(),
+}).strict().superRefine((body,ctx)=>{
+  if(body.sourceType!=='manual'&&!body.sourceId){
+    ctx.addIssue({code:z.ZodIssueCode.custom,path:['sourceId'],message:'sourceId is required'});
+  }
+  if(body.sourceType==='manual'&&body.sourceId){
+    ctx.addIssue({code:z.ZodIssueCode.custom,path:['sourceId'],message:'manual registration cannot bind sourceId'});
+  }
+});
+
+router.post('/valuation/registrations', asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { organizationId, userId } = getV8Context(req);
+  const parsed=valuationRegistrationSchema.safeParse(req.body??{});
+  if(!parsed.success) return sendError(res,400,'INVALID_BODY',parsed.error.issues.map(issue=>`${issue.path.join('.')}: ${issue.message}`).join('; '));
+  const body=parsed.data;
+  const idempotencyKey = String(req.header('Idempotency-Key') || '').trim();
+  if (!idempotencyKey) return sendError(res,400,'IDEMPOTENCY_KEY_REQUIRED','Idempotency-Key is required');
+  try {
+    const result = await createRegisteredValuation({
+      organizationId,userId,title:body.title,
+      description:body.description??undefined,
+      projectId:body.projectId??undefined,
+      initiativeId:body.initiativeId??undefined,
+      sourceType:body.sourceType,
+      sourceId:body.sourceId??null,
+      horizonYears:body.horizonYears,
+      currency:body.currency,
+      depth:body.depth,
+      idempotencyKey,
+      actor:{userId,userEmail:(req.user as any)?.email,ip:req.ip,userAgent:req.get('user-agent')||undefined},
+    });
+    return res.status(result.replay ? 200 : 201).json({data:result,meta:financeV2Meta()});
+  } catch (error) {
+    if (error instanceof ValuationRegistrationError) {
+      return sendError(res,error.status,error.code,error.message);
+    }
+    const message=String((error as any)?.message||'');
+    if (message==='Missing sourceId') return sendError(res,400,'SOURCE_ID_REQUIRED',message);
+    if (/^Source .* not found$/.test(message)) return sendError(res,404,'SOURCE_NOT_FOUND','Valuation source not found');
+    if (/must be approved before it can seed a valuation$/.test(message)) return sendError(res,409,'SOURCE_NOT_APPROVED',message);
+    throw error;
+  }
+}));
 
 router.get('/valuation/legacy/:legacyId/input-identity', requireActiveMembership, asyncHandler(async (req: AuthRequest,res:Response) => {
   const {organizationId}=getV8Context(req);

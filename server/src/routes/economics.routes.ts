@@ -374,9 +374,9 @@ const updateFinancialAnalysisSchema = z
   })
   .strict();
 
-// valuationService.createValuation allowlist (service §211):
-// title (req), description?, projectId?, initiativeId?, sourceType (req),
-// sourceId?, horizonYears?, currency?
+// Rollback-only contract for the retired ECO-W22 route. The cutover guard runs
+// before validation, so this handler is reachable only through the explicit,
+// writer-scoped rollback lever.
 const valuationSourceTypeSchema = z.enum([
   'financial_model',
   'financial_analysis',
@@ -391,14 +391,15 @@ const createValuationSchema = z
     initiativeId: idLike.nullish(),
     sourceType: valuationSourceTypeSchema,
     sourceId: idLike.nullish(),
-    horizonYears: z.number().optional(),
-    currency: z.string().max(10).optional(),
-    // F-4 EV depth switch (D-2, additive) — optional; omitted = existing behavior
-    // (valuationService.createValuation defaults, untouched).
+    horizonYears: z.number().int().min(1).max(20).optional(),
+    currency: z.string().trim().min(3).max(10).optional(),
     depth: z.enum(['managerial', 'banking']).optional(),
   })
   .strict();
 
+// valuationService.createValuation allowlist (service §211):
+// title (req), description?, projectId?, initiativeId?, sourceType (req),
+// sourceId?, horizonYears?, currency?
 // valuationDepthProfileService.setValuationDepth — PUT /valuations/:id/depth.
 const updateValuationDepthSchema = z
   .object({
@@ -2603,38 +2604,18 @@ router.get(
 router.post(
   '/valuations',
   verifyToken,
+  economicsCutoverGuard,
   validateBody(createValuationSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
+    const organizationId = req.user?.organizationId || (req.user as any)?.organization_id;
     const userId = req.user?.id || (req.user as any)?.user_id;
-    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-
-    const {
-      title,
-      description,
-      projectId,
-      initiativeId,
-      sourceType,
-      sourceId,
-      horizonYears,
-      currency,
-      depth,
-    } = req.body || {};
-    if (!title || !sourceType)
-      return res.status(400).json({ error: 'title and sourceType required' });
-
+    if (!organizationId || !userId) return res.status(401).json({ error: 'Unauthorized' });
     const created = await createRegisteredValuation({
-      organizationId: orgId,
+      organizationId,
       userId,
-      title,
-      description,
-      projectId,
-      initiativeId,
-      sourceType,
-      sourceId,
-      horizonYears,
-      currency,
-      depth,
+      ...req.body,
+      idempotencyKey:
+        String(req.get('idempotency-key') || req.get('x-request-id') || '').trim() || uuidv4(),
       actor: {
         userId,
         userEmail: (req.user as any)?.email,
@@ -2642,7 +2623,7 @@ router.post(
         userAgent: req.get('user-agent') || undefined,
       },
     });
-    return res.status(201).json({ success: true, id: created.id });
+    return res.status(created.replay ? 200 : 201).json({ success: true, id: created.id });
   })
 );
 

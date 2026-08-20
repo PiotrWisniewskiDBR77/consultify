@@ -283,10 +283,10 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'ECO-W22',
       method: 'POST',
       path: /^\/valuations\/?$/,
-      state: 'observed',
-      successor: null,
+      state: 'disabled',
+      successor: '/api/v8/finance-v2/valuation/registrations',
       reason:
-        'Creates a valuations row via valuationSvc.createValuation (economics.routes.ts:2637, valuationService.ts:283 INSERT INTO valuations). valuations is bridge-known, but this is a collection-level create with no path id yet, so legacyTable/legacyIdFromPath do not apply. The generic POST /api/v8/finance-v2/artifacts {artifactType:VALUATION_CASE} creates a bare shell with no domain logic seeded, so it is NOT treated as a proven equivalent successor (FINANCE.md finding #3).',
+        'All mounted valuation creation callers use the idempotent canonical registration command, which atomically creates the legacy list identity, canonical artifact/version/revision, valuation case/variant, alias and immutable replay receipt. The former economics writer now fails closed with 410.',
     },
     {
       writerId: 'ECO-W23',

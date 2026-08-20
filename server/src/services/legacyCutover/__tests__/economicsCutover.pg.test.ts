@@ -53,6 +53,7 @@ const mappedValuationId = `${prefix}-mapped-valuation`;
 describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL)', () => {
   let pool: Pool;
   let app: express.Express;
+  let productionMountedApp: express.Express;
   let mappedArtifactId: string;
   let mappedBusinessVersionId: string;
   let mappedValuationArtifactId: string;
@@ -77,6 +78,16 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
         [org, org, now]
       );
     }
+    await pool.query(
+      `INSERT INTO users(id,organization_id,email,first_name,last_name,role)
+       VALUES($1,$2,$3,'Cutover','Actor','ADMIN')`,
+      [actor, orgA, `${actor}@test.local`]
+    );
+    await pool.query(
+      `INSERT INTO organization_members(id,organization_id,user_id,role,status,created_at)
+       VALUES($1,$2,$3,'OWNER','ACTIVE',now())`,
+      [randomUUID(), orgA, actor]
+    );
     const canonical = await createArtifact({
       organizationId: orgA,
       artifactType: 'HISTORICAL_ANALYSIS',
@@ -100,7 +111,10 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
     });
     mappedValuationArtifactId = valuationCanonical.artifact.artifact_id;
     mappedValuationBusinessVersionId = valuationCanonical.businessVersion.business_version_id;
-    await pool.query(`INSERT INTO valuations(id,organization_id,title,source_type,currency,status,created_by) VALUES($1,$2,'Wave4 protected','manual','PLN','DRAFT',$3)`,[mappedValuationId,orgA,actor]);
+    await pool.query(
+      `INSERT INTO valuations(id,organization_id,title,source_type,currency,status,created_by) VALUES($1,$2,'Wave4 protected','manual','PLN','DRAFT',$3)`,
+      [mappedValuationId, orgA, actor]
+    );
     await pool.query(
       `INSERT INTO finance_artifact_aliases
         (legacy_table,legacy_id,legacy_version,artifact_id,organization_id,
@@ -119,6 +133,12 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
       economicsRouter
     );
     app.use((err: any, _req: any, res: any, _next: any) =>
+      res.status(500).json({ error: String(err?.message || err) })
+    );
+    productionMountedApp = express();
+    productionMountedApp.use(express.json());
+    productionMountedApp.use('/api/economics', authenticate, economicsRouter);
+    productionMountedApp.use((err: any, _req: any, res: any, _next: any) =>
       res.status(500).json({ error: String(err?.message || err) })
     );
   }, 90_000);
@@ -159,6 +179,10 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
     await pool.query(`DELETE FROM legacy_cutover_usage_events WHERE organization_id = ANY($1)`, [
       [orgA, orgB],
     ]);
+    await pool.query(`DELETE FROM organization_members WHERE organization_id = ANY($1)`, [
+      [orgA, orgB],
+    ]);
+    await pool.query(`DELETE FROM users WHERE id=$1`, [actor]);
     await pool.query(`DELETE FROM organizations WHERE id = ANY($1)`, [[orgA, orgB]]);
     await pool.end();
   });
@@ -365,6 +389,171 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
     });
   });
 
+  it('retires ECO-W22 valuation creation before any legacy or canonical identity is written', async () => {
+    const requestId = `${prefix}-valuation-create-retired`;
+    const before = await pool.query(
+      `SELECT
+         (SELECT count(*)::int FROM valuations WHERE organization_id=$1) valuations,
+         (SELECT count(*)::int FROM finance_artifacts WHERE organization_id=$1 AND artifact_type='VALUATION_CASE') artifacts`,
+      [orgA]
+    );
+    const response = await request(productionMountedApp)
+      .post('/api/economics/valuations')
+      .set('x-request-id', requestId)
+      .send({ title: 'Must not be created', sourceType: 'manual' });
+    expect(response.status).toBe(410);
+    expect(response.body).toMatchObject({
+      writerId: 'ECO-W22',
+      successor: '/api/v8/finance-v2/valuation/registrations',
+    });
+    const after = await pool.query(
+      `SELECT
+         (SELECT count(*)::int FROM valuations WHERE organization_id=$1) valuations,
+         (SELECT count(*)::int FROM finance_artifacts WHERE organization_id=$1 AND artifact_type='VALUATION_CASE') artifacts`,
+      [orgA]
+    );
+    expect(after.rows).toEqual(before.rows);
+    const usage = await pool.query(
+      `SELECT writer_id,access_kind,successor_path FROM legacy_cutover_usage_events
+        WHERE organization_id=$1 AND request_id=$2`,
+      [orgA, requestId]
+    );
+    expect(usage.rows).toEqual([
+      {
+        writer_id: 'ECO-W22',
+        access_kind: 'legacy_writer_blocked',
+        successor_path: '/api/v8/finance-v2/valuation/registrations',
+      },
+    ]);
+  });
+
+  it('restores exactly one ECO-W22 registration through the writer-scoped rollback lever', async () => {
+    const previous = process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+    const requestId = `${prefix}-valuation-create-rollback`;
+    process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = 'ECO-W22';
+    let createdId = '';
+    try {
+      const response = await request(productionMountedApp)
+        .post('/api/economics/valuations')
+        .set('x-request-id', requestId)
+        .set('idempotency-key', requestId)
+        .send({ title: 'Rollback valuation', sourceType: 'manual', horizonYears: 5 });
+      expect(response.status).toBe(201);
+      createdId = String(response.body.id || '');
+      expect(createdId).toBeTruthy();
+
+      const receipt = await pool.query<{
+        artifact_id: string;
+        business_version_id: string;
+        working_revision_id: string;
+      }>(
+        `SELECT artifact_id,business_version_id,working_revision_id
+           FROM finance_valuation_registration_command_receipts
+          WHERE organization_id=$1 AND idempotency_key=$2`,
+        [orgA, requestId]
+      );
+      expect(receipt.rowCount).toBe(1);
+      expect(
+        await pool.query(`SELECT id FROM valuations WHERE organization_id=$1 AND id=$2`, [
+          orgA,
+          createdId,
+        ])
+      ).toHaveProperty('rowCount', 1);
+      const usage = await pool.query(
+        `SELECT writer_id,access_kind FROM legacy_cutover_usage_events
+          WHERE organization_id=$1 AND request_id=$2`,
+        [orgA, requestId]
+      );
+      expect(usage.rows).toEqual([{ writer_id: 'ECO-W22', access_kind: 'rollback_writer' }]);
+
+      const { artifact_id: artifactId, business_version_id: businessVersionId } = receipt.rows[0];
+      const cleanupClient = await pool.connect();
+      let caseIds: string[] = [];
+      try {
+        await cleanupClient.query('BEGIN');
+        await cleanupClient.query(`SET LOCAL session_replication_role=replica`);
+        await cleanupClient.query(
+          `DELETE FROM finance_valuation_registration_command_receipts
+            WHERE organization_id=$1 AND idempotency_key=$2`,
+          [orgA, requestId]
+        );
+        await cleanupClient.query(
+          `DELETE FROM finance_artifact_aliases WHERE organization_id=$1 AND artifact_id=$2`,
+          [orgA, artifactId]
+        );
+        await cleanupClient.query(
+          `DELETE FROM artifact_lifecycle_events WHERE organization_id=$1 AND artifact_id=$2`,
+          [orgA, artifactId]
+        );
+        const cases = await cleanupClient.query<{ case_id: string }>(
+          `SELECT case_id FROM finance_valuation_variants WHERE organization_id=$1 AND business_version_id=$2`,
+          [orgA, businessVersionId]
+        );
+        caseIds = cases.rows.map((row) => row.case_id);
+        await cleanupClient.query(
+          `DELETE FROM finance_valuation_variants WHERE organization_id=$1 AND business_version_id=$2`,
+          [orgA, businessVersionId]
+        );
+        for (const caseId of caseIds) {
+          await cleanupClient.query(
+            `DELETE FROM finance_valuation_cases WHERE organization_id=$1 AND case_id=$2`,
+            [orgA, caseId]
+          );
+        }
+        await cleanupClient.query(
+          `DELETE FROM finance_working_revisions WHERE organization_id=$1 AND artifact_id=$2`,
+          [orgA, artifactId]
+        );
+        await cleanupClient.query(
+          `DELETE FROM finance_business_versions WHERE organization_id=$1 AND artifact_id=$2`,
+          [orgA, artifactId]
+        );
+        await cleanupClient.query(
+          `DELETE FROM finance_artifacts WHERE organization_id=$1 AND artifact_id=$2`,
+          [orgA, artifactId]
+        );
+        await cleanupClient.query(`DELETE FROM valuations WHERE organization_id=$1 AND id=$2`, [
+          orgA,
+          createdId,
+        ]);
+        await cleanupClient.query(`SET LOCAL session_replication_role=origin`);
+        await cleanupClient.query('COMMIT');
+      } catch (error) {
+        await cleanupClient.query('ROLLBACK');
+        throw error;
+      } finally {
+        cleanupClient.release();
+      }
+      const residue = await pool.query(
+        `SELECT
+          (SELECT count(*)::int FROM valuations WHERE organization_id=$1 AND id=$2) valuations,
+          (SELECT count(*)::int FROM finance_valuation_registration_command_receipts WHERE organization_id=$1 AND idempotency_key=$3) receipts,
+          (SELECT count(*)::int FROM finance_artifact_aliases WHERE organization_id=$1 AND artifact_id=$4) aliases,
+          (SELECT count(*)::int FROM finance_artifacts WHERE organization_id=$1 AND artifact_id=$4) artifacts,
+          (SELECT count(*)::int FROM finance_business_versions WHERE organization_id=$1 AND artifact_id=$4) versions,
+          (SELECT count(*)::int FROM finance_working_revisions WHERE organization_id=$1 AND artifact_id=$4) revisions,
+          (SELECT count(*)::int FROM finance_valuation_variants WHERE organization_id=$1 AND business_version_id=$5) variants,
+          (SELECT count(*)::int FROM finance_valuation_cases WHERE organization_id=$1 AND case_id=ANY($6::text[])) cases,
+          (SELECT count(*)::int FROM artifact_lifecycle_events WHERE organization_id=$1 AND artifact_id=$4) lifecycle_events`,
+        [orgA, createdId, requestId, artifactId, businessVersionId, caseIds]
+      );
+      expect(residue.rows[0]).toEqual({
+        valuations: 0,
+        receipts: 0,
+        aliases: 0,
+        artifacts: 0,
+        versions: 0,
+        revisions: 0,
+        variants: 0,
+        cases: 0,
+        lifecycle_events: 0,
+      });
+    } finally {
+      if (previous === undefined) delete process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+      else process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = previous;
+    }
+  });
+
   it('cold-resolves mapped valuation identity and retires both legacy governance writers', async () => {
     const approve = await request(app)
       .post(`/api/economics/valuations/${mappedValuationId}/approve`)
@@ -402,14 +591,31 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
     ]);
   });
 
-  it('blocks typed assumptions and peers legacy doors before mutation with exact telemetry',async()=>{
-    const before=await pool.query(`SELECT assumptions,peers FROM valuations WHERE id=$1`,[mappedValuationId]);
-    const assumptions=await request(app).put(`/api/economics/valuations/${mappedValuationId}/assumptions`).set('x-request-id',`${prefix}-wave4-assumptions`).send({waccPercent:99});
-    const peers=await request(app).put(`/api/economics/valuations/${mappedValuationId}/peers`).set('x-request-id',`${prefix}-wave4-peers`).send({peerSet:['MUTATION']});
-    expect(assumptions.status).toBe(410); expect(peers.status).toBe(410);
-    expect(assumptions.body).toMatchObject({writerId:'ECO-W24',successor:'/api/v8/finance-v2/valuation/legacy/:legacyId/assumptions'});
-    expect(peers.body).toMatchObject({writerId:'ECO-W25',successor:'/api/v8/finance-v2/valuation/legacy/:legacyId/peers'});
-    const after=await pool.query(`SELECT assumptions,peers FROM valuations WHERE id=$1`,[mappedValuationId]);
+  it('blocks typed assumptions and peers legacy doors before mutation with exact telemetry', async () => {
+    const before = await pool.query(`SELECT assumptions,peers FROM valuations WHERE id=$1`, [
+      mappedValuationId,
+    ]);
+    const assumptions = await request(app)
+      .put(`/api/economics/valuations/${mappedValuationId}/assumptions`)
+      .set('x-request-id', `${prefix}-wave4-assumptions`)
+      .send({ waccPercent: 99 });
+    const peers = await request(app)
+      .put(`/api/economics/valuations/${mappedValuationId}/peers`)
+      .set('x-request-id', `${prefix}-wave4-peers`)
+      .send({ peerSet: ['MUTATION'] });
+    expect(assumptions.status).toBe(410);
+    expect(peers.status).toBe(410);
+    expect(assumptions.body).toMatchObject({
+      writerId: 'ECO-W24',
+      successor: '/api/v8/finance-v2/valuation/legacy/:legacyId/assumptions',
+    });
+    expect(peers.body).toMatchObject({
+      writerId: 'ECO-W25',
+      successor: '/api/v8/finance-v2/valuation/legacy/:legacyId/peers',
+    });
+    const after = await pool.query(`SELECT assumptions,peers FROM valuations WHERE id=$1`, [
+      mappedValuationId,
+    ]);
     expect(after.rows).toEqual(before.rows);
   });
 

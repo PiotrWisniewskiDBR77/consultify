@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { createRegisteredValuation } from '@/services/api/financeV2.api';
 
 import { type FinanceValuationRow, normalizeStatus } from '../financeTypes';
 
@@ -90,7 +91,7 @@ export const CreateValuationModal: React.FC<CreateValuationModalProps> = ({
     }
     setCreating(true);
     try {
-      const result = await Api.post('/api/economics/valuations', {
+      const result = await createRegisteredValuation({
         title: title.trim(),
         sourceType,
         sourceId: sourceType === 'manual' ? null : sourceId,

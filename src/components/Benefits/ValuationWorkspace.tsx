@@ -14,6 +14,7 @@ import {
   approveCanonicalValuation,
   confirmCanonicalLegacyValuationComputeReadback,
   computeCanonicalLegacyValuation,
+  createRegisteredValuation,
   generateCanonicalValuationAdvisor,
   getCanonicalValuationInputs,
   getCanonicalValuationResults,
@@ -351,29 +352,20 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
     }
     setBusy(true);
     try {
-      const res = await fetch(`${API_URL}/economics/valuations`, {
-        method: 'POST',
-        headers: { ...getHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: createTitle,
-          sourceType: createSourceType,
-          sourceId: createSourceType === 'manual' ? null : createSourceId,
-          horizonYears: createHorizonYears,
-        }),
+      const d = await createRegisteredValuation({
+        title: createTitle,
+        sourceType: createSourceType,
+        sourceId: createSourceType === 'manual' ? null : createSourceId,
+        horizonYears: createHorizonYears,
       });
-      const d = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        toast.error(d?.error || t('valuation.create.failed', 'Failed to create valuation'));
-        return;
-      }
       trackFunnelEvent('valuation_created', { valuationId: d?.id, sourceType: createSourceType });
       setShowCreate(false);
       setCreateTitle('');
       await fetchValuations();
       if (d?.id) setSelectedId(String(d.id));
       onValuationChanged?.();
-    } catch {
-      toast.error(t('valuation.create.failed', 'Failed to create valuation'));
+    } catch (error: any) {
+      toast.error(error?.message || t('valuation.create.failed', 'Failed to create valuation'));
     } finally {
       setBusy(false);
     }

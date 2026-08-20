@@ -803,6 +803,54 @@ export async function approveCanonicalFinancialAnalysis(legacyAnalysisId: string
 
 // --- 1. Cases + Variants ---
 
+export interface CreateRegisteredValuationParams {
+  title: string;
+  description?: string | null;
+  projectId?: string | null;
+  initiativeId?: string | null;
+  sourceType: 'financial_model' | 'financial_analysis' | 'budget' | 'manual';
+  sourceId?: string | null;
+  horizonYears?: number;
+  currency?: string;
+  depth?: 'managerial' | 'banking';
+}
+
+export interface RegisteredValuationResultDto {
+  id: string;
+  artifactId: string;
+  businessVersionId: string;
+  workingRevisionId: string;
+  replay: boolean;
+}
+
+export async function createRegisteredValuation(
+  params: CreateRegisteredValuationParams
+): Promise<RegisteredValuationResultDto> {
+  const normalized = {
+    ...params,
+    title: params.title.trim(),
+    description: params.description?.trim() || null,
+    sourceId: params.sourceId || null,
+    currency: (params.currency || 'PLN').trim().toUpperCase(),
+  };
+  const intent = JSON.stringify(normalized);
+  const key = persistentCommandId('finance-valuation-registration', intent);
+  const response = await fetchWithRetry(`${V8_BASE}${BASE}/valuation/registrations`, {
+    method: 'POST',
+    headers: { ...getHeaders(), 'Idempotency-Key': key },
+    body: JSON.stringify(normalized),
+  });
+  const envelope = await handleResponse<{ data: RegisteredValuationResultDto }>(
+    response,
+    'canonical valuation registration'
+  );
+  if (!envelope.data.id || !envelope.data.artifactId || !envelope.data.businessVersionId) {
+    throw new Error('Canonical valuation registration readback is incomplete');
+  }
+  clearPersistentCommandId('finance-valuation-registration', intent);
+  return envelope.data;
+}
+
 export async function createValuationCase(params: {
   name: string;
   description?: string | null;
@@ -1243,6 +1291,7 @@ export const FinanceV2Api = {
   runCanonicalFinancialAnalysis,
   approveCanonicalFinancialAnalysis,
   // --- PKG-H Valuation --- (getFinanceVersionLineage już wyżej — wspólna z Pakietem D, patrz uwaga przy definicji).
+  createRegisteredValuation,
   createValuationCase,
   listValuationCases,
   getValuationCase,

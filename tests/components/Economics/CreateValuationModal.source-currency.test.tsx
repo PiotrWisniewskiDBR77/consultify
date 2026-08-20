@@ -50,9 +50,13 @@ vi.mock('@/services/api', () => ({
     post: vi.fn(),
   },
 }));
+vi.mock('@/services/api/financeV2.api', () => ({
+  createRegisteredValuation: vi.fn(),
+}));
 
 import { CreateValuationModal } from '@/components/Economics/modals/CreateValuationModal';
 import { Api } from '@/services/api';
+import { createRegisteredValuation } from '@/services/api/financeV2.api';
 
 const EUR_MODEL = {
   id: 'model-atelier-roi',
@@ -90,24 +94,20 @@ function deferredSources() {
 }
 
 function postedBody(): Record<string, unknown> {
-  const call = vi.mocked(Api.post).mock.calls.find(
-    ([url]) => url === '/api/economics/valuations'
-  );
-  expect(call, 'POST /api/economics/valuations was never issued').toBeTruthy();
-  return call![1] as Record<string, unknown>;
+  const call = vi.mocked(createRegisteredValuation).mock.calls[0];
+  expect(call, 'canonical valuation registration was never issued').toBeTruthy();
+  return call![0] as Record<string, unknown>;
 }
 
 describe('CreateValuationModal — currency is inherited from the selected source', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(Api.post).mockResolvedValue({
+    vi.mocked(createRegisteredValuation).mockResolvedValue({
       id: 'valuation-1',
-      title: 'Atelier valuation',
-      status: 'DRAFT',
-      sourceType: 'financial_model',
-      currency: 'EUR',
-      horizonYears: 5,
-      updated_at: '2026-08-01T00:00:00.000Z',
+      artifactId: 'artifact-1',
+      businessVersionId: 'version-1',
+      workingRevisionId: 'revision-1',
+      replay: false,
     } as any);
   });
 
@@ -132,7 +132,7 @@ describe('CreateValuationModal — currency is inherited from the selected sourc
 
     fireEvent.click(screen.getByRole('button', { name: 'Create' }));
 
-    await waitFor(() => expect(Api.post).toHaveBeenCalled());
+    await waitFor(() => expect(createRegisteredValuation).toHaveBeenCalled());
     expect(postedBody()).toMatchObject({
       sourceId: EUR_MODEL.id,
       currency: 'EUR',
@@ -162,7 +162,7 @@ describe('CreateValuationModal — currency is inherited from the selected sourc
 
     fireEvent.click(screen.getByRole('button', { name: 'Create' }));
 
-    await waitFor(() => expect(Api.post).toHaveBeenCalled());
+    await waitFor(() => expect(createRegisteredValuation).toHaveBeenCalled());
     expect(postedBody()).toMatchObject({
       sourceType: 'financial_analysis',
       sourceId: EUR_ANALYSIS.id,
@@ -180,7 +180,7 @@ describe('CreateValuationModal — currency is inherited from the selected sourc
 
     fireEvent.click(screen.getByRole('button', { name: 'Create' }));
 
-    await waitFor(() => expect(Api.post).toHaveBeenCalled());
+    await waitFor(() => expect(createRegisteredValuation).toHaveBeenCalled());
     expect(postedBody()).toMatchObject({
       sourceType: 'manual',
       sourceId: null,
@@ -210,7 +210,7 @@ describe('CreateValuationModal — currency is inherited from the selected sourc
     await screen.findByRole('option', { name: 'Budget without currency' });
     fireEvent.click(screen.getByRole('button', { name: 'Create' }));
 
-    await waitFor(() => expect(Api.post).toHaveBeenCalled());
+    await waitFor(() => expect(createRegisteredValuation).toHaveBeenCalled());
     expect(postedBody()).toMatchObject({ currency: 'PLN' });
   });
 });
