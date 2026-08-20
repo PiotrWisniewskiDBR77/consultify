@@ -399,6 +399,7 @@ import userOrgsRoutes from './routes/user/userOrgs.routes.js';
 import userRoutes from './routes/user/users.routes.js';
 import { managerRouter as v8ExecutionControlManagerRouter } from './routes/v8/execution-control.routes.js';
 import { isStatelessComputeDemoRoute } from './routes/v8/financeValueDemoAllowlist.js';
+import { mountedFinanceStatementRouter } from './routes/v8/financeStatementMountedSurface.js';
 import v8Router from './routes/v8/index.js';
 import { publicKnowledgeBaseRoutes as publicV8KnowledgeBaseRoutes } from './routes/v8/knowledge-base.routes.js';
 import v10TeresaRoutes from './routes/v10/teresa.routes.js';
@@ -1428,6 +1429,13 @@ export class ApiGateway {
 
       // V8 API namespace — feature-gated
       logger.info('[ApiGateway] Mounting /api/v8');
+      // Finance Statement is a mounted production workspace, not an opt-in V8
+      // experiment. Route only its exact authenticated surface (plus the
+      // tenant-scoped flags GET consumed by the shell) through the canonical V8
+      // router before the unrelated global rollout gate. The independent narrow
+      // router applies auth, org context and the same Finance membership/editor
+      // walls without inheriting v8OrgGate; no sibling V8 endpoint is exposed.
+      app.use('/api/v8', mountedFinanceStatementRouter);
       app.use('/api/v8', v8FeatureGate, v8Router);
 
       // V10 AI OS namespace — Wave 2 Teresa voice/runtime contract.

@@ -22,7 +22,7 @@ import {
   X,
   XCircle,
 } from 'lucide-react';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import Api from '../../services/api';
@@ -32,6 +32,7 @@ import {
   type FinancialStatementCanonicalLineOption,
   type FinancialStatementMappedValue,
   FinancialStatementMappingEditor,
+  isFinancialStatementValueVerified,
 } from './FinancialStatementMappingEditor';
 import { statementReasonSentences } from './statementReadinessCopy';
 
@@ -100,6 +101,12 @@ type ReviewStatement = {
   periodLabel?: string | null;
   comparisonOfStatementId?: string | null;
   sourceReceiptId?: string;
+  sourceReceipt?: Record<string, any>;
+  currency?: string;
+  scaling?: string;
+  entityName?: string;
+  sourceFileName?: string;
+  sourceSha256?: string;
   mappedValues: MappedValue[];
   savedReady?: boolean;
   valuesVersion?: number;
@@ -132,6 +139,8 @@ interface Props {
    * page title that previously collided with the app logo (H2.9 / H2.10).
    */
   embedded?: boolean;
+  /** Durable Statement id supplied by the Finance deep-link recovery route. */
+  initialStatementId?: string;
 }
 
 async function detectStatementWithFallback(statementId: string, body: Record<string, unknown>) {
@@ -177,6 +186,28 @@ async function getCanonicalLinesWithFallback() {
     }
     const response = await Api.get('/api/finance-statements/canonical-lines');
     return Array.isArray(response) ? response : [];
+  }
+}
+
+async function getStatementSourceReceiptWithFallback(statementId: string) {
+  try {
+    const result = await V8FinanceApi.getStatementSourceReceipt(statementId);
+    return result.receipt as Record<string, any>;
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) throw error;
+    const legacy = await Api.get(`/api/finance-statements/${statementId}/source-receipt`);
+    return (((legacy as any)?.receipt || legacy) ?? {}) as Record<string, any>;
+  }
+}
+
+async function getStatementWithFallback(statementId: string) {
+  try {
+    const result = await V8FinanceApi.getStatement(statementId);
+    return result.statement as Record<string, any>;
+  } catch (error) {
+    if (!shouldFallbackToLegacyFinance(error)) throw error;
+    const legacy = await Api.get(`/api/finance-statements/${statementId}`);
+    return (((legacy as any)?.statement || legacy) ?? {}) as Record<string, any>;
   }
 }
 
@@ -261,6 +292,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
   onOpenKnowledgeBase,
   onOpenAi,
   embedded = false,
+  initialStatementId,
 }) => {
   const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -313,6 +345,112 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
 
   const STEPS: WizardStep[] = ['upload', 'detect', 'map', 'confirm'];
   const stepIdx = STEPS.indexOf(step);
+
+  useEffect(() => {
+    const durableId = String(initialStatementId || '').trim();
+    if (!durableId) return;
+    let cancelled = false;
+    void (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const initialDetail = await getStatementWithFallback(durableId);
+        const siblingIds = Array.from(
+          new Set([
+            durableId,
+            ...(Array.isArray(initialDetail.sourceSiblings)
+              ? initialDetail.sourceSiblings.map((sibling: any) => String(sibling.id || ''))
+              : []),
+          ].filter(Boolean))
+        );
+        const canonical = await getCanonicalLinesWithFallback();
+        const hydrated = await Promise.all(
+          siblingIds.map(async (id) => {
+            const detail = id === durableId ? initialDetail : await getStatementWithFallback(id);
+            const receipt = await getStatementSourceReceiptWithFallback(id);
+            const values = Array.isArray(detail.values) ? detail.values : [];
+            return {
+              statementId: id,
+              statementType: String(detail.statement_type || ''),
+              periodLabel: detail.period_label || null,
+              comparisonOfStatementId: null,
+              sourceReceiptId: String(receipt.receipt_id || ''),
+              sourceReceipt: receipt,
+              currency: String(detail.currency || receipt?.periods_json?.[0]?.currency || ''),
+              scaling: String(detail.scaling || receipt?.periods_json?.[0]?.scaling || ''),
+              entityName: String(detail.entity_name || receipt.entity_name || ''),
+              sourceFileName: String(
+                receipt.original_file_name || detail.source_file_name || ''
+              ),
+              sourceSha256: String(receipt.content_sha256 || ''),
+              valuesVersion: Number(detail.values_version ?? detail.latestVersionNo ?? 0),
+              savedReady: String(detail.readinessStatus || detail.readiness_status || '') === 'ready',
+              mappedValues: values.map((value: any) => {
+                let evidence: Record<string, any> = {};
+                try {
+                  evidence =
+                    typeof value.evidence_json === 'string'
+                      ? JSON.parse(value.evidence_json)
+                      : value.evidence_json || {};
+                } catch {
+                  evidence = {};
+                }
+                return {
+                  originalLabel: String(value.original_label || value.originalLabel || ''),
+                  value: Number(value.value),
+                  confidence: Number(value.confidence || 0),
+                  sourceRow: value.source_row ?? value.sourceRow,
+                  canonicalLineId:
+                    value.canonical_line_id || value.canonicalLineId || null,
+                  canonicalLabel:
+                    value.line_name_pl || value.line_name || value.canonicalLabel || undefined,
+                  mappingStatus: String(value.mapping_status || value.mappingStatus || 'unmapped'),
+                  mappingTier: value.mapping_tier || value.mappingTier || evidence.mappingTier,
+                  userVerified: Boolean(
+                    value.user_verified ?? value.userVerified ?? evidence.verified
+                  ),
+                  isNonFinancial: Boolean(value.is_non_financial ?? value.isNonFinancial),
+                  classificationReason:
+                    value.classification_reason || value.classificationReason || undefined,
+                };
+              }),
+            } satisfies ReviewStatement;
+          })
+        );
+        if (cancelled) return;
+        const active = hydrated.find((item) => item.statementId === durableId) || hydrated[0];
+        setStatementId(durableId);
+        setReviewStatements(hydrated);
+        setActiveReviewStatementId(active?.statementId || durableId);
+        setMappedValues(active?.mappedValues || []);
+        setSourceReceipt(active?.sourceReceipt || null);
+        setCanonicalLines(canonical as CanonicalLine[]);
+        setReadiness({
+          readinessStatus:
+            (initialDetail.readinessStatus || initialDetail.readiness_status || 'pending') as ReadinessState['readinessStatus'],
+          summary: String(initialDetail.readinessSummary || initialDetail.quality_summary || ''),
+          reasonCodes: Array.isArray(initialDetail.readinessReasonCodes)
+            ? initialDetail.readinessReasonCodes
+            : [],
+        });
+        setStep('map');
+      } catch (cause: any) {
+        if (!cancelled) {
+          setError(
+            cause?.response?.data?.error ||
+              cause?.data?.error ||
+              cause?.message ||
+              t('finance.importWizard.recoveryFailed', 'Could not reopen this statement safely.')
+          );
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [initialStatementId]);
 
   const handleDismiss = useCallback(() => {
     if (statementId) {
@@ -557,6 +695,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
       const reviews: ReviewStatement[] = [];
       for (const item of staged) {
         const mapData = await mapStatementWithFallback(String(item.statementId));
+        const receipt = await getStatementSourceReceiptWithFallback(String(item.statementId));
         const mappedLines = Array.isArray((mapData as any)?.mappedLines)
           ? (mapData as any).mappedLines
           : item.lines || [];
@@ -566,6 +705,12 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
           periodLabel: item.periodLabel || null,
           comparisonOfStatementId: item.comparisonOfStatementId || null,
           sourceReceiptId: item.sourceReceiptId ? String(item.sourceReceiptId) : undefined,
+          sourceReceipt: receipt,
+          currency: String(item.currency || receipt?.periods_json?.[0]?.currency || ''),
+          scaling: String(item.scaling || receipt?.periods_json?.[0]?.scaling || ''),
+          entityName: String(item.entityName || receipt?.entity_name || ''),
+          sourceFileName: String(item.sourceFileName || receipt?.original_file_name || ''),
+          sourceSha256: String(item.sourceSha256 || receipt?.content_sha256 || ''),
           mappedValues: (mappedLines as ExtractedLine[]).map((l) => ({
             originalLabel: l.originalLabel,
             value: l.value,
@@ -587,6 +732,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
       setReviewStatements(reviews);
       setActiveReviewStatementId(reviews[0]?.statementId || statementId);
       setMappedValues(reviews[0]?.mappedValues || []);
+      setSourceReceipt(reviews[0]?.sourceReceipt || null);
       setStep('map');
     } catch (e: any) {
       const detail = e?.response?.data?.error || e?.data?.error || e?.message;
@@ -876,6 +1022,64 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
     reviewStatements.every(
       (item) => item.savedReady && item.sourceReceiptId && item.valuesVersion != null
     );
+  const activeReview = reviewStatements.find(
+    (item) => item.statementId === activeReviewStatementId
+  );
+  const activeTypeComparisons = activeReview
+    ? reviewStatements
+        .filter((item) => item.statementType === activeReview.statementType)
+        .sort((left, right) => String(right.periodLabel || '').localeCompare(String(left.periodLabel || '')))
+    : [];
+  const financeNumber = new Intl.NumberFormat(isPl ? 'pl-PL' : 'en-US', {
+    maximumFractionDigits: 4,
+  });
+  const receiptPeriods = Array.isArray(sourceReceipt?.periods_json)
+    ? sourceReceipt.periods_json
+    : [];
+  const durableScaling =
+    receiptPeriods.find((period: any) => period?.scaling)?.scaling ||
+    activeReview?.scaling ||
+    (!sourceReceipt && !activeReview ? overrideScaling || detection?.scaling : '') ||
+    '—';
+  const durableCurrency =
+    receiptPeriods.find((period: any) => period?.currency)?.currency ||
+    activeReview?.currency ||
+    (!sourceReceipt && !activeReview ? overrideCurrency || detection?.currency : '') ||
+    '—';
+  const durableSections = Array.from(
+    new Set(reviewStatements.map((item) => item.statementType).filter(Boolean))
+  );
+  const durablePeriods = Array.from(
+    new Set(
+      reviewStatements
+        .flatMap((item) => [
+          item.periodLabel,
+          ...(Array.isArray(item.sourceReceipt?.periods_json)
+            ? item.sourceReceipt.periods_json.map((period: any) => period?.label)
+            : []),
+        ])
+        .filter(Boolean)
+    )
+  );
+  const durablePageRanges = Array.isArray(sourceReceipt?.page_ranges_json)
+    ? sourceReceipt.page_ranges_json
+        .map((range: any) => [Number(range?.pageStart), Number(range?.pageEnd)])
+        .filter(([start, end]: number[]) => Number.isInteger(start) || Number.isInteger(end))
+        .map(([start, end]: number[]) =>
+          Number.isInteger(start) && Number.isInteger(end) && start !== end
+            ? `${start}–${end}`
+            : String(Number.isInteger(start) ? start : end)
+        )
+    : [];
+  const durableImportedAt = sourceReceipt?.imported_at
+    ? new Intl.DateTimeFormat(isPl ? 'pl-PL' : 'en-US', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      }).format(new Date(sourceReceipt.imported_at))
+    : '—';
+  const allReviewValues = reviewStatements.flatMap((item) => item.mappedValues);
+  const mappedCount = allReviewValues.filter((value) => value.canonicalLineId).length;
+  const verifiedCount = allReviewValues.filter(isFinancialStatementValueVerified).length;
 
   return (
     <div
@@ -894,9 +1098,65 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
           <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
             {t('finance.importWizard.currentDocument', 'Current document')}
           </div>
-          <div className="truncate font-medium text-slate-900 dark:text-white">
-            {file?.name || t('finance.importWizard.noDocumentSelected', 'No document selected')}
+          <div className="break-all font-medium text-slate-900 dark:text-white">
+            {sourceReceipt?.original_file_name ||
+              file?.name ||
+              t('finance.importWizard.noDocumentSelected', 'No document selected')}
           </div>
+          {(sourceReceipt?.entity_name || activeReview?.entityName || (!sourceReceipt && overrideEntity)) && (
+            <div className="text-xs text-slate-600 dark:text-slate-300">
+              {t('finance.importWizard.entity', 'Entity')}: {sourceReceipt?.entity_name || activeReview?.entityName || overrideEntity}
+              {' · '}
+              {t('finance.importWizard.scaling', 'Scaling')}: {durableScaling}
+            </div>
+          )}
+          {sourceReceipt?.content_sha256 && (
+            <div className="break-all font-mono text-[10px] text-slate-500">
+              SHA-256: {sourceReceipt.content_sha256}
+            </div>
+          )}
+          {sourceReceipt && (
+            <div
+              className="mt-1 grid gap-x-3 gap-y-0.5 text-[10px] text-slate-500 sm:grid-cols-2 xl:grid-cols-4"
+              data-testid="durable-source-summary"
+            >
+              <span>{durableSections.join(' + ') || '—'} · {durablePeriods.join(' / ') || '—'}</span>
+              <span>{durableCurrency} · {durableScaling}</span>
+              <span>
+                {sourceReceipt.importer_name || '—'} {sourceReceipt.importer_version || ''} ·{' '}
+                {t('finance.importWizard.importedBy', 'Imported by')}: {sourceReceipt.imported_by || '—'} ·{' '}
+                {t('finance.importWizard.uploadedAt', 'Uploaded at')}: {durableImportedAt}
+              </span>
+              <span>
+                {t('finance.importWizard.readiness', 'Readiness')}: {readiness?.readinessStatus || 'pending'} ·{' '}
+                {mappedCount}/{allReviewValues.length} {t('finance.importWizard.mapped', 'mapped')} ·{' '}
+                {allReviewValues.length - mappedCount} {t('finance.importWizard.unmapped', 'unmapped')} ·{' '}
+                {verifiedCount} {t('finance.mappingEditor.verified', 'verified')}
+              </span>
+              <span>
+                {t('finance.importWizard.pages', 'Pages')}: {durablePageRanges.join(', ') || '—'}
+              </span>
+            </div>
+          )}
+          {sourceReceipt && (activeReviewStatementId || statementId) && (
+            <div className="mt-1 flex flex-wrap gap-3 text-[11px] font-medium">
+              <a
+                href={`/api/finance-statements/${activeReviewStatementId || statementId}/source-document`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                {t('finance.importWizard.openSource', 'Open / download source')}
+              </a>
+              <a
+                href={`${globalThis.location?.pathname || '/finance'}?tab=statements&statementId=${encodeURIComponent(activeReviewStatementId || statementId || '')}`}
+                className="text-blue-600 hover:underline"
+                data-testid="statement-recovery-link"
+              >
+                {t('finance.importWizard.reopenReview', 'Reopen this review')}
+              </a>
+            </div>
+          )}
           {(reviewStatements.find((item) => item.statementId === activeReviewStatementId)
             ?.sourceReceiptId ||
             statementId) && (
@@ -1432,6 +1692,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                   onClick={() => {
                     setActiveReviewStatementId(item.statementId);
                     setMappedValues(item.mappedValues);
+                    setSourceReceipt(item.sourceReceipt || null);
                   }}
                 >
                   <span className="block font-semibold">{item.statementType}</span>
@@ -1447,6 +1708,65 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
           </aside>
 
           <main className="min-w-0 space-y-3">
+            {activeTypeComparisons.length > 1 && (
+              <section
+                className="rounded-xl border border-slate-200 bg-white p-3 dark:border-white/[0.08] dark:bg-navy-900"
+                data-testid="statement-comparison-side-by-side"
+                aria-label={t('finance.importWizard.comparisonTable', 'Period comparison')}
+              >
+                <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  {activeReview?.statementType} · {t('finance.importWizard.comparisonTable', 'Period comparison')}
+                </div>
+                <div className="grid gap-2 md:grid-cols-2">
+                  {activeTypeComparisons.slice(0, 2).map((periodStatement) => (
+                    <button
+                      key={periodStatement.statementId}
+                      type="button"
+                      onClick={() => {
+                        setActiveReviewStatementId(periodStatement.statementId);
+                        setMappedValues(periodStatement.mappedValues);
+                        setSourceReceipt(periodStatement.sourceReceipt || null);
+                      }}
+                      className={`min-w-0 rounded-lg border p-2 text-left ${
+                        periodStatement.statementId === activeReviewStatementId
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10'
+                          : 'border-slate-200 dark:border-white/[0.08]'
+                      }`}
+                    >
+                      <div className="mb-1 flex items-center justify-between gap-2">
+                        <span className="font-semibold text-slate-900 dark:text-white">
+                          {periodStatement.periodLabel || '—'}
+                        </span>
+                        <span className="max-w-48 truncate text-[10px] text-slate-500">
+                          {periodStatement.sourceReceipt?.original_file_name ||
+                            sourceReceipt?.original_file_name ||
+                            file?.name ||
+                            '—'}
+                        </span>
+                      </div>
+                      <div className="max-h-40 overflow-y-auto">
+                        {periodStatement.mappedValues.map((value, index) => (
+                          <div
+                            key={`${periodStatement.statementId}-${value.sourceRow ?? index}`}
+                            className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 border-t border-slate-100 py-1 text-[11px] dark:border-white/[0.05]"
+                          >
+                            <span className="truncate text-slate-600 dark:text-slate-300">
+                              {value.canonicalLabel || value.originalLabel}
+                            </span>
+                            <span className="tabular-nums text-slate-900 dark:text-white">
+                              {financeNumber.format(Number(value.value))}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-1 truncate font-mono text-[9px] text-slate-500" title={periodStatement.sourceReceiptId}>
+                        {t('finance.importWizard.receipt', 'Receipt')}: {periodStatement.sourceReceiptId}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )}
             <div className="flex items-center justify-between px-1">
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
                 {t('finance.importWizard.mappingTitle', 'Map Extracted Lines')}

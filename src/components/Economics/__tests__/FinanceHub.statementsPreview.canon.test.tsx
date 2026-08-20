@@ -45,6 +45,7 @@ const loadStatements = vi.fn();
 const onSelectRow = vi.fn();
 const deselectRow = vi.fn();
 const { apiPost } = vi.hoisted(() => ({ apiPost: vi.fn() }));
+const wizardIds = vi.hoisted(() => [] as string[]);
 
 /** Selection is driven by the test so preview open/closed is deterministic. */
 let selectedId: string | null = null;
@@ -106,6 +107,12 @@ vi.mock('../../Finance/Analysis/AnalysisWorkspace', () => ({
 vi.mock('../../Finance/shared/FinanceWorkspaceUtilities', () => ({
   FinanceWorkspaceUtilities: () => null,
 }));
+vi.mock('../../Finance/FinancialStatementImportWizard', () => ({
+  FinancialStatementImportWizard: ({ initialStatementId }: { initialStatementId?: string }) => {
+    wizardIds.push(String(initialStatementId || ''));
+    return <div data-testid="finance-statement-wizard">{initialStatementId}</div>;
+  },
+}));
 
 vi.mock('../hooks/useFinanceData', () => ({
   useFinanceData: () => ({
@@ -152,14 +159,14 @@ vi.mock('../hooks/useFinanceSelection', () => ({
 
 import { FinanceHub } from '../FinanceHub';
 
-const renderHub = () => {
+const renderHub = (url = '/finance?tab=statements') => {
   // FinanceHub reaches react-query through its lane/entitlement hooks.
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/finance?tab=statements']}>
+      <MemoryRouter initialEntries={[url]}>
         <FinanceHub />
       </MemoryRouter>
     </QueryClientProvider>
@@ -172,9 +179,18 @@ beforeEach(() => {
   onSelectRow.mockClear();
   deselectRow.mockClear();
   apiPost.mockReset();
+  wizardIds.length = 0;
 });
 
 describe('FinanceHub — Statements list+preview canon (FIN-UI-CANON-001)', () => {
+  it('round-trips the generated Statement recovery URL into the wizard exact id', async () => {
+    const generatedUrl = '/finance?tab=statements&statementId=statement-current';
+    renderHub(generatedUrl);
+    await waitFor(() => expect(screen.getByTestId('finance-statement-wizard')).toBeInTheDocument());
+    expect(screen.getByTestId('finance-statement-wizard')).toHaveTextContent('statement-current');
+    expect(wizardIds).toContain('statement-current');
+  });
+
   it('renders the statements list surface', async () => {
     renderHub();
     await waitFor(() => {

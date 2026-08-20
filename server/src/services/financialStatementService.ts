@@ -1916,10 +1916,25 @@ export function extractFinancialLines(
 
     return merged;
   };
-  const isLikelyNoteRef = (raw: string): boolean => {
-    if (/^\d{1,2}\.\d{1,3}$/.test(raw)) {
-      const val = parseFloat(raw);
-      return Number.isFinite(val) && val >= 1 && val < 100;
+  const isLikelyNoteRef = (raw: string, tokenIndex: number, tokenCount: number): boolean => {
+    // Polish listed-company statements render cross-note references as e.g.
+    // `10,13`, `15,34`, `17,34`, `20,34`. They are coordinates into the
+    // notes, not decimal statement values. Treat both separators identically
+    // before any notation-aware numeric parser can assign them authority.
+    if (/^\d{1,2}[.,]\d{1,3}$/.test(raw)) {
+      const val = parseFloat(raw.replace(',', '.'));
+      const expectedValueColumns = Math.max(1, columnSelection.periodGrid.length);
+      // A compound note coordinate is authoritative only in the leading note
+      // column with enough later tokens to fill every detected period column.
+      // The same glyph in a value column (for example a genuine 10,13 decimal)
+      // remains a value.
+      return (
+        tokenIndex === 0 &&
+        tokenCount >= expectedValueColumns + 1 &&
+        Number.isFinite(val) &&
+        val >= 1 &&
+        val < 100
+      );
     }
     if (/^\d{1,2}$/.test(raw)) {
       const val = parseInt(raw, 10);
@@ -1930,7 +1945,9 @@ export function extractFinancialLines(
 
   const normalizeNumericToken = (
     raw: string,
-    index: number
+    index: number,
+    tokenIndex: number,
+    tokenCount: number
   ): {
     raw: string;
     normalizedValue: number | null;
@@ -1948,7 +1965,7 @@ export function extractFinancialLines(
         periodLabel: cleaned,
       };
     }
-    if (isLikelyNoteRef(cleaned)) {
+    if (isLikelyNoteRef(cleaned, tokenIndex, tokenCount)) {
       return {
         raw: cleaned,
         normalizedValue: parseFloat(cleaned),
@@ -2092,8 +2109,11 @@ export function extractFinancialLines(
       continue;
     }
 
-    const numericTokens = extractNumericSpans(line)
-      .map((match) => normalizeNumericToken(match.raw, match.index ?? -1))
+    const numericSpans = extractNumericSpans(line);
+    const numericTokens = numericSpans
+      .map((match, tokenIndex) =>
+        normalizeNumericToken(match.raw, match.index ?? -1, tokenIndex, numericSpans.length)
+      )
       .filter((item) => item.index >= 0);
     const effectiveTokens = classifyPeriodValueTokens(numericTokens);
     const valueTokens = effectiveTokens.filter(
@@ -2101,7 +2121,11 @@ export function extractFinancialLines(
     );
     const effectiveNonNoteTokens = effectiveTokens.filter((t) => t.tokenType !== 'note_ref');
 
-    if (effectiveNonNoteTokens.length < 2 || valueTokens.length === 0) {
+    const requiredPeriodValueCount = comparisonPeriodLabel ? 2 : 1;
+    if (
+      effectiveNonNoteTokens.length < requiredPeriodValueCount ||
+      valueTokens.length < requiredPeriodValueCount
+    ) {
       if (isLikelyLabelOnlyLine(line)) {
         pendingLabel = pendingLabel ? `${pendingLabel} ${line}` : line;
       } else {
@@ -7603,7 +7627,7 @@ export async function persistStatementExtractedSections(params: {
           null,
           section.lineStart,
           section.lineEnd,
-          section.confidence,
+          clampStatementConfidence(section.confidence),
           section.text.slice(0, 4000),
           section.metadata ? JSON.stringify(section.metadata) : null,
         ],
@@ -7661,7 +7685,7 @@ export async function persistStatementCandidateRows(params: {
           Number.isFinite(row.value) ? row.value : null,
           params.currency || null,
           params.scaling || null,
-          row.confidence,
+          clampStatementConfidence(row.confidence),
           row.classificationReason || null,
           JSON.stringify({
             mappingReason: row.mappingReason || null,
@@ -7893,7 +7917,7 @@ export async function persistStatementMappingCandidates(params: {
             params.ingestRunId || null,
             candidateRowId,
             candidate.canonicalLineId,
-            candidate.score,
+            clampStatementConfidence(candidate.score),
             candidate.reason,
             !!candidate.selected,
             candidate.selected ? 'system' : 'system_alt',
@@ -8300,7 +8324,9 @@ export async function updateStatementMetadata(
         patch.periodLabel || null,
         patch.currency || null,
         patch.scaling || null,
-        patch.overallConfidence ?? null,
+        patch.overallConfidence == null
+          ? null
+          : clampStatementConfidence(patch.overallConfidence),
         patch.documentClass || null,
         patch.extractionStrategy || null,
         patch.templateFamily || null,
@@ -8328,7 +8354,9 @@ export async function updateStatementMetadata(
         patch.periodLabel || null,
         patch.currency || null,
         patch.scaling || null,
-        patch.overallConfidence ?? null,
+        patch.overallConfidence == null
+          ? null
+          : clampStatementConfidence(patch.overallConfidence),
         statementId,
       ],
       [0]
@@ -8532,6 +8560,13 @@ export function getIdempotencyKey(req: IdempotencyKeyRequestLike): string | null
  * never the bytes. */
 export function sha256Hex(buffer: Buffer): string {
   return crypto.createHash('sha256').update(buffer).digest('hex');
+}
+
+/** Persisted Statement confidence is a probability, never a percentage. */
+export function clampStatementConfidence(value: unknown, fallback = 0): number {
+  const numeric = Number(value);
+  const boundedFallback = Number.isFinite(fallback) ? Math.max(0, Math.min(1, fallback)) : 0;
+  return Number.isFinite(numeric) ? Math.max(0, Math.min(1, numeric)) : boundedFallback;
 }
 
 /**
@@ -9154,7 +9189,7 @@ export async function createStatement(params: {
         params.sourceFileName || null,
         params.sourceFilePath || null,
         params.parseMethod || 'text_extraction',
-        params.overallConfidence || 0,
+        clampStatementConfidence(params.overallConfidence),
         params.documentClass || 'unknown',
         params.extractionStrategy || null,
         params.templateFamily || null,
@@ -9179,7 +9214,7 @@ export async function createStatement(params: {
         params.sourceFileName || null,
         params.sourceFilePath || null,
         params.parseMethod || 'text_extraction',
-        params.overallConfidence || 0,
+        clampStatementConfidence(params.overallConfidence),
         params.createdBy,
       ],
       [2]
@@ -9240,14 +9275,14 @@ export async function saveStatementValues(
           v.canonicalLineId || null,
           v.originalLabel,
           v.value,
-          v.confidence,
+          clampStatementConfidence(v.confidence),
           v.sourcePage ?? null,
           v.sourceRow || null,
           v.mappingStatus || 'auto',
           !!v.isNonFinancial,
           v.classificationReason || null,
           v.valueOrigin || 'source',
-          v.mappingConfidence ?? v.confidence ?? 0,
+          clampStatementConfidence(v.mappingConfidence ?? v.confidence),
           v.sourceCandidateRowId || null,
           v.selectedMappingCandidateId || null,
           v.periodGranularity || null,
@@ -9267,7 +9302,7 @@ export async function saveStatementValues(
           v.canonicalLineId || null,
           v.originalLabel,
           v.value,
-          v.confidence,
+          clampStatementConfidence(v.confidence),
           v.sourceRow || null,
           v.mappingStatus || 'auto',
         ],

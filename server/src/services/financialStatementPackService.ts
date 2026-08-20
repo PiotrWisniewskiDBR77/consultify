@@ -263,7 +263,7 @@ async function loadPackStatementsWithSchemaCompat(
   packId: string,
   organizationId: string
 ): Promise<any[]> {
-  const fullSql = `SELECT fs.id, fs.statement_type, fs.period_start, fs.period_end, fs.period_label, fs.currency, fs.scaling,
+  const fullSql = `SELECT fs.id, fs.entity_name, fs.statement_type, fs.period_start, fs.period_end, fs.period_label, fs.currency, fs.scaling,
             fs.source_file_name, fs.validation_status, fs.status, fs.readiness_status, fs.readiness_score,
             fs.quality_summary, fs.quality_reason_codes, fs.values_version, fs.updated_at, fs.created_at,
             COUNT(fsv.id) FILTER (WHERE COALESCE(fsv.is_non_financial, FALSE) = FALSE) AS total_line_count,
@@ -285,7 +285,7 @@ async function loadPackStatementsWithSchemaCompat(
   }
 
   // Schema-compat fallback: only columns the base migration guarantees.
-  const coreSql = `SELECT fs.id, fs.statement_type, fs.period_start, fs.period_end, fs.period_label, fs.currency, fs.scaling,
+  const coreSql = `SELECT fs.id, fs.entity_name, fs.statement_type, fs.period_start, fs.period_end, fs.period_label, fs.currency, fs.scaling,
             fs.source_file_name, fs.validation_status, fs.status, fs.updated_at, fs.created_at,
             COUNT(fsv.id) AS total_line_count,
             COUNT(fsv.id) FILTER (WHERE fsv.canonical_line_id IS NOT NULL) AS mapped_line_count,

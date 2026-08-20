@@ -28,20 +28,30 @@ export interface StagedStatementSection {
   comparisonOfStatementId: string | null;
   lineCount: number;
   sourceReceiptId: string;
+  currency: string;
+  scaling: string;
+  entityName: string;
+  sourceFileName: string;
+  sourceSha256: string;
   lines: Array<Record<string, unknown>>;
 }
 
 function normalizeTypes(values: unknown): ImportableStatementType[] {
   if (!Array.isArray(values)) return [];
-  const normalized = values
+  const selected = new Set(
+    values
     .map((value) =>
       String(value || '')
         .trim()
         .toUpperCase()
     )
-    .map((value) => (value === 'PL' || value === 'P&L' ? 'P&L' : value))
-    .filter((value): value is ImportableStatementType => ['P&L', 'BS', 'CF'].includes(value));
-  return [...new Set(normalized)];
+      .map((value) => (value === 'PL' || value === 'P&L' ? 'P&L' : value))
+      .filter((value): value is ImportableStatementType => ['P&L', 'BS', 'CF'].includes(value))
+  );
+  // Caller/detector order must never decide which section reuses the primary
+  // upload row. Canonical order makes sibling identity stable for every input
+  // permutation and keeps P&L as the primary section when selected.
+  return (['P&L', 'BS', 'CF'] as const).filter((type) => selected.has(type));
 }
 
 function periodDates(label: string | null | undefined): { start?: string; end?: string } {
@@ -111,7 +121,21 @@ async function stageSelectedStatementSectionsTx(params: {
     if (sections.length === 0) {
       throw Object.assign(
         new Error(`The selected ${statementType} section was not found reliably in this file.`),
-        { code: 'STATEMENT_SECTION_NOT_FOUND', statusCode: 422, statementType }
+        {
+          code: 'STATEMENT_SECTION_NOT_FOUND',
+          statusCode: 422,
+          statementType,
+          // This in-memory witness is populated only after the preceding
+          // section's transaction-local writes and receipts have completed.
+          // It makes rollback proofs section-specific without persisting an
+          // audit side channel outside the transaction.
+          stagedBeforeFailure: staged.map((item) => ({
+            statementId: item.statementId,
+            statementType: item.statementType,
+            periodLabel: item.periodLabel,
+            sourceReceiptId: item.sourceReceiptId,
+          })),
+        }
       );
     }
 
@@ -291,6 +315,8 @@ async function stageSelectedStatementSectionsTx(params: {
             start: dates.start || params.statement.period_start,
             end: dates.end || params.statement.period_end,
             statementType,
+            currency: params.currency || params.statement.currency,
+            scaling: params.scaling || params.statement.scaling,
           },
         ],
         pageRanges: sections.map((section) => {
@@ -314,6 +340,11 @@ async function stageSelectedStatementSectionsTx(params: {
         comparisonOfStatementId: period.comparisonOf ? currentPeriodStatementId : null,
         lineCount: mapped.length,
         sourceReceiptId: String(sourceReceipt.receipt_id),
+        currency: String(params.currency || params.statement.currency || ''),
+        scaling: String(params.scaling || params.statement.scaling || ''),
+        entityName: params.entityName.trim(),
+        sourceFileName: String(params.statement.source_file_name || ''),
+        sourceSha256,
         lines: mapped as unknown as Array<Record<string, unknown>>,
       });
     }

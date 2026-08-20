@@ -507,6 +507,13 @@ export const FinanceHub: React.FC = () => {
   const [createModelSourceStatementPackId, setCreateModelSourceStatementPackId] = useState<
     string | null
   >(null);
+
+  const deepLinkedStatementId = String(searchParams.get('statementId') || '').trim();
+  useEffect(() => {
+    if (activeTab === 'statements' && deepLinkedStatementId) {
+      setShowImportWizard(true);
+    }
+  }, [activeTab, deepLinkedStatementId]);
   const [analysisSourceStatementPackId, setAnalysisSourceStatementPackId] = useState<string | null>(
     null
   );
@@ -3402,6 +3409,7 @@ export const FinanceHub: React.FC = () => {
         >
           <FinancialStatementImportWizard
             embedded
+            initialStatementId={deepLinkedStatementId || undefined}
             onClose={() => setShowImportWizard(false)}
             onComplete={handleImportWizardComplete}
             onOpenKnowledgeBase={() => navigate('/knowledge-base')}

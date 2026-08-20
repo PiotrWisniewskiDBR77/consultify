@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { Api } from '../../services/api';
+import { useAppStore } from '../../store/useAppStore';
 
 type V10TeresaRuntimeStatus = 'loading' | 'ready' | 'unavailable' | 'error';
 
@@ -30,6 +31,9 @@ type V10TeresaRuntimeState = {
  *                    collapsed into "not configured".
  */
 export function useV10TeresaRuntime(): V10TeresaRuntimeState {
+  const isAuthenticated = useAppStore(
+    (state) => state.isAuthInitializing === false && state.currentUser?.isAuthenticated === true
+  );
   const [state, setState] = React.useState<V10TeresaRuntimeState>({
     loading: true,
     available: false,
@@ -38,6 +42,19 @@ export function useV10TeresaRuntime(): V10TeresaRuntimeState {
 
   React.useEffect(() => {
     let cancelled = false;
+
+    if (!isAuthenticated) {
+      setState({
+        loading: false,
+        available: false,
+        status: 'unavailable',
+        reason: 'Authenticated workspace session required.',
+        httpStatus: null,
+      });
+      return () => {
+        cancelled = true;
+      };
+    }
 
     (async () => {
       try {
@@ -76,7 +93,7 @@ export function useV10TeresaRuntime(): V10TeresaRuntimeState {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [isAuthenticated]);
 
   return state;
 }

@@ -17,12 +17,57 @@ import {
   detectContainedStatementTypes,
   detectStatementType,
   extractFinancialLines,
+  clampStatementConfidence,
   locateStatementSections,
   resolveDuplicateSuggestedMappings,
   validateStatement,
 } from '../financialStatementService.js';
 
+describe('statement confidence boundary', () => {
+  it('clamps every finite or malformed input to a probability', () => {
+    expect(clampStatementConfidence(-0.3)).toBe(0);
+    expect(clampStatementConfidence(0.73)).toBe(0.73);
+    expect(clampStatementConfidence(90)).toBe(1);
+    expect(clampStatementConfidence(Number.NaN)).toBe(0);
+  });
+});
+
 describe('financialStatementService — contract tests', () => {
+  it('never promotes Polish comma-separated footnote references to statement values', () => {
+    const text = [
+      'Skonsolidowany rachunek zysków i strat',
+      'w tysiącach PLN',
+      'Nota 2025 2024',
+      'Przychody ze sprzedaży 10,13 3 233 2 980',
+      'Koszt własny sprzedaży 15,34 (1 900) (1 700)',
+      'Zysk operacyjny 17,34 1 333 1 280',
+      'Zysk netto 20,34 900 850',
+      ...Array.from({ length: 20 }, (_, index) => `Pozycja operacyjna ${index} ${100 + index} ${90 + index}`),
+    ].join('\n');
+    const result = extractFinancialLines(text, 'P&L', {
+      selectedPeriodLabel: '2025',
+      comparisonPeriodLabel: '2024',
+    });
+    expect(result.lines.find((line) => line.originalLabel.startsWith('Przychody'))?.value).toBe(3233);
+    expect(result.lines.map((line) => line.value)).not.toEqual(
+      expect.arrayContaining([10.13, 15.34, 17.34, 20.34])
+    );
+    expect(detectStatementType(text).scaling).toBe('thousands');
+  });
+
+  it('preserves a genuine one-period comma decimal in its value column', () => {
+    const text = [
+      'Skonsolidowany rachunek zysków i strat',
+      '2025',
+      'Marża brutto 10,13',
+      ...Array.from({ length: 20 }, (_, index) => `Wskaźnik operacyjny ${index} ${100 + index}`),
+    ].join('\n');
+    const result = extractFinancialLines(text, 'P&L', {
+      selectedPeriodLabel: '2025',
+    });
+    const margin = result.lines.find((line) => line.originalLabel.startsWith('Marża brutto'));
+    expect(margin?.value).toBe(10.13);
+  });
   it('recognizes a Polish cash-flow heading split across PDF lines', () => {
     const text = [
       'Skonsolidowane sprawozdanie z przepływów',
