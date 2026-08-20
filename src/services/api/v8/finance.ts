@@ -519,6 +519,12 @@ export interface V8FinanceAnalysisCreatePayload {
   sourceStatementPackId?: string;
 }
 
+export type V8FinanceAnalysisUpdatePayload = Partial<
+  Omit<V8FinanceAnalysisCreatePayload, 'projectId' | 'analysisType'> & {
+    rebuildFromStatements: boolean;
+  }
+>;
+
 export const V8FinanceApi = {
   getDashboard: () => v8Get<{ dashboard: V8FinanceDashboard }>('/finance/dashboard'),
   getModels: () => v8Get<{ models: V8FinanceModelSummary[]; count: number }>('/finance/models'),
@@ -651,6 +657,8 @@ export const V8FinanceApi = {
       '/finance/analyses',
       body
     ),
+  updateAnalysis: (analysisId: string, body: V8FinanceAnalysisUpdatePayload) =>
+    v8Put<{ success: boolean; analysisId: string }>(`/finance/analyses/${analysisId}`, body),
   deleteAnalysis: (analysisId: string) =>
     v8Delete<{ success: boolean; deleted: string }>(`/finance/analyses/${analysisId}`),
   runAnalysis: (analysisId: string) =>

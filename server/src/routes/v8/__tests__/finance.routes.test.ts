@@ -6,6 +6,7 @@ import { V8_FINANCE_READ_CONTRACT } from '../finance.routes.js';
 
 vi.mock('../../../services/legacyCutover/requireActiveMembership.js', () => ({
   requireActiveMembership: (_req: unknown, _res: unknown, next: () => void) => next(),
+  requireFinanceEditorMembership: (_req: unknown, _res: unknown, next: () => void) => next(),
 }));
 
 const mockGetFinanceDashboard = vi.fn();
@@ -32,6 +33,7 @@ const mockGetAnalysisRatios = vi.fn();
 const mockGetAnalysisInsights = vi.fn();
 const mockApproveAnalysis = vi.fn();
 const mockCreateAnalysis = vi.fn();
+const mockUpdateAnalysis = vi.fn();
 const mockComputeRatios = vi.fn();
 const mockBuildStatementAnalytics = vi.fn();
 const mockSearchStatementDocumentIntelligence = vi.fn();
@@ -112,6 +114,7 @@ vi.mock('../../../services/financialAnalysisService.js', () => ({
   getAnalysisInsights: (...args: unknown[]) => mockGetAnalysisInsights(...args),
   approveAnalysis: (...args: unknown[]) => mockApproveAnalysis(...args),
   runFullAnalysis: (...args: unknown[]) => mockRunFullAnalysis(...args),
+  updateAnalysis: (...args: unknown[]) => mockUpdateAnalysis(...args),
 }));
 
 vi.mock('../../../services/financialModelingService.js', () => ({
@@ -1819,6 +1822,30 @@ describe('V8 finance read-only routes', () => {
     expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
     expect(res.body.data?.success).toBe(true);
     expect(mockApproveAnalysis).toHaveBeenCalledWith(ORG, 'analysis-1', UID);
+  });
+
+  it('PUT /api/v8/finance/analyses/:id validates and delegates the canonical update', async () => {
+    mockDbGet.mockResolvedValue({ id: 'analysis-1' });
+    const app = createApp();
+    const body = {
+      title: 'Updated analysis',
+      currency: 'EUR',
+      sourceStatementIds: ['statement-1'],
+      rebuildFromStatements: true,
+    };
+    const res = await request(app).put('/api/v8/finance/analyses/analysis-1').send(body);
+
+    expect(res.status).toBe(200);
+    expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
+    expect(res.body.data).toEqual({ success: true, analysisId: 'analysis-1' });
+    expect(mockUpdateAnalysis).toHaveBeenCalledWith(ORG, 'analysis-1', body);
+
+    const invalid = await request(app)
+      .put('/api/v8/finance/analyses/analysis-1')
+      .send({ title: '', unknownField: true });
+    expect(invalid.status).toBe(400);
+    expect(invalid.body.code).toBe('INVALID_BODY');
+    expect(mockUpdateAnalysis).toHaveBeenCalledTimes(1);
   });
 
   it('DELETE /api/v8/finance/analyses/:id deletes a non-approved analysis', async () => {

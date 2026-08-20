@@ -264,7 +264,7 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
     ]);
   });
 
-  it('retires duplicate analysis create and delete doors before either legacy handler runs', async () => {
+  it('retires duplicate analysis create, update and delete doors before legacy handlers run', async () => {
     const before = await pool.query<{ count: string }>(
       `SELECT count(*)::text AS count FROM financial_analyses WHERE organization_id=$1`,
       [orgA]
@@ -277,6 +277,10 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
     const deleteResponse = await request(app)
       .delete(`/api/economics/financial-analyses/${mappedAnalysisId}`)
       .set('x-request-id', `${prefix}-analysis-delete-retired`);
+    const updateResponse = await request(app)
+      .put(`/api/economics/financial-analyses/${mappedAnalysisId}`)
+      .set('x-request-id', `${prefix}-analysis-update-retired`)
+      .send({ title: 'Must not be updated' });
 
     expect(createResponse.status).toBe(410);
     expect(createResponse.body).toMatchObject({
@@ -290,6 +294,12 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
       writerId: 'ECO-W21',
       successor: '/api/v8/finance/analyses/:analysisId',
     });
+    expect(updateResponse.status).toBe(410);
+    expect(updateResponse.body).toMatchObject({
+      code: 'FINANCE_LEGACY_WRITER_DISABLED',
+      writerId: 'ECO-W15',
+      successor: '/api/v8/finance/analyses/:analysisId',
+    });
 
     const after = await pool.query<{ count: string }>(
       `SELECT count(*)::text AS count FROM financial_analyses WHERE organization_id=$1`,
@@ -300,9 +310,14 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
     const usage = await pool.query(
       `SELECT writer_id,access_kind,canonical_artifact_id,canonical_business_version_id,successor_path
          FROM legacy_cutover_usage_events
-        WHERE organization_id=$1 AND request_id IN ($2,$3)
+        WHERE organization_id=$1 AND request_id IN ($2,$3,$4)
         ORDER BY writer_id`,
-      [orgA, `${prefix}-analysis-create-retired`, `${prefix}-analysis-delete-retired`]
+      [
+        orgA,
+        `${prefix}-analysis-create-retired`,
+        `${prefix}-analysis-delete-retired`,
+        `${prefix}-analysis-update-retired`,
+      ]
     );
     expect(usage.rows).toEqual([
       {
@@ -311,6 +326,13 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
         canonical_artifact_id: null,
         canonical_business_version_id: null,
         successor_path: '/api/v8/finance/analyses',
+      },
+      {
+        writer_id: 'ECO-W15',
+        access_kind: 'legacy_writer_blocked',
+        canonical_artifact_id: mappedArtifactId,
+        canonical_business_version_id: mappedBusinessVersionId,
+        successor_path: '/api/v8/finance/analyses/:analysisId',
       },
       {
         writer_id: 'ECO-W21',

@@ -43,6 +43,7 @@ import {
   getAnalysisRatios,
   listAnalyses,
   runFullAnalysis,
+  updateAnalysis,
 } from '../../services/financialAnalysisService.js';
 import { appraiseComputeResult } from '../../services/financialModelAppraisalAdapter.js';
 import {
@@ -2862,6 +2863,65 @@ router.post(
     const analysis = await createAnalysis(organizationId, req.body ?? {}, userId);
     return res.status(201).json({
       data: { analysis },
+      meta: financeMeta(),
+    });
+  })
+);
+
+router.put(
+  '/analyses/:analysisId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const analysisId = String(req.params.analysisId || '');
+    const body = req.body;
+    const allowed = new Set([
+      'title',
+      'description',
+      'periods',
+      'statementData',
+      'currency',
+      'sourceStatementIds',
+      'sourceStatementPackId',
+      'rebuildFromStatements',
+    ]);
+    const invalid =
+      !body ||
+      typeof body !== 'object' ||
+      Array.isArray(body) ||
+      Object.keys(body).some((key) => !allowed.has(key)) ||
+      (body.title !== undefined &&
+        (typeof body.title !== 'string' || !body.title.trim() || body.title.length > 300)) ||
+      (body.description !== undefined &&
+        (typeof body.description !== 'string' || body.description.length > 10_000)) ||
+      (body.currency !== undefined &&
+        (typeof body.currency !== 'string' || body.currency.length > 10)) ||
+      (body.periods !== undefined &&
+        (!Array.isArray(body.periods) ||
+          body.periods.some((value: unknown) => typeof value !== 'string' || value.length > 60))) ||
+      (body.sourceStatementIds !== undefined &&
+        (!Array.isArray(body.sourceStatementIds) ||
+          body.sourceStatementIds.some(
+            (value: unknown) => typeof value !== 'string' || value.length > 64
+          ))) ||
+      (body.statementData !== undefined &&
+        (!body.statementData ||
+          typeof body.statementData !== 'object' ||
+          Array.isArray(body.statementData))) ||
+      (body.sourceStatementPackId !== undefined &&
+        typeof body.sourceStatementPackId !== 'string') ||
+      (body.rebuildFromStatements !== undefined && typeof body.rebuildFromStatements !== 'boolean');
+    if (invalid)
+      return res.status(400).json({ error: 'Invalid analysis update', code: 'INVALID_BODY' });
+
+    const existing = await dbGet<{ id: string }>(
+      `SELECT id FROM financial_analyses WHERE id = ? AND organization_id = ?`,
+      [analysisId, organizationId]
+    );
+    if (!existing) return res.status(404).json({ error: 'Analysis not found' });
+
+    await updateAnalysis(organizationId, analysisId, body);
+    return res.json({
+      data: { success: true, analysisId },
       meta: financeMeta(),
     });
   })

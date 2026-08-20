@@ -209,12 +209,12 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'ECO-W15',
       method: 'PUT',
       path: /^\/financial-analyses\/[^/]+\/?$/,
-      state: 'observed',
-      successor: null,
+      state: 'disabled',
+      successor: '/api/v8/finance/analyses/:analysisId',
       legacyTable: 'financial_analyses',
       legacyIdFromPath: idAt2,
       reason:
-        'Updates a financial_analyses row addressed by :id via finAnalysisSvc.updateAnalysis (economics.routes.ts:2337, financialAnalysisService.ts:470,537 UPDATE financial_analyses). financial_analyses is bridge-known, so legacyTable is set. No proven successor.',
+        'The tenant-scoped canonical V8 Finance update command now exposes the same strict field allowlist and service transaction. No mounted caller uses this duplicate economics route; it is retired fail-closed.',
     },
     {
       writerId: 'ECO-W16',
