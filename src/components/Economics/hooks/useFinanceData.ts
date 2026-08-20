@@ -40,6 +40,34 @@ function isInvestmentAnalysisType(value: unknown): boolean {
   );
 }
 
+export function mapBudgetToPredictionRow(
+  budget: any,
+  translate: (key: string, fallback: string) => string
+): FinanceModelRow {
+  return {
+    id: `budget-${budget.id}`,
+    title: String(budget.title || translate('common.untitled', 'Untitled')),
+    kind: 'prediction',
+    predictionType: 'budget',
+    status: normalizeStatus(budget.status),
+    scenario: 'base/opt/cons',
+    currency: String(budget.currency || 'PLN'),
+    horizonMonths: 0,
+    startDate: String(budget.periodStart || budget.period_start || ''),
+    periodStart: String(budget.periodStart || budget.period_start || ''),
+    periodEnd: String(budget.periodEnd || budget.period_end || ''),
+    granularity: String(budget.granularity || 'monthly'),
+    version: Number(budget.version),
+    updatedAt: String(
+      budget.updatedAt ||
+        budget.updated_at ||
+        budget.createdAt ||
+        budget.created_at ||
+        new Date().toISOString()
+    ),
+  };
+}
+
 export function useFinanceData(
   activeTab: ModuleTab,
   searchQuery: string,
@@ -390,23 +418,9 @@ export function useFinanceData(
         analyticalDepthLabel: deriveAnalyticalDepthLabel(m.event_count, t),
         updatedAt: String(m.updated_at || m.created_at || new Date().toISOString()),
       }));
-      const budgetRows: FinanceModelRow[] = (budgets || []).map((b: any) => ({
-        id: `budget-${b.id}`,
-        title: String(b.title || t('common.untitled', 'Untitled')),
-        kind: 'prediction' as const,
-        predictionType: 'budget' as PredictionType,
-        status: normalizeStatus(b.status),
-        scenario: 'base/opt/cons',
-        currency: String(b.currency || 'PLN'),
-        horizonMonths: 0,
-        startDate: String(b.periodStart || b.period_start || ''),
-        periodStart: String(b.periodStart || b.period_start || ''),
-        periodEnd: String(b.periodEnd || b.period_end || ''),
-        granularity: String(b.granularity || 'monthly'),
-        updatedAt: String(
-          b.updatedAt || b.updated_at || b.createdAt || b.created_at || new Date().toISOString()
-        ),
-      }));
+      const budgetRows: FinanceModelRow[] = (budgets || []).map((budget: any) =>
+        mapBudgetToPredictionRow(budget, t)
+      );
       return [...modelRows, ...budgetRows];
     }
     if (activeTab === 'analysis' || activeTab === 'investment') {

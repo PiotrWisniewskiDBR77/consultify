@@ -14,6 +14,8 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
   const foreignOrgId = `org-budget-registration-foreign-${randomUUID()}`;
   const userId = `user-budget-registration-${randomUUID()}`;
   const approverId = `user-budget-approver-${randomUUID()}`;
+  const viewerId = `user-budget-viewer-${randomUUID()}`;
+  const foreignUserId = `user-budget-foreign-${randomUUID()}`;
   const sourceId = `tool-budget-registration-${randomUUID()}`;
   const foreignSourceId = `tool-budget-registration-foreign-${randomUUID()}`;
   let client: Client;
@@ -22,6 +24,9 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
   let projectBudgetScenario: typeof import('../budgetProjectionCommandService.js').projectBudgetScenario;
   let updateBudgetScenarioAdjustments: typeof import('../budgetProjectionCommandService.js').updateBudgetScenarioAdjustments;
   let approveBudgetCommand: typeof import('../budgetApprovalCommandService.js').approveBudgetCommand;
+  let discardBudgetCommand: typeof import('../budgetDiscardCommandService.js').discardBudgetCommand;
+  let listBudgets: typeof import('../../../budgetingService.js').listBudgets;
+  let getBudget: typeof import('../../../budgetingService.js').getBudget;
 
   const counts = async () =>
     (
@@ -57,6 +62,8 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
     ({ projectBudgetScenario, updateBudgetScenarioAdjustments } =
       await import('../budgetProjectionCommandService.js'));
     ({ approveBudgetCommand } = await import('../budgetApprovalCommandService.js'));
+    ({ discardBudgetCommand } = await import('../budgetDiscardCommandService.js'));
+    ({ listBudgets, getBudget } = await import('../../../budgetingService.js'));
     await client.query(
       `INSERT INTO organizations(id,name) VALUES($1,'Budget registration'),($2,'Foreign budget registration')`,
       [orgId, foreignOrgId]
@@ -64,8 +71,21 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
     await client.query(
       `INSERT INTO users(id,organization_id,email,first_name,last_name,role)
        VALUES($1,$2,$3,'Budget','Owner','ADMIN'),
-             ($4,$2,$5,'Budget','Approver','ADMIN')`,
-      [userId, orgId, `${userId}@test.local`, approverId, `${approverId}@test.local`]
+             ($4,$2,$5,'Budget','Approver','ADMIN'),
+             ($6,$2,$7,'Budget','Viewer','USER'),
+             ($8,$9,$10,'Budget','Foreign','ADMIN')`,
+      [
+        userId,
+        orgId,
+        `${userId}@test.local`,
+        approverId,
+        `${approverId}@test.local`,
+        viewerId,
+        `${viewerId}@test.local`,
+        foreignUserId,
+        foreignOrgId,
+        `${foreignUserId}@test.local`,
+      ]
     );
     await client.query(
       `INSERT INTO organization_members(id,organization_id,user_id,role,status,created_at)
@@ -76,6 +96,11 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
       `INSERT INTO organization_members(id,organization_id,user_id,role,status,created_at)
        VALUES($1,$2,$3,'ADMIN','ACTIVE',now())`,
       [randomUUID(), orgId, approverId]
+    );
+    await client.query(
+      `INSERT INTO organization_members(id,organization_id,user_id,role,status,created_at)
+       VALUES($1,$2,$3,'MEMBER','ACTIVE',now()),($4,$5,$6,'ADMIN','ACTIVE',now())`,
+      [randomUUID(), orgId, viewerId, randomUUID(), foreignOrgId, foreignUserId]
     );
     await client.query(
       `INSERT INTO tool_sessions(id,organization_id,tool_type,name,created_by)
@@ -90,6 +115,10 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
     await client.query('BEGIN');
     try {
       await client.query(`SET LOCAL session_replication_role=replica`);
+      await client.query(
+        `DELETE FROM finance_budget_discard_command_receipts WHERE organization_id=$1`,
+        [orgId]
+      );
       await client.query(
         `DELETE FROM finance_budget_approval_command_receipts WHERE organization_id=$1`,
         [orgId]
@@ -127,8 +156,16 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
         sourceId,
         foreignSourceId,
       ]);
-      await client.query(`DELETE FROM organization_members WHERE organization_id=$1`, [orgId]);
-      await client.query(`DELETE FROM users WHERE id IN ($1,$2)`, [userId, approverId]);
+      await client.query(`DELETE FROM organization_members WHERE organization_id IN ($1,$2)`, [
+        orgId,
+        foreignOrgId,
+      ]);
+      await client.query(`DELETE FROM users WHERE id IN ($1,$2,$3,$4)`, [
+        userId,
+        approverId,
+        viewerId,
+        foreignUserId,
+      ]);
       await client.query(`DELETE FROM organizations WHERE id IN ($1,$2)`, [orgId, foreignOrgId]);
       await client.query('COMMIT');
     } catch (error) {
@@ -982,6 +1019,224 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
       ).toEqual({ status: 'DRAFT', version: currentVersion, snapshot_count: 0 });
     } finally {
       await client.query(`DROP TRIGGER ${trg} ON finance_budget_approval_command_receipts`);
+      await client.query(`DROP FUNCTION ${fn}()`);
+    }
+  });
+
+  it('soft-discards one DRAFT budget, preserves its graph and replays exactly', async () => {
+    const budget = await registerBudget(command(`discard-happy-${randomUUID()}`));
+    await client.query(
+      `INSERT INTO budget_snapshots(id,budget_id,version,snapshot_data) VALUES($1,$2,1,'{}')`,
+      [`snapshot-${randomUUID()}`, budget.budget.id]
+    );
+    const input = {
+      organizationId: orgId,
+      userId,
+      budgetId: budget.budget.id,
+      expectedVersion: 1,
+      idempotencyKey: `discard-${randomUUID()}`,
+      reason: 'Superseded planning draft',
+    };
+    const first = await discardBudgetCommand(input);
+    expect(first).toMatchObject({ status: 'ARCHIVED', budgetVersion: 2, replay: false });
+    expect(await discardBudgetCommand(input)).toEqual({ ...first, replay: true });
+    const cold = (
+      await client.query(
+        `SELECT b.status,b.version,(SELECT count(*)::int FROM budget_lines WHERE budget_id=b.id) lines,(SELECT count(*)::int FROM budget_scenarios WHERE budget_id=b.id) scenarios,(SELECT count(*)::int FROM budget_snapshots WHERE budget_id=b.id) snapshots,(SELECT count(*)::int FROM finance_budget_registration_receipts WHERE budget_id=b.id) registrations,(SELECT count(*)::int FROM finance_budget_discard_command_receipts WHERE budget_id=b.id) discards FROM budgets b WHERE b.id=$1`,
+        [budget.budget.id]
+      )
+    ).rows[0];
+    expect(cold).toEqual({
+      status: 'ARCHIVED',
+      version: 2,
+      lines: 15,
+      scenarios: 3,
+      snapshots: 1,
+      registrations: 1,
+      discards: 1,
+    });
+    await expect(
+      client.query(
+        `UPDATE finance_budget_discard_command_receipts SET reason=reason WHERE budget_id=$1`,
+        [budget.budget.id]
+      )
+    ).rejects.toThrow(/immutable/);
+    await expect(
+      client.query(`DELETE FROM finance_budget_discard_command_receipts WHERE budget_id=$1`, [
+        budget.budget.id,
+      ])
+    ).rejects.toThrow(/immutable/);
+    await expect(
+      client.query(`UPDATE budgets SET title=title WHERE id=$1`, [budget.budget.id])
+    ).rejects.toThrow(/archived budget is immutable/);
+    await expect(
+      client.query(`UPDATE budget_lines SET line_name=line_name WHERE budget_id=$1`, [
+        budget.budget.id,
+      ])
+    ).rejects.toThrow(/archived budget aggregate is immutable/);
+    await expect(
+      client.query(`DELETE FROM budget_scenarios WHERE budget_id=$1`, [budget.budget.id])
+    ).rejects.toThrow(/archived budget aggregate is immutable/);
+    await expect(
+      client.query(
+        `INSERT INTO budget_lines(id,budget_id,line_code,line_name,statement_type,source) VALUES($1,$2,'X','X','P&L','manual')`,
+        [`line-${randomUUID()}`, budget.budget.id]
+      )
+    ).rejects.toThrow(/archived budget aggregate is immutable/);
+    await expect(
+      client.query(
+        `INSERT INTO budget_scenarios(id,budget_id,scenario_type,name) VALUES($1,$2,'base','Late')`,
+        [`scenario-${randomUUID()}`, budget.budget.id]
+      )
+    ).rejects.toThrow(/archived budget aggregate is immutable/);
+    await expect(
+      client.query(
+        `INSERT INTO budget_snapshots(id,budget_id,version,snapshot_data) VALUES($1,$2,99,'{}')`,
+        [`snapshot-${randomUUID()}`, budget.budget.id]
+      )
+    ).rejects.toThrow(/archived budget aggregate is immutable/);
+    await expect(
+      client.query(
+        `INSERT INTO budget_initiative_links(id,budget_id,initiative_id,organization_id) VALUES($1,$2,$3,$4)`,
+        [`link-${randomUUID()}`, budget.budget.id, `missing-${randomUUID()}`, orgId]
+      )
+    ).rejects.toThrow(/archived budget aggregate is immutable/);
+
+    const active = await registerBudget(command(`discard-move-source-${randomUUID()}`));
+    const activeLine = (
+      await client.query(`SELECT id FROM budget_lines WHERE budget_id=$1 LIMIT 1`, [active.budget.id])
+    ).rows[0].id;
+    await expect(
+      client.query(`UPDATE budget_lines SET budget_id=$1 WHERE id=$2`, [
+        budget.budget.id,
+        activeLine,
+      ])
+    ).rejects.toThrow(/archived budget aggregate is immutable/);
+
+    expect((await listBudgets(orgId)).some((item) => item.id === budget.budget.id)).toBe(false);
+    expect(await getBudget(orgId, budget.budget.id)).toBeNull();
+  });
+
+  it('enforces authority and tenant scope before replay', async () => {
+    const budget = await registerBudget(command(`discard-authority-${randomUUID()}`));
+    const key = `discard-authority-${randomUUID()}`;
+    const input = {
+      organizationId: orgId,
+      userId,
+      budgetId: budget.budget.id,
+      expectedVersion: 1,
+      idempotencyKey: key,
+      reason: 'Authority test',
+    };
+    const first = await discardBudgetCommand(input);
+    expect(first.replay).toBe(false);
+    await client.query(
+      `UPDATE organization_members SET status='REVOKED' WHERE organization_id=$1 AND user_id=$2`,
+      [orgId, userId]
+    );
+    try {
+      await expect(discardBudgetCommand(input)).rejects.toMatchObject({
+        code: 'ORG_MEMBERSHIP_REVOKED',
+        status: 403,
+      });
+    } finally {
+      await client.query(
+        `UPDATE organization_members SET status='ACTIVE' WHERE organization_id=$1 AND user_id=$2`,
+        [orgId, userId]
+      );
+    }
+    await expect(
+      discardBudgetCommand({ ...input, userId: viewerId })
+    ).rejects.toMatchObject({ code: 'FINANCE_EDIT_FORBIDDEN', status: 403 });
+    await expect(
+      discardBudgetCommand({
+        ...input,
+        organizationId: foreignOrgId,
+        userId: foreignUserId,
+        idempotencyKey: `foreign-${randomUUID()}`,
+      })
+    ).rejects.toMatchObject({ code: 'BUDGET_NOT_FOUND', status: 404 });
+  });
+
+  it('converges concurrent discard retries and rejects a changed payload', async () => {
+    const budget = await registerBudget(command(`discard-concurrent-${randomUUID()}`));
+    const key = `discard-concurrent-${randomUUID()}`;
+    const input = {
+      organizationId: orgId,
+      userId,
+      budgetId: budget.budget.id,
+      expectedVersion: 1,
+      idempotencyKey: key,
+      reason: 'Concurrent discard',
+    };
+    const results = await Promise.all(
+      Array.from({ length: 8 }, () => discardBudgetCommand(input))
+    );
+    expect(results.filter((result) => !result.replay)).toHaveLength(1);
+    expect(results.filter((result) => result.replay)).toHaveLength(7);
+    expect(
+      (
+        await client.query(
+          `SELECT count(*)::int count FROM finance_budget_discard_command_receipts WHERE organization_id=$1 AND budget_id=$2`,
+          [orgId, budget.budget.id]
+        )
+      ).rows[0].count
+    ).toBe(1);
+    await expect(
+      discardBudgetCommand({ ...input, reason: 'Changed payload' })
+    ).rejects.toMatchObject({ code: 'IDEMPOTENCY_PAYLOAD_COLLISION', status: 409 });
+  });
+
+  it('fails closed for stale and APPROVED budgets and rolls archive back on receipt failure', async () => {
+    const stale = await registerBudget(command(`discard-stale-${randomUUID()}`));
+    await expect(
+      discardBudgetCommand({
+        organizationId: orgId,
+        userId,
+        budgetId: stale.budget.id,
+        expectedVersion: 2,
+        idempotencyKey: `discard-stale-${randomUUID()}`,
+        reason: 'stale',
+      })
+    ).rejects.toMatchObject({ code: 'BUDGET_VERSION_CONFLICT', status: 409 });
+    const approved = await registerBudget(command(`discard-approved-${randomUUID()}`));
+    await client.query(`UPDATE budgets SET status='APPROVED' WHERE id=$1`, [approved.budget.id]);
+    await expect(
+      discardBudgetCommand({
+        organizationId: orgId,
+        userId,
+        budgetId: approved.budget.id,
+        expectedVersion: 1,
+        idempotencyKey: `discard-approved-${randomUUID()}`,
+        reason: 'no',
+      })
+    ).rejects.toMatchObject({ code: 'APPROVED_BUDGET_ARCHIVE_FORBIDDEN', status: 409 });
+    const rollback = await registerBudget(command(`discard-rollback-${randomUUID()}`));
+    const fn = `reject_budget_discard_${randomUUID().replaceAll('-', '')}`,
+      trg = `reject_budget_discard_${randomUUID().replaceAll('-', '')}`;
+    await client.query(
+      `CREATE FUNCTION ${fn}() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'injected budget discard receipt failure'; END $$`
+    );
+    await client.query(
+      `CREATE TRIGGER ${trg} BEFORE INSERT ON finance_budget_discard_command_receipts FOR EACH ROW EXECUTE FUNCTION ${fn}()`
+    );
+    try {
+      await expect(
+        discardBudgetCommand({
+          organizationId: orgId,
+          userId,
+          budgetId: rollback.budget.id,
+          expectedVersion: 1,
+          idempotencyKey: `discard-rollback-${randomUUID()}`,
+          reason: 'rollback',
+        })
+      ).rejects.toThrow(/injected budget discard/);
+      expect(
+        (await client.query(`SELECT status,version FROM budgets WHERE id=$1`, [rollback.budget.id]))
+          .rows[0]
+      ).toEqual({ status: 'DRAFT', version: 1 });
+    } finally {
+      await client.query(`DROP TRIGGER ${trg} ON finance_budget_discard_command_receipts`);
       await client.query(`DROP FUNCTION ${fn}()`);
     }
   });

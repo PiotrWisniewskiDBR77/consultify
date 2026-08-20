@@ -29,6 +29,8 @@ export type FinanceModelRow = FinanceRowBase & {
   periodStart?: string;
   periodEnd?: string;
   granularity?: string;
+  /** Required by the governed budget commands; present for budget prediction rows. */
+  version?: number;
   sourceStatementId?: string;
   sourceStatementPackId?: string;
   seedSourceType?: string;

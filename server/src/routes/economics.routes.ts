@@ -3154,6 +3154,7 @@ router.post(
 router.delete(
   '/budgets/:id',
   verifyToken,
+  economicsCutoverGuard,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId || (req.user as any)?.organization_id;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });

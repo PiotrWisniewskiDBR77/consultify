@@ -227,14 +227,18 @@ export async function createBudget(
   };
 }
 export async function getBudget(orgId: string, id: string): Promise<Budget | null> {
-  const r = await dbGet<any>(`SELECT * FROM budgets WHERE id=? AND organization_id=?`, [id, orgId]);
+  const r = await dbGet<any>(
+    `SELECT * FROM budgets WHERE id=? AND organization_id=? AND status<>'ARCHIVED'`,
+    [id, orgId]
+  );
   return r ? mapBudget(r) : null;
 }
 export async function listBudgets(orgId: string): Promise<Budget[]> {
   return (
-    await dbAll<any>(`SELECT * FROM budgets WHERE organization_id=? ORDER BY created_at DESC`, [
-      orgId,
-    ])
+    await dbAll<any>(
+      `SELECT * FROM budgets WHERE organization_id=? AND status<>'ARCHIVED' ORDER BY created_at DESC`,
+      [orgId]
+    )
   ).map(mapBudget);
 }
 export async function getBudgetLines(budgetId: string): Promise<BudgetLine[]> {

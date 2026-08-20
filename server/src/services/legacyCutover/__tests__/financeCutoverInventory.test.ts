@@ -24,8 +24,8 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
       legacyMutationDoors: 52,
       canonicalMutationDoors: 1,
       nonMutationDoors: 6,
-      retiredLegacyMutationDoors: 22,
-      openLegacyMutationDoors: 30,
+      retiredLegacyMutationDoors: 23,
+      openLegacyMutationDoors: 29,
     });
   });
 
@@ -128,5 +128,14 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
         /(?:Api\.post|fetch)\([^\n]*\/api\/economics\/budgets\/.*\/approve/
       );
     }
+  });
+
+  it('routes the mounted budget discard caller through the canonical successor', () => {
+    const source = fs.readFileSync(
+      path.resolve(process.cwd(), 'src/components/Economics/hooks/useFinanceRowActions.ts'),
+      'utf8'
+    );
+    expect(source).toContain('V8FinanceApi.discardBudget');
+    expect(source).not.toMatch(/Api\.delete\([^\n]*\/api\/economics\/budgets/);
   });
 });

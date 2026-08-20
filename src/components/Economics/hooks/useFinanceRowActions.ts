@@ -206,7 +206,15 @@ export function useFinanceRowActions({
           (row as FinanceModelRow).predictionType === 'budget'
         ) {
           const rawId = getBudgetRawId(row.id);
-          await Api.delete(`/api/economics/budgets/${rawId}`);
+          const version = Number((row as any).version);
+          if (!Number.isInteger(version) || version < 1)
+            throw new Error('Budget version is required');
+          await V8FinanceApi.discardBudget(
+            rawId,
+            version,
+            'Discarded from Finance workspace',
+            crypto.randomUUID()
+          );
           await loadBudgets();
         } else if (row.kind === 'analysis' || row.kind === 'investment') {
           await V8FinanceApi.deleteAnalysis(row.id);

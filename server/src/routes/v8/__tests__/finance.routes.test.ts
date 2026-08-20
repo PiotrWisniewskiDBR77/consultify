@@ -33,6 +33,7 @@ const mockApplyBudgetLineCommand = vi.fn();
 const mockProjectBudgetScenario = vi.fn();
 const mockUpdateBudgetScenarioAdjustments = vi.fn();
 const mockApproveBudgetCommand = vi.fn();
+const mockDiscardBudgetCommand = vi.fn();
 const mockListAnalyses = vi.fn();
 const mockGetAnalysisRatios = vi.fn();
 const mockGetAnalysisInsights = vi.fn();
@@ -341,6 +342,19 @@ vi.mock('../../../services/finance/canonical/budgetApprovalCommandService.js', (
   },
   approveBudgetCommand: (...args: unknown[]) => mockApproveBudgetCommand(...args),
 }));
+vi.mock('../../../services/finance/canonical/budgetDiscardCommandService.js', () => ({
+  BudgetDiscardCommandError: class BudgetDiscardCommandError extends Error {
+    constructor(
+      public code: string,
+      public status: number,
+      message: string,
+      public details?: Record<string, unknown>
+    ) {
+      super(message);
+    }
+  },
+  discardBudgetCommand: (...args: unknown[]) => mockDiscardBudgetCommand(...args),
+}));
 
 vi.mock('../../../services/ratioAnalysisService.js', () => ({
   computeRatios: (...args: unknown[]) => mockComputeRatios(...args),
@@ -515,6 +529,14 @@ describe('V8 finance read-only routes', () => {
       snapshotSha256: 'c'.repeat(64),
       approvedBy: UID,
       approvedAt: '2026-08-20T10:00:00.000Z',
+      replay: false,
+    });
+    mockDiscardBudgetCommand.mockResolvedValue({
+      budgetId: 'budget-new',
+      status: 'ARCHIVED',
+      budgetVersion: 4,
+      archivedBy: 'user-1',
+      archivedAt: '2026-08-20T00:00:00.000Z',
       replay: false,
     });
     mockListAnalyses.mockResolvedValue([]);
@@ -2028,6 +2050,33 @@ describe('V8 finance read-only routes', () => {
     expect(res.status).toBe(400);
     expect(res.body.code).toBe('INVALID_BODY');
     expect(mockApproveBudgetCommand).not.toHaveBeenCalled();
+  });
+
+  it('DELETE /api/v8/finance/budgets/:budgetId binds version, reason and idempotency', async () => {
+    const app = createApp();
+    const response = await request(app)
+      .delete('/api/v8/finance/budgets/budget-new')
+      .set('Idempotency-Key', 'discard-key')
+      .send({ expectedVersion: 3, reason: 'Superseded draft' });
+    expect(response.status).toBe(200);
+    expect(mockDiscardBudgetCommand).toHaveBeenCalledWith({
+      organizationId: ORG,
+      userId: UID,
+      budgetId: 'budget-new',
+      expectedVersion: 3,
+      reason: 'Superseded draft',
+      idempotencyKey: 'discard-key',
+    });
+  });
+
+  it('DELETE /api/v8/finance/budgets/:budgetId rejects unknown fields', async () => {
+    const app = createApp();
+    const response = await request(app)
+      .delete('/api/v8/finance/budgets/budget-new')
+      .set('Idempotency-Key', 'discard-key')
+      .send({ expectedVersion: 3, reason: 'Superseded', hardDelete: true });
+    expect(response.status).toBe(400);
+    expect(mockDiscardBudgetCommand).not.toHaveBeenCalled();
   });
 
   it('POST /api/v8/finance/analyses returns envelope and delegates to createAnalysis', async () => {

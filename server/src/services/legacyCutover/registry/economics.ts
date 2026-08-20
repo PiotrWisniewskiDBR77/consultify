@@ -446,10 +446,10 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'ECO-W38',
       method: 'DELETE',
       path: /^\/budgets\/[^/]+\/?$/,
-      state: 'observed',
-      successor: null,
+      state: 'disabled',
+      successor: '/api/v8/finance/budgets/:budgetId',
       reason:
-        'Deletes a budgets row and its budget_lines/budget_scenarios children, addressed by :id (economics.routes.ts:3195, inline DELETEs at :3213-3215). Refuses if status=APPROVED. No proven successor.',
+        'The mounted budget-delete caller uses a DRAFT-only canonical soft-discard command with live Finance-editor authority, parent-version CAS, preserved aggregate lineage, immutable receipt and writer-scoped legacy rollback.',
     },
     {
       writerId: 'ECO-W39',

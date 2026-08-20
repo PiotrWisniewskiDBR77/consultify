@@ -1,4 +1,19 @@
 import { v8Delete, v8Get, v8Post, v8PostMultipart, v8Put } from './client';
+import { fetchWithRetry, getHeaders, handleResponse } from '../baseClient';
+
+async function discardBudgetRequest<T>(
+  budgetId: string,
+  body: unknown,
+  idempotencyKey: string
+): Promise<T> {
+  const res = await fetchWithRetry(`/api/v8/finance/budgets/${budgetId}`, {
+    method: 'DELETE',
+    headers: { ...getHeaders(), 'Idempotency-Key': idempotencyKey },
+    body: JSON.stringify(body),
+  });
+  const json = await handleResponse<{ data: T }>(res, 'V8 DELETE budget');
+  return json.data;
+}
 
 export const shouldFallbackToLegacyFinance = (error: any) => {
   const status = Number(error?.status);
@@ -297,6 +312,15 @@ export interface V8FinanceBudgetSummary {
   scenario?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
+}
+
+export interface V8FinanceBudgetDiscardResult {
+  budgetId: string;
+  status: 'ARCHIVED';
+  budgetVersion: number;
+  archivedBy: string;
+  archivedAt: string;
+  replay: boolean;
 }
 
 export interface V8FinanceStatementPackSummary {
@@ -742,6 +766,17 @@ export const V8FinanceApi = {
       `/finance/budgets/${budgetId}/approve`,
       { expectedVersion },
       { extraHeaders: { 'Idempotency-Key': idempotencyKey } }
+    ),
+  discardBudget: (
+    budgetId: string,
+    expectedVersion: number,
+    reason: string,
+    idempotencyKey: string
+  ) =>
+    discardBudgetRequest<V8FinanceBudgetDiscardResult>(
+      budgetId,
+      { expectedVersion, reason },
+      idempotencyKey
     ),
   getStatementPacks: (params?: { readiness?: string }) =>
     v8Get<{ statementPacks: V8FinanceStatementPackSummary[]; count: number }>(
