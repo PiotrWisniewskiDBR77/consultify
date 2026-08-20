@@ -1,14 +1,15 @@
 {
   "baselineSha": "7ed35487586ab2832445bde01f8e25ec4c320b2c",
-  "productSha": "8c1cf4f010259b10bd069f312684f2f9fec815c8",
+  "productSha": "048459adbd334f258a4994b65c84df8459316b86",
+  "technicalSourceSha": "8c1cf4f010259b10bd069f312684f2f9fec815c8",
+  "reconciliationSha": "048459adbd334f258a4994b65c84df8459316b86",
   "leaseSha256": "6cea3c806721c2d385d7f960e88d411966e5bf497bb35ccce222828f8b9819c4",
   "taskId": "CHAT-NFR-001",
-  "verdict": "PARTIAL",
+  "verdict": "DONE_CURRENT_SHA",
   "technicalVerdict": "DONE_CURRENT_SHA",
-  "verdictRationale": "All repository-owned cancellation, request-scoped provider-start budgeting, durable disconnect checkpoint, cold explicit resume, tenant isolation, telemetry and runbook obligations are proven on exact current 8c1cf4f010259b10bd069f312684f2f9fec815c8. One user action now owns one HTTP stream lifecycle and one shared maximum-two-start provider ledger across internal retry and cross-model fallback. Overall PARTIAL is retained only because a deployed real external-provider stability window is not repository-owned and was not executed.",
-  "open": [
-    "A real external-provider stability window remains unverified. Provider credentials, selection policy and external availability were explicitly outside this bounded closure; deterministic retry/cancellation/failure contracts are proven without claiming external reliability."
-  ],
+  "verdictRationale": "All repository-owned cancellation, request-scoped provider-start budgeting, durable disconnect checkpoint, cold explicit resume, tenant isolation, telemetry and runbook obligations are proven. The technical source evidence at 8c1cf4f010259b10bd069f312684f2f9fec815c8 remains ancestral; the only later changes in its declared path set are fail-closed Chat UI state handling and tests, requalified on 048459adbd334f258a4994b65c84df8459316b86 with 3 files / 100 tests passing. Under AMD-TECHNICAL-DONE-RELEASE-BOUNDARY-002, a real external-provider stability window is a release boundary and does not keep this repository task PARTIAL.",
+  "open": [],
+  "releaseBoundary": "A deployed real external-provider stability window remains NOT_VERIFIED. It must be exercised on the release candidate before a reliability or release claim, but it is not repository-owned technical work and does not weaken deterministic fail-closed provider handling.",
   "environment": {
     "node": "v24.12.0",
     "postgres": "16 (pgvector/pgvector:pg16)",
@@ -104,7 +105,8 @@
     {"command": "exact-current fresh migration + repeat + dry-run on disposable tmpfs PostgreSQL", "exitCode": 0, "result": "758/758 successful unique migrations; repeat 0; dry-run pending 0"},
     {"command": "exact-current focused CHAT qualification", "exitCode": 0, "result": "real PostgreSQL 7/7; mounted browser 2/2; unit/hook 77/77; literal disconnect/cold resume 1/1; residue 0"},
     {"command": "CI=true NODE_ENV=test E2E_MODE=true npx vitest run server/src/services/ai/__tests__/tokenUsageCapture.test.ts tests/unit/hooks/useAIStream.test.ts tests/integration/ai/ai-chat-stream-e2e-mode.test.ts --no-file-parallelism --maxWorkers=1 --retry=0", "exitCode": 0, "result": "exact integrated SHA 8c1cf4f0: 3/3 files, 44/44 tests, retry 0"},
-    {"command": "exact candidate root and server typechecks plus backend and 8 GiB frontend builds", "exitCode": 0, "result": "both typechecks passed; backend runtime mirrors 9/9; frontend transformed 10444 modules and built successfully"}
+    {"command": "exact candidate root and server typechecks plus backend and 8 GiB frontend builds", "exitCode": 0, "result": "both typechecks passed; backend runtime mirrors 9/9; frontend transformed 10444 modules and built successfully"},
+    {"command": "CI=true NODE_ENV=test E2E_MODE=true npx vitest run server/src/services/ai/__tests__/tokenUsageCapture.test.ts tests/unit/hooks/useAIStream.test.ts tests/components/AIChat/UnifiedChatPanel.test.tsx --no-file-parallelism --maxWorkers=1 --retry=0", "exitCode": 0, "result": "reconciliation SHA 048459adbd: 3/3 files, 100/100 tests, retry 0; React act warnings remain non-failing test-harness debt"}
   ],
   "fixtures": {
     "postgres": "fresh isolated chat_nfr database",
