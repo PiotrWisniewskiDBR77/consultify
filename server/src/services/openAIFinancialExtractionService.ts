@@ -152,6 +152,9 @@ export interface DocumentSection {
   lines: Array<{
     originalLabel: string;
     value: number;
+    comparisonValue?: number;
+    selectedPeriodLabel?: string;
+    comparisonPeriodLabel?: string;
     confidence: number;
     sourcePage?: number;
     sourceRow?: number;
@@ -179,10 +182,10 @@ function buildFullDocumentPrompt(): string {
 Your task:
 1. Identify the company/entity name, reporting period, currency, and scaling (units/thousands/millions).
 2. Find ALL financial statement sections in the document: P&L (Profit & Loss / Income Statement), BS (Balance Sheet), CF (Cash Flow Statement).
-3. For EACH section found, extract ALL financial line items with their values.
+3. For EACH section found, extract ALL financial line items with both the current and comparison-period values when both columns exist.
 
 CRITICAL RULES:
-- Extract from the MOST RECENT period (typically the leftmost data column after labels).
+- Extract the MOST RECENT period into value and the adjacent comparison period into comparisonValue. Preserve both period labels.
 - Keep values in the document's native scaling (if the document says "in millions", return the numbers as shown, e.g. 1040 means 1040 million).
 - Keep negative numbers negative. Values in parentheses are negative.
 - For each line, include the original label exactly as it appears in the document.
@@ -205,7 +208,7 @@ Return ONLY valid JSON in this exact shape:
     {
       "statementType": "P&L",
       "lines": [
-        { "originalLabel": "Przychody ze sprzedaży", "value": 3200, "confidence": 0.95, "sourcePage": 12, "sourceRow": 1 },
+        { "originalLabel": "Przychody ze sprzedaży", "value": 3200, "comparisonValue": 3000, "selectedPeriodLabel": "2025", "comparisonPeriodLabel": "2024", "confidence": 0.95, "sourcePage": 12, "sourceRow": 1 },
         { "originalLabel": "Koszty sprzedanych produktów", "value": -2100, "confidence": 0.93, "sourcePage": 12, "sourceRow": 2 }
       ],
       "warnings": []
@@ -246,10 +249,14 @@ function normalizeFullDocumentAnalysis(
         .map((line: any) => {
           const originalLabel = String(line?.originalLabel || '').trim();
           const value = Number(line?.value);
+          const comparisonValue = Number(line?.comparisonValue);
           if (!originalLabel || !Number.isFinite(value)) return null;
           return {
             originalLabel,
             value,
+            comparisonValue: Number.isFinite(comparisonValue) ? comparisonValue : undefined,
+            selectedPeriodLabel: String(line?.selectedPeriodLabel || '').trim() || undefined,
+            comparisonPeriodLabel: String(line?.comparisonPeriodLabel || '').trim() || undefined,
             confidence: Math.max(0, Math.min(Number(line?.confidence ?? 0.75), 1)),
             sourcePage:
               Number.isInteger(Number(line?.sourcePage)) && Number(line.sourcePage) > 0

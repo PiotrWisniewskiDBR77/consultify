@@ -385,8 +385,24 @@ export interface V8FinanceStatementValuesSaveResult {
   statementPackId?: string | null;
   ingestRunId?: string | null;
   savedCount: number;
+  valuesVersion: number;
   readiness?: Record<string, unknown>;
   validation?: Record<string, unknown>;
+}
+
+export interface V8FinanceStatementSourceReceipt {
+  receipt_id: string;
+  original_file_name: string;
+  content_sha256: string;
+  size_bytes: number;
+  mime_type: string;
+  entity_name: string;
+  periods_json: Array<Record<string, unknown>>;
+  page_ranges_json: Array<Record<string, unknown>>;
+  imported_by: string;
+  imported_at: string;
+  importer_name?: string;
+  importer_version?: string;
 }
 
 export interface V8FinanceStatementAnalyticsResult {
@@ -400,6 +416,7 @@ export interface V8FinanceStatementUploadAnalyzeResult {
   statementPackId?: string | null;
   statementIds: string[];
   analysis?: Record<string, unknown> | null;
+  detection?: Record<string, unknown> | null;
   statements?: Array<Record<string, unknown>>;
   message?: string;
 }
@@ -631,10 +648,30 @@ export const V8FinanceApi = {
     v8Post<V8FinanceStatementExtractResult>(`/finance/statements/${statementId}/extract`, body),
   mapStatement: (statementId: string, body: { lines?: Record<string, unknown>[] } = {}) =>
     v8Post<V8FinanceStatementMapResult>(`/finance/statements/${statementId}/map`, body),
-  confirmStatement: (statementId: string) =>
-    v8Post<V8FinanceStatementConfirmResult>(`/finance/statements/${statementId}/confirm`, {}),
+  confirmStatement: (
+    statementId: string,
+    body: { sourceReceiptId: string; expectedValuesVersion: number },
+    idempotencyKey: string
+  ) =>
+    v8Post<V8FinanceStatementConfirmResult>(`/finance/statements/${statementId}/confirm`, body, {
+      extraHeaders: { 'Idempotency-Key': idempotencyKey },
+    }),
   putStatementValues: (statementId: string, body: { values: Record<string, unknown>[] }) =>
     v8Put<V8FinanceStatementValuesSaveResult>(`/finance/statements/${statementId}/values`, body),
+  getStatementSourceReceipt: (statementId: string) =>
+    v8Get<{ receipt: V8FinanceStatementSourceReceipt }>(
+      `/finance/statements/${statementId}/source-receipt`
+    ),
+  recordStatementManualMappingDecision: (
+    statementId: string,
+    body: Record<string, unknown>,
+    idempotencyKey: string
+  ) =>
+    v8Post<{ decision: Record<string, unknown> }>(
+      `/finance/statements/${statementId}/manual-mapping-decisions`,
+      body,
+      { extraHeaders: { 'Idempotency-Key': idempotencyKey } }
+    ),
   getCanonicalLines: () =>
     v8Get<{ canonicalLines: V8FinanceCanonicalLineOption[]; count: number }>(
       '/finance/canonical-lines'

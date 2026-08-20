@@ -3592,6 +3592,10 @@ export const FinanceHub: React.FC = () => {
     );
   }
 
+  // Import is a focused document workflow. Generic Finance search, filters,
+  // view switches, AI and duplicate CTA would act on the list behind it.
+  if (showImportWizard) return <>{content}</>;
+
   return (
     <>
       <StandardModuleBar

@@ -136,7 +136,12 @@ export type StatementQualityStage =
   | 'benchmark';
 export type StatementQualityResultStatus = 'pass' | 'warning' | 'fail' | 'info';
 export type StatementDocumentClass =
-  'unknown' | 'native_pdf' | 'scan_pdf' | 'spreadsheet' | 'csv' | 'mixed_report';
+  | 'unknown'
+  | 'native_pdf'
+  | 'scan_pdf'
+  | 'spreadsheet'
+  | 'csv'
+  | 'mixed_report';
 
 export interface StatementDocumentProfile {
   documentClass: StatementDocumentClass;
@@ -600,6 +605,16 @@ function detectScaling(text: string): DetectionResult['scaling'] {
   const broadArea = deepArea.substring(0, 200000);
   if (/\$\s*million\s+except\s+per\s+share/i.test(broadArea)) return 'millions';
   if (/\(\s*in\s+millions?,?\s+except/i.test(broadArea)) return 'millions';
+  // Polish annual reports commonly put the scale next to the primary
+  // statements, well after the cover/TOC.  It is still document metadata,
+  // but limiting the Polish form to the first 30k characters made those
+  // reports silently look like unit-denominated statements.
+  if (/\b(?:w\s+tysiącach\s+(?:złotych|pln|zł)|tys\.?\s*(?:zł|pln))\b/i.test(deepArea)) {
+    return 'thousands';
+  }
+  if (/\b(?:w\s+milionach\s+(?:złotych|pln|zł)|mln\s*(?:zł|pln))\b/i.test(deepArea)) {
+    return 'millions';
+  }
 
   return 'units';
 }
@@ -1134,6 +1149,9 @@ export function locateStatementSections(
     CF: {
       start: [
         /^(?:3\.\d\.?\s*)?(?:jednostkowe |skonsolidowane )?sprawozdanie z przepływów pieniężnych/i,
+        // PDF layout engines often split the official Polish heading after
+        // "przepływów" and put "pieniężnych" on the next line.
+        /^\s*(?:3\.\d\.?\s*)?(?:jednostkowe |skonsolidowane )?sprawozdanie z przepływów\s*$/i,
         /^(?:3\.\d\.?\s*)?rachunek przepływów pieniężnych/i,
         /^przepływy środków pieniężnych z działalności/i,
         /\b(?:consolidated\s+)?statements?\s+of\s+cash\s+flows\b/i,
@@ -1199,6 +1217,8 @@ export function locateStatementSections(
     end: number;
     score: number;
     sectionLabel: string;
+    hasExplicitEnd: boolean;
+    hasCanonicalHeading: boolean;
   }> = [];
 
   const isStandardsRefLine = (line: string): boolean =>
@@ -1219,6 +1239,10 @@ export function locateStatementSections(
     const trimmedStartLine = line.trim();
     if (/^[a-ząćęłńóśźżäöüàâéèêëïîôûùüÿçñ•·\-–—]/.test(trimmedStartLine)) continue;
     if (trimmedStartLine.length > 150) continue;
+    const hasCanonicalHeading =
+      /^(?:\d+(?:\.\d+)*\.?\s*)?(?:skonsolidowan\w*|jednostkow\w*|consolidated|group)\s+(?:rachunek|sprawozdanie|statement|statements|balance|income|cash)/i.test(
+        trimmedStartLine
+      );
 
     const otherTypeKeys = Object.keys(sectionMarkers).filter((k) => k !== normalizedType);
     const matchesOtherType = otherTypeKeys.some((otherType) =>
@@ -1273,10 +1297,15 @@ export function locateStatementSections(
     const maxWindow = normalizedType === 'BS' ? 120 : 220;
     const maxSearch = normalizedType === 'BS' ? 150 : 260;
     let end = Math.min(rawLines.length, index + maxWindow);
-    for (let cursor = index + 8; cursor < Math.min(rawLines.length, index + maxSearch); cursor++) {
+    let hasExplicitEnd = false;
+    // A statement can legitimately be short (for example a condensed interim
+    // table).  A following, explicit statement heading is authoritative even
+    // when it occurs fewer than eight lines after this heading.
+    for (let cursor = index + 1; cursor < Math.min(rawLines.length, index + maxSearch); cursor++) {
       const curLine = rawLines[cursor];
       if (markers.end.some((pattern) => pattern.test(curLine))) {
         end = cursor;
+        hasExplicitEnd = true;
         break;
       }
       if (normalizedType === 'BS') {
@@ -1347,8 +1376,7 @@ export function locateStatementSections(
           return parsed.value !== null && Number.isFinite(parsed.value);
         }).length;
       return (
-        matches.length >= 2 &&
-        (financialNumericPattern.test(candidate) || tabularNumericCells >= 2)
+        matches.length >= 2 && (financialNumericPattern.test(candidate) || tabularNumericCells >= 2)
       );
     }).length;
     const semanticLines = windowLines.filter((candidate) =>
@@ -1380,9 +1408,9 @@ export function locateStatementSections(
         /cash and cash equivalents|środki pieniężne|inventories|zapasy/,
       ],
       CF: [
-        /środki pieniężne.*(?:netto|wygenerowane).*operacyjn|(?:net )?cash (?:provided by|from|used in) operating|operating (?:activities|cash)|cashflow aus (?:betrieblicher|laufender)|flux.*(?:activités?\s+)?(?:opérationnelles?|d'exploitation)/,
-        /środki pieniężne.*(?:netto|wykorzystane).*inwestycyjn|(?:net )?cash (?:provided by|from|used in) investing|investing (?:activities|cash)|cashflow aus investitionstätigkeit|flux.*(?:activités?\s+)?d'investissement/,
-        /środki pieniężne.*(?:netto|wykorzystane).*finansow|(?:net )?cash (?:provided by|from|used in) financing|financing (?:activities|cash)|cashflow aus finanzierungstätigkeit|flux.*(?:activités?\s+)?de\s+financement/,
+        /(?:środki|przepływy) pieniężne.*(?:netto|wygenerowane).*operacyjn|(?:net )?cash (?:provided by|from|used in) operating|operating (?:activities|cash)|cashflow aus (?:betrieblicher|laufender)|flux.*(?:activités?\s+)?(?:opérationnelles?|d'exploitation)/,
+        /(?:środki|przepływy) pieniężne.*(?:netto|wykorzystane).*inwestycyjn|(?:net )?cash (?:provided by|from|used in) investing|investing (?:activities|cash)|cashflow aus investitionstätigkeit|flux.*(?:activités?\s+)?d'investissement/,
+        /(?:środki|przepływy) pieniężne.*(?:netto|wykorzystane).*finansow|(?:net )?cash (?:provided by|from|used in) financing|financing (?:activities|cash)|cashflow aus finanzierungstätigkeit|flux.*(?:activités?\s+)?de\s+financement/,
         /depreciation.*amortization|amortyzacja|interest paid|taxes paid|dividends? (?:paid|received)/,
         /capital expenditure|capex|purchases? of property/,
       ],
@@ -1473,13 +1501,15 @@ export function locateStatementSections(
         contextPenalty -
         tooFewNumericLinesPenalty,
       sectionLabel: line.trim().slice(0, 120) || normalizedType,
+      hasExplicitEnd,
+      hasCanonicalHeading,
     });
   }
 
   const windows = candidateWindows
     .sort((left, right) => right.score - left.score)
     .filter((window, index, arr) => {
-      if (window.score < 12) return false;
+      if (window.score < 12 && !window.hasExplicitEnd && !window.hasCanonicalHeading) return false;
       return !arr.slice(0, index).some((other) => Math.abs(other.start - window.start) < 6);
     })
     .slice(0, 3);
@@ -1935,6 +1965,32 @@ export function extractFinancialLines(
   };
   const normalizedTargetPeriod = normalizePeriodLabel(targetPeriodLabel || '');
   const selectedColIndex = columnSelection.selectedPeriodIndex ?? 0;
+  const classifyPeriodValueTokens = (
+    numericTokens: Array<{
+      raw: string;
+      normalizedValue: number | null;
+      index: number;
+      tokenType: 'period' | 'value' | 'note_ref';
+      periodLabel?: string;
+    }>
+  ) => {
+    const hasRealValues = numericTokens.some(
+      (t) =>
+        t.tokenType === 'value' && t.normalizedValue !== null && Math.abs(t.normalizedValue) >= 1
+    );
+    const expectedPeriodValues = Math.max(1, columnSelection.periodGrid.length);
+    const noteTokens = numericTokens.filter((token) => token.tokenType === 'note_ref');
+    const trailingPeriodTokens = new Set(
+      !hasRealValues && noteTokens.length > expectedPeriodValues
+        ? noteTokens.slice(-expectedPeriodValues)
+        : []
+    );
+    return numericTokens.map((token) =>
+      token.tokenType === 'note_ref' && trailingPeriodTokens.has(token)
+        ? { ...token, tokenType: 'value' as const }
+        : token
+    );
+  };
   const selectValueToken = (
     numericTokens: Array<{
       raw: string;
@@ -1949,18 +2005,13 @@ export function extractFinancialLines(
     index: number;
     selectionReason: string;
   } | null => {
-    const hasRealValues = numericTokens.some(
-      (t) =>
-        t.tokenType === 'value' && t.normalizedValue !== null && Math.abs(t.normalizedValue) >= 1
-    );
-
-    const effectiveTokens = numericTokens.map((t) => {
-      if (t.tokenType === 'note_ref' && hasRealValues)
-        return { ...t, tokenType: 'note_ref' as const };
-      if (t.tokenType === 'note_ref' && !hasRealValues)
-        return { ...t, tokenType: 'value' as const };
-      return t;
-    });
+    // In published statements a leading small integer is usually the note
+    // reference, while the following small integers can be perfectly valid
+    // period values (for example: `Usługi 1 5 10`).  When every number is
+    // small, preserve the leading note columns and promote only the trailing
+    // period-width tokens.  This is driven by the detected header positions,
+    // not by confidence or value magnitude.
+    const effectiveTokens = classifyPeriodValueTokens(numericTokens);
 
     // Strategy 1: Match inline period label
     if (normalizedTargetPeriod) {
@@ -2044,10 +2095,11 @@ export function extractFinancialLines(
     const numericTokens = extractNumericSpans(line)
       .map((match) => normalizeNumericToken(match.raw, match.index ?? -1))
       .filter((item) => item.index >= 0);
-    const valueTokens = numericTokens.filter(
+    const effectiveTokens = classifyPeriodValueTokens(numericTokens);
+    const valueTokens = effectiveTokens.filter(
       (item) => item.tokenType === 'value' && item.normalizedValue !== null
     );
-    const effectiveNonNoteTokens = numericTokens.filter((t) => t.tokenType !== 'note_ref');
+    const effectiveNonNoteTokens = effectiveTokens.filter((t) => t.tokenType !== 'note_ref');
 
     if (effectiveNonNoteTokens.length < 2 || valueTokens.length === 0) {
       if (isLikelyLabelOnlyLine(line)) {
@@ -2059,7 +2111,7 @@ export function extractFinancialLines(
     }
 
     const firstNonNoteToken =
-      numericTokens.find((t) => t.tokenType !== 'note_ref') || numericTokens[0];
+      effectiveTokens.find((t) => t.tokenType !== 'note_ref') || effectiveTokens[0];
     const firstNumberIndex = firstNonNoteToken.index;
     let label = line.slice(0, firstNumberIndex).trim();
     if (pendingLabel) {
@@ -2070,7 +2122,7 @@ export function extractFinancialLines(
     label = cleanupExtractedLabel(label.replace(/\s+/g, ' ').trim());
     if (!label || label.length < 3 || isNoiseLine(label)) continue;
     const lineClassification = classifyNonFinancialLine(label);
-    const selectedToken = selectValueToken(numericTokens);
+    const selectedToken = selectValueToken(effectiveTokens);
     if (!selectedToken || selectedToken.normalizedValue == null) continue;
     const rawValue = selectedToken.raw;
     const value = selectedToken.normalizedValue;
@@ -2079,13 +2131,13 @@ export function extractFinancialLines(
     let comparisonRawValue: string | undefined;
     if (comparisonPeriodLabel) {
       const normalizedCompPeriod = normalizePeriodLabel(comparisonPeriodLabel);
-      for (let idx = 0; idx < numericTokens.length; idx++) {
-        const token = numericTokens[idx];
+      for (let idx = 0; idx < effectiveTokens.length; idx++) {
+        const token = effectiveTokens[idx];
         if (
           token.tokenType === 'period' &&
           normalizePeriodLabel(token.periodLabel || token.raw) === normalizedCompPeriod
         ) {
-          const pairedValue = numericTokens
+          const pairedValue = effectiveTokens
             .slice(idx + 1)
             .find((candidate) => candidate.tokenType === 'value');
           if (pairedValue && pairedValue.normalizedValue !== null) {
@@ -2096,8 +2148,8 @@ export function extractFinancialLines(
         }
       }
       if (comparisonValue === null && columnSelection.comparisonPeriodIndex != null) {
-        const compValueTokens = numericTokens.filter((t) => t.tokenType === 'value');
-        const hasPeriodTokens = numericTokens.some((t) => t.tokenType === 'period');
+        const compValueTokens = effectiveTokens.filter((t) => t.tokenType === 'value');
+        const hasPeriodTokens = effectiveTokens.some((t) => t.tokenType === 'period');
         if (!hasPeriodTokens && compValueTokens.length > 1) {
           const compIdx = columnSelection.comparisonPeriodIndex;
           if (compIdx < compValueTokens.length) {
@@ -7704,12 +7756,8 @@ export async function backfillStatementValueSourcePages(statementId: string): Pr
       const canonicalPages = value.canonical_line_id
         ? pagesByCanonicalLine.get(value.canonical_line_id)
         : undefined;
-      const normalizedLabel = value.original_label
-        ? normalizeAliasText(value.original_label)
-        : '';
-      const labelPages = normalizedLabel
-        ? pagesByNormalizedLabel.get(normalizedLabel)
-        : undefined;
+      const normalizedLabel = value.original_label ? normalizeAliasText(value.original_label) : '';
+      const labelPages = normalizedLabel ? pagesByNormalizedLabel.get(normalizedLabel) : undefined;
       const sourcePage =
         exactRowPage ??
         (canonicalPages?.size === 1 ? [...canonicalPages][0] : undefined) ??
@@ -8610,7 +8658,8 @@ export function parseFailedAttemptRecord(raw: string | null): FailedAttemptRecor
   try {
     const parsed = JSON.parse(raw) as Record<string, unknown>;
     const envelope = parsed?.[FAILED_ATTEMPT_ENVELOPE_KEY] as
-      { statementIds?: unknown; result?: unknown } | undefined;
+      | { statementIds?: unknown; result?: unknown }
+      | undefined;
     if (!envelope || !Array.isArray(envelope.statementIds)) return null;
     const statementIds = (envelope.statementIds as unknown[]).filter(
       (id): id is string => typeof id === 'string' && id.length > 0

@@ -227,12 +227,36 @@ async function searchStatementDocumentIntelligenceWithFallback(statementId: stri
 
 async function confirmStatementWithFallback(statementId: string) {
   try {
-    return await V8FinanceApi.confirmStatement(statementId);
+    const [detail, receiptResult] = await Promise.all([
+      V8FinanceApi.getStatement(statementId),
+      V8FinanceApi.getStatementSourceReceipt(statementId),
+    ]);
+    const valuesVersion = Number(detail?.statement?.values_version ?? 0);
+    const sourceReceiptId = String(receiptResult?.receipt?.receipt_id || '');
+    return await V8FinanceApi.confirmStatement(
+      statementId,
+      { sourceReceiptId, expectedValuesVersion: valuesVersion },
+      `statement-confirm-${statementId}-${valuesVersion}`
+    );
   } catch (error) {
     if (!shouldFallbackToLegacyFinance(error)) {
       throw error;
     }
-    return await Api.post(`/api/finance-statements/${statementId}/confirm`, {});
+    const [detailResponse, receiptResponse] = await Promise.all([
+      Api.get(`/api/finance-statements/${statementId}`),
+      Api.get(`/api/finance-statements/${statementId}/source-receipt`),
+    ]);
+    const detail = (detailResponse as any)?.statement || detailResponse;
+    const receipt = (receiptResponse as any)?.receipt || receiptResponse;
+    const valuesVersion = Number(detail?.values_version ?? 0);
+    return await Api.post(
+      `/api/finance-statements/${statementId}/confirm`,
+      {
+        sourceReceiptId: String(receipt?.receipt_id || ''),
+        expectedValuesVersion: valuesVersion,
+      },
+      { extraHeaders: { 'Idempotency-Key': `statement-confirm-${statementId}-${valuesVersion}` } }
+    );
   }
 }
 

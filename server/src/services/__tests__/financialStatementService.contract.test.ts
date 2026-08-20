@@ -17,11 +17,31 @@ import {
   detectContainedStatementTypes,
   detectStatementType,
   extractFinancialLines,
+  locateStatementSections,
   resolveDuplicateSuggestedMappings,
   validateStatement,
 } from '../financialStatementService.js';
 
 describe('financialStatementService — contract tests', () => {
+  it('recognizes a Polish cash-flow heading split across PDF lines', () => {
+    const text = [
+      'Skonsolidowane sprawozdanie z przepływów',
+      'pieniężnych',
+      '01.01.2025 – 31.12.2025  01.01.2024 – 31.12.2024',
+      'DZIAŁALNOŚĆ OPERACYJNA',
+      ...Array.from({ length: 16 }, (_, index) =>
+        `Korekta przepływów operacyjnych ${index + 1} ${100_000 + index} ${90_000 + index}`
+      ),
+      'Przepływy pieniężne netto z działalności operacyjnej 590 880 521 297',
+      'Przepływy pieniężne netto z działalności inwestycyjnej (474 582) (470 547)',
+      'Przepływy pieniężne netto z działalności finansowej (127 069) (103 918)',
+    ].join('\n');
+    const section = locateStatementSections(text, 'CF')[0];
+    expect(section.statementType).toBe('CF');
+    expect(section.confidence).toBeGreaterThanOrEqual(0.5);
+    expect(section.text).toContain('DZIAŁALNOŚĆ OPERACYJNA');
+  });
+
   describe('detectStatementType', () => {
     it('detects a P&L statement from Polish text', () => {
       const result = detectStatementType(
@@ -186,6 +206,101 @@ describe('financialStatementService — contract tests', () => {
 
       expect(row?.value).toBe(17728);
       expect(row?.comparisonValue).toBe(17262);
+    });
+
+    it('bounds a selected P&L to its section in a multi-statement report', () => {
+      const text = [
+        'Skonsolidowany rachunek zysków i strat',
+        'Nota 2025 2024',
+        'Przychody ze sprzedaży 1 866 989 798 372',
+        'Zysk netto 18 455 000 400 000',
+        ...Array.from({ length: 20 }, (_, i) => `wiersz pomocniczy ${i}`),
+        'Skonsolidowane sprawozdanie z sytuacji finansowej',
+        'Nota 31.12.2025 31.12.2024',
+        'AKTYWA RAZEM 3 503 320 3 026 438',
+        'Kapitał własny 2 900 000 2 700 000',
+      ].join('\n');
+
+      const result = extractFinancialLines(text, 'P&L', {
+        selectedPeriodLabel: '2025',
+        comparisonPeriodLabel: '2024',
+      });
+
+      expect(result.lines.some((line) => /Przychody ze sprzedaży/.test(line.originalLabel))).toBe(
+        true
+      );
+      expect(result.lines.some((line) => /AKTYWA RAZEM/i.test(line.originalLabel))).toBe(false);
+    });
+
+    it('keeps P&L, balance sheet, and cash flow selections in their own sections', () => {
+      const spacer = Array.from({ length: 12 }, (_, index) => `wiersz ${index}`);
+      const text = [
+        'Skonsolidowany rachunek zysków i strat',
+        'Nota 2025 2024',
+        'Przychody ze sprzedaży 1 866 989 798 372',
+        'Zysk netto 18 455 000 400 000',
+        ...spacer,
+        'Skonsolidowane sprawozdanie z sytuacji finansowej',
+        'Nota 31.12.2025 31.12.2024',
+        'AKTYWA RAZEM 3 503 320 3 026 438',
+        'Kapitał własny 2 900 000 2 700 000',
+        ...spacer,
+        'Skonsolidowane sprawozdanie z przepływów pieniężnych',
+        'Nota 2025 2024',
+        'Przepływy pieniężne netto z działalności operacyjnej 120 000 110 000',
+        'Środki pieniężne na koniec okresu 90 000 80 000',
+        ...spacer,
+      ].join('\n');
+
+      const selected = (['P&L', 'BS', 'CF'] as const).map((type) =>
+        extractFinancialLines(text, type, {
+          selectedPeriodLabel: '2025',
+          comparisonPeriodLabel: '2024',
+        })
+      );
+
+      expect(selected[0].lines.some((line) => /Przychody/.test(line.originalLabel))).toBe(true);
+      expect(selected[0].lines.some((line) => /AKTYWA|Przepływy/.test(line.originalLabel))).toBe(
+        false
+      );
+      expect(selected[1].lines.some((line) => /AKTYWA/.test(line.originalLabel))).toBe(true);
+      expect(selected[1].lines.some((line) => /Przychody|Przepływy/.test(line.originalLabel))).toBe(
+        false
+      );
+      expect(selected[2].lines.some((line) => /Przepływy/.test(line.originalLabel))).toBe(true);
+      expect(selected[2].lines.some((line) => /Przychody|AKTYWA/.test(line.originalLabel))).toBe(
+        false
+      );
+    });
+
+    it('keeps a leading note reference out of two small period values', () => {
+      const text = [
+        'Skonsolidowany rachunek zysków i strat',
+        'Nota 2025 2024',
+        'Przychody ze sprzedaży usług 1 5 10',
+        ...Array.from({ length: 20 }, (_, i) => `wiersz pomocniczy ${i}`),
+      ].join('\n');
+      const result = extractFinancialLines(text, 'P&L', {
+        selectedPeriodLabel: '2025',
+        comparisonPeriodLabel: '2024',
+      });
+      const row = result.lines.find((line) =>
+        /Przychody ze sprzedaży usług/.test(line.originalLabel)
+      );
+
+      expect(row?.value).toBe(5);
+      expect(row?.comparisonValue).toBe(10);
+      expect(row?.selectedNumericToken?.raw).toBe('5');
+    });
+
+    it('detects Polish thousands declared beside a later statement section', () => {
+      const text = [
+        ...Array.from({ length: 400 }, (_, i) => `strona tytułowa i spis treści ${i}`),
+        'Skonsolidowany rachunek zysków i strat (dane w tys. zł)',
+        'Przychody ze sprzedaży 2025 866 989 2024 798 372',
+      ].join('\n');
+
+      expect(detectStatementType(text).scaling).toBe('thousands');
     });
   });
 

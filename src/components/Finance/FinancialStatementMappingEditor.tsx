@@ -19,6 +19,7 @@ export interface FinancialStatementMappedValue {
   isNonFinancial?: boolean;
   classificationReason?: string;
   mappingTier?: 'auto' | 'llm_confirmed' | 'review_required' | 'excluded';
+  userVerified?: boolean;
 }
 
 interface Props {
@@ -26,6 +27,7 @@ interface Props {
   canonicalLines: FinancialStatementCanonicalLineOption[];
   onValueChange: (idx: number, field: string, val: any) => void;
   onCanonicalChange: (idx: number, canonId: string) => void;
+  onVerifiedChange?: (idx: number, verified: boolean) => void;
   className?: string;
 }
 
@@ -206,6 +208,7 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
   canonicalLines,
   onValueChange,
   onCanonicalChange,
+  onVerifiedChange,
   className = '',
 }) => {
   const { t, i18n } = useTranslation();
@@ -278,6 +281,9 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
                 {t('finance.importWizard.mappedTo', 'Mapped To')}
               </th>
               <th className="w-10" />
+              <th className="px-3 py-2.5 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-500">
+                {t('finance.mappingEditor.verified', 'Verified')}
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200/80 dark:divide-white/[0.04]">
@@ -352,6 +358,20 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
                   >
                     <Edit3 size={12} />
                   </button>
+                </td>
+                <td className="px-3 py-2 text-center">
+                  <label className="inline-flex items-center gap-1.5 text-[10px] text-slate-600 dark:text-slate-300">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(value.userVerified)}
+                      disabled={!value.canonicalLineId}
+                      onChange={(event) => onVerifiedChange?.(idx, event.target.checked)}
+                      aria-label={`${value.originalLabel} ${t('finance.mappingEditor.verified', 'Verified')}`}
+                    />
+                    {value.userVerified
+                      ? t('finance.mappingEditor.userVerified', 'User verified')
+                      : ''}
+                  </label>
                 </td>
               </tr>
             ))}

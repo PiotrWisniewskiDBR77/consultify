@@ -168,6 +168,25 @@ describe.skipIf(!realPg)('statement-pack canonical registration (real PostgreSQL
       [fixture.organizationId]
     );
     expect(counts.rows[0]).toEqual({ artifacts: 1, aliases: 1 });
+
+    // A canonical alias is registration identity, not proof that the current
+    // owner revision is still terminal. Reopen the owner exactly as a later
+    // values save does; the next call must run confirmation work again rather
+    // than returning the alias as a false success.
+    await pool.query(
+      `UPDATE financial_statements
+          SET status='mapped',confirmed_by=NULL,confirmed_at=NULL,values_version=values_version+1
+        WHERE id=$1 AND organization_id=$2`,
+      [fixture.statementId, fixture.organizationId]
+    );
+    const reconfirmed = await register(fixture);
+    expect(reconfirmed.artifactId).toBe(first.artifactId);
+    const reopenedOwner = await pool.query<{ status: string; confirmed_at: Date | null }>(
+      `SELECT status,confirmed_at FROM financial_statements WHERE id=$1 AND organization_id=$2`,
+      [fixture.statementId, fixture.organizationId]
+    );
+    expect(reopenedOwner.rows[0].status).toBe('confirmed');
+    expect(reopenedOwner.rows[0].confirmed_at).not.toBeNull();
   });
 
   it('preserves DbPromise result shapes outside an ambient transaction', async () => {

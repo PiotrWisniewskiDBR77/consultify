@@ -4,9 +4,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { V8_FINANCE_READ_CONTRACT } from '../finance.routes.js';
 
+const mockFinanceEditorGate = vi.hoisted(() => vi.fn());
 vi.mock('../../../services/legacyCutover/requireActiveMembership.js', () => ({
   requireActiveMembership: (_req: unknown, _res: unknown, next: () => void) => next(),
-  requireFinanceEditorMembership: (_req: unknown, _res: unknown, next: () => void) => next(),
+  requireFinanceEditorMembership: (...args: unknown[]) => mockFinanceEditorGate(...args),
 }));
 
 const mockGetFinanceDashboard = vi.fn();
@@ -87,6 +88,10 @@ const mockDbAll = vi.fn();
 const mockDbRun = vi.fn();
 const mockSyncStatementToPack = vi.fn();
 const mockAutoMapLines = vi.fn();
+const mockAppendCfoDerivedMappingSuggestions = vi.fn();
+const mockBackfillStatementValueSourcePages = vi.fn();
+const mockStageSelectedStatementSections = vi.fn();
+const mockConfirmGovernedStatement = vi.fn();
 const mockPersistComputeResult = vi.fn();
 // FIN-005 Fix 2: /statements/upload-and-analyze now goes through the same
 // idempotency primitives /finance-statements/upload already used (moved to
@@ -151,9 +156,14 @@ vi.mock('../../../services/financeStatementAnalyticsService.js', () => ({
 
 vi.mock('../../../services/financialStatementService.js', () => ({
   autoMapLines: (...args: unknown[]) => mockAutoMapLines(...args),
+  appendCfoDerivedMappingSuggestions: (...args: unknown[]) =>
+    mockAppendCfoDerivedMappingSuggestions(...args),
+  backfillStatementValueSourcePages: (...args: unknown[]) =>
+    mockBackfillStatementValueSourcePages(...args),
   classifyStatementDocument: (...args: unknown[]) => mockClassifyStatementDocument(...args),
   confirmStatement: (...args: unknown[]) => mockConfirmStatement(...args),
   createStatement: (...args: unknown[]) => mockCreateStatement(...args),
+  detectContainedStatementTypes: vi.fn(() => ['P&L']),
   detectStatementType: (...args: unknown[]) => mockDetectStatementType(...args),
   evaluateStatementReadiness: (...args: unknown[]) => mockEvaluateStatementReadiness(...args),
   extractFinancialLines: (...args: unknown[]) => mockExtractFinancialLines(...args),
@@ -189,11 +199,38 @@ vi.mock('../../../services/financialStatementService.js', () => ({
   finalizeIdempotentUpload: (...args: unknown[]) => mockFinalizeIdempotentUpload(...args),
   getIdempotencyKey: (...args: unknown[]) => mockGetIdempotencyKey(...args),
   IdempotencyKeyTooLongError: class IdempotencyKeyTooLongError extends Error {},
+  isStructuredStatementInput: vi.fn(() => false),
   MAX_IDEMPOTENCY_KEY_CHARS: 200,
   reserveIdempotentUpload: (...args: unknown[]) => mockReserveIdempotentUpload(...args),
   sha256Hex: (...args: unknown[]) => mockSha256Hex(...args),
   withStatementUploadIdempotencyLock: (...args: unknown[]) =>
     mockWithStatementUploadIdempotencyLock(...(args as [string, string, () => Promise<unknown>])),
+}));
+
+vi.mock('../../../services/statementMultiSectionImportService.js', () => ({
+  stageSelectedStatementSections: (...args: unknown[]) =>
+    mockStageSelectedStatementSections(...args),
+}));
+
+vi.mock('../../../services/finance/canonical/statementGovernedConfirmationService.js', () => ({
+  confirmGovernedStatement: (...args: unknown[]) => mockConfirmGovernedStatement(...args),
+}));
+
+vi.mock('../../../services/finance/canonical/statementManualMappingDecisionService.js', () => ({
+  recordManualMappingDecision: vi.fn(),
+}));
+
+vi.mock('../../../services/finance/canonical/statementSourceReceiptService.js', () => ({
+  readStatementSourceReceipt: vi.fn(),
+  StatementGovernanceError: class StatementGovernanceError extends Error {
+    status: number;
+    code: string;
+    constructor(code: string, message: string, status: number) {
+      super(message);
+      this.code = code;
+      this.status = status;
+    }
+  },
 }));
 
 vi.mock('../../../services/financeCanonicalRegistrySyncService.js', () => ({
@@ -340,6 +377,9 @@ const UID = 'user-finance-v8';
 describe('V8 finance read-only routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockFinanceEditorGate.mockImplementation(
+      (_req: unknown, _res: unknown, next: () => void) => next()
+    );
     mockUser = { id: UID, role: 'ADMIN', organizationId: ORG, isSuperAdmin: false };
     mockGetFinanceDashboard.mockResolvedValue({
       ingestionPipeline: {
@@ -489,6 +529,27 @@ describe('V8 finance read-only routes', () => {
         isNonFinancial: false,
       },
     ]);
+    mockAppendCfoDerivedMappingSuggestions.mockReturnValue(undefined);
+    mockBackfillStatementValueSourcePages.mockResolvedValue(undefined);
+    mockStageSelectedStatementSections.mockResolvedValue({
+      selectedTypes: ['P&L'],
+      statements: [
+        {
+          statementId: 'statement-1',
+          statementType: 'P&L',
+          periodLabel: 'Q1 2026',
+          sourceReceiptId: 'receipt-1',
+          lines: [{ originalLabel: 'Revenue', value: 100, confidence: 0.9, sourceRow: 1 }],
+        },
+      ],
+    });
+    mockConfirmGovernedStatement.mockResolvedValue({
+      statementPackId: 'pack-1',
+      artifactId: 'artifact-1',
+      businessVersionId: 'business-version-1',
+      workingRevisionId: 'working-revision-1',
+      replayed: false,
+    });
   });
 
   it('GET /api/v8/finance/dashboard returns envelope and delegates to getFinanceDashboard', async () => {
@@ -1219,6 +1280,28 @@ describe('V8 finance read-only routes', () => {
     expect(mockListStatements).toHaveBeenCalledWith(ORG, 'recoverable');
   });
 
+  it('keeps Statement reads mounted but denies mutations when Finance editor authority fails', async () => {
+    mockListStatements.mockResolvedValue([]);
+    const app = createApp();
+
+    expect((await request(app).get('/api/v8/finance/statements')).status).toBe(200);
+    expect(mockFinanceEditorGate).not.toHaveBeenCalled();
+
+    mockFinanceEditorGate.mockImplementation((_req: unknown, res: any) =>
+      res.status(403).json({ success: false, code: 'FINANCE_EDIT_FORBIDDEN' })
+    );
+    const denied = await request(app)
+      .post('/api/v8/finance/statements/upload-and-analyze')
+      .attach('file', Buffer.from('%PDF-1.4 denied'), {
+        filename: 'denied.pdf',
+        contentType: 'application/pdf',
+      });
+
+    expect(denied.status).toBe(403);
+    expect(denied.body).toEqual({ success: false, code: 'FINANCE_EDIT_FORBIDDEN' });
+    expect(mockCreateStatement).not.toHaveBeenCalled();
+  });
+
   it('POST /api/v8/finance/statements/upload-and-analyze returns envelope and delegates to the governed upload seam', async () => {
     const app = createApp();
     const res = await request(app)
@@ -1498,54 +1581,36 @@ describe('V8 finance read-only routes', () => {
     });
 
     const app = createApp();
-    const res = await request(app).post('/api/v8/finance/statements/statement-1/confirm').send({});
+    const res = await request(app)
+      .post('/api/v8/finance/statements/statement-1/confirm')
+      .set('Idempotency-Key', 'confirm-statement-1-v1')
+      .send({ sourceReceiptId: 'receipt-1', expectedValuesVersion: 0 });
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_FINANCE_READ_CONTRACT);
     expect(res.body.data?.success).toBe(true);
     expect(res.body.data?.statementId).toBe('statement-1');
     expect(res.body.data?.status).toBe('confirmed');
-    expect(mockEvaluateStatementReadiness).toHaveBeenCalledWith({
-      rawStatus: 'mapped',
-      statementType: 'P&L',
-      validationStatus: 'pass',
-      currency: 'PLN',
-      scaling: 'units',
-      validationMessages: [],
-      values: [{ canonicalLineId: 'line-1', value: 100, isNonFinancial: false }],
+    expect(res.body.data).toEqual(
+      expect.objectContaining({
+        statementPackId: 'pack-1',
+        sourceReceiptId: 'receipt-1',
+        valuesVersion: 0,
+        canonicalArtifactId: 'artifact-1',
+        canonicalBusinessVersionId: 'business-version-1',
+        canonicalWorkingRevisionId: 'working-revision-1',
+        canonicalReplay: false,
+      })
+    );
+    expect(mockConfirmGovernedStatement).toHaveBeenCalledWith({
+      statementId: 'statement-1',
+      organizationId: ORG,
+      userId: UID,
+      sourceReceiptId: 'receipt-1',
+      expectedValuesVersion: 0,
+      idempotencyKey: 'confirm-statement-1-v1',
     });
-    expect(mockConfirmStatement).toHaveBeenCalledWith(
-      'statement-1',
-      UID,
-      expect.objectContaining({ readinessStatus: 'ready' })
-    );
-    expect(mockSnapshotCanonicalStatementVersion).toHaveBeenCalledWith(
-      expect.objectContaining({
-        statementId: 'statement-1',
-        versionKind: 'confirmed',
-      })
-    );
-    expect(mockSyncStatementToPack).toHaveBeenCalledWith('statement-1');
-    expect(mockRecordStatementSourceArtifact).toHaveBeenCalledWith(
-      expect.objectContaining({
-        statementId: 'statement-1',
-        artifactType: 'confirmation',
-      })
-    );
-    expect(mockUpdateStatementIngestRun).toHaveBeenCalledWith(
-      expect.objectContaining({
-        ingestRunId: 'ingest-run-1',
-        currentStage: 'confirm',
-        runStatus: 'completed',
-      })
-    );
-    expect(mockRecordStatementQualityRun).toHaveBeenCalledWith(
-      expect.objectContaining({
-        statementId: 'statement-1',
-        organizationId: ORG,
-        stage: 'confirm',
-      })
-    );
+    expect(mockConfirmStatement).not.toHaveBeenCalled();
   });
 
   it('PUT /api/v8/finance/statements/:id/values returns envelope and delegates to shared values flow', async () => {

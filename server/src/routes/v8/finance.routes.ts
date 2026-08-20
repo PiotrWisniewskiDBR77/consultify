@@ -21,7 +21,10 @@ import { createBudget, listBudgets } from '../../services/budgetingService.js';
 import { searchStatementDocumentIntelligence } from '../../services/documentIntelligenceService.js';
 import { ensureCanonicalRegistryInDatabase } from '../../services/financeCanonicalRegistrySyncService.js';
 import { financeLegacyCutoverGuard } from '../../services/financeLegacyCutover.js';
-import { requireActiveMembership } from '../../services/legacyCutover/requireActiveMembership.js';
+import {
+  requireActiveMembership,
+  requireFinanceEditorMembership,
+} from '../../services/legacyCutover/requireActiveMembership.js';
 import {
   getFinanceTraceId,
   logFinanceError,
@@ -84,6 +87,7 @@ import {
   cleanupUnpersistedUpload,
   confirmStatement as confirmFinancialStatement,
   createStatement,
+  detectContainedStatementTypes,
   detectStatementType,
   evaluateStatementReadiness,
   extractFinancialLines,
@@ -119,7 +123,13 @@ import {
   withStatementUploadIdempotencyLock,
 } from '../../services/financialStatementService.js';
 import { saveStatementValuesFlow } from '../../services/financialStatementValueWriteService.js';
-import { confirmAndRegisterStatementPack } from '../../services/finance/canonical/statementPackRegistrationService.js';
+import { stageSelectedStatementSections } from '../../services/statementMultiSectionImportService.js';
+import { confirmGovernedStatement } from '../../services/finance/canonical/statementGovernedConfirmationService.js';
+import { recordManualMappingDecision } from '../../services/finance/canonical/statementManualMappingDecisionService.js';
+import {
+  readStatementSourceReceipt,
+  StatementGovernanceError,
+} from '../../services/finance/canonical/statementSourceReceiptService.js';
 import {
   applyLlmProposals,
   applySecondPassProposals,
@@ -147,6 +157,14 @@ const router = Router();
 // re-read membership state. Writers need this per-request wall so a revoked
 // token cannot mutate Finance until its JWT expires.
 router.use(requireActiveMembership);
+// Statement reads remain available to every active tenant member. Every V8
+// Statement mutation, including upload and the detect/extract/map/confirm
+// stages, must re-read the established Finance editor role from membership.
+router.use((req, res, next) => {
+  const mutating = !['GET', 'HEAD', 'OPTIONS'].includes(req.method.toUpperCase());
+  if (!mutating || !req.path.startsWith('/statements')) return next();
+  void requireFinanceEditorMembership(req as AuthRequest, res, next);
+});
 router.use(financeLegacyCutoverGuard);
 
 const FINANCE_PACKAGE_ROOT = process.env.FINANCE_PACKAGE_ROOT || '/data/finance-packages';
@@ -163,11 +181,13 @@ function parseObject(value: unknown): Record<string, any> {
 }
 
 function safePackageName(value: unknown): string {
-  return String(value || 'finance')
-    .normalize('NFKD')
-    .replace(/[^a-zA-Z0-9_-]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 80) || 'finance';
+  return (
+    String(value || 'finance')
+      .normalize('NFKD')
+      .replace(/[^a-zA-Z0-9_-]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 80) || 'finance'
+  );
 }
 
 function jsonText(value: unknown): string {
@@ -208,7 +228,10 @@ function addRowsSheet(
   header.font = { bold: true, color: { argb: 'FFFFFFFF' } };
   header.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF243B53' } };
   header.alignment = { vertical: 'middle' };
-  sheet.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: Math.max(1, keys.length) } };
+  sheet.autoFilter = {
+    from: { row: 1, column: 1 },
+    to: { row: 1, column: Math.max(1, keys.length) },
+  };
   sheet.eachRow((row, rowNumber) => {
     if (rowNumber > 1 && rowNumber % 2 === 0) {
       row.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEFF4F8' } };
@@ -1375,15 +1398,17 @@ router.post(
   '/statements/upload-and-analyze',
   upload.single('file'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
+    const { organizationId: requestedOrganizationId } = getV8Context(req);
     const userId = String(req.user?.id || '');
-    const file = req.file;
-    if (!file) {
+    const uploadedFile = req.file;
+    if (!uploadedFile) {
       return res.status(400).json({ error: 'File required (PDF, XLSX, XLS, or CSV)' });
     }
-    if (!userId || !organizationId) {
+    if (!userId || !requestedOrganizationId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
+    const file = uploadedFile;
+    const organizationId = requestedOrganizationId;
 
     const traceId = getFinanceTraceId((req as any).correlationId);
 
@@ -1449,7 +1474,7 @@ router.post(
       });
 
       const structuredInput = isStructuredStatementInput(file.originalname);
-      const analysis = structuredInput
+      const analysisResult = structuredInput
         ? null
         : await analyzeAndExtractFullDocument({
             filePath: file.path,
@@ -1457,7 +1482,7 @@ router.post(
             traceId,
           });
 
-      if (!analysis || analysis.sections.length === 0) {
+      if (!analysisResult || analysisResult.sections.length === 0) {
         const detection = detectStatementType(text);
         const documentProfile = classifyStatementDocument({
           fileName: file.originalname,
@@ -1504,6 +1529,12 @@ router.post(
               statementPackId,
               statementIds: [statementId],
               analysis: null,
+              detection: {
+                ...detection,
+                containedStatementTypes: detectContainedStatementTypes(text),
+                containsMultipleStatements: detectContainedStatementTypes(text).length > 1,
+                entityName: null,
+              },
               message: structuredInput
                 ? 'Structured statement staged for explicit detection, mapping, and confirmation.'
                 : 'LLM analysis unavailable — created single statement with heuristic detection.',
@@ -1512,6 +1543,7 @@ router.post(
           },
         };
       }
+      const analysis = analysisResult;
 
       const normalizeLineageLabel = (value: unknown) =>
         String(value || '')
@@ -1564,6 +1596,60 @@ router.post(
           },
         };
       }
+
+      const proposedPrimaryType = analysisWithLineage.sections[0].statementType;
+      const stagedStatementId = await createStatement({
+        organizationId,
+        statementType: proposedPrimaryType,
+        periodStart: analysis.periodStart || `${new Date().getFullYear()}-01-01`,
+        periodEnd: analysis.periodEnd || `${new Date().getFullYear()}-12-31`,
+        periodLabel: analysis.periodLabel || undefined,
+        currency: analysis.currency,
+        scaling: analysis.scaling,
+        sourceFileName: file.originalname,
+        sourceFilePath: file.path,
+        parseMethod: effectiveParseMethod,
+        overallConfidence: 0,
+        documentClass: 'mixed_report',
+        extractionStrategy: 'llm_full_document_staged',
+        templateFamily: null,
+        createdBy: userId,
+      });
+      anyStatementPersisted = true;
+      primaryStatementId = stagedStatementId;
+      createdStatementIds.push(stagedStatementId);
+      await dbRun(`UPDATE financial_statements SET notes = ? WHERE id = ?`, [
+        text.substring(0, 100000),
+        stagedStatementId,
+      ]);
+      return {
+        statusCode: 201,
+        body: {
+          data: {
+            success: true,
+            mode: 'fallback',
+            statementPackId: null,
+            statementIds: [stagedStatementId],
+            detection: {
+              statementType: proposedPrimaryType,
+              confidence: 0,
+              containedStatementTypes: analysisWithLineage.sections.map(
+                (section) => section.statementType
+              ),
+              containsMultipleStatements: analysisWithLineage.sections.length > 1,
+              periodStart: analysis.periodStart,
+              periodEnd: analysis.periodEnd,
+              periodLabel: analysis.periodLabel,
+              currency: analysis.currency,
+              scaling: analysis.scaling,
+              language: analysis.language,
+              entityName: analysis.entityName,
+            },
+            message: 'Document staged for explicit section, period and mapping review.',
+          },
+          meta: financeMeta(),
+        },
+      };
 
       const createdStatements: Array<{
         statementId: string;
@@ -1661,7 +1747,8 @@ router.post(
           sourcePage: line.sourcePage,
           sourceRow: line.sourceRow,
           mappingStatus: ((line as any).suggestedCanonicalId ? 'auto' : 'unmapped') as
-            'auto' | 'unmapped',
+            | 'auto'
+            | 'unmapped',
           isNonFinancial: !!(line as any).isNonFinancial,
         }));
 
@@ -1719,8 +1806,9 @@ router.post(
       }
 
       if (packId) {
+        const completedPackId = packId;
         try {
-          await recomputeStatementPackForOrganization(organizationId, packId);
+          await recomputeStatementPackForOrganization(organizationId, String(completedPackId));
         } catch (recomputeError) {
           logger.warn('[V8 SmartUpload] Pack recompute failed', {
             packId,
@@ -2299,6 +2387,43 @@ router.post(
       undefined;
     const effectiveScaling =
       String(req.body?.scaling || '').trim() || String(statement.scaling || '').trim() || undefined;
+    const requestedStatementTypes = Array.isArray(req.body?.statementTypes)
+      ? req.body.statementTypes
+      : [];
+    if (requestedStatementTypes.length > 0) {
+      try {
+        const batch = await stageSelectedStatementSections({
+          primaryStatementId: statementId,
+          organizationId,
+          userId,
+          statement,
+          text,
+          statementTypes: requestedStatementTypes,
+          periodLabel: effectivePeriodLabel,
+          currency: effectiveCurrency,
+          scaling: effectiveScaling,
+          entityName: String(req.body?.entityName || '').trim(),
+        });
+        return res.json({
+          data: {
+            statementId,
+            ingestRunId,
+            lines: batch.statements[0]?.lines || [],
+            statements: batch.statements,
+            selectedStatementTypes: batch.selectedTypes,
+            extractionStrategy: 'deterministic_multi_section_staged',
+          },
+          meta: financeMeta(),
+        });
+      } catch (error: any) {
+        const status = Number(error?.statusCode || 422);
+        return res.status(status).json({
+          error: error?.message || 'Multi-section extraction failed',
+          code: error?.code || 'MULTI_SECTION_EXTRACTION_FAILED',
+          statementType: error?.statementType,
+        });
+      }
+    }
     const minimumAiLines =
       effectiveStatementType === 'CF' ? 2 : ['BS', 'P&L'].includes(effectiveStatementType) ? 3 : 2;
 
@@ -2718,66 +2843,106 @@ router.post(
     }
 
     const statementId = String(req.params.statementId || '');
-    const statement = (await getStatementDetail(organizationId, statementId)) as Record<
-      string,
-      any
-    > | null;
-    if (!statement) {
-      return res.status(404).json({ error: 'Statement not found' });
+    const expectedValuesVersion = req.body?.expectedValuesVersion;
+    const sourceReceiptId = String(req.body?.sourceReceiptId || '').trim();
+    const idempotencyKey = String(req.header('Idempotency-Key') || '').trim();
+    if (!Number.isInteger(expectedValuesVersion) || expectedValuesVersion < 0) {
+      return res
+        .status(400)
+        .json({ error: 'expectedValuesVersion must be a non-negative integer' });
+    }
+    if (!sourceReceiptId || !idempotencyKey) {
+      return res.status(400).json({ error: 'sourceReceiptId and Idempotency-Key are required' });
     }
 
-    const valueRows = Array.isArray(statement.values)
-      ? statement.values.map((value: any) => ({
-          canonicalLineId: value?.canonicalLineId ?? value?.canonical_line_id ?? null,
-          value: Number(value?.value || 0),
-          isNonFinancial: Boolean(value?.isNonFinancial ?? value?.is_non_financial),
-        }))
-      : [];
-    const validationMessages = Array.isArray(statement.validationMessages)
-      ? statement.validationMessages
-      : [];
-    const readiness = evaluateStatementReadiness({
-      rawStatus: statement.status,
-      statementType: statement.statement_type,
-      validationStatus: statement.validation_status,
-      currency: statement.currency,
-      scaling: statement.scaling,
-      validationMessages,
-      values: valueRows,
-    });
-
-    if (!readiness.isReady) {
-      return res.status(400).json({
-        error: 'Statement is not ready to confirm',
-        readiness,
+    let registration;
+    try {
+      registration = await confirmGovernedStatement({
+        statementId,
+        organizationId,
+        userId,
+        sourceReceiptId,
+        expectedValuesVersion,
+        idempotencyKey,
       });
+    } catch (error) {
+      if (error instanceof StatementGovernanceError) {
+        return res.status(error.status).json({ error: error.message, code: error.code });
+      }
+      throw error;
     }
-
-    const registration = await confirmAndRegisterStatementPack({
-      statementId,
-      organizationId,
-      userId,
-      statement,
-      values: valueRows,
-      validations: validationMessages,
-      readiness,
-    });
 
     return res.json({
       data: {
         success: true,
         statementId,
         statementPackId: registration.statementPackId,
-        ingestRunId: registration.ingestRunId,
+        sourceReceiptId,
+        valuesVersion: expectedValuesVersion,
         canonicalArtifactId: registration.artifactId,
         canonicalBusinessVersionId: registration.businessVersionId,
         canonicalWorkingRevisionId: registration.workingRevisionId,
         canonicalReplay: registration.replayed,
         status: 'confirmed',
-        readiness,
       },
       meta: financeMeta(),
     });
+  })
+);
+
+router.get(
+  '/statements/:statementId/source-receipt',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const userId = String(req.user?.id || '');
+    try {
+      const receipt = await readStatementSourceReceipt({
+        organizationId,
+        statementId: String(req.params.statementId),
+        userId,
+      });
+      return res.json({ data: { receipt }, meta: financeMeta() });
+    } catch (error) {
+      if (error instanceof StatementGovernanceError)
+        return res.status(error.status).json({ error: error.message, code: error.code });
+      throw error;
+    }
+  })
+);
+
+router.post(
+  '/statements/:statementId/manual-mapping-decisions',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const userId = String(req.user?.id || '');
+    const statementId = String(req.params.statementId);
+    const sourceRow = Number(req.body?.sourceRow);
+    const candidate = Number.isInteger(sourceRow)
+      ? await dbGet<any>(
+          `SELECT id FROM financial_statement_candidate_rows WHERE statement_id=? AND source_row=? ORDER BY created_at DESC,id DESC LIMIT 1`,
+          [statementId, sourceRow]
+        )
+      : null;
+    if (!candidate) return res.status(404).json({ error: 'Candidate row not found' });
+    try {
+      const decision = await recordManualMappingDecision({
+        organizationId,
+        statementId,
+        candidateRowId: candidate.id,
+        canonicalLineId: String(req.body?.canonicalLineId || '') || null,
+        action: 'ACCEPT',
+        reason: String(req.body?.reason || ''),
+        sourceReceiptId: String(req.body?.sourceReceiptId || ''),
+        expectedValuesVersion: Number(req.body?.expectedValuesVersion),
+        idempotencyKey: String(req.header('Idempotency-Key') || ''),
+        userId,
+      });
+      return res.json({ data: { decision }, meta: financeMeta() });
+    } catch (error) {
+      if (error instanceof StatementGovernanceError)
+        return res.status(error.status).json({ error: error.message, code: error.code });
+      throw error;
+    }
   })
 );
 
@@ -3517,7 +3682,8 @@ router.post(
         artifacts: sourceArtifacts,
       });
     }
-    const readme = `# Consultify Finance acceptance package\n\n` +
+    const readme =
+      `# Consultify Finance acceptance package\n\n` +
       `Company: ${pack.entity_name}\n\nPack: ${packId}\n\nCurrency / scale: ${pack.currency} / ${pack.scaling}\n\n` +
       `Generated: ${generatedAt}\n\nThe workbook contains historical statements, 34-ratio catalogue output, ` +
       `Base/Bull/Bear models, assumptions, forecast P&L/BS/CF, validations, valuations, sensitivity/tornado data, sources and audit lineage. ` +
@@ -3534,13 +3700,31 @@ router.post(
       'ratios.json': Buffer.from(jsonText(ratioResult)),
       'scenarios.json': Buffer.from(jsonText({ models, outputs })),
       'assumptions.json': Buffer.from(
-        jsonText(models.map((row) => ({ modelId: row.id, scenario: row.scenario, assumptions: parseObject(row.assumptions_json) })))
+        jsonText(
+          models.map((row) => ({
+            modelId: row.id,
+            scenario: row.scenario,
+            assumptions: parseObject(row.assumptions_json),
+          }))
+        )
       ),
       'valuations.json': Buffer.from(jsonText({ valuations, valuationSnapshots })),
       'checks.json': Buffer.from(jsonText(validations)),
       'evidence-acceptance.json': Buffer.from(jsonText(acceptance)),
       'audit-backup.json': Buffer.from(
-        jsonText({ organizationId, pack, statements, values, sources, analyses, models, outputs, validations, valuations, valuationSnapshots })
+        jsonText({
+          organizationId,
+          pack,
+          statements,
+          values,
+          sources,
+          analyses,
+          models,
+          outputs,
+          validations,
+          valuations,
+          valuationSnapshots,
+        })
       ),
     };
     const manifest = {
@@ -3588,7 +3772,16 @@ router.post(
         title_snapshot, owner_user_id, canonical_home, visibility_scope,
         origin_summary_json, created_by, created_at, last_transition_at)
        VALUES (?, ?, 'sheet', 'ready', 'sheet', ?, ?, 'outputs_library', 'private', ?, ?, ?, ?)`,
-      [artifactId, organizationId, `${pack.entity_name} Finance package`, userId, jsonText(metadata), userId, generatedAt, generatedAt]
+      [
+        artifactId,
+        organizationId,
+        `${pack.entity_name} Finance package`,
+        userId,
+        jsonText(metadata),
+        userId,
+        generatedAt,
+        generatedAt,
+      ]
     );
     await dbRun(
       `INSERT INTO v8_output_exports
@@ -3620,7 +3813,13 @@ router.get(
       data: rows.map((row) => {
         const metadata = parseObject(row.origin_summary_json);
         delete metadata.filePath;
-        return { artifactId: row.artifact_id, title: row.title_snapshot, status: row.delivery_state, createdAt: row.created_at, ...metadata };
+        return {
+          artifactId: row.artifact_id,
+          title: row.title_snapshot,
+          status: row.delivery_state,
+          createdAt: row.created_at,
+          ...metadata,
+        };
       }),
       meta: { ...financeMeta(), contract: 'finance_acceptance_package_v1' },
     });
@@ -3649,7 +3848,10 @@ router.get(
       return res.status(409).json({ error: 'Finance package checksum mismatch' });
     }
     res.setHeader('Content-Type', 'application/zip');
-    res.setHeader('Content-Disposition', `attachment; filename="${safePackageName(String(metadata.fileName).replace(/\.zip$/i, ''))}.zip"`);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${safePackageName(String(metadata.fileName).replace(/\.zip$/i, ''))}.zip"`
+    );
     res.setHeader('X-Content-SHA256', String(metadata.zipSha256));
     return res.send(data);
   })

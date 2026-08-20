@@ -7,7 +7,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback?: any) => (typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key)),
+    t: (_key: string, fallback?: any) =>
+      typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key),
     i18n: { language: 'en' },
   }),
 }));
@@ -35,6 +36,7 @@ vi.mock('@/services/api/v8/finance', () => ({
     putStatementValues: vi.fn(),
     confirmStatement: vi.fn(),
     getCanonicalLines: vi.fn(),
+    getStatementSourceReceipt: vi.fn(),
   },
   shouldFallbackToLegacyFinance: (error: any) => {
     const status = Number(error?.status);
@@ -57,6 +59,22 @@ import { FinancialStatementImportWizard } from '../../../src/components/Finance/
 describe('FinancialStatementImportWizard V8 manual flow seam', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(V8FinanceApi.getStatementSourceReceipt).mockResolvedValue({
+      receipt: {
+        receipt_id: 'receipt-1',
+        original_file_name: 'statement.csv',
+        content_sha256: 'a'.repeat(64),
+        size_bytes: 7,
+        mime_type: 'text/csv',
+        entity_name: 'ACME',
+        periods_json: [],
+        page_ranges_json: [],
+        importer_name: 'consultify-statement-import',
+        importer_version: '2026-08-20',
+        imported_by: 'owner-1',
+        imported_at: '2026-08-20T00:00:00.000Z',
+      },
+    } as any);
     vi.mocked(V8FinanceApi.uploadAndAnalyzeStatement).mockResolvedValue({
       mode: 'legacy',
       statementIds: ['statement-1'],
@@ -78,6 +96,7 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
     await waitFor(() => {
       expect(screen.getByText('Detection Results')).toBeTruthy();
     });
+    fireEvent.change(screen.getAllByRole('combobox')[0], { target: { value: 'P&L' } });
 
     return view;
   }
@@ -149,10 +168,21 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
   });
 
   it('prefers governed detect/extract/map and canonical lines before legacy fallback in the wizard manual flow', async () => {
-    vi.mocked(V8FinanceApi.detectStatement).mockResolvedValue({ statementId: 'statement-1' } as any);
+    vi.mocked(V8FinanceApi.detectStatement).mockResolvedValue({
+      statementId: 'statement-1',
+    } as any);
     vi.mocked(V8FinanceApi.extractStatement).mockResolvedValue({
       statementId: 'statement-1',
       lines: [{ originalLabel: 'Revenue', value: 100, confidence: 0.9 }],
+      statements: [
+        {
+          statementId: 'statement-1',
+          statementType: 'P&L',
+          periodLabel: '2025',
+          sourceReceiptId: 'receipt-1',
+          lines: [{ originalLabel: 'Revenue', value: 100, confidence: 0.9 }],
+        },
+      ],
       sections: [{ sectionKey: 'pl', sectionLabel: 'P&L', confidence: 0.9 }],
       columnSelection: { selectedPeriodLabel: '2024' },
       warnings: [],
@@ -173,7 +203,9 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
       ],
     } as any);
     vi.mocked(V8FinanceApi.getCanonicalLines).mockResolvedValue({
-      canonicalLines: [{ id: 'line-1', statement_type: 'P&L', line_code: 'revenue', line_name: 'Revenue' }],
+      canonicalLines: [
+        { id: 'line-1', statement_type: 'P&L', line_code: 'revenue', line_name: 'Revenue' },
+      ],
       count: 1,
     } as any);
     vi.mocked(Api.post).mockImplementation(async (url: string) => {
@@ -197,8 +229,14 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
     });
     expect(V8FinanceApi.mapStatement).toHaveBeenCalledWith('statement-1', {});
     expect(V8FinanceApi.getCanonicalLines).toHaveBeenCalled();
-    expect(Api.post).not.toHaveBeenCalledWith('/api/finance-statements/statement-1/detect', expect.anything());
-    expect(Api.post).not.toHaveBeenCalledWith('/api/finance-statements/statement-1/extract', expect.anything());
+    expect(Api.post).not.toHaveBeenCalledWith(
+      '/api/finance-statements/statement-1/detect',
+      expect.anything()
+    );
+    expect(Api.post).not.toHaveBeenCalledWith(
+      '/api/finance-statements/statement-1/extract',
+      expect.anything()
+    );
     expect(Api.post).not.toHaveBeenCalledWith('/api/finance-statements/statement-1/map', {});
     expect(Api.get).not.toHaveBeenCalledWith('/api/finance-statements/canonical-lines');
   });
@@ -251,7 +289,9 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
     });
     vi.mocked(Api.get).mockImplementation(async (url: string) => {
       if (url === '/api/finance-statements/canonical-lines') {
-        return [{ id: 'line-1', statement_type: 'P&L', line_code: 'revenue', line_name: 'Revenue' }] as any;
+        return [
+          { id: 'line-1', statement_type: 'P&L', line_code: 'revenue', line_name: 'Revenue' },
+        ] as any;
       }
       throw new Error(`Unexpected GET ${url}`);
     });
@@ -285,7 +325,9 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
   });
 
   it('prefers governed values save before legacy fallback in the wizard manual flow', async () => {
-    vi.mocked(V8FinanceApi.detectStatement).mockResolvedValue({ statementId: 'statement-1' } as any);
+    vi.mocked(V8FinanceApi.detectStatement).mockResolvedValue({
+      statementId: 'statement-1',
+    } as any);
     vi.mocked(V8FinanceApi.extractStatement).mockResolvedValue({
       statementId: 'statement-1',
       lines: [{ originalLabel: 'Revenue', value: 100, confidence: 0.9 }],
@@ -303,12 +345,15 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
       ],
     } as any);
     vi.mocked(V8FinanceApi.getCanonicalLines).mockResolvedValue({
-      canonicalLines: [{ id: 'line-1', statement_type: 'P&L', line_code: 'revenue', line_name: 'Revenue' }],
+      canonicalLines: [
+        { id: 'line-1', statement_type: 'P&L', line_code: 'revenue', line_name: 'Revenue' },
+      ],
       count: 1,
     } as any);
     vi.mocked(V8FinanceApi.putStatementValues).mockResolvedValue({
       statementId: 'statement-1',
       savedCount: 1,
+      valuesVersion: 1,
       readiness: { readinessStatus: 'ready', summary: 'Ready', reasonCodes: [] },
       validation: { status: 'pass', messages: [] },
     } as any);
@@ -338,7 +383,9 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
   });
 
   it('falls back to legacy values save in the wizard manual flow on bounded compatibility statuses', async () => {
-    vi.mocked(V8FinanceApi.detectStatement).mockResolvedValue({ statementId: 'statement-1' } as any);
+    vi.mocked(V8FinanceApi.detectStatement).mockResolvedValue({
+      statementId: 'statement-1',
+    } as any);
     vi.mocked(V8FinanceApi.extractStatement).mockResolvedValue({
       statementId: 'statement-1',
       lines: [{ originalLabel: 'Revenue', value: 100, confidence: 0.9 }],
@@ -356,7 +403,9 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
       ],
     } as any);
     vi.mocked(V8FinanceApi.getCanonicalLines).mockResolvedValue({
-      canonicalLines: [{ id: 'line-1', statement_type: 'P&L', line_code: 'revenue', line_name: 'Revenue' }],
+      canonicalLines: [
+        { id: 'line-1', statement_type: 'P&L', line_code: 'revenue', line_name: 'Revenue' },
+      ],
       count: 1,
     } as any);
     vi.mocked(V8FinanceApi.putStatementValues).mockRejectedValue({ status: 404 });
@@ -388,10 +437,21 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
   });
 
   it('prefers governed confirm before legacy fallback in the wizard manual flow', async () => {
-    vi.mocked(V8FinanceApi.detectStatement).mockResolvedValue({ statementId: 'statement-1' } as any);
+    vi.mocked(V8FinanceApi.detectStatement).mockResolvedValue({
+      statementId: 'statement-1',
+    } as any);
     vi.mocked(V8FinanceApi.extractStatement).mockResolvedValue({
       statementId: 'statement-1',
       lines: [{ originalLabel: 'Revenue', value: 100, confidence: 0.9 }],
+      statements: [
+        {
+          statementId: 'statement-1',
+          statementType: 'P&L',
+          periodLabel: '2025',
+          sourceReceiptId: 'receipt-1',
+          lines: [{ originalLabel: 'Revenue', value: 100, confidence: 0.9 }],
+        },
+      ],
     } as any);
     vi.mocked(V8FinanceApi.mapStatement).mockResolvedValue({
       statementId: 'statement-1',
@@ -406,12 +466,15 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
       ],
     } as any);
     vi.mocked(V8FinanceApi.getCanonicalLines).mockResolvedValue({
-      canonicalLines: [{ id: 'line-1', statement_type: 'P&L', line_code: 'revenue', line_name: 'Revenue' }],
+      canonicalLines: [
+        { id: 'line-1', statement_type: 'P&L', line_code: 'revenue', line_name: 'Revenue' },
+      ],
       count: 1,
     } as any);
     vi.mocked(V8FinanceApi.putStatementValues).mockResolvedValue({
       statementId: 'statement-1',
       savedCount: 1,
+      valuesVersion: 1,
       readiness: { readinessStatus: 'ready', summary: 'Ready', reasonCodes: [] },
       validation: { status: 'pass', messages: [] },
     } as any);
@@ -436,6 +499,9 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
       target: { files: [new File(['revenue'], 'statement.csv', { type: 'text/csv' })] },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Upload & Analyze' }));
+    fireEvent.change(await screen.findAllByRole('combobox').then((items) => items[0]), {
+      target: { value: 'P&L' },
+    });
     fireEvent.click(await screen.findByRole('button', { name: 'Extract Financial Lines' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Save & Validate' }));
     await screen.findByRole('button', { name: 'Confirm & Save' });
@@ -443,7 +509,11 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Confirm & Save' }));
 
     await waitFor(() => {
-      expect(V8FinanceApi.confirmStatement).toHaveBeenCalledWith('statement-1');
+      expect(V8FinanceApi.confirmStatement).toHaveBeenCalledWith(
+        'statement-1',
+        { sourceReceiptId: 'receipt-1', expectedValuesVersion: 1 },
+        'statement-confirm-statement-1-1'
+      );
     });
 
     expect(Api.post).not.toHaveBeenCalledWith('/api/finance-statements/statement-1/confirm', {});
@@ -451,10 +521,21 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
   });
 
   it('falls back to legacy confirm in the wizard manual flow on bounded compatibility statuses', async () => {
-    vi.mocked(V8FinanceApi.detectStatement).mockResolvedValue({ statementId: 'statement-1' } as any);
+    vi.mocked(V8FinanceApi.detectStatement).mockResolvedValue({
+      statementId: 'statement-1',
+    } as any);
     vi.mocked(V8FinanceApi.extractStatement).mockResolvedValue({
       statementId: 'statement-1',
       lines: [{ originalLabel: 'Revenue', value: 100, confidence: 0.9 }],
+      statements: [
+        {
+          statementId: 'statement-1',
+          statementType: 'P&L',
+          periodLabel: '2025',
+          sourceReceiptId: 'receipt-1',
+          lines: [{ originalLabel: 'Revenue', value: 100, confidence: 0.9 }],
+        },
+      ],
     } as any);
     vi.mocked(V8FinanceApi.mapStatement).mockResolvedValue({
       statementId: 'statement-1',
@@ -469,19 +550,22 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
       ],
     } as any);
     vi.mocked(V8FinanceApi.getCanonicalLines).mockResolvedValue({
-      canonicalLines: [{ id: 'line-1', statement_type: 'P&L', line_code: 'revenue', line_name: 'Revenue' }],
+      canonicalLines: [
+        { id: 'line-1', statement_type: 'P&L', line_code: 'revenue', line_name: 'Revenue' },
+      ],
       count: 1,
     } as any);
     vi.mocked(V8FinanceApi.putStatementValues).mockResolvedValue({
       statementId: 'statement-1',
       savedCount: 1,
+      valuesVersion: 1,
       readiness: { readinessStatus: 'ready', summary: 'Ready', reasonCodes: [] },
       validation: { status: 'pass', messages: [] },
     } as any);
     vi.mocked(V8FinanceApi.confirmStatement).mockRejectedValue({ status: 404 });
     vi.mocked(Api.post).mockImplementation(async (url: string, body?: any) => {
       if (url === '/api/finance-statements/statement-1/confirm') {
-        expect(body).toEqual({});
+        expect(body).toEqual({ sourceReceiptId: 'receipt-1', expectedValuesVersion: 1 });
         return { success: true } as any;
       }
       throw new Error(`Unexpected POST ${url}`);
@@ -499,6 +583,9 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
       target: { files: [new File(['revenue'], 'statement.csv', { type: 'text/csv' })] },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Upload & Analyze' }));
+    fireEvent.change(await screen.findAllByRole('combobox').then((items) => items[0]), {
+      target: { value: 'P&L' },
+    });
     fireEvent.click(await screen.findByRole('button', { name: 'Extract Financial Lines' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Save & Validate' }));
     await screen.findByRole('button', { name: 'Confirm & Save' });
@@ -506,10 +593,205 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Confirm & Save' }));
 
     await waitFor(() => {
-      expect(Api.post).toHaveBeenCalledWith('/api/finance-statements/statement-1/confirm', {});
+      expect(Api.post).toHaveBeenCalledWith(
+        '/api/finance-statements/statement-1/confirm',
+        { sourceReceiptId: 'receipt-1', expectedValuesVersion: 1 },
+        { extraHeaders: { 'Idempotency-Key': 'statement-confirm-statement-1-1' } }
+      );
     });
 
-    expect(V8FinanceApi.confirmStatement).toHaveBeenCalledWith('statement-1');
+    expect(V8FinanceApi.confirmStatement).toHaveBeenCalledWith(
+      'statement-1',
+      { sourceReceiptId: 'receipt-1', expectedValuesVersion: 1 },
+      'statement-confirm-statement-1-1'
+    );
     expect(onComplete).toHaveBeenCalledWith('statement-1');
+  });
+
+  it('routes a smart analysis through review and governed confirmation', async () => {
+    vi.mocked(V8FinanceApi.uploadAndAnalyzeStatement).mockResolvedValue({
+      mode: 'smart',
+      statementIds: ['smart-1'],
+      statementPackId: null,
+      analysis: {
+        entityName: 'ACME',
+        periodLabel: '2025',
+        currency: 'PLN',
+        scaling: 'units',
+        sectionTypes: ['P&L'],
+        totalLines: 1,
+      },
+      statements: [{ statementId: 'smart-1', statementType: 'P&L', lineCount: 1 }],
+    } as any);
+    vi.mocked(V8FinanceApi.extractStatement).mockResolvedValue({
+      statements: [
+        {
+          statementId: 'smart-1',
+          statementType: 'P&L',
+          periodLabel: '2025',
+          sourceReceiptId: 'receipt-smart-1',
+          lines: [],
+        },
+      ],
+    } as any);
+    vi.mocked(V8FinanceApi.mapStatement).mockResolvedValue({
+      mappedLines: [
+        { originalLabel: 'Revenue', value: 100, confidence: 0.9, suggestedCanonicalId: 'line-1' },
+      ],
+    } as any);
+    vi.mocked(V8FinanceApi.getCanonicalLines).mockResolvedValue({
+      canonicalLines: [
+        { id: 'line-1', statement_type: 'P&L', line_code: 'revenue', line_name: 'Revenue' },
+      ],
+    } as any);
+    vi.mocked(V8FinanceApi.putStatementValues).mockResolvedValue({
+      valuesVersion: 7,
+      validation: { status: 'pass', messages: [] },
+      readiness: { readinessStatus: 'ready', summary: 'Ready', reasonCodes: [] },
+    } as any);
+    vi.mocked(V8FinanceApi.confirmStatement).mockResolvedValue({ success: true } as any);
+
+    render(<FinancialStatementImportWizard />);
+    fireEvent.change(document.querySelector('input[type="file"]') as HTMLInputElement, {
+      target: { files: [new File(['revenue'], 'smart.xlsx')] },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Upload & Analyze' }));
+    fireEvent.click(
+      await screen.findByRole('button', {
+        name: /Extract selected statement section|Extract Financial Lines/,
+      })
+    );
+    fireEvent.click(await screen.findByRole('button', { name: 'Save & Validate' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirm & Save' }));
+
+    await waitFor(() =>
+      expect(V8FinanceApi.confirmStatement).toHaveBeenCalledWith(
+        'smart-1',
+        { sourceReceiptId: 'receipt-smart-1', expectedValuesVersion: 7 },
+        'statement-confirm-smart-1-7'
+      )
+    );
+  });
+
+  async function stageTwoStatementSections(secondReadiness: 'ready' | 'recoverable' = 'ready') {
+    vi.mocked(V8FinanceApi.uploadAndAnalyzeStatement).mockResolvedValue({
+      mode: 'legacy',
+      statementIds: ['pl-1'],
+      detection: {
+        statementType: '',
+        confidence: 0.9,
+        currency: 'PLN',
+        scaling: 'units',
+        language: 'pl',
+        containsMultipleStatements: true,
+        containedStatementTypes: ['P&L', 'BS'],
+      },
+    } as any);
+    vi.mocked(V8FinanceApi.detectStatement).mockResolvedValue({} as any);
+    vi.mocked(V8FinanceApi.extractStatement).mockResolvedValue({
+      statements: [
+        {
+          statementId: 'pl-1',
+          statementType: 'P&L',
+          periodLabel: '2025',
+          sourceReceiptId: 'receipt-pl-1',
+          lines: [],
+        },
+        {
+          statementId: 'bs-1',
+          statementType: 'BS',
+          periodLabel: '2025',
+          comparisonOfStatementId: 'pl-1',
+          sourceReceiptId: 'receipt-bs-1',
+          lines: [],
+        },
+      ],
+    } as any);
+    vi.mocked(V8FinanceApi.mapStatement).mockImplementation(
+      async (id: string) =>
+        ({
+          mappedLines: [
+            { originalLabel: id, value: 100, confidence: 0.8, suggestedCanonicalId: 'line-1' },
+          ],
+        }) as any
+    );
+    vi.mocked(V8FinanceApi.getCanonicalLines).mockResolvedValue({
+      canonicalLines: [
+        { id: 'line-1', statement_type: 'P&L', line_code: 'revenue', line_name: 'Revenue' },
+      ],
+    } as any);
+    vi.mocked(V8FinanceApi.putStatementValues)
+      .mockResolvedValueOnce({
+        valuesVersion: 11,
+        validation: { status: 'pass', messages: [] },
+        readiness: { readinessStatus: 'ready', summary: 'Ready', reasonCodes: [] },
+      } as any)
+      .mockResolvedValueOnce({
+        valuesVersion: 12,
+        validation: { status: secondReadiness === 'ready' ? 'pass' : 'warnings', messages: [] },
+        readiness: {
+          readinessStatus: secondReadiness,
+          summary: secondReadiness === 'ready' ? 'Ready' : 'Mapping requires review',
+          reasonCodes: secondReadiness === 'ready' ? [] : ['MAPPING_REVIEW_REQUIRED'],
+        },
+      } as any);
+    vi.mocked(V8FinanceApi.getStatementSourceReceipt).mockImplementation(async (id: string) => ({
+      receipt: {
+        receipt_id: `receipt-${id}`,
+        original_file_name: 'whole.xlsx',
+        content_sha256: 'a'.repeat(64),
+        size_bytes: 100,
+        mime_type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        entity_name: 'ACME',
+        periods_json: [{ label: '2025' }],
+        page_ranges_json: [{ pageStart: 1, pageEnd: 2 }],
+        importer_name: 'consultify-statement-import',
+        importer_version: '2026-08-20',
+        imported_by: 'owner-1',
+        imported_at: '2026-08-20T00:00:00.000Z',
+      },
+    })) as any;
+    vi.mocked(V8FinanceApi.confirmStatement).mockResolvedValue({ success: true } as any);
+    const view = render(<FinancialStatementImportWizard />);
+    fireEvent.change(view.container.querySelector('input[type="file"]')!, {
+      target: { files: [new File(['x'], 'whole.xlsx')] },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Upload & Analyze' }));
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Extract selected statement section' })
+    );
+    expect(await screen.findByRole('tab', { name: /P&L · 2025/ })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /BS · 2025 · comparison/ })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Save & Validate' }));
+    return view;
+  }
+
+  it('requires receipts and saved versions, then confirms every ready section sequentially', async () => {
+    await stageTwoStatementSections();
+    await waitFor(() => expect(V8FinanceApi.putStatementValues).toHaveBeenCalledTimes(2));
+    expect(V8FinanceApi.putStatementValues).toHaveBeenNthCalledWith(1, 'pl-1', expect.anything());
+    expect(V8FinanceApi.putStatementValues).toHaveBeenNthCalledWith(2, 'bs-1', expect.anything());
+    const confirm = await screen.findByRole('button', { name: 'Confirm & Save' });
+    fireEvent.click(confirm);
+    await waitFor(() => expect(V8FinanceApi.confirmStatement).toHaveBeenCalledTimes(2));
+    expect(V8FinanceApi.confirmStatement).toHaveBeenNthCalledWith(
+      1,
+      'pl-1',
+      { sourceReceiptId: 'receipt-pl-1', expectedValuesVersion: 11 },
+      'statement-confirm-pl-1-11'
+    );
+    expect(V8FinanceApi.confirmStatement).toHaveBeenNthCalledWith(
+      2,
+      'bs-1',
+      { sourceReceiptId: 'receipt-bs-1', expectedValuesVersion: 12 },
+      'statement-confirm-bs-1-12'
+    );
+  });
+
+  it('fails closed when any staged statement is not ready', async () => {
+    await stageTwoStatementSections('recoverable');
+    expect(await screen.findByText(/BS 2025: mapping requires review/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Confirm & Save' })).not.toBeInTheDocument();
+    expect(V8FinanceApi.confirmStatement).not.toHaveBeenCalled();
   });
 });
