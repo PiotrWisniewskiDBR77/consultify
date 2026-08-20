@@ -7,9 +7,14 @@ import { fileURLToPath } from 'node:url';
 import { hashCanonicalManifest } from './verify-release-candidate-bundle.mjs';
 
 const REQUIRED = ['backendBuild', 'frontendBuild', 'reporter82', 'typecheck'];
+const GIT_MAX_BUFFER = 64 * 1024 * 1024;
 const hash = (v) => createHash('sha256').update(v).digest('hex');
 const git = (r, a, e = 'utf8') =>
-  execFileSync('git', ['-C', r, ...a], { encoding: e, stdio: ['ignore', 'pipe', 'pipe'] });
+  execFileSync('git', ['-C', r, ...a], {
+    encoding: e,
+    maxBuffer: GIT_MAX_BUFFER,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
 const text = (r, a) => git(r, a).trim(),
   file = (r, s, p) => git(r, ['show', `${s}:${p}`], null);
 const artifact = (r, s, p) => ({ path: p, sha256: hash(file(r, s, p)) });

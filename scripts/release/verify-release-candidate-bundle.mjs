@@ -10,6 +10,7 @@ const SHA = /^[0-9a-f]{40}$/,
   HASH = /^[0-9a-f]{64}$/,
   ROOT = 'server/migrations/';
 const REQUIRED = ['backendBuild', 'frontendBuild', 'reporter82', 'typecheck'];
+const GIT_MAX_BUFFER = 64 * 1024 * 1024;
 const hash = (v) => createHash('sha256').update(v).digest('hex');
 const stable = (v) =>
   Array.isArray(v)
@@ -27,7 +28,11 @@ export const canonicalManifestBody = (m) => {
 };
 export const hashCanonicalManifest = (m) => hash(canonicalManifestBody(m));
 const git = (r, a, e = 'utf8') =>
-  execFileSync('git', ['-C', r, ...a], { encoding: e, stdio: ['ignore', 'pipe', 'pipe'] });
+  execFileSync('git', ['-C', r, ...a], {
+    encoding: e,
+    maxBuffer: GIT_MAX_BUFFER,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
 const text = (r, a) => git(r, a).trim(),
   file = (r, s, p) => git(r, ['show', `${s}:${p}`], null);
 const migrations = (r, s) => {
