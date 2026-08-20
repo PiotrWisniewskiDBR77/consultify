@@ -3286,7 +3286,7 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
             {selfConnectEnabled ? (
               <div className="mt-5 grid gap-3 md:grid-cols-2">
                 <label className="block">
-                  <span className="block text-xs font-semibold uppercase tracking-wider text-c-text-muted">
+                  <span className="block text-xs font-semibold uppercase tracking-wider text-c-text-secondary">
                     {t('partner.connect.companyName', 'Nazwa firmy')}
                   </span>
                   <input

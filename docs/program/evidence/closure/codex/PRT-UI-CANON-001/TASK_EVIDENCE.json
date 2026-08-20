@@ -1,7 +1,7 @@
 {
   "taskId": "PRT-UI-CANON-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "020eff97ac03cac5341d41a669888554bf4e696a",
+  "productSha": "0529405e9f3ef7b182ada28a6a3a1aab836ac007",
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
   "changedPaths": [
     "src/components/Partner/PartnerCanonicalRuntimePanel.tsx",
@@ -26,10 +26,25 @@
       "command": "vitest PartnerCanonicalRuntimePanel and EarningsSection payout-settings",
       "exitCode": 0,
       "result": "5/5 across 2 files"
+    },
+    {
+      "command": "npx vitest run PartnerCanonicalRuntimePanel, EarningsSection payout-request/payout-settings and CommissionView continuity --retry=0",
+      "exitCode": 0,
+      "result": "fresh exact-current 4/4 files, 14/14 tests; no Maximum update depth warning"
+    },
+    {
+      "command": "fresh disposable PostgreSQL + signed mounted partner-v8-zero-writer.signed.spec.ts --workers=1 --retries=0",
+      "exitCode": 0,
+      "result": "2/2; tenant and SUPERADMIN cold reload remain read-only; no payout/accrual writer exposed"
+    },
+    {
+      "command": "G4_SURFACE=PRT mounted signed browser matrix after contrast correction",
+      "exitCode": 0,
+      "result": "14/14 cells; 0 console errors; 0 HTTP errors including 404; axe critical/serious 0/0; cold reopen PASS"
     }
   ],
   "denominators": {
-    "focusedTests": "5/5",
+    "focusedTests": "14/14",
     "canonicalSurfaces": "5/5",
     "automatedG4Cells": "14/14",
     "automatedG4Screenshots": "14/14",
@@ -62,7 +77,7 @@
       "9fca795cd15200d294b06d040837ce512d45328c"
     ],
     "technicalFact": "0967ca9955 and c6635b1f48 enforce approved-out economics and a read-only Partner UI; acfac9e3de, f8660eb684 and 12fc26fd6e add signed zero-writer and retained visual evidence; 9fca795cd1 adds the governed immutable non-economic participant referral ledger. All listed commits are ancestors of 2db606fdaf.",
-    "boundary": "This removes the stale source-red interpretation of reachable Partner economics writers. Historical console observations and the legacy Earnings warning still require an exact-current rerun/qualification; owner VoiceOver/persona/brand acceptance remains open."
+    "boundary": "The exact-current rerun on 0529405e9f reproduced neither the historical 2x404 nor the Earnings Maximum update depth warning. The only mounted source-red found was insufficient light-theme contrast on the self-connect company-name label; the bounded production style correction is covered by the fresh zero-violation G4. Owner VoiceOver/persona/brand acceptance remains open."
   },
   "browserArtifacts": [
     {
@@ -135,6 +150,18 @@
         "notFound404": 0,
         "other": 0
       }
+    },
+    {
+      "kind": "mounted_signed_auth_g4_exact_current_postfix",
+      "candidateSha": "0529405e9f3ef7b182ada28a6a3a1aab836ac007",
+      "resultPath": "docs/program/evidence/closure/ui-g4/PRT-UI-CANON-001/G4_SWEEP_RESULT.json",
+      "resultSha256": "4da1d7ad1a786dc8560ce432787b7e17edf5f85beff4484125d7e1dc5859015d",
+      "cells": 14,
+      "consoleErrors": 0,
+      "httpErrors": 0,
+      "axeCritical": 0,
+      "axeSerious": 0,
+      "coldReopen": true
     }
   ],
   "rollback": {
@@ -144,9 +171,7 @@
   "verdict": "PARTIAL",
   "openBlockers": [
     "Manual VoiceOver, named-persona and visual/brand owner acceptance remain pending; see OWNER_UAT_VOICEOVER_RUNBOOK.md.",
-    "Task-specific UI states not reached by the final automated sweep: stale.",
-    "Observed console HTTP errors require task-specific qualification: total=2, 403=0, 404=2, other=0.",
-    "The historical legacy Earnings maximum-update-depth warning/retry remains to be rerun and qualified at reconciliation base 2db606fdaf; it is not classified as current source red without reproduction."
+    "The registry declares no synthetic stale state for this surface, so stale-state reachability remains outside this G4 denominator rather than being claimed as tested."
   ],
   "blockerReconciliation": [
     {
@@ -156,22 +181,24 @@
     },
     {
       "historicalBlocker": "The legacy Earnings test still emits a pre-existing maximum-update-depth warning and required one retry.",
-      "classification": "RETAINED_RERUN_BOUNDARY",
-      "detail": "The historical observation remains represented as an exact-current rerun/qualification boundary, not as a reproduced current source defect."
+      "classification": "RESOLVED_NOT_REPRODUCED_EXACT_CURRENT",
+      "detail": "Fresh exact-current focused 14/14 and mounted signed browser gates emitted no Maximum update depth warning and required no retry."
     }
   ],
   "resolvedBlockers": [
     "Final mounted signed-auth automated G4 completed on candidate 836bfd633af7a689e7a3fb06971cbd8fe57bafe7: responsive cells, screenshots, axe critical/serious, unnamed controls, settled keyboard focus, deep-link, reload and cold reopen passed.",
     "The prior reachable Partner economics writer source-red claim is superseded by ancestor commits 0967ca9955 and c6635b1f48, with signed zero-writer/visual evidence in acfac9e3de, f8660eb684 and 12fc26fd6e at reconciliation base 2db606fdaf.",
-    "Governed non-economic participant referral history remains available through ancestor commit 9fca795cd1."
+    "Governed non-economic participant referral history remains available through ancestor commit 9fca795cd1.",
+    "Exact-current 0529405e9f mounted rerun recorded 0 HTTP errors (including 404), 0 console errors, and no Maximum update depth warning; the historical observations are no longer current blockers.",
+    "The light-theme self-connect label contrast defect found by the first fresh G4 was corrected from text-c-text-muted to text-c-text-secondary; the post-fix 14-cell matrix reports axe critical/serious 0/0."
   ],
   "automatedG4Verdict": {
     "verdict": "PASS_EXACT_SHA",
-    "candidateSha": "836bfd633af7a689e7a3fb06971cbd8fe57bafe7",
-    "reconciliationSha": "086219464dd61d6134d057705d5a19d118a806e4",
+    "candidateSha": "0529405e9f3ef7b182ada28a6a3a1aab836ac007",
+    "reconciliationSha": "0529405e9f3ef7b182ada28a6a3a1aab836ac007",
     "authentication": "real signed JWT from /api/test-support/bootstrap",
-    "e2eMode": false,
-    "database": "real PostgreSQL; current schema apply 0, repeat 0, dry-run pending 0",
+    "e2eMode": true,
+    "database": "fresh disposable real PostgreSQL; canonical 794 migrations plus 81 V8 migrations applied before signed browser execution",
     "cells": {
       "total": 14,
       "rendered": 14
@@ -203,9 +230,9 @@
     },
     "horizontalOverflowCells": 0,
     "consoleErrors": {
-      "total": 2,
+      "total": 0,
       "forbidden403": 0,
-      "notFound404": 2,
+      "notFound404": 0,
       "other": 0
     },
     "humanAcceptance": "PENDING — automated G4 does not sign VoiceOver, persona or visual-owner acceptance",
@@ -217,7 +244,7 @@
     }
   },
   "exactCurrentG4": {
-    "candidateSha": "4eec1d27952bc5642018495575665f5784e04f71",
+    "candidateSha": "0529405e9f3ef7b182ada28a6a3a1aab836ac007",
     "verdict": "AUTOMATED_G4_PASS_HUMAN_PENDING",
     "cells": 14,
     "axeCritical": 0,
