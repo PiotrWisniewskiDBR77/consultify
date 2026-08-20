@@ -30,7 +30,12 @@
   "commands": [
     {"command": "RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=<isolated-local-pg> npx vitest run tests/resultsVnext/kpi/legacyIsolation.realdb.test.ts tests/resultsVnext/okr/legacyIsolation.realdb.test.ts tests/resultsVnext/roi/legacyIsolation.realdb.test.ts", "exitCode": 0, "result": "6 tests passed; KPI/OKR/ROI vNext read models excluded poisoned legacy rows"}
   ],
-  "denominators": {"legacyIsolationTests": "6/6", "domains": 3},
+  "denominators": {
+    "legacyIsolationTests": "6/6",
+    "domains": 3,
+    "exactCurrentWriterRegistry": "28 total = 23 disabled with non-null canonical successors + 5 observed with successor:null",
+    "exactCurrentRegistryTests": "8/8 PASS on e6ca206c0035f653118d9aadbfddf61d452ab52e"
+  },
   "fixtures": {"database": "isolated local PostgreSQL", "poisonedRows": "same-tenant legacy KPI, OKR and ROI records"},
   "negativeControls": [
     "same-tenant poisoned legacy rows never appear in canonical KPI/OKR/ROI reads",
@@ -41,6 +46,21 @@
   "rollback": {"code": "test-only change", "data": "test fixture teardown preserves append-only realization semantics"},
   "verdict": "PARTIAL",
   "openBlockers": [
-    "Usage telemetry, backfill parity and owner-authorized retirement of all legacy writers remain required before cutover is complete."
-  ]
+    "Five exact-current writers remain observed and intentionally open because each has successor:null. Closing them requires a proven canonical semantic successor or an explicit owner-approved semantic cutover; null-successor retirement is not authorized.",
+    "Usage-window telemetry, any required backfill parity and owner-authorized final retirement remain required before the cutover task can become DONE."
+  ],
+  "exactCurrentRegistryReconciliation20260820": {
+    "candidateProductSha": "e6ca206c0035f653118d9aadbfddf61d452ab52e",
+    "source": "server/src/services/legacyCutover/registry/results.ts",
+    "inventory": {
+      "total": 28,
+      "disabled": 23,
+      "observed": 5,
+      "disabledWithCanonicalSuccessor": 23,
+      "observedWithNullSuccessor": 5
+    },
+    "command": "npx vitest run server/src/services/legacyCutover/__tests__/resultsCutover.registry.test.ts --no-file-parallelism --maxWorkers=1 --retry=0",
+    "result": "PASS 1 file / 8 tests",
+    "decision": "The earlier observation denominator is historical discovery evidence, not the current cutover denominator. No remaining null-successor writer was retired or relabelled."
+  }
 }
