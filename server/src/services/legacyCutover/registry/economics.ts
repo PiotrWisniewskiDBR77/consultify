@@ -358,12 +358,12 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'ECO-W29',
       method: 'POST',
       path: /^\/valuations\/[^/]+\/negotiation-pack\/?$/,
-      state: 'observed',
-      successor: null,
+      state: 'disabled',
+      successor: '/api/v8/finance-v2/valuation/legacy/:legacyId/negotiation-pack',
       legacyTable: 'valuations',
       legacyIdFromPath: idAt2,
       reason:
-        'Generates and stores a negotiation pack on the valuation addressed by :id: UPDATE valuations SET negotiation_pack (economics.routes.ts:2897, valuationService.ts:1687). No proven successor.',
+        'The mounted caller generates a tenant-bound canonical negotiation-pack snapshot from persisted method, terminal and EV/equity results, pins artifact/BV/current-WR identity, stores an immutable replay receipt, cold-verifies the exact pack and only then projects it to the legacy compatibility column.',
     },
     {
       writerId: 'ECO-W30',

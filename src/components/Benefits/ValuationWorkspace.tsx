@@ -16,6 +16,7 @@ import {
   computeCanonicalLegacyValuation,
   createRegisteredValuation,
   generateCanonicalValuationAdvisor,
+  generateCanonicalLegacyNegotiationPack,
   getCanonicalValuationInputs,
   getCanonicalValuationResults,
   saveCanonicalValuationAssumptions,
@@ -481,17 +482,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
     if (!selectedId) return;
     setBusy(true);
     try {
-      const res = await fetch(`${API_URL}/economics/valuations/${selectedId}/negotiation-pack`, {
-        method: 'POST',
-        headers: getHeaders(),
-      });
-      const d = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        toast.error(
-          d?.error || t('valuation.negotiation.failed', 'Failed to generate negotiation pack')
-        );
-        return;
-      }
+      await generateCanonicalLegacyNegotiationPack(selectedId);
       trackFunnelEvent('valuation_negotiation_pack_generated', { valuationId: selectedId });
       toast.success(t('valuation.negotiation.ok', 'Negotiation pack generated'));
       await fetchValuation(selectedId);

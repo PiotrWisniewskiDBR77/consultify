@@ -614,8 +614,8 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
     ]);
   });
 
-  it('blocks depth, compute, typed assumptions and peers legacy doors before mutation with exact telemetry', async () => {
-    const before = await pool.query(`SELECT assumptions,peers FROM valuations WHERE id=$1`, [
+  it('blocks depth, compute, negotiation pack, typed assumptions and peers legacy doors before mutation with exact telemetry', async () => {
+    const before = await pool.query(`SELECT assumptions,peers,negotiation_pack FROM valuations WHERE id=$1`, [
       mappedValuationId,
     ]);
     const assumptions = await request(app)
@@ -634,10 +634,15 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
       .post(`/api/economics/valuations/${mappedValuationId}/compute`)
       .set('x-request-id', `${prefix}-wave9-compute`)
       .send({});
+    const negotiation = await request(app)
+      .post(`/api/economics/valuations/${mappedValuationId}/negotiation-pack`)
+      .set('x-request-id', `${prefix}-wave10-negotiation`)
+      .send({});
     expect(assumptions.status).toBe(410);
     expect(peers.status).toBe(410);
     expect(depth.status).toBe(410);
     expect(compute.status).toBe(410);
+    expect(negotiation.status).toBe(410);
     expect(depth.body).toMatchObject({
       writerId: 'ECO-W23',
       successor: '/api/v8/finance-v2/valuation/legacy/:legacyId/depth',
@@ -646,6 +651,7 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
       writerId: 'ECO-W26',
       successor: '/api/v8/finance-v2/valuation/legacy/:legacyId/compute',
     });
+    expect(negotiation.body).toMatchObject({writerId:'ECO-W29',successor:'/api/v8/finance-v2/valuation/legacy/:legacyId/negotiation-pack'});
     expect(assumptions.body).toMatchObject({
       writerId: 'ECO-W24',
       successor: '/api/v8/finance-v2/valuation/legacy/:legacyId/assumptions',
@@ -654,10 +660,29 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
       writerId: 'ECO-W25',
       successor: '/api/v8/finance-v2/valuation/legacy/:legacyId/peers',
     });
-    const after = await pool.query(`SELECT assumptions,peers FROM valuations WHERE id=$1`, [
+    const after = await pool.query(`SELECT assumptions,peers,negotiation_pack FROM valuations WHERE id=$1`, [
       mappedValuationId,
     ]);
     expect(after.rows).toEqual(before.rows);
+  });
+
+  it('restores only ECO-W29 through the writer-scoped rollback lever',async()=>{
+    const previous=process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+    process.env.FINANCE_LEGACY_ROLLBACK_WRITERS='ECO-W29';
+    try{
+      await pool.query(`UPDATE valuations SET status='APPROVED',negotiation_pack=NULL,results=$3::jsonb WHERE organization_id=$1 AND id=$2`,[orgA,mappedValuationId,JSON.stringify({dcf:{enterpriseValue:1000,discountRatePercent:11,terminalMethod:'gordon'},tornado:[{driver:'WACC'}]})]);
+      const requestId=`${prefix}-wave10-negotiation-rollback`;
+      const response=await request(app).post(`/api/economics/valuations/${mappedValuationId}/negotiation-pack`).set('x-request-id',requestId).send({});
+      expect(response.status).toBe(200);expect(response.body).toMatchObject({success:true});
+      const legacy=await pool.query(`SELECT negotiation_pack FROM valuations WHERE organization_id=$1 AND id=$2`,[orgA,mappedValuationId]);
+      expect(legacy.rows[0].negotiation_pack).toMatchObject({valuationId:mappedValuationId});
+      const event=await pool.query(`SELECT writer_id,access_kind,successor_path FROM legacy_cutover_usage_events WHERE organization_id=$1 AND request_id=$2`,[orgA,requestId]);
+      expect(event.rows).toEqual([{writer_id:'ECO-W29',access_kind:'rollback_writer',successor_path:'/api/v8/finance-v2/valuation/legacy/:legacyId/negotiation-pack'}]);
+      const canonical=await pool.query(`SELECT idempotency_key FROM finance_valuation_negotiation_pack_receipts WHERE organization_id=$1 AND legacy_valuation_id=$2`,[orgA,mappedValuationId]);expect(canonical.rows).toHaveLength(0);
+    }finally{
+      await pool.query(`UPDATE valuations SET status='DRAFT' WHERE organization_id=$1 AND id=$2`,[orgA,mappedValuationId]);
+      if(previous===undefined)delete process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;else process.env.FINANCE_LEGACY_ROLLBACK_WRITERS=previous;
+    }
   });
 
   it('restores only ECO-W23 through the writer-scoped rollback lever', async () => {

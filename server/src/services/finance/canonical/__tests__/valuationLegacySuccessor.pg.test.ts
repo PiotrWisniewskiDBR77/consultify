@@ -7,7 +7,7 @@ const REAL = process.env.RUN_DB_TESTS==='1'&&process.env.MOCK_DB==='false'&&Stri
 if(REAL) process.env.DB_TYPE='postgres';
 
 describe.skipIf(!REAL)('FIN-CANONICAL-SUCCESSORS-WAVE4 realPG',()=>{
-  let txWrap:any,createArtifact:any,writeWacc:any,writePeers:any,writeDepth:any,loadDirect:any,readInputs:any,runLegacyCompute:any,findOrCreateMethod:any,computeGordon:any,discountFlows:any,computeEquity:any,writeTerminal:any,writeBridge:any;
+  let txWrap:any,createArtifact:any,writeWacc:any,writePeers:any,writeDepth:any,loadDirect:any,readInputs:any,runLegacyCompute:any,generateNegotiationPack:any,findOrCreateMethod:any,computeGordon:any,discountFlows:any,computeEquity:any,writeTerminal:any,writeBridge:any;
   const orgId=`org-fin-wave4-${randomUUID()}`, userId=`user-fin-wave4-${randomUUID()}`, legacyId=randomUUID();
   let identity:any;
   beforeAll(async()=>{
@@ -16,6 +16,7 @@ describe.skipIf(!REAL)('FIN-CANONICAL-SUCCESSORS-WAVE4 realPG',()=>{
     ({writeCanonicalLegacyWacc:writeWacc,writeCanonicalLegacyPeers:writePeers,writeCanonicalLegacyValuationDepth:writeDepth}=await import('../valuationLegacySuccessorService.js'));
     ({loadCanonicalDirectValuationAssumptions:loadDirect,readCanonicalLegacyValuationInputs:readInputs}=await import('../valuationLegacySuccessorService.js'));
     ({runCanonicalLegacyValuationCompute:runLegacyCompute}=await import('../valuationLegacyComputeAdapterService.js'));
+    ({generateCanonicalLegacyNegotiationPack:generateNegotiationPack}=await import('../valuationNegotiationPackService.js'));
     ({findOrCreateMethod}=await import('../valuationComputeService.js'));
     ({computeGordonTerminalValue:computeGordon,writeTerminalRow:writeTerminal}=await import('../valuationTerminalService.js'));
     ({discountCashFlows:discountFlows}=await import('../valuationDiscountService.js'));
@@ -184,6 +185,30 @@ describe.skipIf(!REAL)('FIN-CANONICAL-SUCCESSORS-WAVE4 realPG',()=>{
     expect(replay.status).toBe(200);expect(replay.body.data.replay).toBe(true);expect(replay.body.data.jobId).toBe(first.body.data.jobId);
     const cold=await txWrap((tx:any)=>tx.queryOne(`SELECT job_id,enterprise_value_decimal,equity_value_decimal FROM finance_valuation_compute_command_receipts WHERE organization_id=? AND idempotency_key=?`,[orgId,key]));
     expect(cold.job_id).toBe(first.body.data.jobId);expect(Number(cold.enterprise_value_decimal)).toBeCloseTo(Number(first.body.data.enterpriseValue),8);expect(Number(cold.equity_value_decimal)).toBeCloseTo(Number(first.body.data.equityValue),8);
+  });
+
+  it('generates one canonical negotiation pack, replays exactly, projects compatibly and checks authority before replay',async()=>{
+    await txWrap((tx:any)=>tx.queryRun(`UPDATE valuations SET status='APPROVED' WHERE organization_id=? AND id=?`,[orgId,legacyId]));
+    const key=`negotiation-${randomUUID()}`;
+    const params={organizationId:orgId,userId,legacyId,expected:identity,idempotencyKey:key};
+    const results=await Promise.all(Array.from({length:8},()=>generateNegotiationPack(params)));
+    expect(results.filter((row:any)=>row.replay===false)).toHaveLength(1);
+    expect(results.filter((row:any)=>row.replay===true)).toHaveLength(7);
+    expect(new Set(results.map((row:any)=>row.sourceResultSha256)).size).toBe(1);
+    const first=results[0];
+    const cold=await txWrap(async(tx:any)=>({
+      pack:await tx.queryOne(`SELECT source_result_sha256,pack_json FROM finance_valuation_negotiation_packs WHERE organization_id=? AND business_version_id=?`,[orgId,identity.businessVersionId]),
+      receipts:await tx.queryAll(`SELECT request_sha256,response_json FROM finance_valuation_negotiation_pack_receipts WHERE organization_id=? AND idempotency_key=?`,[orgId,key]),
+      legacy:await tx.queryOne(`SELECT negotiation_pack FROM valuations WHERE organization_id=? AND id=?`,[orgId,legacyId]),
+    }));
+    expect(cold.receipts).toHaveLength(1);expect(cold.pack.source_result_sha256).toBe(first.sourceResultSha256);expect(cold.pack.pack_json).toEqual(first.pack);expect(cold.legacy.negotiation_pack).toEqual(first.pack);
+    await expect(generateNegotiationPack({...params,expected:{...identity,workingRevisionVersion:999}})).rejects.toMatchObject({code:'CANONICAL_IDENTITY_CAS_CONFLICT'});
+    await expect(txWrap((tx:any)=>tx.queryRun(`UPDATE finance_valuation_negotiation_pack_receipts SET request_sha256=repeat('0',64) WHERE organization_id=? AND idempotency_key=?`,[orgId,key]))).rejects.toThrow(/append-only/);
+    await expect(txWrap((tx:any)=>tx.queryRun(`DELETE FROM finance_valuation_negotiation_pack_receipts WHERE organization_id=? AND idempotency_key=?`,[orgId,key]))).rejects.toThrow(/append-only/);
+    await txWrap((tx:any)=>tx.queryRun(`UPDATE organization_members SET status='REVOKED' WHERE organization_id=? AND user_id=?`,[orgId,userId]));
+    await expect(generateNegotiationPack(params)).rejects.toMatchObject({code:'ORG_MEMBERSHIP_REVOKED'});
+    await txWrap((tx:any)=>tx.queryRun(`UPDATE organization_members SET status='ACTIVE' WHERE organization_id=? AND user_id=?`,[orgId,userId]));
+    expect((await generateNegotiationPack(params)).replay).toBe(true);
   });
 
   it('rolls back method, terminal and bridge publication when receipt insertion fails',async()=>{
