@@ -212,8 +212,8 @@
     "technicalVerdict": "PASS_CURRENT_SHA",
     "g4": "NOT_VERIFIED; no browser evidence added in this bounded technical pass"
   },
-  "verdict": "PARTIAL",
-  "verdictRationale": "PARTIAL retained at exact canonical 2db606fdaf48b1673a1b40d604dd1221ef288c6c. The previously live default-suite regression is resolved: the named tool-session roundtrip contract passes 11/11 and the strict-membership middleware regression suite passes 18/18 on this exact SHA. No current technical source red was reproduced in this bounded no-PostgreSQL reconciliation. The literal remaining boundary is unchanged: mounted browser evidence for the Dynamic SWOT freeze/promote flow plus named human G4/VoiceOver/brand acceptance are still absent. Historical regression diagnosis remains preserved below but is superseded as a current blocker by integratorHarnessResolution20260818 and exactCurrentReconciliation20260819.",
+  "verdict": "DONE_CURRENT_SHA",
+  "verdictRationale": "TLS-BVP is DONE_CURRENT_SHA for internal beta. The tool-session roundtrip passes 11/11, strict-membership middleware passes 18/18, and exact staging candidate e6ca proves the mounted Dynamic SWOT approval, immutable output and replayable promotion journey. Piotr's D6=B decision accepts automated evidence instead of human UAT for internal beta; production remains a separate REL-001 authorization boundary.",
   "ownerTables": [],
   "fixtures": {
     "prefix": "bvp001-*",
@@ -373,6 +373,12 @@
     },
     "classification": "NO_CURRENT_TECHNICAL_SOURCE_RED_REPRODUCED",
     "supersedes": "Any wording in exactCurrentReconciliation20260818 that describes the default-suite regression or an integrator harness fix as a current open blocker. That diagnosis remains historical evidence only.",
-    "remainingBoundary": "PARTIAL is preserved. Mounted browser evidence for the Dynamic SWOT freeze/promote flow and named human G4/VoiceOver/brand acceptance remain open; no verdict promotion is claimed."
+    "remainingBoundary": "Superseded by internalBetaClosure20260820."
+  },
+  "internalBetaClosure20260820": {
+    "candidateProductSha": "e6ca206c0035f653118d9aadbfddf61d452ab52e",
+    "deployedJourney": "PASS: Dynamic SWOT reached independent approval, immutable output and replayable promotion in STG-JOURNEY-16.",
+    "ownerDecision": "D6=B automated evidence accepted for internal beta",
+    "releaseBoundary": "Production remains a separate REL-001 authorization."
   }
 }

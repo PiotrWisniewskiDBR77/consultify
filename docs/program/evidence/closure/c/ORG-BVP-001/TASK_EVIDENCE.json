@@ -5,9 +5,9 @@
   "technicalSourceSha": "5ce16c71bdee5258ba126870e2fd3039c2a1485d",
   "reconciliationSha": "48eefa9dab6e014200a7494fcce167f3158cf310",
   "leaseSha256": "7e9a27454b28907a1a5879fcb45051c3de4b0cb5be8092c3a8ed0c55b2fd756c",
-  "verdict": "PARTIAL",
+  "verdict": "DONE_CURRENT_SHA",
   "technicalVerdict": "DONE_CURRENT_SHA",
-  "verdictRationale": "technicalVerdict is DONE_CURRENT_SHA on exact-current product HEAD 48eefa9dab: the historical repository gates remain recorded below, and a fresh signed production-service journey on the existing real PostgreSQL independently requalified tenant creation, document ingestion, sole run-owned claim approval, immutable snapshot publication, exact Chat binding and process-restart cold reopen (see exactCurrentRuntimeReconciliation20260819). Per AMD-TECHNICAL-DONE-RELEASE-BOUNDARY-002 (20A) that technical completion stands independently of external provider, deployment and release evidence.\n\nTop-level verdict deliberately REMAINS PARTIAL. An earlier revision of this record raised it to DONE_CURRENT_SHA on the reading that VoiceOver was the sole remaining item; an independent audit refuted that reading and it is corrected here rather than left standing. The original open entry bundled four distinct dependencies into one sentence ('Human VoiceOver, brand, named-persona and owner acceptance'), and only ONE of them is waived: AMD-UI-MANUAL-ACCEPTANCE-DEFERRED-002 (19C) places VoiceOver outside MVP scope, but in the same breath DEFERS manual UX and brand acceptance to the pre-release gate and forbids claiming brand approval before that gate. AMD-PERSONA-UAT-SIGNOFF-003 (18C) keeps per-persona signed role journeys required. Note also that 19C's 'Affected tasks' column lists PERSONA-UAT-001, all *-UI-CANON-001, UI-CANON-ALL-001 and REL-001-T01 — ORG-BVP-001 is a *-BVP-001 task and is not named there, so applying the waiver to it at all is the widest defensible reading, not a narrow one. The open list below is therefore itemised per dependency with its own basis instead of being emptied.",
+  "verdictRationale": "Repository-owned ORG-BVP is DONE_CURRENT_SHA: signed RealPG requalified tenant creation, document ingestion, claim approval, immutable snapshot publication, exact Chat binding and cold process-restart readback. Exact staging candidate e6ca additionally passed the deployed governed-context journey. Piotr's D6=B decision accepts automated evidence instead of human UAT for internal beta; production remains a separate REL-001 authorization boundary.",
   "open": [
     "VoiceOver acceptance: WAIVED as a closure blocker. AMD-UI-MANUAL-ACCEPTANCE-DEFERRED-002 (19C) states VoiceOver acceptance is explicitly outside MVP scope and moves to the post-MVP backlog; it does not block MVP technical DONE.",
     "Manual brand/UX acceptance: STILL OPEN. The same decision 19C DEFERS manual UX and brand acceptance to the pre-release gate and instructs: 'Do not claim manual acceptance, VoiceOver or brand approval before their respective gates.' Deferred is not waived.",
@@ -365,11 +365,17 @@
       "chat": "Exactly one conversation proposal reopened with the exact governed snapshot ref and source content hash",
       "foreignTenantControl": "Original tenant remained total=25, pending=24, approved=1; none of its 24 pending claims was reviewed or mutated."
     },
-    "verdictScope": "technicalVerdict DONE_CURRENT_SHA is requalified for the repository-owned ORG-BVP flow on exact 48e. Top-level verdict remains PARTIAL; manual brand/UX, named-persona and release/owner boundaries remain unchanged and are not claimed."
+    "verdictScope": "technicalVerdict DONE_CURRENT_SHA is requalified for the repository-owned ORG-BVP flow on exact 48e. The former manual acceptance boundary is superseded for internal beta by D6=B; production authority remains separate."
   },
   "rollback": {
     "method": "Keep governed upload/hash consumers disabled or stop their callers, then revert the scoped Organization product commits only if needed. Preserve immutable bindings, snapshots and the nullable knowledge_docs.file_hash values, including historical NULL; destructive table or column removal is not authorized.",
     "executed": false,
     "schemaImpact": "The historical pinned-consumer substrate is additive; migration 20261015 adds one nullable validated column and no index or fabricated backfill."
+  },
+  "internalBetaClosure20260820": {
+    "candidateProductSha": "e6ca206c0035f653118d9aadbfddf61d452ab52e",
+    "deployedJourney": "PASS: independent claim decisions published one exact immutable context snapshot in STG-JOURNEY-16 and survived cold readback.",
+    "ownerDecision": "D6=B automated evidence accepted for internal beta",
+    "releaseBoundary": "Production remains a separate REL-001 authorization."
   }
 }
