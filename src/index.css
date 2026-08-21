@@ -854,6 +854,27 @@ body {
   line-height: 1.25rem;
 }
 
+/* Historical micro-copy must not fall below the documented caption floor. */
+:is(.settings-domain-content, .organization-domain-content, .admin-domain-content)
+  :is(.text-\[10px\], .text-\[11px\]) {
+  font-size: 0.75rem !important;
+  line-height: 1rem !important;
+}
+
+/* Headings use sentence/title case. Uppercase remains available for compact
+ * metadata and badges, but never leaks into section/card headings. */
+:is(.settings-domain-content, .organization-domain-content, .admin-domain-content)
+  :is(h1, h2, h3, h4) {
+  text-transform: none !important;
+}
+
+/* Equivalent bounded surfaces share the canonical 12px radius even when an
+ * older card still carries a module-local rounded-2xl utility. */
+:is(.settings-domain-content, .organization-domain-content, .admin-domain-content)
+  :is(.rounded-2xl, .rounded-xl) {
+  border-radius: 0.75rem;
+}
+
 /* Owner decision SET-OWN-001: contextual floating/info shortcuts are removed
  * from Settings, including their focus stops and layout footprint. */
 .settings-domain-content [data-info-button],
