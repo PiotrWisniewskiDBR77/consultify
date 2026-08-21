@@ -19,6 +19,8 @@ import { getStatementDetail } from '../financialStatementReadService.js';
 import { recomputeStatementPack, syncStatementToPack } from '../financialStatementPackService.js';
 import { stageSelectedStatementSections } from '../statementMultiSectionImportService.js';
 import { createArtifact } from '../finance/canonical/artifactVersionService.js';
+import { computeAnalysisKpis } from '../finance/canonical/kpiComputeService.js';
+import { insertEdge } from '../finance/canonical/lineageService.js';
 
 const DATABASE_URL = process.env.DATABASE_URL || '';
 const PDF_PATH = process.env.FINANCE_STATEMENT_ACCEPTANCE_PDF || '';
@@ -890,7 +892,6 @@ describe.runIf(enabled)(
       for (const [workspace, artifactType] of [
         ['baseline', 'BASELINE_MODEL'],
         ['prediction', 'PREDICTION_SCENARIO'],
-        ['analysis', 'HISTORICAL_ANALYSIS'],
         ['valuation', 'VALUATION_CASE'],
       ] as const) {
         const created = await createArtifact({
@@ -904,6 +905,122 @@ describe.runIf(enabled)(
           businessVersionId: created.businessVersion.business_version_id,
         };
       }
+
+      const statementBusinessVersionId = canonicalStatement.rows[0].business_version_id;
+      const calendar = await pool.query(
+        `INSERT INTO finance_stmt_calendars
+           (organization_id,calendar_type,fiscal_year_end_month,effective_from,created_by)
+         VALUES ($1,'STANDARD',12,'2020-01-01',$2)
+         RETURNING fiscal_calendar_id`,
+        [organizationId, userId]
+      );
+      const period = await pool.query(
+        `INSERT INTO finance_stmt_periods
+           (organization_id,fiscal_calendar_id,period_type,fiscal_year,period_start,period_end,label,created_by)
+         VALUES ($1,$2,'FY',2025,'2025-01-01','2025-12-31','FY2025',$3)
+         RETURNING period_id`,
+        [organizationId, calendar.rows[0].fiscal_calendar_id, userId]
+      );
+      const entity = await pool.query(
+        `INSERT INTO finance_stmt_entities
+           (organization_id,business_version_id,entity_code,legal_name,role,
+            consolidation_method,ownership_pct,functional_currency,created_by)
+         VALUES ($1,$2,'CDP-GROUP','CD PROJEKT S.A.','GROUP_PARENT',
+                 'FULL',100,'PLN',$3)
+         RETURNING id`,
+        [organizationId, statementBusinessVersionId, userId]
+      );
+      for (const [lineCode, value] of [
+        ['CURRENT_ASSETS', 2_100_000],
+        ['CURRENT_LIABILITIES', 700_000],
+      ] as const) {
+        const line = await pool.query(
+          `SELECT id FROM financial_statement_lines
+            WHERE line_code=$1 AND organization_id IS NULL LIMIT 1`,
+          [lineCode]
+        );
+        expect(line.rows).toHaveLength(1);
+        await pool.query(
+          `INSERT INTO finance_stmt_lines
+             (organization_id,business_version_id,statement_type,canonical_line_id,
+              entity_id,period_id,accumulation_basis,consolidation_scope,value_status,
+              value_decimal,native_currency,presentation_currency,unit,sign_convention,
+              accounting_policy,created_by)
+           VALUES ($1,$2,'BS',$3,$4,$5,'FULL_YEAR','CONSOLIDATED','PRESENT_NONZERO',
+                   $6,'PLN','PLN','UNITS','NATURAL','IFRS',$7)`,
+          [
+            organizationId,
+            statementBusinessVersionId,
+            line.rows[0].id,
+            entity.rows[0].id,
+            period.rows[0].period_id,
+            value,
+            userId,
+          ]
+        );
+      }
+      const analysisArtifact = await createArtifact({
+        organizationId,
+        artifactType: 'HISTORICAL_ANALYSIS',
+        naturalKey: 'wave3-finance-owner-analysis-v1',
+        createdBy: userId,
+      });
+      const analysisBusinessVersionId = analysisArtifact.businessVersion.business_version_id;
+      await pool.query(
+        `INSERT INTO finance_analysis_definitions
+           (organization_id,business_version_id,purpose,analysis_type,
+            entity_scope_mode,presentation_currency,unit,created_by)
+         VALUES ($1,$2,'INTERNAL_REVIEW','STANDARD','GROUP_CONSOLIDATED','PLN','UNITS',$3)`,
+        [organizationId, analysisBusinessVersionId, userId]
+      );
+      const analysisEdge = await insertEdge({
+        organizationId,
+        sourceVersionId: statementBusinessVersionId,
+        sourceArtifactType: 'STATEMENT_PACK',
+        targetVersionId: analysisBusinessVersionId,
+        targetArtifactType: 'HISTORICAL_ANALYSIS',
+        edgeType: 'STATEMENT_TO_ANALYSIS',
+        transformationKind: 'MANUAL_LINK',
+        authorId: userId,
+      });
+      expect(analysisEdge.ok).toBe(true);
+      const currentRatio = await pool.query(
+        `SELECT id FROM finance_analysis_kpi_catalog
+          WHERE kpi_code='CURRENT_RATIO' AND status='ACTIVE' LIMIT 1`
+      );
+      expect(currentRatio.rows).toHaveLength(1);
+      await pool.query(
+        `INSERT INTO finance_analysis_kpi_values
+           (organization_id,business_version_id,kpi_catalog_id,entity_id,period_id)
+         VALUES ($1,$2,$3,$4,$5)`,
+        [
+          organizationId,
+          analysisBusinessVersionId,
+          currentRatio.rows[0].id,
+          entity.rows[0].id,
+          period.rows[0].period_id,
+        ]
+      );
+      const analysisCompute = await computeAnalysisKpis({
+        organizationId,
+        businessVersionId: analysisBusinessVersionId,
+        requestedByUserId: userId,
+      });
+      expect(analysisCompute.ok).toBe(true);
+      if (!analysisCompute.ok) throw new Error(analysisCompute.message);
+      expect(analysisCompute.results).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            kpiCode: 'CURRENT_RATIO',
+            status: 'PRESENT_NONZERO',
+            value: 3,
+          }),
+        ])
+      );
+      downstream.analysis = {
+        artifactId: analysisArtifact.artifact.artifact_id,
+        businessVersionId: analysisBusinessVersionId,
+      };
       const downstreamReadback = await pool.query(
         `SELECT artifact.artifact_id,artifact.artifact_type,version.business_version_id
            FROM finance_artifacts artifact
@@ -936,6 +1053,24 @@ describe.runIf(enabled)(
           })
         );
       }
+      const analysisReadback = await pool.query(
+        `SELECT catalog.kpi_code,value.value_status,value.value_decimal,job.status AS job_status
+           FROM finance_analysis_kpi_values value
+           JOIN finance_analysis_kpi_catalog catalog ON catalog.id=value.kpi_catalog_id
+           JOIN compute_jobs job ON job.input_artifact_id=$3
+          WHERE value.organization_id=$1 AND value.business_version_id=$2
+            AND catalog.kpi_code='CURRENT_RATIO'
+          ORDER BY job.created_at DESC LIMIT 1`,
+        [organizationId, downstream.analysis.businessVersionId, downstream.analysis.artifactId]
+      );
+      expect(analysisReadback.rows).toEqual([
+        expect.objectContaining({
+          kpi_code: 'CURRENT_RATIO',
+          value_status: 'PRESENT_NONZERO',
+          value_decimal: '3',
+          job_status: 'succeeded',
+        }),
+      ]);
       const receiptReadback = await pool.query(
         `SELECT receipt_id,content_sha256
            FROM finance_statement_source_receipts
@@ -993,7 +1128,10 @@ describe.runIf(enabled)(
                 workspace,
                 {
                   ...identity,
-                  fixtureState: 'IDENTITY_SHELL_NOT_COMPUTED',
+                  fixtureState:
+                    workspace === 'analysis'
+                      ? 'COMPUTED_CURRENT_RATIO_CONFIRMED'
+                      : 'IDENTITY_SHELL_NOT_COMPUTED',
                   ownerReviewReady: false,
                   deepLinkVerified: false,
                   deepLink: `/finance/${
