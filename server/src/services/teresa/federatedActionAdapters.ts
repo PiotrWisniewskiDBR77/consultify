@@ -1,4 +1,4 @@
-import type { FederatedActionEntry } from '../../../../shared/contracts/federatedActionManifest.js';
+import type { FederatedActionEntry } from './federatedActionManifestTypes.js';
 import { TERESA_CAPABILITY_REGISTRY } from './teresaCapabilities.js';
 import type { ExecutionActionPolicy } from '../executionActionRegistryService.js';
 

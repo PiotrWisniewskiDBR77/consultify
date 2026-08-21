@@ -1,4 +1,4 @@
-import type { FederatedActionEntry } from '../../../../shared/contracts/federatedActionManifest.js';
+import type { FederatedActionEntry } from './federatedActionManifestTypes.js';
 
 export interface MountedMutationRoute {
   module: FederatedActionEntry['module'];
