@@ -118,6 +118,31 @@ beforeAll(async () => {
     await probe.end();
   }
 
+  // Current mounted routes enforce active organization membership before
+  // they reach the catalog controller. The historical fixture only injected
+  // req.user headers, so it stopped proving catalog behavior once the
+  // membership wall became canonical. Seed the minimum real identity graph
+  // for both the positive tenant and the cross-tenant negative control.
+  const identity = await freshClient();
+  try {
+    await identity.query(
+      `INSERT INTO organizations (id,name) VALUES ($1,$2),($3,$4)`,
+      [ORG_A, `${P}org A`, ORG_B, `${P}org B`]
+    );
+    await identity.query(
+      `INSERT INTO users (id,organization_id,email,role,status)
+       VALUES ($1,$2,$3,'ADMIN','active')`,
+      [USER, ORG_A, `${P}u@example.test`]
+    );
+    await identity.query(
+      `INSERT INTO organization_members (id,organization_id,user_id,role,status)
+       VALUES ($1,$2,$3,'ADMIN','ACTIVE'),($4,$5,$3,'ADMIN','ACTIVE')`,
+      [`${P}member-a`, ORG_A, USER, `${P}member-b`, ORG_B]
+    );
+  } finally {
+    await identity.end();
+  }
+
   const toolsRoutes = (await import('../../../routes/tools.routes.js')).default;
   const knownToolsRoutes = (await import('../../../routes/knownTools.routes.js')).default;
 
@@ -157,6 +182,9 @@ afterAll(async () => {
   const c = await freshClient();
   try {
     await c.query(`DELETE FROM tool_sessions WHERE organization_id IN ($1, $2)`, [ORG_A, ORG_B]);
+    await c.query(`DELETE FROM organization_members WHERE organization_id IN ($1, $2)`, [ORG_A, ORG_B]);
+    await c.query(`DELETE FROM users WHERE id=$1`, [USER]);
+    await c.query(`DELETE FROM organizations WHERE id IN ($1, $2)`, [ORG_A, ORG_B]);
   } finally {
     await c.end();
   }

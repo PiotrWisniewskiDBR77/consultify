@@ -287,7 +287,14 @@ afterAll(async () => {
       ORG_B,
     ]);
     await c.query(`DELETE FROM tool_outputs WHERE organization_id IN ($1,$2)`, [ORG_A, ORG_B]);
-    await c.query(`DELETE FROM tool_initiative_links WHERE tool_session_id LIKE $1`, [`${P}%`]);
+    // Promotion may record the generated target id in tool_session_id, so a
+    // fixture-prefix predicate on that column misses legitimate rows. The
+    // ledger is canonically organization-scoped; remove exactly this suite's
+    // two ephemeral tenants and prove residue separately in Wave 3 preflight.
+    await c.query(`DELETE FROM tool_initiative_links WHERE organization_id IN ($1,$2)`, [
+      ORG_A,
+      ORG_B,
+    ]);
     await c.query(`DELETE FROM initiatives WHERE organization_id IN ($1,$2)`, [ORG_A, ORG_B]);
     await c.query(
       `DELETE FROM my_ideas WHERE organization_id IN ($1,$2) AND source_type = 'tool'`,
