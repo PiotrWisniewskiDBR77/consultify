@@ -15,8 +15,8 @@ Last updated: `2026-08-21`
 | 9 | `RES` | Results | `TECHNICAL_PREFLIGHT` | `67544776da` source candidate; mount pending | `G00–G03 PASS/PASS_FOR_PREFLIGHT; G04 IN_PROGRESS; G05 PASS_FOR_PREFLIGHT` | 0 | 0 | 0 | 0 | `RES-PF-001..005 fixed; RES-PF-006 non-gating; owner fixture pending` | Organization owner screen intentionally retained |
 | 10 | `FIN` | Finance | `TECHNICAL_PREFLIGHT` | `fa9904eb27` source candidate; mount pending | `G00–G03 PASS/PASS_FOR_PREFLIGHT; G04 IN_PROGRESS; G05 PASS_FOR_SOURCE_PREFLIGHT` | 0 | 0 | 0 | 0 | `FIN-PF-001..005 fixed; guarded exact-six manifest READY; downstream computed fixture/browser pending` | Organization owner screen intentionally retained |
 | 11 | `MAT` | Materials | `NOT_STARTED` | — | `0` | 0 | 0 | 0 | 0 | — | — |
-| 12 | `AUD` | Audits | `NOT_STARTED` | — | `0` | 0 | 0 | 0 | 0 | — | — |
-| 13 | `CHAT` | Chat | `NOT_STARTED` | — | `0` | 0 | 0 | 0 | 0 | — | — |
+| 12 | `AUD` | Audits | `TECHNICAL_PREFLIGHT / POLICY_DECISION_REQUIRED` | `6abc09b71c` source candidate; mount pending | `G00 POLICY_DECISION_REQUIRED; G01–G03 PASS_FOR_PREFLIGHT; G04 NOT_READY; G05 PARTIAL; 96/96 PASS + 1 clean skip` | 0 | 0 | 0 | 0 | `AUD-PF-001 fixed; owner fixture not ready` | Named external standards OFF; owner/browser pending |
+| 13 | `CHAT` | Chat | `TECHNICAL_PREFLIGHT` | `6abc09b71c` source baseline; dirty shared tree, mount pending | `G00 PASS; G01–G03 PASS_FOR_PREFLIGHT; G04–G05 IN_PROGRESS; 139/139 focused PASS` | 0 | 0 | 0 | 0 | `CHAT-PF-001 fixed locally; owner fixture, RealPG and browser pending; MEMBER decision policy confirmation open` | Live provider remains release-boundary `NOT_VERIFIED` |
 | 14 | `ADM` | Admin | `NOT_STARTED` | — | `0` | 0 | 0 | 0 | 0 | — | — |
 | 15 | `SET` | Settings | `NOT_STARTED` | — | `0` | 0 | 0 | 0 | 0 | — | — |
 | 16 | `PRT` | Partner | `NOT_STARTED` | — | `0` | 0 | 0 | 0 | 0 | — | — |

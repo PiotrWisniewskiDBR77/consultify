@@ -1,4 +1,6 @@
 import express, { type Express } from 'express';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -69,9 +71,16 @@ vi.mock('../../../database/Database.js', () => ({
 // ==========================================
 
 let mockUser: any = null;
+let mockMembershipAllowed = true;
 
 vi.mock('../../../middleware/auth.middleware.js', () => ({
-  validateOrgMembership: (_req: any, _res: any, next: () => void) => next(),
+  validateOrgMembership: (_req: any, res: any, next: () => void) => {
+    if (!mockMembershipAllowed) {
+      res.status(403).json({ error: 'Organization membership required' });
+      return;
+    }
+    next();
+  },
   default: (req: any, _res: any, next: () => void) => {
     if (!mockUser) {
       _res.status(401).json({ error: 'No token provided' });
@@ -167,6 +176,7 @@ const MOCK_HANDOFF = {
 describe('Chat Routes (/api/v8/chat)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockMembershipAllowed = true;
     mockUser = {
       id: 'user-1',
       email: 'test@example.com',
@@ -177,11 +187,32 @@ describe('Chat Routes (/api/v8/chat)', () => {
     };
   });
 
+  it('mounts the required membership guard without a fail-open fallback', () => {
+    const routeSource = readFileSync(
+      resolve(process.cwd(), 'server/src/routes/v8/chat.routes.ts'),
+      'utf8'
+    );
+
+    expect(routeSource).toContain('router.use(validateOrgMembership);');
+    expect(routeSource).not.toContain("'validateOrgMembership' in authMiddleware");
+  });
+
   // ------------------------------------------
   // SNAPSHOTS
   // ------------------------------------------
 
   describe('GET /chat/snapshots', () => {
+    it('fails closed when active organization membership is denied', async () => {
+      mockMembershipAllowed = false;
+      const app = createApp();
+
+      const res = await request(app).get('/api/v8/chat/snapshots?conversationId=conv-1');
+
+      expect(res.status).toBe(403);
+      expect(res.body.error).toBe('Organization membership required');
+      expect(mockGetSnapshotsByConversation).not.toHaveBeenCalled();
+    });
+
     it('returns snapshots by conversationId', async () => {
       mockGetSnapshotsByConversation.mockResolvedValue([MOCK_SNAPSHOT]);
       const app = createApp();
