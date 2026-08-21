@@ -2,7 +2,7 @@
 
 ID: `PRT`
 Routes: `/partner`
-Current gate: `NOT_STARTED / APPROVED_OUT_BOUNDARY_REVIEW`
+Current gate: `TECHNICAL_PREFLIGHT / OWNER_FIXTURE_PENDING`
 Owner: Piotr Wisniewski
 Integrator: Codex
 Mobile: `DEFERRED_NON_GATING`
@@ -17,12 +17,12 @@ attribution, self-approval denial, foreign tenant and no false economics state.
 
 | Gate | Mandatory outcome | State | Evidence/decision |
 |---|---|---|---|
-| G00 | Scope, routes, dependencies, 82-task links and exclusions | `NOT_STARTED` | `PRT-MVP-ACCRUAL-001` approved-out boundary |
-| G01 | Exact baseline and client/server/runtime/DB/migrations | `NOT_STARTED` | — |
-| G02 | Journeys, writes/readbacks, upstream/downstream and policy map | `NOT_STARTED` | — |
-| G03 | Named allowed/denied personas | `NOT_STARTED` | — |
-| G04 | Reproducible realistic and boundary fixtures | `NOT_STARTED` | — |
-| G05 | Functional preflight and cold readback | `NOT_STARTED` | — |
+| G00 | Scope, routes, dependencies, 82-task links and exclusions | `PASS / APPROVED_OUT_BOUNDARY` | `PRT-POL-001`; `AMD-PRT-POLICY-CLOSED-001`; accrual/payout remain OFF |
+| G01 | Exact baseline and client/server/runtime/DB/migrations | `PASS_FOR_SOURCE_PREFLIGHT` | source fix `43b823e200`; fresh PostgreSQL `817/817`; backend typecheck and diff-check PASS; disposable database dropped; browser/runtime candidate not mounted |
+| G02 | Journeys, writes/readbacks, upstream/downstream and policy map | `PASS_FOR_PREFLIGHT` | canonical `/api/v8/partner`; exact selected-tenant binding; no request-path demo seeding |
+| G03 | Named allowed/denied personas | `PASS_FOR_PREFLIGHT` | bound OWNER/ADMIN/member; dual-tenant, foreign, revoked and unbound denials |
+| G04 | Reproducible realistic and boundary fixtures | `NOT_READY` | safe owner fixture not yet built; registration-based test is technical proof only |
+| G05 | Functional preflight and cold readback | `PARTIAL` | canonical tenant/policy matrix `72/72` PASS; preserved historical suites remain RED on approved-off economics/legacy connect; `PRT-PF-001` fixed locally |
 | G06 | Desktop/tablet, PL/EN, themes, states, a11y, console/HTTP | `NOT_STARTED` | — |
 | G07 | Piotr review card | `NOT_STARTED` | — |
 | G08 | First-impression review | `NOT_STARTED` | — |
@@ -50,6 +50,23 @@ attribution, self-approval denial, foreign tenant and no false economics state.
 | ID | Type | Purpose | Setup/reset | Readback | Expected access | Status/evidence |
 |---|---|---|---|---|---|---|
 | _none_ | | | | | | |
+
+## Technical preflight findings
+
+| ID | Classification | Finding | Resolution/state |
+|---|---|---|---|
+| `PRT-PF-001` | `PRODUCT_DEFECT / RELEASE_BLOCKING` | Canonical Partner reads and onboarding writes resolved Partner scope from `userId` alone; auth could also fall back from an explicitly requested revoked tenant to another ACTIVE membership. | Fixed in `43b823e200`: preserve pre-fallback requested tenant, require exact context + ACTIVE membership, resolve every canonical path by `(organizationId,userId)`, remove request-path self-heal/demo seed. RealPG covers dual membership, foreign, revoked, unbound and zero mutation. |
+| `PRT-PF-002` | `STALE_TEST_CONTRACT` | Lifecycle/ledger/BVP tests expect legacy connect or accrual/attribution writes after economics was approved OFF. | `IDENTIFIED_STALE / PRESERVED_RED / REMEDIATION_PENDING`. Historical suites remain unchanged so their certification/attribution/cold-read scope is not silently reduced. No accrual/payout was re-enabled. |
+
+Focused verification on disposable PostgreSQL: fresh migrations `817/817`;
+canonical tenant RealPG `4/4`; V8 read/auth unit `46/46`;
+economics-disabled unit `22/22`. Historical lifecycle/program-ledger tests
+were preserved unchanged and remain red where they request approved-off
+economic writes. The preserved legacy HTTP BVP is separately `0/1` RED
+because deprecated `POST /api/partners/connect` now returns governed `410`;
+its certification/attribution/cold-read coverage was not reduced or
+relabelled green. The disposable database was dropped after residue/readback
+checks. These results do not replace G04 or owner/browser acceptance.
 
 ## Owner UI/UX/CX register
 
