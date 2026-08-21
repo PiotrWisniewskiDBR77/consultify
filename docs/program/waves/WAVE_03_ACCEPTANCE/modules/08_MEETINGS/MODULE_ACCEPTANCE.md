@@ -2,7 +2,7 @@
 
 ID: `MTG`
 Routes: `/meeting`
-Current gate: `NOT_STARTED`
+Current gate: `TECHNICAL_PREFLIGHT`
 Owner: Piotr Wisniewski
 Integrator: Codex
 Mobile: `DEFERRED_NON_GATING`
@@ -17,12 +17,12 @@ boundary, rejected proposal, duplicate/retry and foreign tenant.
 
 | Gate | Mandatory outcome | State | Evidence/decision |
 |---|---|---|---|
-| G00 | Scope, routes, dependencies, 82-task links and exclusions | `NOT_STARTED` | — |
-| G01 | Exact baseline and client/server/runtime/DB/migrations | `NOT_STARTED` | — |
-| G02 | Journeys, writes/readbacks, upstream/downstream and policy map | `NOT_STARTED` | — |
-| G03 | Named allowed/denied personas | `NOT_STARTED` | — |
-| G04 | Reproducible realistic and boundary fixtures | `NOT_STARTED` | — |
-| G05 | Functional preflight and cold readback | `NOT_STARTED` | — |
+| G00 | Scope, routes, dependencies, 82-task links and exclusions | `PASS` | Scope: persisted meeting workspace, manually supplied source text → governed note proposal → distinct human decision → immutable receipt and downstream closure-evidence handoff. Task links: `MTG-POL-001`, `MTG-BVP-001`, `MTG-UI-CANON-001`; all evidence packets report `DONE_CURRENT_SHA`. Recording, automatic transcription, media capture and live provider activation remain explicitly approved-out/OFF; mobile and release are excluded. |
+| G01 | Exact baseline and client/server/runtime/DB/migrations | `PASS_FOR_SOURCE_PREFLIGHT` | Source candidate `81c69db686`; root and server typechecks PASS. Real PostgreSQL at `127.0.0.1:34940`. The retained Organization owner screen remains on mounted product `ad0766ac4c1000c6c94934a1af1d53c0b4eed19c`; Meetings exact-SHA browser mount is pending. |
+| G02 | Journeys, writes/readbacks, upstream/downstream and policy map | `PASS` | Create meeting → manually paste source text → durable note/proposal → authorized approve/reject → exactly-one immutable receipt; downstream Meeting/Notebook closure evidence is tenant-scoped and append-only. Direct decision/follow-up writers are retired fail-closed. Replay/collision, stale/concurrent decision, rejection, foreign tenant, revoked membership, unsigned token, provider honesty and capture-OFF are explicit boundaries. |
+| G03 | Named allowed/denied personas | `PASS_FOR_PREFLIGHT` | Allowed: active same-tenant member for meeting/note proposal; active same-tenant ADMIN/OWNER for governed decision and administrative status/delete. Denied: anonymous/forged token, inactive/revoked member, MEMBER approval/status/delete, foreign tenant and stale/concurrent loser. Stable owner-review personas will be bound to the UI fixture. |
+| G04 | Reproducible realistic and boundary fixtures | `IN_PROGRESS` | Real-PG boundary, mounted-auth, 49-flow golden, provider-honesty and downstream closure-evidence fixtures all ran with isolated identities. Scoped residue across organizations, meetings, notes, proposals and receipts is zero. A stable realistic owner-review meeting with pending and decided note states remains to be prepared. |
+| G05 | Functional preflight and cold readback | `IN_PROGRESS` | Current replay: runtime smoke `5/5` checks; boundary/mounted-auth `3/3` files, `21/21`; golden real-PG `49/49`; focused route/service/UI/policy `5/5` files, `48/48`; provider honesty real-PG `5/5`; downstream mounted signed-auth closure evidence `33/33`. Aggregate executed assertions `156/156 PASS`, plus `5/5` structural checks; root and server typechecks PASS. Exact-source browser/UI replay and owner-fixture cold reopen remain pending. |
 | G06 | Desktop/tablet, PL/EN, themes, states, a11y, console/HTTP | `NOT_STARTED` | — |
 | G07 | Piotr review card | `NOT_STARTED` | — |
 | G08 | First-impression review | `NOT_STARTED` | — |
@@ -51,6 +51,15 @@ boundary, rejected proposal, duplicate/retry and foreign tenant.
 |---|---|---|---|---|---|---|
 | _none_ | | | | | | |
 
+## Integrator preflight observations
+
+These are technical observations, not Piotr owner findings.
+
+| ID | Observation | Evidence | State |
+|---|---|---|---|
+| `MTG-PF-001` | The runtime smoke still required retired direct decision/follow-up API helpers and UI copy, contradicting the current governed proposal-only write contract. | Initial smoke `3/5`; real-PG contracts remained green. Smoke now requires generate/list/decide governed-note APIs and the explicit human-approval boundary; replay `5/5`; commit `204293efff`. | `FIXED_VERIFIED` |
+| `MTG-PF-002` | The immutable-cleanup negative control inherited the invocation's permitted database prefix, so it could not prove rejection when the shared local database name itself matched that prefix. | Initial downstream run `32/33`; test now temporarily supplies a deliberately nonmatching prefix and restores the caller environment; replay `33/33`; commit `204293efff`. | `FIXED_VERIFIED` |
+
 ## Owner UI/UX/CX register
 
 | Finding ID | Captured | Piotr original wording | Category | Route/screen | Current behavior | Expected experience | Impact | Screenshot/hash | Product SHA | Severity | Decision/status | Fix commit | Self-QA | Owner retest |
@@ -62,6 +71,13 @@ boundary, rejected proposal, duplicate/retry and foreign tenant.
 | Finding IDs | Root cause | Approved solution | Commit | Shared surfaces | Impacted modules | Tests/self-QA | Regression |
 |---|---|---|---|---|---|---|---|
 | _none_ | | | | | | | |
+
+## Preflight implementation ledger
+
+| Observation | Root cause | Resolution | Commit | Verification |
+|---|---|---|---|---|
+| `MTG-PF-001` | Structural smoke lagged behind the governed meeting-note cutover. | Assert the mounted proposal/decision API and human-approval copy; never restore retired direct writers. | `204293efff` | smoke `5/5`; focused tests `48/48`; typechecks PASS |
+| `MTG-PF-002` | The negative control depended on ambient cleanup-prefix configuration. | Isolate the non-disposable target assertion with a temporary nonmatching prefix and restore environment afterward. | `204293efff` | downstream real-PG `33/33`; scoped residue `0` |
 
 ## Owner verdict
 
