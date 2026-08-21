@@ -1,7 +1,7 @@
 {
   "taskId": "RES-MVP-LEGACY-CUTOVER-001",
   "baselineSha": "64f507859c717494ffa5e83fae550173c9382230",
-  "productSha": "5f5c5e507a64b262ec9585b2469ba6277b0b6939",
+  "productSha": "311c8444d00ede7d3facb6dd4ef560590e601525",
   "technicalSourceSha": "63c2ee2818ef85c298234d98aa0900395d955c9b",
   "requalificationSha": "63c2ee2818ef85c298234d98aa0900395d955c9b",
   "reconciliationSha": "163a702f128518965bcdb132dda9c664231a75fa",
@@ -24,31 +24,47 @@
     "reconciliationNote": "de4100 advances the tested 74f6 product state only through evidence commits relevant to this reconciliation; productSha remains the historical domain implementation authority."
   },
   "leaseSha256": "0dc47a0d37886ab98e87cfff4a75116fccd5f0f2ecf71dd813362ac5fa963860",
-  "changedPaths": ["tests/resultsVnext/roi/legacyIsolation.realdb.test.ts"],
-  "changedPathRationale": {"test": "prove canonical KPI/OKR/ROI reads exclude poisoned legacy rows without mutating immutable realizations"},
+  "changedPaths": [
+    "server/src/services/legacyCutover/legacyCutoverKernel.ts",
+    "server/src/services/legacyCutover/registry/results.ts",
+    "server/src/services/legacyCutover/__tests__/resultsCutover.registry.test.ts",
+    "server/src/services/legacyCutover/__tests__/resultsCutover.pg.test.ts"
+  ],
+  "changedPathRationale": {
+    "server/src/services/legacyCutover/legacyCutoverKernel.ts": "Define the named ownerContract required for an intentionally retained canonical-current writer.",
+    "server/src/services/legacyCutover/registry/results.ts": "Bind each of the five retained writer IDs to one named runtime owner and expose an ownerless fail-closed denominator.",
+    "server/src/services/legacyCutover/__tests__/resultsCutover.registry.test.ts": "Require exact 5/5 owner bindings and zero ownerless canonical-current writers.",
+    "server/src/services/legacyCutover/__tests__/resultsCutover.pg.test.ts": "Prove all five retained writers emit durable tenant-scoped usage observations without being blocked."
+  },
   "ownerTables": ["rvn_kpi_definitions", "rvn_okr_sets", "rvn_roi_cases", "roi_realized_values"],
   "commands": [
-    {"command": "RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=<isolated-local-pg> npx vitest run tests/resultsVnext/kpi/legacyIsolation.realdb.test.ts tests/resultsVnext/okr/legacyIsolation.realdb.test.ts tests/resultsVnext/roi/legacyIsolation.realdb.test.ts", "exitCode": 0, "result": "6 tests passed; KPI/OKR/ROI vNext read models excluded poisoned legacy rows"}
+    {"command": "RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=<isolated-local-pg> npx vitest run tests/resultsVnext/kpi/legacyIsolation.realdb.test.ts tests/resultsVnext/okr/legacyIsolation.realdb.test.ts tests/resultsVnext/roi/legacyIsolation.realdb.test.ts", "exitCode": 0, "result": "6 tests passed; KPI/OKR/ROI vNext read models excluded poisoned legacy rows"},
+    {"command": "npx vitest run server/src/services/legacyCutover/__tests__/resultsCutover.registry.test.ts --reporter=verbose", "exitCode": 0, "result": "1 file / 8 tests PASS; 28/28 writers classified, 5/5 retained owners named, 0 ownerless or unresolved"},
+    {"command": "B1_LEGACY_TEST_CLEANUP=1 RUN_DB_TESTS=1 MOCK_DB=false DATABASE_URL=<fresh-consultify_b1_resultsowners> DB_TYPE=postgres NODE_ENV=test POSTGRES_SKIP_INIT_IN_TEST=1 npx vitest run server/src/services/legacyCutover/__tests__/resultsCutover.pg.test.ts --no-file-parallelism --maxWorkers=1 --retry=0", "exitCode": 0, "result": "1 file / 25 tests PASS; all five retained writers produced durable tenant-scoped observations"},
+    {"command": "npm run type-check -- --pretty false && npm --prefix server run typecheck -- --pretty false", "exitCode": 0, "result": "root and standalone server typechecks PASS with the integrated P3 boundary fix"},
+    {"command": "fresh migration; repeat migration; dry run on disposable pgvector/pgvector:pg16", "exitCode": 0, "result": "fresh 815; repeat applying 0; dry pending 0; owned container removed"}
   ],
   "denominators": {
     "legacyIsolationTests": "6/6",
     "domains": 3,
     "exactCurrentWriterRegistry": "28 total = 23 disabled with non-null canonical successors + 5 observed with successor:null",
-    "exactCurrentRegistryTests": "8/8 PASS on e6ca206c0035f653118d9aadbfddf61d452ab52e"
+    "exactCurrentRegistryTests": "8/8 PASS on the 311c8444 product patch",
+    "canonicalCurrentOwners": "5/5 named owner contracts; 0 ownerless",
+    "canonicalCurrentTelemetry": "5/5 durable tenant-scoped mounted observations",
+    "realPostgresResultsCutover": "25/25 PASS on fresh disposable PostgreSQL",
+    "migration": "fresh 815; repeat 0; dry pending 0"
   },
-  "fixtures": {"database": "isolated local PostgreSQL", "poisonedRows": "same-tenant legacy KPI, OKR and ROI records"},
+  "fixtures": {"database": "owned disposable PostgreSQL 16 database consultify_b1_resultsowners; container removed after proof", "poisonedRows": "same-tenant legacy KPI, OKR and ROI records", "retainedWriterRequests": "one unique request ID for each of RESULTS-W05, W06, W18, W23 and W34"},
   "negativeControls": [
     "same-tenant poisoned legacy rows never appear in canonical KPI/OKR/ROI reads",
     "static repository scan finds zero unauthorized legacy-table references",
     "append-only ROI realization fixture is not deleted or mutated during teardown"
   ],
   "browserArtifacts": [],
-  "rollback": {"code": "test-only change", "data": "test fixture teardown preserves append-only realization semantics"},
-  "verdict": "PARTIAL",
-  "openBlockers": [
-    "Five exact-current writers remain observed and intentionally open because each has successor:null. Closing them requires a proven canonical semantic successor or an explicit owner-approved semantic cutover; null-successor retirement is not authorized.",
-    "Usage-window telemetry, any required backfill parity and owner-authorized final retirement remain required before the cutover task can become DONE."
-  ],
+  "rollback": {"code": "revert 311c8444d00ede7d3facb6dd4ef560590e601525; no writer state changes or schema changes were introduced", "data": "test fixture cleanup preserves append-only realization semantics; the owned disposable PostgreSQL container was removed"},
+  "verdict": "DONE_CURRENT_SHA",
+  "openBlockers": [],
+  "closureRationale20260821": "Wave 2 permits a per-writer decision of canonicalize, build successor or approved-out. All 28 current Results writer doors now have an explicit disposition: 23 are disabled behind proven successors and narrow rollback, while five are intentionally retained as canonical_current with one named owner contract each. The mounted real-PG fixture proves durable tenant-scoped usage telemetry for all five and zero blocking. No backfill is required because the retained writers keep their existing owner tables and identities; no null-successor writer was falsely retired.",
   "exactCurrentRegistryReconciliation20260820": {
     "candidateProductSha": "e6ca206c0035f653118d9aadbfddf61d452ab52e",
     "source": "server/src/services/legacyCutover/registry/results.ts",

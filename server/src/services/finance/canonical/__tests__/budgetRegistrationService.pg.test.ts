@@ -29,6 +29,7 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
   let discardBudgetCommand: typeof import('../budgetDiscardCommandService.js').discardBudgetCommand;
   let importBudgetDocumentCommand: typeof import('../budgetDocumentImportCommandService.js').importBudgetDocumentCommand;
   let linkBudgetInitiativeCommand: typeof import('../budgetInitiativeLinkCommandService.js').linkBudgetInitiativeCommand;
+  let unlinkBudgetInitiativeCommand: typeof import('../budgetInitiativeUnlinkCommandService.js').unlinkBudgetInitiativeCommand;
   let listBudgets: typeof import('../../../budgetingService.js').listBudgets;
   let getBudget: typeof import('../../../budgetingService.js').getBudget;
 
@@ -73,6 +74,8 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
     ({ discardBudgetCommand } = await import('../budgetDiscardCommandService.js'));
     ({ importBudgetDocumentCommand } = await import('../budgetDocumentImportCommandService.js'));
     ({ linkBudgetInitiativeCommand } = await import('../budgetInitiativeLinkCommandService.js'));
+    ({ unlinkBudgetInitiativeCommand } =
+      await import('../budgetInitiativeUnlinkCommandService.js'));
     ({ listBudgets, getBudget } = await import('../../../budgetingService.js'));
     await client.query(
       `INSERT INTO organizations(id,name) VALUES($1,'Budget registration'),($2,'Foreign budget registration')`,
@@ -126,6 +129,10 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
     try {
       await client.query(`SET LOCAL session_replication_role=replica`);
       await client.query(
+        `DELETE FROM finance_budget_initiative_unlink_receipts WHERE organization_id=$1`,
+        [orgId]
+      );
+      await client.query(
         `DELETE FROM finance_budget_initiative_link_receipts WHERE organization_id=$1`,
         [orgId]
       );
@@ -165,9 +172,7 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
         `DELETE FROM budget_scenarios WHERE budget_id IN (SELECT id FROM budgets WHERE organization_id=$1)`,
         [orgId]
       );
-      await client.query(
-        `DELETE FROM budget_initiative_links WHERE organization_id=$1`, [orgId]
-      );
+      await client.query(`DELETE FROM budget_initiative_links WHERE organization_id=$1`, [orgId]);
       await client.query(
         `DELETE FROM budget_lines WHERE budget_id IN (SELECT id FROM budgets WHERE organization_id=$1)`,
         [orgId]
@@ -238,69 +243,375 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
       `INSERT INTO initiatives(id,organization_id,name,title,status,estimated_revenue_uplift,estimated_cost_savings,estimated_capex) VALUES($1,$2,'Zero initiative','Zero initiative','DRAFT',0,0,0)`,
       [initiativeId, orgId]
     );
-    const input = { organizationId: orgId, userId, budgetId: budget.budget.id, initiativeId, expectedVersion: 1, idempotencyKey: `link-${randomUUID()}` };
+    const input = {
+      organizationId: orgId,
+      userId,
+      budgetId: budget.budget.id,
+      initiativeId,
+      expectedVersion: 1,
+      idempotencyKey: `link-${randomUUID()}`,
+    };
     const first = await linkBudgetInitiativeCommand(input);
-    expect(first).toMatchObject({ budgetVersion: 2, replay: false, snapshot: { revenueUplift: '0', costSavings: '0', capexRequired: '0' } });
+    expect(first).toMatchObject({
+      budgetVersion: 2,
+      replay: false,
+      snapshot: { revenueUplift: '0', costSavings: '0', capexRequired: '0' },
+    });
     expect(await linkBudgetInitiativeCommand(input)).toEqual({ ...first, replay: true });
-    await expect(linkBudgetInitiativeCommand({...input,initiativeId:`changed-${randomUUID()}`})).rejects.toMatchObject({code:'IDEMPOTENCY_PAYLOAD_COLLISION',status:409});
-    await client.query(`UPDATE organization_members SET status='REVOKED' WHERE organization_id=$1 AND user_id=$2`,[orgId,userId]);
-    await expect(linkBudgetInitiativeCommand(input)).rejects.toMatchObject({code:'ORG_MEMBERSHIP_REVOKED',status:403});
-    await client.query(`UPDATE organization_members SET status='ACTIVE' WHERE organization_id=$1 AND user_id=$2`,[orgId,userId]);
-    await expect(linkBudgetInitiativeCommand({ ...input, idempotencyKey: `new-${randomUUID()}`, expectedVersion: 2 })).rejects.toMatchObject({ code: 'ALREADY_LINKED', status: 409 });
-    const cold = (await client.query(`SELECT l.revenue_uplift::text revenue,b.version,(SELECT count(*)::int FROM finance_budget_initiative_link_receipts r WHERE r.budget_id=b.id) receipts FROM budget_initiative_links l JOIN budgets b ON b.id=l.budget_id WHERE l.budget_id=$1`, [budget.budget.id])).rows[0];
+    await expect(
+      linkBudgetInitiativeCommand({ ...input, initiativeId: `changed-${randomUUID()}` })
+    ).rejects.toMatchObject({ code: 'IDEMPOTENCY_PAYLOAD_COLLISION', status: 409 });
+    await client.query(
+      `UPDATE organization_members SET status='REVOKED' WHERE organization_id=$1 AND user_id=$2`,
+      [orgId, userId]
+    );
+    await expect(linkBudgetInitiativeCommand(input)).rejects.toMatchObject({
+      code: 'ORG_MEMBERSHIP_REVOKED',
+      status: 403,
+    });
+    await client.query(
+      `UPDATE organization_members SET status='ACTIVE' WHERE organization_id=$1 AND user_id=$2`,
+      [orgId, userId]
+    );
+    await expect(
+      linkBudgetInitiativeCommand({
+        ...input,
+        idempotencyKey: `new-${randomUUID()}`,
+        expectedVersion: 2,
+      })
+    ).rejects.toMatchObject({ code: 'ALREADY_LINKED', status: 409 });
+    const cold = (
+      await client.query(
+        `SELECT l.revenue_uplift::text revenue,b.version,(SELECT count(*)::int FROM finance_budget_initiative_link_receipts r WHERE r.budget_id=b.id) receipts FROM budget_initiative_links l JOIN budgets b ON b.id=l.budget_id WHERE l.budget_id=$1`,
+        [budget.budget.id]
+      )
+    ).rows[0];
     expect(cold).toEqual({ revenue: '0', version: 2, receipts: 1 });
-    await expect(client.query(`UPDATE finance_budget_initiative_link_receipts SET request_sha256=request_sha256 WHERE budget_id=$1`,[budget.budget.id])).rejects.toThrow(/immutable/);
-    await expect(client.query(`DELETE FROM finance_budget_initiative_link_receipts WHERE budget_id=$1`,[budget.budget.id])).rejects.toThrow(/immutable/);
+    await expect(
+      client.query(
+        `UPDATE finance_budget_initiative_link_receipts SET request_sha256=request_sha256 WHERE budget_id=$1`,
+        [budget.budget.id]
+      )
+    ).rejects.toThrow(/immutable/);
+    await expect(
+      client.query(`DELETE FROM finance_budget_initiative_link_receipts WHERE budget_id=$1`, [
+        budget.budget.id,
+      ])
+    ).rejects.toThrow(/immutable/);
   });
 
   it('fails link authority, tenant, state and version checks closed', async () => {
-    const budget=await registerBudget(command(`link-negative-${randomUUID()}`));
-    const initiativeId=`initiative-${randomUUID()}`;
-    await client.query(`INSERT INTO initiatives(id,organization_id,name,title,status) VALUES($1,$2,'Link negative','Link negative','DRAFT')`,[initiativeId,orgId]);
-    const base={organizationId:orgId,userId,budgetId:budget.budget.id,initiativeId,expectedVersion:1,idempotencyKey:`link-negative-${randomUUID()}`};
-    await expect(linkBudgetInitiativeCommand({...base,initiativeId:`missing-${randomUUID()}`})).rejects.toMatchObject({code:'INITIATIVE_NOT_FOUND',status:404});
-    await expect(linkBudgetInitiativeCommand({...base,userId:viewerId})).rejects.toMatchObject({code:'FINANCE_EDIT_FORBIDDEN',status:403});
-    await client.query(`UPDATE organization_members SET status='REVOKED' WHERE organization_id=$1 AND user_id=$2`,[orgId,userId]);
-    await expect(linkBudgetInitiativeCommand(base)).rejects.toMatchObject({code:'ORG_MEMBERSHIP_REVOKED',status:403});
-    await client.query(`UPDATE organization_members SET status='ACTIVE' WHERE organization_id=$1 AND user_id=$2`,[orgId,userId]);
-    await expect(linkBudgetInitiativeCommand({...base,expectedVersion:2})).rejects.toMatchObject({code:'BUDGET_VERSION_CONFLICT',status:409});
-    await client.query(`UPDATE budgets SET status='APPROVED' WHERE id=$1`,[budget.budget.id]);
-    await expect(linkBudgetInitiativeCommand({...base,idempotencyKey:`approved-${randomUUID()}`})).rejects.toMatchObject({code:'BUDGET_IMMUTABLE',status:409});
-    await expect(linkBudgetInitiativeCommand({...base,organizationId:foreignOrgId,userId:foreignUserId,idempotencyKey:`foreign-${randomUUID()}`})).rejects.toMatchObject({code:'BUDGET_NOT_FOUND',status:404});
+    const budget = await registerBudget(command(`link-negative-${randomUUID()}`));
+    const initiativeId = `initiative-${randomUUID()}`;
+    await client.query(
+      `INSERT INTO initiatives(id,organization_id,name,title,status) VALUES($1,$2,'Link negative','Link negative','DRAFT')`,
+      [initiativeId, orgId]
+    );
+    const base = {
+      organizationId: orgId,
+      userId,
+      budgetId: budget.budget.id,
+      initiativeId,
+      expectedVersion: 1,
+      idempotencyKey: `link-negative-${randomUUID()}`,
+    };
+    await expect(
+      linkBudgetInitiativeCommand({ ...base, initiativeId: `missing-${randomUUID()}` })
+    ).rejects.toMatchObject({ code: 'INITIATIVE_NOT_FOUND', status: 404 });
+    await expect(linkBudgetInitiativeCommand({ ...base, userId: viewerId })).rejects.toMatchObject({
+      code: 'FINANCE_EDIT_FORBIDDEN',
+      status: 403,
+    });
+    await client.query(
+      `UPDATE organization_members SET status='REVOKED' WHERE organization_id=$1 AND user_id=$2`,
+      [orgId, userId]
+    );
+    await expect(linkBudgetInitiativeCommand(base)).rejects.toMatchObject({
+      code: 'ORG_MEMBERSHIP_REVOKED',
+      status: 403,
+    });
+    await client.query(
+      `UPDATE organization_members SET status='ACTIVE' WHERE organization_id=$1 AND user_id=$2`,
+      [orgId, userId]
+    );
+    await expect(
+      linkBudgetInitiativeCommand({ ...base, expectedVersion: 2 })
+    ).rejects.toMatchObject({ code: 'BUDGET_VERSION_CONFLICT', status: 409 });
+    await client.query(`UPDATE budgets SET status='APPROVED' WHERE id=$1`, [budget.budget.id]);
+    await expect(
+      linkBudgetInitiativeCommand({ ...base, idempotencyKey: `approved-${randomUUID()}` })
+    ).rejects.toMatchObject({ code: 'BUDGET_IMMUTABLE', status: 409 });
+    await expect(
+      linkBudgetInitiativeCommand({
+        ...base,
+        organizationId: foreignOrgId,
+        userId: foreignUserId,
+        idempotencyKey: `foreign-${randomUUID()}`,
+      })
+    ).rejects.toMatchObject({ code: 'BUDGET_NOT_FOUND', status: 404 });
   });
 
   it('converges link concurrency and rolls back on receipt failure', async () => {
-    const budget=await registerBudget(command(`link-concurrent-${randomUUID()}`));
-    const initiativeId=`initiative-${randomUUID()}`;
-    await client.query(`INSERT INTO initiatives(id,organization_id,name,title,status,estimated_revenue_uplift) VALUES($1,$2,'Concurrent','Concurrent','DRAFT',21)`,[initiativeId,orgId]);
-    const input={organizationId:orgId,userId,budgetId:budget.budget.id,initiativeId,expectedVersion:1,idempotencyKey:`link-concurrent-${randomUUID()}`};
-    const results=await Promise.all(Array.from({length:8},()=>linkBudgetInitiativeCommand(input)));
-    expect(results.filter(result=>!result.replay)).toHaveLength(1);
-    expect(results.filter(result=>result.replay)).toHaveLength(7);
-    const distinctBudget=await registerBudget(command(`link-distinct-${randomUUID()}`));
-    const initiativeA=`initiative-${randomUUID()}`,initiativeB=`initiative-${randomUUID()}`;
-    await client.query(`INSERT INTO initiatives(id,organization_id,name,title,status) VALUES($1,$3,'Race A','Race A','DRAFT'),($2,$3,'Race B','Race B','DRAFT')`,[initiativeA,initiativeB,orgId]);
-    const distinct=await Promise.allSettled([
-      linkBudgetInitiativeCommand({organizationId:orgId,userId,budgetId:distinctBudget.budget.id,initiativeId:initiativeA,expectedVersion:1,idempotencyKey:`distinct-a-${randomUUID()}`}),
-      linkBudgetInitiativeCommand({organizationId:orgId,userId,budgetId:distinctBudget.budget.id,initiativeId:initiativeB,expectedVersion:1,idempotencyKey:`distinct-b-${randomUUID()}`}),
+    const budget = await registerBudget(command(`link-concurrent-${randomUUID()}`));
+    const initiativeId = `initiative-${randomUUID()}`;
+    await client.query(
+      `INSERT INTO initiatives(id,organization_id,name,title,status,estimated_revenue_uplift) VALUES($1,$2,'Concurrent','Concurrent','DRAFT',21)`,
+      [initiativeId, orgId]
+    );
+    const input = {
+      organizationId: orgId,
+      userId,
+      budgetId: budget.budget.id,
+      initiativeId,
+      expectedVersion: 1,
+      idempotencyKey: `link-concurrent-${randomUUID()}`,
+    };
+    const results = await Promise.all(
+      Array.from({ length: 8 }, () => linkBudgetInitiativeCommand(input))
+    );
+    expect(results.filter((result) => !result.replay)).toHaveLength(1);
+    expect(results.filter((result) => result.replay)).toHaveLength(7);
+    const distinctBudget = await registerBudget(command(`link-distinct-${randomUUID()}`));
+    const initiativeA = `initiative-${randomUUID()}`,
+      initiativeB = `initiative-${randomUUID()}`;
+    await client.query(
+      `INSERT INTO initiatives(id,organization_id,name,title,status) VALUES($1,$3,'Race A','Race A','DRAFT'),($2,$3,'Race B','Race B','DRAFT')`,
+      [initiativeA, initiativeB, orgId]
+    );
+    const distinct = await Promise.allSettled([
+      linkBudgetInitiativeCommand({
+        organizationId: orgId,
+        userId,
+        budgetId: distinctBudget.budget.id,
+        initiativeId: initiativeA,
+        expectedVersion: 1,
+        idempotencyKey: `distinct-a-${randomUUID()}`,
+      }),
+      linkBudgetInitiativeCommand({
+        organizationId: orgId,
+        userId,
+        budgetId: distinctBudget.budget.id,
+        initiativeId: initiativeB,
+        expectedVersion: 1,
+        idempotencyKey: `distinct-b-${randomUUID()}`,
+      }),
     ]);
-    expect(distinct.filter(item=>item.status==='fulfilled')).toHaveLength(1);
-    expect(distinct.filter(item=>item.status==='rejected')).toHaveLength(1);
-    const rejected=distinct.find(item=>item.status==='rejected') as PromiseRejectedResult;
-    expect(rejected.reason).toMatchObject({code:'BUDGET_VERSION_CONFLICT',status:409});
-    const winner=(distinct.find(item=>item.status==='fulfilled') as PromiseFulfilledResult<Awaited<ReturnType<typeof linkBudgetInitiativeCommand>>>).value;
-    const raceCold=(await client.query(`SELECT b.version,(SELECT count(*)::int FROM budget_initiative_links WHERE budget_id=b.id) links,(SELECT count(*)::int FROM finance_budget_initiative_link_receipts WHERE budget_id=b.id) receipts,(SELECT initiative_id FROM budget_initiative_links WHERE budget_id=b.id) winner FROM budgets b WHERE id=$1`,[distinctBudget.budget.id])).rows[0];
-    expect(raceCold).toEqual({version:2,links:1,receipts:1,winner:winner.initiativeId});
-    const rollbackBudget=await registerBudget(command(`link-rollback-${randomUUID()}`));
-    const rollbackInitiative=`initiative-${randomUUID()}`;
-    await client.query(`INSERT INTO initiatives(id,organization_id,name,title,status) VALUES($1,$2,'Rollback','Rollback','DRAFT')`,[rollbackInitiative,orgId]);
-    const fn=`reject_link_${randomUUID().replaceAll('-','')}`,trg=`reject_link_${randomUUID().replaceAll('-','')}`;
-    await client.query(`CREATE FUNCTION ${fn}() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'injected link receipt failure'; END $$`);
-    await client.query(`CREATE TRIGGER ${trg} BEFORE INSERT ON finance_budget_initiative_link_receipts FOR EACH ROW EXECUTE FUNCTION ${fn}()`);
+    expect(distinct.filter((item) => item.status === 'fulfilled')).toHaveLength(1);
+    expect(distinct.filter((item) => item.status === 'rejected')).toHaveLength(1);
+    const rejected = distinct.find((item) => item.status === 'rejected') as PromiseRejectedResult;
+    expect(rejected.reason).toMatchObject({ code: 'BUDGET_VERSION_CONFLICT', status: 409 });
+    const winner = (
+      distinct.find((item) => item.status === 'fulfilled') as PromiseFulfilledResult<
+        Awaited<ReturnType<typeof linkBudgetInitiativeCommand>>
+      >
+    ).value;
+    const raceCold = (
+      await client.query(
+        `SELECT b.version,(SELECT count(*)::int FROM budget_initiative_links WHERE budget_id=b.id) links,(SELECT count(*)::int FROM finance_budget_initiative_link_receipts WHERE budget_id=b.id) receipts,(SELECT initiative_id FROM budget_initiative_links WHERE budget_id=b.id) winner FROM budgets b WHERE id=$1`,
+        [distinctBudget.budget.id]
+      )
+    ).rows[0];
+    expect(raceCold).toEqual({ version: 2, links: 1, receipts: 1, winner: winner.initiativeId });
+    const rollbackBudget = await registerBudget(command(`link-rollback-${randomUUID()}`));
+    const rollbackInitiative = `initiative-${randomUUID()}`;
+    await client.query(
+      `INSERT INTO initiatives(id,organization_id,name,title,status) VALUES($1,$2,'Rollback','Rollback','DRAFT')`,
+      [rollbackInitiative, orgId]
+    );
+    const fn = `reject_link_${randomUUID().replaceAll('-', '')}`,
+      trg = `reject_link_${randomUUID().replaceAll('-', '')}`;
+    await client.query(
+      `CREATE FUNCTION ${fn}() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'injected link receipt failure'; END $$`
+    );
+    await client.query(
+      `CREATE TRIGGER ${trg} BEFORE INSERT ON finance_budget_initiative_link_receipts FOR EACH ROW EXECUTE FUNCTION ${fn}()`
+    );
     try {
-      await expect(linkBudgetInitiativeCommand({organizationId:orgId,userId,budgetId:rollbackBudget.budget.id,initiativeId:rollbackInitiative,expectedVersion:1,idempotencyKey:`rollback-${randomUUID()}`})).rejects.toThrow(/injected link receipt failure/);
-      expect((await client.query(`SELECT b.version,(SELECT count(*)::int FROM budget_initiative_links WHERE budget_id=b.id) links FROM budgets b WHERE id=$1`,[rollbackBudget.budget.id])).rows[0]).toEqual({version:1,links:0});
-    } finally { await client.query(`DROP TRIGGER ${trg} ON finance_budget_initiative_link_receipts`); await client.query(`DROP FUNCTION ${fn}()`); }
+      await expect(
+        linkBudgetInitiativeCommand({
+          organizationId: orgId,
+          userId,
+          budgetId: rollbackBudget.budget.id,
+          initiativeId: rollbackInitiative,
+          expectedVersion: 1,
+          idempotencyKey: `rollback-${randomUUID()}`,
+        })
+      ).rejects.toThrow(/injected link receipt failure/);
+      expect(
+        (
+          await client.query(
+            `SELECT b.version,(SELECT count(*)::int FROM budget_initiative_links WHERE budget_id=b.id) links FROM budgets b WHERE id=$1`,
+            [rollbackBudget.budget.id]
+          )
+        ).rows[0]
+      ).toEqual({ version: 1, links: 0 });
+    } finally {
+      await client.query(`DROP TRIGGER ${trg} ON finance_budget_initiative_link_receipts`);
+      await client.query(`DROP FUNCTION ${fn}()`);
+    }
+  });
+
+  it('unlinks with exact CAS, immutable snapshot receipt and response-loss replay', async () => {
+    const budget = await registerBudget(command(`unlink-${randomUUID()}`));
+    const initiativeId = `initiative-${randomUUID()}`;
+    await client.query(
+      `INSERT INTO initiatives(id,organization_id,name,title,status,estimated_revenue_uplift,estimated_cost_savings,estimated_capex)
+       VALUES($1,$2,'Unlink initiative','Unlink initiative','DRAFT',12,7,3)`,
+      [initiativeId, orgId]
+    );
+    await linkBudgetInitiativeCommand({
+      organizationId: orgId,
+      userId,
+      budgetId: budget.budget.id,
+      initiativeId,
+      expectedVersion: 1,
+      idempotencyKey: `link-before-unlink-${randomUUID()}`,
+    });
+    const input = {
+      organizationId: orgId,
+      userId,
+      budgetId: budget.budget.id,
+      initiativeId,
+      expectedVersion: 2,
+      idempotencyKey: `unlink-${randomUUID()}`,
+    };
+    const first = await unlinkBudgetInitiativeCommand(input);
+    expect(first).toMatchObject({
+      budgetVersion: 3,
+      replay: false,
+      removedLinkSnapshot: { revenueUplift: '12', costSavings: '7', capexRequired: '3' },
+    });
+    expect(await unlinkBudgetInitiativeCommand(input)).toEqual({ ...first, replay: true });
+    await expect(
+      unlinkBudgetInitiativeCommand({ ...input, initiativeId: `changed-${randomUUID()}` })
+    ).rejects.toMatchObject({ code: 'IDEMPOTENCY_PAYLOAD_COLLISION', status: 409 });
+    const cold = (
+      await client.query(
+        `SELECT b.version,
+          (SELECT count(*)::int FROM budget_initiative_links WHERE budget_id=b.id) links,
+          (SELECT removed_link_snapshot_json FROM finance_budget_initiative_unlink_receipts
+           WHERE budget_id=b.id) snapshot
+         FROM budgets b WHERE b.id=$1`,
+        [budget.budget.id]
+      )
+    ).rows[0];
+    expect(cold).toEqual({
+      version: 3,
+      links: 0,
+      snapshot: { revenueUplift: '12', costSavings: '7', capexRequired: '3' },
+    });
+    await expect(
+      client.query(
+        `UPDATE finance_budget_initiative_unlink_receipts
+         SET request_sha256=request_sha256 WHERE budget_id=$1`,
+        [budget.budget.id]
+      )
+    ).rejects.toThrow(/immutable/);
+  });
+
+  it('fails unlink authority, tenant, state, version and receipt failure closed', async () => {
+    const budget = await registerBudget(command(`unlink-negative-${randomUUID()}`));
+    const initiativeId = `initiative-${randomUUID()}`;
+    await client.query(
+      `INSERT INTO initiatives(id,organization_id,name,title,status)
+       VALUES($1,$2,'Unlink negative','Unlink negative','DRAFT')`,
+      [initiativeId, orgId]
+    );
+    await linkBudgetInitiativeCommand({
+      organizationId: orgId,
+      userId,
+      budgetId: budget.budget.id,
+      initiativeId,
+      expectedVersion: 1,
+      idempotencyKey: `link-negative-${randomUUID()}`,
+    });
+    const base = {
+      organizationId: orgId,
+      userId,
+      budgetId: budget.budget.id,
+      initiativeId,
+      expectedVersion: 2,
+      idempotencyKey: `unlink-negative-${randomUUID()}`,
+    };
+    await expect(
+      unlinkBudgetInitiativeCommand({ ...base, userId: viewerId })
+    ).rejects.toMatchObject({ code: 'FINANCE_EDIT_FORBIDDEN', status: 403 });
+    await client.query(
+      `UPDATE organization_members SET status='REVOKED'
+       WHERE organization_id=$1 AND user_id=$2`,
+      [orgId, userId]
+    );
+    await expect(unlinkBudgetInitiativeCommand(base)).rejects.toMatchObject({
+      code: 'ORG_MEMBERSHIP_REVOKED',
+      status: 403,
+    });
+    await client.query(
+      `UPDATE organization_members SET status='ACTIVE'
+       WHERE organization_id=$1 AND user_id=$2`,
+      [orgId, userId]
+    );
+    await expect(
+      unlinkBudgetInitiativeCommand({ ...base, expectedVersion: 1 })
+    ).rejects.toMatchObject({ code: 'BUDGET_VERSION_CONFLICT', status: 409 });
+    await expect(
+      unlinkBudgetInitiativeCommand({
+        ...base,
+        organizationId: foreignOrgId,
+        userId: foreignUserId,
+        idempotencyKey: `foreign-${randomUUID()}`,
+      })
+    ).rejects.toMatchObject({ code: 'BUDGET_NOT_FOUND', status: 404 });
+
+    const rollbackBudget = await registerBudget(command(`unlink-rollback-${randomUUID()}`));
+    const rollbackInitiative = `initiative-${randomUUID()}`;
+    await client.query(
+      `INSERT INTO initiatives(id,organization_id,name,title,status)
+       VALUES($1,$2,'Unlink rollback','Unlink rollback','DRAFT')`,
+      [rollbackInitiative, orgId]
+    );
+    await linkBudgetInitiativeCommand({
+      organizationId: orgId,
+      userId,
+      budgetId: rollbackBudget.budget.id,
+      initiativeId: rollbackInitiative,
+      expectedVersion: 1,
+      idempotencyKey: `link-rollback-${randomUUID()}`,
+    });
+    const fn = `reject_unlink_${randomUUID().replaceAll('-', '')}`;
+    const trg = `reject_unlink_${randomUUID().replaceAll('-', '')}`;
+    await client.query(
+      `CREATE FUNCTION ${fn}() RETURNS trigger LANGUAGE plpgsql AS $$
+       BEGIN RAISE EXCEPTION 'injected unlink receipt failure'; END $$`
+    );
+    await client.query(
+      `CREATE TRIGGER ${trg} BEFORE INSERT ON finance_budget_initiative_unlink_receipts
+       FOR EACH ROW EXECUTE FUNCTION ${fn}()`
+    );
+    try {
+      await expect(
+        unlinkBudgetInitiativeCommand({
+          organizationId: orgId,
+          userId,
+          budgetId: rollbackBudget.budget.id,
+          initiativeId: rollbackInitiative,
+          expectedVersion: 2,
+          idempotencyKey: `unlink-rollback-${randomUUID()}`,
+        })
+      ).rejects.toThrow(/injected unlink receipt failure/);
+      expect(
+        (
+          await client.query(
+            `SELECT b.version,
+          (SELECT count(*)::int FROM budget_initiative_links WHERE budget_id=b.id) links
+         FROM budgets b WHERE id=$1`,
+            [rollbackBudget.budget.id]
+          )
+        ).rows[0]
+      ).toEqual({ version: 2, links: 1 });
+    } finally {
+      await client.query(`DROP TRIGGER ${trg} ON finance_budget_initiative_unlink_receipts`);
+      await client.query(`DROP FUNCTION ${fn}()`);
+    }
   });
 
   it('atomically registers the exact aggregate and cold provenance', async () => {
@@ -1557,18 +1868,74 @@ describe.skipIf(!REAL_PG)('budgetRegistrationService (real PostgreSQL)', () => {
   });
 
   it('W40 migration fails closed before DDL on a hostile estimate-column shape', async () => {
-    const migration=fs.readFileSync(path.resolve(process.cwd(),'server/migrations/20261058_finance_budget_initiative_link_command.sql'),'utf8');
+    const migration = fs.readFileSync(
+      path.resolve(
+        process.cwd(),
+        'server/migrations/20261058_finance_budget_initiative_link_command.sql'
+      ),
+      'utf8'
+    );
     await client.query('BEGIN');
     try {
       await client.query(`DROP TABLE finance_budget_initiative_link_receipts CASCADE`);
       await client.query(`DROP FUNCTION finance_budget_initiative_link_receipt_immutable()`);
-      await client.query(`ALTER TABLE budget_initiative_links DROP CONSTRAINT fk_budget_initiative_links_budget_org, DROP CONSTRAINT fk_budget_initiative_links_initiative_org`);
-      await client.query(`ALTER TABLE initiatives DROP COLUMN estimated_revenue_uplift, DROP COLUMN estimated_cost_savings, DROP COLUMN estimated_capex`);
+      await client.query(
+        `ALTER TABLE budget_initiative_links DROP CONSTRAINT fk_budget_initiative_links_budget_org, DROP CONSTRAINT fk_budget_initiative_links_initiative_org`
+      );
+      await client.query(
+        `ALTER TABLE initiatives DROP COLUMN estimated_revenue_uplift, DROP COLUMN estimated_cost_savings, DROP COLUMN estimated_capex`
+      );
       await client.query(`ALTER TABLE initiatives ADD COLUMN estimated_revenue_uplift TEXT`);
-      await expect(client.query(migration)).rejects.toThrow(/ECO-W40 owned migration identity already exists/);
-    } finally { await client.query('ROLLBACK'); }
-    expect((await client.query(`SELECT data_type,is_nullable,column_default FROM information_schema.columns WHERE table_name='initiatives' AND column_name='estimated_revenue_uplift'`)).rows[0]).toMatchObject({data_type:'numeric',is_nullable:'NO',column_default:'0'});
-    expect((await client.query(`SELECT to_regclass('public.finance_budget_initiative_link_receipts') receipt`)).rows[0].receipt).toBe('finance_budget_initiative_link_receipts');
+      await expect(client.query(migration)).rejects.toThrow(
+        /ECO-W40 owned migration identity already exists/
+      );
+    } finally {
+      await client.query('ROLLBACK');
+    }
+    expect(
+      (
+        await client.query(
+          `SELECT data_type,is_nullable,column_default FROM information_schema.columns WHERE table_name='initiatives' AND column_name='estimated_revenue_uplift'`
+        )
+      ).rows[0]
+    ).toMatchObject({ data_type: 'numeric', is_nullable: 'NO', column_default: '0' });
+    expect(
+      (
+        await client.query(
+          `SELECT to_regclass('public.finance_budget_initiative_link_receipts') receipt`
+        )
+      ).rows[0].receipt
+    ).toBe('finance_budget_initiative_link_receipts');
+  });
+
+  it('W41 migration fails closed before DDL on a hostile receipt identity', async () => {
+    const migration = fs.readFileSync(
+      path.resolve(
+        process.cwd(),
+        'server/migrations/20261060_finance_budget_initiative_unlink_command.sql'
+      ),
+      'utf8'
+    );
+    await client.query('BEGIN');
+    try {
+      await client.query(`DROP TABLE finance_budget_initiative_unlink_receipts CASCADE`);
+      await client.query(`DROP FUNCTION finance_budget_initiative_unlink_receipt_immutable()`);
+      await client.query(
+        `CREATE TABLE finance_budget_initiative_unlink_receipts(hostile_marker TEXT NOT NULL)`
+      );
+      await expect(client.query(migration)).rejects.toThrow(
+        /ECO-W41 owned migration identity already exists/
+      );
+    } finally {
+      await client.query('ROLLBACK');
+    }
+    expect(
+      (
+        await client.query(
+          `SELECT to_regclass('public.finance_budget_initiative_unlink_receipts') receipt`
+        )
+      ).rows[0].receipt
+    ).toBe('finance_budget_initiative_unlink_receipts');
   });
 
   it('DatabaseInitializer boot fails hostile W39 and never blesses its ledger row', async () => {

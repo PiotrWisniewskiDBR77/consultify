@@ -24,8 +24,8 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
       legacyMutationDoors: 52,
       canonicalMutationDoors: 1,
       nonMutationDoors: 6,
-      retiredLegacyMutationDoors: 25,
-      openLegacyMutationDoors: 27,
+      retiredLegacyMutationDoors: 26,
+      openLegacyMutationDoors: 26,
     });
   });
 
@@ -100,9 +100,25 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
   });
 
   it('routes the mounted budget initiative link through canonical CAS without a legacy fallback', () => {
-    const source = fs.readFileSync(path.resolve(process.cwd(), 'src/components/Benefits/BudgetWorkspace.tsx'), 'utf8');
+    const source = fs.readFileSync(
+      path.resolve(process.cwd(), 'src/components/Benefits/BudgetWorkspace.tsx'),
+      'utf8'
+    );
     expect(source).toContain('V8FinanceApi.linkBudgetInitiative');
-    expect(source).not.toMatch(/method:\s*'POST'[\s\S]{0,300}economics\/budgets\/\$\{selected\.id\}\/initiatives/);
+    expect(source).not.toMatch(
+      /method:\s*'POST'[\s\S]{0,300}economics\/budgets\/\$\{selected\.id\}\/initiatives/
+    );
+  });
+
+  it('routes the mounted budget initiative unlink through canonical CAS without a legacy fallback', () => {
+    const source = fs.readFileSync(
+      path.resolve(process.cwd(), 'src/components/Benefits/BudgetWorkspace.tsx'),
+      'utf8'
+    );
+    expect(source).toContain('V8FinanceApi.unlinkBudgetInitiative');
+    expect(source).not.toMatch(
+      /method:\s*'DELETE'[\s\S]{0,300}economics\/budgets\/\$\{selected\.id\}\/initiatives/
+    );
   });
 
   it('routes every mounted budget-line mutation through the canonical CAS command', () => {

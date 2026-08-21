@@ -95,6 +95,7 @@ export const RESULTS_CUTOVER: LegacyCutoverDomainConfig = {
       state: 'observed',
       successor: null,
       disposition: 'canonical_current',
+      ownerContract: 'results.routes:promote-closure-benefit',
       legacyTable: 'initiative_benefits',
       legacyIdFromPath: (path) => decodeURIComponent(path.split('/')[2] || ''),
       reason:
@@ -107,6 +108,7 @@ export const RESULTS_CUTOVER: LegacyCutoverDomainConfig = {
       state: 'observed',
       successor: null,
       disposition: 'canonical_current',
+      ownerContract: 'results.routes:dismiss-closure-benefit',
       legacyTable: 'initiative_benefits',
       legacyIdFromPath: (path) => decodeURIComponent(path.split('/')[2] || ''),
       reason:
@@ -129,6 +131,7 @@ export const RESULTS_CUTOVER: LegacyCutoverDomainConfig = {
       state: 'observed',
       successor: null,
       disposition: 'canonical_current',
+      ownerContract: 'results.routes:delete-kpi-mapping',
       legacyTable: 'initiative_kpi_mappings',
       legacyIdFromPath: (path) => decodeURIComponent(path.split('/')[2] || ''),
       reason:
@@ -184,6 +187,7 @@ export const RESULTS_CUTOVER: LegacyCutoverDomainConfig = {
       state: 'observed',
       successor: null,
       disposition: 'canonical_current',
+      ownerContract: 'results.routes:resolve-deviation-case',
       legacyTable: 'kpi_deviation_cases',
       legacyIdFromPath: (path) => decodeURIComponent(path.split('/')[2] || ''),
       reason:
@@ -302,6 +306,7 @@ export const RESULTS_CUTOVER: LegacyCutoverDomainConfig = {
       state: 'observed',
       successor: null,
       disposition: 'canonical_current',
+      ownerContract: 'kpiScorecardService:updateScorecard',
       legacyTable: 'kpi_scorecards',
       legacyIdFromPath: (path) => decodeURIComponent(path.split('/')[2] || ''),
       reason:
@@ -371,6 +376,14 @@ export const RESULTS_LEGACY_CUTOVER_DENOMINATOR = Object.freeze({
     .map((writer) => writer.writerId),
   canonicalCurrentDoors: RESULTS_CUTOVER.writers
     .filter((writer) => writer.disposition === 'canonical_current')
+    .map((writer) => writer.writerId),
+  canonicalCurrentOwners: Object.fromEntries(
+    RESULTS_CUTOVER.writers
+      .filter((writer) => writer.disposition === 'canonical_current')
+      .map((writer) => [writer.writerId, writer.ownerContract])
+  ),
+  ownerlessCanonicalCurrentDoors: RESULTS_CUTOVER.writers
+    .filter((writer) => writer.disposition === 'canonical_current' && !writer.ownerContract)
     .map((writer) => writer.writerId),
   unresolvedDoors: RESULTS_CUTOVER.writers
     .filter((writer) => writer.state !== 'disabled' && !writer.disposition)

@@ -4,18 +4,22 @@ Date: `2026-08-21`
 
 Overall verdict: `CONDITIONAL_PASS / OWNER_BROWSER_GATE_REQUIRED`
 
-This report qualifies the code candidate at
-`1a36dd72b0b27aedc8067e75b8de07ed4446e7fb` on
-`codex/full-mvp-recovery-20260820`. It does not authorize production, deployment,
+This report qualifies the corrected code candidate at
+`2ce7750de9` on
+the transferred integration branch `codex/wave2-browser-transfer-20260821`. It
+does not authorize production, deployment,
 or promotion to `OWNER_ACCEPTED`.
 
 ## Candidate and recovery state
 
 - canonical durable worktree: `/Users/piotrwisniewski/Developer/Consultify`;
-- code candidate: `1a36dd72b0b27aedc8067e75b8de07ed4446e7fb`;
-- branch: `codex/full-mvp-recovery-20260820`;
-- recovery source: the same branch and commit formerly checked out at the
-  reboot-removed `/private/tmp/consultify-staging-deploy-e6ca`;
+- transferred Wave 2 source candidate: `2ce7750de9`;
+- local pre-transfer integration repair retained: `1a36dd72b0`;
+- code candidate: `2ce7750de9`;
+- branch: `codex/wave2-browser-transfer-20260821`;
+- recovery source: preserved local ref
+  `refs/remotes/icloud-source/wave2-final-20260821` plus the durable checkout's
+  pre-transfer branch history;
 - production touched: `NO`;
 - push/deploy performed: `NO`;
 - NFR suite rerun: `NO`.
@@ -36,6 +40,9 @@ The original integrated P1-P4 candidate remains its parent
 | 4 | Dynamic SWOT bounded owner header | `002b9f5a21` |
 | 3 | Federated Teresa/UI action manifest | `8c535a106f` |
 | 3 | Mounted mutation denominator | `a02a150737` |
+| post-gate repair | Standalone server typecheck boundary | `4318da80fa` |
+| post-gate integration repair | Restore eight canonical Finance budget routes lost in merge `826dac93da` | `3ab15ebb29` |
+| post-gate Finance cutover | Govern budget-initiative unlink and retire ECO-W41 | `2ce7750de9` |
 
 The apparent table order preserves the historical commit sequence. P3 was
 reviewed after P1/P2 shared-contract work; the bounded P4 packet had no shared
@@ -59,6 +66,36 @@ A post-restart attempt to invoke the owner harness stopped in preflight because
 tests and is not counted as a failure or as new acceptance evidence. The earlier
 real-PostgreSQL owner evidence remains the qualifying artifact; no Finance code
 changed after it.
+
+### Finance route integration requalification
+
+The final audit found that merge `826dac93da` retained the canonical Finance
+services, clients, registry decisions and route tests but dropped eight mounted
+V8 budget handlers from `finance.routes.ts`: registration, line update,
+projection, scenario adjustment, approval, discard, document import and
+initiative link. That was a real integration regression and contradicted the
+retirement claims despite the earlier green source evidence.
+
+Commit `3ab15ebb29` restores the previously governed handlers without changing
+their service contracts. On the repaired candidate:
+
+- mounted Finance route suite: `79/79 PASS`;
+- exact Finance cutover inventory: `11/11 PASS`;
+- combined recovery qualification: `90/90 PASS`;
+- root `npm run type-check`: `PASS`;
+- no push, deployment, production access or owner-browser substitution occurred.
+
+The exact-current Finance denominator after ECO-W41 is `26 retired / 52 actual
+legacy mutation doors`, with `26` still open. `FIN-MVP-CUTOVER-001` remains
+`PARTIAL`; this repair restores already-claimed mounted successors but does not
+promote the broader parent task.
+
+ECO-W41 adds a DRAFT-only tenant-bound unlink command sharing the link-family
+advisory lock, exact parent-version CAS, immutable removed-link snapshot receipt,
+response-loss replay and writer-scoped legacy rollback. Qualification evidence:
+root and server typechecks `PASS`, focused route/inventory/client/UI tests
+`101/101 PASS`, real-PostgreSQL canonical plus mounted legacy tests `72/72 PASS`,
+fresh migration `816`, repeat `0`, dry-run `0`, final fixture/export residue `0`.
 
 ## P2 — Results writers and Transform runtime
 
@@ -99,6 +136,10 @@ Verdict: `PASS_FOR_EXPLICIT_MVP_DENOMINATOR`
   - Execution: `65`;
   - Case Workspace: `75`;
 - additions, duplicate IDs and missing denominator entries fail CI tests.
+- the standalone server compiler now consumes a server-local type-only boundary;
+  runtime manifest construction and validation remain single-sourced in
+  `shared/contracts/federatedActionManifest.ts`;
+- focused post-repair P3 evidence: `5/5 PASS`.
 
 Important boundary: registry-supported actions and mounted-route denominator
 rows are separate evidence sets. A mounted route is `NOT_SUPPORTED_IN_MVP` for
@@ -138,9 +179,14 @@ Persistence command result:
 Shared-contract verification:
 
 - root `npm run type-check -- --pretty false`: `PASS`;
-- focused P3/P4 rerun after the final integration repair: `3 files / 9 tests PASS`;
-- server production build/typecheck: `PASS`;
-- `git diff --check`: required again after this report-only change;
+- server `npm --prefix server run typecheck -- --pretty false`: `PASS`;
+- initial standalone server rerun exposed `TS6059` in the two P3 adapters; this
+  was treated as a real gate failure, fixed in `4318da80fa`, and rerun to PASS;
+- focused manifest and mounted-denominator tests after the repair: `5/5 PASS`;
+- post-integration Finance route and inventory requalification: `90/90 PASS`;
+- the durable checkout retains the declaration-only shared type boundary from
+  `1a36dd72b0`; final merge typechecks and focused tests are required below;
+- `git diff --check`: required on the final merge candidate;
 - candidate cleanliness: required again after this report-only commit.
 
 During the final 2026-08-21 verification, the server build initially failed
@@ -170,7 +216,22 @@ P4 is code-complete but not owner-accepted. Therefore:
   correction register and iterate without changing the technical verdicts for
   unrelated P1-P3 scopes.
 
-The 2026-08-21 session again exposed neither the Browser control runtime nor the
-Computer Use control runtime. The local repository and dependencies are ready,
-but no synthetic Playwright run or screenshot has been substituted for the
-required owner click gate. P4 therefore remains `CODE_PASS / BROWSER_NOT_TESTED`.
+## Parent-task and next-round reconciliation
+
+The bounded Wave 2 packet does not automatically promote unrelated broader
+82-task parent contracts. After exact owner bindings and mounted real-PG usage
+telemetry closed `RES-MVP-LEGACY-CUTOVER-001`, the authoritative reporter on
+this branch is `73 DONE_CURRENT_SHA / 9 PARTIAL`, with zero missing or invalid
+records.
+
+- the original 11-task reconciliation is recorded in
+  `WAVE_02_REMAINING_11_RECONCILIATION.md`;
+- the exact-SHA collaborative acceptance preparation for all 16 modules is
+  recorded in `WAVE_03_16_MODULE_OWNER_ACCEPTANCE_REGISTER.md`;
+- neither document substitutes historical automation or code inspection for
+  the outstanding mounted browser and owner decisions.
+
+The former workspace exposed neither Browser control nor Computer Use. The
+durable transferred workspace is selected specifically because its Browser
+control was verified available by the owner. No acceptance is promoted until
+the click gate is rerun on the exact final merge SHA.

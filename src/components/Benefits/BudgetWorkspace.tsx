@@ -118,12 +118,28 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
   const [endPeriod, setEndPeriod] = useState('');
   const [createIntentKey, setCreateIntentKey] = useState(() => crypto.randomUUID());
   const [linkIntentKey, setLinkIntentKey] = useState(() => crypto.randomUUID());
-  const pendingLinkAttempts = useRef<Map<string, {
-    budgetId: string;
-    initiativeId: string;
-    expectedVersion: number;
-    idempotencyKey: string;
-  }>>(new Map());
+  const pendingLinkAttempts = useRef<
+    Map<
+      string,
+      {
+        budgetId: string;
+        initiativeId: string;
+        expectedVersion: number;
+        idempotencyKey: string;
+      }
+    >
+  >(new Map());
+  const pendingUnlinkAttempts = useRef<
+    Map<
+      string,
+      {
+        budgetId: string;
+        initiativeId: string;
+        expectedVersion: number;
+        idempotencyKey: string;
+      }
+    >
+  >(new Map());
 
   const fetchBudgets = useCallback(async () => {
     try {
@@ -336,15 +352,15 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
       setLinkingInitiative(true);
       const attemptIdentity = `${selected.id}:${initiativeId}`;
       const pendingAttempt = pendingLinkAttempts.current.get(attemptIdentity);
-      const attempt =
-        pendingAttempt
-          ? pendingAttempt
-          : {
-              budgetId: selected.id,
-              initiativeId,
-              expectedVersion: selected.version,
-              idempotencyKey: pendingLinkAttempts.current.size > 0 ? crypto.randomUUID() : linkIntentKey,
-            };
+      const attempt = pendingAttempt
+        ? pendingAttempt
+        : {
+            budgetId: selected.id,
+            initiativeId,
+            expectedVersion: selected.version,
+            idempotencyKey:
+              pendingLinkAttempts.current.size > 0 ? crypto.randomUUID() : linkIntentKey,
+          };
       pendingLinkAttempts.current.set(attemptIdentity, attempt);
       try {
         const result = await V8FinanceApi.linkBudgetInitiative(
@@ -353,7 +369,9 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
           attempt.expectedVersion,
           attempt.idempotencyKey
         );
-        setSelected((current) => current?.id === selected.id ? { ...current, version: result.budgetVersion } : current);
+        setSelected((current) =>
+          current?.id === selected.id ? { ...current, version: result.budgetVersion } : current
+        );
         setLinkIntentKey(crypto.randomUUID());
         pendingLinkAttempts.current.delete(attemptIdentity);
         toast.success(t('finance.budget.initiativeLinked', 'Initiative linked'));
@@ -372,18 +390,33 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
   const handleUnlinkInitiative = useCallback(
     async (initiativeId: string) => {
       if (!selected) return;
+      const attemptIdentity = `${selected.id}:${initiativeId}`;
+      const attempt = pendingUnlinkAttempts.current.get(attemptIdentity) ?? {
+        budgetId: selected.id,
+        initiativeId,
+        expectedVersion: selected.version,
+        idempotencyKey: crypto.randomUUID(),
+      };
+      pendingUnlinkAttempts.current.set(attemptIdentity, attempt);
       try {
-        await fetch(`${API_URL}/economics/budgets/${selected.id}/initiatives/${initiativeId}`, {
-          method: 'DELETE',
-          headers: getHeaders(),
-        });
+        const result = await V8FinanceApi.unlinkBudgetInitiative(
+          attempt.budgetId,
+          attempt.initiativeId,
+          attempt.expectedVersion,
+          attempt.idempotencyKey
+        );
+        pendingUnlinkAttempts.current.delete(attemptIdentity);
+        setSelected((current) =>
+          current?.id === selected.id ? { ...current, version: result.budgetVersion } : current
+        );
         toast.success(t('finance.budget.initiativeUnlinked', 'Initiative unlinked'));
         await fetchLinkedInitiatives(selected.id);
       } catch {
+        await selectBudget(selected);
         toast.error(t('finance.budget.unlinkFailed', 'Failed to unlink initiative'));
       }
     },
-    [selected, t, fetchLinkedInitiatives]
+    [selected, t, fetchLinkedInitiatives, selectBudget]
   );
 
   const handleOpenLinkPicker = useCallback(async () => {
