@@ -150,7 +150,6 @@ describe.skipIf(!REAL_PG)(
 
     let caseId: string;
     let linkId: string;
-    const createdLinkIds: string[] = [];
 
     function createApp(): Express {
       const app = express();
@@ -162,6 +161,10 @@ describe.skipIf(!REAL_PG)(
     beforeAll(async () => {
       raw = new pg.Client({ connectionString: CONNECTION_STRING });
       await raw.connect();
+      const database = await raw.query<{ current_database: string }>('SELECT current_database()');
+      if (!database.rows[0]?.current_database.startsWith('consultify_results_')) {
+        throw new Error('ROI/Finance reconciliation requires an owned consultify_results_* disposable database');
+      }
 
       // --- schema prerequisite (see header) ---
       const hasTable = await raw.query<{ reg: string | null }>(
@@ -187,6 +190,7 @@ describe.skipIf(!REAL_PG)(
       adapter = await import('../roiFinanceReconciliationAdapter.js');
       roiCaseCommands = await import('../../../resultsVnext/roi/roiCaseCommands.js');
       roiFinanceLinkCommands = await import('../../../resultsVnext/roi/roiFinanceLinkCommands.js');
+      const visibility = await import('../../../resultsVnext/platform/visibilityResolver.js');
       economicsRoutes = (await import('../../../../routes/economics.routes.js')).default;
 
       // --- fixtures ---
@@ -219,7 +223,7 @@ describe.skipIf(!REAL_PG)(
         );
         await raw.query(
           `INSERT INTO organization_members (id,organization_id,user_id,role,status,created_at)
-           VALUES ($1,$2,$3,'MEMBER','ACTIVE',now())`,
+           VALUES ($1,$2,$3,'ADMIN','ACTIVE',now())`,
           [`${resolverId}-membership`, orgId, resolverId]
         );
         await raw.query(
@@ -252,15 +256,15 @@ describe.skipIf(!REAL_PG)(
           initiativeWithoutCase,
         ]
       );
-      // ROI-E001 §5 / RN-G1 §B.3: `createRoiCase` fails closed without an
-      // active domain='roi' visibility policy, and `listRoiFinanceLinks`'s
-      // ABAC join needs one too.
-      await raw.query(
-        `INSERT INTO rvn_platform_visibility_policies
-         (organization_id, domain, policy_version, visibility_mode, default_scope_type, created_by)
-       VALUES ($1,'roi',1,'OPEN_ORG',NULL,$2)`,
-        [orgId, userId]
-      );
+      // Publish the canonical, append-only governed policy. This atomically
+      // creates both governance truth and the ROI_GOVERNED legacy read seam.
+      await visibility.publishRoiGovernedVisibilityPolicy({
+        organizationId: orgId,
+        actorUserId: userId,
+        policyKey: visibility.ROI_GOVERNED_VISIBILITY_POLICY.key,
+        policyDigest: visibility.ROI_GOVERNED_VISIBILITY_POLICY.digest,
+        idempotencyKey: `roi-e007-governance-${orgId}`,
+      });
 
       const caseOutcome = await roiCaseCommands.createRoiCase({
         organizationId: orgId,
@@ -291,7 +295,6 @@ describe.skipIf(!REAL_PG)(
         access: { capabilities: ['*'], platformRole: null },
       });
       linkId = linkOutcome.result.linkId;
-      createdLinkIds.push(linkId);
 
       mockUser = { id: userId, organizationId: orgId };
     }, 60_000);
@@ -312,66 +315,11 @@ describe.skipIf(!REAL_PG)(
 
     afterAll(async () => {
       if (!raw) return;
-      try {
-        await raw.query('BEGIN');
-        // Disable only the three named append/delete guards whose behavior this
-        // suite already proved. The deletes remain exact-org/exact-id scoped.
-        await raw.query(`ALTER TABLE benefit_tracking DISABLE TRIGGER trg_benefit_tracking_deny_delete`);
-        await raw.query(`ALTER TABLE rvn_finance_reconciliation_grant_events DISABLE TRIGGER trg_rvn_fin_reconciliation_grant_append_only`);
-        await raw.query(`ALTER TABLE rvn_finance_reconciliation_decisions DISABLE TRIGGER trg_rvn_fin_reconciliation_decision_append_only`);
-        await raw.query(`DELETE FROM benefit_tracking WHERE organization_id = $1`, [orgId]);
-        await raw.query(`DELETE FROM rvn_finance_reconciliation_decisions WHERE organization_id = $1`, [orgId]);
-        await raw.query(`DELETE FROM rvn_roi_finance_reconciliations WHERE organization_id = $1`, [orgId]);
-        await raw.query(`DELETE FROM rvn_finance_reconciliation_grant_events WHERE organization_id = $1`, [orgId]);
-        if (createdLinkIds.length > 0) {
-          await raw.query(`DELETE FROM rvn_roi_finance_links WHERE link_id = ANY($1::uuid[])`, [
-            createdLinkIds,
-          ]);
-        }
-        await raw.query(`DELETE FROM rvn_platform_outbox WHERE event_id IN (SELECT event_id FROM rvn_platform_events WHERE organization_id=$1)`, [orgId]);
-        await raw.query(`DELETE FROM rvn_platform_events WHERE organization_id=$1`, [orgId]);
-        await raw.query(`DELETE FROM rvn_platform_resource_acl WHERE resource_type='roi_case' AND resource_id=$1`, [caseId]);
-        await raw.query(`DELETE FROM rvn_platform_obligations WHERE organization_id=$1`, [orgId]);
-        await raw.query(`DELETE FROM rvn_roi_baselines WHERE organization_id=$1`, [orgId]);
-        await raw.query(`DELETE FROM rvn_roi_calculation_policy WHERE organization_id=$1`, [orgId]);
-        await raw.query(`DELETE FROM rvn_roi_cases WHERE organization_id=$1`, [orgId]);
-        await raw.query(`DELETE FROM rvn_platform_resource_visibility WHERE organization_id=$1`, [orgId]);
-        await raw.query(`DELETE FROM rvn_platform_visibility_policies WHERE organization_id=$1`, [orgId]);
-        await raw.query(`DELETE FROM digitization_analyses WHERE id=ANY($1::text[])`, [[analysisWithCase, analysisWithoutCase]]);
-        await raw.query(`DELETE FROM initiatives WHERE id=ANY($1::text[])`, [[initiativeWithCase, initiativeWithoutCase]]);
-        await raw.query(`DELETE FROM organization_members WHERE organization_id=$1`, [orgId]);
-        await raw.query(`DELETE FROM users WHERE id=ANY($1::text[])`, [[userId, `resolver-${userId}`, `acceptor-${userId}`]]);
-        await raw.query(`DELETE FROM organizations WHERE id=$1`, [orgId]);
-
-        await raw.query(`ALTER TABLE benefit_tracking ENABLE TRIGGER trg_benefit_tracking_deny_delete`);
-        await raw.query(`ALTER TABLE rvn_finance_reconciliation_grant_events ENABLE TRIGGER trg_rvn_fin_reconciliation_grant_append_only`);
-        await raw.query(`ALTER TABLE rvn_finance_reconciliation_decisions ENABLE TRIGGER trg_rvn_fin_reconciliation_decision_append_only`);
-
-        const residue = await raw.query<{ total: string }>(
-          `SELECT (
-            (SELECT count(*) FROM organizations WHERE id=$1) +
-            (SELECT count(*) FROM users WHERE organization_id=$1) +
-            (SELECT count(*) FROM organization_members WHERE organization_id=$1) +
-            (SELECT count(*) FROM initiatives WHERE organization_id=$1) +
-            (SELECT count(*) FROM digitization_analyses WHERE organization_id=$1) +
-            (SELECT count(*) FROM rvn_roi_cases WHERE organization_id=$1) +
-            (SELECT count(*) FROM rvn_platform_visibility_policies WHERE organization_id=$1) +
-            (SELECT count(*) FROM rvn_roi_finance_reconciliations WHERE organization_id=$1) +
-            (SELECT count(*) FROM rvn_finance_reconciliation_grant_events WHERE organization_id=$1) +
-            (SELECT count(*) FROM rvn_finance_reconciliation_decisions WHERE organization_id=$1)
-          )::text AS total`,
-          [orgId]
-        );
-        if (residue.rows[0]?.total !== '0') {
-          throw new Error(`finance reconciliation fixture residue: ${residue.rows[0]?.total ?? 'unknown'}`);
-        }
-        await raw.query('COMMIT');
-      } catch (error) {
-        await raw.query('ROLLBACK').catch(() => undefined);
-        throw error;
-      } finally {
-        await raw.end();
-      }
+      // Governance, grant events, decisions and platform events are immutable
+      // evidence. The suite is fail-closed to an owned disposable database;
+      // teardown is the externally verified database drop, never trigger
+      // disabling plus selective ledger deletion.
+      await raw.end();
     }, 30_000);
 
     async function readReconciliation(reconciliationId: string) {
@@ -399,6 +347,81 @@ describe.skipIf(!REAL_PG)(
       return row ? Number(row.actual_cost_savings) : null;
     }
 
+    async function bindGovernedSources(roiValue: number, financeValue: number) {
+      const actualSnapshotId = randomUUID();
+      const artifactId = randomUUID();
+      const businessVersionId = randomUUID();
+      const workingRevisionId = randomUUID();
+      const computeSnapshotId = randomUUID();
+      const contentHash = `sha256:${randomUUID().replaceAll('-', '').padEnd(64, '0')}`;
+      const engine = await raw.query<{ engine_manifest_id: string }>(
+        `SELECT engine_manifest_id FROM finance_engine_manifests ORDER BY created_at LIMIT 1`
+      );
+      if (!engine.rows[0]) throw new Error('fixture setup: finance engine manifest missing');
+      await raw.query(
+        `INSERT INTO finance_artifacts (artifact_id,organization_id,artifact_type,natural_key,created_by)
+         VALUES($1,$2,'BASELINE_MODEL',$3,$4)`,
+        [artifactId, orgId, `reconciliation-${artifactId}`, userId]
+      );
+      await raw.query(
+        `INSERT INTO finance_business_versions
+          (business_version_id,artifact_id,organization_id,version_no,status,freshness,engine_manifest_id,content_semantic_hash)
+         VALUES($1,$2,$3,1,'DRAFT','NEVER_COMPUTED',$4,$5)`,
+        [businessVersionId, artifactId, orgId, engine.rows[0].engine_manifest_id, contentHash]
+      );
+      await raw.query(
+        `INSERT INTO finance_working_revisions
+          (working_revision_id,artifact_id,organization_id,business_version_id,revision_seq,content_semantic_hash,is_current,edited_by)
+         VALUES($1,$2,$3,$4,1,$5,false,$6)`,
+        [workingRevisionId, artifactId, orgId, businessVersionId, contentHash, userId]
+      );
+      await raw.query(
+        `INSERT INTO finance_compute_snapshots
+          (compute_snapshot_id,artifact_id,organization_id,working_revision_id,engine_manifest_id,as_of,content_semantic_hash,created_by)
+         VALUES($1,$2,$3,$4,$5,now(),$6,$7)`,
+        [computeSnapshotId, artifactId, orgId, workingRevisionId, engine.rows[0].engine_manifest_id, contentHash, userId]
+      );
+      await raw.query(
+        `UPDATE finance_business_versions SET source_working_revision_id=$1,compute_snapshot_id=$2,
+           status='APPROVED',freshness='CURRENT',approved_by=$3,approved_at=now()
+         WHERE business_version_id=$4`,
+        [workingRevisionId, computeSnapshotId, userId, businessVersionId]
+      );
+      await raw.query(
+        `UPDATE rvn_roi_finance_links SET finance_artifact_id=$1,finance_version_id=$2,
+           tracked_metric='totalFinancialBenefits',pinned_finance_value=$3
+         WHERE link_id=$4 AND organization_id=$5`,
+        [artifactId, businessVersionId, financeValue, linkId, orgId]
+      );
+      const nextSequence = await raw.query<{ n: number }>(
+        `SELECT COALESCE(max(sequence_number),0)::int+1 n FROM rvn_roi_actual_snapshots WHERE case_id=$1`,
+        [caseId]
+      );
+      await raw.query(
+        `INSERT INTO rvn_roi_actual_snapshots
+          (actual_snapshot_id,case_id,organization_id,sequence_number,as_of_period_end,published_by,
+           total_actual_financial_benefits,periods_with_actual_count,periods_expected_count,coverage_pct,
+           unverified_entry_count,disputed_entry_count,entry_ids_included)
+         VALUES($1,$2,$3,$4,'2026-06-30',$5,$6,1,1,100,0,0,'[]'::jsonb)`,
+        [actualSnapshotId, caseId, orgId, nextSequence.rows[0]!.n, userId, roiValue]
+      );
+      return { resultsActualSnapshotId: actualSnapshotId, resultsActualMetric: 'totalFinancialBenefits' as const };
+    }
+
+    async function detectGoverned(
+      params: Omit<Parameters<typeof adapter.detectAndReconcile>[0], 'resultsActualSnapshotId' | 'resultsActualMetric'>
+    ) {
+      if (!adapter.assessMateriality(params.roiValue, params.financeValue).material) {
+        return adapter.detectAndReconcile({
+          ...params,
+          resultsActualSnapshotId: randomUUID(),
+          resultsActualMetric: 'totalFinancialBenefits',
+        });
+      }
+      const source = await bindGovernedSources(params.roiValue, params.financeValue);
+      return adapter.detectAndReconcile({ ...params, ...source });
+    }
+
     // ============================================================
     // 1. detectAndReconcile — the 5% materiality threshold
     // ============================================================
@@ -406,7 +429,7 @@ describe.skipIf(!REAL_PG)(
     describe('detectAndReconcile', () => {
       it('opens a reconciliation ABOVE the threshold, with explicit scalar roi_value/finance_value', async () => {
         // 100 -> 120 = 20% divergence, four times the approved 5% threshold.
-        const result = await adapter.detectAndReconcile({
+        const result = await detectGoverned({
           organizationId: orgId,
           caseId,
           linkId,
@@ -452,7 +475,7 @@ describe.skipIf(!REAL_PG)(
         );
 
         // 100 -> 104 = 4% divergence, inside the tolerance band.
-        const result = await adapter.detectAndReconcile({
+        const result = await detectGoverned({
           organizationId: orgId,
           caseId,
           linkId,
@@ -480,7 +503,7 @@ describe.skipIf(!REAL_PG)(
       });
 
       it('treats a divergence exactly AT the threshold as immaterial (inclusive tolerance edge)', async () => {
-        const result = await adapter.detectAndReconcile({
+        const result = await detectGoverned({
           organizationId: orgId,
           caseId,
           linkId,
@@ -495,7 +518,7 @@ describe.skipIf(!REAL_PG)(
       });
 
       it('opens at 5.0001% and does not permit a caller override of the frozen threshold', async () => {
-        const result = await adapter.detectAndReconcile({
+        const result = await detectGoverned({
           organizationId: orgId,
           caseId,
           linkId,
@@ -530,7 +553,7 @@ describe.skipIf(!REAL_PG)(
       });
 
       it('rejects direct SQL mutation of immutable proposal facts', async () => {
-        const opened = await adapter.detectAndReconcile({
+        const opened = await detectGoverned({
           organizationId: orgId,
           caseId,
           linkId,
@@ -552,7 +575,7 @@ describe.skipIf(!REAL_PG)(
 
       it('rejects a link that does not belong to the case (canonical validation, not ours)', async () => {
         await expect(
-          adapter.detectAndReconcile({
+          detectGoverned({
             organizationId: orgId,
             caseId,
             linkId: randomUUID(),
@@ -579,7 +602,7 @@ describe.skipIf(!REAL_PG)(
 
     describe('resolveReconciliationDecision', () => {
       async function openOne(): Promise<string> {
-        const opened = await adapter.detectAndReconcile({
+        const opened = await detectGoverned({
           organizationId: orgId,
           caseId,
           linkId,
@@ -671,7 +694,7 @@ describe.skipIf(!REAL_PG)(
     // ============================================================
 
     describe('PUT /api/economics/analyses/:id/benefits', () => {
-      it('REGRESSION A: divergent actual WITH a ROI case + link -> 200 + reconciliationId, stored actual UNCHANGED', async () => {
+      it('REGRESSION A: a legacy scalar cannot manufacture reconciliation truth; returns 409 and preserves the stored actual', async () => {
         const trackingPeriod = `2026-Q1-${randomUUID().slice(0, 8)}`;
 
         // Seed the period row through the endpoint itself — the INSERT path is
@@ -687,18 +710,19 @@ describe.skipIf(!REAL_PG)(
           .put(`/api/economics/analyses/${analysisWithCase}/benefits`)
           .send({ trackingPeriod, plannedBenefits: 1200, actualBenefits: 1500 });
 
-        expect(res.status).toBe(200); // explicitly NOT 500
-        expect(res.body.success).toBe(true);
+        expect(res.status).toBe(409); // explicitly NOT 500 and never false success
+        expect(res.body.success).toBe(false);
+        expect(res.body.error).toBe('RESULTS_ACTUAL_SOURCE_REQUIRED');
+        expect(res.body.status).toBe('NEEDS_DECISION');
         expect(res.body.actualBenefitsWriteRejected).toBe(true);
-        expect(res.body.reconciliationId).toBeTruthy();
-        expect(res.body.reconciliationOpened).toBe(true);
         expect(res.body.storedActualBenefits).toBe(900);
         expect(res.body.requestedActualBenefits).toBe(1500);
+        expect(res.body.canonicalSuccessor).toContain(`/api/vnext/results/roi/cases/${caseId}/finance-reconciliations`);
 
         // The whole point: the recorded actual survived.
         expect(await readStoredActual(initiativeWithCase, trackingPeriod)).toBe(900);
 
-        // The rest of the request still landed.
+        // Fail-closed means the rest of the request did not land either.
         const row = await raw.query<{
           planned_cost_savings: number;
           overall_variance_percent: number;
@@ -707,19 +731,7 @@ describe.skipIf(!REAL_PG)(
           WHERE organization_id = $1 AND initiative_id = $2 AND tracking_period = $3`,
           [orgId, initiativeWithCase, trackingPeriod]
         );
-        expect(Number(row.rows[0].planned_cost_savings)).toBe(1200);
-        // Variance is derived from the STORED actual (900), not the rejected 1500.
-        expect(Number(row.rows[0].overall_variance_percent)).toBeCloseTo(
-          ((900 - 1200) / 1200) * 100,
-          4
-        );
-
-        // And the divergence is a durable record carrying both scalars.
-        const rec = await readReconciliation(res.body.reconciliationId);
-        expect(Number(rec.roi_value)).toBe(900);
-        expect(Number(rec.finance_value)).toBe(1500);
-        expect(rec.status).toBe('open');
-        expect(rec.case_id).toBe(caseId);
+        expect(Number(row.rows[0].planned_cost_savings)).toBe(1000);
       });
 
       it('REGRESSION B: divergent actual WITHOUT a ROI case -> 409, value unchanged, NOT 500', async () => {
@@ -788,10 +800,10 @@ describe.skipIf(!REAL_PG)(
           .put(`/api/economics/analyses/${analysisWithCase}/benefits`)
           .send({ trackingPeriod, plannedBenefits: 1000, actualBenefits: 1020 });
 
-        expect(res.status).toBe(200);
+        expect(res.status).toBe(409);
+        expect(res.body.success).toBe(false);
+        expect(res.body.error).toBe('RESULTS_ACTUAL_SOURCE_REQUIRED');
         expect(res.body.actualBenefitsWriteRejected).toBe(true);
-        expect(res.body.reconciliationOpened).toBe(false);
-        expect(res.body.reconciliationId).toBeNull();
         expect(await readStoredActual(initiativeWithCase, trackingPeriod)).toBe(1000);
       });
     });

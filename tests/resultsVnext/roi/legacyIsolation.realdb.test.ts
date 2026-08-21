@@ -64,10 +64,13 @@ import {
   DB_CONFIGURED,
   insertInitiative,
   insertOrganization,
-  insertVisibilityPolicy,
   loadRoiPirTestModules,
   type RoiPirTestModules,
 } from './roiPirRealdbFixtures.js';
+import {
+  ensureRoiFixtureMembership,
+  ensureRoiGovernedVisibility,
+} from './roiRealdbOrgFixture.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '../../..');
@@ -141,6 +144,10 @@ describe('ROI-E008 legacy isolation (real Postgres)', () => {
     try {
       await client.connect();
       await client.query('SELECT 1');
+      const database = await client.query<{ current_database: string }>('SELECT current_database()');
+      if (!database.rows[0]?.current_database.startsWith('consultify_results_')) {
+        throw new Error('ROI legacy-isolation requires an owned consultify_results_* disposable database');
+      }
       await client.query('SELECT 1 FROM rvn_roi_cases LIMIT 0');
       await client.query('SELECT 1 FROM digitization_analyses LIMIT 0');
       await client.query('SELECT 1 FROM initiative_benefits LIMIT 0');
@@ -169,7 +176,13 @@ describe('ROI-E008 legacy isolation (real Postgres)', () => {
     listOrganizationRoiPirOutcomes = orgPerspective.listOrganizationRoiPirOutcomes;
 
     await insertOrganization(client, ORG_ID, 'ROI-E008 Legacy Isolation Org');
-    await insertVisibilityPolicy(client, ORG_ID, 'roi', 'OPEN_ORG', USER);
+    await ensureRoiFixtureMembership(client, { organizationId: ORG_ID, userId: USER, role: 'OWNER' });
+    await ensureRoiFixtureMembership(client, { organizationId: ORG_ID, userId: APPROVER, role: 'ADMIN' });
+    await ensureRoiGovernedVisibility({
+      organizationId: ORG_ID,
+      actorUserId: USER,
+      idempotencyKey: `roi-e008-governance-${tag}`,
+    });
   }, 30_000);
 
   afterAll(async () => {
