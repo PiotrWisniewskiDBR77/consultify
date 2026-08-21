@@ -91,6 +91,12 @@ export interface LegacyWriterRule {
    * MVP; it is not waiting for an invented look-alike successor.
    */
   disposition?: 'successor_backed' | 'canonical_current' | 'approved_out';
+  /**
+   * Named runtime contract that owns an intentionally retained MVP writer.
+   * Required by the Results gate for every `canonical_current` disposition;
+   * a table name alone is not an ownership decision.
+   */
+  ownerContract?: string;
   /** Legacy table this writer mutates, when it addresses a single record. */
   legacyTable?: string;
   /** Extracts the legacy record id from the router-local path. */

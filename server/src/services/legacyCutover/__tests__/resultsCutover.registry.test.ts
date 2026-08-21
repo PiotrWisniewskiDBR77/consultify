@@ -41,6 +41,14 @@ describe('Results legacy cutover registry', () => {
     expect(RESULTS_LEGACY_CUTOVER_DENOMINATOR.canonicalCurrentDoors).toEqual([
       'RESULTS-W05', 'RESULTS-W06', 'RESULTS-W18', 'RESULTS-W23', 'RESULTS-W34',
     ]);
+    expect(RESULTS_LEGACY_CUTOVER_DENOMINATOR.canonicalCurrentOwners).toEqual({
+      'RESULTS-W05': 'results.routes:promote-closure-benefit',
+      'RESULTS-W06': 'results.routes:dismiss-closure-benefit',
+      'RESULTS-W18': 'results.routes:delete-kpi-mapping',
+      'RESULTS-W23': 'results.routes:resolve-deviation-case',
+      'RESULTS-W34': 'kpiScorecardService:updateScorecard',
+    });
+    expect(RESULTS_LEGACY_CUTOVER_DENOMINATOR.ownerlessCanonicalCurrentDoors).toEqual([]);
     expect(RESULTS_LEGACY_CUTOVER_DENOMINATOR.unresolvedDoors).toEqual([]);
   });
 

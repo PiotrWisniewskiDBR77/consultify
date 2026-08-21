@@ -689,6 +689,41 @@ describe.skipIf(!REAL_PG)('RESULTS legacy-cutover guard (fresh real PostgreSQL)'
     ]);
   });
 
+  it('records all five retained canonical-current writers without blocking them', async () => {
+    const calls = [
+      { writerId: 'RESULTS-W05', method: 'post' as const, path: '/api/v8/results/benefits/missing-benefit/promote' },
+      { writerId: 'RESULTS-W06', method: 'post' as const, path: '/api/v8/results/benefits/missing-benefit/dismiss' },
+      { writerId: 'RESULTS-W18', method: 'delete' as const, path: '/api/v8/results/kpi-mappings/missing-mapping' },
+      { writerId: 'RESULTS-W23', method: 'post' as const, path: '/api/v8/results/deviation-cases/missing-case/resolve' },
+      { writerId: 'RESULTS-W34', method: 'put' as const, path: '/api/v8/results/scorecards/missing-scorecard' },
+    ];
+
+    for (const call of calls) {
+      const response = await request(app)[call.method](call.path)
+        .set('x-request-id', `${prefix}-${call.writerId.toLowerCase()}-retained`)
+        .send({ name: 'retained-writer-observation' });
+      expect(response.status).not.toBe(410);
+      expect(response.status).not.toBe(409);
+    }
+
+    const rows = await pool.query(
+      `SELECT writer_id, access_kind, organization_id, tenant_resolution
+         FROM legacy_cutover_usage_events
+        WHERE domain = 'results' AND organization_id = $1
+          AND request_id LIKE $2
+        ORDER BY writer_id`,
+      [orgA, `${prefix}-results-w%-retained`]
+    );
+    expect(rows.rows).toEqual(
+      calls.map((call) => ({
+        writer_id: call.writerId,
+        access_kind: 'legacy_uncovered_writer',
+        organization_id: orgA,
+        tenant_resolution: 'resolved',
+      }))
+    );
+  });
+
   it('records a GET as legacy_read, not a writer access', async () => {
     const response = await request(app)
       .get('/api/v8/results/kpis')
