@@ -52,11 +52,11 @@ describe('AdminSettingsModule section routing', () => {
     renderAt('/admin/people');
     expect(screen.getByTestId('panel-people')).toBeInTheDocument();
     expect(screen.queryByTestId('panel-billing')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Team & Access/i })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: /Użytkownicy|Members/i })).toHaveAttribute(
       'aria-current',
       'page'
     );
-    expect(screen.queryByRole('button', { name: 'Invitations' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Zaproszenia|Invitations/i })).toBeInTheDocument();
   });
 
   it('renders the billing panel at /admin/billing', () => {
@@ -111,9 +111,9 @@ describe('AdminSettingsModule section routing', () => {
     const navigation = container.querySelector('nav');
     expect(navigation).toHaveClass('min-h-0', 'overflow-y-auto');
 
-    const billing = screen.getByRole('button', { name: /Billing & Plans/i });
+    const billing = screen.getByRole('button', { name: /Rozliczenia i plany|Billing & Plans/i });
     billing.focus();
     expect(billing).toHaveFocus();
-    expect(screen.getByRole('button', { name: /Health/i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /Stan systemu|System Health/i })).toBeEnabled();
   });
 });

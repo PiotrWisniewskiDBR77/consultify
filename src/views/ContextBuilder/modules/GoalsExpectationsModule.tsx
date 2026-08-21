@@ -15,10 +15,10 @@ import TeresaMark from '../../../components/shared/TeresaMark';
 import { useContextBuilderStore } from '../../../store/useContextBuilderStore';
 import { AITextArea } from '../shared/AITextArea';
 import { DynamicList, DynamicListItem } from '../shared/DynamicList';
-export const GoalsExpectationsModule: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<
-    'intent' | 'metrics' | 'scope' | 'nogo' | 'expectations'
-  >('intent');
+export type GoalsTab = 'intent' | 'metrics' | 'scope' | 'nogo' | 'expectations';
+export const GoalsExpectationsModule: React.FC<{ screen?: GoalsTab }> = ({ screen }) => {
+  const [localActiveTab, setActiveTab] = useState<GoalsTab>('intent');
+  const activeTab = screen ?? localActiveTab;
 
   // Store State
   const { goals, setGoals, updateGoalsList } = useContextBuilderStore();
@@ -109,14 +109,15 @@ export const GoalsExpectationsModule: React.FC = () => {
       )}
 
       {/* Sub-Module Tabs */}
-      <div className="flex border-b border-slate-200 dark:border-navy-700 space-x-6 overflow-x-auto">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() =>
-              setActiveTab(tab.id as 'intent' | 'metrics' | 'scope' | 'nogo' | 'expectations')
-            }
-            className={`
+      {!screen && (
+        <div className="flex border-b border-slate-200 dark:border-navy-700 space-x-6 overflow-x-auto">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() =>
+                setActiveTab(tab.id as 'intent' | 'metrics' | 'scope' | 'nogo' | 'expectations')
+              }
+              className={`
                             flex items-center gap-2 pb-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap
                             ${
                               activeTab === tab.id
@@ -124,12 +125,13 @@ export const GoalsExpectationsModule: React.FC = () => {
                                 : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
                             }
                         `}
-          >
-            <tab.icon size={16} />
-            {tab.label}
-          </button>
-        ))}
-      </div>
+            >
+              <tab.icon size={16} />
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Content Area */}
       <div className="min-h-[400px]">

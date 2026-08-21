@@ -13,10 +13,10 @@ import { useContextBuilderStore } from '../../../store/useContextBuilderStore';
 import { DynamicList, DynamicListItem } from '../shared/DynamicList';
 import { SynthesisSummary } from './SynthesisSummary';
 import { TransformationScenarios } from './TransformationScenarios';
-export const StrategicSynthesisModule: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'risks' | 'strengths' | 'scenarios' | 'summary'>(
-    'risks'
-  );
+export type SynthesisTab = 'risks' | 'strengths' | 'scenarios' | 'summary';
+export const StrategicSynthesisModule: React.FC<{ screen?: SynthesisTab }> = ({ screen }) => {
+  const [localActiveTab, setActiveTab] = useState<SynthesisTab>('risks');
+  const activeTab = screen ?? localActiveTab;
   // Store Access
   const { companyProfile, challenges, goals, synthesis, setSynthesis, updateSynthesisList } =
     useContextBuilderStore();
@@ -53,15 +53,16 @@ export const StrategicSynthesisModule: React.FC = () => {
   ];
   return (
     <div className="space-y-6 h-full flex flex-col">
-      <div className="flex justify-between items-end border-b border-slate-200 dark:border-navy-700 shrink-0">
-        <div className="flex space-x-6 overflow-x-auto">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() =>
-                setActiveTab(tab.id as 'risks' | 'strengths' | 'scenarios' | 'summary')
-              }
-              className={`
+      {!screen && (
+        <div className="flex justify-between items-end border-b border-slate-200 dark:border-navy-700 shrink-0">
+          <div className="flex space-x-6 overflow-x-auto">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() =>
+                  setActiveTab(tab.id as 'risks' | 'strengths' | 'scenarios' | 'summary')
+                }
+                className={`
                                 flex items-center gap-2 pb-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap
                                 ${
                                   activeTab === tab.id
@@ -69,13 +70,14 @@ export const StrategicSynthesisModule: React.FC = () => {
                                     : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
                                 }
                             `}
-            >
-              <tab.icon size={16} />
-              {tab.label}
-            </button>
-          ))}
+              >
+                <tab.icon size={16} />
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
       <div className="flex-1 overflow-visible min-h-[500px]">
         {/* TAB 1: RISKS */}
         {activeTab === 'risks' && (
@@ -87,8 +89,8 @@ export const StrategicSynthesisModule: React.FC = () => {
                 <p className="opacity-90">
                   Based on your{' '}
                   <strong>{challenges.declaredChallenges.length} declared challenges</strong> and{' '}
-                  <strong>{activeConstraintCount} active constraints</strong>, we
-                  have identified the following risks.
+                  <strong>{activeConstraintCount} active constraints</strong>, we have identified
+                  the following risks.
                 </p>
               </div>
             </div>

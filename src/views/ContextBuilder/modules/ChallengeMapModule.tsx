@@ -18,10 +18,10 @@ import { useContextBuilderStore } from '../../../store/useContextBuilderStore';
 import { AITextArea } from '../shared/AITextArea';
 import { ContextDocUploader } from '../shared/ContextDocUploader';
 import { DynamicList, DynamicListItem } from '../shared/DynamicList';
-export const ChallengeMapModule: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'challenges' | 'rootcause' | 'blockers' | 'evidence'>(
-    'challenges'
-  );
+export type ChallengeTab = 'challenges' | 'rootcause' | 'blockers' | 'evidence';
+export const ChallengeMapModule: React.FC<{ screen?: ChallengeTab }> = ({ screen }) => {
+  const [localActiveTab, setActiveTab] = useState<ChallengeTab>('challenges');
+  const activeTab = screen ?? localActiveTab;
   // Store State
   const { challenges, setChallenges, updateChallengesList } = useContextBuilderStore();
   // Derived State Shortcuts
@@ -127,14 +127,15 @@ export const ChallengeMapModule: React.FC = () => {
   ];
   return (
     <div className="space-y-6">
-      <div className="flex border-b border-slate-200 dark:border-navy-700 space-x-6 overflow-x-auto">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() =>
-              setActiveTab(tab.id as 'challenges' | 'rootcause' | 'blockers' | 'evidence')
-            }
-            className={`
+      {!screen && (
+        <div className="flex border-b border-slate-200 dark:border-navy-700 space-x-6 overflow-x-auto">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() =>
+                setActiveTab(tab.id as 'challenges' | 'rootcause' | 'blockers' | 'evidence')
+              }
+              className={`
                             flex items-center gap-2 pb-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap
                             ${
                               activeTab === tab.id
@@ -142,12 +143,13 @@ export const ChallengeMapModule: React.FC = () => {
                                 : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-navy-900 dark:hover:text-white'
                             }
                         `}
-          >
-            <tab.icon size={16} />
-            {tab.label}
-          </button>
-        ))}
-      </div>
+            >
+              <tab.icon size={16} />
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="min-h-[400px]">
         {/* TAB 1: DECLARED CHALLENGES */}
         {activeTab === 'challenges' && (

@@ -1,212 +1,233 @@
-/**
- * OrganizationSidebar - Settings-like internal navigation for Organization module
- *
- * Mirrors the Settings pattern: single Sidebar entry → Organization page → internal left menu.
- */
-
 import {
+  AlertTriangle,
+  BarChart3,
+  BookOpen,
+  BriefcaseBusiness,
   Building2,
-  ChevronDown,
+  CalendarRange,
+  CheckCircle2,
+  Compass,
+  FileCheck2,
+  FileStack,
+  Flag,
   Goal,
+  Lightbulb,
+  ListChecks,
   Network,
+  Route,
+  Scale,
   ShieldAlert,
-  ShieldCheck,
+  Sparkles,
   Target,
+  Users,
 } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { cn } from '../../lib/utils';
+import DomainNavigation, { type DomainNavigationModule } from '../settings/shared/DomainNavigation';
 
-export type OrganizationSection =
+export type OrganizationModule =
   | 'profile'
   | 'goals'
   | 'challenges'
-  | 'megatrends'
   | 'strategy'
-  | 'knowledge-graph'
-  | 'context-governance'
+  | 'sources'
+  | 'readiness';
+// Compatibility for the legacy OrganizationAdminPanel, which remains the
+// implementation behind redirects to the canonical Admin workspace.
+export type OrganizationSection =
   | 'members'
   | 'competencies'
   | 'billing'
   | 'limits'
   | 'domains'
   | 'branding';
+export type OrganizationScreen =
+  | 'identity-scale'
+  | 'operating-model'
+  | 'position-direction'
+  | 'technology-culture-constraints'
+  | 'strategic-intent'
+  | 'success-metrics'
+  | 'scope-boundaries'
+  | 'stakeholder-expectations'
+  | 'declared-challenges'
+  | 'root-causes'
+  | 'goal-blockers'
+  | 'evidence'
+  | 'risks-opportunities'
+  | 'scenarios'
+  | 'recommendation'
+  | 'executive-brief'
+  | 'files'
+  | 'claims-sources'
+  | 'source-conflicts'
+  | 'knowledge-graph'
+  | 'summary'
+  | 'gaps-freshness'
+  | 'decisions-conflicts'
+  | 'versions-publication';
 
-interface NavItem {
-  id: OrganizationSection;
-  labelKey: string;
-  defaultLabel: string;
-  icon: React.ElementType;
-}
-
-interface NavGroup {
-  id: string;
-  labelKey: string;
-  defaultLabel: string;
-  items: NavItem[];
+export interface OrganizationLocation {
+  module: OrganizationModule;
+  screen: OrganizationScreen;
 }
 
 interface OrganizationSidebarProps {
-  activeSection: OrganizationSection;
-  onSectionChange: (section: OrganizationSection) => void;
+  activeLocation: OrganizationLocation;
+  onLocationChange: (location: OrganizationLocation) => void;
   className?: string;
   onBack?: () => void;
 }
 
+export const ORGANIZATION_MODULES: DomainNavigationModule<
+  OrganizationModule,
+  OrganizationScreen
+>[] = [
+  {
+    id: 'profile',
+    label: 'Profil organizacji',
+    children: [
+      { id: 'identity-scale', label: 'Tożsamość i skala', icon: Building2 },
+      { id: 'operating-model', label: 'Model działania', icon: BriefcaseBusiness },
+      { id: 'position-direction', label: 'Pozycja i kierunek', icon: Compass },
+      {
+        id: 'technology-culture-constraints',
+        label: 'Technologia, kultura i ograniczenia',
+        icon: Sparkles,
+      },
+    ],
+  },
+  {
+    id: 'goals',
+    label: 'Cele i oczekiwania',
+    children: [
+      { id: 'strategic-intent', label: 'Intencja strategiczna', icon: Goal },
+      { id: 'success-metrics', label: 'Mierniki sukcesu', icon: BarChart3 },
+      { id: 'scope-boundaries', label: 'Zakres i granice', icon: Scale },
+      { id: 'stakeholder-expectations', label: 'Oczekiwania interesariuszy', icon: Users },
+    ],
+  },
+  {
+    id: 'challenges',
+    label: 'Wyzwania',
+    children: [
+      { id: 'declared-challenges', label: 'Zadeklarowane wyzwania', icon: ShieldAlert },
+      { id: 'root-causes', label: 'Przyczyny źródłowe', icon: Route },
+      { id: 'goal-blockers', label: 'Blockery celów', icon: AlertTriangle },
+      { id: 'evidence', label: 'Dowody', icon: FileCheck2 },
+    ],
+  },
+  {
+    id: 'strategy',
+    label: 'Synteza strategiczna',
+    children: [
+      { id: 'risks-opportunities', label: 'Ryzyka i szanse', icon: Lightbulb },
+      { id: 'scenarios', label: 'Scenariusze', icon: CalendarRange },
+      { id: 'recommendation', label: 'Rekomendacja', icon: Target },
+      { id: 'executive-brief', label: 'Executive brief', icon: BookOpen },
+    ],
+  },
+  {
+    id: 'sources',
+    label: 'Źródła i wiedza',
+    children: [
+      { id: 'files', label: 'Pliki', icon: FileStack },
+      { id: 'claims-sources', label: 'Twierdzenia i źródła', icon: FileCheck2 },
+      { id: 'source-conflicts', label: 'Konflikty źródeł', icon: AlertTriangle },
+      { id: 'knowledge-graph', label: 'Graf wiedzy', icon: Network },
+    ],
+  },
+  {
+    id: 'readiness',
+    label: 'Gotowość i governance',
+    children: [
+      { id: 'summary', label: 'Podsumowanie', icon: CheckCircle2 },
+      { id: 'gaps-freshness', label: 'Braki i aktualność', icon: ListChecks },
+      { id: 'decisions-conflicts', label: 'Decyzje i konflikty', icon: Flag },
+      { id: 'versions-publication', label: 'Wersje i publikacja', icon: FileCheck2 },
+    ],
+  },
+];
+
+const ORGANIZATION_MODULE_EN: Record<OrganizationModule, string> = {
+  profile: 'Organization Profile',
+  goals: 'Goals & Expectations',
+  challenges: 'Challenges',
+  strategy: 'Strategic Synthesis',
+  sources: 'Sources & Knowledge',
+  readiness: 'Readiness & Governance',
+};
+
+const ORGANIZATION_SCREEN_EN: Record<OrganizationScreen, string> = {
+  'identity-scale': 'Identity & Scale',
+  'operating-model': 'Operating Model',
+  'position-direction': 'Position & Direction',
+  'technology-culture-constraints': 'Technology, Culture & Constraints',
+  'strategic-intent': 'Strategic Intent',
+  'success-metrics': 'Success Metrics',
+  'scope-boundaries': 'Scope & Boundaries',
+  'stakeholder-expectations': 'Stakeholder Expectations',
+  'declared-challenges': 'Declared Challenges',
+  'root-causes': 'Root Causes',
+  'goal-blockers': 'Goal Blockers',
+  evidence: 'Evidence',
+  'risks-opportunities': 'Risks & Opportunities',
+  scenarios: 'Scenarios',
+  recommendation: 'Recommendation',
+  'executive-brief': 'Executive Brief',
+  files: 'Files',
+  'claims-sources': 'Claims & Sources',
+  'source-conflicts': 'Source Conflicts',
+  'knowledge-graph': 'Knowledge Graph',
+  summary: 'Summary',
+  'gaps-freshness': 'Gaps & Freshness',
+  'decisions-conflicts': 'Decisions & Conflicts',
+  'versions-publication': 'Versions & Publication',
+};
+
+export function getOrganizationModules(language?: string) {
+  if (language?.toLowerCase().startsWith('pl')) return ORGANIZATION_MODULES;
+  return ORGANIZATION_MODULES.map((module) => ({
+    ...module,
+    label: ORGANIZATION_MODULE_EN[module.id],
+    children: module.children.map((screen) => ({
+      ...screen,
+      label: ORGANIZATION_SCREEN_EN[screen.id],
+    })),
+  }));
+}
+
 export const OrganizationSidebar: React.FC<OrganizationSidebarProps> = ({
-  activeSection,
-  onSectionChange,
+  activeLocation,
+  onLocationChange,
   className,
   onBack,
 }) => {
-  const { t } = useTranslation();
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['organization']));
-
-  const navGroups: NavGroup[] = useMemo(
-    () => [
-      {
-        id: 'organization',
-        labelKey: 'organization.sidebar.group',
-        defaultLabel: 'ORGANIZATION',
-        items: [
-          {
-            id: 'profile',
-            labelKey: 'organization.sidebar.profile',
-            defaultLabel: 'Profile',
-            icon: Building2,
-          },
-          {
-            id: 'goals',
-            labelKey: 'organization.sidebar.goals',
-            defaultLabel: 'Goals & expectations',
-            icon: Goal,
-          },
-          {
-            id: 'challenges',
-            labelKey: 'organization.sidebar.challenges',
-            defaultLabel: 'Challenges',
-            icon: ShieldAlert,
-          },
-          {
-            id: 'strategy',
-            labelKey: 'organization.sidebar.strategy',
-            defaultLabel: 'Strategy',
-            icon: Target,
-          },
-          {
-            id: 'knowledge-graph',
-            labelKey: 'organization.sidebar.knowledgeGraph',
-            defaultLabel: 'Knowledge Graph',
-            icon: Network,
-          },
-          {
-            id: 'context-governance',
-            labelKey: 'organization.sidebar.contextGovernance',
-            defaultLabel: 'Context governance',
-            icon: ShieldCheck,
-          },
-        ],
-      },
-    ],
-    []
-  );
-
-  useEffect(() => {
-    const groupContaining = navGroups.find((g) => g.items.some((i) => i.id === activeSection));
-    if (!groupContaining) return;
-    setExpandedGroups((prev) => {
-      if (prev.has(groupContaining.id)) return prev;
-      return new Set([...prev, groupContaining.id]);
-    });
-  }, [activeSection, navGroups]);
-
-  const toggleGroup = (groupId: string) => {
-    setExpandedGroups((prev) => {
-      const next = new Set(prev);
-      if (next.has(groupId)) next.delete(groupId);
-      else next.add(groupId);
-      return next;
-    });
-  };
-
+  const { t, i18n } = useTranslation();
+  const language = i18n?.resolvedLanguage || i18n?.language || 'pl';
+  const isPolish = language.toLowerCase().startsWith('pl');
   return (
-    <div className={cn('w-72 shrink-0 border-r border-c-border-subtle bg-c-surface/60', className)}>
-      <div className="p-4">
-        {onBack && (
-          <button
-            type="button"
-            onClick={onBack}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised"
-          >
-            <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-c-surface-raised text-c-text-secondary">
-              <Target size={16} />
-            </span>
-            {t('organization.sidebar.back', 'Back to Dashboard')}
-          </button>
-        )}
-      </div>
-
-      <div className="px-4 pb-4">
-        <div className="text-xs font-semibold tracking-wider text-c-text-secondary">
-          {t('organization.sidebar.title', 'Organization')}
-        </div>
-      </div>
-
-      <div className="px-3 pb-4 space-y-3">
-        {navGroups.map((group) => {
-          const isOpen = expandedGroups.has(group.id);
-          return (
-            <div key={group.id} className="space-y-2">
-              <button
-                type="button"
-                onClick={() => toggleGroup(group.id)}
-                className="w-full flex items-center justify-between px-2 py-1 text-[11px] font-bold tracking-wider text-c-text-muted hover:text-c-text"
-              >
-                <span>{t(group.labelKey, group.defaultLabel)}</span>
-                <ChevronDown
-                  size={14}
-                  className={cn('transition-transform', isOpen ? 'rotate-180' : 'rotate-0')}
-                />
-              </button>
-
-              {isOpen && (
-                <div className="space-y-1">
-                  {group.items.map((item) => {
-                    const active = item.id === activeSection;
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => onSectionChange(item.id)}
-                        className={cn(
-                          'w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-colors',
-                          active
-                            ? 'bg-c-surface-raised text-c-text'
-                            : 'text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text'
-                        )}
-                      >
-                        <span
-                          className={cn(
-                            'inline-flex items-center justify-center w-8 h-8 rounded-lg',
-                            active
-                              ? 'bg-c-accent-soft text-c-info'
-                              : 'bg-c-surface-raised text-c-text-muted'
-                          )}
-                        >
-                          <item.icon size={18} />
-                        </span>
-                        <span className="truncate">{t(item.labelKey, item.defaultLabel)}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
+    <DomainNavigation
+      title={t('organization.sidebar.title', isPolish ? 'ORGANIZACJA' : 'ORGANIZATION')}
+      description={t(
+        'organization.sidebar.description',
+        isPolish
+          ? 'Kontekst biznesowy, źródła i gotowość decyzyjna'
+          : 'Business context, sources, and decision readiness'
+      )}
+      navigationLabel={t(
+        'organization.sidebar.navigation',
+        isPolish ? 'Nawigacja Organizacji' : 'Organization navigation'
+      )}
+      modules={getOrganizationModules(language)}
+      activeModule={activeLocation.module}
+      activeChild={activeLocation.screen}
+      onChildChange={(module, screen) => onLocationChange({ module, screen })}
+      onBack={onBack}
+      backLabel={t('organization.sidebar.back', isPolish ? 'Wróć do pulpitu' : 'Back to Dashboard')}
+      className={className}
+    />
   );
 };
 

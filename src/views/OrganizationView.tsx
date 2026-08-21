@@ -8,12 +8,20 @@
 import { ChevronRight, Menu, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
-import { KnowledgeGraphExplorer } from '../components/Organization/KnowledgeGraphExplorer';
 import { GovernedContextWorkspace } from '../components/Organization/GovernedContextWorkspace';
+import { KnowledgeGraphExplorer } from '../components/Organization/KnowledgeGraphExplorer';
+import {
+  OrganizationDecisionQualityPanel,
+  OrganizationFilesBoundary,
+} from '../components/Organization/OrganizationDecisionQualityPanel';
 import OrganizationSidebar, {
-  type OrganizationSection,
+  getOrganizationModules,
+  ORGANIZATION_MODULES,
+  type OrganizationLocation,
+  type OrganizationModule,
+  type OrganizationScreen,
 } from '../components/Organization/OrganizationSidebar';
 import { OrgContextSummaryBanner } from '../components/Organization/OrgContextSummaryBanner';
 import { useOrgContextSync } from '../hooks/useOrgContextSync';
@@ -21,21 +29,18 @@ import { ROUTES } from '../routes/routeConfig';
 import { trackFunnelEvent } from '../services/funnelAnalytics';
 import { useAppStore } from '../store/useAppStore';
 import { AppView } from '../types';
-import { ChallengeMapModule } from './ContextBuilder/modules/ChallengeMapModule';
-import { GoalsExpectationsModule } from './ContextBuilder/modules/GoalsExpectationsModule';
+import { ChallengeMapModule, type ChallengeTab } from './ContextBuilder/modules/ChallengeMapModule';
+import {
+  GoalsExpectationsModule,
+  type GoalsTab,
+} from './ContextBuilder/modules/GoalsExpectationsModule';
 import { OrganizationProfileModule } from './ContextBuilder/modules/OrganizationProfileModule';
-import { StrategicSynthesisModule } from './ContextBuilder/modules/StrategicSynthesisModule';
+import {
+  StrategicSynthesisModule,
+  type SynthesisTab,
+} from './ContextBuilder/modules/StrategicSynthesisModule';
 
-const ADMIN_SECTIONS: OrganizationSection[] = [
-  'members',
-  'competencies',
-  'billing',
-  'limits',
-  'domains',
-  'branding',
-];
-
-const ADMIN_REDIRECTS: Partial<Record<OrganizationSection, string>> = {
+const ADMIN_REDIRECTS: Record<string, string> = {
   members: ROUTES.ADMIN.PEOPLE,
   competencies: ROUTES.ADMIN.OPERATIONS,
   billing: ROUTES.ADMIN.BILLING,
@@ -44,92 +49,43 @@ const ADMIN_REDIRECTS: Partial<Record<OrganizationSection, string>> = {
   branding: ROUTES.ADMIN.OPERATIONS,
 };
 
-const sectionMeta: Record<
-  OrganizationSection,
-  { titleKey: string; title: string; subtitleKey: string; subtitle: string }
-> = {
-  profile: {
-    titleKey: 'organization.sections.profile.title',
-    title: 'Company Profile',
-    subtitleKey: 'organization.sections.profile.subtitle',
-    subtitle: 'Company snapshot, operating model, and key facts',
-  },
-  goals: {
-    titleKey: 'organization.sections.goals.title',
-    title: 'Goals & Expectations',
-    subtitleKey: 'organization.sections.goals.subtitle',
-    subtitle: 'Strategic intent, target metrics, scope and expectations',
-  },
-  challenges: {
-    titleKey: 'organization.sections.challenges.title',
-    title: 'Challenges',
-    subtitleKey: 'organization.sections.challenges.subtitle',
-    subtitle: 'Challenge map, evidence and root causes',
-  },
-  megatrends: {
-    titleKey: 'organization.sections.megatrends.title',
-    title: 'Megatrends',
-    subtitleKey: 'organization.sections.megatrends.subtitle',
-    subtitle: 'Redirected to Discovery Tools → Strategic Megatrends',
-  },
-  strategy: {
-    titleKey: 'organization.sections.strategy.title',
-    title: 'Strategic Synthesis',
-    subtitleKey: 'organization.sections.strategy.subtitle',
-    subtitle: 'Synthesis, scenarios and executive summary',
-  },
-  members: {
-    titleKey: 'organization.sections.members.title',
-    title: 'Members & Roles',
-    subtitleKey: 'organization.sections.members.subtitle',
-    subtitle: 'Manage team members, invitations and access roles',
-  },
-  competencies: {
-    titleKey: 'competency.catalog.title',
-    title: 'Competency Catalog',
-    subtitleKey: 'competency.catalog.subtitle',
-    subtitle: 'Define competency taxonomy, categories and skill levels',
-  },
-  billing: {
-    titleKey: 'organization.sections.billing.title',
-    title: 'Billing & Tokens',
-    subtitleKey: 'organization.sections.billing.subtitle',
-    subtitle: 'Subscription status, token balance and usage',
-  },
-  limits: {
-    titleKey: 'organization.sections.limits.title',
-    title: 'Limits & Usage',
-    subtitleKey: 'organization.sections.limits.subtitle',
-    subtitle: 'Plan limits, quotas and current usage',
-  },
-  domains: {
-    titleKey: 'organization.sections.domains.title',
-    title: 'Domains',
-    subtitleKey: 'organization.sections.domains.subtitle',
-    subtitle: 'Custom domain setup and verification',
-  },
-  branding: {
-    titleKey: 'organization.sections.branding.title',
-    title: 'Branding & Regional',
-    subtitleKey: 'organization.sections.branding.subtitle',
-    subtitle: 'Logo, colors, timezone, language and currency',
-  },
-  'knowledge-graph': {
-    titleKey: 'organization.sections.knowledgeGraph.title',
-    title: 'Knowledge Graph',
-    subtitleKey: 'organization.sections.knowledgeGraph.subtitle',
-    subtitle: 'Explore entities, relations, provenance and governance',
-  },
-  'context-governance': {
-    titleKey: 'organization.sections.contextGovernance.title',
-    title: 'Context governance',
-    subtitleKey: 'organization.sections.contextGovernance.subtitle',
-    subtitle: 'Review sourced claims and reopen immutable published context',
-  },
+const LEGACY_LOCATIONS: Record<string, OrganizationLocation> = {
+  profile: { module: 'profile', screen: 'identity-scale' },
+  goals: { module: 'goals', screen: 'strategic-intent' },
+  challenges: { module: 'challenges', screen: 'declared-challenges' },
+  strategy: { module: 'strategy', screen: 'risks-opportunities' },
+  'knowledge-graph': { module: 'sources', screen: 'knowledge-graph' },
+  'context-governance': { module: 'readiness', screen: 'versions-publication' },
 };
 
+const SCREEN_META: Record<OrganizationScreen, { title: string; subtitle: string }> =
+  Object.fromEntries(
+    ORGANIZATION_MODULES.flatMap((module) =>
+      module.children.map((child) => [
+        child.id,
+        {
+          title: child.label,
+          subtitle: `Ekran modułu ${module.label}`,
+        },
+      ])
+    )
+  ) as Record<OrganizationScreen, { title: string; subtitle: string }>;
+
+function resolveOrganizationLocation(pathname: string): OrganizationLocation {
+  const segments = pathname
+    .replace(/^\/organization\/?/, '')
+    .split('/')
+    .filter(Boolean);
+  if (!segments.length) return LEGACY_LOCATIONS.profile;
+  if (segments.length === 1 && LEGACY_LOCATIONS[segments[0]]) return LEGACY_LOCATIONS[segments[0]];
+  const [module, screen] = segments as [OrganizationModule, OrganizationScreen];
+  const match = ORGANIZATION_MODULES.find((item) => item.id === module);
+  if (match?.children.some((child) => child.id === screen)) return { module, screen };
+  return LEGACY_LOCATIONS.profile;
+}
+
 export const OrganizationView: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const { setCurrentView, currentOrganization, currentUser } = useAppStore();
@@ -144,9 +100,8 @@ export const OrganizationView: React.FC = () => {
       navigate(ROUTES.DISCOVERY_TOOLS.STRATEGIC_MEGATRENDS, { replace: true });
       return;
     }
-    const section =
-      path.replace(`${ROUTES.ORGANIZATION.ROOT}/`, '').replace(/^\/+|\/+$/g, '') || 'profile';
-    const adminRedirect = ADMIN_REDIRECTS[section as OrganizationSection];
+    const section = path.replace(`${ROUTES.ORGANIZATION.ROOT}/`, '').split('/')[0] || 'profile';
+    const adminRedirect = ADMIN_REDIRECTS[section];
     if (adminRedirect) {
       trackFunnelEvent('org_workspace_admin_handoff', {
         section,
@@ -157,28 +112,16 @@ export const OrganizationView: React.FC = () => {
     }
   }, [location.pathname, navigate]);
 
-  const activeSection = useMemo(() => {
-    const pathSection =
-      location.pathname.replace(`${ROUTES.ORGANIZATION.ROOT}/`, '').replace(/^\/+|\/+$/g, '') ||
-      'profile';
-    const allowed = Object.keys(sectionMeta) as OrganizationSection[];
-    return (
-      allowed.includes(pathSection as OrganizationSection) ? pathSection : 'profile'
-    ) as OrganizationSection;
-  }, [location.pathname]);
+  const activeLocation = useMemo(
+    () => resolveOrganizationLocation(location.pathname),
+    [location.pathname]
+  );
 
   const handleSectionChange = useCallback(
-    (section: OrganizationSection) => {
-      const adminRedirect = ADMIN_REDIRECTS[section];
-      if (adminRedirect) {
-        navigate(adminRedirect);
-        setSidebarOpen(false);
-        trackFunnelEvent('org_workspace_admin_handoff', { section, target: adminRedirect });
-        return;
-      }
-      navigate(`${ROUTES.ORGANIZATION.ROOT}/${section}`);
+    (next: OrganizationLocation) => {
+      navigate(`${ROUTES.ORGANIZATION.ROOT}/${next.module}/${next.screen}`);
       setSidebarOpen(false);
-      trackFunnelEvent('org_workspace_opened', { section });
+      trackFunnelEvent('org_workspace_opened', { ...next });
     },
     [navigate]
   );
@@ -189,44 +132,114 @@ export const OrganizationView: React.FC = () => {
   }, [navigate, setCurrentView]);
 
   const currentMeta = useMemo(() => {
-    const meta = sectionMeta[activeSection];
-    return { title: t(meta.titleKey, meta.title), subtitle: t(meta.subtitleKey, meta.subtitle) };
-  }, [activeSection, t]);
+    const language = i18n?.resolvedLanguage || i18n?.language || 'pl';
+    const localized = getOrganizationModules(language);
+    const module = localized.find((item) => item.id === activeLocation.module);
+    const screen = module?.children.find((item) => item.id === activeLocation.screen);
+    const isPolish = language.toLowerCase().startsWith('pl');
+    return {
+      title: screen?.label || SCREEN_META[activeLocation.screen].title,
+      subtitle: `${module?.label || ''} · ${
+        isPolish
+          ? 'Fakty, decyzje i stan tego obszaru'
+          : 'Facts, decisions, and status for this area'
+      }`,
+    };
+  }, [activeLocation, i18n?.language, i18n?.resolvedLanguage]);
 
   const isOrgAdmin = ['admin', 'owner', 'superadmin'].includes(
     (currentUser?.role || '').toLowerCase()
   );
 
   const renderContent = useCallback(() => {
-    if (ADMIN_SECTIONS.includes(activeSection)) {
-      // M23 L-04 (P1 security): view-level role gate for admin sections.
-      // Defense-in-depth layer 2 — even if the URL-redirect useEffect above has not
-      // yet fired (first render) or is bypassed, a non-admin member must never see
-      // admin data. Explicit <Navigate replace> instead of a bare `null` so the
-      // protection is intentional, testable and never a silent blank screen.
-      if (!isOrgAdmin) {
-        return <Navigate to={ROUTES.AI_CHAT} replace />;
-      }
-      // Every administration section is a handoff to the canonical Admin module.
-      // Redirect immediately so the legacy panel cannot briefly mount, fetch and
-      // show a false load-error toast before the URL effect completes.
-      return <Navigate to={ADMIN_REDIRECTS[activeSection] as string} replace />;
-    }
-    switch (activeSection) {
+    switch (activeLocation.module) {
       case 'goals':
-        return <GoalsExpectationsModule />;
+        return (
+          <GoalsExpectationsModule
+            screen={
+              (
+                {
+                  'strategic-intent': 'intent',
+                  'success-metrics': 'metrics',
+                  'scope-boundaries': 'scope',
+                  'stakeholder-expectations': 'expectations',
+                } as Record<string, GoalsTab>
+              )[
+                activeLocation.screen as
+                  | 'strategic-intent'
+                  | 'success-metrics'
+                  | 'scope-boundaries'
+                  | 'stakeholder-expectations'
+              ]
+            }
+          />
+        );
       case 'challenges':
-        return <ChallengeMapModule />;
+        return (
+          <ChallengeMapModule
+            screen={
+              (
+                {
+                  'declared-challenges': 'challenges',
+                  'root-causes': 'rootcause',
+                  'goal-blockers': 'blockers',
+                  evidence: 'evidence',
+                } as Record<string, ChallengeTab>
+              )[
+                activeLocation.screen as
+                  | 'declared-challenges'
+                  | 'root-causes'
+                  | 'goal-blockers'
+                  | 'evidence'
+              ]
+            }
+          />
+        );
       case 'strategy':
-        return <StrategicSynthesisModule />;
-      case 'knowledge-graph':
-        return <KnowledgeGraphExplorer />;
-      case 'context-governance':
+        return (
+          <StrategicSynthesisModule
+            screen={
+              (
+                {
+                  'risks-opportunities': 'risks',
+                  scenarios: 'scenarios',
+                  recommendation: 'strengths',
+                  'executive-brief': 'summary',
+                } as Record<string, SynthesisTab>
+              )[
+                activeLocation.screen as
+                  | 'risks-opportunities'
+                  | 'scenarios'
+                  | 'recommendation'
+                  | 'executive-brief'
+              ]
+            }
+          />
+        );
+      case 'sources':
+        if (activeLocation.screen === 'knowledge-graph') return <KnowledgeGraphExplorer />;
+        if (activeLocation.screen === 'files') return <OrganizationFilesBoundary />;
         return <GovernedContextWorkspace isAdmin={isOrgAdmin} />;
+      case 'readiness':
+        return activeLocation.screen === 'versions-publication' ? (
+          <GovernedContextWorkspace isAdmin={isOrgAdmin} />
+        ) : (
+          <OrganizationDecisionQualityPanel screen={currentMeta.title} />
+        );
       default:
-        return <OrganizationProfileModule />;
+        return (
+          <OrganizationProfileModule
+            screen={
+              activeLocation.screen as
+                | 'identity-scale'
+                | 'operating-model'
+                | 'position-direction'
+                | 'technology-culture-constraints'
+            }
+          />
+        );
     }
-  }, [activeSection, isOrgAdmin]);
+  }, [activeLocation, currentMeta.title, isOrgAdmin]);
 
   return (
     <div className="flex h-[calc(100vh-64px)] bg-slate-50 dark:bg-navy-950">
@@ -240,8 +253,8 @@ export const OrganizationView: React.FC = () => {
       )}
       <div className="hidden lg:block">
         <OrganizationSidebar
-          activeSection={activeSection}
-          onSectionChange={handleSectionChange}
+          activeLocation={activeLocation}
+          onLocationChange={handleSectionChange}
           onBack={handleBackToDashboard}
         />
       </div>
@@ -249,8 +262,8 @@ export const OrganizationView: React.FC = () => {
         className={`fixed inset-y-0 left-0 z-50 w-72 transform transition-transform lg:hidden ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
         <OrganizationSidebar
-          activeSection={activeSection}
-          onSectionChange={handleSectionChange}
+          activeLocation={activeLocation}
+          onLocationChange={handleSectionChange}
           onBack={handleBackToDashboard}
           className="h-full bg-white dark:bg-navy-900"
         />
@@ -294,7 +307,7 @@ export const OrganizationView: React.FC = () => {
         <div className="px-4 lg:px-6 pb-0">
           <OrgContextSummaryBanner
             organizationId={currentOrganization?.id}
-            isAdmin={ADMIN_SECTIONS.includes(activeSection)}
+            isAdmin={false}
             className="mb-4"
           />
         </div>

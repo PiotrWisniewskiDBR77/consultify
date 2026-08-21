@@ -6,11 +6,20 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { AdminAIControlCenterPanel } from '../../components/Admin/AdminAIControlCenterPanel';
 import { AdminAuditLogPanel } from '../../components/Admin/AdminAuditLogPanel';
 import { AdminBillingFinOpsPanel } from '../../components/Admin/AdminBillingFinOpsPanel';
+import { AdminCapabilityState } from '../../components/Admin/AdminCapabilityState';
 import { AdminCommandCenterPanel } from '../../components/Admin/AdminCommandCenterPanel';
 import { AdminHealthPanel } from '../../components/Admin/AdminHealthPanel';
 import { AdminMembersRolesPanel } from '../../components/Admin/AdminMembersRolesPanel';
+import {
+  ADMIN_DEFAULTS,
+  ADMIN_DOMAINS,
+  type AdminDomain,
+  type AdminScreen,
+  getAdminDomains,
+} from '../../components/Admin/adminNavigation';
 import { AdminSecurityIdentityPanel } from '../../components/Admin/AdminSecurityIdentityPanel';
 import {
+  type AdminLocation,
   AdminSettingsSection,
   AdminSettingsSidebar,
 } from '../../components/Admin/AdminSettingsSidebar';
@@ -20,7 +29,6 @@ import { cn } from '../../lib/utils';
 import { ROUTES } from '../../routes/routeConfig';
 import { useAppStore } from '../../store/useAppStore';
 import { AppView, User } from '../../types';
-import { isCommandCenterEnabled } from '../../utils/commandCenterFlag';
 
 interface AdminSettingsModuleProps {
   initialTab?: AdminSettingsSection;
@@ -143,37 +151,62 @@ function resolveAdminState(
   return { section: initialTab && PRIMARY_SECTIONS.includes(initialTab) ? initialTab : 'people' };
 }
 
+const LEGACY_DOMAIN: Record<AdminSettingsSection, AdminDomain> = {
+  people: 'team',
+  billing: 'billing',
+  ai: 'ai',
+  security: 'security',
+  audit: 'audit',
+  command: 'command',
+  health: 'health',
+};
+
+const DOMAIN_LEGACY: Record<AdminDomain, AdminSettingsSection> = {
+  team: 'people',
+  billing: 'billing',
+  ai: 'ai',
+  security: 'security',
+  audit: 'audit',
+  command: 'command',
+  health: 'health',
+};
+
+function resolveAdminLocation(
+  pathname: string,
+  search: string,
+  initialTab?: AdminSettingsSection
+): AdminLocation {
+  const segments = pathname
+    .replace(/^\/admin\/?/, '')
+    .split('/')
+    .filter(Boolean);
+  if (segments.length >= 2) {
+    const [domain, screen] = segments as [AdminDomain, AdminScreen];
+    const match = ADMIN_DOMAINS.find((item) => item.id === domain);
+    if (match?.children.some((child) => child.id === screen)) return { domain, screen };
+  }
+  const legacy = resolveAdminState(pathname, search, initialTab).section;
+  const domain = LEGACY_DOMAIN[legacy];
+  return { domain, screen: ADMIN_DEFAULTS[domain] };
+}
+
 export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
   initialTab,
   currentUser,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { setCurrentView } = useAppStore();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
 
-  const rawResolvedState = useMemo(
-    () => resolveAdminState(location.pathname, location.search, initialTab),
+  const rawResolvedLocation = useMemo(
+    () => resolveAdminLocation(location.pathname, location.search, initialTab),
     [initialTab, location.pathname, location.search]
   );
 
-  // Flaga OFF → sekcja 'command' nie istnieje dla tego org-admina; bezpośrednie
-  // wejście /admin/command przekierowuje na 'people' (plan §3, F-CC1 odbiór).
-  const commandCenterEnabled = isCommandCenterEnabled();
-  const resolvedState = useMemo(() => {
-    if (rawResolvedState.section === 'command' && !commandCenterEnabled) {
-      return { section: 'people' as AdminSettingsSection };
-    }
-    return rawResolvedState;
-  }, [rawResolvedState, commandCenterEnabled]);
-
-  useEffect(() => {
-    if (rawResolvedState.section === 'command' && !commandCenterEnabled) {
-      navigate('/admin/people', { replace: true });
-    }
-  }, [rawResolvedState.section, commandCenterEnabled, navigate]);
+  const resolvedLocation = rawResolvedLocation;
 
   useEffect(() => {
     if (!sidebarOpen) return;
@@ -186,9 +219,9 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
     return () => document.removeEventListener('keydown', closeOnEscape);
   }, [sidebarOpen]);
 
-  const handleSectionChange = useCallback(
-    (section: AdminSettingsSection) => {
-      navigate(`/admin/${section}`);
+  const handleLocationChange = useCallback(
+    (next: AdminLocation) => {
+      navigate(`/admin/${next.domain}/${next.screen}`);
       setSidebarOpen(false);
     },
     [navigate]
@@ -200,11 +233,60 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
   }, [navigate, setCurrentView]);
 
   const content = useMemo(() => {
-    switch (resolvedState.section) {
-      case 'people':
-        return <AdminMembersRolesPanel />;
+    const domainConfig = getAdminDomains(i18n?.resolvedLanguage || i18n?.language || 'pl').find(
+      (domain) => domain.id === resolvedLocation.domain
+    );
+    const childConfig = domainConfig?.children.find(
+      (screen) => screen.id === resolvedLocation.screen
+    );
+    const connected =
+      resolvedLocation.screen === ADMIN_DEFAULTS[resolvedLocation.domain] ||
+      (resolvedLocation.domain === 'team' &&
+        ['members', 'invitations', 'ownership'].includes(resolvedLocation.screen)) ||
+      (resolvedLocation.domain === 'billing' &&
+        ['plan-limits', 'usage-costs', 'payment-methods', 'invoices', 'budgets-alerts'].includes(
+          resolvedLocation.screen
+        ));
+    if (!connected) {
+      return (
+        <AdminCapabilityState
+          title={childConfig?.label || resolvedLocation.screen}
+          domain={domainConfig?.label || resolvedLocation.domain}
+        />
+      );
+    }
+    switch (resolvedLocation.domain) {
+      case 'team':
+        return (
+          <AdminMembersRolesPanel
+            screen={resolvedLocation.screen as 'members' | 'invitations' | 'ownership'}
+          />
+        );
       case 'billing':
-        return <AdminBillingFinOpsPanel />;
+        return (
+          <AdminBillingFinOpsPanel
+            screen={
+              (
+                {
+                  overview: 'summary',
+                  'plan-limits': 'plan',
+                  'usage-costs': 'summary',
+                  'payment-methods': 'payments',
+                  invoices: 'invoices',
+                  'budgets-alerts': 'controls',
+                } as const
+              )[
+                resolvedLocation.screen as
+                  | 'overview'
+                  | 'plan-limits'
+                  | 'usage-costs'
+                  | 'payment-methods'
+                  | 'invoices'
+                  | 'budgets-alerts'
+              ]
+            }
+          />
+        );
       case 'ai':
         return <AdminAIControlCenterPanel />;
       case 'security':
@@ -212,16 +294,40 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
       case 'audit':
         return <AdminAuditLogPanel />;
       case 'command':
-        return <AdminCommandCenterPanel onSectionChange={handleSectionChange} />;
+        return (
+          <AdminCommandCenterPanel
+            aggregationOnly
+            onSectionChange={(section) =>
+              handleLocationChange({
+                domain: LEGACY_DOMAIN[section],
+                screen: ADMIN_DEFAULTS[LEGACY_DOMAIN[section]],
+              })
+            }
+          />
+        );
       case 'health':
-        return <AdminHealthPanel />;
+        return (
+          <AdminHealthPanel
+            canRunDiagnostics={String(currentUser.role || '').toLowerCase() === 'superadmin'}
+          />
+        );
       default:
         return <AdminMembersRolesPanel />;
     }
-  }, [resolvedState, handleSectionChange]);
+  }, [
+    resolvedLocation.domain,
+    resolvedLocation.screen,
+    handleLocationChange,
+    currentUser.role,
+    i18n?.language,
+    i18n?.resolvedLanguage,
+  ]);
 
-  const meta = SECTION_META[resolvedState.section];
-  void currentUser;
+  const legacySection = DOMAIN_LEGACY[resolvedLocation.domain];
+  const meta = SECTION_META[legacySection];
+  const screenLabel = getAdminDomains(i18n?.resolvedLanguage || i18n?.language || 'pl')
+    .find((domain) => domain.id === resolvedLocation.domain)
+    ?.children.find((screen) => screen.id === resolvedLocation.screen)?.label;
 
   return (
     <div className="relative flex h-full bg-slate-50 dark:bg-navy-950">
@@ -242,8 +348,8 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
         )}
       >
         <AdminSettingsSidebar
-          activeSection={resolvedState.section}
-          onSectionChange={handleSectionChange}
+          activeLocation={resolvedLocation}
+          onLocationChange={handleLocationChange}
           onBack={handleBackToDashboard}
         />
       </div>
@@ -273,9 +379,11 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
                 <span className="text-slate-700 dark:text-slate-200">
                   {t(meta.titleKey, { defaultValue: meta.titleDefault })}
                 </span>
+                <ChevronRight className="h-3.5 w-3.5" />
+                <span className="text-slate-700 dark:text-slate-200">{screenLabel}</span>
               </div>
               <h1 className="text-xl font-semibold text-slate-900 dark:text-white">
-                {t(meta.titleKey, { defaultValue: meta.titleDefault })}
+                {screenLabel}
               </h1>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                 {t(meta.subtitleKey, { defaultValue: meta.subtitleDefault })}

@@ -59,8 +59,11 @@ function formatRanAt(ranAt: string | null): string {
   return d.toLocaleString();
 }
 
-export const AdminHealthPanel: React.FC = () => {
-  const { t } = useTranslation();
+export const AdminHealthPanel: React.FC<{ canRunDiagnostics?: boolean }> = ({
+  canRunDiagnostics = false,
+}) => {
+  const { t, i18n } = useTranslation();
+  const isPolish = (i18n.resolvedLanguage || i18n.language || 'pl').toLowerCase().startsWith('pl');
   const [results, setResults] = useState<ProbeResult[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [envAllowed, setEnvAllowed] = useState(true);
@@ -69,6 +72,7 @@ export const AdminHealthPanel: React.FC = () => {
   const [hasLoaded, setHasLoaded] = useState(false);
   const [runningAll, setRunningAll] = useState(false);
   const [runningProbe, setRunningProbe] = useState<string | null>(null);
+  const [loadedAt, setLoadedAt] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -79,6 +83,7 @@ export const AdminHealthPanel: React.FC = () => {
       setSummary(data?.summary || null);
       setEnvAllowed(data?.envAllowed !== false);
       setHasLoaded(true);
+      setLoadedAt(new Date().toISOString());
     } catch (error: any) {
       const message = error?.message || 'Failed to load health probes';
       setLoadError(message);
@@ -98,6 +103,7 @@ export const AdminHealthPanel: React.FC = () => {
       const data = await Api.runHealthPanelProbes();
       setResults(Array.isArray(data?.results) ? data.results : []);
       setSummary(data?.summary || null);
+      setLoadedAt(new Date().toISOString());
       const failed = Number(data?.summary?.failed || 0);
       if (failed > 0) toast.error(`${failed} probe(s) failing`);
       else toast.success('All probes passing');
@@ -188,27 +194,50 @@ export const AdminHealthPanel: React.FC = () => {
                 aria-hidden
               />
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                {t('admin.health.title', { defaultValue: 'Health — dowody działania' })}
+                {canRunDiagnostics
+                  ? t('admin.health.title', { defaultValue: 'Health — proof of life' })
+                  : isPolish
+                    ? 'Status usług organizacji'
+                    : 'Organization service status'}
               </h2>
             </div>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              {t('admin.health.subtitle', {
-                defaultValue:
-                  'Round-trip probes against our own API and database. Each proves a critical flow still works end-to-end.',
-              })}
+              {canRunDiagnostics
+                ? t('admin.health.subtitle', {
+                    defaultValue:
+                      'Round-trip probes against our own API and database. Each proves a critical flow still works end-to-end.',
+                  })
+                : isPolish
+                  ? 'Zbiorczy, bezpieczny dla klienta odczyt dostępności usług w zakresie organizacji.'
+                  : 'An aggregate, customer-safe availability readback scoped to this organization.'}
+            </p>
+            <p className="mt-2 text-xs text-[var(--c-text-muted)]">
+              {isPolish ? 'Źródło' : 'Source'}: tenant-scoped health readback ·{' '}
+              {isPolish ? 'Odczyt' : 'Read at'}: {formatRanAt(loadedAt)}
             </p>
           </div>
-          <Button onClick={runAll} disabled={runningAll || !envAllowed} className="shrink-0">
-            {runningAll ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Play className="mr-2 h-4 w-4" />
-            )}
-            {t('admin.health.runAll', { defaultValue: 'Run all' })}
-          </Button>
+          {canRunDiagnostics && (
+            <Button onClick={runAll} disabled={runningAll || !envAllowed} className="shrink-0">
+              {runningAll ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Play className="mr-2 h-4 w-4" />
+              )}
+              {t('admin.health.runAll', { defaultValue: 'Run all' })}
+            </Button>
+          )}
         </div>
 
-        {!envAllowed && (
+        {!canRunDiagnostics && (
+          <div className="mt-3 flex items-center gap-2 rounded-lg border border-[var(--c-border)] bg-[var(--c-surface-raised)] px-3 py-2 text-sm text-[var(--c-text-secondary)]">
+            <HelpCircle className="h-4 w-4" />
+            {isPolish
+              ? 'Widok klienta pokazuje wyłącznie bezpieczny status zbiorczy. Szczegóły i uruchamianie sond należą do operatora platformy.'
+              : 'The customer view exposes aggregate safe status only. Probe details and execution belong to the platform operator.'}
+          </div>
+        )}
+
+        {!envAllowed && canRunDiagnostics && (
           <div
             className="mt-3 flex items-center gap-2 rounded-lg border px-3 py-2 text-sm"
             style={{ borderColor: 'var(--c-warning)', color: 'var(--c-warning)' }}
@@ -240,87 +269,91 @@ export const AdminHealthPanel: React.FC = () => {
         </div>
       </div>
 
-      {/* Probe list */}
-      <div className="rounded-2xl border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
-        {loading ? (
-          <div className="flex items-center justify-center py-16 text-slate-400">
-            <Loader2 className="h-6 w-6 animate-spin" />
-          </div>
-        ) : results.length === 0 ? (
-          <div className="py-16 text-center text-sm text-slate-500 dark:text-slate-400">
-            {t('admin.health.empty', { defaultValue: 'No probes registered.' })}
-          </div>
-        ) : (
-          <ul className="divide-y divide-slate-200 dark:divide-white/10">
-            {results.map((probe) => {
-              const meta = STATUS_META[probe.status];
-              const Icon = meta.icon;
-              const isRunning = runningProbe === probe.probeId || runningAll;
-              return (
-                <li key={probe.probeId} className="p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex min-w-0 items-start gap-3">
-                      <Icon
-                        className="mt-0.5 h-5 w-5 shrink-0"
-                        style={{ color: meta.dotVar }}
-                        aria-hidden
-                      />
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-slate-600 dark:bg-white/10 dark:text-slate-300">
-                            {probe.module}
-                          </span>
-                          <span className="truncate text-sm font-medium text-slate-900 dark:text-white">
-                            {probe.title}
-                          </span>
-                        </div>
-                        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                          {probe.description}
-                        </p>
-                        {probe.status === 'fail' && probe.errorMessage && (
-                          <p
-                            className="mt-1.5 rounded-md px-2 py-1 text-xs"
-                            style={{
-                              color: 'var(--c-danger)',
-                              backgroundColor:
-                                'color-mix(in srgb, var(--c-danger) 8%, transparent)',
-                            }}
-                          >
-                            {probe.errorMessage}
+      {/* Detailed probes are platform-operator evidence and are absent from the customer surface. */}
+      {canRunDiagnostics && (
+        <div className="rounded-2xl border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5">
+          {loading ? (
+            <div className="flex items-center justify-center py-16 text-slate-400">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          ) : results.length === 0 ? (
+            <div className="py-16 text-center text-sm text-slate-500 dark:text-slate-400">
+              {t('admin.health.empty', { defaultValue: 'No probes registered.' })}
+            </div>
+          ) : (
+            <ul className="divide-y divide-slate-200 dark:divide-white/10">
+              {results.map((probe) => {
+                const meta = STATUS_META[probe.status];
+                const Icon = meta.icon;
+                const isRunning = runningProbe === probe.probeId || runningAll;
+                return (
+                  <li key={probe.probeId} className="p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex min-w-0 items-start gap-3">
+                        <Icon
+                          className="mt-0.5 h-5 w-5 shrink-0"
+                          style={{ color: meta.dotVar }}
+                          aria-hidden
+                        />
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-slate-600 dark:bg-white/10 dark:text-slate-300">
+                              {probe.module}
+                            </span>
+                            <span className="truncate text-sm font-medium text-slate-900 dark:text-white">
+                              {probe.title}
+                            </span>
+                          </div>
+                          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                            {probe.description}
                           </p>
-                        )}
-                        <div className="mt-1.5 flex items-center gap-3 text-[11px] text-slate-400">
-                          <span>
-                            {t('admin.health.lastRun', { defaultValue: 'Last run' })}:{' '}
-                            {formatRanAt(probe.ranAt)}
-                          </span>
-                          {probe.durationMs != null && <span>{probe.durationMs} ms</span>}
+                          {probe.status === 'fail' && probe.errorMessage && (
+                            <p
+                              className="mt-1.5 rounded-md px-2 py-1 text-xs"
+                              style={{
+                                color: 'var(--c-danger)',
+                                backgroundColor:
+                                  'color-mix(in srgb, var(--c-danger) 8%, transparent)',
+                              }}
+                            >
+                              {probe.errorMessage}
+                            </p>
+                          )}
+                          <div className="mt-1.5 flex items-center gap-3 text-[11px] text-slate-400">
+                            <span>
+                              {t('admin.health.lastRun', { defaultValue: 'Last run' })}:{' '}
+                              {formatRanAt(probe.ranAt)}
+                            </span>
+                            {probe.durationMs != null && <span>{probe.durationMs} ms</span>}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => runOne(probe.probeId)}
-                      disabled={isRunning || !envAllowed}
-                      className="shrink-0"
-                    >
-                      {runningProbe === probe.probeId ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <RefreshCw className="h-4 w-4" />
+                      {canRunDiagnostics && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => runOne(probe.probeId)}
+                          disabled={isRunning || !envAllowed}
+                          className="shrink-0"
+                        >
+                          {runningProbe === probe.probeId ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <RefreshCw className="h-4 w-4" />
+                          )}
+                          <span className="ml-1.5 hidden sm:inline">
+                            {t('admin.health.rerun', { defaultValue: 'Re-run' })}
+                          </span>
+                        </Button>
                       )}
-                      <span className="ml-1.5 hidden sm:inline">
-                        {t('admin.health.rerun', { defaultValue: 'Re-run' })}
-                      </span>
-                    </Button>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      )}
     </div>
   );
 };

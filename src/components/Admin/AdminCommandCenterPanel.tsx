@@ -65,6 +65,7 @@ type TabId =
 
 interface AdminCommandCenterPanelProps {
   onSectionChange?: (section: AdminSettingsSection) => void;
+  aggregationOnly?: boolean;
 }
 
 interface LinkTile {
@@ -158,6 +159,7 @@ const DataTileShell: React.FC<{
       <Icon className="h-3.5 w-3.5" />
       {label}
     </div>
+    <p className="mt-1 text-[10px] text-c-text-muted">Źródło: tenant admin API · odczyt bieżący</p>
     <div className="mt-2">
       {loading ? (
         <div className="flex items-center gap-2 text-sm text-c-text-secondary">
@@ -480,6 +482,7 @@ const CommandCenterOverviewTab: React.FC<{
 
 export const AdminCommandCenterPanel: React.FC<AdminCommandCenterPanelProps> = ({
   onSectionChange,
+  aggregationOnly = false,
 }) => {
   const { t } = useTranslation();
   const tabs: Array<{ id: TabId; label: string; icon: React.ElementType }> = useMemo(
@@ -560,37 +563,41 @@ export const AdminCommandCenterPanel: React.FC<AdminCommandCenterPanelProps> = (
         </p>
       </div>
 
-      <div className="rounded-2xl border border-c-border bg-c-surface p-2">
-        <div className="flex flex-wrap gap-2">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => handleTabChange(tab.id)}
-                className={cn(
-                  'inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition',
-                  activeTab === tab.id
-                    ? 'bg-c-text text-c-bg'
-                    : 'bg-transparent text-c-text-secondary hover:bg-c-surface-raised'
-                )}
-              >
-                <Icon className="h-4 w-4" />
-                {tab.label}
-              </button>
-            );
-          })}
+      {!aggregationOnly && (
+        <div className="rounded-2xl border border-c-border bg-c-surface p-2">
+          <div className="flex flex-wrap gap-2">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => handleTabChange(tab.id)}
+                  className={cn(
+                    'inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition',
+                    activeTab === tab.id
+                      ? 'bg-c-text text-c-bg'
+                      : 'bg-transparent text-c-text-secondary hover:bg-c-surface-raised'
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
-      {activeTab === 'overview' && <CommandCenterOverviewTab onSectionChange={onSectionChange} />}
-      {activeTab === 'agent-trace' && <CommandCenterAgentTraceTab />}
-      {activeTab === 'audit' && <CommandCenterAuditTab />}
-      {activeTab === 'dlp' && <CommandCenterDlpTab />}
-      {activeTab === 'residency' && <CommandCenterResidencyTab />}
-      {activeTab === 'retention' && <CommandCenterRetentionTab />}
-      {activeTab === 'ai-policy' && <CommandCenterAiPolicyTab />}
-      {activeTab === 'benchmark' && <CommandCenterBenchmarkTab />}
+      {(aggregationOnly || activeTab === 'overview') && (
+        <CommandCenterOverviewTab onSectionChange={onSectionChange} />
+      )}
+      {!aggregationOnly && activeTab === 'agent-trace' && <CommandCenterAgentTraceTab />}
+      {!aggregationOnly && activeTab === 'audit' && <CommandCenterAuditTab />}
+      {!aggregationOnly && activeTab === 'dlp' && <CommandCenterDlpTab />}
+      {!aggregationOnly && activeTab === 'residency' && <CommandCenterResidencyTab />}
+      {!aggregationOnly && activeTab === 'retention' && <CommandCenterRetentionTab />}
+      {!aggregationOnly && activeTab === 'ai-policy' && <CommandCenterAiPolicyTab />}
+      {!aggregationOnly && activeTab === 'benchmark' && <CommandCenterBenchmarkTab />}
     </div>
   );
 };

@@ -623,7 +623,20 @@ const labelCls = 'block text-sm font-medium text-c-text-secondary mb-1.5';
 
 // ─── Main Component ───
 
-export const OrganizationProfileModule: React.FC = () => {
+type ProfileScreen =
+  | 'identity-scale'
+  | 'operating-model'
+  | 'position-direction'
+  | 'technology-culture-constraints';
+
+const PROFILE_SCREEN_AREAS: Record<ProfileScreen, ProfileArea[]> = {
+  'identity-scale': ['type', 'identity'],
+  'operating-model': ['production', 'operating', 'market'],
+  'position-direction': ['strategic'],
+  'technology-culture-constraints': ['digital', 'communication', 'constraints'],
+};
+
+export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = ({ screen }) => {
   const { t } = useTranslation();
   const { currentUser, currentOrganization } = useAppStore();
   const orgId = currentOrganization?.id || currentUser?.organizationId;
@@ -765,6 +778,8 @@ export const OrganizationProfileModule: React.FC = () => {
   };
 
   const orgType = profile.organization_type;
+  const isAreaVisible = (area: ProfileArea) =>
+    screen ? PROFILE_SCREEN_AREAS[screen].includes(area) : activeProfileArea === area;
 
   const SectionHeader: React.FC<{
     id: string;
@@ -848,56 +863,60 @@ export const OrganizationProfileModule: React.FC = () => {
       </div>
 
       {/* Teresa AI Guidance (Phase 3.2 — completeness coaching with downstream context) */}
-      <nav aria-label={t('organization.profilePresentation.navigation')}>
-        <p className="mb-2 text-xs text-c-text-muted">
-          {t('organization.profilePresentation.hint')}
-        </p>
-        <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
-          {(
-            [
-              ['type', 'type'],
-              ['identity', 'identity'],
-              ...(showProductionSection(orgType) ? [['production', 'production']] : []),
-              ...(showOperatingSection(orgType) &&
-              (showDeliveryModel(orgType) || showRevenueModel(orgType) || showCoreSystems(orgType))
-                ? [['operating', 'operating']]
-                : []),
-              ['strategic', 'strategic'],
-              ['digital', 'digital'],
-              ['market', 'market'],
-              ['communication', 'communication'],
-              ['constraints', 'constraints'],
-              ['document-extraction', 'documentExtraction'],
-              ['readiness', 'readiness'],
-            ] as Array<[ProfileArea, string]>
-          ).map(([id, translationKey]) => {
-            const active = activeProfileArea === id;
-            return (
-              <button
-                key={id}
-                type="button"
-                aria-current={active ? 'page' : undefined}
-                onClick={() => {
-                  setActiveProfileArea(id);
-                  if (id === 'readiness') setShowReadiness(true);
-                }}
-                className={`rounded-xl border p-3 text-left transition-colors ${
-                  active
-                    ? 'border-primary-400 bg-primary-50 dark:border-primary-500/50 dark:bg-primary-900/20'
-                    : 'border-c-border-subtle bg-c-surface hover:bg-c-surface-raised'
-                }`}
-              >
-                <span className="block text-sm font-semibold text-c-text">
-                  {t(`organization.profilePresentation.sections.${translationKey}.label`)}
-                </span>
-                <span className="mt-1 block text-xs text-c-text-muted">
-                  {t(`organization.profilePresentation.sections.${translationKey}.description`)}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </nav>
+      {!screen && (
+        <nav aria-label={t('organization.profilePresentation.navigation')}>
+          <p className="mb-2 text-xs text-c-text-muted">
+            {t('organization.profilePresentation.hint')}
+          </p>
+          <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
+            {(
+              [
+                ['type', 'type'],
+                ['identity', 'identity'],
+                ...(showProductionSection(orgType) ? [['production', 'production']] : []),
+                ...(showOperatingSection(orgType) &&
+                (showDeliveryModel(orgType) ||
+                  showRevenueModel(orgType) ||
+                  showCoreSystems(orgType))
+                  ? [['operating', 'operating']]
+                  : []),
+                ['strategic', 'strategic'],
+                ['digital', 'digital'],
+                ['market', 'market'],
+                ['communication', 'communication'],
+                ['constraints', 'constraints'],
+                ['document-extraction', 'documentExtraction'],
+                ['readiness', 'readiness'],
+              ] as Array<[ProfileArea, string]>
+            ).map(([id, translationKey]) => {
+              const active = activeProfileArea === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  aria-current={active ? 'page' : undefined}
+                  onClick={() => {
+                    setActiveProfileArea(id);
+                    if (id === 'readiness') setShowReadiness(true);
+                  }}
+                  className={`rounded-xl border p-3 text-left transition-colors ${
+                    active
+                      ? 'border-primary-400 bg-primary-50 dark:border-primary-500/50 dark:bg-primary-900/20'
+                      : 'border-c-border-subtle bg-c-surface hover:bg-c-surface-raised'
+                  }`}
+                >
+                  <span className="block text-sm font-semibold text-c-text">
+                    {t(`organization.profilePresentation.sections.${translationKey}.label`)}
+                  </span>
+                  <span className="mt-1 block text-xs text-c-text-muted">
+                    {t(`organization.profilePresentation.sections.${translationKey}.description`)}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+      )}
 
       {teresaHint && (
         <div className="bg-gradient-to-r from-primary-50 to-white dark:from-primary-900/20 dark:to-navy-900 border border-primary-100 dark:border-primary-800/50 rounded-xl p-4 flex items-start gap-3">
@@ -1081,9 +1100,9 @@ export const OrganizationProfileModule: React.FC = () => {
       <div className="space-y-3">
         {/* Section 1: Organization Type */}
         <div
-          hidden={activeProfileArea !== 'type'}
+          hidden={!isAreaVisible('type')}
           className={
-            activeProfileArea === 'type'
+            isAreaVisible('type')
               ? 'bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden'
               : 'hidden'
           }
@@ -1126,9 +1145,9 @@ export const OrganizationProfileModule: React.FC = () => {
 
         {/* Section 2: Identity & Scale */}
         <div
-          hidden={activeProfileArea !== 'identity'}
+          hidden={!isAreaVisible('identity')}
           className={
-            activeProfileArea === 'identity'
+            isAreaVisible('identity')
               ? 'bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden'
               : 'hidden'
           }
@@ -1251,9 +1270,9 @@ export const OrganizationProfileModule: React.FC = () => {
         {/* Section 3: Production (MANUFACTURING only — §11.4) */}
         {showProductionSection(orgType) && (
           <div
-            hidden={activeProfileArea !== 'production'}
+            hidden={!isAreaVisible('production')}
             className={
-              activeProfileArea === 'production'
+              isAreaVisible('production')
                 ? 'bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden'
                 : 'hidden'
             }
@@ -1322,9 +1341,9 @@ export const OrganizationProfileModule: React.FC = () => {
         {showOperatingSection(orgType) &&
           (showDeliveryModel(orgType) || showRevenueModel(orgType) || showCoreSystems(orgType)) && (
             <div
-              hidden={activeProfileArea !== 'operating'}
+              hidden={!isAreaVisible('operating')}
               className={
-                activeProfileArea === 'operating'
+                isAreaVisible('operating')
                   ? 'bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden'
                   : 'hidden'
               }
@@ -1385,9 +1404,9 @@ export const OrganizationProfileModule: React.FC = () => {
 
         {/* Section 5: Strategic Position (Universal) */}
         <div
-          hidden={activeProfileArea !== 'strategic'}
+          hidden={!isAreaVisible('strategic')}
           className={
-            activeProfileArea === 'strategic'
+            isAreaVisible('strategic')
               ? 'bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden'
               : 'hidden'
           }
@@ -1462,9 +1481,9 @@ export const OrganizationProfileModule: React.FC = () => {
 
         {/* Section 6: Digital & Technology (Universal) */}
         <div
-          hidden={activeProfileArea !== 'digital'}
+          hidden={!isAreaVisible('digital')}
           className={
-            activeProfileArea === 'digital'
+            isAreaVisible('digital')
               ? 'bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden'
               : 'hidden'
           }
@@ -1537,9 +1556,9 @@ export const OrganizationProfileModule: React.FC = () => {
 
         {/* Section 7: Market & Competition (Universal) */}
         <div
-          hidden={activeProfileArea !== 'market'}
+          hidden={!isAreaVisible('market')}
           className={
-            activeProfileArea === 'market'
+            isAreaVisible('market')
               ? 'bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden'
               : 'hidden'
           }
@@ -1596,9 +1615,9 @@ export const OrganizationProfileModule: React.FC = () => {
 
         {/* Section 8: Communication & AI Preferences */}
         <div
-          hidden={activeProfileArea !== 'communication'}
+          hidden={!isAreaVisible('communication')}
           className={
-            activeProfileArea === 'communication'
+            isAreaVisible('communication')
               ? 'bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden'
               : 'hidden'
           }
@@ -1652,9 +1671,9 @@ export const OrganizationProfileModule: React.FC = () => {
 
         {/* Section 9: Constraints & Risk (Universal) */}
         <div
-          hidden={activeProfileArea !== 'constraints'}
+          hidden={!isAreaVisible('constraints')}
           className={
-            activeProfileArea === 'constraints'
+            isAreaVisible('constraints')
               ? 'bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden'
               : 'hidden'
           }

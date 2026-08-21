@@ -44,8 +44,7 @@ const EMPTY_PLAN_FORM: PlanAssignmentForm = {
   expiresAt: '',
 };
 
-
-export const AdminBillingFinOpsPanel: React.FC = () => {
+export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }) => {
   const { t } = useTranslation();
   const stripeEnabled = ['true', '1', 'yes'].includes(
     String(import.meta.env.VITE_STRIPE_ENABLED || '')
@@ -62,7 +61,8 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
     { id: 'invoices', label: t('admin.billing.tabs.invoices', { defaultValue: 'Invoices' }) },
     { id: 'controls', label: t('admin.billing.tabs.controls', { defaultValue: 'Budgets & tax' }) },
   ];
-  const [activeTab, setActiveTab] = useState<TabId>('summary');
+  const [localActiveTab, setActiveTab] = useState<TabId>('summary');
+  const activeTab = screen ?? localActiveTab;
   const [summary, setSummary] = useState<any>(null);
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
   const [invoices, setInvoices] = useState<any[]>([]);
@@ -211,9 +211,7 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
       }
       if (Array.isArray(result?.alerts)) setAlerts(result.alerts);
       setAlertsAvailable(true);
-      toast.success(
-        t('admin.billing.alerts.saved', { defaultValue: 'Progi budżetowe zapisane' })
-      );
+      toast.success(t('admin.billing.alerts.saved', { defaultValue: 'Progi budżetowe zapisane' }));
     } catch (error: any) {
       setAlertsAvailable(false);
       toast.error(
@@ -746,24 +744,26 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
           posture as first-class tenant admin capabilities.
         </p>
       </div>
-      <div className="rounded-2xl border border-slate-200 bg-white p-2 dark:border-white/10 dark:bg-white/5">
-        <div className="flex flex-wrap gap-2">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                'rounded-xl px-4 py-2 text-sm font-medium transition',
-                activeTab === tab.id
-                  ? 'bg-c-text text-c-bg'
-                  : 'bg-transparent text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/5'
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
+      {!screen && (
+        <div className="rounded-2xl border border-slate-200 bg-white p-2 dark:border-white/10 dark:bg-white/5">
+          <div className="flex flex-wrap gap-2">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  'rounded-xl px-4 py-2 text-sm font-medium transition',
+                  activeTab === tab.id
+                    ? 'bg-c-text text-c-bg'
+                    : 'bg-transparent text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/5'
+                )}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
       {renderTab()}
     </div>
   );
