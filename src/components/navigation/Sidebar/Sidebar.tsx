@@ -21,7 +21,6 @@ import {
   dispatchBetaAccessBlocked,
   lockClosedBetaModules,
 } from '../../../utils/betaAccess';
-import { canUseInternalTools } from '../../../utils/internalToolsAccess';
 import { isNavDeclutterEnabled } from '../../../utils/navDeclutterFlag';
 import {
   dispatchPilotAccessBlocked,
@@ -40,7 +39,6 @@ import {
 import { FloatingSubmenu } from './FloatingSubmenu';
 import {
   getAdminMenuItem,
-  getInternalToolsMenuItem,
   getMenuStructure,
   getOrganizationMenuItem,
   getSettingsMenuItem,
@@ -168,15 +166,8 @@ export const Sidebar: React.FC = () => {
   }, [visibleMenuStructure, currentUser?.role, betaLockedMessage, navDeclutterEnabled]);
   const adminMenuItem = React.useMemo(() => getAdminMenuItem(t), [t]);
   const organizationMenuItem = React.useMemo(() => getOrganizationMenuItem(t), [t]);
-  const internalToolsMenuItem = React.useMemo(() => getInternalToolsMenuItem(t), [t]);
   const settingsMenuItem = React.useMemo(() => getSettingsMenuItem(t), [t]);
   const superAdminMenuItem = React.useMemo(() => getSuperAdminMenuItem(t), [t]);
-  const showInternalToolsMenu = canUseInternalTools(currentUser);
-  const canAttemptPartnerPortal = React.useMemo(
-    () => !isSuperAdminRole(currentUser?.role) && !isPilotRestrictedRole(currentUser?.role),
-    [currentUser?.role]
-  );
-  const [hasPartnerPortalAccess, setHasPartnerPortalAccess] = React.useState(false);
 
   // Completed views
   const completedViews = React.useMemo(() => {
@@ -422,35 +413,6 @@ export const Sidebar: React.FC = () => {
   const sidebarWidthClass = showFull ? 'w-64' : 'w-16';
 
   React.useEffect(() => {
-    let isMounted = true;
-
-    const refreshPartnerPortalAccess = async () => {
-      if (!canAttemptPartnerPortal || !currentUser?.id) {
-        if (isMounted) setHasPartnerPortalAccess(false);
-        return;
-      }
-
-      try {
-        const response = await Api.get('/api/partners/connection');
-        const payload = (response as { data?: unknown })?.data;
-        const resolvedData =
-          payload && typeof payload === 'object' && 'data' in (payload as Record<string, unknown>)
-            ? (payload as { data?: { connected?: unknown } })?.data
-            : (payload as { connected?: unknown } | null);
-        const connected = Boolean(resolvedData?.connected);
-        if (isMounted) setHasPartnerPortalAccess(connected);
-      } catch {
-        if (isMounted) setHasPartnerPortalAccess(false);
-      }
-    };
-
-    void refreshPartnerPortalAccess();
-    return () => {
-      isMounted = false;
-    };
-  }, [canAttemptPartnerPortal, currentUser?.id]);
-
-  React.useEffect(() => {
     if (!isSidebarOpen || (!isMobile && !isTablet)) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -529,12 +491,11 @@ export const Sidebar: React.FC = () => {
           onLogout={logout}
           onNavigate={handleFooterNavigate}
           t={t as any}
-          showPartnerPortal={canAttemptPartnerPortal && hasPartnerPortalAccess}
+          showPartnerPortal
         >
           {isAdminOwnerOrSuperAdminRole(currentUser?.role) && renderNavItem(organizationMenuItem)}
           {isAdminOwnerOrSuperAdminRole(currentUser?.role) && renderNavItem(adminMenuItem)}
           {isSuperAdminRole(currentUser?.role) && renderNavItem(superAdminMenuItem)}
-          {showInternalToolsMenu && renderNavItem(internalToolsMenuItem)}
           {renderNavItem(settingsMenuItem)}
         </SidebarFooter>
       </motion.div>

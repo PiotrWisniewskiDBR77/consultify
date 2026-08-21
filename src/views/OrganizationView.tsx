@@ -92,7 +92,7 @@ export const OrganizationView: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
 
-  useOrgContextSync(!!currentUser?.isAuthenticated);
+  const contextSync = useOrgContextSync(!!currentUser?.isAuthenticated);
 
   useEffect(() => {
     const path = location.pathname.replace(/\/+$/, '');
@@ -300,7 +300,7 @@ export const OrganizationView: React.FC = () => {
       </div>
       <div className="flex-1 overflow-auto">
         <div className="sticky top-0 z-10 bg-slate-50/90 dark:bg-navy-950/90 backdrop-blur-sm border-b border-slate-200/60 dark:border-navy-700/60">
-          <div className="flex items-center gap-3 px-4 lg:px-6 py-4">
+          <div className="mx-auto flex w-full max-w-5xl items-center gap-3 px-4 py-4 sm:px-5 lg:px-6">
             <button
               ref={menuButtonRef}
               type="button"
@@ -320,7 +320,7 @@ export const OrganizationView: React.FC = () => {
                 <ChevronRight size={12} />
                 <span className="text-slate-700 dark:text-slate-200">{currentMeta.title}</span>
               </div>
-              <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight truncate">
+              <h1 className="truncate text-xl font-semibold tracking-tight text-slate-900 dark:text-white">
                 {currentMeta.title}
               </h1>
               <p className="text-sm text-slate-500 dark:text-slate-400 truncate mt-0.5">
@@ -339,14 +339,30 @@ export const OrganizationView: React.FC = () => {
             )}
           </div>
         </div>
-        <div className="px-4 lg:px-6 pb-0">
+        <div className="mx-auto w-full max-w-5xl px-4 pb-0 sm:px-5 lg:px-6">
+          {contextSync.isUnsynced && (
+            <div
+              role="status"
+              className="mb-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100"
+            >
+              {contextSync.isSyncing
+                ? t('organization.sync.saving', 'Saving organization context…')
+                : t(
+                    'organization.sync.unsynced',
+                    'Changes are stored locally but have not been confirmed by the server.'
+                  )}
+              {contextSync.error ? ` ${contextSync.error}` : ''}
+            </div>
+          )}
           <OrgContextSummaryBanner
             organizationId={currentOrganization?.id}
             isAdmin={false}
             className="mb-4"
           />
         </div>
-        <div className="px-4 lg:px-6 pb-6 pt-0">{renderContent()}</div>
+        <div className="mx-auto w-full max-w-5xl px-4 pb-6 pt-0 sm:px-5 lg:px-6">
+          {renderContent()}
+        </div>
       </div>
     </div>
   );

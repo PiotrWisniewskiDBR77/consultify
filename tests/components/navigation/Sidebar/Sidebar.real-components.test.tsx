@@ -168,7 +168,7 @@ describe('Sidebar (L2, real subcomponents)', () => {
     deviceState.isTablet = false;
   });
 
-  it('renders footer actions + partner portal for ADMIN and navigates on click', () => {
+  it('renders footer actions + Partners for every authenticated role and hides Internal Tools', () => {
     appState.currentUser = { role: 'SUPERADMIN', journeyState: undefined };
     render(<Sidebar />);
 
@@ -179,13 +179,12 @@ describe('Sidebar (L2, real subcomponents)', () => {
       AppView.ORGANIZATION_PROFILE,
       expect.objectContaining({ preserveChat: true })
     );
-    expect(screen.queryByRole('button', { name: /Partner Portal/i })).not.toBeInTheDocument();
-  });
-
-  it('does not render partner portal for SUPERADMIN', () => {
-    appState.currentUser = { role: 'SUPERADMIN', journeyState: undefined };
-    render(<Sidebar />);
-    expect(screen.queryByRole('button', { name: /Partner Portal/i })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Partners/i }));
+    expect(appState.navigateWithChatContext).toHaveBeenCalledWith(
+      AppView.PARTNER_LANDING,
+      expect.objectContaining({ preserveChat: true })
+    );
+    expect(screen.queryByText(/Internal Tools/i)).not.toBeInTheDocument();
   });
 
   it('AI_CHAT toggles panel when already on chat (no navigation)', () => {

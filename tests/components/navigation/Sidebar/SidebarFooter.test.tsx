@@ -14,7 +14,7 @@ vi.mock('framer-motion', () => ({
 describe('SidebarFooter (L2)', () => {
   const t = (_key: string, fallback?: string) => fallback ?? _key;
 
-  it('renders partner portal and logout actions', () => {
+  it('renders Partners and logout actions', () => {
     const onNavigate = vi.fn();
     const onLogout = vi.fn();
 
@@ -25,14 +25,14 @@ describe('SidebarFooter (L2)', () => {
     );
 
     expect(screen.getByTestId('child-items')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /Partner Portal/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Partners/i }));
     expect(onNavigate).toHaveBeenCalledWith(AppView.PARTNER_LANDING);
 
     fireEvent.click(screen.getByRole('button', { name: /log out/i }));
     expect(onLogout).toHaveBeenCalledTimes(1);
   });
 
-  it('hides partner portal when showPartnerPortal=false', () => {
+  it('hides Partners when showPartnerPortal=false', () => {
     render(
       <SidebarFooter
         showFull={false}
@@ -43,15 +43,15 @@ describe('SidebarFooter (L2)', () => {
       />
     );
 
-    expect(screen.queryByTitle('Partner Portal')).not.toBeInTheDocument();
+    expect(screen.queryByTitle('Partners')).not.toBeInTheDocument();
   });
 
   it('in collapsed mode uses title attributes and does not render text labels', () => {
     render(<SidebarFooter showFull={false} onLogout={() => {}} onNavigate={() => {}} t={t} />);
 
-    const partner = screen.getByTitle('Partner Portal');
+    const partner = screen.getByTitle('Partners');
     expect(partner).toBeInTheDocument();
-    expect(screen.queryByText('Partner Portal')).not.toBeInTheDocument();
+    expect(screen.queryByText('Partners')).not.toBeInTheDocument();
 
     const logout = screen.getByTitle('sidebar.logOut');
     expect(logout).toBeInTheDocument();

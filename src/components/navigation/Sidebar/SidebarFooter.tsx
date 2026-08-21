@@ -1,7 +1,7 @@
 /**
  * SidebarFooter — Tech Sexy (T102)
  *
- * Bottom actions: children (Organization, Admin, Settings) + Partner Portal + Logout.
+ * Bottom actions: children (Organization, Admin, Settings) + Partners + Logout.
  * Monochromatic chrome, invisible border separator.
  */
 
@@ -48,10 +48,10 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
             onClick={() => onNavigate(AppView.PARTNER_LANDING)}
             whileTap={{ scale: 0.98 }}
             className={`${btnBase} hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-slate-300`}
-            title={t('sidebar.partnerPortal', 'Partner Portal')}
+            title={t('sidebar.partnerPortal', 'Partners')}
           >
             <Users size={18} strokeWidth={1.75} className="shrink-0" />
-            {showFull && <span>{t('sidebar.partnerPortal', 'Partner Portal')}</span>}
+            {showFull && <span>{t('sidebar.partnerPortal', 'Partners')}</span>}
           </motion.button>
         )}
 
