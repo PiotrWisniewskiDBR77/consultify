@@ -2,7 +2,7 @@
 
 ID: `EXE`
 Routes: `/execution`, `/execution/:caseId`
-Current gate: `NOT_STARTED`
+Current gate: `TECHNICAL_PREFLIGHT`
 Owner: Piotr Wisniewski
 Integrator: Codex
 Mobile: `DEFERRED_NON_GATING`
@@ -17,12 +17,12 @@ concurrency conflict, foreign tenant and rollback receipt.
 
 | Gate | Mandatory outcome | State | Evidence/decision |
 |---|---|---|---|
-| G00 | Scope, routes, dependencies, 82-task links and exclusions | `NOT_STARTED` | — |
-| G01 | Exact baseline and client/server/runtime/DB/migrations | `NOT_STARTED` | — |
-| G02 | Journeys, writes/readbacks, upstream/downstream and policy map | `NOT_STARTED` | — |
-| G03 | Named allowed/denied personas | `NOT_STARTED` | — |
-| G04 | Reproducible realistic and boundary fixtures | `NOT_STARTED` | — |
-| G05 | Functional preflight and cold readback | `NOT_STARTED` | — |
+| G00 | Scope, routes, dependencies, 82-task links and exclusions | `PASS` | Scope: canonical Execution spine and health, Initiative→Case handoff, governed actions, delivery evidence, immutable Results signal and closure delivery to Results/Finance decision. Task links: `EXE-BVP-001`, `EXE-MVP-SPINE-001`, `EXE-MVP-ACTIONS-001`, `EXE-FLOW-ADAPTER-001`, `EXE-UI-CANON-001`; all five evidence packets report `DONE_CURRENT_SHA`. Mobile and production release are excluded. |
+| G01 | Exact baseline and client/server/runtime/DB/migrations | `PASS_FOR_SOURCE_PREFLIGHT` | Source candidate `9ce72577f923e70eadab8463b6b71805ff0098a6`; root typecheck PASS. Real PostgreSQL is local at `127.0.0.1:34940`; signed live-stack backend ran separately at `127.0.0.1:3001` with `NODE_ENV=development`, V8 enabled and auth bypasses unset. The retained Organization owner screen remains on mounted product `ad0766ac4c1000c6c94934a1af1d53c0b4eed19c`; Execution exact-SHA browser mount is pending. |
+| G02 | Journeys, writes/readbacks, upstream/downstream and policy map | `PASS` | Initiative handoff → governed Case/work/resources/control → evidence submit/distinct approval → close → immutable exactly-once Results receipt → Finance `NEEDS_DECISION` without fabricated actual. Nine implemented actions are registry-governed; four hidden actions remain absent. Stale CAS, idempotency, tenant, role, rollback and cold readback are explicit boundaries. |
+| G03 | Named allowed/denied personas | `PASS_FOR_PREFLIGHT` | Allowed: active same-tenant OWNER/ADMIN plus distinct approver. Denied: MEMBER for governed mutation, inactive/revoked member, foreign tenant, forged JWT, stale CAS writer and hidden/unregistered action caller. Live persona `cw-local-user` and distinct local actors passed real login/JWT checks; owner-review personas will be bound to the stable UI fixture. |
+| G04 | Reproducible realistic and boundary fixtures | `IN_PROGRESS` | Technical fixtures cover producer→Results, Initiative outbox, closure delivery, all nine actions, real signed Case Workspace and negative controls. Run-scoped core prefixes now read zero after cleanup; the reusable `cw-local` live-stack persona is retained intentionally. A stable realistic owner-review Case and a complete live-stack fixture cleanup contract remain pending. |
+| G05 | Functional preflight and cold readback | `IN_PROGRESS` | Current replay: real PostgreSQL `5/5` files, `55/55 PASS`; focused route/unit `6/6`, `43/43 PASS`; signed live-stack `2/2`, `39/39 PASS`; aggregate `137/137 PASS`. Root typecheck PASS. Exact-source browser/UI replay and owner-fixture cold reopen remain pending. |
 | G06 | Desktop/tablet, PL/EN, themes, states, a11y, console/HTTP | `NOT_STARTED` | — |
 | G07 | Piotr review card | `NOT_STARTED` | — |
 | G08 | First-impression review | `NOT_STARTED` | — |
@@ -49,7 +49,19 @@ concurrency conflict, foreign tenant and rollback receipt.
 
 | ID | Type | Purpose | Setup/reset | Readback | Expected access | Status/evidence |
 |---|---|---|---|---|---|---|
-| _none_ | | | | | | |
+| `EXE-TECH-01` | technical matrix | Handoff, BVP close, Results/Finance delivery, all governed actions, tenant/role/CAS/idempotency/rollback | Local real PostgreSQL; unique run-scoped identities; guarded immutable-ledger cleanup | SQL, mounted HTTP, independent pool and immutable receipts | allowed/denied matrix in G03 | `137/137 PASS`; core tested prefixes residue `0` |
+| `EXE-OWNER-01` | owner-review fixture | Credible Case → health/capacity → governed action → evidence/close → cold reopen journey | local-only stable, non-overwriting fixture | PostgreSQL plus mounted UI cold reopen | local owner and boundary persona | `PREPARATION_REQUIRED` |
+
+## Integrator preflight observations
+
+These are technical observations, not Piotr owner findings.
+
+| ID | Observation | Evidence | State |
+|---|---|---|---|
+| `EXE-PF-001` | Root Vitest configuration replaces global `fetch` with a UI mock, so backend live-stack files invoked from the repository root falsely reported HTTP 200 on the unauthenticated probe. Running through `server/vitest.config.ts` restores native network I/O. | Root invocation stopped fail-closed; curl and native Node returned 401; correct server-config replay `39/39 PASS`. | `FIXED_INVOCATION_VERIFIED` |
+| `EXE-PF-002` | The real-PG action registry test wrote an immutable audit but attempted to remove only its organization; every green run retained 11 audit rows and one organization. The guarded disposable-ledger helper now supports `execution_action_audit`, and the test removes its exact organization scope before deleting the organization. | Before fix: 22 rows across two runs; exact bounded cleanup performed; after fix `21/21 PASS`, new prefix residue `0`; commit `9ce72577f9`. | `FIXED_VERIFIED` |
+| `EXE-PF-003` | The signed live test still called governed budget delete without the current required positive `expectedVersion` and `X-Idempotency-Key`, producing 400 before action governance. The test now exercises the current CAS/idempotent contract for success, role denial and forced-audit rollback. | Before reconciliation `35/39 PASS`, four failures all on budget action; corrected replay `39/39 PASS`; commit `9ce72577f9`. | `FIXED_VERIFIED` |
+| `EXE-PF-004` | The historical live-stack harness intentionally retains append-only action audits and does not fully remove every run-created Case/project in its first file. This is durable evidence but prevents claiming whole-harness residue zero on a shared database. | Core prefixes `exe-bvp`, `exe-flow`, `res-flow`, `exe-actions`, `org_exe09` are zero; reusable `cw-local` fixture and historical live-stack audit rows remain separately identifiable. | `OPEN_NONBLOCKING_FIXTURE_HYGIENE` |
 
 ## Owner UI/UX/CX register
 
@@ -62,6 +74,13 @@ concurrency conflict, foreign tenant and rollback receipt.
 | Finding IDs | Root cause | Approved solution | Commit | Shared surfaces | Impacted modules | Tests/self-QA | Regression |
 |---|---|---|---|---|---|---|---|
 | _none_ | | | | | | | |
+
+## Preflight implementation ledger
+
+| Observation | Root cause | Resolution | Commit | Verification |
+|---|---|---|---|---|
+| `EXE-PF-002` | Immutable action audits were outside the common guarded cleanup helper. | Add the audit ledger/trigger to guarded cleanup and remove exact test-org rows before parent teardown. | `9ce72577f9` | `21/21 PASS`; subsequent `exe-actions-*` residue `0`; typecheck PASS |
+| `EXE-PF-003` | Live test contract lagged behind governed CAS/idempotent budget delete. | Supply positive expected version and an explicit idempotency key in success, denial and rollback paths. | `9ce72577f9` | server-config live stack `2/2` files, `39/39 PASS` |
 
 ## Owner verdict
 
