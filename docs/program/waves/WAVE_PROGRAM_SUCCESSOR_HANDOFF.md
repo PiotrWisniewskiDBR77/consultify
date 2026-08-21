@@ -3,7 +3,7 @@
 Date: `2026-08-21`  
 Workspace: `/Users/piotrwisniewski/Developer/Consultify`  
 Branch at preparation: `codex/wave2-browser-transfer-20260821`  
-Document status: `HANDOFF / FAIL_CLOSED`
+Document status: `WAVE_2_CLOSED / WAVE_3_HANDOFF`
 
 ## Purpose
 
@@ -75,6 +75,12 @@ reports. Before continuing, the successor must re-read the actual current Git
 branch, clean/dirty state and HEAD; document metadata never replaces that
 check.
 
+Piotr recorded `OWNER_ACCEPTED` on `2026-08-21` for the bounded P4 result on
+product SHA `a36d9d51edc87bb63e7211754e22106d02d2d3d0`. The decision was explicitly
+qualified: the current UX is unsatisfactory but accepted as-is for Wave 2, and
+the broader quality work is carried into Wave 3. This does not authorize push,
+deployment or production contact.
+
 ### Wave 3 — collaborative acceptance of all 16 modules
 
 Wave 3 is the owner-assisted UI/UX round for:
@@ -84,10 +90,12 @@ Results, Finance, Materials, Audits, Meetings, Organization, Admin, Settings,
 Partner`.
 
 Each module requires one frozen exact SHA, mounted runtime readback, realistic
-persona and fixtures, positive plus negative journeys, desktop/tablet/mobile,
+persona and fixtures, positive plus negative journeys, desktop/tablet,
 light/dark, PL/EN, screenshots, console/network, keyboard/focus and axe
 evidence. Every finding is P0-P3; P0/P1 must close and P2/P3 require an explicit
 disposition. Only Piotr can record `OWNER_ACCEPTED` with date and exact SHA.
+Mobile remains a separate future development workstream and is
+`DEFERRED_NON_GATING` until Piotr freezes that scope.
 
 Browser control is available in the durable workspace, but the 16 module
 rounds have not been replayed on the transfer candidate. All rows therefore

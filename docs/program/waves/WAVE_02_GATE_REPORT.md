@@ -2,13 +2,13 @@
 
 Date: `2026-08-21`
 
-Overall verdict: `CONDITIONAL_PASS / OWNER_BROWSER_GATE_REQUIRED`
+Overall verdict: `OWNER_ACCEPTED / WAVE_2_CLOSED`
 
 This report qualifies the transferred integration candidate at
 `26592bcf2b` on
 the transferred integration branch `codex/wave2-browser-transfer-20260821`. It
-does not authorize production, deployment,
-or promotion to `OWNER_ACCEPTED`.
+does not authorize production or deployment. Piotr's owner acceptance is
+bounded to Wave 2 and does not approve the full Tools-module UX or release.
 
 ## Candidate and recovery state
 
@@ -16,6 +16,7 @@ or promotion to `OWNER_ACCEPTED`.
 - transferred Wave 2 source candidate: `2ce7750de9`;
 - local pre-transfer integration repair retained: `1a36dd72b0`;
 - final transfer merge candidate: `26592bcf2b`;
+- P4 browser-remediation product candidate: `a36d9d51edc87bb63e7211754e22106d02d2d3d0`;
 - branch: `codex/wave2-browser-transfer-20260821`;
 - recovery source: preserved local ref
   `refs/remotes/icloud-source/wave2-final-20260821` plus the durable checkout's
@@ -148,19 +149,50 @@ claim Teresa can execute all 280 mounted mutations.
 
 ## P4 — Dynamic SWOT bounded owner header
 
-Verdict: `CODE_PASS / BROWSER_NOT_TESTED`
+Verdict: `OWNER_ACCEPTED_WITH_WAVE_3_QUALITY_FOLLOWUP`
 
 Only the five backlog-eligible paths were ported. The implementation moves
 Sections, How-to and AI secondary actions into the header before one primary
 CTA, omits an empty Menu 2 shell only for explicit opt-in, and preserves legacy
 consumers.
 
-- focused viewport/compatibility evidence: `4/4 PASS` at 1440, 768 and 390 px;
-- root typecheck: `PASS`;
-- mounted browser proof: `NOT_TESTED`;
-- blocker: Codex Browser/Computer Use runtime was disabled by the local
-  `js_repl = false` feature flag, so `mcp__node_repl__js` was unavailable to the
-  task. No substitute or synthetic screenshot is accepted as owner proof.
+- mounted local browser proof on exact product SHA
+  `a36d9d51edc87bb63e7211754e22106d02d2d3d0`: `PASS` for the technical
+  desktop/tablet header contract;
+- exact runtime SHA readback: frontend `LOCAL @a36d9d51edc8`, backend readiness
+  `buildSha=a36d9d51edc87bb63e7211754e22106d02d2d3d0`;
+- owner-gating viewport matrix: desktop `1440x900` and tablet `768x900`, PL/EN
+  and light/dark, with zero document or action-row horizontal overflow;
+- owner scope decision dated `2026-08-21`: mobile is
+  `DEFERRED_NON_GATING` because that product surface has not yet been developed;
+  exploratory mobile observations are not used for the Wave 2 verdict;
+- click proof: Sections, How-to / Knowledge base, AI panel and More menu all
+  open; Help Center closes without route change; object-code and permalink
+  items are present;
+- authorized local `Start session` completed at `2026-08-21T06:20:33Z` and
+  routed to session `2ea3159d-cfc2-4290-9fb1-9ec77f23b179`;
+- local PostgreSQL readback proves the same ID in `tool_sessions` as
+  `dynamic-swot`, `DRAFT`, completion `0`, initial version `1`; after the
+  mounted autosave, the final readback is version `2` with identity, type,
+  status and completion unchanged; the mounted UI shows `Dynamic SWOT —
+  Session`, `Mission & Context`, `0%` and a saved indicator;
+- the isolated harness has no AI provider, so the AI action truthfully opens
+  its panel and reports provider unavailability; this is not a header failure;
+- defects found and closed in the mounted round:
+  - `P4-HEADER-CLIP-768`: clipped right-side actions at tablet width, fixed by
+    a bounded action row with accessible compact tablet controls;
+  - `P4-HELP-Z-LAYER`: Help Center shared the bottom-navigation layer, fixed by
+    moving the panel to the canonical modal layer and naming its close control;
+- focused owner-header test: `4/4 PASS`;
+- root typecheck: `PASS` with controlled Node heap `8192 MB`;
+- server typecheck: `PASS`;
+- evidence manifest:
+  `docs/program/evidence/closure/browser-p4/DYNAMIC_SWOT_OWNER_HEADER/P4_OWNER_HEADER_RESULT.json`;
+- owner decision on `2026-08-21`: `OWNER_ACCEPTED` for the bounded Wave 2
+  result, with an explicit acknowledgement that the current UX is
+  unsatisfactory and will be reviewed across all modules in Wave 3;
+- this qualified acceptance does not convert the full Tools-module UX or any
+  production/release gate to `PASS`.
 
 ## Final verification on the durable candidate
 
@@ -206,13 +238,18 @@ functional failure.
 
 ## Release decision
 
-Wave 02 is technically closed for P1, P2 and the explicit P3 MVP denominator.
-P4 is code-complete but not owner-accepted. Therefore:
+Wave 02 is closed for P1, P2, the explicit P3 MVP denominator and the bounded
+P4 owner-header gate. Piotr accepted P4 as-is on `2026-08-21`, while explicitly
+deferring the acknowledged broader UX quality problem to Wave 3. Therefore:
 
-- `GO` for preserving this branch as the Wave 02 technical candidate;
-- `STOP` for full `OWNER_ACCEPTED`, production release or deployment;
-- one remaining gate: mounted browser review of the Dynamic SWOT owner header
-  on the exact final candidate, followed by an owner decision;
+- `GO` for preserving and locally checkpointing this branch as the closed
+  Wave 02 candidate;
+- `OWNER_ACCEPTED` applies only to the bounded Wave 2 contract on product SHA
+  `a36d9d51edc87bb63e7211754e22106d02d2d3d0`;
+- `STOP` remains in force for production release, deployment, push and any
+  claim that the full Tools-module UX is accepted;
+- the full 16-module UX review, including the acknowledged quality debt, starts
+  in Wave 3;
 - if that review finds defects, record screenshots and comments in the UI/UX
   correction register and iterate without changing the technical verdicts for
   unrelated P1-P3 scopes.

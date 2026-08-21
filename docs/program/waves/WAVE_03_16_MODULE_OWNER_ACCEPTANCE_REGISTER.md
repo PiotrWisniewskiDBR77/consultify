@@ -2,8 +2,8 @@
 
 Date prepared: `2026-08-21`  
 Source branch: `codex/wave2-browser-transfer-20260821`
-Wave 2 transfer merge candidate: `26592bcf2b`
-Status: `READY_FOR_EXACT_SHA_RUNTIME_PREPARATION / BROWSER_CONTROL_AVAILABLE_NOT_REPLAYED`
+Wave 2 P4 product candidate: `a36d9d51edc87bb63e7211754e22106d02d2d3d0`
+Status: `WAVE_2_OWNER_ACCEPTED / WAVE_3_NOT_STARTED`
 
 This register prepares the collaborative owner rounds. Historical G4 evidence
 is useful for routing and fixture design, but it does not replace a mounted
@@ -19,7 +19,9 @@ Before a round starts:
 2. Start only an isolated or explicitly authorized non-production environment.
 3. Bind a named persona and realistic nonempty fixture plus empty, loading,
    error, permission, conflict, success and stale states where applicable.
-4. Exercise desktop `1440`, tablet `768`, mobile `390`, light/dark and PL/EN.
+4. Exercise desktop `1440`, tablet `768`, light/dark and PL/EN. Per Piotr's
+   owner decision on `2026-08-21`, mobile is a future development workstream and
+   is `DEFERRED_NON_GATING` until a separate scope is frozen.
 5. Capture route, screenshot, console, network, keyboard/focus and axe evidence.
 6. Record each finding as P0-P3 with expected behavior, decision and owner.
 7. Rerun changed flows and obtain Piotr's exact-SHA verdict.
@@ -35,7 +37,7 @@ fail-closed at `READY_FOR_REPLAY`, never `PASS`.
 | 1 | `CHAT` | Chat — `/chat` | Continue a sourced conversation, approve a governed proposal and cold-reopen it. | Provider failure, stale/replayed approval, foreign tenant, no false citation/success. | `READY_FOR_REPLAY` | Exact-current mounted replay and owner UX decision. |
 | 2 | `MYW` | My Work / Agent — `/my-work` | Open a real task/decision/inbox item, perform an allowed transition and refresh. | Member attempts owner/admin action; stale proposal; duplicate prevention. | `READY_FOR_REPLAY` | Exact-current mounted replay and owner UX decision. |
 | 3 | `INT` | Interview — `/interview`, `/interview/respond/:token` | Manage an interview and complete the public respondent path. | Expired/replayed/foreign token; respondent cannot access organization navigation. | `READY_FOR_REPLAY` | Exact-current management and public-token owner review. |
-| 4 | `TLS` | Tools — `/discovery-tools` | Open Dynamic SWOT, review, approve, promote output and cold-reopen it. | Wrong tool/tenant, rejected proposal, stale lineage; header at 1440/768/390. | `CODE_READY_BROWSER_BLOCKED` | Mandatory P4 owner-header click gate on exact final SHA. |
+| 4 | `TLS` | Tools — `/discovery-tools` | Open Dynamic SWOT, review, approve, promote output and cold-reopen it. | Wrong tool/tenant, rejected proposal, stale lineage; header at owner-gating 1440/768. Mobile deferred by owner decision. | `WAVE_2_P4_OWNER_ACCEPTED_WAVE_3_REVIEW_REQUIRED` | Bounded header gate accepted as-is on `2026-08-21`; Piotr explicitly reports unsatisfactory UX, so the full Tools journey and its quality debt remain mandatory Wave 3 scope on a newly frozen SHA. |
 | 5 | `ASM` | Assessment — `/assessment` | Start a method session, inspect output and promote a governed initiative batch. | Missing rights/version, stale session, foreign tenant, failed promotion. | `READY_FOR_REPLAY` | Exact-current mounted replay and owner UX decision. |
 | 6 | `INI` | Initiatives — `/initiatives`, candidate and profile deep links | Review candidate, create/open initiative, inspect analysis and linked execution. | Stale transition, invalid deep link, insufficient role, duplicate command. | `READY_FOR_REPLAY` | Exact-current mounted replay and owner UX decision. |
 | 7 | `EXE` | Execution — `/execution`, `/execution/:caseId` | Open a case, inspect capacity, perform a governed action and cold-reopen. | Member/viewer denial, stale action, concurrency conflict, rollback receipt. | `READY_WITH_STATE_GAPS` | Loading/empty/error/permission/success states need explicit owner observation. |
@@ -55,7 +57,9 @@ Every observed issue must be appended without reinterpretation:
 
 | Finding ID | Module | Exact SHA | Persona | Route/screen | Screenshot | Observation | Expected behavior | Severity | Decision | Status | Owner |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| _none recorded yet_ | | | | | | | | | | | |
+| `P4-HEADER-CLIP-768` | `TLS` | `a36d9d51edc87bb63e7211754e22106d02d2d3d0` | `Wave2 Owner` | Dynamic SWOT owner header, 768 | `browser-p4/DYNAMIC_SWOT_OWNER_HEADER/owner-header-768-en-dark-final.png` | Right-side actions were clipped before remediation. | One bounded accessible row with no document/action overflow. | `P1` | Fix in Wave 2 before owner verdict. | `CLOSED_WITH_EVIDENCE` | Codex integrator |
+| `P4-HELP-Z-LAYER` | `TLS` | `a36d9d51edc87bb63e7211754e22106d02d2d3d0` | `Wave2 Owner` | Dynamic SWOT How-to / Help Center | `browser-p4/DYNAMIC_SWOT_OWNER_HEADER/P4_OWNER_HEADER_RESULT.json` | Help panel shared the bottom-navigation z-layer on narrow exploratory layouts. | Modal layer must own pointer actions and close without route change. | `P1` | Fix in Wave 2 before owner verdict. | `CLOSED_WITH_EVIDENCE` | Codex integrator |
+| `W3-TLS-UX-REVIEW` | `TLS` | _freeze at Wave 3 start_ | `Piotr / Wave3 Owner` | Full Tools journey | _pending Wave 3 evidence_ | Piotr accepted the bounded Wave 2 gate as-is but stated that the current UX is unsatisfactory. No more specific defect was supplied at Wave 2 close. | Run the full Tools owner journey in Wave 3, record concrete P0-P3 findings, and redesign/retest only from those exact observations. | `P2` | Carry forward without reopening Wave 2. | `OPEN` | Wave 3 integrator + Piotr |
 
 Allowed severity: `P0`, `P1`, `P2`, `P3`.  
 Allowed status: `OPEN`, `FIX_IN_PROGRESS`, `READY_FOR_RETEST`, `ACCEPTED_OUT`,

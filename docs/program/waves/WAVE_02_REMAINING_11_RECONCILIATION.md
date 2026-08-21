@@ -3,6 +3,10 @@
 Date: `2026-08-21`  
 Branch: `codex/wave2-browser-transfer-20260821`
 Wave 2 transfer merge candidate: `26592bcf2b`
+
+Wave 2 P4 product candidate: `a36d9d51edc87bb63e7211754e22106d02d2d3d0`
+
+Owner decision: `OWNER_ACCEPTED_WITH_WAVE_3_QUALITY_FOLLOWUP` (`2026-08-21`)
 Report HEAD at audit start: `f5a5db9e10`
 
 ## Authority and counting rule
@@ -41,6 +45,9 @@ promoted merely because a narrower Wave 2 packet passed.
 - Wave 2 technical subpackets completed without promoting their broader parent
   tasks: Results writer ambiguity, Finance Statement exact-six, Transform SWOT
   runtime lineage and Teresa explicit MVP denominator.
+- The bounded P4 Dynamic SWOT owner-header gate is owner-accepted as-is. Piotr's
+  explicit statement that the UX remains unsatisfactory is carried as an open
+  Wave 3 quality review and does not reopen the bounded Wave 2 packet.
 - Current 82-task count is `73 DONE_CURRENT_SHA / 9 PARTIAL`.
 - This is not a failure of the Wave 2 code packet. It is the required separation
   between bounded technical proof and the broader owner/environment/release

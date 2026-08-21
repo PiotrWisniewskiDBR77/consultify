@@ -1,0 +1,148 @@
+{
+  "gate": "Wave 2 P4 Dynamic SWOT owner-header click gate",
+  "status": "OWNER_ACCEPTED_WITH_WAVE_3_QUALITY_FOLLOWUP",
+  "testedAt": "2026-08-21T06:20:33Z",
+  "candidateSha": "a36d9d51edc87bb63e7211754e22106d02d2d3d0",
+  "runtime": {
+    "kind": "isolated-local-non-production",
+    "frontendUrl": "http://127.0.0.1:3940/discovery-tools?docId=known%3Adynamic-swot",
+    "backendReadyUrl": "http://127.0.0.1:3941/api/ready",
+    "backendBuildSha": "a36d9d51edc87bb63e7211754e22106d02d2d3d0",
+    "database": "local-postgresql",
+    "sqlMigrationState": "chain complete",
+    "pendingMigrations": 0,
+    "productionContact": false
+  },
+  "ownerScopeDecision": {
+    "desktop": "GATING",
+    "tablet": "GATING",
+    "mobile": "DEFERRED_NON_GATING",
+    "decisionBy": "Piotr Wisniewski",
+    "decisionDate": "2026-08-21",
+    "note": "Mobile has not yet been developed and is outside the Wave 2 acceptance gate. Earlier exploratory mobile observations were not used for PASS/FAIL."
+  },
+  "ownerDecision": {
+    "decision": "OWNER_ACCEPTED",
+    "decisionBy": "Piotr Wisniewski",
+    "decisionDate": "2026-08-21",
+    "scope": "Wave 2 bounded Dynamic SWOT owner-header gate on the recorded exact product SHA",
+    "qualification": "Accepted as-is for Wave 2 despite acknowledged UX quality concerns. Broader product and module UX changes are deferred to the 16-module Wave 3 owner round; this is not approval of production release or of the full Tools module UX."
+  },
+  "matrix": [
+    {
+      "viewport": "1440x900",
+      "locale": "en",
+      "theme": "dark",
+      "documentHorizontalOverflow": false,
+      "actionRowWithinViewport": true,
+      "secondaryActionOverflow": false,
+      "allRequiredActionsPresent": true,
+      "screenshot": "owner-header-1440-en-dark-final.png",
+      "sha256": "23e29f6996ea8c9f6fbd7e133dbebed5d67c9197f4bb950a4bdef651ef9457d4"
+    },
+    {
+      "viewport": "1440x900",
+      "locale": "pl",
+      "theme": "light",
+      "documentHorizontalOverflow": false,
+      "actionRowWithinViewport": true,
+      "secondaryActionOverflow": false,
+      "allRequiredActionsPresent": true,
+      "screenshot": "owner-header-1440-pl-light-final.png",
+      "sha256": "9b9d38dc012369fa19ab50a329ecf1e4aedd60b768962e7c4e8a566870741cf9"
+    },
+    {
+      "viewport": "768x900",
+      "locale": "en",
+      "theme": "dark",
+      "documentHorizontalOverflow": false,
+      "actionRowWithinViewport": true,
+      "secondaryActionOverflow": false,
+      "allRequiredActionsPresent": true,
+      "compactSecondaryActions": true,
+      "accessibleNamesPreserved": true,
+      "screenshot": "owner-header-768-en-dark-final.png",
+      "sha256": "61fe47bef9316cbeaedbb77fe3d95b59a9584165229281f1448c1e5954c53fd4"
+    },
+    {
+      "viewport": "768x900",
+      "locale": "pl",
+      "theme": "light",
+      "documentHorizontalOverflow": false,
+      "actionRowWithinViewport": true,
+      "secondaryActionOverflow": false,
+      "allRequiredActionsPresent": true,
+      "compactSecondaryActions": true,
+      "accessibleNamesPreserved": true,
+      "screenshot": "owner-header-768-pl-light-final.png",
+      "sha256": "f6a830f5d6a99a23f790bd42ca7c99ff697467053393e1ea01d54594bb3ddb19"
+    }
+  ],
+  "interactions": {
+    "sectionsMenuOpened": true,
+    "knowledgeBaseOpened": true,
+    "knowledgeBaseClosedWithoutNavigation": true,
+    "analyzeWithAiPanelOpened": true,
+    "analyzeWithAiExpectedLocalProviderUnavailable": true,
+    "moreMenuOpened": true,
+    "moreMenuCopyObjectCodePresent": true,
+    "moreMenuCopyLinkPresent": true,
+    "startSession": {
+      "status": "PASS_LOCAL_CREATE_AND_READBACK",
+      "sessionId": "2ea3159d-cfc2-4290-9fb1-9ec77f23b179",
+      "route": "http://127.0.0.1:3940/discovery-tools?docId=2ea3159d-cfc2-4290-9fb1-9ec77f23b179&tab=sessions",
+      "browserState": {
+        "toolType": "dynamic-swot",
+        "status": "DRAFT",
+        "currentStep": "Mission & Context",
+        "completionPercent": 0,
+        "savedIndicatorPresent": true
+      },
+      "databaseReadback": {
+        "table": "tool_sessions",
+        "toolType": "dynamic-swot",
+        "status": "DRAFT",
+        "completionPercent": 0,
+        "version": 1,
+        "createdAt": "2026-08-21 06:20:33.779",
+        "updatedAt": "2026-08-21 06:20:33.779"
+      },
+      "finalVerificationReadback": {
+        "status": "PASS_AFTER_MOUNTED_AUTOSAVE",
+        "toolType": "dynamic-swot",
+        "statusValue": "DRAFT",
+        "completionPercent": 0,
+        "version": 2,
+        "createdAt": "2026-08-21 06:20:33.779",
+        "updatedAt": "2026-08-21 06:38:41.789",
+        "note": "The mounted session autosave advanced the optimistic-lock version after the initial create readback; identity, type, status and completion remained stable."
+      },
+      "screenshot": "start-session-created-1440.png",
+      "sha256": "598ff50ff8dfdc1c798aeb0917654a0e5059da6bec8c0154cc604744bffcc980"
+    }
+  },
+  "defectsRemediated": [
+    {
+      "id": "P4-HEADER-CLIP-768",
+      "symptom": "At 768 px the right side of the owner action row was clipped.",
+      "resolution": "Bounded the action row, introduced a compact accessible tablet representation, and preserved the full desktop labels.",
+      "preFixScreenshot": "owner-header-768-en-light.png",
+      "preFixSha256": "3d0e47cb3ec58da904098fe46c515d3787c7aa88c27f0d216f7b32e51e740376",
+      "status": "FIXED_RETESTED"
+    },
+    {
+      "id": "P4-HELP-Z-LAYER",
+      "symptom": "Help Center shared the bottom navigation z-index, allowing navigation to intercept its close action on narrow layouts.",
+      "resolution": "Raised the Help Center panel to the canonical modal layer and added an accessible close name.",
+      "status": "FIXED_RETESTED"
+    }
+  ],
+  "automatedChecks": {
+    "ownerHeaderTests": "4/4 PASS",
+    "rootTypecheck": "PASS_WITH_NODE_HEAP_8192",
+    "serverTypecheck": "PASS"
+  },
+  "knownNonBlockingLocalBoundary": {
+    "aiProvider": "Not configured in the isolated local harness; the header action opened its panel and reported the unavailable provider honestly."
+  }
+}
