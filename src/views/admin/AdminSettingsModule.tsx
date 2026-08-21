@@ -1,4 +1,4 @@
-import { ChevronRight, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -23,6 +23,7 @@ import {
   AdminSettingsSection,
   AdminSettingsSidebar,
 } from '../../components/Admin/AdminSettingsSidebar';
+import DomainScreenHeader from '../../components/settings/shared/DomainScreenHeader';
 import { Button } from '../../components/ui/primitives/Button';
 import { ScrollArea } from '../../components/ui/scroll-area';
 import { cn } from '../../lib/utils';
@@ -374,40 +375,32 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col bg-white dark:bg-navy-900">
-        <div className="flex items-center border-b border-slate-200 px-4 py-2 lg:hidden dark:border-white/10">
-          <Button
-            ref={menuButtonRef}
-            variant="ghost"
-            size="sm"
-            onClick={() => setSidebarOpen((prev) => !prev)}
-            aria-label={t('admin.shell.toggleNavigation', 'Toggle admin navigation')}
-            aria-expanded={sidebarOpen}
-            aria-controls="admin-settings-navigation"
-            className="p-2 text-slate-600 hover:text-navy-900 dark:text-slate-400 dark:hover:text-white"
-          >
-            {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </Button>
-        </div>
+        <DomainScreenHeader
+          breadcrumbs={[
+            { label: t('admin.shell.breadcrumb'), onClick: handleBackToDashboard },
+            { label: t(meta.titleKey, { defaultValue: meta.titleDefault }) },
+            { label: screenLabel || resolvedLocation.screen },
+          ]}
+          title={screenLabel || resolvedLocation.screen}
+          subtitle={t(meta.subtitleKey, { defaultValue: meta.subtitleDefault })}
+          menuControl={
+            <Button
+              ref={menuButtonRef}
+              variant="ghost"
+              size="sm"
+              onClick={() => setSidebarOpen((prev) => !prev)}
+              aria-label={t('admin.shell.toggleNavigation', 'Toggle admin navigation')}
+              aria-expanded={sidebarOpen}
+              aria-controls="admin-settings-navigation"
+              className="p-2 text-[var(--c-text-secondary)] hover:text-[var(--c-text)] lg:hidden"
+            >
+              {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </Button>
+          }
+        />
 
         <ScrollArea className="flex-1">
-          <div className="admin-domain-content mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-5 lg:p-6">
-            <header className="border-b border-slate-200 pb-4 dark:border-white/10">
-              <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                <span>{t('admin.shell.breadcrumb')}</span>
-                <ChevronRight className="h-3.5 w-3.5" />
-                <span className="text-slate-700 dark:text-slate-200">
-                  {t(meta.titleKey, { defaultValue: meta.titleDefault })}
-                </span>
-                <ChevronRight className="h-3.5 w-3.5" />
-                <span className="text-slate-700 dark:text-slate-200">{screenLabel}</span>
-              </div>
-              <h1 className="text-xl font-semibold text-slate-900 dark:text-white">
-                {screenLabel}
-              </h1>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                {t(meta.subtitleKey, { defaultValue: meta.subtitleDefault })}
-              </p>
-            </header>
+          <div className="admin-domain-content mx-auto w-full max-w-[1280px] space-y-6 p-4 sm:p-5 lg:p-6">
             {content}
           </div>
         </ScrollArea>

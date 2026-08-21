@@ -130,6 +130,7 @@ export const InfoButton: React.FC<InfoButtonProps> = ({
       {/* Info Button */}
       <button
         ref={buttonRef}
+        data-info-button
         onClick={() => setIsOpen(!isOpen)}
         className={`
                     ${positionClasses}

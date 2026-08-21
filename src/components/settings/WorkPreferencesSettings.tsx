@@ -41,6 +41,7 @@ import { User } from '../../types';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { DegradedState } from '../Admin/AdminState';
 import { InfoButton } from '../shared/InfoButton';
+import { SettingsHeaderActionPortal } from './SettingsHeaderActions';
 
 interface WorkPreferencesSettingsProps {
   currentUser: User;
@@ -285,14 +286,17 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
             )}
           </p>
         </div>
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors disabled:opacity-50"
-        >
-          {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-          {saving ? t('settings.saving', 'Saving...') : t('settings.save', 'Save Changes')}
-        </button>
+        <SettingsHeaderActionPortal>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="type-control flex items-center gap-2 rounded-lg bg-navy-900 px-4 py-2 text-white transition-colors hover:bg-navy-800 disabled:opacity-50 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]"
+          >
+            {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+            {saving ? t('settings.saving', 'Saving...') : t('settings.save', 'Save Changes')}
+          </button>
+        </SettingsHeaderActionPortal>
       </div>
 
       {/* Honest disclosure: these preferences are persisted to your account but

@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 
 import { cn } from '../../../lib/utils';
 import { InfoButton } from '../../shared/InfoButton';
+import { SettingsHeaderActionPortal } from '../SettingsHeaderActions';
 
 interface SettingsSectionProps {
   /** Icon component to display in header */
@@ -101,74 +102,85 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
   const headerPadding = variant === 'compact' ? 'p-4' : 'p-6';
 
   return (
-    <div
-      className={cn(
-        'bg-c-surface-raised rounded-xl overflow-hidden transition-all duration-200',
-        bordered && 'border border-c-border-subtle',
-        isDirty && 'ring-2 ring-amber-500/20',
-        className
-      )}
-    >
-      {/* Header */}
-      <div
-        className={cn(
-          'flex items-start justify-between',
-          headerPadding,
-          onSave && 'border-b border-c-border-subtle'
-        )}
-      >
-        <div className="flex items-start gap-4">
-          <div className="p-2.5 bg-c-accent-soft rounded-lg flex-shrink-0">
-            <Icon size={20} className="text-c-accent" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-c-text leading-tight">{title}</h3>
-            <p className="text-sm text-c-text-secondary mt-1 leading-relaxed">{description}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {actions}
-          <InfoButton cardId={cardId} position="top-right" />
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className={cn(contentPadding, !onSave && 'pt-0')}>{children}</div>
-
-      {/* Footer with Save (if onSave provided) */}
+    <>
       {onSave && (
-        <div className="flex items-center justify-between px-6 py-4 bg-c-surface-raised border-t border-c-border-subtle">
-          <div className="flex items-center gap-2 text-sm">
-            {isDirty ? (
-              <>
-                <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
-                <span className="text-amber-400">
-                  {t('settings.unsavedChanges', 'Unsaved changes')}
-                </span>
-              </>
-            ) : (
-              <span className="text-c-text-muted">
-                {t('settings.allChangesSaved', 'All changes saved')}
-              </span>
-            )}
-          </div>
+        <SettingsHeaderActionPortal>
           <button
+            type="button"
             onClick={onSave}
             disabled={saving || !isDirty}
             className={cn(
-              'flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200',
-              'focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)] focus:ring-offset-2 focus:ring-offset-navy-900',
+              'type-control flex items-center gap-2 rounded-lg px-4 py-2 transition-colors',
+              'focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]',
               isDirty
-                ? 'bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]'
-                : 'bg-c-surface-raised text-c-text-muted cursor-not-allowed'
+                ? 'bg-navy-900 text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]'
+                : 'cursor-not-allowed bg-[var(--c-surface-raised)] text-[var(--c-text-muted)]'
             )}
           >
             {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
             {saving ? t('common.saving', 'Saving...') : t('common.saveChanges', 'Save Changes')}
           </button>
-        </div>
+        </SettingsHeaderActionPortal>
       )}
-    </div>
+      <div
+        className={cn(
+          'bg-c-surface-raised rounded-xl overflow-hidden transition-all duration-200',
+          bordered && 'border border-c-border-subtle',
+          isDirty && 'ring-2 ring-amber-500/20',
+          className
+        )}
+      >
+        {/* Header */}
+        <div
+          className={cn(
+            'flex items-start justify-between',
+            headerPadding,
+            onSave && 'border-b border-c-border-subtle'
+          )}
+        >
+          <div className="flex items-start gap-4">
+            <div className="p-2.5 bg-c-accent-soft rounded-lg flex-shrink-0">
+              <Icon size={20} className="text-c-accent" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-c-text leading-tight">{title}</h3>
+              <p className="text-sm text-c-text-secondary mt-1 leading-relaxed">{description}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {actions}
+            <InfoButton cardId={cardId} position="top-right" />
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className={cn(contentPadding, !onSave && 'pt-0')}>{children}</div>
+
+        {/* Persistence state stays with the form; the action is in the canonical screen header. */}
+        {onSave && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="flex items-center px-6 py-4 bg-c-surface-raised border-t border-c-border-subtle"
+          >
+            <div className="flex items-center gap-2 text-sm">
+              {isDirty ? (
+                <>
+                  <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
+                  <span className="text-amber-400">
+                    {t('settings.unsavedChanges', 'Unsaved changes')}
+                  </span>
+                </>
+              ) : (
+                <span className="text-c-text-muted">
+                  {t('settings.allChangesSaved', 'All changes saved')}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </>
   );
 };
 

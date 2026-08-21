@@ -23,6 +23,7 @@ import { User } from '../../types';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { DegradedState } from '../Admin/AdminState';
 import { InfoButton } from '../shared/InfoButton';
+import { SettingsHeaderActionPortal } from './SettingsHeaderActions';
 
 interface RegionalSettingsProps {
   currentUser: User;
@@ -277,14 +278,17 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
             </div>
           ) : null}
         </div>
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors disabled:opacity-50"
-        >
-          {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-          {saving ? t('settings.saving', 'Saving...') : t('settings.save', 'Save Changes')}
-        </button>
+        <SettingsHeaderActionPortal>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="type-control flex items-center gap-2 rounded-lg bg-navy-900 px-4 py-2 text-white transition-colors hover:bg-navy-800 disabled:opacity-50 dark:bg-[var(--c-text)] dark:text-[var(--c-bg)]"
+          >
+            {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+            {saving ? t('settings.saving', 'Saving...') : t('settings.save', 'Save Changes')}
+          </button>
+        </SettingsHeaderActionPortal>
       </div>
 
       {/* Timezone */}

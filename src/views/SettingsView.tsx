@@ -12,7 +12,7 @@
  * @version 2.0
  */
 
-import { ChevronRight, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -58,6 +58,7 @@ import { SecurityOverviewPage } from '../components/settings/security/SecurityOv
 import { SettingsHeaderActionsProvider } from '../components/settings/SettingsHeaderActions';
 import SettingsOwnershipPanels from '../components/settings/SettingsOwnershipPanels';
 import SettingsSidebar, { SettingsSection } from '../components/settings/SettingsSidebar';
+import DomainScreenHeader from '../components/settings/shared/DomainScreenHeader';
 import { ThemeSettings } from '../components/settings/ThemeSettings';
 import { VoiceSettings } from '../components/settings/VoiceSettings';
 import { WebhooksSettings } from '../components/settings/WebhooksSettings';
@@ -523,10 +524,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
         {/* Main Content Area */}
         <div className="flex min-w-0 flex-1 flex-col bg-[var(--c-surface)]">
-          {/* Header - Breadcrumbs Style (Golden Standard) */}
-          <header className="sticky top-0 z-20 flex h-14 items-center justify-between gap-4 border-b border-[var(--c-border-subtle)] bg-[var(--c-surface)] px-4 lg:px-6">
-            <div className="flex items-center gap-3">
-              {/* Mobile menu button */}
+          <DomainScreenHeader
+            titleId="settings-page-title"
+            breadcrumbs={[
+              { label: settingsLabel, onClick: handleBackToDashboard },
+              { label: currentMeta.title },
+            ]}
+            title={currentMeta.title}
+            subtitle={currentMeta.subtitle}
+            actionsRef={setHeaderActionsTarget}
+            menuControl={
               <Button
                 ref={mobileMenuButtonRef}
                 variant="ghost"
@@ -543,33 +550,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               >
                 {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </Button>
-
-              {/* Breadcrumbs */}
-              <div className="flex items-center text-sm font-medium text-[var(--c-text-muted)]">
-                <button
-                  type="button"
-                  onClick={handleBackToDashboard}
-                  className="rounded-sm transition-colors hover:text-[var(--c-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
-                >
-                  {settingsLabel}
-                </button>
-                <ChevronRight size={14} aria-hidden="true" className="mx-2" />
-                <h1
-                  id="settings-page-title"
-                  className="truncate text-sm font-medium text-[var(--c-text)]"
-                >
-                  {currentMeta.title}
-                </h1>
-              </div>
-            </div>
-            <div ref={setHeaderActionsTarget} className="flex shrink-0 items-center gap-2" />
-          </header>
+            }
+          />
 
           {/* Content */}
           <ScrollArea className="flex-1">
             <main
               aria-labelledby="settings-page-title"
-              className="settings-domain-content mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-5 lg:p-6"
+              className="settings-domain-content mx-auto w-full max-w-[1280px] space-y-6 p-4 sm:p-5 lg:p-6"
             >
               {renderContent()}
             </main>

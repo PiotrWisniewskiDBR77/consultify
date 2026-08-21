@@ -209,7 +209,8 @@
     --elevation-0: none;
     --elevation-1: 0 4px 6px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.06); /* == hig-md */
     --elevation-2: 0 8px 16px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.06); /* == hig-hover */
-    --elevation-3: 0 25px 50px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.06); /* == hig-2xl */
+    --elevation-3:
+      0 25px 50px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.06); /* == hig-2xl */
 
     /* ========================================================================
      * VF0-6 STATE-LAYER TOKENS — hover/press/selected via `color-mix`, NOT
@@ -359,8 +360,10 @@
      * hig-dark-xl). NOT currently consumed by any component — see the
      * :root block comment (VF0 pitfall) for why. */
     --elevation-1: 0 4px 6px rgba(0, 0, 0, 0.25), 0 2px 4px rgba(0, 0, 0, 0.3); /* == hig-dark-md */
-    --elevation-2: 0 8px 16px rgba(0, 0, 0, 0.4), 0 4px 8px rgba(0, 0, 0, 0.3); /* == hig-hover-dark */
-    --elevation-3: 0 20px 25px rgba(0, 0, 0, 0.35), 0 10px 10px rgba(0, 0, 0, 0.25); /* == hig-dark-xl */
+    --elevation-2:
+      0 8px 16px rgba(0, 0, 0, 0.4), 0 4px 8px rgba(0, 0, 0, 0.3); /* == hig-hover-dark */
+    --elevation-3:
+      0 20px 25px rgba(0, 0, 0, 0.35), 0 10px 10px rgba(0, 0, 0, 0.25); /* == hig-dark-xl */
     /* --state-hover/-press/-selected NOT redeclared here — the :root formula
      * already reads var(--c-text), which resolves to the dark value here. */
   }
@@ -410,8 +413,8 @@
 
   /* Japanese language font - Noto Sans JP for full character support */
   :lang(ja),
-  [lang="ja"],
-  html[lang="ja"] body,
+  [lang='ja'],
+  html[lang='ja'] body,
   .lang-ja {
     font-family: 'Noto Sans JP', 'Inter', sans-serif;
   }
@@ -419,7 +422,6 @@
 
 /* Admin Module Styles - Clean Enterprise Design */
 @layer components {
-
   /* Admin Card - Base container (v2.0: border-free, bg-layer separation) */
   .admin-card {
     @apply bg-slate-50 dark:bg-navy-900/50 rounded-xl;
@@ -533,7 +535,7 @@
     @apply flex items-center divide-x divide-slate-200 dark:divide-white/10;
   }
 
-  .admin-stats-row>* {
+  .admin-stats-row > * {
     @apply px-4 first:pl-0 last:pr-0;
   }
 
@@ -642,7 +644,7 @@
   }
 
   /* Ensure section breaks */
-  [id^="section-"] {
+  [id^='section-'] {
     page-break-inside: avoid;
     break-inside: avoid;
   }
@@ -660,7 +662,9 @@
   }
 
   /* Better typography for print */
-  h1, h2, h3 {
+  h1,
+  h2,
+  h3 {
     page-break-after: avoid;
   }
 
@@ -682,11 +686,11 @@
  * into redaction (`data-feedback-redact`) or that are obviously sensitive
  * inputs, without touching the live page.
  */
-html[data-feedback-redact-active="1"] [data-feedback-redact],
-html[data-feedback-redact-active="1"] input[type="password"],
-html[data-feedback-redact-active="1"] input[type="email"],
-html[data-feedback-redact-active="1"] input[autocomplete*="password"],
-html[data-feedback-redact-active="1"] input[autocomplete*="email"] {
+html[data-feedback-redact-active='1'] [data-feedback-redact],
+html[data-feedback-redact-active='1'] input[type='password'],
+html[data-feedback-redact-active='1'] input[type='email'],
+html[data-feedback-redact-active='1'] input[autocomplete*='password'],
+html[data-feedback-redact-active='1'] input[autocomplete*='email'] {
   color: transparent !important;
   background: #111 !important;
   caret-color: transparent !important;
@@ -694,8 +698,8 @@ html[data-feedback-redact-active="1"] input[autocomplete*="email"] {
   filter: blur(6px) saturate(0) !important;
 }
 
-html[data-feedback-redact-active="1"] [data-feedback-redact]::before {
-  content: "■■■■■■■■" !important;
+html[data-feedback-redact-active='1'] [data-feedback-redact]::before {
+  content: '■■■■■■■■' !important;
   color: #111 !important;
   letter-spacing: 0.1em !important;
 }
@@ -780,13 +784,88 @@ body {
   letter-spacing: var(--letter-spacing-base, normal);
 }
 
-/* Shared card-heading hierarchy for the three settings-style domains.
- * This intentionally overrides historical component-local Tailwind sizes so
- * cards with the same semantic heading level look identical everywhere. */
+/* Wave 3 semantic screen system: one width, type scale and component rhythm
+ * across Organization, Admin and Settings. Component internals may use grids,
+ * but must not introduce a second page-level working-column width. */
+.domain-screen-container,
+.domain-content-container {
+  width: 100%;
+  max-width: 1280px;
+  margin-inline: auto;
+  padding-inline: 24px;
+}
+
+.type-page-title {
+  font: 700 1.5rem/2rem var(--font-family-base, 'Inter', system-ui, sans-serif);
+  letter-spacing: -0.015em;
+}
+
+.type-section-title {
+  font: 700 1.25rem/1.75rem var(--font-family-base, 'Inter', system-ui, sans-serif);
+}
+
+.type-card-title {
+  font: 600 1rem/1.5rem var(--font-family-base, 'Inter', system-ui, sans-serif);
+}
+
+.type-body,
+.type-control {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.type-helper {
+  font-size: 0.8125rem;
+  line-height: 1.125rem;
+}
+
+.type-caption {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.type-breadcrumb {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1rem;
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+
+:is(.settings-domain-content, .organization-domain-content, .admin-domain-content) {
+  width: 100%;
+  max-width: 1280px;
+}
+
+/* Historical roots used local 3xl/4xl widths. At the domain boundary they are
+ * ordinary page sections, so the canonical container remains authoritative. */
+:is(.settings-domain-content, .organization-domain-content, .admin-domain-content) > * {
+  width: 100%;
+  max-width: none !important;
+  margin-inline: 0 !important;
+}
+
+:is(.settings-domain-content, .organization-domain-content, .admin-domain-content)
+  :is(p, li, label, input, textarea, select, button, td, th) {
+  font-family: inherit;
+}
+
+:is(.settings-domain-content, .organization-domain-content, .admin-domain-content) p {
+  line-height: 1.25rem;
+}
+
+/* Owner decision SET-OWN-001: contextual floating/info shortcuts are removed
+ * from Settings, including their focus stops and layout footprint. */
+.settings-domain-content [data-info-button],
+.settings-domain-content .info-button {
+  display: none !important;
+}
+
+/* Shared card-heading hierarchy for the three settings-style domains. */
 :is(.settings-domain-content, .organization-domain-content, .admin-domain-content) h2 {
   font-family: inherit;
   font-size: 1.25rem;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.75rem;
   letter-spacing: -0.01em;
 }
@@ -805,6 +884,30 @@ body {
   font-weight: 600;
   line-height: 1.25rem;
   letter-spacing: normal;
+}
+
+@media (max-width: 1023px) {
+  .domain-screen-container,
+  .domain-content-container {
+    padding-inline: 16px;
+  }
+}
+
+@media (max-width: 639px) {
+  .type-page-title {
+    font-size: 1.375rem;
+    line-height: 1.75rem;
+  }
+
+  .type-section-title,
+  :is(.settings-domain-content, .organization-domain-content, .admin-domain-content) h2 {
+    font-size: 1.125rem;
+    line-height: 1.5rem;
+  }
+
+  .domain-screen-container {
+    min-height: 88px;
+  }
 }
 
 /* High contrast: strengthen text + borders, remove low-opacity muting */
@@ -855,19 +958,22 @@ html.underline-links a {
 /* Colorblind correction filters (SVG matrices defined inline via filter()).
  * Daltonization-style correction using CSS filters as a lightweight approx. */
 html.colorblind-protanopia {
-  filter: url("#cb-protanopia");
+  filter: url('#cb-protanopia');
 }
 html.colorblind-deuteranopia {
-  filter: url("#cb-deuteranopia");
+  filter: url('#cb-deuteranopia');
 }
 html.colorblind-tritanopia {
-  filter: url("#cb-tritanopia");
+  filter: url('#cb-tritanopia');
 }
 
 /* Cursor size: scale the pointer via a larger SVG cursor */
 html.cursor-large,
 html.cursor-large * {
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' stroke='%23fff' stroke-width='1' d='M4 2l14 8-6 1 3 7-3 1-3-7-5 5z'/%3E%3C/svg%3E") 4 2, auto;
+  cursor:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' stroke='%23fff' stroke-width='1' d='M4 2l14 8-6 1 3 7-3 1-3-7-5 5z'/%3E%3C/svg%3E")
+      4 2,
+    auto;
 }
 
 /* Text spacing (WCAG 1.4.12 style spacing bump) */
@@ -888,7 +994,7 @@ html.caret-thick * {
 }
 html.caret-thick input,
 html.caret-thick textarea,
-html.caret-thick [contenteditable="true"] {
+html.caret-thick [contenteditable='true'] {
   caret-color: var(--c-accent, #85182f);
   /* thicker caret via accentuated caret on supporting browsers */
   caret-shape: block;
@@ -986,7 +1092,7 @@ html.reduce-motion.focus-style-animated :focus-visible {
   position: relative;
 }
 .chat-streaming-frame::after {
-  content: "";
+  content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;

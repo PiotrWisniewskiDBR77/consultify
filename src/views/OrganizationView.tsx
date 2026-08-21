@@ -5,7 +5,7 @@
  * T064: Megatrends redirected to canonical Tools → Strategy route.
  */
 
-import { ChevronRight, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -24,6 +24,7 @@ import OrganizationSidebar, {
   type OrganizationScreen,
 } from '../components/Organization/OrganizationSidebar';
 import { OrgContextSummaryBanner } from '../components/Organization/OrgContextSummaryBanner';
+import DomainScreenHeader from '../components/settings/shared/DomainScreenHeader';
 import { useOrgContextSync } from '../hooks/useOrgContextSync';
 import { ROUTES } from '../routes/routeConfig';
 import { trackFunnelEvent } from '../services/funnelAnalytics';
@@ -299,47 +300,29 @@ export const OrganizationView: React.FC = () => {
         />
       </div>
       <div className="flex-1 overflow-auto">
-        <div className="sticky top-0 z-10 bg-slate-50/90 dark:bg-navy-950/90 backdrop-blur-sm border-b border-slate-200/60 dark:border-navy-700/60">
-          <div className="mx-auto flex w-full max-w-5xl items-center gap-3 px-4 py-4 sm:px-5 lg:px-6">
+        <DomainScreenHeader
+          breadcrumbs={[
+            { label: t('organization.shell.breadcrumb'), onClick: handleBackToDashboard },
+            { label: currentMeta.moduleLabel },
+            { label: currentMeta.title },
+          ]}
+          title={currentMeta.title}
+          subtitle={currentMeta.subtitle}
+          menuControl={
             <button
               ref={menuButtonRef}
               type="button"
-              className="lg:hidden p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500"
-              aria-label="Open navigation"
+              className="rounded-lg p-2 text-[var(--c-text-secondary)] hover:bg-[var(--c-surface-hover)] lg:hidden"
+              aria-label={sidebarOpen ? 'Close navigation' : 'Open navigation'}
               aria-expanded={sidebarOpen}
               aria-controls="organization-navigation"
-              onClick={() => setSidebarOpen(true)}
+              onClick={() => setSidebarOpen((open) => !open)}
             >
-              <Menu size={18} />
+              {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
             </button>
-            <div className="flex-1 min-w-0">
-              <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                <span>{t('organization.shell.breadcrumb')}</span>
-                <ChevronRight size={12} />
-                <span>{currentMeta.moduleLabel}</span>
-                <ChevronRight size={12} />
-                <span className="text-slate-700 dark:text-slate-200">{currentMeta.title}</span>
-              </div>
-              <h1 className="truncate text-xl font-semibold tracking-tight text-slate-900 dark:text-white">
-                {currentMeta.title}
-              </h1>
-              <p className="text-sm text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                {currentMeta.subtitle}
-              </p>
-            </div>
-            {sidebarOpen && (
-              <button
-                type="button"
-                className="lg:hidden p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500"
-                aria-label="Close navigation"
-                onClick={() => setSidebarOpen(false)}
-              >
-                <X size={18} />
-              </button>
-            )}
-          </div>
-        </div>
-        <div className="mx-auto w-full max-w-5xl px-4 pb-0 sm:px-5 lg:px-6">
+          }
+        />
+        <div className="mx-auto w-full max-w-[1280px] px-4 pb-0 sm:px-5 lg:px-6">
           {contextSync.isUnsynced && (
             <div
               role="status"
@@ -360,7 +343,7 @@ export const OrganizationView: React.FC = () => {
             className="mb-4"
           />
         </div>
-        <div className="organization-domain-content mx-auto w-full max-w-5xl px-4 pb-6 pt-0 sm:px-5 lg:px-6">
+        <div className="organization-domain-content mx-auto w-full max-w-[1280px] px-4 pb-6 pt-0 sm:px-5 lg:px-6">
           {renderContent()}
         </div>
       </div>

@@ -23,6 +23,7 @@ import { Api } from '../../services/api';
 import { User } from '../../types';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { InfoButton } from '../shared/InfoButton';
+import { SettingsHeaderActionPortal } from './SettingsHeaderActions';
 
 interface ProfileSettingsProps {
   currentUser: User;
@@ -555,16 +556,19 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
             {t('settings.profile.manage', 'Manage your personal information and preferences')}
           </p>
         </div>
-        <button
-          onClick={handleSave}
-          disabled={isSaving}
-          className="flex items-center gap-2 rounded-lg bg-navy-900 px-4 py-2 text-white shadow-sm transition-colors hover:bg-navy-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)] disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]"
-        >
-          {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-          {isSaving
-            ? t('settings.profile.saving', 'Saving...')
-            : t('settings.profile.save', 'Save Changes')}
-        </button>
+        <SettingsHeaderActionPortal>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={isSaving}
+            className="type-control flex items-center gap-2 rounded-lg bg-navy-900 px-4 py-2 text-white shadow-sm transition-colors hover:bg-navy-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)] disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]"
+          >
+            {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+            {isSaving
+              ? t('settings.profile.saving', 'Saving...')
+              : t('settings.profile.save', 'Save Changes')}
+          </button>
+        </SettingsHeaderActionPortal>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
