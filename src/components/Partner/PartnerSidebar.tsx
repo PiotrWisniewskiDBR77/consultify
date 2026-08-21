@@ -102,6 +102,7 @@ interface PartnerSidebarProps {
   pendingCertifications?: number;
   activeClients?: number;
   onBack?: () => void;
+  programMode?: boolean;
 }
 
 export const PartnerSidebar: React.FC<PartnerSidebarProps> = ({
@@ -111,13 +112,66 @@ export const PartnerSidebar: React.FC<PartnerSidebarProps> = ({
   pendingCertifications = 0,
   activeClients = 0,
   onBack,
+  programMode = false,
 }) => {
   const { t } = useTranslation();
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['home']));
 
   // Navigation groups configuration
-  const navGroups: NavGroup[] = useMemo(
-    () => [
+  const navGroups: NavGroup[] = useMemo(() => {
+    if (programMode) {
+      return [
+        {
+          id: 'program',
+          label: t('partner.sidebar.groups.program', 'Partner program'),
+          defaultOpen: true,
+          items: [
+            {
+              id: 'partner-home',
+              label: t('partner.program.overview', 'Program overview'),
+              icon: Home,
+            },
+            {
+              id: 'dashboard',
+              label: t('partner.program.benefits', 'Why become a partner'),
+              icon: Sparkles,
+            },
+            {
+              id: 'metrics',
+              label: t('partner.program.stories', 'Partner success stories'),
+              icon: TrendingUp,
+            },
+            {
+              id: 'earnings',
+              label: t('partner.program.earnings', 'Earnings and tiers'),
+              icon: DollarSign,
+            },
+            {
+              id: 'company-info',
+              label: t('partner.program.join', 'How to join'),
+              icon: UserCheck,
+            },
+            {
+              id: 'learning-path',
+              label: t('partner.program.academy', 'Partner Academy'),
+              icon: GraduationCap,
+            },
+            {
+              id: 'documentation',
+              label: t('partner.program.resources', 'Program resources'),
+              icon: FileText,
+            },
+            {
+              id: 'templates',
+              label: t('partner.program.faq', 'FAQ and support'),
+              icon: FolderOpen,
+            },
+          ],
+        },
+      ];
+    }
+
+    return [
       {
         id: 'home',
         label: t('partner.sidebar.groups.home', 'HOME'),
@@ -320,9 +374,8 @@ export const PartnerSidebar: React.FC<PartnerSidebarProps> = ({
           },
         ],
       },
-    ],
-    [t, activeClients, pendingCertifications]
-  );
+    ];
+  }, [t, activeClients, pendingCertifications, programMode]);
 
   // Toggle group expansion
   const toggleGroup = useCallback((groupId: string) => {
@@ -375,10 +428,14 @@ export const PartnerSidebar: React.FC<PartnerSidebarProps> = ({
       {/* Header */}
       <div className="px-5 pt-5 pb-4">
         <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-wide">
-          {t('partner.sidebar.title', 'Partner')}
+          {programMode
+            ? t('partner.program.title', 'Consultify Partner Program')
+            : t('partner.sidebar.title', 'Partner')}
         </h1>
         <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">
-          {t('partner.sidebar.subtitle', 'Grow with Consultify')}
+          {programMode
+            ? t('partner.program.subtitle', 'Grow your business with Consultify')
+            : t('partner.sidebar.subtitle', 'Grow with Consultify')}
         </p>
       </div>
 

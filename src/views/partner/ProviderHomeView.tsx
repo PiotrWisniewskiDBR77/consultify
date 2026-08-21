@@ -175,7 +175,7 @@ interface ValueCard {
   highlight: string;
 }
 
-const ValueCardsSection: React.FC = () => {
+export const ValueCardsSection: React.FC = () => {
   const { t } = useTranslation();
 
   const cardKeys = ['revenue', 'expertise', 'tools', 'network'] as const;
@@ -238,7 +238,7 @@ const ValueCardsSection: React.FC = () => {
 // BETA PARTNERS SUCCESS STORIES
 // ============================================================================
 
-const BetaSuccessStories: React.FC = () => {
+export const BetaSuccessStories: React.FC = () => {
   const { t } = useTranslation();
 
   const storyLogos = [
@@ -341,7 +341,7 @@ const BetaSuccessStories: React.FC = () => {
 // TIER PROGRESSION
 // ============================================================================
 
-const TierProgressionSection: React.FC = () => {
+export const TierProgressionSection: React.FC = () => {
   const { t } = useTranslation();
 
   // SSOT — tier names + commission rates come from PARTNER_TIERS
@@ -430,7 +430,7 @@ const TierProgressionSection: React.FC = () => {
 // GENTLE ONBOARDING CHECKLIST
 // ============================================================================
 
-const OnboardingChecklistSection: React.FC = () => {
+export const OnboardingChecklistSection: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [status, setStatus] = useState<V8PartnerOnboardingStatus>({
@@ -726,7 +726,7 @@ const OnboardingChecklistSection: React.FC = () => {
 // COMMISSION CALCULATOR
 // ============================================================================
 
-const CommissionCalculatorSection: React.FC = () => {
+export const CommissionCalculatorSection: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [clientsPerMonth, setClientsPerMonth] = useState<number>(5);
@@ -853,7 +853,7 @@ const CommissionCalculatorSection: React.FC = () => {
 // ACADEMY PREVIEW
 // ============================================================================
 
-const AcademyPreviewSection: React.FC = () => {
+export const AcademyPreviewSection: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
@@ -1051,7 +1051,7 @@ const AcademyPreviewSection: React.FC = () => {
 // CONTACT PARTNER MANAGER
 // ============================================================================
 
-const ContactPartnerManagerSection: React.FC = () => {
+export const ContactPartnerManagerSection: React.FC = () => {
   const { t } = useTranslation();
 
   return (
@@ -1158,7 +1158,7 @@ const ContactPartnerManagerSection: React.FC = () => {
 // FAQ SECTION
 // ============================================================================
 
-const FAQSection: React.FC = () => {
+export const FAQSection: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [openFaq, setOpenFaq] = useState<number | null>(0);
@@ -1282,7 +1282,7 @@ const FAQSection: React.FC = () => {
 // FOOTER RESOURCES
 // ============================================================================
 
-const FooterResourcesSection: React.FC = () => {
+export const FooterResourcesSection: React.FC = () => {
   const navigate = useNavigate();
 
   const columns = [

@@ -102,6 +102,17 @@ const PARTNER_SECTIONS = new Set<PartnerSection>([
   'public-listing',
 ]);
 
+const PARTNER_PROGRAM_SECTIONS = new Set<PartnerSection>([
+  'partner-home',
+  'dashboard',
+  'metrics',
+  'earnings',
+  'company-info',
+  'learning-path',
+  'documentation',
+  'templates',
+]);
+
 const partnerMutationKey = (operation: string) => `${operation}-${globalThis.crypto.randomUUID()}`;
 
 function isPartnerSection(value: string | null): value is PartnerSection {
@@ -112,6 +123,33 @@ function isPartnerSection(value: string | null): value is PartnerSection {
 const ReferralToolsSection = React.lazy(() => import('./sections/ReferralToolsSection'));
 const EarningsSection = React.lazy(() => import('./sections/EarningsSection'));
 const ProviderHomeView = React.lazy(() => import('./ProviderHomeView'));
+const ProgramBenefitsView = React.lazy(() =>
+  import('./ProviderHomeView').then((module) => ({ default: module.ValueCardsSection }))
+);
+const ProgramStoriesView = React.lazy(() =>
+  import('./ProviderHomeView').then((module) => ({ default: module.BetaSuccessStories }))
+);
+const ProgramTiersView = React.lazy(() =>
+  import('./ProviderHomeView').then((module) => ({ default: module.TierProgressionSection }))
+);
+const ProgramCalculatorView = React.lazy(() =>
+  import('./ProviderHomeView').then((module) => ({ default: module.CommissionCalculatorSection }))
+);
+const ProgramOnboardingView = React.lazy(() =>
+  import('./ProviderHomeView').then((module) => ({ default: module.OnboardingChecklistSection }))
+);
+const ProgramContactView = React.lazy(() =>
+  import('./ProviderHomeView').then((module) => ({ default: module.ContactPartnerManagerSection }))
+);
+const ProgramAcademyView = React.lazy(() =>
+  import('./ProviderHomeView').then((module) => ({ default: module.AcademyPreviewSection }))
+);
+const ProgramResourcesView = React.lazy(() =>
+  import('./ProviderHomeView').then((module) => ({ default: module.FooterResourcesSection }))
+);
+const ProgramFaqView = React.lazy(() =>
+  import('./ProviderHomeView').then((module) => ({ default: module.FAQSection }))
+);
 const ClientAccessView = React.lazy(() => import('./ClientAccessView'));
 
 // ============================================================================
@@ -2972,67 +3010,29 @@ class PartnerProspectContentBoundary extends React.Component<
   }
 }
 
-export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
-  currentUser,
-  onNavigate,
-}) => {
-  const { t } = useTranslation();
+export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
   const [connectionLoading, setConnectionLoading] = useState(true);
   const [isConnected, setIsConnected] = useState<boolean>(false);
-  const [connectName, setConnectName] = useState<string>('');
-  const [connecting, setConnecting] = useState(false);
-  const [connectError, setConnectError] = useState<string | null>(null);
-  // Default to FALSE: self-provisioning of a partner org is gated server-side.
-  // Only enable when the backend explicitly returns selfConnectEnabled === true.
-  const [selfConnectEnabled, setSelfConnectEnabled] = useState<boolean>(false);
-
   const fetchConnection = useCallback(async () => {
     try {
       setConnectionLoading(true);
-      setConnectError(null);
       const response = await Api.get('/api/partners/connection');
       const payload = response?.data;
       const data = payload?.data;
       if (response?.success && data && typeof data.connected === 'boolean') {
         setIsConnected(Boolean(data.connected));
-        // Gate self-provisioning: only when backend explicitly allows it.
-        setSelfConnectEnabled(data.selfConnectEnabled === true);
-        if (!connectName) {
-          const seeded =
-            String(data.organization?.name || '').trim() ||
-            String(currentUser?.organizationName || '').trim() ||
-            String(currentUser?.name || '').trim();
-          if (seeded) setConnectName(seeded);
-        }
         return;
       }
       setIsConnected(false);
-      setSelfConnectEnabled(false);
-      setConnectError(
-        t(
-          'partner.connect.unavailable',
-          'Partner Portal is not configured yet. Please run partner portal migrations in the database.'
-        )
-      );
-    } catch (err: any) {
+    } catch {
       setIsConnected(false);
-      setSelfConnectEnabled(false);
-      setConnectError(
-        String(
-          err?.message ||
-            t(
-              'partner.connect.unavailable',
-              'Partner Portal is not configured yet. Please run partner portal migrations in the database.'
-            )
-        )
-      );
     } finally {
       setConnectionLoading(false);
     }
-  }, [connectName, currentUser?.name, currentUser?.organizationName]);
+  }, []);
 
   useEffect(() => {
     fetchConnection();
@@ -3042,11 +3042,14 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
     const params = new URLSearchParams(location.search);
     const section = params.get('tab');
 
-    if (isPartnerSection(section)) return section;
+    if (isPartnerSection(section)) {
+      if (isConnected || PARTNER_PROGRAM_SECTIONS.has(section)) return section;
+      return 'partner-home';
+    }
 
     const legacySection = getLegacyPartnerSection(location.pathname);
     return legacySection ?? 'dashboard';
-  }, [location.pathname, location.search]);
+  }, [location.pathname, location.search, isConnected]);
 
   useEffect(() => {
     if (connectionLoading) return;
@@ -3070,8 +3073,35 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
     [location.search, navigate]
   );
 
+  useEffect(() => {
+    if (connectionLoading || isConnected) return;
+    const params = new URLSearchParams(location.search);
+    const section = params.get('tab');
+    if (isPartnerSection(section) && PARTNER_PROGRAM_SECTIONS.has(section)) return;
+    params.set('tab', 'partner-home');
+    navigate({ pathname: ROUTES.PARTNER.LANDING, search: params.toString() }, { replace: true });
+  }, [connectionLoading, isConnected, location.search, navigate]);
+
   // Get breadcrumbs based on active section
   const breadcrumbs = useMemo((): Breadcrumb[] => {
+    if (!isConnected) {
+      const programLabels: Partial<Record<PartnerSection, string>> = {
+        'partner-home': 'Program overview',
+        dashboard: 'Why become a partner',
+        metrics: 'Partner success stories',
+        earnings: 'Earnings and tiers',
+        'company-info': 'How to join',
+        'learning-path': 'Partner Academy',
+        documentation: 'Program resources',
+        templates: 'FAQ and support',
+      };
+      const crumbs: Breadcrumb[] = [{ label: 'Partner program', section: 'partner-home' }];
+      if (activeSection !== 'partner-home') {
+        crumbs.push({ label: programLabels[activeSection] || 'Program overview' });
+      }
+      return crumbs;
+    }
+
     const sectionLabels: Record<PartnerSection, string> = {
       'partner-home': 'Home',
       dashboard: 'Dashboard',
@@ -3154,7 +3184,7 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
     }
 
     return crumbs;
-  }, [activeSection]);
+  }, [activeSection, isConnected]);
 
   // Render content based on active section
   const renderContent = useCallback(() => {
@@ -3215,125 +3245,61 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
     }
   }, [activeSection, handleSectionChange]);
 
-  const handleConnectPartnerProfile = useCallback(async () => {
-    try {
-      setConnecting(true);
-      setConnectError(null);
-
-      const name = String(connectName || '').trim();
-      const request = { name: name || undefined };
-      const useLegacy = isPartnerLegacyRollbackEnabled();
-      const legacyResponse = useLegacy ? await Api.post('/api/partners/connect', request) : null;
-      const data = useLegacy
-        ? legacyResponse?.data?.data
-        : await V8PartnerApi.connect(request, partnerMutationKey('connect'));
-
-      if (!data?.connected) {
-        throw new Error(legacyResponse?.data?.error || 'Failed to connect partner profile');
-      }
-
-      toast.success(
-        t(
-          'partner.connect.success',
-          'Partner profile connected. You can now complete your company profile.'
-        )
-      );
-      setIsConnected(true);
-      await fetchConnection();
-
-      const params = new URLSearchParams(location.search);
-      params.set('tab', 'company-info');
-      navigate({ pathname: ROUTES.PARTNER.LANDING, search: params.toString() });
-    } catch (err: any) {
-      const msg = String(err?.message || 'Failed to connect partner profile');
-      setConnectError(msg);
-      toast.error(msg);
-    } finally {
-      setConnecting(false);
+  const renderProgramContent = useCallback(() => {
+    switch (activeSection) {
+      case 'dashboard':
+        return <ProgramBenefitsView />;
+      case 'metrics':
+        return <ProgramStoriesView />;
+      case 'earnings':
+        return (
+          <div className="space-y-10">
+            <ProgramTiersView />
+            <ProgramCalculatorView />
+          </div>
+        );
+      case 'company-info':
+        return (
+          <div className="space-y-10">
+            <ProgramOnboardingView />
+            <ProgramContactView />
+          </div>
+        );
+      case 'learning-path':
+        return <ProgramAcademyView />;
+      case 'documentation':
+        return <ProgramResourcesView />;
+      case 'templates':
+        return <ProgramFaqView />;
+      case 'partner-home':
+      default:
+        return <ProviderHomeView />;
     }
-  }, [connectName, fetchConnection, location.search, navigate, t]);
+  }, [activeSection]);
 
   return (
     <PartnerLayout
       activeSection={activeSection}
       onSectionChange={handleSectionChange}
       breadcrumbs={breadcrumbs}
+      programMode={!isConnected}
     >
       {connectionLoading ? (
         <div className="flex items-center justify-center h-64">
           <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : !isConnected ? (
-        <div className="space-y-6">
-          <div className="rounded-xl border border-primary-200 bg-primary-50 p-6 dark:border-primary-700/50 dark:bg-primary-900/20">
-            <h2 className="text-xl font-semibold text-c-text">
-              {t('partner.connect.title', 'Connect your partner profile')}
-            </h2>
-            <p className="mt-2 text-sm text-c-text-secondary">
-              {t(
-                'partner.connect.desc',
-                'Connect your partner profile to your account to access the directory and profile settings.'
-              )}
-            </p>
-
-            {selfConnectEnabled ? (
-              <div className="mt-5 grid gap-3 md:grid-cols-2">
-                <label className="block">
-                  <span className="block text-xs font-semibold uppercase tracking-wider text-c-text-secondary">
-                    {t('partner.connect.companyName', 'Nazwa firmy')}
-                  </span>
-                  <input
-                    type="text"
-                    value={connectName}
-                    onChange={(e) => setConnectName(e.target.value)}
-                    placeholder={t(
-                      'partner.connect.companyNamePlaceholder',
-                      'np. DBR77 Consulting'
-                    )}
-                    className="mt-2 w-full rounded-lg border border-c-border-subtle bg-c-surface px-4 py-2 text-sm text-c-text focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all dark:border-navy-700 dark:bg-navy-900 dark:text-white"
-                  />
-                </label>
-
-                <div className="flex items-end">
-                  <button
-                    type="button"
-                    onClick={handleConnectPartnerProfile}
-                    disabled={connecting}
-                    className="w-full rounded-lg bg-c-text px-4 py-2.5 text-sm font-semibold text-c-bg transition hover:bg-c-text-secondary disabled:opacity-60"
-                  >
-                    {connecting
-                      ? t('partner.connect.connecting', 'Łączenie…')
-                      : t('partner.connect.cta', 'Utwórz i połącz profil')}
-                  </button>
-                </div>
+        <PartnerProspectContentBoundary>
+          <Suspense
+            fallback={
+              <div className="flex h-64 items-center justify-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-600 border-t-transparent" />
               </div>
-            ) : (
-              <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900/40 dark:bg-amber-900/10 dark:text-amber-200">
-                {t(
-                  'partner.connect.contactAdmin',
-                  'Aby dołączyć do programu partnerskiego, skontaktuj się z administratorem lub poproś o zaproszenie.'
-                )}
-              </div>
-            )}
-
-            {connectError && (
-              <div className="mt-4 rounded-lg border border-danger-200 bg-danger-50 p-3 text-sm text-danger-700 dark:border-danger-900/40 dark:bg-danger-900/10 dark:text-danger-300">
-                {connectError}
-              </div>
-            )}
-          </div>
-          <PartnerProspectContentBoundary>
-            <Suspense
-              fallback={
-                <div className="flex h-64 items-center justify-center">
-                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-600 border-t-transparent" />
-                </div>
-              }
-            >
-              {activeSection === 'partner-home' ? <ProviderHomeView /> : renderContent()}
-            </Suspense>
-          </PartnerProspectContentBoundary>
-        </div>
+            }
+          >
+            {renderProgramContent()}
+          </Suspense>
+        </PartnerProspectContentBoundary>
       ) : (
         <Suspense
           fallback={

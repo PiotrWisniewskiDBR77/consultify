@@ -99,26 +99,12 @@ describe('PartnerPortalView route alignment', () => {
     });
   });
 
-  it('keeps ready partner sections accessible before profile connection', async () => {
+  it('shows the ready Consultify partner program before profile connection', async () => {
     vi.mocked(Api.get).mockImplementation(async (url: string) => {
       if (url === '/api/partners/connection') {
         return {
           success: true,
           data: { data: { connected: false, selfConnectEnabled: false, organization: null } },
-        } as any;
-      }
-
-      if (url === '/api/partners/resources') {
-        return {
-          success: true,
-          data: {
-            data: {
-              documentation: [],
-              marketing: [],
-              caseStudies: [],
-              templates: [],
-            },
-          },
         } as any;
       }
 
@@ -134,9 +120,11 @@ describe('PartnerPortalView route alignment', () => {
       </MemoryRouter>
     );
 
-    expect(await screen.findByText('Connect your partner profile')).toBeInTheDocument();
-    await waitFor(() => expect(Api.get).toHaveBeenCalledWith('/api/partners/resources'));
+    expect(await screen.findByText('Program overview')).toBeInTheDocument();
+    expect(await screen.findByText('Application flow')).toBeInTheDocument();
+    expect(screen.getByText('Certification guide')).toBeInTheDocument();
     expect(screen.getByTestId('location')).toHaveTextContent('/partner?tab=documentation');
+    expect(Api.get).not.toHaveBeenCalledWith('/api/partners/resources');
     expect(mockNavigate).not.toHaveBeenCalledWith(
       expect.objectContaining({ search: expect.stringContaining('tab=partner-home') }),
       expect.anything()
