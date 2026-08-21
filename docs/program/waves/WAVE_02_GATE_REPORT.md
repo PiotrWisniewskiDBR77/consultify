@@ -164,9 +164,11 @@ P4 is code-complete but not owner-accepted. Therefore:
 
 ## Parent-task and next-round reconciliation
 
-The bounded Wave 2 packet does not automatically promote the broader 82-task
-parent contracts. The authoritative reporter on this branch remains
-`72 DONE_CURRENT_SHA / 10 PARTIAL`, with zero missing or invalid records.
+The bounded Wave 2 packet does not automatically promote unrelated broader
+82-task parent contracts. After exact owner bindings and mounted real-PG usage
+telemetry closed `RES-MVP-LEGACY-CUTOVER-001`, the authoritative reporter on
+this branch is `73 DONE_CURRENT_SHA / 9 PARTIAL`, with zero missing or invalid
+records.
 
 - the original 11-task reconciliation is recorded in
   `WAVE_02_REMAINING_11_RECONCILIATION.md`;

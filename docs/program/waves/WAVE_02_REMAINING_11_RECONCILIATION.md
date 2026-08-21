@@ -10,7 +10,8 @@ Report HEAD at audit start: `f5a5db9e10`
 The authority is the 82-task denominator parsed by
 `scripts/cleanup/report-closure-progress.mjs` from
 `docs/cleanup/POST_CLEANUP_COMPLETION_PLAN.md` and the four allocation files.
-On the report HEAD it returns exactly `72 DONE_CURRENT_SHA / 10 PARTIAL`, with
+After the Results owner/telemetry closure it returns exactly
+`73 DONE_CURRENT_SHA / 9 PARTIAL`, with
 zero missing and zero invalid evidence records.
 
 The original 11 are the current ten plus `CHAT-NFR-001`, which Wave 1 promoted
@@ -22,7 +23,7 @@ promoted merely because a narrower Wave 2 packet passed.
 | # | Task | Current truthful state | Evidence gained in Wave 1/2 | Missing literal gate | Next authorized action |
 |---:|---|---|---|---|---|
 | 1 | `CHAT-NFR-001` | `DONE_CURRENT_SHA` | Wave 1 reconciled the existing NFR evidence and owner decision; external provider stability remains a release boundary. | No repository-technical gate for the accepted scope. | Retest provider window only at release qualification; do not reopen the technical task without new evidence. |
-| 2 | `RES-MVP-LEGACY-CUTOVER-001` | `PARTIAL` | Wave 2 classified all 28 Results writer doors: 23 retired and five explicitly `canonical_current`; unresolved ambiguity is zero; focused registry tests passed `8/8`. | The parent 82-task contract still calls for one owner plus usage/backfill/rollback proof before any remaining Goals/store retirement. The five current writers were retained, not retired. | Build an exact five-writer usage/owner table and either retain each as the named canonical owner or execute a separately proven cutover. |
+| 2 | `RES-MVP-LEGACY-CUTOVER-001` | `DONE_CURRENT_SHA` | All 28 Results writer doors have a decision: 23 disabled behind proven successors and narrow rollback; five retained as `canonical_current` with exact owner contracts. Registry `8/8`, real-PG `25/25`, retained-owner telemetry `5/5`, fresh `815`, repeat/dry `0/0`. | None for the bounded Wave 2 cutover contract. No backfill is required because the five retained writers keep their existing owner identities and were not retired. | Reopen only if a future product decision replaces one of the five retained contracts; require successor parity before disabling it. |
 | 3 | `FIN-MVP-CUTOVER-001` | `PARTIAL` | Finance exact-six and Statement identity are closed; fresh/repeat/dry migration and real-PG owner-flow evidence are retained. | The evidence record still reports enabled legacy Finance mutation doors and requires one governed compatibility/V8 spine, ID-space/backfill/usage proof and rollback across the full denominator. | Re-inventory the exact-current mutation-door denominator and close one bounded writer family at a time; do not infer global cutover from Statement exact-six. |
 | 4 | `FIN-UI-CANON-001` | `PARTIAL` | Historical mounted G4 covers responsive/theme/locale/a11y; Wave 2 closes the exact-six backend flow. | Exact-current mounted browser acceptance for all five Finance workspaces, including Prediction and Valuation owner review, is absent on the Wave 2 SHA. | Include Finance in the 16-module exact-SHA owner round; retain all earlier screenshots as historical evidence only. |
 | 5 | `MAT-POL-001` | `PARTIAL / BLOCKED_OWNER` | Fail-closed provenance, quarantine, immutable receipts and real-PG negative controls are present. | Approved provider, DPA/residency/SLA/cost and asset provenance/license authority remain owner/legal decisions. | Present the policy decision packet; make no provider or production-policy selection autonomously. |
@@ -35,12 +36,12 @@ promoted merely because a narrower Wave 2 packet passed.
 
 ## Honest closeout
 
-- Repository-technical task promoted in these waves: `CHAT-NFR-001` only.
+- Repository-technical tasks promoted in these waves: `CHAT-NFR-001` and
+  `RES-MVP-LEGACY-CUTOVER-001`.
 - Wave 2 technical subpackets completed without promoting their broader parent
   tasks: Results writer ambiguity, Finance Statement exact-six, Transform SWOT
   runtime lineage and Teresa explicit MVP denominator.
-- Current 82-task count remains `72 DONE_CURRENT_SHA / 10 PARTIAL`.
+- Current 82-task count is `73 DONE_CURRENT_SHA / 9 PARTIAL`.
 - This is not a failure of the Wave 2 code packet. It is the required separation
   between bounded technical proof and the broader owner/environment/release
   contracts in the 82-task authority.
-
