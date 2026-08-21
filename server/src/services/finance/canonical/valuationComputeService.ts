@@ -27,11 +27,24 @@ import { stampWorkingRevisionComputeIdentity } from './artifactVersionService.js
 import { canonicalPayloadHash } from './contentHash.js';
 import * as computeJobService from './computeJobService.js';
 import type { ComputeJobRow } from './computeJobService.js';
-import { computeFcffSeries, type FcffYearInput, type FcffYearResult } from './valuationFcffService.js';
-import { computeWacc, loadWaccInputs, persistComputedWacc, type WaccBreakdown } from './valuationWaccService.js';
+import {
+  computeFcffSeries,
+  type FcffYearInput,
+  type FcffYearResult,
+} from './valuationFcffService.js';
+import {
+  computeWacc,
+  loadWaccInputs,
+  persistComputedWacc,
+  type WaccBreakdown,
+} from './valuationWaccService.js';
 import { loadCanonicalDirectValuationAssumptions } from './valuationLegacySuccessorService.js';
 import { discountCashFlows, type DiscountCashFlowsResult } from './valuationDiscountService.js';
-import { computeExitMultipleTerminalValue, computeGordonTerminalValue, writeTerminalRow } from './valuationTerminalService.js';
+import {
+  computeExitMultipleTerminalValue,
+  computeGordonTerminalValue,
+  writeTerminalRow,
+} from './valuationTerminalService.js';
 import { computeEquityValue, writeBridge } from './valuationBridgeService.js';
 
 // ---------------------------------------------------------------------------
@@ -48,7 +61,12 @@ export type MethodType =
   | 'OTHER_WITH_POLICY';
 
 export type MethodReadiness = 'NOT_CONFIGURED' | 'DATA_INCOMPLETE' | 'READY' | 'COMPUTE_FAILED';
-export type MethodResultValueStatus = 'PRESENT_ZERO' | 'PRESENT_NONZERO' | 'MISSING' | 'NA' | 'NOT_APPLICABLE';
+export type MethodResultValueStatus =
+  | 'PRESENT_ZERO'
+  | 'PRESENT_NONZERO'
+  | 'MISSING'
+  | 'NA'
+  | 'NOT_APPLICABLE';
 
 export interface MethodRow {
   id: string;
@@ -85,7 +103,7 @@ export async function findOrCreateMethod(params: {
   applicabilityPolicyRef?: string | null;
   tx?: any;
 }): Promise<FindOrCreateMethodResult> {
-  const execute=async (tx:any):Promise<FindOrCreateMethodResult> => {
+  const execute = async (tx: any): Promise<FindOrCreateMethodResult> => {
     const bv = await tx.queryOne(
       `SELECT business_version_id FROM finance_business_versions WHERE business_version_id = ? AND organization_id = ?`,
       [params.businessVersionId, params.organizationId]
@@ -103,19 +121,37 @@ export async function findOrCreateMethod(params: {
       [params.businessVersionId, params.organizationId, params.methodType]
     );
     if (existing) return { ok: true, method: existing };
-    const inserted = await tx.queryOne(
+    const inserted = (await tx.queryOne(
       `INSERT INTO finance_valuation_methods (id, organization_id, business_version_id, method_type, applicability_policy_ref, created_by)
-       VALUES (?, ?, ?, ?, ?, ?) RETURNING *`,
-      [uuidv4(), params.organizationId, params.businessVersionId, params.methodType, params.applicabilityPolicyRef ?? null, params.createdBy]
-    );
-    if (!inserted) throw new Error('finance_valuation_methods insert returned no row');
-    return { ok: true, method: inserted };
+       VALUES (?, ?, ?, ?, ?, ?)
+       ON CONFLICT (business_version_id, method_type) DO NOTHING
+       RETURNING *`,
+      [
+        uuidv4(),
+        params.organizationId,
+        params.businessVersionId,
+        params.methodType,
+        params.applicabilityPolicyRef ?? null,
+        params.createdBy,
+      ]
+    )) as MethodRow | null;
+    if (inserted) return { ok: true, method: inserted };
+    const concurrent = (await tx.queryOne(
+      `SELECT * FROM finance_valuation_methods WHERE business_version_id = ? AND organization_id = ? AND method_type = ?`,
+      [params.businessVersionId, params.organizationId, params.methodType]
+    )) as MethodRow | null;
+    if (!concurrent) {
+      throw new Error('finance_valuation_methods conflict row missing in tenant-scoped readback');
+    }
+    return { ok: true, method: concurrent };
   };
-  return params.tx?execute(params.tx):withPinnedPostgresTransaction(execute);
+  return params.tx ? execute(params.tx) : withPinnedPostgresTransaction(execute);
 }
 
 export type SetMethodResultErrorCode = 'RESULT_READINESS_MISMATCH';
-export type SetMethodResultResult = { ok: true } | { ok: false; code: SetMethodResultErrorCode; message: string };
+export type SetMethodResultResult =
+  | { ok: true }
+  | { ok: false; code: SetMethodResultErrorCode; message: string };
 
 /**
  * Mirrors `chk_finance_methods_result_matches_readiness` (WP-D09 section 7.2, Layer 2 of N/A!=zero)
@@ -130,12 +166,21 @@ export function assertResultReadinessConsistency(
   resultValueStatus: MethodResultValueStatus
 ): SetMethodResultResult {
   const readyLike = readiness === 'READY';
-  const resultPresent = resultValueStatus === 'PRESENT_ZERO' || resultValueStatus === 'PRESENT_NONZERO';
+  const resultPresent =
+    resultValueStatus === 'PRESENT_ZERO' || resultValueStatus === 'PRESENT_NONZERO';
   if (readyLike && !resultPresent) {
-    return { ok: false, code: 'RESULT_READINESS_MISMATCH', message: `readiness='READY' requires a PRESENT_ZERO/PRESENT_NONZERO result, got '${resultValueStatus}'` };
+    return {
+      ok: false,
+      code: 'RESULT_READINESS_MISMATCH',
+      message: `readiness='READY' requires a PRESENT_ZERO/PRESENT_NONZERO result, got '${resultValueStatus}'`,
+    };
   }
   if (!readyLike && resultPresent) {
-    return { ok: false, code: 'RESULT_READINESS_MISMATCH', message: `readiness='${readiness}' requires a MISSING/NA/NOT_APPLICABLE result, got '${resultValueStatus}' (N/A can never be a silent zero)` };
+    return {
+      ok: false,
+      code: 'RESULT_READINESS_MISMATCH',
+      message: `readiness='${readiness}' requires a MISSING/NA/NOT_APPLICABLE result, got '${resultValueStatus}' (N/A can never be a silent zero)`,
+    };
   }
   return { ok: true };
 }
@@ -149,15 +194,61 @@ export async function setMethodResult(params: {
 }): Promise<SetMethodResultResult> {
   const gate = assertResultReadinessConsistency(params.readiness, params.resultValueStatus);
   if (!gate.ok) return gate;
-  const write=(tx:any)=>tx.queryRun(
+  const write = (tx: any) =>
+    tx.queryRun(
       `UPDATE finance_valuation_methods SET readiness = ?, result_value_status = ?, result_ev_decimal = ?, updated_at = now() WHERE id = ?`,
       [params.readiness, params.resultValueStatus, params.resultEvDecimal, params.methodId]
     );
-  if(params.tx)await write(params.tx);else await withPinnedPostgresTransaction(write);
+  if (params.tx) await write(params.tx);
+  else await withPinnedPostgresTransaction(write);
   return { ok: true };
 }
 
-export async function setMethodBasket(params: { methodId: string; isInRecommendationBasket: boolean; weightPct: number | null }): Promise<void> {
+export async function persistClassifiedDcfFailureIfUnpublished(params: {
+  organizationId: string;
+  businessVersionId: string;
+  createdBy: string;
+  readiness: 'DATA_INCOMPLETE' | 'COMPUTE_FAILED';
+}): Promise<{ preservedReadyResult: boolean; methodId: string }> {
+  return withPinnedPostgresTransaction(async (tx) => {
+    const methodResult = await findOrCreateMethod({
+      organizationId: params.organizationId,
+      businessVersionId: params.businessVersionId,
+      methodType: 'DCF_FCFF',
+      createdBy: params.createdBy,
+      tx,
+    });
+    if (!methodResult.ok) throw new Error(methodResult.message);
+    const current = await tx.queryOne<MethodRow>(
+      `SELECT * FROM finance_valuation_methods
+       WHERE id = ? AND organization_id = ? FOR UPDATE`,
+      [methodResult.method.id, params.organizationId]
+    );
+    if (!current) throw new Error('finance_valuation_methods failure-state readback missing');
+    const hasPublishedResult =
+      current.readiness === 'READY' &&
+      (current.result_value_status === 'PRESENT_ZERO' ||
+        current.result_value_status === 'PRESENT_NONZERO');
+    if (hasPublishedResult) {
+      return { preservedReadyResult: true, methodId: current.id };
+    }
+    const setResult = await setMethodResult({
+      methodId: current.id,
+      readiness: params.readiness,
+      resultValueStatus: 'MISSING',
+      resultEvDecimal: null,
+      tx,
+    });
+    if (!setResult.ok) throw new Error(setResult.message);
+    return { preservedReadyResult: false, methodId: current.id };
+  });
+}
+
+export async function setMethodBasket(params: {
+  methodId: string;
+  isInRecommendationBasket: boolean;
+  weightPct: number | null;
+}): Promise<void> {
   await withPinnedPostgresTransaction((tx) =>
     tx.queryRun(
       `UPDATE finance_valuation_methods SET is_in_recommendation_basket = ?, weight_pct = ?, updated_at = now() WHERE id = ?`,
@@ -170,7 +261,10 @@ export async function setMethodBasket(params: { methodId: string; isInRecommenda
 // Pakiet B3 (Valuation HTTP Surface) — thin readers + one atomic batch writer for the basket
 // ---------------------------------------------------------------------------
 
-export async function listMethods(organizationId: string, businessVersionId: string): Promise<MethodRow[]> {
+export async function listMethods(
+  organizationId: string,
+  businessVersionId: string
+): Promise<MethodRow[]> {
   return withPinnedPostgresTransaction((tx) =>
     tx.queryAll<MethodRow>(
       `SELECT * FROM finance_valuation_methods WHERE organization_id = ? AND business_version_id = ? ORDER BY method_type`,
@@ -179,13 +273,21 @@ export async function listMethods(organizationId: string, businessVersionId: str
   );
 }
 
-export async function getMethod(organizationId: string, methodId: string): Promise<MethodRow | null> {
+export async function getMethod(
+  organizationId: string,
+  methodId: string
+): Promise<MethodRow | null> {
   return withPinnedPostgresTransaction((tx) =>
-    tx.queryOne<MethodRow>(`SELECT * FROM finance_valuation_methods WHERE organization_id = ? AND id = ?`, [organizationId, methodId])
+    tx.queryOne<MethodRow>(
+      `SELECT * FROM finance_valuation_methods WHERE organization_id = ? AND id = ?`,
+      [organizationId, methodId]
+    )
   );
 }
 
-export type SetBasketWeightsResult = { ok: true; methods: MethodRow[] } | { ok: false; code: 'METHOD_NOT_FOUND'; message: string };
+export type SetBasketWeightsResult =
+  | { ok: true; methods: MethodRow[] }
+  | { ok: false; code: 'METHOD_NOT_FOUND'; message: string };
 
 /**
  * Writes ALL basket membership/weight changes for a variant in ONE call —
@@ -205,7 +307,11 @@ export type SetBasketWeightsResult = { ok: true; methods: MethodRow[] } | { ok: 
 export async function setBasketWeights(params: {
   organizationId: string;
   businessVersionId: string;
-  updates: readonly { methodId: string; isInRecommendationBasket: boolean; weightPct: number | null }[];
+  updates: readonly {
+    methodId: string;
+    isInRecommendationBasket: boolean;
+    weightPct: number | null;
+  }[];
 }): Promise<SetBasketWeightsResult> {
   return withPinnedPostgresTransaction(async (tx) => {
     for (const u of params.updates) {
@@ -257,7 +363,16 @@ export function assessCompsReadiness(usableComps: number): MethodReadiness {
 export type WeightedRecommendationResult =
   | { status: 'NO_BASKET' }
   | { status: 'INCOMPLETE'; notReadyMethodTypes: MethodType[] }
-  | { status: 'READY'; weightedEnterpriseValue: number; contributions: { methodType: MethodType; weightPct: number; resultEvDecimal: number; contribution: number }[] };
+  | {
+      status: 'READY';
+      weightedEnterpriseValue: number;
+      contributions: {
+        methodType: MethodType;
+        weightPct: number;
+        resultEvDecimal: number;
+        contribution: number;
+      }[];
+    };
 
 /**
  * Weighted average across `is_in_recommendation_basket=true` methods ONLY — a method excluded from
@@ -266,7 +381,9 @@ export type WeightedRecommendationResult =
  * drops that member's weight and silently re-normalizes the rest — that would be a different,
  * un-requested weighting scheme the analyst never approved).
  */
-export function computeWeightedRecommendation(methods: readonly MethodRow[]): WeightedRecommendationResult {
+export function computeWeightedRecommendation(
+  methods: readonly MethodRow[]
+): WeightedRecommendationResult {
   const basket = methods.filter((m) => m.is_in_recommendation_basket);
   if (basket.length === 0) return { status: 'NO_BASKET' };
 
@@ -278,7 +395,12 @@ export function computeWeightedRecommendation(methods: readonly MethodRow[]): We
   const contributions = basket.map((m) => {
     const weightPct = Number(m.weight_pct);
     const resultEvDecimal = Number(m.result_ev_decimal);
-    return { methodType: m.method_type, weightPct, resultEvDecimal, contribution: (weightPct / 100) * resultEvDecimal };
+    return {
+      methodType: m.method_type,
+      weightPct,
+      resultEvDecimal,
+      contribution: (weightPct / 100) * resultEvDecimal,
+    };
   });
   const weightedEnterpriseValue = contributions.reduce((sum, c) => sum + c.contribution, 0);
   return { status: 'READY', weightedEnterpriseValue, contributions };
@@ -302,9 +424,9 @@ export interface RunDcfFcffValuationParams {
   directCashTaxRatePct?: number;
   /** Required for the direct-assumption EV-to-equity bridge. */
   valuationAsOfDate?: string;
-  inputCommandHash?:string;
+  inputCommandHash?: string;
   /** When supplied, all user-visible valuation publication joins the caller's receipt transaction. */
-  publicationTx?:any;
+  publicationTx?: any;
 }
 
 export interface DirectDiscountRate {
@@ -351,23 +473,51 @@ export type RunDcfFcffValuationResult =
       message: string;
     };
 
-export async function runDcfFcffValuation(params: RunDcfFcffValuationParams): Promise<RunDcfFcffValuationResult> {
-  const [waccInputs,directAssumptions] = await Promise.all([
+export async function runDcfFcffValuation(
+  params: RunDcfFcffValuationParams
+): Promise<RunDcfFcffValuationResult> {
+  const [waccInputs, directAssumptions] = await Promise.all([
     loadWaccInputs(params.organizationId, params.valuationBusinessVersionId),
-    loadCanonicalDirectValuationAssumptions(params.organizationId, params.valuationBusinessVersionId),
+    loadCanonicalDirectValuationAssumptions(
+      params.organizationId,
+      params.valuationBusinessVersionId
+    ),
   ]);
   if (!waccInputs && !directAssumptions) {
-    return { ok: false, code: 'NO_WACC_INPUTS', message: `No canonical discount-rate inputs for business_version_id ${params.valuationBusinessVersionId}` };
+    return {
+      ok: false,
+      code: 'NO_WACC_INPUTS',
+      message: `No canonical discount-rate inputs for business_version_id ${params.valuationBusinessVersionId}`,
+    };
   }
   if (waccInputs && directAssumptions) {
-    return { ok: false, code: 'WACC_COMPUTE_FAILED', message: 'Both computed-WACC inputs and direct assumptions exist; select exactly one canonical discount-rate source' };
+    return {
+      ok: false,
+      code: 'WACC_COMPUTE_FAILED',
+      message:
+        'Both computed-WACC inputs and direct assumptions exist; select exactly one canonical discount-rate source',
+    };
   }
-  if (directAssumptions && (params.directCashTaxRatePct === undefined || !Number.isFinite(params.directCashTaxRatePct))) {
-    return { ok: false, code: 'WACC_COMPUTE_FAILED', message: 'directCashTaxRatePct is required for direct assumptions; cash tax is never inferred as zero' };
+  if (
+    directAssumptions &&
+    (params.directCashTaxRatePct === undefined || !Number.isFinite(params.directCashTaxRatePct))
+  ) {
+    return {
+      ok: false,
+      code: 'WACC_COMPUTE_FAILED',
+      message:
+        'directCashTaxRatePct is required for direct assumptions; cash tax is never inferred as zero',
+    };
   }
-  const cashTaxRatePct = directAssumptions ? params.directCashTaxRatePct! : Number(waccInputs!.cash_tax_rate_pct);
+  const cashTaxRatePct = directAssumptions
+    ? params.directCashTaxRatePct!
+    : Number(waccInputs!.cash_tax_rate_pct);
   if (!Number.isFinite(cashTaxRatePct)) {
-    return { ok: false, code: 'WACC_COMPUTE_FAILED', message: 'Canonical cash_tax_rate_pct is missing' };
+    return {
+      ok: false,
+      code: 'WACC_COMPUTE_FAILED',
+      message: 'Canonical cash_tax_rate_pct is missing',
+    };
   }
   const fcff = await computeFcffSeries({
     organizationId: params.organizationId,
@@ -380,15 +530,45 @@ export async function runDcfFcffValuation(params: RunDcfFcffValuationParams): Pr
   if (!fcff.ok) return fcff;
 
   const waccResult = directAssumptions
-    ? directAssumptions.currency!==fcff.currency
-      ? {ok:false as const,code:'CURRENCY_MISMATCH',message:'direct assumptions currency does not match FCFF currency'}
-      : {ok:true as const,breakdown:{source:'DIRECT_ASSUMPTION' as const,waccPct:Number(directAssumptions.direct_wacc_pct),sourceWorkingRevisionId:String(directAssumptions.source_working_revision_id),sourceWorkingRevisionVersion:Number(directAssumptions.source_working_revision_version)}}
+    ? directAssumptions.currency !== fcff.currency
+      ? {
+          ok: false as const,
+          code: 'CURRENCY_MISMATCH',
+          message: 'direct assumptions currency does not match FCFF currency',
+        }
+      : {
+          ok: true as const,
+          breakdown: {
+            source: 'DIRECT_ASSUMPTION' as const,
+            waccPct: Number(directAssumptions.direct_wacc_pct),
+            sourceWorkingRevisionId: String(directAssumptions.source_working_revision_id),
+            sourceWorkingRevisionVersion: Number(directAssumptions.source_working_revision_version),
+          },
+        }
     : computeWacc(waccInputs!, fcff.currency);
-  if (!waccResult.ok) return { ok: false, code: 'WACC_COMPUTE_FAILED', message: `${waccResult.code}: ${waccResult.message}` };
-  if(!directAssumptions) await persistComputedWacc(params.organizationId, params.valuationBusinessVersionId, waccResult.breakdown as WaccBreakdown);
+  if (!waccResult.ok)
+    return {
+      ok: false,
+      code: 'WACC_COMPUTE_FAILED',
+      message: `${waccResult.code}: ${waccResult.message}`,
+    };
+  if (!directAssumptions)
+    await persistComputedWacc(
+      params.organizationId,
+      params.valuationBusinessVersionId,
+      waccResult.breakdown as WaccBreakdown
+    );
 
   const notPresent = fcff.years.filter((y) => y.status !== 'PRESENT');
   if (notPresent.length > 0) {
+    if (!params.publicationTx) {
+      await persistClassifiedDcfFailureIfUnpublished({
+        organizationId: params.organizationId,
+        businessVersionId: params.valuationBusinessVersionId,
+        createdBy: params.requestedByUserId,
+        readiness: 'DATA_INCOMPLETE',
+      });
+    }
     return {
       ok: false,
       code: 'FCFF_NOT_FULLY_PRESENT',
@@ -398,14 +578,53 @@ export async function runDcfFcffValuation(params: RunDcfFcffValuationParams): Pr
 
   const terminalYearFcff = fcff.years[fcff.years.length - 1].fcff!;
   const terminalMethod = directAssumptions?.terminal_method ?? 'gordon';
-  const gPct = directAssumptions ? Number(directAssumptions.terminal_growth_pct) : params.terminal.gPct;
-  const terminal = terminalMethod === 'gordon'
-    ? (gPct === undefined ? {ok:false as const,code:'G_MUST_BE_LESS_THAN_WACC' as const,message:'terminal.gPct is required'} : computeGordonTerminalValue({ fcffTerminalYear: terminalYearFcff, gPct, waccPct: waccResult.breakdown.waccPct }))
-    : (directAssumptions!.exit_multiple_metric!=='EV/EBITDA' || fcff.years[fcff.years.length-1].ebit===null || fcff.years[fcff.years.length-1].depreciationAmortization===null
-        ? {ok:false as const,code:'INVALID_EXIT_MULTIPLE_INPUT' as const,message:'Pinned terminal-year EBITDA lineage is required for EV/EBITDA'}
-        : computeExitMultipleTerminalValue({terminalMetricValue:fcff.years[fcff.years.length-1].ebit!+fcff.years[fcff.years.length-1].depreciationAmortization!,exitMultiple:Number(directAssumptions!.exit_multiple)}));
+  const gPct = directAssumptions
+    ? Number(directAssumptions.terminal_growth_pct)
+    : params.terminal.gPct;
+  const terminal =
+    terminalMethod === 'gordon'
+      ? gPct === undefined
+        ? {
+            ok: false as const,
+            code: 'G_MUST_BE_LESS_THAN_WACC' as const,
+            message: 'terminal.gPct is required',
+          }
+        : computeGordonTerminalValue({
+            fcffTerminalYear: terminalYearFcff,
+            gPct,
+            waccPct: waccResult.breakdown.waccPct,
+          })
+      : directAssumptions!.exit_multiple_metric !== 'EV/EBITDA' ||
+          fcff.years[fcff.years.length - 1].ebit === null ||
+          fcff.years[fcff.years.length - 1].depreciationAmortization === null
+        ? {
+            ok: false as const,
+            code: 'INVALID_EXIT_MULTIPLE_INPUT' as const,
+            message: 'Pinned terminal-year EBITDA lineage is required for EV/EBITDA',
+          }
+        : computeExitMultipleTerminalValue({
+            terminalMetricValue:
+              fcff.years[fcff.years.length - 1].ebit! +
+              fcff.years[fcff.years.length - 1].depreciationAmortization!,
+            exitMultiple: Number(directAssumptions!.exit_multiple),
+          });
   if (!terminal.ok) {
-    return { ok: false, code: terminal.code === 'INVALID_EXIT_MULTIPLE_INPUT' ? 'INVALID_EXIT_MULTIPLE_INPUT' : 'TERMINAL_G_MUST_BE_LESS_THAN_WACC', message: terminal.message };
+    if (!params.publicationTx) {
+      await persistClassifiedDcfFailureIfUnpublished({
+        organizationId: params.organizationId,
+        businessVersionId: params.valuationBusinessVersionId,
+        createdBy: params.requestedByUserId,
+        readiness: 'COMPUTE_FAILED',
+      });
+    }
+    return {
+      ok: false,
+      code:
+        terminal.code === 'INVALID_EXIT_MULTIPLE_INPUT'
+          ? 'INVALID_EXIT_MULTIPLE_INPUT'
+          : 'TERMINAL_G_MUST_BE_LESS_THAN_WACC',
+      message: terminal.message,
+    };
   }
 
   const discounted = discountCashFlows({
@@ -415,22 +634,78 @@ export async function runDcfFcffValuation(params: RunDcfFcffValuationParams): Pr
   });
 
   let equityValue: number | null = null;
-  let bridgeComponents:any[]=[];
+  let bridgeComponents: any[] = [];
   if (directAssumptions) {
-    if (!params.valuationAsOfDate) return {ok:false,code:'WACC_COMPUTE_FAILED',message:'valuationAsOfDate is required for direct net-debt bridge'};
+    if (!params.valuationAsOfDate)
+      return {
+        ok: false,
+        code: 'WACC_COMPUTE_FAILED',
+        message: 'valuationAsOfDate is required for direct net-debt bridge',
+      };
     const netDebt = Number(directAssumptions.net_debt_decimal);
-    bridgeComponents = [{sequenceOrder:1,componentKind:(netDebt >= 0 ? 'DEBT' : 'CASH') as 'DEBT'|'CASH',sign:(netDebt >= 0 ? 'SUBTRACT_FROM_EV' : 'ADD_TO_EV') as 'SUBTRACT_FROM_EV'|'ADD_TO_EV',amountDecimal:Math.abs(netDebt),asOfDate:params.valuationAsOfDate,rationale:'Pinned direct net debt'}];
+    bridgeComponents = [
+      {
+        sequenceOrder: 1,
+        componentKind: (netDebt >= 0 ? 'DEBT' : 'CASH') as 'DEBT' | 'CASH',
+        sign: (netDebt >= 0 ? 'SUBTRACT_FROM_EV' : 'ADD_TO_EV') as 'SUBTRACT_FROM_EV' | 'ADD_TO_EV',
+        amountDecimal: Math.abs(netDebt),
+        asOfDate: params.valuationAsOfDate,
+        rationale: 'Pinned direct net debt',
+      },
+    ];
     const equity = computeEquityValue(discounted.enterpriseValue, bridgeComponents);
-    if (!equity.ok) return {ok:false,code:'WACC_COMPUTE_FAILED',message:equity.message};
-    equityValue=equity.equityValueDecimal;
+    if (!equity.ok) return { ok: false, code: 'WACC_COMPUTE_FAILED', message: equity.message };
+    equityValue = equity.equityValueDecimal;
   }
 
-  const publish=async()=>{
-    const methodResult=await findOrCreateMethod({organizationId:params.organizationId,businessVersionId:params.valuationBusinessVersionId,methodType:'DCF_FCFF',createdBy:params.requestedByUserId,tx:params.publicationTx});
-    if(!methodResult.ok)throw new Error(methodResult.message);const method=methodResult.method;
-    await writeTerminalRow({organizationId:params.organizationId,methodId:method.id,convention:terminalMethod==='gordon'?'GORDON_GROWTH':'EXIT_MULTIPLE',gPct:terminalMethod==='gordon'?gPct:null,exitMultipleValue:terminalMethod==='exit_multiple'?Number(directAssumptions!.exit_multiple):null,terminalValueDecimal:terminal.terminalValue,terminalSharePct:discounted.terminalSharePct,isPrimary:true,createdBy:params.requestedByUserId,sourceWorkingRevisionId:directAssumptions?.source_working_revision_id??null,sourceWorkingRevisionVersion:directAssumptions?Number(directAssumptions.source_working_revision_version):null,tx:params.publicationTx});
-    const setResult=await setMethodResult({methodId:method.id,readiness:'READY',resultValueStatus:discounted.enterpriseValue===0?'PRESENT_ZERO':'PRESENT_NONZERO',resultEvDecimal:discounted.enterpriseValue,tx:params.publicationTx});if(!setResult.ok)throw new Error(setResult.message);
-    if(directAssumptions)await writeBridge({organizationId:params.organizationId,businessVersionId:params.valuationBusinessVersionId,asOfDate:params.valuationAsOfDate!,enterpriseValueDecimal:discounted.enterpriseValue,equityValueDecimal:equityValue!,components:bridgeComponents,createdBy:params.requestedByUserId,sourceWorkingRevisionId:directAssumptions.source_working_revision_id,sourceWorkingRevisionVersion:Number(directAssumptions.source_working_revision_version),tx:params.publicationTx});
+  const publish = async () => {
+    const methodResult = await findOrCreateMethod({
+      organizationId: params.organizationId,
+      businessVersionId: params.valuationBusinessVersionId,
+      methodType: 'DCF_FCFF',
+      createdBy: params.requestedByUserId,
+      tx: params.publicationTx,
+    });
+    if (!methodResult.ok) throw new Error(methodResult.message);
+    const method = methodResult.method;
+    await writeTerminalRow({
+      organizationId: params.organizationId,
+      methodId: method.id,
+      convention: terminalMethod === 'gordon' ? 'GORDON_GROWTH' : 'EXIT_MULTIPLE',
+      gPct: terminalMethod === 'gordon' ? gPct : null,
+      exitMultipleValue:
+        terminalMethod === 'exit_multiple' ? Number(directAssumptions!.exit_multiple) : null,
+      terminalValueDecimal: terminal.terminalValue,
+      terminalSharePct: discounted.terminalSharePct,
+      isPrimary: true,
+      createdBy: params.requestedByUserId,
+      sourceWorkingRevisionId: directAssumptions?.source_working_revision_id ?? null,
+      sourceWorkingRevisionVersion: directAssumptions
+        ? Number(directAssumptions.source_working_revision_version)
+        : null,
+      tx: params.publicationTx,
+    });
+    const setResult = await setMethodResult({
+      methodId: method.id,
+      readiness: 'READY',
+      resultValueStatus: discounted.enterpriseValue === 0 ? 'PRESENT_ZERO' : 'PRESENT_NONZERO',
+      resultEvDecimal: discounted.enterpriseValue,
+      tx: params.publicationTx,
+    });
+    if (!setResult.ok) throw new Error(setResult.message);
+    if (directAssumptions)
+      await writeBridge({
+        organizationId: params.organizationId,
+        businessVersionId: params.valuationBusinessVersionId,
+        asOfDate: params.valuationAsOfDate!,
+        enterpriseValueDecimal: discounted.enterpriseValue,
+        equityValueDecimal: equityValue!,
+        components: bridgeComponents,
+        createdBy: params.requestedByUserId,
+        sourceWorkingRevisionId: directAssumptions.source_working_revision_id,
+        sourceWorkingRevisionVersion: Number(directAssumptions.source_working_revision_version),
+        tx: params.publicationTx,
+      });
     return method;
   };
 
@@ -441,13 +716,26 @@ export async function runDcfFcffValuation(params: RunDcfFcffValuationParams): Pr
       [params.valuationBusinessVersionId]
     )
   );
-  if (!bv) throw new Error(`runDcfFcffValuation: no finance_business_versions row for ${params.valuationBusinessVersionId}`);
+  if (!bv)
+    throw new Error(
+      `runDcfFcffValuation: no finance_business_versions row for ${params.valuationBusinessVersionId}`
+    );
   if (!bv.source_working_revision_id) {
-    throw new Error(`runDcfFcffValuation: finance_business_versions.source_working_revision_id is not set for ${params.valuationBusinessVersionId}`);
+    throw new Error(
+      `runDcfFcffValuation: finance_business_versions.source_working_revision_id is not set for ${params.valuationBusinessVersionId}`
+    );
   }
 
   const inputRevisionHash = createHash('sha256')
-    .update(JSON.stringify({ businessVersionId: params.valuationBusinessVersionId, entityId: params.entityId, projectionYears: params.projectionYears, terminal: params.terminal,inputCommandHash:params.inputCommandHash??null }))
+    .update(
+      JSON.stringify({
+        businessVersionId: params.valuationBusinessVersionId,
+        entityId: params.entityId,
+        projectionYears: params.projectionYears,
+        terminal: params.terminal,
+        inputCommandHash: params.inputCommandHash ?? null,
+      })
+    )
     .digest('hex');
   const { job, wasExisting } = await computeJobService.enqueue({
     organizationId: params.organizationId,
@@ -486,7 +774,7 @@ export async function runDcfFcffValuation(params: RunDcfFcffValuationParams): Pr
     // exact result. This invocation independently recomputed the SAME deterministic values above
     // (Decimal-based, in-memory sorted) — we report the ORIGINAL job's identity, never mint a
     // second compute_jobs/compute_job_outputs row for the same idempotency key.
-    const method=await publish();
+    const method = await publish();
     return {
       ok: true,
       job: claimResult.job,
@@ -501,7 +789,10 @@ export async function runDcfFcffValuation(params: RunDcfFcffValuationParams): Pr
   }
   const runningJob = claimResult.job;
 
-  const contentSemanticHash = canonicalPayloadHash({ enterpriseValue: discounted.enterpriseValue, fcff: fcff.years });
+  const contentSemanticHash = canonicalPayloadHash({
+    enterpriseValue: discounted.enterpriseValue,
+    fcff: fcff.years,
+  });
   const completed = await computeJobService.completeJobSuccess({
     jobId: runningJob.id,
     organizationId: params.organizationId,
@@ -533,8 +824,10 @@ export async function runDcfFcffValuation(params: RunDcfFcffValuationParams): Pr
     contentSemanticHash,
     computeRunId: runningJob.id,
   });
-  const finalJob = completed.ok ? completed.job : ((await computeJobService.getJob(params.organizationId, job.id)) ?? runningJob);
-  const method=await publish();
+  const finalJob = completed.ok
+    ? completed.job
+    : ((await computeJobService.getJob(params.organizationId, job.id)) ?? runningJob);
+  const method = await publish();
 
   return {
     ok: true,

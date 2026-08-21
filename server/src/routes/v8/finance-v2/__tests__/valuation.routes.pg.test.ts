@@ -13,11 +13,13 @@ import { randomUUID } from 'node:crypto';
 
 import express from 'express';
 import request from 'supertest';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_PG_REQUESTED =
-  process.env.RUN_DB_TESTS === '1' && process.env.MOCK_DB === 'false' && CONNECTION_STRING.startsWith('postgres');
+  process.env.RUN_DB_TESTS === '1' &&
+  process.env.MOCK_DB === 'false' &&
+  CONNECTION_STRING.startsWith('postgres');
 if (REAL_PG_REQUESTED) {
   process.env.DB_TYPE = 'postgres';
 }
@@ -44,25 +46,33 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B3 — valuation (real HTTP + real 
       next();
     });
     a.use('/api/v8/finance-v2', financeV2Router);
-    a.use((err: any, _req: any, res: any, _next: any) => res.status(500).json({ error: String(err?.message || err) }));
+    a.use((err: any, _req: any, res: any, _next: any) =>
+      res.status(500).json({ error: String(err?.message || err) })
+    );
     return a;
   }
 
   async function makeCase(name = `Case ${randomUUID().slice(0, 8)}`) {
-    const res = await request(app).post('/api/v8/finance-v2/valuation/cases').send({ name, description: 'test case' });
+    const res = await request(app)
+      .post('/api/v8/finance-v2/valuation/cases')
+      .send({ name, description: 'test case' });
     expect(res.status).toBe(201);
     return res.body.data.caseId as string;
   }
 
   async function makeValuationArtifact() {
-    const created = await request(app).post('/api/v8/finance-v2/artifacts').send({ artifactType: 'VALUATION_CASE' });
+    const created = await request(app)
+      .post('/api/v8/finance-v2/artifacts')
+      .send({ artifactType: 'VALUATION_CASE' });
     expect(created.status).toBe(201);
     return created.body.data.currentBusinessVersion.businessVersionId as string;
   }
 
   async function makeVariant(caseId: string, name = `Variant ${randomUUID().slice(0, 8)}`) {
     const bvId = await makeValuationArtifact();
-    const res = await request(app).post(`/api/v8/finance-v2/valuation/cases/${caseId}/variants`).send({ businessVersionId: bvId, name });
+    const res = await request(app)
+      .post(`/api/v8/finance-v2/valuation/cases/${caseId}/variants`)
+      .send({ businessVersionId: bvId, name });
     expect(res.status).toBe(201);
     return bvId;
   }
@@ -71,13 +81,42 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B3 — valuation (real HTTP + real 
     ({ withPinnedPostgresTransaction } = await import('../../../../database/PostgresDatabase.js'));
     av = await import('../../../../services/finance/canonical/artifactVersionService.js');
     lineageService = await import('../../../../services/finance/canonical/lineageService.js');
-    valuationComputeService = await import('../../../../services/finance/canonical/valuationComputeService.js');
+    valuationComputeService =
+      await import('../../../../services/finance/canonical/valuationComputeService.js');
     financeV2Router = (await import('../index.js')).default;
     modelsOnlyRouter = (await import('../models.routes.js')).default;
 
-    await withPinnedPostgresTransaction((tx) => tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [orgId, 'PkgB3 Valuation Test Org']));
+    await withPinnedPostgresTransaction((tx) =>
+      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [
+        orgId,
+        'PkgB3 Valuation Test Org',
+      ])
+    );
+    await withPinnedPostgresTransaction(async (tx) => {
+      await tx.queryRun(
+        `INSERT INTO users (id, email, password, first_name, last_name, role, organization_id)
+         VALUES (?, ?, 'test', 'Valuation', 'Admin', 'ADMIN', ?)`,
+        [userId, `${userId}@test.invalid`, orgId]
+      );
+      await tx.queryRun(
+        `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+         VALUES (?, ?, ?, 'ADMIN', 'ACTIVE')`,
+        [`membership-${userId}`, orgId, userId]
+      );
+    });
     app = appAs('finance_admin');
   }, 60000);
+
+  afterAll(async () => {
+    if (!withPinnedPostgresTransaction) return;
+    await withPinnedPostgresTransaction(async (tx) => {
+      await tx.queryRun(
+        `DELETE FROM organization_members WHERE organization_id = ? AND user_id = ?`,
+        [orgId, userId]
+      );
+      await tx.queryRun(`DELETE FROM users WHERE id = ? AND organization_id = ?`, [userId, orgId]);
+    });
+  });
 
   // ---------------------------------------------------------------------------
   // Dowód montażu (per-file example, same convention every finance-v2 test file uses) — 404 WITH
@@ -89,7 +128,9 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B3 — valuation (real HTTP + real 
     expect(res.status).toBe(404);
     expect(res.body).toHaveProperty('code', 'NOT_FOUND');
 
-    const notMounted = await request(app).get('/api/v8/finance-v2/valuation/this-path-truly-does-not-exist-anywhere');
+    const notMounted = await request(app).get(
+      '/api/v8/finance-v2/valuation/this-path-truly-does-not-exist-anywhere'
+    );
     expect(notMounted.status).toBe(404);
     expect(notMounted.body).not.toHaveProperty('code');
 
@@ -101,7 +142,9 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B3 — valuation (real HTTP + real 
       next();
     });
     preB3App.use('/api/v8/finance-v2', modelsOnlyRouter);
-    const beforeMount = await request(preB3App).get(`/api/v8/finance-v2/valuation/variants/${randomUUID()}`);
+    const beforeMount = await request(preB3App).get(
+      `/api/v8/finance-v2/valuation/variants/${randomUUID()}`
+    );
     expect(beforeMount.status).toBe(404);
     expect(beforeMount.body).not.toHaveProperty('code');
   });
@@ -114,20 +157,29 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B3 — valuation (real HTTP + real 
     const caseId = await makeCase('Acme SA — DCF 2026');
     const bvId = await makeValuationArtifact();
 
-    const created = await request(app).post(`/api/v8/finance-v2/valuation/cases/${caseId}/variants`).send({ businessVersionId: bvId, name: 'Base Case', description: 'management plan' });
+    const created = await request(app)
+      .post(`/api/v8/finance-v2/valuation/cases/${caseId}/variants`)
+      .send({ businessVersionId: bvId, name: 'Base Case', description: 'management plan' });
     expect(created.status).toBe(201);
     expect(created.body.data.businessVersionId).toBe(bvId);
     expect(created.body.data.name).toBe('Base Case');
     expect(created.body.data.status).toBe('DRAFT');
 
-    const dup = await request(app).post(`/api/v8/finance-v2/valuation/cases/${caseId}/variants`).send({ businessVersionId: bvId, name: 'Duplicate attempt' });
+    const dup = await request(app)
+      .post(`/api/v8/finance-v2/valuation/cases/${caseId}/variants`)
+      .send({ businessVersionId: bvId, name: 'Duplicate attempt' });
     expect(dup.status).toBe(409);
     expect(dup.body.code).toBe('ALREADY_A_VARIANT');
 
-    const notAValuation = await request(app).post('/api/v8/finance-v2/artifacts').send({ artifactType: 'BASELINE_MODEL' });
+    const notAValuation = await request(app)
+      .post('/api/v8/finance-v2/artifacts')
+      .send({ artifactType: 'BASELINE_MODEL' });
     const wrongType = await request(app)
       .post(`/api/v8/finance-v2/valuation/cases/${caseId}/variants`)
-      .send({ businessVersionId: notAValuation.body.data.currentBusinessVersion.businessVersionId, name: 'Wrong type' });
+      .send({
+        businessVersionId: notAValuation.body.data.currentBusinessVersion.businessVersionId,
+        name: 'Wrong type',
+      });
     expect(wrongType.status).toBe(404);
     expect(wrongType.body.code).toBe('NOT_A_VALUATION_CASE');
 
@@ -135,13 +187,20 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B3 — valuation (real HTTP + real 
     expect(getRes.status).toBe(200);
     expect(getRes.body.data.name).toBe('Base Case');
 
-    const patchRes = await request(app).patch(`/api/v8/finance-v2/valuation/variants/${bvId}`).send({ name: 'Base Case (renamed)', description: 'updated rationale' });
+    const patchRes = await request(app)
+      .patch(`/api/v8/finance-v2/valuation/variants/${bvId}`)
+      .send({ name: 'Base Case (renamed)', description: 'updated rationale' });
     expect(patchRes.status).toBe(200);
     expect(patchRes.body.data.name).toBe('Base Case (renamed)');
     expect(patchRes.body.data.description).toBe('updated rationale');
 
     // Independent SQL read-back.
-    const sqlRow = await withPinnedPostgresTransaction((tx) => tx.queryOne<{ name: string; description: string }>(`SELECT name, description FROM finance_valuation_variants WHERE business_version_id = ?`, [bvId]));
+    const sqlRow = await withPinnedPostgresTransaction((tx) =>
+      tx.queryOne<{ name: string; description: string }>(
+        `SELECT name, description FROM finance_valuation_variants WHERE business_version_id = ?`,
+        [bvId]
+      )
+    );
     expect(sqlRow?.name).toBe('Base Case (renamed)');
     expect(sqlRow?.description).toBe('updated rationale');
 
@@ -159,7 +218,9 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B3 — valuation (real HTTP + real 
     const caseId = await makeCase();
     const bvId = await makeVariant(caseId);
 
-    const created = await request(app).post(`/api/v8/finance-v2/valuation/variants/${bvId}/methods`).send({ methodType: 'TRADING_COMPS' });
+    const created = await request(app)
+      .post(`/api/v8/finance-v2/valuation/variants/${bvId}/methods`)
+      .send({ methodType: 'TRADING_COMPS' });
     expect(created.status).toBe(201);
     expect(created.body.data.readiness).toBe('NOT_CONFIGURED');
     expect(created.body.data.result.status).toBe('MISSING');
@@ -183,7 +244,9 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B3 — valuation (real HTTP + real 
     expect(sqlRow?.result_ev_decimal).toBeNull();
 
     // Same route, same variant -> find-or-create returns the SAME row (idempotent), not a duplicate.
-    const again = await request(app).post(`/api/v8/finance-v2/valuation/variants/${bvId}/methods`).send({ methodType: 'TRADING_COMPS' });
+    const again = await request(app)
+      .post(`/api/v8/finance-v2/valuation/variants/${bvId}/methods`)
+      .send({ methodType: 'TRADING_COMPS' });
     expect(again.status).toBe(201);
     expect(again.body.data.methodId).toBe(created.body.data.methodId);
   });
@@ -191,30 +254,108 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B3 — valuation (real HTTP + real 
   it("POST .../methods with methodType='OTHER_WITH_POLICY' and no applicabilityPolicyRef -> 400 INVALID_BODY", async () => {
     const caseId = await makeCase();
     const bvId = await makeVariant(caseId);
-    const res = await request(app).post(`/api/v8/finance-v2/valuation/variants/${bvId}/methods`).send({ methodType: 'OTHER_WITH_POLICY' });
+    const res = await request(app)
+      .post(`/api/v8/finance-v2/valuation/variants/${bvId}/methods`)
+      .send({ methodType: 'OTHER_WITH_POLICY' });
     expect(res.status).toBe(400);
     expect(res.body.code).toBe('INVALID_BODY');
+  });
+
+  it('atomically converges a fresh DCF method when READY publication races classified failure persistence', async () => {
+    const bvId = await makeValuationArtifact();
+    const publishReady = async () => {
+      const method = await valuationComputeService.findOrCreateMethod({
+        organizationId: orgId,
+        businessVersionId: bvId,
+        methodType: 'DCF_FCFF',
+        createdBy: userId,
+      });
+      expect(method.ok).toBe(true);
+      if (!method.ok) throw new Error(method.message);
+      const published = await valuationComputeService.setMethodResult({
+        methodId: method.method.id,
+        readiness: 'READY',
+        resultValueStatus: 'PRESENT_NONZERO',
+        resultEvDecimal: 987_654,
+      });
+      expect(published.ok).toBe(true);
+    };
+    await Promise.all([
+      publishReady(),
+      valuationComputeService.persistClassifiedDcfFailureIfUnpublished({
+        organizationId: orgId,
+        businessVersionId: bvId,
+        createdBy: userId,
+        readiness: 'DATA_INCOMPLETE',
+      }),
+    ]);
+    const rows = await withPinnedPostgresTransaction((tx) =>
+      tx.queryAll<{
+        readiness: string;
+        result_value_status: string;
+        result_ev_decimal: string | null;
+      }>(
+        `SELECT readiness,result_value_status,result_ev_decimal FROM finance_valuation_methods WHERE organization_id=? AND business_version_id=? AND method_type='DCF_FCFF'`,
+        [orgId, bvId]
+      )
+    );
+    expect(rows).toEqual([
+      {
+        readiness: 'READY',
+        result_value_status: 'PRESENT_NONZERO',
+        result_ev_decimal: '987654',
+      },
+    ]);
   });
 
   it('★ weight-sum=100 (flagship, DEC-FIN-005 pt.2): basket weights summing to 100 -> 200, weighted EV computed from basket members ONLY; a follow-up write summing to 90 -> 409, NO row mutated (rolled back atomically); a cross-check method with weightPct != null is rejected before any DB write', async () => {
     const caseId = await makeCase();
     const bvId = await makeVariant(caseId);
 
-    const mA = (await request(app).post(`/api/v8/finance-v2/valuation/variants/${bvId}/methods`).send({ methodType: 'DCF_FCFF' })).body.data.methodId;
-    const mB = (await request(app).post(`/api/v8/finance-v2/valuation/variants/${bvId}/methods`).send({ methodType: 'DCF_FCFE' })).body.data.methodId;
-    const mCrossCheck = (await request(app).post(`/api/v8/finance-v2/valuation/variants/${bvId}/methods`).send({ methodType: 'ASSET_BASED' })).body.data.methodId;
+    const mA = (
+      await request(app)
+        .post(`/api/v8/finance-v2/valuation/variants/${bvId}/methods`)
+        .send({ methodType: 'DCF_FCFF' })
+    ).body.data.methodId;
+    const mB = (
+      await request(app)
+        .post(`/api/v8/finance-v2/valuation/variants/${bvId}/methods`)
+        .send({ methodType: 'DCF_FCFE' })
+    ).body.data.methodId;
+    const mCrossCheck = (
+      await request(app)
+        .post(`/api/v8/finance-v2/valuation/variants/${bvId}/methods`)
+        .send({ methodType: 'ASSET_BASED' })
+    ).body.data.methodId;
 
     // Give A/B/cross-check a real READY result directly through the (already-tested-elsewhere)
     // canonical service, bypassing a full DCF run — this test is about the WEIGHT mechanism, not
     // re-proving the compute engine (that is covered by the dedicated compute test below).
-    await valuationComputeService.setMethodResult({ methodId: mA, readiness: 'READY', resultValueStatus: 'PRESENT_NONZERO', resultEvDecimal: 1_000_000 });
-    await valuationComputeService.setMethodResult({ methodId: mB, readiness: 'READY', resultValueStatus: 'PRESENT_NONZERO', resultEvDecimal: 1_200_000 });
-    await valuationComputeService.setMethodResult({ methodId: mCrossCheck, readiness: 'READY', resultValueStatus: 'PRESENT_NONZERO', resultEvDecimal: 5_000_000 });
+    await valuationComputeService.setMethodResult({
+      methodId: mA,
+      readiness: 'READY',
+      resultValueStatus: 'PRESENT_NONZERO',
+      resultEvDecimal: 1_000_000,
+    });
+    await valuationComputeService.setMethodResult({
+      methodId: mB,
+      readiness: 'READY',
+      resultValueStatus: 'PRESENT_NONZERO',
+      resultEvDecimal: 1_200_000,
+    });
+    await valuationComputeService.setMethodResult({
+      methodId: mCrossCheck,
+      readiness: 'READY',
+      resultValueStatus: 'PRESENT_NONZERO',
+      resultEvDecimal: 5_000_000,
+    });
 
     // Cross-check carrying a weight while NOT in the basket -> rejected at the route layer, before any write.
     const badCrossCheck = await request(app)
       .post(`/api/v8/finance-v2/valuation/variants/${bvId}/methods/basket`)
-      .send({ updates: [{ methodId: mCrossCheck, isInRecommendationBasket: false, weightPct: 10 }] });
+      .send({
+        updates: [{ methodId: mCrossCheck, isInRecommendationBasket: false, weightPct: 10 }],
+      });
     expect(badCrossCheck.status).toBe(400);
     expect(badCrossCheck.body.code).toBe('INVALID_BODY');
 
@@ -230,12 +371,24 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B3 — valuation (real HTTP + real 
     expect(okBasket.status).toBe(200);
     expect(okBasket.body.data.weightedRecommendation.status).toBe('READY');
     // Weighted EV = 0.6*1,000,000 + 0.4*1,200,000 = 1,080,000 — the cross-check's 5,000,000 must NOT leak in.
-    expect(okBasket.body.data.weightedRecommendation.weightedEnterpriseValue).toBeCloseTo(1_080_000, 6);
+    expect(okBasket.body.data.weightedRecommendation.weightedEnterpriseValue).toBeCloseTo(
+      1_080_000,
+      6
+    );
     expect(okBasket.body.data.weightedRecommendation.contributions).toHaveLength(2);
-    expect(okBasket.body.data.weightedRecommendation.contributions.some((c: any) => c.methodType === 'ASSET_BASED')).toBe(false);
+    expect(
+      okBasket.body.data.weightedRecommendation.contributions.some(
+        (c: any) => c.methodType === 'ASSET_BASED'
+      )
+    ).toBe(false);
 
     // Independent SQL read-back of the cross-check row — untouched by the basket, still unweighted.
-    const crossCheckRow = await withPinnedPostgresTransaction((tx) => tx.queryOne<{ is_in_recommendation_basket: boolean; weight_pct: string | null }>(`SELECT is_in_recommendation_basket, weight_pct FROM finance_valuation_methods WHERE id = ?`, [mCrossCheck]));
+    const crossCheckRow = await withPinnedPostgresTransaction((tx) =>
+      tx.queryOne<{ is_in_recommendation_basket: boolean; weight_pct: string | null }>(
+        `SELECT is_in_recommendation_basket, weight_pct FROM finance_valuation_methods WHERE id = ?`,
+        [mCrossCheck]
+      )
+    );
     expect(crossCheckRow?.is_in_recommendation_basket).toBe(false);
     expect(crossCheckRow?.weight_pct).toBeNull();
 
@@ -252,7 +405,12 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B3 — valuation (real HTTP + real 
     expect(badBasket.status).toBe(409);
     expect(badBasket.body.code).toBe('BASKET_WEIGHT_SUM_INVALID');
 
-    const afterFailedRow = await withPinnedPostgresTransaction((tx) => tx.queryOne<{ weight_pct: string }>(`SELECT weight_pct FROM finance_valuation_methods WHERE id = ?`, [mB]));
+    const afterFailedRow = await withPinnedPostgresTransaction((tx) =>
+      tx.queryOne<{ weight_pct: string }>(
+        `SELECT weight_pct FROM finance_valuation_methods WHERE id = ?`,
+        [mB]
+      )
+    );
     expect(Number(afterFailedRow?.weight_pct)).toBe(40); // unchanged — the failed 30% write never committed
   });
 
@@ -260,12 +418,25 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B3 — valuation (real HTTP + real 
     const caseId = await makeCase();
     const bvA = await makeVariant(caseId);
     const bvB = await makeVariant(caseId);
-    const mA = (await request(app).post(`/api/v8/finance-v2/valuation/variants/${bvA}/methods`).send({ methodType: 'DCF_FCFF' })).body.data.methodId;
-    const mB = (await request(app).post(`/api/v8/finance-v2/valuation/variants/${bvB}/methods`).send({ methodType: 'DCF_FCFF' })).body.data.methodId;
+    const mA = (
+      await request(app)
+        .post(`/api/v8/finance-v2/valuation/variants/${bvA}/methods`)
+        .send({ methodType: 'DCF_FCFF' })
+    ).body.data.methodId;
+    const mB = (
+      await request(app)
+        .post(`/api/v8/finance-v2/valuation/variants/${bvB}/methods`)
+        .send({ methodType: 'DCF_FCFF' })
+    ).body.data.methodId;
 
     const res = await request(app)
       .post(`/api/v8/finance-v2/valuation/variants/${bvA}/methods/basket`)
-      .send({ updates: [{ methodId: mA, isInRecommendationBasket: true, weightPct: 100 }, { methodId: mB, isInRecommendationBasket: true, weightPct: 0 }] });
+      .send({
+        updates: [
+          { methodId: mA, isInRecommendationBasket: true, weightPct: 100 },
+          { methodId: mB, isInRecommendationBasket: true, weightPct: 0 },
+        ],
+      });
     // mB does not belong to bvA -> 400 INVALID_BODY for weightPct=0 is not even reached; the second
     // update's weightPct=0 already fails validation (must be > 0), so assert on the METHOD_NOT_FOUND
     // path using a syntactically valid second entry instead.
@@ -294,22 +465,38 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B3 — valuation (real HTTP + real 
       nominalOrReal: 'NOMINAL',
       preOrPostTax: 'POST_TAX',
     };
-    const put1 = await request(app).put(`/api/v8/finance-v2/valuation/variants/${bvId}/wacc-inputs`).send(body);
+    const put1 = await request(app)
+      .put(`/api/v8/finance-v2/valuation/variants/${bvId}/wacc-inputs`)
+      .send(body);
     expect(put1.status).toBe(200);
     expect(put1.body.data.wacc_computed_pct).toBeNull();
 
-    const getRes = await request(app).get(`/api/v8/finance-v2/valuation/variants/${bvId}/wacc-inputs`);
+    const getRes = await request(app).get(
+      `/api/v8/finance-v2/valuation/variants/${bvId}/wacc-inputs`
+    );
     expect(getRes.status).toBe(200);
     expect(getRes.body.data.currency).toBe('PLN');
     expect(Number(getRes.body.data.risk_free_rate_pct)).toBe(3);
 
     // Manually stamp a computed WACC (simulating a prior compute run), then edit an input -> must reset to NULL.
-    await withPinnedPostgresTransaction((tx) => tx.queryRun(`UPDATE finance_valuation_wacc_inputs SET wacc_computed_pct = 8.5 WHERE business_version_id = ?`, [bvId]));
-    const put2 = await request(app).put(`/api/v8/finance-v2/valuation/variants/${bvId}/wacc-inputs`).send({ ...body, costOfDebtPretaxPct: 6.5 });
+    await withPinnedPostgresTransaction((tx) =>
+      tx.queryRun(
+        `UPDATE finance_valuation_wacc_inputs SET wacc_computed_pct = 8.5 WHERE business_version_id = ?`,
+        [bvId]
+      )
+    );
+    const put2 = await request(app)
+      .put(`/api/v8/finance-v2/valuation/variants/${bvId}/wacc-inputs`)
+      .send({ ...body, costOfDebtPretaxPct: 6.5 });
     expect(put2.status).toBe(200);
     expect(put2.body.data.wacc_computed_pct).toBeNull();
 
-    const sqlRow = await withPinnedPostgresTransaction((tx) => tx.queryOne<{ wacc_computed_pct: string | null; cost_of_debt_pretax_pct: string }>(`SELECT wacc_computed_pct, cost_of_debt_pretax_pct FROM finance_valuation_wacc_inputs WHERE business_version_id = ?`, [bvId]));
+    const sqlRow = await withPinnedPostgresTransaction((tx) =>
+      tx.queryOne<{ wacc_computed_pct: string | null; cost_of_debt_pretax_pct: string }>(
+        `SELECT wacc_computed_pct, cost_of_debt_pretax_pct FROM finance_valuation_wacc_inputs WHERE business_version_id = ?`,
+        [bvId]
+      )
+    );
     expect(sqlRow?.wacc_computed_pct).toBeNull();
     expect(Number(sqlRow?.cost_of_debt_pretax_pct)).toBe(6.5);
   });
@@ -317,7 +504,9 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B3 — valuation (real HTTP + real 
   it('PUT .../wacc-inputs with an invalid nominalOrReal -> 400 INVALID_BODY', async () => {
     const caseId = await makeCase();
     const bvId = await makeVariant(caseId);
-    const res = await request(app).put(`/api/v8/finance-v2/valuation/variants/${bvId}/wacc-inputs`).send({ currency: 'PLN', nominalOrReal: 'BOGUS', preOrPostTax: 'POST_TAX' });
+    const res = await request(app)
+      .put(`/api/v8/finance-v2/valuation/variants/${bvId}/wacc-inputs`)
+      .send({ currency: 'PLN', nominalOrReal: 'BOGUS', preOrPostTax: 'POST_TAX' });
     expect(res.status).toBe(400);
     expect(res.body.code).toBe('INVALID_BODY');
   });
@@ -350,7 +539,15 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B3 — valuation (real HTTP + real 
       tx.queryOne<{ period_id: string }>(
         `INSERT INTO finance_stmt_periods (organization_id, fiscal_calendar_id, period_type, fiscal_year, period_start, period_end, label, created_by)
          VALUES (?, ?, 'FY', ?, ?, ?, ?, ?) RETURNING period_id`,
-        [orgId, cal!.fiscal_calendar_id, fiscalYear, `${fiscalYear}-01-01`, `${fiscalYear}-12-31`, label, userId]
+        [
+          orgId,
+          cal!.fiscal_calendar_id,
+          fiscalYear,
+          `${fiscalYear}-01-01`,
+          `${fiscalYear}-12-31`,
+          label,
+          userId,
+        ]
       )
     );
     if (!per) throw new Error('finance_stmt_periods fixture insert returned no row');
@@ -358,12 +555,23 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B3 — valuation (real HTTP + real 
   }
 
   async function lineId(lineCode: string) {
-    const row = await withPinnedPostgresTransaction((tx) => tx.queryOne<{ id: string }>(`SELECT id FROM financial_statement_lines WHERE line_code = ?`, [lineCode]));
+    const row = await withPinnedPostgresTransaction((tx) =>
+      tx.queryOne<{ id: string }>(`SELECT id FROM financial_statement_lines WHERE line_code = ?`, [
+        lineCode,
+      ])
+    );
     if (!row) throw new Error(`financial_statement_lines has no row for ${lineCode}`);
     return row.id;
   }
 
-  async function seedBaselineOutput(bvId: string, entityId: string, periodId: string, canonicalLineId: string, statementType: 'P&L' | 'BS' | 'CF', valueDecimal: number) {
+  async function seedBaselineOutput(
+    bvId: string,
+    entityId: string,
+    periodId: string,
+    canonicalLineId: string,
+    statementType: 'P&L' | 'BS' | 'CF',
+    valueDecimal: number
+  ) {
     await withPinnedPostgresTransaction((tx) =>
       tx.queryRun(
         `INSERT INTO finance_baseline_outputs (organization_id, business_version_id, statement_type, canonical_line_id, entity_id, period_id, value_status, value_decimal, native_currency, presentation_currency, unit, value_kind, consolidation_scope, created_by)
@@ -379,7 +587,11 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B3 — valuation (real HTTP + real 
     const entityId = await makeEntity(bvId, `PARENT-${randomUUID().slice(0, 8)}`);
 
     // Source: a Baseline Model with one forecast fiscal year of outputs.
-    const baseline = await av.createArtifact({ organizationId: orgId, artifactType: 'BASELINE_MODEL', createdBy: userId });
+    const baseline = await av.createArtifact({
+      organizationId: orgId,
+      artifactType: 'BASELINE_MODEL',
+      createdBy: userId,
+    });
     const baselineBvId = baseline.businessVersion.business_version_id;
     const periodId = await makeFyPeriod(2027, 'FY2027');
 
@@ -440,30 +652,76 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B3 — valuation (real HTTP + real 
 
     // Independent SQL read-back — the actual persisted row, not just the HTTP echo.
     const sqlRow = await withPinnedPostgresTransaction((tx) =>
-      tx.queryOne<{ readiness: string; result_value_status: string; result_ev_decimal: string }>(`SELECT readiness, result_value_status, result_ev_decimal FROM finance_valuation_methods WHERE id = ?`, [methodId])
+      tx.queryOne<{ readiness: string; result_value_status: string; result_ev_decimal: string }>(
+        `SELECT readiness, result_value_status, result_ev_decimal FROM finance_valuation_methods WHERE id = ?`,
+        [methodId]
+      )
     );
     expect(sqlRow?.readiness).toBe('READY');
     expect(sqlRow?.result_value_status).toBe('PRESENT_NONZERO');
     expect(Number(sqlRow?.result_ev_decimal)).toBeCloseTo(computeRes.body.data.enterpriseValue, 2);
 
-    const methodsRes = await request(app).get(`/api/v8/finance-v2/valuation/variants/${bvId}/methods`);
+    const methodsRes = await request(app).get(
+      `/api/v8/finance-v2/valuation/variants/${bvId}/methods`
+    );
     expect(methodsRes.status).toBe(200);
     const dcfMethod = methodsRes.body.data.methods.find((m: any) => m.methodType === 'DCF_FCFF');
     expect(dcfMethod.readiness).toBe('READY');
     expect(dcfMethod.result.status).toBe('PRESENT_NONZERO');
-    expect(Number(dcfMethod.result.valueDecimal)).toBeCloseTo(computeRes.body.data.enterpriseValue, 2);
+    expect(Number(dcfMethod.result.valueDecimal)).toBeCloseTo(
+      computeRes.body.data.enterpriseValue,
+      2
+    );
 
-    const resultsRes = await request(app).get(`/api/v8/finance-v2/valuation/variants/${bvId}/results`);
+    const resultsRes = await request(app).get(
+      `/api/v8/finance-v2/valuation/variants/${bvId}/results`
+    );
     expect(resultsRes.status).toBe(200);
-    expect(resultsRes.body.data.headlineEnterpriseValue.value).toBeCloseTo(computeRes.body.data.enterpriseValue, 2);
+    expect(resultsRes.body.data.headlineEnterpriseValue.value).toBeCloseTo(
+      computeRes.body.data.enterpriseValue,
+      2
+    );
     expect(resultsRes.body.data.headlineEnterpriseValue.source).toBe('SINGLE_READY_METHOD'); // no bridge/basket yet
-    expect(Number(resultsRes.body.data.wacc.wacc_computed_pct)).toBeCloseTo(computeRes.body.data.wacc.waccPct, 6);
+    expect(Number(resultsRes.body.data.wacc.wacc_computed_pct)).toBeCloseTo(
+      computeRes.body.data.wacc.waccPct,
+      6
+    );
 
-    const terminalRes = await request(app).get(`/api/v8/finance-v2/valuation/methods/${methodId}/terminal`);
+    const terminalRes = await request(app).get(
+      `/api/v8/finance-v2/valuation/methods/${methodId}/terminal`
+    );
     expect(terminalRes.status).toBe(200);
     expect(terminalRes.body.data).toHaveLength(1);
     expect(terminalRes.body.data[0].convention).toBe('GORDON_GROWTH');
     expect(Number(terminalRes.body.data[0].g_pct)).toBe(2);
+
+    const failedTerminal = await request(app)
+      .post(`/api/v8/finance-v2/valuation/variants/${bvId}/compute/dcf`)
+      .send({
+        entityId,
+        projectionYears: [{ fiscalYear: 2027, periodIds: [periodId] }],
+        openingWorkingCapital: 150_000,
+        terminal: { gPct: 99 },
+      });
+    expect(failedTerminal.status).toBe(422);
+    expect(failedTerminal.body.code).toBe('TERMINAL_G_MUST_BE_LESS_THAN_WACC');
+
+    const failedMethod = await withPinnedPostgresTransaction((tx) =>
+      tx.queryOne<{
+        readiness: string;
+        result_value_status: string;
+        result_ev_decimal: string | null;
+      }>(
+        `SELECT readiness, result_value_status, result_ev_decimal
+           FROM finance_valuation_methods WHERE id = ?`,
+        [methodId]
+      )
+    );
+    expect(failedMethod).toEqual({
+      readiness: 'READY',
+      result_value_status: 'PRESENT_NONZERO',
+      result_ev_decimal: sqlRow!.result_ev_decimal,
+    });
   });
 
   it('★ N/A!=zero (compute gap): POST .../compute/dcf with a fiscal year that has NO baseline outputs at all -> FCFF_NOT_FULLY_PRESENT, method persisted as readiness=DATA_INCOMPLETE / result=MISSING, NEVER PRESENT_ZERO/0', async () => {
@@ -471,7 +729,11 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B3 — valuation (real HTTP + real 
     const bvId = await makeVariant(caseId);
     const entityId = await makeEntity(bvId, `PARENT-${randomUUID().slice(0, 8)}`);
 
-    const baseline = await av.createArtifact({ organizationId: orgId, artifactType: 'BASELINE_MODEL', createdBy: userId });
+    const baseline = await av.createArtifact({
+      organizationId: orgId,
+      artifactType: 'BASELINE_MODEL',
+      createdBy: userId,
+    });
     const baselineBvId = baseline.businessVersion.business_version_id;
     const periodId = await makeFyPeriod(2028, 'FY2028-empty');
     // Deliberately NO finance_baseline_outputs rows inserted for this period.
@@ -489,38 +751,97 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B3 — valuation (real HTTP + real 
     });
     expect(edge.ok).toBe(true);
 
-    await request(app)
-      .put(`/api/v8/finance-v2/valuation/variants/${bvId}/wacc-inputs`)
-      .send({
-        riskFreeRatePct: 3,
-        equityRiskPremiumPct: 5,
-        betaUnlevered: 1,
-        targetCapitalStructureDebtPct: 30,
-        targetCapitalStructureEquityPct: 70,
-        costOfDebtPretaxPct: 6,
-        cashTaxRatePct: 19,
-        currency: 'PLN',
-        nominalOrReal: 'NOMINAL',
-        preOrPostTax: 'POST_TAX',
-      });
+    await request(app).put(`/api/v8/finance-v2/valuation/variants/${bvId}/wacc-inputs`).send({
+      riskFreeRatePct: 3,
+      equityRiskPremiumPct: 5,
+      betaUnlevered: 1,
+      targetCapitalStructureDebtPct: 30,
+      targetCapitalStructureEquityPct: 70,
+      costOfDebtPretaxPct: 6,
+      cashTaxRatePct: 19,
+      currency: 'PLN',
+      nominalOrReal: 'NOMINAL',
+      preOrPostTax: 'POST_TAX',
+    });
 
-    const computeRes = await request(app)
-      .post(`/api/v8/finance-v2/valuation/variants/${bvId}/compute/dcf`)
-      .send({ entityId, projectionYears: [{ fiscalYear: 2028, periodIds: [periodId] }], openingWorkingCapital: 100_000, terminal: { gPct: 2 } });
-    expect(computeRes.status).toBe(422);
-    expect(computeRes.body.code).toBe('FCFF_NOT_FULLY_PRESENT');
+    const missingRequest = () =>
+      request(app)
+        .post(`/api/v8/finance-v2/valuation/variants/${bvId}/compute/dcf`)
+        .send({
+          entityId,
+          projectionYears: [{ fiscalYear: 2028, periodIds: [periodId] }],
+          openingWorkingCapital: 100_000,
+          terminal: { gPct: 2 },
+        });
+    const concurrentFailures = await Promise.all([missingRequest(), missingRequest()]);
+    expect(concurrentFailures.map((response) => response.status)).toEqual([422, 422]);
+    expect(concurrentFailures.map((response) => response.body.code)).toEqual([
+      'FCFF_NOT_FULLY_PRESENT',
+      'FCFF_NOT_FULLY_PRESENT',
+    ]);
 
     const sqlRow = await withPinnedPostgresTransaction((tx) =>
-      tx.queryOne<{ readiness: string; result_value_status: string; result_ev_decimal: string | null }>(`SELECT readiness, result_value_status, result_ev_decimal FROM finance_valuation_methods WHERE business_version_id = ? AND method_type = 'DCF_FCFF'`, [bvId])
+      tx.queryOne<{
+        id: string;
+        readiness: string;
+        result_value_status: string;
+        result_ev_decimal: string | null;
+      }>(
+        `SELECT id, readiness, result_value_status, result_ev_decimal FROM finance_valuation_methods WHERE business_version_id = ? AND method_type = 'DCF_FCFF'`,
+        [bvId]
+      )
     );
     expect(sqlRow?.readiness).toBe('DATA_INCOMPLETE');
     expect(sqlRow?.result_value_status).toBe('MISSING');
     expect(sqlRow?.result_ev_decimal).toBeNull(); // never PRESENT_ZERO / 0
+    const methodCount = await withPinnedPostgresTransaction((tx) =>
+      tx.queryOne<{ count: string }>(
+        `SELECT count(*)::text AS count FROM finance_valuation_methods WHERE organization_id = ? AND business_version_id = ? AND method_type = 'DCF_FCFF'`,
+        [orgId, bvId]
+      )
+    );
+    expect(methodCount?.count).toBe('1');
 
-    const methodsRes = await request(app).get(`/api/v8/finance-v2/valuation/variants/${bvId}/methods`);
+    const methodsRes = await request(app).get(
+      `/api/v8/finance-v2/valuation/variants/${bvId}/methods`
+    );
     const dcfMethod = methodsRes.body.data.methods.find((m: any) => m.methodType === 'DCF_FCFF');
     expect(dcfMethod.result.status).toBe('MISSING');
     expect(dcfMethod.result.valueDecimal).toBeNull();
+
+    const seededReady = await valuationComputeService.setMethodResult({
+      methodId: sqlRow!.id,
+      readiness: 'READY',
+      resultValueStatus: 'PRESENT_NONZERO',
+      resultEvDecimal: 123_456,
+    });
+    expect(seededReady.ok).toBe(true);
+    const failedRetry = await request(app)
+      .post(`/api/v8/finance-v2/valuation/variants/${bvId}/compute/dcf`)
+      .send({
+        entityId,
+        projectionYears: [{ fiscalYear: 2028, periodIds: [periodId] }],
+        openingWorkingCapital: 100_000,
+        terminal: { gPct: 2 },
+      });
+    expect(failedRetry.status).toBe(422);
+    expect(failedRetry.body.code).toBe('FCFF_NOT_FULLY_PRESENT');
+    const preserved = await withPinnedPostgresTransaction((tx) =>
+      tx.queryOne<{
+        readiness: string;
+        result_value_status: string;
+        result_ev_decimal: string | null;
+      }>(
+        `SELECT readiness, result_value_status, result_ev_decimal
+           FROM finance_valuation_methods WHERE id = ?`,
+        [sqlRow!.id]
+      )
+    );
+    expect(preserved).toEqual({
+      readiness: 'READY',
+      result_value_status: 'PRESENT_NONZERO',
+      result_ev_decimal: '123456',
+    });
   });
 
   // ---------------------------------------------------------------------------
@@ -536,7 +857,15 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B3 — valuation (real HTTP + real 
       .send({
         asOfDate: '2026-12-31',
         enterpriseValueDecimal: 10_000_000,
-        components: [{ sequenceOrder: 1, componentKind: 'DEBT', sign: 'SUBTRACT_FROM_EV', amountDecimal: 2_000_000, asOfDate: '2026-01-01' }],
+        components: [
+          {
+            sequenceOrder: 1,
+            componentKind: 'DEBT',
+            sign: 'SUBTRACT_FROM_EV',
+            amountDecimal: 2_000_000,
+            asOfDate: '2026-01-01',
+          },
+        ],
       });
     expect(badAsOf.status).toBe(400);
     expect(badAsOf.body.code).toBe('AS_OF_MISMATCH');
@@ -547,8 +876,20 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B3 — valuation (real HTTP + real 
         asOfDate: '2026-12-31',
         enterpriseValueDecimal: 10_000_000,
         components: [
-          { sequenceOrder: 1, componentKind: 'DEBT', sign: 'SUBTRACT_FROM_EV', amountDecimal: 2_000_000, asOfDate: '2026-12-31' },
-          { sequenceOrder: 2, componentKind: 'CASH', sign: 'ADD_TO_EV', amountDecimal: 500_000, asOfDate: '2026-12-31' },
+          {
+            sequenceOrder: 1,
+            componentKind: 'DEBT',
+            sign: 'SUBTRACT_FROM_EV',
+            amountDecimal: 2_000_000,
+            asOfDate: '2026-12-31',
+          },
+          {
+            sequenceOrder: 2,
+            componentKind: 'CASH',
+            sign: 'ADD_TO_EV',
+            amountDecimal: 500_000,
+            asOfDate: '2026-12-31',
+          },
         ],
       });
     expect(ok.status).toBe(200);
@@ -559,7 +900,9 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B3 — valuation (real HTTP + real 
     expect(Number(getRes.body.data.header.equity_value_decimal)).toBe(8_500_000);
     expect(getRes.body.data.components).toHaveLength(2);
 
-    const resultsRes = await request(app).get(`/api/v8/finance-v2/valuation/variants/${bvId}/results`);
+    const resultsRes = await request(app).get(
+      `/api/v8/finance-v2/valuation/variants/${bvId}/results`
+    );
     expect(resultsRes.body.data.headlineEnterpriseValue.source).toBe('BRIDGE');
     expect(resultsRes.body.data.headlineEnterpriseValue.value).toBe(10_000_000);
   });
@@ -571,7 +914,9 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B3 — valuation (real HTTP + real 
   it('POST .../sensitivity builds and persists a real 25-cell / 1-base-cell grid; GET reads it back', async () => {
     const caseId = await makeCase();
     const bvId = await makeVariant(caseId);
-    const methodRes = await request(app).post(`/api/v8/finance-v2/valuation/variants/${bvId}/methods`).send({ methodType: 'DCF_FCFF' });
+    const methodRes = await request(app)
+      .post(`/api/v8/finance-v2/valuation/variants/${bvId}/methods`)
+      .send({ methodType: 'DCF_FCFF' });
     const methodId = methodRes.body.data.methodId;
 
     const body = {
@@ -584,17 +929,26 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B3 — valuation (real HTTP + real 
       baseWaccPct: 8,
       baseGPct: 2,
     };
-    const created = await request(app).post(`/api/v8/finance-v2/valuation/methods/${methodId}/sensitivity`).send(body);
+    const created = await request(app)
+      .post(`/api/v8/finance-v2/valuation/methods/${methodId}/sensitivity`)
+      .send(body);
     expect(created.status).toBe(200);
     expect(created.body.data.cells).toHaveLength(25);
     expect(created.body.data.cells.filter((c: any) => c.isBaseCell)).toHaveLength(1);
 
-    const getRes = await request(app).get(`/api/v8/finance-v2/valuation/methods/${methodId}/sensitivity/primary`);
+    const getRes = await request(app).get(
+      `/api/v8/finance-v2/valuation/methods/${methodId}/sensitivity/primary`
+    );
     expect(getRes.status).toBe(200);
     expect(getRes.body.data.grid.grid_status).toBe('COMPLETE');
     expect(getRes.body.data.cells).toHaveLength(25);
 
-    const sqlCount = await withPinnedPostgresTransaction((tx) => tx.queryOne<{ n: string }>(`SELECT count(*)::text AS n FROM finance_valuation_sensitivity_cells WHERE grid_id = ?`, [created.body.data.gridId]));
+    const sqlCount = await withPinnedPostgresTransaction((tx) =>
+      tx.queryOne<{ n: string }>(
+        `SELECT count(*)::text AS n FROM finance_valuation_sensitivity_cells WHERE grid_id = ?`,
+        [created.body.data.gridId]
+      )
+    );
     expect(sqlCount?.n).toBe('25');
   });
 
@@ -608,24 +962,58 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B3 — valuation (real HTTP + real 
     const bvB = await makeVariant(caseId, 'Variant B');
 
     // Give each variant a minimal READY result so the Advisor has something to compare.
-    const mA = (await request(app).post(`/api/v8/finance-v2/valuation/variants/${bvA}/methods`).send({ methodType: 'DCF_FCFF' })).body.data.methodId;
-    const mB = (await request(app).post(`/api/v8/finance-v2/valuation/variants/${bvB}/methods`).send({ methodType: 'DCF_FCFF' })).body.data.methodId;
-    await valuationComputeService.setMethodResult({ methodId: mA, readiness: 'READY', resultValueStatus: 'PRESENT_NONZERO', resultEvDecimal: 10_000_000 });
-    await valuationComputeService.setMethodResult({ methodId: mB, readiness: 'READY', resultValueStatus: 'PRESENT_NONZERO', resultEvDecimal: 13_000_000 });
+    const mA = (
+      await request(app)
+        .post(`/api/v8/finance-v2/valuation/variants/${bvA}/methods`)
+        .send({ methodType: 'DCF_FCFF' })
+    ).body.data.methodId;
+    const mB = (
+      await request(app)
+        .post(`/api/v8/finance-v2/valuation/variants/${bvB}/methods`)
+        .send({ methodType: 'DCF_FCFF' })
+    ).body.data.methodId;
+    await valuationComputeService.setMethodResult({
+      methodId: mA,
+      readiness: 'READY',
+      resultValueStatus: 'PRESENT_NONZERO',
+      resultEvDecimal: 10_000_000,
+    });
+    await valuationComputeService.setMethodResult({
+      methodId: mB,
+      readiness: 'READY',
+      resultValueStatus: 'PRESENT_NONZERO',
+      resultEvDecimal: 13_000_000,
+    });
 
-    const compareRead = await request(app).post(`/api/v8/finance-v2/valuation/cases/${caseId}/compare-variants`).send({ variantIdA: bvA, variantIdB: bvB, persist: false });
+    const compareRead = await request(app)
+      .post(`/api/v8/finance-v2/valuation/cases/${caseId}/compare-variants`)
+      .send({ variantIdA: bvA, variantIdB: bvB, persist: false });
     expect(compareRead.status).toBe(200);
-    const evMetric = compareRead.body.data.metrics.find((m: any) => m.metric === 'ENTERPRISE_VALUE');
+    const evMetric = compareRead.body.data.metrics.find(
+      (m: any) => m.metric === 'ENTERPRISE_VALUE'
+    );
     expect(evMetric.a).toBe(10_000_000);
     expect(evMetric.b).toBe(13_000_000);
     expect(evMetric.delta).toBe(3_000_000);
 
-    const emptyBefore = await withPinnedPostgresTransaction((tx) => tx.queryOne<{ n: string }>(`SELECT count(*)::text AS n FROM finance_valuation_advisor_outputs WHERE business_version_id = ?`, [bvA]));
+    const emptyBefore = await withPinnedPostgresTransaction((tx) =>
+      tx.queryOne<{ n: string }>(
+        `SELECT count(*)::text AS n FROM finance_valuation_advisor_outputs WHERE business_version_id = ?`,
+        [bvA]
+      )
+    );
     expect(emptyBefore?.n).toBe('0'); // persist:false wrote nothing
 
-    const comparePersist = await request(app).post(`/api/v8/finance-v2/valuation/cases/${caseId}/compare-variants`).send({ variantIdA: bvA, variantIdB: bvB, persist: true });
+    const comparePersist = await request(app)
+      .post(`/api/v8/finance-v2/valuation/cases/${caseId}/compare-variants`)
+      .send({ variantIdA: bvA, variantIdB: bvB, persist: true });
     expect(comparePersist.status).toBe(200);
-    const afterPersist = await withPinnedPostgresTransaction((tx) => tx.queryOne<{ n: string }>(`SELECT count(*)::text AS n FROM finance_valuation_advisor_outputs WHERE business_version_id = ? AND is_comparison = true`, [bvA]));
+    const afterPersist = await withPinnedPostgresTransaction((tx) =>
+      tx.queryOne<{ n: string }>(
+        `SELECT count(*)::text AS n FROM finance_valuation_advisor_outputs WHERE business_version_id = ? AND is_comparison = true`,
+        [bvA]
+      )
+    );
     expect(Number(afterPersist?.n)).toBeGreaterThan(0);
   });
 
@@ -633,14 +1021,27 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B3 — valuation (real HTTP + real 
     const caseId = await makeCase();
     const bvId = await makeVariant(caseId);
 
-    const nothingRes = await request(app).post(`/api/v8/finance-v2/valuation/variants/${bvId}/advisor/generate`).send({});
+    const nothingRes = await request(app)
+      .post(`/api/v8/finance-v2/valuation/variants/${bvId}/advisor/generate`)
+      .send({});
     expect(nothingRes.status).toBe(409);
     expect(nothingRes.body.code).toBe('NOTHING_COMPUTED');
 
-    const mA = (await request(app).post(`/api/v8/finance-v2/valuation/variants/${bvId}/methods`).send({ methodType: 'DCF_FCFF' })).body.data.methodId;
-    await valuationComputeService.setMethodResult({ methodId: mA, readiness: 'READY', resultValueStatus: 'PRESENT_NONZERO', resultEvDecimal: 9_000_000 });
+    const mA = (
+      await request(app)
+        .post(`/api/v8/finance-v2/valuation/variants/${bvId}/methods`)
+        .send({ methodType: 'DCF_FCFF' })
+    ).body.data.methodId;
+    await valuationComputeService.setMethodResult({
+      methodId: mA,
+      readiness: 'READY',
+      resultValueStatus: 'PRESENT_NONZERO',
+      resultEvDecimal: 9_000_000,
+    });
 
-    const genRes = await request(app).post(`/api/v8/finance-v2/valuation/variants/${bvId}/advisor/generate`).send({});
+    const genRes = await request(app)
+      .post(`/api/v8/finance-v2/valuation/variants/${bvId}/advisor/generate`)
+      .send({});
     expect(genRes.status).toBe(200);
     expect(genRes.body.data.findings.length).toBeGreaterThan(0);
     expect(genRes.body.data.computeSnapshotId).toBeTruthy();
@@ -649,7 +1050,12 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B3 — valuation (real HTTP + real 
     expect(listRes.status).toBe(200);
     expect(listRes.body.data.length).toBe(genRes.body.data.findings.length);
 
-    const sqlRow = await withPinnedPostgresTransaction((tx) => tx.queryOne<{ n: string }>(`SELECT count(*)::text AS n FROM finance_valuation_advisor_outputs WHERE business_version_id = ?`, [bvId]));
+    const sqlRow = await withPinnedPostgresTransaction((tx) =>
+      tx.queryOne<{ n: string }>(
+        `SELECT count(*)::text AS n FROM finance_valuation_advisor_outputs WHERE business_version_id = ?`,
+        [bvId]
+      )
+    );
     expect(Number(sqlRow?.n)).toBe(genRes.body.data.findings.length);
   });
 });

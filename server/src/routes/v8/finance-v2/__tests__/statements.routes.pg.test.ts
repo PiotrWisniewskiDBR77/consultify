@@ -15,11 +15,13 @@ import { randomUUID } from 'node:crypto';
 
 import express from 'express';
 import request from 'supertest';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_PG_REQUESTED =
-  process.env.RUN_DB_TESTS === '1' && process.env.MOCK_DB === 'false' && CONNECTION_STRING.startsWith('postgres');
+  process.env.RUN_DB_TESTS === '1' &&
+  process.env.MOCK_DB === 'false' &&
+  CONNECTION_STRING.startsWith('postgres');
 if (REAL_PG_REQUESTED) {
   process.env.DB_TYPE = 'postgres';
 }
@@ -42,7 +44,9 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — statements (real HTTP + real
       next();
     });
     a.use('/api/v8/finance-v2', financeV2Router);
-    a.use((err: any, _req: any, res: any, _next: any) => res.status(500).json({ error: String(err?.message || err) }));
+    a.use((err: any, _req: any, res: any, _next: any) =>
+      res.status(500).json({ error: String(err?.message || err) })
+    );
     return a;
   }
   let financeV2Router: express.Router;
@@ -66,7 +70,24 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — statements (real HTTP + real
     ({ withPinnedPostgresTransaction } = await import('../../../../database/PostgresDatabase.js'));
     financeV2Router = (await import('../index.js')).default;
 
-    await withPinnedPostgresTransaction((tx) => tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [orgId, 'PkgB2 Statements Test Org']));
+    await withPinnedPostgresTransaction((tx) =>
+      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [
+        orgId,
+        'PkgB2 Statements Test Org',
+      ])
+    );
+    await withPinnedPostgresTransaction(async (tx) => {
+      await tx.queryRun(
+        `INSERT INTO users (id, email, password, first_name, last_name, role, organization_id)
+         VALUES (?, ?, 'test', 'Statements', 'Admin', 'ADMIN', ?)`,
+        [userId, `${userId}@test.invalid`, orgId]
+      );
+      await tx.queryRun(
+        `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+         VALUES (?, ?, ?, 'ADMIN', 'ACTIVE')`,
+        [`membership-${userId}`, orgId, userId]
+      );
+    });
 
     const cal = await withPinnedPostgresTransaction((tx) =>
       tx.queryOne<{ fiscal_calendar_id: string }>(
@@ -90,12 +111,30 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — statements (real HTTP + real
     app = appAs('finance_admin');
   });
 
+  afterAll(async () => {
+    if (!withPinnedPostgresTransaction) return;
+    await withPinnedPostgresTransaction(async (tx) => {
+      await tx.queryRun(
+        `DELETE FROM organization_members WHERE organization_id = ? AND user_id = ?`,
+        [orgId, userId]
+      );
+      await tx.queryRun(`DELETE FROM users WHERE id = ? AND organization_id = ?`, [userId, orgId]);
+    });
+  });
+
   it('POST /statements/:id/map -> maps a balanced set of lines; GET /statements/:id/lines reads them back with the full value contract', async () => {
-    const created = await request(app).post('/api/v8/finance-v2/artifacts').send({ artifactType: 'STATEMENT_PACK' });
+    const created = await request(app)
+      .post('/api/v8/finance-v2/artifacts')
+      .send({ artifactType: 'STATEMENT_PACK' });
     const bvId = created.body.data.currentBusinessVersion.businessVersionId;
     const entityId = await makeEntity(bvId, `PARENT-${randomUUID().slice(0, 8)}`);
     const entityCode = (
-      await withPinnedPostgresTransaction((tx) => tx.queryOne<{ entity_code: string }>(`SELECT entity_code FROM finance_stmt_entities WHERE id = ?`, [entityId]))
+      await withPinnedPostgresTransaction((tx) =>
+        tx.queryOne<{ entity_code: string }>(
+          `SELECT entity_code FROM finance_stmt_entities WHERE id = ?`,
+          [entityId]
+        )
+      )
     )?.entity_code;
 
     const mapRes = await request(app)
@@ -104,12 +143,30 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — statements (real HTTP + real
         unit: 'UNITS',
         presentationCurrency: 'PLN',
         rawLines: [
-          { lineItem: 'Total assets', periodId, entityCode, currency: 'PLN', value: 1_000_000, sourceRef: { page: 3 } },
-          { lineItem: 'Total liabilities and equity', periodId, entityCode, currency: 'PLN', value: 1_000_000, sourceRef: { page: 3 } },
+          {
+            lineItem: 'Total assets',
+            periodId,
+            entityCode,
+            currency: 'PLN',
+            value: 1_000_000,
+            sourceRef: { page: 3 },
+          },
+          {
+            lineItem: 'Total liabilities and equity',
+            periodId,
+            entityCode,
+            currency: 'PLN',
+            value: 1_000_000,
+            sourceRef: { page: 3 },
+          },
         ],
         rules: [
           { sourceLabel: 'Total assets', statementType: 'BS', lineCode: 'TOTAL_ASSETS' },
-          { sourceLabel: 'Total liabilities and equity', statementType: 'BS', lineCode: 'TOTAL_LIABILITIES_EQUITY' },
+          {
+            sourceLabel: 'Total liabilities and equity',
+            statementType: 'BS',
+            lineCode: 'TOTAL_LIABILITIES_EQUITY',
+          },
         ],
       });
     expect(mapRes.status).toBe(201);
@@ -134,7 +191,10 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — statements (real HTTP + real
 
     // Independent SQL read-back — never trust only the HTTP body.
     const sqlRows = await withPinnedPostgresTransaction((tx) =>
-      tx.queryAll<{ id: string }>(`SELECT id FROM finance_stmt_lines WHERE business_version_id = ?`, [bvId])
+      tx.queryAll<{ id: string }>(
+        `SELECT id FROM finance_stmt_lines WHERE business_version_id = ?`,
+        [bvId]
+      )
     );
     expect(sqlRows.length).toBe(2);
 
@@ -147,31 +207,44 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — statements (real HTTP + real
     expect(reconcileRes.body.data.totals.residual).toBe(0);
     const reconciliationRunId = reconcileRes.body.data.reconciliationRunId;
 
-    const runsRes = await request(app).get(`/api/v8/finance-v2/statements/${bvId}/reconciliation-runs`);
+    const runsRes = await request(app).get(
+      `/api/v8/finance-v2/statements/${bvId}/reconciliation-runs`
+    );
     expect(runsRes.status).toBe(200);
     expect(runsRes.body.data).toHaveLength(1);
     expect(runsRes.body.data[0].reconciliationRunId).toBe(reconciliationRunId);
 
-    const runDetailRes = await request(app).get(`/api/v8/finance-v2/statements/reconciliation-runs/${reconciliationRunId}`);
+    const runDetailRes = await request(app).get(
+      `/api/v8/finance-v2/statements/reconciliation-runs/${reconciliationRunId}`
+    );
     expect(runDetailRes.status).toBe(200);
     expect(runDetailRes.body.data.rows).toHaveLength(2);
 
     // SQL read-back for the run itself.
     const runRow = await withPinnedPostgresTransaction((tx) =>
-      tx.queryOne<{ status: string }>(`SELECT status FROM finance_reconciliation_runs WHERE id = ?`, [reconciliationRunId])
+      tx.queryOne<{ status: string }>(
+        `SELECT status FROM finance_reconciliation_runs WHERE id = ?`,
+        [reconciliationRunId]
+      )
     );
     expect(runRow?.status).toBe('CLEAN');
   });
 
   it('POST /statements/:id/map with a bad body -> 400 INVALID_BODY, no row written', async () => {
-    const created = await request(app).post('/api/v8/finance-v2/artifacts').send({ artifactType: 'STATEMENT_PACK' });
+    const created = await request(app)
+      .post('/api/v8/finance-v2/artifacts')
+      .send({ artifactType: 'STATEMENT_PACK' });
     const bvId = created.body.data.currentBusinessVersion.businessVersionId;
 
-    const res = await request(app).post(`/api/v8/finance-v2/statements/${bvId}/map`).send({ unit: 'UNITS' });
+    const res = await request(app)
+      .post(`/api/v8/finance-v2/statements/${bvId}/map`)
+      .send({ unit: 'UNITS' });
     expect(res.status).toBe(400);
     expect(res.body.code).toBe('INVALID_BODY');
 
-    const rows = await withPinnedPostgresTransaction((tx) => tx.queryAll(`SELECT id FROM finance_stmt_lines WHERE business_version_id = ?`, [bvId]));
+    const rows = await withPinnedPostgresTransaction((tx) =>
+      tx.queryAll(`SELECT id FROM finance_stmt_lines WHERE business_version_id = ?`, [bvId])
+    );
     expect(rows.length).toBe(0);
   });
 
@@ -180,7 +253,9 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — statements (real HTTP + real
     expect(res.status).toBe(404);
     expect(res.body.code).toBe('NOT_FOUND');
 
-    const notMounted = await request(app).get(`/api/v8/finance-v2/statements/this-path-does-not-exist-anywhere`);
+    const notMounted = await request(app).get(
+      `/api/v8/finance-v2/statements/this-path-does-not-exist-anywhere`
+    );
     // `/statements/:businessVersionId/lines` requires the `/lines` suffix — a bare
     // `/statements/:x` has no matching route in this router at all.
     expect(notMounted.status).toBe(404);

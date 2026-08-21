@@ -828,6 +828,81 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
       // exception remains.
       expect(names).toEqual(['finance_valuation_cases']);
     });
+
+    it('database wall rejects every cross-tenant parent identity in the immutable valuation input ledger', async () => {
+      const graph = async (businessVersionId: string) =>
+        t((tx) =>
+          tx.queryOne<{
+            artifact_id: string;
+            business_version_id: string;
+            working_revision_id: string;
+            working_revision_version: number;
+          }>(
+            `SELECT a.artifact_id, bv.business_version_id,
+                    wr.working_revision_id, wr.version AS working_revision_version
+               FROM finance_business_versions bv
+               JOIN finance_artifacts a
+                 ON (a.artifact_id, a.organization_id) = (bv.artifact_id, bv.organization_id)
+               JOIN finance_working_revisions wr
+                 ON (wr.business_version_id, wr.organization_id) =
+                    (bv.business_version_id, bv.organization_id)
+              WHERE bv.business_version_id = ? AND wr.is_current = TRUE`,
+            [businessVersionId]
+          )
+        );
+      const a = await graph(A.valuationBvId);
+      const b = await graph(B.valuationBvId);
+      expect(a).toBeTruthy();
+      expect(b).toBeTruthy();
+
+      const insert = (identity: NonNullable<typeof a>, suffix: string) =>
+        t((tx) =>
+          tx.queryRun(
+            `INSERT INTO finance_valuation_input_command_events
+             (event_id, organization_id, idempotency_key, input_kind,
+              request_sha256, artifact_id, business_version_id,
+              working_revision_id, working_revision_version, created_by)
+             VALUES (?, ?, ?, 'WACC_ASSUMPTIONS', repeat('a', 64), ?, ?, ?, ?, ?)`,
+            [
+              randomUUID(),
+              A.orgId,
+              `w9c-cross-tenant-${suffix}-${randomUUID()}`,
+              identity.artifact_id,
+              identity.business_version_id,
+              identity.working_revision_id,
+              identity.working_revision_version,
+              A.userId,
+            ]
+          )
+        );
+
+      await expect(insert({ ...a!, artifact_id: b!.artifact_id }, 'artifact')).rejects.toMatchObject({
+        code: '23503',
+      });
+      await expect(
+        insert({ ...a!, business_version_id: b!.business_version_id }, 'business-version')
+      ).rejects.toMatchObject({ code: '23503' });
+      await expect(
+        insert(
+          {
+            ...a!,
+            working_revision_id: b!.working_revision_id,
+            working_revision_version: b!.working_revision_version,
+          },
+          'working-revision'
+        )
+      ).rejects.toMatchObject({ code: '23503' });
+
+      const residue = await t((tx) =>
+        tx.queryOne<{ n: string }>(
+          `SELECT count(*)::text AS n
+             FROM finance_valuation_input_command_events
+            WHERE organization_id = ? AND idempotency_key LIKE 'w9c-cross-tenant-%'`,
+          [A.orgId]
+        )
+      );
+      expect(Number(residue!.n)).toBe(0);
+    });
   });
 
   // =========================================================================

@@ -157,10 +157,22 @@ describe.skipIf(!realPg)('statement-pack canonical registration (real PostgreSQL
     );
     expect(new Set(versions.rows.map((row) => row.txid))).toEqual(new Set([transactionId]));
 
+    const packBeforeReplay = await pool.query<{ txid: string; updated_at: Date }>(
+      `SELECT xmin::text AS txid, updated_at
+       FROM financial_statement_packs WHERE id = $1`,
+      [first.statementPackId]
+    );
     const [replayA, replayB] = await Promise.all([register(fixture), register(fixture)]);
     expect(replayA.artifactId).toBe(first.artifactId);
     expect(replayB.artifactId).toBe(first.artifactId);
     expect(replayA.replayed).toBe(true);
+    expect(replayB.replayed).toBe(true);
+    const packAfterReplay = await pool.query<{ txid: string; updated_at: Date }>(
+      `SELECT xmin::text AS txid, updated_at
+       FROM financial_statement_packs WHERE id = $1`,
+      [first.statementPackId]
+    );
+    expect(packAfterReplay.rows[0]).toEqual(packBeforeReplay.rows[0]);
     const counts = await pool.query<{ artifacts: number; aliases: number }>(
       `SELECT
          (SELECT count(*)::int FROM finance_artifacts WHERE organization_id = $1 AND artifact_type = 'STATEMENT_PACK') AS artifacts,

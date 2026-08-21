@@ -17,7 +17,7 @@ import { randomUUID } from 'node:crypto';
 
 import express from 'express';
 import request from 'supertest';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 vi.unmock('multer');
 
@@ -94,6 +94,23 @@ describe.skipIf(!REAL_PG)(
           'ExpImp Tenant B',
         ])
       );
+      await withPinnedPostgresTransaction(async (tx) => {
+        for (const [userId, orgId, firstName] of [
+          [userA, orgA, 'Export A'],
+          [userB, orgB, 'Export B'],
+        ] as const) {
+          await tx.queryRun(
+            `INSERT INTO users (id, email, password, first_name, last_name, role, organization_id)
+             VALUES (?, ?, 'test', ?, 'Admin', 'ADMIN', ?)`,
+            [userId, `${userId}@test.invalid`, firstName, orgId]
+          );
+          await tx.queryRun(
+            `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+             VALUES (?, ?, ?, 'ADMIN', 'ACTIVE')`,
+            [`membership-${userId}`, orgId, userId]
+          );
+        }
+      });
 
       appA = appAsOrg(orgA, userA);
       appB = appAsOrg(orgB, userB);
@@ -157,6 +174,18 @@ describe.skipIf(!REAL_PG)(
         )
       );
     }, 120000);
+
+    afterAll(async () => {
+      if (!withPinnedPostgresTransaction) return;
+      await withPinnedPostgresTransaction(async (tx) => {
+        await tx.queryRun(
+          `DELETE FROM organization_members
+           WHERE (organization_id = ? AND user_id = ?) OR (organization_id = ? AND user_id = ?)`,
+          [orgA, userA, orgB, userB]
+        );
+        await tx.queryRun(`DELETE FROM users WHERE id IN (?, ?)`, [userA, userB]);
+      });
+    });
 
     // -----------------------------------------------------------------
     // Mount proof

@@ -99,6 +99,18 @@ describe.skipIf(!REAL_PG)(
           'ID Bridge Other Org',
         ])
       );
+      await withPinnedPostgresTransaction(async (tx) => {
+        await tx.queryRun(
+          `INSERT INTO users (id, email, password, first_name, last_name, role, organization_id)
+           VALUES (?, ?, 'test', 'ID Bridge', 'Admin', 'ADMIN', ?)`,
+          [userId, `${userId}@test.invalid`, orgId]
+        );
+        await tx.queryRun(
+          `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+           VALUES (?, ?, ?, 'ADMIN', 'ACTIVE')`,
+          [`membership-${userId}`, orgId, userId]
+        );
+      });
 
       verifyClient = new Client({
         connectionString: CONNECTION_STRING,
@@ -109,6 +121,18 @@ describe.skipIf(!REAL_PG)(
     }, 120000);
 
     afterAll(async () => {
+      if (withPinnedPostgresTransaction) {
+        await withPinnedPostgresTransaction(async (tx) => {
+          await tx.queryRun(
+            `DELETE FROM organization_members WHERE organization_id = ? AND user_id = ?`,
+            [orgId, userId]
+          );
+          await tx.queryRun(`DELETE FROM users WHERE id = ? AND organization_id = ?`, [
+            userId,
+            orgId,
+          ]);
+        });
+      }
       if (verifyClient) await verifyClient.end();
     });
 

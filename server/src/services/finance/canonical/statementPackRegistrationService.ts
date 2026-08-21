@@ -142,6 +142,15 @@ export async function confirmAndRegisterStatementPack(
       (await syncStatementToPack(params.statementId, { deferShadow: true }));
     if (!statementPackId) throw new Error('Statement pack registration produced no pack');
 
+    // syncStatementToPack already refreshes a newly assigned pack on the
+    // ambient pinned client. Comparative imports arrive with an existing pack,
+    // so refresh that aggregate here as part of the same atomic confirmation
+    // and canonical-registration unit. A true replay returned above remains
+    // read-only.
+    if (existingPackId) {
+      await recomputeStatementPack(statementPackId, { deferShadow: true });
+    }
+
     await recordStatementSourceArtifact({
       statementId: params.statementId,
       ingestRunId,
@@ -233,10 +242,6 @@ export async function confirmAndRegisterStatementPack(
     };
   });
 
-  // Refresh from the current transaction state after the owner statement was
-  // confirmed. Skipping re-sync for an existing comparative pack must not
-  // leave the aggregate with the pre-confirm pending snapshot.
-  await recomputeStatementPack(result.statementPackId, { deferShadow: true });
   const shadowRunner = params.afterCommitShadowRunner || runStatementPackShadowReconcile;
   await shadowRunner(result.statementPackId).catch((error) => {
     logger.warn('[FinanceStatements] post-commit pack shadow reconcile failed', {

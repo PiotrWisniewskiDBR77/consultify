@@ -13,11 +13,13 @@ import { randomUUID } from 'node:crypto';
 
 import express from 'express';
 import request from 'supertest';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_PG_REQUESTED =
-  process.env.RUN_DB_TESTS === '1' && process.env.MOCK_DB === 'false' && CONNECTION_STRING.startsWith('postgres');
+  process.env.RUN_DB_TESTS === '1' &&
+  process.env.MOCK_DB === 'false' &&
+  CONNECTION_STRING.startsWith('postgres');
 if (REAL_PG_REQUESTED) {
   process.env.DB_TYPE = 'postgres';
 }
@@ -41,7 +43,9 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — analysis (real HTTP + real P
       next();
     });
     a.use('/api/v8/finance-v2', financeV2Router);
-    a.use((err: any, _req: any, res: any, _next: any) => res.status(500).json({ error: String(err?.message || err) }));
+    a.use((err: any, _req: any, res: any, _next: any) =>
+      res.status(500).json({ error: String(err?.message || err) })
+    );
     return a;
   }
   let financeV2Router: express.Router;
@@ -61,11 +65,21 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — analysis (real HTTP + real P
     return row.id;
   }
 
-  async function writeLine(businessVersionId: string, entityId: string, lineCode: string, statementType: 'P&L' | 'BS' | 'CF', value: number) {
+  async function writeLine(
+    businessVersionId: string,
+    entityId: string,
+    lineCode: string,
+    statementType: 'P&L' | 'BS' | 'CF',
+    value: number
+  ) {
     const line = await withPinnedPostgresTransaction((tx) =>
-      tx.queryOne<{ id: string }>(`SELECT id FROM financial_statement_lines WHERE line_code = ? AND organization_id IS NULL LIMIT 1`, [lineCode])
+      tx.queryOne<{ id: string }>(
+        `SELECT id FROM financial_statement_lines WHERE line_code = ? AND organization_id IS NULL LIMIT 1`,
+        [lineCode]
+      )
     );
-    if (!line) throw new Error(`financial_statement_lines seed row not found for line_code=${lineCode}`);
+    if (!line)
+      throw new Error(`financial_statement_lines seed row not found for line_code=${lineCode}`);
     await withPinnedPostgresTransaction((tx) =>
       tx.queryRun(
         `INSERT INTO finance_stmt_lines (
@@ -83,7 +97,24 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — analysis (real HTTP + real P
     lineageService = await import('../../../../services/finance/canonical/lineageService.js');
     financeV2Router = (await import('../index.js')).default;
 
-    await withPinnedPostgresTransaction((tx) => tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [orgId, 'PkgB2 Analysis Test Org']));
+    await withPinnedPostgresTransaction((tx) =>
+      tx.queryRun(`INSERT INTO organizations (id, name) VALUES (?, ?)`, [
+        orgId,
+        'PkgB2 Analysis Test Org',
+      ])
+    );
+    await withPinnedPostgresTransaction(async (tx) => {
+      await tx.queryRun(
+        `INSERT INTO users (id, email, password, first_name, last_name, role, organization_id)
+         VALUES (?, ?, 'test', 'Analysis', 'Admin', 'ADMIN', ?)`,
+        [userId, `${userId}@test.invalid`, orgId]
+      );
+      await tx.queryRun(
+        `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+         VALUES (?, ?, ?, 'ADMIN', 'ACTIVE')`,
+        [`membership-${userId}`, orgId, userId]
+      );
+    });
 
     const cal = await withPinnedPostgresTransaction((tx) =>
       tx.queryOne<{ fiscal_calendar_id: string }>(
@@ -107,6 +138,17 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — analysis (real HTTP + real P
     app = appAs('finance_admin');
   });
 
+  afterAll(async () => {
+    if (!withPinnedPostgresTransaction) return;
+    await withPinnedPostgresTransaction(async (tx) => {
+      await tx.queryRun(
+        `DELETE FROM organization_members WHERE organization_id = ? AND user_id = ?`,
+        [orgId, userId]
+      );
+      await tx.queryRun(`DELETE FROM users WHERE id = ? AND organization_id = ?`, [userId, orgId]);
+    });
+  });
+
   it('GET /analysis/kpi-catalog returns the globally-seeded three-layer catalog, ACTIVE-only by default', async () => {
     const res = await request(app).get('/api/v8/finance-v2/analysis/kpi-catalog');
     expect(res.status).toBe(200);
@@ -119,7 +161,7 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — analysis (real HTTP + real P
     expect(currentRatio.unitType).toBeTruthy();
   });
 
-  it('GET /analysis/kpi-catalog?tier=ORG_CUSTOM never leaks another org\'s custom KPI (org-scoped filter proven empty for a fresh org)', async () => {
+  it("GET /analysis/kpi-catalog?tier=ORG_CUSTOM never leaks another org's custom KPI (org-scoped filter proven empty for a fresh org)", async () => {
     const res = await request(app).get('/api/v8/finance-v2/analysis/kpi-catalog?tier=ORG_CUSTOM');
     expect(res.status).toBe(200);
     expect(res.body.data).toEqual([]);
@@ -127,7 +169,11 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — analysis (real HTTP + real P
 
   it('POST /analysis/:id/compute computes CURRENT_RATIO end-to-end; GET /analysis/:id/kpi-values reads it back with the full value contract', async () => {
     const av = await import('../../../../services/finance/canonical/artifactVersionService.js');
-    const pack = await av.createArtifact({ organizationId: orgId, artifactType: 'STATEMENT_PACK', createdBy: userId });
+    const pack = await av.createArtifact({
+      organizationId: orgId,
+      artifactType: 'STATEMENT_PACK',
+      createdBy: userId,
+    });
     const packBvId = pack.businessVersion.business_version_id;
     const entityId = await makeEntity(packBvId, `PARENT-${randomUUID().slice(0, 8)}`);
 
@@ -135,7 +181,9 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — analysis (real HTTP + real P
     await writeLine(packBvId, entityId, 'CURRENT_ASSETS', 'BS', 500_000);
     await writeLine(packBvId, entityId, 'CURRENT_LIABILITIES', 'BS', 250_000);
 
-    const analysisCreated = await request(app).post('/api/v8/finance-v2/artifacts').send({ artifactType: 'HISTORICAL_ANALYSIS' });
+    const analysisCreated = await request(app)
+      .post('/api/v8/finance-v2/artifacts')
+      .send({ artifactType: 'HISTORICAL_ANALYSIS' });
     const analysisBvId = analysisCreated.body.data.currentBusinessVersion.businessVersionId;
     await withPinnedPostgresTransaction((tx) =>
       tx.queryRun(
@@ -158,7 +206,9 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — analysis (real HTTP + real P
     expect(edge.ok).toBe(true);
 
     const catalogRow = await withPinnedPostgresTransaction((tx) =>
-      tx.queryOne<{ id: string }>(`SELECT id FROM finance_analysis_kpi_catalog WHERE kpi_code = 'CURRENT_RATIO' AND status = 'ACTIVE' LIMIT 1`)
+      tx.queryOne<{ id: string }>(
+        `SELECT id FROM finance_analysis_kpi_catalog WHERE kpi_code = 'CURRENT_RATIO' AND status = 'ACTIVE' LIMIT 1`
+      )
     );
     expect(catalogRow).toBeTruthy();
     await withPinnedPostgresTransaction((tx) =>
@@ -169,13 +219,17 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — analysis (real HTTP + real P
       )
     );
 
-    const computeRes = await request(app).post(`/api/v8/finance-v2/analysis/${analysisBvId}/compute`).send({});
+    const computeRes = await request(app)
+      .post(`/api/v8/finance-v2/analysis/${analysisBvId}/compute`)
+      .send({});
     expect(computeRes.status).toBe(200);
     expect(computeRes.body.data.resultsCount).toBe(1);
     expect(computeRes.body.data.results[0].status).toBe('PRESENT_NONZERO');
     expect(computeRes.body.data.results[0].value).toBe(2); // 500,000 / 250,000
 
-    const valuesRes = await request(app).get(`/api/v8/finance-v2/analysis/${analysisBvId}/kpi-values`);
+    const valuesRes = await request(app).get(
+      `/api/v8/finance-v2/analysis/${analysisBvId}/kpi-values`
+    );
     expect(valuesRes.status).toBe(200);
     expect(valuesRes.body.data).toHaveLength(1);
     const row = valuesRes.body.data[0];
@@ -186,16 +240,18 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — analysis (real HTTP + real P
 
     // Independent SQL read-back.
     const sqlRow = await withPinnedPostgresTransaction((tx) =>
-      tx.queryOne<{ value_decimal: string }>(`SELECT value_decimal FROM finance_analysis_kpi_values WHERE business_version_id = ? AND kpi_catalog_id = ?`, [
-        analysisBvId,
-        catalogRow!.id,
-      ])
+      tx.queryOne<{ value_decimal: string }>(
+        `SELECT value_decimal FROM finance_analysis_kpi_values WHERE business_version_id = ? AND kpi_catalog_id = ?`,
+        [analysisBvId, catalogRow!.id]
+      )
     );
     expect(sqlRow?.value_decimal).toBe('2');
   });
 
   it('POST /analysis/:id/compute with no STATEMENT_TO_ANALYSIS edge -> 404 NO_SOURCE_STATEMENT_PACK_EDGE', async () => {
-    const created = await request(app).post('/api/v8/finance-v2/artifacts').send({ artifactType: 'HISTORICAL_ANALYSIS' });
+    const created = await request(app)
+      .post('/api/v8/finance-v2/artifacts')
+      .send({ artifactType: 'HISTORICAL_ANALYSIS' });
     const bvId = created.body.data.currentBusinessVersion.businessVersionId;
 
     const res = await request(app).post(`/api/v8/finance-v2/analysis/${bvId}/compute`).send({});
