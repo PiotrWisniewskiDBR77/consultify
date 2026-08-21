@@ -22,7 +22,7 @@ rollback and no false ready state.
 | G01 | Exact baseline and client/server/runtime/DB/migrations | `PASS_FOR_SOURCE_PREFLIGHT` | source candidate `fa9904eb27`; mounted runtime still `ad0766ac4c1000c6c94934a1af1d53c0b4eed19c` and is not claimed exact-current; fresh migrations `817`, repeat `0`, dry-run `0` |
 | G02 | Journeys, writes/readbacks, upstream/downstream and policy map | `PASS` | exact-six Statement → Analysis → Baseline → Prediction → Valuation; Candidate/Results seams mapped; invalid/stale/tenant/auth/atomic/N/A boundaries covered |
 | G03 | Named allowed/denied personas | `PASS_FOR_PREFLIGHT` | durable same-tenant `ACTIVE/ADMIN` route fixtures; separate tenant actors; header claims alone explicitly rejected |
-| G04 | Reproducible realistic and boundary fixtures | `IN_PROGRESS` | official CD PROJEKT FY2025 PDF exact hash qualified; complete mounted owner fixture, stable deep links and reset/readback manifest still pending |
+| G04 | Reproducible realistic and boundary fixtures | `IN_PROGRESS` | guarded local exact-six harness is implemented and independently read back: stable OWNER/ADMIN/foreign OWNER, six statements and source receipts/hashes, pack/artifact/BV identities, exclusive secret-free manifest and whole disposable-DB drop. Statement is `EXACT_SIX_CONFIRMED`; four downstream entries remain explicitly `IDENTITY_SHELL_NOT_COMPUTED`, all links `deepLinkVerified:false`, and mounted owner fixture/browser proof is still pending |
 | G05 | Functional preflight and cold readback | `PASS_FOR_SOURCE_PREFLIGHT` | exact-six `2/2`; canonical RealPG matrix `128/128`; UI/unit `419/419`; focused staging `3/3`; root/server typechecks PASS; disposable DB catalog absence verified |
 | G06 | Desktop/tablet, PL/EN, themes, states, a11y, console/HTTP | `NOT_STARTED` | — |
 | G07 | Piotr review card | `NOT_STARTED` | — |
@@ -50,13 +50,23 @@ rollback and no false ready state.
 
 | ID | Type | Purpose | Setup/reset | Readback | Expected access | Status/evidence |
 |---|---|---|---|---|---|---|
-| _none_ | | | | | | |
+| `FIN-OWNER-G04-V1` | guarded local exact-six pre-browser fixture | CD PROJEKT FY2025 exact PDF; stable OWNER/ADMIN/foreign OWNER; Statement pack + canonical identities | `server/scripts/run-wave3-finance-owner-review.ts`; loopback-only exact-name disposable DB; explicit confirmation; whole DB drop | independent SQL readback for six statements, six source receipts/hashes and downstream artifact/BV identity shells; exclusive mode-0600 manifest | same-tenant OWNER/ADMIN allowed; foreign OWNER mounted pack read denied | `READY_FOR_MOUNTED_FIXTURE_EXTENSION`; not owner-review-ready |
 
-Qualified source fixture (not yet a complete G04 owner fixture):
+Qualified source and guarded pre-browser fixture (not yet a complete G04 owner fixture):
 
 - `/Users/piotrwisniewski/Desktop/CD_PROJEKT_Skonsolidowane_Sprawozdanie_FY2025.pdf`
 - SHA-256 `e993f390ccf5d67143b1076ef7b6d9eed23f234f1c29dc23892eeb57418e3c0e`
 - accepted by the exact-six harness; no substitute PDF is authorized.
+- Guard contract: `SEED_WAVE3_FINANCE_OWNER_REVIEW=YES`, loopback PostgreSQL,
+  exact database name `consultify_w3_finance_owner_*`, explicit new manifest
+  path and `FINANCE_STATEMENT_DROP_DATABASE_AFTER=1`.
+- The manifest is written exclusively with mode `0600`, contains no database
+  URL, password or token, and is bound to the exact source hash and six-record
+  cardinality. A denied foreign-owner read proves no statement-row mutation;
+  it is not claimed as a blanket no-write proof for every Finance table.
+- Prepared routes are source-backed but remain `deepLinkVerified:false` until
+  mounted browser replay. Baseline, Prediction, Analysis and Valuation are
+  identity shells only, not computed downstream results.
 
 ## Owner UI/UX/CX register
 
@@ -96,7 +106,7 @@ Qualified source fixture (not yet a complete G04 owner fixture):
 
 Finance is not `READY_FOR_OWNER_REVIEW` yet. Before G06/G07 the integrator must:
 
-1. build and independently read back a stable mounted owner fixture containing the exact six statements, pack, canonical artifact, business version, receipt/hash and prepared deep links for all five workspaces;
+1. extend the qualified exact-six fixture with computed Baseline, Prediction, Analysis and Valuation states rather than identity shells;
 2. start client/server on the same accepted source SHA and record runtime/DB/flag identity;
 3. execute the literal mounted browser chain `6/6 ready → Save/Validate → explicit confirm → receipt → list/detail/deep-link → cold signed context`;
 4. prepare invalid, stale and foreign-tenant alternates without requiring Piotr to reconstruct technical boundary data manually.
