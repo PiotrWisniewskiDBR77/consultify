@@ -569,7 +569,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <ScrollArea className="flex-1">
             <main
               aria-labelledby="settings-page-title"
-              className="mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-5 lg:p-6"
+              className="settings-domain-content mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-5 lg:p-6"
             >
               {renderContent()}
             </main>

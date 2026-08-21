@@ -360,7 +360,7 @@ export const OrganizationView: React.FC = () => {
             className="mb-4"
           />
         </div>
-        <div className="mx-auto w-full max-w-5xl px-4 pb-6 pt-0 sm:px-5 lg:px-6">
+        <div className="organization-domain-content mx-auto w-full max-w-5xl px-4 pb-6 pt-0 sm:px-5 lg:px-6">
           {renderContent()}
         </div>
       </div>

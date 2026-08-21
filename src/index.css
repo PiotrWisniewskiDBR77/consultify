@@ -780,6 +780,33 @@ body {
   letter-spacing: var(--letter-spacing-base, normal);
 }
 
+/* Shared card-heading hierarchy for the three settings-style domains.
+ * This intentionally overrides historical component-local Tailwind sizes so
+ * cards with the same semantic heading level look identical everywhere. */
+:is(.settings-domain-content, .organization-domain-content, .admin-domain-content) h2 {
+  font-family: inherit;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.75rem;
+  letter-spacing: -0.01em;
+}
+
+:is(.settings-domain-content, .organization-domain-content, .admin-domain-content) h3 {
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.5rem;
+  letter-spacing: normal;
+}
+
+:is(.settings-domain-content, .organization-domain-content, .admin-domain-content) h4 {
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+  letter-spacing: normal;
+}
+
 /* High contrast: strengthen text + borders, remove low-opacity muting */
 html.high-contrast {
   --c-text: #000000;

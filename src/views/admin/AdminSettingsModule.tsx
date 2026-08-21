@@ -390,7 +390,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
         </div>
 
         <ScrollArea className="flex-1">
-          <div className="mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-5 lg:p-6">
+          <div className="admin-domain-content mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-5 lg:p-6">
             <header className="border-b border-slate-200 pb-4 dark:border-white/10">
               <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 <span>{t('admin.shell.breadcrumb')}</span>
