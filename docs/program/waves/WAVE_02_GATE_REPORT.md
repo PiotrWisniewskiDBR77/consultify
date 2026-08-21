@@ -1,21 +1,24 @@
 # Consultify — Wave 02 Core Closure gate report
 
-Date: `2026-08-20`
+Date: `2026-08-21`
 
 Overall verdict: `CONDITIONAL_PASS / OWNER_BROWSER_GATE_REQUIRED`
 
-This report qualifies the code candidate at
-`a02a15073733ffc25cfb471a37586361c1815e6e` on
+This report qualifies the corrected code candidate at
+`4318da80fafb77482398fe64fa30c2af73bd29ee` on
 `codex/full-mvp-recovery-20260820`. It does not authorize production, deployment,
 or promotion to `OWNER_ACCEPTED`.
 
 ## Candidate and recovery state
 
-- durable worktree: `/Users/piotrwisniewski/Developer/consultify-wave02-recovery`;
-- code candidate: `a02a15073733ffc25cfb471a37586361c1815e6e`;
+- authoritative worktree: `/private/tmp/consultify-staging-deploy-e6ca`;
+- dependency-bearing verification checkout (patched temporarily only to run
+  the checks, then restored clean):
+  `/Users/piotrwisniewski/Developer/consultify-wave02-recovery`;
+- code candidate: `4318da80fafb77482398fe64fa30c2af73bd29ee`;
 - branch: `codex/full-mvp-recovery-20260820`;
-- recovery source: the same branch and commit formerly checked out at the
-  reboot-removed `/private/tmp/consultify-staging-deploy-e6ca`;
+- recovery source: preserved local branch history; the authoritative temporary
+  worktree is present again and owns the branch;
 - production touched: `NO`;
 - push/deploy performed: `NO`;
 - NFR suite rerun: `NO`.
@@ -32,6 +35,7 @@ or promotion to `OWNER_ACCEPTED`.
 | 4 | Dynamic SWOT bounded owner header | `002b9f5a21` |
 | 3 | Federated Teresa/UI action manifest | `8c535a106f` |
 | 3 | Mounted mutation denominator | `a02a150737` |
+| post-gate repair | Standalone server typecheck boundary | `4318da80fa` |
 
 The apparent table order preserves the historical commit sequence. P3 was
 reviewed after P1/P2 shared-contract work; the bounded P4 packet had no shared
@@ -95,6 +99,10 @@ Verdict: `PASS_FOR_EXPLICIT_MVP_DENOMINATOR`
   - Execution: `65`;
   - Case Workspace: `75`;
 - additions, duplicate IDs and missing denominator entries fail CI tests.
+- the standalone server compiler now consumes a server-local type-only boundary;
+  runtime manifest construction and validation remain single-sourced in
+  `shared/contracts/federatedActionManifest.ts`;
+- focused post-repair P3 evidence: `5/5 PASS`.
 
 Important boundary: registry-supported actions and mounted-route denominator
 rows are separate evidence sets. A mounted route is `NOT_SUPPORTED_IN_MVP` for
@@ -134,6 +142,10 @@ Persistence command result:
 Shared-contract verification:
 
 - root `npm run type-check -- --pretty false`: `PASS`;
+- server `npm --prefix server run typecheck -- --pretty false`: `PASS`;
+- initial standalone server rerun exposed `TS6059` in the two P3 adapters; this
+  was treated as a real gate failure, fixed in `4318da80fa`, and rerun to PASS;
+- focused manifest and mounted-denominator tests after the repair: `5/5 PASS`;
 - `git diff --check`: required again after this report-only commit;
 - candidate cleanliness: required again after this report-only commit.
 
