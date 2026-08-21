@@ -160,6 +160,28 @@ describe.skipIf(!REAL_PG)('INT-BVP-001 — interview candidate exactly-once (rea
     handoff.setInterviewCandidateHandoffFaultInjectorForTests(null);
     const c = await db();
     try {
+      const cleanupEnabled = process.env.INT_BVP_ALLOW_IMMUTABLE_FIXTURE_CLEANUP === '1';
+      const requiredDbPrefix = String(process.env.INT_BVP_DISPOSABLE_DB_PREFIX ?? '').trim();
+      const databaseResult = await c.query<{ database: string }>(
+        'SELECT current_database() AS database'
+      );
+      const database = String(databaseResult.rows[0]?.database ?? '');
+      const callerDatabase = new URL(CONNECTION_STRING).pathname.replace(/^\//, '');
+      if (
+        !cleanupEnabled ||
+        !requiredDbPrefix ||
+        callerDatabase !== database ||
+        !database.startsWith(requiredDbPrefix) ||
+        !/^int_bvp_[a-z0-9_]+$/.test(database)
+      ) {
+        throw new Error(
+          'INT-BVP immutable fixture cleanup requires explicit opt-in and an int_bvp_* disposable database'
+        );
+      }
+
+      await c.query('BEGIN');
+      await c.query(`SELECT pg_advisory_xact_lock(hashtext('int-bvp-fixture-cleanup'))`);
+      await c.query(`SET LOCAL session_replication_role = replica`);
       await c.query(`DELETE FROM interview_candidate_handoffs WHERE organization_id IN ($1, $2)`, [
         ORG_A,
         ORG_B,
@@ -177,6 +199,30 @@ describe.skipIf(!REAL_PG)('INT-BVP-001 — interview candidate exactly-once (rea
         await c.query(`DELETE FROM interview_insights WHERE id = ANY($1::text[])`, [insightIds]);
       }
       await c.query(`DELETE FROM organizations WHERE id IN ($1, $2)`, [ORG_A, ORG_B]);
+      await c.query(`SET LOCAL session_replication_role = origin`);
+      await c.query('COMMIT');
+
+      const residue = await c.query<{ total: string }>(
+        `SELECT (
+          (SELECT count(*) FROM interview_candidate_handoffs WHERE organization_id IN ($1, $2)) +
+          (SELECT count(*) FROM initiative_candidates WHERE organization_id IN ($1, $2)) +
+          (SELECT count(*) FROM interview_insight_findings WHERE organization_id IN ($1, $2)) +
+          (SELECT count(*) FROM interview_insights WHERE organization_id IN ($1, $2)) +
+          (SELECT count(*) FROM organizations WHERE id IN ($1, $2))
+        )::text AS total`,
+        [ORG_A, ORG_B]
+      );
+      expect(residue.rows[0]?.total).toBe('0');
+      const state = await c.query<{ role: string; disabled: string }>(
+        `SELECT current_setting('session_replication_role') AS role,
+          (SELECT count(*)::text FROM pg_trigger
+            WHERE NOT tgisinternal AND tgenabled <> 'O'
+              AND tgrelid = 'interview_candidate_handoffs'::regclass) AS disabled`
+      );
+      expect(state.rows[0]).toEqual({ role: 'origin', disabled: '0' });
+    } catch (error) {
+      await c.query('ROLLBACK').catch(() => undefined);
+      throw error;
     } finally {
       await c.end();
     }
