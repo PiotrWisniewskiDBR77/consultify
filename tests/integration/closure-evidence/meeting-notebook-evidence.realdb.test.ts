@@ -956,11 +956,20 @@ describe('Meeting/Notebook → Initiative closure evidence (real Postgres, mount
         return original(text, params);
       };
 
+      const previousPrefix = process.env.CLOSURE_EVIDENCE_DISPOSABLE_DB_PREFIX;
+      process.env.CLOSURE_EVIDENCE_DISPOSABLE_DB_PREFIX = 'definitely_disposable_fixture_';
       const outcome = await deleteLedgerRows(probe, [
         { ledger: 'initiative_closure_evidence', column: 'id', values: ['anything'] },
       ])
         .then(() => 'RAN')
-        .catch((e: Error) => e.message);
+        .catch((e: Error) => e.message)
+        .finally(() => {
+          if (previousPrefix === undefined) {
+            delete process.env.CLOSURE_EVIDENCE_DISPOSABLE_DB_PREFIX;
+          } else {
+            process.env.CLOSURE_EVIDENCE_DISPOSABLE_DB_PREFIX = previousPrefix;
+          }
+        });
       await probe.end();
 
       expect(String(outcome)).toContain('Refusing immutable fixture cleanup');

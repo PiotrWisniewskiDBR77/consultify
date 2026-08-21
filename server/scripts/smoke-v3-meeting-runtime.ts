@@ -48,18 +48,18 @@ function main(): void {
   });
 
   checks.push({
-    name: 'Meeting frontend uses shared API instead of local-only storage',
+    name: 'Meeting frontend uses shared API and governed notes instead of local-only storage',
     pass:
       includesAll(meetingHub, [
         'Api',
         'getMeetings',
         'createMeeting',
         'updateMeetingStatus',
-        'addMeetingDecision',
-        'addMeetingFollowUp',
-        'updateMeetingFollowUpStatus',
+        'generateMeetingNotes',
+        'listMeetingNotes',
+        'decideMeetingNote',
         "Shared workspace",
-        'Add decision',
+        'Nothing becomes a decision or follow-up before human approval.',
       ]) && !meetingHub.includes('consultify.meeting.module.v1'),
   });
 
@@ -74,13 +74,14 @@ function main(): void {
   });
 
   checks.push({
-    name: 'Frontend API layer includes meeting CRUD helpers',
+    name: 'Frontend API layer includes meeting CRUD and governed-note helpers',
     pass: includesAll(api, [
       'getMeetings: async',
       'createMeeting: async',
       'updateMeetingStatus: async',
-      'addMeetingFollowUp: async',
-      'updateMeetingFollowUpStatus: async',
+      'generateMeetingNotes: async',
+      'listMeetingNotes: async',
+      'decideMeetingNote: async',
     ]),
   });
 
