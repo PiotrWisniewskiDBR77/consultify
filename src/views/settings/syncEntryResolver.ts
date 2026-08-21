@@ -1,5 +1,5 @@
 import { ROUTES } from '@/routes/routeConfig';
-import { isAdminOrSuperAdminRole } from '@/utils/roleGuards';
+import { isAdminOwnerOrSuperAdminRole } from '@/utils/roleGuards';
 
 export function resolveLegacySyncSettingsEntry(
   pathname: string,
@@ -8,13 +8,13 @@ export function resolveLegacySyncSettingsEntry(
   const normalized = pathname.replace(/\/+$/, '') || '/';
   switch (normalized) {
     case ROUTES.SETTINGS.BILLING:
-      return isAdminOrSuperAdminRole(role) ? ROUTES.ADMIN.BILLING : ROUTES.ORGANIZATION.BILLING;
+      return isAdminOwnerOrSuperAdminRole(role) ? ROUTES.ADMIN.BILLING : ROUTES.SETTINGS.PROFILE;
     case ROUTES.SETTINGS.AI:
       return `${ROUTES.SETTINGS.ROOT}/ai-behavior`;
     case ROUTES.SETTINGS.NOTIFICATIONS:
       return `${ROUTES.SETTINGS.ROOT}/notifications-overview`;
     case ROUTES.SETTINGS.INTEGRATIONS:
-      return isAdminOrSuperAdminRole(role)
+      return isAdminOwnerOrSuperAdminRole(role)
         ? ROUTES.ADMIN.INTEGRATIONS
         : `${ROUTES.SETTINGS.ROOT}/connected-apps`;
     case ROUTES.SETTINGS.ORGANIZATION:

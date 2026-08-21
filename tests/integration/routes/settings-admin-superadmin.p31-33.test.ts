@@ -93,7 +93,7 @@ describe('P31 Settings — taxonomy + preferences', () => {
     const fs = await import('fs');
     const content = fs.readFileSync('src/views/settings/syncEntryResolver.ts', 'utf-8');
     expect(content).toContain('ROUTES.SETTINGS.BILLING');
-    expect(content).toContain('ROUTES.ORGANIZATION.BILLING');
+    expect(content).toContain('ROUTES.ADMIN.BILLING');
     expect(content).toContain('security-dashboard');
     expect(content).toContain('notifications-overview');
   });
@@ -475,23 +475,21 @@ describe('P31 Settings — scope model + impact metadata (§2.3.2-§2.3.6)', () 
 // ===========================================================================
 
 describe('P32 Admin — cockpit IA alignment (§2.3.1)', () => {
-  it('AdminSettingsSidebar exposes only team administration', async () => {
+  it('Admin navigation exposes the seven canonical domains', async () => {
     const fs = await import('fs');
-    const content = fs.readFileSync('src/components/Admin/AdminSettingsSidebar.tsx', 'utf-8');
-    expect(content).toContain('Team Admin');
-    expect(content).toContain('Team & Access');
-    expect(content).toContain("'people'");
-    expect(content).not.toContain('Billing & FinOps');
-    expect(content).not.toContain('AI Governance');
-    expect(content).not.toContain('Organization Ops');
+    const content = fs.readFileSync('src/components/Admin/adminNavigation.ts', 'utf-8');
+    for (const domain of ['team', 'billing', 'ai', 'security', 'audit', 'command', 'health']) {
+      expect(content).toContain(`id: '${domain}'`);
+    }
+    expect(content).toContain("c('platform-operations'");
   });
 
-  it('AdminSettingsModule exposes 5 first-class sections and maps legacy aliases', async () => {
+  it('AdminSettingsModule exposes seven first-class sections and maps legacy aliases', async () => {
     const fs = await import('fs');
     const content = fs.readFileSync('src/views/admin/AdminSettingsModule.tsx', 'utf-8');
-    // M24 IA: billing/ai/security/audit are first-class admin panels (not collapsed into team).
-    expect(content).toContain("PRIMARY_SECTIONS");
-    expect(content).toContain("'people', 'billing', 'ai', 'security', 'audit'");
+    for (const section of ['people', 'billing', 'ai', 'security', 'audit', 'command', 'health']) {
+      expect(content).toContain(`'${section}'`);
+    }
     // Legacy aliases redirect to their canonical first-class section.
     expect(content).toContain("overview: 'people'");
     expect(content).toContain("billing: 'billing'");

@@ -21,10 +21,12 @@ describe('syncEntryResolver', () => {
 
   it('routes legacy billing and integrations based on ownership role', () => {
     expect(resolveLegacySyncSettingsEntry('/settings/billing', 'ADMIN')).toBe('/admin/billing');
-    expect(resolveLegacySyncSettingsEntry('/settings/billing', 'MEMBER')).toBe(
-      '/organization/billing',
-    );
+    expect(resolveLegacySyncSettingsEntry('/settings/billing', 'OWNER')).toBe('/admin/billing');
+    expect(resolveLegacySyncSettingsEntry('/settings/billing', 'MEMBER')).toBe('/settings/profile');
     expect(resolveLegacySyncSettingsEntry('/settings/integrations', 'ADMIN')).toBe(
+      '/admin/integrations',
+    );
+    expect(resolveLegacySyncSettingsEntry('/settings/integrations', 'OWNER')).toBe(
       '/admin/integrations',
     );
     expect(resolveLegacySyncSettingsEntry('/settings/integrations', 'MEMBER')).toBe(
