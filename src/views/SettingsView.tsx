@@ -36,7 +36,6 @@ import { AIUsageDashboard } from '../components/settings/AIUsageDashboard';
 import { APIAccessSettings } from '../components/settings/APIAccessSettings';
 import { AvailabilitySettings } from '../components/settings/AvailabilitySettings';
 import { AvatarPhotoSettings } from '../components/settings/AvatarPhotoSettings';
-import { BillingSettings } from '../components/settings/BillingSettings';
 import { CalendarSyncSettings } from '../components/settings/CalendarSyncSettings';
 import { ChatHistorySettings } from '../components/settings/ChatHistorySettings';
 import { ConnectedAppsSettings } from '../components/settings/ConnectedAppsSettings';
@@ -456,7 +455,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
       // Billing
       case 'billing':
-        return <BillingSettings currentUser={currentUser} />;
+        // Organization billing is owned by Admin. The route-level resolver
+        // immediately hands authorized users off there; do not mount the
+        // legacy personal BillingSettings editor while that redirect settles.
+        return null;
 
       // Appearance
       case 'theme':

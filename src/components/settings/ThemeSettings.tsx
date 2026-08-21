@@ -34,7 +34,7 @@ const ACCENT_COLORS = [
   { key: 'emerald', name: 'Emerald', value: '#10b981', class: 'bg-emerald-500' },
   { key: 'rose', name: 'Rose', value: '#f43f5e', class: 'bg-danger-500' },
   { key: 'amber', name: 'Amber', value: '#f59e0b', class: 'bg-amber-500' },
-  { key: 'cyan', name: 'Cyan', value: '#3b82f6', class: 'bg-blue-500' },
+  { key: 'cyan', name: 'Cyan', value: '#06b6d4', class: 'bg-cyan-500' },
 ];
 
 /**
@@ -313,7 +313,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                 const colorName = t(`settings.appearance.accent.${color.key}`, color.name);
                 return (
                   <button
-                    key={color.value}
+                    key={color.key}
                     onClick={() => handleAccentChange(color.value)}
                     className={cn(
                       'group relative w-12 h-12 rounded-xl transition-all duration-200',
