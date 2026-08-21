@@ -21,6 +21,8 @@ const isProductionEnv = process.env.NODE_ENV === 'production';
 const isTestEnv = process.env.NODE_ENV === 'test' || !!process.env.VITEST;
 const shouldIgnoreLocalEnv =
   process.env.DOTENV_IGNORE_LOCAL === '1' || process.env.DOTENV_IGNORE_LOCAL === 'true';
+const dotenvDisabled =
+  process.env.DOTENV_DISABLED === '1' || process.env.DOTENV_DISABLED === 'true';
 
 const repoRootEnvPath = path.resolve(__dirname, '../../../.env');
 const repoRootEnvLocalPath = path.resolve(__dirname, '../../../.env.local');
@@ -80,13 +82,13 @@ const loadedPaths: string[] = [];
 let baseParsed: ParsedEnv = {};
 let localParsed: ParsedEnv = {};
 
-if (fs.existsSync(baseEnvPath)) {
+if (!dotenvDisabled && fs.existsSync(baseEnvPath)) {
   baseParsed = parseEnvFile(baseEnvPath);
   applyEnv(baseParsed, { override: shouldOverrideDotenv });
   loadedPaths.push(baseEnvPath);
 }
 
-if (localEnvPath && fs.existsSync(localEnvPath)) {
+if (!dotenvDisabled && localEnvPath && fs.existsSync(localEnvPath)) {
   localParsed = parseEnvFile(localEnvPath);
   for (const [key, value] of Object.entries(localParsed)) {
     const current = process.env[key];
@@ -101,7 +103,7 @@ if (localEnvPath && fs.existsSync(localEnvPath)) {
 
 // Optional extra env file, e.g. `.env.staging.local` for connecting to staging DB from local dev.
 // Highest priority, but still respects shell-provided env unless DOTENV_OVERRIDE=1.
-if (extraEnvPath && fs.existsSync(extraEnvPath)) {
+if (!dotenvDisabled && extraEnvPath && fs.existsSync(extraEnvPath)) {
   const extraParsed = parseEnvFile(extraEnvPath);
   for (const [key, value] of Object.entries(extraParsed)) {
     const current = process.env[key];
