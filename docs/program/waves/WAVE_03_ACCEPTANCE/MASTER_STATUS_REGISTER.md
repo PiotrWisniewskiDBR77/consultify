@@ -4,7 +4,7 @@ Last updated: `2026-08-21`
 
 | Order | ID | Module | Current gate | Product SHA | Owner register | Open P0 | Open P1 | Open P2 | Open P3 | Owner verdict | Regression |
 |---:|---|---|---|---|---|---:|---:|---:|---:|---|---|
-| 1 | `ORG` | Organization | `G06_IN_PROGRESS` | `ad0766ac4c1000c6c94934a1af1d53c0b4eed19c` | `0` | 0 | 0 | 0 | 0 | — | 3 fixed; persistence decision open |
+| 1 | `ORG` | Organization | `READY_FOR_OWNER_REVIEW` | `ad0766ac4c1000c6c94934a1af1d53c0b4eed19c` | `0` | 0 | 0 | 0 | 0 | — | preflight 4/4 resolved |
 | 2 | `INT` | Interview | `NOT_STARTED` | — | `0` | 0 | 0 | 0 | 0 | — | — |
 | 3 | `TLS` | Tools | `NOT_STARTED` | — | `1` carry-forward | 0 | 0 | 1 | 0 | — | — |
 | 4 | `ASM` | Assessment | `NOT_STARTED` | — | `0` | 0 | 0 | 0 | 0 | — | — |
