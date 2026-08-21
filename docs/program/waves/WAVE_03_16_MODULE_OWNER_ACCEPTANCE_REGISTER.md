@@ -1,9 +1,14 @@
 # Consultify — 16-module owner acceptance readiness register
 
 Date prepared: `2026-08-21`  
-Source branch: `codex/wave2-browser-transfer-20260821`
+Source branch: `codex/wave3-16-module-acceptance-20260821`
 Wave 2 P4 product candidate: `a36d9d51edc87bb63e7211754e22106d02d2d3d0`
-Status: `WAVE_2_OWNER_ACCEPTED / WAVE_3_NOT_STARTED`
+Status: `WAVE_2_OWNER_ACCEPTED / WAVE_3_STARTED`
+
+Detailed Wave 3 execution, the 16 authoritative owner UI/UX/CX registers,
+exact-SHA ledger, cross-module findings and final replay are maintained in
+`docs/program/waves/WAVE_03_ACCEPTANCE/`. This top-level file remains the
+program-level readiness and verdict register; chat is not a findings queue.
 
 This register prepares the collaborative owner rounds. Historical G4 evidence
 is useful for routing and fixture design, but it does not replace a mounted
