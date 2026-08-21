@@ -6,7 +6,7 @@ Last updated: `2026-08-21`
 |---:|---|---|---|---|---|---:|---:|---:|---:|---|---|
 | 1 | `ORG` | Organization | `READY_FOR_OWNER_REVIEW` | `ad0766ac4c1000c6c94934a1af1d53c0b4eed19c` | `0` | 0 | 0 | 0 | 0 | — | preflight 4 resolved; localization finding open |
 | 2 | `INT` | Interview | `TECHNICAL_PREFLIGHT` | `d3d6de5bfc` source candidate; mount pending | `G00–G04 PASS/PASS_FOR_PREFLIGHT; G05 IN_PROGRESS; 104/104 focused PASS` | 0 | 0 | 0 | 0 | `INT-PF-001..002 fixed; owner fixture READY` | Organization owner screen intentionally retained |
-| 3 | `TLS` | Tools | `NOT_STARTED` | — | `1` carry-forward | 0 | 0 | 1 | 0 | — | — |
+| 3 | `TLS` | Tools | `TECHNICAL_PREFLIGHT_WITH_OWNER_QUALITY_DEBT` | `fbf400a8e3` source candidate; mount pending | `G00–G03 PASS/PASS_FOR_PREFLIGHT; G04 IN_PROGRESS; G05 PASS_WITH_TEST_WARNING; 1 owner carry-forward` | 0 | 0 | 1 | 0 | `TLS-PF-001..002 fixed; TLS-PF-003 open; owner fixture pending` | Organization owner screen intentionally retained |
 | 4 | `ASM` | Assessment | `NOT_STARTED` | — | `0` | 0 | 0 | 0 | 0 | — | — |
 | 5 | `INI` | Initiatives | `NOT_STARTED` | — | `0` | 0 | 0 | 0 | 0 | — | — |
 | 6 | `EXE` | Execution | `NOT_STARTED` | — | `0` | 0 | 0 | 0 | 0 | — | — |
