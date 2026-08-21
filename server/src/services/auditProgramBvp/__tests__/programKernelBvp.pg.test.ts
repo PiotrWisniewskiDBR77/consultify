@@ -531,6 +531,7 @@ suite('AUD-BVP-001 — legacy write surface retirement (HTTP, Postgres realny)',
   const RUN = randomUUID().slice(0, 8);
   const org = `aud-bvp-legacy-org-${RUN}`;
   const userId = `aud-bvp-legacy-user-${RUN}`;
+  const membershipId = `aud-bvp-legacy-membership-${RUN}`;
 
   function tokenFor(): string {
     return jwt.sign(
@@ -550,6 +551,17 @@ suite('AUD-BVP-001 — legacy write surface retirement (HTTP, Postgres realny)',
 
   beforeAll(async () => {
     auditsDb = await import('../../audits/auditsDb.js');
+    await auditsDb.auditRun(`INSERT INTO organizations (id) VALUES ($1)`, [org]);
+    await auditsDb.auditRun(`INSERT INTO users (id, organization_id) VALUES ($1, $2)`, [
+      userId,
+      org,
+    ]);
+    await auditsDb.auditRun(
+      `INSERT INTO organization_members
+         (id, organization_id, user_id, role, status)
+       VALUES ($1, $2, $3, 'OWNER', 'ACTIVE')`,
+      [membershipId, org, userId]
+    );
     app = express();
     app.use(express.json({ limit: '2mb' }));
     const { apiGateway } = await import('../../../Gateway.js');
@@ -559,6 +571,9 @@ suite('AUD-BVP-001 — legacy write surface retirement (HTTP, Postgres realny)',
   afterAll(async () => {
     if (!auditsDb) return;
     await auditsDb.auditRun(`DELETE FROM audit_programs WHERE organization_id = $1`, [org]);
+    await auditsDb.auditRun(`DELETE FROM organization_members WHERE id = $1`, [membershipId]);
+    await auditsDb.auditRun(`DELETE FROM users WHERE id = $1`, [userId]);
+    await auditsDb.auditRun(`DELETE FROM organizations WHERE id = $1`, [org]);
   }, 30_000);
 
   it('LEGACY SURFACE NEGATIVE: POST /api/audit/programs zwraca 410 domyślnie i nie zmienia audit_programs', async () => {
