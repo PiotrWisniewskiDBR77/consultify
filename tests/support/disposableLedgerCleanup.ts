@@ -3,11 +3,15 @@ import type { Client } from 'pg';
 const ENABLE_ENV = 'CLOSURE_EVIDENCE_ALLOW_IMMUTABLE_FIXTURE_CLEANUP';
 const PREFIX_ENV = 'CLOSURE_EVIDENCE_DISPOSABLE_DB_PREFIX';
 
-type AppendOnlyLedger = 'initiative_closure_evidence' | 'initiative_lifecycle_gate_decisions';
+type AppendOnlyLedger =
+  | 'initiative_closure_evidence'
+  | 'initiative_lifecycle_gate_decisions'
+  | 'execution_action_audit';
 
 const LEDGER_TRIGGER: Record<AppendOnlyLedger, string> = {
   initiative_closure_evidence: 'trg_initiative_closure_evidence_append_only',
   initiative_lifecycle_gate_decisions: 'initiative_lifecycle_gate_decisions_immutable',
+  execution_action_audit: 'trg_execution_action_audit_immutable',
 };
 
 export interface LedgerScope {
@@ -100,6 +104,7 @@ export async function residueByPrefix(
   const targets: Array<[string, string]> = [
     ['initiative_closure_evidence', 'id'],
     ['initiative_lifecycle_gate_decisions', 'decision_id'],
+    ['execution_action_audit', 'audit_id'],
     ['initiative_closure_requests', 'id'],
     ['initiative_history', 'initiative_id'],
     ['initiatives', 'id'],

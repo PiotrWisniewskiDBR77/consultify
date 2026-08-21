@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { executeGovernedExecutionAction } from '../executionActionRegistryService.js';
 import { getCurrentPgTransactionClient, withPgTransaction } from '../../utils/queryHelpers.js';
+import { deleteLedgerRows } from '../../../../tests/support/disposableLedgerCleanup.js';
 
 const databaseUrl = process.env.DATABASE_URL;
 const describePg = process.env.RUN_DB_TESTS === '1' && databaseUrl ? describe : describe.skip;
@@ -34,6 +35,16 @@ describePg('execution action governance real PostgreSQL', () => {
     await pool.query(`DROP TABLE IF EXISTS exe_action_uow_probe`).catch(() => undefined);
     await pool.query(`DROP TRIGGER IF EXISTS trg_exe_action_audit_test_failure ON execution_action_audit`).catch(() => undefined);
     await pool.query(`DROP FUNCTION IF EXISTS exe_action_audit_test_failure()`).catch(() => undefined);
+    const cleanupClient = await pool.connect();
+    try {
+      await deleteLedgerRows(cleanupClient, [{
+        ledger: 'execution_action_audit',
+        column: 'organization_id',
+        values: [orgId],
+      }]);
+    } finally {
+      cleanupClient.release();
+    }
     await pool.query(`DELETE FROM organizations WHERE id=$1`, [orgId]).catch(() => undefined);
     await pool.end();
   });

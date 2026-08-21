@@ -832,7 +832,7 @@ describe('EXE-MVP-ACTIONS-001 governed production routes', () => {
     expect(new Set(audits.map((row) => row.action_id))).toEqual(new Set(actionIds));
   });
 
-  it('deletes a real budget entry through the mounted legacy production route', async () => {
+  it('deletes a real budget entry through the mounted governed production route', async () => {
     requireStack();
     const initiativeId = `governed-initiative-${SUFFIX}`;
     const entryId = `governed-budget-${SUFFIX}`;
@@ -848,8 +848,12 @@ describe('EXE-MVP-ACTIONS-001 governed production routes', () => {
     );
 
     const response = await fetch(
-      `${BACKEND}/api/execution-control/budget/entries/${entryId}?initiativeId=${initiativeId}`,
-      { method: 'DELETE', headers: { Authorization: `Bearer ${token}`, 'X-Request-Id': `governed-budget-${SUFFIX}` } }
+      `${BACKEND}/api/execution-control/budget/entries/${entryId}?initiativeId=${initiativeId}&expectedVersion=1`,
+      { method: 'DELETE', headers: {
+        Authorization: `Bearer ${token}`,
+        'X-Request-Id': `governed-budget-${SUFFIX}`,
+        'X-Idempotency-Key': `governed-budget-${SUFFIX}`,
+      } }
     );
     expect(response.status).toBe(200);
     expect(await db.one(`SELECT id FROM budget_entries WHERE id=$1`, [entryId])).toBeNull();
@@ -877,8 +881,12 @@ describe('EXE-MVP-ACTIONS-001 governed production routes', () => {
       () => api(memberToken, 'POST', `/case-workspace/proposals/${target}/transition-to-executing`, { expectedVersion: 1 }),
       () => api(memberToken, 'POST', `/case-workspace/proposals/${target}/revoke`, { reason: 'denied', expectedVersion: 1 }),
       async () => {
-        const response = await fetch(`${BACKEND}/api/execution-control/budget/entries/${target}?initiativeId=${target}`, {
-          method: 'DELETE', headers: { Authorization: `Bearer ${memberToken}`, 'X-Request-Id': `denied-budget-${SUFFIX}` },
+        const response = await fetch(`${BACKEND}/api/execution-control/budget/entries/${target}?initiativeId=${target}&expectedVersion=1`, {
+          method: 'DELETE', headers: {
+            Authorization: `Bearer ${memberToken}`,
+            'X-Request-Id': `denied-budget-${SUFFIX}`,
+            'X-Idempotency-Key': `denied-budget-${SUFFIX}`,
+          },
         });
         return { status: response.status };
       },
@@ -992,8 +1000,12 @@ describe('EXE-MVP-ACTIONS-001 governed production routes', () => {
         () => api(token, 'POST', `/case-workspace/proposals/${revoke.id}/revoke`,
           { reason: 'rollback', expectedVersion: revoke.version }, headers),
         async () => {
-          const response = await fetch(`${BACKEND}/api/execution-control/budget/entries/${entryId}?initiativeId=${initiativeId}`, {
-            method: 'DELETE', headers: { Authorization: `Bearer ${token}`, 'X-Request-Id': requestId },
+          const response = await fetch(`${BACKEND}/api/execution-control/budget/entries/${entryId}?initiativeId=${initiativeId}&expectedVersion=1`, {
+            method: 'DELETE', headers: {
+              Authorization: `Bearer ${token}`,
+              'X-Request-Id': requestId,
+              'X-Idempotency-Key': requestId,
+            },
           });
           return { status: response.status };
         },
