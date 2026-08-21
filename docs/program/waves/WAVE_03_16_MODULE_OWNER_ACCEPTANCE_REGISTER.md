@@ -1,9 +1,9 @@
 # Consultify — 16-module owner acceptance readiness register
 
 Date prepared: `2026-08-21`  
-Source branch: `codex/full-mvp-recovery-20260820`  
-Wave 2 code candidate: `4318da80fafb77482398fe64fa30c2af73bd29ee`  
-Status: `READY_FOR_EXACT_SHA_RUNTIME_PREPARATION / BROWSER_CONTROL_BLOCKED`
+Source branch: `codex/wave2-browser-transfer-20260821`
+Wave 2 transfer merge candidate: `26592bcf2b`
+Status: `READY_FOR_EXACT_SHA_RUNTIME_PREPARATION / BROWSER_CONTROL_AVAILABLE_NOT_REPLAYED`
 
 This register prepares the collaborative owner rounds. Historical G4 evidence
 is useful for routing and fixture design, but it does not replace a mounted
@@ -24,8 +24,9 @@ Before a round starts:
 6. Record each finding as P0-P3 with expected behavior, decision and owner.
 7. Rerun changed flows and obtain Piotr's exact-SHA verdict.
 
-Browser automation is currently unavailable in this Codex session. Therefore
-all rows start fail-closed at `READY_FOR_REPLAY`, never `PASS`.
+The owner verified Browser control in this durable workspace. No module replay
+has yet been executed on the transfer merge SHA, so every row remains
+fail-closed at `READY_FOR_REPLAY`, never `PASS`.
 
 ## Module register
 

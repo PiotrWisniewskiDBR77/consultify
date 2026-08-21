@@ -1,8 +1,8 @@
 # Consultify — reconciliation of the 11 pre-Wave-2 incomplete tasks
 
 Date: `2026-08-21`  
-Branch: `codex/full-mvp-recovery-20260820`  
-Wave 2 code candidate: `2ce7750de9`
+Branch: `codex/wave2-browser-transfer-20260821`
+Wave 2 transfer merge candidate: `26592bcf2b`
 Report HEAD at audit start: `f5a5db9e10`
 
 ## Authority and counting rule

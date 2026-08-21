@@ -4,8 +4,8 @@ Date: `2026-08-21`
 
 Overall verdict: `CONDITIONAL_PASS / OWNER_BROWSER_GATE_REQUIRED`
 
-This report qualifies the corrected code candidate at
-`2ce7750de9` on
+This report qualifies the transferred integration candidate at
+`26592bcf2b` on
 the transferred integration branch `codex/wave2-browser-transfer-20260821`. It
 does not authorize production, deployment,
 or promotion to `OWNER_ACCEPTED`.
@@ -15,7 +15,7 @@ or promotion to `OWNER_ACCEPTED`.
 - canonical durable worktree: `/Users/piotrwisniewski/Developer/Consultify`;
 - transferred Wave 2 source candidate: `2ce7750de9`;
 - local pre-transfer integration repair retained: `1a36dd72b0`;
-- code candidate: `2ce7750de9`;
+- final transfer merge candidate: `26592bcf2b`;
 - branch: `codex/wave2-browser-transfer-20260821`;
 - recovery source: preserved local ref
   `refs/remotes/icloud-source/wave2-final-20260821` plus the durable checkout's
@@ -185,8 +185,9 @@ Shared-contract verification:
 - focused manifest and mounted-denominator tests after the repair: `5/5 PASS`;
 - post-integration Finance route and inventory requalification: `90/90 PASS`;
 - the durable checkout retains the declaration-only shared type boundary from
-  `1a36dd72b0`; final merge typechecks and focused tests are required below;
-- `git diff --check`: required on the final merge candidate;
+  `1a36dd72b0`; final merge root and server typechecks both pass;
+- final transfer-focused tests: `7 files / 110 tests PASS`;
+- `git diff --check`: `PASS` on merge candidate `26592bcf2b`;
 - candidate cleanliness: required again after this report-only commit.
 
 During the final 2026-08-21 verification, the server build initially failed
