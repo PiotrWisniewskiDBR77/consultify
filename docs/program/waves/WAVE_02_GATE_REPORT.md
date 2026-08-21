@@ -1,24 +1,28 @@
 # Consultify — Wave 02 Core Closure gate report
 
-Date: `2026-08-20`
+Date: `2026-08-21`
 
 Overall verdict: `CONDITIONAL_PASS / OWNER_BROWSER_GATE_REQUIRED`
 
 This report qualifies the code candidate at
-`a02a15073733ffc25cfb471a37586361c1815e6e` on
+`1a36dd72b0b27aedc8067e75b8de07ed4446e7fb` on
 `codex/full-mvp-recovery-20260820`. It does not authorize production, deployment,
 or promotion to `OWNER_ACCEPTED`.
 
 ## Candidate and recovery state
 
-- durable worktree: `/Users/piotrwisniewski/Developer/consultify-wave02-recovery`;
-- code candidate: `a02a15073733ffc25cfb471a37586361c1815e6e`;
+- canonical durable worktree: `/Users/piotrwisniewski/Developer/Consultify`;
+- code candidate: `1a36dd72b0b27aedc8067e75b8de07ed4446e7fb`;
 - branch: `codex/full-mvp-recovery-20260820`;
 - recovery source: the same branch and commit formerly checked out at the
   reboot-removed `/private/tmp/consultify-staging-deploy-e6ca`;
 - production touched: `NO`;
 - push/deploy performed: `NO`;
 - NFR suite rerun: `NO`.
+
+The prior conditional report commit was `e4aa6a42c31fd78f507478865dc7e0520d1f5c1c`.
+The original integrated P1-P4 candidate remains its parent
+`a02a15073733ffc25cfb471a37586361c1815e6e`.
 
 ## Controlled fan-in
 
@@ -134,8 +138,24 @@ Persistence command result:
 Shared-contract verification:
 
 - root `npm run type-check -- --pretty false`: `PASS`;
-- `git diff --check`: required again after this report-only commit;
+- focused P3/P4 rerun after the final integration repair: `3 files / 9 tests PASS`;
+- server production build/typecheck: `PASS`;
+- `git diff --check`: required again after this report-only change;
 - candidate cleanliness: required again after this report-only commit.
+
+During the final 2026-08-21 verification, the server build initially failed
+with `TS6059`: the two P3 server adapters imported a type-bearing `.ts` module
+outside `server.rootDir`. Commit `1a36dd72b0` separates the federated type
+contract into a declaration-only shared module. This retains one shared contract
+without copying the registry and prevents the server build from trying to emit
+the frontend/shared implementation. Root typecheck, server build and the P3/P4
+focused tests all pass after the repair.
+
+Dependency installation from the committed lockfile reported 41 audit findings
+(`4 low / 9 moderate / 27 high / 1 critical`). No automatic dependency fix was
+run because that would change the Wave 02 candidate without a bounded dependency
+review. This is a separate security follow-up and is not represented as a P4
+functional failure.
 
 ## Release decision
 
@@ -149,3 +169,8 @@ P4 is code-complete but not owner-accepted. Therefore:
 - if that review finds defects, record screenshots and comments in the UI/UX
   correction register and iterate without changing the technical verdicts for
   unrelated P1-P3 scopes.
+
+The 2026-08-21 session again exposed neither the Browser control runtime nor the
+Computer Use control runtime. The local repository and dependencies are ready,
+but no synthetic Playwright run or screenshot has been substituted for the
+required owner click gate. P4 therefore remains `CODE_PASS / BROWSER_NOT_TESTED`.
