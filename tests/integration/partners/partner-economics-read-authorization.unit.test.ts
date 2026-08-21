@@ -131,15 +131,10 @@ vi.mock('../../../server/src/utils/Logger.js', () => ({
  * every economic-read handler resolves without touching a database.
  * ========================================================================== */
 
-const getActivePartnerOrgIdForUser = vi.fn();
+const getActivePartnerOrgIdForTenantUser = vi.fn();
 vi.mock('../../../server/src/services/partnerOrgResolution.js', () => ({
-  getActivePartnerOrgIdForUser: (...args: unknown[]) => getActivePartnerOrgIdForUser(...args),
-}));
-
-const ensurePartnerDemoDataset = vi.fn().mockResolvedValue(undefined);
-vi.mock('../../../server/src/services/partnerDemoSeedService.js', () => ({
-  ensurePartnerDemoDataset: (...args: unknown[]) => ensurePartnerDemoDataset(...args),
-  default: { ensurePartnerDemoDataset: (...args: unknown[]) => ensurePartnerDemoDataset(...args) },
+  getActivePartnerOrgIdForTenantUser: (...args: unknown[]) =>
+    getActivePartnerOrgIdForTenantUser(...args),
 }));
 
 vi.mock('../../../server/src/services/legalService.js', () => ({
@@ -280,6 +275,7 @@ function buildApp(): Express {
     }
     req.userId = actor.userId;
     req.organizationId = actor.organizationId;
+    req.requestedOrganizationId = actor.organizationId;
     req.userRole = actor.userRole;
     req.user = { id: actor.userId, organizationId: actor.organizationId, role: actor.userRole };
     // Mirrors attachV8Context's output shape (server/src/middleware/v8Auth.middleware.ts),
@@ -349,7 +345,7 @@ function fakeProgramDetail() {
 }
 
 function mockAllEconomicReadsSucceed() {
-  getActivePartnerOrgIdForUser.mockResolvedValue(PARTNER_ORG_ID);
+  getActivePartnerOrgIdForTenantUser.mockResolvedValue(PARTNER_ORG_ID);
   getProgramStatusDetail.mockResolvedValue(fakeProgramDetail());
   listEntries.mockResolvedValue([]);
   getPartnerPayoutSettings.mockResolvedValue({});
@@ -473,14 +469,13 @@ describe('AMD-PRT-ECONOMICS-002 — economic read authorization (v8 partner rout
       expect(getPartnerClients).toHaveBeenCalled();
     });
 
-    it('GET /clients also succeeds for a foreign-tenant-shaped MEMBER (no membership row at all)', async () => {
-      // Non-economic routes were never gated by requireActiveMembership, so
-      // an absent membership row must not affect them — regression guard
-      // against accidentally widening the new gate onto this route.
+    it('GET /clients denies a foreign-tenant-shaped MEMBER with no matching membership row', async () => {
       dbGet.mockResolvedValue(undefined);
       currentActor = MEMBER;
       const res = await request(server).get('/api/v8/partner/clients');
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('ORG_MEMBERSHIP_REVOKED');
+      expect(getPartnerClients).not.toHaveBeenCalled();
     });
   });
 

@@ -113,6 +113,11 @@ describeReal.sequential('PRT-MVP-LEDGER-001 participant/referral ledger', () => 
     await sql.query(
       `INSERT INTO organization_members(id,organization_id,user_id,role,status)
        VALUES ($1,$2,$3,'ADMIN','ACTIVE')`,
+      [randomUUID(), OTHER_OWNER, ACTOR]
+    );
+    await sql.query(
+      `INSERT INTO organization_members(id,organization_id,user_id,role,status)
+       VALUES ($1,$2,$3,'ADMIN','ACTIVE')`,
       [randomUUID(), OTHER_OWNER, FOREIGN_ACTOR]
     );
     await sql.query(
@@ -212,5 +217,115 @@ describeReal.sequential('PRT-MVP-LEDGER-001 participant/referral ledger', () => 
       .set('Authorization', `Bearer ${token(OTHER_OWNER, FOREIGN_ACTOR)}`)
       .set('x-organization-id', OTHER_OWNER);
     expect(foreign.status).toBe(403);
+  });
+
+  it('binds canonical reads and onboarding writes to the selected tenant for a dual-member user', async () => {
+    const mounted = apps().v8;
+    const beforePartnerUsers = Number(
+      (await sql.query(`SELECT COUNT(*)::int AS count FROM partner_users WHERE user_id=$1`, [ACTOR]))
+        .rows[0].count
+    );
+    const beforeOnboarding = Number(
+      (
+        await sql.query(`SELECT COUNT(*)::int AS count FROM user_onboarding_status WHERE user_id=$1`, [
+          ACTOR,
+        ])
+      ).rows[0].count
+    );
+
+    const own = await request(mounted)
+      .get('/api/v8/partner/clients')
+      .set('Authorization', `Bearer ${token(OWNER, ACTOR)}`)
+      .set('x-organization-id', OWNER);
+    expect(own.status).toBe(200);
+    expect(own.body.meta).toMatchObject({
+      partnerOrgId: PARTNER,
+      v8TenantOrganizationId: OWNER,
+    });
+
+    const foreignRead = await request(mounted)
+      .get('/api/v8/partner/clients')
+      .set('Authorization', `Bearer ${token(OTHER_OWNER, ACTOR)}`)
+      .set('x-organization-id', OTHER_OWNER);
+    expect(foreignRead.status).toBe(403);
+    expect(foreignRead.body.code).toBe('PARTNER_ORG_REQUIRED');
+
+    const foreignWrite = await request(mounted)
+      .post('/api/v8/partner/onboarding/accept-terms')
+      .set('Authorization', `Bearer ${token(OTHER_OWNER, ACTOR)}`)
+      .set('x-organization-id', OTHER_OWNER)
+      .send({ termsVersion: 'tenant-isolation-probe', privacyVersion: 'tenant-isolation-probe' });
+    expect(foreignWrite.status).toBe(403);
+    expect(foreignWrite.body.code).toBe('PARTNER_ORG_REQUIRED');
+
+    expect(
+      Number(
+        (
+          await sql.query(`SELECT COUNT(*)::int AS count FROM partner_users WHERE user_id=$1`, [
+            ACTOR,
+          ])
+        ).rows[0].count
+      )
+    ).toBe(beforePartnerUsers);
+    expect(
+      Number(
+        (
+          await sql.query(
+            `SELECT COUNT(*)::int AS count FROM user_onboarding_status WHERE user_id=$1`,
+            [ACTOR]
+          )
+        ).rows[0].count
+      )
+    ).toBe(beforeOnboarding);
+  });
+
+  it('denies revoked and unbound canonical reads without self-heal or demo-seed residue', async () => {
+    const mounted = apps().v8;
+    const snapshot = async () => ({
+      partnerUsers: Number(
+        (await sql.query(`SELECT COUNT(*)::int AS count FROM partner_users WHERE user_id=$1`, [ACTOR]))
+          .rows[0].count
+      ),
+      campaignLinks: Number(
+        (
+          await sql.query(
+            `SELECT COUNT(*)::int AS count FROM partner_campaign_links WHERE partner_org_id=$1`,
+            [PARTNER]
+          )
+        ).rows[0].count
+      ),
+    });
+
+    const before = await snapshot();
+    await sql.query(
+      `UPDATE organization_members SET status='REVOKED' WHERE organization_id=$1 AND user_id=$2`,
+      [OWNER, ACTOR]
+    );
+    const revoked = await request(mounted)
+      .get('/api/v8/partner/clients')
+      .set('Authorization', `Bearer ${token(OWNER, ACTOR)}`)
+      .set('x-organization-id', OWNER);
+    expect(revoked.status).toBe(403);
+    expect(revoked.body.code).toBe('ORG_MEMBERSHIP_REVOKED');
+    expect(await snapshot()).toEqual(before);
+
+    await sql.query(
+      `UPDATE organization_members SET status='ACTIVE' WHERE organization_id=$1 AND user_id=$2`,
+      [OWNER, ACTOR]
+    );
+    await sql.query(`UPDATE partner_organizations SET owner_organization_id=NULL WHERE id=$1`, [
+      PARTNER,
+    ]);
+    const unbound = await request(mounted)
+      .get('/api/v8/partner/clients')
+      .set('Authorization', `Bearer ${token(OWNER, ACTOR)}`)
+      .set('x-organization-id', OWNER);
+    expect(unbound.status).toBe(403);
+    expect(unbound.body.code).toBe('PARTNER_ORG_REQUIRED');
+    expect(await snapshot()).toEqual(before);
+    await sql.query(`UPDATE partner_organizations SET owner_organization_id=$1 WHERE id=$2`, [
+      OWNER,
+      PARTNER,
+    ]);
   });
 });

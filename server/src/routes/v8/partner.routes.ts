@@ -34,7 +34,6 @@ import {
   submitCertificationExam,
   updateCertificationModuleProgress,
 } from '../../services/partnerCertificationService.js';
-import { ensurePartnerDemoDataset } from '../../services/partnerDemoSeedService.js';
 import {
   V8_PARTNER_ECONOMIC_WRITERS,
   createPartnerEconomicsPolicyGuard,
@@ -42,7 +41,6 @@ import {
 } from '../../services/partnerEconomicsPolicy.js';
 import {
   getActivePartnerOrgIdForTenantUser,
-  getActivePartnerOrgIdForUser,
 } from '../../services/partnerOrgResolution.js';
 import {
   getPartnerPayoutSettings,
@@ -89,6 +87,27 @@ const requireBoundPartnerTenant = asyncHandler(
   }
 );
 
+const requireExactPartnerTenantContext = (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): void => {
+  const { organizationId } = getV8Context(req);
+  const requestedOrganizationId = String(req.requestedOrganizationId || '').trim();
+  if (!requestedOrganizationId) {
+    res.status(403).json({
+      error: 'Explicit Partner tenant context required',
+      code: 'PARTNER_TENANT_CONTEXT_REQUIRED',
+    });
+    return;
+  }
+  if (requestedOrganizationId !== organizationId) {
+    res.status(403).json({ success: false, code: 'ORG_MEMBERSHIP_REVOKED' });
+    return;
+  }
+  next();
+};
+
 async function getBoundPartnerOrgId(req: AuthRequest): Promise<string | null> {
   const cached = (req as BoundPartnerRequest).boundPartnerOrgId;
   if (cached) return cached;
@@ -101,6 +120,7 @@ async function getBoundPartnerOrgId(req: AuthRequest): Promise<string | null> {
 // middleware below performs writes (seeding), so guarding after it would let a
 // policy-denied request mutate the database before being refused.
 router.use(createPartnerEconomicsPolicyGuard(V8_PARTNER_ECONOMIC_WRITERS, 'v8_partner'));
+router.use(requireExactPartnerTenantContext);
 
 // Certification mutations must fail closed before the shared partner demo
 // seeder below can perform any write. Route-level membership checks remain as
@@ -156,19 +176,12 @@ router.post(
   unavailablePartnerWriter('partner_license_order')
 );
 
-router.use(
-  asyncHandler(async (req: AuthRequest, _res: Response, next) => {
-    if (/^\/connect\/?$/.test(req.path)) return next();
-    const userId = req.userId || req.user?.id;
-    if (userId) {
-      const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
-      if (partnerOrgId) {
-        await ensurePartnerDemoDataset(partnerOrgId);
-      }
-    }
-    next();
-  })
-);
+// Every canonical Partner route after `/connect` is scoped to the exact live
+// Consultify tenant selected by the request.  Do not resolve or self-heal a
+// Partner membership from userId alone here: a user may legitimately belong
+// to more than one Consultify organization.  Demo fixtures are seeded by
+// explicit, disposable-DB harnesses rather than from a production request.
+router.use(/^(?!\/connect\/?$)/, requireActiveMembership, requireBoundPartnerTenant);
 
 function partnerReadMeta(req: AuthRequest, partnerOrgId: string) {
   const { organizationId } = getV8Context(req);
@@ -286,7 +299,7 @@ router.get(
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
-    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+      const partnerOrgId = await getBoundPartnerOrgId(req);
     if (!partnerOrgId) {
       return res.status(403).json({
         error: 'Partner organization required',
@@ -330,7 +343,7 @@ router.get(
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
-    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    const partnerOrgId = await getBoundPartnerOrgId(req);
     if (!partnerOrgId) {
       return res.status(403).json({
         error: 'Partner organization required',
@@ -393,7 +406,7 @@ router.post(
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
-    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    const partnerOrgId = await getBoundPartnerOrgId(req);
     if (!partnerOrgId) {
       return res.status(403).json({
         error: 'Partner organization required',
@@ -466,7 +479,7 @@ router.get(
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
-    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    const partnerOrgId = await getBoundPartnerOrgId(req);
     if (!partnerOrgId) {
       return res.status(403).json({
         error: 'Partner organization required',
@@ -501,7 +514,7 @@ router.get(
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
-    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    const partnerOrgId = await getBoundPartnerOrgId(req);
     if (!partnerOrgId) {
       return res.status(403).json({
         error: 'Partner organization required',
@@ -535,7 +548,7 @@ router.get(
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
-    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    const partnerOrgId = await getBoundPartnerOrgId(req);
     if (!partnerOrgId) {
       return res.status(403).json({
         error: 'Partner organization required',
@@ -571,7 +584,7 @@ router.get(
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
-    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    const partnerOrgId = await getBoundPartnerOrgId(req);
     if (!partnerOrgId) {
       return res.status(403).json({
         error: 'Partner organization required',
@@ -618,7 +631,7 @@ router.post(
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
-    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    const partnerOrgId = await getBoundPartnerOrgId(req);
     if (!partnerOrgId) {
       return res.status(403).json({
         error: 'Partner organization required',
@@ -683,7 +696,7 @@ router.post(
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
-    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    const partnerOrgId = await getBoundPartnerOrgId(req);
     if (!partnerOrgId) {
       return res.status(403).json({
         error: 'Partner organization required',
@@ -729,7 +742,7 @@ router.post(
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
-    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    const partnerOrgId = await getBoundPartnerOrgId(req);
     if (!partnerOrgId) {
       return res.status(403).json({
         error: 'Partner organization required',
@@ -803,7 +816,7 @@ router.get(
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
-    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    const partnerOrgId = await getBoundPartnerOrgId(req);
     if (!partnerOrgId) {
       return res.status(403).json({
         error: 'Partner organization required',
@@ -899,7 +912,7 @@ router.get(
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
-    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    const partnerOrgId = await getBoundPartnerOrgId(req);
     if (!partnerOrgId) {
       return res.status(403).json({
         error: 'Partner organization required',
@@ -929,7 +942,7 @@ router.get(
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
-    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    const partnerOrgId = await getBoundPartnerOrgId(req);
     if (!partnerOrgId) {
       return res.status(403).json({
         error: 'Partner organization required',
@@ -965,7 +978,7 @@ router.get(
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
-    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    const partnerOrgId = await getBoundPartnerOrgId(req);
     if (!partnerOrgId) {
       return res.status(403).json({
         error: 'Partner organization required',
@@ -1011,7 +1024,7 @@ router.get(
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
-    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    const partnerOrgId = await getBoundPartnerOrgId(req);
     if (!partnerOrgId) {
       return res.status(403).json({
         error: 'Partner organization required',
@@ -1049,7 +1062,7 @@ router.get(
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
-    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    const partnerOrgId = await getBoundPartnerOrgId(req);
     if (!partnerOrgId) {
       return res.status(403).json({
         error: 'Partner organization required',
@@ -1518,7 +1531,7 @@ router.get(
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
     }
-    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    const partnerOrgId = await getBoundPartnerOrgId(req);
     if (!partnerOrgId) {
       return res.status(403).json({
         error: 'Partner organization required',

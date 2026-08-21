@@ -337,6 +337,8 @@ export interface AuthRequest extends AuthenticatedRequest {
   userId?: string;
   userRole?: string;
   organizationId?: string;
+  /** Exact tenant requested by header/token before any legacy active-org fallback. */
+  requestedOrganizationId?: string;
   user?: AuthenticatedUser;
   isDemo?: boolean;
   isE2EAuthBypass?: boolean;
@@ -837,6 +839,7 @@ const attachUser = async (
 
   req.userId = decodedUserId;
   req.userRole = resolvedUserRole;
+  req.requestedOrganizationId = requestedOrgContextId || tokenOrganizationId;
   req.organizationId = resolvedOrganizationId;
 
   // Permanent role fix for selected internal accounts:
