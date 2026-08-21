@@ -10,7 +10,7 @@ Last updated: `2026-08-21`
 | 4 | `ASM` | Assessment | `TECHNICAL_PREFLIGHT` | `91e8a51639` source candidate; mount pending | `G00–G03 PASS/PASS_FOR_PREFLIGHT; G04–G05 IN_PROGRESS; 75/75 focused PASS` | 0 | 0 | 0 | 0 | `ASM-PF-001 fixed; guided owner fixture READY; frozen alternate pending` | Organization owner screen intentionally retained |
 | 5 | `INI` | Initiatives | `TECHNICAL_PREFLIGHT` | `75f84fc3d9` source candidate; mount pending | `G00–G03 PASS/PASS_FOR_PREFLIGHT; G04–G05 IN_PROGRESS; 208/208 focused PASS` | 0 | 0 | 0 | 0 | `INI-PF-001..002 fixed; INI-PF-003 open; owner fixture pending` | Organization owner screen intentionally retained |
 | 6 | `EXE` | Execution | `TECHNICAL_PREFLIGHT` | `9ce72577f9` source candidate; mount pending | `G00–G03 PASS/PASS_FOR_PREFLIGHT; G04–G05 IN_PROGRESS; 137/137 PASS` | 0 | 0 | 0 | 0 | `EXE-PF-001..003 fixed; EXE-PF-004 open; owner fixture pending` | Organization owner screen intentionally retained |
-| 7 | `MYW` | My Work / Agent | `NOT_STARTED` | — | `0` | 0 | 0 | 0 | 0 | — | — |
+| 7 | `MYW` | My Work / Agent | `TECHNICAL_PREFLIGHT` | `86f472918f` source candidate; mount pending | `G00–G03 PASS/PASS_FOR_PREFLIGHT; G04–G05 IN_PROGRESS; 105/105 PASS` | 0 | 0 | 0 | 0 | `MYW-PF-001..002 fixed; owner fixture pending` | Organization owner screen intentionally retained |
 | 8 | `MTG` | Meetings | `NOT_STARTED` | — | `0` | 0 | 0 | 0 | 0 | — | — |
 | 9 | `RES` | Results | `NOT_STARTED` | — | `0` | 0 | 0 | 0 | 0 | — | — |
 | 10 | `FIN` | Finance | `NOT_STARTED` | — | `0` | 0 | 0 | 0 | 0 | — | — |
