@@ -270,6 +270,46 @@ describe('SET-BVP-001 settings persistence across a cold session (real PostgreSQ
     expect(persisted).toEqual(expect.objectContaining({ first_name: 'Persisted', language: 'pl' }));
   });
 
+  it('denies delegated notification writes outside the durable tenant and ignores claimed roles', async () => {
+    const preferenceKey = 'settings:notifications';
+    const beforeForeign = await db.get(
+      `SELECT value FROM user_preferences WHERE user_id = ? AND key = ?`,
+      [foreignUserId, preferenceKey]
+    );
+
+    const claimedAdmin = await request(makeApp())
+      .post('/api/settings/notifications')
+      .set('Authorization', `Bearer ${token({ role: 'ADMIN' })}`)
+      .send({ userId: foreignUserId, preferences: { email: false } });
+    expect(claimedAdmin.status).toBe(403);
+
+    await db.run(
+      `UPDATE organization_members SET role = 'OWNER'
+       WHERE organization_id = ? AND user_id = ?`,
+      [orgId, userId]
+    );
+    try {
+      const durableOwner = await request(makeApp())
+        .post('/api/settings/notifications')
+        .set('Authorization', `Bearer ${token({ role: 'OWNER' })}`)
+        .send({ userId: foreignUserId, preferences: { email: false } });
+      expect(durableOwner.status).toBe(403);
+    } finally {
+      await db.run(
+        `UPDATE organization_members SET role = 'MEMBER'
+         WHERE organization_id = ? AND user_id = ?`,
+        [orgId, userId]
+      );
+    }
+
+    expect(
+      await db.get(`SELECT value FROM user_preferences WHERE user_id = ? AND key = ?`, [
+        foreignUserId,
+        preferenceKey,
+      ])
+    ).toEqual(beforeForeign);
+  });
+
   it('denies every mounted personal-setting write after membership revocation without mutation', async () => {
     const snapshot = async () => ({
       user: await db.get(

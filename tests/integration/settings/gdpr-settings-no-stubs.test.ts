@@ -540,4 +540,54 @@ describe('Settings/GDPR routes (no stub responses)', () => {
       successor: { request: '/api/gdpr/export-request' },
     });
   });
+
+  it('retires the legacy deletion writer with zero deletion writes', async () => {
+    const beforeGdpr = Number(
+      (
+        await db.get(
+          `SELECT count(*)::int AS n FROM gdpr_requests WHERE user_id = ? AND type = 'deletion'`,
+          [userId]
+        )
+      )?.n ?? 0
+    );
+    const beforeAccount = Number(
+      (
+        await db.get(
+          `SELECT count(*)::int AS n FROM account_deletion_requests WHERE user_id = ?`,
+          [userId]
+        )
+      )?.n ?? 0
+    );
+
+    const res = await request(makeApp())
+      .post('/api/user/delete-request')
+      .set('Authorization', `Bearer ${makeToken()}`)
+      .send({ confirmationEmail: 'u1@test.local', reason: 'legacy retry' });
+
+    expect(res.status).toBe(410);
+    expect(res.body).toMatchObject({
+      code: 'SET_DELETE_APPROVED_OUT',
+      destructiveExecution: false,
+    });
+    expect(
+      Number(
+        (
+          await db.get(
+            `SELECT count(*)::int AS n FROM gdpr_requests WHERE user_id = ? AND type = 'deletion'`,
+            [userId]
+          )
+        )?.n ?? 0
+      )
+    ).toBe(beforeGdpr);
+    expect(
+      Number(
+        (
+          await db.get(
+            `SELECT count(*)::int AS n FROM account_deletion_requests WHERE user_id = ?`,
+            [userId]
+          )
+        )?.n ?? 0
+      )
+    ).toBe(beforeAccount);
+  });
 });

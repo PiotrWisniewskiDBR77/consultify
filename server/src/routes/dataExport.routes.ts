@@ -260,82 +260,13 @@ router.post(
   verifyToken,
   isAuthenticated,
   requireAudit,
-  async (req: Request, res: Response) => {
-    try {
-      const userId = (req as any).user?.id;
-      if (!userId) {
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
-      await checkLegalHoldForUser(db, userId, 'Account deletion request');
-      const { reason, confirmationEmail } = req.body;
-
-      // Verify email matches
-      const user = (await db.get('SELECT email, organization_id FROM users WHERE id = ?', [
-        userId,
-      ])) as {
-        email: string;
-        organization_id: string;
-      } | null;
-      if (!user || user.email !== confirmationEmail) {
-        return res.status(400).json({ error: 'Email confirmation does not match' });
-      }
-      // gdpr_requests.organization_id and .type are NOT NULL with no DB default
-      // (Postgres rejects the row; SQLite let both slide) — see /request above.
-      if (!user.organization_id) {
-        return res.status(404).json({ error: 'User organization not found' });
-      }
-
-      const requestId = `del-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-
-      // Create deletion request with 30-day grace period
-      const scheduledDate = new Date();
-      scheduledDate.setDate(scheduledDate.getDate() + 30);
-
-      await db.run(
-        `
-      INSERT INTO gdpr_requests (id, organization_id, user_id, type, request_type, status, requested_at, scheduled_date, options)
-      VALUES (?, ?, ?, 'deletion', 'DELETE', 'SCHEDULED', datetime('now'), ?, ?)
-    `,
-        [
-          requestId,
-          user.organization_id,
-          userId,
-          scheduledDate.toISOString(),
-          JSON.stringify({ reason }),
-        ]
-      );
-
-      logger.info(`[DataExport] Deletion request created: ${requestId} for user ${userId}`);
-      await (req as any).emitAuditEvent?.({
-        actorType: 'USER',
-        action: 'create',
-        resourceType: 'data_delete_request',
-        resourceId: requestId,
-        after: { status: 'SCHEDULED', scheduledDate: scheduledDate.toISOString() },
-        metadata: { userId, reason: reason || null },
-      });
-
-      res.json({
-        success: true,
-        requestId,
-        message:
-          'Account deletion scheduled. Your account and data will be deleted after the grace period.',
-        gracePeriodDays: 30,
-        scheduledDate: scheduledDate.toISOString(),
-      });
-    } catch (error: any) {
-      if (error?.code === 'LEGAL_HOLD') {
-        return res.status(403).json({ error: error.message, code: 'LEGAL_HOLD' });
-      }
-      logger.error('[DataExport] Failed to create deletion request:', {
-        err: error,
-        correlationId: (req as any).correlationId,
-      });
-      res.status(500).json({
-        error: 'Nie udało się utworzyć wniosku o usunięcie danych',
-        code: 'DATA_EXPORT_CREATE_DELETION_FAILED',
-      });
-    }
+  async (_req: Request, res: Response) => {
+    return res.status(410).json({
+      success: false,
+      code: 'SET_DELETE_APPROVED_OUT',
+      error: 'Legacy deletion requests are retired. Use /api/settings/gdpr/deletion-request.',
+      destructiveExecution: false,
+    });
   }
 );
 

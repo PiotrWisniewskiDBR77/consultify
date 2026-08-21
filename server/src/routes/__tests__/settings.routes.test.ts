@@ -1354,3 +1354,74 @@ describe('settings registry contract endpoints', () => {
     );
   });
 });
+
+describe('POST /api/settings/notifications tenant authorization', () => {
+  const makeApp = () => {
+    const app = express();
+    app.use(express.json());
+    app.use('/api/settings', settingsRoutes);
+    return app;
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockDbRun.mockResolvedValue({ success: true });
+  });
+
+  it('allows a durable same-tenant admin to update an ACTIVE target', async () => {
+    mockDbGet.mockImplementation(async (sql: string, params?: unknown[]) => {
+      if (!String(sql).includes('FROM organization_members')) return undefined;
+      const [userId, organizationId] = params as string[];
+      if (organizationId !== 'org-1') return undefined;
+      if (userId === 'user-1') return { status: 'ACTIVE', role: 'ADMIN' };
+      if (userId === 'user-2') return { status: 'ACTIVE', role: 'MEMBER' };
+      return undefined;
+    });
+
+    const res = await request(makeApp())
+      .post('/api/settings/notifications')
+      .set('x-user-role', 'admin')
+      .send({ userId: 'user-2', preferences: { email: false } });
+
+    expect(res.status).toBe(200);
+    expect(mockDbRun).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not trust an admin role claim when the durable actor role is MEMBER', async () => {
+    mockDbGet.mockImplementation(async (sql: string, params?: unknown[]) => {
+      if (!String(sql).includes('FROM organization_members')) return undefined;
+      const [userId, organizationId] = params as string[];
+      if (organizationId !== 'org-1') return undefined;
+      if (userId === 'user-1') return { status: 'ACTIVE', role: 'MEMBER' };
+      if (userId === 'user-2') return { status: 'ACTIVE', role: 'MEMBER' };
+      return undefined;
+    });
+
+    const res = await request(makeApp())
+      .post('/api/settings/notifications')
+      .set('x-user-role', 'admin')
+      .send({ userId: 'user-2', preferences: { email: false } });
+
+    expect(res.status).toBe(403);
+    expect(mockDbRun).not.toHaveBeenCalled();
+  });
+
+  it('denies a foreign or inactive target with zero writes', async () => {
+    mockDbGet.mockImplementation(async (sql: string, params?: unknown[]) => {
+      if (!String(sql).includes('FROM organization_members')) return undefined;
+      const [userId, organizationId] = params as string[];
+      if (userId === 'user-1' && organizationId === 'org-1') {
+        return { status: 'ACTIVE', role: 'OWNER' };
+      }
+      return undefined;
+    });
+
+    const res = await request(makeApp())
+      .post('/api/settings/notifications')
+      .set('x-user-role', 'owner')
+      .send({ userId: 'foreign-user', preferences: { email: false } });
+
+    expect(res.status).toBe(403);
+    expect(mockDbRun).not.toHaveBeenCalled();
+  });
+});

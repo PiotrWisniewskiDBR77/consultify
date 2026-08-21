@@ -1032,6 +1032,7 @@ router.get(
 router.post(
   '/notifications',
   verifyToken,
+  requireActiveMembership,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { userId, preferences } = req.body;
     const requesterId = req.user?.id;
@@ -1040,14 +1041,41 @@ router.post(
       return res.status(400).json({ error: 'Missing userId or preferences' });
     }
 
-    // Only owner or admin/superadmin
-    const actorRole = getSettingsActorRole(req);
-    if (requesterId !== userId && actorRole !== 'owner' && actorRole !== 'admin') {
-      return res.status(403).json({ error: 'Not authorized' });
-    }
-
     try {
-      await ensureUserPreferencesTable();
+      const organizationId = String(
+        (req as any)?.v8Context?.organizationId ||
+          req.user?.organizationId ||
+          (req as any)?.organizationId ||
+          ''
+      ).trim();
+      const [actorMembership, targetMembership] = await Promise.all([
+        dbGet<{ role?: string; status?: string }>(
+          `SELECT role, status FROM organization_members
+           WHERE user_id = ? AND organization_id = ?`,
+          [requesterId, organizationId],
+          { fallback: false }
+        ),
+        requesterId === userId
+          ? Promise.resolve(undefined)
+          : dbGet<{ status?: string }>(
+              `SELECT status FROM organization_members
+               WHERE user_id = ? AND organization_id = ?`,
+              [userId, organizationId],
+              { fallback: false }
+            ),
+      ]);
+      if (String(actorMembership?.status || '').toUpperCase() !== 'ACTIVE') {
+        return res.status(403).json({ error: 'Not authorized', code: 'ORG_MEMBERSHIP_REVOKED' });
+      }
+      if (requesterId !== userId) {
+        const actorRole = String(actorMembership?.role || '').toLowerCase();
+        if (!['owner', 'admin'].includes(actorRole)) {
+          return res.status(403).json({ error: 'Not authorized' });
+        }
+        if (String(targetMembership?.status || '').toUpperCase() !== 'ACTIVE') {
+          return res.status(403).json({ error: 'Target user is outside the active organization' });
+        }
+      }
 
       const data = JSON.stringify(preferences);
       const result = await upsertUserPreferenceValue(userId, preferencesKey('notifications'), data);
