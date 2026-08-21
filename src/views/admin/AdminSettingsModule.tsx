@@ -23,6 +23,7 @@ import {
   AdminSettingsSection,
   AdminSettingsSidebar,
 } from '../../components/Admin/AdminSettingsSidebar';
+import { SettingsHeaderActionsProvider } from '../../components/settings/SettingsHeaderActions';
 import DomainScreenHeader from '../../components/settings/shared/DomainScreenHeader';
 import { Button } from '../../components/ui/primitives/Button';
 import { ScrollArea } from '../../components/ui/scroll-area';
@@ -195,6 +196,7 @@ function resolveAdminLocation(
 }
 
 export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initialTab }) => {
+  const [headerActionsTarget, setHeaderActionsTarget] = useState<HTMLDivElement | null>(null);
   const { t, i18n } = useTranslation();
   const { setCurrentView } = useAppStore();
   const location = useLocation();
@@ -349,63 +351,66 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
     ?.children.find((screen) => screen.id === resolvedLocation.screen)?.label;
 
   return (
-    <div className="relative flex h-full bg-slate-50 dark:bg-navy-950">
-      {sidebarOpen && (
-        <button
-          type="button"
-          aria-label={t('admin.shell.closeNavigation', 'Close admin navigation')}
-          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      <div
-        id="admin-settings-navigation"
-        className={cn(
-          'fixed inset-y-0 left-0 z-40 w-[280px] transform transition-transform duration-300 ease-in-out lg:static lg:transform-none',
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+    <SettingsHeaderActionsProvider value={headerActionsTarget}>
+      <div className="relative flex h-full bg-slate-50 dark:bg-navy-950">
+        {sidebarOpen && (
+          <button
+            type="button"
+            aria-label={t('admin.shell.closeNavigation', 'Close admin navigation')}
+            className="fixed inset-0 z-30 bg-black/50 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
         )}
-      >
-        <AdminSettingsSidebar
-          activeLocation={resolvedLocation}
-          onLocationChange={handleLocationChange}
-          onBack={handleBackToDashboard}
-          canAccessPlatformOperations={CAN_ACCESS_PLATFORM_OPERATIONS}
-        />
-      </div>
 
-      <div className="flex min-w-0 flex-1 flex-col bg-white dark:bg-navy-900">
-        <DomainScreenHeader
-          breadcrumbs={[
-            { label: t('admin.shell.breadcrumb'), onClick: handleBackToDashboard },
-            { label: t(meta.titleKey, { defaultValue: meta.titleDefault }) },
-            { label: screenLabel || resolvedLocation.screen },
-          ]}
-          title={screenLabel || resolvedLocation.screen}
-          subtitle={t(meta.subtitleKey, { defaultValue: meta.subtitleDefault })}
-          menuControl={
-            <Button
-              ref={menuButtonRef}
-              variant="ghost"
-              size="sm"
-              onClick={() => setSidebarOpen((prev) => !prev)}
-              aria-label={t('admin.shell.toggleNavigation', 'Toggle admin navigation')}
-              aria-expanded={sidebarOpen}
-              aria-controls="admin-settings-navigation"
-              className="p-2 text-[var(--c-text-secondary)] hover:text-[var(--c-text)] lg:hidden"
-            >
-              {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </Button>
-          }
-        />
+        <div
+          id="admin-settings-navigation"
+          className={cn(
+            'fixed inset-y-0 left-0 z-40 w-[280px] transform transition-transform duration-300 ease-in-out lg:static lg:transform-none',
+            sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+          )}
+        >
+          <AdminSettingsSidebar
+            activeLocation={resolvedLocation}
+            onLocationChange={handleLocationChange}
+            onBack={handleBackToDashboard}
+            canAccessPlatformOperations={CAN_ACCESS_PLATFORM_OPERATIONS}
+          />
+        </div>
 
-        <ScrollArea className="flex-1">
-          <div className="admin-domain-content mx-auto w-full max-w-[1280px] space-y-6 p-4 sm:p-5 lg:p-6">
-            {content}
-          </div>
-        </ScrollArea>
+        <div className="flex min-w-0 flex-1 flex-col bg-white dark:bg-navy-900">
+          <DomainScreenHeader
+            breadcrumbs={[
+              { label: t('admin.shell.breadcrumb'), onClick: handleBackToDashboard },
+              { label: t(meta.titleKey, { defaultValue: meta.titleDefault }) },
+              { label: screenLabel || resolvedLocation.screen },
+            ]}
+            title={screenLabel || resolvedLocation.screen}
+            subtitle={t(meta.subtitleKey, { defaultValue: meta.subtitleDefault })}
+            actionsRef={setHeaderActionsTarget}
+            menuControl={
+              <Button
+                ref={menuButtonRef}
+                variant="ghost"
+                size="sm"
+                onClick={() => setSidebarOpen((prev) => !prev)}
+                aria-label={t('admin.shell.toggleNavigation', 'Toggle admin navigation')}
+                aria-expanded={sidebarOpen}
+                aria-controls="admin-settings-navigation"
+                className="p-2 text-[var(--c-text-secondary)] hover:text-[var(--c-text)] lg:hidden"
+              >
+                {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </Button>
+            }
+          />
+
+          <ScrollArea className="flex-1">
+            <div className="admin-domain-content mx-auto w-full max-w-[1280px] space-y-6 p-4 sm:p-5 lg:p-6">
+              {content}
+            </div>
+          </ScrollArea>
+        </div>
       </div>
-    </div>
+    </SettingsHeaderActionsProvider>
   );
 };
 
