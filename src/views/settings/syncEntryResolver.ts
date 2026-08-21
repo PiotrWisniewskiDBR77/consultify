@@ -8,7 +8,9 @@ export function resolveLegacySyncSettingsEntry(
   const normalized = pathname.replace(/\/+$/, '') || '/';
   switch (normalized) {
     case ROUTES.SETTINGS.BILLING:
-      return isAdminOwnerOrSuperAdminRole(role) ? ROUTES.ADMIN.BILLING : ROUTES.SETTINGS.PROFILE;
+      return isAdminOwnerOrSuperAdminRole(role)
+        ? `${ROUTES.ADMIN.BILLING}/overview`
+        : ROUTES.SETTINGS.PROFILE;
     case ROUTES.SETTINGS.AI:
       return `${ROUTES.SETTINGS.ROOT}/ai-behavior`;
     case ROUTES.SETTINGS.NOTIFICATIONS:
