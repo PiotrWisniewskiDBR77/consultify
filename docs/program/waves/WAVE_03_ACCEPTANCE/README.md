@@ -92,6 +92,17 @@ The numbered module checklists use gates `G00`–`G20` matching this sequence.
 - `MODULE_TEMPLATE.md` — canonical structure copied into every module packet.
 - `modules/*/MODULE_ACCEPTANCE.md` — the 16 authoritative module registers.
 
+Structural integrity is fail-closed and can be replayed with:
+
+```bash
+node scripts/wave3/verify-acceptance-packages.mjs
+```
+
+The verifier requires exactly 16 canonical directories and master rows, one
+`G00`–`G20` checklist per module, all durable register sections and
+`Mobile: DEFERRED_NON_GATING` in every package. It verifies structure only; it
+does not promote any functional, browser or owner gate.
+
 ## Status lifecycle
 
 `NOT_STARTED → PREPARING → READY_FOR_OWNER_REVIEW → OWNER_REVIEW_IN_PROGRESS →
