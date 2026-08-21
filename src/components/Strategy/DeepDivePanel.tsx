@@ -12,9 +12,13 @@ interface DeepDivePanelProps {
 
 export const DeepDivePanel: React.FC<DeepDivePanelProps> = ({ scenario, isRecommended }) => {
   const { t: translate } = useTranslation();
-  const t = translate('transformationScenarios', { returnObjects: true }) as any;
+  const translated = translate('transformationScenarios', { returnObjects: true });
+  const t =
+    typeof translated === 'object' && translated !== null
+      ? (translated as Record<string, any>)
+      : {};
 
-  const sTexts = t.scenarios[scenario.id];
+  const sTexts = t.scenarios?.[scenario.id];
 
   // Helpers to fallback to english or default
   const getName = () => sTexts?.name || scenario.name;
@@ -27,15 +31,17 @@ export const DeepDivePanel: React.FC<DeepDivePanelProps> = ({ scenario, isRecomm
       {/* Header - Sticky */}
       <div className="p-6 border-b border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-white/5 backdrop-blur-md">
         <div className="flex items-center gap-2 mb-1">
-          <h3 className="text-xl font-bold text-navy-900 dark:text-white">{t.deepDive.title}</h3>
+          <h3 className="text-xl font-bold text-navy-900 dark:text-white">
+            {t.deepDive?.title || 'Scenario details'}
+          </h3>
           {isRecommended && (
             <span className="px-2 py-0.5 bg-primary-100 dark:bg-primary-900/30 text-primary-600 text-[10px] font-bold uppercase rounded-full tracking-wide border border-primary-200 dark:border-primary-500/30">
-              {t.recommended}
+              {t.recommended || 'Recommended'}
             </span>
           )}
         </div>
         <p className="text-slate-500 dark:text-slate-400 text-sm line-clamp-1">
-          {t.deepDive.subtitle?.replace('{name}', getName())}
+          {(t.deepDive?.subtitle || 'Business implications of {name}').replace('{name}', getName())}
         </p>
       </div>
 
@@ -43,7 +49,7 @@ export const DeepDivePanel: React.FC<DeepDivePanelProps> = ({ scenario, isRecomm
         {/* 1. What it means */}
         <section>
           <h4 className="text-sm font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-            <Target size={16} /> {t.deepDive.definition}
+            <Target size={16} /> {t.deepDive?.definition || 'What this scenario means'}
           </h4>
           <div className="bg-white dark:bg-navy-800 p-4 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm">
             <p className="text-navy-900 dark:text-slate-200 leading-relaxed text-sm text-justify">
@@ -56,7 +62,7 @@ export const DeepDivePanel: React.FC<DeepDivePanelProps> = ({ scenario, isRecomm
         {isRecommended && (
           <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <h4 className="text-sm font-bold text-primary-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-              <Zap size={16} /> {t.deepDive.aiReasoning}
+              <Zap size={16} /> {t.deepDive?.aiReasoning || 'Why this scenario fits'}
             </h4>
             <div className="bg-primary-50 dark:bg-primary-900/10 p-4 rounded-xl border border-primary-100 dark:border-primary-900/20 space-y-3">
               <div className="flex gap-3">
@@ -87,12 +93,12 @@ export const DeepDivePanel: React.FC<DeepDivePanelProps> = ({ scenario, isRecomm
         {/* 3. Trade-offs */}
         <section>
           <h4 className="text-sm font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-            <AlertTriangle size={16} /> {t.deepDive.tradeoffs}
+            <AlertTriangle size={16} /> {t.deepDive?.tradeoffs || 'Trade-offs'}
           </h4>
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-green-50 dark:bg-green-900/10 p-4 rounded-xl border border-green-100 dark:border-green-900/20">
               <div className="text-xs font-bold text-green-700 dark:text-green-400 mb-2 uppercase">
-                {t.deepDive.gains}
+                {t.deepDive?.gains || 'Gains'}
               </div>
               <ul className="space-y-2">
                 {getGains().map((gain, i) => (
@@ -105,7 +111,7 @@ export const DeepDivePanel: React.FC<DeepDivePanelProps> = ({ scenario, isRecomm
             </div>
             <div className="bg-danger-50 dark:bg-danger-900/10 p-4 rounded-xl border border-danger-100 dark:border-danger-900/20">
               <div className="text-xs font-bold text-danger-700 dark:text-danger-400 mb-2 uppercase">
-                {t.deepDive.sacrifices}
+                {t.deepDive?.sacrifices || 'Sacrifices'}
               </div>
               <ul className="space-y-2">
                 {getSacrifices().map((sac, i) => (
@@ -122,7 +128,7 @@ export const DeepDivePanel: React.FC<DeepDivePanelProps> = ({ scenario, isRecomm
         {/* 4. Organizational Impact */}
         <section>
           <h4 className="text-sm font-bold text-slate-600 dark:text-slate-500 uppercase tracking-wider mb-3">
-            {t.deepDive.impact}
+            {t.deepDive?.impact || 'Organizational impact'}
           </h4>
           <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 divide-y divide-slate-200 dark:divide-white/5">
             {Object.entries(typeof scenario.impact === 'object' ? scenario.impact : {}).map(

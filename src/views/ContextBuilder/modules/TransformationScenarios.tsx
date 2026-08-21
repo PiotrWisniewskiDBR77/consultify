@@ -22,7 +22,11 @@ export const TransformationScenarios: React.FC<TransformationScenariosProps> = (
   // Derived State
   const { synthesis, challenges, companyProfile } = useContextBuilderStore();
   const { t: translate } = useTranslation();
-  const t = translate('transformationScenarios', { returnObjects: true }) as { [key: string]: any };
+  const translated = translate('transformationScenarios', { returnObjects: true });
+  const t =
+    typeof translated === 'object' && translated !== null
+      ? (translated as Record<string, any>)
+      : {};
 
   const recommendedScenario = recommendScenario(challenges.declaredChallenges, companyProfile);
   const recommendedId = recommendedScenario?.id;
@@ -43,10 +47,14 @@ export const TransformationScenarios: React.FC<TransformationScenariosProps> = (
 
   // Translation helper
   const getScenarioText = (id: string, field: 'name' | 'narrative') => {
-    const sTexts = t.scenarios[id as keyof typeof t.scenarios];
-    if (!sTexts) return '';
+    const sTexts = t.scenarios?.[id];
+    const scenario = SCENARIOS.find((item) => item.id === id);
 
-    return sTexts[field];
+    return (
+      sTexts?.[field] ||
+      (field === 'name' ? scenario?.name : scenario?.narrative || scenario?.description) ||
+      ''
+    );
   };
 
   const handleConfirm = (id: string) => {
@@ -66,9 +74,14 @@ export const TransformationScenarios: React.FC<TransformationScenariosProps> = (
             <BrainCircuit size={24} />
           </div>
           <div>
-            <h3 className="font-bold text-navy-900 dark:text-white text-lg">{t.banner.title}</h3>
+            <h3 className="font-bold text-navy-900 dark:text-white text-lg">
+              {t.banner?.title || 'Recommended transformation scenario'}
+            </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 max-w-2xl mt-1">
-              {t.banner.subtitle
+              {(
+                t.banner?.subtitle ||
+                'Based on {count} declared challenges, the recommended direction is {name}.'
+              )
                 .replace('{count}', challenges.declaredChallenges.length.toString())
                 .replace('{name}', recName)}
               <strong className="text-primary-600 dark:text-primary-400 ml-1">{recName}</strong>
@@ -101,7 +114,7 @@ export const TransformationScenarios: React.FC<TransformationScenariosProps> = (
                   {getScenarioText(viewedScenario.id, 'name')}
                   {viewedScenario.id === recommendedId && (
                     <span className="px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-600 text-xs font-bold uppercase rounded-full border border-primary-200 dark:border-primary-500/30">
-                      {t.recommended}
+                      {t.recommended || 'Recommended'}
                     </span>
                   )}
                 </h2>
@@ -133,13 +146,15 @@ export const TransformationScenarios: React.FC<TransformationScenariosProps> = (
                 onClick={() => setViewedScenarioId(null)}
                 className="px-6 py-3 text-slate-600 dark:text-slate-300 font-medium hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-colors"
               >
-                {t.cancel}
+                {t.cancel || 'Cancel'}
               </button>
               <button
                 onClick={() => handleConfirm(viewedScenario.id)}
                 className="group flex items-center gap-2 px-8 py-3 bg-navy-900 dark:bg-navy-900 text-white rounded-xl hover:bg-navy-800 dark:hover:bg-navy-800 transition-all font-bold shadow-lg shadow-navy-900/20 dark:shadow-primary-900/40"
               >
-                {selectedId === viewedScenario.id ? t.selected : t.select}
+                {selectedId === viewedScenario.id
+                  ? t.selected || 'Selected'
+                  : t.select || 'Select scenario'}
                 {selectedId !== viewedScenario.id && (
                   <ArrowRight
                     size={18}

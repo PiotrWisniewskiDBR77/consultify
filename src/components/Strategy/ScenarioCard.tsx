@@ -31,11 +31,16 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({
 }) => {
   const iconEmoji = scenario.icon;
   const { t: translate } = useTranslation();
-  const t = translate('transformationScenarios', { returnObjects: true }) as any;
+  const translated = translate('transformationScenarios', { returnObjects: true });
+  const t =
+    typeof translated === 'object' && translated !== null
+      ? (translated as Record<string, any>)
+      : {};
 
-  const name = t.scenarios[scenario.id]?.name || scenario.name;
-  const narrative = t.scenarios[scenario.id]?.narrative || scenario.narrative;
-  const recommendedText = t.recommended;
+  const name = t.scenarios?.[scenario.id]?.name || scenario.name;
+  const narrative =
+    t.scenarios?.[scenario.id]?.narrative || scenario.narrative || scenario.description;
+  const recommendedText = t.recommended || 'Recommended';
 
   return (
     <div
