@@ -54,7 +54,6 @@ import { createHash, randomUUID as uuidv4 } from 'node:crypto';
 import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
 import * as artifactVersionService from './artifactVersionService.js';
 import { canonicalPayloadHash } from './contentHash.js';
-import { stampWorkingRevisionComputeIdentity } from './artifactVersionService.js';
 import type { BusinessVersionRow, TransitionServiceResult } from './artifactVersionService.js';
 import * as computeJobService from './computeJobService.js';
 import type { ComputeJobRow } from './computeJobService.js';
@@ -688,6 +687,7 @@ export async function computeAnalysisKpis(params: ComputeAnalysisKpisParams): Pr
     const completed = await computeJobService.completeJobSuccess({
       jobId: runningJob.id,
       organizationId: params.organizationId,
+      inputArtifactId: runningJob.input_artifact_id,
       outputArtifactId: bv.artifact_id,
       outputBusinessVersionId: params.businessVersionId,
       outputWorkingRevisionId,
@@ -701,20 +701,13 @@ export async function computeAnalysisKpis(params: ComputeAnalysisKpisParams): Pr
     // `evaluateAllRows`/`persistResults`, which is exactly the race this
     // fixes.) OUTPUT_ALREADY_COMMITTED is treated as an idempotent-safe
     // outcome — see report §"NOT_RUNNING vs OUTPUT_ALREADY_COMMITTED".
-    if (!completed.ok && completed.code === 'NOT_RUNNING') {
+    if (!completed.ok) {
       return {
         ok: false,
         code: 'JOB_NOT_RUNNING',
         message: `computeAnalysisKpis: completeJobSuccess reported NOT_RUNNING for job ${runningJob.id}: ${completed.message}`,
       };
     }
-    // W10-D01 fix — see baselineComputeService.ts's identical call for the full rationale.
-    await stampWorkingRevisionComputeIdentity({
-      organizationId: params.organizationId,
-      workingRevisionId: outputWorkingRevisionId,
-      contentSemanticHash,
-      computeRunId: runningJob.id,
-    });
   }
 
   // --- Readiness gate + optional DRAFT -> READY_FOR_REVIEW transition (ADR section 7 / this

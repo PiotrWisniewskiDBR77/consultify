@@ -51,7 +51,6 @@ import {
 } from './baselineScheduleEngine.js';
 import { solvePeriod, type CircularityPeriodResult } from './baselineCircularitySolver.js';
 import { canonicalPayloadHash } from './contentHash.js';
-import { stampWorkingRevisionComputeIdentity } from './artifactVersionService.js';
 import * as computeJobService from './computeJobService.js';
 import type { ComputeJobRow } from './computeJobService.js';
 import * as exceptionLedgerService from './exceptionLedgerService.js';
@@ -702,6 +701,7 @@ export async function runBaselineCompute(params: RunBaselineComputeParams): Prom
   const completed = await computeJobService.completeJobSuccess({
     jobId: runningJob.id,
     organizationId: params.organizationId,
+    inputArtifactId: runningJob.input_artifact_id,
     outputArtifactId: runningJob.input_artifact_id,
     outputBusinessVersionId: params.businessVersionId,
     outputWorkingRevisionId: ctx.sourceWorkingRevisionId,
@@ -713,25 +713,13 @@ export async function runBaselineCompute(params: RunBaselineComputeParams): Prom
   // is treated as an idempotent-safe outcome (see report §"NOT_RUNNING vs
   // OUTPUT_ALREADY_COMMITTED"): another attempt for this SAME job_id already
   // committed an output, so we fall through and reuse the authoritative row.
-  if (!completed.ok && completed.code === 'NOT_RUNNING') {
+  if (!completed.ok) {
     return {
       ok: false,
       code: 'JOB_NOT_RUNNING',
       message: `baselineComputeService: completeJobSuccess reported NOT_RUNNING for job ${runningJob.id}: ${completed.message}`,
     };
   }
-  // W10-D01 fix: stamp the SAME hash + the compute job that produced it onto
-  // the working revision itself — before this, `content_semantic_hash` only
-  // ever reached `compute_job_outputs`, never `finance_working_revisions`, so
-  // compute pinning (`computePinning.ts`) and the approve-time snapshot
-  // freeze (`approveVersion()` step (b)) always saw NULL.
-  await stampWorkingRevisionComputeIdentity({
-    organizationId: params.organizationId,
-    workingRevisionId: ctx.sourceWorkingRevisionId,
-    contentSemanticHash,
-    computeRunId: runningJob.id,
-  });
-
   const finalJob = completed.ok ? completed.job : ((await computeJobService.getJob(params.organizationId, job.id)) ?? runningJob);
   return { ok: true, job: finalJob, periodsComputed: monthlyResults.length, monthlyResults };
 }

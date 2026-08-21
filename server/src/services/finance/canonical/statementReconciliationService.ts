@@ -46,7 +46,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
 import {
   transition,
-  stampWorkingRevisionComputeIdentity,
   type BusinessVersionRow,
   type TransitionServiceResult,
 } from './artifactVersionService.js';
@@ -648,6 +647,59 @@ export async function runReconciliation(params: RunReconciliationParams): Promis
       rows.push(inserted);
     }
 
+    const revision = await tx.queryOne<{
+      working_revision_id: string;
+      business_version_id: string;
+      is_current: boolean;
+    }>(
+      `SELECT working_revision_id,business_version_id,is_current
+         FROM finance_working_revisions
+        WHERE artifact_id=? AND organization_id=? AND is_current=true
+        FOR UPDATE`,
+      [params.artifactId, params.organizationId]
+    );
+    const version = revision
+      ? await tx.queryOne<{ status: string; freshness: string }>(
+          `SELECT status,freshness FROM finance_business_versions
+            WHERE business_version_id=? AND organization_id=? FOR UPDATE`,
+          [revision.business_version_id, params.organizationId]
+        )
+      : null;
+    if (
+      !revision ||
+      !version ||
+      revision.business_version_id !== params.businessVersionId ||
+      !['DRAFT', 'READY_FOR_REVIEW', 'IN_REVIEW', 'NEEDS_CHANGES'].includes(version.status) ||
+      ['STALE_SOURCE', 'STALE_ASSUMPTIONS'].includes(version.freshness)
+    ) {
+      throw new Error('STATEMENT_RECONCILIATION_STALE_PUBLICATION');
+    }
+    const contentSemanticHash = canonicalPayloadHash({
+      totals,
+      reconciliationRowCount: rows.length,
+    });
+    const stamped = await tx.queryOne<{ working_revision_id: string }>(
+      `UPDATE finance_working_revisions
+          SET content_semantic_hash=?,compute_run_id=?
+        WHERE working_revision_id=? AND organization_id=? AND is_current=true
+          AND business_version_id=?
+        RETURNING working_revision_id`,
+      [
+        contentSemanticHash,
+        runId,
+        revision.working_revision_id,
+        params.organizationId,
+        params.businessVersionId,
+      ]
+    );
+    if (!stamped) throw new Error('STATEMENT_RECONCILIATION_PUBLICATION_CAS_LOST');
+    await tx.queryRun(
+      `UPDATE finance_business_versions
+          SET freshness='CURRENT',freshness_reason=NULL,stale_since=NULL
+        WHERE business_version_id=? AND organization_id=?`,
+      [revision.business_version_id, params.organizationId]
+    );
+
     return { run: insertedRun, reconciliationRows: rows };
   });
 
@@ -660,21 +712,6 @@ export async function runReconciliation(params: RunReconciliationParams): Promis
   // count — the smallest deterministic fingerprint of "what this reconciliation run
   // produced", mirroring `batchContentHash()`'s "hash the run's own output, not a
   // full domain re-read" convention in `financeImportService.ts`.
-  const reconciliationWorkingRevision = await withPinnedPostgresTransaction((tx) =>
-    tx.queryOne<{ working_revision_id: string }>(
-      `SELECT working_revision_id FROM finance_working_revisions WHERE artifact_id = ? AND organization_id = ? AND is_current = true`,
-      [params.artifactId, params.organizationId]
-    )
-  );
-  if (reconciliationWorkingRevision) {
-    await stampWorkingRevisionComputeIdentity({
-      organizationId: params.organizationId,
-      workingRevisionId: reconciliationWorkingRevision.working_revision_id,
-      contentSemanticHash: canonicalPayloadHash({ totals, reconciliationRowCount: reconciliationRows.length }),
-      computeRunId: runId,
-    });
-  }
-
   // --- Exception on over-threshold residual (task: "Residual > materiality placeholder -> tworzy
   //     finance_exceptions z severity odpowiednim do wielkości residuala"). ---
   let exception: FinanceExceptionRow | null = null;

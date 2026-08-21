@@ -18,9 +18,21 @@ import {
 import { getStatementDetail } from '../financialStatementReadService.js';
 import { recomputeStatementPack, syncStatementToPack } from '../financialStatementPackService.js';
 import { stageSelectedStatementSections } from '../statementMultiSectionImportService.js';
-import { createArtifact } from '../finance/canonical/artifactVersionService.js';
+import {
+  approveVersion,
+  createArtifact,
+  getBusinessVersion,
+  reopenVersion,
+  transition,
+} from '../finance/canonical/artifactVersionService.js';
 import { computeAnalysisKpis } from '../finance/canonical/kpiComputeService.js';
 import { insertEdge } from '../finance/canonical/lineageService.js';
+import { mapStatementLines } from '../finance/canonical/statementMappingService.js';
+import { runReconciliation } from '../finance/canonical/statementReconciliationService.js';
+import { runBaselineCompute } from '../finance/canonical/baselineComputeService.js';
+import { runPredictionCompute } from '../finance/canonical/predictionComputeService.js';
+import { runPreflight } from '../finance/canonical/predictionPreflightService.js';
+import { runDcfFcffValuation } from '../finance/canonical/valuationComputeService.js';
 
 const DATABASE_URL = process.env.DATABASE_URL || '';
 const PDF_PATH = process.env.FINANCE_STATEMENT_ACCEPTANCE_PDF || '';
@@ -930,35 +942,166 @@ describe.runIf(enabled)(
          RETURNING id`,
         [organizationId, statementBusinessVersionId, userId]
       );
-      for (const [lineCode, value] of [
-        ['CURRENT_ASSETS', 2_100_000],
-        ['CURRENT_LIABILITIES', 700_000],
-      ] as const) {
-        const line = await pool.query(
-          `SELECT id FROM financial_statement_lines
-            WHERE line_code=$1 AND organization_id IS NULL LIMIT 1`,
-          [lineCode]
-        );
-        expect(line.rows).toHaveLength(1);
-        await pool.query(
-          `INSERT INTO finance_stmt_lines
-             (organization_id,business_version_id,statement_type,canonical_line_id,
-              entity_id,period_id,accumulation_basis,consolidation_scope,value_status,
-              value_decimal,native_currency,presentation_currency,unit,sign_convention,
-              accounting_policy,created_by)
-           VALUES ($1,$2,'BS',$3,$4,$5,'FULL_YEAR','CONSOLIDATED','PRESENT_NONZERO',
-                   $6,'PLN','PLN','UNITS','NATURAL','IFRS',$7)`,
+      const mappedStatement = await mapStatementLines({
+        organizationId,
+        businessVersionId: statementBusinessVersionId,
+        unit: 'UNITS',
+        presentationCurrency: 'PLN',
+        createdBy: userId,
+        rawLines: [
+          {
+            lineItem: 'Owner fixture current assets',
+            periodId: period.rows[0].period_id,
+            entityCode: 'CDP-GROUP',
+            currency: 'PLN',
+            value: 2_100_000,
+            sourceRef: { fixture: 'wave3-finance-owner' },
+          },
+          {
+            lineItem: 'Owner fixture current liabilities',
+            periodId: period.rows[0].period_id,
+            entityCode: 'CDP-GROUP',
+            currency: 'PLN',
+            value: 700_000,
+            sourceRef: { fixture: 'wave3-finance-owner' },
+          },
+        ],
+        rules: [
+          {
+            sourceLabel: 'Owner fixture current assets',
+            statementType: 'BS',
+            lineCode: 'CURRENT_ASSETS',
+          },
+          {
+            sourceLabel: 'Owner fixture current liabilities',
+            statementType: 'BS',
+            lineCode: 'CURRENT_LIABILITIES',
+          },
+        ],
+      });
+      const GOLDCO = {
+        revenue: 182_000_000,
+        cogs: 118_000_000,
+        opex: 34_000_000,
+        depreciation: 7_000_000,
+        capex: 9_000_000,
+        cash: 11_000_000,
+        ar: 26_000_000,
+        inventory: 19_500_000,
+        fixedAssets: 101_500_000,
+        ap: 17_500_000,
+        longTermDebt: 40_500_000,
+      } as const;
+      const openingAssets = GOLDCO.cash + GOLDCO.ar + GOLDCO.inventory + GOLDCO.fixedAssets;
+      const openingLiabilities = GOLDCO.ap + GOLDCO.longTermDebt;
+      const openingEquity = openingAssets - openingLiabilities;
+      const monthEnd = (year: number, month: number) =>
+        new Date(Date.UTC(year, month, 0)).toISOString().slice(0, 10);
+      const historicalPeriodIds: string[] = [];
+      const forecastPeriodIds: string[] = [];
+      let previousPeriodId: string | null = null;
+      for (let month = 1; month <= 12; month += 1) {
+        const historical = await pool.query(
+          `INSERT INTO finance_stmt_periods
+             (organization_id,fiscal_calendar_id,period_type,fiscal_year,fiscal_month,
+              period_start,period_end,label,previous_period_id,created_by)
+           VALUES ($1,$2,'MONTH',2025,$3,$4,$5,$6,$7,$8) RETURNING period_id`,
           [
             organizationId,
-            statementBusinessVersionId,
-            line.rows[0].id,
-            entity.rows[0].id,
-            period.rows[0].period_id,
-            value,
+            calendar.rows[0].fiscal_calendar_id,
+            month,
+            `2025-${String(month).padStart(2, '0')}-01`,
+            monthEnd(2025, month),
+            `${month}/2025`,
+            previousPeriodId,
             userId,
           ]
         );
+        previousPeriodId = historical.rows[0].period_id;
+        historicalPeriodIds.push(previousPeriodId!);
       }
+      for (let month = 1; month <= 12; month += 1) {
+        const forecast = await pool.query(
+          `INSERT INTO finance_stmt_periods
+             (organization_id,fiscal_calendar_id,period_type,fiscal_year,fiscal_month,
+              period_start,period_end,label,previous_period_id,created_by)
+           VALUES ($1,$2,'MONTH',2026,$3,$4,$5,$6,$7,$8) RETURNING period_id`,
+          [
+            organizationId,
+            calendar.rows[0].fiscal_calendar_id,
+            month,
+            `2026-${String(month).padStart(2, '0')}-01`,
+            monthEnd(2026, month),
+            `${month}/2026`,
+            previousPeriodId,
+            userId,
+          ]
+        );
+        previousPeriodId = forecast.rows[0].period_id;
+        forecastPeriodIds.push(previousPeriodId!);
+      }
+      const monthlyRawLines = historicalPeriodIds.map((periodId, index) => ({
+        lineItem: `Owner fixture monthly revenue ${index + 1}`,
+        periodId,
+        entityCode: 'CDP-GROUP',
+        currency: 'PLN',
+        value: GOLDCO.revenue / 12,
+        sourceRef: { fixture: 'wave3-finance-owner' },
+      }));
+      const openingPeriodId = historicalPeriodIds.at(-1)!;
+      const openingRows = [
+        ['CASH', GOLDCO.cash],
+        ['AR', GOLDCO.ar],
+        ['INVENTORY', GOLDCO.inventory],
+        ['FIXED_ASSETS', GOLDCO.fixedAssets],
+        ['AP', GOLDCO.ap],
+        ['LONG_TERM_DEBT', GOLDCO.longTermDebt],
+        ['EQUITY', openingEquity],
+        ['RETAINED_EARNINGS', 40_000_000],
+        ['COGS', GOLDCO.cogs / 12],
+        ['OPEX', GOLDCO.opex / 12],
+      ] as const;
+      const baselineSourceMapping = await mapStatementLines({
+        organizationId,
+        businessVersionId: statementBusinessVersionId,
+        unit: 'UNITS',
+        presentationCurrency: 'PLN',
+        createdBy: userId,
+        rawLines: [
+          ...monthlyRawLines,
+          ...openingRows.map(([lineCode, value]) => ({
+            lineItem: `Owner fixture opening ${lineCode}`,
+            periodId: openingPeriodId,
+            entityCode: 'CDP-GROUP',
+            currency: 'PLN',
+            value,
+            sourceRef: { fixture: 'wave3-finance-owner' },
+          })),
+        ],
+        rules: [
+          ...monthlyRawLines.map((row) => ({
+            sourceLabel: row.lineItem,
+            statementType: 'P&L' as const,
+            lineCode: 'REVENUE',
+          })),
+          ...openingRows.map(([lineCode]) => ({
+            sourceLabel: `Owner fixture opening ${lineCode}`,
+            statementType: (lineCode === 'COGS' || lineCode === 'OPEX' ? 'P&L' : 'BS') as
+              | 'P&L'
+              | 'BS',
+            lineCode,
+          })),
+        ],
+      });
+      const statementReconciliation = await runReconciliation({
+        organizationId,
+        artifactId: canonicalStatement.rows[0].artifact_id,
+        businessVersionId: statementBusinessVersionId,
+        sourceSystem: 'wave3:finance-owner-review',
+        mappingResults: [...mappedStatement, ...baselineSourceMapping],
+        createdBy: userId,
+      });
+      expect(statementReconciliation.run.status).toBe('CLEAN');
       const analysisArtifact = await createArtifact({
         organizationId,
         artifactType: 'HISTORICAL_ANALYSIS',
@@ -1017,10 +1160,367 @@ describe.runIf(enabled)(
           }),
         ])
       );
+      const approveCanonicalVersion = async (businessVersionId: string) => {
+        let version = await getBusinessVersion(organizationId, businessVersionId);
+        expect(version).toBeTruthy();
+        const submitted = await transition({
+          organizationId,
+          businessVersionId,
+          action: 'submit_for_review',
+          actorId: userId,
+          role: 'preparer',
+          expectedVersion: version!.version,
+        });
+        expect(submitted.ok).toBe(true);
+        version = await getBusinessVersion(organizationId, businessVersionId);
+        const started = await transition({
+          organizationId,
+          businessVersionId,
+          action: 'start_review',
+          actorId: adminId,
+          role: 'approver',
+          expectedVersion: version!.version,
+        });
+        expect(started.ok).toBe(true);
+        version = await getBusinessVersion(organizationId, businessVersionId);
+        const approved = await approveVersion({
+          organizationId,
+          businessVersionId,
+          actorId: adminId,
+          role: 'approver',
+          expectedVersion: version!.version,
+        });
+        if (!approved.ok) {
+          process.stderr.write(`CANONICAL_APPROVAL_FAILURE ${JSON.stringify(approved)}\n`);
+          throw new Error(`canonical approval failed: ${approved.code}`);
+        }
+      };
+      await approveCanonicalVersion(statementBusinessVersionId);
+      await approveCanonicalVersion(analysisBusinessVersionId);
+      const baselineBusinessVersionId = downstream.baseline.businessVersionId;
+      await pool.query(
+        `INSERT INTO finance_baseline_models
+           (organization_id,business_version_id,horizon_months,horizon_rationale,
+            horizon_rationale_note,circularity_max_iterations,circularity_tolerance_currency,
+            interest_income_on_cash_modeled,mandatory_contractual_cash_sweep_modeled,created_by)
+         VALUES ($1,$2,12,'DEBT_MATURITY','Wave 3 owner GoldCo lifecycle',50,1,false,true,$3)`,
+        [organizationId, baselineBusinessVersionId, userId]
+      );
+      expect(
+        (
+          await insertEdge({
+            organizationId,
+            sourceVersionId: statementBusinessVersionId,
+            sourceArtifactType: 'STATEMENT_PACK',
+            targetVersionId: baselineBusinessVersionId,
+            targetArtifactType: 'BASELINE_MODEL',
+            edgeType: 'STATEMENT_TO_MODEL',
+            transformationKind: 'COMPUTE',
+            authorId: userId,
+          })
+        ).ok
+      ).toBe(true);
+      expect(
+        (
+          await insertEdge({
+            organizationId,
+            sourceVersionId: analysisBusinessVersionId,
+            sourceArtifactType: 'HISTORICAL_ANALYSIS',
+            targetVersionId: baselineBusinessVersionId,
+            targetArtifactType: 'BASELINE_MODEL',
+            edgeType: 'ANALYSIS_TO_MODEL',
+            transformationKind: 'COMPUTE',
+            assumptionSnapshotHash: 'a'.repeat(64),
+            authorId: userId,
+          })
+        ).ok
+      ).toBe(true);
+      const assumption = async (
+        scheduleType: string,
+        driverCode: string,
+        value: number,
+        unit: string
+      ) => {
+        await pool.query(
+          `INSERT INTO finance_baseline_assumptions
+             (organization_id,business_version_id,schedule_type,driver_code,entity_id,
+              period_id,rule,value_status,value_decimal,unit,quality,created_by)
+           VALUES ($1,$2,$3,$4,$5,$6,'HISTORICAL_AVERAGE','PRESENT_NONZERO',$7,$8,'ESTIMATED',$9)`,
+          [
+            organizationId,
+            baselineBusinessVersionId,
+            scheduleType,
+            driverCode,
+            entity.rows[0].id,
+            forecastPeriodIds[0],
+            value,
+            unit,
+            userId,
+          ]
+        );
+      };
+      await assumption('revenue_pvm', 'REVENUE_GROWTH_YOY', 0.05, 'PCT');
+      await assumption('cogs_opex', 'COGS_PCT_OF_REVENUE', GOLDCO.cogs / GOLDCO.revenue, 'PCT');
+      await assumption('cogs_opex', 'OPEX_PCT_OF_REVENUE', GOLDCO.opex / GOLDCO.revenue, 'PCT');
+      await assumption('wc_dso_dio_dpo', 'DSO_DAYS', (GOLDCO.ar / GOLDCO.revenue) * 365, 'DAYS');
+      await assumption('wc_dso_dio_dpo', 'DIO_DAYS', (GOLDCO.inventory / GOLDCO.cogs) * 365, 'DAYS');
+      await assumption('wc_dso_dio_dpo', 'DPO_DAYS', (GOLDCO.ap / GOLDCO.cogs) * 365, 'DAYS');
+      await assumption('capex_depreciation', 'CAPEX_PCT_OF_REVENUE', GOLDCO.capex / GOLDCO.revenue, 'PCT');
+      await assumption('capex_depreciation', 'USEFUL_LIFE_MONTHS', (12 * GOLDCO.fixedAssets) / GOLDCO.depreciation, 'MONTHS');
+      await assumption('tax_nol', 'STATUTORY_TAX_RATE_PCT', 0.19, 'PCT');
+      await pool.query(
+        `INSERT INTO finance_baseline_schedules
+           (organization_id,business_version_id,schedule_type,entity_id,schedule_item_code,
+            effective_from_period_id,payload,created_by)
+         VALUES ($1,$2,'debt_maturity',$3,'FACILITY-1',$4,$5,$6)`,
+        [
+          organizationId,
+          baselineBusinessVersionId,
+          entity.rows[0].id,
+          forecastPeriodIds[0],
+          JSON.stringify({
+            principal_opening: GOLDCO.longTermDebt,
+            contractual_rate: 0.048,
+            amortization_schedule: Array.from({ length: 12 }, () => 675_000),
+            mandatory_sweep_pct: 0.1,
+            mandatory_sweep_threshold: 0,
+          }),
+          userId,
+        ]
+      );
+      const baselineVersion = await getBusinessVersion(organizationId, baselineBusinessVersionId);
+      const baselineCompute = await runBaselineCompute({
+        organizationId,
+        businessVersionId: baselineBusinessVersionId,
+        entityId: entity.rows[0].id,
+        forecastPeriodIds,
+        openingBalanceSheetPeriodId: openingPeriodId,
+        engineManifestId: baselineVersion!.engine_manifest_id,
+        requestedByUserId: userId,
+      });
+      expect(baselineCompute.ok).toBe(true);
+      if (!baselineCompute.ok) throw new Error(baselineCompute.message);
+      expect(baselineCompute.periodsComputed).toBe(12);
+      const baselineOutputCount = await pool.query(
+        `SELECT count(*)::int AS count FROM finance_baseline_outputs
+          WHERE organization_id=$1 AND business_version_id=$2`,
+        [organizationId, baselineBusinessVersionId]
+      );
+      expect(baselineOutputCount.rows[0].count).toBe(372);
+      await approveCanonicalVersion(baselineBusinessVersionId);
+      const predictionBusinessVersionId = downstream.prediction.businessVersionId;
+      await pool.query(
+        `INSERT INTO finance_prediction_scenarios
+           (organization_id,business_version_id,name,scenario_mode,created_by)
+         VALUES ($1,$2,'Wave 3 owner base passthrough','STANDARD_BASE',$3)`,
+        [organizationId, predictionBusinessVersionId, userId]
+      );
+      expect(
+        (
+          await insertEdge({
+            organizationId,
+            sourceVersionId: baselineBusinessVersionId,
+            sourceArtifactType: 'BASELINE_MODEL',
+            targetVersionId: predictionBusinessVersionId,
+            targetArtifactType: 'PREDICTION_SCENARIO',
+            edgeType: 'MODEL_TO_SCENARIO',
+            transformationKind: 'MANUAL_LINK',
+            assumptionSnapshotHash: 'sha256:wave3-owner-baseline-passthrough',
+            authorId: userId,
+          })
+        ).ok
+      ).toBe(true);
+      const predictionPreflight = await runPreflight({
+        organizationId,
+        businessVersionId: predictionBusinessVersionId,
+        runBy: userId,
+        entityId: entity.rows[0].id,
+        openingBalanceSheetPeriodId: openingPeriodId,
+      });
+      expect(predictionPreflight.findingsCount).toBe(0);
+      const predictionCompute = await runPredictionCompute({
+        organizationId,
+        businessVersionId: predictionBusinessVersionId,
+        requestedByUserId: userId,
+        engineManifestId: baselineVersion!.engine_manifest_id,
+        entityId: entity.rows[0].id,
+        forecastPeriodIds,
+        openingBalanceSheetPeriodId: openingPeriodId,
+      });
+      expect(predictionCompute.ok).toBe(true);
+      if (!predictionCompute.ok) throw new Error(predictionCompute.message);
+      expect(predictionCompute.mode).toBe('STANDARD_BASE');
+      if (predictionCompute.mode !== 'STANDARD_BASE') {
+        throw new Error('Expected the canonical STANDARD_BASE passthrough result');
+      }
+      expect(predictionCompute.passthroughRowCount).toBe(372);
+      await approveCanonicalVersion(predictionBusinessVersionId);
+      const valuationBusinessVersionId = downstream.valuation.businessVersionId;
+      const valuationCase = await pool.query(
+        `INSERT INTO finance_valuation_cases (organization_id,name,description,created_by)
+         VALUES ($1,'Wave 3 owner GoldCo','DCF owner-review fixture',$2) RETURNING case_id`,
+        [organizationId, userId]
+      );
+      await pool.query(
+        `INSERT INTO finance_valuation_variants
+           (organization_id,business_version_id,case_id,name,description,created_by)
+         VALUES ($1,$2,$3,'Baseline case','Canonical Baseline-sourced DCF',$4)`,
+        [organizationId, valuationBusinessVersionId, valuationCase.rows[0].case_id, userId]
+      );
+      expect(
+        (
+          await insertEdge({
+            organizationId,
+            sourceVersionId: baselineBusinessVersionId,
+            sourceArtifactType: 'BASELINE_MODEL',
+            targetVersionId: valuationBusinessVersionId,
+            targetArtifactType: 'VALUATION_CASE',
+            edgeType: 'MODEL_TO_VALUATION',
+            transformationKind: 'MANUAL_LINK',
+            assumptionSnapshotHash: 'sha256:wave3-owner-model-to-valuation',
+            authorId: userId,
+          })
+        ).ok
+      ).toBe(true);
+      await pool.query(
+        `INSERT INTO finance_valuation_wacc_inputs
+           (organization_id,business_version_id,risk_free_rate_pct,equity_risk_premium_pct,
+            beta_unlevered,target_capital_structure_debt_pct,target_capital_structure_equity_pct,
+            current_capital_structure_debt_pct,current_capital_structure_equity_pct,
+            cost_of_debt_pretax_pct,cash_tax_rate_pct,currency,nominal_or_real,pre_or_post_tax,created_by)
+         VALUES ($1,$2,4.0,5.5,0.9,30,70,30,70,6.0,19,'PLN','NOMINAL','POST_TAX',$3)`,
+        [organizationId, valuationBusinessVersionId, userId]
+      );
+      const valuationParams = {
+        organizationId,
+        valuationBusinessVersionId,
+        entityId: entity.rows[0].id,
+        requestedByUserId: userId,
+        engineManifestId: baselineVersion!.engine_manifest_id,
+        projectionYears: [{ fiscalYear: 2026, periodIds: forecastPeriodIds }],
+        openingWorkingCapital: GOLDCO.ar + GOLDCO.inventory - GOLDCO.ap,
+        terminal: { gPct: 2.5 },
+      } as const;
+      const valuationBeforeFailure = await pool.query(
+        `SELECT version.freshness,revision.content_semantic_hash,revision.compute_run_id
+           FROM finance_business_versions version
+           JOIN finance_working_revisions revision
+             ON revision.working_revision_id=version.source_working_revision_id
+          WHERE version.organization_id=$1 AND version.business_version_id=$2`,
+        [organizationId, valuationBusinessVersionId]
+      );
+      await pool.query(`
+        CREATE FUNCTION wave3_fail_valuation_publish() RETURNS trigger
+        LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'WAVE3_INJECTED_VALUATION_PUBLISH_FAILURE'; END $$;
+        CREATE TRIGGER wave3_fail_valuation_publish
+        BEFORE INSERT OR UPDATE ON finance_valuation_methods
+        FOR EACH ROW EXECUTE FUNCTION wave3_fail_valuation_publish();
+      `);
+      await expect(runDcfFcffValuation(valuationParams)).rejects.toThrow(
+        'WAVE3_INJECTED_VALUATION_PUBLISH_FAILURE'
+      );
+      const valuationFailureReadback = await pool.query(
+        `SELECT version.freshness,revision.content_semantic_hash,revision.compute_run_id,
+                (SELECT count(*)::int FROM compute_job_outputs output
+                  JOIN compute_jobs job ON job.id=output.job_id
+                 WHERE job.organization_id=$1 AND job.job_type='VALUATION_COMPUTE'
+                   AND job.input_artifact_id=$3) AS output_count,
+                (SELECT count(*)::int FROM finance_valuation_methods method
+                 WHERE method.organization_id=$1 AND method.business_version_id=$2) AS method_count
+           FROM finance_business_versions version
+           JOIN finance_working_revisions revision
+             ON revision.working_revision_id=version.source_working_revision_id
+          WHERE version.organization_id=$1 AND version.business_version_id=$2`,
+        [organizationId, valuationBusinessVersionId, downstream.valuation.artifactId]
+      );
+      expect(valuationFailureReadback.rows[0]).toEqual(
+        expect.objectContaining({
+          freshness: valuationBeforeFailure.rows[0].freshness,
+          content_semantic_hash: valuationBeforeFailure.rows[0].content_semantic_hash,
+          compute_run_id: valuationBeforeFailure.rows[0].compute_run_id,
+          output_count: 0,
+          method_count: 0,
+        })
+      );
+      await pool.query(`DROP TRIGGER wave3_fail_valuation_publish ON finance_valuation_methods`);
+      await pool.query(`DROP FUNCTION wave3_fail_valuation_publish()`);
+      await pool.query(
+        `UPDATE compute_job_runs SET outcome='failed',finished_at=now()
+          WHERE job_id IN (SELECT id FROM compute_jobs WHERE organization_id=$1
+                            AND job_type='VALUATION_COMPUTE' AND input_artifact_id=$2)
+            AND outcome='running'`,
+        [organizationId, downstream.valuation.artifactId]
+      );
+      await pool.query(
+        `UPDATE compute_jobs SET status='queued',lease_owner=NULL,lease_expires_at=NULL,
+                                started_at=NULL,finished_at=NULL
+          WHERE organization_id=$1 AND job_type='VALUATION_COMPUTE' AND input_artifact_id=$2
+            AND status='running'`,
+        [organizationId, downstream.valuation.artifactId]
+      );
+      const valuationCompute = await runDcfFcffValuation(valuationParams);
+      expect(valuationCompute.ok).toBe(true);
+      if (!valuationCompute.ok) throw new Error(valuationCompute.message);
+      expect(Number.isFinite(valuationCompute.enterpriseValue)).toBe(true);
+      expect(valuationCompute.fcffYears).toHaveLength(1);
+      const valuationReadback = await pool.query(
+        `SELECT method_type,readiness,result_ev_decimal
+           FROM finance_valuation_methods
+          WHERE organization_id=$1 AND business_version_id=$2 AND method_type='DCF_FCFF'`,
+        [organizationId, valuationBusinessVersionId]
+      );
+      expect(valuationReadback.rows).toHaveLength(1);
+      expect(valuationReadback.rows[0]).toEqual(
+        expect.objectContaining({ method_type: 'DCF_FCFF', readiness: 'READY' })
+      );
+      expect(Number(valuationReadback.rows[0].result_ev_decimal)).toBeCloseTo(
+        valuationCompute.enterpriseValue,
+        6
+      );
+      await approveCanonicalVersion(valuationBusinessVersionId);
       downstream.analysis = {
         artifactId: analysisArtifact.artifact.artifact_id,
         businessVersionId: analysisBusinessVersionId,
       };
+      const approvedVersionIds = [
+        statementBusinessVersionId,
+        analysisBusinessVersionId,
+        baselineBusinessVersionId,
+        predictionBusinessVersionId,
+        valuationBusinessVersionId,
+      ];
+      const coldLifecycleReadback = await pool.query(
+        `SELECT version.business_version_id,version.status,version.approved_by,
+                version.compute_snapshot_id,version.content_semantic_hash,version.compute_run_id,
+                version.source_working_revision_id,revision.working_revision_id,
+                revision.content_semantic_hash AS revision_hash,revision.compute_run_id AS revision_run,
+                snapshot.content_semantic_hash AS snapshot_hash,snapshot.compute_run_id AS snapshot_run,
+                event.actor_id AS approval_actor
+           FROM finance_business_versions version
+           JOIN finance_working_revisions revision
+             ON revision.working_revision_id=version.source_working_revision_id
+            AND revision.organization_id=version.organization_id AND revision.is_current=true
+           JOIN finance_compute_snapshots snapshot
+             ON snapshot.compute_snapshot_id=version.compute_snapshot_id
+            AND snapshot.organization_id=version.organization_id
+           JOIN artifact_lifecycle_events event
+             ON event.business_version_id=version.business_version_id
+            AND event.organization_id=version.organization_id AND event.action='APPROVE'
+          WHERE version.organization_id=$1 AND version.business_version_id=ANY($2::text[])
+          ORDER BY version.business_version_id`,
+        [organizationId, approvedVersionIds]
+      );
+      expect(coldLifecycleReadback.rows).toHaveLength(5);
+      for (const row of coldLifecycleReadback.rows) {
+        expect(row.status).toBe('APPROVED');
+        expect(row.approved_by).toBe(adminId);
+        expect(row.approval_actor).toBe(adminId);
+        expect(row.source_working_revision_id).toBe(row.working_revision_id);
+        expect(row.content_semantic_hash).toBe(row.revision_hash);
+        expect(row.content_semantic_hash).toBe(row.snapshot_hash);
+        expect(row.compute_run_id).toBe(row.revision_run);
+        expect(row.compute_run_id).toBe(row.snapshot_run);
+      }
       const downstreamReadback = await pool.query(
         `SELECT artifact.artifact_id,artifact.artifact_type,version.business_version_id
            FROM finance_artifacts artifact
@@ -1131,6 +1631,12 @@ describe.runIf(enabled)(
                   fixtureState:
                     workspace === 'analysis'
                       ? 'COMPUTED_CURRENT_RATIO_CONFIRMED'
+                      : workspace === 'baseline'
+                        ? 'COMPUTED_7_SCHEDULE_12_PERIOD_CONFIRMED'
+                        : workspace === 'prediction'
+                          ? 'COMPUTED_STANDARD_BASE_CONFIRMED'
+                          : workspace === 'valuation'
+                            ? 'COMPUTED_DCF_FCFF_CONFIRMED'
                       : 'IDENTITY_SHELL_NOT_COMPUTED',
                   ownerReviewReady: false,
                   deepLinkVerified: false,
@@ -1152,6 +1658,42 @@ describe.runIf(enabled)(
           flag: 'wx',
         });
       }
+      const reconciliationCountBeforeReopen = await pool.query(
+        `SELECT count(*)::int AS count FROM finance_reconciliation_runs
+          WHERE organization_id=$1 AND business_version_id=$2`,
+        [organizationId, statementBusinessVersionId]
+      );
+      const approvedStatementVersion = await getBusinessVersion(
+        organizationId,
+        statementBusinessVersionId
+      );
+      const reopenedStatement = await reopenVersion({
+        organizationId,
+        businessVersionId: statementBusinessVersionId,
+        actorId: adminId,
+        role: 'approver',
+        expectedVersion: approvedStatementVersion!.version,
+        reason: 'Wave 3 old-BV publication CAS probe',
+      });
+      expect(reopenedStatement.ok).toBe(true);
+      await expect(
+        runReconciliation({
+          organizationId,
+          artifactId: canonicalStatement.rows[0].artifact_id,
+          businessVersionId: statementBusinessVersionId,
+          sourceSystem: 'wave3:stale-old-bv-probe',
+          mappingResults: mappedStatement,
+          createdBy: userId,
+        })
+      ).rejects.toThrow('STATEMENT_RECONCILIATION_STALE_PUBLICATION');
+      const reconciliationCountAfterReopen = await pool.query(
+        `SELECT count(*)::int AS count FROM finance_reconciliation_runs
+          WHERE organization_id=$1 AND business_version_id=$2`,
+        [organizationId, statementBusinessVersionId]
+      );
+      expect(reconciliationCountAfterReopen.rows[0].count).toBe(
+        reconciliationCountBeforeReopen.rows[0].count
+      );
     }, 30_000);
   }
 );

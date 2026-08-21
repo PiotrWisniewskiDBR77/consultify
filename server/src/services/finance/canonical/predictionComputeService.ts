@@ -63,7 +63,6 @@ import {
   type RunBaselineComputeParams,
 } from './baselineComputeService.js';
 import { impactChainEffectiveFraction } from './predictionPreflightService.js';
-import { stampWorkingRevisionComputeIdentity } from './artifactVersionService.js';
 import * as computeJobService from './computeJobService.js';
 import type { ComputeJobRow } from './computeJobService.js';
 
@@ -368,7 +367,7 @@ async function runStandardBase(params: RunPredictionComputeParams, baselineModel
   const runningJob = claimResult.job;
 
   const scenarioWorkingRevision = await withPinnedPostgresTransaction((tx) =>
-    tx.queryOne<{ source_working_revision_id: string | null }>(`SELECT source_working_revision_id FROM finance_business_versions WHERE business_version_id = ?`, [
+    tx.queryOne<{ artifact_id: string; source_working_revision_id: string | null }>(`SELECT artifact_id,source_working_revision_id FROM finance_business_versions WHERE business_version_id = ?`, [
       params.businessVersionId,
     ])
   );
@@ -379,7 +378,8 @@ async function runStandardBase(params: RunPredictionComputeParams, baselineModel
   const completed = await computeJobService.completeJobSuccess({
     jobId: runningJob.id,
     organizationId: params.organizationId,
-    outputArtifactId: runningJob.input_artifact_id,
+    inputArtifactId: runningJob.input_artifact_id,
+    outputArtifactId: scenarioWorkingRevision.artifact_id,
     outputBusinessVersionId: params.businessVersionId, // the SCENARIO's own bv, for job-output audit trail — no finance_prediction_outputs row exists or ever will for this scenario_mode
     outputWorkingRevisionId: scenarioWorkingRevision.source_working_revision_id,
     contentSemanticHash, // identical derivation from the SAME baseline job's own monthlyResults — proves bit-for-bit equivalence at the job-output level, not just the DB-row level
@@ -389,20 +389,13 @@ async function runStandardBase(params: RunPredictionComputeParams, baselineModel
   // whose compute_job_outputs commit did not happen. OUTPUT_ALREADY_COMMITTED
   // is treated as an idempotent-safe outcome — see report §"NOT_RUNNING vs
   // OUTPUT_ALREADY_COMMITTED".
-  if (!completed.ok && completed.code === 'NOT_RUNNING') {
+  if (!completed.ok) {
     return {
       ok: false,
       code: 'JOB_NOT_RUNNING',
       message: `runStandardBase: completeJobSuccess reported NOT_RUNNING for job ${runningJob.id}: ${completed.message}`,
     };
   }
-  // W10-D01 fix — see baselineComputeService.ts's identical call for the full rationale.
-  await stampWorkingRevisionComputeIdentity({
-    organizationId: params.organizationId,
-    workingRevisionId: scenarioWorkingRevision.source_working_revision_id,
-    contentSemanticHash,
-    computeRunId: runningJob.id,
-  });
   const finalJob = completed.ok ? completed.job : ((await computeJobService.getJob(params.organizationId, job.id)) ?? runningJob);
 
   const passthroughRows = await withPinnedPostgresTransaction((tx) =>
@@ -854,6 +847,7 @@ async function runOverlayCompute(
   const completed = await computeJobService.completeJobSuccess({
     jobId: runningJob.id,
     organizationId: params.organizationId,
+    inputArtifactId: runningJob.input_artifact_id,
     outputArtifactId: scenarioArtifactEarly.artifact_id,
     outputBusinessVersionId: params.businessVersionId,
     outputWorkingRevisionId: scenarioArtifactEarly.source_working_revision_id,
@@ -864,20 +858,13 @@ async function runOverlayCompute(
   // whose compute_job_outputs commit did not happen. OUTPUT_ALREADY_COMMITTED
   // is treated as an idempotent-safe outcome — see report §"NOT_RUNNING vs
   // OUTPUT_ALREADY_COMMITTED".
-  if (!completed.ok && completed.code === 'NOT_RUNNING') {
+  if (!completed.ok) {
     return {
       ok: false,
       code: 'JOB_NOT_RUNNING',
       message: `runOverlayCompute: completeJobSuccess reported NOT_RUNNING for job ${runningJob.id}: ${completed.message}`,
     };
   }
-  // W10-D01 fix — see baselineComputeService.ts's identical call for the full rationale.
-  await stampWorkingRevisionComputeIdentity({
-    organizationId: params.organizationId,
-    workingRevisionId: scenarioArtifactEarly.source_working_revision_id,
-    contentSemanticHash,
-    computeRunId: runningJob.id,
-  });
   const finalJob = completed.ok ? completed.job : ((await computeJobService.getJob(params.organizationId, job.id)) ?? runningJob);
 
   return { ok: true, mode: 'COMPUTED', job: finalJob, periodsComputed: periods.length, periods };

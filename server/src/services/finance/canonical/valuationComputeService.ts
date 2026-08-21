@@ -23,7 +23,6 @@
 import { createHash, randomUUID as uuidv4 } from 'node:crypto';
 
 import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
-import { stampWorkingRevisionComputeIdentity } from './artifactVersionService.js';
 import { canonicalPayloadHash } from './contentHash.js';
 import * as computeJobService from './computeJobService.js';
 import type { ComputeJobRow } from './computeJobService.js';
@@ -658,13 +657,13 @@ export async function runDcfFcffValuation(
     equityValue = equity.equityValueDecimal;
   }
 
-  const publish = async () => {
+  const publish = async (publicationTx = params.publicationTx) => {
     const methodResult = await findOrCreateMethod({
       organizationId: params.organizationId,
       businessVersionId: params.valuationBusinessVersionId,
       methodType: 'DCF_FCFF',
       createdBy: params.requestedByUserId,
-      tx: params.publicationTx,
+      tx: publicationTx,
     });
     if (!methodResult.ok) throw new Error(methodResult.message);
     const method = methodResult.method;
@@ -683,14 +682,14 @@ export async function runDcfFcffValuation(
       sourceWorkingRevisionVersion: directAssumptions
         ? Number(directAssumptions.source_working_revision_version)
         : null,
-      tx: params.publicationTx,
+      tx: publicationTx,
     });
     const setResult = await setMethodResult({
       methodId: method.id,
       readiness: 'READY',
       resultValueStatus: discounted.enterpriseValue === 0 ? 'PRESENT_ZERO' : 'PRESENT_NONZERO',
       resultEvDecimal: discounted.enterpriseValue,
-      tx: params.publicationTx,
+      tx: publicationTx,
     });
     if (!setResult.ok) throw new Error(setResult.message);
     if (directAssumptions)
@@ -704,7 +703,7 @@ export async function runDcfFcffValuation(
         createdBy: params.requestedByUserId,
         sourceWorkingRevisionId: directAssumptions.source_working_revision_id,
         sourceWorkingRevisionVersion: Number(directAssumptions.source_working_revision_version),
-        tx: params.publicationTx,
+        tx: publicationTx,
       });
     return method;
   };
@@ -725,6 +724,7 @@ export async function runDcfFcffValuation(
       `runDcfFcffValuation: finance_business_versions.source_working_revision_id is not set for ${params.valuationBusinessVersionId}`
     );
   }
+  const valuationWorkingRevisionId = bv.source_working_revision_id;
 
   const inputRevisionHash = createHash('sha256')
     .update(
@@ -746,6 +746,7 @@ export async function runDcfFcffValuation(
     idempotencyKey: `valuation-compute:${params.valuationBusinessVersionId}:${inputRevisionHash}`,
     requestedByUserId: params.requestedByUserId,
     requestId: params.requestId ?? null,
+    tx: params.publicationTx,
   });
   // NEW-3 fix: self-claim the EXACT row just enqueued (by id, org-scoped) —
   // never the globally-oldest queued VALUATION_COMPUTE job across every
@@ -761,6 +762,7 @@ export async function runDcfFcffValuation(
     job,
     wasExisting,
     workerId: `valuationComputeService:${uuidv4()}`,
+    tx: params.publicationTx,
   });
   if (claimResult.outcome === 'hard_error') {
     return {
@@ -774,7 +776,21 @@ export async function runDcfFcffValuation(
     // exact result. This invocation independently recomputed the SAME deterministic values above
     // (Decimal-based, in-memory sorted) — we report the ORIGINAL job's identity, never mint a
     // second compute_jobs/compute_job_outputs row for the same idempotency key.
-    const method = await publish();
+    const method = await withPinnedPostgresTransaction((tx) =>
+      tx.queryOne<{ id: string }>(
+        `SELECT id FROM finance_valuation_methods
+          WHERE organization_id=? AND business_version_id=? AND method_type='DCF_FCFF'
+            AND readiness='READY'`,
+        [params.organizationId, params.valuationBusinessVersionId]
+      )
+    );
+    if (!method) {
+      return {
+        ok: false,
+        code: 'JOB_NOT_RUNNING',
+        message: 'Authoritative succeeded valuation job has no READY DCF_FCFF publication',
+      };
+    }
     return {
       ok: true,
       job: claimResult.job,
@@ -793,14 +809,25 @@ export async function runDcfFcffValuation(
     enterpriseValue: discounted.enterpriseValue,
     fcff: fcff.years,
   });
-  const completed = await computeJobService.completeJobSuccess({
-    jobId: runningJob.id,
-    organizationId: params.organizationId,
-    outputArtifactId: bv.artifact_id,
-    outputBusinessVersionId: params.valuationBusinessVersionId,
-    outputWorkingRevisionId: bv.source_working_revision_id,
-    contentSemanticHash,
-  });
+  let publishedMethodId: string | null = null;
+  const completeAndPublish = async (publicationTx: any) => {
+    const result = await computeJobService.completeJobSuccess({
+      jobId: runningJob.id,
+      organizationId: params.organizationId,
+      inputArtifactId: runningJob.input_artifact_id,
+      outputArtifactId: bv.artifact_id,
+      outputBusinessVersionId: params.valuationBusinessVersionId,
+      outputWorkingRevisionId: valuationWorkingRevisionId,
+      contentSemanticHash,
+      tx: publicationTx,
+    });
+    if (!result.ok) return result;
+    publishedMethodId = (await publish(publicationTx)).id;
+    return result;
+  };
+  const completed = params.publicationTx
+    ? await completeAndPublish(params.publicationTx)
+    : await withPinnedPostgresTransaction(completeAndPublish);
   // W9-B-2 fix: `completed.ok` used to be checked ONLY to decide `finalJob`
   // below — this function still unconditionally returned `{ ok: true, ... }`
   // even when completeJobSuccess() reported NOT_RUNNING (job cancelled/
@@ -810,29 +837,22 @@ export async function runDcfFcffValuation(
   // commit did not happen. OUTPUT_ALREADY_COMMITTED is treated as an
   // idempotent-safe outcome — see report §"NOT_RUNNING vs
   // OUTPUT_ALREADY_COMMITTED".
-  if (!completed.ok && completed.code === 'NOT_RUNNING') {
+  if (!completed.ok) {
     return {
       ok: false,
       code: 'JOB_NOT_RUNNING',
       message: `runDcfFcffValuation: completeJobSuccess reported NOT_RUNNING for job ${runningJob.id}: ${completed.message}`,
     };
   }
-  // W10-D01 fix — see baselineComputeService.ts's identical call for the full rationale.
-  await stampWorkingRevisionComputeIdentity({
-    organizationId: params.organizationId,
-    workingRevisionId: bv.source_working_revision_id,
-    contentSemanticHash,
-    computeRunId: runningJob.id,
-  });
   const finalJob = completed.ok
     ? completed.job
     : ((await computeJobService.getJob(params.organizationId, job.id)) ?? runningJob);
-  const method = await publish();
+  if (!publishedMethodId) throw new Error('valuation publication transaction returned no method');
 
   return {
     ok: true,
     job: finalJob,
-    methodId: method.id,
+    methodId: publishedMethodId,
     fcffYears: fcff.years,
     wacc: waccResult.breakdown,
     terminalValue: terminal.terminalValue,

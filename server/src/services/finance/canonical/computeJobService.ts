@@ -45,7 +45,10 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
+import {
+  withPinnedPostgresTransaction,
+  type PinnedTransactionClient,
+} from '../../../database/PostgresDatabase.js';
 import * as exceptionLedgerService from './exceptionLedgerService.js';
 
 export type ComputeJobStatus = 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled';
@@ -90,6 +93,7 @@ export interface EnqueueJobParams {
   requestedByUserId: string;
   requestId?: string | null;
   maxAttempts?: number;
+  tx?: PinnedTransactionClient;
 }
 
 export interface EnqueueJobResult {
@@ -127,7 +131,7 @@ export class ComputeJobArtifactMismatchError extends Error {
  * second row.
  */
 export async function enqueue(params: EnqueueJobParams): Promise<EnqueueJobResult> {
-  return withPinnedPostgresTransaction(async (tx) => {
+  const execute = async (tx: PinnedTransactionClient) => {
     let inserted: ComputeJobRow | null;
     try {
       inserted = await tx.queryOne<ComputeJobRow>(
@@ -168,7 +172,8 @@ export async function enqueue(params: EnqueueJobParams): Promise<EnqueueJobResul
         'compute_jobs enqueue: ON CONFLICT DO NOTHING but no existing row found on read-back'
       );
     return { job: existing, wasExisting: true };
-  });
+  };
+  return params.tx ? execute(params.tx) : withPinnedPostgresTransaction(execute);
 }
 
 export interface ClaimParams {
@@ -310,6 +315,7 @@ export interface ClaimByIdParams {
   jobId: string;
   workerId: string;
   leaseDurationSeconds?: number;
+  tx?: PinnedTransactionClient;
 }
 
 /**
@@ -356,7 +362,7 @@ export interface ClaimByIdParams {
 export async function claimById(params: ClaimByIdParams): Promise<ComputeJobRow | null> {
   const leaseSeconds = params.leaseDurationSeconds ?? 300;
 
-  return withPinnedPostgresTransaction(async (tx) => {
+  const execute = async (tx: PinnedTransactionClient) => {
     const claimed = await tx.queryOne<ComputeJobRow>(
       `UPDATE compute_jobs
           SET status = 'running',
@@ -382,7 +388,8 @@ export async function claimById(params: ClaimByIdParams): Promise<ComputeJobRow 
     }
 
     return claimed;
-  });
+  };
+  return params.tx ? execute(params.tx) : withPinnedPostgresTransaction(execute);
 }
 
 export interface ClaimForComputeParams {
@@ -393,6 +400,7 @@ export interface ClaimForComputeParams {
   wasExisting: boolean;
   workerId: string;
   leaseDurationSeconds?: number;
+  tx?: PinnedTransactionClient;
 }
 
 export type ClaimForComputeResult =
@@ -447,7 +455,7 @@ export async function claimForCompute(
 ): Promise<ClaimForComputeResult> {
   if (params.wasExisting) {
     if (params.job.status === 'succeeded') {
-      const output = await getJobOutput(params.organizationId, params.job.id);
+      const output = await getJobOutput(params.organizationId, params.job.id, params.tx);
       if (output) return { outcome: 'already_committed', job: params.job, output };
       return {
         outcome: 'hard_error',
@@ -474,6 +482,7 @@ export async function claimForCompute(
     jobId: params.job.id,
     workerId: params.workerId,
     leaseDurationSeconds: params.leaseDurationSeconds,
+    tx: params.tx,
   });
   if (!claimed) {
     return {
@@ -488,28 +497,142 @@ export async function claimForCompute(
 export interface CompleteJobSuccessParams {
   jobId: string;
   organizationId: string;
+  /** Caller-observed pinned input artifact; must match the locked job. */
+  inputArtifactId?: string;
   outputArtifactId: string;
   outputWorkingRevisionId: string;
   contentSemanticHash: string;
   outputBusinessVersionId?: string | null;
   freshness?: ComputeJobFreshness;
+  /** Optional ambient pinned transaction for domain publication in the same UoW. */
+  tx?: PinnedTransactionClient;
 }
 
 export type CompleteJobResult =
   | { ok: true; job: ComputeJobRow }
-  | { ok: false; code: 'NOT_RUNNING' | 'OUTPUT_ALREADY_COMMITTED'; message: string };
+  | {
+      ok: false;
+      code: 'NOT_RUNNING' | 'OUTPUT_ALREADY_COMMITTED' | 'STALE_PUBLICATION';
+      message: string;
+    };
 
 /** Commit a successful job's output (append-only `compute_job_outputs`) and mark the job succeeded. */
 export async function completeJobSuccess(
   params: CompleteJobSuccessParams
 ): Promise<CompleteJobResult> {
-  return withPinnedPostgresTransaction(async (tx) => {
+  const execute = async (tx: PinnedTransactionClient): Promise<CompleteJobResult> => {
     const job = await tx.queryOne<ComputeJobRow>(
-      `SELECT * FROM compute_jobs WHERE id = ? FOR UPDATE`,
-      [params.jobId]
+      `SELECT * FROM compute_jobs WHERE id = ? AND organization_id = ? FOR UPDATE`,
+      [params.jobId, params.organizationId]
     );
+    if (job?.status === 'succeeded') {
+      const output = await tx.queryOne<{
+        output_artifact_id: string;
+        output_business_version_id: string | null;
+        output_working_revision_id: string;
+        content_semantic_hash: string;
+      }>(`SELECT * FROM compute_job_outputs WHERE job_id=? AND organization_id=?`, [
+        params.jobId,
+        params.organizationId,
+      ]);
+      if (
+        output &&
+        output.output_artifact_id === params.outputArtifactId &&
+        output.output_business_version_id === (params.outputBusinessVersionId ?? null) &&
+        output.output_working_revision_id === params.outputWorkingRevisionId &&
+        output.content_semantic_hash === params.contentSemanticHash
+      ) {
+        return { ok: true, job };
+      }
+      return {
+        ok: false,
+        code: 'OUTPUT_ALREADY_COMMITTED',
+        message: `Job ${params.jobId} succeeded with a different authoritative output tuple`,
+      };
+    }
     if (!job || job.status !== 'running') {
       return { ok: false, code: 'NOT_RUNNING', message: `Job ${params.jobId} is not running` };
+    }
+    if (params.inputArtifactId && job.input_artifact_id !== params.inputArtifactId) {
+      return {
+        ok: false,
+        code: 'STALE_PUBLICATION',
+        message: `Job ${params.jobId} input artifact does not match the caller pin`,
+      };
+    }
+
+    const revision = await tx.queryOne<{
+      business_version_id: string;
+      artifact_id: string;
+      content_semantic_hash: string | null;
+      compute_run_id: string | null;
+      is_current: boolean;
+    }>(
+      `SELECT business_version_id,artifact_id,content_semantic_hash,compute_run_id,is_current
+         FROM finance_working_revisions
+        WHERE working_revision_id = ? AND organization_id = ?
+        FOR UPDATE`,
+      [params.outputWorkingRevisionId, params.organizationId]
+    );
+    const supersedingRun = revision?.compute_run_id
+      ? await tx.queryOne<{ id: string }>(
+          `SELECT newer.id FROM compute_jobs newer
+            JOIN compute_jobs candidate ON candidate.id=?
+           WHERE newer.id=? AND newer.organization_id=?
+             AND (newer.created_at,newer.id) > (candidate.created_at,candidate.id)`,
+          [params.jobId, revision.compute_run_id, params.organizationId]
+        )
+      : null;
+    if (
+      !revision ||
+      !revision.is_current ||
+      supersedingRun ||
+      revision.artifact_id !== params.outputArtifactId ||
+      (params.outputBusinessVersionId &&
+        revision.business_version_id !== params.outputBusinessVersionId)
+    ) {
+      return {
+        ok: false,
+        code: 'STALE_PUBLICATION',
+        message: `Job ${params.jobId} no longer owns the current pinned working revision`,
+      };
+    }
+    if (job.input_artifact_id !== revision.artifact_id) {
+      const authorizedLineage = await tx.queryOne<{ id: string }>(
+        `SELECT edge.id
+           FROM finance_lineage_edges edge
+           JOIN finance_business_versions source
+             ON source.business_version_id=edge.source_version_id
+            AND source.organization_id=edge.organization_id
+          WHERE edge.organization_id=?
+            AND source.artifact_id=?
+            AND edge.target_version_id=?
+          LIMIT 1`,
+        [params.organizationId, job.input_artifact_id, revision.business_version_id]
+      );
+      if (!authorizedLineage) {
+        return {
+          ok: false,
+          code: 'STALE_PUBLICATION',
+          message: `Job ${params.jobId} has no authoritative input-to-output lineage binding`,
+        };
+      }
+    }
+    const version = await tx.queryOne<{ status: string; freshness: string }>(
+      `SELECT status,freshness FROM finance_business_versions
+        WHERE business_version_id = ? AND organization_id = ? FOR UPDATE`,
+      [revision.business_version_id, params.organizationId]
+    );
+    if (
+      !version ||
+      !['DRAFT', 'READY_FOR_REVIEW', 'IN_REVIEW', 'NEEDS_CHANGES'].includes(version.status) ||
+      ['STALE_SOURCE', 'STALE_ASSUMPTIONS'].includes(version.freshness)
+    ) {
+      return {
+        ok: false,
+        code: 'STALE_PUBLICATION',
+        message: `Job ${params.jobId} cannot publish into ${version?.status ?? 'missing'}/${version?.freshness ?? 'missing'} business version`,
+      };
     }
 
     try {
@@ -552,8 +675,29 @@ export async function completeJobSuccess(
       [params.jobId, job.attempt_count]
     );
     if (!updated) throw new Error('compute_jobs succeeded-update returned no row');
+    const stamped = await tx.queryOne<{ working_revision_id: string }>(
+      `UPDATE finance_working_revisions
+          SET content_semantic_hash = ?, compute_run_id = ?
+        WHERE working_revision_id = ? AND organization_id = ?
+          AND is_current = true
+        RETURNING working_revision_id`,
+      [
+        params.contentSemanticHash,
+        params.jobId,
+        params.outputWorkingRevisionId,
+        params.organizationId,
+      ]
+    );
+    if (!stamped) throw new Error('compute publication CAS lost after revision lock');
+    await tx.queryRun(
+      `UPDATE finance_business_versions
+          SET freshness='CURRENT',freshness_reason=NULL,stale_since=NULL
+        WHERE business_version_id=? AND organization_id=?`,
+      [revision.business_version_id, params.organizationId]
+    );
     return { ok: true, job: updated };
-  });
+  };
+  return params.tx ? execute(params.tx) : withPinnedPostgresTransaction(execute);
 }
 
 /**
@@ -749,16 +893,17 @@ export interface ComputeJobOutputRow {
 
 export async function getJobOutput(
   organizationId: string,
-  jobId: string
+  jobId: string,
+  suppliedTx?: PinnedTransactionClient
 ): Promise<ComputeJobOutputRow | null> {
-  return withPinnedPostgresTransaction((tx) =>
+  const execute = (tx: PinnedTransactionClient) =>
     tx.queryOne<ComputeJobOutputRow>(
       `SELECT o.* FROM compute_job_outputs o
         JOIN compute_jobs j ON j.id = o.job_id
        WHERE o.job_id = ? AND o.organization_id = ? AND j.organization_id = ?`,
       [jobId, organizationId, organizationId]
-    )
-  );
+    );
+  return suppliedTx ? execute(suppliedTx) : withPinnedPostgresTransaction(execute);
 }
 
 export interface ReapedJob {

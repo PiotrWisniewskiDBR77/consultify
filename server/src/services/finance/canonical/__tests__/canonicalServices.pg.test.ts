@@ -884,16 +884,224 @@ describe.skipIf(!REAL_PG)('Finance v3 canonical services — real PostgreSQL', (
       const [claimed] = await computeJobService.claim({ workerId: 'worker-complete', jobTypes: [jobType], limit: 1 });
       expect(claimed.id).toBe(enqueued.job.id);
 
+      const foreignJob = await computeJobService.completeJobSuccess({
+        jobId: claimed.id,
+        organizationId: `foreign-${orgId}`,
+        inputArtifactId: artifact.artifact.artifact_id,
+        outputArtifactId: artifact.artifact.artifact_id,
+        outputBusinessVersionId: artifact.businessVersion.business_version_id,
+        outputWorkingRevisionId: artifact.workingRevision.working_revision_id,
+        contentSemanticHash: 'output-hash-1',
+      });
+      expect(foreignJob).toEqual(expect.objectContaining({ ok: false, code: 'NOT_RUNNING' }));
+
+      const otherArtifact = await artifactVersionService.createArtifact({
+        organizationId: orgId,
+        artifactType: 'BASELINE_MODEL',
+        createdBy: preparerId,
+      });
+      const crossOutput = await computeJobService.completeJobSuccess({
+        jobId: claimed.id,
+        organizationId: orgId,
+        inputArtifactId: artifact.artifact.artifact_id,
+        outputArtifactId: artifact.artifact.artifact_id,
+        outputBusinessVersionId: artifact.businessVersion.business_version_id,
+        outputWorkingRevisionId: otherArtifact.workingRevision.working_revision_id,
+        contentSemanticHash: 'output-hash-1',
+      });
+      expect(crossOutput).toEqual(
+        expect.objectContaining({ ok: false, code: 'STALE_PUBLICATION' })
+      );
+      const selfConsistentButUnboundOutput = await computeJobService.completeJobSuccess({
+        jobId: claimed.id,
+        organizationId: orgId,
+        inputArtifactId: artifact.artifact.artifact_id,
+        outputArtifactId: otherArtifact.artifact.artifact_id,
+        outputBusinessVersionId: otherArtifact.businessVersion.business_version_id,
+        outputWorkingRevisionId: otherArtifact.workingRevision.working_revision_id,
+        contentSemanticHash: 'unbound-output-hash',
+      });
+      expect(selfConsistentButUnboundOutput).toEqual(
+        expect.objectContaining({ ok: false, code: 'STALE_PUBLICATION' })
+      );
+      await withPinnedPostgresTransaction((tx) =>
+        tx.queryRun(`UPDATE finance_working_revisions SET is_current=false WHERE working_revision_id=?`, [
+          artifact.workingRevision.working_revision_id,
+        ])
+      );
+      const nonCurrentOutput = await computeJobService.completeJobSuccess({
+        jobId: claimed.id,
+        organizationId: orgId,
+        inputArtifactId: artifact.artifact.artifact_id,
+        outputArtifactId: artifact.artifact.artifact_id,
+        outputBusinessVersionId: artifact.businessVersion.business_version_id,
+        outputWorkingRevisionId: artifact.workingRevision.working_revision_id,
+        contentSemanticHash: 'output-hash-1',
+      });
+      expect(nonCurrentOutput).toEqual(
+        expect.objectContaining({ ok: false, code: 'STALE_PUBLICATION' })
+      );
+      await withPinnedPostgresTransaction((tx) =>
+        tx.queryRun(`UPDATE finance_working_revisions SET is_current=true WHERE working_revision_id=?`, [
+          artifact.workingRevision.working_revision_id,
+        ])
+      );
+
+      const completionParams = {
+        jobId: claimed.id,
+        organizationId: orgId,
+        inputArtifactId: artifact.artifact.artifact_id,
+        outputArtifactId: artifact.artifact.artifact_id,
+        outputBusinessVersionId: artifact.businessVersion.business_version_id,
+        outputWorkingRevisionId: artifact.workingRevision.working_revision_id,
+        contentSemanticHash: 'output-hash-1',
+      };
+      const result = await computeJobService.completeJobSuccess(completionParams);
+      expect(result.ok).toBe(true);
+      if (!result.ok) throw new Error('unreachable');
+      expect(result.job.status).toBe('succeeded');
+      const replay = await computeJobService.completeJobSuccess(completionParams);
+      expect(replay).toEqual(expect.objectContaining({ ok: true }));
+      const collision = await computeJobService.completeJobSuccess({
+        ...completionParams,
+        contentSemanticHash: 'colliding-output-hash',
+      });
+      expect(collision).toEqual(
+        expect.objectContaining({ ok: false, code: 'OUTPUT_ALREADY_COMMITTED' })
+      );
+    });
+
+    it('completeJobSuccess fails closed after STALE_SOURCE propagation and leaves publication untouched', async () => {
+      const artifact = await artifactVersionService.createArtifact({
+        organizationId: orgId,
+        artifactType: 'BASELINE_MODEL',
+        createdBy: preparerId,
+      });
+      const jobType = `stale_publication_${randomUUID()}`;
+      const enqueued = await computeJobService.enqueue({
+        organizationId: orgId,
+        jobType,
+        inputArtifactId: artifact.artifact.artifact_id,
+        inputRevisionHash: 'stale-input',
+        engineManifestId: artifact.businessVersion.engine_manifest_id,
+        idempotencyKey: randomUUID(),
+        requestedByUserId: preparerId,
+      });
+      const [claimed] = await computeJobService.claim({
+        workerId: 'stale-publication-worker',
+        jobTypes: [jobType],
+        limit: 1,
+      });
+      expect(claimed.id).toBe(enqueued.job.id);
+      await withPinnedPostgresTransaction((tx) =>
+        tx.queryRun(
+          `UPDATE finance_business_versions
+              SET freshness='STALE_SOURCE',freshness_reason='upstream changed',stale_since=now()
+            WHERE business_version_id=? AND organization_id=?`,
+          [artifact.businessVersion.business_version_id, orgId]
+        )
+      );
+
       const result = await computeJobService.completeJobSuccess({
         jobId: claimed.id,
         organizationId: orgId,
         outputArtifactId: artifact.artifact.artifact_id,
+        outputBusinessVersionId: artifact.businessVersion.business_version_id,
         outputWorkingRevisionId: artifact.workingRevision.working_revision_id,
-        contentSemanticHash: 'output-hash-1',
+        contentSemanticHash: 'must-not-publish',
       });
-      expect(result.ok).toBe(true);
-      if (!result.ok) throw new Error('unreachable');
-      expect(result.job.status).toBe('succeeded');
+      expect(result).toEqual(expect.objectContaining({ ok: false, code: 'STALE_PUBLICATION' }));
+      const readback = await withPinnedPostgresTransaction(async (tx) => ({
+        version: await tx.queryOne<{ freshness: string }>(
+          `SELECT freshness FROM finance_business_versions WHERE business_version_id=?`,
+          [artifact.businessVersion.business_version_id]
+        ),
+        revision: await tx.queryOne<{ content_semantic_hash: string; compute_run_id: string | null }>(
+          `SELECT content_semantic_hash,compute_run_id FROM finance_working_revisions WHERE working_revision_id=?`,
+          [artifact.workingRevision.working_revision_id]
+        ),
+        outputs: await tx.queryOne<{ count: string }>(
+          `SELECT count(*)::text AS count FROM compute_job_outputs WHERE job_id=?`,
+          [claimed.id]
+        ),
+      }));
+      expect(readback.version?.freshness).toBe('STALE_SOURCE');
+      expect(readback.revision?.content_semantic_hash).toBe(
+        artifact.workingRevision.content_semantic_hash
+      );
+      expect(readback.revision?.compute_run_id).toBeNull();
+      expect(readback.outputs?.count).toBe('0');
+    });
+
+    it('a delayed older completion cannot overwrite a newer successful publication', async () => {
+      const artifact = await artifactVersionService.createArtifact({
+        organizationId: orgId,
+        artifactType: 'BASELINE_MODEL',
+        createdBy: preparerId,
+      });
+      const jobType = `publication_order_${randomUUID()}`;
+      const older = await computeJobService.enqueue({
+        organizationId: orgId,
+        jobType,
+        inputArtifactId: artifact.artifact.artifact_id,
+        inputRevisionHash: 'older-input',
+        engineManifestId: artifact.businessVersion.engine_manifest_id,
+        idempotencyKey: randomUUID(),
+        requestedByUserId: preparerId,
+      });
+      const newer = await computeJobService.enqueue({
+        organizationId: orgId,
+        jobType,
+        inputArtifactId: artifact.artifact.artifact_id,
+        inputRevisionHash: 'newer-input',
+        engineManifestId: artifact.businessVersion.engine_manifest_id,
+        idempotencyKey: randomUUID(),
+        requestedByUserId: preparerId,
+      });
+      await withPinnedPostgresTransaction((tx) =>
+        tx.queryRun(`UPDATE compute_jobs SET created_at=created_at+interval '1 second' WHERE id=?`, [
+          newer.job.id,
+        ])
+      );
+      const claimed = await computeJobService.claim({
+        workerId: 'publication-order-worker',
+        jobTypes: [jobType],
+        limit: 2,
+      });
+      expect(new Set(claimed.map((job) => job.id))).toEqual(
+        new Set([older.job.id, newer.job.id])
+      );
+      const newerResult = await computeJobService.completeJobSuccess({
+        jobId: newer.job.id,
+        organizationId: orgId,
+        outputArtifactId: artifact.artifact.artifact_id,
+        outputBusinessVersionId: artifact.businessVersion.business_version_id,
+        outputWorkingRevisionId: artifact.workingRevision.working_revision_id,
+        contentSemanticHash: 'newer-output',
+      });
+      expect(newerResult.ok).toBe(true);
+      const delayedOlder = await computeJobService.completeJobSuccess({
+        jobId: older.job.id,
+        organizationId: orgId,
+        outputArtifactId: artifact.artifact.artifact_id,
+        outputBusinessVersionId: artifact.businessVersion.business_version_id,
+        outputWorkingRevisionId: artifact.workingRevision.working_revision_id,
+        contentSemanticHash: 'older-must-not-overwrite',
+      });
+      expect(delayedOlder).toEqual(
+        expect.objectContaining({ ok: false, code: 'STALE_PUBLICATION' })
+      );
+      const readback = await withPinnedPostgresTransaction((tx) =>
+        tx.queryOne<{ content_semantic_hash: string; compute_run_id: string }>(
+          `SELECT content_semantic_hash,compute_run_id FROM finance_working_revisions
+            WHERE working_revision_id=?`,
+          [artifact.workingRevision.working_revision_id]
+        )
+      );
+      expect(readback).toEqual({
+        content_semantic_hash: 'newer-output',
+        compute_run_id: newer.job.id,
+      });
     });
   });
 

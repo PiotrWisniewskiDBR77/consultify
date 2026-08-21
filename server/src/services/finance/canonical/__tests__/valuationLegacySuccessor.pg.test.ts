@@ -1037,6 +1037,23 @@ describe.skipIf(!REAL)('FIN-CANONICAL-SUCCESSORS-WAVE4 realPG', () => {
           `SELECT enterprise_value_decimal::text,equity_value_decimal::text FROM finance_valuation_ev_equity_bridge WHERE organization_id=? AND business_version_id=?`,
           [orgId, identity.businessVersionId]
         ),
+        jobs: await tx.queryAll(
+          `SELECT job.status,job.input_revision_hash,output.content_semantic_hash
+             FROM compute_jobs job
+             LEFT JOIN compute_job_outputs output ON output.job_id=job.id
+            WHERE job.organization_id=? AND job.job_type='VALUATION_COMPUTE'
+              AND job.input_artifact_id=? ORDER BY job.id`,
+          [orgId, identity.artifactId]
+        ),
+        publicationIdentity: await tx.queryOne(
+          `SELECT version.freshness,version.compute_run_id,version.content_semantic_hash,
+                  revision.compute_run_id AS revision_run,revision.content_semantic_hash AS revision_hash
+             FROM finance_business_versions version
+             JOIN finance_working_revisions revision
+               ON revision.working_revision_id=version.source_working_revision_id
+            WHERE version.organization_id=? AND version.business_version_id=?`,
+          [orgId, identity.businessVersionId]
+        ),
       }));
     const before = await snapshot();
     await txWrap(async (tx: any) => {
