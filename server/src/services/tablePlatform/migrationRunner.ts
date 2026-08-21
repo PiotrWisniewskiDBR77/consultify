@@ -80,6 +80,99 @@ export interface RunMigrationsOptions {
   migrationsDir?: string;
 }
 
+type MigrationLedgerDb = {
+  query: <T = Record<string, unknown>>(text: string, params?: unknown[]) => Promise<{ rows: T[] }>;
+};
+
+export class MigrationLedgerReconciliationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'MigrationLedgerReconciliationError';
+  }
+}
+
+/**
+ * Reconciles the legacy Table Platform ledger from the canonical strict SQL
+ * ledger without executing migration SQL a second time.
+ *
+ * A canonical `success` row is accepted only when its checksum is the exact
+ * current 64-character SHA-256 of the same filename. Any malformed or stale
+ * success row fails closed before TP DDL can run. The TP write is followed by
+ * exact readback so a concurrent conflicting insert cannot be mistaken for a
+ * successful reconciliation.
+ */
+export async function reconcileTablePlatformLedgerFromCanonical(
+  db: MigrationLedgerDb,
+  files: string[],
+  migrationsDir: string
+): Promise<number> {
+  const canonicalLedger = await db.query<{ present: boolean }>(
+    `SELECT to_regclass('public.schema_migrations') IS NOT NULL AS present`
+  );
+  if (!canonicalLedger.rows[0]?.present) return 0;
+
+  const canonicalRows = await db.query<{
+    filename: string;
+    checksum: string | null;
+    status: string;
+  }>(`SELECT filename, checksum, status FROM schema_migrations`);
+  const candidateSet = new Set(files);
+  const successful = new Map<string, string | null>();
+  for (const row of canonicalRows.rows) {
+    if (!candidateSet.has(row.filename) || row.status !== 'success') continue;
+    if (successful.has(row.filename)) {
+      throw new MigrationLedgerReconciliationError(
+        `Canonical migration ledger contains duplicate success identity '${row.filename}'`
+      );
+    }
+    successful.set(row.filename, row.checksum);
+  }
+
+  const tpRows = await db.query<{ filename: string; checksum: string | null }>(
+    `SELECT filename, checksum FROM ${MIGRATION_TABLE}`
+  );
+  const tpApplied = new Set(tpRows.rows.map((row) => row.filename));
+  let reconciled = 0;
+
+  for (const file of files) {
+    // An existing TP identity is already reconciled and is validated by the
+    // normal TP checksum path below. Canonical full-SHA validation is scoped
+    // to rows we would copy, so this bridge does not retroactively impose a
+    // new policy on established legacy ledgers.
+    if (tpApplied.has(file)) continue;
+
+    const canonicalChecksum = successful.get(file);
+    if (canonicalChecksum === undefined) continue;
+
+    const content = fs.readFileSync(path.join(migrationsDir, file), 'utf-8');
+    const fullChecksum = crypto.createHash('sha256').update(content).digest('hex');
+    if (!/^[0-9a-f]{64}$/.test(canonicalChecksum || '') || canonicalChecksum !== fullChecksum) {
+      throw new MigrationLedgerReconciliationError(
+        `Canonical success checksum mismatch for '${file}': expected exact current SHA-256 ${fullChecksum}, ` +
+          `received ${JSON.stringify(canonicalChecksum)}. Refusing TP ledger reconciliation and DDL replay.`
+      );
+    }
+    const shortChecksum = fileChecksum(content);
+    await db.query(
+      `INSERT INTO ${MIGRATION_TABLE} (filename, checksum) VALUES ($1, $2) ON CONFLICT (filename) DO NOTHING`,
+      [file, shortChecksum]
+    );
+    const readback = await db.query<{ checksum: string | null }>(
+      `SELECT checksum FROM ${MIGRATION_TABLE} WHERE filename = $1`,
+      [file]
+    );
+    if (readback.rows.length !== 1 || readback.rows[0]?.checksum !== shortChecksum) {
+      throw new MigrationLedgerReconciliationError(
+        `TP ledger readback mismatch for '${file}' after canonical reconciliation`
+      );
+    }
+    tpApplied.add(file);
+    reconciled++;
+  }
+
+  return reconciled;
+}
+
 // Explicit intra-day ordering for same-date-prefix migrations whose plain
 // filename order inverts a real producer/consumer dependency.
 //
@@ -285,31 +378,12 @@ export async function runMigrations(options?: RunMigrationsOptions): Promise<Mig
   );
   const appliedChecksums = new Map(appliedResult.rows.map((r) => [r.filename, r.checksum]));
 
-  // The canonical SQL runner and the legacy Table Platform runner share migration files but
-  // maintain separate ledgers. When the strict SQL chain has already applied the exact current
-  // bytes, executing the same DDL again is both unnecessary and unsafe for older non-idempotent
-  // files. Reconcile the TP ledger only after proving filename + success + full SHA-256.
-  const sqlLedgerExists = await db.query<{ present: boolean }>(
-    `SELECT to_regclass('public.schema_migrations') IS NOT NULL AS present`
+  await reconcileTablePlatformLedgerFromCanonical(db, files, migrationsDir);
+  const reconciledResult = await db.query<{ filename: string; checksum: string | null }>(
+    `SELECT filename, checksum FROM ${MIGRATION_TABLE}`
   );
-  if (sqlLedgerExists.rows[0]?.present) {
-    const sqlApplied = await db.query<{ filename: string; checksum: string; status: string }>(
-      `SELECT filename, checksum, status FROM schema_migrations WHERE status = 'success'`
-    );
-    const successfulSql = new Map(sqlApplied.rows.map((r) => [r.filename, r.checksum]));
-    for (const file of files) {
-      if (appliedChecksums.has(file)) continue;
-      const content = fs.readFileSync(path.join(migrationsDir, file), 'utf-8');
-      const fullChecksum = crypto.createHash('sha256').update(content).digest('hex');
-      if (successfulSql.get(file) !== fullChecksum) continue;
-      const shortChecksum = fileChecksum(content);
-      await db.query(
-        `INSERT INTO ${MIGRATION_TABLE} (filename, checksum) VALUES ($1, $2) ON CONFLICT (filename) DO NOTHING`,
-        [file, shortChecksum]
-      );
-      appliedChecksums.set(file, shortChecksum);
-    }
-  }
+  appliedChecksums.clear();
+  for (const row of reconciledResult.rows) appliedChecksums.set(row.filename, row.checksum);
 
   // ── Checksum verification (fail-closed) ─────────────────────────────────
   // An applied migration whose file changed underneath us means the schema in

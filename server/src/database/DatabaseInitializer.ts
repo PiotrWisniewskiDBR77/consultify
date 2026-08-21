@@ -13,7 +13,10 @@ import { fileURLToPath } from 'url';
 
 import { databaseConfig } from '../config/DatabaseConfig.js';
 import logger from '../utils/Logger.js';
-import { compareMigrationFilenames } from '../services/tablePlatform/migrationRunner.js';
+import {
+  compareMigrationFilenames,
+  reconcileTablePlatformLedgerFromCanonical,
+} from '../services/tablePlatform/migrationRunner.js';
 import { MIGRATION_PATTERN } from '../services/tablePlatform/migrationIdentity.js';
 import { getDatabase, getDatabaseAsync } from './Database.js';
 
@@ -3251,6 +3254,12 @@ async function runTablePlatformMigrations(db: any): Promise<void> {
   }
 
   logger.info(`${TAG} Found ${allFiles.length} table platform migration files`);
+
+  // A strict fresh migration run has already applied these exact SQL files
+  // and recorded their full SHA-256 in schema_migrations. Reconcile that
+  // canonical evidence before calculating the legacy TP pending set, or this
+  // startup path would execute non-idempotent DDL a second time.
+  await reconcileTablePlatformLedgerFromCanonical(db, allFiles, migrationsDir);
 
   // 3. Get already-executed migrations
   const executed = await db.query('SELECT filename FROM tp_migration_history ORDER BY filename');

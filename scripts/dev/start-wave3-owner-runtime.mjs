@@ -495,13 +495,18 @@ async function start(c) {
     fs.closeSync(cfd);
     if (process.env.WAVE3_RUNTIME_FAIL_AT === 'client-spawn') fail('injected client spawn failure');
     const health = await waitHttp(`http://127.0.0.1:${c.serverPort}/api/health`),
-      ready = await waitHttp(`http://127.0.0.1:${c.serverPort}/api/health/ready`),
+      // `/api/health/ready` proves only that PostgreSQL answers `SELECT 1`.
+      // The authoritative traffic gate is `/api/ready`: it stays red until
+      // schema verification, both migration ledgers and startup seeding have
+      // all completed successfully.
+      ready = await waitHttp(`http://127.0.0.1:${c.serverPort}/api/ready`),
       front = await waitHttp(`http://127.0.0.1:${c.clientPort}/`),
       marker = await waitHttp(
         `http://127.0.0.1:${c.clientPort}/src/services/feedbackCollector/AppContext.ts`
       );
     if (process.env.WAVE3_RUNTIME_FAIL_AT === 'readiness') fail('injected readiness failure');
     const hj = JSON.parse(health.body),
+      rj = JSON.parse(ready.body),
       serverGroupEnvironments = ownedGroupEnvironments(state.server),
       clientGroupEnvironments = ownedGroupEnvironments(state.client),
       groupEnvironments = [...serverGroupEnvironments, ...clientGroupEnvironments],
@@ -523,6 +528,14 @@ async function start(c) {
     )
       fail('server-only database/JWT credential reached Vite process group');
     if (hj.gitSha !== c.sha) fail('server health gitSha differs from exact candidate');
+    if (
+      rj.status !== 'ready' ||
+      rj.database !== 'ready' ||
+      rj.migrations?.state !== 'ok' ||
+      rj.sqlMigrations?.state !== 'ok'
+    )
+      fail('authoritative server readiness contract is not fully green');
+    if (rj.buildSha !== c.sha) fail('server readiness buildSha differs from exact candidate');
     if (!marker.body.includes(c.sha)) fail('client transformed marker lacks exact candidate SHA');
     if (git(['rev-parse', 'HEAD']).trim() !== c.sha || currentDirtyFingerprint() !== c.fingerprint)
       fail('candidate changed while qualifying');
@@ -539,6 +552,9 @@ async function start(c) {
         readyStatus: ready.status,
         frontendStatus: front.status,
         serverGitSha: hj.gitSha,
+        readinessBuildSha: rj.buildSha,
+        migrationState: rj.migrations.state,
+        sqlMigrationState: rj.sqlMigrations.state,
         clientMarkerVerified: true,
       },
       database: { ...state.database, migrations },

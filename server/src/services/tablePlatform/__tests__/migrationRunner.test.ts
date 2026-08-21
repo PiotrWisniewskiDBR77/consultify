@@ -1,6 +1,8 @@
+import crypto from 'crypto';
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('Migration Runner', () => {
   it('accepts every exact approved historical checksum variant and rejects unknown history', async () => {
@@ -10,15 +12,15 @@ describe('Migration Runner', () => {
       'utf-8'
     );
 
-    expect(classifyMigrationChecksum('20260623_distribution_delivery.sql', 'afb449dbaf10f409', current)).toBe(
-      'accepted_historical_variant'
-    );
-    expect(classifyMigrationChecksum('20260623_distribution_delivery.sql', '7712332cdc298d49', current)).toBe(
-      'accepted_historical_variant'
-    );
-    expect(classifyMigrationChecksum('20260623_distribution_delivery.sql', '0000000000000000', current)).toBe(
-      'drift'
-    );
+    expect(
+      classifyMigrationChecksum('20260623_distribution_delivery.sql', 'afb449dbaf10f409', current)
+    ).toBe('accepted_historical_variant');
+    expect(
+      classifyMigrationChecksum('20260623_distribution_delivery.sql', '7712332cdc298d49', current)
+    ).toBe('accepted_historical_variant');
+    expect(
+      classifyMigrationChecksum('20260623_distribution_delivery.sql', '0000000000000000', current)
+    ).toBe('drift');
     expect(
       classifyMigrationChecksum(
         '20260623_distribution_delivery.sql',
@@ -28,13 +30,15 @@ describe('Migration Runner', () => {
     ).toBe('drift');
   });
 
-  it('keeps the mounted Studio persistence producer in the strict Postgres path', () => {
+  it('keeps the mounted Studio persistence producer in the strict Postgres path', async () => {
+    const { PROMOTED_LEGACY_SET } = await import('../../../../scripts/migrationOrdering.js');
     const runner = fs.readFileSync(
       path.resolve(process.cwd(), 'server/scripts/migrate.postgres.ts'),
       'utf-8'
     );
 
-    expect(runner).toContain("'081_studio_tables.sql'");
+    expect(PROMOTED_LEGACY_SET.has('081_studio_tables.sql')).toBe(true);
+    expect(runner).toContain('PROMOTED_LEGACY_SET.has(m.filename)');
   });
 
   it('runtime discovery includes the MAT-010 operation-claims producer', async () => {
@@ -101,5 +105,130 @@ describe('Migration Runner', () => {
     const numbers = files.map((f) => parseInt(f.split('_')[0], 10));
     expect(numbers).toContain(725);
     expect(numbers).toContain(726);
+  });
+});
+
+describe('canonical-to-TP migration ledger reconciliation', () => {
+  const file = '700_runtime_reconciliation_probe.sql';
+  let dir: string;
+  let content: string;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'consultify-ledger-reconcile-'));
+    content = 'CREATE TABLE runtime_reconciliation_probe (id TEXT PRIMARY KEY);\n';
+    fs.writeFileSync(path.join(dir, file), content, 'utf8');
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  function fakeDb(options?: {
+    canonicalChecksum?: string | null;
+    canonicalStatus?: string;
+    conflictingInsertChecksum?: string;
+    existingTpChecksum?: string;
+  }) {
+    const tp = new Map<string, string | null>();
+    if (options?.existingTpChecksum) tp.set(file, options.existingTpChecksum);
+    const checksum =
+      options && 'canonicalChecksum' in options
+        ? options.canonicalChecksum
+        : crypto.createHash('sha256').update(content).digest('hex');
+    const query = vi.fn(async (sql: string, params?: unknown[]) => {
+      if (sql.includes("to_regclass('public.schema_migrations')")) {
+        return { rows: [{ present: true }] };
+      }
+      if (sql.includes('FROM schema_migrations')) {
+        return {
+          rows: [
+            {
+              filename: file,
+              checksum,
+              status: options?.canonicalStatus ?? 'success',
+            },
+          ],
+        };
+      }
+      if (sql.startsWith('SELECT filename, checksum FROM tp_migration_history')) {
+        return { rows: [...tp].map(([filename, stored]) => ({ filename, checksum: stored })) };
+      }
+      if (sql.startsWith('INSERT INTO tp_migration_history')) {
+        const filename = String(params?.[0]);
+        if (!tp.has(filename)) {
+          tp.set(filename, options?.conflictingInsertChecksum ?? String(params?.[1]));
+        }
+        return { rows: [] };
+      }
+      if (sql.startsWith('SELECT checksum FROM tp_migration_history WHERE filename')) {
+        const stored = tp.get(String(params?.[0]));
+        return { rows: stored === undefined ? [] : [{ checksum: stored }] };
+      }
+      throw new Error(`Unexpected query: ${sql}`);
+    });
+    return { db: { query }, tp, query };
+  }
+
+  it('copies exact current full-SHA success evidence into the TP ledger', async () => {
+    const { reconcileTablePlatformLedgerFromCanonical } = await import('../migrationRunner.js');
+    const { db, tp } = fakeDb();
+
+    await expect(reconcileTablePlatformLedgerFromCanonical(db, [file], dir)).resolves.toBe(1);
+    expect(tp.get(file)).toBe(
+      crypto.createHash('sha256').update(content).digest('hex').slice(0, 16)
+    );
+  });
+
+  it('fails closed on malformed or stale canonical success checksum without a TP write', async () => {
+    const { reconcileTablePlatformLedgerFromCanonical } = await import('../migrationRunner.js');
+    const { db, tp } = fakeDb({ canonicalChecksum: '0'.repeat(64) });
+
+    await expect(reconcileTablePlatformLedgerFromCanonical(db, [file], dir)).rejects.toThrow(
+      /exact current SHA-256/
+    );
+    expect(tp.size).toBe(0);
+  });
+
+  it('does not trust a conflicting TP row won by a concurrent writer', async () => {
+    const { reconcileTablePlatformLedgerFromCanonical } = await import('../migrationRunner.js');
+    const { db } = fakeDb({ conflictingInsertChecksum: 'badbadbadbadbadb' });
+
+    await expect(reconcileTablePlatformLedgerFromCanonical(db, [file], dir)).rejects.toThrow(
+      /readback mismatch/
+    );
+  });
+
+  it('does not reconcile a canonical failed row', async () => {
+    const { reconcileTablePlatformLedgerFromCanonical } = await import('../migrationRunner.js');
+    const { db, tp } = fakeDb({ canonicalStatus: 'failed' });
+
+    await expect(reconcileTablePlatformLedgerFromCanonical(db, [file], dir)).resolves.toBe(0);
+    expect(tp.size).toBe(0);
+  });
+
+  it('does not retroactively revalidate an already-present TP identity', async () => {
+    const { reconcileTablePlatformLedgerFromCanonical } = await import('../migrationRunner.js');
+    const { db } = fakeDb({
+      canonicalChecksum: 'stale-legacy-value',
+      existingTpChecksum: crypto.createHash('sha256').update(content).digest('hex').slice(0, 16),
+    });
+
+    await expect(reconcileTablePlatformLedgerFromCanonical(db, [file], dir)).resolves.toBe(0);
+  });
+
+  it('runs canonical reconciliation before startup calculates the TP pending set', () => {
+    const initializer = fs.readFileSync(
+      path.resolve(process.cwd(), 'server/src/database/DatabaseInitializer.ts'),
+      'utf-8'
+    );
+    const reconcileAt = initializer.indexOf(
+      'reconcileTablePlatformLedgerFromCanonical(db, allFiles, migrationsDir)'
+    );
+    const pendingReadAt = initializer.indexOf(
+      'SELECT filename FROM tp_migration_history ORDER BY filename'
+    );
+
+    expect(reconcileAt).toBeGreaterThan(-1);
+    expect(pendingReadAt).toBeGreaterThan(reconcileAt);
   });
 });

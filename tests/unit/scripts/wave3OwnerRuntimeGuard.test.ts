@@ -134,7 +134,12 @@ describe('Wave3 owner runtime guards', () => {
     expect(s).toMatch(/processGroup\(p\.pid\)\s*!==\s*p\.pgid/);
     expect(s).toContain('DOTENV_DISABLED');
     expect(s).toContain('VITE_DOTENV_DISABLED');
+    expect(s).toContain('/api/ready');
+    expect(s).not.toMatch(/waitHttp\(`http:\/\/127\.0\.0\.1:\$\{c\.serverPort\}\/api\/health\/ready`\)/);
     expect(s).toMatch(/hj\.gitSha\s*!==\s*c\.sha/);
+    expect(s).toMatch(/rj\.buildSha\s*!==\s*c\.sha/);
+    expect(s).toContain("rj.migrations?.state !== 'ok'");
+    expect(s).toContain("rj.sqlMigrations?.state !== 'ok'");
     expect(s).toContain('marker.body.includes(c.sha)');
     expect(s).toMatch(/currentDirtyFingerprint\(\)\s*!==\s*c\.fingerprint/);
     expect(s).toMatch(/scan\(\[sl,\s*cl,\s*stateFile,\s*c\.manifestPath\]\)/);
