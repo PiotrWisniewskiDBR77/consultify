@@ -21,7 +21,7 @@ attribution, self-approval denial, foreign tenant and no false economics state.
 | G01 | Exact baseline and client/server/runtime/DB/migrations | `PASS_FOR_SOURCE_PREFLIGHT` | source fix `43b823e200`; fresh PostgreSQL `817/817`; backend typecheck and diff-check PASS; disposable database dropped; browser/runtime candidate not mounted |
 | G02 | Journeys, writes/readbacks, upstream/downstream and policy map | `PASS_FOR_PREFLIGHT` | canonical `/api/v8/partner`; exact selected-tenant binding; no request-path demo seeding |
 | G03 | Named allowed/denied personas | `PASS_FOR_PREFLIGHT` | bound OWNER/ADMIN/member; dual-tenant, foreign, revoked and unbound denials |
-| G04 | Reproducible realistic and boundary fixtures | `NOT_READY` | safe owner fixture not yet built; registration-based test is technical proof only |
+| G04 | Reproducible realistic and boundary fixtures | `READY_TO_SEED` | fixture checkpoint `152fd88ea3`; guarded Partner owner harness reproduced twice; test DB reset and catalog absence verified |
 | G05 | Functional preflight and cold readback | `PARTIAL` | canonical tenant/policy matrix `72/72` PASS; preserved historical suites remain RED on approved-off economics/legacy connect; `PRT-PF-001` fixed locally |
 | G06 | Desktop/tablet, PL/EN, themes, states, a11y, console/HTTP | `NOT_STARTED` | — |
 | G07 | Piotr review card | `NOT_STARTED` | — |
@@ -49,7 +49,13 @@ attribution, self-approval denial, foreign tenant and no false economics state.
 
 | ID | Type | Purpose | Setup/reset | Readback | Expected access | Status/evidence |
 |---|---|---|---|---|---|---|
-| _none_ | | | | | | |
+| `PRT-OWN` | allowed | ACTIVE owner; same user also ACTIVE in foreign tenant | guarded stable seed / whole-DB reset | profile, completed certification, referral identity, participant ledger | exact bound tenant only | `READY_TO_SEED` |
+| `PRT-ADM` | allowed | ACTIVE Partner admin | guarded stable seed / whole-DB reset | bound profile and certification states | bound tenant | `READY_TO_SEED` |
+| `PRT-MEM` | allowed | ACTIVE Partner member | guarded stable seed / whole-DB reset | 60% certification state | bound tenant | `READY_TO_SEED` |
+| `PRT-FOR` | denied | owner selecting second ACTIVE foreign tenant | shared stable seed | zero bound Partner rows | deny; zero mutation | readback `0` |
+| `PRT-REV` | denied | revoked tenant membership | shared stable seed | zero ACTIVE membership rows | deny; zero mutation | readback `0` |
+| `PRT-UNB` | denied | historical Partner with NULL owner binding | shared stable seed | zero owner-bound rows | deny; zero mutation | readback `0` |
+| `PRT-ANON` | public | anonymous referral visitor | referral code `W3PARTNER` | `/r/w3-partner-owner` | public validation only | deep link not browser-verified |
 
 ## Technical preflight findings
 
@@ -57,6 +63,7 @@ attribution, self-approval denial, foreign tenant and no false economics state.
 |---|---|---|---|
 | `PRT-PF-001` | `PRODUCT_DEFECT / RELEASE_BLOCKING` | Canonical Partner reads and onboarding writes resolved Partner scope from `userId` alone; auth could also fall back from an explicitly requested revoked tenant to another ACTIVE membership. | Fixed in `43b823e200`: preserve pre-fallback requested tenant, require exact context + ACTIVE membership, resolve every canonical path by `(organizationId,userId)`, remove request-path self-heal/demo seed. RealPG covers dual membership, foreign, revoked, unbound and zero mutation. |
 | `PRT-PF-002` | `STALE_TEST_CONTRACT` | Lifecycle/ledger/BVP tests expect legacy connect or accrual/attribution writes after economics was approved OFF. | `IDENTIFIED_STALE / PRESERVED_RED / REMEDIATION_PENDING`. Historical suites remain unchanged so their certification/attribution/cold-read scope is not silently reduced. No accrual/payout was re-enabled. |
+| `PRT-PF-003` | `FIXTURE_GAP` | No secret-free reproducible owner fixture covered dual-tenant, revoked and unbound boundaries. | Guarded loopback/prefix/explicit-YES harness added; no registration/email/invite; deterministic manifest; whole-DB reset/catalog absence proven. |
 
 Focused verification on disposable PostgreSQL: fresh migrations `817/817`;
 canonical tenant RealPG `4/4`; V8 read/auth unit `46/46`;
