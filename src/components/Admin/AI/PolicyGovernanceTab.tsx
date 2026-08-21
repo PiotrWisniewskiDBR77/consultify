@@ -31,6 +31,7 @@ import { LoadingState } from '@/components/ui/primitives';
 import { useAppStore } from '../../../store/useAppStore';
 import { OrgAISettings } from '../../../types';
 import { ProactivitySelector, SettingsCard } from '../../AISettings';
+import { SettingsHeaderActionPortal } from '../../settings/SettingsHeaderActions';
 
 export const PolicyGovernanceTab: React.FC = () => {
   const { t } = useTranslation();
@@ -230,18 +231,24 @@ export const PolicyGovernanceTab: React.FC = () => {
               {t('admin.aiControlCenter.policyGovernance.unsavedChanges', 'Unsaved changes')}
             </motion.span>
           )}
-          <button
-            onClick={saveSettings}
-            disabled={saving || !hasChanges}
-            className={`flex items-center gap-2 p-4 py-2.5 rounded-lg font-medium transition-all ${
-              hasChanges
-                ? 'bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] shadow-lg shadow-primary-500/20'
-                : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-500 cursor-not-allowed'
-            }`}
-          >
-            {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {t('admin.aiControlCenter.policyGovernance.saveChanges', 'Save Changes')}
-          </button>
+          <SettingsHeaderActionPortal>
+            <button
+              onClick={saveSettings}
+              disabled={saving || !hasChanges}
+              className={`flex items-center gap-2 p-4 py-2.5 rounded-lg font-medium transition-all ${
+                hasChanges
+                  ? 'bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] shadow-lg shadow-primary-500/20'
+                  : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-500 cursor-not-allowed'
+              }`}
+            >
+              {saving ? (
+                <RefreshCw className="w-4 h-4 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              {t('admin.aiControlCenter.policyGovernance.saveChanges', 'Save Changes')}
+            </button>
+          </SettingsHeaderActionPortal>
         </div>
       </div>
 
