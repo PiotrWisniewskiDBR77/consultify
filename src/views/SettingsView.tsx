@@ -55,6 +55,7 @@ import { ProfileSettings } from '../components/settings/ProfileSettings';
 import { RegionalSettings } from '../components/settings/RegionalSettings';
 import { AuthenticationAccessPage } from '../components/settings/security/AuthenticationAccessPage';
 import { SecurityOverviewPage } from '../components/settings/security/SecurityOverviewPage';
+import { SettingsHeaderActionsProvider } from '../components/settings/SettingsHeaderActions';
 import SettingsOwnershipPanels from '../components/settings/SettingsOwnershipPanels';
 import SettingsSidebar, { SettingsSection } from '../components/settings/SettingsSidebar';
 import { ThemeSettings } from '../components/settings/ThemeSettings';
@@ -240,6 +241,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [headerActionsTarget, setHeaderActionsTarget] = useState<HTMLDivElement | null>(null);
   const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
   const isPilotParticipant = isPilotParticipantRole(currentUser?.role);
   const pilotAllowedSections = useMemo(
@@ -484,85 +486,91 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   }, [activeSection, currentUser, onUpdateUser, t]);
 
   return (
-    <div className="relative flex h-full bg-[var(--c-bg)]">
-      {/* Mobile Overlay */}
-      {sidebarOpen && (
-        <button
-          type="button"
-          aria-label={t('settings.sidebar.closeNavigation', 'Close settings navigation')}
-          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Left Sidebar - Admin Style */}
-      <div
-        id="settings-navigation"
-        className={cn(
-          'fixed inset-y-0 left-0 z-40 w-[280px] transform transition-transform duration-300 ease-in-out',
-          'lg:static lg:transform-none',
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+    <SettingsHeaderActionsProvider value={headerActionsTarget}>
+      <div className="relative flex h-full bg-[var(--c-bg)]">
+        {/* Mobile Overlay */}
+        {sidebarOpen && (
+          <button
+            type="button"
+            aria-label={t('settings.sidebar.closeNavigation', 'Close settings navigation')}
+            className="fixed inset-0 z-30 bg-black/50 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
         )}
-      >
-        <SettingsSidebar
-          activeSection={activeSection}
-          onSectionChange={handleSectionChange}
-          onBack={handleBackToDashboard}
-          allowedSections={isPilotParticipant ? pilotAllowedSections : undefined}
-        />
-      </div>
 
-      {/* Main Content Area */}
-      <div className="flex min-w-0 flex-1 flex-col bg-[var(--c-surface)]">
-        {/* Header - Breadcrumbs Style (Golden Standard) */}
-        <header className="sticky top-0 z-20 flex h-12 items-center justify-between border-b border-[var(--c-border-subtle)] bg-[var(--c-surface)] px-4 lg:px-6">
-          <div className="flex items-center gap-3">
-            {/* Mobile menu button */}
-            <Button
-              ref={mobileMenuButtonRef}
-              variant="ghost"
-              size="sm"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              aria-label={
-                sidebarOpen
-                  ? t('settings.sidebar.closeNavigation', 'Close settings navigation')
-                  : t('settings.sidebar.openNavigation', 'Open settings navigation')
-              }
-              aria-expanded={sidebarOpen}
-              aria-controls="settings-navigation"
-              className="p-2 text-[var(--c-text-secondary)] hover:text-[var(--c-text)] lg:hidden"
-            >
-              {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </Button>
+        {/* Left Sidebar - Admin Style */}
+        <div
+          id="settings-navigation"
+          className={cn(
+            'fixed inset-y-0 left-0 z-40 w-[280px] transform transition-transform duration-300 ease-in-out',
+            'lg:static lg:transform-none',
+            sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+          )}
+        >
+          <SettingsSidebar
+            activeSection={activeSection}
+            onSectionChange={handleSectionChange}
+            onBack={handleBackToDashboard}
+            allowedSections={isPilotParticipant ? pilotAllowedSections : undefined}
+          />
+        </div>
 
-            {/* Breadcrumbs */}
-            <div className="flex items-center text-sm font-medium text-[var(--c-text-muted)]">
-              <button
-                type="button"
-                onClick={handleBackToDashboard}
-                className="rounded-sm transition-colors hover:text-[var(--c-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
+        {/* Main Content Area */}
+        <div className="flex min-w-0 flex-1 flex-col bg-[var(--c-surface)]">
+          {/* Header - Breadcrumbs Style (Golden Standard) */}
+          <header className="sticky top-0 z-20 flex h-14 items-center justify-between gap-4 border-b border-[var(--c-border-subtle)] bg-[var(--c-surface)] px-4 lg:px-6">
+            <div className="flex items-center gap-3">
+              {/* Mobile menu button */}
+              <Button
+                ref={mobileMenuButtonRef}
+                variant="ghost"
+                size="sm"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                aria-label={
+                  sidebarOpen
+                    ? t('settings.sidebar.closeNavigation', 'Close settings navigation')
+                    : t('settings.sidebar.openNavigation', 'Open settings navigation')
+                }
+                aria-expanded={sidebarOpen}
+                aria-controls="settings-navigation"
+                className="p-2 text-[var(--c-text-secondary)] hover:text-[var(--c-text)] lg:hidden"
               >
-                {t('settings.sidebar.title', 'Settings')}
-              </button>
-              <ChevronRight size={14} aria-hidden="true" className="mx-2" />
-              <h1 id="settings-page-title" className="truncate text-sm font-medium text-[var(--c-text)]">
-                {currentMeta.title}
-              </h1>
-            </div>
-          </div>
-        </header>
+                {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </Button>
 
-        {/* Content */}
-        <ScrollArea className="flex-1">
-          <main
-            aria-labelledby="settings-page-title"
-            className="mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-5 lg:p-6"
-          >
-            {renderContent()}
-          </main>
-        </ScrollArea>
+              {/* Breadcrumbs */}
+              <div className="flex items-center text-sm font-medium text-[var(--c-text-muted)]">
+                <button
+                  type="button"
+                  onClick={handleBackToDashboard}
+                  className="rounded-sm transition-colors hover:text-[var(--c-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
+                >
+                  {t('settings.sidebar.title', 'Settings')}
+                </button>
+                <ChevronRight size={14} aria-hidden="true" className="mx-2" />
+                <h1
+                  id="settings-page-title"
+                  className="truncate text-sm font-medium text-[var(--c-text)]"
+                >
+                  {currentMeta.title}
+                </h1>
+              </div>
+            </div>
+            <div ref={setHeaderActionsTarget} className="flex shrink-0 items-center gap-2" />
+          </header>
+
+          {/* Content */}
+          <ScrollArea className="flex-1">
+            <main
+              aria-labelledby="settings-page-title"
+              className="mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-5 lg:p-6"
+            >
+              {renderContent()}
+            </main>
+          </ScrollArea>
+        </div>
       </div>
-    </div>
+    </SettingsHeaderActionsProvider>
   );
 };
 

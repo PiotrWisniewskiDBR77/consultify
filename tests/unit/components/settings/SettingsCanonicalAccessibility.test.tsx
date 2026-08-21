@@ -20,7 +20,7 @@ describe('canonical Settings navigation accessibility', () => {
       />
     );
 
-    const securityGroup = screen.getByRole('button', { name: 'SECURITY' });
+    const securityGroup = screen.getByRole('button', { name: 'Security' });
     expect(securityGroup).toHaveAttribute('aria-expanded', 'true');
     const active = screen.getByRole('button', { name: 'Authentication & Access' });
     expect(active).toHaveAttribute('aria-current', 'page');

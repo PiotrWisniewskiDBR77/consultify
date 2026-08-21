@@ -40,12 +40,12 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { type Breadcrumb, PartnerLayout } from '../../components/Partner/PartnerLayout';
 import {
   loadPartnerCanonicalRuntime,
   PartnerCanonicalRuntimePanel,
   type PartnerCanonicalRuntimeSnapshot,
 } from '../../components/Partner/PartnerCanonicalRuntimePanel';
+import { type Breadcrumb, PartnerLayout } from '../../components/Partner/PartnerLayout';
 import {
   loadPartnerRuntimeSummary,
   type PartnerRuntimeSummary,
@@ -60,7 +60,6 @@ import {
 } from '../../config/partnerKnowledge';
 import { ROUTES } from '../../routes/routeConfig';
 import { Api } from '../../services/api';
-import { isPartnerLegacyRollbackEnabled } from '../../services/api/v8/partner';
 import {
   shouldFallbackToLegacyPartner,
   V8PartnerApi,
@@ -70,6 +69,7 @@ import {
   type V8PartnerProject,
   type V8PartnerReferralAnalytics,
 } from '../../services/api/v8';
+import { isPartnerLegacyRollbackEnabled } from '../../services/api/v8/partner';
 import { cn } from '../../utils/cn';
 import { getLegacyPartnerSection } from './partnerLegacyRoutes';
 import { PartnerStartRouter } from './PartnerStartRouter';
@@ -2949,6 +2949,29 @@ interface PartnerPortalViewNewProps {
   onNavigate?: (view: string) => void;
 }
 
+class PartnerProspectContentBoundary extends React.Component<
+  React.PropsWithChildren,
+  { failed: boolean }
+> {
+  state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  render() {
+    if (this.state.failed) {
+      return (
+        <div className="rounded-xl border border-amber-300 bg-c-surface p-6 text-sm text-c-text-secondary dark:border-amber-700/60">
+          Szczegóły programu są chwilowo niedostępne. Możesz nadal poprosić administratora o
+          zaproszenie do programu partnerskiego.
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
   currentUser,
   onNavigate,
@@ -3329,6 +3352,17 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
               </div>
             )}
           </div>
+          <PartnerProspectContentBoundary>
+            <Suspense
+              fallback={
+                <div className="flex h-64 items-center justify-center">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-600 border-t-transparent" />
+                </div>
+              }
+            >
+              <ProviderHomeView />
+            </Suspense>
+          </PartnerProspectContentBoundary>
         </div>
       ) : (
         <Suspense

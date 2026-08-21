@@ -69,22 +69,13 @@ const accentColors = [
   { id: 'pink', color: '#EC4899', name: 'Pink' },
 ];
 
-const fontFamilies = [
-  { id: 'system', name: 'System Default', value: 'system-ui, -apple-system, sans-serif' },
-  { id: 'inter', name: 'Inter', value: '"Inter", sans-serif' },
-  { id: 'roboto', name: 'Roboto', value: '"Roboto", sans-serif' },
-  { id: 'opensans', name: 'Open Sans', value: '"Open Sans", sans-serif' },
-  { id: 'lato', name: 'Lato', value: '"Lato", sans-serif' },
-  { id: 'poppins', name: 'Poppins', value: '"Poppins", sans-serif' },
-  { id: 'jetbrains', name: 'JetBrains Mono', value: '"JetBrains Mono", monospace' },
-  { id: 'fira', name: 'Fira Code', value: '"Fira Code", monospace' },
-];
+const fontFamilies = [{ id: 'inter', name: 'Inter', value: '"Inter", sans-serif' }];
 
 const defaultSettings: VisualSettings = {
   theme: 'system',
   accentColor: '#A51C30',
   fontSize: 'medium',
-  fontFamily: 'system-ui, -apple-system, sans-serif',
+  fontFamily: '"Inter", sans-serif',
   density: 'comfortable',
   sidebarWidth: 280,
   borderRadius: 'medium',
@@ -152,7 +143,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
 
     // Apply CSS variables
     document.documentElement.style.setProperty('--accent-color', s.accentColor);
-    document.documentElement.style.setProperty('--font-family', s.fontFamily);
+    document.documentElement.style.setProperty('--font-family', '"Inter", sans-serif');
     document.documentElement.style.setProperty('--sidebar-width', `${s.sidebarWidth}px`);
   };
 

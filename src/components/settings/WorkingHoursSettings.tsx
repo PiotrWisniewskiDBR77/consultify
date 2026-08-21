@@ -20,6 +20,7 @@ import { Api } from '../../services/api';
 import { DaySchedule, User, WorkingHours } from '../../types';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { DegradedState } from '../Admin/AdminState';
+import { SettingsHeaderActionPortal } from './SettingsHeaderActions';
 
 interface WorkingHoursSettingsProps {
   currentUser: User;
@@ -208,8 +209,18 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <SettingsHeaderActionPortal>
+        <button
+          onClick={handleSave}
+          disabled={saving || !!loadError}
+          className="flex items-center gap-2 rounded-lg bg-navy-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-navy-800 disabled:opacity-50 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]"
+        >
+          {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+          {saving ? t('common.saving', 'Saving...') : t('common.save', 'Save')}
+        </button>
+      </SettingsHeaderActionPortal>
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-c-accent-soft dark:bg-c-accent-soft flex items-center justify-center">
             <Clock className="w-5 h-5 text-c-accent" />
@@ -226,14 +237,6 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
             </p>
           </div>
         </div>
-        <button
-          onClick={handleSave}
-          disabled={saving || !!loadError}
-          className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg transition-colors disabled:opacity-50"
-        >
-          {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-          {saving ? t('common.saving', 'Saving...') : t('common.save', 'Save')}
-        </button>
       </div>
 
       {loadError && <DegradedState title="Working hours unavailable" description={loadError} />}

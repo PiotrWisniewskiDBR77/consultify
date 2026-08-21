@@ -148,6 +148,11 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
   allowedSections,
 }) => {
   const { t } = useTranslation();
+  const normalizeLabel = useCallback((label: string) => {
+    if (label !== label.toLocaleUpperCase()) return label;
+    const normalized = label.toLocaleLowerCase().replace(/\bai\b/gi, 'AI');
+    return normalized.charAt(0).toLocaleUpperCase() + normalized.slice(1);
+  }, []);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['my-settings']));
   const allowedSectionSet = useMemo(
     () => (allowedSections?.length ? new Set(allowedSections) : null),
@@ -552,8 +557,8 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
     >
       {/* Header - Admin style (no icon, bold title) */}
       <div className="px-5 pb-4 pt-5">
-        <h1 className="text-lg font-bold tracking-wide text-[var(--c-text)]">
-          {t('settings.sidebar.title', 'SETTINGS')}
+        <h1 className="text-lg font-semibold text-[var(--c-text)]">
+          {normalizeLabel(t('settings.sidebar.title', 'Settings'))}
         </h1>
         <p className="mt-0.5 text-sm text-[var(--c-text-muted)]">
           {t('settings.sidebar.subtitle', 'Personal, tenant, and module settings')}
@@ -562,7 +567,10 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
 
       {/* Navigation - Collapsible Groups (Admin style - no icons on group headers) */}
       <div className="flex-1 overflow-y-auto px-3">
-        <nav aria-label={t('settings.sidebar.navigation', 'Settings sections')} className="space-y-1">
+        <nav
+          aria-label={t('settings.sidebar.navigation', 'Settings sections')}
+          className="space-y-1"
+        >
           {navGroups.map((group) => {
             const isExpanded = expandedGroups.has(group.id);
 
@@ -574,9 +582,9 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                   onClick={() => toggleGroup(group.id)}
                   aria-expanded={isExpanded}
                   aria-controls={`settings-group-${group.id}`}
-                  className="flex w-full items-center justify-between px-2 py-2.5 text-[11px] font-semibold tracking-wider text-[var(--c-text-muted)] transition-colors hover:text-[var(--c-text-secondary)]"
+                  className="flex w-full items-center justify-between px-2 py-2.5 text-[13px] font-medium text-[var(--c-text-muted)] transition-colors hover:text-[var(--c-text-secondary)]"
                 >
-                  <span>{group.label}</span>
+                  <span>{normalizeLabel(group.label)}</span>
                   <ChevronDown
                     aria-hidden="true"
                     className={cn(

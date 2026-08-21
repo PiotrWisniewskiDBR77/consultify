@@ -32,25 +32,7 @@ interface AccessibilitySettingsProps {
 }
 
 const FONT_FAMILY_OPTIONS = [
-  {
-    value: 'system',
-    labelKey: 'settings.accessibility.fontFamily.system',
-    label: 'System Default',
-  },
   { value: 'inter', labelKey: 'settings.accessibility.fontFamily.inter', label: 'Inter' },
-  { value: 'roboto', labelKey: 'settings.accessibility.fontFamily.roboto', label: 'Roboto' },
-  {
-    value: 'open-sans',
-    labelKey: 'settings.accessibility.fontFamily.openSans',
-    label: 'Open Sans',
-  },
-  { value: 'lato', labelKey: 'settings.accessibility.fontFamily.lato', label: 'Lato' },
-  {
-    value: 'dyslexic',
-    labelKey: 'settings.accessibility.fontFamily.dyslexic',
-    label: 'OpenDyslexic',
-  },
-  { value: 'mono', labelKey: 'settings.accessibility.fontFamily.mono', label: 'Monospace' },
 ];
 
 const COLOR_BLIND_OPTIONS = [

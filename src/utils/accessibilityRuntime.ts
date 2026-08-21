@@ -39,7 +39,7 @@ export const DEFAULT_ACCESSIBILITY_PREFERENCES: AccessibilityPreferences = {
   textSpacing: 'default',
   underlineLinks: false,
   colorBlindMode: 'none',
-  fontFamily: 'system',
+  fontFamily: 'inter',
   lineHeight: 'default',
   letterSpacing: 'default',
   caretWidth: 'default',
@@ -90,21 +90,7 @@ export const applyAccessibilityPreferences = (prefs: AccessibilityPreferences) =
   const letterSpacingMap = { default: '0', wide: '0.025em', wider: '0.05em' };
   root.style.setProperty('--letter-spacing-base', letterSpacingMap[prefs.letterSpacing]);
 
-  const fontFamilyMap: Record<string, string> = {
-    // "System default" must equal the app's brand font (Inter) so selecting it
-    // — or the default merge on load/bootstrap — does not visually change the UI.
-    system: "'Inter', system-ui, -apple-system, sans-serif",
-    inter: 'Inter, sans-serif',
-    roboto: 'Roboto, sans-serif',
-    'open-sans': '"Open Sans", sans-serif',
-    lato: 'Lato, sans-serif',
-    dyslexic: 'OpenDyslexic, sans-serif',
-    mono: 'ui-monospace, monospace',
-  };
-  root.style.setProperty(
-    '--font-family-base',
-    fontFamilyMap[prefs.fontFamily] || fontFamilyMap['system']
-  );
+  root.style.setProperty('--font-family-base', "'Inter', system-ui, -apple-system, sans-serif");
 
   // Cursor size (CSS sets a larger SVG cursor on html.cursor-large)
   root.classList.toggle('cursor-large', prefs.cursorSize !== 'default');

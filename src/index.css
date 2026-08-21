@@ -770,9 +770,8 @@ html.density-spacious {
 
 /* Base font size / line-height / letter-spacing / font-family vars */
 html {
-  /* Default fallback MUST stay the brand font (Inter) so users who never set an
-   * accessibility font preference keep the app's intended typeface. Only an
-   * explicit a11y font choice overrides --font-family-base. */
+  /* Inter is the single visual brand font. Explicit accessibility modes may
+   * still override this through --font-family-base. */
   font-family: var(--font-family-base, 'Inter', system-ui, -apple-system, sans-serif);
 }
 body {
