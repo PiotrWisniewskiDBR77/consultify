@@ -1,210 +1,46 @@
-#!/usr/bin/env tsx
-/**
- * Wave 3 local-only owner-review fixture for canonical DRD Method Core.
- *
- * Uses the mounted production HTTP routes (including governed DRD pack
- * bootstrap and idempotency) rather than inserting method truth directly.
- * It creates no users and therefore does not alter the Organization owner
- * review surface. Reruns preserve the same session and event identities.
- */
+#!/usr/bin/env npx tsx
+/** Wave 3 / module 04 Assessment — isolated DRD owner-review fixture. */
+import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
 import express from 'express';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 import pg from 'pg';
 import request from 'supertest';
 
-const CONFIRM_ENV = 'SEED_WAVE3_ASSESSMENT_OWNER_REVIEW';
-const databaseUrl = process.env.DATABASE_URL ?? '';
-const organizationId =
-  process.env.WAVE3_ORGANIZATION_ID ?? 'fd1827ef-7e39-4c64-bf78-26a2c514adf1';
-const ownerId = process.env.WAVE3_OWNER_ID ?? '0c13d1af-af67-4683-ad01-a3ea6fda2340';
-
-if (process.env[CONFIRM_ENV] !== 'YES') {
-  throw new Error(`${CONFIRM_ENV}=YES is required`);
-}
-if (!/^postgres(?:ql)?:\/\/(?:[^@/]+@)?(?:127\.0\.0\.1|localhost)(?::\d+)?\//.test(databaseUrl)) {
-  throw new Error('Wave 3 Assessment fixture requires loopback PostgreSQL');
-}
-
-process.env.DB_TYPE = 'postgres';
-process.env.MOCK_DB = 'false';
-process.env.NODE_ENV = 'test';
-process.env.RUN_DB_TESTS = '1';
-process.env.CI = 'true';
-process.env.POSTGRES_SKIP_INIT_IN_TEST = '1';
-
-const client = new pg.Client({ connectionString: databaseUrl });
-await client.connect();
-
-try {
-  const identity = await client.query<{ organization_id: string; role: string; email: string }>(
-    'SELECT organization_id, role, email FROM users WHERE id=$1',
-    [ownerId]
-  );
-  if (identity.rows[0]?.organization_id !== organizationId) {
-    throw new Error('Wave 3 owner does not belong to the requested organization');
-  }
-
-  const [{ default: config }, { default: methodCoreRoutes }, registry] = await Promise.all([
-    import('../src/config/Config.js'),
-    import('../src/routes/method-core.routes.js'),
-    import('../src/method-core/MethodPackRegistry.js'),
-  ]);
-  const token = jwt.sign(
-    {
-      id: ownerId,
-      email: identity.rows[0].email,
-      organizationId,
-      role: identity.rows[0].role,
-    },
-    config.JWT_SECRET,
-    {
-      expiresIn: '15m',
-      ...(config.JWT_ISSUER ? { issuer: config.JWT_ISSUER } : {}),
-      ...(config.JWT_AUDIENCE ? { audience: config.JWT_AUDIENCE } : {}),
-    }
-  );
-
-  const app = express();
-  app.use(express.json());
-  app.use('/api/method', methodCoreRoutes);
-  const auth = { Authorization: `Bearer ${token}` };
-
-  const create = await request(app)
-    .post('/api/method/sessions')
-    .set(auth)
-    .set('Idempotency-Key', 'wave3-assessment-owner-guided-v1:create')
-    .send({
-      module: 'assessment',
-      methodPackId: registry.DRD_METHOD_PACK_ID,
-      methodPackVersion: registry.DRD_METHOD_PACK_VERSION,
-      mode: 'guided_manual',
-      projectId: null,
-    });
-  if (![200, 201].includes(create.status)) {
-    throw new Error(`DRD session create failed (${create.status}): ${JSON.stringify(create.body)}`);
-  }
-  const sessionId = String(create.body.session?.id ?? '');
-  if (!sessionId) throw new Error('DRD session create returned no session id');
-
-  const getSession = async () => {
-    const response = await request(app).get(`/api/method/sessions/${sessionId}`).set(auth);
-    if (response.status !== 200) {
-      throw new Error(`DRD session readback failed (${response.status})`);
-    }
-    return response.body.session as { state: string; version: number };
-  };
-
-  let session = await getSession();
-  for (const target of ['prepared', 'active']) {
-    if (session.state === target || (target === 'prepared' && session.state === 'active')) continue;
-    const transition = await request(app)
-      .post(`/api/method/sessions/${sessionId}/transition`)
-      .set(auth)
-      .set('Idempotency-Key', `wave3-assessment-owner-guided-v1:transition:${target}`)
-      .send({ to: target });
-    if (transition.status !== 200) {
-      throw new Error(`DRD transition to ${target} failed (${transition.status}): ${JSON.stringify(transition.body)}`);
-    }
-    session = transition.body.session;
-  }
-
-  const events = [
-    {
-      key: 'customer-data-drafted',
-      type: 'ANSWER_DRAFTED',
-      unitId: '1A',
-      level: 2,
-      payload: {
-        questionId: '1A-L2-Q1',
-        answerState: 'draft',
-        answerText: 'Dane klienta mają właścicieli w poszczególnych projektach, ale nie ma jednego standardu kompletności przed startem wdrożenia.',
-      },
-    },
-    {
-      key: 'customer-data-evidence',
-      type: 'EVIDENCE_ATTACHED',
-      unitId: '1A',
-      payload: {
-        evidenceId: 'wave3-asm-evidence-customer-handoff-v1',
-        evidenceType: 'interview',
-        strength: 'E2',
-        summary: 'W ostatnim kwartale start jednego wdrożenia przesunął się o dziewięć dni z powodu brakującego właściciela danych.',
-      },
-    },
-    {
-      key: 'customer-data-confirmed',
-      type: 'ANSWER_CONFIRMED',
-      unitId: '1A',
-      level: 2,
-      payload: { questionId: '1A-L2-Q1', answerState: 'confirmed' },
-    },
-    {
-      key: 'governance-drafted',
-      type: 'ANSWER_DRAFTED',
-      unitId: '1B',
-      level: 1,
-      payload: {
-        questionId: '1B-L1-Q1',
-        answerState: 'draft',
-        answerText: 'Decyzja o gotowości klienta jest dziś rozproszona między sprzedażą, delivery i kierownikiem projektu.',
-      },
-    },
-    {
-      key: 'governance-evidence',
-      type: 'EVIDENCE_ATTACHED',
-      unitId: '1B',
-      payload: {
-        evidenceId: 'wave3-asm-evidence-readiness-gate-v1',
-        evidenceType: 'document',
-        strength: 'E1',
-        summary: 'Brak wspólnej checklisty i jawnej decyzji gotowe albo zwrot do uzupełnienia.',
-      },
-    },
-    {
-      key: 'governance-confirmed',
-      type: 'ANSWER_CONFIRMED',
-      unitId: '1B',
-      level: 1,
-      payload: { questionId: '1B-L1-Q1', answerState: 'confirmed' },
-    },
-  ] as const;
-
-  for (const event of events) {
-    const response = await request(app)
-      .post(`/api/method/sessions/${sessionId}/events`)
-      .set(auth)
-      .set('Idempotency-Key', `wave3-assessment-owner-guided-v1:event:${event.key}`)
-      .send(event);
-    if (![200, 201].includes(response.status)) {
-      throw new Error(`DRD event ${event.key} failed (${response.status}): ${JSON.stringify(response.body)}`);
-    }
-  }
-
-  const [sessionReadback, eventReadback, sqlReadback] = await Promise.all([
-    getSession(),
-    request(app).get(`/api/method/sessions/${sessionId}/events`).set(auth),
-    client.query(
-      `SELECT s.id, s.state, s.version, s.method_pack_id, s.method_pack_version,
-              count(e.id)::int AS events
-         FROM method_sessions s
-         LEFT JOIN method_events e ON e.session_id=s.id
-        WHERE s.id=$1
-        GROUP BY s.id`,
-      [sessionId]
-    ),
-  ]);
-  if (eventReadback.status !== 200) throw new Error('DRD event readback failed');
-
-  console.log(JSON.stringify({
-    fixture: 'wave3-assessment-owner-guided-v1',
-    organizationId,
-    ownerId,
-    route: `/assessment/drd/${sessionId}`,
-    session: sessionReadback,
-    httpEvents: eventReadback.body.events?.length ?? 0,
-    sqlReadback: sqlReadback.rows[0],
-    note: 'Guided active state only; distinct-approver freeze fixture waits until Organization owner review releases its user surface.',
-  }, null, 2));
-} finally {
-  await client.end();
-}
+const COMMAND = process.argv[2] || 'readback';
+const URL = process.env.ASSESSMENT_OWNER_FIXTURE_DATABASE_URL || '';
+const YES = process.env.ASSESSMENT_OWNER_FIXTURE_CONFIRM;
+const MANIFEST = process.env.ASSESSMENT_OWNER_FIXTURE_MANIFEST || '';
+const PREFIX = 'consultify_w3_assessment_owner_';
+const IDS = Object.freeze({ mainOrg:'04000000-0000-4000-8000-000000000001', foreignOrg:'04000000-0000-4000-8000-000000000002', owner:'04000000-0000-4000-8000-000000000011', approver:'04000000-0000-4000-8000-000000000012', reader:'04000000-0000-4000-8000-000000000013', inactive:'04000000-0000-4000-8000-000000000014', foreign:'04000000-0000-4000-8000-000000000015' });
+const USERS = Object.freeze([
+  {id:IDS.owner,org:IDS.mainOrg,email:'w3.assessment.owner@local.test',role:'OWNER',membership:'ACTIVE',purpose:'session owner/editor',password:'Wave3AsmOwner!2026'},
+  {id:IDS.approver,org:IDS.mainOrg,email:'w3.assessment.approver@local.test',role:'ADMIN',membership:'ACTIVE',purpose:'distinct approver',password:'Wave3AsmApprover!2026'},
+  {id:IDS.reader,org:IDS.mainOrg,email:'w3.assessment.reader@local.test',role:'MEMBER',membership:'ACTIVE',purpose:'same-tenant reader and denied writer',password:'Wave3AsmReader!2026'},
+  {id:IDS.inactive,org:IDS.mainOrg,email:'w3.assessment.inactive@local.test',role:'ADMIN',membership:'REVOKED',purpose:'inactive denial',password:'Wave3AsmInactive!2026'},
+  {id:IDS.foreign,org:IDS.foreignOrg,email:'w3.assessment.foreign@local.test',role:'OWNER',membership:'ACTIVE',purpose:'foreign-tenant denial',password:'Wave3AsmForeign!2026'},
+]);
+function fail(m:string):never{throw new Error(`[W3 Assessment fixture] BLOCKED: ${m}`)}
+function ctx(){if(!URL)fail('ASSESSMENT_OWNER_FIXTURE_DATABASE_URL is required');if(!['seed','readback','reset'].includes(COMMAND))fail(`unknown command ${COMMAND}`);let u:globalThis.URL;try{u=new globalThis.URL(URL)}catch{fail('fixture database URL is invalid')}if(!['127.0.0.1','localhost','::1'].includes(u.hostname))fail(`database host ${u.hostname} is not local`);const db=u.pathname.slice(1);if(!/^consultify_w3_assessment_owner_[a-z0-9_]+$/.test(db))fail(`database name must match ${PREFIX}* using lowercase letters, digits and underscores`);const admin=new globalThis.URL(u);admin.pathname='/postgres';if(COMMAND==='seed'){if(!MANIFEST)fail('ASSESSMENT_OWNER_FIXTURE_MANIFEST is required for seed');if(!path.isAbsolute(MANIFEST)||MANIFEST.includes('://'))fail('ASSESSMENT_OWNER_FIXTURE_MANIFEST must be an absolute local filesystem path');if(fs.existsSync(MANIFEST))fail('manifest path already exists; overwrite is refused')}return{admin,db}}
+function requireYes(){if(YES!=='YES')fail('seed/reset requires ASSESSMENT_OWNER_FIXTURE_CONFIRM=YES')}
+async function exists(c:pg.Client,db:string){return Number((await c.query('select count(*)::int n from pg_database where datname=$1',[db])).rows[0].n)===1}
+function payload(db:string,d:any=null,r:any=null){return{fixture:'W3-ASSESSMENT-OWNER-v1',databaseName:db,deepLinks:{hub:'/assessment',guidedSessionId:d?.guidedSessionId??null,frozenSessionId:d?.frozenSessionId??null,outputId:d?.outputId??null,verified:false},productionWrites:false,sourceGatesChanged:false,personas:USERS.map(({password:_p,...u})=>u),journeys:['DRD bootstrap -> guided active session with six meaningful events','distinct approver -> in_review -> stale/role/tenant boundaries -> frozen immutable Output','Output findings -> one governed Initiative Draft when findings are available','cold HTTP/SQL readback and whole-database reset'],boundaries:{ownerCannotApprove:'missing_permission',staleFreeze:'version_conflict',foreignRead:'tenant non-disclosure',readerMutation:'missing_permission',freezeReplay:'same Output, zero duplicate',frozenOutput:'content hash unchanged'},dynamic:d,readback:r}}
+function persist(p:any){const b=`${JSON.stringify(p,null,2)}\n`;let fd:number|undefined;try{fd=fs.openSync(MANIFEST,'wx',0o600);fs.writeFileSync(fd,b,'utf8')}finally{if(fd!==undefined)fs.closeSync(fd)}const q=JSON.parse(fs.readFileSync(MANIFEST,'utf8'));if((fs.statSync(MANIFEST).mode&0o777)!==0o600||q.fixture!=='W3-ASSESSMENT-OWNER-v1'||q.personas?.length!==USERS.length||Number(q.readback?.personas)!==USERS.length)fail('persisted manifest verification failed');const s=JSON.stringify(q);for(const u of USERS)if(s.includes(u.password))fail('persisted manifest contains a fixture password');return{path:MANIFEST,bytes:Buffer.byteLength(b),mode:'0600',verified:true}}
+async function base(){const c=new pg.Client({connectionString:URL});await c.connect();try{await c.query('begin');await c.query(`insert into organizations(id,name) values($1,'W3 Assessment Owner Review'),($2,'W3 Assessment Foreign')`,[IDS.mainOrg,IDS.foreignOrg]);for(const u of USERS){await c.query(`insert into users(id,organization_id,email,password,first_name,last_name,role,status,language,timezone) values($1,$2,$3,$4,'Assessment','Fixture',$5,'active','pl','Europe/Warsaw')`,[u.id,u.org,u.email,await bcrypt.hash(u.password,10),u.role]);await c.query(`insert into organization_members(id,organization_id,user_id,role,status) values($1,$2,$3,$4,$5)`,[`membership-${u.id}`,u.org,u.id,u.role,u.membership])}await c.query('commit')}catch(e){await c.query('rollback');throw e}finally{await c.end()}}
+async function journey(){Object.assign(process.env,{DATABASE_URL:URL,DB_TYPE:'postgres',MOCK_DB:'false',NODE_ENV:'test',RUN_DB_TESTS:'1',CI:'true',POSTGRES_SKIP_INIT_IN_TEST:'1'});const [{default:typedConfig},{default:routes},registry,{default:postgresDb}]=await Promise.all([import('../src/config/Config.js'),import('../src/routes/method-core.routes.js'),import('../src/method-core/MethodPackRegistry.js'),import('../src/database/PostgresDatabase.js')]);const config=typedConfig as typeof typedConfig & {JWT_ISSUER?:string;JWT_AUDIENCE?:string};const token=(id:string,org:string,role:string,email:string)=>jwt.sign({id,email,organizationId:org,role},config.JWT_SECRET,{expiresIn:'15m',...(config.JWT_ISSUER?{issuer:config.JWT_ISSUER}:{}),...(config.JWT_AUDIENCE?{audience:config.JWT_AUDIENCE}:{})});const toks={owner:token(IDS.owner,IDS.mainOrg,'OWNER',USERS[0].email),approver:token(IDS.approver,IDS.mainOrg,'ADMIN',USERS[1].email),reader:token(IDS.reader,IDS.mainOrg,'MEMBER',USERS[2].email),foreign:token(IDS.foreign,IDS.foreignOrg,'OWNER',USERS[4].email)};const app=express();app.use(express.json());app.use('/api/method',routes);const auth=(t:string)=>({Authorization:`Bearer ${t}`});
+  const create=async(key:string)=>{const x=await request(app).post('/api/method/sessions').set(auth(toks.owner)).set('Idempotency-Key',key).send({module:'assessment',methodPackId:registry.DRD_METHOD_PACK_ID,methodPackVersion:registry.DRD_METHOD_PACK_VERSION,mode:'guided_manual',projectId:null});if(![200,201].includes(x.status))fail(`create failed ${x.status} ${JSON.stringify(x.body)}`);return String(x.body.session.id)};
+  const role=async(s:string,user:string,r:string)=>{const x=await request(app).post(`/api/method/sessions/${s}/roles`).set(auth(toks.owner)).send({userId:user,role:r});if(![200,201].includes(x.status))fail(`role ${r} failed ${x.status} ${JSON.stringify(x.body)}`)};
+  const transition=async(s:string,to:string,key:string,t=toks.owner,extra:any={})=>request(app).post(`/api/method/sessions/${s}/transition`).set(auth(t)).set('Idempotency-Key',key).send({to,...extra});
+  const events=[['customer-draft','ANSWER_DRAFTED','1A',2,{questionId:'1A-L2-Q1',answerState:'draft',answerText:'Brakuje jednego standardu kompletności danych klienta.'}],['customer-evidence','EVIDENCE_ATTACHED','1A',null,{evidenceId:'w3-asm-customer-v1',evidenceType:'interview',strength:'E2',summary:'Start wdrożenia opóźniony o dziewięć dni.'}],['customer-confirmed','ANSWER_CONFIRMED','1A',2,{questionId:'1A-L2-Q1',answerState:'confirmed'}],['governance-draft','ANSWER_DRAFTED','1B',1,{questionId:'1B-L1-Q1',answerState:'draft',answerText:'Decyzja gotowości jest rozproszona.'}],['governance-evidence','EVIDENCE_ATTACHED','1B',null,{evidenceId:'w3-asm-governance-v1',evidenceType:'document',strength:'E1',summary:'Brak wspólnej checklisty gotowości.'}],['governance-confirmed','ANSWER_CONFIRMED','1B',1,{questionId:'1B-L1-Q1',answerState:'confirmed'}]] as const;
+  const addEvents=async(s:string,prefix:string)=>{for(const [key,type,unitId,level,p] of events){const x=await request(app).post(`/api/method/sessions/${s}/events`).set(auth(toks.owner)).set('Idempotency-Key',`${prefix}:${key}`).send({type,unitId,...(level?{level}:{}),payload:p});if(![200,201].includes(x.status))fail(`event failed ${x.status} ${JSON.stringify(x.body)}`)}};
+  const guided=await create('w3-asm-guided:create');await role(guided,IDS.owner,'lead_assessor');for(const to of ['prepared','active']){const x=await transition(guided,to,`w3-asm-guided:${to}`);if(x.status!==200)fail(`guided ${to} failed`)}await addEvents(guided,'w3-asm-guided');
+  const frozen=await create('w3-asm-frozen:create');await role(frozen,IDS.owner,'lead_assessor');await role(frozen,IDS.approver,'approver');for(const to of ['prepared','active']){const x=await transition(frozen,to,`w3-asm-frozen:${to}`);if(x.status!==200)fail(`frozen ${to} failed`)}await addEvents(frozen,'w3-asm-frozen');{const x=await transition(frozen,'in_review','w3-asm-frozen:review');if(x.status!==200)fail(`review failed ${x.status}`)}
+  const stale=await request(app).post(`/api/method/sessions/${frozen}/freeze`).set(auth(toks.approver)).set('Idempotency-Key','w3-asm-freeze-stale').send({expectedVersion:999});if(stale.status!==409||stale.body.error!=='version_conflict')fail('stale freeze did not fail closed');const ownerDeny=await request(app).post(`/api/method/sessions/${frozen}/freeze`).set(auth(toks.owner)).set('Idempotency-Key','w3-asm-freeze-owner-deny').send({});if(ownerDeny.status!==403||ownerDeny.body.error!=='missing_permission')fail('owner freeze denial failed');const readerDeny=await transition(frozen,'active','w3-asm-reader-deny',toks.reader);if(readerDeny.status!==403)fail('reader mutation denial failed');const foreign=await request(app).get(`/api/method/sessions/${frozen}`).set(auth(toks.foreign));if(![403,404].includes(foreign.status))fail('foreign read did not fail closed');
+  const approval=await request(app).post(`/api/method/sessions/${frozen}/approvals`).set(auth(toks.approver)).set('Idempotency-Key','w3-asm-approval-v1').send({decision:'approved',comment:'Niezależna akceptacja gotowości i dowodów.'});if(approval.status!==201||approval.body.session?.state!=='frozen')fail(`approval failed ${approval.status} ${JSON.stringify(approval.body)}`);const freezeKey='w3-asm-freeze-v1';const first=await request(app).post(`/api/method/sessions/${frozen}/freeze`).set(auth(toks.approver)).set('Idempotency-Key',freezeKey).send({});if(first.status!==200)fail(`freeze readback failed ${first.status} ${JSON.stringify(first.body)}`);const replay=await request(app).post(`/api/method/sessions/${frozen}/freeze`).set(auth(toks.approver)).set('Idempotency-Key',freezeKey).send({});if(replay.status!==200||replay.body.output.id!==first.body.output.id)fail('freeze replay diverged');const output=first.body.output;let draftId:null|string=null;if(Array.isArray(output.findings)&&output.findings.length){const d=await request(app).post(`/api/method/outputs/${output.id}/initiative-drafts`).set(auth(toks.owner)).send({findingIds:output.findings.map((f:any)=>f.id),title:'Standard gotowości klienta',rationale:'Zamknąć luki danych i decyzji przed startem.',expectedOutcome:'Jedna jawna bramka gotowości i krótszy czas startu.',confidence:'medium'});if(d.status!==201)fail(`initiative draft failed ${d.status} ${JSON.stringify(d.body)}`);draftId=String(d.body.draft.id)}
+  const after=await request(app).get(`/api/method/outputs/${output.id}`).set(auth(toks.owner));if(after.status!==200||String(after.body.output.contentHash)!==String(output.contentHash))fail('frozen output changed on cold read');await postgresDb.close();return{guidedSessionId:guided,frozenSessionId:frozen,outputId:String(output.id),initiativeDraftId:draftId,outputContentHash:String(output.contentHash)}}
+async function readback(db:string,d:any=null){const c=new pg.Client({connectionString:URL});await c.connect();try{const guided=d?.guidedSessionId??(await c.query(`select id from method_sessions where organization_id=$1 and state='active' order by created_at limit 1`,[IDS.mainOrg])).rows[0]?.id;const frozen=d?.frozenSessionId??(await c.query(`select id from method_sessions where organization_id=$1 and state='frozen' order by created_at limit 1`,[IDS.mainOrg])).rows[0]?.id;const output=d?.outputId??(await c.query(`select id from method_outputs where session_id=$1`,[frozen])).rows[0]?.id;const r=(await c.query(`select (select count(*)::int from users where id=any($1::text[])) personas,(select count(*)::int from method_sessions where id=$2 and state='active') guided_active,(select count(*)::int from method_events where session_id=$2) guided_events,(select count(*)::int from method_sessions where id=$3 and state='frozen') frozen_sessions,(select count(*)::int from method_outputs where session_id=$3) frozen_outputs,(select count(*)::int from method_snapshots where session_id=$3) frozen_snapshots,(select count(*)::int from method_approvals where session_id=$3 and decision='approved' and actor_user_id=$4) distinct_approvals,(select count(*)::int from method_initiative_drafts where session_id=$3) initiative_drafts,(select count(*)::int from schema_migrations where status='success') successful_migrations`,[USERS.map(u=>u.id),guided,frozen,IDS.approver])).rows[0];const exp:any={personas:5,guided_active:1,guided_events:6,frozen_sessions:1,frozen_outputs:1,frozen_snapshots:1,distinct_approvals:1,initiative_drafts:1,successful_migrations:817};for(const[k,v]of Object.entries(exp))if(String(r[k])!==String(v))fail(`readback ${k} expected ${v}, got ${r[k]}`);const p=payload(db,{...d,guidedSessionId:guided,frozenSessionId:frozen,outputId:output},r);console.log(JSON.stringify(p,null,2));return p}finally{await c.end()}}
+async function seed(x:ReturnType<typeof ctx>){requireYes();const a=new pg.Client({connectionString:x.admin.toString()});await a.connect();try{if(await exists(a,x.db))fail('target database already exists; reset it first');await a.query(`create database "${x.db}"`)}finally{await a.end()}const m=spawnSync('npm',['run','db:migrate:strict'],{cwd:process.cwd(),env:{...process.env,NODE_ENV:'test',DB_TYPE:'postgres',DATABASE_URL:URL},encoding:'utf8'});if(m.status!==0)fail(`migration failed: ${m.stderr||m.stdout}`);await base();const d=await journey();const p=await readback(x.db,d);console.log(JSON.stringify({manifestWritten:persist(p)},null,2))}
+async function reset(x:ReturnType<typeof ctx>){requireYes();const a=new pg.Client({connectionString:x.admin.toString()});await a.connect();try{if(await exists(a,x.db))await a.query(`drop database "${x.db}" with (force)`);console.log(JSON.stringify({fixture:'W3-ASSESSMENT-OWNER-v1',databaseName:x.db,dropped:true,catalogAbsent:!(await exists(a,x.db))},null,2))}finally{await a.end()}}
+const x=ctx();if(COMMAND==='seed')await seed(x);else if(COMMAND==='readback')await readback(x.db);else await reset(x);process.exit(0);
