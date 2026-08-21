@@ -695,7 +695,10 @@ export const OrganizationProfileModule: React.FC = () => {
 
     setSaving(true);
     try {
-      await Api.put(`/organization-profiles/${orgId}`, profile);
+      await Api.put(`/organization-profiles/${orgId}`, {
+        ...profile,
+        profile_completeness: completeness,
+      });
       toast.success(t('organization.profileSaved', 'Profile saved'));
     } catch (err: any) {
       toast.error(err.message || 'Failed to save');

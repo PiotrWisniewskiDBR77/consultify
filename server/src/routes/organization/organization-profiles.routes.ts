@@ -436,6 +436,7 @@ router.put(
       production_archetype,
       shift_pattern,
       automation_level,
+      profile_completeness,
     } = req.body;
 
     try {
@@ -498,6 +499,7 @@ router.put(
         production_archetype,
         shift_pattern,
         automation_level,
+        profile_completeness,
       };
 
       const definedFields = Object.entries(profileFields).filter(([, v]) => v !== undefined);

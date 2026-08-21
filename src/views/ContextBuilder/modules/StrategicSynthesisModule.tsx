@@ -25,6 +25,8 @@ export const StrategicSynthesisModule: React.FC = () => {
   const { risks, strengths = [], selectedScenarioId } = synthesis;
   const [selectedRisk, setSelectedRisk] = useState<DynamicListItem | null>(null);
   const [selectedStrength, setSelectedStrength] = useState<DynamicListItem | null>(null);
+  const activeConstraintCount =
+    companyProfile.activeConstraints.length + challenges.activeBlockers.length;
   // Handlers
   const createHandler = (listName: 'risks' | 'strengths', currentItems: DynamicListItem[]) => ({
     onAdd: (item: Omit<DynamicListItem, 'id'>) => {
@@ -85,7 +87,7 @@ export const StrategicSynthesisModule: React.FC = () => {
                 <p className="opacity-90">
                   Based on your{' '}
                   <strong>{challenges.declaredChallenges.length} declared challenges</strong> and{' '}
-                  <strong>{companyProfile.activeConstraints.length} active constraints</strong>, we
+                  <strong>{activeConstraintCount} active constraints</strong>, we
                   have identified the following risks.
                 </p>
               </div>

@@ -4,7 +4,7 @@ Last updated: `2026-08-21`
 
 | Order | ID | Module | Current gate | Product SHA | Owner register | Open P0 | Open P1 | Open P2 | Open P3 | Owner verdict | Regression |
 |---:|---|---|---|---|---|---:|---:|---:|---:|---|---|
-| 1 | `ORG` | Organization | `PREPARING` | `ec43f3c60b6998012da680380cdc28604dee3bec` entry parent | `0` | 0 | 0 | 0 | 0 | — | — |
+| 1 | `ORG` | Organization | `G05_IN_PROGRESS` | `a36d9d51edc87bb63e7211754e22106d02d2d3d0` | `0` | 0 | 0 | 0 | 0 | — | preflight observations: 4 |
 | 2 | `INT` | Interview | `NOT_STARTED` | — | `0` | 0 | 0 | 0 | 0 | — | — |
 | 3 | `TLS` | Tools | `NOT_STARTED` | — | `1` carry-forward | 0 | 0 | 1 | 0 | — | — |
 | 4 | `ASM` | Assessment | `NOT_STARTED` | — | `0` | 0 | 0 | 0 | 0 | — | — |

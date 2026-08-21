@@ -3,6 +3,7 @@
 | Entry | Module/round | Purpose | Git SHA | Client SHA | Server SHA | Runtime | Database | Migrations | Production contact | Evidence | Status |
 |---:|---|---|---|---|---|---|---|---|---|---|---|
 | 1 | Wave 3 entry | Wave 2 closure parent | `ec43f3c60b6998012da680380cdc28604dee3bec` | — | — | not mounted for Wave 3 | — | — | `NO` | Wave 2 gate report | `PARENT_VERIFIED` |
+| 2 | Organization / preflight | Main journey and governed snapshot | `a36d9d51edc87bb63e7211754e22106d02d2d3d0` | `a36d9d51edc87bb63e7211754e22106d02d2d3d0` | `a36d9d51edc87bb63e7211754e22106d02d2d3d0` | client `127.0.0.1:3940`; server `127.0.0.1:3941` | `consultify-wave2-p4-pg` / `consultinity` | 667 current | `NO` | Organization module ledger; snapshot v1 hash `5bac6e23430d8fa84402fdb36973cf78a835d376de7a895cecad5ebd45dab2f8` | `MOUNTED_PREFLIGHT` |
 
 ## Rules
 

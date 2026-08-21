@@ -21,7 +21,11 @@ export const GoalsExpectationsModule: React.FC = () => {
   >('intent');
 
   // Store State
-  const { goals, setGoals, updateGoalsList } = useContextBuilderStore();
+  const { companyProfile, goals, setGoals, updateGoalsList } = useContextBuilderStore();
+
+  const isManufacturingProfile =
+    companyProfile.industry.toLowerCase().includes('manufactur') ||
+    companyProfile.industry.toLowerCase().includes('industrial');
 
   // AI Suggestions Mock State (Local UI state)
   const [aiSuggestions, setAiSuggestions] = useState([
@@ -71,7 +75,7 @@ export const GoalsExpectationsModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* AI Suggestion Banner (Mock) - Contextual to Metrics Tab */}
-      {aiSuggestions.length > 0 && activeTab === 'metrics' && (
+      {isManufacturingProfile && aiSuggestions.length > 0 && activeTab === 'metrics' && (
         <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-4 flex items-start gap-3">
           <Sparkles className="text-primary-600 mt-1" size={18} />
           <div className="flex-1">
