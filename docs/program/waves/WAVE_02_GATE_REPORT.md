@@ -5,7 +5,7 @@ Date: `2026-08-21`
 Overall verdict: `CONDITIONAL_PASS / OWNER_BROWSER_GATE_REQUIRED`
 
 This report qualifies the corrected code candidate at
-`4318da80fafb77482398fe64fa30c2af73bd29ee` on
+`3ab15ebb2930bc42bc143f743c362f987c0ac512` on
 `codex/full-mvp-recovery-20260820`. It does not authorize production, deployment,
 or promotion to `OWNER_ACCEPTED`.
 
@@ -15,7 +15,7 @@ or promotion to `OWNER_ACCEPTED`.
 - dependency-bearing verification checkout (patched temporarily only to run
   the checks, then restored clean):
   `/Users/piotrwisniewski/Developer/consultify-wave02-recovery`;
-- code candidate: `4318da80fafb77482398fe64fa30c2af73bd29ee`;
+- code candidate: `3ab15ebb2930bc42bc143f743c362f987c0ac512`;
 - branch: `codex/full-mvp-recovery-20260820`;
 - recovery source: preserved local branch history; the authoritative temporary
   worktree is present again and owns the branch;
@@ -36,6 +36,7 @@ or promotion to `OWNER_ACCEPTED`.
 | 3 | Federated Teresa/UI action manifest | `8c535a106f` |
 | 3 | Mounted mutation denominator | `a02a150737` |
 | post-gate repair | Standalone server typecheck boundary | `4318da80fa` |
+| post-gate integration repair | Restore eight canonical Finance budget routes lost in merge `826dac93da` | `3ab15ebb29` |
 
 The apparent table order preserves the historical commit sequence. P3 was
 reviewed after P1/P2 shared-contract work; the bounded P4 packet had no shared
@@ -59,6 +60,29 @@ A post-restart attempt to invoke the owner harness stopped in preflight because
 tests and is not counted as a failure or as new acceptance evidence. The earlier
 real-PostgreSQL owner evidence remains the qualifying artifact; no Finance code
 changed after it.
+
+### Finance route integration requalification
+
+The final audit found that merge `826dac93da` retained the canonical Finance
+services, clients, registry decisions and route tests but dropped eight mounted
+V8 budget handlers from `finance.routes.ts`: registration, line update,
+projection, scenario adjustment, approval, discard, document import and
+initiative link. That was a real integration regression and contradicted the
+retirement claims despite the earlier green source evidence.
+
+Commit `3ab15ebb29` restores the previously governed handlers without changing
+their service contracts. On the repaired candidate:
+
+- mounted Finance route suite: `79/79 PASS`;
+- exact Finance cutover inventory: `11/11 PASS`;
+- combined recovery qualification: `90/90 PASS`;
+- root `npm run type-check`: `PASS`;
+- no push, deployment, production access or owner-browser substitution occurred.
+
+The exact-current Finance denominator is therefore `25 retired / 52 actual
+legacy mutation doors`, with `27` still open. `FIN-MVP-CUTOVER-001` remains
+`PARTIAL`; this repair restores already-claimed mounted successors but does not
+promote the broader parent task.
 
 ## P2 — Results writers and Transform runtime
 
@@ -146,6 +170,7 @@ Shared-contract verification:
 - initial standalone server rerun exposed `TS6059` in the two P3 adapters; this
   was treated as a real gate failure, fixed in `4318da80fa`, and rerun to PASS;
 - focused manifest and mounted-denominator tests after the repair: `5/5 PASS`;
+- post-integration Finance route and inventory requalification: `90/90 PASS`;
 - `git diff --check`: required again after this report-only commit;
 - candidate cleanliness: required again after this report-only commit.
 
