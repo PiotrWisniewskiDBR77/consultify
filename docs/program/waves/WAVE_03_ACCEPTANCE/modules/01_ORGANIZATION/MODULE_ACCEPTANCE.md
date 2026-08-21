@@ -2,7 +2,7 @@
 
 ID: `ORG`
 Routes: `/organization`
-Current gate: `G05_IN_PROGRESS`
+Current gate: `G06_IN_PROGRESS`
 Owner: Piotr Wisniewski
 Integrator: Codex
 Mobile: `DEFERRED_NON_GATING`
@@ -68,9 +68,9 @@ resolved or consciously accepted before G07.
 
 | ID | Observation | Evidence | State |
 |---|---|---|---|
-| `ORG-PF-001` | Profile shows `100%` completeness in UI while `organization_profiles.profile_completeness` reads `0` in PostgreSQL. | UI reload plus DB readback at 2026-08-21 10:21 CEST | `OPEN` |
-| `ORG-PF-002` | Goals suggests manufacturing KPI `Safety Incident Rate (TRIR)` despite the saved organization type being Professional Services. | Success Metrics preflight | `OPEN` |
-| `ORG-PF-003` | Strategic Synthesis reports `0 active constraints` after blockers were added in Challenges. | Strategy preflight after Challenge entry | `OPEN` |
+| `ORG-PF-001` | Profile showed `100%` completeness in UI while `organization_profiles.profile_completeness` read `0` in PostgreSQL. Save now persists the computed percentage; UI and DB both read `100`. | UI save/reload plus DB readback on `ad0766ac4c1000c6c94934a1af1d53c0b4eed19c` | `FIXED_VERIFIED` |
+| `ORG-PF-002` | Goals showed an unsafe static manufacturing KPI suggestion for a Professional Services profile. The static suggestion was removed; TRIR is absent on replay. | Success Metrics replay on `ad0766ac4c1000c6c94934a1af1d53c0b4eed19c` | `FIXED_VERIFIED` |
+| `ORG-PF-003` | Strategic Synthesis reported `0 active constraints` after two blockers were added. It now includes active challenge blockers and reads `2 active constraints`. | Strategy replay on `ad0766ac4c1000c6c94934a1af1d53c0b4eed19c` | `FIXED_VERIFIED` |
 | `ORG-PF-004` | Goals, Challenges and Strategy persist through browser storage rather than the canonical Organization backend contract. Same-browser reload passed; cross-browser/cold server readback is not available. | Source map plus UI reload | `OPEN_DECISION` |
 
 ## Owner UI/UX/CX register
@@ -83,7 +83,8 @@ resolved or consciously accepted before G07.
 
 | Finding IDs | Root cause | Approved solution | Commit | Shared surfaces | Impacted modules | Tests/self-QA | Regression |
 |---|---|---|---|---|---|---|---|
-| _none_ | | | | | | | |
+| `ORG-PF-001`, `ORG-PF-003` | Missing completeness payload; synthesis counted only profile constraints, not challenge blockers. | Persist UI completeness; aggregate both constraint sources. | `1c0c2d644becd967f223344b50828f6c70a28d1f` | Organization profile, Goals/Challenges/Strategy | Organization | root/server typecheck; local UI and DB replay; Organization real-PG `12/12 PASS` | final SHA replay passed |
+| `ORG-PF-002` | Unsafe static manufacturing-only mock rendered without trustworthy industry context. | Remove the static suggestion until a governed contextual suggestion source exists. | `ad0766ac4c1000c6c94934a1af1d53c0b4eed19c` | Goals Success Metrics | Organization | local UI replay: TRIR absent, saved KPI retained | final SHA replay passed |
 
 ## Owner verdict
 
