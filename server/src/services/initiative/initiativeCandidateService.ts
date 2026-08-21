@@ -512,8 +512,8 @@ async function loadDiscoveryArtifacts(
   try {
     const rows = await db.queryAll<Record<string, unknown>>(
       `SELECT a.id AS id,
-              COALESCE(a.title, a.name, '') AS title,
-              COALESCE(a.description, a.summary, '') AS summary
+              COALESCE(a.name, '') AS title,
+              COALESCE(a.description, '') AS summary
          FROM assessments a
         WHERE a.organization_id = ?
           AND NOT EXISTS (
