@@ -90,9 +90,56 @@ describe('PartnerPortalView route alignment', () => {
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith(
-        expect.objectContaining({ pathname: '/partner', search: expect.stringContaining('tab=documentation') }),
+        expect.objectContaining({
+          pathname: '/partner',
+          search: expect.stringContaining('tab=documentation'),
+        }),
         expect.objectContaining({ replace: true })
       );
     });
+  });
+
+  it('keeps ready partner sections accessible before profile connection', async () => {
+    vi.mocked(Api.get).mockImplementation(async (url: string) => {
+      if (url === '/api/partners/connection') {
+        return {
+          success: true,
+          data: { data: { connected: false, selfConnectEnabled: false, organization: null } },
+        } as any;
+      }
+
+      if (url === '/api/partners/resources') {
+        return {
+          success: true,
+          data: {
+            data: {
+              documentation: [],
+              marketing: [],
+              caseStudies: [],
+              templates: [],
+            },
+          },
+        } as any;
+      }
+
+      throw new Error(`Unexpected GET ${url}`);
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/partner?tab=documentation']}>
+        <I18nextProvider i18n={i18n}>
+          <PartnerPortalViewNew />
+          <LocationProbe />
+        </I18nextProvider>
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText('Connect your partner profile')).toBeInTheDocument();
+    await waitFor(() => expect(Api.get).toHaveBeenCalledWith('/api/partners/resources'));
+    expect(screen.getByTestId('location')).toHaveTextContent('/partner?tab=documentation');
+    expect(mockNavigate).not.toHaveBeenCalledWith(
+      expect.objectContaining({ search: expect.stringContaining('tab=partner-home') }),
+      expect.anything()
+    );
   });
 });

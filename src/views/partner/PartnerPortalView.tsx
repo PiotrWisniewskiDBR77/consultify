@@ -3042,17 +3042,14 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
     const params = new URLSearchParams(location.search);
     const section = params.get('tab');
 
-    // When partner profile is not connected, lock navigation to the onboarding screen.
-    if (!isConnected) return 'partner-home';
-
     if (isPartnerSection(section)) return section;
 
     const legacySection = getLegacyPartnerSection(location.pathname);
     return legacySection ?? 'dashboard';
-  }, [location.pathname, location.search, isConnected]);
+  }, [location.pathname, location.search]);
 
   useEffect(() => {
-    if (connectionLoading || !isConnected) return;
+    if (connectionLoading) return;
 
     const legacySection = getLegacyPartnerSection(location.pathname);
     if (!legacySection) return;
@@ -3062,43 +3059,16 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
 
     params.set('tab', legacySection);
     navigate({ pathname: ROUTES.PARTNER.LANDING, search: params.toString() }, { replace: true });
-  }, [connectionLoading, isConnected, location.pathname, location.search, navigate]);
+  }, [connectionLoading, location.pathname, location.search, navigate]);
 
   const handleSectionChange = useCallback(
     (section: PartnerSection) => {
-      if (!isConnected && section !== 'partner-home') {
-        toast(
-          t(
-            'partner.connect.requiredToNavigate',
-            'Connect your partner profile first to access other sections.'
-          )
-        );
-
-        const params = new URLSearchParams(location.search);
-        params.set('tab', 'partner-home');
-        navigate(
-          { pathname: ROUTES.PARTNER.LANDING, search: params.toString() },
-          { replace: true }
-        );
-        return;
-      }
-
       const params = new URLSearchParams(location.search);
       params.set('tab', section);
       navigate({ pathname: ROUTES.PARTNER.LANDING, search: params.toString() });
     },
-    [isConnected, location.search, navigate, t]
+    [location.search, navigate]
   );
-
-  // Ensure URL stays consistent with locked navigation.
-  useEffect(() => {
-    if (connectionLoading) return;
-    if (isConnected) return;
-    const params = new URLSearchParams(location.search);
-    if (params.get('tab') === 'partner-home') return;
-    params.set('tab', 'partner-home');
-    navigate({ pathname: ROUTES.PARTNER.LANDING, search: params.toString() }, { replace: true });
-  }, [connectionLoading, isConnected, location.search, navigate]);
 
   // Get breadcrumbs based on active section
   const breadcrumbs = useMemo((): Breadcrumb[] => {
@@ -3360,7 +3330,7 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
                 </div>
               }
             >
-              <ProviderHomeView />
+              {activeSection === 'partner-home' ? <ProviderHomeView /> : renderContent()}
             </Suspense>
           </PartnerProspectContentBoundary>
         </div>
