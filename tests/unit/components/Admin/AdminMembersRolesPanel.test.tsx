@@ -83,7 +83,9 @@ describe('AdminMembersRolesPanel', () => {
     expect(screen.queryByText('Maximum participant registrations')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Maximum team registrations')).toBeInTheDocument();
 
-    const ownerOptions = screen.getAllByRole('option', { name: 'Owner' });
+    const ownerOptions = (await screen.findAllByRole('option', { name: 'Owner' })).filter((option) =>
+      option.closest('tr')
+    );
     expect(ownerOptions).toHaveLength(1);
     expect(ownerOptions[0]).toBeDisabled();
 

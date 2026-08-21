@@ -128,6 +128,7 @@ vi.mock('../../../src/services/api', () => ({
     getOrganizationMembers: vi.fn(),
     addOrganizationMember: vi.fn(),
     updateOrganizationMemberRole: vi.fn(),
+    changeAdminOrganizationMemberRole: vi.fn(),
     removeOrganizationMember: vi.fn(),
     post: vi.fn(),
   },
@@ -325,7 +326,7 @@ describe('RBAC: ADMIN sees Team & Access panel with invite CTA', () => {
 // Suite 3 — OWNER can trigger role changes via the API
 // ---------------------------------------------------------------------------
 
-describe('RBAC: OWNER can change member roles via updateOrganizationMemberRole', () => {
+describe('RBAC: OWNER can change member roles via the governed admin IAM command', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockedApi.getOrganizationMembers.mockResolvedValue([
@@ -344,19 +345,23 @@ describe('RBAC: OWNER can change member roles via updateOrganizationMemberRole',
         last_name: 'Member',
       },
     ]);
-    mockedApi.updateOrganizationMemberRole.mockResolvedValue({ success: true });
+    mockedApi.changeAdminOrganizationMemberRole.mockResolvedValue({ success: true });
 
     // The OWNER is the viewer.
     authState.currentUser = { ...makeUser('OWNER'), id: 'owner-viewer' };
     authState.currentOrganization = { id: 'org-test-1' };
   });
 
-  it('calls updateOrganizationMemberRole with the correct org/member/role args on change', async () => {
+  it('calls the governed role command with org/member/role/stale-state identity', async () => {
     render(<AdminMembersRolesPanel />);
 
-    // Wait for the member table to load.
-    const memberEmail = await screen.findByText('member@acme.test');
-    const row = memberEmail.closest('tr');
+    // Scope to the desktop table. The component intentionally renders a
+    // separate CSS-hidden mobile card tree, which jsdom also exposes.
+    const memberEmail = (await screen.findAllByText('member@acme.test')).find((node) =>
+      node.closest('tr')
+    );
+    expect(memberEmail).toBeTruthy();
+    const row = memberEmail!.closest('tr');
     expect(row).toBeTruthy();
 
     // The role <select> for Bob the Member sits in the same row.
@@ -368,10 +373,12 @@ describe('RBAC: OWNER can change member roles via updateOrganizationMemberRole',
     fireEvent.change(roleSelect, { target: { value: 'ADMIN' } });
 
     await waitFor(() =>
-      expect(mockedApi.updateOrganizationMemberRole).toHaveBeenCalledWith(
+      expect(mockedApi.changeAdminOrganizationMemberRole).toHaveBeenCalledWith(
         'org-test-1',
         'target-member',
-        'ADMIN'
+        'ADMIN',
+        'MEMBER',
+        expect.any(String)
       )
     );
   });
@@ -379,8 +386,11 @@ describe('RBAC: OWNER can change member roles via updateOrganizationMemberRole',
   it('blocks role escalation to OWNER via the inline select (option is disabled)', async () => {
     render(<AdminMembersRolesPanel />);
 
-    const memberEmail = await screen.findByText('member@acme.test');
-    const row = memberEmail.closest('tr');
+    const memberEmail = (await screen.findAllByText('member@acme.test')).find((node) =>
+      node.closest('tr')
+    );
+    expect(memberEmail).toBeTruthy();
+    const row = memberEmail!.closest('tr');
     const roleSelect = row!.querySelector('select') as HTMLSelectElement;
 
     // The OWNER option must exist in the DOM but be disabled — the UI must not
@@ -437,8 +447,11 @@ describe('Anti-escalation: SUPERADMIN role is absent from invite/role-change UI'
   it('does not expose a SUPERADMIN option in the member role-change select', async () => {
     render(<AdminMembersRolesPanel />);
 
-    const memberEmail = await screen.findByText('member@acme.test');
-    const row = memberEmail.closest('tr');
+    const memberEmail = (await screen.findAllByText('member@acme.test')).find((node) =>
+      node.closest('tr')
+    );
+    expect(memberEmail).toBeTruthy();
+    const row = memberEmail!.closest('tr');
     const roleSelect = row!.querySelector('select') as HTMLSelectElement;
 
     const optionValues = Array.from(roleSelect.querySelectorAll('option')).map(
