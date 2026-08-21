@@ -16230,7 +16230,8 @@
     },
     "shell": {
       "title": "Team Admin",
-      "subtitle": "Manage team access and commercial controls for your organization."
+      "subtitle": "Manage team access and commercial controls for your organization.",
+      "breadcrumb": "Admin panel"
     },
     "section": {
       "people": {
@@ -19687,6 +19688,7 @@
       "title": "Organization",
       "subtitle": "Context & Administration",
       "back": "Back to Dashboard",
+      "group": "ORGANIZATION",
       "contextGroup": "CONTEXT",
       "adminGroup": "ADMINISTRATION",
       "profile": "Company Profile",
@@ -19700,7 +19702,59 @@
       "branding": "Branding & Regional",
       "megatrends": "Megatrends",
       "knowledgeGraph": "Knowledge Graph",
-      "competencies": "Competency Catalog"
+      "competencies": "Competency Catalog",
+      "contextGovernance": "Context governance"
+    },
+    "shell": { "breadcrumb": "Organization" },
+    "profilePresentation": {
+      "navigation": "Organization profile sections",
+      "hint": "Review each existing profile section in its canonical order. This presentation does not change the profile information architecture.",
+      "sections": {
+        "type": {
+          "label": "Organization Type",
+          "description": "Existing organization-type selection"
+        },
+        "identity": {
+          "label": "Identity & Scale",
+          "description": "Existing identity and scale fields"
+        },
+        "production": {
+          "label": "Production & Operations",
+          "description": "Existing manufacturing-specific fields"
+        },
+        "operating": {
+          "label": "Operating Model",
+          "description": "Existing delivery, revenue and core-system fields"
+        },
+        "strategic": {
+          "label": "Strategic Position",
+          "description": "Existing position, priorities, mission and vision fields"
+        },
+        "digital": {
+          "label": "Digital & Technology",
+          "description": "Existing technology and digital-maturity fields"
+        },
+        "market": {
+          "label": "Market & Competition",
+          "description": "Existing market, customer and competitor fields"
+        },
+        "communication": {
+          "label": "Communication & AI Preferences",
+          "description": "Existing communication preference fields"
+        },
+        "constraints": {
+          "label": "Constraints & Risk",
+          "description": "Existing risk, regulation and constraint fields"
+        },
+        "documentExtraction": {
+          "label": "Document extraction",
+          "description": "Extract profile proposals from one document; no persisted file collection is implied"
+        },
+        "readiness": {
+          "label": "Completeness & Readiness",
+          "description": "Existing completeness and downstream-readiness calculation"
+        }
+      }
     },
     "sections": {
       "profile": {

@@ -5,7 +5,7 @@
  * T064: Megatrends redirected to canonical Tools → Strategy route.
  */
 
-import { Menu, X } from 'lucide-react';
+import { ChevronRight, Menu, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
@@ -267,6 +267,11 @@ export const OrganizationView: React.FC = () => {
               <Menu size={18} />
             </button>
             <div className="flex-1 min-w-0">
+              <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <span>{t('organization.shell.breadcrumb')}</span>
+                <ChevronRight size={12} />
+                <span className="text-slate-700 dark:text-slate-200">{currentMeta.title}</span>
+              </div>
               <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight truncate">
                 {currentMeta.title}
               </h1>

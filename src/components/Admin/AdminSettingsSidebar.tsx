@@ -126,16 +126,16 @@ export const AdminSettingsSidebar: React.FC<AdminSettingsSidebarProps> = ({
           </button>
         )}
         <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-          {t('admin.shell.title', { defaultValue: 'Team Admin' })}
+          {t('admin.shell.title', { defaultValue: 'Admin panel' })}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
           {t('admin.shell.subtitle', {
-            defaultValue: 'Manage team access and commercial controls for your organization.',
+            defaultValue: 'Manage access, controls, evidence, and system readiness.',
           })}
         </p>
       </div>
 
-      <nav className="flex-1 space-y-2 px-3 py-4">
+      <nav className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-4">
         {visibleNavItems.map((item) => {
           const Icon = item.icon;
           const isActive = item.id === activeSection;
@@ -143,10 +143,11 @@ export const AdminSettingsSidebar: React.FC<AdminSettingsSidebarProps> = ({
           return (
             <button
               key={item.id}
+              type="button"
               onClick={() => onSectionChange(item.id)}
               aria-current={isActive ? 'page' : undefined}
               className={cn(
-                'w-full rounded-xl border px-3 py-3 text-left transition',
+                'w-full rounded-xl border px-3 py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-info)] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-navy-950',
                 isActive
                   ? 'border-slate-200 bg-slate-100 text-slate-900 dark:border-white/10 dark:bg-white/[0.08] dark:text-white'
                   : 'border-transparent bg-transparent text-slate-700 hover:border-slate-200 hover:bg-slate-50 dark:text-slate-300 dark:hover:border-white/10 dark:hover:bg-white/5'

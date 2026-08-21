@@ -1,4 +1,4 @@
-import { Menu, X } from 'lucide-react';
+import { ChevronRight, Menu, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -265,15 +265,22 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
         </div>
 
         <ScrollArea className="flex-1">
-          <div className="space-y-4 p-3 lg:p-4">
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+          <div className="mx-auto w-full max-w-6xl space-y-5 p-4 lg:p-6">
+            <header className="border-b border-slate-200 pb-4 dark:border-white/10">
+              <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <span>{t('admin.shell.breadcrumb')}</span>
+                <ChevronRight className="h-3.5 w-3.5" />
+                <span className="text-slate-700 dark:text-slate-200">
+                  {t(meta.titleKey, { defaultValue: meta.titleDefault })}
+                </span>
+              </div>
               <h1 className="text-xl font-semibold text-slate-900 dark:text-white">
                 {t(meta.titleKey, { defaultValue: meta.titleDefault })}
               </h1>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                 {t(meta.subtitleKey, { defaultValue: meta.subtitleDefault })}
               </p>
-            </div>
+            </header>
             {content}
           </div>
         </ScrollArea>

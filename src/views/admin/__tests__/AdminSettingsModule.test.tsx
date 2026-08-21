@@ -52,6 +52,11 @@ describe('AdminSettingsModule section routing', () => {
     renderAt('/admin/people');
     expect(screen.getByTestId('panel-people')).toBeInTheDocument();
     expect(screen.queryByTestId('panel-billing')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Team & Access/i })).toHaveAttribute(
+      'aria-current',
+      'page'
+    );
+    expect(screen.queryByRole('button', { name: 'Invitations' })).not.toBeInTheDocument();
   });
 
   it('renders the billing panel at /admin/billing', () => {
@@ -99,5 +104,16 @@ describe('AdminSettingsModule section routing', () => {
     expect(screen.getByRole('button', { name: /Close admin navigation/i })).toBeInTheDocument();
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('keeps the real seven-domain navigation keyboard reachable in a scroll container', () => {
+    const { container } = renderAt('/admin/people');
+    const navigation = container.querySelector('nav');
+    expect(navigation).toHaveClass('min-h-0', 'overflow-y-auto');
+
+    const billing = screen.getByRole('button', { name: /Billing & Plans/i });
+    billing.focus();
+    expect(billing).toHaveFocus();
+    expect(screen.getByRole('button', { name: /Health/i })).toBeEnabled();
   });
 });

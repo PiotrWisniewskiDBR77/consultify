@@ -17076,7 +17076,8 @@
     },
     "shell": {
       "title": "Administracja zespołu",
-      "subtitle": "Zarządzaj dostępem zespołu i ustawieniami komercyjnymi organizacji."
+      "subtitle": "Zarządzaj dostępem zespołu i ustawieniami komercyjnymi organizacji.",
+      "breadcrumb": "Panel administratora"
     },
     "section": {
       "people": {
@@ -20222,6 +20223,7 @@
       "title": "Organizacja",
       "subtitle": "Kontekst i administracja",
       "back": "Powrót do pulpitu",
+      "group": "ORGANIZACJA",
       "contextGroup": "KONTEKST",
       "adminGroup": "ADMINISTRACJA",
       "profile": "Profil firmy",
@@ -20235,7 +20237,56 @@
       "branding": "Branding i ustawienia regionalne",
       "megatrends": "Megatrendy",
       "knowledgeGraph": "Graf wiedzy",
-      "competencies": "Katalog kompetencji"
+      "competencies": "Katalog kompetencji",
+      "contextGovernance": "Nadzór nad kontekstem"
+    },
+    "shell": { "breadcrumb": "Organizacja" },
+    "profilePresentation": {
+      "navigation": "Sekcje profilu organizacji",
+      "hint": "Przejrzyj każdą istniejącą sekcję profilu w kanonicznej kolejności. Ten sposób prezentacji nie zmienia architektury informacji profilu.",
+      "sections": {
+        "type": { "label": "Typ organizacji", "description": "Istniejący wybór typu organizacji" },
+        "identity": {
+          "label": "Tożsamość i skala",
+          "description": "Istniejące pola tożsamości i skali"
+        },
+        "production": {
+          "label": "Produkcja i operacje",
+          "description": "Istniejące pola specyficzne dla produkcji"
+        },
+        "operating": {
+          "label": "Model operacyjny",
+          "description": "Istniejące pola dostarczania, przychodów i systemów głównych"
+        },
+        "strategic": {
+          "label": "Pozycja strategiczna",
+          "description": "Istniejące pola pozycji, priorytetów, misji i wizji"
+        },
+        "digital": {
+          "label": "Technologie i cyfryzacja",
+          "description": "Istniejące pola technologii i dojrzałości cyfrowej"
+        },
+        "market": {
+          "label": "Rynek i konkurencja",
+          "description": "Istniejące pola rynku, klientów i konkurencji"
+        },
+        "communication": {
+          "label": "Komunikacja i preferencje AI",
+          "description": "Istniejące pola preferencji komunikacji"
+        },
+        "constraints": {
+          "label": "Ograniczenia i ryzyko",
+          "description": "Istniejące pola ryzyka, regulacji i ograniczeń"
+        },
+        "documentExtraction": {
+          "label": "Ekstrakcja z dokumentu",
+          "description": "Wyodrębnij propozycje pól profilu z jednego dokumentu; nie oznacza to trwałej kolekcji plików"
+        },
+        "readiness": {
+          "label": "Kompletność i gotowość",
+          "description": "Istniejąca kalkulacja kompletności i gotowości modułów"
+        }
+      }
     },
     "sections": {
       "profile": {

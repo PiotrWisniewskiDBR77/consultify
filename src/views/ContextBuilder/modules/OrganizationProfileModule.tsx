@@ -14,8 +14,6 @@ import {
   Briefcase,
   Building2,
   CheckCircle,
-  ChevronDown,
-  ChevronUp,
   Cpu,
   Factory,
   FileText,
@@ -88,6 +86,19 @@ interface OrgProfile {
   shift_pattern: string;
   automation_level: string;
 }
+
+type ProfileArea =
+  | 'type'
+  | 'identity'
+  | 'production'
+  | 'operating'
+  | 'strategic'
+  | 'digital'
+  | 'market'
+  | 'communication'
+  | 'constraints'
+  | 'document-extraction'
+  | 'readiness';
 
 const EMPTY_PROFILE: OrgProfile = {
   name: '',
@@ -622,16 +633,17 @@ export const OrganizationProfileModule: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [extracting, setExtracting] = useState(false);
   const [showReadiness, setShowReadiness] = useState(false);
+  const [activeProfileArea, setActiveProfileArea] = useState<ProfileArea>('type');
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     type: true,
-    identity: false,
-    production: false,
-    operating: false,
-    strategic: false,
-    digital: false,
-    market: false,
-    communication: false,
-    constraints: false,
+    identity: true,
+    production: true,
+    operating: true,
+    strategic: true,
+    digital: true,
+    market: true,
+    communication: true,
+    constraints: true,
   });
   const [showTeresa, setShowTeresa] = useState(true);
   const [validationWarnings, setValidationWarnings] = useState<ValidationWarning[]>([]);
@@ -651,8 +663,21 @@ export const OrganizationProfileModule: React.FC = () => {
     setProfile((prev) => ({ ...prev, [field]: value }));
   }, []);
 
-  const toggleSection = (id: string) =>
-    setExpandedSections((prev) => ({ ...prev, [id]: !prev[id] }));
+  const openSection = (id: string) => {
+    const knownSections: ProfileArea[] = [
+      'type',
+      'identity',
+      'production',
+      'operating',
+      'strategic',
+      'digital',
+      'market',
+      'communication',
+      'constraints',
+    ];
+    if (knownSections.includes(id as ProfileArea)) setActiveProfileArea(id as ProfileArea);
+    setExpandedSections((prev) => ({ ...prev, [id]: true }));
+  };
 
   useEffect(() => {
     if (!orgId) return;
@@ -675,9 +700,6 @@ export const OrganizationProfileModule: React.FC = () => {
             (parsed as any)[f] = Array.isArray(res.profile[f]) ? res.profile[f] : [];
           }
           setProfile((prev) => ({ ...prev, ...parsed }));
-          if (res.profile.organization_type) {
-            setExpandedSections((prev) => ({ ...prev, type: false, identity: true }));
-          }
         }
       } catch (err) {
         console.error('Error loading profile:', err);
@@ -749,11 +771,8 @@ export const OrganizationProfileModule: React.FC = () => {
     title: string;
     icon: React.ReactNode;
     badge?: string;
-  }> = ({ id, title, icon, badge }) => (
-    <button
-      onClick={() => toggleSection(id)}
-      className="w-full flex items-center justify-between p-4 bg-c-surface-raised/50 rounded-lg hover:bg-c-surface-raised transition-colors"
-    >
+  }> = ({ title, icon, badge }) => (
+    <div className="w-full flex items-center justify-between p-4 bg-c-surface-raised/50 rounded-lg">
       <div className="flex items-center gap-3">
         <div className="text-primary-500">{icon}</div>
         <span className="font-semibold text-navy-900 dark:text-white text-sm">{title}</span>
@@ -763,8 +782,7 @@ export const OrganizationProfileModule: React.FC = () => {
           </span>
         )}
       </div>
-      {expandedSections[id] ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-    </button>
+    </div>
   );
 
   if (loading) {
@@ -830,6 +848,57 @@ export const OrganizationProfileModule: React.FC = () => {
       </div>
 
       {/* Teresa AI Guidance (Phase 3.2 — completeness coaching with downstream context) */}
+      <nav aria-label={t('organization.profilePresentation.navigation')}>
+        <p className="mb-2 text-xs text-c-text-muted">
+          {t('organization.profilePresentation.hint')}
+        </p>
+        <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
+          {(
+            [
+              ['type', 'type'],
+              ['identity', 'identity'],
+              ...(showProductionSection(orgType) ? [['production', 'production']] : []),
+              ...(showOperatingSection(orgType) &&
+              (showDeliveryModel(orgType) || showRevenueModel(orgType) || showCoreSystems(orgType))
+                ? [['operating', 'operating']]
+                : []),
+              ['strategic', 'strategic'],
+              ['digital', 'digital'],
+              ['market', 'market'],
+              ['communication', 'communication'],
+              ['constraints', 'constraints'],
+              ['document-extraction', 'documentExtraction'],
+              ['readiness', 'readiness'],
+            ] as Array<[ProfileArea, string]>
+          ).map(([id, translationKey]) => {
+            const active = activeProfileArea === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                aria-current={active ? 'page' : undefined}
+                onClick={() => {
+                  setActiveProfileArea(id);
+                  if (id === 'readiness') setShowReadiness(true);
+                }}
+                className={`rounded-xl border p-3 text-left transition-colors ${
+                  active
+                    ? 'border-primary-400 bg-primary-50 dark:border-primary-500/50 dark:bg-primary-900/20'
+                    : 'border-c-border-subtle bg-c-surface hover:bg-c-surface-raised'
+                }`}
+              >
+                <span className="block text-sm font-semibold text-c-text">
+                  {t(`organization.profilePresentation.sections.${translationKey}.label`)}
+                </span>
+                <span className="mt-1 block text-xs text-c-text-muted">
+                  {t(`organization.profilePresentation.sections.${translationKey}.description`)}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+
       {teresaHint && (
         <div className="bg-gradient-to-r from-primary-50 to-white dark:from-primary-900/20 dark:to-navy-900 border border-primary-100 dark:border-primary-800/50 rounded-xl p-4 flex items-start gap-3">
           <div className="p-2 bg-primary-100 dark:bg-primary-900/50 rounded-lg text-primary-600 shrink-0">
@@ -852,7 +921,7 @@ export const OrganizationProfileModule: React.FC = () => {
           <button
             onClick={() => {
               if (teresaHint.field) {
-                setExpandedSections((prev) => ({ ...prev, [teresaHint.field]: true }));
+                openSection(teresaHint.field);
               }
             }}
             className="px-3 py-1.5 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-xs font-medium rounded-lg hover:bg-navy-800 transition-colors shrink-0"
@@ -879,7 +948,7 @@ export const OrganizationProfileModule: React.FC = () => {
               <AlertTriangle size={14} className="shrink-0 mt-0.5" />
               <span>{w.message}</span>
               <button
-                onClick={() => toggleSection(w.field)}
+                onClick={() => openSection(w.field)}
                 className="ml-auto text-[10px] underline shrink-0"
               >
                 Fix
@@ -890,7 +959,7 @@ export const OrganizationProfileModule: React.FC = () => {
       )}
 
       {/* Document extraction proposals (Phase 3.4) */}
-      {docExtractProposals.length > 0 && (
+      {activeProfileArea === 'document-extraction' && docExtractProposals.length > 0 && (
         <div className="bg-c-surface rounded-xl border border-primary-200 dark:border-primary-700 p-4 space-y-3">
           <h4 className="text-sm font-semibold text-navy-900 dark:text-white flex items-center gap-2">
             <Sparkles size={16} className="text-primary-500" />
@@ -941,14 +1010,16 @@ export const OrganizationProfileModule: React.FC = () => {
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
           {t('common.save', 'Save')}
         </button>
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={extracting}
-          className="flex items-center gap-2 px-4 py-2 bg-c-surface border border-c-border-subtle hover:bg-c-surface-raised text-c-text-secondary rounded-lg font-medium text-sm transition-colors disabled:opacity-50"
-        >
-          {extracting ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
-          Extract from document
-        </button>
+        {activeProfileArea === 'document-extraction' && (
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={extracting}
+            className="flex items-center gap-2 px-4 py-2 bg-c-surface border border-c-border-subtle hover:bg-c-surface-raised text-c-text-secondary rounded-lg font-medium text-sm transition-colors disabled:opacity-50"
+          >
+            {extracting ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+            Extract from document
+          </button>
+        )}
         <input
           ref={fileInputRef}
           type="file"
@@ -960,17 +1031,19 @@ export const OrganizationProfileModule: React.FC = () => {
             e.target.value = '';
           }}
         />
-        <button
-          onClick={() => setShowReadiness((prev) => !prev)}
-          className={`flex items-center gap-2 px-4 py-2 border rounded-lg font-medium text-sm transition-colors ${showReadiness ? 'bg-primary-50 border-primary-300 text-primary-700 dark:bg-primary-900/30 dark:border-primary-500/30 dark:text-primary-300' : 'bg-c-surface border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised'}`}
-        >
-          <Target size={16} />
-          Readiness {readyCount}/{readiness.length}
-        </button>
+        {activeProfileArea === 'readiness' && (
+          <button
+            onClick={() => setShowReadiness((prev) => !prev)}
+            className={`flex items-center gap-2 px-4 py-2 border rounded-lg font-medium text-sm transition-colors ${showReadiness ? 'bg-primary-50 border-primary-300 text-primary-700 dark:bg-primary-900/30 dark:border-primary-500/30 dark:text-primary-300' : 'bg-c-surface border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised'}`}
+          >
+            <Target size={16} />
+            Readiness {readyCount}/{readiness.length}
+          </button>
+        )}
       </div>
 
       {/* Downstream readiness indicators (Phase 3.3) */}
-      {showReadiness && (
+      {activeProfileArea === 'readiness' && showReadiness && (
         <div className="bg-c-surface rounded-xl border border-c-border-subtle p-4">
           <h4 className="text-sm font-semibold text-navy-900 dark:text-white mb-3 flex items-center gap-2">
             <Target size={16} className="text-primary-500" />
@@ -1007,7 +1080,14 @@ export const OrganizationProfileModule: React.FC = () => {
 
       <div className="space-y-3">
         {/* Section 1: Organization Type */}
-        <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
+        <div
+          hidden={activeProfileArea !== 'type'}
+          className={
+            activeProfileArea === 'type'
+              ? 'bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden'
+              : 'hidden'
+          }
+        >
           <SectionHeader id="type" title="Organization Type" icon={<Building2 size={18} />} />
           {expandedSections.type && (
             <div className="p-5 border-t border-c-border-subtle">
@@ -1025,7 +1105,7 @@ export const OrganizationProfileModule: React.FC = () => {
                       checked={profile.organization_type === ot.value}
                       onChange={() => {
                         update('organization_type', ot.value);
-                        setExpandedSections((prev) => ({ ...prev, type: false, identity: true }));
+                        setExpandedSections((prev) => ({ ...prev, type: true, identity: true }));
                       }}
                     />
                     <div className="h-full p-3 rounded-xl border border-c-border-subtle bg-c-bg/50 dark:bg-navy-950/50 hover:border-primary-300 transition-all flex flex-col items-center text-center peer-checked:ring-2 peer-checked:ring-primary-500 peer-checked:border-transparent peer-checked:bg-c-surface dark:peer-checked:bg-navy-800">
@@ -1045,7 +1125,14 @@ export const OrganizationProfileModule: React.FC = () => {
         </div>
 
         {/* Section 2: Identity & Scale */}
-        <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
+        <div
+          hidden={activeProfileArea !== 'identity'}
+          className={
+            activeProfileArea === 'identity'
+              ? 'bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden'
+              : 'hidden'
+          }
+        >
           <SectionHeader id="identity" title="Identity & Scale" icon={<Briefcase size={18} />} />
           {expandedSections.identity && (
             <div className="p-5 border-t border-c-border-subtle space-y-4">
@@ -1163,7 +1250,14 @@ export const OrganizationProfileModule: React.FC = () => {
 
         {/* Section 3: Production (MANUFACTURING only — §11.4) */}
         {showProductionSection(orgType) && (
-          <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
+          <div
+            hidden={activeProfileArea !== 'production'}
+            className={
+              activeProfileArea === 'production'
+                ? 'bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden'
+                : 'hidden'
+            }
+          >
             <SectionHeader
               id="production"
               title="Production & Operations"
@@ -1227,7 +1321,14 @@ export const OrganizationProfileModule: React.FC = () => {
         {/* Section 4: Operating Model (conditional per §11.4) */}
         {showOperatingSection(orgType) &&
           (showDeliveryModel(orgType) || showRevenueModel(orgType) || showCoreSystems(orgType)) && (
-            <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
+            <div
+              hidden={activeProfileArea !== 'operating'}
+              className={
+                activeProfileArea === 'operating'
+                  ? 'bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden'
+                  : 'hidden'
+              }
+            >
               <SectionHeader id="operating" title="Operating Model" icon={<Factory size={18} />} />
               {expandedSections.operating && (
                 <div className="p-5 border-t border-c-border-subtle space-y-4">
@@ -1283,7 +1384,14 @@ export const OrganizationProfileModule: React.FC = () => {
           )}
 
         {/* Section 5: Strategic Position (Universal) */}
-        <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
+        <div
+          hidden={activeProfileArea !== 'strategic'}
+          className={
+            activeProfileArea === 'strategic'
+              ? 'bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden'
+              : 'hidden'
+          }
+        >
           <SectionHeader id="strategic" title="Strategic Position" icon={<Target size={18} />} />
           {expandedSections.strategic && (
             <div className="p-5 border-t border-c-border-subtle space-y-4">
@@ -1353,7 +1461,14 @@ export const OrganizationProfileModule: React.FC = () => {
         </div>
 
         {/* Section 6: Digital & Technology (Universal) */}
-        <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
+        <div
+          hidden={activeProfileArea !== 'digital'}
+          className={
+            activeProfileArea === 'digital'
+              ? 'bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden'
+              : 'hidden'
+          }
+        >
           <SectionHeader id="digital" title="Digital & Technology" icon={<Cpu size={18} />} />
           {expandedSections.digital && (
             <div className="p-5 border-t border-c-border-subtle space-y-4">
@@ -1421,7 +1536,14 @@ export const OrganizationProfileModule: React.FC = () => {
         </div>
 
         {/* Section 7: Market & Competition (Universal) */}
-        <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
+        <div
+          hidden={activeProfileArea !== 'market'}
+          className={
+            activeProfileArea === 'market'
+              ? 'bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden'
+              : 'hidden'
+          }
+        >
           <SectionHeader id="market" title="Market & Competition" icon={<TrendingUp size={18} />} />
           {expandedSections.market && (
             <div className="p-5 border-t border-c-border-subtle space-y-4">
@@ -1473,7 +1595,14 @@ export const OrganizationProfileModule: React.FC = () => {
         </div>
 
         {/* Section 8: Communication & AI Preferences */}
-        <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
+        <div
+          hidden={activeProfileArea !== 'communication'}
+          className={
+            activeProfileArea === 'communication'
+              ? 'bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden'
+              : 'hidden'
+          }
+        >
           <SectionHeader
             id="communication"
             title="Communication & AI Preferences"
@@ -1522,7 +1651,14 @@ export const OrganizationProfileModule: React.FC = () => {
         </div>
 
         {/* Section 9: Constraints & Risk (Universal) */}
-        <div className="bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden">
+        <div
+          hidden={activeProfileArea !== 'constraints'}
+          className={
+            activeProfileArea === 'constraints'
+              ? 'bg-c-surface rounded-xl border border-c-border-subtle overflow-hidden'
+              : 'hidden'
+          }
+        >
           <SectionHeader id="constraints" title="Constraints & Risk" icon={<Shield size={18} />} />
           {expandedSections.constraints && (
             <div className="p-5 border-t border-c-border-subtle space-y-4">

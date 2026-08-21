@@ -5,20 +5,13 @@
  */
 
 import {
-  BookOpen,
   Building2,
   ChevronDown,
-  CreditCard,
-  Gauge,
-  Globe,
   Goal,
-  Map,
   Network,
-  Palette,
   ShieldAlert,
   ShieldCheck,
   Target,
-  Users,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -68,12 +61,12 @@ export const OrganizationSidebar: React.FC<OrganizationSidebarProps> = ({
   onBack,
 }) => {
   const { t } = useTranslation();
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['org']));
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['organization']));
 
   const navGroups: NavGroup[] = useMemo(
     () => [
       {
-        id: 'org',
+        id: 'organization',
         labelKey: 'organization.sidebar.group',
         defaultLabel: 'ORGANIZATION',
         items: [
@@ -86,7 +79,7 @@ export const OrganizationSidebar: React.FC<OrganizationSidebarProps> = ({
           {
             id: 'goals',
             labelKey: 'organization.sidebar.goals',
-            defaultLabel: 'Goals',
+            defaultLabel: 'Goals & expectations',
             icon: Goal,
           },
           {
@@ -94,12 +87,6 @@ export const OrganizationSidebar: React.FC<OrganizationSidebarProps> = ({
             labelKey: 'organization.sidebar.challenges',
             defaultLabel: 'Challenges',
             icon: ShieldAlert,
-          },
-          {
-            id: 'megatrends',
-            labelKey: 'organization.sidebar.megatrends',
-            defaultLabel: 'Megatrends',
-            icon: Map,
           },
           {
             id: 'strategy',
@@ -118,49 +105,6 @@ export const OrganizationSidebar: React.FC<OrganizationSidebarProps> = ({
             labelKey: 'organization.sidebar.contextGovernance',
             defaultLabel: 'Context governance',
             icon: ShieldCheck,
-          },
-        ],
-      },
-      {
-        id: 'admin',
-        labelKey: 'organization.sidebar.adminGroup',
-        defaultLabel: 'ADMINISTRATION',
-        items: [
-          {
-            id: 'members',
-            labelKey: 'organization.sidebar.members',
-            defaultLabel: 'Members',
-            icon: Users,
-          },
-          {
-            id: 'competencies',
-            labelKey: 'organization.sidebar.competencies',
-            defaultLabel: 'Competencies',
-            icon: BookOpen,
-          },
-          {
-            id: 'billing',
-            labelKey: 'organization.sidebar.billing',
-            defaultLabel: 'Billing',
-            icon: CreditCard,
-          },
-          {
-            id: 'limits',
-            labelKey: 'organization.sidebar.limits',
-            defaultLabel: 'Limits',
-            icon: Gauge,
-          },
-          {
-            id: 'domains',
-            labelKey: 'organization.sidebar.domains',
-            defaultLabel: 'Domains',
-            icon: Globe,
-          },
-          {
-            id: 'branding',
-            labelKey: 'organization.sidebar.branding',
-            defaultLabel: 'Branding',
-            icon: Palette,
           },
         ],
       },
