@@ -24,6 +24,7 @@ import OrganizationSidebar, {
   type OrganizationScreen,
 } from '../components/Organization/OrganizationSidebar';
 import { OrgContextSummaryBanner } from '../components/Organization/OrgContextSummaryBanner';
+import { SettingsHeaderActionsProvider } from '../components/settings/SettingsHeaderActions';
 import DomainScreenHeader from '../components/settings/shared/DomainScreenHeader';
 import { useOrgContextSync } from '../hooks/useOrgContextSync';
 import { ROUTES } from '../routes/routeConfig';
@@ -88,6 +89,7 @@ function resolveOrganizationLocation(pathname: string): OrganizationLocation {
 export const OrganizationView: React.FC = () => {
   const { t, i18n } = useTranslation();
   const location = useLocation();
+  const [headerActionsTarget, setHeaderActionsTarget] = useState<HTMLDivElement | null>(null);
   const navigate = useNavigate();
   const { setCurrentView, currentOrganization, currentUser } = useAppStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -272,82 +274,85 @@ export const OrganizationView: React.FC = () => {
   }, [activeLocation, currentMeta.title, isOrgAdmin]);
 
   return (
-    <div className="flex h-[calc(100vh-64px)] bg-slate-50 dark:bg-navy-950">
-      {sidebarOpen && (
-        <button
-          type="button"
-          aria-label="Close organization navigation"
-          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-      <div className="hidden lg:block">
-        <OrganizationSidebar
-          activeLocation={activeLocation}
-          onLocationChange={handleSectionChange}
-          onBack={handleBackToDashboard}
-        />
-      </div>
-      <div
-        id="organization-navigation"
-        className={`fixed inset-y-0 left-0 z-50 w-[280px] transform transition-transform lg:hidden ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
-      >
-        <OrganizationSidebar
-          activeLocation={activeLocation}
-          onLocationChange={handleSectionChange}
-          onBack={handleBackToDashboard}
-          className="h-full bg-white dark:bg-navy-900"
-        />
-      </div>
-      <div className="flex-1 overflow-auto">
-        <DomainScreenHeader
-          breadcrumbs={[
-            { label: t('organization.shell.breadcrumb'), onClick: handleBackToDashboard },
-            { label: currentMeta.moduleLabel },
-            { label: currentMeta.title },
-          ]}
-          title={currentMeta.title}
-          subtitle={currentMeta.subtitle}
-          menuControl={
-            <button
-              ref={menuButtonRef}
-              type="button"
-              className="rounded-lg p-2 text-[var(--c-text-secondary)] hover:bg-[var(--c-surface-hover)] lg:hidden"
-              aria-label={sidebarOpen ? 'Close navigation' : 'Open navigation'}
-              aria-expanded={sidebarOpen}
-              aria-controls="organization-navigation"
-              onClick={() => setSidebarOpen((open) => !open)}
-            >
-              {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
-            </button>
-          }
-        />
-        <div className="mx-auto w-full max-w-[1280px] px-4 pb-0 sm:px-5 lg:px-6">
-          {contextSync.isUnsynced && (
-            <div
-              role="status"
-              className="mb-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100"
-            >
-              {contextSync.isSyncing
-                ? t('organization.sync.saving', 'Saving organization context…')
-                : t(
-                    'organization.sync.unsynced',
-                    'Changes are stored locally but have not been confirmed by the server.'
-                  )}
-              {contextSync.error ? ` ${contextSync.error}` : ''}
-            </div>
-          )}
-          <OrgContextSummaryBanner
-            organizationId={currentOrganization?.id}
-            isAdmin={false}
-            className="mb-4"
+    <SettingsHeaderActionsProvider value={headerActionsTarget}>
+      <div className="flex h-[calc(100vh-64px)] bg-slate-50 dark:bg-navy-950">
+        {sidebarOpen && (
+          <button
+            type="button"
+            aria-label="Close organization navigation"
+            className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+        <div className="hidden lg:block">
+          <OrganizationSidebar
+            activeLocation={activeLocation}
+            onLocationChange={handleSectionChange}
+            onBack={handleBackToDashboard}
           />
         </div>
-        <div className="organization-domain-content mx-auto w-full max-w-[1280px] px-4 pb-6 pt-0 sm:px-5 lg:px-6">
-          {renderContent()}
+        <div
+          id="organization-navigation"
+          className={`fixed inset-y-0 left-0 z-50 w-[280px] transform transition-transform lg:hidden ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        >
+          <OrganizationSidebar
+            activeLocation={activeLocation}
+            onLocationChange={handleSectionChange}
+            onBack={handleBackToDashboard}
+            className="h-full bg-white dark:bg-navy-900"
+          />
+        </div>
+        <div className="flex-1 overflow-auto">
+          <DomainScreenHeader
+            breadcrumbs={[
+              { label: t('organization.shell.breadcrumb'), onClick: handleBackToDashboard },
+              { label: currentMeta.moduleLabel },
+              { label: currentMeta.title },
+            ]}
+            title={currentMeta.title}
+            subtitle={currentMeta.subtitle}
+            actionsRef={setHeaderActionsTarget}
+            menuControl={
+              <button
+                ref={menuButtonRef}
+                type="button"
+                className="rounded-lg p-2 text-[var(--c-text-secondary)] hover:bg-[var(--c-surface-hover)] lg:hidden"
+                aria-label={sidebarOpen ? 'Close navigation' : 'Open navigation'}
+                aria-expanded={sidebarOpen}
+                aria-controls="organization-navigation"
+                onClick={() => setSidebarOpen((open) => !open)}
+              >
+                {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
+              </button>
+            }
+          />
+          <div className="mx-auto w-full max-w-[1280px] px-4 pb-0 sm:px-5 lg:px-6">
+            {contextSync.isUnsynced && (
+              <div
+                role="status"
+                className="mb-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100"
+              >
+                {contextSync.isSyncing
+                  ? t('organization.sync.saving', 'Saving organization context…')
+                  : t(
+                      'organization.sync.unsynced',
+                      'Changes are stored locally but have not been confirmed by the server.'
+                    )}
+                {contextSync.error ? ` ${contextSync.error}` : ''}
+              </div>
+            )}
+            <OrgContextSummaryBanner
+              organizationId={currentOrganization?.id}
+              isAdmin={false}
+              className="mb-4"
+            />
+          </div>
+          <div className="organization-domain-content mx-auto w-full max-w-[1280px] px-4 pb-6 pt-0 sm:px-5 lg:px-6">
+            {renderContent()}
+          </div>
         </div>
       </div>
-    </div>
+    </SettingsHeaderActionsProvider>
   );
 };
 

@@ -33,6 +33,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { SettingsHeaderActionPortal } from '../../../components/settings/SettingsHeaderActions';
 import TeresaMark from '../../../components/shared/TeresaMark';
 import { Api } from '../../../services/api';
 import { useAppStore } from '../../../store/useAppStore';
@@ -823,6 +824,19 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
 
   return (
     <div className="space-y-5 max-w-4xl mx-auto">
+      {screen && (
+        <SettingsHeaderActionPortal>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="type-control flex items-center gap-2 rounded-lg bg-navy-900 px-4 py-2 text-white transition-colors hover:bg-navy-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)] disabled:opacity-50 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]"
+          >
+            {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+            {saving ? t('common.saving', 'Saving...') : t('common.saveChanges', 'Save Changes')}
+          </button>
+        </SettingsHeaderActionPortal>
+      )}
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -1043,14 +1057,16 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
 
       {/* Action bar */}
       <div className="flex gap-3 flex-wrap">
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium text-sm transition-colors disabled:opacity-50"
-        >
-          {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-          {t('common.save', 'Save')}
-        </button>
+        {!screen && (
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex items-center gap-2 px-4 py-2 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium text-sm transition-colors disabled:opacity-50"
+          >
+            {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+            {t('common.save', 'Save')}
+          </button>
+        )}
         {activeProfileArea === 'document-extraction' && (
           <button
             onClick={() => fileInputRef.current?.click()}
@@ -1748,18 +1764,6 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
             </div>
           )}
         </div>
-      </div>
-
-      {/* Bottom save */}
-      <div className="flex justify-end gap-3 pt-3 border-t border-c-border-subtle">
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="flex items-center gap-2 px-5 py-2.5 bg-navy-900 hover:bg-navy-800 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] rounded-lg font-medium text-sm transition-colors disabled:opacity-50"
-        >
-          {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-          {t('common.saveProfile', 'Save Profile')}
-        </button>
       </div>
     </div>
   );
