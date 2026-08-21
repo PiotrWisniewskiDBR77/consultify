@@ -115,5 +115,16 @@ describe('AdminSettingsModule section routing', () => {
     billing.focus();
     expect(billing).toHaveFocus();
     expect(screen.getByRole('button', { name: /Stan systemu|System Health/i })).toBeEnabled();
+    expect(
+      screen.queryByRole('button', { name: /Operacje platformowe|Platform Operations/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it('fails closed for a direct Platform Operations deep link', () => {
+    renderAt('/admin/health/platform-operations');
+    expect(screen.getByRole('heading', { name: 'UNAUTHORIZED' })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Operacje platformowe|Platform Operations/i })
+    ).not.toBeInTheDocument();
   });
 });

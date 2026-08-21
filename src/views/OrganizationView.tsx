@@ -6,7 +6,7 @@
  */
 
 import { ChevronRight, Menu, X } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -90,6 +90,7 @@ export const OrganizationView: React.FC = () => {
   const navigate = useNavigate();
   const { setCurrentView, currentOrganization, currentUser } = useAppStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
 
   useOrgContextSync(!!currentUser?.isAuthenticated);
 
@@ -117,6 +118,30 @@ export const OrganizationView: React.FC = () => {
     [location.pathname]
   );
 
+  useEffect(() => {
+    const section = location.pathname.replace(`${ROUTES.ORGANIZATION.ROOT}/`, '').split('/')[0];
+    if (section === 'megatrends' || ADMIN_REDIRECTS[section]) return;
+    const canonical = `${ROUTES.ORGANIZATION.ROOT}/${activeLocation.module}/${activeLocation.screen}`;
+    const currentPath = location.pathname.replace(/\/+$/, '') || ROUTES.ORGANIZATION.ROOT;
+    if (currentPath !== canonical) navigate(canonical, { replace: true });
+  }, [activeLocation.module, activeLocation.screen, location.pathname, navigate]);
+
+  useEffect(() => {
+    if (!sidebarOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setSidebarOpen(false);
+      requestAnimationFrame(() => menuButtonRef.current?.focus());
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('keydown', closeOnEscape);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [sidebarOpen]);
+
   const handleSectionChange = useCallback(
     (next: OrganizationLocation) => {
       navigate(`${ROUTES.ORGANIZATION.ROOT}/${next.module}/${next.screen}`);
@@ -139,6 +164,7 @@ export const OrganizationView: React.FC = () => {
     const isPolish = language.toLowerCase().startsWith('pl');
     return {
       title: screen?.label || SCREEN_META[activeLocation.screen].title,
+      moduleLabel: module?.label || activeLocation.module,
       subtitle: `${module?.label || ''} · ${
         isPolish
           ? 'Fakty, decyzje i stan tego obszaru'
@@ -224,7 +250,10 @@ export const OrganizationView: React.FC = () => {
         return activeLocation.screen === 'versions-publication' ? (
           <GovernedContextWorkspace isAdmin={isOrgAdmin} />
         ) : (
-          <OrganizationDecisionQualityPanel screen={currentMeta.title} />
+          <OrganizationDecisionQualityPanel
+            screen={activeLocation.screen}
+            title={currentMeta.title}
+          />
         );
       default:
         return (
@@ -259,7 +288,8 @@ export const OrganizationView: React.FC = () => {
         />
       </div>
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-72 transform transition-transform lg:hidden ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        id="organization-navigation"
+        className={`fixed inset-y-0 left-0 z-50 w-[280px] transform transition-transform lg:hidden ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
         <OrganizationSidebar
           activeLocation={activeLocation}
@@ -272,9 +302,12 @@ export const OrganizationView: React.FC = () => {
         <div className="sticky top-0 z-10 bg-slate-50/90 dark:bg-navy-950/90 backdrop-blur-sm border-b border-slate-200/60 dark:border-navy-700/60">
           <div className="flex items-center gap-3 px-4 lg:px-6 py-4">
             <button
+              ref={menuButtonRef}
               type="button"
               className="lg:hidden p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500"
               aria-label="Open navigation"
+              aria-expanded={sidebarOpen}
+              aria-controls="organization-navigation"
               onClick={() => setSidebarOpen(true)}
             >
               <Menu size={18} />
@@ -282,6 +315,8 @@ export const OrganizationView: React.FC = () => {
             <div className="flex-1 min-w-0">
               <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 <span>{t('organization.shell.breadcrumb')}</span>
+                <ChevronRight size={12} />
+                <span>{currentMeta.moduleLabel}</span>
                 <ChevronRight size={12} />
                 <span className="text-slate-700 dark:text-slate-200">{currentMeta.title}</span>
               </div>

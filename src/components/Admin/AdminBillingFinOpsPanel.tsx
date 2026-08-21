@@ -131,13 +131,14 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
         tokenBalance: planForm.tokenBalance === '' ? null : Number(planForm.tokenBalance),
         expiresAt: planForm.expiresAt ? new Date(planForm.expiresAt).toISOString() : null,
       };
-      const result = await Api.assignAdminBillingPlan(payload);
-      if (result?.summary) {
-        setSummary({ summary: result.summary });
-      } else {
-        const refreshed = await Api.getAdminBillingSummary();
-        setSummary(refreshed);
+      await Api.assignAdminBillingPlan(payload);
+      const refreshed = await Api.getAdminBillingSummary();
+      const persistedPlan = refreshed?.summary?.plan;
+      const expectedPlan = payload.planName || planForm.planName || undefined;
+      if (!refreshed?.summary || (expectedPlan && persistedPlan?.name !== expectedPlan)) {
+        throw new Error('Plan request completed, but provider readback did not match the target.');
       }
+      setSummary(refreshed);
       toast.success(t('admin.billing.plan.saved', { defaultValue: 'Plan and limits assigned' }));
     } catch (error: any) {
       const validationErrors = error?.validationErrors;
@@ -159,10 +160,15 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
       return;
     }
     try {
-      const result = await Api.addAdminBillingPaymentMethod({
+      await Api.addAdminBillingPaymentMethod({
         paymentMethodId: newPaymentMethodId.trim(),
       });
-      setPaymentMethods((current) => [result?.paymentMethod, ...current].filter(Boolean));
+      const readback = await Api.getAdminBillingPaymentMethods();
+      const persisted = readback?.paymentMethods || [];
+      if (!persisted.some((method: any) => method.id === newPaymentMethodId.trim())) {
+        throw new Error('Payment request completed, but provider readback did not confirm it.');
+      }
+      setPaymentMethods(persisted);
       setNewPaymentMethodId('');
       toast.success('Payment method added');
     } catch (error: any) {
@@ -173,9 +179,12 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
   const setDefaultPaymentMethod = async (paymentMethodId: string) => {
     try {
       await Api.setAdminBillingDefaultPaymentMethod(paymentMethodId);
-      setPaymentMethods((current) =>
-        current.map((method) => ({ ...method, is_default: method.id === paymentMethodId ? 1 : 0 }))
-      );
+      const readback = await Api.getAdminBillingPaymentMethods();
+      const persisted = readback?.paymentMethods || [];
+      if (!persisted.some((method: any) => method.id === paymentMethodId && method.is_default)) {
+        throw new Error('Default change was not confirmed by provider readback.');
+      }
+      setPaymentMethods(persisted);
       toast.success('Default payment method updated');
     } catch (error: any) {
       toast.error(error?.message || 'Failed to update default payment method');
@@ -185,7 +194,14 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
   const removePaymentMethod = async (paymentMethodId: string) => {
     try {
       await Api.removeAdminBillingPaymentMethod(paymentMethodId);
-      setPaymentMethods((current) => current.filter((method) => method.id !== paymentMethodId));
+      const readback = await Api.getAdminBillingPaymentMethods();
+      const persisted = readback?.paymentMethods || [];
+      if (persisted.some((method: any) => method.id === paymentMethodId)) {
+        throw new Error(
+          'Removal request completed, but provider readback still contains the method.'
+        );
+      }
+      setPaymentMethods(persisted);
       toast.success('Payment method removed');
     } catch (error: any) {
       toast.error(error?.message || 'Failed to remove payment method');
@@ -228,6 +244,11 @@ export const AdminBillingFinOpsPanel: React.FC<{ screen?: TabId }> = ({ screen }
   const saveTaxSettings = async () => {
     try {
       await Api.updateAdminBillingTaxSettings(taxSettings || {});
+      const readback = await Api.getAdminBillingTaxSettings();
+      if (!readback?.settings && !readback?.tax && !readback?.company) {
+        throw new Error('Tax settings request completed, but durable readback was unavailable.');
+      }
+      setTaxSettings(readback?.settings || readback);
       toast.success('Billing tax settings updated');
     } catch (error: any) {
       toast.error(error?.message || 'Failed to update billing tax settings');

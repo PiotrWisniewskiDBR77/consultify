@@ -19,6 +19,7 @@ interface AdminSettingsSidebarProps {
   onLocationChange: (location: AdminLocation) => void;
   className?: string;
   onBack?: () => void;
+  canAccessPlatformOperations?: boolean;
 }
 
 export const AdminSettingsSidebar: React.FC<AdminSettingsSidebarProps> = ({
@@ -26,6 +27,7 @@ export const AdminSettingsSidebar: React.FC<AdminSettingsSidebarProps> = ({
   onLocationChange,
   className,
   onBack,
+  canAccessPlatformOperations = false,
 }) => {
   const { t, i18n } = useTranslation();
   const language = i18n?.resolvedLanguage || i18n?.language || 'pl';
@@ -42,7 +44,14 @@ export const AdminSettingsSidebar: React.FC<AdminSettingsSidebarProps> = ({
         'admin.shell.navigation',
         isPolish ? 'Nawigacja panelu administratora' : 'Admin Panel navigation'
       )}
-      modules={getAdminDomains(language)}
+      modules={getAdminDomains(language).map((domain) =>
+        domain.id === 'health' && !canAccessPlatformOperations
+          ? {
+              ...domain,
+              children: domain.children.filter((screen) => screen.id !== 'platform-operations'),
+            }
+          : domain
+      )}
       activeModule={activeLocation.domain}
       activeChild={activeLocation.screen}
       onChildChange={(domain, screen) => onLocationChange({ domain, screen })}

@@ -45,6 +45,9 @@ const PRIMARY_SECTIONS: AdminSettingsSection[] = [
   'health',
 ];
 
+// Fail closed until the backend exposes a verified Platform Operator capability.
+const CAN_ACCESS_PLATFORM_OPERATIONS = false;
+
 const SECTION_META: Record<
   AdminSettingsSection,
   { titleKey: string; titleDefault: string; subtitleKey: string; subtitleDefault: string }
@@ -190,10 +193,7 @@ function resolveAdminLocation(
   return { domain, screen: ADMIN_DEFAULTS[domain] };
 }
 
-export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
-  initialTab,
-  currentUser,
-}) => {
+export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initialTab }) => {
   const { t, i18n } = useTranslation();
   const { setCurrentView } = useAppStore();
   const location = useLocation();
@@ -207,6 +207,14 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
   );
 
   const resolvedLocation = rawResolvedLocation;
+  // No backend capability contract currently proves Platform Operator access.
+  // Fail closed for navigation, deep links, and data fetching.
+
+  useEffect(() => {
+    const canonical = `/admin/${resolvedLocation.domain}/${resolvedLocation.screen}`;
+    const currentPath = location.pathname.replace(/\/+$/, '') || '/admin';
+    if (currentPath !== canonical) navigate(canonical, { replace: true });
+  }, [location.pathname, navigate, resolvedLocation.domain, resolvedLocation.screen]);
 
   useEffect(() => {
     if (!sidebarOpen) return;
@@ -239,6 +247,21 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
     const childConfig = domainConfig?.children.find(
       (screen) => screen.id === resolvedLocation.screen
     );
+    if (resolvedLocation.screen === 'platform-operations' && !CAN_ACCESS_PLATFORM_OPERATIONS) {
+      return (
+        <section
+          role="alert"
+          className="rounded-xl border border-[var(--c-border)] bg-[var(--c-surface)] p-6"
+        >
+          <h2 className="text-base font-semibold text-[var(--c-text)]">UNAUTHORIZED</h2>
+          <p className="mt-2 text-sm text-[var(--c-text-secondary)]">
+            {i18n.language?.toLowerCase().startsWith('pl')
+              ? 'Operacje platformowe nie należą do administracji klienta i wymagają jawnej capability operatora platformy.'
+              : 'Platform operations are outside customer administration and require an explicit Platform Operator capability.'}
+          </p>
+        </section>
+      );
+    }
     const connected =
       resolvedLocation.screen === ADMIN_DEFAULTS[resolvedLocation.domain] ||
       (resolvedLocation.domain === 'team' &&
@@ -306,11 +329,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
           />
         );
       case 'health':
-        return (
-          <AdminHealthPanel
-            canRunDiagnostics={String(currentUser.role || '').toLowerCase() === 'superadmin'}
-          />
-        );
+        return <AdminHealthPanel canRunDiagnostics={CAN_ACCESS_PLATFORM_OPERATIONS} />;
       default:
         return <AdminMembersRolesPanel />;
     }
@@ -318,7 +337,6 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
     resolvedLocation.domain,
     resolvedLocation.screen,
     handleLocationChange,
-    currentUser.role,
     i18n?.language,
     i18n?.resolvedLanguage,
   ]);
@@ -343,7 +361,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
       <div
         id="admin-settings-navigation"
         className={cn(
-          'fixed inset-y-0 left-0 z-40 w-[300px] transform transition-transform duration-300 ease-in-out lg:static lg:transform-none',
+          'fixed inset-y-0 left-0 z-40 w-[280px] transform transition-transform duration-300 ease-in-out lg:static lg:transform-none',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
       >
@@ -351,6 +369,7 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
           activeLocation={resolvedLocation}
           onLocationChange={handleLocationChange}
           onBack={handleBackToDashboard}
+          canAccessPlatformOperations={CAN_ACCESS_PLATFORM_OPERATIONS}
         />
       </div>
 

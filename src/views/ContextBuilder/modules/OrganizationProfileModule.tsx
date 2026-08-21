@@ -734,6 +734,17 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
         ...profile,
         profile_completeness: completeness,
       });
+      const readback = await Api.get(`/organization-profiles/${orgId}`);
+      const persistedCompleteness = Number(readback?.profile?.profile_completeness);
+      if (!readback?.exists || !readback?.profile || persistedCompleteness !== completeness) {
+        throw new Error(
+          t(
+            'organization.profileReadbackFailed',
+            'Save request completed, but durable profile readback could not be verified.'
+          )
+        );
+      }
+      setProfile((previous) => ({ ...previous, ...readback.profile }));
       toast.success(t('organization.profileSaved', 'Profile saved'));
     } catch (err: any) {
       toast.error(err.message || 'Failed to save');
@@ -853,14 +864,25 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
               />
             </svg>
             {completeness >= 80 && (
-              <CheckCircle
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-green-500"
-                size={18}
-              />
+              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[9px] font-semibold text-c-text-muted">
+                DATA
+              </span>
             )}
           </div>
         </div>
       </div>
+      <p className="-mt-3 text-right text-xs text-c-text-muted">
+        {t(
+          'organization.profile.completenessBoundary',
+          'Data completeness, not decision readiness.'
+        )}{' '}
+        <a
+          href="/organization/readiness/summary"
+          className="font-medium text-[var(--c-info)] underline underline-offset-2"
+        >
+          {t('organization.profile.reviewReadiness', 'Review readiness')}
+        </a>
+      </p>
 
       {/* Teresa AI Guidance (Phase 3.2 — completeness coaching with downstream context) */}
       {!screen && (

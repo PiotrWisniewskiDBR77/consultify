@@ -2,6 +2,8 @@ import { AlertTriangle, CalendarClock, FileQuestion, Scale, UserRound } from 'lu
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import type { OrganizationScreen } from './OrganizationSidebar';
+
 const polishDimensions = [
   {
     label: 'Zakres i przeznaczenie decyzji',
@@ -48,10 +50,36 @@ const englishDimensions = [
   },
 ];
 
-export const OrganizationDecisionQualityPanel: React.FC<{ screen: string }> = ({ screen }) => {
+export const OrganizationDecisionQualityPanel: React.FC<{
+  screen: OrganizationScreen;
+  title: string;
+}> = ({ screen, title }) => {
   const { i18n } = useTranslation();
   const isPolish = (i18n.resolvedLanguage || i18n.language || 'pl').toLowerCase().startsWith('pl');
   const dimensions = isPolish ? polishDimensions : englishDimensions;
+  const focusByScreen: Partial<Record<OrganizationScreen, { pl: string[]; en: string[] }>> = {
+    summary: {
+      pl: [
+        'Przeznaczenie decyzji: UNKNOWN',
+        'Zakres i okres: UNKNOWN',
+        'Właściciel oceny: UNKNOWN',
+      ],
+      en: ['Decision use: UNKNOWN', 'Scope and period: UNKNOWN', 'Assessment owner: UNKNOWN'],
+    },
+    'gaps-freshness': {
+      pl: ['Brakujące dane: UNKNOWN', 'Nieaktualne źródła: UNKNOWN', 'Niska pewność: UNKNOWN'],
+      en: ['Missing data: UNKNOWN', 'Stale sources: UNKNOWN', 'Low confidence: UNKNOWN'],
+    },
+    'decisions-conflicts': {
+      pl: [
+        'Otwarte konflikty: UNKNOWN',
+        'Właściciele: UNKNOWN',
+        'Terminy rozstrzygnięcia: UNKNOWN',
+      ],
+      en: ['Open conflicts: UNKNOWN', 'Owners: UNKNOWN', 'Resolution dates: UNKNOWN'],
+    },
+  };
+  const focusItems = focusByScreen[screen]?.[isPolish ? 'pl' : 'en'] || [];
 
   return (
     <div className="space-y-4">
@@ -85,6 +113,18 @@ export const OrganizationDecisionQualityPanel: React.FC<{ screen: string }> = ({
             </article>
           ))}
         </div>
+        {focusItems.length > 0 && (
+          <div className="mt-4 rounded-lg border border-[var(--c-border)] bg-[var(--c-surface-raised)] p-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--c-text-muted)]">
+              {isPolish ? 'Stan tego ekranu' : 'This screen state'}
+            </h3>
+            <ul className="mt-2 grid gap-2 text-sm text-[var(--c-text-secondary)] md:grid-cols-3">
+              {focusItems.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </div>
+        )}
       </section>
       <section
         role="status"
@@ -100,8 +140,8 @@ export const OrganizationDecisionQualityPanel: React.FC<{ screen: string }> = ({
           </h3>
           <p className="mt-1 text-sm text-[var(--c-text-secondary)]">
             {isPolish
-              ? `Ekran „${screen}” nie publikuje pozytywnego wyniku, dopóki powyższe kryteria nie mają trwałego readbacku. Completeness profilu pozostaje pomocniczą metryką danych.`
-              : `“${screen}” does not publish a positive outcome until these criteria have durable readback. Profile completeness remains a supporting data metric.`}
+              ? `Ekran „${title}” nie publikuje pozytywnego wyniku, dopóki powyższe kryteria nie mają trwałego readbacku. Completeness profilu pozostaje pomocniczą metryką danych.`
+              : `“${title}” does not publish a positive outcome until these criteria have durable readback. Profile completeness remains a supporting data metric.`}
           </p>
         </div>
       </section>

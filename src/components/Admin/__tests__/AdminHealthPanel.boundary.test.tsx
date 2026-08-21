@@ -43,8 +43,8 @@ describe('AdminHealthPanel platform boundary', () => {
   it('keeps probe execution absent from the customer-admin view', async () => {
     render(<AdminHealthPanel />);
 
-    await waitFor(() => expect(mockedApi.getHealthPanelProbes).toHaveBeenCalledTimes(1));
-    expect(await screen.findByText('1')).toBeInTheDocument();
+    await screen.findByText('UNKNOWN');
+    expect(mockedApi.getHealthPanelProbes).not.toHaveBeenCalled();
     expect(screen.queryByText('Tenant readback')).not.toBeInTheDocument();
     expect(screen.queryByText('Checks the customer-safe readback.')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Run all' })).not.toBeInTheDocument();

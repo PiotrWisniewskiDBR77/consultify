@@ -75,6 +75,14 @@ export const AdminHealthPanel: React.FC<{ canRunDiagnostics?: boolean }> = ({
   const [loadedAt, setLoadedAt] = useState<string | null>(null);
 
   const load = useCallback(async () => {
+    if (!canRunDiagnostics) {
+      setResults([]);
+      setSummary(null);
+      setHasLoaded(true);
+      setLoadedAt(null);
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       setLoadError(null);
@@ -91,7 +99,7 @@ export const AdminHealthPanel: React.FC<{ canRunDiagnostics?: boolean }> = ({
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [canRunDiagnostics]);
 
   useEffect(() => {
     void load();
@@ -249,24 +257,38 @@ export const AdminHealthPanel: React.FC<{ canRunDiagnostics?: boolean }> = ({
           </div>
         )}
 
-        <div className="mt-4 grid grid-cols-3 gap-3">
-          {stats.map((s) => (
-            <div
-              key={s.key}
-              className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-white/10 dark:bg-white/[0.03]"
-            >
-              <div className="flex items-center gap-2">
-                <StatusDot status={s.dot} />
-                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                  {s.label}
-                </span>
+        {canRunDiagnostics ? (
+          <div className="mt-4 grid grid-cols-3 gap-3">
+            {stats.map((s) => (
+              <div
+                key={s.key}
+                className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-white/10 dark:bg-white/[0.03]"
+              >
+                <div className="flex items-center gap-2">
+                  <StatusDot status={s.dot} />
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                    {s.label}
+                  </span>
+                </div>
+                <div className="mt-1 text-2xl font-semibold text-slate-900 dark:text-white">
+                  {s.value}
+                </div>
               </div>
-              <div className="mt-1 text-2xl font-semibold text-slate-900 dark:text-white">
-                {s.value}
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-4 rounded-xl border border-[var(--c-border)] bg-[var(--c-surface-raised)] px-4 py-3">
+            <span className="text-xs font-semibold uppercase tracking-wide text-[var(--c-text-muted)]">
+              {isPolish ? 'Status odczytu' : 'Readback status'}
+            </span>
+            <p className="mt-1 text-sm font-medium text-[var(--c-text)]">UNKNOWN</p>
+            <p className="mt-1 text-xs text-[var(--c-text-muted)]">
+              {isPolish
+                ? 'Nie istnieje jeszcze zweryfikowany endpoint zbiorczy bez szczegółów operatora.'
+                : 'A verified aggregate endpoint without operator details is not connected yet.'}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Detailed probes are platform-operator evidence and are absent from the customer surface. */}
