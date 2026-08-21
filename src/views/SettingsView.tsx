@@ -340,6 +340,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       subtitle: t(`settings.sections.${activeSection}.subtitle`, meta.subtitle),
     };
   }, [activeSection, t]);
+  const settingsLabel = useMemo(() => {
+    const label = t('settings.sidebar.title', 'Settings');
+    if (label !== label.toLocaleUpperCase()) return label;
+    const normalized = label.toLocaleLowerCase();
+    return normalized.charAt(0).toLocaleUpperCase() + normalized.slice(1);
+  }, [t]);
 
   // Render content based on active section
   const renderContent = useCallback(() => {
@@ -545,7 +551,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   onClick={handleBackToDashboard}
                   className="rounded-sm transition-colors hover:text-[var(--c-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
                 >
-                  {t('settings.sidebar.title', 'Settings')}
+                  {settingsLabel}
                 </button>
                 <ChevronRight size={14} aria-hidden="true" className="mx-2" />
                 <h1
