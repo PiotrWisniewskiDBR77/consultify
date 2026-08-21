@@ -69,7 +69,8 @@ export async function resolveOrCreateSystemPortfolioProject(
   try {
     await queryHelpers.queryRun(
       `INSERT INTO projects (id, organization_id, name, description, status, owner_id, is_system, created_at)
-       VALUES (?, ?, ?, ?, 'active', ?, TRUE, CURRENT_TIMESTAMP)`,
+       VALUES (?, ?, ?, ?, 'active', ?, TRUE, CURRENT_TIMESTAMP)
+       ON CONFLICT DO NOTHING`,
       [
         id,
         orgId,
@@ -78,10 +79,20 @@ export async function resolveOrCreateSystemPortfolioProject(
         opts.createdBy ?? null,
       ]
     );
-    return id;
+    // Always read the unique owner back. In a race this returns the winner;
+    // without a race it returns the row just inserted above. This avoids
+    // using a deliberately-thrown unique violation as normal control flow,
+    // which polluted logs even though the caller eventually recovered.
+    const resolved = await queryHelpers.queryOne<{ id: string }>(
+      `SELECT id FROM projects WHERE organization_id = ? AND is_system = TRUE LIMIT 1`,
+      [orgId]
+    );
+    if (resolved?.id) return resolved.id;
+    logger.warn('[initiativeProjectPolicyService] system portfolio insert produced no readable owner');
+    return null;
   } catch (err) {
-    // Most likely the partial unique index caught a concurrent lazy-create —
-    // re-select rather than treat this as a hard failure.
+    // Unexpected database failure: re-select once in case another writer
+    // completed between our initial lookup and this attempt.
     try {
       const raced = await queryHelpers.queryOne<{ id: string }>(
         `SELECT id FROM projects WHERE organization_id = ? AND is_system = TRUE LIMIT 1`,
