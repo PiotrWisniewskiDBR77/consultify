@@ -21,23 +21,19 @@ export const GoalsExpectationsModule: React.FC = () => {
   >('intent');
 
   // Store State
-  const { companyProfile, goals, setGoals, updateGoalsList } = useContextBuilderStore();
-
-  const isManufacturingProfile =
-    companyProfile.industry.toLowerCase().includes('manufactur') ||
-    companyProfile.industry.toLowerCase().includes('industrial');
+  const { goals, setGoals, updateGoalsList } = useContextBuilderStore();
 
   // AI Suggestions Mock State (Local UI state)
-  const [aiSuggestions, setAiSuggestions] = useState([
-    {
-      id: 1,
-      type: 'add',
-      item: 'Safety Incident Rate (TRIR)',
-      tab: 'metrics',
-      reason: 'Common safety KPI missing compared to industry standard.',
-      confidence: 'Medium',
-    },
-  ]);
+  const [aiSuggestions, setAiSuggestions] = useState<
+    Array<{
+      id: number;
+      type: string;
+      item: string;
+      tab: string;
+      reason: string;
+      confidence: string;
+    }>
+  >([]);
 
   // Handlers
   const createHandler = (
@@ -75,7 +71,7 @@ export const GoalsExpectationsModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* AI Suggestion Banner (Mock) - Contextual to Metrics Tab */}
-      {isManufacturingProfile && aiSuggestions.length > 0 && activeTab === 'metrics' && (
+      {aiSuggestions.length > 0 && activeTab === 'metrics' && (
         <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-4 flex items-start gap-3">
           <Sparkles className="text-primary-600 mt-1" size={18} />
           <div className="flex-1">
