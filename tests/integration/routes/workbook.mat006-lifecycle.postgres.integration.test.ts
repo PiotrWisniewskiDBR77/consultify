@@ -34,6 +34,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 // vi.mock calls are hoisted by vitest to the top of the module regardless of
 // where they textually appear in the file.
 vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
+  validateOrgMembership: (_req: unknown, _res: unknown, next: () => void) => next(),
   verifyToken: (req: any, res: any, next: () => void) => {
     const orgId = req.headers['x-test-org-id'];
     const userId = req.headers['x-test-user-id'];
@@ -93,7 +94,8 @@ describe('MAT-006 workbook lifecycle (real Postgres)', () => {
         'This suite requires NODE_ENV=test RUN_DB_TESTS=1 with DATABASE_URL pointed at a real, migrated Postgres.'
       );
     }
-    const { default: workbookRoutes } = await import('../../../server/src/routes/workbook.routes.js');
+    const { default: workbookRoutes } =
+      await import('../../../server/src/routes/workbook.routes.js');
     app = express();
     app.use(express.json());
     app.use('/api/workbook', workbookRoutes);
@@ -103,10 +105,14 @@ describe('MAT-006 workbook lifecycle (real Postgres)', () => {
 
   afterAll(async () => {
     // Hygiene: probes clean up after themselves (CLAUDE.md — "probe'y
-    // sprzątają po sobie, zero rekordów testowych"). CASCADE takes the
-    // version-history rows with it.
+    // sprzątają po sobie, zero rekordów testowych"). Revision history is
+    // deleted explicitly because the current FK does not cascade on workbook
+    // deletion.
     if (createdWorkbookIds.length) {
       await pool.query(`DELETE FROM artifact_export_receipts WHERE source_record_id = ANY($1)`, [
+        createdWorkbookIds,
+      ]);
+      await pool.query(`DELETE FROM generated_workbook_revisions WHERE workbook_id = ANY($1)`, [
         createdWorkbookIds,
       ]);
       await pool.query(`DELETE FROM generated_workbooks WHERE id = ANY($1)`, [createdWorkbookIds]);
@@ -150,7 +156,7 @@ describe('MAT-006 workbook lifecycle (real Postgres)', () => {
       .set(authHeaders(ORG_A, USER_A))
       .send({
         commandId: `golden-first-${RUN_ID}`,
-        baseVersion: 1,
+        baseVersion: 0,
         idempotencyKey: `golden-first-${RUN_ID}`,
         operations: [
           { type: 'setCell', sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 21 },
@@ -158,13 +164,13 @@ describe('MAT-006 workbook lifecycle (real Postgres)', () => {
         ],
       })
       .expect(200);
-    expect(first.body.version).toBe(2);
+    expect(first.body.version).toBe(1);
 
     const afterFormula = await request(app)
       .get(`/api/workbook/${id}`)
       .set(authHeaders(ORG_A, USER_A))
       .expect(200);
-    expect(afterFormula.body.version).toBe(2);
+    expect(afterFormula.body.version).toBe(1);
     const cellsAfterFormula = afterFormula.body.schema_json.sheets[0].rows[0].cells;
     expect(cellsAfterFormula.A).toEqual(expect.objectContaining({ value: 21 }));
     expect(cellsAfterFormula.B).toEqual(expect.objectContaining({ formula: 'A2*2' }));
@@ -174,15 +180,15 @@ describe('MAT-006 workbook lifecycle (real Postgres)', () => {
       .set(authHeaders(ORG_A, USER_A))
       .send({
         commandId: `golden-second-${RUN_ID}`,
-        baseVersion: 2,
+        baseVersion: 1,
         idempotencyKey: `golden-second-${RUN_ID}`,
         operations: [
           { type: 'setCell', sheetIndex: 0, rowIndex: 1, columnKey: 'A', value: 'second edit' },
         ],
       })
       .expect(200);
-    expect(second.body.version).toBe(3);
-    const versionToRestoreTo = 2;
+    expect(second.body.version).toBe(2);
+    const versionToRestoreTo = 1;
 
     // 6) GET/history shows both versions (at least the pre-checkpoint and
     // pre-second-edit snapshots)
@@ -199,7 +205,7 @@ describe('MAT-006 workbook lifecycle (real Postgres)', () => {
       .get(`/api/workbook/${id}`)
       .set(authHeaders(ORG_A, USER_A))
       .expect(200);
-    const versionBeforeRestore = beforeRestore.body.version; // 3
+    const versionBeforeRestore = beforeRestore.body.version; // 2
 
     // 7) restore brings back the earlier content
     const restore = await request(app)
@@ -245,16 +251,16 @@ describe('MAT-006 workbook lifecycle (real Postgres)', () => {
   // ---------------------------------------------------------------------
   it('NEGATIVE CONTROL: concurrent edits with the same baseVersion — exactly one winner, one 409, DB holds only the winner content', async () => {
     const id = await createBlankWorkbook(ORG_A, USER_A, 'MAT-006 Concurrency');
-    // version is 1 right after /blank.
+    // version is 0 right after /blank.
     const [r1, r2] = await Promise.all([
       request(app)
         .patch(`/api/workbook/${id}/cell`)
         .set(authHeaders(ORG_A, USER_A))
-        .send({ sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 'writer-1', baseVersion: 1 }),
+        .send({ sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 'writer-1', baseVersion: 0 }),
       request(app)
         .patch(`/api/workbook/${id}/cell`)
         .set(authHeaders(ORG_A, USER_A))
-        .send({ sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 'writer-2', baseVersion: 1 }),
+        .send({ sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 'writer-2', baseVersion: 0 }),
     ]);
     const statuses = [r1.status, r2.status].sort();
     // Exactly one winner (200) and one conflict (409) — this is the concrete
@@ -263,11 +269,242 @@ describe('MAT-006 workbook lifecycle (real Postgres)', () => {
     expect(statuses).toEqual([200, 409]);
 
     const winner = r1.status === 200 ? r1 : r2;
-    const dbRow = await pool.query(`SELECT schema_json, version FROM generated_workbooks WHERE id = $1`, [id]);
+    const dbRow = await pool.query(
+      `SELECT schema_json, version FROM generated_workbooks WHERE id = $1`,
+      [id]
+    );
     const cellA = JSON.parse(dbRow.rows[0].schema_json).sheets[0].rows[0].cells.A;
     // Real DB state (not just HTTP status) proves only the WINNER's write landed.
     expect(cellA.value).toBe(winner.body.cell.value);
-    expect(Number(dbRow.rows[0].version)).toBe(2); // only ONE version bump happened, not two
+    expect(Number(dbRow.rows[0].version)).toBe(1); // only ONE version bump happened, not two
+  });
+
+  it('schema-command is atomic, replay-safe and tenant-scoped on real Postgres', async () => {
+    const id = await createBlankWorkbook(ORG_A, USER_A, 'MAT-006 Schema Command');
+    const body = {
+      expectedVersion: 0,
+      commandId: `schema-add-${RUN_ID}`,
+      idempotencyKey: `schema-add-${RUN_ID}-key`,
+      command: { type: 'addSheet', name: 'Scenarios' },
+    };
+    const first = await request(app)
+      .patch(`/api/workbook/${id}/schema-command`)
+      .set(authHeaders(ORG_A, USER_A))
+      .send(body)
+      .expect(200);
+    expect(first.body).toMatchObject({ duplicate: false, version: 1 });
+
+    const replay = await request(app)
+      .patch(`/api/workbook/${id}/schema-command`)
+      .set(authHeaders(ORG_A, USER_A))
+      .send(body)
+      .expect(200);
+    expect(replay.body).toMatchObject({ duplicate: true, version: 1 });
+    expect(replay.body.schema).toEqual(first.body.schema);
+
+    const payloadConflict = await request(app)
+      .patch(`/api/workbook/${id}/schema-command`)
+      .set(authHeaders(ORG_A, USER_A))
+      .send({ ...body, command: { type: 'addSheet', name: 'Different payload' } })
+      .expect(409);
+    expect(payloadConflict.body.code).toBe('IDEMPOTENCY_CONFLICT');
+    const commandIdConflict = await request(app)
+      .patch(`/api/workbook/${id}/schema-command`)
+      .set(authHeaders(ORG_A, USER_A))
+      .send({ ...body, commandId: `${body.commandId}-different` })
+      .expect(409);
+    expect(commandIdConflict.body.code).toBe('IDEMPOTENCY_CONFLICT');
+
+    const commandB = {
+      expectedVersion: 1,
+      commandId: `schema-add-b-${RUN_ID}`,
+      idempotencyKey: `schema-add-b-${RUN_ID}-key`,
+      command: { type: 'addSheet', name: 'Later command B' },
+    };
+    await request(app)
+      .patch(`/api/workbook/${id}/schema-command`)
+      .set(authHeaders(ORG_A, USER_A))
+      .send(commandB)
+      .expect(200);
+
+    const delayedReplayA = await request(app)
+      .patch(`/api/workbook/${id}/schema-command`)
+      .set(authHeaders(ORG_A, USER_A))
+      .send(body)
+      .expect(200);
+    expect(delayedReplayA.body).toMatchObject({ duplicate: true, version: 2 });
+    const delayedCollisionA = await request(app)
+      .patch(`/api/workbook/${id}/schema-command`)
+      .set(authHeaders(ORG_A, USER_A))
+      .send({ ...body, command: { type: 'addSheet', name: 'Altered delayed A' } })
+      .expect(409);
+    expect(delayedCollisionA.body.code).toBe('IDEMPOTENCY_CONFLICT');
+
+    const denied = await request(app)
+      .patch(`/api/workbook/${id}/schema-command`)
+      .set(authHeaders(ORG_B, USER_B))
+      .send({ ...body, expectedVersion: 1, idempotencyKey: `${body.idempotencyKey}-foreign` })
+      .expect(404);
+    expect(denied.body.error).toMatch(/not found/i);
+
+    const dbState = await pool.query(
+      `SELECT w.version,
+              (SELECT COUNT(*)::int FROM generated_workbook_versions v WHERE v.workbook_id = w.id) snapshots,
+              (SELECT COUNT(*)::int FROM generated_workbook_revisions r WHERE r.workbook_id = w.id) revisions
+       FROM generated_workbooks w WHERE w.id = $1 AND w.organization_id = $2`,
+      [id, ORG_A]
+    );
+    expect(dbState.rows[0]).toMatchObject({ version: 2, snapshots: 2, revisions: 2 });
+  });
+
+  it('schema-command concurrent same-base requests have exactly one durable winner', async () => {
+    const id = await createBlankWorkbook(ORG_A, USER_A, 'MAT-006 Schema Race');
+    const makeBody = (suffix: string) => ({
+      expectedVersion: 0,
+      commandId: `schema-race-${suffix}-${RUN_ID}`,
+      idempotencyKey: `schema-race-${suffix}-${RUN_ID}-key`,
+      command: { type: 'addSheet', name: `Race ${suffix}` },
+    });
+    const [left, right] = await Promise.all([
+      request(app)
+        .patch(`/api/workbook/${id}/schema-command`)
+        .set(authHeaders(ORG_A, USER_A))
+        .send(makeBody('left')),
+      request(app)
+        .patch(`/api/workbook/${id}/schema-command`)
+        .set(authHeaders(ORG_A, USER_A))
+        .send(makeBody('right')),
+    ]);
+    expect([left.status, right.status].sort()).toEqual([200, 409]);
+    const dbState = await pool.query(
+      `SELECT w.version,
+              (SELECT COUNT(*)::int FROM generated_workbook_versions v WHERE v.workbook_id = w.id) snapshots,
+              (SELECT COUNT(*)::int FROM generated_workbook_revisions r WHERE r.workbook_id = w.id) revisions
+       FROM generated_workbooks w WHERE w.id = $1`,
+      [id]
+    );
+    expect(dbState.rows[0]).toMatchObject({ version: 1, snapshots: 1, revisions: 1 });
+  });
+
+  it('delayed replay of a non-idempotent delete command bypasses transformation', async () => {
+    const id = await createBlankWorkbook(ORG_A, USER_A, 'MAT-006 Non-idempotent Replay');
+    const sendSchema = (body: Record<string, unknown>) =>
+      request(app)
+        .patch(`/api/workbook/${id}/schema-command`)
+        .set(authHeaders(ORG_A, USER_A))
+        .send(body);
+    await sendSchema({
+      expectedVersion: 0,
+      commandId: `schema-delete-setup-${RUN_ID}`,
+      idempotencyKey: `schema-delete-setup-${RUN_ID}-key`,
+      command: { type: 'addSheet', name: 'Temporary' },
+    }).expect(200);
+    const commandA = {
+      expectedVersion: 1,
+      commandId: `schema-delete-a-${RUN_ID}`,
+      idempotencyKey: `schema-delete-a-${RUN_ID}-key`,
+      command: { type: 'deleteSheet', sheetIndex: 1 },
+    };
+    await sendSchema(commandA).expect(200);
+    await sendSchema({
+      expectedVersion: 2,
+      commandId: `schema-delete-b-${RUN_ID}`,
+      idempotencyKey: `schema-delete-b-${RUN_ID}-key`,
+      command: { type: 'addSheet', name: 'Durable B' },
+    }).expect(200);
+
+    const delayedReplay = await sendSchema(commandA).expect(200);
+    expect(delayedReplay.body).toMatchObject({ duplicate: true, version: 3 });
+    expect(delayedReplay.body.schema.sheets.map((sheet: any) => sheet.name)).toContain('Durable B');
+    const durable = await pool.query(
+      `SELECT version,
+              (SELECT COUNT(*)::int FROM generated_workbook_versions v WHERE v.workbook_id = w.id) snapshots,
+              (SELECT COUNT(*)::int FROM generated_workbook_revisions r WHERE r.workbook_id = w.id) revisions
+       FROM generated_workbooks w WHERE w.id = $1`,
+      [id]
+    );
+    expect(durable.rows[0]).toMatchObject({ version: 3, snapshots: 3, revisions: 3 });
+  });
+
+  it('delayed replay returns the final locked head when a later command is queued first', async () => {
+    const id = await createBlankWorkbook(ORG_A, USER_A, 'MAT-006 Delayed Replay Interleaving');
+    const commandA = {
+      expectedVersion: 0,
+      commandId: `schema-interleave-a-${RUN_ID}`,
+      idempotencyKey: `schema-interleave-a-${RUN_ID}-key`,
+      command: { type: 'addSheet', name: 'A' },
+    };
+    await request(app)
+      .patch(`/api/workbook/${id}/schema-command`)
+      .set(authHeaders(ORG_A, USER_A))
+      .send(commandA)
+      .expect(200);
+
+    const blocker = await pool.connect();
+    const waitForBlockedSchemaCommands = async (minimum: number) => {
+      const deadline = Date.now() + 3000;
+      while (Date.now() < deadline) {
+        const blocked = await pool.query(
+          `SELECT COUNT(*)::int AS n FROM pg_stat_activity
+           WHERE datname = current_database()
+             AND wait_event_type = 'Lock'
+             AND query LIKE '%generated_workbooks%FOR UPDATE%'`
+        );
+        if (Number(blocked.rows[0].n) >= minimum) return;
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      }
+      throw new Error(`Timed out waiting for ${minimum} blocked schema-command transaction(s)`);
+    };
+
+    try {
+      await blocker.query('BEGIN');
+      await blocker.query(`SELECT id FROM generated_workbooks WHERE id = $1 FOR UPDATE`, [id]);
+      const commandBPromise = Promise.resolve(
+        request(app)
+          .patch(`/api/workbook/${id}/schema-command`)
+          .set(authHeaders(ORG_A, USER_A))
+          .send({
+            expectedVersion: 1,
+            commandId: `schema-interleave-b-${RUN_ID}`,
+            idempotencyKey: `schema-interleave-b-${RUN_ID}-key`,
+            command: { type: 'addSheet', name: 'B' },
+          })
+      );
+      await waitForBlockedSchemaCommands(1);
+      const delayedReplayPromise = Promise.resolve(
+        request(app)
+          .patch(`/api/workbook/${id}/schema-command`)
+          .set(authHeaders(ORG_A, USER_A))
+          .send(commandA)
+      );
+      await waitForBlockedSchemaCommands(2);
+      await blocker.query('COMMIT');
+
+      const [commandB, delayedReplay] = await Promise.all([
+        commandBPromise,
+        delayedReplayPromise,
+      ]);
+      expect(commandB.status).toBe(200);
+      expect(commandB.body).toMatchObject({ duplicate: false, version: 2 });
+      expect(delayedReplay.status).toBe(200);
+      expect(delayedReplay.body).toMatchObject({ duplicate: true, version: 2 });
+
+      const durable = await pool.query(
+        `SELECT schema_json, version,
+                (SELECT COUNT(*)::int FROM generated_workbook_versions v WHERE v.workbook_id = w.id) snapshots,
+                (SELECT COUNT(*)::int FROM generated_workbook_revisions r WHERE r.workbook_id = w.id) revisions
+         FROM generated_workbooks w WHERE w.id = $1`,
+        [id]
+      );
+      expect(delayedReplay.body.schema).toEqual(JSON.parse(durable.rows[0].schema_json));
+      expect(durable.rows[0]).toMatchObject({ version: 2, snapshots: 2, revisions: 2 });
+    } finally {
+      try {
+        await blocker.query('ROLLBACK');
+      } finally {
+        blocker.release();
+      }
+    }
   });
 
   // ---------------------------------------------------------------------
@@ -278,17 +515,19 @@ describe('MAT-006 workbook lifecycle (real Postgres)', () => {
     await request(app)
       .patch(`/api/workbook/${id}/cell`)
       .set(authHeaders(ORG_A, USER_A))
-      .send({ sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 'first', baseVersion: 1 })
-      .expect(200); // version now 2
+      .send({ sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 'first', baseVersion: 0 })
+      .expect(200); // version now 1
 
     const stale = await request(app)
       .patch(`/api/workbook/${id}/cell`)
       .set(authHeaders(ORG_A, USER_A))
-      .send({ sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 'stale-write', baseVersion: 1 })
+      .send({ sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 'stale-write', baseVersion: 0 })
       .expect(409);
     expect(stale.body.code).toBe('WORKBOOK_VERSION_CONFLICT');
 
-    const dbRow = await pool.query(`SELECT schema_json FROM generated_workbooks WHERE id = $1`, [id]);
+    const dbRow = await pool.query(`SELECT schema_json FROM generated_workbooks WHERE id = $1`, [
+      id,
+    ]);
     const cellA = JSON.parse(dbRow.rows[0].schema_json).sheets[0].rows[0].cells.A;
     expect(cellA.value).toBe('first'); // stale write never landed
   });
@@ -301,12 +540,22 @@ describe('MAT-006 workbook lifecycle (real Postgres)', () => {
     await request(app)
       .post(`/api/workbook/${id}/commands`)
       .set(authHeaders(ORG_A, USER_A))
-      .send({ commandId: `restore-v2-${RUN_ID}`, baseVersion: 1, idempotencyKey: `restore-v2-${RUN_ID}`, operations: [{ type: 'setCell', sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 'v2' }] })
+      .send({
+        commandId: `restore-v2-${RUN_ID}`,
+        baseVersion: 0,
+        idempotencyKey: `restore-v2-${RUN_ID}`,
+        operations: [{ type: 'setCell', sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 'v2' }],
+      })
       .expect(200);
     await request(app)
       .post(`/api/workbook/${id}/commands`)
       .set(authHeaders(ORG_A, USER_A))
-      .send({ commandId: `restore-v3-${RUN_ID}`, baseVersion: 2, idempotencyKey: `restore-v3-${RUN_ID}`, operations: [{ type: 'setCell', sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 'v3' }] })
+      .send({
+        commandId: `restore-v3-${RUN_ID}`,
+        baseVersion: 1,
+        idempotencyKey: `restore-v3-${RUN_ID}`,
+        operations: [{ type: 'setCell', sheetIndex: 0, rowIndex: 0, columnKey: 'A', value: 'v3' }],
+      })
       .expect(200);
 
     const historyBefore = await pool.query(
@@ -321,9 +570,9 @@ describe('MAT-006 workbook lifecycle (real Postgres)', () => {
     const historyCountBefore = historyBefore.rows[0].n;
 
     const faulted = await request(app)
-      .post(`/api/workbook/${id}/revisions/2/restore`)
+      .post(`/api/workbook/${id}/revisions/1/restore`)
       .set(authHeaders(ORG_A, USER_A))
-      .send({ baseVersion: 2 });
+      .send({ baseVersion: 1 });
     expect(faulted.status).toBe(409);
     expect(faulted.body.code).toBe('WORKBOOK_VERSION_CONFLICT');
 
@@ -358,14 +607,14 @@ describe('MAT-006 workbook lifecycle (real Postgres)', () => {
 
     const revisionsRes = await request(app)
       .get(`/api/workbook/${id}/revisions`)
-      .set(authHeaders(ORG_B, USER_B))
+      .set(authHeaders(ORG_B, USER_B));
     expect(revisionsRes.status).toBe(200);
     expect(revisionsRes.body.revisions).toEqual([]);
 
     const restoreRes = await request(app)
       .post(`/api/workbook/${id}/revisions/2/restore`)
       .set(authHeaders(ORG_B, USER_B))
-      .send({ baseVersion: 1 });
+      .send({ baseVersion: 0 });
     expect(restoreRes.status).toBe(404);
 
     const shareRes = await request(app)
@@ -380,7 +629,7 @@ describe('MAT-006 workbook lifecycle (real Postgres)', () => {
       [id]
     );
     expect(dbRow.rows[0].organization_id).toBe(ORG_A);
-    expect(Number(dbRow.rows[0].version)).toBe(1);
+    expect(Number(dbRow.rows[0].version)).toBe(0);
     expect(dbRow.rows[0].share_token).toBeNull();
   });
 
@@ -409,7 +658,7 @@ describe('MAT-006 workbook lifecycle (real Postgres)', () => {
       .send({
         field: 'classification',
         value: 'public',
-        baseVersion: 2,
+        baseVersion: 1,
         reason: 'MAT-006 public-share compatibility proof',
       })
       .expect(200);
@@ -432,7 +681,9 @@ describe('MAT-006 workbook lifecycle (real Postgres)', () => {
     expect(reShare.body.shareToken).not.toBe(token);
 
     // 12) public read shows ONLY allowed data, no tenant/internal fields.
-    const publicRead = await request(app).get(`/api/workbook/shared/${reShare.body.shareToken}`).expect(200);
+    const publicRead = await request(app)
+      .get(`/api/workbook/shared/${reShare.body.shareToken}`)
+      .expect(200);
     const publicData = publicRead.body.data;
     expect(publicData.organization_id).toBeUndefined();
     expect(publicData.created_by).toBeUndefined();
@@ -469,7 +720,9 @@ describe('MAT-006 workbook lifecycle (real Postgres)', () => {
     // Real DB state: share_token column is genuinely NULL, not just "the API
     // says 404" — proves the revoke actually wrote NULL, not merely an
     // expiry/soft-delete flag we're not checking.
-    const dbRow = await pool.query(`SELECT share_token FROM generated_workbooks WHERE id = $1`, [id]);
+    const dbRow = await pool.query(`SELECT share_token FROM generated_workbooks WHERE id = $1`, [
+      id,
+    ]);
     expect(dbRow.rows[0].share_token).toBeNull();
   });
 
@@ -477,7 +730,9 @@ describe('MAT-006 workbook lifecycle (real Postgres)', () => {
   // NEGATIVE CONTROL 6 — token enumeration resistance
   // ---------------------------------------------------------------------
   it('NEGATIVE CONTROL: an unknown/guessed share token returns 404 (no enumeration signal, no crash)', async () => {
-    const res = await request(app).get(`/api/workbook/shared/${uuidv4().replace(/-/g, '')}${uuidv4().replace(/-/g, '')}`);
+    const res = await request(app).get(
+      `/api/workbook/shared/${uuidv4().replace(/-/g, '')}${uuidv4().replace(/-/g, '')}`
+    );
     expect(res.status).toBe(404);
   });
 

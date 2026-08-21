@@ -29,6 +29,7 @@ vi.mock('../../utils/queryHelpers.js', () => ({
 let mockUser: { id: string; organizationId: string } | null = null;
 
 vi.mock('../../middleware/auth.middleware.js', () => ({
+  validateOrgMembership: (_req: any, _res: any, next: () => void) => next(),
   verifyToken: (req: any, _res: any, next: () => void) => {
     if (mockUser) {
       req.userId = mockUser.id;

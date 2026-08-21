@@ -17,6 +17,7 @@ const mockUser = {
 };
 
 vi.mock('../../../../server/src/middleware/auth.middleware.js', () => ({
+  validateOrgMembership: (_req: any, _res: any, next: () => void) => next(),
   verifyToken: (req: any, _res: any, next: () => void) => {
     req.user = mockUser;
     req.userId = mockUser.id;
@@ -49,6 +50,15 @@ vi.mock('../../../../server/src/services/workbook/WorkbookGeneratorService.js', 
 vi.mock('../../../../server/src/services/v8/artifactRegistryService.js', () => ({
   registerArtifactOrigin: vi.fn().mockResolvedValue({ artifactId: 'artifact-test' }),
   adoptRunArtifactForWorkbook: vi.fn().mockResolvedValue(null),
+}));
+
+vi.mock('../../../../server/src/services/materialExport/materialExportReceiptService.js', () => ({
+  beginMaterialExport: vi.fn().mockResolvedValue({
+    exportReceiptId: 'receipt-test',
+    replay: false,
+  }),
+  completeMaterialExport: vi.fn().mockResolvedValue({ exportReceiptId: 'receipt-test' }),
+  failMaterialExport: vi.fn().mockResolvedValue(undefined),
 }));
 
 describe('GET /api/workbook/:id/schema', () => {

@@ -15,6 +15,7 @@ vi.mock('../../utils/queryHelpers.js', () => ({
   transaction: (callback: (db: unknown) => Promise<unknown>) => callback({}),
 }));
 vi.mock('../../middleware/auth.middleware.js', () => ({
+  validateOrgMembership: (_req: any, _res: any, next: () => void) => next(),
   verifyToken: (req: any, _res: any, next: () => void) => {
     req.user = { id: 'user-1', organizationId: 'org-1' };
     next();
@@ -57,20 +58,24 @@ beforeEach(() => {
 describe('workbook source bindings', () => {
   it('lists tenant-scoped bindings and exposes anchor state', async () => {
     mockQueryOne.mockResolvedValueOnce({ schema_json: JSON.stringify(schema) });
-    mockQueryAll.mockResolvedValueOnce([
-      {
-        id: 'binding-1',
-        sheet_id: sheetId,
-        range_ref: 'B2:E6',
-        label: 'CRM snapshot',
-        source_ref: 'crm-2026-08-05',
-        source_type: 'dataset',
-        anchored_version: 4,
-        anchor_state: 'active',
-        created_by: 'user-1',
-        created_at: '2026-08-09T08:00:00Z',
-      },
-    ]);
+    mockQueryAll.mockImplementation(async (sql: unknown) =>
+      String(sql).includes('FROM generated_workbook_source_bindings')
+        ? [
+            {
+              id: 'binding-1',
+              sheet_id: sheetId,
+              range_ref: 'B2:E6',
+              label: 'CRM snapshot',
+              source_ref: 'crm-2026-08-05',
+              source_type: 'dataset',
+              anchored_version: 4,
+              anchor_state: 'active',
+              created_by: 'user-1',
+              created_at: '2026-08-09T08:00:00Z',
+            },
+          ]
+        : []
+    );
 
     const response = await request(createApp()).get('/api/workbook/wb-1/sources');
     expect(response.status).toBe(200);
@@ -79,7 +84,10 @@ describe('workbook source bindings', () => {
       range: 'B2:E6',
       anchorState: 'active',
     });
-    expect(mockQueryAll.mock.calls[0][1]).toEqual(['wb-1', 'org-1']);
+    const bindingRead = mockQueryAll.mock.calls.find(([sql]) =>
+      String(sql).includes('FROM generated_workbook_source_bindings')
+    );
+    expect(bindingRead?.[1]).toEqual(['wb-1', 'org-1']);
   });
 
   it('binds a stable sheet range as one versioned revision', async () => {

@@ -9,6 +9,7 @@ let mockUser: any = {
 };
 
 vi.mock('../../../../server/src/middleware/auth.middleware.js', () => ({
+  validateOrgMembership: (_req: any, _res: any, next: () => void) => next(),
   verifyToken: (req: any, res: any, next: () => void) => {
     if (!mockUser) {
       res.status(401).json({ error: 'No token provided' });
@@ -48,9 +49,8 @@ describe('workbook.routes org guard', () => {
       role: 'ADMIN',
       organizationId: '',
     };
-    const { default: workbookRouter } = await import(
-      '../../../../server/src/routes/workbook.routes.js'
-    );
+    const { default: workbookRouter } =
+      await import('../../../../server/src/routes/workbook.routes.js');
     const app = express();
     app.use('/workbook', workbookRouter);
 

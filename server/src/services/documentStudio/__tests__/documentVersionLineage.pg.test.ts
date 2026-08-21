@@ -136,9 +136,7 @@ async function seedDocument(params: {
   artifactId: string;
   title: string;
 }): Promise<void> {
-  const { createWave5Artifact } = await import(
-    '../../../services/wave5ArtifactRuntimeService.js'
-  );
+  const { createWave5Artifact } = await import('../../../services/wave5ArtifactRuntimeService.js');
   // Mirrors `materializeDocumentArtifact`'s own sequence
   // (`documentStudioService.ts:1123-1196`): create the wave5 row, THEN
   // initialize lifecycle state. Without this second step,
@@ -146,9 +144,8 @@ async function seedDocument(params: {
   // "no lifecycle state for artifact" — `getDocumentStatusOrDefault` is
   // lenient and defaults to 'draft' for checkpoint/read paths, but the
   // rollback FORCE-transition is not.
-  const { initializeDocumentLifecycle } = await import(
-    '../../../services/documentStudio/documentLifecycleService.js'
-  );
+  const { initializeDocumentLifecycle } =
+    await import('../../../services/documentStudio/documentLifecycleService.js');
   const schema = minimalSchema(params);
   await createWave5Artifact({
     organizationId: params.organizationId,
@@ -186,257 +183,294 @@ function freshArtifactId(): string {
   return `claude_c_doc_${randomUUID()}`;
 }
 
-describe.skipIf(!REAL_DB)('Document version lineage + checkpoint/rollback CAS — real PostgreSQL', () => {
-  beforeEach(() => {
-    mockUser = null;
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  afterAll(async () => {
-    if (createdOrgs.length === 0) return;
-    const { Pool } = await import('pg');
-    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-    try {
-      const tables = [
-        'document_version_snapshots',
-        'document_studio_schema_overlay',
-        'document_studio_editor_audit',
-        'document_lifecycle_states',
-        'wave5_artifact_versions',
-        'wave5_artifacts',
-      ];
-      for (const table of tables) {
-        await pool.query(`DELETE FROM ${table} WHERE organization_id = ANY($1)`, [createdOrgs]);
-      }
-      for (const table of tables) {
-        const residue = await pool.query(
-          `SELECT COUNT(*)::int AS n FROM ${table} WHERE organization_id = ANY($1)`,
-          [createdOrgs]
-        );
-        if (residue.rows[0]?.n !== 0) {
-          throw new Error(`cleanup left ${residue.rows[0]?.n} row(s) behind in ${table}`);
-        }
-      }
-    } finally {
-      await pool.end();
-    }
-  });
-
-  it('a real PostgreSQL connection answers through the app DbPromise layer (not a mock)', async () => {
-    const { all } = await import('../../../utils/DbPromise.js');
-    const rows = await all<{ v: string }>('SELECT version() AS v', [], { fallback: false });
-    expect(rows).toHaveLength(1);
-    expect(rows[0].v).toMatch(/PostgreSQL/);
-  });
-
-  it('checkpoint writes content_hash + explicit parent chain; identical content -> identical hash; changed content -> different hash', async () => {
-    const ORG = freshOrg();
-    const USER = `claude_c_user_${randomUUID()}`;
-    const ARTIFACT = freshArtifactId();
-    await seedDocument({ organizationId: ORG, userId: USER, artifactId: ARTIFACT, title: 'Baseline' });
-
-    const app = await freshApp();
-    asUser(USER, ORG);
-
-    const c1 = await request(app)
-      .post(`/api/document-studio/${ARTIFACT}/snapshots`)
-      .send({ label: 'v1' });
-    expect(c1.status).toBe(201);
-    expect(c1.body.snapshot.contentHash).toEqual(expect.any(String));
-    expect(c1.body.snapshot.parentVersionId).toBeNull();
-
-    // Same live content, no intervening edit — a second checkpoint MUST hash
-    // identically to the first.
-    const c2 = await request(app)
-      .post(`/api/document-studio/${ARTIFACT}/snapshots`)
-      .send({ label: 'v2-same-content' });
-    expect(c2.status).toBe(201);
-    expect(c2.body.snapshot.parentVersionId).toBe(c1.body.snapshot.versionId);
-    expect(c2.body.snapshot.contentHash).toBe(c1.body.snapshot.contentHash);
-
-    // Now actually change the content via the real manual-save path.
-    const live = await request(app).get(`/api/document-studio/${ARTIFACT}`);
-    expect(live.status).toBe(200);
-    const save = await request(app)
-      .put(`/api/document-studio/${ARTIFACT}/content`)
-      .send({ sections: [], expectedVersion: live.body.schema.updatedAt, title: 'Changed title' });
-    expect(save.status).toBe(200);
-
-    const c3 = await request(app)
-      .post(`/api/document-studio/${ARTIFACT}/snapshots`)
-      .send({ label: 'v3-changed-content' });
-    expect(c3.status).toBe(201);
-    expect(c3.body.snapshot.parentVersionId).toBe(c2.body.snapshot.versionId);
-    expect(c3.body.snapshot.contentHash).not.toBe(c2.body.snapshot.contentHash);
-
-    // Cold readback (part c) — force a genuinely fresh module graph (empty
-    // in-process snapshot cache, empty schema-overlay cache, ...) so this
-    // assertion can only pass if the chain actually survived in Postgres,
-    // not because the warm process's cache still remembers it.
-    vi.resetModules();
-    const cold = await freshApp();
-    const lineageRes = await request(cold).get(`/api/document-studio/${ARTIFACT}/lineage`);
-    expect(lineageRes.status).toBe(200);
-    const chain = lineageRes.body.lineage as Array<{
-      versionId: string;
-      versionNumber: number;
-      parentVersionId: string | null;
-      contentHash: string | null;
-    }>;
-    expect(chain.map((e) => e.versionNumber)).toEqual([1, 2, 3]);
-    expect(chain[0].parentVersionId).toBeNull();
-    expect(chain[1].parentVersionId).toBe(chain[0].versionId);
-    expect(chain[2].parentVersionId).toBe(chain[1].versionId);
-    expect(chain[0].contentHash).toBe(chain[1].contentHash);
-    expect(chain[2].contentHash).not.toBe(chain[1].contentHash);
-  }, 30000); // this test's `vi.resetModules()` cold-readback step re-runs
-  // `ensureWave5ArtifactRuntimeSchema()`'s CREATE TABLE IF NOT EXISTS pass,
-  // which was observed to take 6+s under host load (SLOW QUERY log) — the
-  // default 10s timeout flaked on this one specific test under load.
-
-  it('two CONCURRENT checkpoints with the same expected version: exactly one applies, the loser gets 409 checkpoint_conflict', async () => {
-    const ORG = freshOrg();
-    const USER = `claude_c_user_${randomUUID()}`;
-    const ARTIFACT = freshArtifactId();
-    await seedDocument({ organizationId: ORG, userId: USER, artifactId: ARTIFACT, title: 'Concurrent checkpoint' });
-
-    const app = await freshApp();
-    asUser(USER, ORG);
-
-    // Both callers assert "no snapshot exists yet" (expectedVersion: null) —
-    // the double-click case: two requests fired before either has completed,
-    // neither has observed the other's write.
-    const [r1, r2] = await Promise.all([
-      request(app).post(`/api/document-studio/${ARTIFACT}/snapshots`).send({ expectedVersion: null }),
-      request(app).post(`/api/document-studio/${ARTIFACT}/snapshots`).send({ expectedVersion: null }),
-    ]);
-
-    const statuses = [r1.status, r2.status].sort();
-    expect(statuses).toEqual([201, 409]);
-    const conflictRes = r1.status === 409 ? r1 : r2;
-    expect(conflictRes.body.code).toBe('DOC_CHECKPOINT_CONFLICT');
-    expect(conflictRes.body.conflict.yourVersion).toBeNull();
-
-    const list = await request(app).get(`/api/document-studio/${ARTIFACT}/snapshots`);
-    expect(list.body.snapshots).toHaveLength(1);
-  });
-
-  it('two CONCURRENT rollbacks with the same expected version: exactly one applies, the loser gets 409 rollback_conflict', async () => {
-    const ORG = freshOrg();
-    const USER = `claude_c_user_${randomUUID()}`;
-    const ARTIFACT = freshArtifactId();
-    await seedDocument({ organizationId: ORG, userId: USER, artifactId: ARTIFACT, title: 'Concurrent rollback' });
-
-    const app = await freshApp();
-    asUser(USER, ORG);
-
-    const c1 = await request(app)
-      .post(`/api/document-studio/${ARTIFACT}/snapshots`)
-      .send({ label: 'baseline' });
-    expect(c1.status).toBe(201);
-    const targetVersionId = c1.body.snapshot.versionId as string;
-
-    const live = await request(app).get(`/api/document-studio/${ARTIFACT}`);
-    const expectedVersion = live.body.schema.updatedAt as string;
-
-    const [r1, r2] = await Promise.all([
-      request(app)
-        .post(`/api/document-studio/${ARTIFACT}/snapshots/${targetVersionId}/rollback`)
-        .send({ expectedVersion }),
-      request(app)
-        .post(`/api/document-studio/${ARTIFACT}/snapshots/${targetVersionId}/rollback`)
-        .send({ expectedVersion }),
-    ]);
-
-    const statuses = [r1.status, r2.status].sort();
-    expect(statuses).toEqual([200, 409]);
-    const conflictRes = r1.status === 409 ? r1 : r2;
-    expect(conflictRes.body.code).toBe('DOC_ROLLBACK_CONFLICT');
-    expect(conflictRes.body.conflict.yourVersion).toBe(expectedVersion);
-  });
-
-  it('stale expected-version -> 409 for both checkpoint and rollback', async () => {
-    const ORG = freshOrg();
-    const USER = `claude_c_user_${randomUUID()}`;
-    const ARTIFACT = freshArtifactId();
-    await seedDocument({ organizationId: ORG, userId: USER, artifactId: ARTIFACT, title: 'Stale version' });
-
-    const app = await freshApp();
-    asUser(USER, ORG);
-
-    const c1 = await request(app)
-      .post(`/api/document-studio/${ARTIFACT}/snapshots`)
-      .send({ label: 'v1' });
-    expect(c1.status).toBe(201);
-
-    // Checkpoint: caller wrongly believes the latest is some other id.
-    const staleCheckpoint = await request(app)
-      .post(`/api/document-studio/${ARTIFACT}/snapshots`)
-      .send({ expectedVersion: 'claude_c_not_the_real_latest' });
-    expect(staleCheckpoint.status).toBe(409);
-    expect(staleCheckpoint.body.code).toBe('DOC_CHECKPOINT_CONFLICT');
-    expect(staleCheckpoint.body.conflict.serverVersion.versionId).toBe(c1.body.snapshot.versionId);
-
-    // Rollback: caller wrongly believes the live document's updatedAt.
-    const staleRollback = await request(app)
-      .post(`/api/document-studio/${ARTIFACT}/snapshots/${c1.body.snapshot.versionId}/rollback`)
-      .send({ expectedVersion: 'claude_c_not_the_real_updated_at' });
-    expect(staleRollback.status).toBe(409);
-    expect(staleRollback.body.code).toBe('DOC_ROLLBACK_CONFLICT');
-    expect(staleRollback.body.conflict.serverVersion).toEqual(expect.any(String));
-    expect(staleRollback.body.conflict.serverVersion).not.toBe('claude_c_not_the_real_updated_at');
-  });
-
-  it('cross-tenant read/checkpoint/rollback are denied (tenant-scoped, deny-by-default)', async () => {
-    const VICTIM_ORG = freshOrg();
-    const VICTIM_USER = `claude_c_user_${randomUUID()}`;
-    const ATTACKER_ORG = freshOrg();
-    const ATTACKER_USER = `claude_c_user_${randomUUID()}`;
-    const ARTIFACT = freshArtifactId();
-    await seedDocument({
-      organizationId: VICTIM_ORG,
-      userId: VICTIM_USER,
-      artifactId: ARTIFACT,
-      title: 'Victim document',
+describe.skipIf(!REAL_DB)(
+  'Document version lineage + checkpoint/rollback CAS — real PostgreSQL',
+  () => {
+    beforeEach(() => {
+      mockUser = null;
     });
 
-    const app = await freshApp();
-    asUser(VICTIM_USER, VICTIM_ORG);
-    const c1 = await request(app)
-      .post(`/api/document-studio/${ARTIFACT}/snapshots`)
-      .send({ label: 'victim-only' });
-    expect(c1.status).toBe(201);
-    const victimVersionId = c1.body.snapshot.versionId as string;
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
 
-    // Switch identity to the attacker tenant, same app instance (same
-    // in-process caches) so a cache-scoping bug, not just a DB WHERE
-    // clause, would be caught.
-    asUser(ATTACKER_USER, ATTACKER_ORG);
+    afterAll(async () => {
+      if (createdOrgs.length === 0) return;
+      const { Pool } = await import('pg');
+      const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+      try {
+        const tables = [
+          'artifact_lineage_events',
+          'artifact_lineage_receipts',
+          'document_version_snapshots',
+          'document_studio_schema_overlay',
+          'document_studio_editor_audit',
+          'document_lifecycle_states',
+          'wave5_artifact_versions',
+          'wave5_artifacts',
+        ];
+        for (const table of tables) {
+          await pool.query(`DELETE FROM ${table} WHERE organization_id = ANY($1)`, [createdOrgs]);
+        }
+        for (const table of tables) {
+          const residue = await pool.query(
+            `SELECT COUNT(*)::int AS n FROM ${table} WHERE organization_id = ANY($1)`,
+            [createdOrgs]
+          );
+          if (residue.rows[0]?.n !== 0) {
+            throw new Error(`cleanup left ${residue.rows[0]?.n} row(s) behind in ${table}`);
+          }
+        }
+      } finally {
+        await pool.end();
+      }
+    });
 
-    const listRes = await request(app).get(`/api/document-studio/${ARTIFACT}/snapshots`);
-    expect(listRes.status).toBe(200);
-    expect(listRes.body.snapshots).toEqual([]);
+    it('a real PostgreSQL connection answers through the app DbPromise layer (not a mock)', async () => {
+      const { all } = await import('../../../utils/DbPromise.js');
+      const rows = await all<{ v: string }>('SELECT version() AS v', [], { fallback: false });
+      expect(rows).toHaveLength(1);
+      expect(rows[0].v).toMatch(/PostgreSQL/);
+    });
 
-    const lineageRes = await request(app).get(`/api/document-studio/${ARTIFACT}/lineage`);
-    expect(lineageRes.status).toBe(200);
-    expect(lineageRes.body.lineage).toEqual([]);
+    it('checkpoint writes content_hash + explicit parent chain; identical content -> identical hash; changed content -> different hash', async () => {
+      const ORG = freshOrg();
+      const USER = `claude_c_user_${randomUUID()}`;
+      const ARTIFACT = freshArtifactId();
+      await seedDocument({
+        organizationId: ORG,
+        userId: USER,
+        artifactId: ARTIFACT,
+        title: 'Baseline',
+      });
 
-    const checkpointRes = await request(app)
-      .post(`/api/document-studio/${ARTIFACT}/snapshots`)
-      .send({ label: 'attacker-attempt' });
-    expect(checkpointRes.status).toBe(404);
+      const app = await freshApp();
+      asUser(USER, ORG);
 
-    const rollbackRes = await request(app)
-      .post(`/api/document-studio/${ARTIFACT}/snapshots/${victimVersionId}/rollback`)
-      .send({});
-    expect(rollbackRes.status).toBe(404);
+      const c1 = await request(app)
+        .post(`/api/document-studio/${ARTIFACT}/snapshots`)
+        .send({ label: 'v1' });
+      expect(c1.status).toBe(201);
+      expect(c1.body.snapshot.contentHash).toEqual(expect.any(String));
+      expect(c1.body.snapshot.parentVersionId).toBeNull();
 
-    // Prove the victim's own data is untouched by the attacker's attempts.
-    asUser(VICTIM_USER, VICTIM_ORG);
-    const victimList = await request(app).get(`/api/document-studio/${ARTIFACT}/snapshots`);
-    expect(victimList.body.snapshots).toHaveLength(1);
-  });
-});
+      // Same live content, no intervening edit — a second checkpoint MUST hash
+      // identically to the first.
+      const c2 = await request(app)
+        .post(`/api/document-studio/${ARTIFACT}/snapshots`)
+        .send({ label: 'v2-same-content' });
+      expect(c2.status).toBe(201);
+      expect(c2.body.snapshot.parentVersionId).toBe(c1.body.snapshot.versionId);
+      expect(c2.body.snapshot.contentHash).toBe(c1.body.snapshot.contentHash);
+
+      // Now actually change the content via the real manual-save path.
+      const live = await request(app).get(`/api/document-studio/${ARTIFACT}`);
+      expect(live.status).toBe(200);
+      const save = await request(app)
+        .put(`/api/document-studio/${ARTIFACT}/content`)
+        .send({
+          sections: [],
+          expectedVersion: live.body.schema.updatedAt,
+          title: 'Changed title',
+        });
+      expect(save.status).toBe(200);
+
+      const c3 = await request(app)
+        .post(`/api/document-studio/${ARTIFACT}/snapshots`)
+        .send({ label: 'v3-changed-content' });
+      expect(c3.status).toBe(201);
+      expect(c3.body.snapshot.parentVersionId).toBe(c2.body.snapshot.versionId);
+      expect(c3.body.snapshot.contentHash).not.toBe(c2.body.snapshot.contentHash);
+
+      // Cold readback (part c) — force a genuinely fresh module graph (empty
+      // in-process snapshot cache, empty schema-overlay cache, ...) so this
+      // assertion can only pass if the chain actually survived in Postgres,
+      // not because the warm process's cache still remembers it.
+      vi.resetModules();
+      const cold = await freshApp();
+      const lineageRes = await request(cold).get(`/api/document-studio/${ARTIFACT}/lineage`);
+      expect(lineageRes.status).toBe(200);
+      const chain = lineageRes.body.lineage as Array<{
+        versionId: string;
+        versionNumber: number;
+        parentVersionId: string | null;
+        contentHash: string | null;
+      }>;
+      expect(chain.map((e) => e.versionNumber)).toEqual([1, 2, 3]);
+      expect(chain[0].parentVersionId).toBeNull();
+      expect(chain[1].parentVersionId).toBe(chain[0].versionId);
+      expect(chain[2].parentVersionId).toBe(chain[1].versionId);
+      expect(chain[0].contentHash).toBe(chain[1].contentHash);
+      expect(chain[2].contentHash).not.toBe(chain[1].contentHash);
+    }, 30000); // this test's `vi.resetModules()` cold-readback step re-runs
+    // `ensureWave5ArtifactRuntimeSchema()`'s CREATE TABLE IF NOT EXISTS pass,
+    // which was observed to take 6+s under host load (SLOW QUERY log) — the
+    // default 10s timeout flaked on this one specific test under load.
+
+    it('two CONCURRENT checkpoints with the same expected version: exactly one applies, the loser gets 409 checkpoint_conflict', async () => {
+      const ORG = freshOrg();
+      const USER = `claude_c_user_${randomUUID()}`;
+      const ARTIFACT = freshArtifactId();
+      await seedDocument({
+        organizationId: ORG,
+        userId: USER,
+        artifactId: ARTIFACT,
+        title: 'Concurrent checkpoint',
+      });
+
+      const app = await freshApp();
+      asUser(USER, ORG);
+
+      // Both callers assert "no snapshot exists yet" (expectedVersion: null) —
+      // the double-click case: two requests fired before either has completed,
+      // neither has observed the other's write.
+      const [r1, r2] = await Promise.all([
+        request(app)
+          .post(`/api/document-studio/${ARTIFACT}/snapshots`)
+          .send({ expectedVersion: null }),
+        request(app)
+          .post(`/api/document-studio/${ARTIFACT}/snapshots`)
+          .send({ expectedVersion: null }),
+      ]);
+
+      const statuses = [r1.status, r2.status].sort();
+      expect(statuses).toEqual([201, 409]);
+      const conflictRes = r1.status === 409 ? r1 : r2;
+      expect(conflictRes.body.code).toBe('DOC_CHECKPOINT_CONFLICT');
+      expect(conflictRes.body.conflict.yourVersion).toBeNull();
+
+      const list = await request(app).get(`/api/document-studio/${ARTIFACT}/snapshots`);
+      expect(list.body.snapshots).toHaveLength(1);
+    });
+
+    it('two CONCURRENT rollbacks with the same expected version: exactly one applies, the loser gets 409 rollback_conflict', async () => {
+      const ORG = freshOrg();
+      const USER = `claude_c_user_${randomUUID()}`;
+      const ARTIFACT = freshArtifactId();
+      await seedDocument({
+        organizationId: ORG,
+        userId: USER,
+        artifactId: ARTIFACT,
+        title: 'Concurrent rollback',
+      });
+
+      const app = await freshApp();
+      asUser(USER, ORG);
+
+      const c1 = await request(app)
+        .post(`/api/document-studio/${ARTIFACT}/snapshots`)
+        .send({ label: 'baseline' });
+      expect(c1.status).toBe(201);
+      const targetVersionId = c1.body.snapshot.versionId as string;
+
+      const live = await request(app).get(`/api/document-studio/${ARTIFACT}`);
+      const expectedVersion = live.body.schema.updatedAt as string;
+
+      const [r1, r2] = await Promise.all([
+        request(app)
+          .post(`/api/document-studio/${ARTIFACT}/snapshots/${targetVersionId}/rollback`)
+          .send({ expectedVersion }),
+        request(app)
+          .post(`/api/document-studio/${ARTIFACT}/snapshots/${targetVersionId}/rollback`)
+          .send({ expectedVersion }),
+      ]);
+
+      const statuses = [r1.status, r2.status].sort();
+      expect(statuses).toEqual([200, 409]);
+      const conflictRes = r1.status === 409 ? r1 : r2;
+      expect(conflictRes.body.code).toBe('DOC_ROLLBACK_CONFLICT');
+      expect(conflictRes.body.conflict.yourVersion).toBe(expectedVersion);
+    });
+
+    it('stale expected-version -> 409 for both checkpoint and rollback', async () => {
+      const ORG = freshOrg();
+      const USER = `claude_c_user_${randomUUID()}`;
+      const ARTIFACT = freshArtifactId();
+      await seedDocument({
+        organizationId: ORG,
+        userId: USER,
+        artifactId: ARTIFACT,
+        title: 'Stale version',
+      });
+
+      const app = await freshApp();
+      asUser(USER, ORG);
+
+      const c1 = await request(app)
+        .post(`/api/document-studio/${ARTIFACT}/snapshots`)
+        .send({ label: 'v1' });
+      expect(c1.status).toBe(201);
+
+      // Checkpoint: caller wrongly believes the latest is some other id.
+      const staleCheckpoint = await request(app)
+        .post(`/api/document-studio/${ARTIFACT}/snapshots`)
+        .send({ expectedVersion: 'claude_c_not_the_real_latest' });
+      expect(staleCheckpoint.status).toBe(409);
+      expect(staleCheckpoint.body.code).toBe('DOC_CHECKPOINT_CONFLICT');
+      expect(staleCheckpoint.body.conflict.serverVersion.versionId).toBe(
+        c1.body.snapshot.versionId
+      );
+
+      // Rollback: caller wrongly believes the live document's updatedAt.
+      const staleRollback = await request(app)
+        .post(`/api/document-studio/${ARTIFACT}/snapshots/${c1.body.snapshot.versionId}/rollback`)
+        .send({ expectedVersion: 'claude_c_not_the_real_updated_at' });
+      expect(staleRollback.status).toBe(409);
+      expect(staleRollback.body.code).toBe('DOC_ROLLBACK_CONFLICT');
+      expect(staleRollback.body.conflict.serverVersion).toEqual(expect.any(String));
+      expect(staleRollback.body.conflict.serverVersion).not.toBe(
+        'claude_c_not_the_real_updated_at'
+      );
+    });
+
+    it('cross-tenant read/checkpoint/rollback are denied (tenant-scoped, deny-by-default)', async () => {
+      const VICTIM_ORG = freshOrg();
+      const VICTIM_USER = `claude_c_user_${randomUUID()}`;
+      const ATTACKER_ORG = freshOrg();
+      const ATTACKER_USER = `claude_c_user_${randomUUID()}`;
+      const ARTIFACT = freshArtifactId();
+      await seedDocument({
+        organizationId: VICTIM_ORG,
+        userId: VICTIM_USER,
+        artifactId: ARTIFACT,
+        title: 'Victim document',
+      });
+
+      const app = await freshApp();
+      asUser(VICTIM_USER, VICTIM_ORG);
+      const c1 = await request(app)
+        .post(`/api/document-studio/${ARTIFACT}/snapshots`)
+        .send({ label: 'victim-only' });
+      expect(c1.status).toBe(201);
+      const victimVersionId = c1.body.snapshot.versionId as string;
+
+      // Switch identity to the attacker tenant, same app instance (same
+      // in-process caches) so a cache-scoping bug, not just a DB WHERE
+      // clause, would be caught.
+      asUser(ATTACKER_USER, ATTACKER_ORG);
+
+      const listRes = await request(app).get(`/api/document-studio/${ARTIFACT}/snapshots`);
+      expect(listRes.status).toBe(200);
+      expect(listRes.body.snapshots).toEqual([]);
+
+      const lineageRes = await request(app).get(`/api/document-studio/${ARTIFACT}/lineage`);
+      expect(lineageRes.status).toBe(200);
+      expect(lineageRes.body.lineage).toEqual([]);
+
+      const checkpointRes = await request(app)
+        .post(`/api/document-studio/${ARTIFACT}/snapshots`)
+        .send({ label: 'attacker-attempt' });
+      expect(checkpointRes.status).toBe(404);
+
+      const rollbackRes = await request(app)
+        .post(`/api/document-studio/${ARTIFACT}/snapshots/${victimVersionId}/rollback`)
+        .send({});
+      expect(rollbackRes.status).toBe(404);
+
+      // Prove the victim's own data is untouched by the attacker's attempts.
+      asUser(VICTIM_USER, VICTIM_ORG);
+      const victimList = await request(app).get(`/api/document-studio/${ARTIFACT}/snapshots`);
+      expect(victimList.body.snapshots).toHaveLength(1);
+    });
+  }
+);

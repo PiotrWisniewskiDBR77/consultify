@@ -3518,9 +3518,7 @@ export const Api = {
     return handleResponse(res, 'Failed to generate meeting notes');
   },
 
-  listMeetingNotes: async (
-    meetingId: string
-  ): Promise<{ notes: GovernedMeetingNoteDto[] }> => {
+  listMeetingNotes: async (meetingId: string): Promise<{ notes: GovernedMeetingNoteDto[] }> => {
     const res = await fetchWithRetry(`${API_URL}/meeting/${meetingId}/notes`, {
       headers: getHeaders(),
     });
@@ -5315,9 +5313,8 @@ export const Api = {
     }
   ): Promise<{ sourceSessionId?: string; [key: string]: any }> => {
     const intentIdentity = `${ideaId}:${payload.target}:${JSON.stringify(payload.options || {})}`;
-    const key = payload.idempotencyKey
-      ?? ideaConversionIntentKeys.get(intentIdentity)
-      ?? crypto.randomUUID();
+    const key =
+      payload.idempotencyKey ?? ideaConversionIntentKeys.get(intentIdentity) ?? crypto.randomUUID();
     ideaConversionIntentKeys.set(intentIdentity, key);
     const res = await fetch(`${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/convert`, {
       method: 'POST',
@@ -5334,23 +5331,38 @@ export const Api = {
     targetKind: 'document' | 'presentation' | 'workbook',
     idempotencyKey: string
   ): Promise<any> => {
-    const res = await fetch(`${API_URL}/idea-business-case/${encodeURIComponent(ideaId)}/artifact-proposals`, {
-      method: 'POST', headers: getHeaders(), body: JSON.stringify({ targetKind, idempotencyKey }),
-    });
+    const res = await fetch(
+      `${API_URL}/idea-business-case/${encodeURIComponent(ideaId)}/artifact-proposals`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ targetKind, idempotencyKey }),
+      }
+    );
     return handleResponse(res, 'Failed to create artifact proposal');
   },
 
   decideIdeaArtifact: async (ideaId: string, proposalId: string): Promise<any> => {
-    const res = await fetch(`${API_URL}/idea-business-case/${encodeURIComponent(ideaId)}/artifact-proposals/${encodeURIComponent(proposalId)}/decision`, {
-      method: 'POST', headers: getHeaders(), body: JSON.stringify({ action: 'approve' }),
-    });
+    const res = await fetch(
+      `${API_URL}/idea-business-case/${encodeURIComponent(ideaId)}/artifact-proposals/${encodeURIComponent(proposalId)}/decision`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ action: 'approve' }),
+      }
+    );
     return handleResponse(res, 'Failed to approve artifact proposal');
   },
 
   materializeIdeaArtifact: async (ideaId: string, proposalId: string): Promise<any> => {
-    const res = await fetch(`${API_URL}/idea-business-case/${encodeURIComponent(ideaId)}/artifact-proposals/${encodeURIComponent(proposalId)}/materialize`, {
-      method: 'POST', headers: getHeaders(), body: JSON.stringify({}),
-    });
+    const res = await fetch(
+      `${API_URL}/idea-business-case/${encodeURIComponent(ideaId)}/artifact-proposals/${encodeURIComponent(proposalId)}/materialize`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({}),
+      }
+    );
     return handleResponse(res, 'Failed to materialize artifact');
   },
 
@@ -6725,7 +6737,9 @@ export const Api = {
     return handleResponse(res, 'Failed to create SWOT candidate');
   },
 
-  getSwotCandidateReceipts: async (toolSessionId: string): Promise<{
+  getSwotCandidateReceipts: async (
+    toolSessionId: string
+  ): Promise<{
     receipts: Array<{
       lineageState: 'PINNED' | 'HISTORICAL_UNRESOLVED';
       receiptId: string;
@@ -7335,12 +7349,16 @@ export const Api = {
   },
 
   listToolOutputReports: async (outputId: string): Promise<{ reports: any[] }> => {
-    const res = await fetch(`${API_URL}/tool-outputs/${outputId}/reports`, { headers: getHeaders() });
+    const res = await fetch(`${API_URL}/tool-outputs/${outputId}/reports`, {
+      headers: getHeaders(),
+    });
     return handleResponse(res, 'Failed to list tool output reports');
   },
 
   getToolOutputReport: async (reportId: string): Promise<{ report: any }> => {
-    const res = await fetch(`${API_URL}/tool-outputs/reports/${reportId}`, { headers: getHeaders() });
+    const res = await fetch(`${API_URL}/tool-outputs/reports/${reportId}`, {
+      headers: getHeaders(),
+    });
     return handleResponse(res, 'Failed to fetch tool output report');
   },
 
@@ -7498,13 +7516,23 @@ export const Api = {
   updateWorkbookSchema: async (
     workbookId: string,
     command: Record<string, unknown>,
-    expectedVersion?: number
-  ): Promise<{ ok: boolean; schema: any; version: number }> => {
-    const res = await fetch(`${API_URL}/workbook/${encodeURIComponent(workbookId)}/schema-command`, {
-      method: 'PATCH',
-      headers: getHeaders(),
-      body: JSON.stringify({ command, expectedVersion }),
-    });
+    expectedVersion: number,
+    mutationIdentity: { commandId: string; idempotencyKey: string }
+  ): Promise<{
+    ok: boolean;
+    duplicate: boolean;
+    commandId: string;
+    schema: any;
+    version: number;
+  }> => {
+    const res = await fetch(
+      `${API_URL}/workbook/${encodeURIComponent(workbookId)}/schema-command`,
+      {
+        method: 'PATCH',
+        headers: getHeaders(),
+        body: JSON.stringify({ command, expectedVersion, ...mutationIdentity }),
+      }
+    );
     return handleResponse(res, 'Failed to update workbook structure');
   },
 
@@ -12484,7 +12512,10 @@ export const Api = {
   // be a stub returning [], which made Admin report a clean empty state while
   // invitations were present in PostgreSQL.
   getInvitations: async (organizationId: string): Promise<any[]> => {
-    const res = await fetch(`${API_URL}/organizations/${encodeURIComponent(organizationId)}/admin/invitations`, { headers: getHeaders() });
+    const res = await fetch(
+      `${API_URL}/organizations/${encodeURIComponent(organizationId)}/admin/invitations`,
+      { headers: getHeaders() }
+    );
     const data = await handleResponse(res, 'Failed to fetch invitations');
     return Array.isArray(data) ? data : Array.isArray(data?.invitations) ? data.invitations : [];
   },
@@ -12496,37 +12527,75 @@ export const Api = {
   ): Promise<any> => {
     const headers = getHeaders();
     if (commandId) headers['X-Idempotency-Key'] = commandId;
-    const res = await fetch(`${API_URL}/organizations/${encodeURIComponent(organizationId)}/admin/invitations`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ organizationId, email, role }),
-    });
+    const res = await fetch(
+      `${API_URL}/organizations/${encodeURIComponent(organizationId)}/admin/invitations`,
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ organizationId, email, role }),
+      }
+    );
     return handleResponse(res, 'Failed to create invitation');
   },
-  resendOrganizationInvitation: async (organizationId: string, invitationId: string, commandId: string): Promise<any> => {
-    const headers = getHeaders(); headers['X-Idempotency-Key'] = commandId;
-    const res = await fetch(`${API_URL}/organizations/${encodeURIComponent(organizationId)}/admin/invitations/${encodeURIComponent(invitationId)}/resend`, {
-      method: 'POST',
-      headers,
-    });
+  resendOrganizationInvitation: async (
+    organizationId: string,
+    invitationId: string,
+    commandId: string
+  ): Promise<any> => {
+    const headers = getHeaders();
+    headers['X-Idempotency-Key'] = commandId;
+    const res = await fetch(
+      `${API_URL}/organizations/${encodeURIComponent(organizationId)}/admin/invitations/${encodeURIComponent(invitationId)}/resend`,
+      {
+        method: 'POST',
+        headers,
+      }
+    );
     return handleResponse(res, 'Failed to resend invitation');
   },
-  revokeOrganizationInvitation: async (organizationId: string, invitationId: string, commandId: string): Promise<any> => {
-    const headers = getHeaders(); headers['X-Idempotency-Key'] = commandId;
-    const res = await fetch(`${API_URL}/organizations/${encodeURIComponent(organizationId)}/admin/invitations/${encodeURIComponent(invitationId)}/revoke`, {
-      method: 'POST',
-      headers,
-    });
+  revokeOrganizationInvitation: async (
+    organizationId: string,
+    invitationId: string,
+    commandId: string
+  ): Promise<any> => {
+    const headers = getHeaders();
+    headers['X-Idempotency-Key'] = commandId;
+    const res = await fetch(
+      `${API_URL}/organizations/${encodeURIComponent(organizationId)}/admin/invitations/${encodeURIComponent(invitationId)}/revoke`,
+      {
+        method: 'POST',
+        headers,
+      }
+    );
     return handleResponse(res, 'Failed to revoke invitation');
   },
-  changeAdminOrganizationMemberRole: async (organizationId: string, memberId: string, role: string, expectedRole: string, commandId: string): Promise<any> => {
-    const headers = getHeaders(); headers['X-Idempotency-Key'] = commandId;
-    const res = await fetch(`${API_URL}/organizations/${encodeURIComponent(organizationId)}/admin/members/${encodeURIComponent(memberId)}/role`, { method: 'PATCH', headers, body: JSON.stringify({ role, expectedRole }) });
+  changeAdminOrganizationMemberRole: async (
+    organizationId: string,
+    memberId: string,
+    role: string,
+    expectedRole: string,
+    commandId: string
+  ): Promise<any> => {
+    const headers = getHeaders();
+    headers['X-Idempotency-Key'] = commandId;
+    const res = await fetch(
+      `${API_URL}/organizations/${encodeURIComponent(organizationId)}/admin/members/${encodeURIComponent(memberId)}/role`,
+      { method: 'PATCH', headers, body: JSON.stringify({ role, expectedRole }) }
+    );
     return handleResponse(res, 'Failed to update member role');
   },
-  revokeAdminOrganizationMember: async (organizationId: string, memberId: string, expectedRole: string, commandId: string): Promise<any> => {
-    const headers = getHeaders(); headers['X-Idempotency-Key'] = commandId;
-    const res = await fetch(`${API_URL}/organizations/${encodeURIComponent(organizationId)}/admin/members/${encodeURIComponent(memberId)}/revoke`, { method: 'POST', headers, body: JSON.stringify({ expectedRole }) });
+  revokeAdminOrganizationMember: async (
+    organizationId: string,
+    memberId: string,
+    expectedRole: string,
+    commandId: string
+  ): Promise<any> => {
+    const headers = getHeaders();
+    headers['X-Idempotency-Key'] = commandId;
+    const res = await fetch(
+      `${API_URL}/organizations/${encodeURIComponent(organizationId)}/admin/members/${encodeURIComponent(memberId)}/revoke`,
+      { method: 'POST', headers, body: JSON.stringify({ expectedRole }) }
+    );
     return handleResponse(res, 'Failed to revoke member');
   },
   // System
@@ -16300,7 +16369,10 @@ export const Api = {
     payload: {
       targetId: string;
       action:
-        'retry_failed_branch' | 'recover_expired_lease' | 'cancel_graph' | 'expire_stale_review';
+        | 'retry_failed_branch'
+        | 'recover_expired_lease'
+        | 'cancel_graph'
+        | 'expire_stale_review';
       reason: string;
     },
     idempotencyKey: string
@@ -17134,10 +17206,16 @@ export const Api = {
     return {
       preferences: {
         tone: (userSettings?.writing_tone || 'professional') as
-          'professional' | 'friendly' | 'casual' | 'academic',
+          | 'professional'
+          | 'friendly'
+          | 'casual'
+          | 'academic',
         formality: (userSettings?.formality || 'balanced') as 'formal' | 'balanced' | 'informal',
         verbosity: (userSettings?.verbosity || 'concise') as
-          'minimal' | 'concise' | 'detailed' | 'comprehensive',
+          | 'minimal'
+          | 'concise'
+          | 'detailed'
+          | 'comprehensive',
       },
     };
   },

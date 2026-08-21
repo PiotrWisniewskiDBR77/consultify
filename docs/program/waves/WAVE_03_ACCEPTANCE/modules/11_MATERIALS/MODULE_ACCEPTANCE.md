@@ -1,8 +1,8 @@
 # Wave 3 — Materials acceptance
 
 ID: `MAT`
-Routes: `/documents`, `/presentations`, `/workbooks`
-Current gate: `NOT_STARTED / POLICY_DECISION_REQUIRED`
+Routes: `/document-studio`, `/presentations`, `/excele`
+Current gate: `TECHNICAL_PREFLIGHT / RESTRICTED_POLICY_CONFIRMATION_REQUIRED`
 Owner: Piotr Wisniewski
 Integrator: Codex
 Mobile: `DEFERRED_NON_GATING`
@@ -16,58 +16,72 @@ foreign tenant and no false export success.
 
 ## G00–G20 checklist
 
-| Gate | Mandatory outcome | State | Evidence/decision |
-|---|---|---|---|
-| G00 | Scope, routes, dependencies, 82-task links and exclusions | `NOT_STARTED` | `MAT-POL-001` |
-| G01 | Exact baseline and client/server/runtime/DB/migrations | `NOT_STARTED` | — |
-| G02 | Journeys, writes/readbacks, upstream/downstream and policy map | `NOT_STARTED` | — |
-| G03 | Named allowed/denied personas | `NOT_STARTED` | — |
-| G04 | Reproducible realistic and boundary fixtures | `NOT_STARTED` | — |
-| G05 | Functional preflight and cold readback | `NOT_STARTED` | — |
-| G06 | Desktop/tablet, PL/EN, themes, states, a11y, console/HTTP | `NOT_STARTED` | — |
-| G07 | Piotr review card | `NOT_STARTED` | — |
-| G08 | First-impression review | `NOT_STARTED` | — |
-| G09 | Guided CX journey review | `NOT_STARTED` | — |
-| G10 | Alternate-state owner review | `NOT_STARTED` | — |
-| G11 | Every owner observation/screenshot durably registered | `NOT_STARTED` | — |
-| G12 | Owner register reconciled and confirmed | `NOT_STARTED` | — |
-| G13 | Solution and impact analysis | `NOT_STARTED` | — |
-| G14 | Remediation with finding-to-commit traceability | `NOT_STARTED` | — |
-| G15 | Integrator self-QA and impacted regression | `NOT_STARTED` | — |
-| G16 | Before/after owner retest packet | `NOT_STARTED` | — |
-| G17 | Owner retest decisions for every finding | `NOT_STARTED` | — |
-| G18 | Module accepted on exact SHA and checkpointed | `NOT_STARTED` | — |
-| G19 | Later-change regression obligations resolved | `NOT_STARTED` | — |
-| G20 | Final 16/16 replay | `NOT_STARTED` | — |
+| Gate | Mandatory outcome                                              | State                                     | Evidence/decision                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ---- | -------------------------------------------------------------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| G00  | Scope, routes, dependencies, 82-task links and exclusions      | `RESTRICTED_POLICY_CONFIRMATION_REQUIRED` | Tasks: `MAT-POL-001`, `MAT-BVP-001`, `MAT-MVP-DOC-001`, `MAT-MVP-PPT-001`, `MAT-MVP-XLSX-001`, `MAT-MVP-EXPORT-001`, `MAT-UI-CANON-001`. Mounted UI truth is `/document-studio`, `/presentations`, `/excele` (`ff_excele=1`), not the stale `/documents` and `/workbooks` labels. Native DOCX/PPTX/XLSX and explicit presentation `text_summary` PDF are in restricted scope; new external providers and unproven template/font/image rights remain OFF. |
+| G01  | Exact baseline and client/server/runtime/DB/migrations         | `PASS_FOR_SOURCE_PREFLIGHT`               | Materials work began at `8b5206eb007a7e91548b5a79eb2542ca7cdadf6e`; fresh owned PostgreSQL databases applied `817` migrations. Source/typechecks are qualified; exact-current mounted client/server/browser identity remains pending.                                                                                                                                                                                                                    |
+| G02  | Journeys, writes/readbacks, upstream/downstream and policy map | `PASS`                                    | DOC: edit/checkpoint/version/rollback/cold reopen/DOCX/export receipt/share revoke. PPT: template-bound deck/CAS/history/restore/PPTX; PDF semantics explicit, never false visual parity. XLSX: create/value/formula/structural command/idempotency/revision/CAS restore/XLSX binary/share/archive. Common boundaries: provenance quarantine, provider failure without fake bytes, stale/tenant/auth/revoked-share and immutable receipt replay.         |
+| G03  | Named allowed/denied personas                                  | `PASS_FOR_PREFLIGHT`                      | Same-tenant ACTIVE OWNER/ADMIN and permitted MEMBER artifact actors; independent provenance approver where required. Denied: anonymous, revoked/no membership, foreign tenant, ordinary member attempting provenance/provider approval, and any actor requesting unsupported template/provider. Stable owner-review personas remain to be provisioned.                                                                                                   |
+| G04  | Reproducible realistic and boundary fixtures                   | `IN_PROGRESS`                             | Run-scoped DOC/PPT/XLSX, mounted-auth, policy and provenance fixtures passed with scoped residue `0` or whole owned-DB destruction. A stable owner fixture with a nonempty versioned document, 3–5 slide deck, formula workbook, approved and quarantined templates, share/revoke and provider-failure alternates is not yet seeded.                                                                                                                     |
+| G05  | Functional preflight and cold readback                         | `PASS_FOR_SOURCE_PREFLIGHT`               | Core RealPG `69/69`; restricted policy `6/6`; provenance `24/24`; Workbook/Presentation route lane `112/112`; MAT-006 RealPG after final idempotency hardening `13/13`; focused schema/source route `41/41`. Root/server typechecks and diff-check PASS. Disposable databases dropped with catalog absence; claimed prefixes/tables residue `0`. Browser/owner gates remain open.                                                                        |
+| G06  | Desktop/tablet, PL/EN, themes, states, a11y, console/HTTP      | `NOT_STARTED`                             | —                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| G07  | Piotr review card                                              | `NOT_STARTED`                             | —                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| G08  | First-impression review                                        | `NOT_STARTED`                             | —                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| G09  | Guided CX journey review                                       | `NOT_STARTED`                             | —                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| G10  | Alternate-state owner review                                   | `NOT_STARTED`                             | —                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| G11  | Every owner observation/screenshot durably registered          | `NOT_STARTED`                             | —                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| G12  | Owner register reconciled and confirmed                        | `NOT_STARTED`                             | —                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| G13  | Solution and impact analysis                                   | `NOT_STARTED`                             | —                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| G14  | Remediation with finding-to-commit traceability                | `NOT_STARTED`                             | —                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| G15  | Integrator self-QA and impacted regression                     | `NOT_STARTED`                             | —                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| G16  | Before/after owner retest packet                               | `NOT_STARTED`                             | —                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| G17  | Owner retest decisions for every finding                       | `NOT_STARTED`                             | —                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| G18  | Module accepted on exact SHA and checkpointed                  | `NOT_STARTED`                             | —                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| G19  | Later-change regression obligations resolved                   | `NOT_STARTED`                             | —                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| G20  | Final 16/16 replay                                             | `NOT_STARTED`                             | —                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 
 ## Piotr review card
 
-| Purpose/value | Starting route | Persona/data | Guided actions | Conscious exclusions | Observation prompts |
-|---|---|---|---|---|---|
-| _prepare before G07_ | `/documents` | _pending_ | Open artifact → edit/version → provenance → authorized export → reopen | Unapproved external providers/rights | Authoring flow, templates, previews, provenance trust, export messaging |
+| Purpose/value | Starting route        | Persona/data                                 | Guided actions                                                                                 | Conscious exclusions                   | Observation prompts                                                  |
+| ------------- | --------------------- | -------------------------------------------- | ---------------------------------------------------------------------------------------------- | -------------------------------------- | -------------------------------------------------------------------- |
+| DOC slice     | `/document-studio`    | ACTIVE OWNER; realistic two-version document | Open → edit → checkpoint → restore → cold reopen → authorized DOCX export and receipt          | Mobile; unapproved providers/templates | Authoring clarity, checkpoint trust, provenance and export feedback  |
+| PPT slice     | `/presentations`      | ACTIVE OWNER; independent template approver  | Review 3–5 slide deck → history/restore → PPTX export → inspect notes/alt text                 | Visual-parity PDF is not claimed       | Builder flow, template trust, preview/export semantics               |
+| XLSX slice    | `/excele?ff_excele=1` | ACTIVE OWNER; formula/revision workbook      | Edit value/formula → structural command → replay/readback → restore → XLSX export/share revoke | Legacy `/tabele`; mobile               | Spreadsheet usability, persistence, conflict and download confidence |
 
 ## Persona and fixture ledger
 
-| ID | Type | Purpose | Setup/reset | Readback | Expected access | Status/evidence |
-|---|---|---|---|---|---|---|
-| _none_ | | | | | | |
+| ID                | Type                          | Purpose                                                         | Setup/reset                                               | Readback                                       | Expected access                                   | Status/evidence                  |
+| ----------------- | ----------------------------- | --------------------------------------------------------------- | --------------------------------------------------------- | ---------------------------------------------- | ------------------------------------------------- | -------------------------------- |
+| `MAT-TECH-CORE`   | run-scoped technical fixtures | DOC/PPT/XLSX lifecycle, mounted auth, export and handoff        | owned fresh PostgreSQL; scoped cleanup then exact DB drop | independent DB/binary/readback assertions      | allowed/denied matrix in G03                      | `69/69 PASS`; scoped residue `0` |
+| `MAT-TECH-POLICY` | isolated policy/provenance    | native-format policy, template authority and immutable receipts | separate owned databases/schemas with explicit opt-ins    | policy/provenance receipts and catalog absence | independent approver; unsupported provider denied | `6/6 + 24/24 PASS`               |
+| `MAT-OWNER-01`    | owner-review fixture          | three short DOC/PPT/XLSX guided slices                          | guarded local seed/readback/reset not yet implemented     | manifest/API/SQL/browser pending               | stable owner + approver + denied decoys           | `NOT_READY`                      |
 
 ## Owner UI/UX/CX register
 
 | Finding ID | Captured | Piotr original wording | Category | Route/screen | Current behavior | Expected experience | Impact | Screenshot/hash | Product SHA | Severity | Decision/status | Fix commit | Self-QA | Owner retest |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| _none_ | | | | | | | | | | | | | | |
+| ---------- | -------- | ---------------------- | -------- | ------------ | ---------------- | ------------------- | ------ | --------------- | ----------- | -------- | --------------- | ---------- | ------- | ------------ |
+| _none_     |          |                        |          |              |                  |                     |        |                 |             |          |                 |            |         |              |
 
 ## Implementation/regression ledger
 
 | Finding IDs | Root cause | Approved solution | Commit | Shared surfaces | Impacted modules | Tests/self-QA | Regression |
-|---|---|---|---|---|---|---|---|
-| _none_ | | | | | | | |
+| ----------- | ---------- | ----------------- | ------ | --------------- | ---------------- | ------------- | ---------- |
+| _none_      |            |                   |        |                 |                  |               |            |
+
+## Technical preflight findings
+
+| ID           | Finding                                                                                                               | Classification                                | Resolution/evidence                                                                                                                                                                                                          | State            |
+| ------------ | --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| `MAT-PF-001` | Acceptance package named stale frontend routes `/documents` and `/workbooks`.                                         | documentation/runtime-truth drift             | canonical routes recorded as `/document-studio`, `/presentations`, `/excele`; Excele flag must be pinned for owner evidence                                                                                                  | `FIXED`          |
+| `MAT-PF-002` | Workbook client still called `PATCH /:id/schema-command`, but a broad route rewrite had removed the mounted endpoint. | product compatibility regression              | endpoint restored with current org membership, strict command validation and canonical schema guard                                                                                                                          | `FIXED_VERIFIED` |
+| `MAT-PF-003` | Initial restoration allowed non-atomic snapshot/update and optional CAS/idempotency.                                  | product integrity risk discovered in review   | mandatory `expectedVersion`, `commandId`, `idempotencyKey`; pinned transaction contains snapshot, CAS, revision and hard readback; one concurrent winner; foreign tenant zero-write                                          | `FIXED_VERIFIED` |
+| `MAT-PF-004` | Reusing an idempotency key with another payload or after later commands could be misclassified as replay.             | product idempotency risk discovered in review | tenant-scoped durable revision identity is checked before CAS and again under row lock; same identity replays without writes, altered payload/command ID returns `409 IDEMPOTENCY_CONFLICT`; delayed A→B→A covered in RealPG | `FIXED_VERIFIED` |
+| `MAT-PF-005` | Two RealPG fixtures omitted lineage/export-backfill cleanup; several Workbook mocks predated strict membership.       | test/cleanup debt                             | exact FK-order cleanup and pass-through membership mocks; exhaustive prefix scan and owned-DB catalog remainder `0`                                                                                                          | `FIXED_VERIFIED` |
 
 ## Owner verdict
 
 Decision: `PENDING`
 Accepted SHA: —
 Date: —
-Accepted-out/deferred: Provider/provenance policy may remain explicit later-wave gate.
+Accepted-out/deferred: Mobile is non-gating. New external renderers/providers and any template/font/image rights without explicit authority remain OFF. Piotr must still confirm that Wave 3 accepts the restricted native-format scope rather than treating this as a blanket policy waiver.
 Evidence manifest: —

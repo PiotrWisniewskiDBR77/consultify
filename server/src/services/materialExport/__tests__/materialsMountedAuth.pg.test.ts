@@ -25,9 +25,18 @@ describe('MAT-BVP-001 mounted material routers with real auth', () => {
   let app: express.Express;
   beforeAll(async () => {
     const now = new Date().toISOString();
-    await pool.query(`INSERT INTO organizations(id,name,plan,status,is_active,created_at) VALUES($1,$2,'enterprise','active',1,$3)`, [org, p, now]);
-    await pool.query(`INSERT INTO users(id,organization_id,email,password,role,status,created_at) VALUES($1,$2,$3,'unused','ADMIN','active',$4)`, [user, org, `${user}@example.test`, now]);
-    await pool.query(`INSERT INTO organization_members(id,organization_id,user_id,role,status,created_at) VALUES($1,$2,$3,'ADMIN','ACTIVE',$4)`, [`${p}-membership`, org, user, now]);
+    await pool.query(
+      `INSERT INTO organizations(id,name,plan,status,is_active,created_at) VALUES($1,$2,'enterprise','active',1,$3)`,
+      [org, p, now]
+    );
+    await pool.query(
+      `INSERT INTO users(id,organization_id,email,password,role,status,created_at) VALUES($1,$2,$3,'unused','ADMIN','active',$4)`,
+      [user, org, `${user}@example.test`, now]
+    );
+    await pool.query(
+      `INSERT INTO organization_members(id,organization_id,user_id,role,status,created_at) VALUES($1,$2,$3,'ADMIN','ACTIVE',$4)`,
+      [`${p}-membership`, org, user, now]
+    );
     const [doc, workbook, presentations] = await Promise.all([
       import('../../../routes/document-studio.routes.js'),
       import('../../../routes/workbook.routes.js'),
@@ -38,10 +47,14 @@ describe('MAT-BVP-001 mounted material routers with real auth', () => {
     app.use('/api/document-studio', doc.default);
     app.use('/api/workbook', workbook.default);
     app.use('/api/presentations', presentations.default);
-    app.use((err: any, _req: any, res: any, _next: any) => res.status(500).json({ error: String(err?.message || err) }));
+    app.use((err: any, _req: any, res: any, _next: any) =>
+      res.status(500).json({ error: String(err?.message || err) })
+    );
   }, 60_000);
 
   afterAll(async () => {
+    await pool.query(`DELETE FROM v8_artifact_origin_links WHERE organization_id=$1`, [org]);
+    await pool.query(`DELETE FROM v8_output_artifacts WHERE organization_id=$1`, [org]);
     await pool.query(`DELETE FROM organization_members WHERE organization_id=$1`, [org]);
     await pool.query(`DELETE FROM users WHERE organization_id=$1`, [org]);
     await pool.query(`DELETE FROM organizations WHERE id=$1`, [org]);
@@ -60,8 +73,11 @@ describe('MAT-BVP-001 mounted material routers with real auth', () => {
     ['/api/document-studio/missing/export/docx'],
     ['/api/workbook/missing/download'],
     ['/api/presentations/decks/missing/download'],
-  ])('accepts real JWT/membership but reveals no foreign/nonexistent artifact at %s', async (path) => {
-    const res = await request(app).get(path).set(bearer());
-    expect([404, 409]).toContain(res.status);
-  });
+  ])(
+    'accepts real JWT/membership but reveals no foreign/nonexistent artifact at %s',
+    async (path) => {
+      const res = await request(app).get(path).set(bearer());
+      expect([404, 409]).toContain(res.status);
+    }
+  );
 });

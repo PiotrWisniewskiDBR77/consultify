@@ -15,6 +15,7 @@ vi.mock('../../utils/queryHelpers.js', () => ({
   transaction: (callback: (db: unknown) => Promise<unknown>) => callback({}),
 }));
 vi.mock('../../middleware/auth.middleware.js', () => ({
+  validateOrgMembership: (_req: any, _res: any, next: () => void) => next(),
   verifyToken: (req: any, _res: any, next: () => void) => {
     req.user = { id: 'user-1', organizationId: 'org-1' };
     next();

@@ -20,6 +20,7 @@ vi.mock('../../utils/queryHelpers.js', () => ({
 }));
 
 vi.mock('../../middleware/auth.middleware.js', () => ({
+  validateOrgMembership: (_req: any, _res: any, next: () => void) => next(),
   verifyToken: (req: any, _res: any, next: () => void) => {
     req.user = { id: 'user-1', organizationId: 'org-1' };
     next();
@@ -506,7 +507,11 @@ describe('POST /api/workbook/:id/commands', () => {
   it('moves comment anchors after structural insertion', async () => {
     mockQueryAll
       .mockResolvedValueOnce([
-        { id: 'comment-move', sheet_id: '11111111-1111-4111-8111-111111111111', range_ref: 'A2:B3' },
+        {
+          id: 'comment-move',
+          sheet_id: '11111111-1111-4111-8111-111111111111',
+          range_ref: 'A2:B3',
+        },
       ])
       .mockResolvedValueOnce([]);
 

@@ -43,7 +43,13 @@ import {
 } from '../services/workbook/workbookRuntimeCache.js';
 import { assertWorkbookSchema } from '../services/workbook/workbookSchemaGuard.js';
 import { createCanonicalWorkbook } from '../services/workbook/workbookCreationService.js';
-import type { CellStyle, WorkbookSchema } from '../services/workbook/WorkbookSchema.js';
+import {
+  ChartImageSchema,
+  ConditionalFormattingBlockSchema,
+  type CellStyle,
+  type WorkbookSchema,
+  WorkbookSchemaValidator,
+} from '../services/workbook/WorkbookSchema.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
@@ -51,6 +57,16 @@ import * as queryHelpers from '../utils/queryHelpers.js';
 import { retryWithBackoff } from '../utils/retryWithBackoff.js';
 
 const router = Router();
+
+function canonicalJson(value: unknown): string {
+  if (value === null || typeof value !== 'object') return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map((item) => canonicalJson(item)).join(',')}]`;
+  const record = value as Record<string, unknown>;
+  return `{${Object.keys(record)
+    .sort()
+    .map((key) => `${JSON.stringify(key)}:${canonicalJson(record[key])}`)
+    .join(',')}}`;
+}
 
 /**
  * Składa jeden czytelny string groundingu dla WorkbookGeneratorService z
@@ -1151,8 +1167,7 @@ router.post(
         CustomWorkbookTemplateInvalidError,
         resolveCustomWorkbookTemplate,
         materializeCustomWorkbookSchema,
-      } =
-        await import('../services/workbook/customWorkbookTemplateService.js');
+      } = await import('../services/workbook/customWorkbookTemplateService.js');
       let custom;
       try {
         custom = await resolveCustomWorkbookTemplate(id, user.organizationId, user.id);
@@ -1383,8 +1398,17 @@ router.post(
 
     // Persist through the canonical owner command shared with governed handoffs.
     try {
-      await createCanonicalWorkbook({workbookId:id,organizationId:user.organizationId,userId:user.id,title,schema,
-        sourceIdentity:`workbook-blank:${id}`,sourceHash:'manual-blank-v1',sourcePack,evidenceRefs});
+      await createCanonicalWorkbook({
+        workbookId: id,
+        organizationId: user.organizationId,
+        userId: user.id,
+        title,
+        schema,
+        sourceIdentity: `workbook-blank:${id}`,
+        sourceHash: 'manual-blank-v1',
+        sourcePack,
+        evidenceRefs,
+      });
     } catch (err) {
       logger.warn('[WorkbookRoutes] Failed to persist blank workbook metadata:', err);
     }
@@ -1513,9 +1537,7 @@ router.get(
       outputFormat: 'xlsx',
       createdBy: user.id,
       requestKey:
-        typeof req.headers['idempotency-key'] === 'string'
-          ? req.headers['idempotency-key']
-          : null,
+        typeof req.headers['idempotency-key'] === 'string' ? req.headers['idempotency-key'] : null,
     });
 
     let buffer: Buffer;
@@ -3504,6 +3526,597 @@ router.post(
       );
     });
     res.json({ ok: true, id: existing.id, archived: false });
+  })
+);
+
+/**
+ * PATCH /api/workbook/:id/schema-command
+ *
+ * Canonical structural editor command. Unlike replacing schema_json from the
+ * browser, commands are validated and applied to the latest org-scoped schema,
+ * snapshot the pre-change version and use CAS for conflict-safe persistence.
+ */
+router.patch(
+  '/:id/schema-command',
+  validateOrgMembership,
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    if (!user) return void res.status(401).json({ error: 'Unauthorized' });
+    const { id } = req.params;
+    const { command, expectedVersion, commandId, idempotencyKey } = req.body || {};
+    if (!command || typeof command.type !== 'string') {
+      return void res.status(400).json({ error: 'command.type is required' });
+    }
+    if (!Number.isInteger(expectedVersion) || expectedVersion < 0) {
+      return void res.status(400).json({ error: 'expectedVersion must be a non-negative integer' });
+    }
+    if (typeof commandId !== 'string' || !commandId.trim() || commandId.length > 120) {
+      return void res.status(400).json({ error: 'commandId must be a non-empty string' });
+    }
+    if (
+      typeof idempotencyKey !== 'string' ||
+      !idempotencyKey.trim() ||
+      idempotencyKey.length > 200
+    ) {
+      return void res.status(400).json({ error: 'idempotencyKey must be a non-empty string' });
+    }
+    const normalizedCommandId = commandId.trim();
+    const normalizedIdempotencyKey = idempotencyKey.trim();
+    const canonicalOperationsJson = canonicalJson([command]);
+    const classifyReplayIdentity = async (): Promise<'missing' | 'match' | 'conflict'> => {
+      const revision = await queryHelpers.queryOne<{
+        command_id: string;
+        operations_json: string;
+      }>(
+        `SELECT command_id, operations_json
+         FROM generated_workbook_revisions
+         WHERE workbook_id = ? AND organization_id = ? AND idempotency_key = ?
+         ORDER BY version DESC LIMIT 1`,
+        [id, user.organizationId, normalizedIdempotencyKey]
+      );
+      if (!revision) return 'missing';
+      if (revision.command_id !== normalizedCommandId) return 'conflict';
+      try {
+        return canonicalJson(JSON.parse(revision.operations_json)) === canonicalOperationsJson
+          ? 'match'
+          : 'conflict';
+      } catch {
+        return 'conflict';
+      }
+    };
+    await ensureWorkbookSchema();
+    const row = await queryHelpers.queryOne<{
+      schema_json: string;
+      version: number;
+      title: string;
+      last_mutation_key: string | null;
+    }>(
+      `SELECT schema_json, version, title, last_mutation_key
+       FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
+      [id, user.organizationId]
+    );
+    if (!row?.schema_json) return void res.status(404).json({ error: 'Workbook not found' });
+    const currentVersion = Number(row.version ?? 0);
+    const replayIdentity = await classifyReplayIdentity();
+    if (replayIdentity === 'conflict') {
+      return void res.status(409).json({
+        error: 'Idempotency key was already used for a different workbook command',
+        code: 'IDEMPOTENCY_CONFLICT',
+      });
+    }
+    if (replayIdentity === 'match') {
+      const lockedReplay = await queryHelpers.withPgTransaction(async () => {
+        const head = await queryHelpers.queryOne<{
+          schema_json: string;
+          version: number | null;
+        }>(
+          `SELECT schema_json, version
+           FROM generated_workbooks WHERE id = ? AND organization_id = ? FOR UPDATE`,
+          [id, user.organizationId]
+        );
+        if (!head?.schema_json) return { kind: 'not_found' as const };
+        const lockedIdentity = await classifyReplayIdentity();
+        if (lockedIdentity !== 'match') return { kind: 'idempotency_conflict' as const };
+        return {
+          kind: 'duplicate' as const,
+          schema: JSON.parse(head.schema_json) as WorkbookSchema,
+          version: Number(head.version ?? 0),
+        };
+      });
+      if (lockedReplay.kind === 'not_found')
+        return void res.status(404).json({ error: 'Workbook not found' });
+      if (lockedReplay.kind === 'idempotency_conflict')
+        return void res.status(409).json({
+          error: 'Idempotency key was already used for a different workbook command',
+          code: 'IDEMPOTENCY_CONFLICT',
+        });
+      workbookCache.delete(id);
+      return void res.json({
+        ok: true,
+        duplicate: true,
+        commandId: normalizedCommandId,
+        schema: lockedReplay.schema,
+        version: lockedReplay.version,
+      });
+    }
+    if (expectedVersion !== currentVersion) {
+      return void res.status(409).json({
+        error: 'Version conflict',
+        code: 'VERSION_CONFLICT',
+        serverVersion: currentVersion,
+      });
+    }
+    const schema = JSON.parse(row.schema_json) as WorkbookSchema;
+    const sheetIndex = Number(command.sheetIndex ?? 0);
+    const sheet = schema.sheets[sheetIndex];
+    const requireSheet = () => {
+      if (!Number.isInteger(sheetIndex) || !sheet) throw new Error('Unknown sheetIndex');
+      return sheet;
+    };
+    try {
+      switch (command.type) {
+        case 'renameWorkbook': {
+          const title = String(command.title || '').trim();
+          if (!title) throw new Error('Workbook title is required');
+          schema.title = title.slice(0, 160);
+          break;
+        }
+        case 'addSheet': {
+          const base = String(command.name || `Sheet ${schema.sheets.length + 1}`).trim();
+          const names = new Set(schema.sheets.map((s) => s.name.toLowerCase()));
+          let name = base || `Sheet ${schema.sheets.length + 1}`;
+          let suffix = 2;
+          while (names.has(name.toLowerCase())) name = `${base} ${suffix++}`;
+          schema.sheets.push({
+            name,
+            columns: [{ key: 'A', header: 'Column A' }],
+            rows: [{ cells: { A: { value: null } } }],
+          });
+          break;
+        }
+        case 'renameSheet': {
+          const target = requireSheet();
+          const name = String(command.name || '').trim();
+          if (!name) throw new Error('Sheet name is required');
+          if (
+            schema.sheets.some(
+              (s, i) => i !== sheetIndex && s.name.toLowerCase() === name.toLowerCase()
+            )
+          )
+            throw new Error('Sheet name must be unique');
+          target.name = name.slice(0, 80);
+          break;
+        }
+        case 'duplicateSheet': {
+          const target = requireSheet();
+          const clone = JSON.parse(JSON.stringify(target));
+          clone.name = `${target.name} copy`;
+          schema.sheets.splice(sheetIndex + 1, 0, clone);
+          break;
+        }
+        case 'deleteSheet': {
+          requireSheet();
+          if (schema.sheets.length <= 1) throw new Error('Workbook must keep at least one sheet');
+          schema.sheets.splice(sheetIndex, 1);
+          break;
+        }
+        case 'moveSheet': {
+          requireSheet();
+          const toIndex = Number(command.toIndex);
+          if (!Number.isInteger(toIndex) || toIndex < 0 || toIndex >= schema.sheets.length)
+            throw new Error('Invalid toIndex');
+          const [moved] = schema.sheets.splice(sheetIndex, 1);
+          schema.sheets.splice(toIndex, 0, moved);
+          break;
+        }
+        case 'insertRow': {
+          const target = requireSheet();
+          const rowIndex = Math.max(
+            0,
+            Math.min(Number(command.rowIndex ?? target.rows.length), target.rows.length)
+          );
+          target.rows.splice(rowIndex, 0, {
+            cells: Object.fromEntries(target.columns.map((c) => [c.key, { value: null }])),
+          });
+          break;
+        }
+        case 'deleteRow': {
+          const target = requireSheet();
+          const rowIndex = Number(command.rowIndex);
+          if (!Number.isInteger(rowIndex) || rowIndex < 0 || rowIndex >= target.rows.length)
+            throw new Error('Invalid rowIndex');
+          target.rows.splice(rowIndex, 1);
+          break;
+        }
+        case 'insertColumn': {
+          const target = requireSheet();
+          const colIndex = Math.max(
+            0,
+            Math.min(Number(command.colIndex ?? target.columns.length), target.columns.length)
+          );
+          let key = String(command.key || `column_${Date.now()}`).replace(/[^A-Za-z0-9_]/g, '_');
+          while (target.columns.some((c) => c.key === key)) key += '_2';
+          target.columns.splice(colIndex, 0, {
+            key,
+            header: String(command.header || 'New column'),
+            width: 16,
+          });
+          target.rows.forEach((r) => {
+            r.cells[key] = { value: null };
+          });
+          break;
+        }
+        case 'deleteColumn': {
+          const target = requireSheet();
+          const colIndex = Number(command.colIndex);
+          if (!Number.isInteger(colIndex) || colIndex < 0 || colIndex >= target.columns.length)
+            throw new Error('Invalid colIndex');
+          if (target.columns.length <= 1) throw new Error('Sheet must keep at least one column');
+          const [removed] = target.columns.splice(colIndex, 1);
+          target.rows.forEach((r) => {
+            delete r.cells[removed.key];
+          });
+          break;
+        }
+        case 'resizeColumn': {
+          const target = requireSheet();
+          const colIndex = Number(command.colIndex);
+          const width = Number(command.width);
+          if (!target.columns[colIndex] || !Number.isFinite(width) || width < 4 || width > 80)
+            throw new Error('Invalid column width');
+          target.columns[colIndex].width = width;
+          break;
+        }
+        case 'resizeRow': {
+          const target = requireSheet();
+          const rowIndex = Number(command.rowIndex);
+          const height = Number(command.height);
+          if (!target.rows[rowIndex] || !Number.isFinite(height) || height < 10 || height > 200)
+            throw new Error('Invalid row height');
+          target.rows[rowIndex].height = height;
+          break;
+        }
+        case 'resizeRowAndColumn': {
+          const target = requireSheet();
+          const rowIndex = Number(command.rowIndex);
+          const colIndex = Number(command.colIndex);
+          const height = Number(command.height);
+          const width = Number(command.width);
+          if (
+            !target.rows[rowIndex] ||
+            !target.columns[colIndex] ||
+            !Number.isFinite(height) ||
+            !Number.isFinite(width) ||
+            height < 10 ||
+            height > 200 ||
+            width < 4 ||
+            width > 80
+          )
+            throw new Error('Invalid row or column size');
+          target.rows[rowIndex].height = height;
+          target.columns[colIndex].width = width;
+          break;
+        }
+        case 'setRowHidden': {
+          const target = requireSheet();
+          const rowIndex = Number(command.rowIndex);
+          if (!target.rows[rowIndex]) throw new Error('Invalid rowIndex');
+          target.rows[rowIndex].hidden = Boolean(command.hidden);
+          break;
+        }
+        case 'setColumnHidden': {
+          const target = requireSheet();
+          const colIndex = Number(command.colIndex);
+          if (!target.columns[colIndex]) throw new Error('Invalid colIndex');
+          target.columns[colIndex].hidden = Boolean(command.hidden);
+          break;
+        }
+        case 'unhideAll': {
+          const target = requireSheet();
+          target.rows.forEach((rowValue) => {
+            rowValue.hidden = false;
+          });
+          target.columns.forEach((column) => {
+            column.hidden = false;
+          });
+          break;
+        }
+        case 'mergeCells': {
+          const target = requireSheet();
+          const range = String(command.range || '').toUpperCase();
+          if (!/^\$?[A-Z]+\$?\d+:\$?[A-Z]+\$?\d+$/.test(range))
+            throw new Error('Invalid merge range');
+          const [start, end] = range.split(':');
+          target.merges = [
+            ...(target.merges || []).filter((item) => `${item.start}:${item.end}` !== range),
+            { start, end },
+          ];
+          break;
+        }
+        case 'unmergeCells': {
+          const target = requireSheet();
+          const range = String(command.range || '').toUpperCase();
+          target.merges = (target.merges || []).filter(
+            (item) => `${item.start}:${item.end}`.toUpperCase() !== range
+          );
+          break;
+        }
+        case 'addConditionalFormat': {
+          const target = requireSheet();
+          const block = command.block;
+          const parsed = ConditionalFormattingBlockSchema.parse(block);
+          target.conditionalFormatting = [...(target.conditionalFormatting || []), parsed];
+          break;
+        }
+        case 'clearConditionalFormats': {
+          const target = requireSheet();
+          target.conditionalFormatting = [];
+          break;
+        }
+        case 'formatCells': {
+          const target = requireSheet();
+          const rowIndexes = Array.isArray(command.rowIndexes) ? command.rowIndexes : [];
+          const colIndexes = Array.isArray(command.colIndexes) ? command.colIndexes : [];
+          const style = command.style && typeof command.style === 'object' ? command.style : {};
+          rowIndexes.forEach((ri: number) =>
+            colIndexes.forEach((ci: number) => {
+              const col = target.columns[ci];
+              const targetRow = target.rows[ri];
+              if (!col || !targetRow) return;
+              targetRow.cells[col.key] = {
+                ...(targetRow.cells[col.key] || {}),
+                style: { ...(targetRow.cells[col.key]?.style || {}), ...style },
+              };
+            })
+          );
+          break;
+        }
+        case 'sortRows': {
+          const target = requireSheet();
+          const colIndex = Number(command.colIndex);
+          const col = target.columns[colIndex];
+          if (!col) throw new Error('Invalid colIndex');
+          const direction = command.direction === 'desc' ? -1 : 1;
+          const scalar = (row: (typeof target.rows)[number]) => row.cells[col.key]?.value ?? '';
+          const sorted = target.rows
+            .map((rowValue, oldIndex) => ({ rowValue, oldIndex }))
+            .sort(
+              (a, b) =>
+                String(scalar(a.rowValue)).localeCompare(String(scalar(b.rowValue)), undefined, {
+                  numeric: true,
+                }) * direction
+            );
+          target.rows = sorted.map(({ rowValue, oldIndex }, newIndex) => {
+            const delta = newIndex - oldIndex;
+            if (!delta) return rowValue;
+            const clone = JSON.parse(JSON.stringify(rowValue)) as typeof rowValue;
+            Object.values(clone.cells).forEach((cell) => {
+              if (typeof cell?.formula !== 'string') return;
+              cell.formula = cell.formula.replace(
+                /(\$?[A-Z]+)(\$?)(\d+)/g,
+                (_match, letters: string, absoluteRow: string, rowNumber: string) =>
+                  `${letters}${absoluteRow}${absoluteRow ? rowNumber : Math.max(1, Number(rowNumber) + delta)}`
+              );
+            });
+            return clone;
+          });
+          break;
+        }
+        case 'setFreeze': {
+          const target = requireSheet();
+          const freezeRow = Number(command.freezeRow ?? 0);
+          const freezeCol = Number(command.freezeCol ?? 0);
+          if (
+            !Number.isInteger(freezeRow) ||
+            !Number.isInteger(freezeCol) ||
+            freezeRow < 0 ||
+            freezeCol < 0
+          )
+            throw new Error('Invalid freeze panes');
+          target.freezeRow = freezeRow;
+          target.freezeCol = freezeCol;
+          break;
+        }
+        case 'setAutoFilter': {
+          const target = requireSheet();
+          target.autoFilter = Boolean(command.enabled);
+          break;
+        }
+        case 'setValidation': {
+          const target = requireSheet();
+          const rowIndex = Number(command.rowIndex);
+          const colIndex = Number(command.colIndex);
+          const col = target.columns[colIndex];
+          const targetRow = target.rows[rowIndex];
+          if (!col || !targetRow) throw new Error('Invalid cell');
+          const current = targetRow.cells[col.key] || {};
+          targetRow.cells[col.key] = { ...current, validation: command.validation || undefined };
+          break;
+        }
+        case 'upsertChartImage': {
+          const target = requireSheet();
+          const chart = ChartImageSchema.parse(command.chart);
+          const charts = target.chartImages || [];
+          const existingIndex = chart.id ? charts.findIndex((item) => item.id === chart.id) : -1;
+          if (existingIndex >= 0) charts[existingIndex] = chart;
+          else charts.push({ ...chart, id: chart.id || uuidv4() });
+          target.chartImages = charts;
+          break;
+        }
+        case 'deleteChartImage': {
+          const target = requireSheet();
+          const chartId = String(command.chartId || '');
+          target.chartImages = (target.chartImages || []).filter((chart) => chart.id !== chartId);
+          break;
+        }
+        case 'setComment': {
+          const target = requireSheet();
+          const rowIndex = Number(command.rowIndex);
+          const colIndex = Number(command.colIndex);
+          const col = target.columns[colIndex];
+          const targetRow = target.rows[rowIndex];
+          if (!col || !targetRow) throw new Error('Invalid cell');
+          const current = targetRow.cells[col.key] || {};
+          targetRow.cells[col.key] = {
+            ...current,
+            comment: String(command.comment || '').trim() || undefined,
+          };
+          break;
+        }
+        case 'findReplace': {
+          const find = String(command.find || '');
+          const replacement = String(command.replacement ?? '');
+          if (!find) throw new Error('Find text is required');
+          const matchCase = Boolean(command.matchCase);
+          const normalize = (value: string) => (matchCase ? value : value.toLocaleLowerCase());
+          let replacements = 0;
+          schema.sheets.forEach((target) =>
+            target.rows.forEach((targetRow) =>
+              Object.values(targetRow.cells).forEach((cell) => {
+                if (typeof cell.value !== 'string') return;
+                const source = cell.value;
+                const sourceComparable = normalize(source);
+                const findComparable = normalize(find);
+                if (!sourceComparable.includes(findComparable)) return;
+                if (matchCase) cell.value = source.split(find).join(replacement);
+                else {
+                  const escaped = find.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                  cell.value = source.replace(new RegExp(escaped, 'gi'), replacement);
+                }
+                replacements += 1;
+              })
+            )
+          );
+          (schema.metadata ||= {}).lastFindReplaceCount = replacements;
+          break;
+        }
+        default:
+          throw new Error(`Unsupported command ${command.type}`);
+      }
+    } catch (error) {
+      return void res
+        .status(400)
+        .json({ error: error instanceof Error ? error.message : 'Invalid command' });
+    }
+    const parsed = WorkbookSchemaValidator.safeParse(schema);
+    if (!parsed.success)
+      return void res
+        .status(400)
+        .json({ error: 'Command produced invalid workbook schema', issues: parsed.error.issues });
+    const nextVersion = currentVersion + 1;
+    const nextFileName = `${parsed.data.title.replace(/[^a-zA-Z0-9._-]+/g, '_') || 'workbook'}.xlsx`;
+    const serializedSchema = JSON.stringify(parsed.data);
+    const persisted = await queryHelpers.withPgTransaction(async () => {
+      const head = await queryHelpers.queryOne<{
+        schema_json: string;
+        version: number | null;
+        last_mutation_key: string | null;
+      }>(
+        `SELECT schema_json, version, last_mutation_key
+         FROM generated_workbooks WHERE id = ? AND organization_id = ? FOR UPDATE`,
+        [id, user.organizationId]
+      );
+      if (!head?.schema_json) {
+        return { kind: 'not_found' as const };
+      }
+      const headVersion = Number(head.version ?? 0);
+      const transactionReplayIdentity = await classifyReplayIdentity();
+      if (transactionReplayIdentity === 'conflict') {
+        return { kind: 'idempotency_conflict' as const };
+      }
+      if (transactionReplayIdentity === 'match') {
+        return {
+          kind: 'duplicate' as const,
+          schema: JSON.parse(head.schema_json) as WorkbookSchema,
+          version: headVersion,
+        };
+      }
+      if (headVersion !== expectedVersion) {
+        return { kind: 'conflict' as const, version: headVersion };
+      }
+      await queryHelpers.queryRun(
+        `INSERT INTO generated_workbook_versions
+         (id, workbook_id, version, schema_json_snapshot, sheet_count, created_by, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+        [
+          uuidv4(),
+          id,
+          headVersion,
+          head.schema_json,
+          (JSON.parse(head.schema_json) as WorkbookSchema).sheets.length,
+          user.id,
+        ]
+      );
+      const result = await queryHelpers.queryRun(
+        `UPDATE generated_workbooks
+         SET schema_json = ?, title = ?, file_name = ?, sheet_count = ?, version = ?,
+             last_mutation_key = ?, approval_current = 0
+         WHERE id = ? AND organization_id = ? AND COALESCE(version, 0) = ?`,
+        [
+          serializedSchema,
+          parsed.data.title,
+          nextFileName,
+          parsed.data.sheets.length,
+          nextVersion,
+          normalizedIdempotencyKey,
+          id,
+          user.organizationId,
+          headVersion,
+        ]
+      );
+      if (!result?.changes) return { kind: 'conflict' as const, version: headVersion };
+      await queryHelpers.queryRun(
+        `INSERT INTO generated_workbook_revisions
+         (id, workbook_id, organization_id, version, command_id, idempotency_key,
+          base_schema_json, schema_json, operations_json, created_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          uuidv4(),
+          id,
+          user.organizationId,
+          nextVersion,
+          normalizedCommandId,
+          normalizedIdempotencyKey,
+          head.schema_json,
+          serializedSchema,
+          canonicalOperationsJson,
+          user.id,
+        ]
+      );
+      const readback = await queryHelpers.queryOne<{ schema_json: string; version: number | null }>(
+        `SELECT schema_json, version FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
+        [id, user.organizationId]
+      );
+      if (!readback?.schema_json || Number(readback.version ?? -1) !== nextVersion) {
+        throw new Error('Workbook schema command readback failed');
+      }
+      return {
+        kind: 'applied' as const,
+        schema: JSON.parse(readback.schema_json) as WorkbookSchema,
+        version: nextVersion,
+      };
+    });
+    if (persisted.kind === 'not_found')
+      return void res.status(404).json({ error: 'Workbook not found' });
+    if (persisted.kind === 'conflict')
+      return void res.status(409).json({
+        error: 'Version conflict',
+        code: 'VERSION_CONFLICT',
+        serverVersion: persisted.version,
+      });
+    if (persisted.kind === 'idempotency_conflict')
+      return void res.status(409).json({
+        error: 'Idempotency key was already used for a different workbook command',
+        code: 'IDEMPOTENCY_CONFLICT',
+      });
+    workbookCache.delete(id);
+    res.json({
+      ok: true,
+      duplicate: persisted.kind === 'duplicate',
+      commandId: normalizedCommandId,
+      schema: persisted.schema,
+      version: persisted.version,
+    });
   })
 );
 
