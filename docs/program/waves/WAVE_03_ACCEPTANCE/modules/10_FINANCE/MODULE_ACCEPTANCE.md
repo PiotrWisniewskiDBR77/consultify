@@ -2,7 +2,7 @@
 
 ID: `FIN`
 Routes: `/finance`
-Current gate: `TECHNICAL_PREFLIGHT / OWNER_FIXTURE_AND_BROWSER_PENDING`
+Current gate: `FULL_COMPUTED_HARNESS_PASS / MOUNTED_OWNER_FIXTURE_PENDING`
 Owner: Piotr Wisniewski
 Integrator: Codex
 Mobile: `DEFERRED_NON_GATING`
@@ -19,10 +19,10 @@ rollback and no false ready state.
 | Gate | Mandatory outcome | State | Evidence/decision |
 |---|---|---|---|
 | G00 | Scope, routes, dependencies, 82-task links and exclusions | `PASS` | `FIN-BVP-001`, `FIN-MVP-CUTOVER-001`, `FIN-MVP-CANDIDATE-001`, `FIN-MVP-RECONCILIATION-001`, `FIN-MVP-IMPORT-001`, `FIN-UI-CANON-001`; mobile/release/production excluded |
-| G01 | Exact baseline and client/server/runtime/DB/migrations | `PASS_FOR_SOURCE_PREFLIGHT` | source candidate `fa9904eb27`; mounted runtime still `ad0766ac4c1000c6c94934a1af1d53c0b4eed19c` and is not claimed exact-current; fresh migrations `817`, repeat `0`, dry-run `0` |
+| G01 | Exact baseline and client/server/runtime/DB/migrations | `PASS_FOR_SOURCE_PREFLIGHT` | atomic full-chain checkpoint `eee5b6cc7b`; mounted runtime is not yet rebound to this checkpoint; fresh migrations `817`, repeat `0`, dry-run `0` |
 | G02 | Journeys, writes/readbacks, upstream/downstream and policy map | `PASS` | exact-six Statement → Analysis → Baseline → Prediction → Valuation; Candidate/Results seams mapped; invalid/stale/tenant/auth/atomic/N/A boundaries covered |
 | G03 | Named allowed/denied personas | `PASS_FOR_PREFLIGHT` | durable same-tenant `ACTIVE/ADMIN` route fixtures; separate tenant actors; header claims alone explicitly rejected |
-| G04 | Reproducible realistic and boundary fixtures | `IN_PROGRESS / ANALYSIS_COMPUTED` | Analysis checkpoint `d5bfcc31df`. The guarded exact-six harness uses the official CD PROJEKT FY2025 PDF with pinned hash, stable OWNER/ADMIN/foreign OWNER, six statements and source receipts/hashes, exclusive secret-free manifest and whole disposable-DB drop. Statement is `EXACT_SIX_CONFIRMED`; canonical Statement BV → FY/entity/BS lines → `STATEMENT_TO_ANALYSIS` lineage → `computeAnalysisKpis` now cold-reads `CURRENT_RATIO=3` with a succeeded job on a fresh DB. Baseline, Prediction and Valuation remain explicitly `IDENTITY_SHELL_NOT_COMPUTED`; no full-G04 or owner-ready claim is made. The existing Baseline happy-path fixture bypasses source lifecycle via `session_replication_role=replica` and is rejected as Wave 3 evidence until a canonical independent-checker submit/approval/snapshot/freshness chain is built. All links remain `deepLinkVerified:false`; browser proof is pending. |
+| G04 | Reproducible realistic and boundary fixtures | `PASS_FOR_FULL_COMPUTED_HARNESS / MOUNTED_FIXTURE_MODE_PENDING` | Checkpoint `eee5b6cc7b`. The guarded official-PDF harness reproducibly executes the full canonical chain without trigger/session bypass: exact-six Statement and reconciliation, computed Analysis (`CURRENT_RATIO=3`), real GoldCo Baseline (7 schedule families, 12 periods, 372 outputs), STANDARD_BASE Prediction (372 passthrough rows) and DCF_FCFF Valuation (`READY`). All five business versions pass independent-checker approval and cold hash/run/current-pointer readback. Two final clean runs passed `2/2` and whole-database cleanup. This is strong pre-browser evidence, but the harness deliberately drops its database; a mounted retain/reset mode and deep-link replay are still required before owner review. |
 | G05 | Functional preflight and cold readback | `PASS_FOR_SOURCE_PREFLIGHT` | exact-six `2/2`; canonical RealPG matrix `128/128`; UI/unit `419/419`; focused staging `3/3`; root/server typechecks PASS; disposable DB catalog absence verified |
 | G06 | Desktop/tablet, PL/EN, themes, states, a11y, console/HTTP | `NOT_STARTED` | — |
 | G07 | Piotr review card | `NOT_STARTED` | — |
@@ -50,7 +50,7 @@ rollback and no false ready state.
 
 | ID | Type | Purpose | Setup/reset | Readback | Expected access | Status/evidence |
 |---|---|---|---|---|---|---|
-| `FIN-OWNER-G04-V1` | guarded local exact-six pre-browser fixture | CD PROJEKT FY2025 exact PDF; stable OWNER/ADMIN/foreign OWNER; Statement pack + computed Analysis + remaining downstream identities | `server/scripts/run-wave3-finance-owner-review.ts`; loopback-only exact-name disposable DB; explicit confirmation; whole DB drop | six statements/receipts/hashes; canonical Analysis CURRENT_RATIO `3` + succeeded job; Baseline/Prediction/Valuation remain shells; exclusive mode-0600 manifest | same-tenant OWNER/ADMIN allowed; foreign OWNER mounted pack read denied | `ANALYSIS_COMPUTED / FULL_G04_NOT_READY` |
+| `FIN-OWNER-G04-V1` | guarded full-chain pre-browser harness | CD PROJEKT FY2025 exact PDF; stable OWNER/ADMIN/foreign OWNER; exact-six Statement plus computed Analysis/Baseline/Prediction/Valuation | `server/scripts/run-wave3-finance-owner-review.ts`; loopback-only exact-name disposable DB; explicit confirmation; whole DB drop | six statements/receipts/hashes; Analysis ratio `3`; Baseline 372 outputs; Prediction 372 passthrough rows; DCF method `READY`; five approved versions with matching hashes/runs | same-tenant OWNER/ADMIN allowed; foreign OWNER pack read denied | `FULL_COMPUTED_HARNESS_PASS / MOUNTED_RETAIN_MODE_PENDING` |
 
 Qualified source and guarded pre-browser fixture (not yet a complete G04 owner fixture):
 
@@ -65,8 +65,9 @@ Qualified source and guarded pre-browser fixture (not yet a complete G04 owner f
   cardinality. A denied foreign-owner read proves no statement-row mutation;
   it is not claimed as a blanket no-write proof for every Finance table.
 - Prepared routes are source-backed but remain `deepLinkVerified:false` until
-  mounted browser replay. Baseline, Prediction, Analysis and Valuation are
-  identity shells only, not computed downstream results.
+  mounted browser replay. Statement, Analysis, Baseline, Prediction and
+  Valuation are computed and independently read back; the retained browser
+  database/runtime journey is not yet proven.
 
 ## Owner UI/UX/CX register
 
@@ -89,13 +90,16 @@ Qualified source and guarded pre-browser fixture (not yet a complete G04 owner f
 | `FIN-PF-003` | Immutable valuation input event ledger lacked tenant-bound parent FKs. | product schema defect | migration `20261061_finance_valuation_input_events_tenant_fks.sql`; three validated composite FKs, fail-closed anti-joins, append-only preserved; three raw cross-tenant probes reject `23503` with zero probe residue | `FIXED` |
 | `FIN-PF-004` | Failed DCF compute could omit a truthful method state or leave contradictory/stale publication behavior. | product state-integrity regression | new unpublished methods persist classified `DATA_INCOMPLETE`/`COMPUTE_FAILED` with `MISSING`; failed retry preserves last good `READY`; direct and legacy paths independently read back; no failure receipt fabricated | `FIXED` |
 | `FIN-PF-005` | Concurrent method creation could leak unique violation `23505`, including mixed success/failure publication. | product concurrency regression | atomic `INSERT ... ON CONFLICT DO NOTHING` plus tenant-scoped reselect; mixed race yields one method and final `READY`; tenant matrix remains green | `FIXED` |
+| `FIN-PF-006` | Compute output, job success, revision identity, business-version freshness and Valuation publication could commit in separate units or bind to an unrelated job/target. | product atomicity and identity-binding defects | checkpoint `eee5b6cc7b` publishes the authoritative tuple in one supplied transaction; enforces organization, input, lineage-bound output/BV/current revision, stale/order and replay/collision gates; injected publication/receipt failures fully roll back job/output/WR/BV/method; foreign and unrelated targets fail closed | `FIXED_VERIFIED` |
 
 ## Exact-current source evidence
 
-- Source candidate: `fa9904eb27` on `codex/wave3-16-module-acceptance-20260821`.
+- Source checkpoint: `eee5b6cc7b` on `codex/wave3-16-module-acceptance-20260821`.
 - Finance UI/unit pack: `46` files, `419/419 PASS`, zero skipped.
 - Staged Statement services: `2` files, `3/3 PASS`.
 - Official-PDF exact-six RealPG: `1` file, `2/2 PASS`; confidence/schema wall, rollback, six sibling statements, ACCEPT/EXCLUDE mapping decisions, six confirmations, pack readiness, cold readback, receipt hash and reimport identity.
+- Full official-PDF computed chain after atomic-publication hardening: two final fresh runs, each `2/2 PASS`, each followed by whole-database drop and catalog absence.
+- Focused atomic publication regressions: canonical `26/26 PASS`; legacy Valuation adapter `17/17 PASS`; injected publish/receipt rollback, foreign/unrelated target denial, current-revision binding, exact replay/collision, delayed-order protection and old-BV reconciliation rollback.
 - Canonical RealPG/HTTP replay: `12` files, `128/128 PASS`, zero skipped. It covers Statement, Analysis, Baseline, Prediction, Valuation, mount proof, legacy ID bridge, export/import, tenant matrix, cold reopen, atomic Statement registration and legacy Valuation successor behavior.
 - Migration ledger: fresh `817`, repeat `0`, dry-run `0` on owned disposable PostgreSQL databases.
 - Root typecheck: PASS. Server typecheck: PASS. `git diff --check`: PASS.

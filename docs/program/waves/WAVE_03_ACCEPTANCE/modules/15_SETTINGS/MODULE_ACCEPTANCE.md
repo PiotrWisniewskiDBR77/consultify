@@ -2,7 +2,7 @@
 
 ID: `SET`
 Routes: `/settings`
-Current gate: `G04_OWNER_FIXTURE_READY / G07_PENDING`
+Current gate: `OWNER_UI_DIRECTION_ACCEPTED / EXACT_SHA_RETEST_PENDING`
 Owner: Piotr Wisniewski
 Integrator: Codex
 Mobile: `DEFERRED_NON_GATING`
@@ -24,7 +24,7 @@ denial, destructive deletion OFF, legal-hold truth and no false success.
 | G04 | Reproducible realistic and boundary fixtures | `PASS_OWNER_FIXTURE_READY` | Fixture checkpoint `fafe6d96aa`. Guarded `scripts/dev/seed-wave3-settings-owner-review.mjs` creates only exact local `consultify_w3_settings_owner_*` databases after literal `YES`. Seed also requires a new absolute `SETTINGS_OWNER_FIXTURE_MANIFEST`, writes the verified secret-free readback once with exclusive `wx`/`0600`, and reset deliberately preserves it. Two distinct manifest paths passed seed/readback/drop cycles with identical logical hashes and final catalog absence `0`. No real OAuth token, MFA secret or destructive deletion is seeded. `deepLinkVerified:false` until browser G07. |
 | G05 | Functional preflight and cold readback | `PASS_FOR_SOURCE_PREFLIGHT` | Focused unit `49/49`; RealPG deletion guard `6/6`, cold settings `6/6`, GDPR/export/deletion cutover `6/6`, guarded OAuth `9/9`. Cross-tenant notification IDOR is tenant/ACTIVE/role scoped with zero-write negatives and no runtime DDL on that writer. One test-owned receipt row required exact manual cleanup before whole-DB drop and remains fixture-cleanup debt. Browser/owner evidence is not included. |
 | G06 | Desktop/tablet, PL/EN, themes, states, a11y, console/HTTP | `NOT_STARTED` | — |
-| G07 | Piotr review card | `NOT_STARTED` | — |
+| G07 | Piotr review card | `PASS_OWNER_DIRECTION` | On 2026-08-21 Piotr explicitly stated: “Ustawienia są ok”. This accepts the current Settings UI direction and removes Settings from the Organization/Admin rebuild scope. Exact-SHA guided replay and technical boundaries remain mandatory before G18. |
 | G08 | First-impression review | `NOT_STARTED` | — |
 | G09 | Guided CX journey review | `NOT_STARTED` | — |
 | G10 | Alternate-state owner review | `NOT_STARTED` | — |
@@ -60,7 +60,7 @@ denial, destructive deletion OFF, legal-hold truth and no false success.
 
 | Finding ID | Captured | Piotr original wording | Category | Route/screen | Current behavior | Expected experience | Impact | Screenshot/hash | Product SHA | Severity | Decision/status | Fix commit | Self-QA | Owner retest |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| _none_ | | | | | | | | | | | | | | |
+| `SET-OWN-001` | 2026-08-21 | “Ustawienia są ok” | owner verdict / UI direction | `/settings/*` | Piotr reviewed the Settings direction while deciding which of Organization, Admin and Settings require rebuilding. | Preserve the accepted Settings direction; do not rebuild unless a later regression or a new owner observation requires it. | Prevents unnecessary redesign work while preserving the final exact-SHA replay obligation. | none supplied | runtime SHA not yet rebound | — | `OWNER_DIRECTION_ACCEPTED / EXACT_SHA_RETEST_PENDING` | — | pending frozen-candidate regression | pending exact-SHA replay |
 
 ## Implementation/regression ledger
 
@@ -79,8 +79,8 @@ denial, destructive deletion OFF, legal-hold truth and no false success.
 
 ## Owner verdict
 
-Decision: `PENDING`
+Decision: `OWNER_UI_DIRECTION_ACCEPTED / EXACT_SHA_RETEST_PENDING`
 Accepted SHA: —
-Date: —
+Date: 2026-08-21
 Accepted-out/deferred: Destructive deletion and external OAuth activation remain OFF pending later policy/release authorization. MFA enrollment UI is deferred; backend capability is not represented as an owner-complete flow.
 Evidence manifest: —
