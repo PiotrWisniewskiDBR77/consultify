@@ -38,6 +38,14 @@
  *    `InitiativeLifecycleGateDecisionError`/`INITIATIVE_LIFECYCLE_GATE_
  *    DOMAINS` stay real so `instanceof` checks and the Zod enum are genuine.
  *
+ * This is a bounded handler-contract test. The production router now places
+ * the legacy surface behind `requireCanonicalInitiativeExecutionWriter`, so
+ * mounted writes correctly return `409 EXECUTION_RUNTIME_V1_WRITE_REQUIRED`.
+ * That cutover is proved by the middleware's own regression suite; here the
+ * middleware is bypassed deliberately so the retained compatibility handler's
+ * validation, auth derivation and error mapping stay testable without making
+ * a false mounted-reachability claim.
+ *
  * Router double-mount: `server/src/Gateway.ts` mounts the SAME
  * `initiativesRoutes` router at both `/api/initiatives` (line 657) and
  * `/api/pmo/initiatives` (line 1106). This suite replicates both mounts on
@@ -101,6 +109,10 @@ vi.mock('../../../middleware/rateLimiting.middleware.js', () => ({
 
 vi.mock('../../../middleware/demoGuard.middleware.js', () => ({
   demoContextMiddleware: (_req: any, _res: any, next: () => void) => next(),
+}));
+
+vi.mock('../../../middleware/executionSpineLegacyReadOnly.middleware.js', () => ({
+  requireCanonicalInitiativeExecutionWriter: (_req: any, _res: any, next: () => void) => next(),
 }));
 
 // `middleware/validation.middleware.js` is DELIBERATELY NOT mocked — see
@@ -394,9 +406,9 @@ describe('two-phase early governed lifecycle routes', () => {
   });
 });
 
-describe('POST /:id/lifecycle-gate-decisions — reachability at both mounted prefixes', () => {
+describe('POST /:id/lifecycle-gate-decisions — retained handler contract at both prefixes', () => {
   it.each(['/api/pmo/initiatives', '/api/initiatives'])(
-    'is reachable at %s/:id/lifecycle-gate-decisions (201, not 404)',
+    'retains its bounded handler at %s/:id/lifecycle-gate-decisions (201 in middleware-isolated unit)',
     async (prefix) => {
       mockRecordDecision.mockResolvedValue({
         decision: decisionFixture(),
