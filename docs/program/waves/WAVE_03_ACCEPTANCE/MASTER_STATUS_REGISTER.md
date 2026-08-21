@@ -12,7 +12,7 @@ Last updated: `2026-08-21`
 | 6 | `EXE` | Execution | `TECHNICAL_PREFLIGHT` | `9ce72577f9` source candidate; mount pending | `G00–G03 PASS/PASS_FOR_PREFLIGHT; G04–G05 IN_PROGRESS; 137/137 PASS` | 0 | 0 | 0 | 0 | `EXE-PF-001..003 fixed; EXE-PF-004 open; owner fixture pending` | Organization owner screen intentionally retained |
 | 7 | `MYW` | My Work / Agent | `TECHNICAL_PREFLIGHT` | `81c69db686` source candidate; mount pending | `G00–G03 PASS/PASS_FOR_PREFLIGHT; G04–G05 IN_PROGRESS; 105/105 PASS` | 0 | 0 | 0 | 0 | `MYW-PF-001..002 fixed; owner fixture script READY_PRESEED` | Organization owner screen intentionally retained |
 | 8 | `MTG` | Meetings | `TECHNICAL_PREFLIGHT` | `81c69db686` source candidate; mount pending | `G00–G03 PASS/PASS_FOR_PREFLIGHT; G04–G05 IN_PROGRESS; 156/156 PASS + smoke 5/5` | 0 | 0 | 0 | 0 | `MTG-PF-001..002 fixed; owner fixture pending` | Organization owner screen intentionally retained |
-| 9 | `RES` | Results | `NOT_STARTED` | — | `0` | 0 | 0 | 0 | 0 | — | — |
+| 9 | `RES` | Results | `TECHNICAL_PREFLIGHT` | `67544776da` source candidate; mount pending | `G00–G03 PASS/PASS_FOR_PREFLIGHT; G04 IN_PROGRESS; G05 PASS_FOR_PREFLIGHT` | 0 | 0 | 0 | 0 | `RES-PF-001..005 fixed; RES-PF-006 non-gating; owner fixture pending` | Organization owner screen intentionally retained |
 | 10 | `FIN` | Finance | `NOT_STARTED` | — | `0` | 0 | 0 | 0 | 0 | — | — |
 | 11 | `MAT` | Materials | `NOT_STARTED` | — | `0` | 0 | 0 | 0 | 0 | — | — |
 | 12 | `AUD` | Audits | `NOT_STARTED` | — | `0` | 0 | 0 | 0 | 0 | — | — |

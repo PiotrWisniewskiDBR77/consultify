@@ -2,7 +2,7 @@
 
 ID: `RES`
 Routes: `/results`
-Current gate: `NOT_STARTED`
+Current gate: `TECHNICAL_PREFLIGHT`
 Owner: Piotr Wisniewski
 Integrator: Codex
 Mobile: `DEFERRED_NON_GATING`
@@ -17,12 +17,12 @@ truth, immutable history, retry, visibility grant and foreign tenant.
 
 | Gate | Mandatory outcome | State | Evidence/decision |
 |---|---|---|---|
-| G00 | Scope, routes, dependencies, 82-task links and exclusions | `NOT_STARTED` | — |
-| G01 | Exact baseline and client/server/runtime/DB/migrations | `NOT_STARTED` | — |
-| G02 | Journeys, writes/readbacks, upstream/downstream and policy map | `NOT_STARTED` | — |
-| G03 | Named allowed/denied personas | `NOT_STARTED` | — |
-| G04 | Reproducible realistic and boundary fixtures | `NOT_STARTED` | — |
-| G05 | Functional preflight and cold readback | `NOT_STARTED` | — |
+| G00 | Scope, routes, dependencies, 82-task links and exclusions | `PASS` | Scope binds `RES-BVP-001`, `RES-MVP-LEGACY-CUTOVER-001`, `RES-MVP-VISIBILITY-001`, `RES-FLOW-ADAPTER-001`, `RES-UI-CANON-001`; all historical packets report `DONE_CURRENT_SHA` but were replayed rather than trusted. Canonical API families are KPI/ROI/OKR plus visibility, legacy archive and Execution ingress. Results owns immutable Actual; Finance may propose/reconcile but never overwrite it. Production telemetry, release and mobile are excluded. |
+| G01 | Exact baseline and client/server/runtime/DB/migrations | `PASS_FOR_SOURCE_PREFLIGHT` | Source candidate `67544776da`; branch `codex/wave3-16-module-acceptance-20260821`; root/server typechecks PASS. Shared local PostgreSQL is `127.0.0.1:34940/consultinity`; fresh disposable schemas applied `816` migrations. Governed ROI and immutable legacy suites used exact-name disposable databases and verified their removal. Mounted browser remains intentionally on Organization product `ad0766ac4c1000c6c94934a1af1d53c0b4eed19c`; Results exact-SHA browser mount is pending. |
+| G02 | Journeys, writes/readbacks, upstream/downstream and policy map | `PASS` | KPI definition/version/approval → measurement → deviation/recovery; ROI case → approved Finance source + Results Actual → proposal/dispute/PIR; OKR program/set/objectives/KRs → publish/check-in/review. Execution ingress is tenant-scoped and exactly-once. Legacy inventory is exactly `28 = 23 disabled + 5 retained-observed`. Cold reads, maker/checker, CAS, idempotency, immutable sources, foreign tenant and fail-closed legacy scalar boundaries are explicit. |
+| G03 | Named allowed/denied personas | `PASS_FOR_PREFLIGHT` | Allowed module wall: same-tenant ACTIVE OWNER/ADMIN; independent maker/checker for governed commands. Denied: MEMBER/CONSULTANT/GUEST at restricted-beta wall, revoked/missing membership, forged role/superadmin, body tenant spoof and foreign tenant. Finance reconciliation additionally requires ACTIVE OWNER/ADMIN and current grant. Stable browser personas remain to be bound in G04. |
+| G04 | Reproducible realistic and boundary fixtures | `IN_PROGRESS` | Run-scoped RealPG fixtures cover KPI/ROI/OKR, membership, governed visibility, legacy isolation, Execution receipt and Finance reconciliation. Append-only governance/evidence ran only on disposable databases, then whole databases were dropped with catalog remainder `0`. Stable owner-review data still needs three guided slices: KPI trend/lineage, ROI Actual/Finance seam and OKR hierarchy/review. |
+| G05 | Functional preflight and cold readback | `PASS_FOR_PREFLIGHT` | Exact-current replay: UI/component `22 files / 141 tests`; KPI/ROI/OKR BVP `6 files / 30`; mounted visibility `4`; strict membership `11`; legacy registry `8`; legacy cutover `25`; legacy isolation `6`; governed ROI legacy-isolation + Finance reconciliation `20`; Execution ingress + cross-surface KPI identity `3`. All executed assertions PASS, zero skipped in claimed packets. Root/server typechecks and `git diff --check` PASS. React `act(...)` warnings remain non-gating test-quality debt; browser/owner gates G06+ are not claimed. |
 | G06 | Desktop/tablet, PL/EN, themes, states, a11y, console/HTTP | `NOT_STARTED` | — |
 | G07 | Piotr review card | `NOT_STARTED` | — |
 | G08 | First-impression review | `NOT_STARTED` | — |
@@ -43,13 +43,27 @@ truth, immutable history, retry, visibility grant and foreign tenant.
 
 | Purpose/value | Starting route | Persona/data | Guided actions | Conscious exclusions | Observation prompts |
 |---|---|---|---|---|---|
-| _prepare before G07_ | `/results` | _pending_ | Inspect outcomes → trace lineage → add observation → reopen | Production telemetry | Executive readability, trends/graphics, evidence trust, actionability |
+| Three short owner slices | `/results` | ACTIVE OWNER; independent ADMIN checker; denied MEMBER/foreign decoy prepared technically | (1) KPI overview/trend/lineage and governed recovery observation; (2) ROI Actual/variance/PIR and Finance reconciliation without overwrite; (3) OKR hierarchy/progress/review, then cold reopen | Production telemetry, mobile, manual replay of every denied boundary | Five-second clarity, executive readability, chart semantics, source trust, actionability and whether Finance/Results ownership is understandable |
 
 ## Persona and fixture ledger
 
 | ID | Type | Purpose | Setup/reset | Readback | Expected access | Status/evidence |
 |---|---|---|---|---|---|---|
-| _none_ | | | | | | |
+| `RES-TECH-01` | run-scoped technical matrix | KPI/ROI/OKR lifecycle, visibility, membership, legacy isolation/cutover, Execution/Finance seams | Shared PG for scoped-clean suites; owned disposable DB for append-only governance/legacy | independent clients, immutable receipts/source envelope, catalog drop check | allowed/denied matrix in G03 | claimed packets all PASS; disposable DB remainder `0` |
+| `RES-OWNER-01` | owner fixture | Stable executive KPI/ROI/OKR review dataset | _pending guarded seed/readback/reset_ | _pending_ | OWNER + independent ADMIN | `NOT_PREPARED` |
+
+## Integrator preflight observations
+
+These are technical observations, not Piotr owner findings.
+
+| ID | Observation | Evidence | State |
+|---|---|---|---|
+| `RES-PF-001` | Five component tests expected Save/update through the deliberately retired legacy KPI drawer. | Initial UI `138/143`; current drawer routes to `/results/kpi`. Tests now assert read-only archive controls, canonical handoff and zero legacy mutation; replay `141/141`. | `FIXED_VERIFIED` |
+| `RES-PF-002` | KPI deviation fixture supplied obsolete `performanceStatus` hints and no evaluable threshold, producing no case. | Product evaluator derives status from approved definition. Fixture now pins target `100` and warning boundary `50`; sequential/concurrent deviation replay `3/3`. | `FIXED_VERIFIED` |
+| `RES-PF-003` | ROI lifecycle, PIR and legacy-isolation fixtures used raw OPEN_ORG/RESTRICTED_ACL rows without canonical governance or active authoritative memberships. | Fixtures now use canonical governance publisher, OWNER/ADMIN membership and disposable-DB guards; relevant BVP/legacy packets PASS. | `FIXED_VERIFIED` |
+| `RES-PF-004` | Mounted visibility expected the beta-wall code even when the earlier authoritative auth wall correctly returned `ORG_MEMBERSHIP_REVOKED`. | Expected code now reflects middleware ordering while retaining 403 and zero access; mounted replay `4/4`. | `FIXED_VERIFIED` |
+| `RES-PF-005` | Finance reconciliation fixture used unpinned scalars and MEMBER reviewers; current contract requires exact Results Actual + approved Finance BV/WR/hash with matching metric and OWNER/ADMIN decision. | Fixture now creates complete immutable source envelopes and independent ADMIN reviewers; legacy scalar route asserts fail-closed `409 RESULTS_ACTUAL_SOURCE_REQUIRED`; replay `18/18`. | `FIXED_VERIFIED` |
+| `RES-PF-006` | Multiple passing React suites emit `act(...)` warnings. | Full UI pack passes `141/141`; warnings are preserved as test-quality debt and must not be described as clean-console browser evidence. | `OPEN_NON_GATING` |
 
 ## Owner UI/UX/CX register
 
@@ -62,6 +76,13 @@ truth, immutable history, retry, visibility grant and foreign tenant.
 | Finding IDs | Root cause | Approved solution | Commit | Shared surfaces | Impacted modules | Tests/self-QA | Regression |
 |---|---|---|---|---|---|---|---|
 | _none_ | | | | | | | |
+
+## Preflight implementation ledger
+
+| Observations | Resolution | Commits | Verification |
+|---|---|---|---|
+| `RES-PF-001..004` | Preserve governed KPI cutover; replace stale archive-write tests, correct evaluated KPI thresholds, bind canonical ROI governance/personas and authoritative mounted denial codes. | `0b41c28fac` | UI `141/141`; BVP `30/30`; mounted visibility `4/4`; strict membership `11/11`; legacy cutover `25/25` |
+| `RES-PF-003`, `RES-PF-005` | Require owned disposable DBs for immutable governance; create exact Results Actual and approved Finance source envelopes; make legacy scalar overwrite fail closed. | `67544776da` | ROI legacy isolation `2/2`; Finance reconciliation `18/18`; combined `20/20`; disposable DB catalog remainder `0`; typechecks PASS |
 
 ## Owner verdict
 
