@@ -161,3 +161,16 @@ P4 is code-complete but not owner-accepted. Therefore:
 - if that review finds defects, record screenshots and comments in the UI/UX
   correction register and iterate without changing the technical verdicts for
   unrelated P1-P3 scopes.
+
+## Parent-task and next-round reconciliation
+
+The bounded Wave 2 packet does not automatically promote the broader 82-task
+parent contracts. The authoritative reporter on this branch remains
+`72 DONE_CURRENT_SHA / 10 PARTIAL`, with zero missing or invalid records.
+
+- the original 11-task reconciliation is recorded in
+  `WAVE_02_REMAINING_11_RECONCILIATION.md`;
+- the exact-SHA collaborative acceptance preparation for all 16 modules is
+  recorded in `WAVE_03_16_MODULE_OWNER_ACCEPTANCE_REGISTER.md`;
+- neither document substitutes historical automation or code inspection for
+  the outstanding mounted browser and owner decisions.
