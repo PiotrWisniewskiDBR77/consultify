@@ -265,16 +265,19 @@ export const SectionsManagerMenu: React.FC<SectionsManagerMenuProps> = ({
   const catalogById = new Map(catalog.map((c) => [c.id, c]));
 
   return (
-    <div ref={ref} className={`relative ${className ?? ''}`}>
+    <div ref={ref} className={`relative shrink-0 ${className ?? ''}`}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
+        aria-label={t('sharedComponents.nModeCardManager.sectionsLabel')}
         aria-haspopup="menu"
         aria-expanded={open}
         className={TOOLBAR_BTN}
       >
         <Layers size={14} />
-        {t('sharedComponents.nModeCardManager.sectionsLabel')}
+        <span className="hidden lg:inline">
+          {t('sharedComponents.nModeCardManager.sectionsLabel')}
+        </span>
         <ChevronDown size={13} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (

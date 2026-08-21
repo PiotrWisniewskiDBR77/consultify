@@ -349,7 +349,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
        * progu WCAG AA (zmierzone 4,55:1, próg 4,5:1). */
       className="col-span-full border border-c-border bg-c-surface-raised/90 backdrop-blur-xl rounded-2xl overflow-hidden shadow-elevation-1"
     >
-      <div className="flex items-center gap-4 px-5 py-3">
+      <div className="flex flex-wrap items-center gap-3 px-5 py-3 lg:flex-nowrap lg:gap-4">
         {/* Back button — icon-only (ChevronLeft), so it needs an explicit
             accessible name: axe-core (critical, 2026-08-12 sweep) found this
             control had none on every N-mode detail screen. `onClose` is the
@@ -447,11 +447,14 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
         </div>
 
         {/* Action buttons */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div
+          data-nmode-header-action-row
+          className="flex w-full min-w-0 items-center gap-1 sm:gap-2 lg:w-auto lg:shrink-0"
+        >
           {secondaryActions ? (
             <div
               data-nmode-header-secondary-actions
-              className="flex min-w-0 max-w-[55vw] items-center gap-2 overflow-x-auto overscroll-x-contain"
+              className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto overscroll-x-contain sm:gap-2 lg:max-w-[55vw] lg:flex-none"
             >
               {secondaryActions}
             </div>
@@ -506,7 +509,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
                       : primaryAction.title.en
                     : undefined
                 }
-                className={`${MENU_1_PRIMARY_CTA} shrink-0 whitespace-nowrap`}
+                className={`${MENU_1_PRIMARY_CTA} shrink-0 whitespace-nowrap !gap-1 !px-2 !text-xs sm:!gap-2 sm:!px-4 sm:!text-sm`}
               >
                 {primaryAction.icon && <primaryAction.icon size={16} />}
                 <span>{isPolish ? primaryAction.label.pl : primaryAction.label.en}</span>

@@ -66,11 +66,12 @@ const L = {
   bar: { en: 'Card menu', pl: 'Menu karty' },
 } as const;
 
-const pick = (pair: { en: string; pl: string }, isPolish: boolean) => (isPolish ? pair.pl : pair.en);
+const pick = (pair: { en: string; pl: string }, isPolish: boolean) =>
+  isPolish ? pair.pl : pair.en;
 
 /** Wspólna baza przycisków paska — jedna wysokość, jeden promień, jeden fokus. */
 const BTN_BASE =
-  'inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-medium transition-colors ' +
+  'inline-flex shrink-0 items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-medium transition-colors ' +
   'disabled:opacity-40 disabled:cursor-not-allowed ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus';
 
@@ -95,22 +96,29 @@ export const Menu2AIButton: React.FC<Menu2AIButtonProps> = ({
   label,
   isPolish = false,
   className = '',
+  'aria-label': ariaLabel,
+  title,
   ...rest
-}) => (
-  <button
-    type="button"
-    data-menu2-slot="ai"
-    className={`${BTN_BASE} border border-c-ai/40 bg-c-ai/10 text-c-ai hover:bg-c-ai/15 ${className}`}
-    {...rest}
-  >
-    {busy ? (
-      <Loader2 size={13} className="animate-spin shrink-0" />
-    ) : (
-      <Sparkles size={13} className="shrink-0" />
-    )}
-    <span className="truncate">{label ?? pick(L.analyzeAi, isPolish)}</span>
-  </button>
-);
+}) => {
+  const resolvedLabel = label ?? pick(L.analyzeAi, isPolish);
+  return (
+    <button
+      type="button"
+      data-menu2-slot="ai"
+      aria-label={ariaLabel ?? resolvedLabel}
+      title={title ?? resolvedLabel}
+      className={`${BTN_BASE} border border-c-ai/40 bg-c-ai/10 text-c-ai hover:bg-c-ai/15 ${className}`}
+      {...rest}
+    >
+      {busy ? (
+        <Loader2 size={13} className="animate-spin shrink-0" />
+      ) : (
+        <Sparkles size={13} className="shrink-0" />
+      )}
+      <span className="hidden truncate lg:inline">{resolvedLabel}</span>
+    </button>
+  );
+};
 
 // ── Przycisk How to / Baza wiedzy ───────────────────────────────────────────
 
@@ -126,20 +134,25 @@ export const Menu2HowToButton: React.FC<Menu2HowToButtonProps> = ({
   label,
   isPolish = false,
   className = '',
+  'aria-label': ariaLabel,
+  title,
   ...rest
-}) => (
-  <button
-    type="button"
-    data-menu2-slot="howto"
-    className={`${BTN_BASE} border border-c-border-subtle text-c-text-secondary hover:bg-state-hover ${className}`}
-    {...rest}
-  >
-    <BookOpen size={13} className="shrink-0" />
-    <span className="truncate">
-      {label ?? pick(variant === 'knowledge' ? L.knowledge : L.howTo, isPolish)}
-    </span>
-  </button>
-);
+}) => {
+  const resolvedLabel = label ?? pick(variant === 'knowledge' ? L.knowledge : L.howTo, isPolish);
+  return (
+    <button
+      type="button"
+      data-menu2-slot="howto"
+      aria-label={ariaLabel ?? resolvedLabel}
+      title={title ?? resolvedLabel}
+      className={`${BTN_BASE} border border-c-border-subtle text-c-text-secondary hover:bg-state-hover ${className}`}
+      {...rest}
+    >
+      <BookOpen size={13} className="shrink-0" />
+      <span className="hidden truncate lg:inline">{resolvedLabel}</span>
+    </button>
+  );
+};
 
 // ── Przełącznik Edycja | Podgląd ────────────────────────────────────────────
 
