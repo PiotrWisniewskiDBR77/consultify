@@ -5,7 +5,7 @@ Date: `2026-08-21`
 Overall verdict: `CONDITIONAL_PASS / OWNER_BROWSER_GATE_REQUIRED`
 
 This report qualifies the corrected code candidate at
-`3ab15ebb2930bc42bc143f743c362f987c0ac512` on
+`2ce7750de9` on
 `codex/full-mvp-recovery-20260820`. It does not authorize production, deployment,
 or promotion to `OWNER_ACCEPTED`.
 
@@ -15,7 +15,7 @@ or promotion to `OWNER_ACCEPTED`.
 - dependency-bearing verification checkout (patched temporarily only to run
   the checks, then restored clean):
   `/Users/piotrwisniewski/Developer/consultify-wave02-recovery`;
-- code candidate: `3ab15ebb2930bc42bc143f743c362f987c0ac512`;
+- code candidate: `2ce7750de9`;
 - branch: `codex/full-mvp-recovery-20260820`;
 - recovery source: preserved local branch history; the authoritative temporary
   worktree is present again and owns the branch;
@@ -37,6 +37,7 @@ or promotion to `OWNER_ACCEPTED`.
 | 3 | Mounted mutation denominator | `a02a150737` |
 | post-gate repair | Standalone server typecheck boundary | `4318da80fa` |
 | post-gate integration repair | Restore eight canonical Finance budget routes lost in merge `826dac93da` | `3ab15ebb29` |
+| post-gate Finance cutover | Govern budget-initiative unlink and retire ECO-W41 | `2ce7750de9` |
 
 The apparent table order preserves the historical commit sequence. P3 was
 reviewed after P1/P2 shared-contract work; the bounded P4 packet had no shared
@@ -79,10 +80,17 @@ their service contracts. On the repaired candidate:
 - root `npm run type-check`: `PASS`;
 - no push, deployment, production access or owner-browser substitution occurred.
 
-The exact-current Finance denominator is therefore `25 retired / 52 actual
-legacy mutation doors`, with `27` still open. `FIN-MVP-CUTOVER-001` remains
+The exact-current Finance denominator after ECO-W41 is `26 retired / 52 actual
+legacy mutation doors`, with `26` still open. `FIN-MVP-CUTOVER-001` remains
 `PARTIAL`; this repair restores already-claimed mounted successors but does not
 promote the broader parent task.
+
+ECO-W41 adds a DRAFT-only tenant-bound unlink command sharing the link-family
+advisory lock, exact parent-version CAS, immutable removed-link snapshot receipt,
+response-loss replay and writer-scoped legacy rollback. Qualification evidence:
+root and server typechecks `PASS`, focused route/inventory/client/UI tests
+`101/101 PASS`, real-PostgreSQL canonical plus mounted legacy tests `72/72 PASS`,
+fresh migration `816`, repeat `0`, dry-run `0`, final fixture/export residue `0`.
 
 ## P2 — Results writers and Transform runtime
 

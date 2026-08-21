@@ -1,7 +1,7 @@
 {
   "taskId": "FIN-MVP-CUTOVER-001",
   "baselineSha": "14889d7b087585ae6f5d4a74e86c1b5e344e7c1c",
-  "productSha": "3ab15ebb2930bc42bc143f743c362f987c0ac512",
+  "productSha": "2ce7750de9",
   "technicalSourceSha": "117adaef6b9305ded7b6d0ac5069ecc03d00cec8",
   "requalificationSha": "117adaef6b9305ded7b6d0ac5069ecc03d00cec8",
   "reconciliationSha": "163a702f128518965bcdb132dda9c664231a75fa",
@@ -12,15 +12,15 @@
   },
   "technicalVerdict": "PASS_CURRENT_LEGACY_CUTOVER_KERNEL",
   "exactCurrentInventory20260820": {
-    "productSha": "3ab15ebb2930bc42bc143f743c362f987c0ac512",
+    "productSha": "2ce7750de9",
     "scope": "All currently registered Finance legacy-route families: /api/v8/finance, /api/financial-modeling, /api/economics and /api/finance-statements.",
     "result": {
       "totalRouteRules": 59,
       "actualLegacyMutationDoors": 52,
       "alreadyCanonicalMutationDoors": 1,
       "nonMutationOrExplicitRefusalDoors": 6,
-      "retiredLegacyMutationDoors": 25,
-      "openLegacyMutationDoors": 27
+      "retiredLegacyMutationDoors": 26,
+      "openLegacyMutationDoors": 26
     },
     "correction": "The historical 1/30 denominator mixed an incomplete route inventory with POST-shaped routes that do not write legacy state. The current denominator is source-derived and separates persistence effect from HTTP verb. ECO-W14 create and ECO-W21 delete are retired after all mounted callers removed their legacy fallback. ECO-W15 update is retired behind the strict tenant-scoped canonical V8 Finance update command. ECO-W22 is retired after every mounted valuation-create caller moved to the idempotent canonical registration command. ECO-W23 is retired behind the exact identity CAS depth command with tenant-bound state and immutable receipt. ECO-W26 is retired after its mounted caller moved to the atomic, lineage-fingerprinted canonical compute adapter. ECO-W29 is retired behind the exact-identity negotiation-pack command with canonical result fingerprint, immutable receipt and cold pack readback. ECO-W31 is retired after every mounted PPTX caller moved to the exact-identity canonical renderer, shared immutable byte/source receipt and tenant-bound export binding. ECO-W32 is retired behind an exact-identity soft-discard command that archives the legacy list identity and canonical artifact, preserves the full valuation lineage and records an immutable tenant-bound receipt. ECO-W33 is retired after all mounted budget-create callers moved to one canonical idempotent registration command with explicit periods, source provenance and immutable tenant-bound receipt. ECO-W34 is retired after the mounted Budget Workspace moved both baseline-value and lock mutations to one tenant-bound, versioned and replay-safe canonical line command. ECO-W35 is retired after all mounted budget-projection callers moved to one exact-scenario, parent-version-CAS canonical projection command with immutable tenant-bound receipt. ECO-W36 is retired behind a DRAFT-only exact-scenario adjustment command that invalidates stale projections, increments the parent version and records an immutable tenant-bound receipt. ECO-W37 is retired after all mounted approval callers moved to a material maker-checker command with exact version, full line/scenario snapshot and immutable approval receipt. ECO-W38 is retired after the mounted budget delete caller moved to a DRAFT-only soft-discard command that preserves the complete aggregate, hides archived budgets from normal reads and writes an immutable tenant-bound receipt. ECO-W39 is retired after the mounted document import moved to a signature-verified PDF/XLS/XLSX/CSV canonical command with DRAFT-only exact parent CAS, atomic recognized baseline replacement, immutable provenance receipt and diagnostic unapplied rows. ECO-W40 is retired after the mounted Budget Workspace moved initiative linking to a DRAFT-only, tenant-bound, parent-version-CAS command with immutable receipt and writer-scoped rollback. All fourteen retired Economics writers retain writer-scoped tested rollback.",
     "commands": [
@@ -62,7 +62,7 @@
     ],
     "cleanup": "The ECO-W22 exact-current qualification used guarded database consultify_b1_wave7 on 127.0.0.1:32772. Test-scoped rollback identities and immutable receipts were removed on a pinned PoolClient with post-commit residue0; the database was then dropped and existence readback returned 0. Earlier wave5/wave6 runs followed the same guarded drop boundary.",
     "knownHarnessSignal": "The earlier unfiltered route run was not qualifying evidence. Final integration audit later found that merge 826dac93da had dropped eight governed V8 budget handlers while retaining their tests and cutover decisions. Commit 3ab15ebb29 restored those handlers; the complete route file then passed 79/79 and the exact inventory passed 11/11.",
-    "verdictImpact": "PARTIAL is retained. Twenty-five of 52 actual legacy mutation doors are retired; 27 still require canonical parity or explicit retained-owner qualification, identity/backfill, usage and rollback evidence."
+    "verdictImpact": "PARTIAL is retained. Twenty-six of 52 actual legacy mutation doors are retired; 26 still require canonical parity or explicit retained-owner qualification, identity/backfill, usage and rollback evidence."
   },
   "exactCurrentEcoW22Requalification20260820": {
     "productSha": "f1d517cfdca8641a189aa0982d677a3fc8074618",
@@ -514,7 +514,7 @@
   "leaseSha256": "not_applicable_integrator_bounded_task",
   "verdict": "PARTIAL",
   "open": [
-    "The exact-current mounted-route inventory contains 52 actual legacy mutation doors. Twenty-five are retired and 27 remain open pending route-by-route canonical parity or explicit retained-owner decisions, identity/backfill, usage and rollback evidence.",
+    "The exact-current mounted-route inventory contains 52 actual legacy mutation doors. Twenty-six are retired and 26 remain open pending route-by-route canonical parity or explicit retained-owner decisions, identity/backfill, usage and rollback evidence.",
     "Rollout timing and Finance/Results reconciliation remain owner decisions; this evidence does not authorize rollout or change Results Actual ownership."
   ],
   "environment": {
@@ -547,10 +547,10 @@
     {"command": "git diff --check", "exitCode": 0, "result": "passed"}
   ],
   "denominators": {
-    "focused": "Final mounted Finance route requalification 79/79 plus exact inventory 11/11; W39 route 12/12, genuine PDF/XLS/XLSX/CSV extraction 1/1 and multipart API 1/1 remain retained evidence",
-    "realPostgres": "61 passed / 61 discovered across canonical budget-registration and production-shaped Economics cutover suites",
-    "legacyV8Writers": "25 safely retired / 52 actual legacy mutation doors; 27 remain open",
-    "migration": "809/809 migrations on the exact-current fresh qualification database; repeat 0 and dry pending 0",
+    "focused": "ECO-W41 route, inventory, client transport and UI response-loss retry 101/101; prior mounted Finance route requalification 79/79 remains retained evidence",
+    "realPostgres": "72/72 across canonical budget aggregate and production-shaped Economics cutover suites on the ECO-W41 candidate",
+    "legacyV8Writers": "26 safely retired / 52 actual legacy mutation doors; 26 remain open",
+    "migration": "816/816 migrations on the exact-current fresh qualification database; repeat 0 and dry pending 0",
     "typeCheck": "Root and server noEmit 2/2 exit 0; exact commit diff check exit 0"
   },
   "fixtures": {
@@ -566,11 +566,11 @@
     "rollback": "only explicit FINANCE_LEGACY_WRITER_ROLLBACK_ENABLED=true reaches the legacy leaf; rollback observation is durable",
     "tenant": "same legacy ID in a foreign tenant resolves no canonical artifact/version",
     "coldReadback": "independent pg.Client reads stable canonical artifact and business-version IDs with one row per request/access kind",
-    "unprovenSurfaces": "27 actual legacy mutation doors remain enabled and visibly classified; no false zero-writer claim"
+    "unprovenSurfaces": "26 actual legacy mutation doors remain enabled and visibly classified; no false zero-writer claim"
   },
   "browserArtifacts": [],
   "rollback": {
-    "method": "Set FINANCE_LEGACY_ROLLBACK_WRITERS to one exact proven writer id: ECO-W22, ECO-W23, ECO-W26, ECO-W29, ECO-W31, ECO-W32, ECO-W33, ECO-W34, ECO-W35, ECO-W36, ECO-W37, ECO-W38, ECO-W39 or ECO-W40. This temporarily re-enables only that corresponding compatibility route. No migration rollback or Finance business-data rewrite is required.",
+    "method": "Set FINANCE_LEGACY_ROLLBACK_WRITERS to one exact proven writer id: ECO-W22, ECO-W23, ECO-W26, ECO-W29, ECO-W31, ECO-W32, ECO-W33, ECO-W34, ECO-W35, ECO-W36, ECO-W37, ECO-W38, ECO-W39, ECO-W40 or ECO-W41. This temporarily re-enables only that corresponding compatibility route. No migration rollback or Finance business-data rewrite is required.",
     "executed": true,
     "proof": "The production-shaped RealPG suite proves each listed writer-scoped rollback independently. ECO-W39 reaches exactly the prior document-import mutation while disabled state remains 410/no-write; canonical signature validation, DRAFT-only exact CAS, atomic baseline replacement, replay, live authority and provenance receipt rollback are proven separately."
   }
