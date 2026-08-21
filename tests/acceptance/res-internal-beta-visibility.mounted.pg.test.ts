@@ -195,10 +195,13 @@ describe.skipIf(!enabled)('mounted Results internal-beta visibility', () => {
   });
 
   it('rechecks revoked, missing and foreign memberships and ignores body tenant spoofing', async () => {
-    for (const bearer of [token(revoked, orgA), token(missing, orgA)]) {
+    for (const [bearer, expectedCode] of [
+      [token(revoked, orgA), 'ORG_MEMBERSHIP_REVOKED'],
+      [token(missing, orgA), 'ORG_MEMBERSHIP_REVOKED'],
+    ] as const) {
       const denied = await authGet('/kpi', bearer);
       expect(denied.status).toBe(403);
-      expect(denied.body.code).toBe('RESULTS_INTERNAL_BETA_VISIBILITY_DENIED');
+      expect(denied.body.code).toBe(expectedCode);
     }
     const foreignClaimSpoof = await authGet('/kpi', token(foreignOwner, orgA));
     expect(foreignClaimSpoof.status).toBe(200);

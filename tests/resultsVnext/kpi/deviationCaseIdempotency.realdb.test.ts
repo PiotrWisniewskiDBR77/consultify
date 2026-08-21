@@ -76,8 +76,8 @@ async function insertFixtureKpi(kpiId: string, definitionVersionId: string): Pro
   await client.query(
     `INSERT INTO rvn_kpi_definition_versions
        (definition_version_id, kpi_id, organization_id, version_number, name, target_geometry,
-        target_min, approval_status, created_by, effective_from)
-     VALUES ($1, $2, $3, 1, 'IT fixture KPI', 'threshold_min', 100, 'approved', $4, now())`,
+        target_value, warning_low, approval_status, created_by, effective_from)
+     VALUES ($1, $2, $3, 1, 'IT fixture KPI', 'threshold_min', 100, 50, 'approved', $4, now())`,
     [definitionVersionId, kpiId, ORG_ID, OWNER_USER_ID]
   );
   await client.query(`UPDATE rvn_kpi_definitions SET current_definition_version_id = $1 WHERE kpi_id = $2`, [

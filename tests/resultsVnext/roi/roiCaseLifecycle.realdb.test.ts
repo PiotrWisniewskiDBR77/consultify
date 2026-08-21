@@ -16,7 +16,11 @@ import { randomUUID } from 'node:crypto';
 import { Client, type ClientConfig } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { ensureRoiFixtureOrganization } from './roiRealdbOrgFixture.js';
+import {
+  ensureRoiFixtureMembership,
+  ensureRoiFixtureOrganization,
+  ensureRoiGovernedVisibility,
+} from './roiRealdbOrgFixture.js';
 
 function buildClientConfig(): ClientConfig | null {
   const raw = process.env.DATABASE_URL;
@@ -69,15 +73,6 @@ let listRoiCases: RepositoryModule['listRoiCases'];
 // assertion needs one real calculation run to still reach 'ready_for_review'.
 let createRoiCalculationRun: CalcRunCommandsModule['createRoiCalculationRun'];
 let closePgPool: (() => Promise<void>) | undefined;
-
-async function insertVisibilityPolicy(domain: string, mode: string, createdBy: string): Promise<void> {
-  await client.query(
-    `INSERT INTO rvn_platform_visibility_policies
-       (organization_id, domain, policy_version, visibility_mode, is_active, created_by)
-     VALUES ($1, $2, 1, $3, true, $4)`,
-    [ORG_ID, domain, mode, createdBy]
-  );
-}
 
 /**
  * Each fixture case gets its OWN initiative. `ux_rvn_roi_cases_one_active_per_initiative`
@@ -137,6 +132,10 @@ describe('ROI-E001 case lifecycle — startModeling/markReadyForReview guards + 
     try {
       await client.connect();
       await client.query('SELECT 1');
+      const database = await client.query<{ current_database: string }>('SELECT current_database()');
+      if (!database.rows[0]?.current_database.startsWith('consultify_results_')) {
+        throw new Error('ROI governed-visibility lifecycle requires an owned consultify_results_* disposable database');
+      }
       await client.query('SELECT 1 FROM rvn_roi_cases LIMIT 0');
       await client.query(
         `CREATE TABLE IF NOT EXISTS team_members (
@@ -151,6 +150,11 @@ describe('ROI-E001 case lifecycle — startModeling/markReadyForReview guards + 
       // `CREATE TABLE IF NOT EXISTS initiatives` below a no-op rather than the
       // stub it looks like — so the organization row has to exist first.
       await ensureRoiFixtureOrganization(client, ORG_ID, 'roiCaseLifecycle realdb fixture org');
+      await ensureRoiFixtureMembership(client, {
+        organizationId: ORG_ID,
+        userId: USER_OWNER,
+        role: 'OWNER',
+      });
       await client.query(
         `CREATE TABLE IF NOT EXISTS initiatives (
            id TEXT PRIMARY KEY,
@@ -200,7 +204,11 @@ describe('ROI-E001 case lifecycle — startModeling/markReadyForReview guards + 
     const pgModule: PgModule = await import('../../../server/src/database/PostgresDatabase.js');
     closePgPool = (pgModule as unknown as { closePool?: () => Promise<void> }).closePool;
 
-    await insertVisibilityPolicy('roi', 'RESTRICTED_ACL', USER_OWNER);
+    await ensureRoiGovernedVisibility({
+      organizationId: ORG_ID,
+      actorUserId: USER_OWNER,
+      idempotencyKey: `roi-e001-governance-${tag}`,
+    });
   }, 30_000);
 
   afterAll(async () => {
@@ -230,7 +238,8 @@ describe('ROI-E001 case lifecycle — startModeling/markReadyForReview guards + 
     await client.query(`DELETE FROM rvn_platform_resource_visibility WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM rvn_platform_visibility_policies WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM initiatives WHERE organization_id = $1`, [ORG_ID]);
-    await client.query(`DELETE FROM organizations WHERE id = $1`, [ORG_ID]);
+    // Governance is append-only. The organization and membership are
+    // intentionally retained until the owned disposable database is dropped.
     await client.end();
     if (closePgPool) await closePgPool();
   }, 30_000);

@@ -39,10 +39,13 @@ import {
   DB_CONFIGURED,
   insertInitiative,
   insertOrganization,
-  insertVisibilityPolicy,
   loadRoiPirTestModules,
   type RoiPirTestModules,
 } from './roiPirRealdbFixtures.js';
+import {
+  ensureRoiFixtureMembership,
+  ensureRoiGovernedVisibility,
+} from './roiRealdbOrgFixture.js';
 
 const tag = `${Date.now().toString(36)}_${randomUUID().slice(0, 8)}`;
 const ORG_ID = `roi-e006-reopen-org-${tag}`;
@@ -64,18 +67,29 @@ describe('ROI-E006 AC-04 cold reopen (real Postgres, separate connection)', () =
     }
     client = new Client(buildClientConfig() as ClientConfig);
     await client.connect();
+    const database = await client.query<{ current_database: string }>('SELECT current_database()');
+    if (!database.rows[0]?.current_database.startsWith('consultify_results_')) {
+      throw new Error('ROI governed-visibility cold reopen requires an owned consultify_results_* disposable database');
+    }
     await client.query('SELECT 1 FROM rvn_roi_post_investment_reviews LIMIT 0');
     reachable = true;
 
     modules = await loadRoiPirTestModules();
 
     await insertOrganization(client, ORG_ID, 'ROI-E006 Cold-Reopen RealDB Org');
-    await insertVisibilityPolicy(client, ORG_ID, 'roi', 'OPEN_ORG', USER_OWNER);
+    await ensureRoiFixtureMembership(client, { organizationId: ORG_ID, userId: USER_OWNER, role: 'OWNER' });
+    await ensureRoiFixtureMembership(client, { organizationId: ORG_ID, userId: USER_APPROVER, role: 'ADMIN' });
+    await ensureRoiFixtureMembership(client, { organizationId: ORG_ID, userId: USER_CLOSER, role: 'ADMIN' });
+    await ensureRoiGovernedVisibility({
+      organizationId: ORG_ID,
+      actorUserId: USER_OWNER,
+      idempotencyKey: `roi-e006-governance-${tag}`,
+    });
   }, 30_000);
 
   afterAll(async () => {
     if (!reachable) return;
-    await cleanupRoiPirFixtures(client, ORG_ID);
+    await cleanupRoiPirFixtures(client, ORG_ID, { retainGovernedOrganization: true });
     await client.end();
     if (modules.closePgPool) await modules.closePgPool();
   }, 30_000);

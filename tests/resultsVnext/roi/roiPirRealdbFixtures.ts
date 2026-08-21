@@ -390,7 +390,11 @@ export async function buildCaseThroughPirStarted(
  * (children before parents), extended with the two ROI-E006 additions
  * (`rvn_roi_post_investment_reviews`, and `rvn_platform_obligations` already
  * covered by the shared platform delete). */
-export async function cleanupRoiPirFixtures(client: Client, organizationId: string): Promise<void> {
+export async function cleanupRoiPirFixtures(
+  client: Client,
+  organizationId: string,
+  options: { retainGovernedOrganization?: boolean } = {}
+): Promise<void> {
   await client.query(
     `UPDATE rvn_roi_cases SET current_forecast_version_id = NULL, current_actual_snapshot_id = NULL
       WHERE organization_id = $1`,
@@ -430,5 +434,7 @@ export async function cleanupRoiPirFixtures(client: Client, organizationId: stri
   await client.query(`DELETE FROM rvn_platform_resource_visibility WHERE organization_id = $1`, [organizationId]);
   await client.query(`DELETE FROM rvn_platform_visibility_policies WHERE organization_id = $1`, [organizationId]);
   await client.query(`DELETE FROM initiatives WHERE organization_id = $1`, [organizationId]);
-  await client.query(`DELETE FROM organizations WHERE id = $1`, [organizationId]);
+  if (!options.retainGovernedOrganization) {
+    await client.query(`DELETE FROM organizations WHERE id = $1`, [organizationId]);
+  }
 }
