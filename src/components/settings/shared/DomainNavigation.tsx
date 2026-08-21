@@ -136,7 +136,7 @@ export function DomainNavigation<TModule extends string, TChild extends string>(
                       className={cn(
                         'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]',
                         active
-                          ? 'bg-[var(--c-accent-soft)] font-medium text-[var(--c-text)]'
+                          ? 'bg-[var(--c-selection)] font-medium text-[var(--c-text)] shadow-[inset_3px_0_0_var(--c-focus-solid)]'
                           : 'text-[var(--c-text-secondary)] hover:bg-[var(--c-surface-raised)] hover:text-[var(--c-text)]'
                       )}
                     >

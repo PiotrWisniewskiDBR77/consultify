@@ -610,7 +610,7 @@ const ChipSelector: React.FC<{
         onClick={() => {
           onChange(value.includes(opt) ? value.filter((v) => v !== opt) : [...value, opt]);
         }}
-        className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${value.includes(opt) ? 'bg-primary-100 border-primary-300 text-primary-700 dark:bg-primary-900/30 dark:border-primary-500/30 dark:text-primary-300' : 'bg-c-bg border-c-border-subtle text-c-text-secondary dark:bg-navy-950 dark:border-navy-700 dark:text-c-text-muted hover:border-primary-300'}`}
+        className={`px-3 py-1.5 text-xs rounded-full border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)] ${value.includes(opt) ? 'bg-[var(--c-selection)] border-[var(--c-selection-border)] text-[var(--c-text)]' : 'bg-c-bg border-c-border-subtle text-c-text-secondary dark:bg-navy-950 dark:border-navy-700 dark:text-c-text-muted hover:border-[var(--c-border-strong)]'}`}
       >
         {opt}
       </button>
@@ -619,7 +619,7 @@ const ChipSelector: React.FC<{
 );
 
 const inputCls =
-  'w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none text-sm';
+  'w-full px-4 py-2.5 bg-c-surface-raised border border-c-border-subtle rounded-lg focus:ring-2 focus:ring-[var(--c-focus)] focus:border-[var(--c-focus-solid)] focus:outline-none text-sm';
 const labelCls = 'block text-sm font-medium text-c-text-secondary mb-1.5';
 
 // ─── Main Component ───
@@ -878,7 +878,7 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
               />
             </svg>
             {completeness >= 80 && (
-              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[9px] font-semibold text-c-text-muted">
+              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xs font-semibold text-c-text-muted">
                 DATA
               </span>
             )}
@@ -937,7 +937,7 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
                   }}
                   className={`rounded-xl border p-3 text-left transition-colors ${
                     active
-                      ? 'border-primary-400 bg-primary-50 dark:border-primary-500/50 dark:bg-primary-900/20'
+                      ? 'border-[var(--c-selection-border)] bg-[var(--c-selection)] shadow-[inset_3px_0_0_var(--c-focus-solid)]'
                       : 'border-c-border-subtle bg-c-surface hover:bg-c-surface-raised'
                   }`}
                 >
@@ -1091,7 +1091,7 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
         {activeProfileArea === 'readiness' && (
           <button
             onClick={() => setShowReadiness((prev) => !prev)}
-            className={`flex items-center gap-2 px-4 py-2 border rounded-lg font-medium text-sm transition-colors ${showReadiness ? 'bg-primary-50 border-primary-300 text-primary-700 dark:bg-primary-900/30 dark:border-primary-500/30 dark:text-primary-300' : 'bg-c-surface border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised'}`}
+            className={`flex items-center gap-2 px-4 py-2 border rounded-lg font-medium text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)] ${showReadiness ? 'bg-[var(--c-selection)] border-[var(--c-selection-border)] text-[var(--c-text)]' : 'bg-c-surface border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised'}`}
           >
             <Target size={16} />
             Readiness {readyCount}/{readiness.length}
@@ -1165,8 +1165,8 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
                         setExpandedSections((prev) => ({ ...prev, type: true, identity: true }));
                       }}
                     />
-                    <div className="h-full p-3 rounded-xl border border-c-border-subtle bg-c-bg/50 dark:bg-navy-950/50 hover:border-primary-300 transition-all flex flex-col items-center text-center peer-checked:ring-2 peer-checked:ring-primary-500 peer-checked:border-transparent peer-checked:bg-c-surface dark:peer-checked:bg-navy-800">
-                      <div className="text-c-text-muted mb-2 peer-checked:text-primary-600">
+                    <div className="h-full p-3 rounded-xl border border-c-border-subtle bg-c-bg/50 dark:bg-navy-950/50 hover:border-[var(--c-border-strong)] transition-all flex flex-col items-center text-center peer-checked:ring-2 peer-checked:ring-[var(--c-focus-solid)] peer-checked:border-[var(--c-selection-border)] peer-checked:bg-[var(--c-selection)]">
+                      <div className="text-c-text-muted mb-2 peer-checked:text-[var(--c-focus-solid)]">
                         {ot.icon}
                       </div>
                       <div className="font-semibold text-sm text-navy-900 dark:text-white">
@@ -1734,7 +1734,7 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
                     <button
                       key={r.value}
                       onClick={() => update('risk_appetite', r.value)}
-                      className={`flex-1 p-3 rounded-lg border text-center text-sm transition-colors ${profile.risk_appetite === r.value ? 'bg-primary-100 border-primary-300 text-primary-700 dark:bg-primary-900/30 dark:border-primary-500/30 dark:text-primary-300' : 'bg-c-bg border-c-border-subtle text-c-text-secondary dark:bg-navy-950 dark:border-navy-700 dark:text-c-text-muted hover:border-primary-300'}`}
+                      className={`flex-1 p-3 rounded-lg border text-center text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)] ${profile.risk_appetite === r.value ? 'bg-[var(--c-selection)] border-[var(--c-selection-border)] text-[var(--c-text)]' : 'bg-c-bg border-c-border-subtle text-c-text-secondary dark:bg-navy-950 dark:border-navy-700 dark:text-c-text-muted hover:border-[var(--c-border-strong)]'}`}
                     >
                       {r.label}
                     </button>

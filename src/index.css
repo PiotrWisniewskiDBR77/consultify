@@ -71,6 +71,11 @@
     --c-focus-rgb: 37 99 235;
     --c-focus-solid: #2563eb; /* focus border color */
     --c-focus-solid-rgb: 37 99 235;
+    /* Ordinary selection is deliberately neutral-blue. Brand crimson remains
+     * available for primary actions, while error/destructive states keep their
+     * own semantic red tokens. */
+    --c-selection: rgba(37, 99, 235, 0.08);
+    --c-selection-border: rgba(37, 99, 235, 0.32);
     /* ── n-Type grid geometry (SSOT: _GRID_STABILIZATION_COMMAND_2026-07-24.md) ──
      * Wspólna geometria powłoki sześciu kart n-Type (Zadanie · Decyzja · Insight ·
      * Inicjatywa · Narzędzie · Powiadomienie). Jedno źródło szerokości paneli i
@@ -285,6 +290,8 @@
     --c-focus-rgb: 91 141 239;
     --c-focus-solid: #5b8def; /* focus border color (lifted for dark) */
     --c-focus-solid-rgb: 91 141 239;
+    --c-selection: rgba(91, 141, 239, 0.14);
+    --c-selection-border: rgba(91, 141, 239, 0.42);
     /* Status tokens — Harvard complementary lifted for dark backgrounds.
      * Each value is the LIGHT/mid family member so contrast on navy is good.
      *   success #9EC44D (HBS Green 3)  — lifted from #026833

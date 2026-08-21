@@ -16,7 +16,10 @@ vi.mock('react-i18next', () => ({
 function renderSidebar() {
   return render(
     <BrowserRouter>
-      <AdminSettingsSidebar activeSection="people" onSectionChange={vi.fn()} />
+      <AdminSettingsSidebar
+        activeLocation={{ domain: 'team', screen: 'members' }}
+        onLocationChange={vi.fn()}
+      />
     </BrowserRouter>
   );
 }
