@@ -473,10 +473,10 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'ECO-W41',
       method: 'DELETE',
       path: /^\/budgets\/[^/]+\/initiatives\/[^/]+\/?$/,
-      state: 'observed',
-      successor: null,
+      state: 'disabled',
+      successor: '/api/v8/finance/budgets/:budgetId/initiatives/:initiativeId',
       reason:
-        'Removes a budget_initiative_links row for the budget/initiative pair addressed by :id/:initiativeId (economics.routes.ts:3399, inline DELETE at :3406). No proven successor.',
+        'The mounted Budget Workspace uses a DRAFT-only canonical unlink command with live Finance-editor authority, exact parent-version CAS, an immutable snapshot receipt, response-loss replay and writer-scoped rollback.',
     },
     {
       writerId: 'ECO-W42',

@@ -15,6 +15,24 @@ async function discardBudgetRequest<T>(
   return json.data;
 }
 
+async function unlinkBudgetInitiativeRequest<T>(
+  budgetId: string,
+  initiativeId: string,
+  expectedVersion: number,
+  idempotencyKey: string
+): Promise<T> {
+  const res = await fetchWithRetry(
+    `/api/v8/finance/budgets/${encodeURIComponent(budgetId)}/initiatives/${encodeURIComponent(initiativeId)}`,
+    {
+      method: 'DELETE',
+      headers: { ...getHeaders(), 'Idempotency-Key': idempotencyKey },
+      body: JSON.stringify({ expectedVersion }),
+    }
+  );
+  const json = await handleResponse<{ data: T }>(res, 'V8 DELETE budget initiative link');
+  return json.data;
+}
+
 export const shouldFallbackToLegacyFinance = (error: any) => {
   const status = Number(error?.status);
   return [400, 404, 405, 501].includes(status);
@@ -340,6 +358,18 @@ export interface V8FinanceBudgetInitiativeLinkResult {
   initiativeId: string;
   budgetVersion: number;
   snapshot: { revenueUplift: string; costSavings: string; capexRequired: string };
+  replay: boolean;
+}
+
+export interface V8FinanceBudgetInitiativeUnlinkResult {
+  budgetId: string;
+  initiativeId: string;
+  budgetVersion: number;
+  removedLinkSnapshot: {
+    revenueUplift: string;
+    costSavings: string;
+    capexRequired: string;
+  };
   replay: boolean;
 }
 
@@ -826,6 +856,18 @@ export const V8FinanceApi = {
       `/finance/budgets/${encodeURIComponent(budgetId)}/initiatives/${encodeURIComponent(initiativeId)}`,
       { expectedVersion },
       { extraHeaders: { 'Idempotency-Key': idempotencyKey } }
+    ),
+  unlinkBudgetInitiative: (
+    budgetId: string,
+    initiativeId: string,
+    expectedVersion: number,
+    idempotencyKey: string
+  ) =>
+    unlinkBudgetInitiativeRequest<V8FinanceBudgetInitiativeUnlinkResult>(
+      budgetId,
+      initiativeId,
+      expectedVersion,
+      idempotencyKey
     ),
   getStatementPacks: (params?: { readiness?: string }) =>
     v8Get<{ statementPacks: V8FinanceStatementPackSummary[]; count: number }>(

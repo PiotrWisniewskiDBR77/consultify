@@ -181,6 +181,10 @@ import {
   linkBudgetInitiativeCommand,
   BudgetInitiativeLinkCommandError,
 } from '../../services/finance/canonical/budgetInitiativeLinkCommandService.js';
+import {
+  unlinkBudgetInitiativeCommand,
+  BudgetInitiativeUnlinkCommandError,
+} from '../../services/finance/canonical/budgetInitiativeUnlinkCommandService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -1479,9 +1483,16 @@ router.post(
     try {
       const keys = Object.keys(req.body || {});
       if (keys.length !== 1 || keys[0] !== 'expectedVersion')
-        return res.status(400).json({ code: 'INVALID_BODY', error: 'Only expectedVersion is allowed' });
+        return res
+          .status(400)
+          .json({ code: 'INVALID_BODY', error: 'Only expectedVersion is allowed' });
       if (!Number.isInteger(req.body.expectedVersion) || req.body.expectedVersion < 1)
-        return res.status(400).json({ code: 'INVALID_EXPECTED_VERSION', error: 'expectedVersion must be a positive integer' });
+        return res
+          .status(400)
+          .json({
+            code: 'INVALID_EXPECTED_VERSION',
+            error: 'expectedVersion must be a positive integer',
+          });
       const { organizationId } = getV8Context(req);
       const userId = String(req.user?.id || (req.user as any)?.user_id || '');
       const result = await linkBudgetInitiativeCommand({
@@ -1495,7 +1506,44 @@ router.post(
       return res.status(200).json({ data: result, meta: financeMeta() });
     } catch (error) {
       if (error instanceof BudgetInitiativeLinkCommandError)
-        return res.status(error.status).json({ code: error.code, error: error.message, ...(error.details || {}) });
+        return res
+          .status(error.status)
+          .json({ code: error.code, error: error.message, ...(error.details || {}) });
+      throw error;
+    }
+  })
+);
+
+router.delete(
+  '/budgets/:budgetId/initiatives/:initiativeId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const keys = Object.keys(req.body || {});
+      if (keys.length !== 1 || keys[0] !== 'expectedVersion')
+        return res
+          .status(400)
+          .json({ code: 'INVALID_BODY', error: 'Only expectedVersion is allowed' });
+      if (!Number.isInteger(req.body.expectedVersion) || req.body.expectedVersion < 1)
+        return res.status(400).json({
+          code: 'INVALID_EXPECTED_VERSION',
+          error: 'expectedVersion must be a positive integer',
+        });
+      const { organizationId } = getV8Context(req);
+      const userId = String(req.user?.id || (req.user as any)?.user_id || '');
+      const result = await unlinkBudgetInitiativeCommand({
+        organizationId,
+        userId,
+        budgetId: String(req.params.budgetId),
+        initiativeId: String(req.params.initiativeId),
+        expectedVersion: req.body.expectedVersion,
+        idempotencyKey: String(req.header('Idempotency-Key') || ''),
+      });
+      return res.status(200).json({ data: result, meta: financeMeta() });
+    } catch (error) {
+      if (error instanceof BudgetInitiativeUnlinkCommandError)
+        return res
+          .status(error.status)
+          .json({ code: error.code, error: error.message, ...(error.details || {}) });
       throw error;
     }
   })
@@ -1592,7 +1640,12 @@ router.put(
     const body =
       req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
     const allowed = new Set([
-      'expectedVersion', 'baselineValue', 'source', 'driverKpiId', 'driverFormula', 'isLocked',
+      'expectedVersion',
+      'baselineValue',
+      'source',
+      'driverKpiId',
+      'driverFormula',
+      'isLocked',
     ]);
     if (Object.keys(body).some((key) => !allowed.has(key))) {
       return res.status(400).json({ code: 'INVALID_BODY', error: 'Unknown budget line field' });
@@ -1603,7 +1656,9 @@ router.put(
     const patch: BudgetLinePatch = {};
     if (body.baselineValue !== undefined) {
       if (typeof body.baselineValue !== 'string')
-        return res.status(400).json({ code: 'INVALID_BODY', error: 'baselineValue must be a decimal string' });
+        return res
+          .status(400)
+          .json({ code: 'INVALID_BODY', error: 'baselineValue must be a decimal string' });
       patch.baselineValue = body.baselineValue;
     }
     if (body.source !== undefined) patch.source = body.source;
@@ -1612,15 +1667,22 @@ router.put(
     if (body.isLocked !== undefined) patch.isLocked = body.isLocked;
     try {
       const result = await applyBudgetLineCommand({
-        organizationId, userId, budgetId: req.params.budgetId, lineId: req.params.lineId,
+        organizationId,
+        userId,
+        budgetId: req.params.budgetId,
+        lineId: req.params.lineId,
         expectedVersion: body.expectedVersion,
-        idempotencyKey: String(req.header('Idempotency-Key') || req.header('x-idempotency-key') || ''),
+        idempotencyKey: String(
+          req.header('Idempotency-Key') || req.header('x-idempotency-key') || ''
+        ),
         patch,
       });
       return res.status(200).json({ data: result, meta: financeMeta() });
     } catch (error) {
       if (error instanceof BudgetLineCommandError) {
-        return res.status(error.status).json({ code: error.code, error: error.message, ...(error.details || {}) });
+        return res
+          .status(error.status)
+          .json({ code: error.code, error: error.message, ...(error.details || {}) });
       }
       throw error;
     }
@@ -1632,21 +1694,29 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const userId = String(req.user?.id || (req.user as any)?.user_id || '');
-    const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
+    const body =
+      req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
     if (Object.keys(body).some((key) => key !== 'expectedVersion'))
       return res.status(400).json({ code: 'INVALID_BODY', error: 'Unknown projection field' });
     if (!Number.isInteger(body.expectedVersion) || body.expectedVersion < 1)
       return res.status(400).json({ code: 'INVALID_BODY', error: 'Invalid expectedVersion' });
     try {
       const result = await projectBudgetScenario({
-        organizationId, userId, budgetId: req.params.budgetId, scenarioId: req.params.scenarioId,
+        organizationId,
+        userId,
+        budgetId: req.params.budgetId,
+        scenarioId: req.params.scenarioId,
         expectedVersion: body.expectedVersion,
-        idempotencyKey: String(req.header('Idempotency-Key') || req.header('x-idempotency-key') || ''),
+        idempotencyKey: String(
+          req.header('Idempotency-Key') || req.header('x-idempotency-key') || ''
+        ),
       });
       return res.status(200).json({ data: result, meta: financeMeta() });
     } catch (error) {
       if (error instanceof BudgetProjectionCommandError)
-        return res.status(error.status).json({ code: error.code, error: error.message, ...(error.details || {}) });
+        return res
+          .status(error.status)
+          .json({ code: error.code, error: error.message, ...(error.details || {}) });
       throw error;
     }
   })
@@ -1657,24 +1727,36 @@ router.put(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const userId = String(req.user?.id || (req.user as any)?.user_id || '');
-    const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
+    const body =
+      req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
     if (Object.keys(body).some((key) => !['expectedVersion', 'adjustments'].includes(key)))
       return res.status(400).json({ code: 'INVALID_BODY', error: 'Unknown adjustment field' });
     if (!Number.isInteger(body.expectedVersion) || body.expectedVersion < 1)
       return res.status(400).json({ code: 'INVALID_BODY', error: 'Invalid expectedVersion' });
-    if (!body.adjustments || typeof body.adjustments !== 'object' || Array.isArray(body.adjustments))
+    if (
+      !body.adjustments ||
+      typeof body.adjustments !== 'object' ||
+      Array.isArray(body.adjustments)
+    )
       return res.status(400).json({ code: 'INVALID_BODY', error: 'Invalid adjustments' });
     try {
       const result = await updateBudgetScenarioAdjustments({
-        organizationId, userId, budgetId: req.params.budgetId, scenarioId: req.params.scenarioId,
+        organizationId,
+        userId,
+        budgetId: req.params.budgetId,
+        scenarioId: req.params.scenarioId,
         expectedVersion: body.expectedVersion,
-        idempotencyKey: String(req.header('Idempotency-Key') || req.header('x-idempotency-key') || ''),
+        idempotencyKey: String(
+          req.header('Idempotency-Key') || req.header('x-idempotency-key') || ''
+        ),
         adjustments: body.adjustments,
       });
       return res.status(200).json({ data: result, meta: financeMeta() });
     } catch (error) {
       if (error instanceof BudgetProjectionCommandError)
-        return res.status(error.status).json({ code: error.code, error: error.message, ...(error.details || {}) });
+        return res
+          .status(error.status)
+          .json({ code: error.code, error: error.message, ...(error.details || {}) });
       throw error;
     }
   })
@@ -1685,21 +1767,28 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const userId = String(req.user?.id || (req.user as any)?.user_id || '');
-    const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
+    const body =
+      req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
     if (Object.keys(body).some((key) => key !== 'expectedVersion'))
       return res.status(400).json({ code: 'INVALID_BODY', error: 'Unknown approval field' });
     if (!Number.isInteger(body.expectedVersion) || body.expectedVersion < 1)
       return res.status(400).json({ code: 'INVALID_BODY', error: 'Invalid expectedVersion' });
     try {
       const result = await approveBudgetCommand({
-        organizationId, userId, budgetId: req.params.budgetId,
+        organizationId,
+        userId,
+        budgetId: req.params.budgetId,
         expectedVersion: body.expectedVersion,
-        idempotencyKey: String(req.header('Idempotency-Key') || req.header('x-idempotency-key') || ''),
+        idempotencyKey: String(
+          req.header('Idempotency-Key') || req.header('x-idempotency-key') || ''
+        ),
       });
       return res.status(200).json({ data: result, meta: financeMeta() });
     } catch (error) {
       if (error instanceof BudgetApprovalCommandError)
-        return res.status(error.status).json({ code: error.code, error: error.message, ...(error.details || {}) });
+        return res
+          .status(error.status)
+          .json({ code: error.code, error: error.message, ...(error.details || {}) });
       throw error;
     }
   })
@@ -1710,20 +1799,27 @@ router.delete(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const userId = String(req.user?.id || (req.user as any)?.user_id || '');
-    const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
+    const body =
+      req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
     if (Object.keys(body).some((key) => !['expectedVersion', 'reason'].includes(key)))
       return res.status(400).json({ code: 'INVALID_BODY', error: 'Unknown discard field' });
     try {
       const result = await discardBudgetCommand({
-        organizationId, userId, budgetId: req.params.budgetId,
+        organizationId,
+        userId,
+        budgetId: req.params.budgetId,
         expectedVersion: body.expectedVersion,
         reason: typeof body.reason === 'string' ? body.reason : '',
-        idempotencyKey: String(req.header('Idempotency-Key') || req.header('x-idempotency-key') || ''),
+        idempotencyKey: String(
+          req.header('Idempotency-Key') || req.header('x-idempotency-key') || ''
+        ),
       });
       return res.status(200).json({ data: result, meta: financeMeta() });
     } catch (error) {
       if (error instanceof BudgetDiscardCommandError)
-        return res.status(error.status).json({ code: error.code, error: error.message, ...(error.details || {}) });
+        return res
+          .status(error.status)
+          .json({ code: error.code, error: error.message, ...(error.details || {}) });
       throw error;
     }
   })
@@ -2033,7 +2129,6 @@ router.post(
           meta: financeMeta(),
         },
       };
-
     };
 
     if (!idempotencyKey) {
@@ -2614,9 +2709,7 @@ router.post(
           code: error?.code || 'MULTI_SECTION_EXTRACTION_FAILED',
           statementType: error?.statementType,
           ...(Array.isArray(error?.missing) ? { missing: error.missing } : {}),
-          ...(Array.isArray(error?.invalidIndexes)
-            ? { invalidIndexes: error.invalidIndexes }
-            : {}),
+          ...(Array.isArray(error?.invalidIndexes) ? { invalidIndexes: error.invalidIndexes } : {}),
         });
       }
     }
@@ -3112,9 +3205,13 @@ router.post(
     const { organizationId } = getV8Context(req);
     const userId = String(req.user?.id || '');
     const statementId = String(req.params.statementId);
-    const action = String(req.body?.action || 'ACCEPT').trim().toUpperCase();
+    const action = String(req.body?.action || 'ACCEPT')
+      .trim()
+      .toUpperCase();
     if (!['ACCEPT', 'EXCLUDE'].includes(action)) {
-      return res.status(400).json({ error: 'Unsupported mapping decision', code: 'MANUAL_MAPPING_ACTION_INVALID' });
+      return res
+        .status(400)
+        .json({ error: 'Unsupported mapping decision', code: 'MANUAL_MAPPING_ACTION_INVALID' });
     }
     const canonicalLineId = String(req.body?.canonicalLineId || '').trim();
     if (action === 'ACCEPT' && !canonicalLineId) {
