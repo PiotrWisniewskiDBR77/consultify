@@ -181,6 +181,8 @@ export interface NModeHeaderPrimaryAction {
   disabled?: boolean;
   /** Optional tooltip override */
   title?: { en: string; pl: string };
+  /** Optional layout override for a reviewed header action cluster. */
+  className?: string;
 }
 
 // ── Header Configuration ────────────────────────────────────────────────────

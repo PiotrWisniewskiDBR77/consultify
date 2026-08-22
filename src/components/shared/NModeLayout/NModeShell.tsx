@@ -25,7 +25,7 @@
  */
 
 import { Loader2 } from 'lucide-react';
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 
 import type { PresentationMode } from '@/hooks/usePresentationMode';
 
@@ -132,6 +132,18 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
   readMode,
   children,
 }) => {
+  const centerScrollRef = useRef<HTMLDivElement>(null);
+
+  // A document may be opened in the same hub without unmounting this shell.
+  // Browsers then retain the previous document's scrollTop, which can make a
+  // resumed tool session appear to start halfway through its canvas (with the
+  // header, properties and phase summary hidden above the viewport). Artifact
+  // identity is the navigation boundary: every newly opened card starts at its
+  // canonical top, while normal scrolling inside the same card is preserved.
+  useEffect(() => {
+    centerScrollRef.current?.scrollTo?.({ top: 0, left: 0, behavior: 'auto' });
+  }, [header.artifactId]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full bg-white dark:bg-navy-950">
@@ -153,7 +165,10 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
   return (
     <div className="h-full min-h-0 flex">
       {/* ── Kolumna centrum (własny scroll; gdy brak rightPanel = pełna szerokość, identycznie jak dawniej) ── */}
-      <div className="flex-1 min-w-0 h-full min-h-0 overflow-y-auto bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
+      <div
+        ref={centerScrollRef}
+        className="flex-1 min-w-0 h-full min-h-0 overflow-y-auto bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950"
+      >
         {/* ── Segment 1: Header + PropertiesStrip (scrolls away) ────────────────── */}
         <div className="px-6 pt-4 pb-0">
           <div className="max-w-6xl mx-auto">
@@ -180,22 +195,24 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
             (`NMODE_TOOLBAR_SHELL_CLASS`), więc sticky-tło dalej biegnie od
             krawędzi do krawędzi. Zmiana jest wspólna dla wszystkich sześciu
             kart N na tej powłoce. */}
-        {showToolbarShell ? <div className={NMODE_TOOLBAR_SHELL_CLASS} data-nmode-toolbar-shell>
-          <div className="px-6 py-2">
-            <div className="max-w-6xl mx-auto">
-              {renderActionBar
-                ? actionBarNode
-                : hasToolbarContent && (
-                    <NModeActionBar
-                      actions={actionsVisible ? actions : []}
-                      aiContextActions={aiContextActions}
-                      toolAIActions={toolAIActions}
-                      activeSection={activeSection}
-                    />
-                  )}
+        {showToolbarShell ? (
+          <div className={NMODE_TOOLBAR_SHELL_CLASS} data-nmode-toolbar-shell>
+            <div className="px-6 py-2">
+              <div className="max-w-6xl mx-auto">
+                {renderActionBar
+                  ? actionBarNode
+                  : hasToolbarContent && (
+                      <NModeActionBar
+                        actions={actionsVisible ? actions : []}
+                        aiContextActions={aiContextActions}
+                        toolAIActions={toolAIActions}
+                        activeSection={activeSection}
+                      />
+                    )}
+              </div>
             </div>
           </div>
-        </div> : null}
+        ) : null}
 
         {/* ── Segment 3: Main content (scrollable, padded) ──────────────────────── */}
         <div className="px-6 pb-6">

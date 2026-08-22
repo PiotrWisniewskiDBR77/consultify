@@ -509,7 +509,7 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
                       : primaryAction.title.en
                     : undefined
                 }
-                className={`${MENU_1_PRIMARY_CTA} shrink-0 whitespace-nowrap !gap-1 !px-2 !text-xs sm:!gap-2 sm:!px-4 sm:!text-sm`}
+                className={`${MENU_1_PRIMARY_CTA} shrink-0 whitespace-nowrap !gap-1 !px-2 !text-xs sm:!gap-2 sm:!px-4 sm:!text-sm ${primaryAction.className ?? ''}`}
               >
                 {primaryAction.icon && <primaryAction.icon size={16} />}
                 <span>{isPolish ? primaryAction.label.pl : primaryAction.label.en}</span>

@@ -232,6 +232,7 @@ export interface SectionsManagerMenuProps {
   layout: UseCardLayoutResult;
   isPolish?: boolean;
   className?: string;
+  buttonClassName?: string;
 }
 
 /**
@@ -243,6 +244,7 @@ export const SectionsManagerMenu: React.FC<SectionsManagerMenuProps> = ({
   layout,
   isPolish: isPolishProp,
   className,
+  buttonClassName,
 }) => {
   const { t: tHook, i18n } = useTranslation();
   const t = typeof isPolishProp === 'boolean' ? i18n.getFixedT(isPolishProp ? 'pl' : 'en') : tHook;
@@ -272,7 +274,7 @@ export const SectionsManagerMenu: React.FC<SectionsManagerMenuProps> = ({
         aria-label={t('sharedComponents.nModeCardManager.sectionsLabel')}
         aria-haspopup="menu"
         aria-expanded={open}
-        className={TOOLBAR_BTN}
+        className={`${TOOLBAR_BTN} ${buttonClassName ?? ''}`}
       >
         <Layers size={14} />
         <span className="hidden lg:inline">

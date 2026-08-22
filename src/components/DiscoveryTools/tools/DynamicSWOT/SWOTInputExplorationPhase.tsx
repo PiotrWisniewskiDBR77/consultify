@@ -2,6 +2,7 @@ import { Check, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { Api } from '@/services/api';
 import {
   ProposalCardType,
   SWOTData,
@@ -580,6 +581,24 @@ export function SWOTInputExplorationPhase({
   const [expandedAcceptedById, setExpandedAcceptedById] = React.useState<Record<string, boolean>>(
     {}
   );
+  const [activeStream, setActiveStream] = React.useState<StreamId>('strengths');
+  const [guidanceExpanded, setGuidanceExpanded] = React.useState(false);
+  const [manualItem, setManualItem] = React.useState('');
+  const [fillAllBusy, setFillAllBusy] = React.useState(false);
+  const [fillAllError, setFillAllError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const saved = window.localStorage.getItem(`swot-guidance:${session.id}`);
+    setGuidanceExpanded(saved === 'expanded');
+  }, [session.id]);
+
+  const toggleGuidance = () => {
+    setGuidanceExpanded((current) => {
+      const next = !current;
+      window.localStorage.setItem(`swot-guidance:${session.id}`, next ? 'expanded' : 'collapsed');
+      return next;
+    });
+  };
 
   React.useEffect(() => {
     setWorkingProposalByStream((current) =>
@@ -790,6 +809,50 @@ export function SWOTInputExplorationPhase({
     }
   };
 
+  const addManualItem = (streamId: StreamId) => {
+    const value = manualItem.trim();
+    if (!value || acceptedSignalsByStream[streamId].length >= 5) return;
+    addSWOTSignal({
+      type: 'interview',
+      sourceLabel: value,
+      content: value,
+      confidence: 5,
+      tags: [streamId, 'input-proposal', 'manual-entry'],
+      evidenceType: 'observation',
+      state: 'accepted',
+      provenance: 'Consultant manual entry',
+      proposalStatus: 'accepted',
+    });
+    setManualItem('');
+  };
+
+  const fillAllWithAi = async () => {
+    setFillAllBusy(true);
+    setFillAllError(null);
+    try {
+      const response = await Api.createSwotProposals(session.id);
+      setWorkingProposalByStream((current) => {
+        const next = { ...current };
+        for (const proposal of response.proposals || []) {
+          if (proposal.status !== 'pending' || !proposal.proposedAfter?.text) continue;
+          next[proposal.quadrant] = {
+            title: proposal.proposedAfter.text,
+            explanation: proposal.rationale,
+          };
+        }
+        return next;
+      });
+    } catch {
+      setFillAllError(
+        isPolish
+          ? 'Teresa nie mogła przygotować propozycji. Spróbuj ponownie.'
+          : 'Teresa could not prepare proposals. Try again.'
+      );
+    } finally {
+      setFillAllBusy(false);
+    }
+  };
+
   const confirmStreamSet = (streamId: StreamId) => {
     acceptedSignalsByStream[streamId].forEach((signal) => {
       updateSWOTSignal(signal.id, {
@@ -822,463 +885,582 @@ export function SWOTInputExplorationPhase({
           <div className="mt-3 text-lg font-semibold leading-tight text-slate-900 dark:text-white">
             {t(`${P}.introTitle`)}
           </div>
-          <div className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-            {t(`${P}.introSubtitle`)}
+          {guidanceExpanded && (
+            <div className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+              {t(`${P}.introSubtitle`)}
+            </div>
+          )}
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={toggleGuidance}
+              aria-expanded={guidanceExpanded}
+              className="rounded-full border border-slate-300/60 px-3 py-1 text-xs font-semibold text-slate-600 dark:text-slate-200"
+            >
+              {guidanceExpanded ? (isPolish ? 'Mniej' : 'Less') : isPolish ? 'Więcej' : 'More'}
+            </button>
+            <button
+              type="button"
+              onClick={() => void fillAllWithAi()}
+              disabled={fillAllBusy}
+              data-testid="swot-fill-all-ai"
+              className="rounded-full border border-sky-400/40 bg-sky-500/10 px-3 py-1 text-xs font-semibold text-sky-700 dark:text-sky-200"
+            >
+              {fillAllBusy
+                ? isPolish
+                  ? 'Teresa pracuje…'
+                  : 'Teresa is working…'
+                : isPolish
+                  ? 'Wypełnij wszystkie z AI'
+                  : 'Fill all with AI'}
+            </button>
+            {fillAllError ? (
+              <span role="alert" className="text-xs text-danger-600">
+                {fillAllError}
+              </span>
+            ) : null}
           </div>
         </div>
 
-        <div className="grid gap-3 border-b border-slate-200/70 px-6 py-5 dark:border-white/10 md:grid-cols-4">
-          <div className="rounded-[24px] border border-slate-200/70 bg-white/85 p-4 dark:border-white/10 dark:bg-white/[0.04]">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
-              {labels.totalAccepted}
-            </div>
-            <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
-              {totalAcceptedPoints}
-            </div>
-          </div>
-          <div className="rounded-[24px] border border-emerald-200/70 bg-emerald-500/5 p-4 dark:border-emerald-900/40">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300">
-              {labels.confirmedAreas}
-            </div>
-            <div className="mt-2 text-2xl font-semibold text-emerald-700 dark:text-emerald-200">
-              {confirmedAreasCount}/4
-            </div>
-          </div>
-          <div className="rounded-[24px] border border-primary-200/70 bg-primary-500/5 p-4 dark:border-primary-900/40">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-700 dark:text-primary-300">
-              {labels.activeDialogue}
-            </div>
-            <div className="mt-2 text-2xl font-semibold text-primary-700 dark:text-primary-200">
-              4
-            </div>
-          </div>
-          <div className="rounded-[24px] border border-sky-200/70 bg-sky-500/5 p-4 dark:border-sky-900/40">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-700 dark:text-sky-300">
-              {labels.maxTarget}
-            </div>
-            <div className="mt-2 text-2xl font-semibold text-sky-700 dark:text-sky-200">5</div>
-          </div>
-        </div>
+        <div className="xl:grid xl:grid-cols-[180px_minmax(0,1fr)]">
+          <aside className="hidden border-r border-slate-200/70 p-4 dark:border-white/10 xl:block">
+            <nav
+              aria-label={isPolish ? 'Strumienie analizy SWOT' : 'SWOT analysis streams'}
+              className="sticky top-24 space-y-2"
+            >
+              {STREAM_ORDER.map((streamId) => {
+                const meta = STREAM_META[streamId];
+                const count = acceptedSignalsByStream[streamId].length;
+                return (
+                  <button
+                    key={streamId}
+                    type="button"
+                    onClick={() => setActiveStream(streamId)}
+                    aria-current={activeStream === streamId ? 'step' : undefined}
+                    className={`flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left text-xs font-semibold ${activeStream === streamId ? meta.surface : 'border-transparent text-slate-500 hover:border-slate-200 dark:text-slate-300'}`}
+                  >
+                    <span>{isPolish ? meta.title.pl : meta.title.en}</span>
+                    <span>{count}/5</span>
+                  </button>
+                );
+              })}
+            </nav>
+          </aside>
+          <div className="min-w-0">
+            <nav
+              role="tablist"
+              aria-label={isPolish ? 'Kategorie SWOT' : 'SWOT categories'}
+              className="grid grid-cols-2 gap-2 border-b border-slate-200/70 px-6 py-4 dark:border-white/10 md:grid-cols-4"
+            >
+              {STREAM_ORDER.map((streamId) => {
+                const meta = STREAM_META[streamId];
+                const count = acceptedSignalsByStream[streamId].length;
+                return (
+                  <button
+                    key={streamId}
+                    type="button"
+                    onClick={() => setActiveStream(streamId)}
+                    role="tab"
+                    aria-selected={activeStream === streamId}
+                    aria-controls={`swot-stream-panel-${streamId}`}
+                    data-testid={`swot-stream-${streamId}`}
+                    className={`rounded-xl border px-3 py-2 text-left text-sm font-semibold ${activeStream === streamId ? meta.surface : 'border-slate-200/70 bg-transparent text-slate-500 dark:border-white/10 dark:text-slate-300'}`}
+                  >
+                    <span>{isPolish ? meta.title.pl : meta.title.en}</span>
+                    <span className="ml-2 text-xs">{count}/5</span>
+                  </button>
+                );
+              })}
+            </nav>
 
-        <div className="space-y-4 px-6 py-5">
-          {STREAM_ORDER.map((streamId) => {
-            const meta = STREAM_META[streamId];
-            const acceptedSignals = acceptedSignalsByStream[streamId];
-            const acceptedCount = acceptedSignals.length;
-            const isConfirmed =
-              acceptedCount >= 2 &&
-              acceptedSignals.every((signal) => signal.tags?.includes('confirmed-for-matrix'));
-            const shouldSuggestEnough =
-              attemptCountByStream[streamId] >= 10 &&
-              acceptedCount >= 3 &&
-              acceptedCount < 5 &&
-              !isConfirmed;
-            const currentProposal = applyContextToProposal(
-              workingProposalByStream[streamId],
-              buildContextHint(swotData, streamId, acceptedSignals, isPolish),
-              isPolish
-            );
-            const previewProposal =
-              activeAction?.streamId === streamId &&
-              activeAction.target === 'proposal' &&
-              (activeAction.mode === 'deepen' ? selectedDeepen.trim() : feedbackInput.trim())
-                ? buildRewrittenProposal(
-                    currentProposal,
-                    activeAction.mode === 'deepen' ? selectedDeepen : feedbackInput,
-                    activeAction.mode
-                  )
-                : currentProposal;
-
-            return (
-              <section key={streamId} className={`rounded-[26px] border p-5 ${meta.surface}`}>
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <div
-                      className={`text-[11px] font-semibold uppercase tracking-[0.16em] ${meta.headerTone}`}
-                    >
-                      {isPolish ? meta.title.pl : meta.title.en}
-                    </div>
-                    <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                      {isPolish ? meta.subtitle.pl : meta.subtitle.en}
-                    </div>
-                  </div>
-                  <span className="inline-flex rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200">
-                    {meta.badge}
-                  </span>
+            <div className="grid gap-3 border-b border-slate-200/70 px-6 py-5 dark:border-white/10 md:grid-cols-4">
+              <div className="rounded-[24px] border border-slate-200/70 bg-white/85 p-4 dark:border-white/10 dark:bg-white/[0.04]">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
+                  {labels.totalAccepted}
                 </div>
-
-                <div className="mt-4 flex flex-wrap items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
-                  <span className="inline-flex rounded-full border border-white/70 bg-white/70 px-2.5 py-1 font-semibold uppercase tracking-[0.16em] dark:border-white/10 dark:bg-white/[0.04]">
-                    {labels.accepted}: {acceptedCount}/5
-                  </span>
-                  <span className="inline-flex rounded-full border border-white/70 bg-white/70 px-2.5 py-1 font-semibold uppercase tracking-[0.16em] dark:border-white/10 dark:bg-white/[0.04]">
-                    {labels.attempts}: {attemptCountByStream[streamId]}
-                  </span>
-                  {isConfirmed && (
-                    <span className="inline-flex rounded-full border border-emerald-300/50 bg-emerald-50 px-2.5 py-1 font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300">
-                      {labels.confirmed}
-                    </span>
-                  )}
+                <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+                  {totalAcceptedPoints}
                 </div>
+              </div>
+              <div className="rounded-[24px] border border-emerald-200/70 bg-emerald-500/5 p-4 dark:border-emerald-900/40">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300">
+                  {labels.confirmedAreas}
+                </div>
+                <div className="mt-2 text-2xl font-semibold text-emerald-700 dark:text-emerald-200">
+                  {confirmedAreasCount}/4
+                </div>
+              </div>
+              <div className="rounded-[24px] border border-primary-200/70 bg-primary-500/5 p-4 dark:border-primary-900/40">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-700 dark:text-primary-300">
+                  {labels.activeDialogue}
+                </div>
+                <div className="mt-2 text-2xl font-semibold text-primary-700 dark:text-primary-200">
+                  4
+                </div>
+              </div>
+              <div className="rounded-[24px] border border-sky-200/70 bg-sky-500/5 p-4 dark:border-sky-900/40">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-700 dark:text-sky-300">
+                  {labels.maxTarget}
+                </div>
+                <div className="mt-2 text-2xl font-semibold text-sky-700 dark:text-sky-200">5</div>
+              </div>
+            </div>
 
-                <div className="mt-4 rounded-[24px] border border-white/70 bg-white/75 p-4 dark:border-white/10 dark:bg-white/[0.04]">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
-                    {labels.acceptedList}
-                  </div>
-                  {acceptedSignals.length === 0 ? (
-                    <div className="mt-3 text-sm text-slate-500 dark:text-slate-400">
-                      {labels.emptyAccepted}
-                    </div>
-                  ) : (
-                    <div className="mt-4 space-y-3">
-                      {acceptedSignals.map((signal) => (
+            <div className="space-y-4 px-6 py-5">
+              {STREAM_ORDER.filter((streamId) => streamId === activeStream).map((streamId) => {
+                const meta = STREAM_META[streamId];
+                const acceptedSignals = acceptedSignalsByStream[streamId];
+                const acceptedCount = acceptedSignals.length;
+                const isConfirmed =
+                  acceptedCount >= 2 &&
+                  acceptedSignals.every((signal) => signal.tags?.includes('confirmed-for-matrix'));
+                const shouldSuggestEnough =
+                  attemptCountByStream[streamId] >= 10 &&
+                  acceptedCount >= 3 &&
+                  acceptedCount < 5 &&
+                  !isConfirmed;
+                const currentProposal = applyContextToProposal(
+                  workingProposalByStream[streamId],
+                  buildContextHint(swotData, streamId, acceptedSignals, isPolish),
+                  isPolish
+                );
+                const previewProposal =
+                  activeAction?.streamId === streamId &&
+                  activeAction.target === 'proposal' &&
+                  (activeAction.mode === 'deepen' ? selectedDeepen.trim() : feedbackInput.trim())
+                    ? buildRewrittenProposal(
+                        currentProposal,
+                        activeAction.mode === 'deepen' ? selectedDeepen : feedbackInput,
+                        activeAction.mode
+                      )
+                    : currentProposal;
+
+                return (
+                  <section
+                    key={streamId}
+                    id={`swot-stream-panel-${streamId}`}
+                    role="tabpanel"
+                    className={`rounded-[26px] border p-5 ${meta.surface}`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
                         <div
-                          key={signal.id}
-                          className="rounded-2xl border border-slate-200/70 bg-white/85 p-4 dark:border-white/10 dark:bg-white/[0.04]"
+                          className={`text-[11px] font-semibold uppercase tracking-[0.16em] ${meta.headerTone}`}
                         >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0 flex-1">
-                              <div className="text-base font-semibold leading-tight text-slate-900 dark:text-white">
-                                {signal.sourceLabel}
-                              </div>
-                              {expandedAcceptedById[signal.id] && (
-                                <div className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                                  {signal.content}
-                                </div>
-                              )}
-                            </div>
-                            <div className="rounded-full border border-emerald-300/40 bg-emerald-50 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300">
-                              {signal.tags?.includes('confirmed-for-matrix')
-                                ? labels.confirmed
-                                : labels.accepted}
-                            </div>
-                          </div>
+                          {isPolish ? meta.title.pl : meta.title.en}
+                        </div>
+                        <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                          {isPolish ? meta.subtitle.pl : meta.subtitle.en}
+                        </div>
+                      </div>
+                      <span className="inline-flex rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200">
+                        {meta.badge}
+                      </span>
+                    </div>
 
-                          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-200/70 pt-3 dark:border-white/10">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() => toggleAcceptedDetails(signal.id)}
-                                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/70 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
-                              >
-                                <ChevronDown
-                                  className={`h-3.5 w-3.5 transition-transform ${
-                                    expandedAcceptedById[signal.id] ? 'rotate-180' : ''
-                                  }`}
-                                />
-                                {expandedAcceptedById[signal.id]
-                                  ? labels.hideExplanation
-                                  : labels.showExplanation}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => removeSWOTSignal(signal.id)}
-                                aria-label={labels.remove}
-                                title={labels.remove}
-                                className="inline-flex items-center justify-center rounded-full border border-slate-200/70 bg-white p-2 text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </button>
-                            </div>
+                    <div className="mt-4 flex flex-wrap items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+                      <span className="inline-flex rounded-full border border-white/70 bg-white/70 px-2.5 py-1 font-semibold uppercase tracking-[0.16em] dark:border-white/10 dark:bg-white/[0.04]">
+                        {labels.accepted}: {acceptedCount}/5
+                      </span>
+                      <span className="inline-flex rounded-full border border-white/70 bg-white/70 px-2.5 py-1 font-semibold uppercase tracking-[0.16em] dark:border-white/10 dark:bg-white/[0.04]">
+                        {labels.attempts}: {attemptCountByStream[streamId]}
+                      </span>
+                      {isConfirmed && (
+                        <span className="inline-flex rounded-full border border-emerald-300/50 bg-emerald-50 px-2.5 py-1 font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300">
+                          {labels.confirmed}
+                        </span>
+                      )}
+                    </div>
 
-                            <div className="flex flex-wrap justify-end gap-2">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setActiveAction({
-                                    streamId,
-                                    mode: 'comment',
-                                    target: 'accepted',
-                                    signalId: signal.id,
-                                  });
-                                  setFeedbackInput('');
-                                }}
-                                className="inline-flex items-center rounded-full border border-slate-200/70 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
-                              >
-                                {labels.comment}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setActiveAction({
-                                    streamId,
-                                    mode: 'deepen',
-                                    target: 'accepted',
-                                    signalId: signal.id,
-                                  });
-                                  setFeedbackInput('');
-                                  setSelectedDeepen('');
-                                }}
-                                className="inline-flex items-center rounded-full border border-primary-300/50 bg-white px-3 py-1.5 text-xs font-medium text-primary-800 transition-colors hover:bg-primary-50 dark:border-primary-900/40 dark:bg-white/[0.04] dark:text-primary-200"
-                              >
-                                {labels.deepen}
-                              </button>
-                            </div>
-                          </div>
-
-                          {activeAction?.target === 'accepted' &&
-                            activeAction.signalId === signal.id &&
-                            activeAction.streamId === streamId && (
-                              <div className="mt-4 rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]">
-                                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
-                                  {activeAction.mode === 'comment' ? labels.comment : labels.deepen}
-                                </div>
-                                {activeAction.mode === 'comment' ? (
-                                  <textarea
-                                    value={feedbackInput}
-                                    onChange={(e) => setFeedbackInput(e.target.value)}
-                                    rows={3}
-                                    placeholder={t(`${P}.refineAcceptedPlaceholder`)}
-                                    className="mt-3 w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-relaxed text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-500/20 dark:border-navy-700 dark:bg-navy-800 dark:text-white"
-                                  />
-                                ) : (
-                                  <div className="mt-3 grid gap-2">
-                                    {DEEPEN_OPTIONS[streamId].map((option) => {
-                                      const active =
-                                        selectedDeepen ===
-                                        (isPolish ? option.label.pl : option.label.en);
-                                      return (
-                                        <button
-                                          key={option.id}
-                                          type="button"
-                                          onClick={() =>
-                                            setSelectedDeepen(
-                                              isPolish ? option.label.pl : option.label.en
-                                            )
-                                          }
-                                          className={`rounded-2xl border px-4 py-3 text-left transition-colors ${
-                                            active
-                                              ? 'border-primary-300 bg-primary-50 text-primary-900 dark:border-primary-800 dark:bg-primary-950/30 dark:text-primary-100'
-                                              : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]'
-                                          }`}
-                                        >
-                                          <div className="text-sm font-semibold">
-                                            {isPolish ? option.label.pl : option.label.en}
-                                          </div>
-                                          <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                                            {isPolish
-                                              ? option.description.pl
-                                              : option.description.en}
-                                          </div>
-                                        </button>
-                                      );
-                                    })}
+                    <div className="mt-4 rounded-[24px] border border-white/70 bg-white/75 p-4 dark:border-white/10 dark:bg-white/[0.04]">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
+                        {labels.acceptedList}
+                      </div>
+                      {acceptedSignals.length === 0 ? (
+                        <div className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+                          {labels.emptyAccepted}
+                        </div>
+                      ) : (
+                        <div className="mt-4 space-y-3">
+                          {acceptedSignals.map((signal) => (
+                            <div
+                              key={signal.id}
+                              className="rounded-2xl border border-slate-200/70 bg-white/85 p-4 dark:border-white/10 dark:bg-white/[0.04]"
+                            >
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0 flex-1">
+                                  <div className="text-base font-semibold leading-tight text-slate-900 dark:text-white">
+                                    {signal.sourceLabel}
                                   </div>
-                                )}
-                                <div className="mt-3 flex gap-2">
+                                  {expandedAcceptedById[signal.id] && (
+                                    <div className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                                      {signal.content}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="rounded-full border border-emerald-300/40 bg-emerald-50 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300">
+                                  {signal.tags?.includes('confirmed-for-matrix')
+                                    ? labels.confirmed
+                                    : labels.accepted}
+                                </div>
+                              </div>
+
+                              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-200/70 pt-3 dark:border-white/10">
+                                <div className="flex flex-wrap items-center gap-2">
                                   <button
                                     type="button"
-                                    onClick={() => applyAction(streamId)}
-                                    disabled={
-                                      activeAction.mode === 'comment'
-                                        ? !feedbackInput.trim()
-                                        : !selectedDeepen
-                                    }
-                                    className="inline-flex rounded-2xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-slate-900"
+                                    onClick={() => toggleAcceptedDetails(signal.id)}
+                                    className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/70 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
                                   >
-                                    {labels.apply}
+                                    <ChevronDown
+                                      className={`h-3.5 w-3.5 transition-transform ${
+                                        expandedAcceptedById[signal.id] ? 'rotate-180' : ''
+                                      }`}
+                                    />
+                                    {expandedAcceptedById[signal.id]
+                                      ? labels.hideExplanation
+                                      : labels.showExplanation}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeSWOTSignal(signal.id)}
+                                    aria-label={labels.remove}
+                                    title={labels.remove}
+                                    className="inline-flex items-center justify-center rounded-full border border-slate-200/70 bg-white p-2 text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </button>
+                                </div>
+
+                                <div className="flex flex-wrap justify-end gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setActiveAction({
+                                        streamId,
+                                        mode: 'comment',
+                                        target: 'accepted',
+                                        signalId: signal.id,
+                                      });
+                                      setFeedbackInput('');
+                                    }}
+                                    className="inline-flex items-center rounded-full border border-slate-200/70 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
+                                  >
+                                    {labels.comment}
                                   </button>
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      setActiveAction(null);
+                                      setActiveAction({
+                                        streamId,
+                                        mode: 'deepen',
+                                        target: 'accepted',
+                                        signalId: signal.id,
+                                      });
                                       setFeedbackInput('');
                                       setSelectedDeepen('');
                                     }}
-                                    className="inline-flex rounded-2xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-navy-700 dark:text-slate-300 dark:hover:bg-navy-800"
+                                    className="inline-flex items-center rounded-full border border-primary-300/50 bg-white px-3 py-1.5 text-xs font-medium text-primary-800 transition-colors hover:bg-primary-50 dark:border-primary-900/40 dark:bg-white/[0.04] dark:text-primary-200"
                                   >
-                                    {labels.close}
+                                    {labels.deepen}
                                   </button>
                                 </div>
                               </div>
-                            )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
 
-                  {acceptedCount >= 2 && (
-                    <div className="mt-4 space-y-3">
-                      {isConfirmed ? (
-                        <div className="rounded-2xl border border-emerald-200/70 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300">
-                          {acceptedCount < 5 ? labels.confirmedButOpen : labels.confirmedToMatrix}
+                              {activeAction?.target === 'accepted' &&
+                                activeAction.signalId === signal.id &&
+                                activeAction.streamId === streamId && (
+                                  <div className="mt-4 rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]">
+                                    <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
+                                      {activeAction.mode === 'comment'
+                                        ? labels.comment
+                                        : labels.deepen}
+                                    </div>
+                                    {activeAction.mode === 'comment' ? (
+                                      <textarea
+                                        value={feedbackInput}
+                                        onChange={(e) => setFeedbackInput(e.target.value)}
+                                        rows={3}
+                                        placeholder={t(`${P}.refineAcceptedPlaceholder`)}
+                                        className="mt-3 w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-relaxed text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-500/20 dark:border-navy-700 dark:bg-navy-800 dark:text-white"
+                                      />
+                                    ) : (
+                                      <div className="mt-3 grid gap-2">
+                                        {DEEPEN_OPTIONS[streamId].map((option) => {
+                                          const active =
+                                            selectedDeepen ===
+                                            (isPolish ? option.label.pl : option.label.en);
+                                          return (
+                                            <button
+                                              key={option.id}
+                                              type="button"
+                                              onClick={() =>
+                                                setSelectedDeepen(
+                                                  isPolish ? option.label.pl : option.label.en
+                                                )
+                                              }
+                                              className={`rounded-2xl border px-4 py-3 text-left transition-colors ${
+                                                active
+                                                  ? 'border-primary-300 bg-primary-50 text-primary-900 dark:border-primary-800 dark:bg-primary-950/30 dark:text-primary-100'
+                                                  : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]'
+                                              }`}
+                                            >
+                                              <div className="text-sm font-semibold">
+                                                {isPolish ? option.label.pl : option.label.en}
+                                              </div>
+                                              <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                                {isPolish
+                                                  ? option.description.pl
+                                                  : option.description.en}
+                                              </div>
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                    )}
+                                    <div className="mt-3 flex gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => applyAction(streamId)}
+                                        disabled={
+                                          activeAction.mode === 'comment'
+                                            ? !feedbackInput.trim()
+                                            : !selectedDeepen
+                                        }
+                                        className="inline-flex rounded-2xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-slate-900"
+                                      >
+                                        {labels.apply}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setActiveAction(null);
+                                          setFeedbackInput('');
+                                          setSelectedDeepen('');
+                                        }}
+                                        className="inline-flex rounded-2xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-navy-700 dark:text-slate-300 dark:hover:bg-navy-800"
+                                      >
+                                        {labels.close}
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+                            </div>
+                          ))}
                         </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => confirmStreamSet(streamId)}
-                          className="inline-flex items-center gap-2 rounded-2xl border border-emerald-300/50 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300"
-                        >
-                          <Check className="h-4 w-4" />
-                          {labels.confirmSet}
-                        </button>
                       )}
 
-                      {acceptedCount >= 2 && acceptedCount < 5 && (
-                        <div className="flex flex-wrap items-center gap-2">
+                      {acceptedCount >= 2 && (
+                        <div className="mt-4 space-y-3">
                           {isConfirmed ? (
+                            <div className="rounded-2xl border border-emerald-200/70 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300">
+                              {acceptedCount < 5
+                                ? labels.confirmedButOpen
+                                : labels.confirmedToMatrix}
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => confirmStreamSet(streamId)}
+                              className="inline-flex items-center gap-2 rounded-2xl border border-emerald-300/50 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300"
+                            >
+                              <Check className="h-4 w-4" />
+                              {labels.confirmSet}
+                            </button>
+                          )}
+
+                          {acceptedCount >= 2 && acceptedCount < 5 && (
+                            <div className="flex flex-wrap items-center gap-2">
+                              {isConfirmed ? (
+                                <button
+                                  type="button"
+                                  onClick={() => moveToNextProposal(streamId)}
+                                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/70 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
+                                >
+                                  <ChevronRight className="h-3.5 w-3.5" />
+                                  {labels.continueAdding}
+                                </button>
+                              ) : null}
+                              <div className="text-sm text-slate-500 dark:text-slate-400">
+                                {labels.keepGoing}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {shouldSuggestEnough && (
+                        <div className="mt-4 rounded-2xl border border-amber-200/70 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300">
+                          {labels.readyEnough}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="mt-4 flex gap-2">
+                      <input
+                        value={manualItem}
+                        onChange={(event) => setManualItem(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter') addManualItem(streamId);
+                        }}
+                        aria-label={isPolish ? 'Dodaj własny punkt' : 'Add your own point'}
+                        placeholder={isPolish ? 'Dodaj własny punkt…' : 'Add your own…'}
+                        className="min-w-0 flex-1 rounded-xl border border-slate-300/60 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-navy-900"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => addManualItem(streamId)}
+                        disabled={!manualItem.trim() || acceptedCount >= 5}
+                        className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40 dark:bg-white dark:text-slate-900"
+                      >
+                        {isPolish ? 'Dodaj' : 'Add'}
+                      </button>
+                    </div>
+
+                    {acceptedCount < 5 && (
+                      <div className={`mt-4 rounded-[24px] border p-5 ${meta.proposalTone}`}>
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
+                            {labels.aiProposal}
+                          </div>
+                          <span className="inline-flex rounded-full border border-primary-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-primary-700 dark:border-primary-900/40 dark:bg-white/[0.05] dark:text-primary-200">
+                            AI
+                          </span>
+                        </div>
+
+                        <div className="mt-4 text-xl font-semibold leading-tight text-slate-900 dark:text-white">
+                          {previewProposal.title}
+                        </div>
+                        <div className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                          {previewProposal.explanation}
+                        </div>
+
+                        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => acceptProposal(streamId)}
+                              disabled={acceptedCount >= 5}
+                              className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300/50 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300"
+                            >
+                              <Check className="h-3.5 w-3.5" />
+                              {labels.accept}
+                            </button>
                             <button
                               type="button"
                               onClick={() => moveToNextProposal(streamId)}
                               className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/70 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
                             >
                               <ChevronRight className="h-3.5 w-3.5" />
-                              {labels.continueAdding}
+                              {labels.nextProposal}
                             </button>
-                          ) : null}
-                          <div className="text-sm text-slate-500 dark:text-slate-400">
-                            {labels.keepGoing}
+                          </div>
+
+                          <div className="flex flex-wrap justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setActiveAction({ streamId, mode: 'comment', target: 'proposal' });
+                                setFeedbackInput('');
+                              }}
+                              className="inline-flex items-center rounded-full border border-slate-200/70 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
+                            >
+                              {labels.comment}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setActiveAction({ streamId, mode: 'deepen', target: 'proposal' });
+                                setFeedbackInput('');
+                                setSelectedDeepen('');
+                              }}
+                              className="inline-flex items-center rounded-full border border-primary-300/50 bg-white px-3 py-1.5 text-xs font-medium text-primary-800 transition-colors hover:bg-primary-50 dark:border-primary-900/40 dark:bg-white/[0.04] dark:text-primary-200"
+                            >
+                              {labels.deepen}
+                            </button>
                           </div>
                         </div>
-                      )}
-                    </div>
-                  )}
 
-                  {shouldSuggestEnough && (
-                    <div className="mt-4 rounded-2xl border border-amber-200/70 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300">
-                      {labels.readyEnough}
-                    </div>
-                  )}
-                </div>
-
-                {acceptedCount < 5 && (
-                  <div className={`mt-4 rounded-[24px] border p-5 ${meta.proposalTone}`}>
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
-                        {labels.aiProposal}
-                      </div>
-                      <span className="inline-flex rounded-full border border-primary-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-primary-700 dark:border-primary-900/40 dark:bg-white/[0.05] dark:text-primary-200">
-                        AI
-                      </span>
-                    </div>
-
-                    <div className="mt-4 text-xl font-semibold leading-tight text-slate-900 dark:text-white">
-                      {previewProposal.title}
-                    </div>
-                    <div className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                      {previewProposal.explanation}
-                    </div>
-
-                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => acceptProposal(streamId)}
-                          disabled={acceptedCount >= 5}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300/50 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300"
-                        >
-                          <Check className="h-3.5 w-3.5" />
-                          {labels.accept}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => moveToNextProposal(streamId)}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/70 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
-                        >
-                          <ChevronRight className="h-3.5 w-3.5" />
-                          {labels.nextProposal}
-                        </button>
-                      </div>
-
-                      <div className="flex flex-wrap justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setActiveAction({ streamId, mode: 'comment', target: 'proposal' });
-                            setFeedbackInput('');
-                          }}
-                          className="inline-flex items-center rounded-full border border-slate-200/70 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
-                        >
-                          {labels.comment}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setActiveAction({ streamId, mode: 'deepen', target: 'proposal' });
-                            setFeedbackInput('');
-                            setSelectedDeepen('');
-                          }}
-                          className="inline-flex items-center rounded-full border border-primary-300/50 bg-white px-3 py-1.5 text-xs font-medium text-primary-800 transition-colors hover:bg-primary-50 dark:border-primary-900/40 dark:bg-white/[0.04] dark:text-primary-200"
-                        >
-                          {labels.deepen}
-                        </button>
-                      </div>
-                    </div>
-
-                    {activeAction?.streamId === streamId && activeAction.target === 'proposal' && (
-                      <div className="mt-4 rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]">
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
-                          {activeAction.mode === 'comment' ? labels.comment : labels.deepen}
-                        </div>
-                        {activeAction.mode === 'comment' ? (
-                          <textarea
-                            value={feedbackInput}
-                            onChange={(e) => setFeedbackInput(e.target.value)}
-                            rows={3}
-                            placeholder={t(`${P}.rewriteProposalPlaceholder`)}
-                            className="mt-3 w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-relaxed text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-500/20 dark:border-navy-700 dark:bg-navy-800 dark:text-white"
-                          />
-                        ) : (
-                          <div className="mt-3 grid gap-2">
-                            {DEEPEN_OPTIONS[streamId].map((option) => {
-                              const active =
-                                selectedDeepen === (isPolish ? option.label.pl : option.label.en);
-                              return (
+                        {activeAction?.streamId === streamId &&
+                          activeAction.target === 'proposal' && (
+                            <div className="mt-4 rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]">
+                              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
+                                {activeAction.mode === 'comment' ? labels.comment : labels.deepen}
+                              </div>
+                              {activeAction.mode === 'comment' ? (
+                                <textarea
+                                  value={feedbackInput}
+                                  onChange={(e) => setFeedbackInput(e.target.value)}
+                                  rows={3}
+                                  placeholder={t(`${P}.rewriteProposalPlaceholder`)}
+                                  className="mt-3 w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-relaxed text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-500/20 dark:border-navy-700 dark:bg-navy-800 dark:text-white"
+                                />
+                              ) : (
+                                <div className="mt-3 grid gap-2">
+                                  {DEEPEN_OPTIONS[streamId].map((option) => {
+                                    const active =
+                                      selectedDeepen ===
+                                      (isPolish ? option.label.pl : option.label.en);
+                                    return (
+                                      <button
+                                        key={option.id}
+                                        type="button"
+                                        onClick={() =>
+                                          setSelectedDeepen(
+                                            isPolish ? option.label.pl : option.label.en
+                                          )
+                                        }
+                                        className={`rounded-2xl border px-4 py-3 text-left transition-colors ${
+                                          active
+                                            ? 'border-primary-300 bg-primary-50 text-primary-900 dark:border-primary-800 dark:bg-primary-950/30 dark:text-primary-100'
+                                            : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]'
+                                        }`}
+                                      >
+                                        <div className="text-sm font-semibold">
+                                          {isPolish ? option.label.pl : option.label.en}
+                                        </div>
+                                        <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                          {isPolish ? option.description.pl : option.description.en}
+                                        </div>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                              <div className="mt-3 flex gap-2">
                                 <button
-                                  key={option.id}
                                   type="button"
-                                  onClick={() =>
-                                    setSelectedDeepen(isPolish ? option.label.pl : option.label.en)
+                                  onClick={() => applyAction(streamId)}
+                                  disabled={
+                                    activeAction.mode === 'comment'
+                                      ? !feedbackInput.trim()
+                                      : !selectedDeepen
                                   }
-                                  className={`rounded-2xl border px-4 py-3 text-left transition-colors ${
-                                    active
-                                      ? 'border-primary-300 bg-primary-50 text-primary-900 dark:border-primary-800 dark:bg-primary-950/30 dark:text-primary-100'
-                                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]'
-                                  }`}
+                                  className="inline-flex rounded-2xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-slate-900"
                                 >
-                                  <div className="text-sm font-semibold">
-                                    {isPolish ? option.label.pl : option.label.en}
-                                  </div>
-                                  <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                                    {isPolish ? option.description.pl : option.description.en}
-                                  </div>
+                                  {labels.apply}
                                 </button>
-                              );
-                            })}
-                          </div>
-                        )}
-                        <div className="mt-3 flex gap-2">
-                          <button
-                            type="button"
-                            onClick={() => applyAction(streamId)}
-                            disabled={
-                              activeAction.mode === 'comment'
-                                ? !feedbackInput.trim()
-                                : !selectedDeepen
-                            }
-                            className="inline-flex rounded-2xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-slate-900"
-                          >
-                            {labels.apply}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setActiveAction(null);
-                              setFeedbackInput('');
-                              setSelectedDeepen('');
-                            }}
-                            className="inline-flex rounded-2xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-navy-700 dark:text-slate-300 dark:hover:bg-navy-800"
-                          >
-                            {labels.close}
-                          </button>
-                        </div>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setActiveAction(null);
+                                    setFeedbackInput('');
+                                    setSelectedDeepen('');
+                                  }}
+                                  className="inline-flex rounded-2xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-navy-700 dark:text-slate-300 dark:hover:bg-navy-800"
+                                >
+                                  {labels.close}
+                                </button>
+                              </div>
+                            </div>
+                          )}
                       </div>
                     )}
-                  </div>
-                )}
-              </section>
-            );
-          })}
+                  </section>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
     </div>

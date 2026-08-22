@@ -318,7 +318,114 @@ Date opened: `2026-08-21`
 
 ## Counters
 
-- Observations: `6`
+- Observations: `8`
 - Evidence items: `4` directly linked (`XMOD-EVD-002–005`)
 - Fixed: `0`
 - Accepted: `0`
+
+## XMOD-OWN-008 — Define a domain-aware Preview Content Contract
+
+- Modules: `ALL MODULES WITH TABLE + PREVIEW`
+- Trigger surface: Tools — Library, Sessions, Insights/Outputs, Reports,
+  Initiatives
+- Category: `CONTENT DESIGN / INFORMATION ARCHITECTURE / AI TRUST / PREVIEW`
+- Piotr's original wording (verbatim):
+
+  > Wszystkie preview są OK. Natomiast tutaj mam wniosek generalny do preview.
+  > (…) musimy lepiej opisać, co ma być w treściach preview. (…) preview nie jest
+  > zrobione tylko po to, żeby się otwierała tabela. Rzeczywiście dobrze jest mieć
+  > tutaj podsumowanie, co jest w środku. (…) te tutaj graficzne są dobre.
+
+- Owner boundary:
+  - the reviewed Tools Preview graphic layer is accepted and should be preserved;
+  - the missing work is the information/content contract, not a visual redesign.
+- Current behavior:
+  - canonical Preview documents define anatomy and action placement;
+  - object-specific panels may still open without giving a useful summary of the
+    object's actual contents, relevance, sources and next decision;
+  - implementing ad-hoc summaries per module would create inconsistent meaning
+    even if every panel looked visually identical.
+- Expected experience:
+  - Preview answers, without full open: what this is, what is inside, why it
+    matters, what state/version is authoritative, where it came from, what is
+    uncertain and what the user can or should do next;
+  - each object type owns a versioned content descriptor mapped to the canonical
+    Preview anatomy;
+  - at minimum the descriptor defines: one-sentence purpose, lifecycle/status and
+    owner, 3–5 key findings/contents, meaningful scope/metrics, sources and
+    lineage, risks/limitations, last material change and recommended next action;
+  - content comes from durable domain fields or an explicitly labelled AI
+    summary with source/version/time and refresh behavior;
+  - empty, loading, stale, permission-restricted and summary-generation failure
+    states remain truthful and useful;
+  - sensitive content respects field- and object-level capability before being
+    summarized or displayed.
+- Non-goals:
+  - do not create a new Preview shell;
+  - do not rewrite the accepted Tools graphic layer;
+  - do not duplicate the entire full view inside Preview;
+  - do not fabricate missing summary content through untraceable AI text.
+- Impact: a visually polished but informationally empty Preview does not reduce
+  navigation cost and cannot support consulting decisions or transfer learning.
+- Proposed importance: `HIGH / CROSS-CUTTING`
+- Origin finding: `TLS-PREV-CONTENT-OWN-001`
+- Status: `CAPTURED_UNRECONCILED / CONTENT_INVENTORY_AND_DESCRIPTOR_STANDARD_PENDING`
+
+### Preview-content acceptance criteria
+
+| ID | Criterion | Status |
+|---|---|---|
+| `XMOD-PREV-CONTENT-AC-001` | Every Preview consumer is inventoried and assigned a versioned object-specific content descriptor | `NOT_TESTED` |
+| `XMOD-PREV-CONTENT-AC-002` | The first viewport communicates purpose, authoritative status/version, key contents and next action without full open | `NOT_TESTED` |
+| `XMOD-PREV-CONTENT-AC-003` | Sources, lineage, limitations and AI-generated summaries are explicit and permission-safe | `NOT_TESTED` |
+| `XMOD-PREV-CONTENT-AC-004` | Empty/loading/stale/error/restricted states explain the condition and recovery without fabricated content | `NOT_TESTED` |
+| `XMOD-PREV-CONTENT-AC-005` | Preview does not duplicate the full record and the accepted canonical visual/action anatomy remains intact | `NOT_TESTED` |
+| `XMOD-PREV-CONTENT-AC-006` | PL/EN, long content, keyboard/screen-reader and owner review pass separately per object family | `NOT_TESTED` |
+
+## XMOD-OWN-009 — Governed row-menu registry and completeness audit
+
+- Modules: `ALL MODULES WITH TABLE ROW ACTIONS`
+- Trigger surfaces: Tools and earlier Interview owner review
+- Category: `ACTION GOVERNANCE / LIFECYCLE / SECURITY / UX / PLATFORM`
+- Piotr's original wording (verbatim):
+
+  > Menu zarówno z prawego przycisku, jak i z kebaba są (…) bardzo słabe. (…)
+  > Uzupełnienie wszystkich menu, które są mało konkretne. (…) Powołanie trzech
+  > ekspertów-sceptyków, którzy przeanalizują naszą politykę tworzenia menu (…) i
+  > zweryfikują zarówno te menu, jak i te w innych kartach, gdzie zgłaszałem, że
+  > menu jest biedne.
+
+- Three-skeptic verdict:
+  - the canonical renderer and parity rule are a strong foundation;
+  - the policy remains partial because runtime permits local action arrays and
+    does not require one domain matrix across entity, lifecycle, persona,
+    capability, source eligibility and surface;
+  - adding buttons locally before platform governance would create more forks.
+- Required sequence:
+  1. `Platform Action Registry + parity enforcement`;
+  2. `Menu completeness audit and domain rollout`.
+- Required scope:
+  - first wave: Tools Library, Sessions, Insights/Outputs, Reports, Initiatives;
+  - first wave: Interview Inbox, Sessions, Assigned, Templates, Insights,
+    Initiatives;
+  - later revalidation: Sejf, Run Agent, Documents/Sheets and every remaining
+    registered table surface.
+- Required artifacts:
+  - [`ROW_MENU_POLICY_SKEPTICAL_REVIEW.md`](ROW_MENU_POLICY_SKEPTICAL_REVIEW.md)
+  - [`ROW_MENU_AUDIT_REGISTER.md`](ROW_MENU_AUDIT_REGISTER.md)
+- Origin findings: `TLS-MENU-OWN-001`, `TLS-MENU-POLICY-OWN-001`,
+  `INT-MENU-OWN-001`
+- Status: `THREE_SKEPTICS_COMPLETE / CAPTURED_UNRECONCILED / IMPLEMENTATION_NOT_AUTHORIZED`
+
+### Row-menu acceptance criteria
+
+| ID | Criterion | Status |
+|---|---|---|
+| `XMOD-MENU-AC-001` | Kebab and right-click resolve the exact same ordered action descriptors | `NOT_TESTED` |
+| `XMOD-MENU-AC-002` | Every action has one stable ID, real handler, capability/state/source gating and server authorization | `NOT_TESTED` |
+| `XMOD-MENU-AC-003` | Preview and bulk reuse the same action semantics and handlers for every shared action ID | `NOT_TESTED` |
+| `XMOD-MENU-AC-004` | No placeholder, empty handler, silent no-op or unexplained local action fork remains | `NOT_TESTED` |
+| `XMOD-MENU-AC-005` | Mutations have truthful async states, proportional confirmation, idempotency/concurrency policy, audit and cold readback | `NOT_TESTED` |
+| `XMOD-MENU-AC-006` | Permission, tenant, stale-version, timeout, retry, destructive and source-eligibility failures are fail-closed and tested | `NOT_TESTED` |
+| `XMOD-MENU-AC-007` | Keyboard, screen-reader, focus return, viewport clamp, touch, PL/EN and 200% zoom preserve all available actions | `NOT_TESTED` |
+| `XMOD-MENU-AC-008` | 100% of registered table surfaces are classified and owner-retested on the frozen candidate SHA | `NOT_TESTED` |

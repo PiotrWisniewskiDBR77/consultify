@@ -481,6 +481,7 @@ export function KnownToolDetailView(props: {
       icon: ArrowRight,
       onClick: startSession,
       disabled: starting || !tool || !tool.isActive,
+      className: '!h-9 !w-32 !justify-center !px-3 !text-xs sm:!px-3 sm:!text-xs',
       title: {
         en: 'Create a tool session and start working',
         pl: 'Utwórz sesję narzędzia i rozpocznij pracę',
@@ -2452,21 +2453,27 @@ export function KnownToolDetailView(props: {
           statusTone: tool?.isActive && !tool?.isComingSoon ? 'approved' : 'neutral',
           secondaryActions: (
             <>
-              <SectionsManagerMenu layout={toolCardLayout} isPolish={isPolish} />
+              <SectionsManagerMenu
+                layout={toolCardLayout}
+                isPolish={isPolish}
+                buttonClassName="!h-9 !w-32 !justify-center !px-3"
+              />
               <Menu2HowToButton
                 variant="knowledge"
                 isPolish={isPolish}
-                label={isPolish ? 'How to / Baza wiedzy' : 'How to / Knowledge base'}
+                label={isPolish ? 'Wiedza' : 'Knowledge'}
                 onClick={openKb}
                 disabled={!tool}
+                className="!h-9 !w-32 !justify-center !px-3"
               />
               <Menu2AIButton
                 isPolish={isPolish}
+                label={isPolish ? 'Analizuj' : 'Analyze'}
                 busy={toolCardAnalysis.loading}
                 aria-expanded={toolCardAnalysis.open}
                 disabled={!tool}
                 onClick={toolCardAnalysis.run}
-                className="!border-c-border-subtle !bg-transparent !text-c-text-secondary hover:!bg-state-hover"
+                className="!h-9 !w-32 !justify-center !border-c-border-subtle !bg-transparent !px-3 !text-c-text-secondary hover:!bg-state-hover"
               />
             </>
           ),

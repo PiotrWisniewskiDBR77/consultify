@@ -41,9 +41,18 @@
  */
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useToolStore } from '@/store/useToolStore';
+
+// Teresa proposal loading has its own real-component/API lifecycle suite in
+// tests/components/discovery-tools/TeresaSwotProposals.test.tsx. These tests
+// target only the synchronous SWOT matrix/store contract, so keep the sibling
+// network-backed panel out of this mount and avoid unrelated post-render state
+// updates leaking across assertions.
+vi.mock('../TeresaSwotProposals', () => ({
+  TeresaSwotProposals: () => <div data-testid="teresa-swot-proposals-stub" />,
+}));
 
 import { SWOTBuildPhase } from '../SWOTBuildPhase';
 

@@ -15,6 +15,12 @@ import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
+import {
+  ARTIFACT_PANEL_CARD_CLASS_DOCKED,
+  ArtifactRightPanel,
+  type ArtifactRightPanelSection,
+} from '@/components/standard/ArtifactRightPanel';
 import { LoadingState } from '@/components/ui/primitives';
 import { CONSULTING_TOOL_STANDARD_OUTPUTS } from '@/config/consultingToolsStandard';
 import { useToolAI } from '@/hooks/discovery/useToolAI';
@@ -61,6 +67,7 @@ import {
   computeToolReviewGaps,
 } from './toolCompletion';
 import { ToolContextPanel } from './ToolContextPanel';
+import { TeresaSwotProposals } from './tools/DynamicSWOT/TeresaSwotProposals';
 
 interface ToolDocumentViewProps {
   toolType: ToolType;
@@ -283,6 +290,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   const [commandRowPortalTarget, setCommandRowPortalTarget] = useState<HTMLElement | null>(null);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [showRequestReviewModal, setShowRequestReviewModal] = useState(false);
+  const [showTeresaProposals, setShowTeresaProposals] = useState(false);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
 
   const [generatedInitiatives, setGeneratedInitiatives] = useState<
@@ -1821,14 +1829,18 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
             component: renderPhaseCanvas(step),
           };
         }),
-        {
-          id: 'ai-collaboration',
-          icon: Sparkles,
-          label: { en: 'AI Collaboration Panel', pl: 'AI Collaboration Panel' },
-          group: groupLabels[3],
-          cSpan: 2 as const,
-          component: aiCollaborationSection,
-        },
+        ...(toolType === 'dynamic-swot'
+          ? []
+          : [
+              {
+                id: 'ai-collaboration',
+                icon: Sparkles,
+                label: { en: 'AI Collaboration Panel', pl: 'AI Collaboration Panel' },
+                group: groupLabels[3],
+                cSpan: 2 as const,
+                component: aiCollaborationSection,
+              },
+            ]),
       ] as NModeSection[];
     }
 
@@ -2026,7 +2038,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     })}`;
   }, [isPolish, lastModified]);
 
-  const commandRowActions = useMemo(() => {
+  const lifecycleControls = useMemo(() => {
     const showAiActions = effectivePhaseAiActions.length > 0 || isStreaming || aiReviewCount > 0;
 
     return (
@@ -2034,6 +2046,17 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         className="flex flex-wrap items-center justify-end gap-1.5"
         data-menu3-actions="tool-lifecycle-ai-chat"
       >
+        {toolType === 'dynamic-swot' ? (
+          <button
+            type="button"
+            onClick={() => setShowTeresaProposals((visible) => !visible)}
+            className={getMenu3AiButtonClass(false)}
+            data-testid="ask-teresa-toolbar"
+          >
+            <Sparkles size={12} />
+            {isPolish ? 'Zapytaj Teresę' : 'Ask Teresa'}
+          </button>
+        ) : null}
         <span
           className="inline-flex h-8 items-center rounded-full border border-slate-200/60 bg-slate-100 px-3 text-[11px] font-semibold text-slate-500 dark:border-navy-700/60 dark:bg-navy-800 dark:text-slate-300"
           data-menu3-lifecycle-status={toolStatus}
@@ -2126,14 +2149,108 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     toolPermissions.canGenerate,
     toolPermissions.canRequestReview,
     toolStatus,
+    toolType,
   ]);
 
   useEffect(() => {
     if (!onCommandRowActionsChange) return;
 
-    onCommandRowActionsChange(commandRowActions);
+    onCommandRowActionsChange(toolType === 'dynamic-swot' ? null : lifecycleControls);
     return () => onCommandRowActionsChange(null);
-  }, [commandRowActions, onCommandRowActionsChange]);
+  }, [lifecycleControls, onCommandRowActionsChange, toolType]);
+
+  const sessionRightPanelSections: ArtifactRightPanelSection[] = useMemo(
+    () => [
+      {
+        id: 'actions',
+        label: isPolish ? 'Akcje' : 'Actions',
+        icon: Sparkles,
+        defaultOpen: true,
+        children: lifecycleControls,
+      },
+      {
+        id: 'properties',
+        label: isPolish ? 'Właściwości' : 'Properties',
+        icon: Target,
+        defaultOpen: true,
+        children: (
+          <ArtifactPropertiesTable
+            propertyLabel={isPolish ? 'Właściwość' : 'Property'}
+            valueLabel={isPolish ? 'Wartość' : 'Value'}
+            rows={properties.map((property) => ({
+              id: property.id,
+              label: isPolish ? property.label.pl : property.label.en,
+              value: String(property.value ?? '—'),
+            }))}
+          />
+        ),
+      },
+      {
+        id: 'relations',
+        label: isPolish ? 'Powiązania' : 'Relations',
+        icon: ExternalLink,
+        defaultOpen: false,
+        badge: toolBacklinks.length,
+        showZeroBadge: true,
+        isEmpty: toolBacklinks.length === 0,
+        emptyLabel: isPolish ? 'Brak powiązanych elementów.' : 'No related items.',
+        children: (
+          <ul className="space-y-2 text-xs text-c-text-secondary">
+            {toolBacklinks.map((item) => (
+              <li key={item.id}>{`${item.sourceType}: ${item.sourceId}`}</li>
+            ))}
+          </ul>
+        ),
+      },
+      {
+        id: 'evidence',
+        label: isPolish ? 'Źródła i założenia' : 'Sources & assumptions',
+        icon: CheckCircle2,
+        defaultOpen: false,
+        children: (
+          <p className="text-xs leading-relaxed text-c-text-secondary">
+            {isPolish
+              ? 'Źródła, założenia i materiał wejściowy użyty w tej sesji są widoczne w kroku Input & Exploration.'
+              : 'Sources, assumptions, and input material used in this session are available in Input & Exploration.'}
+          </p>
+        ),
+      },
+      {
+        id: 'results',
+        label: isPolish ? 'Rezultaty' : 'Results',
+        icon: Lightbulb,
+        defaultOpen: false,
+        badge: generatedInitiatives.length + (swotData?.outputCandidates?.length || 0),
+        showZeroBadge: true,
+        children: (
+          <p className="text-xs text-c-text-secondary">
+            {isPolish ? `Postęp sesji: ${progress}%` : `Session progress: ${progress}%`}
+          </p>
+        ),
+      },
+      {
+        id: 'comments',
+        label: isPolish ? 'Komentarze' : 'Comments',
+        icon: MessageSquare,
+        defaultOpen: false,
+        badge: nModeComments.length,
+        showZeroBadge: true,
+        isEmpty: nModeComments.length === 0,
+        emptyLabel: isPolish ? 'Brak komentarzy.' : 'No comments.',
+        children: <p className="text-xs text-c-text-secondary">{nModeComments.length}</p>,
+      },
+    ],
+    [
+      generatedInitiatives.length,
+      isPolish,
+      lifecycleControls,
+      nModeComments.length,
+      progress,
+      properties,
+      swotData?.outputCandidates?.length,
+      toolBacklinks,
+    ]
+  );
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -2145,7 +2262,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     syncPortalTarget();
     const rafId = window.requestAnimationFrame(syncPortalTarget);
     return () => window.cancelAnimationFrame(rafId);
-  }, [toolSessionId, commandRowActions]);
+  }, [toolSessionId, lifecycleControls]);
 
   if (loading) {
     return (
@@ -2157,8 +2274,8 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
 
   return (
     <>
-      {commandRowPortalTarget && commandRowActions
-        ? createPortal(commandRowActions, commandRowPortalTarget)
+      {toolType !== 'dynamic-swot' && commandRowPortalTarget && lifecycleControls
+        ? createPortal(lifecycleControls, commandRowPortalTarget)
         : null}
       <NModeShell
         loading={loading}
@@ -2177,9 +2294,19 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
           lastSavedLabel,
           isDirty: saveState === 'dirty' || saveState === 'error',
           onClose: onBack,
-          statusDotColor: toolMeta.statusDot,
+          statusLabel: statusLabel(toolStatus),
+          statusTone:
+            toolStatus === 'DRAFT' ? 'draft' : toolStatus === 'REVIEW' ? 'review' : 'approved',
         }}
-        properties={properties}
+        rightPanel={
+          <div data-testid="tool-session-properties" className="h-full">
+            <ArtifactRightPanel
+              sections={sessionRightPanelSections}
+              className={ARTIFACT_PANEL_CARD_CLASS_DOCKED}
+              ariaLabel={isPolish ? 'Panel sesji narzędzia' : 'Tool session panel'}
+            />
+          </div>
+        }
         sections={sections}
         actions={[]}
         actionsVisible={false}
@@ -2188,6 +2315,34 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       >
         {null}
       </NModeShell>
+
+      {showTeresaProposals && toolType === 'dynamic-swot' && toolSessionId ? (
+        <aside
+          role="dialog"
+          aria-modal="false"
+          aria-label={isPolish ? 'Propozycje Teresy' : 'Teresa proposals'}
+          className="fixed bottom-5 right-5 z-40 max-h-[70vh] w-[min(440px,calc(100vw-2.5rem))] overflow-y-auto rounded-2xl border border-c-border bg-c-surface p-4 shadow-2xl"
+          data-testid="teresa-proposals-panel"
+        >
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <strong className="text-sm text-c-text">
+              {isPolish ? 'Propozycje Teresy' : 'Teresa proposals'}
+            </strong>
+            <button
+              type="button"
+              onClick={() => setShowTeresaProposals(false)}
+              onKeyDown={(event) => {
+                if (event.key === 'Escape') setShowTeresaProposals(false);
+              }}
+              className="rounded-lg px-2 py-1 text-xs text-c-text-secondary hover:bg-c-surface-raised"
+              autoFocus
+            >
+              {isPolish ? 'Zamknij' : 'Close'}
+            </button>
+          </div>
+          <TeresaSwotProposals toolSessionId={toolSessionId} isPolish={isPolish} />
+        </aside>
+      ) : null}
 
       <div id="tool-report-export" className="hidden p-8 bg-white text-slate-900">
         <h1 className="text-2xl font-semibold">{sessionName || `${toolMeta.name} — Session`}</h1>

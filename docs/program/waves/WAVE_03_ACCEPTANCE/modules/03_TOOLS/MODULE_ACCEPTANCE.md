@@ -2,7 +2,7 @@
 
 ID: `TLS`
 Routes: `/discovery-tools`
-Current gate: `TECHNICAL_BROWSER_COMPLETE / OWNER_QUALITY_REVIEW_PENDING`
+Current gate: `TECHNICAL_BROWSER_COMPLETE / OWNER_QUALITY_REVIEW_IN_PROGRESS / LIVE_REGISTER_OPEN / NO_REMEDIATION_AUTHORIZED`
 Owner: Piotr Wisniewski
 Integrator: Codex
 Mobile: `DEFERRED_NON_GATING`
@@ -27,12 +27,12 @@ provider unavailable without false success and owner header at 1440/768.
 | G05 | Functional preflight and cold readback | `PASS_WITH_TEST_WARNING` | Existing `123/123` technical replay and `23/23` persistence/CAS lane remain green. The exact adopted browser authenticated the owner and cold-read both stable Dynamic SWOT fixtures: guided `wave3-tools-owner-guided-v1` and approved `wave3-tools-owner-approved-v1`, including their history/comments and exact server-backed session reads. No Tools HTTP 4xx/5xx was recorded in that sweep. React `act(...)` warnings remain test-quality debt; this does not resolve Piotr's captured Wave 3 UX/visual concern. |
 | G06 | Desktop/tablet, PL/EN, themes, states, a11y, console/HTTP | `PASS_TECHNICAL / OWNER_QUALITY_DEBT_OPEN` | Desktop entry and stable guided/approved deep links cold-reopened on the exact runtime; the guided and approved states were distinct and server-backed. Technical HTTP replay was clean for Tools. The write-once fixture receipt remains `deepLinkVerified:false`; this later exact-runtime evidence is recorded here instead of rewriting that receipt. PL/EN, tablet, themes and full a11y/console coverage were not exhaustively repeated. Mobile is non-gating, and `W3-TLS-CX-001` remains explicitly open for Piotr's visual/CX review; therefore this is not `OWNER_ACCEPTED`. |
 | G07 | Piotr review card | `READY_FOR_GUIDED_REPLAY` | Shared operator card: `../../GUIDED_OWNER_REPLAY.md`, row 4. Owner decisions remain pending. |
-| G08 | First-impression review | `NOT_STARTED` | — |
-| G09 | Guided CX journey review | `NOT_STARTED` | — |
+| G08 | First-impression review | `PARTIAL_BASELINE_APPROVED / INFORMATION_ARCHITECTURE_FINDINGS_OPEN` | Owner accepted the Library and Sessions table/menu/preview baseline. Outputs and Reports are semantically conflated: owner requires Outputs to become tool-derived Insights from approved Sessions, while Reports must become generated Word/PowerPoint/Excel documents. Findings and evidence: `TOOLS_OWNER_REVIEW_REGISTER.md`, `TLS-TBL-EVD-001..004`. No product remediation is authorized during intake. |
+| G09 | Guided CX journey review | `IN_PROGRESS_WITH_ARCHITECTURE_DECISIONS` | Review sequence is Library → detail/preview → start/resume → Dynamic SWOT workspace → review/finalize → output/promotion. Owner has already fixed the downstream information architecture: approved Sessions → tool Insights; Sessions/Insights → generated Reports; eligible approved Sessions/Insights/Reports → the same canonical Initiative Creator used by Interview, with a Tools-specific context adapter and preserved lineage. Exact findings: `TOOLS_OWNER_REVIEW_REGISTER.md`. |
 | G10 | Alternate-state owner review | `NOT_STARTED` | — |
-| G11 | Every owner observation/screenshot durably registered | `NOT_STARTED` | — |
-| G12 | Owner register reconciled and confirmed | `NOT_STARTED` | — |
-| G13 | Solution and impact analysis | `NOT_STARTED` | — |
+| G11 | Every owner observation/screenshot durably registered | `CAPTURE_COMPLETE_FOR_THIS_ROUND / FINAL_REPORT_WRITTEN` | Atomic evidence and owner decisions are preserved in `TOOLS_OWNER_REVIEW_REGISTER.md`; the consolidated checkpoint is `TOOLS_OWNER_REVIEW_FINAL_REPORT_2026-08-22.md`; the full Dynamic SWOT and cross-tool contract is `rejestr/3-DO-ODBIORU/SWOT-003-finalny-model-pracy-dynamic-swot.md`. Screenshots prove visible composition only; handler, permission and persistence correctness remain pending. |
+| G12 | Owner register reconciled and confirmed | `OWNER_RECONCILIATION_PENDING` | The complete round report is ready for Piotr to confirm or correct. It is not owner acceptance of the module. |
+| G13 | Solution and impact analysis | `RECOMMENDATION_COMPLETE / IMPLEMENTATION_NOT_AUTHORIZED` | The final recommendation covers Preview Content, menu governance, the Dynamic SWOT session, shared creator shell, approval/send-back, `Outputs → Insights → Reports → Initiatives`, and the platform blueprint for every consulting tool. Exact contract: `TOOLS_OWNER_REVIEW_FINAL_REPORT_2026-08-22.md` plus `SWOT-003-finalny-model-pracy-dynamic-swot.md`. Technical decomposition starts only after owner reconciliation and authorization. |
 | G14 | Remediation with finding-to-commit traceability | `NOT_STARTED` | — |
 | G15 | Integrator self-QA and impacted regression | `NOT_STARTED` | — |
 | G16 | Before/after owner retest packet | `NOT_STARTED` | — |

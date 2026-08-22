@@ -2,7 +2,7 @@
 
 ID: `ASM`
 Routes: `/assessment`
-Current gate: `TECHNICAL_BROWSER_COMPLETE / OWNER_REVIEW_PENDING`
+Current gate: `OWNER_REVIEW_BLOCKED / RUNTIME_BACKEND_CONTRACT_MISMATCH`
 Owner: Piotr Wisniewski
 Integrator: Codex
 Mobile: `DEFERRED_NON_GATING`
@@ -30,7 +30,7 @@ failed promotion, duplicate promotion and no false completed state.
 | G08 | First-impression review | `NOT_STARTED` | — |
 | G09 | Guided CX journey review | `NOT_STARTED` | — |
 | G10 | Alternate-state owner review | `NOT_STARTED` | — |
-| G11 | Every owner observation/screenshot durably registered | `NOT_STARTED` | — |
+| G11 | Every owner observation/screenshot durably registered | `CAPTURED_UNRECONCILED` | Owner findings `ASM-OWN-001`–`ASM-OWN-003` captured from the licensed Assessment runtime on `2026-08-22`; screenshots hashed below. No remediation or owner retest has occurred. |
 | G12 | Owner register reconciled and confirmed | `NOT_STARTED` | — |
 | G13 | Solution and impact analysis | `NOT_STARTED` | — |
 | G14 | Remediation with finding-to-commit traceability | `NOT_STARTED` | — |
@@ -74,7 +74,9 @@ These are technical observations, not Piotr owner findings.
 
 | Finding ID | Captured | Piotr original wording | Category | Route/screen | Current behavior | Expected experience | Impact | Screenshot/hash | Product SHA | Severity | Decision/status | Fix commit | Self-QA | Owner retest |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| _none_ | | | | | | | | | | | | | | |
+| `ASM-OWN-001` | `2026-08-22 21:05 Europe/Warsaw` | “It's obviously not connected to the back end. Please try to recognize that we are right now in an assessment on license like DLD and Siri. As you can see, absolutely nothing is here.” | Backend contract / licensed Assessment | `/assessment/overview?tab=library` | Licensed framework catalog renders, but lifecycle counters are `0`, `Your canonical DRD sessions` is empty and the surface reports `Request failed with 404`. The catalog is client-visible metadata and is not evidence that licensed Assessment sessions were read from the backend. | Licensed Assessment must read the canonical, tenant-scoped session register from its backend and distinguish supported/activated methods from unavailable licensed methods without presenting a false empty register. | Owner cannot review DRD/SIRI-family work or determine whether sessions exist. | `Screenshot 2026-08-22 at 21.05.13.png`; SHA-256 `8efc1823d0c6981ae6bf955d140c1605ac09b78953bbe3866e33280105b429e5` | visible marker `f3237e942304`; actual Vite checkout `1fce2f0631af9d4a1c68521ad44d53a75a9977fc` | `P0` | `CAPTURED_UNRECONCILED / BLOCKS_OWNER_REVIEW` | — | Read-only probe: `GET /api/method/outputs` through `:4119` returns Railway `API_ROUTE_NOT_FOUND` / HTTP `404`; no local Consultify backend process is mounted for this client. | `NOT_TESTED` |
+| `ASM-OWN-002` | `2026-08-22 21:05 Europe/Warsaw` | Same owner observation; screenshot shows the result of opening the licensed Assessment workflow. | Runtime truth / fail-closed workspace | licensed Assessment open/deep-link | The workspace collapses to a full-screen `RECOVERY_DRAFT` state with `Request failed with 404`; no server-confirmed session is available. | Open only a server-confirmed session identity/version. On missing backend contract, keep the failure explicit and provide recovery navigation; never imply that `RECOVERY_DRAFT` is a valid Assessment result. | No licensed assessment can be executed or reviewed; local draft state cannot be accepted as source truth. | `Screenshot 2026-08-22 at 21.05.31.png`; SHA-256 `6bf86c9deb60f9c67e25493c3620f5d8e0291dd541a72890a31d7cfae3c5a67f` | visible marker `f3237e942304`; actual Vite checkout `1fce2f0631af9d4a1c68521ad44d53a75a9977fc` | `P0` | `CAPTURED_UNRECONCILED / BLOCKS_OWNER_REVIEW` | — | Source contract confirms `RECOVERY_DRAFT` is local/unconfirmed state, not server truth. | `NOT_TESTED` |
+| `ASM-OWN-003` | `2026-08-22 21:05 Europe/Warsaw` | “As you can see, absolutely nothing is here.” | Downstream read / Outputs | `/assessment/overview?tab=outputs` | Outputs/Reports/Initiatives navigation renders, but Outputs fails with `Failed to load Outputs. Please try again.` and all counters remain `0`. The client calls canonical Method Core `GET /api/method/outputs`; the currently proxied Railway backend responds `404 API_ROUTE_NOT_FOUND`. | Licensed Assessment must expose the canonical lifecycle Library → Sessions/Processes → Workspace → immutable Insights/Outputs → Reports → Initiatives against one compatible backend contract, with persisted rows and cold readback. | Entire downstream Assessment chain is unavailable and zero counters are misleading while the request failed. | `Screenshot 2026-08-22 at 21.05.42.png`; SHA-256 `3253b59e086fb7fa3b89f02fe383f15dd750ba0ca8454dd391c5d8f09b3027ea` | visible marker `f3237e942304`; actual Vite checkout `1fce2f0631af9d4a1c68521ad44d53a75a9977fc` | `P0` | `CAPTURED_UNRECONCILED / BLOCKS_OWNER_REVIEW` | — | Client source uses `/api/method`; Gateway source mounts this route, but the backend reached by the current Vite proxy does not expose it. This is a client/backend release-contract mismatch, not proof that the database itself is empty. | `NOT_TESTED` |
 
 ## Implementation/regression ledger
 
