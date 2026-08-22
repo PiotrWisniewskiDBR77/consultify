@@ -17,7 +17,7 @@ import {
   UserRound,
   Users,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -37,6 +37,12 @@ import {
   type PartnerAudience,
   type PartnerAudienceId,
 } from './partnerProgramContent';
+import {
+  localizeAudience,
+  localizeModel,
+  localizeStage,
+  partnerText,
+} from './partnerProgramLocale';
 
 const audienceIcons: Record<PartnerAudienceId, React.ElementType> = {
   'consulting-owner': BriefcaseBusiness,
@@ -80,30 +86,29 @@ const StatusBadge: React.FC<{ children: React.ReactNode; tone?: 'neutral' | 'lim
   </span>
 );
 
-const AudienceDetail: React.FC<{ audience: PartnerAudience }> = ({ audience }) => (
+const AudienceDetail: React.FC<{ audience: PartnerAudience; language?: string }> = ({ audience, language }) => (
   <div
-    id={`partner-path-${audience.id}`}
     className={cn(sectionCard, 'border-[var(--c-selection-border)]')}
     data-testid="partner-audience-detail"
   >
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-c-text-muted">
-          Selected path
+          {partnerText('Selected path', language)}
         </p>
         <h3 className="mt-1 text-xl font-semibold text-c-text">{audience.label}</h3>
       </div>
-      <StatusBadge>Program fit to discuss</StatusBadge>
+      <StatusBadge>{partnerText('Program fit to discuss', language)}</StatusBadge>
     </div>
     <p className="mt-4 max-w-3xl text-base leading-7 text-c-text">{audience.outcome}</p>
     <div className="mt-5 grid gap-4 lg:grid-cols-2">
       <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">Use case</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">{partnerText('Use case', language)}</p>
         <p className="mt-2 text-sm leading-6 text-c-text-secondary">{audience.useCase}</p>
       </div>
       <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
-          Recommended starting models
+          {partnerText('Recommended starting models', language)}
         </p>
         <div className="mt-2 flex flex-wrap gap-2">
           {audience.recommendedModels.map((modelId) => (
@@ -114,14 +119,14 @@ const AudienceDetail: React.FC<{ audience: PartnerAudience }> = ({ audience }) =
         </div>
       </div>
       <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">You bring</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">{partnerText('You bring', language)}</p>
         <p className="mt-2 text-sm leading-6 text-c-text-secondary">
           {audience.partnerContribution}
         </p>
       </div>
       <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-c-text-muted">
-          Consultify brings
+          {partnerText('Consultify brings', language)}
         </p>
         <p className="mt-2 text-sm leading-6 text-c-text-secondary">
           {audience.consultifyContribution}
@@ -131,24 +136,23 @@ const AudienceDetail: React.FC<{ audience: PartnerAudience }> = ({ audience }) =
     <div className="mt-5 flex items-start gap-3 rounded-lg bg-[var(--c-selection)] p-4 text-c-text">
       <ArrowRight className="mt-0.5 h-4 w-4 shrink-0 text-[var(--c-selection-border)]" />
       <div>
-        <p className="text-sm font-semibold">First practical step</p>
+        <p className="text-sm font-semibold">{partnerText('First practical step', language)}</p>
         <p className="mt-1 text-sm text-c-text-secondary">{audience.firstStep}</p>
       </div>
     </div>
   </div>
 );
 
-const ProgramHero: React.FC<{ onExplore: () => void }> = ({ onExplore }) => (
+const ProgramHero: React.FC<{ onExplore: () => void; language?: string }> = ({ onExplore, language }) => (
   <section className="relative overflow-hidden rounded-2xl border border-c-border-subtle bg-c-surface px-6 py-8 md:px-10 md:py-10">
     <div className="pointer-events-none absolute inset-y-0 right-0 w-2/5 bg-[radial-gradient(circle_at_center,var(--c-selection),transparent_70%)] opacity-80" />
     <div className="relative max-w-4xl">
-      <StatusBadge>Consultify Partner Program</StatusBadge>
+      <StatusBadge>{partnerText('Consultify Partner Program', language)}</StatusBadge>
       <h1 className="mt-5 max-w-3xl text-3xl font-semibold tracking-tight text-c-text md:text-4xl">
-        Build the first joint client opportunity — with roles and boundaries clear from day one.
+        {partnerText('Build the first joint client opportunity — with roles and boundaries clear from day one.', language)}
       </h1>
       <p className="mt-4 max-w-3xl text-base leading-7 text-c-text-secondary md:text-lg">
-        Choose the partner path that matches your business, compare five cooperation models and see
-        how a joint opportunity moves from qualification to an evidence-based expansion decision.
+        {partnerText('Choose the partner path that matches your business, compare five cooperation models and see how a joint opportunity moves from qualification to an evidence-based expansion decision.', language)}
       </p>
       <div className="mt-6 flex flex-wrap items-center gap-3">
         <button
@@ -156,11 +160,11 @@ const ProgramHero: React.FC<{ onExplore: () => void }> = ({ onExplore }) => (
           onClick={onExplore}
           className="inline-flex items-center gap-2 rounded-lg bg-c-text px-5 py-2.5 text-sm font-semibold text-c-surface transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus-ring)] focus-visible:ring-offset-2"
         >
-          Choose your partner path
+          {partnerText('Choose your partner path', language)}
           <ArrowRight className="h-4 w-4" />
         </button>
         <p className="text-xs leading-5 text-c-text-muted">
-          Program fit and commercial terms are confirmed during qualification.
+          {partnerText('Program fit and commercial terms are confirmed during qualification.', language)}
         </p>
       </div>
     </div>
@@ -168,21 +172,34 @@ const ProgramHero: React.FC<{ onExplore: () => void }> = ({ onExplore }) => (
 );
 
 export const ValueCardsSection: React.FC = () => {
+  const { i18n } = useTranslation();
+  const language = i18n?.resolvedLanguage ?? i18n?.language ?? 'en';
+  const audiences = useMemo(
+    () => PARTNER_AUDIENCES.map((item) => localizeAudience(item, language)),
+    [language]
+  );
   const [selectedId, setSelectedId] = useState<PartnerAudienceId>('consulting-owner');
-  const selected = PARTNER_AUDIENCES.find((audience) => audience.id === selectedId)!;
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const selected = audiences.find((audience) => audience.id === selectedId)!;
+  const selectByIndex = (index: number) => {
+    const normalizedIndex = (index + audiences.length) % audiences.length;
+    const next = audiences[normalizedIndex];
+    setSelectedId(next.id);
+    tabRefs.current[normalizedIndex]?.focus();
+  };
   return (
     <section id="partner-paths" className="space-y-5" aria-labelledby="partner-paths-title">
       <SectionHeading
-        eyebrow="Six partner paths"
-        title="Start with the way you create value"
-        description="The program has one governance contract, but the first opportunity should reflect your client access, delivery model and responsibility boundary. Select a path to compare the intended fit."
+        eyebrow={partnerText('Six partner paths', language)}
+        title={partnerText('Start with the way you create value', language)}
+        description={partnerText('The program has one governance contract, but the first opportunity should reflect your client access, delivery model and responsibility boundary. Select a path to compare the intended fit.', language)}
       />
       <div
         className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3"
         role="tablist"
-        aria-label="Partner types"
+        aria-label={partnerText('Partner types', language)}
       >
-        {PARTNER_AUDIENCES.map((audience) => {
+        {audiences.map((audience, index) => {
           const Icon = audienceIcons[audience.id];
           const selectedPath = audience.id === selectedId;
           return (
@@ -190,9 +207,29 @@ export const ValueCardsSection: React.FC = () => {
               key={audience.id}
               type="button"
               role="tab"
+              id={`partner-path-tab-${audience.id}`}
               aria-selected={selectedPath}
-              aria-controls={`partner-path-${audience.id}`}
+              aria-controls="partner-path-panel"
+              tabIndex={selectedPath ? 0 : -1}
+              ref={(element) => {
+                tabRefs.current[index] = element;
+              }}
               onClick={() => setSelectedId(audience.id)}
+              onKeyDown={(event) => {
+                if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+                  event.preventDefault();
+                  selectByIndex(index + 1);
+                } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+                  event.preventDefault();
+                  selectByIndex(index - 1);
+                } else if (event.key === 'Home') {
+                  event.preventDefault();
+                  selectByIndex(0);
+                } else if (event.key === 'End') {
+                  event.preventDefault();
+                  selectByIndex(audiences.length - 1);
+                }
+              }}
               className={cn(
                 'min-h-24 rounded-xl border p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus-ring)]',
                 selectedPath
@@ -206,46 +243,57 @@ export const ValueCardsSection: React.FC = () => {
           );
         })}
       </div>
-      <AudienceDetail key={selected.id} audience={selected} />
+      <div
+        id="partner-path-panel"
+        role="tabpanel"
+        aria-labelledby={`partner-path-tab-${selected.id}`}
+      >
+        <AudienceDetail key={selected.id} audience={selected} language={language} />
+      </div>
     </section>
   );
 };
 
-export const BetaSuccessStories: React.FC = () => (
+export const BetaSuccessStories: React.FC = () => {
+  const { i18n } = useTranslation();
+  const language = i18n?.resolvedLanguage ?? i18n?.language ?? 'en';
+  return (
   <section className="space-y-5" aria-labelledby="partner-proof-title">
     <SectionHeading
-      eyebrow="Evidence policy"
-      title="Proof must be traceable — illustrative stories are not customer evidence"
-      description="No company logo, quotation or outcome is shown here without an evidence owner and publication consent. The previously displayed fictional beta companies have been removed."
+      eyebrow={partnerText('Evidence policy', language)}
+      title={partnerText('Proof must be traceable — illustrative stories are not customer evidence', language)}
+      description={partnerText('No company logo, quotation or outcome is shown here without an evidence owner and publication consent. The previously displayed fictional beta companies have been removed.', language)}
     />
     <div className={cn(sectionCard, 'flex items-start gap-4')}>
       <ShieldCheck className="mt-0.5 h-6 w-6 shrink-0 text-c-text-secondary" />
       <div>
         <h3 id="partner-proof-title" className="text-base font-semibold text-c-text">
-          Current evidence status
+          {partnerText('Current evidence status', language)}
         </h3>
         <p className="mt-2 text-sm leading-6 text-c-text-secondary">
-          There is no approved public partner testimonial in the current evidence register. Real
-          cases will appear only after the source, evidence owner and consent to publish are
-          recorded.
+          {partnerText('There is no approved public partner testimonial in the current evidence register. Real cases will appear only after the source, evidence owner and consent to publish are recorded.', language)}
         </p>
         <div className="mt-3">
-          <StatusBadge tone="limited">No publishable reference yet</StatusBadge>
+          <StatusBadge tone="limited">{partnerText('No publishable reference yet', language)}</StatusBadge>
         </div>
       </div>
     </div>
   </section>
-);
+  );
+};
 
-export const CommissionCalculatorSection: React.FC = () => (
-  <section className="space-y-5" aria-labelledby="partner-models-title">
+export const CommissionCalculatorSection: React.FC = () => {
+  const { i18n } = useTranslation();
+  const language = i18n?.resolvedLanguage ?? i18n?.language ?? 'en';
+  const models = COOPERATION_MODELS.map((item) => localizeModel(item, language));
+  return <section className="space-y-5" aria-labelledby="partner-models-title">
     <SectionHeading
-      eyebrow="Five cooperation models"
-      title="Choose a responsibility model before discussing economics"
-      description="These patterns explain who leads the relationship and delivery. Their availability and commercial terms are confirmed for the specific partner and opportunity."
+      eyebrow={partnerText('Five cooperation models', language)}
+      title={partnerText('Choose a responsibility model before discussing economics', language)}
+      description={partnerText('These patterns explain who leads the relationship and delivery. Their availability and commercial terms are confirmed for the specific partner and opportunity.', language)}
     />
     <div className="grid gap-4 lg:grid-cols-2">
-      {COOPERATION_MODELS.map((model) => (
+      {models.map((model) => (
         <article key={model.id} className={sectionCard}>
           <div className="flex items-center gap-3">
             <Handshake className="h-5 w-5 text-c-text-secondary" />
@@ -259,7 +307,7 @@ export const CommissionCalculatorSection: React.FC = () => (
           <p className="mt-3 text-sm leading-6 text-c-text-secondary">{model.bestFor}</p>
           <dl className="mt-4 space-y-3 text-sm">
             <div>
-              <dt className="font-medium text-c-text">Partner</dt>
+              <dt className="font-medium text-c-text">{partnerText('Partner', language)}</dt>
               <dd className="mt-1 text-c-text-secondary">{model.partnerContribution}</dd>
             </div>
             <div>
@@ -273,40 +321,42 @@ export const CommissionCalculatorSection: React.FC = () => (
         </article>
       ))}
     </div>
-  </section>
-);
+  </section>;
+};
 
-export const TierProgressionSection: React.FC = () => (
-  <section
+export const TierProgressionSection: React.FC = () => {
+  const { i18n } = useTranslation();
+  const language = i18n?.resolvedLanguage ?? i18n?.language ?? 'en';
+  return <section
     id="commercial-framework"
     className="space-y-5"
     aria-labelledby="commercial-framework-title"
   >
     <SectionHeading
-      eyebrow="Commercial framework"
-      title="One agreement, no provisional numbers"
-      description="The visible program does not publish draft tiers, commission rates, payout rules or support promises. The applicable schedule must come from one approved agreement."
+      eyebrow={partnerText('Commercial framework', language)}
+      title={partnerText('One agreement, no provisional numbers', language)}
+      description={partnerText('The visible program does not publish draft tiers, commission rates, payout rules or support promises. The applicable schedule must come from one approved agreement.', language)}
     />
     <div className={cn(sectionCard, 'grid gap-5 lg:grid-cols-[1fr_auto] lg:items-center')}>
       <div>
         <div className="flex items-center gap-3">
           <CircleDollarSign className="h-5 w-5 text-c-text-secondary" />
           <h3 id="commercial-framework-title" className="font-semibold text-c-text">
-            Commercial schedule: decision required
+            {partnerText('Commercial schedule: decision required', language)}
           </h3>
         </div>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-c-text-secondary">
-          Eligibility, tier, compensation, settlement timing and service levels are defined in the
-          executed partner agreement. Values from draft configuration are not an offer and are not
-          shown on this page.
+          {partnerText('Eligibility, tier, compensation, settlement timing and service levels are defined in the executed partner agreement. Values from draft configuration are not an offer and are not shown on this page.', language)}
         </p>
       </div>
-      <StatusBadge tone="limited">Economics unavailable in this workspace</StatusBadge>
+      <StatusBadge tone="limited">{partnerText('Economics unavailable in this workspace', language)}</StatusBadge>
     </div>
-  </section>
-);
+  </section>;
+};
 
 export const OnboardingChecklistSection: React.FC = () => {
+  const { i18n } = useTranslation();
+  const language = i18n?.resolvedLanguage ?? i18n?.language ?? 'en';
   const navigate = useNavigate();
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [status, setStatus] = useState<V8PartnerOnboardingStatus | null>(null);
@@ -344,19 +394,19 @@ export const OnboardingChecklistSection: React.FC = () => {
   }, [loadStatus]);
   const steps = useMemo(
     () => [
-      { label: 'Agreement reviewed', done: Boolean(status?.termsAccepted) },
-      { label: 'Privacy terms reviewed', done: Boolean(status?.privacyAccepted) },
-      { label: 'Program path recorded', done: Boolean(status?.pricingTier) },
-      { label: 'Activation confirmed', done: Boolean(status?.completed) },
+      { label: partnerText('Agreement reviewed', language), done: Boolean(status?.termsAccepted) },
+      { label: partnerText('Privacy terms reviewed', language), done: Boolean(status?.privacyAccepted) },
+      { label: partnerText('Program path recorded', language), done: Boolean(status?.pricingTier) },
+      { label: partnerText('Activation confirmed', language), done: Boolean(status?.completed) },
     ],
-    [status]
+    [status, language]
   );
   const completed = steps.filter((step) => step.done).length;
   const primaryLabel = status?.completed
-    ? 'Open partner workspace'
+    ? partnerText('Open partner workspace', language)
     : completed > 0
-      ? 'Continue onboarding'
-      : 'Start application';
+      ? partnerText('Continue onboarding', language)
+      : partnerText('Start onboarding', language);
   const primaryDestination = status?.completed
     ? `${ROUTES.PARTNER.LANDING}?tab=dashboard`
     : status
@@ -365,9 +415,9 @@ export const OnboardingChecklistSection: React.FC = () => {
   return (
     <section className="space-y-5" aria-labelledby="partner-next-action-title">
       <SectionHeading
-        eyebrow="Your next action"
-        title="Continue from your verified program state"
-        description="The primary action changes only after the current status is read. If status cannot be verified, the page does not infer that you are a prospect or an active partner."
+        eyebrow={partnerText('Your next action', language)}
+        title={partnerText('Continue from your verified program state', language)}
+        description={partnerText('The primary action changes only after the current status is read. If status cannot be verified, the page does not infer that you are a prospect or an active partner.', language)}
       />
       <div className={sectionCard}>
         {state === 'loading' ? (
@@ -384,11 +434,10 @@ export const OnboardingChecklistSection: React.FC = () => {
               <AlertTriangle className="mt-0.5 h-5 w-5 text-amber-600" />
               <div>
                 <h3 id="partner-next-action-title" className="font-semibold text-c-text">
-                  Program status is not verified
+                  {partnerText('Program status is not verified', language)}
                 </h3>
                 <p className="mt-1 text-sm text-c-text-secondary">
-                  We will not guess whether you should apply, continue onboarding or open the
-                  workspace.
+                  {partnerText('We will not guess whether you should apply, continue onboarding or open the workspace.', language)}
                 </p>
               </div>
             </div>
@@ -397,7 +446,7 @@ export const OnboardingChecklistSection: React.FC = () => {
               onClick={() => void loadStatus()}
               className="rounded-lg bg-c-text px-4 py-2 text-sm font-semibold text-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus-ring)]"
             >
-              Retry status check
+              {partnerText('Retry status check', language)}
             </button>
           </div>
         ) : (
@@ -405,10 +454,10 @@ export const OnboardingChecklistSection: React.FC = () => {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h3 id="partner-next-action-title" className="font-semibold text-c-text">
-                  {status?.completed ? 'Partner workspace ready' : 'Application and onboarding'}
+                  {status?.completed ? partnerText('Partner workspace ready', language) : partnerText('Onboarding status', language)}
                 </h3>
                 <p className="mt-1 text-sm text-c-text-secondary">
-                  {completed}/4 verified steps
+                  {completed}/4 {partnerText('verified steps', language)}
                   {status?.pricingTier ? ` · Current tier: ${status.pricingTier}` : ''}
                 </p>
               </div>
@@ -565,13 +614,15 @@ const FAQ_ITEMS = [
 ] as const;
 
 export const FAQSection: React.FC = () => {
+  const { i18n } = useTranslation();
+  const language = i18n?.resolvedLanguage ?? i18n?.language ?? 'en';
   const [openIndex, setOpenIndex] = useState<number | null>(0);
   return (
     <section className="space-y-5" aria-labelledby="partner-faq-title">
       <SectionHeading
-        eyebrow="Safeguards and FAQ"
-        title="Make the boundaries explicit before the client conversation"
-        description="These answers describe the governance baseline. The executed agreement remains authoritative for a specific partnership."
+        eyebrow={partnerText('Safeguards and FAQ', language)}
+        title={partnerText('Make the boundaries explicit before the client conversation', language)}
+        description={partnerText('These answers describe the governance baseline. The executed agreement remains authoritative for a specific partnership.', language)}
       />
       <div className="overflow-hidden rounded-xl border border-c-border-subtle bg-c-surface">
         {FAQ_ITEMS.map(([question, answer], index) => {
@@ -589,7 +640,7 @@ export const FAQSection: React.FC = () => {
                   id={index === 0 ? 'partner-faq-title' : undefined}
                   className="text-sm font-semibold text-c-text"
                 >
-                  {question}
+                  {partnerText(question, language)}
                 </span>
                 <ChevronDown
                   className={cn(
@@ -603,7 +654,7 @@ export const FAQSection: React.FC = () => {
                   id={`partner-faq-answer-${index}`}
                   className="px-5 pb-5 text-sm leading-6 text-c-text-secondary"
                 >
-                  {answer}
+                  {partnerText(answer, language)}
                 </div>
               )}
             </div>
@@ -614,15 +665,18 @@ export const FAQSection: React.FC = () => {
   );
 };
 
-export const FooterResourcesSection: React.FC = () => (
-  <section className="space-y-5" aria-labelledby="first-deal-title">
+export const FooterResourcesSection: React.FC = () => {
+  const { i18n } = useTranslation();
+  const language = i18n?.resolvedLanguage ?? i18n?.language ?? 'en';
+  const stages = FIRST_DEAL_STAGES.map((item) => localizeStage(item, language));
+  return <section className="space-y-5" aria-labelledby="first-deal-title">
     <SectionHeading
-      eyebrow="First joint deal"
-      title="Move through six stages with an owner, output and proof at each step"
-      description="This is a collaboration framework, not a promise of timing or outcome. Each stage must earn the decision to continue."
+      eyebrow={partnerText('First joint deal', language)}
+      title={partnerText('Move through six stages with an owner, output and proof at each step', language)}
+      description={partnerText('This is a collaboration framework, not a promise of timing or outcome. Each stage must earn the decision to continue.', language)}
     />
     <ol className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-      {FIRST_DEAL_STAGES.map((stage, index) => (
+      {stages.map((stage, index) => (
         <li key={stage.id} className={sectionCard}>
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
@@ -640,33 +694,34 @@ export const FooterResourcesSection: React.FC = () => (
           </div>
           <dl className="mt-4 space-y-3 text-sm">
             <div>
-              <dt className="font-medium text-c-text">Owner</dt>
+              <dt className="font-medium text-c-text">{partnerText('Owner', language)}</dt>
               <dd className="mt-1 text-c-text-secondary">{stage.owner}</dd>
             </div>
             <div>
-              <dt className="font-medium text-c-text">Output</dt>
+              <dt className="font-medium text-c-text">{partnerText('Output', language)}</dt>
               <dd className="mt-1 text-c-text-secondary">{stage.output}</dd>
             </div>
             <div>
-              <dt className="font-medium text-c-text">Proof to continue</dt>
+              <dt className="font-medium text-c-text">{partnerText('Proof to continue', language)}</dt>
               <dd className="mt-1 text-c-text-secondary">{stage.proof}</dd>
             </div>
           </dl>
         </li>
       ))}
     </ol>
-  </section>
-);
+  </section>;
+};
 
 export const ProviderHomeView: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const language = i18n?.resolvedLanguage ?? i18n?.language ?? 'en';
   const scrollToPaths = () =>
     document
       .getElementById('partner-paths')
       ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   return (
     <div className="mx-auto max-w-7xl space-y-12 pb-12" data-testid="partner-program-overview">
-      <ProgramHero onExplore={scrollToPaths} />
+      <ProgramHero onExplore={scrollToPaths} language={language} />
       <ValueCardsSection />
       <CommissionCalculatorSection />
       <FooterResourcesSection />

@@ -14,10 +14,12 @@ import {
   PROHIBITED_PARTNER_MARKETING_STRINGS,
 } from '@/views/partner/partnerProgramContent';
 
+const locale = vi.hoisted(() => ({ language: 'en' }));
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (_key: string, fallback?: string) => fallback || _key,
-    i18n: { language: 'en' },
+    i18n: { get language() { return locale.language; } },
   }),
 }));
 
@@ -31,6 +33,7 @@ import { V8PartnerApi } from '@/services/api/v8';
 
 describe('ProviderHomeView PAR-OWN-001 content trust', () => {
   beforeEach(() => {
+    locale.language = 'en';
     vi.clearAllMocks();
     vi.mocked(V8PartnerApi.getOnboardingStatus).mockResolvedValue({
       status: {
@@ -41,6 +44,42 @@ describe('ProviderHomeView PAR-OWN-001 content trust', () => {
         completed: false,
       },
     } as any);
+  });
+
+  it('implements roving keyboard navigation and a stable tabpanel relationship', () => {
+    render(
+      <MemoryRouter>
+        <ProviderHomeView />
+      </MemoryRouter>
+    );
+
+    const first = screen.getByRole('tab', { name: 'Consulting Owner' });
+    first.focus();
+    fireEvent.keyDown(first, { key: 'ArrowRight' });
+    const second = screen.getByRole('tab', { name: 'Individual Consultant' });
+    expect(second).toHaveFocus();
+    expect(second).toHaveAttribute('aria-selected', 'true');
+    expect(second).toHaveAttribute('aria-controls', 'partner-path-panel');
+    expect(screen.getByRole('tabpanel')).toHaveAttribute('aria-labelledby', second.id);
+
+    fireEvent.keyDown(second, { key: 'End' });
+    expect(screen.getByRole('tab', { name: 'Financial Institution' })).toHaveFocus();
+  });
+
+  it('renders the governed core narrative in Polish when Polish is active', async () => {
+    locale.language = 'pl';
+    render(
+      <MemoryRouter>
+        <ProviderHomeView />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByRole('heading', { name: /Zbuduj pierwszą wspólną szansę/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Instytucja finansowa' })).toBeInTheDocument();
+    expect(screen.getByText('Pięć modeli współpracy')).toBeInTheDocument();
+    expect(screen.getByText('Pierwsza wspólna transakcja')).toBeInTheDocument();
+    expect(screen.getByText('Zabezpieczenia i FAQ')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText(/potwierdzonych kroków/i)).toBeInTheDocument());
   });
 
   it('renders all six partner paths and switches to a role-specific contribution split', async () => {

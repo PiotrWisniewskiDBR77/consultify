@@ -51,17 +51,15 @@ vi.mock('@/services/api/v8', () => ({
 import { V8PartnerApi } from '@/services/api/v8';
 import { ProviderHomeView } from '@/views/partner/ProviderHomeView';
 
-// PartnerLifecycleCanonPanel was removed during partner production-hardening
-// (commit 8404b892f6). Its lifecycle progress view was consolidated into the
-// ProviderHomeView onboarding checklist, which builds the same
-// apply -> activate -> payout -> active lifecycle from the governed onboarding
-// status. This test pins that surviving canonical lifecycle surface.
+// PartnerLifecycleCanonPanel was removed during partner production-hardening.
+// This suite pins the surviving state-aware action without restoring draft
+// commercial lifecycle claims.
 describe('Partner lifecycle canon surface', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('renders the canonical onboarding lifecycle narrative', async () => {
+  it('offers one state-aware onboarding action for a verified zero-step state', async () => {
     vi.mocked(V8PartnerApi.getOnboardingStatus).mockResolvedValue({
       status: {
         termsAccepted: false,
@@ -79,15 +77,14 @@ describe('Partner lifecycle canon surface', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Get Started in 10 Minutes')).toBeInTheDocument();
+      expect(screen.getByText('Onboarding status')).toBeInTheDocument();
     });
 
-    // The four canonical lifecycle steps surface as their CTAs.
-    expect(screen.getByRole('button', { name: 'Review terms' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Choose plan' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Set up payment' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Finish onboarding' })).toBeInTheDocument();
-    expect(screen.getByText('0/4')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Start onboarding/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Review terms/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Choose plan/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Set up payment/i })).not.toBeInTheDocument();
+    expect(screen.getByText(/0\/4 verified steps/i)).toBeInTheDocument();
   });
 
   it('reflects onboarding progress for partner workspace states', async () => {
@@ -108,11 +105,11 @@ describe('Partner lifecycle canon surface', () => {
     );
 
     await waitFor(() => {
-      // terms+privacy, tier, and payment complete -> 3 of 4 lifecycle steps done.
-      expect(screen.getByText('3/4')).toBeInTheDocument();
+      // terms+privacy and the recorded program path complete -> 3 of 4 steps done.
+      expect(screen.getByText(/3\/4 verified steps/i)).toBeInTheDocument();
     });
 
-    // The active commercial tier is reflected back in the lifecycle.
+    expect(screen.getByRole('button', { name: /Continue onboarding/i })).toBeInTheDocument();
     expect(screen.getByText(/Current tier: professional/i)).toBeInTheDocument();
   });
 });

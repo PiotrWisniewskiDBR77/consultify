@@ -85,10 +85,10 @@ describe('ProviderHomeView CTA authority', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Start application' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Start onboarding' })).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Start application' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start onboarding' }));
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith(ROUTES.PARTNER.ONBOARDING);
@@ -120,7 +120,7 @@ describe('ProviderHomeView CTA authority', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Application and onboarding')).toBeInTheDocument();
+      expect(screen.getByText('Onboarding status')).toBeInTheDocument();
     });
 
     expect(screen.queryByText('Partner lifecycle canon')).toBeNull();

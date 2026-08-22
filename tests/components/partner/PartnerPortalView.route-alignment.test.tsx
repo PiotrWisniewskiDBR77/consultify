@@ -121,8 +121,7 @@ describe('PartnerPortalView route alignment', () => {
     );
 
     expect(await screen.findByText('Program overview')).toBeInTheDocument();
-    expect(await screen.findByText('Application flow')).toBeInTheDocument();
-    expect(screen.getByText('Certification guide')).toBeInTheDocument();
+    expect(screen.getByText('Models and commercial terms')).toBeInTheDocument();
     expect(screen.getByTestId('location')).toHaveTextContent('/partner?tab=documentation');
     expect(Api.get).not.toHaveBeenCalledWith('/api/partners/resources');
     expect(mockNavigate).not.toHaveBeenCalledWith(
