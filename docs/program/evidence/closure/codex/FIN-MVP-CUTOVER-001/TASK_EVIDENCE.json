@@ -527,6 +527,33 @@
       "No Railway, production, deployment, release or tenant rollout mutation was authorized or performed."
     ]
   },
+  "wave3EcoW12DigitizationArchiveRequalification20260823": {
+    "testedSha": "2347887ae2",
+    "scope": "Replaces irreversible DELETE /api/economics/analyses/:id with a canonical tenant-scoped archive command and retires ECO-W12 fail-closed.",
+    "changedPaths": [
+      "server/migrations/20261063_digitization_analysis_archive_command.sql",
+      "server/src/services/finance/canonical/digitizationAnalysisArchiveCommandService.ts",
+      "server/src/services/finance/canonical/__tests__/digitizationAnalysisArchiveCommandService.pg.test.ts",
+      "server/src/routes/v8/finance.routes.ts",
+      "server/src/routes/v8/__tests__/finance.routes.test.ts",
+      "server/src/routes/economics.routes.ts",
+      "server/src/services/legacyCutover/registry/economics.ts",
+      "server/src/services/legacyCutover/__tests__/financeCutoverInventory.test.ts",
+      "server/src/services/legacyCutover/__tests__/economicsCutover.pg.test.ts",
+      "src/services/api/v8/finance.ts"
+    ],
+    "schema": "Fresh PostgreSQL migration ledger 819/819; strict repeat applied 0; dry run reported 0 pending. The archived row is retained, the receipt has a restrictive source FK and UPDATE/DELETE are rejected by an append-only trigger.",
+    "tests": "Canonical archive RealPG 3/3; production-shaped Economics cutover RealPG 39/39; mounted Finance route plus exact inventory 100/100.",
+    "proved": "Six concurrent calls produce one immutable receipt and one archive transition; exact replay is stable; payload collision, foreign tenant, live Finance-editor authority, version CAS and injected post-update failure rollback are fail-closed. Archived analyses disappear from active legacy list/detail/stats/update surfaces without deleting their row or dependent graph. The legacy DELETE returns 410/no-write by default and its exact ECO-W12 rollback lever was exercised separately.",
+    "static": "Root and server TypeScript noEmit passed; targeted ESLint had zero errors; targeted Prettier and git diff checks passed.",
+    "cleanup": "Final disposable database readback: 819 migrations, disabled triggers 0, advisory locks 0, archive fixture/receipt residue 0. Both owned PostgreSQL containers were removed and ports 35589 and 35590 were released.",
+    "denominator": "28 safely retired / 52 actual legacy mutation doors; 24 remain open.",
+    "verdict": "PARTIAL",
+    "remainingBoundary": [
+      "Twenty-four legacy mutation doors still require route-by-route canonical parity or an explicit retained-owner decision.",
+      "No Railway, production, deployment, release or tenant rollout mutation was authorized or performed."
+    ]
+  },
   "currentKernelRequalification": {
     "migration": "Fresh exact-current PostgreSQL ledger 758/758/758 successful and unique with zero missing checksums; strict repeat applied 0 and dry-run reported 0 pending.",
     "focused": "3 files / 13 tests passed: durable lifecycle 5, mounted Finance/Results/Partner observation 6, atomic bulk user plus ACTIVE membership 2.",
@@ -541,7 +568,7 @@
   "leaseSha256": "not_applicable_integrator_bounded_task",
   "verdict": "PARTIAL",
   "open": [
-    "The exact-current mounted-route inventory contains 52 actual legacy mutation doors. Twenty-seven are retired and 25 remain open pending route-by-route canonical parity or explicit retained-owner decisions, identity/backfill, usage and rollback evidence.",
+    "The exact-current mounted-route inventory contains 52 actual legacy mutation doors. Twenty-eight are retired and 24 remain open pending route-by-route canonical parity or explicit retained-owner decisions, identity/backfill, usage and rollback evidence.",
     "Rollout timing and Finance/Results reconciliation remain owner decisions; this evidence does not authorize rollout or change Results Actual ownership."
   ],
   "environment": {
@@ -574,10 +601,10 @@
     {"command": "git diff --check", "exitCode": 0, "result": "passed"}
   ],
   "denominators": {
-    "focused": "ECO-W42 canonical settings RealPG 7/7, production-shaped Economics cutover 37/37, and mounted Finance routes plus exact inventory 97/97",
-    "realPostgres": "ECO-W42 canonical settings and production-shaped Economics cutover suites passed on disposable PostgreSQL with atomic rollback, replay and cleanup readback",
-    "legacyV8Writers": "27 safely retired / 52 actual legacy mutation doors; 25 remain open",
-    "migration": "818/818 migrations on the exact-current fresh qualification database; repeat 0 and dry pending 0",
+    "focused": "ECO-W12 canonical archive RealPG 3/3, production-shaped Economics cutover 39/39, and mounted Finance routes plus exact inventory 100/100",
+    "realPostgres": "ECO-W12 canonical archive and production-shaped Economics cutover passed on final fresh disposable PostgreSQL with concurrency, immutable receipt, rollback and cleanup readback",
+    "legacyV8Writers": "28 safely retired / 52 actual legacy mutation doors; 24 remain open",
+    "migration": "819/819 migrations on the exact-current fresh qualification database; repeat 0 and dry pending 0",
     "typeCheck": "Root and server noEmit 2/2 exit 0; exact commit diff check exit 0"
   },
   "fixtures": {
@@ -593,12 +620,12 @@
     "rollback": "only explicit FINANCE_LEGACY_WRITER_ROLLBACK_ENABLED=true reaches the legacy leaf; rollback observation is durable",
     "tenant": "same legacy ID in a foreign tenant resolves no canonical artifact/version",
     "coldReadback": "independent pg.Client reads stable canonical artifact and business-version IDs with one row per request/access kind",
-    "unprovenSurfaces": "25 actual legacy mutation doors remain enabled and visibly classified; no false zero-writer claim"
+    "unprovenSurfaces": "24 actual legacy mutation doors remain enabled and visibly classified; no false zero-writer claim"
   },
   "browserArtifacts": [],
   "rollback": {
-    "method": "Set FINANCE_LEGACY_ROLLBACK_WRITERS to one exact proven writer id: ECO-W22, ECO-W23, ECO-W26, ECO-W29, ECO-W31, ECO-W32, ECO-W33, ECO-W34, ECO-W35, ECO-W36, ECO-W37, ECO-W38, ECO-W39, ECO-W40, ECO-W41 or ECO-W42. This temporarily re-enables only that corresponding compatibility route. No migration rollback or Finance business-data rewrite is required.",
+    "method": "Set FINANCE_LEGACY_ROLLBACK_WRITERS to one exact proven writer id: ECO-W12, ECO-W22, ECO-W23, ECO-W26, ECO-W29, ECO-W31, ECO-W32, ECO-W33, ECO-W34, ECO-W35, ECO-W36, ECO-W37, ECO-W38, ECO-W39, ECO-W40, ECO-W41 or ECO-W42. This temporarily re-enables only that corresponding compatibility route. No migration rollback or Finance business-data rewrite is required.",
     "executed": true,
-    "proof": "The production-shaped RealPG suite proves each listed writer-scoped rollback independently. ECO-W39 reaches exactly the prior document-import mutation while disabled state remains 410/no-write; canonical signature validation, DRAFT-only exact CAS, atomic baseline replacement, replay, live authority and provenance receipt rollback are proven separately."
+    "proof": "The production-shaped RealPG suite proves each listed writer-scoped rollback independently. ECO-W12 reaches exactly the former destructive delete only when explicitly selected, while default state preserves the row and returns 410; the canonical archive separately proves version CAS, concurrency, immutable replay receipt, live authority and atomic rollback."
   }
 }
