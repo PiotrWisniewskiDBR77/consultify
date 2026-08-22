@@ -742,18 +742,19 @@ async function main() {
 
     await db.run(
       `INSERT INTO notifications(
-        id, user_id,
+        id, user_id, organization_id,
         type, title, message, body,
         data, metadata,
         read, is_read, severity, priority, icon,
         entity_type, entity_id,
         actor_name, read_at,
         created_at
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
       ON CONFLICT (id) DO NOTHING`,
       [
         id,
         userId,
+        orgId,
         n.type,
         n.title,
         n.message,
@@ -1302,6 +1303,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  logger.error('[seed-mywork-demo] Failed:', err?.message || err);
+  logger.error(`[seed-mywork-demo] Failed: ${err?.stack || err?.message || String(err)}`);
   process.exit(1);
 });
