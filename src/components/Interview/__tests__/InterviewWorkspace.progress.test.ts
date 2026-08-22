@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { calculateInterviewProgress } from '../InterviewWorkspace';
+import {
+  calculateInterviewProgress,
+  getInterviewWorkspacePresentation,
+} from '../InterviewWorkspace';
 
 describe('calculateInterviewProgress', () => {
   it('counts organization-defined question categories in the session total', () => {
@@ -24,4 +27,19 @@ describe('calculateInterviewProgress', () => {
       overallPercent: 0,
     });
   });
+});
+
+describe('getInterviewWorkspacePresentation', () => {
+  it('keeps the owner-approved single-question flow in its dedicated wide workspace', () => {
+    expect(getInterviewWorkspacePresentation('single_question')).toBe(
+      'dedicated_question_workspace'
+    );
+  });
+
+  it.each(['task_list', 'conversational'] as const)(
+    'keeps %s inside the shared N-mode shell',
+    (runtimeMode) => {
+      expect(getInterviewWorkspacePresentation(runtimeMode)).toBe('n_mode_shell');
+    }
+  );
 });

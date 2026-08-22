@@ -37,6 +37,7 @@ import {
   Paperclip,
   Save,
   Send,
+  Shield,
   Sparkles,
   Target,
   ThumbsUp,
@@ -78,8 +79,6 @@ import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 import { buildArtifactCode } from '@/utils/artifactLinks';
 
-import { loadInterviewV8Capability } from './interviewBackendRouting';
-
 import { type LinkedItem, LinkedItemsSection } from '../MyWork/shared';
 import {
   CATEGORY_CONFIG,
@@ -90,6 +89,7 @@ import {
 import { CompanyProfile, KeyMetric, OpenGap, Stakeholder } from './CompanyFactsPanel';
 import { ConversationalPanel } from './ConversationalPanel';
 import { EvidencePanel, InterviewEvidence } from './EvidencePanel';
+import { loadInterviewV8Capability } from './interviewBackendRouting';
 // MIGRACJA (D-8): kompozycja kart Interview wyprowadzona z WIĄŻĄCEGO kontraktu
 // karty (cardContract.types.ts) zamiast z luźnej tablicy NModeSection[] —
 // patrz interviewCardContract.ts. Za flagą (default OFF), zero regresji na demo.
@@ -102,17 +102,24 @@ import { RuntimeMode, RuntimeModeSelector } from './RuntimeModeSelector';
 
 type PersistedLinkedItem = LinkedItem & { edgeId?: string };
 
-export function calculateInterviewProgress(
-  questions: Array<Pick<InterviewQuestion, 'status'>>
-): { totalQuestions: number; answeredQuestions: number; overallPercent: number } {
+export function calculateInterviewProgress(questions: Array<Pick<InterviewQuestion, 'status'>>): {
+  totalQuestions: number;
+  answeredQuestions: number;
+  overallPercent: number;
+} {
   const totalQuestions = questions.length;
   const answeredQuestions = questions.filter((question) => question.status === 'answered').length;
   return {
     totalQuestions,
     answeredQuestions,
-    overallPercent:
-      totalQuestions > 0 ? Math.round((answeredQuestions / totalQuestions) * 100) : 0,
+    overallPercent: totalQuestions > 0 ? Math.round((answeredQuestions / totalQuestions) * 100) : 0,
   };
+}
+
+export function getInterviewWorkspacePresentation(
+  runtimeMode: RuntimeMode
+): 'dedicated_question_workspace' | 'n_mode_shell' {
+  return runtimeMode === 'single_question' ? 'dedicated_question_workspace' : 'n_mode_shell';
 }
 
 const withTimeout = async <T,>(promise: Promise<T>, ms: number, message: string): Promise<T> => {
@@ -462,7 +469,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   // questions, so the same submitted session rendered as 3/3 in its navigator
   // but 0/0 in the properties rail.  The overall counter is a property of the
   // complete session, not only of the built-in navigation groups.
-  const { totalQuestions, answeredQuestions, overallPercent } = calculateInterviewProgress(questions);
+  const { totalQuestions, answeredQuestions, overallPercent } =
+    calculateInterviewProgress(questions);
   const activeCategoryConfig = activeCategory ? CATEGORY_CONFIG[activeCategory] : undefined;
   const ActiveCategoryIcon = activeCategoryConfig?.icon || FileText;
   const activeCategoryProgress = activeCategory
@@ -1527,9 +1535,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         const fresh = await withTimeout(
           runAiQualityReview({ silent: true, signal: aiReviewSignal }),
           12000,
-          isPolish
-            ? 'Przekroczono limit czasu oceny jakości AI.'
-            : 'AI quality review timed out.'
+          isPolish ? 'Przekroczono limit czasu oceny jakości AI.' : 'AI quality review timed out.'
         );
         if (fresh) evaluation = fresh;
       } catch {
@@ -3248,13 +3254,217 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     </AnimatePresence>
   );
 
-  // SPEC-N §7 decyzja #5 — tu KIEDYS stal `if (runtimeMode === 'single_question')
-  // { return … }`, czyli druga powloka: wlasny top-bar z tytulem, statusem,
-  // paskiem postepu i DUPLIKATAMI Save / Approve / Send-back, calkowicie
-  // omijajaca NModeShell/NModeHeader. Usuniete — tryb pojedynczego pytania
-  // renderuje sie teraz WEWNATRZ tej samej powloki (sekcja „Pytania",
-  // wariant `immersive` runtime'u), a jego akcje mieszkaja w slotach powloki.
-  // Nie ma juz drugiej deklaracji tych samych akcji (SPEC-N §2.6).
+  // INT-QCARD-OWN-001 — the owner explicitly rejected embedding the primary
+  // respondent workspace inside the generic N-mode artifact shell. Keep the
+  // current data, CAS, review and lifecycle handlers, but restore the dedicated
+  // wide question rail/canvas/navigation used before 809e3abe31.
+  if (getInterviewWorkspacePresentation(runtimeMode) === 'dedicated_question_workspace') {
+    const answeredCount = questions.filter((question) => question.status === 'answered').length;
+    const totalCount = questions.length;
+    const progressPct = totalCount > 0 ? Math.round((answeredCount / totalCount) * 100) : 0;
+
+    return (
+      <>
+        {qualityGateModal}
+        <div
+          className="flex h-full min-h-0 flex-col bg-c-background"
+          data-testid="interview-dedicated-question-workspace"
+        >
+          <header className="shrink-0 border-b border-c-border bg-c-surface px-4 py-2.5">
+            <div className="flex min-w-0 items-center gap-3">
+              <button
+                type="button"
+                onClick={onClose || (() => {})}
+                className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-2 text-sm text-c-text-muted transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+              >
+                <ChevronLeft size={16} />
+                {t('interview.workspace.back')}
+              </button>
+              <div className="h-5 w-px shrink-0 bg-c-border" />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-c-text">
+                  {sessionName || t('interview.workspace.interviewSession')}
+                </p>
+                <p className="text-xs text-c-text-muted">
+                  {t('interview.workspace.dedicatedQuestionWorkspace', 'Question workspace')}
+                </p>
+              </div>
+              <EntityStatusChip
+                status={lifecycleStatus}
+                label={t(
+                  `interview.workspace.lifecycleStatusLabel.${lifecycleStatus}`,
+                  lifecycleConfig.label.en
+                )}
+              />
+              <div className="ml-auto hidden min-w-44 items-center gap-2 sm:flex">
+                <span className="text-xs tabular-nums text-c-text-muted">
+                  {answeredCount}/{totalCount}
+                </span>
+                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-c-surface-raised">
+                  <div
+                    className="h-full rounded-full bg-c-accent transition-[width] duration-300"
+                    style={{ width: `${progressPct}%` }}
+                  />
+                </div>
+                <span className="text-xs tabular-nums text-c-text-muted">{progressPct}%</span>
+              </div>
+              <div className="h-5 w-px shrink-0 bg-c-border" />
+              {isReviewerMode ? (
+                <>
+                  <span className="hidden items-center gap-1 rounded-full bg-c-warning/10 px-2 py-1 text-xs font-semibold text-c-warning md:inline-flex">
+                    <Shield size={12} />
+                    {t('interview.workspace.review')}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleApprove}
+                    disabled={isApproving || !canApprove}
+                    title={!canApprove ? approveBlockedHint : undefined}
+                    className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-c-success/30 bg-c-success/10 px-3 text-sm font-medium text-c-success transition-colors hover:bg-c-success/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {isApproving ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <ThumbsUp size={14} />
+                    )}
+                    {t('interview.workspace.approve')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowSendBackForm(true)}
+                    disabled={isSendingBack}
+                    className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-c-warning/40 bg-c-warning/10 px-3 text-sm font-medium text-c-warning transition-colors hover:bg-c-warning/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"
+                  >
+                    <AlertTriangle size={14} />
+                    {t('interview.workspace.sendBack')}
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={isSaving || isLocked}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-c-border px-3 text-sm font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-50"
+                >
+                  {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                  {t('interview.workspace.save')}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => handleRuntimeModeSelect('task_list')}
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2 text-sm text-c-text-muted transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+                title={t('interview.workspace.switchToListView')}
+              >
+                <ArrowRight size={14} />
+                <span className="hidden lg:inline">{t('interview.workspace.list')}</span>
+              </button>
+            </div>
+          </header>
+
+          {isReviewerMode && !canApprove && (
+            <div className="flex shrink-0 items-center gap-2 border-b border-c-warning/20 bg-c-warning/10 px-4 py-2 text-xs font-medium text-c-warning">
+              <AlertTriangle size={13} />
+              {approveBlockedHint}
+            </div>
+          )}
+
+          {showSendBackForm && isReviewerMode && (
+            <section className="shrink-0 border-b border-c-warning/20 bg-c-warning/5 px-6 py-3">
+              <div className="mx-auto max-w-3xl space-y-3">
+                <label className="block text-sm font-medium text-c-text">
+                  {t('interview.workspace.reasonForSendingBack')}
+                </label>
+                <textarea
+                  value={sendBackReason}
+                  onChange={(event) => setSendBackReason(event.target.value)}
+                  rows={2}
+                  className="w-full resize-none rounded-xl border border-c-border bg-c-surface px-3 py-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
+                  placeholder={t('interview.workspace.describeWhatNeedsImprovement')}
+                />
+                {sendBackMissingItems.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {sendBackMissingItems.map((item, index) => (
+                      <label
+                        key={item.key}
+                        className="inline-flex items-center gap-1.5 text-xs text-c-warning"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={item.checked}
+                          onChange={() =>
+                            setSendBackMissingItems((current) =>
+                              current.map((entry, entryIndex) =>
+                                entryIndex === index ? { ...entry, checked: !entry.checked } : entry
+                              )
+                            )
+                          }
+                          className="rounded"
+                        />
+                        {item.label}
+                      </label>
+                    ))}
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleSendBack}
+                    disabled={!sendBackReason.trim() || isSendingBack}
+                    className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-c-warning/40 bg-c-warning/10 px-3 text-sm font-medium text-c-warning transition-colors hover:bg-c-warning/20 disabled:opacity-50"
+                  >
+                    {isSendingBack ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <Send size={14} />
+                    )}
+                    {t('interview.workspace.sendBack')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowSendBackForm(false);
+                      setSendBackReason('');
+                    }}
+                    className="inline-flex h-9 items-center rounded-lg px-3 text-sm text-c-text-muted hover:bg-c-surface-raised"
+                  >
+                    {t('interview.workspace.cancel')}
+                  </button>
+                </div>
+              </div>
+            </section>
+          )}
+
+          <main className="min-h-0 flex-1">
+            {totalCount > 0 ? (
+              <InterviewSingleQuestionRuntime
+                questions={questions}
+                evidence={evidence}
+                activeCategory={activeCategory || questions[0]?.category || 'strategy'}
+                onCategoryChange={setActiveCategory}
+                onUpdateQuestion={handleUpdateQuestion}
+                onUploadFile={handleUploadFile}
+                onAddLink={handleAddLink}
+                onAddVoiceEvidence={handleAddVoiceEvidence}
+                onSubmitSession={handleSubmitSession}
+                onSaveAndExit={onClose}
+                sessionName={sessionName}
+                readOnly={isLocked}
+                isSubmitting={isSubmittingSession}
+                immersive
+                answerHistoryByQuestionId={answerHistoryByQuestionId}
+              />
+            ) : (
+              <EmptyState
+                title={t('interview.workspace.noQuestionsInThisSession')}
+                icon={<ClipboardList />}
+              />
+            )}
+          </main>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
