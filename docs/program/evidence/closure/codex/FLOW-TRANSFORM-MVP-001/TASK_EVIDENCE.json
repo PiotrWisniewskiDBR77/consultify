@@ -139,12 +139,13 @@
   },
   "verdict": "PARTIAL",
   "openBlockers": [
-    "The full-lineage policy fixture is explicitly SYNTHETIC_TEST_ONLY; production policy activation and non-synthetic owner authorization remain outside this bounded technical proof.",
+    "Equivalent Organization, Interview and DRD source-to-PIR lineages require exact-current requalification alongside the proven SWOT path.",
     "Deployed desktop and mobile journey and rollback rehearsal are not authorized or verified."
   ],
   "resolvedBlockers": [
     "A single exact-current real-PostgreSQL suite now carries one APPROVED SWOT identity through candidate, Initiative, Execution, Results Actual, Finance reconciliation and PIR, with fail-closed tenant and authority controls.",
-    "Commit d6020571a8 is an ancestor of canonical 81123eb305 and its 12 production/test paths are byte-identical at that canonical SHA. Its fresh-PostgreSQL source-adapter assertions passed 4/4 and its parameterized four-source downstream matrix passed 6/6 for Organization, Interview, DRD and SWOT, including cold replay, foreign-tenant denial, immutable correlation receipts and stable candidate-to-PIR identities."
+    "Commit d6020571a8 is an ancestor of canonical 81123eb305 and its 12 production/test paths are byte-identical at that canonical SHA. Its fresh-PostgreSQL source-adapter assertions passed 4/4 and its parameterized four-source downstream matrix passed 6/6 for Organization, Interview, DRD and SWOT, including cold replay, foreign-tenant denial, immutable correlation receipts and stable candidate-to-PIR identities.",
+    "The former SYNTHETIC_TEST_ONLY visibility-policy blocker is resolved in the exact-current suite: the fixture publishes the pinned governed ROI visibility policy through the production command, rejects foreign-tenant authority and exercises that policy in mounted signed reads."
   ],
   "fourSourceCanonicalReconciliation20260819": {
     "technicalSourceSha": "d6020571a8",
@@ -263,6 +264,22 @@
       "The visibility prerequisite used by the full-lineage fixture remains explicitly SYNTHETIC_TEST_ONLY and does not establish the governed production owner policy.",
       "Equivalent Organization, Interview and DRD source-to-PIR lineages remain NOT_VERIFIED at this exact SHA.",
       "Deployed desktop/mobile acceptance, rollback rehearsal and release authorization remain outside this repository proof and are NOT VERIFIED or NOT AUTHORIZED."
+    ]
+  },
+  "wave3GovernedPolicyRequalification20260822": {
+    "testedSha": "b66b8902b036167461b7fca9d555bbc2a10bf107",
+    "scope": "Exact-current fresh-pgvector16 requalification of the mounted signed APPROVED SWOT lineage using the production governed ROI visibility-policy command rather than the retired synthetic OPEN_ORG fixture.",
+    "schema": "Fresh 817, repeat applying 0, dry-run pending 0, ledger 817.",
+    "command": "DATABASE_URL=<owned-disposable-pgvector16> DB_TYPE=postgres NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false FLOW_ALLOW_IMMUTABLE_FIXTURE_CLEANUP=1 FLOW_DISPOSABLE_DB_PREFIX=<exact-prefix> ROI_E007_ALLOW_IMMUTABLE_FIXTURE_CLEANUP=1 ROI_E007_DISPOSABLE_DB_PREFIX=<exact-prefix> JWT_SECRET=<ephemeral-redacted> npx vitest run server/src/routes/resultsVnext/__tests__/roiFinanceSeam.routes.test.ts server/src/services/initiative/__tests__/ini-mvp-gate-001-lifecycle-gate-route.test.ts server/src/services/initiative/__tests__/ini-mvp-gate-001-lifecycle-gate-writer.pg.test.ts server/src/services/initiative/__tests__/initiativeTransitionService.closureGate.test.ts tests/integration/crossflow/cf-00-full-transformation-lineage.realdb.test.ts tests/resultsVnext/roi/roiFinanceReconciliation.realdb.test.ts --retry=0 --no-file-parallelism --maxWorkers=1",
+    "result": "6/6 files; 87/87 active tests passed; 1 explicitly retired legacy test skipped; 0 failures; no retry; sequential execution.",
+    "governedPolicyProof": "Foreign-tenant policy publication is denied; same-tenant ACTIVE OWNER publication succeeds through publishRoiGovernedVisibilityPolicy; mounted signed ROI list/detail reads consume resolveRoiGovernedVisibility. No synthetic OPEN_ORG provisioning remains in the fixture.",
+    "lineageProof": "One signed APPROVED SWOT identity remains stable through Candidate, Initiative, Runtime-v1 Execution, Results Actual, distinct-maker/checker Finance reconciliation and finalized PIR. Tenant, authority, lifecycle, CAS, replay, concurrency, stale and injected-failure controls fail closed.",
+    "cleanup": "After suite completion: schema_migrations 817; disabled triggers 0; advisory locks 0; non-system organizations 0; non-system users 0; initiatives 0; Process Flow handoffs 0; ROI cases 0; Finance reconciliations 0. Owned container consultify-flow-requal-b66b removed and localhost port 35580 released.",
+    "verdict": "PARTIAL",
+    "remainingBoundary": [
+      "Equivalent Organization, Interview and DRD source-to-PIR lineages are not requalified in this exact-current invocation.",
+      "Deployed desktop/mobile acceptance and rollback rehearsal remain NOT VERIFIED.",
+      "Production release remains NOT AUTHORIZED."
     ]
   }
 }
