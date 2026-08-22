@@ -16,7 +16,11 @@ vi.mock('react-router-dom', async (importOriginal) => {
   };
 });
 
-const tMock = (key: string, fallbackOrOptions?: string | Record<string, unknown>, maybeOptions?: Record<string, unknown>) => {
+const tMock = (
+  key: string,
+  fallbackOrOptions?: string | Record<string, unknown>,
+  maybeOptions?: Record<string, unknown>
+) => {
   const fallback = typeof fallbackOrOptions === 'string' ? fallbackOrOptions : undefined;
   const options =
     typeof fallbackOrOptions === 'object' && fallbackOrOptions !== null
@@ -73,7 +77,7 @@ describe('ProviderHomeView CTA authority', () => {
     } as any);
   });
 
-  it('routes incomplete onboarding CTAs to the partner-specific onboarding entry', async () => {
+  it('routes the one state-aware primary CTA to partner onboarding', async () => {
     render(
       <MemoryRouter initialEntries={['/partner']}>
         <ProviderHomeView />
@@ -81,30 +85,26 @@ describe('ProviderHomeView CTA authority', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Review terms' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Start application' })).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Review terms' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start application' }));
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith(ROUTES.PARTNER.ONBOARDING);
     });
   });
 
-  it('uses honest hero CTAs for onboarding and partner docs', async () => {
+  it('keeps the hero educational and routes documentation to the canonical guide', async () => {
     render(
       <MemoryRouter initialEntries={['/partner']}>
         <ProviderHomeView />
       </MemoryRouter>
     );
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Open onboarding' })[0]);
-    await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith(ROUTES.PARTNER.ONBOARDING);
-    });
-
-    mockNavigate.mockReset();
-    fireEvent.click(screen.getByRole('button', { name: 'Open partner docs' }));
+    expect(screen.getByRole('button', { name: 'Choose your partner path' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /discuss custom terms/i })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Open documentation' }));
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith(
         '/docs/consultify-partner-program/partner-program-overview'
@@ -112,7 +112,7 @@ describe('ProviderHomeView CTA authority', () => {
     });
   });
 
-  it('shows the shared partner lifecycle canon inside onboarding surfaces', async () => {
+  it('does not reintroduce the legacy tier and payout lifecycle narrative', async () => {
     render(
       <MemoryRouter initialEntries={['/partner']}>
         <ProviderHomeView />
@@ -120,11 +120,11 @@ describe('ProviderHomeView CTA authority', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Get Started in 10 Minutes')).toBeInTheDocument();
+      expect(screen.getByText('Application and onboarding')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('Otwórz przewodnik aplikacji')).toBeInTheDocument();
-    expect(screen.getByText('Zobacz case potwierdzający')).toBeInTheDocument();
-    expect(screen.getByText('Your Path to Partnership Success')).toBeInTheDocument();
+    expect(screen.queryByText('Partner lifecycle canon')).toBeNull();
+    expect(screen.queryByText(/Finish workspace and payouts/i)).toBeNull();
+    expect(screen.getByText('Commercial schedule: decision required')).toBeInTheDocument();
   });
 });

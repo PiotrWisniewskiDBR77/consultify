@@ -133,17 +133,17 @@ export const PartnerSidebar: React.FC<PartnerSidebarProps> = ({
             },
             {
               id: 'dashboard',
-              label: t('partner.program.benefits', 'Why become a partner'),
+              label: t('partner.program.paths', 'Partner paths'),
               icon: Sparkles,
             },
             {
               id: 'metrics',
-              label: t('partner.program.stories', 'Partner success stories'),
+              label: t('partner.program.proof', 'Evidence policy'),
               icon: TrendingUp,
             },
             {
               id: 'earnings',
-              label: t('partner.program.earnings', 'Earnings and tiers'),
+              label: t('partner.program.commercial', 'Models and commercial terms'),
               icon: DollarSign,
             },
             {
@@ -153,7 +153,7 @@ export const PartnerSidebar: React.FC<PartnerSidebarProps> = ({
             },
             {
               id: 'learning-path',
-              label: t('partner.program.academy', 'Partner Academy'),
+              label: t('partner.program.enablement', 'Enablement and Academy'),
               icon: GraduationCap,
             },
             {
@@ -163,7 +163,7 @@ export const PartnerSidebar: React.FC<PartnerSidebarProps> = ({
             },
             {
               id: 'templates',
-              label: t('partner.program.faq', 'FAQ and support'),
+              label: t('partner.program.faq', 'Safeguards and FAQ'),
               icon: FolderOpen,
             },
           ],

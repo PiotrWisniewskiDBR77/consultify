@@ -46,7 +46,7 @@ function renderView() {
   return render(
     <I18nextProvider i18n={i18n}>
       <BecomePartnerView />
-    </I18nextProvider>,
+    </I18nextProvider>
   );
 }
 
@@ -59,7 +59,7 @@ describe('BecomePartnerView marketing shell parity', () => {
       vi.fn().mockResolvedValue({
         ok: false,
         json: async () => ({}),
-      }),
+      })
     );
     Object.defineProperty(globalThis, 'crypto', {
       configurable: true,
@@ -71,23 +71,21 @@ describe('BecomePartnerView marketing shell parity', () => {
     vi.restoreAllMocks();
   });
 
-  it('renders shared landing shell chrome and preserves partner portal access', () => {
+  it('renders shared landing shell chrome and the verified program paths', () => {
     renderView();
 
     expect(screen.getByTestId('landing-mobile-menu-trigger')).toBeInTheDocument();
     expect(screen.getAllByText('Consultify Partner Program').length).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: 'Ask Anna first' })).toBeInTheDocument();
-    expect(screen.getByText('What You Get as a Partner')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Zaloguj się jako partner' }));
-
-    expect(navigateMock).toHaveBeenCalledWith('/login');
+    expect(screen.getByText('Start with the way you create value')).toBeInTheDocument();
+    expect(screen.getAllByRole('tab')).toHaveLength(6);
+    expect(screen.queryByText(/do 20% prowizji/i)).toBeNull();
   });
 
   it('routes the main application CTA to partner onboarding', () => {
     renderView();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Apply for Partnership' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start application' }));
 
     expect(navigateMock).toHaveBeenCalledWith(ROUTES.PARTNER.PUBLIC_APPLY);
   });

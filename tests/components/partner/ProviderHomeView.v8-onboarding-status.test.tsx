@@ -6,7 +6,11 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 
-const tMock = (key: string, fallbackOrOptions?: string | Record<string, unknown>, maybeOptions?: Record<string, unknown>) => {
+const tMock = (
+  key: string,
+  fallbackOrOptions?: string | Record<string, unknown>,
+  maybeOptions?: Record<string, unknown>
+) => {
   const fallback = typeof fallbackOrOptions === 'string' ? fallbackOrOptions : undefined;
   const options =
     typeof fallbackOrOptions === 'object' && fallbackOrOptions !== null
@@ -77,7 +81,7 @@ describe('ProviderHomeView onboarding status seam', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('2/4')).toBeInTheDocument();
+      expect(screen.getByText(/3\/4 verified steps/i)).toBeInTheDocument();
       expect(screen.getByText(/Current tier: professional/i)).toBeInTheDocument();
     });
 
@@ -107,7 +111,7 @@ describe('ProviderHomeView onboarding status seam', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('4/4')).toBeInTheDocument();
+      expect(screen.getByText(/4\/4 verified steps/i)).toBeInTheDocument();
       expect(screen.getByText(/Current tier: enterprise/i)).toBeInTheDocument();
     });
 

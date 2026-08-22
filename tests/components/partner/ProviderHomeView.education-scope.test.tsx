@@ -54,7 +54,7 @@ describe('ProviderHomeView education scope', () => {
     vi.mocked(Api.get).mockResolvedValue({} as any);
   });
 
-  it('frames academy as structured enablement beyond partner docs', async () => {
+  it('frames Academy as access-dependent rather than a present-tense promise', async () => {
     render(
       <MemoryRouter>
         <ProviderHomeView />
@@ -65,20 +65,13 @@ describe('ProviderHomeView education scope', () => {
       expect(V8PartnerApi.getOnboardingStatus).toHaveBeenCalled();
     });
 
-    expect(screen.getByText('Rozwijaj umiejętności z Partner Academy')).toBeInTheDocument();
+    expect(screen.getByText('Partner Academy')).toBeInTheDocument();
+    expect(screen.getByText('Access-dependent')).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Ustrukturyzowane wsparcie partnera wykraczające poza dokumentację: podstawy, ścieżki dla ról i gotowość do certyfikacji.'
+        'Structured enablement may be available after activation; access and progress are verified in the partner workspace.'
       )
     ).toBeInTheDocument();
-    expect(screen.getByText('Zakres Academy')).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        'Pomoc i dokumentacja partnera wyjaśniają procesy podczas pracy. Partner Academy to oddzielna warstwa szkoleniowa do ustrukturyzowanego rozwoju, powtarzalnego enablementu i sygnałów certyfikacji.'
-      )
-    ).toBeInTheDocument();
-    expect(screen.getByText('Podstawy')).toBeInTheDocument();
-    expect(screen.getByText('Ścieżka roli')).toBeInTheDocument();
-    expect(screen.getByText('Certyfikacja')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Open documentation' })).toBeInTheDocument();
   });
 });
