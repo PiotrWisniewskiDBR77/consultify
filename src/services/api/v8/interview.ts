@@ -642,6 +642,14 @@ export const V8InterviewApi = {
   remindAssignment: (id: string) =>
     v8Post(`/interview/assignments/${encodeURIComponent(id)}/remind`, {}),
 
+  escalateAssignment: (id: string) =>
+    v8Post<{
+      success: boolean;
+      escalatedAt: string | null;
+      escalationCount: number;
+      escalationTargetId: string | null;
+    }>(`/interview/assignments/${encodeURIComponent(id)}/escalate`, {}),
+
   sendBackAssignment: (
     id: string,
     payload: { reason: string; missingItems?: Array<string | Record<string, unknown>> }

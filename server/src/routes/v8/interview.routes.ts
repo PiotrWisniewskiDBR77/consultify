@@ -404,6 +404,12 @@ router.post(
   v8Wrap(InterviewController.approveAssignment, interviewMeta)
 );
 
+router.post(
+  '/assignments/:id/escalate',
+  requirePermission('INTERVIEW_ASSIGN_MANAGE'),
+  v8Wrap(InterviewController.escalateAssignment, interviewMeta)
+);
+
 router.patch(
   '/assignments/:id/manage',
   requirePermission('INTERVIEW_ASSIGN_MANAGE'),

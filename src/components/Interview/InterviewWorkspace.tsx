@@ -3457,7 +3457,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             ) : (
               <EmptyState
                 title={t('interview.workspace.noQuestionsInThisSession')}
-                icon={<ClipboardList />}
+                icon={ClipboardList}
               />
             )}
           </main>

@@ -21,6 +21,7 @@ const mockSubmitAssignment = vi.fn();
 const mockSendAssignmentReminder = vi.fn();
 const mockSendBackAssignment = vi.fn();
 const mockApproveAssignment = vi.fn();
+const mockEscalateAssignment = vi.fn();
 const mockEvaluateSessionAnswers = vi.fn();
 
 const mockInsightList = vi.fn();
@@ -45,6 +46,7 @@ vi.mock('../../../controllers/InterviewController.js', () => ({
     sendAssignmentReminder: (...args: unknown[]) => mockSendAssignmentReminder(...args),
     sendBackAssignment: (...args: unknown[]) => mockSendBackAssignment(...args),
     approveAssignment: (...args: unknown[]) => mockApproveAssignment(...args),
+    escalateAssignment: (...args: unknown[]) => mockEscalateAssignment(...args),
     evaluateSessionAnswers: (...args: unknown[]) => mockEvaluateSessionAnswers(...args),
   },
   loadInterviewSessionsForOrganization: (...args: unknown[]) => mockListSessions(...args),
@@ -636,6 +638,33 @@ describe('V8 Interview read-only routes', () => {
     expect(res.body.data?.assignment?.status).toBe('approved');
     expect(res.body.meta?.contract).toBe('interview_runtime_read_v1');
     expect(mockApproveAssignment).toHaveBeenCalled();
+  });
+
+  it('POST /api/v8/interview/assignments/:id/escalate wraps durable escalation readback', async () => {
+    mockEscalateAssignment.mockImplementation(async (req: any, res: any) => {
+      res.json({
+        success: true,
+        id: req.params.id,
+        escalatedAt: '2026-08-22T21:30:00.000Z',
+        escalationCount: 1,
+        escalationTargetId: 'manager-1',
+      });
+    });
+
+    const res = await request(createApp())
+      .post('/api/v8/interview/assignments/asg-5/escalate')
+      .set('Authorization', 'Bearer x')
+      .send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({
+      success: true,
+      id: 'asg-5',
+      escalationCount: 1,
+      escalationTargetId: 'manager-1',
+    });
+    expect(res.body.meta?.contract).toBe('interview_runtime_read_v1');
+    expect(mockEscalateAssignment).toHaveBeenCalled();
   });
 
   it('POST /api/v8/interview/sessions/:id/evaluate-answers wraps AI evaluation in V8 envelope', async () => {

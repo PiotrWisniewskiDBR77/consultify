@@ -75,7 +75,6 @@ import {
   isInterviewCapabilityForbidden,
   loadInterviewV8Capability,
 } from '@/components/Interview/interviewBackendRouting';
-import { RequiredProjectPicker } from '@/components/shared/RequiredProjectPicker';
 import {
   MENU_3_ACTION_NEUTRAL,
   MENU_3_ALL_DOT_CLASS,
@@ -91,6 +90,7 @@ import {
   MENU_3_ROW_CLASS,
 } from '@/components/shared/ModuleMenu3';
 import { EmptyStateInline } from '@/components/shared/NModeBlocks';
+import { RequiredProjectPicker } from '@/components/shared/RequiredProjectPicker';
 import { EmptyState, LoadingState } from '@/components/shared/states';
 import { TeresaMark } from '@/components/shared/TeresaMark';
 import {
@@ -3012,11 +3012,11 @@ export const InterviewHub: React.FC = () => {
       }
       setEscalateBusyId(assignment.id);
       try {
-        throw new InterviewCapabilityError('assignments', 'unavailable', undefined, undefined);
+        await V8InterviewApi.escalateAssignment(assignment.id);
         toast.success(t('interview.hub.escalated'));
         await refreshManagedAssignments();
-      } catch (error) {
-        toast.error(t('interview.hub.couldNotEscalate'));
+      } catch (error: unknown) {
+        safeToastError(error, t('interview.hub.couldNotEscalate'), isPolish);
         console.error('[InterviewHub] Escalate now failed:', error);
       } finally {
         setEscalateBusyId(null);
@@ -5208,9 +5208,7 @@ export const InterviewHub: React.FC = () => {
       return;
     }
     try {
-      await loadInterviewV8Capability('insights', () =>
-        V8InterviewApi.deleteInsight(insightId)
-      );
+      await loadInterviewV8Capability('insights', () => V8InterviewApi.deleteInsight(insightId));
       toast.success(t('interview.hub.insightDeleted'));
       setInsights((prev) => prev.filter((i) => i.id !== insightId));
     } catch (error) {
