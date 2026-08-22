@@ -9,6 +9,8 @@ const DATABASE_URL =
   process.env.DATABASE_URL || 'postgres://consultinity:consultinity@localhost:5442/consultinity';
 process.env.DATABASE_URL = DATABASE_URL;
 process.env.DB_TYPE = 'postgres';
+const RUN_REAL_DB = process.env.RUN_DB_TESTS === '1' && DATABASE_URL.startsWith('postgres');
+const describeRealDb = RUN_REAL_DB ? describe : describe.skip;
 
 const PREFIX = `tls007-${Date.now()}-`;
 const ORG_A = `${PREFIX}org-a`;
@@ -29,6 +31,7 @@ async function client(): Promise<Client> {
 }
 
 beforeAll(async () => {
+  if (!RUN_REAL_DB) return;
   const db = await client();
   try {
     const migration = await fs.readFile(
@@ -45,6 +48,29 @@ beforeAll(async () => {
          ($4, $2, NULL, 'dynamic-swot', 'TLS-07 unapproved SWOT', 'DRAFT', 100, 4, $3, $3, NOW(), NOW()),
          ($5, $2, NULL, 'business-model-canvas', 'Not SWOT', 'APPROVED', 100, 4, $3, $3, NOW(), NOW())`,
       [SESSION, ORG_A, ACTOR, UNAPPROVED_SESSION, NON_SWOT]
+    );
+    await db.query(
+      `INSERT INTO tool_outputs
+         (id, organization_id, tool_session_id, tool_type, method_pack_version, version,
+          title, payload_json, content_hash, status, created_by, approved_by, approved_at, frozen_at)
+       VALUES ($1, $2, $3, 'dynamic-swot', 'dynamic-swot@1', 1, 'Approved SWOT output',
+               $4::jsonb, $5, 'approved', $6, $6, NOW(), NOW())`,
+      [
+        `${PREFIX}output`,
+        ORG_A,
+        SESSION,
+        JSON.stringify({
+          sourceRevision: 1,
+          conclusions: [
+            { id: 'rec-1', k3Actions: ['Capture the market opportunity'] },
+            { id: 'rec-2', k3Actions: ['Concurrent recommendation'] },
+            { id: 'rec-4', k3Actions: ['HTTP recommendation'] },
+            { id: 'rec-9', k3Actions: ['Rollback recommendation'] },
+          ],
+        }),
+        'a'.repeat(16),
+        ACTOR,
+      ]
     );
   } finally {
     await db.end();
@@ -68,9 +94,19 @@ beforeAll(async () => {
 }, 30_000);
 
 afterAll(async () => {
+  if (!RUN_REAL_DB) return;
   setFault?.(null);
   const db = await client();
   try {
+    const databaseName = new URL(DATABASE_URL).pathname.slice(1);
+    if (
+      process.env.FLOW_ALLOW_IMMUTABLE_FIXTURE_CLEANUP !== '1' ||
+      !databaseName.startsWith(process.env.FLOW_DISPOSABLE_DB_PREFIX || 'never-match')
+    ) {
+      throw new Error('SWOT source-adapter cleanup requires an explicitly guarded flow_* database');
+    }
+    await db.query('BEGIN');
+    await db.query(`SET LOCAL session_replication_role = 'replica'`);
     await db.query(`DELETE FROM swot_candidate_handoffs WHERE organization_id IN ($1, $2)`, [
       ORG_A,
       ORG_B,
@@ -79,17 +115,32 @@ afterAll(async () => {
       ORG_A,
       ORG_B,
     ]);
+    await db.query(`DELETE FROM tool_outputs WHERE organization_id IN ($1, $2)`, [ORG_A, ORG_B]);
     await db.query(`DELETE FROM tool_sessions WHERE id IN ($1, $2, $3)`, [
       SESSION,
       UNAPPROVED_SESSION,
       NON_SWOT,
     ]);
+    await db.query('COMMIT');
+    const readback = await db.query<{ residue: string; disabled: string }>(
+      `SELECT
+         ((SELECT count(*) FROM swot_candidate_handoffs WHERE organization_id IN ($1, $2)) +
+          (SELECT count(*) FROM initiative_candidates WHERE organization_id IN ($1, $2)) +
+          (SELECT count(*) FROM tool_outputs WHERE organization_id IN ($1, $2)) +
+          (SELECT count(*) FROM tool_sessions WHERE id IN ($3, $4, $5)))::text AS residue,
+         (SELECT count(*)::text FROM pg_trigger WHERE NOT tgisinternal AND tgenabled <> 'O') AS disabled`,
+      [ORG_A, ORG_B, SESSION, UNAPPROVED_SESSION, NON_SWOT]
+    );
+    expect(readback.rows[0]).toEqual({ residue: '0', disabled: '0' });
+  } catch (error) {
+    await db.query('ROLLBACK').catch(() => undefined);
+    throw error;
   } finally {
     await db.end();
   }
 });
 
-describe('TLS-07 — SWOT recommendation to canonical Candidate', () => {
+describeRealDb('TLS-07 — SWOT recommendation to canonical Candidate', () => {
   it('rejects a DRAFT or REVIEW SWOT before any Candidate or receipt write', async () => {
     for (const [status, recommendationId] of [
       ['DRAFT', 'rec-7'],
@@ -109,8 +160,6 @@ describe('TLS-07 — SWOT recommendation to canonical Candidate', () => {
           organizationId: ORG_A,
           toolSessionId: UNAPPROVED_SESSION,
           recommendationId,
-          title: 'Must not materialize',
-          rationale: 'Approval is mandatory.',
           actorId: ACTOR,
         })
       ).rejects.toMatchObject({ code: 'SWOT_SESSION_NOT_APPROVED', status: 409 });
@@ -134,8 +183,6 @@ describe('TLS-07 — SWOT recommendation to canonical Candidate', () => {
       organizationId: ORG_A,
       toolSessionId: SESSION,
       recommendationId: 'rec-1',
-      title: 'Capture the market opportunity',
-      rationale: 'Accepted SWOT factors support this move.',
       actorId: ACTOR,
     });
     expect(result.created).toBe(true);
@@ -153,7 +200,7 @@ describe('TLS-07 — SWOT recommendation to canonical Candidate', () => {
       expect(stored.rows).toHaveLength(1);
       expect(stored.rows[0]).toMatchObject({
         source_type: 'swot_recommendation',
-        source_id: `${SESSION}:rec-1`,
+        source_id: `${PREFIX}output:rec-1`,
         candidate_id: result.candidate.id,
       });
     } finally {
@@ -166,8 +213,6 @@ describe('TLS-07 — SWOT recommendation to canonical Candidate', () => {
       organizationId: ORG_A,
       toolSessionId: SESSION,
       recommendationId: 'rec-1',
-      title: 'Changed client title',
-      rationale: 'Changed client rationale',
       actorId: ACTOR,
     });
     expect(first.created).toBe(false);
@@ -181,8 +226,6 @@ describe('TLS-07 — SWOT recommendation to canonical Candidate', () => {
           organizationId: ORG_A,
           toolSessionId: SESSION,
           recommendationId: 'rec-2',
-          title: 'Concurrent recommendation',
-          rationale: 'One governed handoff.',
           actorId: ACTOR,
         })
       )
@@ -197,8 +240,6 @@ describe('TLS-07 — SWOT recommendation to canonical Candidate', () => {
         organizationId: ORG_B,
         toolSessionId: SESSION,
         recommendationId: 'rec-3',
-        title: 'Foreign write',
-        rationale: 'Must fail.',
         actorId: ACTOR,
       })
     ).rejects.toMatchObject({ code: 'SWOT_SESSION_NOT_FOUND', status: 404 });
@@ -210,8 +251,6 @@ describe('TLS-07 — SWOT recommendation to canonical Candidate', () => {
         organizationId: ORG_A,
         toolSessionId: NON_SWOT,
         recommendationId: 'rec-1',
-        title: 'Wrong source',
-        rationale: 'Must fail.',
         actorId: ACTOR,
       })
     ).rejects.toMatchObject({ code: 'NOT_SWOT_SESSION', status: 409 });
@@ -249,8 +288,6 @@ describe('TLS-07 — SWOT recommendation to canonical Candidate', () => {
         organizationId: ORG_A,
         toolSessionId: SESSION,
         recommendationId: 'rec-9',
-        title: 'Rollback recommendation',
-        rationale: 'Must leave no trace.',
         actorId: ACTOR,
       })
     ).rejects.toThrow('tls007 injected failure');
