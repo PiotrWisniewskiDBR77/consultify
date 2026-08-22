@@ -130,6 +130,7 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
       // Pre-fill financial data if available
       if (initiative.costCapex || initiative.costOpex || initiative.annualBenefit) {
         await Api.updateAnalysisFinancials(newAnalysis.id, {
+          expectedVersion: newAnalysis.version,
           costs: [
             { year: 0, amount: initiative.costCapex || 0, description: 'CAPEX' },
             { year: 1, amount: initiative.costOpex || 0, description: 'OPEX (roczne)' },

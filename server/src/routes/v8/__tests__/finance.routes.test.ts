@@ -43,6 +43,7 @@ const mockArchiveDigitizationAnalysisCommand = vi.fn();
 const mockRegisterDigitizationAnalysis = vi.fn();
 const mockUpdateDigitizationAnalysisCommand = vi.fn();
 const mockLinkDigitizationAnalysisInitiativeCommand = vi.fn();
+const mockPersistDigitizationAnalysisFinancialsCommand = vi.fn();
 const mockImportBudgetDocumentCommand = vi.fn();
 const mockLinkBudgetInitiativeCommand = vi.fn();
 const mockUnlinkBudgetInitiativeCommand = vi.fn();
@@ -405,6 +406,14 @@ vi.mock(
     DigitizationAnalysisInitiativeLinkError: class DigitizationAnalysisInitiativeLinkError extends Error {},
     linkDigitizationAnalysisInitiativeCommand: (...args: unknown[]) =>
       mockLinkDigitizationAnalysisInitiativeCommand(...args),
+  })
+);
+vi.mock(
+  '../../../services/finance/canonical/digitizationAnalysisFinancialsCommandService.js',
+  () => ({
+    DigitizationAnalysisFinancialsError: class DigitizationAnalysisFinancialsError extends Error {},
+    persistDigitizationAnalysisFinancialsCommand: (...args: unknown[]) =>
+      mockPersistDigitizationAnalysisFinancialsCommand(...args),
   })
 );
 vi.mock('../../../services/finance/canonical/budgetDocumentImportCommandService.js', () => ({
@@ -2369,6 +2378,37 @@ describe('V8 finance read-only routes', () => {
       initiativeId: 'initiative-1',
       expectedVersion: 1,
       idempotencyKey: 'link-key',
+    });
+  });
+
+  it('PUT /api/v8/finance/digitization-analyses/:id/financials binds atomic graph command', async () => {
+    const app = createApp();
+    mockPersistDigitizationAnalysisFinancialsCommand.mockResolvedValueOnce({
+      analysisId: 'digitization-analysis-1',
+      financialsId: 'financials-1',
+      version: 2,
+      metrics: { npv: 100 },
+      warnings: [],
+      recommendations: [],
+      scenarioRecommendation: {
+        scenarioType: 'optimistic',
+        reason: 'Highest NPV across scenarios',
+      },
+      receiptId: 'receipt-1',
+      replay: false,
+    });
+    const body = { expectedVersion: 1, financialData: { initialInvestment: 100 } };
+    const response = await request(app)
+      .put('/api/v8/finance/digitization-analyses/digitization-analysis-1/financials')
+      .set('Idempotency-Key', 'financials-key')
+      .send(body);
+    expect(response.status).toBe(201);
+    expect(mockPersistDigitizationAnalysisFinancialsCommand).toHaveBeenCalledWith({
+      organizationId: ORG,
+      userId: UID,
+      analysisId: 'digitization-analysis-1',
+      idempotencyKey: 'financials-key',
+      body,
     });
   });
 

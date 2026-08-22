@@ -1063,6 +1063,31 @@ export const V8FinanceApi = {
       { initiativeId, expectedVersion },
       { extraHeaders: { 'Idempotency-Key': idempotencyKey } }
     ),
+  persistDigitizationAnalysisFinancials: (
+    analysisId: string,
+    body: {
+      expectedVersion: number;
+      financialData?: Record<string, unknown>;
+      costs?: Array<{ year: number; amount: number; description?: string }>;
+      benefits?: Array<{ year: number; amount: number; description?: string }>;
+      discountRate?: number;
+      investmentHorizon?: number;
+    },
+    idempotencyKey: string
+  ) =>
+    v8Put<{
+      analysisId: string;
+      financialsId: string;
+      version: number;
+      metrics: Record<string, unknown>;
+      warnings: string[];
+      recommendations: string[];
+      scenarioRecommendation: { scenarioType: string; reason: string } | null;
+      receiptId: string;
+      replay: boolean;
+    }>(`/finance/digitization-analyses/${analysisId}/financials`, body, {
+      extraHeaders: { 'Idempotency-Key': idempotencyKey },
+    }),
   archiveDigitizationAnalysis: (
     analysisId: string,
     body: { expectedVersion: number; reason: string },

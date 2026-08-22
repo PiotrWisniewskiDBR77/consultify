@@ -2052,6 +2052,85 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
     }
   });
 
+  it('retires the multi-write digitization financial graph handler (ECO-W04)', async () => {
+    const analysisId = `${prefix}-financials-protected`;
+    await pool.query(
+      `INSERT INTO digitization_analyses(id,name,status,organization_id,created_by,created_at,updated_at) VALUES($1,'Protected financials','draft',$2,$3,now(),now())`,
+      [analysisId, orgA, actor]
+    );
+    try {
+      const response = await request(app)
+        .put(`/api/economics/analyses/${analysisId}/financials`)
+        .set('x-request-id', `${prefix}-financials-blocked`)
+        .send({ financialData: { initialInvestment: 100, annualCostSavings: 50 } });
+      expect(response.status).toBe(410);
+      expect(response.body).toMatchObject({
+        code: 'FINANCE_LEGACY_WRITER_DISABLED',
+        writerId: 'ECO-W04',
+        successor: '/api/v8/finance/digitization-analyses/:analysisId/financials',
+      });
+      expect(
+        (
+          await pool.query<{ n: number }>(
+            `SELECT count(*)::int n FROM analysis_financials WHERE analysis_id=$1`,
+            [analysisId]
+          )
+        ).rows[0].n
+      ).toBe(0);
+      expect(
+        (
+          await pool.query<{ n: number }>(
+            `SELECT count(*)::int n FROM analysis_financial_scenarios WHERE analysis_id=$1`,
+            [analysisId]
+          )
+        ).rows[0].n
+      ).toBe(0);
+    } finally {
+      await pool.query(`DELETE FROM digitization_analyses WHERE id=$1`, [analysisId]);
+    }
+  });
+
+  it('restores only ECO-W04 through its exact writer-scoped rollback lever', async () => {
+    const previous = process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+    const analysisId = `${prefix}-financials-rollback`;
+    await pool.query(
+      `INSERT INTO digitization_analyses(id,name,status,organization_id,created_by,created_at,updated_at) VALUES($1,'Rollback financials','draft',$2,$3,now(),now())`,
+      [analysisId, orgA, actor]
+    );
+    process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = 'ECO-W04';
+    try {
+      const response = await request(app)
+        .put(`/api/economics/analyses/${analysisId}/financials`)
+        .set('x-request-id', `${prefix}-financials-rollback`)
+        .send({ financialData: { initialInvestment: 100, annualCostSavings: 50 } });
+      expect(response.status).toBe(200);
+      expect(
+        (
+          await pool.query<{ n: number }>(
+            `SELECT count(*)::int n FROM analysis_financials WHERE analysis_id=$1`,
+            [analysisId]
+          )
+        ).rows[0].n
+      ).toBe(1);
+      expect(
+        (
+          await pool.query<{ n: number }>(
+            `SELECT count(*)::int n FROM analysis_financial_scenarios WHERE analysis_id=$1`,
+            [analysisId]
+          )
+        ).rows[0].n
+      ).toBe(3);
+    } finally {
+      if (previous === undefined) delete process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+      else process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = previous;
+      await pool.query(`DELETE FROM analysis_financial_scenarios WHERE analysis_id=$1`, [
+        analysisId,
+      ]);
+      await pool.query(`DELETE FROM analysis_financials WHERE analysis_id=$1`, [analysisId]);
+      await pool.query(`DELETE FROM digitization_analyses WHERE id=$1`, [analysisId]);
+    }
+  });
+
   it('classifies ECO-W11 as canonical Decision ownership with retry-safe source lineage', async () => {
     const analysisId = `${prefix}-decision-source`;
     const key = `${prefix}-decision-key`;

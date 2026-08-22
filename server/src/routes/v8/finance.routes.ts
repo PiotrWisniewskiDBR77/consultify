@@ -64,6 +64,10 @@ import {
   DigitizationAnalysisArchiveError,
 } from '../../services/finance/canonical/digitizationAnalysisArchiveCommandService.js';
 import {
+  DigitizationAnalysisFinancialsError,
+  persistDigitizationAnalysisFinancialsCommand,
+} from '../../services/finance/canonical/digitizationAnalysisFinancialsCommandService.js';
+import {
   DigitizationAnalysisInitiativeLinkError,
   linkDigitizationAnalysisInitiativeCommand,
 } from '../../services/finance/canonical/digitizationAnalysisInitiativeLinkCommandService.js';
@@ -461,6 +465,31 @@ router.post(
       return res.status(result.replay ? 200 : 201).json({ data: result });
     } catch (error) {
       if (error instanceof DigitizationAnalysisInitiativeLinkError) {
+        return res
+          .status(error.status)
+          .json({ code: error.code, error: error.message, ...(error.details || {}) });
+      }
+      throw error;
+    }
+  })
+);
+
+router.put(
+  '/digitization-analyses/:analysisId/financials',
+  requireFinanceEditorMembership,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    try {
+      const result = await persistDigitizationAnalysisFinancialsCommand({
+        organizationId,
+        userId,
+        analysisId: String(req.params.analysisId || ''),
+        idempotencyKey: String(req.header('idempotency-key') || ''),
+        body: req.body,
+      });
+      return res.status(result.replay ? 200 : 201).json({ data: result });
+    } catch (error) {
+      if (error instanceof DigitizationAnalysisFinancialsError) {
         return res
           .status(error.status)
           .json({ code: error.code, error: error.message, ...(error.details || {}) });

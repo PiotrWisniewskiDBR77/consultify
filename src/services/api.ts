@@ -11232,6 +11232,7 @@ export const Api = {
   updateAnalysisFinancials: async (
     analysisId: string,
     data: {
+      expectedVersion?: number;
       financialData?: Record<string, any>;
       costs?: Array<{ year: number; amount: number; description?: string }>;
       benefits?: Array<{ year: number; amount: number; description?: string }>;
@@ -11239,12 +11240,13 @@ export const Api = {
       investmentHorizon?: number;
     }
   ): Promise<any> => {
-    const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/financials`, {
-      method: 'PUT',
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    });
-    return handleResponse(res, 'Failed to update financial data');
+    const { V8FinanceApi } = await import('./api/v8/finance');
+    const { expectedVersion = 1, ...financials } = data;
+    return V8FinanceApi.persistDigitizationAnalysisFinancials(
+      analysisId,
+      { ...financials, expectedVersion },
+      `digitization-analysis-financials:${analysisId}:${expectedVersion}`
+    );
   },
 
   /**

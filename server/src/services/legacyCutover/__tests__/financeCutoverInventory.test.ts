@@ -25,8 +25,8 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
       legacyMutationDoors: 51,
       canonicalMutationDoors: 2,
       nonMutationDoors: 6,
-      retiredLegacyMutationDoors: 32,
-      openLegacyMutationDoors: 19,
+      retiredLegacyMutationDoors: 33,
+      openLegacyMutationDoors: 18,
     });
   });
 
@@ -244,6 +244,25 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
     expect(ECONOMICS_CUTOVER.writers.find((rule) => rule.writerId === 'ECO-W03')).toMatchObject({
       state: 'disabled',
       successor: '/api/v8/finance/digitization-analyses/:analysisId/initiative-link',
+    });
+  });
+
+  it('routes active digitization financials writes through one atomic canonical command', () => {
+    for (const file of [
+      'src/services/api.ts',
+      'src/components/Economics/InitiativeFinancialIntegration.tsx',
+    ]) {
+      const source = fs.readFileSync(path.resolve(process.cwd(), file), 'utf8');
+      expect(source).toContain('updateAnalysisFinancials');
+    }
+    const api = fs.readFileSync(path.resolve(process.cwd(), 'src/services/api.ts'), 'utf8');
+    expect(api).toContain('V8FinanceApi.persistDigitizationAnalysisFinancials');
+    expect(api).not.toMatch(
+      /economics\/analyses\/\$\{analysisId\}\/financials[\s\S]{0,120}method:\s*'PUT'/
+    );
+    expect(ECONOMICS_CUTOVER.writers.find((rule) => rule.writerId === 'ECO-W04')).toMatchObject({
+      state: 'disabled',
+      successor: '/api/v8/finance/digitization-analyses/:analysisId/financials',
     });
   });
 });

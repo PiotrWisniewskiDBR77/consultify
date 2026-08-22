@@ -108,10 +108,10 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'ECO-W04',
       method: 'PUT',
       path: /^\/analyses\/[^/]+\/financials\/?$/,
-      state: 'observed',
-      successor: null,
+      state: 'disabled',
+      successor: '/api/v8/finance/digitization-analyses/:analysisId/financials',
       reason:
-        'Upserts an analysis_financials row for the analysis addressed by :id (economics.routes.ts:1043, INSERT/UPDATE at :1130/:1168). No proven successor.',
+        'The active Initiative integration and compatibility client use one tenant-scoped command that atomically persists validated financials, calculated metrics, three scenarios, shared command-version CAS and an immutable receipt. The multi-write legacy handler is retired fail-closed with writer-scoped rollback.',
     },
     {
       writerId: 'ECO-W05',
