@@ -74,3 +74,8 @@ unrecorded effective value or a flag that silently changes the data source.
 3. obtain the two policy decisions before Materials/Audits owner judgment;
 4. only then begin G08 in the guided sequence and register every observation
    against the exact candidate.
+
+The two bounded choices are prepared in
+[`OWNER_POLICY_DECISIONS.md`](OWNER_POLICY_DECISIONS.md); accepting the
+recommended scope keeps providers, unproven rights, named standards,
+production and mobile outside Wave 3 rather than silently authorizing them.
