@@ -26,10 +26,12 @@ vi.mock('../../../services/ai/ingestionPipeline.js', () => ({
 }));
 vi.mock('../../../services/ai/llmService.js', () => ({ llmService: {} }));
 vi.mock('../../../services/organizationContext/OrganizationContextService.js', () => ({
-  default: {},
+  default: { recordInterviewAnswer: vi.fn().mockResolvedValue(undefined) },
 }));
 vi.mock('../../../services/pdfParserService.js', () => ({ default: {} }));
-vi.mock('../../../services/workflow/gatePolicy.js', () => ({ evaluateGatePolicy: vi.fn() }));
+vi.mock('../../../services/workflow/gatePolicy.js', () => ({
+  evaluateGatePolicy: vi.fn().mockReturnValue({ allow: true }),
+}));
 
 describe.skipIf(!REAL_DB)('published interview assignment delivery (real PostgreSQL)', () => {
   const suffix = randomUUID().slice(0, 8);
@@ -281,6 +283,101 @@ describe.skipIf(!REAL_DB)('published interview assignment delivery (real Postgre
     expect(assignmentReadback.rows[0]).toMatchObject({
       session_id: sessionId,
       status: 'in_progress',
+    });
+  });
+
+  it('persists submit, send-back, correction, resubmit and approval as one visible lifecycle', async () => {
+    const initialQuestions = await request(app)
+      .get(`/api/interview/sessions/${sessionId}/questions`)
+      .set(bearer(respondentToken));
+    expect(initialQuestions.status).toBe(200);
+    expect(initialQuestions.body).toHaveLength(1);
+    const questionId = initialQuestions.body[0].id;
+
+    const firstAnswer = await request(app)
+      .patch(`/api/interview/questions/${questionId}`)
+      .set(bearer(respondentToken))
+      .send({
+        answerText: 'First submitted answer',
+        expectedUpdatedAt: initialQuestions.body[0].updatedAt,
+        status: 'answered',
+      });
+    expect(firstAnswer.status, JSON.stringify(firstAnswer.body)).toBe(200);
+
+    const submitted = await request(app)
+      .post(`/api/interview/assignments/${assignmentId}/submit`)
+      .set(bearer(respondentToken))
+      .send({ language: 'en' });
+    expect(submitted.status, JSON.stringify(submitted.body)).toBe(200);
+    expect(submitted.body.assignment.status).toBe('submitted');
+    expect(submitted.body.session.status).toBe('submitted');
+
+    const locked = await request(app)
+      .patch(`/api/interview/questions/${questionId}`)
+      .set(bearer(respondentToken))
+      .send({
+        answerText: 'Must stay locked',
+        expectedUpdatedAt: firstAnswer.body.updatedAt,
+        status: 'answered',
+      });
+    expect(locked.status).toBe(409);
+    expect(locked.body.error).toBe('Session is locked');
+
+    const sentBack = await request(app)
+      .post(`/api/interview/assignments/${assignmentId}/send-back`)
+      .set(bearer(ownerToken))
+      .send({ reason: 'Add concrete evidence', missingItems: [{ key: 'evidence', label: 'Evidence' }] });
+    expect(sentBack.status).toBe(200);
+    expect(sentBack.body).toMatchObject({
+      status: 'in_progress',
+      sentBackReason: 'Add concrete evidence',
+    });
+
+    const editableQuestions = await request(app)
+      .get(`/api/interview/sessions/${sessionId}/questions`)
+      .set(bearer(respondentToken));
+    const corrected = await request(app)
+      .patch(`/api/interview/questions/${questionId}`)
+      .set(bearer(respondentToken))
+      .send({
+        answerText: 'Corrected answer with concrete evidence',
+        expectedUpdatedAt: editableQuestions.body[0].updatedAt,
+        status: 'answered',
+      });
+    expect(corrected.status).toBe(200);
+
+    const resubmitted = await request(app)
+      .post(`/api/interview/assignments/${assignmentId}/submit`)
+      .set(bearer(respondentToken))
+      .send({ language: 'en' });
+    expect(resubmitted.status).toBe(200);
+    expect(resubmitted.body.assignment.status).toBe('submitted');
+
+    const approved = await request(app)
+      .post(`/api/interview/assignments/${assignmentId}/approve`)
+      .set(bearer(ownerToken))
+      .send({});
+    expect(approved.status).toBe(200);
+    expect(approved.body.assignment.status).toBe('approved');
+    expect(approved.body.session.status).toBe('completed');
+    expect(approved.body.entersContext).toBe(true);
+
+    const persisted = await pool.query(
+      `SELECT a.status AS assignment_status, s.status AS session_status,
+              (SELECT COUNT(*)::int FROM interview_answer_history h
+                WHERE h.assignment_id=a.id) AS history_count,
+              (SELECT answer_text FROM interview_questions q
+                WHERE q.session_id=s.id LIMIT 1) AS answer_text
+       FROM interview_assignments a
+       JOIN interview_sessions s ON s.id=a.session_id
+       WHERE a.id=$1`,
+      [assignmentId]
+    );
+    expect(persisted.rows[0]).toMatchObject({
+      assignment_status: 'approved',
+      session_status: 'completed',
+      answer_text: 'Corrected answer with concrete evidence',
+      history_count: 3,
     });
   });
 

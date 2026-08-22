@@ -4862,6 +4862,8 @@ export const InterviewController = {
     res.json({
       ...updatedWithoutRawAiReview,
       status: normalizeAssignmentStatusForClient((updated as any)?.status),
+      sentBackAt: (updated as any)?.sent_back_at || null,
+      sentBackReason: (updated as any)?.sent_back_reason || null,
       missingItems: parseMissingItems((updated as any)?.missing_items_json),
       aiReview: sendBackAiReview,
       aiReviewedAt: (updated as any)?.ai_reviewed_at || null,
@@ -4871,6 +4873,8 @@ export const InterviewController = {
       assignment: {
         ...updatedWithoutRawAiReview,
         status: normalizeAssignmentStatusForClient((updated as any)?.status),
+        sentBackAt: (updated as any)?.sent_back_at || null,
+        sentBackReason: (updated as any)?.sent_back_reason || null,
         missingItems: parseMissingItems((updated as any)?.missing_items_json),
         aiReview: sendBackAiReview,
         aiReviewedAt: (updated as any)?.ai_reviewed_at || null,
