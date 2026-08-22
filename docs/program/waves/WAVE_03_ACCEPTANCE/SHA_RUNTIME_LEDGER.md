@@ -16,6 +16,16 @@
 - Open invalidation/blocking boundary: any product/config/migration/fixture
   change creates a successor checkpoint; `XMOD-SEC-001` external Railway
   credential rotation must be verified before final acceptance.
+- Finance current-checkpoint technical mount: clean docs checkpoint
+  `629d3e62b94645e2b15adbe25800e139ebb8d21d` (product parent `96fe8ddc10`),
+  server/client `4110/4111`, retained DB
+  `consultify_w3_finance_owner_final_ui_20260821`, `817` migrations, FINAL
+  marker and client/server SHA PASS. Real OWNER canonical API cold-read exactly
+  five `APPROVED`/`CURRENT` version-4 artifacts and all five details returned
+  `200`; no mutation was issued. Runtime manifest:
+  `/private/tmp/consultify-wave3-runtime-manifest-finance-checkpoint-20260822.json`.
+  Owned runtime stopped, ports free, DB preserved. Authenticated browser
+  replay on this checkpoint remains part of G08/G09 and G18, not implied here.
 
 Settings latest exact entry (supersedes the older module-15 row): `3d61730fd8ad18f19cf9967cb5513697659003cc` / `536483a24363a2b7a66a934be087ace9ac3d9e94b0745ad604ba9dd31ca06246`; server `4102`, client `4103`; retained DB `consultify_w3_settings_owner_final_20260822`; fixture `/private/tmp/consultify-w3-settings-owner-final-v3-20260822.json`; runtime `/private/tmp/consultify-wave3-runtime-manifest-settings-ui-v3-20260822.json`; `817`; real OWNER; bypasses OFF; cold/reload PASS; runtime stopped and DB preserved.
 
