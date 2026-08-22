@@ -76,6 +76,11 @@ import {
   registerDigitizationAnalysis,
 } from '../../services/finance/canonical/digitizationAnalysisRegistrationService.js';
 import {
+  activateDigitizationAnalysisScenario,
+  DigitizationAnalysisScenarioCommandError,
+  upsertDigitizationAnalysisScenario,
+} from '../../services/finance/canonical/digitizationAnalysisScenarioCommandService.js';
+import {
   DigitizationAnalysisUpdateError,
   updateDigitizationAnalysisCommand,
 } from '../../services/finance/canonical/digitizationAnalysisUpdateCommandService.js';
@@ -494,6 +499,70 @@ router.put(
           .status(error.status)
           .json({ code: error.code, error: error.message, ...(error.details || {}) });
       }
+      throw error;
+    }
+  })
+);
+
+router.post(
+  '/digitization-analyses/:analysisId/scenarios',
+  requireFinanceEditorMembership,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const body =
+      req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
+    if (
+      Object.keys(body).some(
+        (key) => !['expectedVersion', 'scenarioType', 'name', 'financialData'].includes(key)
+      )
+    )
+      return res.status(400).json({ code: 'INVALID_BODY', error: 'Unknown scenario field' });
+    try {
+      const result = await upsertDigitizationAnalysisScenario({
+        organizationId,
+        userId,
+        analysisId: String(req.params.analysisId || ''),
+        idempotencyKey: String(req.header('idempotency-key') || ''),
+        expectedVersion: Number(body.expectedVersion),
+        scenarioType: typeof body.scenarioType === 'string' ? body.scenarioType : '',
+        name: typeof body.name === 'string' ? body.name : undefined,
+        financialData: body.financialData,
+      });
+      return res.status(result.replay ? 200 : 201).json({ data: result });
+    } catch (error) {
+      if (error instanceof DigitizationAnalysisScenarioCommandError)
+        return res
+          .status(error.status)
+          .json({ code: error.code, error: error.message, ...(error.details || {}) });
+      throw error;
+    }
+  })
+);
+
+router.post(
+  '/digitization-analyses/:analysisId/scenarios/:scenarioId/activate',
+  requireFinanceEditorMembership,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const body =
+      req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
+    if (Object.keys(body).some((key) => key !== 'expectedVersion'))
+      return res.status(400).json({ code: 'INVALID_BODY', error: 'Unknown activation field' });
+    try {
+      const result = await activateDigitizationAnalysisScenario({
+        organizationId,
+        userId,
+        analysisId: String(req.params.analysisId || ''),
+        scenarioId: String(req.params.scenarioId || ''),
+        idempotencyKey: String(req.header('idempotency-key') || ''),
+        expectedVersion: Number(body.expectedVersion),
+      });
+      return res.status(result.replay ? 200 : 201).json({ data: result });
+    } catch (error) {
+      if (error instanceof DigitizationAnalysisScenarioCommandError)
+        return res
+          .status(error.status)
+          .json({ code: error.code, error: error.message, ...(error.details || {}) });
       throw error;
     }
   })

@@ -25,8 +25,8 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
       legacyMutationDoors: 51,
       canonicalMutationDoors: 2,
       nonMutationDoors: 6,
-      retiredLegacyMutationDoors: 33,
-      openLegacyMutationDoors: 18,
+      retiredLegacyMutationDoors: 35,
+      openLegacyMutationDoors: 16,
     });
   });
 
@@ -264,5 +264,15 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
       state: 'disabled',
       successor: '/api/v8/finance/digitization-analyses/:analysisId/financials',
     });
+  });
+
+  it('routes scenario authoring and activation through canonical CAS commands', () => {
+    const api = fs.readFileSync(path.resolve(process.cwd(), 'src/services/api.ts'), 'utf8');
+    expect(api).toContain('V8FinanceApi.upsertDigitizationAnalysisScenario');
+    expect(api).toContain('V8FinanceApi.activateDigitizationAnalysisScenario');
+    for (const id of ['ECO-W05', 'ECO-W06'])
+      expect(ECONOMICS_CUTOVER.writers.find((rule) => rule.writerId === id)?.state).toBe(
+        'disabled'
+      );
   });
 });

@@ -44,6 +44,8 @@ const mockRegisterDigitizationAnalysis = vi.fn();
 const mockUpdateDigitizationAnalysisCommand = vi.fn();
 const mockLinkDigitizationAnalysisInitiativeCommand = vi.fn();
 const mockPersistDigitizationAnalysisFinancialsCommand = vi.fn();
+const mockUpsertDigitizationAnalysisScenario = vi.fn();
+const mockActivateDigitizationAnalysisScenario = vi.fn();
 const mockImportBudgetDocumentCommand = vi.fn();
 const mockLinkBudgetInitiativeCommand = vi.fn();
 const mockUnlinkBudgetInitiativeCommand = vi.fn();
@@ -414,6 +416,16 @@ vi.mock(
     DigitizationAnalysisFinancialsError: class DigitizationAnalysisFinancialsError extends Error {},
     persistDigitizationAnalysisFinancialsCommand: (...args: unknown[]) =>
       mockPersistDigitizationAnalysisFinancialsCommand(...args),
+  })
+);
+vi.mock(
+  '../../../services/finance/canonical/digitizationAnalysisScenarioCommandService.js',
+  () => ({
+    DigitizationAnalysisScenarioCommandError: class DigitizationAnalysisScenarioCommandError extends Error {},
+    upsertDigitizationAnalysisScenario: (...args: unknown[]) =>
+      mockUpsertDigitizationAnalysisScenario(...args),
+    activateDigitizationAnalysisScenario: (...args: unknown[]) =>
+      mockActivateDigitizationAnalysisScenario(...args),
   })
 );
 vi.mock('../../../services/finance/canonical/budgetDocumentImportCommandService.js', () => ({
@@ -2409,6 +2421,48 @@ describe('V8 finance read-only routes', () => {
       analysisId: 'digitization-analysis-1',
       idempotencyKey: 'financials-key',
       body,
+    });
+  });
+
+  it('binds scenario upsert and activation CAS commands', async () => {
+    const app = createApp();
+    mockUpsertDigitizationAnalysisScenario.mockResolvedValueOnce({
+      scenarioId: 'scenario-1',
+      version: 2,
+      replay: false,
+    });
+    mockActivateDigitizationAnalysisScenario.mockResolvedValueOnce({
+      scenarioId: 'scenario-1',
+      version: 3,
+      replay: false,
+    });
+    const upsert = await request(app)
+      .post('/api/v8/finance/digitization-analyses/analysis-1/scenarios')
+      .set('Idempotency-Key', 'upsert-key')
+      .send({ expectedVersion: 1, scenarioType: 'optimistic', financialData: {} });
+    const activate = await request(app)
+      .post('/api/v8/finance/digitization-analyses/analysis-1/scenarios/scenario-1/activate')
+      .set('Idempotency-Key', 'activate-key')
+      .send({ expectedVersion: 2 });
+    expect(upsert.status).toBe(201);
+    expect(activate.status).toBe(201);
+    expect(mockUpsertDigitizationAnalysisScenario).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: ORG,
+        userId: UID,
+        analysisId: 'analysis-1',
+        expectedVersion: 1,
+        scenarioType: 'optimistic',
+        idempotencyKey: 'upsert-key',
+      })
+    );
+    expect(mockActivateDigitizationAnalysisScenario).toHaveBeenCalledWith({
+      organizationId: ORG,
+      userId: UID,
+      analysisId: 'analysis-1',
+      scenarioId: 'scenario-1',
+      expectedVersion: 2,
+      idempotencyKey: 'activate-key',
     });
   });
 

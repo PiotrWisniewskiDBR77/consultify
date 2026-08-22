@@ -1088,6 +1088,46 @@ export const V8FinanceApi = {
     }>(`/finance/digitization-analyses/${analysisId}/financials`, body, {
       extraHeaders: { 'Idempotency-Key': idempotencyKey },
     }),
+  upsertDigitizationAnalysisScenario: (
+    analysisId: string,
+    body: {
+      expectedVersion: number;
+      scenarioType: string;
+      name?: string;
+      financialData?: Record<string, unknown>;
+    },
+    idempotencyKey: string
+  ) =>
+    v8Post<{
+      analysisId: string;
+      scenarioId: string;
+      scenarioType: string;
+      isActive: boolean;
+      version: number;
+      receiptId: string;
+      replay: boolean;
+    }>(`/finance/digitization-analyses/${analysisId}/scenarios`, body, {
+      extraHeaders: { 'Idempotency-Key': idempotencyKey },
+    }),
+  activateDigitizationAnalysisScenario: (
+    analysisId: string,
+    scenarioId: string,
+    expectedVersion: number,
+    idempotencyKey: string
+  ) =>
+    v8Post<{
+      analysisId: string;
+      scenarioId: string;
+      scenarioType: string;
+      isActive: true;
+      version: number;
+      receiptId: string;
+      replay: boolean;
+    }>(
+      `/finance/digitization-analyses/${analysisId}/scenarios/${scenarioId}/activate`,
+      { expectedVersion },
+      { extraHeaders: { 'Idempotency-Key': idempotencyKey } }
+    ),
   archiveDigitizationAnalysis: (
     analysisId: string,
     body: { expectedVersion: number; reason: string },

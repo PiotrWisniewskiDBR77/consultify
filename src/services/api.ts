@@ -11264,28 +11264,37 @@ export const Api = {
    */
   upsertAnalysisScenario: async (
     analysisId: string,
-    data: { scenarioType: string; name?: string; financialData?: Record<string, any> }
+    data: {
+      expectedVersion?: number;
+      scenarioType: string;
+      name?: string;
+      financialData?: Record<string, any>;
+    }
   ): Promise<any> => {
-    const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/scenarios`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    });
-    return handleResponse(res, 'Failed to save scenario');
+    const { V8FinanceApi } = await import('./api/v8/finance');
+    const { expectedVersion = 1, ...scenario } = data;
+    return V8FinanceApi.upsertDigitizationAnalysisScenario(
+      analysisId,
+      { ...scenario, expectedVersion },
+      `digitization-scenario-upsert:${analysisId}:${scenario.scenarioType}:${expectedVersion}`
+    );
   },
 
   /**
    * Activate scenario
    */
-  activateAnalysisScenario: async (analysisId: string, scenarioId: string): Promise<any> => {
-    const res = await fetchWithRetry(
-      `${API_URL}/economics/analyses/${analysisId}/scenarios/${scenarioId}/activate`,
-      {
-        method: 'POST',
-        headers: getHeaders(),
-      }
+  activateAnalysisScenario: async (
+    analysisId: string,
+    scenarioId: string,
+    expectedVersion = 1
+  ): Promise<any> => {
+    const { V8FinanceApi } = await import('./api/v8/finance');
+    return V8FinanceApi.activateDigitizationAnalysisScenario(
+      analysisId,
+      scenarioId,
+      expectedVersion,
+      `digitization-scenario-activate:${analysisId}:${scenarioId}:${expectedVersion}`
     );
-    return handleResponse(res, 'Failed to activate scenario');
   },
 
   /**

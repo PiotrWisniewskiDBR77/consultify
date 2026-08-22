@@ -117,19 +117,19 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'ECO-W05',
       method: 'POST',
       path: /^\/analyses\/[^/]+\/scenarios\/?$/,
-      state: 'observed',
-      successor: null,
+      state: 'disabled',
+      successor: '/api/v8/finance/digitization-analyses/:analysisId/scenarios',
       reason:
-        'Upserts an analysis_financial_scenarios row for the analysis addressed by :id (economics.routes.ts:1370, INSERT at :1430). No proven successor.',
+        'The compatibility client uses the tenant-scoped scenario command with shared analysis CAS, idempotent receipt and canonical metric calculation. The unversioned legacy upsert is retired fail-closed with writer-scoped rollback.',
     },
     {
       writerId: 'ECO-W06',
       method: 'POST',
       path: /^\/analyses\/[^/]+\/scenarios\/[^/]+\/activate\/?$/,
-      state: 'observed',
-      successor: null,
+      state: 'disabled',
+      successor: '/api/v8/finance/digitization-analyses/:analysisId/scenarios/:scenarioId/activate',
       reason:
-        'Flips is_active on analysis_financial_scenarios rows for the analysis addressed by :id (economics.routes.ts:1463, two UPDATEs immediately following). No proven successor.',
+        'The compatibility client uses one tenant-scoped activation transaction that locks the analysis, validates the target, clears prior active flags, activates exactly one scenario, advances CAS and records an immutable receipt. The split legacy sequence is retired fail-closed with writer-scoped rollback.',
     },
     {
       writerId: 'ECO-W07',

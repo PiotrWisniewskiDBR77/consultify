@@ -2131,6 +2131,102 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
     }
   });
 
+  it('retires unversioned scenario upsert and split activation (ECO-W05/W06)', async () => {
+    const analysisId = `${prefix}-scenarios-protected`;
+    const scenarioId = `${prefix}-scenario-protected`;
+    await pool.query(
+      `INSERT INTO digitization_analyses(id,name,status,organization_id,created_by,created_at,updated_at) VALUES($1,'Protected scenarios','draft',$2,$3,now(),now())`,
+      [analysisId, orgA, actor]
+    );
+    await pool.query(
+      `INSERT INTO analysis_financial_scenarios(id,analysis_id,organization_id,scenario_type,name,financial_data,metrics,is_active,created_by,created_at,updated_at) VALUES($1,$2,$3,'base','Base','{}','{}',TRUE,$4,now(),now())`,
+      [scenarioId, analysisId, orgA, actor]
+    );
+    try {
+      const upsert = await request(app)
+        .post(`/api/economics/analyses/${analysisId}/scenarios`)
+        .set('x-request-id', `${prefix}-scenario-upsert-blocked`)
+        .send({ scenarioType: 'optimistic', financialData: {} });
+      const activate = await request(app)
+        .post(`/api/economics/analyses/${analysisId}/scenarios/${scenarioId}/activate`)
+        .set('x-request-id', `${prefix}-scenario-activate-blocked`)
+        .send({});
+      expect(upsert.status).toBe(410);
+      expect(upsert.body.writerId).toBe('ECO-W05');
+      expect(activate.status).toBe(410);
+      expect(activate.body.writerId).toBe('ECO-W06');
+      expect(
+        (
+          await pool.query<{ n: number }>(
+            `SELECT count(*)::int n FROM analysis_financial_scenarios WHERE analysis_id=$1`,
+            [analysisId]
+          )
+        ).rows[0].n
+      ).toBe(1);
+      expect(
+        (
+          await pool.query(`SELECT is_active FROM analysis_financial_scenarios WHERE id=$1`, [
+            scenarioId,
+          ])
+        ).rows[0].is_active
+      ).toBe(true);
+    } finally {
+      await pool.query(`DELETE FROM analysis_financial_scenarios WHERE analysis_id=$1`, [
+        analysisId,
+      ]);
+      await pool.query(`DELETE FROM digitization_analyses WHERE id=$1`, [analysisId]);
+    }
+  });
+
+  it('restores ECO-W05 and ECO-W06 only through their exact rollback levers', async () => {
+    const previous = process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+    const analysisId = `${prefix}-scenarios-rollback`;
+    await pool.query(
+      `INSERT INTO digitization_analyses(id,name,status,organization_id,created_by,created_at,updated_at) VALUES($1,'Rollback scenarios','draft',$2,$3,now(),now())`,
+      [analysisId, orgA, actor]
+    );
+    let scenarioId = '';
+    try {
+      process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = 'ECO-W05';
+      const upsert = await request(app)
+        .post(`/api/economics/analyses/${analysisId}/scenarios`)
+        .set('x-request-id', `${prefix}-scenario-upsert-rollback`)
+        .send({ scenarioType: 'optimistic', financialData: {} });
+      expect(upsert.status).toBe(200);
+      scenarioId = String(upsert.body.scenarioId);
+      process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = 'ECO-W06';
+      const activate = await request(app)
+        .post(`/api/economics/analyses/${analysisId}/scenarios/${scenarioId}/activate`)
+        .set('x-request-id', `${prefix}-scenario-activate-rollback`)
+        .send({});
+      expect(activate.status).toBe(200);
+      expect(activate.body).toMatchObject({ success: true, scenarioId });
+      expect(
+        (
+          await pool.query(`SELECT is_active FROM analysis_financial_scenarios WHERE id=$1`, [
+            scenarioId,
+          ])
+        ).rows[0].is_active
+      ).toBe(false);
+      expect(
+        (
+          await pool.query(
+            `SELECT writer_id,access_kind FROM legacy_cutover_usage_events
+             WHERE organization_id=$1 AND request_id=$2`,
+            [orgA, `${prefix}-scenario-activate-rollback`]
+          )
+        ).rows
+      ).toEqual([{ writer_id: 'ECO-W06', access_kind: 'rollback_writer' }]);
+    } finally {
+      if (previous === undefined) delete process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+      else process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = previous;
+      await pool.query(`DELETE FROM analysis_financial_scenarios WHERE analysis_id=$1`, [
+        analysisId,
+      ]);
+      await pool.query(`DELETE FROM digitization_analyses WHERE id=$1`, [analysisId]);
+    }
+  });
+
   it('classifies ECO-W11 as canonical Decision ownership with retry-safe source lineage', async () => {
     const analysisId = `${prefix}-decision-source`;
     const key = `${prefix}-decision-key`;
