@@ -186,7 +186,7 @@ Acceptance requires:
 
 | Finding IDs | Root cause | Approved solution | Commit | Shared surfaces | Impacted modules | Tests/self-QA | Regression |
 |---|---|---|---|---|---|---|---|
-| _none_ | | | | | | | |
+| `INT-ASSIGN-OWN-001` / `REC-INT-002` | The list treated an approved system template as unassignable unless a tenant-scoped publication snapshot already existed, while the assignment writer rejected every system template by requiring `organization_id = actor.organizationId`. | Keep exact-version publication mandatory. Approved product-owned system templates with questions are listable as assignable; the first governed assignment atomically freezes one immutable global `system` snapshot. Organization/private templates still require their tenant publication receipt. | `f3c35cecce` | Template list/detail, assignment writer, publication snapshot reader | Interview | unit `3/3`; startup/readiness `43/43`; fresh pgvector16 mounted delivery `7/7`; migrations `817/0/0`; residue, disabled triggers and advisory locks `0` | `TECHNICAL_PASS / OWNER_RETEST_AND_RAILWAY_READBACK_PENDING` |
 
 ## Preflight implementation ledger
 
