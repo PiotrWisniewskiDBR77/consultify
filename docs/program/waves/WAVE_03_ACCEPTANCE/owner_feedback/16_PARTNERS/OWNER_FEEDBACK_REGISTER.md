@@ -2,7 +2,7 @@
 
 Date opened: `2026-08-22`
 
-Intake status: `OWNER_REVIEW_IN_PROGRESS / CAPTURED_UNRECONCILED`
+Intake status: `IMPLEMENTED_FOR_OWNER_REVIEW / COMMERCIAL_GATES_FAIL_CLOSED`
 
 ## PAR-OWN-001 — Rebuild the Partner Program content from the complete verified corpus
 
@@ -101,41 +101,53 @@ Intake status: `OWNER_REVIEW_IN_PROGRESS / CAPTURED_UNRECONCILED`
 - Requirements: `PAR-REQ-001` through `PAR-REQ-010`
 - Acceptance criteria: `PAR-AC-001` through `PAR-AC-012`
 - Open questions: `PAR-Q-001` through `PAR-Q-005`
-- Status: `CAPTURED_UNRECONCILED`
+- Implementation candidate: `6cfdf6f1e5`
+- Content matrix:
+  [`PAR_OWN_001_CONTENT_MATRIX.md`](PAR_OWN_001_CONTENT_MATRIX.md)
+- Implemented result:
+  - one role-aware program with six partner types and five cooperation models;
+  - concrete `Qualify → Align → Enable → Pursuit → Pilot → Expand` journey with
+    owner, output and proof to continue;
+  - state-aware application/onboarding/workspace action with fail-closed retry;
+  - fictional testimonials removed and no substitute proof invented;
+  - draft tier, commission, payout, SLA, calculator and named-contact claims
+    suppressed under `AMD-PRT-ECONOMICS-002` and the open owner decisions;
+  - legacy public pricing deep-link canonicalized to the safe program overview.
+- Status: `IMPLEMENTED_PENDING_EXACT_RUNTIME_AND_OWNER_REVIEW`
 
 ## Atomic requirements
 
 | ID | Requirement | Authority | Status |
 |---|---|---|---|
-| `PAR-REQ-001` | Use the complete existing partner corpus as the redesign input, with source classification and traceability. | `OWNER_EXPLICIT + AUDIT_CONFIRMED` | `CAPTURED_UNRECONCILED` |
-| `PAR-REQ-002` | Make the proposition materially more persuasive and concrete than the current generic overview. | `OWNER_EXPLICIT` | `CAPTURED_UNRECONCILED` |
-| `PAR-REQ-003` | Differentiate the six partner types and their value propositions. | `EXPERT_PROPOSED_FROM_EXISTING_SSOT` | `PROPOSED_UNRECONCILED` |
-| `PAR-REQ-004` | Explain cooperation models, responsibility split and the first-deal journey. | `EXPERT_PROPOSED_FROM_EXISTING_SSOT` | `PROPOSED_UNRECONCILED` |
-| `PAR-REQ-005` | Publish only exact-SHA verified current capabilities; distinguish limitations and planned functions. | `TRUST_CONTROL_DERIVED` | `PROPOSED_UNRECONCILED` |
-| `PAR-REQ-006` | Use one business-approved contract source for all tiers and commercial terms. | `TRUST_CONTROL_DERIVED` | `PROPOSED_UNRECONCILED` |
-| `PAR-REQ-007` | Remove or explicitly relabel fictional success stories; use real testimonials only with traceable evidence and consent. | `TRUST_CONTROL_DERIVED / AUDIT_CONFIRMED` | `PROPOSED_UNRECONCILED` |
-| `PAR-REQ-008` | Provide state-aware, non-conflicting CTAs for acquisition, onboarding and established partners. | `EXPERT_PROPOSED` | `PROPOSED_UNRECONCILED` |
-| `PAR-REQ-009` | Cover eligibility, onboarding, Academy/enablement, support and safeguards in a coherent journey. | `EXPERT_PROPOSED_FROM_EXISTING_CORPUS` | `PROPOSED_UNRECONCILED` |
-| `PAR-REQ-010` | Preserve claim-level source, approval and evidence traceability in a canonical content matrix. | `TRUST_CONTROL_DERIVED` | `PROPOSED_UNRECONCILED` |
+| `PAR-REQ-001` | Use the complete existing partner corpus as the redesign input, with source classification and traceability. | `OWNER_EXPLICIT + AUDIT_CONFIRMED` | `IMPLEMENTED_VERIFIED_SOURCE` |
+| `PAR-REQ-002` | Make the proposition materially more persuasive and concrete than the current generic overview. | `OWNER_EXPLICIT` | `IMPLEMENTED_OWNER_REVIEW_REQUIRED` |
+| `PAR-REQ-003` | Differentiate the six partner types and their value propositions. | `EXPERT_PROPOSED_FROM_EXISTING_SSOT` | `IMPLEMENTED_VERIFIED_SOURCE` |
+| `PAR-REQ-004` | Explain cooperation models, responsibility split and the first-deal journey. | `EXPERT_PROPOSED_FROM_EXISTING_SSOT` | `IMPLEMENTED_VERIFIED_SOURCE` |
+| `PAR-REQ-005` | Publish only exact-SHA verified current capabilities; distinguish limitations and planned functions. | `TRUST_CONTROL_DERIVED` | `IMPLEMENTED_FAIL_CLOSED` |
+| `PAR-REQ-006` | Use one business-approved contract source for all tiers and commercial terms. | `TRUST_CONTROL_DERIVED` | `OWNER_DECISION_OPEN / VALUES_SUPPRESSED` |
+| `PAR-REQ-007` | Remove or explicitly relabel fictional success stories; use real testimonials only with traceable evidence and consent. | `TRUST_CONTROL_DERIVED / AUDIT_CONFIRMED` | `IMPLEMENTED_VERIFIED_SOURCE` |
+| `PAR-REQ-008` | Provide state-aware, non-conflicting CTAs for acquisition, onboarding and established partners. | `EXPERT_PROPOSED` | `IMPLEMENTED_VERIFIED_SOURCE` |
+| `PAR-REQ-009` | Cover eligibility, onboarding, Academy/enablement, support and safeguards in a coherent journey. | `EXPERT_PROPOSED_FROM_EXISTING_CORPUS` | `IMPLEMENTED_WITH_LIMITATIONS` |
+| `PAR-REQ-010` | Preserve claim-level source, approval and evidence traceability in a canonical content matrix. | `TRUST_CONTROL_DERIVED` | `IMPLEMENTED_VERIFIED_SOURCE` |
 
 ## Acceptance criteria
 
-All criteria remain `NOT_TESTED`; implementation or smoke evidence does not imply
-owner acceptance.
+Technical results below apply to UI candidate `6cfdf6f1e5`; they do not imply
+owner acceptance or approval of the still-suppressed commercial schedule.
 
 | ID | Acceptance criterion | Required evidence | Status |
 |---|---|---|---|
-| `PAR-AC-001` | Every visible claim maps to a content-matrix row containing audience, source, evidence owner, approval and runtime state. | Content matrix plus sampled UI-to-source trace | `NOT_TESTED` |
-| `PAR-AC-002` | The overview offers clear paths for all six canonical partner types without duplicating contradictory program terms. | Desktop/mobile screenshots and navigation replay | `NOT_TESTED` |
-| `PAR-AC-003` | Each partner path states target outcome, cooperation model, contribution split and first-deal next step. | Six-path content review | `NOT_TESTED` |
-| `PAR-AC-004` | The first-deal journey displays all six stages and names the owner/output of each stage. | Journey screen evidence | `NOT_TESTED` |
-| `PAR-AC-005` | Every present-tense capability claim is backed by exact-SHA runtime evidence or visibly marked with its limitation. | Candidate SHA, route replay and capability matrix | `NOT_TESTED` |
-| `PAR-AC-006` | Tier, commission, payout, SLA and eligibility values are identical across all partner surfaces and linked to an explicit owner-approved decision. | Cross-surface comparison and decision ID | `NOT_TESTED` |
-| `PAR-AC-007` | No fictional company, logo, quotation or result is presented as real customer evidence. | Content search plus rendered-page review | `NOT_TESTED` |
-| `PAR-AC-008` | Any real testimonial includes evidence owner, consent/publication authority and source artifact. | Testimonial evidence register | `NOT_TESTED` |
-| `PAR-AC-009` | Acquisition, applicant/onboarding and established-partner states each expose one primary CTA that reaches the intended destination. | State fixtures and destination replay | `NOT_TESTED` |
-| `PAR-AC-010` | Internal GTM, anti-ICP and confidential commercial language is absent from public UI unless explicitly approved. | Source classification review | `NOT_TESTED` |
-| `PAR-AC-011` | FAQ answers cover client ownership, delivery responsibility, data, IP, branding, support, commercial terms and joining process without contradicting the contract SSOT. | FAQ review against approved decisions | `NOT_TESTED` |
+| `PAR-AC-001` | Every visible claim maps to a content-matrix row containing audience, source, evidence owner, approval and runtime state. | Content matrix plus sampled UI-to-source trace | `PASS_TECHNICAL` |
+| `PAR-AC-002` | The overview offers clear paths for all six canonical partner types without duplicating contradictory program terms. | Desktop/mobile screenshots and navigation replay | `PASS_TECHNICAL` |
+| `PAR-AC-003` | Each partner path states target outcome, cooperation model, contribution split and first-deal next step. | Six-path content review | `PASS_TECHNICAL` |
+| `PAR-AC-004` | The first-deal journey displays all six stages and names the owner/output of each stage. | Journey screen evidence | `PASS_TECHNICAL` |
+| `PAR-AC-005` | Every present-tense capability claim is backed by exact-SHA runtime evidence or visibly marked with its limitation. | Candidate SHA, route replay and capability matrix | `PASS_WITH_LIMITATIONS` |
+| `PAR-AC-006` | Tier, commission, payout, SLA and eligibility values are identical across all partner surfaces and linked to an explicit owner-approved decision. | Cross-surface comparison and decision ID | `SAFE_SUPPRESSION / OWNER_DECISION_OPEN` |
+| `PAR-AC-007` | No fictional company, logo, quotation or result is presented as real customer evidence. | Content search plus rendered-page review | `PASS_TECHNICAL` |
+| `PAR-AC-008` | Any real testimonial includes evidence owner, consent/publication authority and source artifact. | Testimonial evidence register | `N/A_NO_REAL_TESTIMONIAL_PUBLISHED` |
+| `PAR-AC-009` | Acquisition, applicant/onboarding and established-partner states each expose one primary CTA that reaches the intended destination. | State fixtures and destination replay | `PASS_SOURCE_AND_UNIT / OWNER_RUNTIME_FIXTURE_PENDING` |
+| `PAR-AC-010` | Internal GTM, anti-ICP and confidential commercial language is absent from public UI unless explicitly approved. | Source classification review | `PASS_TECHNICAL` |
+| `PAR-AC-011` | FAQ answers cover client ownership, delivery responsibility, data, IP, branding, support, commercial terms and joining process without contradicting the contract SSOT. | FAQ review against approved decisions | `PASS_TECHNICAL` |
 | `PAR-AC-012` | Piotr reviews the completed exact-SHA surface and provides an explicit outcome. | Owner result linked to exact SHA/runtime | `NOT_TESTED / OWNER_GATE_REQUIRED` |
 
 ## Open questions and decision gates
@@ -180,8 +192,9 @@ owner acceptance.
 
 - Observations: `1`
 - Atomic requirements: `10` (`2 OWNER_EXPLICIT`, `8 PROPOSED/DERIVED`)
-- Acceptance criteria: `12 NOT_TESTED`
+- Acceptance criteria: `9 PASS_TECHNICAL/PASS_WITH_LIMITATIONS`, `1 SAFE_SUPPRESSION`,
+  `1 N/A`, `1 OWNER_GATE_REQUIRED`
 - Evidence items: `1`
 - Open questions: `5`
-- Fixed: `0`
+- Fixed: `1` (`IMPLEMENTED_PENDING_OWNER_REVIEW`)
 - Accepted: `0`
