@@ -25,8 +25,8 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
       legacyMutationDoors: 51,
       canonicalMutationDoors: 2,
       nonMutationDoors: 6,
-      retiredLegacyMutationDoors: 35,
-      openLegacyMutationDoors: 16,
+      retiredLegacyMutationDoors: 36,
+      openLegacyMutationDoors: 15,
     });
   });
 
@@ -274,5 +274,15 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
       expect(ECONOMICS_CUTOVER.writers.find((rule) => rule.writerId === id)?.state).toBe(
         'disabled'
       );
+  });
+
+  it('routes benefit planning through Finance while refusing Results-owned Actual', () => {
+    const api = fs.readFileSync(path.resolve(process.cwd(), 'src/services/api.ts'), 'utf8');
+    expect(api).toContain('/v8/finance/digitization-analyses/${analysisId}/planned-benefits');
+    expect(api).toContain('Actual benefits są własnością Results');
+    expect(ECONOMICS_CUTOVER.writers.find((rule) => rule.writerId === 'ECO-W07')).toMatchObject({
+      state: 'disabled',
+      successor: '/api/v8/finance/digitization-analyses/:analysisId/planned-benefits',
+    });
   });
 });

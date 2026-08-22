@@ -72,6 +72,10 @@ import {
   linkDigitizationAnalysisInitiativeCommand,
 } from '../../services/finance/canonical/digitizationAnalysisInitiativeLinkCommandService.js';
 import {
+  DigitizationAnalysisPlannedBenefitError,
+  persistDigitizationAnalysisPlannedBenefit,
+} from '../../services/finance/canonical/digitizationAnalysisPlannedBenefitCommandService.js';
+import {
   DigitizationAnalysisRegistrationError,
   registerDigitizationAnalysis,
 } from '../../services/finance/canonical/digitizationAnalysisRegistrationService.js';
@@ -560,6 +564,43 @@ router.post(
       return res.status(result.replay ? 200 : 201).json({ data: result });
     } catch (error) {
       if (error instanceof DigitizationAnalysisScenarioCommandError)
+        return res
+          .status(error.status)
+          .json({ code: error.code, error: error.message, ...(error.details || {}) });
+      throw error;
+    }
+  })
+);
+
+router.put(
+  '/digitization-analyses/:analysisId/planned-benefits',
+  requireFinanceEditorMembership,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const body =
+      req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
+    if (
+      Object.keys(body).some(
+        (key) => !['expectedVersion', 'trackingPeriod', 'plannedBenefits'].includes(key)
+      )
+    )
+      return res.status(400).json({
+        code: 'INVALID_BODY',
+        error: 'Actual benefits are Results-owned; only plannedBenefits may be written here',
+      });
+    try {
+      const result = await persistDigitizationAnalysisPlannedBenefit({
+        organizationId,
+        userId,
+        analysisId: String(req.params.analysisId || ''),
+        idempotencyKey: String(req.header('idempotency-key') || ''),
+        expectedVersion: Number(body.expectedVersion),
+        trackingPeriod: typeof body.trackingPeriod === 'string' ? body.trackingPeriod : '',
+        plannedBenefits: Number(body.plannedBenefits),
+      });
+      return res.status(result.replay ? 200 : 201).json({ data: result });
+    } catch (error) {
+      if (error instanceof DigitizationAnalysisPlannedBenefitError)
         return res
           .status(error.status)
           .json({ code: error.code, error: error.message, ...(error.details || {}) });

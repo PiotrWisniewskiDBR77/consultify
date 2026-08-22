@@ -27,10 +27,10 @@ import { findReconciliationTargetForInitiative } from '../services/finance/canon
 import { createRegisteredValuation } from '../services/finance/canonical/valuationRegistrationService.js';
 import { FinanceCandidateHandoffError } from '../services/finance/financeCandidateHandoffCore.js';
 import * as finAnalysisSvc from '../services/financialAnalysisService.js';
-import { createLegacyCutoverGuard } from '../services/legacyCutover/legacyCutoverKernel.js';
-import { ECONOMICS_CUTOVER } from '../services/legacyCutover/registry/economics.js';
 import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import { resolveInitiativeProjectId } from '../services/initiativeProjectPolicyService.js';
+import { createLegacyCutoverGuard } from '../services/legacyCutover/legacyCutoverKernel.js';
+import { ECONOMICS_CUTOVER } from '../services/legacyCutover/registry/economics.js';
 import { buildBasketFromResults } from '../services/valuationBasketService.js';
 import {
   buildBasketForDepth,
@@ -1055,7 +1055,7 @@ router.put(
     }
 
     const analysis = await dbGet<any>(
-      'SELECT id, initiative_id FROM digitization_analyses WHERE id = ? AND organization_id = ?',
+      'SELECT id, initiative_id, command_version FROM digitization_analyses WHERE id = ? AND organization_id = ?',
       [id, orgId]
     );
     if (!analysis) {
@@ -1506,7 +1506,7 @@ router.get(
     );
 
     if (!analysis?.initiative_id) {
-      return res.json({ benefits: [] });
+      return res.json({ benefits: [], version: Number(analysis?.command_version || 1) });
     }
 
     const benefits = await dbAll<any>(
@@ -1524,7 +1524,7 @@ router.get(
       trackedAt: row.created_at,
     }));
 
-    return res.json({ benefits: mapped });
+    return res.json({ benefits: mapped, version: Number(analysis.command_version || 1) });
   })
 );
 

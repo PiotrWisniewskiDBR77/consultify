@@ -11345,11 +11345,32 @@ export const Api = {
       trackingPeriod?: string;
     }
   ): Promise<any> => {
-    const res = await fetchWithRetry(`${API_URL}/economics/analyses/${analysisId}/benefits`, {
-      method: 'PUT',
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    });
+    const current = await Api.getAnalysisBenefits(analysisId);
+    const row = (current.benefits || []).find(
+      (item: any) => item.trackingPeriod === data.trackingPeriod
+    );
+    const requestedActual = Number((data as any).actualBenefits ?? 0);
+    const storedActual = Number(row?.actualBenefits ?? 0);
+    if (requestedActual !== storedActual) {
+      throw new Error(
+        'Actual benefits są własnością Results. Zapisz lub uzgodnij Actual w module Results; plan nie został zmieniony.'
+      );
+    }
+    const res = await fetchWithRetry(
+      `${API_URL}/v8/finance/digitization-analyses/${analysisId}/planned-benefits`,
+      {
+        method: 'PUT',
+        headers: {
+          ...getHeaders(),
+          'Idempotency-Key': `planned-benefit:${analysisId}:${data.trackingPeriod}:${crypto.randomUUID()}`,
+        },
+        body: JSON.stringify({
+          expectedVersion: Number(current.version),
+          trackingPeriod: data.trackingPeriod,
+          plannedBenefits: Number((data as any).plannedBenefits ?? 0),
+        }),
+      }
+    );
     return handleResponse(res, 'Failed to update benefit tracking data');
   },
 

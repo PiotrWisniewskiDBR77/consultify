@@ -135,10 +135,10 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'ECO-W07',
       method: 'PUT',
       path: /^\/analyses\/[^/]+\/benefits\/?$/,
-      state: 'observed',
-      successor: null,
+      state: 'disabled',
+      successor: '/api/v8/finance/digitization-analyses/:analysisId/planned-benefits',
       reason:
-        'Upserts a benefit_tracking row for the initiative linked to the analysis addressed by :id (economics.routes.ts:1534). actual_* columns are append-only protected by a DB trigger (ROI-E007); the handler routes disagreements to a reconciliation record rather than overwriting. No proven successor.',
+        'Finance now writes only planned benefits through a tenant-scoped CAS command and immutable receipt. Actual remains Results-owned and is never accepted by this command; the mixed legacy writer is retired fail-closed with writer-scoped rollback.',
     },
     {
       writerId: 'ECO-W08',
