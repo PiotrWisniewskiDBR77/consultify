@@ -37,6 +37,10 @@ import {
   importBudgetDocumentCommand,
 } from '../../services/finance/canonical/budgetDocumentImportCommandService.js';
 import {
+  archiveDigitizationAnalysisCommand,
+  DigitizationAnalysisArchiveError,
+} from '../../services/finance/canonical/digitizationAnalysisArchiveCommandService.js';
+import {
   BudgetInitiativeLinkCommandError,
   linkBudgetInitiativeCommand,
 } from '../../services/finance/canonical/budgetInitiativeLinkCommandService.js';
@@ -330,6 +334,39 @@ router.put(
       return res.status(result.idempotentReplay ? 200 : 201).json({ data: result });
     } catch (error) {
       if (error instanceof FinanceSettingsCommandError) {
+        return res.status(error.status).json({
+          code: error.code,
+          error: error.message,
+          ...(error.details || {}),
+        });
+      }
+      throw error;
+    }
+  })
+);
+
+router.post(
+  '/digitization-analyses/:analysisId/archive',
+  requireFinanceEditorMembership,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const body =
+      req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
+    if (Object.keys(body).some((key) => !['expectedVersion', 'reason'].includes(key))) {
+      return res.status(400).json({ code: 'INVALID_BODY', error: 'Unknown archive field' });
+    }
+    try {
+      const result = await archiveDigitizationAnalysisCommand({
+        organizationId,
+        userId,
+        analysisId: String(req.params.analysisId || ''),
+        expectedVersion: Number(body.expectedVersion),
+        reason: typeof body.reason === 'string' ? body.reason : '',
+        idempotencyKey: String(req.header('idempotency-key') || ''),
+      });
+      return res.status(result.replay ? 200 : 201).json({ data: result });
+    } catch (error) {
+      if (error instanceof DigitizationAnalysisArchiveError) {
         return res.status(error.status).json({
           code: error.code,
           error: error.message,

@@ -182,10 +182,10 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'ECO-W12',
       method: 'DELETE',
       path: /^\/analyses\/[^/]+\/?$/,
-      state: 'observed',
-      successor: null,
+      state: 'disabled',
+      successor: '/api/v8/finance/digitization-analyses/:analysisId/archive',
       reason:
-        'Deletes a digitization_analyses row addressed by :id (economics.routes.ts:2159, DELETE at :2172). No proven successor; irreversible delete with zero protection before this registration.',
+        'The canonical tenant-scoped archive command preserves the complete digitization analysis graph, uses exact version CAS, an immutable idempotency receipt and live Finance-editor authority. The irreversible legacy DELETE is retired fail-closed with writer-scoped rollback.',
     },
     {
       writerId: 'ECO-W13',

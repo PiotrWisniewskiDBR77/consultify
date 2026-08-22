@@ -991,6 +991,21 @@ export const V8FinanceApi = {
     v8Post<{ success: boolean; result: unknown }>(`/finance/analyses/${analysisId}/run`, {}),
   approveAnalysis: (analysisId: string) =>
     v8Post<{ success: boolean }>(`/finance/analyses/${analysisId}/approve`, {}),
+  archiveDigitizationAnalysis: (
+    analysisId: string,
+    body: { expectedVersion: number; reason: string },
+    idempotencyKey: string
+  ) =>
+    v8Post<{
+      analysisId: string;
+      status: 'ARCHIVED';
+      version: number;
+      archivedBy: string;
+      archivedAt: string;
+      replay: boolean;
+    }>(`/finance/digitization-analyses/${analysisId}/archive`, body, {
+      extraHeaders: { 'Idempotency-Key': idempotencyKey },
+    }),
 
   // P05 Lane endpoints
   startLaneRun: (versionType?: FinanceVersionType) =>

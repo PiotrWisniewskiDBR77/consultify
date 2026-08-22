@@ -39,6 +39,7 @@ const mockProjectBudgetScenario = vi.fn();
 const mockUpdateBudgetScenarioAdjustments = vi.fn();
 const mockApproveBudgetCommand = vi.fn();
 const mockDiscardBudgetCommand = vi.fn();
+const mockArchiveDigitizationAnalysisCommand = vi.fn();
 const mockImportBudgetDocumentCommand = vi.fn();
 const mockLinkBudgetInitiativeCommand = vi.fn();
 const mockUnlinkBudgetInitiativeCommand = vi.fn();
@@ -364,6 +365,20 @@ vi.mock('../../../services/finance/canonical/budgetDiscardCommandService.js', ()
   },
   discardBudgetCommand: (...args: unknown[]) => mockDiscardBudgetCommand(...args),
 }));
+vi.mock('../../../services/finance/canonical/digitizationAnalysisArchiveCommandService.js', () => ({
+  DigitizationAnalysisArchiveError: class DigitizationAnalysisArchiveError extends Error {
+    constructor(
+      public code: string,
+      public status: number,
+      message: string,
+      public details?: Record<string, unknown>
+    ) {
+      super(message);
+    }
+  },
+  archiveDigitizationAnalysisCommand: (...args: unknown[]) =>
+    mockArchiveDigitizationAnalysisCommand(...args),
+}));
 vi.mock('../../../services/finance/canonical/budgetDocumentImportCommandService.js', () => ({
   BudgetDocumentImportCommandError: class BudgetDocumentImportCommandError extends Error {
     constructor(
@@ -611,6 +626,14 @@ describe('V8 finance read-only routes', () => {
       budgetVersion: 4,
       archivedBy: 'user-1',
       archivedAt: '2026-08-20T00:00:00.000Z',
+      replay: false,
+    });
+    mockArchiveDigitizationAnalysisCommand.mockResolvedValue({
+      analysisId: 'digitization-analysis-1',
+      status: 'ARCHIVED',
+      version: 2,
+      archivedBy: UID,
+      archivedAt: '2026-08-23T00:00:00.000Z',
       replay: false,
     });
     mockListAnalyses.mockResolvedValue([]);
@@ -2222,6 +2245,37 @@ describe('V8 finance read-only routes', () => {
       expectedVersion: 1,
       idempotencyKey: 'approval-command-key',
     });
+  });
+
+  it('POST /api/v8/finance/digitization-analyses/:id/archive binds tenant command fields', async () => {
+    const app = createApp();
+    const response = await request(app)
+      .post('/api/v8/finance/digitization-analyses/digitization-analysis-1/archive')
+      .set('Idempotency-Key', 'archive-key')
+      .send({ expectedVersion: 1, reason: 'Remove from active workspace' });
+
+    expect(response.status).toBe(201);
+    expect(response.body.data).toMatchObject({ status: 'ARCHIVED', version: 2, replay: false });
+    expect(mockArchiveDigitizationAnalysisCommand).toHaveBeenCalledWith({
+      organizationId: ORG,
+      userId: UID,
+      analysisId: 'digitization-analysis-1',
+      expectedVersion: 1,
+      reason: 'Remove from active workspace',
+      idempotencyKey: 'archive-key',
+    });
+  });
+
+  it('POST /api/v8/finance/digitization-analyses/:id/archive rejects unknown fields', async () => {
+    const app = createApp();
+    const response = await request(app)
+      .post('/api/v8/finance/digitization-analyses/digitization-analysis-1/archive')
+      .set('Idempotency-Key', 'archive-key')
+      .send({ expectedVersion: 1, reason: 'Archive', hardDelete: true });
+
+    expect(response.status).toBe(400);
+    expect(response.body.code).toBe('INVALID_BODY');
+    expect(mockArchiveDigitizationAnalysisCommand).not.toHaveBeenCalled();
   });
 
   it('POST /api/v8/finance/budgets/:budgetId/approve rejects unknown fields', async () => {

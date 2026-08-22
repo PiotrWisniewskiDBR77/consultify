@@ -1778,6 +1778,85 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
     expect(stored.rows[0].n).toBe(0);
   });
 
+  it('retires irreversible digitization-analysis DELETE (ECO-W12) before row loss', async () => {
+    const analysisId = `${prefix}-delete-protected`;
+    await pool.query(
+      `INSERT INTO digitization_analyses
+       (id,name,status,organization_id,created_by,created_at,updated_at)
+       VALUES($1,'Delete protected','draft',$2,$3,now(),now())`,
+      [analysisId, orgA, actor]
+    );
+    try {
+      const response = await request(app)
+        .delete(`/api/economics/analyses/${analysisId}`)
+        .set('x-request-id', `${prefix}-analysis-delete-blocked`);
+      expect(response.status).toBe(410);
+      expect(response.body).toMatchObject({
+        code: 'FINANCE_LEGACY_WRITER_DISABLED',
+        writerId: 'ECO-W12',
+        successor: '/api/v8/finance/digitization-analyses/:analysisId/archive',
+      });
+      expect(
+        (
+          await pool.query<{ n: number }>(
+            `SELECT count(*)::int n FROM digitization_analyses WHERE id=$1 AND organization_id=$2`,
+            [analysisId, orgA]
+          )
+        ).rows[0].n
+      ).toBe(1);
+    } finally {
+      await pool.query(`DELETE FROM digitization_analyses WHERE id=$1 AND organization_id=$2`, [
+        analysisId,
+        orgA,
+      ]);
+    }
+  });
+
+  it('restores only ECO-W12 through the exact writer-scoped rollback lever', async () => {
+    const previous = process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+    const analysisId = `${prefix}-delete-rollback`;
+    await pool.query(
+      `INSERT INTO digitization_analyses
+       (id,name,status,organization_id,created_by,created_at,updated_at)
+       VALUES($1,'Rollback delete','draft',$2,$3,now(),now())`,
+      [analysisId, orgA, actor]
+    );
+    process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = 'ECO-W12';
+    try {
+      const response = await request(app)
+        .delete(`/api/economics/analyses/${analysisId}`)
+        .set('x-request-id', `${prefix}-analysis-delete-rollback`);
+      expect(response.status).toBe(200);
+      expect(
+        (
+          await pool.query<{ n: number }>(
+            `SELECT count(*)::int n FROM digitization_analyses WHERE id=$1 AND organization_id=$2`,
+            [analysisId, orgA]
+          )
+        ).rows[0].n
+      ).toBe(0);
+      const event = await pool.query(
+        `SELECT writer_id,access_kind,successor_path FROM legacy_cutover_usage_events
+         WHERE organization_id=$1 AND request_id=$2`,
+        [orgA, `${prefix}-analysis-delete-rollback`]
+      );
+      expect(event.rows).toEqual([
+        {
+          writer_id: 'ECO-W12',
+          access_kind: 'rollback_writer',
+          successor_path: '/api/v8/finance/digitization-analyses/:analysisId/archive',
+        },
+      ]);
+    } finally {
+      if (previous === undefined) delete process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+      else process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = previous;
+      await pool.query(`DELETE FROM digitization_analyses WHERE id=$1 AND organization_id=$2`, [
+        analysisId,
+        orgA,
+      ]);
+    }
+  });
+
   it('records one durable, tenant-scoped observation row per writer', async () => {
     const rows = await pool.query(
       `SELECT writer_id, access_kind, organization_id, tenant_resolution, route_path,

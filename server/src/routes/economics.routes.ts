@@ -533,7 +533,7 @@ router.get(
         LEFT JOIN initiatives i ON da.initiative_id = i.id
         LEFT JOIN analysis_financials af ON af.analysis_id = da.id
         LEFT JOIN users u ON da.created_by = u.id
-        WHERE da.organization_id = ?
+        WHERE da.organization_id = ? AND da.archived_at IS NULL
       `;
       const params: any[] = [orgId];
 
@@ -651,27 +651,27 @@ router.get(
 
     try {
       const total = await dbGet<{ count: number }>(
-        `SELECT COUNT(*) as count FROM digitization_analyses WHERE organization_id = ?`,
+        `SELECT COUNT(*) as count FROM digitization_analyses WHERE organization_id = ? AND archived_at IS NULL`,
         [orgId]
       );
 
       const draft = await dbGet<{ count: number }>(
-        `SELECT COUNT(*) as count FROM digitization_analyses WHERE organization_id = ? AND UPPER(status) = 'DRAFT'`,
+        `SELECT COUNT(*) as count FROM digitization_analyses WHERE organization_id = ? AND archived_at IS NULL AND UPPER(status) = 'DRAFT'`,
         [orgId]
       );
 
       const inProgress = await dbGet<{ count: number }>(
-        `SELECT COUNT(*) as count FROM digitization_analyses WHERE organization_id = ? AND UPPER(status) = 'REVIEW'`,
+        `SELECT COUNT(*) as count FROM digitization_analyses WHERE organization_id = ? AND archived_at IS NULL AND UPPER(status) = 'REVIEW'`,
         [orgId]
       );
 
       const completed = await dbGet<{ count: number }>(
-        `SELECT COUNT(*) as count FROM digitization_analyses WHERE organization_id = ? AND UPPER(status) = 'APPROVED'`,
+        `SELECT COUNT(*) as count FROM digitization_analyses WHERE organization_id = ? AND archived_at IS NULL AND UPPER(status) = 'APPROVED'`,
         [orgId]
       );
 
       const avgScore = await dbGet<{ avg: number }>(
-        `SELECT AVG(overall_score) as avg FROM digitization_analyses WHERE organization_id = ? AND overall_score IS NOT NULL`,
+        `SELECT AVG(overall_score) as avg FROM digitization_analyses WHERE organization_id = ? AND archived_at IS NULL AND overall_score IS NOT NULL`,
         [orgId]
       );
 
@@ -793,7 +793,7 @@ router.get(
          LEFT JOIN initiatives i ON da.initiative_id = i.id
          LEFT JOIN analysis_financials af ON af.analysis_id = da.id
          LEFT JOIN users u ON da.created_by = u.id
-         WHERE da.id = ? AND da.organization_id = ?`,
+         WHERE da.id = ? AND da.organization_id = ? AND da.archived_at IS NULL`,
         [id, orgId]
       );
 
@@ -863,7 +863,7 @@ router.put(
 
     try {
       const existing = await dbGet<any>(
-        'SELECT id FROM digitization_analyses WHERE id = ? AND organization_id = ?',
+        'SELECT id FROM digitization_analyses WHERE id = ? AND organization_id = ? AND archived_at IS NULL',
         [id, orgId]
       );
 

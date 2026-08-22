@@ -25,8 +25,8 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
       legacyMutationDoors: 52,
       canonicalMutationDoors: 1,
       nonMutationDoors: 6,
-      retiredLegacyMutationDoors: 27,
-      openLegacyMutationDoors: 25,
+      retiredLegacyMutationDoors: 28,
+      openLegacyMutationDoors: 24,
     });
   });
 
@@ -180,5 +180,19 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
     expect(source).toContain('V8FinanceApi.getSettings');
     expect(source).toContain('V8FinanceApi.updateSettings');
     expect(source).not.toContain("Api.put('/api/economics/finance-settings'");
+  });
+
+  it('retires irreversible digitization-analysis deletion behind the archive successor', () => {
+    const writer = ECONOMICS_CUTOVER.writers.find((rule) => rule.writerId === 'ECO-W12');
+    expect(writer).toMatchObject({
+      state: 'disabled',
+      successor: '/api/v8/finance/digitization-analyses/:analysisId/archive',
+    });
+    const client = fs.readFileSync(
+      path.resolve(process.cwd(), 'src/services/api/v8/finance.ts'),
+      'utf8'
+    );
+    expect(client).toContain('archiveDigitizationAnalysis');
+    expect(client).toContain('/finance/digitization-analyses/${analysisId}/archive');
   });
 });
