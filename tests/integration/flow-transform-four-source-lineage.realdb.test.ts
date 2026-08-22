@@ -8,6 +8,8 @@ const DATABASE_URL =
   process.env.DATABASE_URL || 'postgres://consultinity:consultinity@localhost:5442/consultinity';
 process.env.DATABASE_URL = DATABASE_URL;
 process.env.DB_TYPE = 'postgres';
+const runRealDb = process.env.RUN_DB_TESTS === '1' && DATABASE_URL.startsWith('postgres');
+const describeRealDb = runRealDb ? describe : describe.skip;
 
 const prefix = `flow-four-${Date.now()}`;
 const org = `${prefix}-org`;
@@ -18,6 +20,7 @@ const projectId = `${prefix}-project`;
 const kinds = ['organization', 'interview', 'drd', 'swot'] as const;
 type Kind = (typeof kinds)[number];
 const sourceReceipts = new Map<Kind, string>();
+const sourceCandidates = new Map<Kind, string>();
 
 async function db() {
   const c = new Client({ connectionString: DATABASE_URL });
@@ -25,8 +28,7 @@ async function db() {
   return c;
 }
 
-async function seedChain(client: Client, kind: Kind, index: number) {
-  const candidateId = `${prefix}-${kind}-candidate`;
+async function seedChain(client: Client, kind: Kind, candidateId: string) {
   const initiativeId = `${prefix}-${kind}-initiative`;
   const caseId = `${prefix}-${kind}-case`;
   const executionLinkId = randomUUID();
@@ -36,24 +38,15 @@ async function seedChain(client: Client, kind: Kind, index: number) {
   const reconciliationId = randomUUID();
   const decisionId = randomUUID();
   const pirId = randomUUID();
-  const sourceReceiptId = randomUUID();
-  sourceReceipts.set(kind, sourceReceiptId);
-
   await client.query(
     `INSERT INTO initiatives(id,name,organization_id,status) VALUES ($1,$2,$3,'EXECUTING')`,
     [initiativeId, `${kind} initiative`, org]
   );
   await client.query(
-    `INSERT INTO initiative_candidates(id,organization_id,source_type,source_id,title,rationale,fit_score,status,created_by,initiative_id,accepted_at) VALUES ($1,$2,$3,$4,$5,'source',1,'accepted',$6,$7,now())`,
-    [
-      candidateId,
-      org,
-      `flow_${kind}`,
-      `${prefix}-${kind}-source`,
-      `${kind} candidate`,
-      maker,
-      initiativeId,
-    ]
+    `UPDATE initiative_candidates
+        SET status='accepted', initiative_id=$1, accepted_at=now()
+      WHERE id=$2 AND organization_id=$3`,
+    [initiativeId, candidateId, org]
   );
   await client.query(
     `INSERT INTO case_core(case_id,project_id,organization_id,case_name,created_by_actor_id,contracted_closure_type) VALUES ($1,$2,$3,$4,$5,'OUTCOME_VALIDATED')`,
@@ -115,60 +108,136 @@ async function seedChain(client: Client, kind: Kind, index: number) {
       checker,
     ]
   );
+}
 
-  if (kind === 'organization') {
-    const snapshotId = `${prefix}-flow-snapshot`;
-    await client.query(
-      `INSERT INTO organization_context_snapshot_versions(id,organization_id,version,schema_version,content_hash,claim_count,snapshot_json,source_refs_json,created_by) VALUES ($1,$2,90,1,$3,1,'{}','[]',$4)`,
-      [snapshotId, org, 'a'.repeat(64), maker]
-    );
-    await client.query(
-      `INSERT INTO organization_snapshot_candidate_handoffs(id,organization_id,snapshot_id,snapshot_version,snapshot_content_hash,candidate_id,created_by) VALUES ($1,$2,$3,90,$4,$5,$6)`,
-      [sourceReceiptId, org, snapshotId, 'a'.repeat(64), candidateId, maker]
-    );
-  } else if (kind === 'interview') {
-    await client.query(
-      `INSERT INTO interview_candidate_handoffs(id,organization_id,source_type,source_id,accepted_snapshot_id,candidate_id,created_by,source_version,snapshot_content_hash) VALUES ($1,$2,'interview_submission',$3,$4,$5,$6,$4,$7)`,
-      [
-        sourceReceiptId,
-        org,
-        `${prefix}-assignment`,
-        `${prefix}-submission-v1`,
-        candidateId,
-        maker,
-        'b'.repeat(64),
-      ]
-    );
-  } else if (kind === 'drd') {
-    await client.query(
-      `INSERT INTO assessment_candidate_handoffs(id,organization_id,assessment_id,output_id,candidate_id,created_by,source_version,snapshot_content_hash) VALUES ($1,$2,$3,$4,$5,$6,$4,$7)`,
-      [
-        sourceReceiptId,
-        org,
-        `${prefix}-assessment`,
-        `${prefix}-output`,
-        candidateId,
-        maker,
-        'c'.repeat(64),
-      ]
-    );
-  } else {
-    await client.query(
-      `INSERT INTO swot_candidate_handoffs(id,organization_id,tool_session_id,recommendation_id,candidate_id,created_by,tool_output_id,tool_output_version,tool_output_content_hash,source_revision) VALUES ($1,$2,$3,'rec',$4,$5,$6,1,$7,1)`,
-      [
-        sourceReceiptId,
-        org,
-        `${prefix}-swot`,
-        candidateId,
-        maker,
-        `${prefix}-tool-output`,
-        'd'.repeat(16),
-      ]
-    );
-  }
+async function produceCanonicalSources(client: Client) {
+  const organizationSnapshotId = `${prefix}-organization-snapshot`;
+  const interviewInsightId = `${prefix}-interview-insight`;
+  const interviewFindingId = `${prefix}-interview-finding`;
+  const assessmentId = `${prefix}-assessment`;
+  const assessmentSnapshotId = `${prefix}-assessment-snapshot`;
+  const swotSessionId = `${prefix}-swot`;
+  const swotOutputId = `${prefix}-swot-output`;
+
+  await client.query(
+    `INSERT INTO organization_context_snapshot_versions
+       (id,organization_id,version,schema_version,content_hash,claim_count,snapshot_json,source_refs_json,created_by)
+     VALUES ($1,$2,1,1,$3,1,$4,'[]',$5)`,
+    [
+      organizationSnapshotId,
+      org,
+      'a'.repeat(64),
+      JSON.stringify({ organizationId: org, claims: [{ claimId: 'flow-claim' }] }),
+      maker,
+    ]
+  );
+  await client.query(
+    `INSERT INTO interview_insights(id,organization_id,title,status,content,created_by)
+     VALUES ($1,$2,'Approved interview insight','completed','Accepted evidence',$3)`,
+    [interviewInsightId, org, maker]
+  );
+  await client.query(
+    `INSERT INTO interview_insight_findings
+       (id,organization_id,insight_id,source_key,finding_statement,limits_text,next_action_text,review_status,readback_status,created_by)
+     VALUES ($1,$2,$3,$4,'Confirmed interview finding','','Execute finding','published','confirmed_by_client',$5)`,
+    [interviewFindingId, org, interviewInsightId, `${prefix}-finding-key`, maker]
+  );
+  await client.query(
+    `INSERT INTO assessments(id,organization_id,status,name,assessment_type)
+     VALUES ($1,$2,'APPROVED','Approved DRD','DRD')`,
+    [assessmentId, org]
+  );
+  await client.query(
+    `INSERT INTO assessment_accepted_snapshots
+       (id,organization_id,assessment_id,review_id,snapshot_json,provenance_json,accepted_by,is_current)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,true)`,
+    [
+      assessmentSnapshotId,
+      org,
+      assessmentId,
+      `${prefix}-drd-review`,
+      JSON.stringify({ axis: 'strategy', score: 4 }),
+      JSON.stringify({ source: 'owner-approved-drd' }),
+      maker,
+    ]
+  );
+  await client.query(
+    `INSERT INTO tool_sessions
+       (id,organization_id,project_id,tool_type,name,status,completion_percent,confidence_avg,created_by,updated_by,created_at,updated_at)
+     VALUES ($1,$2,$3,'dynamic-swot','Approved SWOT','APPROVED',100,4,$4,$4,now(),now())`,
+    [swotSessionId, org, projectId, maker]
+  );
+  await client.query(
+    `INSERT INTO tool_outputs
+       (id,organization_id,tool_session_id,tool_type,method_pack_version,version,title,payload_json,content_hash,status,created_by,approved_by,approved_at,frozen_at)
+     VALUES ($1,$2,$3,'dynamic-swot','dynamic-swot@1',1,'Approved SWOT output',$4,$5,'approved',$6,$6,now(),now())`,
+    [
+      swotOutputId,
+      org,
+      swotSessionId,
+      JSON.stringify({
+        sourceRevision: 1,
+        conclusions: [{ id: 'rec', k3Actions: ['Execute approved SWOT recommendation'] }],
+      }),
+      'd'.repeat(16),
+      maker,
+    ]
+  );
+
+  const organizationService = await import(
+    '../../server/src/services/organizationContext/organizationSnapshotCandidateHandoffService.js'
+  );
+  const interviewService = await import(
+    '../../server/src/services/interview/interviewCandidateHandoff.js'
+  );
+  const drdService = await import('../../server/src/services/assessment/drdCandidateHandoff.js');
+  const swotService = await import(
+    '../../server/src/services/tools/swotCandidateHandoffService.js'
+  );
+  const produced = {
+    organization: await organizationService.handoffOrganizationSnapshotToCandidate({
+      organizationId: org,
+      snapshotId: organizationSnapshotId,
+      snapshotVersion: 1,
+      snapshotContentHash: 'a'.repeat(64),
+      actorId: maker,
+    }),
+    interview: await interviewService.approveInterviewCandidateHandoff({
+      organizationId: org,
+      actorId: maker,
+      source: { kind: 'insight_finding', findingId: interviewFindingId },
+    }),
+    drd: await drdService.handoffAssessmentToCandidate({
+      organizationId: org,
+      assessmentId,
+      actorId: maker,
+    }),
+    swot: await swotService.handoffSwotRecommendation({
+      organizationId: org,
+      toolSessionId: swotSessionId,
+      recommendationId: 'rec',
+      actorId: maker,
+    }),
+  };
+  sourceReceipts.set('organization', produced.organization.receipt.receiptId);
+  sourceReceipts.set('interview', produced.interview.handoff.id);
+  sourceReceipts.set('drd', produced.drd.handoff.id);
+  sourceReceipts.set('swot', produced.swot.receipt.receiptId);
+  sourceCandidates.set('organization', produced.organization.candidate.id);
+  sourceCandidates.set('interview', produced.interview.candidate.id);
+  sourceCandidates.set('drd', produced.drd.candidate.id);
+  sourceCandidates.set('swot', produced.swot.candidate.id);
 }
 
 beforeAll(async () => {
+  if (!runRealDb) return;
+  const databaseName = new URL(DATABASE_URL).pathname.slice(1);
+  if (
+    process.env.FLOW_ALLOW_IMMUTABLE_FIXTURE_CLEANUP !== '1' ||
+    !databaseName.startsWith(process.env.FLOW_DISPOSABLE_DB_PREFIX || 'never-match')
+  ) {
+    throw new Error('Four-source lineage requires an explicitly guarded disposable flow_* database');
+  }
   const client = await db();
   try {
     await client.query(
@@ -182,13 +251,14 @@ beforeAll(async () => {
       `INSERT INTO projects(id,name,organization_id) VALUES ($1,'Flow project',$2)`,
       [projectId, org]
     );
-    for (let i = 0; i < kinds.length; i++) await seedChain(client, kinds[i], i);
+    await produceCanonicalSources(client);
+    for (const kind of kinds) await seedChain(client, kind, sourceCandidates.get(kind)!);
   } finally {
     await client.end();
   }
 }, 30_000);
 
-describe('FLOW-TRANSFORM four-source full lineage', () => {
+describeRealDb('FLOW-TRANSFORM four-source full lineage', () => {
   it.each(kinds)(
     '%s source certifies stable source→Candidate→Initiative→Execution→Actual→Finance→PIR identities and cold replay',
     async (sourceKind) => {
