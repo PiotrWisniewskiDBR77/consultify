@@ -10701,21 +10701,26 @@ export const Api = {
   updateDigitizationAnalysis: async (
     id: string,
     data: {
+      expectedVersion?: number;
       name?: string;
       description?: string;
       status?: string;
       projectId?: string;
       initiativeId?: string;
       analysisType?: string;
+      axisScores?: Record<string, unknown>;
+      overallScore?: number | null;
+      completionPercent?: number;
       tags?: string[];
     }
   ): Promise<any> => {
-    const res = await fetchWithRetry(`${API_URL}/economics/analyses/${id}`, {
-      method: 'PUT',
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    });
-    return handleResponse(res, 'Failed to update analysis');
+    const { V8FinanceApi } = await import('./api/v8/finance');
+    const { tags: _legacyIgnoredTags, expectedVersion = 1, ...patch } = data;
+    return V8FinanceApi.updateDigitizationAnalysis(
+      id,
+      { ...patch, expectedVersion },
+      `digitization-analysis-update:${id}:${expectedVersion}:${crypto.randomUUID()}`
+    );
   },
 
   /**

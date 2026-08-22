@@ -41,6 +41,7 @@ const mockApproveBudgetCommand = vi.fn();
 const mockDiscardBudgetCommand = vi.fn();
 const mockArchiveDigitizationAnalysisCommand = vi.fn();
 const mockRegisterDigitizationAnalysis = vi.fn();
+const mockUpdateDigitizationAnalysisCommand = vi.fn();
 const mockImportBudgetDocumentCommand = vi.fn();
 const mockLinkBudgetInitiativeCommand = vi.fn();
 const mockUnlinkBudgetInitiativeCommand = vi.fn();
@@ -391,6 +392,11 @@ vi.mock('../../../services/finance/canonical/digitizationAnalysisRegistrationSer
     }
   },
   registerDigitizationAnalysis: (...args: unknown[]) => mockRegisterDigitizationAnalysis(...args),
+}));
+vi.mock('../../../services/finance/canonical/digitizationAnalysisUpdateCommandService.js', () => ({
+  DigitizationAnalysisUpdateError: class DigitizationAnalysisUpdateError extends Error {},
+  updateDigitizationAnalysisCommand: (...args: unknown[]) =>
+    mockUpdateDigitizationAnalysisCommand(...args),
 }));
 vi.mock('../../../services/finance/canonical/budgetDocumentImportCommandService.js', () => ({
   BudgetDocumentImportCommandError: class BudgetDocumentImportCommandError extends Error {
@@ -2306,6 +2312,28 @@ describe('V8 finance read-only routes', () => {
       userId: UID,
       idempotencyKey: 'analysis-register-key',
       body,
+    });
+  });
+
+  it('PUT /api/v8/finance/digitization-analyses/:id binds optimistic update command', async () => {
+    const app = createApp();
+    mockUpdateDigitizationAnalysisCommand.mockResolvedValueOnce({
+      analysisId: 'digitization-analysis-1',
+      version: 2,
+      receiptId: 'receipt-1',
+      replay: false,
+    });
+    const response = await request(app)
+      .put('/api/v8/finance/digitization-analyses/digitization-analysis-1')
+      .set('Idempotency-Key', 'update-key')
+      .send({ expectedVersion: 1, name: 'Updated' });
+    expect(response.status).toBe(201);
+    expect(mockUpdateDigitizationAnalysisCommand).toHaveBeenCalledWith({
+      organizationId: ORG,
+      userId: UID,
+      analysisId: 'digitization-analysis-1',
+      idempotencyKey: 'update-key',
+      body: { expectedVersion: 1, name: 'Updated' },
     });
   });
 

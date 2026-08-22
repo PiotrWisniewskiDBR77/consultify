@@ -90,10 +90,10 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'ECO-W02',
       method: 'PUT',
       path: /^\/analyses\/[^/]+\/?$/,
-      state: 'observed',
-      successor: null,
+      state: 'disabled',
+      successor: '/api/v8/finance/digitization-analyses/:analysisId',
       reason:
-        'Updates a digitization_analyses row addressed by :id (economics.routes.ts:840, UPDATE at :917). No proven successor.',
+        'The compatibility client uses a tenant-scoped canonical update command with live Finance-editor authority, optimistic CAS and an immutable idempotency receipt. The unversioned legacy UPDATE is retired fail-closed with writer-scoped rollback.',
     },
     {
       writerId: 'ECO-W03',

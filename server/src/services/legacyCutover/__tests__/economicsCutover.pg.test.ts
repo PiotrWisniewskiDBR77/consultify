@@ -1891,6 +1891,81 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
     }
   });
 
+  it('retires unversioned digitization-analysis update (ECO-W02)', async () => {
+    const analysisId = `${prefix}-update-protected`;
+    await pool.query(
+      `INSERT INTO digitization_analyses
+       (id,name,status,organization_id,created_by,created_at,updated_at)
+       VALUES($1,'Before protected update','draft',$2,$3,now(),now())`,
+      [analysisId, orgA, actor]
+    );
+    try {
+      const response = await request(app)
+        .put(`/api/economics/analyses/${analysisId}`)
+        .set('x-request-id', `${prefix}-analysis-update-blocked`)
+        .send({ name: 'Must not persist' });
+      expect(response.status).toBe(410);
+      expect(response.body).toMatchObject({
+        code: 'FINANCE_LEGACY_WRITER_DISABLED',
+        writerId: 'ECO-W02',
+        successor: '/api/v8/finance/digitization-analyses/:analysisId',
+      });
+      expect(
+        (
+          await pool.query<{ name: string }>(`SELECT name FROM digitization_analyses WHERE id=$1`, [
+            analysisId,
+          ])
+        ).rows[0].name
+      ).toBe('Before protected update');
+    } finally {
+      await pool.query(`DELETE FROM digitization_analyses WHERE id=$1`, [analysisId]);
+    }
+  });
+
+  it('restores only ECO-W02 through its exact writer-scoped rollback lever', async () => {
+    const previous = process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+    const analysisId = `${prefix}-update-rollback`;
+    await pool.query(
+      `INSERT INTO digitization_analyses
+       (id,name,status,organization_id,created_by,created_at,updated_at)
+       VALUES($1,'Before rollback update','draft',$2,$3,now(),now())`,
+      [analysisId, orgA, actor]
+    );
+    process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = 'ECO-W02';
+    try {
+      const response = await request(app)
+        .put(`/api/economics/analyses/${analysisId}`)
+        .set('x-request-id', `${prefix}-analysis-update-rollback`)
+        .send({ name: 'Rollback update reached leaf' });
+      expect(response.status).toBe(200);
+      expect(
+        (
+          await pool.query<{ name: string }>(`SELECT name FROM digitization_analyses WHERE id=$1`, [
+            analysisId,
+          ])
+        ).rows[0].name
+      ).toBe('Rollback update reached leaf');
+      expect(
+        (
+          await pool.query(
+            `SELECT writer_id,access_kind,successor_path FROM legacy_cutover_usage_events WHERE organization_id=$1 AND request_id=$2`,
+            [orgA, `${prefix}-analysis-update-rollback`]
+          )
+        ).rows
+      ).toEqual([
+        {
+          writer_id: 'ECO-W02',
+          access_kind: 'rollback_writer',
+          successor_path: '/api/v8/finance/digitization-analyses/:analysisId',
+        },
+      ]);
+    } finally {
+      if (previous === undefined) delete process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+      else process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = previous;
+      await pool.query(`DELETE FROM digitization_analyses WHERE id=$1`, [analysisId]);
+    }
+  });
+
   it('classifies ECO-W11 as canonical Decision ownership with retry-safe source lineage', async () => {
     const analysisId = `${prefix}-decision-source`;
     const key = `${prefix}-decision-key`;

@@ -25,8 +25,8 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
       legacyMutationDoors: 51,
       canonicalMutationDoors: 2,
       nonMutationDoors: 6,
-      retiredLegacyMutationDoors: 30,
-      openLegacyMutationDoors: 21,
+      retiredLegacyMutationDoors: 31,
+      openLegacyMutationDoors: 20,
     });
   });
 
@@ -222,6 +222,18 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
     expect(ECONOMICS_CUTOVER.writers.find((rule) => rule.writerId === 'ECO-W01')).toMatchObject({
       state: 'disabled',
       successor: '/api/v8/finance/digitization-analyses',
+    });
+  });
+
+  it('routes digitization-analysis updates through canonical optimistic CAS', () => {
+    const source = fs.readFileSync(path.resolve(process.cwd(), 'src/services/api.ts'), 'utf8');
+    expect(source).toContain('V8FinanceApi.updateDigitizationAnalysis');
+    expect(source).not.toMatch(
+      /fetchWithRetry\(`\$\{API_URL\}\/economics\/analyses\/\$\{id\}`,[\s\S]{0,120}method:\s*'PUT'/
+    );
+    expect(ECONOMICS_CUTOVER.writers.find((rule) => rule.writerId === 'ECO-W02')).toMatchObject({
+      state: 'disabled',
+      successor: '/api/v8/finance/digitization-analyses/:analysisId',
     });
   });
 });

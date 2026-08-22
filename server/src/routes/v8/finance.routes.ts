@@ -68,6 +68,10 @@ import {
   registerDigitizationAnalysis,
 } from '../../services/finance/canonical/digitizationAnalysisRegistrationService.js';
 import {
+  DigitizationAnalysisUpdateError,
+  updateDigitizationAnalysisCommand,
+} from '../../services/finance/canonical/digitizationAnalysisUpdateCommandService.js';
+import {
   FinanceSettingsCommandError,
   readCanonicalFinanceSettings,
   updateCanonicalFinanceSettings,
@@ -398,6 +402,33 @@ router.post(
     } catch (error) {
       if (error instanceof DigitizationAnalysisRegistrationError) {
         return res.status(error.status).json({ code: error.code, error: error.message });
+      }
+      throw error;
+    }
+  })
+);
+
+router.put(
+  '/digitization-analyses/:analysisId',
+  requireFinanceEditorMembership,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    try {
+      const result = await updateDigitizationAnalysisCommand({
+        organizationId,
+        userId,
+        analysisId: String(req.params.analysisId || ''),
+        idempotencyKey: String(req.header('idempotency-key') || ''),
+        body: req.body,
+      });
+      return res.status(result.replay ? 200 : 201).json({ data: result });
+    } catch (error) {
+      if (error instanceof DigitizationAnalysisUpdateError) {
+        return res.status(error.status).json({
+          code: error.code,
+          error: error.message,
+          ...(error.details || {}),
+        });
       }
       throw error;
     }
