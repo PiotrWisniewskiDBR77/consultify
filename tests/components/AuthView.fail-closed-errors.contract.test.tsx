@@ -46,6 +46,26 @@ describe('AuthView fail-closed error contract', () => {
     });
   });
 
+  it('exposes the login fields by their visible labels', () => {
+    render(
+      <AuthView
+        initialStep={AuthStep.LOGIN}
+        targetMode={SessionMode.FREE}
+        onAuthSuccess={onAuthSuccess}
+        onBack={onBack}
+      />
+    );
+
+    expect(screen.getByRole('textbox', { name: 'auth.email' })).toHaveAttribute(
+      'autocomplete',
+      'email'
+    );
+    expect(screen.getByLabelText('auth.password')).toHaveAttribute(
+      'autocomplete',
+      'current-password'
+    );
+  });
+
   it('quick access failure is non-leaking and alert-accessible', async () => {
     demoLoginMock.mockRejectedValueOnce(new Error('pg://secret-host/internal'));
     const user = userEvent.setup();

@@ -777,6 +777,18 @@ export function useFinancePreview({
                       </div>
                     ))}
                   </div>
+                ) : row.canonicalArtifactId && row.canonicalBusinessVersionId ? (
+                  <div className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
+                    <div className="font-medium text-emerald-700 dark:text-emerald-300">
+                      {t('finance.preview.canonicalComputed', 'Computed canonical result')}
+                    </div>
+                    <div>
+                      {t(
+                        'finance.preview.openCanonicalResult',
+                        'Open the workspace to inspect the verified result and its source lineage.'
+                      )}
+                    </div>
+                  </div>
                 ) : (
                   <div className="text-xs text-slate-500 dark:text-slate-400">
                     {t('finance.preview.notComputedDcf', 'Not computed yet — click "Compute DCF"')}
@@ -1263,7 +1275,14 @@ export function useFinancePreview({
           <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
           <PreviewRelations
             items={relationItems}
-            emptyLabel={t('common.noRelations', 'No relations')}
+            emptyLabel={
+              row.canonicalArtifactId && row.canonicalBusinessVersionId
+                ? t(
+                    'finance.preview.relationsInWorkspace',
+                    'Verified lineage is available in the canonical workspace'
+                  )
+                : t('common.noRelations', 'No relations')
+            }
           />
           {versionSnapshots && versionSnapshots.length > 0 && (
             <>

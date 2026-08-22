@@ -53,6 +53,28 @@ afterEach(() => {
 });
 
 describe('StatementPackWorkspaceV2 — persistence + cold reopen (AP_MOUNT §6)', () => {
+  it('uses the business-facing pack title instead of exposing a technical alias key', async () => {
+    setFeatureFlagOverrides({ financeStatementPackWorkspaceV2: true });
+    render(
+      <StatementPackWorkspaceV2
+        businessVersionId="bv-1"
+        displayName="CD PROJEKT S.A."
+        resolveLineLabel={resolveLineLabel}
+        fetchers={fakeFetchers('financial_statement_packs:8b7b08b8-technical-id')}
+        onOpenArtifact={() => {}}
+        onCreateNew={() => {}}
+        onOpenReportResult={() => {}}
+      />
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId('finance-workspace-bar-name')).toHaveTextContent(
+        'CD PROJEKT S.A.'
+      )
+    );
+    expect(screen.queryByText(/financial_statement_packs:/)).not.toBeInTheDocument();
+  });
+
   it('a committed rename is sent to the real fetcher, and a cold-reopened instance shows the persisted name', async () => {
     setFeatureFlagOverrides({ financeStatementPackWorkspaceV2: true });
     const renameArtifact = vi.fn().mockResolvedValue(undefined);

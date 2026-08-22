@@ -6,6 +6,7 @@ import path from 'path';
 import { Pool } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import bcrypt from 'bcryptjs';
 
 import { inputSanitizationMiddleware } from '../../middleware/inputSanitization.middleware.js';
 import financeRoutes from '../../routes/v8/finance.routes.js';
@@ -30,6 +31,7 @@ import { insertEdge } from '../finance/canonical/lineageService.js';
 import { mapStatementLines } from '../finance/canonical/statementMappingService.js';
 import { runReconciliation } from '../finance/canonical/statementReconciliationService.js';
 import { runBaselineCompute } from '../finance/canonical/baselineComputeService.js';
+import { configureBaselineWorkspaceContext } from '../finance/canonical/baselineContextService.js';
 import { runPredictionCompute } from '../finance/canonical/predictionComputeService.js';
 import { runPreflight } from '../finance/canonical/predictionPreflightService.js';
 import { runDcfFcffValuation } from '../finance/canonical/valuationComputeService.js';
@@ -38,14 +40,23 @@ const DATABASE_URL = process.env.DATABASE_URL || '';
 const PDF_PATH = process.env.FINANCE_STATEMENT_ACCEPTANCE_PDF || '';
 const EXPECTED_PDF_SHA = 'e993f390ccf5d67143b1076ef7b6d9eed23f234f1c29dc23892eeb57418e3c0e';
 const enabled = process.env.RUN_DB_TESTS === '1';
+const retainOwnerDatabase = process.env.FINANCE_OWNER_FIXTURE_RETAIN_DATABASE === '1';
+const dropOwnerDatabase = process.env.FINANCE_STATEMENT_DROP_DATABASE_AFTER === '1';
+const fixtureId = 'W3-FINANCE-OWNER-v1';
+const ownershipNonce = process.env.FINANCE_OWNER_FIXTURE_OWNERSHIP_NONCE || '';
+const fixturePasswords = Object.freeze({
+  owner: 'Wave3FinanceOwner!2026',
+  admin: 'Wave3FinanceAdmin!2026',
+  foreignOwner: 'Wave3FinanceForeign!2026',
+});
 let disposableDatabaseName = '';
 if (enabled) {
   if (process.env.MOCK_DB !== 'false') throw new Error('RealPG proof requires MOCK_DB=false.');
   if (!DATABASE_URL.startsWith('postgres')) throw new Error('RealPG proof requires DATABASE_URL.');
   if (!PDF_PATH) throw new Error('FINANCE_STATEMENT_ACCEPTANCE_PDF is required.');
-  if (process.env.FINANCE_STATEMENT_DROP_DATABASE_AFTER !== '1') {
+  if (retainOwnerDatabase === dropOwnerDatabase) {
     throw new Error(
-      'FINANCE_STATEMENT_DROP_DATABASE_AFTER=1 is required for immutable-ledger cleanup.'
+      'Exactly one of FINANCE_STATEMENT_DROP_DATABASE_AFTER=1 or FINANCE_OWNER_FIXTURE_RETAIN_DATABASE=1 is required.'
     );
   }
   const parsed = new URL(DATABASE_URL);
@@ -68,6 +79,9 @@ if (enabled) {
   ) {
     throw new Error('Wave 3 Finance owner database requires explicit YES and manifest path');
   }
+  if (retainOwnerDatabase && !/^[a-f0-9]{64}$/.test(ownershipNonce)) {
+    throw new Error('Retained Finance owner fixture requires a lowercase 64-hex ownership nonce');
+  }
 }
 
 describe.runIf(enabled)(
@@ -87,21 +101,53 @@ describe.runIf(enabled)(
       expect(crypto.createHash('sha256').update(bytes).digest('hex')).toBe(EXPECTED_PDF_SHA);
       pdfText = await PDFParserService.extractText(PDF_PATH);
       pool = new Pool({ connectionString: DATABASE_URL });
+      if (retainOwnerDatabase) {
+        await pool.query(`CREATE TABLE IF NOT EXISTS public.wave3_owner_fixture_markers(
+          fixture_id text PRIMARY KEY,
+          ownership_nonce text NOT NULL,
+          database_name text NOT NULL
+        )`);
+        await pool.query(
+          `INSERT INTO public.wave3_owner_fixture_markers(fixture_id,ownership_nonce,database_name)
+           VALUES($1,$2,current_database())
+           ON CONFLICT (fixture_id) DO NOTHING`,
+          [fixtureId, ownershipNonce]
+        );
+        const marker = await pool.query(
+          `SELECT count(*)::int AS count
+             FROM public.wave3_owner_fixture_markers
+            WHERE fixture_id=$1 AND ownership_nonce=$2 AND database_name=current_database()`,
+          [fixtureId, ownershipNonce]
+        );
+        if (marker.rows[0]?.count !== 1) {
+          throw new Error('Finance owner fixture durable marker mismatch');
+        }
+      }
       await pool.query(`INSERT INTO organizations(id,name,status) VALUES ($1,$2,'active')`, [
         organizationId,
         'Finance owner PG proof',
       ]);
       await pool.query(
-        `INSERT INTO users(id,organization_id,email,role,status) VALUES ($1,$2,$3,'OWNER','active')`,
-        [userId, organizationId, `${userId}@example.test`]
+        `INSERT INTO users(id,organization_id,email,password,role,status) VALUES ($1,$2,$3,$4,'OWNER','active')`,
+        [
+          userId,
+          organizationId,
+          `${userId}@example.test`,
+          await bcrypt.hash(fixturePasswords.owner, 10),
+        ]
       );
       await pool.query(
         `INSERT INTO organization_members(id,organization_id,user_id,role,status) VALUES ($1,$2,$3,'OWNER','ACTIVE')`,
         [`member-${nonce}`, organizationId, userId]
       );
       await pool.query(
-        `INSERT INTO users(id,organization_id,email,role,status) VALUES ($1,$2,$3,'ADMIN','active')`,
-        [adminId, organizationId, 'wave3-finance-admin@example.test']
+        `INSERT INTO users(id,organization_id,email,password,role,status) VALUES ($1,$2,$3,$4,'ADMIN','active')`,
+        [
+          adminId,
+          organizationId,
+          'wave3-finance-admin@example.test',
+          await bcrypt.hash(fixturePasswords.admin, 10),
+        ]
       );
       await pool.query(
         `INSERT INTO organization_members(id,organization_id,user_id,role,status) VALUES ($1,$2,$3,'ADMIN','ACTIVE')`,
@@ -112,8 +158,13 @@ describe.runIf(enabled)(
         'Finance owner foreign boundary',
       ]);
       await pool.query(
-        `INSERT INTO users(id,organization_id,email,role,status) VALUES ($1,$2,$3,'OWNER','active')`,
-        [foreignUserId, foreignOrganizationId, 'wave3-finance-foreign@example.test']
+        `INSERT INTO users(id,organization_id,email,password,role,status) VALUES ($1,$2,$3,$4,'OWNER','active')`,
+        [
+          foreignUserId,
+          foreignOrganizationId,
+          'wave3-finance-foreign@example.test',
+          await bcrypt.hash(fixturePasswords.foreignOwner, 10),
+        ]
       );
       await pool.query(
         `INSERT INTO organization_members(id,organization_id,user_id,role,status) VALUES ($1,$2,$3,'OWNER','ACTIVE')`,
@@ -124,6 +175,7 @@ describe.runIf(enabled)(
     afterAll(async () => {
       if (!pool) return;
       await pool.end();
+      if (retainOwnerDatabase) return;
       // Governance receipts are intentionally immutable, so cleanup is the
       // whole explicitly named scratch database—not row deletion. WITH FORCE
       // closes the application pool owned by the service imports in this test.
@@ -909,7 +961,11 @@ describe.runIf(enabled)(
         const created = await createArtifact({
           organizationId,
           artifactType,
-          naturalKey: `wave3-finance-owner-${workspace}-v1`,
+          naturalKey: {
+            baseline: 'CD PROJEKT — Model bazowy FY2025',
+            prediction: 'CD PROJEKT — Scenariusz bazowy FY2025',
+            valuation: 'CD PROJEKT — Wycena DCF FY2025',
+          }[workspace],
           createdBy: userId,
         });
         downstream[workspace] = {
@@ -1105,7 +1161,7 @@ describe.runIf(enabled)(
       const analysisArtifact = await createArtifact({
         organizationId,
         artifactType: 'HISTORICAL_ANALYSIS',
-        naturalKey: 'wave3-finance-owner-analysis-v1',
+        naturalKey: 'CD PROJEKT — Analiza historyczna FY2025',
         createdBy: userId,
       });
       const analysisBusinessVersionId = analysisArtifact.businessVersion.business_version_id;
@@ -1263,11 +1319,38 @@ describe.runIf(enabled)(
       await assumption('cogs_opex', 'COGS_PCT_OF_REVENUE', GOLDCO.cogs / GOLDCO.revenue, 'PCT');
       await assumption('cogs_opex', 'OPEX_PCT_OF_REVENUE', GOLDCO.opex / GOLDCO.revenue, 'PCT');
       await assumption('wc_dso_dio_dpo', 'DSO_DAYS', (GOLDCO.ar / GOLDCO.revenue) * 365, 'DAYS');
-      await assumption('wc_dso_dio_dpo', 'DIO_DAYS', (GOLDCO.inventory / GOLDCO.cogs) * 365, 'DAYS');
+      await assumption(
+        'wc_dso_dio_dpo',
+        'DIO_DAYS',
+        (GOLDCO.inventory / GOLDCO.cogs) * 365,
+        'DAYS'
+      );
       await assumption('wc_dso_dio_dpo', 'DPO_DAYS', (GOLDCO.ap / GOLDCO.cogs) * 365, 'DAYS');
-      await assumption('capex_depreciation', 'CAPEX_PCT_OF_REVENUE', GOLDCO.capex / GOLDCO.revenue, 'PCT');
-      await assumption('capex_depreciation', 'USEFUL_LIFE_MONTHS', (12 * GOLDCO.fixedAssets) / GOLDCO.depreciation, 'MONTHS');
+      await assumption(
+        'capex_depreciation',
+        'CAPEX_PCT_OF_REVENUE',
+        GOLDCO.capex / GOLDCO.revenue,
+        'PCT'
+      );
+      await assumption(
+        'capex_depreciation',
+        'USEFUL_LIFE_MONTHS',
+        (12 * GOLDCO.fixedAssets) / GOLDCO.depreciation,
+        'MONTHS'
+      );
       await assumption('tax_nol', 'STATUTORY_TAX_RATE_PCT', 0.19, 'PCT');
+      const baselineContext = await configureBaselineWorkspaceContext({
+        organizationId,
+        businessVersionId: baselineBusinessVersionId,
+        actorId: userId,
+        expectedVersion: 0,
+        idempotencyKey: 'wave3-finance-owner-baseline-context-v1',
+        entityId: entity.rows[0].id,
+        openingBalanceSheetPeriodId: openingPeriodId,
+        forecastPeriodIds,
+      });
+      expect(baselineContext.replay).toBe(false);
+      expect(baselineContext.forecastPeriods).toHaveLength(12);
       await pool.query(
         `INSERT INTO finance_baseline_schedules
            (organization_id,business_version_id,schedule_type,entity_id,schedule_item_code,
@@ -1588,8 +1671,19 @@ describe.runIf(enabled)(
         const manifest = {
           schemaVersion: 1,
           fixture: 'wave3-finance-owner-review-v1',
+          fixtureId,
+          ownershipState: retainOwnerDatabase ? 'FINAL' : 'EPHEMERAL_EVIDENCE',
+          ownershipNonce: retainOwnerDatabase ? ownershipNonce : undefined,
+          marker: retainOwnerDatabase
+            ? {
+                table: 'wave3_owner_fixture_markers',
+                fixtureId,
+                ownershipNonce,
+              }
+            : undefined,
+          databaseName: disposableDatabaseName,
           databaseGuard: 'consultify_w3_finance_owner_*',
-          cleanup: 'WHOLE_DATABASE_DROP',
+          cleanup: retainOwnerDatabase ? 'RETAINED_DATABASE_MARKER_BOUND' : 'WHOLE_DATABASE_DROP',
           source: { fileName: path.basename(PDF_PATH), sha256: EXPECTED_PDF_SHA },
           personas: {
             owner: { userId, organizationId, role: 'OWNER', membershipStatus: 'ACTIVE' },
@@ -1621,7 +1715,7 @@ describe.runIf(enabled)(
               fixtureState: 'EXACT_SIX_CONFIRMED',
               ownerReviewReady: false,
               deepLinkVerified: false,
-              deepLink: `/finance/statements/${encodeURIComponent(primary)}`,
+              deepLink: `/finance/statements/${encodeURIComponent(primary)}?ff_wave3FinanceOwnerReview=1`,
             },
             ...Object.fromEntries(
               Object.entries(downstream).map(([workspace, identity]) => [
@@ -1637,7 +1731,7 @@ describe.runIf(enabled)(
                           ? 'COMPUTED_STANDARD_BASE_CONFIRMED'
                           : workspace === 'valuation'
                             ? 'COMPUTED_DCF_FCFF_CONFIRMED'
-                      : 'IDENTITY_SHELL_NOT_COMPUTED',
+                            : 'IDENTITY_SHELL_NOT_COMPUTED',
                   ownerReviewReady: false,
                   deepLinkVerified: false,
                   deepLink: `/finance/${
@@ -1647,7 +1741,7 @@ describe.runIf(enabled)(
                       analysis: 'analyses',
                       valuation: 'valuations',
                     }[workspace]
-                  }/${encodeURIComponent(identity.artifactId)}`,
+                  }/${encodeURIComponent(identity.artifactId)}?ff_wave3FinanceOwnerReview=1`,
                 },
               ])
             ),
@@ -1658,6 +1752,7 @@ describe.runIf(enabled)(
           flag: 'wx',
         });
       }
+      if (retainOwnerDatabase) return;
       const reconciliationCountBeforeReopen = await pool.query(
         `SELECT count(*)::int AS count FROM finance_reconciliation_runs
           WHERE organization_id=$1 AND business_version_id=$2`,

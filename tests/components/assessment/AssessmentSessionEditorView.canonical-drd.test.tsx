@@ -10,9 +10,16 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-const { getAssessmentMock, updateAssessmentMock } = vi.hoisted(() => ({
+const { getAssessmentMock, updateAssessmentMock, useAssessmentPermissionsMock } = vi.hoisted(() => ({
   getAssessmentMock: vi.fn(),
   updateAssessmentMock: vi.fn(),
+  useAssessmentPermissionsMock: vi.fn(() => ({
+    role: 'viewer',
+    permissions: { canView: false, canEdit: false },
+    isLoading: false,
+    requestAccess: vi.fn(),
+    refreshPermissions: vi.fn(),
+  })),
 }));
 
 vi.mock('react-router-dom', async () => {
@@ -86,13 +93,7 @@ vi.mock('@/components/assessment/drd/DrdMethodWorkspaceScreen', () => ({
 
 vi.mock('@/components/assessment/permissions', () => ({
   RequestAccessModal: () => null,
-  useAssessmentPermissions: () => ({
-    role: 'admin',
-    permissions: { canView: true, canEdit: true },
-    isLoading: false,
-    requestAccess: vi.fn(),
-    refreshPermissions: vi.fn(),
-  }),
+  useAssessmentPermissions: useAssessmentPermissionsMock,
 }));
 
 import { AssessmentSessionEditorView } from '../../../src/views/AssessmentSessionEditorView';
@@ -102,6 +103,9 @@ describe('AssessmentSessionEditorView — canonical DRD owner', () => {
     render(<AssessmentSessionEditorView />);
 
     expect(screen.getByTestId('canonical-drd-workspace')).toHaveTextContent('method-session-1');
+    expect(useAssessmentPermissionsMock).toHaveBeenCalledWith('method-session-1', {
+      enabled: false,
+    });
     expect(getAssessmentMock).not.toHaveBeenCalled();
     expect(updateAssessmentMock).not.toHaveBeenCalled();
   });

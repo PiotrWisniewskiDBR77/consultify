@@ -38,6 +38,7 @@
 import { ChevronDown, ChevronRight, MoreHorizontal, MoreVertical } from 'lucide-react';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 
 export interface RowAction {
   id: string;
@@ -236,6 +237,7 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
   contextMenuAnchor = null,
   onContextMenuClose,
 }) => {
+  const { t } = useTranslation();
   const [kebabOpen, setKebabOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -547,8 +549,8 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
         ref={buttonRef}
         onClick={handleToggle}
         className={`${buttonHit} rounded-md text-slate-600 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-state-hover transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus`}
-        title="Actions"
-        aria-label="Row actions"
+        title={t('common.actions', 'Actions')}
+        aria-label={t('common.rowActions', 'Row actions')}
         aria-haspopup="menu"
         aria-expanded={isOpen}
       >

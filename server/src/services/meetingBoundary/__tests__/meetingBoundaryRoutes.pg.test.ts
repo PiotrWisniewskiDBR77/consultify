@@ -39,6 +39,8 @@ import { Pool } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import { meetingIntelligenceService } from '../../ai/meetingIntelligenceService.js';
+
 vi.mock('../../../middleware/auth.middleware.js', () => ({
   verifyToken: (req: any, res: any, next: () => void) => {
     const orgId = req.headers['x-test-org-id'];
@@ -81,6 +83,11 @@ const member = (org = ORG_A, user = USER_A) => ({
   'x-test-org-id': org,
   'x-test-user-id': user,
   'x-test-role': 'member',
+});
+const betaAdmin = (org = ORG_A, user = USER_A) => ({
+  'x-test-org-id': org,
+  'x-test-user-id': user,
+  'x-test-role': 'administrator',
 });
 const admin = (org = ORG_A, user = USER_A) => ({
   'x-test-org-id': org,
@@ -130,7 +137,7 @@ describe('meeting boundary — route layer (real Postgres)', () => {
   const createMeeting = async (org = ORG_A) =>
     request(app)
       .post('/api/meeting')
-      .set(member(org))
+      .set(betaAdmin(org))
       .send({ title: `${PREFIX}route-meeting`, startAt: '2026-09-20T09:00:00.000Z' });
 
   it('generate-notes DEFAULT no longer auto-persists into decisions_json / meeting_follow_ups, and creates a proposal instead', async () => {
@@ -139,7 +146,7 @@ describe('meeting boundary — route layer (real Postgres)', () => {
 
     const res = await request(app)
       .post(`/api/meeting/${meetingId}/generate-notes`)
-      .set(member())
+      .set(betaAdmin())
       .send({
         transcript: `${PREFIX} Ann: we decided to ship the pilot on Friday. Bob: action item - Bob will prepare the rollout plan by Monday.`,
         language: 'en',
@@ -166,13 +173,44 @@ describe('meeting boundary — route layer (real Postgres)', () => {
     expect(noteRow.rows[0].status).toBe('proposed');
   });
 
+  it('replays a completed command before invoking meeting intelligence again', async () => {
+    const created = await createMeeting();
+    const meetingId = created.body.meeting.id;
+    const payload = {
+      transcript: `${PREFIX} stable replay source text`,
+      language: 'en',
+      idempotencyKey: `${PREFIX}route-replay-before-ai`,
+    };
+    const generation = vi.spyOn(meetingIntelligenceService, 'generateMeetingNotes');
+    generation.mockClear();
+
+    const first = await request(app)
+      .post(`/api/meeting/${meetingId}/generate-notes`)
+      .set(betaAdmin())
+      .send(payload);
+    const replay = await request(app)
+      .post(`/api/meeting/${meetingId}/generate-notes`)
+      .set(betaAdmin())
+      .send(payload);
+
+    expect(first.status).toBe(201);
+    expect(replay.status).toBe(200);
+    expect(replay.body.meetingNoteId).toBe(first.body.meetingNoteId);
+    expect(replay.body.proposal).toMatchObject({
+      proposalId: first.body.proposal.proposalId,
+      replayed: true,
+    });
+    expect(generation).toHaveBeenCalledTimes(1);
+    generation.mockRestore();
+  });
+
   it('generate-notes with persist:true fails closed and performs no direct legacy write', async () => {
     const created = await createMeeting();
     const meetingId = created.body.meeting.id;
 
     const res = await request(app)
       .post(`/api/meeting/${meetingId}/generate-notes`)
-      .set(member())
+      .set(betaAdmin())
       .send({
         transcript: `${PREFIX} Ann: we decided to ship the beta on Tuesday. Bob: action item - Bob will write release notes.`,
         language: 'en',
@@ -197,7 +235,7 @@ describe('meeting boundary — route layer (real Postgres)', () => {
     const meetingId = created.body.meeting.id;
     const genRes = await request(app)
       .post(`/api/meeting/${meetingId}/generate-notes`)
-      .set(member())
+      .set(betaAdmin())
       .send({ transcript: `${PREFIX} role gate transcript, decided A, action B` });
     const noteId = genRes.body.meetingNoteId;
 
@@ -226,7 +264,7 @@ describe('meeting boundary — route layer (real Postgres)', () => {
     const meetingId = created.body.meeting.id;
     const genRes = await request(app)
       .post(`/api/meeting/${meetingId}/generate-notes`)
-      .set(member())
+      .set(betaAdmin())
       .send({ transcript: `${PREFIX} invalid action transcript` });
     const noteId = genRes.body.meetingNoteId;
 
@@ -252,13 +290,13 @@ describe('meeting boundary — route layer (real Postgres)', () => {
     const meetingId = created.body.meeting.id;
     const genRes = await request(app)
       .post(`/api/meeting/${meetingId}/generate-notes`)
-      .set(member(ORG_A))
+      .set(betaAdmin(ORG_A))
       .send({ transcript: `${PREFIX} tenant isolation route transcript` });
     const noteId = genRes.body.meetingNoteId;
 
     const crossOrgList = await request(app)
       .get(`/api/meeting/${meetingId}/notes`)
-      .set(member(ORG_B, USER_B));
+      .set(betaAdmin(ORG_B, USER_B));
     expect(crossOrgList.status).toBe(404);
 
     const crossOrgDecision = await request(app)
@@ -270,7 +308,9 @@ describe('meeting boundary — route layer (real Postgres)', () => {
     const noteRow = await pool.query(`SELECT status FROM meeting_notes WHERE id = $1`, [noteId]);
     expect(noteRow.rows[0].status).toBe('proposed');
 
-    const ownOrgList = await request(app).get(`/api/meeting/${meetingId}/notes`).set(member(ORG_A));
+    const ownOrgList = await request(app)
+      .get(`/api/meeting/${meetingId}/notes`)
+      .set(betaAdmin(ORG_A));
     expect(ownOrgList.status).toBe(200);
     expect(ownOrgList.body.notes.some((n: any) => n.id === noteId)).toBe(true);
   });

@@ -95,6 +95,7 @@ import { useUserCan } from '@/hooks/useUserCan';
 import i18n from '@/i18n';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
+import { getMyWorkContextSummary, type MyWorkContextSummary } from '@/services/api/myWorkContext';
 import { AppView } from '@/types';
 import { createWorkspaceContext, type WorkspaceType } from '@/types/workspace';
 import { isAgentPlanEnabled } from '@/utils/agentPlanFlag';
@@ -1192,19 +1193,12 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   // M1: Chat context enrichment — aggregated workload summary
-  const [contextSummary, setContextSummary] = useState<Record<string, any> | null>(null);
+  const [contextSummary, setContextSummary] = useState<MyWorkContextSummary | null>(null);
 
   useEffect(() => {
     const fetchContext = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const res = await fetch('/api/my-work/context-summary', {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (res.ok) setContextSummary(await res.json());
+        setContextSummary(await getMyWorkContextSummary());
       } catch {
         /* ignore — partial enrichment is fine */
       }

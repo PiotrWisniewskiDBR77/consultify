@@ -15,35 +15,10 @@
  * exports, not the global fetch, or a dev-render harness silently keeps
  * hitting the real network.
  *
- * ---------------------------------------------------------------------
- * Known gap — server `version` column is not wired end-to-end (2026-08-13)
- * ---------------------------------------------------------------------
- * `tool_sessions.version` exists in Postgres (INTEGER NOT NULL DEFAULT 1,
- * bumped on every `answers_json` write — see
- * `server/src/controllers/ToolController.ts:1290`) but, verified by
- * reading that file directly:
- *   - `GET /api/tools/:toolId` does NOT return it — the handler builds its
- *     JSON response by hand and never lists `version`
- *     (`ToolController.ts:1129-1153`).
- *   - `PUT /api/tools/:toolId` does NOT accept an `expectedVersion` and
- *     does NOT perform a conditional `WHERE version = ?` update for a
- *     normal save (`ToolController.ts:1157-1369`) — that CAS pattern
- *     exists ONLY for the SWOT-proposal-accept path
- *     (`ToolController.ts:3045-3055`), a different endpoint entirely.
- *
- * `ToolController.ts` is owned by another workstream for the duration of
- * this session, so it could not be extended here (see
- * `docs/program/METHOD_TOOLS_2026-08-13/SESSION_HTTP_INVENTORY.md` for the
- * full inventory and a flagged follow-up). This adapter is written to be
- * forward-compatible with that gap being closed later:
- *   - every response is read defensively for an optional `version` field;
- *   - every update sends `expectedVersion` (silently ignored by today's
- *     server, wired for free once the server checks it);
- *   - ANY HTTP 409 from the update endpoint is treated as "conflict,
- *     needs reconciliation" — which is already correct today (the
- *     endpoint returns 409 for a locked/approved session, an invalid
- *     status transition, or a failed DoD gate) and will remain correct
- *     once a real stale-version 409 is added.
+ * The server returns a numeric version on create/GET and requires
+ * `expectedVersion` on every PUT. A stale writer receives 409 with the
+ * authoritative current version; callers must reconcile rather than
+ * silently overwrite newer state.
  */
 import { Api } from '@/services/api';
 
@@ -82,12 +57,7 @@ export interface ToolSessionApiRecord {
     canApproveTool?: boolean;
     canGenerate?: boolean;
   };
-  /**
-   * Not actually sent by the server today — see the "Known gap" note
-   * above. Read defensively so the adapter starts using it for free the
-   * moment ToolController is extended, without another frontend change.
-   */
-  version?: number;
+  version: number;
   [key: string]: unknown;
 }
 
@@ -100,6 +70,7 @@ export interface CreateToolSessionInput {
 export interface CreateToolSessionResult {
   id: string;
   status: string;
+  version: number;
 }
 
 export interface UpdateToolSessionInput {
@@ -111,21 +82,14 @@ export interface UpdateToolSessionInput {
   missingItems?: ToolSessionMissingItem[];
   status?: string;
   failureReason?: string;
-  /**
-   * Forward-compatible optimistic-concurrency token. Ignored by the
-   * server today (see file header) — sending it is harmless and costs
-   * nothing; once ToolController checks it, stale saves start failing
-   * with a real 409 with no further frontend change required.
-   */
-  expectedVersion?: number;
+  expectedVersion: number;
 }
 
 export interface UpdateToolSessionResult {
   id: string;
   status: string;
   updatedAt: string;
-  /** See "Known gap" — undefined until the server sends it back. */
-  version?: number;
+  version: number;
 }
 
 export const toolSessionApi = {
@@ -138,10 +102,7 @@ export const toolSessionApi = {
   },
 
   async update(toolId: string, input: UpdateToolSessionInput): Promise<UpdateToolSessionResult> {
-    // `Api.updateToolSession`'s payload type predates `expectedVersion`;
-    // cast at this single boundary rather than widening the shared,
-    // 21k-line api.ts service (out of this stream's scope).
-    return Api.updateToolSession(toolId, input as Parameters<typeof Api.updateToolSession>[1]);
+    return Api.updateToolSession(toolId, input);
   },
 };
 

@@ -50,7 +50,6 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { useConfirmDialog } from '@/components/MyWork/shared/ConfirmDialog';
 import { GeneratedReportView } from '@/components/Reports/GeneratedReportView';
 import {
   generateReportDocument,
@@ -83,11 +82,7 @@ import {
 } from '@/services/api/v8/execution-control';
 import { refreshExecutionWriteTruth } from '@/services/executionWriteTruth';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
-import {
-  getStatusActions,
-  getStatusesForModule,
-  STATUS_METADATA,
-} from '@/services/initiativeLifecycle';
+import { getStatusesForModule, STATUS_METADATA } from '@/services/initiativeLifecycle';
 import { useConversationStore } from '@/store/useConversationStore';
 import { getArtifactPath } from '@/utils/artifactLinks';
 import { mapHubLoadFailureToPresentation } from '@/utils/errors/mapHubLoadFailureToPresentation';
@@ -120,13 +115,10 @@ import {
   Menu3Chip,
 } from '../shared/ModuleMenu3';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
-import ExecutionChangeSignalsPanel from './ExecutionChangeSignalsPanel';
 import { ExecutionControlSurface } from './ExecutionControlSurface';
-import { isExecutionFlagEnabled } from './executionFeatureFlags';
-import { ExecutionInitiativesKanbanView } from './ExecutionInitiativesKanbanView';
-import ExecutionIntelligencePanel from './ExecutionIntelligencePanel';
-import { ExecutionManagementView } from './ExecutionManagementView';
 import { ExecutionDeliveryClosurePanel } from './ExecutionDeliveryClosurePanel';
+import { isExecutionFlagEnabled } from './executionFeatureFlags';
+import { ExecutionManagementView } from './ExecutionManagementView';
 import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
 import { ExecutionRealizationsSurface } from './ExecutionRealizationsSurface';
 import {
@@ -141,8 +133,7 @@ import {
 import { ExecutionReportsSurface } from './ExecutionReportsSurface';
 import { ExecutionResourcesSurface } from './ExecutionResourcesSurface';
 import ExecutionSummaryOneLook from './ExecutionSummaryOneLook';
-import { DelaySignalItem, ExecutionTimelineView, RiskSignalItem } from './ExecutionTimelineView';
-import ExecutionWhatIfSandbox from './ExecutionWhatIfSandbox';
+import type { DelaySignalItem, RiskSignalItem } from './ExecutionTimelineView';
 import { ExecutionWorkloadView } from './ExecutionWorkloadView';
 import { ExecutionWorkSurface } from './ExecutionWorkSurface';
 import { ReportDocumentView } from './ReportDocumentView';
@@ -1835,7 +1826,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const clearSummarySelection = useCallback(() => setSummarySelectedIds(new Set()), []);
 
   // #12 — confirm dialog for bulk mutations (canon, replaces native confirm()).
-  const { dialog: bulkConfirmDialog, confirm: confirmBulk } = useConfirmDialog();
 
   // Drop selections for rows that are no longer visible (filter/scope changes).
   useEffect(() => {
@@ -2022,136 +2012,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     [t]
   );
 
-  // Handle inline status change from table/grid
-  const handleInlineStatusChange = useCallback(
-    async (initiativeId: string, newStatus: string) => {
-      if (isPilotParticipant) {
-        dispatchPilotAccessBlocked({
-          href: '/execution',
-        });
-        return;
-      }
-      const previous = initiatives.find((i) => i.id === initiativeId);
-      try {
-        // Backend exposes a dedicated status transition endpoint (with validation + governance rules).
-        await Api.patch(`/initiatives/${initiativeId}/status`, { status: newStatus });
-        setInitiatives((prev) =>
-          prev.map((i) =>
-            i.id === initiativeId ? { ...i, status: newStatus as InitiativeStatus } : i
-          )
-        );
-        trackFunnelEvent('execution_status_updated', {
-          initiativeId,
-          from: previous?.status || null,
-          to: newStatus,
-          tab: activeTab,
-          viewMode,
-        });
-        toast.success(t('execution.toast.statusUpdated', 'Status updated'));
-      } catch (e: any) {
-        toast.error(
-          e?.message || t('execution.toast.statusUpdateFailed', 'Failed to update status')
-        );
-      }
-    },
-    [activeTab, initiatives, isPilotParticipant, t, viewMode]
-  );
-
-  // #12 — bulk status targets = INTERSECTION of governed transitions valid for
-  // EVERY selected initiative. A single bulk target is only offered when it is a
-  // legal next-status for all of them; the per-row PATCH stays server-validated
-  // (governance gate), so bulk never bypasses transition rules.
-  const bulkStatusTargets = useMemo(() => {
-    const selected = Array.from(summarySelectedIds)
-      .map((id) => initiatives.find((i) => i.id === id))
-      .filter((i): i is FullInitiative => Boolean(i));
-    if (selected.length === 0) return [] as { targetStatus: InitiativeStatus; label: string }[];
-    let common: string[] | null = null;
-    for (const init of selected) {
-      const targets = getStatusActions(init.status as InitiativeStatus).map((a) =>
-        String(a.targetStatus)
-      );
-      common = common === null ? targets : common.filter((x) => targets.includes(x));
-    }
-    // Dedupe by display label: two distinct target statuses can share a label
-    // (e.g. BLOCKED → both resume paths render as "Executing"); keep the first so
-    // the bar never shows two identical-looking buttons.
-    const seenLabels = new Set<string>();
-    return (common ?? [])
-      .map((ts) => ({
-        targetStatus: ts as InitiativeStatus,
-        label: STATUS_METADATA[ts as InitiativeStatus]?.label || ts,
-      }))
-      .filter((o) => {
-        if (seenLabels.has(o.label)) return false;
-        seenLabels.add(o.label);
-        return true;
-      });
-  }, [summarySelectedIds, initiatives]);
-
-  // #12 — apply one governed status to all selected initiatives (loops the live
-  // PATCH /initiatives/:id/status; one summary toast; honest partial-failure report).
-  const handleBulkStatusChange = useCallback(
-    async (newStatus: InitiativeStatus) => {
-      if (isPilotParticipant) {
-        dispatchPilotAccessBlocked({ href: '/execution' });
-        return;
-      }
-      const ids = Array.from(summarySelectedIds);
-      if (ids.length === 0) return;
-      const meta = STATUS_METADATA[newStatus];
-      const ok = await confirmBulk({
-        title: t('execution.bulk.confirmStatusTitle', 'Zmienić status zaznaczonych inicjatyw?'),
-        description: t(
-          'execution.bulk.confirmStatusDesc',
-          'Nowy status „{{status}}" dla {{count}} inicjatyw. Każda zmiana podlega regułom governance.',
-          { status: meta?.label || String(newStatus), count: ids.length }
-        ),
-        confirmLabel: t('common.apply', 'Zastosuj'),
-        cancelLabel: t('common.cancel', 'Anuluj'),
-        variant: 'warning',
-      });
-      if (!ok) return;
-      let success = 0;
-      let failed = 0;
-      for (const id of ids) {
-        try {
-          await Api.patch(`/initiatives/${id}/status`, { status: newStatus });
-          setInitiatives((prev) =>
-            prev.map((i) => (i.id === id ? { ...i, status: newStatus } : i))
-          );
-          success += 1;
-        } catch {
-          failed += 1;
-        }
-      }
-      trackFunnelEvent('execution_status_updated', {
-        bulk: true,
-        count: ids.length,
-        to: newStatus,
-        success,
-        failed,
-        tab: activeTab,
-      });
-      clearSummarySelection();
-      if (failed === 0) {
-        toast.success(
-          t('execution.bulk.statusUpdated', 'Zaktualizowano status {{count}} inicjatyw', {
-            count: success,
-          })
-        );
-      } else {
-        toast.error(
-          t('execution.bulk.statusPartial', 'Zmieniono {{success}}, błędów: {{failed}}', {
-            success,
-            failed,
-          })
-        );
-      }
-    },
-    [isPilotParticipant, summarySelectedIds, confirmBulk, t, activeTab, clearSummarySelection]
-  );
-
   // Table columns
   const columns: TableColumn[] = useMemo(
     () => [
@@ -2204,33 +2064,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         }),
         render: (row) => {
           const meta = STATUS_METADATA[row.status as InitiativeStatus];
-          const actions = getStatusActions(row.status as InitiativeStatus);
-          const canMutateStatus = !isPilotParticipant && actions.length > 0;
           return (
-            <div className="relative group">
-              <EntityStatusChip
-                status={String(row.status)}
-                label={meta?.label || String(row.status)}
-              />
-              {canMutateStatus && (
-                <select
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  value=""
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      handleInlineStatusChange(row.id, e.target.value);
-                    }
-                  }}
-                >
-                  <option value="">{meta?.label || row.status}</option>
-                  {actions.map((a) => (
-                    <option key={a.targetStatus} value={a.targetStatus}>
-                      {a.label}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
+            <EntityStatusChip
+              status={String(row.status)}
+              label={meta?.label || String(row.status)}
+            />
           );
         },
       },
@@ -2398,7 +2236,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         },
       },
     ],
-    [decisionsByInitiative, handleInlineStatusChange, isPilotParticipant, t, tasksByInitiative]
+    [decisionsByInitiative, t, tasksByInitiative]
   );
 
   const scopeToggle = (
@@ -2729,9 +2567,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const buildInitiativeRowMenu = useCallback(
     (init: FullInitiative): StandardRowMenu => {
       const hasDue = Boolean(init.plannedEndDate || init.slaDeadline);
-      const statusActions = isPilotParticipant
-        ? []
-        : getStatusActions(init.status as InitiativeStatus);
       return {
         primary: [
           {
@@ -2741,12 +2576,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             onClick: () => setSummaryPreviewInitiativeId(init.id),
           },
         ],
-        statusTransitions: statusActions.map((action) => ({
-          id: `status-${action.targetStatus}`,
-          label: action.label,
-          icon: CheckCircle2,
-          onClick: () => handleInlineStatusChange(init.id, String(action.targetStatus)),
-        })),
+        statusTransitions: [],
         timeActions: hasDue
           ? [
               {
@@ -2770,7 +2600,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         },
       };
     },
-    [handleInlineStatusChange, handleOpenDocument, isPilotParticipant, t]
+    [handleOpenDocument, isPilotParticipant, t]
   );
 
   // Triada standard (StandardTable rowMenu contract, canon A6) — Reports
@@ -5332,46 +5162,7 @@ Please return:
   // table, 1:1 with Assessment/Results catalog bulk bars. Replaces the
   // FilterableTable-internal bulk strip that used to live inline in the table
   // content area.
-  const summaryBulkCommandRowContent =
-    activeTab === 'list' && viewMode === 'table' && summarySelectedIds.size > 0 ? (
-      <div className={MENU_3_INNER_CLASS}>
-        <div className={MENU_3_LEFT_CLASS}>
-          <span className="inline-flex h-7 items-center rounded-full px-2.5 text-[11px] font-semibold text-c-text whitespace-nowrap">
-            {t('execution.table.selectedCount', '{{count}} selected', {
-              count: summarySelectedIds.size,
-            })}
-          </span>
-          <Menu3Chip onClick={toggleSummarySelectAll}>
-            {t('common.selectAll', 'Select all')}
-          </Menu3Chip>
-          <Menu3Chip onClick={clearSummarySelection}>{t('common.clear', 'Clear')}</Menu3Chip>
-          {!isPilotParticipant && bulkStatusTargets.length > 0 && (
-            <>
-              <span className="text-xs text-c-text-muted select-none">·</span>
-              <span className="text-xs text-c-text-muted select-none">
-                {t('execution.bulk.setStatus', 'Zmień status:')}
-              </span>
-              {bulkStatusTargets.map((tg) => (
-                <button
-                  key={tg.targetStatus}
-                  type="button"
-                  onClick={() => void handleBulkStatusChange(tg.targetStatus)}
-                  className="rounded-md border border-c-border-subtle px-2 py-0.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors"
-                >
-                  {tg.label}
-                </button>
-              ))}
-            </>
-          )}
-          {!isPilotParticipant && bulkStatusTargets.length === 0 && (
-            <span className="text-xs text-c-text-muted select-none">
-              {t('execution.bulk.noCommonStatus', 'Brak wspólnej akcji statusu dla zaznaczenia')}
-            </span>
-          )}
-        </div>
-        <div className={MENU_3_RIGHT_CLASS} />
-      </div>
-    ) : null;
+  const summaryBulkCommandRowContent = null;
 
   // Triada standard (canon A3/Menu 3): bulk command row for the 'reports' tab
   // table, 1:1 with the 'list' tab above. Report catalog rows have no bulk
@@ -5566,202 +5357,6 @@ Please return:
             sourceModule="execution"
           />
         </Suspense>
-      );
-    }
-
-    if (activeTab === 'list') {
-      if (viewMode === 'kanban') {
-        return (
-          <ExecutionInitiativesKanbanView
-            initiatives={portfolioInitiatives}
-            scope={scope}
-            onInitiativeClick={(pi) => {
-              const full =
-                summaryInitiatives.find((x) => x.id === pi.id) ||
-                filteredInitiatives.find((x) => x.id === pi.id);
-              if (full) handleOpenSidePanel(full);
-            }}
-            onStatusChange={(id, status) => handleInlineStatusChange(id, status)}
-            readOnly={isPilotParticipant}
-          />
-        );
-      }
-
-      if (viewMode === 'timeline') {
-        return (
-          <div className="min-h-[420px]">
-            {controlTowerFailed && (
-              <div className="px-4 pt-3">
-                <Callout
-                  variant="warning"
-                  title={t('execution.controlTower.failed', 'Control tower signals unavailable')}
-                >
-                  {t(
-                    'execution.controlTower.failedDesc',
-                    'Timeline warnings and capacity signals could not be loaded. The view is operating without risk and delay overlays.'
-                  )}
-                </Callout>
-              </div>
-            )}
-            <ExecutionTimelineView
-              initiatives={
-                (summaryInitiatives.length
-                  ? summaryInitiatives
-                  : filteredInitiatives) as FullInitiative[]
-              }
-              onInitiativeClick={handleOpenSidePanel}
-              onUpdateInitiative={isPilotParticipant ? undefined : handleInitiativeUpdate}
-              onTimelineUpdate={undefined}
-              onDependenciesChanged={isPilotParticipant ? undefined : handleRefresh}
-              riskSignals={riskSignals}
-              delaySignals={delaySignals}
-              governedTimelineWarnings={timelineWarnings}
-              projectId={currentProjectId || undefined}
-            />
-          </div>
-        );
-      }
-
-      // Triada standard (docs/ui-standards/TRIADA_KANON.md A4-A7): Execution
-      // 'list' (Portfolio) tab → StandardTable + StandardPreview, 1:1 with the
-      // Assessment 'list' / Meeting 'list' / Results KPI catalog adopters.
-      // Module declares TYLKO data + kebab contract (buildInitiativeRowMenu);
-      // all chrome comes from the Standard* facades.
-      const selectedRow = selectedSummaryInitiative;
-      const previewModel = selectedRow ? mapToPreviewModel(selectedRow) : null;
-
-      return (
-        <div className="flex h-full flex-col overflow-hidden">
-          {isExecutionFlagEnabled('intelligence') && (
-            <div className="shrink-0 px-4 pt-3">
-              <ExecutionIntelligencePanel projectId={currentProjectId || 'all'} />
-            </div>
-          )}
-          {isExecutionFlagEnabled('changeSignals') && (
-            <div className="shrink-0 px-4 pt-3">
-              <ExecutionChangeSignalsPanel />
-            </div>
-          )}
-          {isExecutionFlagEnabled('whatIfSandbox') && (
-            <div className="shrink-0 px-4 pt-3">
-              <ExecutionWhatIfSandbox
-                baseline={{
-                  healthScore: portfolioMetrics?.healthScore ?? executionHealth?.healthScore ?? 0,
-                }}
-              />
-            </div>
-          )}
-          {bulkConfirmDialog}
-          <div className="min-h-0 flex-1 flex overflow-hidden">
-            <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
-              <StandardTable
-                columns={columns}
-                data={
-                  summaryInitiatives as unknown as Array<Record<string, unknown> & { id: string }>
-                }
-                selectedRowId={summaryPreviewInitiativeId}
-                onRowClick={(row) => setSummaryPreviewInitiativeId(String((row as any).id))}
-                onRowDoubleClick={(row) => {
-                  const init = summaryInitiatives.find((x) => x.id === (row as any).id);
-                  if (init) handleOpenDocument(init);
-                }}
-                rowDescription={() => null}
-                persistKey="execution-summary"
-                density="compact"
-                selection={{ selectedIds: summarySelectedIds, onChange: setSummarySelectedIds }}
-                empty={{
-                  icon: LayoutDashboard,
-                  title: t('execution.empty.noInExecution', 'No initiatives in execution'),
-                  description: t(
-                    'execution.empty.noInExecutionDesc',
-                    'Initiatives promoted to execution will appear here.'
-                  ),
-                }}
-                rowMenu={(row) => {
-                  const init = summaryInitiatives.find((x) => x.id === (row as any).id);
-                  return init
-                    ? buildInitiativeRowMenu(init)
-                    : ({ primary: [], universalHandlers: {}, destructive: {} } as StandardRowMenu);
-                }}
-                activeFilters={summaryFilters}
-                onFilterChange={setSummaryFilters}
-              />
-            </div>
-
-            {selectedRow && previewModel ? (
-              <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
-                <StandardPreview
-                  title={selectedRow.name || t('execution.initiativeLabel', 'Initiative')}
-                  onClose={() => setSummaryPreviewInitiativeId(null)}
-                  onOpenFull={() => handleOpenDocument(selectedRow)}
-                  meta={{
-                    pills: [
-                      {
-                        label:
-                          STATUS_METADATA[selectedRow.status as InitiativeStatus]?.label ||
-                          String(selectedRow.status),
-                        tone: statusChipTone(String(selectedRow.status)),
-                      },
-                      {
-                        label: `${previewModel.progress ?? 0}%`,
-                        tone: 'neutral',
-                      },
-                    ],
-                    trailing: (
-                      <span className="text-[11px] font-semibold text-c-text-secondary">
-                        {selectedRow.plannedEndDate
-                          ? new Date(selectedRow.plannedEndDate).toLocaleDateString()
-                          : '—'}
-                      </span>
-                    ),
-                  }}
-                  details={{
-                    text: [
-                      `${t('execution.table.assignee', 'Owner')}: ${
-                        previewModel.ownerBusiness
-                          ? `${previewModel.ownerBusiness.firstName ?? ''} ${previewModel.ownerBusiness.lastName ?? ''}`.trim()
-                          : t('execution.table.unassigned', 'Unassigned')
-                      }`,
-                      `${t('execution.table.progress', 'Progress')}: ${previewModel.progress ?? 0}%`,
-                      `${t('execution.table.deadline', 'Due')}: ${
-                        selectedRow.plannedEndDate
-                          ? new Date(selectedRow.plannedEndDate).toLocaleDateString()
-                          : '—'
-                      }`,
-                      `${t('execution.table.tasks', 'Tasks')}: ${
-                        tasksByInitiative[selectedRow.id]?.length ?? 0
-                      }`,
-                      '',
-                      previewModel.summary?.trim() ||
-                        previewModel.description?.trim() ||
-                        t('common.noDescription', 'No description'),
-                    ].join('\n'),
-                    onCopy: () => {
-                      void navigator.clipboard?.writeText(
-                        `${selectedRow.name} — ${selectedRow.status} (${previewModel.progress ?? 0}%)`
-                      );
-                    },
-                  }}
-                  ai={{
-                    hints: [
-                      t(
-                        'execution.summary.summarizePrompt',
-                        'Summarize this initiative in 5 bullets and propose 3 next steps.'
-                      ),
-                    ],
-                    onRunHint: (hint) => openAiChatForInitiative(selectedRow, hint),
-                  }}
-                  relations={
-                    previewModel.sourceType
-                      ? [{ label: `${t('common.source', 'Source')}: ${previewModel.sourceType}` }]
-                      : []
-                  }
-                  actions={listPreviewActions}
-                />
-              </aside>
-            ) : null}
-          </div>
-        </div>
       );
     }
 

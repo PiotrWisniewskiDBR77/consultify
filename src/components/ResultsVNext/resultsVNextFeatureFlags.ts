@@ -26,6 +26,7 @@ import {
   isDemoAcceptanceProfileEnabled,
   type DemoAcceptanceProfileSource,
 } from '@/utils/demoAcceptanceProfile';
+import { isResultsOwnerReviewModeEnabled } from '@/components/Results/resultsOwnerReviewMode';
 
 type FlagKeys = { query: string; localStorage: string; env: string };
 
@@ -115,6 +116,7 @@ export function isResultsVNextFlagEnabled(
   flag: ResultsVNextFlag,
   profileSource?: DemoAcceptanceProfileSource
 ): boolean {
+  if (isResultsOwnerReviewModeEnabled()) return true;
   if (isDemoAcceptanceProfileEnabled(profileSource)) return true;
   const keys = FLAGS[flag];
   const fromQuery = readQuery(keys.query);

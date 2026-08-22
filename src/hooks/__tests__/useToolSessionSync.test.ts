@@ -36,6 +36,7 @@ const record = (overrides: Record<string, unknown> = {}) => ({
   status: 'DRAFT',
   answers: { mission: 'grow' },
   updatedAt: '2026-08-13T00:00:00.000Z',
+  version: 1,
   ...overrides,
 });
 
@@ -135,7 +136,7 @@ describe('load()', () => {
     // Not applied automatically -- server data is still what's loaded.
     expect(result.current.data).toEqual({ mission: 'grow' });
 
-    update.mockResolvedValueOnce({ id: 'tool-1', status: 'DRAFT', updatedAt: 'later' });
+    update.mockResolvedValueOnce({ id: 'tool-1', status: 'DRAFT', updatedAt: 'later', version: 2 });
     act(() => {
       result.current.applyRecoveryDraft();
     });
@@ -147,7 +148,12 @@ describe('load()', () => {
 describe('setData() -> debounced autosave', () => {
   it('does not save before the debounce elapses, then saves once after', async () => {
     get.mockResolvedValueOnce(record());
-    update.mockResolvedValueOnce({ id: 'tool-1', status: 'DRAFT', updatedAt: 'saved-at' });
+    update.mockResolvedValueOnce({
+      id: 'tool-1',
+      status: 'DRAFT',
+      updatedAt: 'saved-at',
+      version: 2,
+    });
     vi.useFakeTimers();
 
     const { result } = renderHook(() => useToolSessionSync({ toolId: 'tool-1', debounceMs: 1000 }));
@@ -179,7 +185,12 @@ describe('setData() -> debounced autosave', () => {
 
   it('collapses several rapid edits into a single save (real debounce, not per-keystroke)', async () => {
     get.mockResolvedValueOnce(record());
-    update.mockResolvedValueOnce({ id: 'tool-1', status: 'DRAFT', updatedAt: 'saved-at' });
+    update.mockResolvedValueOnce({
+      id: 'tool-1',
+      status: 'DRAFT',
+      updatedAt: 'saved-at',
+      version: 2,
+    });
     vi.useFakeTimers();
 
     const { result } = renderHook(() => useToolSessionSync({ toolId: 'tool-1', debounceMs: 200 }));
@@ -314,7 +325,12 @@ describe('offline handling', () => {
 
     // Back online -- the queued edit must be retried automatically, with
     // no further action from the caller.
-    update.mockResolvedValueOnce({ id: 'tool-1', status: 'DRAFT', updatedAt: 'now-online' });
+    update.mockResolvedValueOnce({
+      id: 'tool-1',
+      status: 'DRAFT',
+      updatedAt: 'now-online',
+      version: 2,
+    });
     await act(async () => {
       window.dispatchEvent(new Event('online'));
       await Promise.resolve();
@@ -332,7 +348,7 @@ describe('offline handling', () => {
 describe('flush() / unmount', () => {
   it('flush() bypasses the debounce and saves immediately', async () => {
     get.mockResolvedValueOnce(record());
-    update.mockResolvedValueOnce({ id: 'tool-1', status: 'DRAFT', updatedAt: 'now' });
+    update.mockResolvedValueOnce({ id: 'tool-1', status: 'DRAFT', updatedAt: 'now', version: 2 });
     vi.useFakeTimers();
 
     const { result } = renderHook(() =>
@@ -355,7 +371,7 @@ describe('flush() / unmount', () => {
 
   it('flushes a still-pending debounced save on unmount (no edit is silently lost)', async () => {
     get.mockResolvedValueOnce(record());
-    update.mockResolvedValueOnce({ id: 'tool-1', status: 'DRAFT', updatedAt: 'now' });
+    update.mockResolvedValueOnce({ id: 'tool-1', status: 'DRAFT', updatedAt: 'now', version: 2 });
 
     const { result, unmount } = renderHook(() =>
       useToolSessionSync({ toolId: 'tool-1', debounceMs: 60_000 })

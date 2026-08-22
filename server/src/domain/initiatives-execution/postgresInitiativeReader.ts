@@ -96,6 +96,28 @@ export interface PendingDefinitionRemediationReadModel {
 export class PostgresInitiativeReader {
   constructor(private readonly pool: Pool) {}
 
+  async isEligibleInitiativeOwner(
+    organizationId: string,
+    projectId: string,
+    userId: string
+  ): Promise<boolean> {
+    const result = await this.pool.query(
+      `SELECT 1
+         FROM projects p
+         JOIN organization_members om
+           ON om.organization_id=p.organization_id
+          AND om.user_id=$3
+          AND UPPER(COALESCE(om.status, ''))='ACTIVE'
+         JOIN project_members pm
+           ON pm.project_id=p.id
+          AND pm.user_id=$3
+        WHERE p.id=$2 AND p.organization_id=$1
+        LIMIT 1`,
+      [organizationId, projectId, userId]
+    );
+    return result.rowCount === 1;
+  }
+
   async resolveProjectIdsForAggregate(
     organizationId: string,
     aggregateType: string,

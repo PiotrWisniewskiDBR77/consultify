@@ -49,7 +49,11 @@ export { newRoiIdempotencyKey, RoiApiError };
 export const ROI_SCENARIO_TYPES = ['downside', 'upside', 'custom'] as const;
 export type RoiScenarioType = (typeof ROI_SCENARIO_TYPES)[number];
 
-export const ROI_SCENARIO_OVERRIDE_TARGET_TYPES = ['assumption', 'cost_line', 'benefit_line'] as const;
+export const ROI_SCENARIO_OVERRIDE_TARGET_TYPES = [
+  'assumption',
+  'cost_line',
+  'benefit_line',
+] as const;
 export type RoiScenarioOverrideTargetType = (typeof ROI_SCENARIO_OVERRIDE_TARGET_TYPES)[number];
 
 export const ROI_EVIDENCE_LINK_PURPOSES = ['primary_evidence', 'supporting'] as const;
@@ -61,16 +65,31 @@ export type RoiEvidenceLinkDisputeStatus = (typeof ROI_EVIDENCE_LINK_DISPUTE_STA
 export const ROI_ACTUAL_ENTRY_TYPES = ['cost', 'benefit', 'observation'] as const;
 export type RoiActualEntryType = (typeof ROI_ACTUAL_ENTRY_TYPES)[number];
 
-export const ROI_DATA_QUALITY_STATUSES = ['unverified', 'verified', 'disputed', 'estimated'] as const;
+export const ROI_DATA_QUALITY_STATUSES = [
+  'unverified',
+  'verified',
+  'disputed',
+  'estimated',
+] as const;
 export type RoiDataQualityStatus = (typeof ROI_DATA_QUALITY_STATUSES)[number];
 
-export const ROI_VARIANCE_COMPARISON_TYPES = ['approved_vs_forecast', 'approved_vs_actual', 'forecast_vs_actual'] as const;
+export const ROI_VARIANCE_COMPARISON_TYPES = [
+  'approved_vs_forecast',
+  'approved_vs_actual',
+  'forecast_vs_actual',
+] as const;
 export type RoiVarianceComparisonType = (typeof ROI_VARIANCE_COMPARISON_TYPES)[number];
 
 export const ROI_VARIANCE_STATUSES = ['open', 'explained', 'action_planned', 'resolved'] as const;
 export type RoiVarianceStatus = (typeof ROI_VARIANCE_STATUSES)[number];
 
-export const ROI_COMPARE_METRICS = ['npv', 'simpleRoi', 'totalCosts', 'totalFinancialBenefits', 'paybackPeriods'] as const;
+export const ROI_COMPARE_METRICS = [
+  'npv',
+  'simpleRoi',
+  'totalCosts',
+  'totalFinancialBenefits',
+  'paybackPeriods',
+] as const;
 export type RoiCompareMetric = (typeof ROI_COMPARE_METRICS)[number];
 
 export const ROI_PIR_STATUSES = ['draft', 'finalized'] as const;
@@ -83,10 +102,19 @@ export const ROI_PIR_OUTCOMES = [
 ] as const;
 export type RoiPirOutcome = (typeof ROI_PIR_OUTCOMES)[number];
 
-export const ROI_PIR_TERESA_DRAFT_DISPOSITIONS = ['accepted', 'rejected', 'edited_then_accepted'] as const;
+export const ROI_PIR_TERESA_DRAFT_DISPOSITIONS = [
+  'accepted',
+  'rejected',
+  'edited_then_accepted',
+] as const;
 export type RoiPirTeresaDraftDisposition = (typeof ROI_PIR_TERESA_DRAFT_DISPOSITIONS)[number];
 
-export const ROI_FINANCE_RECONCILIATION_STATUSES = ['open', 'investigating', 'resolved', 'accepted_divergence'] as const;
+export const ROI_FINANCE_RECONCILIATION_STATUSES = [
+  'open',
+  'investigating',
+  'resolved',
+  'accepted_divergence',
+] as const;
 export type RoiFinanceReconciliationStatus = (typeof ROI_FINANCE_RECONCILIATION_STATUSES)[number];
 
 /** `RoiIrrStatus` shape is already declared in `roiApi.ts` — reused, not
@@ -126,8 +154,13 @@ export interface RoiScenario {
   updatedAt: string;
 }
 
-export async function listRoiScenarios(caseId: string, includeDeleted = false): Promise<RoiScenario[]> {
-  const { scenarios } = await getJson<{ scenarios: RoiScenario[] }>(`${base(caseId)}/scenarios`, { includeDeleted });
+export async function listRoiScenarios(
+  caseId: string,
+  includeDeleted = false
+): Promise<RoiScenario[]> {
+  const { scenarios } = await getJson<{ scenarios: RoiScenario[] }>(`${base(caseId)}/scenarios`, {
+    includeDeleted,
+  });
   return scenarios;
 }
 
@@ -141,7 +174,10 @@ export interface RoiScenarioWriteResponse {
   outcome: 'applied' | 'duplicate';
   scenario: RoiScenario;
 }
-export async function addRoiScenario(caseId: string, input: AddRoiScenarioInput & WriteTrailer): Promise<RoiScenarioWriteResponse> {
+export async function addRoiScenario(
+  caseId: string,
+  input: AddRoiScenarioInput & WriteTrailer
+): Promise<RoiScenarioWriteResponse> {
   return mutateJson<RoiScenarioWriteResponse>('POST', `${base(caseId)}/scenarios`, input);
 }
 export interface UpdateRoiScenarioInput {
@@ -155,14 +191,22 @@ export async function updateRoiScenario(
   scenarioId: string,
   input: UpdateRoiScenarioInput & WriteTrailer
 ): Promise<RoiScenarioWriteResponse> {
-  return mutateJson<RoiScenarioWriteResponse>('PATCH', `${base(caseId)}/scenarios/${encodeURIComponent(scenarioId)}`, input);
+  return mutateJson<RoiScenarioWriteResponse>(
+    'PATCH',
+    `${base(caseId)}/scenarios/${encodeURIComponent(scenarioId)}`,
+    input
+  );
 }
 export async function removeRoiScenario(
   caseId: string,
   scenarioId: string,
   input: RemoveTrailer & WriteTrailer
 ): Promise<RoiScenarioWriteResponse> {
-  return mutateJson<RoiScenarioWriteResponse>('DELETE', `${base(caseId)}/scenarios/${encodeURIComponent(scenarioId)}`, input);
+  return mutateJson<RoiScenarioWriteResponse>(
+    'DELETE',
+    `${base(caseId)}/scenarios/${encodeURIComponent(scenarioId)}`,
+    input
+  );
 }
 
 // ==========================================
@@ -212,7 +256,11 @@ export async function removeRoiScenarioOverride(
   overrideId: string,
   input: RemoveTrailer & WriteTrailer
 ): Promise<{ outcome: 'applied' | 'duplicate'; overrideId: string }> {
-  return mutateJson('DELETE', `${base(caseId)}/scenarios/${encodeURIComponent(scenarioId)}/overrides/${encodeURIComponent(overrideId)}`, input);
+  return mutateJson(
+    'DELETE',
+    `${base(caseId)}/scenarios/${encodeURIComponent(scenarioId)}/overrides/${encodeURIComponent(overrideId)}`,
+    input
+  );
 }
 
 // ==========================================
@@ -245,13 +293,25 @@ export interface RoiCalculationRun {
   completedAt: string;
   createdAt: string;
 }
-export async function listRoiCalculationRuns(caseId: string, limit = 50, offset = 0): Promise<RoiCalculationRun[]> {
-  const { runs } = await getJson<{ runs: RoiCalculationRun[] }>(`${base(caseId)}/calculation-runs`, { limit, offset });
+export async function listRoiCalculationRuns(
+  caseId: string,
+  limit = 50,
+  offset = 0
+): Promise<RoiCalculationRun[]> {
+  const { runs } = await getJson<{ runs: RoiCalculationRun[] }>(
+    `${base(caseId)}/calculation-runs`,
+    { limit, offset }
+  );
   return runs;
 }
-export async function getRoiCalculationRun(caseId: string, runId: string): Promise<RoiCalculationRun | null> {
+export async function getRoiCalculationRun(
+  caseId: string,
+  runId: string
+): Promise<RoiCalculationRun | null> {
   try {
-    const { run } = await getJson<{ run: RoiCalculationRun }>(`${base(caseId)}/calculation-runs/${encodeURIComponent(runId)}`);
+    const { run } = await getJson<{ run: RoiCalculationRun }>(
+      `${base(caseId)}/calculation-runs/${encodeURIComponent(runId)}`
+    );
     return run;
   } catch (err) {
     if (err instanceof RoiApiError && err.status === 404) return null;
@@ -270,7 +330,11 @@ export async function createRoiCalculationRun(
   caseId: string,
   input: CreateRoiCalculationRunInput & WriteTrailer
 ): Promise<RoiCalculationRunWriteResponse> {
-  return mutateJson<RoiCalculationRunWriteResponse>('POST', `${base(caseId)}/calculation-runs`, input);
+  return mutateJson<RoiCalculationRunWriteResponse>(
+    'POST',
+    `${base(caseId)}/calculation-runs`,
+    input
+  );
 }
 
 // ==========================================
@@ -298,7 +362,10 @@ export interface RoiBenefitEvidenceLink {
   createdAt: string;
   updatedAt: string;
 }
-export async function listRoiBenefitEvidenceLinks(caseId: string, benefitLineId: string): Promise<RoiBenefitEvidenceLink[]> {
+export async function listRoiBenefitEvidenceLinks(
+  caseId: string,
+  benefitLineId: string
+): Promise<RoiBenefitEvidenceLink[]> {
   const { links } = await getJson<{ links: RoiBenefitEvidenceLink[] }>(
     `${base(caseId)}/benefit-lines/${encodeURIComponent(benefitLineId)}/kpi-evidence-links`
   );
@@ -370,10 +437,15 @@ export interface RoiApprovalSnapshot {
   createdAt: string;
 }
 export async function listRoiApprovalSnapshots(caseId: string): Promise<RoiApprovalSnapshot[]> {
-  const { snapshots } = await getJson<{ snapshots: RoiApprovalSnapshot[] }>(`${base(caseId)}/approval-snapshots`);
+  const { snapshots } = await getJson<{ snapshots: RoiApprovalSnapshot[] }>(
+    `${base(caseId)}/approval-snapshots`
+  );
   return snapshots;
 }
-export async function getRoiApprovalSnapshot(caseId: string, snapshotId: string): Promise<RoiApprovalSnapshot | null> {
+export async function getRoiApprovalSnapshot(
+  caseId: string,
+  snapshotId: string
+): Promise<RoiApprovalSnapshot | null> {
   try {
     const { snapshot } = await getJson<{ snapshot: RoiApprovalSnapshot }>(
       `${base(caseId)}/approval-snapshots/${encodeURIComponent(snapshotId)}`
@@ -415,10 +487,15 @@ export interface RoiForecastVersion {
   createdAt: string;
 }
 export async function listRoiForecastVersions(caseId: string): Promise<RoiForecastVersion[]> {
-  const { forecastVersions } = await getJson<{ forecastVersions: RoiForecastVersion[] }>(`${base(caseId)}/forecast-versions`);
+  const { forecastVersions } = await getJson<{ forecastVersions: RoiForecastVersion[] }>(
+    `${base(caseId)}/forecast-versions`
+  );
   return forecastVersions;
 }
-export async function getRoiForecastVersion(caseId: string, forecastVersionId: string): Promise<RoiForecastVersion | null> {
+export async function getRoiForecastVersion(
+  caseId: string,
+  forecastVersionId: string
+): Promise<RoiForecastVersion | null> {
   try {
     const { forecastVersion } = await getJson<{ forecastVersion: RoiForecastVersion }>(
       `${base(caseId)}/forecast-versions/${encodeURIComponent(forecastVersionId)}`
@@ -450,7 +527,11 @@ export async function createRoiForecastVersion(
   caseId: string,
   input: CreateRoiForecastVersionInput & WriteTrailer
 ): Promise<RoiForecastVersionWriteResponse> {
-  return mutateJson<RoiForecastVersionWriteResponse>('POST', `${base(caseId)}/forecast-versions`, input);
+  return mutateJson<RoiForecastVersionWriteResponse>(
+    'POST',
+    `${base(caseId)}/forecast-versions`,
+    input
+  );
 }
 
 /** `GET .../compare` — no query params (route reads only `:caseId`,
@@ -513,9 +594,14 @@ export async function listRoiActualEntries(
   const { entries } = await getJson<{ entries: RoiActualEntry[] }>(`${base(caseId)}/actuals`, opts);
   return entries;
 }
-export async function getRoiActualEntry(caseId: string, entryId: string): Promise<RoiActualEntry | null> {
+export async function getRoiActualEntry(
+  caseId: string,
+  entryId: string
+): Promise<RoiActualEntry | null> {
   try {
-    const { actualEntry } = await getJson<{ actualEntry: RoiActualEntry }>(`${base(caseId)}/actuals/${encodeURIComponent(entryId)}`);
+    const { actualEntry } = await getJson<{ actualEntry: RoiActualEntry }>(
+      `${base(caseId)}/actuals/${encodeURIComponent(entryId)}`
+    );
     return actualEntry;
   } catch (err) {
     if (err instanceof RoiApiError && err.status === 404) return null;
@@ -558,21 +644,33 @@ export async function correctRoiActualEntry(
   entryId: string,
   input: CorrectRoiActualEntryInput & WriteTrailer
 ): Promise<RoiActualEntryWriteResponse> {
-  return mutateJson<RoiActualEntryWriteResponse>('POST', `${base(caseId)}/actuals/${encodeURIComponent(entryId)}/corrections`, input);
+  return mutateJson<RoiActualEntryWriteResponse>(
+    'POST',
+    `${base(caseId)}/actuals/${encodeURIComponent(entryId)}/corrections`,
+    input
+  );
 }
 export async function verifyRoiActualEntry(
   caseId: string,
   entryId: string,
   input: { notes?: string | null } & WriteTrailer
 ): Promise<RoiActualEntryWriteResponse> {
-  return mutateJson<RoiActualEntryWriteResponse>('POST', `${base(caseId)}/actuals/${encodeURIComponent(entryId)}/verify`, input);
+  return mutateJson<RoiActualEntryWriteResponse>(
+    'POST',
+    `${base(caseId)}/actuals/${encodeURIComponent(entryId)}/verify`,
+    input
+  );
 }
 export async function disputeRoiActualEntry(
   caseId: string,
   entryId: string,
   input: { disputeReason: string } & WriteTrailer
 ): Promise<RoiActualEntryWriteResponse> {
-  return mutateJson<RoiActualEntryWriteResponse>('POST', `${base(caseId)}/actuals/${encodeURIComponent(entryId)}/dispute`, input);
+  return mutateJson<RoiActualEntryWriteResponse>(
+    'POST',
+    `${base(caseId)}/actuals/${encodeURIComponent(entryId)}/dispute`,
+    input
+  );
 }
 
 // ==========================================
@@ -601,10 +699,15 @@ export interface RoiActualSnapshot {
   createdAt: string;
 }
 export async function listRoiActualSnapshots(caseId: string): Promise<RoiActualSnapshot[]> {
-  const { actualSnapshots } = await getJson<{ actualSnapshots: RoiActualSnapshot[] }>(`${base(caseId)}/actual-snapshots`);
+  const { actualSnapshots } = await getJson<{ actualSnapshots: RoiActualSnapshot[] }>(
+    `${base(caseId)}/actual-snapshots`
+  );
   return actualSnapshots;
 }
-export async function getRoiActualSnapshot(caseId: string, actualSnapshotId: string): Promise<RoiActualSnapshot | null> {
+export async function getRoiActualSnapshot(
+  caseId: string,
+  actualSnapshotId: string
+): Promise<RoiActualSnapshot | null> {
   try {
     const { actualSnapshot } = await getJson<{ actualSnapshot: RoiActualSnapshot }>(
       `${base(caseId)}/actual-snapshots/${encodeURIComponent(actualSnapshotId)}`
@@ -628,7 +731,11 @@ export async function publishRoiActualSnapshot(
   caseId: string,
   input: PublishRoiActualSnapshotInput & WriteTrailer
 ): Promise<RoiActualSnapshotWriteResponse> {
-  return mutateJson<RoiActualSnapshotWriteResponse>('POST', `${base(caseId)}/actual-snapshots`, input);
+  return mutateJson<RoiActualSnapshotWriteResponse>(
+    'POST',
+    `${base(caseId)}/actual-snapshots`,
+    input
+  );
 }
 
 // ==========================================
@@ -672,9 +779,14 @@ export async function listRoiVariances(caseId: string): Promise<RoiVariance[]> {
   const { variances } = await getJson<{ variances: RoiVariance[] }>(`${base(caseId)}/variances`);
   return variances;
 }
-export async function getRoiVariance(caseId: string, varianceId: string): Promise<RoiVariance | null> {
+export async function getRoiVariance(
+  caseId: string,
+  varianceId: string
+): Promise<RoiVariance | null> {
   try {
-    const { variance } = await getJson<{ variance: RoiVariance }>(`${base(caseId)}/variances/${encodeURIComponent(varianceId)}`);
+    const { variance } = await getJson<{ variance: RoiVariance }>(
+      `${base(caseId)}/variances/${encodeURIComponent(varianceId)}`
+    );
     return variance;
   } catch (err) {
     if (err instanceof RoiApiError && err.status === 404) return null;
@@ -694,7 +806,10 @@ export interface RoiVarianceWriteResponse {
   outcome: 'applied' | 'duplicate';
   variance: RoiVariance;
 }
-export async function recordRoiVariance(caseId: string, input: RecordRoiVarianceInput & WriteTrailer): Promise<RoiVarianceWriteResponse> {
+export async function recordRoiVariance(
+  caseId: string,
+  input: RecordRoiVarianceInput & WriteTrailer
+): Promise<RoiVarianceWriteResponse> {
   return mutateJson<RoiVarianceWriteResponse>('POST', `${base(caseId)}/variances`, input);
 }
 export interface UpdateRoiVarianceStatusInput {
@@ -708,7 +823,11 @@ export async function updateRoiVarianceStatus(
   varianceId: string,
   input: UpdateRoiVarianceStatusInput & WriteTrailer
 ): Promise<RoiVarianceWriteResponse> {
-  return mutateJson<RoiVarianceWriteResponse>('PATCH', `${base(caseId)}/variances/${encodeURIComponent(varianceId)}`, input);
+  return mutateJson<RoiVarianceWriteResponse>(
+    'PATCH',
+    `${base(caseId)}/variances/${encodeURIComponent(varianceId)}`,
+    input
+  );
 }
 export interface AddRoiVarianceCauseInput {
   causeCategory: string;
@@ -725,7 +844,11 @@ export async function addRoiVarianceCause(
   varianceId: string,
   input: AddRoiVarianceCauseInput & WriteTrailer
 ): Promise<RoiVarianceCauseWriteResponse> {
-  return mutateJson<RoiVarianceCauseWriteResponse>('POST', `${base(caseId)}/variances/${encodeURIComponent(varianceId)}/causes`, input);
+  return mutateJson<RoiVarianceCauseWriteResponse>(
+    'POST',
+    `${base(caseId)}/variances/${encodeURIComponent(varianceId)}/causes`,
+    input
+  );
 }
 export async function removeRoiVarianceCause(
   caseId: string,
@@ -749,14 +872,18 @@ export interface RoiCaseBenefitsRealizationView {
   caseId: string;
   approvedFinancialBenefits: number | null;
   actualFinancialBenefits: number | null;
-  benefitsRealizationPct: number | null;
+  benefitsRealizationPct:
+    | { status: 'available'; value: number | null }
+    | { status: 'not_yet_available'; reason: 'not_yet_approved' | 'no_actual_recorded' };
   [key: string]: unknown;
 }
-export async function getRoiCaseBenefitsRealization(caseId: string): Promise<RoiCaseBenefitsRealizationView | null> {
+export async function getRoiCaseBenefitsRealization(
+  caseId: string
+): Promise<RoiCaseBenefitsRealizationView | null> {
   try {
-    const { benefitsRealization } = await getJson<{ benefitsRealization: RoiCaseBenefitsRealizationView }>(
-      `${base(caseId)}/benefits-realization`
-    );
+    const { benefitsRealization } = await getJson<{
+      benefitsRealization: RoiCaseBenefitsRealizationView;
+    }>(`${base(caseId)}/benefits-realization`);
     return benefitsRealization;
   } catch (err) {
     if (err instanceof RoiApiError && err.status === 404) return null;
@@ -809,17 +936,22 @@ export async function scheduleRoiPostInvestmentReview(
 ): Promise<{ outcome: 'applied' | 'duplicate'; case: import('./roiApi').RoiCaseListItem }> {
   return mutateJson('PUT', `${base(caseId)}/post-investment-review-schedule`, input);
 }
-export async function listRoiPostInvestmentReviews(caseId: string): Promise<RoiPostInvestmentReview[]> {
-  const { postInvestmentReviews } = await getJson<{ postInvestmentReviews: RoiPostInvestmentReview[] }>(
-    `${base(caseId)}/post-investment-reviews`
-  );
+export async function listRoiPostInvestmentReviews(
+  caseId: string
+): Promise<RoiPostInvestmentReview[]> {
+  const { postInvestmentReviews } = await getJson<{
+    postInvestmentReviews: RoiPostInvestmentReview[];
+  }>(`${base(caseId)}/post-investment-reviews`);
   return postInvestmentReviews;
 }
-export async function getRoiPostInvestmentReview(caseId: string, pirId: string): Promise<RoiPostInvestmentReview | null> {
+export async function getRoiPostInvestmentReview(
+  caseId: string,
+  pirId: string
+): Promise<RoiPostInvestmentReview | null> {
   try {
-    const { postInvestmentReview } = await getJson<{ postInvestmentReview: RoiPostInvestmentReview }>(
-      `${base(caseId)}/post-investment-reviews/${encodeURIComponent(pirId)}`
-    );
+    const { postInvestmentReview } = await getJson<{
+      postInvestmentReview: RoiPostInvestmentReview;
+    }>(`${base(caseId)}/post-investment-reviews/${encodeURIComponent(pirId)}`);
     return postInvestmentReview;
   } catch (err) {
     if (err instanceof RoiApiError && err.status === 404) return null;
@@ -842,7 +974,11 @@ export async function updateRoiPostInvestmentReviewDraft(
   pirId: string,
   input: UpdateRoiPirDraftInput & WriteTrailer
 ): Promise<RoiPirWriteResponse> {
-  return mutateJson<RoiPirWriteResponse>('PATCH', `${base(caseId)}/post-investment-reviews/${encodeURIComponent(pirId)}`, input);
+  return mutateJson<RoiPirWriteResponse>(
+    'PATCH',
+    `${base(caseId)}/post-investment-reviews/${encodeURIComponent(pirId)}`,
+    input
+  );
 }
 export interface RecordRoiPirTeresaDraftDispositionInput {
   expectedVersion: number;
@@ -894,7 +1030,9 @@ export interface RoiFinanceLink {
   updatedAt: string;
 }
 export async function listRoiFinanceLinks(caseId: string): Promise<RoiFinanceLink[]> {
-  const { financeLinks } = await getJson<{ financeLinks: RoiFinanceLink[] }>(`${base(caseId)}/finance-links`);
+  const { financeLinks } = await getJson<{ financeLinks: RoiFinanceLink[] }>(
+    `${base(caseId)}/finance-links`
+  );
   return financeLinks;
 }
 export interface CreateRoiFinanceLinkInput {
@@ -924,7 +1062,11 @@ export async function removeRoiFinanceLink(
   linkId: string,
   input: RemoveTrailer & WriteTrailer
 ): Promise<RoiFinanceLinkWriteResponse> {
-  return mutateJson<RoiFinanceLinkWriteResponse>('DELETE', `${base(caseId)}/finance-links/${encodeURIComponent(linkId)}`, input);
+  return mutateJson<RoiFinanceLinkWriteResponse>(
+    'DELETE',
+    `${base(caseId)}/finance-links/${encodeURIComponent(linkId)}`,
+    input
+  );
 }
 
 export interface RoiFinanceReconciliation {
@@ -954,10 +1096,12 @@ export interface RoiFinanceReconciliation {
   sourceIdentityDigest: string | null;
   requestIdempotencyKey: string | null;
 }
-export async function listRoiFinanceReconciliations(caseId: string): Promise<RoiFinanceReconciliation[]> {
-  const { financeReconciliations } = await getJson<{ financeReconciliations: RoiFinanceReconciliation[] }>(
-    `${base(caseId)}/finance-reconciliations`
-  );
+export async function listRoiFinanceReconciliations(
+  caseId: string
+): Promise<RoiFinanceReconciliation[]> {
+  const { financeReconciliations } = await getJson<{
+    financeReconciliations: RoiFinanceReconciliation[];
+  }>(`${base(caseId)}/finance-reconciliations`);
   return financeReconciliations;
 }
 export interface OpenRoiFinanceReconciliationInput {
@@ -977,7 +1121,11 @@ export async function openRoiFinanceReconciliation(
   caseId: string,
   input: OpenRoiFinanceReconciliationInput & WriteTrailer
 ): Promise<RoiFinanceReconciliationWriteResponse> {
-  return mutateJson<RoiFinanceReconciliationWriteResponse>('POST', `${base(caseId)}/finance-reconciliations`, input);
+  return mutateJson<RoiFinanceReconciliationWriteResponse>(
+    'POST',
+    `${base(caseId)}/finance-reconciliations`,
+    input
+  );
 }
 export interface UpdateRoiFinanceReconciliationStatusInput {
   expectedVersion: number;
@@ -1002,6 +1150,8 @@ export interface RoiFinanceProjection {
   [key: string]: unknown;
 }
 export async function listRoiFinanceProjections(caseId: string): Promise<RoiFinanceProjection[]> {
-  const { financeProjections } = await getJson<{ financeProjections: RoiFinanceProjection[] }>(`${base(caseId)}/finance-projections`);
+  const { financeProjections } = await getJson<{ financeProjections: RoiFinanceProjection[] }>(
+    `${base(caseId)}/finance-projections`
+  );
   return financeProjections;
 }

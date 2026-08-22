@@ -42,10 +42,14 @@ async function tableExists(tableName: string): Promise<boolean> {
  *                                      seeding even in production for a
  *                                      controlled, intentional demo.
  */
-function isPartnerDemoSeedAllowed(): boolean {
+export function isPartnerDemoSeedAllowed(): boolean {
   const isProduction = process.env.NODE_ENV === 'production';
   const explicitDemoEnabled = process.env.DEMO_WRITES_ENABLED === 'true';
   const partnerDemoSeedEnabled = process.env.PARTNER_DEMO_SEED_ENABLED === 'true';
+  // Owner-review and other exact local runtimes must be able to opt out. Their
+  // guarded fixtures are evidence; a read request may not silently decorate
+  // that database with demo campaigns/clicks.
+  if (process.env.PARTNER_DEMO_SEED_ENABLED === 'false') return false;
   return !isProduction || explicitDemoEnabled || partnerDemoSeedEnabled;
 }
 

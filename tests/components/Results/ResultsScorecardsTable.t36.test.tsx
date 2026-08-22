@@ -62,7 +62,13 @@ describe('T36 ResultsScorecardsTable', () => {
   it('row click -> factual preview <=140 words, whitelisted fields only, no raw object leak', async () => {
     goalsGet.mockResolvedValue({
       goals: [
-        { id: 'g-1', title: 'Digital revenue growth', goal_type: 'scorecard', status: 'active', progress: 40 },
+        {
+          id: 'g-1',
+          title: 'Digital revenue growth',
+          goal_type: 'scorecard',
+          status: 'active',
+          progress: 40,
+        },
       ],
     });
     goalsGetRollup.mockResolvedValue({ rollupProgress: 55, linkedInitiatives: 3, childGoals: 0 });
@@ -78,7 +84,13 @@ describe('T36 ResultsScorecardsTable', () => {
   it('kebab exposes exactly Open preview — no edit/delete/export/assign', async () => {
     goalsGet.mockResolvedValue({
       goals: [
-        { id: 'g-1', title: 'Digital revenue growth', goal_type: 'scorecard', status: 'active', progress: 40 },
+        {
+          id: 'g-1',
+          title: 'Digital revenue growth',
+          goal_type: 'scorecard',
+          status: 'active',
+          progress: 40,
+        },
       ],
     });
     goalsGetRollup.mockResolvedValue({ rollupProgress: 55, linkedInitiatives: 3, childGoals: 0 });
@@ -96,7 +108,13 @@ describe('T36 ResultsScorecardsTable', () => {
   it('no selection checkboxes rendered (selection: none, no Menu3 bulk)', async () => {
     goalsGet.mockResolvedValue({
       goals: [
-        { id: 'g-1', title: 'Digital revenue growth', goal_type: 'scorecard', status: 'active', progress: 40 },
+        {
+          id: 'g-1',
+          title: 'Digital revenue growth',
+          goal_type: 'scorecard',
+          status: 'active',
+          progress: 40,
+        },
       ],
     });
     goalsGetRollup.mockResolvedValue({ rollupProgress: 55, linkedInitiatives: 3, childGoals: 0 });

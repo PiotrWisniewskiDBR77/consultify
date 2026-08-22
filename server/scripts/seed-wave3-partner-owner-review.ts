@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 /** Guarded Wave 3 Partner owner-review fixture. Local disposable PostgreSQL only. */
-import { createHash } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -81,6 +81,8 @@ const emails = {
 };
 const digest = (value: unknown) =>
   createHash('sha256').update(JSON.stringify(value)).digest('hex');
+const fixtureId = 'W3-PARTNER-OWNER-v1';
+const ownershipNonce = randomBytes(32).toString('hex');
 const sourceRef = {
   fixture: 'wave3-partner-owner-review-v1',
   classification: 'non-economic-referral-lineage',
@@ -97,9 +99,22 @@ try {
   const migrations = await db.query<{ count: number }>(
     `SELECT COUNT(*)::int AS count FROM schema_migrations WHERE status IN ('applied','success')`
   );
-  if (Number(migrations.rows[0]?.count) < 800) throw new Error('Partner owner database is not migrated');
+  if (Number(migrations.rows[0]?.count) !== 817)
+    throw new Error('Partner owner database must have exactly 817 successful migrations');
 
   await db.query('BEGIN');
+  await db.query(
+    `CREATE TABLE IF NOT EXISTS public.wave3_owner_fixture_markers(
+       fixture_id TEXT PRIMARY KEY,
+       ownership_nonce TEXT NOT NULL,
+       database_name TEXT NOT NULL
+     )`
+  );
+  await db.query(
+    `INSERT INTO public.wave3_owner_fixture_markers(fixture_id,ownership_nonce,database_name)
+     VALUES($1,$2,current_database())`,
+    [fixtureId, ownershipNonce]
+  );
   await db.query(`SET LOCAL session_replication_role='replica'`);
   await db.query(`DELETE FROM partner_participant_ledger WHERE id=$1`, [IDs.ledger]);
   await db.query(`DELETE FROM partner_attributions WHERE id=$1`, [IDs.attribution]);
@@ -268,6 +283,11 @@ try {
   const manifest = {
     schemaVersion: 1,
     fixture: 'wave3-partner-owner-review-v1',
+    fixtureId,
+    ownershipState: 'FINAL',
+    ownershipNonce,
+    databaseName,
+    marker: { table: 'wave3_owner_fixture_markers', fixtureId, ownershipNonce },
     fixtureState: 'READY_FOR_LOCAL_OWNER_REVIEW',
     ownerReviewReady: true,
     database: { name: databaseName, disposable: true, loopbackOnly: true },

@@ -1,11 +1,12 @@
 import { Request, Response, Router } from 'express';
 
 import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
-import { betaGate } from '../middleware/betaGate.middleware.js';
+import { closedBetaModuleGate } from '../middleware/betaGate.middleware.js';
 import { meetingIntelligenceService } from '../services/ai/meetingIntelligenceService.js';
 import { HandoffSpineError } from '../services/artifactHandoff/handoffSpineService.js';
 import {
   decideMeetingNote,
+  findMeetingNoteReplay,
   listMeetingNotesForMeeting,
   MeetingBoundaryError,
   proposeMeetingNote,
@@ -30,9 +31,7 @@ export const MEETING_CAPTURE_POLICY = Object.freeze({
 const MANUAL_NOTE_FIELDS = new Set(['transcript', 'language', 'idempotencyKey']);
 const CAPTURE_FIELD = /(record|transcrib|audio|media|blob|provider|upload|file|url)/i;
 
-export function validateManualMeetingNotePayload(
-  body: unknown
-):
+export function validateManualMeetingNotePayload(body: unknown):
   | { ok: true }
   | {
       ok: false;
@@ -144,10 +143,7 @@ function rejectDirectMeetingOutputs(res: Response): Response {
 
 router.use(verifyToken);
 router.use(isAuthenticated);
-// L-03: server-side beta gate on /api/meeting (was FE-only). betaGate is the
-// SSOT-mirror middleware — currently pass-through ('open'); flips to 403
-// BETA_LOCKED when MODULE_MEETING is set 'closed' in betaAccess.ts.
-router.use(betaGate);
+router.use(closedBetaModuleGate);
 router.use(async (_req, _res, next) => {
   await ensureMeetingTables();
   next();
@@ -382,6 +378,45 @@ router.post(
         ? req.body.language.trim()
         : 'en';
 
+    const idempotencyKey =
+      typeof req.body?.idempotencyKey === 'string' && req.body.idempotencyKey.trim()
+        ? req.body.idempotencyKey.trim()
+        : null;
+    try {
+      const replay = await findMeetingNoteReplay({
+        organizationId: orgId,
+        meetingId,
+        transcript,
+        language,
+        idempotencyKey,
+      });
+      if (replay) {
+        return res.status(200).json({
+          note: {
+            source: replay.note.source,
+            summary: replay.note.summary,
+            keyPoints: replay.note.keyPoints,
+            decisions: replay.note.decisions,
+            actionItems: replay.note.actionItems,
+          },
+          meeting,
+          meetingNoteId: replay.note.id,
+          proposal: {
+            proposalId: replay.proposal.proposalId,
+            state: replay.proposal.state,
+            replayed: true,
+          },
+        });
+      }
+    } catch (err: unknown) {
+      if (err instanceof MeetingBoundaryError || err instanceof HandoffSpineError) {
+        return res
+          .status(statusForSpineErrorCode(err.code))
+          .json({ error: err.message, code: err.code });
+      }
+      throw err;
+    }
+
     const note = await meetingIntelligenceService.generateMeetingNotes({
       transcript,
       language,
@@ -400,10 +435,6 @@ router.post(
       },
     });
 
-    const idempotencyKey =
-      typeof req.body?.idempotencyKey === 'string' && req.body.idempotencyKey.trim()
-        ? req.body.idempotencyKey.trim()
-        : null;
     let storedNote;
     let proposal;
     let replayed;

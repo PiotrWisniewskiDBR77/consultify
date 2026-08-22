@@ -294,6 +294,27 @@ describe('AuditsMethodHub', () => {
     );
   });
 
+  it('keeps the program preview mounted when canonical detail omits optional members', async () => {
+    setupApiMocks();
+    mockedGetProgram.mockResolvedValue({
+      ...programs[0],
+      objective: null,
+      scopeText: null,
+      projectId: null,
+    } as Awaited<ReturnType<typeof getProgram>>);
+    renderHub(['/audit-programs?tab=processes']);
+    fireEvent.click(await screen.findByText('Q3 Compliance Audit'));
+    expect(await screen.findByText(/Customer complaint intake/)).toBeInTheDocument();
+    expect(screen.queryByText(/something went wrong/i)).not.toBeInTheDocument();
+  });
+
+  it('cold-opens the program preview from the canonical programId query deep link', async () => {
+    setupApiMocks();
+    renderHub(['/audit-programs?tab=processes&programId=prog-1']);
+    expect(await screen.findByText(/Customer complaint intake/)).toBeInTheDocument();
+    expect(mockedGetProgram).toHaveBeenCalledWith('prog-1');
+  });
+
   it('shows an ErrorState with retry when the Library API call fails', async () => {
     mockedListPacks.mockRejectedValue(new Error('boom'));
     mockedListPrograms.mockResolvedValue({ items: [], total: 0 });

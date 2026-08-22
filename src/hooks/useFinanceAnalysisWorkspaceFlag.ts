@@ -15,6 +15,7 @@
  */
 
 import { useFeatureFlags, type FeatureFlag, type UseFeatureFlagsReturn } from './useFeatureFlags';
+import { isFinanceOwnerReviewModeEnabled } from '@/utils/financeOwnerReviewMode';
 
 export const FINANCE_ANALYSIS_WORKSPACE_FLAG_ID = 'financeAnalysisWorkspaceV1';
 
@@ -44,7 +45,11 @@ export function useFinanceAnalysisWorkspaceFlag(
     userId: config.userId,
     enableLocalOverrides: config.enableLocalOverrides ?? true,
   });
-  return { enabled: flags.isEnabled(FINANCE_ANALYSIS_WORKSPACE_FLAG_ID), flags };
+  return {
+    enabled:
+      isFinanceOwnerReviewModeEnabled() || flags.isEnabled(FINANCE_ANALYSIS_WORKSPACE_FLAG_ID),
+    flags,
+  };
 }
 
 export default useFinanceAnalysisWorkspaceFlag;

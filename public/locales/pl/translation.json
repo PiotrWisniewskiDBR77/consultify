@@ -4,9 +4,14 @@
       "open": "Otwórz panel AI",
       "close": "Zamknij panel AI"
     },
-    "openMenu": "Otwórz menu"
+    "openMenu": "Otwórz menu",
+    "skipToContent": "Przejdź do głównej treści"
   },
   "common": {
+    "actions": "Akcje",
+    "rowActions": "Akcje wiersza",
+    "sortByColumn": "Sortuj według: {{column}}",
+    "resizeColumn": "Zmień szerokość kolumny: {{column}}",
     "more": "Więcej",
     "optional": "opcjonalnie",
     "save": "Zapisz",
@@ -11659,6 +11664,11 @@
     "menu": {
       "preferences": "Preferencje",
       "theme": "Motyw",
+      "themeModes": {
+        "light": "Jasny",
+        "system": "Systemowy",
+        "dark": "Ciemny"
+      },
       "language": "Język",
       "demoMode": "Otwórz przykładowy workspace",
       "demoModeExit": "Wyjdź z demo",
@@ -16781,6 +16791,7 @@
     "reasoningTierDesc": "Tryb MAX, głębokie myślenie"
   },
   "taskDropdown": {
+    "titleButton": "Dzisiejsze zadania",
     "title": "Mój plan działania",
     "pending": "{{count}} oczekujące",
     "viewAll": "Zobacz wszystkie",
@@ -16795,6 +16806,25 @@
     "dOverdue": "{{count}} dn. spóźnienia",
     "today": "Dzisiaj",
     "tomorrow": "Jutro"
+  },
+  "userProfile": {
+    "openMenu": "Otwórz menu profilu użytkownika"
+  },
+  "moduleHub": {
+    "sections": "Sekcje modułu",
+    "search": {
+      "label": "Szukaj",
+      "placeholder": "Szukaj...",
+      "bulkModeActive": "Tryb operacji zbiorczych"
+    },
+    "viewModes": {
+      "table": "Tabela",
+      "kanban": "Kanban",
+      "timeline": "Oś czasu",
+      "calendar": "Kalendarz",
+      "matrix": "Macierz",
+      "grid": "Siatka"
+    }
   },
   "executive": {
     "greeting": {

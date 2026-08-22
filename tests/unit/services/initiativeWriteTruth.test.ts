@@ -18,6 +18,12 @@ vi.mock('@/services/api/v8/planning', () => ({
   },
 }));
 
+vi.mock('@/services/initiatives-execution/runtimeApi', () => ({
+  submitSourceProposal: vi.fn(),
+  registerSourceProposal: vi.fn(),
+  readRegisteredInitiative: vi.fn(),
+}));
+
 import { Api } from '@/services/api';
 import {
   createInitiativeWriteTruth,
@@ -25,6 +31,11 @@ import {
   refreshInitiativeWriteTruth,
 } from '@/services/initiativeWriteTruth';
 import { V8PlanningApi } from '@/services/api/v8/planning';
+import {
+  readRegisteredInitiative,
+  registerSourceProposal,
+  submitSourceProposal,
+} from '@/services/initiatives-execution/runtimeApi';
 
 describe('initiativeWriteTruth', () => {
   beforeEach(() => {
@@ -59,19 +70,41 @@ describe('initiativeWriteTruth', () => {
     expect(result.blockingItems).toEqual(['Owner assigned']);
   });
 
-  it('hydrates a newly created initiative through governed read truth', async () => {
-    vi.mocked(Api.post).mockResolvedValue({ id: 'init-1' });
-    vi.mocked(V8PlanningApi.getInitiative).mockResolvedValue({ id: 'init-1', name: 'Alpha' } as any);
-    vi.mocked(V8PlanningApi.getGateReadiness).mockResolvedValue(null as any);
-    vi.mocked(V8PlanningApi.getStatusHistory).mockResolvedValue([]);
-    vi.mocked(V8PlanningApi.getHistory).mockResolvedValue([]);
+  it('creates through proposal and registration then trusts cold aggregate readback', async () => {
+    vi.mocked(submitSourceProposal).mockResolvedValue({} as any);
+    vi.mocked(registerSourceProposal).mockResolvedValue({} as any);
+    vi.mocked(readRegisteredInitiative).mockResolvedValue({
+      version: 1,
+      updatedAt: '2026-08-21T00:00:00.000Z',
+      initiative: {
+        initiativeId: 'init-cold',
+        lifecycleState: 'REGISTERED_DRAFT',
+        title: 'Alpha',
+        projectId: 'project-1',
+        readiness: 'NOT_EVALUATED',
+        source: {
+          proposalId: 'proposal-1',
+          proposalVersion: 1,
+          sourceType: 'MANUAL_HUB',
+          sourceId: 'manual-1',
+          sourceVersion: 1,
+        },
+      },
+    });
 
-    const result = await createInitiativeWriteTruth({ title: 'Alpha' });
+    const result = await createInitiativeWriteTruth({
+      projectId: 'project-1',
+      initiativeOwnerId: 'owner-1',
+      title: 'Alpha',
+      problem: 'Problem Alpha',
+    });
 
-    expect(Api.post).toHaveBeenCalledWith('/initiatives', { title: 'Alpha' });
-    expect(V8PlanningApi.getInitiative).toHaveBeenCalledWith('init-1');
-    expect(result.createdId).toBe('init-1');
-    expect(result.truth.initiative?.name).toBe('Alpha');
+    expect(Api.post).not.toHaveBeenCalled();
+    expect(submitSourceProposal).toHaveBeenCalledOnce();
+    expect(registerSourceProposal).toHaveBeenCalledOnce();
+    expect(readRegisteredInitiative).toHaveBeenCalledOnce();
+    expect(result.createdId).toBe(vi.mocked(readRegisteredInitiative).mock.calls[0]?.[0]);
+    expect(result.truth.initiative?.title).toBe('Alpha');
   });
 
   it('falls back to legacy initiative governance reads when V8 reads fail', async () => {

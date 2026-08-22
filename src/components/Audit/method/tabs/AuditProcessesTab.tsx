@@ -53,6 +53,7 @@ export interface AuditProcessesTabProps {
   isPolish: boolean;
   /** Called after a lifecycle transition succeeds, so the Hub can refresh the list. */
   onProgramChanged: () => void;
+  initialSelectedId?: string | null;
 }
 
 export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
@@ -62,8 +63,9 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
   onRetry,
   isPolish,
   onProgramChanged,
+  initialSelectedId = null,
 }) => {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId);
   const [detail, setDetail] = useState<AuditProgramDetail | null>(null);
   const [coverage, setCoverage] = useState<AuditProgramCoverage | null>(null);
   const [lifecycle, setLifecycle] = useState<AuditProgramLifecycle | null>(null);
@@ -71,6 +73,10 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
   const [transitioning, setTransitioning] = useState<string | null>(null);
   const [criteria, setCriteria] = useState<AuditCriterionSummary[]>([]);
   const [criteriaError, setCriteriaError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initialSelectedId) setSelectedId(initialSelectedId);
+  }, [initialSelectedId]);
 
   useEffect(() => {
     if (!selectedId) {
@@ -302,7 +308,7 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
               valueLabel: isPolish ? 'Wartość' : 'Value',
             }}
             relations={
-              detail?.members.map((member) => ({
+              detail?.members?.map((member) => ({
                 id: member.userId,
                 label: member.name || member.userId,
                 value: auditRoleLabel(member.memberRole, isPolish),

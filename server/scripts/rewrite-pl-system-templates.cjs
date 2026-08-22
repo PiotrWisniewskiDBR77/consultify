@@ -1,5 +1,6 @@
 const { Client } = require('pg');
-const DB_URL = "postgresql://postgres:uIvWKxAeMRYvlJIhbuHmrYVjOvezCRjz@centerbeam.proxy.rlwy.net:37823/railway";
+const DB_URL = process.env.DATABASE_URL;
+if (!DB_URL) throw new Error('DATABASE_URL is required');
 
 const templates = [
   {

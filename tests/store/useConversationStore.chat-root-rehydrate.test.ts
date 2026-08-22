@@ -10,6 +10,7 @@ vi.mock('@/services/api', () => ({ Api: mockApi }));
 
 vi.mock('@/i18n', () => ({
   isValidLanguage: (lang: string) => ['pl', 'en', 'de'].includes(lang),
+  normalizeLanguageCode: (lang: string) => lang,
 }));
 
 const setTestPath = (path: string) => {
@@ -154,6 +155,52 @@ describe('useConversationStore chat root rehydration', () => {
     expect(useConversationStore.getState().activeConversationId).toBeNull();
     expect(useConversationStore.getState().isLoading).toBe(false);
     expect(useConversationStore.getState()._activeConversationState).toBe('permission_denied');
+  });
+
+  it('retries a pre-login 401 immediately after authentication instead of deduping it', async () => {
+    setTestPath('/chat/auth-race-id');
+    vi.useFakeTimers();
+    localStorage.setItem('token', 'pre-login-token');
+    mockApi.getConversation
+      .mockRejectedValueOnce({ status: 401 })
+      .mockResolvedValueOnce({
+        id: 'auth-race-id',
+        language: 'en',
+        messages: [
+          {
+            id: 'server-message',
+            conversation_id: 'auth-race-id',
+            role: 'ai',
+            content: 'Durable conversation restored',
+            message_type: 'text',
+            created_at: '2026-08-21T08:00:00.000Z',
+          },
+        ],
+      });
+    localStorage.setItem(
+      'consultify-conversations',
+      JSON.stringify({
+        state: {
+          activeConversationId: 'auth-race-id',
+          displayMode: 'full',
+          draftChatLanguage: 'en',
+          chatLanguageByConversationId: {},
+        },
+        version: 2,
+      })
+    );
+
+    const { useConversationStore } = await import('../../src/store/useConversationStore');
+    await vi.runAllTimersAsync();
+
+    expect(useConversationStore.getState()._activeConversationState).toBe('permission_denied');
+    await useConversationStore.getState().fetchConversation('auth-race-id');
+
+    expect(mockApi.getConversation).toHaveBeenCalledTimes(2);
+    expect(useConversationStore.getState().activeConversationId).toBe('auth-race-id');
+    expect(useConversationStore.getState().activeMessages.map((message) => message.id)).toEqual([
+      'server-message',
+    ]);
   });
 
   it('does not fetch a deep-linked conversation already marked missing', async () => {

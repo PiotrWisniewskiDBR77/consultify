@@ -9,19 +9,28 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (_key: string, fallback?: any, opts?: any) => {
-      let str = typeof fallback === 'string' ? fallback : _key;
-      if (opts && typeof opts === 'object') {
-        str = str.replace(/\{\{(\w+)\}\}/g, (_m: string, k: string) => String(opts[k] ?? ''));
-      }
-      return str;
-    },
-    i18n: { language: 'pl' },
-  }),
-  initReactI18next: { type: '3rdParty', init: () => {} },
-}));
+vi.mock('react-i18next', async () => {
+  const dictionary = (await import('../../../public/locales/pl/translation.json'))
+    .default as Record<string, any>;
+  const resolve = (key: string) =>
+    key.split('.').reduce<any>((value, part) => value?.[part], dictionary);
+  return {
+    useTranslation: () => ({
+      t: (key: string, fallback?: any, opts?: any) => {
+        const options = typeof fallback === 'object' ? fallback : opts;
+        let str =
+          resolve(key) ??
+          (typeof fallback === 'string' ? fallback : (options?.defaultValue ?? key));
+        str = String(str).replace(/\{\{(\w+)\}\}/g, (_m: string, name: string) =>
+          String(options?.[name] ?? '')
+        );
+        return str;
+      },
+      i18n: { language: 'pl' },
+    }),
+    initReactI18next: { type: '3rdParty', init: () => {} },
+  };
+});
 
 vi.mock('@/services/api', () => ({
   Api: { get: vi.fn(), post: vi.fn() },
@@ -41,7 +50,13 @@ const STRATEGIC = {
     overallHealthPct: 0.62,
     balanced: false,
   },
-  bdn: { stats: { nodeCount: 12, edgeCount: 9, byType: { benefit: 4, enabler: 3, change: 2, objective: 3 } } },
+  bdn: {
+    stats: {
+      nodeCount: 12,
+      edgeCount: 9,
+      byType: { benefit: 4, enabler: 3, change: 2, objective: 3 },
+    },
+  },
   narrative: { executiveSummary: 'Portfel realizuje 62% celów strategicznych.' },
 };
 
@@ -95,7 +110,9 @@ const OKR = {
       id: 'obj-parent',
       label: 'Wzrost rentowności',
       parentId: null,
-      keyResults: [{ id: 'kr-1', label: 'EBITDA margin', baseline: 10, target: 20, current: 15, weight: 1 }],
+      keyResults: [
+        { id: 'kr-1', label: 'EBITDA margin', baseline: 10, target: 20, current: 15, weight: 1 },
+      ],
       score: 0.5,
       rollupScore: 0.55,
     },
@@ -142,10 +159,10 @@ describe('StrategicLayerPanel', () => {
     render(<StrategicLayerPanel projectId="all" />);
     await waitFor(() => expect(screen.getByTestId('strategic-layer-panel')).toBeInTheDocument());
     expect(screen.getByText('Balanced Scorecard')).toBeInTheDocument();
-    expect(screen.getByText('Finanse')).toBeInTheDocument();
-    expect(screen.getByText('Klient')).toBeInTheDocument();
-    expect(screen.getByText('Procesy')).toBeInTheDocument();
-    expect(screen.getByText('Rozwój')).toBeInTheDocument();
+    expect(screen.getByText('Finance')).toBeInTheDocument();
+    expect(screen.getByText('Customer')).toBeInTheDocument();
+    expect(screen.getByText('Processes')).toBeInTheDocument();
+    expect(screen.getByText('Growth')).toBeInTheDocument();
   });
 
   it('shows the unbalanced-scorecard warning when bsc.balanced is false', async () => {
@@ -198,11 +215,28 @@ describe('StrategicLayerPanel', () => {
 
   it('renders empty-state placeholders when all endpoints return empty payloads (no crash)', async () => {
     mockEndpoints({
-      '/strategic': { bsc: { perspectives: {}, overallHealthPct: 0, balanced: true }, bdn: { stats: { nodeCount: 0, edgeCount: 0 } }, narrative: {} },
+      '/strategic': {
+        bsc: { perspectives: {}, overallHealthPct: 0, balanced: true },
+        bdn: { stats: { nodeCount: 0, edgeCount: 0 } },
+        narrative: {},
+      },
       '/adoption': { flags: [], total: 0, atRiskCount: 0 },
       '/sustainment': { statuses: [], summary: { total: 0, sustained: 0, atRisk: 0, unowned: 0 } },
-      '/benefit-profiles': { profiles: [], summary: { total: 0, financial: 0, nonFinancial: 0, strategic: 0, withTarget: 0, disBenefits: 0 } },
-      '/okr': { objectives: [], summary: { total: 0, onTrack: 0, atRisk: 0, offTrack: 0, avgScore: 0 } },
+      '/benefit-profiles': {
+        profiles: [],
+        summary: {
+          total: 0,
+          financial: 0,
+          nonFinancial: 0,
+          strategic: 0,
+          withTarget: 0,
+          disBenefits: 0,
+        },
+      },
+      '/okr': {
+        objectives: [],
+        summary: { total: 0, onTrack: 0, atRisk: 0, offTrack: 0, avgScore: 0 },
+      },
     });
     render(<StrategicLayerPanel projectId="all" />);
     await waitFor(() => expect(screen.getByTestId('strategic-layer-panel')).toBeInTheDocument());

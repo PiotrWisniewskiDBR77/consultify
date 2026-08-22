@@ -7,7 +7,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback?: any) => (typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key)),
+    t: (_key: string, fallback?: any) =>
+      typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key),
     i18n: { language: 'en' },
   }),
 }));
@@ -70,11 +71,7 @@ describe('ROIDetailDrawer V8 detail seam', () => {
     } as any);
 
     render(
-      <ROIDetailDrawer
-        initiativeId="init-1"
-        initiativeName="Initiative Alpha"
-        onClose={vi.fn()}
-      />,
+      <ROIDetailDrawer initiativeId="init-1" initiativeName="Initiative Alpha" onClose={vi.fn()} />
     );
 
     await waitFor(() => {
@@ -107,11 +104,7 @@ describe('ROIDetailDrawer V8 detail seam', () => {
     });
 
     render(
-      <ROIDetailDrawer
-        initiativeId="init-2"
-        initiativeName="Initiative Beta"
-        onClose={vi.fn()}
-      />,
+      <ROIDetailDrawer initiativeId="init-2" initiativeName="Initiative Beta" onClose={vi.fn()} />
     );
 
     await waitFor(() => {

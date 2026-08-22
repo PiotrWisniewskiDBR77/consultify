@@ -5,7 +5,7 @@
  * Used as the primary runtime for non-licensed consulting tools.
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -41,6 +41,8 @@ export const ToolWizardView: React.FC<ToolWizardViewProps> = ({
     createEmptyWizardSession(sessionId, toolType)
   );
   const [isLoading, setIsLoading] = useState(true);
+  const sessionVersionRef = useRef<number | null>(null);
+  const saveChainRef = useRef<Promise<void>>(Promise.resolve());
 
   const config = useMemo(() => getToolWizardConfig(toolType), [toolType]);
   const normalizeWizardStatus = useCallback(
@@ -94,6 +96,10 @@ export const ToolWizardView: React.FC<ToolWizardViewProps> = ({
         const baseSession = createEmptyWizardSession(sessionId, toolType);
         const wizardState = apiSession.wizardState as Partial<WizardSessionData> | undefined;
         const normalizedStatus = normalizeWizardStatus(apiSession.status);
+        if (!Number.isInteger(apiSession.version)) {
+          throw new Error('Tool session readback returned no version');
+        }
+        sessionVersionRef.current = Number(apiSession.version);
 
         setSessionData({
           ...baseSession,
@@ -123,6 +129,27 @@ export const ToolWizardView: React.FC<ToolWizardViewProps> = ({
     };
   }, [normalizeWizardStatus, sessionId, toolType]);
 
+  const queueSessionSave = useCallback(
+    (updated: WizardSessionData, persistedStatus: string) => {
+      saveChainRef.current = saveChainRef.current
+        .catch(() => undefined)
+        .then(async () => {
+          if (!Number.isInteger(sessionVersionRef.current)) {
+            throw new Error('Tool session version unavailable');
+          }
+          const result = await Api.updateToolSession(sessionId, {
+            wizardState: updated as unknown as Record<string, unknown>,
+            missingItems: normalizeWizardMissingItems(updated.review?.missingItems || []),
+            status: persistedStatus,
+            expectedVersion: sessionVersionRef.current as number,
+          });
+          sessionVersionRef.current = Number(result.version);
+        })
+        .catch((err) => console.warn('[ToolWizardView] Auto-save failed:', err));
+    },
+    [normalizeWizardMissingItems, sessionId]
+  );
+
   const handleSessionUpdate = useCallback(
     (partial: Partial<WizardSessionData>) => {
       setSessionData((prev) => {
@@ -133,16 +160,11 @@ export const ToolWizardView: React.FC<ToolWizardViewProps> = ({
             : updated.status === 'REVIEW'
               ? 'REVIEW'
               : 'IN_PROGRESS';
-        // Debounced save to API
-        Api.updateToolSession(sessionId, {
-          wizardState: updated as unknown as Record<string, unknown>,
-          missingItems: normalizeWizardMissingItems(updated.review?.missingItems || []),
-          status: persistedStatus,
-        }).catch((err) => console.warn('[ToolWizardView] Auto-save failed:', err));
+        queueSessionSave(updated, persistedStatus);
         return updated;
       });
     },
-    [normalizeWizardMissingItems, sessionId]
+    [queueSessionSave]
   );
 
   const handleStepChange = useCallback(
@@ -162,6 +184,10 @@ export const ToolWizardView: React.FC<ToolWizardViewProps> = ({
     }
 
     try {
+      await saveChainRef.current;
+      if (!Number.isInteger(sessionVersionRef.current)) {
+        throw new Error('Tool session version unavailable');
+      }
       const finalizedSession: WizardSessionData = {
         ...sessionData,
         status: 'FINALIZED',
@@ -169,11 +195,13 @@ export const ToolWizardView: React.FC<ToolWizardViewProps> = ({
         currentStep: 'outputs',
         updatedAt: new Date().toISOString(),
       };
-      await Api.updateToolSession(sessionId, {
+      const result = await Api.updateToolSession(sessionId, {
         status: 'FINALIZED',
         wizardState: finalizedSession as unknown as Record<string, unknown>,
         missingItems: normalizeWizardMissingItems(finalizedSession.review?.missingItems || []),
+        expectedVersion: sessionVersionRef.current as number,
       });
+      sessionVersionRef.current = Number(result.version);
       setSessionData(finalizedSession);
       trackFunnelEvent('tools_wizard_finalized', { toolType });
       toast.success(t('tools.wizard.finalized', 'Session finalized'));

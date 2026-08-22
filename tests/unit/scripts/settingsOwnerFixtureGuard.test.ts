@@ -62,6 +62,16 @@ describe('Wave 3 Settings owner fixture guard', () => {
     expect(result.stderr).toContain('SETTINGS_OWNER_FIXTURE_MANIFEST is required for seed');
   });
 
+  it('requires the exact retained manifest before reset can reach the database', () => {
+    const result = run(
+      'reset',
+      'postgresql://user:pass@127.0.0.1/consultify_w3_settings_owner_guard_test',
+      'YES'
+    );
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('reset requires exact existing SETTINGS_OWNER_FIXTURE_MANIFEST');
+  });
+
   it('refuses to overwrite an existing manifest before database access', () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'w3-settings-manifest-'));
     const manifest = path.join(dir, 'manifest.json');

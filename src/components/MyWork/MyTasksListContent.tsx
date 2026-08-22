@@ -5,7 +5,8 @@
  * Scope: personal tasks — renders the current user's personal tasks served by the
  * canonical `/my-work/personal-tasks` endpoint (org + assignee scoped). By default
  * the terminal statuses `done/completed/validated` are de-prioritised (sorted to the
- * bottom and hidden from the active list) so the view surfaces actionable work.
+ * bottom) but remain available in "All" so a completed transition has a cold-readback
+ * surface instead of disappearing immediately after success.
  */
 
 import { AnimatePresence, motion } from 'framer-motion';
@@ -1508,7 +1509,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     try {
       setLoading(true);
       setLoadError(false);
-      const data = await Api.getPersonalTasks();
+      const data = await Api.getPersonalTasks({ includeDone: true });
       setTasks(data || []);
     } catch (error) {
       console.error('Failed to fetch tasks:', error);

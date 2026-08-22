@@ -6,7 +6,7 @@ Branch: `codex/wave3-16-module-acceptance-20260821`
 
 Entry checkpoint: `ec43f3c60b6998012da680380cdc28604dee3bec`
 
-Status: `WAVE_3_STARTED / ORGANIZATION_PREPARATION_PENDING`
+Status: `TECHNICAL_BROWSER_COVERAGE_COMPLETE / OWNER_CYCLE_PENDING`
 
 ## Authority
 
@@ -89,6 +89,8 @@ The numbered module checklists use gates `G00`–`G20` matching this sequence.
 - `CROSS_MODULE_FINDINGS.md` — shared-component findings only; module detail
   remains in its module register.
 - `FINAL_16_MODULE_REPLAY.md` — final one-SHA replay contract.
+- `GUIDED_OWNER_REPLAY.md` — the current Chat-to-Partner owner walkthrough,
+  including the exact screen, evidence and decision required per module.
 - `MODULE_TEMPLATE.md` — canonical structure copied into every module packet.
 - `modules/*/MODULE_ACCEPTANCE.md` — the 16 authoritative module registers.
 

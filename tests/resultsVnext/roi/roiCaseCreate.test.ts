@@ -27,6 +27,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
  */
 
 let visibilityPolicyRow: Record<string, unknown> | null = null;
+let governedVisibilityPolicyExists = true;
 let existingActiveCaseId: string | null = null;
 let insertShouldRace = false;
 let raceWinnerCaseId: string | null = null;
@@ -91,7 +92,10 @@ function policyRowFor(caseId: string): Record<string, unknown> {
   };
 }
 
-function caseRowFor(caseId: string, overrides: Record<string, unknown> = {}): Record<string, unknown> {
+function caseRowFor(
+  caseId: string,
+  overrides: Record<string, unknown> = {}
+): Record<string, unknown> {
   return {
     case_id: caseId,
     organization_id: ORG_ID,
@@ -128,7 +132,10 @@ function caseRowFor(caseId: string, overrides: Record<string, unknown> = {}): Re
   };
 }
 
-async function fakeQuery(sql: string, params: unknown[] = []): Promise<{ rows: unknown[]; rowCount: number }> {
+async function fakeQuery(
+  sql: string,
+  params: unknown[] = []
+): Promise<{ rows: unknown[]; rowCount: number }> {
   const trimmed = sql.trim();
   const normalized = trimmed.toUpperCase();
 
@@ -143,7 +150,17 @@ async function fakeQuery(sql: string, params: unknown[] = []): Promise<{ rows: u
   }
 
   if (sql.includes('FROM rvn_platform_visibility_policies') && sql.includes('is_active')) {
-    return visibilityPolicyRow ? { rows: [visibilityPolicyRow], rowCount: 1 } : { rows: [], rowCount: 0 };
+    return visibilityPolicyRow
+      ? { rows: [visibilityPolicyRow], rowCount: 1 }
+      : { rows: [], rowCount: 0 };
+  }
+  if (sql.includes('FROM rvn_roi_visibility_governance')) {
+    return governedVisibilityPolicyExists
+      ? { rows: [{ organization_id: ORG_ID }], rowCount: 1 }
+      : { rows: [], rowCount: 0 };
+  }
+  if (sql.includes('FROM organization_members')) {
+    return { rows: [{ role: 'OWNER', status: 'ACTIVE' }], rowCount: 1 };
   }
   if (sql.includes('SELECT visibility_mode, default_scope_type')) {
     return { rows: [{ visibility_mode: 'RESTRICTED_ACL', default_scope_type: null }], rowCount: 1 };
@@ -151,10 +168,7 @@ async function fakeQuery(sql: string, params: unknown[] = []): Promise<{ rows: u
 
   // AC-02 pre-check / retry-after-rollback SELECT (identical SQL shape,
   // reused for both — matches createRoiCase's own implementation).
-  if (
-    sql.includes('SELECT case_id FROM rvn_roi_cases') &&
-    sql.includes('status NOT IN')
-  ) {
+  if (sql.includes('SELECT case_id FROM rvn_roi_cases') && sql.includes('status NOT IN')) {
     if (existingActiveCaseId) {
       return { rows: [{ case_id: existingActiveCaseId }], rowCount: 1 };
     }
@@ -166,7 +180,9 @@ async function fakeQuery(sql: string, params: unknown[] = []): Promise<{ rows: u
 
   if (sql.startsWith('INSERT INTO rvn_roi_cases')) {
     if (insertShouldRace) {
-      const err = new Error('duplicate key value violates unique constraint') as Error & { code: string };
+      const err = new Error('duplicate key value violates unique constraint') as Error & {
+        code: string;
+      };
       err.code = '23505';
       throw err;
     }
@@ -262,9 +278,8 @@ vi.mock('../../../server/src/utils/Logger.js', () => ({
   default: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 
-const { createRoiCase, RoiCaseNoActiveVisibilityPolicyError } = await import(
-  '../../../server/src/services/resultsVnext/roi/roiCaseCommands.js'
-);
+const { createRoiCase, RoiCaseNoActiveVisibilityPolicyError } =
+  await import('../../../server/src/services/resultsVnext/roi/roiCaseCommands.js');
 
 function baseInput(overrides: Record<string, unknown> = {}) {
   return {
@@ -282,6 +297,7 @@ function baseInput(overrides: Record<string, unknown> = {}) {
 
 beforeEach(() => {
   visibilityPolicyRow = { policy_id: 'policy-1', policy_version: 1 };
+  governedVisibilityPolicyExists = true;
   existingActiveCaseId = null;
   insertShouldRace = false;
   raceWinnerCaseId = null;
@@ -295,11 +311,13 @@ describe('createRoiCase — no-active-policy fail-closed', () => {
   it('throws RoiCaseNoActiveVisibilityPolicyError when no active domain="roi" policy exists', async () => {
     visibilityPolicyRow = null;
 
-    await expect(createRoiCase(baseInput())).rejects.toBeInstanceOf(RoiCaseNoActiveVisibilityPolicyError);
+    await expect(createRoiCase(baseInput())).rejects.toBeInstanceOf(
+      RoiCaseNoActiveVisibilityPolicyError
+    );
 
-    // The client must always be released, success or failure (finally
-    // block in executeAtomicCreate).
-    expect(releaseMock).toHaveBeenCalledTimes(1);
+    // Both pinned clients are released: governed-visibility authorization
+    // and the atomic create transaction.
+    expect(releaseMock).toHaveBeenCalledTimes(2);
     // Never reached any INSERT.
     expect(insertedCaseRows.size).toBe(0);
   });
@@ -326,7 +344,7 @@ describe('createRoiCase — AC-02 duplicate prevention', () => {
     expect(outcome.outcome).toBe('applied');
     expect(outcome.result.created).toBe(false);
     expect(outcome.result.case.caseId).toBe('race-winner-case');
-    expect(releaseMock).toHaveBeenCalledTimes(1);
+    expect(releaseMock).toHaveBeenCalledTimes(2);
   });
 
   it('happy path: no existing case and no race — creates a new case and baseline shell with created:true', async () => {

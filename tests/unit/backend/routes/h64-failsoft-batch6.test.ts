@@ -423,6 +423,7 @@ describe('/api/my-work/* — chat-actions write fail-closed, ai-suggestions degr
         req.organizationId = 'org-1';
         next();
       },
+      validateOrgMembership: (_req: any, _res: any, next: any) => next(),
       requireRole:
         (..._roles: string[]) =>
         (_req: any, _res: any, next: any) =>
@@ -506,17 +507,20 @@ describe('/api/my-work/* — chat-actions write fail-closed, ai-suggestions degr
     return app;
   }
 
-  it('POST /chat-actions (write) stays fail-closed: 500 + code, no err.message leak', async () => {
-    queryRunMock.mockRejectedValue(new Error('duplicate key value violates unique constraint'));
+  it('POST /chat-actions is retired with 410 and performs no direct write', async () => {
     const app = await loadApp();
 
     const res = await request(app)
       .post('/api/my-work/chat-actions')
       .send({ action: 'create_task', payload: { title: 'Test task' } });
 
-    expect(res.status).toBe(500);
-    expect(res.body.code).toBe('MY_WORK_CHAT_ACTION_FAILED');
-    expect(JSON.stringify(res.body)).not.toContain('duplicate key');
+    expect(res.status).toBe(410);
+    expect(res.body).toMatchObject({
+      code: 'MY_WORK_CHAT_DIRECT_WRITE_RETIRED',
+      successor: '/my-work?tab=agent',
+      directWritePerformed: false,
+    });
+    expect(queryRunMock).not.toHaveBeenCalled();
   });
 
   it('POST /my-ideas/:id/ai-suggestions degrades to 200 + degraded:true when the LLM call throws', async () => {

@@ -8,7 +8,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback?: any) => (typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key)),
+    t: (_key: string, fallback?: any) =>
+      typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key),
     i18n: { language: 'en' },
   }),
   initReactI18next: {
@@ -88,7 +89,9 @@ const KPI_CATALOG = {
       ownerName: 'Ada Lovelace',
     },
   ],
-  mappings: [{ id: 'map-1', kpiId: 'kpi-1', initiativeId: 'init-1', initiativeName: 'Initiative Alpha' }],
+  mappings: [
+    { id: 'map-1', kpiId: 'kpi-1', initiativeId: 'init-1', initiativeName: 'Initiative Alpha' },
+  ],
   initiatives: [],
 };
 
@@ -124,13 +127,13 @@ describe('Results KPI read surfaces V8 catalog seam', () => {
     render(
       <MemoryRouter>
         <ResultsKpiReportsView activeFilters={[]} onFilterChange={vi.fn()} createNonce={1} />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     await waitFor(() => {
       expect(screen.getByText('KPI Alpha')).toBeInTheDocument();
       expect(
-        screen.getByText((content) => content.replace(/\s+/g, ' ').includes('Selected: 1/1')),
+        screen.getByText((content) => content.replace(/\s+/g, ' ').includes('Selected: 1/1'))
       ).toBeInTheDocument();
     });
 
@@ -148,7 +151,7 @@ describe('Results KPI read surfaces V8 catalog seam', () => {
     render(
       <MemoryRouter>
         <ResultsKpiReportsView activeFilters={[]} onFilterChange={vi.fn()} createNonce={1} />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     await waitFor(() => {
@@ -186,7 +189,7 @@ describe('Results KPI read surfaces V8 catalog seam', () => {
     render(
       <MemoryRouter>
         <ResultsKpiReportsView activeFilters={[]} onFilterChange={vi.fn()} createNonce={1} />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     await waitFor(() => {

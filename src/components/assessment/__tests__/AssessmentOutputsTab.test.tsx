@@ -118,6 +118,25 @@ describe('AssessmentOutputsTab', () => {
     });
   });
 
+  it('excludes Method Core outputs owned by Tools or Audits from the Assessment surface', async () => {
+    hoisted.listOutputs.mockResolvedValue({
+      outputs: [
+        outputRow(),
+        outputRow({ id: 'tool-output', module: 'tools', scope: 'Tool output' }),
+        outputRow({ id: 'audit-output', module: 'audits', scope: 'Audit output' }),
+      ],
+      total: 3,
+    });
+    const onCountChange = vi.fn();
+
+    render(<AssessmentOutputsTab onCountChange={onCountChange} />);
+
+    expect(await screen.findByText('Digital Readiness — Area A')).toBeInTheDocument();
+    expect(screen.queryByText('Tool output')).not.toBeInTheDocument();
+    expect(screen.queryByText('Audit output')).not.toBeInTheDocument();
+    expect(onCountChange).toHaveBeenCalledWith(1);
+  });
+
   it('visually distinguishes a current Output from a superseded one', async () => {
     hoisted.listOutputs.mockResolvedValue({
       outputs: [

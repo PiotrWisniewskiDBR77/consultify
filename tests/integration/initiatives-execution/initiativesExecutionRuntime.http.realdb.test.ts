@@ -31,6 +31,7 @@ describeRealDb('Initiatives Execution runtime HTTP realDB', () => {
       unitOfWork: new PostgresMaterialCommandUnitOfWork(pool),
       reader: new PostgresInitiativeReader(pool),
       authorize: async (actor, projectId) =>
+        actor.organizationId === 'nordwerk-e2e' &&
         ['validator', 'definition-reviewer', 'initiative-owner', 'definition-authority'].includes(
           actor.userId
         ) &&
@@ -76,6 +77,37 @@ describeRealDb('Initiatives Execution runtime HTTP realDB', () => {
        'Automated Changeover Optimization','Median changeover is 95 minutes.',
        'Reduce median changeover time.','operations-transformation-2027','iwona-owner',
        'PROJECT','READY','CLEAR','pending',2)`);
+    await pool.query(`
+      INSERT INTO organizations (id,name) VALUES ('nordwerk-e2e','Nordwerk'),('foreign-tenant','Foreign') ON CONFLICT (id) DO NOTHING;
+      INSERT INTO projects (id,organization_id,name) VALUES ('operations-transformation-2027','nordwerk-e2e','Operations') ON CONFLICT (id) DO NOTHING;
+      INSERT INTO users (id,email,organization_id,status) VALUES
+        ('validator','validator@local.test','nordwerk-e2e','active'),
+        ('definition-reviewer','reviewer@local.test','nordwerk-e2e','active'),
+        ('initiative-owner','owner@local.test','nordwerk-e2e','active'),
+        ('definition-authority','authority@local.test','nordwerk-e2e','active'),
+        ('iwona-owner','iwona@local.test','nordwerk-e2e','active'),
+        ('revoked-owner','revoked@local.test','nordwerk-e2e','active'),
+        ('foreign-owner','foreign@local.test','foreign-tenant','active')
+      ON CONFLICT (id) DO NOTHING;
+      INSERT INTO organization_members (id,organization_id,user_id,role,status) VALUES
+        ('om-validator','nordwerk-e2e','validator','MEMBER','ACTIVE'),
+        ('om-reviewer','nordwerk-e2e','definition-reviewer','MEMBER','ACTIVE'),
+        ('om-owner','nordwerk-e2e','initiative-owner','MEMBER','ACTIVE'),
+        ('om-authority','nordwerk-e2e','definition-authority','MEMBER','ACTIVE'),
+        ('om-iwona','nordwerk-e2e','iwona-owner','MEMBER','ACTIVE'),
+        ('om-revoked','nordwerk-e2e','revoked-owner','MEMBER','REVOKED'),
+        ('om-foreign','foreign-tenant','foreign-owner','MEMBER','ACTIVE')
+      ON CONFLICT (organization_id,user_id) DO UPDATE SET status=EXCLUDED.status;
+      INSERT INTO project_members (id,project_id,user_id,project_role) VALUES
+        ('pm-validator','operations-transformation-2027','validator','PROJECT_MANAGER'),
+        ('pm-reviewer','operations-transformation-2027','definition-reviewer','PROJECT_MANAGER'),
+        ('pm-owner','operations-transformation-2027','initiative-owner','INITIATIVE_OWNER'),
+        ('pm-authority','operations-transformation-2027','definition-authority','STEERING_COMMITTEE'),
+        ('pm-iwona','operations-transformation-2027','iwona-owner','INITIATIVE_OWNER'),
+        ('pm-revoked','operations-transformation-2027','revoked-owner','INITIATIVE_OWNER'),
+        ('pm-foreign','operations-transformation-2027','foreign-owner','INITIATIVE_OWNER')
+      ON CONFLICT (project_id,user_id) DO NOTHING;
+    `);
   });
   afterAll(async () => {
     await cleanupInitiativesExecutionOrg(pool, 'nordwerk-e2e');
@@ -100,6 +132,85 @@ describeRealDb('Initiatives Execution runtime HTTP realDB', () => {
     visibility: 'PROJECT',
     initiativeOwnerId: 'iwona-owner',
   };
+
+  const insertInitiative = async (organizationId = 'nordwerk-e2e', lifecycleState = 'REGISTERED_DRAFT') => {
+    await pool.query(
+      `INSERT INTO ie_aggregate_state (organization_id, aggregate_type, aggregate_id, version, payload_json)
+       VALUES ($1, 'initiative', 'hub-command-initiative', 1, $2::jsonb)`,
+      [organizationId, JSON.stringify({
+        initiativeId: 'hub-command-initiative', lifecycleState, title: 'Hub initiative', problem: 'Hub problem', proposedOutcome: null,
+        projectId: 'operations-transformation-2027', initiativeOwnerId: 'initiative-owner', readiness: 'NOT_EVALUATED',
+        source: { proposalId: 'proposal-hub', proposalVersion: 1, sourceType: 'MANUAL_HUB', sourceId: 'manual-hub', sourceVersion: 1 },
+      })]
+    );
+  };
+
+  it('amends metadata with exact cold readback, CAS, replay, collision, auth and tenant isolation', async () => {
+    await insertInitiative();
+    await insertInitiative('foreign-tenant');
+    for (const ownerId of ['foreign-owner', 'revoked-owner', 'missing-owner']) {
+      await request(app).patch('/runtime-v1/initiatives/hub-command-initiative/metadata').send({ expectedVersion: 1, clientRequestId: `hub-owner-denied-${ownerId}`, initiativeOwnerId: ownerId }).expect(422);
+    }
+    expect((await pool.query(`SELECT version FROM ie_aggregate_state WHERE organization_id='nordwerk-e2e' AND aggregate_id='hub-command-initiative'`)).rows).toEqual([{ version: 1 }]);
+    const command = { expectedVersion: 1, clientRequestId: 'hub-amend-1', title: 'Hub amended', initiativeOwnerId: 'definition-reviewer' };
+    const first = await request(app).patch('/runtime-v1/initiatives/hub-command-initiative/metadata').send(command).expect(200);
+    expect(first.body).toMatchObject({ status: 'APPLIED', aggregateVersion: 2, initiative: { version: 2, initiative: { title: 'Hub amended', initiativeOwnerId: 'definition-reviewer' } } });
+    const cold = await request(app).get('/runtime-v1/initiatives/hub-command-initiative').expect(200);
+    expect(first.body.initiative).toEqual(cold.body);
+
+    const replay = await request(app).patch('/runtime-v1/initiatives/hub-command-initiative/metadata').send(command).expect(200);
+    expect(replay.body).toMatchObject({ status: 'REPLAYED', aggregateVersion: 2 });
+    await request(app).patch('/runtime-v1/initiatives/hub-command-initiative/metadata').send({ ...command, title: 'Collision' }).expect(409);
+    await request(app).patch('/runtime-v1/initiatives/hub-command-initiative/metadata').send({ ...command, clientRequestId: 'hub-amend-stale', title: 'Stale' }).expect(409);
+    await request(app).patch('/runtime-v1/initiatives/hub-command-initiative/metadata').set('x-test-user', 'unrelated-user').send({ ...command, expectedVersion: 2, clientRequestId: 'hub-amend-denied' }).expect(403);
+    await request(app).patch('/runtime-v1/initiatives/hub-command-initiative/metadata').set('x-test-org', 'foreign-tenant').send({ ...command, expectedVersion: 1, clientRequestId: 'hub-amend-foreign' }).expect(403);
+    const versions = await pool.query(`SELECT organization_id, version FROM ie_aggregate_state WHERE aggregate_id='hub-command-initiative' ORDER BY organization_id`);
+    expect(versions.rows).toEqual([{ organization_id: 'foreign-tenant', version: 1 }, { organization_id: 'nordwerk-e2e', version: 2 }]);
+  });
+
+  it('rejects ineligible owners before proposal or registration creates any canonical write', async () => {
+    const proposal = {
+      proposalId: 'owner-invalid-proposal', expectedVersion: 0, clientRequestId: 'owner-invalid-submit', sourceType: 'MANUAL_HUB', sourceId: 'owner-invalid-source', sourceVersion: 1,
+      provenance: { system: 'test', recordType: 'manual', capturedAt: '2026-08-21T10:00:00.000Z', evidenceRefs: ['evidence:test'] },
+      title: 'Invalid owner', problem: 'Owner must be eligible', proposedOutcome: null, projectId: 'operations-transformation-2027', initiativeOwnerId: 'revoked-owner', visibility: 'PROJECT',
+    };
+    await request(app).post('/runtime-v1/source-proposals').send(proposal).expect(422);
+    expect((await pool.query(`SELECT count(*)::int count FROM ie_aggregate_state WHERE aggregate_id='owner-invalid-proposal'`)).rows[0].count).toBe(0);
+    expect((await pool.query(`SELECT count(*)::int count FROM initiative_candidates WHERE id='owner-invalid-proposal'`)).rows[0].count).toBe(0);
+
+    await request(app).post('/runtime-v1/registrations').send({ ...body, initiativeId: 'owner-invalid-initiative', clientRequestId: 'owner-invalid-register', initiativeOwnerId: 'foreign-owner' }).expect(422);
+    expect((await pool.query(`SELECT count(*)::int count FROM ie_aggregate_state WHERE aggregate_id='owner-invalid-initiative'`)).rows[0].count).toBe(0);
+  });
+
+  it('governed cancel rejects locked lifecycle and rolls back atomically when outbox fails', async () => {
+    await insertInitiative('nordwerk-e2e', 'SCHEDULED');
+    await request(app).post('/runtime-v1/initiatives/hub-command-initiative/cancel').send({ expectedVersion: 1, clientRequestId: 'hub-cancel-locked', reason: 'Too late' }).expect(400);
+    await pool.query(`UPDATE ie_aggregate_state SET payload_json=jsonb_set(payload_json, '{lifecycleState}', '"REGISTERED_DRAFT"') WHERE organization_id='nordwerk-e2e' AND aggregate_id='hub-command-initiative'`);
+    await pool.query(`CREATE OR REPLACE FUNCTION wave3_hub_fail_outbox() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'forced outbox failure'; END $$`);
+    await pool.query(`CREATE TRIGGER wave3_hub_fail_outbox BEFORE INSERT ON ie_outbox_events FOR EACH ROW EXECUTE FUNCTION wave3_hub_fail_outbox()`);
+    try {
+      await request(app).post('/runtime-v1/initiatives/hub-command-initiative/cancel').send({ expectedVersion: 1, clientRequestId: 'hub-cancel-rollback', reason: 'Rollback proof' }).expect(500);
+    } finally {
+      await pool.query('DROP TRIGGER IF EXISTS wave3_hub_fail_outbox ON ie_outbox_events');
+      await pool.query('DROP FUNCTION IF EXISTS wave3_hub_fail_outbox()');
+    }
+    const state = await pool.query(`SELECT version, payload_json->>'lifecycleState' lifecycle FROM ie_aggregate_state WHERE organization_id='nordwerk-e2e' AND aggregate_id='hub-command-initiative'`);
+    expect(state.rows).toEqual([{ version: 1, lifecycle: 'REGISTERED_DRAFT' }]);
+    expect((await pool.query(`SELECT 1 FROM ie_command_receipts WHERE organization_id='nordwerk-e2e' AND client_request_id='hub-cancel-rollback'`)).rowCount).toBe(0);
+
+    const command = { expectedVersion: 1, clientRequestId: 'hub-cancel-success', reason: 'No longer aligned' };
+    const success = await request(app).post('/runtime-v1/initiatives/hub-command-initiative/cancel').send(command).expect(200);
+    expect(success.body).toMatchObject({ status: 'APPLIED', aggregateVersion: 2, initiative: { version: 2, initiative: { lifecycleState: 'CANCELLED', cancellation: { reason: 'No longer aligned', cancelledBy: 'validator' } } } });
+    const cold = await request(app).get('/runtime-v1/initiatives/hub-command-initiative').expect(200);
+    expect(success.body.initiative).toEqual(cold.body);
+    await request(app).post('/runtime-v1/initiatives/hub-command-initiative/cancel').send(command).expect(200).expect((res) => expect(res.body.status).toBe('REPLAYED'));
+    await request(app).post('/runtime-v1/initiatives/hub-command-initiative/cancel').send({ ...command, reason: 'Changed collision' }).expect(409);
+    await request(app).post('/runtime-v1/initiatives/hub-command-initiative/cancel').send({ ...command, clientRequestId: 'hub-cancel-stale', reason: 'Stale' }).expect(409);
+    await request(app).post('/runtime-v1/initiatives/hub-command-initiative/cancel').set('x-test-user', 'unrelated-user').send({ expectedVersion: 2, clientRequestId: 'hub-cancel-denied', reason: 'Denied' }).expect(403);
+    await request(app).post('/runtime-v1/initiatives/hub-command-initiative/cancel').set('x-test-org', 'foreign-tenant').send({ expectedVersion: 1, clientRequestId: 'hub-cancel-foreign', reason: 'Foreign' }).expect(404);
+    const versions = await pool.query(`SELECT organization_id,version FROM ie_aggregate_state WHERE aggregate_id='hub-command-initiative' ORDER BY organization_id`);
+    expect(versions.rows).toEqual([{ organization_id: 'nordwerk-e2e', version: 2 }]);
+  });
 
   it('returns 201 then the same 200 read-back for an idempotent retry', async () => {
     const before = await request(app).get('/runtime-v1/source-proposals').expect(200);

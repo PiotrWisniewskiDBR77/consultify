@@ -19,6 +19,8 @@ const EMPTY_CONTEXT = {
   challenges: {},
   synthesis: {},
   companyProfile: {},
+  version: null,
+  companyProfileOwnership: 'organization_profiles',
 };
 
 router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
@@ -34,10 +36,11 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
       challenges_json: string;
       synthesis_json: string;
       company_profile_json: string;
+      updated_at: string;
     }>(
-      'SELECT goals_json, challenges_json, synthesis_json, company_profile_json FROM organization_context_store WHERE organization_id = $1',
+      'SELECT goals_json, challenges_json, synthesis_json, company_profile_json, updated_at FROM organization_context_store WHERE organization_id = $1',
       [orgId],
-      { fallback: true }
+      { fallback: false }
     );
 
     if (!rows.length) {
@@ -50,7 +53,12 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
       goals: parseJsonField(row.goals_json),
       challenges: parseJsonField(row.challenges_json),
       synthesis: parseJsonField(row.synthesis_json),
-      companyProfile: parseJsonField(row.company_profile_json),
+      // Profile fields are canonically owned by /api/organization-profiles.
+      // Keep the legacy blob in storage for reversibility, but never hydrate it
+      // into the active Organization editor as a competing source of truth.
+      companyProfile: {},
+      version: String(row.updated_at),
+      companyProfileOwnership: 'organization_profiles',
     });
   } catch (err: any) {
     Logger.error('[org-context-store] GET failed', { orgId, err: err?.message });
@@ -66,18 +74,17 @@ router.put('/', async (req: AuthRequest, res: Response): Promise<void> => {
     return;
   }
 
-  const { goals, challenges, synthesis, companyProfile } = req.body ?? {};
+  const { goals, challenges, synthesis } = req.body ?? {};
 
   try {
     await dbRun(
       `INSERT INTO organization_context_store
            (organization_id, goals_json, challenges_json, synthesis_json, company_profile_json, updated_at, updated_by)
-         VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, $6)
+         VALUES ($1, $2, $3, $4, '{}', CURRENT_TIMESTAMP, $5)
          ON CONFLICT (organization_id) DO UPDATE SET
            goals_json           = EXCLUDED.goals_json,
            challenges_json      = EXCLUDED.challenges_json,
            synthesis_json       = EXCLUDED.synthesis_json,
-           company_profile_json = EXCLUDED.company_profile_json,
            updated_at           = EXCLUDED.updated_at,
            updated_by           = EXCLUDED.updated_by`,
       [
@@ -85,13 +92,24 @@ router.put('/', async (req: AuthRequest, res: Response): Promise<void> => {
         JSON.stringify(goals ?? {}),
         JSON.stringify(challenges ?? {}),
         JSON.stringify(synthesis ?? {}),
-        JSON.stringify(companyProfile ?? {}),
         userId ?? null,
       ],
-      { fallback: true }
+      { fallback: false }
     );
 
-    res.json({ ok: true });
+    const persisted = await dbAll<{ updated_at: string }>(
+      'SELECT updated_at FROM organization_context_store WHERE organization_id = $1',
+      [orgId],
+      { fallback: false }
+    );
+    if (persisted.length !== 1 || !persisted[0].updated_at) {
+      throw new Error('Persisted organization context version is unavailable');
+    }
+    res.json({
+      ok: true,
+      version: String(persisted[0].updated_at),
+      companyProfileOwnership: 'organization_profiles',
+    });
   } catch (err: any) {
     Logger.error('[org-context-store] PUT failed', { orgId, err: err?.message });
     res.status(500).json({ error: 'Failed to save org context' });

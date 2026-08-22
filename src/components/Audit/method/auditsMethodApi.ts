@@ -15,12 +15,9 @@
  * — więc `res.data` TO SAMA koperta `{ success, data }`, a właściwa treść to
  * `res.data.data`. `unwrap()` centralizuje to rozpakowanie.
  *
- * Trasy backendu (`server/src/routes/audits/*.routes.ts`) są na moment pisania
- * tego pliku pustymi szkieletami (U2/U3/U5 powstają równolegle) — ten klient
- * jest pisany POD KONTRAKT z briefu, nie pod działającą implementację, i jest
- * defensywny wobec kształtu odpowiedzi (kilka możliwych kluczy tablicy), żeby
- * drobna rozbieżność realnej koperty degradowała się do pustej listy zamiast
- * wywalać UI.
+ * Trasy backendu (`server/src/routes/audits/*.routes.ts`) są działającym,
+ * kanonicznym kontraktem. Klient celowo odrzuca niepoprawną kopertę zamiast
+ * przedstawiać błąd kontraktu jako prawidłowy pusty stan.
  */
 
 import { Api } from '@/services/api';
@@ -53,7 +50,10 @@ export const AUDIT_VERIFICATION_STATES = [
 export type AuditVerificationState = (typeof AUDIT_VERIFICATION_STATES)[number];
 
 /** Typy źródła, którym wolno pokazać w UI słowo „norma" — niezależnie od `verificationStatus`. */
-export const NORMATIVE_SOURCE_TYPES: readonly AuditSourceType[] = ['LICENSED_STANDARD', 'REGULATION'];
+export const NORMATIVE_SOURCE_TYPES: readonly AuditSourceType[] = [
+  'LICENSED_STANDARD',
+  'REGULATION',
+];
 
 export function isNormativeSourceType(value: unknown): boolean {
   return NORMATIVE_SOURCE_TYPES.includes(value as AuditSourceType);
@@ -322,16 +322,19 @@ export interface ListResult<T> {
 /** `res.data` to cała koperta `{ success, data }` — właściwa treść jest w `.data`. */
 function unwrapEnvelope(res: unknown): unknown {
   const body = (res as { data?: unknown })?.data;
-  if (body && typeof body === 'object' && 'data' in (body as Record<string, unknown>)) {
-    return (body as Record<string, unknown>).data;
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    throw new Error('AUDITS_API_CONTRACT_ERROR: response body is not an envelope');
   }
-  return body;
+  const envelope = body as Record<string, unknown>;
+  if (envelope.success !== true || !Object.prototype.hasOwnProperty.call(envelope, 'data')) {
+    throw new Error('AUDITS_API_CONTRACT_ERROR: expected { success: true, data }');
+  }
+  return envelope.data;
 }
 
 /**
- * Defensywne wyciągnięcie tablicy: akceptuje surową tablicę albo obiekt z
- * jednym z podanych kluczy. Backend jeszcze nie istnieje (szkielety tras) —
- * gdy realna koperta się różni, wolimy pustą listę niż wybuch UI.
+ * Ścisłe wyciągnięcie tablicy. Niepoprawny kształt 200 jest błędem kontraktu,
+ * a nie prawidłowym pustym wynikiem.
  */
 function toArray<T>(value: unknown, ...keys: string[]): T[] {
   if (Array.isArray(value)) return value as T[];
@@ -341,7 +344,16 @@ function toArray<T>(value: unknown, ...keys: string[]): T[] {
       if (Array.isArray(obj[key])) return obj[key] as T[];
     }
   }
-  return [];
+  throw new Error(
+    `AUDITS_API_CONTRACT_ERROR: expected array${keys.length ? ` (${keys.join('|')})` : ''}`
+  );
+}
+
+function envelopeTotal(res: unknown): number | undefined {
+  const body = (res as { data?: unknown })?.data;
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return undefined;
+  const total = (body as Record<string, unknown>).total;
+  return typeof total === 'number' ? total : undefined;
 }
 
 function toTotal(value: unknown, fallbackLength: number, ...keys: string[]): number {
@@ -369,7 +381,9 @@ function buildQuery(params: Record<string, string | number | undefined>): string
 // Library — pakiety
 // ---------------------------------------------------------------------------
 
-export async function listPacks(params: ListPacksParams = {}): Promise<ListResult<AuditPackSummary>> {
+export async function listPacks(
+  params: ListPacksParams = {}
+): Promise<ListResult<AuditPackSummary>> {
   const qs = buildQuery({
     search: params.search,
     status: params.status,
@@ -381,7 +395,7 @@ export async function listPacks(params: ListPacksParams = {}): Promise<ListResul
   const res = await Api.get(`/audits/packs${qs}`);
   const payload = unwrapEnvelope(res);
   const items = toArray<AuditPackSummary>(payload, 'packs', 'items');
-  return { items, total: toTotal(payload, items.length, 'total') };
+  return { items, total: envelopeTotal(res) ?? toTotal(payload, items.length, 'total') };
 }
 
 export async function getPack(id: string): Promise<AuditPackDetail | null> {
@@ -428,7 +442,10 @@ export async function getProgram(id: string): Promise<AuditProgramDetail | null>
   return program && program.id ? program : null;
 }
 
-export async function createProgram(input: CreateProgramInput, idempotencyKey: string): Promise<AuditProgramDetail> {
+export async function createProgram(
+  input: CreateProgramInput,
+  idempotencyKey: string
+): Promise<AuditProgramDetail> {
   const res = await Api.post('/audits/programs', input, {
     extraHeaders: { 'Idempotency-Key': idempotencyKey },
   });

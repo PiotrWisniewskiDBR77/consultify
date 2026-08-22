@@ -179,6 +179,7 @@ describe('AnalysisWorkspace — montowanie realnego komponentu (jsdom)', () => {
         unitType: 'PERCENT',
         entityId: 'ent-1',
         periodId: 'p-2026',
+        periodLabel: 'FY2026',
         value: {
           status: 'MISSING',
           valueDecimal: null,
@@ -207,6 +208,7 @@ describe('AnalysisWorkspace — montowanie realnego komponentu (jsdom)', () => {
     );
     await waitFor(() => expect(apiMocks.getAnalysisKpiValues).toHaveBeenCalled());
     await screen.findByText('Marża brutto');
+    expect(screen.getByText('FY2026')).toBeInTheDocument();
     const zeroCells = screen.queryAllByText('0');
     expect(zeroCells).toHaveLength(0); // KONTROLA NEGATYWNA: MISSING nigdy nie renderuje się jako "0"
   });

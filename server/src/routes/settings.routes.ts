@@ -3319,18 +3319,34 @@ router.get(
       [organizationId, userId]
     );
 
-    if (!request) {
-      return res.json({ request: null });
-    }
+    const latestRequest = await dbGet<{
+      id: string;
+      status: string;
+      scheduled_at: string;
+      reason: string;
+      created_at: string;
+    }>(
+      `SELECT id, status, scheduled_at, reason, created_at
+         FROM gdpr_requests
+        WHERE organization_id = ? AND user_id = ? AND type = 'deletion'
+        ORDER BY created_at DESC LIMIT 1`,
+      [organizationId, userId]
+    );
+
+    const presentRequest = (row: typeof request) =>
+      row
+        ? {
+            id: row.id,
+            status: row.status,
+            scheduledAt: row.scheduled_at,
+            reason: row.reason,
+            requestedAt: row.created_at,
+          }
+        : null;
 
     return res.json({
-      request: {
-        id: request.id,
-        status: request.status,
-        scheduledAt: request.scheduled_at,
-        reason: request.reason,
-        requestedAt: request.created_at,
-      },
+      request: presentRequest(request),
+      latestRequest: presentRequest(latestRequest),
     });
   })
 );

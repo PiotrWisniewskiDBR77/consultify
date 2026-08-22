@@ -9,19 +9,28 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (_key: string, fallback?: any, opts?: any) => {
-      let str = typeof fallback === 'string' ? fallback : _key;
-      if (opts && typeof opts === 'object') {
-        str = str.replace(/\{\{(\w+)\}\}/g, (_m: string, k: string) => String(opts[k] ?? ''));
-      }
-      return str;
-    },
-    i18n: { language: 'pl' },
-  }),
-  initReactI18next: { type: '3rdParty', init: () => {} },
-}));
+vi.mock('react-i18next', async () => {
+  const dictionary = (await import('../../../public/locales/pl/translation.json'))
+    .default as Record<string, any>;
+  const resolve = (key: string) =>
+    key.split('.').reduce<any>((value, part) => value?.[part], dictionary);
+  return {
+    useTranslation: () => ({
+      t: (key: string, fallback?: any, opts?: any) => {
+        const options = typeof fallback === 'object' ? fallback : opts;
+        let str =
+          resolve(key) ??
+          (typeof fallback === 'string' ? fallback : (options?.defaultValue ?? key));
+        str = String(str).replace(/\{\{(\w+)\}\}/g, (_m: string, name: string) =>
+          String(options?.[name] ?? '')
+        );
+        return str;
+      },
+      i18n: { language: 'pl' },
+    }),
+    initReactI18next: { type: '3rdParty', init: () => {} },
+  };
+});
 
 vi.mock('@/services/api', () => ({
   Api: { get: vi.fn(), post: vi.fn() },
@@ -83,8 +92,7 @@ describe('AIInsightsPanel', () => {
     await waitFor(() => expect(screen.getByTestId('ai-insights-panel')).toBeInTheDocument());
     expect(screen.getByText('Atrybucja — co bez inicjatywy?')).toBeInTheDocument();
     expect(screen.getByText('Atrybucja do inicjatywy')).toBeInTheDocument();
-    // 1.8M PLN formatted
-    expect(screen.getByText('1.8 M PLN')).toBeInTheDocument();
+    expect(screen.getByText('€1.8M')).toBeInTheDocument();
   });
 
   it('always renders the static premium sections (anomaly / forecast / RCA)', async () => {

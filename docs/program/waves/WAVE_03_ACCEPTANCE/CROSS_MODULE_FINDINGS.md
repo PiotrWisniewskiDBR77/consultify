@@ -5,7 +5,9 @@ observing module still owns the detailed original record and Piotr wording.
 
 | Cross ID | Source finding | Affected modules | Shared surface | Observation | Expected behavior | Severity | Decision | Fix SHA | Retest modules | Status |
 |---|---|---|---|---|---|---|---|---|---|---|
-| _none_ | | | | | | | | | | |
+| `XMOD-SEC-001` | pre-freeze credential scan | all modules using the shared Railway database boundary | five tracked maintenance scripts | A plaintext credentialed Railway PostgreSQL URL was committed in repository history. The current candidate removed the literal from all five scripts and now requires `DATABASE_URL`, but repository exposure means the credential must be treated as compromised until the environment owner confirms rotation. | No live credential is stored in source or evidence; the affected Railway credential is rotated and the old value is rejected before final acceptance. | `P0_SECURITY` | `REMOVE_FROM_CURRENT_CANDIDATE / ROTATION_REQUIRED` | `PENDING_CHECKPOINT` | final secret scan plus non-secret connectivity check after authorized rotation | `CODE_FIXED / EXTERNAL_ROTATION_UNVERIFIED` |
+
+Settings `SET-PF-005..007` closed through module-local fixture/presenter work and exact browser proof; no shared cross-module root cause was established.
 
 ## Rule
 

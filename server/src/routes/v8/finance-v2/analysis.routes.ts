@@ -150,6 +150,7 @@ router.get(
         unitType: r.unit_type,
         entityId: r.entity_id,
         periodId: r.period_id,
+        periodLabel: r.period_label,
         value: {
           status: r.value_status,
           valueDecimal: r.value_decimal,

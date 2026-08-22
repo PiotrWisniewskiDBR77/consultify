@@ -2,7 +2,7 @@
 
 ID: `PRT`
 Routes: `/partner`
-Current gate: `TECHNICAL_PREFLIGHT / OWNER_FIXTURE_PENDING`
+Current gate: `TECHNICAL_BROWSER_PASS / OWNER_PENDING / ECONOMICS_OFF`
 Owner: Piotr Wisniewski
 Integrator: Codex
 Mobile: `DEFERRED_NON_GATING`
@@ -15,77 +15,82 @@ attribution, self-approval denial, foreign tenant and no false economics state.
 
 ## G00–G20 checklist
 
-| Gate | Mandatory outcome | State | Evidence/decision |
-|---|---|---|---|
-| G00 | Scope, routes, dependencies, 82-task links and exclusions | `PASS / APPROVED_OUT_BOUNDARY` | `PRT-POL-001`; `AMD-PRT-POLICY-CLOSED-001`; accrual/payout remain OFF |
-| G01 | Exact baseline and client/server/runtime/DB/migrations | `PASS_FOR_SOURCE_PREFLIGHT` | source fix `43b823e200`; fresh PostgreSQL `817/817`; backend typecheck and diff-check PASS; disposable database dropped; browser/runtime candidate not mounted |
-| G02 | Journeys, writes/readbacks, upstream/downstream and policy map | `PASS_FOR_PREFLIGHT` | canonical `/api/v8/partner`; exact selected-tenant binding; no request-path demo seeding |
-| G03 | Named allowed/denied personas | `PASS_FOR_PREFLIGHT` | bound OWNER/ADMIN/member; dual-tenant, foreign, revoked and unbound denials |
-| G04 | Reproducible realistic and boundary fixtures | `READY_TO_SEED` | fixture checkpoint `152fd88ea3`; guarded Partner owner harness reproduced twice; test DB reset and catalog absence verified |
-| G05 | Functional preflight and cold readback | `PARTIAL` | canonical tenant/policy matrix `72/72` PASS; preserved historical suites remain RED on approved-off economics/legacy connect; `PRT-PF-001` fixed locally |
-| G06 | Desktop/tablet, PL/EN, themes, states, a11y, console/HTTP | `NOT_STARTED` | — |
-| G07 | Piotr review card | `NOT_STARTED` | — |
-| G08 | First-impression review | `NOT_STARTED` | — |
-| G09 | Guided CX journey review | `NOT_STARTED` | — |
-| G10 | Alternate-state owner review | `NOT_STARTED` | — |
-| G11 | Every owner observation/screenshot durably registered | `NOT_STARTED` | — |
-| G12 | Owner register reconciled and confirmed | `NOT_STARTED` | — |
-| G13 | Solution and impact analysis | `NOT_STARTED` | — |
-| G14 | Remediation with finding-to-commit traceability | `NOT_STARTED` | — |
-| G15 | Integrator self-QA and impacted regression | `NOT_STARTED` | — |
-| G16 | Before/after owner retest packet | `NOT_STARTED` | — |
-| G17 | Owner retest decisions for every finding | `NOT_STARTED` | — |
-| G18 | Module accepted on exact SHA and checkpointed | `NOT_STARTED` | — |
-| G19 | Later-change regression obligations resolved | `NOT_STARTED` | — |
-| G20 | Final 16/16 replay | `NOT_STARTED` | — |
+| Gate | Mandatory outcome                                              | State                          | Evidence/decision                                                                                                                                                                                                                                                                                      |
+| ---- | -------------------------------------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| G00  | Scope, routes, dependencies, 82-task links and exclusions      | `PASS / APPROVED_OUT_BOUNDARY` | `PRT-POL-001`; `AMD-PRT-POLICY-CLOSED-001`; accrual/payout remain OFF                                                                                                                                                                                                                                  |
+| G01  | Exact baseline and client/server/runtime/DB/migrations         | `PASS_EXACT_RUNTIME`           | Source fix began at `43b823e200`. Retained owner fixture was adopted on exact browser candidate `3d61730fd8ad18d19cf9967cb5513697659003cc`, dirty fingerprint `312f08be...`, server/client `4050/4051`, healthy client/server/build marker, SQL ledgers `ok`, `817` migrations and matching FINAL SQL marker. Technical evidence does not imply owner acceptance. |
+| G02  | Journeys, writes/readbacks, upstream/downstream and policy map | `PASS_FOR_PREFLIGHT`           | canonical `/api/v8/partner`; exact selected-tenant binding; no request-path demo seeding                                                                                                                                                                                                               |
+| G03  | Named allowed/denied personas                                  | `PASS_FOR_PREFLIGHT`           | bound OWNER/ADMIN/member; dual-tenant, foreign, revoked and unbound denials                                                                                                                                                                                                                            |
+| G04  | Reproducible realistic and boundary fixtures                   | `PASS_OWNER_FIXTURE_RETAINED / OWNER_PENDING` | Fixture checkpoint `152fd88ea3`; guarded Partner owner harness reproduced twice. Retained DB `consultify_w3_partner_owner_browser_20260822` and FINAL manifest `/tmp/consultify-wave3-partner-owner-browser-20260822.json` were marker-verified by the adopted runtime. Demo campaign/click seeding remains disabled and economics stays OFF. |
+| G05  | Functional preflight and cold readback                         | `PASS_TECHNICAL / OWNER_PENDING` | Prior tenant/policy matrix `72/72` PASS; unit replay `68/68` with four environment-gated RealPG cases; Partner UI `118/118`; fresh lifecycle/ledger/HTTP `14/14`. Fixture-backed browser replay cold-opened profile, certification `1/10`, referral `W3PARTNER`, participant ledger and explicit `AMD-PRT-ECONOMICS-002` gate. Demo campaign/click rows remained `0/0` after cold restart; foreign, revoked and unbound personas failed closed. Focused browser regressions: `29/29 PASS`. |
+| G06  | Desktop/tablet, PL/EN, themes, states, a11y, console/HTTP      | `PARTIAL_BROWSER_PASS`         | Authenticated desktop replay passed the operational fixture journey and cold readback. A separate visual sweep found that bare `/partner` still lands on the polished long program/marketing page rather than directly exposing the owner operations journey; this remains a P2 CX/deep-link decision, not a backend failure. Tablet, themes, PL/EN, full a11y and complete console/HTTP sweep remain pending; mobile is non-gating. |
+| G07  | Piotr review card                                              | `READY_FOR_GUIDED_REPLAY`      | Shared operator card: `../../GUIDED_OWNER_REPLAY.md`, row 16. Owner decisions remain pending.                                                                                                                                                                                                            |
+| G08  | First-impression review                                        | `NOT_STARTED`                  | —                                                                                                                                                                                                                                                                                                      |
+| G09  | Guided CX journey review                                       | `NOT_STARTED`                  | —                                                                                                                                                                                                                                                                                                      |
+| G10  | Alternate-state owner review                                   | `NOT_STARTED`                  | —                                                                                                                                                                                                                                                                                                      |
+| G11  | Every owner observation/screenshot durably registered          | `NOT_STARTED`                  | —                                                                                                                                                                                                                                                                                                      |
+| G12  | Owner register reconciled and confirmed                        | `NOT_STARTED`                  | —                                                                                                                                                                                                                                                                                                      |
+| G13  | Solution and impact analysis                                   | `NOT_STARTED`                  | —                                                                                                                                                                                                                                                                                                      |
+| G14  | Remediation with finding-to-commit traceability                | `NOT_STARTED`                  | —                                                                                                                                                                                                                                                                                                      |
+| G15  | Integrator self-QA and impacted regression                     | `NOT_STARTED`                  | —                                                                                                                                                                                                                                                                                                      |
+| G16  | Before/after owner retest packet                               | `NOT_STARTED`                  | —                                                                                                                                                                                                                                                                                                      |
+| G17  | Owner retest decisions for every finding                       | `NOT_STARTED`                  | —                                                                                                                                                                                                                                                                                                      |
+| G18  | Module accepted on exact SHA and checkpointed                  | `NOT_STARTED`                  | —                                                                                                                                                                                                                                                                                                      |
+| G19  | Later-change regression obligations resolved                   | `NOT_STARTED`                  | —                                                                                                                                                                                                                                                                                                      |
+| G20  | Final 16/16 replay                                             | `NOT_STARTED`                  | —                                                                                                                                                                                                                                                                                                      |
 
 ## Piotr review card
 
-| Purpose/value | Starting route | Persona/data | Guided actions | Conscious exclusions | Observation prompts |
-|---|---|---|---|---|---|
-| _prepare before G07_ | `/partner` | _pending_ | Open partner profile → certification/attribution → ledger → denied economics | Accrual, commission and payout execution | Partner value, trust, certification clarity, honest excluded-economics messaging |
+| Purpose/value        | Starting route | Persona/data | Guided actions                                                               | Conscious exclusions                     | Observation prompts                                                              |
+| -------------------- | -------------- | ------------ | ---------------------------------------------------------------------------- | ---------------------------------------- | -------------------------------------------------------------------------------- |
+| _prepare before G07_ | `/partner`     | _pending_    | Open partner profile → certification/attribution → ledger → denied economics | Accrual, commission and payout execution | Partner value, trust, certification clarity, honest excluded-economics messaging |
 
 ## Persona and fixture ledger
 
-| ID | Type | Purpose | Setup/reset | Readback | Expected access | Status/evidence |
-|---|---|---|---|---|---|---|
-| `PRT-OWN` | allowed | ACTIVE owner; same user also ACTIVE in foreign tenant | guarded stable seed / whole-DB reset | profile, completed certification, referral identity, participant ledger | exact bound tenant only | `READY_TO_SEED` |
-| `PRT-ADM` | allowed | ACTIVE Partner admin | guarded stable seed / whole-DB reset | bound profile and certification states | bound tenant | `READY_TO_SEED` |
-| `PRT-MEM` | allowed | ACTIVE Partner member | guarded stable seed / whole-DB reset | 60% certification state | bound tenant | `READY_TO_SEED` |
-| `PRT-FOR` | denied | owner selecting second ACTIVE foreign tenant | shared stable seed | zero bound Partner rows | deny; zero mutation | readback `0` |
-| `PRT-REV` | denied | revoked tenant membership | shared stable seed | zero ACTIVE membership rows | deny; zero mutation | readback `0` |
-| `PRT-UNB` | denied | historical Partner with NULL owner binding | shared stable seed | zero owner-bound rows | deny; zero mutation | readback `0` |
-| `PRT-ANON` | public | anonymous referral visitor | referral code `W3PARTNER` | `/r/w3-partner-owner` | public validation only | deep link not browser-verified |
+| ID         | Type    | Purpose                                               | Setup/reset                          | Readback                                                                | Expected access         | Status/evidence                |
+| ---------- | ------- | ----------------------------------------------------- | ------------------------------------ | ----------------------------------------------------------------------- | ----------------------- | ------------------------------ |
+| `PRT-OWN`  | allowed | ACTIVE owner; same user also ACTIVE in foreign tenant | guarded stable seed / retained exact-prefix DB | profile, certification, referral identity and participant ledger browser cold-read | exact bound tenant only | `TECHNICAL_BROWSER_PASS / OWNER_PENDING` |
+| `PRT-ADM`  | allowed | ACTIVE Partner admin                                  | guarded stable seed / whole-DB reset | bound profile and certification states                                  | bound tenant            | `TECHNICAL_BOUNDARY_PASS / OWNER_PENDING` |
+| `PRT-MEM`  | allowed | ACTIVE Partner member                                 | guarded stable seed / whole-DB reset | certification state                                                     | bound tenant            | `TECHNICAL_BOUNDARY_PASS / OWNER_PENDING` |
+| `PRT-FOR`  | denied  | owner selecting second ACTIVE foreign tenant          | shared stable seed                   | zero bound Partner rows                                                 | deny; zero mutation     | readback `0`                   |
+| `PRT-REV`  | denied  | revoked tenant membership                             | shared stable seed                   | zero ACTIVE membership rows                                             | deny; zero mutation     | readback `0`                   |
+| `PRT-UNB`  | denied  | historical Partner with NULL owner binding            | shared stable seed                   | zero owner-bound rows                                                   | deny; zero mutation     | readback `0`                   |
+| `PRT-ANON` | public  | anonymous referral visitor                            | referral code `W3PARTNER`            | `/r/w3-partner-owner`                                                   | public validation only  | deep link not browser-verified |
 
 ## Technical preflight findings
 
-| ID | Classification | Finding | Resolution/state |
-|---|---|---|---|
-| `PRT-PF-001` | `PRODUCT_DEFECT / RELEASE_BLOCKING` | Canonical Partner reads and onboarding writes resolved Partner scope from `userId` alone; auth could also fall back from an explicitly requested revoked tenant to another ACTIVE membership. | Fixed in `43b823e200`: preserve pre-fallback requested tenant, require exact context + ACTIVE membership, resolve every canonical path by `(organizationId,userId)`, remove request-path self-heal/demo seed. RealPG covers dual membership, foreign, revoked, unbound and zero mutation. |
-| `PRT-PF-002` | `STALE_TEST_CONTRACT` | Lifecycle/ledger/BVP tests expect legacy connect or accrual/attribution writes after economics was approved OFF. | `IDENTIFIED_STALE / PRESERVED_RED / REMEDIATION_PENDING`. Historical suites remain unchanged so their certification/attribution/cold-read scope is not silently reduced. No accrual/payout was re-enabled. |
-| `PRT-PF-003` | `FIXTURE_GAP` | No secret-free reproducible owner fixture covered dual-tenant, revoked and unbound boundaries. | Guarded loopback/prefix/explicit-YES harness added; no registration/email/invite; deterministic manifest; whole-DB reset/catalog absence proven. |
+| ID           | Classification                      | Finding                                                                                                                                                                                       | Resolution/state                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ------------ | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PRT-PF-001` | `PRODUCT_DEFECT / RELEASE_BLOCKING` | Canonical Partner reads and onboarding writes resolved Partner scope from `userId` alone; auth could also fall back from an explicitly requested revoked tenant to another ACTIVE membership. | Fixed in `43b823e200`: preserve pre-fallback requested tenant, require exact context + ACTIVE membership, resolve every canonical path by `(organizationId,userId)`, remove request-path self-heal/demo seed. RealPG covers dual membership, foreign, revoked, unbound and zero mutation.                                                                                                                                                                                                                         |
+| `PRT-PF-002` | `STALE_TEST_CONTRACT`               | Lifecycle/ledger/BVP tests expected legacy connect or accrual/attribution writes after economics was approved OFF.                                                                            | `FIXED_VERIFIED`. HTTP BVP uses canonical `/api/v8/partner` connect/certification writes with durable idempotency keys and retains legacy cold-reader compatibility. Service lifecycle tests now prove referral identity/certification while attribution is refused before SQL; ledger tests retain append-only historical-row governance and prove service accrual retries are all refused with zero residue. Fresh-817 matrix `3/3` files, `14/14` PASS; catalog residue `0`; no accrual/payout was re-enabled. |
+| `PRT-PF-003` | `FIXTURE_GAP`                       | No secret-free reproducible owner fixture covered dual-tenant, revoked and unbound boundaries.                                                                                                | Guarded loopback/prefix/explicit-YES harness added; no registration/email/invite; deterministic manifest; whole-DB reset/catalog absence proven.                                                                                                                                                                                                                                                                                                                                                                  |
+| `PRT-PF-004` | `STALE_UI_TEST_FIXTURES`            | Five Partner UI assertions still expected the removed self-connect mutation or a Polish tier label while the test i18n mock was running the English fallback contract.                        | Tests now pin the current acquisition boundary (no V8 or legacy self-connect writer, even with rollback enabled) and interpolate the governed tier through the English fallback. Full Partner component suite `27/27` files, `118/118` tests PASS. React `act(...)` warnings remain non-gating harness debt.                                                                                                                                                                                                      |
 
 Focused verification on disposable PostgreSQL: fresh migrations `817/817`;
 canonical tenant RealPG `4/4`; V8 read/auth unit `46/46`;
-economics-disabled unit `22/22`. Historical lifecycle/program-ledger tests
-were preserved unchanged and remain red where they request approved-off
-economic writes. The preserved legacy HTTP BVP is separately `0/1` RED
-because deprecated `POST /api/partners/connect` now returns governed `410`;
-its certification/attribution/cold-read coverage was not reduced or
-relabelled green. The disposable database was dropped after residue/readback
-checks. These results do not replace G04 or owner/browser acceptance.
+economics-disabled unit `22/22`; Partner lifecycle/ledger/HTTP matrix `14/14`
+PASS. The HTTP BVP now
+crosses canonical connect, certification progress and exam commands with
+idempotency keys, then cold-reopens connection, referral identity and the
+completed certificate through the retained reader. Referral registration is
+also proved to leave `partner_attributions` at exactly zero under the approved
+economics-OFF policy. The direct lifecycle suite now proves the same refusal
+and cold zero-readback. The ledger suite still verifies append-only integrity
+for historical rows while its public service path refuses all concurrent
+accrual retries before SQL. The fresh database was whole-dropped and catalog
+residue was `0`. These results do not replace G04 or owner/browser acceptance.
 
 ## Owner UI/UX/CX register
 
 | Finding ID | Captured | Piotr original wording | Category | Route/screen | Current behavior | Expected experience | Impact | Screenshot/hash | Product SHA | Severity | Decision/status | Fix commit | Self-QA | Owner retest |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| _none_ | | | | | | | | | | | | | | |
+| ---------- | -------- | ---------------------- | -------- | ------------ | ---------------- | ------------------- | ------ | --------------- | ----------- | -------- | --------------- | ---------- | ------- | ------------ |
+| _none_     |          |                        |          |              |                  |                     |        |                 |             |          |                 |            |         |              |
 
 ## Implementation/regression ledger
 
 | Finding IDs | Root cause | Approved solution | Commit | Shared surfaces | Impacted modules | Tests/self-QA | Regression |
-|---|---|---|---|---|---|---|---|
-| _none_ | | | | | | | |
+| ----------- | ---------- | ----------------- | ------ | --------------- | ---------------- | ------------- | ---------- |
+| _none_      |            |                   |        |                 |                  |               |            |
 
 ## Owner verdict
 

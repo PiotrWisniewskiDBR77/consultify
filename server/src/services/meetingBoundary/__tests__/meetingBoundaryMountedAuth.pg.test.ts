@@ -116,7 +116,7 @@ describe('MTG-BVP-001 mounted production router with real auth and PostgreSQL', 
   it('creates agenda/materials metadata and proposes durable notes through real member auth', async () => {
     const embeddedOutput = await request(app)
       .post('/api/meeting')
-      .set(auth(token(memberA, orgA, 'USER')))
+      .set(auth(token(memberA, orgA, 'ADMINISTRATOR')))
       .send({
         title: `${prefix}-invalid-output-meeting`,
         startAt: '2026-09-20T08:00:00.000Z',
@@ -127,7 +127,7 @@ describe('MTG-BVP-001 mounted production router with real auth and PostgreSQL', 
 
     const created = await request(app)
       .post('/api/meeting')
-      .set(auth(token(memberA, orgA, 'USER')))
+      .set(auth(token(memberA, orgA, 'ADMINISTRATOR')))
       .send({
         title: `${prefix}-meeting`,
         startAt: '2026-09-20T09:00:00.000Z',
@@ -140,7 +140,7 @@ describe('MTG-BVP-001 mounted production router with real auth and PostgreSQL', 
 
     const generated = await request(app)
       .post(`/api/meeting/${meetingId}/generate-notes`)
-      .set(auth(token(memberA, orgA, 'USER')))
+      .set(auth(token(memberA, orgA, 'ADMINISTRATOR')))
       .send({
         transcript: `${prefix}: decision approve pilot. action item prepare evidence.`,
         idempotencyKey: `${prefix}-idem`,
@@ -152,12 +152,14 @@ describe('MTG-BVP-001 mounted production router with real auth and PostgreSQL', 
     const participantRead = await request(app)
       .get(`/api/meeting/${meetingId}/notes`)
       .set(auth(token(participantA, orgA, 'USER')));
-    expect(participantRead.status, JSON.stringify(participantRead.body)).toBe(200);
+    expect(participantRead.status, JSON.stringify(participantRead.body)).toBe(403);
+    expect(participantRead.body.code).toBe('BETA_LOCKED');
 
     const outsiderRead = await request(app)
       .get(`/api/meeting/${meetingId}/notes`)
       .set(auth(token(outsiderA, orgA, 'USER')));
-    expect(outsiderRead.status).toBe(404);
+    expect(outsiderRead.status).toBe(403);
+    expect(outsiderRead.body.code).toBe('BETA_LOCKED');
 
     const participantBrief = await request(app)
       .get(`/api/ai-operator/meetings/${meetingId}/brief`)
@@ -171,12 +173,12 @@ describe('MTG-BVP-001 mounted production router with real auth and PostgreSQL', 
 
     const replay = await request(app)
       .post(`/api/meeting/${meetingId}/generate-notes`)
-      .set(auth(token(memberA, orgA, 'USER')))
+      .set(auth(token(memberA, orgA, 'ADMINISTRATOR')))
       .send({
         transcript: `${prefix}: decision approve pilot. action item prepare evidence.`,
         idempotencyKey: `${prefix}-idem`,
       });
-    expect(replay.status, JSON.stringify(replay.body)).toBe(201);
+    expect(replay.status, JSON.stringify(replay.body)).toBe(200);
     expect(replay.body.meetingNoteId).toBe(noteId);
     expect(replay.body.proposal.replayed).toBe(true);
   });
@@ -189,7 +191,7 @@ describe('MTG-BVP-001 mounted production router with real auth and PostgreSQL', 
 
     const directDecision = await request(app)
       .post(`/api/meeting/${meetingId}/decisions`)
-      .set(auth(token(memberA, orgA, 'USER')))
+      .set(auth(token(memberA, orgA, 'ADMINISTRATOR')))
       .send({ decision: 'bypass' });
     expect(directDecision.status).toBe(410);
     expect(directDecision.body.code).toBe('MEETING_PROPOSAL_REQUIRED');

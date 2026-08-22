@@ -293,6 +293,20 @@ vi.doMock('../../../src/components/AIChat/EnhancedChatInput', () => ({
         send
       </button>
       <button
+        data-testid="send-retired-task"
+        disabled={disabled}
+        onClick={() => onSend('/task Prepare steering committee brief')}
+      >
+        send-retired-task
+      </button>
+      <button
+        data-testid="send-retired-decision"
+        disabled={disabled}
+        onClick={() => onSend('/decision Approve the recovery plan')}
+      >
+        send-retired-decision
+      </button>
+      <button
         data-testid="send-pdf"
         disabled={disabled}
         onClick={() =>
@@ -1608,6 +1622,39 @@ describe('UnifiedChatPanel (L2)', () => {
     );
     await waitFor(() => expect(startStreamMock).toHaveBeenCalled());
   });
+
+  it.each([
+    ['send-retired-task', 'task'],
+    ['send-retired-decision', 'decision'],
+  ] as const)(
+    'fails governed slash command %s closed in the mounted panel without starting a chat write',
+    async (buttonId, targetKind) => {
+      conversationStoreState.activeConversationId = 'conv-governed-boundary';
+      renderWithRouter(<UnifiedChatPanel onMessageSent={vi.fn()} />);
+
+      fireEvent.click(screen.getByTestId(buttonId));
+
+      await waitFor(() =>
+        expect(addChatMessageMock).toHaveBeenCalledWith(
+          expect.objectContaining({
+            role: 'ai',
+            content: expect.stringContaining(`No ${targetKind} was created`),
+          })
+        )
+      );
+      expect(addChatMessageMock).toHaveBeenCalledWith(
+        expect.objectContaining({ content: expect.stringContaining('/my-work?tab=agent') })
+      );
+      expect(addMessageToConversationMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          conversationId: 'conv-governed-boundary',
+          role: 'ai',
+        })
+      );
+      expect(createConversationMock).not.toHaveBeenCalled();
+      expect(startStreamMock).not.toHaveBeenCalled();
+    }
+  );
 
   it('uses the live store conversation when sending immediately after switching chats', async () => {
     conversationStoreState.activeConversationId = 'conv-old';

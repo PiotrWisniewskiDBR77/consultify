@@ -18,6 +18,7 @@ import { ConversationRouteSync } from '@/components/AIChat/ConversationRouteSync
 import { isCaseWorkspaceEnabled } from '@/components/CaseWorkspace/caseWorkspaceFlag';
 import { BetaGate, ProtectedRoute } from '@/components/ProtectedRoute';
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
+import { ResultsOwnerReviewEntry } from '@/components/Results/ResultsOwnerReviewEntry';
 import { AnimationWrapper } from '@/components/shared/AnimationWrapper';
 import { LoadingState } from '@/components/shared/states/LoadingState';
 import { V8UnavailableBanner } from '@/components/shared/V8UnavailableBanner';
@@ -744,8 +745,16 @@ const DRDAuditReportRoute: React.FC = () => {
 };
 
 const LegacyAuditCriterionRedirect: React.FC = () => {
-  const { programId = '', criterionId = '' } = useParams<{ programId: string; criterionId: string }>();
-  return <Navigate to={`/audit-programs/${encodeURIComponent(programId)}/criteria/${encodeURIComponent(criterionId)}`} replace />;
+  const { programId = '', criterionId = '' } = useParams<{
+    programId: string;
+    criterionId: string;
+  }>();
+  return (
+    <Navigate
+      to={`/audit-programs/${encodeURIComponent(programId)}/criteria/${encodeURIComponent(criterionId)}`}
+      replace
+    />
+  );
 };
 
 /** Redirects /auth?action=trial to /trial/start */
@@ -1596,10 +1605,7 @@ export const AppRoutes: React.FC = () => {
         />
 
         {/* Retired parallel entry: the canonical kernel now owns /audit-programs. */}
-        <Route
-          path="/audit-programs/method"
-          element={<Navigate to="/audit-programs" replace />}
-        />
+        <Route path="/audit-programs/method" element={<Navigate to="/audit-programs" replace />} />
 
         {/* Canonical criterion workspace: one governed lifecycle from source
             and evidence through finding, remediation and closure. */}
@@ -1885,9 +1891,7 @@ export const AppRoutes: React.FC = () => {
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Interview']} noPadding>
               <RouteErrorBoundary>
-                <V8UnavailableBanner moduleName="Interview">
-                  <InterviewHub />
-                </V8UnavailableBanner>
+                <InterviewHub />
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -1898,9 +1902,7 @@ export const AppRoutes: React.FC = () => {
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Interview']} noPadding>
               <RouteErrorBoundary>
-                <V8UnavailableBanner moduleName="Interview">
-                  <InterviewHub />
-                </V8UnavailableBanner>
+                <InterviewHub />
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -2130,10 +2132,10 @@ export const AppRoutes: React.FC = () => {
           path={`${ROUTES.ASSESSMENT.ROOT}/*`}
           element={
             <ProtectedRoute requireAuth={true}>
-              <MainLayout breadcrumbs={breadcrumbs || ['Tools', 'Licensed']} noPadding>
+              <MainLayout breadcrumbs={breadcrumbs || ['Assessment']} noPadding>
                 <ProductionModuleGate
                   enabled={!hideNonCoreModulesOnPublicProduction}
-                  moduleName="Tools"
+                  moduleName="Assessment"
                 >
                   <RouteErrorBoundary>
                     <Routes>
@@ -2331,6 +2333,27 @@ export const AppRoutes: React.FC = () => {
         />
         <Route
           path={ROUTES.EXECUTION}
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['Execution']}>
+              <ProductionModuleGate
+                enabled={!hideNonCoreModulesOnPublicProduction}
+                moduleName="Execution"
+              >
+                <RouteErrorBoundary>
+                  <AnimationWrapper variant="slideUp">
+                    <V8UnavailableBanner moduleName="Execution">
+                      <Suspense fallback={<LoadingScreen message="Loading..." />}>
+                        <ExecutionHub />
+                      </Suspense>
+                    </V8UnavailableBanner>
+                  </AnimationWrapper>
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
+            </MainLayout>
+          }
+        />
+        <Route
+          path={`${ROUTES.EXECUTION}/:executionCaseId`}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Execution']}>
               <ProductionModuleGate
@@ -2649,7 +2672,7 @@ export const AppRoutes: React.FC = () => {
                   moduleName="Results"
                 >
                   <RouteErrorBoundary>
-                    <ResultsHub />
+                    <ResultsOwnerReviewEntry fallback={<ResultsHub />} />
                   </RouteErrorBoundary>
                 </ProductionModuleGate>
               </MainLayout>

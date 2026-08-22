@@ -76,7 +76,9 @@ describe('T38 ResultsOkrSetsTable', () => {
 
   it('kebab exposes exactly Open preview — no assign/archive', async () => {
     apiGet.mockResolvedValue({
-      objectives: [{ id: 'o-1', label: 'Grow enterprise revenue', rollupScore: 62, keyResults: [] }],
+      objectives: [
+        { id: 'o-1', label: 'Grow enterprise revenue', rollupScore: 62, keyResults: [] },
+      ],
     });
     render(<ResultsOkrSetsTable />);
     await screen.findByText('Grow enterprise revenue');
@@ -90,7 +92,9 @@ describe('T38 ResultsOkrSetsTable', () => {
 
   it('no selection checkboxes rendered (selection: none, no Menu3 bulk)', async () => {
     apiGet.mockResolvedValue({
-      objectives: [{ id: 'o-1', label: 'Grow enterprise revenue', rollupScore: 62, keyResults: [] }],
+      objectives: [
+        { id: 'o-1', label: 'Grow enterprise revenue', rollupScore: 62, keyResults: [] },
+      ],
     });
     render(<ResultsOkrSetsTable />);
     await screen.findByText('Grow enterprise revenue');

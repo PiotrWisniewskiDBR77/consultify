@@ -82,34 +82,29 @@ vi.mock('react-i18next', () => {
     },
   });
 
+  // Match react-i18next's stable `t` identity. Recreating this function for
+  // every mocked hook call causes artificial callback/effect loops in tests.
+  const translate = (key: string, options?: any) => {
+    if (typeof options === 'string') return options;
+    if (options?.returnObjects) return returnObjectsProxy;
+    if (options && typeof options === 'object') {
+      let result = options.defaultValue || key;
+      Object.keys(options).forEach((optKey) => {
+        if (optKey !== 'defaultValue' && optKey !== 'returnObjects') {
+          result = String(result).replace(
+            new RegExp(`\\{${optKey}\\}`, 'g'),
+            String(options[optKey])
+          );
+        }
+      });
+      return result;
+    }
+    return key;
+  };
+
   return {
     useTranslation: () => ({
-      t: (key: string, options?: any) => {
-        // Handle fallback as second argument (string)
-        if (typeof options === 'string') {
-          return options;
-        }
-        // Handle returnObjects option
-        if (options?.returnObjects) {
-          return returnObjectsProxy;
-        }
-        // Handle interpolation
-        if (options && typeof options === 'object' && !options.returnObjects) {
-          // Simple interpolation - replace {key} with value
-          let result = options.defaultValue || key;
-          Object.keys(options).forEach((optKey) => {
-            if (optKey !== 'defaultValue' && optKey !== 'returnObjects') {
-              result = String(result).replace(
-                new RegExp(`\\{${optKey}\\}`, 'g'),
-                String(options[optKey])
-              );
-            }
-          });
-          return result;
-        }
-        // Default: return the key or defaultValue
-        return options?.defaultValue || key;
-      },
+      t: translate,
       i18n: {
         language: 'en',
         changeLanguage: vi.fn(),

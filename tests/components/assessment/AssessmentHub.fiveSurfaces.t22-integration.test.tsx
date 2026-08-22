@@ -41,7 +41,7 @@ import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { apiMock, isEnabledMock } = vi.hoisted(() => ({
+const { apiMock, isEnabledMock, listMethodSessionsMock } = vi.hoisted(() => ({
   apiMock: {
     listAssessments: vi.fn(),
     getAssessmentReports: vi.fn(),
@@ -52,6 +52,7 @@ const { apiMock, isEnabledMock } = vi.hoisted(() => ({
     getUsers: vi.fn(),
   },
   isEnabledMock: vi.fn((_flagId: string) => false),
+  listMethodSessionsMock: vi.fn(),
 }));
 
 vi.mock('react-router-dom', async () => {
@@ -60,6 +61,9 @@ vi.mock('react-router-dom', async () => {
 });
 
 vi.mock('../../../src/services/api', () => ({ Api: apiMock }));
+vi.mock('../../../src/method-core/api/methodCoreApi', () => ({
+  listSessions: listMethodSessionsMock,
+}));
 
 // AssessmentHub.tsx reads flags via `useFeatureFlagsContext()`
 // (@/contexts/FeatureFlagsContext) — this per-file mock shadows the global
@@ -143,6 +147,7 @@ describe('T22-INTEGRATION-SHELL AssessmentHub five-surfaces — QA screen shell'
     apiMock.get.mockResolvedValue([]);
     apiMock.listReportImports.mockResolvedValue({ data: [] });
     apiMock.getUsers.mockResolvedValue([]);
+    listMethodSessionsMock.mockResolvedValue({ sessions: [], total: 0 });
   });
 
   it('flag OFF: exactly the 3 legacy tabs, no five-surfaces ids', async () => {
@@ -206,16 +211,14 @@ describe('T22-INTEGRATION-SHELL AssessmentHub five-surfaces — QA screen shell'
 
   it('flag ON: outputs tab with an assessment selected (via Processes) renders the real AssessmentQualityReviewPanel', async () => {
     isEnabledMock.mockImplementation((id: string) => id === 'assessmentFiveSurfacesV1');
-    apiMock.listAssessments.mockResolvedValue({
-      items: [
-        {
-          id: 'asm_1',
-          name: 'Canonical DRD',
-          type: 'DRD',
-          status: 'DRAFT',
-          updatedAt: '2026-04-11T08:00:00.000Z',
-        },
-      ],
+    listMethodSessionsMock.mockResolvedValue({
+      sessions: [{
+        id: 'asm-method-1', organizationId: 'org-1', projectId: null,
+        module: 'assessment', methodPackId: 'drd', methodPackVersion: '2.0.0-methodpack.1',
+        state: 'active', domainStage: null, mode: 'guided_manual', ownerUserId: 'owner-1',
+        createdAt: '2026-04-11T08:00:00.000Z', updatedAt: '2026-04-11T08:00:00.000Z',
+        version: 1, frozenSnapshotId: null, revisionOfSessionId: null, hasFrozenOutput: false,
+      }], total: 1,
     });
 
     render(
@@ -224,7 +227,7 @@ describe('T22-INTEGRATION-SHELL AssessmentHub five-surfaces — QA screen shell'
       </MemoryRouter>
     );
 
-    const row = await screen.findByText('Canonical DRD');
+    const row = await screen.findByText('DRD · asm-meth');
     fireEvent.click(row);
 
     // `react-i18next`'s real `useTranslation()` is intentionally left
@@ -237,7 +240,7 @@ describe('T22-INTEGRATION-SHELL AssessmentHub five-surfaces — QA screen shell'
     fireEvent.click(outputsTab);
 
     expect(await screen.findByTestId('assessment-quality-review-panel')).toHaveTextContent(
-      'asm_1'
+      'asm-method-1'
     );
   });
 });

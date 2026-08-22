@@ -45,6 +45,7 @@ const loadStatements = vi.fn();
 const onSelectRow = vi.fn();
 const deselectRow = vi.fn();
 const { apiPost } = vi.hoisted(() => ({ apiPost: vi.fn() }));
+const { getFinanceArtifact } = vi.hoisted(() => ({ getFinanceArtifact: vi.fn() }));
 const wizardIds = vi.hoisted(() => [] as string[]);
 
 /** Selection is driven by the test so preview open/closed is deterministic. */
@@ -74,6 +75,11 @@ vi.mock('@/contexts/AccessPolicyContext', async (importOriginal) => {
 vi.mock('@/services/api', async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, any>;
   return { ...actual, Api: { ...actual.Api, post: apiPost } };
+});
+
+vi.mock('@/services/api/financeV2.api', async (importOriginal) => {
+  const actual = (await importOriginal()) as Record<string, unknown>;
+  return { ...actual, getFinanceArtifact };
 });
 
 vi.mock('@/hooks/useFinanceStatementPackWorkspaceV2Flag', () => ({
@@ -298,6 +304,17 @@ describe('FinanceHub — Statements list+preview canon (FIN-UI-CANON-001)', () =
       businessVersionId: 'analysis-bv-1',
       workingRevisionId: 'analysis-wr-1',
       edgeId: 'lineage-edge-1',
+    });
+    getFinanceArtifact.mockResolvedValue({
+      artifactId: 'analysis-artifact-1',
+      artifactType: 'HISTORICAL_ANALYSIS',
+      naturalKey: 'FY24 Analysis',
+      currentBusinessVersion: {
+        businessVersionId: 'analysis-bv-1',
+        status: 'DRAFT',
+        freshness: 'NEVER_COMPUTED',
+        version: 1,
+      },
     });
     renderHub();
     const row = (await screen.findAllByText(STATEMENT_ROW.title))

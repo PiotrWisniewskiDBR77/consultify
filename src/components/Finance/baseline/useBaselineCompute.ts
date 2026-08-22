@@ -28,10 +28,15 @@
  * i tak pokaże użytkownikowi poprawny, już policzony wynik zamiast czerwonego
  * ekranu.
  */
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { computeBaseline, listBaselineOutputs } from '@/services/api/financeV2.api';
-import { describeFinanceV2Error, type BaselineComputeParams, type BaselineComputeResultDto } from '@/services/api/financeV2.types';
+import {
+  describeFinanceV2Error,
+  type BaselineComputeParams,
+  type BaselineComputeResultDto,
+  type FinanceArtifactFreshness,
+} from '@/services/api/financeV2.types';
 
 export type BaselineComputeUiState = 'idle' | 'computing' | 'succeeded' | 'recovering' | 'failed';
 
@@ -50,13 +55,40 @@ export interface UseBaselineComputeResult {
   markStale: (reason: Exclude<BaselineStaleReason, null>) => void;
 }
 
-export function useBaselineCompute(businessVersionId: string): UseBaselineComputeResult {
+export function useBaselineCompute(
+  businessVersionId: string,
+  initialFreshness: FinanceArtifactFreshness = 'NEVER_COMPUTED'
+): UseBaselineComputeResult {
   const [state, setState] = useState<BaselineComputeUiState>('idle');
   const [result, setResult] = useState<BaselineComputeResultDto | null>(null);
   const [lastComputedAt, setLastComputedAt] = useState<Date | null>(null);
   const [errorDetail, setErrorDetail] = useState<{ title: string; detail: string; code: string | null } | null>(null);
   const [wasRecovered, setWasRecovered] = useState(false);
-  const [stale, setStale] = useState<{ stale: boolean; reason: BaselineStaleReason }>({ stale: true, reason: 'NEVER_COMPUTED' });
+  const [stale, setStale] = useState<{ stale: boolean; reason: BaselineStaleReason }>(() => ({
+    stale: initialFreshness !== 'CURRENT',
+    reason:
+      initialFreshness === 'CURRENT'
+        ? null
+        : initialFreshness === 'STALE_SOURCE'
+          ? 'SOURCE_CHANGED'
+          : initialFreshness === 'STALE_ASSUMPTIONS'
+            ? 'ASSUMPTIONS_EDITED'
+            : 'NEVER_COMPUTED',
+  }));
+
+  useEffect(() => {
+    setStale({
+      stale: initialFreshness !== 'CURRENT',
+      reason:
+        initialFreshness === 'CURRENT'
+          ? null
+          : initialFreshness === 'STALE_SOURCE'
+            ? 'SOURCE_CHANGED'
+            : initialFreshness === 'STALE_ASSUMPTIONS'
+              ? 'ASSUMPTIONS_EDITED'
+              : 'NEVER_COMPUTED',
+    });
+  }, [businessVersionId, initialFreshness]);
 
   const run = useCallback(
     async (params: Omit<BaselineComputeParams, 'businessVersionId'>) => {

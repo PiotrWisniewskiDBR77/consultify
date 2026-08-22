@@ -235,6 +235,7 @@ describe.skipIf(!REAL_PG)('Finance v2 Pakiet B2 — analysis (real HTTP + real P
     const row = valuesRes.body.data[0];
     expect(row.kpiCode).toBe('CURRENT_RATIO');
     expect(row.tier).toBe('UNIVERSAL');
+    expect(row.periodLabel).toBe('FY2025');
     expect(row.value.status).toBe('PRESENT_NONZERO');
     expect(row.value.valueDecimal).toBe('2');
 

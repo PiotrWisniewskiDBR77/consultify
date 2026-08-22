@@ -35,6 +35,7 @@ import {
   type CreateArtifactParams,
   getArtifact,
   getBusinessVersion,
+  listArtifacts,
   listBusinessVersions,
   renameArtifact,
 } from '../../../services/finance/canonical/artifactVersionService.js';
@@ -63,6 +64,52 @@ const VALID_ARTIFACT_TYPES: readonly FinanceArtifactType[] = [
   'VALUATION_CASE',
   'REPORT_EXPORT',
 ];
+
+// ---------------------------------------------------------------------------
+// GET /artifacts — canonical registry list for the Finance hub.
+// ---------------------------------------------------------------------------
+
+router.get(
+  '/artifacts',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const rawType = typeof req.query.artifactType === 'string' ? req.query.artifactType : undefined;
+    if (rawType !== undefined && !isValidArtifactType(rawType)) {
+      return sendError(
+        res,
+        400,
+        'INVALID_ARTIFACT_TYPE',
+        `artifactType must be one of ${VALID_ARTIFACT_TYPES.join(', ')}`
+      );
+    }
+    const artifacts = await listArtifacts(organizationId, rawType);
+    return res.status(200).json({
+      data: {
+        artifacts: artifacts.map((row) => ({
+          artifactId: row.artifact_id,
+          artifactType: row.artifact_type,
+          naturalKey: row.natural_key,
+          createdAt: row.created_at,
+          currentBusinessVersion: row.current_business_version_id
+            ? {
+                businessVersionId: row.current_business_version_id,
+                versionNo: row.current_version_no,
+                version: row.current_version,
+                status: row.current_status,
+                freshness: row.current_freshness,
+                freshnessReason: row.current_freshness_reason,
+                riskTier: row.current_risk_tier,
+                createdAt: row.current_version_created_at,
+                updatedAt: row.current_version_updated_at,
+              }
+            : null,
+        })),
+        count: artifacts.length,
+      },
+      meta: financeV2Meta(),
+    });
+  })
+);
 
 function isValidArtifactType(value: unknown): value is FinanceArtifactType {
   return typeof value === 'string' && (VALID_ARTIFACT_TYPES as readonly string[]).includes(value);

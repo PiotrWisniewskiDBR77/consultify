@@ -957,6 +957,27 @@ export async function readRegisteredInitiative(
   return body as RegisteredInitiativeReadModel;
 }
 
+export async function amendRegisteredInitiative(
+  initiativeId: string,
+  command: { expectedVersion: number; clientRequestId: string; title?: string; problem?: string; proposedOutcome?: string | null; initiativeOwnerId?: string }
+) {
+  const response = await fetch(`/api/initiatives/runtime-v1/initiatives/${encodeURIComponent(initiativeId)}/metadata`, {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(command),
+  });
+  const body = await readJson(response);
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  return body as { status: 'APPLIED' | 'REPLAYED'; aggregateVersion: number; initiative: RegisteredInitiativeReadModel };
+}
+
+export async function cancelRegisteredInitiative(initiativeId: string, command: { expectedVersion: number; clientRequestId: string; reason: string }) {
+  const response = await fetch(`/api/initiatives/runtime-v1/initiatives/${encodeURIComponent(initiativeId)}/cancel`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(command),
+  });
+  const body = await readJson(response);
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  return body as { status: 'APPLIED' | 'REPLAYED'; aggregateVersion: number; initiative: RegisteredInitiativeReadModel };
+}
+
 export async function listRegisteredInitiatives(signal?: AbortSignal): Promise<{
   initiatives: RegisteredInitiativeReadModel[];
 }> {

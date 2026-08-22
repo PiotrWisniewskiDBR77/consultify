@@ -450,6 +450,49 @@ export async function proposeMeetingNote(
   return { note: finalNote, proposal, replayed: !isNew || proposalReplayed };
 }
 
+/**
+ * Read-only command replay probe used before note generation. It prevents a
+ * network retry from invoking the AI provider again after the first durable
+ * note+proposal already committed. An orphan note without a proposal is not a
+ * completed replay and deliberately falls through to the normal convergence
+ * path in `proposeMeetingNote`.
+ */
+export async function findMeetingNoteReplay(input: {
+  organizationId: string;
+  meetingId: string;
+  transcript: string;
+  language?: string;
+  idempotencyKey?: string | null;
+}): Promise<{ note: MeetingNoteRecord; proposal: HandoffProposal } | null> {
+  await ensureMeetingBoundaryTables();
+  const organizationId = requireNonEmpty(input.organizationId, 'organizationId');
+  const meetingId = requireNonEmpty(input.meetingId, 'meetingId');
+  const transcript = requireNonEmpty(input.transcript, 'transcript');
+  const language = (input.language || 'en').trim() || 'en';
+  const transcriptHash = sha256Hex(transcript);
+  const idempotencyKey =
+    typeof input.idempotencyKey === 'string' && input.idempotencyKey.trim()
+      ? input.idempotencyKey.trim()
+      : `${meetingId}:${transcriptHash}:${language}`;
+  const note = await withPgTransaction(async (query) => {
+    const existing = await query<NoteRow>(
+      `SELECT * FROM meeting_notes
+         WHERE organization_id = $1 AND meeting_id = $2 AND idempotency_key = $3`,
+      [organizationId, meetingId, idempotencyKey]
+    );
+    return existing.rows[0] ? mapNoteRow(existing.rows[0]) : null;
+  });
+  if (!note) return null;
+  if (note.transcriptHash !== transcriptHash || note.language !== language) {
+    throw new MeetingBoundaryError(
+      'idempotencyKey was already used with different meeting-note content',
+      'IDEMPOTENCY_CONFLICT'
+    );
+  }
+  if (!note.proposalId) return null;
+  return { note, proposal: await readHandoffProposal(organizationId, note.proposalId) };
+}
+
 // ---------------------------------------------------------------------------
 // decideMeetingNote — human approve/reject, then exactly-one materialize
 // ---------------------------------------------------------------------------

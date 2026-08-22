@@ -30,7 +30,14 @@ export interface V8ExecutionManagementSnapshot {
 
 export const shouldFallbackToLegacyExecutionControl = (error: any) => {
   const status = Number(error?.status);
-  return [400, 404, 405, 501].includes(status);
+  const code = String(error?.data?.error?.code ?? error?.data?.code ?? error?.code ?? '').trim();
+
+  // Execution-control is a canonical, mounted capability. Validation and
+  // not-found responses are business truth and must never redirect reads or
+  // writes into the legacy aggregate. A fallback is permitted only when the
+  // server explicitly declares that this capability is unavailable during a
+  // controlled compatibility window.
+  return status === 501 && code === 'EXECUTION_CONTROL_CAPABILITY_UNAVAILABLE';
 };
 
 export interface V8ExecutionRiskSignal {

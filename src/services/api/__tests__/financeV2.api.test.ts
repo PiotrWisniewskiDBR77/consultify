@@ -28,6 +28,7 @@ import {
   getFinanceArtifact,
   getFinanceArtifactCapabilities,
   getFinanceComputeJob,
+  listFinanceArtifacts,
   reopenFinanceModel,
   transitionFinanceVersion,
 } from '../financeV2.api';
@@ -66,7 +67,20 @@ describe('financeV2.api — routing + rozpakowanie {data}', () => {
   it('createFinanceArtifact → POST /api/v8/finance-v2/artifacts, zwraca data', async () => {
     mockedFetch.mockResolvedValueOnce(
       jsonResponse(201, {
-        data: { artifactId: 'art-1', artifactType: 'BASELINE_MODEL', naturalKey: null, createdAt: '2026-01-01', currentBusinessVersion: { businessVersionId: 'bv-1', versionNo: 1, version: 1, status: 'DRAFT', riskTier: 'LOW' }, workingRevisionId: 'wr-1' },
+        data: {
+          artifactId: 'art-1',
+          artifactType: 'BASELINE_MODEL',
+          naturalKey: null,
+          createdAt: '2026-01-01',
+          currentBusinessVersion: {
+            businessVersionId: 'bv-1',
+            versionNo: 1,
+            version: 1,
+            status: 'DRAFT',
+            riskTier: 'LOW',
+          },
+          workingRevisionId: 'wr-1',
+        },
         meta: { version: 'v2', contract: 'finance_v3_canonical_v1' },
       })
     );
@@ -80,7 +94,18 @@ describe('financeV2.api — routing + rozpakowanie {data}', () => {
 
   it('getFinanceArtifact → GET /api/v8/finance-v2/artifacts/:id (URL-encoded)', async () => {
     mockedFetch.mockResolvedValueOnce(
-      jsonResponse(200, { data: { artifactId: 'art with space', artifactType: 'STATEMENT_PACK', naturalKey: null, createdAt: 't', archivedAt: null, archivedReason: null, currentBusinessVersion: null }, meta: {} })
+      jsonResponse(200, {
+        data: {
+          artifactId: 'art with space',
+          artifactType: 'STATEMENT_PACK',
+          naturalKey: null,
+          createdAt: 't',
+          archivedAt: null,
+          archivedReason: null,
+          currentBusinessVersion: null,
+        },
+        meta: {},
+      })
     );
     await getFinanceArtifact('art with space');
     const [url, init] = mockedFetch.mock.calls[0];
@@ -91,9 +116,33 @@ describe('financeV2.api — routing + rozpakowanie {data}', () => {
     expect(init.method).toBe('GET');
   });
 
+  it('listFinanceArtifacts → canonical registry with an artifact-type filter', async () => {
+    mockedFetch.mockResolvedValueOnce(
+      jsonResponse(200, {
+        data: { artifacts: [], count: 0 },
+        meta: { version: 'v2', contract: 'finance_v3_canonical_v1' },
+      })
+    );
+    await listFinanceArtifacts({ artifactType: 'VALUATION_CASE' });
+    const [url, init] = mockedFetch.mock.calls[0];
+    expect(url).toBe(
+      'http://localhost:3000/api/v8/finance-v2/artifacts?artifactType=VALUATION_CASE'
+    );
+    expect(init.method).toBe('GET');
+  });
+
   it('getFinanceArtifactCapabilities → allowedActions przechodzi bez modyfikacji', async () => {
     mockedFetch.mockResolvedValueOnce(
-      jsonResponse(200, { data: { artifactId: 'a', businessVersionId: 'bv', status: 'IN_REVIEW', role: 'approver', allowedActions: ['approve', 'request_changes'] }, meta: {} })
+      jsonResponse(200, {
+        data: {
+          artifactId: 'a',
+          businessVersionId: 'bv',
+          status: 'IN_REVIEW',
+          role: 'approver',
+          allowedActions: ['approve', 'request_changes'],
+        },
+        meta: {},
+      })
     );
     const caps = await getFinanceArtifactCapabilities('a');
     expect(caps.allowedActions).toEqual(['approve', 'request_changes']);
@@ -101,9 +150,21 @@ describe('financeV2.api — routing + rozpakowanie {data}', () => {
 
   it('transitionFinanceVersion → POST z action/expectedVersion w body', async () => {
     mockedFetch.mockResolvedValueOnce(
-      jsonResponse(200, { data: { businessVersionId: 'bv-1', status: 'READY_FOR_REVIEW', version: 2, freshnessPropagation: null }, meta: {} })
+      jsonResponse(200, {
+        data: {
+          businessVersionId: 'bv-1',
+          status: 'READY_FOR_REVIEW',
+          version: 2,
+          freshnessPropagation: null,
+        },
+        meta: {},
+      })
     );
-    await transitionFinanceVersion({ businessVersionId: 'bv-1', action: 'submit_for_review', expectedVersion: 1 });
+    await transitionFinanceVersion({
+      businessVersionId: 'bv-1',
+      action: 'submit_for_review',
+      expectedVersion: 1,
+    });
     const [url, init] = mockedFetch.mock.calls[0];
     expect(url).toBe('/api/v8/finance-v2/versions/bv-1/transitions');
     expect(JSON.parse(init.body)).toEqual({ action: 'submit_for_review', expectedVersion: 1 });
@@ -111,7 +172,24 @@ describe('financeV2.api — routing + rozpakowanie {data}', () => {
 
   it('enqueueFinanceComputeJob → dołącza nagłówek Idempotency-Key', async () => {
     mockedFetch.mockResolvedValueOnce(
-      jsonResponse(201, { data: { jobId: 'job-1', jobType: 'baseline_compute', status: 'queued', inputArtifactId: 'a', inputRevisionHash: 'h', attemptCount: 0, maxAttempts: 3, createdAt: 't', startedAt: null, finishedAt: null, error: null, requestedByUserId: 'u', wasExisting: false }, meta: {} })
+      jsonResponse(201, {
+        data: {
+          jobId: 'job-1',
+          jobType: 'baseline_compute',
+          status: 'queued',
+          inputArtifactId: 'a',
+          inputRevisionHash: 'h',
+          attemptCount: 0,
+          maxAttempts: 3,
+          createdAt: 't',
+          startedAt: null,
+          finishedAt: null,
+          error: null,
+          requestedByUserId: 'u',
+          wasExisting: false,
+        },
+        meta: {},
+      })
     );
     await enqueueFinanceComputeJob({
       jobType: 'baseline_compute',
@@ -126,12 +204,44 @@ describe('financeV2.api — routing + rozpakowanie {data}', () => {
 
   it('getFinanceComputeJob: status "queued/running/succeeded/failed/cancelled" przechodzi jeden-do-jednego (KONTROLA NEGATYWNA: dwa różne statusy dają różny wynik)', async () => {
     mockedFetch.mockResolvedValueOnce(
-      jsonResponse(200, { data: { jobId: 'j1', jobType: 't', status: 'running', inputArtifactId: 'a', inputRevisionHash: 'h', attemptCount: 1, maxAttempts: 3, createdAt: 't', startedAt: 't', finishedAt: null, error: null, requestedByUserId: 'u' }, meta: {} })
+      jsonResponse(200, {
+        data: {
+          jobId: 'j1',
+          jobType: 't',
+          status: 'running',
+          inputArtifactId: 'a',
+          inputRevisionHash: 'h',
+          attemptCount: 1,
+          maxAttempts: 3,
+          createdAt: 't',
+          startedAt: 't',
+          finishedAt: null,
+          error: null,
+          requestedByUserId: 'u',
+        },
+        meta: {},
+      })
     );
     const running = await getFinanceComputeJob('j1');
 
     mockedFetch.mockResolvedValueOnce(
-      jsonResponse(200, { data: { jobId: 'j1', jobType: 't', status: 'failed', inputArtifactId: 'a', inputRevisionHash: 'h', attemptCount: 3, maxAttempts: 3, createdAt: 't', startedAt: 't', finishedAt: 't', error: 'boom', requestedByUserId: 'u' }, meta: {} })
+      jsonResponse(200, {
+        data: {
+          jobId: 'j1',
+          jobType: 't',
+          status: 'failed',
+          inputArtifactId: 'a',
+          inputRevisionHash: 'h',
+          attemptCount: 3,
+          maxAttempts: 3,
+          createdAt: 't',
+          startedAt: 't',
+          finishedAt: 't',
+          error: 'boom',
+          requestedByUserId: 'u',
+        },
+        meta: {},
+      })
     );
     const failed = await getFinanceComputeJob('j1');
 
@@ -150,9 +260,24 @@ describe('financeV2.api — routing + rozpakowanie {data}', () => {
 
   it('reopenFinanceModel → wymaga Idempotency-Key i reason w body', async () => {
     mockedFetch.mockResolvedValueOnce(
-      jsonResponse(201, { data: { artifactId: 'm-1', previousBusinessVersionId: 'bv-1', businessVersionId: 'bv-2', versionNo: 2, status: 'DRAFT', workingRevisionId: 'wr-2', idempotentReplay: false }, meta: {} })
+      jsonResponse(201, {
+        data: {
+          artifactId: 'm-1',
+          previousBusinessVersionId: 'bv-1',
+          businessVersionId: 'bv-2',
+          versionNo: 2,
+          status: 'DRAFT',
+          workingRevisionId: 'wr-2',
+          idempotentReplay: false,
+        },
+        meta: {},
+      })
     );
-    await reopenFinanceModel({ modelArtifactId: 'm-1', reason: 'Błąd w założeniach', idempotencyKey: 'idem-reopen-1' });
+    await reopenFinanceModel({
+      modelArtifactId: 'm-1',
+      reason: 'Błąd w założeniach',
+      idempotencyKey: 'idem-reopen-1',
+    });
     const [url, init] = mockedFetch.mock.calls[0];
     expect(url).toBe('/api/v8/finance-v2/models/m-1/reopen');
     expect(init.headers['Idempotency-Key']).toBe('idem-reopen-1');
@@ -160,9 +285,15 @@ describe('financeV2.api — routing + rozpakowanie {data}', () => {
   });
 
   it('błąd 409 VERSION_CONFLICT → rzucony Error niesie .status i .data.code (zmierzone: baseClient.handleResponse NIE ustawia .code bezpośrednio)', async () => {
-    mockedFetch.mockResolvedValueOnce(jsonResponse(409, { error: 'Version conflict', code: 'VERSION_CONFLICT' }));
+    mockedFetch.mockResolvedValueOnce(
+      jsonResponse(409, { error: 'Version conflict', code: 'VERSION_CONFLICT' })
+    );
     await expect(
-      transitionFinanceVersion({ businessVersionId: 'bv-1', action: 'withdraw', expectedVersion: 1 })
+      transitionFinanceVersion({
+        businessVersionId: 'bv-1',
+        action: 'withdraw',
+        expectedVersion: 1,
+      })
     ).rejects.toMatchObject({
       status: 409,
       data: { code: 'VERSION_CONFLICT' },
@@ -170,7 +301,12 @@ describe('financeV2.api — routing + rozpakowanie {data}', () => {
   });
 
   it('błąd 404 NOT_FOUND → rzucony Error niesie .status 404 i .data.code NOT_FOUND', async () => {
-    mockedFetch.mockResolvedValueOnce(jsonResponse(404, { error: 'Artifact not found', code: 'NOT_FOUND' }));
-    await expect(getFinanceArtifact('nieistniejacy')).rejects.toMatchObject({ status: 404, data: { code: 'NOT_FOUND' } });
+    mockedFetch.mockResolvedValueOnce(
+      jsonResponse(404, { error: 'Artifact not found', code: 'NOT_FOUND' })
+    );
+    await expect(getFinanceArtifact('nieistniejacy')).rejects.toMatchObject({
+      status: 404,
+      data: { code: 'NOT_FOUND' },
+    });
   });
 });

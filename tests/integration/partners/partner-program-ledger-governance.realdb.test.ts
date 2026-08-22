@@ -55,12 +55,14 @@ async function insert(params: {
 }
 
 beforeAll(async () => {
-  if (!connectionString) throw new Error('DATABASE_URL is required for partner ledger realDB proof');
+  if (!connectionString)
+    throw new Error('DATABASE_URL is required for partner ledger realDB proof');
   sql = new Client({ connectionString });
   await sql.connect();
   const identity = await sql.query(`SELECT version() AS version`);
   expect(identity.rows[0].version).toMatch(/PostgreSQL/);
-  ledgerService = (await import('../../../server/src/services/partnerProgramLedgerService.ts')).default;
+  ledgerService = (await import('../../../server/src/services/partnerProgramLedgerService.ts'))
+    .default;
   // Warm the idempotent schema guard before this suite opens its long-lived
   // rollback transaction; concurrent writers must exercise INSERT contention,
   // not DDL lock contention from lazy compatibility setup.
@@ -117,7 +119,12 @@ describe.sequential('partner program append-only participant ledger (real PG)', 
   it('rejects missing and cross-tenant correction/dispute links', async () => {
     await insert({ id: 'prt-foreign-original', org: ORG_B });
     await expectDbError(
-      () => insert({ id: 'prt-cross-tenant', type: 'accrual.adjustment', related: 'prt-foreign-original' }),
+      () =>
+        insert({
+          id: 'prt-cross-tenant',
+          type: 'accrual.adjustment',
+          related: 'prt-foreign-original',
+        }),
       /another partner organization/
     );
     await expectDbError(
@@ -147,8 +154,16 @@ describe.sequential('partner program append-only participant ledger (real PG)', 
         WHERE id LIKE 'prt-dispute-%' ORDER BY id`
     );
     expect(readback.rows).toEqual([
-      { entry_type: 'dispute.opened', dispute_status: 'open', related_entry_id: 'prt-disputed-fact' },
-      { entry_type: 'dispute.resolved', dispute_status: 'upheld', related_entry_id: 'prt-dispute-open' },
+      {
+        entry_type: 'dispute.opened',
+        dispute_status: 'open',
+        related_entry_id: 'prt-disputed-fact',
+      },
+      {
+        entry_type: 'dispute.resolved',
+        dispute_status: 'upheld',
+        related_entry_id: 'prt-dispute-open',
+      },
     ]);
   });
 
@@ -164,9 +179,9 @@ describe.sequential('partner program append-only participant ledger (real PG)', 
     );
   });
 
-  it('coalesces concurrent retries into one committed fact and cold-reads the same immutable id', async () => {
+  it('refuses concurrent economic retries before SQL and cold-reads zero residue', async () => {
     const idempotencyKey = `prt-ledger-concurrent-${Date.now()}`;
-    const writes = await Promise.all(
+    const writes = await Promise.allSettled(
       Array.from({ length: 12 }, () =>
         ledgerService.appendEntry({
           partnerOrgId: ORG_A,
@@ -180,8 +195,17 @@ describe.sequential('partner program append-only participant ledger (real PG)', 
         })
       )
     );
-    expect(new Set(writes.map((write) => write.id)).size).toBe(1);
-    expect(writes.filter((write) => write.duplicate).length).toBe(11);
+    expect(writes).toHaveLength(12);
+    for (const write of writes) {
+      expect(write.status).toBe('rejected');
+      if (write.status === 'rejected') {
+        expect(write.reason).toMatchObject({
+          code: 'PARTNER_ECONOMICS_POLICY_DISABLED',
+          decision: 'AMD-PRT-ECONOMICS-002',
+          operation: 'accrual',
+        });
+      }
+    }
 
     const cold = new Client({ connectionString });
     await cold.connect();
@@ -192,15 +216,7 @@ describe.sequential('partner program append-only participant ledger (real PG)', 
           WHERE partner_org_id=$1 AND idempotency_key=$2`,
         [ORG_A, idempotencyKey]
       );
-      expect(persisted.rows).toEqual([
-        expect.objectContaining({
-          id: writes[0].id,
-          partner_org_id: ORG_A,
-          amount: '25.0000',
-          currency: 'EUR',
-          rule_version: 'partner-test-rule-v1',
-        }),
-      ]);
+      expect(persisted.rows).toEqual([]);
     } finally {
       await cold.end();
     }

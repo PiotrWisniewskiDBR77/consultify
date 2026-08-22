@@ -9,19 +9,28 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (_key: string, fallback?: any, opts?: any) => {
-      let str = typeof fallback === 'string' ? fallback : _key;
-      if (opts && typeof opts === 'object') {
-        str = str.replace(/\{\{(\w+)\}\}/g, (_m: string, k: string) => String(opts[k] ?? ''));
-      }
-      return str;
-    },
-    i18n: { language: 'pl' },
-  }),
-  initReactI18next: { type: '3rdParty', init: () => {} },
-}));
+vi.mock('react-i18next', async () => {
+  const dictionary = (await import('../../../public/locales/pl/translation.json'))
+    .default as Record<string, any>;
+  const resolve = (key: string) =>
+    key.split('.').reduce<any>((value, part) => value?.[part], dictionary);
+  return {
+    useTranslation: () => ({
+      t: (key: string, fallback?: any, opts?: any) => {
+        const options = typeof fallback === 'object' ? fallback : opts;
+        let str =
+          resolve(key) ??
+          (typeof fallback === 'string' ? fallback : (options?.defaultValue ?? key));
+        str = String(str).replace(/\{\{(\w+)\}\}/g, (_m: string, name: string) =>
+          String(options?.[name] ?? '')
+        );
+        return str;
+      },
+      i18n: { language: 'pl' },
+    }),
+    initReactI18next: { type: '3rdParty', init: () => {} },
+  };
+});
 
 vi.mock('@/services/api', () => ({
   Api: { get: vi.fn(), post: vi.fn() },
@@ -32,8 +41,20 @@ import { Api } from '@/services/api';
 
 const TREE = {
   nodes: [
-    { id: 'obj-1', label: 'Wzrost marży', type: 'objective', rolledUpValue: 2_500_000, confidence: 0.8 },
-    { id: 'drv-1', label: 'Efektywność procesów', type: 'driver', value: 1_200_000, confidence: 0.7 },
+    {
+      id: 'obj-1',
+      label: 'Wzrost marży',
+      type: 'objective',
+      rolledUpValue: 2_500_000,
+      confidence: 0.8,
+    },
+    {
+      id: 'drv-1',
+      label: 'Efektywność procesów',
+      type: 'driver',
+      value: 1_200_000,
+      confidence: 0.7,
+    },
     { id: 'kpi-1', label: 'Koszt jednostkowy', type: 'kpi', value: 80, target: 60 },
     { id: 'init-1', label: 'Lean transformation', type: 'initiative', value: 500_000 },
   ],
@@ -42,7 +63,13 @@ const TREE = {
     { from: 'drv-1', to: 'kpi-1', weight: 0.6 },
     { from: 'kpi-1', to: 'init-1', weight: 1 },
   ],
-  stats: { totalNodes: 4, objectiveCount: 1, kpiCount: 1, initiativeCount: 1, coveredValue: 2_500_000 },
+  stats: {
+    totalNodes: 4,
+    objectiveCount: 1,
+    kpiCount: 1,
+    initiativeCount: 1,
+    coveredValue: 2_500_000,
+  },
 };
 
 function mockTree(value: any) {

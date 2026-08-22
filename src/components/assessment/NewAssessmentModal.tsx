@@ -8,6 +8,15 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import {
+  createSession as createMethodCoreSession,
+  getSession as getMethodCoreSession,
+  newIdempotencyKey,
+} from '@/method-core/api/methodCoreApi';
+import {
+  DRD_METHOD_PACK_ID,
+  DRD_METHOD_PACK_VERSION,
+} from '@/method-core/methods/drd/compileDrdPack';
 import { Api } from '@/services/api';
 import { isFrameworkComingSoon } from '@/services/frameworkRegistry';
 import { useAppStore } from '@/store/useAppStore';
@@ -109,6 +118,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
   const { currentProjectId } = useAppStore();
   const modalRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const drdIdempotencyKeyRef = useRef<string | null>(null);
 
   // Form state
   const [selectedFramework, setSelectedFramework] = useState<AssessmentFramework | null>(null);
@@ -127,6 +137,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
       setAssessmentName('');
       setAssessmentDescription('');
       setError(null);
+      drdIdempotencyKeyRef.current = null;
       setStep(1);
     }
   }, [isOpen]);
@@ -213,12 +224,12 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
         return;
       }
 
-      if (!assessmentName.trim()) {
+      if (selectedFramework !== 'DRD' && !assessmentName.trim()) {
         setError('Please enter an assessment name');
         return;
       }
 
-      if (assessmentName.trim().length > 200) {
+      if (selectedFramework !== 'DRD' && assessmentName.trim().length > 200) {
         setError('Assessment name must be 200 characters or less');
         return;
       }
@@ -227,18 +238,47 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
       setError(null);
 
       try {
-        const response = await Api.createAssessmentSession({
-          assessmentType: selectedFramework,
-          name: assessmentName.trim(),
-          description: assessmentDescription.trim() || undefined,
-          projectId: currentProjectId || null,
-        });
+        const response =
+          selectedFramework === 'DRD'
+            ? await (async () => {
+                const created = await createMethodCoreSession(
+                  {
+                    module: 'assessment',
+                    methodPackId: DRD_METHOD_PACK_ID,
+                    methodPackVersion: DRD_METHOD_PACK_VERSION,
+                    mode: 'guided_manual',
+                    projectId: currentProjectId || null,
+                  },
+                  drdIdempotencyKeyRef.current ||
+                    (drdIdempotencyKeyRef.current = newIdempotencyKey())
+                );
+                const readback = await getMethodCoreSession(created.session.id);
+                if (
+                  readback.session.id !== created.session.id ||
+                  readback.session.module !== 'assessment' ||
+                  readback.session.methodPackId !== DRD_METHOD_PACK_ID ||
+                  readback.session.methodPackVersion !== DRD_METHOD_PACK_VERSION
+                ) {
+                  throw new Error('Canonical DRD session readback mismatch');
+                }
+                drdIdempotencyKeyRef.current = null;
+                return { id: readback.session.id, status: readback.session.state };
+              })()
+            : await Api.createAssessmentSession({
+                assessmentType: selectedFramework,
+                name: assessmentName.trim(),
+                description: assessmentDescription.trim() || undefined,
+                projectId: currentProjectId || null,
+              });
 
         toast.success('Assessment created successfully');
 
         onSuccess?.({
           id: response.id,
-          name: assessmentName.trim(),
+          name:
+            selectedFramework === 'DRD'
+              ? `DRD · ${response.id.slice(0, 8)}`
+              : assessmentName.trim(),
           assessmentType: selectedFramework,
           status: response.status || 'DRAFT',
         });
@@ -394,74 +434,85 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
                 </div>
               )}
 
-              {/* Assessment Name Input */}
-              <div>
-                <label
-                  htmlFor="assessment-name"
-                  className="block text-sm font-medium text-c-text-secondary mb-2"
-                >
-                  Assessment Name
-                </label>
-                <input
-                  ref={nameInputRef}
-                  id="assessment-name"
-                  type="text"
-                  value={assessmentName}
-                  onChange={(e) => setAssessmentName(e.target.value)}
-                  placeholder="Enter assessment name..."
-                  maxLength={200}
-                  className="
+              {/* Method Core has no persisted display-metadata contract yet.
+                  Do not collect fields that would disappear on cold read. */}
+              {selectedFramework !== 'DRD' && (
+                <div>
+                  <label
+                    htmlFor="assessment-name"
+                    className="block text-sm font-medium text-c-text-secondary mb-2"
+                  >
+                    Assessment Name
+                  </label>
+                  <input
+                    ref={nameInputRef}
+                    id="assessment-name"
+                    type="text"
+                    value={assessmentName}
+                    onChange={(e) => setAssessmentName(e.target.value)}
+                    placeholder="Enter assessment name..."
+                    maxLength={200}
+                    className="
                     w-full h-11 px-4 bg-c-surface-raised border border-c-border-subtle rounded-lg
                     text-c-text placeholder-c-text-muted
                     focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/25
                     transition-colors
                   "
-                />
-                <div className="flex justify-between mt-1.5">
-                  <span className="text-xs text-c-text-muted">
-                    Give your assessment a descriptive name
-                  </span>
-                  <span
-                    className={`text-xs ${assessmentName.length > 180 ? 'text-amber-400' : 'text-c-text-muted'}`}
-                  >
-                    {assessmentName.length}/200
-                  </span>
+                  />
+                  <div className="flex justify-between mt-1.5">
+                    <span className="text-xs text-c-text-muted">
+                      Give your assessment a descriptive name
+                    </span>
+                    <span
+                      className={`text-xs ${assessmentName.length > 180 ? 'text-amber-400' : 'text-c-text-muted'}`}
+                    >
+                      {assessmentName.length}/200
+                    </span>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Assessment Description Input */}
-              <div>
-                <label
-                  htmlFor="assessment-description"
-                  className="block text-sm font-medium text-c-text-secondary mb-2"
-                >
-                  Description <span className="text-c-text-muted">(optional)</span>
-                </label>
-                <textarea
-                  id="assessment-description"
-                  value={assessmentDescription}
-                  onChange={(e) => setAssessmentDescription(e.target.value)}
-                  placeholder="Describe the scope and objectives of this assessment..."
-                  maxLength={1000}
-                  rows={3}
-                  className="
+              {selectedFramework !== 'DRD' && (
+                <div>
+                  <label
+                    htmlFor="assessment-description"
+                    className="block text-sm font-medium text-c-text-secondary mb-2"
+                  >
+                    Description <span className="text-c-text-muted">(optional)</span>
+                  </label>
+                  <textarea
+                    id="assessment-description"
+                    value={assessmentDescription}
+                    onChange={(e) => setAssessmentDescription(e.target.value)}
+                    placeholder="Describe the scope and objectives of this assessment..."
+                    maxLength={1000}
+                    rows={3}
+                    className="
                     w-full px-4 py-3 bg-c-surface-raised border border-c-border-subtle rounded-lg
                     text-c-text placeholder-c-text-muted resize-none
                     focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/25
                     transition-colors
                   "
-                />
-                <div className="flex justify-between mt-1.5">
-                  <span className="text-xs text-c-text-muted">
-                    Optional context for this assessment
-                  </span>
-                  <span
-                    className={`text-xs ${assessmentDescription.length > 900 ? 'text-amber-400' : 'text-c-text-muted'}`}
-                  >
-                    {assessmentDescription.length}/1000
-                  </span>
+                  />
+                  <div className="flex justify-between mt-1.5">
+                    <span className="text-xs text-c-text-muted">
+                      Optional context for this assessment
+                    </span>
+                    <span
+                      className={`text-xs ${assessmentDescription.length > 900 ? 'text-amber-400' : 'text-c-text-muted'}`}
+                    >
+                      {assessmentDescription.length}/1000
+                    </span>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {selectedFramework === 'DRD' && (
+                <p className="text-sm text-c-text-secondary">
+                  The canonical session label will be assigned from its Method Core identifier.
+                </p>
+              )}
 
               {/* Error Message */}
               {error && (
@@ -496,13 +547,15 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
                     disabled:opacity-50 disabled:cursor-not-allowed
                     transition-all
                   "
-                  disabled={isSubmitting || !assessmentName.trim()}
+                  disabled={isSubmitting || (selectedFramework !== 'DRD' && !assessmentName.trim())}
                 >
                   {isSubmitting ? (
                     <>
                       <Loader2 size={16} className="animate-spin" />
                       Creating...
                     </>
+                  ) : selectedFramework === 'DRD' ? (
+                    'Start DRD session'
                   ) : (
                     'Create Assessment'
                   )}

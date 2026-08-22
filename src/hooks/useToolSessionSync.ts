@@ -11,12 +11,9 @@
  *     server after a debounce (`debounceMs`, default 2000ms — matches the
  *     autosave cadence ToolDocumentView already used before this adapter
  *     existed);
- *   - tracks the server's `updatedAt`/`version` (`version` is currently
- *     never returned by the server — see `toolSessionApi.ts`'s "Known gap"
- *     note — so conflict detection today rests on real HTTP 409s, which
- *     the update endpoint already returns for a locked/approved session,
- *     an invalid status transition, or a failed DoD gate; this becomes a
- *     true stale-version check for free once the server sends `version`);
+ *   - tracks the server's `updatedAt`/`version` and sends the required
+ *     `expectedVersion` on every PUT; stale writers receive a real 409 and
+ *     must reconcile with the authoritative server version;
  *   - detects offline saves (network unreachable, not an HTTP error) and
  *     retries automatically once the browser reports `online`;
  *   - keeps a localStorage "recovery draft" that is NEVER the source of
@@ -195,9 +192,16 @@ export function useToolSessionSync<TData = Record<string, unknown>>(
     setStatus('saving');
     try {
       const extra = getExtraPayloadRef.current ? getExtraPayloadRef.current() : {};
+      let expectedVersion = sessionRef.current?.version;
+      if (!Number.isInteger(expectedVersion)) {
+        const fresh = await toolSessionApi.get(id);
+        sessionRef.current = fresh;
+        setSession(fresh);
+        expectedVersion = fresh.version;
+      }
       const result = await toolSessionApi.update(id, {
         answers: dataRef.current as Record<string, unknown>,
-        expectedVersion: sessionRef.current?.version,
+        expectedVersion: expectedVersion as number,
         ...extra,
       });
       sessionRef.current = {
@@ -205,7 +209,7 @@ export function useToolSessionSync<TData = Record<string, unknown>>(
         id: result.id,
         status: result.status,
         updatedAt: result.updatedAt,
-        version: result.version ?? sessionRef.current?.version,
+        version: result.version,
       };
       setSession(sessionRef.current);
       setLastSyncedAt(result.updatedAt);

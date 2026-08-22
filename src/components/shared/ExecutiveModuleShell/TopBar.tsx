@@ -418,8 +418,10 @@ export const TopBar: React.FC<TopBarProps> = ({
           // icon-only — its meaning only surfaced on hover (`title`), which is
           // exactly why owners couldn't find "simple navigation" out of a
           // screen. A visible text label next to the arrow (same
-          // `hidden md:inline` pattern the chip strip already uses) makes the
-          // control's actual behaviour legible at a glance instead of a guess.
+          // visible label makes the control's actual behaviour legible at a
+          // glance instead of a guess. On compact laptop/tablet widths the
+          // icon keeps the same accessible name while the label yields space
+          // to the editable document title and action cluster.
           className="flex-shrink-0 flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-sm text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
           title={backLabel ?? 'Back'}
           aria-label={backLabel ?? 'Back'}
@@ -427,14 +429,14 @@ export const TopBar: React.FC<TopBarProps> = ({
         >
           <ArrowLeft size={18} className="flex-shrink-0" aria-hidden="true" />
           {backLabel ? (
-            <span className="hidden md:inline whitespace-nowrap">{backLabel}</span>
+            <span className="hidden xl:inline whitespace-nowrap">{backLabel}</span>
           ) : null}
         </button>
       ) : null}
 
       <div className="flex items-center gap-1.5 text-sm min-w-0 flex-1 text-slate-500 dark:text-slate-400">
-        <span className="flex-shrink-0 truncate">{moduleLabel}</span>
-        <ChevronRight size={14} className="flex-shrink-0" aria-hidden="true" />
+        <span className="hidden flex-shrink-0 truncate xl:inline">{moduleLabel}</span>
+        <ChevronRight size={14} className="hidden flex-shrink-0 xl:block" aria-hidden="true" />
         {titleIconSlot}
         {editing && onTitleChange ? (
           <input

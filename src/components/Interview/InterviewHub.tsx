@@ -70,6 +70,11 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { InitiativeWizardModal } from '@/components/Initiatives/Wizard/InitiativeWizardModal';
+import {
+  InterviewCapabilityError,
+  isInterviewCapabilityForbidden,
+  loadInterviewV8Capability,
+} from '@/components/Interview/interviewBackendRouting';
 import { RequiredProjectPicker } from '@/components/shared/RequiredProjectPicker';
 import {
   MENU_3_ACTION_NEUTRAL,
@@ -290,7 +295,8 @@ interface InterviewInsight {
   impactLevel?: string;
   confidence?: string;
   status?: string;
-  version: number;
+  // V8 insight reads do not currently expose a revision number.
+  version?: number;
   hasPublishedVersion?: boolean;
   reviewStatus?: 'draft' | 'in_review' | 'published';
   publishedAt?: string;
@@ -863,17 +869,13 @@ export const InterviewHub: React.FC = () => {
 
   const loadManagedSessions = useCallback(
     async (lifecycle: 'active' | 'archived' | 'trash' = 'active'): Promise<InterviewSession[]> => {
-      // The v8 managed-sessions endpoint ignores lifecycle, so only the default
-      // "active" view can use the v8 fast path. Archive/Trash views must go through
-      // the legacy /interview/sessions/managed?lifecycle= endpoint (#8b backend).
-      const sessionsRes =
+      // Authenticated authoring remains on the load-bearing legacy contract.
+      // Assignments and insights below are separate, explicitly V8-only capabilities.
+      const sessionsRes = await Api.get(
         lifecycle === 'active'
-          ? await V8InterviewApi.getSessions()
-              .then((res) => res.sessions)
-              .catch(() => Api.get('/interview/sessions'))
-          : await Api.get(
-              `/interview/sessions/managed?lifecycle=${encodeURIComponent(lifecycle)}`
-            );
+          ? '/interview/sessions'
+          : `/interview/sessions/managed?lifecycle=${encodeURIComponent(lifecycle)}`
+      );
       return Array.isArray(sessionsRes)
         ? (sessionsRes as InterviewSession[]).map(normalizeInterviewSessionRecord)
         : [];
@@ -891,34 +893,33 @@ export const InterviewHub: React.FC = () => {
         setSessionsLoadError(null);
       } catch (error) {
         console.error('[InterviewHub] Failed to refresh sessions:', error);
+        setSessionsLoadError(t('interview.hub.failedToLoadSessionsTry'));
       }
     },
     [loadManagedSessions, sessionLifecycle]
   );
 
   const loadMyAssignments = useCallback(async (): Promise<InterviewAssignment[]> => {
-    const assignmentsRes = await V8InterviewApi.getMyAssignments()
-      .then((res) => res.assignments)
-      .catch(() => Api.get('/interview/assignments/my'));
+    const assignmentsRes = await loadInterviewV8Capability('assignments', () =>
+      V8InterviewApi.getMyAssignments().then((res) => res.assignments)
+    );
     return Array.isArray(assignmentsRes)
       ? (assignmentsRes as InterviewAssignment[]).map(normalizeInterviewAssignmentRecord)
       : [];
   }, []);
 
-  // #8c — Managed assignments list is filtered server-side via
-  // ?lifecycle=active|archived|all (active = default, excludes archived).
-  // The v8 fast path returns only active rows, so non-active views go through
-  // the /interview/assignments/managed?lifecycle= endpoint.
+  // Managed assignments are V8-only. V8 currently exposes the active view;
+  // archived/all requests fail closed until that capability exists in V8.
   const loadManagedAssignments = useCallback(
     async (lifecycle: 'active' | 'archived' | 'all' = 'active'): Promise<InterviewAssignment[]> => {
-      const assignmentsRes =
-        lifecycle === 'active'
-          ? await V8InterviewApi.getManagedAssignments()
-              .then((res) => res.assignments)
-              .catch(() => Api.get('/interview/assignments/managed'))
-          : await Api.get(
-              `/interview/assignments/managed?lifecycle=${encodeURIComponent(lifecycle)}`
-            );
+      if (lifecycle !== 'active') {
+        throw new InterviewCapabilityError('assignments', 'unavailable', undefined, {
+          lifecycle,
+        });
+      }
+      const assignmentsRes = await loadInterviewV8Capability('assignments', () =>
+        V8InterviewApi.getManagedAssignments().then((res) => res.assignments)
+      );
       return Array.isArray(assignmentsRes)
         ? (assignmentsRes as InterviewAssignment[]).map(normalizeInterviewAssignmentRecord)
         : [];
@@ -927,9 +928,9 @@ export const InterviewHub: React.FC = () => {
   );
 
   const loadOverdueAssignments = useCallback(async (): Promise<InterviewAssignment[]> => {
-    const assignmentsRes = await V8InterviewApi.getOverdueAssignments()
-      .then((res) => res.assignments)
-      .catch(() => Api.get('/interview/assignments/overdue'));
+    const assignmentsRes = await loadInterviewV8Capability('assignments', () =>
+      V8InterviewApi.getOverdueAssignments().then((res) => res.assignments)
+    );
     return Array.isArray(assignmentsRes)
       ? (assignmentsRes as InterviewAssignment[]).map(normalizeInterviewAssignmentRecord)
       : [];
@@ -945,6 +946,7 @@ export const InterviewHub: React.FC = () => {
         setManagedAssignments(next);
       } catch (error) {
         console.error('[InterviewHub] Failed to refresh managed assignments:', error);
+        setAssignmentsLoadError(t('interview.hub.failedToLoadInterviewAssignments'));
       }
     },
     [loadManagedAssignments, managedLifecycle]
@@ -1108,9 +1110,9 @@ export const InterviewHub: React.FC = () => {
       const [sessionsRes, insightsRes, initiativesRes, templatesRes, decisionsRes, tasksRes] =
         await Promise.allSettled([
           loadManagedSessions(),
-          V8InterviewApi.listInsights()
-            .then((r) => r.insights)
-            .catch(() => Api.get('/interview/insights')),
+          loadInterviewV8Capability('insights', () =>
+            V8InterviewApi.listInsights().then((r) => r.insights)
+          ),
           Api.get('/initiatives?source=interview_insight'),
           Api.get('/interview/templates'),
           // Lineage read-back — decisions/tasks tagged source_type='interview_insight'.
@@ -1136,8 +1138,7 @@ export const InterviewHub: React.FC = () => {
         // Insights are an admin/consultant surface. A pilot/survey USER legitimately
         // lacks the INTERVIEW_INSIGHTS_VIEW permission, so a 403 here is expected —
         // treat it as "no insights for you" silently instead of a console error + banner.
-        const reason = insightsRes.reason as { status?: number; response?: { status?: number } };
-        const isForbidden = reason?.status === 403 || reason?.response?.status === 403;
+        const isForbidden = isInterviewCapabilityForbidden(insightsRes.reason);
         if (!isForbidden) {
           console.error('[InterviewHub] Failed to load insights:', insightsRes.reason);
         }
@@ -1223,11 +1224,9 @@ export const InterviewHub: React.FC = () => {
   // Load insights function (for refresh)
   const loadInsights = useCallback(async () => {
     try {
-      const insightsRes = await V8InterviewApi.listInsights({ scope: insightScope })
-        .then((r) => r.insights)
-        .catch(() =>
-          Api.get(`/interview/insights${insightScope !== 'active' ? `?scope=${insightScope}` : ''}`)
-        );
+      const insightsRes = await loadInterviewV8Capability('insights', () =>
+        V8InterviewApi.listInsights({ scope: insightScope }).then((r) => r.insights)
+      );
       const apiInsights = unwrapApiList(insightsRes, 'insights');
       setInsights(apiInsights);
       setInsightsLoadError(null);
@@ -1419,16 +1418,14 @@ export const InterviewHub: React.FC = () => {
     loadOverdueAssignments,
   ]);
 
-  // #8 / #8c — Assignment archive lifecycle. Per-row archive/restore backed by
-  // POST /interview/assignments/:id/{archive,restore}. After each action we
-  // re-fetch the list for the current lifecycle filter so the affected row drops
-  // out of view.
+  // Assignment archive lifecycle has no V8 command yet. Keep the control honest:
+  // fail closed instead of crossing into the legacy assignment writer.
   const handleAssignmentLifecycleAction = useCallback(
     async (assignment: InterviewAssignment, action: 'archive' | 'restore') => {
       if (managedLifecycleBusy) return;
       setManagedLifecycleBusy(true);
       try {
-        await Api.post(`/interview/assignments/${assignment.id}/${action}`, {});
+        throw new InterviewCapabilityError('assignments', 'unavailable', undefined, undefined);
         toast.success(
           action === 'archive'
             ? t('interview.hub.assignmentArchived')
@@ -1452,15 +1449,8 @@ export const InterviewHub: React.FC = () => {
       const ids = Array.from(selectedAssignmentIds);
       if (ids.length === 0 || managedLifecycleBusy) return;
       setManagedLifecycleBusy(true);
-      let done = 0;
-      for (const id of ids) {
-        try {
-          await Api.post(`/interview/assignments/${id}/${action}`, {});
-          done += 1;
-        } catch {
-          // per-item failures tolerated; reflected in the count
-        }
-      }
+      const done = 0;
+      setAssignmentsLoadError(t('interview.hub.failedToLoadInterviewAssignments'));
       await refreshManagedAssignments();
       setManagedLifecycleBusy(false);
       setSelectedAssignmentIds(new Set());
@@ -2781,8 +2771,8 @@ export const InterviewHub: React.FC = () => {
       if (!selectedAssignment) return;
 
       try {
-        await V8InterviewApi.sendBackAssignment(selectedAssignment.id, { reason }).catch(() =>
-          Api.post(`/interview/assignments/${selectedAssignment.id}/send-back`, { reason })
+        await loadInterviewV8Capability('assignments', () =>
+          V8InterviewApi.sendBackAssignment(selectedAssignment.id, { reason })
         );
         toast.success(t('interview.hub.interviewSentBack'));
         setShowSendBackModal(false);
@@ -2817,8 +2807,8 @@ export const InterviewHub: React.FC = () => {
   const handleApproveAssignment = useCallback(
     async (assignment: InterviewAssignment) => {
       try {
-        await V8InterviewApi.approveAssignment(assignment.id).catch(() =>
-          Api.post(`/interview/assignments/${assignment.id}/approve`, {})
+        await loadInterviewV8Capability('assignments', () =>
+          V8InterviewApi.approveAssignment(assignment.id)
         );
         toast.success(t('interview.hub.interviewApproved'));
 
@@ -3022,7 +3012,7 @@ export const InterviewHub: React.FC = () => {
       }
       setEscalateBusyId(assignment.id);
       try {
-        await Api.post(`/interview/assignments/${assignment.id}/escalate`, {});
+        throw new InterviewCapabilityError('assignments', 'unavailable', undefined, undefined);
         toast.success(t('interview.hub.escalated'));
         await refreshManagedAssignments();
       } catch (error) {
@@ -3224,16 +3214,16 @@ export const InterviewHub: React.FC = () => {
     async (session: InterviewSession, promptType: InsightPromptType = 'summary') => {
       try {
         toast.loading(t('interview.hub.generatingAiInsights'));
-        await V8InterviewApi.createInsight({ sessionId: session.id, promptType }).catch(() =>
-          Api.post('/interview/insights', { sessionId: session.id, promptType })
+        await loadInterviewV8Capability('insights', () =>
+          V8InterviewApi.createInsight({ sessionId: session.id, promptType })
         );
         toast.dismiss();
         toast.success(t('interview.hub.insightsGenerated'));
 
         // Refresh insights
-        const insightsRes = await V8InterviewApi.listInsights()
-          .then((r) => r.insights)
-          .catch(() => Api.get('/interview/insights').catch(() => []));
+        const insightsRes = await loadInterviewV8Capability('insights', () =>
+          V8InterviewApi.listInsights().then((r) => r.insights)
+        );
         setInsights(Array.isArray(insightsRes) ? insightsRes : []);
 
         // Switch to insights tab
@@ -5181,14 +5171,14 @@ export const InterviewHub: React.FC = () => {
   const handleExportInsightToTools = async (insightId: string) => {
     try {
       // Backend contract: POST /interview/insights/:id/export { target: 'tools' | 'assessment' }
-      await V8InterviewApi.exportInsight(insightId, { target: 'tools' }).catch(() =>
-        Api.post(`/interview/insights/${insightId}/export`, { target: 'tools' })
+      await loadInterviewV8Capability('insights', () =>
+        V8InterviewApi.exportInsight(insightId, { target: 'tools' })
       );
       toast.success(t('interview.hub.exportedToTools'));
       // Refresh insights
-      const insightsRes = await V8InterviewApi.listInsights()
-        .then((r) => r.insights)
-        .catch(() => Api.get('/interview/insights').catch(() => []));
+      const insightsRes = await loadInterviewV8Capability('insights', () =>
+        V8InterviewApi.listInsights().then((r) => r.insights)
+      );
       setInsights(Array.isArray(insightsRes) ? insightsRes : []);
     } catch (error) {
       toast.error(t('interview.hub.failedToExport'));
@@ -5198,13 +5188,13 @@ export const InterviewHub: React.FC = () => {
 
   const handleExportInsightToAssessment = async (insightId: string) => {
     try {
-      await V8InterviewApi.exportInsight(insightId, { target: 'assessment' }).catch(() =>
-        Api.post(`/interview/insights/${insightId}/export`, { target: 'assessment' })
+      await loadInterviewV8Capability('insights', () =>
+        V8InterviewApi.exportInsight(insightId, { target: 'assessment' })
       );
       toast.success(t('interview.hub.exportedToAssessment'));
-      const insightsRes = await V8InterviewApi.listInsights()
-        .then((r) => r.insights)
-        .catch(() => Api.get('/interview/insights').catch(() => []));
+      const insightsRes = await loadInterviewV8Capability('insights', () =>
+        V8InterviewApi.listInsights().then((r) => r.insights)
+      );
       setInsights(Array.isArray(insightsRes) ? insightsRes : []);
     } catch (error) {
       toast.error(t('interview.hub.failedToExport'));
@@ -5218,8 +5208,8 @@ export const InterviewHub: React.FC = () => {
       return;
     }
     try {
-      await V8InterviewApi.deleteInsight(insightId).catch(() =>
-        Api.delete(`/interview/insights/${insightId}`)
+      await loadInterviewV8Capability('insights', () =>
+        V8InterviewApi.deleteInsight(insightId)
       );
       toast.success(t('interview.hub.insightDeleted'));
       setInsights((prev) => prev.filter((i) => i.id !== insightId));
@@ -5232,8 +5222,8 @@ export const InterviewHub: React.FC = () => {
   // Archive / restore an insight (soft, reversible). Row leaves the current scope view.
   const handleSetInsightArchived = async (insightId: string, archived: boolean) => {
     try {
-      await V8InterviewApi.updateInsight(insightId, { archived }).catch(() =>
-        Api.patch(`/interview/insights/${insightId}`, { archived })
+      await loadInterviewV8Capability('insights', () =>
+        V8InterviewApi.updateInsight(insightId, { archived })
       );
       // Optimistic: row drops out of the current list (active→archived or archived→active).
       setInsights((prev) => prev.filter((i) => i.id !== insightId));
@@ -5266,9 +5256,9 @@ export const InterviewHub: React.FC = () => {
         return;
       }
       toast.success(t('interview.hub.insightForked'));
-      const insightsRes = await V8InterviewApi.listInsights()
-        .then((r) => r.insights)
-        .catch(() => Api.get('/interview/insights').catch(() => []));
+      const insightsRes = await loadInterviewV8Capability('insights', () =>
+        V8InterviewApi.listInsights().then((r) => r.insights)
+      );
       setInsights(Array.isArray(insightsRes) ? insightsRes : []);
       handleOpenDocument({
         id: newInsight.id,
@@ -5296,8 +5286,8 @@ export const InterviewHub: React.FC = () => {
     try {
       await Promise.all(
         ids.map((id) =>
-          V8InterviewApi.updateInsight(id, { archived }).catch(() =>
-            Api.patch(`/interview/insights/${id}`, { archived })
+          loadInterviewV8Capability('insights', () =>
+            V8InterviewApi.updateInsight(id, { archived })
           )
         )
       );
@@ -6106,15 +6096,11 @@ export const InterviewHub: React.FC = () => {
           insightId={doc.id}
           onClose={() => handleCloseDocument(doc.id)}
           onRegenerate={async () => {
-            const insightsRes = await V8InterviewApi.listInsights()
-              .then((r) => r.insights)
-              .catch(() => Api.get('/interview/insights').catch(() => []));
-            const apiInsights = Array.isArray(insightsRes) ? insightsRes : [];
-            setInsights(
-              apiInsights.length > 0
-                ? apiInsights
-                : (interviewDemoData.insights as InterviewInsight[])
+            const insightsRes = await loadInterviewV8Capability('insights', () =>
+              V8InterviewApi.listInsights().then((r) => r.insights)
             );
+            const apiInsights = Array.isArray(insightsRes) ? insightsRes : [];
+            setInsights(apiInsights);
           }}
           onSaved={(data) => {
             setInsights((prev) => prev.map((i) => (i.id === data.id ? { ...i, ...data } : i)));
@@ -6331,12 +6317,8 @@ export const InterviewHub: React.FC = () => {
           return;
         }
         toast.loading(t('interview.hub.startingInterview'));
-        const result = (await V8InterviewApi.startAssignment(assignment.id, {
-          projectId,
-        }).catch(() =>
-          Api.post(`/interview/assignments/${assignment.id}/start`, {
-            projectId,
-          })
+        const result = (await loadInterviewV8Capability('assignments', () =>
+          V8InterviewApi.startAssignment(assignment.id, { projectId })
         )) as any;
         toast.dismiss();
 
@@ -9692,8 +9674,8 @@ Return ONLY the answer text (no markdown fences).`;
                 <button
                   onClick={async () => {
                     try {
-                      await V8InterviewApi.remindAssignment(selectedAssignment.id).catch(() =>
-                        Api.post(`/interview/assignments/${selectedAssignment.id}/remind`, {})
+                      await loadInterviewV8Capability('assignments', () =>
+                        V8InterviewApi.remindAssignment(selectedAssignment.id)
                       );
                       toast.success(t('interview.hub.reminderSent'));
                       setShowReminderModal(false);
@@ -10242,9 +10224,9 @@ Return ONLY the answer text (no markdown fences).`;
         }}
         onSuccess={async () => {
           // Refresh insights after generation
-          const insightsRes = await V8InterviewApi.listInsights()
-            .then((r) => r.insights)
-            .catch(() => Api.get('/interview/insights').catch(() => []));
+          const insightsRes = await loadInterviewV8Capability('insights', () =>
+            V8InterviewApi.listInsights().then((r) => r.insights)
+          );
           setInsights(Array.isArray(insightsRes) ? insightsRes : []);
         }}
       />

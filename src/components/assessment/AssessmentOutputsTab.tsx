@@ -119,8 +119,14 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({ onCo
     listOutputs()
       .then((res) => {
         if (cancelled) return;
-        setItems(res.outputs as OutputRow[]);
-        onCountChangeRef.current?.(res.outputs.length);
+        // `/api/method/outputs` is org-wide across Assessment, Tools and
+        // Audits. This module must not present another module's immutable
+        // output as an Assessment result.
+        const assessmentOutputs = res.outputs.filter(
+          (output) => output.module === 'assessment'
+        ) as OutputRow[];
+        setItems(assessmentOutputs);
+        onCountChangeRef.current?.(assessmentOutputs.length);
       })
       .catch((err) => {
         if (cancelled) return;

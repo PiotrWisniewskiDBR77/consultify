@@ -14,7 +14,7 @@
  */
 
 import { spawnSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { existsSync, statSync, writeFileSync } from 'node:fs';
 import bcrypt from 'bcryptjs';
 import pg from 'pg';
@@ -25,7 +25,8 @@ const CONFIRM=process.env.MTG_OWNER_FIXTURE_CONFIRM;
 const PASSWORD=process.env.MTG_OWNER_FIXTURE_PASSWORD;
 const MANIFEST_PATH=process.env.MTG_OWNER_FIXTURE_MANIFEST||'';
 const PREFIX='consultify_w3_meetings_owner_';
-const TEMPLATE_DB='consultify_audits_20260813';
+const FIXTURE_ID='W3-MEETINGS-OWNER-v1';
+const FIXTURE_NAME='wave3-meetings-owner-review-v1';
 const LOCAL_HOSTS=new Set(['127.0.0.1','localhost','::1']);
 const MUTATING=new Set(['provision','seed','reset','drop']);
 
@@ -55,12 +56,11 @@ function qualifiedUrl(){
 }
 async function maintenance(url){const u=new URL(url);u.pathname='/postgres';const c=new pg.Client({connectionString:u.toString()});await c.connect();return c;}
 async function provision(url,dbName){
-  const a=await maintenance(url);try{if(!(await a.query('SELECT 1 FROM pg_database WHERE datname=$1',[TEMPLATE_DB])).rowCount)fail(`fixed local template ${TEMPLATE_DB} absent`);if((await a.query('SELECT 1 FROM pg_database WHERE datname=$1',[dbName])).rowCount)fail('database already exists');await a.query(`CREATE DATABASE ${dbName} TEMPLATE ${TEMPLATE_DB}`);}finally{await a.end();}
-  const migrations=['server/migrations/20260623_meetings_baseline.sql','server/migrations/20260912_claude_c_handoff_spine.sql','server/migrations/20260912_claude_c_handoff_spine_version_unique.sql','server/migrations/20260912_claude_c_meeting_boundary.sql'];
-  for(const migration of migrations){const r=spawnSync('/opt/homebrew/opt/postgresql@15/bin/psql',['-v','ON_ERROR_STOP=1','-d',url.toString(),'-f',migration],{cwd:process.cwd(),stdio:'inherit',env:{...process.env,PGPASSWORD:url.password}});if(r.status!==0)fail(`Meetings schema migration failed: ${migration}`);}
-  console.log(JSON.stringify({command:'provision',database:dbName,template:TEMPLATE_DB,meetingMigrations:migrations.length}));
+  const a=await maintenance(url);try{if((await a.query('SELECT 1 FROM pg_database WHERE datname=$1',[dbName])).rowCount)fail('database already exists');await a.query(`CREATE DATABASE ${dbName}`);}finally{await a.end();}
+  const r=spawnSync(process.execPath,['node_modules/.bin/tsx','server/scripts/migrate.postgres.ts'],{cwd:process.cwd(),stdio:'inherit',env:{...process.env,NODE_ENV:'test',DB_TYPE:'postgres',DATABASE_URL:url.toString(),DOTENV_IGNORE_LOCAL:'1'}});if(r.status!==0)fail('fresh migration chain failed');
+  console.log(JSON.stringify({command:'provision',database:dbName,freshMigrations:true}));
 }
-async function reset(client){await client.query('BEGIN');try{await client.query('DELETE FROM artifact_handoff_receipts WHERE organization_id=ANY($1)',[[IDS.org,IDS.foreignOrg]]);await client.query("DELETE FROM artifact_handoff_proposals WHERE organization_id=ANY($1) AND producer_kind='meeting'",[[IDS.org,IDS.foreignOrg]]);await client.query('DELETE FROM meeting_notes WHERE organization_id=ANY($1)',[[IDS.org,IDS.foreignOrg]]);await client.query('DELETE FROM meeting_follow_ups WHERE meeting_id=ANY($1)',[[IDS.pendingMeeting,IDS.rejectedMeeting,IDS.approvedMeeting]]);await client.query('DELETE FROM meetings WHERE organization_id=ANY($1)',[[IDS.org,IDS.foreignOrg]]);await client.query('DELETE FROM organization_members WHERE organization_id=ANY($1)',[[IDS.org,IDS.foreignOrg]]);await client.query('DELETE FROM users WHERE id=ANY($1)',[[IDS.owner,IDS.admin,IDS.member,IDS.revoked,IDS.foreignOwner]]);await client.query('DELETE FROM organizations WHERE id=ANY($1)',[[IDS.org,IDS.foreignOrg]]);await client.query('COMMIT');}catch(e){await client.query('ROLLBACK');throw e;}}
+async function reset(client){await client.query('BEGIN');try{await client.query(`CREATE TABLE IF NOT EXISTS wave3_owner_fixture_markers(fixture_id TEXT PRIMARY KEY,ownership_nonce TEXT NOT NULL,database_name TEXT NOT NULL)`);await client.query('DELETE FROM wave3_owner_fixture_markers WHERE fixture_id=$1',[FIXTURE_ID]);await client.query('DELETE FROM artifact_handoff_receipts WHERE organization_id=ANY($1)',[[IDS.org,IDS.foreignOrg]]);await client.query("DELETE FROM artifact_handoff_proposals WHERE organization_id=ANY($1) AND producer_kind='meeting'",[[IDS.org,IDS.foreignOrg]]);await client.query('DELETE FROM meeting_notes WHERE organization_id=ANY($1)',[[IDS.org,IDS.foreignOrg]]);await client.query('DELETE FROM meeting_follow_ups WHERE meeting_id=ANY($1)',[[IDS.pendingMeeting,IDS.rejectedMeeting,IDS.approvedMeeting]]);await client.query('DELETE FROM meetings WHERE organization_id=ANY($1)',[[IDS.org,IDS.foreignOrg]]);await client.query('DELETE FROM organization_members WHERE organization_id=ANY($1)',[[IDS.org,IDS.foreignOrg]]);await client.query('DELETE FROM users WHERE id=ANY($1)',[[IDS.owner,IDS.admin,IDS.member,IDS.revoked,IDS.foreignOwner]]);await client.query('DELETE FROM organizations WHERE id=ANY($1)',[[IDS.org,IDS.foreignOrg]]);await client.query('COMMIT');}catch(e){await client.query('ROLLBACK');throw e;}}
 
 async function seed(client){
   const existing=await client.query('SELECT count(*)::int n FROM meeting_notes WHERE organization_id=$1 AND idempotency_key=ANY($2)',[IDS.org,[IDS.pendingKey,IDS.rejectedKey,IDS.approvedKey]]);
@@ -80,6 +80,7 @@ async function seed(client){
   await decideMeetingNote({organizationId:IDS.org,meetingId:IDS.rejectedMeeting,noteId:rejected.note.id,decidedBy:IDS.owner,action:'reject',reason:'Readiness evidence is absent'});
   const approved=await make(IDS.approvedMeeting,TEXTS.approved,IDS.approvedKey,'Pilot after readiness evidence');
   await decideMeetingNote({organizationId:IDS.org,meetingId:IDS.approvedMeeting,noteId:approved.note.id,decidedBy:IDS.admin,action:'approve',reason:'Manual note and readiness condition reviewed'});
+  const ownershipNonce=randomBytes(32).toString('hex');await client.query(`INSERT INTO wave3_owner_fixture_markers(fixture_id,ownership_nonce,database_name) VALUES($1,$2,current_database())`,[FIXTURE_ID,ownershipNonce]);
   return persist(await readback(client,false));
 }
 
@@ -89,7 +90,8 @@ async function readback(client,emit=true){
     WHERE n.organization_id=$1 AND n.idempotency_key=ANY($2) ORDER BY n.idempotency_key`,[IDS.org,[IDS.pendingKey,IDS.rejectedKey,IDS.approvedKey]]);
   if(rows.rowCount!==3)fail(`expected three governed notes, found ${rows.rowCount}`);const byKey=Object.fromEntries(rows.rows.map(r=>[r.idempotency_key,r]));
   const personas=await client.query(`SELECT u.id,u.organization_id,m.role,m.status FROM users u JOIN organization_members m ON m.user_id=u.id AND m.organization_id=u.organization_id WHERE u.id=ANY($1) ORDER BY u.id`,[[IDS.owner,IDS.admin,IDS.member,IDS.revoked,IDS.foreignOwner]]);
-  const manifest={schemaVersion:'w3-meetings-owner-v1',deepLink:'/meeting',deepLinkVerified:false,capture:{mode:'manual_text',recording:'OFF',transcription:'OFF',media:'OFF',liveProvider:'OFF'},ids:{...IDS},expected:{pending:{meetingId:IDS.pendingMeeting,noteStatus:byKey[IDS.pendingKey]?.note_status,proposalState:byKey[IDS.pendingKey]?.proposal_state,transcriptHash:byKey[IDS.pendingKey]?.transcript_hash,receiptCount:byKey[IDS.pendingKey]?.receipt_id?1:0},rejected:{meetingId:IDS.rejectedMeeting,noteStatus:byKey[IDS.rejectedKey]?.note_status,proposalState:byKey[IDS.rejectedKey]?.proposal_state,transcriptHash:byKey[IDS.rejectedKey]?.transcript_hash,decidedBy:byKey[IDS.rejectedKey]?.decided_by,receiptCount:byKey[IDS.rejectedKey]?.receipt_id?1:0},approved:{meetingId:IDS.approvedMeeting,noteStatus:byKey[IDS.approvedKey]?.note_status,proposalState:byKey[IDS.approvedKey]?.proposal_state,transcriptHash:byKey[IDS.approvedKey]?.transcript_hash,decidedBy:byKey[IDS.approvedKey]?.decided_by,receiptCount:byKey[IDS.approvedKey]?.receipt_id?1:0,receiptTargetIsNote:Boolean(byKey[IDS.approvedKey]?.receipt_id&&byKey[IDS.approvedKey]?.target_record_id)}} ,personas:personas.rows};
+  const marker=(await client.query('SELECT fixture_id,ownership_nonce,database_name FROM wave3_owner_fixture_markers WHERE fixture_id=$1',[FIXTURE_ID])).rows[0];if(!marker)fail('durable ownership marker missing');
+  const manifest={schemaVersion:'w3-meetings-owner-v1',fixtureId:FIXTURE_ID,fixture:FIXTURE_NAME,ownershipState:'FINAL',databaseName:marker.database_name,ownershipNonce:marker.ownership_nonce,marker:{table:'wave3_owner_fixture_markers',fixtureId:FIXTURE_ID,ownershipNonce:marker.ownership_nonce},deepLink:'/meeting',deepLinkVerified:false,capture:{mode:'manual_text',recording:'OFF',transcription:'OFF',media:'OFF',liveProvider:'OFF'},ids:{...IDS},expected:{pending:{meetingId:IDS.pendingMeeting,noteStatus:byKey[IDS.pendingKey]?.note_status,proposalState:byKey[IDS.pendingKey]?.proposal_state,transcriptHash:byKey[IDS.pendingKey]?.transcript_hash,receiptCount:byKey[IDS.pendingKey]?.receipt_id?1:0},rejected:{meetingId:IDS.rejectedMeeting,noteStatus:byKey[IDS.rejectedKey]?.note_status,proposalState:byKey[IDS.rejectedKey]?.proposal_state,transcriptHash:byKey[IDS.rejectedKey]?.transcript_hash,decidedBy:byKey[IDS.rejectedKey]?.decided_by,receiptCount:byKey[IDS.rejectedKey]?.receipt_id?1:0},approved:{meetingId:IDS.approvedMeeting,noteStatus:byKey[IDS.approvedKey]?.note_status,proposalState:byKey[IDS.approvedKey]?.proposal_state,transcriptHash:byKey[IDS.approvedKey]?.transcript_hash,decidedBy:byKey[IDS.approvedKey]?.decided_by,receiptCount:byKey[IDS.approvedKey]?.receipt_id?1:0,receiptTargetIsNote:Boolean(byKey[IDS.approvedKey]?.receipt_id&&byKey[IDS.approvedKey]?.target_record_id)}} ,personas:personas.rows};
   if(byKey[IDS.pendingKey].source!=='heuristic'||byKey[IDS.pendingKey].proposal_state!=='pending'||byKey[IDS.pendingKey].note_status!=='proposed'||byKey[IDS.pendingKey].receipt_id||byKey[IDS.rejectedKey].proposal_state!=='rejected'||byKey[IDS.rejectedKey].note_status!=='rejected'||byKey[IDS.rejectedKey].decided_by!==IDS.owner||byKey[IDS.rejectedKey].receipt_id||byKey[IDS.approvedKey].proposal_state!=='materialized'||byKey[IDS.approvedKey].note_status!=='approved'||byKey[IDS.approvedKey].decided_by!==IDS.admin||!byKey[IDS.approvedKey].receipt_id||!byKey[IDS.approvedKey].target_record_id||byKey[IDS.pendingKey].transcript_hash!==sha(TEXTS.pending)||byKey[IDS.rejectedKey].transcript_hash!==sha(TEXTS.rejected)||byKey[IDS.approvedKey].transcript_hash!==sha(TEXTS.approved)||personas.rowCount!==5)fail('canonical meeting state/readback contract failed');
   if(emit)console.log(JSON.stringify(manifest,null,2));return manifest;
 }

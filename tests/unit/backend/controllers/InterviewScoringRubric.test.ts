@@ -257,6 +257,40 @@ describe('InterviewController — objective scoring rubric (#48a)', () => {
     expect(callArgs.temperature).toBeLessThanOrEqual(0.2);
   });
 
+  it('returns a canonical retryable 503 without fabricating or persisting an evaluation when the provider is unavailable', async () => {
+    mockQueryOne.mockResolvedValueOnce({
+      id: 's1',
+      organization_id: 'org-1',
+      name: 'Session',
+      owner_id: 'user-1',
+    });
+    mockQueryAll.mockResolvedValueOnce([
+      {
+        id: 'q1',
+        question_text: 'What is the core problem?',
+        is_required: 1,
+        status: 'answered',
+        answer_text: 'A persisted answer that must remain untouched.',
+      },
+    ]);
+    mockLlmCall.mockRejectedValueOnce(Object.assign(new Error('provider unavailable'), {
+      code: 'CIRCUIT_OPEN',
+    }));
+
+    const { InterviewController } = await import(
+      '../../../../server/src/controllers/InterviewController.js'
+    );
+    await InterviewController.evaluateSessionAnswers(mockReq, mockRes, mockNext);
+
+    expect(mockRes.status).toHaveBeenCalledWith(503);
+    expect(mockRes.json).toHaveBeenCalledWith({
+      error: 'AI evaluation is temporarily unavailable',
+      code: 'INTERVIEW_EVALUATION_UNAVAILABLE',
+      retryable: true,
+    });
+    expect(mockQueryRun).not.toHaveBeenCalled();
+  });
+
   it('weighs a required answer more heavily than an optional one in the session score', async () => {
     mockQueryOne
       .mockResolvedValueOnce({ id: 's1', organization_id: 'org-1', name: 'Session', owner_id: 'user-1' })

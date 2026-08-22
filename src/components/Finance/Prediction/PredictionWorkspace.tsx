@@ -307,18 +307,28 @@ function PredictionWorkspaceInner(props: PredictionWorkspaceProps): React.ReactE
 
   const focusMode = useFinanceFocusMode({ workspaceState: draft, activeViewId });
 
+  const canonicalVersion = mountCheck.kind === 'confirmed' ? mountCheck.version : null;
+  const canonicalStatus = canonicalVersion?.status ?? 'DRAFT';
+  const canonicalFreshness = canonicalVersion?.freshness ?? 'NEVER_COMPUTED';
+  const hasUncommittedWorkingRevision =
+    authoringState.kind === 'ready' &&
+    confirmedAuthoringContent !== null &&
+    confirmedAuthoringContent !== authoringContent(draft);
+
   const evaluationContext = buildPredictionEvaluationContext({
-    status: 'DRAFT',
-    role: 'preparer',
-    freshness: draft.lastComputeAt ? 'CURRENT' : 'NEVER_COMPUTED',
+    status: canonicalStatus,
+    role: 'finance_admin',
+    freshness: canonicalFreshness,
   });
   const config = buildPredictionWorkspaceBarConfig({
     draft,
     activeViewId,
     artifactId: props.artifactId,
-    status: 'DRAFT',
-    role: 'preparer',
-    freshness: draft.lastComputeAt ? 'CURRENT' : 'NEVER_COMPUTED',
+    status: canonicalStatus,
+    role: 'finance_admin',
+    freshness: canonicalFreshness,
+    versionNo: canonicalVersion?.versionNo,
+    hasUncommittedWorkingRevision,
   });
 
   async function handlePreflight(): Promise<void> {

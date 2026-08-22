@@ -73,6 +73,20 @@ interface DeletionRequest {
   scheduledAt?: string | null;
 }
 
+interface LatestDeletionRequest {
+  id: string;
+  status: 'pending' | 'scheduled' | 'cancelled';
+  requestedAt?: string | null;
+  scheduledAt?: string | null;
+}
+
+interface ExportRequest {
+  id: string;
+  status: 'pending' | 'processing' | 'ready' | 'failed' | 'expired';
+  requestedAt?: string | null;
+  expiresAt?: string | null;
+}
+
 const DEFAULT_CONSENTS: ConsentSettings = {
   analytics: true,
   personalization: true,
@@ -235,6 +249,11 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
   const [requestingDeletion, setRequestingDeletion] = useState(false);
   const [cancellingDeletion, setCancellingDeletion] = useState(false);
   const [deletionRequest, setDeletionRequest] = useState<DeletionRequest | null>(null);
+  const [latestDeletionRequest, setLatestDeletionRequest] =
+    useState<LatestDeletionRequest | null>(null);
+  const [exportRequest, setExportRequest] = useState<ExportRequest | null>(null);
+  const [exportStatusLoading, setExportStatusLoading] = useState(true);
+  const [exportStatusError, setExportStatusError] = useState<string | null>(null);
   const [deletionStatusLoading, setDeletionStatusLoading] = useState(true);
   const [deletionStatusError, setDeletionStatusError] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -303,6 +322,7 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
       setDeletionStatusError(null);
       const response = await Api.getGdprDeletionStatus();
       const request = response?.request;
+      const latestRequest = response?.latestRequest;
       if (request !== null && request !== undefined) {
         if (!request.id || !['pending', 'scheduled'].includes(request.status)) {
           throw new Error('Account deletion status response was invalid');
@@ -310,6 +330,17 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
         setDeletionRequest(request as DeletionRequest);
       } else {
         setDeletionRequest(null);
+      }
+      if (latestRequest !== null && latestRequest !== undefined) {
+        if (
+          !latestRequest.id ||
+          !['pending', 'scheduled', 'cancelled'].includes(latestRequest.status)
+        ) {
+          throw new Error('Latest account deletion status response was invalid');
+        }
+        setLatestDeletionRequest(latestRequest as LatestDeletionRequest);
+      } else {
+        setLatestDeletionRequest(null);
       }
     } catch (error: unknown) {
       setDeletionStatusError(
@@ -323,6 +354,34 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
   useEffect(() => {
     void loadDeletionStatus();
   }, [currentUser.id, loadDeletionStatus]);
+
+  const loadExportStatus = useCallback(async () => {
+    setExportStatusLoading(true);
+    try {
+      setExportStatusError(null);
+      const response = await Api.getGdprExportStatus();
+      const request = response?.request;
+      if (request !== null && request !== undefined) {
+        if (
+          !request.id ||
+          !['pending', 'processing', 'ready', 'failed', 'expired'].includes(request.status)
+        ) {
+          throw new Error('Data export status response was invalid');
+        }
+        setExportRequest(request as ExportRequest);
+      } else {
+        setExportRequest(null);
+      }
+    } catch (error: unknown) {
+      setExportStatusError(normalizeApiErrorMessage(error, 'Failed to load data export status'));
+    } finally {
+      setExportStatusLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadExportStatus();
+  }, [currentUser.id, loadExportStatus]);
 
   const handleSave = useCallback(async () => {
     setSaving(true);
@@ -474,10 +533,15 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
         throw new Error('Account deletion cancellation was not confirmed by the server');
       }
       const readBack = await Api.getGdprDeletionStatus();
-      if (readBack?.request !== null) {
+      if (
+        readBack?.request !== null ||
+        readBack?.latestRequest?.id !== deletionRequest.id ||
+        readBack.latestRequest.status !== 'cancelled'
+      ) {
         throw new Error('Account deletion cancellation was not confirmed by read-back');
       }
       setDeletionRequest(null);
+      setLatestDeletionRequest(readBack.latestRequest as LatestDeletionRequest);
       toast.success(t('settings.data.deletionCancelled', 'Deletion request cancelled'));
     } catch (error: unknown) {
       const message = normalizeApiErrorMessage(
@@ -635,7 +699,12 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                   </div>
                   <button
                     onClick={handleExportData}
-                    disabled={exporting}
+                    disabled={
+                      exporting ||
+                      exportStatusLoading ||
+                      exportRequest?.status === 'pending' ||
+                      exportRequest?.status === 'processing'
+                    }
                     className={cn(
                       'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-shrink-0',
                       'bg-c-accent-soft text-c-accent border border-c-accent',
@@ -653,6 +722,34 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                       : t('settings.data.requestExport', 'Request Export')}
                   </button>
                 </div>
+                {exportStatusLoading && (
+                  <div className="mt-4 flex items-center gap-2 text-xs text-c-text-secondary">
+                    <Loader2 size={14} className="animate-spin" />
+                    {t('settings.data.loadingExportStatus', 'Loading export status...')}
+                  </div>
+                )}
+                {exportStatusError && (
+                  <div className="mt-4">
+                    <Banner variant="danger" title={exportStatusError} />
+                    <button
+                      type="button"
+                      onClick={() => void loadExportStatus()}
+                      className="mt-2 px-3 py-1.5 bg-c-surface border border-c-border-subtle rounded-lg text-xs text-c-text-secondary"
+                    >
+                      {t('common.retry', 'Retry')}
+                    </button>
+                  </div>
+                )}
+                {exportRequest && !exportStatusLoading && !exportStatusError && (
+                  <div className="mt-4 rounded-lg border border-c-border-subtle bg-c-surface p-4">
+                    <p className="text-sm font-medium text-c-text">
+                      {t('settings.data.exportStatus', 'Export status')}: {exportRequest.status}
+                    </p>
+                    <p className="mt-2 break-all font-mono text-[11px] text-c-text-muted">
+                      {t('settings.data.requestReceipt', 'Receipt')}: {exportRequest.id}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -731,6 +828,23 @@ export const DataControlsSettings: React.FC<DataControlsSettingsProps> = ({
                       {cancellingDeletion && <Loader2 size={14} className="animate-spin" />}
                       {t('settings.data.cancelDeletionRequest', 'Cancel deletion request')}
                     </button>
+                  </div>
+                )}
+
+                {!deletionRequest && latestDeletionRequest?.status === 'cancelled' && (
+                  <div className="mt-4 rounded-lg border border-c-border-subtle bg-c-surface p-4">
+                    <p className="text-sm font-medium text-c-text">
+                      {t('settings.data.deletionCancelledStatus', 'Previous deletion request cancelled')}
+                    </p>
+                    <p className="mt-1 text-xs text-c-text-secondary">
+                      {t(
+                        'settings.data.deletionCancelledStatusDesc',
+                        'No automated erasure is scheduled. You may submit a new request if needed.'
+                      )}
+                    </p>
+                    <p className="mt-2 break-all font-mono text-[11px] text-c-text-muted">
+                      {t('settings.data.requestReceipt', 'Receipt')}: {latestDeletionRequest.id}
+                    </p>
                   </div>
                 )}
 

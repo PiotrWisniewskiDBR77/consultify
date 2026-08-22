@@ -13,11 +13,10 @@
  *     WYŁĄCZNIE w pamięci komponentu. `analysis.routes.ts` nie ma endpointu
  *     zapisu tych flag (tylko `kpi-catalog`/`compute`/`kpi-values`, GET/GET/POST)
  *     — odświeżenie strony je resetuje. Nie udawane jako trwałe.
- *   - `periodColumns` są WYPROWADZONE z `periodId` obecnych w
- *     `GET /analysis/:id/kpi-values` (unikalne, posortowane leksykograficznie)
- *     — nie istnieje dziś endpoint zwracający czytelną etykietę okresu, więc
- *     etykietą kolumny jest surowe `periodId`, jawnie oznaczone w komentarzu
- *     poniżej (nie zmyślona nazwa typu "Q1 2026").
+ *   - `periodColumns` są WYPROWADZONE z okresów obecnych w
+ *     `GET /analysis/:id/kpi-values`; endpoint zwraca kanoniczną etykietę z
+ *     `finance_stmt_periods`, więc UI nigdy nie pokazuje technicznego UUID jako
+ *     nagłówka raportu.
  *   - Krok kreatora "Utwórz i przelicz" woła REALNE `createFinanceArtifact`+
  *     `computeAnalysisKpis` — jeśli backend odpowie `NO_SOURCE_STATEMENT_PACK_EDGE`
  *     (bo nie ma writer'a lineage), UI pokazuje ten honest błąd, nie fejkuje sukcesu.
@@ -212,12 +211,15 @@ function AnalysisWorkspaceInner(props: AnalysisWorkspaceProps): React.ReactEleme
     void reload();
   }, [reload]);
 
-  // Okresy — wyprowadzone z periodId obecnych w kpiValues (brak dziś endpointu
-  // etykiet okresów, patrz nagłówek pliku). Posortowane leksykograficznie —
-  // deterministycznie, niezależnie od kolejności odpowiedzi API.
+  // Okresy — wyprowadzone z periodId obecnych w kpiValues i opisane etykietą
+  // zwróconą z kanonicznego rejestru okresów. Posortowane deterministycznie.
   const periodColumns: AnalysisKpiTablePeriodColumn[] = useMemo(() => {
-    const ids = [...new Set(kpiValues.map((v) => v.periodId))].sort((a, b) => a.localeCompare(b));
-    return ids.map((id) => ({ id, label: id }));
+    const labels = new Map(
+      kpiValues.map((value) => [value.periodId, value.periodLabel || value.periodId])
+    );
+    return [...labels.entries()]
+      .sort((left, right) => left[1].localeCompare(right[1]) || left[0].localeCompare(right[0]))
+      .map(([id, label]) => ({ id, label }));
   }, [kpiValues]);
 
   const groups = useMemo(

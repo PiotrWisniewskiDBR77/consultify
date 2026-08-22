@@ -72,6 +72,22 @@ const renderTable = (activeFilters: Array<{ column: string; value: string }> = [
   );
 
 describe('FilterableTable — shared column-filter accessible contract', () => {
+  it('keeps the empty-state card pinned to the visible horizontal viewport', () => {
+    render(
+      <FilterableTable
+        columns={COLUMNS}
+        data={[]}
+        activeFilters={[]}
+        onFilterChange={vi.fn()}
+        emptyMessage={<div data-testid="empty-copy">Nothing here</div>}
+      />
+    );
+
+    const card = screen.getByTestId('empty-copy').parentElement;
+    expect(card).toHaveClass('sticky', 'left-4');
+    expect(card?.closest('.overflow-x-auto')).toBeInTheDocument();
+  });
+
   it('keeps an interactive row keyboard-operable without an invalid button role', () => {
     const onRowClick = vi.fn();
     render(

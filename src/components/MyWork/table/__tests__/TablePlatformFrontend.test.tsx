@@ -59,7 +59,14 @@ vi.mock('react-i18next', () => ({
       opts?: string | ({ defaultValue?: string } & Record<string, unknown>),
       params?: Record<string, unknown>
     ) => {
-      const def = (typeof opts === 'string' ? opts : opts?.defaultValue) ?? k;
+      const copy: Record<string, string> = {
+        'myWorkTable.gridView.selectRow': 'Select row',
+        'myWorkTable.gridView.totals': 'Totals',
+        'myWorkTable.fieldManager.save': 'Save',
+        'myWorkTable.fieldManager.failedToUpdateField': 'Failed to update field',
+        'myWorkTable.chatToSchemaPanel.aiTableBuilder': 'AI Table Builder',
+      };
+      const def = copy[k] ?? (typeof opts === 'string' ? opts : opts?.defaultValue) ?? k;
       const vars = (typeof opts === 'object' && opts ? opts : params) ?? {};
       return Object.entries(vars).reduce(
         (acc, [key, val]) => acc.split(`{{${key}}}`).join(String(val)),
@@ -103,6 +110,7 @@ vi.mock('../StickyNoteView', () => ({
 }));
 
 const tpApiMocks = vi.hoisted(() => ({
+  getAttachments: vi.fn().mockResolvedValue({ attachments: [] }),
   updateField: vi.fn(),
   deleteField: vi.fn(),
   createField: vi.fn(),
@@ -549,9 +557,9 @@ describe('ViewRouter', () => {
   it('renders spreadsheet-style grid (table layout) by default when rows exist', () => {
     const integration = makeIntegration({ viewLayout: 'table', processedRows: FIXTURE_ROWS });
     renderRouter(integration);
-    expect(screen.getByRole('columnheader', { name: 'Name' })).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: 'Status' })).toBeInTheDocument();
-    const checks = screen.getAllByRole('checkbox', { name: 'Select row' });
+    expect(screen.getByRole('columnheader', { name: /^Name\b/ })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /^Status\b/ })).toBeInTheDocument();
+    const checks = screen.getAllByRole('checkbox', { name: /^Select row\b/ });
     expect(checks.length).toBe(FIXTURE_ROWS.length);
   });
 
@@ -610,7 +618,7 @@ describe('ViewRouter', () => {
         <ViewRouter />
       </TableDataProvider>
     );
-    const rowChecks = screen.getAllByRole('checkbox', { name: 'Select row' });
+    const rowChecks = screen.getAllByRole('checkbox', { name: /^Select row\b/ });
     fireEvent.click(rowChecks[0]!);
     expect(toggleRowSelection).toHaveBeenCalledWith('rec-1');
   });
@@ -644,7 +652,7 @@ describe('GridView', () => {
       position: { x: 0, y: 0 },
     }));
     render(<GridView rows={rows} columns={cols} />);
-    const rowChecks = screen.getAllByRole('checkbox', { name: 'Select row' });
+    const rowChecks = screen.getAllByRole('checkbox', { name: /^Select row\b/ });
     expect(rowChecks).toHaveLength(5);
   });
 
@@ -656,7 +664,7 @@ describe('GridView', () => {
       { id: 'solo', type: 'idea', data: { k: 'x' }, position: { x: 0, y: 0 } },
     ];
     render(<GridView rows={rows} columns={cols} />);
-    expect(screen.getAllByRole('checkbox', { name: 'Select row' })).toHaveLength(1);
+    expect(screen.getAllByRole('checkbox', { name: /^Select row\b/ })).toHaveLength(1);
   });
 });
 
@@ -904,8 +912,8 @@ describe('IdeaTableTool P15 integration', () => {
         <ViewRouter />
       </TableDataProvider>
     );
-    expect(screen.getByRole('columnheader', { name: 'Name' })).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: 'Status' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /^Name\b/ })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /^Status\b/ })).toBeInTheDocument();
   });
 
   it('renders loading skeleton while data loads', () => {
@@ -955,8 +963,8 @@ describe('IdeaTableTool P15 integration', () => {
       </TableDataProvider>
     );
     expect(screen.getByText(/\[Missing: Deleted Col\]/)).toBeInTheDocument();
-    const amberHeaders = container.querySelectorAll('th.bg-amber-50');
-    expect(amberHeaders.length).toBeGreaterThanOrEqual(1);
+    const warningHeaders = container.querySelectorAll('th.text-c-warning');
+    expect(warningHeaders.length).toBeGreaterThanOrEqual(1);
   });
 
   it('passes locale to ViewErrorBoundary', () => {

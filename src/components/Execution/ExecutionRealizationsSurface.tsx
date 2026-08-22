@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
 
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import {
@@ -114,6 +115,9 @@ export const ExecutionRealizationsSurface = ({
   activePreset,
   onCountsChange,
 }: { scope: 'active' | 'all' } & ExecutionMenu3Contract) => {
+  const { executionCaseId: deepLinkedExecutionCaseId } = useParams<{
+    executionCaseId?: string;
+  }>();
   const [state, setState] = useState<'LOADING' | 'READY' | 'ERROR'>('LOADING');
   const [rows, setRows] = useState<ExecutionRow[]>([]);
   const [selectedExecutionCaseId, setSelectedExecutionCaseId] = useState<string | null>(null);
@@ -147,6 +151,13 @@ export const ExecutionRealizationsSurface = ({
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (!deepLinkedExecutionCaseId || !rows.some((row) => row.id === deepLinkedExecutionCaseId))
+      return;
+    setSelectedExecutionCaseId(deepLinkedExecutionCaseId);
+    setShowWorkbench(true);
+  }, [deepLinkedExecutionCaseId, rows]);
 
   const matches = useCallback((row: ExecutionRow, preset: string) => {
     const health = String(row.detail.health ?? row.detail.severity ?? '').toUpperCase();

@@ -253,7 +253,7 @@ function BaselineWorkspaceInner(props: BaselineWorkspaceResolvedProps): React.Re
 
   const editor = useBaselineAssumptionsEditor(businessVersionId, { entityId });
   const outputsHook = useBaselineOutputs(businessVersionId, { entityId });
-  const compute = useBaselineCompute(businessVersionId);
+  const compute = useBaselineCompute(businessVersionId, props.freshness);
 
   // Edycja założeń → Wyliczenia stają się `stale` (DoD: „wynik oznaczony stale po edycji założeń").
   useEffect(() => {

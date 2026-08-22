@@ -7,6 +7,7 @@ import {
   createResultsShowcaseKpis,
   shouldUseResultsShowcaseData,
 } from './resultsShowcaseData';
+import { isResultsOwnerReviewModeEnabled } from './resultsOwnerReviewMode';
 
 export interface KpiCatalogRuntimeResult {
   initiatives: ResultsTrackedInitiative[];
@@ -44,8 +45,9 @@ function unwrapCatalog(payload: unknown): CatalogEnvelope {
 
 export async function loadResultsDashboard(initiativeId?: string) {
   const scopedInitiativeId = String(initiativeId || '').trim();
-  if (!scopedInitiativeId) return null;
-  const response = await V8ResultsApi.getDashboard({ initiativeId: scopedInitiativeId });
+  const response = scopedInitiativeId
+    ? await V8ResultsApi.getDashboard({ initiativeId: scopedInitiativeId })
+    : await V8ResultsApi.getDashboard();
   return response?.snapshot ?? null;
 }
 
@@ -105,6 +107,7 @@ async function loadLegacyResultsKpis(): Promise<KpiCatalogRuntimeResult> {
 }
 
 export async function loadResultsKpis(): Promise<KpiCatalogRuntimeResult> {
+  const canonicalOnly = isResultsOwnerReviewModeEnabled();
   try {
     const catalog = unwrapCatalog(await V8ResultsApi.getKpiCatalog());
     const initiatives = Array.isArray(catalog?.initiatives) ? catalog.initiatives : [];
@@ -114,6 +117,7 @@ export async function loadResultsKpis(): Promise<KpiCatalogRuntimeResult> {
     );
 
     if (initiatives.length === 0 && kpis.length === 0) {
+      if (canonicalOnly) return { initiatives, kpis, source: 'v8' };
       // Presenter/demo curated data takes priority when enabled.
       if (shouldUseResultsShowcaseData()) {
         return showcaseResult();
@@ -136,6 +140,7 @@ export async function loadResultsKpis(): Promise<KpiCatalogRuntimeResult> {
       source: 'v8',
     };
   } catch (error) {
+    if (canonicalOnly) throw error;
     if (!shouldFallbackToLegacyResults(error)) {
       throw error;
     }

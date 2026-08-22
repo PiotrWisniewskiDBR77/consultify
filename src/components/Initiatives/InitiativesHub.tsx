@@ -61,6 +61,7 @@ import {
 } from '@/services/api/v8/planning';
 import { getStatusesForModule, STATUS_METADATA } from '@/services/initiativeLifecycle';
 import {
+  cancelInitiativeWriteTruth,
   createInitiativeWriteTruth,
   getInitiativeStatusPreflightTruth,
   quickUpdateInitiativeWriteTruth,
@@ -726,8 +727,20 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       setActiveTab('list');
       setActiveDocumentId(initiative.id);
       handlePreviewSelection(initiative.id);
+      if (readInitiativeDeepLinkId(searchParams.toString()) !== initiative.id) {
+        navigate(buildInitiativeDeepLink(initiative.id, { mode: 'doc' }), { replace: true });
+      }
     },
-    [handlePreviewSelection, openDocuments, setActiveDocumentId, setOpenDocuments, t]
+    [
+      handlePreviewSelection,
+      navigate,
+      openDocuments,
+      searchParams,
+      setActiveDocumentId,
+      setOpenDocuments,
+      setSearchParams,
+      t,
+    ]
   );
 
   // Generic document opener (used by canon §9 kebab "Open full" on list/grid cards).
@@ -916,19 +929,12 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             e?.message ||
             t('initiatives.toast.openFailed', 'Failed to open initiative')
         );
-      } finally {
-        // Clear only deep-link params (preserve others if any)
-        const next = new URLSearchParams(searchParams);
-        next.delete('open');
-        next.delete('mode');
-        setSearchParams(next, { replace: true });
       }
     };
 
     run();
   }, [
     searchParams,
-    setSearchParams,
     initiatives,
     initiativesDemoData,
     handleInitiativeClick,
@@ -1113,7 +1119,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       try {
         const truth = await quickUpdateInitiativeWriteTruth(
           initiativeId,
-          updates as Record<string, unknown>
+          updates as Record<string, unknown>,
+          (initiatives.find((item) => item.id === initiativeId) as PortfolioInitiative & { canonicalVersion?: number })?.canonicalVersion
         );
         const refreshed = truth.initiative;
         setInitiatives((prev) =>
@@ -1175,13 +1182,19 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
   const handleShowList = useCallback(() => {
     setActiveDocumentId(null);
-  }, []);
+    const next = new URLSearchParams(searchParams);
+    next.delete('open');
+    next.delete('mode');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const handleMainTabChange = useCallback(
     (tab: ModuleTab) => {
       setActiveTab(tab);
       setActiveDocumentId(null);
       const next = new URLSearchParams(searchParams);
+      next.delete('open');
+      next.delete('mode');
       if (tab === 'list') next.delete('tab');
       else next.set('tab', tab);
       setSearchParams(next, { replace: true });
@@ -1208,9 +1221,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       setOpenDocuments((prev) => prev.filter((d) => d.id !== id));
       if (activeDocumentId === id) {
         setActiveDocumentId(null);
+        const next = new URLSearchParams(searchParams);
+        next.delete('open');
+        next.delete('mode');
+        setSearchParams(next, { replace: true });
       }
     },
-    [activeDocumentId]
+    [activeDocumentId, searchParams, setSearchParams]
   );
 
   const handleBulkApply = useCallback(async () => {
@@ -1223,22 +1240,18 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     if (selectedIds.size === 0) return;
 
     const ids = Array.from(selectedIds);
-    const statusUpdates = bulkStatus
-      ? ids.map((id) =>
-          Api.patch(`/initiatives/${id}/status`, {
-            status: bulkStatus,
-          })
-        )
-      : [];
+    const statusUpdates: Promise<unknown>[] = [];
 
     const quickUpdatePayload: Record<string, unknown> = {};
-    if (bulkPriority) quickUpdatePayload.priority = bulkPriority;
     if (bulkOwnerBusinessId) quickUpdatePayload.ownerBusinessId = bulkOwnerBusinessId;
     if (bulkOwnerExecutionId) quickUpdatePayload.ownerExecutionId = bulkOwnerExecutionId;
 
     const quickUpdates =
       Object.keys(quickUpdatePayload).length > 0
-        ? ids.map((id) => Api.patch(`/initiatives/${id}/quick-update`, quickUpdatePayload))
+        ? ids.map((id) => {
+            const row = initiatives.find((item) => item.id === id) as PortfolioInitiative & { canonicalVersion?: number } | undefined;
+            return quickUpdateInitiativeWriteTruth(id, quickUpdatePayload, row?.canonicalVersion);
+          })
         : [];
 
     const results = await Promise.allSettled([...statusUpdates, ...quickUpdates]);
@@ -1272,9 +1285,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const handleArchiveInitiative = useCallback(
     async (initiative: PortfolioInitiative) => {
       try {
-        await Api.post(`/initiatives/${initiative.id}/archive`, {});
-        toast.success(t('initiatives.toast.archived', 'Initiative archived'));
-        await fetchData(true);
+        toast.error(t('initiatives.toast.archiveGoverned', 'Archive is available only from the governed closure workflow.'));
       } catch {
         toast.error(t('initiatives.toast.archiveFailed', 'Could not archive initiative'));
       }
@@ -1286,18 +1297,20 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     async (initiative: PortfolioInitiative) => {
       const name = String(initiative.name || initiative.title || '').trim();
       const shouldProceed = window.confirm(
-        t('initiatives.confirmDelete', {
+        t('initiatives.confirmCancel', {
           name: name || t('initiatives.thisInitiative', 'this initiative'),
-          defaultValue: 'Permanently delete "{{name}}"? This action cannot be undone.',
+          defaultValue: 'Cancel "{{name}}"? Its immutable history will be preserved.',
         })
       );
       if (!shouldProceed) return;
       try {
-        await Api.delete(`/initiatives/${initiative.id}`);
-        toast.success(t('initiatives.toast.deleted', 'Initiative deleted'));
+        const version = (initiative as PortfolioInitiative & { canonicalVersion?: number }).canonicalVersion;
+        if (!version) throw new Error('Canonical version is required');
+        await cancelInitiativeWriteTruth(initiative.id, version, `Cancelled from Initiatives Hub: ${name || initiative.id}`);
+        toast.success(t('initiatives.toast.cancelled', 'Initiative cancelled'));
         await fetchData(true);
       } catch {
-        toast.error(t('initiatives.toast.deleteError', 'Could not delete initiative'));
+        toast.error(t('initiatives.toast.cancelError', 'Could not cancel initiative'));
       }
     },
     [fetchData, t]
@@ -1963,10 +1976,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 // pilot/viewer roles have no permission to change an
                 // initiative's status, so disable picking up cards for them
                 // instead of only failing after the drop.
-                canDrag={!isPilotParticipant}
+                canDrag={false}
                 dragDisabledReason={t(
                   'initiatives.kanban.dragDisabled',
-                  "You don't have permission to change this initiative's status."
+                  'Use the governed gate workspace to advance lifecycle.'
                 )}
               />
             </TableWithPreviewLayout>
@@ -2536,12 +2549,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 try {
                   setIsCreating(true);
                   const { createdId, truth } = await createInitiativeWriteTruth({
-                    projectId: currentProjectId || undefined,
+                    projectId: currentProjectId || '',
+                    initiativeOwnerId: String((currentUser as any)?.id || ''),
                     title: newTitle.trim(),
-                    axis: newAxis,
-                    level: newLevel, // D1.1: send initiative level
-                    summary: newSummary.trim() || undefined,
-                    status: 'DRAFT',
+                    problem: newSummary.trim() || newTitle.trim(),
+                    proposedOutcome: newSummary.trim() || null,
                   });
                   toast.success(t('initiatives.form.initiativeCreated'));
                   setShowNewModal(false);
@@ -2623,7 +2635,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               {t('initiatives.bulkEdit.selectedCount', { count: selectedIds.size })}
             </p>
             <div className="space-y-4">
-              <div>
+              {false && <div>
                 <label className="block text-xs text-c-text-muted mb-1">
                   {t('initiatives.bulkEdit.status')}
                 </label>
@@ -2639,8 +2651,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                     </option>
                   ))}
                 </select>
-              </div>
-              <div>
+              </div>}
+              {false && <div>
                 <label className="block text-xs text-c-text-muted mb-1">
                   {t('initiatives.bulkEdit.priority')}
                 </label>
@@ -2655,8 +2667,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                   <option value="MEDIUM">{t('initiatives.priority.medium')}</option>
                   <option value="LOW">{t('initiatives.priority.low')}</option>
                 </select>
-              </div>
-              <div>
+              </div>}
+              {false && <div>
                 <label className="block text-xs text-c-text-muted mb-1">
                   {t('initiatives.bulkEdit.businessOwner')}
                 </label>
@@ -2672,7 +2684,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                     </option>
                   ))}
                 </select>
-              </div>
+              </div>}
               <div>
                 <label className="block text-xs text-c-text-muted mb-1">
                   {t('initiatives.bulkEdit.executionOwner')}

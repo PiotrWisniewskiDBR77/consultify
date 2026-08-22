@@ -21,7 +21,7 @@
  */
 
 import { spawnSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { existsSync, statSync, writeFileSync } from 'node:fs';
 import bcrypt from 'bcryptjs';
 import pg from 'pg';
@@ -33,6 +33,8 @@ const PASSWORD = process.env.CHAT_OWNER_FIXTURE_PASSWORD;
 const MANIFEST_PATH = process.env.CHAT_OWNER_FIXTURE_MANIFEST || '';
 const LOCAL_HOSTS = new Set(['127.0.0.1', 'localhost', '::1']);
 const DB_PREFIX = 'consultify_w3_chat_owner_';
+const FIXTURE_ID = 'W3-CHAT-OWNER-v1';
+const FIXTURE_NAME = 'wave3-chat-owner-review-v1';
 const MUTATING = new Set(['provision', 'seed', 'reset', 'drop']);
 
 const IDS = Object.freeze({
@@ -46,8 +48,9 @@ const IDS = Object.freeze({
   memberMembership: 'w3-chat-member-membership-v1',
   revokedMembership: 'w3-chat-revoked-membership-v1',
   foreignMembership: 'w3-chat-foreign-membership-v1',
-  conversation: 'w3-chat-owner-conversation-v1',
-  message: 'w3-chat-owner-source-message-v1',
+  // Mounted conversation routes validate these public identities as UUIDs.
+  conversation: '13000000-0000-4000-8000-000000000001',
+  message: '13000000-0000-4000-8000-000000000002',
   idempotencyKey: 'w3-chat-owner-proposal-v1',
 });
 
@@ -153,6 +156,14 @@ async function reset(client) {
     await client.query('DELETE FROM organization_members WHERE organization_id=ANY($1)', [[IDS.org, IDS.foreignOrg]]);
     await client.query('DELETE FROM users WHERE id=ANY($1)', [[IDS.owner, IDS.member, IDS.revoked, IDS.foreignOwner]]);
     await client.query('DELETE FROM organizations WHERE id=ANY($1)', [[IDS.org, IDS.foreignOrg]]);
+    await client.query(`CREATE TABLE IF NOT EXISTS public.wave3_owner_fixture_markers(
+      fixture_id text PRIMARY KEY,
+      ownership_nonce text NOT NULL,
+      database_name text NOT NULL
+    )`);
+    await client.query('DELETE FROM public.wave3_owner_fixture_markers WHERE fixture_id=$1', [
+      FIXTURE_ID,
+    ]);
     await client.query('COMMIT');
   } catch (error) {
     await client.query('ROLLBACK');
@@ -250,6 +261,17 @@ async function seed(client) {
   if (created.proposal.state !== 'pending' || created.citations.length < 1) {
     fail('canonical service did not create a cited pending proposal');
   }
+  const ownershipNonce = randomBytes(32).toString('hex');
+  await client.query(`CREATE TABLE IF NOT EXISTS public.wave3_owner_fixture_markers(
+    fixture_id text PRIMARY KEY,
+    ownership_nonce text NOT NULL,
+    database_name text NOT NULL
+  )`);
+  await client.query(
+    `INSERT INTO public.wave3_owner_fixture_markers(fixture_id,ownership_nonce,database_name)
+     VALUES($1,$2,current_database())`,
+    [FIXTURE_ID, ownershipNonce]
+  );
   const manifest = await readback(client, false);
   persistManifest(manifest);
   console.log(JSON.stringify(manifest, null, 2));
@@ -277,8 +299,27 @@ async function readback(client, emit = true) {
       WHERE u.id=ANY($1) ORDER BY u.id`,
     [[IDS.owner, IDS.member, IDS.revoked, IDS.foreignOwner]]
   );
+  const marker = await client.query(
+    `SELECT fixture_id,ownership_nonce,database_name
+       FROM public.wave3_owner_fixture_markers
+      WHERE fixture_id=$1 AND database_name=current_database()`,
+    [FIXTURE_ID]
+  );
+  if (marker.rowCount !== 1 || !/^[a-f0-9]{64}$/.test(marker.rows[0].ownership_nonce)) {
+    fail('durable Chat ownership marker is missing or invalid');
+  }
   const manifest = {
     schemaVersion: 'w3-chat-owner-v1',
+    fixture: FIXTURE_NAME,
+    fixtureId: FIXTURE_ID,
+    ownershipState: 'FINAL',
+    databaseName: marker.rows[0].database_name,
+    ownershipNonce: marker.rows[0].ownership_nonce,
+    marker: {
+      table: 'wave3_owner_fixture_markers',
+      fixtureId: FIXTURE_ID,
+      ownershipNonce: marker.rows[0].ownership_nonce,
+    },
     deepLink: `/chat/${IDS.conversation}`,
     deepLinkVerified: false,
     providerMode: 'none-db-source-only',
@@ -297,6 +338,8 @@ async function readback(client, emit = true) {
   const expectedTextHash = createHash('sha256').update(SOURCE_CONTENT).digest('hex');
   if (
     manifest.schemaVersion !== 'w3-chat-owner-v1' ||
+    manifest.fixtureId !== FIXTURE_ID ||
+    manifest.ownershipState !== 'FINAL' ||
     row.state !== 'pending' ||
     row.target_kind !== 'document' ||
     row.content !== SOURCE_CONTENT ||

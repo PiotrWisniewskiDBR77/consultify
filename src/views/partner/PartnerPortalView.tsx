@@ -332,6 +332,13 @@ const DashboardSection: React.FC = () => {
   }
 
   const s = dashboardData?.stats;
+  // The dashboard endpoint deliberately does not own certification progress.
+  // Never present its legacy 0/0 placeholder as product truth; the dedicated
+  // certification reader used by the governed runtime is the canonical source.
+  const canonicalCertification = canonicalRuntime?.certifications ?? null;
+  const certificationCount = canonicalCertification
+    ? `${canonicalCertification.completed}/${canonicalCertification.total}`
+    : '—';
   const stats = s
     ? [
         {
@@ -351,7 +358,9 @@ const DashboardSection: React.FC = () => {
         {
           label: t('partner.dashboard.certificationLevel', 'Certification Level'),
           value: s.certificationLevel || 'Registered',
-          change: `${dashboardData?.certificationProgress?.completed ?? 0}/${dashboardData?.certificationProgress?.total ?? 0} completed`,
+          change: canonicalCertification
+            ? `${certificationCount} ${t('partner.dashboard.completed', 'completed')}`
+            : t('common.loading', 'Loading…'),
           changeType: 'neutral' as const,
           icon: GraduationCap,
         },
@@ -498,8 +507,9 @@ const DashboardSection: React.FC = () => {
               {t('partner.dashboard.certificationProgress', 'Certification Progress')}
             </h3>
             <span className="text-sm text-primary-600 dark:text-primary-400 font-medium">
-              {dashboardData?.certificationProgress?.completed || 0}/
-              {dashboardData?.certificationProgress?.total || 0} Complete
+              {canonicalCertification
+                ? `${certificationCount} ${t('partner.dashboard.complete', 'Complete')}`
+                : t('common.loading', 'Loading…')}
             </span>
           </div>
           <div className="space-y-3">
@@ -533,11 +543,25 @@ const DashboardSection: React.FC = () => {
                   )}
                 </div>
               ))
-            ) : (
+            ) : canonicalCertification?.state === 'unavailable' ? (
+              <p className="text-sm text-amber-700 dark:text-amber-300 text-center py-4">
+                {t(
+                  'partner.dashboard.certificationsUnavailable',
+                  'Certification status is temporarily unavailable'
+                )}
+              </p>
+            ) : canonicalCertification && canonicalCertification.total > 0 ? (
+              <p className="text-sm text-c-text-secondary text-center py-4">
+                {t(
+                  'partner.dashboard.certificationsInLearningPath',
+                  'Certification details are available in Learning Path'
+                )}
+              </p>
+            ) : canonicalCertification ? (
               <p className="text-sm text-c-text-secondary text-center py-4">
                 {t('partner.dashboard.noCertifications', 'No certifications available')}
               </p>
-            )}
+            ) : null}
           </div>
         </div>
       </div>

@@ -13,6 +13,8 @@ import {
   startAnalysis,
 } from '../../domain/initiatives-execution/analysisDecision.js';
 import { evaluateAnalysisReadiness } from '../../domain/initiatives-execution/analysisReadiness.js';
+import { amendInitiativeMetadata } from '../../domain/initiatives-execution/amendInitiativeMetadata.js';
+import { cancelInitiative } from '../../domain/initiatives-execution/cancelInitiative.js';
 import {
   createCapacityOptions,
   selectCapacityOption,
@@ -170,6 +172,19 @@ const SubmitSourceProposalSchema = z.object({
   projectId: z.string().min(1).max(255),
   initiativeOwnerId: z.string().min(1).max(255),
   visibility: z.enum(['PROJECT', 'ORGANIZATION_RESTRICTED']),
+});
+const AmendInitiativeMetadataSchema = z.object({
+  expectedVersion: z.number().int().min(1),
+  clientRequestId: z.string().min(1).max(255),
+  title: z.string().min(1).max(500).optional(),
+  problem: z.string().min(1).max(20_000).optional(),
+  proposedOutcome: z.string().max(20_000).nullable().optional(),
+  initiativeOwnerId: z.string().min(1).max(255).optional(),
+}).refine((value) => value.title !== undefined || value.problem !== undefined || value.proposedOutcome !== undefined || value.initiativeOwnerId !== undefined, 'At least one metadata field is required');
+const CancelInitiativeSchema = z.object({
+  expectedVersion: z.number().int().min(1),
+  clientRequestId: z.string().min(1).max(255),
+  reason: z.string().min(1).max(2000),
 });
 const ReviseSourceProposalSchema = z.object({
   expectedVersion: z.number().int().min(1),
@@ -1323,6 +1338,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(403).json({ error: { code: 'CAPABILITY_REQUIRED' } });
         return;
       }
+      if (!(await deps.reader.isEligibleInitiativeOwner(actor.organizationId, parsed.data.projectId, parsed.data.initiativeOwnerId))) {
+        res.status(422).json({ error: { code: 'INITIATIVE_OWNER_INELIGIBLE' } });
+        return;
+      }
       const policy = await deps.resolvePolicy(actor.organizationId, parsed.data.projectId);
       const result = await submitSourceProposal(deps.unitOfWork, {
         organizationId: actor.organizationId,
@@ -1508,6 +1527,10 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(403).json({ error: { code: 'CAPABILITY_REQUIRED' } });
         return;
       }
+      if (!(await deps.reader.isEligibleInitiativeOwner(actor.organizationId, parsed.data.projectId, parsed.data.initiativeOwnerId))) {
+        res.status(422).json({ error: { code: 'INITIATIVE_OWNER_INELIGIBLE' } });
+        return;
+      }
       const policy = await deps.resolvePolicy(
         actor.organizationId,
         parsed.data.projectId,
@@ -1626,6 +1649,53 @@ export function createInitiativesExecutionRuntimeRouter(
         )
       ).filter((row): row is NonNullable<typeof row> => Boolean(row));
       res.json({ initiatives: visible });
+    })
+  );
+
+  router.patch(
+    '/initiatives/:initiativeId/metadata',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+      const parsed = AmendInitiativeMetadataSchema.safeParse(req.body);
+      if (!parsed.success) return void res.status(400).json({ error: { code: 'VALIDATION_FAILED', issues: parsed.error.issues } });
+      const initiativeId = firstParam(req.params.initiativeId);
+      const found = await deps.reader.findById(actor.organizationId, initiativeId);
+      if (!found) return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+      if (!(await deps.authorize(actor, found.initiative.projectId, 'initiative.update'))) return void res.status(403).json({ error: { code: 'CAPABILITY_REQUIRED' } });
+      if (parsed.data.initiativeOwnerId !== undefined && !(await deps.reader.isEligibleInitiativeOwner(actor.organizationId, found.initiative.projectId, parsed.data.initiativeOwnerId))) return void res.status(422).json({ error: { code: 'INITIATIVE_OWNER_INELIGIBLE' } });
+      const policy = await deps.resolvePolicy(actor.organizationId, found.initiative.projectId, initiativeId);
+      const result = await amendInitiativeMetadata(deps.unitOfWork, {
+        organizationId: actor.organizationId, actorId: actor.userId, aggregateType: 'initiative', aggregateId: initiativeId,
+        expectedVersion: parsed.data.expectedVersion, clientRequestId: parsed.data.clientRequestId,
+        correlationId: req.header('X-Correlation-ID') || `initiative-amend-${parsed.data.clientRequestId}`,
+        policyId: policy.policyId, policyVersion: policy.version, commandType: 'initiative.metadata.amend', payload: parsed.data,
+      });
+      const readBack = await deps.reader.findById(actor.organizationId, initiativeId);
+      res.json({ ...result, initiative: readBack });
+    })
+  );
+
+  router.post(
+    '/initiatives/:initiativeId/cancel',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+      const parsed = CancelInitiativeSchema.safeParse(req.body);
+      if (!parsed.success) return void res.status(400).json({ error: { code: 'VALIDATION_FAILED', issues: parsed.error.issues } });
+      const initiativeId = firstParam(req.params.initiativeId);
+      const found = await deps.reader.findById(actor.organizationId, initiativeId);
+      if (!found) return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+      if (!(await deps.authorize(actor, found.initiative.projectId, 'initiative.update'))) return void res.status(403).json({ error: { code: 'CAPABILITY_REQUIRED' } });
+      const policy = await deps.resolvePolicy(actor.organizationId, found.initiative.projectId, initiativeId);
+      const result = await cancelInitiative(deps.unitOfWork, {
+        organizationId: actor.organizationId, actorId: actor.userId, aggregateType: 'initiative', aggregateId: initiativeId,
+        expectedVersion: parsed.data.expectedVersion, clientRequestId: parsed.data.clientRequestId,
+        correlationId: req.header('X-Correlation-ID') || `initiative-cancel-${parsed.data.clientRequestId}`,
+        policyId: policy.policyId, policyVersion: policy.version, commandType: 'initiative.cancel', payload: parsed.data,
+      });
+      const readBack = await deps.reader.findById(actor.organizationId, initiativeId);
+      res.json({ ...result, initiative: readBack });
     })
   );
 

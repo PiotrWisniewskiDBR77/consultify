@@ -34,8 +34,10 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     // Support both t(key, 'default') and t(key, { defaultValue }) — the shared
     // EmptyState (canonical states) uses the options-object form.
-    t: (_k: string, d?: string | { defaultValue?: string }) =>
-      typeof d === 'string' ? d : (d?.defaultValue ?? _k),
+    t: (_k: string, d?: string | { defaultValue?: string }) => {
+      if (_k === 'common.retry') return 'Retry';
+      return typeof d === 'string' ? d : (d?.defaultValue ?? _k);
+    },
     i18n: { language: 'en' },
   }),
 }));

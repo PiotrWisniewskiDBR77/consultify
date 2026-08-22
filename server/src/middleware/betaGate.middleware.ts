@@ -16,6 +16,26 @@ export function betaGate(req: Request, res: Response, next: NextFunction): void 
   next();
 }
 
+/**
+ * Explicit server-side mirror for a module whose client SSOT is closed.
+ * Mount this only after authentication so a regular user cannot bypass the
+ * client gate by calling the API directly. OWNER/ADMIN/SUPERADMIN retain the
+ * same development access granted by `BETA_ADMINS_EXEMPT` on the client.
+ */
+export function closedBetaModuleGate(req: Request, res: Response, next: NextFunction): void {
+  const role = String((req as Request & { user?: { role?: string } }).user?.role || '')
+    .trim()
+    .toUpperCase();
+  if (role === 'OWNER' || role === 'ADMIN' || role === 'ADMINISTRATOR' || role === 'SUPERADMIN') {
+    next();
+    return;
+  }
+  res.status(403).json({
+    error: 'This beta module is not available for your role',
+    code: 'BETA_LOCKED',
+  });
+}
+
 export function createBetaGate(_skipPaths: string[]) {
   return (req: Request, res: Response, next: NextFunction): void => {
     next();

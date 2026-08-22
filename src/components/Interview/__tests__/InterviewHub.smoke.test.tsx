@@ -55,6 +55,7 @@ const {
   apiGet,
   apiPost,
   getSessions,
+  listInsights,
   getProjects,
   createProject,
   setCurrentProjectId,
@@ -63,6 +64,7 @@ const {
   apiGet: vi.fn(),
   apiPost: vi.fn(),
   getSessions: vi.fn(),
+  listInsights: vi.fn(),
   getProjects: vi.fn(),
   createProject: vi.fn(),
   setCurrentProjectId: vi.fn(),
@@ -89,7 +91,7 @@ vi.mock('@/services/api/v8/interview', () => ({
     getMyAssignments: vi.fn(async () => []),
     getManagedAssignments: vi.fn(async () => []),
     getOverdueAssignments: vi.fn(async () => []),
-    listInsights: vi.fn(async () => ({ insights: [] })),
+    listInsights,
     getSession: vi.fn(async () => null),
     remindAssignment: vi.fn(async () => ({})),
     startAssignment: vi.fn(async () => ({})),
@@ -155,6 +157,8 @@ beforeEach(() => {
   apiPost.mockResolvedValue({});
   getSessions.mockReset();
   getSessions.mockResolvedValue({ sessions: [] });
+  listInsights.mockReset();
+  listInsights.mockResolvedValue({ insights: [] });
   getProjects.mockReset();
   getProjects.mockResolvedValue([{ id: 'proj-1', name: 'Project One' }]);
   createProject.mockReset();
@@ -217,6 +221,17 @@ describe('InterviewHub smoke — tab rendering', () => {
     expect(container.firstChild).toBeTruthy();
   });
 
+  it('keeps legacy authoring available while a V8 insight failure is visible and never hidden by legacy fallback', async () => {
+    listInsights.mockRejectedValue({ status: 503 });
+
+    renderTab('insights');
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/Failed to load insights/i);
+    expect(apiGet).toHaveBeenCalledWith('/interview/sessions');
+    expect(getSessions).not.toHaveBeenCalled();
+    expect(apiGet).not.toHaveBeenCalledWith('/interview/insights');
+  });
+
   it('exposes the shared project create control in the new-session modal for a zero-project tenant', async () => {
     appStoreState.currentProjectId = null;
     getProjects.mockResolvedValue([]);
@@ -249,7 +264,9 @@ describe('InterviewHub smoke — tab rendering', () => {
       answeredQuestions: 0,
       startedAt: '2026-08-18T20:00:00.000Z',
     };
-    getSessions.mockResolvedValueOnce({ sessions: [] }).mockResolvedValue({ sessions: [created] });
+    apiGet.mockImplementation(async (path: string) =>
+      path === '/interview/sessions' ? [created] : []
+    );
     apiPost.mockResolvedValue(created);
 
     renderTab('sessions');
@@ -267,7 +284,7 @@ describe('InterviewHub smoke — tab rendering', () => {
         projectId: 'proj-1',
         name: created.name,
       });
-      expect(getSessions).toHaveBeenCalledTimes(2);
+      expect(apiGet).toHaveBeenCalledWith('/interview/sessions');
       expect(
         screen.queryByRole('heading', { name: 'New interview session' })
       ).not.toBeInTheDocument();

@@ -78,6 +78,8 @@ import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 import { buildArtifactCode } from '@/utils/artifactLinks';
 
+import { loadInterviewV8Capability } from './interviewBackendRouting';
+
 import { type LinkedItem, LinkedItemsSection } from '../MyWork/shared';
 import {
   CATEGORY_CONFIG,
@@ -99,6 +101,19 @@ import { InterviewQuestion, QuestionsList } from './QuestionsList';
 import { RuntimeMode, RuntimeModeSelector } from './RuntimeModeSelector';
 
 type PersistedLinkedItem = LinkedItem & { edgeId?: string };
+
+export function calculateInterviewProgress(
+  questions: Array<Pick<InterviewQuestion, 'status'>>
+): { totalQuestions: number; answeredQuestions: number; overallPercent: number } {
+  const totalQuestions = questions.length;
+  const answeredQuestions = questions.filter((question) => question.status === 'answered').length;
+  return {
+    totalQuestions,
+    answeredQuestions,
+    overallPercent:
+      totalQuestions > 0 ? Math.round((answeredQuestions / totalQuestions) * 100) : 0,
+  };
+}
 
 const withTimeout = async <T,>(promise: Promise<T>, ms: number, message: string): Promise<T> => {
   let timer: ReturnType<typeof setTimeout> | null = null;
@@ -441,10 +456,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   });
 
   // Overall progress
-  const totalQuestions = categoryProgress.reduce((sum, p) => sum + p.totalQuestions, 0);
-  const answeredQuestions = categoryProgress.reduce((sum, p) => sum + p.answeredQuestions, 0);
-  const overallPercent =
-    totalQuestions > 0 ? Math.round((answeredQuestions / totalQuestions) * 100) : 0;
+  // The persisted Interview contract also permits organization-defined
+  // categories (for example `process`, `risk` and `improvement`).  Computing
+  // the headline progress from CATEGORY_ORDER silently discarded those
+  // questions, so the same submitted session rendered as 3/3 in its navigator
+  // but 0/0 in the properties rail.  The overall counter is a property of the
+  // complete session, not only of the built-in navigation groups.
+  const { totalQuestions, answeredQuestions, overallPercent } = calculateInterviewProgress(questions);
   const activeCategoryConfig = activeCategory ? CATEGORY_CONFIG[activeCategory] : undefined;
   const ActiveCategoryIcon = activeCategoryConfig?.icon || FileText;
   const activeCategoryProgress = activeCategory
@@ -621,11 +639,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       setAiEvaluationError(null);
       try {
         const language = isPolish ? 'pl' : 'en';
-        const result = (await V8InterviewApi.evaluateSessionAnswers(session.id, { language }).catch(
-          () =>
-            Api.post(`/interview/sessions/${session.id}/evaluate-answers`, {
-              language,
-            })
+        const result = (await loadInterviewV8Capability('evaluation', () =>
+          V8InterviewApi.evaluateSessionAnswers(session.id, { language })
         )) as InterviewAnswerEvaluation;
         if (opts?.signal?.cancelled) return result;
         setAiEvaluation(result);

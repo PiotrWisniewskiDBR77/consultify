@@ -114,12 +114,14 @@ interface BetaGateProps {
  */
 export const BetaGate: React.FC<BetaGateProps> = ({ moduleId, children }) => {
   const { currentUser } = useAppStore();
+  const isAuthenticated = currentUser?.isAuthenticated === true;
   // Honor BETA_ADMINS_EXEMPT like the sidebar's lockClosedBetaModules: a closed
   // beta only blocks the route when it is also locked for this role. While
   // BETA_ADMINS_EXEMPT is false this is identical to before (locked for all);
   // when flipped true, ADMIN/OWNER/SUPERADMIN keep route access too — matching
   // the betaAccess.ts contract ("administrators always keep full access").
-  const isLocked = isBetaClosed(moduleId) && isBetaLockedForRole(currentUser?.role);
+  const isLocked =
+    isAuthenticated && isBetaClosed(moduleId) && isBetaLockedForRole(currentUser?.role);
 
   React.useEffect(() => {
     if (isLocked) dispatchBetaAccessBlocked();
@@ -127,6 +129,13 @@ export const BetaGate: React.FC<BetaGateProps> = ({ moduleId, children }) => {
 
   if (isLocked) {
     return <Navigate to={ROUTES.AI_CHAT} replace />;
+  }
+
+  // Authentication routing owns unauthenticated deep links. A closed-beta
+  // gate must not rewrite `/finance?...` to `/chat` before RouterSync can
+  // preserve the original target in the login redirect.
+  if (!isAuthenticated) {
+    return null;
   }
 
   return <>{children}</>;

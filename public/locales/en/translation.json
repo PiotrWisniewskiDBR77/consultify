@@ -4,7 +4,8 @@
       "open": "Open AI panel",
       "close": "Close AI panel"
     },
-    "openMenu": "Open menu"
+    "openMenu": "Open menu",
+    "skipToContent": "Skip to main content"
   },
   "landing": {
     "hero": {
@@ -1429,6 +1430,10 @@
     }
   },
   "common": {
+    "actions": "Actions",
+    "rowActions": "Row actions",
+    "sortByColumn": "Sort by {{column}}",
+    "resizeColumn": "Resize {{column}} column",
     "more": "More",
     "save": "Save",
     "saving": "Saving...",
@@ -12336,6 +12341,11 @@
     "menu": {
       "preferences": "Preferences",
       "theme": "Theme",
+      "themeModes": {
+        "light": "Light",
+        "system": "System",
+        "dark": "Dark"
+      },
       "language": "Language",
       "demoMode": "Open Sample Workspace",
       "demoModeExit": "Exit Demo",
@@ -15935,6 +15945,7 @@
     "reasoningTierDesc": "MAX Mode, deep thinking"
   },
   "taskDropdown": {
+    "titleButton": "Today's tasks",
     "title": "My Action Plan",
     "pending": "{{count}} Pending",
     "viewAll": "View all",
@@ -15949,6 +15960,25 @@
     "dOverdue": "{{count}}d overdue",
     "today": "Today",
     "tomorrow": "Tomorrow"
+  },
+  "userProfile": {
+    "openMenu": "Open user profile menu"
+  },
+  "moduleHub": {
+    "sections": "Module sections",
+    "search": {
+      "label": "Search",
+      "placeholder": "Search...",
+      "bulkModeActive": "Bulk mode active"
+    },
+    "viewModes": {
+      "table": "Table",
+      "kanban": "Kanban",
+      "timeline": "Timeline",
+      "calendar": "Calendar",
+      "matrix": "Matrix",
+      "grid": "Grid"
+    }
   },
   "executive": {
     "greeting": {

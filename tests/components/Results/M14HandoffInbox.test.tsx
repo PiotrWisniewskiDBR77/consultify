@@ -79,9 +79,7 @@ describe('M14HandoffInbox', () => {
 
     render(<M14HandoffInbox />);
 
-    expect(
-      await screen.findByText('No new benefits from closed initiatives.')
-    ).toBeInTheDocument();
+    expect(await screen.findByText('No new benefits from closed initiatives.')).toBeInTheDocument();
   });
 
   it('promotes a benefit and removes it from the list', async () => {

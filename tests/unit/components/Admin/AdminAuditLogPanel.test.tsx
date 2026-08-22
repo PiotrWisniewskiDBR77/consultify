@@ -37,4 +37,33 @@ describe('AdminAuditLogPanel authoritative states', () => {
     fireEvent.click(screen.getByRole('button', { name: /Retry/i }));
     expect(await screen.findByText('Total logs')).toBeInTheDocument();
   });
+
+  it('renders a nonempty canonical IAM audit projection and its authoritative count', async () => {
+    vi.mocked(Api.getTenantAdminAuditLogs).mockResolvedValue({
+      logs: [
+        {
+          id: 'iam-audit-1',
+          action_type: 'role_change',
+          admin_id: 'owner-1',
+          metadata_json: JSON.stringify({ before: { role: 'MEMBER' }, after: { role: 'ADMIN' } }),
+          risk_level: 'high',
+          risk_score: 60,
+          status: 'logged',
+          created_at: '2026-08-22T08:00:00.000Z',
+        },
+      ],
+    });
+    vi.mocked(Api.getTenantAdminAuditStats).mockResolvedValue({
+      totalLogs: 1,
+      unresolvedCount: 1,
+      highRiskCount: 1,
+    });
+
+    render(<AdminAuditLogPanel />);
+
+    expect(await screen.findByText('role change')).toBeInTheDocument();
+    expect(screen.getByText('owner-1')).toBeInTheDocument();
+    expect(screen.getByText('high (60)')).toBeInTheDocument();
+    expect(screen.getAllByText('1')).toHaveLength(3);
+  });
 });

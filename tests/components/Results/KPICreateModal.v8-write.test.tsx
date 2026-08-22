@@ -11,7 +11,8 @@ import { V8ResultsApi } from '../../../src/services/api/v8/results';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback?: any) => (typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key)),
+    t: (_key: string, fallback?: any) =>
+      typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key),
   }),
 }));
 
@@ -76,7 +77,7 @@ describe('KPICreateModal V8 write seam', () => {
           thresholdMode: 'PERCENT_FROM_TARGET',
           amberThresholdPct: 0.1,
           redThresholdPct: 0.2,
-        }),
+        })
       );
     });
 
@@ -85,7 +86,7 @@ describe('KPICreateModal V8 write seam', () => {
         initiativeId: 'init-1',
         kpiId: 'kpi-v8-1',
         impactDirection: 'increase',
-      }),
+      })
     );
     expect(Api.post).not.toHaveBeenCalledWith('/benefits/kpis', expect.anything());
     expect(Api.post).not.toHaveBeenCalledWith('/benefits/kpi-mappings', expect.anything());
@@ -113,7 +114,7 @@ describe('KPICreateModal V8 write seam', () => {
     await waitFor(() => {
       expect(Api.post).toHaveBeenCalledWith(
         '/benefits/kpis',
-        expect.objectContaining({ name: 'Revenue Growth' }),
+        expect.objectContaining({ name: 'Revenue Growth' })
       );
     });
 
@@ -122,7 +123,7 @@ describe('KPICreateModal V8 write seam', () => {
       expect.objectContaining({
         initiativeId: 'init-1',
         kpiId: 'kpi-legacy-1',
-      }),
+      })
     );
     expect(onSuccess).toHaveBeenCalled();
   });

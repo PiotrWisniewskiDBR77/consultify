@@ -25,6 +25,8 @@ const CONFIRM = process.env.ADMIN_OWNER_FIXTURE_CONFIRM;
 const MANIFEST_PATH = process.env.ADMIN_OWNER_FIXTURE_MANIFEST || '';
 const LOCAL_HOSTS = new Set(['127.0.0.1', 'localhost', '::1']);
 const DB_PREFIX = 'consultify_w3_admin_owner_';
+const FIXTURE_ID = 'W3-ADMIN-OWNER-v1';
+const EXPECTED_MIGRATIONS = 817;
 
 const IDS = Object.freeze({
   mainOrg: '14000000-0000-4000-8000-000000000001',
@@ -71,12 +73,14 @@ function context() {
   }
   const admin = new URL(target);
   admin.pathname = '/postgres';
-  if (COMMAND === 'seed') {
-    if (!MANIFEST_PATH) fail('ADMIN_OWNER_FIXTURE_MANIFEST is required for seed');
+  if (COMMAND === 'seed' || COMMAND === 'reset') {
+    if (!MANIFEST_PATH) fail('ADMIN_OWNER_FIXTURE_MANIFEST is required for seed/reset');
     if (!path.isAbsolute(MANIFEST_PATH) || MANIFEST_PATH.includes('://')) {
       fail('ADMIN_OWNER_FIXTURE_MANIFEST must be an absolute local filesystem path');
     }
-    if (fs.existsSync(MANIFEST_PATH)) fail('manifest path already exists; overwrite is refused');
+    if (COMMAND === 'seed' && fs.existsSync(MANIFEST_PATH)) fail('manifest path already exists; overwrite is refused');
+    if (COMMAND === 'reset' && !fs.existsSync(MANIFEST_PATH)) fail('reset requires the existing fixture manifest');
+    if (COMMAND === 'reset' && fs.lstatSync(MANIFEST_PATH).isSymbolicLink()) fail('reset manifest must not be a symlink');
   }
   return { admin, databaseName, manifestPath: MANIFEST_PATH };
 }
@@ -89,9 +93,13 @@ async function databaseExists(client: pg.Client, databaseName: string) {
   return Number((await client.query('SELECT count(*)::int n FROM pg_database WHERE datname=$1', [databaseName])).rows[0].n) === 1;
 }
 
-function logicalManifest(databaseName: string, readback: Record<string, unknown> | null = null) {
+function logicalManifest(databaseName: string, ownershipNonce: string, readback: Record<string, unknown> | null = null) {
   return {
-    fixture: 'W3-ADMIN-OWNER-v1',
+    fixture: FIXTURE_ID,
+    fixtureId: FIXTURE_ID,
+    ownershipState: 'FINAL',
+    ownershipNonce,
+    marker: { table: 'wave3_owner_fixture_markers', fixtureId: FIXTURE_ID, ownershipNonce },
     databaseName,
     deepLink: '/admin',
     deepLinkVerified: false,
@@ -132,7 +140,13 @@ function persistManifest(manifestPath: string, payload: ReturnType<typeof logica
   const persisted = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
   if ((stat.mode & 0o777) !== 0o600) fail('persisted manifest mode is not 0600');
   if (
-    persisted?.fixture !== 'W3-ADMIN-OWNER-v1' ||
+    persisted?.fixture !== FIXTURE_ID ||
+    persisted?.fixtureId !== FIXTURE_ID ||
+    persisted?.ownershipState !== 'FINAL' ||
+    !/^[a-f0-9]{64}$/.test(persisted?.ownershipNonce || '') ||
+    persisted?.marker?.table !== 'wave3_owner_fixture_markers' ||
+    persisted?.marker?.fixtureId !== FIXTURE_ID ||
+    persisted?.marker?.ownershipNonce !== persisted.ownershipNonce ||
     !Array.isArray(persisted?.personas) ||
     persisted.personas.length !== USERS.length ||
     Number(persisted?.readback?.personas) !== USERS.length
@@ -249,7 +263,26 @@ async function runRealIamCommands() {
   await postgresDatabase.close();
 }
 
-async function readback({ databaseName }: { databaseName: string }) {
+async function installOwnershipMarker(databaseName: string, ownershipNonce: string) {
+  const client = new pg.Client({ connectionString: TARGET_URL });
+  await client.connect();
+  try {
+    await client.query(
+      `CREATE TABLE IF NOT EXISTS wave3_owner_fixture_markers(
+         fixture_id TEXT PRIMARY KEY,
+         ownership_nonce TEXT NOT NULL,
+         database_name TEXT NOT NULL
+       )`
+    );
+    await client.query(
+      `INSERT INTO wave3_owner_fixture_markers(fixture_id,ownership_nonce,database_name)
+       VALUES($1,$2,$3)`,
+      [FIXTURE_ID, ownershipNonce, databaseName]
+    );
+  } finally { await client.end(); }
+}
+
+async function readback({ databaseName }: { databaseName: string }, expectedNonce?: string) {
   const client = new pg.Client({ connectionString: TARGET_URL });
   await client.connect();
   try {
@@ -284,8 +317,21 @@ async function readback({ databaseName }: { databaseName: string }) {
     for (const [key, value] of Object.entries(expected)) {
       if (String(rb[key]) !== String(value)) fail(`readback ${key} expected ${value}, got ${rb[key]}`);
     }
-    if (Number(rb.successful_migrations) < 800) fail(`fresh migration ledger is unexpectedly short: ${rb.successful_migrations}`);
-    const payload = logicalManifest(databaseName, rb);
+    if (Number(rb.successful_migrations) !== EXPECTED_MIGRATIONS) {
+      fail(`migration ledger expected exactly ${EXPECTED_MIGRATIONS}, got ${rb.successful_migrations}`);
+    }
+    const marker = await client.query(
+      `SELECT ownership_nonce,database_name FROM wave3_owner_fixture_markers WHERE fixture_id=$1`,
+      [FIXTURE_ID]
+    );
+    if (marker.rowCount !== 1 || marker.rows[0].database_name !== databaseName) {
+      fail('durable ownership marker does not match the target database');
+    }
+    const ownershipNonce = String(marker.rows[0].ownership_nonce || '');
+    if (!/^[a-f0-9]{64}$/.test(ownershipNonce) || (expectedNonce && ownershipNonce !== expectedNonce)) {
+      fail('durable ownership nonce does not match the expected fixture identity');
+    }
+    const payload = logicalManifest(databaseName, ownershipNonce, rb);
     console.log(JSON.stringify(payload, null, 2));
     return payload;
   } finally { await client.end(); }
@@ -306,19 +352,33 @@ async function seed({ admin, databaseName, manifestPath }: ReturnType<typeof con
   if (migration.status !== 0) fail(`migration failed: ${migration.stderr || migration.stdout}`);
   await seedBaseData();
   await runRealIamCommands();
-  const payload = await readback({ databaseName });
+  const ownershipNonce = crypto.randomBytes(32).toString('hex');
+  await installOwnershipMarker(databaseName, ownershipNonce);
+  const payload = await readback({ databaseName }, ownershipNonce);
   const persisted = persistManifest(manifestPath, payload);
   console.log(JSON.stringify({ manifestWritten: persisted }, null, 2));
 }
 
 async function reset({ admin, databaseName }: ReturnType<typeof context>) {
   requireYes();
+  const stat = fs.statSync(MANIFEST_PATH);
+  if (!stat.isFile() || (stat.mode & 0o777) !== 0o600) fail('reset manifest must be a regular 0600 file');
+  const manifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
+  if (
+    manifest?.databaseName !== databaseName || manifest?.fixture !== FIXTURE_ID ||
+    manifest?.fixtureId !== FIXTURE_ID || manifest?.ownershipState !== 'FINAL' ||
+    manifest?.marker?.table !== 'wave3_owner_fixture_markers' ||
+    manifest?.marker?.fixtureId !== FIXTURE_ID ||
+    manifest?.marker?.ownershipNonce !== manifest?.ownershipNonce
+  ) fail('reset manifest identity does not match the Admin fixture');
   const client = new pg.Client({ connectionString: admin.toString() });
   await client.connect();
   try {
-    if (await databaseExists(client, databaseName)) await client.query(`DROP DATABASE "${databaseName}" WITH (FORCE)`);
+    if (!(await databaseExists(client, databaseName))) fail('reset target database is absent');
+    await readback({ databaseName }, manifest.ownershipNonce);
+    await client.query(`DROP DATABASE "${databaseName}" WITH (FORCE)`);
     const absent = !(await databaseExists(client, databaseName));
-    console.log(JSON.stringify({ fixture: 'W3-ADMIN-OWNER-v1', databaseName, dropped: true, catalogAbsent: absent }, null, 2));
+    console.log(JSON.stringify({ fixture: FIXTURE_ID, databaseName, dropped: true, catalogAbsent: absent, manifestPreserved: true }, null, 2));
   } finally { await client.end(); }
 }
 

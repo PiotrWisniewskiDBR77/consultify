@@ -34,6 +34,7 @@ vi.mock('react-hot-toast', () => {
 const {
   getPortfolio,
   getInitiative,
+  listRegisteredInitiatives,
   apiGet,
   portfolioStoreState,
   appStoreState,
@@ -41,6 +42,7 @@ const {
 } = vi.hoisted(() => ({
   getPortfolio: vi.fn(),
   getInitiative: vi.fn(),
+  listRegisteredInitiatives: vi.fn(),
   apiGet: vi.fn(),
   portfolioStoreState: { refreshTrigger: 0 },
   appStoreState: {
@@ -49,6 +51,11 @@ const {
     currentOrganization: { id: 'org-1' },
   },
   conversationStoreState: { addMessage: vi.fn() },
+}));
+
+vi.mock('@/services/initiatives-execution/runtimeApi', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/services/initiatives-execution/runtimeApi')>()),
+  listRegisteredInitiatives,
 }));
 
 vi.mock('@/services/api/v8/planning', () => ({
@@ -137,6 +144,8 @@ beforeEach(() => {
   getPortfolio.mockResolvedValue({ initiatives: [] });
   getInitiative.mockReset();
   getInitiative.mockResolvedValue(null);
+  listRegisteredInitiatives.mockReset();
+  listRegisteredInitiatives.mockResolvedValue({ initiatives: [] });
   apiGet.mockReset();
   apiGet.mockResolvedValue({});
 });
@@ -161,13 +170,27 @@ describe('InitiativesHub smoke', () => {
   });
 
   it('renders an initiative card when the portfolio has one initiative', async () => {
-    getPortfolio.mockResolvedValue({
+    listRegisteredInitiatives.mockResolvedValue({
       initiatives: [
         {
-          id: 'init-1',
-          name: 'Automate Onboarding',
-          status: 'REVIEW', // in the default "active" scope so it isn't filtered out
-          priority: 'high',
+          version: 1,
+          updatedAt: '2026-08-22T00:00:00.000Z',
+          initiative: {
+            initiativeId: 'init-1',
+            lifecycleState: 'IN_EXECUTION',
+            title: 'Automate Onboarding',
+            problem: 'Manual onboarding',
+            projectId: 'proj-1',
+            readiness: 'NOT_EVALUATED',
+            source: {
+              proposalId: 'proposal-1',
+              proposalVersion: 1,
+              sourceType: 'assessment-finding',
+              sourceId: 'finding-1',
+              sourceVersion: 1,
+              freshness: 'CURRENT',
+            },
+          },
         },
       ],
     });

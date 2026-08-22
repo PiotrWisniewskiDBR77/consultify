@@ -160,6 +160,7 @@ describe('requirement 7 — loading and error each have their own visible state'
   });
 
   it.each([
+    [401, 'auth_required'],
     [403, 'missing_permission'],
     [404, 'session_not_found'],
   ])('keeps a canonical resume %s fail-closed with retry and no workspace', async (status, code) => {

@@ -21,6 +21,7 @@ import {
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { MENU_2_TAB_ACTIVE, MENU_2_TAB_INACTIVE } from '../ModuleMenu3';
 import { ActiveFilters, type FilterChip } from './ActiveFilters';
@@ -181,6 +182,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
   aiControl,
   forceCommandRow = false,
 }) => {
+  const { t } = useTranslation();
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -218,12 +220,12 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
   const VIEW_MODE_ORDER: ViewMode[] = ['table', 'kanban', 'timeline', 'calendar', 'matrix', 'grid'];
 
   const viewModeConfig: Record<ViewMode, { icon: React.ReactNode; label: string }> = {
-    table: { icon: <List size={16} />, label: 'Table' },
-    kanban: { icon: <Kanban size={16} />, label: 'Kanban' },
-    timeline: { icon: <Calendar size={16} />, label: 'Timeline' },
-    calendar: { icon: <CalendarDays size={16} />, label: 'Calendar' },
-    matrix: { icon: <LayoutGrid size={16} />, label: 'Matrix' },
-    grid: { icon: <Grid3X3 size={16} />, label: 'Grid' },
+    table: { icon: <List size={16} />, label: t('moduleHub.viewModes.table', 'Table') },
+    kanban: { icon: <Kanban size={16} />, label: t('moduleHub.viewModes.kanban', 'Kanban') },
+    timeline: { icon: <Calendar size={16} />, label: t('moduleHub.viewModes.timeline', 'Timeline') },
+    calendar: { icon: <CalendarDays size={16} />, label: t('moduleHub.viewModes.calendar', 'Calendar') },
+    matrix: { icon: <LayoutGrid size={16} />, label: t('moduleHub.viewModes.matrix', 'Matrix') },
+    grid: { icon: <Grid3X3 size={16} />, label: t('moduleHub.viewModes.grid', 'Grid') },
   };
 
   const orderedViewModes = VIEW_MODE_ORDER.filter((m) => availableViewModes.includes(m));
@@ -262,8 +264,8 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
               type="text"
               value={searchQuery}
               onChange={handleSearchChange}
-              placeholder="Search..."
-              aria-label="Search"
+              placeholder={t('moduleHub.search.placeholder', 'Search...')}
+              aria-label={t('moduleHub.search.label', 'Search')}
               className="
                 w-full pl-10 pr-10 py-2 rounded-lg
                 bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600
@@ -376,7 +378,12 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
                 ? 'bg-white/70 dark:bg-white/[0.06] text-slate-900 dark:text-slate-100 border-slate-300 dark:border-white/25'
                 : 'text-slate-500 dark:text-slate-400 border-slate-200/70 dark:border-white/[0.06] hover:bg-slate-100/70 dark:hover:bg-white/[0.05]'
             }`}
-            title={forceCommandRow ? 'Bulk mode active' : 'Search'}
+            title={
+              forceCommandRow
+                ? t('moduleHub.search.bulkModeActive', 'Bulk mode active')
+                : t('moduleHub.search.label', 'Search')
+            }
+            aria-label={t('moduleHub.search.label', 'Search')}
             aria-disabled={forceCommandRow}
             aria-expanded={showSearch}
             aria-controls={showSearch ? 'modulehub-command-search' : undefined}
@@ -385,7 +392,11 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
           </button>
 
           {/* Main Tabs — V3-A03: Level A pill (rounded-full) */}
-          <div className="flex items-center gap-1.5" role="tablist" aria-label="Module sections">
+          <div
+            className="flex items-center gap-1.5"
+            role="tablist"
+            aria-label={t('moduleHub.sections', 'Module sections')}
+          >
             {tabs.map((tab) => {
               const isActive = activeTab === tab.id;
               return (
@@ -486,6 +497,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
                         : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.05]'
                     }`}
                     title={config.label}
+                    aria-label={config.label}
                   >
                     {config.icon}
                   </button>

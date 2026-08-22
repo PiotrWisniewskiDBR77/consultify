@@ -7421,7 +7421,16 @@ Answer type: ${(question as any).answer_type || 'open'}`;
     } catch (err) {
       if (!responded) {
         logger.error('[evaluateSessionAnswers] AI call failed:', err);
-        res.status(500).json({ error: 'AI evaluation failed' });
+        // Provider configuration/outage is an unavailable dependency, not an
+        // internal server defect. Fail closed with a stable, retryable
+        // contract: do not fabricate scores and do not persist a substitute
+        // review snapshot. Both the V8 and compatibility routers mount this
+        // same handler, so callers observe one canonical outcome.
+        res.status(503).json({
+          error: 'AI evaluation is temporarily unavailable',
+          code: 'INTERVIEW_EVALUATION_UNAVAILABLE',
+          retryable: true,
+        });
       }
     } finally {
       if (timer) clearTimeout(timer);

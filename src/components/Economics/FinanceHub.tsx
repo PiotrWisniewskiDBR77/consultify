@@ -73,7 +73,12 @@ import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useV8FeatureFlag } from '@/hooks/useV8FeatureFlag';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api, API_URL, getHeaders } from '@/services/api';
-import type { BusinessVersionStatus } from '@/services/api/financeV2.types';
+import { getFinanceArtifact } from '@/services/api/financeV2.api';
+import type {
+  BusinessVersionStatus,
+  FinanceArtifactDetailDto,
+  FinanceArtifactType,
+} from '@/services/api/financeV2.types';
 import {
   shouldFallbackToLegacyFinance,
   V8FinanceApi,
@@ -221,6 +226,102 @@ function CanonicalFinanceWorkspaceMount({
         artifactType={artifactType}
       />
     </div>
+  );
+}
+
+function CanonicalFinanceDirectWorkspace({
+  artifactId,
+  businessVersionId,
+  artifactType,
+  onNavigateBack,
+}: {
+  artifactId: string;
+  businessVersionId: string;
+  artifactType: FinanceArtifactType;
+  onNavigateBack: () => void;
+}) {
+  const [artifact, setArtifact] = useState<FinanceArtifactDetailDto | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setArtifact(null);
+    setError(null);
+    getFinanceArtifact(artifactId)
+      .then((result) => {
+        const current = result.currentBusinessVersion;
+        if (
+          result.artifactType !== artifactType ||
+          !current ||
+          current.businessVersionId !== businessVersionId
+        ) {
+          throw new Error('Canonical Finance identity does not match the current version.');
+        }
+        if (!cancelled) setArtifact(result);
+      })
+      .catch((reason: unknown) => {
+        if (!cancelled) {
+          setError(reason instanceof Error ? reason.message : 'Canonical Finance artifact failed.');
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [artifactId, artifactType, businessVersionId]);
+
+  if (error) {
+    return (
+      <div className="flex h-full items-center justify-center p-6">
+        <EmptyStateInline
+          icon={AlertTriangle}
+          message={error}
+          action={{ label: 'Wróć do listy', onClick: onNavigateBack }}
+        />
+      </div>
+    );
+  }
+  if (!artifact?.currentBusinessVersion) return <LoadingState template="panel" />;
+
+  const current = artifact.currentBusinessVersion;
+  return (
+    <CanonicalFinanceWorkspaceMount
+      artifactId={artifactId}
+      businessVersionId={businessVersionId}
+      artifactType={artifactType}
+    >
+      {artifactType === 'BASELINE_MODEL' ? (
+        <FinanceV3BaselineWorkspace
+          artifactId={artifactId}
+          businessVersionId={businessVersionId}
+          name={artifact.naturalKey || 'Model bazowy'}
+          status={current.status}
+          freshness={current.freshness}
+          version={current.version}
+          role="preparer"
+          contextValues={{ type: 'Model bazowy (Baseline)' }}
+          onNavigateBack={onNavigateBack}
+        />
+      ) : artifactType === 'PREDICTION_SCENARIO' ? (
+        <FinanceV3PredictionWorkspace
+          artifactId={artifactId}
+          businessVersionId={businessVersionId}
+          onNavigateBack={onNavigateBack}
+        />
+      ) : artifactType === 'HISTORICAL_ANALYSIS' ? (
+        <FinanceV3AnalysisWorkspace
+          artifactId={artifactId}
+          businessVersionId={businessVersionId}
+          role="preparer"
+          onNavigateBack={onNavigateBack}
+        />
+      ) : artifactType === 'VALUATION_CASE' ? (
+        <FinanceV3ValuationWorkspace
+          businessVersionId={businessVersionId}
+          role="preparer"
+          onNavigateBack={onNavigateBack}
+        />
+      ) : null}
+    </CanonicalFinanceWorkspaceMount>
   );
 }
 const CreateAnalysisModal = lazy(() =>
@@ -431,6 +532,7 @@ export const FinanceHub: React.FC = () => {
     useModuleOpenDocuments('finance');
   const [activeDocument, setActiveDocument] = useState<FinanceRow | null>(null);
   const relatedArtifactIdempotencyKeys = useRef(new Map<string, string>());
+  const canonicalNavigationInFlightRef = useRef(false);
 
   // AP_MOUNT §B — read each Finance v3 mount flag ONCE at the top of the
   // component (Rules of Hooks: unconditional call). All four default OFF
@@ -475,6 +577,8 @@ export const FinanceHub: React.FC = () => {
         next.set('canonicalArtifactType', 'HISTORICAL_ANALYSIS');
         next.set('canonicalArtifactId', String(created.artifactId));
         next.set('canonicalBusinessVersionId', String(created.businessVersionId));
+        canonicalNavigationInFlightRef.current = true;
+        setActiveTab('analysis');
         setSearchParams(next);
         relatedArtifactIdempotencyKeys.current.delete(sourceBusinessVersionId);
         setActiveDocumentId(null);
@@ -868,18 +972,29 @@ export const FinanceHub: React.FC = () => {
   );
 
   // ---- Document management ----
-  const handleOpenFull = useCallback((row: FinanceRow) => {
-    const doc: OpenDocument = {
-      id: row.id,
-      type: 'report',
-      subType: 'finance',
-      name: row.title,
-      status: statusToItemStatus(row.status),
-    };
-    setOpenDocuments((prev) => (prev.some((d) => d.id === doc.id) ? prev : [...prev, doc]));
-    setActiveDocumentId(row.id);
-    setActiveDocument(row);
-  }, []);
+  const handleOpenFull = useCallback(
+    (row: FinanceRow) => {
+      if (row.canonicalArtifactId && row.canonicalBusinessVersionId && row.canonicalArtifactType) {
+        const next = new URLSearchParams(searchParams);
+        next.set('canonicalArtifactType', row.canonicalArtifactType);
+        next.set('canonicalArtifactId', row.canonicalArtifactId);
+        next.set('canonicalBusinessVersionId', row.canonicalBusinessVersionId);
+        setSearchParams(next);
+        return;
+      }
+      const doc: OpenDocument = {
+        id: row.id,
+        type: 'report',
+        subType: 'finance',
+        name: row.title,
+        status: statusToItemStatus(row.status),
+      };
+      setOpenDocuments((prev) => (prev.some((d) => d.id === doc.id) ? prev : [...prev, doc]));
+      setActiveDocumentId(row.id);
+      setActiveDocument(row);
+    },
+    [searchParams, setSearchParams]
+  );
 
   const handleCloseDocument = useCallback(
     (id: string) => {
@@ -916,6 +1031,24 @@ export const FinanceHub: React.FC = () => {
     }
     if (kind === 'valuation') loadValuations().catch(() => {});
   }, [activeTab, loadStatements, loadAnalyses, loadModels, loadBudgets, loadValuations]);
+
+  const handleModuleTabChange = useCallback(
+    (nextTab: ModuleTab) => {
+      setActiveDocumentId(null);
+      setActiveDocument(null);
+      setSelectedFinanceRowIds(new Set());
+      setSelectedStatementIds(new Set());
+
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.set('tab', nextTab);
+      nextParams.delete('canonicalArtifactType');
+      nextParams.delete('canonicalArtifactId');
+      nextParams.delete('canonicalBusinessVersionId');
+      setSearchParams(nextParams, { replace: true });
+      setActiveTab(nextTab);
+    },
+    [searchParams, setActiveDocumentId, setSearchParams]
+  );
 
   const handleRemoveFilter = useCallback(
     (id: string) => setActiveFilters((prev) => prev.filter((f) => f.id !== id)),
@@ -1170,6 +1303,10 @@ export const FinanceHub: React.FC = () => {
   }, [searchParams, searchQuery, setSearchParams, validFinanceTabs]);
 
   useEffect(() => {
+    if (canonicalNavigationInFlightRef.current) {
+      canonicalNavigationInFlightRef.current = false;
+      return;
+    }
     const nextParams = new URLSearchParams(searchParams);
     if (nextParams.get('tab') === activeTab) return;
     nextParams.set('tab', activeTab);
@@ -1521,7 +1658,7 @@ export const FinanceHub: React.FC = () => {
           render: (row: FinanceRow) =>
             row.kind === 'prediction' ? (
               <span className="text-sm text-c-text-secondary">
-                {(row as FinanceModelRow).scenario}
+                {(row as FinanceModelRow).scenario || '—'}
               </span>
             ) : (
               <span className="text-sm text-c-text-muted">—</span>
@@ -1545,7 +1682,9 @@ export const FinanceHub: React.FC = () => {
               );
             return (
               <span className="text-sm text-c-text-secondary">
-                {pRow.horizonMonths} {t('finance.units.mo', 'mo')}
+                {pRow.horizonMonths > 0
+                  ? `${pRow.horizonMonths} ${t('finance.units.mo', 'mo')}`
+                  : '—'}
               </span>
             );
           },
@@ -1565,7 +1704,9 @@ export const FinanceHub: React.FC = () => {
         filterOptions: sourceTypeFilterOptions,
         render: (row: FinanceRow) =>
           row.kind === 'valuation' ? (
-            <span className="text-sm text-c-text-secondary capitalize">{row.sourceType}</span>
+            <span className="text-sm text-c-text-secondary capitalize">
+              {row.sourceType || '—'}
+            </span>
           ) : (
             <span className="text-sm text-c-text-muted">—</span>
           ),
@@ -1578,7 +1719,7 @@ export const FinanceHub: React.FC = () => {
         filterOptions: methodFilterOptions,
         render: (row: FinanceRow) =>
           row.kind === 'valuation' ? (
-            <span className="text-sm text-c-text-secondary">{row.method}</span>
+            <span className="text-sm text-c-text-secondary">{row.method || '—'}</span>
           ) : (
             <span className="text-sm text-c-text-muted">—</span>
           ),
@@ -1590,7 +1731,7 @@ export const FinanceHub: React.FC = () => {
         render: (row: FinanceRow) =>
           row.kind === 'valuation' ? (
             <span className="text-sm text-c-text-secondary">
-              {row.horizonYears} {t('finance.units.yr', 'yr')}
+              {row.horizonYears > 0 ? `${row.horizonYears} ${t('finance.units.yr', 'yr')}` : '—'}
             </span>
           ) : (
             <span className="text-sm text-c-text-muted">—</span>
@@ -2954,13 +3095,16 @@ export const FinanceHub: React.FC = () => {
     const canonicalArtifactId = searchParams.get('canonicalArtifactId');
     const canonicalBusinessVersionId = searchParams.get('canonicalBusinessVersionId');
     if (
-      (canonicalArtifactType === 'HISTORICAL_ANALYSIS' ||
-        canonicalArtifactType === 'PREDICTION_SCENARIO') &&
+      (canonicalArtifactType === 'BASELINE_MODEL' ||
+        canonicalArtifactType === 'HISTORICAL_ANALYSIS' ||
+        canonicalArtifactType === 'PREDICTION_SCENARIO' ||
+        canonicalArtifactType === 'VALUATION_CASE') &&
       canonicalArtifactId &&
       canonicalBusinessVersionId &&
-      (canonicalArtifactType === 'HISTORICAL_ANALYSIS'
-        ? financeV3AnalysisFlag.enabled
-        : financeV3PredictionFlag.enabled)
+      ((canonicalArtifactType === 'BASELINE_MODEL' && financeV3BaselineFlag.enabled) ||
+        (canonicalArtifactType === 'HISTORICAL_ANALYSIS' && financeV3AnalysisFlag.enabled) ||
+        (canonicalArtifactType === 'PREDICTION_SCENARIO' && financeV3PredictionFlag.enabled) ||
+        (canonicalArtifactType === 'VALUATION_CASE' && financeV3ValuationFlag.enabled))
     ) {
       const closeCanonical = () => {
         const next = new URLSearchParams(searchParams);
@@ -2972,32 +3116,12 @@ export const FinanceHub: React.FC = () => {
       return (
         <div className="p-4 lg:p-6">
           <div className="h-[calc(100vh-120px)] min-h-[620px] overflow-hidden rounded-xl border border-c-border-subtle bg-c-surface">
-            {canonicalArtifactType === 'HISTORICAL_ANALYSIS' ? (
-              <CanonicalFinanceWorkspaceMount
-                artifactId={canonicalArtifactId}
-                businessVersionId={canonicalBusinessVersionId}
-                artifactType="HISTORICAL_ANALYSIS"
-              >
-                <FinanceV3AnalysisWorkspace
-                  artifactId={canonicalArtifactId}
-                  businessVersionId={canonicalBusinessVersionId}
-                  role="preparer"
-                  onNavigateBack={closeCanonical}
-                />
-              </CanonicalFinanceWorkspaceMount>
-            ) : (
-              <CanonicalFinanceWorkspaceMount
-                artifactId={canonicalArtifactId}
-                businessVersionId={canonicalBusinessVersionId}
-                artifactType="PREDICTION_SCENARIO"
-              >
-                <FinanceV3PredictionWorkspace
-                  artifactId={canonicalArtifactId}
-                  businessVersionId={canonicalBusinessVersionId}
-                  onNavigateBack={closeCanonical}
-                />
-              </CanonicalFinanceWorkspaceMount>
-            )}
+            <CanonicalFinanceDirectWorkspace
+              artifactId={canonicalArtifactId}
+              businessVersionId={canonicalBusinessVersionId}
+              artifactType={canonicalArtifactType}
+              onNavigateBack={closeCanonical}
+            />
           </div>
         </div>
       );
@@ -3103,6 +3227,7 @@ export const FinanceHub: React.FC = () => {
                     >
                       <FinanceV3StatementPackWorkspace
                         businessVersionId={resolved.businessVersionId ?? ''}
+                        displayName={activeDocument.title}
                         resolveLineLabel={(rowKey, canonicalLineId, lineCode) =>
                           lineCode ?? canonicalLineId ?? rowKey
                         }
@@ -3564,8 +3689,10 @@ export const FinanceHub: React.FC = () => {
       );
     if (
       (activeDocumentId && activeDocument) ||
-      ((searchParams.get('canonicalArtifactType') === 'HISTORICAL_ANALYSIS' ||
-        searchParams.get('canonicalArtifactType') === 'PREDICTION_SCENARIO') &&
+      ((searchParams.get('canonicalArtifactType') === 'BASELINE_MODEL' ||
+        searchParams.get('canonicalArtifactType') === 'HISTORICAL_ANALYSIS' ||
+        searchParams.get('canonicalArtifactType') === 'PREDICTION_SCENARIO' ||
+        searchParams.get('canonicalArtifactType') === 'VALUATION_CASE') &&
         searchParams.get('canonicalArtifactId') &&
         searchParams.get('canonicalBusinessVersionId'))
     )
@@ -3639,7 +3766,7 @@ export const FinanceHub: React.FC = () => {
       <StandardModuleBar
         tabs={tabs}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={(tab) => handleModuleTabChange(tab as ModuleTab)}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onSearch={setSearchQuery}

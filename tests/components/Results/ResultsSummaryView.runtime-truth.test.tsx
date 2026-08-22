@@ -8,7 +8,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback?: any) => (typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key)),
+    t: (_key: string, fallback?: any) =>
+      typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key),
     i18n: { language: 'en' },
   }),
 }));
@@ -95,7 +96,9 @@ describe('ResultsSummaryView runtime truth alignment', () => {
   });
 
   it.skip('keeps governed snapshot cards but shows an empty state instead of demo initiatives when legacy reads fail (ResultsSummaryView removed — component no longer exists)', async () => {
-    vi.mocked(Api.getInitiativesByStatus).mockRejectedValue(new Error('legacy initiatives unavailable'));
+    vi.mocked(Api.getInitiativesByStatus).mockRejectedValue(
+      new Error('legacy initiatives unavailable')
+    );
     vi.mocked(V8ResultsApi.getDashboard).mockResolvedValue({
       snapshot: {
         organizationId: 'dbr77',
@@ -134,7 +137,7 @@ describe('ResultsSummaryView runtime truth alignment', () => {
     render(
       <MemoryRouter>
         <ResultsSummaryView searchQuery="" activeFilters={[]} onFilterChange={vi.fn()} />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     await waitFor(() => {
@@ -143,7 +146,11 @@ describe('ResultsSummaryView runtime truth alignment', () => {
       expect(screen.getByText('Governed KPIs')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('No completed initiatives. Finish an initiative to review results monitoring.')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'No completed initiatives. Finish an initiative to review results monitoring.'
+      )
+    ).toBeInTheDocument();
     expect(screen.getByTestId('summary-row-count')).toHaveTextContent('0');
     expect(screen.queryByText('Digital Transformation Program')).not.toBeInTheDocument();
     expect(screen.getByText('480,000')).toBeInTheDocument();

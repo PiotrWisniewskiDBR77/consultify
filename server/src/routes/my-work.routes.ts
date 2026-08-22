@@ -8149,93 +8149,12 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
-    const { userId, orgId } = identity;
-
-    const action = String(req.body?.action || '').trim();
-    const payload = req.body?.payload || {};
-
-    if (!action) {
-      return res.status(400).json({ error: 'action is required' });
-    }
-
-    try {
-      switch (action) {
-        case 'create_task': {
-          const id = uuidv4();
-          const cols = await getTableColumns('tasks');
-          const insertCols: string[] = ['id'];
-          const insertVals: string[] = ['?'];
-          const insertParams: any[] = [id];
-          const add = (col: string, val: any) => {
-            if (!cols.has(col)) return;
-            insertCols.push(col);
-            insertVals.push('?');
-            insertParams.push(val);
-          };
-          add('organization_id', orgId);
-          // F15 (data-integrity): decode entities the global sanitizer escaped
-          // on payload.title before storing tasks.title.
-          add('title', decodeHtmlEntities(String(payload.title || 'New Task').slice(0, 500)));
-          add('description', payload.description || null);
-          add('status', payload.status || 'todo');
-          add('priority', payload.priority || 'medium');
-          add('assignee_id', userId);
-          add('reporter_id', userId);
-          if (payload.dueDate) add('due_date', payload.dueDate);
-          add('tags', JSON.stringify(payload.tags || []));
-          add('task_type', 'personal');
-          await queryHelpers.queryRun(
-            `INSERT INTO tasks (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
-            insertParams
-          );
-          return res.status(201).json({ success: true, action, id, title: payload.title });
-        }
-        case 'update_task_status': {
-          const { taskId, status } = payload;
-          if (!taskId || !status)
-            return res.status(400).json({ error: 'taskId and status required' });
-          await queryHelpers.queryRun(
-            `UPDATE tasks SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND assignee_id = ? AND organization_id = ?`,
-            [status, taskId, userId, orgId]
-          );
-          return res.json({ success: true, action, taskId, status });
-        }
-        case 'create_decision': {
-          const id = uuidv4();
-          const cols = await getTableColumns('decisions');
-          const insertCols: string[] = ['id'];
-          const insertVals: string[] = ['?'];
-          const insertParams: any[] = [id];
-          const add = (col: string, val: any) => {
-            if (!cols.has(col)) return;
-            insertCols.push(col);
-            insertVals.push('?');
-            insertParams.push(val);
-          };
-          add('organization_id', orgId);
-          // F15 (data-integrity): decode entities the global sanitizer escaped
-          // on payload.title before storing decisions.title.
-          add('title', decodeHtmlEntities(String(payload.title || 'New Decision').slice(0, 500)));
-          add('description', payload.description || null);
-          add('status', 'pending');
-          add('created_by', userId);
-          add('decision_maker_id', userId);
-          await queryHelpers.queryRun(
-            `INSERT INTO decisions (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
-            insertParams
-          );
-          return res.status(201).json({ success: true, action, id, title: payload.title });
-        }
-        default:
-          return res.status(400).json({ error: `Unknown action: ${action}` });
-      }
-    } catch (err: any) {
-      logger.error('[my-work] chat-actions failed', {
-        err,
-        correlationId: (req as any).correlationId,
-      });
-      return res.status(500).json({ error: 'Action failed', code: 'MY_WORK_CHAT_ACTION_FAILED' });
-    }
+    return res.status(410).json({
+      error: 'Direct Chat writes are retired. Create a governed proposal in My Work / Agent.',
+      code: 'MY_WORK_CHAT_DIRECT_WRITE_RETIRED',
+      successor: '/my-work?tab=agent',
+      directWritePerformed: false,
+    });
   })
 );
 

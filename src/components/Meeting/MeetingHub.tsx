@@ -11,10 +11,10 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { type FilterChip, type ModuleTab, type ViewMode } from '@/components/shared/ModuleHub';
 import { getMenu3AiButtonClass } from '@/components/shared/ModuleHub/menu3ActionButtonStyles';
@@ -69,6 +69,7 @@ export interface MeetingItem {
 export const MeetingHub: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const isPolish = i18n.language?.startsWith('pl');
   const currentUser = useAppStore((state) => state.currentUser);
   const canApproveMeetingNotes = ['OWNER', 'ADMIN', 'SUPERADMIN'].includes(
@@ -89,6 +90,7 @@ export const MeetingHub: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showNotesModal, setShowNotesModal] = useState(false);
   const [notesTranscript, setNotesTranscript] = useState('');
+  const noteGenerationCommandRef = useRef<{ signature: string; key: string } | null>(null);
   const [generatingNotes, setGeneratingNotes] = useState(false);
   const [generatedNote, setGeneratedNote] = useState<any>(null);
   const [governedNotes, setGovernedNotes] = useState<GovernedMeetingNoteDto[]>([]);
@@ -266,7 +268,17 @@ export const MeetingHub: React.FC = () => {
     };
     setOpenDocuments((prev) => (prev.some((item) => item.id === row.id) ? prev : [...prev, doc]));
     setActiveDocumentId(row.id);
+    const next = new URLSearchParams(searchParams);
+    next.set('meetingId', row.id);
+    setSearchParams(next, { replace: true });
   };
+
+  const deepLinkMeetingId = searchParams.get('meetingId');
+  useEffect(() => {
+    if (!deepLinkMeetingId || activeDocumentId === deepLinkMeetingId) return;
+    const meeting = meetings.find((item) => item.id === deepLinkMeetingId);
+    if (meeting) openMeetingDocument(meeting);
+  }, [activeDocumentId, deepLinkMeetingId, meetings]);
 
   const tabs = useMemo(
     () => [
@@ -606,12 +618,24 @@ export const MeetingHub: React.FC = () => {
 
   const handleGenerateNotes = async () => {
     if (!activeMeeting || !notesTranscript.trim()) return;
+    const transcript = notesTranscript.trim();
+    const language = isPolish ? 'pl' : 'en';
+    const signature = JSON.stringify([activeMeeting.id, language, transcript]);
+    if (noteGenerationCommandRef.current?.signature !== signature) {
+      noteGenerationCommandRef.current = {
+        signature,
+        key:
+          globalThis.crypto?.randomUUID?.() ||
+          `meeting-note-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      };
+    }
     setGeneratingNotes(true);
     setGeneratedNote(null);
     try {
       const response = await (Api as any).generateMeetingNotes?.(activeMeeting.id, {
-        transcript: notesTranscript.trim(),
-        language: isPolish ? 'pl' : 'en',
+        transcript,
+        language,
+        idempotencyKey: noteGenerationCommandRef.current.key,
       });
       const note = response?.note;
       const noteId = response?.meetingNoteId;
@@ -1258,6 +1282,11 @@ export const MeetingHub: React.FC = () => {
                               <p className="mt-2 break-all text-xs text-c-text-muted">
                                 {t('meeting.notes.receipt', 'Materialization receipt')}:{' '}
                                 {noteReceiptIds[note.id]}
+                              </p>
+                            ) : null}
+                            {note.decisionReason ? (
+                              <p className="mt-2 text-xs text-c-text-muted">
+                                {t('meeting.notes.decisionReason', 'Decision reason')}: {note.decisionReason}
                               </p>
                             ) : null}
                           </div>

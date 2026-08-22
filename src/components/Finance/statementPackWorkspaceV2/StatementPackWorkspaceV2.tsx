@@ -185,6 +185,8 @@ const DEFAULT_FETCHERS: StatementPackWorkspaceV2Fetchers = {
 
 export interface StatementPackWorkspaceV2Props {
   businessVersionId: string;
+  /** Human-readable pack label from the canonical list/legacy bridge. */
+  displayName?: string;
   resolveLineLabel: (rowKey: string, canonicalLineId: string | null, lineCode: string | null) => string;
   fetchers?: Partial<StatementPackWorkspaceV2Fetchers>;
   onOpenArtifact: (edge: LineageEdgeDto) => void;
@@ -262,7 +264,7 @@ function StatementPackWorkspaceV2Inner(props: StatementPackWorkspaceV2Props): Re
       .then((identity) => {
         if (cancelled) return;
         setArtifactId(identity.artifactId);
-        setName(identity.name);
+        setName(props.displayName?.trim() || identity.name);
         setStatus(identity.status);
         setFreshness(identity.freshness);
         setVersionNo(identity.versionNo);
@@ -275,7 +277,7 @@ function StatementPackWorkspaceV2Inner(props: StatementPackWorkspaceV2Props): Re
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [businessVersionId, fetchers]);
+  }, [businessVersionId, fetchers, props.displayName]);
 
   const [linesState, setLinesState] = useState<AsyncListState<StatementLineDto[]>>({ status: 'loading' });
   const [lineageState, setLineageState] = useState<AsyncListState<LineageEdgeDto[]>>({ status: 'loading' });

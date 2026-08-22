@@ -246,15 +246,19 @@ export const BetaSuccessStories: React.FC = () => {
     '/images/partner/partner-story-transformace.png',
   ];
 
-  const stories = [0, 1].map((i) => ({
-    company: t(`partner.beta.stories.${i}.company`),
-    type: t(`partner.beta.stories.${i}.type`),
-    location: t(`partner.beta.stories.${i}.location`),
-    quote: t(`partner.beta.stories.${i}.quote`),
-    results: t(`partner.beta.stories.${i}.results`, { returnObjects: true }) as string[],
-    since: t(`partner.beta.stories.${i}.since`),
-    logo: storyLogos[i],
-  }));
+  const stories = [0, 1].map((i) => {
+    const translatedResults = t(`partner.beta.stories.${i}.results`, { returnObjects: true });
+    return {
+      company: t(`partner.beta.stories.${i}.company`),
+      type: t(`partner.beta.stories.${i}.type`),
+      location: t(`partner.beta.stories.${i}.location`),
+      quote: t(`partner.beta.stories.${i}.quote`),
+      // Missing or malformed locale data must not take down the Partner home.
+      results: Array.isArray(translatedResults) ? translatedResults.map(String) : [],
+      since: t(`partner.beta.stories.${i}.since`),
+      logo: storyLogos[i],
+    };
+  });
 
   return (
     <div className="space-y-6">

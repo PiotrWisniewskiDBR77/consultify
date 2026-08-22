@@ -24,7 +24,7 @@ export interface ToolSessionRecoveryDraft<TData = unknown> {
   toolId: string;
   /** `updatedAt` of the server session this draft was built on top of, if known. */
   baseUpdatedAt: string | null;
-  /** server `version` this draft was built on top of, if known (see toolSessionApi.ts gap note). */
+  /** Server `version` this draft was built on top of, if a session had already loaded. */
   baseVersion?: number;
   data: TData;
   /** local wall-clock time the draft was written (ISO string). */

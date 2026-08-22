@@ -1,6 +1,7 @@
 #!/usr/bin/env tsx
 /** Guarded deterministic Wave 3 Results owner-review fixture. Local disposable PostgreSQL only. */
 import fs from 'node:fs';
+import crypto from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import { Client } from 'pg';
 
@@ -8,6 +9,10 @@ const url = process.env.DATABASE_URL ?? '';
 const manifestPath = process.env.RESULTS_OWNER_FIXTURE_MANIFEST ?? '';
 const password = process.env.RESULTS_OWNER_FIXTURE_PASSWORD ?? '';
 const reset = process.argv.includes('--reset');
+const FIXTURE_ID = 'W3-RESULTS-OWNER-v1';
+const FIXTURE_NAME = 'wave3-results-owner-review-v1';
+const ROI_POLICY_KEY = 'AMD-FLOW-ROI-VISIBILITY-002/v1';
+const ROI_POLICY_DIGEST = 'sha256:2c49cd371727bd19b7164b950e523c2caa9068874c88a451700d05f0ced67c65';
 if (process.env.SEED_WAVE3_RESULTS_OWNER_REVIEW !== 'YES')
   throw new Error('SEED_WAVE3_RESULTS_OWNER_REVIEW=YES is required');
 if (!url) throw new Error('DATABASE_URL is required');
@@ -20,6 +25,34 @@ if (!/^consultify_w3_results_owner_[a-z0-9_]+$/.test(dbName))
 const adminUrl = new URL(url);
 adminUrl.pathname = '/postgres';
 async function dropDb() {
+  if (!manifestPath || !fs.existsSync(manifestPath))
+    throw new Error('Reset requires the existing RESULTS_OWNER_FIXTURE_MANIFEST');
+  if ((fs.statSync(manifestPath).mode & 0o777) !== 0o600)
+    throw new Error('Reset manifest mode must be 0600');
+  const receipt = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  if (
+    receipt.ownershipState !== 'FINAL' ||
+    receipt.fixture !== FIXTURE_NAME ||
+    receipt.fixtureId !== FIXTURE_ID ||
+    receipt.databaseName !== dbName ||
+    receipt.marker?.table !== 'wave3_owner_fixture_markers' ||
+    receipt.marker?.fixtureId !== FIXTURE_ID ||
+    receipt.marker?.ownershipNonce !== receipt.ownershipNonce
+  )
+    throw new Error('Reset manifest is not the exact FINAL Results ownership receipt');
+  const owned = new Client({ connectionString: url });
+  await owned.connect();
+  try {
+    const marker = await owned.query(
+      `SELECT database_name FROM public.wave3_owner_fixture_markers
+        WHERE fixture_id=$1 AND ownership_nonce=$2`,
+      [FIXTURE_ID, receipt.ownershipNonce]
+    );
+    if (marker.rowCount !== 1 || marker.rows[0]?.database_name !== dbName)
+      throw new Error('Reset refused: durable Results ownership marker mismatch');
+  } finally {
+    await owned.end();
+  }
   const c = new Client({ connectionString: adminUrl.toString() });
   await c.connect();
   try {
@@ -31,7 +64,7 @@ async function dropDb() {
     const q = await c.query('SELECT 1 FROM pg_database WHERE datname=$1', [dbName]);
     if (q.rowCount) throw new Error('Results DB remains in catalog');
     process.stdout.write(
-      `${JSON.stringify({ fixture: 'wave3-results-owner-review-v1', reset: true, catalogAbsent: true })}\n`
+      `${JSON.stringify({ fixture: FIXTURE_NAME, reset: true, catalogAbsent: true })}\n`
     );
   } finally {
     await c.end();
@@ -45,6 +78,7 @@ if (!manifestPath || !password)
   throw new Error('RESULTS_OWNER_FIXTURE_MANIFEST and RESULTS_OWNER_FIXTURE_PASSWORD are required');
 if (fs.existsSync(manifestPath)) throw new Error('Refusing to overwrite existing manifest');
 const F = '2026-08-21T08:00:00.000Z';
+const ownershipNonce = crypto.randomBytes(32).toString('hex');
 const I = {
   org: 'b0900000-0000-4000-8000-000000000001',
   foreignOrg: 'b0900000-0000-4000-8000-000000000002',
@@ -65,6 +99,8 @@ const I = {
   finLink: 'b0930000-0000-4000-8000-000000000005',
   recon: 'b0930000-0000-4000-8000-000000000006',
   pir: 'b0930000-0000-4000-8000-000000000007',
+  roiRun: 'b0930000-0000-4000-8000-000000000008',
+  approvalSnap: 'b0930000-0000-4000-8000-000000000009',
   program: 'b0940000-0000-4000-8000-000000000001',
   policy: 'b0940000-0000-4000-8000-000000000002',
   cycle: 'b0940000-0000-4000-8000-000000000003',
@@ -81,6 +117,9 @@ const I = {
   project: 'results-owner-project',
   executionCase: 'results-owner-case',
   artifactLink: 'cwlink-results-owner-evidence',
+  kpiVisibilityPolicy: 'b0960000-0000-4000-8000-000000000001',
+  roiVisibilityPolicy: 'b0960000-0000-4000-8000-000000000002',
+  okrVisibilityPolicy: 'b0960000-0000-4000-8000-000000000003',
 };
 const emails = {
   owner: 'wave3.results.owner.20260821@local.test',
@@ -105,6 +144,16 @@ try {
   }
   const hash = await bcrypt.hash(password, 10);
   await db.query('BEGIN');
+  await db.query(`CREATE TABLE IF NOT EXISTS public.wave3_owner_fixture_markers(
+    fixture_id text PRIMARY KEY,
+    ownership_nonce text NOT NULL,
+    database_name text NOT NULL
+  )`);
+  await db.query(
+    `INSERT INTO public.wave3_owner_fixture_markers(fixture_id,ownership_nonce,database_name)
+     VALUES($1,$2,current_database())`,
+    [FIXTURE_ID, ownershipNonce]
+  );
   await db.query(
     `INSERT INTO organizations(id,name) VALUES($1,'Wave 3 Results Owner'),($2,'Wave 3 Results Foreign')`,
     [I.org, I.foreignOrg]
@@ -129,6 +178,28 @@ try {
       `INSERT INTO organization_members(id,organization_id,user_id,role,status) VALUES(gen_random_uuid()::text,$1,$2,$3,'ACTIVE')`,
       [org, id, role]
     );
+  for (const [policyId, domain, mode] of [
+    [I.kpiVisibilityPolicy, 'kpi', 'OPEN_ORG'],
+    [I.roiVisibilityPolicy, 'roi', 'ROI_GOVERNED'],
+    [I.okrVisibilityPolicy, 'okr', 'OPEN_ORG'],
+  ])
+    await db.query(
+      `INSERT INTO rvn_platform_visibility_policies(
+         policy_id,organization_id,domain,policy_version,visibility_mode,
+         allow_narrowing_only,is_active,effective_from,created_by,created_at)
+       VALUES($1,$2,$3,1,$4,true,true,$5,$6,$5)`,
+      [policyId, I.org, domain, mode, F, I.admin]
+    );
+  const roiGovernanceFingerprint = crypto
+    .createHash('sha256')
+    .update(JSON.stringify([I.org, I.owner, ROI_POLICY_KEY, ROI_POLICY_DIGEST]))
+    .digest('hex');
+  await db.query(
+    `INSERT INTO rvn_roi_visibility_governance(
+       organization_id,published_by,published_at,idempotency_key,request_fingerprint)
+     VALUES($1,$2,$3,'results-owner-roi-governance-v1',$4)`,
+    [I.org, I.owner, F, roiGovernanceFingerprint]
+  );
   await db.query(
     `INSERT INTO projects(id,organization_id,name,status,owner_id,created_at)
      VALUES($1,$2,'Results owner execution project','active',$3,$4)`,
@@ -150,6 +221,12 @@ try {
   await db.query(
     'UPDATE rvn_kpi_definitions SET current_definition_version_id=$1 WHERE kpi_id=$2',
     [I.kpiVersion, I.kpi]
+  );
+  await db.query(
+    `INSERT INTO rvn_platform_resource_visibility(
+       resource_type,resource_id,organization_id,visibility_mode,policy_id,owner_user_id)
+     VALUES('kpi',$1,$2,'OPEN_ORG',$3,$4)`,
+    [I.kpi, I.org, I.kpiVisibilityPolicy, I.owner]
   );
   for (const [id, start, end, val, status] of [
     [I.m1, '2026-06-01', '2026-06-30', 92, 'on_target'],
@@ -180,8 +257,73 @@ try {
     [I.roi, I.org, I.initiative, I.owner, F]
   );
   await db.query(
+    `INSERT INTO rvn_platform_resource_visibility(
+       resource_type,resource_id,organization_id,visibility_mode,policy_id,owner_user_id)
+     VALUES('roi_case',$1,$2,'ROI_GOVERNED',$3,$4)`,
+    [I.roi, I.org, I.roiVisibilityPolicy, I.owner]
+  );
+  await db.query(
     `INSERT INTO rvn_roi_baselines(baseline_id,case_id,organization_id,baseline_period_start,baseline_period_end,current_measured_value,current_measured_unit,current_measured_as_of,source,confidence,owner_user_id,frozen_at,frozen_by,created_by,created_at,updated_at) VALUES($1,$2,$3,'2025-01-01','2025-12-31',100000,'PLN','2025-12-31','approved baseline','high',$4,$5,$4,$4,$5,$5)`,
     [I.baseline, I.roi, I.org, I.owner, F]
+  );
+  const roiRunPayload = {
+    runId: I.roiRun,
+    caseId: I.roi,
+    status: 'completed',
+    totalCosts: 100000,
+    totalFinancialBenefits: 200000,
+    simpleRoi: 1,
+    npv: 85000,
+    irrPct: 18,
+    irrStatus: 'computed',
+    paybackPeriods: 8,
+    discountedPaybackPeriods: 9,
+    benefitCostRatio: 2,
+  };
+  await db.query(
+    `INSERT INTO rvn_roi_calculation_runs(
+       run_id,case_id,organization_id,engine_version,policy_version_stamp,status,input_snapshot,input_hash,
+       total_costs,total_financial_benefits,simple_roi,npv,irr_pct,irr_status,payback_periods,
+       discounted_payback_periods,benefit_cost_ratio,period_series,initiated_by,started_at,completed_at,created_at)
+     VALUES($1,$2,$3,'results-owner-fixture-v1','results-owner-policy-v1','completed',$4,$5,
+       100000,200000,1,85000,18,'computed',8,9,2,'[]',$6,$7,$7,$7)`,
+    [
+      I.roiRun,
+      I.roi,
+      I.org,
+      JSON.stringify({ fixture: FIXTURE_ID, baselineId: I.baseline }),
+      crypto.createHash('sha256').update(`${FIXTURE_ID}:${I.roiRun}`).digest('hex'),
+      I.owner,
+      F,
+    ]
+  );
+  const approvalPayload = {
+    case: { caseId: I.roi, organizationId: I.org, status: 'approved' },
+    baseline: { baselineId: I.baseline, caseId: I.roi },
+    calculationPolicy: { caseId: I.roi, requiredMetrics: ['roi', 'npv', 'irr'] },
+    assumptions: [],
+    costLines: [],
+    benefitLines: [],
+    benefitEvidenceLinks: [],
+    scenarios: [],
+    scenarioOverrides: [],
+    decisionCalculationRun: roiRunPayload,
+  };
+  await db.query(
+    `INSERT INTO rvn_roi_approval_snapshots(
+       snapshot_id,case_id,organization_id,sequence_number,decision_calculation_run_id,
+       approved_by,approved_at,content_hash,snapshot_payload,created_at)
+     VALUES($1,$2,$3,1,$4,$5,$6,$7,$8,$6)`,
+    [
+      I.approvalSnap,
+      I.roi,
+      I.org,
+      I.roiRun,
+      I.admin,
+      F,
+      crypto.createHash('sha256').update(JSON.stringify(approvalPayload)).digest('hex'),
+      JSON.stringify(approvalPayload),
+    ]
   );
   await db.query(
     `INSERT INTO rvn_roi_actual_entries(actual_entry_id,case_id,organization_id,entry_type,period_start,period_end,amount,currency,data_quality_status,source,evidence_refs,notes,recorded_by,recorded_at,verified_by,verified_at) VALUES($1,$2,$3,'observation','2026-01-01','2026-06-30',125000,'PLN','verified','results_actual','[]','Realized benefit observation',$4,$5,$6,$5)`,
@@ -190,6 +332,17 @@ try {
   await db.query(
     `INSERT INTO rvn_roi_actual_snapshots(actual_snapshot_id,case_id,organization_id,sequence_number,as_of_period_end,published_by,published_at,total_actual_costs,total_actual_financial_benefits,actual_simple_roi,periods_with_actual_count,periods_expected_count,coverage_pct,unverified_entry_count,disputed_entry_count,entry_ids_included,created_at) VALUES($1,$2,$3,1,'2026-06-30',$4,$5,70000,125000,0.7857,6,6,100,0,0,$6,$5)`,
     [I.actualSnap, I.roi, I.org, I.owner, F, JSON.stringify([I.actual])]
+  );
+  await db.query(
+    `UPDATE rvn_roi_cases
+        SET original_approved_snapshot_id=$1,
+            latest_approved_snapshot_id=$1,
+            decision_calculation_run_id=$2,
+            current_actual_snapshot_id=$3,
+            approved_by=$4,
+            approved_at=$5
+      WHERE case_id=$6 AND organization_id=$7`,
+    [I.approvalSnap, I.roiRun, I.actualSnap, I.admin, F, I.roi, I.org]
   );
   await db.query(
     `INSERT INTO rvn_roi_finance_links(link_id,case_id,organization_id,finance_artifact_type,finance_artifact_id,finance_version_id,mapping_version,source,as_of,semantic_unit,currency,link_purpose,linked_by,linked_at,created_by,created_at,updated_at) VALUES($1,$2,$3,'business_version','finance-bv-owner-001','finance-wr-owner-001',1,'approved_finance_snapshot',$4,'benefit','PLN','reconciliation',$5,$4,$5,$4,$4)`,
@@ -230,6 +383,12 @@ try {
   await db.query(
     `INSERT INTO okr_vnext_sets(set_id,organization_id,program_id,cycle_id,scope_type,scope_id,owner_user_id,reviewer_user_id,title,status,current_version,approved_version,overall_progress,overall_confidence,attention_state,last_checkin_at,created_by,created_at,updated_at) VALUES($1,$2,$3,$4,'company',$2,$5,$6,'Company Results Q3','review',1,1,0.72,'medium','watch',$7,$5,$7,$7)`,
     [I.set, I.org, I.program, I.cycle, I.owner, I.admin, F]
+  );
+  await db.query(
+    `INSERT INTO rvn_platform_resource_visibility(
+       resource_type,resource_id,organization_id,visibility_mode,policy_id,owner_user_id)
+     VALUES('okr_set',$1,$2,'OPEN_ORG',$3,$4)`,
+    [I.set, I.org, I.okrVisibilityPolicy, I.owner]
   );
   await db.query(
     `INSERT INTO okr_vnext_objectives(objective_id,set_id,organization_id,owner_user_id,title,description,ambition_type,status,progress,progress_calc_policy_version_id,progress_calc_reason,confidence,confidence_calc_policy_version_id,confidence_calc_reason,created_by,created_at,updated_at) VALUES($1,$2,$3,$4,'Improve delivery predictability','Customer-facing operational outcome','committed','active',0.72,$5,'weighted KR rollup','medium',$5,'lowest KR',$4,$6,$6)`,
@@ -355,9 +514,19 @@ try {
        (SELECT count(*)::int FROM rvn_roi_actual_entries WHERE case_id=$3) actuals,
        (SELECT count(*)::int FROM rvn_roi_finance_reconciliations WHERE case_id=$3) reconciliations,
        (SELECT count(*)::int FROM rvn_roi_post_investment_reviews WHERE case_id=$3) pirs,
+       (SELECT count(*)::int FROM rvn_roi_approval_snapshots
+         WHERE snapshot_id=$8 AND case_id=$3
+           AND (snapshot_payload->'decisionCalculationRun'->>'totalFinancialBenefits')::numeric=200000) approval_snapshots,
+       (SELECT count(*)::int FROM rvn_roi_cases
+         WHERE case_id=$3 AND latest_approved_snapshot_id=$8
+           AND current_actual_snapshot_id=$9 AND decision_calculation_run_id=$10) roi_pointers,
        (SELECT count(*)::int FROM okr_vnext_key_results WHERE set_id=$4) key_results,
        (SELECT count(*)::int FROM okr_vnext_checkins WHERE set_id=$4) checkins,
        (SELECT count(*)::int FROM okr_vnext_reviews WHERE set_id=$4) reviews,
+       (SELECT count(*)::int FROM rvn_platform_resource_visibility
+         WHERE organization_id=$5 AND resource_id=ANY($6::text[])) visibility_rows,
+       (SELECT count(*)::int FROM rvn_roi_visibility_governance
+         WHERE organization_id=$5 AND published_by=$7) roi_governance,
        (SELECT count(*)::int
           FROM rvn_execution_signal_receipts r
           JOIN execution_results_signal_outbox s ON s.signal_id=r.source_signal_id
@@ -378,7 +547,18 @@ try {
           LEFT JOIN case_core c ON c.case_id=r.source_case_id
          WHERE r.receipt_id=$2
            AND (s.signal_id IS NULL OR l.link_id IS NULL OR i.id IS NULL OR c.case_id IS NULL)) execution_orphans`,
-    [I.kpi, I.receipt, I.roi, I.set]
+    [
+      I.kpi,
+      I.receipt,
+      I.roi,
+      I.set,
+      I.org,
+      [I.kpi, I.roi, I.set],
+      I.owner,
+      I.approvalSnap,
+      I.actualSnap,
+      I.roiRun,
+    ]
   );
   const expected = {
     kpi_points: 2,
@@ -387,9 +567,13 @@ try {
     actuals: 1,
     reconciliations: 1,
     pirs: 1,
+    approval_snapshots: 1,
+    roi_pointers: 1,
     key_results: 1,
     checkins: 1,
     reviews: 1,
+    visibility_rows: 3,
+    roi_governance: 1,
     execution_graph: 1,
     execution_orphans: 0,
   };
@@ -397,13 +581,21 @@ try {
     if (Number(rb.rows[0]?.[k]) !== v) throw new Error(`Readback failed: ${k}`);
   const manifest = {
     schemaVersion: 1,
-    fixture: 'wave3-results-owner-review-v1',
-    fixtureState: 'READY_TO_SEED',
+    fixture: FIXTURE_NAME,
+    fixtureId: FIXTURE_ID,
+    ownershipState: 'FINAL',
+    ownershipNonce,
+    marker: {
+      table: 'wave3_owner_fixture_markers',
+      fixtureId: FIXTURE_ID,
+      ownershipNonce,
+    },
+    fixtureState: 'SEEDED_AND_READBACK_VERIFIED',
     ownerReviewReady: false,
     generatedAt: F,
     databaseName: dbName,
     deepLinkVerified: false,
-    route: '/results',
+    route: '/results?ff_wave3ResultsOwnerReview=1',
     flags: {
       resultsVNext: 'REQUIRED_RUNTIME_CONFIRMATION',
       legacyWriter: 'DISABLED',
@@ -445,6 +637,13 @@ try {
       memberAndForeignSeeded: true,
       deniedRequestsExecuted: false,
       canonicalJourneyExecuted: false,
+    },
+    canonicalReadSurface: {
+      kpi: '/api/vnext/results/kpi',
+      roi: '/api/vnext/results/roi/cases',
+      okr: '/api/vnext/results/okr/company',
+      expectedRowsEach: 1,
+      visibilityPolicy: 'EXPLICIT_AND_READBACK_VERIFIED',
     },
     readback: expected,
   };

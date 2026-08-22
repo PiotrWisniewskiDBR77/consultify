@@ -21,6 +21,10 @@ const tMock = (
     return ['Mock item A', 'Mock item B'];
   }
 
+  if (typeof options?.defaultValue === 'string') {
+    return options.defaultValue.replace('{{tier}}', String(options.tier ?? ''));
+  }
+
   return fallback || key;
 };
 
@@ -109,6 +113,6 @@ describe('Partner lifecycle canon surface', () => {
     });
 
     // The active commercial tier is reflected back in the lifecycle.
-    expect(screen.getByText(/Aktualny poziom: professional/i)).toBeInTheDocument();
+    expect(screen.getByText(/Current tier: professional/i)).toBeInTheDocument();
   });
 });

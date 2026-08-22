@@ -1,6 +1,7 @@
 const { Client } = require('pg');
 
-const DATABASE_URL = 'postgresql://postgres:uIvWKxAeMRYvlJIhbuHmrYVjOvezCRjz@centerbeam.proxy.rlwy.net:37823/railway';
+const DATABASE_URL = process.env.DATABASE_URL;
+if (!DATABASE_URL) throw new Error('DATABASE_URL is required');
 const { v4: uuidv4 } = require('uuid');
 
 async function main() {

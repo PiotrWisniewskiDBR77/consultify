@@ -242,6 +242,78 @@ describe('adminP32Routes', () => {
     expect(getLogs).toHaveBeenCalledWith(expect.objectContaining({ organizationId: 'org-1' }));
   });
 
+  it('projects canonical IAM audits with legacy logs and keeps list, stats, and export aligned', async () => {
+    const canonical = {
+      id: 'iam-audit-1',
+      organization_id: 'org-1',
+      project_id: null,
+      actor_id: 'user-1',
+      action: 'role_change',
+      resource_type: 'organization_member',
+      resource_id: 'user-2',
+      before_json: JSON.stringify({ role: 'MEMBER' }),
+      after_json: JSON.stringify({ role: 'ADMIN' }),
+      created_at: '2026-08-22T08:00:00.000Z',
+    };
+    const legacy = {
+      id: 'legacy-audit-1',
+      organization_id: 'org-1',
+      admin_id: 'user-1',
+      action_type: 'update_security_policy',
+      resource_type: 'security_policy',
+      metadata_json: null,
+      risk_score: 20,
+      risk_level: 'low',
+      status: 'logged',
+      created_at: '2026-08-22T07:00:00.000Z',
+    };
+    dbGet.mockResolvedValue({ role: 'OWNER', status: 'ACTIVE' });
+    getLogs.mockResolvedValue([legacy]);
+    dbAll.mockResolvedValue([canonical]);
+    const app = createApp();
+
+    const list = await request(app).get('/api/admin/audit-logs');
+    const stats = await request(app).get('/api/admin/audit-logs/stats');
+    const exported = await request(app).get('/api/admin/audit-logs/export');
+
+    expect(list.status).toBe(200);
+    expect(list.body.logs.map((row: any) => row.id)).toEqual(['iam-audit-1', 'legacy-audit-1']);
+    expect(list.body.logs[0]).toMatchObject({
+      admin_id: 'user-1',
+      action_type: 'role_change',
+      organization_id: 'org-1',
+      risk_level: 'high',
+      status: 'logged',
+    });
+    expect(stats.body).toEqual({ totalLogs: 2, unresolvedCount: 2, highRiskCount: 1 });
+    expect(exported.status).toBe(200);
+    expect(exported.text).toContain('"iam-audit-1","user-1","role_change"');
+    expect(exported.text).toContain(
+      '"legacy-audit-1","user-1","update_security_policy"'
+    );
+  });
+
+  it('does not admit a foreign canonical IAM audit into the tenant projection', async () => {
+    dbGet.mockResolvedValue({ role: 'OWNER', status: 'ACTIVE' });
+    getLogs.mockResolvedValue([]);
+    dbAll.mockResolvedValue([
+      {
+        id: 'foreign-event',
+        organization_id: 'org-2',
+        actor_id: 'foreign-user',
+        action: 'member_removed',
+        resource_type: 'organization_member',
+        resource_id: 'foreign-target',
+        created_at: '2026-08-22T08:00:00.000Z',
+      },
+    ]);
+
+    const res = await request(createApp()).get('/api/admin/audit-logs');
+
+    expect(res.status).toBe(200);
+    expect(res.body.logs).toEqual([]);
+  });
+
   it('applies the same authoritative membership gate before the health admin role', async () => {
     const healthRouter = (await import('../admin/health-panel.routes.js')).default;
     const app = express();

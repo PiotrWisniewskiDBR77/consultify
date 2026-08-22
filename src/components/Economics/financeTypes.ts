@@ -17,6 +17,16 @@ export type FinanceRowBase = PreviewableItem & {
   kind: FinanceKind;
   status: FinanceStatus;
   updatedAt: string;
+  canonicalArtifactId?: string;
+  canonicalBusinessVersionId?: string;
+  canonicalArtifactType?:
+    | 'STATEMENT_PACK'
+    | 'HISTORICAL_ANALYSIS'
+    | 'BASELINE_MODEL'
+    | 'PREDICTION_SCENARIO'
+    | 'VALUATION_CASE';
+  canonicalFreshness?: string;
+  canonicalVersion?: number;
 };
 
 export type FinanceModelRow = FinanceRowBase & {

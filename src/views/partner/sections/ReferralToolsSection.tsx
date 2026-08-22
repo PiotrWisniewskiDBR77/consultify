@@ -181,7 +181,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
       title: t('partner.referrals.title', 'My Referral Links & Codes'),
       subtitle: t(
         'partner.referrals.subtitle',
-        'Share your unique links and codes to earn commissions'
+        'Share unique links and codes to record governed referrals'
       ),
       runtimeTitle: t('partner.referrals.v8RuntimeTitle', 'V8 Referral Summary'),
       runtimeSubtitle: t(

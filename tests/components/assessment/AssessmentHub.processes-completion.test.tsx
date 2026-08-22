@@ -28,11 +28,11 @@
  * flag state is irrelevant to what's under test here.
  */
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { apiMock } = vi.hoisted(() => ({
+const { apiMock, listMethodSessionsMock } = vi.hoisted(() => ({
   apiMock: {
     listAssessments: vi.fn(),
     getAssessmentReports: vi.fn(),
@@ -42,9 +42,13 @@ const { apiMock } = vi.hoisted(() => ({
     delete: vi.fn(),
     getUsers: vi.fn(),
   },
+  listMethodSessionsMock: vi.fn(),
 }));
 
 vi.mock('../../../src/services/api', () => ({ Api: apiMock }));
+vi.mock('../../../src/method-core/api/methodCoreApi', () => ({
+  listSessions: listMethodSessionsMock,
+}));
 
 vi.mock('@/contexts/FeatureFlagsContext', () => ({
   useFeatureFlagsContext: () => ({ isEnabled: () => false }),
@@ -88,9 +92,20 @@ describe('AssessmentHub — Processes list reads server-derived completion (Code
     apiMock.get.mockResolvedValue([]);
     apiMock.listReportImports.mockResolvedValue({ data: [] });
     apiMock.getUsers.mockResolvedValue([]);
+    listMethodSessionsMock.mockResolvedValue({ sessions: [], total: 0 });
   });
 
-  it('renders 42% (not 0%) for a DRD assessment whose list-item carries completion_percent: 42', async () => {
+  it('renders canonical DRD from Method Core and ignores a conflicting legacy completion row', async () => {
+    listMethodSessionsMock.mockResolvedValue({
+      sessions: [{
+        id: 'asm-method-1', organizationId: 'org-1', projectId: null,
+        module: 'assessment', methodPackId: 'drd', methodPackVersion: '2.0.0-methodpack.1',
+        state: 'active', domainStage: null, mode: 'guided_manual', ownerUserId: 'owner-1',
+        createdAt: '2026-04-11T08:00:00.000Z', updatedAt: '2026-04-11T08:00:00.000Z',
+        version: 1, frozenSnapshotId: null, revisionOfSessionId: null, hasFrozenOutput: false,
+      }],
+      total: 1,
+    });
     apiMock.listAssessments.mockResolvedValue({
       items: [
         {
@@ -116,9 +131,8 @@ describe('AssessmentHub — Processes list reads server-derived completion (Code
       </MemoryRouter>
     );
 
-    expect(await screen.findByText('DRD with real completion')).toBeInTheDocument();
-    expect(screen.getByText('42%')).toBeInTheDocument();
-    expect(screen.queryByText('0%')).not.toBeInTheDocument();
+    expect(await screen.findByText('DRD · asm-meth')).toBeInTheDocument();
+    expect(screen.queryByText('DRD with real completion')).not.toBeInTheDocument();
   });
 
   it('falls back to the raw snake_case completion_percent when camelCase is absent (non-DRD / DRD-without-areas-yet row shape)', async () => {
@@ -148,7 +162,7 @@ describe('AssessmentHub — Processes list reads server-derived completion (Code
     expect(screen.getByText('65%')).toBeInTheDocument();
   });
 
-  it('regression guard: a row with no completion field at all still renders 0% (not a crash)', async () => {
+  it('regression guard: a legacy DRD row without completion never masquerades as canonical', async () => {
     apiMock.listAssessments.mockResolvedValue({
       items: [
         {
@@ -167,7 +181,7 @@ describe('AssessmentHub — Processes list reads server-derived completion (Code
       </MemoryRouter>
     );
 
-    expect(await screen.findByText('Brand new assessment')).toBeInTheDocument();
-    expect(screen.getByText('0%')).toBeInTheDocument();
+    await waitFor(() => expect(apiMock.listAssessments).toHaveBeenCalled());
+    expect(screen.queryByText('Brand new assessment')).not.toBeInTheDocument();
   });
 });

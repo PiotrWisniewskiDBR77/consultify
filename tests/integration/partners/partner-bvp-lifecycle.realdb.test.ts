@@ -2,9 +2,9 @@
  * PRT-BVP-001 — one real PostgreSQL partner lifecycle.
  *
  * Proves registration/connection, certification, durable referral identity,
- * attribution, tenant isolation, retry/concurrency and a cold read through a
- * separately opened database connection. Fixtures use reserved UUIDs and are
- * removed after the suite; no shared/demo organization is touched.
+ * economics-policy refusal, tenant isolation, retry/concurrency and a cold
+ * read through a separately opened database connection. Fixtures use reserved
+ * UUIDs and are removed after the suite; no shared/demo organization is touched.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Client } from 'pg';
@@ -22,7 +22,6 @@ let referral: typeof import('../../../server/src/services/partnerReferralService
 let certification: typeof import('../../../server/src/services/partnerCertificationService.ts');
 let resolvePartnerOrg: typeof import('../../../server/src/services/partnerOrgResolution.ts');
 let stableIdentity: { referralCode: string; referralLinkSlug: string };
-let attributionId: string;
 let certificateId: string;
 
 async function cleanup() {
@@ -179,42 +178,33 @@ describe.sequential('PRT-BVP-001 partner lifecycle on real PostgreSQL', () => {
     certificateId = result.certificateId!;
   });
 
-  it('attributes the registered customer exactly once and reads it only in the owning partner scope', async () => {
-    const created = await referral.createAttribution({
-      partnerOrgId: PARTNER_A,
-      organizationId: CUSTOMER_A,
-      attributionType: 'REFERRAL_LINK',
-      referralCodeUsed: stableIdentity.referralCode,
-      commissionRatePercent: 0,
-      utmSource: 'partner-bvp-proof',
-    });
-    attributionId = created.id;
-    expect(created).toEqual(
-      expect.objectContaining({
-        partnerOrgId: PARTNER_A,
-        organizationId: CUSTOMER_A,
-        status: 'PENDING',
-        referralCodeUsed: stableIdentity.referralCode,
-      })
-    );
-    // The completed foundation certification raises the effective tier to
-    // BRONZE, whose canonical repaired lookup is 12%.
-    expect(Number(created.commissionRatePercent)).toBe(12);
-
-    const own = await referral.getPartnerAttributions(PARTNER_A);
-    const foreign = await referral.getPartnerAttributions(PARTNER_B);
-    expect(own.map((row) => row.id)).toContain(attributionId);
-    expect(foreign.map((row) => row.id)).not.toContain(attributionId);
-
-    await expect(
+  it('refuses economic attribution before SQL and leaves both tenant scopes empty', async () => {
+    const attempt = () =>
       referral.createAttribution({
         partnerOrgId: PARTNER_A,
         organizationId: CUSTOMER_A,
         attributionType: 'REFERRAL_LINK',
         referralCodeUsed: stableIdentity.referralCode,
-        commissionRatePercent: 10,
-      })
-    ).rejects.toThrow(/already exists/);
+        commissionRatePercent: 0,
+        utmSource: 'partner-bvp-proof',
+      });
+    await expect(attempt()).rejects.toMatchObject({
+      code: 'PARTNER_ECONOMICS_POLICY_DISABLED',
+      decision: 'AMD-PRT-ECONOMICS-002',
+      operation: 'commission',
+    });
+    await expect(attempt()).rejects.toMatchObject({
+      code: 'PARTNER_ECONOMICS_POLICY_DISABLED',
+    });
+
+    await expect(referral.getPartnerAttributions(PARTNER_A)).resolves.toEqual([]);
+    await expect(referral.getPartnerAttributions(PARTNER_B)).resolves.toEqual([]);
+    const rows = await sql.query(
+      `SELECT count(*)::int AS count FROM partner_attributions
+        WHERE partner_org_id IN ($1,$2) OR organization_id=$3`,
+      [PARTNER_A, PARTNER_B, CUSTOMER_A]
+    );
+    expect(rows.rows[0]?.count).toBe(0);
   });
 
   it('rejects inactive partner codes instead of fabricating eligibility', async () => {
@@ -225,20 +215,18 @@ describe.sequential('PRT-BVP-001 partner lifecycle on real PostgreSQL', () => {
     await sql.query(`UPDATE partner_organizations SET status='active' WHERE id=$1`, [PARTNER_A]);
   });
 
-  it('cold-reopens durable connection, certification, code and attribution through a new PG connection', async () => {
+  it('cold-reopens durable connection, certification and code with zero attribution rows', async () => {
     const cold = new Client({ connectionString: DATABASE_URL });
     await cold.connect();
     try {
       const reopened = await cold.query(
         `SELECT po.id AS partner_id, po.referral_code, po.referral_link_slug,
-                pu.user_id, pc.certificate_id, pc.status AS certification_status,
-                pa.id AS attribution_id, pa.organization_id, pa.referral_code_used
+                pu.user_id, pc.certificate_id, pc.status AS certification_status
          FROM partner_organizations po
          JOIN partner_users pu ON pu.partner_org_id=po.id AND pu.status='active'
          JOIN partner_certifications pc ON pc.partner_org_id=po.id AND pc.user_id=pu.user_id
-         JOIN partner_attributions pa ON pa.partner_org_id=po.id
-         WHERE po.id=$1 AND pc.certificate_id=$2 AND pa.id=$3`,
-        [PARTNER_A, certificateId, attributionId]
+         WHERE po.id=$1 AND pc.certificate_id=$2`,
+        [PARTNER_A, certificateId]
       );
       expect(reopened.rows).toHaveLength(1);
       expect(reopened.rows[0]).toEqual(
@@ -249,11 +237,13 @@ describe.sequential('PRT-BVP-001 partner lifecycle on real PostgreSQL', () => {
           referral_link_slug: stableIdentity.referralLinkSlug,
           certificate_id: certificateId,
           certification_status: 'completed',
-          attribution_id: attributionId,
-          organization_id: CUSTOMER_A,
-          referral_code_used: stableIdentity.referralCode,
         })
       );
+      const attributionRows = await cold.query(
+        `SELECT count(*)::int AS count FROM partner_attributions WHERE partner_org_id=$1`,
+        [PARTNER_A]
+      );
+      expect(attributionRows.rows[0]?.count).toBe(0);
     } finally {
       await cold.end();
     }

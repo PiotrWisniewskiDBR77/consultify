@@ -6,8 +6,8 @@
  * No cw-local/shared DB, browser, remote provider or production runtime.
  */
 import { spawnSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
-import { existsSync, statSync, writeFileSync } from 'node:fs';
+import { createHash, randomBytes } from 'node:crypto';
+import { existsSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import bcrypt from 'bcryptjs';
 import pg from 'pg';
 
@@ -17,7 +17,8 @@ const COMMAND = process.argv[2] || 'readback',
   PASSWORD = process.env.EXE_OWNER_FIXTURE_PASSWORD,
   MANIFEST_PATH = process.env.EXE_OWNER_FIXTURE_MANIFEST || '';
 const PREFIX = 'consultify_w3_execution_owner_',
-  TEMPLATE_DB = 'consultify_audits_20260813',
+  FIXTURE_ID = 'W3-EXECUTION-OWNER-v1',
+  FIXTURE_NAME = 'wave3-execution-owner-review-v1',
   LOCAL_HOSTS = new Set(['127.0.0.1', 'localhost', '::1']),
   MUTATING = new Set(['provision', 'seed', 'reset', 'drop']);
 const IDS = Object.freeze({
@@ -32,11 +33,13 @@ const IDS = Object.freeze({
   project: 'w3-exe-project-v1',
   initiative: 'w3-exe-initiative-v1',
   case: 'w3-exe-case-v1',
+  handoff: 'w3-exe-handoff-v1',
   artifact: 'w3-exe-artifact-v1',
   budget: 'w3-exe-budget-v1',
   intakeKey: 'w3-exe-intake-v1',
   evidenceKey: 'w3-exe-evidence-v1',
   signalKey: 'w3-exe-signal-v1',
+  v8Flag: 'w3-exe-owner-v8-workspace-v1',
 });
 const DIGEST = createHash('sha256')
   .update('Owner-review delivery evidence: pilot completed within approved PLN 120000 budget.')
@@ -76,65 +79,35 @@ async function maintenance(u) {
 async function provision(u, db) {
   const a = await maintenance(u);
   try {
-    if (!(await a.query('SELECT 1 FROM pg_database WHERE datname=$1', [TEMPLATE_DB])).rowCount)
-      fail('fixed local template absent');
     if ((await a.query('SELECT 1 FROM pg_database WHERE datname=$1', [db])).rowCount)
       fail('database already exists');
-    await a.query(`CREATE DATABASE ${db} TEMPLATE ${TEMPLATE_DB}`);
+    await a.query(`CREATE DATABASE ${db}`);
   } finally {
     await a.end();
   }
-  const ms = [
-    'server/migrations/20260809_case_workspace_case_core.sql',
-    'server/migrations/20260809_case_workspace_artifact_links.sql',
-    'server/migrations/20260908_execution_bvp_spine.sql',
-    'server/migrations/20260917_results_execution_signal_ingress.sql',
-    'server/migrations/20260927_runtime_v1_execution_identity_seam.sql',
-    'server/migrations/20261026_execution_spine_authority.sql',
-    'server/migrations/20261034_execution_budget_delete_commands.sql',
-  ];
-  for (const m of ms) {
-    const r = spawnSync(
-      '/opt/homebrew/opt/postgresql@15/bin/psql',
-      ['-v', 'ON_ERROR_STOP=1', '-d', u.toString(), '-f', m],
-      { cwd: process.cwd(), stdio: 'inherit', env: { ...process.env, PGPASSWORD: u.password } }
-    );
-    if (r.status !== 0) fail(`schema migration failed: ${m}`);
-  }
-  // The full reliability migration also alters Closure/Runtime-v1 tables that
-  // are intentionally outside this bounded fixture. Apply only its additive
-  // Execution-outbox columns/constraint required by the canonical ingress.
-  const fixtureDb = new pg.Client({ connectionString: u.toString() });
-  await fixtureDb.connect();
-  try {
-    await fixtureDb.query(`ALTER TABLE execution_results_signal_outbox
-      ADD COLUMN IF NOT EXISTS max_attempts INTEGER NOT NULL DEFAULT 5,
-      ADD COLUMN IF NOT EXISTS dead_lettered_at TIMESTAMPTZ`);
-    await fixtureDb.query(`ALTER TABLE execution_results_signal_outbox
-      DROP CONSTRAINT IF EXISTS execution_results_signal_outbox_delivery_status_check`);
-    await fixtureDb.query(`ALTER TABLE execution_results_signal_outbox
-      ADD CONSTRAINT execution_results_signal_outbox_delivery_status_check
-      CHECK (delivery_status IN ('PENDING','PROCESSING','DELIVERED','FAILED','DEAD_LETTER'))`);
-  } finally {
-    await fixtureDb.end();
-  }
-  console.log(
-    JSON.stringify({
-      command: 'provision',
-      database: db,
-      template: TEMPLATE_DB,
-      migrations: ms.length,
-    })
-  );
+  const migrated=spawnSync('npm',['run','db:migrate:strict'],{cwd:process.cwd(),stdio:'inherit',env:{...process.env,DATABASE_URL:u.toString(),DB_TYPE:'postgres',NODE_ENV:'test'}});
+  if(migrated.status!==0){const cleanup=await maintenance(u);try{await cleanup.query(`DROP DATABASE ${db}`);}finally{await cleanup.end();}fail('exact strict migration chain failed; new database removed');}
+  console.log(JSON.stringify({command:'provision',database:db,migrationMode:'exact-current-strict'}));
 }
 async function reset(c) {
+  const immutableReceipts = await c.query(
+    'SELECT count(*)::int n FROM rvn_execution_signal_receipts WHERE organization_id=ANY($1)',
+    [[IDS.org, IDS.foreignOrg]]
+  );
+  if (immutableReceipts.rows[0].n !== 0)
+    fail('immutable Results receipts exist; preserve ledger and use manifest-bound drop + provision');
   await c.query('BEGIN');
   try {
-    await c.query('ALTER TABLE rvn_execution_signal_receipts DISABLE TRIGGER USER');
-    await c.query('DELETE FROM rvn_execution_signal_receipts WHERE organization_id=ANY($1)', [
-      [IDS.org, IDS.foreignOrg],
-    ]);
-    await c.query('ALTER TABLE rvn_execution_signal_receipts ENABLE TRIGGER USER');
+    await c.query('DELETE FROM v8.v8_feature_flags WHERE flag_id=$1', [IDS.v8Flag]);
+    await c.query(
+      `DELETE FROM ie_aggregate_relations WHERE organization_id=$1
+       AND (source_id=ANY($2) OR target_id=ANY($2))`,
+      [IDS.org, [IDS.initiative, IDS.case, IDS.handoff]]
+    );
+    await c.query(
+      `DELETE FROM ie_aggregate_state WHERE organization_id=$1 AND aggregate_id=ANY($2)`,
+      [IDS.org, [IDS.initiative, IDS.case, IDS.handoff]]
+    );
     for (const t of [
       'execution_results_signal_outbox',
       'execution_delivery_evidence',
@@ -173,6 +146,11 @@ async function reset(c) {
   }
 }
 async function seed(c) {
+  await c.query(`CREATE TABLE IF NOT EXISTS wave3_owner_fixture_markers(fixture_id text PRIMARY KEY,ownership_nonce text NOT NULL,database_name text NOT NULL,created_at timestamptz NOT NULL DEFAULT now())`);
+  const databaseName=qualified().db;
+  const ownership=await c.query('SELECT ownership_nonce,database_name FROM wave3_owner_fixture_markers WHERE fixture_id=$1',[FIXTURE_ID]);
+  if(ownership.rowCount&&ownership.rows[0].database_name!==databaseName) fail('durable marker database mismatch');
+  if(!ownership.rowCount) await c.query('INSERT INTO wave3_owner_fixture_markers VALUES($1,$2,$3,now())',[FIXTURE_ID,randomBytes(32).toString('hex'),databaseName]);
   const e = await c.query(
     'SELECT count(*)::int n FROM execution_case_links WHERE organization_id=$1 AND intake_idempotency_key=$2',
     [IDS.org, IDS.intakeKey]
@@ -214,7 +192,7 @@ async function seed(c) {
       [IDS.initiative, IDS.org, IDS.project, IDS.owner]
     );
     await c.query(
-      `INSERT INTO case_core(case_id,organization_id,project_id,contracted_closure_type,created_by_actor_id,case_status) VALUES($1,$2,$3,'DELIVERY_COMPLETED',$4,'ACTIVE')`,
+      `INSERT INTO case_core(case_id,organization_id,project_id,case_name,contracted_closure_type,created_by_actor_id,case_status) VALUES($1,$2,$3,'Customer pilot execution case','DELIVERY_COMPLETED',$4,'ACTIVE')`,
       [IDS.case, IDS.org, IDS.project, IDS.owner]
     );
     await c.query(
@@ -224,6 +202,76 @@ async function seed(c) {
     await c.query(
       `INSERT INTO budget_entries(id,organization_id,initiative_id,entry_type,cost_type,category,amount,currency,description,period_month,period_year,source,created_by,version) VALUES($1,$2,$3,'ACTUAL','OPEX','Pilot delivery',40000,'PLN','Approved pilot execution cost',9,2026,'manual',$4,1)`,
       [IDS.budget, IDS.org, IDS.initiative, IDS.admin]
+    );
+    await c.query(
+      `INSERT INTO v8.v8_feature_flags(flag_id,organization_id,module,enabled,updated_by)
+       VALUES($1,$2,'workspace',1,$3)`,
+      [IDS.v8Flag, IDS.org, IDS.owner]
+    );
+    await c.query(
+      `INSERT INTO ie_aggregate_state(organization_id,aggregate_type,aggregate_id,version,payload_json)
+       VALUES
+       ($1,'initiative',$2,3,$3::jsonb),
+       ($1,'handoff_package',$4,1,$5::jsonb),
+       ($1,'execution_case',$6,1,$7::jsonb)`,
+      [
+        IDS.org,
+        IDS.initiative,
+        JSON.stringify({
+          initiativeId: IDS.initiative,
+          projectId: IDS.project,
+          title: 'Customer pilot delivery',
+          problem: 'Deliver the approved customer pilot within the committed budget.',
+          proposedOutcome: 'Pilot accepted with traceable evidence and Results lineage.',
+          initiativeOwnerId: IDS.owner,
+          lifecycleState: 'EXECUTING',
+          handoffPackageId: IDS.handoff,
+          executionState: 'ACTIVE',
+          executionCaseId: IDS.case,
+        }),
+        IDS.handoff,
+        JSON.stringify({
+          handoffPackageId: IDS.handoff,
+          version: 1,
+          initiativeId: IDS.initiative,
+          executionManagerId: IDS.owner,
+          snapshot: {
+            scope: {
+              problem: 'Deliver the approved customer pilot within the committed budget.',
+              outcome: 'Customer pilot delivery',
+            },
+            baseline: { milestones: { acceptance: 'Customer acceptance review' } },
+            sourceVersions: { initiative: 3 },
+          },
+          createdAt: '2026-08-22T00:00:00.000Z',
+        }),
+        IDS.case,
+        JSON.stringify({
+          executionCaseId: IDS.case,
+          initiativeId: IDS.initiative,
+          projectId: IDS.project,
+          state: 'ACTIVE',
+          executionManagerId: IDS.owner,
+          handoffPackageId: IDS.handoff,
+          handoffPackageVersion: 1,
+          acceptedBaseline: {
+            scope: {
+              problem: 'Deliver the approved customer pilot within the committed budget.',
+              outcome: 'Customer pilot delivery',
+            },
+            baseline: { milestones: { acceptance: 'Customer acceptance review' } },
+            sourceVersions: { initiative: 3 },
+          },
+          gaps: [],
+          acceptedAt: '2026-08-22T00:00:00.000Z',
+        }),
+      ]
+    );
+    await c.query(
+      `INSERT INTO ie_aggregate_relations
+       (organization_id,relation_type,source_type,source_id,source_version,target_type,target_id,payload_json)
+       VALUES($1,'INITIATIVE_EXECUTION_CASE','initiative',$2,3,'execution_case',$3,$4::jsonb)`,
+      [IDS.org, IDS.initiative, IDS.case, JSON.stringify({ status: 'ACCEPT' })]
     );
     await c.query('COMMIT');
   } catch (err) {
@@ -306,6 +354,8 @@ async function seed(c) {
   return persist(await readback(c, false));
 }
 async function readback(c, emit = true) {
+  const ownership=await c.query('SELECT ownership_nonce,database_name FROM wave3_owner_fixture_markers WHERE fixture_id=$1',[FIXTURE_ID]);
+  if(ownership.rowCount!==1) fail('durable ownership marker absent or ambiguous');
   const r = await c.query(
     `SELECT e.status,e.version,e.work_ref,e.resource_ref,e.control_ref,e.report_ref,d.approval_status,d.content_digest,d.submitted_by,d.approved_by,s.delivery_status,s.attempt_count,s.payload_json,rr.source_initiative_id,rr.source_case_id,rr.observation_payload,b.amount,b.currency,b.version budget_version,i.status initiative_status,cc.case_status FROM execution_case_links e JOIN execution_delivery_evidence d ON d.execution_link_id=e.link_id JOIN execution_results_signal_outbox s ON s.execution_link_id=e.link_id JOIN rvn_execution_signal_receipts rr ON rr.source_signal_id=s.signal_id JOIN budget_entries b ON b.id=$3 JOIN initiatives i ON i.id=e.initiative_id JOIN case_core cc ON cc.case_id=e.case_id WHERE e.organization_id=$1 AND e.intake_idempotency_key=$2`,
     [IDS.org, IDS.intakeKey, IDS.budget]
@@ -316,8 +366,24 @@ async function readback(c, emit = true) {
     `SELECT u.id,u.organization_id,m.role,m.status FROM users u JOIN organization_members m ON m.user_id=u.id AND m.organization_id=u.organization_id WHERE u.id=ANY($1) ORDER BY u.id`,
     [[IDS.owner, IDS.admin, IDS.member, IDS.approver, IDS.revoked, IDS.foreignOwner]]
   );
+  const v8Flag = await c.query(
+    `SELECT enabled FROM v8.v8_feature_flags
+     WHERE flag_id=$1 AND organization_id=$2 AND module='workspace'`,
+    [IDS.v8Flag, IDS.org]
+  );
+  const canonicalCase = await c.query(
+    `SELECT version,payload_json FROM ie_aggregate_state
+     WHERE organization_id=$1 AND aggregate_type='execution_case' AND aggregate_id=$2`,
+    [IDS.org, IDS.case]
+  );
   const manifest = {
     schemaVersion: 'w3-execution-owner-v1',
+    fixture: FIXTURE_NAME,
+    fixtureId: FIXTURE_ID,
+    ownershipState: 'FINAL',
+    ownershipNonce: ownership.rows[0].ownership_nonce,
+    databaseName: ownership.rows[0].database_name,
+    marker: {table:'wave3_owner_fixture_markers',fixtureId:FIXTURE_ID,ownershipNonce:ownership.rows[0].ownership_nonce},
     deepLinks: { list: '/execution', case: `/execution/${IDS.case}` },
     deepLinkVerified: false,
     runtime: {
@@ -325,6 +391,7 @@ async function readback(c, emit = true) {
       sharedCwLocal: false,
       production: false,
       policyBoundariesPreserved: true,
+      canonicalUiSeedMode: 'deterministic-accepted-snapshot',
     },
     ids: { ...IDS },
     expected: {
@@ -367,7 +434,11 @@ async function readback(c, emit = true) {
     Number(x.amount) !== 40000 ||
     x.currency !== 'PLN' ||
     x.resource_ref !== `budget:${IDS.budget}` ||
-    personas.rowCount !== 6
+    personas.rowCount !== 6 ||
+    v8Flag.rowCount !== 1 ||
+    Number(v8Flag.rows[0].enabled) !== 1
+    || canonicalCase.rowCount !== 1
+    || canonicalCase.rows[0].payload_json?.state !== 'ACTIVE'
   )
     fail('canonical CAS/idempotency/Results lineage readback failed');
   if (emit) console.log(JSON.stringify(manifest, null, 2));
@@ -393,6 +464,34 @@ function persist(m) {
   return m;
 }
 async function drop(u, db) {
+  if (
+    !MANIFEST_PATH ||
+    !existsSync(MANIFEST_PATH) ||
+    (statSync(MANIFEST_PATH).mode & 0o777) !== 0o600
+  )
+    fail('drop requires exact existing 0600 manifest');
+  const receipt = JSON.parse(readFileSync(MANIFEST_PATH, 'utf8'));
+  if (
+    receipt.fixtureId !== FIXTURE_ID ||
+    receipt.fixture !== FIXTURE_NAME ||
+    receipt.ownershipState !== 'FINAL' ||
+    receipt.databaseName !== db ||
+    receipt.marker?.ownershipNonce !== receipt.ownershipNonce
+  )
+    fail('drop manifest ownership binding mismatch');
+  const owned = new pg.Client({ connectionString: u.toString() });
+  await owned.connect();
+  try {
+    const marker = await owned.query(
+      `SELECT database_name FROM wave3_owner_fixture_markers
+       WHERE fixture_id=$1 AND ownership_nonce=$2`,
+      [FIXTURE_ID, receipt.ownershipNonce]
+    );
+    if (marker.rowCount !== 1 || marker.rows[0].database_name !== db)
+      fail('drop durable marker mismatch');
+  } finally {
+    await owned.end();
+  }
   const a = await maintenance(u);
   try {
     await a.query(

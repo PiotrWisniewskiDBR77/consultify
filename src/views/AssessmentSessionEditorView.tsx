@@ -649,7 +649,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
     isLoading: permissionsLoading,
     requestAccess,
     refreshPermissions,
-  } = useAssessmentPermissions(assessmentId);
+  } = useAssessmentPermissions(assessmentId, { enabled: !mountDrdMethodWorkspace });
 
   const isGlobalAdmin = useMemo(() => {
     const r = String(currentUser?.role || '').toLowerCase();

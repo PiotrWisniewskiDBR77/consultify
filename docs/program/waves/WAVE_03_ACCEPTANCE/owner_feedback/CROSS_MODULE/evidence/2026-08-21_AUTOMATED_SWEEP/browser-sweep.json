@@ -1,0 +1,743 @@
+{
+  "generatedAt": "2026-08-21T20:49:23.962Z",
+  "runtime": {
+    "origin": "http://127.0.0.1:3940",
+    "reportedSha": "ad0766ac4c10",
+    "exactCurrent": false,
+    "viewport": {
+      "width": 1055,
+      "height": 998
+    }
+  },
+  "entries": [
+    {
+      "id": "01_CHAT",
+      "path": "/chat",
+      "url": "http://127.0.0.1:3940/chat",
+      "metrics": {
+        "buttons": 50,
+        "emptyText": false,
+        "errorText": false,
+        "h1": [],
+        "h2": [],
+        "horizontalOverflow": false,
+        "links": 2,
+        "loadingText": false,
+        "textLength": 905,
+        "title": "AI Chat — Consultify",
+        "viewport": {
+          "height": 998,
+          "width": 1055
+        }
+      },
+      "file": "/Users/piotrwisniewski/Developer/Consultify/docs/program/waves/WAVE_03_ACCEPTANCE/owner_feedback/CROSS_MODULE/evidence/2026-08-21_AUTOMATED_SWEEP/01_CHAT.png"
+    },
+    {
+      "id": "02_MY_WORK",
+      "path": "/my-work",
+      "url": "http://127.0.0.1:3940/my-work",
+      "metrics": {
+        "buttons": 49,
+        "emptyText": false,
+        "errorText": false,
+        "h1": [],
+        "h2": [],
+        "horizontalOverflow": false,
+        "links": 1,
+        "loadingText": false,
+        "textLength": 539,
+        "title": "My Work — Consultify",
+        "viewport": {
+          "height": 998,
+          "width": 1055
+        }
+      },
+      "file": "/Users/piotrwisniewski/Developer/Consultify/docs/program/waves/WAVE_03_ACCEPTANCE/owner_feedback/CROSS_MODULE/evidence/2026-08-21_AUTOMATED_SWEEP/02_MY_WORK.png"
+    },
+    {
+      "id": "03_INTERVIEW",
+      "path": "/interview",
+      "url": "http://127.0.0.1:3940/interview",
+      "metrics": {
+        "buttons": 41,
+        "emptyText": false,
+        "errorText": false,
+        "h1": [],
+        "h2": [],
+        "horizontalOverflow": false,
+        "links": 1,
+        "loadingText": true,
+        "textLength": 423,
+        "title": "Interview — Consultify",
+        "viewport": {
+          "height": 998,
+          "width": 1055
+        }
+      },
+      "file": "/Users/piotrwisniewski/Developer/Consultify/docs/program/waves/WAVE_03_ACCEPTANCE/owner_feedback/CROSS_MODULE/evidence/2026-08-21_AUTOMATED_SWEEP/03_INTERVIEW.png"
+    },
+    {
+      "id": "04_TOOLS",
+      "path": "/discovery-tools",
+      "url": "http://127.0.0.1:3940/discovery-tools",
+      "metrics": {
+        "buttons": 39,
+        "emptyText": false,
+        "errorText": false,
+        "h1": [],
+        "h2": [],
+        "horizontalOverflow": false,
+        "links": 1,
+        "loadingText": true,
+        "textLength": 427,
+        "title": "Discovery Tools — Consultify",
+        "viewport": {
+          "height": 998,
+          "width": 1055
+        }
+      },
+      "file": "/Users/piotrwisniewski/Developer/Consultify/docs/program/waves/WAVE_03_ACCEPTANCE/owner_feedback/CROSS_MODULE/evidence/2026-08-21_AUTOMATED_SWEEP/04_TOOLS.png"
+    },
+    {
+      "id": "05_ASSESSMENT",
+      "path": "/assessment",
+      "url": "http://127.0.0.1:3940/assessment",
+      "metrics": {
+        "buttons": 0,
+        "emptyText": false,
+        "errorText": false,
+        "h1": [],
+        "h2": [],
+        "horizontalOverflow": false,
+        "links": 0,
+        "loadingText": false,
+        "textLength": 19,
+        "title": "Consultify",
+        "viewport": {
+          "height": 998,
+          "width": 1055
+        }
+      },
+      "file": "/Users/piotrwisniewski/Developer/Consultify/docs/program/waves/WAVE_03_ACCEPTANCE/owner_feedback/CROSS_MODULE/evidence/2026-08-21_AUTOMATED_SWEEP/05_ASSESSMENT.png"
+    },
+    {
+      "id": "06_INITIATIVES",
+      "path": "/initiatives",
+      "url": "http://127.0.0.1:3940/initiatives",
+      "metrics": {
+        "buttons": 49,
+        "emptyText": false,
+        "errorText": false,
+        "h1": [],
+        "h2": [],
+        "horizontalOverflow": false,
+        "links": 1,
+        "loadingText": false,
+        "textLength": 596,
+        "title": "Consultify",
+        "viewport": {
+          "height": 998,
+          "width": 1055
+        }
+      },
+      "file": "/Users/piotrwisniewski/Developer/Consultify/docs/program/waves/WAVE_03_ACCEPTANCE/owner_feedback/CROSS_MODULE/evidence/2026-08-21_AUTOMATED_SWEEP/06_INITIATIVES.png"
+    },
+    {
+      "id": "07_EXECUTION",
+      "path": "/execution",
+      "url": "http://127.0.0.1:3940/execution?tab=list&view=table",
+      "metrics": {
+        "buttons": 51,
+        "emptyText": false,
+        "errorText": false,
+        "h1": [],
+        "h2": [],
+        "horizontalOverflow": false,
+        "links": 1,
+        "loadingText": false,
+        "textLength": 742,
+        "title": "Consultify",
+        "viewport": {
+          "height": 998,
+          "width": 1055
+        }
+      },
+      "file": "/Users/piotrwisniewski/Developer/Consultify/docs/program/waves/WAVE_03_ACCEPTANCE/owner_feedback/CROSS_MODULE/evidence/2026-08-21_AUTOMATED_SWEEP/07_EXECUTION.png"
+    },
+    {
+      "id": "08_MEETINGS",
+      "path": "/meeting",
+      "url": "http://127.0.0.1:3940/meeting",
+      "metrics": {
+        "buttons": 42,
+        "emptyText": false,
+        "errorText": false,
+        "h1": [],
+        "h2": [],
+        "horizontalOverflow": false,
+        "links": 1,
+        "loadingText": false,
+        "textLength": 572,
+        "title": "Consultify",
+        "viewport": {
+          "height": 998,
+          "width": 1055
+        }
+      },
+      "file": "/Users/piotrwisniewski/Developer/Consultify/docs/program/waves/WAVE_03_ACCEPTANCE/owner_feedback/CROSS_MODULE/evidence/2026-08-21_AUTOMATED_SWEEP/08_MEETINGS.png"
+    },
+    {
+      "id": "09_RESULTS",
+      "path": "/results",
+      "url": "http://127.0.0.1:3940/results",
+      "metrics": {
+        "buttons": 31,
+        "emptyText": false,
+        "errorText": false,
+        "h1": [
+          "Results"
+        ],
+        "h2": [
+          "KPI — target ↔ actual"
+        ],
+        "horizontalOverflow": false,
+        "links": 1,
+        "loadingText": false,
+        "textLength": 633,
+        "title": "Consultify",
+        "viewport": {
+          "height": 998,
+          "width": 1055
+        }
+      },
+      "file": "/Users/piotrwisniewski/Developer/Consultify/docs/program/waves/WAVE_03_ACCEPTANCE/owner_feedback/CROSS_MODULE/evidence/2026-08-21_AUTOMATED_SWEEP/09_RESULTS.png"
+    },
+    {
+      "id": "10_FINANCE_SHARED",
+      "path": "/finance",
+      "url": "http://127.0.0.1:3940/finance?tab=statements",
+      "metrics": {
+        "buttons": 47,
+        "emptyText": false,
+        "errorText": false,
+        "h1": [],
+        "h2": [],
+        "horizontalOverflow": false,
+        "links": 1,
+        "loadingText": false,
+        "textLength": 718,
+        "title": "Consultify",
+        "viewport": {
+          "height": 998,
+          "width": 1055
+        }
+      },
+      "file": "/Users/piotrwisniewski/Developer/Consultify/docs/program/waves/WAVE_03_ACCEPTANCE/owner_feedback/CROSS_MODULE/evidence/2026-08-21_AUTOMATED_SWEEP/10_FINANCE_SHARED.png"
+    },
+    {
+      "id": "11_MATERIALS",
+      "path": "/document-studio",
+      "url": "http://127.0.0.1:3940/document-studio",
+      "metrics": {
+        "buttons": 35,
+        "emptyText": false,
+        "errorText": false,
+        "h1": [],
+        "h2": [
+          "Jak chcesz zacząć dokument?"
+        ],
+        "horizontalOverflow": false,
+        "links": 1,
+        "loadingText": false,
+        "textLength": 696,
+        "title": "Consultify",
+        "viewport": {
+          "height": 998,
+          "width": 1055
+        }
+      },
+      "file": "/Users/piotrwisniewski/Developer/Consultify/docs/program/waves/WAVE_03_ACCEPTANCE/owner_feedback/CROSS_MODULE/evidence/2026-08-21_AUTOMATED_SWEEP/11_MATERIALS.png"
+    },
+    {
+      "id": "12_AUDITS",
+      "path": "/audit-programs",
+      "url": "http://127.0.0.1:3940/audit-programs?tab=library",
+      "metrics": {
+        "buttons": 50,
+        "emptyText": false,
+        "errorText": false,
+        "h1": [],
+        "h2": [],
+        "horizontalOverflow": false,
+        "links": 1,
+        "loadingText": false,
+        "textLength": 756,
+        "title": "Consultify",
+        "viewport": {
+          "height": 998,
+          "width": 1055
+        }
+      },
+      "file": "/Users/piotrwisniewski/Developer/Consultify/docs/program/waves/WAVE_03_ACCEPTANCE/owner_feedback/CROSS_MODULE/evidence/2026-08-21_AUTOMATED_SWEEP/12_AUDITS.png"
+    },
+    {
+      "id": "13_ORGANIZATION",
+      "path": "/organization",
+      "url": "http://127.0.0.1:3940/organization/profile/identity-scale",
+      "metrics": {
+        "buttons": 44,
+        "emptyText": false,
+        "errorText": false,
+        "h1": [
+          "Organization",
+          "Identity & Scale"
+        ],
+        "h2": [
+          "Organization Profile"
+        ],
+        "horizontalOverflow": false,
+        "links": 2,
+        "loadingText": false,
+        "textLength": 2072,
+        "title": "Consultify",
+        "viewport": {
+          "height": 998,
+          "width": 1055
+        }
+      },
+      "file": "/Users/piotrwisniewski/Developer/Consultify/docs/program/waves/WAVE_03_ACCEPTANCE/owner_feedback/CROSS_MODULE/evidence/2026-08-21_AUTOMATED_SWEEP/13_ORGANIZATION.png"
+    },
+    {
+      "id": "14_ADMIN",
+      "path": "/admin",
+      "url": "http://127.0.0.1:3940/admin/team/members",
+      "metrics": {
+        "buttons": 49,
+        "emptyText": false,
+        "errorText": false,
+        "h1": [
+          "ADMIN PANEL",
+          "Members"
+        ],
+        "h2": [
+          "Members & Roles"
+        ],
+        "horizontalOverflow": false,
+        "links": 1,
+        "loadingText": false,
+        "textLength": 1758,
+        "title": "Consultify",
+        "viewport": {
+          "height": 998,
+          "width": 1055
+        }
+      },
+      "file": "/Users/piotrwisniewski/Developer/Consultify/docs/program/waves/WAVE_03_ACCEPTANCE/owner_feedback/CROSS_MODULE/evidence/2026-08-21_AUTOMATED_SWEEP/14_ADMIN.png"
+    },
+    {
+      "id": "15_SETTINGS",
+      "path": "/settings",
+      "url": "http://127.0.0.1:3940/settings/profile",
+      "metrics": {
+        "buttons": 45,
+        "emptyText": false,
+        "errorText": false,
+        "h1": [
+          "Settings",
+          "Profile"
+        ],
+        "h2": [
+          "Personal Information"
+        ],
+        "horizontalOverflow": false,
+        "links": 1,
+        "loadingText": false,
+        "textLength": 1807,
+        "title": "Settings — Consultify",
+        "viewport": {
+          "height": 998,
+          "width": 1055
+        }
+      },
+      "file": "/Users/piotrwisniewski/Developer/Consultify/docs/program/waves/WAVE_03_ACCEPTANCE/owner_feedback/CROSS_MODULE/evidence/2026-08-21_AUTOMATED_SWEEP/15_SETTINGS.png"
+    },
+    {
+      "id": "16_PARTNER",
+      "path": "/partner",
+      "url": "http://127.0.0.1:3940/partner?tab=partner-home",
+      "metrics": {
+        "buttons": 75,
+        "emptyText": false,
+        "errorText": false,
+        "h1": [
+          "Consultify Partner Program",
+          "Be Our Partner.Let's Grow Together."
+        ],
+        "h2": [
+          "Why Partner with Consultify?",
+          "Early Adopters Already See Results",
+          "Your Path to Partnership Success",
+          "Get Started in 10 Minutes",
+          "Calculate your earning potential",
+          "Grow your skills with Partner Academy",
+          "Have questions? Let's talk!",
+          "Frequently asked questions"
+        ],
+        "horizontalOverflow": false,
+        "links": 4,
+        "loadingText": false,
+        "textLength": 6907,
+        "title": "Consultify",
+        "viewport": {
+          "height": 998,
+          "width": 1055
+        }
+      },
+      "file": "/Users/piotrwisniewski/Developer/Consultify/docs/program/waves/WAVE_03_ACCEPTANCE/owner_feedback/CROSS_MODULE/evidence/2026-08-21_AUTOMATED_SWEEP/16_PARTNER.png"
+    }
+  ],
+  "tabs": [
+    {
+      "module": "03",
+      "tab": "Sessions",
+      "error": false,
+      "h": [
+        "Run your first interview"
+      ],
+      "loading": false,
+      "overflow": false,
+      "text": "LOCAL @ad0766ac4c10\n?\nHelp Center\nFeedback\nDocuments\nChat\nMy Work\nInterview\nTools\nAssessment\nInitiatives\nExecution\nResults\nbeta\nFinance\nbeta\nMaterials\nbeta\nAudits\nWkrótce\nMeeting\nWkrótce\nOrganization\nAdmin Panel\nSettings\nPartners\nLog Out\nSkip to main content\nInterview\nSessions\nData\nModel\nCase Workspace\nCW\n③ Inbox\nSessions\n② Assigned\n① Templates\n④ Insights\n⑤ Initiatives\nNew session\nAll\n0\nIn progress\n0\nSubmitted\n0\nApproved\n0\nActive\nArchive\nTrash\n\t\nNAME\n\t\nTEMPLATE\n\t\nASSIGNEE\n\t\nSTATUS\n\t\nPROGRESS\n\t\nDUE\n\t\nSUBMITTED\n\t\n\n\nRun your first interview\n\nStart your first stakeholder interview. Pick a template or build one from scratch.\n\nUse a template",
+      "url": "http://127.0.0.1:3940/interview?tab=sessions"
+    },
+    {
+      "module": "03",
+      "tab": "② Assigned",
+      "error": true,
+      "h": [
+        "No assignments"
+      ],
+      "loading": false,
+      "overflow": false,
+      "text": "LOCAL @ad0766ac4c10\n?\nHelp Center\nFeedback\nDocuments\nChat\nMy Work\nInterview\nTools\nAssessment\nInitiatives\nExecution\nResults\nbeta\nFinance\nbeta\nMaterials\nbeta\nAudits\nWkrótce\nMeeting\nWkrótce\nOrganization\nAdmin Panel\nSettings\nPartners\nLog Out\nSkip to main content\nInterview\nAssigned\nData\nModel\nCase Workspace\nCW\n③ Inbox\nSessions\n② Assigned\n① Templates\n④ Insights\n⑤ Initiatives\nAssign\nAll\n0\nTo approve\n0\nOverdue\n0\nSent back\n0\nActive\nArchive\nDegraded mode: Failed to load interview assignments. Try refreshing.Try again\n\t\nTEMPLATE\n\t\nASSIGNEE\n\t\nSTATUS\n\t\nPROGRESS\n\t\nDAYS TO DUE\n\t\nSUBMITTED\n\t\nAI SCORE\n\t\nESCALATION\n\t\n\n\nNo assignments",
+      "url": "http://127.0.0.1:3940/interview?tab=managed"
+    },
+    {
+      "module": "03",
+      "tab": "① Templates",
+      "error": false,
+      "h": [],
+      "loading": false,
+      "overflow": false,
+      "text": "LOCAL @ad0766ac4c10\n?\nHelp Center\nFeedback\nDocuments\nChat\nMy Work\nInterview\nTools\nAssessment\nInitiatives\nExecution\nResults\nbeta\nFinance\nbeta\nMaterials\nbeta\nAudits\nWkrótce\nMeeting\nWkrótce\nOrganization\nAdmin Panel\nSettings\nPartners\nLog Out\nSkip to main content\nInterview\nTemplates\nData\nModel\nCase Workspace\nCW\n③ Inbox\nSessions\n② Assigned\n① Templates\n④ Insights\n⑤ Initiatives\nArea: all\nSource: all\nApplication\nOrganization\nUser\nNew template\nAll\n18\nDraft\n0\nIn review\n0\nPublished\n18\nArchived\n0\n\t\nNAME\n\t\nCATEGORY\n\t\nQUESTIONS\n\t\nUSAGE\n\t\nLAST USED\n\t\nSTATUS\n\t\n\n\t\nAutomation Readiness\n\t\nstandard\t6\t—\t—\t\nPublished\n\t\n\n\t\nChange Readiness\n\t\nstandard\t6\t—\t—\t\nPublished\n\t\n\n\t\nCommercial Pipeline & Forecast\n\t\nstandard\t6\t—\t—\t\nPublished\n\t\n\n\t\nCost & Efficiency Review\n\t\nstandard\t6\t—\t—\t\nPublished\n\t\n\n\t\nCustomer Experience Discovery\n\t\nstandard\t6\t—\t—\t\nPublished\n\t\n\n\t\nData & Reporting Maturity\n\t\nstandard\t6\t—\t—\t\nPublished\n\t\n\n\t\nDigital Landscape Discovery\n\t\nstandard\t6\t—\t—\t\nPublished\n\t\n\n\t\nFinance Baseline\n\t\nstandard\t6\t—\t—\t\nPublished\n\t\n\n\t\nLeadership Alignment Pulse\n\t\npulse\t6\t—\t—\t\nPublished\n\t\n\n\t\nManufacturing Walkthrough\n\t\ndeep dive\t8\t—\t—\t\nPublished\n\t\n\n\t\nOperating Model Fit\n\t\nstandard\t6\t—\t—\t\nPublished\n\t\n\n\t\nOperational Excellence Discovery\n\t\nstandard\t7\t—\t—\t\nPublished\n\t\n\n\t\nOrganization & Roles Clarity\n\t\nstandard\t6\t—\t—\t\nPublished\n\t\n\n\t\nProcess Pain Mapping\n\t\nstandard\t6\t—\t—\t\nPublished\n\t\n\n\t\nQuality, Compliance & Risk\n\t\nstandard\t6\t—\t—\t\nPublished\n\t\n\n\t\nQuick Company Snapshot\n\t\npulse\t5\t—\t—\t\nPublished\n\t\n\n\t\nStrategic Direction Discovery\n\t\nstandard\t7\t—\t—\t\nPublished\n\t\n\n\t\nWorking Capital & Cash\n\t\nstandard\t6\t—\t—\t\nPublished\n\t",
+      "url": "http://127.0.0.1:3940/interview?tab=templates"
+    },
+    {
+      "module": "03",
+      "tab": "④ Insights",
+      "error": true,
+      "h": [
+        "No insights yet"
+      ],
+      "loading": false,
+      "overflow": false,
+      "text": "LOCAL @ad0766ac4c10\n?\nHelp Center\nFeedback\nDocuments\nChat\nMy Work\nInterview\nTools\nAssessment\nInitiatives\nExecution\nResults\nbeta\nFinance\nbeta\nMaterials\nbeta\nAudits\nWkrótce\nMeeting\nWkrótce\nOrganization\nAdmin Panel\nSettings\nPartners\nLog Out\nSkip to main content\nInterview\nInsights\nData\nModel\nCase Workspace\nCW\n③ Inbox\nSessions\n② Assigned\n① Templates\n④ Insights\n⑤ Initiatives\nNew insight\nAll\n0\nReady\n0\nFailed\n0\nPublished\n0\nArchived\nDegraded mode: Failed to load insights. Try refreshing.Try again\n\t\nTITLE\n\t\nTYPE\n\t\nSTATUS\n\t\nSOURCE\n\t\nEXPORTED TO\n\t\nDATE\n\t\n\n\nNo insights yet\n\nInsights are generated automatically by AI based on completed interviews. Click \"New Insight\" to generate insights from selected sessions.\n\nGenerate AI Insights",
+      "url": "http://127.0.0.1:3940/interview?tab=insights"
+    },
+    {
+      "module": "03",
+      "tab": "⑤ Initiatives",
+      "error": false,
+      "h": [
+        "No initiatives created from interview yet"
+      ],
+      "loading": false,
+      "overflow": false,
+      "text": "LOCAL @ad0766ac4c10\n?\nHelp Center\nFeedback\nDocuments\nChat\nMy Work\nInterview\nTools\nAssessment\nInitiatives\nExecution\nResults\nbeta\nFinance\nbeta\nMaterials\nbeta\nAudits\nWkrótce\nMeeting\nWkrótce\nOrganization\nAdmin Panel\nSettings\nPartners\nLog Out\nSkip to main content\nInterview\nInitiatives\nData\nModel\nCase Workspace\nCW\n③ Inbox\nSessions\n② Assigned\n① Templates\n④ Insights\n⑤ Initiatives\nAdd initiatives\nAll\n0\nDrafts\n0\nPending review\n0\nMoved forward\n0\n\t\nINITIATIVE\n\t\nSTATUS\n\t\nPRIORITY\n\t\nSOURCE\n\t\nDATE\n\t\n\n\nNo initiatives created from interview yet\n\nNo initiatives yet — promote insights from the Insights tab or run the initiative wizard.\n\nGo to Insights",
+      "url": "http://127.0.0.1:3940/interview?tab=initiatives"
+    },
+    {
+      "module": "06",
+      "tab": "Inicjatywy",
+      "error": true,
+      "h": [],
+      "loading": false,
+      "overflow": false,
+      "text": "LOCAL @ad0766ac4c10\n?\nHelp Center\nFeedback\nDocuments\nChat\nMy Work\nInterview\nTools\nAssessment\nInitiatives\nExecution\nResults\nbeta\nFinance\nbeta\nMaterials\nbeta\nAudits\nWkrótce\nMeeting\nWkrótce\nOrganization\nAdmin Panel\nSettings\nPartners\nLog Out\nSkip to main content\nInitiatives\nData\nModel\nCase Workspace\nCW\nInicjatywy\nKandydaci\nPortfel\nPlan\nObciążenie\nActive\nAll\nNew initiative\nWszystkie\n0\nW przygotowaniu\n0\nDo decyzji\n0\nZatwierdzony backlog\n0\nZaplanowane\n0\nW realizacji\n0\nRezultaty\n0\nZamknięte\n0\nFailed to load initiatives.\n\nFailed to load initiatives from the active data source.\n\nRetry\nDismiss",
+      "url": "http://127.0.0.1:3940/initiatives"
+    },
+    {
+      "module": "06",
+      "tab": "Kandydaci",
+      "error": false,
+      "h": [],
+      "loading": false,
+      "overflow": false,
+      "text": "LOCAL @ad0766ac4c10\n?\nHelp Center\nFeedback\nDocuments\nChat\nMy Work\nInterview\nTools\nAssessment\nInitiatives\nExecution\nResults\nbeta\nFinance\nbeta\nMaterials\nbeta\nAudits\nWkrótce\nMeeting\nWkrótce\nOrganization\nAdmin Panel\nSettings\nPartners\nLog Out\nSkip to main content\nInitiatives\nData\nModel\nCase Workspace\nCW\nInicjatywy\nKandydaci\nPortfel\nPlan\nObciążenie\nActive\nAll\nSource proposals\nDiscovery candidates\nSource proposals are unavailable. No registration action was performed.",
+      "url": "http://127.0.0.1:3940/initiatives?tab=candidates"
+    },
+    {
+      "module": "06",
+      "tab": "Portfel",
+      "error": false,
+      "h": [
+        "Portfel inicjatyw",
+        "Brak wariantów portfela"
+      ],
+      "loading": false,
+      "overflow": false,
+      "text": "LOCAL @ad0766ac4c10\n?\nHelp Center\nFeedback\nDocuments\nChat\nMy Work\nInterview\nTools\nAssessment\nInitiatives\nExecution\nResults\nbeta\nFinance\nbeta\nMaterials\nbeta\nAudits\nWkrótce\nMeeting\nWkrótce\nOrganization\nAdmin Panel\nSettings\nPartners\nLog Out\nSkip to main content\nInitiatives\nData\nModel\nCase Workspace\nCW\nInicjatywy\nKandydaci\nPortfel\nPlan\nObciążenie\nActive\nAll\nCurrent scenario\n0\nUnassigned\n0\nIncluded\n0\nConditional\n0\nDeferred\n0\nExcluded\n0\nMandatory\n0\nLow confidence\n0\nCoverage gaps\n0\nDuplicates\n0\nPortfel inicjatyw\n\nPorównuj warianty, zakres i kolejność inicjatyw.\n\nAktywny wariant\nBrak wariantu\nNowy wariant\nScenario operation failed; canonical truth was not changed.\nSpróbuj ponownie\nINITIATIVE\n\t\nINCLUDE STATE\n\t\nRANK\n\t\nSTRATEGIC FIT\n\t\nEXPECTED VALUE\n\t\nCOST ENVELOPE\n\t\nRISK\n\t\nREADINESS\n\t\nCONFIDENCE\n\t\nCOVERAGE\n\t\nOVERLAP / SYNERGY\n\t\nROUGH DEMAND\n\t\nDECISION\n\t\nOWNER\n\t\n\n\nBrak wariantów portfela\n\nUtwórz pierwszy wariant, aby zbudować listę inicjatyw portfela.",
+      "url": "http://127.0.0.1:3940/initiatives?tab=portfolio"
+    },
+    {
+      "module": "06",
+      "tab": "Plan",
+      "error": false,
+      "h": [],
+      "loading": false,
+      "overflow": false,
+      "text": "LOCAL @ad0766ac4c10\n?\nHelp Center\nFeedback\nDocuments\nChat\nMy Work\nInterview\nTools\nAssessment\nInitiatives\nExecution\nResults\nbeta\nFinance\nbeta\nMaterials\nbeta\nAudits\nWkrótce\nMeeting\nWkrótce\nOrganization\nAdmin Panel\nSettings\nPartners\nLog Out\nSkip to main content\nInitiatives\nData\nModel\nCase Workspace\nCW\nInicjatywy\nKandydaci\nPortfel\nPlan\nObciążenie\nActive\nAll\nUnscheduled\n0\nNow\n0\nNext\n0\nLater\n0\nConflicted\n0\nMissing dependencies\n0\nNeeds capacity\n0\nReady for schedule\n0\nPublished\n0\n Persistent Plan register is unavailable.\nRetry",
+      "url": "http://127.0.0.1:3940/initiatives?tab=plan"
+    },
+    {
+      "module": "06",
+      "tab": "Obciążenie",
+      "error": false,
+      "h": [],
+      "loading": false,
+      "overflow": false,
+      "text": "LOCAL @ad0766ac4c10\n?\nHelp Center\nFeedback\nDocuments\nChat\nMy Work\nInterview\nTools\nAssessment\nInitiatives\nExecution\nResults\nbeta\nFinance\nbeta\nMaterials\nbeta\nAudits\nWkrótce\nMeeting\nWkrótce\nOrganization\nAdmin Panel\nSettings\nPartners\nLog Out\nSkip to main content\nInitiatives\nData\nModel\nCase Workspace\nCW\nInicjatywy\nKandydaci\nPortfel\nPlan\nObciążenie\nActive\nAll\nAll constraints\n0\nCritical\n0\nUnknown supply\n0\nMissing demand\n0\nSkill gaps\n0\nManagement load\n0\nBudget envelope\n0\nUnconfirmed\n0\nResolved in scenario\n0\n Capacity register unavailable. No local shadow was created. Retry",
+      "url": "http://127.0.0.1:3940/initiatives?tab=capacity"
+    },
+    {
+      "module": "07",
+      "tab": "Realizacje",
+      "error": false,
+      "h": [
+        "Brak zaakceptowanych realizacji"
+      ],
+      "overflow": false,
+      "text": "LOCAL @ad0766ac4c10\n?\nHelp Center\nFeedback\nDocuments\nChat\nMy Work\nInterview\nTools\nAssessment\nInitiatives\nExecution\nResults\nbeta\nFinance\nbeta\nMaterials\nbeta\nAudits\nWkrótce\nMeeting\nWkrótce\nOrganization\nAdmin Panel\nSettings\nPartners\nLog Out\nSkip to main content\nExecution\nData\nModel\nCase Workspace\nCW\nRealizacje\nPraca\nZasoby\nSterowanie\nRaporty\nActive\nAll\nActive\n0\nAt risk\n0\nCritical\n0\nBlocked work\n0\nMissing baseline\n0\nMissing forecast\n0\nClosing\n0\nRecently delivered\n0\nUnknown data\n0\nNie udało się załadować realizacji. Spróbuj ponownie\nREALIZACJA\n\t\nSTAN\n\t\nFAZA\n\t\nMANAGER REALIZACJI\n\t\nPAKIET PRZEKAZANIA\n\t\nZAAKCEPTOWANA BAZA\n\t\nOTWARTE LUKI\n\t\nNASTĘPNY KAMIEŃ MILOWY\n\t\nNASTĘPNE DZIAŁANIE\n\t\nAKTUALIZACJA\n\t\n\n\nBrak zaakceptowanych realizacji\n\nRealizacja pojawi się po zaakceptowaniu pakietu przekazania.",
+      "url": "http://127.0.0.1:3940/execution?tab=list&view=table"
+    },
+    {
+      "module": "07",
+      "tab": "Praca",
+      "error": false,
+      "h": [],
+      "overflow": false,
+      "text": "LOCAL @ad0766ac4c10\n?\nHelp Center\nFeedback\nDocuments\nChat\nMy Work\nInterview\nTools\nAssessment\nInitiatives\nExecution\nResults\nbeta\nFinance\nbeta\nMaterials\nbeta\nAudits\nWkrótce\nMeeting\nWkrótce\nOrganization\nAdmin Panel\nSettings\nPartners\nLog Out\nSkip to main content\nExecution\nData\nModel\nCase Workspace\nCW\nRealizacje\nPraca\nZasoby\nSterowanie\nRaporty\nAll\n0\nTasks\n0\nDecisions\n0\nBlocked\n0\nOverdue\n0\nDue soon\n0\nMissing owner\n0\nMissing DoD/evidence\n0\nWaiting dependency\n0\nMine\n0\nBy team\n0\n\nNie udało się załadować kanonicznego rejestru pracy.\n\nSpróbuj ponownie",
+      "url": "http://127.0.0.1:3940/execution?tab=work&view=table"
+    },
+    {
+      "module": "07",
+      "tab": "Zasoby",
+      "error": false,
+      "h": [],
+      "overflow": false,
+      "text": "LOCAL @ad0766ac4c10\n?\nHelp Center\nFeedback\nDocuments\nChat\nMy Work\nInterview\nTools\nAssessment\nInitiatives\nExecution\nResults\nbeta\nFinance\nbeta\nMaterials\nbeta\nAudits\nWkrótce\nMeeting\nWkrótce\nOrganization\nAdmin Panel\nSettings\nPartners\nLog Out\nSkip to main content\nExecution\nData\nModel\nCase Workspace\nCW\nRealizacje\nPraca\nZasoby\nSterowanie\nRaporty\nAll\n0\nOverallocated\n0\nUnassigned work\n0\nSkill gaps\n0\nUnconfirmed assignments\n0\nAvailability unknown\n0\nCost risk\n0\nNeeds decision\n0\nBy team\n0\nBy Initiative\n0\n\nNie udało się załadować rejestru zasobów.\n\nSpróbuj ponownie",
+      "url": "http://127.0.0.1:3940/execution?tab=resources&view=table"
+    },
+    {
+      "module": "07",
+      "tab": "Sterowanie",
+      "error": false,
+      "h": [
+        "Delivery closure and Results receipt"
+      ],
+      "overflow": false,
+      "text": "LOCAL @ad0766ac4c10\n?\nHelp Center\nFeedback\nDocuments\nChat\nMy Work\nInterview\nTools\nAssessment\nInitiatives\nExecution\nResults\nbeta\nFinance\nbeta\nMaterials\nbeta\nAudits\nWkrótce\nMeeting\nWkrótce\nOrganization\nAdmin Panel\nSettings\nPartners\nLog Out\nSkip to main content\nExecution\nData\nModel\nCase Workspace\nCW\nRealizacje\nPraca\nZasoby\nSterowanie\nRaporty\nNeeds action\n0\nCritical\n0\nDecisions\n0\nSchedule\n0\nResources\n0\nCost\n0\nRisk\n0\nDependencies\n0\nAdoption\n0\nOutcome risk\n0\nVerification overdue\n0\nResolved\n0\nDelivery closure and Results receipt\n\nComplete the governed spine, submit evidence, obtain an independent approval, and close into Results.\n\nInitiative ID\nExecution case ID\nStart governed closure\n\nNie udało się załadować rejestru sterowania.\n\nSpróbuj ponownie",
+      "url": "http://127.0.0.1:3940/execution?tab=control&view=table"
+    },
+    {
+      "module": "07",
+      "tab": "Raporty",
+      "error": false,
+      "h": [],
+      "overflow": false,
+      "text": "LOCAL @ad0766ac4c10\n?\nHelp Center\nFeedback\nDocuments\nChat\nMy Work\nInterview\nTools\nAssessment\nInitiatives\nExecution\nResults\nbeta\nFinance\nbeta\nMaterials\nbeta\nAudits\nWkrótce\nMeeting\nWkrótce\nOrganization\nAdmin Panel\nSettings\nPartners\nLog Out\nSkip to main content\nExecution\nData\nModel\nCase Workspace\nCW\nRealizacje\nPraca\nZasoby\nSterowanie\nRaporty\nAll\n0\nWeekly\n0\nMonthly\n0\nOn demand\n0\nSponsor\n0\nNeeds generation\n0\nNeeds review\n0\nPartial/stale\n0\nPublished\n0\nFailed\n0\nRecent runs\n0\n\nNie udało się załadować kanonicznego rejestru raportów.\n\nSpróbuj ponownie",
+      "url": "http://127.0.0.1:3940/execution?tab=reports&view=table"
+    },
+    {
+      "module": "09",
+      "tab": "KPI 0",
+      "error": false,
+      "h": [
+        "Results",
+        "KPI — target ↔ actual",
+        "No KPIs"
+      ],
+      "overflow": false,
+      "text": "LOCAL @ad0766ac4c10\n?\nHelp Center\nFeedback\nDocuments\nChat\nMy Work\nInterview\nTools\nAssessment\nInitiatives\nExecution\nResults\nbeta\nFinance\nbeta\nMaterials\nbeta\nAudits\nWkrótce\nMeeting\nWkrótce\nOrganization\nAdmin Panel\nSettings\nPartners\nLog Out\nSkip to main content\nResults\nData\nModel\nCase Workspace\nCW\nResults\n\nNon-financial initiative results in three pairs: promise ↔ delivery.\n\nKPI\n0\nROI\n0\nOKR\n0\n1\nKPI — target ↔ actual\n\nMeasurable initiative indicators: where we are vs the target.\n\n+ Add KPI\nTRACKED\n0 KPI\n→\nON TARGET\n0/0\nAverage target attainment: 0%\nKPI\n\t\nTARGET\n\t\nACTUAL\n\t\nPROGRESS\n\t\nSTATUS\n\n\nNo KPIs\n\nAdd the first initiative KPI.",
+      "url": "http://127.0.0.1:3940/results"
+    },
+    {
+      "module": "09",
+      "tab": "ROI 0",
+      "error": false,
+      "h": [
+        "Results",
+        "ROI — expected ↔ realized",
+        "No ROI analyses"
+      ],
+      "overflow": false,
+      "text": "LOCAL @ad0766ac4c10\n?\nHelp Center\nFeedback\nDocuments\nChat\nMy Work\nInterview\nTools\nAssessment\nInitiatives\nExecution\nResults\nbeta\nFinance\nbeta\nMaterials\nbeta\nAudits\nWkrótce\nMeeting\nWkrótce\nOrganization\nAdmin Panel\nSettings\nPartners\nLog Out\nSkip to main content\nResults\nData\nModel\nCase Workspace\nCW\nResults\n\nNon-financial initiative results in three pairs: promise ↔ delivery.\n\nKPI\n0\nROI\n0\nOKR\n0\n2\nROI — expected ↔ realized\n\nNet initiative benefits: forecast vs realization.\n\n+ New ROI analysis\nEXPECTED (NET)\n0 PLN\n→\nREALIZED (NET)\n0 PLN\nRealization coverage: 0%\nINITIATIVE\n\t\nEXPECTED\n\t\nREALIZED (NET)\n\t\nVARIANCE\n\n\nNo ROI analyses\n\nRun the first per-initiative ROI analysis.",
+      "url": "http://127.0.0.1:3940/results?pair=roi"
+    },
+    {
+      "module": "09",
+      "tab": "OKR 0",
+      "error": false,
+      "h": [
+        "Results",
+        "OKR — objective ↔ key results",
+        "No OKRs"
+      ],
+      "overflow": false,
+      "text": "LOCAL @ad0766ac4c10\n?\nHelp Center\nFeedback\nDocuments\nChat\nMy Work\nInterview\nTools\nAssessment\nInitiatives\nExecution\nResults\nbeta\nFinance\nbeta\nMaterials\nbeta\nAudits\nWkrótce\nMeeting\nWkrótce\nOrganization\nAdmin Panel\nSettings\nPartners\nLog Out\nSkip to main content\nResults\nData\nModel\nCase Workspace\nCW\nResults\n\nNon-financial initiative results in three pairs: promise ↔ delivery.\n\nKPI\n0\nROI\n0\nOKR\n0\n3\nOKR — objective ↔ key results\n\nStrategic objectives and their measurable key results (KR).\n\nManage OKR\nOBJECTIVES\n0\n→\nKEY RESULTS\n0\nAverage OKR score (rollup): 0%\nOBJECTIVE\n\t\nTARGET\n\t\nACTUAL\n\t\nPROGRESS\n\n\nNo OKRs\n\nDefine the first strategic objective and its KRs.",
+      "url": "http://127.0.0.1:3940/results?pair=okr"
+    },
+    {
+      "module": "10",
+      "tab": "Statements",
+      "error": false,
+      "h": [
+        "No statements yet"
+      ],
+      "overflow": false,
+      "text": "LOCAL @ad0766ac4c10\n?\nHelp Center\nFeedback\nDocuments\nChat\nMy Work\nInterview\nTools\nAssessment\nInitiatives\nExecution\nResults\nbeta\nFinance\nbeta\nMaterials\nbeta\nAudits\nWkrótce\nMeeting\nWkrótce\nOrganization\nAdmin Panel\nSettings\nPartners\nLog Out\nSkip to main content\nFinance\nStatements\nData\nModel\nCase Workspace\nCW\nStatements\nAnalysis\nModels\nPrediction\nEnterprise valuation\nImport statement\nAll\n0\nRejected Imports\n0\nRecovery Queue\n0\nReady Statements\n0\nAnalyze\nAI\n\t\nTYPE\n\t\nNAME\n\t\nCOMPLETENESS\n\t\nPERIOD\n\t\nCURRENCY\n\t\nDOCS\n\t\nSTATUS\n\t\nUPDATED\n\t\n\n\nNo statements yet\n\nNo statements in the current view. Ready items go to the working set, recoverable items go to Recovery Queue, and rejected ones stay outside downstream flows.\n\nImport statement",
+      "url": "http://127.0.0.1:3940/finance?tab=statements"
+    },
+    {
+      "module": "10",
+      "tab": "Analysis",
+      "error": false,
+      "h": [
+        "No analyses yet. Create your first analysis."
+      ],
+      "overflow": false,
+      "text": "LOCAL @ad0766ac4c10\n?\nHelp Center\nFeedback\nDocuments\nChat\nMy Work\nInterview\nTools\nAssessment\nInitiatives\nExecution\nResults\nbeta\nFinance\nbeta\nMaterials\nbeta\nAudits\nWkrótce\nMeeting\nWkrótce\nOrganization\nAdmin Panel\nSettings\nPartners\nLog Out\nSkip to main content\nFinance\nAnalysis\nData\nModel\nCase Workspace\nCW\nStatements\nAnalysis\nModels\nPrediction\nEnterprise valuation\n+ New analysis\nAll\n0\nDraft\n0\nReview\n0\nApproved\n0\nAnalyze\nAI\n\t\nTYPE\n\t\nNAME\n\t\nTYPE\n\t\nPERIODS\n\t\nCURRENCY\n\t\nSTATUS\n\t\nUPDATED\n\t\n\n\nNo analyses yet. Create your first analysis.",
+      "url": "http://127.0.0.1:3940/finance?tab=analysis"
+    },
+    {
+      "module": "10",
+      "tab": "Models",
+      "error": false,
+      "h": [],
+      "overflow": false,
+      "text": "LOCAL @ad0766ac4c10\n?\nHelp Center\nFeedback\nDocuments\nChat\nMy Work\nInterview\nTools\nAssessment\nInitiatives\nExecution\nResults\nbeta\nFinance\nbeta\nMaterials\nbeta\nAudits\nWkrótce\nMeeting\nWkrótce\nOrganization\nAdmin Panel\nSettings\nPartners\nLog Out\nSkip to main content\nFinance\nModels\nData\nModel\nCase Workspace\nCW\nStatements\nAnalysis\nModels\nPrediction\nEnterprise valuation\n+ New model\nAll\n0\nDraft\n0\nReview\n0\nApproved\n0\nAnalyze\nAI\nBuild your first financial model\nA financial model turns a statement pack into a board-ready business case: P&L, balance sheet, cash flow, and the NPV / ROI / payback story for the client.\nCreate Financial Model\nAsk Teresa to start\nSEED A MODEL FROM A STATEMENT PACK OR START FROM SCRATCH — TERESA PROPOSES THE ASSUMPTIONS.",
+      "url": "http://127.0.0.1:3940/finance?tab=models"
+    },
+    {
+      "module": "10",
+      "tab": "Prediction",
+      "error": false,
+      "h": [
+        "No prediction data. Create a model first."
+      ],
+      "overflow": false,
+      "text": "LOCAL @ad0766ac4c10\n?\nHelp Center\nFeedback\nDocuments\nChat\nMy Work\nInterview\nTools\nAssessment\nInitiatives\nExecution\nResults\nbeta\nFinance\nbeta\nMaterials\nbeta\nAudits\nWkrótce\nMeeting\nWkrótce\nOrganization\nAdmin Panel\nSettings\nPartners\nLog Out\nSkip to main content\nFinance\nPrediction\nData\nModel\nCase Workspace\nCW\nStatements\nAnalysis\nModels\nPrediction\nEnterprise valuation\n+ New scenario\nAll\n0\nDraft\n0\nReview\n0\nApproved\n0\nAnalyze\nAI\n\t\nTYPE\n\t\nSUBTYPE\n\t\nNAME\n\t\nSCENARIO\n\t\nHORIZON\n\t\nSTATUS\n\t\nUPDATED\n\t\n\n\nNo prediction data. Create a model first.",
+      "url": "http://127.0.0.1:3940/finance?tab=prediction"
+    },
+    {
+      "module": "10",
+      "tab": "Enterprise valuation",
+      "error": false,
+      "h": [
+        "No valuations yet. Create your first valuation."
+      ],
+      "overflow": false,
+      "text": "LOCAL @ad0766ac4c10\n?\nHelp Center\nFeedback\nDocuments\nChat\nMy Work\nInterview\nTools\nAssessment\nInitiatives\nExecution\nResults\nbeta\nFinance\nbeta\nMaterials\nbeta\nAudits\nWkrótce\nMeeting\nWkrótce\nOrganization\nAdmin Panel\nSettings\nPartners\nLog Out\nSkip to main content\nFinance\nEnterprise valuation\nData\nModel\nCase Workspace\nCW\nStatements\nAnalysis\nModels\nPrediction\nEnterprise valuation\n+ New valuation\nAll\n0\nDraft\n0\nReview\n0\nApproved\n0\nAnalyze\nAI\n\t\nTYPE\n\t\nNAME\n\t\nSOURCE\n\t\nMETHOD\n\t\nHORIZON\n\t\nSTATUS\n\t\nUPDATED\n\t\n\n\nNo valuations yet. Create your first valuation.",
+      "url": "http://127.0.0.1:3940/finance?tab=valuation"
+    },
+    {
+      "module": "12",
+      "tab": "Library",
+      "error": false,
+      "h": [
+        "No audit packs yet"
+      ],
+      "overflow": false,
+      "text": "LOCAL @ad0766ac4c10\n?\nHelp Center\nFeedback\nDocuments\nChat\nMy Work\nInterview\nTools\nAssessment\nInitiatives\nExecution\nResults\nbeta\nFinance\nbeta\nMaterials\nbeta\nAudits\nWkrótce\nMeeting\nWkrótce\nOrganization\nAdmin Panel\nSettings\nPartners\nLog Out\nSkip to main content\nAudits\nData\nModel\nCase Workspace\nCW\nLibrary\nSessions\nOutputs\nReports\nInitiatives\nSOURCE TYPE\nAll\n0\nInternal procedure\n0\nInternal framework\n0\nRegulation\n0\nLicensed standard\n0\nDemonstration\n0\nLegacy (retired)\n0\nVERIFICATION\nAll\n0\nVerified\n0\nPending review\n0\nUnverified\n0\nEvidence missing\n0\nTITLE\n\t\nSOURCE\n\t\nVERSION\n\t\nSOURCE TYPE\n\t\nVERIFICATION\n\t\nPUBLICATION STATUS\n\t\nCRITERIA\n\t\nUPDATED\n\t\n\n\nNo audit packs yet\n\nThe library is empty. Seed a demo pack or wait for the first methodology to be published.",
+      "url": "http://127.0.0.1:3940/audit-programs?tab=library"
+    },
+    {
+      "module": "12",
+      "tab": "Sessions",
+      "error": false,
+      "h": [
+        "No audit programs yet"
+      ],
+      "overflow": false,
+      "text": "LOCAL @ad0766ac4c10\n?\nHelp Center\nFeedback\nDocuments\nChat\nMy Work\nInterview\nTools\nAssessment\nInitiatives\nExecution\nResults\nbeta\nFinance\nbeta\nMaterials\nbeta\nAudits\nWkrótce\nMeeting\nWkrótce\nOrganization\nAdmin Panel\nSettings\nPartners\nLog Out\nSkip to main content\nAudits\nData\nModel\nCase Workspace\nCW\nLibrary\nSessions\nOutputs\nReports\nInitiatives\nAll\n0\nPlanning\n0\nPreparation\n0\nFieldwork\n0\nEvidence review\n0\nFindings review\n0\nManagement response\n0\nApproval\n0\nRemediation\n0\nEffectiveness verification\n0\nClosure\n0\nClosed\n0\nNAME\n\t\nPACK\n\t\nSTAGE\n\t\nPROGRESS\n\t\nOPEN FINDINGS\n\t\nLEAD AUDITOR\n\t\nDUE\n\t\nUPDATED\n\t\n\n\nNo audit programs yet\n\nPrograms are created from the Library — open a pack and use \"Start audit\".",
+      "url": "http://127.0.0.1:3940/audit-programs?tab=processes"
+    },
+    {
+      "module": "12",
+      "tab": "Outputs",
+      "error": false,
+      "h": [
+        "No Outputs yet"
+      ],
+      "overflow": false,
+      "text": "LOCAL @ad0766ac4c10\n?\nHelp Center\nFeedback\nDocuments\nChat\nMy Work\nInterview\nTools\nAssessment\nInitiatives\nExecution\nResults\nbeta\nFinance\nbeta\nMaterials\nbeta\nAudits\nWkrótce\nMeeting\nWkrótce\nOrganization\nAdmin Panel\nSettings\nPartners\nLog Out\nSkip to main content\nAudits\nData\nModel\nCase Workspace\nCW\nLibrary\nSessions\nOutputs\nReports\nInitiatives\nTITLE\n\t\nVERSION\n\t\nFINALIZED AT\n\t\nBY\n\t\n\n\nNo Outputs yet\n\nAn Output is created automatically when an audit program is finalized (closure stage) — it is then immutable and versioned. No program has reached that stage yet.",
+      "url": "http://127.0.0.1:3940/audit-programs?tab=outputs"
+    },
+    {
+      "module": "12",
+      "tab": "Reports",
+      "error": false,
+      "h": [
+        "No reports yet"
+      ],
+      "overflow": false,
+      "text": "LOCAL @ad0766ac4c10\n?\nHelp Center\nFeedback\nDocuments\nChat\nMy Work\nInterview\nTools\nAssessment\nInitiatives\nExecution\nResults\nbeta\nFinance\nbeta\nMaterials\nbeta\nAudits\nWkrótce\nMeeting\nWkrótce\nOrganization\nAdmin Panel\nSettings\nPartners\nLog Out\nSkip to main content\nAudits\nData\nModel\nCase Workspace\nCW\nLibrary\nSessions\nOutputs\nReports\nInitiatives\nTITLE\n\t\nKIND\n\t\nVERSION\n\t\nSTATUS\n\t\nLANGUAGE\n\t\nPUBLISHED AT\n\n\nNo reports yet\n\nA report is issued from a program Output. Finalize a program to issue the first report.",
+      "url": "http://127.0.0.1:3940/audit-programs?tab=reports"
+    },
+    {
+      "module": "12",
+      "tab": "Initiatives",
+      "error": false,
+      "h": [
+        "No Proposal Drafts yet"
+      ],
+      "overflow": false,
+      "text": "LOCAL @ad0766ac4c10\n?\nHelp Center\nFeedback\nDocuments\nChat\nMy Work\nInterview\nTools\nAssessment\nInitiatives\nExecution\nResults\nbeta\nFinance\nbeta\nMaterials\nbeta\nAudits\nWkrótce\nMeeting\nWkrótce\nOrganization\nAdmin Panel\nSettings\nPartners\nLog Out\nSkip to main content\nAudits\nData\nModel\nCase Workspace\nCW\nLibrary\nSessions\nOutputs\nReports\nInitiatives\n\nThese are local Proposal Drafts derived from audit findings — they are NOT registered Initiatives module items until someone explicitly registers them.\n\nTITLE\n\t\nSOURCE FINDINGS\n\t\nPRIORITY\n\t\nSTATUS\n\t\nUPDATED\n\n\nNo Proposal Drafts yet\n\nA Proposal Draft is created from an audit finding during findings review. No finding has produced a proposal yet.",
+      "url": "http://127.0.0.1:3940/audit-programs?tab=initiatives"
+    },
+    {
+      "id": "04_TOOLS_SETTLED",
+      "error": true,
+      "h": [
+        "Dynamic SWOT — Session"
+      ],
+      "overflow": false,
+      "skeletons": 1,
+      "text": "LOCAL @ad0766ac4c10\n?\nHelp Center\nFeedback\nDocuments\nChat\nMy Work\nInterview\nTools\nAssessment\nInitiatives\nExecution\nResults\nbeta\nFinance\nbeta\nMaterials\nbeta\nAudits\nWkrótce\nMeeting\nWkrótce\nOrganization\nAdmin Panel\nSettings\nPartners\nLog Out\nSkip to main content\nTools\nData\nModel\nCase Workspace\nCW\nLibrary\nSessions\nOutputs\nReports\nInitiatives\nAdd tool\nList\ndynamic-swot\nDynamic SWOT\ndynamic-swot\nDynamic SWOT\nDRAFT\nRequest Review\nDynamic SWOT — Session\nSave failed\nTOOL TYPE\ndynamic-swot\nCATEGORY\nstrategic\nSTATUS\nDRAFT\nCONSULTING STAGE\nEntry & purpose\nCURRENT STEP\n-\nPROGRESS\n0%\nCOLLABORATION\nAI Collaboration Panel\nFailed to load session\nFailed to load session",
+      "title": "Discovery Tools — Consultify",
+      "url": "http://127.0.0.1:3940/discovery-tools"
+    },
+    {
+      "id": "11_PRESENTATIONS",
+      "error": false,
+      "h": [],
+      "overflow": false,
+      "skeletons": 1,
+      "text": "LOCAL @ad0766ac4c10\n?\nHelp Center\nFeedback\nDocuments\nChat\nMy Work\nInterview\nTools\nAssessment\nInitiatives\nExecution\nResults\nbeta\nFinance\nbeta\nMaterials\nbeta\nAudits\nWkrótce\nMeeting\nWkrótce\nOrganization\nAdmin Panel\nSettings\nPartners\nLog Out\nSkip to main content\nMaterials\nData\nModel\nCase Workspace\nCW\nAll\nDocuments\nPresentations\nSheets\nTemplate Library\nShow drafts\nFilters\nNew presentation\nAll\n0\nDraft\n0\nGenerated\n0\nEditing\n0\nReady\n0\nShared\n0\nArchived\n0\nLoading\nLoading",
+      "title": "Consultify",
+      "url": "http://127.0.0.1:3940/presentations"
+    },
+    {
+      "id": "11_EXCELE",
+      "error": false,
+      "h": [
+        "Excel",
+        "Workbook templates"
+      ],
+      "overflow": false,
+      "skeletons": 1,
+      "text": "k), wejścia na arkuszu Założenia, arkusz Podsumowanie.\n\n9 parameters\n\nEkonomia jednostkowa SaaS\n\nParametryczna ekonomia jednostkowa SaaS: LTV=ARPU×marża/churn, LTV/CAC, okres zwrotu CAC=CAC/(ARPU×marża), NRR, oraz 12-miesięczna projekcja klientów/MRR z churnem m/m, każda pozycja jako formuła, wejścia na arkuszu Założenia, arkusze Metryki i Projekcja 12m.\n\n7 parameters\n\nHarmonogram spłaty kredytu (amortyzacja)\n\nParametryczny harmonogram kredytu: rata annuitetowa (formuła arytmetyczna, nie PMT), podział raty na odsetki i kapitał, saldo malejące miesiąc po miesiącu do zera, wiersz RAZEM z sumami i saldem końcowym, każda pozycja jako formuła, wejścia na arkuszu Założenia, arkusz Harmonogram.\n\n5 parameters\n\nOcena opłacalności projektu (NPV/IRR)\n\nParametryczna ocena opłacalności projektu: projekcja przepływów pieniężnych netto (rok 0 = inwestycja, lata 1..N = eksploatacja z podatkiem i wartością rezydualną)→NPV→IRR→wskaźnik rentowności (PI)→okres zwrotu prosty i zdyskontowany, plus siatka wrażliwości NPV na stopę dyskontową i poziom przepływów, każda pozycja jako formuła, wejścia na arkuszu Założenia, arkusze Przepływy, Wyniki i Wrażliwość.\n\n10 parameters\n\nBenefits Realization — wartość programu\n\nBoard-ready model korzyści: kontrolowane założenia i właściciele dowodów, plan risk-adjusted, realizacja YTD, luka, ROI oraz jednokartkowe Executive Summary.\n\n9 parameters\n\nFinancial Model\n\nP&L + Balance Sheet + Cash Flow\n\nBudget Planning\n\nAnnual/quarterly budget template\n\nResource Allocation Matrix\n\nTeam capacity and assignment\n\nRisk Register\n\nRisk log with scoring and owners\n\nProject Timeline\n\nGantt-style milestone tracker\n\nCompetitive Analysis Matrix\n\nFeature comparison grid\n\nRecruitment Pipeline\n\nCandidate tracking and stages\n\nOKR Tracking Sheet\n\nObjectives, key results, progress",
+      "title": "Consultify",
+      "url": "http://127.0.0.1:3940/excele?ff_excele=1"
+    }
+  ]
+}

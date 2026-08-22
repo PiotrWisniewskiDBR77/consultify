@@ -37,6 +37,7 @@ describe.skipIf(!REAL_DB)('INT-DELIVERY-OPS mounted auth — real PostgreSQL', (
   const staleA = id('stale_a');
   const sessionA = id('session_a');
   const questionA = id('question_a');
+  const assignmentA = id('assignment_a');
   let pool: Pool;
   let app: Express;
   let tokenA = '';
@@ -72,6 +73,12 @@ describe.skipIf(!REAL_DB)('INT-DELIVERY-OPS mounted auth — real PostgreSQL', (
        VALUES ($1,$2,$3,'strategy','Mounted question','initial','answered',0)`,
       [questionA, sessionA, orgA]
     );
+    await pool.query(
+      `INSERT INTO interview_assignments
+         (id, organization_id, assignee_user_id, template_id, session_id)
+       VALUES ($1,$2,$3,'mounted-evaluation',$4)`,
+      [assignmentA, orgA, ownerA, sessionA]
+    );
 
     mockLlmCall.mockResolvedValue({
       object: { questionEvaluations: [], recommendations: [] }, usage: {},
@@ -91,6 +98,7 @@ describe.skipIf(!REAL_DB)('INT-DELIVERY-OPS mounted auth — real PostgreSQL', (
 
   afterAll(async () => {
     if (!pool) return;
+    await pool.query(`DELETE FROM interview_assignments WHERE id=$1`, [assignmentA]);
     await pool.query(`DELETE FROM interview_questions WHERE id=$1`, [questionA]);
     await pool.query(`DELETE FROM interview_sessions WHERE id=$1`, [sessionA]);
     await pool.query(`DELETE FROM organization_members WHERE organization_id = ANY($1)`, [[orgA, orgB]]);
@@ -117,6 +125,26 @@ describe.skipIf(!REAL_DB)('INT-DELIVERY-OPS mounted auth — real PostgreSQL', (
       .set(bearer(tokenA))
       .send({ language: 'en' });
     expect(evaluated.status).toBe(200);
+
+    const cold = new Pool({ connectionString: DATABASE_URL });
+    try {
+      const persisted = await cold.query(
+        `SELECT ai_review_snapshot_json, ai_reviewed_at FROM interview_assignments WHERE id=$1`,
+        [assignmentA]
+      );
+      expect(persisted.rows[0].ai_reviewed_at).toBeTruthy();
+      const snapshot =
+        typeof persisted.rows[0].ai_review_snapshot_json === 'string'
+          ? JSON.parse(persisted.rows[0].ai_review_snapshot_json)
+          : persisted.rows[0].ai_review_snapshot_json;
+      expect(snapshot).toMatchObject({ rubricVersion: 'oxford-v1' });
+      const answer = await cold.query(`SELECT answer_text FROM interview_questions WHERE id=$1`, [
+        questionA,
+      ]);
+      expect(answer.rows[0].answer_text).toBe('mounted winner');
+    } finally {
+      await cold.end();
+    }
   });
 
   it('foreign tenant cannot mutate the question', async () => {

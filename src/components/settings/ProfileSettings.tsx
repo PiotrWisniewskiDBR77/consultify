@@ -1,10 +1,8 @@
 import {
   Briefcase,
   Building2,
-  Calendar,
   CalendarOff,
   CheckCircle,
-  Clock,
   Globe,
   Loader2,
   Mail,
@@ -97,46 +95,12 @@ const JOB_TITLE_I18N_KEYS: Record<string, string> = {
   Other: 'other',
 };
 
-// Common timezones
-const COMMON_TIMEZONES = [
-  { value: 'Europe/Warsaw', label: 'Warsaw (CET/CEST)' },
-  { value: 'Europe/London', label: 'London (GMT/BST)' },
-  { value: 'Europe/Berlin', label: 'Berlin (CET/CEST)' },
-  { value: 'Europe/Paris', label: 'Paris (CET/CEST)' },
-  { value: 'America/New_York', label: 'New York (EST/EDT)' },
-  { value: 'America/Chicago', label: 'Chicago (CST/CDT)' },
-  { value: 'America/Denver', label: 'Denver (MST/MDT)' },
-  { value: 'America/Los_Angeles', label: 'Los Angeles (PST/PDT)' },
-  { value: 'Asia/Tokyo', label: 'Tokyo (JST)' },
-  { value: 'Asia/Shanghai', label: 'Shanghai (CST)' },
-  { value: 'Asia/Dubai', label: 'Dubai (GST)' },
-  { value: 'Australia/Sydney', label: 'Sydney (AEST/AEDT)' },
-  { value: 'UTC', label: 'UTC' },
-];
-
-// Date format options
-const DATE_FORMATS = [
-  { value: 'DD/MM/YYYY', label: 'DD/MM/YYYY (31/12/2024)' },
-  { value: 'MM/DD/YYYY', label: 'MM/DD/YYYY (12/31/2024)' },
-  { value: 'YYYY-MM-DD', label: 'YYYY-MM-DD (2024-12-31)' },
-  { value: 'DD.MM.YYYY', label: 'DD.MM.YYYY (31.12.2024)' },
-];
-
-// Time format options
-const TIME_FORMATS = [
-  { value: '24h', label: '24-hour (14:30)' },
-  { value: '12h', label: '12-hour (2:30 PM)' },
-];
-
 const PROFILE_CONFIRMATION_FIELDS = [
   'firstName',
   'lastName',
   'phone',
   'companyName',
   'jobTitle',
-  'timezone',
-  'dateFormat',
-  'timeFormat',
   'linkedinId',
   'displayName',
   'pronouns',
@@ -356,8 +320,6 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
       t(`settings.profile.jobTitleSuggestions.${JOB_TITLE_I18N_KEYS[title] || 'other'}`, title),
     [t]
   );
-  const formatI18nKey = (value: string) =>
-    value.replace(/\//g, '_slash_').replace(/\./g, '_dot_').replace(/-/g, '_dash_');
   const updateFormField = useCallback(
     <K extends keyof ExtendedFormState>(field: K, value: ExtendedFormState[K]) => {
       hasLocalEditsRef.current = true;
@@ -1018,131 +980,24 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
             </div>
           </div>
 
-          {/* Regional Settings */}
+          {/* Regional preferences have one canonical writer. */}
           <div className={cardClass}>
             <h4 className={sectionTitleClass}>
               {t('settings.profile.regional', 'Regional Settings')}
             </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Timezone */}
-              <div className="space-y-1.5">
-                <label className={labelClass} htmlFor="profile-timezone">
-                  {t('settings.profile.timezone', 'Timezone')}
-                </label>
-                <div className="relative">
-                  <Clock
-                    size={14}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--c-text-muted)] pointer-events-none"
-                  />
-                  <select
-                    id="profile-timezone"
-                    value={formState.timezone}
-                    onChange={(e) => updateFormField('timezone', e.target.value)}
-                    className={selectClass}
-                  >
-                    {COMMON_TIMEZONES.map((tz) => (
-                      <option key={tz.value} value={tz.value}>
-                        {t(`settings.profile.timezones.${tz.value}`, tz.label)}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <svg
-                      className="w-4 h-4 text-[var(--c-text-muted)]"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
-                  </div>
-                </div>
-                <p className="text-xs text-[var(--c-text-muted)] mt-1">
-                  {t('settings.profile.timezoneHint', 'Current local time:')}{' '}
-                  {new Date().toLocaleTimeString(undefined, {
-                    timeZone: formState.timezone,
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </p>
-              </div>
-
-              {/* Date Format */}
-              <div className="space-y-1.5">
-                <label className={labelClass} htmlFor="profile-date-format">
-                  {t('settings.profile.dateFormat', 'Date Format')}
-                </label>
-                <div className="relative">
-                  <Calendar
-                    size={14}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--c-text-muted)] pointer-events-none"
-                  />
-                  <select
-                    id="profile-date-format"
-                    value={formState.dateFormat}
-                    onChange={(e) => updateFormField('dateFormat', e.target.value)}
-                    className={selectClass}
-                  >
-                    {DATE_FORMATS.map((fmt) => (
-                      <option key={fmt.value} value={fmt.value}>
-                        {t(`settings.profile.dateFormats.${formatI18nKey(fmt.value)}`, fmt.label)}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <svg
-                      className="w-4 h-4 text-[var(--c-text-muted)]"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-
-              {/* Time Format */}
-              <div className="space-y-1.5 md:col-span-2">
-                <label className={labelClass + ' mb-2 block'}>
-                  {t('settings.profile.timeFormat', 'Time Format')}
-                </label>
-                <div className="flex gap-4">
-                  {TIME_FORMATS.map((fmt) => (
-                    <label
-                      key={fmt.value}
-                      className={`flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 transition-all ${
-                        formState.timeFormat === fmt.value
-                          ? 'border-2 border-[var(--c-info)] bg-[color-mix(in_srgb,var(--c-info)_12%,transparent)] text-[var(--c-info)]'
-                          : 'border border-[var(--c-border)] bg-[var(--c-surface-raised)] text-[var(--c-text-secondary)] hover:border-[var(--c-border-strong)]'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="timeFormat"
-                        value={fmt.value}
-                        checked={formState.timeFormat === fmt.value}
-                        onChange={(e) => updateFormField('timeFormat', e.target.value)}
-                        className="sr-only"
-                      />
-                      <span className="text-sm font-medium">
-                        {t(`settings.profile.timeFormats.${formatI18nKey(fmt.value)}`, fmt.label)}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <p className="text-sm text-[var(--c-text-secondary)]">
+              {t(
+                'settings.profile.regionalCanonicalHint',
+                'Timezone, date, time, number and unit formats are managed together in Regional Settings.'
+              )}
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate('/settings/regional')}
+              className="mt-4 rounded-lg border border-[var(--c-border)] px-4 py-2 text-sm font-medium text-[var(--c-text)] hover:border-[var(--c-border-strong)]"
+            >
+              {t('settings.profile.openRegionalSettings', 'Open Regional Settings')}
+            </button>
           </div>
         </div>
       </div>

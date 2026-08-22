@@ -77,6 +77,8 @@ interface PortfolioListViewProps {
   onArchive?: (initiative: PortfolioInitiative) => void;
   /** Called when Delete is clicked */
   onDelete?: (initiative: PortfolioInitiative) => void;
+  /** Canonical lifecycle is advanced only in gate-specific workspaces. */
+  allowLifecycleMutation?: boolean;
   /**
    * Canon §27 — localStorage persistence key for table view state.
    * This is a hand-rolled static table (fixed column widths, no resize/hide
@@ -162,6 +164,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
   onOpenFull,
   onStatusChange,
   onQuickUpdate,
+  allowLifecycleMutation = true,
   onSelectionChange,
   canvasClassName = 'pl-4 pr-1.5 pt-3 pb-4',
   onArchive,
@@ -480,7 +483,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                       <span
                         className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${statusDotClass}`}
                       />
-                      <select
+                      {allowLifecycleMutation ? <select
                         value={initiative.status}
                         onChange={(e) =>
                           handleStatusChange(
@@ -496,11 +499,11 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                             {getStatusLabel(s)}
                           </option>
                         ))}
-                      </select>
-                      <ChevronDown
+                      </select> : <span className="text-xs font-medium text-c-text-secondary">{getStatusLabel(initiative.status)}</span>}
+                      {allowLifecycleMutation && <ChevronDown
                         size={12}
                         className="absolute right-0 text-c-text-muted pointer-events-none"
-                      />
+                      />}
                     </div>
                   </td>
 

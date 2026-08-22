@@ -751,7 +751,7 @@ export class ApiGateway {
         documentRoutes
       );
       app.use('/api/settings', settingsRoutes);
-      app.use('/api/meeting', betaGate, meetingRoutes);
+      app.use('/api/meeting', meetingRoutes);
       mountStub(
         '/api/integrations/calendar',
         calendarIntegrationsRoutes,

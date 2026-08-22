@@ -58,6 +58,7 @@ describe('DataControlsSettings honest UI', () => {
     vi.mocked(Api.getGdprConsents).mockResolvedValue({ consents });
     vi.mocked(Api.getGdprRetention).mockResolvedValue({ retention });
     vi.mocked(Api.getGdprDeletionStatus).mockResolvedValue({ request: null });
+    vi.mocked(Api.getGdprExportStatus).mockResolvedValue({ request: null });
   });
 
   it('does not render failed data-control loads as editable defaults', async () => {
@@ -100,7 +101,10 @@ describe('DataControlsSettings honest UI', () => {
       .mockResolvedValueOnce({
         request: { id: 'delete-receipt-1', status: 'pending', requestedAt: '2026-08-19T10:00:00Z' },
       })
-      .mockResolvedValueOnce({ request: null });
+      .mockResolvedValueOnce({
+        request: null,
+        latestRequest: { id: 'delete-receipt-1', status: 'cancelled' },
+      });
     vi.mocked(Api.cancelGdprDeletion).mockResolvedValue({
       success: true,
       request: { id: 'delete-receipt-1', status: 'cancelled' },
@@ -118,6 +122,32 @@ describe('DataControlsSettings honest UI', () => {
       expect(screen.getByRole('button', { name: 'Delete Account' })).toBeInTheDocument();
     });
     expect(toast.success).toHaveBeenCalledWith('Deletion request cancelled');
+  });
+
+  it('cold-renders a pending export receipt and a cancelled deletion receipt without active semantics', async () => {
+    vi.mocked(Api.getGdprExportStatus).mockResolvedValue({
+      request: { id: 'export-receipt-1', status: 'pending' },
+    });
+    vi.mocked(Api.getGdprDeletionStatus).mockResolvedValue({
+      request: null,
+      latestRequest: { id: 'delete-cancelled-1', status: 'cancelled', scheduledAt: null },
+    });
+
+    renderSettings();
+
+    expect(await screen.findByText('Export status: pending')).toBeInTheDocument();
+    expect(screen.getByText(/export-receipt-1/)).toBeInTheDocument();
+    expect(screen.getByText('Previous deletion request cancelled')).toBeInTheDocument();
+    expect(screen.getByText(/delete-cancelled-1/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Request Export' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Delete Account' })).toBeEnabled();
+  });
+
+  it('fails visibly when cold export status cannot be loaded', async () => {
+    vi.mocked(Api.getGdprExportStatus).mockRejectedValue(new Error('Export status unavailable'));
+    renderSettings();
+    expect(await screen.findByText('Export status unavailable')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
   });
 
   it('submits a reauthenticated deletion request and claims success only after exact read-back', async () => {
@@ -174,6 +204,7 @@ describe('DataControlsSettings honest UI', () => {
       request: { id: 'receipt-1', status: 'pending' },
     });
     vi.mocked(Api.getGdprExportStatus)
+      .mockResolvedValueOnce({ request: null })
       .mockResolvedValueOnce({ request: { id: 'receipt-1', status: 'pending' } })
       .mockResolvedValueOnce({ request: { id: 'receipt-1', status: 'ready' } });
     vi.mocked(Api.get).mockResolvedValue({ profile: { id: 'user-1' } });
@@ -187,7 +218,7 @@ describe('DataControlsSettings honest UI', () => {
     await waitFor(() => {
       expect(Api.get).toHaveBeenCalledWith('/api/gdpr/download-export/receipt-1');
     });
-    expect(Api.getGdprExportStatus).toHaveBeenCalledTimes(2);
+    expect(Api.getGdprExportStatus).toHaveBeenCalledTimes(3);
     expect(click).toHaveBeenCalledTimes(1);
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:export');
     expect(toast.success).toHaveBeenCalledWith('Data exported successfully');
@@ -222,9 +253,9 @@ describe('DataControlsSettings honest UI', () => {
         vi.mocked(Api.requestGdprExport).mockResolvedValue({
           request: { id: 'receipt-1', status: 'pending' },
         });
-        vi.mocked(Api.getGdprExportStatus).mockResolvedValue({
-          request: { id: 'different-receipt', status: 'ready' },
-        });
+        vi.mocked(Api.getGdprExportStatus)
+          .mockResolvedValueOnce({ request: null })
+          .mockResolvedValue({ request: { id: 'different-receipt', status: 'ready' } });
       },
     ],
     [
@@ -233,7 +264,9 @@ describe('DataControlsSettings honest UI', () => {
         vi.mocked(Api.requestGdprExport).mockResolvedValue({
           request: { id: 'receipt-1', status: 'pending' },
         });
-        vi.mocked(Api.getGdprExportStatus).mockRejectedValue(new Error('status unavailable'));
+        vi.mocked(Api.getGdprExportStatus)
+          .mockResolvedValueOnce({ request: null })
+          .mockRejectedValue(new Error('status unavailable'));
       },
     ],
     [
@@ -242,9 +275,9 @@ describe('DataControlsSettings honest UI', () => {
         vi.mocked(Api.requestGdprExport).mockResolvedValue({
           request: { id: 'receipt-1', status: 'pending' },
         });
-        vi.mocked(Api.getGdprExportStatus).mockResolvedValue({
-          request: { id: 'receipt-1', status: 'failed' },
-        });
+        vi.mocked(Api.getGdprExportStatus)
+          .mockResolvedValueOnce({ request: null })
+          .mockResolvedValue({ request: { id: 'receipt-1', status: 'failed' } });
       },
     ],
     [
@@ -279,9 +312,9 @@ describe('DataControlsSettings honest UI', () => {
     vi.mocked(Api.requestGdprExport).mockResolvedValue({
       request: { id: 'receipt-1', status: 'pending' },
     });
-    vi.mocked(Api.getGdprExportStatus).mockResolvedValue({
-      request: { id: 'receipt-1', status: 'pending' },
-    });
+    vi.mocked(Api.getGdprExportStatus)
+      .mockResolvedValueOnce({ request: null })
+      .mockResolvedValue({ request: { id: 'receipt-1', status: 'pending' } });
     const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
 
     renderSettings();
@@ -290,7 +323,7 @@ describe('DataControlsSettings honest UI', () => {
     await vi.advanceTimersByTimeAsync(60_000);
     await waitFor(() => expect(toast.error).toHaveBeenCalled());
 
-    expect(Api.getGdprExportStatus).toHaveBeenCalledTimes(30);
+    expect(Api.getGdprExportStatus).toHaveBeenCalledTimes(31);
     expect(Api.get).not.toHaveBeenCalled();
     expect(click).not.toHaveBeenCalled();
     expect(toast.success).not.toHaveBeenCalledWith('Data exported successfully');

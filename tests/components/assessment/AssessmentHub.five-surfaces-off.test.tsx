@@ -11,7 +11,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { apiMock } = vi.hoisted(() => ({
+const { apiMock, listMethodSessionsMock } = vi.hoisted(() => ({
   apiMock: {
     listAssessments: vi.fn(),
     getAssessmentReports: vi.fn(),
@@ -21,9 +21,13 @@ const { apiMock } = vi.hoisted(() => ({
     delete: vi.fn(),
     getUsers: vi.fn(),
   },
+  listMethodSessionsMock: vi.fn(),
 }));
 
 vi.mock('../../../src/services/api', () => ({ Api: apiMock }));
+vi.mock('../../../src/method-core/api/methodCoreApi', () => ({
+  listSessions: listMethodSessionsMock,
+}));
 
 // Explicit OFF — same default as DEFAULT_FLAGS in useFeatureFlags.tsx.
 vi.mock('@/contexts/FeatureFlagsContext', () => ({
@@ -74,16 +78,17 @@ describe('AssessmentHub — regression guard (assessmentFiveSurfacesV1 OFF)', ()
   beforeEach(() => {
     vi.clearAllMocks();
     sessionStorage.clear();
-    apiMock.listAssessments.mockResolvedValue({
-      items: [
+    apiMock.listAssessments.mockResolvedValue({ items: [] });
+    listMethodSessionsMock.mockResolvedValue({
+      sessions: [
         {
-          id: 'asm_1',
-          name: 'Canonical DRD',
-          type: 'DRD',
-          status: 'DRAFT',
-          updatedAt: '2026-04-11T08:00:00.000Z',
+          id: 'asm-method-1', organizationId: 'org-1', projectId: null,
+          module: 'assessment', methodPackId: 'drd', methodPackVersion: '2.0.0-methodpack.1',
+          state: 'active', domainStage: null, mode: 'guided_manual', ownerUserId: 'owner-1',
+          createdAt: '2026-04-11T08:00:00.000Z', updatedAt: '2026-04-11T08:00:00.000Z',
+          version: 1, frozenSnapshotId: null, revisionOfSessionId: null, hasFrozenOutput: false,
         },
-      ],
+      ], total: 1,
     });
     apiMock.getAssessmentReports.mockResolvedValue([]);
     apiMock.get.mockResolvedValue([]);
@@ -99,7 +104,7 @@ describe('AssessmentHub — regression guard (assessmentFiveSurfacesV1 OFF)', ()
       </MemoryRouter>
     );
 
-    await screen.findByText('Canonical DRD');
+    await screen.findByText('DRD · asm-meth');
     const tabs = screen.getAllByRole('tab').map((el) => el.textContent || '');
     expect(tabs.some((t) => /Assessment/.test(t))).toBe(true);
     expect(tabs.some((t) => /Reports/.test(t))).toBe(true);
@@ -118,7 +123,7 @@ describe('AssessmentHub — regression guard (assessmentFiveSurfacesV1 OFF)', ()
       </MemoryRouter>
     );
 
-    expect(await screen.findByText('Canonical DRD')).toBeInTheDocument();
+    expect(await screen.findByText('DRD · asm-meth')).toBeInTheDocument();
     expect(screen.queryByTestId('assessment-library-tab')).not.toBeInTheDocument();
   });
 
@@ -130,7 +135,7 @@ describe('AssessmentHub — regression guard (assessmentFiveSurfacesV1 OFF)', ()
       </MemoryRouter>
     );
 
-    await screen.findByText('Canonical DRD');
+    await screen.findByText('DRD · asm-meth');
     expect(screen.getByTestId('location-probe')).not.toHaveTextContent('tab=');
 
     fireEvent.click(await screen.findByRole('tab', { name: /Reports/i }));
@@ -156,7 +161,7 @@ describe('AssessmentHub — regression guard (assessmentFiveSurfacesV1 OFF)', ()
 
     // Still lands on the default list content — the OFF path never resolves
     // tab ids from the URL at all.
-    expect(await screen.findByText('Canonical DRD')).toBeInTheDocument();
+    expect(await screen.findByText('DRD · asm-meth')).toBeInTheDocument();
     expect(screen.queryByTestId('assessment-library-tab')).not.toBeInTheDocument();
   });
 });

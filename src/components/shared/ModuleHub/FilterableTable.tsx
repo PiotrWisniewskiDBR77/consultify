@@ -392,12 +392,12 @@ const RESIZE_STEP_LARGE = 48;
 
 const ColumnResizeHandle: React.FC<{
   columnId: string;
-  columnLabel: string;
+  resizeLabel: string;
   currentWidth: number;
   minWidth: number;
   maxWidth: number;
   onResize: (columnId: string, newWidth: number) => void;
-}> = ({ columnId, columnLabel, currentWidth, minWidth, maxWidth, onResize }) => {
+}> = ({ columnId, resizeLabel, currentWidth, minWidth, maxWidth, onResize }) => {
   const [isDragging, setIsDragging] = useState(false);
   const startXRef = useRef(0);
   const startWidthRef = useRef(0);
@@ -495,7 +495,7 @@ const ColumnResizeHandle: React.FC<{
     <div
       role="separator"
       aria-orientation="vertical"
-      aria-label={`Resize ${columnLabel} column`}
+      aria-label={resizeLabel}
       aria-valuenow={Math.round(currentWidth)}
       aria-valuemin={Math.round(minWidth)}
       aria-valuemax={Math.round(maxWidth)}
@@ -512,7 +512,7 @@ const ColumnResizeHandle: React.FC<{
         outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-inset rounded-sm
         ${isDragging ? 'z-50' : 'z-10'}
       `}
-      title={`Resize ${columnLabel} column`}
+      title={resizeLabel}
     >
       {/* Excel-like: grip sits exactly on the column boundary. */}
       <div
@@ -554,6 +554,32 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   rowClassName,
   minTableWidth = DEFAULT_MIN_TABLE_WIDTH,
 }) => {
+  const horizontalViewportRef = useRef<HTMLDivElement>(null);
+  const [horizontalViewportWidth, setHorizontalViewportWidth] = useState(0);
+
+  useEffect(() => {
+    const viewport = horizontalViewportRef.current;
+    if (!viewport) return;
+
+    const updateWidth = () => {
+      const visibleWindowWidth = Math.max(
+        0,
+        window.innerWidth - viewport.getBoundingClientRect().left
+      );
+      setHorizontalViewportWidth(Math.min(viewport.clientWidth, visibleWindowWidth));
+    };
+    updateWidth();
+
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(updateWidth);
+    observer.observe(viewport);
+    window.addEventListener('resize', updateWidth);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', updateWidth);
+    };
+  }, []);
+
   const { t } = useTranslation();
   /**
    * ── R04-2A · wysokość rejestru ────────────────────────────────────────────
@@ -903,7 +929,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   return (
     <div className={canvasClassName}>
       <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.03] rounded-xl overflow-hidden">
-        <div className="w-full overflow-x-auto">
+        <div ref={horizontalViewportRef} className="w-full overflow-x-auto">
           <table
             /* §27-exempt: to JEST kanoniczny komponent FilterableTable (§2 SSOT) — surowy <table> tutaj to jego implementacja, nie luka */ className="w-full table-fixed"
             data-min-table-width={resolvedMinTableWidth ?? 'auto'}
@@ -970,7 +996,9 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                               // bursztynowy rgb(229,151,0) — i łamie kanon na KAŻDYM
                               // ekranie listowym, bo to wspólny nagłówek sortowania.
                               className="inline-flex items-center gap-1 uppercase tracking-wider transition-colors hover:text-c-text-secondary rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                              aria-label={`Sort by ${column.label}`}
+                              aria-label={t('common.sortByColumn', 'Sort by {{column}}', {
+                                column: column.label,
+                              })}
                             >
                               <span>{column.label}</span>
                               <SortIcon columnId={column.id} />
@@ -990,7 +1018,9 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                       {!isLastDataCol && !isSelectCol ? (
                         <ColumnResizeHandle
                           columnId={column.id}
-                          columnLabel={column.label}
+                          resizeLabel={t('common.resizeColumn', 'Resize {{column}} column', {
+                            column: column.label,
+                          })}
                           currentWidth={width}
                           minWidth={minWidth}
                           maxWidth={maxWidth}
@@ -1118,7 +1148,23 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                       Rozróżnienie jest lokalne i pewne: `data` to wejście,
                       `sortedData` to wynik po filtrach.
                     */}
-                    <div className="mx-auto max-w-2xl rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-slate-50/70 dark:bg-white/[0.03] px-6 py-8 text-sm">
+                    <div
+                      className="sticky left-4 max-w-2xl rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-slate-50/70 dark:bg-white/[0.03] px-6 py-8 text-sm"
+                      style={
+                        horizontalViewportWidth > 0
+                          ? {
+                              width: Math.max(0, Math.min(672, horizontalViewportWidth - 64)),
+                              marginLeft: Math.max(
+                                0,
+                                (horizontalViewportWidth -
+                                  Math.min(672, horizontalViewportWidth - 64)) /
+                                  2 -
+                                  16
+                              ),
+                            }
+                          : undefined
+                      }
+                    >
                       {data.length === 0 ? (
                         emptyMessage
                       ) : (
@@ -1158,7 +1204,10 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                     // nie zaśmiecać kolejności fokusa pustymi przystankami.
                     tabIndex={onRowClick || onRowDoubleClick ? 0 : undefined}
                     onKeyDown={(event) => {
-                      if ((onRowClick || onRowDoubleClick) && (event.key === 'Enter' || event.key === ' ')) {
+                      if (
+                        (onRowClick || onRowDoubleClick) &&
+                        (event.key === 'Enter' || event.key === ' ')
+                      ) {
                         // Spacja przewija stronę, jeśli jej nie zatrzymać.
                         // Klawisz na kontrolce wewnątrz wiersza (przycisk,
                         // checkbox, kebab) należy do niej, nie do wiersza.
@@ -1171,8 +1220,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                       if (
                         !(
                           !hideRowActions &&
-                          (event.key === 'ContextMenu' ||
-                            (event.shiftKey && event.key === 'F10'))
+                          (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10'))
                         )
                       )
                         return;

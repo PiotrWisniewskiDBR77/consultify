@@ -142,6 +142,11 @@ describe('useBaselineCompute — TEST ANTY-PLUG (DEC-FIN-002, punkt 5)', () => {
 });
 
 describe('useBaselineCompute — markStale i odzysk po błędzie', () => {
+  it('otwiera kanonicznie CURRENT model jako aktualnie policzony', () => {
+    const { result } = renderHook(() => useBaselineCompute('bv-current', 'CURRENT'));
+    expect(result.current.stale).toEqual({ stale: false, reason: null });
+  });
+
   it('markStale ustawia stale.stale=true z podanym powodem', () => {
     const { result } = renderHook(() => useBaselineCompute('bv-1'));
     act(() => result.current.markStale('ASSUMPTIONS_EDITED'));

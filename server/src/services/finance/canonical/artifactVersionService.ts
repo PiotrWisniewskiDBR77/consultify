@@ -125,6 +125,17 @@ export interface ArtifactRow {
   archived_reason: string | null;
 }
 
+export interface ArtifactSummaryRow extends ArtifactRow {
+  current_version_no: number | null;
+  current_version: number | null;
+  current_status: BusinessVersionStatus | null;
+  current_freshness: string | null;
+  current_freshness_reason: string | null;
+  current_risk_tier: RiskTier | null;
+  current_version_created_at: string | null;
+  current_version_updated_at: string | null;
+}
+
 const LEGACY_UNKNOWN_ENGINE_MANIFEST_SQL = `(SELECT engine_manifest_id FROM finance_engine_manifests
    WHERE engine_name = 'LEGACY_UNKNOWN' ORDER BY created_at ASC LIMIT 1)`;
 
@@ -140,6 +151,38 @@ export async function getArtifact(
     tx.queryOne<ArtifactRow>(
       `SELECT * FROM finance_artifacts WHERE artifact_id = ? AND organization_id = ?`,
       [artifactId, organizationId]
+    )
+  );
+}
+
+/** Canonical tenant-scoped artifact registry used by the Finance hub. */
+export async function listArtifacts(
+  organizationId: string,
+  artifactType?: FinanceArtifactType
+): Promise<ArtifactSummaryRow[]> {
+  const typePredicate = artifactType ? 'AND a.artifact_type = ?' : '';
+  const params = artifactType ? [organizationId, artifactType] : [organizationId];
+  return withPinnedPostgresTransaction((tx) =>
+    tx.queryAll<ArtifactSummaryRow>(
+      `SELECT
+         a.*,
+         bv.version_no AS current_version_no,
+         bv.version AS current_version,
+         bv.status AS current_status,
+         bv.freshness AS current_freshness,
+         bv.freshness_reason AS current_freshness_reason,
+         bv.risk_tier AS current_risk_tier,
+         bv.created_at AS current_version_created_at,
+         bv.updated_at AS current_version_updated_at
+       FROM finance_artifacts a
+       LEFT JOIN finance_business_versions bv
+         ON bv.business_version_id = a.current_business_version_id
+        AND bv.organization_id = a.organization_id
+       WHERE a.organization_id = ?
+         AND a.archived_at IS NULL
+         ${typePredicate}
+       ORDER BY COALESCE(bv.updated_at, a.created_at) DESC, a.artifact_id ASC`,
+      params
     )
   );
 }

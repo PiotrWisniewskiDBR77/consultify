@@ -112,8 +112,10 @@ function shouldFallbackToLegacyAssessmentPermissions(error: unknown): boolean {
 // ==========================================
 
 export function useAssessmentPermissions(
-  assessmentId: string | undefined
+  assessmentId: string | undefined,
+  options: { enabled?: boolean } = {}
 ): UseAssessmentPermissionsResult {
+  const enabled = options.enabled !== false;
   const [role, setRole] = useState<AssessmentRole>('viewer');
   const [permissions, setPermissions] = useState<AssessmentPermissions>(DEFAULT_PERMISSIONS);
   const [assignedAreas, setAssignedAreas] = useState<string[] | null>(null);
@@ -152,7 +154,8 @@ export function useAssessmentPermissions(
 
   // Fetch permissions from API
   const fetchPermissions = useCallback(async () => {
-    if (!assessmentId) {
+    if (!assessmentId || !enabled) {
+      setError(null);
       setIsLoading(false);
       return;
     }
@@ -203,7 +206,7 @@ export function useAssessmentPermissions(
     } finally {
       setIsLoading(false);
     }
-  }, [assessmentId, isGlobalAdmin, GLOBAL_ADMIN_PERMISSIONS]);
+  }, [assessmentId, enabled, isGlobalAdmin, GLOBAL_ADMIN_PERMISSIONS]);
 
   // Fetch on mount and when assessmentId changes
   useEffect(() => {

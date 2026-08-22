@@ -78,6 +78,7 @@ import { useUniversalVoice } from '../../hooks/useUniversalVoice';
 import { Api } from '../../services/api';
 import { V8ChatApi } from '../../services/api/v8';
 import type { GovernedChatHandoffProposal } from '../../services/api/v8/chat';
+import { retiredChatWriteCommand } from '../../utils/chatSlashCommandPolicy';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 import type { ChatContextAction } from '../../store/slices/uiSlice';
 import { useAIActionsStore } from '../../store/useAIActionsStore';
@@ -2844,56 +2845,34 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       const detectedMessageLanguage = detectMessageLanguage(content);
       const effectiveChatLanguage = detectedMessageLanguage || chatLanguage;
 
-      // M2: Chat commands for MyWork actions
+      // Wave 3 governance boundary: the old slash-command path wrote directly
+      // to tasks/decisions and bypassed proposal, independent decision and
+      // materialization receipt. Fail closed until Chat has a source-bound
+      // governed bridge for these target kinds.
       const text = content.trim();
-      if (text.startsWith('/task ') || text.startsWith('/decision ')) {
-        const isTask = text.startsWith('/task ');
-        const title = text.replace(/^\/(task|decision)\s+/, '').trim();
-        if (title) {
-          // FIX-001: guard the slash-command action fetch with an AbortController +
-          // 20s timeout so a hung server can't freeze the composer indefinitely.
-          const actionController = new AbortController();
-          const actionTimeout = setTimeout(() => actionController.abort(), 20000);
+      const retiredWrite = retiredChatWriteCommand(text);
+      if (retiredWrite) {
+        const noticeMessage: ChatMessage = {
+          id: `governed-write-required-${Date.now()}`,
+          role: 'ai',
+          content: retiredWrite.notice,
+          timestamp: new Date(),
+        };
+        addChatMessage(noticeMessage);
+        if (activeConversationId) {
           try {
-            const token = localStorage.getItem('token');
-            const resp = await fetch('/api/my-work/chat-actions', {
-              method: 'POST',
-              headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                action: isTask ? 'create_task' : 'create_decision',
-                payload: { title },
-              }),
-              signal: actionController.signal,
+            await addMessageToConversation({
+              conversationId: activeConversationId,
+              role: 'ai',
+              content: noticeMessage.content,
+              messageType: 'text',
             });
-            if (resp.ok) {
-              const confirmMsg: ChatMessage = {
-                id: `action-${Date.now()}`,
-                role: 'ai',
-                content: isTask ? `Task created: "${title}"` : `Decision created: "${title}"`,
-                timestamp: new Date(),
-              };
-              addChatMessage(confirmMsg);
-              if (activeConversationId) {
-                try {
-                  await addMessageToConversation({
-                    conversationId: activeConversationId,
-                    role: 'ai',
-                    content: confirmMsg.content,
-                    messageType: 'text',
-                  });
-                } catch {
-                  /* best-effort persist */
-                }
-              }
-              onMessageSent?.(content);
-              return;
-            }
           } catch {
-            /* timeout/abort or network error — fall through to normal send */
-          } finally {
-            clearTimeout(actionTimeout);
+            /* The visible fail-closed notice remains truthful even if history persistence fails. */
           }
         }
+        onMessageSent?.(content);
+        return;
       }
 
       // Explicit output tool routing (user picked a tool via OutputToolSelector)

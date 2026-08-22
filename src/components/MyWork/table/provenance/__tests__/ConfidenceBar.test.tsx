@@ -50,7 +50,7 @@ describe('ConfidenceBar', () => {
     expect(fill.style.width).toBe('4%');
   });
 
-  it('shifts colour tier at the documented thresholds', () => {
+  it('shifts across the three semantic colour tiers', () => {
     const { rerender } = render(<ConfidenceBar score={0.3} />);
     const danger = screen.getByTestId('provenance-confidence-bar-fill').style.backgroundColor;
 
@@ -63,7 +63,8 @@ describe('ConfidenceBar', () => {
     rerender(<ConfidenceBar score={0.9} />);
     const deepEmerald = screen.getByTestId('provenance-confidence-bar-fill').style.backgroundColor;
 
-    expect(new Set([danger, amber, emerald, deepEmerald]).size).toBe(4);
+    expect(new Set([danger, amber, emerald]).size).toBe(3);
+    expect(deepEmerald).toBe(emerald);
   });
 
   it('compact variant hides the percent label', () => {

@@ -33,7 +33,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.unmock('@/contexts/FeatureFlagsContext');
 
-const { apiMock } = vi.hoisted(() => ({
+const { apiMock, listMethodSessionsMock } = vi.hoisted(() => ({
   apiMock: {
     listAssessments: vi.fn(),
     getAssessmentReports: vi.fn(),
@@ -43,12 +43,16 @@ const { apiMock } = vi.hoisted(() => ({
     delete: vi.fn(),
     getUsers: vi.fn(),
   },
+  listMethodSessionsMock: vi.fn(),
 }));
 
 vi.mock('../../../src/services/api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../../src/services/api')>();
   return { ...actual, Api: apiMock };
 });
+vi.mock('../../../src/method-core/api/methodCoreApi', () => ({
+  listSessions: listMethodSessionsMock,
+}));
 
 vi.mock('../../../src/components/assessment/library/AssessmentLibraryTab', () => ({
   AssessmentLibraryTab: () => <div data-testid="assessment-library-tab">Library stub</div>,
@@ -90,16 +94,15 @@ function LocationProbe() {
   );
 }
 
-const CANONICAL_ASSESSMENT_LIST = {
-  items: [
-    {
-      id: 'asm_1',
-      name: 'Canonical DRD',
-      type: 'DRD',
-      status: 'DRAFT',
-      updatedAt: '2026-04-11T08:00:00.000Z',
-    },
-  ],
+const CANONICAL_METHOD_SESSIONS = {
+  sessions: [{
+    id: 'asm-method-1', organizationId: 'org-1', projectId: null,
+    module: 'assessment', methodPackId: 'drd', methodPackVersion: '2.0.0-methodpack.1',
+    state: 'active', domainStage: null, mode: 'guided_manual', ownerUserId: 'owner-1',
+    createdAt: '2026-04-11T08:00:00.000Z', updatedAt: '2026-04-11T08:00:00.000Z',
+    version: 1, frozenSnapshotId: null, revisionOfSessionId: null, hasFrozenOutput: false,
+  }],
+  total: 1,
 };
 
 function renderRealAssessmentHub(initialEntry: string, providerConfig?: Record<string, unknown>) {
@@ -118,7 +121,8 @@ describe('AssessmentHub — assessmentFiveSurfacesV1, REAL FeatureFlagsProvider 
     vi.clearAllMocks();
     sessionStorage.clear();
     localStorage.clear();
-    apiMock.listAssessments.mockResolvedValue(CANONICAL_ASSESSMENT_LIST);
+    apiMock.listAssessments.mockResolvedValue({ items: [] });
+    listMethodSessionsMock.mockResolvedValue(CANONICAL_METHOD_SESSIONS);
     apiMock.getAssessmentReports.mockResolvedValue([]);
     apiMock.get.mockResolvedValue([]);
     apiMock.listReportImports.mockResolvedValue({ data: [] });
@@ -166,7 +170,7 @@ describe('AssessmentHub — assessmentFiveSurfacesV1, REAL FeatureFlagsProvider 
     it('OFF: a real local override for assessmentFiveSurfacesV1=false beats defaultValue=true from the first render — reproduces the legacy 3-tab Hub', async () => {
       renderRealAssessmentHub('/assessment', { enableLocalOverrides: true });
 
-      await screen.findByText('Canonical DRD');
+      await screen.findByText('DRD · asm-meth');
       const tabs = screen.getAllByRole('tab').map((el) => el.textContent || '');
       expect(tabs.some((t) => /Assessment/.test(t))).toBe(true);
       expect(tabs.some((t) => /Reports/.test(t))).toBe(true);
@@ -181,7 +185,7 @@ describe('AssessmentHub — assessmentFiveSurfacesV1, REAL FeatureFlagsProvider 
     it('OFF: clicking a tab still works but never touches ?tab= (identical to the legacy/local-mock regression guard)', async () => {
       renderRealAssessmentHub('/assessment', { enableLocalOverrides: true });
 
-      await screen.findByText('Canonical DRD');
+      await screen.findByText('DRD · asm-meth');
       fireEvent.click(await screen.findByRole('tab', { name: /Reports/i }));
 
       await waitFor(() => {

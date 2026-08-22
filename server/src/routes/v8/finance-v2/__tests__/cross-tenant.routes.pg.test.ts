@@ -67,6 +67,19 @@ describe.skipIf(!REAL_PG)(
           'PkgB Tenant B',
         ])
       );
+      await withPinnedPostgresTransaction(async (tx) => {
+        await tx.queryRun(
+          `INSERT INTO users (id, email, password, first_name, last_name, role, organization_id)
+           VALUES (?, ?, 'test', 'Tenant', 'A', 'ADMIN', ?),
+                  (?, ?, 'test', 'Tenant', 'B', 'ADMIN', ?)`,
+          [userA, `${userA}@example.test`, orgA, userB, `${userB}@example.test`, orgB]
+        );
+        await tx.queryRun(
+          `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+           VALUES (?, ?, ?, 'ADMIN', 'ACTIVE'), (?, ?, ?, 'ADMIN', 'ACTIVE')`,
+          [randomUUID(), orgA, userA, randomUUID(), orgB, userB]
+        );
+      });
 
       appA = appAsOrg(orgA, userA);
       appB = appAsOrg(orgB, userB);
@@ -87,6 +100,49 @@ describe.skipIf(!REAL_PG)(
       if (!row) throw new Error('LEGACY_UNKNOWN engine manifest not seeded');
       return row.engine_manifest_id;
     }
+
+    it('GET /artifacts — returns only the active tenant registry and honors the canonical type filter', async () => {
+      const ownBaseline = await request(appA)
+        .post('/api/v8/finance-v2/artifacts')
+        .send({ artifactType: 'BASELINE_MODEL', naturalKey: 'tenant-a-baseline' });
+      const ownAnalysis = await request(appA)
+        .post('/api/v8/finance-v2/artifacts')
+        .send({ artifactType: 'HISTORICAL_ANALYSIS', naturalKey: 'tenant-a-analysis' });
+      const foreignBaseline = await request(appB)
+        .post('/api/v8/finance-v2/artifacts')
+        .send({ artifactType: 'BASELINE_MODEL', naturalKey: 'tenant-b-baseline' });
+
+      const list = await request(appA).get('/api/v8/finance-v2/artifacts');
+      expect(list.status).toBe(200);
+      expect(list.body.data.artifacts).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ artifactId: ownBaseline.body.data.artifactId }),
+          expect.objectContaining({ artifactId: ownAnalysis.body.data.artifactId }),
+        ])
+      );
+      expect(list.body.data.artifacts).not.toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ artifactId: foreignBaseline.body.data.artifactId }),
+        ])
+      );
+
+      const filtered = await request(appA).get(
+        '/api/v8/finance-v2/artifacts?artifactType=BASELINE_MODEL'
+      );
+      expect(filtered.status).toBe(200);
+      expect(filtered.body.data.artifacts).toEqual([
+        expect.objectContaining({
+          artifactId: ownBaseline.body.data.artifactId,
+          artifactType: 'BASELINE_MODEL',
+        }),
+      ]);
+
+      const invalid = await request(appA).get(
+        '/api/v8/finance-v2/artifacts?artifactType=NOT_A_FINANCE_TYPE'
+      );
+      expect(invalid.status).toBe(400);
+      expect(invalid.body.code).toBe('INVALID_ARTIFACT_TYPE');
+    });
 
     it('GET /artifacts/:id — org B reading org A artifact -> 404, SQL confirms row still belongs to org A', async () => {
       const created = await request(appA)

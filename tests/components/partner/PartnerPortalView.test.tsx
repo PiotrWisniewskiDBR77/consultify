@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
 import { I18nextProvider } from 'react-i18next';
@@ -32,6 +32,7 @@ vi.mock('../../../src/services/api/v8', () => ({
     getEarningsSummary: vi.fn(),
     getProgramStatus: vi.fn(),
     getAttributions: vi.fn(),
+    getParticipantLedger: vi.fn(),
     connect: vi.fn(),
     startCertificationExam: vi.fn(),
     submitCertificationExam: vi.fn(),
@@ -99,9 +100,16 @@ describe('PartnerPortalView', () => {
       hold: null,
     } as any);
     vi.mocked(V8PartnerApi.getAttributions).mockResolvedValue({ attributions: [] } as any);
+    vi.mocked(V8PartnerApi.getParticipantLedger).mockResolvedValue({
+      facts: [],
+      readModel: {
+        participantFactCount: 0,
+        latestFactAt: null,
+      },
+    } as any);
   });
 
-  describe('V8 mutation cutover', () => {
+  describe('partner acquisition boundary', () => {
     const connectionResponses = () => {
       let connected = false;
       vi.mocked(Api.get).mockImplementation(async (url: string) => {
@@ -124,12 +132,8 @@ describe('PartnerPortalView', () => {
       };
     };
 
-    it('preselects V8 connect and never calls the legacy writer by default', async () => {
-      const markConnected = connectionResponses();
-      vi.mocked(V8PartnerApi.connect).mockImplementation(async () => {
-        markConnected();
-        return { connected: true, organization: { id: 'partner-1', name: 'Partner One' } };
-      });
+    it('does not expose a direct self-connect writer by default', async () => {
+      connectionResponses();
 
       render(
         <TestWrapper>
@@ -137,49 +141,27 @@ describe('PartnerPortalView', () => {
         </TestWrapper>
       );
 
-      fireEvent.click(
-        await screen.findByRole('button', {
+      await waitFor(() => expect(Api.get).toHaveBeenCalledWith('/api/partners/connection'));
+      expect(
+        screen.queryByRole('button', {
           name: /Utwórz i połącz profil|Create and connect profile|partner\.connect\.cta/,
         })
-      );
-
-      await waitFor(() =>
-        expect(V8PartnerApi.connect).toHaveBeenCalledWith(
-          { name: undefined },
-          expect.stringMatching(/^connect-/)
-        )
-      );
+      ).not.toBeInTheDocument();
+      expect(V8PartnerApi.connect).not.toHaveBeenCalled();
       expect(Api.post).not.toHaveBeenCalledWith('/api/partners/connect', expect.anything());
     });
 
-    it('selects legacy connect only when rollback was enabled before the request', async () => {
-      const markConnected = connectionResponses();
+    it('does not re-enable the removed self-connect writer through the rollback flag', async () => {
+      connectionResponses();
       vi.mocked(isPartnerLegacyRollbackEnabled).mockReturnValue(true);
-      vi.mocked(Api.post).mockImplementation(async (url: string) => {
-        if (url === '/api/partners/connect') {
-          markConnected();
-          return {
-            success: true,
-            data: { data: { connected: true, organization: { id: 'partner-1' } } },
-          } as any;
-        }
-        throw new Error(`Unexpected POST ${url}`);
-      });
 
       render(
         <TestWrapper>
           <PartnerPortalViewNew />
         </TestWrapper>
       );
-      fireEvent.click(
-        await screen.findByRole('button', {
-          name: /Utwórz i połącz profil|Create and connect profile|partner\.connect\.cta/,
-        })
-      );
-
-      await waitFor(() =>
-        expect(Api.post).toHaveBeenCalledWith('/api/partners/connect', { name: undefined })
-      );
+      await waitFor(() => expect(Api.get).toHaveBeenCalledWith('/api/partners/connection'));
+      expect(Api.post).not.toHaveBeenCalledWith('/api/partners/connect', expect.anything());
       expect(V8PartnerApi.connect).not.toHaveBeenCalled();
     });
   });
@@ -301,6 +283,51 @@ describe('PartnerPortalView', () => {
       expect(screen.getByText('Ready for payout')).toBeInTheDocument();
       expect(screen.getByText('30 unique')).toBeInTheDocument();
       expect(screen.getByText('payout lifecycle')).toBeInTheDocument();
+    });
+
+    it('uses the canonical certification reader instead of the dashboard 0/0 placeholder', async () => {
+      vi.mocked(Api.get).mockImplementation(async (url: string) => {
+        if (url === '/api/partners/connection') {
+          return {
+            success: true,
+            data: { data: { connected: true, organization: { name: 'Partner Org' } } },
+          } as any;
+        }
+        if (url === '/api/partners/dashboard') {
+          return {
+            success: true,
+            data: {
+              data: {
+                stats: { certificationLevel: 'Certified' },
+                recentActivity: [],
+                certificationProgress: { completed: 0, total: 0, courses: [] },
+              },
+            },
+          } as any;
+        }
+        if (url === '/api/partners/certifications') {
+          return {
+            success: true,
+            data: {
+              data: [
+                { id: 'cert-complete', status: 'completed', reviewState: 'approved' },
+                { id: 'cert-pending', status: 'in_progress', reviewState: 'pending' },
+              ],
+            },
+          } as any;
+        }
+        throw new Error(`Unexpected GET ${url}`);
+      });
+
+      render(
+        <TestWrapper>
+          <PartnerPortalViewNew />
+        </TestWrapper>
+      );
+
+      await waitFor(() => expect(screen.getAllByText(/1\/2/).length).toBeGreaterThanOrEqual(2));
+      expect(screen.queryByText(/0\/0/)).not.toBeInTheDocument();
+      expect(screen.getByText('Certification details are available in Learning Path')).toBeInTheDocument();
     });
 
     it('should handle dashboard API error', async () => {

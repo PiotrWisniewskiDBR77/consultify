@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 
-const { navigateMock, apiMock, tMock } = vi.hoisted(() => ({
+const { navigateMock, apiMock, tMock, listMethodSessionsMock } = vi.hoisted(() => ({
   navigateMock: vi.fn(),
   apiMock: {
     listAssessments: vi.fn(),
@@ -16,6 +16,7 @@ const { navigateMock, apiMock, tMock } = vi.hoisted(() => ({
     // (same wzór as DiscoveryToolsHub) — must be mocked or the hub throws.
     getUsers: vi.fn(),
   },
+  listMethodSessionsMock: vi.fn(),
   // Mirror react-i18next: the second arg may be a fallback string OR an options
   // object ({ defaultValue, ...interpolation }). Returning the raw object would
   // crash React with "Objects are not valid as a React child".
@@ -60,6 +61,9 @@ vi.mock('react-hot-toast', () => ({
 vi.mock('../../../src/services/api', () => ({
   Api: apiMock,
 }));
+vi.mock('../../../src/method-core/api/methodCoreApi', () => ({
+  listSessions: listMethodSessionsMock,
+}));
 
 vi.mock('../../../src/hooks/useFeatureFlags', () => ({
   useFeatureFlags: () => ({
@@ -91,6 +95,7 @@ vi.mock('../../../src/components/shared/ModuleHub', () => ({
   StatusDropdown: () => null,
   ASSESSMENT_STATUSES: {},
   REPORT_STATUSES: {},
+  getStatusesForModule: () => [],
 }));
 
 vi.mock('../../../src/components/Initiatives/InitiativeCompactPanel', () => ({
@@ -139,6 +144,7 @@ describe('AssessmentHub rate limit resilience', () => {
     apiMock.get.mockResolvedValue([]);
     apiMock.listReportImports.mockResolvedValue({ data: [] });
     apiMock.getUsers.mockResolvedValue([]);
+    listMethodSessionsMock.mockResolvedValue({ sessions: [], total: 0 });
   });
 
   it('keeps the hub usable when the assessment list is rate limited', async () => {
@@ -151,7 +157,7 @@ describe('AssessmentHub rate limit resilience', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('assessment-module-hub')).toBeInTheDocument();
+      expect(screen.getByRole('tablist', { name: 'Module sections' })).toBeInTheDocument();
     });
 
     expect(apiMock.listAssessments).toHaveBeenCalled();
@@ -172,8 +178,8 @@ describe('AssessmentHub rate limit resilience', () => {
       JSON.stringify([
         {
           id: 'asm_cached_1',
-          name: 'Cached DRD Assessment',
-          type: 'DRD',
+          name: 'Cached SIRI Assessment',
+          type: 'SIRI',
           status: 'DRAFT',
           updatedAt: '2026-03-26T08:00:00.000Z',
         },
@@ -187,7 +193,7 @@ describe('AssessmentHub rate limit resilience', () => {
       </MemoryRouter>
     );
 
-    expect(await screen.findByText('Cached DRD Assessment')).toBeInTheDocument();
+    expect(await screen.findByText('Cached SIRI Assessment')).toBeInTheDocument();
 
     expect(
       await screen.findByText(
@@ -196,18 +202,17 @@ describe('AssessmentHub rate limit resilience', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders the canonical Menu 3 AI actions in the hub', async () => {
-    apiMock.listAssessments.mockResolvedValue({
-      items: [
-        {
-          id: 'asm_1',
-          name: 'Canonical DRD',
-          type: 'DRD',
-          status: 'DRAFT',
-          updatedAt: '2026-04-11T08:00:00.000Z',
-        },
-      ],
+  it('renders only the canonical contextual AI action in Menu 3', async () => {
+    listMethodSessionsMock.mockResolvedValue({
+      sessions: [{
+        id: 'asm-method-1', organizationId: 'org-1', projectId: null,
+        module: 'assessment', methodPackId: 'drd', methodPackVersion: '2.0.0-methodpack.1',
+        state: 'active', domainStage: null, mode: 'guided_manual', ownerUserId: 'owner-1',
+        createdAt: '2026-04-11T08:00:00.000Z', updatedAt: '2026-04-11T08:00:00.000Z',
+        version: 1, frozenSnapshotId: null, revisionOfSessionId: null, hasFrozenOutput: false,
+      }], total: 1,
     });
+    apiMock.listAssessments.mockResolvedValue({ items: [] });
 
     render(
       <MemoryRouter initialEntries={['/assessment']}>
@@ -216,10 +221,8 @@ describe('AssessmentHub rate limit resilience', () => {
     );
 
     expect(await screen.findByText('AI Triage')).toBeInTheDocument();
-    expect(screen.getByText('Chat')).toBeInTheDocument();
-    // #70: "Interpretation Draft" was unclear jargon — renamed to say what the
-    // button does (resume the most recently updated assessment's editor).
-    expect(screen.getByText('Resume latest assessment')).toBeInTheDocument();
+    expect(screen.queryByText('Chat')).not.toBeInTheDocument();
+    expect(screen.queryByText('Resume latest assessment')).not.toBeInTheDocument();
   });
 
   // #73: reports/initiatives used to open a bespoke `fixed inset-0` backdrop

@@ -1137,8 +1137,11 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
       <form onSubmit={handleLogin} className="space-y-5">
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-c-text-secondary">{t('auth.email')}</label>
+          <label htmlFor="login-email" className="text-xs font-medium text-c-text-secondary">
+            {t('auth.email')}
+          </label>
           <input
+            id="login-email"
             type="email"
             name="email"
             autoComplete="email"
@@ -1152,7 +1155,10 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
         <div className="space-y-1.5">
           <div className="flex justify-between">
-            <label className="text-xs font-medium text-c-text-secondary">
+            <label
+              htmlFor="login-password"
+              className="text-xs font-medium text-c-text-secondary"
+            >
               {t('auth.password')}
             </label>
             <button
@@ -1164,6 +1170,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
             </button>
           </div>
           <input
+            id="login-password"
             type="password"
             name="password"
             autoComplete="current-password"

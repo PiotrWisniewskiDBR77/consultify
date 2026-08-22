@@ -54,10 +54,11 @@ describe('PriorityCell', () => {
     const { container: cLast } = render(
       <PriorityCell value="P3" fieldOptions={{ levels: 'P0_P1_P2_P3' }} />
     );
-    // Highest priority uses the semantic `danger` token (migrated from rose by the
-    // Visual Quality program); lowest stays neutral slate.
-    expect(cFirst.innerHTML).toMatch(/danger/);
-    expect(cLast.innerHTML).toMatch(/slate/);
+    // Highest priority uses the semantic danger token; lowest uses the neutral
+    // surface/text tokens. Do not couple this contract to a palette name.
+    expect(cFirst.innerHTML).toMatch(/--c-danger/);
+    expect(cLast.innerHTML).toMatch(/--c-text-muted/);
+    expect(cLast.innerHTML).toMatch(/--c-surface-raised/);
   });
 
   it('does NOT use raw hex literals', () => {

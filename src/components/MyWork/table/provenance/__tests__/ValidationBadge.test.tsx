@@ -19,7 +19,13 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_k: string, def?: string) => def ?? _k,
+    t: (_k: string, value?: string | ({ defaultValue?: string } & Record<string, unknown>)) => {
+      const copy: Record<string, string> = {
+        'myWorkTable.validationBadge.validationStatus': 'Validation status',
+        'myWorkTable.validationBadge.validationStatusTitle': 'Change validation status',
+      };
+      return copy[_k] ?? (typeof value === 'string' ? value : value?.defaultValue) ?? _k;
+    },
     i18n: { language: 'en' },
   }),
 }));

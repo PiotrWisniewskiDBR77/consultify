@@ -9,15 +9,15 @@
  *   AUD_OWNER_FIXTURE_CONFIRM=YES DATABASE_URL=... node scripts/dev/seed-wave3-audits-owner-review.mjs reset
  *   AUD_OWNER_FIXTURE_CONFIRM=YES DATABASE_URL=... node scripts/dev/seed-wave3-audits-owner-review.mjs drop
  *
- * `provision` clones only the fixed local baseline `consultify_audits_20260813`
- * and applies the two Audits method-core migrations. No external standard,
+ * `provision` creates an empty disposable database and applies the exact current
+ * strict migration chain. No external standard,
  * live provider, remote endpoint or production database is used. Each seed
  * requires a new manifest path; manifests are exclusive wx/0600 and retained.
  */
 
 import { spawnSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
-import { existsSync, statSync, writeFileSync } from 'node:fs';
+import { createHash, randomBytes } from 'node:crypto';
+import { existsSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import bcrypt from 'bcryptjs';
 import pg from 'pg';
 
@@ -27,7 +27,8 @@ const CONFIRM = process.env.AUD_OWNER_FIXTURE_CONFIRM;
 const PASSWORD = process.env.AUD_OWNER_FIXTURE_PASSWORD;
 const MANIFEST_PATH = process.env.AUD_OWNER_FIXTURE_MANIFEST || '';
 const PREFIX = 'consultify_w3_audits_owner_';
-const TEMPLATE_DB = 'consultify_audits_20260813';
+const FIXTURE_ID = 'W3-AUDITS-OWNER-v1';
+const FIXTURE_NAME = 'wave3-audits-owner-review-v1';
 const LOCAL_HOSTS = new Set(['127.0.0.1', 'localhost', '::1']);
 const MUTATING = new Set(['provision', 'seed', 'reset', 'drop']);
 
@@ -78,22 +79,22 @@ async function maintenance(url) {
 async function provision(url, dbName) {
   const admin = await maintenance(url);
   try {
-    const template = await admin.query('SELECT 1 FROM pg_database WHERE datname=$1', [TEMPLATE_DB]);
-    if (!template.rowCount) fail(`fixed local template ${TEMPLATE_DB} is absent`);
     const exists = await admin.query('SELECT 1 FROM pg_database WHERE datname=$1', [dbName]);
     if (exists.rowCount) fail('database already exists');
-    await admin.query(`CREATE DATABASE ${dbName} TEMPLATE ${TEMPLATE_DB}`);
+    await admin.query(`CREATE DATABASE ${dbName}`);
   } finally { await admin.end(); }
-  for (const migration of [
-    'server/migrations/20260813_audits_method_core.sql',
-    'server/migrations/20260813b_audits_source_classification_split.sql',
-  ]) {
-    const result = spawnSync('/opt/homebrew/opt/postgresql@15/bin/psql', ['-v', 'ON_ERROR_STOP=1', '-d', url.toString(), '-f', migration], {
-      cwd: process.cwd(), stdio: 'inherit', env: { ...process.env, PGPASSWORD: url.password },
-    });
-    if (result.status !== 0) fail(`Audits schema migration failed: ${migration}`);
+  const result = spawnSync('npm', ['run', 'db:migrate:strict'], {
+    cwd: process.cwd(), stdio: 'inherit', env: { ...process.env, DATABASE_URL: url.toString(), DB_TYPE: 'postgres', NODE_ENV: 'test' },
+  });
+  if (result.status !== 0) {
+    const cleanup = await maintenance(url);
+    try {
+      await cleanup.query('SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname=$1 AND pid<>pg_backend_pid()', [dbName]);
+      await cleanup.query(`DROP DATABASE ${dbName}`);
+    } finally { await cleanup.end(); }
+    fail('exact strict migration chain failed; newly-created database removed');
   }
-  console.log(JSON.stringify({ command: 'provision', database: dbName, template: TEMPLATE_DB, auditMigrations: 2 }));
+  console.log(JSON.stringify({ command: 'provision', database: dbName, migrationMode: 'exact-current-strict' }));
 }
 
 async function reset(client) {
@@ -113,6 +114,21 @@ async function reset(client) {
 }
 
 async function seed(client) {
+  await client.query(`CREATE TABLE IF NOT EXISTS public.wave3_owner_fixture_markers(
+    fixture_id text PRIMARY KEY, ownership_nonce text NOT NULL, database_name text NOT NULL,
+    created_at timestamptz NOT NULL DEFAULT now())`);
+  const marker = await client.query(
+    'SELECT ownership_nonce,database_name FROM public.wave3_owner_fixture_markers WHERE fixture_id=$1',
+    [FIXTURE_ID]
+  );
+  const databaseName = qualifiedUrl().dbName;
+  if (marker.rowCount && marker.rows[0].database_name !== databaseName) fail('durable ownership marker database mismatch');
+  if (!marker.rowCount) {
+    await client.query(
+      'INSERT INTO public.wave3_owner_fixture_markers(fixture_id,ownership_nonce,database_name) VALUES($1,$2,$3)',
+      [FIXTURE_ID, randomBytes(32).toString('hex'), databaseName]
+    );
+  }
   const existing = await client.query('SELECT count(*)::int n FROM audit_programs WHERE id=$1 AND organization_id=$2', [IDS.program, IDS.org]);
   if (existing.rows[0].n === 1) return persist(await readback(client, false));
   if (!PASSWORD || PASSWORD.length < 12) fail('first seed requires AUD_OWNER_FIXTURE_PASSWORD of at least 12 characters');
@@ -161,6 +177,11 @@ async function seed(client) {
 }
 
 async function readback(client, emit = true) {
+  const marker = await client.query(
+    'SELECT ownership_nonce,database_name FROM public.wave3_owner_fixture_markers WHERE fixture_id=$1',
+    [FIXTURE_ID]
+  );
+  if (marker.rowCount !== 1) fail('durable ownership marker is absent or ambiguous');
   const result = await client.query(`SELECT p.id program_id,p.lifecycle_state,p.pack_id,pk.title pack_title,pk.source_type,pk.verification_state,s.rights_status,
     c.id criterion_id,e.id evidence_id,e.content_hash,f.id finding_id,f.status finding_status,f.author_id,f.reviewed_by,f.owner_user_id,
     a.id action_id,a.status action_status,a.owner_user_id action_owner,a.approved_by,r.id report_id,r.status report_status,r.content_hash report_hash,
@@ -174,7 +195,9 @@ async function readback(client, emit = true) {
   const row = result.rows[0];
   const members = await client.query(`SELECT user_id,member_role,independence_declared FROM audit_program_members WHERE organization_id=$1 AND program_id=$2 ORDER BY member_role`, [IDS.org,IDS.program]);
   const personas = await client.query(`SELECT u.id,u.organization_id,m.role,m.status FROM users u JOIN organization_members m ON m.user_id=u.id AND m.organization_id=u.organization_id WHERE u.id=ANY($1) ORDER BY u.id`, [[IDS.owner,IDS.lead,IDS.auditee,IDS.reviewer,IDS.actionOwner,IDS.revoked,IDS.foreignOwner]]);
-  const manifest = { schemaVersion:'w3-audits-owner-v1', deepLinks:{ program:`/audit-programs/${IDS.program}`, finding:`/audit-programs/${IDS.program}?findingId=${IDS.finding}` }, deepLinkVerified:false, providerMode:'none-internal-fixture-only', policy:{ externalNamedStandards:'OFF', methodologyRightsDecision:'PENDING', ownerGate:'PENDING' }, ids:{...IDS}, expected:{ lifecycleState:row.lifecycle_state, packTitle:row.pack_title, sourceType:row.source_type, verificationState:row.verification_state, rightsStatus:row.rights_status, evidenceHash:row.content_hash, findingStatus:row.finding_status, actionStatus:row.action_status, reportStatus:row.report_status, reportHash:row.report_hash, proposalStatus:row.proposal_status, counts:{members:members.rowCount,citations:0,liveProviderCalls:0} }, sod:{findingAuthor:row.author_id,independentReviewer:row.reviewed_by,findingOwner:row.owner_user_id,actionOwner:row.action_owner,actionApprover:row.approved_by}, members:members.rows, personas:personas.rows };
+  const ownershipNonce = marker.rows[0].ownership_nonce;
+  const databaseName = marker.rows[0].database_name;
+  const manifest = { schemaVersion:'w3-audits-owner-v1', fixture:FIXTURE_NAME, fixtureId:FIXTURE_ID, ownershipState:'FINAL', ownershipNonce, databaseName, marker:{table:'wave3_owner_fixture_markers',fixtureId:FIXTURE_ID,ownershipNonce}, deepLinks:{ program:`/audit-programs?tab=processes&programId=${IDS.program}`, finding:`/audit-programs/${IDS.program}/criteria/${IDS.criterion}?findingId=${IDS.finding}` }, deepLinkVerified:false, providerMode:'none-internal-fixture-only', policy:{ externalNamedStandards:'OFF', methodologyRightsDecision:'PENDING', ownerGate:'PENDING' }, ids:{...IDS}, expected:{ lifecycleState:row.lifecycle_state, packTitle:row.pack_title, sourceType:row.source_type, verificationState:row.verification_state, rightsStatus:row.rights_status, evidenceHash:row.content_hash, findingStatus:row.finding_status, actionStatus:row.action_status, reportStatus:row.report_status, reportHash:row.report_hash, proposalStatus:row.proposal_status, counts:{members:members.rowCount,citations:0,liveProviderCalls:0} }, sod:{findingAuthor:row.author_id,independentReviewer:row.reviewed_by,findingOwner:row.owner_user_id,actionOwner:row.action_owner,actionApprover:row.approved_by}, members:members.rows, personas:personas.rows };
   const sourceFindings = typeof row.source_finding_ids === 'string' ? JSON.parse(row.source_finding_ids) : row.source_finding_ids;
   if (BANNED.test(JSON.stringify(manifest)) || row.pack_title !== PACK_TITLE || row.source_type !== 'INTERNAL_FRAMEWORK' || row.rights_status !== 'owned_internal' || row.finding_status !== 'confirmed' || row.action_status !== 'approved' || row.report_status !== 'draft' || row.proposal_status !== 'draft' || row.content_hash !== hash(EVIDENCE_TEXT) || !sourceFindings.includes(IDS.finding) || members.rowCount !== 5 || row.author_id === row.reviewed_by || row.reviewed_by === row.owner_user_id || row.reviewed_by === row.action_owner || row.action_owner === row.approved_by) fail('canonical readback / SoD / internal-rights validation failed');
   if (emit) console.log(JSON.stringify(manifest,null,2));
@@ -192,6 +215,10 @@ function persist(manifest) {
 }
 
 async function drop(url, dbName) {
+  if (!MANIFEST_PATH || !existsSync(MANIFEST_PATH) || (statSync(MANIFEST_PATH).mode & 0o777) !== 0o600) fail('drop requires exact existing 0600 manifest');
+  const receipt=JSON.parse(readFileSync(MANIFEST_PATH,'utf8'));
+  if(receipt.fixtureId!==FIXTURE_ID||receipt.fixture!==FIXTURE_NAME||receipt.ownershipState!=='FINAL'||receipt.databaseName!==dbName||receipt.marker?.ownershipNonce!==receipt.ownershipNonce) fail('drop manifest ownership binding mismatch');
+  const owned=new pg.Client({connectionString:url.toString()}); await owned.connect(); try { const m=await owned.query('SELECT database_name FROM wave3_owner_fixture_markers WHERE fixture_id=$1 AND ownership_nonce=$2',[FIXTURE_ID,receipt.ownershipNonce]); if(m.rowCount!==1||m.rows[0].database_name!==dbName) fail('drop durable marker mismatch'); } finally { await owned.end(); }
   const admin=await maintenance(url); try { await admin.query('SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname=$1 AND pid<>pg_backend_pid()',[dbName]); await admin.query(`DROP DATABASE IF EXISTS ${dbName}`); const r=await admin.query('SELECT count(*)::int n FROM pg_database WHERE datname=$1',[dbName]); if(r.rows[0].n!==0) fail('catalog absence failed'); console.log(JSON.stringify({command:'drop',database:dbName,catalogMatches:0})); } finally { await admin.end(); }
 }
 

@@ -10,19 +10,28 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (_key: string, fallback?: any, opts?: any) => {
-      let str = typeof fallback === 'string' ? fallback : _key;
-      if (opts && typeof opts === 'object') {
-        str = str.replace(/\{\{(\w+)\}\}/g, (_m: string, k: string) => String(opts[k] ?? ''));
-      }
-      return str;
-    },
-    i18n: { language: 'pl' },
-  }),
-  initReactI18next: { type: '3rdParty', init: () => {} },
-}));
+vi.mock('react-i18next', async () => {
+  const dictionary = (await import('../../../public/locales/pl/translation.json'))
+    .default as Record<string, any>;
+  const resolve = (key: string) =>
+    key.split('.').reduce<any>((value, part) => value?.[part], dictionary);
+  return {
+    useTranslation: () => ({
+      t: (key: string, fallback?: any, opts?: any) => {
+        const options = typeof fallback === 'object' ? fallback : opts;
+        let str =
+          resolve(key) ??
+          (typeof fallback === 'string' ? fallback : (options?.defaultValue ?? key));
+        str = String(str).replace(/\{\{(\w+)\}\}/g, (_m: string, name: string) =>
+          String(options?.[name] ?? '')
+        );
+        return str;
+      },
+      i18n: { language: 'pl' },
+    }),
+    initReactI18next: { type: '3rdParty', init: () => {} },
+  };
+});
 
 vi.mock('@/services/api', () => ({
   Api: { get: vi.fn(), post: vi.fn() },
@@ -33,15 +42,34 @@ import { Api } from '@/services/api';
 
 const SIGNALS = {
   signals: [
-    { id: 'sig-1', name: 'Adopcja poniżej progu', type: 'adoption', severity: 'critical', realizationPct: 0.3 },
-    { id: 'sig-2', name: 'Trend spadkowy', type: 'trend', severity: 'warning', realizationPct: 0.55 },
+    {
+      id: 'sig-1',
+      name: 'Adopcja poniżej progu',
+      type: 'adoption',
+      severity: 'critical',
+      realizationPct: 0.3,
+    },
+    {
+      id: 'sig-2',
+      name: 'Trend spadkowy',
+      type: 'trend',
+      severity: 'warning',
+      realizationPct: 0.55,
+    },
   ],
   summary: { total: 2, critical: 1, warning: 1 },
 };
 
 const REALLOCATION = {
   moves: [
-    { fromId: 'init-aaa', fromName: 'Inicjatywa A', toId: 'init-bbb', toName: 'Inicjatywa B', fteSuggested: 2, rationale: 'więcej wartości' },
+    {
+      fromId: 'init-aaa',
+      fromName: 'Inicjatywa A',
+      toId: 'init-bbb',
+      toName: 'Inicjatywa B',
+      fteSuggested: 2,
+      rationale: 'więcej wartości',
+    },
   ],
   summary: {},
   capacityAssumed: true,
@@ -49,7 +77,12 @@ const REALLOCATION = {
 
 const RUN_RATE = {
   bridge: { runRate: 4_000_000, projectedInYear: 5_000_000, alreadyRealized: 2_000_000 },
-  timing: { totalRunRate: 4_000_000, totalRealized: 2_000_000, aheadOfPlanCount: 3, behindPlanCount: 1 },
+  timing: {
+    totalRunRate: 4_000_000,
+    totalRealized: 2_000_000,
+    aheadOfPlanCount: 3,
+    behindPlanCount: 1,
+  },
   periodMonths: 6,
   periodMonthsAssumed: true,
 };
@@ -65,7 +98,11 @@ const SCENARIOS = {
 };
 
 const FINANCE_LINK = {
-  aggregate: { totalPositiveImpact: 2_000_000, totalNegativeImpact: -500_000, netImpact: 1_500_000 },
+  aggregate: {
+    totalPositiveImpact: 2_000_000,
+    totalNegativeImpact: -500_000,
+    netImpact: 1_500_000,
+  },
   mappingCount: 4,
 };
 
@@ -130,15 +167,15 @@ describe('PortfolioInsightsPanel', () => {
     await waitFor(() => expect(screen.getByTestId('portfolio-insights-panel')).toBeInTheDocument());
     expect(screen.getByText('Sygnały do M14 Wdrożenie')).toBeInTheDocument();
     expect(screen.getByText('Adopcja poniżej progu')).toBeInTheDocument();
-    expect(screen.getByText('1 krytycznych')).toBeInTheDocument();
+    expect(screen.getByText('1 critical')).toBeInTheDocument();
   });
 
   it('renders the run-rate section with the assumption flag', async () => {
     mockEndpoints(FULL);
     render(<PortfolioInsightsPanel projectId="all" />);
     await waitFor(() => expect(screen.getByTestId('portfolio-insights-panel')).toBeInTheDocument());
-    expect(screen.getByText('Run-rate vs in-year')).toBeInTheDocument();
-    expect(screen.getByText(/założenie: 6 mies/)).toBeInTheDocument();
+    expect(screen.getByText('Run-rate vs bieżący rok')).toBeInTheDocument();
+    expect(screen.getByText(/założenie: 6 mies\. okno pomiaru/)).toBeInTheDocument();
   });
 
   it('renders the scenarios table with NPV/IRR rows', async () => {
@@ -188,7 +225,12 @@ describe('PortfolioInsightsPanel', () => {
       '/run-rate': null,
       '/scenarios': null,
       '/finance-link': null,
-      '/funnel': { stages: [], conversion: [], valueAtRisk: { atRiskValue: 0, atRiskCount: 0 }, total: 0 },
+      '/funnel': {
+        stages: [],
+        conversion: [],
+        valueAtRisk: { atRiskValue: 0, atRiskCount: 0 },
+        total: 0,
+      },
     });
     render(<PortfolioInsightsPanel projectId="all" />);
     await waitFor(() => expect(screen.getByTestId('portfolio-insights-panel')).toBeInTheDocument());

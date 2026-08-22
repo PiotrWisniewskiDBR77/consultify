@@ -2181,9 +2181,13 @@ async function createAdminRoleAssignment(orgId: string, actorId: string, body: a
 
 function matchesAuditFilter(log: any, orgId: string, filters: Record<string, string>) {
   const metadata = parseJson<Record<string, unknown>>(log.metadata_json, {});
-  const logOrgId = String(
+  const persistedOrgId = String(log.organization_id || '').trim();
+  const legacyMetadataOrgId = String(
     metadata.orgId || metadata.organizationId || (metadata.details as any)?.orgId || ''
   ).trim();
+  // The indexed tenant column is authoritative. Metadata is only a compatibility
+  // fallback for rows written before organization_id was populated.
+  const logOrgId = persistedOrgId || legacyMetadataOrgId;
 
   if (logOrgId !== orgId) return false;
   if (filters.actionType && String(log.action_type) !== filters.actionType) return false;
@@ -2201,9 +2205,58 @@ function matchesAuditFilter(log: any, orgId: string, filters: Record<string, str
   return true;
 }
 
+function normalizeIamAuditEvent(row: any) {
+  const actionType = String(row.action || 'iam_change');
+  const riskScore = actionType === 'member_removed' ? 80 : actionType === 'role_change' ? 60 : 40;
+  return {
+    id: String(row.id),
+    organization_id: String(row.organization_id),
+    admin_id: String(row.actor_id),
+    action_type: actionType,
+    resource_type: String(row.resource_type || 'organization_member'),
+    resource_id: row.resource_id == null ? null : String(row.resource_id),
+    metadata_json: JSON.stringify({
+      source: 'role_change_audit_events',
+      projectId: row.project_id || null,
+      before: parseJson(row.before_json, null),
+      after: parseJson(row.after_json, null),
+    }),
+    risk_score: riskScore,
+    risk_level: riskScore >= 80 ? 'critical' : riskScore >= 60 ? 'high' : 'medium',
+    status: 'logged',
+    created_at: row.created_at,
+  };
+}
+
+async function readTenantAdminAuditProjection(orgId: string) {
+  const [legacyRows, iamRows] = await Promise.all([
+    adminAuditService.getLogs({ limit: 1000, offset: 0, organizationId: orgId }),
+    dbAll<any>(
+      `SELECT id, organization_id, project_id, actor_id, action, resource_type,
+              resource_id, before_json, after_json, created_at
+         FROM role_change_audit_events
+        WHERE organization_id = ?
+        ORDER BY created_at DESC
+        LIMIT 1000`,
+      [orgId],
+      { fallback: false }
+    ),
+  ]);
+
+  const normalized = [
+    ...(Array.isArray(legacyRows) ? legacyRows : []),
+    ...(Array.isArray(iamRows) ? iamRows.map(normalizeIamAuditEvent) : []),
+  ];
+  const unique = new Map<string, any>();
+  for (const row of normalized) unique.set(`${row.organization_id || ''}:${row.id}`, row);
+  return Array.from(unique.values()).sort(
+    (a, b) => Date.parse(String(b.created_at || '')) - Date.parse(String(a.created_at || ''))
+  );
+}
+
 async function readAuditStatsForOrg(orgId: string) {
   try {
-    const logs = await adminAuditService.getLogs({ limit: 1000, offset: 0, organizationId: orgId });
+    const logs = await readTenantAdminAuditProjection(orgId);
     const scoped = logs.filter((log: any) => matchesAuditFilter(log, orgId, {}));
     return {
       totalLogs: scoped.length,
@@ -2974,7 +3027,7 @@ router.get(
     };
     const limit = Math.min(Number(req.query.limit || 50), 200);
     const offset = Math.max(Number(req.query.offset || 0), 0);
-    const logs = await adminAuditService.getLogs({ limit: 1000, offset: 0, organizationId: orgId });
+    const logs = await readTenantAdminAuditProjection(orgId);
     const filtered = logs.filter((log: any) => matchesAuditFilter(log, orgId, filters));
     const paginated = filtered.slice(offset, offset + limit);
 
@@ -2993,7 +3046,7 @@ router.get(
     const actor = await getAdminActor(req, res, ['audit:read']);
     if (!actor) return;
     const { orgId } = actor;
-    const logs = await adminAuditService.getLogs({ limit: 1000, offset: 0, organizationId: orgId });
+    const logs = await readTenantAdminAuditProjection(orgId);
     const scoped = logs.filter((log: any) => matchesAuditFilter(log, orgId, {}));
     const unresolved = scoped.filter((log: any) => log.status !== 'resolved').length;
     const highRisk = scoped.filter((log: any) => Number(log.risk_score || 0) >= 60).length;
@@ -3012,7 +3065,7 @@ router.get(
     const actor = await getAdminActor(req, res, ['audit:export', 'audit:read']);
     if (!actor) return;
     const { orgId } = actor;
-    const logs = await adminAuditService.getLogs({ limit: 1000, offset: 0, organizationId: orgId });
+    const logs = await readTenantAdminAuditProjection(orgId);
     const scoped = logs.filter((log: any) =>
       matchesAuditFilter(log, orgId, { actionType: '', status: '', riskScoreMin: '', search: '' })
     );

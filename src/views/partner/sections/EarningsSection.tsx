@@ -551,6 +551,38 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
   }
 
   if (error && !summary) {
+    // Program status is a successful governed read even when all money-bearing
+    // readers are refused by AMD-PRT-ECONOMICS-002. In that state, a generic
+    // retry error is misleading: the feature is intentionally policy-gated.
+    if (programStatus) {
+      return (
+        <div
+          className="rounded-xl border border-amber-200 bg-amber-50 p-6 dark:border-amber-700/60 dark:bg-amber-500/10"
+          role="note"
+        >
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-700 dark:text-amber-300" />
+            <div>
+              <h2 className="font-semibold text-c-text">
+                {t('partner.earnings.policyUnavailableTitle', 'Partner economics unavailable')}
+              </h2>
+              <p className="mt-1 text-sm text-c-text-secondary">
+                {t(
+                  'partner.earnings.payoutOperationsUnavailable',
+                  'Commission, accrual and payout operations are unavailable under AMD-PRT-ECONOMICS-002.'
+                )}
+              </p>
+              <p className="mt-2 text-xs text-c-text-muted">
+                {t(
+                  'partner.earnings.historicalReadOnlyUnavailable',
+                  'No historical economic readback is available for this partner.'
+                )}
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center">
         <div className="p-4 rounded-full bg-danger-500/10 mb-4">

@@ -106,18 +106,14 @@ describe('ResultsVNextRegistryShell · Esc-to-close i powrót fokusu', () => {
    * bez dotykania `RowActionsMenu.tsx`) jest otwarty, ta powłoka MUSI
    * pominąć zamknięcie preview i oddać Escape wyłącznie jemu.
    */
-  it('Escape NIE zamyka preview, gdy otwarty jest kebab wiersza (role="menu") — jedna warstwa naraz', () => {
+  it('Escape NIE zamyka preview, gdy bardziej lokalna warstwa już obsłużyła zdarzenie', () => {
     const onClose = vi.fn();
     render(<Harness open onClose={onClose} />);
 
-    const menu = document.createElement('div');
-    menu.setAttribute('role', 'menu');
-    document.body.appendChild(menu);
-
-    fireEvent.keyDown(document, { key: 'Escape' });
+    const event = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+    event.preventDefault();
+    document.dispatchEvent(event);
     expect(onClose).not.toHaveBeenCalled();
-
-    menu.remove();
   });
 
   it('Escape zamyka preview normalnie, gdy kebab NIE jest otwarty', () => {
@@ -132,15 +128,14 @@ describe('ResultsVNextRegistryShell · Esc-to-close i powrót fokusu', () => {
     const onClose = vi.fn();
     render(<Harness open onClose={onClose} />);
 
-    const menu = document.createElement('div');
-    menu.setAttribute('role', 'menu');
-    document.body.appendChild(menu);
-
-    fireEvent.keyDown(document, { key: 'Escape' });
+    const handledByMenu = new KeyboardEvent('keydown', {
+      key: 'Escape',
+      bubbles: true,
+      cancelable: true,
+    });
+    handledByMenu.preventDefault();
+    document.dispatchEvent(handledByMenu);
     expect(onClose).not.toHaveBeenCalled();
-
-    // Kebab się zamknął (symulacja: RowActionsMenu usunęło swój popover).
-    menu.remove();
 
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(onClose).toHaveBeenCalledTimes(1);

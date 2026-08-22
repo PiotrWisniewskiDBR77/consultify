@@ -54,6 +54,11 @@ import {
   type StatusTone,
 } from '@/components/ui/primitives/chips';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
+import {
+  listSessions as listMethodSessions,
+  type MethodSessionListItem,
+} from '@/method-core/api/methodCoreApi';
+import { DRD_METHOD_PACK_ID } from '@/method-core/methods/drd/compileDrdPack';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
@@ -190,6 +195,8 @@ interface AssessmentFromAPI {
   // so raw rows carry snake_case created_by even though this type isn't formally normalized.
   createdBy?: string;
   created_by?: string;
+  /** Identifies the canonical Method Core DRD rows from legacy assessments. */
+  source?: 'method-core' | 'legacy';
 }
 
 interface ReportBuilderReportFromAPI {
@@ -212,7 +219,13 @@ function readCachedAssessmentHubList(): AssessmentFromAPI[] {
     const raw = window.sessionStorage.getItem(ASSESSMENT_HUB_CACHE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as AssessmentFromAPI[]) : [];
+    // This cache predates Method Core and is intentionally legacy-only. A
+    // cached legacy DRD row must never masquerade as a canonical DRD session.
+    return Array.isArray(parsed)
+      ? (parsed as AssessmentFromAPI[]).filter(
+          (item) => String(item.type || '').toUpperCase() !== 'DRD'
+        )
+      : [];
   } catch {
     return [];
   }
@@ -220,10 +233,38 @@ function readCachedAssessmentHubList(): AssessmentFromAPI[] {
 
 function writeCachedAssessmentHubList(items: AssessmentFromAPI[]): void {
   try {
-    window.sessionStorage.setItem(ASSESSMENT_HUB_CACHE_KEY, JSON.stringify(items));
+    window.sessionStorage.setItem(
+      ASSESSMENT_HUB_CACHE_KEY,
+      JSON.stringify(items.filter((item) => item.source === 'legacy'))
+    );
   } catch {
     // Ignore browser storage failures and keep runtime continuity.
   }
+}
+
+function methodSessionToAssessment(session: MethodSessionListItem): AssessmentFromAPI {
+  const statusByState: Record<MethodSessionListItem['state'], AssessmentStatusType> = {
+    draft: 'DRAFT',
+    prepared: 'DRAFT',
+    active: 'DRAFT',
+    in_review: 'IN_REVIEW',
+    frozen: 'APPROVED',
+    closed: 'ARCHIVED',
+    archived: 'ARCHIVED',
+  };
+  return {
+    id: session.id,
+    name: `DRD · ${session.id.slice(0, 8)}`,
+    description: session.domainStage || undefined,
+    status: statusByState[session.state],
+    type: 'DRD',
+    progress: 0,
+    createdAt: session.createdAt,
+    updatedAt: session.updatedAt,
+    organizationId: session.organizationId,
+    createdBy: session.ownerUserId,
+    source: 'method-core',
+  };
 }
 
 // Map API status to assessment status (preserves assessment-native statuses)
@@ -521,48 +562,76 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
       );
     };
 
-    const maxAttempts = 5;
-    let lastErr: any = null;
-
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        const assessmentResponse = await Api.listAssessments({ limit: 200, offset: 0 });
-        const assessmentData = (assessmentResponse as any)?.items || [];
-        const normalized = Array.isArray(assessmentData) ? assessmentData : [];
-        setAssessments(normalized);
-        writeCachedAssessmentHubList(normalized);
-        return null;
-      } catch (e: any) {
-        lastErr = e;
-        if (attempt < maxAttempts && isTransient(e)) {
-          await sleep(transientDelayBaseMs * attempt);
-          continue;
+    const retry = async <T,>(load: () => Promise<T>): Promise<T> => {
+      let lastError: any;
+      for (let attempt = 1; attempt <= 5; attempt++) {
+        try {
+          return await load();
+        } catch (error: any) {
+          lastError = error;
+          if (attempt < 5 && isTransient(error)) {
+            await sleep(transientDelayBaseMs * attempt);
+            continue;
+          }
+          throw error;
         }
-        break;
       }
-    }
+      throw lastError;
+    };
 
+    // The two stores have different product ownership. A legacy outage must
+    // never erase successfully read canonical DRD truth (and vice versa).
+    const [methodOutcome, legacyOutcome] = await Promise.allSettled([
+      // Method Core deliberately refuses list limits above 100 rather than
+      // silently clamping them. Keep the canonical DRD read inside that
+      // contract; the legacy non-DRD source has its own pagination rules.
+      retry(() => listMethodSessions({ methodPackId: DRD_METHOD_PACK_ID, limit: 100, offset: 0 })),
+      retry(() => Api.listAssessments({ limit: 200, offset: 0 })),
+    ]);
+    const canonicalDrd =
+      methodOutcome.status === 'fulfilled'
+        ? methodOutcome.value.sessions
+            .filter(
+              (session) =>
+                session.module === 'assessment' && session.methodPackId === DRD_METHOD_PACK_ID
+            )
+            .map(methodSessionToAssessment)
+        : [];
     const cached = readCachedAssessmentHubList();
-    if (cached.length > 0) {
-      setAssessments(cached);
-      return Number(lastErr?.status) === 429
+    const legacyData =
+      legacyOutcome.status === 'fulfilled' ? (legacyOutcome.value as any)?.items || [] : cached;
+    const legacyNonDrd: AssessmentFromAPI[] = Array.isArray(legacyData)
+      ? legacyData
+          .filter((item) => String(item?.type || '').toUpperCase() !== 'DRD')
+          .map((item) => ({ ...item, source: 'legacy' as const }))
+      : [];
+    if (legacyOutcome.status === 'fulfilled') writeCachedAssessmentHubList(legacyNonDrd);
+    setAssessments([...canonicalDrd, ...legacyNonDrd]);
+
+    if (methodOutcome.status === 'rejected') {
+      return t(
+        'assessment.hub.warnings.methodCoreUnavailable',
+        'DRD sessions could not be loaded from Method Core. No legacy DRD data is shown.'
+      );
+    }
+    if (legacyOutcome.status === 'rejected') {
+      const legacyError: any = legacyOutcome.reason;
+      return Number(legacyError?.status) === 429 && cached.length > 0
         ? t(
             'assessment.hub.warnings.rateLimitedCached',
             'Assessment data is temporarily rate limited. Showing the last available list while staging recovers.'
           )
-        : t(
-            'assessment.hub.warnings.cached',
-            'Assessment data could not be refreshed. Showing the last available list.'
-          );
+        : Number(legacyError?.status) === 429
+          ? t(
+              'assessment.hub.warnings.rateLimitedEmpty',
+              'Assessment data is temporarily rate limited. Retry in a moment or create a new assessment while staging recovers.'
+            )
+          : t(
+              'assessment.hub.warnings.legacyUnavailable',
+              'Non-DRD assessments could not be refreshed. Canonical DRD sessions are still shown.'
+            );
     }
-
-    setAssessments([]);
-    return Number(lastErr?.status) === 429
-      ? t(
-          'assessment.hub.warnings.rateLimitedEmpty',
-          'Assessment data is temporarily rate limited. Retry in a moment or create a new assessment while staging recovers.'
-        )
-      : lastErr?.message || t('assessment.hub.errors.load', 'Failed to load assessments');
+    return null;
   }, [t]);
 
   const loadSupplementaryData = useCallback(async () => {
@@ -747,7 +816,14 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
         count: initiatives.length,
       },
     ];
-  }, [fiveSurfacesEnabled, assessments.length, reports, initiatives, importedReports, outputsCount]);
+  }, [
+    fiveSurfacesEnabled,
+    assessments.length,
+    reports,
+    initiatives,
+    importedReports,
+    outputsCount,
+  ]);
 
   // Table columns for assessments
   // Dynamic columns per active tab

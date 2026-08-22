@@ -15,7 +15,7 @@ import {
 } from '@/components/Finance/shared/financeWorkspaceBar.contract';
 import type { BusinessVersionStatus, FinanceArtifactFreshness, FinanceRole } from '@/services/api/financeV2.types';
 
-import { resolveResultFreshness, type ScenarioDraft } from './predictionScenarioModel';
+import type { ScenarioDraft } from './predictionScenarioModel';
 
 export const PREDICTION_VIEW_IDS = { assumptions: 'assumptions', results: 'results' } as const;
 export type PredictionViewId = (typeof PREDICTION_VIEW_IDS)[keyof typeof PREDICTION_VIEW_IDS];
@@ -27,6 +27,8 @@ export interface BuildPredictionWorkspaceBarConfigParams {
   status: BusinessVersionStatus;
   role: FinanceRole;
   freshness: FinanceArtifactFreshness;
+  versionNo?: number;
+  hasUncommittedWorkingRevision?: boolean;
 }
 
 export function buildPredictionEvaluationContext(params: Pick<BuildPredictionWorkspaceBarConfigParams, 'status' | 'role' | 'freshness'>): WorkspaceBarEvaluationContext {
@@ -35,7 +37,7 @@ export function buildPredictionEvaluationContext(params: Pick<BuildPredictionWor
 
 export function buildPredictionWorkspaceBarConfig(params: BuildPredictionWorkspaceBarConfigParams): WorkspaceBarConfig {
   const { draft } = params;
-  const resultsFreshness = resolveResultFreshness(draft);
+  const resultsFreshness = params.freshness;
   const rename = canRenameArtifact(params.status, params.role);
   const businessVersionId = draft.businessVersionId ?? 'DRAFT_LOCAL';
 
@@ -51,7 +53,7 @@ export function buildPredictionWorkspaceBarConfig(params: BuildPredictionWorkspa
       state:
         resultsFreshness === 'NEVER_COMPUTED'
           ? { kind: 'not-configured' as const, label: { key: 'finance.prediction.results.neverComputed', pl: 'Nie przeliczono' } }
-          : resultsFreshness === 'STALE'
+          : resultsFreshness !== 'CURRENT'
             ? { kind: 'stale' as const, label: { key: 'finance.prediction.results.stale', pl: 'Nieaktualne' } }
             : { kind: 'ready' as const, label: { key: 'finance.prediction.results.ready', pl: 'Aktualne' } },
     },
@@ -70,7 +72,13 @@ export function buildPredictionWorkspaceBarConfig(params: BuildPredictionWorkspa
         maxChars: WORKSPACE_BAR_NAME_MAX_CHARS,
         layoutBudgetChars: WORKSPACE_BAR_NAME_LAYOUT_BUDGET_CHARS,
       },
-      version: { label: 'v1', businessVersionId, hasUncommittedWorkingRevision: draft.lastAssumptionChangeAt > (draft.lastComputeAt ?? '') },
+      version: {
+        label: `v${params.versionNo ?? 1}`,
+        businessVersionId,
+        hasUncommittedWorkingRevision:
+          params.hasUncommittedWorkingRevision ??
+          draft.lastAssumptionChangeAt > (draft.lastComputeAt ?? ''),
+      },
       status: params.status,
       freshness: params.freshness,
       contextFields: [...WORKSPACE_BAR_CONTEXT_FIELDS].filter((f) => f === 'type' || f === 'lastCompute') as (typeof WORKSPACE_BAR_CONTEXT_FIELDS)[number][],

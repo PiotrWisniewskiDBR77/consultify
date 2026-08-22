@@ -88,8 +88,7 @@ describe('RiskScoreCell', () => {
     const { container } = render(<RiskScoreCell value={20} fieldOptions={{ scale: 25 }} />);
     const html = container.innerHTML;
     expect(html).not.toMatch(/#[0-9a-fA-F]{6}/);
-    // High severity uses the semantic `danger` token (migrated from rose by the
-    // Visual Quality program); medium=amber, low=emerald.
-    expect(html).toMatch(/(bg|text|border)-(danger|amber|emerald)/);
+    // High severity uses the shared semantic CSS variable contract.
+    expect(html).toMatch(/--c-danger/);
   });
 });

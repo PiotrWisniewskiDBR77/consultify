@@ -10,8 +10,7 @@ import pg from 'pg';
 
 const CONFIRM_ENV = 'SEED_WAVE3_TOOLS_OWNER_REVIEW';
 const databaseUrl = process.env.DATABASE_URL ?? '';
-const organizationId =
-  process.env.WAVE3_ORGANIZATION_ID ?? 'fd1827ef-7e39-4c64-bf78-26a2c514adf1';
+const organizationId = process.env.WAVE3_ORGANIZATION_ID ?? 'fd1827ef-7e39-4c64-bf78-26a2c514adf1';
 const ownerId = process.env.WAVE3_OWNER_ID ?? '0c13d1af-af67-4683-ad01-a3ea6fda2340';
 
 if (process.env[CONFIRM_ENV] !== 'YES') {
@@ -52,7 +51,8 @@ const acceptedItems = [
     impact: 'high',
     proposalStatus: 'accepted',
     evidenceStatus: 'confirmed',
-    evidence: 'W ostatnim kwartale start projektu przesunął się o dziewięć dni z powodu brakującego właściciela danych.',
+    evidence:
+      'W ostatnim kwartale start projektu przesunął się o dziewięć dni z powodu brakującego właściciela danych.',
   },
   {
     id: 'o1',
@@ -75,6 +75,12 @@ const acceptedItems = [
 ];
 
 const completeAnswers = {
+  context: {
+    goal: 'Ustalić jeden mierzalny standard przekazania klienta ze sprzedaży do wdrożenia.',
+    scope: 'Proces od podpisania umowy do potwierdzenia gotowości zespołu wdrożeniowego.',
+    successSignal:
+      'Każde wdrożenie rozpoczyna się z kompletem danych, właścicielem i potwierdzonym kryterium gotowości.',
+  },
   items: acceptedItems,
   tensions: [
     {
@@ -83,7 +89,8 @@ const completeAnswers = {
       type: 'attack',
       linkedItemIds: ['s1', 'o1', 'w1'],
       linkedCorrelationIds: [],
-      insight: 'Popyt na szybki etap przygotowania można wykorzystać tylko wtedy, gdy wiedza konsultanta zostanie zamieniona w jawną bramkę gotowości.',
+      insight:
+        'Popyt na szybki etap przygotowania można wykorzystać tylko wtedy, gdy wiedza konsultanta zostanie zamieniona w jawną bramkę gotowości.',
     },
     {
       id: 'tn2',
@@ -91,7 +98,8 @@ const completeAnswers = {
       type: 'defend',
       linkedItemIds: ['s2', 'w1', 't1'],
       linkedCorrelationIds: [],
-      insight: 'Dopasowany warsztat nie ochroni relacji, jeżeli jego ustalenia nie mają właściciela i obowiązkowego readbacku.',
+      insight:
+        'Dopasowany warsztat nie ochroni relacji, jeżeli jego ustalenia nie mają właściciela i obowiązkowego readbacku.',
     },
   ],
   recommendedMoves: [
@@ -99,12 +107,14 @@ const completeAnswers = {
       id: 'm1',
       title: 'Wprowadzić bramkę gotowości klienta do wdrożenia',
       category: 'quick-win',
-      rationale: 'Jedna decyzja gotowe albo zwrot do uzupełnienia ograniczy rozbieżności między sprzedażą a dostawą.',
+      rationale:
+        'Jedna decyzja gotowe albo zwrot do uzupełnienia ograniczy rozbieżności między sprzedażą a dostawą.',
       linkedTensionIds: ['tn1', 'tn2'],
       linkedItemIds: ['s1', 'w1', 'o1', 't1'],
       expectedImpact: 'high',
       estimatedEffort: 'medium',
-      firstStep: 'Uzgodnić pięć wymaganych pól i właściciela decyzji podczas jednego warsztatu operacyjnego.',
+      firstStep:
+        'Uzgodnić pięć wymaganych pól i właściciela decyzji podczas jednego warsztatu operacyjnego.',
       ownerRole: 'Dyrektor operacyjny',
       tradeoff: {
         chosen: 'Jedna obowiązkowa bramka przed startem',
@@ -117,9 +127,18 @@ const completeAnswers = {
       },
     },
   ],
+  summary: {
+    executiveSummary:
+      'Największą dźwignią jest obowiązkowa, jawna bramka gotowości przed rozpoczęciem wdrożenia.',
+    keyInsights: [
+      'Standard przekazania musi łączyć komplet danych, właściciela decyzji i potwierdzenie zespołu wdrożeniowego.',
+      'Warsztat diagnostyczny daje przewagę tylko wtedy, gdy jego ustalenia są trwałym readbackiem, a nie notatką konsultanta.',
+    ],
+  },
 };
 
 const guidedAnswers = {
+  context: completeAnswers.context,
   items: acceptedItems,
   tensions: completeAnswers.tensions.slice(0, 1),
   recommendedMoves: [],
@@ -142,7 +161,7 @@ try {
       id: ids.guidedSession,
       name: 'Odbiór właścicielski — Dynamic SWOT: przekazanie klienta',
       status: 'IN_PROGRESS',
-      completion: 70,
+      completion: 80,
       confidence: 4,
       answers: guidedAnswers,
     },
@@ -190,16 +209,22 @@ try {
        FROM tool_sessions WHERE id=ANY($1::text[]) ORDER BY id`,
     [Object.values(ids)]
   );
-  console.log(JSON.stringify({
-    fixture: 'wave3-tools-owner-review-v1',
-    organizationId,
-    ownerId,
-    routes: {
-      guided: `/discovery-tools?docId=${ids.guidedSession}`,
-      approved: `/discovery-tools?docId=${ids.approvedSession}`,
-    },
-    readback: readback.rows,
-  }, null, 2));
+  console.log(
+    JSON.stringify(
+      {
+        fixture: 'wave3-tools-owner-review-v1',
+        organizationId,
+        ownerId,
+        routes: {
+          guided: `/discovery-tools?docId=${ids.guidedSession}`,
+          approved: `/discovery-tools?docId=${ids.approvedSession}`,
+        },
+        readback: readback.rows,
+      },
+      null,
+      2
+    )
+  );
 } catch (error) {
   await client.query('ROLLBACK').catch(() => undefined);
   throw error;

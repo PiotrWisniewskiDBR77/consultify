@@ -34,21 +34,27 @@ import {
 
 describe('toolSessionApi', () => {
   it('create() forwards to Api.createToolSession and returns its result', async () => {
-    createToolSession.mockResolvedValueOnce({ id: 'tool-1', status: 'DRAFT' });
+    createToolSession.mockResolvedValueOnce({ id: 'tool-1', status: 'DRAFT', version: 1 });
     const result = await toolSessionApi.create({ toolType: 'dynamic-swot', name: 'X' });
     expect(createToolSession).toHaveBeenCalledWith({ toolType: 'dynamic-swot', name: 'X' });
-    expect(result).toEqual({ id: 'tool-1', status: 'DRAFT' });
+    expect(result).toEqual({ id: 'tool-1', status: 'DRAFT', version: 1 });
   });
 
   it('get() forwards to Api.getToolSession', async () => {
-    getToolSession.mockResolvedValueOnce({ id: 'tool-1', answers: { a: 1 } });
+    getToolSession.mockResolvedValueOnce({ id: 'tool-1', answers: { a: 1 }, version: 4 });
     const result = await toolSessionApi.get('tool-1');
     expect(getToolSession).toHaveBeenCalledWith('tool-1');
     expect(result.answers).toEqual({ a: 1 });
+    expect(result.version).toBe(4);
   });
 
   it('update() forwards to Api.updateToolSession, including expectedVersion', async () => {
-    updateToolSession.mockResolvedValueOnce({ id: 'tool-1', status: 'DRAFT', updatedAt: 'now' });
+    updateToolSession.mockResolvedValueOnce({
+      id: 'tool-1',
+      status: 'DRAFT',
+      updatedAt: 'now',
+      version: 4,
+    });
     await toolSessionApi.update('tool-1', { answers: { a: 2 }, expectedVersion: 3 });
     expect(updateToolSession).toHaveBeenCalledWith('tool-1', {
       answers: { a: 2 },

@@ -75,6 +75,19 @@ describe('RegionalSettings honest UI', () => {
     expect(screen.queryByRole('button', { name: /Save Changes/i })).not.toBeInTheDocument();
   });
 
+  it('cold-hydrates all display-format fields from the canonical regional API', async () => {
+    render(<RegionalSettings currentUser={user as any} onUpdateUser={vi.fn()} />);
+
+    await waitFor(() => expect(screen.getByText('First Day of Week')).toBeInTheDocument());
+    expect(SettingsApi.getRegionalPreferences).toHaveBeenCalledTimes(1);
+    expect(screen.getByDisplayValue('Europe/Warsaw')).toBeInTheDocument();
+    expect(Array.from(document.querySelectorAll('select')).some((select) => select.value === 'PLN')).toBe(true);
+    expect(Array.from(document.querySelectorAll('select')).some((select) => select.value === 'pl-PL')).toBe(true);
+    expect(screen.getByRole('radio', { name: /Day\/Month\/Year/i })).toBeChecked();
+    expect(screen.getByRole('button', { name: /Metric/i })).toHaveClass('border-amber-500');
+    expect(screen.getByRole('radio', { name: /24-hour/i })).toBeChecked();
+  });
+
   it('does not show success when regional save read-back returns stale preferences', async () => {
     const onUpdateUser = vi.fn();
     vi.mocked(SettingsApi.getRegionalPreferences)

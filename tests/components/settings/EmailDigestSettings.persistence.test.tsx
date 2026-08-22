@@ -84,4 +84,22 @@ describe('EmailDigestSettings persistence', () => {
       expect(Api.get).toHaveBeenCalledWith('/settings/notifications/digest');
     });
   });
+
+  it('cold-hydrates the canonical weekly digest envelope', async () => {
+    (Api.get as any).mockImplementation((url: string) => {
+      if (url === '/settings/notifications/email') {
+        return Promise.resolve({ taskUpdates: true, projectAlerts: true, weeklyDigest: true, marketing: false });
+      }
+      if (url === '/settings/notifications/digest') {
+        return Promise.resolve({ frequency: 'weekly', content: 'summary', format: 'html' });
+      }
+      return Promise.resolve(null);
+    });
+
+    render(<EmailDigestSettings currentUser={currentUser} onUpdateUser={vi.fn()} />);
+
+    const weekly = await screen.findByRole('button', { name: /Weekly Receive a summary once per week/i });
+    expect(weekly.className).toContain('border-c-accent');
+    expect(Api.get).toHaveBeenCalledWith('/settings/notifications/digest');
+  });
 });

@@ -331,6 +331,7 @@ export interface KpiValueListRow {
   unit_type: string;
   entity_id: string;
   period_id: string;
+  period_label: string;
   value_status: string;
   value_decimal: string | null;
   native_currency: string | null;
@@ -361,12 +362,15 @@ export async function listKpiValues(
     tx.queryAll<KpiValueListRow>(
       `SELECT v.id, v.organization_id, v.business_version_id, v.kpi_catalog_id,
               c.kpi_code, c.kpi_name, c.category, c.tier, c.unit_type,
-              v.entity_id, v.period_id, v.value_status, v.value_decimal,
+              v.entity_id, v.period_id, p.label AS period_label,
+              v.value_status, v.value_decimal,
               v.native_currency, v.presentation_currency, v.unit, v.multiplier,
               v.quality_flag, v.delta_vs_prior_period, v.delta_pct_vs_prior_period,
               v.interpretation_text, v.created_at, v.updated_at
          FROM finance_analysis_kpi_values v
          JOIN finance_analysis_kpi_catalog c ON c.id = v.kpi_catalog_id
+         JOIN finance_stmt_periods p
+           ON p.organization_id = v.organization_id AND p.period_id = v.period_id
         WHERE v.organization_id = ? AND v.business_version_id = ?
         ORDER BY c.category ASC, c.kpi_code ASC, v.entity_id ASC, v.period_id ASC`,
       [organizationId, businessVersionId]

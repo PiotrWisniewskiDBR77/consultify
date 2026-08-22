@@ -413,6 +413,7 @@ export const AuditsMethodHub: React.FC = () => {
           />
         ) : activeTab === 'processes' ? (
           <AuditProcessesTab
+            initialSelectedId={searchParams.get('programId')}
             programs={filteredPrograms}
             loading={programsLoading}
             error={programsError}

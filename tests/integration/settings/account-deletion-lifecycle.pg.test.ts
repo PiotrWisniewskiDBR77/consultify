@@ -154,7 +154,7 @@ describe('SET-MVP-DELETE-001 approved request/cancel/status lifecycle', () => {
     ).rejects.toThrow(/immutable/);
   });
 
-  it('cancels only the exact owned request and cold read-back becomes empty', async () => {
+  it('cancels only the exact owned request and cold read-back preserves the latest receipt', async () => {
     const created = await request(app())
       .post('/api/settings/gdpr/deletion-request')
       .set('Authorization', `Bearer ${token()}`)
@@ -177,7 +177,14 @@ describe('SET-MVP-DELETE-001 approved request/cancel/status lifecycle', () => {
     const cold = await request(app())
       .get('/api/settings/gdpr/deletion-status')
       .set('Authorization', `Bearer ${token()}`);
-    expect(cold.body).toEqual({ request: null });
+    expect(cold.body).toEqual({
+      request: null,
+      latestRequest: expect.objectContaining({
+        id: requestId,
+        status: 'cancelled',
+        scheduledAt: null,
+      }),
+    });
     const events = await client.query<{ event_type: string }>(
       'SELECT event_type FROM account_deletion_request_receipts WHERE request_id = $1 ORDER BY occurred_at',
       [requestId]

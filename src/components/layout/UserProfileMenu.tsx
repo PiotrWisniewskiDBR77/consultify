@@ -460,7 +460,8 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                           ? 'bg-white dark:bg-navy-800 shadow-sm text-c-text'
                           : 'text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300'
                       }`}
-                      title={tMode.charAt(0).toUpperCase() + tMode.slice(1)}
+                      title={t(`settings.menu.themeModes.${tMode}`, tMode)}
+                      aria-label={t(`settings.menu.themeModes.${tMode}`, tMode)}
                     >
                       {tMode === 'light' && <Sun size={14} />}
                       {tMode === 'dark' && <Moon size={14} />}

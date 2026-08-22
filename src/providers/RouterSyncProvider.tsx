@@ -12,7 +12,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { getAppViewFromRoute, getRouteFromAppView } from '@/routes/routeConfig';
+import { getAppViewFromPath, getRouteFromAppView } from '@/routes/routeConfig';
 import { useAppStore } from '@/store/useAppStore';
 import { AppView } from '@/types';
 
@@ -50,7 +50,7 @@ export const RouterSyncProvider: React.FC<RouterSyncProviderProps> = ({ children
       return;
     }
 
-    const appView = getAppViewFromRoute(location.pathname);
+    const appView = getAppViewFromPath(location.pathname);
 
     if (appView && appView !== currentView) {
       console.log('[RouterSync] URL changed:', location.pathname, '→', appView);
@@ -74,6 +74,15 @@ export const RouterSyncProvider: React.FC<RouterSyncProviderProps> = ({ children
     // Skip if this change was triggered by URL update
     if (syncSource.current === 'url') {
       syncSource.current = null;
+      return;
+    }
+
+    // The URL is authoritative during a direct/deep-link entry. In React
+    // StrictMode both synchronization effects may be replayed before the
+    // Zustand update from the URL has rendered. Never let the stale persisted
+    // currentView overwrite an already valid route during that window.
+    const locationView = getAppViewFromPath(location.pathname);
+    if (locationView && locationView !== currentView) {
       return;
     }
 

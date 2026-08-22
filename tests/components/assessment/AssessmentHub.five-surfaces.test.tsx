@@ -17,7 +17,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { apiMock } = vi.hoisted(() => ({
+const { apiMock, listMethodSessionsMock } = vi.hoisted(() => ({
   apiMock: {
     listAssessments: vi.fn(),
     getAssessmentReports: vi.fn(),
@@ -27,9 +27,13 @@ const { apiMock } = vi.hoisted(() => ({
     delete: vi.fn(),
     getUsers: vi.fn(),
   },
+  listMethodSessionsMock: vi.fn(),
 }));
 
 vi.mock('../../../src/services/api', () => ({ Api: apiMock }));
+vi.mock('../../../src/method-core/api/methodCoreApi', () => ({
+  listSessions: listMethodSessionsMock,
+}));
 
 vi.mock('@/contexts/FeatureFlagsContext', () => ({
   useFeatureFlagsContext: () => ({
@@ -81,16 +85,18 @@ describe('AssessmentHub — five surfaces (assessmentFiveSurfacesV1 ON)', () => 
   beforeEach(() => {
     vi.clearAllMocks();
     sessionStorage.clear();
-    apiMock.listAssessments.mockResolvedValue({
-      items: [
+    apiMock.listAssessments.mockResolvedValue({ items: [] });
+    listMethodSessionsMock.mockResolvedValue({
+      sessions: [
         {
-          id: 'asm_1',
-          name: 'Canonical DRD',
-          type: 'DRD',
-          status: 'DRAFT',
-          updatedAt: '2026-04-11T08:00:00.000Z',
+          id: 'asm-method-1', organizationId: 'org-1', projectId: null,
+          module: 'assessment', methodPackId: 'drd', methodPackVersion: '2.0.0-methodpack.1',
+          state: 'active', domainStage: null, mode: 'guided_manual', ownerUserId: 'owner-1',
+          createdAt: '2026-04-11T08:00:00.000Z', updatedAt: '2026-04-11T08:00:00.000Z',
+          version: 1, frozenSnapshotId: null, revisionOfSessionId: null, hasFrozenOutput: false,
         },
       ],
+      total: 1,
     });
     apiMock.getAssessmentReports.mockResolvedValue([]);
     apiMock.get.mockResolvedValue([]);
@@ -120,7 +126,7 @@ describe('AssessmentHub — five surfaces (assessmentFiveSurfacesV1 ON)', () => 
       </MemoryRouter>
     );
 
-    expect(await screen.findByText('Canonical DRD')).toBeInTheDocument();
+    expect(await screen.findByText('DRD · asm-meth')).toBeInTheDocument();
     expect(screen.queryByTestId('assessment-library-tab')).not.toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /Processes/i })).toHaveAttribute(
       'aria-selected',
@@ -136,7 +142,7 @@ describe('AssessmentHub — five surfaces (assessmentFiveSurfacesV1 ON)', () => 
       </MemoryRouter>
     );
 
-    expect(await screen.findByText('Canonical DRD')).toBeInTheDocument();
+    expect(await screen.findByText('DRD · asm-meth')).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByTestId('location-probe')).toHaveTextContent('tab=processes');
     });
@@ -158,7 +164,10 @@ describe('AssessmentHub — five surfaces (assessmentFiveSurfacesV1 ON)', () => 
     await waitFor(() => {
       expect(screen.getByTestId('location-probe')).toHaveTextContent('tab=reports');
     });
-    expect(reportsTab).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: /Reports/i })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
   });
 
   it('a fresh mount with ?tab=reports starts on the Reports tab (refresh/back-forward)', async () => {

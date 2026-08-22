@@ -11,6 +11,11 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const { searchParamsMock, setSearchParamsMock } = vi.hoisted(() => ({
+  searchParamsMock: new URLSearchParams(),
+  setSearchParamsMock: vi.fn(),
+}));
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (k: string, opts?: string | { defaultValue?: string }) =>
@@ -21,6 +26,7 @@ vi.mock('react-i18next', () => ({
 
 vi.mock('react-router-dom', () => ({
   useNavigate: () => vi.fn(),
+  useSearchParams: () => [searchParamsMock, setSearchParamsMock],
 }));
 
 const { getMeetingsMock, getBriefMock, listNotesMock, generateNotesMock, decideNoteMock } =
@@ -72,6 +78,8 @@ describe('MeetingHub (smoke)', () => {
     listNotesMock.mockResolvedValue({ notes: [] });
     generateNotesMock.mockReset();
     decideNoteMock.mockReset();
+    searchParamsMock.delete('meetingId');
+    setSearchParamsMock.mockReset();
   });
 
   it('loads and renders meetings from the API', async () => {
@@ -194,7 +202,19 @@ describe('MeetingHub (smoke)', () => {
     );
 
     await waitFor(() => expect(generateNotesMock).toHaveBeenCalled());
+    const firstCommand = generateNotesMock.mock.calls[0][1];
+    expect(firstCommand).toMatchObject({
+      transcript: 'Manual meeting text',
+      language: 'en',
+      idempotencyKey: expect.any(String),
+    });
     expect(screen.queryByText('Ephemeral')).toBeNull();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /meeting\.generateNotes2|Generate notes/i })
+    );
+    await waitFor(() => expect(generateNotesMock).toHaveBeenCalledTimes(2));
+    expect(generateNotesMock.mock.calls[1][1].idempotencyKey).toBe(firstCommand.idempotencyKey);
   });
 
   it('materializes a proposal only after an explicit decision', async () => {
@@ -250,6 +270,27 @@ describe('MeetingHub (smoke)', () => {
     fireEvent.dblClick(await screen.findByText('Quarterly Review'));
     fireEvent.click(await screen.findByRole('button', { name: /meeting\.aiNotes|AI Notes/i }));
     expect(await screen.findByText(/receipt-cold-exact/)).toBeTruthy();
+  });
+
+  it('opens a meeting from the stable meetingId deep link', async () => {
+    searchParamsMock.set('meetingId', 'meeting-1');
+    getMeetingsMock.mockResolvedValue({ meetings: [meeting] });
+    render(<MeetingHub />);
+
+    expect(await screen.findByText('Operator brief')).toBeTruthy();
+    expect(screen.getAllByText('Quarterly Review').length).toBeGreaterThan(0);
+  });
+
+  it('shows the durable rejection reason after cold proposal reload', async () => {
+    getMeetingsMock.mockResolvedValue({ meetings: [meeting] });
+    listNotesMock.mockResolvedValue({ notes: [{
+      id: 'note-rejected', source: 'heuristic', summary: 'Rejected minutes', keyPoints: [], decisions: [], actionItems: [],
+      status: 'rejected', proposalId: 'proposal-rejected', decisionReason: 'Readiness evidence is absent',
+    }] });
+    render(<MeetingHub />);
+    fireEvent.dblClick(await screen.findByText('Quarterly Review'));
+    fireEvent.click(await screen.findByRole('button', { name: /meeting\.aiNotes|AI Notes/i }));
+    expect(await screen.findByText(/Readiness evidence is absent/)).toBeTruthy();
   });
 
   it('reloads authoritative proposal state after a stale decision conflict', async () => {

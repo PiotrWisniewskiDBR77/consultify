@@ -43,6 +43,15 @@ describe('ProfileSettings honest UI', () => {
     vi.mocked(Api.updateUser).mockResolvedValue({ success: true });
   });
 
+  it('has no independent regional writers and directs users to the canonical screen', () => {
+    render(<ProfileSettings currentUser={baseUser as any} onUpdateUser={vi.fn()} />);
+
+    expect(screen.queryByLabelText('Timezone')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Date Format')).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /24-hour/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Open Regional Settings' })).toBeInTheDocument();
+  });
+
   it('does not show saved when profile read-back does not confirm persisted values', async () => {
     const onUpdateUser = vi.fn();
     vi.mocked(Api.getMe).mockResolvedValue(baseUser);

@@ -18,7 +18,15 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_k: string, def?: string) => def ?? _k,
+    t: (_k: string, value?: string | ({ defaultValue?: string } & Record<string, unknown>)) => {
+      if (_k === 'myWorkTable.sourcePopover.loading') return 'Loading…';
+      const template = (typeof value === 'string' ? value : value?.defaultValue) ?? _k;
+      const variables = typeof value === 'object' && value ? value : {};
+      return Object.entries(variables).reduce(
+        (text, [name, replacement]) => text.replaceAll(`{{${name}}}`, String(replacement)),
+        template
+      );
+    },
     i18n: { language: 'en' },
   }),
 }));

@@ -249,7 +249,11 @@ describe('RecoveryCardPanel', () => {
   });
 
   it('3. create flow: fills hypothesis + priority, submits, then shows the card view', async () => {
-    const createdCard = makeCard({ hypothesis: 'My hypothesis text', priority: 'HIGH', lifecycleStatus: 'DRAFT' });
+    const createdCard = makeCard({
+      hypothesis: 'My hypothesis text',
+      priority: 'HIGH',
+      lifecycleStatus: 'DRAFT',
+    });
     vi.mocked(V8ResultsApi.getRecoveryCard)
       .mockRejectedValueOnce({ status: 404 })
       .mockResolvedValueOnce(createdCard);
@@ -268,14 +272,17 @@ describe('RecoveryCardPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: rc.createCta }));
 
     await waitFor(() => {
-      expect(V8ResultsApi.createRecoveryCard).toHaveBeenCalledWith('case-1', expect.objectContaining({
-        hypothesis: 'My hypothesis text',
-        priority: 'HIGH',
-        expectedImpact: undefined,
-        expectedRecoveryDate: undefined,
-        effectivenessCriteria: undefined,
-        idempotencyKey: expect.any(String),
-      }));
+      expect(V8ResultsApi.createRecoveryCard).toHaveBeenCalledWith(
+        'case-1',
+        expect.objectContaining({
+          hypothesis: 'My hypothesis text',
+          priority: 'HIGH',
+          expectedImpact: undefined,
+          expectedRecoveryDate: undefined,
+          effectivenessCriteria: undefined,
+          idempotencyKey: expect.any(String),
+        })
+      );
     });
 
     // Panel switched from the create form to the loaded-card view.
@@ -323,7 +330,15 @@ describe('RecoveryCardPanel', () => {
         priority: 'HIGH',
         lifecycleStatus: 'UNDER_REVIEW',
         actions: [makeAction()],
-        checkpoints: [{ id: 'cp-1', checkpointDate: '2026-08-15', status: 'PENDING', notes: null, rowVersion: 1 }],
+        checkpoints: [
+          {
+            id: 'cp-1',
+            checkpointDate: '2026-08-15',
+            status: 'PENDING',
+            notes: null,
+            rowVersion: 1,
+          },
+        ],
         dependencies: [
           { description: 'Depends on Initiative Alpha', relatedId: 'INI-2', note: 'blocked' },
         ],
@@ -424,7 +439,9 @@ describe('RecoveryCardPanel', () => {
     fireEvent.change(title, { target: { value: 'Persistent recovery action' } });
     fireEvent.click(screen.getByRole('button', { name: rc.addAction }));
     await waitFor(() => expect(V8ResultsApi.createRecoveryAction).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(screen.getByDisplayValue('Persistent recovery action')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByDisplayValue('Persistent recovery action')).toBeInTheDocument()
+    );
     fireEvent.click(screen.getByRole('button', { name: rc.addAction }));
     await waitFor(() => expect(V8ResultsApi.createRecoveryAction).toHaveBeenCalledTimes(2));
     const firstKey = vi.mocked(V8ResultsApi.createRecoveryAction).mock.calls[0][1].idempotencyKey;

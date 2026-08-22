@@ -516,6 +516,24 @@ export interface FinanceArtifactDetailDto {
   } | null;
 }
 
+export interface FinanceArtifactSummaryDto {
+  artifactId: string;
+  artifactType: FinanceArtifactType;
+  naturalKey: string | null;
+  createdAt: string;
+  currentBusinessVersion: {
+    businessVersionId: string;
+    versionNo: number;
+    version: number;
+    status: BusinessVersionStatus;
+    freshness: FinanceArtifactFreshness;
+    freshnessReason: string | null;
+    riskTier: string;
+    createdAt: string;
+    updatedAt: string;
+  } | null;
+}
+
 /** artifacts.routes.ts:174-189 (GET /artifacts/:id/versions), jeden wpis. */
 export interface FinanceBusinessVersionSummaryDto {
   businessVersionId: string;
@@ -707,6 +725,7 @@ export interface AnalysisKpiValueDto {
   unitType: string;
   entityId: string;
   periodId: string;
+  periodLabel?: string;
   value: {
     status: FinanceValueStatus;
     valueDecimal: string | null;
@@ -2041,26 +2060,51 @@ export interface FinancePredictionDriverOverrideDto {
 }
 
 export interface FinancePredictionInitiativeDto {
-  id: string; initiativeCode: string; name: string; description: string | null;
-  source: string | null; owner: string | null; confidencePct: string | null;
-  defaultStartPeriodId: string | null; defaultRampMonths: number | null;
-  defaultDurationMonths: number | null; implementationCostDecimal: string | null;
+  id: string;
+  initiativeCode: string;
+  name: string;
+  description: string | null;
+  source: string | null;
+  owner: string | null;
+  confidencePct: string | null;
+  defaultStartPeriodId: string | null;
+  defaultRampMonths: number | null;
+  defaultDurationMonths: number | null;
+  implementationCostDecimal: string | null;
   status: string;
 }
 
 export interface FinancePredictionImpactDto {
-  id: string; initiativeId: string; assumptionLabel: string;
-  driverScheduleType: string | null; driverCode: string | null; kpiCatalogId: string | null;
-  statementLineCode: string; entityId: string; amountKind: string; amountDecimal: string;
-  amountUnit: string; sign: string; startPeriodId: string | null; rampMonths: number | null;
-  durationMonths: number | null; decayPctPerPeriod: string | null;
-  implementationCostDecimal: string | null; confidencePct: string | null;
-  probabilityPct: string | null; cannibalizesImpactId: string | null;
+  id: string;
+  initiativeId: string;
+  assumptionLabel: string;
+  driverScheduleType: string | null;
+  driverCode: string | null;
+  kpiCatalogId: string | null;
+  statementLineCode: string;
+  entityId: string;
+  amountKind: string;
+  amountDecimal: string;
+  amountUnit: string;
+  sign: string;
+  startPeriodId: string | null;
+  rampMonths: number | null;
+  durationMonths: number | null;
+  decayPctPerPeriod: string | null;
+  implementationCostDecimal: string | null;
+  confidencePct: string | null;
+  probabilityPct: string | null;
+  cannibalizesImpactId: string | null;
 }
 
 export interface FinancePredictionFinancingDto {
-  id: string; financingKind: string; entityId: string; periodId: string | null;
-  payload: Record<string, unknown>; sourceRef: Record<string, unknown> | null; rationale: string | null;
+  id: string;
+  financingKind: string;
+  entityId: string;
+  periodId: string | null;
+  payload: Record<string, unknown>;
+  sourceRef: Record<string, unknown> | null;
+  rationale: string | null;
 }
 
 export interface FinancePredictionDraftDto {
@@ -2077,7 +2121,12 @@ export interface FinancePredictionDraftDto {
   computeContext: {
     entityId: string;
     openingBalanceSheetPeriodId: string;
-    forecastPeriods: Array<{ periodId: string; label: string; periodStart: string; periodEnd: string }>;
+    forecastPeriods: Array<{
+      periodId: string;
+      label: string;
+      periodStart: string;
+      periodEnd: string;
+    }>;
   };
   driverOverrides: FinancePredictionDriverOverrideDto[];
   initiatives: FinancePredictionInitiativeDto[];

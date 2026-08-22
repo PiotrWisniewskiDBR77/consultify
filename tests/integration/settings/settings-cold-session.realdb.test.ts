@@ -21,6 +21,7 @@ describe('SET-BVP-001 settings persistence across a cold session (real PostgreSQ
   let usersRouter: any;
   let authRouter: any;
   let aiSettingsRouter: any;
+  let gdprRouter: any;
   let suiteLockHeld = false;
 
   const token = (claims: Record<string, unknown> = {}) =>
@@ -43,6 +44,7 @@ describe('SET-BVP-001 settings persistence across a cold session (real PostgreSQ
     app.use('/api/users', usersRouter);
     app.use('/api/auth', authRouter);
     app.use('/api/ai-settings', aiSettingsRouter);
+    app.use('/api/gdpr', gdprRouter);
     return app;
   };
 
@@ -97,11 +99,14 @@ describe('SET-BVP-001 settings persistence across a cold session (real PostgreSQ
     authRouter = (await import('../../../server/src/routes/auth.routes.ts')).default;
     aiSettingsRouter = (await import('../../../server/src/routes/ai/ai-settings.routes.ts'))
       .default;
+    gdprRouter = (await import('../../../server/src/routes/gdpr.routes.ts')).default;
   }, 30_000);
 
   afterAll(async () => {
     try {
       if (db) {
+        await db.run(`DELETE FROM data_export_requests WHERE user_id IN (?, ?)`, [userId, foreignUserId]);
+        await db.run(`DELETE FROM gdpr_requests WHERE user_id IN (?, ?)`, [userId, foreignUserId]);
         await db.run(`DELETE FROM user_preferences WHERE user_id = ?`, [userId]);
         await db.run(`DELETE FROM user_ai_settings WHERE user_id = ?`, [userId]);
         await db.run(`DELETE FROM organization_members WHERE user_id IN (?, ?)`, [
@@ -224,6 +229,88 @@ describe('SET-BVP-001 settings persistence across a cold session (real PostgreSQ
     expect(aiRead.body.providers[0]).toEqual(expect.objectContaining({ hasApiKey: true }));
     expect(aiRead.body.providers[0]).not.toHaveProperty('apiKey');
     expect(JSON.stringify(aiRead.body)).not.toContain(`sk-private-${suffix}`);
+  });
+
+  it('cold-reads canonical digest/regional/export and tenant-scoped latest cancelled deletion', async () => {
+    const exportId = randomUUID();
+    const cancelledId = randomUUID();
+    await db.run(
+      `INSERT INTO user_preferences(user_id,key,value) VALUES(?,?,?)
+       ON CONFLICT(user_id,key) DO UPDATE SET value=excluded.value`,
+      [
+        userId,
+        'settings:notification-digest',
+        JSON.stringify({ frequency: 'weekly', content: 'summary', format: 'html' }),
+      ]
+    );
+    await db.run(
+      `INSERT INTO user_preferences(user_id,key,value) VALUES(?,?,?)
+       ON CONFLICT(user_id,key) DO UPDATE SET value=excluded.value`,
+      [
+        userId,
+        'settings:regional',
+        JSON.stringify({
+          language: 'pl',
+          timezone: 'Europe/Warsaw',
+          currency: 'PLN',
+          units: 'metric',
+          numberFormat: 'pl-PL',
+          dateFormat: 'DD/MM/YYYY',
+          timeFormat: '24h',
+          firstDayOfWeek: 'monday',
+        }),
+      ]
+    );
+    await db.run(
+      `INSERT INTO data_export_requests
+       (id,organization_id,user_id,export_type,status,requested_at,expires_at)
+       VALUES(?,?,?,'gdpr','pending',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP + INTERVAL '7 days')`,
+      [exportId, orgId, userId]
+    );
+    await db.run(
+      `INSERT INTO gdpr_requests
+       (id,organization_id,user_id,type,status,request_type,requested_at,reason,scheduled_at,metadata)
+       VALUES(?,?,?,'deletion','cancelled','deletion',CURRENT_TIMESTAMP,?,NULL,'{}')`,
+      [cancelledId, orgId, userId, 'cancelled in owner review']
+    );
+
+    expect((await auth('get', '/api/settings/notifications/digest')).body).toEqual({
+      frequency: 'weekly',
+      content: 'summary',
+      format: 'html',
+    });
+    expect((await auth('get', '/api/settings/preferences/regional')).body.preferences).toEqual(
+      expect.objectContaining({
+        timezone: 'Europe/Warsaw',
+        units: 'metric',
+        numberFormat: 'pl-PL',
+        dateFormat: 'DD/MM/YYYY',
+        timeFormat: '24h',
+      })
+    );
+    expect((await auth('get', '/api/gdpr/export-status')).body.request).toEqual(
+      expect.objectContaining({ id: exportId, status: 'pending' })
+    );
+    const deletion = await auth('get', '/api/settings/gdpr/deletion-status');
+    expect(deletion.body.request).toBeNull();
+    expect(deletion.body.latestRequest).toEqual(
+      expect.objectContaining({ id: cancelledId, status: 'cancelled', scheduledAt: null })
+    );
+
+    const foreignJwt = token({
+      id: foreignUserId,
+      organizationId: foreignOrgId,
+      email: `foreign-${suffix}@test.local`,
+    });
+    const foreignApp = makeApp();
+    const foreignExport = await request(foreignApp)
+      .get('/api/gdpr/export-status')
+      .set('Authorization', `Bearer ${foreignJwt}`);
+    const foreignDeletion = await request(foreignApp)
+      .get('/api/settings/gdpr/deletion-status')
+      .set('Authorization', `Bearer ${foreignJwt}`);
+    expect(foreignExport.body.request).toBeNull();
+    expect(foreignDeletion.body).toEqual({ request: null, latestRequest: null });
   });
 
   it('fails closed when a new AI secret cannot be encrypted and preserves the prior value', async () => {

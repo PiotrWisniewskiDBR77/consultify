@@ -35,6 +35,7 @@ vi.mock('react-hot-toast', () => ({
 }));
 
 const tpApiMocks = vi.hoisted(() => ({
+  getAttachments: vi.fn().mockResolvedValue({ attachments: [] }),
   getRecordWatchers: vi.fn().mockResolvedValue([]),
   toggleRecordWatch: vi.fn().mockResolvedValue({ watching: false }),
   listRecordComments: vi.fn().mockResolvedValue({ comments: [], total: 0 }),

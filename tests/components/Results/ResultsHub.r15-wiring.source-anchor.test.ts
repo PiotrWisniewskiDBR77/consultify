@@ -52,9 +52,7 @@ describe('R15 ResultsHub wiring — source anchors', () => {
 
 describe('R15 — foreign ResultsHub.tsx hunks preserved', () => {
   it('the pre-existing rmode type formatting and KPI-tab count removal are still present', () => {
-    expect(source).toContain(
-      "'tracked' | 'reports' | 'schedules' | 'wallboards' | 'connectors')"
-    );
+    expect(source).toContain("'tracked' | 'reports' | 'schedules' | 'wallboards' | 'connectors')");
     // The foreign hunk removed `count: kpis.length` from the results_kpi tab
     // entry — confirm the tab entry has no `count` line immediately after
     // its icon (still true: only results_reports/people_change-style tabs

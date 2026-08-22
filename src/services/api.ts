@@ -6992,7 +6992,7 @@ export const Api = {
     }>;
     /** V3-C03: For toolType=MYWORK — snapshot of source context */
     snapshotJson?: Record<string, unknown>;
-  }): Promise<{ id: string; status: string }> => {
+  }): Promise<{ id: string; status: string; version: number }> => {
     const res = await fetch(`${API_URL}/tools`, {
       method: 'POST',
       headers: getHeaders(),
@@ -7158,6 +7158,7 @@ export const Api = {
         resolved?: boolean;
       }>;
       failureReason?: string;
+      expectedVersion: number;
     }
   ): Promise<any> => {
     const res = await fetch(`${API_URL}/tools/${toolId}`, {

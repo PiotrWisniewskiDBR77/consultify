@@ -32,7 +32,7 @@ vi.mock('@/components/shared/PreviewPane', () => ({
   PreviewAIHintStrip: () => <div>ai-hints</div>,
   PreviewDetailsSection: () => <div>details</div>,
   PreviewMetaCard: () => <div>meta</div>,
-  PreviewRelations: () => <div>relations</div>,
+  PreviewRelations: ({ emptyLabel }: any) => <div>{emptyLabel || 'relations'}</div>,
 }));
 
 vi.mock('@/services/api', () => ({
@@ -65,6 +65,8 @@ import { useFinancePreview } from '@/components/Economics/FinancePreviewPanel';
 import { Api } from '@/services/api';
 import {
   approveCanonicalFinancialAnalysis,
+  approveFinanceModel,
+  resolveLegacyFinanceArtifact,
   runCanonicalFinancialAnalysis,
 } from '@/services/api/financeV2.api';
 import { V8FinanceApi } from '@/services/api/v8/finance';
@@ -120,6 +122,18 @@ const modelRow = {
   updatedAt: '2026-03-26T10:00:00.000Z',
 } as any;
 
+const canonicalValuationRow = {
+  id: 'valuation-1',
+  kind: 'valuation',
+  title: 'Canonical DCF valuation',
+  status: 'APPROVED',
+  updatedAt: '2026-08-21T10:00:00.000Z',
+  sourceType: 'manual',
+  canonicalArtifactId: 'artifact-1',
+  canonicalBusinessVersionId: 'version-1',
+  canonicalArtifactType: 'VALUATION_CASE',
+} as any;
+
 function FooterHarness() {
   const { renderPreviewFooter } = useFinancePreview(previewParams as any);
   return <>{renderPreviewFooter(analysisRow)}</>;
@@ -133,6 +147,16 @@ function PredictionFooterHarness() {
 function ModelFooterHarness() {
   const { renderPreviewFooter } = useFinancePreview(previewParams as any);
   return <>{renderPreviewFooter(modelRow)}</>;
+}
+
+function CanonicalValuationPreviewHarness() {
+  const { renderPreviewBody, renderPreviewFooter } = useFinancePreview(previewParams as any);
+  return (
+    <>
+      {renderPreviewBody(canonicalValuationRow)}
+      {renderPreviewFooter(canonicalValuationRow)}
+    </>
+  );
 }
 
 describe('FinancePreviewPanel V8 analysis mutations', () => {
@@ -213,8 +237,12 @@ describe('FinancePreviewPanel V8 analysis mutations', () => {
     });
   });
 
-  it('prefers governed preview model approve action before legacy fallback', async () => {
-    vi.mocked(V8FinanceApi.approveModel).mockResolvedValue({ success: true, status: 'approved' } as any);
+  it('uses the canonical identity bridge for model approval', async () => {
+    vi.mocked(resolveLegacyFinanceArtifact).mockResolvedValue({
+      status: 'RESOLVED',
+      artifactId: 'canonical-model-1',
+    } as any);
+    vi.mocked(approveFinanceModel).mockResolvedValue({ success: true } as any);
 
     render(<ModelFooterHarness />);
 
@@ -223,16 +251,20 @@ describe('FinancePreviewPanel V8 analysis mutations', () => {
     });
 
     await waitFor(() => {
-      expect(V8FinanceApi.approveModel).toHaveBeenCalledWith('model-1');
+      expect(resolveLegacyFinanceArtifact).toHaveBeenCalledWith('financial_models', 'model-1');
+      expect(approveFinanceModel).toHaveBeenCalledWith({
+        modelArtifactId: 'canonical-model-1',
+        idempotencyKey: expect.any(String),
+      });
       expect(previewParams.loadModels).toHaveBeenCalled();
     });
 
-    expect(Api.post).not.toHaveBeenCalledWith('/api/financial-modeling/models/model-1/approve', {});
+    expect(V8FinanceApi.approveModel).not.toHaveBeenCalled();
+    expect(Api.post).not.toHaveBeenCalled();
   });
 
-  it('falls back to legacy preview model approve action on bounded compatibility statuses', async () => {
-    vi.mocked(V8FinanceApi.approveModel).mockRejectedValue({ status: 404 });
-    vi.mocked(Api.post).mockResolvedValue({ success: true } as any);
+  it('fails closed when a model has no canonical identity', async () => {
+    vi.mocked(resolveLegacyFinanceArtifact).mockResolvedValue({ status: 'MISSING' } as any);
 
     render(<ModelFooterHarness />);
 
@@ -240,9 +272,23 @@ describe('FinancePreviewPanel V8 analysis mutations', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Zatwierdź' }));
     });
 
-    await waitFor(() => {
-      expect(Api.post).toHaveBeenCalledWith('/api/financial-modeling/models/model-1/approve', {});
-      expect(previewParams.loadModels).toHaveBeenCalled();
-    });
+    await waitFor(() => expect(resolveLegacyFinanceArtifact).toHaveBeenCalled());
+    expect(approveFinanceModel).not.toHaveBeenCalled();
+    expect(previewParams.loadModels).not.toHaveBeenCalled();
+    expect(Api.post).not.toHaveBeenCalled();
+  });
+
+  it('does not describe a computed canonical valuation as uncomputed or unrelated', () => {
+    render(<CanonicalValuationPreviewHarness />);
+
+    expect(screen.getByText('Computed canonical result')).toBeInTheDocument();
+    expect(
+      screen.getByText('Open the workspace to inspect the verified result and its source lineage.')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Verified lineage is available in the canonical workspace')
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Not computed yet — click "Compute DCF"')).toBeNull();
+    expect(screen.queryByText('No relations')).toBeNull();
   });
 });

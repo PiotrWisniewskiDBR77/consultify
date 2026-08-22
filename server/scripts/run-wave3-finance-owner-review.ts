@@ -15,6 +15,8 @@ const confirmation = process.env.SEED_WAVE3_FINANCE_OWNER_REVIEW;
 const databaseUrl = process.env.DATABASE_URL ?? '';
 const pdfPath = process.env.FINANCE_STATEMENT_ACCEPTANCE_PDF ?? '';
 const manifestPath = process.env.FINANCE_OWNER_FIXTURE_MANIFEST ?? '';
+const retainDatabase = process.env.FINANCE_OWNER_FIXTURE_RETAIN_DATABASE === '1';
+const ownershipNonce = process.env.FINANCE_OWNER_FIXTURE_OWNERSHIP_NONCE ?? '';
 
 if (confirmation !== 'YES') throw new Error('SEED_WAVE3_FINANCE_OWNER_REVIEW=YES is required');
 if (!databaseUrl || !pdfPath || !manifestPath) {
@@ -35,6 +37,9 @@ if (actualSha !== EXPECTED_SHA) throw new Error('Official Finance PDF SHA-256 mi
 if (fs.existsSync(manifestPath)) {
   throw new Error('Refusing to overwrite an existing Finance owner fixture manifest');
 }
+if (retainDatabase && !/^[a-f0-9]{64}$/.test(ownershipNonce)) {
+  throw new Error('Retained Finance owner fixture requires a lowercase 64-hex ownership nonce');
+}
 
 const repoRoot = path.resolve(import.meta.dirname, '../..');
 const result = spawnSync(
@@ -48,7 +53,8 @@ const result = spawnSync(
       DB_TYPE: 'postgres',
       RUN_DB_TESTS: '1',
       MOCK_DB: 'false',
-      FINANCE_STATEMENT_DROP_DATABASE_AFTER: '1',
+      FINANCE_STATEMENT_DROP_DATABASE_AFTER: retainDatabase ? '0' : '1',
+      FINANCE_OWNER_FIXTURE_RETAIN_DATABASE: retainDatabase ? '1' : '0',
     },
     stdio: 'inherit',
   }
@@ -61,9 +67,38 @@ if (
   manifest?.schemaVersion !== 1 ||
   manifest?.fixture !== 'wave3-finance-owner-review-v1' ||
   manifest?.source?.sha256 !== EXPECTED_SHA ||
-  manifest?.statement?.statements?.length !== 6
+  manifest?.statement?.statements?.length !== 6 ||
+  Object.keys(manifest?.workspaces ?? {}).length !== 5 ||
+  !Object.values(manifest?.workspaces ?? {}).every((workspace: any) =>
+    String(workspace?.fixtureState ?? '').startsWith(
+      workspace === manifest?.workspaces?.statement ? 'EXACT_SIX_' : 'COMPUTED_'
+    )
+  )
 ) {
   throw new Error('Finance owner fixture manifest schema/hash/exact-six validation failed');
+}
+if (
+  retainDatabase &&
+  (manifest?.ownershipState !== 'FINAL' ||
+    manifest?.fixtureId !== 'W3-FINANCE-OWNER-v1' ||
+    manifest?.ownershipNonce !== ownershipNonce ||
+    manifest?.marker?.fixtureId !== manifest.fixtureId ||
+    manifest?.marker?.ownershipNonce !== ownershipNonce ||
+    manifest?.cleanup !== 'RETAINED_DATABASE_MARKER_BOUND')
+) {
+  throw new Error('Retained Finance owner fixture ownership contract validation failed');
+}
+const serialized = JSON.stringify(manifest);
+for (const secret of [
+  databaseUrl,
+  process.env.FINANCE_OWNER_PASSWORD,
+  'Wave3FinanceOwner!2026',
+  'Wave3FinanceAdmin!2026',
+  'Wave3FinanceForeign!2026',
+]) {
+  if (secret && serialized.includes(secret)) {
+    throw new Error('Finance owner fixture manifest contains secret material');
+  }
 }
 process.stdout.write(
   `${JSON.stringify({

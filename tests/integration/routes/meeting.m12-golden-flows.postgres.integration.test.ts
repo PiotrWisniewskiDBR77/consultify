@@ -64,6 +64,11 @@ const member = (org = ORG_A, user = USER_A) => ({
   'x-test-user-id': user,
   'x-test-role': 'member',
 });
+const betaAdmin = (org = ORG_A, user = USER_A) => ({
+  'x-test-org-id': org,
+  'x-test-user-id': user,
+  'x-test-role': 'administrator',
+});
 /** Org admin — the role gate on DELETE / PATCH :id/status. */
 const admin = (org = ORG_A, user = USER_A) => ({
   'x-test-org-id': org,
@@ -130,7 +135,7 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
     return rows;
   };
 
-  const createMeeting = async (body: Record<string, unknown>, headers = member()) =>
+  const createMeeting = async (body: Record<string, unknown>, headers = betaAdmin()) =>
     request(app).post('/api/meeting').set(headers).send(body);
 
   // ── GROUP A — open / list ────────────────────────────────────────────────
@@ -141,7 +146,7 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
     });
 
     it('GF-02 fresh org opens to an honest empty list (200 + [])', async () => {
-      const res = await request(app).get('/api/meeting').set(member(ORG_B, USER_B));
+      const res = await request(app).get('/api/meeting').set(betaAdmin(ORG_B, USER_B));
       expect(res.status).toBe(200);
       expect(Array.isArray(res.body.meetings)).toBe(true);
       expect(res.body.meetings).toHaveLength(0);
@@ -158,7 +163,7 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
     it('GF-04 list returns created meetings ordered by start_at ascending', async () => {
       await createMeeting({ title: 'Later', startAt: '2026-09-02T10:00:00.000Z' });
       await createMeeting({ title: 'Earlier', startAt: '2026-09-01T10:00:00.000Z' });
-      const res = await request(app).get('/api/meeting').set(member());
+      const res = await request(app).get('/api/meeting').set(betaAdmin());
       expect(res.status).toBe(200);
       const titles = res.body.meetings.map((m: any) => m.title);
       expect(titles.indexOf('Earlier')).toBeLessThan(titles.indexOf('Later'));
@@ -170,18 +175,17 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
         startAt: '2026-09-03T10:00:00.000Z',
         projectId: PROJECT_A,
       });
-      const res = await request(app).get(`/api/meeting?projectId=${PROJECT_A}`).set(member());
+      const res = await request(app).get(`/api/meeting?projectId=${PROJECT_A}`).set(betaAdmin());
       expect(res.status).toBe(200);
       expect(res.body.meetings).toHaveLength(1);
       expect(res.body.meetings[0].title).toBe('Project scoped');
     });
 
-    it('GF-06 betaGate is mounted on the router and does NOT block MODULE_MEETING', async () => {
-      // meeting.routes.ts:51 claims the gate "flips to 403 BETA_LOCKED when
-      // MODULE_MEETING is set closed in betaAccess.ts". It is set to 'closed'.
-      // This asserts the real runtime behaviour, whatever the comment says.
-      const res = await request(app).get('/api/meeting').set(member());
-      expect(res.status).toBe(200);
+    it('GF-06 mirrors the closed MODULE_MEETING boundary after authentication', async () => {
+      const denied = await request(app).get('/api/meeting').set(member());
+      expect(denied.status).toBe(403);
+      expect(denied.body.code).toBe('BETA_LOCKED');
+      expect((await request(app).get('/api/meeting').set(betaAdmin())).status).toBe(200);
     });
   });
 
@@ -270,7 +274,7 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
     it('GF-13 update persists the new title (verified by SQL read-back)', async () => {
       const res = await request(app)
         .put(`/api/meeting/${id}`)
-        .set(member())
+        .set(betaAdmin())
         .send({ title: 'Edited title' });
       expect(res.status).toBe(200);
       expect((await rowById(id)).title).toBe('Edited title');
@@ -279,7 +283,7 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
     it('GF-14 update replaces array fields wholesale', async () => {
       await request(app)
         .put(`/api/meeting/${id}`)
-        .set(member())
+        .set(betaAdmin())
         .send({ agenda: ['New A', 'New B'], attendees: ['Zoe'] });
       const row = await rowById(id);
       expect(JSON.parse(row.agenda_json)).toEqual(['New A', 'New B']);
@@ -287,20 +291,26 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
     });
 
     it('GF-15 empty title is rejected 400 and does not blank the stored title', async () => {
-      const res = await request(app).put(`/api/meeting/${id}`).set(member()).send({ title: '   ' });
+      const res = await request(app)
+        .put(`/api/meeting/${id}`)
+        .set(betaAdmin())
+        .send({ title: '   ' });
       expect(res.status).toBe(400);
       expect((await rowById(id)).title).toBe('Edited title');
     });
 
     it('GF-16 empty startAt is rejected 400', async () => {
-      const res = await request(app).put(`/api/meeting/${id}`).set(member()).send({ startAt: '' });
+      const res = await request(app)
+        .put(`/api/meeting/${id}`)
+        .set(betaAdmin())
+        .send({ startAt: '' });
       expect(res.status).toBe(400);
     });
 
     it('GF-17 update of an unknown id is 404, not a fabricated success envelope', async () => {
       const res = await request(app)
         .put(`/api/meeting/meeting-does-not-exist`)
-        .set(member())
+        .set(betaAdmin())
         .send({ title: 'ghost' });
       expect(res.status).toBe(404);
     });
@@ -308,7 +318,7 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
     it('GF-18 update bumps updated_at', async () => {
       const before = (await rowById(id)).updated_at;
       await new Promise((r) => setTimeout(r, 5));
-      await request(app).put(`/api/meeting/${id}`).set(member()).send({ location: 'Room 9' });
+      await request(app).put(`/api/meeting/${id}`).set(betaAdmin()).send({ location: 'Room 9' });
       const after = (await rowById(id)).updated_at;
       expect(after).not.toBe(before);
     });
@@ -328,7 +338,7 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
     });
 
     it('GF-19 a fresh list request returns the saved meeting with all fields intact', async () => {
-      const res = await request(app).get('/api/meeting').set(member());
+      const res = await request(app).get('/api/meeting').set(betaAdmin());
       const found = res.body.meetings.find((m: any) => m.id === id);
       expect(found).toBeTruthy();
       expect(found.agenda).toEqual(['A1']);
@@ -339,11 +349,11 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
     it('GF-20 direct follow-up output is retired and reopen stays unchanged', async () => {
       const write = await request(app)
         .post(`/api/meeting/${id}/follow-ups`)
-        .set(member())
+        .set(betaAdmin())
         .send({ title: 'Send minutes', owner: 'Ann' });
       expect(write.status).toBe(410);
       expect(write.body.code).toBe('MEETING_PROPOSAL_REQUIRED');
-      const res = await request(app).get('/api/meeting').set(member());
+      const res = await request(app).get('/api/meeting').set(betaAdmin());
       const found = res.body.meetings.find((m: any) => m.id === id);
       expect(found.followUps).toEqual([]);
     });
@@ -351,11 +361,11 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
     it('GF-21 direct decision output is retired and reopen stays unchanged', async () => {
       const write = await request(app)
         .post(`/api/meeting/${id}/decisions`)
-        .set(member())
+        .set(betaAdmin())
         .send({ decision: 'Ship on Friday' });
       expect(write.status).toBe(410);
       expect(write.body.code).toBe('MEETING_PROPOSAL_REQUIRED');
-      const res = await request(app).get('/api/meeting').set(member());
+      const res = await request(app).get('/api/meeting').set(betaAdmin());
       const found = res.body.meetings.find((m: any) => m.id === id);
       expect(found.decisions).toEqual([]);
     });
@@ -372,7 +382,7 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
     it('GF-22 direct decision writer is retired', async () => {
       const res = await request(app)
         .post(`/api/meeting/${id}/decisions`)
-        .set(member())
+        .set(betaAdmin())
         .send({ decision: 'Approve budget' });
       expect(res.status).toBe(410);
       expect(res.body.code).toBe('MEETING_PROPOSAL_REQUIRED');
@@ -382,7 +392,7 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
     it('GF-23 empty decision cannot reach the retired writer', async () => {
       const res = await request(app)
         .post(`/api/meeting/${id}/decisions`)
-        .set(member())
+        .set(betaAdmin())
         .send({ decision: '  ' });
       expect(res.status).toBe(410);
     });
@@ -390,7 +400,7 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
     it('GF-24 direct follow-up writer is retired', async () => {
       const res = await request(app)
         .post(`/api/meeting/${id}/follow-ups`)
-        .set(member())
+        .set(betaAdmin())
         .send({ title: 'Book room', owner: 'Bob' });
       expect(res.status).toBe(410);
       expect(res.body.code).toBe('MEETING_PROPOSAL_REQUIRED');
@@ -400,7 +410,7 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
     it('GF-25 empty follow-up cannot reach the retired writer', async () => {
       const res = await request(app)
         .post(`/api/meeting/${id}/follow-ups`)
-        .set(member())
+        .set(betaAdmin())
         .send({ title: '' });
       expect(res.status).toBe(410);
     });
@@ -408,7 +418,7 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
     it('GF-26 legacy follow-up status writer is retired', async () => {
       const res = await request(app)
         .patch(`/api/meeting/${id}/follow-ups/legacy-follow-up`)
-        .set(member())
+        .set(betaAdmin())
         .send({ status: 'done' });
       expect(res.status).toBe(410);
     });
@@ -416,7 +426,7 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
     it('GF-27 invalid status cannot reach the retired writer', async () => {
       const res = await request(app)
         .patch(`/api/meeting/${id}/follow-ups/legacy-follow-up`)
-        .set(member())
+        .set(betaAdmin())
         .send({ status: 'maybe' });
       expect(res.status).toBe(410);
     });
@@ -424,7 +434,7 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
     it('GF-28 toggling a follow-up that does not exist must NOT report success', async () => {
       const res = await request(app)
         .patch(`/api/meeting/${id}/follow-ups/meeting-fu-does-not-exist`)
-        .set(member())
+        .set(betaAdmin())
         .send({ status: 'done' });
       expect(res.status).toBe(410);
     });
@@ -437,7 +447,7 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
       const otherId = other.body.meeting.id;
       const res = await request(app)
         .patch(`/api/meeting/${id}/follow-ups/foreign-follow-up`)
-        .set(member())
+        .set(betaAdmin())
         .send({ status: 'done' });
 
       expect(await followUpRows(otherId)).toEqual([]);
@@ -461,18 +471,21 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
     it('GF-30 generate-notes without a transcript is rejected 400', async () => {
       const res = await request(app)
         .post(`/api/meeting/${id}/generate-notes`)
-        .set(member())
+        .set(betaAdmin())
         .send({});
       expect(res.status).toBe(400);
     });
 
     it('GF-30b rejects every capture/provider activation field before durable writes', async () => {
-      const count = async () => (await pool.query<{ n: number }>(
-        `SELECT
+      const count = async () =>
+        (
+          await pool.query<{ n: number }>(
+            `SELECT
           (SELECT count(*) FROM meeting_notes WHERE organization_id=$1)::int +
           (SELECT count(*) FROM artifact_handoff_proposals WHERE producer_kind='meeting' AND organization_id=$1)::int AS n`,
-        [ORG_A]
-      )).rows[0].n;
+            [ORG_A]
+          )
+        ).rows[0].n;
       const before = await count();
       for (const forbidden of [
         { recording: true },
@@ -484,7 +497,7 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
       ]) {
         const res = await request(app)
           .post(`/api/meeting/${id}/generate-notes`)
-          .set(member())
+          .set(betaAdmin())
           .send({ transcript: 'manual text must not bypass capture policy', ...forbidden });
         expect(res.status).toBe(400);
         expect(res.body.code).toMatch(/MEETING_CAPTURE_DISABLED|UNSUPPORTED_MEETING_NOTE_FIELD/);
@@ -495,17 +508,20 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
     it('GF-31 generate-notes on an unknown meeting is 404', async () => {
       const res = await request(app)
         .post(`/api/meeting/meeting-nope/generate-notes`)
-        .set(member())
+        .set(betaAdmin())
         .send({ transcript: 'we decided to ship' });
       expect(res.status).toBe(404);
     });
 
     it('GF-32 generate-notes returns notes and honestly labels the heuristic path', async () => {
-      const res = await request(app).post(`/api/meeting/${id}/generate-notes`).set(member()).send({
-        transcript:
-          'Ann: we decided to ship the pilot on Friday. Bob: action item - Bob will prepare the rollout plan by Monday.',
-        language: 'en',
-      });
+      const res = await request(app)
+        .post(`/api/meeting/${id}/generate-notes`)
+        .set(betaAdmin())
+        .send({
+          transcript:
+            'Ann: we decided to ship the pilot on Friday. Bob: action item - Bob will prepare the rollout plan by Monday.',
+          language: 'en',
+        });
       expect(res.status).toBe(201);
       expect(res.body.note).toBeTruthy();
       // No OPENAI_API_KEY in this environment → must self-declare as heuristic,
@@ -527,12 +543,16 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
       const decisionsBefore = JSON.parse(before.decisions_json || '[]');
       const followUpsBefore = await followUpRows(id);
 
-      const gen = await request(app).post(`/api/meeting/${id}/generate-notes`).set(member()).send({
-        transcript:
-          'Ann: we decided to ship the pilot on Friday. Bob: action item - Bob will prepare the rollout plan by Monday.',
-        language: 'en',
-      });
-      expect(gen.status).toBe(201);
+      const gen = await request(app)
+        .post(`/api/meeting/${id}/generate-notes`)
+        .set(betaAdmin())
+        .send({
+          transcript:
+            'Ann: we decided to ship the pilot on Friday. Bob: action item - Bob will prepare the rollout plan by Monday.',
+          language: 'en',
+        });
+      expect(gen.status).toBe(200);
+      expect(gen.body.proposal?.replayed).toBe(true);
 
       // 1) A durable note and a PENDING proposal exist ...
       expect(gen.body.meetingNoteId).toBeTruthy();
@@ -641,14 +661,14 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
     });
 
     it('GF-39 org B does not see org A meetings in its list', async () => {
-      const res = await request(app).get('/api/meeting').set(member(ORG_B, USER_B));
+      const res = await request(app).get('/api/meeting').set(betaAdmin(ORG_B, USER_B));
       expect(res.body.meetings.some((m: any) => m.id === orgAMeetingId)).toBe(false);
     });
 
     it('GF-40 org B cannot update an org A meeting (404, and the row is unchanged)', async () => {
       const res = await request(app)
         .put(`/api/meeting/${orgAMeetingId}`)
-        .set(member(ORG_B, USER_B))
+        .set(betaAdmin(ORG_B, USER_B))
         .send({ title: 'Hijacked' });
       expect(res.status).toBe(404);
       expect((await rowById(orgAMeetingId)).title).toBe('Org A private');
@@ -657,7 +677,7 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
     it('GF-41 org B cannot append a decision to an org A meeting', async () => {
       const res = await request(app)
         .post(`/api/meeting/${orgAMeetingId}/decisions`)
-        .set(member(ORG_B, USER_B))
+        .set(betaAdmin(ORG_B, USER_B))
         .send({ decision: 'Cross-tenant write' });
       expect(res.status).toBe(404);
       expect(JSON.parse((await rowById(orgAMeetingId)).decisions_json || '[]')).toEqual([]);
@@ -666,7 +686,7 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
     it('GF-42 org B cannot add a follow-up to an org A meeting', async () => {
       const res = await request(app)
         .post(`/api/meeting/${orgAMeetingId}/follow-ups`)
-        .set(member(ORG_B, USER_B))
+        .set(betaAdmin(ORG_B, USER_B))
         .send({ title: 'Cross-tenant follow-up' });
       expect(res.status).toBe(404);
       expect(await followUpRows(orgAMeetingId)).toHaveLength(0);
@@ -692,7 +712,7 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
     it('GF-45 org B cannot generate notes against an org A meeting', async () => {
       const res = await request(app)
         .post(`/api/meeting/${orgAMeetingId}/generate-notes`)
-        .set(member(ORG_B, USER_B))
+        .set(betaAdmin(ORG_B, USER_B))
         .send({ transcript: 'cross tenant transcript' });
       expect(res.status).toBe(404);
     });
@@ -769,7 +789,7 @@ describe('M12 Meeting — golden flows (real Postgres)', () => {
       try {
         const res = await request(app)
           .put(`/api/meeting/${id}`)
-          .set(member())
+          .set(betaAdmin())
           .send({ title: 'Renamed but not really' });
         const row = await rowById(id);
         expect(row.title).toBe('Silent write probe'); // nothing was written

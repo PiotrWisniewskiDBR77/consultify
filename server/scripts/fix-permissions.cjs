@@ -1,7 +1,8 @@
 const { Client } = require('pg');
 const { v4: uuidv4 } = require('uuid');
 
-const DATABASE_URL = 'postgresql://postgres:uIvWKxAeMRYvlJIhbuHmrYVjOvezCRjz@centerbeam.proxy.rlwy.net:37823/railway';
+const DATABASE_URL = process.env.DATABASE_URL;
+if (!DATABASE_URL) throw new Error('DATABASE_URL is required');
 
 async function main() {
   const client = new Client({ connectionString: DATABASE_URL, ssl: { rejectUnauthorized: false } });

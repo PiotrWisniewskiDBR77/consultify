@@ -9,13 +9,98 @@ const root = process.cwd(),
   cmd = process.argv[2] || 'status',
   protectedPorts = new Set([3940, 3941]),
   localHosts = new Set(['127.0.0.1', 'localhost', '::1']),
+  // Adopt only fixture families that currently implement the complete FINAL
+  // receipt + durable marker contract. Extend this allowlist only together
+  // with the corresponding fixture migration and executable preservation test.
+  adoptedFixtureContracts = [
+    {
+      databasePattern: /^consultify_w3_organization_owner_[a-z0-9_]+$/,
+      fixtureId: 'W3-ORGANIZATION-OWNER-v1',
+      fixture: 'W3-ORGANIZATION-OWNER-v1',
+    },
+    {
+      databasePattern: /^consultify_w3_finance_owner_[a-z0-9_]+$/,
+      fixtureId: 'W3-FINANCE-OWNER-v1',
+      fixture: 'wave3-finance-owner-review-v1',
+    },
+    {
+      databasePattern: /^consultify_w3_chat_owner_[a-z0-9_]+$/,
+      fixtureId: 'W3-CHAT-OWNER-v1',
+      fixture: 'wave3-chat-owner-review-v1',
+    },
+    {
+      databasePattern: /^consultify_w3_results_owner_[a-z0-9_]+$/,
+      fixtureId: 'W3-RESULTS-OWNER-v1',
+      fixture: 'wave3-results-owner-review-v1',
+    },
+    {
+      databasePattern: /^consultify_w3_materials_owner_[a-z0-9_]+$/,
+      fixtureId: 'W3-MATERIALS-OWNER-v1',
+      fixture: 'wave3-materials-owner-review-v1',
+    },
+    {
+      databasePattern: /^consultify_w3_audits_owner_[a-z0-9_]+$/,
+      fixtureId: 'W3-AUDITS-OWNER-v1',
+      fixture: 'wave3-audits-owner-review-v1',
+    },
+    {
+      databasePattern: /^consultify_w3_execution_owner_[a-z0-9_]+$/,
+      fixtureId: 'W3-EXECUTION-OWNER-v1',
+      fixture: 'wave3-execution-owner-review-v1',
+    },
+    {
+      databasePattern: /^consultify_w3_assessment_owner_[a-z0-9_]+$/,
+      fixtureId: 'W3-ASSESSMENT-OWNER-v1',
+      fixture: 'W3-ASSESSMENT-OWNER-v1',
+    },
+    {
+      databasePattern: /^consultify_w3_admin_owner_[a-z0-9_]+$/,
+      fixtureId: 'W3-ADMIN-OWNER-v1',
+      fixture: 'W3-ADMIN-OWNER-v1',
+    },
+    {
+      databasePattern: /^consultify_w3_interview_owner_[a-z0-9_]+$/,
+      fixtureId: 'W3-INTERVIEW-OWNER-v1',
+      fixture: 'W3-INTERVIEW-OWNER-v1',
+    },
+    {
+      databasePattern: /^consultify_w3_tools_owner_[a-z0-9_]+$/,
+      fixtureId: 'W3-TOOLS-OWNER-v1',
+      fixture: 'W3-TOOLS-OWNER-v1',
+    },
+    {
+      databasePattern: /^consultify_w3_meetings_owner_[a-z0-9_]+$/,
+      fixtureId: 'W3-MEETINGS-OWNER-v1',
+      fixture: 'wave3-meetings-owner-review-v1',
+    },
+    {
+      databasePattern: /^consultify_w3_initiatives_owner_[a-z0-9_]+$/,
+      fixtureId: 'W3-INITIATIVES-OWNER-v1',
+      fixture: 'W3-INITIATIVES-OWNER-v1',
+    },
+    {
+      databasePattern: /^consultify_w3_partner_owner_[a-z0-9_]+$/,
+      fixtureId: 'W3-PARTNER-OWNER-v1',
+      fixture: 'wave3-partner-owner-review-v1',
+    },
+    {
+      databasePattern: /^consultify_w3_my_work_owner_[a-z0-9_]+$/,
+      fixtureId: 'W3-MY-WORK-OWNER-v1',
+      fixture: 'W3-MY-WORK-OWNER-v1',
+    },
+    {
+      databasePattern: /^consultify_w3_settings_owner_[a-z0-9_]+$/,
+      fixtureId: 'W3-SETTINGS-OWNER-v1',
+      fixture: 'W3-SETTINGS-OWNER-v1',
+    },
+  ],
   runtimeSecrets = [];
 const fail = (m) => {
     throw new Error(`[W3 runtime] BLOCKED: ${m}`);
   },
   sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const git = (a) => {
-  const r = spawnSync('git', a, { cwd: root, encoding: 'utf8' });
+  const r = spawnSync('git', a, { cwd: root, encoding: 'utf8', maxBuffer: 128 * 1024 * 1024 });
   if (r.status !== 0) fail(`git ${a.join(' ')} failed`);
   return r.stdout;
 };
@@ -48,7 +133,7 @@ function directTmp(input, label, prefix, mustNotExist = false) {
   if (mustNotExist && fs.existsSync(input)) fail(`${label} exists; overwrite refused`);
   return path.join(tmp, path.basename(input));
 }
-function parseDb(raw) {
+function parseDb(raw, mode) {
   let url;
   try {
     url = new URL(raw);
@@ -57,12 +142,62 @@ function parseDb(raw) {
   }
   const name = url.pathname.slice(1),
     port = Number(url.port || 5432);
-  if (!localHosts.has(url.hostname) || !/^consultify_w3_runtime_[a-z0-9_]+$/.test(name))
-    fail('runtime DB must be local and named consultify_w3_runtime_*');
+  const validName =
+    mode === 'create'
+      ? /^consultify_w3_runtime_[a-z0-9_]+$/.test(name)
+      : adoptedFixtureContracts.some((contract) => contract.databasePattern.test(name));
+  if (!localHosts.has(url.hostname) || !validName)
+    fail(
+      mode === 'create'
+        ? 'runtime DB must be local and named consultify_w3_runtime_*'
+        : 'adopted DB must be local and match the closed Wave3 owner prefix allowlist'
+    );
   if (!url.username || !Number.isInteger(port)) fail('runtime DB user/port required');
   return {
     url,
     configured: { host: url.hostname, port, user: decodeURIComponent(url.username), name },
+  };
+}
+function fixtureManifest(raw, dbName) {
+  if (!raw || !path.isAbsolute(raw)) fail('WAVE3_RUNTIME_FIXTURE_MANIFEST must be absolute');
+  if (!fs.existsSync(raw)) fail('fixture manifest must exist');
+  if (fs.lstatSync(raw).isSymbolicLink()) fail('fixture manifest must not be a symlink');
+  const file = fs.realpathSync(raw);
+  const stat = fs.statSync(file);
+  if (!stat.isFile() || (stat.mode & 0o777) !== 0o600)
+    fail('fixture manifest must be an existing regular 0600 file');
+  const bytes = fs.readFileSync(file);
+  let value;
+  try {
+    value = JSON.parse(bytes.toString('utf8'));
+  } catch {
+    fail('fixture manifest must be valid JSON');
+  }
+  if (value?.databaseName !== dbName) fail('fixture manifest databaseName differs from runtime DB');
+  if (value?.ownershipState !== 'FINAL')
+    fail('fixture manifest must be a finalized owner-fixture receipt');
+  const contract = adoptedFixtureContracts.find((candidate) =>
+    candidate.databasePattern.test(dbName)
+  );
+  if (!contract) fail('adopted fixture family contract is missing');
+  const fixtureId = value?.fixtureId,
+    ownershipNonce = value?.ownershipNonce,
+    marker = value?.marker;
+  if (
+    fixtureId !== contract.fixtureId ||
+    value?.fixture !== contract.fixture ||
+    typeof ownershipNonce !== 'string' ||
+    !/^[a-f0-9]{32,128}$/.test(ownershipNonce) ||
+    marker?.table !== 'wave3_owner_fixture_markers' ||
+    marker?.fixtureId !== fixtureId ||
+    marker?.ownershipNonce !== ownershipNonce
+  )
+    fail('fixture manifest ownership marker contract is invalid for the adopted database family');
+  return {
+    path: file,
+    sha256: crypto.createHash('sha256').update(bytes).digest('hex'),
+    fixtureId,
+    ownershipNonce,
   };
 }
 function validate() {
@@ -90,7 +225,14 @@ function validate() {
   if (!suppliedFp) fail('WAVE3_RUNTIME_DIRTY_FINGERPRINT is required');
   if (cmd !== 'stop' && suppliedFp !== currentFp)
     fail(`WAVE3_RUNTIME_DIRTY_FINGERPRINT must equal current fingerprint ${currentFp}`);
-  const db = parseDb(process.env.WAVE3_RUNTIME_DATABASE_URL || ''),
+  const mode = process.env.WAVE3_RUNTIME_MODE || 'create';
+  if (!['create', 'adopt-existing'].includes(mode))
+    fail('WAVE3_RUNTIME_MODE must be create or adopt-existing');
+  const db = parseDb(process.env.WAVE3_RUNTIME_DATABASE_URL || '', mode),
+    fixture =
+      mode === 'adopt-existing'
+        ? fixtureManifest(process.env.WAVE3_RUNTIME_FIXTURE_MANIFEST || '', db.configured.name)
+        : null,
     manifestPath = directTmp(
       process.env.WAVE3_RUNTIME_MANIFEST || '',
       'manifest',
@@ -117,6 +259,8 @@ function validate() {
     sha,
     fingerprint: cmd === 'stop' ? suppliedFp : currentFp,
     db,
+    mode,
+    fixture,
     manifestPath,
     stateDir,
     serverPort,
@@ -285,6 +429,27 @@ async function bind(c, state) {
     throw e;
   }
 }
+async function verifyAdoptedMarker(c) {
+  if (c.mode !== 'adopt-existing') return;
+  const client = new pg.Client({ connectionString: c.db.url.toString() });
+  await client.connect();
+  try {
+    const table = await client.query(
+      `select to_regclass('public.wave3_owner_fixture_markers')::text name`
+    );
+    if (table.rows[0]?.name !== 'wave3_owner_fixture_markers')
+      fail('adopted DB ownership marker table is absent');
+    const marker = await client.query(
+      `select database_name from public.wave3_owner_fixture_markers
+       where fixture_id=$1 and ownership_nonce=$2`,
+      [c.fixture.fixtureId, c.fixture.ownershipNonce]
+    );
+    if (marker.rowCount !== 1 || marker.rows[0].database_name !== c.db.configured.name)
+      fail('adopted DB ownership marker does not exactly match fixture manifest');
+  } finally {
+    await client.end();
+  }
+}
 function signalGroup(pgid, signal) {
   try {
     process.kill(-pgid, signal);
@@ -339,7 +504,8 @@ async function cleanup(c, state) {
   else writeExclusive(stateFile, state);
   const b = await bind(c, state);
   try {
-    if (b.exists) await b.admin.query(`drop database "${c.db.configured.name}" with (force)`);
+    if (b.exists && c.mode === 'create')
+      await b.admin.query(`drop database "${c.db.configured.name}" with (force)`);
   } finally {
     await b.admin.end();
   }
@@ -355,12 +521,14 @@ async function start(c) {
       schema: 'W3-RUNTIME-STATE-v2',
       sha: c.sha,
       fingerprint: c.fingerprint,
-      database: { configured: c.db.configured },
+      mode: c.mode,
+      fixture: c.fixture,
+      database: { configured: c.db.configured, preserved: c.mode === 'adopt-existing' },
       server: null,
       client: null,
       stage: 'ALLOCATING_DB',
     };
-  let created = false,
+  let cleanupArmed = false,
     interrupted = false,
     cleanupPromise = null,
     activeOwnershipStage = Promise.resolve();
@@ -371,7 +539,7 @@ async function start(c) {
     interrupted = true;
     void activeOwnershipStage
       .catch(() => undefined)
-      .then(() => (created ? runCleanup() : undefined))
+      .then(() => (cleanupArmed ? runCleanup() : undefined))
       .then(() => process.exit(signal === 'SIGINT' ? 130 : 143))
       .catch((error) => {
         console.error(error);
@@ -385,9 +553,14 @@ async function start(c) {
       const admin = new pg.Client({ connectionString: adminUrl(c.db) });
       await admin.connect();
       try {
-        if (await exists(admin, c.db.configured.name)) fail('runtime database already exists');
-        await admin.query(`create database "${c.db.configured.name}"`);
-        created = true;
+        const present = await exists(admin, c.db.configured.name);
+        if (c.mode === 'create') {
+          if (present) fail('runtime database already exists');
+          await admin.query(`create database "${c.db.configured.name}"`);
+          cleanupArmed = true;
+        } else {
+          if (!present) fail('adopted runtime database does not exist');
+        }
         const delay = Number(process.env.WAVE3_RUNTIME_TEST_DB_STAGE_DELAY_MS || 0);
         if (delay > 0) await sleep(delay);
         if (process.env.WAVE3_RUNTIME_TEST_DB_STAGE_FAIL === '1')
@@ -395,27 +568,47 @@ async function start(c) {
       } finally {
         await admin.end();
       }
-      state.stage = 'DB_CREATED';
+      if (c.mode === 'adopt-existing') {
+        await verifyAdoptedMarker(c);
+        cleanupArmed = true;
+      }
+      state.stage = c.mode === 'create' ? 'DB_CREATED' : 'DB_ADOPTED';
       writeExclusive(stateFile, state);
     })();
     await activeOwnershipStage;
     activeOwnershipStage = Promise.resolve();
     if (stopForwardProgress()) return;
     if (process.env.WAVE3_RUNTIME_FAIL_AT === 'after-db') fail('injected after-db failure');
-    const migration = spawnSync('npm', ['run', 'db:migrate:strict'], {
-      cwd: root,
-      env: childEnv({ NODE_ENV: 'test', DB_TYPE: 'postgres', DATABASE_URL: c.db.url.toString() }),
-      encoding: 'utf8',
-    });
+    const migration = spawnSync(
+      'npm',
+      ['run', 'db:migrate:strict', ...(c.mode === 'adopt-existing' ? ['--', '--dry-run'] : [])],
+      {
+        cwd: root,
+        env: childEnv({ NODE_ENV: 'test', DB_TYPE: 'postgres', DATABASE_URL: c.db.url.toString() }),
+        encoding: 'utf8',
+      }
+    );
     if (stopForwardProgress()) return;
     if (migration.status !== 0) fail(`migration failed: ${migration.stderr || migration.stdout}`);
+    if (c.mode === 'adopt-existing' && !/Pending migrations:\s*0\b/.test(migration.stdout))
+      fail('adopted database does not match the exact source migration chain');
     if (process.env.WAVE3_RUNTIME_FAIL_AT === 'migration') fail('injected migration failure');
     const db = new pg.Client({ connectionString: c.db.url.toString() });
     await db.connect();
-    const migrations = Number(
-        (await db.query(`select count(*)::int n from schema_migrations where status='success'`))
-          .rows[0].n
-      ),
+    const migrationRows = (
+        await db.query(`select filename,status,checksum from schema_migrations order by filename`)
+      ).rows,
+      migrations = migrationRows.filter((row) => row.status === 'success').length,
+      migrationChainSha256 = crypto
+        .createHash('sha256')
+        .update(JSON.stringify(migrationRows))
+        .digest('hex'),
+      invalidAdoptedChain =
+        c.mode === 'adopt-existing' &&
+        (!migrationRows.length ||
+          migrationRows.some(
+            (row) => row.status !== 'success' || !/^[a-f0-9]{64}$/.test(String(row.checksum || ''))
+          )),
       actual = (
         await db.query(
           `select current_database() name,current_user "user",inet_server_addr()::text host,inet_server_port() port`
@@ -423,9 +616,13 @@ async function start(c) {
       ).rows[0];
     await db.end();
     if (stopForwardProgress()) return;
+    if (invalidAdoptedChain)
+      fail('adopted schema_migrations is not an exact successful source chain');
     if (actual.name !== c.db.configured.name || actual.user !== c.db.configured.user)
       fail('live DB identity mismatch');
     state.database.actual = actual;
+    state.database.migrations = migrations;
+    state.database.migrationChainSha256 = migrationChainSha256;
     const sl = path.join(c.stateDir, 'server.log'),
       cl = path.join(c.stateDir, 'client.log'),
       sfd = fs.openSync(sl, 'wx', 0o600),
@@ -443,11 +640,16 @@ async function start(c) {
         ENABLE_TEST_AUTH_BYPASS: 'false',
         ENABLE_TEST_GATEWAY: 'false',
         ENABLE_TEST_SUPPORT: 'false',
+        ENABLE_V8_GLOBAL: 'true',
+        ENABLE_V8_SHADOW_MODE: 'false',
         DISABLE_SCHEDULER: 'true',
         DISABLE_AI_PROVIDER_SENTINEL: 'true',
         DISABLE_AI_HEALTH_MONITOR: 'true',
         DISABLE_STARTUP_HEALTH_MONITOR: 'true',
         SKIP_STARTUP_VALIDATOR: 'true',
+        // Exact owner fixtures are immutable evidence. Partner GET middleware
+        // must not auto-seed development demo campaigns into an adopted DB.
+        PARTNER_DEMO_SEED_ENABLED: 'false',
       });
     const clientEnv = childEnv({
       NODE_ENV: 'development',
@@ -537,6 +739,7 @@ async function start(c) {
       fail('authoritative server readiness contract is not fully green');
     if (rj.buildSha !== c.sha) fail('server readiness buildSha differs from exact candidate');
     if (!marker.body.includes(c.sha)) fail('client transformed marker lacks exact candidate SHA');
+    await verifyAdoptedMarker(c);
     if (git(['rev-parse', 'HEAD']).trim() !== c.sha || currentDirtyFingerprint() !== c.fingerprint)
       fail('candidate changed while qualifying');
     scan([sl, cl, stateFile]);
@@ -557,7 +760,8 @@ async function start(c) {
         sqlMigrationState: rj.sqlMigrations.state,
         clientMarkerVerified: true,
       },
-      database: { ...state.database, migrations },
+      database: { ...state.database, migrations, migrationChainSha256 },
+      fixture: c.fixture ? { ...c.fixture, sqlMarkerVerified: true } : null,
       auth: {
         nodeEnv: 'development',
         secretPersisted: false,
@@ -565,6 +769,10 @@ async function start(c) {
         enableTestAuthBypass: false,
         enableTestGateway: false,
         enableTestSupport: false,
+      },
+      runtimeFeatures: {
+        v8GlobalEnabled: true,
+        v8ShadowModeEnabled: false,
       },
       dotenvIsolation: {
         serverDisabled: true,
@@ -586,7 +794,7 @@ async function start(c) {
     scan([sl, cl, stateFile, c.manifestPath]);
     console.log(JSON.stringify(manifest, null, 2));
   } catch (e) {
-    if (created)
+    if (cleanupArmed)
       try {
         await runCleanup();
       } catch (ce) {
@@ -601,27 +809,42 @@ function readState(c) {
     fail('owned state missing or symlinked');
   const s = JSON.parse(fs.readFileSync(f, 'utf8'));
   if (s.sha !== c.sha || s.fingerprint !== c.fingerprint) fail('state candidate identity differs');
+  if ((s.mode || 'create') !== c.mode) fail('runtime mode differs from owned state');
   if (JSON.stringify(s.database?.configured) !== JSON.stringify(c.db.configured))
     fail('database host/port/user/name differs from owned state');
+  if (c.mode === 'adopt-existing') {
+    if (s.fixture?.path !== c.fixture?.path || s.fixture?.sha256 !== c.fixture?.sha256)
+      fail('fixture manifest identity/hash differs from owned state');
+  }
   return s;
 }
 async function stop(c) {
   const s = readState(c);
   const pre = await bind(c, s);
+  if (!pre.exists) {
+    await pre.admin.end();
+    fail('owned database absent before stop; refusing process signal');
+  }
   await pre.admin.end();
+  await verifyAdoptedMarker(c);
   await cleanup(c, s);
   const a = new pg.Client({ connectionString: adminUrl(c.db) });
   await a.connect();
   const absent = !(await exists(a, c.db.configured.name));
   await a.end();
+  if (c.mode === 'adopt-existing') {
+    if (absent) fail('adopted database missing after stop');
+    await verifyAdoptedMarker(c);
+  }
   console.log(
     JSON.stringify(
       {
         stopped: true,
         ownedProcessGroupsOnly: true,
         processGroupsVerifiedTerminated: s.cleanupProof?.processGroupsVerifiedTerminated === true,
-        databaseDropped: true,
-        catalogAbsent: absent,
+        ...(c.mode === 'create'
+          ? { databaseDropped: true, catalogAbsent: absent }
+          : { databasePreserved: true, catalogPresentAndPreserved: !absent }),
         portsFree: true,
         portsUntouched: [3940, 3941],
       },
@@ -635,6 +858,7 @@ async function status(c) {
     b = await bind(c, s);
   await b.admin.end();
   if (!b.exists) fail('owned database absent');
+  await verifyAdoptedMarker(c);
   for (const n of ['server', 'client'])
     if (
       !s[n]?.identity ||

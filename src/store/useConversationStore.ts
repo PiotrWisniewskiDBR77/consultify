@@ -943,6 +943,14 @@ export const useConversationStore = create<ConversationState>()(
             });
           } catch (err: any) {
             console.error('[ConversationStore] Fetch conversation error:', err);
+            // A failed request is not a reusable cache entry. In particular, a
+            // deep link can be mounted before login completes, receive 401, and
+            // then be retried immediately after authentication. Keeping the
+            // timestamp here made that valid retry hit the dedupe window and
+            // render a writable blank chat even though the durable conversation
+            // existed. Missing conversations remain quarantined by their
+            // separate 404 marker below.
+            delete _lastFetchConversationAt[id];
             const status = err?.response?.status || err?.status;
             if (status === 401 || status === 403) {
               const reason = err?.response?.data?.reason || err?.data?.reason || '';

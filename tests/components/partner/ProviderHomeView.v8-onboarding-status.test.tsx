@@ -17,6 +17,10 @@ const tMock = (key: string, fallbackOrOptions?: string | Record<string, unknown>
     return ['Mock item A', 'Mock item B'];
   }
 
+  if (typeof options?.defaultValue === 'string') {
+    return options.defaultValue.replace('{{tier}}', String(options.tier ?? ''));
+  }
+
   if (key === 'partner.beta.partnerSince' && options?.date) {
     return `Beta Partner since ${String(options.date)}`;
   }
@@ -74,7 +78,7 @@ describe('ProviderHomeView onboarding status seam', () => {
 
     await waitFor(() => {
       expect(screen.getByText('2/4')).toBeInTheDocument();
-      expect(screen.getByText(/Aktualny poziom: professional/i)).toBeInTheDocument();
+      expect(screen.getByText(/Current tier: professional/i)).toBeInTheDocument();
     });
 
     expect(V8PartnerApi.getOnboardingStatus).toHaveBeenCalled();
@@ -104,7 +108,7 @@ describe('ProviderHomeView onboarding status seam', () => {
 
     await waitFor(() => {
       expect(screen.getByText('4/4')).toBeInTheDocument();
-      expect(screen.getByText(/Aktualny poziom: enterprise/i)).toBeInTheDocument();
+      expect(screen.getByText(/Current tier: enterprise/i)).toBeInTheDocument();
     });
 
     expect(Api.get).toHaveBeenCalledWith('/onboarding/status');
