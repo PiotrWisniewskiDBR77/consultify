@@ -1,5 +1,22 @@
 # Wave 3 — SHA and runtime ledger
 
+## Clean owner-review checkpoint — 2026-08-22
+
+- Product checkpoint: `96fe8ddc10d0f8b5c48296cd4ce80b00c7f7bfbc`.
+- Parent technical-browser evidence: the exact module rows below, primarily
+  `3d61730fd8ad...` dirty snapshots plus the explicitly older Results/Finance
+  evidence. Those rows remain historical evidence and do not become replay
+  evidence for `96fe8ddc10` by association.
+- Qualification: clean local commit; package verifier `16/16` with `21` gates
+  each; root typecheck PASS; pre-commit staged diff-check PASS; no push,
+  deployment or production contact.
+- Purpose: stable source checkpoint from which G08–G17 owner review and
+  remediation can proceed. It is not `MODULE_ACCEPTED_ON_SHA` and not the final
+  Wave 3 SHA.
+- Open invalidation/blocking boundary: any product/config/migration/fixture
+  change creates a successor checkpoint; `XMOD-SEC-001` external Railway
+  credential rotation must be verified before final acceptance.
+
 Settings latest exact entry (supersedes the older module-15 row): `3d61730fd8ad18f19cf9967cb5513697659003cc` / `536483a24363a2b7a66a934be087ace9ac3d9e94b0745ad604ba9dd31ca06246`; server `4102`, client `4103`; retained DB `consultify_w3_settings_owner_final_20260822`; fixture `/private/tmp/consultify-w3-settings-owner-final-v3-20260822.json`; runtime `/private/tmp/consultify-wave3-runtime-manifest-settings-ui-v3-20260822.json`; `817`; real OWNER; bypasses OFF; cold/reload PASS; runtime stopped and DB preserved.
 
 | Entry | Module/round | Purpose | Git SHA | Client SHA | Server SHA | Runtime | Database | Migrations | Production contact | Evidence | Status |

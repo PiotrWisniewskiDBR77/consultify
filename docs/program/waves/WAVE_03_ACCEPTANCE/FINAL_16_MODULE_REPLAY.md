@@ -6,24 +6,29 @@ Final product SHA: `UNSET`
 
 ## Pre-freeze audit — 2026-08-22
 
-- Current HEAD: `3d61730fd8ad18d19cf9967cb5513697659003cc`.
-- Current dirty fingerprint: `c5fd4ba95953111429daba1fe16ec91d425eda385757fc3036a30e5becf3977a`,
-  identical across three consecutive checks over ten seconds.
-- Worktree scope: `258` modified or untracked paths. This is an integration
-  checkpoint, not a clean or final candidate.
-- The Organization/Admin/Settings rebuild runtime on `3953/3954` remains
-  independently owned and must finish before the candidate can be frozen.
+- Clean owner-review checkpoint: `96fe8ddc10d0f8b5c48296cd4ce80b00c7f7bfbc`.
+- The checkpoint contains the integrated Organization/Admin/Settings rebuild,
+  the sixteen retained fixture families and the technical browser corrections.
+  It is a clean local commit, but it is not the final accepted SHA: no module
+  has completed G08–G20 yet.
+- The historical Organization/Admin/Settings preview on `3953/3954` remains an
+  independently owned, older detached build (`72a590b0b6`). It is not evidence
+  for this checkpoint and must not be used for the guided replay.
 - The historical Organization/notetaker runtime on `3951/3952` was initially
   classified from its stale state as unused. After its recorded process groups
   were stopped, the independent rebuild proxy on `3954` proved that it still
   depended on backend `3951`. The same retained fixture database was left
   untouched and a replacement local backend was restored on `3951`; `/api/ready`
   is green through both `3951` and the `3954` proxy. The unused historical Vite
-  client on `3952` remains stopped. This recovery runtime is not final replay
-  evidence and must be explicitly handed back or stopped before freeze.
-- Package verifier is green (`16` modules, `21` gates each) and `git diff
-  --check` is green. These checks do not satisfy any unchecked entry gate
-  below.
+  client on `3952` remains stopped. The replacement backend on `3951` only
+  supports that older preview/proxy and is not final replay evidence; it must be
+  identity-stopped before the final freeze.
+- Package verifier is green (`16` modules, `21` gates each), root typecheck and
+  staged diff-check passed before the checkpoint, and the post-commit worktree
+  was clean. These checks do not satisfy any unchecked entry gate below.
+- `XMOD-SEC-001` remains an explicit P0 acceptance blocker: the plaintext
+  Railway credential was removed from the current source, but external rotation
+  and rejection of the exposed value are not yet verified.
 
 ## Entry gate
 
