@@ -112,6 +112,31 @@ describe('V8InterviewApi', () => {
     );
     expect(v8Post).toHaveBeenNthCalledWith(6, '/interview/assignments/asg-5/approve', {});
   });
+
+  it('uses the existing assignment id for escalation and reassignment writes', async () => {
+    vi.mocked(v8Post).mockResolvedValue({ success: true } as any);
+    vi.mocked(v8Patch).mockResolvedValue({ action: 'updated' } as any);
+
+    await V8InterviewApi.escalateAssignment('asg/managed');
+    await V8InterviewApi.manageAssignment('asg/managed', {
+      assigneeUserId: 'user-2',
+      templateId: 'template-1',
+      dueAt: '2026-08-25T00:00:00.000Z',
+      priority: 'high',
+      notes: 'Preserve the assignment',
+      mode: 'update',
+    });
+
+    expect(v8Post).toHaveBeenCalledWith('/interview/assignments/asg%2Fmanaged/escalate', {});
+    expect(v8Patch).toHaveBeenCalledWith('/interview/assignments/asg%2Fmanaged/manage', {
+      assigneeUserId: 'user-2',
+      templateId: 'template-1',
+      dueAt: '2026-08-25T00:00:00.000Z',
+      priority: 'high',
+      notes: 'Preserve the assignment',
+      mode: 'update',
+    });
+  });
 });
 
 // ── P10 insight lifecycle contract tests ──────────────────────────────────────

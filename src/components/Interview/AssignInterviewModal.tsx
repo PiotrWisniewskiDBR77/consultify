@@ -26,6 +26,7 @@ import {
 import { Button, LoadingState, Switch } from '@/components/ui/primitives';
 import { useInterviewPermissions } from '@/hooks/useInterviewPermissions';
 import { Api } from '@/services/api';
+import { V8InterviewApi } from '@/services/api/v8/interview';
 import { useAppStore } from '@/store/useAppStore';
 
 import {
@@ -61,6 +62,14 @@ interface AssignInterviewModalProps {
   onClose: () => void;
   onSuccess?: () => void;
   preselectedTemplateId?: string;
+  reassignAssignment?: {
+    id: string;
+    assigneeUserId: string;
+    templateId: string;
+    dueAt?: string | null;
+    priority: Priority;
+    notes?: string | null;
+  } | null;
 }
 
 type Priority = 'low' | 'medium' | 'high' | 'urgent';
@@ -70,6 +79,7 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
   onClose,
   onSuccess,
   preselectedTemplateId,
+  reassignAssignment,
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
@@ -210,15 +220,17 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
       requestKeyRef.current =
         globalThis.crypto?.randomUUID?.() ?? `assignment-${Date.now()}-${Math.random()}`;
       setSelectedTemplateId(preselectedTemplateId || '');
-      setSelectedUserIds([]);
+      setSelectedUserIds(
+        reassignAssignment?.assigneeUserId ? [reassignAssignment.assigneeUserId] : []
+      );
       setTeamLeadId('');
-      setDueDate('');
-      setPriority('medium');
-      setNotes('');
+      setDueDate(reassignAssignment?.dueAt?.split('T')[0] || '');
+      setPriority(reassignAssignment?.priority || 'medium');
+      setNotes(reassignAssignment?.notes || '');
       setIsTeamAssignment(false);
       setIsAnonymous(false);
     }
-  }, [isOpen, preselectedTemplateId]);
+  }, [isOpen, preselectedTemplateId, reassignAssignment]);
 
   // Template options for the portal-based Select (with scope/area-tag hints).
   const templateOptions = useMemo<SelectOption[]>(
@@ -286,6 +298,12 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
       toast.error(t('interview.assignModal.selectAtLeastOneUser'));
       return;
     }
+    if (reassignAssignment && selectedUserIds.length !== 1) {
+      toast.error(
+        t('interview.assignModal.selectOneUserForReassignment', 'Select one new assignee')
+      );
+      return;
+    }
     if (!dueDate) {
       toast.error(t('interview.assignModal.setADueDate'));
       return;
@@ -297,6 +315,21 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
 
     setIsSubmitting(true);
     try {
+      if (reassignAssignment) {
+        await V8InterviewApi.manageAssignment(reassignAssignment.id, {
+          assigneeUserId: selectedUserIds[0],
+          templateId: reassignAssignment.templateId,
+          dueAt: new Date(dueDate).toISOString(),
+          priority,
+          notes: notes || null,
+          mode: 'update',
+        });
+        toast.success(t('interview.assignModal.reassigned', 'Interview reassigned'));
+        onSuccess?.();
+        onClose();
+        return;
+      }
+
       const selectedTemplate = templates.find((template) => template.id === selectedTemplateId);
       if (
         !selectedTemplate ||
@@ -306,6 +339,7 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
         toast.error('The selected template has no published version. Publish it before assigning.');
         return;
       }
+
       const result = await Api.post('/interview/assignments', {
         templateId: selectedTemplateId,
         templateVersion: selectedTemplate.version,
@@ -379,10 +413,17 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
             </div>
             <div>
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                {t('interview.assignModal.assignInterview')}
+                {reassignAssignment
+                  ? t('interview.assignModal.reassignInterview', 'Reassign interview')
+                  : t('interview.assignModal.assignInterview')}
               </h2>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                {t('interview.assignModal.selectATemplateAndAssign')}
+                {reassignAssignment
+                  ? t(
+                      'interview.assignModal.selectNewAssignee',
+                      'Select one new assignee and preserve this assignment.'
+                    )
+                  : t('interview.assignModal.selectATemplateAndAssign')}
               </p>
             </div>
           </div>
@@ -409,6 +450,7 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
                   options={templateOptions}
                   placeholder={t('interview.assignModal.selectTemplate')}
                   aria-label={t('interview.assignModal.interviewTemplate')}
+                  disabled={Boolean(reassignAssignment)}
                 />
               </Field>
 
@@ -431,7 +473,7 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
                 />
 
                 {/* Team Assignment Toggle */}
-                {selectedUserIds.length >= 2 && (
+                {!reassignAssignment && selectedUserIds.length >= 2 && (
                   <div className="mt-1 p-3 bg-slate-50 dark:bg-navy-800/50 border border-slate-200 dark:border-navy-700 rounded-xl">
                     <Switch
                       checked={isTeamAssignment}
@@ -508,22 +550,24 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
               </div>
 
               {/* Anonymous responses toggle (D18-A) */}
-              <div className="p-3 bg-slate-50 dark:bg-navy-800/50 border border-slate-200 dark:border-navy-700 rounded-xl">
-                <Switch
-                  checked={isAnonymous}
-                  onCheckedChange={setIsAnonymous}
-                  aria-label={t('interview.assignModal.anonymousResponses')}
-                  label={
-                    <span className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-                      <EyeOff size={16} className="text-slate-500 dark:text-slate-400" />
-                      {t('interview.assignModal.anonymousResponses')}
-                    </span>
-                  }
-                />
-                <p className="mt-1.5 pl-7 text-xs text-slate-500 dark:text-slate-400">
-                  {t('interview.assignModal.theManagerWillOnlyEver')}
-                </p>
-              </div>
+              {!reassignAssignment && (
+                <div className="p-3 bg-slate-50 dark:bg-navy-800/50 border border-slate-200 dark:border-navy-700 rounded-xl">
+                  <Switch
+                    checked={isAnonymous}
+                    onCheckedChange={setIsAnonymous}
+                    aria-label={t('interview.assignModal.anonymousResponses')}
+                    label={
+                      <span className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                        <EyeOff size={16} className="text-slate-500 dark:text-slate-400" />
+                        {t('interview.assignModal.anonymousResponses')}
+                      </span>
+                    }
+                  />
+                  <p className="mt-1.5 pl-7 text-xs text-slate-500 dark:text-slate-400">
+                    {t('interview.assignModal.theManagerWillOnlyEver')}
+                  </p>
+                </div>
+              )}
 
               {/* Scope Warning */}
               {assignmentScope.type === 'projects' && (
@@ -552,7 +596,9 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
           >
             {isSubmitting
               ? t('interview.assignModal.assigning')
-              : t('interview.assignModal.assign')}
+              : reassignAssignment
+                ? t('interview.hub.reassign')
+                : t('interview.assignModal.assign')}
           </Button>
         </div>
       </div>

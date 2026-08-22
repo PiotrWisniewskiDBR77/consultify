@@ -663,6 +663,9 @@ export const InterviewHub: React.FC = () => {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [selectedTemplateForAssign, setSelectedTemplateForAssign] =
     useState<InterviewTemplate | null>(null);
+  const [assignmentForReassign, setAssignmentForReassign] = useState<InterviewAssignment | null>(
+    null
+  );
   const [insightTypeFilter, setInsightTypeFilter] = useState<string>('all');
   const [insightStatusFilter, setInsightStatusFilter] = useState<string>('all');
   // Lifecycle scope (active vs archived) — Menu 3 chip toggles this; drives server query.
@@ -2989,6 +2992,7 @@ export const InterviewHub: React.FC = () => {
     (assignment: InterviewAssignment) => {
       const tpl = templates.find((t) => t.id === assignment.templateId) ?? null;
       setSelectedTemplateForAssign(tpl);
+      setAssignmentForReassign(assignment);
       setShowAssignModal(true);
     },
     [templates]
@@ -5653,6 +5657,7 @@ export const InterviewHub: React.FC = () => {
                 icon: UserPlus,
                 onClick: () => {
                   setSelectedTemplateForAssign(template);
+                  setAssignmentForReassign(null);
                   setShowAssignModal(true);
                 },
               },
@@ -6556,6 +6561,14 @@ Return ONLY the answer text (no markdown fences).`;
                 id: 'reassign',
                 label: t('interview.hub.reassign'),
                 icon: UserPlus,
+                disabled: assignment.status !== 'assigned',
+                description:
+                  assignment.status !== 'assigned'
+                    ? t(
+                        'interview.hub.reassignOnlyBeforeStart',
+                        'Reassignment is available only before the interview starts.'
+                      )
+                    : undefined,
                 onClick: () => handleReassignAssignment(assignment),
               },
             ]
@@ -9463,6 +9476,7 @@ Return ONLY the answer text (no markdown fences).`;
         <button
           onClick={() => {
             setSelectedTemplateForAssign(null);
+            setAssignmentForReassign(null);
             setShowAssignModal(true);
           }}
           className="inline-flex h-9 items-center gap-2 rounded-lg bg-navy-900 px-4 text-sm font-medium text-white transition-colors hover:bg-navy-800 dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
@@ -9605,6 +9619,7 @@ Return ONLY the answer text (no markdown fences).`;
         onClose={() => {
           setShowAssignModal(false);
           setSelectedTemplateForAssign(null);
+          setAssignmentForReassign(null);
         }}
         onSuccess={async () => {
           // Refresh assignments after successful creation
@@ -9618,11 +9633,13 @@ Return ONLY the answer text (no markdown fences).`;
             setManagedAssignments(Array.isArray(managedRes) ? managedRes : []);
             setOverdueAssignments(Array.isArray(overdueRes) ? overdueRes : []);
             setSelectedTemplateForAssign(null);
+            setAssignmentForReassign(null);
           } catch (error) {
             console.error('[InterviewHub] Failed to refresh assignments:', error);
           }
         }}
         preselectedTemplateId={selectedTemplateForAssign?.id}
+        reassignAssignment={assignmentForReassign}
       />
 
       {/* Reminder Modal */}
