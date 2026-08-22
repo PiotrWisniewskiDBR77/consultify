@@ -2,7 +2,7 @@
 
 ID: `CHAT`
 Routes: `/chat`
-Current gate: `TECHNICAL_BROWSER_AND_RECEIPT_PASS / OWNER_PENDING`
+Current gate: `OWNER_VISUAL_NAVIGATION_REVIEW_COMPLETE / REMEDIATION_REQUIRED / OWNER_VERDICT_PENDING`
 Owner: Piotr Wisniewski
 Integrator: Codex
 Mobile: `DEFERRED_NON_GATING`
@@ -24,13 +24,13 @@ stale/replayed approval, foreign tenant and no false citation or success.
 | G04 | Reproducible realistic and boundary fixtures | `PASS_OWNER_FIXTURE_RETAINED` | Guarded `scripts/dev/seed-wave3-chat-owner-review.mjs` created a fresh `817`-migration retained database. Stable owner/member/revoked/foreign identities, a UUID-valid sourced conversation and two server-extracted citations produced one pending proposal through the canonical DB-backed service with no LLM/provider call. The exclusive `0600` manifest is `FINAL`, carries a lowercase nonce and is bound to the matching durable `public.wave3_owner_fixture_markers` row; runtime adoption independently verified the tuple. The seed manifest records the pre-review pending/zero-receipt baseline; the retained database now truthfully contains the later technical OWNER decision and one receipt described in G05. Fixture manifest emits no password/database credential. |
 | G05 | Functional preflight and cold readback | `PASS_TECHNICAL / OWNER_PENDING` | Prior focused replay: `8/8` files, `139/139 PASS`; fresh RealPG/mounted lane `6/6` files, `39/39 PASS`; store regression `9/9 PASS`. Real OWNER login opened the exact sourced conversation and two-reference proposal. OWNER `Approve` followed by `Create document` produced one successful materialization receipt; new-tab cold reopen retained `Document created`. DB readback: proposal `34540062-cf51-4d0e-a15b-a04c17844df0` is `materialized`, decided by the fixture OWNER, with one succeeded mapping receipt (`attempt_count=1`, no error, target version `1`). Live-provider reliability, MEMBER decision policy and owner judgment remain open. |
 | G06 | Desktop/tablet, PL/EN, themes, states, a11y, console/HTTP | `PARTIAL_BROWSER_PASS` | Exact authenticated desktop/dark evidence captured the source URL, two preserved references, pinned hash prefix/version, pending actions, materialized status and cold reopen on `/chat/13000000-0000-4000-8000-000000000001`. No frontend defect was observed in this deterministic provider-free journey. PL/light, rejection/error states, tablet, full a11y and complete console/HTTP replay remain pending; mobile is non-gating. |
-| G07 | Piotr review card | `READY_FOR_GUIDED_REPLAY` | Shared operator card: `../../GUIDED_OWNER_REPLAY.md`, row 1. Owner decisions remain pending. |
-| G08 | First-impression review | `NOT_STARTED` | — |
-| G09 | Guided CX journey review | `NOT_STARTED` | — |
-| G10 | Alternate-state owner review | `NOT_STARTED` | — |
-| G11 | Every owner observation/screenshot durably registered | `NOT_STARTED` | — |
-| G12 | Owner register reconciled and confirmed | `NOT_STARTED` | — |
-| G13 | Solution and impact analysis | `NOT_STARTED` | — |
+| G07 | Piotr review card | `REVIEW_EXECUTED` | Guided review executed on `2026-08-22` at exact SHA `75bed3bb648577e5ac10fec98868893b768c4f92`; detailed record: `OWNER_REVIEW_2026-08-22.md`. Formal owner verdict remains pending. |
+| G08 | First-impression review | `PASS_WITH_FINDINGS` | Piotr judged Chat understandable, readable and generally very strong; the accepted direction is preserved by the remediation contract. |
+| G09 | Guided CX journey review | `PASS_WITH_FINDINGS` | Piotr completed `Approve -> Create document -> Document created`; visual/navigation findings and integration gaps are registered as `CHAT-OWN-001`–`017`. |
+| G10 | Alternate-state owner review | `PARTIAL` | Provider-off failure was observed honestly. Rejection, permission, stale/conflict, live-provider, Canvas and voice states remain integrator/retest obligations. |
+| G11 | Every owner observation/screenshot durably registered | `PASS_INTAKE` | `25/25` screenshots copied and SHA-256 indexed under `evidence/owner-review-2026-08-22/`; all observations mapped in `OWNER_REVIEW_2026-08-22.md`. |
+| G12 | Owner register reconciled and confirmed | `READY_FOR_OWNER_CONFIRMATION` | Detailed correction tasks and owner-positive constraints are reconciled; Piotr has not yet confirmed the written report or issued a formal verdict. |
+| G13 | Solution and impact analysis | `DRAFT_COMPLETE` | Seventeen prioritized tasks with acceptance criteria separate UI remediation from integrator-owned Canvas/API/provider/RBAC/voice qualification. |
 | G14 | Remediation with finding-to-commit traceability | `NOT_STARTED` | — |
 | G15 | Integrator self-QA and impacted regression | `NOT_STARTED` | — |
 | G16 | Before/after owner retest packet | `NOT_STARTED` | — |
@@ -59,7 +59,7 @@ stale/replayed approval, foreign tenant and no false citation or success.
 
 | Finding ID | Captured | Piotr original wording | Category | Route/screen | Current behavior | Expected experience | Impact | Screenshot/hash | Product SHA | Severity | Decision/status | Fix commit | Self-QA | Owner retest |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| _none_ | | | | | | | | | | | | | | |
+| `CHAT-OWN-001`–`CHAT-OWN-017` | `2026-08-22` | Preserved as exact excerpts in the detailed report | UX / visual / integration / IA | Chat, Canvas, start state, history, global Teresa | See detailed report | See atomic acceptance criteria | `P0`–`P2` | `CHAT-EVD-001`–`025` | `75bed3bb648577e5ac10fec98868893b768c4f92` | mixed | `CAPTURED / REMEDIATION_REQUIRED / OWNER_VERDICT_PENDING` | — | — | — |
 
 ## Implementation/regression ledger
 
@@ -71,8 +71,8 @@ stale/replayed approval, foreign tenant and no false citation or success.
 
 ## Owner verdict
 
-Decision: `PENDING`
+Decision: `OWNER_VISUAL_NAVIGATION_REVIEW_COMPLETE / REMEDIATION_REQUIRED / FORMAL_VERDICT_PENDING`
 Accepted SHA: —
 Date: —
 Accepted-out/deferred: —
-Evidence manifest: —
+Evidence manifest: `OWNER_REVIEW_2026-08-22.md`; `evidence/owner-review-2026-08-22/EVIDENCE_INDEX.md`
