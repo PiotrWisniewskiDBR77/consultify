@@ -9,10 +9,8 @@ import {
   Compass,
   FileCheck2,
   FileStack,
-  Flag,
   Goal,
   Lightbulb,
-  ListChecks,
   Network,
   Route,
   Scale,
@@ -141,12 +139,7 @@ export const ORGANIZATION_MODULES: DomainNavigationModule<
   {
     id: 'readiness',
     label: 'Gotowość i nadzór',
-    children: [
-      { id: 'summary', label: 'Podsumowanie', icon: CheckCircle2 },
-      { id: 'gaps-freshness', label: 'Braki i aktualność', icon: ListChecks },
-      { id: 'decisions-conflicts', label: 'Decyzje i konflikty', icon: Flag },
-      { id: 'versions-publication', label: 'Wersje i publikacja', icon: FileCheck2 },
-    ],
+    children: [{ id: 'summary', label: 'Gotowość organizacji', icon: CheckCircle2 }],
   },
 ];
 
@@ -180,7 +173,7 @@ const ORGANIZATION_SCREEN_EN: Record<OrganizationScreen, string> = {
   'claims-sources': 'Claims & Sources',
   'source-conflicts': 'Source Conflicts',
   'knowledge-graph': 'Knowledge Graph',
-  summary: 'Summary',
+  summary: 'Organization Readiness',
   'gaps-freshness': 'Gaps & Freshness',
   'decisions-conflicts': 'Decisions & Conflicts',
   'versions-publication': 'Versions & Publication',

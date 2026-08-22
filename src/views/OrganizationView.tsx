@@ -80,6 +80,7 @@ function resolveOrganizationLocation(pathname: string): OrganizationLocation {
     .filter(Boolean);
   if (!segments.length) return LEGACY_LOCATIONS.profile;
   if (segments.length === 1 && LEGACY_LOCATIONS[segments[0]]) return LEGACY_LOCATIONS[segments[0]];
+  if (segments[0] === 'readiness') return { module: 'readiness', screen: 'summary' };
   const [module, screen] = segments as [OrganizationModule, OrganizationScreen];
   const match = ORGANIZATION_MODULES.find((item) => item.id === module);
   if (match?.children.some((child) => child.id === screen)) return { module, screen };
