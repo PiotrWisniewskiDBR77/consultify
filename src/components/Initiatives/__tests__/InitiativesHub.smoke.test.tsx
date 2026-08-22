@@ -200,6 +200,31 @@ describe('InitiativesHub smoke', () => {
     });
   });
 
+  it('keeps a historical initiative visible when its source envelope is absent', async () => {
+    listRegisteredInitiatives.mockResolvedValue({
+      initiatives: [
+        {
+          version: 1,
+          updatedAt: '2026-08-22T00:00:00.000Z',
+          initiative: {
+            initiativeId: 'legacy-init-1',
+            lifecycleState: 'IN_EXECUTION',
+            title: 'Historical Initiative',
+            problem: 'Created before source lineage was required',
+            projectId: 'proj-1',
+            readiness: 'NOT_EVALUATED',
+          },
+        },
+      ],
+    });
+
+    renderHub();
+
+    await waitFor(() => {
+      expect(screen.getByText('Historical Initiative')).toBeInTheDocument();
+    });
+  });
+
   it('exposes the canonical "New Initiative" CTA and opens the wizard in default table view', async () => {
     renderHub();
     await waitFor(() => expect(screen.getByTestId('initiatives-hub')).toBeInTheDocument());

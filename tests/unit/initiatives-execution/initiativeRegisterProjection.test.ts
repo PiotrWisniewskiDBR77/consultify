@@ -70,6 +70,22 @@ describe('canonical Initiative register projection', () => {
     expect(row.nextAction).toBe('Monitoruj realizację');
   });
 
+  it('keeps legacy source-envelope gaps visible without dropping the register row', () => {
+    const withoutFreshness = projectCanonicalInitiativeRegisterRow(
+      record({ source: { sourceType: 'legacy', sourceId: 'legacy-1' } }) as any
+    );
+    const withoutSource = toCanonicalInitiativeRegisterItem(record({ source: undefined }) as any);
+
+    expect(withoutFreshness.sourceFreshness).toBe('UNKNOWN');
+    expect(withoutSource).toMatchObject({
+      id: 'initiative-1',
+      name: 'Digital Performance Management',
+      sourceFreshness: 'UNKNOWN',
+      sourceType: 'UNKNOWN',
+    });
+    expect(withoutSource.sourceId).toBeUndefined();
+  });
+
   it('renders a recognizable owner label instead of exposing a raw principal identifier', () => {
     const currentOwner = toCanonicalInitiativeRegisterItem(
       record({ initiativeOwnerId: 'd2b6a316-08c5-47cf-9bf7-4ba50311d5a2' }) as any,

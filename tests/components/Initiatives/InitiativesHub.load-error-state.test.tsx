@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockGetPortfolio = vi.fn();
 const mockGetInitiatives = vi.fn();
+const mockListRegisteredInitiatives = vi.fn();
 
 
 vi.mock('../../../src/store/useAppStore', () => ({
@@ -41,6 +42,10 @@ vi.mock('../../../src/services/api/v8/planning', () => ({
   },
 }));
 
+vi.mock('../../../src/services/initiatives-execution/runtimeApi', () => ({
+  listRegisteredInitiatives: (...args: unknown[]) => mockListRegisteredInitiatives(...args),
+}));
+
 vi.mock('../../../src/services/initiativeLifecycle', () => ({
   getStatusesForModule: () => [],
   STATUS_METADATA: {},
@@ -70,10 +75,21 @@ vi.mock('../../../src/utils/pilotAccess', () => ({
 vi.mock('../../../src/components/shared/ModuleHub', () => ({
   ModuleHub: ({ children }: any) => <div>{children}</div>,
   HubWorkAreaLoading: () => <div>loading</div>,
-  HubWorkAreaLoadError: ({ error, onDismiss }: any) => (
-    <div role="alert" data-error-code={error?.code}>
-      {error?.code}
-      <button onClick={onDismiss}>Dismiss</button>
+  HubWorkAreaLoadError: ({
+    title,
+    message,
+    errorCode,
+    retryLabel,
+    dismissLabel,
+    onRetry,
+    onDismiss,
+  }: any) => (
+    <div role="alert" data-error-code={errorCode}>
+      <div>{title}</div>
+      <div>{message}</div>
+      {errorCode ? <div>code: {errorCode}</div> : null}
+      <button className="h-9" onClick={onRetry}>{retryLabel}</button>
+      <button className="h-9" onClick={onDismiss}>{dismissLabel}</button>
     </div>
   ),
 }));
@@ -130,6 +146,11 @@ import { InitiativesHub } from '../../../src/components/Initiatives/InitiativesH
 describe('InitiativesHub load error quality', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockListRegisteredInitiatives.mockRejectedValue({
+      status: 500,
+      message: 'canonical runtime failed',
+      data: { error: 'Forbidden', code: 'INITIATIVE_NOT_FOUND' },
+    });
   });
 
   it('shows error code on load failure and clears on dismiss', async () => {

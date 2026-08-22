@@ -123,6 +123,7 @@ import {
   InitiativePreviewV3Footer,
   type InitiativePreviewV3Model,
 } from './InitiativePreviewV3';
+import { initiativeLoadErrorCode, isInitiativesNetworkError } from './initiativeLoadError';
 import {
   INITIATIVE_LIFECYCLE_LABELS,
   INITIATIVE_LIFECYCLE_PRESETS,
@@ -374,6 +375,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     });
   }, [currentUser]);
 
+  // Keep the canonical register fetch stable even when the app store selector
+  // returns an equivalent user object with a new reference after a rerender.
+  const currentUserId = (currentUser as any)?.id;
+  const currentUserDisplayName =
+    (currentUser as any)?.displayName ||
+    [(currentUser as any)?.firstName, (currentUser as any)?.lastName].filter(Boolean).join(' ') ||
+    null;
+
   const mergeShowcaseInitiatives = useCallback((items: PortfolioInitiative[]) => {
     return items;
   }, []);
@@ -453,16 +462,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         if (searchQuery) params.append('search', searchQuery);
 
         const canonical = await listRegisteredInitiatives();
-        const currentUserName =
-          (currentUser as any)?.displayName ||
-          [(currentUser as any)?.firstName, (currentUser as any)?.lastName]
-            .filter(Boolean)
-            .join(' ') ||
-          null;
         const canonicalRows: PortfolioInitiative[] = canonical.initiatives.map((record) =>
           toCanonicalInitiativeRegisterItem(record, {
-            id: (currentUser as any)?.id,
-            displayName: currentUserName,
+            id: currentUserId,
+            displayName: currentUserDisplayName,
           })
         );
         const response: { initiatives: PortfolioInitiative[] } = {
@@ -510,10 +513,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         setAllInitiatives(canonicalRows);
       } catch (error: any) {
         console.error('[InitiativesHub] Fetch error:', error);
-        const isNetworkError =
-          !error?.status ||
-          error?.message?.includes('Failed to fetch') ||
-          error?.message?.includes('NetworkError');
+        const isNetworkError = isInitiativesNetworkError(error);
         if (isNetworkError && fetchRetryRef.current < 3) {
           fetchRetryRef.current++;
           const delay = Math.min(2000 * Math.pow(2, fetchRetryRef.current - 1), 8000);
@@ -531,11 +531,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             'Failed to load initiatives from the active data source.'
           )
         );
-        const code =
-          typeof error?.data?.code === 'string' && error.data.code.trim()
-            ? error.data.code.trim()
-            : null;
-        setLoadErrorCode(code);
+        setLoadErrorCode(initiativeLoadErrorCode(error));
       } finally {
         setIsLoading(false);
         setIsRefreshing(false);
@@ -543,13 +539,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     },
     [
       currentProjectId,
-      allowDemoData,
       activeStatusFilter,
       activeLifecyclePreset,
-      currentUser,
+      currentUserDisplayName,
+      currentUserId,
       filters.priority,
-      initiativesDemoData,
-      mergeShowcaseInitiatives,
       searchQuery,
       scope,
       t,

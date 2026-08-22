@@ -286,7 +286,12 @@ export interface RegisteredInitiativeReadModel {
     projectId: string;
     initiativeOwnerId?: string;
     readiness: 'NOT_EVALUATED';
-    source: {
+    /**
+     * Older registered rows may predate the canonical source envelope. The
+     * server should emit it for new writes, but reads must represent the
+     * historical absence honestly instead of claiming the payload is complete.
+     */
+    source?: {
       proposalId: string;
       proposalVersion: number;
       sourceType: string;
@@ -294,7 +299,7 @@ export interface RegisteredInitiativeReadModel {
       sourceVersion: number;
       freshness?: 'CURRENT' | 'STALE' | 'SOURCE_UNAVAILABLE';
       refreshedAt?: string;
-    };
+    } | null;
     gateState?: string;
     gateReadiness?: string;
     definitionDecisionId?: string;

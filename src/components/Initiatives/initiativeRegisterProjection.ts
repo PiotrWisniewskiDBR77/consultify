@@ -106,7 +106,9 @@ export const projectCanonicalInitiativeRegisterRow = (record: RegisteredInitiati
     impactConfidence: 'UNKNOWN',
     plannedWindow: null,
     healthState: lifecycle === 'IN_EXECUTION' ? 'UNKNOWN' : 'N/A',
-    sourceFreshness: record.initiative.source.freshness || 'UNKNOWN',
+    // Historical registrations may not carry the later source envelope at all.
+    // Keep that absence visible; never let one legacy row erase the full table.
+    sourceFreshness: record.initiative.source?.freshness || 'UNKNOWN',
     updatedAt: record.updatedAt,
   } as const;
 };
@@ -153,8 +155,8 @@ export const toCanonicalInitiativeRegisterItem = (
     progress: undefined as unknown as number,
     budget: undefined as unknown as number,
     projectId: initiative.projectId,
-    sourceId: initiative.source.sourceId,
-    sourceType: initiative.source.sourceType,
+    sourceId: initiative.source?.sourceId,
+    sourceType: initiative.source?.sourceType || 'UNKNOWN',
     ownerBusiness: ownerId
       ? {
           id: ownerId,
