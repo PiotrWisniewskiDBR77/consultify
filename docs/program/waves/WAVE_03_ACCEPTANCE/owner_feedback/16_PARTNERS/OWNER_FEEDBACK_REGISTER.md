@@ -101,7 +101,7 @@ Intake status: `IMPLEMENTED_FOR_OWNER_REVIEW / COMMERCIAL_GATES_FAIL_CLOSED`
 - Requirements: `PAR-REQ-001` through `PAR-REQ-010`
 - Acceptance criteria: `PAR-AC-001` through `PAR-AC-012`
 - Open questions: `PAR-Q-001` through `PAR-Q-005`
-- Implementation candidate: `6cfdf6f1e5`
+- Implementation candidate: `864c4a9da9` (content base: `6cfdf6f1e5`)
 - Content matrix:
   [`PAR_OWN_001_CONTENT_MATRIX.md`](PAR_OWN_001_CONTENT_MATRIX.md)
 - Implemented result:
@@ -109,11 +109,14 @@ Intake status: `IMPLEMENTED_FOR_OWNER_REVIEW / COMMERCIAL_GATES_FAIL_CLOSED`
   - concrete `Qualify → Align → Enable → Pursuit → Pilot → Expand` journey with
     owner, output and proof to continue;
   - state-aware application/onboarding/workspace action with fail-closed retry;
+  - corrected authenticated zero-step semantics (`Start onboarding` reaches the
+    protected onboarding route rather than implying a new public application);
+  - bilingual typed program corpus and complete roving-tab keyboard behavior;
   - fictional testimonials removed and no substitute proof invented;
   - draft tier, commission, payout, SLA, calculator and named-contact claims
     suppressed under `AMD-PRT-ECONOMICS-002` and the open owner decisions;
   - legacy public pricing deep-link canonicalized to the safe program overview.
-- Status: `IMPLEMENTED_PENDING_EXACT_RUNTIME_AND_OWNER_REVIEW`
+- Status: `IMPLEMENTED_EXACT_RUNTIME_TECHNICAL_PASS / OWNER_REVIEW_REQUIRED`
 
 ## Atomic requirements
 
@@ -132,7 +135,7 @@ Intake status: `IMPLEMENTED_FOR_OWNER_REVIEW / COMMERCIAL_GATES_FAIL_CLOSED`
 
 ## Acceptance criteria
 
-Technical results below apply to UI candidate `6cfdf6f1e5`; they do not imply
+Technical results below apply to UI candidate `864c4a9da9`; they do not imply
 owner acceptance or approval of the still-suppressed commercial schedule.
 
 | ID | Acceptance criterion | Required evidence | Status |
@@ -145,7 +148,7 @@ owner acceptance or approval of the still-suppressed commercial schedule.
 | `PAR-AC-006` | Tier, commission, payout, SLA and eligibility values are identical across all partner surfaces and linked to an explicit owner-approved decision. | Cross-surface comparison and decision ID | `SAFE_SUPPRESSION / OWNER_DECISION_OPEN` |
 | `PAR-AC-007` | No fictional company, logo, quotation or result is presented as real customer evidence. | Content search plus rendered-page review | `PASS_TECHNICAL` |
 | `PAR-AC-008` | Any real testimonial includes evidence owner, consent/publication authority and source artifact. | Testimonial evidence register | `N/A_NO_REAL_TESTIMONIAL_PUBLISHED` |
-| `PAR-AC-009` | Acquisition, applicant/onboarding and established-partner states each expose one primary CTA that reaches the intended destination. | State fixtures and destination replay | `PASS_SOURCE_AND_UNIT / OWNER_RUNTIME_FIXTURE_PENDING` |
+| `PAR-AC-009` | Acquisition, applicant/onboarding and established-partner states each expose one primary CTA that reaches the intended destination. | State fixtures and destination replay | `PASS_CONTROLLED_EXACT_RUNTIME / PERSISTED_DB_READBACK_NOT_CLAIMED` |
 | `PAR-AC-010` | Internal GTM, anti-ICP and confidential commercial language is absent from public UI unless explicitly approved. | Source classification review | `PASS_TECHNICAL` |
 | `PAR-AC-011` | FAQ answers cover client ownership, delivery responsibility, data, IP, branding, support, commercial terms and joining process without contradicting the contract SSOT. | FAQ review against approved decisions | `PASS_TECHNICAL` |
 | `PAR-AC-012` | Piotr reviews the completed exact-SHA surface and provides an explicit outcome. | Owner result linked to exact SHA/runtime | `NOT_TESTED / OWNER_GATE_REQUIRED` |

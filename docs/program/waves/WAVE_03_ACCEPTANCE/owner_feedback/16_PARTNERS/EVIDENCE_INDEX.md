@@ -12,22 +12,30 @@ these artifacts constitutes commercial approval or owner acceptance.
 
 ## PAR-EVD-002 — implementation evidence
 
-- UI candidate: `6cfdf6f1e5`
+- UI candidate: `864c4a9da9` (content base: `6cfdf6f1e5`)
 - Claim matrix:
   [`PAR_OWN_001_CONTENT_MATRIX.md`](PAR_OWN_001_CONTENT_MATRIX.md)
-- Focused source replay: `30/30 PASS`
+- Partner regression replay: `127/127 PASS` across `30/30` test files
 - Typecheck: `PASS`
 - Browser routes:
   - `/become-partner` — six role paths, five models and first-deal journey;
   - `/partner/pricing` — canonical replace to
     `/become-partner#commercial-framework`;
-  - `/partner?tab=partner-home` — authentication boundary reached without
-    transmitting credentials; state variants remain covered by source fixtures.
+  - `/partner?tab=partner-home` — controlled local authenticated fixture replay
+    covered verified zero-step, partial `3/4`, completed `4/4`, and read-error
+    states. Each rendered exactly one primary CTA: start onboarding, continue
+    onboarding, open workspace, or retry. The fixture was API-controlled and
+    non-persistent; it is not a durable database-readback claim.
 - Responsive replay: `1440×1000`, `1024×768`, `390×844` and effective 200%
   (`720×900`); each had one H1, no horizontal overflow, no fictional proof and
   no prohibited commercial value.
 - Six role tabs: `6/6` selected correctly and exposed role outcome,
   contribution split, recommended models and first practical step.
+- PL/EN replay: public content switched from English to Polish on the exact
+  candidate with no horizontal overflow; the Polish role labels, models,
+  first-deal journey and FAQ were present. Keyboard replay confirmed
+  `ArrowRight` selection/focus transfer and the stable `tab` → `tabpanel`
+  relationship.
 - Scope limitation: no application submission, agreement acceptance, payout,
   external contact or other persistence-changing action was executed.
 - Status: `TECHNICAL_PASS / OWNER_ACCEPTANCE_REQUIRED`.

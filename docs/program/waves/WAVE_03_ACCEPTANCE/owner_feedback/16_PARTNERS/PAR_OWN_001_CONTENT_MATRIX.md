@@ -1,6 +1,6 @@
 # PAR-OWN-001 — canonical claim and publication matrix
 
-UI candidate: `6cfdf6f1e5`
+UI candidate: `864c4a9da9` (content base: `6cfdf6f1e5`)
 
 Status: `IMPLEMENTED_FOR_OWNER_REVIEW / COMMERCIAL_DECISION_OPEN / OWNER_ACCEPTANCE_REQUIRED`
 
@@ -44,7 +44,7 @@ Status: `IMPLEMENTED_FOR_OWNER_REVIEW / COMMERCIAL_DECISION_OPEN / OWNER_ACCEPTA
 | `PAR-CLM-026` | FAQ data, confidentiality, IP and branding boundaries | All | Align | program audit + legal baseline | Legal / Security Owner | `CONTENT_ONLY` | `WRITTEN_TERMS_REQUIRED` | Access is not granted by program membership alone | FAQ | `PUBLISH_QUALITATIVE` |
 | `PAR-CLM-027` | FAQ support, economics and joining boundaries | All | Join | owner register PAR-Q-001–004 | Partner Program Owner | `CONTENT_ONLY` | `AGREEMENT_REQUIRED` | No service, compensation or timing promise | FAQ / application | `PUBLISH_WITH_LIMITATION` |
 
-## Explicitly prohibited on candidate `6cfdf6f1e5`
+## Explicitly prohibited on candidate `864c4a9da9`
 
 - fictional companies, logos, quotations, “partner since” dates and results;
 - commission percentages, payout threshold/day, cooling-off period and response-time SLA;
