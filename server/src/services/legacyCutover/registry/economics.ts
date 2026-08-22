@@ -164,10 +164,10 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'ECO-W10',
       method: 'POST',
       path: /^\/analyses\/[^/]+\/create-initiative\/?$/,
-      state: 'observed',
-      successor: null,
+      state: 'disabled',
+      successor: '/api/finance/candidate-handoff/digitization-analysis/:analysisId/confirm',
       reason:
-        'Creates an initiatives row directly (economics.routes.ts:1935, INSERT at :2004, live path when INITIATIVE_FUNNEL_ENABLED is unset) plus UPDATEs on digitization_analyses and analysis_financials. Bypasses the canonical initiative creation funnel on its default (unset) path — a distinct split-brain risk from the Finance legacy-table bridge this lane covers, flagged here but not in scope to fix. No proven successor for this specific writer.',
+        'The canonical digitization-analysis handoff creates one idempotent Candidate plus a durable Finance lineage receipt; Initiative creation remains a separate governed acceptance decision. The direct Initiative writer and raw fallback are retired fail-closed with writer-scoped rollback.',
     },
     {
       writerId: 'ECO-W11',

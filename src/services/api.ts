@@ -11278,17 +11278,12 @@ export const Api = {
   },
 
   /**
-   * Create initiative from analysis
+   * @deprecated Compatibility name: creates a governed Candidate, never an Initiative.
    */
   createInitiativeFromAnalysis: async (analysisId: string): Promise<any> => {
-    const res = await fetchWithRetry(
-      `${API_URL}/economics/analyses/${analysisId}/create-initiative`,
-      {
-        method: 'POST',
-        headers: getHeaders(),
-      }
-    );
-    return handleResponse(res, 'Failed to create initiative from analysis');
+    const { confirmDigitizationAnalysisCandidateHandoff } =
+      await import('./api/v8/financeCandidateHandoffDigitizationAnalysis');
+    return confirmDigitizationAnalysisCandidateHandoff(analysisId);
   },
 
   /**

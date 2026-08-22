@@ -25,8 +25,8 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
       legacyMutationDoors: 52,
       canonicalMutationDoors: 1,
       nonMutationDoors: 6,
-      retiredLegacyMutationDoors: 28,
-      openLegacyMutationDoors: 24,
+      retiredLegacyMutationDoors: 29,
+      openLegacyMutationDoors: 23,
     });
   });
 
@@ -194,5 +194,16 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
     );
     expect(client).toContain('archiveDigitizationAnalysis');
     expect(client).toContain('/finance/digitization-analyses/${analysisId}/archive');
+  });
+
+  it('routes digitization analysis promotion through Candidate instead of direct Initiative creation', () => {
+    const writer = ECONOMICS_CUTOVER.writers.find((rule) => rule.writerId === 'ECO-W10');
+    expect(writer).toMatchObject({
+      state: 'disabled',
+      successor: '/api/finance/candidate-handoff/digitization-analysis/:analysisId/confirm',
+    });
+    const client = fs.readFileSync(path.resolve(process.cwd(), 'src/services/api.ts'), 'utf8');
+    expect(client).toContain('confirmDigitizationAnalysisCandidateHandoff');
+    expect(client).not.toContain('`${API_URL}/economics/analyses/${analysisId}/create-initiative`');
   });
 });

@@ -59,6 +59,7 @@ export type DiscoverySourceType =
   | 'assessment'
   | 'audit'
   | 'finance_investment_case'
+  | 'finance_digitization_analysis'
   | 'finance_statement_pack'
   | 'finance_valuation_recommendation';
 

@@ -1,10 +1,11 @@
-import type { NextFunction, Response } from 'express';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
-import * as DbPromise from '../../utils/DbPromise.js';
+import type { NextFunction, Response } from 'express';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { requireActiveMembership } from '../../services/legacyCutover/requireActiveMembership.js';
+import * as DbPromise from '../../utils/DbPromise.js';
 
 vi.mock('../../utils/DbPromise.js', async () => {
   const actual = await vi.importActual<typeof import('../../utils/DbPromise.js')>(
@@ -13,8 +14,8 @@ vi.mock('../../utils/DbPromise.js', async () => {
   return { ...actual, get: vi.fn() };
 });
 
-// Gate A / WP-A04 follow-up: the three FIN-06 candidate-handoff mounts
-// (investment-case, statement-pack, valuation-recommendation) were mounted
+// Gate A / WP-A04 follow-up: the FIN-06 candidate-handoff mounts
+// (investment-case, digitization-analysis, statement-pack, valuation-recommendation) were mounted
 // in Gateway.ts without gatewayVerifyToken, unlike every sibling finance
 // mount (e.g. /api/financial-modeling). Each router's requireUser() throws
 // on a missing req.user, so this was "broken for everyone" rather than an
@@ -28,6 +29,7 @@ describe('finance candidate-handoff mounts require gatewayVerifyToken', () => {
 
   const mounts = [
     "'/api/finance/candidate-handoff/investment-case'",
+    "'/api/finance/candidate-handoff/digitization-analysis'",
     "'/api/finance/candidate-handoff/statement-pack'",
     "'/api/finance/candidate-handoff/valuation-recommendation'",
   ];

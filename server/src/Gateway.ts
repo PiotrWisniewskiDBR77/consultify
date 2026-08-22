@@ -130,6 +130,7 @@ import feedbackRoutes from './routes/feedback.routes.js';
 import finalBatchRoutes from './routes/final-batch.routes.js';
 import financeEnterpriseRoutes from './routes/finance-enterprise.routes.js';
 import financeStatementsRoutes from './routes/finance-statements.routes.js';
+import financeCandidateHandoffDigitizationAnalysisRoutes from './routes/financeCandidateHandoffDigitizationAnalysis.routes.js';
 import financeCandidateHandoffInvestmentCaseRoutes from './routes/financeCandidateHandoffInvestmentCase.routes.js';
 import financeCandidateHandoffStatementPackRoutes from './routes/financeCandidateHandoffStatementPack.routes.js';
 import financeCandidateHandoffValuationRecommendationRoutes from './routes/financeCandidateHandoffValuationRecommendation.routes.js';
@@ -1395,6 +1396,12 @@ export class ApiGateway {
         gatewayVerifyToken,
         tenantStrictMembership,
         financeCandidateHandoffInvestmentCaseRoutes
+      );
+      app.use(
+        '/api/finance/candidate-handoff/digitization-analysis',
+        gatewayVerifyToken,
+        tenantStrictMembership,
+        financeCandidateHandoffDigitizationAnalysisRoutes
       );
       app.use(
         '/api/finance/candidate-handoff/statement-pack',

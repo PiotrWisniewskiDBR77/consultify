@@ -1812,6 +1812,56 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
     }
   });
 
+  it('retires direct digitization-analysis to Initiative creation (ECO-W10)', async () => {
+    const before = await pool.query<{ n: number }>(
+      `SELECT count(*)::int n FROM initiatives WHERE organization_id=$1`,
+      [orgA]
+    );
+    const response = await request(app)
+      .post(`/api/economics/analyses/${prefix}-direct-initiative/create-initiative`)
+      .set('x-request-id', `${prefix}-direct-initiative-blocked`)
+      .send({});
+    expect(response.status).toBe(410);
+    expect(response.body).toMatchObject({
+      code: 'FINANCE_LEGACY_WRITER_DISABLED',
+      writerId: 'ECO-W10',
+      successor: '/api/finance/candidate-handoff/digitization-analysis/:analysisId/confirm',
+    });
+    const after = await pool.query<{ n: number }>(
+      `SELECT count(*)::int n FROM initiatives WHERE organization_id=$1`,
+      [orgA]
+    );
+    expect(after.rows).toEqual(before.rows);
+  });
+
+  it('restores only ECO-W10 through its exact writer-scoped rollback lever', async () => {
+    const previous = process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+    process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = 'ECO-W10';
+    try {
+      const response = await request(app)
+        .post(`/api/economics/analyses/${prefix}-missing/create-initiative`)
+        .set('x-request-id', `${prefix}-direct-initiative-rollback`)
+        .send({});
+      expect(response.status).toBe(404);
+      const event = await pool.query(
+        `SELECT writer_id,access_kind,successor_path FROM legacy_cutover_usage_events
+         WHERE organization_id=$1 AND request_id=$2`,
+        [orgA, `${prefix}-direct-initiative-rollback`]
+      );
+      expect(event.rows).toEqual([
+        {
+          writer_id: 'ECO-W10',
+          access_kind: 'rollback_writer',
+          successor_path:
+            '/api/finance/candidate-handoff/digitization-analysis/:analysisId/confirm',
+        },
+      ]);
+    } finally {
+      if (previous === undefined) delete process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+      else process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = previous;
+    }
+  });
+
   it('restores only ECO-W12 through the exact writer-scoped rollback lever', async () => {
     const previous = process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
     const analysisId = `${prefix}-delete-rollback`;
