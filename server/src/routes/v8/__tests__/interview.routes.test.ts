@@ -204,6 +204,7 @@ vi.mock('../../../middleware/auth.middleware.js', () => ({
   },
   requireRole: () => (_req: unknown, _res: unknown, next: () => void) => next(),
   requireOrganization: (_req: unknown, _res: unknown, next: () => void) => next(),
+  validateOrgMembership: (_req: unknown, _res: unknown, next: () => void) => next(),
   isAuthenticated: (_req: unknown, _res: unknown, next: () => void) => next(),
 }));
 

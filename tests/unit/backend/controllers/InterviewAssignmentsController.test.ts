@@ -844,7 +844,11 @@ describe('InterviewController assignments', () => {
     'updateQuestion: rejects edits when session is %s',
     async (sessionStatus) => {
       mockReq.params.questionId = 'q1';
-      mockReq.body = { answerText: 'test', status: 'answered' };
+      mockReq.body = {
+        answerText: 'test',
+        status: 'answered',
+        expectedUpdatedAt: '2026-08-22T20:00:00.000Z',
+      };
 
       mockQueryOne.mockResolvedValueOnce({
         session_id: 's1',
