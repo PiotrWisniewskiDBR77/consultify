@@ -110,6 +110,7 @@ const CASE_ID = '11111111-1111-4111-8111-111111111111';
 const BENEFIT_LINE_ID = '33333333-3333-4333-8333-333333333333';
 const LINK_ID = '22222222-2222-4222-8222-222222222222';
 const RECONCILIATION_ID = '44444444-4444-4444-8444-444444444444';
+const RESULTS_ACTUAL_SNAPSHOT_ID = '55555555-5555-4555-8555-555555555555';
 
 function caseFixture(overrides: Record<string, unknown> = {}) {
   return {
@@ -364,11 +365,25 @@ describe('POST .../finance-reconciliations', () => {
     });
     const response = await request(createApp())
       .post(`/api/vnext/results/roi/cases/${CASE_ID}/finance-reconciliations`)
-      .send({ financeLinkId: LINK_ID, roiValue: 1000, financeValue: 900, divergenceReason: 'Timing difference' });
+      .send({
+        financeLinkId: LINK_ID,
+        resultsActualSnapshotId: RESULTS_ACTUAL_SNAPSHOT_ID,
+        resultsActualMetric: 'npv',
+        roiValue: 1000,
+        financeValue: 900,
+        divergenceReason: 'Timing difference',
+      });
     expect(response.status).toBe(201);
     expect(response.body.financeReconciliation.status).toBe('open');
     expect(mockOpenRoiFinanceReconciliation).toHaveBeenCalledWith(
-      expect.objectContaining({ caseId: CASE_ID, financeLinkId: LINK_ID, roiValue: 1000, financeValue: 900 })
+      expect.objectContaining({
+        caseId: CASE_ID,
+        financeLinkId: LINK_ID,
+        resultsActualSnapshotId: RESULTS_ACTUAL_SNAPSHOT_ID,
+        resultsActualMetric: 'npv',
+        roiValue: 1000,
+        financeValue: 900,
+      })
     );
   });
 
@@ -377,7 +392,13 @@ describe('POST .../finance-reconciliations', () => {
     mockOpenRoiFinanceReconciliation.mockRejectedValue(new RoiFinanceLinkNotFoundError(LINK_ID, CASE_ID));
     const response = await request(createApp())
       .post(`/api/vnext/results/roi/cases/${CASE_ID}/finance-reconciliations`)
-      .send({ financeLinkId: LINK_ID, roiValue: 1000, financeValue: 900 });
+      .send({
+        financeLinkId: LINK_ID,
+        resultsActualSnapshotId: RESULTS_ACTUAL_SNAPSHOT_ID,
+        resultsActualMetric: 'npv',
+        roiValue: 1000,
+        financeValue: 900,
+      });
     expect(response.status).toBe(404);
     expect(response.body.code).toBe('FINANCE_LINK_NOT_FOUND');
   });
