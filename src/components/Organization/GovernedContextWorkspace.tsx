@@ -1,5 +1,6 @@
 import { AlertTriangle, Check, FileCheck2, Loader2, RefreshCw, ShieldCheck, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/primitives';
@@ -49,13 +50,24 @@ function renderValue(value: unknown): string {
   }
 }
 
-function governedError(error: unknown, fallback: string): string {
+function governedError(error: unknown, fallback: string, t: TFunction): string {
   const candidate = error as { message?: string; status?: number; response?: { status?: number } };
   const status = candidate?.status ?? candidate?.response?.status;
-  if (status === 403) return 'You do not have permission to perform this governed action.';
+  if (status === 403)
+    return t(
+      'organization.governance.errors.forbidden',
+      'You do not have permission to perform this governed action.'
+    );
   if (status === 404)
-    return 'The governed claim or snapshot no longer exists. Refresh and try again.';
-  if (status === 409) return 'The governed state changed. Refresh before retrying this action.';
+    return t(
+      'organization.governance.errors.notFound',
+      'The governed claim or snapshot no longer exists. Refresh and try again.'
+    );
+  if (status === 409)
+    return t(
+      'organization.governance.errors.conflict',
+      'The governed state changed. Refresh before retrying this action.'
+    );
   return candidate?.message ? `${fallback} ${candidate.message}` : fallback;
 }
 
@@ -93,7 +105,8 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
           t(
             'organization.governance.loadError',
             'Governed context could not be loaded. Your existing data was not changed.'
-          )
+          ),
+          t
         )
       );
     } finally {
@@ -151,7 +164,8 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
           t(
             'organization.governance.uploadError',
             'The document could not be ingested. No governed claim was accepted.'
-          )
+          ),
+          t
         )
       );
     } finally {
@@ -178,7 +192,8 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
       setError(
         governedError(
           caught,
-          t('organization.governance.decisionError', 'The claim could not be reviewed.')
+          t('organization.governance.decisionError', 'The claim could not be reviewed.'),
+          t
         )
       );
     } finally {
@@ -218,7 +233,8 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
       setError(
         governedError(
           caught,
-          t('organization.governance.publishError', 'The snapshot could not be published.')
+          t('organization.governance.publishError', 'The snapshot could not be published.'),
+          t
         )
       );
     } finally {
@@ -241,7 +257,8 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
       setError(
         governedError(
           caught,
-          t('organization.governance.reopenError', 'That snapshot version could not be opened.')
+          t('organization.governance.reopenError', 'That snapshot version could not be opened.'),
+          t
         )
       );
     } finally {
@@ -263,9 +280,23 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
       }
       setSelectedRef(ref);
       setSelected(reopened);
-      setNotice('Latest was resolved now and pinned to this exact immutable snapshot.');
+      setNotice(
+        t(
+          'organization.governance.latestPinned',
+          'Latest was resolved now and pinned to this exact immutable snapshot.'
+        )
+      );
     } catch (caught) {
-      setError(governedError(caught, 'The latest governed snapshot could not be selected.'));
+      setError(
+        governedError(
+          caught,
+          t(
+            'organization.governance.latestError',
+            'The latest governed snapshot could not be selected.'
+          ),
+          t
+        )
+      );
     } finally {
       setBusyKey(null);
     }
@@ -289,11 +320,26 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
       setCandidateReceipt(result.receipt);
       setNotice(
         result.created
-          ? 'One canonical Candidate was created from this exact snapshot.'
-          : 'Existing Candidate receipt was reopened.'
+          ? t(
+              'organization.governance.candidateCreated',
+              'One canonical Candidate was created from this exact snapshot.'
+            )
+          : t(
+              'organization.governance.candidateReopened',
+              'Existing Candidate receipt was reopened.'
+            )
       );
     } catch (caught) {
-      setError(governedError(caught, 'The snapshot could not be handed off to Candidates.'));
+      setError(
+        governedError(
+          caught,
+          t(
+            'organization.governance.candidateError',
+            'The snapshot could not be handed off to Candidates.'
+          ),
+          t
+        )
+      );
     } finally {
       setBusyKey(null);
     }
@@ -433,7 +479,9 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
             {t('organization.governance.sources', 'Sources')} ({sources.length})
           </h3>
           {sources.length === 0 ? (
-            <p className="mt-4 text-sm text-c-text-secondary">No visible governed sources.</p>
+            <p className="mt-4 text-sm text-c-text-secondary">
+              {t('organization.governance.emptySources', 'No visible governed sources.')}
+            </p>
           ) : (
             <ul className="mt-4 space-y-2">
               {sources.map((source) => (
@@ -447,7 +495,10 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
           )}
           {!isAdmin && (
             <p className="mt-3 text-xs text-c-text-muted">
-              Restricted sources and claims are omitted from this view by the server.
+              {t(
+                'organization.governance.restrictedSources',
+                'Restricted sources and claims are omitted from this view by the server.'
+              )}
             </p>
           )}
         </section>
@@ -461,7 +512,7 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
           </h3>
           {conflicts.length === 0 ? (
             <p className="mt-4 text-sm text-c-text-secondary">
-              No conflicting visible claim values.
+              {t('organization.governance.emptyConflicts', 'No conflicting visible claim values.')}
             </p>
           ) : (
             <ul className="mt-4 space-y-3">
@@ -472,8 +523,11 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
                 >
                   <p className="font-medium text-amber-900 dark:text-amber-200">{claimPath}</p>
                   <p className="mt-1 text-xs text-amber-800 dark:text-amber-300">
-                    {entries.length} sourced claims disagree. Review each proposal before
-                    publishing.
+                    {t('organization.governance.conflictSummary', {
+                      count: entries.length,
+                      defaultValue:
+                        '{{count}} sourced claims disagree. Review each proposal before publishing.',
+                    })}
                   </p>
                 </li>
               ))}
@@ -579,12 +633,22 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
                 className="flex flex-wrap items-center justify-between gap-3 py-3"
               >
                 <div>
-                  <p className="font-medium text-c-text">Version {version.version}</p>
+                  <p className="font-medium text-c-text">
+                    {t('organization.governance.version', {
+                      version: version.version,
+                      defaultValue: 'Version {{version}}',
+                    })}
+                  </p>
                   <p className="break-all font-mono text-xs text-c-text-muted">
                     {version.snapshotId}
                   </p>
                   <p className="font-mono text-xs text-c-text-muted">{version.contentHash}</p>
-                  <p className="text-xs text-c-text-secondary">{version.claimCount} claims</p>
+                  <p className="text-xs text-c-text-secondary">
+                    {t('organization.governance.claimCount', {
+                      count: version.claimCount,
+                      defaultValue: '{{count}} claims',
+                    })}
+                  </p>
                 </div>
                 <Button
                   variant="outline"
@@ -606,9 +670,17 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
       {selected && (
         <section
           className="rounded-2xl border border-c-info/40 bg-c-info/5 p-5"
-          aria-label={`Version ${selected.version}`}
+          aria-label={t('organization.governance.version', {
+            version: selected.version,
+            defaultValue: 'Version {{version}}',
+          })}
         >
-          <h3 className="font-semibold text-c-text">Version {selected.version}</h3>
+          <h3 className="font-semibold text-c-text">
+            {t('organization.governance.version', {
+              version: selected.version,
+              defaultValue: 'Version {{version}}',
+            })}
+          </h3>
           <p className="mt-1 break-all font-mono text-xs text-c-text-secondary">
             {selected.snapshotId}
           </p>
@@ -620,15 +692,15 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
               className="mt-2 text-xs font-medium text-c-success"
               data-testid="selected-governed-ref"
             >
-              Pinned exact reference: {selectedRef.snapshotId} · v{selectedRef.version} ·{' '}
-              {selectedRef.contentHash}
+              {t('organization.governance.pinnedReference', 'Pinned exact reference:')}{' '}
+              {selectedRef.snapshotId} · v{selectedRef.version} · {selectedRef.contentHash}
             </p>
           )}
           {isAdmin && selectedRef && (
             <div className="mt-3">
               <Button onClick={() => void handoffCandidate()} disabled={busyKey !== null}>
                 {busyKey === 'candidate' && <Loader2 className="animate-spin" size={14} />}
-                Send exact snapshot to Candidates
+                {t('organization.governance.sendToCandidates', 'Send exact snapshot to Candidates')}
               </Button>
             </div>
           )}
@@ -637,8 +709,9 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
               className="mt-3 rounded-lg bg-c-surface px-3 py-2 text-xs text-c-success"
               data-testid="organization-candidate-receipt"
             >
-              Candidate {candidateReceipt.candidateId} · source v{candidateReceipt.snapshotVersion}{' '}
-              · {candidateReceipt.snapshotContentHash}
+              {t('organization.governance.candidate', 'Candidate')} {candidateReceipt.candidateId} ·{' '}
+              {t('organization.governance.sourceVersion', 'source v')}
+              {candidateReceipt.snapshotVersion} · {candidateReceipt.snapshotContentHash}
             </p>
           )}
           {selected.sourceRefs.some((ref) => ref.dangling) && (
@@ -655,16 +728,24 @@ export const GovernedContextWorkspace: React.FC<GovernedContextWorkspaceProps> =
           )}
           <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
             <div>
-              <dt className="text-c-text-muted">Claims</dt>
+              <dt className="text-c-text-muted">{t('organization.governance.claims', 'Claims')}</dt>
               <dd className="text-c-text">{selected.claimCount}</dd>
             </div>
             <div>
-              <dt className="text-c-text-muted">Sources</dt>
+              <dt className="text-c-text-muted">
+                {t('organization.governance.sources', 'Sources')}
+              </dt>
               <dd className="text-c-text">{selected.sourceRefs.length}</dd>
             </div>
           </dl>
           {selected.sourceRefs.length > 0 && (
-            <ul className="mt-4 space-y-2" aria-label="Frozen source references">
+            <ul
+              className="mt-4 space-y-2"
+              aria-label={t(
+                'organization.governance.frozenSourceReferences',
+                'Frozen source references'
+              )}
+            >
               {selected.sourceRefs.map((ref) => (
                 <li
                   key={ref.claimId}
