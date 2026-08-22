@@ -18,6 +18,12 @@ The shared implementation contract is defined by
 security and commercial decisions remain explicit gates; runtime behavior and owner
 acceptance remain unverified until exact-SHA replay and an explicit owner result.
 
+Post-checkpoint recovery:
+[`RECOVERED_OWNER_FEEDBACK_2026-08-22.md`](RECOVERED_OWNER_FEEDBACK_2026-08-22.md)
+captures the owner observations made after commit `aa5918d8fc` that had remained
+only in the task history. Its items are `CAPTURED_UNRECONCILED`; implementation,
+testing and owner acceptance are not inferred.
+
 ## Module index
 
 | Module | Observation register | Evidence index | Current intake status |
