@@ -2613,12 +2613,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     (report: ReportDef): StandardRowMenu => ({
       primary: [
         {
-          id: 'open_preview',
-          label: t('common.openPreview', 'Otwórz podgląd'),
-          icon: ChevronRight,
-          onClick: () => setReportPreviewId(report.id),
-        },
-        {
           id: 'open_full',
           label: t('common.openFull', 'Otwórz pełny widok'),
           icon: FileText,

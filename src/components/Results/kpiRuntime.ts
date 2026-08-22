@@ -45,9 +45,8 @@ function unwrapCatalog(payload: unknown): CatalogEnvelope {
 
 export async function loadResultsDashboard(initiativeId?: string) {
   const scopedInitiativeId = String(initiativeId || '').trim();
-  const response = scopedInitiativeId
-    ? await V8ResultsApi.getDashboard({ initiativeId: scopedInitiativeId })
-    : await V8ResultsApi.getDashboard();
+  if (!scopedInitiativeId) return null;
+  const response = await V8ResultsApi.getDashboard({ initiativeId: scopedInitiativeId });
   return response?.snapshot ?? null;
 }
 

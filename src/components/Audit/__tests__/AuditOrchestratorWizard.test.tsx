@@ -18,8 +18,8 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (k: string, opts?: any) => {
+  useTranslation: () => {
+    const t = (k: string, opts?: any) => {
       if (typeof opts === 'string') return opts;
       if (opts?.defaultValue) return opts.defaultValue;
       const TRANSLATIONS: Record<string, string> = {
@@ -37,9 +37,9 @@ vi.mock('react-i18next', () => ({
         'audit.close': 'Close',
       };
       return TRANSLATIONS[k] || k;
-    },
-    i18n: { language: 'en' },
-  }),
+    };
+    return { t, i18n: { language: 'en', getFixedT: () => t } };
+  },
   initReactI18next: { type: '3rdParty', init: vi.fn() },
 }));
 

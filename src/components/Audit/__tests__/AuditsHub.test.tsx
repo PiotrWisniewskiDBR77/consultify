@@ -20,14 +20,16 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (k: string, opts?: any) => {
+  useTranslation: () => {
+    const t = (k: string, opts?: any) => {
       if (typeof opts === 'string') return opts;
       if (opts?.defaultValue) return opts.defaultValue;
+      if (k === 'audit.noAuditProgramsYet') return 'No audit programs yet.';
+      if (k === 'audit.completion') return 'Completion';
       return k;
-    },
-    i18n: { language: 'en' },
-  }),
+    };
+    return { t, i18n: { language: 'en', getFixedT: () => t } };
+  },
   initReactI18next: { type: '3rdParty', init: vi.fn() },
 }));
 
@@ -161,7 +163,7 @@ describe('AuditsHub — §27 list', () => {
     await waitFor(() => {
       // program name appears in the preview dashboard heading as well
       expect(screen.getAllByText('ISO 27001 readiness').length).toBeGreaterThan(0);
-      expect(screen.getByText('Completion')).toBeInTheDocument();
+      expect(screen.getByText(/Completion:/)).toBeInTheDocument();
     });
   });
 });
