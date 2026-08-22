@@ -19788,6 +19788,8 @@
       "typeHint": "Select the type that best describes your organization. This determines which questions are most relevant.",
       "communicationHint": "These settings help Teresa adapt her communication style to match your organization's culture.",
       "completeness": "Completeness",
+      "completenessBoundary": "Data completeness, not decision readiness.",
+      "reviewReadiness": "Review readiness",
       "aiGuide": "AI Guide",
       "usedBy": "Used by:",
       "go": "Go",

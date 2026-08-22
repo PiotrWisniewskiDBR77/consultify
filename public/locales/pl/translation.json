@@ -11677,7 +11677,7 @@
       "demoModeOff": "Otwórz przykładowy workspace Atelier Toys",
       "demoReadOnly": "Przykładowe dane - tylko do odczytu",
       "myProfile": "Mój profil",
-      "billing": "Billing i plany",
+      "billing": "Rozliczenia i plany",
       "aiConfig": "Konfiguracja AI",
       "switchOrg": "Przełącz organizację"
     },
@@ -20320,6 +20320,8 @@
       "typeHint": "Wybierz typ najlepiej opisujący organizację. Na tej podstawie pokażemy najbardziej trafne pytania.",
       "communicationHint": "Te ustawienia pomagają Teresie dopasować sposób komunikacji do kultury Twojej organizacji.",
       "completeness": "Kompletność",
+      "completenessBoundary": "Kompletność danych, a nie gotowość decyzyjna.",
+      "reviewReadiness": "Sprawdź gotowość",
       "aiGuide": "Przewodnik AI",
       "usedBy": "Wykorzystywane przez:",
       "go": "Przejdź",

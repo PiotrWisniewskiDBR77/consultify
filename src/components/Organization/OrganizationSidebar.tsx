@@ -140,7 +140,7 @@ export const ORGANIZATION_MODULES: DomainNavigationModule<
   },
   {
     id: 'readiness',
-    label: 'Gotowość i governance',
+    label: 'Gotowość i nadzór',
     children: [
       { id: 'summary', label: 'Podsumowanie', icon: CheckCircle2 },
       { id: 'gaps-freshness', label: 'Braki i aktualność', icon: ListChecks },

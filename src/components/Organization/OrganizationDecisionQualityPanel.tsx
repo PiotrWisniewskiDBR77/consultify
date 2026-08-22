@@ -8,7 +8,7 @@ const polishDimensions = [
   {
     label: 'Zakres i przeznaczenie decyzji',
     icon: Scale,
-    detail: 'Wymagany jest jawny podmiot, okres, jednostki i zamierzony downstream use case.',
+    detail: 'Wymagany jest jawny podmiot, okres, jednostki i zamierzone zastosowanie wyniku.',
   },
   {
     label: 'Źródła i aktualność',
@@ -18,7 +18,7 @@ const polishDimensions = [
   {
     label: 'Odpowiedzialność',
     icon: UserRound,
-    detail: 'Każdy blocker i konflikt musi mieć właściciela oraz warunek zamknięcia.',
+    detail: 'Każda blokada i każdy konflikt muszą mieć właściciela oraz warunek zamknięcia.',
   },
   {
     label: 'Konflikty i braki',
@@ -140,7 +140,7 @@ export const OrganizationDecisionQualityPanel: React.FC<{
           </h3>
           <p className="mt-1 text-sm text-[var(--c-text-secondary)]">
             {isPolish
-              ? `Ekran „${title}” nie publikuje pozytywnego wyniku, dopóki powyższe kryteria nie mają trwałego readbacku. Completeness profilu pozostaje pomocniczą metryką danych.`
+              ? `Ekran „${title}” nie publikuje pozytywnego wyniku, dopóki powyższe kryteria nie mają trwałego potwierdzenia odczytu. Kompletność profilu pozostaje pomocniczą metryką danych.`
               : `“${title}” does not publish a positive outcome until these criteria have durable readback. Profile completeness remains a supporting data metric.`}
           </p>
         </div>
