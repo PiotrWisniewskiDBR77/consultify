@@ -16708,6 +16708,7 @@
     }
   },
   "system": {
+    "data": "Dane",
     "online": "Online",
     "offline": "Offline",
     "status": "Status systemu",
@@ -16722,6 +16723,7 @@
     "lastUpdate": "Automatyczne odświeżanie co 30s"
   },
   "llm": {
+    "model": "Model",
     "title": "Routing modeli wg poziomu",
     "offlineMessage": "Offline — sprawdź połączenie sieciowe",
     "unavailableMessage": "AI niedostępne — sprawdź stan dostawców",

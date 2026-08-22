@@ -15862,6 +15862,7 @@
     }
   },
   "system": {
+    "data": "Data",
     "online": "Online",
     "offline": "Offline",
     "status": "System Status",
@@ -15876,6 +15877,7 @@
     "lastUpdate": "Auto-refresh every 30s"
   },
   "llm": {
+    "model": "Model",
     "title": "Model Routing per Tier",
     "offlineMessage": "Offline - check network connection",
     "unavailableMessage": "AI unavailable - check provider health",
