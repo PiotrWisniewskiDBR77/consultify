@@ -174,9 +174,10 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       method: 'POST',
       path: /^\/analyses\/[^/]+\/decisions\/?$/,
       state: 'observed',
+      effect: 'canonical-write',
       successor: null,
       reason:
-        'Creates a decisions row via decisionService.createDecision (economics.routes.ts:2048, decisionService.ts:234 INSERT INTO decisions). No proven successor.',
+        'Verified canonical write: the handler delegates exclusively to the shared decisionService owner, carries digitization-analysis sourceType/sourceId lineage and forwards Idempotency-Key for exact retry protection. It does not mutate a Finance legacy table.',
     },
     {
       writerId: 'ECO-W12',

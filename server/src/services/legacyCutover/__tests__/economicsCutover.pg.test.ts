@@ -1834,6 +1834,54 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
     expect(after.rows).toEqual(before.rows);
   });
 
+  it('classifies ECO-W11 as canonical Decision ownership with retry-safe source lineage', async () => {
+    const analysisId = `${prefix}-decision-source`;
+    const key = `${prefix}-decision-key`;
+    await pool.query(
+      `INSERT INTO digitization_analyses
+       (id,name,status,organization_id,created_by,created_at,updated_at)
+       VALUES($1,'Decision source','completed',$2,$3,now(),now())`,
+      [analysisId, orgA, actor]
+    );
+    try {
+      const first = await request(app)
+        .post(`/api/economics/analyses/${analysisId}/decisions`)
+        .set('Idempotency-Key', key)
+        .set('x-request-id', `${prefix}-decision-first`)
+        .send({ decisionType: 'go-no-go' });
+      const replay = await request(app)
+        .post(`/api/economics/analyses/${analysisId}/decisions`)
+        .set('Idempotency-Key', key)
+        .set('x-request-id', `${prefix}-decision-replay`)
+        .send({ decisionType: 'go-no-go' });
+      expect(first.status).toBe(201);
+      expect(replay.status).toBe(201);
+      expect(replay.body.decision.id).toBe(first.body.decision.id);
+      const rows = await pool.query(
+        `SELECT id,source_type,source_id,idempotency_key FROM decisions
+         WHERE organization_id=$1 AND idempotency_key=$2`,
+        [orgA, key]
+      );
+      expect(rows.rows).toEqual([
+        {
+          id: first.body.decision.id,
+          source_type: 'finance_digitization_analysis_decision',
+          source_id: `${analysisId}:go-no-go:${actor}`,
+          idempotency_key: key,
+        },
+      ]);
+    } finally {
+      await pool.query(`DELETE FROM decisions WHERE organization_id=$1 AND idempotency_key=$2`, [
+        orgA,
+        key,
+      ]);
+      await pool.query(`DELETE FROM digitization_analyses WHERE id=$1 AND organization_id=$2`, [
+        analysisId,
+        orgA,
+      ]);
+    }
+  });
+
   it('restores only ECO-W10 through its exact writer-scoped rollback lever', async () => {
     const previous = process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
     process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = 'ECO-W10';

@@ -2063,6 +2063,9 @@ router.post(
       decisionMakerId: makerId,
       options,
       createdBy: userId,
+      idempotencyKey: String(req.header('idempotency-key') || '').trim() || undefined,
+      sourceType: 'finance_digitization_analysis_decision',
+      sourceId: `${id}:${decisionType || 'approve-analysis'}:${makerId}`,
     });
 
     return res.status(201).json({ success: true, decision });

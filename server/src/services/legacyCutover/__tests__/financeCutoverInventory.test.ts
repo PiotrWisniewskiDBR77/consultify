@@ -22,11 +22,11 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
   it('separates actual legacy mutations from POST-shaped reads, refusals and canonical handoffs', () => {
     expect(summarizeLegacyCutoverInventory(CONFIGS)).toEqual({
       totalRules: 59,
-      legacyMutationDoors: 52,
-      canonicalMutationDoors: 1,
+      legacyMutationDoors: 51,
+      canonicalMutationDoors: 2,
       nonMutationDoors: 6,
       retiredLegacyMutationDoors: 29,
-      openLegacyMutationDoors: 23,
+      openLegacyMutationDoors: 22,
     });
   });
 
@@ -38,6 +38,7 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
     expect(classified.map((rule) => rule.writerId).sort()).toEqual([
       'ECO-W08',
       'ECO-W09',
+      'ECO-W11',
       'ECO-W18',
       'ECO-W19',
       'ECO-W20',
