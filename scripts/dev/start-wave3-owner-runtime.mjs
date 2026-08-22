@@ -99,6 +99,19 @@ const fail = (m) => {
     throw new Error(`[W3 runtime] BLOCKED: ${m}`);
   },
   sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+function fixtureClientEnvironment(fixture) {
+  if (!fixture) return {};
+  switch (fixture.fixtureId) {
+    case 'W3-FINANCE-OWNER-v1':
+      return { VITE_WAVE3_FINANCE_OWNER_REVIEW: 'true' };
+    case 'W3-RESULTS-OWNER-v1':
+      return { VITE_WAVE3_RESULTS_OWNER_REVIEW: 'true' };
+    default:
+      return {};
+  }
+}
+
 const git = (a) => {
   const r = spawnSync('git', a, { cwd: root, encoding: 'utf8', maxBuffer: 128 * 1024 * 1024 });
   if (r.status !== 0) fail(`git ${a.join(' ')} failed`);
@@ -661,6 +674,7 @@ async function start(c) {
       VITE_API_TARGET: `http://127.0.0.1:${c.serverPort}`,
       VITE_API_URL: '',
       VITE_BUILD_SHA: c.sha,
+      ...fixtureClientEnvironment(c.fixture),
     });
     runtimeSecrets.push(jwt, ...knownSecrets);
     if (stopForwardProgress()) return;
@@ -773,6 +787,7 @@ async function start(c) {
       runtimeFeatures: {
         v8GlobalEnabled: true,
         v8ShadowModeEnabled: false,
+        fixtureBoundClientFlags: fixtureClientEnvironment(c.fixture),
       },
       dotenvIsolation: {
         serverDisabled: true,

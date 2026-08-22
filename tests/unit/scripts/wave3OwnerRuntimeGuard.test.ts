@@ -672,6 +672,12 @@ describe('Wave3 owner runtime guards', () => {
     expect(s).toContain('VITE_DOTENV_DISABLED');
     expect(s).toContain("ENABLE_V8_GLOBAL: 'true'");
     expect(s).toContain("ENABLE_V8_SHADOW_MODE: 'false'");
+    expect(s).toContain("case 'W3-FINANCE-OWNER-v1'");
+    expect(s).toContain("VITE_WAVE3_FINANCE_OWNER_REVIEW: 'true'");
+    expect(s).toContain("case 'W3-RESULTS-OWNER-v1'");
+    expect(s).toContain("VITE_WAVE3_RESULTS_OWNER_REVIEW: 'true'");
+    expect(s).toContain('...fixtureClientEnvironment(c.fixture)');
+    expect(s).toContain('fixtureBoundClientFlags: fixtureClientEnvironment(c.fixture)');
     expect(s).toContain('v8GlobalEnabled: true');
     expect(s).toContain('/api/ready');
     expect(s).not.toMatch(
