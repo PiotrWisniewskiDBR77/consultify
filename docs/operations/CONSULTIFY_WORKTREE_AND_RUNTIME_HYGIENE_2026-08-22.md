@@ -27,9 +27,32 @@ Git currently registers eight worktrees/checkouts:
 | `/Users/piotrwisniewski/Developer/Consultify-wave3-exact-83a6a4` | `b834519c5b` | detached; clean | `RETAIN_AS_FINANCE_BASELINE` |
 
 The Finance worktree is the highest loss risk and is intentionally not removed,
-reset, stashed or rewritten. The earlier incident preservation archive predates
-some later activity, so its current dirty state must be reconciled or separately
-archived before any physical cleanup.
+reset, stashed or rewritten. Its current dirty state was separately archived and
+reconciled before any physical cleanup decision.
+
+## Late-worktree preservation and reconciliation
+
+Location:
+`/Users/piotrwisniewski/Developer/Consultify/.tmp/incident-20260822/workspace-preservation/late-worktrees`
+
+| Artifact | Paths | Mode | SHA-256 | Verification |
+|---|---:|---:|---|---|
+| `finance-wip-b834519c5b-20260822.tar.gz` | 37 | `0600` | `5b85f1f95f225ebda3e389e5be6beef8cddd0bd39a6f5122dd6cae3297e31ff4` | archive listing count `37` |
+| `staging-wip-e6ca206c00-20260822.tar.gz` | 1 | `0600` | `7aedb3fd7efd740b959cb824e5383c2c787c941ecc708c5894478238f5fef2c9` | archive listing count `1` |
+
+Finance reconciliation against the active candidate found all 37 paths present:
+24 are byte-identical and 13 contain later candidate evolution. Inspection of
+the divergent code shows the detached Finance tree would remove later safety
+work, including honest missing-value rendering, the complete multi-fixture
+runtime guard and newer regression coverage. It is therefore preserved as an
+immutable recovery source, not copied over the newer exact-SHA candidate.
+
+The single staging delta was unique and safety-relevant: although
+`DB_MANAGED_SCHEMA=off` skipped the legacy initializer, the active server still
+continued into connection-pool, migration, SQL-chain and seeding readiness.
+The guarded early return was integrated into the active candidate so a
+verify-only owner-review runtime cannot mutate a qualified shared database.
+Focused startup contracts pass `5/5`; root typecheck passes.
 
 ## Repository integrity and branch hygiene
 

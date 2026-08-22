@@ -364,6 +364,18 @@ export const databaseInitPromise: Promise<void> = shouldInitializeTestDatabase(r
 
         logger.info(`[Server] Database schema initialized: ${initResult.message}`);
 
+        // A verify-only owner-review runtime may connect to an already
+        // qualified shared database, but it must not run any DDL, migrations
+        // or seeders. DB_READONLY remains the independent write guard.
+        if (skipManagedSchema) {
+          tpMigrationStatus = { state: 'disabled', detail: 'DB_MANAGED_SCHEMA=off' };
+          sqlMigrationStatus = { state: 'disabled', failed: 0, pending: 0, applied: 0 } as any;
+          dbReady = true;
+          dbInitError = null;
+          logger.info('[Server] Database connected in verify-only owner-review mode');
+          return;
+        }
+
         // Initialize connection pool
         if (process.env.DISABLE_CONNECTION_POOL !== 'true') {
           try {
