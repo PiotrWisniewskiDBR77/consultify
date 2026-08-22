@@ -368,8 +368,20 @@ export const databaseInitPromise: Promise<void> = shouldInitializeTestDatabase(r
         // qualified shared database, but it must not run any DDL, migrations
         // or seeders. DB_READONLY remains the independent write guard.
         if (skipManagedSchema) {
-          tpMigrationStatus = { state: 'disabled', detail: 'DB_MANAGED_SCHEMA=off' };
-          sqlMigrationStatus = { state: 'disabled', failed: 0, pending: 0, applied: 0 } as any;
+          tpMigrationStatus = {
+            state: 'disabled_by_operator',
+            detail: 'DB_MANAGED_SCHEMA=off; Table Platform ledger not evaluated',
+          };
+          sqlMigrationStatus = {
+            state: 'error',
+            failed: 0,
+            skipped: 0,
+            pending: 0,
+            unexplainedDrift: 0,
+            approvedVariants: 0,
+            attestedLegacyVariants: 0,
+            detail: 'DB_MANAGED_SCHEMA=off; SQL migration ledger not evaluated',
+          };
           dbReady = true;
           dbInitError = null;
           logger.info('[Server] Database connected in verify-only owner-review mode');

@@ -22,8 +22,8 @@ describe('DB_MANAGED_SCHEMA verify-only startup contract', () => {
     expect(bypassEnd).toBeGreaterThan(bypassStart);
     expect(poolStart).toBeGreaterThan(bypassEnd);
     expect(readinessStart).toBeGreaterThan(poolStart);
-    expect(bypass).toContain("tpMigrationStatus = { state: 'disabled'");
-    expect(bypass).toContain("sqlMigrationStatus = { state: 'disabled'");
+    expect(bypass).toContain("state: 'disabled_by_operator'");
+    expect(bypass).toContain("state: 'error'");
     expect(bypass).toContain('dbReady = true');
     expect(bypass).toContain('return;');
   });

@@ -72,6 +72,18 @@ function successfulDeps(overrides: Partial<ReadinessDeps> = {}): ReadinessDeps {
     isProduction: false,
     migrationsDisabled: false,
     logger: { info: () => {}, warn: () => {}, error: () => {} },
+    evaluateSqlChain: async () => ({
+      state: 'ok',
+      ledgerPresent: true,
+      failed: [],
+      skipped: [],
+      pending: [],
+      unexplainedDrift: [],
+      approvedVariants: [],
+      attestedLegacyVariants: [],
+      unverifiable: [],
+      detail: 'chain complete',
+    }),
     ...overrides,
   };
 }
@@ -305,7 +317,9 @@ describe('P0A — six production guarantees (RUN_DB_TESTS must never weaken prod
     expect(authMiddlewareSource).not.toMatch(/RUN_DB_TESTS/);
     // And the actual E2E_MODE bypass line must be guarded by the production
     // check — not bare `process.env.E2E_MODE === 'true'`.
-    expect(authMiddlewareSource).toMatch(/!isProductionEnv\s*&&\s*process\.env\.E2E_MODE === 'true'/);
+    expect(authMiddlewareSource).toMatch(
+      /!isProductionEnv\(\)\s*&&\s*process\.env\.E2E_MODE === 'true'/
+    );
   });
 
   it('G4: RUN_DB_TESTS=1 never registers routes beyond the normal production router — index.ts touches RUN_DB_TESTS in exactly one place (the mock-DB decision inside the init IIFE), never near route registration', () => {

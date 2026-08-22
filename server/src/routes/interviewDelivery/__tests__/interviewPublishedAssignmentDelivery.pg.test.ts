@@ -42,6 +42,8 @@ describe.skipIf(!REAL_DB)('published interview assignment delivery (real Postgre
   const foreign = id('foreign');
   const project = id('project');
   const template = id('template');
+  const systemTemplate = id('system_template');
+  const systemQuestion = id('system_question');
   const requestKey = `assign-${randomUUID()}`;
   let pool: Pool;
   let app: Express;
@@ -92,6 +94,18 @@ describe.skipIf(!REAL_DB)('published interview assignment delivery (real Postgre
        VALUES ($1,$2,'Immutable delivery','CUSTOM','draft','org',0,$3,'organization')`,
       [template, orgA, owner]
     );
+    await pool.query(
+      `INSERT INTO interview_library_templates
+         (id,organization_id,name,category,status,visibility,version,created_by,template_scope)
+       VALUES ($1,NULL,'System delivery','CUSTOM','approved','global',1,'system','system')`,
+      [systemTemplate]
+    );
+    await pool.query(
+      `INSERT INTO interview_library_template_questions
+         (id,template_id,category,question_text,sort_order,is_required)
+       VALUES ($1,$2,'strategy','System question',1,true)`,
+      [systemQuestion, systemTemplate]
+    );
 
     const { default: config } = await import('../../../config/Config.js');
     const sign = (userId: string, organizationId: string, role: string) =>
@@ -127,13 +141,18 @@ describe.skipIf(!REAL_DB)('published interview assignment delivery (real Postgre
     );
     await pool.query(`DELETE FROM interview_assignments WHERE organization_id=$1`, [orgA]);
     await pool.query(`DELETE FROM tasks WHERE organization_id=$1`, [orgA]);
-    await pool.query(`DELETE FROM interview_library_template_versions WHERE organization_id=$1`, [
-      orgA,
-    ]);
+    await pool.query(
+      `DELETE FROM interview_library_template_versions WHERE organization_id=$1 OR template_id=$2`,
+      [orgA, systemTemplate]
+    );
     await pool.query(`DELETE FROM interview_library_template_questions WHERE template_id=$1`, [
       template,
     ]);
     await pool.query(`DELETE FROM interview_library_templates WHERE id=$1`, [template]);
+    await pool.query(`DELETE FROM interview_library_template_questions WHERE template_id=$1`, [
+      systemTemplate,
+    ]);
+    await pool.query(`DELETE FROM interview_library_templates WHERE id=$1`, [systemTemplate]);
     await pool.query(`DELETE FROM projects WHERE id=$1`, [project]);
     await pool.query(`DELETE FROM organization_members WHERE organization_id = ANY($1)`, [
       [orgA, orgB],
@@ -173,6 +192,46 @@ describe.skipIf(!REAL_DB)('published interview assignment delivery (real Postgre
       replayed: false,
     });
     assignmentId = assigned.body.id;
+  });
+
+  it('lists an approved system template as assignable and atomically freezes its global version', async () => {
+    const listed = await request(app).get('/api/interview/templates').set(bearer(ownerToken));
+    expect(listed.status).toBe(200);
+    expect(listed.body).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: systemTemplate,
+          scope: 'system',
+          version: 1,
+          hasPublishedVersion: true,
+        }),
+      ])
+    );
+
+    const assigned = await request(app)
+      .post('/api/interview/assignments')
+      .set(bearer(ownerToken))
+      .send(
+        assignmentPayload({
+          idempotencyKey: `system-${randomUUID()}`,
+          templateId: systemTemplate,
+          templateVersion: 1,
+        })
+      );
+    expect(assigned.status).toBe(201);
+    expect(assigned.body).toMatchObject({ templateId: systemTemplate, templateVersion: 1 });
+
+    const snapshot = await pool.query(
+      `SELECT organization_id, snapshot_json
+       FROM interview_library_template_versions
+       WHERE template_id=$1 AND version=1`,
+      [systemTemplate]
+    );
+    expect(snapshot.rowCount).toBe(1);
+    expect(snapshot.rows[0].organization_id).toBe('system');
+    expect(snapshot.rows[0].snapshot_json.questions).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: systemQuestion })])
+    );
   });
 
   it('replays the same create request and rejects the same key with changed payload', async () => {

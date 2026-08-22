@@ -296,12 +296,108 @@ export async function getPublishedInterviewTemplateSnapshot(
 ): Promise<PublishedTemplateSnapshot | null> {
   const row = await withPgTransaction(async (tx) => {
     const result = await tx.query<{ snapshot_json: PublishedTemplateSnapshot | string }>(
-      `SELECT snapshot_json FROM interview_library_template_versions
-       WHERE organization_id = ? AND template_id = ? AND version = ?`,
-      [organizationId, templateId, version]
+      `SELECT v.snapshot_json
+       FROM interview_library_template_versions v
+       JOIN interview_library_templates t ON t.id = v.template_id
+       WHERE v.template_id = ? AND v.version = ?
+         AND (
+           v.organization_id = ?
+           OR (
+             v.organization_id = 'system'
+             AND COALESCE(NULLIF(t.template_scope, ''), CASE WHEN t.organization_id IS NULL THEN 'system' ELSE 'organization' END) = 'system'
+           )
+         )
+       ORDER BY CASE WHEN v.organization_id = ? THEN 0 ELSE 1 END
+       LIMIT 1`,
+      [templateId, version, organizationId, organizationId]
     );
     return result.rows[0] ?? null;
   });
   if (!row) return null;
   return typeof row.snapshot_json === 'string' ? JSON.parse(row.snapshot_json) : row.snapshot_json;
+}
+
+/**
+ * System templates are product-owned, immutable inputs. Unlike organization and
+ * private templates, they cannot be published by a tenant actor. Materialize
+ * their current approved shape exactly once when the first governed assignment
+ * needs it, then reuse the global immutable version for every tenant.
+ */
+export async function ensureSystemInterviewTemplateSnapshotForAssignment(params: {
+  templateId: string;
+  version: number;
+}): Promise<PublishedTemplateSnapshot> {
+  return withPgTransaction(async (tx) => {
+    const templateResult = await tx.query<TemplateRow>(
+      `SELECT * FROM interview_library_templates WHERE id = ? FOR UPDATE`,
+      [params.templateId]
+    );
+    const template = templateResult.rows[0];
+    if (!template || normalizedScope(template) !== 'system') {
+      throw new TemplatePublicationError(
+        'SYSTEM_TEMPLATE_NOT_FOUND',
+        404,
+        'System template not found'
+      );
+    }
+    const storedVersion = Number(template.version || 0);
+    if (
+      String(template.status || '').toLowerCase() !== 'approved' ||
+      !Number.isInteger(params.version) ||
+      params.version < 1 ||
+      params.version !== storedVersion
+    ) {
+      throw new TemplatePublicationError(
+        'SYSTEM_TEMPLATE_VERSION_NOT_APPROVED',
+        409,
+        'The selected system template version is not approved'
+      );
+    }
+
+    const existing = await tx.query<{ snapshot_json: PublishedTemplateSnapshot | string }>(
+      `SELECT snapshot_json FROM interview_library_template_versions
+       WHERE template_id = ? AND version = ?`,
+      [params.templateId, params.version]
+    );
+    if (existing.rows[0]) {
+      const value = existing.rows[0].snapshot_json;
+      return typeof value === 'string' ? JSON.parse(value) : value;
+    }
+
+    const questions = await readQuestions(tx, params.templateId);
+    if (questions.length === 0) {
+      throw new TemplatePublicationError(
+        'SYSTEM_TEMPLATE_QUESTIONS_REQUIRED',
+        409,
+        'The selected system template has no published questions'
+      );
+    }
+    const snapshot: PublishedTemplateSnapshot = {
+      template: { ...template, version: params.version, status: 'approved' },
+      questions,
+    };
+    await tx.query(
+      `INSERT INTO interview_library_template_versions
+         (id, template_id, organization_id, version, snapshot_json, published_by)
+       VALUES (?, ?, 'system', ?, ?::jsonb, 'system')
+       ON CONFLICT (template_id, version) DO NOTHING`,
+      [uuidv4(), params.templateId, params.version, JSON.stringify(snapshot)]
+    );
+    const persisted = await tx.query<{
+      snapshot_json: PublishedTemplateSnapshot | string;
+    }>(
+      `SELECT snapshot_json FROM interview_library_template_versions
+       WHERE template_id = ? AND version = ?`,
+      [params.templateId, params.version]
+    );
+    const value = persisted.rows[0]?.snapshot_json;
+    if (!value) {
+      throw new TemplatePublicationError(
+        'SYSTEM_TEMPLATE_SNAPSHOT_FAILED',
+        500,
+        'System template snapshot could not be persisted'
+      );
+    }
+    return typeof value === 'string' ? JSON.parse(value) : value;
+  });
 }

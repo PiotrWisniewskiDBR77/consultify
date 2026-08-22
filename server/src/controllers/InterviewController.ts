@@ -21,6 +21,7 @@ import { logAIAction } from '../services/auditService.js';
 import { IngestionPipeline } from '../services/ai/ingestionPipeline.js';
 import { llmService } from '../services/ai/llmService.js';
 import {
+  ensureSystemInterviewTemplateSnapshotForAssignment,
   getPublishedInterviewTemplateSnapshot,
   publishInterviewTemplate,
   TemplatePublicationError,
@@ -4009,11 +4010,11 @@ export const InterviewController = {
 
     // Validate template
     const template = await queryHelpers.queryOne(
-      `SELECT id, name, version, status FROM interview_library_templates
-       WHERE id = ? AND organization_id = ?`,
-      [templateId, admin.organizationId]
+      `SELECT id, name, version, status, organization_id, template_scope, created_by, visibility
+       FROM interview_library_templates WHERE id = ?`,
+      [templateId]
     );
-    if (!template) {
+    if (!template || !canAccessTemplate(template, admin)) {
       res.status(404).json({ error: 'Template not found' });
       return;
     }
@@ -4021,11 +4022,27 @@ export const InterviewController = {
       res.status(400).json({ error: 'Template is not approved yet' });
       return;
     }
-    const publishedSnapshot = await getPublishedInterviewTemplateSnapshot(
-      admin.organizationId,
-      String(templateId),
-      requestedTemplateVersion
-    );
+    const templateScope = resolveTemplateScopeFromRow(template);
+    let publishedSnapshot;
+    try {
+      publishedSnapshot =
+        templateScope === 'system'
+          ? await ensureSystemInterviewTemplateSnapshotForAssignment({
+              templateId: String(templateId),
+              version: requestedTemplateVersion,
+            })
+          : await getPublishedInterviewTemplateSnapshot(
+              admin.organizationId,
+              String(templateId),
+              requestedTemplateVersion
+            );
+    } catch (error) {
+      if (error instanceof TemplatePublicationError) {
+        res.status(error.status).json({ error: error.message, code: error.code });
+        return;
+      }
+      throw error;
+    }
     if (!publishedSnapshot) {
       res.status(409).json({
         error: 'The selected template version is not published.',
@@ -5963,10 +5980,18 @@ export const InterviewController = {
          (SELECT COUNT(1) FROM interview_sessions s 
           JOIN projects p ON p.id = s.project_id 
           WHERE s.template_id = t.id AND p.organization_id = ?) as sessions_used,
-         EXISTS (
+         (EXISTS (
            SELECT 1 FROM interview_library_template_versions v
-            WHERE v.template_id = t.id AND v.organization_id = ? AND v.version = t.version
-         ) as has_published_version
+            WHERE v.template_id = t.id
+              AND v.organization_id IN (?, 'system')
+              AND v.version = t.version
+         ) OR (
+           COALESCE(NULLIF(t.template_scope, ''), CASE WHEN t.organization_id IS NULL THEN 'system' ELSE 'organization' END) = 'system'
+           AND LOWER(COALESCE(t.status, '')) = 'approved'
+           AND EXISTS (
+             SELECT 1 FROM interview_library_template_questions q2 WHERE q2.template_id = t.id
+           )
+         )) as has_published_version
        FROM interview_library_templates t
        WHERE (
          (
@@ -6036,10 +6061,18 @@ export const InterviewController = {
       `SELECT
          t.*,
          (SELECT COUNT(1) FROM interview_library_template_questions q WHERE q.template_id = t.id) as question_count,
-         EXISTS (
+         (EXISTS (
            SELECT 1 FROM interview_library_template_versions v
-            WHERE v.template_id = t.id AND v.organization_id = ? AND v.version = t.version
-         ) as has_published_version
+            WHERE v.template_id = t.id
+              AND v.organization_id IN (?, 'system')
+              AND v.version = t.version
+         ) OR (
+           COALESCE(NULLIF(t.template_scope, ''), CASE WHEN t.organization_id IS NULL THEN 'system' ELSE 'organization' END) = 'system'
+           AND LOWER(COALESCE(t.status, '')) = 'approved'
+           AND EXISTS (
+             SELECT 1 FROM interview_library_template_questions q2 WHERE q2.template_id = t.id
+           )
+         )) as has_published_version
        FROM interview_library_templates t
        WHERE t.id = ?`,
       [user.organizationId, id]
