@@ -139,10 +139,10 @@
   },
   "verdict": "PARTIAL",
   "openBlockers": [
-    "One same-database invocation must still join each current Organization, Interview, DRD and SWOT producer command to its downstream Candidate-to-PIR certification identity; the producer and downstream proofs currently pass as adjacent, independently qualified boundaries.",
     "Deployed desktop and mobile journey and rollback rehearsal are not authorized or verified."
   ],
   "resolvedBlockers": [
+    "One guarded exact-current real-PostgreSQL invocation now joins each actual Organization, Interview, DRD and SWOT producer command to its own stable Candidate-to-PIR identity in the same database; 6/6 tests passed with cold replay, tenant denial and append-only correlation controls.",
     "Exact-current mounted producer commands for Organization, Interview, DRD and SWOT now pass together on fresh real PostgreSQL: 4/4 files and 28/28 tests, including frozen-source lineage, cold replay, tenant denial, concurrency exactly-once, immutable receipts and injected rollback.",
     "A single exact-current real-PostgreSQL suite now carries one APPROVED SWOT identity through candidate, Initiative, Execution, Results Actual, Finance reconciliation and PIR, with fail-closed tenant and authority controls.",
     "Commit d6020571a8 is an ancestor of canonical 81123eb305 and its 12 production/test paths are byte-identical at that canonical SHA. Its fresh-PostgreSQL source-adapter assertions passed 4/4 and its parameterized four-source downstream matrix passed 6/6 for Organization, Interview, DRD and SWOT, including cold replay, foreign-tenant denial, immutable correlation receipts and stable candidate-to-PIR identities.",
@@ -314,6 +314,23 @@
     "verdict": "PARTIAL",
     "remainingBoundary": [
       "The four producer commands and four-source Candidate-to-PIR certification pass as adjacent boundaries, but have not yet been joined in one same-database producer-to-PIR invocation.",
+      "Deployed desktop/mobile acceptance and rollback rehearsal remain NOT VERIFIED.",
+      "Production release remains NOT AUTHORIZED."
+    ]
+  },
+  "wave3JoinedProducerToPirRequalification20260823": {
+    "testedSha": "458b1d3d5b",
+    "scope": "Single-database exact-current proof that the actual governed Organization snapshot, accepted Interview finding, accepted DRD output and approved frozen SWOT output producer services create the source receipt and Candidate identities subsequently certified through Initiative, Execution, Results Actual, Finance reconciliation and PIR.",
+    "schema": "Fresh 817 migrations on owned disposable pgvector PostgreSQL 16 database flow_joined_deed.",
+    "command": "DATABASE_URL=<owned-disposable-pgvector16> DB_TYPE=postgres NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false FLOW_ALLOW_IMMUTABLE_FIXTURE_CLEANUP=1 FLOW_DISPOSABLE_DB_PREFIX=flow_joined_ npx vitest run tests/integration/flow-transform-four-source-lineage.realdb.test.ts --retry=0 --no-file-parallelism --maxWorkers=1",
+    "result": "1/1 file; 6/6 tests passed; 0 skipped; 0 failures; no retry; sequential execution. The guarded run was repeated successfully after adding the fail-closed database opt-in.",
+    "proved": "Four current producer services, rather than fabricated Candidate or receipt rows, create four distinct source receipts and Candidates. Each retains seven distinct linked identities through finalized PIR; cold replay returns the identical immutable correlation receipt; foreign-tenant discovery leaves zero receipt; correlation receipts reject mutation.",
+    "failClosedHarness": "Without RUN_DB_TESTS=1 the suite skips all 6 tests and opens no database. An active run additionally requires FLOW_ALLOW_IMMUTABLE_FIXTURE_CLEANUP=1 and a current database name beginning with the explicit FLOW_DISPOSABLE_DB_PREFIX.",
+    "static": "Focused ESLint passed; root TypeScript type-check passed.",
+    "databaseReadback": "schema_migrations 817; disabled triggers 0; advisory locks 0; two successful repetitions produced exactly two lineage receipts per source kind before whole-database disposal.",
+    "cleanup": "The complete owned disposable database was removed with container consultify-flow-joined-deed and localhost port 35585 was released. No Railway environment or persistent application database was mutated.",
+    "verdict": "PARTIAL",
+    "remainingBoundary": [
       "Deployed desktop/mobile acceptance and rollback rehearsal remain NOT VERIFIED.",
       "Production release remains NOT AUTHORIZED."
     ]
