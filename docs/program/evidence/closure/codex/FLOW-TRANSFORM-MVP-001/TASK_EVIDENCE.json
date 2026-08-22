@@ -139,7 +139,7 @@
   },
   "verdict": "PARTIAL",
   "openBlockers": [
-    "Equivalent Organization, Interview and DRD source-to-PIR lineages require exact-current requalification alongside the proven SWOT path.",
+    "Mounted product journeys must still prove that current Interview, DRD and SWOT producer commands create their immutable source receipts before the exact-current four-source certification boundary.",
     "Deployed desktop and mobile journey and rollback rehearsal are not authorized or verified."
   ],
   "resolvedBlockers": [
@@ -278,6 +278,22 @@
     "verdict": "PARTIAL",
     "remainingBoundary": [
       "Equivalent Organization, Interview and DRD source-to-PIR lineages are not requalified in this exact-current invocation.",
+      "Deployed desktop/mobile acceptance and rollback rehearsal remain NOT VERIFIED.",
+      "Production release remains NOT AUTHORIZED."
+    ]
+  },
+  "wave3ExactCurrentFourSourceCertification20260822": {
+    "testedSha": "a1e78c865604c8c9a91c6918be04dcb9c43c558a",
+    "scope": "Exact-current real-pgvector16 certification matrix for Organization, Interview, DRD and SWOT immutable source receipts through distinct Candidate, Initiative, Execution, Results Actual, Finance reconciliation and PIR identities.",
+    "schema": "Fresh 817 migrations on an owned disposable database.",
+    "command": "DATABASE_URL=<owned-disposable-pgvector16> DB_TYPE=postgres NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false npx vitest run tests/integration/flow-transform-source-adapters.realdb.test.ts tests/integration/flow-transform-four-source-lineage.realdb.test.ts --retry=0 --no-file-parallelism --maxWorkers=1",
+    "result": "2/2 files; 10/10 tests passed; 0 skipped; 0 failures; no retry; sequential execution.",
+    "proved": "All four source kinds cold-replay the same immutable correlation receipt and retain seven distinct linked identities. Foreign-tenant discovery is denied with zero foreign receipt, correlation receipts reject mutation, Organization source approval is exactly-once under concurrency, stale/hash/tenant references fail closed and an injected receipt failure leaves zero Candidate.",
+    "databaseReadback": "schema_migrations 817; disabled triggers 0; advisory locks 0; four lineage receipts (one per source kind); Organization handoffs 3 (canonical, concurrent and rollback-control fixture), Interview 1, DRD 1 and SWOT 1.",
+    "cleanup": "The complete owned disposable database was removed with container consultify-flow-four-b66b and localhost port 35581 was released.",
+    "verdict": "PARTIAL",
+    "remainingBoundary": [
+      "This matrix begins at persisted source receipts; mounted current Interview, DRD and SWOT producer-command journeys into those receipts remain to be replayed on the same candidate.",
       "Deployed desktop/mobile acceptance and rollback rehearsal remain NOT VERIFIED.",
       "Production release remains NOT AUTHORIZED."
     ]
