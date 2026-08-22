@@ -318,6 +318,8 @@ const JARGON_LEVELS = [
   { value: 'HEAVY', label: 'Heavy industry jargon' },
 ];
 
+const optionKey = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+
 // ─── Conditional section visibility per §11.4 ───
 
 function showProductionSection(orgType: OrganizationType): boolean {
@@ -339,6 +341,7 @@ function showOperatingSection(orgType: OrganizationType): boolean {
 // ─── Cross-validation (Phase 3.1) ───
 
 interface ValidationWarning {
+  code: string;
   field: string;
   message: string;
   severity: 'warning' | 'info';
@@ -353,12 +356,14 @@ function crossValidate(p: OrgProfile): ValidationWarning[] {
       const prevMax = COMPANY_SIZES[COMPANY_SIZES.indexOf(sizeEntry) - 1]?.max ?? 0;
       if (p.employee_count > sizeEntry.max) {
         warnings.push({
+          code: 'employeeAboveRange',
           field: 'identity',
           message: `Employee count (${p.employee_count}) exceeds "${sizeEntry.label}" range. Consider updating company size.`,
           severity: 'warning',
         });
       } else if (p.employee_count <= prevMax) {
         warnings.push({
+          code: 'employeeBelowRange',
           field: 'identity',
           message: `Employee count (${p.employee_count}) is below "${sizeEntry.label}" range. Consider updating company size.`,
           severity: 'warning',
@@ -373,6 +378,7 @@ function crossValidate(p: OrgProfile): ValidationWarning[] {
     !['Manufacturing', 'Industrial', 'Construction', 'Energy', 'Agriculture'].includes(p.industry)
   ) {
     warnings.push({
+      code: 'industryTypeMismatch',
       field: 'identity',
       message: `Industry "${p.industry}" is uncommon for Manufacturing org type. If correct, keep it — AI will adapt.`,
       severity: 'info',
@@ -381,6 +387,7 @@ function crossValidate(p: OrgProfile): ValidationWarning[] {
 
   if (p.founding_year && (p.founding_year > new Date().getFullYear() || p.founding_year < 1800)) {
     warnings.push({
+      code: 'foundingYear',
       field: 'identity',
       message: `Founding year ${p.founding_year} seems unusual. Please verify.`,
       severity: 'warning',
@@ -389,6 +396,7 @@ function crossValidate(p: OrgProfile): ValidationWarning[] {
 
   if (p.growth_stage === 'STARTUP' && p.companySize === 'ENTERPRISE') {
     warnings.push({
+      code: 'startupEnterprise',
       field: 'strategic',
       message: 'Growth stage "Startup" combined with "Enterprise" size is unusual. Please verify.',
       severity: 'info',
@@ -401,6 +409,7 @@ function crossValidate(p: OrgProfile): ValidationWarning[] {
 // ─── Completeness coaching (Phase 3.2) — tells user WHY each field matters ───
 
 interface CompletenessHint {
+  id: string;
   message: string;
   field: string;
   downstream: string;
@@ -409,6 +418,7 @@ interface CompletenessHint {
 function getTeresaGuidance(p: OrgProfile, completeness: number): CompletenessHint | null {
   if (!p.organization_type)
     return {
+      id: 'organizationType',
       message:
         'Start by selecting your organization type — this helps me show you the right questions.',
       field: 'organization_type',
@@ -416,6 +426,7 @@ function getTeresaGuidance(p: OrgProfile, completeness: number): CompletenessHin
     };
   if (!p.industry)
     return {
+      id: 'industry',
       message:
         'Which industry are you in? Assessment uses this for benchmarking and framework selection.',
       field: 'identity',
@@ -423,12 +434,14 @@ function getTeresaGuidance(p: OrgProfile, completeness: number): CompletenessHin
     };
   if (!p.companySize)
     return {
+      id: 'companySize',
       message: 'What is your company size? This calibrates recommendations to your scale.',
       field: 'identity',
       downstream: 'Assessment, Planning, Reports',
     };
   if (p.strategic_priorities.length === 0)
     return {
+      id: 'strategicPriorities',
       message:
         'Add strategic priorities — AI aligns every recommendation, initiative, and report to your goals.',
       field: 'strategic',
@@ -436,12 +449,14 @@ function getTeresaGuidance(p: OrgProfile, completeness: number): CompletenessHin
     };
   if (!p.mission_statement)
     return {
+      id: 'mission',
       message: 'A mission statement helps AI maintain consistency across all generated content.',
       field: 'strategic',
       downstream: 'Reports, Presentations, AI Chat',
     };
   if (p.technology_stack.length === 0)
     return {
+      id: 'technologyStack',
       message:
         'List your tech stack — Assessment and Tool recommendations improve significantly with this.',
       field: 'digital',
@@ -449,12 +464,14 @@ function getTeresaGuidance(p: OrgProfile, completeness: number): CompletenessHin
     };
   if (p.regulatory_environment.length === 0)
     return {
+      id: 'regulations',
       message: 'Select applicable regulations — AI will avoid suggesting non-compliant solutions.',
       field: 'constraints',
       downstream: 'Assessment, Risk Management, Initiatives',
     };
   if (!p.communication_style)
     return {
+      id: 'communicationStyle',
       message:
         'Set your preferred communication style — Teresa will adapt her language to match your culture.',
       field: 'communication',
@@ -462,6 +479,7 @@ function getTeresaGuidance(p: OrgProfile, completeness: number): CompletenessHin
     };
   if (p.organization_type === 'MANUFACTURING' && !p.production_archetype)
     return {
+      id: 'productionType',
       message:
         'Select your production type — this helps Assessment evaluate Industry 4.0 readiness accurately.',
       field: 'production',
@@ -469,6 +487,7 @@ function getTeresaGuidance(p: OrgProfile, completeness: number): CompletenessHin
     };
   if (completeness < 80)
     return {
+      id: 'completeness',
       message: `Your profile is ${completeness}% complete. The more context you provide, the better AI can help you.`,
       field: '',
       downstream: 'All modules',
@@ -740,15 +759,15 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
       if (!readback?.exists || !readback?.profile || persistedCompleteness !== completeness) {
         throw new Error(
           t(
-            'organization.profileReadbackFailed',
+            'organization.profile.readbackFailed',
             'Save request completed, but durable profile readback could not be verified.'
           )
         );
       }
       setProfile((previous) => ({ ...previous, ...readback.profile }));
-      toast.success(t('organization.profileSaved', 'Profile saved'));
+      toast.success(t('organization.profile.saved', 'Profile saved'));
     } catch (err: any) {
-      toast.error(err.message || 'Failed to save');
+      toast.error(err.message || t('organization.profile.saveFailed', 'Failed to save'));
     } finally {
       setSaving(false);
     }
@@ -768,10 +787,20 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
         setDocExtractProposals(res.proposals.map((p: any) => ({ ...p, accepted: null })));
         toast.success(`Teresa extracted ${res.proposals.length} field(s) from the document`);
       } else {
-        toast.error('No fields could be extracted from this document');
+        toast.error(
+          t(
+            'organization.profile.extraction.empty',
+            'No fields could be extracted from this document'
+          )
+        );
       }
     } catch {
-      toast.error('Document extraction is not yet configured on this server');
+      toast.error(
+        t(
+          'organization.profile.extraction.unavailable',
+          'Document extraction is not yet configured on this server'
+        )
+      );
     } finally {
       setExtracting(false);
     }
@@ -853,7 +882,9 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
         </div>
         <div className="flex items-center gap-3">
           <div className="text-right">
-            <div className="text-xs text-c-text-muted">Completeness</div>
+            <div className="text-xs text-c-text-muted">
+              {t('organization.profile.completeness', 'Completeness')}
+            </div>
             <div className="text-lg font-bold text-navy-900 dark:text-white">{completeness}%</div>
           </div>
           <div className="w-12 h-12 relative">
@@ -963,14 +994,20 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
             <h4 className="text-sm font-semibold text-navy-900 dark:text-white flex items-center gap-2">
               Teresa
               <span className="text-[10px] font-normal px-1.5 py-0.5 bg-primary-100 dark:bg-primary-500/20 text-primary-600 dark:text-primary-300 rounded-full">
-                AI Guide
+                {t('organization.profile.aiGuide', 'AI Guide')}
               </span>
             </h4>
             <p className="text-xs text-c-text-secondary mt-1 leading-relaxed">
-              {teresaHint.message}
+              {t(`organization.profile.guidance.${teresaHint.id}.message`, teresaHint.message, {
+                completeness,
+              })}
             </p>
             <p className="text-[10px] text-c-text-secondary mt-0.5">
-              Used by: {teresaHint.downstream}
+              {t('organization.profile.usedBy', 'Used by:')}{' '}
+              {t(
+                `organization.profile.guidance.${teresaHint.id}.downstream`,
+                teresaHint.downstream
+              )}
             </p>
           </div>
           <button
@@ -981,13 +1018,13 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
             }}
             className="px-3 py-1.5 bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] text-xs font-medium rounded-lg hover:bg-navy-800 transition-colors shrink-0"
           >
-            Go
+            {t('organization.profile.go', 'Go')}
           </button>
           <button
             onClick={() => setShowTeresa(false)}
             className="text-c-text-secondary hover:text-c-text-secondary dark:hover:text-slate-300 p-1"
           >
-            <span className="sr-only">Dismiss</span>&times;
+            <span className="sr-only">{t('common.dismiss', 'Dismiss')}</span>&times;
           </button>
         </div>
       )}
@@ -1001,12 +1038,20 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
               className={`flex items-start gap-2 p-3 rounded-lg border text-xs ${w.severity === 'warning' ? 'bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-900/20 dark:border-amber-700 dark:text-amber-300' : 'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-300'}`}
             >
               <AlertTriangle size={14} className="shrink-0 mt-0.5" />
-              <span>{w.message}</span>
+              <span>
+                {t(`organization.profile.validation.${w.code}`, w.message, {
+                  employeeCount: profile.employee_count,
+                  companySize:
+                    COMPANY_SIZES.find((size) => size.value === profile.companySize)?.label ?? '',
+                  industry: profile.industry,
+                  foundingYear: profile.founding_year,
+                })}
+              </span>
               <button
                 onClick={() => openSection(w.field)}
                 className="ml-auto text-[10px] underline shrink-0"
               >
-                Fix
+                {t('common.fix', 'Fix')}
               </button>
             </div>
           ))}
@@ -1018,7 +1063,10 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
         <div className="bg-c-surface rounded-xl border border-primary-200 dark:border-primary-700 p-4 space-y-3">
           <h4 className="text-sm font-semibold text-navy-900 dark:text-white flex items-center gap-2">
             <Sparkles size={16} className="text-primary-500" />
-            Teresa extracted these fields from your document
+            {t(
+              'organization.profile.extraction.proposalsTitle',
+              'Teresa extracted these fields from your document'
+            )}
           </h4>
           {docExtractProposals.map((proposal, idx) => (
             <div
@@ -1037,13 +1085,13 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
                     onClick={() => applyProposal(idx, true)}
                     className="px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700"
                   >
-                    Accept
+                    {t('common.accept', 'Accept')}
                   </button>
                   <button
                     onClick={() => applyProposal(idx, false)}
                     className="px-2 py-1 bg-slate-300 text-c-text-secondary text-xs rounded hover:bg-slate-400 dark:bg-slate-600 dark:text-slate-200"
                   >
-                    Reject
+                    {t('common.reject', 'Reject')}
                   </button>
                 </div>
               )}
@@ -1074,7 +1122,7 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
             className="flex items-center gap-2 px-4 py-2 bg-c-surface border border-c-border-subtle hover:bg-c-surface-raised text-c-text-secondary rounded-lg font-medium text-sm transition-colors disabled:opacity-50"
           >
             {extracting ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
-            Extract from document
+            {t('organization.profile.extraction.action', 'Extract from document')}
           </button>
         )}
         <input
@@ -1094,7 +1142,7 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
             className={`flex items-center gap-2 px-4 py-2 border rounded-lg font-medium text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)] ${showReadiness ? 'bg-[var(--c-selection)] border-[var(--c-selection-border)] text-[var(--c-text)]' : 'bg-c-surface border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised'}`}
           >
             <Target size={16} />
-            Readiness {readyCount}/{readiness.length}
+            {t('organization.profile.readiness.label', 'Readiness')} {readyCount}/{readiness.length}
           </button>
         )}
       </div>
@@ -1104,7 +1152,7 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
         <div className="bg-c-surface rounded-xl border border-c-border-subtle p-4">
           <h4 className="text-sm font-semibold text-navy-900 dark:text-white mb-3 flex items-center gap-2">
             <Target size={16} className="text-primary-500" />
-            Module Readiness
+            {t('organization.profile.readiness.title', 'Module Readiness')}
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {readiness.map((r) => (
@@ -1121,11 +1169,16 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
                   <span
                     className={`text-xs font-medium ${r.ready ? 'text-green-700 dark:text-green-400' : 'text-c-text-secondary'}`}
                   >
-                    {r.label}
+                    {t(`organization.profile.readiness.modules.${r.module}.label`, r.label)}
                   </span>
                   {!r.ready && r.missing.length > 0 && (
                     <span className="text-[10px] text-c-text-secondary ml-1">
-                      needs: {r.missing.join(', ')}
+                      {t('organization.profile.readiness.needs', 'needs:')}{' '}
+                      {r.missing
+                        .map((item) =>
+                          t(`organization.profile.readiness.fields.${optionKey(item)}`, item)
+                        )
+                        .join(', ')}
                     </span>
                   )}
                 </div>
@@ -1145,12 +1198,18 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
               : 'hidden'
           }
         >
-          <SectionHeader id="type" title="Organization Type" icon={<Building2 size={18} />} />
+          <SectionHeader
+            id="type"
+            title={t('organization.profilePresentation.sections.type.label')}
+            icon={<Building2 size={18} />}
+          />
           {expandedSections.type && (
             <div className="p-5 border-t border-c-border-subtle">
               <p className="text-xs text-c-text-muted mb-4">
-                Select the type that best describes your organization. This determines which
-                questions are most relevant.
+                {t(
+                  'organization.profile.typeHint',
+                  'Select the type that best describes your organization. This determines which questions are most relevant.'
+                )}
               </p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {ORG_TYPES.map((ot) => (
@@ -1170,9 +1229,17 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
                         {ot.icon}
                       </div>
                       <div className="font-semibold text-sm text-navy-900 dark:text-white">
-                        {ot.label}
+                        {t(
+                          `organization.profile.options.organizationType.${ot.value}.label`,
+                          ot.label
+                        )}
                       </div>
-                      <div className="text-[10px] text-c-text-muted mt-1">{ot.hint}</div>
+                      <div className="text-[10px] text-c-text-muted mt-1">
+                        {t(
+                          `organization.profile.options.organizationType.${ot.value}.hint`,
+                          ot.hint
+                        )}
+                      </div>
                     </div>
                   </label>
                 ))}
@@ -1190,114 +1257,130 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
               : 'hidden'
           }
         >
-          <SectionHeader id="identity" title="Identity & Scale" icon={<Briefcase size={18} />} />
+          <SectionHeader
+            id="identity"
+            title={t('organization.profilePresentation.sections.identity.label')}
+            icon={<Briefcase size={18} />}
+          />
           {expandedSections.identity && (
             <div className="p-5 border-t border-c-border-subtle space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className={labelCls}>Industry *</label>
+                  <label className={labelCls}>{t('organization.profile.fields.industry')} *</label>
                   <select
                     value={profile.industry}
                     onChange={(e) => update('industry', e.target.value)}
                     className={inputCls}
                   >
-                    <option value="">Select Industry</option>
+                    <option value="">{t('organization.profile.selectIndustry')}</option>
                     {INDUSTRIES.map((i) => (
                       <option key={i} value={i}>
-                        {i}
+                        {t(`organization.profile.options.industry.${optionKey(i)}`, i)}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className={labelCls}>Sub-Industry</label>
+                  <label className={labelCls}>{t('organization.profile.fields.subIndustry')}</label>
                   <input
                     type="text"
                     value={profile.industry_subsector}
                     onChange={(e) => update('industry_subsector', e.target.value)}
-                    placeholder="e.g., Automotive Parts, Fintech"
+                    placeholder={t('organization.profile.placeholders.subIndustry')}
                     className={inputCls}
                   />
                 </div>
                 <div>
-                  <label className={labelCls}>Industry Code</label>
+                  <label className={labelCls}>
+                    {t('organization.profile.fields.industryCode')}
+                  </label>
                   <input
                     type="text"
                     value={profile.industry_code}
                     onChange={(e) => update('industry_code', e.target.value)}
-                    placeholder="e.g., PKD 25.11.Z, NAICS 5112"
+                    placeholder={t('organization.profile.placeholders.industryCode')}
                     className={inputCls}
                   />
                 </div>
                 <div>
-                  <label className={labelCls}>Company Size *</label>
+                  <label className={labelCls}>
+                    {t('organization.profile.fields.companySize')} *
+                  </label>
                   <select
                     value={profile.companySize}
                     onChange={(e) => update('companySize', e.target.value)}
                     className={inputCls}
                   >
-                    <option value="">Select Size</option>
+                    <option value="">{t('organization.profile.selectSize')}</option>
                     {COMPANY_SIZES.map((s) => (
                       <option key={s.value} value={s.value}>
-                        {s.label}
+                        {t(`organization.profile.options.companySize.${s.value}`, s.label)}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className={labelCls}>Employee Count</label>
+                  <label className={labelCls}>
+                    {t('organization.profile.fields.employeeCount')}
+                  </label>
                   <input
                     type="number"
                     value={profile.employee_count ?? ''}
                     onChange={(e) =>
                       update('employee_count', e.target.value ? parseInt(e.target.value) : null)
                     }
-                    placeholder="e.g., 500"
+                    placeholder={t('organization.profile.placeholders.employeeCount')}
                     className={inputCls}
                   />
                 </div>
                 <div>
-                  <label className={labelCls}>Annual Revenue</label>
+                  <label className={labelCls}>
+                    {t('organization.profile.fields.annualRevenue')}
+                  </label>
                   <input
                     type="number"
                     value={profile.annual_revenue ?? ''}
                     onChange={(e) =>
                       update('annual_revenue', e.target.value ? parseFloat(e.target.value) : null)
                     }
-                    placeholder="e.g., 50000000"
+                    placeholder={t('organization.profile.placeholders.annualRevenue')}
                     className={inputCls}
                   />
                 </div>
                 <div>
-                  <label className={labelCls}>Founding Year</label>
+                  <label className={labelCls}>
+                    {t('organization.profile.fields.foundingYear')}
+                  </label>
                   <input
                     type="number"
                     value={profile.founding_year ?? ''}
                     onChange={(e) =>
                       update('founding_year', e.target.value ? parseInt(e.target.value) : null)
                     }
-                    placeholder="e.g., 2010"
+                    placeholder={t('organization.profile.placeholders.foundingYear')}
                     className={inputCls}
                   />
                 </div>
                 <div>
-                  <label className={labelCls}>Headquarters Country</label>
+                  <label className={labelCls}>
+                    {t('organization.profile.fields.headquartersCountry')}
+                  </label>
                   <input
                     type="text"
                     value={profile.headquarters_country}
                     onChange={(e) => update('headquarters_country', e.target.value)}
-                    placeholder="e.g., Poland"
+                    placeholder={t('organization.profile.placeholders.headquartersCountry')}
                     className={inputCls}
                   />
                 </div>
               </div>
               <div>
-                <label className={labelCls}>Description</label>
+                <label className={labelCls}>{t('organization.profile.fields.description')}</label>
                 <textarea
                   value={profile.description}
                   onChange={(e) => update('description', e.target.value)}
                   rows={2}
-                  placeholder="Brief description of your organization"
+                  placeholder={t('organization.profile.placeholders.description')}
                   className={inputCls + ' resize-none'}
                 />
               </div>
@@ -1317,54 +1400,63 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
           >
             <SectionHeader
               id="production"
-              title="Production & Operations"
+              title={t('organization.profilePresentation.sections.production.label')}
               icon={<Factory size={18} />}
-              badge="Manufacturing"
+              badge={t('organization.profile.options.organizationType.MANUFACTURING.label')}
             />
             {expandedSections.production && (
               <div className="p-5 border-t border-c-border-subtle space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className={labelCls}>Production Archetype</label>
+                    <label className={labelCls}>
+                      {t('organization.profile.fields.productionArchetype')}
+                    </label>
                     <select
                       value={profile.production_archetype}
                       onChange={(e) => update('production_archetype', e.target.value)}
                       className={inputCls}
                     >
-                      <option value="">Select...</option>
+                      <option value="">{t('organization.profile.select')}</option>
                       {PRODUCTION_ARCHETYPES.map((p) => (
                         <option key={p.value} value={p.value}>
-                          {p.label}
+                          {t(
+                            `organization.profile.options.productionArchetype.${p.value}`,
+                            p.label
+                          )}
                         </option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label className={labelCls}>Shift Pattern</label>
+                    <label className={labelCls}>
+                      {t('organization.profile.fields.shiftPattern')}
+                    </label>
                     <select
                       value={profile.shift_pattern}
                       onChange={(e) => update('shift_pattern', e.target.value)}
                       className={inputCls}
                     >
-                      <option value="">Select...</option>
+                      <option value="">{t('organization.profile.select')}</option>
                       {SHIFT_PATTERNS.map((s) => (
                         <option key={s.value} value={s.value}>
-                          {s.label}
+                          {t(`organization.profile.options.shiftPattern.${s.value}`, s.label)}
                         </option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label className={labelCls}>Automation Level</label>
+                    <label className={labelCls}>
+                      {t('organization.profile.fields.automationLevel')}
+                    </label>
                     <select
                       value={profile.automation_level}
                       onChange={(e) => update('automation_level', e.target.value)}
                       className={inputCls}
                     >
-                      <option value="">Select...</option>
+                      <option value="">{t('organization.profile.select')}</option>
                       {AUTOMATION_LEVELS.map((a) => (
                         <option key={a.value} value={a.value}>
-                          {a.label}
+                          {t(`organization.profile.options.automationLevel.${a.value}`, a.label)}
                         </option>
                       ))}
                     </select>
@@ -1386,21 +1478,27 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
                   : 'hidden'
               }
             >
-              <SectionHeader id="operating" title="Operating Model" icon={<Factory size={18} />} />
+              <SectionHeader
+                id="operating"
+                title={t('organization.profilePresentation.sections.operating.label')}
+                icon={<Factory size={18} />}
+              />
               {expandedSections.operating && (
                 <div className="p-5 border-t border-c-border-subtle space-y-4">
                   {showDeliveryModel(orgType) && (
                     <div>
-                      <label className={labelCls}>Delivery Model</label>
+                      <label className={labelCls}>
+                        {t('organization.profile.fields.deliveryModel')}
+                      </label>
                       <select
                         value={profile.delivery_model}
                         onChange={(e) => update('delivery_model', e.target.value)}
                         className={inputCls}
                       >
-                        <option value="">Select...</option>
+                        <option value="">{t('organization.profile.select')}</option>
                         {DELIVERY_MODELS.map((d) => (
                           <option key={d} value={d}>
-                            {d}
+                            {t(`organization.profile.options.deliveryModel.${optionKey(d)}`, d)}
                           </option>
                         ))}
                       </select>
@@ -1409,17 +1507,19 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
                   {showRevenueModel(orgType) && (
                     <div>
                       <label className={labelCls}>
-                        {orgType === 'NONPROFIT' ? 'Funding Model' : 'Revenue / Funding Model'}
+                        {orgType === 'NONPROFIT'
+                          ? t('organization.profile.fields.fundingModel')
+                          : t('organization.profile.fields.revenueFundingModel')}
                       </label>
                       <select
                         value={profile.revenue_model}
                         onChange={(e) => update('revenue_model', e.target.value)}
                         className={inputCls}
                       >
-                        <option value="">Select...</option>
+                        <option value="">{t('organization.profile.select')}</option>
                         {REVENUE_MODELS.map((r) => (
                           <option key={r} value={r}>
-                            {r}
+                            {t(`organization.profile.options.revenueModel.${optionKey(r)}`, r)}
                           </option>
                         ))}
                       </select>
@@ -1427,7 +1527,9 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
                   )}
                   {showCoreSystems(orgType) && (
                     <div>
-                      <label className={labelCls}>Core Systems</label>
+                      <label className={labelCls}>
+                        {t('organization.profile.fields.coreSystems')}
+                      </label>
                       <ChipSelector
                         options={CORE_SYSTEMS_OPTIONS}
                         value={profile.core_systems}
@@ -1449,67 +1551,79 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
               : 'hidden'
           }
         >
-          <SectionHeader id="strategic" title="Strategic Position" icon={<Target size={18} />} />
+          <SectionHeader
+            id="strategic"
+            title={t('organization.profilePresentation.sections.strategic.label')}
+            icon={<Target size={18} />}
+          />
           {expandedSections.strategic && (
             <div className="p-5 border-t border-c-border-subtle space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className={labelCls}>Competitive Position</label>
+                  <label className={labelCls}>
+                    {t('organization.profile.fields.competitivePosition')}
+                  </label>
                   <select
                     value={profile.competitive_position}
                     onChange={(e) => update('competitive_position', e.target.value)}
                     className={inputCls}
                   >
-                    <option value="">Select...</option>
+                    <option value="">{t('organization.profile.select')}</option>
                     {COMPETITIVE_POSITIONS.map((p) => (
                       <option key={p.value} value={p.value}>
-                        {p.label}
+                        {t(`organization.profile.options.competitivePosition.${p.value}`, p.label)}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className={labelCls}>Growth Stage</label>
+                  <label className={labelCls}>{t('organization.profile.fields.growthStage')}</label>
                   <select
                     value={profile.growth_stage}
                     onChange={(e) => update('growth_stage', e.target.value)}
                     className={inputCls}
                   >
-                    <option value="">Select...</option>
+                    <option value="">{t('organization.profile.select')}</option>
                     {GROWTH_STAGES.map((g) => (
                       <option key={g.value} value={g.value}>
-                        {g.label}
+                        {t(`organization.profile.options.growthStage.${g.value}`, g.label)}
                       </option>
                     ))}
                   </select>
                 </div>
               </div>
               <div>
-                <label className={labelCls}>Strategic Priorities</label>
+                <label className={labelCls}>
+                  {t('organization.profile.fields.strategicPriorities')}
+                </label>
                 <CommaInput
                   value={profile.strategic_priorities}
                   onChange={(v) => update('strategic_priorities', v)}
-                  placeholder="e.g., Digital transformation, Cost optimization, Growth"
+                  placeholder={t('organization.profile.placeholders.strategicPriorities')}
                   className={inputCls}
                 />
               </div>
               <div>
-                <label className={labelCls}>Mission Statement</label>
+                <label className={labelCls}>
+                  {t('organization.profile.fields.missionStatement')}
+                </label>
                 <textarea
                   value={profile.mission_statement}
                   onChange={(e) => update('mission_statement', e.target.value)}
                   rows={2}
-                  placeholder="What is your organization's mission?"
+                  placeholder={t('organization.profile.placeholders.missionStatement')}
                   className={inputCls + ' resize-none'}
                 />
               </div>
               <div>
-                <label className={labelCls}>Vision Statement</label>
+                <label className={labelCls}>
+                  {t('organization.profile.fields.visionStatement')}
+                </label>
                 <textarea
                   value={profile.vision_statement}
                   onChange={(e) => update('vision_statement', e.target.value)}
                   rows={2}
-                  placeholder="Where do you see the organization in 3-5 years?"
+                  placeholder={t('organization.profile.placeholders.visionStatement')}
                   className={inputCls + ' resize-none'}
                 />
               </div>
@@ -1526,12 +1640,18 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
               : 'hidden'
           }
         >
-          <SectionHeader id="digital" title="Digital & Technology" icon={<Cpu size={18} />} />
+          <SectionHeader
+            id="digital"
+            title={t('organization.profilePresentation.sections.digital.label')}
+            icon={<Cpu size={18} />}
+          />
           {expandedSections.digital && (
             <div className="p-5 border-t border-c-border-subtle space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className={labelCls}>Digital Maturity (1-7)</label>
+                  <label className={labelCls}>
+                    {t('organization.profile.fields.digitalMaturity')}
+                  </label>
                   <input
                     type="number"
                     min={1}
@@ -1548,32 +1668,36 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
                   />
                 </div>
                 <div>
-                  <label className={labelCls}>Cloud Adoption</label>
+                  <label className={labelCls}>
+                    {t('organization.profile.fields.cloudAdoption')}
+                  </label>
                   <select
                     value={profile.cloud_adoption_level}
                     onChange={(e) => update('cloud_adoption_level', e.target.value)}
                     className={inputCls}
                   >
-                    <option value="">Select...</option>
+                    <option value="">{t('organization.profile.select')}</option>
                     {CLOUD_LEVELS.map((l) => (
                       <option key={l} value={l}>
-                        {l.replace(/_/g, ' ')}
+                        {t(`organization.profile.options.cloudAdoption.${l}`, l.replace(/_/g, ' '))}
                       </option>
                     ))}
                   </select>
                 </div>
               </div>
               <div>
-                <label className={labelCls}>Technology Stack</label>
+                <label className={labelCls}>
+                  {t('organization.profile.fields.technologyStack')}
+                </label>
                 <CommaInput
                   value={profile.technology_stack}
                   onChange={(v) => update('technology_stack', v)}
-                  placeholder="e.g., AWS, React, Python, SAP"
+                  placeholder={t('organization.profile.placeholders.technologyStack')}
                   className={inputCls}
                 />
               </div>
               <div>
-                <label className={labelCls}>Digital Budget (% of IT spend)</label>
+                <label className={labelCls}>{t('organization.profile.fields.digitalBudget')}</label>
                 <input
                   type="number"
                   min={0}
@@ -1601,38 +1725,48 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
               : 'hidden'
           }
         >
-          <SectionHeader id="market" title="Market & Competition" icon={<TrendingUp size={18} />} />
+          <SectionHeader
+            id="market"
+            title={t('organization.profilePresentation.sections.market.label')}
+            icon={<TrendingUp size={18} />}
+          />
           {expandedSections.market && (
             <div className="p-5 border-t border-c-border-subtle space-y-4">
               <div>
-                <label className={labelCls}>Primary Markets</label>
+                <label className={labelCls}>
+                  {t('organization.profile.fields.primaryMarkets')}
+                </label>
                 <CommaInput
                   value={profile.primary_markets}
                   onChange={(v) => update('primary_markets', v)}
-                  placeholder="e.g., Poland, DACH, CEE"
+                  placeholder={t('organization.profile.placeholders.primaryMarkets')}
                   className={inputCls}
                 />
               </div>
               <div>
-                <label className={labelCls}>Customer Segments</label>
+                <label className={labelCls}>
+                  {t('organization.profile.fields.customerSegments')}
+                </label>
                 <CommaInput
                   value={profile.customer_segments}
                   onChange={(v) => update('customer_segments', v)}
-                  placeholder="e.g., B2B Enterprise, SMB, Consumer"
+                  placeholder={t('organization.profile.placeholders.customerSegments')}
                   className={inputCls}
                 />
               </div>
               <div>
-                <label className={labelCls}>Key Competitors</label>
+                <label className={labelCls}>
+                  {t('organization.profile.fields.keyCompetitors')}
+                </label>
                 <CommaInput
                   value={profile.key_competitors}
                   onChange={(v) => update('key_competitors', v)}
-                  placeholder="e.g., Competitor A, Competitor B"
+                  placeholder={t('organization.profile.placeholders.keyCompetitors')}
                   className={inputCls}
                 />
               </div>
               <div>
-                <label className={labelCls}>Market Share (%)</label>
+                <label className={labelCls}>{t('organization.profile.fields.marketShare')}</label>
                 <input
                   type="number"
                   min={0}
@@ -1662,42 +1796,46 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
         >
           <SectionHeader
             id="communication"
-            title="Communication & AI Preferences"
+            title={t('organization.profilePresentation.sections.communication.label')}
             icon={<MessageSquare size={18} />}
           />
           {expandedSections.communication && (
             <div className="p-5 border-t border-c-border-subtle space-y-4">
               <p className="text-xs text-c-text-muted">
-                These settings help Teresa adapt her communication style to match your
-                organization's culture.
+                {t(
+                  'organization.profile.communicationHint',
+                  "These settings help Teresa adapt her communication style to match your organization's culture."
+                )}
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className={labelCls}>Communication Style</label>
+                  <label className={labelCls}>
+                    {t('organization.profile.fields.communicationStyle')}
+                  </label>
                   <select
                     value={profile.communication_style}
                     onChange={(e) => update('communication_style', e.target.value)}
                     className={inputCls}
                   >
-                    <option value="">Select...</option>
+                    <option value="">{t('organization.profile.select')}</option>
                     {COMMUNICATION_STYLES.map((s) => (
                       <option key={s.value} value={s.value}>
-                        {s.label}
+                        {t(`organization.profile.options.communicationStyle.${s.value}`, s.label)}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className={labelCls}>Industry Jargon Level</label>
+                  <label className={labelCls}>{t('organization.profile.fields.jargonLevel')}</label>
                   <select
                     value={profile.industry_jargon_level}
                     onChange={(e) => update('industry_jargon_level', e.target.value)}
                     className={inputCls}
                   >
-                    <option value="">Select...</option>
+                    <option value="">{t('organization.profile.select')}</option>
                     {JARGON_LEVELS.map((j) => (
                       <option key={j.value} value={j.value}>
-                        {j.label}
+                        {t(`organization.profile.options.jargonLevel.${j.value}`, j.label)}
                       </option>
                     ))}
                   </select>
@@ -1716,11 +1854,17 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
               : 'hidden'
           }
         >
-          <SectionHeader id="constraints" title="Constraints & Risk" icon={<Shield size={18} />} />
+          <SectionHeader
+            id="constraints"
+            title={t('organization.profilePresentation.sections.constraints.label')}
+            icon={<Shield size={18} />}
+          />
           {expandedSections.constraints && (
             <div className="p-5 border-t border-c-border-subtle space-y-4">
               <div>
-                <label className={labelCls}>Regulatory Environment</label>
+                <label className={labelCls}>
+                  {t('organization.profile.fields.regulatoryEnvironment')}
+                </label>
                 <ChipSelector
                   options={REGULATIONS}
                   value={profile.regulatory_environment}
@@ -1728,7 +1872,7 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
                 />
               </div>
               <div>
-                <label className={labelCls}>Risk Appetite</label>
+                <label className={labelCls}>{t('organization.profile.fields.riskAppetite')}</label>
                 <div className="flex gap-3">
                   {RISK_APPETITES.map((r) => (
                     <button
@@ -1736,28 +1880,32 @@ export const OrganizationProfileModule: React.FC<{ screen?: ProfileScreen }> = (
                       onClick={() => update('risk_appetite', r.value)}
                       className={`flex-1 p-3 rounded-lg border text-center text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)] ${profile.risk_appetite === r.value ? 'bg-[var(--c-selection)] border-[var(--c-selection-border)] text-[var(--c-text)]' : 'bg-c-bg border-c-border-subtle text-c-text-secondary dark:bg-navy-950 dark:border-navy-700 dark:text-c-text-muted hover:border-[var(--c-border-strong)]'}`}
                     >
-                      {r.label}
+                      {t(`organization.profile.options.riskAppetite.${r.value}`, r.label)}
                     </button>
                   ))}
                 </div>
               </div>
               <div>
-                <label className={labelCls}>Budget Constraints</label>
+                <label className={labelCls}>
+                  {t('organization.profile.fields.budgetConstraints')}
+                </label>
                 <textarea
                   value={profile.budget_constraints}
                   onChange={(e) => update('budget_constraints', e.target.value)}
                   rows={2}
-                  placeholder="e.g., Max 500k EUR/year for digital initiatives"
+                  placeholder={t('organization.profile.placeholders.budgetConstraints')}
                   className={inputCls + ' resize-none'}
                 />
               </div>
               <div>
-                <label className={labelCls}>Timeline Constraints</label>
+                <label className={labelCls}>
+                  {t('organization.profile.fields.timelineConstraints')}
+                </label>
                 <textarea
                   value={profile.timeline_constraints}
                   onChange={(e) => update('timeline_constraints', e.target.value)}
                   rows={2}
-                  placeholder="e.g., DORA compliance by Q1 2027"
+                  placeholder={t('organization.profile.placeholders.timelineConstraints')}
                   className={inputCls + ' resize-none'}
                 />
               </div>

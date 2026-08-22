@@ -27,7 +27,7 @@ An owner-review session may start only when all of the following are true:
 
 | # | Module | Admission before Piotr review | Exact reason / boundary |
 |---:|---|---|---|
-| 1 | Organization | `DO_NOT_REVIEW_YET` | Current rebuild must freeze; profile still has mixed PL/EN chrome. Governed-context EN/PL surface was fixed on `612bb9ab4f`, but the full profile locale contract still needs closure. |
+| 1 | Organization | `DO_NOT_REVIEW_YET` | Current rebuild must freeze. The full Profile and governed-context EN/PL source contracts are now fixed and focused suites pass, but an exact retained-fixture PL/EN browser retest is required before owner judgment. |
 | 2 | Interview | `READY_WITH_HONEST_LIMITATION` | Manager/public/revoked journeys are canonical. Provider scoring is deliberately unavailable and must remain a visible retryable `503`, never a fabricated score or legacy retry. |
 | 3 | Tools | `READY_WITH_HONEST_LIMITATION` | Review the active Dynamic SWOT journey only. Catalog entries marked Coming Soon are roadmap surfaces, not implemented tools. |
 | 4 | Assessment | `READY_WITH_HONEST_LIMITATION` | Canonical owner scope is DRD/Method Core. Other frameworks remain explicitly segregated legacy/roadmap surfaces. |
@@ -68,7 +68,7 @@ unrecorded effective value or a flag that silently changes the data source.
 
 ## Remaining pre-owner actions
 
-1. finish Organization locale parity and freeze Organization/Admin rebuilds;
+1. freeze Organization/Admin rebuilds and perform the exact retained-fixture Organization PL/EN browser retest;
 2. run one clean-session entry/deep-link/console/network smoke for the twelve
    admitted modules on the final frozen candidate;
 3. obtain the two policy decisions before Materials/Audits owner judgment;

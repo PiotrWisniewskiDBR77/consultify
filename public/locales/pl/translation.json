@@ -18,11 +18,13 @@
     "saving": "Zapisywanie...",
     "saveChanges": "Zapisz zmiany",
     "cancel": "Anuluj",
+    "accept": "Akceptuj",
     "approve": "Zatwierdź",
     "reject": "Odrzuć",
     "delete": "Usuń",
     "duplicate": "Duplikuj",
     "edit": "Edytuj",
+    "fix": "Popraw",
     "close": "Zamknij",
     "loading": "Ładowanie",
     "error": "Błąd",
@@ -1699,6 +1701,10 @@
       "fetchFailed": "Nie udało się załadować",
       "createFailed": "Nie udało się utworzyć",
       "saveFailed": "Nie udało się zapisać",
+      "saved": "Profil został zapisany",
+      "readbackFailed": "Żądanie zapisu zakończyło się, ale nie udało się potwierdzić trwałego odczytu profilu.",
+      "completenessBoundary": "Kompletność danych nie oznacza gotowości decyzyjnej.",
+      "reviewReadiness": "Sprawdź gotowość",
       "deleteFailed": "Nie udało się usunąć",
       "updateFailed": "Nie udało się zaktualizować"
     },
@@ -20306,6 +20312,144 @@
         "forbidden": "Nie masz uprawnień do wykonania tej nadzorowanej operacji.",
         "notFound": "Twierdzenie lub migawka już nie istnieje. Odśwież widok i spróbuj ponownie.",
         "conflict": "Stan nadzorowanego kontekstu uległ zmianie. Odśwież widok przed ponowną próbą."
+      }
+    },
+    "profile": {
+      "title": "Profil organizacji",
+      "subtitle": "Zdefiniuj kontekst organizacji wykorzystywany przez analizy wspierane przez AI",
+      "typeHint": "Wybierz typ najlepiej opisujący organizację. Na tej podstawie pokażemy najbardziej trafne pytania.",
+      "communicationHint": "Te ustawienia pomagają Teresie dopasować sposób komunikacji do kultury Twojej organizacji.",
+      "completeness": "Kompletność",
+      "aiGuide": "Przewodnik AI",
+      "usedBy": "Wykorzystywane przez:",
+      "go": "Przejdź",
+      "saveFailed": "Nie udało się zapisać",
+      "select": "Wybierz…",
+      "selectIndustry": "Wybierz branżę",
+      "selectSize": "Wybierz wielkość",
+      "extraction": {
+        "proposalsTitle": "Teresa wyodrębniła z dokumentu następujące pola",
+        "action": "Wyodrębnij z dokumentu",
+        "empty": "Nie udało się wyodrębnić żadnych pól z tego dokumentu",
+        "unavailable": "Wyodrębnianie z dokumentów nie jest jeszcze skonfigurowane na tym serwerze"
+      },
+      "guidance": {
+        "organizationType": { "message": "Zacznij od wyboru typu organizacji — dzięki temu pokażę Ci właściwe pytania.", "downstream": "Wszystkie moduły" },
+        "industry": { "message": "W jakiej branży działa organizacja? Assessment wykorzystuje tę informację do benchmarków i doboru metodyki.", "downstream": "Assessment, analiza konkurencji" },
+        "companySize": { "message": "Jaka jest wielkość firmy? Dzięki temu rekomendacje będą dopasowane do jej skali.", "downstream": "Assessment, planowanie, raporty" },
+        "strategicPriorities": { "message": "Dodaj priorytety strategiczne — AI powiąże z nimi rekomendacje, inicjatywy i raporty.", "downstream": "Deep Research, inicjatywy, raporty" },
+        "mission": { "message": "Misja pomaga AI zachować spójność wszystkich generowanych treści.", "downstream": "Raporty, prezentacje, czat AI" },
+        "technologyStack": { "message": "Dodaj stos technologiczny — znacząco poprawi to rekomendacje Assessment i Narzędzi.", "downstream": "Assessment, Narzędzia, planowanie integracji" },
+        "regulations": { "message": "Wybierz właściwe regulacje — AI nie będzie proponować rozwiązań niezgodnych z wymaganiami.", "downstream": "Assessment, zarządzanie ryzykiem, inicjatywy" },
+        "communicationStyle": { "message": "Ustaw preferowany styl komunikacji — Teresa dopasuje język do kultury organizacji.", "downstream": "Wszystkie interakcje z AI" },
+        "productionType": { "message": "Wybierz typ produkcji — pomoże to dokładniej ocenić gotowość Przemysłu 4.0.", "downstream": "Assessment, rekomendacje Narzędzi" },
+        "completeness": { "message": "Profil jest kompletny w {{completeness}}%. Im więcej kontekstu podasz, tym trafniej AI będzie mogło Ci pomóc.", "downstream": "Wszystkie moduły" }
+      },
+      "readiness": {
+        "label": "Gotowość",
+        "title": "Gotowość modułów",
+        "needs": "brakuje:",
+        "modules": {
+          "assessment": { "label": "Assessment i benchmarking" },
+          "research": { "label": "Deep Research" },
+          "reports": { "label": "Raporty i prezentacje" },
+          "competitive": { "label": "Analiza konkurencji" },
+          "ai_chat": { "label": "Czat AI (Teresa)" }
+        },
+        "fields": {
+          "industry": "branży", "company_size": "wielkości firmy", "strategic_priorities": "priorytetów strategicznych", "name_or_industry": "nazwy lub branży", "key_competitors": "głównych konkurentów", "organization_type": "typu organizacji"
+        }
+      },
+      "validation": {
+        "employeeAboveRange": "Liczba pracowników ({{employeeCount}}) przekracza zakres {{companySize}}. Rozważ zmianę wielkości firmy.",
+        "employeeBelowRange": "Liczba pracowników ({{employeeCount}}) jest niższa niż zakres {{companySize}}. Rozważ zmianę wielkości firmy.",
+        "industryTypeMismatch": "Branża {{industry}} jest nietypowa dla organizacji produkcyjnej. Jeśli wybór jest poprawny, pozostaw go — AI dostosuje rekomendacje.",
+        "foundingYear": "Rok założenia {{foundingYear}} wygląda nietypowo. Sprawdź tę wartość.",
+        "startupEnterprise": "Połączenie etapu Startup z wielkością Duża firma jest nietypowe. Sprawdź te wartości."
+      },
+      "fields": {
+        "industry": "Branża",
+        "subIndustry": "Podbranża",
+        "industryCode": "Kod branżowy",
+        "companySize": "Wielkość firmy",
+        "employeeCount": "Liczba pracowników",
+        "annualRevenue": "Roczny przychód",
+        "foundingYear": "Rok założenia",
+        "headquartersCountry": "Kraj siedziby głównej",
+        "description": "Opis",
+        "productionArchetype": "Typ produkcji",
+        "shiftPattern": "System zmianowy",
+        "automationLevel": "Poziom automatyzacji",
+        "deliveryModel": "Model realizacji",
+        "fundingModel": "Model finansowania",
+        "revenueFundingModel": "Model przychodów / finansowania",
+        "coreSystems": "Główne systemy",
+        "competitivePosition": "Pozycja konkurencyjna",
+        "growthStage": "Etap rozwoju",
+        "strategicPriorities": "Priorytety strategiczne",
+        "missionStatement": "Misja",
+        "visionStatement": "Wizja",
+        "digitalMaturity": "Dojrzałość cyfrowa (1–7)",
+        "cloudAdoption": "Wykorzystanie chmury",
+        "technologyStack": "Stos technologiczny",
+        "digitalBudget": "Budżet cyfrowy (% wydatków IT)",
+        "primaryMarkets": "Główne rynki",
+        "customerSegments": "Segmenty klientów",
+        "keyCompetitors": "Główni konkurenci",
+        "marketShare": "Udział w rynku (%)",
+        "communicationStyle": "Styl komunikacji",
+        "jargonLevel": "Poziom terminologii branżowej",
+        "regulatoryEnvironment": "Otoczenie regulacyjne",
+        "riskAppetite": "Apetyt na ryzyko",
+        "budgetConstraints": "Ograniczenia budżetowe",
+        "timelineConstraints": "Ograniczenia czasowe"
+      },
+      "placeholders": {
+        "subIndustry": "np. części samochodowe, fintech",
+        "industryCode": "np. PKD 25.11.Z, NAICS 5112",
+        "employeeCount": "np. 500",
+        "annualRevenue": "np. 50000000",
+        "foundingYear": "np. 2010",
+        "headquartersCountry": "np. Polska",
+        "description": "Krótki opis organizacji",
+        "strategicPriorities": "np. transformacja cyfrowa, optymalizacja kosztów, wzrost",
+        "missionStatement": "Jaka jest misja Twojej organizacji?",
+        "visionStatement": "Gdzie widzisz organizację za 3–5 lat?",
+        "technologyStack": "np. AWS, React, Python, SAP",
+        "primaryMarkets": "np. Polska, DACH, CEE",
+        "customerSegments": "np. duże firmy B2B, MŚP, konsumenci",
+        "keyCompetitors": "np. konkurent A, konkurent B",
+        "budgetConstraints": "np. maks. 500 tys. EUR rocznie na inicjatywy cyfrowe",
+        "timelineConstraints": "np. zgodność z DORA do I kw. 2027"
+      },
+      "options": {
+        "organizationType": {
+          "MANUFACTURING": { "label": "Produkcja", "hint": "Produkcja, montaż i przemysł procesowy" },
+          "SERVICES": { "label": "Usługi profesjonalne", "hint": "Doradztwo, prawo, księgowość i rekrutacja" },
+          "TECHNOLOGY": { "label": "Technologie", "hint": "Oprogramowanie, SaaS, sprzęt i usługi IT" },
+          "PUBLIC_SECTOR": { "label": "Sektor publiczny", "hint": "Administracja, edukacja i ochrona zdrowia" },
+          "NONPROFIT": { "label": "Organizacja społeczna / NGO", "hint": "Fundacje, stowarzyszenia i przedsiębiorstwa społeczne" },
+          "OTHER": { "label": "Inny typ", "hint": "Handel, nieruchomości, energetyka, transport itd." }
+        },
+        "companySize": { "STARTUP": "Startup (< 50)", "SMB": "MŚP (50–250)", "MID_MARKET": "Firma średnia (250–1000)", "ENTERPRISE": "Duża firma (1000+)" },
+        "productionArchetype": { "DISCRETE": "Produkcja dyskretna", "PROCESS": "Produkcja procesowa", "HYBRID": "Produkcja hybrydowa" },
+        "shiftPattern": { "SINGLE": "Jedna zmiana", "DOUBLE": "Dwie zmiany", "TRIPLE": "Trzy zmiany", "CONTINUOUS": "Praca ciągła (24/7)" },
+        "automationLevel": { "MANUAL": "Praca ręczna", "SEMI_AUTOMATED": "Częściowa automatyzacja", "FULLY_AUTOMATED": "Pełna automatyzacja" },
+        "competitivePosition": { "LEADER": "Lider rynku", "CHALLENGER": "Pretendent", "FOLLOWER": "Naśladowca", "NICHE": "Gracz niszowy" },
+        "growthStage": { "STARTUP": "Startup", "SCALE_UP": "Skalowanie", "MATURE": "Dojrzałość", "TURNAROUND": "Restrukturyzacja" },
+        "cloudAdoption": { "NONE": "Brak", "EXPLORING": "Rozpoznanie", "PARTIAL": "Częściowe wykorzystanie", "CLOUD_FIRST": "Chmura jako pierwszy wybór", "CLOUD_NATIVE": "Rozwiązania chmurowe od podstaw" },
+        "communicationStyle": { "FORMAL": "Formalny", "BUSINESS_CASUAL": "Biznesowy swobodny", "CASUAL": "Swobodny / startupowy", "TECHNICAL": "Techniczny / inżynierski" },
+        "jargonLevel": { "NONE": "Prosty język", "MODERATE": "Umiarkowana terminologia branżowa", "HEAVY": "Zaawansowany żargon branżowy" },
+        "riskAppetite": { "CONSERVATIVE": "Konserwatywny", "MODERATE": "Umiarkowany", "AGGRESSIVE": "Agresywny" },
+        "deliveryModel": {
+          "projects": "Projekty", "products": "Produkty", "managed_services": "Usługi zarządzane", "platform_marketplace": "Platforma / marketplace", "consulting_engagements": "Projekty doradcze", "mixed": "Model mieszany"
+        },
+        "revenueModel": {
+          "subscription_saas": "Subskrypcja / SaaS", "project_based": "Rozliczenie projektowe", "product_sales": "Sprzedaż produktów", "managed_services": "Usługi zarządzane", "licensing": "Licencjonowanie", "grant_funded": "Finansowanie grantowe", "mixed_hybrid": "Model mieszany / hybrydowy"
+        },
+        "industry": {
+          "technology": "Technologie", "financial_services": "Usługi finansowe", "healthcare": "Ochrona zdrowia", "manufacturing": "Produkcja", "industrial": "Przemysł", "consumer": "Dobra konsumenckie", "energy": "Energetyka", "telecommunications": "Telekomunikacja", "real_estate": "Nieruchomości", "transportation_logistics": "Transport i logistyka", "education": "Edukacja", "government": "Administracja publiczna", "retail_e_commerce": "Handel i e-commerce", "media_entertainment": "Media i rozrywka", "agriculture": "Rolnictwo", "construction": "Budownictwo", "hospitality": "Hotelarstwo i gastronomia", "professional_services": "Usługi profesjonalne", "other": "Inna"
+        }
       }
     },
     "sections": {
