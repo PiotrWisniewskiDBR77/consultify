@@ -25,13 +25,13 @@ import {
   POLA_TEKSTOWE_INICJATYWY,
 } from '../utils/decodeHtmlEntities';
 import { OrganizationContextWorkerApi } from './api/organizationContextWorker.api';
+import { SettingsApi } from './api/settings.api';
+import { V8AssessmentApi } from './api/v8/assessment';
+import { V8MyWorkApi } from './api/v8/my-work';
 // Type-only on purpose: `demoSessionAdoption` pulls in the store, and the store
 // pulls in this module. Importing the type keeps the shape shared with zero
 // runtime edge, so no import cycle is created.
 import type { DemoSessionPayload } from './demoSessionAdoption';
-import { SettingsApi } from './api/settings.api';
-import { V8AssessmentApi } from './api/v8/assessment';
-import { V8MyWorkApi } from './api/v8/my-work';
 import { trackFunnelEvent } from './funnelAnalytics';
 import {
   clearPersonalTasksCache,
@@ -10673,14 +10673,16 @@ export const Api = {
     projectId?: string;
     initiativeId?: string;
     analysisType?: string;
+    sourceType?: string;
+    sourceId?: string;
     tags?: string[];
   }): Promise<any> => {
-    const res = await fetchWithRetry(`${API_URL}/economics/analyses`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    });
-    return handleResponse(res, 'Failed to create analysis');
+    const { V8FinanceApi } = await import('./api/v8/finance');
+    const { tags: _legacyIgnoredTags, ...payload } = data;
+    return V8FinanceApi.createDigitizationAnalysis(
+      payload,
+      `digitization-analysis:${data.sourceType || 'manual'}:${data.sourceId || crypto.randomUUID()}`
+    );
   },
 
   /**

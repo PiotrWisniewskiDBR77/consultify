@@ -141,13 +141,16 @@ async function createTargetOutput(
     return { outputId: String(response?.model?.id ?? response?.id ?? '') };
   }
   if (targetType === 'analysis') {
-    const response = await Api.post('/economics/analyses', {
-      name: sourceTitle.slice(0, 255),
-      description: `Converted from MyWork session`,
-      analysisType: 'financial',
-      sourceType: 'tool_session',
-      sourceId: sessionId,
-    });
+    const response = await V8FinanceApi.createDigitizationAnalysis(
+      {
+        name: sourceTitle.slice(0, 255),
+        description: `Converted from MyWork session`,
+        analysisType: 'financial',
+        sourceType: 'tool_session',
+        sourceId: sessionId,
+      },
+      `mywork-analysis:${sessionId}`
+    );
     return { outputId: String(response?.id ?? '') };
   }
   if (targetType === 'valuation') {

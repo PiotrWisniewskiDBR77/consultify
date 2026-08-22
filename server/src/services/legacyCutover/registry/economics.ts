@@ -81,10 +81,10 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'ECO-W01',
       method: 'POST',
       path: /^\/analyses\/?$/,
-      state: 'observed',
-      successor: null,
+      state: 'disabled',
+      successor: '/api/v8/finance/digitization-analyses',
       reason:
-        'Creates a digitization_analyses row (economics.routes.ts:703, INSERT at :722). digitization_analyses is not one of the four legacy tables the identity bridge knows; no proven successor.',
+        'All mounted callers use the tenant-scoped canonical registration command with live Finance-editor authority, immutable receipt, idempotency and source-lineage dedupe. The duplicate unguarded INSERT is retired fail-closed with writer-scoped rollback.',
     },
     {
       writerId: 'ECO-W02',

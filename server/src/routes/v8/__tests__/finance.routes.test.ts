@@ -40,6 +40,7 @@ const mockUpdateBudgetScenarioAdjustments = vi.fn();
 const mockApproveBudgetCommand = vi.fn();
 const mockDiscardBudgetCommand = vi.fn();
 const mockArchiveDigitizationAnalysisCommand = vi.fn();
+const mockRegisterDigitizationAnalysis = vi.fn();
 const mockImportBudgetDocumentCommand = vi.fn();
 const mockLinkBudgetInitiativeCommand = vi.fn();
 const mockUnlinkBudgetInitiativeCommand = vi.fn();
@@ -379,6 +380,18 @@ vi.mock('../../../services/finance/canonical/digitizationAnalysisArchiveCommandS
   archiveDigitizationAnalysisCommand: (...args: unknown[]) =>
     mockArchiveDigitizationAnalysisCommand(...args),
 }));
+vi.mock('../../../services/finance/canonical/digitizationAnalysisRegistrationService.js', () => ({
+  DigitizationAnalysisRegistrationError: class DigitizationAnalysisRegistrationError extends Error {
+    constructor(
+      public code: string,
+      public status: number,
+      message: string
+    ) {
+      super(message);
+    }
+  },
+  registerDigitizationAnalysis: (...args: unknown[]) => mockRegisterDigitizationAnalysis(...args),
+}));
 vi.mock('../../../services/finance/canonical/budgetDocumentImportCommandService.js', () => ({
   BudgetDocumentImportCommandError: class BudgetDocumentImportCommandError extends Error {
     constructor(
@@ -634,6 +647,14 @@ describe('V8 finance read-only routes', () => {
       version: 2,
       archivedBy: UID,
       archivedAt: '2026-08-23T00:00:00.000Z',
+      replay: false,
+    });
+    mockRegisterDigitizationAnalysis.mockResolvedValue({
+      id: 'digitization-analysis-new',
+      name: 'New analysis',
+      status: 'DRAFT',
+      version: 1,
+      receiptId: 'receipt-new',
       replay: false,
     });
     mockListAnalyses.mockResolvedValue([]);
@@ -2263,6 +2284,28 @@ describe('V8 finance read-only routes', () => {
       expectedVersion: 1,
       reason: 'Remove from active workspace',
       idempotencyKey: 'archive-key',
+    });
+  });
+
+  it('POST /api/v8/finance/digitization-analyses binds registration and idempotency', async () => {
+    const app = createApp();
+    const body = {
+      name: 'New analysis',
+      analysisType: 'financial',
+      sourceType: 'tool_session',
+      sourceId: 'session-1',
+    };
+    const response = await request(app)
+      .post('/api/v8/finance/digitization-analyses')
+      .set('Idempotency-Key', 'analysis-register-key')
+      .send(body);
+    expect(response.status).toBe(201);
+    expect(response.body.data).toMatchObject({ id: 'digitization-analysis-new', replay: false });
+    expect(mockRegisterDigitizationAnalysis).toHaveBeenCalledWith({
+      organizationId: ORG,
+      userId: UID,
+      idempotencyKey: 'analysis-register-key',
+      body,
     });
   });
 

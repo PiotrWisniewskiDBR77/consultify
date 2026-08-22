@@ -1834,6 +1834,63 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
     expect(after.rows).toEqual(before.rows);
   });
 
+  it('retires ungoverned digitization-analysis registration (ECO-W01)', async () => {
+    const before = await pool.query<{ n: number }>(
+      `SELECT count(*)::int n FROM digitization_analyses WHERE organization_id=$1`,
+      [orgA]
+    );
+    const response = await request(app)
+      .post('/api/economics/analyses')
+      .set('x-request-id', `${prefix}-analysis-register-blocked`)
+      .send({ name: 'Legacy registration' });
+    expect(response.status).toBe(410);
+    expect(response.body).toMatchObject({
+      code: 'FINANCE_LEGACY_WRITER_DISABLED',
+      writerId: 'ECO-W01',
+      successor: '/api/v8/finance/digitization-analyses',
+    });
+    const after = await pool.query<{ n: number }>(
+      `SELECT count(*)::int n FROM digitization_analyses WHERE organization_id=$1`,
+      [orgA]
+    );
+    expect(after.rows).toEqual(before.rows);
+  });
+
+  it('restores only ECO-W01 through its exact writer-scoped rollback lever', async () => {
+    const previous = process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+    process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = 'ECO-W01';
+    let analysisId = '';
+    try {
+      const response = await request(app)
+        .post('/api/economics/analyses')
+        .set('x-request-id', `${prefix}-analysis-register-rollback`)
+        .send({ name: 'Legacy rollback registration', analysisType: 'financial' });
+      expect(response.status).toBe(201);
+      analysisId = String(response.body.analysis.id);
+      const event = await pool.query(
+        `SELECT writer_id,access_kind,successor_path FROM legacy_cutover_usage_events
+         WHERE organization_id=$1 AND request_id=$2`,
+        [orgA, `${prefix}-analysis-register-rollback`]
+      );
+      expect(event.rows).toEqual([
+        {
+          writer_id: 'ECO-W01',
+          access_kind: 'rollback_writer',
+          successor_path: '/api/v8/finance/digitization-analyses',
+        },
+      ]);
+    } finally {
+      if (previous === undefined) delete process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+      else process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = previous;
+      if (analysisId) {
+        await pool.query(`DELETE FROM digitization_analyses WHERE id=$1 AND organization_id=$2`, [
+          analysisId,
+          orgA,
+        ]);
+      }
+    }
+  });
+
   it('classifies ECO-W11 as canonical Decision ownership with retry-safe source lineage', async () => {
     const analysisId = `${prefix}-decision-source`;
     const key = `${prefix}-decision-key`;

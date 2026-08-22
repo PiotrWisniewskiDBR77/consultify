@@ -74,6 +74,29 @@ export interface V8FinanceAnalysisSummary {
   updatedAt: string;
 }
 
+export interface V8DigitizationAnalysisRegistrationPayload {
+  name: string;
+  description?: string;
+  projectId?: string;
+  initiativeId?: string;
+  analysisType?: string;
+  sourceType?: string;
+  sourceId?: string;
+}
+
+export interface V8DigitizationAnalysisRegistrationResult {
+  id: string;
+  name: string;
+  description: string | null;
+  status: 'DRAFT';
+  projectId: string | null;
+  initiativeId: string | null;
+  analysisType: string;
+  version: 1;
+  receiptId: string;
+  replay: boolean;
+}
+
 export interface V8FinanceModelSummary {
   id: string;
   name: string;
@@ -991,6 +1014,13 @@ export const V8FinanceApi = {
     v8Post<{ success: boolean; result: unknown }>(`/finance/analyses/${analysisId}/run`, {}),
   approveAnalysis: (analysisId: string) =>
     v8Post<{ success: boolean }>(`/finance/analyses/${analysisId}/approve`, {}),
+  createDigitizationAnalysis: (
+    body: V8DigitizationAnalysisRegistrationPayload,
+    idempotencyKey: string
+  ) =>
+    v8Post<V8DigitizationAnalysisRegistrationResult>('/finance/digitization-analyses', body, {
+      extraHeaders: { 'Idempotency-Key': idempotencyKey },
+    }),
   archiveDigitizationAnalysis: (
     analysisId: string,
     body: { expectedVersion: number; reason: string },

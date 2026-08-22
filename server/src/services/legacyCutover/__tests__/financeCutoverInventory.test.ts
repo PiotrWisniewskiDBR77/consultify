@@ -25,8 +25,8 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
       legacyMutationDoors: 51,
       canonicalMutationDoors: 2,
       nonMutationDoors: 6,
-      retiredLegacyMutationDoors: 29,
-      openLegacyMutationDoors: 22,
+      retiredLegacyMutationDoors: 30,
+      openLegacyMutationDoors: 21,
     });
   });
 
@@ -206,5 +206,22 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
     const client = fs.readFileSync(path.resolve(process.cwd(), 'src/services/api.ts'), 'utf8');
     expect(client).toContain('confirmDigitizationAnalysisCandidateHandoff');
     expect(client).not.toContain('`${API_URL}/economics/analyses/${analysisId}/create-initiative`');
+  });
+
+  it('routes all mounted digitization-analysis creation callers through canonical registration', () => {
+    for (const file of [
+      'src/services/conversionService.ts',
+      'src/components/Economics/InitiativeFinancialIntegration.tsx',
+      'src/services/api.ts',
+    ]) {
+      const source = fs.readFileSync(path.resolve(process.cwd(), file), 'utf8');
+      expect(source).toContain('createDigitizationAnalysis');
+      expect(source).not.toContain("Api.post('/economics/analyses'");
+      expect(source).not.toContain('`${API_URL}/economics/analyses`,');
+    }
+    expect(ECONOMICS_CUTOVER.writers.find((rule) => rule.writerId === 'ECO-W01')).toMatchObject({
+      state: 'disabled',
+      successor: '/api/v8/finance/digitization-analyses',
+    });
   });
 });

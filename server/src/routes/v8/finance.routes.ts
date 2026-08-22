@@ -37,10 +37,6 @@ import {
   importBudgetDocumentCommand,
 } from '../../services/finance/canonical/budgetDocumentImportCommandService.js';
 import {
-  archiveDigitizationAnalysisCommand,
-  DigitizationAnalysisArchiveError,
-} from '../../services/finance/canonical/digitizationAnalysisArchiveCommandService.js';
-import {
   BudgetInitiativeLinkCommandError,
   linkBudgetInitiativeCommand,
 } from '../../services/finance/canonical/budgetInitiativeLinkCommandService.js';
@@ -63,6 +59,14 @@ import {
   BudgetRegistrationError,
   registerBudget,
 } from '../../services/finance/canonical/budgetRegistrationService.js';
+import {
+  archiveDigitizationAnalysisCommand,
+  DigitizationAnalysisArchiveError,
+} from '../../services/finance/canonical/digitizationAnalysisArchiveCommandService.js';
+import {
+  DigitizationAnalysisRegistrationError,
+  registerDigitizationAnalysis,
+} from '../../services/finance/canonical/digitizationAnalysisRegistrationService.js';
 import {
   FinanceSettingsCommandError,
   readCanonicalFinanceSettings,
@@ -372,6 +376,28 @@ router.post(
           error: error.message,
           ...(error.details || {}),
         });
+      }
+      throw error;
+    }
+  })
+);
+
+router.post(
+  '/digitization-analyses',
+  requireFinanceEditorMembership,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    try {
+      const result = await registerDigitizationAnalysis({
+        organizationId,
+        userId,
+        idempotencyKey: String(req.header('idempotency-key') || ''),
+        body: req.body,
+      });
+      return res.status(result.replay ? 200 : 201).json({ data: result });
+    } catch (error) {
+      if (error instanceof DigitizationAnalysisRegistrationError) {
+        return res.status(error.status).json({ code: error.code, error: error.message });
       }
       throw error;
     }

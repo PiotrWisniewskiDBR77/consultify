@@ -22,6 +22,7 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '../../services/api';
+import { V8FinanceApi } from '../../services/api/v8/finance';
 import { LoadingState } from '../ui/primitives';
 
 interface LinkedAnalysis {
@@ -114,16 +115,17 @@ export const InitiativeFinancialIntegration: React.FC<InitiativeFinancialIntegra
     setIsCreating(true);
     try {
       // Create new analysis with initiative data pre-filled
-      const newAnalysis = await Api.createDigitizationAnalysis({
-        name: `Analiza ekonomiczna: ${initiative.name}`,
-        description: `Analiza ekonomiczna dla initiative: ${initiative.name}`,
-        projectId: initiative.id,
-        initiativeId: initiative.id,
-        analysisType: 'financial',
-      });
-
-      // Link to initiative
-      await Api.linkAnalysisToInitiative(newAnalysis.id, initiative.id);
+      const newAnalysis = await V8FinanceApi.createDigitizationAnalysis(
+        {
+          name: `Analiza ekonomiczna: ${initiative.name}`,
+          description: `Analiza ekonomiczna dla initiative: ${initiative.name}`,
+          initiativeId: initiative.id,
+          analysisType: 'financial',
+          sourceType: 'initiative',
+          sourceId: initiative.id,
+        },
+        `initiative-analysis:${initiative.id}`
+      );
 
       // Pre-fill financial data if available
       if (initiative.costCapex || initiative.costOpex || initiative.annualBenefit) {
