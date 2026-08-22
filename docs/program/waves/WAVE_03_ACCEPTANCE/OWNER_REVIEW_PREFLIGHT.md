@@ -35,8 +35,8 @@ An owner-review session may start only when all of the following are true:
 | 6 | Execution | `READY_WITH_HONEST_LIMITATION` | Canonical Case/initiative spine is reviewable. Work, allocation, report and intervention collections are fixture-empty; no generic legacy status writer is allowed. |
 | 7 | My Work / Agent | `READY_WITH_HONEST_LIMITATION` | Decision, task, plan and materialization receipt are populated. Notebook, conversion and mind-map items explicitly marked Coming Soon are outside the current acceptance slice. |
 | 8 | Meetings | `READY_WITH_HONEST_LIMITATION` | Pending/rejected/materialized note journeys are populated. Capture, transcription, media and live provider features remain OFF; participant-name presentation remains open. |
-| 9 | Results | `TECHNICAL_REPLAY_REQUIRED` | Retained KPI/ROI/OKR fixture is valid. Runtime now pins `VITE_WAVE3_RESULTS_OWNER_REVIEW=true`, eliminating dependence on URL/localStorage, but a post-change exact-runtime cold replay is required before Piotr. |
-| 10 | Finance | `TECHNICAL_REPLAY_REQUIRED` | Retained exact-six chain is valid. Runtime now pins `VITE_WAVE3_FINANCE_OWNER_REVIEW=true`, making canonical-only lists and all five workspaces deterministic; post-change exact-runtime replay is required. |
+| 9 | Results | `READY_WITH_HONEST_LIMITATION` | Retained KPI/ROI/OKR fixture is valid. Exact clean runtime `0c0d79f001` injected `VITE_WAVE3_RESULTS_OWNER_REVIEW=true`; the served transformed module and runtime manifest independently contained that exact value. Authenticated KPI/ROI/OKR product judgment remains Piotr's review. |
+| 10 | Finance | `READY_WITH_HONEST_LIMITATION` | Retained exact-six chain is valid. Exact clean runtime `0c0d79f001` injected `VITE_WAVE3_FINANCE_OWNER_REVIEW=true`; the served transformed module and runtime manifest independently contained that exact value. Authenticated five-workspace product judgment remains Piotr's review. |
 | 11 | Materials | `OWNER_POLICY_DECISION_FIRST` | DOC/PPT/XLSX reads are technical-green. Native export, sharing, external providers and content-rights scope must be agreed before those controls are judged. |
 | 12 | Audits | `OWNER_POLICY_DECISION_FIRST` | Internal unlicensed pack/program journey is technical-green. Named external standards/providers are excluded until policy approval. |
 | 13 | Chat | `READY_WITH_HONEST_LIMITATION` | Sourced proposal, decision, materialization and cold receipt are populated. Live provider and MEMBER decision policy remain outside the current review. |
@@ -46,8 +46,8 @@ An owner-review session may start only when all of the following are true:
 
 Current admission totals:
 
-- `READY_WITH_HONEST_LIMITATION`: 10
-- `TECHNICAL_REPLAY_REQUIRED`: 2
+- `READY_WITH_HONEST_LIMITATION`: 12
+- `TECHNICAL_REPLAY_REQUIRED`: 0
 - `OWNER_POLICY_DECISION_FIRST`: 2
 - `DO_NOT_REVIEW_YET`: 2
 
@@ -69,12 +69,8 @@ unrecorded effective value or a flag that silently changes the data source.
 ## Remaining pre-owner actions
 
 1. finish Organization locale parity and freeze Organization/Admin rebuilds;
-2. run exact-runtime cold replays for Results and Finance with the new
-   fixture-bound flag injection;
-3. record the effective client flag profile in each runtime manifest;
-4. run one clean-session entry/deep-link/console/network smoke for the ten
+2. run one clean-session entry/deep-link/console/network smoke for the twelve
    admitted modules on the final frozen candidate;
-5. obtain the two policy decisions before Materials/Audits owner judgment;
-6. only then begin G08 in the guided sequence and register every observation
+3. obtain the two policy decisions before Materials/Audits owner judgment;
+4. only then begin G08 in the guided sequence and register every observation
    against the exact candidate.
-
