@@ -139,10 +139,11 @@
   },
   "verdict": "PARTIAL",
   "openBlockers": [
-    "Mounted product journeys must still prove that current Interview, DRD and SWOT producer commands create their immutable source receipts before the exact-current four-source certification boundary.",
+    "One same-database invocation must still join each current Organization, Interview, DRD and SWOT producer command to its downstream Candidate-to-PIR certification identity; the producer and downstream proofs currently pass as adjacent, independently qualified boundaries.",
     "Deployed desktop and mobile journey and rollback rehearsal are not authorized or verified."
   ],
   "resolvedBlockers": [
+    "Exact-current mounted producer commands for Organization, Interview, DRD and SWOT now pass together on fresh real PostgreSQL: 4/4 files and 28/28 tests, including frozen-source lineage, cold replay, tenant denial, concurrency exactly-once, immutable receipts and injected rollback.",
     "A single exact-current real-PostgreSQL suite now carries one APPROVED SWOT identity through candidate, Initiative, Execution, Results Actual, Finance reconciliation and PIR, with fail-closed tenant and authority controls.",
     "Commit d6020571a8 is an ancestor of canonical 81123eb305 and its 12 production/test paths are byte-identical at that canonical SHA. Its fresh-PostgreSQL source-adapter assertions passed 4/4 and its parameterized four-source downstream matrix passed 6/6 for Organization, Interview, DRD and SWOT, including cold replay, foreign-tenant denial, immutable correlation receipts and stable candidate-to-PIR identities.",
     "The former SYNTHETIC_TEST_ONLY visibility-policy blocker is resolved in the exact-current suite: the fixture publishes the pinned governed ROI visibility policy through the production command, rejects foreign-tenant authority and exercises that policy in mounted signed reads."
@@ -294,6 +295,25 @@
     "verdict": "PARTIAL",
     "remainingBoundary": [
       "This matrix begins at persisted source receipts; mounted current Interview, DRD and SWOT producer-command journeys into those receipts remain to be replayed on the same candidate.",
+      "Deployed desktop/mobile acceptance and rollback rehearsal remain NOT VERIFIED.",
+      "Production release remains NOT AUTHORIZED."
+    ]
+  },
+  "wave3FourProducerCommandRequalification20260822": {
+    "testedProductSha": "ac70206ce910ffedcf3699aec450799df545b744",
+    "reconciliationSha": "6ad4ff592c",
+    "relationship": "The reconciliation commit changes only the SWOT real-PostgreSQL harness so it exercises the already-current frozen-output contract; Organization, Interview, DRD and production service paths are unchanged from the tested product SHA.",
+    "scope": "Exact-current producer-command requalification for governed Organization snapshot, Interview insight, accepted DRD output and approved frozen SWOT output into canonical Candidate receipts.",
+    "schema": "Fresh 817 migrations on owned disposable pgvector PostgreSQL 16 database int_bvp_flow_producers_ac70.",
+    "command": "DATABASE_URL=<owned-disposable-pgvector16> DB_TYPE=postgres NODE_ENV=test RUN_DB_TESTS=1 MOCK_DB=false FLOW_ALLOW_IMMUTABLE_FIXTURE_CLEANUP=1 FLOW_DISPOSABLE_DB_PREFIX=int_bvp_ INT_BVP_ALLOW_IMMUTABLE_FIXTURE_CLEANUP=1 INT_BVP_DISPOSABLE_DB_PREFIX=int_bvp_ npx vitest run tests/integration/flow-transform-source-adapters.realdb.test.ts tests/integration/flow-transform-drd-source-adapter.realdb.test.ts server/src/services/interviewCandidate/__tests__/interviewCandidateExactlyOnce.pg.test.ts tests/integration/tls-007-swot-candidate-handoff.realdb.test.ts --retry=0 --no-file-parallelism --maxWorkers=1",
+    "result": "4/4 files; 28/28 tests passed; 0 skipped; 0 failures; no retry; sequential execution.",
+    "proved": "Each current producer creates or reopens one canonical Candidate identity from its governed persisted source. The matrix covers cold replay, tenant denial, eight-way concurrency exactly-once, immutable correlation receipts, stale or changed source rejection, approved frozen SWOT content rather than client-supplied copy, and injected post-Candidate failure with transaction rollback.",
+    "static": "Focused ESLint passed and root TypeScript type-check passed.",
+    "databaseReadback": "schema_migrations 817; disabled triggers 0; advisory locks 0.",
+    "cleanup": "The owned disposable container consultify-flow-producers-2-ac70 was removed and localhost port 35584 was released. No Railway environment or persistent application database was mutated.",
+    "verdict": "PARTIAL",
+    "remainingBoundary": [
+      "The four producer commands and four-source Candidate-to-PIR certification pass as adjacent boundaries, but have not yet been joined in one same-database producer-to-PIR invocation.",
       "Deployed desktop/mobile acceptance and rollback rehearsal remain NOT VERIFIED.",
       "Production release remains NOT AUTHORIZED."
     ]
