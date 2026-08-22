@@ -40,6 +40,7 @@ const mockUpdateBudgetScenarioAdjustments = vi.fn();
 const mockApproveBudgetCommand = vi.fn();
 const mockDiscardBudgetCommand = vi.fn();
 const mockArchiveDigitizationAnalysisCommand = vi.fn();
+const mockDuplicateDigitizationAnalysisCommand = vi.fn();
 const mockRegisterDigitizationAnalysis = vi.fn();
 const mockUpdateDigitizationAnalysisCommand = vi.fn();
 const mockLinkDigitizationAnalysisInitiativeCommand = vi.fn();
@@ -385,6 +386,14 @@ vi.mock('../../../services/finance/canonical/digitizationAnalysisArchiveCommandS
   archiveDigitizationAnalysisCommand: (...args: unknown[]) =>
     mockArchiveDigitizationAnalysisCommand(...args),
 }));
+vi.mock(
+  '../../../services/finance/canonical/digitizationAnalysisDuplicateCommandService.js',
+  () => ({
+    DigitizationAnalysisDuplicateError: class DigitizationAnalysisDuplicateError extends Error {},
+    duplicateDigitizationAnalysisCommand: (...args: unknown[]) =>
+      mockDuplicateDigitizationAnalysisCommand(...args),
+  })
+);
 vi.mock('../../../services/finance/canonical/digitizationAnalysisRegistrationService.js', () => ({
   DigitizationAnalysisRegistrationError: class DigitizationAnalysisRegistrationError extends Error {
     constructor(
@@ -683,6 +692,16 @@ describe('V8 finance read-only routes', () => {
       version: 2,
       archivedBy: UID,
       archivedAt: '2026-08-23T00:00:00.000Z',
+      replay: false,
+    });
+    mockDuplicateDigitizationAnalysisCommand.mockResolvedValue({
+      sourceAnalysisId: 'digitization-analysis-1',
+      analysisId: 'digitization-analysis-copy',
+      status: 'DRAFT',
+      version: 1,
+      axisScoreCount: 36,
+      financialsCopied: true,
+      scenarioCount: 3,
       replay: false,
     });
     mockRegisterDigitizationAnalysis.mockResolvedValue({
@@ -2320,6 +2339,26 @@ describe('V8 finance read-only routes', () => {
       expectedVersion: 1,
       reason: 'Remove from active workspace',
       idempotencyKey: 'archive-key',
+    });
+  });
+
+  it('POST /api/v8/finance/digitization-analyses/:id/duplicate binds source CAS and identity', async () => {
+    const response = await request(createApp())
+      .post('/api/v8/finance/digitization-analyses/digitization-analysis-1/duplicate')
+      .set('Idempotency-Key', 'duplicate-key')
+      .send({ expectedSourceVersion: 4, name: 'Independent draft' });
+    expect(response.status).toBe(201);
+    expect(response.body.data).toMatchObject({
+      analysisId: 'digitization-analysis-copy',
+      status: 'DRAFT',
+    });
+    expect(mockDuplicateDigitizationAnalysisCommand).toHaveBeenCalledWith({
+      organizationId: ORG,
+      userId: UID,
+      sourceAnalysisId: 'digitization-analysis-1',
+      idempotencyKey: 'duplicate-key',
+      expectedSourceVersion: 4,
+      name: 'Independent draft',
     });
   });
 

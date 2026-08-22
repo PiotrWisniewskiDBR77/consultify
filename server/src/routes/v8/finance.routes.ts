@@ -64,6 +64,10 @@ import {
   DigitizationAnalysisArchiveError,
 } from '../../services/finance/canonical/digitizationAnalysisArchiveCommandService.js';
 import {
+  DigitizationAnalysisDuplicateError,
+  duplicateDigitizationAnalysisCommand,
+} from '../../services/finance/canonical/digitizationAnalysisDuplicateCommandService.js';
+import {
   DigitizationAnalysisFinancialsError,
   persistDigitizationAnalysisFinancialsCommand,
 } from '../../services/finance/canonical/digitizationAnalysisFinancialsCommandService.js';
@@ -398,6 +402,35 @@ router.post(
           ...(error.details || {}),
         });
       }
+      throw error;
+    }
+  })
+);
+
+router.post(
+  '/digitization-analyses/:analysisId/duplicate',
+  requireFinanceEditorMembership,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const body =
+      req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
+    if (Object.keys(body).some((key) => !['expectedSourceVersion', 'name'].includes(key)))
+      return res.status(400).json({ code: 'INVALID_BODY', error: 'Unknown duplicate field' });
+    try {
+      const result = await duplicateDigitizationAnalysisCommand({
+        organizationId,
+        userId,
+        sourceAnalysisId: String(req.params.analysisId || ''),
+        idempotencyKey: String(req.header('idempotency-key') || ''),
+        expectedSourceVersion: Number(body.expectedSourceVersion),
+        name: typeof body.name === 'string' ? body.name : undefined,
+      });
+      return res.status(result.replay ? 200 : 201).json({ data: result });
+    } catch (error) {
+      if (error instanceof DigitizationAnalysisDuplicateError)
+        return res
+          .status(error.status)
+          .json({ code: error.code, error: error.message, ...(error.details || {}) });
       throw error;
     }
   })

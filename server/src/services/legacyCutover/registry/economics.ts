@@ -192,10 +192,10 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'ECO-W13',
       method: 'POST',
       path: /^\/analyses\/[^/]+\/duplicate\/?$/,
-      state: 'observed',
-      successor: null,
+      state: 'disabled',
+      successor: '/api/v8/finance/digitization-analyses/:analysisId/duplicate',
       reason:
-        'Inserts a copy of a digitization_analyses row (economics.routes.ts:2192, INSERT at :2220). No proven successor.',
+        'The compatibility client uses an idempotent tenant-scoped duplicate command. It copies assessment scores and planning financials/scenarios into a fresh DRAFT while deliberately resetting Initiative, Actual and governance history; the header-only legacy writer is retired fail-closed.',
     },
     {
       writerId: 'ECO-W14',

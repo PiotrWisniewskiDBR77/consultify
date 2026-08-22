@@ -10738,11 +10738,18 @@ export const Api = {
    * Duplicate digitization analysis
    */
   duplicateDigitizationAnalysis: async (id: string, name?: string): Promise<any> => {
-    const res = await fetchWithRetry(`${API_URL}/economics/analyses/${id}/duplicate`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify({ name }),
-    });
+    const source = await Api.getDigitizationAnalysis(id);
+    const res = await fetchWithRetry(
+      `${API_URL}/v8/finance/digitization-analyses/${id}/duplicate`,
+      {
+        method: 'POST',
+        headers: {
+          ...getHeaders(),
+          'Idempotency-Key': `digitization-analysis-duplicate:${id}:${crypto.randomUUID()}`,
+        },
+        body: JSON.stringify({ name, expectedSourceVersion: Number(source.version || 1) }),
+      }
+    );
     return handleResponse(res, 'Failed to duplicate analysis');
   },
 

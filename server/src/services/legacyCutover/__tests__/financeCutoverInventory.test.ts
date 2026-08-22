@@ -25,8 +25,8 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
       legacyMutationDoors: 51,
       canonicalMutationDoors: 2,
       nonMutationDoors: 6,
-      retiredLegacyMutationDoors: 36,
-      openLegacyMutationDoors: 15,
+      retiredLegacyMutationDoors: 37,
+      openLegacyMutationDoors: 14,
     });
   });
 
@@ -283,6 +283,16 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
     expect(ECONOMICS_CUTOVER.writers.find((rule) => rule.writerId === 'ECO-W07')).toMatchObject({
       state: 'disabled',
       successor: '/api/v8/finance/digitization-analyses/:analysisId/planned-benefits',
+    });
+  });
+
+  it('routes analysis duplication through the governed full-draft clone', () => {
+    const api = fs.readFileSync(path.resolve(process.cwd(), 'src/services/api.ts'), 'utf8');
+    expect(api).toContain('/v8/finance/digitization-analyses/${id}/duplicate');
+    expect(api).not.toContain('`${API_URL}/economics/analyses/${id}/duplicate`');
+    expect(ECONOMICS_CUTOVER.writers.find((rule) => rule.writerId === 'ECO-W13')).toMatchObject({
+      state: 'disabled',
+      successor: '/api/v8/finance/digitization-analyses/:analysisId/duplicate',
     });
   });
 });

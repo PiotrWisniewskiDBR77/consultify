@@ -826,6 +826,7 @@ router.get(
         importDate: row.import_date,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
+        version: Number(row.command_version || 1),
       });
     } catch (error: any) {
       logger.error('[Economics] Error fetching analysis:', error);
