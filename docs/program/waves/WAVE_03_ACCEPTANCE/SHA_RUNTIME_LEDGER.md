@@ -26,6 +26,18 @@
   `/private/tmp/consultify-wave3-runtime-manifest-finance-checkpoint-20260822.json`.
   Owned runtime stopped, ports free, DB preserved. Authenticated browser
   replay on this checkpoint remains part of G08/G09 and G18, not implied here.
+- Results current-checkpoint technical mount: clean checkpoint
+  `12ef2e236af080c4aa4166e08ca902eb1c112716`, server/client `4112/4113`,
+  retained DB `consultify_w3_results_owner_final_20260821_c`, `817`
+  migrations, FINAL marker and client/server SHA PASS. Real OWNER canonical
+  vNext reads returned one active KPI, one ROI case with current Actual
+  snapshot, one company OKR set, one active program and one review cycle. The
+  explicit owner-review profile is the frontend route to these registries;
+  empty old-cockpit `/api/v8/results/*` reads were not counted as fixture
+  success. Runtime manifest:
+  `/private/tmp/consultify-wave3-runtime-manifest-results-checkpoint-20260822.json`.
+  Owned runtime stopped, ports free, DB preserved. Current-checkpoint browser
+  replay remains part of G08/G09 and G18.
 
 Settings latest exact entry (supersedes the older module-15 row): `3d61730fd8ad18f19cf9967cb5513697659003cc` / `536483a24363a2b7a66a934be087ace9ac3d9e94b0745ad604ba9dd31ca06246`; server `4102`, client `4103`; retained DB `consultify_w3_settings_owner_final_20260822`; fixture `/private/tmp/consultify-w3-settings-owner-final-v3-20260822.json`; runtime `/private/tmp/consultify-wave3-runtime-manifest-settings-ui-v3-20260822.json`; `817`; real OWNER; bypasses OFF; cold/reload PASS; runtime stopped and DB preserved.
 
