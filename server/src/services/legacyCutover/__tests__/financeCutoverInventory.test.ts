@@ -1,10 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import {
-  summarizeLegacyCutoverInventory,
   type LegacyCutoverDomainConfig,
+  summarizeLegacyCutoverInventory,
 } from '../legacyCutoverKernel.js';
 import { FINANCE_CUTOVER, FINANCE_MODELING_CUTOVER } from '../registry.js';
 import { ECONOMICS_CUTOVER } from '../registry/economics.js';
@@ -24,8 +25,8 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
       legacyMutationDoors: 52,
       canonicalMutationDoors: 1,
       nonMutationDoors: 6,
-      retiredLegacyMutationDoors: 26,
-      openLegacyMutationDoors: 26,
+      retiredLegacyMutationDoors: 27,
+      openLegacyMutationDoors: 25,
     });
   });
 
@@ -169,5 +170,15 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
     );
     expect(source).toContain('V8FinanceApi.discardBudget');
     expect(source).not.toMatch(/Api\.delete\([^\n]*\/api\/economics\/budgets/);
+  });
+
+  it('routes the mounted Finance settings caller through canonical CAS without a legacy fallback', () => {
+    const source = fs.readFileSync(
+      path.resolve(process.cwd(), 'src/components/settings/OrganizationSettings.tsx'),
+      'utf8'
+    );
+    expect(source).toContain('V8FinanceApi.getSettings');
+    expect(source).toContain('V8FinanceApi.updateSettings');
+    expect(source).not.toContain("Api.put('/api/economics/finance-settings'");
   });
 });

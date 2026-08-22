@@ -1,5 +1,5 @@
-import { v8Delete, v8Get, v8Post, v8PostMultipart, v8Put } from './client';
 import { fetchWithRetry, getHeaders, handleResponse } from '../baseClient';
+import { v8Delete, v8Get, v8Post, v8PostMultipart, v8Put } from './client';
 
 async function discardBudgetRequest<T>(
   budgetId: string,
@@ -189,6 +189,19 @@ export interface V8FinanceBudgetRegistrationPayload {
   currency: string;
   sourceKind: 'manual' | 'tool_session';
   sourceToolSessionId?: string;
+}
+
+export interface V8FinanceSettingsState {
+  defaultWacc: number;
+  defaultCurrency: string;
+  defaultHorizonYears: number;
+  version: number;
+}
+
+export interface V8FinanceSettingsCommandResult {
+  state: V8FinanceSettingsState;
+  receiptId: string;
+  idempotentReplay: boolean;
 }
 
 export interface V8FinanceBudgetRegistrationResult {
@@ -715,6 +728,17 @@ export type V8FinanceAnalysisUpdatePayload = Partial<
 
 export const V8FinanceApi = {
   getDashboard: () => v8Get<{ dashboard: V8FinanceDashboard }>('/finance/dashboard'),
+  getSettings: () => v8Get<V8FinanceSettingsState>('/finance/settings'),
+  updateSettings: (
+    settings: Omit<V8FinanceSettingsState, 'version'>,
+    expectedVersion: number,
+    idempotencyKey: string
+  ) =>
+    v8Put<V8FinanceSettingsCommandResult>(
+      '/finance/settings',
+      { settings, expectedVersion },
+      { extraHeaders: { 'Idempotency-Key': idempotencyKey } }
+    ),
   getModels: () => v8Get<{ models: V8FinanceModelSummary[]; count: number }>('/finance/models'),
   createModel: (body: V8FinanceModelCreatePayload) =>
     v8Post<{ model: V8FinanceModelDetail }>('/finance/models', body),

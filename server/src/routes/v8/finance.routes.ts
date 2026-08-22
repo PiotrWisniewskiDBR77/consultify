@@ -5,13 +5,13 @@
  * @module routes/v8/finance.routes
  */
 
+import crypto from 'crypto';
+import ExcelJS from 'exceljs';
 import type { Response } from 'express';
 import { Router } from 'express';
-import crypto from 'crypto';
 import fs from 'fs/promises';
-import path from 'path';
-import ExcelJS from 'exceljs';
 import JSZip from 'jszip';
+import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
@@ -20,21 +20,63 @@ import {
   sniffFileSignature,
   upload,
 } from '../../middleware/fileUpload.middleware.js';
-import { extractTextFromBuffer as extractDocumentTextFromBuffer } from '../../services/documentTextExtractor.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import { listBudgets } from '../../services/budgetingService.js';
 import { searchStatementDocumentIntelligence } from '../../services/documentIntelligenceService.js';
-import { ensureCanonicalRegistryInDatabase } from '../../services/financeCanonicalRegistrySyncService.js';
-import { financeLegacyCutoverGuard } from '../../services/financeLegacyCutover.js';
+import { extractTextFromBuffer as extractDocumentTextFromBuffer } from '../../services/documentTextExtractor.js';
 import {
-  requireActiveMembership,
-  requireFinanceEditorMembership,
-} from '../../services/legacyCutover/requireActiveMembership.js';
+  approveBudgetCommand,
+  BudgetApprovalCommandError,
+} from '../../services/finance/canonical/budgetApprovalCommandService.js';
+import {
+  BudgetDiscardCommandError,
+  discardBudgetCommand,
+} from '../../services/finance/canonical/budgetDiscardCommandService.js';
+import {
+  BudgetDocumentImportCommandError,
+  importBudgetDocumentCommand,
+} from '../../services/finance/canonical/budgetDocumentImportCommandService.js';
+import {
+  BudgetInitiativeLinkCommandError,
+  linkBudgetInitiativeCommand,
+} from '../../services/finance/canonical/budgetInitiativeLinkCommandService.js';
+import {
+  BudgetInitiativeUnlinkCommandError,
+  unlinkBudgetInitiativeCommand,
+} from '../../services/finance/canonical/budgetInitiativeUnlinkCommandService.js';
+import {
+  applyBudgetLineCommand,
+  BudgetLineCommandError,
+  type BudgetLinePatch,
+} from '../../services/finance/canonical/budgetLineCommandService.js';
+import {
+  BudgetProjectionCommandError,
+  projectBudgetScenario,
+  updateBudgetScenarioAdjustments,
+} from '../../services/finance/canonical/budgetProjectionCommandService.js';
+import {
+  type BudgetGranularity,
+  BudgetRegistrationError,
+  registerBudget,
+} from '../../services/finance/canonical/budgetRegistrationService.js';
+import {
+  FinanceSettingsCommandError,
+  readCanonicalFinanceSettings,
+  updateCanonicalFinanceSettings,
+} from '../../services/finance/canonical/financeSettingsCommandService.js';
+import { confirmGovernedStatement } from '../../services/finance/canonical/statementGovernedConfirmationService.js';
+import { recordManualMappingDecision } from '../../services/finance/canonical/statementManualMappingDecisionService.js';
+import {
+  readStatementSourceReceipt,
+  StatementGovernanceError,
+} from '../../services/finance/canonical/statementSourceReceiptService.js';
+import { ensureCanonicalRegistryInDatabase } from '../../services/financeCanonicalRegistrySyncService.js';
 import {
   getFinanceTraceId,
   logFinanceError,
   logFinanceEvent,
 } from '../../services/financeDiagnosticsService.js';
+import { financeLegacyCutoverGuard } from '../../services/financeLegacyCutover.js';
 import {
   assessCoverage,
   classifyMappingTier,
@@ -88,6 +130,7 @@ import type { DetectionResult } from '../../services/financialStatementService.j
 import {
   appendCfoDerivedMappingSuggestions,
   autoMapLines,
+  backfillStatementValueSourcePages,
   classifyStatementDocument,
   cleanupUnpersistedUpload,
   confirmStatement as confirmFinancialStatement,
@@ -97,7 +140,6 @@ import {
   evaluateStatementReadiness,
   extractFinancialLines,
   failIdempotentUpload,
-  backfillStatementValueSourcePages,
   finalizeIdempotentUpload,
   getIdempotencyKey,
   getLatestStatementIngestRun,
@@ -128,13 +170,10 @@ import {
   withStatementUploadIdempotencyLock,
 } from '../../services/financialStatementService.js';
 import { saveStatementValuesFlow } from '../../services/financialStatementValueWriteService.js';
-import { stageSelectedStatementSections } from '../../services/statementMultiSectionImportService.js';
-import { confirmGovernedStatement } from '../../services/finance/canonical/statementGovernedConfirmationService.js';
-import { recordManualMappingDecision } from '../../services/finance/canonical/statementManualMappingDecisionService.js';
 import {
-  readStatementSourceReceipt,
-  StatementGovernanceError,
-} from '../../services/finance/canonical/statementSourceReceiptService.js';
+  requireActiveMembership,
+  requireFinanceEditorMembership,
+} from '../../services/legacyCutover/requireActiveMembership.js';
 import {
   applyLlmProposals,
   applySecondPassProposals,
@@ -148,43 +187,9 @@ import {
 } from '../../services/openAIFinancialExtractionService.js';
 import PDFParserService from '../../services/pdfParserService.js';
 import { computeRatios } from '../../services/ratioAnalysisService.js';
+import { stageSelectedStatementSections } from '../../services/statementMultiSectionImportService.js';
 import { getFinanceDashboard } from '../../services/v8/financeIntegrationService.js';
 import { listValuations } from '../../services/valuationService.js';
-import {
-  type BudgetGranularity,
-  BudgetRegistrationError,
-  registerBudget,
-} from '../../services/finance/canonical/budgetRegistrationService.js';
-import {
-  applyBudgetLineCommand,
-  BudgetLineCommandError,
-  type BudgetLinePatch,
-} from '../../services/finance/canonical/budgetLineCommandService.js';
-import {
-  BudgetProjectionCommandError,
-  projectBudgetScenario,
-  updateBudgetScenarioAdjustments,
-} from '../../services/finance/canonical/budgetProjectionCommandService.js';
-import {
-  approveBudgetCommand,
-  BudgetApprovalCommandError,
-} from '../../services/finance/canonical/budgetApprovalCommandService.js';
-import {
-  discardBudgetCommand,
-  BudgetDiscardCommandError,
-} from '../../services/finance/canonical/budgetDiscardCommandService.js';
-import {
-  importBudgetDocumentCommand,
-  BudgetDocumentImportCommandError,
-} from '../../services/finance/canonical/budgetDocumentImportCommandService.js';
-import {
-  linkBudgetInitiativeCommand,
-  BudgetInitiativeLinkCommandError,
-} from '../../services/finance/canonical/budgetInitiativeLinkCommandService.js';
-import {
-  unlinkBudgetInitiativeCommand,
-  BudgetInitiativeUnlinkCommandError,
-} from '../../services/finance/canonical/budgetInitiativeUnlinkCommandService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -293,6 +298,48 @@ router.use((req, res, next) => {
 router.use(financeLegacyCutoverGuard);
 
 const FINANCE_PACKAGE_ROOT = process.env.FINANCE_PACKAGE_ROOT || '/data/finance-packages';
+
+router.get(
+  '/settings',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    try {
+      return res.json({ data: await readCanonicalFinanceSettings(organizationId) });
+    } catch (error) {
+      if (error instanceof FinanceSettingsCommandError) {
+        return res.status(error.status).json({ code: error.code, error: error.message });
+      }
+      throw error;
+    }
+  })
+);
+
+router.put(
+  '/settings',
+  requireFinanceEditorMembership,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    try {
+      const result = await updateCanonicalFinanceSettings({
+        organizationId,
+        actorId: userId,
+        idempotencyKey: String(req.header('idempotency-key') || ''),
+        expectedVersion: Number(req.body?.expectedVersion),
+        patch: req.body?.settings,
+      });
+      return res.status(result.idempotentReplay ? 200 : 201).json({ data: result });
+    } catch (error) {
+      if (error instanceof FinanceSettingsCommandError) {
+        return res.status(error.status).json({
+          code: error.code,
+          error: error.message,
+          ...(error.details || {}),
+        });
+      }
+      throw error;
+    }
+  })
+);
 
 function parseObject(value: unknown): Record<string, any> {
   if (!value) return {};
@@ -1487,12 +1534,10 @@ router.post(
           .status(400)
           .json({ code: 'INVALID_BODY', error: 'Only expectedVersion is allowed' });
       if (!Number.isInteger(req.body.expectedVersion) || req.body.expectedVersion < 1)
-        return res
-          .status(400)
-          .json({
-            code: 'INVALID_EXPECTED_VERSION',
-            error: 'expectedVersion must be a positive integer',
-          });
+        return res.status(400).json({
+          code: 'INVALID_EXPECTED_VERSION',
+          error: 'expectedVersion must be a positive integer',
+        });
       const { organizationId } = getV8Context(req);
       const userId = String(req.user?.id || (req.user as any)?.user_id || '');
       const result = await linkBudgetInitiativeCommand({

@@ -5,8 +5,8 @@
  * Proves the kernel, composed with the REAL `/api/economics` router, blocks
  * ECO-W16/W17 and the canonicalized valuation governance writers ECO-W27/W28
  * before their legacy handlers mutate anything. Unmapped identities fail 409;
- * mapped identities fail 410 with exact successor telemetry. ECO-W42 remains
- * observed and reachable because it has no proven canonical successor.
+ * mapped identities fail 410 with exact successor telemetry. ECO-W42 is also
+ * retired after its mounted caller moved to canonical versioned settings.
  *
  * economics.routes.ts calls the real `verifyToken` middleware internally on
  * every route. No bearer token is sent here, so `ENABLE_TEST_AUTH_BYPASS` is
@@ -18,16 +18,17 @@
 import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+
 import express from 'express';
 import { Pool } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { cleanupLegacyCutoverTestIntents } from './legacyCutoverTestCleanup.js';
 
+import { exportsDir } from '../../../utils/storagePaths.js';
 import { createArtifact } from '../../finance/canonical/artifactVersionService.js';
 import { createLegacyCutoverGuard } from '../legacyCutoverKernel.js';
 import { ECONOMICS_CUTOVER } from '../registry/economics.js';
-import { exportsDir } from '../../../utils/storagePaths.js';
+import { cleanupLegacyCutoverTestIntents } from './legacyCutoverTestCleanup.js';
 
 const CONNECTION_STRING = process.env.DATABASE_URL || '';
 const REAL_PG =
@@ -1763,15 +1764,18 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
     }
   });
 
-  it('does not block the finance-settings writer (ECO-W42)', async () => {
+  it('retires the finance-settings writer (ECO-W42) before its unversioned upsert', async () => {
     const response = await request(app)
       .put('/api/economics/finance-settings')
       .set('x-request-id', `${prefix}-settings-1`)
       .send({ defaultCurrency: 'EUR' });
-    expect(response.status).not.toBe(410);
-    expect(response.status).not.toBe(409);
-    expect(response.status).toBe(200);
-    expect(response.body?.defaultCurrency).toBe('EUR');
+    expect(response.status).toBe(410);
+    const stored = await pool.query(
+      `SELECT count(*)::int n FROM organization_settings
+        WHERE organization_id=$1 AND setting_key='finance'`,
+      [orgA]
+    );
+    expect(stored.rows[0].n).toBe(0);
   });
 
   it('records one durable, tenant-scoped observation row per writer', async () => {
@@ -1807,13 +1811,13 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
       },
       {
         writer_id: 'ECO-W42',
-        access_kind: 'legacy_uncovered_writer',
+        access_kind: 'legacy_writer_blocked',
         organization_id: orgA,
         tenant_resolution: 'resolved',
         route_path: '/api/economics/finance-settings',
         legacy_table: null,
         legacy_id: null,
-        successor_path: null,
+        successor_path: '/api/v8/finance/settings',
       },
     ]);
   });
@@ -1856,6 +1860,34 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
       [orgA, requestId]
     );
     expect(rows.rows).toHaveLength(1);
+  });
+
+  it('restores only ECO-W42 through the writer-scoped rollback lever', async () => {
+    const previous = process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+    process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = 'ECO-W42';
+    try {
+      const response = await request(app)
+        .put('/api/economics/finance-settings')
+        .set('x-request-id', `${prefix}-settings-rollback`)
+        .send({ defaultCurrency: 'EUR' });
+      expect(response.status).toBe(200);
+      expect(response.body.defaultCurrency).toBe('EUR');
+      const event = await pool.query(
+        `SELECT writer_id,access_kind,successor_path FROM legacy_cutover_usage_events
+          WHERE organization_id=$1 AND request_id=$2`,
+        [orgA, `${prefix}-settings-rollback`]
+      );
+      expect(event.rows).toEqual([
+        {
+          writer_id: 'ECO-W42',
+          access_kind: 'rollback_writer',
+          successor_path: '/api/v8/finance/settings',
+        },
+      ]);
+    } finally {
+      if (previous === undefined) delete process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+      else process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = previous;
+    }
   });
 
   it('attributes two tenants making the same call with the same x-request-id to one row each', async () => {

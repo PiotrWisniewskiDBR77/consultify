@@ -18,6 +18,7 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
+import { V8FinanceApi } from '../../services/api/v8/finance';
 import { User } from '../../types';
 import { InfoButton } from '../shared/InfoButton';
 
@@ -49,12 +50,17 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
     defaultCurrency: string;
     defaultHorizonYears: number;
   }>({ defaultWacc: 12, defaultCurrency: 'PLN', defaultHorizonYears: 5 });
+  const [financeSettingsVersion, setFinanceSettingsVersion] = useState(0);
   const [savingFinance, setSavingFinance] = useState(false);
 
   const loadFinanceSettings = useCallback(async () => {
     try {
-      const data = await Api.get('/api/economics/finance-settings');
-      if (data) setFinanceSettings((prev) => ({ ...prev, ...data }));
+      const data = await V8FinanceApi.getSettings();
+      if (data) {
+        const { version, ...settings } = data;
+        setFinanceSettings((prev) => ({ ...prev, ...settings }));
+        setFinanceSettingsVersion(version);
+      }
     } catch {
       /* not configured yet */
     }
@@ -63,14 +69,21 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
   const handleSaveFinanceSettings = useCallback(async () => {
     setSavingFinance(true);
     try {
-      await Api.put('/api/economics/finance-settings', financeSettings);
+      const result = await V8FinanceApi.updateSettings(
+        financeSettings,
+        financeSettingsVersion,
+        crypto.randomUUID()
+      );
+      const { version, ...savedSettings } = result.state;
+      setFinanceSettings(savedSettings);
+      setFinanceSettingsVersion(version);
       toast.success(t('settings.financeSaved', 'Finance defaults saved'));
     } catch {
       toast.error(t('settings.financeError', 'Failed to save finance defaults'));
     } finally {
       setSavingFinance(false);
     }
-  }, [financeSettings, t]);
+  }, [financeSettings, financeSettingsVersion, t]);
 
   useEffect(() => {
     fetchOrganizations();

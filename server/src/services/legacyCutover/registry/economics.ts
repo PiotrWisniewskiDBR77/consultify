@@ -482,10 +482,10 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'ECO-W42',
       method: 'PUT',
       path: /^\/finance-settings\/?$/,
-      state: 'observed',
-      successor: null,
+      state: 'disabled',
+      successor: '/api/v8/finance/settings',
       reason:
-        "Upserts the organization-scoped finance settings row keyed by (organization_id, setting_key='finance') — a collection-level write, not addressed by a path id (economics.routes.ts:3431, valuationService.ts:210,219 setOrgFinanceSettings -> INSERT INTO organization_settings ... ON CONFLICT). No proven successor.",
+        'The only mounted Organization Settings caller now uses the canonical versioned Finance settings command with live Finance-editor authority, exact CAS, tenant-bound immutable receipt and atomic compatibility projection. The former unversioned economics upsert is retired fail-closed with writer-scoped rollback.',
     },
   ],
 };
