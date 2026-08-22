@@ -25,8 +25,8 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
       legacyMutationDoors: 51,
       canonicalMutationDoors: 2,
       nonMutationDoors: 6,
-      retiredLegacyMutationDoors: 37,
-      openLegacyMutationDoors: 14,
+      retiredLegacyMutationDoors: 38,
+      openLegacyMutationDoors: 13,
     });
   });
 
@@ -293,6 +293,21 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
     expect(ECONOMICS_CUTOVER.writers.find((rule) => rule.writerId === 'ECO-W13')).toMatchObject({
       state: 'disabled',
       successor: '/api/v8/finance/digitization-analyses/:analysisId/duplicate',
+    });
+  });
+
+  it('routes statement upload-and-analyze only through the mounted V8 ingest owner', () => {
+    const wizard = fs.readFileSync(
+      path.resolve(process.cwd(), 'src/components/Finance/FinancialStatementImportWizard.tsx'),
+      'utf8'
+    );
+    expect(wizard).toContain('V8FinanceApi.uploadAndAnalyzeStatement');
+    expect(wizard).not.toContain("'/api/finance-statements/upload-and-analyze'");
+    expect(
+      FINANCE_STATEMENTS_CUTOVER.writers.find((rule) => rule.writerId === 'FS-W02')
+    ).toMatchObject({
+      state: 'disabled',
+      successor: '/api/v8/finance/statements/upload-and-analyze',
     });
   });
 });

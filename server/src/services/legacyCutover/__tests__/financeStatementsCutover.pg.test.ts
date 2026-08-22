@@ -90,7 +90,10 @@ describe.skipIf(!REAL_PG)('FINANCE-STATEMENTS legacy-cutover guard (fresh real P
 
   afterAll(async () => {
     if (!pool) return;
-    await cleanupLegacyCutoverTestIntents(pool, { organizationIds: [orgA, orgB], requestIdPrefix: prefix });
+    await cleanupLegacyCutoverTestIntents(pool, {
+      organizationIds: [orgA, orgB],
+      requestIdPrefix: prefix,
+    });
     await pool.query(`DELETE FROM financial_ratio_benchmarks WHERE organization_id = ANY($1)`, [
       [orgA, orgB],
     ]);
@@ -99,6 +102,31 @@ describe.skipIf(!REAL_PG)('FINANCE-STATEMENTS legacy-cutover guard (fresh real P
     ]);
     await pool.query(`DELETE FROM organizations WHERE id = ANY($1)`, [[orgA, orgB]]);
     await pool.end();
+  });
+
+  it('retires FS-W02 by default and restores only that leaf with the exact rollback lever', async () => {
+    const blocked = await request(app)
+      .post('/api/finance-statements/upload-and-analyze')
+      .set('x-request-id', `${prefix}-w02-blocked`);
+    expect(blocked.status).toBe(410);
+    expect(blocked.body).toMatchObject({
+      code: 'FINANCE_LEGACY_WRITER_DISABLED',
+      writerId: 'FS-W02',
+      successor: '/api/v8/finance/statements/upload-and-analyze',
+    });
+
+    process.env.FINANCE_LEGACY_WRITER_ROLLBACK_ENABLED = 'true';
+    process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = 'FS-W02';
+    try {
+      const restored = await request(app)
+        .post('/api/finance-statements/upload-and-analyze')
+        .set('x-request-id', `${prefix}-w02-restored`);
+      expect(restored.status).toBe(400);
+      expect(restored.body.error).toMatch(/File required/i);
+    } finally {
+      delete process.env.FINANCE_LEGACY_WRITER_ROLLBACK_ENABLED;
+      delete process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+    }
   });
 
   it('does not block the financial_statement_packs recompute writer (FS-W09)', async () => {
@@ -171,7 +199,11 @@ describe.skipIf(!REAL_PG)('FINANCE-STATEMENTS legacy-cutover guard (fresh real P
       [orgA, `${prefix}-benchmarks-get-1`]
     );
     expect(rows.rows).toEqual([
-      { access_kind: 'legacy_read', route_path: '/api/finance-statements/benchmarks', writer_id: null },
+      {
+        access_kind: 'legacy_read',
+        route_path: '/api/finance-statements/benchmarks',
+        writer_id: null,
+      },
     ]);
   });
 

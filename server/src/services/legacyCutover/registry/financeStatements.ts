@@ -63,11 +63,11 @@ export const FINANCE_STATEMENTS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'FS-W02',
       method: 'POST',
       path: /^\/upload-and-analyze\/?$/,
-      state: 'observed',
-      successor: null,
+      state: 'disabled',
+      successor: '/api/v8/finance/statements/upload-and-analyze',
       legacyTable: 'financial_statements',
       reason:
-        'Full ingest pipeline writing financial_statements, financial_statement_upload_idempotency and financial_statement_ingest_runs (finance-statements.routes.ts:1097, shares financialStatementService.ts functions with the v8 twin). Unguarded twin of the v8 upload-and-analyze handler; no proven successor.',
+        'The mounted Import Wizard now calls only the independently mounted, tenant-context V8 ingest route with the same stable Idempotency-Key. Its legacy fallback was removed, so the unguarded duplicate write door is retired fail-closed with writer-scoped rollback.',
     },
     {
       writerId: 'FS-W03',

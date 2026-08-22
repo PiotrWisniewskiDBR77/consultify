@@ -267,20 +267,9 @@ function generateIdempotencyKey(): string {
 // dedupe it instead of creating a second real Statement/Pack. See
 // FinancialStatementImportWizard's `uploadIdempotencyKey` state for where
 // this key is generated/held.
-async function uploadAndAnalyzeWithFallback(formData: FormData, idempotencyKey?: string) {
+async function uploadAndAnalyzeGoverned(formData: FormData, idempotencyKey?: string) {
   const extraHeaders = idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : undefined;
-  try {
-    return await V8FinanceApi.uploadAndAnalyzeStatement(formData, extraHeaders);
-  } catch (error) {
-    if (!shouldFallbackToLegacyFinance(error)) {
-      throw error;
-    }
-    return await Api.postMultipart(
-      '/api/finance-statements/upload-and-analyze',
-      formData,
-      extraHeaders
-    );
-  }
+  return V8FinanceApi.uploadAndAnalyzeStatement(formData, extraHeaders);
 }
 
 // ---------------------------------------------------------------------------
@@ -356,12 +345,14 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
       try {
         const initialDetail = await getStatementWithFallback(durableId);
         const siblingIds = Array.from(
-          new Set([
-            durableId,
-            ...(Array.isArray(initialDetail.sourceSiblings)
-              ? initialDetail.sourceSiblings.map((sibling: any) => String(sibling.id || ''))
-              : []),
-          ].filter(Boolean))
+          new Set(
+            [
+              durableId,
+              ...(Array.isArray(initialDetail.sourceSiblings)
+                ? initialDetail.sourceSiblings.map((sibling: any) => String(sibling.id || ''))
+                : []),
+            ].filter(Boolean)
+          )
         );
         const canonical = await getCanonicalLinesWithFallback();
         const hydrated = await Promise.all(
@@ -379,12 +370,11 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
               currency: String(detail.currency || receipt?.periods_json?.[0]?.currency || ''),
               scaling: String(detail.scaling || receipt?.periods_json?.[0]?.scaling || ''),
               entityName: String(detail.entity_name || receipt.entity_name || ''),
-              sourceFileName: String(
-                receipt.original_file_name || detail.source_file_name || ''
-              ),
+              sourceFileName: String(receipt.original_file_name || detail.source_file_name || ''),
               sourceSha256: String(receipt.content_sha256 || ''),
               valuesVersion: Number(detail.values_version ?? detail.latestVersionNo ?? 0),
-              savedReady: String(detail.readinessStatus || detail.readiness_status || '') === 'ready',
+              savedReady:
+                String(detail.readinessStatus || detail.readiness_status || '') === 'ready',
               mappedValues: values.map((value: any) => {
                 let evidence: Record<string, any> = {};
                 try {
@@ -400,8 +390,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                   value: Number(value.value),
                   confidence: Number(value.confidence || 0),
                   sourceRow: value.source_row ?? value.sourceRow,
-                  canonicalLineId:
-                    value.canonical_line_id || value.canonicalLineId || null,
+                  canonicalLineId: value.canonical_line_id || value.canonicalLineId || null,
                   canonicalLabel:
                     value.line_name_pl || value.line_name || value.canonicalLabel || undefined,
                   mappingStatus: String(value.mapping_status || value.mappingStatus || 'unmapped'),
@@ -413,9 +402,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                   classificationReason:
                     value.classification_reason || value.classificationReason || undefined,
                   suggestedExclusionReason:
-                    value.suggested_exclusion_reason ||
-                    value.suggestedExclusionReason ||
-                    undefined,
+                    value.suggested_exclusion_reason || value.suggestedExclusionReason || undefined,
                   manualDecision: value.manual_decision || value.manualDecision || undefined,
                 };
               }),
@@ -431,8 +418,9 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
         setSourceReceipt(active?.sourceReceipt || null);
         setCanonicalLines(canonical as CanonicalLine[]);
         setReadiness({
-          readinessStatus:
-            (initialDetail.readinessStatus || initialDetail.readiness_status || 'pending') as ReadinessState['readinessStatus'],
+          readinessStatus: (initialDetail.readinessStatus ||
+            initialDetail.readiness_status ||
+            'pending') as ReadinessState['readinessStatus'],
           summary: String(initialDetail.readinessSummary || initialDetail.quality_summary || ''),
           reasonCodes: Array.isArray(initialDetail.readinessReasonCodes)
             ? initialDetail.readinessReasonCodes
@@ -537,7 +525,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
       if (!uploadIdempotencyKey) setUploadIdempotencyKey(idempotencyKey);
 
       // Try smart upload first (LLM analyzes entire document)
-      const data = await uploadAndAnalyzeWithFallback(formData, idempotencyKey);
+      const data = await uploadAndAnalyzeGoverned(formData, idempotencyKey);
 
       if (data.mode === 'smart' && data.analysis) {
         // LLM successfully analyzed the document — skip detect/extract steps
@@ -1054,7 +1042,9 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
   const activeTypeComparisons = activeReview
     ? reviewStatements
         .filter((item) => item.statementType === activeReview.statementType)
-        .sort((left, right) => String(right.periodLabel || '').localeCompare(String(left.periodLabel || '')))
+        .sort((left, right) =>
+          String(right.periodLabel || '').localeCompare(String(left.periodLabel || ''))
+        )
     : [];
   const financeNumber = new Intl.NumberFormat(isPl ? 'pl-PL' : 'en-US', {
     maximumFractionDigits: 4,
@@ -1129,9 +1119,12 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
               file?.name ||
               t('finance.importWizard.noDocumentSelected', 'No document selected')}
           </div>
-          {(sourceReceipt?.entity_name || activeReview?.entityName || (!sourceReceipt && overrideEntity)) && (
+          {(sourceReceipt?.entity_name ||
+            activeReview?.entityName ||
+            (!sourceReceipt && overrideEntity)) && (
             <div className="text-xs text-slate-600 dark:text-slate-300">
-              {t('finance.importWizard.entity', 'Entity')}: {sourceReceipt?.entity_name || activeReview?.entityName || overrideEntity}
+              {t('finance.importWizard.entity', 'Entity')}:{' '}
+              {sourceReceipt?.entity_name || activeReview?.entityName || overrideEntity}
               {' · '}
               {t('finance.importWizard.scaling', 'Scaling')}: {scalingLabel(durableScaling)}
             </div>
@@ -1146,18 +1139,25 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
               className="mt-1 grid gap-x-3 gap-y-0.5 text-[10px] text-slate-500 sm:grid-cols-2 xl:grid-cols-4"
               data-testid="durable-source-summary"
             >
-              <span>{durableSections.join(' + ') || '—'} · {durablePeriods.join(' / ') || '—'}</span>
-              <span>{durableCurrency} · {scalingLabel(durableScaling)}</span>
+              <span>
+                {durableSections.join(' + ') || '—'} · {durablePeriods.join(' / ') || '—'}
+              </span>
+              <span>
+                {durableCurrency} · {scalingLabel(durableScaling)}
+              </span>
               <span>
                 {sourceReceipt.importer_name || '—'} {sourceReceipt.importer_version || ''} ·{' '}
-                {t('finance.importWizard.importedBy', 'Imported by')}: {sourceReceipt.imported_by || '—'} ·{' '}
+                {t('finance.importWizard.importedBy', 'Imported by')}:{' '}
+                {sourceReceipt.imported_by || '—'} ·{' '}
                 {t('finance.importWizard.uploadedAt', 'Uploaded at')}: {durableImportedAt}
               </span>
               <span>
-                {t('finance.importWizard.readiness', 'Readiness')}: {readiness?.readinessStatus || 'pending'} ·{' '}
-                {mappedCount}/{allReviewValues.length} {t('finance.importWizard.mapped', 'mapped')} ·{' '}
-                {allReviewValues.length - mappedCount} {t('finance.importWizard.unmapped', 'unmapped')} ·{' '}
-                {verifiedCount} {t('finance.mappingEditor.verified', 'verified')}
+                {t('finance.importWizard.readiness', 'Readiness')}:{' '}
+                {readiness?.readinessStatus || 'pending'} · {mappedCount}/{allReviewValues.length}{' '}
+                {t('finance.importWizard.mapped', 'mapped')} ·{' '}
+                {allReviewValues.length - mappedCount}{' '}
+                {t('finance.importWizard.unmapped', 'unmapped')} · {verifiedCount}{' '}
+                {t('finance.mappingEditor.verified', 'verified')}
               </span>
               <span>
                 {t('finance.importWizard.pages', 'Pages')}: {durablePageRanges.join(', ') || '—'}
@@ -1725,7 +1725,9 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                     setSourceReceipt(item.sourceReceipt || null);
                   }}
                 >
-                  <span className="block font-semibold">{statementTypeLabel(item.statementType)}</span>
+                  <span className="block font-semibold">
+                    {statementTypeLabel(item.statementType)}
+                  </span>
                   <span className="block opacity-80">
                     {item.periodLabel || '—'}
                     {item.comparisonOfStatementId
@@ -1745,7 +1747,8 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                 aria-label={t('finance.importWizard.comparisonTable', 'Period comparison')}
               >
                 <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  {statementTypeLabel(activeReview?.statementType || '')} · {t('finance.importWizard.comparisonTable', 'Period comparison')}
+                  {statementTypeLabel(activeReview?.statementType || '')} ·{' '}
+                  {t('finance.importWizard.comparisonTable', 'Period comparison')}
                 </div>
                 <div className="grid gap-2 md:grid-cols-2">
                   {activeTypeComparisons.slice(0, 2).map((periodStatement) => (
@@ -1789,8 +1792,12 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                           </div>
                         ))}
                       </div>
-                      <div className="mt-1 truncate font-mono text-[9px] text-slate-500" title={periodStatement.sourceReceiptId}>
-                        {t('finance.importWizard.receipt', 'Receipt')}: {periodStatement.sourceReceiptId}
+                      <div
+                        className="mt-1 truncate font-mono text-[9px] text-slate-500"
+                        title={periodStatement.sourceReceiptId}
+                      >
+                        {t('finance.importWizard.receipt', 'Receipt')}:{' '}
+                        {periodStatement.sourceReceiptId}
                       </div>
                     </button>
                   ))}
@@ -1861,7 +1868,9 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                         ...value,
                         isNonFinancial: excluded,
                         mappingStatus: excluded ? 'manual_exclude' : 'unmapped',
-                        mappingTier: excluded ? ('excluded' as const) : ('review_required' as const),
+                        mappingTier: excluded
+                          ? ('excluded' as const)
+                          : ('review_required' as const),
                         classificationReason: excluded ? reason : undefined,
                         userVerified: excluded,
                       }
@@ -1877,9 +1886,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
               }}
               onExcludeAllSuggested={() => {
                 const update = (value: FinancialStatementMappedValue) =>
-                  !value.canonicalLineId &&
-                  value.suggestedExclusionReason &&
-                  !value.isNonFinancial
+                  !value.canonicalLineId && value.suggestedExclusionReason && !value.isNonFinancial
                     ? {
                         ...value,
                         isNonFinancial: true,
@@ -1978,7 +1985,10 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
                   <dd className="font-semibold text-slate-800 dark:text-slate-200">
                     {statementTypeLabel(
                       reviewStatements.find((item) => item.statementId === activeReviewStatementId)
-                        ?.statementType || overrideType || detection?.statementType || '—'
+                        ?.statementType ||
+                        overrideType ||
+                        detection?.statementType ||
+                        '—'
                     )}
                   </dd>
                 </div>

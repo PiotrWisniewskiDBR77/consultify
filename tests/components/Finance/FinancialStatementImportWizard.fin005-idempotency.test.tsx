@@ -39,7 +39,13 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('@/services/api', () => {
-  const api = { get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn(), postMultipart: vi.fn() };
+  const api = {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    delete: vi.fn(),
+    postMultipart: vi.fn(),
+  };
   return { Api: api, default: api };
 });
 
@@ -53,13 +59,15 @@ vi.mock('@/services/api/v8/finance', () => ({
     confirmStatement: vi.fn(),
     getCanonicalLines: vi.fn(),
   },
-  shouldFallbackToLegacyFinance: (error: any) => [400, 404, 405, 501].includes(Number(error?.status)),
+  shouldFallbackToLegacyFinance: (error: any) =>
+    [400, 404, 405, 501].includes(Number(error?.status)),
 }));
 
 vi.mock('@/services/funnelAnalytics', () => ({ trackFunnelEvent: vi.fn() }));
 
 vi.mock('../../../src/components/Finance/FinancialStatementMappingEditor', () => ({
   FinancialStatementMappingEditor: () => <div>financial-statement-mapping-editor</div>,
+  isFinancialStatementValueVerified: () => false,
 }));
 
 import Api from '../../../src/services/api';
@@ -78,7 +86,9 @@ describe('FinancialStatementImportWizard — FIN-005 Fix 2 idempotency (409 hand
   });
 
   it('a 409 UPLOAD_IN_PROGRESS from the v8 endpoint shows the honest "try again shortly" message — not a false success, not the generic error', async () => {
-    const inProgressError: any = new Error('Another upload for this Idempotency-Key is already in progress — retry shortly');
+    const inProgressError: any = new Error(
+      'Another upload for this Idempotency-Key is already in progress — retry shortly'
+    );
     inProgressError.status = 409;
     inProgressError.data = { code: 'UPLOAD_IN_PROGRESS', error: inProgressError.message };
     vi.mocked(V8FinanceApi.uploadAndAnalyzeStatement).mockRejectedValueOnce(inProgressError);
