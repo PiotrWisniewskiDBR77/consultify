@@ -1044,6 +1044,25 @@ export const V8FinanceApi = {
       body,
       { extraHeaders: { 'Idempotency-Key': idempotencyKey } }
     ),
+  linkDigitizationAnalysisInitiative: (
+    analysisId: string,
+    initiativeId: string,
+    expectedVersion: number,
+    idempotencyKey: string
+  ) =>
+    v8Post<{
+      analysisId: string;
+      initiativeId: string;
+      projectId: string | null;
+      financialsId: string;
+      version: number;
+      receiptId: string;
+      replay: boolean;
+    }>(
+      `/finance/digitization-analyses/${analysisId}/initiative-link`,
+      { initiativeId, expectedVersion },
+      { extraHeaders: { 'Idempotency-Key': idempotencyKey } }
+    ),
   archiveDigitizationAnalysis: (
     analysisId: string,
     body: { expectedVersion: number; reason: string },

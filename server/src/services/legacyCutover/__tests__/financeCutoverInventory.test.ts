@@ -25,8 +25,8 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
       legacyMutationDoors: 51,
       canonicalMutationDoors: 2,
       nonMutationDoors: 6,
-      retiredLegacyMutationDoors: 31,
-      openLegacyMutationDoors: 20,
+      retiredLegacyMutationDoors: 32,
+      openLegacyMutationDoors: 19,
     });
   });
 
@@ -234,6 +234,16 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
     expect(ECONOMICS_CUTOVER.writers.find((rule) => rule.writerId === 'ECO-W02')).toMatchObject({
       state: 'disabled',
       successor: '/api/v8/finance/digitization-analyses/:analysisId',
+    });
+  });
+
+  it('routes digitization-analysis Initiative linking through one atomic canonical command', () => {
+    const source = fs.readFileSync(path.resolve(process.cwd(), 'src/services/api.ts'), 'utf8');
+    expect(source).toContain('V8FinanceApi.linkDigitizationAnalysisInitiative');
+    expect(source).not.toContain('/link-initiative`');
+    expect(ECONOMICS_CUTOVER.writers.find((rule) => rule.writerId === 'ECO-W03')).toMatchObject({
+      state: 'disabled',
+      successor: '/api/v8/finance/digitization-analyses/:analysisId/initiative-link',
     });
   });
 });

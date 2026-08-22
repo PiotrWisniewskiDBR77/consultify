@@ -99,10 +99,10 @@ export const ECONOMICS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'ECO-W03',
       method: 'POST',
       path: /^\/analyses\/[^/]+\/link-initiative\/?$/,
-      state: 'observed',
-      successor: null,
+      state: 'disabled',
+      successor: '/api/v8/finance/digitization-analyses/:analysisId/initiative-link',
       reason:
-        'Links an analysis to an initiative: UPDATE digitization_analyses SET initiative_id (economics.routes.ts:931, UPDATE at :954). No proven successor.',
+        'The compatibility client uses one tenant-scoped, optimistic and idempotent command that atomically links digitization_analyses and analysis_financials to the same Initiative and inherited project. The split legacy sequence is retired fail-closed with writer-scoped rollback.',
     },
     {
       writerId: 'ECO-W04',

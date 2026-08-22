@@ -1966,6 +1966,92 @@ describe.skipIf(!REAL_PG)('ECONOMICS legacy-cutover guard (fresh real PostgreSQL
     }
   });
 
+  it('retires split digitization-analysis Initiative linking (ECO-W03)', async () => {
+    const analysisId = `${prefix}-link-protected`;
+    const initiativeId = `${prefix}-link-protected-initiative`;
+    await pool.query(
+      `INSERT INTO initiatives(id,organization_id,name,title,status) VALUES($1,$2,'Protected link','Protected link','DRAFT')`,
+      [initiativeId, orgA]
+    );
+    await pool.query(
+      `INSERT INTO digitization_analyses(id,name,status,organization_id,created_by,created_at,updated_at) VALUES($1,'Protected link analysis','draft',$2,$3,now(),now())`,
+      [analysisId, orgA, actor]
+    );
+    try {
+      const response = await request(app)
+        .post(`/api/economics/analyses/${analysisId}/link-initiative`)
+        .set('x-request-id', `${prefix}-analysis-link-blocked`)
+        .send({ initiativeId });
+      expect(response.status).toBe(410);
+      expect(response.body).toMatchObject({
+        code: 'FINANCE_LEGACY_WRITER_DISABLED',
+        writerId: 'ECO-W03',
+        successor: '/api/v8/finance/digitization-analyses/:analysisId/initiative-link',
+      });
+      expect(
+        (
+          await pool.query(`SELECT initiative_id FROM digitization_analyses WHERE id=$1`, [
+            analysisId,
+          ])
+        ).rows[0].initiative_id
+      ).toBeNull();
+      expect(
+        (
+          await pool.query<{ n: number }>(
+            `SELECT count(*)::int n FROM analysis_financials WHERE analysis_id=$1`,
+            [analysisId]
+          )
+        ).rows[0].n
+      ).toBe(0);
+    } finally {
+      await pool.query(`DELETE FROM digitization_analyses WHERE id=$1`, [analysisId]);
+      await pool.query(`DELETE FROM initiatives WHERE id=$1`, [initiativeId]);
+    }
+  });
+
+  it('restores only ECO-W03 through its exact writer-scoped rollback lever', async () => {
+    const previous = process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+    const analysisId = `${prefix}-link-rollback`;
+    const initiativeId = `${prefix}-link-rollback-initiative`;
+    await pool.query(
+      `INSERT INTO initiatives(id,organization_id,name,title,status) VALUES($1,$2,'Rollback link','Rollback link','DRAFT')`,
+      [initiativeId, orgA]
+    );
+    await pool.query(
+      `INSERT INTO digitization_analyses(id,name,status,organization_id,created_by,created_at,updated_at) VALUES($1,'Rollback link analysis','draft',$2,$3,now(),now())`,
+      [analysisId, orgA, actor]
+    );
+    process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = 'ECO-W03';
+    try {
+      const response = await request(app)
+        .post(`/api/economics/analyses/${analysisId}/link-initiative`)
+        .set('x-request-id', `${prefix}-analysis-link-rollback`)
+        .send({ initiativeId });
+      expect(response.status).toBe(200);
+      expect(
+        (
+          await pool.query(`SELECT initiative_id FROM digitization_analyses WHERE id=$1`, [
+            analysisId,
+          ])
+        ).rows[0].initiative_id
+      ).toBe(initiativeId);
+      expect(
+        (
+          await pool.query<{ n: number }>(
+            `SELECT count(*)::int n FROM analysis_financials WHERE analysis_id=$1 AND initiative_id=$2`,
+            [analysisId, initiativeId]
+          )
+        ).rows[0].n
+      ).toBe(1);
+    } finally {
+      if (previous === undefined) delete process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+      else process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = previous;
+      await pool.query(`DELETE FROM analysis_financials WHERE analysis_id=$1`, [analysisId]);
+      await pool.query(`DELETE FROM digitization_analyses WHERE id=$1`, [analysisId]);
+      await pool.query(`DELETE FROM initiatives WHERE id=$1`, [initiativeId]);
+    }
+  });
+
   it('classifies ECO-W11 as canonical Decision ownership with retry-safe source lineage', async () => {
     const analysisId = `${prefix}-decision-source`;
     const key = `${prefix}-decision-key`;

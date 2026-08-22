@@ -11202,16 +11202,18 @@ export const Api = {
   /**
    * Link analysis to initiative
    */
-  linkAnalysisToInitiative: async (analysisId: string, initiativeId: string): Promise<any> => {
-    const res = await fetchWithRetry(
-      `${API_URL}/economics/analyses/${analysisId}/link-initiative`,
-      {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify({ initiativeId }),
-      }
+  linkAnalysisToInitiative: async (
+    analysisId: string,
+    initiativeId: string,
+    expectedVersion = 1
+  ): Promise<any> => {
+    const { V8FinanceApi } = await import('./api/v8/finance');
+    return V8FinanceApi.linkDigitizationAnalysisInitiative(
+      analysisId,
+      initiativeId,
+      expectedVersion,
+      `digitization-analysis-link:${analysisId}:${initiativeId}:${expectedVersion}`
     );
-    return handleResponse(res, 'Failed to link analysis to initiative');
   },
 
   /**

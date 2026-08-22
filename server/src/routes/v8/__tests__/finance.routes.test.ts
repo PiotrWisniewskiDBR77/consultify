@@ -42,6 +42,7 @@ const mockDiscardBudgetCommand = vi.fn();
 const mockArchiveDigitizationAnalysisCommand = vi.fn();
 const mockRegisterDigitizationAnalysis = vi.fn();
 const mockUpdateDigitizationAnalysisCommand = vi.fn();
+const mockLinkDigitizationAnalysisInitiativeCommand = vi.fn();
 const mockImportBudgetDocumentCommand = vi.fn();
 const mockLinkBudgetInitiativeCommand = vi.fn();
 const mockUnlinkBudgetInitiativeCommand = vi.fn();
@@ -398,6 +399,14 @@ vi.mock('../../../services/finance/canonical/digitizationAnalysisUpdateCommandSe
   updateDigitizationAnalysisCommand: (...args: unknown[]) =>
     mockUpdateDigitizationAnalysisCommand(...args),
 }));
+vi.mock(
+  '../../../services/finance/canonical/digitizationAnalysisInitiativeLinkCommandService.js',
+  () => ({
+    DigitizationAnalysisInitiativeLinkError: class DigitizationAnalysisInitiativeLinkError extends Error {},
+    linkDigitizationAnalysisInitiativeCommand: (...args: unknown[]) =>
+      mockLinkDigitizationAnalysisInitiativeCommand(...args),
+  })
+);
 vi.mock('../../../services/finance/canonical/budgetDocumentImportCommandService.js', () => ({
   BudgetDocumentImportCommandError: class BudgetDocumentImportCommandError extends Error {
     constructor(
@@ -2334,6 +2343,32 @@ describe('V8 finance read-only routes', () => {
       analysisId: 'digitization-analysis-1',
       idempotencyKey: 'update-key',
       body: { expectedVersion: 1, name: 'Updated' },
+    });
+  });
+
+  it('POST /api/v8/finance/digitization-analyses/:id/initiative-link binds atomic command', async () => {
+    const app = createApp();
+    mockLinkDigitizationAnalysisInitiativeCommand.mockResolvedValueOnce({
+      analysisId: 'digitization-analysis-1',
+      initiativeId: 'initiative-1',
+      projectId: 'project-1',
+      financialsId: 'financials-1',
+      version: 2,
+      receiptId: 'receipt-1',
+      replay: false,
+    });
+    const response = await request(app)
+      .post('/api/v8/finance/digitization-analyses/digitization-analysis-1/initiative-link')
+      .set('Idempotency-Key', 'link-key')
+      .send({ initiativeId: 'initiative-1', expectedVersion: 1 });
+    expect(response.status).toBe(201);
+    expect(mockLinkDigitizationAnalysisInitiativeCommand).toHaveBeenCalledWith({
+      organizationId: ORG,
+      userId: UID,
+      analysisId: 'digitization-analysis-1',
+      initiativeId: 'initiative-1',
+      expectedVersion: 1,
+      idempotencyKey: 'link-key',
     });
   });
 

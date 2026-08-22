@@ -64,6 +64,10 @@ import {
   DigitizationAnalysisArchiveError,
 } from '../../services/finance/canonical/digitizationAnalysisArchiveCommandService.js';
 import {
+  DigitizationAnalysisInitiativeLinkError,
+  linkDigitizationAnalysisInitiativeCommand,
+} from '../../services/finance/canonical/digitizationAnalysisInitiativeLinkCommandService.js';
+import {
   DigitizationAnalysisRegistrationError,
   registerDigitizationAnalysis,
 } from '../../services/finance/canonical/digitizationAnalysisRegistrationService.js';
@@ -429,6 +433,37 @@ router.put(
           error: error.message,
           ...(error.details || {}),
         });
+      }
+      throw error;
+    }
+  })
+);
+
+router.post(
+  '/digitization-analyses/:analysisId/initiative-link',
+  requireFinanceEditorMembership,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const body =
+      req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
+    if (Object.keys(body).some((key) => !['initiativeId', 'expectedVersion'].includes(key))) {
+      return res.status(400).json({ code: 'INVALID_BODY', error: 'Unknown initiative-link field' });
+    }
+    try {
+      const result = await linkDigitizationAnalysisInitiativeCommand({
+        organizationId,
+        userId,
+        analysisId: String(req.params.analysisId || ''),
+        initiativeId: typeof body.initiativeId === 'string' ? body.initiativeId : '',
+        expectedVersion: Number(body.expectedVersion),
+        idempotencyKey: String(req.header('idempotency-key') || ''),
+      });
+      return res.status(result.replay ? 200 : 201).json({ data: result });
+    } catch (error) {
+      if (error instanceof DigitizationAnalysisInitiativeLinkError) {
+        return res
+          .status(error.status)
+          .json({ code: error.code, error: error.message, ...(error.details || {}) });
       }
       throw error;
     }
