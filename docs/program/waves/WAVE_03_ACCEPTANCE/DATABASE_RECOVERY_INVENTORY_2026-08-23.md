@@ -290,3 +290,24 @@ Credentialed browser replay, owner decisions and Piotr acceptance remain
 pending. Current reconstructed storage readiness: `10/16` — Organization,
 Assessment, Initiatives, Execution, Meetings, Results, Finance, Materials,
 Audits and Partner.
+
+My Work / Agent was reconstructed eleventh as
+`consultify_w3_my_work_owner_recovered_20260823`. Its owned successor provisioned
+a fresh database, passed `831/831` migrations with append-only triggers enabled,
+and wrote a FINAL `0600` marker-bound receipt with nonce
+`e8f9302fc8c72c056186acf18fcb52121332d0767d1006580c2eb4d22af9da16`.
+The mounted canonical materialization flow proved a three-step plan, governed
+approval, one materialized task and the expected self-approval, role, tenant,
+stale-version and revoked-membership boundaries. PostgreSQL restart and cold
+readback preserved the exact state. Exact clean SHA
+`10a227dabb223cb24f6c4a40ddebd3780154b27b` adopted the database on
+server/client `4351/4352`; runtime SHA, migration chain, marker and frontend
+gates passed. OWNER task read returned `200` with data; same-tenant member and
+foreign tenant returned isolated empty `200`, revoked login returned `403`, and
+anonymous access returned `401`. Runtime and container were stopped while
+preserving the database.
+
+Credentialed browser replay, owner decisions and Piotr acceptance remain
+pending. Current reconstructed storage readiness: `11/16` — Organization,
+Assessment, Initiatives, Execution, My Work / Agent, Meetings, Results, Finance,
+Materials, Audits and Partner.
