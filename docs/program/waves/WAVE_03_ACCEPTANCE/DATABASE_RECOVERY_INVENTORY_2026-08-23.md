@@ -208,3 +208,22 @@ and container were stopped while preserving the database.
 Credentialed browser replay, export/share/provider and rights-policy approval,
 and Piotr acceptance remain pending. Current reconstructed storage readiness:
 `6/16` — Initiatives, Execution, Meetings, Results, Finance and Materials.
+
+Audits was reconstructed seventh as
+`consultify_w3_audits_owner_recovered_20260823`. It passed `831/831` migrations
+and wrote a new FINAL `0600` marker-bound receipt with nonce
+`951e96e70444ac55473da54b43f9d058c26ca1fea43f303045dd3d685627f47b`.
+After PostgreSQL restart, independent readback preserved the internal-owned
+source and pack, five program roles, verified evidence, independently confirmed
+finding, separately approved corrective action, draft report and draft
+initiative proposal. The separation-of-duties contract passed; named external
+standards, citations and live provider calls remained zero. Exact clean SHA
+`ac2c0d1e997d590523e5b887463cbcc292c94ae3` adopted the database on
+server/client `4343/4344`; runtime and marker gates passed. OWNER pack, program,
+report and proposal lists returned `200`; inactive login returned `403`, foreign
+program list empty `200`, and anonymous pack access `401`. Runtime and container
+were stopped while preserving the database.
+
+Credentialed browser replay, methodology-rights/provider approval and Piotr
+acceptance remain pending. Current reconstructed storage readiness: `7/16` —
+Initiatives, Execution, Meetings, Results, Finance, Materials and Audits.

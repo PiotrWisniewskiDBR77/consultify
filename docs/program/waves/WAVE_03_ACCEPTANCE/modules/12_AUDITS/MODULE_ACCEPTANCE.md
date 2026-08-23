@@ -7,6 +7,20 @@ Owner: Piotr Wisniewski
 Integrator: Codex
 Mobile: `DEFERRED_NON_GATING`
 
+> Recovery replay — 2026-08-23: the historical 817-migration database recorded
+> below was absent at catalog revalidation. Replacement local-only database
+> `consultify_w3_audits_owner_recovered_20260823` passed the exact 831-migration
+> chain, PostgreSQL restart and independent cold readback of the internal source,
+> pack, program, evidence, independently reviewed finding, approved action,
+> draft report and draft proposal. Named external standards/providers remain
+> `OFF`, with methodology-rights and owner gates `PENDING`. Exact clean SHA
+> `ac2c0d1e997d590523e5b887463cbcc292c94ae3` adopted it on server/client
+> `4343/4344`: health/readiness/frontend `200/200/200`, migration ledgers `ok/ok`,
+> client and SQL markers passed. OWNER pack/program/report/proposal lists returned
+> `200`; inactive login `403`, foreign program list empty `200`, anonymous pack
+> `401`. This restores current technical API/storage readiness, not authenticated
+> browser evidence, rights/provider approval, Piotr acceptance or release.
+
 ## Contract
 
 Primary journey: open the internal Transformation Audit Pack, create/reopen a
