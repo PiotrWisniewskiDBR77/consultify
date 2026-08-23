@@ -31,6 +31,8 @@ import {
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { CHAT_HEADER_SELECTOR_CLASS } from './chatHeaderControlStyles';
+
 // ==========================================
 // TYPES
 // ==========================================
@@ -261,12 +263,7 @@ export const BranchSelector: React.FC<BranchSelectorProps> = ({
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         data-testid="branch-selector-trigger"
-        className={`
-          flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm
-          bg-slate-100 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700
-          border border-slate-200 dark:border-navy-700 transition-colors
-          ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-        `}
+        className={CHAT_HEADER_SELECTOR_CLASS}
       >
         <GitBranch size={14} className="text-slate-500" />
         <span className="max-w-[120px] truncate">
@@ -278,9 +275,7 @@ export const BranchSelector: React.FC<BranchSelectorProps> = ({
             data-testid="branch-selector-loading"
           />
         ) : (
-          branches.length > 0 && (
-            <span className="text-xs text-slate-400">({branches.length})</span>
-          )
+          branches.length > 0 && <span className="text-xs text-slate-400">({branches.length})</span>
         )}
         <ChevronDown size={14} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>

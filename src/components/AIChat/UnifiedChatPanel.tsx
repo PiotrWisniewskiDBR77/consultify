@@ -119,6 +119,7 @@ import {
 import { pushRecentAttachment } from './chatRecentAttachments';
 import { ChatSignalsPanel } from './ChatSignalsPanel';
 import { ChatSlidingPanel } from './ChatSlidingPanel';
+import { CHAT_HEADER_ICON_CONTROL_CLASS } from './chatHeaderControlStyles';
 import { ContextBadge } from './ContextBadge';
 import {
   detectDocumentIntent,
@@ -6482,7 +6483,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               onClick={handleNewChat}
               disabled={isConversationAccessForbidden}
               data-testid="chat-new-button"
-              className="p-1.5 rounded-lg transition-colors text-c-text-muted hover:bg-c-surface-raised hover:text-c-text disabled:cursor-not-allowed disabled:opacity-50"
+              className={CHAT_HEADER_ICON_CONTROL_CLASS}
               title={t('aiChat.newChat', 'New chat')}
               aria-label={t('aiChat.newChat', 'New chat')}
             >
@@ -6494,11 +6495,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 onClick={() => toggleSidebar()}
                 data-testid="chat-history-button"
                 data-chat-toggle
-                className={`p-1.5 rounded-lg transition-colors ${
-                  isSidebarOpen
-                    ? 'text-c-text bg-c-surface-raised'
-                    : 'text-c-text-muted hover:bg-c-surface-raised hover:text-c-text'
-                }`}
+                className={`${CHAT_HEADER_ICON_CONTROL_CLASS} ${isSidebarOpen ? 'ring-1 ring-c-border' : ''}`}
                 title={t('aiChat.history', 'History')}
                 aria-label={t('aiChat.history', 'Chat history')}
               >
@@ -6515,7 +6512,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                   <button
                     onClick={() => void handleSelectBranch(branchParentConversationId)}
                     data-testid="chat-branch-back-to-parent"
-                    className="p-1.5 rounded-lg transition-colors text-c-text-muted hover:bg-c-surface-raised hover:text-c-text"
+                    className={CHAT_HEADER_ICON_CONTROL_CLASS}
                     title={t('branch.backToParent', 'Back to source conversation')}
                     aria-label={t('branch.backToParent', 'Back to source conversation')}
                   >
@@ -6548,7 +6545,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                   onNavigateToActions();
                 }}
                 data-testid="chat-business-button"
-                className="relative p-1.5 rounded-lg transition-colors text-c-text-muted hover:bg-c-surface-raised hover:text-c-text"
+                className={`relative ${CHAT_HEADER_ICON_CONTROL_CLASS}`}
                 title={t('aiChat.business', 'Business actions')}
                 aria-label={t('aiChat.business', 'Business actions')}
               >
@@ -6566,7 +6563,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               <button
                 onClick={() => setSignalsOpen(true)}
                 data-testid="chat-signals-button"
-                className="p-1.5 rounded-lg transition-colors text-c-text-muted hover:bg-c-surface-raised hover:text-c-text"
+                className={CHAT_HEADER_ICON_CONTROL_CLASS}
                 title={t('aiChat.signals.title', 'Important signals')}
                 aria-label={t('aiChat.signals.title', 'Important signals')}
               >
