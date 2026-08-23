@@ -115,6 +115,28 @@ inherited an unrelated local `DATABASE_URL` and connected to `iris_test`, making
 registration return 503. The exact named RealPG replay above is the qualified
 acceptance evidence.
 
+## Fresh-PostgreSQL schema convergence
+
+The strict PostgreSQL baseline and runtime bootstrap define different shapes
+for `subscription_plans` and `webhooks`. In a baseline-first startup, the
+runtime `CREATE TABLE IF NOT EXISTS` statements cannot add the columns used by
+Billing, Revenue, and `WebhookService`. This explained the startup diagnostics
+for missing `subscription_plans.is_active` and `webhooks.created_by`; the latter
+is a live write field, not a stale index-only artifact.
+
+Migration `20260823_billing_webhooks_schema_convergence.sql` additively repairs
+both creation orders. Local disposable RealPG evidence:
+
+- canonical strict chain: 830/830 migrations completed;
+- `subscription_plans`: all live billing metadata columns present and a full
+  plan insert/readback passed;
+- `webhooks`: all `WebhookService` write columns present, a tenant-bound
+  insert/readback passed, and `idx_webhooks_creator` exists;
+- a webhook insert against a nonexistent organization was rejected by the
+  foreign key as expected;
+- 27/27 focused schema-contract tests passed and root TypeScript check passed;
+- disposable container and test database removed after verification.
+
 ## Remaining gates
 
 - Railway `dev` recovery: `NOT_AUTHORIZED`; requires candidate/ledger decision.
