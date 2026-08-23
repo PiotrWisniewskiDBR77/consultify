@@ -15,7 +15,7 @@ linked paths.
 | --- | --- |
 | Checkout | `/Users/piotrwisniewski/Developer/Consultify-final-mvp-integration-20260823` |
 | Branch | `codex/final-mvp-integration-20260823` |
-| Integrated product baseline | `55fc3e8998` after Wave Tri reconciliation, selective Dynamic SWOT recovery, Final Demo / Materials integration and Finance source reconciliation |
+| Integrated product baseline | `1b6bb33565` after Wave Tri reconciliation, selective Dynamic SWOT recovery, Final Demo / Materials integration, Finance reconciliation and Chat-to-Tools source qualification |
 | Frozen runtime SHA | `a2b500caca36d423bf9b215f25fc1c7aba4484b3` |
 | Working tree at runtime freeze | clean at `a2b500caca`; runtime must be restarted before claims about later source HEADs |
 | Production / Railway mutation | `NOT_AUTHORIZED / NOT_PERFORMED` |
@@ -47,6 +47,7 @@ release readiness.
 | Dynamic SWOT integration | `47f206f5722260198880a3d64cc6925212e3f224`; `checkpoint/final-mvp-dynamic-swot-integrated-20260823-2235` | `/Users/piotrwisniewski/Developer/Consultify-safety-checkpoints/final-mvp-dynamic-swot-47f206f572.bundle` | `05e56ff0f3cf105a2f4236af9e915dfe7882cd229b1b4dbf370f0693132dd5c2` |
 | Materials integration | `7a3d5b05def22781686b1a458316969f98aba902`; `checkpoint/final-mvp-materials-integrated-20260823-2300` | `/Users/piotrwisniewski/Developer/Consultify-safety-checkpoints/final-mvp-materials-7a3d5b05de.bundle` | `4730b6879ba20dcced254f3d44fc6fb2c112592a6bbfde9d06a745a1bc81d0e8` |
 | Final Demo integration | `423af5c9f869e214300a5c1eb7aad51a277382a6`; `checkpoint/final-mvp-finaldemo-integrated-20260823-2240` | `/Users/piotrwisniewski/Developer/Consultify-safety-checkpoints/final-mvp-finaldemo-423af5c9f8.bundle` | `5c7d170da2669f84f6847c7be493879720814c76f122fd8716f8b7fd0ea11f12` |
+| Chat-to-Tools qualification | `1b6bb33565afba7e4042dd78387ae4f16376b61d`; `checkpoint/final-mvp-chat-to-tools-qualified-20260823-2355` | `/Users/piotrwisniewski/Developer/Consultify-safety-checkpoints/final-mvp-chat-to-tools-qualified.bundle` | `892cf903c783aa7cf9332d052deefe4fc83f66f21463a7bbe364438efdd94be4` |
 
 No cleanup, deletion or pruning is authorized from this file. The retained
 state inventory remains
@@ -99,6 +100,7 @@ node scripts/wave3/verify-acceptance-packages.mjs
 | `1fce2f0631` / retained Dynamic SWOT source | originally not an ancestor; 22 unique product commits | selectively integrated commit-by-commit; JSX, owner-feedback interaction and DRD shell contracts reconciled at `6e9f116f82`; source worktree remains preserved |
 | `bcfb01483a` detached Final Demo worktree plus dirty WIP | 27 changed files across Initiatives, Execution, Results, feature flags, tests and documentation | archived first, then preserved on `codex/preserve-finaldemo-wip-20260823` at `9f29cb00ff4a98551a6c76f3f547bcd922fdfed1`; cherry-picked cleanly as `28e901b813912f3e3ed3c069ae927a6d52c91fdf`; source worktree remains preserved |
 | `b834519c5b` detached Finance worktree plus dirty WIP | 37 changed files across Finance UI/API/backend/runtime/tests/docs | archived first, then preserved on `codex/preserve-finance-owner-wip-20260823` at `e7574b340e7262dc096cd8ac4d9cff61fed0a19c`; reconciliation proved the package was already present on the newer candidate, except for an apparent API addition that duplicated the existing `listFinanceArtifacts` client; duplicate removed at `55fc3e8998`; source worktree remains preserved |
+| `ca9ef206` detached Chat-to-Tools worktree plus dirty WIP | 140 task files excluding the accidental `false/` npm-cache tree and explicitly excluded Assessment / inherited Discovery hub scope | archived first, then preserved exactly on `codex/preserve-chat-to-tools-wip-20260823` at `7c3b559ca8d8e8e06566a072b0078d3f9666dfba`; byte comparison proves the bounded Chat, Interview, My Work / Notebook and Tools product files are already represented on the controlled candidate; source worktree remains preserved |
 | retained dirty/detached worktrees | mixed | evidence/comparison sources only until exact live re-inventory and explicit cleanup authority |
 
 ## 5. Current exact-candidate delta
@@ -180,6 +182,26 @@ Verification on the reconciled tree proves:
 
 Finance is therefore `SOURCE_RECONCILED / TECHNICAL_PASS /
 RUNTIME_DB_GATE_OPEN / OWNER_ACCEPTANCE_REQUIRED`.
+
+The retained Chat-to-Tools owner-review package has now been reconciled against
+the controlled candidate without copying its accidental `false/` npm-cache
+tree or the explicitly excluded Assessment and inherited Discovery hub files.
+The bounded product comparison proves:
+
+- Chat backend, migration, store and owner-review UI are functionally present;
+  the only source comparison difference is seven trailing one-line file endings,
+  not missing behavior;
+- Interview, My Work / Notebook and the bounded Tools paths are byte-identical
+  to the preserved source package;
+- focused Chat suite: `43/43 PASS` across `10/10` files;
+- combined Interview / My Work / Notebook / bounded Tools suite:
+  `132/132 PASS` across `30/30` files after replacing one stale source-string
+  assertion with the current `aria-disabled` fail-closed accessibility contract;
+- full TypeScript type-check: `PASS`;
+- `git diff --check`: `PASS` before the qualification commit.
+
+This segment is therefore `SOURCE_RECONCILED / TECHNICAL_PASS /
+RUNTIME_REPLAY_REQUIRED / OWNER_ACCEPTANCE_REQUIRED`.
 
 ### Preserved dirty-source snapshots
 
