@@ -133,7 +133,7 @@ export function classifyMigrationSql(sql) {
       /^INSERT\s+INTO\b[\s\S]*\bON\s+CONFLICT\b[\s\S]*\bDO\s+UPDATE\b/.test(normalized)
     )
       return { classification: 'DENY', code: 'DESTRUCTIVE_DATA_REWRITE' };
-    if (/^CREATE\s+OR\s+REPLACE\s+(?:FUNCTION|PROCEDURE|VIEW)\b/.test(normalized))
+    if (/^CREATE\s+(?:OR\s+REPLACE\s+)?(?:FUNCTION|PROCEDURE|VIEW)\b/.test(normalized))
       return { classification: 'ALLOW', code: 'SAFE_PROGRAMMABLE_REPLACE' };
     if (
       /^CREATE\s+(?:UNIQUE\s+)?(?:TABLE|INDEX|SEQUENCE|TYPE|POLICY|TRIGGER|EXTENSION)\b/.test(
@@ -143,6 +143,11 @@ export function classifyMigrationSql(sql) {
       return { classification: 'ALLOW', code: 'SAFE_CREATE' };
     if (/^ALTER\s+TABLE\b.*\bADD\s+(?:COLUMN|CONSTRAINT)\b/.test(normalized))
       return { classification: 'ALLOW', code: 'SAFE_ALTER_ADD' };
+    // Relaxing nullability does not erase or rewrite existing rows. Keep this
+    // narrow: DROP COLUMN/CONSTRAINT remains denied above and all other ALTER
+    // COLUMN operations continue to fail closed as unclassified.
+    if (/^ALTER\s+TABLE\b.*\bALTER\s+COLUMN\b.*\bDROP\s+NOT\s+NULL\b/.test(normalized))
+      return { classification: 'ALLOW', code: 'SAFE_ALTER_DROP_NOT_NULL' };
     if (/^ALTER\s+TYPE\b.*\bADD\s+VALUE\b/.test(normalized))
       return { classification: 'ALLOW', code: 'SAFE_ENUM_ADD' };
     if (/^(?:BEGIN|COMMIT|ROLLBACK)\b/.test(normalized))
