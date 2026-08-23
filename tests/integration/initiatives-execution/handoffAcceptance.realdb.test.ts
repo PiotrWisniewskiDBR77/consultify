@@ -205,5 +205,33 @@ real('Handoff Acceptance and canonical Execution Case realDB', () => {
         )
       ).rows[0].n
     ).toBe(1);
+
+    const coldPool = new Pool({ connectionString: url, max: 1 });
+    try {
+      const coldReader = new PostgresInitiativeReader(coldPool);
+      expect(await coldReader.findExecutionCaseByInitiative(org, initiativeId)).toEqual(
+        expect.objectContaining({
+          executionCaseId: winner.caseId,
+          detail: expect.objectContaining({
+            executionCaseId: winner.caseId,
+            initiativeId,
+            state: 'ACTIVE',
+          }),
+        })
+      );
+      expect(await coldReader.findExecutionCaseByInitiative('foreign-org', initiativeId)).toBeNull();
+
+      const identities = await coldPool.query(
+        `SELECT
+           count(*) FILTER (WHERE aggregate_type='initiative' AND aggregate_id=$2)::int initiatives,
+           count(*) FILTER (WHERE aggregate_type='execution_case' AND payload_json->>'initiativeId'=$2)::int execution_cases
+         FROM ie_aggregate_state
+         WHERE organization_id=$1`,
+        [org, initiativeId]
+      );
+      expect(identities.rows[0]).toEqual({ initiatives: 1, execution_cases: 1 });
+    } finally {
+      await coldPool.end();
+    }
   });
 });
