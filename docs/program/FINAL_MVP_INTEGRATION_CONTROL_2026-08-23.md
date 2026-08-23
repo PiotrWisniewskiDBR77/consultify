@@ -45,6 +45,7 @@ release readiness.
 | Assessment navigator | `a2b500caca36d423bf9b215f25fc1c7aba4484b3`; `checkpoint/assessment-navigator-20260823-2137` | `/Users/piotrwisniewski/Developer/Consultify-safety-checkpoints/assessment-navigator-a2b500caca.bundle` | `4078856900803bbb9cfebbf3e544c4826d8c082afdbd2d0763f9355fe553c247` |
 | Sixteen-module source map | `b973c2d1964c04e0f843852b649ab935516cf934`; `checkpoint/final-mvp-16-module-map-20260823-2155` | `/Users/piotrwisniewski/Developer/Consultify-safety-checkpoints/final-mvp-16-module-map-b973c2d196.bundle` | `12b8a9143284cf9f7621335a8a002eefc35bdce3c77a16ff51284f568c0313f7` |
 | Dynamic SWOT integration | `47f206f5722260198880a3d64cc6925212e3f224`; `checkpoint/final-mvp-dynamic-swot-integrated-20260823-2235` | `/Users/piotrwisniewski/Developer/Consultify-safety-checkpoints/final-mvp-dynamic-swot-47f206f572.bundle` | `05e56ff0f3cf105a2f4236af9e915dfe7882cd229b1b4dbf370f0693132dd5c2` |
+| Materials integration | `7a3d5b05def22781686b1a458316969f98aba902`; `checkpoint/final-mvp-materials-integrated-20260823-2300` | `/Users/piotrwisniewski/Developer/Consultify-safety-checkpoints/final-mvp-materials-7a3d5b05de.bundle` | `4730b6879ba20dcced254f3d44fc6fb2c112592a6bbfde9d06a745a1bc81d0e8` |
 
 No cleanup, deletion or pruning is authorized from this file. The retained
 state inventory remains
@@ -95,6 +96,7 @@ node scripts/wave3/verify-acceptance-packages.mjs
 | `54987e405a` recovered Finance fixture documentation | ancestor | integrated |
 | `d48f4d7fc8` / `codex/wave3-four-modules-bcfb0148` | originally not an ancestor; one unique documentation commit | semantically reviewed; its single file was selectively integrated by cherry-pick as `3d0028802d`; source branch/worktree remains preserved |
 | `1fce2f0631` / retained Dynamic SWOT source | originally not an ancestor; 22 unique product commits | selectively integrated commit-by-commit; JSX, owner-feedback interaction and DRD shell contracts reconciled at `6e9f116f82`; source worktree remains preserved |
+| `bcfb01483a` detached Final Demo worktree plus dirty WIP | 27 changed files across Initiatives, Execution, Results, feature flags, tests and documentation | archived first, then preserved on `codex/preserve-finaldemo-wip-20260823` at `9f29cb00ff4a98551a6c76f3f547bcd922fdfed1`; cherry-picked cleanly as `28e901b813912f3e3ed3c069ae927a6d52c91fdf`; source worktree remains preserved |
 | retained dirty/detached worktrees | mixed | evidence/comparison sources only until exact live re-inventory and explicit cleanup authority |
 
 ## 5. Current exact-candidate delta
@@ -137,6 +139,24 @@ Materials has one bounded source correction ready on this candidate:
 
 The Materials correction therefore remains `SOURCE_VERIFIED /
 RUNTIME_NOT_REPLAYED / OWNER_ACCEPTANCE_REQUIRED`.
+
+The preserved Final Demo package is now integrated selectively into the same
+candidate. It restores and reconciles the current Initiatives, Execution and
+Results owner-review surfaces, deterministic local review data, canonical
+Execution initiative linkage and Results domain navigation. Verification on
+the integrated candidate proves:
+
+- full TypeScript type-check: `PASS`;
+- focused Initiatives / Execution / Results / feature-flag suite:
+  `147/147 PASS` across `6/6` test files;
+- `git diff --check`: `PASS` before the checkpoint commit;
+- the one stale Initiatives architecture assertion was updated to test the
+  canonical-register delegation that the product now mounts, rather than the
+  removed inline preview implementation; the correction is committed at
+  `8c96a1c77a`.
+
+This is `SOURCE_INTEGRATED / TECHNICAL_PASS`. It is not yet browser replay,
+persistence/readback, a complete `16 x 21` gate result or owner acceptance.
 
 ### Preserved dirty-source snapshots
 
