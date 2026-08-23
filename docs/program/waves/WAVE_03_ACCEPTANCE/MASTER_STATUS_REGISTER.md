@@ -1,6 +1,23 @@
 # Wave 3 — master status register
 
-Last updated: `2026-08-23`
+Last updated: `2026-08-24`
+
+Current controlled source candidate is clean
+`ff8ba735cc404982e9d455632c7bc06162f97df1` on
+`codex/final-mvp-integration-20260823`. The structural package verifier passes
+`16/16` modules with exactly `21/21` gates per module and `16/16` master rows.
+Across the atomic registers this is `336/336` structurally present gate rows;
+`159/336` still carry the literal status `NOT_STARTED`. Other open rows keep
+their precise partial, policy, provider, browser-retest or owner-review status.
+This is the current control denominator, not a claim that the remaining 177
+rows are accepted.
+
+Finance and Materials now have newer bounded browser evidence on guarded local
+owner runtimes. Finance proves read-only opening of all five full cards;
+Materials proves the Presentation, Document and Sheet full cards. No compute,
+generate, save, export, share, provider, Railway or production mutation was
+performed. These recoveries advance navigation and evidence only; both module
+owner verdicts remain `PENDING`, and final one-SHA replay remains open.
 
 Final MVP integration control now has integrated product baseline
 `6e9f116f82dd202edb66fac7d900028da2d81e69`. Its mounted product runtime is

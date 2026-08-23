@@ -9,13 +9,41 @@ integration. It does not replace module registers, owner wording, screenshots,
 database inventories or gate evidence. Those remain authoritative at their
 linked paths.
 
+## Current CTO checkpoint — 2026-08-24
+
+This section is the current navigation state. Older SHA/runtime entries below
+remain immutable historical evidence; they are not silently promoted to the
+current candidate.
+
+| Property | Current value |
+| --- | --- |
+| Controlled candidate | `ff8ba735cc404982e9d455632c7bc06162f97df1` on `codex/final-mvp-integration-20260823` |
+| Working tree | clean after Finance and Materials evidence commits |
+| Acceptance package structure | `16/16` modules, exactly `21/21` gates each, `336/336` gate rows, `16/16` master rows |
+| Literal open denominator | `159/336` gate rows remain exactly `NOT_STARTED`; other non-final rows retain their qualified `PARTIAL`, `PENDING`, policy, provider or owner-review wording |
+| Finance recovery | five full cards browser-read on the guarded local owner runtime; no compute, generate, save, export or environment mutation performed |
+| Materials recovery | Presentation, Document and Sheet full cards browser-read on the guarded local owner runtime; no export, share or provider mutation performed |
+| Production / Railway mutation | `NOT_AUTHORIZED / NOT_PERFORMED` |
+| Owner acceptance | `NOT COMPLETE`; technical screenshots, fixture reads and package validation do not substitute for `G07-G20` or Piotr's explicit verdict |
+
+Current evidence:
+
+- Finance: [`evidence/current-browser-replay/2026-08-24/finance/MANIFEST.md`](evidence/current-browser-replay/2026-08-24/finance/MANIFEST.md)
+- Materials: [`evidence/current-browser-replay/2026-08-24/materials/MANIFEST.md`](evidence/current-browser-replay/2026-08-24/materials/MANIFEST.md)
+- Atomic module states: [`waves/WAVE_03_ACCEPTANCE/modules/`](waves/WAVE_03_ACCEPTANCE/modules/)
+
+Execution rule from this checkpoint: close work in the existing atomic module
+registers; do not create a competing tracker, do not rewrite `NOT_STARTED`, and
+do not freeze a final SHA until product/configuration/migration/fixture changes
+have stopped and the impacted modules have been replayed on that exact SHA.
+
 ## 1. Controlled candidate
 
 | Property | Current value |
 | --- | --- |
 | Checkout | `/Users/piotrwisniewski/Developer/Consultify-final-mvp-integration-20260823` |
 | Branch | `codex/final-mvp-integration-20260823` |
-| Integrated product baseline | `1b6bb33565` after Wave Tri reconciliation, selective Dynamic SWOT recovery, Final Demo / Materials integration, Finance reconciliation and Chat-to-Tools source qualification |
+| Integrated product baseline | current clean candidate `ff8ba735cc`; the older `1b6bb33565` checkpoint remains an ancestor and historical recovery anchor |
 | Frozen runtime SHA | `a2b500caca36d423bf9b215f25fc1c7aba4484b3` |
 | Working tree at runtime freeze | clean at `a2b500caca`; runtime must be restarted before claims about later source HEADs |
 | Production / Railway mutation | `NOT_AUTHORIZED / NOT_PERFORMED` |
