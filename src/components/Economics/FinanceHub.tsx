@@ -2457,10 +2457,7 @@ export const FinanceHub: React.FC = () => {
                 label: t('finance.row.confirmStatement', 'Potwierdź'),
                 onClick: async () => {
                   try {
-                    await Api.post(
-                      `/api/finance-statements/${selectedStatementRow.id}/confirm`,
-                      {}
-                    );
+                    await V8FinanceApi.confirmStatementCurrent(selectedStatementRow.id);
                     await loadStatements();
                     toast.success(t('finance.toast.statementConfirmed', 'Statement potwierdzony'));
                   } catch (e: any) {
@@ -2759,10 +2756,7 @@ export const FinanceHub: React.FC = () => {
                         label: t('finance.row.confirmStatement', 'Potwierdź'),
                         onClick: async () => {
                           try {
-                            await Api.post(
-                              `/api/finance-statements/${statementRow.id}/confirm`,
-                              {}
-                            );
+                            await V8FinanceApi.confirmStatementCurrent(statementRow.id);
                             await loadStatements();
                             toast.success(
                               t('finance.toast.statementConfirmed', 'Statement potwierdzony')

@@ -531,11 +531,27 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
     expect(V8FinanceApi.getStatementSourceReceipt).toHaveBeenCalledTimes(4);
   });
 
-  it('falls back to legacy detect/extract/map and canonical lines in the wizard manual flow on bounded compatibility statuses', async () => {
-    vi.mocked(V8FinanceApi.detectStatement).mockRejectedValue({ status: 404 });
-    vi.mocked(V8FinanceApi.extractStatement).mockRejectedValue({ status: 404 });
-    vi.mocked(V8FinanceApi.mapStatement).mockRejectedValue({ status: 404 });
-    vi.mocked(V8FinanceApi.getCanonicalLines).mockRejectedValue({ status: 404 });
+  it('keeps detect/extract/map writes on V8 without reopening legacy doors', async () => {
+    vi.mocked(V8FinanceApi.extractStatement).mockResolvedValue({
+      lines: [{ originalLabel: 'Revenue', value: 100, confidence: 0.9 }],
+    } as any);
+    vi.mocked(V8FinanceApi.mapStatement).mockResolvedValue({
+      mappedLines: [
+        {
+          originalLabel: 'Revenue',
+          value: 100,
+          confidence: 0.9,
+          suggestedCanonicalId: 'line-1',
+          suggestedCanonicalLabel: 'Revenue',
+        },
+      ],
+    } as any);
+    vi.mocked(V8FinanceApi.getCanonicalLines).mockResolvedValue({
+      canonicalLines: [
+        { id: 'line-1', statement_type: 'P&L', line_code: 'revenue', line_name: 'Revenue' },
+      ],
+      count: 1,
+    } as any);
     vi.mocked(Api.post).mockImplementation(async (url: string, body?: any) => {
       if (url === '/api/finance-statements/statement-1/detect') {
         expect(body).toEqual({
@@ -600,13 +616,14 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
       '/api/finance-statements/statement-1/detect',
       expect.anything()
     );
-    expect(Api.post).toHaveBeenCalledWith('/api/finance-statements/statement-1/extract', {
-      statementType: 'P&L',
-      periodLabel: '',
-      currency: 'PLN',
-    });
-    expect(Api.post).toHaveBeenCalledWith('/api/finance-statements/statement-1/map', {});
-    expect(Api.get).toHaveBeenCalledWith('/api/finance-statements/canonical-lines');
+    expect(Api.post).not.toHaveBeenCalledWith(
+      '/api/finance-statements/statement-1/extract',
+      expect.anything()
+    );
+    expect(Api.post).not.toHaveBeenCalledWith(
+      '/api/finance-statements/statement-1/map',
+      expect.anything()
+    );
   });
 
   it('prefers governed values save before legacy fallback in the wizard manual flow', async () => {
@@ -758,7 +775,7 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
     );
   });
 
-  it('falls back to legacy values save in the wizard manual flow on bounded compatibility statuses', async () => {
+  it('does not reopen legacy values save when governed V8 save fails', async () => {
     vi.mocked(V8FinanceApi.detectStatement).mockResolvedValue({
       statementId: 'statement-1',
     } as any);
@@ -801,11 +818,8 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Save & Validate' }));
 
-    await waitFor(() => {
-      expect(Api.put).toHaveBeenCalledWith('/api/finance-statements/statement-1/values', {
-        values: expect.any(Array),
-      });
-    });
+    await waitFor(() => expect(V8FinanceApi.putStatementValues).toHaveBeenCalled());
+    expect(Api.put).not.toHaveBeenCalled();
 
     expect(V8FinanceApi.putStatementValues).toHaveBeenCalledWith('statement-1', {
       values: expect.any(Array),
@@ -896,7 +910,7 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
     expect(onComplete).toHaveBeenCalledWith('statement-1');
   });
 
-  it('falls back to legacy confirm in the wizard manual flow on bounded compatibility statuses', async () => {
+  it('does not reopen legacy confirm when governed V8 confirmation fails', async () => {
     vi.mocked(V8FinanceApi.detectStatement).mockResolvedValue({
       statementId: 'statement-1',
     } as any);
@@ -968,20 +982,19 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Confirm & Save' }));
 
-    await waitFor(() => {
-      expect(Api.post).toHaveBeenCalledWith(
-        '/api/finance-statements/statement-1/confirm',
-        { sourceReceiptId: 'receipt-1', expectedValuesVersion: 1 },
-        { extraHeaders: { 'Idempotency-Key': 'statement-confirm-statement-1-1' } }
-      );
-    });
+    await waitFor(() => expect(V8FinanceApi.confirmStatement).toHaveBeenCalled());
+    expect(Api.post).not.toHaveBeenCalledWith(
+      '/api/finance-statements/statement-1/confirm',
+      expect.anything(),
+      expect.anything()
+    );
 
     expect(V8FinanceApi.confirmStatement).toHaveBeenCalledWith(
       'statement-1',
       { sourceReceiptId: 'receipt-1', expectedValuesVersion: 1 },
       'statement-confirm-statement-1-1'
     );
-    expect(onComplete).toHaveBeenCalledWith('statement-1');
+    expect(onComplete).not.toHaveBeenCalled();
   });
 
   it('routes a smart analysis through review and governed confirmation', async () => {

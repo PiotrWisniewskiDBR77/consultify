@@ -18,14 +18,15 @@
  * the `authenticate` middleware below relies on.
  */
 import { randomUUID } from 'node:crypto';
+
 import express from 'express';
 import { Pool } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { cleanupLegacyCutoverTestIntents } from './legacyCutoverTestCleanup.js';
 
 import { createLegacyCutoverGuard } from '../legacyCutoverKernel.js';
 import { FINANCE_STATEMENTS_CUTOVER } from '../registry/financeStatements.js';
+import { cleanupLegacyCutoverTestIntents } from './legacyCutoverTestCleanup.js';
 
 const CONNECTION_STRING = process.env.DATABASE_URL || '';
 const REAL_PG =
@@ -115,7 +116,6 @@ describe.skipIf(!REAL_PG)('FINANCE-STATEMENTS legacy-cutover guard (fresh real P
       successor: '/api/v8/finance/statements/upload-and-analyze',
     });
 
-    process.env.FINANCE_LEGACY_WRITER_ROLLBACK_ENABLED = 'true';
     process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = 'FS-W02';
     try {
       const restored = await request(app)
@@ -124,7 +124,53 @@ describe.skipIf(!REAL_PG)('FINANCE-STATEMENTS legacy-cutover guard (fresh real P
       expect(restored.status).toBe(400);
       expect(restored.body.error).toMatch(/File required/i);
     } finally {
-      delete process.env.FINANCE_LEGACY_WRITER_ROLLBACK_ENABLED;
+      delete process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+    }
+  });
+
+  it.each([
+    ['FS-W03', 'post', 'detect', '/api/v8/finance/statements/:statementId/detect'],
+    ['FS-W04', 'post', 'extract', '/api/v8/finance/statements/:statementId/extract'],
+    ['FS-W05', 'post', 'map', '/api/v8/finance/statements/:statementId/map'],
+    ['FS-W06', 'put', 'values', '/api/v8/finance/statements/:statementId/values'],
+    ['FS-W07', 'post', 'validate', '/api/v8/finance/statements/:statementId/confirm'],
+    ['FS-W08', 'post', 'confirm', '/api/v8/finance/statements/:statementId/confirm'],
+  ] as const)(
+    'retires %s by default and exposes its governed successor',
+    async (writerId, method, action, successor) => {
+      const statementId = `${prefix}-${writerId.toLowerCase()}`;
+      const response = await request(app)
+        [method](`/api/finance-statements/${statementId}/${action}`)
+        .set('x-request-id', `${prefix}-${writerId.toLowerCase()}-blocked`)
+        .send({});
+
+      expect(response.status).toBe(410);
+      expect(response.body).toMatchObject({
+        code: 'FINANCE_LEGACY_WRITER_DISABLED',
+        writerId,
+        successor,
+      });
+    }
+  );
+
+  it('restores only FS-W08 when its exact writer-scoped rollback lever is enabled', async () => {
+    const statementId = `${prefix}-w08-rollback`;
+    process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = 'FS-W08';
+    try {
+      const restored = await request(app)
+        .post(`/api/finance-statements/${statementId}/confirm`)
+        .set('x-request-id', `${prefix}-w08-restored`)
+        .send({});
+      expect(restored.status).not.toBe(410);
+      expect(restored.status).toBe(400);
+
+      const stillBlocked = await request(app)
+        .post(`/api/finance-statements/${statementId}/extract`)
+        .set('x-request-id', `${prefix}-w04-still-blocked`)
+        .send({});
+      expect(stillBlocked.status).toBe(410);
+      expect(stillBlocked.body.writerId).toBe('FS-W04');
+    } finally {
       delete process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
     }
   });

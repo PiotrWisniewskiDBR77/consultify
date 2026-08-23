@@ -554,9 +554,17 @@ describe('V8FinanceApi', () => {
       status: 'confirmed',
     });
 
-    const data = await V8FinanceApi.confirmStatement('statement-1');
+    const data = await V8FinanceApi.confirmStatement(
+      'statement-1',
+      { sourceReceiptId: 'receipt-1', expectedValuesVersion: 2 },
+      'confirm-key'
+    );
 
-    expect(v8Post).toHaveBeenCalledWith('/finance/statements/statement-1/confirm', {});
+    expect(v8Post).toHaveBeenCalledWith(
+      '/finance/statements/statement-1/confirm',
+      { sourceReceiptId: 'receipt-1', expectedValuesVersion: 2 },
+      { extraHeaders: { 'Idempotency-Key': 'confirm-key' } }
+    );
     expect(data.success).toBe(true);
     expect(data.statementPackId).toBe('pack-1');
   });

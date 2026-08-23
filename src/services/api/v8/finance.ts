@@ -635,9 +635,17 @@ export interface V8FinanceStatementUploadAnalyzeResult {
   mode: 'smart' | 'fallback' | 'legacy';
   statementPackId?: string | null;
   statementIds: string[];
-  analysis?: Record<string, unknown> | null;
+  analysis?: {
+    entityName?: string;
+    periodLabel?: string;
+    currency?: string;
+    scaling?: string;
+    documentDescription?: string;
+    sectionTypes?: string[];
+    totalLines?: number;
+  } | null;
   detection?: Record<string, unknown> | null;
-  statements?: Array<Record<string, unknown>>;
+  statements?: Array<{ statementId: string; statementType: string; lineCount: number }>;
   message?: string;
 }
 
@@ -981,6 +989,19 @@ export const V8FinanceApi = {
     v8Post<V8FinanceStatementConfirmResult>(`/finance/statements/${statementId}/confirm`, body, {
       extraHeaders: { 'Idempotency-Key': idempotencyKey },
     }),
+  confirmStatementCurrent: async (statementId: string) => {
+    const [detail, source] = await Promise.all([
+      V8FinanceApi.getStatement(statementId),
+      V8FinanceApi.getStatementSourceReceipt(statementId),
+    ]);
+    const valuesVersion = Number(detail.statement.values_version ?? 0);
+    const sourceReceiptId = String(source.receipt.receipt_id || '');
+    return V8FinanceApi.confirmStatement(
+      statementId,
+      { sourceReceiptId, expectedValuesVersion: valuesVersion },
+      `statement-confirm:${statementId}:${valuesVersion}:${crypto.randomUUID()}`
+    );
+  },
   putStatementValues: (statementId: string, body: { values: Record<string, unknown>[] }) =>
     v8Put<V8FinanceStatementValuesSaveResult>(`/finance/statements/${statementId}/values`, body),
   getStatementSourceReceipt: (statementId: string) =>

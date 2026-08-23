@@ -25,8 +25,8 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
       legacyMutationDoors: 51,
       canonicalMutationDoors: 2,
       nonMutationDoors: 6,
-      retiredLegacyMutationDoors: 38,
-      openLegacyMutationDoors: 13,
+      retiredLegacyMutationDoors: 44,
+      openLegacyMutationDoors: 7,
     });
   });
 
@@ -309,5 +309,25 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
       state: 'disabled',
       successor: '/api/v8/finance/statements/upload-and-analyze',
     });
+  });
+
+  it('routes the mounted statement editing flow exclusively through governed V8 writes', () => {
+    const files = [
+      'src/components/Finance/FinancialStatementImportWizard.tsx',
+      'src/components/Finance/FinancialStatementWorkspace.tsx',
+      'src/components/Economics/FinanceHub.tsx',
+      'src/components/Economics/hooks/useFinanceRowActions.ts',
+    ];
+    for (const file of files) {
+      const source = fs.readFileSync(path.resolve(process.cwd(), file), 'utf8');
+      expect(source).not.toMatch(
+        /finance-statements\/\$\{[^}]+\}\/(detect|extract|map|values|validate|confirm)/
+      );
+    }
+    for (const id of ['FS-W03', 'FS-W04', 'FS-W05', 'FS-W06', 'FS-W07', 'FS-W08']) {
+      expect(FINANCE_STATEMENTS_CUTOVER.writers.find((rule) => rule.writerId === id)?.state).toBe(
+        'disabled'
+      );
+    }
   });
 });

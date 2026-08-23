@@ -156,25 +156,11 @@ interface Props {
 }
 
 async function extractStatementWithFallback(statementId: string, body: Record<string, unknown>) {
-  try {
-    return await V8FinanceApi.extractStatement(statementId, body);
-  } catch (error) {
-    if (!shouldFallbackToLegacyFinance(error)) {
-      throw error;
-    }
-    return await Api.post(`/api/finance-statements/${statementId}/extract`, body);
-  }
+  return V8FinanceApi.extractStatement(statementId, body);
 }
 
 async function mapStatementWithFallback(statementId: string) {
-  try {
-    return await V8FinanceApi.mapStatement(statementId, {});
-  } catch (error) {
-    if (!shouldFallbackToLegacyFinance(error)) {
-      throw error;
-    }
-    return await Api.post(`/api/finance-statements/${statementId}/map`, {});
-  }
+  return V8FinanceApi.mapStatement(statementId, {});
 }
 
 async function getCanonicalLinesWithFallback() {
@@ -216,14 +202,7 @@ async function saveStatementValuesWithFallback(
   statementId: string,
   values: Array<Record<string, unknown>>
 ) {
-  try {
-    return await V8FinanceApi.putStatementValues(statementId, { values });
-  } catch (error) {
-    if (!shouldFallbackToLegacyFinance(error)) {
-      throw error;
-    }
-    return await Api.put(`/api/finance-statements/${statementId}/values`, { values });
-  }
+  return V8FinanceApi.putStatementValues(statementId, { values });
 }
 
 async function confirmStatementWithFallback(
@@ -232,22 +211,11 @@ async function confirmStatementWithFallback(
   expectedValuesVersion: number,
   idempotencyKey: string
 ) {
-  try {
-    return await V8FinanceApi.confirmStatement(
-      statementId,
-      { sourceReceiptId, expectedValuesVersion },
-      idempotencyKey
-    );
-  } catch (error) {
-    if (!shouldFallbackToLegacyFinance(error)) {
-      throw error;
-    }
-    return await Api.post(
-      `/api/finance-statements/${statementId}/confirm`,
-      { sourceReceiptId, expectedValuesVersion },
-      { extraHeaders: { 'Idempotency-Key': idempotencyKey } }
-    );
-  }
+  return V8FinanceApi.confirmStatement(
+    statementId,
+    { sourceReceiptId, expectedValuesVersion },
+    idempotencyKey
+  );
 }
 
 /** crypto.randomUUID() with a defensive fallback for environments where it's
@@ -538,11 +506,14 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
           documentDescription: data.analysis.documentDescription,
           sectionTypes: data.analysis.sectionTypes,
           totalLines: data.analysis.totalLines,
-          statementPackId: data.statementPackId,
+          statementPackId: data.statementPackId || undefined,
           statements: data.statements,
         });
         setStatementId(
-          data.statementIds?.[0] || data.statements?.[0]?.statementId || data.statementPackId
+          data.statementIds?.[0] ||
+            data.statements?.[0]?.statementId ||
+            data.statementPackId ||
+            null
         );
         trackFunnelEvent('financial_statement_import_started', {
           packId: data.statementPackId,
@@ -574,7 +545,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
         setStep('detect');
       } else {
         // Fallback: old flow with manual section selection
-        setStatementId(data.statementIds?.[0] || data.statementPackId);
+        setStatementId(data.statementIds?.[0] || data.statementPackId || null);
         const detected = data.detection as Partial<Detection> | undefined;
         const fallbackDetection: Detection = {
           statementType: '',
@@ -846,35 +817,18 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
             expectedValuesVersion: valuesVersion,
           };
           const key = `statement-map-${review.statementId}-${value.sourceRow}-${valuesVersion}`;
-          try {
-            const result = await V8FinanceApi.recordStatementManualMappingDecision(
-              review.statementId,
-              body,
-              key
-            );
-            const decision = (result as any)?.decision;
-            if (decision?.readinessStatus) {
-              decisionReadiness = {
-                readinessStatus: decision.readinessStatus,
-                summary: String(decision.summary || ''),
-                reasonCodes: Array.isArray(decision.reasonCodes) ? decision.reasonCodes : [],
-              };
-            }
-          } catch (decisionError) {
-            if (!shouldFallbackToLegacyFinance(decisionError)) throw decisionError;
-            const result = await Api.post(
-              `/api/finance-statements/${review.statementId}/manual-mapping-decisions`,
-              body,
-              { extraHeaders: { 'Idempotency-Key': key } }
-            );
-            const decision = (result as any)?.decision;
-            if (decision?.readinessStatus) {
-              decisionReadiness = {
-                readinessStatus: decision.readinessStatus,
-                summary: String(decision.summary || ''),
-                reasonCodes: Array.isArray(decision.reasonCodes) ? decision.reasonCodes : [],
-              };
-            }
+          const result = await V8FinanceApi.recordStatementManualMappingDecision(
+            review.statementId,
+            body,
+            key
+          );
+          const decision = (result as any)?.decision;
+          if (decision?.readinessStatus) {
+            decisionReadiness = {
+              readinessStatus: decision.readinessStatus,
+              summary: String(decision.summary || ''),
+              reasonCodes: Array.isArray(decision.reasonCodes) ? decision.reasonCodes : [],
+            };
           }
         }
         const effectiveReadiness = decisionReadiness || (data as any)?.readiness || null;

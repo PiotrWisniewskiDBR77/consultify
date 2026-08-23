@@ -431,7 +431,7 @@ export function useFinanceRowActions({
             icon: CheckCircle,
             onClick: async () => {
               try {
-                await Api.post(`/api/finance-statements/${statementRow.id}/confirm`, {});
+                await V8FinanceApi.confirmStatementCurrent(statementRow.id);
                 await loadStatements();
                 toast.success(t('finance.toast.statementConfirmed', 'Statement potwierdzony'));
               } catch (e: any) {
