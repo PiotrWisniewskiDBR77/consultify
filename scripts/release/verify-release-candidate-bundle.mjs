@@ -136,7 +136,7 @@ export function classifyMigrationSql(sql) {
     if (/^CREATE\s+(?:OR\s+REPLACE\s+)?(?:FUNCTION|PROCEDURE|VIEW)\b/.test(normalized))
       return { classification: 'ALLOW', code: 'SAFE_PROGRAMMABLE_REPLACE' };
     if (
-      /^CREATE\s+(?:UNIQUE\s+)?(?:TABLE|INDEX|SEQUENCE|TYPE|POLICY|TRIGGER|EXTENSION)\b/.test(
+      /^CREATE\s+(?:OR\s+REPLACE\s+)?(?:TABLE|INDEX|SEQUENCE|TYPE|POLICY|TRIGGER|EXTENSION)\b/.test(
         normalized
       )
     )

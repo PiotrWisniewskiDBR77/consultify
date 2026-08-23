@@ -23,8 +23,6 @@ BEGIN
 END;
 $$;
 
-DROP TRIGGER IF EXISTS trg_finance_digitization_analysis_financials_receipt_immutable
-  ON finance_digitization_analysis_financials_receipts;
-CREATE TRIGGER trg_finance_digitization_analysis_financials_receipt_immutable
+CREATE OR REPLACE TRIGGER trg_finance_digitization_analysis_financials_receipt_immutable
   BEFORE UPDATE OR DELETE ON finance_digitization_analysis_financials_receipts
   FOR EACH ROW EXECUTE FUNCTION finance_digitization_analysis_financials_receipt_immutable();

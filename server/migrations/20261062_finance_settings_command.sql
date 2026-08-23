@@ -34,8 +34,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS trg_finance_settings_command_receipts_append_only
-  ON finance_settings_command_receipts;
-CREATE TRIGGER trg_finance_settings_command_receipts_append_only
+CREATE OR REPLACE TRIGGER trg_finance_settings_command_receipts_append_only
 BEFORE UPDATE OR DELETE ON finance_settings_command_receipts
 FOR EACH ROW EXECUTE FUNCTION reject_finance_settings_receipt_mutation();

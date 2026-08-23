@@ -62,9 +62,7 @@ BEGIN
   RETURN NEW;
 END $$;
 
-DROP TRIGGER IF EXISTS trg_flow_accepted_classic_runtime_adoption_validate
-  ON flow_accepted_classic_runtime_adoptions;
-CREATE TRIGGER trg_flow_accepted_classic_runtime_adoption_validate
+CREATE OR REPLACE TRIGGER trg_flow_accepted_classic_runtime_adoption_validate
 BEFORE INSERT ON flow_accepted_classic_runtime_adoptions
 FOR EACH ROW EXECUTE FUNCTION validate_flow_accepted_classic_runtime_adoption();
 
@@ -74,8 +72,6 @@ BEGIN
   RAISE EXCEPTION 'flow_accepted_classic_runtime_adoptions is append-only';
 END $$;
 
-DROP TRIGGER IF EXISTS trg_flow_accepted_classic_runtime_adoption_immutable
-  ON flow_accepted_classic_runtime_adoptions;
-CREATE TRIGGER trg_flow_accepted_classic_runtime_adoption_immutable
+CREATE OR REPLACE TRIGGER trg_flow_accepted_classic_runtime_adoption_immutable
 BEFORE UPDATE OR DELETE ON flow_accepted_classic_runtime_adoptions
 FOR EACH ROW EXECUTE FUNCTION protect_flow_accepted_classic_runtime_adoption();

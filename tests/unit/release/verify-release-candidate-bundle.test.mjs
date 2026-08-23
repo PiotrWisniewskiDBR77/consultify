@@ -242,6 +242,7 @@ test('rejects destructive and unclassified migration statements without comment/
     'ALTER TABLE base ADD COLUMN safe text; CREATE INDEX safe_idx ON base(safe);',
     'CREATE TABLE child(id text, parent_id text REFERENCES base(id) ON DELETE CASCADE);',
     'CREATE TRIGGER immutable BEFORE UPDATE OR DELETE ON base FOR EACH ROW EXECUTE FUNCTION reject_change();',
+    'CREATE OR REPLACE TRIGGER immutable BEFORE UPDATE OR DELETE ON base FOR EACH ROW EXECUTE FUNCTION reject_change();',
     'BEGIN; ALTER TABLE base ADD COLUMN guarded text; COMMIT;',
   ]) {
     const x = fx(sql),

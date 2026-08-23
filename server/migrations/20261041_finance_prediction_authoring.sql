@@ -34,9 +34,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS trg_finance_prediction_authoring_receipt_immutable
-  ON finance_prediction_authoring_receipts;
-CREATE TRIGGER trg_finance_prediction_authoring_receipt_immutable
+CREATE OR REPLACE TRIGGER trg_finance_prediction_authoring_receipt_immutable
   BEFORE UPDATE OR DELETE ON finance_prediction_authoring_receipts
   FOR EACH ROW EXECUTE FUNCTION finance_prediction_authoring_receipt_immutable();
 
