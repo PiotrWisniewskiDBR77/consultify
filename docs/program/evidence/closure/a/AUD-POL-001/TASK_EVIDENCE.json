@@ -103,14 +103,22 @@
   },
   "integratorChangeRequests": [],
   "openItems": [
-    "GAP 1 (unpublished packs listable/readable by any org member) has a ready-to-apply diff in docs/program/evidence/closure/a/AUD-MVP-RIGHTS-001/INTEGRATOR_CHANGE_REQUESTS.md, but it is outside this lane's lease (server/src/routes/audits/** is excluded).",
-    "GAP 2 (the legacy ISO 27001 preset bypasses the rights kernel entirely) is intentionally NOT a ready-to-apply diff — it requires a Product decision (retire vs. flag-gate vs. accept-as-is) before any code changes, per Section 1 item 2 of the decision packet.",
-    "The independence detector getIndependenceReport (auditTrailService.ts:269) is reachable via GET /trail/independence but has no caller anywhere in src/, server/src/cron, server/src/jobs, or server/src/scripts — a detector nobody runs is not a control.",
-    "No browser/visual evidence exists for this task; it is a decision packet plus backend negative-control tests, with no UI surface exercised."
+    "Enable AUDIT_INDEPENDENCE_DETECTOR_CRON_ENABLED=true only in the explicitly authorized deployed environment and observe bounded scheduled ticks, cursor progression and violation/error telemetry.",
+    "Obtain accountable Methodology/Rights/Legal owner acceptance that the implemented restricted internal-pack scope satisfies AMD-AUD-RIGHTS-001; named external standards remain OFF.",
+    "Mounted browser denial of every external-standard entry point remains an acceptance gate; the current Wave 3 browser replay proves the internal Transformation Audit journey, not publication rights for external standards."
   ],
   "unverifiedFields": [],
-  "technicalVerdict": "FIX_REQUIRED_OWNER_DECISION_COMPLETE",
+  "technicalVerdict": "READY_FOR_EXTERNAL_GATE",
   "verdict": "PARTIAL",
+  "wave3RecoveryRequalification20260823": {
+    "candidateSha": "eaf63c1fc88d92bcfb4c0faf40814c4c3a018edc",
+    "database": "Isolated local PostgreSQL database aud_policy_requal_20260823_a; none of the 16 recovered owner-fixture databases was mutated.",
+    "migrationResult": "Fresh exact-current migration chain applied 831/831 successfully.",
+    "validRun": "2/2 files and 26/26 tests passed with retry=0 after the exact disposable cleanup prefix was supplied.",
+    "rejectedRun": "The preceding invocation was correctly rejected as 2 files / 26 tests cleanly skipped because the disposable cleanup declaration was absent; it is not counted as evidence.",
+    "proved": "Default and every non-literal-true flag remain inert; enabled ticks are bounded and cursor-backed; overlapping workers cannot double-process; fences are unique; superseded workers cannot record progress; starvation and cycle-wrap controls pass.",
+    "boundary": "Repository code is READY_FOR_EXTERNAL_GATE. Deployment flag activation, environment telemetry and Methodology/Rights/Legal acceptance remain unexecuted and unauthorized; overall verdict remains PARTIAL."
+  },
   "historicalVerdictRationale": "G0/G1/G3 shared gates pass at this SHA and the packet's factual claims are proven, not asserted: 10/10 real-Postgres tests confirm the fail-closed publish/usage gates work today, all four segregation-of-duties guards are wired at their call sites, and two real gaps (GAP 1 read-path filtering, GAP 2 legacy ISO 27001 preset bypass) are identified with evidence rather than hidden. This task was BLOCKED_OWNER before the amendment.",
   "verdictRationale": "PARTIAL retained at 4f0fd2cd9b. The owner decision AMD-AUD-RIGHTS-001 is complete and keeps named external standards OFF. Exact-current source inspection supersedes two of the three gaps this record previously held open: draft-pack reads ARE now author/platform-admin scoped (packs.routes.ts:59/:116, packService.ts:259) and the legacy ISO 27001 preset IS hard-disabled at compile time with two independent choke points (auditIso27001LegacyPresetGate.ts:35, auditPresets.ts:207, AuditsHub.tsx:796). The third gap survives in substance: the independence detector now has a real caller (auditIndependenceDetectorJob.ts:67) registered in the scheduler (Scheduler.ts:891) but fenced default-OFF (Scheduler.ts:38), so it is implemented, not operationalized — and operationalizing it is a deployment act, not a repository state. The recorded 10/10 denominator is preserved as an accurate historical fact at productSha 78a618942e but is not exact-current: the same file now holds 23 cases and was not re-run in this pass (real-PostgreSQL suite; no Docker and no runtime window were taken). See exactCurrentReconciliation20260818 for the literal evidence and supersededVerdictRationale20260817 for the superseded wording.",
   "ownerTables": [],
