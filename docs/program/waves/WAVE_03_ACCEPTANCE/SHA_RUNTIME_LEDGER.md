@@ -1,5 +1,36 @@
 # Wave 3 — SHA and runtime ledger
 
+## Final MVP integration candidate — 2026-08-23
+
+- Current source checkpoint: `3159cbe83db2effae5a31f0dba7a13698749fff2`
+  on `codex/final-mvp-integration-20260823`.
+- Current mounted product runtime remains exact
+  `a2b500caca36d423bf9b215f25fc1c7aba4484b3`; client `4390`, server `4391`,
+  local adopted seeded database `consultify_w3_assessment_owner_finaldemo_bcfb`
+  on port `34945`, migration chain current and readiness SHA matched.
+- Runtime manifest:
+  `/tmp/consultify-wave3-runtime-manifest-assessment-a2b500-20260823.json`.
+- Exact browser evidence proves only the bounded Assessment compact navigator:
+  one expanded top-level axis, previous axis collapsed on switch, focused
+  Interview question, no Teresa side rail, and visible
+  `Interview / Matrix / Report` with separate `Settings`.
+- Source commits after `a2b500caca` are documentation-only: the final MVP
+  control plane and the selectively reconciled Wave Tri open-gate
+  classification. They do not require a runtime replay, but the next product,
+  configuration, migration or fixture change does.
+- Recovery tag:
+  `checkpoint/final-mvp-wave-tri-reconciled-20260823-2222`; verified complete
+  bundle:
+  `/Users/piotrwisniewski/Developer/Consultify-safety-checkpoints/final-mvp-wave-tri-reconciled-3159cbe83d.bundle`,
+  SHA-256
+  `2b12e756ce7d5eb079dcf83e3b34baa4424c957dd146fffc9f4eb205961a6301`.
+- Status: `CONTROLLED_SOURCE_CHECKPOINT / ASSESSMENT_BOUNDED_TECHNICAL_PASS /
+  16_MODULE_REPLAY_NOT_STARTED / RELEASE_NOT_AUTHORIZED`.
+
+This entry supersedes only candidate navigation. It does not invalidate or
+upgrade the historical module rows below, and it does not imply any module or
+owner acceptance.
+
 ## Clean owner-review checkpoint — 2026-08-22
 
 - Product checkpoint: `96fe8ddc10d0f8b5c48296cd4ce80b00c7f7bfbc`.
