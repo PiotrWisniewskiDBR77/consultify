@@ -16,10 +16,9 @@ ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS stripe_price_id_monthly 
 ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS stripe_price_id_yearly TEXT;
 ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
 
-UPDATE subscription_plans
-SET is_active = COALESCE(is_active, 1),
-    is_public = COALESCE(is_public, 1),
-    sort_order = COALESCE(sort_order, 0);
+-- Preserve pre-existing rows byte-for-byte. PostgreSQL exposes the declared
+-- defaults for rows that predate these ADD COLUMN statements, while future
+-- writes inherit the same defaults without a migration-time data rewrite.
 
 ALTER TABLE webhooks ADD COLUMN IF NOT EXISTS description TEXT;
 ALTER TABLE webhooks ADD COLUMN IF NOT EXISTS events TEXT NOT NULL DEFAULT '[]';

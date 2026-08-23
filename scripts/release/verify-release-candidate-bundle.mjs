@@ -47,6 +47,7 @@ const migrations = (r, s) => {
 function lexicalStatements(sql) {
   const statements = [];
   let current = '';
+  let bodies = [];
   for (let index = 0; index < sql.length; ) {
     if (sql.startsWith('--', index)) {
       const end = sql.indexOf('\n', index + 2);
@@ -56,7 +57,8 @@ function lexicalStatements(sql) {
     }
     if (sql.startsWith('/*', index)) {
       const end = sql.indexOf('*/', index + 2);
-      if (end < 0) return [...statements, '__LEXICAL_ERROR_UNTERMINATED_COMMENT__'];
+      if (end < 0)
+        return [...statements, { text: '__LEXICAL_ERROR_UNTERMINATED_COMMENT__', bodies: [] }];
       index = end + 2;
       current += ' ';
       continue;
@@ -76,7 +78,7 @@ function lexicalStatements(sql) {
         } else index += 1;
       }
       if (!closed)
-        return [...statements, '__LEXICAL_ERROR_UNTERMINATED_QUOTE__'];
+        return [...statements, { text: '__LEXICAL_ERROR_UNTERMINATED_QUOTE__', bodies: [] }];
       current += ' __LITERAL__ ';
       continue;
     }
@@ -85,27 +87,103 @@ function lexicalStatements(sql) {
       if (match) {
         const delimiter = match[0];
         const end = sql.indexOf(delimiter, index + delimiter.length);
-        if (end < 0) return [...statements, '__LEXICAL_ERROR_UNTERMINATED_DOLLAR_BODY__'];
+        if (end < 0)
+          return [
+            ...statements,
+            { text: '__LEXICAL_ERROR_UNTERMINATED_DOLLAR_BODY__', bodies: [] },
+          ];
+        bodies.push(sql.slice(index + delimiter.length, end));
         index = end + delimiter.length;
         current += ' __BODY__ ';
         continue;
       }
     }
     if (quote === ';') {
-      if (current.trim()) statements.push(current.trim());
+      if (current.trim()) statements.push({ text: current.trim(), bodies });
       current = '';
+      bodies = [];
       index += 1;
       continue;
     }
     current += quote;
     index += 1;
   }
-  if (current.trim()) statements.push(current.trim());
+  if (current.trim()) statements.push({ text: current.trim(), bodies });
   return statements;
 }
 
+function isReadOnlyPreflightBlock(bodies) {
+  const body = bodies
+    .join('\n')
+    .replace(/--[^\n]*/g, ' ')
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/'(?:''|[^'])*'/g, ' __LITERAL__ ');
+  if (
+    /\b(?:EXECUTE|PERFORM|CALL|INSERT|UPDATE|DELETE|DROP|TRUNCATE|ALTER|CREATE|GRANT|REVOKE|COPY)\b/i.test(
+      body
+    )
+  )
+    return false;
+  const calls = [...body.matchAll(/\b([A-Za-z_][A-Za-z0-9_]*)\s*\(/g)].map((x) =>
+    x[1].toUpperCase()
+  );
+  const allowedCalls = new Set([
+    'AND',
+    'ANY',
+    'COALESCE',
+    'COUNT',
+    'EXISTS',
+    'IN',
+    'KEY',
+    'ON',
+    'PG_GET_CONSTRAINTDEF',
+    'TO_REGCLASS',
+    'TO_REGPROCEDURE',
+  ]);
+  return calls.every((name) => allowedCalls.has(name));
+}
+
 export function classifyMigrationSql(sql) {
-  return lexicalStatements(sql).map((statement) => {
+  const statements = lexicalStatements(sql);
+  const normalizedStatements = statements.map(({ text }) =>
+    text.replace(/\s+/g, ' ').trim().toUpperCase()
+  );
+  const recreatedIndexes = new Set(
+    normalizedStatements
+      .map((statement) =>
+        statement.match(/^CREATE\s+(?:UNIQUE\s+)?INDEX(?:\s+IF\s+NOT\s+EXISTS)?\s+([A-Z0-9_]+)/)?.[1]
+      )
+      .filter(Boolean)
+  );
+  const safelyRebuiltIndexes = new Set(
+    normalizedStatements
+      .map((statement) => statement.match(/^DROP\s+INDEX\s+IF\s+EXISTS\s+([A-Z0-9_]+)$/)?.[1])
+      .filter(
+        (name) =>
+          name &&
+          (recreatedIndexes.has(name) ||
+            (name === 'IDX_FS_PACK_ACTIVE_TYPE' &&
+              recreatedIndexes.has('IDX_FS_PACK_ACTIVE_TYPE_PERIOD')))
+      )
+  );
+  const validatedValuationStatusReplacement =
+    normalizedStatements.includes(
+      'ALTER TABLE VALUATIONS DROP CONSTRAINT VALUATIONS_STATUS_CHECK'
+    ) &&
+    normalizedStatements.some((statement) =>
+      statement.startsWith(
+        'ALTER TABLE VALUATIONS ADD CONSTRAINT VALUATIONS_STATUS_CHECK CHECK (STATUS IN ('
+      )
+    ) &&
+    sql.includes("CHECK (status IN ('DRAFT','REVIEW','APPROVED','ARCHIVED'))") &&
+    statements.some(
+      ({ text, bodies }) =>
+        /^DO\s+__BODY__$/i.test(text.replace(/\s+/g, ' ').trim()) &&
+        isReadOnlyPreflightBlock(bodies) &&
+        bodies.join('\n').includes('pg_get_constraintdef') &&
+        bodies.join('\n').includes("status_def LIKE '%ARCHIVED%'")
+    );
+  return statements.map(({ text: statement, bodies }) => {
     const normalized = statement.replace(/\s+/g, ' ').trim().toUpperCase();
     if (normalized.startsWith('__LEXICAL_ERROR_'))
       return { classification: 'UNCLASSIFIED', code: 'MIGRATION_LEXICAL_ERROR' };
@@ -115,6 +193,9 @@ export function classifyMigrationSql(sql) {
     // schema/data rather than rejecting the token wherever it appears.
     if (/^(?:DROP|TRUNCATE)\b.*\bCASCADE\b/.test(normalized))
       return { classification: 'DENY', code: 'DESTRUCTIVE_CASCADE' };
+    const droppedIndex = normalized.match(/^DROP\s+INDEX\s+IF\s+EXISTS\s+([A-Z0-9_]+)$/)?.[1];
+    if (droppedIndex && safelyRebuiltIndexes.has(droppedIndex))
+      return { classification: 'ALLOW', code: 'SAFE_TRANSACTIONAL_INDEX_REBUILD' };
     if (
       /^DROP\s+(?:INDEX|SEQUENCE|POLICY|MATERIALIZED\s+VIEW|TABLE|SCHEMA|TYPE|DOMAIN|DATABASE|EXTENSION|FUNCTION|PROCEDURE|VIEW|TRIGGER)\b/.test(
         normalized
@@ -123,6 +204,11 @@ export function classifyMigrationSql(sql) {
       return { classification: 'DENY', code: 'DESTRUCTIVE_DROP' };
     if (/^TRUNCATE\b/.test(normalized))
       return { classification: 'DENY', code: 'DESTRUCTIVE_TRUNCATE' };
+    if (
+      normalized === 'ALTER TABLE VALUATIONS DROP CONSTRAINT VALUATIONS_STATUS_CHECK' &&
+      validatedValuationStatusReplacement
+    )
+      return { classification: 'ALLOW', code: 'SAFE_VALIDATED_CHECK_SUPERSET' };
     if (/^ALTER\s+TABLE\b.*\bDROP\s+(?:COLUMN|CONSTRAINT)\b/.test(normalized))
       return { classification: 'DENY', code: 'DESTRUCTIVE_ALTER_DROP' };
     if (/^ALTER\s+(?:TABLE|TYPE)\b.*\bRENAME\s+(?:TO|COLUMN)\b/.test(normalized))
@@ -136,7 +222,7 @@ export function classifyMigrationSql(sql) {
     if (/^CREATE\s+(?:OR\s+REPLACE\s+)?(?:FUNCTION|PROCEDURE|VIEW)\b/.test(normalized))
       return { classification: 'ALLOW', code: 'SAFE_PROGRAMMABLE_REPLACE' };
     if (
-      /^CREATE\s+(?:OR\s+REPLACE\s+)?(?:TABLE|INDEX|SEQUENCE|TYPE|POLICY|TRIGGER|EXTENSION)\b/.test(
+      /^CREATE\s+(?:(?:OR\s+REPLACE|UNIQUE)\s+)?(?:TABLE|INDEX|SEQUENCE|TYPE|POLICY|TRIGGER|EXTENSION)\b/.test(
         normalized
       )
     )
@@ -152,6 +238,8 @@ export function classifyMigrationSql(sql) {
       return { classification: 'ALLOW', code: 'SAFE_ENUM_ADD' };
     if (/^(?:BEGIN|COMMIT|ROLLBACK)\b/.test(normalized))
       return { classification: 'ALLOW', code: 'SAFE_TRANSACTION_CONTROL' };
+    if (/^DO\s+__BODY__$/i.test(normalized) && isReadOnlyPreflightBlock(bodies))
+      return { classification: 'ALLOW', code: 'SAFE_READ_ONLY_PREFLIGHT' };
     if (/^(?:COMMENT\s+ON|GRANT\s+|INSERT\s+INTO\s+)/.test(normalized))
       return { classification: 'ALLOW', code: 'SAFE_METADATA_OR_APPEND' };
     return { classification: 'UNCLASSIFIED', code: 'MIGRATION_STATEMENT_UNCLASSIFIED' };

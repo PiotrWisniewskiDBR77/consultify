@@ -39,40 +39,32 @@ BEGIN
     RAISE EXCEPTION
       'finance_valuation_input_command_events contains a working-revision tenant mismatch';
   END IF;
-END $$;
 
-DO $$
-BEGIN
-  IF NOT EXISTS (
+  IF EXISTS (
     SELECT 1 FROM pg_constraint
-     WHERE conname = 'fk_fin_val_input_events_artifact_org'
-       AND conrelid = 'finance_valuation_input_command_events'::regclass
+     WHERE conrelid = 'finance_valuation_input_command_events'::regclass
+       AND conname IN (
+         'fk_fin_val_input_events_artifact_org',
+         'fk_fin_val_input_events_bv_org',
+         'fk_fin_val_input_events_wr_org'
+       )
   ) THEN
-    ALTER TABLE finance_valuation_input_command_events
-      ADD CONSTRAINT fk_fin_val_input_events_artifact_org
-      FOREIGN KEY (artifact_id, organization_id)
-      REFERENCES finance_artifacts (artifact_id, organization_id);
-  END IF;
-
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint
-     WHERE conname = 'fk_fin_val_input_events_bv_org'
-       AND conrelid = 'finance_valuation_input_command_events'::regclass
-  ) THEN
-    ALTER TABLE finance_valuation_input_command_events
-      ADD CONSTRAINT fk_fin_val_input_events_bv_org
-      FOREIGN KEY (business_version_id, organization_id)
-      REFERENCES finance_business_versions (business_version_id, organization_id);
-  END IF;
-
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint
-     WHERE conname = 'fk_fin_val_input_events_wr_org'
-       AND conrelid = 'finance_valuation_input_command_events'::regclass
-  ) THEN
-    ALTER TABLE finance_valuation_input_command_events
-      ADD CONSTRAINT fk_fin_val_input_events_wr_org
-      FOREIGN KEY (working_revision_id, organization_id)
-      REFERENCES finance_working_revisions (working_revision_id, organization_id);
+    RAISE EXCEPTION
+      'finance_valuation_input_command_events tenant constraint identity already exists';
   END IF;
 END $$;
+
+ALTER TABLE finance_valuation_input_command_events
+  ADD CONSTRAINT fk_fin_val_input_events_artifact_org
+  FOREIGN KEY (artifact_id, organization_id)
+  REFERENCES finance_artifacts (artifact_id, organization_id);
+
+ALTER TABLE finance_valuation_input_command_events
+  ADD CONSTRAINT fk_fin_val_input_events_bv_org
+  FOREIGN KEY (business_version_id, organization_id)
+  REFERENCES finance_business_versions (business_version_id, organization_id);
+
+ALTER TABLE finance_valuation_input_command_events
+  ADD CONSTRAINT fk_fin_val_input_events_wr_org
+  FOREIGN KEY (working_revision_id, organization_id)
+  REFERENCES finance_working_revisions (working_revision_id, organization_id);

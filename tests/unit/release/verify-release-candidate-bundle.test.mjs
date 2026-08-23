@@ -219,6 +219,8 @@ test('rejects destructive and unclassified migration statements without comment/
     '/* unterminated comment',
     "COMMENT ON TABLE base IS 'unterminated",
     'CREATE FUNCTION f() RETURNS void AS $body$ BEGIN NULL; END; LANGUAGE plpgsql;',
+    'DO $$ BEGIN PERFORM dangerous_side_effect(); END $$;',
+    'DO $$ BEGIN UPDATE base SET id=id; END $$;',
   ]) {
     const x = fx(sql),
       r = verifyReleaseCandidateBundle({ manifest: x.manifest, repo: x.repo, bundleDir: x.out });
@@ -235,6 +237,7 @@ test('rejects destructive and unclassified migration statements without comment/
     "CREATE OR REPLACE FUNCTION f() RETURNS text AS $$ BEGIN RETURN 'DELETE FROM base'; END $$ LANGUAGE plpgsql;",
     'CREATE FUNCTION f() RETURNS void AS $body$ BEGIN NULL; END; $body$ LANGUAGE plpgsql;',
     'CREATE INDEX IF NOT EXISTS idx ON base(id);',
+    'CREATE UNIQUE INDEX IF NOT EXISTS unique_idx ON base(id);',
     "INSERT INTO base(id) VALUES ('UPDATE base SET id=id');",
     'ALTER TABLE "base" ADD COLUMN "MixedCase" text;',
     'ALTER TABLE "base" ALTER COLUMN "MixedCase" DROP NOT NULL;',
@@ -243,7 +246,11 @@ test('rejects destructive and unclassified migration statements without comment/
     'CREATE TABLE child(id text, parent_id text REFERENCES base(id) ON DELETE CASCADE);',
     'CREATE TRIGGER immutable BEFORE UPDATE OR DELETE ON base FOR EACH ROW EXECUTE FUNCTION reject_change();',
     'CREATE OR REPLACE TRIGGER immutable BEFORE UPDATE OR DELETE ON base FOR EACH ROW EXECUTE FUNCTION reject_change();',
+    "DO $$ BEGIN IF to_regclass('public.base') IS NULL THEN RAISE EXCEPTION 'missing'; END IF; END $$;",
     'BEGIN; ALTER TABLE base ADD COLUMN guarded text; COMMIT;',
+    'BEGIN; DROP INDEX IF EXISTS idx; CREATE UNIQUE INDEX idx ON base(id); COMMIT;',
+    'BEGIN; DROP INDEX IF EXISTS idx_fs_pack_active_type; CREATE UNIQUE INDEX idx_fs_pack_active_type_period ON base(id); COMMIT;',
+    "BEGIN; DO $$ DECLARE status_def text; BEGIN SELECT pg_get_constraintdef(oid) INTO status_def FROM pg_constraint; IF status_def LIKE '%ARCHIVED%' THEN RAISE EXCEPTION 'already'; END IF; END $$; ALTER TABLE valuations DROP CONSTRAINT valuations_status_check; ALTER TABLE valuations ADD CONSTRAINT valuations_status_check CHECK (status IN ('DRAFT','REVIEW','APPROVED','ARCHIVED')); COMMIT;",
   ]) {
     const x = fx(sql),
       r = verifyReleaseCandidateBundle({ manifest: x.manifest, repo: x.repo, bundleDir: x.out });
