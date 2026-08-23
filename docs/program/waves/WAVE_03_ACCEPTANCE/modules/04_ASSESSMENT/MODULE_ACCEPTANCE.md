@@ -2,10 +2,27 @@
 
 ID: `ASM`
 Routes: `/assessment`
-Current gate: `OWNER_REVIEW_IN_PROGRESS / BOUNDED_REMEDIATION_PARTIAL / OWNER_RETEST_REQUIRED`
+Current gate: `EXPERT_NO_GO / OWNER_REVIEW_IN_PROGRESS / FULL_PRODUCT_REMEDIATION_REQUIRED`
 Owner: Piotr Wisniewski
 Integrator: Codex
 Mobile: `DEFERRED_NON_GATING`
+
+## Current evidence hierarchy
+
+The two independent reviews below are the newest acceptance evidence and
+supersede any broader interpretation of the historical technical `PASS` rows
+in this file:
+
+- `../../evidence/exact-candidate-43730-photo-gate-2026-08-23/assessment/ASSESSMENT_EXPERT_METHOD_REVIEW_2026-08-23.md` — method/product verdict
+  `NO-GO FOR IMPLEMENTATION ACCEPTANCE`;
+- `../../evidence/exact-candidate-43730-photo-gate-2026-08-23/assessment/ASSESSMENT_EXPERT_UX_REVIEW_2026-08-23.md` — UX/visual verdict
+  `NO-GO FOR OWNER ACCEPTANCE`.
+
+The reviews are bound to candidate `43730f86f8a74943c36a58b9ff07aa680a42aa3e`.
+Current integration source is newer, but no newer exact-source runtime,
+persistence, accessibility, PDF or owner replay has superseded those verdicts.
+Historical passes remain useful regression evidence for the reusable Method
+Core kernel; they do not prove the owner-defined final Assessment product.
 
 ## Contract
 

@@ -2,15 +2,16 @@
 
 Last updated: `2026-08-24`
 
-Current controlled source candidate is clean
-`ff8ba735cc404982e9d455632c7bc06162f97df1` on
-`codex/final-mvp-integration-20260823`. The structural package verifier passes
+Current controlled product-source integration checkpoint is
+`3549e1752bb1ddd2382223157b38cbdcc9337f86` on
+`codex/final-mvp-integration-20260823`; later documentation-only reconciliation
+does not change that product tree. The structural package verifier passes
 `16/16` modules with exactly `21/21` gates per module and `16/16` master rows.
 Across the atomic registers this is `336/336` structurally present gate rows;
-`159/336` still carry the literal status `NOT_STARTED`. Other open rows keep
-their precise partial, policy, provider, browser-retest or owner-review status.
-This is the current control denominator, not a claim that the remaining 177
-rows are accepted.
+`103/336` currently carry the literal status `NOT_STARTED`. The other `233`
+rows include historical passes as well as precise partial, policy, provider,
+browser-retest and owner-review states; they are not implicitly accepted. This
+is the current control denominator, not a completion claim.
 
 Finance and Materials now have newer bounded browser evidence on guarded local
 owner runtimes. Finance proves read-only opening of all five full cards;
@@ -30,11 +31,12 @@ exact-runtime rows below.
 See `FINAL_MVP_INTEGRATION_CONTROL_2026-08-23.md` and
 `SHA_RUNTIME_LEDGER.md`.
 
-Assessment latest reconciliation supersedes its older row wording only: Piotr's
-current owner intake contains nine findings and fourteen durable images. Two
-bounded corrections and the complete current-WIP component regression are
-technically green; the seven P0 and one P1 product decisions remain open until
-the four-mode workshop, implementation and explicit owner retest.
+Assessment latest reconciliation supersedes its older row wording: Piotr's
+owner intake and durable images are preserved, and two independent reviews of
+candidate `43730f86f8a7` return `NO-GO` for implementation and owner acceptance.
+The current integration source is newer, but it has no newer exact-source
+runtime/persistence/a11y/PDF/owner packet that could supersede those verdicts.
+Historical technical passes qualify the reusable Method Core kernel only.
 
 Settings latest reconciliation (supersedes its older row wording): exact `3d61730fd8ad` / `536483a2…`, retained FINAL v3 on `4102/4103`; G05 technical PASS and G06 browser-proven closure of `SET-PF-005..007`. Runtime stopped and DB preserved. Owner direction is accepted, but module owner acceptance remains pending.
 
@@ -65,7 +67,7 @@ signed contexts. Full G06 state/a11y coverage and owner replay remain open.
 |     1 | `ORG`  | Organization    | `SOURCE_FIX_PASS / BROWSER_RETEST_PENDING / OWNER_REVIEW_IN_PROGRESS` | exact source fix after `3d61730fd8ad`; retained FINAL DB replay remains on `4080/4081`; runtime stopped, DB preserved | `G00–G04 PASS; G05 source fix/browser retest pending; G06 source fix/browser retest/owner pending; Organization locale/UI focused 19/19 + governance 16/16 + context-store 2/2 unit and 2/2 mounted RealPG PASS` |       0 |       0 |       0 |       0 | `PENDING`; prior profile/27 claims/readiness UNKNOWN/cold/anonymous PASS; `ORG-PF-005` source fix is green but exact browser retest and owner IA questions remain open | Mobile non-gating; exact PL/EN browser retest, Piotr guided review, responsive/theme/a11y remain open |
 |     2 | `INT`  | Interview       | `TECHNICAL_BROWSER_COMPLETE_WITH_PROVIDER_UNAVAILABLE / OWNER_REVIEW_PENDING` | exact `3d61730fd8ad`; retained FINAL DB on `3984/3985`; 817 migrations | `G00–G04 PASS; G05 PASS_WITH_PROVIDER_UNAVAILABLE; G06 PASS_TECHNICAL_WITH_PROVIDER_UNAVAILABLE; focused 70/70 + 34/34 + 15/15 + 47/47, mounted 6/6 PASS` |       0 |       0 |       0 |       0 | `PENDING`; manager/public/revoked cold opens PASS; provider returned honest retryable `503`, no legacy fallback | Provider scoring, owner review, responsive/theme/a11y and mobile remain open |
 |     3 | `TLS`  | Tools           | `TECHNICAL_BROWSER_COMPLETE / OWNER_QUALITY_REVIEW_PENDING`     | exact `3d61730fd8ad`; retained FINAL DB on `3980/3981`; 817 migrations | `G00–G04 PASS; G05 PASS_WITH_TEST_WARNING; G06 PASS_TECHNICAL/OWNER_QUALITY_DEBT_OPEN; 123/123 + CAS 23/23 PASS` |       0 |       0 |       1 |       0 | `PENDING`; guided/approved Dynamic SWOT cold opens PASS; `W3-TLS-CX-001` owner quality concern remains captured | Provider/mobile excluded; React act warnings nonblocking              |
-|     4 | `ASM`  | Assessment      | `OWNER_REVIEW_IN_PROGRESS / COMPACT_NAVIGATOR_BOUNDED_PASS / OWNER_RETEST_REQUIRED` | mounted exact product `a2b500caca`; source checkpoint `3159cbe83d` adds documentation only; runtime `4390/4391`; preserved adopted DB `consultify_w3_assessment_owner_finaldemo_bcfb` | prior G08–G15 intake retained; compact navigator focused tests `24/24 PASS`; exact browser marker and axis-switch DOM readback PASS; screenshot indexed under `exact-candidate-a2b500-assessment-2026-08-23` |       7 |       1 |       0 |       0 | `PENDING`; compact single-axis navigation now proven, but this does not accept Interview, Matrix, Report, Settings, approvals, persistence or downstream artifacts | Owner workshop/retest, full knowledge-document route/final catalog metadata, create→Processes persistence, downstream Insights contract, responsive/theme/a11y and mobile remain open |
+|     4 | `ASM`  | Assessment      | `EXPERT_NO_GO / OWNER_REVIEW_IN_PROGRESS / FULL_PRODUCT_REMEDIATION_REQUIRED` | newest independent review candidate `43730f86f8a7`; current source checkpoint `3549e1752b` is not runtime-qualified | owner intake and screenshots retained; method/product and UX reviews both return `NO-GO`; historical Method Core tests remain reusable-kernel evidence only |       7 |       1 |       0 |       0 | `PENDING / NO-GO`; no newer exact-source runtime, persistence, a11y, PDF or owner replay supersedes the independent reviews | Reconcile final Interview/Matrix/Report + Settings contract, implement remaining product seams, then exact-SHA browser/API/SQL/PDF/a11y and owner retest |
 |     5 | `INI`  | Initiatives     | `TECHNICAL_BROWSER_COMPLETE_WITH_RESIDUALS / OWNER_REVIEW_PENDING` | exact `3d61730fd8ad`; retained FINAL DB `consultify_w3_initiatives_owner_night_20260822` | `G00–G04 PASS; G05 PASS_WITH_RESIDUALS; G06 PASS_TECHNICAL_WITH_RESIDUALS; 208/208 + focused 13/13 + unit/RealPG 18/18 PASS` |       0 |       0 |       0 |       0 | `PENDING`; register/candidate/Card/deep-link cold opens PASS; empty scenario surfaces and amend/cancel CX remain open | AI generation, production, legacy writers and mobile excluded         |
 |     6 | `EXE`  | Execution       | `TECHNICAL_BROWSER_PASS / OWNER_REVIEW_PENDING`                 | exact `3d61730fd8ad`; retained FINAL DB on `3982/3983`; 817 migrations | `G00–G04 PASS/SEEDED_RETAINED; G05 PASS_TECHNICAL_BROWSER_PARTIAL; G06 PARTIAL_DESKTOP_PL; 137/137 + deep-link 4/4 PASS` |       0 |       0 |       0 |       0 | `PENDING`; five tabs mount and canonical Case v1 deep link/API/SQL parity PASS; empty work/allocation/report states are fixture-truthful | Owner judgment, alternate states, responsive/theme/a11y and mobile open |
 |     7 | `MYW`  | My Work / Agent | `IDEAS_AND_NOTEBOOK_VISUAL_REVIEWS_COMPLETE / CORE_DESIGN_TASKS_REQUIRED / MODULE_REVIEW_IN_PROGRESS` | qualified technical runtime remains exact `3d61730fd8ad`; visual badge `75bed3bb6485` on non-qualified Chat-oriented fixture | `G00–G05 technical PASS on qualified runtime; Ideas + Notebook G08–G13 partial product intake; 35 screenshots bound` |       6 |       4 |       0 |       0 | `PENDING`; Ideas and Notebook core redesign tasks recorded; no functional acceptance inferred | Remaining My Work review, implementation/API audits, provider/autonomous materialization, responsive/theme/a11y and mobile open |

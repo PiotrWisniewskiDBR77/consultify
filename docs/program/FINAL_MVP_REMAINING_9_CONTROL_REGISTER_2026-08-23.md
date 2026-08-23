@@ -1,13 +1,14 @@
 # Consultify final MVP — remaining 9 control register
 
 Date: 2026-08-23  
-Branch: `codex/wave3-16-module-acceptance-20260821`  
+Branch: `codex/final-mvp-integration-20260823`
 Qualified product SHA: `bcfb01483a368fb4baa133d35dbc7b56ba6c7857`
 Production and Railway mutation authority: `NOT_AUTHORIZED`
 
-Current integration checkpoint: `744b9dc42b8b` on
-`codex/final-mvp-integration-20260823` (2026-08-24). This is the controlled
-source-integration checkpoint, not owner acceptance and not release authority.
+Product-source integration checkpoint: `3549e1752bb1` on
+`codex/final-mvp-integration-20260823` (2026-08-24). Documentation-only
+reconciliation may follow without changing that product tree. This is not
+owner acceptance and not release authority.
 
 ## Current control state
 
