@@ -14,12 +14,19 @@ let redisUrl: string | null = process.env.REDIS_URL || 'redis://localhost:6379';
 
 // Check if Railway variable expansion didn't work (still contains ${{)
 if (redisUrl && redisUrl.includes('${{')) {
-  logger.warn('[Redis] REDIS_URL appears to contain unexpanded Railway variable:', redisUrl);
+  logger.warn('[Redis] REDIS_URL appears to contain an unexpanded variable reference');
   logger.warn('[Redis] Falling back to individual REDIS_* variables or mock client');
   redisUrl = null; // Force fallback
 }
 
 logger.info('[Redis] Initializing client...');
+
+function redactRedisSecrets(value: string): string {
+  return value.replace(/rediss?:\/\/[^@\s]+@/gi, (credentials) => {
+    const schemeEnd = credentials.indexOf('://') + 3;
+    return `${credentials.slice(0, schemeEnd)}****@`;
+  });
+}
 
 // Mock client interface
 interface MockRedisClient {
@@ -55,6 +62,7 @@ function createMockClient(): MockRedisClient {
 }
 
 let client: RedisClientType | MockRedisClient;
+let usingMockClient = false;
 
 if (process.env.MOCK_REDIS === 'true' || !redisUrl) {
   if (!redisUrl) {
@@ -62,22 +70,23 @@ if (process.env.MOCK_REDIS === 'true' || !redisUrl) {
   } else {
     logger.info('[Redis] Using Mock Client');
   }
+  usingMockClient = true;
   client = createMockClient();
 } else {
   const connectTimeout = parseInt(process.env.REDIS_CONNECT_TIMEOUT || '30000', 10); // 30 seconds default for Railway
   const commandTimeout = parseInt(process.env.REDIS_COMMAND_TIMEOUT || '10000', 10); // 10 seconds for commands
 
-  logger.info(`[Redis] Connecting to: ${redisUrl.replace(/:[^:@]+@/, ':****@')}`); // Hide password in logs
+  logger.info(`[Redis] Connecting to: ${redactRedisSecrets(redisUrl)}`);
 
   client = createClient({
     url: redisUrl,
     socket: {
       connectTimeout: connectTimeout,
       reconnectStrategy: (retries: number) => {
-        if (retries > 10) {
-          logger.error('[Redis] Max reconnection attempts exceeded');
-          return new Error('Max reconnection attempts exceeded');
-        }
+        // Never permanently give up after a transient Redis outage. Returning an
+        // Error here makes node-redis stop reconnecting; the old implementation
+        // did that after 10 attempts and the catch below then replaced this
+        // client with an in-process mock for the lifetime of the application.
         const delay = Math.min(1000 * Math.pow(2, retries), 30000);
         logger.info(`[Redis] Reconnecting in ${delay}ms (attempt ${retries})`);
         return delay;
@@ -85,7 +94,9 @@ if (process.env.MOCK_REDIS === 'true' || !redisUrl) {
     },
   }) as RedisClientType;
 
-  client.on('error', (err: Error) => logger.error('[Redis] Client Error', err.message));
+  client.on('error', (err: Error) =>
+    logger.error('[Redis] Client Error', redactRedisSecrets(err.message))
+  );
   client.on('connect', () => logger.info('[Redis] Connecting...'));
   client.on('ready', () => logger.info('[Redis] Connected and ready'));
 
@@ -102,14 +113,20 @@ if (process.env.MOCK_REDIS === 'true' || !redisUrl) {
         logger.info('[Redis] Successfully connected');
       }
     } catch (err: any) {
-      logger.error('[Redis] Connection Failed:', (err as Error).message);
-      // Fallback to mock on connection failure
-      logger.info('[Redis] Falling back to Mock Client');
-      const mockClient = createMockClient();
-      // Replace the broken client with mock
-      client = mockClient;
+      // Keep the configured real client. node-redis continues reconnecting in
+      // the background, while callers retain their existing fail-safe behavior
+      // for commands issued while Redis is unavailable.
+      logger.warn(
+        '[Redis] Initial connection wait failed; recovery remains active:',
+        redactRedisSecrets((err as Error).message)
+      );
     }
   })();
+}
+
+/** Health contract: mocks are fail-safe substitutes, never connected Redis. */
+export function isRedisReady(): boolean {
+  return !usingMockClient && (client as RedisClientType).isReady === true;
 }
 
 export default client;

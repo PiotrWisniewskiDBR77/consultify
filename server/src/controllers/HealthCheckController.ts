@@ -130,10 +130,8 @@ export class HealthCheckController {
           }
 
           try {
-            const redis = (await import('../utils/RedisClient.js')).default as any;
-            const isReady = typeof redis?.isReady === 'boolean' ? redis.isReady : undefined;
-            const isOpen = typeof redis?.isOpen === 'boolean' ? redis.isOpen : undefined;
-            connected = connected || Boolean(isReady ?? isOpen);
+            const { isRedisReady } = await import('../utils/RedisClient.js');
+            connected = connected || isRedisReady();
           } catch {
             // ignore
           }
@@ -212,10 +210,8 @@ export class HealthCheckController {
         }
 
         try {
-          const redis = (await import('../utils/RedisClient.js')).default as any;
-          const isReady = typeof redis?.isReady === 'boolean' ? redis.isReady : undefined;
-          const isOpen = typeof redis?.isOpen === 'boolean' ? redis.isOpen : undefined;
-          connected = connected || Boolean(isReady ?? isOpen);
+          const { isRedisReady } = await import('../utils/RedisClient.js');
+          connected = connected || isRedisReady();
         } catch {
           // ignore
         }
