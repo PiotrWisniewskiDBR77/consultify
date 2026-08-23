@@ -158,12 +158,12 @@ export const FINANCE_STATEMENTS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'FS-W12',
       method: 'DELETE',
       path: /^\/packs\/[^/]+\/?$/,
-      state: 'observed',
-      successor: null,
+      state: 'disabled',
+      successor: '/api/v8/finance/statement-packs/:packId',
       legacyTable: 'financial_statement_packs',
       legacyIdFromPath: (path) => decodeURIComponent(path.split('/')[2] || ''),
       reason:
-        'Deletes a financial_statement_packs row and its financial_statement_validations (finance-statements.routes.ts:2951, financialStatementPackService.ts:421,427). No proven successor; irreversible delete with zero protection before this registration.',
+        'The mounted Finance workspace now uses a tenant-scoped, Finance-editor, version-CAS and idempotent archive command. Confirmed packs are protected and archived packs plus their receipts are immutable; the irreversible cascade-delete door is retired fail-closed.',
     },
     {
       writerId: 'FS-W13',

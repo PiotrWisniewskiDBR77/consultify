@@ -215,6 +215,7 @@ export type FinanceStatementRow = FinanceRowBase & {
   kind: 'statements';
   statementType: string;
   statementPackId?: string;
+  version?: number;
   entityName?: string;
   periodStart: string;
   periodEnd: string;

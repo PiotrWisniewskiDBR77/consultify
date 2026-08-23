@@ -25,8 +25,23 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
       legacyMutationDoors: 51,
       canonicalMutationDoors: 2,
       nonMutationDoors: 6,
-      retiredLegacyMutationDoors: 49,
-      openLegacyMutationDoors: 2,
+      retiredLegacyMutationDoors: 50,
+      openLegacyMutationDoors: 1,
+    });
+  });
+
+  it('replaces mounted statement-pack cascade deletion with governed archive', () => {
+    const source = fs.readFileSync(
+      path.resolve(process.cwd(), 'src/components/Economics/hooks/useFinanceRowActions.ts'),
+      'utf8'
+    );
+    expect(source).toContain('V8FinanceApi.archiveStatementPack');
+    expect(source).not.toContain('Api.delete(`/api/finance-statements/packs/${row.id}`)');
+    expect(
+      FINANCE_STATEMENTS_CUTOVER.writers.find((rule) => rule.writerId === 'FS-W12')
+    ).toMatchObject({
+      state: 'disabled',
+      successor: '/api/v8/finance/statement-packs/:packId',
     });
   });
 

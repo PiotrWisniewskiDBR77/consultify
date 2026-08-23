@@ -387,6 +387,7 @@ export function useFinanceData(
                 : 'DRAFT',
           statementType: 'PACK',
           statementPackId: String(s.id),
+          version: Number(s.version ?? 1),
           entityName: String(s.entity_name || ''),
           periodStart: String(s.period_start || ''),
           periodEnd: String(s.period_end || ''),

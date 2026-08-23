@@ -119,9 +119,12 @@ function computePackAggregate(statements: PackStatementRow[]): PackAggregate {
   const periodSet = new Set(normalized.map(periodIdentity).filter(Boolean));
   const incompletePeriods = Array.from(periodSet).filter((period) =>
     requiredTypes.some(
-      (type) => !normalized.some((statement) =>
-        normalizeStatementType(statement.statement_type) === type && periodIdentity(statement) === period
-      )
+      (type) =>
+        !normalized.some(
+          (statement) =>
+            normalizeStatementType(statement.statement_type) === type &&
+            periodIdentity(statement) === period
+        )
     )
   );
   const entitySet = new Set(
@@ -829,6 +832,7 @@ export async function listStatementPacks(
      FROM financial_statement_packs p
      LEFT JOIN financial_statements fs ON fs.statement_pack_id = p.id
      WHERE p.organization_id = ?
+       AND COALESCE(p.pack_status, 'draft') <> 'archived'
        AND (? = '' OR LOWER(COALESCE(p.pack_readiness_status, 'pending')) = ?)
      GROUP BY p.id
      ORDER BY p.period_end DESC, p.updated_at DESC

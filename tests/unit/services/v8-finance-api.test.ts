@@ -7,8 +7,14 @@ vi.mock('@/services/api/v8/client', () => ({
   v8Delete: vi.fn(),
   v8Put: vi.fn(),
 }));
+vi.mock('@/services/api/baseClient', () => ({
+  fetchWithRetry: vi.fn(),
+  getHeaders: vi.fn(() => ({ Authorization: 'Bearer test' })),
+  handleResponse: vi.fn(),
+}));
 
 import { shouldFallbackToLegacyFinance, V8FinanceApi } from '@/services/api/v8/finance';
+import { fetchWithRetry, handleResponse } from '@/services/api/baseClient';
 import { v8Delete, v8Get, v8Post, v8PostMultipart, v8Put } from '@/services/api/v8/client';
 
 describe('V8FinanceApi', () => {
@@ -70,6 +76,33 @@ describe('V8FinanceApi', () => {
     });
     expect(data.count).toBe(1);
     expect(data.analyses[0].title).toBe('Working capital analysis');
+  });
+
+  it('archives a statement pack through governed DELETE with CAS and idempotency', async () => {
+    vi.mocked(fetchWithRetry).mockResolvedValue({} as Response);
+    vi.mocked(handleResponse).mockResolvedValue({
+      data: {
+        packId: 'pack-1',
+        status: 'archived',
+        version: 2,
+        archivedBy: 'user-1',
+        archivedAt: '2026-08-23T00:00:00.000Z',
+        replay: false,
+      },
+    });
+
+    const data = await V8FinanceApi.archiveStatementPack(
+      'pack-1',
+      { expectedVersion: 1, reason: 'Owner removed pack' },
+      'archive-key'
+    );
+
+    expect(fetchWithRetry).toHaveBeenCalledWith('/api/v8/finance/statement-packs/pack-1', {
+      method: 'DELETE',
+      headers: { Authorization: 'Bearer test', 'Idempotency-Key': 'archive-key' },
+      body: JSON.stringify({ expectedVersion: 1, reason: 'Owner removed pack' }),
+    });
+    expect(data).toMatchObject({ packId: 'pack-1', status: 'archived', version: 2 });
   });
 
   it('requests governed finance models from the V8 namespace', async () => {

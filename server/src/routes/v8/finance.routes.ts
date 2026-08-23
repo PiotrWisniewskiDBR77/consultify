@@ -100,6 +100,10 @@ import {
 import { confirmGovernedStatement } from '../../services/finance/canonical/statementGovernedConfirmationService.js';
 import { recordManualMappingDecision } from '../../services/finance/canonical/statementManualMappingDecisionService.js';
 import {
+  archiveStatementPackCommand,
+  StatementPackArchiveCommandError,
+} from '../../services/finance/canonical/statementPackArchiveCommandService.js';
+import {
   readStatementSourceReceipt,
   StatementGovernanceError,
 } from '../../services/finance/canonical/statementSourceReceiptService.js';
@@ -2200,6 +2204,40 @@ router.get(
       data: { pack },
       meta: financeMeta(),
     });
+  })
+);
+
+router.delete(
+  '/statement-packs/:packId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const userId = String(req.user?.id || '');
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    const body =
+      req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
+    if (Object.keys(body).some((key) => !['expectedVersion', 'reason'].includes(key)))
+      return res.status(400).json({ code: 'INVALID_BODY', error: 'Unknown archive field' });
+    try {
+      const result = await archiveStatementPackCommand({
+        organizationId,
+        userId,
+        packId: String(req.params.packId || ''),
+        expectedVersion: Number(body.expectedVersion),
+        reason: typeof body.reason === 'string' ? body.reason : '',
+        idempotencyKey: String(
+          req.header('Idempotency-Key') || req.header('x-idempotency-key') || ''
+        ),
+      });
+      return res.json({ data: result, meta: financeMeta() });
+    } catch (error) {
+      if (error instanceof StatementPackArchiveCommandError)
+        return res.status(error.status).json({
+          code: error.code,
+          error: error.message,
+          ...(error.details || {}),
+        });
+      throw error;
+    }
   })
 );
 

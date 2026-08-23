@@ -15,6 +15,23 @@ async function discardBudgetRequest<T>(
   return json.data;
 }
 
+async function archiveStatementPackRequest<T>(
+  packId: string,
+  body: unknown,
+  idempotencyKey: string
+): Promise<T> {
+  const res = await fetchWithRetry(
+    `/api/v8/finance/statement-packs/${encodeURIComponent(packId)}`,
+    {
+      method: 'DELETE',
+      headers: { ...getHeaders(), 'Idempotency-Key': idempotencyKey },
+      body: JSON.stringify(body),
+    }
+  );
+  const json = await handleResponse<{ data: T }>(res, 'V8 DELETE statement pack');
+  return json.data;
+}
+
 async function unlinkBudgetInitiativeRequest<T>(
   budgetId: string,
   initiativeId: string,
@@ -424,6 +441,7 @@ export interface V8FinanceBudgetInitiativeUnlinkResult {
 
 export interface V8FinanceStatementPackSummary {
   id: string;
+  version?: number;
   entity_name?: string | null;
   period_start?: string | null;
   period_end?: string | null;
@@ -448,6 +466,15 @@ export interface V8FinanceStatementPackSummary {
 export interface V8FinanceStatementPackDetail extends V8FinanceStatementPackSummary {
   validations?: Array<Record<string, unknown>>;
   statements?: Array<Record<string, unknown>>;
+}
+
+export interface V8FinanceStatementPackArchiveResult {
+  packId: string;
+  status: 'archived';
+  version: number;
+  archivedBy: string;
+  archivedAt: string;
+  replay: boolean;
 }
 
 export interface V8FinanceStatementDetail {
@@ -946,6 +973,12 @@ export const V8FinanceApi = {
     ),
   getStatementPack: (packId: string) =>
     v8Get<{ pack: V8FinanceStatementPackDetail }>(`/finance/statement-packs/${packId}`),
+  archiveStatementPack: (
+    packId: string,
+    body: { expectedVersion: number; reason: string },
+    idempotencyKey: string
+  ) =>
+    archiveStatementPackRequest<V8FinanceStatementPackArchiveResult>(packId, body, idempotencyKey),
   getStatements: (params?: { readiness?: string }) =>
     v8Get<{ statements: V8FinanceStatementSummary[]; count: number }>('/finance/statements', {
       ...(params?.readiness ? { readiness: params.readiness } : {}),

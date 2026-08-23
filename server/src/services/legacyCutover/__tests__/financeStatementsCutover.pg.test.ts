@@ -209,6 +209,7 @@ describe.skipIf(!REAL_PG)('FINANCE-STATEMENTS legacy-cutover guard (fresh real P
         'FS-W11',
         409,
       ],
+      ['delete', `/api/finance-statements/packs/${packId}`, 'FS-W12', 409],
       ['delete', `/api/finance-statements/missing-statement`, 'FS-W13', 409],
     ] as const;
     for (const [method, route, writerId, status] of cases) {

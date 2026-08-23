@@ -193,7 +193,14 @@ export function useFinanceRowActions({
 
       try {
         if (row.kind === 'statements') {
-          await Api.delete(`/api/finance-statements/packs/${row.id}`);
+          const version = Number((row as FinanceStatementRow).version);
+          if (!Number.isInteger(version) || version < 1)
+            throw new Error('Statement pack version is required');
+          await V8FinanceApi.archiveStatementPack(
+            row.id,
+            { expectedVersion: version, reason: 'Archived from Finance workspace' },
+            `statement-pack-archive-${row.id}-${version}`
+          );
           await loadStatements();
         } else if (
           row.kind === 'models' ||
