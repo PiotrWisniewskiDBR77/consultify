@@ -23,12 +23,12 @@ The repository contains a substantial canonical Initiative and Execution foundat
 | Package | Current state | Evidence boundary |
 |---|---|---|
 | `INI-C01` | `SOURCE_FIX_PASS` | Implicit `import.meta.env.DEV` sample-data admission was removed. A persistent canonical read failure now renders the blocking data-source error and no unlabelled demo row. Hub/error/modal lane: `17/17 PASS`. |
-| `INI-C02` | `SOURCE_PATH_PASS / PERSISTENCE_PENDING` | Ordinary local Plan and Capacity now receive `demoMode=false` and select their real APIs. Domain/surface lane: `9/9 PASS`. Create/save/refresh/reopen against a disposable canonical DB is still not proven. |
+| `INI-C02` | `TECHNICAL_REALDB_PASS / BROWSER_PENDING` | Ordinary local Plan and Capacity now receive `demoMode=false` and select their real APIs. Domain/surface lane: `9/9 PASS`. An isolated disposable PostgreSQL replay proved Plan/Capacity create, version, publish and reader readback: `2` files, `3/3 PASS`, retry `0`; cleanup residue `0`. HTTP/browser create-save-refresh-reopen is still pending. |
 | Dialog regression | `SOURCE_FIX_PASS` | The historical New-Initiative dialog focus restoration and label contract were restored; no claim is made for a complete current browser accessibility matrix. |
 
 This checkpoint does not change the consolidated decision: `NO-GO_FOR_OWNER_ACCEPTANCE`.
-`INI-C03`, `INI-C04`, the persistence half of `INI-C02`, current runtime/browser
-qualification and owner retest remain open.
+`INI-C03`, `INI-C04`, HTTP/browser completion of `INI-C02`, current exact-SHA
+browser qualification and owner retest remain open.
 
 ## Consolidated closure packages
 
