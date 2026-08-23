@@ -230,6 +230,44 @@ describe.skipIf(!REAL_PG)(
       expect(res.body.data).toEqual({ status: 'NOT_MIGRATED' });
     });
 
+    it('2a) RESOLVED: a compatibility-list canonical artifact id opens without a redundant alias', async () => {
+      const created = await createArtifact({
+        organizationId: orgId,
+        artifactType: 'PREDICTION_SCENARIO',
+        naturalKey: null,
+        createdBy: userId,
+      });
+      const app = appWithContext(orgId);
+      const res = await request(app).get(
+        `/api/v8/finance-v2/artifacts/resolve-legacy/financial_models/${created.artifact.artifact_id}`
+      );
+
+      expect(res.status).toBe(200);
+      expect(res.body.data).toEqual({
+        status: 'RESOLVED',
+        artifactId: created.artifact.artifact_id,
+        businessVersionId: created.businessVersion.business_version_id,
+        artifactType: 'PREDICTION_SCENARIO',
+        mappingConfidence: 'AUTO_MIGRATE',
+      });
+    });
+
+    it('2b) NOT_MIGRATED: direct canonical fallback rejects a type from another Finance list', async () => {
+      const created = await createArtifact({
+        organizationId: orgId,
+        artifactType: 'VALUATION_CASE',
+        naturalKey: null,
+        createdBy: userId,
+      });
+      const app = appWithContext(orgId);
+      const res = await request(app).get(
+        `/api/v8/finance-v2/artifacts/resolve-legacy/financial_models/${created.artifact.artifact_id}`
+      );
+
+      expect(res.status).toBe(200);
+      expect(res.body.data).toEqual({ status: 'NOT_MIGRATED' });
+    });
+
     // -----------------------------------------------------------------
     // 3. QUARANTINED — a DIFFERENT "nothing to open" state from NOT_MIGRATED:
     //    the backfill looked at this row and deliberately excluded it, with a

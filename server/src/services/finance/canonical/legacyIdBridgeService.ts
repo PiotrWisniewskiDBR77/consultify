@@ -50,6 +50,16 @@ export function isLegacyFinanceTable(value: unknown): value is LegacyFinanceTabl
   return typeof value === 'string' && (LEGACY_FINANCE_TABLES as readonly string[]).includes(value);
 }
 
+const canonicalTypesByLegacyTable: Record<
+  LegacyFinanceTable,
+  ReadonlySet<ArtifactRow['artifact_type']>
+> = {
+  financial_statement_packs: new Set(['STATEMENT_PACK']),
+  financial_analyses: new Set(['HISTORICAL_ANALYSIS']),
+  financial_models: new Set(['BASELINE_MODEL', 'PREDICTION_SCENARIO']),
+  valuations: new Set(['VALUATION_CASE']),
+};
+
 interface AliasRow {
   alias_id: string;
   legacy_table: string;
@@ -66,6 +76,8 @@ interface AliasRow {
   mapping_reason: string | null;
   created_at: string;
 }
+
+type CanonicalBridgeArtifactRow = ArtifactRow & { resolved_business_version_id: string | null };
 
 /**
  * Three, and only three, machine-distinguishable outcomes (CLAUDE.md §2.3 —
@@ -118,7 +130,43 @@ export async function resolveLegacyFinanceArtifact(
   );
 
   if (!alias) {
-    return { status: 'NOT_MIGRATED' };
+    // The compatibility list can already expose canonical artifact ids while
+    // the detail route still passes through this legacy bridge. Resolve that
+    // identity directly, but only inside the current tenant and only when the
+    // artifact type is valid for the requested legacy list. This keeps an
+    // unknown legacy id and a cross-tenant canonical id fail-closed while
+    // avoiding a false NOT_MIGRATED shell for an artifact the list just
+    // returned to the user.
+    const canonicalArtifact = await withPinnedPostgresTransaction((tx) =>
+      tx.queryOne<CanonicalBridgeArtifactRow>(
+        `SELECT artifact.*,
+                COALESCE(
+                  artifact.current_business_version_id,
+                  (SELECT version.business_version_id
+                     FROM finance_business_versions version
+                    WHERE version.artifact_id = artifact.artifact_id
+                      AND version.organization_id = artifact.organization_id
+                    ORDER BY version.version DESC, version.created_at DESC
+                    LIMIT 1)
+                ) AS resolved_business_version_id
+           FROM finance_artifacts artifact
+          WHERE artifact.artifact_id = ? AND artifact.organization_id = ?`,
+        [legacyId, organizationId]
+      )
+    );
+    if (
+      !canonicalArtifact ||
+      !canonicalTypesByLegacyTable[legacyTable].has(canonicalArtifact.artifact_type)
+    ) {
+      return { status: 'NOT_MIGRATED' };
+    }
+    return {
+      status: 'RESOLVED',
+      artifactId: canonicalArtifact.artifact_id,
+      businessVersionId: canonicalArtifact.resolved_business_version_id,
+      artifactType: canonicalArtifact.artifact_type,
+      mappingConfidence: 'AUTO_MIGRATE',
+    };
   }
 
   if (
