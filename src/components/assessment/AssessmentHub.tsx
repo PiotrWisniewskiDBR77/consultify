@@ -798,7 +798,10 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
       },
       {
         id: 'outputs' as ModuleTab,
-        label: 'Outputs',
+        // Owner-approved product language: the immutable Method Core records
+        // remain `outputs` in the API/route contract, while the user-facing
+        // Assessment surface is Insights.
+        label: 'Insights',
         icon: <Package size={16} />,
         count: outputsCount ?? undefined,
       },
