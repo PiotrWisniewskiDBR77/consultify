@@ -29,6 +29,8 @@ describe('Notebook native block-menu contract', () => {
     expect(menu).toContain("id: 'block-move-down'");
     expect(menu).toContain("id: 'block-delete'");
     expect(menu).toContain("state.mode === 'context'");
-    expect(menu).toContain('disabled={cmd.canRun ? !cmd.canRun(editor) : false}');
+    expect(menu).toContain('const editorUnavailable = cmd.canRun ? !cmd.canRun(editor) : false');
+    expect(menu).toContain('const unavailable = governedUnavailable || editorUnavailable');
+    expect(menu).toContain('aria-disabled={unavailable || undefined}');
   });
 });
