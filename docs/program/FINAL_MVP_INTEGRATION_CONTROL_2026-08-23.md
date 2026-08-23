@@ -15,7 +15,7 @@ linked paths.
 | --- | --- |
 | Checkout | `/Users/piotrwisniewski/Developer/Consultify-final-mvp-integration-20260823` |
 | Branch | `codex/final-mvp-integration-20260823` |
-| Current source HEAD | `3d0028802d` after selective Wave Tri documentation integration |
+| Current source HEAD | `e8daa9405fc3423fe2af55fbea63c2db9bb5eeaf` after Wave Tri reconciliation and source/runtime ledger binding |
 | Frozen runtime SHA | `a2b500caca36d423bf9b215f25fc1c7aba4484b3` |
 | Working tree at runtime freeze | clean at `a2b500caca`; runtime must be restarted before claims about later source HEADs |
 | Production / Railway mutation | `NOT_AUTHORIZED / NOT_PERFORMED` |
@@ -72,6 +72,8 @@ never inferred from tests or screenshots.
    [`SHA_RUNTIME_LEDGER.md`](waves/WAVE_03_ACCEPTANCE/SHA_RUNTIME_LEDGER.md).
 7. Final one-candidate replay contract:
    [`FINAL_16_MODULE_REPLAY.md`](waves/WAVE_03_ACCEPTANCE/FINAL_16_MODULE_REPLAY.md).
+8. Canonical route, component, fixture and evidence map for all modules:
+   [`MODULE_SOURCE_FIXTURE_EVIDENCE_INVENTORY_2026-08-23.md`](waves/WAVE_03_ACCEPTANCE/MODULE_SOURCE_FIXTURE_EVIDENCE_INVENTORY_2026-08-23.md).
 
 The structural verifier currently proves `16` module directories, `21` gates
 per module, `16` master rows and `Mobile: DEFERRED_NON_GATING`. It proves

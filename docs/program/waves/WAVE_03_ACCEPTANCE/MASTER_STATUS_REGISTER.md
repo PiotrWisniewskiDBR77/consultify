@@ -3,11 +3,12 @@
 Last updated: `2026-08-23`
 
 Final MVP integration control now runs on source checkpoint
-`3159cbe83db2effae5a31f0dba7a13698749fff2`. Its mounted product runtime is
+`e8daa9405fc3423fe2af55fbea63c2db9bb5eeaf`. Its mounted product runtime is
 still exact `a2b500caca36d423bf9b215f25fc1c7aba4484b3`; commits after that runtime
 are documentation-only. This checkpoint adds bounded Assessment compact-axis
-evidence and the reconciled Wave Tri open-gate classification. It does not
-promote any module verdict or replace the historical exact-runtime rows below.
+evidence, the reconciled Wave Tri open-gate classification and the bound
+source/runtime ledger. It does not promote any module verdict or replace the
+historical exact-runtime rows below.
 See `FINAL_MVP_INTEGRATION_CONTROL_2026-08-23.md` and
 `SHA_RUNTIME_LEDGER.md`.
 
