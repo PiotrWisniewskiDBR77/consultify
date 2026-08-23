@@ -190,3 +190,21 @@ container were stopped while preserving the database.
 Credentialed browser replay and Piotr acceptance remain pending. Current
 reconstructed storage readiness: `5/16` — Initiatives, Execution, Meetings,
 Results and Finance.
+
+Materials was reconstructed sixth as
+`consultify_w3_materials_owner_recovered_20260823`. It passed `831/831`
+successful migrations and wrote a new FINAL `0600` marker-bound receipt with
+nonce `adf53b59fc1a4d18a5691e28d40172ca863310fcf819e61d3ad070a518b0d4c4`.
+Seed readback proved two document versions, one four-slide deck/version with
+notes and alt text, one formula workbook/revision, one approved template and one
+separate `UNKNOWN_RIGHTS_QUARANTINED` template. After PostgreSQL restart,
+independent SQL rechecked `831/831`, marker `1`, document versions `2`, deck
+version `1` and workbook revision `1`. Exact clean SHA
+`54987e405a5cdf13d7c24d5bb5178529a5d55bac` adopted the database on
+server/client `4341/4342`; runtime and marker gates passed. OWNER document, deck
+and workbook reads returned `200`; each anonymous read returned `401`. Runtime
+and container were stopped while preserving the database.
+
+Credentialed browser replay, export/share/provider and rights-policy approval,
+and Piotr acceptance remain pending. Current reconstructed storage readiness:
+`6/16` — Initiatives, Execution, Meetings, Results, Finance and Materials.

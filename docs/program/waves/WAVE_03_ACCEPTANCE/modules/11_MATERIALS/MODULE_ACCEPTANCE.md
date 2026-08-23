@@ -7,6 +7,21 @@ Owner: Piotr Wisniewski
 Integrator: Codex
 Mobile: `DEFERRED_NON_GATING`
 
+> Recovery replay — 2026-08-23: the historical 817-migration database recorded
+> below was absent at catalog revalidation. Replacement local-only database
+> `consultify_w3_materials_owner_recovered_20260823` passed the exact
+> 831-migration chain and independent post-restart SQL readback: two document
+> versions, one deck version and one workbook revision. Its new FINAL `0600`
+> receipt preserves one approved template and the separate
+> `UNKNOWN_RIGHTS_QUARANTINED` template; provider/share/export remain explicitly
+> unproven. Exact clean SHA `54987e405a5cdf13d7c24d5bb5178529a5d55bac`
+> adopted it on server/client `4341/4342`: health/readiness/frontend
+> `200/200/200`, migration ledgers `ok/ok`, client and SQL markers passed. OWNER
+> login and document/deck/workbook reads returned `200`; all three anonymous
+> reads returned `401`. This restores current technical API/storage readiness,
+> not authenticated browser evidence, rights approval, provider capability,
+> Piotr acceptance or release authority.
+
 ## Contract
 
 Primary journey: open, edit, version, export where authorized and reopen a
