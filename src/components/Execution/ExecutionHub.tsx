@@ -135,7 +135,7 @@ import { ExecutionResourcesSurface } from './ExecutionResourcesSurface';
 import ExecutionSummaryOneLook from './ExecutionSummaryOneLook';
 import type { DelaySignalItem, RiskSignalItem } from './ExecutionTimelineView';
 import { ExecutionWorkloadView } from './ExecutionWorkloadView';
-import { ExecutionWorkSurface } from './ExecutionWorkSurface';
+import { ExecutionWorkSurface, type ExecutionWorkDocumentRef } from './ExecutionWorkSurface';
 import { ReportDocumentView } from './ReportDocumentView';
 import { RolloutTab } from './RolloutTab';
 
@@ -2505,6 +2505,27 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       if (prev.find((d) => d.id === docId)) return prev;
       return [...prev, doc];
     });
+    setActiveDocumentId(docId);
+    setIsSidePanelOpen(false);
+  }, []);
+
+  const handleOpenWorkDocument = useCallback((row: ExecutionWorkDocumentRef) => {
+    const docId = `work:${row.executionCaseId}:${row.id}`;
+    const doc: OpenDocument = {
+      id: docId,
+      type: row.kind === 'TASK' ? 'task' : 'decision',
+      subType: row.kind,
+      name: row.title,
+      status:
+        row.status === 'BLOCKED'
+          ? 'BLOCKED'
+          : ['COMPLETED', 'DECIDED', 'APPROVED'].includes(row.status)
+            ? 'DONE'
+            : 'DRAFT',
+    };
+    setOpenDocuments((prev) =>
+      prev.some((item) => item.id === docId) ? prev : [...prev, doc]
+    );
     setActiveDocumentId(docId);
     setIsSidePanelOpen(false);
   }, []);
@@ -5327,13 +5348,25 @@ Please return:
       );
     }
 
-    if (activeTab === ('work' as ModuleTab))
+    if (activeTab === ('work' as ModuleTab)) {
+      if (activeDocumentId?.startsWith('work:')) {
+        const [, , ...workIdParts] = activeDocumentId.split(':');
+        return (
+          <ExecutionWorkSurface
+            activePreset="all"
+            onCountsChange={menu3CountHandlers.work}
+            documentId={workIdParts.join(':')}
+          />
+        );
+      }
       return (
         <ExecutionWorkSurface
           activePreset={canonicalMenu3Preset.work}
           onCountsChange={menu3CountHandlers.work}
+          onOpenDocument={handleOpenWorkDocument}
         />
       );
+    }
     if (activeTab === ('resources' as ModuleTab))
       return (
         <ExecutionResourcesSurface

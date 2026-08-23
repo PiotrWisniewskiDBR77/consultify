@@ -48,6 +48,13 @@ interface Row extends TableRow {
   initiativeId: string;
   source: any;
 }
+export interface ExecutionWorkDocumentRef {
+  id: string;
+  title: string;
+  kind: WorkKind;
+  status: string;
+  executionCaseId: string;
+}
 interface Milestone {
   milestoneId: string;
   version: number;
@@ -141,7 +148,15 @@ const businessLabel = (value: string | null | undefined, fallback: string) => {
     .replace(/[-_]+/g, ' ')
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 };
-export const ExecutionWorkSurface = ({ activePreset, onCountsChange }: ExecutionMenu3Contract) => {
+export const ExecutionWorkSurface = ({
+  activePreset,
+  onCountsChange,
+  onOpenDocument,
+  documentId,
+}: ExecutionMenu3Contract & {
+  onOpenDocument?: (row: ExecutionWorkDocumentRef) => void;
+  documentId?: string | null;
+}) => {
   const actorId = useAppStore((store) => store.currentUser?.id ?? null);
   const [cases, setCases] = useState<Array<any>>([]),
     [caseId, setCaseId] = useState(''),
@@ -354,12 +369,21 @@ export const ExecutionWorkSurface = ({ activePreset, onCountsChange }: Execution
     };
   };
   const openWorkspace = async (row: Row) => {
+    if (onOpenDocument && !documentId) {
+      onOpenDocument(row);
+      return;
+    }
     if (caseId !== row.executionCaseId) await load(row.executionCaseId);
     setSelectedId(row.id);
     setShowWorkspace(true);
     setToolMode(row.kind);
     setForm(formFromRow(row));
   };
+  useEffect(() => {
+    if (!documentId || rows.length === 0) return;
+    const row = rows.find((candidate) => candidate.id === documentId);
+    if (row && (!showWorkspace || selectedId !== row.id)) void openWorkspace(row);
+  }, [documentId, rows, selectedId, showWorkspace]);
   useEffect(() => {
     if (!showWorkspace || !selected) return;
     setToolMode(selected.kind);
@@ -580,12 +604,16 @@ export const ExecutionWorkSurface = ({ activePreset, onCountsChange }: Execution
     <section aria-label="Execution Work" className="p-4">
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="font-semibold">Praca</h2>
+          <h2 className="font-semibold">
+            {documentId ? selected?.title || 'Element pracy' : 'Praca'}
+          </h2>
           <p className="text-sm text-c-text-muted">
-            Zadania i decyzje ze wszystkich dostępnych realizacji; wybór realizacji zawęża listę.
+            {documentId
+              ? 'Kanoniczny dokument zadania lub decyzji wraz z kontrolami, dowodami i zależnościami.'
+              : 'Zadania i decyzje ze wszystkich dostępnych realizacji; wybór realizacji zawęża listę.'}
           </p>
         </div>
-        {caseId && (
+        {!documentId && caseId && (
           <div className="flex flex-wrap gap-2">
             <button className="btn-secondary" onClick={() => setToolMode('TASK')}>
               Nowe zadanie
@@ -599,40 +627,42 @@ export const ExecutionWorkSurface = ({ activePreset, onCountsChange }: Execution
           </div>
         )}
       </div>
-      <label className="mb-4 block max-w-md text-xs font-medium text-c-text-muted">
-        Filtr realizacji
-        <select
-          aria-label="Execution Case for work"
-          value={caseId}
-          className="mt-1 block w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm"
-          onChange={(e) => {
-            const nextCaseId = e.target.value;
-            if (nextCaseId) void load(nextCaseId);
-            else {
-              setCaseId('');
-              setSelectedId(null);
-              setShowWorkspace(false);
-              void loadCases();
-            }
-          }}
-        >
-          <option value="">Wszystkie realizacje</option>
-          {cases.map((c) => (
-            <option key={c.executionCaseId} value={c.executionCaseId}>
-              {c.initiativeTitle ||
-                c.title ||
-                `Realizacja · ${String(c.executionCaseId).slice(-8)}`}
-            </option>
-          ))}
-        </select>
-      </label>
+      {!documentId && (
+        <label className="mb-4 block max-w-md text-xs font-medium text-c-text-muted">
+          Filtr realizacji
+          <select
+            aria-label="Execution Case for work"
+            value={caseId}
+            className="mt-1 block w-full rounded-lg border border-c-border bg-c-surface px-3 py-2 text-sm"
+            onChange={(e) => {
+              const nextCaseId = e.target.value;
+              if (nextCaseId) void load(nextCaseId);
+              else {
+                setCaseId('');
+                setSelectedId(null);
+                setShowWorkspace(false);
+                void loadCases();
+              }
+            }}
+          >
+            <option value="">Wszystkie realizacje</option>
+            {cases.map((c) => (
+              <option key={c.executionCaseId} value={c.executionCaseId}>
+                {c.initiativeTitle ||
+                  c.title ||
+                  `Realizacja · ${String(c.executionCaseId).slice(-8)}`}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       {state === 'LOADING' && <p role="status">Loading canonical work</p>}
       {!caseId && state === 'READY' && rows.length === 0 && (
         <div className="rounded-xl border border-dashed border-c-border p-8 text-center text-sm text-c-text-muted">
           Brak kanonicznych zadań i decyzji w dostępnych realizacjach.
         </div>
       )}
-      {state === 'READY' && rows.length > 0 && (
+      {!documentId && state === 'READY' && rows.length > 0 && (
         <TableWithPreviewLayout<Row>
           selectedId={selectedId}
           selectedItem={selected}
@@ -784,9 +814,11 @@ export const ExecutionWorkSurface = ({ activePreset, onCountsChange }: Execution
         >
           <div className="flex items-center justify-between">
             <h3 className="font-semibold">{selected.title}</h3>
-            <button className="btn-secondary" onClick={() => setShowWorkspace(false)}>
-              Zamknij workspace
-            </button>
+            {!documentId && (
+              <button className="btn-secondary" onClick={() => setShowWorkspace(false)}>
+                Zamknij workspace
+              </button>
+            )}
           </div>
           <CanonicalWorkHardeningPanel
             item={selected.source}
@@ -804,7 +836,7 @@ export const ExecutionWorkSurface = ({ activePreset, onCountsChange }: Execution
           {selected.kind === 'TASK' && <TaskMilestoneBlastRadius task={selected.source} />}
         </section>
       )}
-      {caseId && (
+      {!documentId && caseId && (
         <section
           aria-label="Execution Milestones"
           className="mt-4 rounded border border-c-border p-4"
