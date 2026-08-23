@@ -245,3 +245,23 @@ database.
 Credentialed browser replay, economics policy and Piotr acceptance remain
 pending. Current reconstructed storage readiness: `8/16` — Initiatives,
 Execution, Meetings, Results, Finance, Materials, Audits and Partner.
+
+Organization was reconstructed ninth as
+`consultify_w3_organization_owner_recovered_20260823`. It passed `831/831`
+migrations and wrote a new FINAL `0600` marker-bound receipt with nonce
+`e63db7e4c3b72c8d8f36d6c38292e0215a856e64f3fdd9e2a98e2a7518e0621c`.
+The fixture contains four access personas, 27 approved organization-context
+claims, one governed snapshot and two deliberate conflict records. After a
+PostgreSQL restart, independent SQL rechecked `831/831` migrations, all 27
+claims and the single marker. Exact clean SHA
+`e17f4e58f72e3e58aab8666d70563215d71e7c9a` adopted the database on
+server/client `4347/4348`; health, readiness, frontend, runtime SHA and marker
+gates passed. The OWNER organization and context endpoints returned `200`;
+foreign-tenant organization access returned `403`, revoked login returned
+`403`, and anonymous organization and context access returned `401`. Runtime
+and container were stopped while preserving the database.
+
+Credentialed browser replay, remaining owner decisions and Piotr acceptance
+remain pending. Current reconstructed storage readiness: `9/16` — Organization,
+Initiatives, Execution, Meetings, Results, Finance, Materials, Audits and
+Partner.
