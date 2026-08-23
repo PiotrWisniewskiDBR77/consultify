@@ -114,7 +114,15 @@
     "schema": "additive and backward-readable",
     "data": "no production data and no live restore"
   },
-  "technicalVerdict": "PASS_REPOSITORY_PARTIAL_ENVIRONMENT_NOT_AUTHORIZED",
+  "wave3RecoveryRequalification20260823": {
+    "candidateSha": "4124dc608ab34fe14e4285bdca4457943a0525df",
+    "databases": "Fresh isolated consultify_adm_backup_source_20260823_a and consultify_adm_backup_restore_20260823_a; both applied 831/831 migrations. None of the 16 recovered owner-fixture databases was used for the DR test.",
+    "validRun": "3/3 files and 18/18 tests passed with retry=0: encrypted tenant backup, checksum/authentication, isolated restore, tenant readback, corruption/wrong-key/same-target boundaries, no-stub route behavior and durable single-flight scheduler controls.",
+    "negativeLogNote": "The emitted missing-key and BACKUP_RUN_FENCE_LOST errors are intentional negative-control inputs; their assertions passed and do not represent runtime failures.",
+    "rejectedInfrastructureRun": "An earlier attempt is invalid evidence: the Docker VM exhausted space while migrating the second disposable database, PostgreSQL entered crash recovery and the target stopped at 414 migrations. Only dangling image layers were pruned; no volume was pruned. PostgreSQL recovered and the 16/16 owner-fixture audit passed before the target was rebuilt from zero.",
+    "boundary": "Repository/local DR is current and green. Deployment scheduler observation, environment-managed key rotation/object storage, authorized staging restore and production release remain unexecuted and unauthorized."
+  },
+  "technicalVerdict": "PASS_REPOSITORY_CURRENT_SHA_PARTIAL_ENVIRONMENT_NOT_AUTHORIZED",
   "verdict": "PARTIAL",
   "openBlockers": [
     "No deployment or production scheduler observation was authorized.",
