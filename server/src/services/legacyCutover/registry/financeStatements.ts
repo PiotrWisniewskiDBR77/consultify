@@ -139,9 +139,10 @@ export const FINANCE_STATEMENTS_CUTOVER: LegacyCutoverDomainConfig = {
       method: 'POST',
       path: /^\/packs\/[^/]+\/report-section\/?$/,
       state: 'observed',
+      effect: 'canonical-write',
       successor: null,
       reason:
-        'Reads the financial_statement_packs row addressed by :id but writes a NEW report/snapshot record via ReportBuilderService.createReport and ReportContract.createSnapshot (finance-statements.routes.ts:2701, financeReportSectionService.ts:1500-1552) — the mutated rows are report tables, not financial_statement_packs itself, so legacyTable is left unset (the write target is not one legacy record with a stable id in the packs table).',
+        'Verified canonical report handoff, not a legacy Finance-table mutation: it reads the financial_statement_packs source, creates a native Report Builder artifact, freezes it through canonical ReportContract.createSnapshot and persists its Evidence Envelope (finance-statements.routes.ts:2701, financeReportSectionService.ts:1500-1590). It never mutates financial_statement_packs or financial_statements.',
     },
     {
       writerId: 'FS-W11',
