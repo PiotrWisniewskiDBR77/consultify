@@ -2,13 +2,14 @@
 
 Last updated: `2026-08-23`
 
-Final MVP integration control now runs on source checkpoint
-`e8daa9405fc3423fe2af55fbea63c2db9bb5eeaf`. Its mounted product runtime is
-still exact `a2b500caca36d423bf9b215f25fc1c7aba4484b3`; commits after that runtime
-are documentation-only. This checkpoint adds bounded Assessment compact-axis
-evidence, the reconciled Wave Tri open-gate classification and the bound
-source/runtime ledger. It does not promote any module verdict or replace the
-historical exact-runtime rows below.
+Final MVP integration control now has integrated product baseline
+`6e9f116f82dd202edb66fac7d900028da2d81e69`. Its mounted product runtime is
+still exact `a2b500caca36d423bf9b215f25fc1c7aba4484b3`; later source changes are not
+runtime-proven until restart and replay. The baseline adds bounded Assessment
+compact-axis evidence, the reconciled Wave Tri open-gate classification, the
+bound source/runtime ledger and selective recovery of 22 Dynamic SWOT product
+commits. It does not promote any module verdict or replace the historical
+exact-runtime rows below.
 See `FINAL_MVP_INTEGRATION_CONTROL_2026-08-23.md` and
 `SHA_RUNTIME_LEDGER.md`.
 
@@ -28,6 +29,13 @@ are present; My Work Decisions remains canonical. Every remaining item is
 explicitly gated by backend, prototype, runtime or owner decision and remains
 `NOT_OWNER_ACCEPTED`. See
 `CHAT_TO_TOOLS_IMPLEMENTATION_RECONCILIATION_2026-08-23.md`.
+
+Tools source recovery adds a newer bounded fact without changing its owner
+verdict: 22 unique Dynamic SWOT commits from retained source `1fce2f0631` were
+selectively integrated, interaction conflicts were reconciled, the focused
+suite passed `34/34`, and full type-check passed at `6e9f116f82`. Browser,
+persistence/readback and owner quality replay on a runtime carrying this source
+remain open.
 
 Finance latest reconciliation (supersedes its older row wording only): current
 WIP passed one literal signed five-workspace test on an isolated `831/831`

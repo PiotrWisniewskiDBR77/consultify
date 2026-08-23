@@ -15,7 +15,7 @@ linked paths.
 | --- | --- |
 | Checkout | `/Users/piotrwisniewski/Developer/Consultify-final-mvp-integration-20260823` |
 | Branch | `codex/final-mvp-integration-20260823` |
-| Current source HEAD | `e8daa9405fc3423fe2af55fbea63c2db9bb5eeaf` after Wave Tri reconciliation and source/runtime ledger binding |
+| Integrated product baseline | `6e9f116f82dd202edb66fac7d900028da2d81e69` after Wave Tri reconciliation, selective Dynamic SWOT recovery and DRD contract repair |
 | Frozen runtime SHA | `a2b500caca36d423bf9b215f25fc1c7aba4484b3` |
 | Working tree at runtime freeze | clean at `a2b500caca`; runtime must be restarted before claims about later source HEADs |
 | Production / Railway mutation | `NOT_AUTHORIZED / NOT_PERFORMED` |
@@ -43,6 +43,7 @@ release readiness.
 | --- | --- | --- | --- |
 | Owner-review preservation | `af75a84e379312f429bb111e4221c8779cf08d57`; `checkpoint/wave3-owner-review-20260823-2135` | `/Users/piotrwisniewski/Developer/Consultify-safety-checkpoints/wave3-owner-review-af75a84e37.bundle` | `688d505ac996b38f25d96997c04a85d5e26f9e1b95b75b96d07bd0737c33d5b2` |
 | Assessment navigator | `a2b500caca36d423bf9b215f25fc1c7aba4484b3`; `checkpoint/assessment-navigator-20260823-2137` | `/Users/piotrwisniewski/Developer/Consultify-safety-checkpoints/assessment-navigator-a2b500caca.bundle` | `4078856900803bbb9cfebbf3e544c4826d8c082afdbd2d0763f9355fe553c247` |
+| Sixteen-module source map | `b973c2d1964c04e0f843852b649ab935516cf934`; `checkpoint/final-mvp-16-module-map-20260823-2155` | `/Users/piotrwisniewski/Developer/Consultify-safety-checkpoints/final-mvp-16-module-map-b973c2d196.bundle` | `12b8a9143284cf9f7621335a8a002eefc35bdce3c77a16ff51284f568c0313f7` |
 
 No cleanup, deletion or pruning is authorized from this file. The retained
 state inventory remains
@@ -92,6 +93,7 @@ node scripts/wave3/verify-acceptance-packages.mjs
 | `d8561ed5c2` Finance canonical ID bridge | ancestor | integrated |
 | `54987e405a` recovered Finance fixture documentation | ancestor | integrated |
 | `d48f4d7fc8` / `codex/wave3-four-modules-bcfb0148` | originally not an ancestor; one unique documentation commit | semantically reviewed; its single file was selectively integrated by cherry-pick as `3d0028802d`; source branch/worktree remains preserved |
+| `1fce2f0631` / retained Dynamic SWOT source | originally not an ancestor; 22 unique product commits | selectively integrated commit-by-commit; JSX, owner-feedback interaction and DRD shell contracts reconciled at `6e9f116f82`; source worktree remains preserved |
 | retained dirty/detached worktrees | mixed | evidence/comparison sources only until exact live re-inventory and explicit cleanup authority |
 
 ## 5. Current exact-candidate delta
@@ -109,6 +111,12 @@ Assessment compact navigation is now proven on the controlled candidate:
 
 Assessment remains `OWNER_REVIEW_IN_PROGRESS`; this bounded correction is not
 module acceptance.
+
+Dynamic SWOT source reconciliation is technically green on integrated product
+baseline `6e9f116f82`: the focused suite is `34/34 PASS`, full TypeScript
+type-check is `PASS`, and `git diff --check` is clean. This is source-level
+evidence only; the mounted runtime remains `a2b500caca36`, so browser replay,
+persistence/readback and owner quality acceptance remain open.
 
 ## 6. Integration queue
 
