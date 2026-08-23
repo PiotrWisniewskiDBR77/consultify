@@ -463,7 +463,7 @@ async function readback(db: string, d: any = null) {
       frozen_snapshots: 1,
       distinct_approvals: 1,
       initiative_drafts: 1,
-      successful_migrations: 817,
+      successful_migrations: 831,
     };
     for (const [k, v] of Object.entries(exp))
       if (String(r[k]) !== String(v)) fail(`readback ${k} expected ${v}, got ${r[k]}`);

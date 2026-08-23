@@ -586,8 +586,8 @@ async function readback({ databaseName }: { databaseName: string }) {
         fail(`readback ${key} expected ${expected}, got ${rb[key]}`);
     if (Number(rb.context_claims) < 10 || Number(rb.approved_claims) !== Number(rb.context_claims))
       fail('claim governance readback mismatch');
-    if (Number(rb.successful_migrations) !== 817)
-      fail(`fresh migration ledger expected exactly 817, got ${rb.successful_migrations}`);
+    if (Number(rb.successful_migrations) !== 831)
+      fail(`fresh migration ledger expected exactly 831, got ${rb.successful_migrations}`);
     const payload = manifest(databaseName, String(rb.ownership_nonce), rb);
     if (payload.logicalReplayDigest !== logicalReplayDigest(rb))
       fail('logical replay digest is not deterministic');

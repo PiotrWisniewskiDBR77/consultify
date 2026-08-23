@@ -99,8 +99,8 @@ try {
   const migrations = await db.query<{ count: number }>(
     `SELECT COUNT(*)::int AS count FROM schema_migrations WHERE status IN ('applied','success')`
   );
-  if (Number(migrations.rows[0]?.count) !== 817)
-    throw new Error('Partner owner database must have exactly 817 successful migrations');
+  if (Number(migrations.rows[0]?.count) !== 831)
+    throw new Error('Partner owner database must have exactly 831 successful migrations');
 
   await db.query('BEGIN');
   await db.query(

@@ -105,7 +105,7 @@ async function provision(u, db) {
         )
       ).rows[0].n
     );
-    if (n !== 817) fail(`expected 817 successful migrations, got ${n}`);
+    if (n !== 831) fail(`expected 831 successful migrations, got ${n}`);
   } finally {
     await c.end();
   }
@@ -113,7 +113,7 @@ async function provision(u, db) {
     JSON.stringify({
       command: 'provision',
       database: db,
-      migrations: 817,
+      migrations: 831,
       appendOnlyTriggers: 'ENABLED',
     })
   );

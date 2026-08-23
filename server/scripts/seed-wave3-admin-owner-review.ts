@@ -26,7 +26,7 @@ const MANIFEST_PATH = process.env.ADMIN_OWNER_FIXTURE_MANIFEST || '';
 const LOCAL_HOSTS = new Set(['127.0.0.1', 'localhost', '::1']);
 const DB_PREFIX = 'consultify_w3_admin_owner_';
 const FIXTURE_ID = 'W3-ADMIN-OWNER-v1';
-const EXPECTED_MIGRATIONS = 817;
+const EXPECTED_MIGRATIONS = 831;
 
 const IDS = Object.freeze({
   mainOrg: '14000000-0000-4000-8000-000000000001',

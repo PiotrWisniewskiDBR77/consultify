@@ -216,7 +216,7 @@ async function coldReadback(receipt: any) {
     );
     const readback = result.rows[0];
     if (
-      Number(readback.migrations) !== 817 ||
+      Number(readback.migrations) !== 831 ||
       Number(readback.approved_versions) !== 5 ||
       Number(readback.statements) !== 6 ||
       Number(readback.source_receipts) !== 6 ||
@@ -225,7 +225,7 @@ async function coldReadback(receipt: any) {
       fail(`cold readback mismatch: ${JSON.stringify(readback)}`);
     }
     return {
-      migrations: 817,
+      migrations: 831,
       approvedVersions: 5,
       statements: 6,
       sourceReceipts: 6,
