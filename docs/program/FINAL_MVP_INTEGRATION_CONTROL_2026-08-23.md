@@ -15,7 +15,7 @@ linked paths.
 | --- | --- |
 | Checkout | `/Users/piotrwisniewski/Developer/Consultify-final-mvp-integration-20260823` |
 | Branch | `codex/final-mvp-integration-20260823` |
-| Integrated product baseline | `6e9f116f82dd202edb66fac7d900028da2d81e69` after Wave Tri reconciliation, selective Dynamic SWOT recovery and DRD contract repair |
+| Integrated product baseline | `55fc3e8998` after Wave Tri reconciliation, selective Dynamic SWOT recovery, Final Demo / Materials integration and Finance source reconciliation |
 | Frozen runtime SHA | `a2b500caca36d423bf9b215f25fc1c7aba4484b3` |
 | Working tree at runtime freeze | clean at `a2b500caca`; runtime must be restarted before claims about later source HEADs |
 | Production / Railway mutation | `NOT_AUTHORIZED / NOT_PERFORMED` |
@@ -46,6 +46,7 @@ release readiness.
 | Sixteen-module source map | `b973c2d1964c04e0f843852b649ab935516cf934`; `checkpoint/final-mvp-16-module-map-20260823-2155` | `/Users/piotrwisniewski/Developer/Consultify-safety-checkpoints/final-mvp-16-module-map-b973c2d196.bundle` | `12b8a9143284cf9f7621335a8a002eefc35bdce3c77a16ff51284f568c0313f7` |
 | Dynamic SWOT integration | `47f206f5722260198880a3d64cc6925212e3f224`; `checkpoint/final-mvp-dynamic-swot-integrated-20260823-2235` | `/Users/piotrwisniewski/Developer/Consultify-safety-checkpoints/final-mvp-dynamic-swot-47f206f572.bundle` | `05e56ff0f3cf105a2f4236af9e915dfe7882cd229b1b4dbf370f0693132dd5c2` |
 | Materials integration | `7a3d5b05def22781686b1a458316969f98aba902`; `checkpoint/final-mvp-materials-integrated-20260823-2300` | `/Users/piotrwisniewski/Developer/Consultify-safety-checkpoints/final-mvp-materials-7a3d5b05de.bundle` | `4730b6879ba20dcced254f3d44fc6fb2c112592a6bbfde9d06a745a1bc81d0e8` |
+| Final Demo integration | `423af5c9f869e214300a5c1eb7aad51a277382a6`; `checkpoint/final-mvp-finaldemo-integrated-20260823-2240` | `/Users/piotrwisniewski/Developer/Consultify-safety-checkpoints/final-mvp-finaldemo-423af5c9f8.bundle` | `5c7d170da2669f84f6847c7be493879720814c76f122fd8716f8b7fd0ea11f12` |
 
 No cleanup, deletion or pruning is authorized from this file. The retained
 state inventory remains
@@ -97,6 +98,7 @@ node scripts/wave3/verify-acceptance-packages.mjs
 | `d48f4d7fc8` / `codex/wave3-four-modules-bcfb0148` | originally not an ancestor; one unique documentation commit | semantically reviewed; its single file was selectively integrated by cherry-pick as `3d0028802d`; source branch/worktree remains preserved |
 | `1fce2f0631` / retained Dynamic SWOT source | originally not an ancestor; 22 unique product commits | selectively integrated commit-by-commit; JSX, owner-feedback interaction and DRD shell contracts reconciled at `6e9f116f82`; source worktree remains preserved |
 | `bcfb01483a` detached Final Demo worktree plus dirty WIP | 27 changed files across Initiatives, Execution, Results, feature flags, tests and documentation | archived first, then preserved on `codex/preserve-finaldemo-wip-20260823` at `9f29cb00ff4a98551a6c76f3f547bcd922fdfed1`; cherry-picked cleanly as `28e901b813912f3e3ed3c069ae927a6d52c91fdf`; source worktree remains preserved |
+| `b834519c5b` detached Finance worktree plus dirty WIP | 37 changed files across Finance UI/API/backend/runtime/tests/docs | archived first, then preserved on `codex/preserve-finance-owner-wip-20260823` at `e7574b340e7262dc096cd8ac4d9cff61fed0a19c`; reconciliation proved the package was already present on the newer candidate, except for an apparent API addition that duplicated the existing `listFinanceArtifacts` client; duplicate removed at `55fc3e8998`; source worktree remains preserved |
 | retained dirty/detached worktrees | mixed | evidence/comparison sources only until exact live re-inventory and explicit cleanup authority |
 
 ## 5. Current exact-candidate delta
@@ -157,6 +159,27 @@ the integrated candidate proves:
 
 This is `SOURCE_INTEGRATED / TECHNICAL_PASS`. It is not yet browser replay,
 persistence/readback, a complete `16 x 21` gate result or owner acceptance.
+
+The retained Finance owner-review package has also been reconciled without a
+wholesale worktree copy. Its `37` dirty files were preserved first. Comparing
+and cherry-picking the package onto the newer candidate showed that its product,
+backend, migration, fixture, test and documentation changes were already
+represented by later source. The sole apparent delta added a second copy of the
+already-existing `listFinanceArtifacts` API client; that duplicate was removed
+without rewriting history. The resulting source tree is byte-for-byte unchanged
+from the pre-reconciliation candidate (`git diff 423af5c9f8 --stat` is empty).
+Verification on the reconciled tree proves:
+
+- full TypeScript type-check: `PASS`;
+- focused Finance API, Finance data hook and Finance deep-link suite:
+  `22/22 PASS` across `3/3` test files;
+- the broader owner-runtime guard is `31 PASS / 13 FAIL`; all `13` failures are
+  environmental `ECONNREFUSED 127.0.0.1:34940` because its dedicated local
+  PostgreSQL dependency was not running. They are retained as an open runtime
+  gate and are not represented as Finance regressions or as passes.
+
+Finance is therefore `SOURCE_RECONCILED / TECHNICAL_PASS /
+RUNTIME_DB_GATE_OPEN / OWNER_ACCEPTANCE_REQUIRED`.
 
 ### Preserved dirty-source snapshots
 
