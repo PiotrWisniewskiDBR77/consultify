@@ -59,6 +59,7 @@ export const OrgProvider: React.FC<OrgProviderProps> = ({ children }) => {
   const currentUser = useAppStore((s) => s.currentUser);
   const setCurrentOrganization = useAppStore((s) => s.setCurrentOrganization);
   const isDemoMode = useAppStore((s) => s.isDemoMode);
+  const demoSessionOrgId = useAppStore((s) => s.demoSessionOrgId);
 
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
   const [availableOrgs, setAvailableOrgs] = useState<Organization[]>([]);
@@ -69,6 +70,28 @@ export const OrgProvider: React.FC<OrgProviderProps> = ({ children }) => {
 
   const fetchOrganizations = useCallback(async () => {
     if (!currentUser?.id) {
+      setIsLoading(false);
+      return;
+    }
+
+    // A public demo principal is server-bound to exactly one isolated session
+    // tenant. `/organizations/current` describes the account's base membership,
+    // so resolving from it would persist `demo-org` as an ordinary org context;
+    // the backend correctly rejects that tenant-steering header. Keep the demo
+    // tenant in memory and deliberately leave the ordinary org key absent.
+    if (isDemoMode && demoSessionOrgId) {
+      const demoOrg: Organization = {
+        id: demoSessionOrgId,
+        name: 'Demo workspace',
+        role: String(currentUser.role || 'CONSULTANT'),
+        access_type: 'CONSULTANT',
+        is_current: true,
+      };
+      localStorage.removeItem(STORAGE_KEY);
+      setAvailableOrgs([demoOrg]);
+      setCurrentOrg(demoOrg);
+      setCurrentOrganization({ id: demoOrg.id, name: demoOrg.name });
+      setError(null);
       setIsLoading(false);
       return;
     }
@@ -126,7 +149,7 @@ export const OrgProvider: React.FC<OrgProviderProps> = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [currentUser?.id, setCurrentOrganization]);
+  }, [currentUser, demoSessionOrgId, isDemoMode, setCurrentOrganization]);
 
   const switchOrg = useCallback(
     async (orgId: string) => {
@@ -209,7 +232,7 @@ export const OrgProvider: React.FC<OrgProviderProps> = ({ children }) => {
       setAvailableOrgs([]);
       setCurrentOrg(null);
     }
-  }, [currentUser?.id, fetchOrganizations]);
+  }, [currentUser?.id, demoSessionOrgId, fetchOrganizations]);
 
   // Listen for cross-tab org switches
   useEffect(() => {
