@@ -547,7 +547,7 @@ async function readback(databaseName: string, dynamic: Record<string, unknown> |
       complete_runtime_read_models: 1,
       negative_profile_receipts: 0,
       negative_execution_links: 0,
-      successful_migrations: 831,
+      successful_migrations: 834,
     };
     for (const [key, value] of Object.entries(expected))
       if (String(r[key]) !== String(value))
