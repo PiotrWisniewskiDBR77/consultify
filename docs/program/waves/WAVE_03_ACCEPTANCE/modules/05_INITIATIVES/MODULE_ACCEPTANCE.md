@@ -13,9 +13,11 @@ The current controlling review is the three-expert consolidation at
 `../../evidence/current-expert-audits-2026-08-24/initiatives/INITIATIVES_EXPERT_REVIEW_CONSOLIDATED_2026-08-24.md`.
 It supersedes optimistic gate wording, but does not delete historical technical
 evidence below. The source architecture is substantial; current acceptance is
-still `NO-GO` because ordinary DEV can mask canonical failures with fixtures,
-Plan and Capacity bypass the real API in DEV, and the current exact-SHA
-Initiative → Execution persistence/readback has not been proven.
+still `NO-GO`. Source checkpoint `b88f23e1494b45900b20e6488313d7702809f5eb`
+removed implicit DEV fixtures and made ordinary local Plan and Capacity select
+their canonical APIs. Create/save/refresh/reopen against a disposable DB, the
+current exact-SHA Initiative → Execution identity, and browser/readback
+qualification have not yet been proven.
 
 ## Contract
 
@@ -41,8 +43,8 @@ invalid deep link, insufficient role, foreign tenant and duplicate command.
 | G11 | Every owner observation/screenshot durably registered | `CAPTURED_PENDING_RECONCILIATION` | `INI-OWN-001..010` below plus current browser evidence manifest. Source screenshots remain preserved in the Wave 3 owner inventory. |
 | G12 | Owner register reconciled and confirmed | `IN_PROGRESS` | Latest owner IA supersedes the historical Candidates/Portfolio top-level tabs; no owner acceptance inferred. |
 | G13 | Solution and impact analysis | `PASS_FOR_CURRENT_P0` | Root causes for unclassified demo rows, duplicated IA and unopenable showcase cards identified; Plan/Capacity specifications remain implementation work. |
-| G14 | Remediation with finding-to-commit traceability | `PASS_TECHNICAL` | Bounded P0 repair checkpoint: `5c6d72066f8fe72d50edc0948fac4fadd6b4e696`; owner retest remains required. |
-| G15 | Integrator self-QA and impacted regression | `PARTIAL_PASS_WITH_TEST_RESIDUAL` | Typecheck and diff-check PASS; browser register/card replay PASS. Focused suite: 129 PASS, 7 legacy New-Initiative a11y failures expecting two duplicate triggers; recorded, not hidden. |
+| G14 | Remediation with finding-to-commit traceability | `PASS_TECHNICAL` | UI repair checkpoint: `5c6d72066f8fe72d50edc0948fac4fadd6b4e696`. Truthful-source checkpoint: `b88f23e1494b45900b20e6488313d7702809f5eb` closes the source portion of `INI-C01` and enables the canonical API path required by `INI-C02`; persistence and owner retest remain required. |
+| G15 | Integrator self-QA and impacted regression | `PARTIAL_PASS_WITH_RUNTIME_PENDING` | Current Hub/error/modal lane `17/17 PASS`; Plan/Capacity domain+surface lane `9/9 PASS`; diff-check PASS. The New-Initiative dialog focus/label behavior was restored. Full-file lint still exposes historical InitiativesHub debt; current exact-SHA runtime, DB and browser qualification remain pending. |
 | G16 | Before/after owner retest packet | `NOT_STARTED` | — |
 | G17 | Owner retest decisions for every finding | `NOT_STARTED` | — |
 | G18 | Module accepted on exact SHA and checkpointed | `NOT_STARTED` | — |

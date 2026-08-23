@@ -6,7 +6,7 @@ Decision: `NO-GO_FOR_OWNER_ACCEPTANCE / REMEDIATION_REQUIRED`
 
 ## Evidence boundary
 
-The three independent reviews inspected source at `2cf780d62f9a421ec4b372e8168b247435c464ec`. Current product HEAD is `1885ea5cde`; the intervening commit changes Assessment navigation only and does not close any Initiatives finding. Historical exact-SHA runtime and browser evidence remains preserved, but it does not qualify the current source or replace owner acceptance.
+The three independent reviews inspected source at `2cf780d62f9a421ec4b372e8168b247435c464ec`. Post-review source checkpoint `b88f23e1494b45900b20e6488313d7702809f5eb` removes implicit DEV fixture selection and restores the canonical API path for ordinary local Plan and Capacity. Historical exact-SHA runtime and browser evidence remains preserved, but it does not qualify the current source or replace owner acceptance.
 
 Inputs:
 
@@ -17,6 +17,18 @@ Inputs:
 ## What is genuinely present
 
 The repository contains a substantial canonical Initiative and Execution foundation: authenticated organization-scoped runtime routes, material commands, versioned cards, audit/outbox/idempotency storage, Plan and Capacity scenario APIs, an Initiative-to-Execution identity seam and focused source tests. This is reusable product work, not an empty mock.
+
+## Post-review remediation checkpoint
+
+| Package | Current state | Evidence boundary |
+|---|---|---|
+| `INI-C01` | `SOURCE_FIX_PASS` | Implicit `import.meta.env.DEV` sample-data admission was removed. A persistent canonical read failure now renders the blocking data-source error and no unlabelled demo row. Hub/error/modal lane: `17/17 PASS`. |
+| `INI-C02` | `SOURCE_PATH_PASS / PERSISTENCE_PENDING` | Ordinary local Plan and Capacity now receive `demoMode=false` and select their real APIs. Domain/surface lane: `9/9 PASS`. Create/save/refresh/reopen against a disposable canonical DB is still not proven. |
+| Dialog regression | `SOURCE_FIX_PASS` | The historical New-Initiative dialog focus restoration and label contract were restored; no claim is made for a complete current browser accessibility matrix. |
+
+This checkpoint does not change the consolidated decision: `NO-GO_FOR_OWNER_ACCEPTANCE`.
+`INI-C03`, `INI-C04`, the persistence half of `INI-C02`, current runtime/browser
+qualification and owner retest remain open.
 
 ## Consolidated closure packages
 
