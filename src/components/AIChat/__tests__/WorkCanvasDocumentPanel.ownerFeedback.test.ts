@@ -34,4 +34,17 @@ describe('WorkCanvasDocumentPanel owner feedback', () => {
     expect(source).not.toContain('Edit Markdown manually');
     expect(source).not.toContain('Back to document view');
   });
+
+  it('contains the floating menu in an opaque elevated layer and restores trigger focus', () => {
+    expect(source).toContain('ref={diagnosticsTriggerRef}');
+    expect(source).toContain('ref={diagnosticsPanelRef}');
+    expect(source).toContain('diagnosticsTriggerRef.current?.focus()');
+    expect(source).toContain('role="dialog"');
+    expect(source).toContain('tabIndex={-1}');
+    expect(source).toContain('w-[min(360px,calc(100vw-24px))]');
+    expect(source).toContain('max-h-[calc(100dvh-72px)]');
+    expect(source).toContain('overscroll-contain');
+    expect(source).toContain('bg-[#ffffff]');
+    expect(source).toContain('dark:bg-[#151E32]');
+  });
 });

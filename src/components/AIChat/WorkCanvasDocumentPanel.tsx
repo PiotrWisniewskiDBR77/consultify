@@ -978,6 +978,9 @@ function WorkCanvasMarkdownDocumentPanel({
   const latestTitleRef = React.useRef(documentState.title);
   const autosaveTimerRef = React.useRef<number | null>(null);
   const titleInputRef = React.useRef<HTMLInputElement | null>(null);
+  const diagnosticsTriggerRef = React.useRef<HTMLButtonElement | null>(null);
+  const diagnosticsPanelRef = React.useRef<HTMLDivElement | null>(null);
+  const diagnosticsWasOpenRef = React.useRef(false);
   // persistDraft is defined further down; conflict recovery needs to call it.
   const persistDraftRef = React.useRef<
     | ((
@@ -2604,6 +2607,18 @@ function WorkCanvasMarkdownDocumentPanel({
     };
   }, [isDiagnosticsOpen, isNewCanvasMenuOpen]);
 
+  React.useEffect(() => {
+    if (isDiagnosticsOpen) {
+      diagnosticsWasOpenRef.current = true;
+      diagnosticsPanelRef.current?.focus();
+      return;
+    }
+    if (diagnosticsWasOpenRef.current) {
+      diagnosticsWasOpenRef.current = false;
+      diagnosticsTriggerRef.current?.focus();
+    }
+  }, [isDiagnosticsOpen]);
+
   const captureMarkdownSelection = (event: React.SyntheticEvent<HTMLTextAreaElement>) => {
     const target = event.currentTarget;
     const selectedText = target.value.slice(target.selectionStart, target.selectionEnd);
@@ -3252,7 +3267,7 @@ function WorkCanvasMarkdownDocumentPanel({
 
   return (
     <div className="relative flex h-full min-h-0 flex-col bg-slate-50 text-slate-950 dark:bg-navy-950 dark:text-slate-100">
-      <div className="flex min-h-[42px] shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-slate-200/70 bg-white/70 px-4 py-1 backdrop-blur dark:border-white/[0.06] dark:bg-navy-950/60">
+      <div className="relative z-30 flex min-h-[42px] shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-slate-200/70 bg-white/70 px-4 py-1 backdrop-blur dark:border-white/[0.06] dark:bg-navy-950/60">
         {/* #17 (rewizja 07-12): "z canvasu musi być łatwy powrót do TEJ
             KONKRETNEJ notatki [nie tylko do listy]" — persistent breadcrumb,
             visible for the whole time this note-derived draft is open (not a
@@ -3612,8 +3627,9 @@ function WorkCanvasMarkdownDocumentPanel({
             </div>
           ) : null}
 
-          <div className="relative" data-testid="canvas-menu-root">
+          <div className="relative isolate z-40" data-testid="canvas-menu-root">
             <button
+              ref={diagnosticsTriggerRef}
               type="button"
               onClick={() => {
                 setIsDiagnosticsOpen((open) => !open);
@@ -3627,7 +3643,11 @@ function WorkCanvasMarkdownDocumentPanel({
             </button>
             {isDiagnosticsOpen ? (
               <div
-                className="absolute right-0 z-20 mt-2 max-h-[80vh] w-[360px] overflow-auto rounded-2xl border border-slate-200 bg-white p-3 text-xs shadow-xl dark:border-white/10 dark:bg-navy-800"
+                ref={diagnosticsPanelRef}
+                role="dialog"
+                aria-label={t('canvas.panel.menuAria', 'Canvas menu')}
+                tabIndex={-1}
+                className="absolute right-0 top-full z-50 mt-2 max-h-[calc(100dvh-72px)] w-[min(360px,calc(100vw-24px))] overscroll-contain overflow-y-auto rounded-2xl border border-slate-200 bg-[#ffffff] p-3 text-xs opacity-100 shadow-2xl outline-none ring-1 ring-black/5 dark:border-white/10 dark:bg-[#151E32] dark:ring-white/5"
                 data-testid="canvas-diagnostics-menu"
               >
                 <details className="group mt-3 space-y-1.5 border-b border-slate-200 pb-3 dark:border-white/10">
