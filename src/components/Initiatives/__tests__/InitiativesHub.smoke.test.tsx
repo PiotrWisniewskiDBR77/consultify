@@ -169,6 +169,19 @@ describe('InitiativesHub smoke', () => {
     });
   });
 
+  it('fails closed in DEV when the canonical register read fails', async () => {
+    listRegisteredInitiatives.mockRejectedValue(
+      Object.assign(new Error('canonical unavailable'), { status: 500, code: 'API_UNAVAILABLE' })
+    );
+
+    renderHub();
+
+    expect(
+      await screen.findByText('Failed to load initiatives from the active data source.')
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Post-Merger KPI Harmonization')).not.toBeInTheDocument();
+  });
+
   it('renders an initiative card when the portfolio has one initiative', async () => {
     listRegisteredInitiatives.mockResolvedValue({
       initiatives: [

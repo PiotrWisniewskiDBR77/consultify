@@ -48,6 +48,7 @@ import {
   type TableColumn as StandardTableColumn,
 } from '@/components/standard';
 import { statusChipTone } from '@/components/ui/primitives/chips';
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api, shouldAllowDemoData } from '@/services/api';
@@ -234,6 +235,8 @@ interface InitiativesHubProps {
   initialTab?: ModuleTab;
 }
 
+const NEW_INITIATIVE_EMPTY_CTA_TESTID = 'initiatives-new-modal-empty-cta';
+
 const CANONICAL_INITIATIVES_TABS = new Set<ModuleTab>([
   'list',
   'plan',
@@ -313,6 +316,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [isV8InitiativeSnapshotLoading, setIsV8InitiativeSnapshotLoading] = useState(false);
   const v8SnapshotRequestRef = useRef(0);
   const [showNewModal, setShowNewModal] = useState(false);
+  const newModalDialogRef = useRef<HTMLDivElement>(null);
   const [showInitiativeWizard, setShowInitiativeWizard] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -330,6 +334,19 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [newLevel, setNewLevel] = useState<InitiativeLevel>('standard');
   const [newSummary, setNewSummary] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const closeNewModal = useCallback(() => {
+    if (!isCreating) setShowNewModal(false);
+  }, [isCreating]);
+  const getNewModalFallbackFocusTarget = useCallback(
+    () => document.querySelector<HTMLElement>(`[data-testid="${NEW_INITIATIVE_EMPTY_CTA_TESTID}"]`),
+    []
+  );
+  useDialogA11y({
+    open: showNewModal,
+    onClose: closeNewModal,
+    containerRef: newModalDialogRef,
+    getFallbackFocusTarget: getNewModalFallbackFocusTarget,
+  });
 
   // Preview pane state (V3 Table+Preview)
   const [previewInitiativeId, setPreviewInitiativeId] = useState<string | null>(null);
@@ -355,10 +372,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
   // Filter state for API
   const [filters, setFilters] = useState<PortfolioFilters>({});
-  // This isolated local review runtime must keep its deterministic review
-  // dataset while the owner moves between Initiatives tabs. Production still
-  // requires the normal demo-data policy and never enters through this branch.
-  const allowDemoData = import.meta.env.DEV || shouldAllowDemoData();
+  // Sample data is an explicit user-selected source. DEV/local execution must
+  // exercise the same canonical API path as production; otherwise a failed
+  // backend can look like a healthy populated register and Plan/Capacity never
+  // reach their real endpoints.
+  const allowDemoData = shouldAllowDemoData();
 
   const initiativesDemoData = useMemo(() => {
     const currentUserAny = currentUser as any;
@@ -1779,6 +1797,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                   label: t('initiatives.form.newInitiative'),
                   onClick: () => setShowNewModal(true),
                   icon: Plus,
+                  testId: NEW_INITIATIVE_EMPTY_CTA_TESTID,
                 }
           }
         />
@@ -2466,21 +2485,31 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       {/* New Initiative Modal — D1.1: includes type/level selector */}
       {showNewModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <h2 className="text-lg font-semibold text-c-text mb-4">
+          <div
+            ref={newModalDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="initiatives-new-modal-heading"
+            tabIndex={-1}
+            className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto outline-none"
+          >
+            <h2 id="initiatives-new-modal-heading" className="text-lg font-semibold text-c-text mb-4">
               {t('initiatives.form.createNew')}
             </h2>
             <div className="space-y-4">
               {/* Title */}
               <div>
-                <label className="block text-xs text-c-text-muted mb-1">
+                <label htmlFor="initiatives-new-modal-title" className="block text-xs text-c-text-muted mb-1">
                   {t('initiatives.form.titleRequired')}
                 </label>
                 <input
+                  id="initiatives-new-modal-title"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   className="w-full px-3 py-2 bg-c-bg border border-c-border-subtle rounded-lg text-sm text-c-text"
                   placeholder={t('initiatives.form.titlePlaceholder')}
+                  required
+                  aria-required="true"
                   autoFocus
                 />
               </div>

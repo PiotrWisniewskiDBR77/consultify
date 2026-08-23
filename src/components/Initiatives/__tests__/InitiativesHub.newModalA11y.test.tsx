@@ -45,6 +45,10 @@ const { getPortfolio, portfolioStoreState, appStoreState, conversationStoreState
   })
 );
 
+vi.mock('@/services/initiatives-execution/runtimeApi', () => ({
+  listRegisteredInitiatives: vi.fn(async () => ({ initiatives: [] })),
+}));
+
 vi.mock('@/services/api/v8/planning', () => ({
   V8PlanningApi: {
     getPortfolio,
