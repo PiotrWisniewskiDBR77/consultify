@@ -8,7 +8,7 @@
  * 3 building blocks are just different node data, not different components.
  */
 import { ChevronRight } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import type { MethodEvidenceState, MethodNavigatorNode } from './types';
 
@@ -54,11 +54,28 @@ const NodeRow: React.FC<{
   depth: number;
   activeUnitId: string | null;
   onSelect: (id: string) => void;
-}> = ({ node, depth, activeUnitId, onSelect }) => {
-  const [expanded, setExpanded] = useState(true);
+  expandedRootId: string | null;
+  onRootToggle: (id: string) => void;
+}> = ({ node, depth, activeUnitId, onSelect, expandedRootId, onRootToggle }) => {
+  const containsActiveUnit = useMemo(() => {
+    const contains = (candidate: TreeNode): boolean =>
+      candidate.unitId === activeUnitId || candidate.children.some(contains);
+    return contains(node);
+  }, [activeUnitId, node]);
+  const [nestedExpanded, setNestedExpanded] = useState(containsActiveUnit);
   const hasChildren = node.children.length > 0;
   const isLeaf = !hasChildren;
   const active = node.unitId === activeUnitId;
+  const expanded = depth === 0 ? expandedRootId === node.unitId : nestedExpanded;
+
+  useEffect(() => {
+    if (depth > 0 && containsActiveUnit) setNestedExpanded(true);
+  }, [containsActiveUnit, depth]);
+
+  const toggleExpanded = () => {
+    if (depth === 0) onRootToggle(node.unitId);
+    else setNestedExpanded((value) => !value);
+  };
 
   return (
     <li>
@@ -71,11 +88,11 @@ const NodeRow: React.FC<{
         aria-expanded={hasChildren ? expanded : undefined}
         aria-selected={active}
         tabIndex={0}
-        onClick={() => (isLeaf ? onSelect(node.unitId) : setExpanded((v) => !v))}
+        onClick={() => (isLeaf ? onSelect(node.unitId) : toggleExpanded())}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            isLeaf ? onSelect(node.unitId) : setExpanded((v) => !v);
+            isLeaf ? onSelect(node.unitId) : toggleExpanded();
           }
         }}
       >
@@ -106,7 +123,15 @@ const NodeRow: React.FC<{
       {hasChildren && expanded && (
         <ul role="group">
           {node.children.map((child) => (
-            <NodeRow key={child.unitId} node={child} depth={depth + 1} activeUnitId={activeUnitId} onSelect={onSelect} />
+            <NodeRow
+              key={child.unitId}
+              node={child}
+              depth={depth + 1}
+              activeUnitId={activeUnitId}
+              onSelect={onSelect}
+              expandedRootId={expandedRootId}
+              onRootToggle={onRootToggle}
+            />
           ))}
         </ul>
       )}
@@ -116,6 +141,20 @@ const NodeRow: React.FC<{
 
 export const MethodNavigator: React.FC<MethodNavigatorProps> = ({ nodes, activeUnitId, onSelect, className = '' }) => {
   const tree = useMemo(() => buildTree(nodes), [nodes]);
+  const activeRootId = useMemo(() => {
+    const contains = (node: TreeNode): boolean =>
+      node.unitId === activeUnitId || node.children.some(contains);
+    return tree.find(contains)?.unitId ?? null;
+  }, [activeUnitId, tree]);
+  const [expandedRootId, setExpandedRootId] = useState<string | null>(activeRootId);
+
+  useEffect(() => {
+    if (activeRootId) setExpandedRootId(activeRootId);
+  }, [activeRootId]);
+
+  const handleRootToggle = (rootId: string) => {
+    setExpandedRootId((current) => (current === rootId ? null : rootId));
+  };
 
   if (nodes.length === 0) {
     return (
@@ -129,7 +168,15 @@ export const MethodNavigator: React.FC<MethodNavigatorProps> = ({ nodes, activeU
     <nav aria-label="Method Navigator" data-testid="method-navigator" className={className}>
       <ul role="tree" className="space-y-0.5">
         {tree.map((node) => (
-          <NodeRow key={node.unitId} node={node} depth={0} activeUnitId={activeUnitId} onSelect={onSelect} />
+          <NodeRow
+            key={node.unitId}
+            node={node}
+            depth={0}
+            activeUnitId={activeUnitId}
+            onSelect={onSelect}
+            expandedRootId={expandedRootId}
+            onRootToggle={handleRootToggle}
+          />
         ))}
       </ul>
     </nav>

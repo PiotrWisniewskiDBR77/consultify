@@ -43,6 +43,7 @@ describe('DrdMethodWorkspaceScreen — Matrix: per-axis scale, not a global one'
     expect(screen.queryByText('L8')).not.toBeInTheDocument();
 
     const axis7 = DRD_STRUCTURE.find((axis) => axis.id === 7)!;
+    fireEvent.click(screen.getByText(axis7.namePL || axis7.name));
     fireEvent.click(screen.getByText(axis7.areas[0].namePL || axis7.areas[0].name));
 
     expect(screen.getByText('L5')).toBeInTheDocument();
