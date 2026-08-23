@@ -7,7 +7,7 @@ import path from 'node:path';
 import pg from 'pg';
 const root = process.cwd(),
   cmd = process.argv[2] || 'status',
-  protectedPorts = new Set([3940, 3941]),
+  protectedPorts = new Set([3940, 3941, 4363, 4364]),
   localHosts = new Set(['127.0.0.1', 'localhost', '::1']),
   // Adopt only fixture families that currently implement the complete FINAL
   // receipt + durable marker contract. Extend this allowlist only together
@@ -265,7 +265,7 @@ function validate() {
     ['client', clientPort],
   ])
     if (!Number.isInteger(p) || p < 1024 || p > 65535 || protectedPorts.has(p))
-      fail(`${n} port must be 1024..65535 and not 3940/3941`);
+      fail(`${n} port must be 1024..65535 and not 3940/3941/4363/4364`);
   if (serverPort === clientPort) fail('client and server ports must differ');
   return {
     probe: false,

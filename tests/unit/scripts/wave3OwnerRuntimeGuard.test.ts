@@ -95,6 +95,12 @@ describe('Wave3 owner runtime guards', () => {
   });
   it('rejects protected ports and remote DB', () => {
     expect(run('start', { WAVE3_RUNTIME_SERVER_PORT: '3940' }).stderr).toContain('not 3940/3941');
+    expect(run('start', { WAVE3_RUNTIME_SERVER_PORT: '4363' }).stderr).toContain(
+      'not 3940/3941/4363/4364'
+    );
+    expect(run('start', { WAVE3_RUNTIME_CLIENT_PORT: '4364' }).stderr).toContain(
+      'not 3940/3941/4363/4364'
+    );
     expect(
       run('start', {
         WAVE3_RUNTIME_DATABASE_URL: 'postgresql://u:p@example.com/consultify_w3_runtime_guard',
