@@ -22,6 +22,7 @@ import {
   runsRealDbInTestMode,
   shouldMountTestGatewayRoutes,
   shouldInitializeTestDatabase,
+  shouldStartPersistentBackgroundWorkers,
 } from '../testModeGates.js';
 
 const REAL_DB_TEST_ENV = {
@@ -59,9 +60,9 @@ describe('A14 — testModeGates (server boot readiness)', () => {
     });
 
     it('still opens for ENABLE_TEST_GATEWAY=true (pre-existing behavior preserved)', () => {
-      expect(
-        shouldInitializeTestDatabase({ NODE_ENV: 'test', ENABLE_TEST_GATEWAY: 'true' })
-      ).toBe(true);
+      expect(shouldInitializeTestDatabase({ NODE_ENV: 'test', ENABLE_TEST_GATEWAY: 'true' })).toBe(
+        true
+      );
     });
 
     it('still opens outside test mode entirely (production/dev, pre-existing behavior preserved)', () => {
@@ -97,9 +98,9 @@ describe('A14 — testModeGates (server boot readiness)', () => {
     });
 
     it('still opens for ENABLE_TEST_GATEWAY=true (pre-existing behavior preserved)', () => {
-      expect(
-        shouldMountTestGatewayRoutes({ NODE_ENV: 'test', ENABLE_TEST_GATEWAY: 'true' })
-      ).toBe(true);
+      expect(shouldMountTestGatewayRoutes({ NODE_ENV: 'test', ENABLE_TEST_GATEWAY: 'true' })).toBe(
+        true
+      );
     });
 
     it('still opens outside test mode entirely (pre-existing behavior preserved)', () => {
@@ -116,6 +117,22 @@ describe('A14 — testModeGates (server boot readiness)', () => {
     });
     it('is false otherwise', () => {
       expect(isTestMode({ NODE_ENV: 'production' })).toBe(false);
+    });
+  });
+
+  describe('shouldStartPersistentBackgroundWorkers', () => {
+    it('disables durable workers for an explicit local MOCK_DB runtime', () => {
+      expect(shouldStartPersistentBackgroundWorkers({ NODE_ENV: 'test', MOCK_DB: 'true' })).toBe(
+        false
+      );
+    });
+
+    it('keeps durable workers enabled for real-DB test and normal runtimes', () => {
+      expect(shouldStartPersistentBackgroundWorkers(REAL_DB_TEST_ENV)).toBe(true);
+      expect(shouldStartPersistentBackgroundWorkers({ NODE_ENV: 'development' })).toBe(true);
+      expect(
+        shouldStartPersistentBackgroundWorkers({ NODE_ENV: 'production', MOCK_DB: 'true' })
+      ).toBe(true);
     });
   });
 });

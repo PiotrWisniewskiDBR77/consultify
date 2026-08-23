@@ -45,6 +45,7 @@ import { sendSystemAlert } from './services/systemAlertNotifier.js';
 import {
   shouldInitializeTestDatabase,
   shouldMountTestGatewayRoutes,
+  shouldStartPersistentBackgroundWorkers,
   shouldUseMockDatabase,
   type TestModeGateEnv,
 } from './startup/testModeGates.js';
@@ -309,7 +310,9 @@ function readTestModeGateEnv(): TestModeGateEnv {
 // `false` forever with `dbInitError` staying `null`: not a slow/stuck
 // migration, but the readiness sequence never being started in the first
 // place.
-export const databaseInitPromise: Promise<void> = shouldInitializeTestDatabase(readTestModeGateEnv())
+export const databaseInitPromise: Promise<void> = shouldInitializeTestDatabase(
+  readTestModeGateEnv()
+)
   ? (async () => {
       try {
         logger.info('[Server] Initializing database...');
@@ -1990,6 +1993,8 @@ async function announceDeploy(): Promise<void> {
 if (startServer && shouldStartHttpServer) {
   (async () => {
     logger.info('[Server] Starting HTTP server after route registration...');
+    const persistentBackgroundWorkersEnabled =
+      shouldStartPersistentBackgroundWorkers(readTestModeGateEnv());
 
     // Feedback artifact retention pruner (best-effort, daily, idempotent).
     // Keeps screenshot storage bounded even when the Railway volume is not
@@ -2003,93 +2008,99 @@ if (startServer && shouldStartHttpServer) {
       logger.warn('[Server] Feedback artifact pruner not started:', err?.message);
     }
 
-    // Feedback Slack digest (daily). Gated on FEEDBACK_DIGEST_ENABLED=true so
-    // non-prod / local envs stay silent by default.
-    try {
-      const { startFeedbackDigestCron } = await import('./services/feedbackDigest.js');
-      startFeedbackDigestCron();
-    } catch (err: any) {
-      logger.warn('[Server] Feedback digest cron not started:', err?.message);
+    if (!persistentBackgroundWorkersEnabled) {
+      logger.info('[Server] Persistent background workers disabled for MOCK_DB runtime');
     }
 
-    // F5 (SLA): overdue-escalation sweep. Opt-OUT (on by default) — this is a
-    // safety/communication guarantee that no report rots past its deadline.
-    try {
-      const { startFeedbackSlaSweepCron } = await import('./services/feedbackSla.js');
-      startFeedbackSlaSweepCron();
-    } catch (err: any) {
-      logger.warn('[Server] Feedback SLA sweep not started:', err?.message);
-    }
+    if (persistentBackgroundWorkersEnabled) {
+      // Feedback Slack digest (daily). Gated on FEEDBACK_DIGEST_ENABLED=true so
+      // non-prod / local envs stay silent by default.
+      try {
+        const { startFeedbackDigestCron } = await import('./services/feedbackDigest.js');
+        startFeedbackDigestCron();
+      } catch (err: any) {
+        logger.warn('[Server] Feedback digest cron not started:', err?.message);
+      }
 
-    // E-OUTBOX-01: notification_outbox drain. Opt-OUT (on by default) — rows
-    // enqueued by slaService.ts (approval-assignment escalations) etc. sat in
-    // PENDING forever with nothing draining the table; this loop delivers
-    // each row (dedupe_key collapses duplicates to a single send) and marks
-    // it SENT/FAILED.
-    try {
-      const { startNotificationOutboxDrainCron } =
-        await import('./services/notificationOutboxService.js');
-      startNotificationOutboxDrainCron();
-    } catch (err: any) {
-      logger.warn('[Server] Notification outbox drain not started:', err?.message);
-    }
+      // F5 (SLA): overdue-escalation sweep. Opt-OUT (on by default) — this is a
+      // safety/communication guarantee that no report rots past its deadline.
+      try {
+        const { startFeedbackSlaSweepCron } = await import('./services/feedbackSla.js');
+        startFeedbackSlaSweepCron();
+      } catch (err: any) {
+        logger.warn('[Server] Feedback SLA sweep not started:', err?.message);
+      }
 
-    // Results vNext events are written atomically with their outbox rows. Drain them by
-    // default so KPI/ROI/OKR projections cannot remain permanently pending after a restart.
-    try {
-      const { startPlatformOutboxDrainCron } =
-        await import('./services/resultsVnext/platform/platformOutboxDrainCron.js');
-      startPlatformOutboxDrainCron();
-    } catch (err: any) {
-      logger.warn('[Server] Platform outbox drain not started:', err?.message);
-    }
+      // E-OUTBOX-01: notification_outbox drain. Opt-OUT (on by default) — rows
+      // enqueued by slaService.ts (approval-assignment escalations) etc. sat in
+      // PENDING forever with nothing draining the table; this loop delivers
+      // each row (dedupe_key collapses duplicates to a single send) and marks
+      // it SENT/FAILED.
+      try {
+        const { startNotificationOutboxDrainCron } =
+          await import('./services/notificationOutboxService.js');
+        startNotificationOutboxDrainCron();
+      } catch (err: any) {
+        logger.warn('[Server] Notification outbox drain not started:', err?.message);
+      }
 
-    // Case Workspace outbox drain — same reason as the notification drain
-    // directly above, and it was missing entirely: every row committed to
-    // case_workspace_event_outbox sat there forever in a real deployment
-    // because nothing called the worker outside its own tests, so no
-    // subscribeToOutboxDelivery consumer ever ran. The transactional write
-    // side was correct; only the delivery side was never started.
-    try {
-      const { startCaseWorkspaceOutboxWorker } =
-        await import('./services/caseWorkspace/outboxWorker.js');
-      startCaseWorkspaceOutboxWorker();
-    } catch (err: any) {
-      logger.warn('[Server] Case Workspace outbox worker not started:', err?.message);
-    }
+      // Results vNext events are written atomically with their outbox rows. Drain them by
+      // default so KPI/ROI/OKR projections cannot remain permanently pending after a restart.
+      try {
+        const { startPlatformOutboxDrainCron } =
+          await import('./services/resultsVnext/platform/platformOutboxDrainCron.js');
+        startPlatformOutboxDrainCron();
+      } catch (err: any) {
+        logger.warn('[Server] Platform outbox drain not started:', err?.message);
+      }
 
-    // Capability bindings are in-memory and must be rebuilt on every boot. The bootstrap
-    // remains fail-closed unless a configured actor is a real ADMIN of the configured org.
-    try {
-      const { bootstrapCaseWorkspaceCapabilities } =
-        await import('./services/caseWorkspace/capabilityBootstrap.js');
-      const bootResult = await bootstrapCaseWorkspaceCapabilities();
-      if (bootResult.status === 'REGISTERED') {
-        logger.info('[Server] Case Workspace capability adapters registered (7 adapters).');
-      } else {
+      // Case Workspace outbox drain — same reason as the notification drain
+      // directly above, and it was missing entirely: every row committed to
+      // case_workspace_event_outbox sat there forever in a real deployment
+      // because nothing called the worker outside its own tests, so no
+      // subscribeToOutboxDelivery consumer ever ran. The transactional write
+      // side was correct; only the delivery side was never started.
+      try {
+        const { startCaseWorkspaceOutboxWorker } =
+          await import('./services/caseWorkspace/outboxWorker.js');
+        startCaseWorkspaceOutboxWorker();
+      } catch (err: any) {
+        logger.warn('[Server] Case Workspace outbox worker not started:', err?.message);
+      }
+
+      // Capability bindings are in-memory and must be rebuilt on every boot. The bootstrap
+      // remains fail-closed unless a configured actor is a real ADMIN of the configured org.
+      try {
+        const { bootstrapCaseWorkspaceCapabilities } =
+          await import('./services/caseWorkspace/capabilityBootstrap.js');
+        const bootResult = await bootstrapCaseWorkspaceCapabilities();
+        if (bootResult.status === 'REGISTERED') {
+          logger.info('[Server] Case Workspace capability adapters registered (7 adapters).');
+        } else {
+          logger.warn(
+            `[Server] Case Workspace capability adapters not registered: ${bootResult.status}.`
+          );
+        }
+      } catch (err: any) {
+        logger.warn('[Server] Case Workspace capability adapters not started:', err?.message);
+      }
+
+      // EXE-09: closure→Results/Finance delivery receipt reconciliation sweep.
+      // Opt-OUT (on by default) — retries any closure_delivery_receipts row
+      // whose Results/Finance leg is still PENDING/FAILED, so a failed or
+      // interrupted delivery (including one lost to a process restart between
+      // closure-commit and its first delivery attempt) is recovered
+      // automatically rather than sitting stuck forever.
+      try {
+        const { startClosureReceiptReconciliationCron } =
+          await import('./services/closureDeliveryReceiptService.js');
+        startClosureReceiptReconciliationCron();
+      } catch (err: any) {
         logger.warn(
-          `[Server] Case Workspace capability adapters not registered: ${bootResult.status}.`
+          '[Server] Closure delivery receipt reconciliation sweep not started:',
+          err?.message
         );
       }
-    } catch (err: any) {
-      logger.warn('[Server] Case Workspace capability adapters not started:', err?.message);
-    }
-
-    // EXE-09: closure→Results/Finance delivery receipt reconciliation sweep.
-    // Opt-OUT (on by default) — retries any closure_delivery_receipts row
-    // whose Results/Finance leg is still PENDING/FAILED, so a failed or
-    // interrupted delivery (including one lost to a process restart between
-    // closure-commit and its first delivery attempt) is recovered
-    // automatically rather than sitting stuck forever.
-    try {
-      const { startClosureReceiptReconciliationCron } =
-        await import('./services/closureDeliveryReceiptService.js');
-      startClosureReceiptReconciliationCron();
-    } catch (err: any) {
-      logger.warn(
-        '[Server] Closure delivery receipt reconciliation sweep not started:',
-        err?.message
-      );
     }
 
     // EXE-FLOW-ADAPTER-001: optional neutral material-command receipt drain.
@@ -2376,10 +2387,13 @@ if (startServer && shouldStartHttpServer) {
     startHttpListener();
     logger.info(`[Server] Frontend will be served from: ${frontendDistPath}`);
 
-    // Start conversation purge scheduler (P35 — auto-purge soft-deleted conversations)
-    import('./services/conversationPurgeScheduler.js')
-      .then((m) => m.startPurgeScheduler())
-      .catch((err) => logger.warn('[Server] Purge scheduler init failed (non-fatal):', err));
+    // Start conversation purge scheduler (P35 — auto-purge soft-deleted conversations).
+    // It is part of the persistent worker family and therefore stays off for MOCK_DB.
+    if (persistentBackgroundWorkersEnabled) {
+      import('./services/conversationPurgeScheduler.js')
+        .then((m) => m.startPurgeScheduler())
+        .catch((err) => logger.warn('[Server] Purge scheduler init failed (non-fatal):', err));
+    }
   })();
 }
 

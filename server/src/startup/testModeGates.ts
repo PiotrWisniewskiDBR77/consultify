@@ -72,6 +72,20 @@ export function shouldUseMockDatabase(env: TestModeGateEnv): boolean {
 }
 
 /**
+ * Persistent schedulers must never run against the in-process mock database.
+ * The mock deliberately has no durable outbox/receipt/purge tables, so starting
+ * those loops creates false error storms and can make a browser-only runtime
+ * look unhealthy even though no persistent store was requested.
+ *
+ * Production still returns true even when somebody sets MOCK_DB=true because
+ * shouldUseMockDatabase() rejects that unsafe production configuration; normal
+ * database readiness remains responsible for failing the boot closed.
+ */
+export function shouldStartPersistentBackgroundWorkers(env: TestModeGateEnv): boolean {
+  return !shouldUseMockDatabase(env);
+}
+
+/**
  * True when the database-init sequence — schema verification, Table
  * Platform migrations, seeding, and the only code path that ever sets
  * `dbReady = true` or a non-null `dbInitError` — must run at all.
