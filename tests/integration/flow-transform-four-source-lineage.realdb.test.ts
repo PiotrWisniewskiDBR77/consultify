@@ -52,10 +52,20 @@ async function seedChain(client: Client, kind: Kind, candidateId: string) {
     `INSERT INTO case_core(case_id,project_id,organization_id,case_name,created_by_actor_id,contracted_closure_type) VALUES ($1,$2,$3,$4,$5,'OUTCOME_VALIDATED')`,
     [caseId, projectId, org, `${kind} execution`, maker]
   );
-  await client.query(
-    `INSERT INTO execution_case_links(link_id,organization_id,initiative_id,case_id,project_id,intake_idempotency_key,created_by) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-    [executionLinkId, org, initiativeId, caseId, projectId, `${prefix}-${kind}-execution`, maker]
-  );
+  if (kind === 'swot') {
+    await client.query(
+      `INSERT INTO execution_case_links
+        (link_id,organization_id,source_kind,runtime_initiative_id,runtime_execution_case_id,
+         source_version,source_project_id,intake_idempotency_key,created_by)
+       VALUES ($1,$2,'RUNTIME_V1',$3,$4,1,$5,$6,$7)`,
+      [executionLinkId, org, initiativeId, caseId, projectId, `${prefix}-${kind}-execution`, maker]
+    );
+  } else {
+    await client.query(
+      `INSERT INTO execution_case_links(link_id,organization_id,initiative_id,case_id,project_id,intake_idempotency_key,created_by) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+      [executionLinkId, org, initiativeId, caseId, projectId, `${prefix}-${kind}-execution`, maker]
+    );
+  }
   await client.query(
     `INSERT INTO rvn_roi_cases(case_id,organization_id,initiative_id,title,owner_user_id,status,currency,created_by) VALUES ($1,$2,$3,$4,$5,'post_investment_review','PLN',$5)`,
     [roiCaseId, org, initiativeId, `${kind} results`, maker]
@@ -184,16 +194,13 @@ async function produceCanonicalSources(client: Client) {
     ]
   );
 
-  const organizationService = await import(
-    '../../server/src/services/organizationContext/organizationSnapshotCandidateHandoffService.js'
-  );
-  const interviewService = await import(
-    '../../server/src/services/interview/interviewCandidateHandoff.js'
-  );
+  const organizationService =
+    await import('../../server/src/services/organizationContext/organizationSnapshotCandidateHandoffService.js');
+  const interviewService =
+    await import('../../server/src/services/interview/interviewCandidateHandoff.js');
   const drdService = await import('../../server/src/services/assessment/drdCandidateHandoff.js');
-  const swotService = await import(
-    '../../server/src/services/tools/swotCandidateHandoffService.js'
-  );
+  const swotService =
+    await import('../../server/src/services/tools/swotCandidateHandoffService.js');
   const produced = {
     organization: await organizationService.handoffOrganizationSnapshotToCandidate({
       organizationId: org,
@@ -236,7 +243,9 @@ beforeAll(async () => {
     process.env.FLOW_ALLOW_IMMUTABLE_FIXTURE_CLEANUP !== '1' ||
     !databaseName.startsWith(process.env.FLOW_DISPOSABLE_DB_PREFIX || 'never-match')
   ) {
-    throw new Error('Four-source lineage requires an explicitly guarded disposable flow_* database');
+    throw new Error(
+      'Four-source lineage requires an explicitly guarded disposable flow_* database'
+    );
   }
   const client = await db();
   try {
@@ -259,6 +268,62 @@ beforeAll(async () => {
 }, 30_000);
 
 describeRealDb('FLOW-TRANSFORM four-source full lineage', () => {
+  it('fails closed when one Initiative has both legacy and runtime Execution identities', async () => {
+    const candidateId = sourceCandidates.get('swot')!;
+    const client = await db();
+    const initiative = await client.query<{ initiative_id: string }>(
+      `SELECT initiative_id FROM initiative_candidates WHERE organization_id=$1 AND id=$2`,
+      [org, candidateId]
+    );
+    const initiativeId = initiative.rows[0].initiative_id;
+    const legacyLinkId = randomUUID();
+    const legacyCaseId = `${prefix}-swot-ambiguous-legacy-case`;
+    try {
+      await client.query(
+        `INSERT INTO case_core(case_id,project_id,organization_id,case_name,created_by_actor_id,contracted_closure_type)
+         VALUES ($1,$2,$3,'Ambiguous legacy execution',$4,'OUTCOME_VALIDATED')`,
+        [legacyCaseId, projectId, org, maker]
+      );
+      await client.query(
+        `INSERT INTO execution_case_links
+          (link_id,organization_id,initiative_id,case_id,project_id,intake_idempotency_key,created_by)
+         VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+        [
+          legacyLinkId,
+          org,
+          initiativeId,
+          legacyCaseId,
+          projectId,
+          `${prefix}-swot-ambiguous`,
+          maker,
+        ]
+      );
+      const { certifyFlowTransformLineage } =
+        await import('../../server/src/services/flowTransform/flowTransformLineageService.js');
+      await expect(
+        certifyFlowTransformLineage({
+          organizationId: org,
+          sourceKind: 'swot',
+          sourceReceiptId: sourceReceipts.get('swot')!,
+          actorId: checker,
+        })
+      ).rejects.toMatchObject({ code: 'EXECUTION_IDENTITY_AMBIGUOUS', status: 409 });
+      expect(
+        (
+          await client.query(
+            `SELECT count(*)::int n FROM flow_transform_lineage_receipts
+        WHERE organization_id=$1 AND source_kind='swot'`,
+            [org]
+          )
+        ).rows[0].n
+      ).toBe(0);
+    } finally {
+      await client.query(`DELETE FROM execution_case_links WHERE link_id=$1`, [legacyLinkId]);
+      await client.query(`DELETE FROM case_core WHERE case_id=$1`, [legacyCaseId]);
+      await client.end();
+    }
+  });
+
   it.each(kinds)(
     '%s source certifies stable source→Candidate→Initiative→Execution→Actual→Finance→PIR identities and cold replay',
     async (sourceKind) => {

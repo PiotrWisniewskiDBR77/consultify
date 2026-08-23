@@ -36,6 +36,9 @@ function createUnitOfWork(
         aggregates: new Map(store.aggregates),
       };
       const transaction: MaterialCommandTransaction = {
+        async adoptAcceptedClassicInitiative() {
+          throw new Error('not used by material command unit tests');
+        },
         async findReceipt<TResponse>(_organizationId, clientRequestId) {
           return (store.receipts.get(clientRequestId) as StoredCommandReceipt<TResponse>) ?? null;
         },

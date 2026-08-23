@@ -216,12 +216,30 @@ export async function certifyFlowTransformLineage(input: {
         'Candidate has no durable accepted Initiative identity'
       );
 
-    const execution = (
-      await tx.query<{ link_id: string; initiative_id: string }>(
-        `SELECT link_id, initiative_id FROM execution_case_links WHERE organization_id=? AND initiative_id=?`,
-        [input.organizationId, candidate.initiative_id]
+    const executions = (
+      await tx.query<{
+        link_id: string;
+        source_kind: 'LEGACY_CASE_CORE' | 'RUNTIME_V1';
+        resolved_initiative_id: string;
+      }>(
+        `SELECT link_id,source_kind,
+                CASE WHEN source_kind='RUNTIME_V1' THEN runtime_initiative_id ELSE initiative_id END resolved_initiative_id
+           FROM execution_case_links
+          WHERE organization_id=?
+            AND ((source_kind='RUNTIME_V1' AND runtime_initiative_id=?)
+              OR (source_kind='LEGACY_CASE_CORE' AND initiative_id=?))
+          ORDER BY CASE source_kind WHEN 'RUNTIME_V1' THEN 0 ELSE 1 END
+          LIMIT 2`,
+        [input.organizationId, candidate.initiative_id, candidate.initiative_id]
       )
-    ).rows[0];
+    ).rows;
+    if (executions.length > 1)
+      throw new FlowTransformLineageError(
+        'EXECUTION_IDENTITY_AMBIGUOUS',
+        409,
+        'Initiative has multiple Execution identities'
+      );
+    const execution = executions[0];
     if (!execution)
       throw new FlowTransformLineageError(
         'EXECUTION_IDENTITY_MISSING',

@@ -10,6 +10,7 @@ import type {
   SourceProposalSnapshot,
   StoredCommandReceipt,
 } from './materialCommand.js';
+import { MaterialCommandConflictError, MaterialCommandValidationError } from './materialCommand.js';
 
 interface QueryResultRowCount {
   rowCount: number | null;
@@ -21,6 +22,126 @@ function requireSingleRow(result: QueryResultRowCount, operation: string): void 
 
 class PostgresMaterialCommandTransaction implements MaterialCommandTransaction {
   constructor(private readonly client: PoolClient) {}
+
+  async adoptAcceptedClassicInitiative(input: {
+    organizationId: string;
+    candidateId: string;
+    initiativeId: string;
+    projectId: string;
+    actorId: string;
+    policyId: string;
+    policyVersion: number;
+    correlationId: string;
+  }) {
+    await this.client.query('SELECT pg_advisory_xact_lock(hashtextextended($1, 0))', [
+      `${input.organizationId}:accepted-classic:${input.candidateId}`,
+    ]);
+    const source = await this.client.query<{
+      candidate_id: string;
+      initiative_id: string;
+      registered_initiative_id: string | null;
+      title: string;
+      rationale: string | null;
+      handoff_id: string;
+      source_revision: number;
+      tool_output_id: string;
+      tool_output_version: number;
+      tool_output_content_hash: string;
+    }>(
+      `SELECT c.id candidate_id,c.initiative_id,c.registered_initiative_id,c.title,c.rationale,
+              h.id handoff_id,h.source_revision,h.tool_output_id,h.tool_output_version,
+              h.tool_output_content_hash
+         FROM initiative_candidates c
+         JOIN initiatives i ON i.organization_id=c.organization_id AND i.id=c.initiative_id
+         JOIN swot_candidate_handoffs h ON h.organization_id=c.organization_id AND h.candidate_id=c.id
+         JOIN tool_outputs o ON o.organization_id=h.organization_id AND o.id=h.tool_output_id
+        WHERE c.organization_id=$1 AND c.id=$2 AND c.status='accepted'
+          AND c.initiative_id=$3 AND i.project_id=$4 AND c.registered_initiative_id IS NULL
+          AND o.status='approved' AND o.version=h.tool_output_version
+          AND o.content_hash=h.tool_output_content_hash
+        FOR UPDATE OF c`,
+      [input.organizationId, input.candidateId, input.initiativeId, input.projectId]
+    );
+    const row = source.rows[0];
+    if (!row)
+      throw new MaterialCommandValidationError(
+        'Accepted classic SWOT candidate not found or lineage is not immutable'
+      );
+    const existing = await this.client.query<{
+      receipt_id: string;
+      candidate_id: string;
+      classic_initiative_id: string;
+      runtime_initiative_id: string;
+      project_id: string;
+      swot_handoff_receipt_id: string;
+      tool_output_id: string;
+      tool_output_version: number;
+      tool_output_content_hash: string;
+    }>(
+      `SELECT * FROM flow_accepted_classic_runtime_adoptions
+          WHERE organization_id=$1 AND (candidate_id=$2 OR classic_initiative_id=$3) FOR UPDATE`,
+      [input.organizationId, input.candidateId, input.initiativeId]
+    );
+    if (existing.rows.length > 1)
+      throw new MaterialCommandConflictError('classic adoption identity conflict', 0, 1);
+    const prior = existing.rows[0];
+    if (prior) {
+      if (
+        prior.candidate_id !== input.candidateId ||
+        prior.classic_initiative_id !== input.initiativeId ||
+        prior.runtime_initiative_id !== input.initiativeId ||
+        prior.swot_handoff_receipt_id !== row.handoff_id ||
+        prior.project_id !== input.projectId ||
+        prior.tool_output_id !== row.tool_output_id ||
+        prior.tool_output_version !== row.tool_output_version ||
+        prior.tool_output_content_hash !== row.tool_output_content_hash
+      ) {
+        throw new MaterialCommandConflictError('classic adoption identity conflict', 0, 1);
+      }
+      return {
+        receiptId: prior.receipt_id,
+        title: row.title,
+        problem: row.rationale || row.title,
+        sourceReceiptId: row.handoff_id,
+        sourceVersion: row.source_revision,
+        sourceContentHash: row.tool_output_content_hash,
+        toolOutputId: row.tool_output_id,
+        toolOutputVersion: row.tool_output_version,
+      };
+    }
+    const inserted = await this.client.query<{ receipt_id: string }>(
+      `INSERT INTO flow_accepted_classic_runtime_adoptions
+       (organization_id,candidate_id,classic_initiative_id,runtime_initiative_id,
+        project_id,swot_handoff_receipt_id,swot_source_revision,tool_output_id,tool_output_version,
+        tool_output_content_hash,policy_id,policy_version,correlation_id,adopted_by)
+       VALUES($1,$2,$3,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING receipt_id`,
+      [
+        input.organizationId,
+        input.candidateId,
+        input.initiativeId,
+        input.projectId,
+        row.handoff_id,
+        row.source_revision,
+        row.tool_output_id,
+        row.tool_output_version,
+        row.tool_output_content_hash,
+        input.policyId,
+        input.policyVersion,
+        input.correlationId,
+        input.actorId,
+      ]
+    );
+    return {
+      receiptId: inserted.rows[0].receipt_id,
+      title: row.title,
+      problem: row.rationale || row.title,
+      sourceReceiptId: row.handoff_id,
+      sourceVersion: row.source_revision,
+      sourceContentHash: row.tool_output_content_hash,
+      toolOutputId: row.tool_output_id,
+      toolOutputVersion: row.tool_output_version,
+    };
+  }
 
   async findReceipt<TResponse>(
     organizationId: string,

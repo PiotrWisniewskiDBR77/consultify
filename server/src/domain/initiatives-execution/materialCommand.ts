@@ -115,6 +115,25 @@ export type SourceProposalDisposition =
   | 'DISMISS';
 
 export interface MaterialCommandTransaction {
+  adoptAcceptedClassicInitiative(input: {
+    organizationId: string;
+    candidateId: string;
+    initiativeId: string;
+    projectId: string;
+    actorId: string;
+    policyId: string;
+    policyVersion: number;
+    correlationId: string;
+  }): Promise<{
+    receiptId: string;
+    title: string;
+    problem: string;
+    sourceReceiptId: string;
+    sourceVersion: number;
+    sourceContentHash: string;
+    toolOutputId: string;
+    toolOutputVersion: number;
+  }>;
   findReceipt<TResponse>(
     organizationId: string,
     clientRequestId: string
