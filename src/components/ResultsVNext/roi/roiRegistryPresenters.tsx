@@ -31,42 +31,11 @@ import {
   getRoiCaseLockInfo,
   humanizeActionType,
   irrNotCalculableReason,
-  isRoiCaseLocked,
-  isRoiTransitionAllowedFromStatus,
   npvNotCalculableReason,
   ROI_STATUS_TONE,
-  ROI_TRANSITIONS,
   roiStatusLabel,
   type RoiTransitionId,
 } from './roiRegistryMappers';
-
-/** Kebab display order for the lifecycle transitions this package wires
- * (RN_G2_UI_SCOPE.md §G #16 subset, 7 transitions) — decision-zone actions
- * first (approve/reject/request-changes), then the two-step "approved →
- * revision" escape hatch, then the tracking-phase transitions (start-pir/
- * close), with `cancel` last (broadest `fromStatuses`, most cases in the
- * flow could theoretically show it eligible only very late — closest in
- * spirit to an ending action, though it stays in the `statusTransitions`
- * zone, not `destructive`, since it is a real lifecycle status, not a
- * delete). PLUS (RN-G6-C2): `start_modeling`/`ready_for_review` prepended —
- * the two earliest-lifecycle transitions (draft → modeling → ready for
- * review), added after the fact once the gold-flow run found they had no
- * frontend caller at all (see `roiApi.ts` header comment). */
-const ROI_TRANSITION_ORDER: RoiTransitionId[] = [
-  'start_modeling',
-  'ready_for_review',
-  'submit_for_approval',
-  'approve',
-  'reject',
-  'request_changes',
-  'reopen_for_revision',
-  'start_tracking',
-  'start_benefits_realization',
-  'mark_pir_due',
-  'start_pir',
-  'close',
-  'cancel',
-];
 
 // ==========================================
 // Table columns
@@ -254,11 +223,6 @@ export function buildRoiBenefitsRealizationColumns(isPolish: boolean): TableColu
 // never hidden.
 // ==========================================
 
-const NOT_BUILT_NOTE = {
-  pl: 'Pełna edycja pól sprawy ROI (poza przejściami cyklu życia) jeszcze nie zbudowana w tym pakiecie.',
-  en: 'Full ROI case field editing (beyond lifecycle transitions) is not built in this package yet.',
-};
-
 export function buildRoiCaseRowMenu(
   row: RoiCaseListItem,
   isPolish: boolean,
@@ -279,11 +243,8 @@ export function buildRoiCaseRowMenu(
     onModel?: (row: RoiCaseListItem) => void;
   }
 ): StandardRowMenu {
-  const locked = isRoiCaseLocked(row.status);
   const lock = getRoiCaseLockInfo(row.status);
   const lockReason = lock ? (isPolish ? lock.reason.pl : lock.reason.en) : undefined;
-  const notBuiltReason = isPolish ? NOT_BUILT_NOTE.pl : NOT_BUILT_NOTE.en;
-
   return {
     primary: [
       {
@@ -301,45 +262,14 @@ export function buildRoiCaseRowMenu(
           ]
         : []),
     ],
-    // Every one of the 7 wired lifecycle transitions is ALWAYS visible
-    // (TRIADA §C3: a disabled item stays visible with a reason, never
-    // hidden) — eligible ones (per `ROI_TRANSITIONS[id].fromStatuses`,
-    // copied verbatim from the server guard, see roiRegistryMappers.ts) are
-    // enabled; ineligible ones are disabled with the state-machine reason
-    // (`disabledReason`) — distinct in wording from `lockedRowMenuAction`'s
-    // business-lock reason below, since "wrong current status" and "editing
-    // frozen post-approval" are different facts even though both render as
-    // a disabled+note kebab entry.
-    statusTransitions: ROI_TRANSITION_ORDER.map((id) => {
-      const def = ROI_TRANSITIONS[id];
-      const label = isPolish ? def.label.pl : def.label.en;
-      const allowed = isRoiTransitionAllowedFromStatus(id, row.status);
-      // Menu-item id is namespaced `roi-<id>`, NOT the bare transition id —
-      // `src/components/shared/RowActionsMenu.tsx` `DANGER_IDS` (a shared,
-      // pre-existing, app-wide convention this package does not own) treats
-      // a bare `'reject'` action id as belonging to the danger zone
-      // REGARDLESS of which section declared it, silently splitting it out
-      // from its 6 sibling transitions into its own bottom group (confirmed
-      // live in the dev-render harness, RN-G2 create-package QA
-      // 2026-08-10). `reject` here is a normal lifecycle transition, not a
-      // delete — namespacing avoids the accidental collision without
-      // touching the shared component. `handlers.onTransition` still
-      // receives the real `RoiTransitionId` (`id`), unaffected by this.
-      const menuItemId = `roi-${id}`;
-      if (allowed) {
-        return { id: menuItemId, label, onClick: () => handlers.onTransition(row, id) };
-      }
-      return {
-        id: menuItemId,
-        label,
-        disabled: true,
-        note: isPolish ? def.disabledReason.pl : def.disabledReason.en,
-      };
-    }),
+    // Lifecycle transitions are intentionally handled inside the full ROI
+    // tool. The registry remains a concise navigation surface instead of
+    // exposing the whole state machine (including disabled actions).
+    statusTransitions: [],
     universalHandlers: {
       preview: () => handlers.onPreview(row),
-      editNote: locked ? lockReason : notBuiltReason,
-      archiveNote: locked ? lockReason : notBuiltReason,
+      editNote: lockReason,
+      archiveNote: lockReason,
     },
   };
 }

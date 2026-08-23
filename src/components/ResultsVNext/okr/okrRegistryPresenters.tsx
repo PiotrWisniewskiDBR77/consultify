@@ -15,13 +15,12 @@ import type { StandardPreviewProps, StandardRowMenu, TableColumn } from '@/compo
 import { StatusChip } from '@/components/ui/primitives';
 
 import { HonestValueCell } from '../HonestValue';
-import { LifecycleLockBadge, lockedRowMenuAction } from '../LifecycleLockBadge';
+import { LifecycleLockBadge } from '../LifecycleLockBadge';
 import type { OkrSetDto } from './okrApi';
 import {
   formatOkrDate,
   formatOkrProgressPercent,
   getOkrSetLockInfo,
-  isOkrSetLocked,
   OKR_SET_ATTENTION_TONE,
   OKR_SET_CONFIDENCE_TONE,
   OKR_SET_STATUS_TONE,
@@ -162,11 +161,6 @@ export function buildOkrSetColumns(isPolish: boolean): TableColumn[] {
 // lock or "not built in this package yet" — never a fake working button.
 // ==========================================
 
-const NOT_BUILT_NOTE = {
-  pl: 'Pełne narzędzie zestawu OKR (edycja/przejścia submit/approve/request-changes) jeszcze nie zbudowane w tym pakiecie — rejestr jest list+preview.',
-  en: 'The full OKR Set tool (editing/submit/approve/request-changes transitions) is not built in this package yet — this is list+preview only.',
-};
-
 export function buildOkrSetRowMenu(
   row: OkrSetDto,
   isPolish: boolean,
@@ -191,10 +185,8 @@ export function buildOkrSetRowMenu(
     onOpenWorkspace?: (row: OkrSetDto) => void;
   }
 ): StandardRowMenu {
-  const locked = isOkrSetLocked(row.status);
   const lock = getOkrSetLockInfo(row.status);
   const lockReason = lock ? (isPolish ? lock.reason.pl : lock.reason.en) : undefined;
-  const notBuiltReason = isPolish ? NOT_BUILT_NOTE.pl : NOT_BUILT_NOTE.en;
 
   return {
     primary: [
@@ -222,19 +214,14 @@ export function buildOkrSetRowMenu(
           ]
         : []),
     ],
-    // A single representative lifecycle-transition slot — same rationale as
-    // ROI's own row menu: demonstrates the TWO distinct disabled-reasons a
-    // real build will need (a genuine business lock vs. "not wired yet"),
-    // never the same generic "disabled" with no reason.
-    statusTransitions: [
-      locked
-        ? lockedRowMenuAction({ id: 'advance', label: isPolish ? 'Zmień status' : 'Change status' }, lockReason!)
-        : { id: 'advance', label: isPolish ? 'Zmień status' : 'Change status', disabled: true, note: notBuiltReason },
-    ],
+    // Registry menus stay navigational. Lifecycle work belongs to the full
+    // OKR tool; surfacing unavailable transitions here created a large,
+    // misleading menu that did not match the shared registry standard.
+    statusTransitions: [],
     universalHandlers: {
       preview: () => handlers.onPreview(row),
-      editNote: locked ? lockReason : notBuiltReason,
-      archiveNote: locked ? lockReason : notBuiltReason,
+      editNote: lockReason,
+      archiveNote: lockReason,
     },
   };
 }
