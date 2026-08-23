@@ -696,6 +696,16 @@
     "verdict": "PARTIAL",
     "boundary": "No Railway, production, deployment, release or persistent tenant data was mutated. Thirteen statement-family writers and the broader MVP objective remain open."
   },
+  "wave3FsW03W08StatementWorkflowCutover20260823": {
+    "testedSha": "f19e1a7a5c",
+    "scope": "Removes mounted legacy mutation fallbacks for statement detect, extract, map, manual mapping decisions, values and confirm; retires FS-W03 through FS-W08 behind the shared fail-closed cutover kernel.",
+    "tests": "Wizard manual-flow, idempotency, V8 API and exact inventory passed 82/82. Fresh PostgreSQL production-shaped finance-statements cutover passed 14/14, including six default 410 contracts and exact FS-W08 writer-scoped rollback while FS-W04 remained blocked. Root TypeScript passed with an 8 GB Node heap after the default 4 GB validator process exhausted memory; focused lint had zero errors after import sorting.",
+    "proved": "Mounted writes remain on tenant-scoped V8 routes and never retry onto /api/finance-statements mutation leaves. Confirmation derives the current source receipt and values version and uses a stable Idempotency-Key. The governed confirmation transaction performs validation and readiness, making the separate legacy validate mutation redundant.",
+    "cleanup": "Fresh pgvector PostgreSQL applied 827 migrations, strict repeat applied 0 and dry-run reported 0 pending. Final readback was 827 migrations, 0 disabled user triggers, 0 advisory locks and 0 run-owned cutover events after cleanup. Both disposable --rm containers were removed.",
+    "denominator": "44 safely retired / 51 actual legacy mutation doors; 7 remain open: FS-W01, FS-W09, FS-W10, FS-W11, FS-W12, FS-W13 and FS-W15.",
+    "verdict": "PARTIAL",
+    "boundary": "No Railway, production, deployment, release or persistent tenant data was mutated. Seven Finance Statements writers, Wave 3 owner acceptance and the broader MVP objective remain open."
+  },
   "currentKernelRequalification": {
     "migration": "Fresh exact-current PostgreSQL ledger 758/758/758 successful and unique with zero missing checksums; strict repeat applied 0 and dry-run reported 0 pending.",
     "focused": "3 files / 13 tests passed: durable lifecycle 5, mounted Finance/Results/Partner observation 6, atomic bulk user plus ACTIVE membership 2.",
