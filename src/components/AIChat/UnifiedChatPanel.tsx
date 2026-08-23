@@ -5267,15 +5267,23 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   // sends — so the freshly-applied flags are live on that send (config flows to
   // the send via React closures, which only refresh after this state update).
   const handleModeTile = useCallback(
-    (preset: Record<string, unknown> | undefined, prompt: string) => {
+    (
+      preset: Record<string, unknown> | undefined,
+      prompt: string,
+      source: 'topic-starter' | 'capability-tile' = 'capability-tile'
+    ) => {
       if (preset && Object.keys(preset).length > 0) {
         setAIConfig(preset as any);
       }
+      trackFunnelEvent('chat_start_control_selected', {
+        source,
+        hasPreset: Boolean(preset && Object.keys(preset).length > 0),
+      });
       try {
         if (typeof window !== 'undefined') {
           window.sessionStorage.setItem(
             'consultify.teresa.pendingPrompt',
-            JSON.stringify({ prompt, ts: Date.now() })
+            JSON.stringify({ prompt, ts: Date.now(), source })
           );
           window.dispatchEvent(new Event('consultify:teresa-pending-prompt'));
         }
@@ -6830,7 +6838,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                   <button
                     key={item.label}
                     type="button"
-                    onClick={() => handleSendMessage(item.prompt)}
+                    onClick={() => handleModeTile(undefined, item.prompt, 'topic-starter')}
                     className="rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-1 text-[11px] font-medium text-c-text-secondary transition-colors hover:border-c-border-strong hover:bg-c-surface-raised hover:text-c-text"
                   >
                     {item.label}
@@ -6902,7 +6910,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                   <button
                     key={cap.label}
                     type="button"
-                    onClick={() => handleModeTile(cap.preset, cap.prompt)}
+                    onClick={() => handleModeTile(cap.preset, cap.prompt, 'capability-tile')}
                     className="group flex flex-col items-start gap-1.5 rounded-lg border border-c-border-subtle bg-c-surface p-2.5 text-left transition-[background-color,border-color] duration-200 hover:border-c-border-subtle hover:bg-c-surface-raised"
                   >
                     <div className={`rounded-md p-1.5 ${cap.bg}`}>

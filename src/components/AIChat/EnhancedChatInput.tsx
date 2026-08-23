@@ -199,6 +199,8 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   const vadIntervalRef = useRef<number | null>(null);
   const isDictatingRef = useRef(false);
   const lastTeresaVoiceToastRef = useRef<string | null>(null);
+  const valueRef = useRef(value);
+  valueRef.current = value;
 
   const isDisabled = disabled || aiFreezeStatus.isFrozen;
   const isInputDisabled = isDisabled || isStreaming;
@@ -222,8 +224,9 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
           return;
         }
         // Only prefill if input is empty (don't overwrite user-typed text)
-        if (!value || value.trim().length === 0) {
+        if (!valueRef.current.trim()) {
           setValue(parsed.prompt);
+          window.requestAnimationFrame(() => textareaRef.current?.focus());
         }
         window.sessionStorage.removeItem('consultify.teresa.pendingPrompt');
       } catch {
@@ -236,7 +239,6 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
       return () => window.removeEventListener('consultify:teresa-pending-prompt', consumePending);
     }
     return undefined;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ========================================================================

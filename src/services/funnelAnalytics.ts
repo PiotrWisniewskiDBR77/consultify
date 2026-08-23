@@ -59,6 +59,7 @@ export type FunnelEventName =
   | 'market_research_exported'
   | 'cothinker_mode_selected'
   | 'cothinker_response_generated'
+  | 'chat_start_control_selected'
   | 'oauth_login_started'
   | 'oauth_login_succeeded'
   | 'oauth_login_failed'
