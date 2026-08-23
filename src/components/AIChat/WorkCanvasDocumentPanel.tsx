@@ -3647,7 +3647,12 @@ function WorkCanvasMarkdownDocumentPanel({
                 role="dialog"
                 aria-label={t('canvas.panel.menuAria', 'Canvas menu')}
                 tabIndex={-1}
-                className="absolute right-0 top-full z-50 mt-2 max-h-[calc(100dvh-72px)] w-[min(360px,calc(100vw-24px))] overscroll-contain overflow-y-auto rounded-2xl border border-slate-200 bg-[#ffffff] p-3 text-xs opacity-100 shadow-2xl outline-none ring-1 ring-black/5 dark:border-white/10 dark:bg-[#151E32] dark:ring-white/5"
+                className="absolute right-0 top-full z-50 mt-2 w-[min(360px,calc(100vw-24px))] overscroll-contain overflow-y-auto rounded-2xl border border-slate-200 bg-[#ffffff] p-3 text-xs opacity-100 shadow-2xl outline-none ring-1 ring-black/5 dark:border-white/10 dark:bg-[#151E32] dark:ring-white/5"
+                style={{
+                  maxHeight: `calc(100dvh - ${Math.ceil(
+                    diagnosticsTriggerRef.current?.getBoundingClientRect().bottom ?? 72
+                  ) + 12}px)`,
+                }}
                 data-testid="canvas-diagnostics-menu"
               >
                 <details className="group mt-3 space-y-1.5 border-b border-slate-200 pb-3 dark:border-white/10">

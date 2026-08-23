@@ -42,7 +42,8 @@ describe('WorkCanvasDocumentPanel owner feedback', () => {
     expect(source).toContain('role="dialog"');
     expect(source).toContain('tabIndex={-1}');
     expect(source).toContain('w-[min(360px,calc(100vw-24px))]');
-    expect(source).toContain('max-h-[calc(100dvh-72px)]');
+    expect(source).toContain('absolute right-0 top-full z-50 mt-2');
+    expect(source).toContain('diagnosticsTriggerRef.current?.getBoundingClientRect().bottom');
     expect(source).toContain('overscroll-contain');
     expect(source).toContain('bg-[#ffffff]');
     expect(source).toContain('dark:bg-[#151E32]');
