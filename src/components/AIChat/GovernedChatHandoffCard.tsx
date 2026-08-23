@@ -28,19 +28,86 @@ export const GovernedChatHandoffCard: React.FC<GovernedChatHandoffCardProps> = (
   const isPending = proposal.state === 'pending';
   const isApproved = proposal.state === 'approved';
   const isDone = proposal.state === 'materialized' || Boolean(targetRecordId);
+  const visualState = error
+    ? 'failed'
+    : busy
+      ? 'working'
+      : isDone
+        ? 'materialized'
+        : isApproved
+          ? 'materializable'
+          : proposal.state;
+  const stateStyle = {
+    pending: {
+      card: 'border-amber-300/60 dark:border-amber-300/20',
+      icon: 'text-amber-600 dark:text-amber-300',
+      badge: 'bg-amber-500/10 text-amber-700 dark:text-amber-200',
+      label: t('chat.governedHandoff.state.pending', 'Pending review'),
+    },
+    materializable: {
+      card: 'border-sky-300/60 dark:border-sky-300/20',
+      icon: 'text-sky-600 dark:text-sky-300',
+      badge: 'bg-sky-500/10 text-sky-700 dark:text-sky-200',
+      label: t('chat.governedHandoff.state.materializable', 'Ready to create'),
+    },
+    working: {
+      card: 'border-sky-300/60 dark:border-sky-300/20',
+      icon: 'text-sky-600 dark:text-sky-300',
+      badge: 'bg-sky-500/10 text-sky-700 dark:text-sky-200',
+      label: t('chat.governedHandoff.state.working', 'Working'),
+    },
+    materialized: {
+      card: 'border-emerald-300/60 dark:border-emerald-300/20',
+      icon: 'text-emerald-600 dark:text-emerald-300',
+      badge: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-200',
+      label: t('chat.governedHandoff.state.materialized', 'Created'),
+    },
+    rejected: {
+      card: 'border-slate-300/70 dark:border-slate-500/30',
+      icon: 'text-slate-500 dark:text-slate-300',
+      badge: 'bg-slate-500/10 text-slate-600 dark:text-slate-300',
+      label: t('chat.governedHandoff.state.rejected', 'Rejected'),
+    },
+    failed: {
+      card: 'border-danger-300/60 dark:border-danger-300/25',
+      icon: 'text-danger-600 dark:text-danger-300',
+      badge: 'bg-danger-500/10 text-danger-700 dark:text-danger-200',
+      label: t('chat.governedHandoff.state.failed', 'Action failed'),
+    },
+    approved: {
+      card: 'border-sky-300/60 dark:border-sky-300/20',
+      icon: 'text-sky-600 dark:text-sky-300',
+      badge: 'bg-sky-500/10 text-sky-700 dark:text-sky-200',
+      label: t('chat.governedHandoff.state.approved', 'Approved'),
+    },
+  }[visualState];
 
   return (
     <section
       data-testid={`governed-chat-handoff-${proposal.proposalId}`}
-      className="not-prose mt-3 rounded-lg border border-c-border bg-c-surface-raised p-3"
+      data-visual-state={visualState}
+      className={`not-prose relative mt-3 overflow-hidden rounded-2xl border bg-gradient-to-br from-white/90 to-white/70 p-4 shadow-[0_12px_32px_rgba(15,23,42,0.10)] backdrop-blur-xl dark:from-navy-900/90 dark:to-navy-800/70 dark:shadow-[0_16px_36px_rgba(0,0,0,0.28)] ${stateStyle.card}`}
       aria-label={t('chat.governedHandoff.title', 'Governed document proposal')}
     >
-      <div className="flex items-start gap-2">
-        <ShieldCheck size={16} className="mt-0.5 shrink-0 text-c-focus" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent dark:via-white/20" />
+      <div className="flex items-start gap-3">
+        <div
+          className={`mt-0.5 rounded-xl bg-white/70 p-2 shadow-sm dark:bg-white/[0.06] ${stateStyle.icon}`}
+        >
+          <ShieldCheck size={16} aria-hidden="true" />
+        </div>
         <div className="min-w-0 flex-1">
-          <div className="text-xs font-semibold text-c-text">
-            {proposal.payload?.suggestedTitle ||
-              t('chat.governedHandoff.title', 'Governed document proposal')}
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div className="text-xs font-semibold text-c-text">
+              {proposal.payload?.suggestedTitle ||
+                t('chat.governedHandoff.title', 'Governed document proposal')}
+            </div>
+            <span
+              data-testid="governed-chat-handoff-state"
+              className={`rounded-full px-2 py-1 text-[10px] font-semibold ${stateStyle.badge}`}
+            >
+              {stateStyle.label}
+            </span>
           </div>
           <div className="mt-1 text-[11px] text-c-text-secondary">
             {t(

@@ -78,4 +78,58 @@ describe('GovernedChatHandoffCard', () => {
     expect(screen.getByText('Document created')).toBeInTheDocument();
     expect(screen.getByText('artifact-chat-123')).toBeInTheDocument();
   });
+
+  it.each([
+    ['pending', 'pending', 'Pending review'],
+    ['approved', 'materializable', 'Ready to create'],
+    ['rejected', 'rejected', 'Rejected'],
+    ['materialized', 'materialized', 'Created'],
+    ['failed', 'failed', 'Action failed'],
+  ] as const)('renders %s with a distinct semantic visual state', (state, visualState, label) => {
+    render(
+      <GovernedChatHandoffCard
+        proposal={proposal(state)}
+        onApprove={vi.fn()}
+        onReject={vi.fn()}
+        onMaterialize={vi.fn()}
+      />
+    );
+    expect(screen.getByTestId('governed-chat-handoff-proposal-1')).toHaveAttribute(
+      'data-visual-state',
+      visualState
+    );
+    expect(screen.getByTestId('governed-chat-handoff-state')).toHaveTextContent(label);
+  });
+
+  it('distinguishes working and failed UI states from the underlying proposal state', () => {
+    const { rerender } = render(
+      <GovernedChatHandoffCard
+        proposal={proposal('approved')}
+        busy="materialize"
+        onApprove={vi.fn()}
+        onReject={vi.fn()}
+        onMaterialize={vi.fn()}
+      />
+    );
+    expect(screen.getByTestId('governed-chat-handoff-proposal-1')).toHaveAttribute(
+      'data-visual-state',
+      'working'
+    );
+    expect(screen.getByTestId('governed-chat-handoff-state')).toHaveTextContent('Working');
+
+    rerender(
+      <GovernedChatHandoffCard
+        proposal={proposal('approved')}
+        error="Materialization failed"
+        onApprove={vi.fn()}
+        onReject={vi.fn()}
+        onMaterialize={vi.fn()}
+      />
+    );
+    expect(screen.getByTestId('governed-chat-handoff-proposal-1')).toHaveAttribute(
+      'data-visual-state',
+      'failed'
+    );
+    expect(screen.getByTestId('governed-chat-handoff-state')).toHaveTextContent('Action failed');
+  });
 });
