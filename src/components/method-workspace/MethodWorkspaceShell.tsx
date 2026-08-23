@@ -338,7 +338,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
             <p>Wersja sesji v{session.version}</p>
             {documentSourceLabel && <p>Źródło: {documentSourceLabel}</p>}
             {documentSourceIndicator && <div className="mt-2">{documentSourceIndicator}</div>}
-            <p className="mt-2">Zapis: {saveState === 'saved' ? 'zapisano' : saveState}</p>
+            <p className="mt-2">Zapis: {saveState === 'SAVED' ? 'zapisano' : saveState}</p>
             <p>
               Dowody: {readiness.totalUnits - readiness.unitsMissingEvidence}/{readiness.totalUnits}
             </p>

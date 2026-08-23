@@ -14,7 +14,7 @@ import {
   useToolStore,
 } from '@/store/useToolStore';
 
-import { SwotMatrixVisual } from '../../shared/StrategicCanvasVisuals';
+import { InlineAssist } from '../../InlineAssist';
 import { EvidenceEditor } from './EvidenceEditor';
 
 type QuadrantId = SWOTItem['quadrant'];
@@ -96,7 +96,7 @@ function QuadrantCard({
   isPolish: boolean;
 }) {
   const { t } = useTranslation();
-  const { addSWOTItem, updateSWOTItem } = useToolStore();
+  const { addSWOTItem, updateSWOTItem, removeSWOTItem } = useToolStore();
   const [draft, setDraft] = useState('');
   const meta = QUADRANT_META[quadrant];
 
@@ -530,10 +530,6 @@ export function SWOTBuildPhase({ session, isPolish, isGeneratingAI = false }: Bu
             </div>
           ) : null}
         </div>
-      ) : null}
-
-      <div className="max-h-72 overflow-hidden rounded-2xl border border-navy-700/70 bg-navy-950/50 p-3">
-        <SwotMatrixVisual data={swotData} isPolish={isPolish} />
       </div>
 
       <nav

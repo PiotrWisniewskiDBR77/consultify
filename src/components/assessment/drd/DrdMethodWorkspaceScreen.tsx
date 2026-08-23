@@ -584,6 +584,14 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
                     setActiveUnitId(selection.unitId);
                   }}
                   onCloseSideSheet={() => setMatrixSelection(null)}
+                  renderSideSheet={(selection, cell) => (
+                    <div className="text-xs text-c-text-secondary">
+                      <p>
+                        {selection.unitId} · poziom {selection.level} —{' '}
+                        {cell?.blocker ? 'BLOKER (pierwszy niespełniony poziom)' : cell?.reviewRequired ? 'above-gap: wymaga przeglądu' : cell?.achieved ? 'osiągnięty' : 'nieosiągnięty'}
+                      </p>
+                    </div>
+                  )}
                   methodName={pack.manifest.name}
                 />
               </div>
