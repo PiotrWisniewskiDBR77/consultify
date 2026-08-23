@@ -44,6 +44,7 @@ release readiness.
 | Owner-review preservation | `af75a84e379312f429bb111e4221c8779cf08d57`; `checkpoint/wave3-owner-review-20260823-2135` | `/Users/piotrwisniewski/Developer/Consultify-safety-checkpoints/wave3-owner-review-af75a84e37.bundle` | `688d505ac996b38f25d96997c04a85d5e26f9e1b95b75b96d07bd0737c33d5b2` |
 | Assessment navigator | `a2b500caca36d423bf9b215f25fc1c7aba4484b3`; `checkpoint/assessment-navigator-20260823-2137` | `/Users/piotrwisniewski/Developer/Consultify-safety-checkpoints/assessment-navigator-a2b500caca.bundle` | `4078856900803bbb9cfebbf3e544c4826d8c082afdbd2d0763f9355fe553c247` |
 | Sixteen-module source map | `b973c2d1964c04e0f843852b649ab935516cf934`; `checkpoint/final-mvp-16-module-map-20260823-2155` | `/Users/piotrwisniewski/Developer/Consultify-safety-checkpoints/final-mvp-16-module-map-b973c2d196.bundle` | `12b8a9143284cf9f7621335a8a002eefc35bdce3c77a16ff51284f568c0313f7` |
+| Dynamic SWOT integration | `47f206f5722260198880a3d64cc6925212e3f224`; `checkpoint/final-mvp-dynamic-swot-integrated-20260823-2235` | `/Users/piotrwisniewski/Developer/Consultify-safety-checkpoints/final-mvp-dynamic-swot-47f206f572.bundle` | `05e56ff0f3cf105a2f4236af9e915dfe7882cd229b1b4dbf370f0693132dd5c2` |
 
 No cleanup, deletion or pruning is authorized from this file. The retained
 state inventory remains
@@ -117,6 +118,42 @@ baseline `6e9f116f82`: the focused suite is `34/34 PASS`, full TypeScript
 type-check is `PASS`, and `git diff --check` is clean. This is source-level
 evidence only; the mounted runtime remains `a2b500caca36`, so browser replay,
 persistence/readback and owner quality acceptance remain open.
+
+Materials has one bounded source correction ready on this candidate:
+
+- the Documents library is bound to canonical document artifacts rather than
+  the historical Reports table;
+- its primary action is `New document`, not `New report`;
+- the deterministic owner-review seed publishes the document and workbook to
+  `v8_output_artifacts` with canonical origin links;
+- the seed remains fail-closed to loopback PostgreSQL databases named
+  `consultify_w3_materials_owner_*` and therefore is not authority to mutate a
+  shared or production database;
+- full TypeScript type-check is `PASS` and `git diff --check` is clean;
+- the broad legacy Materials hub harness is `13 PASS / 10 FAIL` because it
+  still asserts the removed `ModuleHub` `active-tab` marker after the product
+  migrated to `StandardModuleBar`. This is recorded test debt, not browser,
+  persistence or owner-acceptance proof.
+
+The Materials correction therefore remains `SOURCE_VERIFIED /
+RUNTIME_NOT_REPLAYED / OWNER_ACCEPTANCE_REQUIRED`.
+
+### Preserved dirty-source snapshots
+
+Before selective integration, every dirty source checkout was archived without
+cleaning, stashing, resetting or changing the source worktree. The archives are
+under `/Users/piotrwisniewski/Developer/Consultify-safety-checkpoints/wip-20260823-2245/`:
+
+| Source snapshot | SHA-256 |
+| --- | --- |
+| `chat-to-tools-dirty-files.tar.gz` | `8d24a3118851dbcb854901ab04198d2e72353dc6f5dcadbcc1d418772aac6854` |
+| `finaldemo-dirty-files.tar.gz` | `c013cb7ea6a3210a1f1452277a0b4b0b50c9df834105712fa5a7d8cf5949d5ef` |
+| `finance-dirty-files.tar.gz` | `1adae68e260bcbf10388a6d50ebe2d0330cdf868f1832d98b9e03dceee7aa5ee` |
+| `materials-dirty-files.tar.gz` | `d1a0f6199a23c7c03feef53554f8ffbc0a9666a6ba795e5cd4158a097765608c` |
+| `staging-e6ca-dirty-files.tar.gz` | `69aafc200ab6f3bacd87c0d17dd64fbda004aaaa2ef2159b28576e6f350a0f9e` |
+| `wave3-main-dirty-files.tar.gz` | `4d4baa645a18a5a7fb0de291c1979307b022fc94997b30f0cfd2f49474c40803` |
+
+These are recovery evidence, not candidates to merge wholesale.
 
 ## 6. Integration queue
 

@@ -265,6 +265,14 @@ try {
     `INSERT INTO wave5_artifacts(artifact_id,organization_id,artifact_type,status,title,content,canonical_format,content_json_native,content_schema_version,current_version,created_by,created_at,updated_at) VALUES($1,$2,'document','draft','Plan transformacji operacyjnej',$3::text,'json_native',$3::jsonb,'document_studio_v1',2,$4,$5,$5)`,
     [I.artifact, I.org, JSON.stringify(doc2), I.user, fixed]
   );
+  await db.query(
+    `INSERT INTO v8_output_artifacts(artifact_id,organization_id,output_type,delivery_state,artifact_family,title_snapshot,owner_user_id,canonical_home,visibility_scope,origin_summary_json,is_draft,created_by,created_at,last_transition_at) VALUES($1,$2,'report','draft','document','Plan transformacji operacyjnej',$3,'outputs_library','organization','{"fixture":"wave3-materials","origin":"native_artifact"}',1,$3,$4,$4)`,
+    [I.artifact, I.org, I.user, fixed]
+  );
+  await db.query(
+    `INSERT INTO v8_artifact_origin_links(link_id,artifact_id,organization_id,origin_runtime,origin_record_id,is_primary_origin,created_at) VALUES($1,$2,$3,'native_artifact',$2,1,$4)`,
+    ['b1130000-0000-4000-8000-000000000099', I.artifact, I.org, fixed]
+  );
   for (const [id, version, content] of [
     [I.docV1, 1, doc1],
     [I.docV2, 2, doc2],
@@ -307,6 +315,17 @@ try {
   await db.query(
     `INSERT INTO generated_workbook_revisions(id,workbook_id,organization_id,version,command_id,idempotency_key,base_schema_json,schema_json,operations_json,created_by,created_at) VALUES($1,$2,$3,1,'fixture-create','wave3-materials-workbook-v1','{}',$4,'[{"kind":"set_formula","cell":"B4"}]',$5,$6)`,
     [I.workbookRev, I.workbook, I.org, JSON.stringify(workbookV1), I.user, fixed]
+  );
+  // The Materials Sheets list reads the canonical V8 output registry, while
+  // the editor reads generated_workbooks. Keep both projections linked so the
+  // owner can open this workbook from the library instead of a hidden deep link.
+  await db.query(
+    `INSERT INTO v8_output_artifacts(artifact_id,organization_id,output_type,delivery_state,artifact_family,title_snapshot,owner_user_id,canonical_home,visibility_scope,origin_summary_json,is_draft,created_by,created_at,last_transition_at) VALUES($1,$2,'sheet','draft','sheet','Budżet pilotażu',$3,'outputs_library','organization','{"fixture":"wave3-materials","origin":"workbook"}',1,$3,$4,$4)`,
+    [I.workbook, I.org, I.user, fixed]
+  );
+  await db.query(
+    `INSERT INTO v8_artifact_origin_links(link_id,artifact_id,organization_id,origin_runtime,origin_record_id,is_primary_origin,created_at) VALUES($1,$2,$3,'sheet',$2,1,$4)`,
+    ['b1190000-0000-4000-8000-000000000001', I.workbook, I.org, fixed]
   );
   await db.query('COMMIT');
 

@@ -290,6 +290,8 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   const libraryView =
     activeTab === 'outputs_all'
       ? 'all'
+      : activeTab === 'outputs_documents'
+        ? 'all'
       : activeTab === 'outputs_mine'
         ? 'mine'
         : activeTab === 'outputs_review'
@@ -370,7 +372,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       outputs_all: t('rap.outputs.cta.new', 'New output'),
       outputs_mine: t('rap.outputs.cta.new', 'New output'),
       outputs_review: t('rap.outputs.cta.new', 'New output'),
-      outputs_documents: t('rap.actions.newReport', 'New report'),
+      outputs_documents: t('rap.actions.newDocument', 'New document'),
       presentations: t('rap.actions.newPresentation', 'New presentation'),
       // Odblokowane 2026-07-24 (item 3 briefu Materiały-entry) — Sheets dostaje
       // realne „Dodaj" (tablica format→tryb), tak jak Documents/Presentations/All.
@@ -892,44 +894,9 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         ] as Array<{ value: string; label: string }>)
       : [];
 
-    const reportCanon =
-      activeTab === 'outputs_documents' ? (
-        <div className="mr-2 hidden xl:flex items-center gap-2">
-          {[
-            ['R1', t('rap.reportCanon.r1', 'Weekly Execution')],
-            ['R2', t('rap.reportCanon.r2', 'Steering Committee')],
-            ['R3', t('rap.reportCanon.r3', 'Benefits Tracking')],
-            ['R4', t('rap.reportCanon.r4', 'Portfolio Overview')],
-          ].map(([code, label]) => {
-            const checked = activeFilters.some(
-              (f) => f.column === 'reportType' && f.value === code
-            );
-            return (
-              <button
-                key={code}
-                type="button"
-                onClick={() =>
-                  setSinglePreset(
-                    'reportType',
-                    checked ? null : code,
-                    `${code} · ${label}`,
-                    'bg-slate-400'
-                  )
-                }
-                className={`h-8 rounded-full px-3 text-[11px] font-medium border inline-flex items-center gap-2 transition-colors ${
-                  checked
-                    ? 'bg-c-accent-soft text-c-text border-c-border'
-                    : 'bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised'
-                } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus`}
-                title={label}
-              >
-                <span className="font-semibold">{code}</span>
-                <span className="truncate max-w-[120px]">{label}</span>
-              </button>
-            );
-          })}
-        </div>
-      ) : null;
+    // Documents are document artifacts. Historical R1-R4 management-report
+    // presets belong to reporting, not to the Materials document library.
+    const reportCanon = null;
 
     return (
       <div className="relative flex items-center gap-2">
@@ -1269,7 +1236,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       activeTab === 'templates'
         ? templates
         : activeTab === 'outputs_documents'
-          ? reports
+          ? artifactOutputRows.filter((row) => row.kind === 'document')
           : presentations;
 
     const statusKey = 'status' as const;
@@ -1486,18 +1453,18 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         );
       case 'outputs_documents':
         return (
-          <ReportsTabContent
+          <OutputsAggregateTabContent
             viewMode={viewMode}
             searchQuery={searchQuery}
             activeFilters={activeFilters}
             onFilterChange={setActiveFilters}
-            reports={reports}
-            loading={reportsLoading}
-            error={reportsError}
-            onRefresh={fetchReports}
+            rows={artifactOutputRows.filter((row) => row.kind === 'document')}
+            loading={artifactOutputsLoading}
+            error={artifactOutputsError}
+            moduleDisabled={artifactOutputsModuleDisabled}
+            onRefresh={refetchArtifactOutputs}
             actions={actions}
             initialArtifactId={initialArtifactId}
-            onNewItem={handleNewItem}
           />
         );
       case 'presentations':
