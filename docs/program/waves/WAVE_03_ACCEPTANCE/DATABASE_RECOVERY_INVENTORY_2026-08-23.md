@@ -81,3 +81,28 @@ No fixture was silently recreated during this audit.
    FINAL marker contract, then cold-read back before browser replay;
 4. do not use any restored snapshot as a deployment source until its migration
    ledger is reconciled against the frozen candidate.
+
+## Fixture reconstruction progress
+
+Initiatives was reconstructed first into named persistent Docker volume
+`consultify_w3_recovered_fixtures_20260823` and database
+`consultify_w3_initiatives_owner_recovered_20260823`. Guarded seed and a
+separate cold readback proved:
+
+- FINAL `0600` manifest and matching durable ownership marker;
+- `831` successful migrations;
+- six personas, two candidates, exactly one accepted DRAFT initiative, one
+  system portfolio, one profile receipt and one Execution link/relation;
+- zero negative-boundary receipts or links;
+- exact-SHA `6695f4d8a42144a6f0ca1827548463a1f789ad29` adopted runtime with
+  health / ready / frontend `200 / 200 / 200` and migration states `ok / ok`;
+- authenticated API list `1`, candidates `2`, owner detail `200`, foreign
+  detail `404 INITIATIVE_NOT_FOUND`, inactive login `403`;
+- anonymous browser navigation redirected to the exact local login surface
+  with no console error; credentialed visual replay remains pending;
+- runtime stopped with database/catalog preserved, and the fixture container
+  returned to stopped state.
+
+Current reconstructed storage readiness: `1/16` — Initiatives only. Historical
+browser evidence for the other modules remains evidence, but their databases
+must be reconstructed and requalified on the current exact candidate.

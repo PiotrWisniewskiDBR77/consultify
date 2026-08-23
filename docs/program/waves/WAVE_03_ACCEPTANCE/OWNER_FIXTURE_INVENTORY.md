@@ -7,6 +7,11 @@
 > [DATABASE_RECOVERY_INVENTORY_2026-08-23.md](DATABASE_RECOVERY_INVENTORY_2026-08-23.md).
 > The tables below are retained as historical evidence and must not be read as
 > current catalog state.
+>
+> Reconstruction update — 2026-08-23: Initiatives has been rebuilt and
+> cold-read back on the current 831-migration chain as
+> `consultify_w3_initiatives_owner_recovered_20260823`. Current reconstructed
+> storage readiness is `1/16`; see the recovery inventory for exact evidence.
 
 Inventory date: `2026-08-22`
 
