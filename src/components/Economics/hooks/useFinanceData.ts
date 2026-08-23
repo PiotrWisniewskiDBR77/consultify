@@ -26,6 +26,13 @@ import {
   normalizeStatus,
   type PredictionType,
 } from '../financeTypes';
+import {
+  FINANCE_OWNER_SAMPLE_ANALYSES,
+  FINANCE_OWNER_SAMPLE_MODELS,
+  FINANCE_OWNER_SAMPLE_STATEMENTS,
+  FINANCE_OWNER_SAMPLE_VALUATIONS,
+  isFinanceOwnerSampleDataEnabled,
+} from '../financeOwnerSampleData';
 
 // Dead demo data arrays removed — D1 cleanup
 
@@ -102,6 +109,7 @@ export function useFinanceData(
   const { t } = useTranslation();
   const allowDemoData = shouldAllowDemoData();
   const canonicalOnly = isFinanceOwnerReviewModeEnabled();
+  const ownerSampleData = isFinanceOwnerSampleDataEnabled();
 
   const [models, setModels] = useState<any[]>([]);
   const [statements, setStatements] = useState<any[]>([]);
@@ -112,6 +120,11 @@ export function useFinanceData(
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const loadStatements = useCallback(async () => {
+    if (ownerSampleData) {
+      setLoadError(null);
+      setStatements(FINANCE_OWNER_SAMPLE_STATEMENTS);
+      return;
+    }
     try {
       let arr: any[] = [];
       try {
@@ -141,9 +154,14 @@ export function useFinanceData(
       );
       setStatements([]);
     }
-  }, [allowDemoData, canonicalOnly, t]);
+  }, [allowDemoData, canonicalOnly, ownerSampleData, t]);
 
   const loadModels = useCallback(async () => {
+    if (ownerSampleData) {
+      setLoadError(null);
+      setModels(FINANCE_OWNER_SAMPLE_MODELS);
+      return;
+    }
     try {
       let arr: any[] = [];
       if (canonicalOnly) {
@@ -177,9 +195,14 @@ export function useFinanceData(
       );
       setModels([]);
     }
-  }, [canonicalOnly, t]);
+  }, [canonicalOnly, ownerSampleData, t]);
 
   const loadAnalyses = useCallback(async () => {
+    if (ownerSampleData) {
+      setLoadError(null);
+      setAnalyses(FINANCE_OWNER_SAMPLE_ANALYSES);
+      return;
+    }
     try {
       let arr: any[] = [];
       if (canonicalOnly) {
@@ -210,9 +233,14 @@ export function useFinanceData(
       );
       setAnalyses([]);
     }
-  }, [canonicalOnly, t]);
+  }, [canonicalOnly, ownerSampleData, t]);
 
   const loadValuations = useCallback(async () => {
+    if (ownerSampleData) {
+      setLoadError(null);
+      setValuations(FINANCE_OWNER_SAMPLE_VALUATIONS);
+      return;
+    }
     try {
       let arr: any[] = [];
       if (canonicalOnly) {
@@ -241,7 +269,7 @@ export function useFinanceData(
       );
       setValuations([]);
     }
-  }, [canonicalOnly, t]);
+  }, [canonicalOnly, ownerSampleData, t]);
 
   const loadBudgets = useCallback(async () => {
     try {
