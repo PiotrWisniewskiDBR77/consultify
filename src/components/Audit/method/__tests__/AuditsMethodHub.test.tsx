@@ -162,7 +162,6 @@ function setupApiMocks() {
   });
   mockedGetProgramCoverage.mockResolvedValue({
     applicableCriteria: 10, concludedCriteria: 4, insufficientEvidenceCriteria: 1,
-    openFindings: 2, unresolvedFindings: 2,
   });
   mockedGetProgramLifecycle.mockResolvedValue({ state: 'fieldwork', allowed: [] });
   mockedListProgramCriteria.mockResolvedValue([

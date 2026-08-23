@@ -266,8 +266,6 @@ export interface AuditProgramCoverage {
   applicableCriteria: number;
   concludedCriteria: number;
   insufficientEvidenceCriteria: number;
-  openFindings: number;
-  unresolvedFindings: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -484,14 +482,24 @@ export async function transitionProgram(
 
 export async function getProgramCoverage(id: string): Promise<AuditProgramCoverage | null> {
   const res = await Api.get(`/audits/programs/${encodeURIComponent(id)}/coverage`);
-  const payload = unwrapEnvelope(res) as Partial<AuditProgramCoverage> | undefined;
+  const payload = unwrapEnvelope(res) as Record<string, unknown> | undefined;
   if (!payload) return null;
+
+  const requiredCount = (key: string): number => {
+    const value = payload[key];
+    if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
+      throw new Error(`AUDITS_API_CONTRACT_ERROR: coverage.${key} must be a non-negative number`);
+    }
+    return value;
+  };
+
   return {
-    applicableCriteria: payload.applicableCriteria ?? 0,
-    concludedCriteria: payload.concludedCriteria ?? 0,
-    insufficientEvidenceCriteria: payload.insufficientEvidenceCriteria ?? 0,
-    openFindings: payload.openFindings ?? 0,
-    unresolvedFindings: payload.unresolvedFindings ?? 0,
+    // The criterion service exposes *Total fields. Keep the UI-facing names
+    // explicit here so a server/client contract drift cannot silently render
+    // valid coverage as 0/0.
+    applicableCriteria: requiredCount('applicableTotal'),
+    concludedCriteria: requiredCount('concludedTotal'),
+    insufficientEvidenceCriteria: requiredCount('evidenceInsufficientTotal'),
   };
 }
 

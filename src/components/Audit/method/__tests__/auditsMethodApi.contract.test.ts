@@ -6,7 +6,7 @@ vi.mock('@/services/api', () => ({
   Api: { get },
 }));
 
-import { listOutputs, listPacks, listPrograms } from '../auditsMethodApi';
+import { getProgramCoverage, listOutputs, listPacks, listPrograms } from '../auditsMethodApi';
 
 describe('auditsMethodApi canonical response contract', () => {
   beforeEach(() => get.mockReset());
@@ -28,6 +28,37 @@ describe('auditsMethodApi canonical response contract', () => {
       items: [{ id: 'program-1' }],
       total: 1,
     });
+  });
+
+  it('maps the criterion-service coverage totals without silently rendering 0/0', async () => {
+    get.mockResolvedValue({
+      data: {
+        success: true,
+        data: {
+          applicableTotal: 1,
+          testedTotal: 1,
+          concludedTotal: 1,
+          evidenceInsufficientTotal: 0,
+          conformingTotal: 0,
+          nonconformingTotal: 1,
+          notApplicableTotal: 0,
+        },
+      },
+    });
+
+    await expect(getProgramCoverage('program-1')).resolves.toMatchObject({
+      applicableCriteria: 1,
+      concludedCriteria: 1,
+      insufficientEvidenceCriteria: 0,
+    });
+  });
+
+  it('rejects coverage contract drift instead of substituting zeroes', async () => {
+    get.mockResolvedValue({
+      data: { success: true, data: { applicableCriteria: 1, concludedCriteria: 1 } },
+    });
+
+    await expect(getProgramCoverage('program-1')).rejects.toThrow('AUDITS_API_CONTRACT_ERROR');
   });
 
   it.each([
