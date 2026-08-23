@@ -749,8 +749,8 @@
   "leaseSha256": "not_applicable_integrator_bounded_task",
   "verdict": "PARTIAL",
   "open": [
-    "The exact-current mounted-route inventory contains 51 actual legacy mutation doors. Thirty-five are retired and 16 remain open pending route-by-route canonical parity or explicit retained-owner decisions, identity/backfill, usage and rollback evidence. ECO-W11 is separately verified as a canonical Decision write.",
-    "Rollout timing and Finance/Results reconciliation remain owner decisions; this evidence does not authorize rollout or change Results Actual ownership."
+    "The exact-current code denominator is closed at 50/50 retired legacy mutation doors and 0 open; three additional mutation routes are classified and tested as canonical writes rather than legacy doors.",
+    "Rollout timing, an authorized usage window and Finance/Results reconciliation remain owner decisions; this evidence does not authorize rollout or change Results Actual ownership."
   ],
   "environment": {
     "node": "v24.12.0",
@@ -770,8 +770,8 @@
     "server/src/routes/v8/finance.routes.ts": "Restores the eight already-governed canonical budget handlers that merge 826dac93da dropped while leaving their services, clients, tests and cutover decisions present.",
     "server/src/services/financeLegacyCutover.ts": "Records cutover usage idempotently while keeping protected writes fail-closed even if telemetry fails.",
     "server/src/services/__tests__/financeLegacyCutover.pg.test.ts": "Adds mounted route, retry, tenant-isolated alias bridge and independent cold-readback proof on fresh PostgreSQL.",
-    "server/src/services/legacyCutover/registry/economics.ts": "Carries the exact-current ECO-W40 retirement decision and keeps the remaining open mutation doors visible.",
-    "server/src/services/legacyCutover/__tests__/financeCutoverInventory.test.ts": "Pins the exact 52-door denominator at 25 retired and 27 open and statically rejects mounted caller fallback regressions."
+    "server/src/services/legacyCutover/registry/economics.ts": "Carries the governed Economics retirement decisions and keeps canonical writes and non-mutations explicitly classified.",
+    "server/src/services/legacyCutover/__tests__/financeCutoverInventory.test.ts": "Pins the exact 59-rule denominator at 50 retired legacy mutations, 3 canonical writes, 6 non-mutations and 0 open legacy mutations; it statically rejects mounted caller fallback regressions."
   },
   "ownerTables": ["finance_legacy_usage_events", "finance_artifact_aliases", "finance_artifacts", "finance_business_versions"],
   "commands": [
@@ -784,8 +784,8 @@
   "denominators": {
     "focused": "ECO-W05/W06 mounted Finance route plus exact inventory 111/111; scenario command RealPG 2/2 and production-shaped Economics cutover RealPG 52/52",
     "realPostgres": "Scenario upsert/activation concurrency, one-active invariant, shared CAS, immutable receipts, tenant/target rejection, default 410 and exact legacy rollback behavior passed on fresh disposable PostgreSQL",
-    "legacyV8Writers": "35 safely retired / 51 actual legacy mutation doors; 16 remain open; 2 additional registered routes are canonical writes",
-    "migration": "825/825 migrations on the exact-current fresh qualification database; repeat 0 and dry pending 0",
+    "legacyV8Writers": "50 safely retired / 50 actual legacy mutation doors; 0 open; 3 additional registered routes are canonical writes and 6 are non-mutations",
+    "migration": "Historical cutover qualifications reached 828 migrations; the current repository migration denominator is separately requalified at 831/831 with repeat 0 and dry pending 0",
     "typeCheck": "Root and server noEmit 2/2 exit 0; exact commit diff check exit 0"
   },
   "fixtures": {
@@ -801,7 +801,7 @@
     "rollback": "only explicit FINANCE_LEGACY_WRITER_ROLLBACK_ENABLED=true reaches the legacy leaf; rollback observation is durable",
     "tenant": "same legacy ID in a foreign tenant resolves no canonical artifact/version",
     "coldReadback": "independent pg.Client reads stable canonical artifact and business-version IDs with one row per request/access kind",
-    "unprovenSurfaces": "16 actual legacy mutation doors remain enabled and visibly classified; no false zero-writer claim"
+    "unprovenSurfaces": "No legacy mutation door remains open in the exact-current registry. Authorized rollout/usage telemetry and the separate Finance/Results reconciliation decision remain unproven."
   },
   "browserArtifacts": [],
   "rollback": {
