@@ -143,6 +143,7 @@ import {
   getTeresaEmptyResponseMessage,
   getTeresaStartFailureMessage,
 } from './teresaRuntimeCopy';
+import { getSafeTeresaWelcomeFirstName } from './teresaWelcome';
 import { TeresaTTSPlayer } from './TeresaTTSPlayer';
 import { V8ArtifactRunControl } from './V8ArtifactRunControl';
 import { V8ContextIndicator } from './V8ContextIndicator';
@@ -6440,6 +6441,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     },
     [setPersistedWorkCanvasWidth, workCanvasWidthPercent]
   );
+  const teresaWelcomeFirstName = getSafeTeresaWelcomeFirstName(currentUser?.firstName);
 
   return (
     <div
@@ -6701,19 +6703,21 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               <h3
                 className={`${isCompact ? 'text-2xl' : 'text-[32px]'} leading-tight font-semibold text-c-text`}
               >
-                {t('aiChat.teresaWelcome', "Let's start your transformation")}
-                {currentUser?.firstName && (
-                  // Imię w kolorze tytułu (wzorzec 2026-07-04: czerwień TYLKO
-                  // dla semantyki krytycznej, nie jako akcent ozdobny).
-                  <span className="text-c-text">, {currentUser.firstName}</span>
-                )}
+                {t('aiChat.teresaWelcome', 'Talk to Teresa')}
+                {teresaWelcomeFirstName ? (
+                  <>
+                    <span className="text-c-text">, </span>
+                    <span className="text-c-ai">{teresaWelcomeFirstName}</span>
+                  </>
+                ) : null}
+                <span className="text-c-text">.</span>
               </h3>
               <p
                 className={`${isCompact ? 'text-sm' : 'text-lg'} mt-4 max-w-2xl text-c-text-secondary`}
               >
                 {t(
                   'aiChat.teresaWelcomeSubtitle',
-                  "Describe a challenge, decision, or process you want to change — and we'll shape the transformation together, the way other leaders do."
+                  'Bring a challenge, decision, idea, or document. Teresa will help you think it through and turn it into concrete next steps.'
                 )}
               </p>
 
@@ -6923,7 +6927,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               </p>
 
               <div className="mt-12 flex flex-col items-center gap-1.5 pointer-events-none select-none">
-                <p className="text-3xl font-semibold tracking-tight text-c-text/70">Consultify®</p>
+                <p className="text-4xl font-semibold tracking-tight text-c-text/70">Consultify®</p>
                 <p className="text-center text-[11px] uppercase tracking-[0.25em] text-c-text-secondary">
                   DBR77 Industrial Intelligence
                 </p>
