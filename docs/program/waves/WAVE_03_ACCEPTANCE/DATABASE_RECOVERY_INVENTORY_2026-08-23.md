@@ -352,3 +352,24 @@ Credentialed browser replay, backup/restore DR qualification, owner decisions
 and Piotr acceptance remain pending. Current reconstructed storage readiness:
 `13/16` — Organization, Assessment, Initiatives, Execution, My Work / Agent,
 Meetings, Results, Finance, Materials, Audits, Chat, Admin and Partner.
+
+Settings was reconstructed fourteenth as
+`consultify_w3_settings_owner_recovered_20260823`. Its guarded fixture created a
+fresh database, passed `831/831` migrations and wrote a FINAL `0600`
+marker-bound receipt with nonce
+`e9202cb9c5fe6008dcdde90f540bdf18f2b76736b4877655bffb482685938ea7`.
+Readback proved six personas, four preference groups, Polish regional settings,
+a pending export request, a cancelled deletion request, legal-hold protection
+and zero MFA secrets or OAuth activations. No destructive request was executed.
+PostgreSQL restart preserved the complete state. Exact clean SHA
+`611653f07801c75f2cac4f36de6b63d368ecfbe3` adopted the database on
+server/client `4357/4358`; SHA, migration, marker, frontend and dotenv-isolation
+gates passed. OWNER, MEMBER, foreign and legal-hold personas received isolated
+`200` profile/preference reads; revoked login returned `403`, and anonymous
+profile/preferences access returned `401`. Runtime and container were stopped
+while preserving the database.
+
+Credentialed browser replay, destructive-flow owner acceptance and Piotr
+acceptance remain pending. Current reconstructed storage readiness: `14/16` —
+Organization, Assessment, Initiatives, Execution, My Work / Agent, Meetings,
+Results, Finance, Materials, Audits, Chat, Admin, Settings and Partner.

@@ -10,7 +10,7 @@
 >
 > Reconstruction update — 2026-08-23: Initiatives, Execution, Meetings, Results,
 > Finance, Materials, Audits, Partner, Organization, Assessment, My Work / Agent,
-> Chat and Admin have been
+> Chat, Admin and Settings have been
 > rebuilt and cold-read back on the current 831-migration chain as
 > `consultify_w3_initiatives_owner_recovered_20260823` and
 > `consultify_w3_execution_owner_recovered_20260823`, plus
@@ -24,8 +24,9 @@
 > `consultify_w3_assessment_owner_recovered_20260823`, plus
 > `consultify_w3_my_work_owner_recovered_20260823` and
 > `consultify_w3_chat_owner_recovered_20260823`, plus
-> `consultify_w3_admin_owner_recovered_20260823`. Current reconstructed storage
-> readiness is `13/16`; see the recovery inventory for exact evidence.
+> `consultify_w3_admin_owner_recovered_20260823` and
+> `consultify_w3_settings_owner_recovered_20260823`. Current reconstructed
+> storage readiness is `14/16`; see the recovery inventory for exact evidence.
 
 Inventory date: `2026-08-22`
 
