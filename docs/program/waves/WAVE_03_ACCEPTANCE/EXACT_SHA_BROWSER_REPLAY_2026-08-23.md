@@ -5,6 +5,9 @@ Runtime candidates:
 - `a7e43c31ac128f895d278e3035c4f9ff00675767` — Organization through Assessment.
 - `b36a6a0eb9d728ed9c4538a55ca09d8285731cd7` — Initiatives through Meetings;
   its only change from the first candidate is this evidence document.
+- `6d28066e5e9b273e44662c3b272a3b90e0510d05` — Results, Finance and Materials.
+- `62b8ca12cbfe94490140ddffff2ad22500b9d7a9` — Audits after the fail-closed
+  coverage-contract repair.
 
 Scope: credentialed in-app browser replay against isolated recovered local
 PostgreSQL databases. Railway, staging, demo and production were not mutated.
@@ -26,6 +29,10 @@ This is runtime evidence, not Piotr owner acceptance or release authorization.
 | Execution | Real OWNER login; `/execution/w3-exe-case-v1` rendered the one active Customer pilot case, exact handoff `w3-exe-handoff-v1@v1`, accepted Initiative baseline `v3`, zero open gaps, next milestone and independent acceptance request contract. | `BROWSER_PASS_OWNER_ACCEPTANCE_REQUIRED` |
 | My Work / Agent | Real OWNER login; `/my-work` rendered the full module navigation and empty canonical Inbox. Direct cold-open `/my-work/tasks` rendered the durable `Review pilot` task as `W trakcie`, high priority and assigned to the owner. | `BROWSER_PASS_OWNER_ACCEPTANCE_REQUIRED` |
 | Meetings | Real OWNER login; `/meeting` rendered all three completed owner fixtures: pending minutes, rejected minutes and approved minutes, with exact scheduled dates, participants and zero follow-ups. | `BROWSER_PASS_OWNER_ACCEPTANCE_REQUIRED` |
+| Results | Real OWNER login; `/results` canonicalized to `/results/kpi` and rendered the active `DELIVERY_ON_TIME` KPI, its owner and durable update date. | `BROWSER_PASS_OWNER_ACCEPTANCE_REQUIRED` |
+| Finance | Real OWNER login; `/finance?tab=statements` rendered three statements, two rejected imports, zero repair-queue items, one ready statement, the approved CD PROJEKT 2024 statement and the two truthful 2025 draft states. | `BROWSER_PASS_OWNER_ACCEPTANCE_REQUIRED` |
+| Materials | Real OWNER login; canonical document, presentation and workbook routes rendered the transformation plan with two substantive sections, the four-slide deck and the pilot-budget workbook/XLSX identity. | `BROWSER_PASS_OWNER_ACCEPTANCE_REQUIRED` |
+| Audits | The initial replay exposed a real contract defect: the list and criterion showed `1/1`, while the preview silently rendered `0/0`. The server returned canonical `applicableTotal`/`concludedTotal` fields but the client read obsolete `...Criteria` names and defaulted them to zero. Commit `62b8ca12cb` maps the canonical fields and rejects malformed coverage instead of fabricating zeroes. Exact-SHA runtime replay on the preserved fixture then rendered `Postęp 1/1`, `Pokrycie 1/1`, `Dowód niewystarczający 0`, and criterion `TA.1` as `1 / 1`. | `BROWSER_PASS_OWNER_ACCEPTANCE_REQUIRED` |
 
 ## Qualification notes
 
@@ -49,8 +56,8 @@ This is runtime evidence, not Piotr owner acceptance or release authorization.
 
 ## Remaining denominator
 
-Browser-qualified across the exact-SHA candidate lineage: `8/16` modules.
+Browser-qualified across the exact-SHA candidate lineage: `12/16` modules.
 
-Pending exact-SHA browser replay: Results, Finance, Materials, Audits, Chat,
-Admin, Settings and Partner. Responsive/accessibility checks and Piotr owner
-acceptance remain open for the full denominator.
+Pending exact-SHA browser replay: Chat, Admin, Settings and Partner.
+Responsive/accessibility checks and Piotr owner acceptance remain open for the
+full denominator.
