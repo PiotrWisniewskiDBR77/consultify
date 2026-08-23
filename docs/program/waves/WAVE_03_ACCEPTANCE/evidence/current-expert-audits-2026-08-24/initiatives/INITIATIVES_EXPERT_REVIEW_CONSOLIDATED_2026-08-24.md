@@ -24,6 +24,7 @@ The repository contains a substantial canonical Initiative and Execution foundat
 |---|---|---|
 | `INI-C01` | `SOURCE_FIX_PASS` | Implicit `import.meta.env.DEV` sample-data admission was removed. A persistent canonical read failure now renders the blocking data-source error and no unlabelled demo row. Hub/error/modal lane: `17/17 PASS`. |
 | `INI-C02` | `TECHNICAL_REALDB_PASS / BROWSER_PENDING` | Ordinary local Plan and Capacity now receive `demoMode=false` and select their real APIs. Domain/surface lane: `9/9 PASS`. An isolated disposable PostgreSQL replay proved Plan/Capacity create, version, publish and reader readback: `2` files, `3/3 PASS`, retry `0`; cleanup residue `0`. HTTP/browser create-save-refresh-reopen is still pending. |
+| `INI-C03` | `TECHNICAL_REALDB_PASS / PROCESS_RESTART_AND_BROWSER_PENDING` | Concurrent handoff acceptance produced exactly one stable Execution Case and one relation; idempotent retry replayed the winner; a new PostgreSQL connection pool cold-read the same Initiative/Case IDs; foreign tenant readback returned null; identity counts were `1 Initiative / 1 Execution Case`. Isolated lane: `1` file, `2/2 PASS`, retry `0`, residue `0`; a restarted server/browser traversal is still pending. |
 | Dialog regression | `SOURCE_FIX_PASS` | The historical New-Initiative dialog focus restoration and label contract were restored; no claim is made for a complete current browser accessibility matrix. |
 
 This checkpoint does not change the consolidated decision: `NO-GO_FOR_OWNER_ACCEPTANCE`.
