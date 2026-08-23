@@ -10,6 +10,8 @@ Runtime candidates:
   coverage-contract repair.
 - `c02afa5205a5d2fff900902a7d414ec1c6931829` — Chat, Admin, Settings and
   Partner; its only change from the Audits candidate is this evidence document.
+- `d8561ed5c2b81632c03d8012d633a6bb7dce142d` — complete Finance five-workspace
+  replay after repairing the canonical-id/legacy-bridge mismatch.
 
 Scope: credentialed in-app browser replay against isolated recovered local
 PostgreSQL databases. Railway, staging, demo and production were not mutated.
@@ -39,6 +41,49 @@ This is runtime evidence, not Piotr owner acceptance or release authorization.
 | Admin | Real OWNER login and `/admin/audit/events` rendered the rebuilt task-oriented Admin navigation and a reconciled audit surface: `3` total, `3` unresolved, `3` high-risk, with all three durable IAM events present in the table. No export or IAM mutation was performed. | `BROWSER_PASS_OWNER_ACCEPTANCE_REQUIRED` |
 | Settings | Real OWNER login and `/settings/data-controls` rendered the pending export with durable receipt and the previous deletion request as cancelled, explicitly stating that no automated erasure is scheduled. No consent, retention, export or deletion mutation was performed. Broad GDPR-compliance copy remains a separate legal/source-authorization gate; this replay does not substantiate it. | `BROWSER_PASS_OWNER_ACCEPTANCE_REQUIRED` |
 | Partner | Real OWNER login and `/partner/profile` rendered active partner state, certification `1/10`, one attribution, one participant-ledger record and zero accrued economics. The governed boundary explicitly disables accrual, payout and self-approval without an approved versioned rule. The navigation still exposes commission/payout sections while economics is policy-gated; the previously recorded owner IA decision remains open. | `BROWSER_PASS_OWNER_ACCEPTANCE_REQUIRED / IA_DECISION_OPEN / ECONOMICS_OFF` |
+
+## Finance five-workspace closure
+
+The first read-only replay at clean `0848de6039` exposed a real integration
+defect rather than missing data. Statements opened, and the other four Finance
+lists each showed one approved record, but Baseline, Prediction, Analysis and
+Valuation rendered `finance-bridge-unresolved`. Their URLs carried canonical
+`finance_artifacts.artifact_id` values while the detail gate required a legacy
+alias row. The recovered fixture correctly contained the canonical artifacts
+and approved business versions; only Statements had a legacy alias.
+
+Commit `d8561ed5c2` repairs the resolver fail-closed: when no alias exists, it
+accepts a direct canonical identity only for the current tenant and only when
+its artifact type belongs to the requested Finance list. Unknown ids,
+cross-tenant ids and mismatched artifact types remain `NOT_MIGRATED`. If an
+artifact has no current-version pointer, the resolver deterministically uses
+its latest same-tenant business version.
+
+Verification on an isolated `831/831` PostgreSQL database passed `9/9` bridge
+route tests, including direct canonical resolution and wrong-type denial.
+Component coverage passed `6/6`; full TypeScript checking passed. The isolated
+database was then dropped.
+
+The guarded exact-SHA runtime at `d8561ed5c2` adopted preserved database
+`consultify_w3_finance_owner_recovered_20260823` with health/readiness/frontend
+`200`, both migration ledgers `ok`, exact client/server marker, test bypasses
+OFF and the FINAL fixture marker verified. A fresh real OWNER login then
+cold-opened all five workspaces without bridge error:
+
+- Statements: `3` rows, `2` rejected imports, `0` repair items, `1` ready;
+  approved 2024 and truthful 2025 draft states.
+- Baseline: approved `v1`, persisted assumptions table and nine visible
+  assumption rows.
+- Prediction: approved `v1`, canonical authoring banner and Base passthrough
+  contract.
+- Valuation: approved `v1`, DCF source step and the complete four-edge lineage
+  from Statement through Analysis/Baseline to Valuation.
+- Analysis: approved `v1`, persisted `Current Ratio = 3` with `OK` quality.
+
+A fresh browser tab after the replay mounted Analysis with zero console
+warnings/errors. No workspace write, onboarding dismissal, Railway action or
+production action occurred. This is technical browser qualification, not
+Piotr owner acceptance or release authorization.
 
 ## Qualification notes
 

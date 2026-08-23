@@ -225,7 +225,7 @@
   "verdict": "PARTIAL",
   "humanGate": "ACCEPTED_AUTOMATED_INTERNAL_BETA",
   "openBlockers": [
-    "Run the complete five-workspace Finance G4 on one frozen final candidate SHA. The current Wave 3 replay proves Statements on the recovered 831-migration fixture, while Prediction, Analysis, Baseline and Valuation retain valid historical technical evidence but have not all been replayed on that same final candidate.",
+    "Repeat the complete five-workspace Finance G4 after the final candidate SHA is frozen. Exact clean SHA d8561ed5c2 technically replays all five workspaces on the recovered 831-migration fixture, but later program/evidence commits would invalidate a literal final-SHA claim.",
     "Production deployment and release remain separately NOT_AUTHORIZED."
   ],
   "wave3RecoveryStatementReplay20260823": {
@@ -236,6 +236,14 @@
     "browserResult": "Real OWNER opened /finance?tab=statements and saw three statements, two rejected imports, zero repair-queue items, one ready statement, approved CD PROJEKT 2024 and truthful 2025 draft states.",
     "historicalBlockerDisposition": "The earlier Statement HTTP 422 / PostgreSQL 25P02 stop-loss is not the current recovered-fixture state and is superseded as an open blocker. It remains preserved elsewhere in this packet as historical incident evidence.",
     "boundary": "Statements browser readback is current-line technical evidence, not the required single-final-SHA five-workspace G4 and not production authorization."
+  },
+  "wave3RecoveryFiveWorkspaceReplay20260823": {
+    "candidateSha": "d8561ed5c2b81632c03d8012d633a6bb7dce142d",
+    "database": "consultify_w3_finance_owner_recovered_20260823 with 831/831 migrations and verified FINAL marker",
+    "defect": "Four canonical list ids were passed through a legacy-only alias resolver and falsely rendered NOT_MIGRATED even though the same-tenant canonical artifacts and approved versions existed.",
+    "repair": "The bridge now resolves a no-alias id only when it is a same-tenant canonical artifact of a type valid for the requested Finance list; wrong-type, unknown and cross-tenant ids remain fail-closed.",
+    "verification": "Real PostgreSQL 9/9 PASS, bridge component 6/6 PASS, full TypeScript PASS; exact-SHA guarded runtime health/readiness/frontend 200; real OWNER cold-opened Statements, Baseline, Prediction, Valuation and Analysis; a fresh post-replay tab had zero console warnings/errors.",
+    "boundary": "Technical five-workspace browser qualification only; final frozen-SHA rerun, owner acceptance and production authorization remain open."
   },
   "blockerReconciliation": [
     {
