@@ -402,14 +402,6 @@ export async function getFinanceArtifact(artifactId: string): Promise<FinanceArt
   return v8Get<FinanceArtifactDetailDto>(`${BASE}/artifacts/${encodeURIComponent(artifactId)}`);
 }
 
-export async function listFinanceArtifacts(params?: {
-  artifactType?: FinanceArtifactType;
-}): Promise<{ artifacts: FinanceArtifactSummaryDto[]; count: number }> {
-  return v8Get<{ artifacts: FinanceArtifactSummaryDto[]; count: number }>(`${BASE}/artifacts`, {
-    ...(params?.artifactType ? { artifactType: params.artifactType } : {}),
-  });
-}
-
 /**
  * ID BRIDGE (Gate E) — translates an OLD `/api/v8/finance/*` list-row id
  * (`financial_models.id` / `financial_analyses.id` /
