@@ -398,3 +398,10 @@ Current reconstructed storage readiness is `16/16`. This proves durable local
 fixture recovery and exact-SHA API qualification; it does not replace
 credentialed browser replay, responsive/accessibility checks, Piotr owner
 acceptance, NFR/DR gates or release authorization.
+
+The fail-closed cross-fixture audit
+`scripts/dev/audit-wave3-recovered-fixtures.mjs` then qualified the complete
+denominator in one run: `16/16` manifests present as regular non-symlink `0600`
+files, `16` unique database names, `16` unique ownership nonces, all databases
+present in the retained PostgreSQL catalog, every database at `831` successful
+migrations, and every module marker exactly bound to its manifest and database.
