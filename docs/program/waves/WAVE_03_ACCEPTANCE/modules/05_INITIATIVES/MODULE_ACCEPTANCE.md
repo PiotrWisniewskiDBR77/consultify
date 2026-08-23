@@ -2,10 +2,20 @@
 
 ID: `INI`
 Routes: `/initiatives`, candidate and profile deep links
-Current gate: `OWNER_FEEDBACK_CAPTURED / P0_BROWSER_REPAIRS_VERIFIED / OWNER_RETEST_PENDING`
+Current gate: `EXPERT_NO_GO / REMEDIATION_REQUIRED / OWNER_RETEST_PENDING`
 Owner: Piotr Wisniewski
 Integrator: Codex
 Mobile: `DEFERRED_NON_GATING`
+
+## Current evidence hierarchy (2026-08-24)
+
+The current controlling review is the three-expert consolidation at
+`../../evidence/current-expert-audits-2026-08-24/initiatives/INITIATIVES_EXPERT_REVIEW_CONSOLIDATED_2026-08-24.md`.
+It supersedes optimistic gate wording, but does not delete historical technical
+evidence below. The source architecture is substantial; current acceptance is
+still `NO-GO` because ordinary DEV can mask canonical failures with fixtures,
+Plan and Capacity bypass the real API in DEV, and the current exact-SHA
+Initiative → Execution persistence/readback has not been proven.
 
 ## Contract
 
