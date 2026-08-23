@@ -9,7 +9,7 @@
 > current catalog state.
 >
 > Reconstruction update — 2026-08-23: Initiatives, Execution, Meetings, Results,
-> Finance, Materials, Audits, Partner and Organization have been
+> Finance, Materials, Audits, Partner, Organization and Assessment have been
 > rebuilt and cold-read back on the current 831-migration chain as
 > `consultify_w3_initiatives_owner_recovered_20260823` and
 > `consultify_w3_execution_owner_recovered_20260823`, plus
@@ -19,8 +19,9 @@
 > `consultify_w3_materials_owner_recovered_20260823`, plus
 > `consultify_w3_audits_owner_recovered_20260823` and
 > `consultify_w3_partner_owner_recovered_20260823`, plus
-> `consultify_w3_organization_owner_recovered_20260823`. Current reconstructed
-> storage readiness is `9/16`; see the recovery inventory for exact evidence.
+> `consultify_w3_organization_owner_recovered_20260823` and
+> `consultify_w3_assessment_owner_recovered_20260823`. Current reconstructed
+> storage readiness is `10/16`; see the recovery inventory for exact evidence.
 
 Inventory date: `2026-08-22`
 

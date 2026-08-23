@@ -265,3 +265,28 @@ Credentialed browser replay, remaining owner decisions and Piotr acceptance
 remain pending. Current reconstructed storage readiness: `9/16` — Organization,
 Initiatives, Execution, Meetings, Results, Finance, Materials, Audits and
 Partner.
+
+Assessment was reconstructed tenth as
+`consultify_w3_assessment_owner_recovered_20260823`. The guarded owned fixture
+created a fresh database, passed `831/831` migrations and wrote a FINAL `0600`
+marker-bound receipt with nonce
+`17e1618e2c7d0a84d449478d6ef5bae569e6d9d26b4bd0fb067758b7c8b1a9f0`.
+Readback proved five personas, one active guided session with six events, one
+frozen session/output/snapshot, one distinct approval and one governed
+Initiative Draft. After PostgreSQL restart, the SQL readback remained complete.
+Exact clean SHA `95e04e46aae84e65d4be4ce8060ffb97ebffb5e2` adopted the database on
+server/client `4349/4350`; health, readiness, frontend, migration chain, SHA and
+marker gates passed. OWNER and same-tenant reader login plus assessment-hub
+reads returned `200`; inactive login returned `403`, and anonymous hub access
+returned `401`. Runtime and container were stopped while preserving the
+database.
+
+Interview and Tools data were also seeded into separate retained databases,
+but their legacy seeders do not yet emit the required FINAL receipt and durable
+module marker. They therefore remain excluded from the readiness numerator
+until that preservation contract and exact-SHA runtime replay are complete.
+
+Credentialed browser replay, owner decisions and Piotr acceptance remain
+pending. Current reconstructed storage readiness: `10/16` — Organization,
+Assessment, Initiatives, Execution, Meetings, Results, Finance, Materials,
+Audits and Partner.
