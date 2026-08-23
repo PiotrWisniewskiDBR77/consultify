@@ -225,9 +225,18 @@
   "verdict": "PARTIAL",
   "humanGate": "ACCEPTED_AUTOMATED_INTERNAL_BETA",
   "openBlockers": [
-    "INTERNAL_BETA_LIMITATION: Finance Statement owner acceptance failed at exact product SHA f5c6a7f16f95a6b800afb19b08832d2c6930514c with mounted HTTP 422 / PostgreSQL 25P02 before exact-six creation.",
-    "Statement-dependent downstream claims remain excluded and fail-closed. Per owner stop-loss, no additional Finance successor is authorized and this limitation does not globally block the remaining internal-beta program."
+    "Run the complete five-workspace Finance G4 on one frozen final candidate SHA. The current Wave 3 replay proves Statements on the recovered 831-migration fixture, while Prediction, Analysis, Baseline and Valuation retain valid historical technical evidence but have not all been replayed on that same final candidate.",
+    "Production deployment and release remain separately NOT_AUTHORIZED."
   ],
+  "wave3RecoveryStatementReplay20260823": {
+    "browserCandidateSha": "6d28066e5e9b273e44662c3b272a3b90e0510d05",
+    "pathContinuityTo": "3a4e4e1db08862c371ffe709beb1ef82bc388aad",
+    "pathContinuity": "No Finance product, route, service, migration or test path changed between the browser candidate and the reconciliation SHA; intervening product changes are confined to the Audits coverage adapter.",
+    "database": "consultify_w3_finance_owner_recovered_20260823 with 831/831 migrations and verified FINAL marker",
+    "browserResult": "Real OWNER opened /finance?tab=statements and saw three statements, two rejected imports, zero repair-queue items, one ready statement, approved CD PROJEKT 2024 and truthful 2025 draft states.",
+    "historicalBlockerDisposition": "The earlier Statement HTTP 422 / PostgreSQL 25P02 stop-loss is not the current recovered-fixture state and is superseded as an open blocker. It remains preserved elsewhere in this packet as historical incident evidence.",
+    "boundary": "Statements browser readback is current-line technical evidence, not the required single-final-SHA five-workspace G4 and not production authorization."
+  },
   "blockerReconciliation": [
     {
       "historicalBlocker": "Mounted browser completion for Prediction and Valuation, plus explicit conflict/error-state journeys, is incomplete.",
