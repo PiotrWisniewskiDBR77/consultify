@@ -54,3 +54,14 @@ product bytes and must not be presented as a new product qualification.
 
 No local technical PASS in this document authorizes push, deploy, Railway
 mutation or production release.
+
+## Final-demo checkpoint
+
+An isolated Assessment final-demo now runs on this qualified product SHA at
+client `4370` / server `4371`, backed by a full local clone on PostgreSQL
+`34945` with `832` exact migrations. Health/readiness/frontend, runtime SHA,
+client marker, real OWNER API login and Method Core API/SQL readback pass. The
+browser reached the exact-SHA login redirect and remains retained for owner
+review; authenticated visual acceptance remains pending without storage
+injection or a test bypass. See
+`FINAL_DEMO_RUNTIME_ASSESSMENT_2026-08-23.md`.
