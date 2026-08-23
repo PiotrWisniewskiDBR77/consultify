@@ -51,6 +51,25 @@ describe('parseExpectedSchema', () => {
     expect(schema.tables.has('quoted_table')).toBe(false);
   });
 
+  it('handles public-qualified tables, ignores dynamic SQL and honors dropped columns', () => {
+    fs.writeFileSync(
+      path.join(tmpDir, '702_lifecycle.sql'),
+      `
+      CREATE TABLE IF NOT EXISTS public.qualified_table (id TEXT);
+      ALTER TABLE public.qualified_table ADD COLUMN IF NOT EXISTS legacy_value TEXT;
+      ALTER TABLE public.qualified_table DROP COLUMN IF EXISTS legacy_value;
+      DO $$ BEGIN EXECUTE 'CREATE TABLE IF NOT EXISTS dynamic_backup AS SELECT 1'; END $$;
+      `
+    );
+
+    const schema = parseExpectedSchema(tmpDir);
+    expect(schema.tables.has('qualified_table')).toBe(true);
+    expect(schema.tables.has('public')).toBe(false);
+    expect(schema.tables.has('if')).toBe(false);
+    expect(schema.tables.has('dynamic_backup')).toBe(false);
+    expect(schema.columns.has('qualified_table.legacy_value')).toBe(false);
+  });
+
   it('excludes sqlite-only / Postgres-skipped migrations from expected schema', () => {
     // These mirror migrate.postgres.ts isSqliteOnlyMigration and must NOT count.
     fs.writeFileSync(
@@ -81,7 +100,7 @@ describe('parseExpectedSchema', () => {
     const schema = parseExpectedSchema(realDir);
     expect(schema.tables.size).toBeGreaterThan(100);
     // W4 audit landmarks
-    expect(schema.tables.has('v8_process_flow_nodes')).toBe(true);
+    expect(schema.tables.has('v8.v8_process_flow_nodes')).toBe(true);
     expect(schema.tables.has('my_idea_map_snapshots')).toBe(true);
     expect(schema.tables.has('v8_kpi_signals')).toBe(true);
   });

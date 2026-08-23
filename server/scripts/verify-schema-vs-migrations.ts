@@ -31,15 +31,19 @@ import { pathToFileURL } from 'url';
 import { Pool } from 'pg';
 
 import { resolveReachableDatabaseUrl } from '../src/config/databaseTargetResolver.js';
+import { PROMOTED_LEGACY_SET, sortMigrationsDeterministically } from './migrationOrdering.js';
 
 export type ExpectedSchema = {
   tables: Map<string, string>; // table -> first defining file
   columns: Map<string, string>; // "table.column" -> defining file
 };
 
-const TABLE_RE = /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?"?([a-zA-Z0-9_]+)"?/gi;
+const TABLE_RE =
+  /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:"?([a-zA-Z0-9_]+)"?\.)?"?([a-zA-Z0-9_]+)"?/gi;
 const ALTER_COL_RE =
-  /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?"?([a-zA-Z0-9_]+)"?\s+ADD\s+COLUMN\s+(?:IF\s+NOT\s+EXISTS\s+)?"?([a-zA-Z0-9_]+)"?/gi;
+  /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:"?([a-zA-Z0-9_]+)"?\.)?"?([a-zA-Z0-9_]+)"?\s+ADD\s+COLUMN\s+(?:IF\s+NOT\s+EXISTS\s+)?"?([a-zA-Z0-9_]+)"?/gi;
+const DROP_COL_RE =
+  /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:"?([a-zA-Z0-9_]+)"?\.)?"?([a-zA-Z0-9_]+)"?\s+DROP\s+COLUMN\s+(?:IF\s+EXISTS\s+)?"?([a-zA-Z0-9_]+)"?/gi;
 // A table created and then dropped or renamed-away within the migrations is
 // transient (rename-swap or marker tables) and must not count as expected.
 const DROP_RE = /DROP\s+TABLE\s+(?:IF\s+EXISTS\s+)?"?([a-zA-Z0-9_]+)"?/gi;
@@ -77,25 +81,41 @@ export function isSqliteOnlyMigration(filename: string): boolean {
 export function parseExpectedSchema(dir: string, onlyPrefix?: string): ExpectedSchema {
   const tables = new Map<string, string>();
   const columns = new Map<string, string>();
-  const files = fs
-    .readdirSync(dir)
-    .filter((f) => f.endsWith('.sql'))
-    .filter((f) => !isSqliteOnlyMigration(f))
-    .filter((f) => !onlyPrefix || f.startsWith(onlyPrefix))
-    .sort();
+  const files = sortMigrationsDeterministically(
+    fs
+      .readdirSync(dir)
+      .filter((f) => f.endsWith('.sql'))
+      .filter((f) => PROMOTED_LEGACY_SET.has(f) || !isSqliteOnlyMigration(f))
+      .filter((f) => !onlyPrefix || f.startsWith(onlyPrefix))
+      .map((filename) => ({
+        filename,
+        filepath: path.join(dir, filename),
+        version: filename.split('_')[0] || filename,
+        checksum: '',
+      }))
+  ).map((migration) => migration.filename);
 
   const droppedOrRenamed = new Set<string>();
+  const tableKey = (schema: string | undefined, table: string) =>
+    schema && schema.toLowerCase() !== 'public'
+      ? `${schema.toLowerCase()}.${table.toLowerCase()}`
+      : table.toLowerCase();
   for (const file of files) {
     const sql = fs.readFileSync(path.join(dir, file), 'utf-8');
-    // strip line comments so commented-out DDL is not counted
-    const cleaned = sql.replace(/--[^\n]*/g, '');
+    // Strip comments and SQL string literals. DDL embedded inside EXECUTE
+    // strings is conditional runtime logic, not an unconditional final-schema
+    // promise, and previously produced phantom tables named `if`.
+    const cleaned = sql.replace(/--[^\n]*/g, '').replace(/'(?:''|[^'])*'/g, "''");
     for (const m of cleaned.matchAll(TABLE_RE)) {
-      const t = m[1].toLowerCase();
+      const t = tableKey(m[1], m[2]);
       if (!tables.has(t)) tables.set(t, file);
     }
     for (const m of cleaned.matchAll(ALTER_COL_RE)) {
-      const key = `${m[1].toLowerCase()}.${m[2].toLowerCase()}`;
-      if (!columns.has(key)) columns.set(key, file);
+      const key = `${tableKey(m[1], m[2])}.${m[3].toLowerCase()}`;
+      columns.set(key, file);
+    }
+    for (const m of cleaned.matchAll(DROP_COL_RE)) {
+      columns.delete(`${tableKey(m[1], m[2])}.${m[3].toLowerCase()}`);
     }
     for (const m of cleaned.matchAll(DROP_RE)) droppedOrRenamed.add(m[1].toLowerCase());
     for (const m of cleaned.matchAll(RENAME_RE)) droppedOrRenamed.add(m[1].toLowerCase());
@@ -143,16 +163,34 @@ async function verify(dir: string, onlyPrefix?: string, asJson = false): Promise
 
   const pool = new Pool({ connectionString: url, max: 1 });
   try {
-    const tablesRes = await pool.query<{ table_name: string }>(
-      `SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'`
+    const tablesRes = await pool.query<{ table_schema: string; table_name: string }>(
+      `SELECT table_schema, table_name FROM information_schema.tables
+       WHERE table_schema NOT IN ('pg_catalog', 'information_schema')`
     );
-    const liveTables = new Set(tablesRes.rows.map((r) => r.table_name.toLowerCase()));
+    const liveTables = new Set(
+      tablesRes.rows.map((r) =>
+        r.table_schema.toLowerCase() === 'public'
+          ? r.table_name.toLowerCase()
+          : `${r.table_schema.toLowerCase()}.${r.table_name.toLowerCase()}`
+      )
+    );
 
-    const colsRes = await pool.query<{ table_name: string; column_name: string }>(
-      `SELECT table_name, column_name FROM information_schema.columns WHERE table_schema = 'public'`
+    const colsRes = await pool.query<{
+      table_schema: string;
+      table_name: string;
+      column_name: string;
+    }>(
+      `SELECT table_schema, table_name, column_name FROM information_schema.columns
+       WHERE table_schema NOT IN ('pg_catalog', 'information_schema')`
     );
     const liveColumns = new Set(
-      colsRes.rows.map((r) => `${r.table_name.toLowerCase()}.${r.column_name.toLowerCase()}`)
+      colsRes.rows.map((r) => {
+        const table =
+          r.table_schema.toLowerCase() === 'public'
+            ? r.table_name.toLowerCase()
+            : `${r.table_schema.toLowerCase()}.${r.table_name.toLowerCase()}`;
+        return `${table}.${r.column_name.toLowerCase()}`;
+      })
     );
 
     const missingTables = [...expected.tables.entries()]
@@ -161,9 +199,13 @@ async function verify(dir: string, onlyPrefix?: string, asJson = false): Promise
 
     const missingColumns = [...expected.columns.entries()]
       // a column on a missing table is already covered by missingTables
-      .filter(([key]) => liveTables.has(key.split('.')[0]) && !liveColumns.has(key))
+      .filter(
+        ([key]) => liveTables.has(key.slice(0, key.lastIndexOf('.'))) && !liveColumns.has(key)
+      )
       .map(([key, definedIn]) => {
-        const [table, column] = key.split('.');
+        const splitAt = key.lastIndexOf('.');
+        const table = key.slice(0, splitAt);
+        const column = key.slice(splitAt + 1);
         return { table, column, definedIn };
       });
 
