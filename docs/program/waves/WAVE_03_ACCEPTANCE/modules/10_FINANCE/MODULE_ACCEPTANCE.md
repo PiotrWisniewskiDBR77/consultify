@@ -7,6 +7,22 @@ Owner: Piotr Wisniewski
 Integrator: Codex
 Mobile: `DEFERRED_NON_GATING`
 
+> Recovery replay — 2026-08-23: the historical 817-migration database recorded
+> below was absent at catalog revalidation. The authorized desktop PDF was
+> re-hashed before use and exactly matched
+> `e993f390ccf5d67143b1076ef7b6d9eed23f234f1c29dc23892eeb57418e3c0e`.
+> Replacement local-only database
+> `consultify_w3_finance_owner_recovered_20260823` passed the exact 831-migration
+> chain, full computed seed and independent post-restart readback: five approved
+> versions, six Statements, six matching source receipts and one Baseline
+> context with lifecycle hash/run identity verified. Exact clean SHA
+> `c8c9b22532691506945107299f857753a535a05d` adopted it on server/client
+> `4339/4340`; health/readiness/frontend `200/200/200`, migration ledgers `ok/ok`,
+> client and SQL markers passed. OWNER login, artifact list and all five artifact
+> details returned `200`; foreign Statement access returned `404`, anonymous list
+> `401`. This restores current technical API/storage readiness, not authenticated
+> browser evidence, Piotr acceptance or release authority.
+
 ## Contract
 
 Primary journey: import exact-six Statement, map/confirm, then inspect Baseline,

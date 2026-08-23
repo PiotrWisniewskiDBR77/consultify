@@ -170,3 +170,23 @@ while preserving the database.
 Credentialed browser replay and Piotr acceptance remain pending. Current
 reconstructed storage readiness: `4/16` — Initiatives, Execution, Meetings and
 Results.
+
+Finance was reconstructed fifth as
+`consultify_w3_finance_owner_recovered_20260823`. Before any seed, the authorized
+desktop CD PROJEKT FY2025 PDF was re-hashed to the exact allowlisted SHA-256
+`e993f390ccf5d67143b1076ef7b6d9eed23f234f1c29dc23892eeb57418e3c0e`.
+The guarded full-chain seed then passed `831/831` migrations and created a FINAL
+`0600` marker-bound receipt with nonce
+`db4812d57e81648c27de0f94647856d22b429032a36a903fc4fb242266367dbf`.
+Initial and post-PostgreSQL-restart readbacks both proved five APPROVED business
+versions, six Statements, six source receipts matching the exact PDF, one
+Baseline context and matching lifecycle semantic hashes/compute runs. Exact
+clean SHA `c8c9b22532691506945107299f857753a535a05d` adopted the database on
+server/client `4339/4340`; runtime and marker gates passed. OWNER list plus all
+five Statement/Analysis/Baseline/Prediction/Valuation details returned `200`,
+foreign Statement access returned `404`, and anonymous list `401`. Runtime and
+container were stopped while preserving the database.
+
+Credentialed browser replay and Piotr acceptance remain pending. Current
+reconstructed storage readiness: `5/16` — Initiatives, Execution, Meetings,
+Results and Finance.
