@@ -26,6 +26,10 @@ import {
 
 import { API_URL, getHeaders, shouldAllowDemoData } from '../../services/api';
 import { resolveMaterialFileFormat } from './materialFileFormat';
+import {
+  isMaterialsOwnerSampleEnabled,
+  materialsOwnerRegistryRows,
+} from './materialsOwnerSampleData';
 import type {
   ArtifactGovernanceSummary,
   PresentationItem,
@@ -282,6 +286,15 @@ export function useReports() {
   const fetchReports = useCallback(async (includeDrafts = false) => {
     setLoading(true);
     try {
+      if (isMaterialsOwnerSampleEnabled()) {
+        setReports(
+          materialsOwnerRegistryRows
+            .filter((item) => item.originRuntime === 'native_artifact')
+            .map(mapArtifactReport)
+        );
+        setError(null);
+        return;
+      }
       const draftParam = includeDrafts ? '&include=drafts' : '';
       const artifactRes = await fetch(
         `${API_URL}/artifacts?outputType=report&limit=200${draftParam}`,
@@ -672,6 +685,15 @@ export function useArtifactOutputsList(view: ArtifactOutputsRegistryView | null)
       }
       setLoading(true);
       try {
+        if (isMaterialsOwnerSampleEnabled()) {
+          const mapped = materialsOwnerRegistryRows
+            .map(mapRegistryItemToUnified)
+            .filter((x: UnifiedOutputRow | null): x is UnifiedOutputRow => !!x);
+          setRows(mapped);
+          setError(null);
+          setModuleDisabled(false);
+          return;
+        }
         const qs = new URLSearchParams({ limit: '200' });
         if (view === 'mine') qs.set('view', 'mine');
         if (view === 'review') qs.set('view', 'review');
@@ -1052,6 +1074,15 @@ export function usePresentations() {
   const fetchPresentations = useCallback(async (includeDrafts = false) => {
     setLoading(true);
     try {
+      if (isMaterialsOwnerSampleEnabled()) {
+        setPresentations(
+          materialsOwnerRegistryRows
+            .filter((item) => item.originRuntime === 'presentation')
+            .map(mapArtifactPresentation)
+        );
+        setError(null);
+        return;
+      }
       const draftParam = includeDrafts ? '&include=drafts' : '';
       const artifactRes = await fetch(
         `${API_URL}/artifacts?outputType=presentation&limit=200${draftParam}`,
@@ -1111,6 +1142,16 @@ export function useSheetOutputs() {
   const fetchSheets = useCallback(async (includeDrafts = false) => {
     setLoading(true);
     try {
+      if (isMaterialsOwnerSampleEnabled()) {
+        const mapped = materialsOwnerRegistryRows
+          .map(mapRegistryItemToUnified)
+          .filter(
+            (item: UnifiedOutputRow | null): item is UnifiedOutputRow => item?.kind === 'sheet'
+          );
+        setRows(mapped);
+        setError(null);
+        return;
+      }
       const draftParam = includeDrafts ? '&include=drafts' : '';
       const res = await fetch(`${API_URL}/artifacts?outputType=sheet&limit=200${draftParam}`, {
         headers: getHeaders(),
