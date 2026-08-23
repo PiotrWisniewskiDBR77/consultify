@@ -240,6 +240,38 @@ rollback rehearsal or production release authorization. Status:
 `REALPG_FLOW_PASS / CURRENT_RUNTIME_REPLAY_REQUIRED /
 OWNER_ACCEPTANCE_REQUIRED / PRODUCTION_NOT_AUTHORIZED`.
 
+### Current candidate runtime checkpoint
+
+The preserved local Assessment PostgreSQL clone was advanced with the exact
+current migration chain and the controlled candidate was restarted on the
+familiar local coordinates `127.0.0.1:4390 -> 127.0.0.1:4391`. This is a local
+owner-review runtime only; no Railway, shared staging or production target was
+contacted or changed.
+
+The first backend restart was rejected by the database target guard because a
+development process cannot silently use a localhost database. The guard was
+not weakened or patched. The runtime was restarted with the repository's
+existing CI-local allowance while retaining `NODE_ENV=development`, which
+allowed the complete readiness initialization to execute against the preserved
+synthetic clone.
+
+Current checkpoint evidence:
+
+- `/api/health`: `status=ok`, `database=connected`,
+  `gitSha=cc8848eb7d33e717cd0ab9bf104ed0c6b376c185`;
+- `/api/ready`: `status=ready`, `buildSha` equal to the same candidate,
+  SQL chain `ok`, `0` failed, `0` skipped, `0` pending and `0` unexplained
+  drift;
+- PostgreSQL ledger: `834` migration rows, `0` disabled user triggers and `0`
+  advisory locks;
+- the client is listening on `4390` and the backend on `4391` from the
+  controlled worktree.
+
+This closes the current runtime identity/readiness prerequisite. Signed browser
+flows, current screenshots, persistence/readback and owner verdicts remain
+open. Status: `CURRENT_RUNTIME_READY / BROWSER_REPLAY_REQUIRED /
+OWNER_ACCEPTANCE_REQUIRED / PRODUCTION_NOT_AUTHORIZED`.
+
 ### Preserved dirty-source snapshots
 
 Before selective integration, every dirty source checkout was archived without
