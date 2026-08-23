@@ -175,30 +175,73 @@ describe.skipIf(!REAL_PG)('FINANCE-STATEMENTS legacy-cutover guard (fresh real P
     }
   });
 
-  it('does not block the financial_statement_packs recompute writer (FS-W09)', async () => {
+  it('retires the orphan financial_statement_packs recompute writer (FS-W09)', async () => {
     const response = await request(app)
       .post(`/api/finance-statements/packs/${packId}/recompute`)
       .set('x-request-id', `${prefix}-recompute-1`)
       .send({});
-    // No pack exists for this id, so the leaf handler answers 404 — the point
-    // of this assertion is only that the guard let the request through.
-    expect(response.status).not.toBe(410);
-    expect(response.status).not.toBe(409);
-    expect(response.status).toBe(404);
+    expect(response.status).toBe(409);
+    expect(response.body).toMatchObject({
+      code: 'FINANCE_LEGACY_IDENTITY_UNMAPPED',
+      writerId: 'FS-W09',
+    });
   });
 
-  it('does not block the benchmarks upsert writer (FS-W15)', async () => {
+  it('retires the unmounted benchmarks upsert writer (FS-W15)', async () => {
     const response = await request(app)
       .put('/api/finance-statements/benchmarks')
       .set('x-request-id', `${prefix}-benchmarks-1`)
       .send({ ratioCode: `${prefix}-roa`, median: 8.2 });
-    expect(response.status).not.toBe(410);
-    expect(response.status).not.toBe(409);
-    expect(response.status).toBe(200);
-    expect(response.body?.success).toBe(true);
+    expect(response.status).toBe(410);
+    expect(response.body).toMatchObject({
+      code: 'FINANCE_LEGACY_WRITER_DISABLED',
+      writerId: 'FS-W15',
+      successor: null,
+    });
   });
 
-  it('records one durable, tenant-scoped observation row per writer', async () => {
+  it('retires the other unmounted statement mutations without reaching their leaves', async () => {
+    const cases = [
+      ['post', '/api/finance-statements/upload', 'FS-W01', 410],
+      [
+        'post',
+        `/api/finance-statements/packs/${packId}/statements/missing-statement/assign`,
+        'FS-W11',
+        409,
+      ],
+      ['delete', `/api/finance-statements/missing-statement`, 'FS-W13', 409],
+    ] as const;
+    for (const [method, route, writerId, status] of cases) {
+      const response = await request(app)
+        [method](route)
+        .set('x-request-id', `${prefix}-${writerId.toLowerCase()}-blocked`)
+        .send({});
+      expect(response.status).toBe(status);
+      expect(response.body.writerId).toBe(writerId);
+    }
+  });
+
+  it('restores only FS-W15 with its exact writer-scoped rollback lever', async () => {
+    process.env.FINANCE_LEGACY_ROLLBACK_WRITERS = 'FS-W15';
+    try {
+      const restored = await request(app)
+        .put('/api/finance-statements/benchmarks')
+        .set('x-request-id', `${prefix}-w15-restored`)
+        .send({ ratioCode: `${prefix}-rollback-roa`, median: 8.2 });
+      expect(restored.status).toBe(200);
+
+      const stillBlocked = await request(app)
+        .post('/api/finance-statements/upload')
+        .set('x-request-id', `${prefix}-w01-still-blocked`)
+        .send({});
+      expect(stillBlocked.status).toBe(410);
+      expect(stillBlocked.body.writerId).toBe('FS-W01');
+    } finally {
+      delete process.env.FINANCE_LEGACY_ROLLBACK_WRITERS;
+    }
+  });
+
+  it('records one durable, tenant-scoped blocked row per writer', async () => {
     const rows = await pool.query(
       `SELECT writer_id, access_kind, organization_id, tenant_resolution, route_path,
               legacy_table, legacy_id, successor_path
@@ -211,7 +254,7 @@ describe.skipIf(!REAL_PG)('FINANCE-STATEMENTS legacy-cutover guard (fresh real P
     expect(rows.rows).toEqual([
       {
         writer_id: 'FS-W09',
-        access_kind: 'legacy_uncovered_writer',
+        access_kind: 'legacy_identity_unmapped',
         organization_id: orgA,
         tenant_resolution: 'resolved',
         route_path: `/api/finance-statements/packs/${packId}/recompute`,
@@ -221,7 +264,7 @@ describe.skipIf(!REAL_PG)('FINANCE-STATEMENTS legacy-cutover guard (fresh real P
       },
       {
         writer_id: 'FS-W15',
-        access_kind: 'legacy_uncovered_writer',
+        access_kind: 'legacy_writer_blocked',
         organization_id: orgA,
         tenant_resolution: 'resolved',
         route_path: '/api/finance-statements/benchmarks',

@@ -34,9 +34,9 @@
  * that the bridge has never aliased would produce a permanent, meaningless
  * `not_migrated` result rather than an honest `not_applicable`.
  *
- * All writers are `observed`: reachable exactly as before, now durably recorded
- * per tenant. Nothing here is disabled — this lane has no telemetry window yet
- * for any of these fifteen doors.
+ * A writer is disabled only after its mounted callers have moved to a governed
+ * successor or an exhaustive frontend scan proves that no product caller
+ * remains. Writer-scoped rollback remains available for operational recovery.
  */
 
 import type { LegacyCutoverDomainConfig } from '../legacyCutoverKernel.js';
@@ -53,11 +53,11 @@ export const FINANCE_STATEMENTS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'FS-W01',
       method: 'POST',
       path: /^\/upload\/?$/,
-      state: 'observed',
+      state: 'disabled',
       successor: null,
       legacyTable: 'financial_statements',
       reason:
-        'Creates a new financial_statements row (finance-statements.routes.ts:500, createStatement/finalizeIdempotentUpload in financialStatementService.ts:9047,8936). No mount-level guard existed before this registration; no proven canonical successor (statement-family rows are not one of the four bridged legacy tables).',
+        'No mounted frontend caller uses the primitive single-statement upload door. Product ingestion is owned by /api/v8/finance/statements/upload-and-analyze; this obsolete duplicate creator is retired fail-closed without naming a false equivalent successor.',
     },
     {
       writerId: 'FS-W02',
@@ -127,12 +127,12 @@ export const FINANCE_STATEMENTS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'FS-W09',
       method: 'POST',
       path: /^\/packs\/[^/]+\/recompute\/?$/,
-      state: 'observed',
+      state: 'disabled',
       successor: null,
       legacyTable: 'financial_statement_packs',
       legacyIdFromPath: (path) => decodeURIComponent(path.split('/')[2] || ''),
       reason:
-        'Recomputes a financial_statement_packs row addressed by :id (finance-statements.routes.ts:2679, recomputeStatementPackForOrganization -> financialStatementPackService.ts:695). financial_statement_packs is one of the four legacy tables the canonical identity bridge knows, so legacyTable is set here. No proven successor.',
+        'No mounted frontend caller invokes standalone pack recomputation; governed ingest, mapping and confirmation own recomputation within their workflows. The exposed maintenance mutation is retired fail-closed without claiming an unproved successor.',
     },
     {
       writerId: 'FS-W10',
@@ -147,12 +147,12 @@ export const FINANCE_STATEMENTS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'FS-W11',
       method: 'POST',
       path: /^\/packs\/[^/]+\/statements\/[^/]+\/assign\/?$/,
-      state: 'observed',
+      state: 'disabled',
       successor: null,
       legacyTable: 'financial_statement_packs',
       legacyIdFromPath: (path) => decodeURIComponent(path.split('/')[2] || ''),
       reason:
-        'Assigns a financial_statements row to a financial_statement_packs row, mutating both (finance-statements.routes.ts:2924, assignStatementToExistingPack -> financialStatementPackService.ts:855 -> assignStatementToPack + recomputeStatementPack). legacyId is the pack id (the bridge-known table); the statement id is a second, unmapped parameter. No proven successor.',
+        'No mounted frontend caller exposes manual statement-to-pack assignment. Governed multi-section ingest and confirmation own pack membership; this orphan mutation is retired fail-closed without claiming a successor.',
     },
     {
       writerId: 'FS-W12',
@@ -169,12 +169,12 @@ export const FINANCE_STATEMENTS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'FS-W13',
       method: 'DELETE',
       path: /^\/[^/]+\/?$/,
-      state: 'observed',
+      state: 'disabled',
       successor: null,
       legacyTable: 'financial_statement_packs',
       legacyIdFromPath: (path) => decodeURIComponent(path.split('/')[1] || ''),
       reason:
-        'Dual-purpose delete: the handler first checks whether :id is a financial_statement_packs row (and cascades to its child financial_statements + 7 dependent tables), otherwise falls back to treating :id as an individual financial_statements row (finance-statements.routes.ts:3310-3400, inline SQL, no shared service function — the inventory pointer to financialStatementService.ts:8644/8647 was a different function, compensateAbandonedStatement, not this handler). legacyTable is set to financial_statement_packs as the more common case; when :id is actually a statement id the bridge lookup will honestly resolve not_migrated rather than false-positively match. No proven successor.',
+        'No mounted frontend caller uses the ambiguous pack-or-statement cascade delete. The active pack deletion UI uses the explicit /packs/:id contract (FS-W12); this broad destructive fallback is retired fail-closed.',
     },
     {
       writerId: 'FS-W14',
@@ -190,10 +190,10 @@ export const FINANCE_STATEMENTS_CUTOVER: LegacyCutoverDomainConfig = {
       writerId: 'FS-W15',
       method: 'PUT',
       path: /^\/benchmarks\/?$/,
-      state: 'observed',
+      state: 'disabled',
       successor: null,
       reason:
-        'Upserts an organization-scoped financial_ratio_benchmarks row keyed by (organization_id, ratio_code, industry, period_year) — a collection-level write, not addressed by a path id (finance-statements.routes.ts:3431, upsertBenchmark -> ratioAnalysisService.ts:1150). No legacyTable/legacyId: no single legacy record identity in the path.',
+        'No mounted frontend caller provides benchmark administration through this route. The unaudited collection upsert is retired fail-closed until a governed owner-authorized benchmark command exists.',
     },
   ],
 };

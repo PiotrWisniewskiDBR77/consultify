@@ -25,9 +25,39 @@ describe('FIN-MVP-CUTOVER exact mounted-route denominator', () => {
       legacyMutationDoors: 51,
       canonicalMutationDoors: 2,
       nonMutationDoors: 6,
-      retiredLegacyMutationDoors: 44,
-      openLegacyMutationDoors: 7,
+      retiredLegacyMutationDoors: 49,
+      openLegacyMutationDoors: 2,
     });
+  });
+
+  it('keeps retired orphan statement mutations unreachable from mounted frontend source', () => {
+    const files: string[] = [];
+    const visit = (directory: string) => {
+      for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+        const target = path.join(directory, entry.name);
+        if (entry.isDirectory()) visit(target);
+        else if (/\.(?:ts|tsx)$/.test(entry.name)) files.push(target);
+      }
+    };
+    visit(path.resolve(process.cwd(), 'src'));
+    const mountedSource = files.map((file) => fs.readFileSync(file, 'utf8')).join('\n');
+
+    expect(mountedSource).not.toMatch(/\/api\/finance-statements\/upload(?:['"`?])/);
+    expect(mountedSource).not.toMatch(/\/api\/finance-statements\/packs\/\$\{[^}]+\}\/recompute/);
+    expect(mountedSource).not.toMatch(
+      /\/api\/finance-statements\/packs\/\$\{[^}]+\}\/statements\/\$\{[^}]+\}\/assign/
+    );
+    expect(mountedSource).not.toMatch(/Api\.delete\(`\/api\/finance-statements\/\$\{/);
+    expect(mountedSource).not.toContain("Api.put('/api/finance-statements/benchmarks'");
+
+    for (const writerId of ['FS-W01', 'FS-W09', 'FS-W11', 'FS-W13', 'FS-W15']) {
+      expect(
+        FINANCE_STATEMENTS_CUTOVER.writers.find((rule) => rule.writerId === writerId)
+      ).toMatchObject({
+        state: 'disabled',
+        successor: null,
+      });
+    }
   });
 
   it('requires every non-legacy classification to carry a literal reason that names its effect', () => {
