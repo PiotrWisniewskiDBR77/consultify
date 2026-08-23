@@ -203,6 +203,43 @@ The bounded product comparison proves:
 This segment is therefore `SOURCE_RECONCILED / TECHNICAL_PASS /
 RUNTIME_REPLAY_REQUIRED / OWNER_ACCEPTANCE_REQUIRED`.
 
+### Governed transformation-flow requalification
+
+The current controlled candidate was compared with the last exact-product
+FLOW qualification at `bcfb01483a368fb4baa133d35dbc7b56ba6c7857` before any
+expensive replay. Across the bounded Initiative, Execution, Results, Finance
+and four-source FLOW product/test paths there is zero drift. The only changes
+inside the compared scope are two additive migrations for Chat project-context
+governance and Knowledge Vault document metadata.
+
+A fresh disposable native PostgreSQL 17 cluster was then created locally. It
+was neither the preserved Assessment owner fixture on `34945` nor any shared,
+staging, Railway or production database. The exact-current migration runner
+applied `834/834` migrations from zero without `--safe` or skipped failure.
+
+One sequential no-retry invocation covered the canonical Initiative lifecycle
+gates, Runtime-v1 Execution, Results Actual, governed Finance reconciliation,
+PIR and the four real producer kinds (Organization, Interview, DRD and SWOT):
+
+- initial combined invocation: `6/7` files passed, `93` tests passed, `1`
+  retired legacy test skipped and one full-lineage assertion ended with the
+  transport error `ECONNRESET / socket hang up` rather than a product
+  assertion failure;
+- one bounded rerun of only the affected full-lineage file, on a separately
+  recreated disposable database with the same `834/834` schema, passed `4/4`
+  active tests; its one retired legacy test remained skipped by contract;
+- final technical denominator: all `94` active tests exercised in the bounded
+  current-SHA packet passed, with one explicitly retired test skipped;
+- both disposable databases reported `834` migration ledger rows, `0`
+  disabled user triggers and `0` advisory locks after execution.
+
+This proves current-source and current-schema continuity for the governed
+repository flow. It does not prove signed browser/API/SQL identity on the
+current candidate runtime, desktop/mobile visual acceptance, owner acceptance,
+rollback rehearsal or production release authorization. Status:
+`REALPG_FLOW_PASS / CURRENT_RUNTIME_REPLAY_REQUIRED /
+OWNER_ACCEPTANCE_REQUIRED / PRODUCTION_NOT_AUTHORIZED`.
+
 ### Preserved dirty-source snapshots
 
 Before selective integration, every dirty source checkout was archived without
