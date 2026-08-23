@@ -9,7 +9,7 @@ import {
   updateAnnaLpCtaContext,
 } from '@/services/annaLpCtaContext';
 import { Api } from '@/services/api';
-import { adoptDemoSession } from '@/services/demoSessionAdoption';
+import { adoptDemoSession, bindUserToDemoSession } from '@/services/demoSessionAdoption';
 import { postPublicAnnaFunnelEvent } from '@/services/publicAnnaAnalytics';
 
 import { AuthStep, SessionMode, UserRole } from '../types';
@@ -481,7 +481,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         // absent it calls `setDemoMode(false)` + `resetDemoState()` and wipes the
         // adoption above. `Api.registerDemo` already stamps it on the user, and
         // it is restated here so the guarantee does not depend on that.
-        onAuthSuccess({ ...user, hasWorkspace: true, isDemo: true } as any);
+        onAuthSuccess({ ...bindUserToDemoSession(user, demoSession), hasWorkspace: true } as any);
       } catch (err: any) {
         setError(mapPublicAuthError(err, 'demoSignup'));
 
@@ -611,7 +611,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         // Same ordering rule as the sign-up branch: adopt, then hand over to the
         // caller that navigates.
         adoptDemoSession(session);
-        onAuthSuccess({ ...user, hasWorkspace: true, isDemo: true } as any);
+        onAuthSuccess({ ...bindUserToDemoSession(user, session), hasWorkspace: true } as any);
       } catch (err: any) {
         setError(mapPublicAuthError(err, 'login'));
       } finally {
@@ -1155,10 +1155,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
         <div className="space-y-1.5">
           <div className="flex justify-between">
-            <label
-              htmlFor="login-password"
-              className="text-xs font-medium text-c-text-secondary"
-            >
+            <label htmlFor="login-password" className="text-xs font-medium text-c-text-secondary">
               {t('auth.password')}
             </label>
             <button

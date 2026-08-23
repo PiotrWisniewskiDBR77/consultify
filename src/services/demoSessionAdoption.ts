@@ -1,4 +1,5 @@
 import { useAppStore } from '../store/useAppStore';
+import type { User } from '../types';
 
 /**
  * The isolated demo tenant provisioned by `POST /auth/register-demo` (and by
@@ -35,4 +36,45 @@ export function adoptDemoSession(session: DemoSessionPayload | null | undefined)
   const store = useAppStore.getState();
   store.setDemoMode(true);
   store.setDemoSessionOrgId(session?.organizationId ?? null);
+  if (typeof window !== 'undefined') {
+    window.localStorage.removeItem('consultify_current_org_id');
+  }
+  store.setCurrentOrganization(
+    session?.organizationId ? { id: session.organizationId, name: 'Demo workspace' } : null
+  );
+}
+
+/** Bind the public-demo principal to the isolated tenant before navigation. */
+export function bindUserToDemoSession(
+  user: User,
+  session: DemoSessionPayload | null | undefined
+): User {
+  if (!session?.organizationId) return { ...user, isDemo: true };
+  return {
+    ...user,
+    organizationId: session.organizationId,
+    organizationName: 'Demo workspace',
+    isDemo: true,
+  };
+}
+
+/**
+ * `/auth/me` intentionally returns the account's base role and organization.
+ * During an active public-demo session those values must not replace the
+ * already-authenticated demo persona or its isolated tenant.
+ */
+export function reconcileDemoAuthProfile(
+  remoteUser: User,
+  restoredUser: User | null,
+  demoSessionOrgId: string | null
+): User {
+  if (!demoSessionOrgId) return remoteUser;
+  const sameDemoPrincipal = restoredUser?.id === remoteUser.id && restoredUser.isDemo === true;
+  return {
+    ...remoteUser,
+    ...(sameDemoPrincipal ? { role: restoredUser.role } : {}),
+    organizationId: demoSessionOrgId,
+    organizationName: 'Demo workspace',
+    isDemo: true,
+  };
 }

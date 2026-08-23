@@ -76,12 +76,14 @@ vi.mock('../../src/services/api', () => ({
 // that AuthView really drives the shared helper down onto the store.
 const setDemoModeMock = vi.fn();
 const setDemoSessionOrgIdMock = vi.fn();
+const setCurrentOrganizationMock = vi.fn();
 
 vi.mock('../../src/store/useAppStore', () => ({
   useAppStore: {
     getState: () => ({
       setDemoMode: setDemoModeMock,
       setDemoSessionOrgId: setDemoSessionOrgIdMock,
+      setCurrentOrganization: setCurrentOrganizationMock,
     }),
   },
 }));
@@ -122,7 +124,10 @@ function registerFields(container: HTMLElement) {
   };
 }
 
-async function fillAndSubmitRegister(user: ReturnType<typeof userEvent.setup>, container: HTMLElement) {
+async function fillAndSubmitRegister(
+  user: ReturnType<typeof userEvent.setup>,
+  container: HTMLElement
+) {
   const fields = registerFields(container);
   await user.type(fields.firstName, 'Fixture');
   await user.type(fields.lastName, 'Tester');

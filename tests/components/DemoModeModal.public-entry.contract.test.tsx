@@ -70,12 +70,14 @@ vi.mock('../../src/services/api', () => ({
 
 const setDemoModeMock = vi.fn();
 const setDemoSessionOrgIdMock = vi.fn();
+const setCurrentOrganizationMock = vi.fn();
 
 vi.mock('../../src/store/useAppStore', () => ({
   useAppStore: {
     getState: () => ({
       setDemoMode: setDemoModeMock,
       setDemoSessionOrgId: setDemoSessionOrgIdMock,
+      setCurrentOrganization: setCurrentOrganizationMock,
     }),
   },
 }));
@@ -106,9 +108,7 @@ async function submitLogin() {
 }
 
 function renderDemoModal(onSuccess = vi.fn()) {
-  render(
-    <DemoModeModal isOpen onClose={vi.fn()} onSuccess={onSuccess} mode="demo" />
-  );
+  render(<DemoModeModal isOpen onClose={vi.fn()} onSuccess={onSuccess} mode="demo" />);
   return onSuccess;
 }
 
@@ -133,9 +133,9 @@ describe('DemoModeModal public entry contract', () => {
   });
 
   it('separates unavailable seed from a credential problem', () => {
-    expect(
-      mapPublicEntryError({ data: { code: 'DEMO_SEED_UNAVAILABLE' } }, 'demoSignup')
-    ).toBe(DEMO_MODAL_PUBLIC_ERROR_COPY.demoUnavailable);
+    expect(mapPublicEntryError({ data: { code: 'DEMO_SEED_UNAVAILABLE' } }, 'demoSignup')).toBe(
+      DEMO_MODAL_PUBLIC_ERROR_COPY.demoUnavailable
+    );
     expect(mapPublicEntryError({ code: 'DEMO_UNAVAILABLE' }, 'demoLogin')).toBe(
       DEMO_MODAL_PUBLIC_ERROR_COPY.demoUnavailable
     );

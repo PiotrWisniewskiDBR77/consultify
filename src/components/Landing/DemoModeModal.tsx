@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { Api } from '../../services/api';
-import { adoptDemoSession } from '../../services/demoSessionAdoption';
+import { adoptDemoSession, bindUserToDemoSession } from '../../services/demoSessionAdoption';
 
 interface DemoModeModalProps {
   isOpen: boolean;
@@ -41,9 +41,11 @@ type PublicEntryContext = 'demoSignup' | 'demoLogin' | 'trialSignup' | 'trialLog
 function readErrorCode(error: unknown): string | null {
   // `handleResponse` attaches the parsed body as `err.data`; other call sites use
   // `err.code` or a nested `err.error.code`. Read all three, uppercased.
-  const raw = error as
-    | { code?: unknown; error?: { code?: unknown }; data?: { code?: unknown } }
-    | null;
+  const raw = error as {
+    code?: unknown;
+    error?: { code?: unknown };
+    data?: { code?: unknown };
+  } | null;
   const candidate =
     (typeof raw?.code === 'string' && raw.code) ||
     (typeof raw?.data?.code === 'string' && raw.data.code) ||
@@ -127,17 +129,18 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
             legalConsentAt: new Date().toISOString(),
           });
           adoptDemoSession(demoSession);
-          onSuccess({ ...user, hasWorkspace: true, isDemo: true }, 'demo');
+          onSuccess({ ...bindUserToDemoSession(user, demoSession), hasWorkspace: true }, 'demo');
         } else {
           const user = await Api.login(form.email, form.password);
           // A returning public-demo account already owns an isolated active
           // session. Reuse it instead of asking the fail-closed demo toggle to
           // provision again (public demo principals may only leave via toggle).
-          const session = user.isDemo && user.demoSession
-            ? user.demoSession
-            : (await Api.enterDemo())?.demoSession;
+          const session =
+            user.isDemo && user.demoSession
+              ? user.demoSession
+              : (await Api.enterDemo())?.demoSession;
           adoptDemoSession(session);
-          onSuccess({ ...user, hasWorkspace: true, isDemo: true }, 'demo');
+          onSuccess({ ...bindUserToDemoSession(user, session), hasWorkspace: true }, 'demo');
         }
       } else {
         if (tab === 'signup') {

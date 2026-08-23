@@ -7,6 +7,7 @@ import { usePageMeta } from '@/hooks/usePageMeta';
 // RouterSyncProvider removed - RouterSync is now single source of truth
 import { usePageTracking } from '@/hooks/usePageTracking';
 import { Api } from '@/services/api';
+import { reconcileDemoAuthProfile } from '@/services/demoSessionAdoption';
 import { syncLanguageFromAccount } from '@/services/languagePreference';
 import { initializeTokenServiceOnce, tokenService } from '@/services/tokenService';
 import { bootstrapAccessibilityPreferences } from '@/utils/accessibilityRuntime';
@@ -55,7 +56,9 @@ const isStyleGuideEnabled = import.meta.env.VITE_ENABLE_STYLEGUIDE === 'true';
 // <Route> w ogóle nie trafia do <Routes>, więc dla wszystkich pozostałych
 // użytkowników nic się nie zmienia (CLAUDE.md reguła #9 — zakaz masowego
 // włączania; moduł wchodzi na demo dopiero po akcepcie właściciela).
-const CaseWorkspaceRoute = React.lazy(() => import('./components/CaseWorkspace/CaseWorkspaceRoute'));
+const CaseWorkspaceRoute = React.lazy(
+  () => import('./components/CaseWorkspace/CaseWorkspaceRoute')
+);
 const isCaseWorkspaceEnabledAtBoot = isCaseWorkspaceEnabled();
 
 type AuthBootState = {
@@ -346,7 +349,9 @@ function AppContent() {
         if (!isMounted) return; // Component unmounted, don't update state
 
         if (user) {
-          const authenticatedUser: User = { ...user, isAuthenticated: true };
+          const demoSessionOrgId = useAppStore.getState().demoSessionOrgId;
+          const reconciledUser = reconcileDemoAuthProfile(user, restoredUser, demoSessionOrgId);
+          const authenticatedUser: User = { ...reconciledUser, isAuthenticated: true };
 
           // P0.3: konto > localStorage > navigator — re-sync on every fresh
           // profile fetch, not only when id/email/avatar/role changed (the
@@ -356,24 +361,25 @@ function AppContent() {
           // Only update if user data actually changed to prevent unnecessary re-renders
           if (
             !restoredUser ||
-            restoredUser.id !== user.id ||
-            restoredUser.email !== user.email ||
-            restoredUser.avatarUrl !== user.avatarUrl ||
-            restoredUser.role !== user.role
+            restoredUser.id !== authenticatedUser.id ||
+            restoredUser.email !== authenticatedUser.email ||
+            restoredUser.avatarUrl !== authenticatedUser.avatarUrl ||
+            restoredUser.role !== authenticatedUser.role ||
+            restoredUser.organizationId !== authenticatedUser.organizationId
           ) {
             setCurrentUser(authenticatedUser);
 
-            if (user.organizationId) {
+            if (authenticatedUser.organizationId) {
               setCurrentOrganization({
-                id: user.organizationId,
-                name: user.organizationName || 'Organization',
+                id: authenticatedUser.organizationId,
+                name: authenticatedUser.organizationName || 'Organization',
               });
             }
-          } else if (user.organizationId) {
+          } else if (authenticatedUser.organizationId) {
             // Still update organization if needed
             setCurrentOrganization({
-              id: user.organizationId,
-              name: user.organizationName || 'Organization',
+              id: authenticatedUser.organizationId,
+              name: authenticatedUser.organizationName || 'Organization',
             });
           }
         }
