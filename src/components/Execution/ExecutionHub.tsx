@@ -84,6 +84,7 @@ import {
 import { refreshExecutionWriteTruth } from '@/services/executionWriteTruth';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { getStatusesForModule, STATUS_METADATA } from '@/services/initiativeLifecycle';
+import { listExecutionCases } from '@/services/initiatives-execution/runtimeApi';
 import { useConversationStore } from '@/store/useConversationStore';
 import { getArtifactPath } from '@/utils/artifactLinks';
 import { mapHubLoadFailureToPresentation } from '@/utils/errors/mapHubLoadFailureToPresentation';
@@ -1198,12 +1199,33 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       setInitiativesLoadError(null);
       setInitiativesLoadErrorCode(null);
       try {
-        const response = await Api.getInitiatives(currentProjectId || undefined);
+        const [response, executionCasesResponse] = await Promise.all([
+          Api.getInitiatives(currentProjectId || undefined),
+          listExecutionCases(),
+        ]);
         const data = normalizeExecutionArrayEnvelope<FullInitiative>(response, ['initiatives']);
-
-        const canonicalExecutionInitiatives = data.filter((i: FullInitiative) =>
-          EXECUTION_STATUSES.includes(i.status)
+        const activeExecutionInitiativeIds = new Set(
+          normalizeExecutionArrayEnvelope<{ initiativeId?: string; state?: string }>(
+            executionCasesResponse,
+            ['cases']
+          )
+            .filter((executionCase) => String(executionCase.state || '').toUpperCase() === 'ACTIVE')
+            .map((executionCase) => String(executionCase.initiativeId || ''))
+            .filter(Boolean)
         );
+
+        const canonicalExecutionInitiatives = data
+          .filter(
+            (initiative: FullInitiative) =>
+              EXECUTION_STATUSES.includes(initiative.status) ||
+              activeExecutionInitiativeIds.has(String(initiative.id))
+          )
+          .map((initiative: FullInitiative) =>
+            activeExecutionInitiativeIds.has(String(initiative.id)) &&
+            !EXECUTION_STATUSES.includes(initiative.status)
+              ? { ...initiative, status: InitiativeStatus.EXECUTING }
+              : initiative
+          );
         const canonicalIds = new Set(canonicalExecutionInitiatives.map((initiative) => String(initiative.id)));
         const reviewInitiatives = allowDemoData
           ? executionDemoData.initiatives.filter(

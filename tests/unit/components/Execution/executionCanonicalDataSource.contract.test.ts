@@ -20,4 +20,11 @@ describe('Execution canonical data-source contract', () => {
     expect(source).toContain(': [];');
     expect(source).not.toMatch(/const fallbackInitiatives = import\.meta\.env\.DEV/);
   });
+
+  it('uses the canonical execution-case spine to admit initiatives into Execution', () => {
+    expect(source).toContain('listExecutionCases()');
+    expect(source).toContain("String(executionCase.state || '').toUpperCase() === 'ACTIVE'");
+    expect(source).toContain('activeExecutionInitiativeIds.has(String(initiative.id))');
+    expect(source).toContain('status: InitiativeStatus.EXECUTING');
+  });
 });
