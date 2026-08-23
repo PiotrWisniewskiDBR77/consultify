@@ -1,6 +1,10 @@
 # Wave 3 exact-SHA browser replay — 2026-08-23
 
-Candidate: `a7e43c31ac128f895d278e3035c4f9ff00675767`
+Runtime candidates:
+
+- `a7e43c31ac128f895d278e3035c4f9ff00675767` — Organization through Assessment.
+- `b36a6a0eb9d728ed9c4538a55ca09d8285731cd7` — Initiatives through Meetings;
+  its only change from the first candidate is this evidence document.
 
 Scope: credentialed in-app browser replay against isolated recovered local
 PostgreSQL databases. Railway, staging, demo and production were not mutated.
@@ -18,6 +22,10 @@ This is runtime evidence, not Piotr owner acceptance or release authorization.
 | Interview | Real OWNER login; `/interview` rendered two durable assignments: one `In progress / 0%` and one `Submitted / 100%`. The anonymous public deep link rendered all three required Polish questions and submit action without authentication. | `BROWSER_PASS_OWNER_ACCEPTANCE_REQUIRED` |
 | Tools | Real OWNER login; `/discovery-tools?docId=wave3-tools-owner-approved-v1` rendered the `APPROVED`, `100%` Dynamic SWOT session, mission/context, five-question workflow, properties and executive-summary-backed output. | `BROWSER_PASS_OWNER_ACCEPTANCE_REQUIRED` |
 | Assessment | Real OWNER login; `/assessment` rendered the DRD library plus both canonical sessions with exact IDs, pinned method `2.0.0-methodpack.1`, versions `v5`/`v3`, and states `frozen`/`active`. Direct cold-open of `/assessment/drd/23aaf18e-19f3-4067-ae91-204495b642e5` rendered immutable Output v1, content hash, scope/limitations, two unit scores, two findings and the governed local Initiative Proposal Draft. | `BROWSER_PASS_OWNER_ACCEPTANCE_REQUIRED` |
+| Initiatives | Real OWNER login; `/initiatives` rendered one `W realizacji` initiative, `Delivery` lifecycle, owner, next action, expected 30% planning improvement and truthful `Confidence: UNKNOWN`/health state. | `BROWSER_PASS_OWNER_ACCEPTANCE_REQUIRED` |
+| Execution | Real OWNER login; `/execution/w3-exe-case-v1` rendered the one active Customer pilot case, exact handoff `w3-exe-handoff-v1@v1`, accepted Initiative baseline `v3`, zero open gaps, next milestone and independent acceptance request contract. | `BROWSER_PASS_OWNER_ACCEPTANCE_REQUIRED` |
+| My Work / Agent | Real OWNER login; `/my-work` rendered the full module navigation and empty canonical Inbox. Direct cold-open `/my-work/tasks` rendered the durable `Review pilot` task as `W trakcie`, high priority and assigned to the owner. | `BROWSER_PASS_OWNER_ACCEPTANCE_REQUIRED` |
+| Meetings | Real OWNER login; `/meeting` rendered all three completed owner fixtures: pending minutes, rejected minutes and approved minutes, with exact scheduled dates, participants and zero follow-ups. | `BROWSER_PASS_OWNER_ACCEPTANCE_REQUIRED` |
 
 ## Qualification notes
 
@@ -31,15 +39,18 @@ This is runtime evidence, not Piotr owner acceptance or release authorization.
   The table's `Open` action did not produce an independently captured navigation
   event in this run, so action-level click acceptance remains `NOT VERIFIED`
   rather than being inferred from the successful direct route.
+- My Work task content was proven through its canonical `/my-work/tasks` deep
+  link. Clicking the visible tab label did not produce a separately captured
+  state transition while onboarding was still overlaid, so that click-level
+  interaction remains `NOT VERIFIED`; no task-content claim depends on it.
 - Onboarding remained visible because dismissing it would write review state.
   It did not block direct route readback, but onboarding acceptance remains a
   separate owner decision.
 
 ## Remaining denominator
 
-Browser-qualified on this candidate: `4/16` modules.
+Browser-qualified across the exact-SHA candidate lineage: `8/16` modules.
 
-Pending exact-SHA browser replay: Initiatives, Execution, My Work / Agent,
-Meetings, Results, Finance, Materials, Audits, Chat, Admin, Settings and Partner.
-Responsive/accessibility checks and Piotr owner acceptance remain open for the
-full denominator.
+Pending exact-SHA browser replay: Results, Finance, Materials, Audits, Chat,
+Admin, Settings and Partner. Responsive/accessibility checks and Piotr owner
+acceptance remain open for the full denominator.
