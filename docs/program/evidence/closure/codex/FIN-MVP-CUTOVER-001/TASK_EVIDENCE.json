@@ -716,6 +716,16 @@
     "verdict": "PARTIAL",
     "boundary": "No Railway, production, deployment, release or persistent tenant data was mutated. FS-W10 and FS-W12 require governed successors before retirement; Wave 3 owner acceptance and the broader MVP objective remain open."
   },
+  "wave3FsW12StatementPackArchive20260823": {
+    "testedSha": "2db82e7077",
+    "scope": "Replaces the mounted irreversible statement-pack cascade delete with a tenant-scoped, Finance-editor, version-CAS and idempotent archive command; archived packs disappear from active lists while all child evidence remains intact.",
+    "tests": "Canonical archive service plus production-shaped legacy cutover passed 18/18 on fresh PostgreSQL. API and exact inventory passed 66/66. Root TypeScript passed. Five concurrent identical commands produced one mutation and one immutable receipt; wrong-tenant access failed 403, confirmed-pack archive failed 409, and receipt/aggregate mutation was rejected.",
+    "proved": "The mounted Finance delete action calls only V8 archive with expectedVersion, reason and Idempotency-Key. The legacy /packs/:id cascade-delete writer is disabled with exact rollback available. The command preserves child statements and blocks updates or deletion after archival.",
+    "cleanup": "Fresh pgvector PostgreSQL applied 828 migrations, strict repeat applied 0 and dry-run reported 0 pending. Final readback was 828 migrations, 0 fixture residue, 0 disabled triggers, 0 advisory locks and 0 run-owned cutover events. The disposable --rm container was removed.",
+    "denominator": "50 safely retired / 51 actual legacy mutation doors. Only FS-W10 report-section publication remains open.",
+    "verdict": "PARTIAL",
+    "boundary": "No Railway, production, deployment, release or persistent tenant data was mutated. FS-W10, Wave 3 owner acceptance and the broader MVP objective remain open."
+  },
   "currentKernelRequalification": {
     "migration": "Fresh exact-current PostgreSQL ledger 758/758/758 successful and unique with zero missing checksums; strict repeat applied 0 and dry-run reported 0 pending.",
     "focused": "3 files / 13 tests passed: durable lifecycle 5, mounted Finance/Results/Partner observation 6, atomic bulk user plus ACTIVE membership 2.",
