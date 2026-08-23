@@ -1132,6 +1132,52 @@ html.reduce-motion.focus-style-animated :focus-visible {
     opacity: 0.9;
   }
 }
+
+/* CHAT-OWN-012 — restrained idle affordance around the Teresa composer.
+   It is mounted only while the input is empty, enabled, unfocused and neither
+   sending nor recording, so it never impersonates an operation state. */
+.chat-composer-idle-pulse::before {
+  position: absolute;
+  inset: -1px;
+  z-index: 1;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  content: '';
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg 260deg,
+    rgb(133 24 47 / 0.08) 285deg,
+    rgb(133 24 47 / 0.55) 330deg,
+    transparent 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: chat-composer-idle-orbit 12s linear infinite;
+  will-change: transform;
+}
+
+@keyframes chat-composer-idle-orbit {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-composer-idle-pulse::before {
+    animation: none;
+    opacity: 0.18;
+    will-change: auto;
+  }
+}
+html.reduce-motion .chat-composer-idle-pulse::before {
+  animation: none;
+  opacity: 0.18;
+  will-change: auto;
+}
 /* reduce-motion: keep a static accent frame, drop the pulse */
 html.reduce-motion .chat-streaming-frame::after {
   animation: none;

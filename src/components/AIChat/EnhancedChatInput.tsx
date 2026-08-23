@@ -1081,8 +1081,9 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
 
       {/* Main Input Container */}
       <div
+        data-idle-pulse={!isInputDisabled && !isRecordingAny && !isFocused && !value.trim()}
         className={`
-                relative
+                relative isolate
                 bg-white dark:bg-navy-900 rounded-xl border transition-all duration-200
                 ${
                   /* Bez kolorowej obwódki focusa na composerze (decyzja Piotra
@@ -1095,6 +1096,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                 }
                 ${isRecordingAny ? 'ring-2 ring-blue-500/50' : ''}
                 ${isDisabled ? 'opacity-60' : ''}
+                ${!isInputDisabled && !isRecordingAny && !isFocused && !value.trim() ? 'chat-composer-idle-pulse' : ''}
             `}
       >
         {/* Slash / @-mention palette — floats above the composer */}
