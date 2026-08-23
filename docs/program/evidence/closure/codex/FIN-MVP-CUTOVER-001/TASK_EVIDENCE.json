@@ -726,6 +726,15 @@
     "verdict": "PARTIAL",
     "boundary": "No Railway, production, deployment, release or persistent tenant data was mutated. FS-W10, Wave 3 owner acceptance and the broader MVP objective remain open."
   },
+  "wave3FinanceLegacyDenominatorClosure20260823": {
+    "testedSha": "09caf5636a",
+    "scope": "Corrects FS-W10 report-section publication from legacy-write to canonical-write after tracing its actual persistence targets and closes the exact mounted Finance legacy mutation denominator.",
+    "tests": "Exact inventory and literal effect-reason enforcement passed 26/26. The route reads a statement pack but persists only a native Report Builder artifact, an immutable ReportContract snapshot and its Evidence Envelope; it does not update legacy statement or pack rows.",
+    "proved": "The final exact denominator is 59 registered rules: 50 actual legacy mutation doors, 3 canonical writes and 6 non-mutations. All 50 actual legacy mutation doors are now retired; zero remain open. FS-W10 remains available because it is the canonical report handoff, not a legacy writer requiring retirement.",
+    "denominator": "50 safely retired / 50 actual legacy mutation doors; 0 open.",
+    "verdict": "TECHNICAL PASS / BROADER MVP PARTIAL",
+    "boundary": "This closes the Finance legacy mutation denominator only. It does not prove Wave 3 owner acceptance, runtime demo, Railway/database reconciliation, NFR/DR or final MVP release readiness. Production remains unchanged."
+  },
   "currentKernelRequalification": {
     "migration": "Fresh exact-current PostgreSQL ledger 758/758/758 successful and unique with zero missing checksums; strict repeat applied 0 and dry-run reported 0 pending.",
     "focused": "3 files / 13 tests passed: durable lifecycle 5, mounted Finance/Results/Partner observation 6, atomic bulk user plus ACTIVE membership 2.",
