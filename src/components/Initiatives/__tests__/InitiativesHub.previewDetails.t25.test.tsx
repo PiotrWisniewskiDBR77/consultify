@@ -150,7 +150,7 @@ describe('T25 Initiatives Portfolio table preview Details', () => {
     expect(result).not.toMatch(/MARKER_/);
   });
 
-  it('changes only table Details and preserves block order, relations, actions, and adjacent modes', () => {
+  it('delegates the table preview contract to the canonical register and preserves adjacent modes', () => {
     const source = readFileSync(
       join(process.cwd(), 'src/components/Initiatives/InitiativesHub.tsx'),
       'utf8'
@@ -160,16 +160,20 @@ describe('T25 Initiatives Portfolio table preview Details', () => {
     const tableSlice = source.slice(tableStart, gridStart);
     const adjacentSlice = source.slice(gridStart);
 
-    expect(tableSlice).toContain('text: tablePreviewDetailsText');
-    expect(tableSlice).not.toContain("t('initiatives.noDescription', 'No description.')");
-    expect(tableSlice).toContain('selectedTableRow.sourceType && selectedTableRow.sourceId');
-    expect(tableSlice).toContain('actions={tablePreviewActions}');
+    expect(tableSlice).toContain('<CanonicalInitiativeRegister');
+    expect(tableSlice).toContain('rows={searchedInitiatives}');
+    expect(tableSlice).toContain('selectedId={previewInitiativeId}');
+    expect(tableSlice).toContain('onSelect={(row) =>');
+    expect(tableSlice).toContain('onOpen={handleOpenInitiativeDocument}');
+    expect(tableSlice).toContain('persistKey="initiatives.canonical-register.v1"');
+    expect(tableSlice).toContain('relationForRow={(row) =>');
+    expect(tableSlice).not.toContain('tablePreviewDetailsText');
     const order = [
-      'meta={{',
-      'details={{',
-      'ai={{',
-      'relations={',
-      'actions={tablePreviewActions}',
+      'rows={searchedInitiatives}',
+      'selectedId={previewInitiativeId}',
+      'onSelect={(row) =>',
+      'onOpen={handleOpenInitiativeDocument}',
+      'relationForRow={(row) =>',
     ];
     const positions = order.map((token) => tableSlice.indexOf(token));
     expect(positions.every((position) => position >= 0)).toBe(true);
