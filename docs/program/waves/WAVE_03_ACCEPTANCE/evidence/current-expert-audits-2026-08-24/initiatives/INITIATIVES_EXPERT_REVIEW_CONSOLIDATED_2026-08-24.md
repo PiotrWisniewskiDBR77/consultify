@@ -23,12 +23,12 @@ The repository contains a substantial canonical Initiative and Execution foundat
 | Package | Current state | Evidence boundary |
 |---|---|---|
 | `INI-C01` | `SOURCE_FIX_PASS` | Implicit `import.meta.env.DEV` sample-data admission was removed. A persistent canonical read failure now renders the blocking data-source error and no unlabelled demo row. Hub/error/modal lane: `17/17 PASS`. |
-| `INI-C02` | `TECHNICAL_REALDB_PASS / BROWSER_PENDING` | Ordinary local Plan and Capacity now receive `demoMode=false` and select their real APIs. Domain/surface lane: `9/9 PASS`. An isolated disposable PostgreSQL replay proved Plan/Capacity create, version, publish and reader readback: `2` files, `3/3 PASS`, retry `0`; cleanup residue `0`. HTTP/browser create-save-refresh-reopen is still pending. |
-| `INI-C03` | `TECHNICAL_REALDB_PASS / PROCESS_RESTART_AND_BROWSER_PENDING` | Concurrent handoff acceptance produced exactly one stable Execution Case and one relation; idempotent retry replayed the winner; a new PostgreSQL connection pool cold-read the same Initiative/Case IDs; foreign tenant readback returned null; identity counts were `1 Initiative / 1 Execution Case`. Isolated lane: `1` file, `2/2 PASS`, retry `0`, residue `0`; a restarted server/browser traversal is still pending. |
+| `INI-C02` | `TECHNICAL_REALDB_AND_BROWSER_PASS / OWNER_ACCEPTANCE_PENDING` | Ordinary local Plan and Capacity use their real APIs. Domain/surface lane: `9/9 PASS`; disposable PostgreSQL create/version/publish/readback: `3/3 PASS`, retry `0`, residue `0`. After a clean process restart at `68d59c4774`, the browser reopened published Plan v2 and Capacity v2; Capacity retained row `2026-W35`. The Plan table is truthfully empty because the fixture Initiative is already `IN_EXECUTION`, so it cannot be rescheduled into the Plan. |
+| `INI-C03` | `TECHNICAL_REALDB_RESTART_BROWSER_PASS / OWNER_ACCEPTANCE_PENDING` | Concurrent handoff acceptance produced exactly one stable Execution Case and relation; retry replayed the winner; cold pool retained identical IDs; foreign tenant returned null. At clean runtime SHA `68d59c4774`, Execution joined the canonical active Execution Case to the same Initiative ID and displayed `Automatyzacja planowania przezbrojeń` as `Executing`. Historical demo rows were absent. Fix checkpoint: `68d59c4774`; this is technical evidence, not owner acceptance. |
 | Dialog regression | `SOURCE_FIX_PASS` | The historical New-Initiative dialog focus restoration and label contract were restored; no claim is made for a complete current browser accessibility matrix. |
 
 This checkpoint does not change the consolidated decision: `NO-GO_FOR_OWNER_ACCEPTANCE`.
-`INI-C03`, `INI-C04`, HTTP/browser completion of `INI-C02`, current exact-SHA
+`INI-C04`, owner acceptance of `INI-C02`/`INI-C03`, current exact-SHA
 browser qualification and owner retest remain open.
 
 ## Consolidated closure packages
