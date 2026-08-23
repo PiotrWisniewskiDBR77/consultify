@@ -3323,6 +3323,33 @@ function WorkCanvasMarkdownDocumentPanel({
         </div>
 
         <div className="flex min-w-0 shrink-0 items-center gap-2">
+          <div
+            className="inline-flex shrink-0 rounded-full border border-slate-200 bg-slate-100/80 p-0.5 dark:border-white/10 dark:bg-white/10"
+            data-testid="canvas-direct-view-switcher"
+            aria-label="Canvas view"
+          >
+            {(
+              [
+                ['rich', 'Rich'],
+                ['document', 'DOC'],
+                ['md', 'MD'],
+              ] as const
+            ).map(([viewMode, label]) => (
+              <button
+                key={viewMode}
+                type="button"
+                onClick={() => setMode(viewMode)}
+                aria-pressed={mode === viewMode}
+                className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+                  mode === viewMode
+                    ? 'bg-white text-slate-950 shadow-sm dark:bg-white dark:text-slate-950'
+                    : 'text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           <div className="relative" data-testid="canvas-new-menu-root">
             <button
               type="button"
@@ -3603,52 +3630,6 @@ function WorkCanvasMarkdownDocumentPanel({
                 className="absolute right-0 z-20 mt-2 max-h-[80vh] w-[360px] overflow-auto rounded-2xl border border-slate-200 bg-white p-3 text-xs shadow-xl dark:border-white/10 dark:bg-navy-800"
                 data-testid="canvas-diagnostics-menu"
               >
-                {/* #87d — grupa WIDOK (zwijalna). Restrukturyzacja mega-kebaba:
-                    14 sekcji → 8 nazwanych grup-akordeonów, żeby użytkownik nie
-                    skrolował ściany. Zero utraty funkcji — każda pozycja została,
-                    tylko pogrupowana. */}
-                <details
-                  className="group space-y-1.5 border-b border-slate-200 pb-3 dark:border-white/10"
-                  open
-                >
-                  <summary className="flex cursor-pointer select-none items-center justify-between rounded-xl px-2.5 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/10">
-                    <span>{t('canvas.panel.groups.view', 'Widok')}</span>
-                    <ChevronDown
-                      size={14}
-                      className="shrink-0 text-slate-400 transition-transform group-open:rotate-180"
-                    />
-                  </summary>
-                  <div
-                    className="mx-2.5 mt-1 inline-flex rounded-full bg-slate-100 p-1 dark:bg-white/10"
-                    data-testid="canvas-view-actions"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setMode('document')}
-                      aria-label="Dock view"
-                      className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-                        mode === 'document'
-                          ? 'bg-white text-slate-950 shadow-sm dark:bg-white dark:text-slate-950'
-                          : 'text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'
-                      }`}
-                    >
-                      Dock
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setMode('md')}
-                      aria-label="Markdown view"
-                      className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-                        mode === 'md'
-                          ? 'bg-white text-slate-950 shadow-sm dark:bg-white dark:text-slate-950'
-                          : 'text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'
-                      }`}
-                    >
-                      MD
-                    </button>
-                  </div>
-                </details>
-
                 <details className="group mt-3 space-y-1.5 border-b border-slate-200 pb-3 dark:border-white/10">
                   <summary className="flex cursor-pointer select-none items-center justify-between rounded-xl px-2.5 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/10">
                     <span>{t('canvas.panel.common.title', 'Most common actions')}</span>
@@ -3701,16 +3682,6 @@ function WorkCanvasMarkdownDocumentPanel({
                       ),
                       actionLabel: t('canvas.panel.hints.templateAction', 'New template'),
                       onClick: () => setIsTemplateBuilderOpen((open) => !open),
-                    },
-                    {
-                      title: t('canvas.panel.hints.viewTitle', 'Switch Rich/Dock/MD view'),
-                      detail: t(
-                        'canvas.panel.hints.viewDetail',
-                        'Rich = editor with toolbar, Dock = preview, MD = raw markdown.'
-                      ),
-                      actionLabel: mode === 'rich' ? 'Dock' : mode === 'document' ? 'MD' : 'Rich',
-                      onClick: () =>
-                        setMode(mode === 'rich' ? 'document' : mode === 'document' ? 'md' : 'rich'),
                     },
                     {
                       title: t('canvas.panel.hints.saveTitle', 'Save and export the draft'),
@@ -3905,28 +3876,8 @@ function WorkCanvasMarkdownDocumentPanel({
 
                   <div className="mt-3 space-y-1.5 border-b border-slate-200 pb-3 dark:border-white/10">
                     <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                      {t('canvas.panel.manualEdit.title', 'Manual editing')}
+                      {t('canvas.panel.versioning.title', 'Versioning')}
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setMode('md')}
-                      className="flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-left text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"
-                    >
-                      <span>
-                        {t('canvas.panel.manualEdit.editMarkdown', 'Edit Markdown manually')}
-                      </span>
-                      <span className="text-[11px] text-slate-500 dark:text-slate-400">MD</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setMode('document')}
-                      className="flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-left text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"
-                    >
-                      <span>
-                        {t('canvas.panel.manualEdit.backToDocument', 'Back to document view')}
-                      </span>
-                      <span className="text-[11px] text-slate-500 dark:text-slate-400">Dock</span>
-                    </button>
                     {/* #87c (rewizja 07-13) — "Historia" moved here from the
                       always-visible main bar (decluttering ask). Same
                       openVersionHistory()/isHistoryOpen pair as before; the

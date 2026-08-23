@@ -2,10 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-const source = fs.readFileSync(
-  path.resolve(__dirname, '../WorkCanvasDocumentPanel.tsx'),
-  'utf8'
-);
+const source = fs.readFileSync(path.resolve(__dirname, '../WorkCanvasDocumentPanel.tsx'), 'utf8');
 
 describe('WorkCanvasDocumentPanel owner feedback', () => {
   it('uses an explicit workspace outcome instead of the unexplained PROMOTE label', () => {
@@ -25,5 +22,16 @@ describe('WorkCanvasDocumentPanel owner feedback', () => {
     ]) {
       expect(source).toContain(`'${actionId}'`);
     }
+  });
+
+  it('puts the Rich, DOC and MD switcher directly in the Canvas bar without menu duplicates', () => {
+    expect(source).toContain('data-testid="canvas-direct-view-switcher"');
+    expect(source).toContain("['rich', 'Rich']");
+    expect(source).toContain("['document', 'DOC']");
+    expect(source).toContain("['md', 'MD']");
+    expect(source).not.toContain('data-testid="canvas-view-actions"');
+    expect(source).not.toContain('Switch Rich/Dock/MD view');
+    expect(source).not.toContain('Edit Markdown manually');
+    expect(source).not.toContain('Back to document view');
   });
 });
