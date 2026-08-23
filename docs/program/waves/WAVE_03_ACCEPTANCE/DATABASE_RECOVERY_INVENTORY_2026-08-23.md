@@ -373,3 +373,28 @@ Credentialed browser replay, destructive-flow owner acceptance and Piotr
 acceptance remain pending. Current reconstructed storage readiness: `14/16` —
 Organization, Assessment, Initiatives, Execution, My Work / Agent, Meetings,
 Results, Finance, Materials, Audits, Chat, Admin, Settings and Partner.
+
+Interview and Tools were reconstructed fifteenth and sixteenth as
+`consultify_w3_interview_owner_recovered_20260823` and
+`consultify_w3_tools_owner_recovered_20260823`. Their legacy seeders were first
+hardened to require owned database names, new absolute manifests, FINAL `0600`
+receipts, durable markers and explicit cold-readback commands. Interview's nonce
+is `79d552bb9e0a4f7620367b80c13da69181f98a6f980cc0129d115d1576cf3be8`;
+Tools' nonce is
+`a8810c659559647d643dc5e7eb371a3ca6d90e41d74eef87483dfe3200f50b6f`.
+After PostgreSQL restart, Interview retained two sessions, six questions and two
+distributions; Tools retained both the 80% guided and 100% approved Dynamic SWOT
+sessions. Exact clean SHA `2d5f5ea22b2f5a43b014a8fc48c993c6135fd37d`
+adopted each database independently on server/client `4359/4360` and
+`4361/4362`; SHA, migration, marker, frontend and dotenv-isolation gates passed.
+Interview OWNER session list returned `200`, foreign list was empty `200`, active
+public token returned `200`, revoked token `410`, revoked login `403`, and
+anonymous manager access `401`. Tools OWNER list/object returned `200`, foreign
+list was empty `200` and object access `404`, revoked login returned `403`, and
+anonymous object access `401`. Both runtimes and the container were stopped
+while preserving both databases.
+
+Current reconstructed storage readiness is `16/16`. This proves durable local
+fixture recovery and exact-SHA API qualification; it does not replace
+credentialed browser replay, responsive/accessibility checks, Piotr owner
+acceptance, NFR/DR gates or release authorization.
