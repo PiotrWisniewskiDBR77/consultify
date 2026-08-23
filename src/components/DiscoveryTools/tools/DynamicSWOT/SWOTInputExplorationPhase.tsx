@@ -1,4 +1,4 @@
-import { Check, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
+import { Check, ChevronDown, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -584,6 +584,7 @@ export function SWOTInputExplorationPhase({
   const [activeStream, setActiveStream] = React.useState<StreamId>('strengths');
   const [guidanceExpanded, setGuidanceExpanded] = React.useState(false);
   const [manualItem, setManualItem] = React.useState('');
+  const [manualEntryOpen, setManualEntryOpen] = React.useState(false);
   const [fillAllBusy, setFillAllBusy] = React.useState(false);
   const [fillAllError, setFillAllError] = React.useState<string | null>(null);
 
@@ -665,18 +666,6 @@ export function SWOTInputExplorationPhase({
       ),
     [signals]
   );
-
-  const totalAcceptedPoints = STREAM_ORDER.reduce(
-    (sum, streamId) => sum + acceptedSignalsByStream[streamId].length,
-    0
-  );
-  const confirmedAreasCount = STREAM_ORDER.filter(
-    (streamId) =>
-      acceptedSignalsByStream[streamId].length >= 2 &&
-      acceptedSignalsByStream[streamId].every((signal) =>
-        signal.tags?.includes('confirmed-for-matrix')
-      )
-  ).length;
 
   const buildRewrittenProposal = (
     base: LocalizedProposal,
@@ -922,30 +911,7 @@ export function SWOTInputExplorationPhase({
           </div>
         </div>
 
-        <div className="xl:grid xl:grid-cols-[180px_minmax(0,1fr)]">
-          <aside className="hidden border-r border-slate-200/70 p-4 dark:border-white/10 xl:block">
-            <nav
-              aria-label={isPolish ? 'Strumienie analizy SWOT' : 'SWOT analysis streams'}
-              className="sticky top-24 space-y-2"
-            >
-              {STREAM_ORDER.map((streamId) => {
-                const meta = STREAM_META[streamId];
-                const count = acceptedSignalsByStream[streamId].length;
-                return (
-                  <button
-                    key={streamId}
-                    type="button"
-                    onClick={() => setActiveStream(streamId)}
-                    aria-current={activeStream === streamId ? 'step' : undefined}
-                    className={`flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left text-xs font-semibold ${activeStream === streamId ? meta.surface : 'border-transparent text-slate-500 hover:border-slate-200 dark:text-slate-300'}`}
-                  >
-                    <span>{isPolish ? meta.title.pl : meta.title.en}</span>
-                    <span>{count}/5</span>
-                  </button>
-                );
-              })}
-            </nav>
-          </aside>
+        <div className="xl:grid">
           <div className="min-w-0">
             <nav
               role="tablist"
@@ -972,39 +938,6 @@ export function SWOTInputExplorationPhase({
                 );
               })}
             </nav>
-
-            <div className="grid gap-3 border-b border-slate-200/70 px-6 py-5 dark:border-white/10 md:grid-cols-4">
-              <div className="rounded-[24px] border border-slate-200/70 bg-white/85 p-4 dark:border-white/10 dark:bg-white/[0.04]">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
-                  {labels.totalAccepted}
-                </div>
-                <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
-                  {totalAcceptedPoints}
-                </div>
-              </div>
-              <div className="rounded-[24px] border border-emerald-200/70 bg-emerald-500/5 p-4 dark:border-emerald-900/40">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300">
-                  {labels.confirmedAreas}
-                </div>
-                <div className="mt-2 text-2xl font-semibold text-emerald-700 dark:text-emerald-200">
-                  {confirmedAreasCount}/4
-                </div>
-              </div>
-              <div className="rounded-[24px] border border-primary-200/70 bg-primary-500/5 p-4 dark:border-primary-900/40">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-700 dark:text-primary-300">
-                  {labels.activeDialogue}
-                </div>
-                <div className="mt-2 text-2xl font-semibold text-primary-700 dark:text-primary-200">
-                  4
-                </div>
-              </div>
-              <div className="rounded-[24px] border border-sky-200/70 bg-sky-500/5 p-4 dark:border-sky-900/40">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-700 dark:text-sky-300">
-                  {labels.maxTarget}
-                </div>
-                <div className="mt-2 text-2xl font-semibold text-sky-700 dark:text-sky-200">5</div>
-              </div>
-            </div>
 
             <div className="space-y-4 px-6 py-5">
               {STREAM_ORDER.filter((streamId) => streamId === activeStream).map((streamId) => {
@@ -1059,12 +992,6 @@ export function SWOTInputExplorationPhase({
                     </div>
 
                     <div className="mt-4 flex flex-wrap items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
-                      <span className="inline-flex rounded-full border border-white/70 bg-white/70 px-2.5 py-1 font-semibold uppercase tracking-[0.16em] dark:border-white/10 dark:bg-white/[0.04]">
-                        {labels.accepted}: {acceptedCount}/5
-                      </span>
-                      <span className="inline-flex rounded-full border border-white/70 bg-white/70 px-2.5 py-1 font-semibold uppercase tracking-[0.16em] dark:border-white/10 dark:bg-white/[0.04]">
-                        {labels.attempts}: {attemptCountByStream[streamId]}
-                      </span>
                       {isConfirmed && (
                         <span className="inline-flex rounded-full border border-emerald-300/50 bg-emerald-50 px-2.5 py-1 font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300">
                           {labels.confirmed}
@@ -1072,15 +999,11 @@ export function SWOTInputExplorationPhase({
                       )}
                     </div>
 
-                    <div className="mt-4 rounded-[24px] border border-white/70 bg-white/75 p-4 dark:border-white/10 dark:bg-white/[0.04]">
-                      <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
-                        {labels.acceptedList}
-                      </div>
-                      {acceptedSignals.length === 0 ? (
-                        <div className="mt-3 text-sm text-slate-500 dark:text-slate-400">
-                          {labels.emptyAccepted}
+                    {acceptedSignals.length > 0 && (
+                      <div className="mt-4 rounded-[24px] border border-white/70 bg-white/75 p-4 dark:border-white/10 dark:bg-white/[0.04]">
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
+                          {labels.acceptedList}
                         </div>
-                      ) : (
                         <div className="mt-4 space-y-3">
                           {acceptedSignals.map((signal) => (
                             <div
@@ -1248,73 +1171,92 @@ export function SWOTInputExplorationPhase({
                             </div>
                           ))}
                         </div>
-                      )}
 
-                      {acceptedCount >= 2 && (
-                        <div className="mt-4 space-y-3">
-                          {isConfirmed ? (
-                            <div className="rounded-2xl border border-emerald-200/70 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300">
-                              {acceptedCount < 5
-                                ? labels.confirmedButOpen
-                                : labels.confirmedToMatrix}
-                            </div>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => confirmStreamSet(streamId)}
-                              className="inline-flex items-center gap-2 rounded-2xl border border-emerald-300/50 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300"
-                            >
-                              <Check className="h-4 w-4" />
-                              {labels.confirmSet}
-                            </button>
-                          )}
-
-                          {acceptedCount >= 2 && acceptedCount < 5 && (
-                            <div className="flex flex-wrap items-center gap-2">
-                              {isConfirmed ? (
-                                <button
-                                  type="button"
-                                  onClick={() => moveToNextProposal(streamId)}
-                                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/70 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
-                                >
-                                  <ChevronRight className="h-3.5 w-3.5" />
-                                  {labels.continueAdding}
-                                </button>
-                              ) : null}
-                              <div className="text-sm text-slate-500 dark:text-slate-400">
-                                {labels.keepGoing}
+                        {acceptedCount >= 2 && (
+                          <div className="mt-4 space-y-3">
+                            {isConfirmed ? (
+                              <div className="rounded-2xl border border-emerald-200/70 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300">
+                                {acceptedCount < 5
+                                  ? labels.confirmedButOpen
+                                  : labels.confirmedToMatrix}
                               </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => confirmStreamSet(streamId)}
+                                className="inline-flex items-center gap-2 rounded-2xl border border-emerald-300/50 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300"
+                              >
+                                <Check className="h-4 w-4" />
+                                {labels.confirmSet}
+                              </button>
+                            )}
 
-                      {shouldSuggestEnough && (
-                        <div className="mt-4 rounded-2xl border border-amber-200/70 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300">
-                          {labels.readyEnough}
-                        </div>
-                      )}
-                    </div>
+                            {acceptedCount >= 2 && acceptedCount < 5 && (
+                              <div className="flex flex-wrap items-center gap-2">
+                                {isConfirmed ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => moveToNextProposal(streamId)}
+                                    className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/70 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
+                                  >
+                                    <ChevronRight className="h-3.5 w-3.5" />
+                                    {labels.continueAdding}
+                                  </button>
+                                ) : null}
+                                <div className="text-sm text-slate-500 dark:text-slate-400">
+                                  {labels.keepGoing}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
 
-                    <div className="mt-4 flex gap-2">
-                      <input
-                        value={manualItem}
-                        onChange={(event) => setManualItem(event.target.value)}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Enter') addManualItem(streamId);
-                        }}
-                        aria-label={isPolish ? 'Dodaj własny punkt' : 'Add your own point'}
-                        placeholder={isPolish ? 'Dodaj własny punkt…' : 'Add your own…'}
-                        className="min-w-0 flex-1 rounded-xl border border-slate-300/60 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-navy-900"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => addManualItem(streamId)}
-                        disabled={!manualItem.trim() || acceptedCount >= 5}
-                        className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40 dark:bg-white dark:text-slate-900"
-                      >
-                        {isPolish ? 'Dodaj' : 'Add'}
-                      </button>
+                        {shouldSuggestEnough && (
+                          <div className="mt-4 rounded-2xl border border-amber-200/70 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300">
+                            {labels.readyEnough}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {!manualEntryOpen ? (
+                        <button
+                          type="button"
+                          onClick={() => setManualEntryOpen(true)}
+                          disabled={acceptedCount >= 5}
+                          className="inline-flex items-center gap-2 rounded-xl border border-slate-300/60 bg-white px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-40 dark:border-white/10 dark:bg-navy-900 dark:text-slate-200"
+                        >
+                          <Plus className="h-4 w-4" />
+                          {isPolish ? 'Dodaj punkt ręcznie' : 'Add point manually'}
+                        </button>
+                      ) : (
+                        <>
+                          <input
+                            autoFocus
+                            value={manualItem}
+                            onChange={(event) => setManualItem(event.target.value)}
+                            onKeyDown={(event) => {
+                              if (event.key === 'Enter') addManualItem(streamId);
+                              if (event.key === 'Escape') setManualEntryOpen(false);
+                            }}
+                            aria-label={isPolish ? 'Dodaj własny punkt' : 'Add your own point'}
+                            placeholder={isPolish ? 'Dodaj własny punkt…' : 'Add your own…'}
+                            className="min-w-0 flex-1 rounded-xl border border-slate-300/60 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-navy-900"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              addManualItem(streamId);
+                              setManualEntryOpen(false);
+                            }}
+                            disabled={!manualItem.trim() || acceptedCount >= 5}
+                            className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40 dark:bg-white dark:text-slate-900"
+                          >
+                            {isPolish ? 'Dodaj' : 'Add'}
+                          </button>
+                        </>
+                      )}
                     </div>
 
                     {acceptedCount < 5 && (

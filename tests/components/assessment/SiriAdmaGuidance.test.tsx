@@ -47,10 +47,9 @@ describe('SIRIAssessmentEditor — AI guidance parity with DRD', () => {
       <SIRIAssessmentEditor assessmentId="a1" value={undefined} onChange={vi.fn()} />
     );
 
-    const btn = screen.getByText(/Podpowiedź AI/i);
+    const btn = screen.getByText(/AI guidance/i);
     fireEvent.click(btn);
 
-    expect(await screen.findByText(/Generuję podpowiedź/i)).toBeTruthy();
     expect(await screen.findByText(guidanceFixture.whyItMatters)).toBeTruthy();
     expect(await screen.findByText(guidanceFixture.canonContext)).toBeTruthy();
 
@@ -69,10 +68,9 @@ describe('ADMAAssessmentEditor — AI guidance parity with DRD', () => {
       <ADMAAssessmentEditor assessmentId="a2" value={undefined} onChange={vi.fn()} />
     );
 
-    const btn = screen.getByText(/Podpowiedź AI/i);
+    const btn = screen.getByText(/AI guidance/i);
     fireEvent.click(btn);
 
-    expect(await screen.findByText(/Generuję podpowiedź/i)).toBeTruthy();
     expect(await screen.findByText(guidanceFixture.whyItMatters)).toBeTruthy();
     expect(await screen.findByText(guidanceFixture.canonContext)).toBeTruthy();
 

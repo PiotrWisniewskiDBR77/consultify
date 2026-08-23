@@ -164,8 +164,9 @@ describe('T24-PREVIEW-P25 Initiatives preview Details', () => {
     // Anchor past the render-switch comment (same landmark T21/T23's guard
     // tests use) — an earlier, unrelated `if (activeTab === 'initiatives')`
     // also exists in the data-loading effect above the render switch.
-    const listStart = source.indexOf("// 'list' tab → StandardTable + StandardPreview");
-    const initiativesStart = source.indexOf("if (activeTab === 'initiatives')", listStart);
+    const listStart = source.indexOf('// Triada standard');
+    const initiativesMarker = source.indexOf("// #73: 'initiatives' tab", listStart);
+    const initiativesStart = source.indexOf("if (activeTab === 'initiatives')", initiativesMarker);
     const initiativesSlice = source.slice(initiativesStart);
 
     expect(initiativesSlice).toContain('buildAssessmentInitiativePreviewDetails');

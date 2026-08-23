@@ -51,6 +51,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { PreviewDetailsSection } from '@/components/shared/PreviewPane/PreviewDetailsSection';
 import {
   EmptyState as SharedEmptyState,
   LoadingState as SharedLoadingState,
@@ -131,6 +132,9 @@ import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { ChipBase } from '../ui/primitives/chips/chipBase';
 import { PriorityChip, type PriorityLevel } from '../ui/primitives/chips/PriorityChip';
 import { useSurfaceUrlSync } from './hooks/useSurfaceUrlSync';
+import { buildOutputPreviewDetails } from './outputPreviewDetails';
+import { buildReportPreviewDetails } from './reportPreviewDetails';
+import { buildToolInitiativePreviewDetails } from './toolInitiativePreviewDetails';
 import { renderToolStatusCell, TOOL_STATUS_DOMAIN_TO_ITEM_STATUS } from './toolStatusCell';
 
 // Tool category types (V3: includes licensed assessments)
@@ -4278,7 +4282,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           onOpenFull={(id) => {
             const row = currentData.find((d) => d.id === id);
             if (!row) return;
-            if (isReportsAndPresentationsTab) {
+            if (activeTab === 'outputs' || activeTab === 'reports') {
               openOutput(row as any);
               return;
             }
@@ -4287,6 +4291,23 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           renderPreview={(item) => {
             if (isReportsAndPresentationsTab) {
               const kind = String((item as any)?.outputKind || '');
+              const isReportLikeOutputKind =
+                kind === 'assessment_report' || kind === 'report_builder';
+              const outputDetailsText =
+                activeTab === 'outputs'
+                  ? isReportLikeOutputKind
+                    ? buildReportPreviewDetails(
+                        item as unknown as Record<string, unknown>,
+                        isPolish ? 'pl' : 'en'
+                      )
+                    : buildOutputPreviewDetails(
+                        item as unknown as Record<string, unknown>,
+                        isPolish ? 'pl' : 'en'
+                      )
+                  : buildReportPreviewDetails(
+                      item as unknown as Record<string, unknown>,
+                      isPolish ? 'pl' : 'en'
+                    );
               const label =
                 kind === 'assessment_report'
                   ? t('tools.hub.outputs.type.assessmentReport', 'Assessment report')
@@ -4327,6 +4348,12 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                       </div>
                     </div>
                   </div>
+                  {outputDetailsText ? (
+                    <PreviewDetailsSection
+                      text={outputDetailsText}
+                      onCopy={() => void navigator.clipboard?.writeText(outputDetailsText)}
+                    />
+                  ) : null}
                 </div>
               );
             }
@@ -4350,6 +4377,11 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               selectedInitiative && selectedInitiative.id === item.id
                 ? selectedInitiative
                 : ((item as any)?._fullData as any) || {};
+            const initiativeMetadataText = buildToolInitiativePreviewDetails(
+              init,
+              isPolish ? 'pl' : 'en'
+            );
+            const InitiativePreviewDetailsSection = PreviewDetailsSection;
 
             const mapToPreviewModel = (i: any): InitiativePreviewV3Model => ({
               id: String(i?.id || item.id),
@@ -4394,16 +4426,24 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             };
 
             return (
-              <InitiativePreviewV3Body
-                initiative={mapToPreviewModel(init)}
-                onSummarize={() =>
-                  openChat(
-                    isPolish
-                      ? 'Podsumuj tę inicjatywę w 5 punktach i zaproponuj 3 kolejne kroki.'
-                      : 'Summarize this initiative in 5 bullets and propose 3 next steps.'
-                  )
-                }
-              />
+              <div className="space-y-3">
+                <InitiativePreviewV3Body
+                  initiative={mapToPreviewModel(init)}
+                  onSummarize={() =>
+                    openChat(
+                      isPolish
+                        ? 'Podsumuj tę inicjatywę w 5 punktach i zaproponuj 3 kolejne kroki.'
+                        : 'Summarize this initiative in 5 bullets and propose 3 next steps.'
+                    )
+                  }
+                />
+                {initiativeMetadataText ? (
+                  <InitiativePreviewDetailsSection
+                    text={initiativeMetadataText}
+                    onCopy={() => void navigator.clipboard?.writeText(initiativeMetadataText)}
+                  />
+                ) : null}
+              </div>
             );
           }}
           renderPreviewFooter={(item) => {

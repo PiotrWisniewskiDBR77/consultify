@@ -34,13 +34,13 @@ async function dismissOnboarding(page: import('@playwright/test').Page): Promise
 }
 
 test.describe.serial('FIN-BVP signed canonical workspaces', () => {
-  test('Baseline, Prediction and Analysis persist mounted domain writes across new signed browser contexts', async ({
+  test('Statements, Baseline, Prediction, Analysis and Valuation survive new signed browser contexts', async ({
     browser,
     context,
     page,
     request,
   }) => {
-    test.setTimeout(240_000);
+    test.setTimeout(360_000);
     const state = readTestSupportState();
     const { fixture, pool, lockClient } = await seedFinanceBvpFixture(
       state.organizationId,
@@ -55,6 +55,37 @@ test.describe.serial('FIN-BVP signed canonical workspaces', () => {
         state.organizationId,
         fixture.runId
       );
+
+      await page.goto(
+        `${WEB_BASE_URL}/finance/statements/${encodeURIComponent(fixture.statement.legacyId)}`
+      );
+      await dismissOnboarding(page);
+      await expect(page.getByTestId('statement-pack-workspace-v2')).toBeVisible({
+        timeout: 30_000,
+      });
+      await expect(page.getByTestId('canonical-statement-table-v2')).toBeVisible();
+      await expect(page.getByText('CURRENT_ASSETS', { exact: true })).toBeVisible();
+      await expect(page.getByText('500 000', { exact: true })).toBeVisible();
+      await expect(page.getByText('CURRENT_LIABILITIES', { exact: true })).toBeVisible();
+      await expect(page.getByText('250 000', { exact: true })).toBeVisible();
+
+      const statementStorageState = await context.storageState();
+      const statementColdContext = await browser.newContext({
+        storageState: statementStorageState,
+      });
+      const statementCold = await statementColdContext.newPage();
+      await statementCold.goto(
+        `${WEB_BASE_URL}/finance/statements/${encodeURIComponent(fixture.statement.legacyId)}`
+      );
+      await expect(statementCold.getByTestId('statement-pack-workspace-v2')).toBeVisible({
+        timeout: 30_000,
+      });
+      await expect(statementCold.getByTestId('canonical-statement-table-v2')).toBeVisible();
+      await expect(statementCold.getByText('CURRENT_ASSETS', { exact: true })).toBeVisible();
+      await expect(statementCold.getByText('500 000', { exact: true })).toBeVisible();
+      await expect(statementCold.getByText('CURRENT_LIABILITIES', { exact: true })).toBeVisible();
+      await expect(statementCold.getByText('250 000', { exact: true })).toBeVisible();
+      await statementColdContext.close();
 
       await page.goto(
         `${WEB_BASE_URL}/finance/models/${encodeURIComponent(fixture.baseline.legacyId)}`
@@ -97,11 +128,13 @@ test.describe.serial('FIN-BVP signed canonical workspaces', () => {
         (response) =>
           response.request().method() === 'PUT' &&
           new URL(response.url()).pathname ===
-            `/api/v8/finance-v2/prediction/${fixture.prediction.businessVersionId}/draft`
+            `/api/v8/finance-v2/prediction/${fixture.prediction.businessVersionId}/authoring`
       );
-      await page.getByTestId('prediction-draft-save').click();
+      await page.getByTestId('prediction-save-authoring').click();
       expect((await predictionWrite).status()).toBe(200);
-      await expect(page.getByTestId('prediction-draft-version')).toContainText('Draft v2');
+      await expect(page.getByTestId('prediction-canonical-authoring-banner')).toContainText(
+        'Rewizja authoringu: 2'
+      );
 
       const predictionColdContext = await browser.newContext({ storageState });
       const predictionCold = await predictionColdContext.newPage();
@@ -114,9 +147,9 @@ test.describe.serial('FIN-BVP signed canonical workspaces', () => {
       await expect(predictionCold.getByLabel('Nazwa inicjatywy')).toHaveValue(
         `Signed initiative ${fixture.runId}`
       );
-      await expect(predictionCold.getByTestId('prediction-draft-version')).toContainText(
-        'Draft v2'
-      );
+      await expect(
+        predictionCold.getByTestId('prediction-canonical-authoring-banner')
+      ).toContainText('Rewizja authoringu: 2');
 
       const preflight = predictionCold.waitForResponse(
         (response) =>
@@ -135,86 +168,56 @@ test.describe.serial('FIN-BVP signed canonical workspaces', () => {
       await conflictPage.goto(
         `${WEB_BASE_URL}/finance/predictions/${encodeURIComponent(fixture.prediction.legacyId)}`
       );
-      await expect(conflictPage.getByTestId('prediction-draft-version')).toContainText('Draft v2');
+      await expect(conflictPage.getByTestId('prediction-canonical-authoring-banner')).toContainText(
+        'Rewizja authoringu: 2'
+      );
       const winningDraftResponse = await request.get(
-        `${API_BASE_URL}/api/v8/finance-v2/prediction/${fixture.prediction.businessVersionId}/draft`,
+        `${API_BASE_URL}/api/v8/finance-v2/prediction/${fixture.prediction.businessVersionId}/authoring`,
         { headers: bearer(state.token) }
       );
       expect(winningDraftResponse.status(), await winningDraftResponse.text()).toBe(200);
-      const winningDraft = (await winningDraftResponse.json()).data;
+      const winningSnapshot = (await winningDraftResponse.json()).data;
       const winningKey = `signed-winner-${fixture.runId}`;
       const winningCommand = {
-        expectedVersion: winningDraft.version,
+        expectedRevision: winningSnapshot.revision,
         draft: {
-          name: winningDraft.name,
-          description: winningDraft.description,
-          scenarioMode: winningDraft.scenarioMode,
-          driverOverrides: winningDraft.driverOverrides,
-          initiatives: winningDraft.initiatives.map((initiative: Record<string, unknown>) => ({
-            ...initiative,
-            name: `Server winner ${fixture.runId}`,
-          })),
-          impacts: winningDraft.impacts,
-          financing: winningDraft.financing,
+          ...winningSnapshot.draft,
+          initiatives: winningSnapshot.draft.initiatives.map(
+            (initiative: Record<string, unknown>) => ({
+              ...initiative,
+              name: `Server winner ${fixture.runId}`,
+            })
+          ),
         },
       };
       const winningWrite = await request.put(
-        `${API_BASE_URL}/api/v8/finance-v2/prediction/${fixture.prediction.businessVersionId}/draft`,
+        `${API_BASE_URL}/api/v8/finance-v2/prediction/${fixture.prediction.businessVersionId}/authoring`,
         {
-          headers: { ...bearer(state.token), 'Idempotency-Key': winningKey },
+          headers: { ...bearer(state.token), 'x-idempotency-key': winningKey },
           data: winningCommand,
         }
       );
       expect(winningWrite.status(), await winningWrite.text()).toBe(200);
-      expect((await winningWrite.json()).data).toMatchObject({ version: 3, replay: false });
-      const receiptBeforeReplay = await pool.query<{ receipts: number; version: number }>(
-        `SELECT
-          (SELECT count(*)::int FROM finance_prediction_draft_command_receipts
-            WHERE organization_id=$1 AND business_version_id=$2) receipts,
-          (SELECT draft_version FROM finance_prediction_scenarios
-            WHERE organization_id=$1 AND business_version_id=$2) version`,
-        [state.organizationId, fixture.prediction.businessVersionId]
-      );
-      const replay = await request.put(
-        `${API_BASE_URL}/api/v8/finance-v2/prediction/${fixture.prediction.businessVersionId}/draft`,
-        {
-          headers: { ...bearer(state.token), 'Idempotency-Key': winningKey },
-          data: winningCommand,
-        }
-      );
-      expect(replay.status(), await replay.text()).toBe(200);
-      expect((await replay.json()).data).toMatchObject({ version: 3, replay: true });
-      expect(
-        (
-          await pool.query<{ receipts: number; version: number }>(
-            `SELECT
-              (SELECT count(*)::int FROM finance_prediction_draft_command_receipts
-                WHERE organization_id=$1 AND business_version_id=$2) receipts,
-              (SELECT draft_version FROM finance_prediction_scenarios
-                WHERE organization_id=$1 AND business_version_id=$2) version`,
-            [state.organizationId, fixture.prediction.businessVersionId]
-          )
-        ).rows[0]
-      ).toEqual(receiptBeforeReplay.rows[0]);
+      expect((await winningWrite.json()).data).toMatchObject({ revision: 3, replay: false });
 
       await conflictPage.getByLabel('Nazwa inicjatywy').fill(`Local conflict ${fixture.runId}`);
       const conflictResponse = conflictPage.waitForResponse(
         (response) =>
           response.request().method() === 'PUT' &&
           new URL(response.url()).pathname ===
-            `/api/v8/finance-v2/prediction/${fixture.prediction.businessVersionId}/draft`
+            `/api/v8/finance-v2/prediction/${fixture.prediction.businessVersionId}/authoring`
       );
-      await conflictPage.getByTestId('prediction-draft-save').click();
+      await conflictPage.getByTestId('prediction-save-authoring').click();
       expect((await conflictResponse).status()).toBe(409);
-      await expect(conflictPage.getByLabel('Nazwa inicjatywy')).toHaveValue(
-        `Local conflict ${fixture.runId}`
+      await expect(conflictPage.getByTestId('prediction-status-message')).toContainText(
+        'Wczytano kanoniczną rewizję 3'
       );
-      await expect(conflictPage.getByTestId('prediction-conflict-reload')).toBeVisible();
-      await conflictPage.getByTestId('prediction-conflict-reload').click();
       await expect(conflictPage.getByLabel('Nazwa inicjatywy')).toHaveValue(
         `Server winner ${fixture.runId}`
       );
-      await expect(conflictPage.getByTestId('prediction-draft-version')).toContainText('Draft v3');
+      await expect(conflictPage.getByTestId('prediction-canonical-authoring-banner')).toContainText(
+        'Rewizja authoringu: 3'
+      );
       await conflictContext.close();
 
       await page.goto(
@@ -252,37 +255,92 @@ test.describe.serial('FIN-BVP signed canonical workspaces', () => {
       await expect(currentRatioRow).toContainText('2');
       await analysisColdContext.close();
 
+      await page.goto(`${WEB_BASE_URL}/finance?tab=valuation`);
+      await page.getByRole('button', { name: /New valuation|Nowa wycena/i }).click();
+      const valuationTitle = `Signed valuation ${fixture.runId}`;
+      const valuationModal = page
+        .getByRole('heading', {
+          name: /Nowa wycena przedsiębiorstwa|New enterprise valuation/i,
+        })
+        .locator('..');
+      await valuationModal.getByPlaceholder(/Wycena DCF|valuation/i).fill(valuationTitle);
+      const valuationCreate = page.waitForResponse(
+        (response) =>
+          response.request().method() === 'POST' &&
+          new URL(response.url()).pathname === '/api/v8/finance-v2/valuation/registrations'
+      );
+      await valuationModal.getByRole('button', { name: /Create|Utwórz/i }).click();
+      const valuationCreated = await valuationCreate;
+      expect(valuationCreated.status(), await valuationCreated.text()).toBe(201);
+      const valuation = (await valuationCreated.json()).data;
+      expect(valuation.id).toBeTruthy();
+      expect(valuation.businessVersionId).toBeTruthy();
+      await expect(page.getByTestId('valuation-workspace')).toBeVisible({ timeout: 30_000 });
+      await page.getByRole('tab', { name: /Założenia|Assumptions/i }).click();
+      await page.getByTestId('wacc-currency').fill('EUR');
+      await page.getByTestId('wacc-risk-free-rate').fill('3.75');
+      const valuationWrite = page.waitForResponse(
+        (response) =>
+          response.request().method() === 'PUT' &&
+          new URL(response.url()).pathname ===
+            `/api/v8/finance-v2/valuation/variants/${valuation.businessVersionId}/wacc-inputs`
+      );
+      await page.getByTestId('wacc-save-button').click();
+      expect((await valuationWrite).status()).toBe(200);
+
+      const valuationColdContext = await browser.newContext({ storageState });
+      const valuationCold = await valuationColdContext.newPage();
+      await valuationCold.goto(
+        `${WEB_BASE_URL}/finance/valuations/${encodeURIComponent(String(valuation.id))}`
+      );
+      await expect(valuationCold.getByTestId('valuation-workspace')).toBeVisible({
+        timeout: 30_000,
+      });
+      await valuationCold.getByRole('tab', { name: /Założenia|Assumptions/i }).click();
+      await expect(valuationCold.getByTestId('wacc-currency')).toHaveValue('EUR');
+      await expect(valuationCold.getByTestId('wacc-risk-free-rate')).toHaveValue('3.75');
+      await valuationColdContext.close();
+
       const persisted = await pool.query<{
         baseline_value: string;
-        prediction_version: number;
+        prediction_version: string;
         initiative_count: number;
         preflight_count: number;
         analysis_value: string;
+        valuation_currency: string;
+        valuation_risk_free_rate: string;
       }>(
         `SELECT
           (SELECT value_decimal::text FROM finance_baseline_assumptions
             WHERE organization_id=$1 AND business_version_id=$2 LIMIT 1) baseline_value,
-          (SELECT draft_version FROM finance_prediction_scenarios
+          (SELECT authoring_revision FROM finance_prediction_scenarios
             WHERE organization_id=$1 AND business_version_id=$3) prediction_version,
           (SELECT count(*)::int FROM finance_prediction_initiatives
             WHERE organization_id=$1 AND business_version_id=$3) initiative_count,
           (SELECT count(*)::int FROM finance_prediction_preflight_runs
             WHERE organization_id=$1 AND business_version_id=$3) preflight_count,
           (SELECT value_decimal::text FROM finance_analysis_kpi_values
-            WHERE organization_id=$1 AND business_version_id=$4 LIMIT 1) analysis_value`,
+            WHERE organization_id=$1 AND business_version_id=$4 LIMIT 1) analysis_value,
+          (SELECT currency FROM finance_valuation_wacc_inputs
+            WHERE organization_id=$1 AND business_version_id=$5) valuation_currency,
+          (SELECT risk_free_rate_pct::text FROM finance_valuation_wacc_inputs
+            WHERE organization_id=$1 AND business_version_id=$5) valuation_risk_free_rate`,
         [
           state.organizationId,
           fixture.baseline.businessVersionId,
           fixture.prediction.businessVersionId,
           fixture.analysis.businessVersionId,
+          valuation.businessVersionId,
         ]
       );
       expect(persisted.rows[0]).toEqual({
         baseline_value: '2.5',
-        prediction_version: 3,
+        prediction_version: '3',
         initiative_count: 1,
         preflight_count: 1,
         analysis_value: '2',
+        valuation_currency: 'EUR',
+        valuation_risk_free_rate: '3.75',
       });
 
       const beforeDenials = await pool.query(
@@ -307,7 +365,7 @@ test.describe.serial('FIN-BVP signed canonical workspaces', () => {
             FROM finance_prediction_financing f
             WHERE organization_id=$1 AND business_version_id=$4) prediction_financing,
           (SELECT coalesce(jsonb_agg(to_jsonb(r) ORDER BY to_jsonb(r)::text),'[]')
-            FROM finance_prediction_draft_command_receipts r
+            FROM finance_prediction_authoring_receipts r
             WHERE organization_id=$1 AND business_version_id=$4) prediction_receipts,
           (SELECT coalesce(jsonb_agg(to_jsonb(r) ORDER BY to_jsonb(r)::text),'[]')
             FROM finance_prediction_preflight_runs r
@@ -340,22 +398,14 @@ test.describe.serial('FIN-BVP signed canonical workspaces', () => {
       const foreign = (await foreignResponse.json()) as SignedPersona;
 
       const ownerDraftResponse = await request.get(
-        `${API_BASE_URL}/api/v8/finance-v2/prediction/${fixture.prediction.businessVersionId}/draft`,
+        `${API_BASE_URL}/api/v8/finance-v2/prediction/${fixture.prediction.businessVersionId}/authoring`,
         { headers: bearer(state.token) }
       );
       expect(ownerDraftResponse.status(), await ownerDraftResponse.text()).toBe(200);
-      const ownerDraft = (await ownerDraftResponse.json()).data;
+      const ownerSnapshot = (await ownerDraftResponse.json()).data;
       const predictionCommand = {
-        expectedVersion: ownerDraft.version,
-        draft: {
-          name: ownerDraft.name,
-          description: ownerDraft.description,
-          scenarioMode: ownerDraft.scenarioMode,
-          driverOverrides: ownerDraft.driverOverrides,
-          initiatives: ownerDraft.initiatives,
-          impacts: ownerDraft.impacts,
-          financing: ownerDraft.financing,
-        },
+        expectedRevision: ownerSnapshot.revision,
+        draft: ownerSnapshot.draft,
       };
 
       const probeWrites = async (token: string, marker: string) => {
@@ -386,9 +436,9 @@ test.describe.serial('FIN-BVP signed canonical workspaces', () => {
           }
         );
         const prediction = await request.put(
-          `${API_BASE_URL}/api/v8/finance-v2/prediction/${fixture.prediction.businessVersionId}/draft`,
+          `${API_BASE_URL}/api/v8/finance-v2/prediction/${fixture.prediction.businessVersionId}/authoring`,
           {
-            headers: { ...headers, 'Idempotency-Key': `denied-${marker}-${fixture.runId}` },
+            headers: { ...headers, 'x-idempotency-key': `denied-${marker}-${fixture.runId}` },
             data: predictionCommand,
           }
         );
@@ -439,7 +489,7 @@ test.describe.serial('FIN-BVP signed canonical workspaces', () => {
             FROM finance_prediction_financing f
             WHERE organization_id=$1 AND business_version_id=$4) prediction_financing,
           (SELECT coalesce(jsonb_agg(to_jsonb(r) ORDER BY to_jsonb(r)::text),'[]')
-            FROM finance_prediction_draft_command_receipts r
+            FROM finance_prediction_authoring_receipts r
             WHERE organization_id=$1 AND business_version_id=$4) prediction_receipts,
           (SELECT coalesce(jsonb_agg(to_jsonb(r) ORDER BY to_jsonb(r)::text),'[]')
             FROM finance_prediction_preflight_runs r

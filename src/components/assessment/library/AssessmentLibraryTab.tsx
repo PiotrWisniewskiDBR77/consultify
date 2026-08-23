@@ -9,10 +9,10 @@
  * hidden (TRIADA_KANON.md C3: a disabled row explains WHY, it never lies by
  * omission).
  *
- * List UI is StandardTable ONLY (docs/ui-standards/TRIADA_KANON.md — list
- * screens use StandardModuleBar/StandardTable/StandardPreview exclusively,
- * no bespoke tables/menus). This tab has no preview aside: rows either start
- * an assessment (navigates away) or are inert (disabled, nothing to preview).
+ * List UI follows the canonical StandardTable + StandardPreview pair. Every
+ * catalog row is readable even when its execution engine is unavailable;
+ * only the Start action is gated. This keeps Library a knowledge surface
+ * instead of making unavailable methodologies inert dead rows.
  *
  * MVP compromise (ASM-001 audit, explicitly sanctioned): the backend does
  * NOT expose a "published only" filter endpoint yet — only
@@ -21,23 +21,25 @@
  * `status === 'published'` client-side, picking the newest version. Do not
  * ask the backend for a new endpoint here — one already exists.
  */
-import { AlertTriangle, Clock3, Library as LibraryIcon, PlayCircle, RefreshCw } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AlertTriangle, BookOpen, Clock3, Library as LibraryIcon, PlayCircle, RefreshCw } from 'lucide-react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { type StandardRowMenu, StandardTable, type TableColumn } from '@/components/standard';
+import { StandardPreview, type StandardRowMenu, StandardTable, type TableColumn } from '@/components/standard';
 import { StatusChip } from '@/components/ui/primitives/chips';
+import { FRAMEWORK_CONFIGS } from '@/services/frameworkRegistry';
 import {
   createSession as createMethodCoreSession,
   getSession as getMethodCoreSession,
-  listSessions,
   MethodCoreApiError,
   newIdempotencyKey,
-  type MethodSessionListItem,
 } from '@/method-core/api/methodCoreApi';
-import { DRD_METHOD_PACK_ID, DRD_METHOD_PACK_VERSION } from '@/method-core/methods/drd/compileDrdPack';
+import {
+  DRD_METHOD_PACK_ID,
+  DRD_METHOD_PACK_VERSION,
+} from '@/method-core/methods/drd/compileDrdPack';
 
 type MethodologyId = 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
 
@@ -46,6 +48,10 @@ interface MethodologyRow {
   name: string;
   description: string;
   supported: boolean;
+  area: string;
+  accessCondition: string;
+  whatYouGet: string[];
+  legalNotice: string | null;
 }
 
 // Static catalog — only DRD has a real published-definition-backed engine
@@ -57,30 +63,50 @@ const METHODOLOGY_CATALOG: MethodologyRow[] = [
     name: 'Digital Readiness Diagnosis',
     description: 'Assess digital maturity across 5 axes, area by area.',
     supported: true,
+    area: 'Digital transformation',
+    accessCondition: 'Method Core available',
+    whatYouGet: ['Current and target maturity by area', 'Evidence-backed findings', 'Report and initiative inputs'],
+    legalNotice: FRAMEWORK_CONFIGS.DRD.legalNotice ?? null,
   },
   {
     id: 'SIRI',
     name: 'Smart Industry Readiness Index',
     description: 'Singapore SIRI Industry 4.0 maturity framework.',
     supported: false,
+    area: 'Smart manufacturing',
+    accessCondition: 'Knowledge available; execution coming soon',
+    whatYouGet: ['Process, technology and organization view', 'Industry 4.0 maturity scale', 'Educational framework context'],
+    legalNotice: FRAMEWORK_CONFIGS.SIRI.legalNotice ?? null,
   },
   {
     id: 'ADMA',
     name: 'Advanced Digital Maturity Assessment',
     description: 'Extended digital maturity model across process dimensions.',
     supported: false,
+    area: 'Digital manufacturing',
+    accessCondition: 'Knowledge available; execution coming soon',
+    whatYouGet: ['Five-pillar maturity view', 'Dimension-level assessment structure', 'Educational framework context'],
+    legalNotice: FRAMEWORK_CONFIGS.ADMA.legalNotice ?? null,
   },
   {
     id: 'CMMI',
     name: 'Capability Maturity Model Integration',
     description: 'Process capability and maturity model.',
     supported: false,
+    area: 'Process capability',
+    accessCondition: 'Knowledge available; execution coming soon',
+    whatYouGet: ['Five maturity levels', 'Practice-area structure', 'Educational framework context'],
+    legalNotice: FRAMEWORK_CONFIGS.CMMI.legalNotice ?? null,
   },
   {
     id: 'LEAN',
     name: 'Lean 4.0',
     description: 'Lean manufacturing maturity assessment.',
     supported: false,
+    area: 'Lean and automation',
+    accessCondition: 'Knowledge available; execution coming soon',
+    whatYouGet: ['Measure → Optimize → Automate path', 'Lean maturity perspective', 'Automation and AI opportunity context'],
+    legalNotice: FRAMEWORK_CONFIGS.LEAN.legalNotice ?? null,
   },
 ];
 
@@ -129,12 +155,8 @@ export const AssessmentLibraryTab: React.FC = () => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const [startingId, setStartingId] = useState<MethodologyId | null>(null);
-  const [sessions, setSessions] = useState<readonly MethodSessionListItem[]>([]);
-  const [sessionsTotal, setSessionsTotal] = useState<number | null>(null);
-  const [rawFetchedCount, setRawFetchedCount] = useState(0);
-  const [sessionsLoading, setSessionsLoading] = useState(true);
-  const [sessionsError, setSessionsError] = useState<string | null>(null);
   const [startError, setStartError] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<MethodologyId | null>(null);
 
   // ASM-BVP-001 production cutover: the mounted DRD Library row has exactly
   // one writer. It always creates a method-core session and the editor always
@@ -148,45 +170,6 @@ export const AssessmentLibraryTab: React.FC = () => {
   const startInFlightRef = useRef<Set<MethodologyId>>(new Set());
   const startIdempotencyKeysRef = useRef<Map<MethodologyId, string>>(new Map());
   const failedStartRowRef = useRef<MethodologyRow | null>(null);
-
-  const loadCanonicalSessions = useCallback(async (append = false) => {
-    setSessionsLoading(true);
-    setSessionsError(null);
-    try {
-      const offset = append ? rawFetchedCount : 0;
-      const result = await listSessions({ methodPackId: DRD_METHOD_PACK_ID, limit: 100, offset });
-      const page = result.sessions.filter((session) => session.module === 'assessment');
-      setSessions((current) => {
-        if (!append) return page;
-        const byId = new Map(current.map((session) => [session.id, session]));
-        for (const session of page) byId.set(session.id, session);
-        return [...byId.values()];
-      });
-      setSessionsTotal(result.total);
-      setRawFetchedCount(offset + result.sessions.length);
-    } catch (error: any) {
-      const message =
-        error instanceof MethodCoreApiError && error.status === 403
-          ? isPolish
-            ? 'Nie masz dostępu do sesji DRD tej organizacji.'
-            : 'You do not have access to this organization’s DRD sessions.'
-          : error instanceof MethodCoreApiError && error.isNetworkError
-            ? isPolish
-              ? 'Brak połączenia. Lista sesji nie została zastąpiona danymi lokalnymi.'
-              : 'Offline. The session list was not replaced with local data.'
-            : error?.message || (isPolish ? 'Nie udało się pobrać sesji DRD.' : 'Failed to load DRD sessions.');
-      setSessionsError(message);
-    } finally {
-      setSessionsLoading(false);
-    }
-  }, [isPolish, rawFetchedCount]);
-
-  useEffect(() => {
-    void loadCanonicalSessions(false);
-    // Initial load only. Pagination updates sessions.length and must not
-    // restart the list from offset zero.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPolish]);
 
   // The DRD pack is bootstrapped and governed server-side. Non-DRD rows are
   // intentionally visible but disabled in this MVP.
@@ -250,13 +233,21 @@ export const AssessmentLibraryTab: React.FC = () => {
             e.body?.error === 'pack_not_released'
               ? 'The DRD method pack is not yet registered for production sessions.'
               : e.status === 403
-                ? isPolish ? 'Nie masz uprawnień do uruchomienia lub odczytu tej sesji DRD.' : 'You do not have permission to start or read this DRD session.'
+                ? isPolish
+                  ? 'Nie masz uprawnień do uruchomienia lub odczytu tej sesji DRD.'
+                  : 'You do not have permission to start or read this DRD session.'
                 : e.status === 404
-                  ? isPolish ? 'Utworzona sesja DRD nie została znaleziona podczas odczytu kontrolnego.' : 'The created DRD session was not found during canonical readback.'
+                  ? isPolish
+                    ? 'Utworzona sesja DRD nie została znaleziona podczas odczytu kontrolnego.'
+                    : 'The created DRD session was not found during canonical readback.'
                   : e.status === 409
-                    ? isPolish ? 'Sesja DRD jest w konflikcie wersji lub tożsamości. Ponów bez tworzenia kolejnej sesji.' : 'The DRD session has a version or identity conflict. Retry without creating another session.'
+                    ? isPolish
+                      ? 'Sesja DRD jest w konflikcie wersji lub tożsamości. Ponów bez tworzenia kolejnej sesji.'
+                      : 'The DRD session has a version or identity conflict. Retry without creating another session.'
                     : e.isNetworkError
-                      ? isPolish ? 'Brak połączenia. Ponówienie użyje tego samego klucza i nie utworzy drugiej sesji.' : 'Offline. Retry will reuse the same key and cannot create a second session.'
+                      ? isPolish
+                        ? 'Brak połączenia. Ponówienie użyje tego samego klucza i nie utworzy drugiej sesji.'
+                        : 'Offline. Retry will reuse the same key and cannot create a second session.'
                       : e.message || `Failed to start ${row.name}`;
           toast.error(reason, { id: toastId });
           setStartError(reason);
@@ -288,6 +279,12 @@ export const AssessmentLibraryTab: React.FC = () => {
         ),
       },
       {
+        id: 'area',
+        label: isPolish ? 'Obszar' : 'Area',
+        width: '220px',
+        render: (row: MethodologyRow) => row.area,
+      },
+      {
         id: 'status',
         label: 'Status',
         width: '220px',
@@ -315,8 +312,12 @@ export const AssessmentLibraryTab: React.FC = () => {
               className="inline-flex h-9 items-center gap-2 rounded-full border border-[var(--c-border)] bg-[var(--c-surface)] px-3 text-sm font-medium text-[var(--c-text)] transition-colors hover:bg-[var(--c-surface-raised)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)] disabled:cursor-not-allowed disabled:opacity-50"
               title={
                 canStartRow(row)
-                  ? isPolish ? `Uruchom nową ocenę ${row.name}` : `Start a new ${row.name} assessment`
-                  : isPolish ? 'Niedostępne w tym MVP' : 'Not available in this MVP'
+                  ? isPolish
+                    ? `Uruchom nową ocenę ${row.name}`
+                    : `Start a new ${row.name} assessment`
+                  : isPolish
+                    ? 'Niedostępne w tym MVP'
+                    : 'Not available in this MVP'
               }
             >
               {startingId === row.id ? (
@@ -335,59 +336,19 @@ export const AssessmentLibraryTab: React.FC = () => {
 
   const data = useMemo(() => METHODOLOGY_CATALOG.map((row) => ({ ...row })), []);
 
-  const sessionColumns: TableColumn[] = useMemo(
-    () => [
-      {
-        id: 'identity',
-        label: isPolish ? 'Sesja' : 'Session',
-        render: (row: MethodSessionListItem) => (
-          <div className="min-w-0">
-            <div className="truncate text-sm font-semibold text-c-text">{row.methodPackId}</div>
-            <div className="truncate font-mono text-[11px] text-c-text-muted">{row.id}</div>
-          </div>
-        ),
-      },
-      {
-        id: 'version',
-        label: isPolish ? 'Wersje' : 'Versions',
-        width: '190px',
-        render: (row: MethodSessionListItem) => (
-          <div className="text-xs text-c-text-secondary">
-            <div>{isPolish ? 'Metoda' : 'Method'}: {row.methodPackVersion}</div>
-            <div>{isPolish ? 'Sesja' : 'Session'}: v{row.version}</div>
-          </div>
-        ),
-      },
-      {
-        id: 'state',
-        label: isPolish ? 'Stan' : 'State',
-        width: '150px',
-        render: (row: MethodSessionListItem) => <StatusChip label={row.state} tone="neutral" />,
-      },
-      {
-        id: 'open',
-        label: isPolish ? 'Działanie' : 'Action',
-        width: '140px',
-        render: (row: MethodSessionListItem) => (
-          <button
-            type="button"
-            onClick={() => navigate(`/assessment/drd/${encodeURIComponent(row.id)}`)}
-            className="inline-flex h-9 items-center gap-2 rounded-full border border-[var(--c-border)] bg-[var(--c-surface)] px-3 text-sm font-medium text-[var(--c-text)] hover:bg-[var(--c-surface-raised)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
-          >
-            <PlayCircle size={14} /> {isPolish ? 'Otwórz' : 'Open'}
-          </button>
-        ),
-      },
-    ],
-    [isPolish, navigate]
-  );
-
   const rowMenu = useCallback(
     (row: any): StandardRowMenu => {
       const methodology = row as MethodologyRow;
       return {
-        primary: canStartRow(methodology)
-          ? [
+        primary: [
+          {
+            id: 'read',
+            label: isPolish ? 'Przeczytaj o metodzie' : 'Read about methodology',
+            icon: BookOpen,
+            onClick: () => setSelectedId(methodology.id),
+          },
+          ...(canStartRow(methodology)
+            ? [
               {
                 id: 'start',
                 label: isPolish ? 'Uruchom' : 'Start',
@@ -395,18 +356,36 @@ export const AssessmentLibraryTab: React.FC = () => {
                 onClick: () => void handleStart(methodology),
               },
             ]
-          : [],
+            : []),
+        ],
+        universalHandlers: { preview: () => setSelectedId(methodology.id) },
       };
     },
     [canStartRow, handleStart, isPolish]
   );
 
   return (
-    <div className="flex h-full min-w-0 flex-col gap-4 overflow-auto p-4">
-      {(sessionsError || startError) && (
-        <div role="alert" className="flex items-start justify-between gap-3 rounded-xl border border-amber-300/60 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
-          <div className="flex min-w-0 items-start gap-2"><AlertTriangle className="mt-0.5 shrink-0" size={16} /><span>{startError || sessionsError}</span></div>
-          <button type="button" onClick={() => startError && failedStartRowRef.current ? void handleStart(failedStartRowRef.current) : void loadCanonicalSessions()} className="inline-flex shrink-0 items-center gap-1 rounded-full border border-current px-3 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"><RefreshCw size={13} />{isPolish ? 'Ponów' : 'Retry'}</button>
+    <div className="flex h-full min-w-0 overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col gap-4 overflow-auto p-4">
+      {startError && (
+        <div
+          role="alert"
+          className="flex items-start justify-between gap-3 rounded-xl border border-amber-300/60 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100"
+        >
+          <div className="flex min-w-0 items-start gap-2">
+            <AlertTriangle className="mt-0.5 shrink-0" size={16} />
+            <span>{startError}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() =>
+              failedStartRowRef.current ? void handleStart(failedStartRowRef.current) : undefined
+            }
+            className="inline-flex shrink-0 items-center gap-1 rounded-full border border-current px-3 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]"
+          >
+            <RefreshCw size={13} />
+            {isPolish ? 'Ponów' : 'Retry'}
+          </button>
         </div>
       )}
       <StandardTable
@@ -414,6 +393,8 @@ export const AssessmentLibraryTab: React.FC = () => {
         data={data}
         loading={false}
         rowMenu={rowMenu}
+        selectedRowId={selectedId}
+        onRowClick={(row: any) => setSelectedId((row as MethodologyRow).id)}
         rowDescription={(row: any) => (row as MethodologyRow).description}
         persistKey="assessment.hub.library"
         empty={{
@@ -422,28 +403,56 @@ export const AssessmentLibraryTab: React.FC = () => {
           description: 'The methodology catalog could not be loaded.',
         }}
       />
-      <section aria-labelledby="drd-sessions-heading" className="min-w-0 space-y-2">
-        <div>
-          <h2 id="drd-sessions-heading" className="text-sm font-semibold text-c-text">{isPolish ? 'Twoje kanoniczne sesje DRD' : 'Your canonical DRD sessions'}</h2>
-          <p className="text-xs text-c-text-muted">{isPolish ? 'Otwierane z dokładnym identyfikatorem sesji oraz przypiętą wersją metody.' : 'Opened by exact session identity and pinned method version.'}</p>
-        </div>
-        <StandardTable
-          columns={sessionColumns}
-          data={[...sessions]}
-          loading={sessionsLoading}
-          rowMenu={() => ({ primary: [] })}
-          persistKey="assessment.hub.library.sessions"
-          empty={{ icon: LibraryIcon, title: isPolish ? 'Brak sesji DRD' : 'No DRD sessions', description: isPolish ? 'Uruchom pierwszą sesję z katalogu powyżej.' : 'Start the first session from the catalog above.' }}
-        />
-        {sessionsTotal !== null && rawFetchedCount < sessionsTotal && (
-          <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-c-text-muted">
-            <span>{isPolish ? `Wyświetlono ${sessions.length} sesji DRD; sprawdzono ${rawFetchedCount} z ${sessionsTotal}` : `Showing ${sessions.length} DRD sessions; scanned ${rawFetchedCount} of ${sessionsTotal}`}</span>
-            <button type="button" disabled={sessionsLoading} onClick={() => void loadCanonicalSessions(true)} className="rounded-full border border-c-border px-3 py-1.5 font-medium text-c-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:opacity-50">
-              {sessionsLoading ? (isPolish ? 'Wczytywanie…' : 'Loading…') : (isPolish ? 'Wczytaj więcej' : 'Load more')}
-            </button>
-          </div>
-        )}
-      </section>
+      </div>
+      {selectedId ? (
+        <aside className="w-[400px] shrink-0 bg-slate-50 p-3 dark:bg-navy-950">
+          {(() => {
+            const item = METHODOLOGY_CATALOG.find((row) => row.id === selectedId);
+            if (!item) return null;
+            return (
+              <StandardPreview
+                title={item.name}
+                onClose={() => setSelectedId(null)}
+                meta={{
+                  pills: [
+                    { label: item.id, tone: 'neutral' },
+                    {
+                      label: item.supported
+                        ? isPolish ? 'Dostępna' : 'Available'
+                        : isPolish ? 'Wkrótce' : 'Coming soon',
+                      tone: item.supported ? 'success' : 'neutral',
+                    },
+                  ],
+                }}
+                details={{
+                  text: `${item.description}\n\n${item.whatYouGet.map((value) => `• ${value}`).join('\n')}${item.legalNotice ? `\n\n${item.legalNotice}` : ''}`,
+                  showWordCount: false,
+                  properties: [
+                    { id: 'area', label: isPolish ? 'Obszar' : 'Area', value: item.area },
+                    { id: 'access', label: isPolish ? 'Dostęp' : 'Access', value: item.accessCondition },
+                    {
+                      id: 'commercial',
+                      label: isPolish ? 'Warunki komercyjne' : 'Commercial terms',
+                      value: isPolish ? 'Nie skonfigurowano w katalogu' : 'Not configured in catalog',
+                    },
+                  ],
+                  propertyLabel: isPolish ? 'Właściwość' : 'Property',
+                  valueLabel: isPolish ? 'Wartość' : 'Value',
+                }}
+                actions={item.supported ? {
+                  informational: [{
+                    id: 'start',
+                    variant: 'neutral',
+                    label: isPolish ? 'Uruchom assessment' : 'Start assessment',
+                    icon: PlayCircle,
+                    onClick: () => void handleStart(item),
+                  }],
+                } : undefined}
+              />
+            );
+          })()}
+        </aside>
+      ) : null}
     </div>
   );
 };

@@ -6,7 +6,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),
   get: vi.fn(),
-  list: vi.fn(),
   navigate: vi.fn(),
   language: 'en',
 }));
@@ -40,7 +39,6 @@ vi.mock('@/method-core/api/methodCoreApi', () => {
     MethodCoreApiError,
     createSession: mocks.create,
     getSession: mocks.get,
-    listSessions: mocks.list,
     newIdempotencyKey: () => 'stable-start-key',
   };
 });
@@ -66,18 +64,29 @@ describe('AssessmentLibraryTab canonical method-core flow', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.language = 'en';
-    mocks.list.mockResolvedValue({ sessions: [canonicalSession], total: 1 });
     mocks.get.mockResolvedValue({ session: canonicalSession, roles: ['owner'] });
   });
 
-  it('lists and cold-opens the exact canonical session and pinned versions', async () => {
+  it('keeps Library pure: it shows frameworks but no canonical session register', () => {
     render(<AssessmentLibraryTab />);
 
-    expect(await screen.findByText('session-exact-123')).toBeInTheDocument();
-    expect(screen.getByText('Method: 2.0.0-methodpack.1')).toBeInTheDocument();
-    expect(screen.getByText('Session: v7')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Open' }));
-    expect(mocks.navigate).toHaveBeenCalledWith('/assessment/drd/session-exact-123');
+    expect(screen.getByText('Digital Readiness Diagnosis')).toBeInTheDocument();
+    expect(screen.queryByText('Your canonical DRD sessions')).not.toBeInTheDocument();
+    expect(screen.queryByText('session-exact-123')).not.toBeInTheDocument();
+  });
+
+  it('opens a readable methodology preview for available and coming-soon rows', () => {
+    render(<AssessmentLibraryTab />);
+
+    fireEvent.click(screen.getByText('Smart Industry Readiness Index'));
+    expect(screen.getAllByText('Smart manufacturing')).toHaveLength(2);
+    expect(screen.getByText('Knowledge available; execution coming soon')).toBeInTheDocument();
+    expect(screen.getByText('Not configured in catalog')).toBeInTheDocument();
+    expect(screen.getByText(/Process, technology and organization view/)).toBeInTheDocument();
+
+    // Reading is available, but the unavailable framework must not acquire a
+    // truthful-looking Start action inside the preview.
+    expect(screen.queryByRole('button', { name: 'Start assessment' })).not.toBeInTheDocument();
   });
 
   it('retries an ambiguous create with the same idempotency key', async () => {
@@ -85,9 +94,10 @@ describe('AssessmentLibraryTab canonical method-core flow', () => {
       .mockRejectedValueOnce(new MethodCoreApiError('Offline', 0, null, true))
       .mockResolvedValueOnce({ session: canonicalSession });
     render(<AssessmentLibraryTab />);
-    await screen.findByText('session-exact-123');
 
-    const start = screen.getAllByRole('button', { name: 'Start' }).find((button) => !(button as HTMLButtonElement).disabled)!;
+    const start = screen
+      .getAllByRole('button', { name: 'Start' })
+      .find((button) => !(button as HTMLButtonElement).disabled)!;
     fireEvent.click(start);
     expect(await screen.findByRole('alert')).toHaveTextContent('Offline');
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
@@ -98,61 +108,41 @@ describe('AssessmentLibraryTab canonical method-core flow', () => {
     expect(mocks.navigate).toHaveBeenCalledWith('/assessment/drd/session-exact-123');
   });
 
-  it('renders a durable fail-closed 403 with an explicit retry', async () => {
-    mocks.list.mockRejectedValueOnce(new MethodCoreApiError('Forbidden', 403));
-    render(<AssessmentLibraryTab />);
-    expect(await screen.findByRole('alert')).toHaveTextContent('do not have access');
-
-    mocks.list.mockResolvedValueOnce({ sessions: [canonicalSession], total: 1 });
-    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
-    expect(await screen.findByText('session-exact-123')).toBeInTheDocument();
-  });
-
   it.each([
     [404, 'not found during canonical readback'],
     [409, 'version or identity conflict'],
   ])('keeps the same create key across a %s canonical readback failure', async (status, copy) => {
     mocks.create.mockResolvedValue({ session: canonicalSession });
     mocks.get
-      .mockRejectedValueOnce(new MethodCoreApiError('readback refused', status, { error: 'readback_refused' }))
+      .mockRejectedValueOnce(
+        new MethodCoreApiError('readback refused', status, { error: 'readback_refused' })
+      )
       .mockResolvedValueOnce({ session: canonicalSession, roles: ['owner'] });
     render(<AssessmentLibraryTab />);
-    await screen.findByText('session-exact-123');
 
-    const start = screen.getAllByRole('button', { name: 'Start' }).find((button) => !(button as HTMLButtonElement).disabled)!;
+    const start = screen
+      .getAllByRole('button', { name: 'Start' })
+      .find((button) => !(button as HTMLButtonElement).disabled)!;
     fireEvent.click(start);
     expect(await screen.findByRole('alert')).toHaveTextContent(copy);
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
 
-    await waitFor(() => expect(mocks.navigate).toHaveBeenCalledWith('/assessment/drd/session-exact-123'));
+    await waitFor(() =>
+      expect(mocks.navigate).toHaveBeenCalledWith('/assessment/drd/session-exact-123')
+    );
     expect(mocks.create).toHaveBeenCalledTimes(2);
-    expect(mocks.create.mock.calls.map((call) => call[1])).toEqual(['stable-start-key', 'stable-start-key']);
+    expect(mocks.create.mock.calls.map((call) => call[1])).toEqual([
+      'stable-start-key',
+      'stable-start-key',
+    ]);
   });
 
-  it('renders the canonical session controls in Polish and keeps non-DRD methods disabled', async () => {
+  it('renders the pure catalog controls in Polish and keeps non-DRD methods disabled', () => {
     mocks.language = 'pl';
     render(<AssessmentLibraryTab />);
-    expect(await screen.findByText('Twoje kanoniczne sesje DRD')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Otwórz' })).toBeEnabled();
+    expect(screen.queryByText('Twoje kanoniczne sesje DRD')).not.toBeInTheDocument();
     expect(screen.getAllByText('Wkrótce')).toHaveLength(4);
     const startButtons = screen.getAllByRole('button', { name: 'Uruchom' });
     expect(startButtons.filter((button) => (button as HTMLButtonElement).disabled)).toHaveLength(4);
-  });
-
-  it('never silently truncates more than 100 sessions and loads the next deduplicated page', async () => {
-    const firstPage = [
-      ...Array.from({ length: 99 }, (_, index) => ({ ...canonicalSession, id: `session-${index}` })),
-      { ...canonicalSession, id: 'tool-session-hidden', module: 'tools' },
-    ];
-    mocks.list
-      .mockResolvedValueOnce({ sessions: firstPage, total: 101 })
-      .mockResolvedValueOnce({ sessions: [{ ...canonicalSession, id: 'session-100' }], total: 101 });
-    render(<AssessmentLibraryTab />);
-
-    expect(await screen.findByText('Showing 99 DRD sessions; scanned 100 of 101')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Load more' }));
-    expect(await screen.findByText('session-100')).toBeInTheDocument();
-    expect(screen.queryByText('Showing 99 DRD sessions; scanned 100 of 101')).not.toBeInTheDocument();
-    expect(mocks.list.mock.calls[1][0]).toMatchObject({ limit: 100, offset: 100 });
   });
 });

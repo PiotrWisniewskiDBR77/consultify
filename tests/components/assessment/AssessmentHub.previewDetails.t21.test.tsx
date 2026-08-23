@@ -48,14 +48,15 @@ describe('T21 Assessment list preview Details', () => {
   it.each(['pl', 'en'] as const)(
     'keeps every non-empty sparse %s row within 80–140 words without inferred values',
     (language) => {
-      const result = buildAssessmentPreviewDetails({ name: 'Sparse persisted assessment' }, language);
+      const result = buildAssessmentPreviewDetails(
+        { name: 'Sparse persisted assessment' },
+        language
+      );
 
       expect(wordCount(result)).toBeGreaterThanOrEqual(80);
       expect(wordCount(result)).toBeLessThanOrEqual(140);
       expect(result).toContain('Sparse persisted assessment');
-      expect(result).toMatch(
-        language === 'pl' ? /nie został(?:a|o)? zapisany/i : /not persisted/i
-      );
+      expect(result).toMatch(language === 'pl' ? /nie został(?:a|o)? zapisany/i : /not persisted/i);
     }
   );
 
@@ -102,10 +103,7 @@ describe('T21 Assessment list preview Details', () => {
       [field, 'authentication', `MARKER_AUTHENTICATION_${field}`],
     ])
   )('blocks %s carrying %s credential assignment', (field, credential, marker) => {
-    const result = buildAssessmentPreviewDetails(
-      { [field]: `${credential}=${marker}` },
-      'en'
-    );
+    const result = buildAssessmentPreviewDetails({ [field]: `${credential}=${marker}` }, 'en');
     expect(result).toBe('');
     expect(result).not.toContain(marker);
   });
@@ -131,11 +129,15 @@ describe('T21 Assessment list preview Details', () => {
       join(process.cwd(), 'src/components/Assessment/AssessmentHub.tsx'),
       'utf8'
     );
+    const renderStart = source.indexOf('// Triada standard');
     const listStart = source.indexOf(
-      "// 'list' tab → StandardTable + StandardPreview"
+      "if (activeTab === 'list' || activeTab === 'processes')",
+      renderStart
     );
-    const reportsStart = source.indexOf("if (activeTab === 'reports')", listStart);
-    const initiativesStart = source.indexOf("if (activeTab === 'initiatives')", reportsStart);
+    const reportsMarker = source.indexOf("// #73: 'reports' tab", listStart);
+    const reportsStart = source.indexOf("if (activeTab === 'reports')", reportsMarker);
+    const initiativesMarker = source.indexOf("// #73: 'initiatives' tab", reportsStart);
+    const initiativesStart = source.indexOf("if (activeTab === 'initiatives')", initiativesMarker);
     const listSlice = source.slice(listStart, reportsStart);
     const reportsSlice = source.slice(reportsStart, initiativesStart);
     const initiativesSlice = source.slice(initiativesStart);
@@ -153,7 +155,13 @@ describe('T21 Assessment list preview Details', () => {
     expect(initiativesSlice).toContain('text: previewDetailsText');
     expect(initiativesSlice).not.toContain('propertyLabel:');
 
-    const blockOrder = ['meta={{', 'details={{', 'ai={{', 'relations={[]}', 'actions={previewActions}'];
+    const blockOrder = [
+      'meta={{',
+      'details={{',
+      'ai={{',
+      'relations={[]}',
+      'actions={previewActions}',
+    ];
     const positions = blockOrder.map((token) => listSlice.indexOf(token));
     expect(positions.every((position) => position >= 0)).toBe(true);
     expect(positions).toEqual([...positions].sort((a, b) => a - b));

@@ -98,7 +98,9 @@ describe('AssessmentWorkbenchPanel', () => {
       expect(screen.getByText('Assessment Workbench')).toBeInTheDocument();
     });
 
-    expect(screen.getByText(/awaiting_evidence/i)).toBeInTheDocument();
+    // The run-state label is localized; the persisted degradation code is the
+    // stable contract and must remain visible without translation.
+    expect(screen.getByText('missing_required_evidence')).toBeInTheDocument();
     expect(screen.getByText('DRD canonical definition')).toBeInTheDocument();
     expect(screen.getByText('Add evidence before scoring.')).toBeInTheDocument();
     expect(screen.getByText('Missing interpretation proposal')).toBeInTheDocument();

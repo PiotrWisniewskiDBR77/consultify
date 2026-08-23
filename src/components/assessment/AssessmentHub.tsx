@@ -83,17 +83,16 @@ import {
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
-import {
-  MENU_3_ACTION_DANGER,
-  MENU_3_INNER_CLASS,
-  MENU_3_LEFT_CLASS,
-  MENU_3_RIGHT_CLASS,
-  Menu3Chip,
-} from '../shared/ModuleMenu3';
+import { Menu3BulkRow } from '../shared/ModuleMenu3';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { AssessmentMenu3ActionBar } from './AssessmentMenu3ActionBar';
 import { AssessmentOutputsTab } from './AssessmentOutputsTab';
 import { AssessmentQualityReviewPanel } from './AssessmentQualityReviewPanel';
+import {
+  buildAssessmentInitiativePreviewDetails,
+  buildAssessmentPreviewDetails,
+  buildAssessmentReportPreviewDetails,
+} from './assessmentPreviewDetails';
 import { ImportedReportDetailView } from './ImportedReportDetailView';
 import { InitiativesGenerationWizardModal } from './InitiativesGenerationWizardModal';
 import { AssessmentLibraryTab } from './library/AssessmentLibraryTab';
@@ -1653,28 +1652,24 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
   }, [selectedListIds, currentData, handleRowAction]);
 
   const bulkCommandRowContent =
-    (activeTab === 'list' || activeTab === 'processes') && selectedListIds.size > 0 ? (
-      <div className={MENU_3_INNER_CLASS}>
-        <div className={MENU_3_LEFT_CLASS}>
-          <span className="inline-flex h-7 items-center rounded-full px-2.5 text-[11px] font-semibold text-c-text whitespace-nowrap">
-            {`${selectedListIds.size} selected`}
-          </span>
-          <Menu3Chip onClick={() => setSelectedListIds(new Set(currentData.map((r: any) => r.id)))}>
-            Select all
-          </Menu3Chip>
-          <Menu3Chip onClick={() => setSelectedListIds(new Set())}>Clear</Menu3Chip>
-        </div>
-        <div className={MENU_3_RIGHT_CLASS}>
-          <button
-            type="button"
-            onClick={() => void handleBulkDeleteList()}
-            className={MENU_3_ACTION_DANGER}
-          >
-            <Trash2 size={12} />
-            Delete
-          </button>
-        </div>
-      </div>
+    (activeTab === 'list' && selectedListIds.size > 0) ||
+    (activeTab === 'processes' && selectedListIds.size > 0) ? (
+      <Menu3BulkRow
+        selectedLabel={`${selectedListIds.size} selected`}
+        selectAllLabel="Select all"
+        onSelectAll={() => setSelectedListIds(new Set(currentData.map((r: any) => r.id)))}
+        clearLabel="Clear"
+        onClear={() => setSelectedListIds(new Set())}
+        actions={[
+          {
+            id: 'delete',
+            label: 'Delete',
+            icon: Trash2,
+            onClick: () => void handleBulkDeleteList(),
+            variant: 'danger',
+          },
+        ]}
+      />
     ) : null;
 
   const hubCommandRowContent = useMemo(
@@ -2086,6 +2081,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
     if (activeTab === 'list' || activeTab === 'processes') {
       const selectedRow = selectedListRow;
       const previewActions = listPreviewActions;
+      const previewDetailsText = buildAssessmentPreviewDetails(selectedRow, isPolish ? 'pl' : 'en');
 
       return (
         <div className="h-full flex overflow-hidden">
@@ -2124,7 +2120,6 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
                 ],
                 universalHandlers: {
                   preview: () => setSelectedAssessmentId(String((row as any).id)),
-                  edit: () => handleOpenDocument(row as any),
                   // Brak API archiwizacji assessmentu — pozycja disabled z notą (StandardTable dokłada ją sama).
                 },
                 destructive: {
@@ -2160,30 +2155,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
                   ),
                 }}
                 details={{
-                  // N-52 / przeglad 128 zrzutow: to sa WLASCIWOSCI, nie tresc —
-                  // szly dotad jako sklejony akapit w bloku na proze.
-                  propertyLabel: isPolish ? 'Wlasciwosc' : 'Property',
-                  valueLabel: isPolish ? 'Wartosc' : 'Value',
-                  properties: [
-                    {
-                      id: 'type',
-                      label: t('assessment.table.type', 'Type'),
-                      value:
-                        FRAMEWORK_META[selectedRow.framework as AssessmentFramework]?.name ||
-                        selectedRow.framework ||
-                        '—',
-                    },
-                    {
-                      id: 'progress',
-                      label: t('assessment.table.progress', 'Progress'),
-                      value: `${selectedRow.progress ?? 0}%`,
-                      mono: true,
-                    },
-                  ],
+                  text: previewDetailsText,
                   onCopy: () => {
-                    void navigator.clipboard?.writeText(
-                      `${selectedRow.name} — ${selectedRow.status} (${selectedRow.progress ?? 0}%)`
-                    );
+                    void navigator.clipboard?.writeText(previewDetailsText);
                   },
                 }}
                 ai={{
@@ -2216,6 +2190,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
     if (activeTab === 'reports') {
       const selectedRow = selectedReportRow;
       const previewActions = reportPreviewActions;
+      const previewDetailsText = selectedRow
+        ? buildAssessmentReportPreviewDetails(selectedRow, isPolish ? 'pl' : 'en')
+        : '';
 
       return (
         <div className="h-full flex overflow-hidden">
@@ -2301,38 +2278,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
                   ),
                 }}
                 details={{
-                  // N-52 / przeglad 128 zrzutow: to sa WLASCIWOSCI, nie tresc —
-                  // szly dotad jako sklejony akapit w bloku na proze.
-                  propertyLabel: isPolish ? 'Wlasciwosc' : 'Property',
-                  valueLabel: isPolish ? 'Wartosc' : 'Value',
-                  properties: [
-                    {
-                      id: 'type',
-                      label: t('assessment.table.type', 'Type'),
-                      value:
-                        FRAMEWORK_META[selectedRow.framework as AssessmentFramework]?.name ||
-                        selectedRow.framework ||
-                        '—',
-                    },
-                    ...(selectedRow.assessmentName
-                      ? [
-                          {
-                            id: 'source',
-                            label: t('assessment.reports.source', 'Source assessment'),
-                            value: selectedRow.assessmentName,
-                          },
-                        ]
-                      : []),
-                    {
-                      id: 'author',
-                      label: t('assessment.hub.table.author', 'Author'),
-                      value: getAuthorLabel(selectedRow.createdBy) || '—',
-                    },
-                  ],
+                  text: previewDetailsText,
                   onCopy: () => {
-                    void navigator.clipboard?.writeText(
-                      `${selectedRow.name} — ${selectedRow.status}`
-                    );
+                    void navigator.clipboard?.writeText(previewDetailsText);
                   },
                 }}
                 relations={[]}
@@ -2362,6 +2310,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
     if (activeTab === 'initiatives') {
       const selectedRow = selectedInitiativeRow;
       const previewActions = initiativePreviewActions;
+      const previewDetailsText = selectedRow
+        ? buildAssessmentInitiativePreviewDetails(selectedRow, isPolish ? 'pl' : 'en')
+        : '';
 
       return (
         <div className="h-full flex overflow-hidden">
@@ -2434,38 +2385,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
                   ),
                 }}
                 details={{
-                  // N-52 / przeglad 128 zrzutow: to sa WLASCIWOSCI, nie tresc —
-                  // szly dotad jako sklejony akapit w bloku na proze.
-                  propertyLabel: isPolish ? 'Wlasciwosc' : 'Property',
-                  valueLabel: isPolish ? 'Wartosc' : 'Value',
-                  properties: [
-                    {
-                      id: 'type',
-                      label: t('assessment.table.type', 'Type'),
-                      value:
-                        FRAMEWORK_META[selectedRow.framework as AssessmentFramework]?.name ||
-                        selectedRow.framework ||
-                        '—',
-                    },
-                    ...(selectedRow.sourceReport
-                      ? [
-                          {
-                            id: 'source-report',
-                            label: t('assessment.initiatives.sourceReport', 'Source report'),
-                            value: selectedRow.sourceReport,
-                          },
-                        ]
-                      : []),
-                    {
-                      id: 'author',
-                      label: t('assessment.hub.table.author', 'Author'),
-                      value: getAuthorLabel(selectedRow.createdBy) || '—',
-                    },
-                  ],
+                  text: previewDetailsText,
                   onCopy: () => {
-                    void navigator.clipboard?.writeText(
-                      `${selectedRow.name} — ${selectedRow.status}`
-                    );
+                    void navigator.clipboard?.writeText(previewDetailsText);
                   },
                 }}
                 relations={[]}
@@ -2631,7 +2553,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
             <StandardPreview> aside (h-full chain) collapses to content
             height instead of stretching to the viewport — see the same
             fix already applied in InitiativesHub. */}
-        <div className="min-h-0 flex-1 overflow-hidden space-y-3">
+        <div className="h-full min-h-0 overflow-hidden space-y-3">
           {loadWarning &&
             !(
               (activeTab === 'list' || activeTab === 'processes') &&

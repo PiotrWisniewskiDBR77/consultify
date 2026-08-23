@@ -137,8 +137,11 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({ onCo
         } else {
           setHasLoadError(true);
         }
-        // eslint-disable-next-line no-console -- fixed diagnostic only, no raw message in UI.
-        console.error('[AssessmentOutputsTab] failed to load outputs', err);
+        // Never echo an exception here: fetch errors can contain internal URLs,
+        // SQL fragments or credential-shaped headers. The fixed diagnostic is
+        // enough for this surface; request telemetry belongs in the API layer.
+        // eslint-disable-next-line no-console
+        console.error('[AssessmentOutputsTab] failed to load outputs');
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

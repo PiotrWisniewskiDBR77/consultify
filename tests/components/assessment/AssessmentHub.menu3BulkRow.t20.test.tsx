@@ -92,9 +92,7 @@ describe('T20 AssessmentHub list-tab bulk row: Menu3BulkRow migration', () => {
       'const previewDetailsText = buildAssessmentPreviewDetails(selectedRow, isPolish'
     );
     expect(source).toContain('text: previewDetailsText,');
-    expect(source).toContain(
-      'void navigator.clipboard?.writeText(previewDetailsText);'
-    );
+    expect(source).toContain('void navigator.clipboard?.writeText(previewDetailsText);');
   });
 
   it('Reports Details (T23) and Initiatives Details (T24) are both canonical prose, and neither tab carries Menu3/selection wiring', () => {
@@ -104,14 +102,11 @@ describe('T20 AssessmentHub list-tab bulk row: Menu3BulkRow migration', () => {
     // own guard tests. This assertion is narrowed to what T20 actually owns:
     // the bulk-row/Menu3 primitive is list-only and never leaks into
     // Reports/Initiatives, regardless of which Details format each tab uses.
-    const listMarkerStart = source.indexOf(
-      "// 'list' tab → StandardTable + StandardPreview"
-    );
-    const reportsStart = source.indexOf("if (activeTab === 'reports')", listMarkerStart);
-    const initiativesStart = source.indexOf(
-      "if (activeTab === 'initiatives')",
-      reportsStart
-    );
+    const listMarkerStart = source.indexOf('// Triada standard');
+    const reportsMarker = source.indexOf("// #73: 'reports' tab", listMarkerStart);
+    const reportsStart = source.indexOf("if (activeTab === 'reports')", reportsMarker);
+    const initiativesMarker = source.indexOf("// #73: 'initiatives' tab", reportsStart);
+    const initiativesStart = source.indexOf("if (activeTab === 'initiatives')", initiativesMarker);
     const reportsSlice = source.slice(reportsStart, initiativesStart);
     const initiativesSlice = source.slice(initiativesStart);
 
