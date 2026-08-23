@@ -137,6 +137,15 @@
     "method": "Keep FLOW_CLOSURE_ROI_BINDING_ENABLED disabled or stop its callers; if code rollback is required, revert the bounded FLOW chain from 61bf9750ac through d7e1b42a5f while preserving existing immutable receipt and platform-event history. No schema migration or production enablement was introduced by this seam.",
     "executed": false
   },
+  "wave3RecoveryRequalification20260823": {
+    "candidateSha": "9711d714f7a01e8f01f8376fa58910da813aef87",
+    "database": "Isolated local PostgreSQL database flow_requal_20260823_a; none of the 16 recovered owner-fixture databases was mutated.",
+    "migrationResult": "Fresh exact-current migration chain applied 831/831 successfully.",
+    "command": "RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres NODE_ENV=test DATABASE_URL=<isolated-local-pg> FLOW_ALLOW_IMMUTABLE_FIXTURE_CLEANUP=1 FLOW_DISPOSABLE_DB_PREFIX=flow_requal_ ROI_E007_ALLOW_IMMUTABLE_FIXTURE_CLEANUP=1 ROI_E007_DISPOSABLE_DB_PREFIX=flow_requal_ JWT_SECRET=<ephemeral-redacted> npx vitest run <six FLOW/Initiative/ROI/Finance files> --retry=0 --no-file-parallelism --maxWorkers=1",
+    "result": "6/6 files passed; 87/87 active tests passed; 1 explicitly retired legacy A05 test skipped by source contract.",
+    "proved": "Current code preserves the governed full lineage from approved SWOT through Candidate, Initiative, runtime-v1 Execution, Results Actual, Finance reconciliation and PIR, including tenant, stale, replay, collision, concurrency and maker-checker controls.",
+    "boundary": "Technical local requalification only. Deployed desktop/mobile journey, rollback rehearsal and release authorization remain unverified and not authorized; verdict remains PARTIAL."
+  },
   "verdict": "PARTIAL",
   "openBlockers": [
     "Deployed desktop and mobile journey and rollback rehearsal are not authorized or verified."
