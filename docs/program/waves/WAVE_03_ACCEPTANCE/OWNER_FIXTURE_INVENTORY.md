@@ -1,5 +1,13 @@
 # Wave 3 — owner fixture and runtime inventory
 
+> Revalidation warning — 2026-08-23: the database endpoint recorded below no
+> longer contains the 16 named fixture databases. The manifests and historical
+> evidence remain, but storage readiness is currently
+> `DATABASE_ABSENT_AT_REVALIDATION`; see
+> [DATABASE_RECOVERY_INVENTORY_2026-08-23.md](DATABASE_RECOVERY_INVENTORY_2026-08-23.md).
+> The tables below are retained as historical evidence and must not be read as
+> current catalog state.
+
 Inventory date: `2026-08-22`
 
 This is a read-only operational inventory. It does not replace the module
