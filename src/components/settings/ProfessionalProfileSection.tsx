@@ -34,7 +34,6 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import { Certification, Education, SocialLinks, User, WorkExperience } from '../../types';
-import { InfoButton } from '../shared/InfoButton';
 
 interface ProfessionalProfileSectionProps {
   currentUser: User;
@@ -196,8 +195,6 @@ export const ProfessionalProfileSection: React.FC<ProfessionalProfileSectionProp
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
-      <InfoButton cardId="settings-professional-profile" position="top-right" />
-
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

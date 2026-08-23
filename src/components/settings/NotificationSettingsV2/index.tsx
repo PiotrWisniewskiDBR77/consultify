@@ -32,7 +32,6 @@ import { ErrorState, LoadingState } from '@/components/ui/primitives';
 
 import { useUserIntegrations } from '../../../hooks/useUserIntegrations';
 import { useUserNotificationPreferences } from '../../../hooks/useUserNotificationPreferences';
-import { InfoButton } from '../../shared/InfoButton';
 import CategoriesTab from './CategoriesTab';
 import ChannelsTab from './ChannelsTab';
 import DigestsTab from './DigestsTab';
@@ -280,7 +279,6 @@ export const NotificationSettingsV2: React.FC<NotificationSettingsV2Props> = ({
     <div className={`space-y-6 ${className}`}>
       {/* Header */}
       <div className="relative">
-        <InfoButton cardId="settings-notifications-v2" position="top-right" />
         <h2 className="text-2xl font-bold text-c-text">
           {t('settings.notifications.title', 'Notifications')}
         </h2>

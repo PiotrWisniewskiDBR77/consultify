@@ -36,7 +36,6 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '../../lib/utils';
 import { Api } from '../../services/api';
 import { User } from '../../types';
-import { InfoButton } from '../shared/InfoButton';
 import {
   SettingsDivider,
   SettingsFormRow,

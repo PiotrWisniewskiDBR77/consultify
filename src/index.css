@@ -882,13 +882,6 @@ body {
   border-radius: 0.75rem;
 }
 
-/* Owner decision SET-OWN-001: contextual floating/info shortcuts are removed
- * from Settings, including their focus stops and layout footprint. */
-.settings-domain-content [data-info-button],
-.settings-domain-content .info-button {
-  display: none !important;
-}
-
 /* Shared card-heading hierarchy for the three settings-style domains. */
 :is(.settings-domain-content, .organization-domain-content, .admin-domain-content) h2 {
   font-family: inherit;

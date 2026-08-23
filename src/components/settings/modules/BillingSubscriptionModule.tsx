@@ -38,7 +38,6 @@ import { trackFunnelEvent } from '../../../services/funnelAnalytics';
 import { User } from '../../../types';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { DegradedState } from '../../Admin/AdminState';
-import { InfoButton } from '../../shared/InfoButton';
 
 interface BillingSubscriptionModuleProps {
   currentUser: User;
@@ -394,7 +393,6 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
   if (loadError) {
     return (
       <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
-        <InfoButton cardId="settings-billing" position="top-right" />
         <DegradedState title="Billing data unavailable" description={loadError} />
       </div>
     );
@@ -407,8 +405,6 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
-      <InfoButton cardId="settings-billing" position="top-right" />
-
       {actionError && <Banner variant="danger" title={actionError} />}
 
       {/* Past Due Banner */}

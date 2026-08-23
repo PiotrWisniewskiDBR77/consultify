@@ -36,7 +36,6 @@ import { shouldFallbackToLegacySync, V8SyncApi } from '../../../services/api/v8/
 import { User } from '../../../types';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { DegradedState } from '../../Admin/AdminState';
-import { InfoButton } from '../../shared/InfoButton';
 
 interface IntegrationHealthDashboardProps {
   currentUser: User;
@@ -298,8 +297,6 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
-      <InfoButton cardId="settings-integration-health" position="top-right" />
-
       {/* Error banner */}
       {loadError && (
         <DegradedState title="Integration health unavailable" description={loadError} />

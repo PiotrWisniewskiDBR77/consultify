@@ -13,7 +13,6 @@ import { Api } from '../../../services/api';
 import { User } from '../../../types';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { DegradedState } from '../../Admin/AdminState';
-import { InfoButton } from '../../shared/InfoButton';
 
 interface SettingsHistoryProps {
   currentUser: User;
@@ -151,8 +150,6 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in relative">
-      <InfoButton cardId="settings-history" position="top-right" />
-
       <div>
         <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">
           <History size={28} className="text-amber-500" />

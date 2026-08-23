@@ -22,7 +22,6 @@ import { SettingsApi } from '../../services/api/settings.api';
 import { User } from '../../types';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { DegradedState } from '../Admin/AdminState';
-import { InfoButton } from '../shared/InfoButton';
 import { SettingsHeaderActionPortal } from './SettingsHeaderActions';
 
 interface RegionalSettingsProps {
@@ -217,7 +216,6 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
   if (loadError) {
     return (
       <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
-        <InfoButton cardId="settings-regional" position="top-right" />
         <div>
           <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">
             <Globe size={28} className="text-blue-500" />
@@ -237,8 +235,6 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
-      <InfoButton cardId="settings-regional" position="top-right" />
-
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

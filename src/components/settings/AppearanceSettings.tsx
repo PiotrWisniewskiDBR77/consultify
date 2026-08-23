@@ -34,7 +34,6 @@ import {
 } from '../../i18n';
 import { Api } from '../../services/api';
 import { User } from '../../types';
-import { InfoButton } from '../shared/InfoButton';
 
 interface AppearanceSettingsProps {
   currentUser: User;
@@ -210,8 +209,6 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
-      <InfoButton cardId="settings-appearance" position="top-right" />
-
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

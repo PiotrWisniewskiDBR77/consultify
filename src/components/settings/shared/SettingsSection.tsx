@@ -2,7 +2,7 @@
  * SettingsSection - Unified settings section component
  *
  * Provides consistent UI pattern for all settings sections:
- * - Header with icon, title, description, and InfoButton
+ * - Header with icon, title, description, and optional domain actions
  * - Content area with consistent padding
  * - Optional footer with save button and dirty state indicator
  * - Loading state with skeleton
@@ -15,7 +15,6 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { cn } from '../../../lib/utils';
-import { InfoButton } from '../../shared/InfoButton';
 import { SettingsHeaderActionPortal } from '../SettingsHeaderActions';
 
 interface SettingsSectionProps {
@@ -25,7 +24,7 @@ interface SettingsSectionProps {
   title: string;
   /** Section description */
   description: string;
-  /** Card documentation ID for help button */
+  /** Retained temporarily for call-site compatibility; no floating help control is rendered. */
   cardId: string;
   /** Optional additional actions in header */
   actions?: React.ReactNode;
@@ -71,7 +70,7 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
   icon: Icon,
   title,
   description,
-  cardId,
+  cardId: _cardId,
   actions,
   children,
   isDirty = false,
@@ -147,10 +146,7 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
               <p className="text-sm text-c-text-secondary mt-1 leading-relaxed">{description}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {actions}
-            <InfoButton cardId={cardId} position="top-right" />
-          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">{actions}</div>
         </div>
 
         {/* Content */}

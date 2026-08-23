@@ -22,7 +22,6 @@ import { useTranslation } from 'react-i18next';
 import { LoadingState } from '@/components/ui/primitives';
 
 import { Provider, UserIntegration, useUserIntegrations } from '../../../hooks/useUserIntegrations';
-import { InfoButton } from '../../shared/InfoButton';
 import IntegrationCard from './IntegrationCard';
 
 // Slack icon (simple version)
@@ -138,7 +137,6 @@ export const UserIntegrations: React.FC<UserIntegrationsProps> = ({ className = 
     <div className={`space-y-6 ${className}`}>
       {/* Header */}
       <div className="relative">
-        <InfoButton cardId="settings-integrations" position="top-right" />
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-c-text flex items-center gap-2">

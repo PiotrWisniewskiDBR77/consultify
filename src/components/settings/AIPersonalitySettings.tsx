@@ -10,7 +10,6 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
-import { InfoButton } from '../shared/InfoButton';
 
 interface AIPersonalityPreferences {
   tone: string;
@@ -74,8 +73,6 @@ export const AIPersonalitySettings: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
-      <InfoButton cardId="settings-ai" position="top-right" />
-
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-c-text flex items-center gap-2">

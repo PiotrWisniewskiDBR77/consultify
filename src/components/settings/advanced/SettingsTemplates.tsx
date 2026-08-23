@@ -13,7 +13,6 @@ import { Api } from '../../../services/api';
 import { User } from '../../../types';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { DegradedState } from '../../Admin/AdminState';
-import { InfoButton } from '../../shared/InfoButton';
 
 interface SettingsTemplatesProps {
   currentUser: User;
@@ -205,8 +204,6 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in relative">
-      <InfoButton cardId="settings-templates" position="top-right" />
-
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">

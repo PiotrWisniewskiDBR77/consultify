@@ -33,7 +33,6 @@ import { LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
-import { InfoButton } from '../../shared/InfoButton';
 import TeresaMark from '../../shared/TeresaMark';
 
 interface AIModelSelectionSettingsProps {
@@ -221,8 +220,6 @@ export const AIModelSelectionSettings: React.FC<AIModelSelectionSettingsProps> =
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
-      <InfoButton cardId="settings-ai-model-selection" position="top-right" />
-
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

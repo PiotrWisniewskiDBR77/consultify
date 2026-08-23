@@ -20,7 +20,6 @@ import { Banner } from '@/components/shared/Banner';
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
-import { InfoButton } from '../../shared/InfoButton';
 
 interface SettingsExportImportProps {
   currentUser: User;
@@ -255,8 +254,6 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in relative">
-      <InfoButton cardId="settings-export-import" position="top-right" />
-
       <div>
         <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">
           <FileJson size={28} className="text-emerald-500" />

@@ -30,7 +30,6 @@ import { LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../services/api';
 import { DoNotDisturbHours, OutOfOfficePeriod, User, WorkingHours } from '../../types';
-import { InfoButton } from '../shared/InfoButton';
 
 interface AvailabilityStatusSectionProps {
   currentUser: User;
@@ -221,8 +220,6 @@ export const AvailabilityStatusSection: React.FC<AvailabilityStatusSectionProps>
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
-      <InfoButton cardId="settings-availability-status" position="top-right" />
-
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

@@ -8,7 +8,6 @@ import { EmptyState } from '@/components/ui/composed';
 import { Api } from '../../services/api';
 import { LegalDocType, LegalDocument, User } from '../../types';
 import { DegradedState } from '../Admin/AdminState';
-import { InfoButton } from '../shared/InfoButton';
 
 interface LegalSettingsProps {
   currentUser: User;
@@ -134,7 +133,6 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
 
   return (
     <div className="max-w-3xl relative">
-      <InfoButton cardId="settings-legal" position="top-right" />
       <h2 className="text-xl font-semibold text-c-text mb-2">
         {t('settings.menu.legal', 'Legal Documents')}
       </h2>

@@ -20,7 +20,6 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '../../services/api';
 import { V8FinanceApi } from '../../services/api/v8/finance';
 import { User } from '../../types';
-import { InfoButton } from '../shared/InfoButton';
 
 interface OrganizationSettingsProps {
   currentUser: User;
@@ -267,7 +266,6 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto relative">
-      <InfoButton cardId="settings-organization" position="top-right" />
       {/* Header / Selector */}
       <div className="flex items-center justify-between">
         <div>

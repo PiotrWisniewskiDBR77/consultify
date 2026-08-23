@@ -7,7 +7,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { User } from '../../../types';
-import { InfoButton } from '../../shared/InfoButton';
 
 interface SettingsSearchProps {
   currentUser: User;
@@ -311,8 +310,6 @@ export const SettingsSearch: React.FC<SettingsSearchProps> = ({ currentUser, onN
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in relative">
-      <InfoButton cardId="settings-search" position="top-right" />
-
       <div>
         <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">
           <Search size={28} className="text-blue-500" />

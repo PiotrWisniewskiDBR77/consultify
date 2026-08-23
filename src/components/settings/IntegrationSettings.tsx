@@ -35,7 +35,6 @@ import { ROUTES } from '../../routes/routeConfig';
 import { Api } from '../../services/api';
 import { User } from '../../types';
 import { EasySyncSetupShellPanel } from '../shared/EasySyncSetupShellPanel';
-import { InfoButton } from '../shared/InfoButton';
 
 // Webhook types
 interface WebhookSubscription {
@@ -957,7 +956,6 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 relative">
-      <InfoButton cardId="settings-integrations" position="top-right" />
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-c-text">
           {t('settings.integrations.title', 'Integrations')}

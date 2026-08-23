@@ -20,7 +20,6 @@ import { useNavigate } from 'react-router-dom';
 import { Api } from '../../services/api';
 import { User } from '../../types';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
-import { InfoButton } from '../shared/InfoButton';
 import { SettingsHeaderActionPortal } from './SettingsHeaderActions';
 
 interface ProfileSettingsProps {
@@ -506,8 +505,6 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
-      <InfoButton cardId="settings-profile" position="top-right" />
-
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

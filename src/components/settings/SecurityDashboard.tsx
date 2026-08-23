@@ -40,7 +40,6 @@ import { LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../services/api';
 import { User } from '../../types';
-import { InfoButton } from '../shared/InfoButton';
 
 interface SecurityDashboardProps {
   currentUser: User;
@@ -262,8 +261,6 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative p-6">
-      <InfoButton cardId="security-dashboard" position="top-right" />
-
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">

@@ -5,7 +5,6 @@ import { Link } from 'react-router-dom';
 import { usePermissions } from '../../hooks/usePermissions';
 import { User } from '../../types';
 import { BillingCore } from '../shared/BillingCore';
-import { InfoButton } from '../shared/InfoButton';
 
 interface BillingSettingsProps {
   currentUser: User;
@@ -16,7 +15,6 @@ export const BillingSettings: React.FC<BillingSettingsProps> = ({ currentUser })
 
   return (
     <div className="max-w-4xl relative">
-      <InfoButton cardId="settings-billing" position="top-right" />
       <h2 className="text-lg font-semibold text-c-text mb-6">Subscription & Billing</h2>
       <BillingCore
         mode={isAdmin ? 'org-admin' : 'user'}

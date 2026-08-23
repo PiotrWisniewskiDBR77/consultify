@@ -40,7 +40,6 @@ import { Api } from '../../services/api';
 import { User } from '../../types';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { DegradedState } from '../Admin/AdminState';
-import { InfoButton } from '../shared/InfoButton';
 import { SettingsHeaderActionPortal } from './SettingsHeaderActions';
 
 interface WorkPreferencesSettingsProps {
@@ -201,7 +200,6 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
   if (loadError) {
     return (
       <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
-        <InfoButton cardId="settings-work" position="top-right" />
         <div>
           <h2 className="text-2xl font-bold text-c-text flex items-center gap-3">
             <Target size={28} className="text-c-accent" />
@@ -270,8 +268,6 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
-      <InfoButton cardId="settings-work" position="top-right" />
-
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

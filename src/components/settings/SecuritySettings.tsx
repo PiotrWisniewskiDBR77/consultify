@@ -26,7 +26,6 @@ import { StatusChip } from '@/components/ui/primitives';
 
 import { Api } from '../../services/api';
 import { User } from '../../types';
-import { InfoButton } from '../shared/InfoButton';
 
 interface SecuritySettingsProps {
   currentUser: User;
@@ -172,7 +171,6 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({ currentUser 
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
-      <InfoButton cardId="settings-security" position="top-right" />
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-blue-600 flex items-center justify-center shadow-lg shadow-emerald-500/25">

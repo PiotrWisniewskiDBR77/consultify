@@ -53,7 +53,6 @@ import {
 } from '../../types';
 import { LLMProviderConfig } from '../../types/domain/ai';
 import { ProactivitySelector } from '../AISettings';
-import { InfoButton } from '../shared/InfoButton';
 
 interface AISettingsProps {
   currentUser: User;
@@ -493,7 +492,6 @@ export const AISettings: React.FC<AISettingsProps> = ({ currentUser, onUpdateUse
               </>
             )}
           </button>
-          <InfoButton cardId="settings-ai" position="top-right" />
         </div>
       </div>
 
