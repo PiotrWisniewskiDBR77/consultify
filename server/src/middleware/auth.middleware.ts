@@ -14,6 +14,7 @@ import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
 import {
+  type ActiveDemoSession,
   DEMO_SESSION_EXPIRED_CODE,
   DEMO_SESSION_INVALID_CODE,
   isPathAllowedForExpiredDemo,
@@ -42,6 +43,11 @@ const JWT_VERIFY_OPTIONS: VerifyOptions = {
   algorithms: [ALLOWED_AUTH_JWT_ALGORITHM],
   clockTolerance: JWT_CLOCK_TOLERANCE_SEC,
 };
+
+// Server-only proof that `attachUser` resolved this request from an ACTIVE
+// public-demo session. A WeakMap keeps the authority off the enumerable request
+// object, so no header/body field can forge the membership exception below.
+const trustedPublicDemoSessions = new WeakMap<Request, ActiveDemoSession>();
 
 const getForcedSuperAdminEmails = (): Set<string> => {
   const raw = String(process.env.FORCE_SUPERADMIN_EMAILS || '');
@@ -670,7 +676,10 @@ const attachUser = async (
       // A foreign or stale session org must be refused, not quietly downgraded to
       // the base org — degrading is what let a caller probe other tenants' ids and
       // still get a 200.
-      if (requestedDemoSessionOrgId && requestedDemoSessionOrgId !== publicDemo.session.sessionOrgId) {
+      if (
+        requestedDemoSessionOrgId &&
+        requestedDemoSessionOrgId !== publicDemo.session.sessionOrgId
+      ) {
         res.status(403).json({
           error: 'Demo workspace mismatch. Reload the demo to continue.',
           code: DEMO_SESSION_INVALID_CODE,
@@ -704,6 +713,7 @@ const attachUser = async (
         });
         return;
       }
+      trustedPublicDemoSessions.set(req, publicDemo.session);
     }
   }
 
@@ -1603,6 +1613,17 @@ export const validateOrgMembership = asyncHandler(
       isSuperAdmin = false;
     }
     if (isSuperAdmin) {
+      return next();
+    }
+
+    // Public demo session tenants intentionally have no organization_members
+    // row: their authority is the ACTIVE server-side demo_sessions record that
+    // `attachUser` already resolved and pinned to this exact request. Do not
+    // reclassify that absence as a revoked customer membership. The WeakMap is
+    // module-private and the exact org comparison prevents client-controlled
+    // headers from widening this exception.
+    const trustedDemoSession = trustedPublicDemoSessions.get(req);
+    if (trustedDemoSession?.sessionOrgId === orgId) {
       return next();
     }
 

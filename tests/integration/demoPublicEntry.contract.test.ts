@@ -104,6 +104,28 @@ describe('OPS-DEMO-002 public demo entry contract', () => {
       expect(typeof res.body.demoSession.expiresAt).toBe('string');
     }, 120_000);
 
+    it('allows authenticated reads in the server-verified session tenant without a membership row', async () => {
+      const res = await registerDemo(fixtureEmail('session-membership'));
+      expect(res.status).toBe(200);
+      const sessionOrg = res.body.demoSession.organizationId as string;
+
+      for (const endpoint of [
+        '/api/organization-context',
+        '/api/my-work/personal-tasks',
+        '/api/conversations',
+        '/api/chat-projects',
+      ]) {
+        const read = await request(app)
+          .get(endpoint)
+          .set('Authorization', `Bearer ${res.body.token}`)
+          .set('X-Demo-Mode', 'true')
+          .set('X-Demo-Session-Org', sessionOrg);
+
+        expect(read.status, `${endpoint}: ${JSON.stringify(read.body)}`).toBe(200);
+        expect(read.body?.code).not.toBe('ORG_MEMBERSHIP_REVOKED');
+      }
+    }, 120_000);
+
     it('stores the address in the same normalized form the login lookup uses', async () => {
       // Root cause of the staging dead end: register stored the raw mixed-case
       // address while login queried the lowercased one, so the account existed
