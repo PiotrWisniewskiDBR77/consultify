@@ -39,7 +39,12 @@ A read-only identity check found the already-running isolated Materials owner ru
 
 The canonical registry contains one presentation, `Plan transformacji — 90 dni`. Opening it from the registry cold-opens the full Deck Builder with four slides, slide navigation, editing controls, presentation mode, comments, AI actions and the Teresa side panel. Evidence: `materials-presentation-full-card-4342.jpg`.
 
-This recovered lane does not currently expose canonical Document or Sheet records. Therefore the presentation full-card path is proven, while Document Studio and Workbook full-card readback remain open integration work.
+The deterministic fixture deep-links prove that the two records missing from the common registry projection were not lost:
+
+- `/document-studio/b1120000-0000-4000-8000-000000000001` cold-opens `Plan transformacji operacyjnej` in the full Document Studio with two populated sections, formatting, QA/review, AI Editor, share and DOCX/PDF export controls. Evidence: `materials-document-full-card-4342.jpg`;
+- `/excele?ff_excele=1&artifactId=b1180000-0000-4000-8000-000000000001` cold-opens the real `Budżet pilotażu` workbook with one XLSX sheet, download/preview and history/release controls. Evidence: `materials-sheet-full-card-4342.jpg`.
+
+The remaining defect is now bounded: Document and Sheet exist and their full cards work, but the recovered common Materials registry exposes only the Presentation row. Repairing/rebuilding those two registry projections and proving row-to-card navigation remains integration work. Persistence mutations and exports were not executed in this read-only replay.
 The attempted presentation and workbook paths are not mounted canonical routes and fall
 back to Chat. Therefore this replay proves the registry/table integration only. It does
 not claim DOC/PPT/XLSX cold-open, persistence, export, or owner acceptance.
