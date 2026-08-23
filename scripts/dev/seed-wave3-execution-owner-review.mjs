@@ -1,9 +1,11 @@
-#!/usr/bin/env node
+#!/usr/bin/env -S node --import=tsx
 /** Wave 3 / module 06 Execution deterministic local owner fixture.
  * Commands: provision|seed|readback|reset|drop. Mutations require
  * EXE_OWNER_FIXTURE_CONFIRM=YES and exact loopback DB
  * `consultify_w3_execution_owner_*`. Seed requires a new wx/0600 manifest.
  * No cw-local/shared DB, browser, remote provider or production runtime.
+ * Invoke directly, or with `npx tsx`, because seeding imports canonical
+ * TypeScript services after the relational fixture has been written.
  */
 import { spawnSync } from 'node:child_process';
 import { createHash, randomBytes } from 'node:crypto';

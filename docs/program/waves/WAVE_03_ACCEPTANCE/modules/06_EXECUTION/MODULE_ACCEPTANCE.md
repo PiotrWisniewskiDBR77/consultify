@@ -7,6 +7,20 @@ Owner: Piotr Wisniewski
 Integrator: Codex
 Mobile: `DEFERRED_NON_GATING`
 
+> Recovery replay — 2026-08-23: the historical 817-migration database recorded
+> below was absent at catalog revalidation. A replacement local-only database,
+> `consultify_w3_execution_owner_recovered_20260823`, was provisioned through
+> the exact 831-migration chain and bound to a new FINAL `0600` manifest. A
+> PostgreSQL restart followed by independent readback preserved the complete
+> closed execution/evidence/Results lineage and all six personas. Exact clean
+> SHA `df885a12eb352c2c417739c363ca5d1ec714d2c3` then adopted it on server/client
+> `4333/4334`: health/readiness/frontend were `200/200/200`, migration ledgers
+> were `ok/ok`, the client marker and SQL ownership marker passed, canonical
+> Initiative/Case/work/list API reads returned `200`, anonymous access returned
+> `401`, inactive login `403`, and foreign-tenant Case access `404`. This restores
+> current technical API/storage readiness, not authenticated browser evidence,
+> Piotr acceptance, policy approval, production release, or final 16/16 replay.
+
 ## Contract
 
 Primary journey: open a case, inspect capacity/health, perform a governed action

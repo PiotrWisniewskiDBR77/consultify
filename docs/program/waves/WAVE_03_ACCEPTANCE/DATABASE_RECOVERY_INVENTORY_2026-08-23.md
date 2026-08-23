@@ -103,6 +103,32 @@ separate cold readback proved:
 - runtime stopped with database/catalog preserved, and the fixture container
   returned to stopped state.
 
-Current reconstructed storage readiness: `1/16` — Initiatives only. Historical
-browser evidence for the other modules remains evidence, but their databases
-must be reconstructed and requalified on the current exact candidate.
+After this first step, reconstructed storage readiness was `1/16` — Initiatives
+only. Historical browser evidence for the other modules remains evidence, but
+their databases must be reconstructed and requalified on the current exact
+candidate.
+
+Execution was reconstructed next in the same named persistent volume as
+`consultify_w3_execution_owner_recovered_20260823`. The guarded seed initially
+failed closed when invoked with plain `node`, because its canonical service
+imports require the TypeScript loader; it made no fixture manifest and was
+rerun successfully with `npx tsx`. The script entrypoint now documents and
+encodes that loader requirement. Qualification proved:
+
+- `831/831` successful migrations before seed;
+- a new FINAL `0600` manifest and matching durable ownership marker with nonce
+  `17b786f13458b0ade3270d465cc87dc7db5a687c624b4e446428e279d7be3473`;
+- PostgreSQL restart followed by independent cold readback of six personas,
+  closed Execution `v3`, ACTIVE canonical Case `v1`, approved evidence,
+  PLN `40000` actual budget and exactly-once delivered Results lineage;
+- exact clean SHA `df885a12eb352c2c417739c363ca5d1ec714d2c3` adopted runtime on
+  server/client `4333/4334`, with health / ready / frontend `200 / 200 / 200`,
+  migration states `ok / ok`, verified client marker and SQL marker;
+- active OWNER login `200`; canonical Execution list, Case, work and Initiative
+  API reads `200`; missing Case `404`; anonymous Case read `401`; inactive login
+  `403`; foreign OWNER login `200` followed by same-tenant Case denial `404`;
+- identity-safe runtime stop freed both ports and preserved the database; the
+  persistent fixture container was then returned to stopped state.
+
+Credentialed browser replay and Piotr's owner acceptance remain pending. Current
+reconstructed storage readiness: `2/16` — Initiatives and Execution.
