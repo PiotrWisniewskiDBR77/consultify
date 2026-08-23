@@ -1991,307 +1991,305 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
           </div>
         )}
 
-      {/* Unified Feedback Block (AI only): single action row, revealed on hover.
-          Stays visible while the user has expanded actions/sources so it doesn't
-          vanish mid-interaction; the last message keeps it visible for discovery. */}
-      {msg.role === 'ai' &&
-        !msg.isStreaming &&
-        (isHovered || isLastMessage || showCompactActions || showSourcesDetails) && (
-          <div className={`mt-1 flex items-center gap-1.5`}>
-            {/* Copy — always visible */}
-            <button
-              onClick={() => handleCopyMessage(userVisibleContent, msg.id)}
-              className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors"
-              title={t('chat.actions.copy', 'Copy')}
-              aria-label={t('chat.actions.copy', 'Copy')}
-            >
-              {isCopied ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
-            </button>
-            {/* Speak — always visible */}
-            <button
-              onClick={() => {
-                stopSpeaking();
-                setTimeout(() => speak(userVisibleContent), 60);
-              }}
-              className={`p-1 rounded-md transition-colors ${
-                voiceState.isSpeaking
-                  ? 'text-danger-500'
-                  : 'text-c-text-muted hover:text-c-text hover:bg-c-surface-raised'
-              }`}
-              title={
-                voiceState.isSpeaking
-                  ? t('chat.actions.stop', 'Stop')
-                  : t('chat.actions.speak', 'Speak')
-              }
-              aria-label={t('chat.actions.speak', 'Speak')}
-            >
-              <Volume2 size={12} />
-            </button>
-            {/* More (feedback / save / sources) */}
-            <button
-              onClick={() =>
-                setShowCompactActions((v) => {
-                  const next = !v;
-                  if (!next) setShowSourcesDetails(false);
-                  return next;
-                })
-              }
-              className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-c-border text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors"
-              title={t('chat.actions.toggleResponseActions', 'More actions')}
-              aria-label={t('chat.actions.toggleResponseActions', 'More actions')}
-            >
-              {showCompactActions ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-            </button>
+      {/* One stable response-action capsule. Controls stay mounted while the
+          response streams or capabilities are temporarily unavailable; their
+          disabled/busy state replaces the former layout-shifting disappearance. */}
+      {msg.role === 'ai' && (
+        <div
+          className="mt-1 inline-flex min-h-8 items-center gap-1 rounded-xl border border-white/30 bg-gradient-to-br from-white/85 to-white/65 px-1.5 py-1 shadow-sm backdrop-blur-xl dark:border-white/[0.08] dark:from-navy-900/80 dark:to-navy-800/60"
+          data-testid="message-response-actions"
+          data-response-state={msg.isStreaming ? 'streaming' : isDisabled ? 'disabled' : 'ready'}
+        >
+          {/* Copy — always visible */}
+          <button
+            onClick={() => handleCopyMessage(userVisibleContent, msg.id)}
+            disabled={msg.isStreaming}
+            className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+            title={t('chat.actions.copy', 'Copy')}
+            aria-label={t('chat.actions.copy', 'Copy')}
+          >
+            {isCopied ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+          </button>
+          {/* Speak — always visible */}
+          <button
+            onClick={() => {
+              stopSpeaking();
+              setTimeout(() => speak(userVisibleContent), 60);
+            }}
+            disabled={msg.isStreaming}
+            className={`p-1 rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+              voiceState.isSpeaking
+                ? 'text-danger-500'
+                : 'text-c-text-muted hover:text-c-text hover:bg-c-surface-raised'
+            }`}
+            title={
+              voiceState.isSpeaking
+                ? t('chat.actions.stop', 'Stop')
+                : t('chat.actions.speak', 'Speak')
+            }
+            aria-label={t('chat.actions.speak', 'Speak')}
+          >
+            <Volume2 size={12} />
+          </button>
+          {/* More (feedback / save / sources) */}
+          <button
+            onClick={() =>
+              setShowCompactActions((v) => {
+                const next = !v;
+                if (!next) setShowSourcesDetails(false);
+                return next;
+              })
+            }
+            disabled={msg.isStreaming}
+            className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-c-border text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+            title={t('chat.actions.toggleResponseActions', 'More actions')}
+            aria-label={t('chat.actions.toggleResponseActions', 'More actions')}
+          >
+            {showCompactActions ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+          </button>
 
-            {showCompactActions && (
-              <div className="relative inline-flex items-center gap-0.5 px-1.5 py-1 rounded-xl border border-c-border bg-c-surface-raised">
-                <InlineResponseFeedback
-                  messageId={msg.id}
-                  conversationId={activeConversationId || undefined}
-                  responseLength={userVisibleContent.length}
-                  onFeedback={(feedback) => handleFeedback(msg.id, userVisibleContent, feedback)}
-                  compact
-                  thumbsOnly
-                  // M01-P03 §7 — hydrate "already rated" from the persisted
-                  // message. M01-P03B (2026-08-05) wired the server-side
-                  // join that makes this real: GET /api/conversations/:id
-                  // now attaches the caller's own ai_response_feedback
-                  // rating onto each message, so `msg.feedback` is no
-                  // longer always null on real data.
-                  existingFeedback={
-                    msg.feedback &&
-                    (msg.feedback.rating === 'positive' || msg.feedback.rating === 'negative')
-                      ? { rating: msg.feedback.rating, timestamp: new Date() }
-                      : null
-                  }
-                />
-                {/* M01-010 — Regenerate: re-sends the user turn this answer
-                    replied to, through the same path as the error-retry button.
-                    Hidden when there is no preceding user message (no dead button). */}
-                {canRegenerate && (
-                  <button
-                    onClick={handleRegenerateMessage}
-                    disabled={isDisabled}
-                    data-testid="message-action-regenerate"
-                    className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                    title={t('chat.actions.regenerate', 'Regenerate')}
-                    aria-label={t('chat.actions.regenerate', 'Regenerate')}
-                  >
-                    <RefreshCw size={12} />
-                  </button>
-                )}
-                {/* M01-010 — Continue: sends a continuation instruction on the
+          <fieldset
+            disabled={msg.isStreaming || isDisabled}
+            className={`relative items-center gap-0.5 border-l border-c-border pl-1 ${showCompactActions ? 'inline-flex' : 'hidden'}`}
+            aria-hidden={!showCompactActions}
+            data-testid="message-response-actions-expanded"
+          >
+            <InlineResponseFeedback
+              messageId={msg.id}
+              conversationId={activeConversationId || undefined}
+              responseLength={userVisibleContent.length}
+              onFeedback={(feedback) => handleFeedback(msg.id, userVisibleContent, feedback)}
+              compact
+              thumbsOnly
+              // M01-P03 §7 — hydrate "already rated" from the persisted
+              // message. M01-P03B (2026-08-05) wired the server-side
+              // join that makes this real: GET /api/conversations/:id
+              // now attaches the caller's own ai_response_feedback
+              // rating onto each message, so `msg.feedback` is no
+              // longer always null on real data.
+              existingFeedback={
+                msg.feedback &&
+                (msg.feedback.rating === 'positive' || msg.feedback.rating === 'negative')
+                  ? { rating: msg.feedback.rating, timestamp: new Date() }
+                  : null
+              }
+            />
+            {/* Regenerate remains mounted; without a preceding user turn it is
+                honestly disabled instead of changing the action-row geometry. */}
+            <button
+              onClick={handleRegenerateMessage}
+              disabled={isDisabled || msg.isStreaming || !canRegenerate}
+              data-testid="message-action-regenerate"
+              className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+              title={t('chat.actions.regenerate', 'Regenerate')}
+              aria-label={t('chat.actions.regenerate', 'Regenerate')}
+            >
+              <RefreshCw size={12} />
+            </button>
+            {/* M01-010 — Continue: sends a continuation instruction on the
                     same `handleSendMessage` path. */}
-                <button
-                  onClick={handleContinueMessage}
-                  disabled={isDisabled}
-                  data-testid="message-action-continue"
-                  className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                  title={t('chat.actions.continue', 'Continue')}
-                  aria-label={t('chat.actions.continue', 'Continue')}
-                >
-                  <CornerDownRight size={12} />
-                </button>
-                {/* M01-010 — Report: opens the reason prompt, then really POSTs
+            <button
+              onClick={handleContinueMessage}
+              disabled={isDisabled}
+              data-testid="message-action-continue"
+              className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+              title={t('chat.actions.continue', 'Continue')}
+              aria-label={t('chat.actions.continue', 'Continue')}
+            >
+              <CornerDownRight size={12} />
+            </button>
+            {/* M01-010 — Report: opens the reason prompt, then really POSTs
                     to /api/ai/report via Api.reportMessageFeedback.
                     Hidden for optimistic messages: the endpoint requires a
                     persisted uuid, so a `local-` id could only ever 400. Same
                     guard Branch uses. */}
-                {!String(msg.id || '').startsWith('local-') && (
-                  <button
-                    ref={reportTriggerRef}
-                    onClick={() => {
-                      setReportError(null);
-                      setReportOpen((v) => !v);
-                    }}
-                    data-testid="message-action-report"
-                    aria-haspopup="dialog"
-                    aria-expanded={reportOpen}
-                    className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                    title={t('chat.actions.report', 'Report')}
-                    aria-label={t('chat.actions.report', 'Report')}
-                  >
-                    <Flag size={12} />
-                  </button>
+            <button
+              ref={reportTriggerRef}
+              onClick={() => {
+                setReportError(null);
+                setReportOpen((v) => !v);
+              }}
+              data-testid="message-action-report"
+              aria-haspopup="dialog"
+              aria-expanded={reportOpen}
+              disabled={msg.isStreaming || String(msg.id || '').startsWith('local-')}
+              className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+              title={t('chat.actions.report', 'Report')}
+              aria-label={t('chat.actions.report', 'Report')}
+            >
+              <Flag size={12} />
+            </button>
+            <button
+              onClick={() => handleSaveAsNote(msg.id, userVisibleContent)}
+              className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors"
+              title={t('myWork.notebook.saveAsNote', 'Save as note')}
+              aria-label={t('myWork.notebook.saveAsNote', 'Save as note')}
+            >
+              <Bookmark size={12} />
+            </button>
+            <button
+              onClick={() => handleSaveAsIdea(msg.id, userVisibleContent)}
+              className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors"
+              title={t('myWork.ideas.saveAsIdea', 'Save as idea')}
+              aria-label={t('myWork.ideas.saveAsIdea', 'Save as idea')}
+            >
+              <Lightbulb size={12} />
+            </button>
+            {!governedHandoff && onCreateGovernedDocument ? (
+              <button
+                onClick={() => onCreateGovernedDocument(msg)}
+                disabled={Boolean(governedHandoffBusyById[msg.id])}
+                className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title={t('chat.governedHandoff.proposeDocument', 'Propose governed document')}
+                aria-label={t('chat.governedHandoff.proposeDocument', 'Propose governed document')}
+              >
+                {governedHandoffBusyById[msg.id] === 'create' ? (
+                  <Loader2 size={12} className="animate-spin" />
+                ) : (
+                  <FilePlus2 size={12} />
                 )}
-                <button
-                  onClick={() => handleSaveAsNote(msg.id, userVisibleContent)}
-                  className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors"
-                  title={t('myWork.notebook.saveAsNote', 'Save as note')}
-                  aria-label={t('myWork.notebook.saveAsNote', 'Save as note')}
-                >
-                  <Bookmark size={12} />
-                </button>
-                <button
-                  onClick={() => handleSaveAsIdea(msg.id, userVisibleContent)}
-                  className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors"
-                  title={t('myWork.ideas.saveAsIdea', 'Save as idea')}
-                  aria-label={t('myWork.ideas.saveAsIdea', 'Save as idea')}
-                >
-                  <Lightbulb size={12} />
-                </button>
-                {!governedHandoff && onCreateGovernedDocument ? (
-                  <button
-                    onClick={() => onCreateGovernedDocument(msg)}
-                    disabled={Boolean(governedHandoffBusyById[msg.id])}
-                    className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    title={t('chat.governedHandoff.proposeDocument', 'Propose governed document')}
-                    aria-label={t(
-                      'chat.governedHandoff.proposeDocument',
-                      'Propose governed document'
-                    )}
-                  >
-                    {governedHandoffBusyById[msg.id] === 'create' ? (
-                      <Loader2 size={12} className="animate-spin" />
-                    ) : (
-                      <FilePlus2 size={12} />
-                    )}
-                  </button>
-                ) : null}
-                {canSaveToContext && (
-                  <button
-                    onClick={() => handleSaveToContext(msg.id, userVisibleContent, contextSaveRole)}
-                    disabled={isContextSaveBusy || isContextSaved}
-                    className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    title={
-                      isContextSaved
-                        ? t('chat.actions.savedToContext', 'Saved to Context OS')
-                        : t('chat.actions.saveToContext', 'Save to Context OS')
-                    }
-                    aria-label={t('chat.actions.saveToContext', 'Save to Context OS')}
-                  >
-                    {isContextSaveBusy ? (
-                      <Loader2 size={12} className="animate-spin" />
-                    ) : isContextSaved ? (
-                      <CheckCircle2 size={12} className="text-emerald-500" />
-                    ) : (
-                      <Database size={12} />
-                    )}
-                  </button>
+              </button>
+            ) : null}
+            {canSaveToContext && (
+              <button
+                onClick={() => handleSaveToContext(msg.id, userVisibleContent, contextSaveRole)}
+                disabled={isContextSaveBusy || isContextSaved}
+                className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title={
+                  isContextSaved
+                    ? t('chat.actions.savedToContext', 'Saved to Context OS')
+                    : t('chat.actions.saveToContext', 'Save to Context OS')
+                }
+                aria-label={t('chat.actions.saveToContext', 'Save to Context OS')}
+              >
+                {isContextSaveBusy ? (
+                  <Loader2 size={12} className="animate-spin" />
+                ) : isContextSaved ? (
+                  <CheckCircle2 size={12} className="text-emerald-500" />
+                ) : (
+                  <Database size={12} />
                 )}
-                <button
-                  onClick={() => setShowSourcesDetails((v) => !v)}
-                  className={`p-1 rounded-md transition-colors ${
-                    showSourcesDetails
-                      ? 'text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-900/25'
-                      : 'text-c-text-muted hover:text-c-text hover:bg-c-surface-raised'
-                  }`}
-                  title={t('chat.sources.details', 'Sources details')}
-                  aria-label={t('chat.sources.details', 'Sources details')}
-                >
-                  <ShieldCheck size={12} />
-                </button>
-                <span className="mx-0.5 h-3 w-px bg-c-border" />
+              </button>
+            )}
+            <button
+              onClick={() => setShowSourcesDetails((v) => !v)}
+              className={`p-1 rounded-md transition-colors ${
+                showSourcesDetails
+                  ? 'text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-900/25'
+                  : 'text-c-text-muted hover:text-c-text hover:bg-c-surface-raised'
+              }`}
+              title={t('chat.sources.details', 'Sources details')}
+              aria-label={t('chat.sources.details', 'Sources details')}
+            >
+              <ShieldCheck size={12} />
+            </button>
+            <span className="mx-0.5 h-3 w-px bg-c-border" />
 
-                {/* M01-010 — report reason prompt. Escape closes it and focus
+            {/* M01-010 — report reason prompt. Escape closes it and focus
                     returns to the Report button (see closeReportDialog). */}
-                {reportOpen && (
-                  <div
-                    ref={reportDialogRef}
-                    role="dialog"
-                    aria-modal="false"
-                    aria-label={t('chat.report.title', 'Report an issue')}
-                    data-testid="message-report-dialog"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Escape') {
-                        e.stopPropagation();
-                        closeReportDialog();
-                      }
-                    }}
-                    className="absolute top-full left-0 z-30 mt-1 w-64 rounded-xl border border-c-border bg-c-surface p-3 shadow-lg text-left"
-                  >
-                    <div className="text-xs font-semibold text-c-text">
-                      {t('chat.report.title', 'Report an issue')}
-                    </div>
-                    <p className="mt-0.5 text-[11px] text-c-text-muted">
-                      {t(
-                        'chat.report.description',
-                        'Let us know what went wrong with this response.'
-                      )}
-                    </p>
-                    <div className="mt-2 flex flex-col gap-1" role="radiogroup">
-                      {REPORT_REASON_KEYS.map((key, idx) => (
-                        <label
-                          key={key}
-                          className="flex items-center gap-2 text-[11px] text-c-text-secondary cursor-pointer"
-                        >
-                          <input
-                            type="radio"
-                            name={`report-reason-${msg.id}`}
-                            value={key}
-                            checked={reportReasonKey === key}
-                            onChange={() => setReportReasonKey(key)}
-                            data-report-autofocus={idx === 0 ? 'true' : undefined}
-                            className="accent-current focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                          />
-                          <span>{t(`chat.report.${key}`, REPORT_REASON_FALLBACKS[key])}</span>
-                        </label>
-                      ))}
-                    </div>
-                    {reportReasonKey === 'other' && (
-                      <textarea
-                        value={reportOtherText}
-                        onChange={(e) => setReportOtherText(e.target.value)}
-                        rows={2}
-                        data-testid="message-report-other-text"
-                        placeholder={t('chat.report.otherPlaceholder', 'Describe the issue...')}
-                        aria-label={t('chat.report.otherPlaceholder', 'Describe the issue...')}
-                        className="mt-2 w-full rounded-lg border border-c-border bg-c-surface-raised px-2 py-1 text-[11px] text-c-text placeholder:text-c-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+            {reportOpen && (
+              <div
+                ref={reportDialogRef}
+                role="dialog"
+                aria-modal="false"
+                aria-label={t('chat.report.title', 'Report an issue')}
+                data-testid="message-report-dialog"
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    e.stopPropagation();
+                    closeReportDialog();
+                  }
+                }}
+                className="absolute top-full left-0 z-30 mt-1 w-64 rounded-xl border border-c-border bg-c-surface p-3 shadow-lg text-left"
+              >
+                <div className="text-xs font-semibold text-c-text">
+                  {t('chat.report.title', 'Report an issue')}
+                </div>
+                <p className="mt-0.5 text-[11px] text-c-text-muted">
+                  {t('chat.report.description', 'Let us know what went wrong with this response.')}
+                </p>
+                <div className="mt-2 flex flex-col gap-1" role="radiogroup">
+                  {REPORT_REASON_KEYS.map((key, idx) => (
+                    <label
+                      key={key}
+                      className="flex items-center gap-2 text-[11px] text-c-text-secondary cursor-pointer"
+                    >
+                      <input
+                        type="radio"
+                        name={`report-reason-${msg.id}`}
+                        value={key}
+                        checked={reportReasonKey === key}
+                        onChange={() => setReportReasonKey(key)}
+                        data-report-autofocus={idx === 0 ? 'true' : undefined}
+                        className="accent-current focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                       />
-                    )}
-                    {reportError && (
-                      <div
-                        role="alert"
-                        data-testid="message-report-error"
-                        className="mt-2 text-[11px] text-danger-600 dark:text-danger-300"
-                      >
-                        {reportError}
-                      </div>
-                    )}
-                    <div className="mt-2 flex items-center justify-end gap-1.5">
-                      <button
-                        type="button"
-                        onClick={closeReportDialog}
-                        data-testid="message-report-cancel"
-                        className="h-6 px-2 rounded-md text-[11px] text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                      >
-                        {t('common.cancel', 'Cancel')}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleSubmitReport}
-                        disabled={
-                          reportBusy ||
-                          (reportReasonKey === 'other' && reportOtherText.trim().length === 0)
-                        }
-                        data-testid="message-report-submit"
-                        className="h-6 px-2 rounded-md border border-c-border bg-c-surface text-[11px] font-medium text-c-text hover:bg-c-surface-raised transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                      >
-                        {reportBusy ? (
-                          <Loader2 size={12} className="animate-spin" />
-                        ) : (
-                          t('chat.report.submit', 'Report')
-                        )}
-                      </button>
-                    </div>
+                      <span>{t(`chat.report.${key}`, REPORT_REASON_FALLBACKS[key])}</span>
+                    </label>
+                  ))}
+                </div>
+                {reportReasonKey === 'other' && (
+                  <textarea
+                    value={reportOtherText}
+                    onChange={(e) => setReportOtherText(e.target.value)}
+                    rows={2}
+                    data-testid="message-report-other-text"
+                    placeholder={t('chat.report.otherPlaceholder', 'Describe the issue...')}
+                    aria-label={t('chat.report.otherPlaceholder', 'Describe the issue...')}
+                    className="mt-2 w-full rounded-lg border border-c-border bg-c-surface-raised px-2 py-1 text-[11px] text-c-text placeholder:text-c-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                  />
+                )}
+                {reportError && (
+                  <div
+                    role="alert"
+                    data-testid="message-report-error"
+                    className="mt-2 text-[11px] text-danger-600 dark:text-danger-300"
+                  >
+                    {reportError}
                   </div>
                 )}
+                <div className="mt-2 flex items-center justify-end gap-1.5">
+                  <button
+                    type="button"
+                    onClick={closeReportDialog}
+                    data-testid="message-report-cancel"
+                    className="h-6 px-2 rounded-md text-[11px] text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                  >
+                    {t('common.cancel', 'Cancel')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSubmitReport}
+                    disabled={
+                      reportBusy ||
+                      (reportReasonKey === 'other' && reportOtherText.trim().length === 0)
+                    }
+                    data-testid="message-report-submit"
+                    className="h-6 px-2 rounded-md border border-c-border bg-c-surface text-[11px] font-medium text-c-text hover:bg-c-surface-raised transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                  >
+                    {reportBusy ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : (
+                      t('chat.report.submit', 'Report')
+                    )}
+                  </button>
+                </div>
               </div>
             )}
+          </fieldset>
 
-            {/* Honest result of the last report attempt (success only — a
+          {/* Honest result of the last report attempt (success only — a
                 failure keeps the dialog open with an inline error). */}
-            {!reportOpen && reportSentAt !== null && (
-              <span
-                role="status"
-                data-testid="message-report-status"
-                className="text-[11px] text-c-text-muted"
-              >
-                {t('chat.report.sent', 'Report sent for review.')}
-              </span>
-            )}
-          </div>
-        )}
+          {!reportOpen && reportSentAt !== null && (
+            <span
+              role="status"
+              data-testid="message-report-status"
+              className="text-[11px] text-c-text-muted"
+            >
+              {t('chat.report.sent', 'Report sent for review.')}
+            </span>
+          )}
+        </div>
+      )}
 
       {/* AI-suggested Deep Thinking activation hint */}
       {msg.role === 'ai' &&
