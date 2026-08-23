@@ -2058,7 +2058,10 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
       }
       return (
         <div className="h-full overflow-hidden">
-          <AssessmentOutputsTab onCountChange={setOutputsCount} />
+          <AssessmentOutputsTab
+            onCountChange={setOutputsCount}
+            onNavigate={(target) => setActiveTab(target)}
+          />
         </div>
       );
     }

@@ -5,9 +5,9 @@
  * (`listOutputs`/`getOutput`), NOT the legacy `/api/artifacts` registry.
  * Covers: StandardTable rendering, current/superseded distinction,
  * snapshot-not-session-state on open, lineage hand-off, empty/error/
- * forbidden states, and the internal Outputs/Reports/Initiatives switch.
+ * forbidden states, and canonical sibling-surface navigation.
  */
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -108,7 +108,10 @@ describe('AssessmentOutputsTab', () => {
   });
 
   it('reports the count back to the parent via onCountChange', async () => {
-    hoisted.listOutputs.mockResolvedValue({ outputs: [outputRow(), outputRow({ id: 'out-2' })], total: 2 });
+    hoisted.listOutputs.mockResolvedValue({
+      outputs: [outputRow(), outputRow({ id: 'out-2' })],
+      total: 2,
+    });
     const onCountChange = vi.fn();
 
     render(<AssessmentOutputsTab onCountChange={onCountChange} />);
@@ -141,7 +144,13 @@ describe('AssessmentOutputsTab', () => {
     hoisted.listOutputs.mockResolvedValue({
       outputs: [
         outputRow({ id: 'out-1', outputVersion: 1, isSuperseded: true, scope: 'Old revision' }),
-        outputRow({ id: 'out-2', outputVersion: 2, isSuperseded: false, revisionOfOutputId: 'out-1', scope: 'New revision' }),
+        outputRow({
+          id: 'out-2',
+          outputVersion: 2,
+          isSuperseded: false,
+          revisionOfOutputId: 'out-1',
+          scope: 'New revision',
+        }),
       ],
       total: 2,
     });
@@ -157,7 +166,13 @@ describe('AssessmentOutputsTab', () => {
     hoisted.listOutputs.mockResolvedValue({
       outputs: [
         outputRow({ id: 'out-1', outputVersion: 1, isSuperseded: null, scope: 'Older' }),
-        outputRow({ id: 'out-2', outputVersion: 2, isSuperseded: null, revisionOfOutputId: 'out-1', scope: 'Newer' }),
+        outputRow({
+          id: 'out-2',
+          outputVersion: 2,
+          isSuperseded: null,
+          revisionOfOutputId: 'out-1',
+          scope: 'Newer',
+        }),
       ],
       total: 2,
     });
@@ -193,9 +208,9 @@ describe('AssessmentOutputsTab', () => {
 
     render(<AssessmentOutputsTab />);
 
-    expect(await screen.findByText('No outputs yet')).toBeInTheDocument();
+    expect(await screen.findByText('No insights yet')).toBeInTheDocument();
     expect(
-      screen.getByText('Outputs frozen from a completed assessment session will appear here.')
+      screen.getByText('Insights frozen from a completed assessment session will appear here.')
     ).toBeInTheDocument();
   });
 
@@ -205,7 +220,9 @@ describe('AssessmentOutputsTab', () => {
 
     render(<AssessmentOutputsTab />);
 
-    expect(await screen.findByText('Failed to load Outputs. Please try again.')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Failed to load Insights. Please try again.')
+    ).toBeInTheDocument();
 
     hoisted.listOutputs.mockResolvedValueOnce({ outputs: [outputRow()], total: 1 });
     // Accessible name is "Try again" (i18n `common.retry`), not "Retry" — the
@@ -226,25 +243,24 @@ describe('AssessmentOutputsTab', () => {
 
     render(<AssessmentOutputsTab />);
 
-    expect(await screen.findByText('No access to Outputs')).toBeInTheDocument();
-    expect(screen.queryByText('No outputs yet')).not.toBeInTheDocument();
+    expect(await screen.findByText('No access to Insights')).toBeInTheDocument();
+    expect(screen.queryByText('No insights yet')).not.toBeInTheDocument();
   });
 
-  it('switches to the Reports segment and scopes it to the selected Output via the relation chip', async () => {
+  it('hands Reports navigation to the canonical parent surface instead of rendering a duplicate menu', async () => {
     hoisted.listOutputs.mockResolvedValue({ outputs: [outputRow()], total: 1 });
-    hoisted.listReports.mockResolvedValue([]);
+    const onNavigate = vi.fn();
     const user = userEvent.setup();
 
-    render(<AssessmentOutputsTab />);
+    render(<AssessmentOutputsTab onNavigate={onNavigate} />);
     await user.click(await screen.findByText('Digital Readiness — Area A'));
     await screen.findByText('3'); // preview loaded
 
     const reportsRelation = screen.getByRole('button', { name: 'Reports' });
     await user.click(reportsRelation);
 
-    await waitFor(() => {
-      expect(hoisted.listReports).toHaveBeenCalledWith({ outputId: 'out-1' });
-    });
+    expect(onNavigate).toHaveBeenCalledWith('reports');
+    expect(hoisted.listReports).not.toHaveBeenCalled();
   });
 
   it('"View lineage" swaps the aside for ArtifactLineagePanel, fetching the session lineage', async () => {

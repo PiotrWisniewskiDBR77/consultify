@@ -21,10 +21,10 @@
  * the excluded `src/components/assessment/drd/` tree — grepped, confirmed
  * absent here).
  *
- * Internal structure: a lightweight neutral segmented switch (Outputs /
- * Reports / Initiatives — NOT a second StandardModuleBar; this is one Hub
- * tab's own content, AssessmentHub's top-level tabs are untouched) plus,
- * from an Output row, a "View lineage" action that swaps the aside for
+ * Internal structure: the user-facing Insights registry only. Reports and
+ * Initiatives remain sibling surfaces in AssessmentHub's canonical module
+ * navigation; this component must not duplicate that navigation. From an
+ * Insight row, a "View lineage" action swaps the aside for
  * `ArtifactLineagePanel` (session → revisions → Output → Report/
  * Presentation → Initiative Proposal). This design keeps ALL of P0D's UI
  * inside this package's own files — AssessmentHub.tsx needed ZERO changes:
@@ -60,12 +60,8 @@ import {
 } from '../standard/StandardTable';
 import { StatusChip } from '../ui/primitives/chips';
 import { ArtifactLineagePanel } from './artifacts/ArtifactLineagePanel';
-import { AssessmentInitiativesTab } from './artifacts/AssessmentInitiativesTab';
-import { AssessmentReportsTab } from './artifacts/AssessmentReportsTab';
 
 type OutputRow = MethodOutputListItem & { [key: string]: unknown };
-
-type InnerView = 'outputs' | 'reports' | 'initiatives';
 
 function statusTone(isSuperseded: boolean | null): 'success' | 'neutral' {
   return isSuperseded === false ? 'success' : 'neutral';
@@ -79,9 +75,13 @@ function statusLabel(isPolish: boolean, isSuperseded: boolean | null): string {
 
 interface AssessmentOutputsTabProps {
   onCountChange?: (count: number | null) => void;
+  onNavigate?: (target: 'reports' | 'initiatives') => void;
 }
 
-export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({ onCountChange }) => {
+export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
+  onCountChange,
+  onNavigate,
+}) => {
   const { t, i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
   const onCountChangeRef = useRef(onCountChange);
@@ -89,9 +89,6 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({ onCo
   useEffect(() => {
     onCountChangeRef.current = onCountChange;
   }, [onCountChange]);
-
-  const [view, setView] = useState<InnerView>('outputs');
-  const [outputIdFilter, setOutputIdFilter] = useState<string | null>(null);
 
   const [items, setItems] = useState<OutputRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -152,10 +149,9 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({ onCo
   }, []);
 
   useEffect(() => {
-    if (view !== 'outputs') return;
     const cancel = load();
     return cancel;
-  }, [load, view]);
+  }, [load]);
 
   // Opening a row ALWAYS re-fetches the immutable server snapshot — see the
   // module doc comment's "snapshot discipline" note. The list row (`items`)
@@ -220,7 +216,8 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({ onCo
         id: 'scope',
         label: t('assessment.outputs.table.scope', 'Scope'),
         sortable: true,
-        render: (row) => (row.scope as string | null) || t('assessment.outputs.table.untitled', 'Untitled output'),
+        render: (row) =>
+          (row.scope as string | null) || t('assessment.outputs.table.untitled', 'Untitled output'),
       },
       {
         id: 'module',
@@ -240,7 +237,11 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({ onCo
           return (
             <div className="flex items-center gap-1.5">
               <span className="font-mono text-[11px]">{version != null ? `v${version}` : '—'}</span>
-              <StatusChip label={statusLabel(isPolish, superseded)} tone={statusTone(superseded)} size="sm" />
+              <StatusChip
+                label={statusLabel(isPolish, superseded)}
+                tone={statusTone(superseded)}
+                size="sm"
+              />
             </div>
           );
         },
@@ -297,23 +298,16 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({ onCo
 
   const showLineage = lineageSessionId !== null;
 
-  const segments: { id: InnerView; label: string }[] = [
-    { id: 'outputs', label: t('assessment.outputs.segment.outputs', 'Outputs') },
-    { id: 'reports', label: t('assessment.outputs.segment.reports', 'Reports') },
-    { id: 'initiatives', label: t('assessment.outputs.segment.initiatives', 'Initiatives') },
-  ];
-
-  if (forbidden && view === 'outputs') {
+  if (forbidden) {
     return (
       <div className="h-full flex flex-col overflow-hidden">
-        <SegmentedNav segments={segments} active={view} onChange={setView} />
         <div className="flex-1 overflow-auto p-4">
           <EmptyState
             variant="forbidden"
-            title={t('assessment.outputs.forbidden.title', 'No access to Outputs')}
+            title={t('assessment.outputs.forbidden.title', 'No access to Insights')}
             description={t(
               'assessment.outputs.forbidden.description',
-              'Your account does not have permission to view this organization’s Outputs.'
+              'Your account does not have permission to view this organization’s Insights.'
             )}
           />
         </div>
@@ -323,206 +317,163 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({ onCo
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
-      <SegmentedNav segments={segments} active={view} onChange={setView} />
+      <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
+          <StandardTable
+            columns={columns}
+            data={items}
+            loading={loading}
+            error={
+              hasLoadError
+                ? isPolish
+                  ? 'Nie udało się wczytać insightów. Spróbuj ponownie.'
+                  : 'Failed to load Insights. Please try again.'
+                : null
+            }
+            onRetry={load}
+            persistKey="assessment.outputs"
+            defaultSort={{ columnId: 'frozenAt', direction: 'desc' }}
+            selectedRowId={selectedOutputId}
+            onRowClick={(row) => setSelectedOutputId(String(row.id))}
+            rowMenu={rowMenu}
+            rowDescription={() => null}
+            empty={{
+              icon: Package,
+              title: t('assessment.outputs.emptyState.title', 'No insights yet'),
+              description: t(
+                'assessment.outputs.emptyState.description',
+                'Insights frozen from a completed assessment session will appear here.'
+              ),
+            }}
+          />
+        </div>
 
-      {view === 'reports' ? (
-        <AssessmentReportsTab
-          outputId={outputIdFilter ?? undefined}
-          onClearFilter={outputIdFilter ? () => setOutputIdFilter(null) : undefined}
-          onOpenLineage={(sessionId) => setLineageSessionId(sessionId)}
-        />
-      ) : view === 'initiatives' ? (
-        <AssessmentInitiativesTab
-          outputId={outputIdFilter ?? undefined}
-          onClearFilter={outputIdFilter ? () => setOutputIdFilter(null) : undefined}
-          onOpenLineage={(sessionId) => setLineageSessionId(sessionId)}
-        />
-      ) : (
-        <div className="flex-1 flex overflow-hidden">
-          <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
-            <StandardTable
-              columns={columns}
-              data={items}
-              loading={loading}
-              error={
-                hasLoadError
-                  ? isPolish
-                    ? 'Nie udało się wczytać Outputów. Spróbuj ponownie.'
-                    : 'Failed to load Outputs. Please try again.'
-                  : null
-              }
-              onRetry={load}
-              persistKey="assessment.outputs"
-              defaultSort={{ columnId: 'frozenAt', direction: 'desc' }}
-              selectedRowId={selectedOutputId}
-              onRowClick={(row) => setSelectedOutputId(String(row.id))}
-              rowMenu={rowMenu}
-              rowDescription={() => null}
-              empty={{
-                icon: Package,
-                title: t('assessment.outputs.emptyState.title', 'No outputs yet'),
-                description: t(
-                  'assessment.outputs.emptyState.description',
-                  'Outputs frozen from a completed assessment session will appear here.'
-                ),
+        {showLineage && lineageSessionId ? (
+          <aside className="w-[400px] shrink-0 p-3 overflow-hidden">
+            <ArtifactLineagePanel
+              sessionId={lineageSessionId}
+              onClose={() => setLineageSessionId(null)}
+              onOpenOutput={(outputId) => {
+                setLineageSessionId(null);
+                setSelectedOutputId(outputId);
+              }}
+              onOpenReport={() => {
+                setLineageSessionId(null);
+                onNavigate?.('reports');
+              }}
+              onOpenInitiativeDraft={() => {
+                setLineageSessionId(null);
+                onNavigate?.('initiatives');
               }}
             />
-          </div>
-
-          {showLineage && lineageSessionId ? (
-            <aside className="w-[400px] shrink-0 p-3 overflow-hidden">
-              <ArtifactLineagePanel
-                sessionId={lineageSessionId}
-                onClose={() => setLineageSessionId(null)}
-                onOpenOutput={(outputId) => {
-                  setLineageSessionId(null);
-                  setSelectedOutputId(outputId);
-                }}
-                onOpenReport={() => {
-                  setLineageSessionId(null);
-                  setView('reports');
-                }}
-                onOpenInitiativeDraft={() => {
-                  setLineageSessionId(null);
-                  setView('initiatives');
-                }}
-              />
-            </aside>
-          ) : selectedRow ? (
-            <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
-              <StandardPreview
-                title={selectedRow.scope || t('assessment.outputs.table.untitled', 'Untitled output')}
-                onClose={() => setSelectedOutputId(null)}
-                loading={detailLoading}
-                meta={{
-                  pills: metaPills,
-                  trailing: selectedRow.frozenAt ? (
-                    <span className="text-[11px] font-semibold text-c-text-secondary">
-                      {formatListDate(selectedRow.frozenAt as string)}
-                    </span>
-                  ) : undefined,
-                }}
-                details={{
-                  text: previewDetailsText,
-                  showWordCount: false,
-                  properties: [
-                    {
-                      id: 'sessionId',
-                      label: isPolish ? 'Sesja' : 'Session',
-                      value: selectedRow.sessionId ?? '—',
-                      mono: true,
-                    },
-                    {
-                      id: 'methodPack',
-                      label: isPolish ? 'Pakiet metody' : 'Method pack',
-                      value:
-                        selectedRow.methodPackId && selectedRow.methodPackVersion
-                          ? `${selectedRow.methodPackId}@${selectedRow.methodPackVersion}`
-                          : '—',
-                      mono: true,
-                    },
-                    {
-                      id: 'findings',
-                      label: isPolish ? 'Ustalenia' : 'Findings',
-                      value: selectedDetail ? selectedDetail.output.findings.length : (selectedRow.findingsCount ?? '—'),
-                    },
-                    {
-                      id: 'limitations',
-                      label: isPolish ? 'Ograniczenia' : 'Limitations',
-                      value: selectedDetail
-                        ? selectedDetail.output.limitations.length
-                        : (selectedRow.limitationsCount ?? '—'),
-                    },
-                    {
-                      id: 'contentHash',
-                      label: isPolish ? 'Skrót treści' : 'Content hash',
-                      value: selectedRow.contentHash ? `${String(selectedRow.contentHash).slice(0, 12)}…` : '—',
-                      mono: true,
-                    },
-                    {
-                      id: 'supersededBy',
-                      label: isPolish ? 'Zastąpiony przez' : 'Superseded by',
-                      value: (selectedDetail?.supersededByOutputId ?? selectedRow.supersededByOutputId) || '—',
-                      mono: true,
-                    },
-                  ],
-                  propertyLabel: isPolish ? 'Właściwość' : 'Property',
-                  valueLabel: isPolish ? 'Wartość' : 'Value',
-                  onCopy: () => {
-                    void navigator.clipboard?.writeText(previewDetailsText);
-                  },
-                }}
-                relations={[
+          </aside>
+        ) : selectedRow ? (
+          <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+            <StandardPreview
+              title={selectedRow.scope || t('assessment.outputs.table.untitled', 'Untitled output')}
+              onClose={() => setSelectedOutputId(null)}
+              loading={detailLoading}
+              meta={{
+                pills: metaPills,
+                trailing: selectedRow.frozenAt ? (
+                  <span className="text-[11px] font-semibold text-c-text-secondary">
+                    {formatListDate(selectedRow.frozenAt as string)}
+                  </span>
+                ) : undefined,
+              }}
+              details={{
+                text: previewDetailsText,
+                showWordCount: false,
+                properties: [
                   {
-                    id: 'reports',
-                    label: isPolish ? 'Raporty' : 'Reports',
-                    icon: FileText,
-                    onClick: () => {
-                      setOutputIdFilter(selectedRow.id);
-                      setView('reports');
-                    },
+                    id: 'sessionId',
+                    label: isPolish ? 'Sesja' : 'Session',
+                    value: selectedRow.sessionId ?? '—',
+                    mono: true,
                   },
                   {
-                    id: 'initiatives',
-                    label: isPolish ? 'Inicjatywy' : 'Initiatives',
-                    icon: Lightbulb,
-                    onClick: () => {
-                      setOutputIdFilter(selectedRow.id);
-                      setView('initiatives');
-                    },
+                    id: 'methodPack',
+                    label: isPolish ? 'Pakiet metody' : 'Method pack',
+                    value:
+                      selectedRow.methodPackId && selectedRow.methodPackVersion
+                        ? `${selectedRow.methodPackId}@${selectedRow.methodPackVersion}`
+                        : '—',
+                    mono: true,
                   },
-                ]}
-                actions={{
-                  informational: selectedRow.sessionId
-                    ? [
-                        {
-                          id: 'view-lineage',
-                          variant: 'neutral',
-                          label: t('assessment.outputs.actions.viewLineage', 'View lineage'),
-                          icon: GitBranch,
-                          onClick: () => setLineageSessionId(selectedRow.sessionId as string),
-                        },
-                      ]
-                    : undefined,
-                }}
-              />
-            </aside>
-          ) : null}
-        </div>
-      )}
+                  {
+                    id: 'findings',
+                    label: isPolish ? 'Ustalenia' : 'Findings',
+                    value: selectedDetail
+                      ? selectedDetail.output.findings.length
+                      : (selectedRow.findingsCount ?? '—'),
+                  },
+                  {
+                    id: 'limitations',
+                    label: isPolish ? 'Ograniczenia' : 'Limitations',
+                    value: selectedDetail
+                      ? selectedDetail.output.limitations.length
+                      : (selectedRow.limitationsCount ?? '—'),
+                  },
+                  {
+                    id: 'contentHash',
+                    label: isPolish ? 'Skrót treści' : 'Content hash',
+                    value: selectedRow.contentHash
+                      ? `${String(selectedRow.contentHash).slice(0, 12)}…`
+                      : '—',
+                    mono: true,
+                  },
+                  {
+                    id: 'supersededBy',
+                    label: isPolish ? 'Zastąpiony przez' : 'Superseded by',
+                    value:
+                      (selectedDetail?.supersededByOutputId ?? selectedRow.supersededByOutputId) ||
+                      '—',
+                    mono: true,
+                  },
+                ],
+                propertyLabel: isPolish ? 'Właściwość' : 'Property',
+                valueLabel: isPolish ? 'Wartość' : 'Value',
+                onCopy: () => {
+                  void navigator.clipboard?.writeText(previewDetailsText);
+                },
+              }}
+              relations={[
+                {
+                  id: 'reports',
+                  label: isPolish ? 'Raporty' : 'Reports',
+                  icon: FileText,
+                  onClick: () => {
+                    onNavigate?.('reports');
+                  },
+                },
+                {
+                  id: 'initiatives',
+                  label: isPolish ? 'Inicjatywy' : 'Initiatives',
+                  icon: Lightbulb,
+                  onClick: () => {
+                    onNavigate?.('initiatives');
+                  },
+                },
+              ]}
+              actions={{
+                informational: selectedRow.sessionId
+                  ? [
+                      {
+                        id: 'view-lineage',
+                        variant: 'neutral',
+                        label: t('assessment.outputs.actions.viewLineage', 'View lineage'),
+                        icon: GitBranch,
+                        onClick: () => setLineageSessionId(selectedRow.sessionId as string),
+                      },
+                    ]
+                  : undefined,
+              }}
+            />
+          </aside>
+        ) : null}
+      </div>
     </div>
   );
 };
-
-/** Neutral, non-crimson in-surface segmented switch — same c-* token
- * discipline as `TableTabStrip` (src/components/MyWork/table/TableTabStrip.tsx),
- * NOT a second `StandardModuleBar` (this is one Hub tab's own content). */
-const SegmentedNav: React.FC<{
-  segments: { id: InnerView; label: string }[];
-  active: InnerView;
-  onChange: (id: InnerView) => void;
-}> = ({ segments, active, onChange }) => (
-  <div className="flex items-center gap-1 px-4 pt-3 pb-1 shrink-0" role="tablist">
-    {segments.map((segment) => {
-      const isActive = segment.id === active;
-      return (
-        <button
-          key={segment.id}
-          type="button"
-          role="tab"
-          aria-selected={isActive}
-          onClick={() => onChange(segment.id)}
-          className={`rounded-token-md px-3 py-1.5 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
-            isActive
-              ? 'bg-c-surface-raised text-c-text border border-c-border'
-              : 'text-c-text-muted hover:text-c-text-secondary hover:bg-c-surface-raised border border-transparent'
-          }`}
-        >
-          {segment.label}
-        </button>
-      );
-    })}
-  </div>
-);
 
 export default AssessmentOutputsTab;
