@@ -330,3 +330,25 @@ Credentialed browser replay, owner decisions and Piotr acceptance remain
 pending. Current reconstructed storage readiness: `12/16` — Organization,
 Assessment, Initiatives, Execution, My Work / Agent, Meetings, Results, Finance,
 Materials, Audits, Chat and Partner.
+
+Admin was reconstructed thirteenth as
+`consultify_w3_admin_owner_recovered_20260823`. Its guarded owned fixture created
+a fresh database, passed `831/831` migrations and wrote a FINAL `0600`
+marker-bound receipt with nonce
+`e416e843b93e4a6e8cbd7832c8be91d4681c3b8c15c1cde866736d6fa569a7ec`.
+Readback proved eight personas, real member role-change commands and audit
+events, revoked-session evidence, last-owner protection, tenant boundaries and
+a deliberately failed tokenless invitation with external delivery disabled.
+No email was sent and no backup/restore operation was executed. PostgreSQL
+restart preserved all counters. Exact clean SHA
+`ae66591e8e70103a41102d61dc8f067b937c83bc` adopted the database on
+server/client `4355/4356`; SHA, migration, marker, frontend and dotenv-isolation
+gates passed. Main-tenant OWNER, ADMIN and MEMBER reads returned `200`; foreign
+OWNER and platform SUPERADMIN without tenant membership returned `403`, revoked
+login returned `403`, and anonymous access returned `401`. Runtime and container
+were stopped while preserving the database.
+
+Credentialed browser replay, backup/restore DR qualification, owner decisions
+and Piotr acceptance remain pending. Current reconstructed storage readiness:
+`13/16` — Organization, Assessment, Initiatives, Execution, My Work / Agent,
+Meetings, Results, Finance, Materials, Audits, Chat, Admin and Partner.
