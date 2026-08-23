@@ -15,8 +15,9 @@ linked paths.
 | --- | --- |
 | Checkout | `/Users/piotrwisniewski/Developer/Consultify-final-mvp-integration-20260823` |
 | Branch | `codex/final-mvp-integration-20260823` |
-| Exact HEAD | `a2b500caca36d423bf9b215f25fc1c7aba4484b3` |
-| Working tree at runtime freeze | clean |
+| Current source HEAD | `3d0028802d` after selective Wave Tri documentation integration |
+| Frozen runtime SHA | `a2b500caca36d423bf9b215f25fc1c7aba4484b3` |
+| Working tree at runtime freeze | clean at `a2b500caca`; runtime must be restarted before claims about later source HEADs |
 | Production / Railway mutation | `NOT_AUTHORIZED / NOT_PERFORMED` |
 | Current local client | `http://127.0.0.1:4390` |
 | Current local API | `http://127.0.0.1:4391` |
@@ -88,7 +89,7 @@ node scripts/wave3/verify-acceptance-packages.mjs
 | `bcfb01483a` accepted classic initiatives adapter | ancestor | integrated |
 | `d8561ed5c2` Finance canonical ID bridge | ancestor | integrated |
 | `54987e405a` recovered Finance fixture documentation | ancestor | integrated |
-| `d48f4d7fc8` / `codex/wave3-four-modules-bcfb0148` | **not an ancestor** | preserve; perform path/commit semantic comparison before selective integration; never merge or copy wholesale |
+| `d48f4d7fc8` / `codex/wave3-four-modules-bcfb0148` | originally not an ancestor; one unique documentation commit | semantically reviewed; its single file was selectively integrated by cherry-pick as `3d0028802d`; source branch/worktree remains preserved |
 | retained dirty/detached worktrees | mixed | evidence/comparison sources only until exact live re-inventory and explicit cleanup authority |
 
 ## 5. Current exact-candidate delta
@@ -111,23 +112,21 @@ module acceptance.
 
 Work is executed in this order, on this one branch:
 
-1. Reconcile the non-ancestor Wave Tri branch at commit/path level and import
-   only stronger, non-regressive changes with explicit provenance.
-2. Reconcile the current exact SHA into the master row and SHA ledger without
+1. Reconcile the current source HEAD into the master row and SHA ledger without
    rewriting historical evidence.
-3. For every module, locate the best existing implementation before editing;
+2. For every module, locate the best existing implementation before editing;
    bind non-empty deterministic fixture data; capture current table, preview,
    context menu, workspace and negative states.
-4. Convert every mismatch into the existing module register with source,
+3. Convert every mismatch into the existing module register with source,
    expected result, severity and closure evidence. No second findings queue.
-5. Close P0/P1 and explicitly dispose P2/P3, then run technical, visual,
+4. Close P0/P1 and explicitly dispose P2/P3, then run technical, visual,
    accessibility, persistence/readback and tenant/role gates.
-6. Integrate the governed transformation flow:
+5. Integrate the governed transformation flow:
    `Assessment -> Insights/Reports/Initiatives -> Execution -> Results -> Finance -> Materials`,
    including lineage, approvals, versioning and cold readback.
-7. Reconcile remaining-nine, NFR, security, migration, backup/restore and DR
+6. Reconcile remaining-nine, NFR, security, migration, backup/restore and DR
    registers against the same frozen candidate.
-8. Run the final `16 x G00-G20` replay on one exact SHA and request explicit
+7. Run the final `16 x G00-G20` replay on one exact SHA and request explicit
    owner verdicts. Only after that can a release candidate be proposed.
 
 ## 7. Stop-loss rules
@@ -141,4 +140,3 @@ Work is executed in this order, on this one branch:
 - Do not touch production or Railway without a separate explicit release
   authorization and a freshly verified target.
 - If two attempts fail, change method and preserve the literal failure.
-
