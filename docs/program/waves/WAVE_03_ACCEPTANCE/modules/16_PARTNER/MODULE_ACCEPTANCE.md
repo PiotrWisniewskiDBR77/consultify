@@ -7,6 +7,20 @@ Owner: Piotr Wisniewski
 Integrator: Codex
 Mobile: `DEFERRED_NON_GATING`
 
+> Recovery replay — 2026-08-23: the historical 817-migration database recorded
+> below was absent at catalog revalidation. Replacement local-only database
+> `consultify_w3_partner_owner_recovered_20260823` passed the exact 831-migration
+> chain and post-restart SQL readback of the bound partner, two certification
+> states and one participant-ledger fact. Commissions and payouts remain zero;
+> economics policy remains OFF/PENDING. Exact clean SHA
+> `f5dca6a89540a9faf9f8545789d3489dd6d31a74` adopted it on server/client
+> `4345/4346`: health/readiness/frontend `200/200/200`, migration ledgers `ok/ok`,
+> client and SQL markers passed. OWNER program/ledger/referral/certification reads
+> returned `200`; revoked login `403`, unbound partner access governed `403`, and
+> anonymous program access `401`. This restores current technical API/storage
+> readiness, not authenticated browser evidence, economics approval, Piotr
+> acceptance or release authority.
+
 ## Contract
 
 Primary journey: open partner profile/certification/attribution and inspect

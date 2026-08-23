@@ -227,3 +227,21 @@ were stopped while preserving the database.
 Credentialed browser replay, methodology-rights/provider approval and Piotr
 acceptance remain pending. Current reconstructed storage readiness: `7/16` —
 Initiatives, Execution, Meetings, Results, Finance, Materials and Audits.
+
+Partner was reconstructed eighth as
+`consultify_w3_partner_owner_recovered_20260823`. It passed `831/831` migrations
+and wrote a new FINAL `0600` marker-bound receipt with nonce
+`1aaccb5c627b1a69a4f59343de3d7b40fe7845ef427eb9c00764f6a2cbcdb3f7`.
+After PostgreSQL restart, independent SQL rechecked the bound partner, two
+certification states and one non-economic participant-ledger fact. Commission
+and payout counts remained zero. Exact clean SHA
+`f5dca6a89540a9faf9f8545789d3489dd6d31a74` adopted the database on
+server/client `4345/4346`; runtime and marker gates passed. OWNER program status,
+participant ledger, referral tools and certifications returned `200`; revoked
+login returned `403`, unbound partner access governed `403`, and anonymous
+program access `401`. Runtime and container were stopped while preserving the
+database.
+
+Credentialed browser replay, economics policy and Piotr acceptance remain
+pending. Current reconstructed storage readiness: `8/16` — Initiatives,
+Execution, Meetings, Results, Finance, Materials, Audits and Partner.
