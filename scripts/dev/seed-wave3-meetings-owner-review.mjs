@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env -S node --import=tsx
 /**
  * Wave 3 / module 08 Meetings — deterministic provider-free owner fixture.
  *
@@ -11,6 +11,8 @@
  * Recording, transcription, media upload and live providers remain OFF. The
  * three manually supplied text notes go through canonical meetingBoundary
  * services: pending, rejected, and approved/materialized with one receipt.
+ * Invoke directly, or with `npx tsx`, because seeding imports canonical
+ * TypeScript services after the relational fixture has been written.
  */
 
 import { spawnSync } from 'node:child_process';

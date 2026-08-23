@@ -7,6 +7,20 @@ Owner: Piotr Wisniewski
 Integrator: Codex
 Mobile: `DEFERRED_NON_GATING`
 
+> Recovery replay — 2026-08-23: the historical 817-migration database recorded
+> below was absent at catalog revalidation. Replacement local-only database
+> `consultify_w3_meetings_owner_recovered_20260823` passed the exact 831-migration
+> chain, PostgreSQL restart and independent cold readback. Its new FINAL `0600`
+> receipt is bound to the durable marker and preserves pending, rejected and
+> approved/materialized manual-note states with receipts `0/0/1`. Exact clean SHA
+> `fe1ee2449a53d0caf27135c206045d1772d2d5a7` adopted it on server/client
+> `4335/4336`: health/readiness/frontend `200/200/200`, migration ledgers `ok/ok`,
+> client and SQL markers passed. OWNER login, meeting list and all three note
+> reads returned `200`; anonymous list `401`, inactive login `403`, and foreign
+> note access `404`. This restores current technical API/storage readiness, not
+> authenticated browser evidence, provider capability, Piotr acceptance or
+> release authority.
+
 ## Contract
 
 Primary journey: create a governed meeting-note proposal, approve

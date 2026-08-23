@@ -132,3 +132,21 @@ encodes that loader requirement. Qualification proved:
 
 Credentialed browser replay and Piotr's owner acceptance remain pending. Current
 reconstructed storage readiness: `2/16` — Initiatives and Execution.
+
+Meetings was reconstructed third as
+`consultify_w3_meetings_owner_recovered_20260823` in the same retained volume.
+Qualification proved `831/831` successful migrations, a new FINAL `0600`
+manifest and matching marker nonce
+`ad47f3e021fab66903c1582b2b61173aab49085891e32f913a1bbd3299941882`.
+After a PostgreSQL restart, independent readback preserved five personas and
+the three provider-free manual-note governance states: pending, rejected and
+approved/materialized, with receipt counts `0/0/1`. Exact clean SHA
+`fe1ee2449a53d0caf27135c206045d1772d2d5a7` adopted the database on server/client
+`4335/4336`; runtime and marker gates passed, all four canonical owner reads
+returned `200`, anonymous list returned `401`, inactive login `403`, and foreign
+note access `404`. Runtime and container were identity-safely stopped while the
+database remained in the named volume.
+
+Credentialed browser replay, recording/transcription/provider capability and
+Piotr acceptance remain pending. Current reconstructed storage readiness:
+`3/16` — Initiatives, Execution and Meetings.

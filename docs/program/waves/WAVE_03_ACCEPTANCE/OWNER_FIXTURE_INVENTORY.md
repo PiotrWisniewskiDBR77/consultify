@@ -8,11 +8,12 @@
 > The tables below are retained as historical evidence and must not be read as
 > current catalog state.
 >
-> Reconstruction update — 2026-08-23: Initiatives and Execution have been
+> Reconstruction update — 2026-08-23: Initiatives, Execution and Meetings have been
 > rebuilt and cold-read back on the current 831-migration chain as
 > `consultify_w3_initiatives_owner_recovered_20260823` and
-> `consultify_w3_execution_owner_recovered_20260823`. Current reconstructed
-> storage readiness is `2/16`; see the recovery inventory for exact evidence.
+> `consultify_w3_execution_owner_recovered_20260823`, plus
+> `consultify_w3_meetings_owner_recovered_20260823`. Current reconstructed
+> storage readiness is `3/16`; see the recovery inventory for exact evidence.
 
 Inventory date: `2026-08-22`
 
