@@ -109,7 +109,11 @@ export function classifyMigrationSql(sql) {
     const normalized = statement.replace(/\s+/g, ' ').trim().toUpperCase();
     if (normalized.startsWith('__LEXICAL_ERROR_'))
       return { classification: 'UNCLASSIFIED', code: 'MIGRATION_LEXICAL_ERROR' };
-    if (/\bCASCADE\b/.test(normalized))
+    // `ON DELETE CASCADE` is a normal FK action inside an additive CREATE;
+    // it is not equivalent to executing DROP/TRUNCATE ... CASCADE. Keep the
+    // destructive check anchored to statements that can actually erase
+    // schema/data rather than rejecting the token wherever it appears.
+    if (/^(?:DROP|TRUNCATE)\b.*\bCASCADE\b/.test(normalized))
       return { classification: 'DENY', code: 'DESTRUCTIVE_CASCADE' };
     if (
       /^DROP\s+(?:INDEX|SEQUENCE|POLICY|MATERIALIZED\s+VIEW|TABLE|SCHEMA|TYPE|DOMAIN|DATABASE|EXTENSION|FUNCTION|PROCEDURE|VIEW|TRIGGER)\b/.test(
@@ -124,8 +128,9 @@ export function classifyMigrationSql(sql) {
     if (/^ALTER\s+(?:TABLE|TYPE)\b.*\bRENAME\s+(?:TO|COLUMN)\b/.test(normalized))
       return { classification: 'DENY', code: 'DESTRUCTIVE_RENAME' };
     if (
-      /\b(?:DELETE\s+FROM|UPDATE\s+)/.test(normalized) ||
-      /\bON\s+CONFLICT\b.*\bDO\s+UPDATE\b/.test(normalized)
+      /^(?:DELETE\s+FROM|UPDATE\s+)/.test(normalized) ||
+      /^WITH\b[\s\S]*\b(?:DELETE\s+FROM|UPDATE\s+)/.test(normalized) ||
+      /^INSERT\s+INTO\b[\s\S]*\bON\s+CONFLICT\b[\s\S]*\bDO\s+UPDATE\b/.test(normalized)
     )
       return { classification: 'DENY', code: 'DESTRUCTIVE_DATA_REWRITE' };
     if (/^CREATE\s+OR\s+REPLACE\s+(?:FUNCTION|PROCEDURE|VIEW)\b/.test(normalized))
@@ -140,6 +145,8 @@ export function classifyMigrationSql(sql) {
       return { classification: 'ALLOW', code: 'SAFE_ALTER_ADD' };
     if (/^ALTER\s+TYPE\b.*\bADD\s+VALUE\b/.test(normalized))
       return { classification: 'ALLOW', code: 'SAFE_ENUM_ADD' };
+    if (/^(?:BEGIN|COMMIT|ROLLBACK)\b/.test(normalized))
+      return { classification: 'ALLOW', code: 'SAFE_TRANSACTION_CONTROL' };
     if (/^(?:COMMENT\s+ON|GRANT\s+|INSERT\s+INTO\s+)/.test(normalized))
       return { classification: 'ALLOW', code: 'SAFE_METADATA_OR_APPEND' };
     return { classification: 'UNCLASSIFIED', code: 'MIGRATION_STATEMENT_UNCLASSIFIED' };

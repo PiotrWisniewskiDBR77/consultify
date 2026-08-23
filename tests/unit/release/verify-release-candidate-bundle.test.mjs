@@ -209,7 +209,7 @@ test('rejects destructive and unclassified migration statements without comment/
     'ALTER TABLE base RENAME TO other;',
     'DELETE FROM base;',
     'UPDATE base SET id=id;',
-    'ALTER TABLE base ADD COLUMN safe text CASCADE;',
+    'DROP TABLE base CASCADE;',
     'VACUUM base;',
     'WITH doomed AS (SELECT id FROM base) DELETE FROM base WHERE id IN (SELECT id FROM doomed);',
     'WITH changed AS (SELECT id FROM base) UPDATE base SET id=id FROM changed;',
@@ -238,6 +238,9 @@ test('rejects destructive and unclassified migration statements without comment/
     'ALTER TABLE "base" ADD COLUMN "MixedCase" text;',
     'CREATE OR REPLACE VIEW "MixedView" AS SELECT 1 AS "Value";',
     'ALTER TABLE base ADD COLUMN safe text; CREATE INDEX safe_idx ON base(safe);',
+    'CREATE TABLE child(id text, parent_id text REFERENCES base(id) ON DELETE CASCADE);',
+    'CREATE TRIGGER immutable BEFORE UPDATE OR DELETE ON base FOR EACH ROW EXECUTE FUNCTION reject_change();',
+    'BEGIN; ALTER TABLE base ADD COLUMN guarded text; COMMIT;',
   ]) {
     const x = fx(sql),
       r = verifyReleaseCandidateBundle({ manifest: x.manifest, repo: x.repo, bundleDir: x.out });

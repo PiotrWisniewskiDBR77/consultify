@@ -166,6 +166,23 @@
     },
     "decision": "NO_GO. Using exact staging-qualified e6ca as previousVerifiedSha removes the false rollback-modified finding, but 158 findings across 37 new migrations remain. Do not suppress or waive them; audit and classify every statement before regenerating the bundle. No push, deploy, Railway mutation or release was performed."
   },
+  "finalVerifierPrecisionPass20260823": {
+    "scope": "Correct two lexical false-positive classes without creating a waiver path: additive foreign-key ON DELETE CASCADE is no longer confused with DROP/TRUNCATE CASCADE, and CREATE TRIGGER ... BEFORE UPDATE OR DELETE is no longer confused with executing an UPDATE/DELETE data rewrite. BEGIN/COMMIT/ROLLBACK are classified as transaction controls.",
+    "tests": "Release generator/verifier unit suite 10/10 PASS, including new positive controls for FK cascade, immutable trigger creation and transaction-wrapped additive DDL; destructive DROP ... CASCADE, actual UPDATE/DELETE, CTE rewrite and INSERT ON CONFLICT DO UPDATE remain rejected.",
+    "independentVerifierAfterPrecisionFix": {
+      "verified": false,
+      "releaseGo": false,
+      "errorCount": 81,
+      "files": 36,
+      "byCode": {
+        "DESTRUCTIVE_ALTER_DROP": 13,
+        "DESTRUCTIVE_DATA_REWRITE": 13,
+        "DESTRUCTIVE_DROP": 15,
+        "MIGRATION_STATEMENT_UNCLASSIFIED": 40
+      }
+    },
+    "decision": "NO_GO remains. The precision fix removes 77 demonstrable lexical false positives but does not permit trigger/constraint drops, actual rewrites or opaque procedural blocks without stronger paired-operation and upgrade-with-data evidence."
+  },
   "technicalVerdict": "STAGING_QUALIFIED_ROLLBACK_PASS_CANDIDATE_RESTORED_NOT_AUTHORIZED",
   "verdict": "PARTIAL",
   "blockers": [
