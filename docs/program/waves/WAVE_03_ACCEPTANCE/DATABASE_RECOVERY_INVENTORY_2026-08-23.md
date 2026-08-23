@@ -311,3 +311,22 @@ Credentialed browser replay, owner decisions and Piotr acceptance remain
 pending. Current reconstructed storage readiness: `11/16` — Organization,
 Assessment, Initiatives, Execution, My Work / Agent, Meetings, Results, Finance,
 Materials, Audits and Partner.
+
+Chat was reconstructed twelfth as
+`consultify_w3_chat_owner_recovered_20260823`. It provisioned a fresh `831/831`
+migration database and wrote a FINAL `0600` marker-bound receipt with nonce
+`29e9e4235e3f684d49a836ddec37260ed4e617821a0b3d39051fc8cb67e3eb88`.
+The canonical DB-backed handoff service produced one pending document proposal
+from a durable source message, with two citations, a stable source hash and no
+execution receipt. PostgreSQL restart and cold readback preserved that exact
+state. Exact clean SHA `7246841e1bd59f76faa11f44bde48f91303a7212`
+adopted the database on server/client `4353/4354`; SHA, migration, marker,
+frontend and dotenv-isolation gates passed. OWNER login and conversation read
+returned `200`; same-tenant non-owner and foreign tenant received non-disclosing
+`404`, revoked login returned `403`, and anonymous access returned `401`.
+Runtime and container were stopped while preserving the database.
+
+Credentialed browser replay, owner decisions and Piotr acceptance remain
+pending. Current reconstructed storage readiness: `12/16` — Organization,
+Assessment, Initiatives, Execution, My Work / Agent, Meetings, Results, Finance,
+Materials, Audits, Chat and Partner.
