@@ -17,17 +17,26 @@ const ORG_SCOPED_RUNTIME_TABLES = [
  * evidence and none of these producer-focused fixtures creates them.
  */
 export async function cleanupInitiativesExecutionOrg(pool: Pool, organizationId: string) {
+  const presentTables: (typeof ORG_SCOPED_RUNTIME_TABLES)[number][] = [];
   for (const table of ORG_SCOPED_RUNTIME_TABLES) {
+    const relation = await pool.query<{ relation: string | null }>(
+      'SELECT to_regclass($1) AS relation',
+      [`public.${table}`]
+    );
+    if (!relation.rows[0]?.relation) continue;
+    presentTables.push(table);
     await pool.query(`DELETE FROM ${table} WHERE organization_id=$1`, [organizationId]);
   }
 
+  if (presentTables.length === 0) return;
+
   const residue = await pool.query(
-    `SELECT ${ORG_SCOPED_RUNTIME_TABLES.map(
+    `SELECT ${presentTables.map(
       (table) => `(SELECT count(*)::int FROM ${table} WHERE organization_id=$1) AS ${table}`
     ).join(', ')}`,
     [organizationId]
   );
-  for (const table of ORG_SCOPED_RUNTIME_TABLES) {
+  for (const table of presentTables) {
     if (residue.rows[0]?.[table] !== 0) {
       throw new Error(`Initiatives Execution fixture residue remains in ${table}`);
     }
